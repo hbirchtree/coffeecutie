@@ -33,7 +33,7 @@ struct alignas(4) tagref_typed_t
         return std::string_view(reinterpret_cast<const char*>(&tag_class), 4);
     }
 
-    inline tagref_typed_t<> to_plain() const
+    inline tagref_typed_t<> const& to_plain() const
     {
         return *C_RCAST<tagref_typed_t<> const*>(this);
     }

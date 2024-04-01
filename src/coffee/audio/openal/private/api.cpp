@@ -8,6 +8,7 @@
 
 #include <coffee/core/debug/formatting.h>
 #include <fmt/format.h>
+#include <peripherals/stl/string/hex.h>
 
 namespace oaf {
 
@@ -69,6 +70,17 @@ void detail::buffer_dealloc(ALuint buf)
 void detail::source_dealloc(ALuint src)
 {
     alDeleteSources(1, &src);
+}
+
+void detail::check_error(std::string_view call)
+{
+    using stl_types::str::fmt::pointerify;
+    ALenum error{AL_NO_ERROR};
+    do
+    {
+        if(error = alGetError(); error != AL_NO_ERROR)
+            cWarning("AL Error: {}: {}", call, pointerify(error));
+    } while((error != AL_NO_ERROR));
 }
 
 void source_t::spatialize_as(spatialize_t v)
@@ -162,14 +174,14 @@ std::optional<std::string> api::load(DeviceHandle&& device)
     if(!alcMakeContextCurrent(m_context))
         return current_error();
 
-    m_formats.float32    = alcIsExtensionPresent(m_device, "AL_EXT_float32");
-    m_formats.ima4_adpcm = alcIsExtensionPresent(m_device, "AL_EXT_IMA4");
-    m_formats.ms_adpcm   = alcIsExtensionPresent(m_device, "AL_SOFT_MSADPCM");
+    m_formats.float32    = alIsExtensionPresent("AL_EXT_float32");
+    m_formats.ima4_adpcm = alIsExtensionPresent("AL_EXT_IMA4");
+    m_formats.ms_adpcm   = alIsExtensionPresent("AL_SOFT_MSADPCM");
 
     m_features.soft.block_alignment =
-        alcIsExtensionPresent(m_device, "AL_SOFT_block_alignment");
+        alIsExtensionPresent("AL_SOFT_block_alignment");
     m_features.soft.spatialize =
-        alcIsExtensionPresent(m_device, "AL_SOFT_source_spatialize");
+        alIsExtensionPresent("AL_SOFT_source_spatialize");
 
     return std::nullopt;
 }
@@ -242,27 +254,10 @@ ALenum enum_to_al(source_property prop)
 
 void system::start_frame(compo::ContainerProxy& p, const compo::time_point&)
 {
-    if(m_piggyback_input_event && !m_input_listener_registered)
-    {
-        using Coffee::Input::CIEvent;
-        using Coffee::Input::CIMouseButtonEvent;
-        p.underlying()
-            .service<comp_app::BasicEventBus<CIEvent>>()
-            ->addEventFunction<CIMouseButtonEvent>(
-                1000, [this](CIEvent&, CIMouseButtonEvent* ev) {
-                    if(!m_piggyback_input_event)
-                        return;
-                    cDebug("Resuming OpenAL device on input event");
-                    resume_playback();
-                    m_piggyback_input_event = false;
-                });
-        m_input_listener_registered = true;
-    }
-
-    if(auto err = current_error(); err != std::string())
-    {
-        cWarning("Audio system error: {}", err);
-    }
+    // if(auto err = current_error(); err != std::string())
+    // {
+    //     cWarning("Audio system error: {}", err);
+    // }
 }
 
 void system::collect_info(comp_app::interfaces::AppInfo& appInfo)
@@ -295,9 +290,10 @@ void system::collect_info(comp_app::interfaces::AppInfo& appInfo)
     if constexpr(compile_info::platform::is_emscripten)
     {
         cDebug(
-            "OpenAL info dump:\nDevice: {}\nExtensions: {}",
+            "OpenAL info dump:\nDevice: {}\nExtensions: {} {}",
             device(),
-            alcGetString(m_device, ALC_EXTENSIONS));
+            alcGetString(m_device, ALC_EXTENSIONS),
+            alGetString(AL_EXTENSIONS));
     }
 }
 

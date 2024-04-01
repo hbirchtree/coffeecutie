@@ -33,6 +33,7 @@ coffee_application(
         rendering.cpp
         resource_creation.cpp
         script_component.cpp
+        sounds.cpp
         touch_overlay.cpp
         ui.cpp
         widgets.cpp

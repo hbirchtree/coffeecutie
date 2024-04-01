@@ -374,6 +374,3 @@ constexpr auto is_pod_v = is_pod<T>::value;
 #undef IS_CONST
 #undef IS_SIGNED
 #undef IS_USIGNED
-
-#define TEMPLATE_REQUIRES(condition, dummy) \
-    typename std::enable_if<condition, dummy>::type* = nullptr

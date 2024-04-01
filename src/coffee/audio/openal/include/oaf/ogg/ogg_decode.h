@@ -26,7 +26,7 @@ struct decoder
 
     semantic::concepts::sound::Format::format_t format() const
     {
-        return semantic::concepts::sound::Format::format_t::f32;
+        return semantic::concepts::sound::Format::format_t::pcm;
     }
 
     struct decode_data_t

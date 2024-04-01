@@ -446,6 +446,7 @@
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "x64;mingw;windows",
                 "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON",
                 "VCPKG_MANIFEST_FEATURES": "audio;blam;gleam;headful;network;openssl",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/openal-soft",
                 "VCPKG_TARGET_TRIPLET": "x64-mingw-posix-static"
             },
             "environment": {
@@ -455,7 +456,8 @@
                 "TOOLCHAIN_VERSION": "v2.1.1",
                 "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
                 "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools",
-                "NINJA": "$penv{NINJA}"
+                "NINJA": "$penv{NINJA}",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/openal-soft"
             }
         },
         {

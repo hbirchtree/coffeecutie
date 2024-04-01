@@ -7,13 +7,18 @@
 #include "resource_creation.h"
 #include "selected_version.h"
 #include "shader_cache.h"
+#include "sounds.h"
 #include "ui.h"
+#include "ui_caching.h"
 
 #include <coffee/comp_app/file_mapper.h>
 #include <coffee/components/entity_container.h>
 #include <coffee/core/debug/formatting.h>
 
 #include <fmt_extensions/url_types.h>
+
+#include <oaf/api_system.h>
+#include <oaf/ogg/ogg_decode.h>
 
 using Coffee::cDebug;
 using Coffee::Resource;
@@ -76,7 +81,36 @@ static void load_sounds(
         return;
     auto& sounds = e.subsystem_cast<SoundCache<halo_version>>();
     if(magic.has_value())
+    {
         sounds.load_sounds_from(*magic);
+
+        // auto& snd = e.subsystem_cast<oaf::system>();
+
+        // using namespace std::chrono_literals;
+        // auto&            magic_    = *magic;
+        // std::string_view ogg_magic = "OggS";
+        // auto             ptr       = memmem(
+        //     magic_.base_ptr,
+        //     magic_.max_size,
+        //     ogg_magic.data(),
+        //     ogg_magic.size());
+
+        // static auto               buf = snd.alloc_buffer();
+        // oaf::decode::ogg::decoder decoder;
+        // decoder.decode(
+        //     gsl::span(
+        //         reinterpret_cast<const char*>(ptr),
+        //         magic_.max_size -
+        //             (reinterpret_cast<byte_t*>(ptr) - magic_.base_ptr)),
+        //     {},
+        //     10s,
+        //     *buf);
+
+        // static auto src = snd.alloc_source();
+        // src->queue(*buf);
+        // src->set_property<oaf::source_property::looping>(true);
+        // src->set_property<oaf::source_property::relative>(true);
+    }
     auto& loading_status = e.subsystem_cast<LoadingStatus>();
     if(loading_status.loaded_map != LoadingStatus::loaded)
         return;
@@ -93,6 +127,7 @@ static void init_map(
     auto& models         = e.subsystem_cast<ModelCache<halo_version>>();
     auto& shaders        = e.subsystem_cast<ShaderCache<halo_version>>();
     auto& sounds         = e.subsystem_cast<SoundCache<halo_version>>();
+    auto& ui_elements    = e.subsystem_cast<UIElementCache<halo_version>>();
 
     u32 num = 0;
     for([[maybe_unused]] auto const& i : e.select(ObjectGC))
@@ -111,6 +146,14 @@ static void init_map(
     };
     e.subsystem_cast<GameEventBus>().inject(event, &changed);
 
+    comp_app::EventBus<SoundEvent>* sound_bus =
+        e.service<comp_app::EventBus<SoundEvent>>();
+
+    {
+        SoundEvent ev = {.type = SoundEvent::clear_all};
+        sound_bus->inject(ev, nullptr);
+    }
+
     bitmaps.load_from(changed.container);
     bsps.load_from(changed.container);
     models.load_from(changed.container);
@@ -121,42 +164,108 @@ static void init_map(
     load_scenario_scenery(e, changed);
     load_ui_items(e, changed);
 
-    // For debugging: go through all the bitmaps
-    if constexpr(!compile_info::platform::is_32bit)
+    // generation_idx_t player_model;
+    // auto             bipeds =
+    //     changed.scenario->objects.bipeds.palette.data(files.container.magic)
+    //         .value();
+    // for(auto const& mod2_tag : bipeds)
+    // {
+    //     player_model = models.predict(
+    //         mod2_tag.front(), blam::mod2::mod2_lod::lod_high_ext);
+    // }
+    auto recipe = compo::EntityRecipe{
+        .components =
+            {
+                compo::type_hash_v<PlayerInfo>(),
+                compo::type_hash_v<NetworkInfo>(),
+                compo::type_hash_v<SoundEffects>(),
+            },
+        .tags = ObjectGC | PlayerBiped,
+    };
+    // if(player_model.valid())
+    //     recipe.components.push_back(compo::type_hash_v<Model>());
+    u64 main_biped_id{0};
+    for(auto i : range<>(4))
     {
-        u32 num_snds{0}, num_bitms{0}, num_mod{0};
-        cDebug("Tags:");
-        for(blam::tag_t const& tag : blam::tag_index_view(files.container))
-        {
-            if(tag.matches(blam::tag_class_t::bitm))
-            {
-                // cDebug(
-                //     "Loading bitmap {0}",
-                //     tag.to_name().to_string(files.container.magic));
-                // bitmaps.predict(tag.as_ref(), 0);
-                num_bitms++;
-            }
-            if(tag.matches(blam::tag_class_t::snd))
-            {
-                num_snds++;
-            }
-            if(tag.matches(blam::tag_class_t::mod2))
-            {
-                num_mod++;
-            }
-            cDebug(
-                " - {}:{}: {}",
-                tag.tagclass[0].str(),
-                stl_types::str::fmt::hexify(tag.tag_id),
-                tag.to_name().to_string(files.container.magic));
-        }
-
-        cDebug(
-            "Map tag summary: {} bitmaps, {} sounds, {} models",
-            num_bitms,
-            num_snds,
-            num_mod);
+        auto  ref       = e.create_entity(recipe);
+        auto& info      = ref.get<PlayerInfo>();
+        info.player_idx = i;
+        if(i == 0)
+            main_biped_id = ref.id();
+        // if(!player_model.valid())
+        //     continue;
+        // TODO: Set up biped model here
+        // auto& model = ref.get<Model>();
+        // model.model = player_model;
     }
+
+    // For debugging: go through all the bitmaps
+    u32 num_snds{0}, num_bitms{0}, num_mod{0};
+    cDebug("Tags:");
+    for(blam::tag_t const& tag : blam::tag_index_view(files.container))
+    {
+        if(tag.matches(blam::tag_class_t::bitm))
+        {
+            // cDebug(
+            //     "Loading bitmap {0}",
+            //     tag.to_name().to_string(files.container.magic));
+            // bitmaps.predict(tag.as_ref(), 0);
+            num_bitms++;
+        }
+        if(tag.matches(blam::tag_class_t::snd))
+        {
+            num_snds++;
+        }
+        if(tag.matches(blam::tag_class_t::mod2))
+        {
+            num_mod++;
+        }
+        if(tag.matches(blam::tag_class_t::tag_collection))
+        {
+            // Go through tag collections and load them
+            // I think this is the way? There are no other references to eg.
+            // the title music *other than* the tagc tags
+            auto const& magic = files.container.magic;
+            auto tag_coll     = tag.data<blam::tag_collection_t>(magic).value();
+            auto tags         = tag_coll->tags.data(magic).value();
+            for(auto const& tag : tags)
+            {
+                switch(tag.tag_class)
+                {
+                case blam::tag_class_t::Soul:
+                    // Put in UI cache
+                    ui_elements.explore(tag);
+                    break;
+                case blam::tag_class_t::lsnd:
+                {
+                    // Put in sound cache
+                    LoopSoundEvent loop = {
+                        .sound = &tag,
+                    };
+                    SoundEvent ev = {
+                        .type = SoundEvent::loop_sound,
+                        .entity_id = main_biped_id,
+                    };
+                    sound_bus->inject(ev, &loop);
+                    break;
+                }
+                default:
+                    break;
+                }
+            }
+        }
+        // cDebug(
+        //     " - {}:{}: {}",
+        //     tag.tagclass[0].str(),
+        //     stl_types::str::fmt::hexify(tag.tag_id),
+        //     tag.to_name().to_string(files.container.magic));
+    }
+
+    cDebug(
+        "Map tag summary: {} bitmaps, {} sounds, {} models",
+        num_bitms,
+        num_snds,
+        num_mod);
 
     create_camera(
         e,

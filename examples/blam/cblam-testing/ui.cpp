@@ -411,10 +411,10 @@ void load_ui_items(
         if(tag.matches(blam::tag_class_t::font))
         {
             fonts.predict(tag.as_ref());
-        } else if(tag.matches(blam::tag_class_t::Soul))
+        } /*else if(tag.matches(blam::tag_class_t::Soul))
         {
             root_widgets = ui_elements.explore(tag.as_ref());
-        }
+        }*/
     }
 
     compo::EntityRecipe rec;

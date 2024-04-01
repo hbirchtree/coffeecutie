@@ -20,20 +20,6 @@ namespace math {
 using namespace libc_types;
 using namespace std;
 
-#ifdef COFFEE_WINDOWS
-template<typename T>
-T min(T v1, T v2)
-{
-    return std::min(v1, v2);
-}
-
-template<typename T>
-T max(T v1, T v2)
-{
-    return std::max(v1, v2);
-}
-#endif
-
 template<typename T>
 inline bool IsPower2(T const& n)
 {

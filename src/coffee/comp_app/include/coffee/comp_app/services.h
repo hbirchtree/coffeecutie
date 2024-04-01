@@ -780,10 +780,9 @@ using WindowInfo          = detail::tag_t<interfaces::WindowInfo>;
 using Windowing           = detail::tag_t<interfaces::Windowing>;
 
 template<typename EType>
-struct EventBus
-    : interfaces::EventBus<EType>
-    , AppService<EventBus<EType>, detail::tag_t<interfaces::EventBus<EType>>>
+struct EventBus : interfaces::EventBus<EType>
 {
+    using type = EventBus<EType>;
 };
 
 template<typename EType>

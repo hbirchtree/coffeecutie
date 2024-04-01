@@ -7,6 +7,7 @@
 #include "resource_creation.h"
 #include "script_component.h"
 #include "selected_version.h"
+#include "sounds.h"
 #include "touch_overlay.h"
 #include "ui.h"
 #include "ui_caching.h"
@@ -161,6 +162,7 @@ i32 blam_main()
             e.register_component_inplace<ObjectSpawn>();
             e.register_component_inplace<NetworkInfo>();
             e.register_component_inplace<PlayerInfo>();
+            e.register_component_inplace<SoundEffects>();
             e.register_component_inplace<MultiplayerSpawn>();
             e.register_component_inplace<ShaderData>();
             e.register_component_inplace<MeshTrackingData>();
@@ -213,6 +215,10 @@ i32 blam_main()
             params.mipmap_bias = 0;
             e.register_subsystem_inplace<LoadingStatus>();
 
+            auto& sound_cache =
+                e.register_subsystem_inplace<SoundCache<halo_version>>(&snd);
+            alloc_sound_system(e);
+
             {
                 auto& bitm_cache =
                     e.register_subsystem_inplace<BitmapCache<halo_version>>(
@@ -220,15 +226,13 @@ i32 blam_main()
                 auto& shader_cache =
                     e.register_subsystem_inplace<ShaderCache<halo_version>>(
                         std::ref(bitm_cache));
-                auto& sound_cache =
-                    e.register_subsystem_inplace<SoundCache<halo_version>>(
-                        &snd);
                 e.register_subsystem_inplace<ModelCache<halo_version>>(
                     std::ref(bitm_cache), std::ref(shader_cache), &gfx);
                 e.register_subsystem_inplace<BSPCache<halo_version>>(
                     std::ref(bitm_cache),
                     std::ref(shader_cache),
-                    std::ref(sound_cache));
+                    std::ref(sound_cache),
+                    e.service<comp_app::EventBus<SoundEvent>>());
                 auto& font_cache =
                     e.register_subsystem_inplace<FontCache<halo_version>>(&gfx);
                 e.register_subsystem_inplace<UIElementCache<halo_version>>(
@@ -341,7 +345,7 @@ i32 blam_main()
                 src->set_property<oaf::source_property::rolloff_factor>(1.5f);
                 src->set_property<oaf::source_property::position>(
                     Vecf3{0, 0, 0});
-                src->queue(*buf);
+                // src->queue(*buf);
             }
 
 #if defined(COFFEE_EMSCRIPTEN) && defined(FEATURE_ENABLE_ASIO)

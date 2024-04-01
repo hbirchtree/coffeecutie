@@ -28,6 +28,7 @@
 #include "data_cache.h"
 #include "shader_cache.h"
 #include "sound_cache.h"
+#include "sounds.h"
 
 using gfx_api = gleam::api;
 using libc_types::byte_t;
@@ -160,16 +161,18 @@ struct BSPCache
     : DataCache<BSPItem, blam::bsp::info const*, blam::bsp::info const&>
     , compo::SubsystemBase
 {
-    using type  = BSPCache<V>;
+    using type = BSPCache<V>;
 
     BSPCache(
-        BitmapCache<V>& bitm_cache,
-        ShaderCache<V>& shader_cache,
-        SoundCache<V>&  sound_cache)
+        BitmapCache<V>&                 bitm_cache,
+        ShaderCache<V>&                 shader_cache,
+        SoundCache<V>&                  sound_cache,
+        comp_app::EventBus<SoundEvent>* sound_bus)
         : version(V::version_v)
         , bitm_cache(bitm_cache)
         , shader_cache(shader_cache)
         , sound_cache(sound_cache)
+        , sound_bus(sound_bus)
     {
     }
 
@@ -177,17 +180,19 @@ struct BSPCache
     {
         index    = blam::tag_index_view(map);
         magic    = map.magic;
-        vert_ptr = 0, element_ptr = 0, light_ptr = 0, portal_ptr = reserved_debug_points,
+        vert_ptr = 0, element_ptr = 0, light_ptr = 0,
+        portal_ptr       = reserved_debug_points,
         portal_color_ptr = reserved_debug_colors;
         evict_all();
     }
 
-    blam::version_t         version;
-    BitmapCache<V>&         bitm_cache;
-    ShaderCache<V>&         shader_cache;
-    SoundCache<V>&          sound_cache;
-    blam::tag_index_view<V> index;
-    blam::magic_data_t      magic;
+    blam::version_t                 version;
+    BitmapCache<V>&                 bitm_cache;
+    ShaderCache<V>&                 shader_cache;
+    SoundCache<V>&                  sound_cache;
+    comp_app::EventBus<SoundEvent>* sound_bus;
+    blam::tag_index_view<V>         index;
+    blam::magic_data_t              magic;
 
     Span<byte_t>           vert_buffer;
     Span<byte_t>           light_buffer;

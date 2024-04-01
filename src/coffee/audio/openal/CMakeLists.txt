@@ -6,11 +6,17 @@ coffee_library(
     LIBRARIES Core Vorbis::vorbisfile
     HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
+coffee_library(
+    TARGET ImaDecoder
+    SOURCES private/ima_decode.cpp
+    LIBRARIES Core
+    HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
 
 coffee_library(
     TARGET OAF
     SOURCES private/api.cpp
-    LIBRARIES ComponentApp OggDecoder
+    LIBRARIES ComponentApp OggDecoder ImaDecoder
     HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
 

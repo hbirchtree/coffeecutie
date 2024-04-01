@@ -36,11 +36,15 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         auto bg_sound = section.background_sound.data(bsp_magic);
         if(bg_sound.has_value())
         {
+            SoundEvent ev = {.type = SoundEvent::loop_sound};
             auto snds = bg_sound.value();
             for(auto const& snd : snds)
             {
                 cDebug("BG sound tag: {}", snd.name.str());
-                sound_cache.predict(snd.bg_sound.to_plain());
+                LoopSoundEvent loop = {
+                    .sound = &snd.bg_sound.to_plain(),
+                };
+                sound_bus->process(ev, &loop);
             }
         }
     }
@@ -776,7 +780,15 @@ void ShaderCache<V>::populate_material(
          *          * Texture scrolling animation:
          * 12-15: U-animation function
          * 16-19: V-animation function
-         *          *          */
+         *
+         * Allocation of material inputs:
+         * i1.0: lightmap brightness
+         * i1.1: specular brightness
+         * 0: specular perp. color + brightness
+         * 1: specular paral. color + brightness
+         * 2: uv offset + ???
+         * 3: power on/off/plasma in partitioned vector
+         */
 
         break;
     }

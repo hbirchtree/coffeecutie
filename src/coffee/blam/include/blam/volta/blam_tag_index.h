@@ -121,6 +121,11 @@ struct alignas(4) tag_t
     }
 };
 
+struct tag_collection_t
+{
+    reflexive_t<tagref_t> tags;
+};
+
 template<typename V>
 /*!
  * \brief A tag index contains information about the map, its resources and its

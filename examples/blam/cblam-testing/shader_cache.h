@@ -163,7 +163,7 @@ struct ShaderCache
         }
         case blam::tag_class_t::senv: {
             shader_env const* info = shader.header->as<shader_env>();
-            (void)info;
+            // mat.material.inputs[2] = uv_animation(info->scrolling, t);
             break;
         }
         default:

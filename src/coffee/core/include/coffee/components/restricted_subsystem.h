@@ -33,38 +33,32 @@ using proxy_t = ConstrainedProxy<
     typename T::subsystems,
     typename T::readable_services>;
 
-template<class T, TEMPLATE_REQUIRES(!is_start_restricted_subsystem<T>, T)>
+template<class T>
+requires (!is_start_restricted_subsystem<T>)
 void start_frame(T&, EntityContainer&, time_point const&)
 {
 }
 
-template<class T, TEMPLATE_REQUIRES(is_start_restricted_subsystem<T>, T)>
+template<class T>
+requires is_start_restricted_subsystem<T>
 void start_frame(T& subsys, EntityContainer& container, time_point const& t)
 {
     auto proxy = proxy_t<T>(container);
     subsys.start_restricted(proxy, t);
 }
 
-template<class T, TEMPLATE_REQUIRES(!is_end_restricted_subsystem<T>, T)>
+template<class T>
+requires (!is_end_restricted_subsystem<T>)
 void end_frame(T&, EntityContainer&, time_point const&)
 {
 }
 
-template<class T, TEMPLATE_REQUIRES(is_end_restricted_subsystem<T>, T)>
+template<class T>
+requires is_end_restricted_subsystem<T>
 void end_frame(T& subsys, EntityContainer& container, time_point const& t)
 {
     auto proxy = proxy_t<T>(container);
     subsys.end_restricted(proxy, t);
 }
-
-// template<class T, TEMPLATE_REQUIRES(!is_restricted_subsystem<T>, T)>
-// void start_frame(T&, EntityContainer&, time_point const&)
-//{
-// }
-
-// template<class T, TEMPLATE_REQUIRES(!is_restricted_subsystem<T>, T)>
-// void end_frame(T&, EntityContainer&, time_point const&)
-//{
-// }
 
 } // namespace compo::restricted

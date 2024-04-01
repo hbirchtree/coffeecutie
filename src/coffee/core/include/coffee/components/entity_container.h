@@ -174,6 +174,14 @@ struct EntityContainer : stl_types::non_copy
             return *it;
         }
 
+        Entity* operator->() const
+        {
+            if(it == m_container->entities.end())
+                Throw(std::out_of_range("bad iterator"));
+
+            return &(*it);
+        }
+
       private:
         void initialize_iterator()
         {

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <functional>
+#include <peripherals/stl/type_safety.h>
+#include <stdexcept>
 
 namespace stl_types {
 
@@ -23,6 +25,13 @@ struct quick_container
     IteratorType end()
     {
         return m_end();
+    }
+
+    typename IteratorType::value_type& front()
+    {
+        if(begin() == end())
+            Throw(std::out_of_range("no values in container"));
+        return (*begin());
     }
 
   private:

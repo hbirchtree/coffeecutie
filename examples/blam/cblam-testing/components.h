@@ -407,6 +407,14 @@ struct PlayerInfo
     /* Maybe stash some more info here in the future */
 };
 
+struct SoundEffects
+{
+    using value_type = SoundEffects;
+    using type = compo::alloc::VectorContainer<value_type>;
+
+    std::vector<generation_idx_t> tracks; /* sound effects/music to play */
+};
+
 enum ObjectTags : u64
 {
     ObjectScenery      = 0x1,

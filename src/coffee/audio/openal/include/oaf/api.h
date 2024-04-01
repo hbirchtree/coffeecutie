@@ -23,6 +23,7 @@ namespace detail {
 
 void buffer_dealloc(ALuint buf);
 void source_dealloc(ALuint src);
+void check_error(std::string_view call);
 
 } // namespace detail
 
@@ -59,7 +60,7 @@ struct format_t : Format
         case fmt_t::f32:
             if(!formats.float32)
                 break;
-            return AL_FORMAT_STEREO_FLOAT32 + (channels == 1 ? 0 : 1);
+            return AL_FORMAT_MONO_FLOAT32 + (channels == 1 ? 0 : 1);
         case fmt_t::ms_adpcm:
             if(!formats.ms_adpcm)
                 break;
@@ -101,8 +102,9 @@ struct buffer_t
             m_handle,
             fmt.to_al(m_formats),
             data.data(),
-            data.size(),
+            data.size_bytes(),
             fmt.frequency);
+        detail::check_error("alBufferData");
     }
 
     buffer_handle_t  m_handle{};
@@ -131,6 +133,7 @@ struct source_t
     void set_property(bool prop)
     {
         alSourcei(m_handle, enum_to_al(Prop), prop ? AL_TRUE : AL_FALSE);
+        detail::check_error("alSourcei");
     }
 
     template<source_property Prop>
@@ -138,6 +141,7 @@ struct source_t
     void set_property(f32 prop)
     {
         alSourcef(m_handle, enum_to_al(Prop), prop);
+        detail::check_error("alSourcef");
     }
 
     template<source_property Prop>
@@ -145,12 +149,33 @@ struct source_t
     void set_property(Vecf3 prop)
     {
         alSourcefv(m_handle, enum_to_al(Prop), &prop[0]);
+        detail::check_error("alSourcefv");
     }
 
     void queue(buffer_t const& buf)
     {
         alSourceQueueBuffers(m_handle, 1, &buf.m_handle.hnd);
+        detail::check_error("alSourceQueueBuffers");
         alSourcePlay(m_handle);
+        detail::check_error("alSourcePlay");
+    }
+
+    void unqueue(buffer_t const& buf)
+    {
+        ALuint hnd = buf.m_handle;
+        alSourceUnqueueBuffers(m_handle, 1, &hnd);
+        detail::check_error("alSourceUnqueueBuffers");
+    }
+
+    std::pair<u32, u32> buffer_queue()
+    {
+        ALint queued, processed;
+        alGetSourcei(m_handle, AL_BUFFERS_QUEUED, &queued);
+        detail::check_error("alGetSourcei");
+        alGetSourcei(m_handle, AL_BUFFERS_PROCESSED, &processed);
+        detail::check_error("alGetSourcei");
+        return std::make_pair(
+            static_cast<u32>(queued), static_cast<u32>(processed));
     }
 
     enum spatialize_t
@@ -173,6 +198,7 @@ struct listener_t
     void set_property(f32 prop)
     {
         alListenerf(enum_to_al(Prop), prop);
+        detail::check_error("alListenerf");
     }
 
     template<source_property Prop>
@@ -180,6 +206,7 @@ struct listener_t
     void set_property(Vecf3 prop)
     {
         alListenerfv(enum_to_al(Prop), &prop[0]);
+        detail::check_error("alListenerfv");
     }
 
     template<source_property Prop>
@@ -193,6 +220,7 @@ struct listener_t
         Vecf3 right   = Vecf3{rotation[0][0], rotation[1][0], rotation[2][0]};
         prop[1]       = glm::cross(forward, right);
         alListenerfv(enum_to_al(Prop), &prop[0][0]);
+        detail::check_error("alListenerfv");
     }
 };
 
@@ -240,6 +268,7 @@ struct api
     void set_distance_model(distance_model_t model, bool clamped = false)
     {
         alDistanceModel(model + (clamped ? 1 : 0));
+        detail::check_error("alDistanceModel");
     }
 
   protected:

@@ -1,0 +1,212 @@
+#include "sounds.h"
+
+#include "components.h"
+#include "selected_version.h"
+#include "sound_cache.h"
+
+#include <oaf/api_system.h>
+#include <oaf/ima_adpcm/decode.h>
+#include <oaf/ogg/ogg_decode.h>
+#include <peripherals/stl/enumerate.h>
+
+using Coffee::Logging::cDebug;
+
+using SoundManifest = compo::
+    SubsystemManifest<type_list_t<SoundEffects>, empty_list_t, empty_list_t>;
+
+enum class status_t
+{
+    unplayed,
+    queued,
+    played,
+};
+
+struct track_t
+{
+    std::shared_ptr<oaf::source_t> source;
+
+    struct entry_t
+    {
+        std::shared_ptr<oaf::buffer_t> buffer;
+        bool                           looping{false};
+        status_t                       status{status_t::unplayed};
+    };
+
+    std::vector<entry_t> buffers;
+    size_t               position{0};
+};
+
+template<typename Ver>
+struct SoundSystem
+    : compo::RestrictedSubsystem<SoundSystem<Ver>, SoundManifest>
+    , comp_app::EventBus<SoundEvent>
+{
+    using services = type_list_t<comp_app::EventBus<SoundEvent>>;
+    using type     = SoundSystem;
+    using Proxy    = compo::proxy_of<SoundManifest>;
+
+    SoundSystem(oaf::api& audio, SoundCache<Ver>& sound_cache)
+        : snd(audio)
+        , sound_cache(sound_cache)
+    {
+    }
+
+    oaf::api&        snd;
+    SoundCache<Ver>& sound_cache;
+
+    std::map<u64, track_t> active_tracks;
+
+    void start_restricted(Proxy& p, compo::time_point const& t)
+    {
+        for(auto& [id, track] : active_tracks)
+        {
+            auto& src = track.source;
+            for(auto& [i, buffer] : stl_types::enumerate(track.buffers))
+            {
+                if(i < track.position)
+                    continue;
+                if(buffer.status == status_t::unplayed)
+                {
+                    src->queue(*buffer.buffer);
+                    // cDebug("Queueing {}", i);
+                    buffer.status  = status_t::queued;
+                    track.position = i;
+                    break;
+                }
+                if(buffer.status == status_t::queued)
+                {
+                    auto [queued, processed] = src->buffer_queue();
+                    if(queued != processed)
+                    {
+                        // cDebug("Waiting for {} to play", i);
+                        track.position = i;
+                        break;
+                    }
+                    // cDebug("Finished playing {}", i);
+                    src->unqueue(*buffer.buffer);
+                    buffer.status =
+                        buffer.looping ? status_t::unplayed : status_t::played;
+                    track.position++;
+                }
+                if(buffer.status == status_t::played)
+                {
+                    // cDebug("Cleaning up {}", i);
+                    buffer.buffer.reset();
+                    continue;
+                }
+            }
+            if(track.position == track.buffers.size())
+                track.position = 0;
+        }
+    }
+
+    void end_restricted(Proxy&, compo::time_point const&)
+    {
+    }
+
+    void decode_audio(
+        blam::sound::sound const*      sound,
+        std::vector<track_t::entry_t>& buffers,
+        track_t::entry_t const&        props)
+    {
+        auto const& magic       = sound_cache.magic;
+        auto const& sound_magic = sound_cache.sound_magic;
+
+        auto ranges = sound->pitch_ranges.data(magic).value();
+        if(ranges.empty())
+            return;
+        auto perms = ranges[0].permutations.data(magic).value();
+        if(perms.empty())
+            return;
+
+        blam::sound::pitch_permutation_t const* perm = &perms[0];
+        using sound_t                                = blam::sound::sound;
+
+        while(perm)
+        {
+            auto data = perm->sample_data().data(sound_magic).value();
+            switch(sound->codec)
+            {
+            case blam::sound::sound::codec_t::ogg: {
+                auto                      buf = snd.alloc_buffer();
+                oaf::decode::ogg::decoder decoder;
+                decoder.decode(data, {}, {}, *buf);
+                buffers.push_back({.buffer = buf, .looping = props.looping});
+                break;
+            }
+            case blam::sound::sound::codec_t::xbox_adpcm: {
+                auto          buf = snd.alloc_buffer();
+                oaf::format_t fmt;
+                fmt.format = oaf::Format::ima_adpcm;
+                fmt.frequency =
+                    sound->sample_rate == sound_t::_22kHz ? 22050 : 44100;
+                fmt.channels = sound->channels == sound_t::mono ? 1 : 2;
+                if(snd.formats().ima4_adpcm)
+                {
+                    buf->upload(data, fmt);
+                } else
+                {
+                    oaf::decode::ima_adpcm::decoder decoder;
+                    decoder.decode(data, fmt, *buf);
+                }
+                buffers.push_back({.buffer = buf, .looping = props.looping});
+                break;
+            }
+            default:
+                break;
+            }
+            if(perm->next_permutation_idx == -1)
+                break;
+            perm = &perms[perm->next_permutation_idx];
+        }
+    }
+
+    virtual void process(SoundEvent& ev, libc_types::c_ptr data) final
+    {
+        if(ev.type == SoundEvent::loop_sound)
+        {
+            auto const& loop  = reinterpret_cast<LoopSoundEvent const*>(data);
+            auto        sound = sound_cache.predict(*loop->sound);
+            if(!sound.valid())
+                return;
+            SoundItem const& item  = (*sound_cache.find(sound)).second;
+            auto const&      track = item.tracks.front();
+            auto start_ = track.sounds.find(SoundItem::role_t::start);
+            auto loop_  = track.sounds.find(SoundItem::role_t::loop);
+            std::vector<track_t::entry_t> buffers;
+            if(start_ != track.sounds.end())
+                decode_audio(start_->second, buffers, track_t::entry_t{});
+            decode_audio(
+                loop_->second,
+                buffers,
+                track_t::entry_t{
+                    .looping = true,
+                });
+            cDebug("Queueing {} audio buffers", buffers.size());
+            active_tracks.emplace(
+                ev.entity_id,
+                track_t{
+                    .source  = snd.alloc_source(),
+                    .buffers = std::move(buffers),
+                });
+        }
+        if(ev.type == SoundEvent::play_sound)
+        {
+            auto const& play = reinterpret_cast<PlaySoundEvent const*>(data);
+        }
+        if(ev.type == SoundEvent::clear_all)
+            active_tracks.clear();
+    }
+};
+
+void alloc_sound_system(compo::EntityContainer& e)
+{
+    auto& sound_sys = e.register_subsystem_inplace<SoundSystem<halo_version>>(
+        std::ref(e.subsystem_cast<oaf::system>()),
+        std::ref(e.subsystem_cast<SoundCache<halo_version>>()));
+    e.register_subsystem_services<SoundSystem<halo_version>>(&sound_sys);
+}
+
+void queue_sound_event(const LoopSoundEvent& event)
+{
+}
