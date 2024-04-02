@@ -6,19 +6,29 @@ coffee_library(
     LIBRARIES Core Vorbis::vorbisfile
     HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
-coffee_library(
-    TARGET ImaDecoder
-    SOURCES private/ima_decode.cpp
-    LIBRARIES Core
-    HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-)
 
 coffee_library(
     TARGET OAF
     SOURCES private/api.cpp
-    LIBRARIES ComponentApp OggDecoder ImaDecoder
+    LIBRARIES ComponentApp OggDecoder
     HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
+
+if(EMSCRIPTEN)
+    coffee_library(
+        TARGET ImaDecoder
+        LINKAGE SHARED
+        SOURCES private/ima_decode.cpp
+        LIBRARIES Core
+        HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    )
+    target_compile_definitions(ImaDecoder PUBLIC
+        -DOAF_IMA_DECODER_ENABLED=1
+    )
+    target_link_libraries(OAF PUBLIC
+        ImaDecoder
+    )
+endif()
 
 if(EMSCRIPTEN)
     # Emscripten requires that we link this one instead

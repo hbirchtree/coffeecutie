@@ -33,6 +33,10 @@ constexpr u32 ALC_HRTF_UNSUPPORTED_FORMAT_SOFT  = 0x0005;
 constexpr u32 AL_SOURCE_SPATIALIZE_SOFT = 0x1214;
 constexpr u32 AL_AUTO_SOFT              = 0x0002;
 #endif
+#if !defined(AL_FORMAT_MONO_FLOAT32)
+constexpr u32 AL_FORMAT_MONO_FLOAT32   = 0x10010;
+constexpr u32 AL_FORMAT_STEREO_FLOAT32 = 0x10011;
+#endif
 
 using GETSTRINGISOFT   = ALCchar* (*)(ALCdevice*, ALCenum, ALCsizei);
 using DEVICEPAUSESOFT  = void (*)(ALCdevice*);
@@ -81,6 +85,41 @@ void detail::check_error(std::string_view call)
         if(error = alGetError(); error != AL_NO_ERROR)
             cWarning("AL Error: {}: {}", call, pointerify(error));
     } while((error != AL_NO_ERROR));
+}
+
+ALenum format_t::to_al(const formats_t& formats) const
+{
+    using fmt_t = Format::format_t;
+
+    if(channels < 1 || channels > 2)
+        return AL_NONE;
+    if(bits != 8 && bits != 16 && bits != 32)
+        return AL_NONE;
+
+    switch(format)
+    {
+    case fmt_t::pcm:
+        return AL_FORMAT_MONO8 + (channels == 1 ? 0 : 2) + (bits == 8 ? 0 : 1);
+    case fmt_t::f32:
+        if(!formats.float32)
+            break;
+        return AL_FORMAT_MONO_FLOAT32 + (channels == 1 ? 0 : 1);
+#if defined(AL_FORMAT_MONO_MSADPCM_SOFT)
+    case fmt_t::ms_adpcm:
+        if(!formats.ms_adpcm)
+            break;
+        return AL_FORMAT_MONO_MSADPCM_SOFT + (channels == 1 ? 0 : 1);
+#endif
+#if defined(AL_FORMAT_MONO_IMA4)
+    case fmt_t::ima_adpcm:
+        if(!formats.ima4_adpcm)
+            break;
+        return AL_FORMAT_MONO_IMA4 + (channels == 1 ? 0 : 1);
+#endif
+    default:
+        break;
+    }
+    return AL_NONE;
 }
 
 void source_t::spatialize_as(spatialize_t v)

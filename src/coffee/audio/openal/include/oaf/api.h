@@ -42,40 +42,7 @@ struct formats_t
 
 struct format_t : Format
 {
-    inline ALenum to_al(formats_t const& formats) const
-    {
-        using fmt_t = Format::format_t;
-
-        if(channels < 1 || channels > 2)
-            return AL_NONE;
-        if(bits != 8 && bits != 16 && bits != 32)
-            return AL_NONE;
-
-        switch(format)
-        {
-        case fmt_t::pcm:
-            return AL_FORMAT_MONO8 + (channels == 1 ? 0 : 2) +
-                   (bits == 8 ? 0 : 1);
-#if __has_include(<AL/alext.h>)
-        case fmt_t::f32:
-            if(!formats.float32)
-                break;
-            return AL_FORMAT_MONO_FLOAT32 + (channels == 1 ? 0 : 1);
-        case fmt_t::ms_adpcm:
-            if(!formats.ms_adpcm)
-                break;
-            return AL_FORMAT_MONO_MSADPCM_SOFT + (channels == 1 ? 0 : 1);
-        case fmt_t::ima_adpcm:
-            if(!formats.ima4_adpcm)
-                break;
-            return AL_FORMAT_MONO_IMA4 + (channels == 1 ? 0 : 1);
-            break;
-#endif
-        default:
-            break;
-        }
-        return AL_NONE;
-    }
+    ALenum to_al(formats_t const& formats) const;
 };
 
 struct features_t

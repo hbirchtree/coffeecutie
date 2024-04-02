@@ -5,9 +5,12 @@
 #include "sound_cache.h"
 
 #include <oaf/api_system.h>
-#include <oaf/ima_adpcm/decode.h>
 #include <oaf/ogg/ogg_decode.h>
 #include <peripherals/stl/enumerate.h>
+
+#if defined(OAF_IMA_DECODER_ENABLED)
+#include <oaf/ima_adpcm/decode.h>
+#endif
 
 using Coffee::Logging::cDebug;
 
@@ -144,11 +147,14 @@ struct SoundSystem
                 if(snd.formats().ima4_adpcm)
                 {
                     buf->upload(data, fmt);
-                } else
+                }
+#if defined(OAF_IMA_DECODER_ENABLED)
+                else
                 {
                     oaf::decode::ima_adpcm::decoder decoder;
                     decoder.decode(data, fmt, *buf);
                 }
+#endif
                 buffers.push_back({.buffer = buf, .looping = props.looping});
                 break;
             }

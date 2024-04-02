@@ -1,7 +1,5 @@
 #include <oaf/ima_adpcm/decode.h>
 
-#include <coffee/core/files/cfiles.h>
-
 namespace oaf::decode::ima_adpcm {
 
 using libc_types::i16;
@@ -9,9 +7,11 @@ using libc_types::i32;
 using libc_types::i8;
 using libc_types::u8;
 
+using uint = libc_types::u32;
+
 //
-// Implementation inspired by https://github.com/nth-eye/ima/
-// Because I needed a small, yet portable impl :)
+// Implementation stolen from openal-soft
+// It's LGPL-licensed, so handle with care!
 //
 
 namespace {
@@ -190,10 +190,8 @@ bool decoder::decode(
     //     gsl::span(reinterpret_cast<const std::byte*>(data.data()),
     //     data.size()), 1, 0, format.channels, 65);
 
-    format_t fmt;
+    format_t fmt = format;
     fmt.format    = format_t::f32;
-    fmt.channels  = format.channels;
-    fmt.frequency = format.frequency;
     output.upload(decoded, fmt);
 
     return true;
