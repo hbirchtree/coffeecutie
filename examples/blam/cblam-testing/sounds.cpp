@@ -59,8 +59,39 @@ struct SoundSystem
 
     std::map<u64, track_t> active_tracks;
 
+    struct queued_event_t
+    {
+        SoundEvent                                   event;
+        std::variant<LoopSoundEvent, PlaySoundEvent> data;
+    };
+
+    std::vector<queued_event_t> queued_events;
+
     void start_restricted(Proxy& p, compo::time_point const& t)
     {
+        if(!queued_events.empty() && sound_cache.sound_magic.base_ptr)
+        {
+            for(queued_event_t& event : queued_events)
+            {
+                switch(event.event.type)
+                {
+                case SoundEvent::loop_sound:
+                    process(
+                        event.event,
+                        &std::get<LoopSoundEvent>(event.data));
+                    break;
+                case SoundEvent::play_sound:
+                    process(
+                        event.event,
+                        &std::get<PlaySoundEvent>(event.data));
+                    break;
+                default:
+                    break;
+                }
+            }
+            queued_events.clear();
+        }
+
         for(auto& [id, track] : active_tracks)
         {
             auto& src = track.source;
@@ -144,7 +175,7 @@ struct SoundSystem
                 fmt.frequency =
                     sound->sample_rate == sound_t::_22kHz ? 22050 : 44100;
                 fmt.channels = sound->channels == sound_t::mono ? 1 : 2;
-                if(snd.formats().ima4_adpcm)
+                if(snd.formats().ima4_adpcm && false)
                 {
                     buf->upload(data, fmt);
                 }
@@ -169,6 +200,24 @@ struct SoundSystem
 
     virtual void process(SoundEvent& ev, libc_types::c_ptr data) final
     {
+        if(!sound_cache.sound_magic.base_ptr)
+        {
+            queued_event_t event{.event = ev};
+            switch(ev.type)
+            {
+            case SoundEvent::loop_sound:
+                event.data = *reinterpret_cast<LoopSoundEvent const*>(data);
+                break;
+            case SoundEvent::play_sound:
+                event.data = *reinterpret_cast<PlaySoundEvent const*>(data);
+                break;
+            default:
+                return;
+            }
+            queued_events.push_back(event);
+            return;
+        }
+
         if(ev.type == SoundEvent::loop_sound)
         {
             auto const& loop  = reinterpret_cast<LoopSoundEvent const*>(data);

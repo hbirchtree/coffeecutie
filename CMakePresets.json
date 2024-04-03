@@ -204,12 +204,14 @@
                 "BUILD_GL_SOFTWARE_BCN": "ON",
                 "BUILD_GLES": "ON",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
+                "EMSCRIPTEN_ROOT_PATH": "$env{EMSDK}",
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "emscripten;wasm",
                 "VCPKG_TARGET_TRIPLET": "wasm32-emscripten"
             },
             "environment": {
                 "EMSDK": "${sourceDir}/multi_build/compilers/emsdk/",
+                "EMSCRIPTEN": "$env{EMSDK}/upstream/emscripten",
                 "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
                 "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools",
                 "NINJA": "$penv{NINJA}"

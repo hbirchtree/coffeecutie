@@ -15,6 +15,8 @@ if(BUILD_OPENAL AND NOT EMSCRIPTEN)
     set(BUNDLED_LIBS
         $<IF:$<CONFIG:Debug>,$<TARGET_PROPERTY:OpenAL::OpenAL,IMPORTED_LOCATION_DEBUG>,$<TARGET_PROPERTY:OpenAL::OpenAL,IMPORTED_LOCATION_RELEASE>>
     )
+elseif(EMSCRIPTEN)
+    set(BUNDLED_LIBS OpenAL_ImaDecoder)
 endif()
 
 resource_dir_package(

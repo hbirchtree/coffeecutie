@@ -12,22 +12,26 @@ coffee_library(
     SOURCES private/api.cpp
     LIBRARIES ComponentApp OggDecoder
     HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    )
+)
 
 if(EMSCRIPTEN)
+    find_package(Microsoft.GSL CONFIG REQUIRED)
     coffee_library(
-        TARGET ImaDecoder
+        TARGET OpenAL_ImaDecoder
         LINKAGE SHARED
-        SOURCES private/ima_decode.cpp
-        LIBRARIES Core
+        SOURCES
+            private/ima_decode.cpp
+        LIBRARIES Microsoft.GSL::GSL
         HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
-    target_compile_definitions(ImaDecoder PUBLIC
-        -DOAF_IMA_DECODER_ENABLED=1
+    target_link_options(OpenAL_ImaDecoder PUBLIC -pthread)
+    target_compile_definitions(OAF PUBLIC
+      -DOAF_IMA_DECODER_ENABLED=1
     )
     target_link_libraries(OAF PUBLIC
-        ImaDecoder
+      ${CMAKE_BINARY_DIR}/lib/libOpenAL_ImaDecoder.wasm
     )
+    add_dependencies(OAF OpenAL_ImaDecoder)
 endif()
 
 if(EMSCRIPTEN)

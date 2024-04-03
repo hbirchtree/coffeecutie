@@ -1,6 +1,6 @@
 function(EMSCRIPTEN_PACKAGE)
   cmake_parse_arguments(
-    EM "" "TARGET;SHELL;THREADS" "SOURCES;RESOURCES;ICON" ${ARGN}
+    EM "" "TARGET;SHELL;THREADS" "SOURCES;RESOURCES;BUNDLE_MODULES;ICON" ${ARGN}
   )
 
   set(BUNDLE_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EM_TARGET}.bundle)
@@ -30,8 +30,7 @@ function(EMSCRIPTEN_PACKAGE)
   target_link_options(
     ${EM_TARGET}
     PUBLIC
-    --shell-file
-    "${EM_SHELL}"
+    --shell-file=${EM_SHELL}
     ${RSC_FLAGS}
     -sPTHREAD_POOL_SIZE=$<TARGET_PROPERTY:${EM_TARGET},EMSCRIPTEN_THREADPOOL_SIZE>
     $<$<BOOL:$<TARGET_PROPERTY:${EM_TARGET},EMSCRIPTEN_GROWABLE_MEMORY>>:-sALLOW_MEMORY_GROWTH>
@@ -69,6 +68,15 @@ function(EMSCRIPTEN_PACKAGE)
         ${COFFEE_DESKTOP_DIRECTORY}/common/favicon.ico
         ${BUNDLE_DIR}/..
   )
+  foreach(LIB ${EM_BUNDLE_MODULES})
+    add_custom_command(
+        TARGET ${EM_TARGET}
+        COMMAND ${CMAKE_COMMAND}
+            -E copy
+            $<TARGET_FILE:${LIB}>
+            ${BUNDLE_DIR}
+    )
+  endforeach()
 
   install(DIRECTORY ${BUNDLE_DIR} DESTINATION bin)
 endfunction()

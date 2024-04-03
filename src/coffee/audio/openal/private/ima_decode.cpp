@@ -1,21 +1,22 @@
-#include <oaf/ima_adpcm/decode.h>
+#include <oaf/ima_adpcm/decoder_impl.h>
+
+#include <array>
+#include <cassert>
+#include <gsl/span>
+#include <tuple>
 
 namespace oaf::decode::ima_adpcm {
 
-using libc_types::i16;
-using libc_types::i32;
-using libc_types::i8;
-using libc_types::u8;
-
-using uint = libc_types::u32;
+using uint = uint32_t;
 
 //
-// Implementation stolen from openal-soft
+// Implementation "stolen" from openal-soft
 // It's LGPL-licensed, so handle with care!
+// In our case, we use shared linkage against this module to keep it
+// LGPL-compliant
 //
 
 namespace {
-
 /* IMA ADPCM Stepsize table */
 constexpr std::array<int, 89> IMAStep_size{
     {7,     8,     9,     10,    11,    12,    13,    14,    16,    17,
@@ -38,13 +39,13 @@ constexpr std::array<int, 16> IMA4Index_adjust{
 
 } // namespace
 
-inline size_t LoadSamples(
+size_t LoadSamples(
     gsl::span<float>           dstSamples,
     gsl::span<const std::byte> src,
     const size_t               srcChan,
     const size_t               srcOffset,
     const size_t               srcStep,
-    const size_t               samplesPerBlock) noexcept
+    const size_t               samplesPerBlock)
 {
     static constexpr int MaxStepIndex{
         static_cast<int>(IMAStep_size.size()) - 1};
@@ -143,58 +144,6 @@ inline size_t LoadSamples(
         written += todo;
     }
     return written;
-}
-
-bool decoder::decode(
-    gsl::span<const char> const& data, format_t const& format, buffer_t& output)
-{
-    std::vector<f32> buffer;
-    buffer.resize(data.size() * 2);
-
-    auto decoded = gsl::span(buffer.data(), buffer.size());
-
-    size_t written1 = LoadSamples(
-        decoded,
-        gsl::span(reinterpret_cast<const std::byte*>(data.data()), data.size()),
-        0,
-        0,
-        format.channels,
-        65);
-    size_t written2;
-    if(format.channels == 2)
-        written2 = LoadSamples(
-            decoded.subspan(data.size()),
-            gsl::span(
-                reinterpret_cast<const std::byte*>(data.data()), data.size()),
-            0,
-            0,
-            format.channels,
-            65);
-
-    if(format.channels == 2)
-    {
-        std::vector<f32> interleaved;
-        interleaved.reserve(written1 * 2);
-        for(size_t i = 0; i < written1; ++i)
-        {
-            f32 v1 = decoded[i], v2 = decoded[data.size() + i];
-            interleaved.push_back(v1);
-            interleaved.push_back(v2);
-        }
-        buffer = std::move(interleaved);
-    } else
-        buffer.resize(written1);
-    decoded = gsl::span(buffer.data(), buffer.size());
-    // LoadSamples(
-    //     decoded,
-    //     gsl::span(reinterpret_cast<const std::byte*>(data.data()),
-    //     data.size()), 1, 0, format.channels, 65);
-
-    format_t fmt = format;
-    fmt.format    = format_t::f32;
-    output.upload(decoded, fmt);
-
-    return true;
 }
 
 } // namespace oaf::decode::ima_adpcm

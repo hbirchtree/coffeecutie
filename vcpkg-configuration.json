@@ -25,6 +25,7 @@
             "repository": "https://github.com/Microsoft/vcpkg",
             "baseline": "ce1916404fc6f2b645f419a6d47b7ebafe686582",
             "packages": [
+                "imgui",
                 "openal-soft"
             ]
         },

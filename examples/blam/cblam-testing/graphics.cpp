@@ -375,9 +375,7 @@ i32 blam_main()
                     if(prev != camera.active)
                         cDebug("Player {} -> {}", i, camera.active);
                 }
-                // if(!camera.active)
-                //     continue;
-                if(controllers)
+                if(controllers && !compile_info::platform::is_emscripten)
                     controller_camera_update(
                         camera.camera_,
                         camera.controller_opts,
