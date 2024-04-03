@@ -175,7 +175,7 @@ struct SoundSystem
                 fmt.frequency =
                     sound->sample_rate == sound_t::_22kHz ? 22050 : 44100;
                 fmt.channels = sound->channels == sound_t::mono ? 1 : 2;
-                if(snd.formats().ima4_adpcm && false)
+                if(snd.formats().ima4_adpcm)
                 {
                     buf->upload(data, fmt);
                 }
