@@ -463,6 +463,9 @@ void load_multiplayer_equipment(
                         .template data<blam::scn::item>(magic)
                         .value()[0];
 
+                if(!item.model.valid())
+                    continue;
+
                 auto              set    = e.create_entity(equip);
                 Model&            model_ = set.get<Model>();
                 MultiplayerSpawn& spawn  = set.get<MultiplayerSpawn>();

@@ -395,9 +395,6 @@ void alloc_ui_system(compo::EntityContainer& e)
 void load_ui_items(
     compo::EntityContainer& e, MapChangedEvent<halo_version>& data)
 {
-    if(std::is_same_v<halo_version, blam::custom_version_t>)
-        return;
-
     auto& fonts       = e.subsystem_cast<FontCache<halo_version>>();
     auto& ui_elements = e.subsystem_cast<UIElementCache<halo_version>>();
     // auto& ui_renderer = e.subsystem_cast<UIRenderer>();
@@ -408,10 +405,10 @@ void load_ui_items(
     std::vector<generation_idx_t> root_widgets;
     for(blam::tag_t const& tag : blam::tag_index_view(data.container))
     {
-        if(tag.matches(blam::tag_class_t::font))
+        /*if(tag.matches(blam::tag_class_t::font))
         {
             fonts.predict(tag.as_ref());
-        } /*else if(tag.matches(blam::tag_class_t::Soul))
+        } else if(tag.matches(blam::tag_class_t::Soul))
         {
             root_widgets = ui_elements.explore(tag.as_ref());
         }*/
