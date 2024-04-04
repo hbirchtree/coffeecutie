@@ -202,7 +202,47 @@ static void init_map(
     // For debugging: go through all the bitmaps
     u32 num_snds{0}, num_bitms{0}, num_mod{0};
     cDebug("Tags:");
-    for(blam::tag_t const& tag : blam::tag_index_view(files.container))
+    blam::tag_index_view index(files.container);
+    std::function<void(blam::tag_t const&)> explore_tagc;
+    explore_tagc = [&](blam::tag_t const& tag) {
+        // Go through tag collections and load them
+        // I think this is the way? There are no other references to eg.
+        // the title music *other than* the tagc tags
+        auto const& magic    = files.container.magic;
+        auto        tag_coll = tag.data<blam::tag_collection_t>(magic).value();
+        auto        tags     = tag_coll->tags.data(magic).value();
+        for(auto const& tag : tags)
+        {
+            cDebug(" - tagc: {}", tag.tag_class_name());
+            switch(tag.tag_class)
+            {
+            case blam::tag_class_t::Soul:
+                // Put in UI cache
+                ui_elements.explore(tag);
+                break;
+            case blam::tag_class_t::lsnd: {
+                // Put in sound cache
+                LoopSoundEvent loop = {
+                    .sound = &tag,
+                };
+                SoundEvent ev = {
+                    .type      = SoundEvent::loop_sound,
+                    .entity_id = main_biped_id,
+                };
+                sound_bus->inject(ev, &loop);
+                break;
+            }
+            case blam::tag_class_t::tagc: {
+                explore_tagc(*index.find(tag.to_plain()));
+                break;
+            }
+            default:
+                break;
+            }
+        }
+    };
+
+    for(blam::tag_t const& tag : index)
     {
         if(tag.matches(blam::tag_class_t::bitm))
         {
@@ -222,37 +262,7 @@ static void init_map(
         }
         if(tag.matches(blam::tag_class_t::tag_collection))
         {
-            // Go through tag collections and load them
-            // I think this is the way? There are no other references to eg.
-            // the title music *other than* the tagc tags
-            auto const& magic = files.container.magic;
-            auto tag_coll     = tag.data<blam::tag_collection_t>(magic).value();
-            auto tags         = tag_coll->tags.data(magic).value();
-            for(auto const& tag : tags)
-            {
-                switch(tag.tag_class)
-                {
-                case blam::tag_class_t::Soul:
-                    // Put in UI cache
-                    ui_elements.explore(tag);
-                    break;
-                case blam::tag_class_t::lsnd:
-                {
-                    // Put in sound cache
-                    LoopSoundEvent loop = {
-                        .sound = &tag,
-                    };
-                    SoundEvent ev = {
-                        .type = SoundEvent::loop_sound,
-                        .entity_id = main_biped_id,
-                    };
-                    sound_bus->inject(ev, &loop);
-                    break;
-                }
-                default:
-                    break;
-                }
-            }
+            explore_tagc(tag);
         }
         // cDebug(
         //     " - {}:{}: {}",
