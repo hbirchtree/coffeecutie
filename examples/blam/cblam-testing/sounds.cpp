@@ -35,6 +35,7 @@ struct track_t
         std::shared_ptr<oaf::buffer_t> buffer;
         bool                           looping{false};
         status_t                       status{status_t::unplayed};
+        blam::sound::sound const*      sound{nullptr};
     };
 
     std::vector<entry_t> buffers;
@@ -106,6 +107,8 @@ struct SoundSystem
                 if(buffer.status == status_t::unplayed)
                 {
                     src->queue(*buffer.buffer);
+                    src->template set_property<oaf::source_property::gain>(
+                        buffer.sound->gain_modifier);
                     // cDebug("Queueing {}", i);
                     buffer.status  = status_t::queued;
                     track.position = i;
@@ -172,7 +175,11 @@ struct SoundSystem
                 auto                      buf = snd.alloc_buffer();
                 oaf::decode::ogg::decoder decoder;
                 decoder.decode(data, {}, {}, *buf);
-                buffers.push_back({.buffer = buf, .looping = props.looping});
+                buffers.push_back({
+                    .buffer  = buf,
+                    .looping = props.looping,
+                    .sound   = sound,
+                });
                 break;
             }
             case blam::sound::sound::codec_t::ima_adpcm:
@@ -194,7 +201,11 @@ struct SoundSystem
                     decoder.decode(data, fmt, *buf);
                 }
 #endif
-                buffers.push_back({.buffer = buf, .looping = props.looping});
+                buffers.push_back({
+                    .buffer  = buf,
+                    .looping = props.looping,
+                    .sound   = sound,
+                });
                 break;
             }
             default:

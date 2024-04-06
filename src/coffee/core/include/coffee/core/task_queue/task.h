@@ -314,7 +314,7 @@ struct dependent_task : public dependent_task_invoker
 namespace {
 
 template<typename T>
-using future_result_t = declmemtype(&T::get);
+using future_result_t = typename declmemtype(&T::get);
 
 template<typename... T>
 using future_values =
