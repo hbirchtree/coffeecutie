@@ -243,6 +243,7 @@ def encode_textures(
         }
         extension = source.split('.')[-1]
         basename = '.'.join(source.split('.')[:-1])
+        file_dir = dirname(source)
         print(f'{basename}[{extension}] -> {descriptor}')
         rendered_file = f'{cache_directory}/{basename}.png'
         if extension == 'svg':
@@ -273,13 +274,15 @@ def encode_textures(
             *[ f'--resolution={res}' for res in resolutions ],
             f'--mode={compress_mode}',
             rendered_file,
-            f'--output={out_directory}/'
+            f'--output={out_directory}/{file_dir}'
             )
 
     for file in values['files']:
         resolutions = _generate_mipmaps(file['mipmap_range'])
         codecs = []
         for v in variants:
+            if v not in DEFAULT_TEX_MATRIX[target]:
+                continue
             selected = [ x for x in file['formats'] if x in variants[v] ]
             for fmt in selected:
                 codecs.append((v, fmt))
@@ -339,6 +342,7 @@ if __name__ == '__main__':
             if 'out_dirs' in definitions:
                 for directory in definitions['out_dirs']:
                     makedirs(f'{args.output}/{directory}', exist_ok=True)
+                    makedirs(f'{args.cache_dir}/{directory}', exist_ok=True)
             # Add files and tools to dependencies
             process_resources(
                 definitions,
