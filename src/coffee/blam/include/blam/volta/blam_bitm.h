@@ -1,7 +1,8 @@
 #pragma once
 
+#include "blam_atlas.h"
 #include "blam_magic_data.h"
-#include "blam_reflexive.h"
+#include "blam_reference.h"
 #include "blam_strings.h"
 #include "blam_structures.h"
 #include "blam_tag_index.h"
@@ -64,79 +65,6 @@ enum class flags_t : u16
 C_FLAGS(flags_t, u16);
 
 struct header_t;
-
-struct locator_block
-{
-    string_ref name;
-    u32        size;
-    u32        offset;
-
-    inline auto to_reflexive() const
-    {
-        return reflexive_t<header_t>{1, {offset}};
-    }
-};
-
-struct bitmap_atlas_t
-{
-    u32 unknown;
-    u32 name_block_off;
-
-    u32 locators_offset;
-    u32 locators_count;
-
-    static inline bitmap_atlas_t const* from_data(
-        semantic::Span<const byte_t> const& data)
-    {
-        return C_RCAST<bitmap_atlas_t const*>(data.data());
-    }
-
-    inline std::string_view get_name(locator_block const& block) const
-    {
-        auto base_ptr = C_RCAST<byte_t const*>(this);
-
-        return C_RCAST<const char*>(
-            base_ptr + name_block_off + block.name.offset);
-    }
-
-    inline semantic::Span<locator_block const> locators() const
-    {
-        auto base_ptr = C_RCAST<byte_t const*>(this);
-
-        return semantic::Span<locator_block const>(
-            C_RCAST<locator_block const*>(base_ptr + locators_offset),
-            locators_count);
-    }
-
-    inline magic_data_t block_magic(
-        magic_data_t const& bitm, u32 bitm_idx) const
-    {
-        auto const& loc = locators()[bitm_idx];
-        return magic_data_t(
-            {bitm.base_ptr + loc.offset, bitm.max_size - loc.offset}, 0);
-    }
-
-    inline reflexive_t<header_t> get_block(u32 bitm_idx = 0) const
-    {
-        auto const& loc = locators()[bitm_idx];
-        return loc.to_reflexive();
-    }
-};
-
-struct bitmap_atlas_view
-{
-    magic_data_t          bitmap_magic;
-    bitmap_atlas_t const* header;
-
-    static inline bitmap_atlas_view from_data(
-        semantic::Span<const byte_t> const& data)
-    {
-        return {
-            .bitmap_magic = magic_data_t(data),
-            .header       = bitmap_atlas_t::from_data(data),
-        };
-    }
-};
 
 struct padding_t;
 struct image_t;
@@ -224,8 +152,8 @@ struct header_t
     sprite_usage_t sprite_usage;
     u16            sprite_spacing;
 
-    reflexive_t<sequence_t> sequences;
-    reflexive_t<image_t>    images;
+    reference_t<sequence_t> sequences;
+    reference_t<image_t>    images;
 };
 
 static_assert(offsetof(header_t, images) == 96);
@@ -239,7 +167,7 @@ struct alignas(64) sequence_t
     u16               first_bitmap;
     u16               bitmap_count;
 
-    reflexive_t<sprite_t> sprites;
+    reference_t<sprite_t> sprites;
 };
 
 struct alignas(32) sprite_t

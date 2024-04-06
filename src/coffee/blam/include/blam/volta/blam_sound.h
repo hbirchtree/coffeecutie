@@ -33,12 +33,12 @@ struct pitch_permutation_t
     u32 offset3;
     u32 empty;
 
-    reflexive_t<char> mouth_data;
-    reflexive_t<char> subtitle_data;
+    reference_t<char> mouth_data;
+    reference_t<char> subtitle_data;
 
-    reflexive_t<char> sample_data() const
+    reference_t<char> sample_data() const
     {
-        return reflexive_t<char>{
+        return reference_t<char>{
             .count = sample_size,
             .offset = sample_offset,
         };
@@ -55,7 +55,7 @@ struct pitch_ranges_t
     i16                              actual_permutation_count;
     f32                              playback_rate;
     i32                              padding[2];
-    reflexive_t<pitch_permutation_t> permutations;
+    reference_t<pitch_permutation_t> permutations;
 };
 
 struct sound
@@ -142,7 +142,7 @@ struct sound
     i16                              promotion_count;
     i32                              maximum_play_time;
     i32                              unknown[4];
-    reflexive_t<pitch_ranges_t>      pitch_ranges;
+    reference_t<pitch_ranges_t>      pitch_ranges;
 };
 
 static_assert(sizeof(sound) == 164);
@@ -211,8 +211,8 @@ struct looping_sound
 
     u32 padding_because_effort[13];
 
-    reflexive_t<track_t>        tracks;
-    reflexive_t<detail_sound_t> detail_sounds;
+    reference_t<track_t>        tracks;
+    reference_t<detail_sound_t> detail_sounds;
 };
 
 static_assert(sizeof(looping_sound) == 84);

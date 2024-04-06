@@ -58,9 +58,8 @@ struct BitmapCache
     /*! Should not be called if we're parsing Xbox maps! */
     inline void load_bitmaps_from(blam::magic_data_t const& bitmap_magic)
     {
-        bitm_header =
-            blam::bitm::bitmap_atlas_view::from_data(bitmap_magic.data());
-        bitm_magic              = bitmap_magic;
+        bitm_header = blam::atlas_view::from_data(bitmap_magic.data());
+        bitm_magic  = bitmap_magic;
         bitm_magic.magic_offset = 0;
     }
 
@@ -68,9 +67,9 @@ struct BitmapCache
     gfx::api*                  allocator;
     RenderingParameters const* params;
 
-    blam::magic_data_t            magic;
-    blam::magic_data_t            bitm_magic;
-    blam::bitm::bitmap_atlas_view bitm_header;
+    blam::magic_data_t magic;
+    blam::magic_data_t bitm_magic;
+    blam::atlas_view   bitm_header;
 
     std::map<bitm_format_hash, TextureBucket> tex_buckets;
 

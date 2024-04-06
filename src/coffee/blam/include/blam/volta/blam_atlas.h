@@ -12,9 +12,9 @@ struct locator_block
     u32        offset;
 
     template<typename T>
-    inline auto to_reflexive() const
+    inline auto to_reference() const
     {
-        return reflexive_t<T>{1, {offset}};
+        return reference_t<T>{1, {offset}};
     }
 };
 
@@ -72,10 +72,10 @@ struct tag_atlas_t
     }
 
     template<typename T>
-    inline reflexive_t<T> get_block(u32 bitm_idx = 0) const
+    inline reference_t<T> get_block(u32 bitm_idx = 0) const
     {
         auto const& loc = locators()[bitm_idx];
-        return loc.to_reflexive<T>();
+        return loc.to_reference<T>();
     }
 };
 

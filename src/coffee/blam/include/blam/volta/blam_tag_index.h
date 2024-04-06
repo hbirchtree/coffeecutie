@@ -1,7 +1,7 @@
 #pragma once
 
 #include "blam_base_types.h"
-#include "blam_reflexive.h"
+#include "blam_reference.h"
 #include "blam_strings.h"
 #include "blam_tag_ref.h"
 #include "blam_versions.h"
@@ -10,10 +10,11 @@
 namespace blam {
 namespace bitm {
 
-struct bitmap_atlas_view;
 struct header_t;
 
 } // namespace bitm
+
+struct atlas_view;
 
 namespace scn {
 template<typename V>
@@ -93,7 +94,7 @@ struct alignas(4) tag_t
         if(!valid())
             return "invalid tag"sv;
 
-        return reflexive_t<T>{1, offset}.data(magic, single_value);
+        return reference_t<T>{1, offset}.data(magic, single_value);
     }
 
     /*!
@@ -102,7 +103,7 @@ struct alignas(4) tag_t
      * The storage is indicated by the storage flag
      */
     result<std::pair<bitm::header_t const*, magic_data_t>, error_msg> image(
-        magic_data_t const& magic, bitm::bitmap_atlas_view const& source) const;
+        magic_data_t const& magic, atlas_view const& source) const;
 
     inline string_ref to_name() const
     {
@@ -123,7 +124,7 @@ struct alignas(4) tag_t
 
 struct tag_collection_t
 {
-    reflexive_t<tagref_t> tags;
+    reference_t<tagref_t> tags;
 };
 
 template<typename V>
@@ -134,11 +135,30 @@ template<typename V>
 struct alignas(4) tag_index_t : stl_types::non_copy
 {
     using vertex_array =
-        reflexive_t<vert::mod2_vertex<vert::uncompressed>, xbox_t>;
-    using index_array = reflexive_t<vert::idx_t, xbox_t>;
+        reference_t<vert::mod2_vertex<vert::uncompressed>, xbox_t>;
+    using index_array = reference_t<vert::idx_t, xbox_t>;
 
-    i32          index_magic;    /*!< Number used to adjust indexes*/
-    u32          base_tag;       /*!< Base tag, smallest tag id */
+    /*!
+     * \brief My theory is that this is the pointer to the location in memory in
+     * which the data would be located; in particular it points to the start of
+     * the region in which data is stored. The offsets on the tags themselves
+     * would in this arrangement pretty much be pointers to the memory where the
+     * data can be found.
+     * The offset found in each tag is also a pointer to the tag's related
+     * memory
+     * The challenge here is that most systems nowadays are not cool with
+     * `mmap()` at a fixed pointer in memory due to position-independent
+     * code/executable and address space layout randomization which could or
+     * could not collide with the region of memory that the files are expecting.
+     *
+     * So instead we'll have to subtract this offset from each pointer to get an
+     * offset relative to the memory-mapped file wherever it is in memory.
+     *
+     * Thanks for coming to my TED talk.
+     */
+    u32 tag_data_offset;
+
+    u32          base_tag;       /*!< Base tag aka. lowest tag ID */
     u32          vertex_size;    /*!< Size of vertex data*/
     u32          tag_count;      /*!< Number of tags*/
     vertex_array vertex_objects; /*!< Number of vertex objects*/
@@ -163,7 +183,7 @@ struct alignas(4) tag_index_t : stl_types::non_copy
         u32 max_size = std::max(file_size, base->decomp_len);
         return magic_data_t{
             {base_ptr, max_size},
-            index_magic - (base->tag_index_offset + index_size)};
+            tag_data_offset - (base->tag_index_offset + index_size)};
     }
 
     inline vertex_array vertex_base() const

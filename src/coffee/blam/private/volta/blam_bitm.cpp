@@ -114,7 +114,7 @@ semantic::Span<const libc_types::u8> image_t::data(
         else if(type == type_t::tex_3d)
             size *= depth;
 
-        return reflexive_t<u8>{.count = size, .offset = offset + mip_offset}
+        return reference_t<u8>{.count = size, .offset = offset + mip_offset}
             .data(magic)
             .value();
     } else
@@ -140,7 +140,7 @@ semantic::Span<const libc_types::u8> image_t::data(
         else if(type == type_t::tex_3d)
             size *= depth;
 
-        return reflexive_t<u8>{.count = size, .offset = offset + mip_offset}
+        return reference_t<u8>{.count = size, .offset = offset + mip_offset}
             .data(magic)
             .value();
     }
@@ -151,18 +151,17 @@ semantic::Span<const libc_types::u8> image_t::data(
 namespace blam {
 
 stl_types::result<std::pair<const bitm::header_t*, magic_data_t>, error_msg>
-tag_t::image(
-    const magic_data_t& magic, const bitm::bitmap_atlas_view& source) const
+tag_t::image(const magic_data_t& magic, const atlas_view& source) const
 {
     /* CE changes! */
     if(storage == image_storage_t::external)
     {
         return std::make_pair(
-            source.header->get_block(offset)
-                .data(source.bitmap_magic)
+            source.header->get_block<bitm::header_t>(offset)
+                .data(source.magic)
                 .value()
                 .data(),
-            source.header->block_magic(source.bitmap_magic, offset));
+            source.header->block_magic(source.magic, offset));
     } else
     {
         return std::make_pair(data<bitm::header_t>(magic).value(), magic);

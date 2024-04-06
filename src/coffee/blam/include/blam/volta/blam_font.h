@@ -1,7 +1,7 @@
 #pragma once
 
 #include "blam_base_types.h"
-#include "blam_reflexive.h"
+#include "blam_reference.h"
 #include "blam_tag_ref.h"
 
 namespace blam {
@@ -40,19 +40,19 @@ struct alignas(32) font
     u16          leadin_width;
 
     u32 unknown_1[9];
-
-    reflexive_t<character_mapping> character_table;
+    
+    reference_t<character_mapping> character_table;
 
     tagref_typed_t<tag_class_t::font> bold;
     tagref_typed_t<tag_class_t::font> italic;
     tagref_typed_t<tag_class_t::font> condense;
     tagref_typed_t<tag_class_t::font> underline;
-
-    reflexive_t<character_t> characters;
-    reflexive_t<char>        pixels;
+    
+    reference_t<character_t> characters;
+    reference_t<char>        pixels;
     u32                      pixels_offset;
-
-    reflexive_t<char> pixel_data(u32 offset = 0, u32 size = 0) const
+    
+    reference_t<char> pixel_data(u32 offset = 0, u32 size = 0) const
     {
         auto p   = pixels;
         p.offset = pixels_offset + offset;

@@ -21,7 +21,7 @@ template<typename T, typename V = grbx_t, typename MagicTag = void>
 /*!
  * \brief Points to a chunk of memory within the file
  */
-struct alignas(4) reflexive_t
+struct alignas(4) reference_t
 {
     using value_type = T;
     using chunk_type = semantic::mem_chunk<T const>;
@@ -88,22 +88,22 @@ struct alignas(4) reflexive_t
     template<typename T2>
     inline auto as() const
     {
-        return reinterpret_cast<reflexive_t<T2, V> const*>(this);
+        return reinterpret_cast<reference_t<T2, V> const*>(this);
     }
 };
 
 static_assert(
-    sizeof(reflexive_t<int, grbx_t>) == 12,
+    sizeof(reference_t<int, grbx_t>) == 12,
     "reflexive_t<..., pc_variant> needs to be 12 bytes");
 
 static_assert(
-    sizeof(reflexive_t<int, xbox_t>) == 8, "reflexive_t<..., xbox_variant>");
+    sizeof(reference_t<int, xbox_t>) == 8, "reflexive_t<..., xbox_variant>");
 
 namespace reflexive_helpers {
 
 template<typename T, typename Version>
 semantic::Span<T> unwrap(
-    reflexive_t<T, Version> const& pointer, magic_data_t const& magic)
+    reference_t<T, Version> const& pointer, magic_data_t const& magic)
 {
     if(auto data = pointer.data(magic); data.has_value())
         return data.value();

@@ -5,7 +5,7 @@
 #include "blam_file_header.h"
 #include "blam_magic_data.h"
 #include "blam_mod2.h"
-#include "blam_reflexive.h"
+#include "blam_reference.h"
 #include "blam_tag_index.h"
 #include "blam_vertex.h"
 #include "hsc/blam_bytecode.h"
@@ -20,8 +20,8 @@ template<typename T>
  */
 struct reflex_group
 {
-    reflexive_t<T>                       instances;
-    reflexive_t<std::array<tagref_t, 3>> palette;
+    reference_t<T>                       instances;
+    reference_t<std::array<tagref_t, 3>> palette;
 };
 
 using angle_t = f32;
@@ -124,8 +124,8 @@ struct item : object
         u32      second_scale;
         u32      change_color;
     };
-
-    reflexive_t<attachment_t> attachments;
+    
+    reference_t<attachment_t> attachments;
 };
 
 using vehicle = object;
@@ -278,7 +278,7 @@ struct weapon_instance
     tagref_t something;
 };
 
-using weapon_tagref = reflexive_t<weapon_instance>;
+using weapon_tagref = reference_t<weapon_instance>;
 
 struct scenery
 {
@@ -354,7 +354,7 @@ struct item_permutation
 
 struct item_collection
 {
-    reflexive_t<item_permutation> items;
+    reference_t<item_permutation> items;
     u32                           spawn_time;
 };
 
@@ -723,7 +723,7 @@ struct squad
     u16                 normal_diff_count;
     u16                 insane_diff_count;
     u32                 unk3[20];
-    reflexive_t<byte_t> start_locations;
+    reference_t<byte_t> start_locations;
     u32                 unk4[3];
 };
 
@@ -742,10 +742,10 @@ struct encounter
 {
     bl_string_var<16>            text;
     u32                          unk[28];
-    reflexive_t<squad>           squads;
-    reflexive_t<platoon>         platoons;
-    reflexive_t<firing_position> firing_positions;
-    reflexive_t<squad_spawn>     start_locations;
+    reference_t<squad>           squads;
+    reference_t<platoon>         platoons;
+    reference_t<firing_position> firing_positions;
+    reference_t<squad_spawn>     start_locations;
 };
 
 } // namespace ai
@@ -856,10 +856,10 @@ struct skybox
     tagref_t       indoor_fog_screen;
 
     u32 padding_3[1];
-
-    reflexive_t<shader_function> shader_functions;
-    reflexive_t<animation>       animations;
-    reflexive_t<light>           lights;
+    
+    reference_t<shader_function> shader_functions;
+    reference_t<animation>       animations;
+    reference_t<light>           lights;
 }; // namespace scn
 
 static_assert(sizeof(skybox) == 208);
@@ -940,18 +940,18 @@ struct scenario
         tagref_t unk_bsp1; // Unused
         tagref_t unk_bsp2; // Unused
         tagref_t unk_sky;  // Unused
-
-        reflexive_t<skybox_ref> skyboxes;
+        
+        reference_t<skybox_ref> skyboxes;
 
         scenario_type  type;
         scenario_flags flags;
-
-        reflexive_t<tagref_t> child_scenarios;
+        
+        reference_t<tagref_t> child_scenarios;
 
         f32 local_north;
-
-        reflexive_t<u32> predicted_resource;
-        reflexive_t<u32> functions;
+        
+        reference_t<u32> predicted_resource;
+        reference_t<u32> functions;
 
         u32 padding1[39];
     } info;
@@ -960,19 +960,19 @@ struct scenario
     {
         i32                 scenario_size;
         u32                 unknown_2;
-        reflexive_t<byte_t> comments;
+        reference_t<byte_t> comments;
         u32                 padding2[59];
     } editor;
 
     struct objects_t /* 324-byte block, object spawns */
     {
-        reflexive_t<object_name>           object_names;
+        reference_t<object_name>           object_names;
         reflex_group<scenery_spawn>        scenery;
         reflex_group<biped_spawn>          bipeds;
         reflex_group<vehicle_spawn>        vehicles;
         reflex_group<equip_spawn>          equips;
         reflex_group<weapon_spawn>         weapon_spawns;
-        reflexive_t<device_group>          device_groups;
+        reference_t<device_group>          device_groups;
         reflex_group<device_machine_spawn> machines;
         reflex_group<control>              controls;
         reflex_group<light_fixture_spawn>  light_fixtures;
@@ -983,70 +983,70 @@ struct scenario
 
     struct player_start_t
     {
-        reflexive_t<player_starting_profile>  profiles;
-        reflexive_t<player_starting_location> locations;
+        reference_t<player_starting_profile>  profiles;
+        reference_t<player_starting_location> locations;
     } player_start;
-
-    reflexive_t<trigger_volume> trigger_volumes;
-    reflexive_t<scn_chunk>      recorded_animations;
+    
+    reference_t<trigger_volume> trigger_volumes;
+    reference_t<scn_chunk>      recorded_animations;
 
     struct multiplayer_t /* 216-byte block */
     {
-        reflexive_t<multiplayer_flag>      flags;
-        reflexive_t<multiplayer_equipment> equipment;
+        reference_t<multiplayer_flag>      flags;
+        reference_t<multiplayer_equipment> equipment;
     } netgame;
-
-    reflexive_t<starting_equip> starting_equipment;
-
-    reflexive_t<bsp_trigger> bsp_switch_triggers;
+    
+    reference_t<starting_equip> starting_equipment;
+    
+    reference_t<bsp_trigger> bsp_switch_triggers;
     reflex_group<decal>      decals;
-    reflexive_t<scn_chunk>   detail_object_collection;
+    reference_t<scn_chunk>   detail_object_collection;
     u32                      padding4[21];
 
     struct ai_info_t /* 340-byte block */
     {
-        reflexive_t<actor_variant_ref> actor_palette;
-        reflexive_t<ai::encounter>     encounters;
-        reflexive_t<scn_chunk>         command_lists;
-        reflexive_t<scn_chunk>         animation_references;
-        reflexive_t<scn_chunk>         script_references;
-        reflexive_t<scn_chunk>         recording_references;
-        reflexive_t<scn_chunk>         conversations;
+        reference_t<actor_variant_ref> actor_palette;
+        reference_t<ai::encounter>     encounters;
+        reference_t<scn_chunk>         command_lists;
+        reference_t<scn_chunk>         animation_references;
+        reference_t<scn_chunk>         script_references;
+        reference_t<scn_chunk>         recording_references;
+        reference_t<scn_chunk>         conversations;
     } ai;
 
     struct script_t
     {
         u32                                      script_bytecode_size;
         u32                                      unknown_7;
-        reflexive_t<hsc::script_ref<bytecode_t>> unknown_9;
+        reference_t<hsc::script_ref<bytecode_t>> unknown_9;
         u32                                      script_function_table_offset;
         u32                                      script_function_table_size;
-        reflexive_t<char>                        script_string_segment;
-        reflexive_t<hsc::function_declaration>   scripts;
-        reflexive_t<hsc::global>                 globals;
-        reflexive_t<scn_chunk> references; /* references to what? */
-        reflexive_t<scn_chunk> unknown1;
-        reflexive_t<scn_chunk> unknown2;
-        reflexive_t<scn_chunk> unknown3;
+        reference_t<char>                        script_string_segment;
+        reference_t<hsc::function_declaration>   scripts;
+        reference_t<hsc::global>                 globals;
+        reference_t<scn_chunk> references; /* references to what? */
+        reference_t<scn_chunk> unknown1;
+        reference_t<scn_chunk> unknown2;
+        reference_t<scn_chunk> unknown3;
     } script;
 
     struct cutscene_t
     {
-        reflexive_t<cutscene_flag>            flags;
-        reflexive_t<cutscene_camera_position> camera_points;
-        reflexive_t<scn_chunk>                titles;
+        reference_t<cutscene_flag>            flags;
+        reference_t<cutscene_camera_position> camera_points;
+        reference_t<scn_chunk>                titles;
     } cutscene;
-
-    reflexive_t<scn_chunk> unknown7;
-    reflexive_t<scn_chunk> unknown8;
-    reflexive_t<scn_chunk> unknown9;
-    reflexive_t<scn_chunk> unknown10;
+    
+    reference_t<scn_chunk> unknown7;
+    reference_t<scn_chunk> unknown8;
+    reference_t<scn_chunk> unknown9;
+    reference_t<scn_chunk> unknown10;
     u32                    padding5[15];
 
     inline Span<hsc::opcode_layout<bytecode_t> const> bytecode(
         magic_data_t const& magic) const
     {
-        reflexive_t<hsc::opcode_layout<bytecode_t>> data{
+        reference_t<hsc::opcode_layout<bytecode_t>> data{
             .count = static_cast<u32>(
                 (script.script_bytecode_size -
                  sizeof(hsc::script_ref<bytecode_t>)) /
@@ -1082,8 +1082,8 @@ struct scenario
         tagref_t cutscene_titles;     /*!< Points to ui::unicode_ref*/
         tagref_t hud_text;            /*!< Points to ui::hud_message */
     } ui_text;
-
-    reflexive_t<bsp::info> bsp_info;
+    
+    reference_t<bsp::info> bsp_info;
 };
 
 static_assert(sizeof(scenario<xbox_version_t>) == 1456);
@@ -1108,7 +1108,7 @@ struct unicode_ref
 {
     u32                         length;
     u32                         padding;
-    reflexive_t<unicode_var<1>> data;
+    reference_t<unicode_var<1>> data;
 
     inline result<ucs_string, error_msg> str(
         magic_data_t const& magic, u16 off = 0) const
@@ -1122,7 +1122,7 @@ struct unicode_ref
 
 struct unicode_string
 {
-    reflexive_t<unicode_ref> sub_strings;
+    reference_t<unicode_ref> sub_strings;
 };
 
 struct hud_symbol
@@ -1143,8 +1143,8 @@ struct hud_message
     };
 
     unicode_ref              text;
-    reflexive_t<offset_pair> offsets;
-    reflexive_t<hud_symbol>  symbols;
+    reference_t<offset_pair> offsets;
+    reference_t<hud_symbol>  symbols;
 
     /* Get offset into unicode_ref for a string */
     inline std::optional<u16> str_offset(

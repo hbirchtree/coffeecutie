@@ -6,7 +6,7 @@
 #include <locale>
 
 #include "blam_magic_data.h"
-#include "blam_reflexive.h"
+#include "blam_reference.h"
 
 namespace blam {
 
@@ -140,7 +140,7 @@ struct alignas(4) string_ref
 
 struct unicode_reflexive
 {
-    reflexive_t<char16_t> data;
+    reference_t<char16_t> data;
 
     inline result<ucs_string, error_msg> str(magic_data_t const& magic) const
     {

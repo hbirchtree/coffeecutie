@@ -1,7 +1,7 @@
 #pragma once
 
 #include "blam_base_types.h"
-#include "blam_reflexive.h"
+#include "blam_reference.h"
 #include "blam_strings.h"
 #include "blam_tag_index.h"
 
@@ -12,7 +12,7 @@ struct multiplayer_scenario
 {
     struct map_string
     {
-        reflexive_t<byte_t, V> unknown_1;
+        reference_t<byte_t, V> unknown_1;
         u32                    unknown_2;
         u32                    unknown_3;
         unicode_reflexive<V>   unknown_4;
@@ -27,8 +27,8 @@ struct multiplayer_scenario
 
         bl_string_var<36> map_name;
     };
-
-    reflexive_t<level_ref, V> unknown_data;
+    
+    reference_t<level_ref, V> unknown_data;
 };
 
 } // namespace blam

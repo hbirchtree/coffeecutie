@@ -300,10 +300,10 @@ struct alignas(4) shader_chicago : radiosity_properties /* aka schi */
 {
     chicago::base          transparent;
     chicago::lens_flares_t lens_flares;
-
-    reflexive_t<tagref_typed_t<tag_class_t::shdr>, V> layers;
-
-    reflexive_t<chicago::map_t, V> maps;
+    
+    reference_t<tagref_typed_t<tag_class_t::shdr>, V> layers;
+    
+    reference_t<chicago::map_t, V> maps;
 
     chicago::extra_flags ex_flags;
 };
@@ -324,9 +324,9 @@ struct alignas(4) shader_chicago_extended : radiosity_properties /* aka scex */
 {
     chicago::base                                     transparent;
     chicago::lens_flares_t                            lens_flares;
-    reflexive_t<tagref_typed_t<tag_class_t::shdr>, V> layers;
-    reflexive_t<chicago::map_t, V>                    maps_4stage;
-    reflexive_t<chicago::map_t, V>                    maps_2stage;
+    reference_t<tagref_typed_t<tag_class_t::shdr>, V> layers;
+    reference_t<chicago::map_t, V>                    maps_4stage;
+    reference_t<chicago::map_t, V>                    maps_2stage;
     chicago::extra_flags                              extra_flags;
 };
 
@@ -475,8 +475,8 @@ struct alignas(4) shader_water : radiosity_properties /* aka swat */
         f32 mipmap_bias;
 
         u32 padding_[16];
-
-        reflexive_t<ripple_t> ripples;
+        
+        reference_t<ripple_t> ripples;
     } ripple;
 
     u32 padding[4];
@@ -900,8 +900,8 @@ struct alignas(32) shader_transparent : radiosity_properties /* aka sotr */
 {
     chicago::base          transparent;
     chicago::lens_flares_t lens_flares;
-
-    reflexive_t<tagref_typed_t<tag_class_t::shdr>> layers;
+    
+    reference_t<tagref_typed_t<tag_class_t::shdr>> layers;
 
     enum class map_flags_t : u16
     {
@@ -1030,9 +1030,9 @@ struct alignas(32) shader_transparent : radiosity_properties /* aka sotr */
          * YIKES
          */
     };
-
-    reflexive_t<map_t>   maps;
-    reflexive_t<stage_t> stages;
+    
+    reference_t<map_t>   maps;
+    reference_t<stage_t> stages;
 };
 
 static_assert(offsetof(shader_transparent, maps) == 84);

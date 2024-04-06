@@ -1,6 +1,6 @@
 #pragma once
 
-#include "blam_reflexive.h"
+#include "blam_reference.h"
 #include "blam_shaders.h"
 #include "blam_strings.h"
 #include "blam_tag_index.h"
@@ -85,14 +85,14 @@ struct vertex
 
 struct bsp
 {
-    reflexive_t<bsp_3d>      nodes_3d;
-    reflexive_t<plane>       planes;
-    reflexive_t<leaf>        leaves;
-    reflexive_t<bsp_2d_ref>  bsp_2d_refs;
-    reflexive_t<bsp_2d_node> bsp_2d_nodes;
-    reflexive_t<surface>     surfaces;
-    reflexive_t<edge>        edges;
-    reflexive_t<vertex>      vertices;
+    reference_t<bsp_3d>      nodes_3d;
+    reference_t<plane>       planes;
+    reference_t<leaf>        leaves;
+    reference_t<bsp_2d_ref>  bsp_2d_refs;
+    reference_t<bsp_2d_node> bsp_2d_nodes;
+    reference_t<surface>     surfaces;
+    reference_t<edge>        edges;
+    reference_t<vertex>      vertices;
 };
 
 } // namespace collision
@@ -110,8 +110,8 @@ struct section
     u32 header_offset;
 
     /* Below values are only valid on Xbox */
-    reflexive_t<comp_vertex, xbox_t>   xbox_vertices;
-    reflexive_t<comp_lightmap, xbox_t> xbox_lightmaps;
+    reference_t<comp_vertex, xbox_t>   xbox_vertices;
+    reference_t<comp_lightmap, xbox_t> xbox_lightmaps;
     bl_tag                             tag;
 
     /*!
@@ -119,7 +119,7 @@ struct section
      * Uses bsp_magic()
      * \return
      */
-    inline reflexive_t<header, xbox_t> to_header() const
+    inline reference_t<header, xbox_t> to_header() const
     {
         return {1, {header_offset}};
     }
@@ -177,7 +177,7 @@ struct material
     tagref_t                        shader;
     u16                             shader_permutation;
     flags_t                         flags; /*!< Mesh indices */
-    reflexive_t<vert::face, xbox_t> surfaces;
+    reference_t<vert::face, xbox_t> surfaces;
     Vecf3                           centroid;
     Vecf3                           ambient_col;
     u32                             dist_light_count;
@@ -201,9 +201,9 @@ struct material
             u32                         padding2[3];
             u32                         something;
             u32                         padding3;
-            reflexive_t<byte_t, xbox_t> uncompressed_vertices;
+            reference_t<byte_t, xbox_t> uncompressed_vertices;
             u32                         padding4[3];
-            reflexive_t<byte_t, xbox_t> compressed_vertices;
+            reference_t<byte_t, xbox_t> compressed_vertices;
         } pc;
 
         struct
@@ -213,11 +213,11 @@ struct material
         struct
         {
             u32                              pad[3];
-            reflexive_t<pc_vertex, xbox_t>   pc_vertices_data;
+            reference_t<pc_vertex, xbox_t>   pc_vertices_data;
             u32                              memory_vertex_offset;
             u32                              vert_reflexive;
             u32                              unknown_always_3;
-            reflexive_t<xbox_vertex, xbox_t> xbox_vertices_data;
+            reference_t<xbox_vertex, xbox_t> xbox_vertices_data;
             u32                              memory_lightmap_offset;
             u32                              lightmap_vert_reflexive;
             u32                              unknown_zero[2];
@@ -233,8 +233,8 @@ struct material
 
         u32 all[22];
     };
-
-    inline reflexive_t<byte_t, xbox_t> vertices() const
+    
+    inline reference_t<byte_t, xbox_t> vertices() const
     {
         //        reflexive_t<pc_vertex, xbox_t> base = pc_vertices_data;
         //        base.offset += pc_vertex_data_offset;
@@ -253,8 +253,8 @@ struct material
                 .offset = pc.compressed_vertices.offset,
             };
     }
-
-    inline reflexive_t<byte_t, xbox_t> light_verts() const
+    
+    inline reference_t<byte_t, xbox_t> light_verts() const
     {
         //        reflexive_t<pc_light_vertex, xbox_t> out;
         //        /* Offset to vertex segment */
@@ -304,7 +304,7 @@ struct material
     //    }
 
     //    C_DEPRECATED_S("not how you get indices")
-    inline reflexive_t<vert::face> indices(header const& head) const;
+    inline reference_t<vert::face> indices(header const& head) const;
 };
 
 using node = bounding_box;
@@ -318,7 +318,7 @@ struct predicted_resource
 struct subcluster
 {
     bounding_box     bounds;
-    reflexive_t<u32> indices; /* Points into surfaces on header */
+    reference_t<u32> indices; /* Points into surfaces on header */
 };
 
 struct mirror
@@ -326,7 +326,7 @@ struct mirror
     Vecf3                             plane;
     f32                               d;
     tagref_typed_t<tag_class_t::shdr> shader;
-    reflexive_t<Vecf3>                vertices;
+    reference_t<Vecf3>                vertices;
 };
 
 struct cluster
@@ -338,13 +338,13 @@ struct cluster
     i16                             weather;
     i16                             transition_bsp;
     u32                             unknown1[7];
-    reflexive_t<predicted_resource> predicted_resources;
-    reflexive_t<subcluster>         sub_clusters;
+    reference_t<predicted_resource> predicted_resources;
+    reference_t<subcluster>         sub_clusters;
     u16                             first_lens_flare_marker;
     u16                             lens_flare_marker_count;
-    reflexive_t<vert::idx_t>        surface_indices;
-    reflexive_t<mirror>             mirrors;
-    reflexive_t<i16>                portals;
+    reference_t<vert::idx_t>        surface_indices;
+    reference_t<mirror>             mirrors;
+    reference_t<i16>                portals;
 };
 
 struct cluster_portal
@@ -355,7 +355,7 @@ struct cluster_portal
     Vecf3              centroid;
     f32                bound_radius;
     u32                unknown[7];
-    reflexive_t<Vecf3> vertices;
+    reference_t<Vecf3> vertices;
 };
 
 struct breakable_surface
@@ -395,7 +395,7 @@ struct alignas(4) lightmap
     i16 lightmap_idx;
     /* Intentionally leave 2 bytes here for padding */
     u32                   unknown[4];
-    reflexive_t<material> materials;
+    reference_t<material> materials;
 };
 
 static_assert(sizeof(lightmap) == 32);
@@ -428,8 +428,8 @@ struct weather_polyhedra
         Vecf3 plane;
         f32   d;
     };
-
-    reflexive_t<plane> planes;
+    
+    reference_t<plane> planes;
 };
 
 struct pathfinding_surface
@@ -475,11 +475,11 @@ struct leaf_map_leaf
     struct face
     {
         u16                node_index;
-        reflexive_t<Vecf2> vertices;
+        reference_t<Vecf2> vertices;
     };
-
-    reflexive_t<face> faces;
-    reflexive_t<u16>  portal_indices;
+    
+    reference_t<face> faces;
+    reference_t<u16>  portal_indices;
 };
 
 struct leaf_map_portal
@@ -487,7 +487,7 @@ struct leaf_map_portal
     i32                plane_idx;
     i32                back_leaf;
     i32                front_leaf;
-    reflexive_t<Vecf3> vertices;
+    reference_t<Vecf3> vertices;
 };
 
 struct header
@@ -496,48 +496,48 @@ struct header
     f32                              vehicle_floor;
     f32                              vehicle_ceiling;
     u32                              unknown1[35];
-    reflexive_t<shader::shader_desc> collision_materials;
-    reflexive_t<collision::bsp>      collision_header;
+    reference_t<shader::shader_desc> collision_materials;
+    reference_t<collision::bsp>      collision_header;
     /* Volumes in world-space where leaf surfaces reside */
-    reflexive_t<node> nodes;
+    reference_t<node> nodes;
     bounding_box      world_bounds;
-    reflexive_t<leaf> leaves;
+    reference_t<leaf> leaves;
     /* Grouping of surfaces, each one a pair of surfaces and node */
-    reflexive_t<leaf_surface>                      leaf_surfaces;
-    reflexive_t<vert::face>                        surfaces;
-    reflexive_t<lightmap>                          lightmaps;
-    reflexive_t<tagref_typed_t<tag_class_t::lens>> lens_flares;
-    reflexive_t<lens_flare_marker>                 lens_flare_markers;
+    reference_t<leaf_surface>                      leaf_surfaces;
+    reference_t<vert::face>                        surfaces;
+    reference_t<lightmap>                          lightmaps;
+    reference_t<tagref_typed_t<tag_class_t::lens>> lens_flares;
+    reference_t<lens_flare_marker>                 lens_flare_markers;
     u32                                            padding0[3];
     /* Clusters contain some properties such as sky, fog, sound, weather
      * Subclusters contain surface indices
      */
-    reflexive_t<cluster>                   clusters;
+    reference_t<cluster>                   clusters;
     i32                                    cluster_data_size;
     u32                                    padding1[4];
-    reflexive_t<cluster_portal>            cluster_portals;
+    reference_t<cluster_portal>            cluster_portals;
     u32                                    padding2[3];
-    reflexive_t<breakable_surface>         breakables_surfaces;
-    reflexive_t<byte_t>                    fog_planes;
-    reflexive_t<byte_t>                    fog_regions;
+    reference_t<breakable_surface>         breakables_surfaces;
+    reference_t<byte_t>                    fog_planes;
+    reference_t<byte_t>                    fog_regions;
     u32                                    padding3[9];
-    reflexive_t<weather_palette>           weather_palettes;
-    reflexive_t<weather_polyhedra>         weather_polyhedras;
+    reference_t<weather_palette>           weather_palettes;
+    reference_t<weather_polyhedra>         weather_polyhedras;
     u32                                    padding4[6];
-    reflexive_t<pathfinding_surface>       pathfinding_surfaces;
-    reflexive_t<pathfinding_edge>          pathfinding_edges;
-    reflexive_t<background_sound_palette>  background_sound;
-    reflexive_t<sound_environment_palette> sound_env;
+    reference_t<pathfinding_surface>       pathfinding_surfaces;
+    reference_t<pathfinding_edge>          pathfinding_edges;
+    reference_t<background_sound_palette>  background_sound;
+    reference_t<sound_environment_palette> sound_env;
     i32                                    sound_pas_data_size;
     u32                                    padding5[10];
-    reflexive_t<marker>                    markers;
-    reflexive_t<detail_object>             detail_objects;
-    reflexive_t<runtime_decal>             runtime_decals;
-    reflexive_t<leaf_map_leaf>             leaf_map_leaves;
-    reflexive_t<leaf_map_portal>           leaf_map_portals;
+    reference_t<marker>                    markers;
+    reference_t<detail_object>             detail_objects;
+    reference_t<runtime_decal>             runtime_decals;
+    reference_t<leaf_map_leaf>             leaf_map_leaves;
+    reference_t<leaf_map_portal>           leaf_map_portals;
     u32                                    unkown4[3];
-
-    inline reflexive_t<vert::face> all_indices() const
+    
+    inline reference_t<vert::face> all_indices() const
     {
         return surfaces;
     }
@@ -551,7 +551,7 @@ static_assert(offsetof(header, clusters) == 308);
 static_assert(offsetof(header, cluster_portals) == 340);
 static_assert(sizeof(header) == 648);
 
-inline reflexive_t<vert::face> material::indices(header const& head) const
+inline reference_t<vert::face> material::indices(header const& head) const
 {
     //    return {
     //        .count  = index_count(),

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "blam_base_types.h"
-#include "blam_reflexive.h"
+#include "blam_reference.h"
 #include "blam_shaders.h"
 
 namespace blam::mod2 {
@@ -59,12 +59,12 @@ struct header
     Vecf2 uvscale;
 
     u32 unknown2[29];
-
-    reflexive_t<marker>              markers;
-    reflexive_t<bone>                bones;
-    reflexive_t<region>              regions;
-    reflexive_t<geometry_header<V>>  geometries;
-    reflexive_t<shader::shader_desc> shaders;
+    
+    reference_t<marker>              markers;
+    reference_t<bone>                bones;
+    reference_t<region>              regions;
+    reference_t<geometry_header<V>>  geometries;
+    reference_t<shader::shader_desc> shaders;
 
     inline std::optional<model_data_t> model_at(
         mod2_lod lod, magic_data_t const& magic) const;
@@ -88,7 +88,7 @@ struct marker
 
     bl_string               name;
     u32                     unknown[5];
-    reflexive_t<instance_t> instances;
+    reference_t<instance_t> instances;
 };
 
 static_assert(sizeof(marker) == 64);
@@ -117,7 +117,7 @@ struct region
 {
     bl_string                       name;
     u32                             unknown[8];
-    reflexive_t<region_permutation> permutations;
+    reference_t<region_permutation> permutations;
 };
 
 static_assert(sizeof(region) == 76);
@@ -137,7 +137,7 @@ struct region_permutation
      * References the geometries data in the header
      */
     std::array<u16, 5>  meshindex_lod;
-    reflexive_t<marker> markers;
+    reference_t<marker> markers;
 };
 
 static_assert(sizeof(region_permutation) == 88);
@@ -163,7 +163,7 @@ struct xbox_ref
 
     inline auto vertices(u32 vert_count) const
     {
-        reflexive_t<vert::vertex<vert::compressed>> out;
+        reference_t<vert::vertex<vert::compressed>> out;
         out.count  = vert_count;
         out.offset = offset;
         return out;
@@ -179,14 +179,14 @@ struct part
     std::array<u16, 2> centroids;
     std::array<f32, 2> centroid_weights;
     Vecf3              centroid;
-
-    reflexive_t<vert::uncompressed> uncompressed_vertices;
-    reflexive_t<vert::compressed>   compressed_vertices;
-
-    reflexive_t<u32> triangles;
+    
+    reference_t<vert::uncompressed> uncompressed_vertices;
+    reference_t<vert::compressed>   compressed_vertices;
+    
+    reference_t<u32> triangles;
     u32              pad_[1];
-
-    reflexive_t<vert::idx_t, xbox_t> indices;
+    
+    reference_t<vert::idx_t, xbox_t> indices;
 
     u32 pad2;
 
@@ -194,7 +194,7 @@ struct part
 
     union
     {
-        reflexive_t<vert::compressed> vertices;
+        reference_t<vert::compressed> vertices;
 
         struct
         {
@@ -211,7 +211,7 @@ struct part
     {
         if constexpr(std::is_same_v<V, xbox_version_t>)
         {
-            reflexive_t<xbox_ref> out;
+            reference_t<xbox_ref> out;
             out.count  = 1;
             out.offset = vertex_ref_offset;
             return out.data(magic, blam::single_value)
@@ -272,8 +272,8 @@ template<typename Version>
 struct geometry_header
 {
     u32 unknown[9];
-
-    reflexive_t<part_wrap_header<Version>> meshes_;
+    
+    reference_t<part_wrap_header<Version>> meshes_;
 
     inline auto meshes(magic_data_t const& magic) const
     {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "blam_base_types.h"
-#include "blam_reflexive.h"
+#include "blam_reference.h"
 #include "blam_tag_ref.h"
 
 namespace blam {
@@ -63,8 +63,8 @@ struct ui_element
         function_t function;
         u32        unknown[8];
     };
-
-    reflexive_t<data_input_t> data_inputs;
+    
+    reference_t<data_input_t> data_inputs;
 
     struct event_handler_t
     {
@@ -125,8 +125,8 @@ struct ui_element
         tagref_typed_t<tag_class_t::snd>  sound;
         bl_string                         script;
     };
-
-    reflexive_t<event_handler_t> event_handlers;
+    
+    reference_t<event_handler_t> event_handlers;
 
     struct search_and_replace_t
     {
@@ -184,8 +184,8 @@ struct ui_element
         i16 horizontal_offset;
         u32 unknown[5];
     };
-
-    reflexive_t<child_widget_t> child_widgets;
+    
+    reference_t<child_widget_t> child_widgets;
 };
 
 static_assert(offsetof(ui_element, child_widgets) == 992);
@@ -198,8 +198,8 @@ struct ui_item_collection
     {
         tagref_typed_t<tag_class_t::DeLa> definition;
     };
-
-    reflexive_t<widget_definition_t> widget_definitions;
+    
+    reference_t<widget_definition_t> widget_definitions;
 };
 
 struct multiplayer_scenarios
@@ -211,8 +211,8 @@ struct multiplayer_scenarios
         bl_string                         directory_path;
         u32                               padding[4];
     };
-
-    reflexive_t<map_t> maps;
+    
+    reference_t<map_t> maps;
 };
 
 } // namespace blam
