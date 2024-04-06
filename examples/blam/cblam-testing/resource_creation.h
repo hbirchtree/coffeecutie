@@ -3,6 +3,8 @@
 #include "data.h"
 #include "selected_version.h"
 
+#include <blam/volta/blam_scenario.h>
+
 #include <coffee/graphics/apis/gleam/rhi.h>
 #include <coffee/graphics/apis/gleam/rhi_system.h>
 #include <peripherals/libc/types.h>

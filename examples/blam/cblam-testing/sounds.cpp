@@ -14,8 +14,10 @@
 
 using Coffee::Logging::cDebug;
 
-using SoundManifest = compo::
-    SubsystemManifest<type_list_t<SoundEffects>, empty_list_t, empty_list_t>;
+using SoundManifest = compo::SubsystemManifest<
+    type_list_t<SoundEffects>,
+    type_list_t<LoadingStatus>,
+    empty_list_t>;
 
 enum class status_t
 {
@@ -48,14 +50,19 @@ struct SoundSystem
     using type     = SoundSystem;
     using Proxy    = compo::proxy_of<SoundManifest>;
 
-    SoundSystem(oaf::api& audio, SoundCache<Ver>& sound_cache)
+    SoundSystem(
+        oaf::api& audio, SoundCache<Ver>& sound_cache, LoadingStatus* loading)
         : snd(audio)
         , sound_cache(sound_cache)
+        , index(sound_cache.index)
+        , loading(loading)
     {
     }
 
-    oaf::api&        snd;
-    SoundCache<Ver>& sound_cache;
+    oaf::api&                  snd;
+    SoundCache<Ver>&           sound_cache;
+    blam::tag_index_view<Ver>& index;
+    LoadingStatus*             loading;
 
     std::map<u64, track_t> active_tracks;
 
@@ -69,21 +76,18 @@ struct SoundSystem
 
     void start_restricted(Proxy& p, compo::time_point const& t)
     {
-        if(!queued_events.empty() && sound_cache.sound_magic.base_ptr)
+        if(!queued_events.empty() &&
+           loading->loaded_sounds == LoadingStatus::loaded)
         {
             for(queued_event_t& event : queued_events)
             {
                 switch(event.event.type)
                 {
                 case SoundEvent::loop_sound:
-                    process(
-                        event.event,
-                        &std::get<LoopSoundEvent>(event.data));
+                    process(event.event, &std::get<LoopSoundEvent>(event.data));
                     break;
                 case SoundEvent::play_sound:
-                    process(
-                        event.event,
-                        &std::get<PlaySoundEvent>(event.data));
+                    process(event.event, &std::get<PlaySoundEvent>(event.data));
                     break;
                 default:
                     break;
@@ -143,13 +147,13 @@ struct SoundSystem
         std::vector<track_t::entry_t>& buffers,
         track_t::entry_t const&        props)
     {
-        auto const& magic       = sound_cache.magic;
-        auto const& sound_magic = sound_cache.sound_magic;
-
-        auto ranges = sound->pitch_ranges.data(magic).value();
+        auto ranges_ = index.deref(sound->pitch_ranges);
+        if(!ranges_.has_value())
+            return;
+        auto ranges = ranges_.value();
         if(ranges.empty())
             return;
-        auto perms = ranges[0].permutations.data(magic).value();
+        auto perms = index.deref(ranges[0].permutations).value();
         if(perms.empty())
             return;
 
@@ -158,7 +162,10 @@ struct SoundSystem
 
         while(perm)
         {
-            auto data = perm->sample_data().data(sound_magic).value();
+            auto data_ = index.deref(perm->sample_data());
+            if(!data_.has_value())
+                break;
+            auto data = data_.value();
             switch(sound->codec)
             {
             case blam::sound::sound::codec_t::ogg: {
@@ -168,6 +175,7 @@ struct SoundSystem
                 buffers.push_back({.buffer = buf, .looping = props.looping});
                 break;
             }
+            case blam::sound::sound::codec_t::ima_adpcm:
             case blam::sound::sound::codec_t::xbox_adpcm: {
                 auto          buf = snd.alloc_buffer();
                 oaf::format_t fmt;
@@ -200,7 +208,10 @@ struct SoundSystem
 
     virtual void process(SoundEvent& ev, libc_types::c_ptr data) final
     {
-        if(!sound_cache.sound_magic.base_ptr)
+        if(ev.type == SoundEvent::clear_all)
+            active_tracks.clear();
+
+        if(loading->loaded_sounds != LoadingStatus::loaded)
         {
             queued_event_t event{.event = ev};
             switch(ev.type)
@@ -249,8 +260,6 @@ struct SoundSystem
         {
             auto const& play = reinterpret_cast<PlaySoundEvent const*>(data);
         }
-        if(ev.type == SoundEvent::clear_all)
-            active_tracks.clear();
     }
 };
 
@@ -258,10 +267,7 @@ void alloc_sound_system(compo::EntityContainer& e)
 {
     auto& sound_sys = e.register_subsystem_inplace<SoundSystem<halo_version>>(
         std::ref(e.subsystem_cast<oaf::system>()),
-        std::ref(e.subsystem_cast<SoundCache<halo_version>>()));
+        std::ref(e.subsystem_cast<SoundCache<halo_version>>()),
+        &e.subsystem_cast<LoadingStatus>());
     e.register_subsystem_services<SoundSystem<halo_version>>(&sound_sys);
-}
-
-void queue_sound_event(const LoopSoundEvent& event)
-{
 }

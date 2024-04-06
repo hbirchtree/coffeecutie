@@ -49,27 +49,28 @@ struct BitmapCache
         magic = map.magic;
         if(map.map->version == blam::version_t::xbox)
         {
-            bitm_magic              = map.magic;
-            bitm_magic.magic_offset = 0;
+            bitm_magic             = map.magic;
+            bitm_magic.file_offset = 0;
         }
         evict_all();
     }
 
     /*! Should not be called if we're parsing Xbox maps! */
-    inline void load_bitmaps_from(blam::magic_data_t const& bitmap_magic)
+    inline void load_bitmaps_from(blam::map_ptr const& bitmap_magic)
     {
+        index.add_atlas(blam::atlas_type_t::bitmaps, bitmap_magic.data());
         bitm_header = blam::atlas_view::from_data(bitmap_magic.data());
         bitm_magic  = bitmap_magic;
-        bitm_magic.magic_offset = 0;
+        bitm_magic.file_offset = 0;
     }
 
     blam::tag_index_view<V>    index;
     gfx::api*                  allocator;
     RenderingParameters const* params;
 
-    blam::magic_data_t magic;
-    blam::magic_data_t bitm_magic;
-    blam::atlas_view   bitm_header;
+    blam::map_ptr    magic;
+    blam::map_ptr    bitm_magic;
+    blam::atlas_view bitm_header;
 
     std::map<bitm_format_hash, TextureBucket> tex_buckets;
 
@@ -142,10 +143,10 @@ struct BitmapCache
 
     template<typename BucketType>
     inline void upload_mipmap(
-        TextureBucket&            bucket,
-        BitmapItem const&         img,
-        blam::magic_data_t const& magic,
-        u16                       mipmap)
+        TextureBucket&       bucket,
+        BitmapItem const&    img,
+        blam::map_ptr const& magic,
+        u16                  mipmap)
     {
         u32 mips = bucket.surface->m_mipmaps;
 
@@ -220,7 +221,7 @@ struct BitmapCache
 
         C_UNUSED(auto name) = img.tag->to_name().to_string(magic);
 
-        auto bmagic = img.image.mip->shared() ? bitm_magic : magic.no_magic();
+        auto bmagic = img.image.mip->shared() ? bitm_magic : magic.ptr_only();
 
         for(auto i : range<u16>(img.mipmaps.last - img.mipmaps.base))
         {

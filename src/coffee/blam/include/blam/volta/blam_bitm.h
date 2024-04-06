@@ -1,9 +1,7 @@
 #pragma once
 
-#include "blam_atlas.h"
 #include "blam_magic_data.h"
 #include "blam_reference.h"
-#include "blam_strings.h"
 #include "blam_structures.h"
 #include "blam_tag_index.h"
 
@@ -152,8 +150,8 @@ struct header_t
     sprite_usage_t sprite_usage;
     u16            sprite_spacing;
 
-    reference_t<sequence_t> sequences;
-    reference_t<image_t>    images;
+    reference<sequence_t> sequences;
+    reference<image_t>    images;
 };
 
 static_assert(offsetof(header_t, images) == 96);
@@ -167,7 +165,7 @@ struct alignas(64) sequence_t
     u16               first_bitmap;
     u16               bitmap_count;
 
-    reference_t<sprite_t> sprites;
+    reference<sprite_t> sprites;
 };
 
 struct alignas(32) sprite_t
@@ -219,7 +217,7 @@ struct image_t
 
     std::tuple<PixFmt, CompFlags> to_compressed_fmt() const;
 
-    Span<const u8> data(magic_data_t const& magic, u16 mipmap = 0) const;
+    Span<const u8> data(map_ptr const& magic, u16 mipmap = 0) const;
 };
 
 } // namespace blam::bitm

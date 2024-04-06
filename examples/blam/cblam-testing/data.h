@@ -159,7 +159,7 @@ struct LoadingStatus : compo::SubsystemBase
         if(loaded_map == loaded && loaded_bitmaps == loaded &&
            loaded_sounds == loaded)
         {
-            loading = false;
+            loading  = false;
             progress = -1;
         }
     }
@@ -176,7 +176,6 @@ struct GameEvent
         MapDataLoad,
         MapLoadFinished,
         MapChanged,
-        MapResourcesReady,
 
         ServerConnect,
         ServerConnected,
@@ -224,9 +223,10 @@ struct MapLoadFinishedEvent
 {
     static constexpr auto event_type = GameEvent::MapLoadFinished;
 
-    blam::map_container<V>* container;
-    std::string             map_name{};
-    std::string             map_title{};
+    blam::map_container<V>*      container;
+    std::string                  map_name{};
+    std::string                  map_title{};
+    std::optional<blam::map_ptr> bitmaps{};
 };
 
 template<typename V>
@@ -236,14 +236,6 @@ struct MapChangedEvent
 
     blam::map_container<V>&       container;
     blam::scn::scenario<V> const* scenario{nullptr};
-};
-
-struct MapResourcesReady
-{
-    static constexpr auto event_type = GameEvent::MapResourcesReady;
-
-    std::optional<blam::magic_data_t> bitmap_file{};
-    std::optional<blam::magic_data_t> sound_file{};
 };
 
 struct ServerConnectEvent

@@ -31,7 +31,7 @@ struct ShaderCache
 
     BitmapCache<V>&         bitm_cache;
     blam::tag_index_view<V> index;
-    blam::magic_data_t      magic;
+    blam::map_ptr      magic;
 
     template<blam::tag_class_t Tag>
     generation_idx_t get_bitm_idx(blam::tagref_typed_t<Tag> const& bitm)

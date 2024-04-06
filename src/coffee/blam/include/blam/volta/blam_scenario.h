@@ -20,8 +20,8 @@ template<typename T>
  */
 struct reflex_group
 {
-    reference_t<T>                       instances;
-    reference_t<std::array<tagref_t, 3>> palette;
+    reference<T>                       instances;
+    reference<std::array<tagref_t, 3>> palette;
 };
 
 using angle_t = f32;
@@ -125,7 +125,7 @@ struct item : object
         u32      change_color;
     };
     
-    reference_t<attachment_t> attachments;
+    reference<attachment_t> attachments;
 };
 
 using vehicle = object;
@@ -278,7 +278,7 @@ struct weapon_instance
     tagref_t something;
 };
 
-using weapon_tagref = reference_t<weapon_instance>;
+using weapon_tagref = reference<weapon_instance>;
 
 struct scenery
 {
@@ -354,7 +354,7 @@ struct item_permutation
 
 struct item_collection
 {
-    reference_t<item_permutation> items;
+    reference<item_permutation> items;
     u32                           spawn_time;
 };
 
@@ -723,7 +723,7 @@ struct squad
     u16                 normal_diff_count;
     u16                 insane_diff_count;
     u32                 unk3[20];
-    reference_t<byte_t> start_locations;
+    reference<byte_t> start_locations;
     u32                 unk4[3];
 };
 
@@ -742,10 +742,10 @@ struct encounter
 {
     bl_string_var<16>            text;
     u32                          unk[28];
-    reference_t<squad>           squads;
-    reference_t<platoon>         platoons;
-    reference_t<firing_position> firing_positions;
-    reference_t<squad_spawn>     start_locations;
+    reference<squad>           squads;
+    reference<platoon>         platoons;
+    reference<firing_position> firing_positions;
+    reference<squad_spawn>     start_locations;
 };
 
 } // namespace ai
@@ -857,9 +857,9 @@ struct skybox
 
     u32 padding_3[1];
     
-    reference_t<shader_function> shader_functions;
-    reference_t<animation>       animations;
-    reference_t<light>           lights;
+    reference<shader_function> shader_functions;
+    reference<animation>       animations;
+    reference<light>           lights;
 }; // namespace scn
 
 static_assert(sizeof(skybox) == 208);
@@ -941,17 +941,17 @@ struct scenario
         tagref_t unk_bsp2; // Unused
         tagref_t unk_sky;  // Unused
         
-        reference_t<skybox_ref> skyboxes;
+        reference<skybox_ref> skyboxes;
 
         scenario_type  type;
         scenario_flags flags;
         
-        reference_t<tagref_t> child_scenarios;
+        reference<tagref_t> child_scenarios;
 
         f32 local_north;
         
-        reference_t<u32> predicted_resource;
-        reference_t<u32> functions;
+        reference<u32> predicted_resource;
+        reference<u32> functions;
 
         u32 padding1[39];
     } info;
@@ -960,19 +960,19 @@ struct scenario
     {
         i32                 scenario_size;
         u32                 unknown_2;
-        reference_t<byte_t> comments;
+        reference<byte_t> comments;
         u32                 padding2[59];
     } editor;
 
     struct objects_t /* 324-byte block, object spawns */
     {
-        reference_t<object_name>           object_names;
+        reference<object_name>           object_names;
         reflex_group<scenery_spawn>        scenery;
         reflex_group<biped_spawn>          bipeds;
         reflex_group<vehicle_spawn>        vehicles;
         reflex_group<equip_spawn>          equips;
         reflex_group<weapon_spawn>         weapon_spawns;
-        reference_t<device_group>          device_groups;
+        reference<device_group>          device_groups;
         reflex_group<device_machine_spawn> machines;
         reflex_group<control>              controls;
         reflex_group<light_fixture_spawn>  light_fixtures;
@@ -983,70 +983,70 @@ struct scenario
 
     struct player_start_t
     {
-        reference_t<player_starting_profile>  profiles;
-        reference_t<player_starting_location> locations;
+        reference<player_starting_profile>  profiles;
+        reference<player_starting_location> locations;
     } player_start;
     
-    reference_t<trigger_volume> trigger_volumes;
-    reference_t<scn_chunk>      recorded_animations;
+    reference<trigger_volume> trigger_volumes;
+    reference<scn_chunk>      recorded_animations;
 
     struct multiplayer_t /* 216-byte block */
     {
-        reference_t<multiplayer_flag>      flags;
-        reference_t<multiplayer_equipment> equipment;
+        reference<multiplayer_flag>      flags;
+        reference<multiplayer_equipment> equipment;
     } netgame;
     
-    reference_t<starting_equip> starting_equipment;
+    reference<starting_equip> starting_equipment;
     
-    reference_t<bsp_trigger> bsp_switch_triggers;
+    reference<bsp_trigger> bsp_switch_triggers;
     reflex_group<decal>      decals;
-    reference_t<scn_chunk>   detail_object_collection;
+    reference<scn_chunk>   detail_object_collection;
     u32                      padding4[21];
 
     struct ai_info_t /* 340-byte block */
     {
-        reference_t<actor_variant_ref> actor_palette;
-        reference_t<ai::encounter>     encounters;
-        reference_t<scn_chunk>         command_lists;
-        reference_t<scn_chunk>         animation_references;
-        reference_t<scn_chunk>         script_references;
-        reference_t<scn_chunk>         recording_references;
-        reference_t<scn_chunk>         conversations;
+        reference<actor_variant_ref> actor_palette;
+        reference<ai::encounter>     encounters;
+        reference<scn_chunk>         command_lists;
+        reference<scn_chunk>         animation_references;
+        reference<scn_chunk>         script_references;
+        reference<scn_chunk>         recording_references;
+        reference<scn_chunk>         conversations;
     } ai;
 
     struct script_t
     {
         u32                                      script_bytecode_size;
         u32                                      unknown_7;
-        reference_t<hsc::script_ref<bytecode_t>> unknown_9;
+        reference<hsc::script_ref<bytecode_t>> unknown_9;
         u32                                      script_function_table_offset;
         u32                                      script_function_table_size;
-        reference_t<char>                        script_string_segment;
-        reference_t<hsc::function_declaration>   scripts;
-        reference_t<hsc::global>                 globals;
-        reference_t<scn_chunk> references; /* references to what? */
-        reference_t<scn_chunk> unknown1;
-        reference_t<scn_chunk> unknown2;
-        reference_t<scn_chunk> unknown3;
+        reference<char>                        script_string_segment;
+        reference<hsc::function_declaration>   scripts;
+        reference<hsc::global>                 globals;
+        reference<scn_chunk> references; /* references to what? */
+        reference<scn_chunk> unknown1;
+        reference<scn_chunk> unknown2;
+        reference<scn_chunk> unknown3;
     } script;
 
     struct cutscene_t
     {
-        reference_t<cutscene_flag>            flags;
-        reference_t<cutscene_camera_position> camera_points;
-        reference_t<scn_chunk>                titles;
+        reference<cutscene_flag>            flags;
+        reference<cutscene_camera_position> camera_points;
+        reference<scn_chunk>                titles;
     } cutscene;
     
-    reference_t<scn_chunk> unknown7;
-    reference_t<scn_chunk> unknown8;
-    reference_t<scn_chunk> unknown9;
-    reference_t<scn_chunk> unknown10;
+    reference<scn_chunk> unknown7;
+    reference<scn_chunk> unknown8;
+    reference<scn_chunk> unknown9;
+    reference<scn_chunk> unknown10;
     u32                    padding5[15];
 
     inline Span<hsc::opcode_layout<bytecode_t> const> bytecode(
-        magic_data_t const& magic) const
+        map_ptr const& magic) const
     {
-        reference_t<hsc::opcode_layout<bytecode_t>> data{
+        reference<hsc::opcode_layout<bytecode_t>> data{
             .count = static_cast<u32>(
                 (script.script_bytecode_size -
                  sizeof(hsc::script_ref<bytecode_t>)) /
@@ -1057,7 +1057,7 @@ struct scenario
     }
 
     inline result<string_segment_ref, error_msg> string_segment(
-        magic_data_t const& magic) const
+        map_ptr const& magic) const
     {
         if(auto string_base_chunk = script.script_string_segment.data(magic);
            string_base_chunk.has_error())
@@ -1071,7 +1071,7 @@ struct scenario
     }
 
     inline Span<hsc::function_declaration const> function_table(
-        magic_data_t const& magic) const
+        map_ptr const& magic) const
     {
         return script.scripts.data(magic).value();
     }
@@ -1083,7 +1083,7 @@ struct scenario
         tagref_t hud_text;            /*!< Points to ui::hud_message */
     } ui_text;
     
-    reference_t<bsp::info> bsp_info;
+    reference<bsp::info> bsp_info;
 };
 
 static_assert(sizeof(scenario<xbox_version_t>) == 1456);
@@ -1092,7 +1092,7 @@ static_assert(sizeof(scenario<pc_version_t>) == 1456);
 template<typename V>
 requires is_game_version<V>
 inline scenario<V> const& get_scenario(
-    file_header_t const* header, magic_data_t const& magic)
+    file_header_t const* header, map_ptr const& magic)
 {
     return tag_index_t<V>::from_header(header)
         .scenario(header)
@@ -1108,10 +1108,10 @@ struct unicode_ref
 {
     u32                         length;
     u32                         padding;
-    reference_t<unicode_var<1>> data;
+    reference<unicode_var<1>> data;
 
     inline result<ucs_string, error_msg> str(
-        magic_data_t const& magic, u16 off = 0) const
+        map_ptr const& magic, u16 off = 0) const
     {
         if(auto str_data = data.data(magic); str_data.has_error())
             return str_data.error();
@@ -1122,7 +1122,7 @@ struct unicode_ref
 
 struct unicode_string
 {
-    reference_t<unicode_ref> sub_strings;
+    reference<unicode_ref> sub_strings;
 };
 
 struct hud_symbol
@@ -1143,12 +1143,12 @@ struct hud_message
     };
 
     unicode_ref              text;
-    reference_t<offset_pair> offsets;
-    reference_t<hud_symbol>  symbols;
+    reference<offset_pair> offsets;
+    reference<hud_symbol>  symbols;
 
     /* Get offset into unicode_ref for a string */
     inline std::optional<u16> str_offset(
-        magic_data_t const& magic, u32 idx) const
+        map_ptr const& magic, u32 idx) const
     {
         if(auto offset_data = offsets.data(magic); offset_data.has_error())
             return std::nullopt;
@@ -1164,7 +1164,7 @@ struct hud_message
     }
 
     inline std::optional<ucs_string> symbol_find(
-        magic_data_t const& magic, std::string_view const& sym) const
+        map_ptr const& magic, std::string_view const& sym) const
     {
         auto symbol_res = symbols.data(magic);
         if(symbol_res.has_error())

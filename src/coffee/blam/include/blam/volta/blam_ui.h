@@ -64,7 +64,7 @@ struct ui_element
         u32        unknown[8];
     };
     
-    reference_t<data_input_t> data_inputs;
+    reference<data_input_t> data_inputs;
 
     struct event_handler_t
     {
@@ -126,7 +126,7 @@ struct ui_element
         bl_string                         script;
     };
     
-    reference_t<event_handler_t> event_handlers;
+    reference<event_handler_t> event_handlers;
 
     struct search_and_replace_t
     {
@@ -185,7 +185,7 @@ struct ui_element
         u32 unknown[5];
     };
     
-    reference_t<child_widget_t> child_widgets;
+    reference<child_widget_t> child_widgets;
 };
 
 static_assert(offsetof(ui_element, child_widgets) == 992);
@@ -199,7 +199,7 @@ struct ui_item_collection
         tagref_typed_t<tag_class_t::DeLa> definition;
     };
     
-    reference_t<widget_definition_t> widget_definitions;
+    reference<widget_definition_t> widget_definitions;
 };
 
 struct multiplayer_scenarios
@@ -212,7 +212,7 @@ struct multiplayer_scenarios
         u32                               padding[4];
     };
     
-    reference_t<map_t> maps;
+    reference<map_t> maps;
 };
 
 } // namespace blam

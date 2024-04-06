@@ -60,14 +60,14 @@ struct header
 
     u32 unknown2[29];
     
-    reference_t<marker>              markers;
-    reference_t<bone>                bones;
-    reference_t<region>              regions;
-    reference_t<geometry_header<V>>  geometries;
-    reference_t<shader::shader_desc> shaders;
+    reference<marker>              markers;
+    reference<bone>                bones;
+    reference<region>              regions;
+    reference<geometry_header<V>>  geometries;
+    reference<shader::shader_desc> shaders;
 
     inline std::optional<model_data_t> model_at(
-        mod2_lod lod, magic_data_t const& magic) const;
+        mod2_lod lod, map_ptr const& magic) const;
 };
 
 static_assert(offsetof(header<pc_version_t>, detail_cutoff) == 8);
@@ -88,7 +88,7 @@ struct marker
 
     bl_string               name;
     u32                     unknown[5];
-    reference_t<instance_t> instances;
+    reference<instance_t> instances;
 };
 
 static_assert(sizeof(marker) == 64);
@@ -117,7 +117,7 @@ struct region
 {
     bl_string                       name;
     u32                             unknown[8];
-    reference_t<region_permutation> permutations;
+    reference<region_permutation> permutations;
 };
 
 static_assert(sizeof(region) == 76);
@@ -137,7 +137,7 @@ struct region_permutation
      * References the geometries data in the header
      */
     std::array<u16, 5>  meshindex_lod;
-    reference_t<marker> markers;
+    reference<marker> markers;
 };
 
 static_assert(sizeof(region_permutation) == 88);
@@ -163,7 +163,7 @@ struct xbox_ref
 
     inline auto vertices(u32 vert_count) const
     {
-        reference_t<vert::vertex<vert::compressed>> out;
+        reference<vert::vertex<vert::compressed>> out;
         out.count  = vert_count;
         out.offset = offset;
         return out;
@@ -180,13 +180,13 @@ struct part
     std::array<f32, 2> centroid_weights;
     Vecf3              centroid;
     
-    reference_t<vert::uncompressed> uncompressed_vertices;
-    reference_t<vert::compressed>   compressed_vertices;
+    reference<vert::uncompressed> uncompressed_vertices;
+    reference<vert::compressed>   compressed_vertices;
     
-    reference_t<u32> triangles;
+    reference<u32> triangles;
     u32              pad_[1];
     
-    reference_t<vert::idx_t, xbox_t> indices;
+    reference<vert::idx_t, xbox_t> indices;
 
     u32 pad2;
 
@@ -194,7 +194,7 @@ struct part
 
     union
     {
-        reference_t<vert::compressed> vertices;
+        reference<vert::compressed> vertices;
 
         struct
         {
@@ -207,11 +207,11 @@ struct part
 
     template<typename V>
     inline auto vertex_segment(
-        tag_index_t<V> const& base, magic_data_t const& magic) const
+        tag_index_t<V> const& base, map_ptr const& magic) const
     {
         if constexpr(std::is_same_v<V, xbox_version_t>)
         {
-            reference_t<xbox_ref> out;
+            reference<xbox_ref> out;
             out.count  = 1;
             out.offset = vertex_ref_offset;
             return out.data(magic, blam::single_value)
@@ -273,9 +273,9 @@ struct geometry_header
 {
     u32 unknown[9];
     
-    reference_t<part_wrap_header<Version>> meshes_;
-
-    inline auto meshes(magic_data_t const& magic) const
+    reference<part_wrap_header<Version>> meshes_;
+    
+    inline auto meshes(map_ptr const& magic) const
     {
         if(auto out = meshes_.data(magic); out.has_value())
             return out.value();
@@ -288,7 +288,7 @@ static_assert(sizeof(geometry_header<pc_version_t>) == 48);
 
 template<typename V>
 inline std::optional<model_data_t> header<V>::model_at(
-    mod2_lod lod, magic_data_t const& magic) const
+    mod2_lod lod, map_ptr const& magic) const
 {
     auto regions_ptr = regions.data(magic);
     if(!regions_ptr.has_value())

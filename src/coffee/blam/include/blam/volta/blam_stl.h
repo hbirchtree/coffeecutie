@@ -1,7 +1,8 @@
 #pragma once
 
-#include "blam_scenario.h"
+#include "blam_atlas.h"
 #include "blam_structures.h"
+#include "blam_tag_index.h"
 
 #include <algorithm>
 #include <coffee/core/task_queue/task.h>
@@ -47,7 +48,7 @@ struct map_container
         return fut;
     }
 
-    STATICINLINE result<map_container, map_load_error> from_bytes(
+    STATICINLINE result_type from_bytes(
         semantic::BytesConst const&                  map,
         Ver                                          ver,
         std::function<void(std::string_view, i16)>&& progress = null_progress)
@@ -121,7 +122,7 @@ struct map_container
 
     file_header_t const*    map{nullptr};
     tag_index_t<Ver> const* tags{nullptr};
-    magic_data_t            magic;
+    map_ptr                 magic;
 
     semantic::mem_chunk<const char> store;
     std::vector<char>               decompressed{};
@@ -146,9 +147,10 @@ struct map_container
 template<typename Ver>
 class tag_index_view
 {
-    tag_index_t<Ver> const* m_idx;
-    file_header_t const*    m_file;
-    magic_data_t            m_magic;
+    tag_index_t<Ver> const*            m_idx;
+    file_header_t const*               m_file;
+    map_ptr                            m_ptr;
+    std::map<atlas_type_t, atlas_view> m_atlases;
 
   public:
     using span_type = semantic::Span<const tag_t>;
@@ -163,7 +165,7 @@ class tag_index_view
     tag_index_view(map_container<Ver> const& map)
         : m_idx(map.tags)
         , m_file(map.map)
-        , m_magic(map.magic)
+        , m_ptr(map.magic)
     {
     }
 
@@ -182,6 +184,12 @@ class tag_index_view
         if(!m_idx)
             return span_type();
         return span_type(m_idx->tags(m_file), m_idx->tag_count);
+    }
+
+    void add_atlas(atlas_type_t type, map_ptr const& data)
+    {
+        m_atlases.insert(
+            std::make_pair(type, atlas_view::from_data(data.data())));
     }
 
     iterator begin() const
@@ -253,7 +261,7 @@ class tag_index_view
     {
         for(iterator it = begin(); it != end(); ++it)
         {
-            auto it_name = (*it).to_name().to_string(m_magic);
+            auto it_name = (*it).to_name().to_string(m_ptr);
             if(it_name == name)
                 return it;
         }
@@ -267,10 +275,61 @@ class tag_index_view
         auto it = find(key);
         if(it == end())
             return std::nullopt;
-        auto out = (*it).template data<T>(m_magic);
+        tag_t const& tag = (*it);
+        auto         out = tag.template data<T>(m_ptr);
         if(!out.has_value())
             return std::nullopt;
         return out.value();
+    }
+
+    template<typename T, typename Key>
+    std::optional<std::tuple<tag_t const*, T const*, map_ptr>> resource(
+        Key const& key) const
+    {
+        auto it = find(key);
+        if(it == end())
+            return std::nullopt;
+        tag_t const& tag = (*it);
+        switch(tag.tag_class())
+        {
+        case tag_class_t::bitm: {
+            auto bitm_atlas = m_atlases.find(atlas_type_t::bitmaps);
+            if(bitm_atlas == m_atlases.end() &&
+               tag.storage == tag_storage_t::external)
+                return std::nullopt;
+            if(auto img = tag.image(m_ptr, bitm_atlas->second); img.has_value())
+                return std::make_tuple(
+                    &tag, img.value().first, img.value().second);
+            break;
+        }
+        case tag_class_t::snd:
+            break;
+        default:
+            break;
+        }
+        return std::nullopt;
+    }
+
+    template<typename T>
+    std::optional<gsl::span<T const>> deref(reference<T> const& ref) const
+    {
+        if(auto val = ref.data(m_ptr); !val.has_value())
+            return std::nullopt;
+        else
+            return val.value();
+    }
+
+    template<typename T, typename V>
+    std::optional<gsl::span<T const>> deref(
+        reference<T, V, atlas_type_t::sounds> const& ref) const
+    {
+        auto atlas = m_atlases.find(atlas_type_t::sounds);
+        if(atlas == m_atlases.end())
+            return std::nullopt;
+        if(auto val = ref.data(atlas->second.magic); !val.has_value())
+            return std::nullopt;
+        else
+            return val.value();
     }
 };
 

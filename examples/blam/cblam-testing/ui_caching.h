@@ -5,6 +5,8 @@
 #include "shader_cache.h"
 #include "ui_caching_item.h"
 
+#include <magic_enum.hpp>
+
 using libc_types::u8;
 
 template<typename V>
@@ -23,7 +25,7 @@ struct FontCache
     }
 
     blam::tag_index_view<V>                     index;
-    blam::magic_data_t                          magic;
+    blam::map_ptr                               magic;
     std::shared_ptr<gfx::compat::texture_2da_t> font_textures;
     std::shared_ptr<gfx::sampler_t>             font_sampler;
     gfx::api*                                   api;
@@ -158,10 +160,10 @@ struct UIElementCache
 
     virtual blam::ui_element const* get_id(blam::tagref_t const& ui_tag)
     {
-        if(auto tag_it = index.find(ui_tag); tag_it == index.end())
+        if(auto data = index.template data<blam::ui_element>(ui_tag); !data.has_value())
             return nullptr;
         else
-            return (*tag_it).template data<blam::ui_element>(magic).value();
+            return *data;
     }
 
     std::vector<generation_idx_t> explore(
@@ -172,7 +174,7 @@ struct UIElementCache
         if(!collection_.has_value())
             return {};
         blam::ui_item_collection const* collection = collection_.value();
-        auto widgets = collection->widget_definitions.data(magic).value();
+        auto widgets = *index.deref(collection->widget_definitions);
         std::vector<generation_idx_t> root_widgets;
         std::transform(
             std::begin(widgets),
@@ -185,7 +187,7 @@ struct UIElementCache
     }
 
     blam::tag_index_view<V> index;
-    blam::magic_data_t      magic;
+    blam::map_ptr           magic;
     BitmapCache<V>&         bitm_cache;
     FontCache<V>&           font_cache;
 };

@@ -613,19 +613,31 @@ namespace comp_app {
 void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
 {
     using namespace platform::profiling;
+    using namespace std::chrono_literals;
 
     auto time = compo::clock::now();
 
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
         time.time_since_epoch());
 
+    auto frametime = std::chrono::duration_cast<stl_types::Chrono::seconds_f32>(
+        time - m_prevFrame);
+
+    if(frametime > 200ms)
+    {
+        Coffee::Logging::cWarning(
+            "Frame hitch detected! {}ms", frametime.count() * 1000.f);
+        json::CaptureMetrics(
+            "Frame hitch",
+            MetricVariant::Marker,
+            0,
+            timestamp);
+    }
+
     json::CaptureMetrics(
         "Frametime",
         MetricVariant::Value,
-        std::chrono::duration_cast<stl_types::Chrono::seconds_f32>(
-            time - m_prevFrame)
-                .count() *
-            1000.f,
+        frametime.count() * 1000.f,
         timestamp);
     m_prevFrame = time;
 

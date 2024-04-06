@@ -128,21 +128,21 @@ struct alignas(4) string_ref
 {
     u32 offset;
 
-    inline std::string_view to_string(magic_data_t const& magic) const
+    inline std::string_view to_string(map_ptr const& magic) const
     {
         using namespace std::string_view_literals;
         if(offset == 0)
             return "[empty string]"sv;
 
-        return C_RCAST<cstring>(magic.base_ptr + offset - magic.magic_offset);
+        return C_RCAST<cstring>(magic.base_ptr + offset - magic.file_offset);
     }
 };
 
 struct unicode_reflexive
 {
-    reference_t<char16_t> data;
+    reference<char16_t> data;
 
-    inline result<ucs_string, error_msg> str(magic_data_t const& magic) const
+    inline result<ucs_string, error_msg> str(map_ptr const& magic) const
     {
         if(auto seg = data.data(magic); seg.has_error())
             return seg.error();

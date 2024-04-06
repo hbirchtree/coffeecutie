@@ -2,6 +2,8 @@
 
 #include "caching.h"
 
+#include <blam/volta/blam_scenario.h>
+
 using ERef = compo::EntityRef<compo::EntityContainer>;
 
 using comp_app::detail::duration;
@@ -333,8 +335,8 @@ struct Cluster
 
     blam::bsp::cluster const* cluster;
     u32                       id;
-
-    bool contains(Matf4 const& transform, blam::magic_data_t const& magic) const
+    
+    bool contains(Matf4 const& transform, blam::map_ptr const& magic) const
     {
         auto subclusters_ = cluster->sub_clusters.data(magic);
         if(!subclusters_.has_value())

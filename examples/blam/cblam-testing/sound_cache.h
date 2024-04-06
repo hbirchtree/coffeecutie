@@ -51,22 +51,18 @@ struct SoundCache
     inline void load_from(blam::map_container<V> const& map)
     {
         index = blam::tag_index_view<V>(map);
-        magic = map.magic;
         if(map.map->version == blam::version_t::xbox)
-            sound_magic = map.magic;
+            index.add_atlas(blam::atlas_type_t::sounds, map.magic);
         evict_all();
     }
 
-    inline void load_sounds_from(blam::magic_data_t const& sound_magic)
+    inline void load_sounds_from(blam::map_ptr const& sound_ptr)
     {
-        this->sound_magic              = sound_magic;
-        this->sound_magic.magic_offset = 0;
+        index.add_atlas(blam::atlas_type_t::sounds, sound_ptr);
     }
 
     oaf::api*               api{nullptr};
     blam::tag_index_view<V> index;
-    blam::magic_data_t      magic;
-    blam::magic_data_t      sound_magic;
 
     blam::sound::sound const* parse_simple_sound(blam::tagref_t const& tag)
     {
@@ -79,12 +75,16 @@ struct SoundCache
         return parse_simple_sound(tag.to_plain());
     }
 
-    void parse_loop_sound(SoundItem& item, blam::tag_t const& tag)
+    void parse_loop_sound(SoundItem& item, blam::tagref_t const& tag)
     {
-        auto const* lsnd = tag.data<blam::sound::looping_sound>(magic).value();
+        auto it = index.template data<blam::sound::looping_sound>(tag);
+        if(!it.has_value())
+            return;
+
+        auto const* lsnd   = it.value();
         item.looping_sound = lsnd;
 
-        auto tracks = lsnd->tracks.data(magic).value();
+        auto tracks = index.deref(lsnd->tracks).value();
         for(blam::sound::track_t const& track : tracks)
         {
             item.tracks.push_back({
@@ -101,24 +101,16 @@ struct SoundCache
 
     SoundItem predict_impl(blam::tagref_t const& tag)
     {
-        if(std::is_same_v<V, blam::custom_version_t>)
-            return {};
-
         if(!tag.matches(blam::tag_class_t::snd) &&
            !tag.matches(blam::tag_class_t::lsnd))
             return {};
         SoundItem out;
 
-        auto tag_it = index.find(tag);
-
-        if(tag_it == index.end())
-            return {};
-
         cDebug("Sound:");
         switch(tag.tag_class)
         {
         case blam::tag_class_t::lsnd:
-            parse_loop_sound(out, *tag_it);
+            parse_loop_sound(out, tag);
             break;
         case blam::tag_class_t::snd:
             out.sound = parse_simple_sound(tag);
@@ -128,44 +120,6 @@ struct SoundCache
         }
 
         return out;
-    }
-
-    void process_sounds()
-    {
-        for(auto const& [key, sound] : m_cache)
-        {
-            if(!sound.looping_sound)
-                continue;
-            for(SoundItem::track_t const& track : sound.tracks)
-            {
-                if(!track.sounds.contains(SoundItem::loop))
-                    continue;
-                cDebug(
-                    " - Track: {} sounds, loop=codec={};samplerate={}",
-                    track.sounds.size(),
-                    magic_enum::enum_name(
-                        track.sounds.at(SoundItem::loop)->codec),
-                    magic_enum::enum_name(
-                        track.sounds.at(SoundItem::loop)->sample_rate));
-                auto sound   = track.sounds.at(SoundItem::loop);
-                auto pitches = track.sounds.at(SoundItem::loop)
-                                   ->pitch_ranges.data(magic)
-                                   .value();
-                for(auto const& pitch : pitches)
-                {
-                    auto perms = pitch.permutations.data(magic).value();
-                    for(auto const& perm : perms)
-                    {
-                        auto data =
-                            perm.sample_data().data(sound_magic).value();
-                        cDebug(
-                            "   - Perm: gain={}, ptr={}",
-                            perm.gain,
-                            static_cast<const void*>(data.data()));
-                    }
-                }
-            }
-        }
     }
 
     u32 get_id(blam::tagref_t const& tag)

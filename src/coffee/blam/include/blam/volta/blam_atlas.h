@@ -1,31 +1,26 @@
 #pragma once
 
-#include "blam_base_types.h"
-#include "blam_strings.h"
+#include "blam_magic_data.h"
+#include "blam_reference.h"
 
 namespace blam {
 
 struct locator_block
 {
-    string_ref name;
-    u32        size;
-    u32        offset;
+    u32 name_offset;
+    u32 size;
+    u32 offset;
 
     template<typename T>
     inline auto to_reference() const
     {
-        return reference_t<T>{1, {offset}};
+        return reference<T>{1, {offset}};
     }
 };
 
 struct tag_atlas_t
 {
-    enum class type_t : u32
-    {
-        bitmaps      = 1,
-        sounds       = 2,
-        localization = 3,
-    } type;
+    atlas_type_t type;
     u32 name_block_off;
 
     u32 locators_offset;
@@ -42,7 +37,7 @@ struct tag_atlas_t
         auto base_ptr = C_RCAST<byte_t const*>(this);
 
         return C_RCAST<const char*>(
-            base_ptr + name_block_off + block.name.offset);
+            base_ptr + name_block_off + block.name_offset);
     }
 
     inline semantic::Span<locator_block const> locators() const
@@ -55,7 +50,7 @@ struct tag_atlas_t
     }
 
     inline std::optional<locator_block const*> by_name(
-        std::string_view name, magic_data_t const& magic) const
+        std::string_view name, map_ptr const& magic) const
     {
         for(auto const& loc : locators())
             if(get_name(loc) == name)
@@ -63,16 +58,15 @@ struct tag_atlas_t
         return std::nullopt;
     }
 
-    inline magic_data_t block_magic(
-        magic_data_t const& bitm, u32 bitm_idx) const
+    inline map_ptr block_magic(map_ptr const& bitm, u32 bitm_idx) const
     {
         auto const& loc = locators()[bitm_idx];
-        return magic_data_t(
+        return map_ptr(
             {bitm.base_ptr + loc.offset, bitm.max_size - loc.offset}, 0);
     }
 
     template<typename T>
-    inline reference_t<T> get_block(u32 bitm_idx = 0) const
+    inline reference<T> get_block(u32 bitm_idx = 0) const
     {
         auto const& loc = locators()[bitm_idx];
         return loc.to_reference<T>();
@@ -81,15 +75,20 @@ struct tag_atlas_t
 
 struct atlas_view
 {
-    magic_data_t       magic;
+    map_ptr            magic;
     tag_atlas_t const* header;
 
     static inline atlas_view from_data(semantic::Span<const byte_t> const& data)
     {
         return {
-            .magic  = magic_data_t(data),
+            .magic  = map_ptr(data),
             .header = tag_atlas_t::from_data(data),
         };
+    }
+
+    static inline atlas_view from_ptr(map_ptr const& data)
+    {
+        return from_data(data.data());
     }
 };
 

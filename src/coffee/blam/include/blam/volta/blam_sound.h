@@ -33,13 +33,13 @@ struct pitch_permutation_t
     u32 offset3;
     u32 empty;
 
-    reference_t<char> mouth_data;
-    reference_t<char> subtitle_data;
+    reference<char> mouth_data;
+    reference<char> subtitle_data;
 
-    reference_t<char> sample_data() const
+    reference<char, xbox_t, atlas_type_t::sounds> sample_data() const
     {
-        return reference_t<char>{
-            .count = sample_size,
+        return {
+            .count  = sample_size,
             .offset = sample_offset,
         };
     }
@@ -49,13 +49,13 @@ static_assert(sizeof(pitch_permutation_t) == 124);
 
 struct pitch_ranges_t
 {
-    bl_string                        name;
-    f32                              natural_pitch;
-    Vecf2                            bend_bounds;
-    i16                              actual_permutation_count;
-    f32                              playback_rate;
-    i32                              padding[2];
-    reference_t<pitch_permutation_t> permutations;
+    bl_string                      name;
+    f32                            natural_pitch;
+    Vecf2                          bend_bounds;
+    i16                            actual_permutation_count;
+    f32                            playback_rate;
+    i32                            padding[2];
+    reference<pitch_permutation_t> permutations;
 };
 
 struct sound
@@ -142,7 +142,7 @@ struct sound
     i16                              promotion_count;
     i32                              maximum_play_time;
     i32                              unknown[4];
-    reference_t<pitch_ranges_t>      pitch_ranges;
+    reference<pitch_ranges_t>        pitch_ranges;
 };
 
 static_assert(sizeof(sound) == 164);
@@ -211,8 +211,8 @@ struct looping_sound
 
     u32 padding_because_effort[13];
 
-    reference_t<track_t>        tracks;
-    reference_t<detail_sound_t> detail_sounds;
+    reference<track_t>        tracks;
+    reference<detail_sound_t> detail_sounds;
 };
 
 static_assert(sizeof(looping_sound) == 84);

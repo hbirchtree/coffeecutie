@@ -3,6 +3,8 @@
 #include "materials.h"
 #include "selected_version.h"
 
+#include <magic_enum.hpp>
+
 template<typename V>
 BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
 {
@@ -36,8 +38,8 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         auto bg_sound = section.background_sound.data(bsp_magic);
         if(bg_sound.has_value())
         {
-            SoundEvent ev = {.type = SoundEvent::loop_sound};
-            auto snds = bg_sound.value();
+            SoundEvent ev   = {.type = SoundEvent::loop_sound};
+            auto       snds = bg_sound.value();
             for(auto const& snd : snds)
             {
                 cDebug("BG sound tag: {}", snd.name.str());
@@ -488,8 +490,8 @@ ModelItem<V> ModelCache<V>::predict_impl(
     return out;
 }
 
-template ModelItem<halo_version> ModelCache<halo_version>::
-    predict_impl(const blam::tagref_t& mod2, blam::mod2::mod2_lod lod);
+template ModelItem<halo_version> ModelCache<halo_version>::predict_impl(
+    const blam::tagref_t& mod2, blam::mod2::mod2_lod lod);
 
 template<typename V>
 ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)
@@ -1076,21 +1078,13 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
     if(!bitmap.valid() || bitmap.tag_class != tag_class_t::bitm)
         Throw(std::runtime_error("non-bitm tag passed to BitmapCache"));
 
-    auto it          = index.find(bitmap);
     auto shader_name = bitmap.to_name().to_string(magic);
+    auto it          = index.template resource<blam::bitm::header_t>(bitmap);
 
-    if(it == index.end())
-    {
-        cDebug("Failed to find bitmap: {0}", shader_name);
+    if(!it.has_value())
         return {};
-    }
 
-    blam::tag_t const* bitm_tag = &(*it);
-
-    auto [bitm_ptr, curr_magic] = bitm_tag->image(magic, bitm_header).value();
-
-    if(!bitm_ptr)
-        Throw(undefined_behavior("failed to get bitmap header"));
+    auto [bitm_tag, bitm_ptr, curr_magic] = *it;
 
     auto const& bitm = *bitm_ptr;
 
@@ -1098,22 +1092,22 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
     out.header = &bitm;
     out.tag    = bitm_tag;
 
-    auto sequences = bitm.sequences.data(curr_magic).value();
-    for(auto const& sequence : sequences)
-    {
-        //            if(sequence.name.str().empty())
-        cDebug(
-            "Sequence: {0} : {1} bitmaps",
-            sequence.name.str(),
-            sequence.bitmap_count);
-        for(auto const& sprite : sequence.sprites.data(curr_magic).value())
-        {
-            cDebug(
-                " - Sprite {0}+{1}",
-                sequence.first_bitmap,
-                sprite.bitmap_index);
-        }
-    }
+    // auto sequences = bitm.sequences.data(curr_magic).value();
+    // for(auto const& sequence : sequences)
+    // {
+    //     //            if(sequence.name.str().empty())
+    //     cDebug(
+    //         "Sequence: {0} : {1} bitmaps",
+    //         sequence.name.str(),
+    //         sequence.bitmap_count);
+    //     for(auto const& sprite : sequence.sprites.data(curr_magic).value())
+    //     {
+    //         cDebug(
+    //             " - Sprite {0}+{1}",
+    //             sequence.first_bitmap,
+    //             sprite.bitmap_index);
+    //     }
+    // }
 
     if(auto image_ = bitm.images.data(curr_magic); image_.has_value())
     {

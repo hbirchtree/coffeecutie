@@ -1,5 +1,7 @@
 #include <blam/volta/blam_bitm.h>
 
+#include <blam/volta/blam_atlas.h>
+
 #include <glw/texture_formats.h>
 #include <glw/texture_formats_desc.h>
 #include <peripherals/stl/range.h>
@@ -82,7 +84,7 @@ std::tuple<typing::pixels::PixFmt, typing::pixels::CompFlags> image_t::
 }
 
 semantic::Span<const libc_types::u8> image_t::data(
-    const magic_data_t& magic, u16 mipmap) const
+    const map_ptr& magic, u16 mipmap) const
 {
     using namespace typing::pixels::properties;
 
@@ -114,7 +116,7 @@ semantic::Span<const libc_types::u8> image_t::data(
         else if(type == type_t::tex_3d)
             size *= depth;
 
-        return reference_t<u8>{.count = size, .offset = offset + mip_offset}
+        return reference<u8>{.count = size, .offset = offset + mip_offset}
             .data(magic)
             .value();
     } else
@@ -140,7 +142,7 @@ semantic::Span<const libc_types::u8> image_t::data(
         else if(type == type_t::tex_3d)
             size *= depth;
 
-        return reference_t<u8>{.count = size, .offset = offset + mip_offset}
+        return reference<u8>{.count = size, .offset = offset + mip_offset}
             .data(magic)
             .value();
     }
@@ -150,11 +152,11 @@ semantic::Span<const libc_types::u8> image_t::data(
 
 namespace blam {
 
-stl_types::result<std::pair<const bitm::header_t*, magic_data_t>, error_msg>
-tag_t::image(const magic_data_t& magic, const atlas_view& source) const
+stl_types::result<std::pair<const bitm::header_t*, map_ptr>, error_msg>
+tag_t::image(const map_ptr& magic, const atlas_view& source) const
 {
     /* CE changes! */
-    if(storage == image_storage_t::external)
+    if(storage == tag_storage_t::external)
     {
         return std::make_pair(
             source.header->get_block<bitm::header_t>(offset)

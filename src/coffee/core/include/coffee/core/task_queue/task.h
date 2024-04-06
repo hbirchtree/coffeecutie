@@ -1,11 +1,13 @@
 #pragma once
 
 #include <coffee/core/internal_state.h>
+#include <peripherals/concepts/future.h>
 #include <peripherals/enum/helpers.h>
 #include <peripherals/error/result.h>
 #include <peripherals/stl/functional_types.h>
 #include <peripherals/stl/thread_types.h>
 #include <peripherals/stl/time_types.h>
+#include <peripherals/stl/tuple_foreach.h>
 
 namespace rq {
 namespace detail {
@@ -280,6 +282,11 @@ struct dependent_task : public dependent_task_invoker
         (*this)();
     }
 
+    auto get_future()
+    {
+        return output.get_future();
+    }
+
     template<typename Dummy = void>
     requires(!std::is_same_v<Dependency, void>)
     void operator()()
@@ -303,6 +310,95 @@ struct dependent_task : public dependent_task_invoker
     std::optional<Future> dependency{};
     std::promise<Out>     output{};
 };
+
+namespace {
+
+template<typename T>
+using future_result_t = declmemtype(&T::get);
+
+template<typename... T>
+using future_values =
+    std::tuple<std::remove_reference_t<future_result_t<T>>...>;
+
+} // namespace
+
+template<typename Out, typename Func, typename... Future>
+struct multi_dependent_task : public dependent_task_invoker
+{
+    bool ready() override
+    {
+        using namespace std::chrono_literals;
+        return stl_types::tuple::reduce_and(
+            dependencies, []<typename T>(T& f) {
+                if(!f.valid())
+                    return true;
+                return f.wait_for(0ms) == std::future_status::ready;
+            });
+    }
+
+    bool cancelled() override
+    {
+        return stl_types::tuple::reduce_or(
+            dependencies, []<typename T>(T const& f) { return !f.valid(); });
+    }
+
+    auto gather_futures(Future&... futures)
+    {
+        return std::make_tuple(std::move(futures.get())...);
+    }
+
+    void execute() override
+    {
+        (*this)();
+    }
+
+    auto get_future()
+    {
+        return output.get_future();
+    }
+
+    template<typename Dummy = void>
+    requires(!std::is_same_v<Out, void>)
+    void operator()()
+    {
+        output.set_value(std::apply(
+            task,
+            std::apply(
+                [this](Future&... deps) -> future_values<Future...> {
+                    return gather_futures(deps...);
+                },
+                dependencies)));
+    }
+
+    template<typename Dummy = void>
+    requires(std::is_same_v<Out, void>)
+    void operator()()
+    {
+        std::apply(
+            task,
+            std::apply(
+                [this](Future&... deps) -> future_values<Future...> {
+                    return gather_futures(deps...);
+                },
+                dependencies));
+        output.set_value();
+    }
+
+    std::tuple<Future...> dependencies;
+    Func                  task{};
+    std::promise<Out>     output;
+};
+
+template<typename Out, typename Func, stl_types::is_future_t... Future>
+inline auto CreateMultiTask(Func&& task, Future... futures)
+{
+    auto task_wrapped = std::function(std::move(task));
+    auto out          = std::make_unique<
+        multi_dependent_task<Out, decltype(task_wrapped), Future...>>();
+    out->dependencies = std::make_tuple<Future...>(std::move(futures)...);
+    out->task         = std::move(task_wrapped);
+    return out;
+}
 
 class runtime_queue
 {

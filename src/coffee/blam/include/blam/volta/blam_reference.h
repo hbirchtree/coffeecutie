@@ -4,6 +4,7 @@
 #include <peripherals/semantic/chunk.h>
 #include <type_traits>
 
+#include "blam_atlas_type.h"
 #include "blam_magic_data.h"
 #include "blam_versions.h"
 
@@ -17,11 +18,14 @@ struct single_value_t
 
 constexpr single_value_t single_value;
 
-template<typename T, typename V = grbx_t, typename MagicTag = void>
+template<
+    typename T,
+    typename V        = grbx_t,
+    atlas_type_t Type = atlas_type_t::map_file>
 /*!
  * \brief Points to a chunk of memory within the file
  */
-struct alignas(4) reference_t
+struct alignas(4) reference
 {
     using value_type = T;
     using chunk_type = semantic::mem_chunk<T const>;
@@ -49,7 +53,7 @@ struct alignas(4) reference_t
      * \brief Function for dereferencing reflexive data. Will do basic error
      * checking eg. the pointer is within the map file and that count > 0
      */
-    result<span_type, std::string_view> data(magic_data_t const& magic) const
+    result<span_type, std::string_view> data(map_ptr const& magic) const
     {
         using namespace std::string_view_literals;
 
@@ -60,20 +64,20 @@ struct alignas(4) reference_t
         if(count == 0)
             return stl_types::success(span_type());
 
-        auto computed_offset = offset - magic.magic_offset;
+        auto computed_offset = offset - magic.file_offset;
         if(computed_offset > magic.max_size)
             return stl_types::failure("reflexive pointer out of bounds"sv);
 
         span_type chunk =
             chunk_type::of(
-                C_RCAST<T const*>(magic.base_ptr + offset - magic.magic_offset),
+                C_RCAST<T const*>(magic.base_ptr + offset - magic.file_offset),
                 count)
                 .view;
         return stl_types::success(chunk);
     }
 
     result<T const*, std::string_view> data(
-        magic_data_t const& magic, single_value_t) const
+        map_ptr const& magic, single_value_t) const
     {
         using namespace std::string_view_literals;
 
@@ -88,27 +92,16 @@ struct alignas(4) reference_t
     template<typename T2>
     inline auto as() const
     {
-        return reinterpret_cast<reference_t<T2, V> const*>(this);
+        return reinterpret_cast<reference<T2, V> const*>(this);
     }
 };
 
 static_assert(
-    sizeof(reference_t<int, grbx_t>) == 12,
-    "reflexive_t<..., pc_variant> needs to be 12 bytes");
+    sizeof(reference<int, grbx_t>) == 12,
+    "reference_t<..., grbx_t> needs to be 12 bytes");
 
 static_assert(
-    sizeof(reference_t<int, xbox_t>) == 8, "reflexive_t<..., xbox_variant>");
+    sizeof(reference<int, xbox_t>) == 8,
+    "reference_t<..., xbox_t> needs to be 8 bytes");
 
-namespace reflexive_helpers {
-
-template<typename T, typename Version>
-semantic::Span<T> unwrap(
-    reference_t<T, Version> const& pointer, magic_data_t const& magic)
-{
-    if(auto data = pointer.data(magic); data.has_value())
-        return data.value();
-    else
-        return semantic::Span<T>();
-}
-} // namespace reflexive_helpers
 } // namespace blam

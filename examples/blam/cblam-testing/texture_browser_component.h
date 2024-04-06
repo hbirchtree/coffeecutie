@@ -104,8 +104,8 @@ struct BlamTextureBrowser
 
         BitmapCache<V>& bitmap_cache   = e.template subsystem<BitmapCache<V>>();
         blam::bitm::image_t const* img = m_selected.image.mip;
-        blam::magic_data_t         magic =
-            (m_selected.tag->storage == blam::image_storage_t::internal &&
+        blam::map_ptr         magic =
+            (m_selected.tag->storage == blam::tag_storage_t::internal &&
              m_map->map->version == blam::version_t::custom_edition)
                         ? m_map->magic
                         : bitmap_cache.bitm_magic;

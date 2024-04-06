@@ -6,26 +6,27 @@
 namespace blam {
 
 struct file_header_t;
+struct atlas_view;
 
-struct magic_data_t
+struct map_ptr
 {
-    magic_data_t()
+    map_ptr()
     {
         base_ptr = nullptr;
     }
 
-    magic_data_t(semantic::Span<const byte_t> const& data, u32 magic = 0)
-        : magic_offset(magic)
+    map_ptr(semantic::Span<const byte_t> const& data, u32 magic = 0)
+        : file_offset(magic)
         , max_size(data.size())
     {
         base_ptr = data.data();
     }
 
-    inline magic_data_t& operator=(semantic::Bytes const& data)
+    inline map_ptr& operator=(semantic::Bytes const& data)
     {
-        base_ptr     = data.data;
-        magic_offset = 0;
-        max_size     = data.size;
+        base_ptr    = data.data;
+        file_offset = 0;
+        max_size    = data.size;
 
         return *this;
     }
@@ -40,9 +41,9 @@ struct magic_data_t
         return header_ptr->version;
     }
 
-    inline magic_data_t no_magic() const
+    inline map_ptr ptr_only() const
     {
-        return magic_data_t(data());
+        return map_ptr(data());
     }
 
     union
@@ -51,7 +52,7 @@ struct magic_data_t
         byte_t const*        base_ptr{nullptr};
     };
 
-    u32 magic_offset{0};
+    u32 file_offset{0};
     u32 max_size{0};
 };
 

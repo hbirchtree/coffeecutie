@@ -12,7 +12,7 @@ struct multiplayer_scenario
 {
     struct map_string
     {
-        reference_t<byte_t, V> unknown_1;
+        reference<byte_t, V> unknown_1;
         u32                    unknown_2;
         u32                    unknown_3;
         unicode_reflexive<V>   unknown_4;
@@ -28,7 +28,7 @@ struct multiplayer_scenario
         bl_string_var<36> map_name;
     };
     
-    reference_t<level_ref, V> unknown_data;
+    reference<level_ref, V> unknown_data;
 };
 
 } // namespace blam

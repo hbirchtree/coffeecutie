@@ -22,7 +22,7 @@ requires is_game_version<V>
 struct scenario;
 } // namespace scn
 
-enum class image_storage_t : u32
+enum class tag_storage_t : u32
 {
     internal = 0,
     external = 1
@@ -48,7 +48,7 @@ struct alignas(4) tag_t
     union
     {
         u32             unknown;
-        image_storage_t storage; /*!< Only applies to custom_edition */
+        tag_storage_t storage; /*!< Only applies to custom_edition */
     };
 
     i32 padding;
@@ -72,9 +72,9 @@ struct alignas(4) tag_t
     }
 
     template<typename T>
-    inline result<T const*, error_msg> data(magic_data_t const& magic) const
+    inline result<T const*, error_msg> data(map_ptr const& magic) const
     {
-        if(storage == image_storage_t::external && matches(tag_class_t::bitm))
+        if(storage == tag_storage_t::external && matches(tag_class_t::bitm))
         {
             /* If you're here, that means you hit one of Custom Edition's
              *  externally stored bitmaps, but used the map magic
@@ -94,7 +94,7 @@ struct alignas(4) tag_t
         if(!valid())
             return "invalid tag"sv;
 
-        return reference_t<T>{1, offset}.data(magic, single_value);
+        return reference<T>{1, offset}.data(magic, single_value);
     }
 
     /*!
@@ -102,8 +102,8 @@ struct alignas(4) tag_t
      *  internal, and this function simplifies that part.
      * The storage is indicated by the storage flag
      */
-    result<std::pair<bitm::header_t const*, magic_data_t>, error_msg> image(
-        magic_data_t const& magic, atlas_view const& source) const;
+    result<std::pair<bitm::header_t const*, map_ptr>, error_msg> image(
+        map_ptr const& magic, atlas_view const& source) const;
 
     inline string_ref to_name() const
     {
@@ -124,7 +124,7 @@ struct alignas(4) tag_t
 
 struct tag_collection_t
 {
-    reference_t<tagref_t> tags;
+    reference<tagref_t> tags;
 };
 
 template<typename V>
@@ -135,8 +135,8 @@ template<typename V>
 struct alignas(4) tag_index_t : stl_types::non_copy
 {
     using vertex_array =
-        reference_t<vert::mod2_vertex<vert::uncompressed>, xbox_t>;
-    using index_array = reference_t<vert::idx_t, xbox_t>;
+        reference<vert::mod2_vertex<vert::uncompressed>, xbox_t>;
+    using index_array = reference<vert::idx_t, xbox_t>;
 
     /*!
      * \brief My theory is that this is the pointer to the location in memory in
@@ -172,7 +172,7 @@ struct alignas(4) tag_index_t : stl_types::non_copy
 
     bl_tag pc_tag_sentinel; /*!< Says "tags" */
 
-    inline magic_data_t get_magic(
+    inline map_ptr get_magic(
         file_header_t const* base, u32 file_size) const
     {
         byte_t const* base_ptr   = C_RCAST<byte_t const*>(base);
@@ -181,7 +181,7 @@ struct alignas(4) tag_index_t : stl_types::non_copy
                                        : sizeof(tag_index_t);
 
         u32 max_size = std::max(file_size, base->decomp_len);
-        return magic_data_t{
+        return map_ptr{
             {base_ptr, max_size},
             tag_data_offset - (base->tag_index_offset + index_size)};
     }
@@ -198,9 +198,9 @@ struct alignas(4) tag_index_t : stl_types::non_copy
         return base_reflexive;
     }
 
-    inline magic_data_t vertex_magic(magic_data_t const& base) const
+    inline map_ptr vertex_magic(map_ptr const& base) const
     {
-        return magic_data_t{{base.base_ptr, base.max_size}, 0};
+        return map_ptr{{base.base_ptr, base.max_size}, 0};
     }
 
     /*!
@@ -226,7 +226,7 @@ struct alignas(4) tag_index_t : stl_types::non_copy
     }
 
     inline optional<blam::scn::scenario<V> const*> scenario(
-        file_header_t const* header, magic_data_t const& magic) const
+        file_header_t const* header, map_ptr const& magic) const
     {
         tag_t const* tag = &(tags(header)[0]);
 

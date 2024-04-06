@@ -78,6 +78,8 @@ void detail::source_dealloc(ALuint src)
 
 void detail::check_error(std::string_view call)
 {
+    return;
+
     using stl_types::str::fmt::pointerify;
     ALenum error{AL_NO_ERROR};
     do

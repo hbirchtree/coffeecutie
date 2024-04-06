@@ -80,8 +80,8 @@ struct ModelCache
     blam::version_t             version;
     blam::tag_index_t<V> const* tags;
     blam::tag_index_view<V>     index;
-    blam::magic_data_t          magic;
-    blam::magic_data_t          vertex_magic;
+    blam::map_ptr          magic;
+    blam::map_ptr          vertex_magic;
     BitmapCache<V>&             bitm_cache;
     ShaderCache<V>&             shader_cache;
     gfx_api*                    allocator;
@@ -192,7 +192,7 @@ struct BSPCache
     SoundCache<V>&                  sound_cache;
     comp_app::EventBus<SoundEvent>* sound_bus;
     blam::tag_index_view<V>         index;
-    blam::magic_data_t              magic;
+    blam::map_ptr              magic;
 
     Span<byte_t>           vert_buffer;
     Span<byte_t>           light_buffer;

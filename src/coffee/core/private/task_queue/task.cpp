@@ -854,6 +854,9 @@ u64 runtime_queue::enqueue(std::unique_ptr<dependent_task_invoker>&& task)
 {
     detail::unique_lock<detail::recursive_mutex> _(m_tasks_lock);
 
+    if(!task)
+        Throw(undefined_behavior("nullptr passed as dependent_task!"));
+
     dependent_task_data_t data;
     data.task = std::move(task);
 
