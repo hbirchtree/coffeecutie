@@ -332,22 +332,6 @@ i32 blam_main()
                 e.subsystem_cast<GameEventBus>().inject(event, &connect);
             }
 
-            // Just a small audio experiment
-            {
-                using namespace std::chrono_literals;
-                oaf::decode::ogg::decoder decoder;
-                static auto               buf = snd.alloc_buffer();
-                static auto               src = snd.alloc_source();
-
-                decoder.decode("sounds/thefunny2.ogg"_rsc.data(), {}, {}, *buf);
-                src->set_property<oaf::source_property::looping>(true);
-                // src->set_property<oaf::source_property::max_distance>(20.f);
-                src->set_property<oaf::source_property::rolloff_factor>(1.5f);
-                src->set_property<oaf::source_property::position>(
-                    Vecf3{0, 0, 0});
-                // src->queue(*buf);
-            }
-
 #if defined(COFFEE_EMSCRIPTEN) && defined(FEATURE_ENABLE_ASIO)
             platform::env::set_var("COFFEE_REPORT_URL", EMBEDDED_REPORT_URL);
             Net::ProfilingExport();

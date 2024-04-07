@@ -298,6 +298,33 @@ struct sampler_t
         }
     }
 
+    inline void set_edge_policy(u32 dimension, typing::WrapPolicy policy)
+    {
+        const auto policy_to_gl = [](typing::WrapPolicy p) {
+            switch(p)
+            {
+            case typing::WrapPolicy::MirrorRepeat:
+            case typing::WrapPolicy::MirrorClamp:
+                return group::texture_wrap_mode::mirrored_repeat;
+            case typing::WrapPolicy::Repeat:
+                return group::texture_wrap_mode::repeat;
+            default:
+                return group::texture_wrap_mode::clamp_to_edge;
+            }
+        };
+#if GLEAM_MAX_VERSION_ES != 0x200
+        if(m_features.samplers)
+        {
+            cmd::sampler_parameter(
+                m_handle,
+                dimension == 1   ? group::sampler_parameter_i::texture_wrap_s
+                : dimension == 2 ? group::sampler_parameter_i::texture_wrap_t
+                                 : group::sampler_parameter_i::texture_wrap_r,
+                static_cast<i32>(policy_to_gl(policy)));
+        }
+#endif
+    }
+
     std::weak_ptr<texture_t>    m_source;
     features::textures          m_features;
     hnd                         m_handle;

@@ -48,6 +48,7 @@ macro(
   set(FLATPAK_TARGET_BRANCH "master")
 
   set(FLATPAK_PKG_NAME "${DOM_NAME}.${TARGET}")
+  string(TOLOWER "${FLATPAK_PKG_NAME}" FLATPAK_PKG_NAME)
 
   set(FLATPAK_TITLE "${TITLE}")
   set(FLATPAK_EXEC "${TARGET}")
@@ -74,7 +75,7 @@ macro(
   set(FLATPAK_BINARY_DIR "${FLATPAK_BASE_DIR}/files/bin")
   set(FLATPAK_EXPORT_DIR "${FLATPAK_BASE_DIR}/export")
 
-  set(FLATPAK_ICON_REF "${FLATPAK_PKG_NAME}.svg")
+  set(FLATPAK_ICON_REF "${FLATPAK_PKG_NAME}")
 
   set(FLATPAK_BUNDLE_REPO "${FLATPAK_DEPLOY_DIRECTORY}/${TARGET}")
   set(FLATPAK_BUNDLE_DIR "${COFFEE_PACKAGE_DIRECTORY}/linux-flatpak/${TARGET}.flatpak")
@@ -91,7 +92,8 @@ macro(
     COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_ASSET_DIR}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_BINARY_DIR}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_LIBRARY_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_EXPORT_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_EXPORT_DIR}/share/applications"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_EXPORT_DIR}/share/icons/hicolor/scalable/apps"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_DEPLOY_DIRECTORY}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${COFFEE_PACKAGE_DIRECTORY}/linux-flatpak"
   )
@@ -102,10 +104,11 @@ macro(
   )
   configure_file(
     "${FLATPAK_CONFIG_DIR}/application.desktop.in"
-    "${FLATPAK_EXPORT_DIR}/${FLATPAK_PKG_NAME}.desktop" @ONLY
+    "${FLATPAK_EXPORT_DIR}/share/applications/${FLATPAK_PKG_NAME}.desktop" @ONLY
   )
   configure_file(
-    "${ICON_ASSET}" "${FLATPAK_BASE_DIR}/export/${FLATPAK_ICON_REF}" COPYONLY
+    "${ICON_ASSET}"
+    "${FLATPAK_EXPORT_DIR}/share/icons/hicolor/scalable/apps/${FLATPAK_ICON_REF}.svg" COPYONLY
   )
 
   # Copy resources into flatpak

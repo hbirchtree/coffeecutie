@@ -49,6 +49,16 @@ void create_resources(compo::EntityContainer& e)
                     viewport.camera.aspect = aspect;
                 cDebug("Window resize: {}x{}", resize->w, resize->h);
             });
+
+        eventhandler->addEventFunction<CIDropEvent>(
+            0, [&e](CIEvent&, CIDropEvent* drop) {
+                if(!drop->file)
+                    return;
+                GameEvent    ev{.type = GameEvent::MapLoadStart};
+                MapLoadEvent load{.file = *drop->file};
+                GameEventBus& gbus = e.subsystem_cast<GameEventBus>();
+                gbus.process(ev, &load);
+            });
     }
 
     gfx::api&      api       = e.subsystem_cast<gfx::system>();

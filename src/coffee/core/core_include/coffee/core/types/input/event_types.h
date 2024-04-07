@@ -2,8 +2,12 @@
 
 #include "keymap.h"
 
+#include <gsl/span>
+#include <optional>
 #include <peripherals/libc/types.h>
 #include <peripherals/typing/vectors/vector_types.h>
+#include <string_view>
+#include <url/url.h>
 
 /*!
  * \brief Input structures and enums, are commonly used by
@@ -399,22 +403,11 @@ struct CIDropEvent : BaseEvent<CIEvent::Drop>
         Text = 0x3, /*!< Text*/
     };
 
-    union
-    {
-        void* data = 0;
+    std::optional<platform::url::Url> link;
+    std::optional<platform::url::Url> file;
+    std::optional<std::string_view>   text;
 
-        struct
-        {
-            cstring text;
-        } text_data;
-    };
-
-    PACKEDSTRUCT({
-        u32 size : 24; /*!< Size of data*/
-        u8  type;      /*!< Event type*/
-    });
-
-    u32 pad1;
+    DataType type; /*!< Event type*/
 };
 
 /*!

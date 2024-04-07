@@ -42,7 +42,7 @@ coffee_application(
   LIBRARIES Blam Core Image GLeamRHI ImGui OAF
   BUNDLE_LIBRARIES ${BUNDLED_LIBS}
   SCHEMES blam halo
-  ICON_ASSET ${CMAKE_CURRENT_SOURCE_DIR}/icon_asset.svg
+  ICON_ASSET ${CMAKE_CURRENT_SOURCE_DIR}/icon_asset_plain.svg
   RESOURCES "${CMAKE_CURRENT_BINARY_DIR}/assets"
 )
 add_dependencies(BlamGraphics BlamGraphics.assets)

@@ -77,9 +77,15 @@ struct LoadingScreen
 
     void load_resources(gfx::system& api);
 
-    std::shared_ptr<gfx::program_t>    loading_program;
-    std::shared_ptr<gfx::texture_2d_t> loading_tex;
-    std::shared_ptr<gfx::sampler_t>    loading_sampler;
+    std::shared_ptr<gfx::buffer_t>       quad_vbo;
+    std::shared_ptr<gfx::vertex_array_t> quad_vao;
+    std::shared_ptr<gfx::program_t>      loading_program;
+    std::shared_ptr<gfx::program_t>      loading_bg_program;
+    std::shared_ptr<gfx::texture_2d_t>   loading_tex;
+    std::shared_ptr<gfx::sampler_t>      loading_sampler;
+
+    std::optional<compo::time_point> loading_screen_gone_time;
+    bool was_loading{false};
 };
 
 void alloc_renderer(compo::EntityContainer& container);

@@ -42,7 +42,7 @@ namespace {
 int canvas_width = 0, canvas_height = 0;
 #endif
 
-}
+} // namespace
 
 using Coffee::Logging::cDebug;
 
@@ -308,12 +308,12 @@ void Windowing::start_restricted(proxy_type& p, time_point const&)
     }
 
 #if defined(COFFEE_EMSCRIPTEN)
-    int current_width = EM_ASM_INT({ return canvas.width; });
+    int current_width  = EM_ASM_INT({ return canvas.width; });
     int current_height = EM_ASM_INT({ return canvas.height; });
     if(canvas_width != current_width || canvas_height != current_height)
     {
         EMIT_DEVENT(ResizeEvent(current_width, current_height));
-        canvas_width = current_width;
+        canvas_width  = current_width;
         canvas_height = current_height;
     }
 #endif
@@ -986,6 +986,34 @@ void MouseInput::start_restricted(proxy_type&, time_point const&)
         }
         case SDL_MOUSEWHEEL:
             EMIT_IEVENT(translate::event<CIScrollEvent>(event))
+            break;
+        }
+    }
+
+    while(
+        SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_DROPFILE, SDL_DROPCOMPLETE))
+    {
+        cDebug("Drop event: {}", event.drop.type);
+        switch(event.type)
+        {
+        case SDL_DROPFILE: {
+            cDebug("Received file: {}", event.drop.file);
+            if(!std::isprint(event.drop.file[0]))
+                break;
+            inputEv.type = Coffee::Input::CIEvent::Drop;
+            CIDropEvent drop;
+            drop.file = platform::url::constructors::MkUrl(event.drop.file);
+            inputBus->process(inputEv, &drop);
+            SDL_free(event.drop.file);
+            break;
+        }
+        case SDL_DROPTEXT:
+            break;
+        case SDL_DROPBEGIN:
+            cDebug("Something's coming!");
+            break;
+        case SDL_DROPCOMPLETE:
+            cDebug("Aaaand it's done");
             break;
         }
     }
