@@ -352,13 +352,13 @@ void load_objects(
         blam::scn::object const* instance_obj =
             instance_tag->template data<blam::scn::object>(magic).value();
 
-        auto model_it = index.find(instance_obj[0].model.to_plain());
+        auto model_it = index.find(instance_obj[0].model);
 
         if(model_it == index.end())
             continue;
 
-        ModelAssembly mesh_data = model_cache.predict_regions(
-            instance_obj[0].model.to_plain(), model_lod);
+        ModelAssembly mesh_data =
+            model_cache.predict_regions(instance_obj[0].model, model_lod);
 
         auto         parent_ = e.create_entity(parent);
         Model&       model   = parent_.get<Model>();
@@ -480,8 +480,8 @@ void load_multiplayer_equipment(
                 netinfo.object       = item_perm.item;
                 netinfo.instance_id  = ++instance_id;
 
-                ModelAssembly models = model_cache.predict_regions(
-                    item.model.to_plain(), model_lod);
+                ModelAssembly models =
+                    model_cache.predict_regions(item.model, model_lod);
 
                 for(auto const& model : models.models)
                 {
@@ -676,7 +676,7 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
         skybox_mod.transform = glm::identity<Matf4>();
 
         ModelAssembly assem = model_cache.predict_regions(
-            skybox_.model.to_plain(), blam::mod2::mod2_lod::lod_high_ext);
+            skybox_.model, blam::mod2::mod2_lod::lod_high_ext);
 
         if(assem.models.empty())
         {

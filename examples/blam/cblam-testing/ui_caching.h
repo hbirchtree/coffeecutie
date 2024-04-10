@@ -134,7 +134,7 @@ struct UIElementCache
         if(ui_el->background.valid())
         {
             auto all_bitms =
-                bitm_cache.resolve_all(ui_el->background.to_plain());
+                bitm_cache.resolve_all(ui_el->background);
             out.background = all_bitms.front();
             if(all_bitms.size() > 1)
                 out.background_alt = all_bitms.at(1);
@@ -147,7 +147,7 @@ struct UIElementCache
             auto children        = ui_el->child_widgets.data(magic).value();
             for(child_widget_t const& child : children)
             {
-                if(auto c = predict(child.widget.to_plain()); c.valid())
+                if(auto c = predict(child.widget); c.valid())
                     out.children.push_back(c);
             }
             break;
@@ -181,7 +181,7 @@ struct UIElementCache
             std::end(widgets),
             std::back_inserter(root_widgets),
             [this](auto const& widget) {
-                return predict(widget.definition.to_plain());
+                return predict(widget.definition);
             });
         return root_widgets;
     }

@@ -4,9 +4,11 @@
 #include "selected_version.h"
 #include "sound_cache.h"
 
+#include <deque>
 #include <oaf/api_system.h>
 #include <oaf/ogg/ogg_decode.h>
 #include <peripherals/stl/enumerate.h>
+#include <ranges>
 
 #if defined(OAF_IMA_DECODER_ENABLED)
 #include <oaf/ima_adpcm/decode.h>
@@ -99,7 +101,8 @@ struct SoundSystem
 
         for(auto& [id, track] : active_tracks)
         {
-            auto& src = track.source;
+            auto&              src = track.source;
+            std::deque<size_t> deletions;
             for(auto& [i, buffer] : stl_types::enumerate(track.buffers))
             {
                 if(i < track.position)
@@ -133,11 +136,14 @@ struct SoundSystem
                 {
                     // cDebug("Cleaning up {}", i);
                     buffer.buffer.reset();
+                    deletions.push_back(i);
                     continue;
                 }
             }
             if(track.position == track.buffers.size())
                 track.position = 0;
+            for(auto const& i : deletions | std::views::reverse)
+                track.buffers.erase(track.buffers.begin() + i);
         }
     }
 
@@ -146,17 +152,15 @@ struct SoundSystem
     }
 
     void decode_audio(
-        blam::sound::sound const*      sound,
+        sound_ptr const&               sound_,
         std::vector<track_t::entry_t>& buffers,
         track_t::entry_t const&        props)
     {
-        auto ranges_ = index.deref(sound->pitch_ranges);
-        if(!ranges_.has_value())
-            return;
-        auto ranges = ranges_.value();
+        auto const& [tag, sound, heap] = sound_;
+        auto ranges = *sound->pitch_ranges(heap);
         if(ranges.empty())
             return;
-        auto perms = index.deref(ranges[0].permutations).value();
+        auto perms = *ranges[0].permutations(heap);
         if(perms.empty())
             return;
 
@@ -165,7 +169,7 @@ struct SoundSystem
 
         while(perm)
         {
-            auto data_ = index.deref(perm->sample_data());
+            auto data_ = index.deref(*tag, perm->sample_data());
             if(!data_.has_value())
                 break;
             auto data = data_.value();
@@ -250,6 +254,9 @@ struct SoundSystem
             auto const&      track = item.tracks.front();
             auto start_ = track.sounds.find(SoundItem::role_t::start);
             auto loop_  = track.sounds.find(SoundItem::role_t::loop);
+            /* Custom maps apparently do this thing... */
+            if(loop_ == track.sounds.end())
+                return;
             std::vector<track_t::entry_t> buffers;
             if(start_ != track.sounds.end())
                 decode_audio(start_->second, buffers, track_t::entry_t{});

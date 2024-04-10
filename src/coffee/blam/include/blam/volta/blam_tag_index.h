@@ -44,12 +44,7 @@ struct alignas(4) tag_t
     u32        tag_id;
     string_ref name;
     u32        offset; /*!< A byte offset to associated data*/
-
-    union
-    {
-        u32             unknown;
-        tag_storage_t storage; /*!< Only applies to custom_edition */
-    };
+    tag_storage_t storage; /*!< Only applies to custom_edition */
 
     i32 padding;
 

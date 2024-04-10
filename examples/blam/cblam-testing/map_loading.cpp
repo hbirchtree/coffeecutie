@@ -102,11 +102,6 @@ static void init_map(
     comp_app::EventBus<SoundEvent>* sound_bus =
         e.service<comp_app::EventBus<SoundEvent>>();
 
-    {
-        SoundEvent ev = {.type = SoundEvent::clear_all};
-        sound_bus->process(ev, nullptr);
-    }
-
     bitmaps.load_from(changed.container);
     bsps.load_from(changed.container);
     models.load_from(changed.container);
@@ -196,7 +191,7 @@ static void init_map(
                 break;
             }
             case blam::tag_class_t::tagc: {
-                explore_tagc(*index.find(tag.to_plain()));
+                explore_tagc(*index.find(tag));
                 break;
             }
             default:
@@ -278,6 +273,13 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     e.remove_entity_if([](compo::Entity const& e) {
         return stl_types::any_flag_of(e.tags, ObjectGC);
     });
+
+    {
+        comp_app::EventBus<SoundEvent>* sound_bus =
+            e.service<comp_app::EventBus<SoundEvent>>();
+        SoundEvent ev = {.type = SoundEvent::clear_all};
+        sound_bus->process(ev, nullptr);
+    }
 
     MapListingEvent listing;
     if(load.directory)

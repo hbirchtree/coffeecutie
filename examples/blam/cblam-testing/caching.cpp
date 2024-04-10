@@ -44,7 +44,7 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             {
                 cDebug("BG sound tag: {}", snd.name.str());
                 LoopSoundEvent loop = {
-                    .sound = &snd.bg_sound.to_plain(),
+                    .sound = &static_cast<blam::tagref_t const&>(snd.bg_sound),
                 };
                 sound_bus->process(ev, &loop);
             }
@@ -191,7 +191,7 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
 
         for(blam::bsp::material const& mat : materials)
         {
-            auto shader    = shader_cache.predict(mat.shader.to_plain());
+            auto shader    = shader_cache.predict(mat.shader);
             auto vertex_id = lightmap.lightmap_idx |
                              (static_cast<u64>(mat.shader.tag_id) << 32);
             auto vertices       = mat.vertices().data(bsp_magic).value();
@@ -561,7 +561,7 @@ ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)
         {
             u8 i = 0;
             for(auto const& layer : layers.value())
-                out.schi.layers.at(i++) = predict(layer.to_plain());
+                out.schi.layers.at(i++) = predict(layer);
         }
 
         break;
@@ -580,7 +580,7 @@ ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)
         {
             u8 i = 0;
             for(auto const& layer : layers.value())
-                out.scex.layers.at(i++) = predict(layer.to_plain());
+                out.scex.layers.at(i++) = predict(layer);
         }
 
         break;

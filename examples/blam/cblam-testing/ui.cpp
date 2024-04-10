@@ -9,6 +9,7 @@
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
 #include <glm/gtx/matrix_transform_2d.hpp>
 #include <peripherals/semantic/chunk.h>
+#include <peripherals/stl/enumerate.h>
 
 using semantic::RSCA;
 
@@ -19,7 +20,6 @@ struct UIElement
     using tag_type   = type;
 
     generation_idx_t element;
-    bool             visible{false};
 };
 
 using UIRendererManifest = compo::SubsystemManifest<
@@ -102,8 +102,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     std::shared_ptr<gfx::buffer_t>       instance_vertices;
     std::shared_ptr<gfx::vertex_array_t> array;
 
-    Vecf2 screen_size;
-    Vecf2 mouse_pos;
+    Vecf2                           screen_size;
+    Vecf2                           mouse_pos;
+    CIMouseButtonEvent::MouseButton mouse_buttons{CIMouseButtonEvent::NoneBtn};
 
     struct widget_data_t
     {
@@ -137,15 +138,44 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                mouse_pos.y > min.y && mouse_pos.y < max.y;
     }
 
+    bool mouse_down(
+        CIMouseButtonEvent::MouseButton button = CIMouseButtonEvent::LeftButton)
+    {
+        return mouse_buttons & button;
+    }
+
+    auto& create_element(compo::EntityContainer& e, generation_idx_t id)
+    {
+        for(auto& el : e.select<UIElement>())
+        {
+            auto  ref        = e.ref(el);
+            auto& ui_element = ref.get<UIElement>();
+            if(ui_element.element == id)
+                return ui_element;
+        }
+
+        compo::EntityRecipe rec;
+        rec.tags           = ObjectGC;
+        rec.components     = {compo::type_hash_v<UIElement>()};
+        auto  ref          = e.create_entity(rec);
+        auto& ui_element   = ref.get<UIElement>();
+        ui_element.element = id;
+        return ui_element;
+    }
+
     void process_widget(
+        Proxy&                  e,
         generation_idx_t const& item,
         widget_data_t           data,
         layout_data_t           layout = {})
     {
-        using widget_type       = blam::ui_element::widget_type_t;
-        UIElementItem const& el = ui_cache.find(item)->second;
+        using widget_type = blam::ui_element::widget_type_t;
+        UIElementItem& el = ui_cache.find(item)->second;
 
         [[maybe_unused]] auto widget_name = el.ui_element->name.str();
+
+        if(!el.visible)
+            return;
 
         auto& bounds = el.ui_element->bounds;
         // Coords + dimensions we can derive purely from the bounding box
@@ -187,6 +217,37 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             },
         }};
 
+        auto eventhandlers =
+            el.ui_element->event_handlers.data(bitm_cache.magic).value();
+
+        if(mouse_in_bounds(min, max))
+        {
+            el.focused = true;
+            if(mouse_down())
+            {
+                cDebug(
+                    "Clicked {}, contains {} eventhandlers",
+                    widget_name,
+                    eventhandlers.size());
+                for(auto const& eh : eventhandlers)
+                {
+                    using eh_t = blam::ui_element::event_handler_t;
+                    if(eh.event_type != eh_t::type_t::a_btn)
+                        continue;
+                    if(eh.flags == eh_t::flags_t::open_widget)
+                    {
+                        auto widget_ = ui_cache.predict(eh.widget);
+                        if(!widget_.valid())
+                            break;
+                        create_element(e.underlying(), widget_);
+                    } else if(eh.flags == eh_t::flags_t::run_function)
+                    {
+                        cDebug("Running function #{}", eh.function);
+                    }
+                }
+            }
+        }
+
         if(el.background.valid())
         {
             data.vertex_data.insert(
@@ -218,6 +279,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
         switch(el.ui_element->widget_type)
         {
+        case widget_type::spinner_list:
         case widget_type::column_list:
         case widget_type::container: {
             widget_data_t child_data = {
@@ -228,30 +290,50 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
             auto children =
                 el.ui_element->child_widgets.data(bitm_cache.magic).value();
-            u32 i = 0;
-            for(auto const& child : el.children)
+            for(auto const& [i, child] :
+                stl_types::const_enumerate(el.children))
             {
                 auto const& meta = children[i];
                 process_widget(
+                    e,
                     child,
                     child_data,
                     layout_data_t{
                         .offset =
                             Vecf2(meta.horizontal_offset, meta.vertical_offset),
                     });
-                i++;
             }
             break;
         }
         case widget_type::text_box:
             // TODO: Render the text, for now just render the background
             break;
-        default:
+        default: {
+            auto children =
+                el.ui_element->child_widgets.data(bitm_cache.magic).value();
+            for(auto const& [i, child] :
+                stl_types::const_enumerate(el.children))
+            {
+                auto const& meta = children[i];
+                process_widget(
+                    e,
+                    child,
+                    widget_data_t{
+                        .vertex_data   = data.vertex_data,
+                        .instance_data = data.instance_data,
+                        .box           = {min.x, min.y, max.x, max.y},
+                    },
+                    layout_data_t{
+                        .offset =
+                            Vecf2(meta.horizontal_offset, meta.vertical_offset),
+                    });
+            }
             break;
+        }
         }
     }
 
-    void start_restricted(Proxy& /*e*/, time_point const&)
+    void start_restricted(Proxy&, time_point const&)
     {
     }
 
@@ -284,6 +366,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         {
             mouse_pos =
                 window_to_ui(Vecf2(mouse->position().x, mouse->position().y));
+            mouse_buttons = mouse->buttons();
         }
 
         std::vector<vertex_t>          vertex_data;
@@ -293,9 +376,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         {
             auto        ref     = e.ref<Proxy>(widget);
             auto const& element = ref.get<UIElement>();
-            if(!element.visible)
-                continue;
             process_widget(
+                e,
                 element.element,
                 widget_data_t{
                     .vertex_data   = vertex_data,
@@ -422,7 +504,6 @@ void load_ui_items(
     {
         auto ref                     = e.create_entity(rec);
         ref.get<UIElement>().element = id;
-        ref.get<UIElement>().visible = true;
         break;
     }
 

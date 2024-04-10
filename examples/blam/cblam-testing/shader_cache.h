@@ -39,7 +39,7 @@ struct ShaderCache
         if(!bitm.valid())
             return generation_idx_t();
 
-        return bitm_cache.predict(bitm.to_plain(), 0);
+        return bitm_cache.predict(bitm, 0);
     }
 
     template<typename T>

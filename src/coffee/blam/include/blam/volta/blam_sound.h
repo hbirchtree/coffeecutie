@@ -47,15 +47,31 @@ struct pitch_permutation_t
 
 static_assert(sizeof(pitch_permutation_t) == 124);
 
-struct pitch_ranges_t
+struct pitch_range_t
 {
-    bl_string                      name;
-    f32                            natural_pitch;
-    Vecf2                          bend_bounds;
-    i16                            actual_permutation_count;
-    f32                            playback_rate;
-    i32                            padding[2];
-    reference<pitch_permutation_t> permutations;
+    bl_string name;
+    f32       natural_pitch;
+    Vecf2     bend_bounds;
+    i16       actual_permutation_count;
+    f32       playback_rate;
+    i32       padding[2];
+    reference<pitch_permutation_t, grbx_t, atlas_type_t::sounds> permutations_;
+
+    inline std::optional<gsl::span<const pitch_permutation_t>> permutations(
+        map_ptr const& map) const
+    {
+        if(map.file_offset && permutations_.offset > map.file_offset)
+        {
+            if(auto ptr = permutations_.data(map); ptr.has_value())
+                return ptr.value();
+            return std::nullopt;
+        }
+        auto base_ptr = reinterpret_cast<const byte_t*>(&this[0]);
+        return gsl::span(
+            reinterpret_cast<const pitch_permutation_t*>(
+                &base_ptr[permutations_.offset]),
+            permutations_.count);
+    }
 };
 
 struct sound
@@ -138,11 +154,22 @@ struct sound
         ogg,
     } codec;
 
-    tagref_typed_t<tag_class_t::snd> promotion_sound;
-    i16                              promotion_count;
-    i32                              maximum_play_time;
-    i32                              unknown[4];
-    reference<pitch_ranges_t>        pitch_ranges;
+    tagref_typed_t<tag_class_t::snd>                       promotion_sound;
+    i16                                                    promotion_count;
+    i32                                                    maximum_play_time;
+    i32                                                    unknown[4];
+    reference<pitch_range_t, grbx_t, atlas_type_t::sounds> pitch_ranges_;
+
+    inline std::optional<gsl::span<const pitch_range_t>> pitch_ranges(
+        map_ptr const& map) const
+    {
+        if(auto ptr = pitch_ranges_.data(map); ptr.has_value())
+            return ptr.value();
+        if(map.file_offset && pitch_ranges_.offset > map.file_offset)
+            return std::nullopt;
+        auto* base_ptr = reinterpret_cast<const pitch_range_t*>(&this[1]);
+        return gsl::span(base_ptr, pitch_ranges_.count);
+    }
 };
 
 static_assert(sizeof(sound) == 164);

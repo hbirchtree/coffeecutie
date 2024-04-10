@@ -7,6 +7,9 @@
 #include <coffee/components/subsystem.h>
 #include <oaf/api.h>
 
+using sound_ptr =
+    std::tuple<blam::tag_t const*, blam::sound::sound const*, blam::map_ptr>;
+
 struct SoundItem
 {
     enum role_t
@@ -21,18 +24,18 @@ struct SoundItem
 
     struct track_t
     {
-        blam::sound::track_t const*                 track{nullptr};
-        std::map<role_t, blam::sound::sound const*> sounds;
+        blam::sound::track_t const* track{nullptr};
+        std::map<role_t, sound_ptr> sounds;
     };
 
     blam::sound::looping_sound const* looping_sound{nullptr};
-    blam::sound::sound const*         sound{nullptr};
+    sound_ptr                         sound{};
 
     std::vector<track_t> tracks;
 
     bool valid() const
     {
-        return looping_sound || sound;
+        return looping_sound || std::get<1>(sound);
     }
 };
 
@@ -64,15 +67,12 @@ struct SoundCache
     oaf::api*               api{nullptr};
     blam::tag_index_view<V> index;
 
-    blam::sound::sound const* parse_simple_sound(blam::tagref_t const& tag)
+    sound_ptr parse_simple_sound(blam::tagref_t const& tag)
     {
-        return index.template data<blam::sound::sound>(tag).value_or(nullptr);
-    }
-
-    blam::sound::sound const* parse_simple_sound(
-        blam::tagref_typed_t<blam::tag_class_t::snd> const& tag)
-    {
-        return parse_simple_sound(tag.to_plain());
+        auto data = index.template resource<blam::sound::sound>(tag);
+        if(!data.has_value())
+            return {};
+        return *data;
     }
 
     void parse_loop_sound(SoundItem& item, blam::tagref_t const& tag)
@@ -94,8 +94,9 @@ struct SoundCache
             sounds[SoundItem::start] = parse_simple_sound(track.start);
             sounds[SoundItem::loop]  = parse_simple_sound(track.loop);
             sounds[SoundItem::end]   = parse_simple_sound(track.end);
-            std::erase_if(
-                sounds, [](auto const& p) { return p.second == nullptr; });
+            std::erase_if(sounds, [](auto const& p) {
+                return std::get<1>(p.second) == nullptr;
+            });
         }
     }
 

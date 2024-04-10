@@ -37,6 +37,10 @@ struct UIElementItem
     generation_idx_t              background;
     generation_idx_t              background_alt;
 
+    bool visible{true};
+    bool focused{false};
+    bool selected{false};
+
     bool valid() const
     {
         return ui_element;

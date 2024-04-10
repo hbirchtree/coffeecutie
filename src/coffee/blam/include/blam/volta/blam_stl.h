@@ -1,6 +1,7 @@
 #pragma once
 
 #include "blam_atlas.h"
+#include "blam_sound.h"
 #include "blam_structures.h"
 #include "blam_tag_index.h"
 
@@ -12,6 +13,9 @@
 #include <peripherals/semantic/chunk.h>
 
 namespace blam {
+namespace sound {
+struct sound;
+}
 
 template<typename Ver>
 struct map_container
@@ -283,6 +287,8 @@ class tag_index_view
     }
 
     template<typename T, typename Key>
+    requires(
+        !std::is_same_v<T, bitm::header_t> && !std::is_same_v<T, sound::sound>)
     std::optional<std::tuple<tag_t const*, T const*, map_ptr>> resource(
         Key const& key) const
     {
@@ -290,22 +296,58 @@ class tag_index_view
         if(it == end())
             return std::nullopt;
         tag_t const& tag = (*it);
-        switch(tag.tag_class())
+        auto         d   = data<T>(key);
+        if(d.has_value())
+            return std::make_tuple(&tag, d.value(), m_ptr);
+        return std::nullopt;
+    }
+
+    template<typename T, typename Key>
+    requires std::is_same_v<T, bitm::header_t>
+    std::optional<std::tuple<tag_t const*, T const*, map_ptr>> resource(
+        Key const& key) const
+    {
+        auto it = find(key);
+        if(it == end())
+            return std::nullopt;
+        tag_t const& tag = (*it);
+        if(tag.storage == tag_storage_t::internal)
+            return std::make_tuple(&tag, tag.data<T>(m_ptr).value(), m_ptr);
+        auto atlas = m_atlases.find(atlas_type_t::bitmaps);
+        if(atlas == m_atlases.end())
+            return std::nullopt;
+        if(auto img = tag.image(m_ptr, atlas->second); img.has_value())
         {
-        case tag_class_t::bitm: {
-            auto bitm_atlas = m_atlases.find(atlas_type_t::bitmaps);
-            if(bitm_atlas == m_atlases.end() &&
-               tag.storage == tag_storage_t::external)
-                return std::nullopt;
-            if(auto img = tag.image(m_ptr, bitm_atlas->second); img.has_value())
-                return std::make_tuple(
-                    &tag, img.value().first, img.value().second);
-            break;
+            auto const& [ptr, heap] = img.value();
+            return std::make_tuple(&tag, ptr, heap);
         }
-        case tag_class_t::snd:
-            break;
-        default:
-            break;
+        return std::nullopt;
+    }
+
+    template<typename T, typename Key>
+    requires std::is_same_v<T, sound::sound>
+    std::optional<std::tuple<tag_t const*, T const*, map_ptr>> resource(
+        Key const& key) const
+    {
+        auto it = find(key);
+        if(it == end())
+            return std::nullopt;
+        tag_t const& tag = (*it);
+        if(tag.storage == tag_storage_t::internal)
+            return std::make_tuple(&tag, tag.data<T>(m_ptr).value(), m_ptr);
+        auto atlas_ = m_atlases.find(atlas_type_t::sounds);
+        if(atlas_ == m_atlases.end())
+            return std::nullopt;
+        auto const& atlas = atlas_->second;
+        if(auto loc = atlas.header->by_name(tag.to_name().to_string(m_ptr)))
+        {
+            return std::make_tuple(
+                &tag,
+                &(*loc)
+                     ->template to_reference<T>()
+                     .data(atlas.magic)
+                     .value()[0],
+                atlas.magic);
         }
         return std::nullopt;
     }
@@ -321,15 +363,38 @@ class tag_index_view
 
     template<typename T, typename V>
     std::optional<gsl::span<T const>> deref(
-        reference<T, V, atlas_type_t::sounds> const& ref) const
+        tag_t const& tag, reference<T, V, atlas_type_t::sounds> ref) const
     {
-        auto atlas = m_atlases.find(atlas_type_t::sounds);
-        if(atlas == m_atlases.end())
-            return std::nullopt;
-        if(auto val = ref.data(atlas->second.magic); !val.has_value())
-            return std::nullopt;
-        else
-            return val.value();
+        // If we receive a pointer like this, we don't know if it's within the
+        // map or not, so try both approaches?
+        constexpr bool use_relative_offset =
+            std::is_same_v<Ver, custom_version_t> &&
+            (std::is_same_v<T, sound::pitch_permutation_t> ||
+             std::is_same_v<T, sound::pitch_range_t>);
+        // Some structures, eg. pitch ranges and permutations are relative to
+        // the sound struct
+        if(use_relative_offset && tag.storage == tag_storage_t::external)
+            ref.offset = tag.offset + sizeof(sound::sound);
+        if(auto int_val = ref.data(m_ptr); int_val.has_value())
+            return int_val.value();
+        // Other times, we're getting sample data from the atlas
+        if(!std::is_same_v<Ver, custom_version_t> ||
+           tag.storage == tag_storage_t::external)
+        {
+            auto atlas_ = m_atlases.find(atlas_type_t::sounds);
+            if(atlas_ == m_atlases.end())
+                return std::nullopt;
+            auto const& atlas = *atlas_;
+            if(auto ext_val = ref.data(atlas.second.magic); ext_val.has_value())
+                return ext_val.value();
+        } else if(auto int_val = ref.data(m_ptr.ptr_only());
+                  int_val.has_value())
+        {
+            // And for custom maps there might be sample data embedded in the
+            // map file
+            return int_val.value();
+        }
+        return std::nullopt;
     }
 };
 

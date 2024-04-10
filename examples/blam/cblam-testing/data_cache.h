@@ -22,6 +22,10 @@ struct generation_idx_t
     {
         return i != 0 && gen != 0;
     }
+    inline bool operator==(generation_idx_t const& idx) const
+    {
+        return gen == idx.gen && i == idx.i;
+    }
 };
 
 struct data_cache_error : std::runtime_error
@@ -74,6 +78,11 @@ struct DataCache
             Throw(data_cache_error("stale reference"));
 
         return m_cache.find(id.i);
+    }
+
+    auto& get(generation_idx_t id)
+    {
+        return find(id)->second;
     }
 
     auto end()

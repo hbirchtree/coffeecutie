@@ -53,10 +53,7 @@ struct ui_element
     i32                               millis_auto_close_fade_time;
     tagref_typed_t<tag_class_t::bitm> background;
 
-    enum class function_t : u16
-    {
-        // so much stuff...
-    };
+    using function_t = u16;
 
     struct data_input_t
     {
@@ -83,7 +80,7 @@ struct ui_element
             run_scenario_script        = 0x400,
             try_to_branch_on_failure   = 0x800,
         } flags;
-        enum class event_type_t : u16
+        enum class type_t : u16
         {
             a_btn,
             b_btn,

@@ -21,7 +21,7 @@ struct locator_block
 struct tag_atlas_t
 {
     atlas_type_t type;
-    u32 name_block_off;
+    u32          name_block_off;
 
     u32 locators_offset;
     u32 locators_count;
@@ -50,7 +50,7 @@ struct tag_atlas_t
     }
 
     inline std::optional<locator_block const*> by_name(
-        std::string_view name, map_ptr const& magic) const
+        std::string_view name) const
     {
         for(auto const& loc : locators())
             if(get_name(loc) == name)
