@@ -141,8 +141,7 @@
                 "ARCHITECTURE": "arm64",
                 "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
                 "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools",
-                "NDK_VERSION_": "26.0.10792818",
-                "NDK_VERSION": "25.2.9519653",
+                "NDK_VERSION": "26.3.11579264",
                 "NINJA": "$penv{NINJA}"
             }
         },

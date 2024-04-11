@@ -404,7 +404,7 @@ function android_build()
             --sdk_root=${ANDROID_SDK} \
             --install build-tools\;34.0.0 \
             ndk\;25.2.9519653 \
-            ndk\;26.0.10792818 \
+            ndk\;26.3.11579264 \
             platforms\;android-19 \
             platforms\;android-25 \
             platforms\;android-30 \
