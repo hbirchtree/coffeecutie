@@ -3,8 +3,8 @@
     "license": "MIT",
     "version-string": "4.0",
     "dependencies": [
-        { "name": "boost-stacktrace", "platform": "!bare" },
-        { "name": "boost-outcome", "platform": "android | emscripten | (arm & linux) | (x64 & linux) | windows" },
+        { "name": "boost-stacktrace", "platform": "!bare & !emscripten" },
+        { "name": "boost-outcome", "platform": "android | (arm & linux) | (x64 & linux) | windows" },
         { "name": "cppcodec", "platform": "!bare" },
         "cxxopts",
         { "name": "fmt" },

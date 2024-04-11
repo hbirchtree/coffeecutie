@@ -23,8 +23,9 @@
         },{
             "kind": "git",
             "repository": "https://github.com/Microsoft/vcpkg",
-            "baseline": "ce1916404fc6f2b645f419a6d47b7ebafe686582",
+            "baseline": "a34c873a9717a888f58dc05268dea15592c2f0ff",
             "packages": [
+                "boost-*",
                 "imgui",
                 "openal-soft"
             ]

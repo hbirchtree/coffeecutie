@@ -151,7 +151,8 @@ elseif(EMSCRIPTEN)
     -fwasm-exceptions
     -fPIC
     -pthread
-    -flto
+    # -flto
+    -sUSE_BOOST_HEADERS=1
   )
   target_link_options(
     PeripheralLib
@@ -160,10 +161,11 @@ elseif(EMSCRIPTEN)
     -msimd128
     -fwasm-exceptions
     -fPIC
-    -flto
+    # -flto
     -pthread
     --no-heap-copy
     -sLLD_REPORT_UNDEFINED
+    -sUSE_BOOST_HEADERS=1
     # -sSAFE_HEAP=1 -sALLOW_MEMORY_GROWTH
   )
   target_link_libraries(

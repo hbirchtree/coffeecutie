@@ -26,7 +26,7 @@ toolchain:
   source: hbirchtree/coffeecutie-automation-tools
   version: v2.1.1
   emsdk:
-    version: 3.1.40
+    version: 3.1.57
   android:
     ndk: '15c'
 version:
