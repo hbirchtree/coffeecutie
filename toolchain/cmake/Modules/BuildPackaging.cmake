@@ -157,37 +157,35 @@ StartupNotify=true
 StartupWMClass=${APP_TARGET}
 "
     )
-
     set(XDG_SCHEMES)
-
     foreach(SCHEME ${APP_SCHEMES})
       set(XDG_SCHEMES "x-scheme-handler/${SCHEME}\;${XDG_SCHEMES}")
     endforeach()
-
     if(NOT "${XDG_SCHEMES}" STREQUAL "")
       file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/${APP_TARGET}.desktop"
            "MimeType=${XDG_SCHEMES}\n"
       )
     endif()
-
     if(GENERATE_APPIMAGE)
       appimage_package(
-        ${APP_TARGET} "${APP_TITLE}" "${APP_RESOURCES}" ""
-        "${APP_BUNDLE_LIBRARIES}" "${ICON_ASSET}"
+        TARGET ${APP_TARGET}
+        TITLE "${APP_TITLE}"
+        RESOURCES "${APP_RESOURCES}" ""
+        BUNDLE_LIBRARIES "${APP_BUNDLE_LIBRARIES}"
+        ICON_ASSET "${ICON_ASSET}"
       )
     endif()
     if(GENERATE_FLATPAK)
       flatpak_package(
-        ${APP_TARGET}
-        "${APP_PACKAGE_PREFIX}"
-        "${APP_TITLE}"
-        "${APP_VERSION_CODE}"
-        "${APP_COPYRIGHT}"
-        "${APP_COMPANY}"
-        "${APP_RESOURCES}"
-        ""
-        "${APP_BUNDLE_LIBRARIES}"
-        "${ICON_ASSET}"
+        TARGET ${APP_TARGET}
+        TITLE "${APP_TITLE}"
+        DOM_NAME "${APP_PACKAGE_PREFIX}"
+        VERSION_CODE "${APP_VERSION_CODE}"
+        COPYRIGHT "${APP_COPYRIGHT}"
+        COMPANY "${APP_COMPANY}"
+        RESOURCES ${APP_RESOURCES}
+        BUNDLE_LIBRARIES ${APP_BUNDLE_LIBRARIES}
+        ICON_ASSET "${ICON_ASSET}"
       )
     endif()
     if(GENERATE_RWIMAGE)
@@ -206,7 +204,6 @@ StartupWMClass=${APP_TARGET}
     gamecube_package(TARGET "${APP_TARGET}" SOURCES ${SOURCES_MOD})
   else()
     add_executable(${APP_TARGET} ${SOURCES_MOD})
-
     install(TARGETS ${APP_TARGET}
             DESTINATION "bin/${CMAKE_LIBRARY_ARCHITECTURE}"
     )
@@ -231,15 +228,10 @@ StartupWMClass=${APP_TARGET}
                           -DCOFFEE_COMPILE_APPLICATION=1
   )
 
-  target_enable_cxx11(${APP_TARGET})
-  target_enable_lto(${APP_TARGET})
-
   set(CORE_APP_LIB Coffee::CoreApplication)
-
   if("${PROJECT_NAME}" STREQUAL "Coffee")
     set(CORE_APP_LIB CoreApplication)
   endif()
 
   target_link_libraries(${APP_TARGET} PUBLIC ${APP_LIBRARIES} ${CORE_APP_LIB})
-
 endfunction()

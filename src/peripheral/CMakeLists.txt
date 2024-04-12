@@ -149,7 +149,6 @@ elseif(EMSCRIPTEN)
     -sMAIN_MODULE=2
     -msimd128
     -fwasm-exceptions
-    -fPIC
     -pthread
     # -flto
     -sUSE_BOOST_HEADERS=1
@@ -160,7 +159,6 @@ elseif(EMSCRIPTEN)
     -sMAIN_MODULE=2
     -msimd128
     -fwasm-exceptions
-    -fPIC
     # -flto
     -pthread
     --no-heap-copy

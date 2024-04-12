@@ -82,9 +82,11 @@
         "shaders/map_legacy.vert",
         "shaders/map_legacy.frag",
         "sounds/thefunny.ogg",
-        "sounds/thefunny2.ogg"
+        "sounds/thefunny2.ogg",
+        "names.txt"
     ],
     "out_dirs": [
+        "data",
         "shaders",
         "sounds",
         "textures"

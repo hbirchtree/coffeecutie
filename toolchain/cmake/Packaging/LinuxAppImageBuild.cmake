@@ -30,19 +30,24 @@ endif()
 
 function(
   APPIMAGE_PACKAGE
-  TARGET
-  APPIMAGE_TITLE
-  DATA
-  LIBRARIES
-  LIBRARY_FILES
-  ICON_ASSET
+  # TARGET
+  # LIBRARIES
+  # LIBRARY_FILES
+  # ICON_ASSET
 )
+  set(ONE_OPTS
+      TARGET
+      TITLE
+      ICON_ASSET
+  )
+  set(MULTI_OPTS RESOURCES LIBRARIES BUNDLE_LIBRARIES)
+  cmake_parse_arguments(APPIMAGE "" "${ONE_OPTS}" "${MULTI_OPTS}" ${ARGN})
+
   string(TOLOWER "${APPIMAGE_TITLE}" APPIMAGE_INTERNALNAME)
   string(MAKE_C_IDENTIFIER "${APPIMAGE_INTERNALNAME}" APPIMAGE_INTERNALNAME)
 
   if(NOT EXISTS "${APPIMAGE_RUNTIME_BINARY}")
     find_program(RUNTIME_BIN_TMP runtime)
-
     if(NOT EXISTS "${RUNTIME_BIN_TMP}")
       message(STATUS "No runtime binary for AppImage")
       return()
@@ -52,28 +57,26 @@ function(
           CACHE PATH "" FORCE
       )
     endif()
-
   endif()
 
   # Some prerequisites TITLE here is used as the name of the final AppImage as
   # well as the desktop entry's name
-  set(APPIMAGE_TITLE "${APPIMAGE_TITLE}")
   set(APPIMAGE_INTERNALNAME "${APPIMAGE_INTERNALNAME}")
-  set(APPIMAGE_LIBRARIES)
-  set(APPIMAGE_DATA)
+  # Populated by arguments
+  set(APPIMAGE_LIBRARIES ${APPIMAGE_LIBRARIES})
+  set(APPIMAGE_RESOURCES ${APPIMAGE_RESOURCES})
 
   # Icon file to be used for the AppImage, only one in this case, preferrably
   # SVG
-  set(APPIMAGE_ICON "${ICON_ASSET}")
   # We define a way to reference this icon based on where it is located
   set(APPIMAGE_ICON_REF "${APPIMAGE_INTERNALNAME}.svg")
 
   # This helps the window manager to recognize the program even if it has no
   # embedded or loaded icon
-  set(APPIMAGE_EXEC_WM ${TARGET})
+  set(APPIMAGE_EXEC_WM ${APPIMAGE_TARGET})
 
   # Sets the launch variable in .desktop entry
-  set(APPIMAGE_EXEC ${TARGET})
+  set(APPIMAGE_EXEC ${APPIMAGE_TARGET})
 
   # This directory is used for temporary files, might get messy
   set(APPIMAGE_CACHE_DIR
@@ -102,14 +105,11 @@ function(
       "${APPIMAGE_OUTPUT_DIRECTORY}/${APPIMAGE_TITLE}.AppImage"
   )
 
-  list(APPEND APPIMAGE_LIBRARIES ${LIBRARIES})
-  list(APPEND APPIMAGE_DATA ${DATA})
-
-  add_custom_target(${TARGET}.AppDir ALL DEPENDS ${TARGET})
-  add_custom_target(${TARGET}.AppImage ALL DEPENDS ${TARGET}.AppDir)
+  add_custom_target(${APPIMAGE_TARGET}.AppDir ALL DEPENDS ${APPIMAGE_TARGET})
+  add_custom_target(${APPIMAGE_TARGET}.AppImage ALL DEPENDS ${APPIMAGE_TARGET}.AppDir)
 
   add_custom_command(
-    TARGET ${TARGET}.AppDir
+    TARGET ${APPIMAGE_TARGET}.AppDir
     PRE_BUILD
     # Remove the previous AppImage file to avoid confusion when generating a new
     # one
@@ -123,9 +123,9 @@ function(
   )
 
   # Copy and configure some data for the AppDir
-  configure_file("${APPIMAGE_ICON}" "${APPIMAGE_ICON_TARGET}" COPYONLY)
+  configure_file("${APPIMAGE_ICON_ASSET}" "${APPIMAGE_ICON_TARGET}" COPYONLY)
   configure_file(
-    "${APPIMAGE_ICON}" "${APPIMAGE_INTERMEDIATE_DIR}/.DirIcon" COPYONLY
+    "${APPIMAGE_ICON_ASSET}" "${APPIMAGE_INTERMEDIATE_DIR}/.DirIcon" COPYONLY
   )
   configure_file(
     "${APPIMAGE_CONFIG_DIR}/set_icon.py"
@@ -153,9 +153,9 @@ function(
   endif()
 
   # Copy resources into AppDir
-  foreach(RESC ${DATA})
+  foreach(RESC ${APPIMAGE_RESOURCES})
     add_custom_command(
-      TARGET ${TARGET}.AppDir
+      TARGET ${APPIMAGE_TARGET}.AppDir
       PRE_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy_directory "${RESC}"
               "${APPIMAGE_ASSET_DIR}"
@@ -163,12 +163,12 @@ function(
   endforeach()
 
   # Copy bundled libraries into AppDir
-  foreach(LIB ${LIBRARY_FILES} ${APPIMAGE_EXTRA_LIBRARIES})
+  foreach(LIB ${APPIMAGE_BUNDLE_LIBRARIES} ${APPIMAGE_EXTRA_LIBRARIES})
     if(NOT EXISTS ${LIB} AND NOT "${LIB}" MATCHES "$\<")
       continue()
     endif()
     add_custom_command(
-      TARGET ${TARGET}.AppDir
+      TARGET ${APPIMAGE_TARGET}.AppDir
       POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy "${LIB}" "${APPIMAGE_LIBRARY_DIR}"
     )
@@ -176,9 +176,9 @@ function(
 
   # If we are building CrashRecovery, include it
   if(TARGET CrashRecovery)
-    add_dependencies(${TARGET}.AppImage CrashRecovery)
+    add_dependencies(${APPIMAGE_TARGET}.AppImage CrashRecovery)
     add_custom_command(
-      TARGET ${TARGET}.AppDir
+      TARGET ${APPIMAGE_TARGET}.AppDir
       POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:CrashRecovery>"
               "${APPIMAGE_BINARY_DIR}"
@@ -187,7 +187,7 @@ function(
 
   foreach(LIB ${LIBRARIES})
     add_custom_command(
-      TARGET ${TARGET}.AppDir
+      TARGET ${APPIMAGE_TARGET}.AppDir
       POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${LIB}>"
               "${APPIMAGE_LIBRARY_DIR}"
@@ -195,10 +195,11 @@ function(
   endforeach()
 
   if("${CMAKE_BUILD_TYPE}" STREQUAL "Release"
-     AND (NOT "${LIBRARIES}" STREQUAL "" OR NOT "${LIBRARY_FILES}" STREQUAL "")
+     AND (NOT "${LIBRARIES}" STREQUAL ""
+        OR NOT "${APPIMAGE_BUNDLE_LIBRARIES}" STREQUAL "")
   )
     add_custom_command(
-      TARGET ${TARGET}.AppDir
+      TARGET ${APPIMAGE_TARGET}.AppDir
       POST_BUILD
       COMMAND bash -c '${CMAKE_STRIP} `find ${APPIMAGE_LIBRARY_DIR} -type f`'
     )
@@ -206,24 +207,24 @@ function(
 
   # Copy the binary to AppDir
   add_custom_command(
-    TARGET ${TARGET}.AppDir
+    TARGET ${APPIMAGE_TARGET}.AppDir
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${TARGET}>"
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${APPIMAGE_TARGET}>"
             "${APPIMAGE_BINARY_DIR}"
   )
 
   if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     add_custom_command(
-      TARGET ${TARGET}.AppDir
+      TARGET ${APPIMAGE_TARGET}.AppDir
       POST_BUILD
-      COMMAND ${CMAKE_STRIP} "${APPIMAGE_BINARY_DIR}/${TARGET}"
+      COMMAND ${CMAKE_STRIP} "${APPIMAGE_BINARY_DIR}/${APPIMAGE_TARGET}"
               "${APPIMAGE_BINARY_DIR}/CrashRecovery"
     )
   endif()
 
   # Do the actual packaging
   add_custom_command(
-    TARGET ${TARGET}.AppImage
+    TARGET ${APPIMAGE_TARGET}.AppImage
     POST_BUILD USES_TERMINAL
     # First create squashfs
     COMMAND "${MKSQUASH_PROGRAM}" "${APPIMAGE_INTERMEDIATE_DIR}"

@@ -33,28 +33,38 @@ endif()
 
 macro(
   FLATPAK_PACKAGE
-  TARGET
-  DOM_NAME
-  TITLE
-  VERSION_CODE
-  COPYRIGHT
-  COMPANY
-  DATA
-  LIBRARIES
-  BUNDLE_LIBRARIES
-  ICON_ASSET
+  # TARGET
+  # DOM_NAME
+  # TITLE
+  # VERSION_CODE
+  # COPYRIGHT
+  # COMPANY
+  # DATA
+  # LIBRARIES
+  # BUNDLE_LIBRARIES
+  # ICON_ASSET
 )
+  set(ONE_OPTS
+      TARGET
+      DOM_NAME
+      TITLE
+      VERSION_CODE
+      COPYRIGHT
+      COMPANY
+      ICON_ASSET
+  )
+  set(MULTI_OPTS RESOURCES BUNDLE_LIBRARIES)
+  cmake_parse_arguments(FLATPAK "" "${ONE_OPTS}" "${MULTI_OPTS}" ${ARGN})
 
   set(FLATPAK_TARGET_BRANCH "master")
 
-  set(FLATPAK_PKG_NAME "${DOM_NAME}.${TARGET}")
+  set(FLATPAK_PKG_NAME "${FLATPAK_DOM_NAME}.${FLATPAK_TARGET}")
   string(TOLOWER "${FLATPAK_PKG_NAME}" FLATPAK_PKG_NAME)
 
-  set(FLATPAK_TITLE "${TITLE}")
-  set(FLATPAK_EXEC "${TARGET}")
-  set(FLATPAK_EXEC_WM "${TARGET}")
-  set(FLATPAK_ARCH "x86_64")
+  set(FLATPAK_EXEC "${FLATPAK_TARGET}")
+  set(FLATPAK_EXEC_WM "${FLATPAK_TARGET}")
 
+  set(FLATPAK_ARCH "x86_64")
   if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64")
     set(FLATPAK_ARCH "x86_64")
   elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(i386|i686)-linux-gnu" OR
@@ -77,17 +87,17 @@ macro(
 
   set(FLATPAK_ICON_REF "${FLATPAK_PKG_NAME}")
 
-  set(FLATPAK_BUNDLE_REPO "${FLATPAK_DEPLOY_DIRECTORY}/${TARGET}")
-  set(FLATPAK_BUNDLE_DIR "${COFFEE_PACKAGE_DIRECTORY}/linux-flatpak/${TARGET}.flatpak")
+  set(FLATPAK_BUNDLE_REPO "${FLATPAK_DEPLOY_DIRECTORY}/${FLATPAK_TARGET}")
+  set(FLATPAK_BUNDLE_DIR "${COFFEE_PACKAGE_DIRECTORY}/linux-flatpak/${FLATPAK_TARGET}.flatpak")
 
   # TODO: Unify this with the in-app information somehow
-  set(FLATPAK_CONFIG "${TARGET}")
+  set(FLATPAK_CONFIG "${FLATPAK_TARGET}")
 
-  add_custom_target(${TARGET}.flatpak ALL DEPENDS ${TARGET})
+  add_custom_target(${FLATPAK_TARGET}.flatpak ALL DEPENDS ${FLATPAK_TARGET})
 
   # Create directory structures
   add_custom_command(
-    TARGET ${TARGET}.flatpak
+    TARGET ${FLATPAK_TARGET}.flatpak
     PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_ASSET_DIR}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_BINARY_DIR}"
@@ -107,14 +117,14 @@ macro(
     "${FLATPAK_EXPORT_DIR}/share/applications/${FLATPAK_PKG_NAME}.desktop" @ONLY
   )
   configure_file(
-    "${ICON_ASSET}"
+    "${FLATPAK_ICON_ASSET}"
     "${FLATPAK_EXPORT_DIR}/share/icons/hicolor/scalable/apps/${FLATPAK_ICON_REF}.svg" COPYONLY
   )
 
   # Copy resources into flatpak
-  foreach(RESC ${DATA})
+  foreach(RESC ${FLATPAK_RESOURCES})
     add_custom_command(
-      TARGET ${TARGET}.flatpak
+      TARGET ${FLATPAK_TARGET}.flatpak
       PRE_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy_directory "${RESC}"
               "${FLATPAK_ASSET_DIR}"
@@ -122,20 +132,20 @@ macro(
   endforeach()
 
   # Copy bundled libraries into flatpak
-  foreach(LIB ${BUNDLE_LIBRARIES} ${FLATPAK_EXTRA_LIBRARIES})
+  foreach(LIB ${FLATPAK_BUNDLE_LIBRARIES} ${FLATPAK_EXTRA_LIBRARIES})
     if(NOT EXISTS ${LIB})
         continue()
     endif()
     add_custom_command(
-      TARGET ${TARGET}.flatpak
+      TARGET ${FLATPAK_TARGET}.flatpak
       PRE_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy "${LIB}" "${FLATPAK_LIBRARY_DIR}"
     )
   endforeach()
 
-  foreach(LIB ${LIBRARIES})
+  foreach(LIB ${FLATPAK_LIBRARIES})
     add_custom_command(
-      TARGET ${TARGET}.flatpak
+      TARGET ${FLATPAK_TARGET}.flatpak
       PRE_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${LIB}>"
               "${FLATPAK_LIBRARY_DIR}"
@@ -144,29 +154,29 @@ macro(
 
   # Finally, copy binary into flatpak
   add_custom_command(
-    TARGET ${TARGET}.flatpak
+    TARGET ${FLATPAK_TARGET}.flatpak
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${TARGET}>"
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${FLATPAK_TARGET}>"
             "${FLATPAK_BINARY_DIR}"
   )
 
   if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     add_custom_command(
-      TARGET ${TARGET}.flatpak
+      TARGET ${FLATPAK_TARGET}.flatpak
       POST_BUILD
-      COMMAND ${CMAKE_STRIP} "${FLATPAK_BINARY_DIR}/${TARGET}"
+      COMMAND ${CMAKE_STRIP} "${FLATPAK_BINARY_DIR}/${FLATPAK_TARGET}"
     )
   endif()
 
   add_custom_command(
-    TARGET ${TARGET}.flatpak
+    TARGET ${FLATPAK_TARGET}.flatpak
     POST_BUILD
     COMMAND ${FLATPAK_PROGRAM} build-export "${FLATPAK_BUNDLE_REPO}"
             "${FLATPAK_BASE_DIR}"
   )
 
   add_custom_command(
-    TARGET ${TARGET}.flatpak
+    TARGET ${FLATPAK_TARGET}.flatpak
     POST_BUILD
     COMMAND ${FLATPAK_PROGRAM} build-bundle --arch ${FLATPAK_ARCH} "${FLATPAK_BUNDLE_REPO}"
             "${FLATPAK_BUNDLE_DIR}" "${FLATPAK_PKG_NAME}"
@@ -174,7 +184,7 @@ macro(
 
   if(FLATPAK_DEPLOY_LOCALLY)
     add_custom_command(
-      TARGET ${TARGET}.flatpak
+      TARGET ${FLATPAK_TARGET}.flatpak
       POST_BUILD
       COMMAND ${FLATPAK_PROGRAM} remote-add --user --no-gpg-verify
               deployed_${FLATPAK_PKG_NAME} ${FLATPAK_BUNDLE_REPO} || true
@@ -191,5 +201,4 @@ macro(
   install(FILES "${FLATPAK_BUNDLE_DIR}"
           DESTINATION "${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-flatpak"
   )
-
 endmacro(FLATPAK_PACKAGE)

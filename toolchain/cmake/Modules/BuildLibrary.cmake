@@ -90,7 +90,7 @@ macro(COFFEE_LIBRARY)
   )
 
   if(NOT DEFINED LIB_LINKAGE)
-    set(LIB_LINKAGE ${COFFEE_LINK_OPT})
+    set(LIB_LINKAGE "")
   endif()
 
   if(NOT DEFINED LIB_VERSION_CODE)
@@ -119,11 +119,7 @@ macro(COFFEE_LIBRARY)
 
   source_group("${LIB_TARGET}_headers" FILES ${ALL_HEADERS})
 
-  if(APPLE
-     AND NOT IOS
-     AND NOT LIB_LINKABLE
-  )
-
+  if(APPLE AND NOT IOS AND NOT LIB_LINKABLE)
     macframework_package(
       "${LIB_TARGET}"
       "${LIB_LINKAGE}"
@@ -134,14 +130,11 @@ macro(COFFEE_LIBRARY)
       "${LIB_RESOURCES}"
       "${LIB_BUNDLE_HEADERS}"
     )
-
   else()
-    if(EMSCRIPTEN AND "${LIB_LINKAGE}" MATCHES SHARED)
+    if(EMSCRIPTEN AND ${BUILD_SHARED_LIBS})
         set(EMSCRIPTEN_SIDE_MODULE ON)
     endif()
     add_library(${LIB_TARGET} ${LIB_LINKAGE} ${LIB_SOURCES} ${ALL_HEADERS})
-
-    set_property(TARGET ${LIB_TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
     if(APPLE)
       set_target_properties(${LIB_TARGET} PROPERTIES MACOSX_RPATH ".")
@@ -155,29 +148,21 @@ macro(COFFEE_LIBRARY)
         ${LIB_TARGET} PROPERTIES VERSION ${COFFEE_BUILD_STRING} SOVERSION 1
       )
     endif()
-
   endif()
 
-  target_enable_cxx11(${LIB_TARGET})
-
   target_include_directories(${LIB_TARGET} PUBLIC ${LIB_HEADER_DIRS})
-
   target_link_libraries(${LIB_TARGET} PUBLIC ${LIB_LIBRARIES})
-
   target_compile_definitions(
     ${LIB_TARGET} PRIVATE -DCOFFEE_APPLICATION_LIBRARY
                           -DCOFFEE_COMPONENT_NAME="${LIB_TARGET}"
   )
-
   target_compile_definitions(
     ${LIB_TARGET} PUBLIC -DFEATURE_ENABLE_${LIB_TARGET}=1
   )
-
   if(NOT LIB_NO_EXPORT)
     add_export(${LIB_TARGET} "${LIB_HEADER_DIRS}")
     header_install(${LIB_TARGET} "${LIB_HEADER_DIRS}" "${LIB_HEADER_BASE}")
   endif()
-
 endmacro()
 
 macro(COFFEE_FRAMEWORK)
