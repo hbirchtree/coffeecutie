@@ -14,6 +14,8 @@ add_compile_definitions(
   _WIN32_WINNT=0x0602
 )
 add_compile_options(
+  -march=x86-64-v2
+  -mavx
   -Wa,-mbig-obj
 )
 add_link_options(

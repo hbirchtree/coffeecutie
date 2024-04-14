@@ -100,7 +100,7 @@ function(ANDROIDAPK_PACKAGE)
   )
 
   add_custom_target("${AAPK_TARGET}.project" DEPENDS "${AAPK_TARGET}")
-  add_custom_target("${AAPK_TARGET}.apk" DEPENDS "${AAPK_TARGET}.project")
+  add_custom_target("${AAPK_TARGET}.apk" ALL DEPENDS "${AAPK_TARGET}.project")
 
   add_dependencies(AndroidPackage "${AAPK_TARGET}.apk")
 
@@ -233,6 +233,9 @@ function(ANDROIDAPK_PACKAGE)
   set(ANDROID_APK_FILE_OUTPUT
       "${ANDROID_APK_OUTPUT_DIR}/${AAPK_DOM_NAME}.${AAPK_TARGET}_${RELEASE_PREFIX}.apk"
   )
+  set(ANDROID_APK_LEGACY_FILE_OUTPUT
+      "${ANDROID_APK_OUTPUT_DIR}/${AAPK_DOM_NAME}.${AAPK_TARGET}-legacy_${RELEASE_PREFIX}.apk"
+  )
 
   set(BUILD_OUTDIR ${ANDROID_BUILD_OUTPUT}/${AAPK_TARGET})
 
@@ -357,7 +360,11 @@ function(ANDROIDAPK_PACKAGE)
     POST_BUILD
     COMMAND
       ${CMAKE_COMMAND} -E copy
-      "${BUILD_OUTDIR}/app/build/outputs/apk/${RELEASE_PREFIX}/app-${RELEASE_PREFIX}.apk"
+      "${BUILD_OUTDIR}/app/build/outputs/apk/legacy/${RELEASE_PREFIX}/app-legacy-${RELEASE_PREFIX}.apk"
+      "${ANDROID_APK_LEGACY_FILE_OUTPUT}"
+    COMMAND
+      ${CMAKE_COMMAND} -E copy
+      "${BUILD_OUTDIR}/app/build/outputs/apk/modern/${RELEASE_PREFIX}/app-modern-${RELEASE_PREFIX}.apk"
       "${ANDROID_APK_FILE_OUTPUT}"
   )
   add_custom_target(

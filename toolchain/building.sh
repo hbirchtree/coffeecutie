@@ -396,12 +396,12 @@ function android_build()
         wget ${PTOOLS_URL} -O android-platform-tools.zip
         unzip android-sdk-tools.zip
         unzip android-platform-tools.zip
-        mv cmdline-tools latest
+        mkdir -p latest/cmdline-tools/
+        mv cmdline-tools latest/cmdline-tools/latest
         mv platform-tools latest/
         popd
         pushd ${ANDROID_SDK}
-        printf "y\ny\ny\ny\ny\ny\ny\ny\n" | bin/sdkmanager \
-            --sdk_root=${ANDROID_SDK} \
+        printf "y\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\n" | cmdline-tools/latest/bin/sdkmanager \
             --install build-tools\;34.0.0 \
             ndk\;25.2.9519653 \
             ndk\;26.3.11579264 \
