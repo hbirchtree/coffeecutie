@@ -409,7 +409,8 @@ function android_build()
             platforms\;android-25 \
             platforms\;android-30 \
             platforms\;android-32 \
-            platforms\;android-33
+            platforms\;android-33 \
+            platforms\;android-34
         popd
         echo "::endgroup::"
     else
