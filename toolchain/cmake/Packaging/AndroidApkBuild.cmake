@@ -229,12 +229,18 @@ function(ANDROIDAPK_PACKAGE)
 
   # For now, manage release builds through Android Studio
   set(RELEASE_PREFIX "debug")
+  if(CMAKE_BUILD_TYPE MATCHES "Rel")
+    set(APK_ASSEMBLE_TARGET release)
+  endif()
 
   set(ANDROID_APK_FILE_OUTPUT
       "${ANDROID_APK_OUTPUT_DIR}/${AAPK_DOM_NAME}.${AAPK_TARGET}_${RELEASE_PREFIX}.apk"
   )
   set(ANDROID_APK_LEGACY_FILE_OUTPUT
       "${ANDROID_APK_OUTPUT_DIR}/${AAPK_DOM_NAME}.${AAPK_TARGET}-legacy_${RELEASE_PREFIX}.apk"
+  )
+  set(ANDROID_AAB_FILE_OUTPUT
+      "${ANDROID_APK_OUTPUT_DIR}/${AAPK_DOM_NAME}.${AAPK_TARGET}_${RELEASE_PREFIX}.apk"
   )
 
   set(BUILD_OUTDIR ${ANDROID_BUILD_OUTPUT}/${AAPK_TARGET})
@@ -352,7 +358,7 @@ function(ANDROIDAPK_PACKAGE)
     TARGET "${AAPK_TARGET}.apk"
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E env GRADLE_OPTS="-Dorg.gradle.daemon=false"
-            ${BUILD_OUTDIR}/gradlew assemble${APK_ASSEMBLE_TARGET}
+            ${BUILD_OUTDIR}/gradlew assemble
     WORKING_DIRECTORY ${BUILD_OUTDIR}
   )
   add_custom_command(
@@ -373,8 +379,17 @@ function(ANDROIDAPK_PACKAGE)
             ${BUILD_OUTDIR}/gradlew install${APK_ASSEMBLE_TARGET}
     WORKING_DIRECTORY ${BUILD_OUTDIR}
   )
+  add_custom_target(
+    "${AAPK_TARGET}.aab"
+    COMMAND
+      ${CMAKE_COMMAND} -E copy
+      "${BUILD_OUTDIR}/app/modern/${RELEASE_PREFIX}/app-modern-${RELEASE_PREFIX}.aab"
+      "${ANDROID_AAB_FILE_OUTPUT}"
+    WORKING_DIRECTORY ${BUILD_OUTDIR}
+  )
 
   add_dependencies("${AAPK_TARGET}.install" "${AAPK_TARGET}.apk")
+  add_dependencies("${AAPK_TARGET}.aab" "${AAPK_TARGET}.apk")
 
   # ############################################################################
   # ############################################################################
