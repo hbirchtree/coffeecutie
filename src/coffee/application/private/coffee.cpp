@@ -344,7 +344,7 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 #endif
 #if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN)
     for(auto const& arg : arg_storage)
-        GetInitArgs().push_back(arg);
+        GetInitArgs().push_back(arg.c_str());
 #endif
 
     silent_init = (flags & SilentInit) == SilentInit;
