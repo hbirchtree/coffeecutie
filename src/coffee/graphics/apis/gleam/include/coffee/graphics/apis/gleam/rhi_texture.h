@@ -217,7 +217,7 @@ struct sampler_t
 
     inline void set_lod_bias(f32 bias)
     {
-#if GLEAM_MAX_VERSION_ES != 0x200
+#if GLEAM_MAX_VERSION != 0x0
         if(m_features.samplers)
             cmd::sampler_parameter(
                 m_handle, group::sampler_parameter_f::texture_lod_bias, bias);
