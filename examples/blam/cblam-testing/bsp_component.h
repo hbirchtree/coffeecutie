@@ -179,6 +179,13 @@ struct BlamBspWidget
                     ImGui::SliderFloat("Gamma", &postprocess->gamma, 0.1, 5.0);
                     ImGui::SliderFloat(
                         "Exposure", &postprocess->exposure, -10.f, 10.f);
+                    ImGui::SliderFloat(
+                        "Texture resolution", &rendering->tex_res, -20.f, 20.f);
+                    ImGui::SliderInt(
+                        "Texture resolution (load)",
+                        reinterpret_cast<i32*>(&rendering->mipmap_bias),
+                        0,
+                        4);
                     if(ImGui::Checkbox("Doom mode", &postprocess->doom_mode))
                         postprocess->scale =
                             postprocess->doom_mode ? 0.25f : 1.f;

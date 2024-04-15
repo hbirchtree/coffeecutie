@@ -134,6 +134,8 @@ struct RenderingParameters : compo::SubsystemBase
     bool debug_portals{false};
     bool debug_clusters{false};
     bool debug_triggers{false};
+
+    f32 tex_res{0.f};
 };
 
 struct LoadingStatus : compo::SubsystemBase

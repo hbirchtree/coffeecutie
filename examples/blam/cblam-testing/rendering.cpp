@@ -145,9 +145,10 @@ struct MeshRenderer
 
     time_point last_update{};
 
-    gfx::api*      m_api;
-    BlamResources& m_resources;
-    BlamCamera&    m_camera;
+    gfx::api*            m_api;
+    BlamResources&       m_resources;
+    RenderingParameters& m_render_params;
+    BlamCamera&          m_camera;
 
     ShaderCache<Version>& shader_cache;
     BitmapCache<Version>& bitm_cache;
@@ -161,12 +162,14 @@ struct MeshRenderer
     MeshRenderer(
         gfx::api*             api,
         BlamResources&        resources,
+        RenderingParameters&  render,
         BlamCamera&           camera,
         ShaderCache<Version>& shader_cache,
         BitmapCache<Version>& bitm_cache,
         BSPCache<Version>&    bsp_cache)
         : m_api(api)
         , m_resources(resources)
+        , m_render_params(render)
         , m_camera(camera)
         , shader_cache(shader_cache)
         , bitm_cache(bitm_cache)
@@ -308,6 +311,10 @@ struct MeshRenderer
                     PixDesc(PixFmt::RGBA8), blam::bitm::type_t::tex_cube)
                 .sampler});
 #endif
+        for(auto& sampler : samplers)
+        {
+            std::get<2>(sampler)->set_lod_bias(m_render_params.tex_res);
+        }
     }
 
     auto get_view_state(u32 player_idx)
@@ -1500,6 +1507,7 @@ void alloc_renderer(EntityContainer& container)
     container.register_subsystem_inplace<MeshRenderer<halo_version>>(
         &container.subsystem_cast<gfx::system>(),
         std::ref(container.subsystem_cast<BlamResources>()),
+        std::ref(container.subsystem_cast<RenderingParameters>()),
         std::ref(container.subsystem_cast<BlamCamera>()),
         std::ref(container.subsystem_cast<ShaderCache<halo_version>>()),
         std::ref(container.subsystem_cast<BitmapCache<halo_version>>()),

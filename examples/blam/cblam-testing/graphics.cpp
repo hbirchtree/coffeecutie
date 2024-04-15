@@ -42,8 +42,12 @@ i32 blam_main()
         cxxopts::Options options(
             "Blam! Graphics", "A prototype for a Blam! engine");
         Coffee::BaseArgParser::GetBase(options);
+        if constexpr(compile_info::implicit_resource_dir)
+            options.custom_help("[resource dir] [map file/dir] [OPTION...]");
+        else
+            options.custom_help("[map file/dir] [OPTION...]");
         options.positional_help("map name or directory");
-        options.add_options("networking")
+        options.add_options("Networking")
             //
             ("server",
              "Server to connect to on startup",
@@ -51,23 +55,15 @@ i32 blam_main()
             //
             ("listen",
              "Interface to start a server on",
-             cxxopts::value<std::string>())
-        //
-#if defined(COFFEE_CUSTOM_EXIT_HANDLING)
-                ("map", "Which map file to load", cxxopts::value<std::string>())
-#endif
-            ;
+             cxxopts::value<std::string>());
+        if constexpr(!compile_info::supports_command_line)
+            options.add_options("Game")(
+                "map", "Which map file to load", cxxopts::value<std::string>());
         auto& args = GetInitArgs();
         arguments  = options.parse(args.size(), args.data());
         if(BaseArgParser::PerformDefaults(options, args) >= 0)
             return 0;
     }
-    cDebug("Unmatched args:");
-    for(auto const& arg : arguments.unmatched())
-        cDebug(" - {}", arg);
-    cDebug("Matched args:");
-    for(auto const& arg : arguments.arguments())
-        cDebug(" - {}={}", arg.key(), arg.value());
 
     rq::runtime_queue::CreateNewQueue("Blam Graphics!").assume_value();
 #if defined(FEATURE_ENABLE_ASIO)
@@ -93,8 +89,6 @@ i32 blam_main()
     if constexpr(compile_info::debug_mode || true)
     {
         glConfig.profile |= comp_app::GLConfig::Debug;
-        // glConfig.version.major = 3;
-        // glConfig.version.minor = 2;
     }
 #endif
 
@@ -270,43 +264,26 @@ i32 blam_main()
             Url map_filename;
             Url map_dir;
 
-            if constexpr(
-                compile_info::platform::is_android ||
-                compile_info::platform::is_emscripten)
+            map_filename = MkUrl(
+                compile_info::supports_command_line
+                    ? (arguments.unmatched().size() >=
+                               (compile_info::implicit_resource_dir ? 1 : 2)
+                           ? arguments.unmatched().at(
+                                 compile_info::implicit_resource_dir ? 0 : 1)
+                           : ".")
+                : arguments.count("map") ? arguments["map"].as<std::string>()
+                                         : ".",
+                compile_info::supports_command_line ? RSCA::SystemFile
+                                                    : RSCA::AssetFile);
+            if(auto info = platform::file::file_info(map_filename);
+               info.has_value() &&
+               info.value().mode == platform::file::mode_t::directory)
             {
-#if defined(COFFEE_ANDROID)
-                map_filename = MkUrl(
-                    android::intent().extra("map").value_or("beavercreek.map"),
-                    RSCA::AssetFile);
-                map_dir = "."_asset;
-#elif defined(COFFEE_EMSCRIPTEN)
-                map_filename = MkUrl(
-                    ::emscripten::args::query_params()["map"], RSCA::AssetFile);
+                map_dir      = map_filename;
+                map_filename = {};
+            } else if(info.value().mode == platform::file::mode_t::file)
                 map_dir = map_filename.path().dirname().url(map_filename.flags);
-#else
-                map_filename = "b30.map"_asset;
-                map_dir      = "."_asset;
-#endif
-            } else if(
-                arguments.unmatched().size() >= 2 ||
-                (compile_info::platform::is_windows &&
-                 arguments.unmatched().size() >= 1))
-            {
-                auto url =
-                    MkUrl(arguments.unmatched().back(), RSCA::SystemFile);
-                if(auto info = platform::file::file_info(url);
-                   info.has_value() &&
-                   info.value().mode == platform::file::mode_t::file)
-                {
-                    map_filename = url;
-                    map_dir =
-                        map_filename.path().dirname().url(RSCA::SystemFile);
-                } else
-                    map_dir = url;
-            } else
-            {
-                map_dir = "."_asset;
-            }
+
             GameEvent    event{GameEvent::MapLoadStart};
             MapLoadEvent load{
                 .directory = map_dir,

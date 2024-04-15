@@ -215,6 +215,17 @@ struct sampler_t
 #endif
     }
 
+    inline void set_lod_bias(f32 bias)
+    {
+#if GLEAM_MAX_VERSION_ES != 0x200
+        if(m_features.samplers)
+            cmd::sampler_parameter(
+                m_handle, group::sampler_parameter_f::texture_lod_bias, bias);
+        else
+#endif
+            m_lodBias = bias;
+    }
+
     inline void set_lod(typing::vector_types::Vecf2 const& range)
     {
 #if GLEAM_MAX_VERSION_ES != 0x200
@@ -330,6 +341,7 @@ struct sampler_t
     hnd                         m_handle;
     textures::type              m_type{textures::type::d2};
     typing::vector_types::Vecf2 m_lodRange{0, 0};
+    f32                         m_lodBias{0.f};
     typing::Filtering           m_mag{typing::Filtering::Linear};
     typing::Filtering           m_min{typing::Filtering::Linear};
     typing::Filtering           m_mip{typing::Filtering::None};

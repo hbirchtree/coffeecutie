@@ -325,6 +325,28 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     for(auto i : stl_types::range(argc))
         GetInitArgs().push_back(argv[i]);
 
+#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN)
+    static std::vector<std::string> arg_storage;
+#endif
+#if defined(COFFEE_ANDROID)
+    for(auto const& [key, value] : android::intent().extras())
+    {
+        arg_storage.push_back(fmt::format("--{}", key));
+        arg_storage.push_back(value);
+    }
+#endif
+#if defined(COFFEE_EMSCRIPTEN)
+    for(auto const& [key, value] : emscripten::args::query_params())
+    {
+        arg_storage.push_back(fmt::format("--{}", key));
+        arg_storage.push_back(value);
+    }
+#endif
+#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN)
+    for(auto const& arg : arg_storage)
+        GetInitArgs().push_back(arg);
+#endif
+
     silent_init = (flags & SilentInit) == SilentInit;
 
     if constexpr(!compile_info::lowfat_mode)
@@ -562,29 +584,30 @@ namespace BaseArgParser {
 
 cxxopts::Options& GetBase(cxxopts::Options& parser)
 {
-    parser
-#if !defined(COFFEE_WINDOWS) && !defined(COFFEE_APPLE)
-        .positional_help("resource prefix")
-#endif
-        .add_options("engine")
+    if constexpr(compile_info::implicit_resource_dir)
+        parser.positional_help("resource prefix")
+            .custom_help("[resource dir] [OPTION...]");
+    parser.add_options("Engine")
         //
         ("h,help", "Print help and exit")
         //
         ("version", "Print version information and exit")
         //
-        ("v", "Increase logging verbosity by 1")
-        //
         ("q,quiet", "Disable log output")
         //
         ("licenses", "Print license information and exit")
-    //
-#if PERIPHERAL_PROFILER_ENABLED
-            ("deep-profile", "Enable deep profiling")
-#endif
+        //
+        ;
+    parser.add_options("Logging")
+        //
+        ("v", "Increase logging verbosity by 1")
         //
         ("json", "Log output as JSON")
         //
         ;
+#if PERIPHERAL_PROFILER_ENABLED
+    parser.add_options("Profiling")("deep-profile", "Enable deep profiling");
+#endif
 
     return parser;
 }

@@ -240,6 +240,24 @@ constexpr bool internal_build =
 #endif
     ;
 
+constexpr bool implicit_resource_dir =
+#if defined(COFFEE_WINDOWS) || defined(COFFEE_APPLE) ||      \
+    defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID) || \
+    defined(COFFEE_GEKKO)
+    true
+#else
+    false
+#endif
+    ;
+
+constexpr bool supports_command_line =
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID)
+    false
+#else
+    true
+#endif
+    ;
+
 /*
  * Platform identifiers
  *
