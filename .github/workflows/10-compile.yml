@@ -78,6 +78,7 @@ jobs:
         java-version: '17'
     - name: Installing build-essential
       run: |
+        sudo rm /etc/apt/sources.list.d/microsoft-prod.list
         sudo apt-get update
         sudo apt install build-essential inkscape flatpak nasm squashfs-tools
     - name: Host tools cache
