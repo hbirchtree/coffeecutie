@@ -1,10 +1,12 @@
 #version 460 core
 
+#extension GL_GOOGLE_include_directive : enable
+
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 tex;
-layout(location = 2) in vec3 normal;
-layout(location = 3) in vec3 binormal;
-layout(location = 4) in vec3 tangent;
+layout(location = 2) in uint normal;
+layout(location = 3) in uint binormal;
+layout(location = 4) in uint tangent;
 
 layout(binding = 0, std140) uniform MatrixStore
 {
@@ -29,6 +31,8 @@ out gl_PerVertex {
     vec4 gl_Position;
 };
 
+#include "fragments/unpack_uvec3.glsl"
+
 void main()
 {
     mat4 transform = matrices.transform[gl_InstanceID];
@@ -36,9 +40,9 @@ void main()
     vec4 world_pos = transform * vec4(position, 1);
     frag.tex = tex;
     frag.instanceId = gl_InstanceID;
-    frag.tangent = (transform * vec4(tangent, 0.0)).xyz;
-    frag.binormal = (transform * vec4(binormal, 0.0)).xyz;
-    frag.normal = (transform * vec4(normal, 0.0)).xyz;
+    frag.tangent = (transform * vec4(unpack_uvec3(tangent), 0.0)).xyz;
+    frag.binormal = (transform * vec4(unpack_uvec3(binormal), 0.0)).xyz;
+    frag.normal = (transform * vec4(unpack_uvec3(normal), 0.0)).xyz;
     frag.position = world_pos.xyz * -1;
     gl_Position = camera * world_pos;
 }

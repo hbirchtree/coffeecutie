@@ -3,7 +3,9 @@
 layout(location = 0) in FragData {
     vec3 position;
     vec2 tex;
-    mat3 tbn;
+    vec3 tangent;
+    vec3 binormal;
+    vec3 normal;
     vec2 light_tex;
     flat int instanceId;
 } frag;
@@ -55,16 +57,25 @@ layout(binding = 2, std140) uniform WorldProperties
 const uint INTERIOR_LIGHTING = 0u;
 const uint EXTERIOR_LIGHTING = 1u;
 
+mat3 tbn_matrix()
+{
+    return mat3(frag.tangent, frag.binormal, frag.normal);
+}
+
 vec3 view_direction()
 {
-    return normalize(frag.tbn * (camera_position - frag.position));
+    return normalize(
+            tbn_matrix() *
+            (camera_position.xzy - frag.position.xzy)
+        ) *
+        vec3(1, -1, -1);
 }
 vec3 light_direction()
 {
     vec3 direction = world.lighting[INTERIOR_LIGHTING].light_direction.xyz;
     return normalize(
-        transpose(frag.tbn) *
-        direction * -1);
+        transpose(tbn_matrix()) *
+        direction);
 }
 
 vec4 sample_map(
@@ -148,8 +159,9 @@ vec4 get_cube_color(in vec3 tex_coord)
 vec4 get_bump(in uint map_id, in vec2 offset)
 {
     vec3 normal = normalize(get_color_with_offset(map_id, offset).rgb * 2.0 - 1.0);
-    normal = frag.tbn * normal;
-    return vec4(normal, dot(normal, -light_direction()));
+    normal = /*tbn_matrix() **/ normal;
+    return vec4(normal, dot(normal, light_direction()));
+    // return vec4(normal, dot(normal, light_direction()));
 }
 #endif
 
@@ -205,7 +217,7 @@ vec4 shader_environment()
     if(reflective > 0)
     {
         uint reflect_flags = uint((mats.instance[frag.instanceId].material.flags >> 7) & 0x3);
-        reflection = get_cube_color(view_direction() * vec3(1, -1, 1)).rgb;
+        reflection = get_cube_color(view_direction()).rgb;
 
         vec4 perp_color = mats.instance[frag.instanceId].material.input2;
         vec4 parallel_color = mats.instance[frag.instanceId].material.input3;
@@ -244,6 +256,7 @@ vec4 shader_environment()
 #endif
 #if USE_NORMALMAP == 1
         max(0.1, normal.a) *
+        // normal.rgb *
 #endif
         vec3(1),
         1.0
@@ -527,24 +540,26 @@ vec4 shader_model()
         discard;
 
     /* These are shamelessly stolen from the original shader */
-    vec4 primary_change_color = vec4(1) - vec4(vec3(1), 0); // cb[0]
+    // vec4 primary_change_color = vec4(1) - vec4(vec3(1), 0); // cb[0]
     vec4 fog_color_correction_0 = vec4(0, 0, 0, 1); // cb[1]
     vec4 fog_color_correction_E = vec4(0, 0, 0, 1); // cb[2]
     vec4 fog_color_correction_1 = vec4(0, 0, 0, 1); // cb[3]
     vec4 self_illum_color = vec4(0); // cb[4]
     vec4 fog_color = vec4(0); // cb[5]
+    vec4 primary_change_color = mats.instance[frag.instanceId].material.input2;
 
-    vec4 coloring = vec4(1) * primary_change_color;
+    // vec4 coloring = vec4(1) * primary_change_color;
 
-    vec4 multi = get_color(multi_map_id).bgra;
+    vec4 multi = get_color(multi_map_id);
+
     // HLSL does some vec4 -> vec2 cast here, so this might be wrong
-    vec3 specular = vec3(multi.xz - multi.zw, 0); // add r3.xy, -r2.zwzz, r2.xzxx
-    multi.xz = fog_color_correction_1.x * specular.xy + multi.zw; // mad r1.xyz, fog_color_correction_1.w, r3.xxyx, r2.zzwz
-    specular.xyz = clamp(multi.y * self_illum_color.rgb + 1, 0, 1);
-    coloring.rgb = coloring.rgb * multi.z + 1;
-    float specular_contribution = 0.8;
-    coloring.a = multi.r * specular_contribution;
-    coloring.rgb = coloring.rgb * specular.xyz;
+    // vec3 specular = vec3(multi.xy - multi.xw, 0); // add r3.xy, -r2.zwzz, r2.xzxx
+    // multi.xz = fog_color_correction_1.x * specular.xy + multi.zw; // mad r1.xyz, fog_color_correction_1.w, r3.xxyx, r2.zzwz
+    // specular.xyz = clamp(multi.z * self_illum_color.rgb + 1, 0, 1);
+    // coloring.rgb = coloring.rgb * multi.z + 1;
+    float specular_contribution = multi.w * 0.8;
+    // coloring.a = multi.r * specular_contribution;
+    // coloring.rgb = coloring.rgb * specular.xyz;
 
 #if USE_REFLECTIONS == 1
     vec3 reflection = get_cube_color(view_direction()).rgb;
@@ -553,18 +568,24 @@ vec4 shader_model()
 #endif
 
     // mul r2.xyz, r2.xyz, v2.xyz
-    reflection = reflection * coloring.a;
-    color.rgb = clamp(color.rgb /** coloring.rgb*/ + reflection.rgb, 0, 1);
+    // reflection = reflection * specular_contribution;
+    color.rgb = clamp(color.rgb
+        /*+ coloring.rgb*/
+        /*+ reflection.rgb*/, 0, 1);
 
     vec4 detail = get_color(detail_map_id);
 //    color.rgb = detail.rgb * 2 + color.rgb;
 //    color.rgb = clamp(color.rgb - 1, 0, 1);
 
     return vec4(
-        color.rgb *
+        // multi.rgb *
+        mix(
+            color.rgb,
+            primary_change_color.rgb,
+            multi.z * primary_change_color.a) *
         detail.rgb *
 #if USE_REFLECTIONS == 1
-//        mix(vec3(1), reflection, reflection_factor) *
+       mix(vec3(1), reflection, multi.z) *
 #endif
         1, color.a);
 }

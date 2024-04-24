@@ -6,7 +6,11 @@ varying vec3 frag_normal;
 varying vec2 frag_light_tex;
 varying float frag_instanceId;
 
+uniform sampler2D base_map;
+uniform sampler2D lightmap;
+
 void main()
 {
-    gl_FragColor = vec4(frag_normal, 1.0);
+    vec3 base_color = texture2D(base_map, frag_tex).rgb;
+    gl_FragColor = vec4(base_color + frag_normal / 8.0, 1.0);
 }

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "blam_base_types.h"
 #include "blam_tag_classes.h"
@@ -23,6 +23,7 @@ enum class detail_map_function : u32
     multiply,
     biased_add,
 };
+
 enum class animation_function : u16
 {
     one,
@@ -38,6 +39,9 @@ enum class animation_function : u16
     wander,
     spark,
 };
+
+/* TODO: Find all places that secretly use these */
+
 enum class animation_src : u16
 {
     none,
@@ -46,6 +50,20 @@ enum class animation_src : u16
     C_out,
     D_out,
 };
+
+enum class param_src : u16
+{
+    none,
+    A_in,
+    B_in,
+    C_in,
+    D_in,
+    A_out,
+    B_out,
+    C_out,
+    D_out,
+};
+
 enum class reflection_map_type : u16
 {
     bumped_cube,
@@ -654,13 +672,6 @@ struct alignas(4) shader_model : radiosity_properties /* aka soso */
         true_atmospheric_fog      = 0x10,
         disable_two_sided_culling = 0x20,
     };
-    enum class color_src : u32
-    {
-        A_out,
-        B_out,
-        C_out,
-        D_out,
-    };
     enum class self_illum_flags : u32
     {
         none            = 0x0,
@@ -671,12 +682,18 @@ struct alignas(4) shader_model : radiosity_properties /* aka soso */
     u32         padding_1[4];
     f32         translucency;
 
-    struct
-    {
-        color_src src;
-    } change_color;
+    u32 padding_2[4];
 
-    u32 padding_2[23];
+    enum class change_color_t : u32
+    {
+        none,
+        A,
+        B,
+        C,
+        D,
+    } change_color_src;
+
+    u32 padding_3[19];
 
     struct maps_t
     {
@@ -699,7 +716,7 @@ struct alignas(4) shader_model : radiosity_properties /* aka soso */
         } detail;
     } maps;
 
-    u32 padding_3[19];
+    u32 padding_4[19];
 
     struct reflection_t
     {
@@ -712,7 +729,7 @@ struct alignas(4) shader_model : radiosity_properties /* aka soso */
         tagref_typed_t<tag_class_t::bitm> reflection;
     } reflection;
 
-    u32 padding_4[17];
+    u32 padding_5[17];
 };
 
 static_assert(offsetof(shader_model, translucency) == 56);

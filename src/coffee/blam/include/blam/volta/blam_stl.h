@@ -286,6 +286,15 @@ class tag_index_view
         return out.value();
     }
 
+    template<typename Key>
+    std::optional<tag_t const*> tag_of(Key const& key) const
+    {
+        auto it = find(key);
+        if(it == end())
+            return std::nullopt;
+        return &(*it);
+    }
+
     template<typename T, typename Key>
     requires(
         !std::is_same_v<T, bitm::header_t> && !std::is_same_v<T, sound::sound>)

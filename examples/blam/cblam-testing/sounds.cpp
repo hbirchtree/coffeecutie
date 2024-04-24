@@ -18,7 +18,7 @@ using Coffee::Logging::cDebug;
 
 using SoundManifest = compo::SubsystemManifest<
     type_list_t<SoundEffects>,
-    type_list_t<LoadingStatus>,
+    type_list_t<LoadingStatus, SoundPreferences>,
     empty_list_t>;
 
 enum class status_t
@@ -79,6 +79,11 @@ struct SoundSystem
 
     void start_restricted(Proxy& p, compo::time_point const& t)
     {
+        SoundPreferences* sound_pref{};
+        p.subsystem(sound_pref);
+        snd.listener().set_property<oaf::listener_property::gain>(
+            sound_pref->master_volume);
+
         if(!queued_events.empty() &&
            loading->loaded_sounds == LoadingStatus::loaded)
         {
@@ -112,7 +117,7 @@ struct SoundSystem
                     src->queue(*buffer.buffer);
                     src->template set_property<oaf::source_property::gain>(
                         buffer.sound->gain_modifier);
-                    // cDebug("Queueing {}", i);
+                    cDebug("Queueing {}", i);
                     buffer.status  = status_t::queued;
                     track.position = i;
                     break;
@@ -122,11 +127,10 @@ struct SoundSystem
                     auto [queued, processed] = src->buffer_queue();
                     if(queued != processed)
                     {
-                        // cDebug("Waiting for {} to play", i);
                         track.position = i;
                         break;
                     }
-                    // cDebug("Finished playing {}", i);
+                    cDebug("Finished playing {}", i);
                     src->unqueue(*buffer.buffer);
                     buffer.status =
                         buffer.looping ? status_t::unplayed : status_t::played;
@@ -134,16 +138,15 @@ struct SoundSystem
                 }
                 if(buffer.status == status_t::played)
                 {
-                    // cDebug("Cleaning up {}", i);
+                    cDebug("Freeing up {}", i);
                     buffer.buffer.reset();
                     deletions.push_back(i);
-                    continue;
                 }
             }
             if(track.position == track.buffers.size())
                 track.position = 0;
-            for(auto const& i : deletions | std::views::reverse)
-                track.buffers.erase(track.buffers.begin() + i);
+            // for(auto const& i : deletions | std::views::reverse)
+            //     track.buffers.erase(track.buffers.begin() + i);
         }
     }
 
@@ -157,7 +160,7 @@ struct SoundSystem
         track_t::entry_t const&        props)
     {
         auto const& [tag, sound, heap] = sound_;
-        auto ranges = *sound->pitch_ranges(heap);
+        auto ranges                    = *sound->pitch_ranges(heap);
         if(ranges.empty())
             return;
         auto perms = *ranges[0].permutations(heap);
@@ -283,6 +286,7 @@ struct SoundSystem
 
 void alloc_sound_system(compo::EntityContainer& e)
 {
+    e.register_subsystem_inplace<SoundPreferences>();
     auto& sound_sys = e.register_subsystem_inplace<SoundSystem<halo_version>>(
         std::ref(e.subsystem_cast<oaf::system>()),
         std::ref(e.subsystem_cast<SoundCache<halo_version>>()),

@@ -28,4 +28,11 @@ struct PlaySoundEvent
     compo::time_point     time{};
 };
 
+struct SoundPreferences : compo::SubsystemBase
+{
+    using type = SoundPreferences;
+
+    f32 master_volume{1.f};
+};
+
 void alloc_sound_system(compo::EntityContainer& e);

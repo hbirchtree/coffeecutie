@@ -865,8 +865,12 @@ struct MeshRenderer
                 pass.draws[track.model_id.bucket].at(track.model_id.draw);
             auto instance_id = draw.instances.offset + track.model_id.instance;
             pass.matrix_mapping[instance_id] = model.transform;
+            auto name = model.origin_object->to_name().to_string(shader_cache.magic);
             populate_mod2_material(
-                smodel, model_cache->find(model.model)->second, instance_id);
+                smodel,
+                model_cache->find(model.model)->second,
+                model_context(model.origin_object),
+                instance_id);
         }
 
         m_resources.model_matrix_store->unmap();
@@ -948,13 +952,31 @@ struct MeshRenderer
         bitm_cache.assign_atlas_data(material.lightmap, ref.lightmap);
     }
 
+    std::optional<ShaderCache<halo_version>::material_context> model_context(
+        blam::tag_t const* tag)
+    {
+        switch(tag->tag_class())
+        {
+        case blam::tag_class_t::bipd:
+        case blam::tag_class_t::vehi:
+        case blam::tag_class_t::scen:
+            return tag->template data<blam::scn::unit>(shader_cache.magic)
+                .value();
+        default:
+            return std::nullopt;
+        }
+    }
+
     void populate_mod2_material(
-        SubModel const& sub, ModelItem<Version> const& model, size_t i = 0)
+        SubModel const&                                            sub,
+        ModelItem<Version> const&                                  model,
+        std::optional<ShaderCache<halo_version>::material_context> context,
+        size_t                                                     i = 0)
     {
         Pass&                   pass     = m_model[sub.current_pass];
         materials::shader_data& material = pass.material_of(i);
         shader_cache.populate_material(
-            material, sub.shader, model.header->uvscale);
+            material, sub.shader, model.header->uvscale, context);
     }
 
     void update_animations(

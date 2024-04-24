@@ -134,7 +134,9 @@ struct Model
     generation_idx_t                              model;
     std::vector<ERef>                             parts;
     semantic::mem_chunk<blam::mod2::region const> regions;
-    blam::tag_t const*                            tag = nullptr;
+
+    blam::tag_t const* tag{nullptr};
+    blam::tag_t const* origin_object{nullptr};
 
     bool visible{true};
 
@@ -335,7 +337,7 @@ struct Cluster
 
     blam::bsp::cluster const* cluster;
     u32                       id;
-    
+
     bool contains(Matf4 const& transform, blam::map_ptr const& magic) const
     {
         auto subclusters_ = cluster->sub_clusters.data(magic);
@@ -412,7 +414,7 @@ struct PlayerInfo
 struct SoundEffects
 {
     using value_type = SoundEffects;
-    using type = compo::alloc::VectorContainer<value_type>;
+    using type       = compo::alloc::VectorContainer<value_type>;
 
     std::vector<generation_idx_t> tracks; /* sound effects/music to play */
 };

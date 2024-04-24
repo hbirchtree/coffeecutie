@@ -54,8 +54,8 @@ void create_resources(compo::EntityContainer& e)
             0, [&e](CIEvent&, CIDropEvent* drop) {
                 if(!drop->file)
                     return;
-                GameEvent    ev{.type = GameEvent::MapLoadStart};
-                MapLoadEvent load{.file = *drop->file};
+                GameEvent     ev{.type = GameEvent::MapLoadStart};
+                MapLoadEvent  load{.file = *drop->file};
                 GameEventBus& gbus = e.subsystem_cast<GameEventBus>();
                 gbus.process(ev, &load);
             });
@@ -400,6 +400,10 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
     using namespace std::string_view_literals;
     using platform::url::constructors::MkUrl;
 
+    const auto map_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
+                                ? "map_xbox"sv
+                                : "map"sv;
+
     std::array<shader_pair_t, 4> shaders = {{
         {
             .vertex_file   = "debug_lines"sv,
@@ -412,12 +416,12 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
             .shader        = resources.model_pipeline,
         },
         {
-            .vertex_file   = "map"sv,
+            .vertex_file   = map_vertex,
             .fragment_file = "map_uber"sv,
             .shader        = resources.bsp_pipeline,
         },
         {
-            .vertex_file   = "map"sv,
+            .vertex_file   = map_vertex,
             .fragment_file = "wireframe"sv,
             .shader        = resources.wireframe_pipeline,
         },
@@ -431,6 +435,10 @@ static void create_uber_lite_shaders(gfx::api& api, BlamResources& resources)
     using namespace std::string_view_literals;
     using platform::url::constructors::MkUrl;
 
+    const auto map_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
+                                ? "map_xbox"sv
+                                : "map"sv;
+
     std::array<shader_pair_t, 4> shaders = {{
         {
             .vertex_file   = "debug_lines"sv,
@@ -443,12 +451,12 @@ static void create_uber_lite_shaders(gfx::api& api, BlamResources& resources)
             .shader        = resources.model_pipeline,
         },
         {
-            .vertex_file   = "map"sv,
+            .vertex_file   = map_vertex,
             .fragment_file = "map_uber_lite"sv,
             .shader        = resources.bsp_pipeline,
         },
         {
-            .vertex_file   = "map"sv,
+            .vertex_file   = map_vertex,
             .fragment_file = "wireframe"sv,
             .shader        = resources.wireframe_pipeline,
         },
@@ -462,6 +470,10 @@ static void create_standard_shaders(gfx::api& api, BlamResources& resources)
     using namespace std::string_view_literals;
     using platform::url::constructors::MkUrl;
 
+    const auto map_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
+                                ? "map_xbox"sv
+                                : "map"sv;
+
     std::array<shader_pair_t, 4> shaders = {{
         {
             .vertex_file   = "debug_lines"sv,
@@ -469,12 +481,14 @@ static void create_standard_shaders(gfx::api& api, BlamResources& resources)
             .shader        = resources.debug_lines_pipeline,
         },
         {
-            .vertex_file   = "scenery"sv,
+            .vertex_file   = std::is_same_v<halo_version, blam::xbox_version_t>
+                                 ? "scenery_xbox"sv
+                                 : "scenery"sv,
             .fragment_file = "scenery"sv,
             .shader        = resources.model_pipeline,
         },
         {
-            .vertex_file   = "map"sv,
+            .vertex_file   = map_vertex,
             .fragment_file = "map"sv,
             .shader        = resources.bsp_pipeline,
         },

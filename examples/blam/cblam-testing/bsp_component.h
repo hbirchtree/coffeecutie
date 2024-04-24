@@ -19,7 +19,8 @@ using BlamBspWidgetManifest = compo::SubsystemManifest<
         BlamCamera,
         BlamResources,
         PostProcessParameters,
-        RenderingParameters>,
+        RenderingParameters,
+        SoundPreferences>,
     empty_list_t>;
 
 template<typename V>
@@ -198,6 +199,14 @@ struct BlamBspWidget
                         create_shaders(e.underlying());
                     }
                     ImGui::Columns();
+                    ImGui::EndTabItem();
+                }
+                if(ImGui::BeginTabItem("Sound"))
+                {
+                    SoundPreferences* pref;
+                    e.subsystem(pref);
+                    ImGui::SliderFloat(
+                        "Master volume", &pref->master_volume, 0.f, 1.f);
                     ImGui::EndTabItem();
                 }
                 ImGui::EndTabBar();

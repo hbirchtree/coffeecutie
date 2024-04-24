@@ -2,6 +2,7 @@
 
 #include "materials.h"
 #include "selected_version.h"
+#include <coffee/graphics/apis/gleam/rhi_texture_atlas.h>
 
 #include <magic_enum.hpp>
 
@@ -642,7 +643,8 @@ template<typename V>
 void ShaderCache<V>::populate_material(
     materials::shader_data&            mat,
     const generation_idx_t&            shader_id,
-    const typing::vector_types::Vecf2& base_map_scale)
+    const typing::vector_types::Vecf2& base_map_scale,
+    std::optional<material_context>    context)
 {
     using blam::tag_class_t;
     using namespace blam::shader;
@@ -857,12 +859,13 @@ void ShaderCache<V>::populate_material(
     case tag_class_t::soso: {
         shader_model const* info =
             shader.header->as<blam::shader::shader_model>();
+
         bitm_cache.assign_atlas_data(mat.maps[0], shader.soso.base_bitm);
         mat.maps[0].uv_scale = base_map_scale;
         mat.maps[0].bias     = 2;
 
         bitm_cache.assign_atlas_data(mat.maps[1], shader.soso.multi_bitm);
-        mat.maps[1].uv_scale = Vecf2(1);
+        mat.maps[1].uv_scale = base_map_scale;
         mat.maps[1].bias     = 2;
 
         auto* detail =
@@ -877,6 +880,33 @@ void ShaderCache<V>::populate_material(
             bitm_cache.get_atlas_layer(shader.soso.reflection_bitm);
         if(mat.lightmap.reflection != 0)
             mat.material.flags |= 0x1;
+
+        mat.material.inputs[0] = Vecf4(Vecf3(1.f), 0.f);
+        using change_color_t   = blam::shader::shader_model::change_color_t;
+        if(context.has_value())
+        {
+            do
+            {
+                if(info->change_color_src == change_color_t::none)
+                    break;
+                auto unit   = std::get<blam::scn::unit const*>(*context);
+                auto colors = unit->change_colors.data(magic).value();
+                if(colors.empty())
+                    break;
+                auto i = static_cast<u32>(info->change_color_src) - 1u;
+                if((i + 1) > colors.size())
+                    break;
+                auto perms = colors[i].permutations.data(magic).value();
+                if(perms.empty())
+                {
+                    mat.material.inputs[0] = Vecf4(colors[i].lower_bound, 1.f);
+                    break;
+                }
+                // TODO: Figure out what weights on permutations actually mean
+                // The game doesn't use them, but chooses one that's not [0]
+                mat.material.inputs[0] = Vecf4(perms[0].upper_bound, 1.f);
+            } while(false);
+        }
 
         mat.material.material = materials::id::soso;
         break;
@@ -894,7 +924,8 @@ void ShaderCache<V>::populate_material(
 template void ShaderCache<halo_version>::populate_material(
     materials::shader_data&            mat,
     const generation_idx_t&            shader_id,
-    const typing::vector_types::Vecf2& base_map_scale);
+    const typing::vector_types::Vecf2& base_map_scale,
+    std::optional<material_context>    context);
 
 template<typename V>
 void BitmapCache<V>::allocate_storage()
@@ -974,7 +1005,7 @@ void BitmapCache<V>::allocate_storage()
                 img->mipmaps.last =
                     params->mipmap_bias +
                     std::min<i32>(
-                        5, img->image.mip->mipmaps - params->mipmap_bias);
+                        8, img->image.mip->mipmaps - params->mipmap_bias);
             } else
             {
                 img->mipmaps.base = 0;

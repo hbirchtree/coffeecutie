@@ -32,15 +32,22 @@ using vec3_i16 = typing::vector_types::tvec3<i16>;
 
 template<typename V>
 requires is_vert_compression<V>
-using normal_type = std::
-    conditional_t<std::is_same_v<V, uncompressed>, Vecf3, typing::pixels::f11>;
+using normal_type = std::conditional_t<
+    std::is_same_v<V, uncompressed>,
+    Vecf3, /* Uncompressed is simple enough, even readable from a debugger */
+    typing::pixels::r11g11b10u /* I think when Guerilla says it's 11/11/10-bit,
+           it means they're unsigned int components. These are however not
+           supported by OpenGL, so we'll probably have to parse them on the CPU
+           before writing them to the GPU.
+         */
+    >;
 
 template<typename V>
 requires is_vert_compression<V>
 struct alignas(4) vertex
 {
     Vecf3          position;
-    normal_type<V> normal; /* TODO: Fix Xbox normals, they're *not* f11 */
+    normal_type<V> normal;
     normal_type<V> binorm;
     normal_type<V> tangent;
     Vecf2          texcoord;
@@ -111,7 +118,7 @@ template<typename RType>
 struct light_vertex<RType, false>
 {
     // Compressed Xbox variant
-    typing::pixels::f11              normal;   /*!< PixFmt::R11G11B10F */
+    typing::pixels::r11g11b10u       normal;   /*!< R11G11B10 */
     typing::vectors::tvector<i16, 2> texcoord; /*!< PixFmt::R16, Normalized */
 };
 

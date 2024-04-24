@@ -50,6 +50,8 @@ constexpr inline std::pair<semantic::TypeEnum, vattribute_flags> type_of()
         return {E::UByte, vattribute_flags::none};
     if constexpr(std::is_same_v<T, typing::pixels::f11>)
         return {E::Packed_UFloat, vattribute_flags::packed};
+    if constexpr(std::is_same_v<T, typing::pixels::r11g11b10u>)
+        return {E::UInt, vattribute_flags::none};
 }
 
 template<typename T>
@@ -97,6 +99,13 @@ requires std::is_same_v<T, typing::pixels::f11>
 inline std::tuple<semantic::TypeEnum, vattribute_flags, u32> vector_info_of()
 {
     return {semantic::TypeEnum::Packed_UFloat, vattribute_flags::packed, 3};
+}
+
+template<typename T>
+requires std::is_same_v<T, typing::pixels::r11g11b10u>
+inline std::tuple<semantic::TypeEnum, vattribute_flags, u32> vector_info_of()
+{
+    return {semantic::TypeEnum::UInt, vattribute_flags::none, 1};
 }
 
 constexpr inline bool vertex_is_int_type(semantic::TypeEnum type)
@@ -314,7 +323,7 @@ struct vertex_array_t
                     attribute.index,
                     attribute.value.count,
                     convert::to<group::vertex_attrib_int>(attribute.value.type),
-                    attribute.value.stride);
+                    attribute.value.offset);
             else
                 cmd::vertex_array_attrib_format(
                     m_handle,

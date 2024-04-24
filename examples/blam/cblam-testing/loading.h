@@ -253,14 +253,7 @@ void load_scenario_bsp(
 
     for(auto const& mesh_id : bsp_meshes)
     {
-        auto mesh_it = bsp_cache.find(mesh_id);
-        if(mesh_it == bsp_cache.end())
-        {
-            cDebug("Failed to find BSP mesh: {}:{}", mesh_id.gen, mesh_id.i);
-            continue;
-        }
-        auto const& bsp = mesh_it->second;
-
+        auto const& bsp = bsp_cache.get(mesh_id);
         for(auto const& group : bsp.groups)
             for(BSPItem::Mesh const& mesh : group.meshes)
             {
@@ -273,12 +266,11 @@ void load_scenario_bsp(
                 bsp_ref.visible  = true;
                 bsp_ref.draw.data.push_back(mesh.draw);
 
-                ShaderData&       shader_ = mesh_ent.get<ShaderData>();
-                ShaderItem const& shader_it =
-                    shader_cache.find(mesh.shader)->second;
-                shader_.shader     = shader_it.header;
-                shader_.shader_tag = shader_it.tag;
-                shader_.shader_id  = mesh.shader;
+                ShaderData&       shader_   = mesh_ent.get<ShaderData>();
+                ShaderItem const& shader_it = shader_cache.get(mesh.shader);
+                shader_.shader              = shader_it.header;
+                shader_.shader_tag          = shader_it.tag;
+                shader_.shader_id           = mesh.shader;
 
                 //                DepthInfo&    depth    =
                 //                mesh_ent.get<DepthInfo>(); depth.position =
@@ -310,7 +302,7 @@ void load_objects(
         type_hash_v<ObjectSpawn>(),
         type_hash_v<DepthInfo>(),
     };
-    parent.tags = tags;
+    parent.tags = tags | ObjectGC;
 
     EntityRecipe submodel;
     submodel.components = {
@@ -339,12 +331,12 @@ void load_objects(
 
         blam::tagref_t const& tagref = palette[instance.ref][0];
 
-        auto instance_it = index.find(tagref);
+        auto instance_it = index.tag_of(tagref);
 
-        if(instance_it == index.end())
+        if(!instance_it.has_value())
             continue;
 
-        auto instance_tag = &(*instance_it);
+        auto const* instance_tag = *instance_it;
 
         if(!instance_tag->valid())
             continue;
@@ -365,12 +357,18 @@ void load_objects(
         ObjectSpawn& spawn   = parent_.get<ObjectSpawn>();
         DepthInfo&   depth   = parent_.get<DepthInfo>();
 
-        spawn.tag    = instance_tag;
-        spawn.header = &instance;
-        model.tag    = &(*model_it);
-        model.model  = mesh_data.models.at(0);
+        spawn.tag           = instance_tag;
+        spawn.header        = &instance;
+        model.tag           = &(*model_it);
+        model.model         = mesh_data.models.at(0);
+        model.origin_object = instance_tag;
         model.initialize(&instance);
         depth.position = model.position;
+
+        auto mod_name = model.tag->to_name().to_string(magic);
+        auto tag_name = instance_tag->to_name().to_string(magic);
+        if(mod_name == "scenery\\c_storage\\c_storage")
+            cDebug("Halt!!!");
 
         NetworkInfo& netinfo = parent_.get<NetworkInfo>();
         netinfo.object       = tagref;
@@ -378,9 +376,7 @@ void load_objects(
 
         for(auto const& model_ : mesh_data.models)
         {
-            ModelItem<Version> const& modelit =
-                model_cache.find(model_)->second;
-
+            ModelItem<Version>& modelit = model_cache.get(model_);
             for(auto const& sub : modelit.mesh.sub)
             {
                 if(!sub.shader.valid())
@@ -393,9 +389,8 @@ void load_objects(
                 submod_.parent = parent_.id();
                 submod_.initialize<Version>(model_, sub);
 
-                ShaderData&       shader_ = submod.get<ShaderData>();
-                ShaderItem const& shader_it =
-                    shader_cache.find(sub.shader)->second;
+                ShaderData&       shader_   = submod.get<ShaderData>();
+                ShaderItem const& shader_it = shader_cache.get(sub.shader);
                 shader_.initialize(shader_it, submod_);
 
                 submod_.current_pass = shader_.get_render_pass(shader_cache);
@@ -427,7 +422,7 @@ void load_multiplayer_equipment(
         type_hash_v<NetworkInfo>(),
         type_hash_v<MultiplayerSpawn>(),
     };
-    equip.tags = tags;
+    equip.tags = tags | ObjectGC;
 
     EntityRecipe submodel;
     submodel.components = {
@@ -459,9 +454,10 @@ void load_multiplayer_equipment(
             case blam::tag_class_t::weap:
             case blam::tag_class_t::eqip: {
                 blam::scn::item const& item =
-                    (*index.find(item_perm.item))
-                        .template data<blam::scn::item>(magic)
-                        .value()[0];
+                    *index.template data<blam::scn::item>(item_perm.item)
+                         .value();
+                blam::tag_t const* item_tag =
+                    index.tag_of(item_perm.item).value();
 
                 if(!item.model.valid())
                     continue;
@@ -474,7 +470,8 @@ void load_multiplayer_equipment(
                 spawn.spawn      = &equipment_ref;
                 spawn.collection = &item_coll;
                 model_.initialize(&equipment_ref);
-                model_.tag = &(*index.find(item.model));
+                model_.tag           = *index.tag_of(item.model);
+                model_.origin_object = item_tag;
 
                 NetworkInfo& netinfo = set.get<NetworkInfo>();
                 netinfo.object       = item_perm.item;
@@ -485,9 +482,8 @@ void load_multiplayer_equipment(
 
                 for(auto const& model : models.models)
                 {
-                    ModelItem<Version> const& modelit =
-                        model_cache.find(model)->second;
-                    model_.model = model;
+                    ModelItem<Version>& modelit = model_cache.get(model);
+                    model_.model                = model;
 
                     for(auto const& sub : modelit.mesh.sub)
                     {
@@ -501,7 +497,7 @@ void load_multiplayer_equipment(
 
                         ShaderData&       shader_ = submod.get<ShaderData>();
                         ShaderItem const& shader_it =
-                            shader_cache.find(sub.shader)->second;
+                            shader_cache.get(sub.shader);
                         shader_.initialize(shader_it, submod_);
 
                         submod_.current_pass =
@@ -627,7 +623,7 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
     auto skyboxes = data.scenario->info.skyboxes.data(magic).value();
     for(auto const& skybox : skyboxes)
     {
-        auto                     skybox_tag = &(*index.find(skybox));
+        auto                     skybox_tag = *index.tag_of(skybox);
         blam::scn::skybox const& skybox_ =
             skybox_tag->template data<blam::scn::skybox>(magic).value()[0];
 
@@ -639,8 +635,8 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
             cDebug("Light: {0}", light.marker_name.str());
             Vecf3 rotation =
                 glm::mat3_cast(
-                    glm::quat(Vecf3{0, 0, light.radiosity.direction.x}) *
-                    glm::quat(Vecf3{0, light.radiosity.direction.y, 0})) *
+                    glm::quat(Vecf3{0, light.radiosity.direction.x, 0}) *
+                    glm::quat(Vecf3{0, 0, light.radiosity.direction.y})) *
                 Vecf3{0, 0, 1};
             world_data[0].lighting[0].light_direction = Vecf4{
                 rotation,
@@ -672,8 +668,9 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
         if(skybox_.outdoor_fog.opaque_distance < 1)
             world_data[0].fog.distances.w = 1000.f;
 
-        skybox_mod.tag       = skybox_tag;
-        skybox_mod.transform = glm::identity<Matf4>();
+        skybox_mod.tag           = *index.tag_of(skybox_.model);
+        skybox_mod.origin_object = skybox_tag;
+        skybox_mod.transform     = glm::identity<Matf4>();
 
         ModelAssembly assem = model_cache.predict_regions(
             skybox_.model, blam::mod2::mod2_lod::lod_high_ext);
@@ -688,8 +685,8 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
 
         for(auto const& part_id : assem.models)
         {
-            ModelItem<Version> const& part = model_cache.find(part_id)->second;
-            skybox_mod.model               = part_id;
+            ModelItem<Version>& part = model_cache.get(part_id);
+            skybox_mod.model         = part_id;
 
             for(typename ModelItem<Version>::SubModel const& region :
                 part.mesh.sub)
@@ -703,9 +700,8 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
                 submodel.parent    = skybox_ent.id();
                 submodel.initialize<Version>(part_id, region);
 
-                ShaderData&       shader_ = submod.get<ShaderData>();
-                ShaderItem const& shader_it =
-                    shader_cache.find(region.shader)->second;
+                ShaderData&       shader_   = submod.get<ShaderData>();
+                ShaderItem const& shader_it = shader_cache.get(region.shader);
                 shader_.initialize(shader_it, submodel);
 
                 submodel.current_pass = Pass_Sky;

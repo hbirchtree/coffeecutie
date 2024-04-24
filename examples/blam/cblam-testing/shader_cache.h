@@ -5,6 +5,7 @@
 #include "data.h"
 #include "data_cache.h"
 #include "materials.h"
+#include <blam/volta/blam_scenario.h>
 
 using ShaderManifest =
     compo::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
@@ -31,7 +32,8 @@ struct ShaderCache
 
     BitmapCache<V>&         bitm_cache;
     blam::tag_index_view<V> index;
-    blam::map_ptr      magic;
+    blam::map_ptr           magic;
+    stl_types::math::rng    random;
 
     template<blam::tag_class_t Tag>
     generation_idx_t get_bitm_idx(blam::tagref_typed_t<Tag> const& bitm)
@@ -50,10 +52,13 @@ struct ShaderCache
 
     ShaderItem predict_impl(blam::tagref_t const& shader);
 
+    using material_context = std::variant<blam::scn::unit const*>;
+
     void populate_material(
-        materials::shader_data& mat,
-        generation_idx_t const& shader_id,
-        Vecf2 const&            base_map_scale);
+        materials::shader_data&         mat,
+        generation_idx_t const&         shader_id,
+        Vecf2 const&                    base_map_scale,
+        std::optional<material_context> context = {});
 
     void populate_transparent_material(
         materials::transparent_data& mat, generation_idx_t const& shader_id)

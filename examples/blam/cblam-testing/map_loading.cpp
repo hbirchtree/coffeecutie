@@ -347,15 +347,6 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     auto& file_mapper   = e.subsystem_cast<comp_app::FileMapper>();
     using AsyncResource = comp_app::FileMapper::Resource;
 
-    std::shared_future<std::shared_ptr<AsyncResource>> bitmaps_file;
-    std::future<std::shared_ptr<AsyncResource>>        sounds_file;
-
-    if(!std::is_same_v<halo_version, blam::xbox_version_t>)
-    {
-        bitmaps_file = file_mapper.fetch(listing.bitmap_file);
-        sounds_file  = file_mapper.fetch(listing.sound_file);
-    }
-
     std::function<void(std::string_view, i16)> progress_cb =
         [&loading](std::string_view status, i16 progress) {
             loading.status   = std::string(status.begin(), status.end());
@@ -378,62 +369,76 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
                     return std::move(map.value());
                 });
 
-    auto map_load_task = rq::CreateMultiTask<int>(
-        [&e](result_type map, std::shared_ptr<AsyncResource> bitmap_data)
-            -> int {
-            ProfContext _("Notifying systems of new map");
+    auto map_load_fun = [&e](
+                            result_type                    map,
+                            std::shared_ptr<AsyncResource> bitmap_data) -> int {
+        ProfContext _("Notifying systems of new map");
 
-            if(map.has_error())
-            {
-                cWarning(
-                    "Failed to load map: {}",
-                    magic_enum::enum_name(map.error()));
-                return -1;
-            }
-            auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
+        if(map.has_error())
+        {
+            cWarning(
+                "Failed to load map: {}", magic_enum::enum_name(map.error()));
+            return -1;
+        }
+        auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
 
-            files.container   = std::move(map.value());
-            files.bitmap_file = std::move(bitmap_data);
+        files.container   = std::move(map.value());
+        files.bitmap_file = std::move(bitmap_data);
 
-            auto&            gbus = e.subsystem_cast<GameEventBus>();
-            GameEvent        event{GameEvent::MapDataLoad};
-            MapDataLoadEvent loaded = {
-                .map = *files.map_file,
-            };
-            gbus.inject(event, &loaded);
-            event.type = GameEvent::MapLoadFinished;
-            MapLoadFinishedEvent<halo_version> finished = {
-                .container = &files.container,
-                .bitmaps =
-                    blam::map_ptr(static_cast<BytesConst>(*files.bitmap_file)),
-            };
-            finished.map_name  = files.container.internal_name();
-            finished.map_title = files.container.name();
-            gbus.inject(event, &finished);
-            return 0;
-        },
-        map_read_task->get_future(),
-        bitmaps_file);
+        auto&            gbus = e.subsystem_cast<GameEventBus>();
+        GameEvent        event{GameEvent::MapDataLoad};
+        MapDataLoadEvent loaded = {
+            .map = *files.map_file,
+        };
+        gbus.inject(event, &loaded);
+        event.type = GameEvent::MapLoadFinished;
+        MapLoadFinishedEvent<halo_version> finished = {
+            .container = &files.container,
+        };
+        if(bitmap_data)
+            finished.bitmaps =
+                blam::map_ptr(static_cast<BytesConst>(*files.bitmap_file));
+        finished.map_name  = files.container.internal_name();
+        finished.map_title = files.container.name();
+        gbus.inject(event, &finished);
+        return 0;
+    };
 
-    auto map_load = map_load_task->get_future().share();
-    if(sounds_file.valid())
-        rq::runtime_queue::Queue(
-            rq::CreateMultiTask<void>(
-                [&e](int, std::shared_ptr<AsyncResource> data) mutable {
-                    auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
-                    files.sound_file = std::move(data);
-                    load_sounds(
-                        e,
-                        blam::map_ptr(
-                            static_cast<BytesConst>(*files.sound_file)));
-                },
-                map_load,
-                std::move(sounds_file)))
-            .assume_value();
+    if(!std::is_same_v<halo_version, blam::xbox_version_t>)
+    {
+        auto bitmaps_file = file_mapper.fetch(listing.bitmap_file).share();
+        auto sounds_file  = file_mapper.fetch(listing.sound_file);
 
+        auto map_load_task = rq::CreateMultiTask<int>(
+            std::move(map_load_fun), map_read_task->get_future(), bitmaps_file);
+        auto map_load = map_load_task->get_future().share();
+        if(sounds_file.valid())
+            rq::runtime_queue::Queue(
+                rq::CreateMultiTask<void>(
+                    [&e](int, std::shared_ptr<AsyncResource> data) mutable {
+                        auto& files =
+                            e.subsystem_cast<BlamFiles<halo_version>>();
+                        files.sound_file = std::move(data);
+                        load_sounds(
+                            e,
+                            blam::map_ptr(
+                                static_cast<BytesConst>(*files.sound_file)));
+                    },
+                    map_load,
+                    std::move(sounds_file)))
+                .assume_value();
+        rq::runtime_queue::Queue(std::move(map_load_task)).assume_value();
+    } else
+    {
+        auto map_load_task = rq::CreateMultiTask<int>(
+            [loader = std::move(map_load_fun)](result_type map) -> int {
+                loader(std::move(map), {});
+                return 0;
+            },
+            map_read_task->get_future());
+        rq::runtime_queue::Queue(std::move(map_load_task)).assume_value();
+    }
     BlamResources& resources = e.subsystem_cast<BlamResources>();
-
-    rq::runtime_queue::Queue(std::move(map_load_task)).assume_value();
     rq::runtime_queue::Queue(
         resources.background_worker, std::move(map_read_task))
         .assume_value();

@@ -4,6 +4,7 @@
             "shaders/debug_lines.vert",
             "shaders/debug_lines.frag",
             "shaders/map.vert",
+            "shaders/map_xbox.vert",
             "shaders/map.frag",
             "shaders/map_senv.frag",
             "shaders/map_senv_base.frag",
@@ -34,6 +35,13 @@
                 "shaders/debug_lines.vert",
                 "shaders/debug_lines.frag"
             ],
+            "map_uber_xbox": [
+                "shaders/map.vert",
+                "shaders/map_xbox.vert",
+                "shaders/map_uber.frag",
+                "shaders/white.frag",
+                "shaders/wireframe.frag"
+            ],
             "map_uber": [
                 "shaders/map.vert",
                 "shaders/map_uber.frag",
@@ -42,6 +50,10 @@
             ],
             "scenery": [
                 "shaders/scenery.vert",
+                "shaders/scenery.frag"
+            ],
+            "scenery_xbox": [
+                "shaders/scenery_xbox.vert",
                 "shaders/scenery.frag"
             ]
         },

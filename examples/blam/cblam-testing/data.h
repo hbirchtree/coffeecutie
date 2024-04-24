@@ -124,7 +124,7 @@ struct RenderingParameters : compo::SubsystemBase
 {
     using type = RenderingParameters;
 
-    libc_types::u32 mipmap_bias{0};
+    libc_types::u32 mipmap_bias{compile_info::platform::is_32bit ? 2 : 0};
 
     bool render_scenery{true};
     bool render_ui{false};

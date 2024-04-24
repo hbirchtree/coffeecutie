@@ -246,6 +246,15 @@ struct r11g11b10f
 
 static_assert(sizeof(r11g11b10f) == 4, "Invalid size");
 
+PACKED(struct) r11g11b10u
+{
+    u16 r:11;
+    u16 g:11;
+    u16 b:10;
+};
+
+static_assert(sizeof(r11g11b10u) == 4, "Invalid size");
+
 struct r10g10b10a2
 {
     u32 d;

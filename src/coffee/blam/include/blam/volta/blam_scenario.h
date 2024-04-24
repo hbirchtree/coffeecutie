@@ -124,12 +124,53 @@ struct item : object
         u32      second_scale;
         u32      change_color;
     };
-    
+
     reference<attachment_t> attachments;
 };
 
-using vehicle = object;
-using biped   = object;
+struct unit : object
+{
+    struct color_perm_t
+    {
+        f32   weight;
+        Vecf3 lower_bound;
+        Vecf3 upper_bound;
+    };
+
+    struct change_color_t
+    {
+        shader::param_src darken_by;
+        shader::param_src scale_by;
+
+        enum scale_flags_t : u32
+        {
+            none         = 0x0,
+            blend_in_hsv = 0x1,
+            more_hues    = 0x2,
+        } scale_flags;
+
+        Vecf3                   lower_bound;
+        Vecf3                   upper_bound;
+        reference<color_perm_t> permutations;
+    };
+
+    u32 padding[39];
+
+    reference<change_color_t> change_colors;
+};
+
+struct biped : unit
+{
+};
+
+struct vehicle : unit
+{
+};
+
+/* ... Need to figure out a common name for these... */
+struct scenery : unit
+{
+};
 
 struct weapon : item
 {
@@ -280,13 +321,13 @@ struct weapon_instance
 
 using weapon_tagref = reference<weapon_instance>;
 
-struct scenery
-{
-    u32                               count;
-    string_ref                        name;
-    u32                               padding[8];
-    tagref_typed_t<tag_class_t::mod2> model;
-};
+// struct scenery
+// {
+//     u32                               count;
+//     string_ref                        name;
+//     u32                               padding[8];
+//     tagref_typed_t<tag_class_t::mod2> model;
+// };
 
 struct device_machine : object
 {
@@ -355,7 +396,7 @@ struct item_permutation
 struct item_collection
 {
     reference<item_permutation> items;
-    u32                           spawn_time;
+    u32                         spawn_time;
 };
 
 struct multiplayer_equipment
@@ -706,25 +747,25 @@ struct firing_position
 
 struct squad
 {
-    bl_string           name;
-    local_actor_type    actor_type;
-    u16                 platoon;
-    state_t             initial_state;
-    state_t             return_state;
-    u32                 unk1[11];
-    u32                 attacking;
-    u32                 attacking_search;
-    u32                 attacking_guard;
-    u32                 defending;
-    u32                 defending_search;
-    u32                 defending_guard;
-    u32                 pursuing;
-    u32                 unk2[3];
-    u16                 normal_diff_count;
-    u16                 insane_diff_count;
-    u32                 unk3[20];
+    bl_string         name;
+    local_actor_type  actor_type;
+    u16               platoon;
+    state_t           initial_state;
+    state_t           return_state;
+    u32               unk1[11];
+    u32               attacking;
+    u32               attacking_search;
+    u32               attacking_guard;
+    u32               defending;
+    u32               defending_search;
+    u32               defending_guard;
+    u32               pursuing;
+    u32               unk2[3];
+    u16               normal_diff_count;
+    u16               insane_diff_count;
+    u32               unk3[20];
     reference<byte_t> start_locations;
-    u32                 unk4[3];
+    u32               unk4[3];
 };
 
 struct squad_spawn
@@ -740,8 +781,8 @@ static_assert(sizeof(squad_spawn) == 28);
 
 struct encounter
 {
-    bl_string_var<16>            text;
-    u32                          unk[28];
+    bl_string_var<16>          text;
+    u32                        unk[28];
     reference<squad>           squads;
     reference<platoon>         platoons;
     reference<firing_position> firing_positions;
@@ -856,7 +897,7 @@ struct skybox
     tagref_t       indoor_fog_screen;
 
     u32 padding_3[1];
-    
+
     reference<shader_function> shader_functions;
     reference<animation>       animations;
     reference<light>           lights;
@@ -940,16 +981,16 @@ struct scenario
         tagref_t unk_bsp1; // Unused
         tagref_t unk_bsp2; // Unused
         tagref_t unk_sky;  // Unused
-        
+
         reference<skybox_ref> skyboxes;
 
         scenario_type  type;
         scenario_flags flags;
-        
+
         reference<tagref_t> child_scenarios;
 
         f32 local_north;
-        
+
         reference<u32> predicted_resource;
         reference<u32> functions;
 
@@ -958,21 +999,21 @@ struct scenario
 
     struct editor_t /* 256-byte block */
     {
-        i32                 scenario_size;
-        u32                 unknown_2;
+        i32               scenario_size;
+        u32               unknown_2;
         reference<byte_t> comments;
-        u32                 padding2[59];
+        u32               padding2[59];
     } editor;
 
     struct objects_t /* 324-byte block, object spawns */
     {
-        reference<object_name>           object_names;
+        reference<object_name>             object_names;
         reflex_group<scenery_spawn>        scenery;
         reflex_group<biped_spawn>          bipeds;
         reflex_group<vehicle_spawn>        vehicles;
         reflex_group<equip_spawn>          equips;
         reflex_group<weapon_spawn>         weapon_spawns;
-        reference<device_group>          device_groups;
+        reference<device_group>            device_groups;
         reflex_group<device_machine_spawn> machines;
         reflex_group<control>              controls;
         reflex_group<light_fixture_spawn>  light_fixtures;
@@ -986,7 +1027,7 @@ struct scenario
         reference<player_starting_profile>  profiles;
         reference<player_starting_location> locations;
     } player_start;
-    
+
     reference<trigger_volume> trigger_volumes;
     reference<scn_chunk>      recorded_animations;
 
@@ -995,13 +1036,13 @@ struct scenario
         reference<multiplayer_flag>      flags;
         reference<multiplayer_equipment> equipment;
     } netgame;
-    
+
     reference<starting_equip> starting_equipment;
-    
+
     reference<bsp_trigger> bsp_switch_triggers;
-    reflex_group<decal>      decals;
+    reflex_group<decal>    decals;
     reference<scn_chunk>   detail_object_collection;
-    u32                      padding4[21];
+    u32                    padding4[21];
 
     struct ai_info_t /* 340-byte block */
     {
@@ -1016,11 +1057,11 @@ struct scenario
 
     struct script_t
     {
-        u32                                      script_bytecode_size;
-        u32                                      unknown_7;
+        u32                                    script_bytecode_size;
+        u32                                    unknown_7;
         reference<hsc::script_ref<bytecode_t>> unknown_9;
-        u32                                      script_function_table_offset;
-        u32                                      script_function_table_size;
+        u32                                    script_function_table_offset;
+        u32                                    script_function_table_size;
         reference<char>                        script_string_segment;
         reference<hsc::function_declaration>   scripts;
         reference<hsc::global>                 globals;
@@ -1036,12 +1077,12 @@ struct scenario
         reference<cutscene_camera_position> camera_points;
         reference<scn_chunk>                titles;
     } cutscene;
-    
+
     reference<scn_chunk> unknown7;
     reference<scn_chunk> unknown8;
     reference<scn_chunk> unknown9;
     reference<scn_chunk> unknown10;
-    u32                    padding5[15];
+    u32                  padding5[15];
 
     inline Span<hsc::opcode_layout<bytecode_t> const> bytecode(
         map_ptr const& magic) const
@@ -1082,7 +1123,7 @@ struct scenario
         tagref_t cutscene_titles;     /*!< Points to ui::unicode_ref*/
         tagref_t hud_text;            /*!< Points to ui::hud_message */
     } ui_text;
-    
+
     reference<bsp::info> bsp_info;
 };
 
@@ -1106,8 +1147,8 @@ namespace blam::ui {
 
 struct unicode_ref
 {
-    u32                         length;
-    u32                         padding;
+    u32                       length;
+    u32                       padding;
     reference<unicode_var<1>> data;
 
     inline result<ucs_string, error_msg> str(
@@ -1142,13 +1183,12 @@ struct hud_message
         u8 size;
     };
 
-    unicode_ref              text;
+    unicode_ref            text;
     reference<offset_pair> offsets;
     reference<hud_symbol>  symbols;
 
     /* Get offset into unicode_ref for a string */
-    inline std::optional<u16> str_offset(
-        map_ptr const& magic, u32 idx) const
+    inline std::optional<u16> str_offset(map_ptr const& magic, u32 idx) const
     {
         if(auto offset_data = offsets.data(magic); offset_data.has_error())
             return std::nullopt;
