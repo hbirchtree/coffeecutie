@@ -120,6 +120,12 @@ struct BlamBspWidget
                     }
                     ImGui::EndTabItem();
                 }
+                if(ImGui::BeginTabItem("Models"))
+                {
+                    ImGui::Checkbox(
+                        "Color changing", &rendering->color_changing);
+                    ImGui::EndTabItem();
+                }
                 if(ImGui::BeginTabItem("Trigger volumes"))
                 {
                     ImGui::Checkbox(

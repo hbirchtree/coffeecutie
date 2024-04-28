@@ -2,7 +2,6 @@
 
 #include <coffee/graphics/apis/CGLeam>
 #include <coffee/graphics/apis/gleam/rhi_system.h>
-#include <coffee/interfaces/cgraphics_pixops.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
 #include <glw/texture_formats.h>
@@ -165,8 +164,8 @@ void ImGuiSystem::submit_draws(Proxy& e)
                                   .offset = cmd.IdxOffset * sizeof(ImDrawIdx),
                                   .vertex_offset = cmd.VtxOffset,
                                   .type          = sizeof(ImDrawIdx) == 2
-                                                       ? semantic::TypeEnum::UShort
-                                                       : semantic::TypeEnum::UInt,
+                                                       ? semantic::type_t::u16
+                                                       : semantic::type_t::u32,
                               }}},
                 };
 
@@ -379,17 +378,17 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
         unsigned char* pixels;
         int            width, height;
         io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
-
-        using typing::PixCmp;
-        using typing::pixels::BitFmt;
-        auto pixelDataSize = gl::tex::format_of(typing::pixels::PixFmt::R8)
+        
+        using typing::pix_components;
+        using typing::pixels::bit_fmt;
+        auto pixelDataSize = gl::tex::format_of(typing::pixels::pix_fmt::R8)
                                  .data_size(Veci2{width, height});
 
         auto surface_size = size_2d<i32>{width, height}.convert<u32>();
 
         data.font_atlas = api.alloc_texture(
             gleam::textures::d2,
-            typing::pixels::PixDesc(typing::pixels::PixFmt::R8),
+            typing::pixels::PixDesc(typing::pixels::pix_fmt::R8),
             1);
         data.font_atlas->alloc(size_3d<u32>{surface_size.w, surface_size.h, 1});
         data.font_atlas->upload(
@@ -419,7 +418,7 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
 
         data.shell_texture = api.alloc_texture(
             gleam::textures::d2,
-            typing::pixels::PixDesc(typing::pixels::PixFmt::RGBA8),
+            typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8),
             1);
 
         data.shell_sampler = data.shell_texture->sampler();

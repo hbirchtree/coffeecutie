@@ -8,7 +8,7 @@
 
 namespace blam::bitm {
 
-std::tuple<typing::pixels::BitFmt, typing::PixCmp> image_t::to_fmt() const
+std::tuple<typing::pixels::bit_fmt, typing::pix_components> image_t::to_fmt() const
 {
     switch(format)
     {
@@ -16,28 +16,28 @@ std::tuple<typing::pixels::BitFmt, typing::PixCmp> image_t::to_fmt() const
     case format_t::Y8:
     case format_t::P8:
     case format_t::AY8:
-        return {BitFmt::UByte, PixCmp::R};
+        return {bit_fmt::u8, pix_components::R};
 
     case format_t::A8Y8:
-        return {BitFmt::UByte, PixCmp::RG};
+        return {bit_fmt::u8, pix_components::RG};
     case format_t::R5G6B5:
-        return {BitFmt::UShort_565, PixCmp::RGB};
+        return {bit_fmt::u16_565, pix_components::RGB};
     case format_t::A1RGB5:
-        return {BitFmt::UShort_1555R, PixCmp::RGBA};
+        return {bit_fmt::u16_1555, pix_components::RGBA};
     case format_t::ARGB4:
-        return {BitFmt::UShort_4444, PixCmp::RGBA};
+        return {bit_fmt::u16_4444, pix_components::RGBA};
 
     case format_t::ARGB8:
-        return {BitFmt::UByte, PixCmp::RGBA};
+        return {bit_fmt::u8, pix_components::RGBA};
     case format_t::XRGB8:
-        return {BitFmt::UByte, PixCmp::RGBA};
+        return {bit_fmt::u8, pix_components::RGBA};
 
     default:
-        return {BitFmt::Undefined, PixCmp::None};
+        return {bit_fmt::undefined, pix_components::None};
     }
 }
 
-typing::pixels::PixFmt image_t::to_pixfmt() const
+typing::pixels::pix_fmt image_t::to_pixfmt() const
 {
     switch(format)
     {
@@ -45,38 +45,38 @@ typing::pixels::PixFmt image_t::to_pixfmt() const
     case format_t::Y8:
     case format_t::P8:
     case format_t::AY8:
-        return PixFmt::R8;
+        return pix_fmt::R8;
     case format_t::R5G6B5:
-        return PixFmt::RGB565;
+        return pix_fmt::RGB565;
     case format_t::A8Y8:
-        return PixFmt::RG8;
+        return pix_fmt::RG8;
     case format_t::A1RGB5:
-        return PixFmt::RGB5A1;
+        return pix_fmt::RGB5A1;
     case format_t::ARGB4:
-        return PixFmt::RGBA4;
+        return pix_fmt::RGBA4;
     case format_t::ARGB8:
-        return PixFmt::RGBA8;
+        return pix_fmt::RGBA8;
     case format_t::XRGB8:
-        return PixFmt::RGBA8;
+        return pix_fmt::RGBA8;
     case format_t::BC1:
     case format_t::BC2:
     case format_t::BC3:
-        return PixFmt::BCn;
+        return pix_fmt::BCn;
     }
     throw std::runtime_error("unhandled pixfmt");
 }
 
-std::tuple<typing::pixels::PixFmt, typing::pixels::CompFlags> image_t::
+std::tuple<typing::pixels::pix_fmt, typing::pixels::comp_flags> image_t::
     to_compressed_fmt() const
 {
     switch(format)
     {
     case format_t::BC1:
-        return {PixFmt::BCn, CompFlags::BC1};
+        return {pix_fmt::BCn, comp_flags::BC1};
     case format_t::BC2:
-        return {PixFmt::BCn, CompFlags::BC2};
+        return {pix_fmt::BCn, comp_flags::BC2};
     case format_t::BC3:
-        return {PixFmt::BCn, CompFlags::BC3};
+        return {pix_fmt::BCn, comp_flags::BC3};
     default:
         break;
     }
@@ -121,8 +121,8 @@ semantic::Span<const libc_types::u8> image_t::data(
             .value();
     } else
     {
-        PixFmt    fmt;
-        CompFlags flags;
+        pix_fmt    fmt;
+        comp_flags flags;
         std::tie(fmt, flags) = to_compressed_fmt();
         auto comp_fmt        = typing::pixels::CompFmt(fmt, flags);
 

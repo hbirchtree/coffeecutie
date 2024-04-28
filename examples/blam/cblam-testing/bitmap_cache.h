@@ -118,7 +118,7 @@ struct BitmapCache
         bucket.ptr = 0;
         bucket.fmt = fmt;
 
-        bool no_mipmap = fmt.pixfmt == PixFmt::RGB565;
+        bool no_mipmap = fmt.pixfmt == pix_fmt::RGB565;
 
         bucket.mip_bias = no_mipmap ? 0 : params->mipmap_bias;
 
@@ -160,7 +160,7 @@ struct BitmapCache
         if(size.x % 4 != 0 || size.y % 4 != 0)
             return;
 
-        i32 mip_pad = 0; // bucket.surface->m_format.pixfmt != PixFmt::RGB565
+        i32 mip_pad = 0; // bucket.surface->m_format.pixfmt != pix_fmt::RGB565
                          //? 2 << (mips - mipmap)
                          //: 0;
 
@@ -289,32 +289,32 @@ struct BitmapCache
 
     u32 type_mask(BitmapItem const& bitm)
     {
-        using typing::pixels::PixFmt;
+        using typing::pixels::pix_fmt;
         switch(bitm.image.fmt.pixfmt)
         {
-        case PixFmt::BCn: {
+        case pix_fmt::BCn: {
             switch(bitm.image.fmt.cmpflg)
             {
-            case typing::pixels::CompFlags::BC1:
+            case typing::pixels::comp_flags::BC1:
                 return 0x01000000;
-            case typing::pixels::CompFlags::BC2:
+            case typing::pixels::comp_flags::BC2:
                 return 0x02000000;
-            case typing::pixels::CompFlags::BC3:
+            case typing::pixels::comp_flags::BC3:
                 return 0x03000000;
             default:
                 break;
             }
             break;
         }
-        case PixFmt::RGB565:
+        case pix_fmt::RGB565:
             return 0x04000000;
-        case PixFmt::R8:
+        case pix_fmt::R8:
             return 0x05000000;
-        case PixFmt::RG8:
+        case pix_fmt::RG8:
             return 0x06000000;
-        case PixFmt::RGBA4:
+        case pix_fmt::RGBA4:
             return 0x07000000;
-        case PixFmt::RGBA8:
+        case pix_fmt::RGBA8:
             return 0x08000000;
         default:
             break;

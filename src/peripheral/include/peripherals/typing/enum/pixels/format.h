@@ -11,7 +11,7 @@ namespace pixels {
 
 using namespace ::libc_types;
 
-enum class PixFlg : u16
+enum class pix_flags : u16
 {
     None = 0x0,
 
@@ -36,9 +36,9 @@ enum class PixFlg : u16
 
     LOWER_SHORT_MASK = 0xFFFF,
 };
-C_FLAGS(PixFlg, u16);
+C_FLAGS(pix_flags, u16);
 
-enum class PixFmt : u8
+enum class pix_fmt : u8
 {
     None,
     /* Formatting: [CHANNELS][NUMBITS][DATATYPE] */
@@ -161,7 +161,7 @@ enum class PixFmt : u8
  * GL_ARB_texture_compression_bptc
  *
  */
-enum class CompFlags : u16
+enum class comp_flags : u16
 {
     None,
     CompressionNone = None,
@@ -195,48 +195,42 @@ enum class CompFlags : u16
 
     Undefined = CompressionNone,
 };
-C_FLAGS(CompFlags, u16);
+C_FLAGS(comp_flags, u16);
 
-enum class BitFmt : u8
+enum class bit_fmt : u8
 {
-    Byte,
-    ByteR,
-    UByte,
-    UByteR,
-    UByte_332,
-    UByte_233R,
+    i8,
+    u8,
+    u8_332,
+    u8_233,
 
-    Short,
-    ShortR,
-    UShort,
-    UShortR,
-    UShort_4444,
-    UShort_4444R,
-    UShort_565,
-    UShort_565R,
-    UShort_5551,
-    UShort_1555R,
+    i16,
+    u16,
+    u16_4444,
+    u16_4444_r,
+    u16_565,
+    u16_565_r,
+    u16_5551,
+    u16_1555,
 
-    Int,
-    IntR,
-    Int_1010102,
+    i32,
+    i32_1010102,
 
-    UInt,
-    UIntR,
-    UInt_5999R,
-    UInt_1010102,
-    UInt_2101010R,
+    u32,
+    u32_5999,
+    u32_1010102,
+    u32_2101010,
 
-    Scalar_16,
-    Scalar_32,
-    Scalar_64,
+    f16,
+    f32,
+    f64,
     Scalar_11_11_10,
 
-    UInt24_8,
+    u32_24_8,
 
-    Scalar_32_Int_24_8,
+    f32_u32_24_8,
 
-    Undefined,
+    undefined,
 };
 
 struct r11g11b10f
@@ -248,9 +242,13 @@ static_assert(sizeof(r11g11b10f) == 4, "Invalid size");
 
 PACKED(struct) r11g11b10u
 {
+#if defined(COFFEE_UNIXPLAT)
     u16 r:11;
     u16 g:11;
     u16 b:10;
+#else
+    u32 d;
+#endif
 };
 
 static_assert(sizeof(r11g11b10u) == 4, "Invalid size");

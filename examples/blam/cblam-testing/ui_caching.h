@@ -18,7 +18,7 @@ struct FontCache
 
     FontCache(gfx::api* allocator)
         : font_textures(std::make_shared<gfx::compat::texture_2da_t>(
-              allocator, PixDesc(PixFmt::R8), 1))
+              allocator, PixDesc(pix_fmt::R8), 1))
         , font_sampler(font_textures->sampler())
         , api(allocator)
     {

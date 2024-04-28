@@ -130,13 +130,13 @@ struct features
         bool depth32f{false};
 
         /* Specify these for simple selection of rendertarget formats */
-        typing::pixels::PixFmt high_precision_color_format{};
-        typing::pixels::PixFmt med_precision_color_format{};
-        typing::pixels::PixFmt high_precision_single_format{};
-        typing::pixels::PixFmt high_precision_depth_format{};
-        typing::pixels::PixFmt low_precision_color_format{};
-        typing::pixels::PixFmt low_precision_single_format{};
-        typing::pixels::PixFmt low_precision_depth_format{};
+        typing::pixels::pix_fmt high_precision_color_format{};
+        typing::pixels::pix_fmt med_precision_color_format{};
+        typing::pixels::pix_fmt high_precision_single_format{};
+        typing::pixels::pix_fmt high_precision_depth_format{};
+        typing::pixels::pix_fmt low_precision_color_format{};
+        typing::pixels::pix_fmt low_precision_single_format{};
+        typing::pixels::pix_fmt low_precision_depth_format{};
 
         struct
         {

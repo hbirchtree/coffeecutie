@@ -424,35 +424,35 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     {"source_bc1"sv, 0},
                     bitm_cache
                         .template get_bucket<gfx::compat::texture_2da_t>(
-                            CompFmt(PixFmt::BCn, CompFlags::BC1))
+                            CompFmt(pix_fmt::BCn, comp_flags::BC1))
                         .sampler},
                 gleam::sampler_definition_t{
                     typing::graphics::ShaderStage::Fragment,
                     {"source_bc2"sv, 1},
                     bitm_cache
                         .template get_bucket<gfx::compat::texture_2da_t>(
-                            CompFmt(PixFmt::BCn, CompFlags::BC2))
+                            CompFmt(pix_fmt::BCn, comp_flags::BC2))
                         .sampler},
                 gleam::sampler_definition_t{
                     typing::graphics::ShaderStage::Fragment,
                     {"source_bc3"sv, 2},
                     bitm_cache
                         .template get_bucket<gfx::compat::texture_2da_t>(
-                            CompFmt(PixFmt::BCn, CompFlags::BC3))
+                            CompFmt(pix_fmt::BCn, comp_flags::BC3))
                         .sampler},
                 gleam::sampler_definition_t{
                     typing::graphics::ShaderStage::Fragment,
                     {"source_rgba4"sv, 3},
                     bitm_cache
                         .template get_bucket<gfx::compat::texture_2da_t>(
-                            PixDesc(PixFmt::RGBA4))
+                            PixDesc(pix_fmt::RGBA4))
                         .sampler},
                 gleam::sampler_definition_t{
                     typing::graphics::ShaderStage::Fragment,
                     {"source_rgba8"sv, 4},
                     bitm_cache
                         .template get_bucket<gfx::compat::texture_2da_t>(
-                            PixDesc(PixFmt::RGBA8))
+                            PixDesc(pix_fmt::RGBA8))
                         .sampler}),
             gfx::make_buffer_list(gfx::buffer_definition_t{
                 .stage  = typing::graphics::ShaderStage::Fragment,

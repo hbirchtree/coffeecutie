@@ -27,7 +27,7 @@ void TouchOverlay::start_restricted(Proxy& proxy, const time_point&)
         controller = gfx->alloc_texture(
             gfx::textures::d2,
             typing::pixels::CompFmt(
-                comp_app::PixFmt::ETC2, typing::pixels::PixFlg::RGBA),
+                comp_app::pix_fmt::ETC2, typing::pixels::pix_flags::RGBA),
             1);
 
         atlas_storage = std::move(tex.value());

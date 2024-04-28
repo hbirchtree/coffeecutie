@@ -11,7 +11,7 @@
 
 namespace blam::bitm {
 
-using typing::PixCmp;
+using typing::pix_components;
 
 /*!
  * \brief These are the various texture formats found in the Blam engine
@@ -211,11 +211,11 @@ struct image_t
         return enum_helpers::feval(flags & flags_t::shared);
     }
 
-    std::tuple<BitFmt, PixCmp> to_fmt() const;
+    std::tuple<bit_fmt, pix_components> to_fmt() const;
 
-    PixFmt to_pixfmt() const;
+    pix_fmt to_pixfmt() const;
 
-    std::tuple<PixFmt, CompFlags> to_compressed_fmt() const;
+    std::tuple<pix_fmt, typing::pixels::comp_flags> to_compressed_fmt() const;
 
     Span<const u8> data(map_ptr const& magic, u16 mipmap = 0) const;
 };

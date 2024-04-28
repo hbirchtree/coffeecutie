@@ -23,13 +23,13 @@ using libc_types::u16;
 using libc_types::u32;
 using semantic::Span;
 using stl_types::range;
-using typing::PixCmp;
+using typing::pix_components;
 using typing::geometry::size_2d;
 using typing::geometry::size_3d;
-using typing::pixels::BitFmt;
-using typing::pixels::CompFlags;
+using typing::pixels::bit_fmt;
+using typing::pixels::comp_flags;
+using typing::pixels::pix_fmt;
 using typing::pixels::PixDesc;
-using typing::pixels::PixFmt;
 using typing::vector_types::Matf3;
 using typing::vector_types::Matf4;
 using typing::vector_types::Quatf;
@@ -41,8 +41,8 @@ using typing::vector_types::Veci3;
 using typing::vector_types::Vecui2;
 using typing::vector_types::Vecui3;
 
-using bitm_format_hash =
-    std::tuple<blam::bitm::type_t, PixFmt, PixCmp, BitFmt, CompFlags>;
+using bitm_format_hash = std::
+    tuple<blam::bitm::type_t, pix_fmt, pix_components, bit_fmt, comp_flags>;
 
 struct BSPItem
 {

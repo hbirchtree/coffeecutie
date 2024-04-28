@@ -12,70 +12,70 @@ namespace typing::pixels {
 struct CompFmt
 {
     constexpr CompFmt()
-        : base_fmt(PixFmt::None)
-        , c_flags(CompFlags::CompressionNone)
-        , p_flags(PixFlg::None)
+        : base_fmt(pix_fmt::None)
+        , c_flags(comp_flags::CompressionNone)
+        , p_flags(pix_flags::None)
     {
     }
 
-    constexpr CompFmt(PixFmt base, CompFlags cf = CompFlags::CompressionNone)
+    constexpr CompFmt(pix_fmt base, comp_flags cf = comp_flags::CompressionNone)
         : base_fmt(base)
         , c_flags(cf)
-        , p_flags(PixFlg::None)
+        , p_flags(pix_flags::None)
     {
     }
 
     constexpr CompFmt(
-        PixFmt base, PixFlg flg, CompFlags cf = CompFlags::CompressionNone)
+        pix_fmt base, pix_flags flg, comp_flags cf = comp_flags::CompressionNone)
         : base_fmt(base)
         , c_flags(cf)
         , p_flags(flg)
     {
     }
 
-    PixFmt    base_fmt;
-    CompFlags c_flags;
-    PixFlg    p_flags;
+    pix_fmt    base_fmt;
+    comp_flags c_flags;
+    pix_flags    p_flags;
 };
 
 namespace convert {
 
 template<
     typename ToType,
-    typename std::enable_if<std::is_same<ToType, PixFlg>::value>::type* =
+    typename std::enable_if<std::is_same<ToType, pix_flags>::value>::type* =
         nullptr>
-FORCEDINLINE constexpr PixFlg to(PixCmp component)
+FORCEDINLINE constexpr pix_flags to(pix_components component)
 {
     switch(component)
     {
-    case PixCmp::R:
-        return PixFlg::R;
-    case PixCmp::RG:
-        return PixFlg::RG;
-    case PixCmp::RGB:
-        return PixFlg::RGB;
-    case PixCmp::RGBA:
-    case PixCmp::BGRA:
-        return PixFlg::RGBA;
-    case PixCmp::Depth:
-        return PixFlg::R | PixFlg::FloatingPoint;
-    case PixCmp::Stencil:
-        return PixFlg::R;
-    case PixCmp::DepthStencil:
-        return PixFlg::RG;
+    case pix_components::R:
+        return pix_flags::R;
+    case pix_components::RG:
+        return pix_flags::RG;
+    case pix_components::RGB:
+        return pix_flags::RGB;
+    case pix_components::RGBA:
+    case pix_components::BGRA:
+        return pix_flags::RGBA;
+    case pix_components::Depth:
+        return pix_flags::R | pix_flags::FloatingPoint;
+    case pix_components::Stencil:
+        return pix_flags::R;
+    case pix_components::DepthStencil:
+        return pix_flags::RG;
     default:
-        return PixFlg::None;
+        return pix_flags::None;
     }
 }
 
 template<
     typename ToType,
-    typename std::enable_if<std::is_same<ToType, BitFmt>::value>::type* =
+    typename std::enable_if<std::is_same<ToType, bit_fmt>::value>::type* =
         nullptr>
-FORCEDINLINE constexpr BitFmt to(PixFmt fmt)
+FORCEDINLINE constexpr bit_fmt to(pix_fmt fmt)
 {
-    using P = PixFmt;
-    using B = BitFmt;
+    using P = pix_fmt;
+    using B = bit_fmt;
 
     switch(fmt)
     {
@@ -83,79 +83,79 @@ FORCEDINLINE constexpr BitFmt to(PixFmt fmt)
     case P::RG16F:
     case P::RGB16F:
     case P::RGBA16F:
-        return B::Scalar_16;
+        return B::f16;
 
     case P::R32F:
     case P::RG32F:
     case P::RGB32F:
     case P::RGBA32F:
-        return B::Scalar_32;
+        return B::f32;
 
     case P::R8I:
     case P::RG8I:
     case P::RGB8I:
     case P::RGBA8I:
-        return B::Byte;
+        return B::i8;
 
     case P::R16I:
     case P::RG16I:
     case P::RGB16I:
     case P::RGBA16I:
-        return B::Short;
+        return B::i16;
 
     case P::R32I:
     case P::RG32I:
     case P::RGB32I:
     case P::RGBA32I:
-        return B::Int;
+        return B::i32;
 
     case P::RG16:
     case P::R16UI:
     case P::RG16UI:
     case P::RGB16UI:
     case P::RGBA16UI:
-        return B::UShort;
+        return B::u16;
 
     case P::R32UI:
     case P::RG32UI:
     case P::RGB32UI:
     case P::RGBA32UI:
-        return B::UInt;
+        return B::u32;
 
     case P::R3G3B2:
-        return B::UByte_332;
+        return B::u8_332;
     case P::RGB565:
-        return B::UShort_565;
+        return B::u16_565;
     case P::RGB5A1:
-        return B::UShort_5551;
+        return B::u16_5551;
     case P::RGBA4:
-        return B::UShort_4444;
+        return B::u16_4444;
     case P::RGB12:
     case P::RGB16:
     case P::RGBA12:
     case P::RGBA16:
-        return B::UShort;
+        return B::u16;
 
     case P::RGB10A2:
-        return B::UInt_1010102;
+        return B::u32_1010102;
     case P::R11G11B10F:
         return B::Scalar_11_11_10;
     case P::RGB9E5:
-        return B::UInt_5999R;
+        return B::u32_5999;
 
     case P::Depth16:
-        return B::UShort;
+        return B::u16;
     case P::Depth16F:
-        return B::Scalar_16;
+        return B::f16;
     case P::Depth24Stencil8:
-        return B::UInt24_8;
+        return B::u32_24_8;
     case P::Depth32F:
-        return B::Scalar_32;
+        return B::f32;
     case P::Depth32FStencil8:
-        return B::Scalar_32_Int_24_8;
+        return B::f32_u32_24_8;
 
     default:
-        return B::UByte;
+        return B::u8;
     }
 }
 
@@ -166,11 +166,11 @@ FORCEDINLINE constexpr BitFmt to(PixFmt fmt)
  */
 template<
     typename ToType,
-    typename std::enable_if<std::is_same<ToType, PixFlg>::value>::type* =
+    typename std::enable_if<std::is_same<ToType, pix_flags>::value>::type* =
         nullptr>
-FORCEDINLINE constexpr PixFlg to(PixFmt fmt)
+FORCEDINLINE constexpr pix_flags to(pix_fmt fmt)
 {
-    using F = PixFmt;
+    using F = pix_fmt;
 
     switch(fmt)
     {
@@ -189,7 +189,7 @@ FORCEDINLINE constexpr PixFlg to(PixFmt fmt)
     case F::RGBA16UI:
     case F::RGBA32UI:
 
-        return PixFlg::Unsigned;
+        return pix_flags::Unsigned;
 
     case F::R8I:
     case F::R16I:
@@ -204,7 +204,7 @@ FORCEDINLINE constexpr PixFlg to(PixFmt fmt)
     case F::RGBA16I:
     case F::RGBA32I:
 
-        return PixFlg::Signed;
+        return pix_flags::Signed;
 
     case F::R8:
     case F::RG8:
@@ -243,32 +243,32 @@ FORCEDINLINE constexpr PixFlg to(PixFmt fmt)
 
     case F::R11G11B10F:
 
-        return PixFlg::FloatingPoint;
+        return pix_flags::FloatingPoint;
 
     case F::SRGB8:
     case F::SRGB8A8:
-        return PixFlg::sRGB;
+        return pix_flags::sRGB;
 
     case F::Depth16:
     case F::Depth16F:
     case F::Depth32F:
     case F::Depth24Stencil8:
     case F::Depth32FStencil8:
-        return PixFlg::FloatingPoint;
+        return pix_flags::FloatingPoint;
 
     default:
-        return PixFlg::None;
+        return pix_flags::None;
     }
 }
 
 template<
     typename ToType,
-    typename std::enable_if<std::is_same<ToType, PixCmp>::value>::type* =
+    typename std::enable_if<std::is_same<ToType, pix_components>::value>::type* =
         nullptr>
-FORCEDINLINE constexpr PixCmp to(PixFmt fmt)
+FORCEDINLINE constexpr pix_components to(pix_fmt fmt)
 {
-    using C = PixCmp;
-    using F = PixFmt;
+    using C = pix_components;
+    using F = pix_fmt;
 
     switch(fmt)
     {
@@ -352,34 +352,34 @@ FORCEDINLINE constexpr PixCmp to(PixFmt fmt)
 }
 
 template<typename ToType>
-requires std::is_same_v<ToType, PixCmp>
-FORCEDINLINE constexpr PixCmp to(CompFmt fmt)
+requires std::is_same_v<ToType, pix_components>
+FORCEDINLINE constexpr pix_components to(CompFmt fmt)
 {
     switch(fmt.base_fmt)
     {
-    case PixFmt::BCn: {
+    case pix_fmt::BCn: {
         switch(fmt.p_flags)
         {
-        case PixFlg::RGB:
-            return PixCmp::RGB;
-        case PixFlg::RGBA:
-            return PixCmp::RGBA;
+        case pix_flags::RGB:
+            return pix_components::RGB;
+        case pix_flags::RGBA:
+            return pix_components::RGBA;
         default:
             break;
         }
         switch(fmt.c_flags)
         {
-        case CompFlags::BC4:
-            return PixCmp::R;
-        case CompFlags::BC5:
-            return PixCmp::RG;
-        case CompFlags::BC1:
-            return PixCmp::RGB;
-        case CompFlags::BC2:
-        case CompFlags::BC3:
-        case CompFlags::BC6H:
-        case CompFlags::BC7:
-            return PixCmp::RGBA;
+        case comp_flags::BC4:
+            return pix_components::R;
+        case comp_flags::BC5:
+            return pix_components::RG;
+        case comp_flags::BC1:
+            return pix_components::RGB;
+        case comp_flags::BC2:
+        case comp_flags::BC3:
+        case comp_flags::BC6H:
+        case comp_flags::BC7:
+            return pix_components::RGBA;
         default:
             break;
         }
@@ -390,7 +390,7 @@ FORCEDINLINE constexpr PixCmp to(CompFmt fmt)
         break;
     }
 
-    return PixCmp::None;
+    return pix_components::None;
 }
 
 } // namespace convert
@@ -415,12 +415,12 @@ enum format_property
 template<format_property Prop>
 requires(Prop == supports_srgb)
 //
-FORCEDINLINE constexpr bool get(PixFmt f)
+FORCEDINLINE constexpr bool get(pix_fmt f)
 {
     switch(f)
     {
-    case PixFmt::SRGB8:
-    case PixFmt::SRGB8A8:
+    case pix_fmt::SRGB8:
+    case pix_fmt::SRGB8A8:
         return true;
     default:
         return false;
@@ -430,9 +430,9 @@ FORCEDINLINE constexpr bool get(PixFmt f)
 template<format_property Prop>
 requires(Prop == pixel_size)
 //
-FORCEDINLINE constexpr szptr get(BitFmt fmt, PixCmp comp, szptr pixels)
+FORCEDINLINE constexpr szptr get(bit_fmt fmt, pix_components comp, szptr pixels)
 {
-    using B = BitFmt;
+    using B = bit_fmt;
 
     /* Packed formats contain RGB/RGBA within a single value */
     bool packed = false;
@@ -440,47 +440,41 @@ FORCEDINLINE constexpr szptr get(BitFmt fmt, PixCmp comp, szptr pixels)
     szptr pxsz = 0;
     switch(fmt)
     {
-    case B::UByte_332:
-    case B::UByte_233R:
+    case B::u8_332:
+    case B::u8_233:
         packed = true;
         [[fallthrough]];
-    case B::Byte:
-    case B::ByteR:
-    case B::UByte:
-    case B::UByteR:
+    case B::i8:
+    case B::u8:
         pxsz = 1;
         break;
-    case B::UShort_4444:
-    case B::UShort_4444R:
-    case B::UShort_565:
-    case B::UShort_565R:
-    case B::UShort_5551:
-    case B::UShort_1555R:
+    case B::u16_4444:
+    case B::u16_4444_r:
+    case B::u16_565:
+    case B::u16_565_r:
+    case B::u16_5551:
+    case B::u16_1555:
         packed = true;
         [[fallthrough]];
-    case B::Short:
-    case B::ShortR:
-    case B::UShort:
-    case B::UShortR:
-    case B::Scalar_16:
+    case B::i16:
+    case B::u16:
+    case B::f16:
         pxsz = 2;
         break;
-    case B::UInt_5999R:
-    case B::UInt_1010102:
-    case B::UInt_2101010R:
+    case B::u32_5999:
+    case B::u32_1010102:
+    case B::u32_2101010:
     case B::Scalar_11_11_10:
         packed = true;
         [[fallthrough]];
-    case B::Int:
-    case B::IntR:
-    case B::UInt:
-    case B::UIntR:
-    case B::Scalar_32:
-    case B::UInt24_8:
+    case B::i32:
+    case B::u32:
+    case B::f32:
+    case B::u32_24_8:
         pxsz = 4;
         break;
-    case B::Scalar_64:
-    case B::Scalar_32_Int_24_8:
+    case B::f64:
+    case B::f32_u32_24_8:
         pxsz = 8;
         break;
 
@@ -490,24 +484,24 @@ FORCEDINLINE constexpr szptr get(BitFmt fmt, PixCmp comp, szptr pixels)
     if(!packed)
         switch(comp)
         {
-        case PixCmp::R:
-        case PixCmp::G:
-        case PixCmp::B:
-        case PixCmp::A:
-        case PixCmp::Stencil:
-        case PixCmp::Depth:
-        case PixCmp::DepthStencil:
+        case pix_components::R:
+        case pix_components::G:
+        case pix_components::B:
+        case pix_components::A:
+        case pix_components::Stencil:
+        case pix_components::Depth:
+        case pix_components::DepthStencil:
             pxsz *= 1;
             break;
-        case PixCmp::RG:
+        case pix_components::RG:
             pxsz *= 2;
             break;
-        case PixCmp::RGB:
-        case PixCmp::BGR:
+        case pix_components::RGB:
+        case pix_components::BGR:
             pxsz *= 3;
             break;
-        case PixCmp::RGBA:
-        case PixCmp::BGRA:
+        case pix_components::RGBA:
+        case pix_components::BGRA:
             pxsz *= 4;
             break;
 
@@ -551,9 +545,9 @@ struct layout_t
 template<format_property Prop>
 requires(Prop == layout)
 //
-FORCEDINLINE constexpr layout_t get(PixFmt fmt)
+FORCEDINLINE constexpr layout_t get(pix_fmt fmt)
 {
-    using F = PixFmt;
+    using F = pix_fmt;
 
     switch(fmt)
     {
@@ -634,36 +628,36 @@ FORCEDINLINE constexpr layout_t get(PixFmt fmt)
 struct PixDesc
 {
     PixDesc()
-        : pixfmt(PixFmt::None)
-        , cmpflg(CompFlags::CompressionNone)
-        , pixflg(PixFlg::None)
-        , bfmt(BitFmt::Byte)
-        , comp(PixCmp::None)
+        : pixfmt(pix_fmt::None)
+        , cmpflg(comp_flags::CompressionNone)
+        , pixflg(pix_flags::None)
+        , bfmt(bit_fmt::i8)
+        , comp(pix_components::None)
     {
     }
 
-    PixDesc(PixFmt pixfmt)
+    PixDesc(pix_fmt pixfmt)
         : pixfmt(pixfmt)
-        , cmpflg(CompFlags::CompressionNone)
-        , pixflg(PixFlg::None)
-        , bfmt(convert::to<BitFmt>(pixfmt))
-        , comp(convert::to<PixCmp>(pixfmt))
+        , cmpflg(comp_flags::CompressionNone)
+        , pixflg(pix_flags::None)
+        , bfmt(convert::to<bit_fmt>(pixfmt))
+        , comp(convert::to<pix_components>(pixfmt))
     {
     }
 
-    PixDesc(PixFmt pixfmt, BitFmt bitfmt, PixCmp comp)
+    PixDesc(pix_fmt pixfmt, bit_fmt bitfmt, pix_components comp)
         : pixfmt(pixfmt)
-        , cmpflg(CompFlags::CompressionNone)
-        , pixflg(PixFlg::None)
+        , cmpflg(comp_flags::CompressionNone)
+        , pixflg(pix_flags::None)
         , bfmt(bitfmt)
         , comp(comp)
     {
     }
 
-    PixDesc(BitFmt bitfmt, PixCmp comp)
-        : pixfmt(PixFmt::None)
-        , cmpflg(CompFlags::CompressionNone)
-        , pixflg(PixFlg::None)
+    PixDesc(bit_fmt bitfmt, pix_components comp)
+        : pixfmt(pix_fmt::None)
+        , cmpflg(comp_flags::CompressionNone)
+        , pixflg(pix_flags::None)
         , bfmt(bitfmt)
         , comp(comp)
     {
@@ -671,8 +665,8 @@ struct PixDesc
 
     PixDesc(CompFmt cf)
         : c(cf)
-        , bfmt(BitFmt::Byte)
-        , comp(convert::to<PixCmp>(c))
+        , bfmt(bit_fmt::i8)
+        , comp(convert::to<pix_components>(c))
     {
     }
 
@@ -682,14 +676,14 @@ struct PixDesc
 
         struct
         {
-            PixFmt    pixfmt;
-            CompFlags cmpflg;
-            PixFlg    pixflg;
+            pix_fmt    pixfmt;
+            comp_flags cmpflg;
+            pix_flags    pixflg;
         };
     };
 
-    BitFmt bfmt;
-    PixCmp comp;
+    bit_fmt bfmt;
+    pix_components comp;
 };
 
 } // namespace typing::pixels

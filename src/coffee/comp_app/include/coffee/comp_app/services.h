@@ -32,7 +32,7 @@ using text_type   = std::string const&;
 using text_type_t = std::string;
 using position_t  = typing::geometry::point_2d<libc_types::i32>;
 using size_2d_t   = typing::geometry::size_2d<libc_types::i32>;
-using PixFmt      = typing::pixels::PixFmt;
+using pix_fmt      = typing::pixels::pix_fmt;
 
 using Coffee::Components::component_list;
 using Coffee::Components::subsystem_list;
@@ -393,19 +393,19 @@ struct GraphicsFramebuffer
 
     virtual size_2d_t size() const = 0;
 
-    virtual PixFmt format() const
+    virtual pix_fmt format() const
     {
-        return PixFmt::None;
+        return pix_fmt::None;
     }
 
-    virtual PixFmt depthFormat() const
+    virtual pix_fmt depthFormat() const
     {
-        return PixFmt::None;
+        return pix_fmt::None;
     }
 
-    virtual PixFmt stencilFormat() const
+    virtual pix_fmt stencilFormat() const
     {
-        return PixFmt::None;
+        return pix_fmt::None;
     }
 
     virtual void swapBuffers(app_error& ec) = 0;
@@ -565,7 +565,7 @@ struct ScreenshotProvider
     struct dump_t
     {
         size_2d_t                   size;
-        typing::pixels::PixFmt      format;
+        typing::pixels::pix_fmt      format;
         std::vector<libc_types::u8> data;
     };
 

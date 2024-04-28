@@ -37,7 +37,6 @@ void install_imgui_widgets(
 i32 blam_main()
 {
     cxxopts::ParseResult arguments;
-    if constexpr(!compile_info::platform::is_emscripten)
     {
         cxxopts::Options options(
             "Blam! Graphics", "A prototype for a Blam! engine");
@@ -276,13 +275,21 @@ i32 blam_main()
                 compile_info::supports_command_line ? RSCA::SystemFile
                                                     : RSCA::AssetFile);
             if(auto info = platform::file::file_info(map_filename);
-               info.has_value() &&
-               info.value().mode == platform::file::mode_t::directory)
+               info.has_value())
             {
-                map_dir      = map_filename;
-                map_filename = {};
-            } else if(info.value().mode == platform::file::mode_t::file)
+                if(info.value().mode == platform::file::mode_t::directory)
+                {
+                    map_dir      = map_filename;
+                    map_filename = {};
+                } else if(info.value().mode == platform::file::mode_t::file)
+                {
+                    map_dir =
+                        map_filename.path().dirname().url(map_filename.flags);
+                }
+            } else
+            {
                 map_dir = map_filename.path().dirname().url(map_filename.flags);
+            }
 
             GameEvent    event{GameEvent::MapLoadStart};
             MapLoadEvent load{

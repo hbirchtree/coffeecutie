@@ -29,13 +29,13 @@ struct texture_decode_not_implemented : std::runtime_error
     using std::runtime_error::runtime_error;
 };
 
-using typing::pixels::PixFmt;
+using typing::pixels::pix_fmt;
 
 bool texture_t::requires_software_decode()
 {
-    using Comp = typing::pixels::CompFlags;
+    using Comp = typing::pixels::comp_flags;
 
-    if(m_format.pixfmt == PixFmt::BCn)
+    if(m_format.pixfmt == pix_fmt::BCn)
     {
         const auto s3tc_support = m_features.tex.ext.s3tc;
         const auto rgtc_support = m_features.tex.gl.rgtc ||
@@ -60,29 +60,29 @@ bool texture_t::requires_software_decode()
 #endif
     }
 #if defined(GLEAM_ENABLE_SOFTWARE_PVRTC)
-    if(m_format.pixfmt == PixFmt::ETC1 && !m_features.tex.oes.etc1)
+    if(m_format.pixfmt == pix_fmt::ETC1 && !m_features.tex.oes.etc1)
         return true;
-    if(m_format.pixfmt == PixFmt::PVRTC && !m_features.tex.img.pvrtc)
+    if(m_format.pixfmt == pix_fmt::PVRTC && !m_features.tex.img.pvrtc)
         return true;
 #else
-    if(m_format.pixfmt == PixFmt::ETC1 && !m_features.tex.oes.etc1)
+    if(m_format.pixfmt == pix_fmt::ETC1 && !m_features.tex.oes.etc1)
         Throw(texture_decode_not_available("ETC1" NOT_SUPPORTED));
-    if(m_format.pixfmt == PixFmt::PVRTC && !m_features.tex.img.pvrtc)
+    if(m_format.pixfmt == pix_fmt::PVRTC && !m_features.tex.img.pvrtc)
         Throw(texture_decode_not_available("PVRTC" NOT_SUPPORTED));
 #endif
 
-    if(m_format.pixfmt == PixFmt::ASTC && !m_features.tex.gl.astc &&
+    if(m_format.pixfmt == pix_fmt::ASTC && !m_features.tex.gl.astc &&
        !m_features.tex.khr.astc)
         Throw(texture_decode_not_available("ASTC" NOT_SUPPORTED));
-    if(m_format.pixfmt == PixFmt::ETC2 && !m_features.tex.gl.etc2)
+    if(m_format.pixfmt == pix_fmt::ETC2 && !m_features.tex.gl.etc2)
         Throw(texture_decode_not_available("ETC2" NOT_SUPPORTED));
     return false;
 }
 
 std::optional<PixDesc> texture_t::software_decode_format()
 {
-    if(m_format.pixfmt == PixFmt::BCn && requires_software_decode())
-        return PixDesc(PixFmt::RGBA8);
+    if(m_format.pixfmt == pix_fmt::BCn && requires_software_decode())
+        return PixDesc(pix_fmt::RGBA8);
     return std::nullopt;
 }
 
@@ -92,7 +92,7 @@ static std::vector<char> software_decode_bcn(
     semantic::Span<const char>&& data,
     size_3d<i32> const&          size)
 {
-    using typing::pixels::CompFlags;
+    using typing::pixels::comp_flags;
     using bcdec_transform_t     = void (*)(const void*, void*, int);
     auto              out_size  = size.volume() * 4u;
     auto              out_pitch = size.w * 4u;
@@ -102,18 +102,18 @@ static std::vector<char> software_decode_bcn(
 
     switch(m_format.cmpflg)
     {
-    case CompFlags::BC1:
+    case comp_flags::BC1:
         transform = bcdec_bc1;
         break;
-    case CompFlags::BC2:
+    case comp_flags::BC2:
         transform = bcdec_bc2;
         blk_size  = BCDEC_BC2_BLOCK_SIZE;
         break;
-    case CompFlags::BC3:
+    case comp_flags::BC3:
         transform = bcdec_bc3;
         blk_size  = BCDEC_BC3_BLOCK_SIZE;
         break;
-    case CompFlags::BC7:
+    case comp_flags::BC7:
         transform = bcdec_bc7;
         blk_size  = BCDEC_BC7_BLOCK_SIZE;
         break;
@@ -152,14 +152,14 @@ static std::vector<char> software_decode_pvrtc_etc1(
 {
     std::vector<char> out;
     out.resize(size.w * size.h * 4);
-    if(fmt.pixfmt == PixFmt::PVRTC)
+    if(fmt.pixfmt == pix_fmt::PVRTC)
         pvr::PVRTDecompressPVRTC(
             data.data(),
-            fmt.cmpflg == typing::pixels::CompFlags::bpp_2 ? 1 : 0,
+            fmt.cmpflg == typing::pixels::comp_flags::bpp_2 ? 1 : 0,
             size.w,
             size.h,
             reinterpret_cast<uint8_t*>(out.data()));
-    else if(fmt.pixfmt == PixFmt::ETC1)
+    else if(fmt.pixfmt == pix_fmt::ETC1)
         pvr::PVRTDecompressETC(data.data(), size.w, size.h, out.data(), 0);
     return out;
 }
@@ -169,7 +169,7 @@ static std::vector<char> software_decode_pvrtc_etc1(
 std::future<std::vector<char>> texture_t::software_decode(
     semantic::Span<const char>&& data, size_3d<i32> size, i32 mipmap)
 {
-    using typing::pixels::CompFlags;
+    using typing::pixels::comp_flags;
 
     if(!m_decoder_queue)
     {
@@ -185,7 +185,7 @@ std::future<std::vector<char>> texture_t::software_decode(
     (void)mipmap;
 
 #if defined(GLEAM_ENABLE_SOFTWARE_BCN)
-    if(m_format.pixfmt == PixFmt::BCn)
+    if(m_format.pixfmt == pix_fmt::BCn)
     {
         auto task = rq::dependent_task<void, std::vector<char>>::CreateSource(
             [fmt = m_format, data, size]() mutable {
@@ -199,7 +199,7 @@ std::future<std::vector<char>> texture_t::software_decode(
     }
 #endif
 #if defined(GLEAM_ENABLE_SOFTWARE_PVRTC)
-    if(stl_types::any_of(m_format.pixfmt, PixFmt::PVRTC, PixFmt::ETC1))
+    if(stl_types::any_of(m_format.pixfmt, pix_fmt::PVRTC, pix_fmt::ETC1))
     {
         auto task = rq::dependent_task<void, std::vector<char>>::CreateSource(
             [fmt = m_format, data, size]() mutable {

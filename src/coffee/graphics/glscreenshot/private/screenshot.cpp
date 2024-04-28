@@ -124,7 +124,7 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
 #endif
         return dump_t{
             .size   = size_,
-            .format = typing::pixels::PixFmt::RGBA8,
+            .format = typing::pixels::pix_fmt::RGBA8,
             .data   = std::move(data),
         };
     };

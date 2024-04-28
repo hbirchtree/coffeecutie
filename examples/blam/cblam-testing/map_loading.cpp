@@ -395,7 +395,7 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
         MapLoadFinishedEvent<halo_version> finished = {
             .container = &files.container,
         };
-        if(bitmap_data)
+        if(files.bitmap_file)
             finished.bitmaps =
                 blam::map_ptr(static_cast<BytesConst>(*files.bitmap_file));
         finished.map_name  = files.container.internal_name();

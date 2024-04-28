@@ -20,43 +20,43 @@ namespace detail {
 using vattribute_flags = semantic::concepts::graphics::buffers::attribute_flags;
 
 template<typename T>
-constexpr inline std::pair<semantic::TypeEnum, vattribute_flags> type_of()
+constexpr inline std::pair<semantic::type_t, vattribute_flags> type_of()
 {
     using libc_types::i16;
     using libc_types::i8;
     using libc_types::u16;
     using libc_types::u8;
 
-    using E = semantic::TypeEnum;
+    using E = semantic::type_t;
     if constexpr(std::is_same_v<T, f64>)
-        return {E::BigScalar, vattribute_flags::none};
+        return {E::f64, vattribute_flags::none};
     if constexpr(std::is_same_v<T, f32>)
-        return {E::Scalar, vattribute_flags::none};
+        return {E::f32, vattribute_flags::none};
     if constexpr(std::is_same_v<T, i64>)
-        return {E::LL, vattribute_flags::none};
+        return {E::i64, vattribute_flags::none};
     if constexpr(std::is_same_v<T, i32>)
-        return {E::Int, vattribute_flags::none};
+        return {E::i32, vattribute_flags::none};
     if constexpr(std::is_same_v<T, i16>)
-        return {E::Short, vattribute_flags::none};
+        return {E::i16, vattribute_flags::none};
     if constexpr(std::is_same_v<T, i8>)
-        return {E::Byte, vattribute_flags::none};
+        return {E::i8, vattribute_flags::none};
     if constexpr(std::is_same_v<T, u64>)
-        return {E::ULL, vattribute_flags::none};
+        return {E::u64, vattribute_flags::none};
     if constexpr(std::is_same_v<T, u32>)
-        return {E::UInt, vattribute_flags::none};
+        return {E::u32, vattribute_flags::none};
     if constexpr(std::is_same_v<T, u16>)
-        return {E::UShort, vattribute_flags::none};
+        return {E::u16, vattribute_flags::none};
     if constexpr(std::is_same_v<T, u8>)
-        return {E::UByte, vattribute_flags::none};
+        return {E::u8, vattribute_flags::none};
     if constexpr(std::is_same_v<T, typing::pixels::f11>)
-        return {E::Packed_UFloat, vattribute_flags::packed};
+        return {E::f11, vattribute_flags::packed};
     if constexpr(std::is_same_v<T, typing::pixels::r11g11b10u>)
-        return {E::UInt, vattribute_flags::none};
+        return {E::u32, vattribute_flags::none};
 }
 
 template<typename T>
 requires semantic::concepts::Vector<T, typename T::value_type, 4>
-inline std::tuple<semantic::TypeEnum, vattribute_flags, u32> vector_info_of()
+inline std::tuple<semantic::type_t, vattribute_flags, u32> vector_info_of()
 {
     auto [type, flags] = type_of<typename T::value_type>();
     return {type, flags, 4};
@@ -64,7 +64,7 @@ inline std::tuple<semantic::TypeEnum, vattribute_flags, u32> vector_info_of()
 
 template<typename T>
 requires semantic::concepts::Vector<T, typename T::value_type, 3>
-inline std::tuple<semantic::TypeEnum, vattribute_flags, u32> vector_info_of()
+inline std::tuple<semantic::type_t, vattribute_flags, u32> vector_info_of()
 {
     auto [type, flags] = type_of<typename T::value_type>();
     return {type, flags, 3};
@@ -72,7 +72,7 @@ inline std::tuple<semantic::TypeEnum, vattribute_flags, u32> vector_info_of()
 
 template<typename T>
 requires semantic::concepts::Vector<T, typename T::value_type, 2>
-inline std::tuple<semantic::TypeEnum, vattribute_flags, u32> vector_info_of()
+inline std::tuple<semantic::type_t, vattribute_flags, u32> vector_info_of()
 {
     auto [type, flags] = type_of<typename T::value_type>();
     return {type, flags, 2};
@@ -81,7 +81,7 @@ inline std::tuple<semantic::TypeEnum, vattribute_flags, u32> vector_info_of()
 template<typename T>
 requires(std::is_floating_point_v<T> || std::is_integral_v<T>)
 //
-inline std::tuple<semantic::TypeEnum, vattribute_flags, u32> vector_info_of()
+inline std::tuple<semantic::type_t, vattribute_flags, u32> vector_info_of()
 {
     auto [type, flags] = type_of<T>();
     return {type, flags, 1};
@@ -96,31 +96,31 @@ static_assert(
 
 template<typename T>
 requires std::is_same_v<T, typing::pixels::f11>
-inline std::tuple<semantic::TypeEnum, vattribute_flags, u32> vector_info_of()
+inline std::tuple<semantic::type_t, vattribute_flags, u32> vector_info_of()
 {
-    return {semantic::TypeEnum::Packed_UFloat, vattribute_flags::packed, 3};
+    return {semantic::type_t::f11, vattribute_flags::packed, 3};
 }
 
 template<typename T>
 requires std::is_same_v<T, typing::pixels::r11g11b10u>
-inline std::tuple<semantic::TypeEnum, vattribute_flags, u32> vector_info_of()
+inline std::tuple<semantic::type_t, vattribute_flags, u32> vector_info_of()
 {
-    return {semantic::TypeEnum::UInt, vattribute_flags::none, 1};
+    return {semantic::type_t::u32, vattribute_flags::none, 1};
 }
 
-constexpr inline bool vertex_is_int_type(semantic::TypeEnum type)
+constexpr inline bool vertex_is_int_type(semantic::type_t type)
 {
-    using T = semantic::TypeEnum;
+    using T = semantic::type_t;
     switch(type)
     {
-    case T::UByte:
-    case T::Byte:
-    case T::UShort:
-    case T::Short:
-    case T::UInt:
-    case T::Int:
-    case T::ULL:
-    case T::LL:
+    case T::u8:
+    case T::i8:
+    case T::u16:
+    case T::i16:
+    case T::u32:
+    case T::i32:
+    case T::u64:
+    case T::i64:
         return true;
     default:
         return false;
@@ -152,7 +152,7 @@ struct vertex_attribute
         u64                offset{0};
         u64                stride{0};
         u32                count{4};
-        semantic::TypeEnum type{semantic::TypeEnum::Scalar};
+        semantic::type_t type{semantic::type_t::f32};
         attribute_flags    flags{attribute_flags::none};
     } value;
 

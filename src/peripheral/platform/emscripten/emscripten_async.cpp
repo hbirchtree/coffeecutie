@@ -51,6 +51,7 @@ static std::map<std::string, promise_data_t> mmap_async_data{};
 
 static std::optional<posix::mem_mapping_t> mmap_download(const char* hash)
 {
+    fprintf(stdout, "Getting file from VFS: %s\n", hash);
     auto tmpfile = url::constructors::MkUrl(hash);
     auto size    = posix::size(tmpfile);
     auto mapping =
@@ -75,8 +76,8 @@ std::future<posix::mem_mapping_t> mmap_async(Url const& file)
     {
         std::promise<posix::mem_mapping_t> out;
         auto                               fut = out.get_future();
-        out.set_value(
-            mmap_download(hash.c_str()).value_or(posix::mem_mapping_t{}));
+        out.set_value(mmap_download(file.internUrl.c_str())
+                          .value_or(posix::mem_mapping_t{}));
         return fut;
     }
 

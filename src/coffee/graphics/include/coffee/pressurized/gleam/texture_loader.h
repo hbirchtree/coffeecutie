@@ -18,12 +18,12 @@ STATICINLINE UrlResolver TextureResolver(
     UrlResolver::SingleResolver sres = [&](Url const& url) {
         static constexpr szptr num_formats = 5;
 
-        static const Array<Pair<PixFmt, cstring>, num_formats> formats = {{
-            {PixFmt::S3TC, "dxt5"},
-            {PixFmt::S3TC, "dxt3"},
-            {PixFmt::S3TC, "dxt1"},
-            {PixFmt::ETC2, "etc2"},
-            {PixFmt::ETC1, "etc1"},
+        static const Array<Pair<pix_fmt, cstring>, num_formats> formats = {{
+            {pix_fmt::S3TC, "dxt5"},
+            {pix_fmt::S3TC, "dxt3"},
+            {pix_fmt::S3TC, "dxt1"},
+            {pix_fmt::ETC2, "etc2"},
+            {pix_fmt::ETC1, "etc1"},
         }};
 
         auto mip_ext = cast_pod(mipsize);

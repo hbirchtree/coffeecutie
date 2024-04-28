@@ -30,8 +30,8 @@ namespace compressor::bcn {
 
 std::optional<ktxTexture1*> encode(
     compressor::rgba_image_t const& img,
-    typing::pixels::CompFlags       format,
-    typing::PixCmp                  channels,
+    typing::pixels::comp_flags      format,
+    typing::pix_components          channels,
     settings_t&&                    settings = {});
 
 }

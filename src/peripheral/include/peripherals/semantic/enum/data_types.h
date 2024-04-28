@@ -5,19 +5,20 @@
 
 namespace semantic {
 
-enum class TypeEnum : libc_types::u8
+enum class type_t : libc_types::u8
 {
-    UByte,
-    Byte,
-    UShort,
-    Short,
-    UInt,
-    Int,
-    ULL,
-    LL,
-    Scalar,
-    BigScalar,
+    u8,
+    i8,
+    u16,
+    i16,
+    u32,
+    i32,
+    u64,
+    i64,
+    f32,
+    f64,
 
-    Packed_UFloat, /* PixFmt::R10FG11FB11F */
+    f11, /* pix_fmt::R10FG11FB11F */
+    u11, /* A rare format I hope isn't widespread */
 };
 }

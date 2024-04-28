@@ -48,7 +48,7 @@ inline compressor::rgba_image_t& cache_image(std::string filename)
            &image_cache[filename],
            Coffee::Resource(MkSysUrl(filename)),
            img_err,
-           typing::PixCmp::RGBA))
+           typing::pix_components::RGBA))
     {
         cBasicPrint("Failed to decode image to rgba8");
         return image_cache[filename];
@@ -84,7 +84,7 @@ bool etc2_compress(
     platform::url::Path const& base_dir,
     std::string const&         file,
     std::vector<u32> const&    resolutions,
-    typing::PixCmp             format,
+    typing::pix_components     format,
     std::string const&         channels,
     quality_mode               quality)
 {
@@ -95,14 +95,14 @@ bool etc2_compress(
                &imagef,
                Coffee::Resource(MkSysUrl(file)),
                img_err,
-               typing::PixCmp::RGBA))
+               typing::pix_components::RGBA))
         {
             cBasicPrint("Failed to decode image to rgba32f");
             return false;
         }
     }
 
-    if(format != typing::PixCmp::RGBA)
+    if(format != typing::pix_components::RGBA)
     {
         auto remapped = compressor::map_channels(imagef, channels);
         if(!remapped.has_value())
@@ -112,11 +112,11 @@ bool etc2_compress(
 
     auto out_fmt = compressor::etc2::format_t::RGBA8;
 
-    if(format == typing::PixCmp::R)
+    if(format == typing::pix_components::R)
         out_fmt = compressor::etc2::format_t::R11;
-    if(format == typing::PixCmp::RG)
+    if(format == typing::pix_components::RG)
         out_fmt = compressor::etc2::format_t::RG11;
-    if(format == typing::PixCmp::RGB)
+    if(format == typing::pix_components::RGB)
         out_fmt = compressor::etc2::format_t::RGB8;
 
     auto res = compressor::etc2::encode(
@@ -141,15 +141,15 @@ bool bcn_compress(
     std::string const&                       file,
     [[maybe_unused]] std::vector<u32> const& resolutions,
     [[maybe_unused]] std::string const&      codec,
-    typing::PixCmp                           format,
+    typing::pix_components                   format,
     std::string const&                       channels,
     [[maybe_unused]] quality_mode            quality)
 {
-    using typing::pixels::CompFlags;
+    using typing::pixels::comp_flags;
 
     compressor::rgba_image_t image = cache_image(file).copy();
 
-    if(format != typing::PixCmp::RGBA)
+    if(format != typing::pix_components::RGBA)
     {
         auto remapped = compressor::map_channels(image, channels);
         if(!remapped.has_value())
@@ -159,17 +159,17 @@ bool bcn_compress(
 
     auto out_name = create_output_name(base_dir, file, 0, "png");
 
-    CompFlags bcn_format = CompFlags::BC1;
+    comp_flags bcn_format = comp_flags::BC1;
     if(codec == "bc2" || codec == "bc3")
-        bcn_format = CompFlags::BC3;
+        bcn_format = comp_flags::BC3;
     else if(codec == "bc4")
-        bcn_format = CompFlags::BC4;
+        bcn_format = comp_flags::BC4;
     else if(codec == "bc5")
-        bcn_format = CompFlags::BC5;
+        bcn_format = comp_flags::BC5;
     else if(codec == "bc6")
-        bcn_format = CompFlags::BC6H;
+        bcn_format = comp_flags::BC6H;
     else if(codec == "bc7")
-        bcn_format = CompFlags::BC7;
+        bcn_format = comp_flags::BC7;
 
     auto res = compressor::bcn::encode(image, bcn_format, format);
 
@@ -179,21 +179,20 @@ bool bcn_compress(
         return false;
     }
 
-    return save_ktx_to_file(
-        create_output_name(base_dir, file, 0, codec), *res);
+    return save_ktx_to_file(create_output_name(base_dir, file, 0, codec), *res);
 }
 
 bool png_compress(
     platform::url::Path const& base_dir,
     std::string const&         file,
     std::vector<u32> const&    resolutions,
-    typing::PixCmp             format,
+    typing::pix_components     format,
     std::string const&         channels,
     quality_mode               quality)
 {
     compressor::rgba_image_t image = cache_image(file).copy();
 
-    if(format != typing::PixCmp::RGBA)
+    if(format != typing::pix_components::RGBA)
     {
         auto remapped = compressor::map_channels(image, channels);
         if(!remapped.has_value())
@@ -226,12 +225,12 @@ bool raw_include(
     platform::url::Path const& base_dir,
     std::string const&         file,
     std::vector<u32> const&    resolutions,
-    typing::PixCmp             format,
+    typing::pix_components     format,
     std::string const&         channels)
 {
     compressor::rgba_image_t image = cache_image(file).copy();
 
-    if(format != typing::PixCmp::RGBA)
+    if(format != typing::pix_components::RGBA)
     {
         auto remapped = compressor::map_channels(image, channels);
         if(!remapped.has_value())
@@ -242,13 +241,13 @@ bool raw_include(
     ktx_uint32_t ktx_format = GL_RGBA8;
     switch(format)
     {
-    case typing::PixCmp::R:
+    case typing::pix_components::R:
         ktx_format = GL_R8;
         break;
-    case typing::PixCmp::RG:
+    case typing::pix_components::RG:
         ktx_format = GL_RG8;
         break;
-    case typing::PixCmp::RGB:
+    case typing::pix_components::RGB:
         ktx_format = GL_RGB8;
         break;
     default:
@@ -385,10 +384,11 @@ i32 cooker_main(i32 argc, char** argv)
 
         for(auto [codec, format] : codecs)
         {
-            auto pixcmp = format == "rgba"           ? typing::PixCmp::RGBA
-                          : format == "rgb"          ? typing::PixCmp::RGB
-                          : (format == "rg" || "ra") ? typing::PixCmp::RG
-                                                     : typing::PixCmp::R;
+            auto pixcmp = format == "rgba"  ? typing::pix_components::RGBA
+                          : format == "rgb" ? typing::pix_components::RGB
+                          : (format == "rg" || "ra")
+                              ? typing::pix_components::RG
+                              : typing::pix_components::R;
 
             if(codec == "etc2")
                 etc2_compress(

@@ -504,9 +504,9 @@ void SetupRendering(
 
         ProfContext _("Texture loading");
         auto        fmt = typing::pixels::PixDesc(
-            typing::pixels::PixFmt::RGBA8,
-            typing::pixels::BitFmt::UByte,
-            typing::PixCmp::RGBA);
+            typing::pixels::pix_fmt::RGBA8,
+            typing::pixels::bit_fmt::u8,
+            typing::pix_components::RGBA);
 
         auto texture = d.g_data.tex =
             std::make_shared<gleam::compat::texture_2da_t>(&d.gfx, fmt, 1);
@@ -547,7 +547,7 @@ void SetupRendering(
         auto img_download = e.subsystem_cast<ASIO::Subsystem>().create_download(
             "http://i.imgur.com/nQdOmCJ.png"_http);
         auto img_decode = IMG::create_decoder(
-            img_download->output.get_future(), typing::PixCmp::RGBA);
+            img_download->output.get_future(), typing::pix_components::RGBA);
         auto img_upload = rq::dependent_task<stb::image_rw, void>::CreateSink(
             img_decode->output.get_future(),
             [texture = d.g_data.tex](stb::image_rw* img) {

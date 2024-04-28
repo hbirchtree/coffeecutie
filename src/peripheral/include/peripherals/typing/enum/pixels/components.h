@@ -3,7 +3,7 @@
 #include <peripherals/libc/types.h>
 
 namespace typing {
-enum class PixCmp : libc_types::u8
+enum class pix_components : libc_types::u8
 {
     None,
 

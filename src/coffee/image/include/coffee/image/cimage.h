@@ -14,7 +14,7 @@ namespace IMG {
 using namespace typing::pixels;
 using semantic::Bytes;
 using semantic::BytesConst;
-using typing::PixCmp;
+using typing::pix_components;
 
 /*!
  * \brief For the cases when you need to store an image descriptor
@@ -25,8 +25,8 @@ struct serial_image
     serial_image()
         : size()
     {
-        v2.format  = {};
-        v2.bit_fmt = BitFmt::Byte;
+        v2.format = {};
+        v2.bitfmt = bit_fmt::i8;
     }
 
     static serial_image const* From(Bytes const& data)
@@ -57,16 +57,16 @@ struct serial_image
     {
         struct
         {
-            CompFlags comp_fmt;
-            PixFmt    fmt;
-            BitFmt    bit_fmt;
-            u8        pad_;
+            comp_flags comp_fmt;
+            pix_fmt    fmt;
+            bit_fmt    bitfmt;
+            u8         pad_;
         } v1;
 
         struct
         {
             CompFmt format;
-            BitFmt  bit_fmt;
+            bit_fmt bitfmt;
             u8      pad_;
         } v2;
 
@@ -93,7 +93,7 @@ namespace stb {
 using namespace typing::pixels;
 using semantic::Bytes;
 using semantic::BytesConst;
-using typing::PixCmp;
+using typing::pix_components;
 
 enum class ImageHint : u16
 {
@@ -107,7 +107,7 @@ enum class STBError
 {
     GeneralError = 1,
     InvalidComponents,
-    InvalidPixFmt,
+    Invalidpix_fmt,
     DecodingError,
     EncodingError,
     ResizeError,
@@ -226,12 +226,12 @@ extern bool LoadData(
     image<u8>*        target,
     BytesConst const& src,
     stb_error&        ec,
-    PixCmp            comp = PixCmp::RGBA);
+    pix_components    comp = pix_components::RGBA);
 extern bool LoadData(
     image<f32>*       target,
     BytesConst const& src,
     stb_error&        ec,
-    PixCmp            comp = PixCmp::RGBA);
+    pix_components    comp = pix_components::RGBA);
 /*!
  * \brief Resize an image using STB
  * \param img Target image
@@ -248,7 +248,9 @@ extern image<f32> Resize(
     image<f32> const& img, const Size& target, int channels);
 
 inline bool LoadData(
-    image_rw* target, BytesConst const& src, PixCmp comp = PixCmp::RGBA)
+    image_rw*         target,
+    BytesConst const& src,
+    pix_components    comp = pix_components::RGBA)
 {
     stb_error ec;
     auto      out = LoadData(target, src, ec, comp);
@@ -297,7 +299,8 @@ extern bool SaveJPG(
 namespace IMG {
 using stb::stb_error;
 
-inline bool Load(BytesConst& r, PixCmp cmp, BitFmt& fmt, Bytes& data, Size& res)
+inline bool Load(
+    BytesConst& r, pix_components cmp, bit_fmt& fmt, Bytes& data, Size& res)
 {
     stb_error ec;
 
@@ -305,7 +308,7 @@ inline bool Load(BytesConst& r, PixCmp cmp, BitFmt& fmt, Bytes& data, Size& res)
     bool          stat = stb::LoadData(&img, r, ec, cmp);
     C_ERROR_CHECK(ec)
 
-    fmt  = BitFmt::UByte;
+    fmt  = bit_fmt::u8;
     data = std::move(img.data_owner);
     res  = img.size;
 
@@ -315,7 +318,7 @@ inline bool Load(BytesConst& r, PixCmp cmp, BitFmt& fmt, Bytes& data, Size& res)
 }
 
 inline bool Load(
-    BytesConst&& r, PixCmp cmp, BitFmt& fmt, Bytes& data, Size& res)
+    BytesConst&& r, pix_components cmp, bit_fmt& fmt, Bytes& data, Size& res)
 {
     return Load(r, cmp, fmt, data, res);
 }

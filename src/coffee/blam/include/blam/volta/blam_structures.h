@@ -18,9 +18,9 @@
 
 namespace blam {
 
-using typing::pixels::BitFmt;
-using typing::pixels::CompFlags;
-using typing::pixels::PixFmt;
+using typing::pixels::bit_fmt;
+using typing::pixels::comp_flags;
+using typing::pixels::pix_fmt;
 using typing::vector_types::Quatf;
 using TexType = typing::graphics::TexType;
 

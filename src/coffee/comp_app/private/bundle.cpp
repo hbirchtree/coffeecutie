@@ -328,19 +328,19 @@ void configureDefaults(AppLoader& loader)
     loader.addConfigs<detail::TypeList<GLConfig>>();
 
     auto& glConfig          = loader.config<GLConfig>();
-    glConfig.framebufferFmt = PixFmt::RGBA8;
-    glConfig.depthFmt       = PixFmt::Depth24Stencil8;
+    glConfig.framebufferFmt = pix_fmt::RGBA8;
+    glConfig.depthFmt       = pix_fmt::Depth24Stencil8;
 
 #if defined(FEATURE_ENABLE_GLeamCommon_ES2) || \
     defined(FEATURE_ENABLE_GLeamCommon_ES2Dynamic)
-    glConfig.framebufferFmt = PixFmt::RGB565;
-    glConfig.depthFmt       = PixFmt::Depth24Stencil8;
+    glConfig.framebufferFmt = pix_fmt::RGB565;
+    glConfig.depthFmt       = pix_fmt::Depth24Stencil8;
     glConfig.profile        = GLConfig::Embedded;
     glConfig.version.major  = 2;
     glConfig.version.minor  = 0;
 #elif defined(FEATURE_ENABLE_GLeamCommon_ES) || \
     defined(FEATURE_ENABLE_GLeamCommon_ESDynamic)
-    glConfig.framebufferFmt = PixFmt::RGB565;
+    glConfig.framebufferFmt = pix_fmt::RGB565;
     glConfig.profile        = GLConfig::Embedded;
     glConfig.version.major  = 3;
     glConfig.version.minor  = 2;
@@ -358,7 +358,7 @@ void configureDefaults(AppLoader& loader)
     if(compile_info::platform::is_android ||
        (compile_info::platform::is_linux && !compile_info::platform::is_iot) ||
        compile_info::platform::is_macos || compile_info::platform::is_windows)
-        glConfig.framebufferFmt = PixFmt::SRGB8;
+        glConfig.framebufferFmt = pix_fmt::SRGB8;
 
 #if defined(FEATURE_ENABLE_X11Component)
     loader.addConfigs<detail::TypeList<x11::X11Config>>();

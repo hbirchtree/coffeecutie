@@ -11,14 +11,14 @@ std::string_view draw_error_to_string(error e)
 
 std::size_t element_size(const draw_command::data_t& data)
 {
-    using semantic::TypeEnum;
+    using semantic::type_t;
     switch(data.elements.type)
     {
-    case TypeEnum::UByte:
+    case type_t::u8:
         return 1;
-    case TypeEnum::UShort:
+    case type_t::u16:
         return 2;
-    case TypeEnum::UInt:
+    case type_t::u32:
         return 4;
     default:
         Throw(std::runtime_error("unsupported element type"));

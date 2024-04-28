@@ -22,7 +22,7 @@ using typing::pixels::PixDesc;
 
 namespace detail {
 
-inline std::tuple<PixFmt, CompFlags> get_bitm_hash(BitmapItem const& bitm)
+inline std::tuple<pix_fmt, comp_flags> get_bitm_hash(BitmapItem const& bitm)
 {
     return std::make_tuple(bitm.image.fmt.pixfmt, bitm.image.fmt.cmpflg);
 }
@@ -225,56 +225,56 @@ struct MeshRenderer
             {"lightmaps"sv, 4},
             bitm_cache
                 .template get_bucket<gfx::compat::texture_2da_t>(
-                    PixDesc(PixFmt::RGB565))
+                    PixDesc(pix_fmt::RGB565))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_bc1"sv, 0},
             bitm_cache
                 .template get_bucket<gfx::compat::texture_2da_t>(
-                    CompFmt(PixFmt::BCn, CompFlags::BC1))
+                    CompFmt(pix_fmt::BCn, comp_flags::BC1))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_bc2"sv, 1},
             bitm_cache
                 .template get_bucket<gfx::compat::texture_2da_t>(
-                    CompFmt(PixFmt::BCn, CompFlags::BC2))
+                    CompFmt(pix_fmt::BCn, comp_flags::BC2))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_bc3"sv, 2},
             bitm_cache
                 .template get_bucket<gfx::compat::texture_2da_t>(
-                    CompFmt(PixFmt::BCn, CompFlags::BC3))
+                    CompFmt(pix_fmt::BCn, comp_flags::BC3))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_rgb565"sv, 3},
             bitm_cache
                 .template get_bucket<gfx::compat::texture_2da_t>(
-                    PixDesc(PixFmt::RGB565))
+                    PixDesc(pix_fmt::RGB565))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_r8"sv, 5},
             bitm_cache
                 .template get_bucket<gfx::compat::texture_2da_t>(
-                    PixDesc(PixFmt::R8))
+                    PixDesc(pix_fmt::R8))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_rg8"sv, 6},
             bitm_cache
                 .template get_bucket<gfx::compat::texture_2da_t>(
-                    PixDesc(PixFmt::RG8))
+                    PixDesc(pix_fmt::RG8))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_rgba4"sv, 7},
             bitm_cache
                 .template get_bucket<gfx::compat::texture_2da_t>(
-                    PixDesc(PixFmt::RGBA4))
+                    PixDesc(pix_fmt::RGBA4))
                 .sampler});
 
         if(m_api->limits().textures.texture_units <= 8)
@@ -285,7 +285,7 @@ struct MeshRenderer
             {"source_rgba8"sv, 8},
             bitm_cache
                 .template get_bucket<gfx::compat::texture_2da_t>(
-                    PixDesc(PixFmt::RGBA8))
+                    PixDesc(pix_fmt::RGBA8))
                 .sampler});
 #if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION_ES >= 0x320
         samplers.push_back(gleam::sampler_definition_t{
@@ -293,7 +293,7 @@ struct MeshRenderer
             {"source_cube_bc1"sv, 9},
             bitm_cache
                 .template get_bucket<gfx::texture_cube_array_t>(
-                    CompFmt(PixFmt::BCn, CompFlags::BC1),
+                    CompFmt(pix_fmt::BCn, comp_flags::BC1),
                     blam::bitm::type_t::tex_cube)
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
@@ -301,14 +301,14 @@ struct MeshRenderer
             {"source_cube_rgb565"sv, 10},
             bitm_cache
                 .template get_bucket<gfx::texture_cube_array_t>(
-                    PixDesc(PixFmt::RGB565), blam::bitm::type_t::tex_cube)
+                    PixDesc(pix_fmt::RGB565), blam::bitm::type_t::tex_cube)
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_cube_rgba8"sv, 11},
             bitm_cache
                 .template get_bucket<gfx::texture_cube_array_t>(
-                    PixDesc(PixFmt::RGBA8), blam::bitm::type_t::tex_cube)
+                    PixDesc(pix_fmt::RGBA8), blam::bitm::type_t::tex_cube)
                 .sampler});
 #endif
         for(auto& sampler : samplers)
@@ -955,6 +955,8 @@ struct MeshRenderer
     std::optional<ShaderCache<halo_version>::material_context> model_context(
         blam::tag_t const* tag)
     {
+        if(!m_render_params.color_changing)
+            return std::nullopt;
         switch(tag->tag_class())
         {
         case blam::tag_class_t::bipd:
@@ -1515,7 +1517,7 @@ void main()
         cWarning("Error compiling loader bg shader: {}", res.error());
 
     loading_tex =
-        api.alloc_texture(gfx::textures::d2, PixDesc(PixFmt::RGB8), 1);
+        api.alloc_texture(gfx::textures::d2, PixDesc(pix_fmt::RGB8), 1);
     loading_tex->alloc(size_3d<u32>{32, 32, 1});
     loading_tex->upload(gsl::span(noise_tex), Veci2{}, size_2d<i32>{32, 32});
     loading_sampler = loading_tex->sampler();

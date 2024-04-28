@@ -158,7 +158,7 @@ struct alignas(8) Screenshot
 {
     static constexpr auto message_type = MessageBase::Screenshot;
 
-    PixFmt format{PixFmt::None};
+    pix_fmt format{pix_fmt::None};
 };
 
 struct EntityTag

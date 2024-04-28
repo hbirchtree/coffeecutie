@@ -202,7 +202,7 @@ STATICINLINE u32 index_to_attr(u32 idx)
     return 0;
 }
 
-STATICINLINE u32 type_to_layout(u32 attr, semantic::TypeEnum type, u32 size)
+STATICINLINE u32 type_to_layout(u32 attr, semantic::type_t type, u32 size)
 {
     switch(attr)
     {
@@ -229,9 +229,9 @@ STATICINLINE u32 type_to_layout(u32 attr, semantic::TypeEnum type, u32 size)
     return 0;
 }
 
-STATICINLINE u32 type_to_format(u32 attr, semantic::TypeEnum type, u32 size)
+STATICINLINE u32 type_to_format(u32 attr, semantic::type_t type, u32 size)
 {
-    using T = semantic::TypeEnum;
+    using T = semantic::type_t;
 
     switch(attr)
     {
@@ -461,7 +461,7 @@ void GXAPI::Draw(
     GXAPI::D_CALL const& call,
     GXAPI::D_DATA const& data)
 {
-    using T = semantic::TypeEnum;
+    using T = semantic::type_t;
 
     desc.bind();
 

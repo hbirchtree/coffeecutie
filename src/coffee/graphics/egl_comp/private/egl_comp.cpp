@@ -310,7 +310,7 @@ static attrib_list create_context_attribs(
     return attribs;
 }
 
-inline auto layout_of(comp_app::PixFmt fmt)
+inline auto layout_of(comp_app::pix_fmt fmt)
 {
     return gl::tex::format_of(fmt).raw_format->bit_layout;
 }
@@ -364,7 +364,7 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
         } else
         {
             /* Unsupported */
-            config.framebufferFmt = PixFmt::RGB565;
+            config.framebufferFmt = pix_fmt::RGB565;
             color                 = layout_of(config.framebufferFmt);
         }
     }
@@ -446,7 +446,7 @@ void GraphicsFramebuffer::end_frame(ContainerProxy&, const time_point&)
 
 void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
 {
-    using comp_app::PixFmt;
+    using comp_app::pix_fmt;
 
     m_container = &e;
 
@@ -460,8 +460,8 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
     std::vector<std::pair<EGLint, EGLint>> attribs;
 
 #if defined(EGL_VERSION_1_5)
-    if((config.framebufferFmt == PixFmt::SRGB8A8 ||
-        config.framebufferFmt == PixFmt::SRGB8) &&
+    if((config.framebufferFmt == pix_fmt::SRGB8A8 ||
+        config.framebufferFmt == pix_fmt::SRGB8) &&
        (handle.m_major > 1 || (handle.m_major == 1 && handle.m_minor >= 5)))
         attribs.push_back({EGL_GL_COLORSPACE, EGL_GL_COLORSPACE_SRGB});
 #endif

@@ -47,8 +47,8 @@ struct GLConfig : Config<GLConfig>
         PerfMask    = PreferHighPerf | PreferLowPerf,
     };
 
-    PixFmt framebufferFmt = PixFmt::RGBA8;
-    PixFmt depthFmt       = PixFmt::Depth24Stencil8;
+    pix_fmt framebufferFmt = pix_fmt::RGBA8;
+    pix_fmt depthFmt       = pix_fmt::Depth24Stencil8;
 
     struct
     {

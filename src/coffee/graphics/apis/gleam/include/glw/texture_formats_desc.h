@@ -12,9 +12,9 @@ using typing::pixels::PixDesc;
 
 inline texture_format_t const& format_of(PixDesc const& desc)
 {
-    using C = typing::pixels::CompFlags;
-    using P = typing::pixels::PixFmt;
-    using F = typing::pixels::PixFlg;
+    using C = typing::pixels::comp_flags;
+    using P = typing::pixels::pix_fmt;
+    using F = typing::pixels::pix_flags;
     switch(desc.pixfmt)
     {
     case P::BCn:
@@ -254,162 +254,162 @@ inline texture_format_t const& format_of(PixDesc const& desc)
 
 inline PixDesc desc_of(texture_format_t const& fmt)
 {
-    using typing::PixCmp;
-    using typing::pixels::CompFlags;
+    using typing::pix_components;
+    using typing::pixels::comp_flags;
     using typing::pixels::CompFmt;
     using typing::pixels::PixDesc;
-    using typing::pixels::PixFlg;
-    using typing::pixels::PixFmt;
+    using typing::pixels::pix_flags;
+    using typing::pixels::pix_fmt;
     switch(fmt.type)
     {
         /* ETC1 */
 #if defined(GL_ETC1_RGB8_OES)
     case format_t::etc1_rgb8_oes:
-        return CompFmt(PixFmt::ETC1);
+        return CompFmt(pix_fmt::ETC1);
 #endif
 
         /* ETC2 */
 #if defined(GL_COMPRESSED_R11_EAC)
     case format_t::compressed_r11_eac:
-        return CompFmt(PixFmt::ETC2, PixFlg::R);
+        return CompFmt(pix_fmt::ETC2, pix_flags::R);
     case format_t::compressed_rg11_eac:
-        return CompFmt(PixFmt::ETC2, PixFlg::RG);
+        return CompFmt(pix_fmt::ETC2, pix_flags::RG);
     case format_t::compressed_rgb8_etc2:
-        return CompFmt(PixFmt::ETC2, PixFlg::RGBA);
+        return CompFmt(pix_fmt::ETC2, pix_flags::RGBA);
     case format_t::compressed_rgba8_etc2_eac:
-        return CompFmt(PixFmt::ETC2, PixFlg::RGBA);
+        return CompFmt(pix_fmt::ETC2, pix_flags::RGBA);
     case format_t::compressed_rgb8_punchthrough_alpha1_etc2:
-        return CompFmt(PixFmt::ETC2, PixFlg::RGBA_Punchthrough);
+        return CompFmt(pix_fmt::ETC2, pix_flags::RGBA_Punchthrough);
 #endif
 
         /* BCn */
 #if defined(GL_COMPRESSED_RGB_S3TC_DXT1_EXT)
     case format_t::compressed_rgb_s3tc_dxt1_ext:
-        return CompFmt(PixFmt::BCn, CompFlags::BC1);
+        return CompFmt(pix_fmt::BCn, comp_flags::BC1);
     case format_t::compressed_rgba_s3tc_dxt3_ext:
-        return CompFmt(PixFmt::BCn, CompFlags::BC2);
+        return CompFmt(pix_fmt::BCn, comp_flags::BC2);
     case format_t::compressed_rgba_s3tc_dxt5_ext:
-        return CompFmt(PixFmt::BCn, CompFlags::BC3);
+        return CompFmt(pix_fmt::BCn, comp_flags::BC3);
 #endif
 
 #if defined(GL_COMPRESSED_RED_RGTC1)
     case format_t::compressed_red_rgtc1:
-        return CompFmt(PixFmt::BCn, CompFlags::BC4);
+        return CompFmt(pix_fmt::BCn, comp_flags::BC4);
 #endif
 #if defined(GL_COMPRESSED_RG_RGTC2)
     case format_t::compressed_rg_rgtc2:
-        return CompFmt(PixFmt::BCn, CompFlags::BC5);
+        return CompFmt(pix_fmt::BCn, comp_flags::BC5);
 #endif
 
 #if defined(GL_COMPRESSED_RGBA_BPTC_UNORM) || \
     defined(GL_COMPRESSED_RGBA_BPTC_UNORM_ARB)
     case format_t::compressed_rgb_bptc_signed_float:
         return CompFmt(
-            PixFmt::BCn,
-            PixFlg::Signed | PixFlg::FloatingPoint,
-            CompFlags::BC6H);
+            pix_fmt::BCn,
+            pix_flags::Signed | pix_flags::FloatingPoint,
+            comp_flags::BC6H);
     case format_t::compressed_rgb_bptc_unsigned_float:
         return CompFmt(
-            PixFmt::BCn,
-            PixFlg::Unsigned | PixFlg::FloatingPoint,
-            CompFlags::BC6H);
+            pix_fmt::BCn,
+            pix_flags::Unsigned | pix_flags::FloatingPoint,
+            comp_flags::BC6H);
     case format_t::compressed_rgba_bptc_unorm:
-        return CompFmt(PixFmt::BCn, CompFlags::BC7);
+        return CompFmt(pix_fmt::BCn, comp_flags::BC7);
 #endif
 
 #if defined(GL_R16)
     case format_t::r16:
-        return PixDesc(PixFmt::R16);
+        return PixDesc(pix_fmt::R16);
     case format_t::rg16:
-        return PixDesc(PixFmt::RG16);
+        return PixDesc(pix_fmt::RG16);
     case format_t::rgb16:
-        return PixDesc(PixFmt::RGB16);
+        return PixDesc(pix_fmt::RGB16);
     case format_t::rgba16:
-        return PixDesc(PixFmt::RGBA16);
+        return PixDesc(pix_fmt::RGBA16);
 #endif
 
     case format_t::rgb565:
-        return PixDesc(PixFmt::RGB565);
+        return PixDesc(pix_fmt::RGB565);
     case format_t::rgb5_a1:
-        return PixDesc(PixFmt::RGB5A1);
+        return PixDesc(pix_fmt::RGB5A1);
     case format_t::rgb9_e5:
-        return PixDesc(PixFmt::RGB9E5);
+        return PixDesc(pix_fmt::RGB9E5);
 
     case format_t::r8:
-        return PixDesc(PixFmt::R8);
+        return PixDesc(pix_fmt::R8);
     case format_t::r8i:
-        return PixDesc(PixFmt::R8I);
+        return PixDesc(pix_fmt::R8I);
     case format_t::r8ui:
-        return PixDesc(PixFmt::R8UI);
+        return PixDesc(pix_fmt::R8UI);
     case format_t::r16f:
-        return PixDesc(PixFmt::R16F);
+        return PixDesc(pix_fmt::R16F);
     case format_t::r16i:
-        return PixDesc(PixFmt::R16I);
+        return PixDesc(pix_fmt::R16I);
     case format_t::r16ui:
-        return PixDesc(PixFmt::R16UI);
+        return PixDesc(pix_fmt::R16UI);
     case format_t::r32f:
-        return PixDesc(PixFmt::R32F);
+        return PixDesc(pix_fmt::R32F);
     case format_t::r32i:
-        return PixDesc(PixFmt::R32I);
+        return PixDesc(pix_fmt::R32I);
     case format_t::r32ui:
-        return PixDesc(PixFmt::R32UI);
+        return PixDesc(pix_fmt::R32UI);
 
     case format_t::rg8:
-        return PixDesc(PixFmt::RG8);
+        return PixDesc(pix_fmt::RG8);
     case format_t::rg8i:
-        return PixDesc(PixFmt::RG8I);
+        return PixDesc(pix_fmt::RG8I);
     case format_t::rg8ui:
-        return PixDesc(PixFmt::RG8UI);
+        return PixDesc(pix_fmt::RG8UI);
     case format_t::rg16f:
-        return PixDesc(PixFmt::RG16F);
+        return PixDesc(pix_fmt::RG16F);
     case format_t::rg16i:
-        return PixDesc(PixFmt::RG16I);
+        return PixDesc(pix_fmt::RG16I);
     case format_t::rg16ui:
-        return PixDesc(PixFmt::RG16UI);
+        return PixDesc(pix_fmt::RG16UI);
     case format_t::rg32f:
-        return PixDesc(PixFmt::RG32F);
+        return PixDesc(pix_fmt::RG32F);
     case format_t::rg32i:
-        return PixDesc(PixFmt::RG32I);
+        return PixDesc(pix_fmt::RG32I);
     case format_t::rg32ui:
-        return PixDesc(PixFmt::RG32UI);
+        return PixDesc(pix_fmt::RG32UI);
 
     case format_t::rgb8:
-        return PixDesc(PixFmt::RGB8);
+        return PixDesc(pix_fmt::RGB8);
     case format_t::rgb8i:
-        return PixDesc(PixFmt::RGB8I);
+        return PixDesc(pix_fmt::RGB8I);
     case format_t::rgb8ui:
-        return PixDesc(PixFmt::RGB8UI);
+        return PixDesc(pix_fmt::RGB8UI);
     case format_t::rgb16f:
-        return PixDesc(PixFmt::RGB16F);
+        return PixDesc(pix_fmt::RGB16F);
     case format_t::rgb16i:
-        return PixDesc(PixFmt::RGB16I);
+        return PixDesc(pix_fmt::RGB16I);
     case format_t::rgb16ui:
-        return PixDesc(PixFmt::RGB16UI);
+        return PixDesc(pix_fmt::RGB16UI);
     case format_t::rgb32f:
-        return PixDesc(PixFmt::RGB32F);
+        return PixDesc(pix_fmt::RGB32F);
     case format_t::rgb32i:
-        return PixDesc(PixFmt::RGB32I);
+        return PixDesc(pix_fmt::RGB32I);
     case format_t::rgb32ui:
-        return PixDesc(PixFmt::RGB32UI);
+        return PixDesc(pix_fmt::RGB32UI);
 
     case format_t::rgba8:
-        return PixDesc(PixFmt::RGBA8);
+        return PixDesc(pix_fmt::RGBA8);
     case format_t::rgba8i:
-        return PixDesc(PixFmt::RGBA8I);
+        return PixDesc(pix_fmt::RGBA8I);
     case format_t::rgba8ui:
-        return PixDesc(PixFmt::RGBA8UI);
+        return PixDesc(pix_fmt::RGBA8UI);
     case format_t::rgba16f:
-        return PixDesc(PixFmt::RGBA16F);
+        return PixDesc(pix_fmt::RGBA16F);
     case format_t::rgba16i:
-        return PixDesc(PixFmt::RGBA16I);
+        return PixDesc(pix_fmt::RGBA16I);
     case format_t::rgba16ui:
-        return PixDesc(PixFmt::RGBA16UI);
+        return PixDesc(pix_fmt::RGBA16UI);
     case format_t::rgba32f:
-        return PixDesc(PixFmt::RGBA32F);
+        return PixDesc(pix_fmt::RGBA32F);
     case format_t::rgba32i:
-        return PixDesc(PixFmt::RGBA32I);
+        return PixDesc(pix_fmt::RGBA32I);
     case format_t::rgba32ui:
-        return PixDesc(PixFmt::RGBA32UI);
+        return PixDesc(pix_fmt::RGBA32UI);
     default:
         break;
     }

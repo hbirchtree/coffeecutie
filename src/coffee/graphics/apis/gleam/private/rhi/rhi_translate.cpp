@@ -17,11 +17,11 @@ std::tuple<T, group::pixel_type, group::pixel_format> to(
     using f = T;
     using b = group::pixel_type;
     using p = group::pixel_format;
-
-    using P = typing::pixels::PixFmt;
-    using F = typing::pixels::PixFlg;
-    using C = typing::PixCmp;
-    using M = typing::pixels::CompFlags;
+    
+    using P = typing::pixels::pix_fmt;
+    using F = typing::pixels::pix_flags;
+    using C = typing::pix_components;
+    using M = typing::pixels::comp_flags;
 
     if(auto fmt_ = detail::to_internal<T>(fmt);
        static_cast<u32>(std::get<0>(fmt_)) != 0)

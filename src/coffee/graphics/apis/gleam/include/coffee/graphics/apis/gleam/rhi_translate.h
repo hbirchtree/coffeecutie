@@ -214,20 +214,20 @@ inline std::
     using f = group::internal_format;
     using b = group::pixel_type;
     using p = group::pixel_format;
-
-    using P = typing::pixels::PixFmt;
-    using B = typing::pixels::BitFmt;
-
-    if(fmt.pixfmt == P::RGBA8 && fmt.bfmt == B::UByte)
+    
+    using P = typing::pixels::pix_fmt;
+    using B = typing::pixels::bit_fmt;
+    
+    if(fmt.pixfmt == P::RGBA8 && fmt.bfmt == B::u8)
         return {f::rgba, b::unsigned_byte, p::rgba};
-    if(fmt.pixfmt == P::RGB8 && fmt.bfmt == B::UByte)
+    if(fmt.pixfmt == P::RGB8 && fmt.bfmt == B::u8)
         return {f::rgb, b::unsigned_byte, p::rgb};
-
-    if(fmt.pixfmt == P::RGB565 && fmt.bfmt == B::UShort_565)
+    
+    if(fmt.pixfmt == P::RGB565 && fmt.bfmt == B::u16_565)
         return {f::rgb, b::unsigned_short_5_6_5, p::rgb};
-    if(fmt.pixfmt == P::RGB5A1 && fmt.bfmt == B::UShort_5551)
+    if(fmt.pixfmt == P::RGB5A1 && fmt.bfmt == B::u16_5551)
         return {f::rgba, b::unsigned_short_5_5_5_1, p::rgba};
-    if(fmt.pixfmt == P::RGBA4 && fmt.bfmt == B::UShort_4444)
+    if(fmt.pixfmt == P::RGBA4 && fmt.bfmt == B::u16_4444)
         return {f::rgba, b::unsigned_short_4_4_4_4, p::rgba};
     return {};
 }
@@ -427,19 +427,19 @@ namespace detail {
 
 template<typename T>
 requires std::is_same_v<T, group::vertex_attrib_type>
-inline T vertex_type_to(semantic::TypeEnum type)
+inline T vertex_type_to(semantic::type_t type)
 {
-    using semantic::TypeEnum;
+    using semantic::type_t;
     switch(type)
     {
-    case TypeEnum::Scalar:
+    case type_t::f32:
         return T::float_;
 #if GLEAM_MAX_VERSION >= 0x440
-    case TypeEnum::Packed_UFloat:
+    case type_t::f11:
         return T::unsigned_int_10f_11f_11f_rev;
 #endif
 #if GLEAM_MAX_VERSION >= 0x150
-    case TypeEnum::BigScalar:
+    case type_t::f64:
         return T::double_;
 #endif
     default:
@@ -449,23 +449,23 @@ inline T vertex_type_to(semantic::TypeEnum type)
 
 template<typename T>
 requires std::is_same_v<T, group::vertex_attrib_pointer_type>
-inline T vertex_type_to(semantic::TypeEnum type)
+inline T vertex_type_to(semantic::type_t type)
 {
-    using semantic::TypeEnum;
+    using semantic::type_t;
     switch(type)
     {
-    case TypeEnum::Scalar:
+    case type_t::f32:
         return T::float_;
 #if GLEAM_MAX_VERSION >= 0x150
-    case TypeEnum::Packed_UFloat:
+    case type_t::f11:
         return T::unsigned_int_10f_11f_11f_rev;
-    case TypeEnum::BigScalar:
+    case type_t::f64:
         return T::double_;
 #endif
 #if defined(GL_UNSIGNED_INT64_ARB) && defined(GL_INT64_ARB)
-    case TypeEnum::LL:
+    case type_t::LL:
         return T::int64_arb;
-    case TypeEnum::ULL:
+    case type_t::ULL:
         return T::unsigned_int64_arb;
 #endif
     default:
@@ -475,7 +475,7 @@ inline T vertex_type_to(semantic::TypeEnum type)
 
 template<typename T>
 requires std::is_same_v<T, group::vertex_attrib_int>
-inline T vertex_type_to(semantic::TypeEnum /*type*/)
+inline T vertex_type_to(semantic::type_t /*type*/)
 {
     Throw(undefined_behavior("unhandled vertex type"));
 }
@@ -486,23 +486,23 @@ template<typename T>
 requires std::is_same_v<T, group::vertex_attrib_int> ||
          std::is_same_v<T, group::vertex_attrib_pointer_type> ||
          std::is_same_v<T, group::vertex_attrib_type>
-inline T to(semantic::TypeEnum type)
+inline T to(semantic::type_t type)
 {
-    using semantic::TypeEnum;
+    using semantic::type_t;
     switch(type)
     {
-    case TypeEnum::Byte:
+    case type_t::i8:
         return T::byte_;
-    case TypeEnum::UByte:
+    case type_t::u8:
         return T::unsigned_byte;
-    case TypeEnum::Short:
+    case type_t::i16:
         return T::short_;
-    case TypeEnum::UShort:
+    case type_t::u16:
         return T::unsigned_short;
 #if GLEAM_MAX_VERSION >= 0x100 || GLEAM_MAX_VERSION_ES >= 0x300
-    case TypeEnum::Int:
+    case type_t::i32:
         return T::int_;
-    case TypeEnum::UInt:
+    case type_t::u32:
         return T::unsigned_int;
 #endif
     default:
@@ -585,15 +585,15 @@ inline group::primitive_type to(drawing::primitive primitive)
 
 template<typename T>
 requires std::is_same_v<T, group::draw_elements_type>
-inline group::draw_elements_type to(semantic::TypeEnum type)
+inline group::draw_elements_type to(semantic::type_t type)
 {
     switch(type)
     {
-    case semantic::TypeEnum::UInt:
+    case semantic::type_t::u32:
         return group::draw_elements_type::unsigned_int;
-    case semantic::TypeEnum::UShort:
+    case semantic::type_t::u16:
         return group::draw_elements_type::unsigned_short;
-    case semantic::TypeEnum::UByte:
+    case semantic::type_t::u8:
         return group::draw_elements_type::unsigned_byte;
     default:
         Throw(undefined_behavior("invalid draw element type"));

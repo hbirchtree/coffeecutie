@@ -401,7 +401,7 @@ inline void test_t2d()
     api  ap;
     auto a = ap.alloc_texture(
         textures::d2,
-        typing::pixels::PixDesc(typing::pixels::PixFmt::RGBA8),
+        typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8),
         3);
     a->upload(null_span{}, Veci2{}, Veci2{}, 0);
     a->view(textures::d2, {});

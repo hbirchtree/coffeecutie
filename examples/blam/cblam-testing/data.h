@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <blam/volta/blam_stl.h>
 #include <coffee/comp_app/services.h>
@@ -134,6 +134,8 @@ struct RenderingParameters : compo::SubsystemBase
     bool debug_portals{false};
     bool debug_clusters{false};
     bool debug_triggers{false};
+
+    bool color_changing{true};
 
     f32 tex_res{0.f};
 };

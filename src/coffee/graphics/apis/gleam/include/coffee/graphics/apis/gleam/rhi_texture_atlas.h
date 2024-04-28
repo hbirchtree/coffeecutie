@@ -9,7 +9,7 @@ template<typename Tex, typename Allocator>
 struct texture_atlas_t
 {
     using format_desc_t =
-        std::pair<typing::pixels::PixFmt, typing::pixels::CompFlags>;
+        std::pair<typing::pixels::pix_fmt, typing::pixels::comp_flags>;
 
     struct atlas_reference_t
     {

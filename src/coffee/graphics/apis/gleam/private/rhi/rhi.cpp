@@ -6,7 +6,6 @@
 #include <glw/enums/TriangleFace.h>
 
 #include <coffee/graphics/apis/gleam/rhi_texture.h>
-#include <coffee/interfaces/cgraphics_pixops.h>
 
 #include <peripherals/stl/regex.h>
 #include <peripherals/stl/string_casting.h>
@@ -87,8 +86,8 @@ void texture_t::alloc(size_type const& size, bool create_storage)
 
     if constexpr(compile_info::debug_mode)
     {
-        using P = typing::pixels::PixFmt;
-        using C = typing::pixels::CompFlags;
+        using P = typing::pixels::pix_fmt;
+        using C = typing::pixels::comp_flags;
 
         bool sw_decoded = requires_software_decode();
         if(!sw_decoded)
@@ -588,15 +587,15 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.program.khr.parallel_shader_compile =
             supports_extension(extensions, khr::parallel_shader_compile::name);
     }
-
-    using typing::pixels::PixFmt;
+    
+    using typing::pixels::pix_fmt;
 
     out.rendertarget.depth32f =
         out.rendertarget.depth32f ||
-        supports_render_format(out, PixFmt::Depth32F) ||
+        supports_render_format(out, pix_fmt::Depth32F) ||
         supports_extension(extensions, arb::depth_buffer_float::name);
 
-    /* Selection of preferred PixFmt for color/depth buffers
+    /* Selection of preferred pix_fmt for color/depth buffers
      * For easier use by other code
      * References:
      * For Core OpenGL:
@@ -606,36 +605,36 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
      * For ES, it's just guesswork :)
      */
     if(out.rendertarget.depth32f)
-        out.rendertarget.high_precision_depth_format = PixFmt::Depth32F;
+        out.rendertarget.high_precision_depth_format = pix_fmt::Depth32F;
     else if(out.rendertarget.depth32)
-        out.rendertarget.high_precision_depth_format = PixFmt::Depth32;
+        out.rendertarget.high_precision_depth_format = pix_fmt::Depth32;
     else
-        out.rendertarget.high_precision_depth_format = PixFmt::Depth24;
-    out.rendertarget.low_precision_depth_format = PixFmt::Depth16;
+        out.rendertarget.high_precision_depth_format = pix_fmt::Depth24;
+    out.rendertarget.low_precision_depth_format = pix_fmt::Depth16;
 
     if(out.rendertarget.color_buffer_float)
     {
-        out.rendertarget.high_precision_color_format = PixFmt::RGB32F;
+        out.rendertarget.high_precision_color_format = pix_fmt::RGB32F;
         if(out.rendertarget.color_buffer_half_float)
-            out.rendertarget.med_precision_color_format = PixFmt::RGB16F;
+            out.rendertarget.med_precision_color_format = pix_fmt::RGB16F;
         else if(out.rendertarget.color_buffer_11f_11f_10f)
-            out.rendertarget.med_precision_color_format = PixFmt::R11G11B10F;
+            out.rendertarget.med_precision_color_format = pix_fmt::R11G11B10F;
         else
-            out.rendertarget.med_precision_color_format = PixFmt::RGB32F;
+            out.rendertarget.med_precision_color_format = pix_fmt::RGB32F;
     } else if(out.rendertarget.color_buffer_half_float)
         out.rendertarget.high_precision_color_format =
-            out.rendertarget.med_precision_color_format = PixFmt::RGB16F;
+            out.rendertarget.med_precision_color_format = pix_fmt::RGB16F;
     else if(out.rendertarget.color_buffer_11f_11f_10f)
         out.rendertarget.high_precision_color_format =
-            out.rendertarget.med_precision_color_format = PixFmt::R11G11B10F;
+            out.rendertarget.med_precision_color_format = pix_fmt::R11G11B10F;
     else if(out.rendertarget.color_buffer_10bit)
         out.rendertarget.high_precision_color_format =
-            out.rendertarget.med_precision_color_format = PixFmt::RGB10A2;
+            out.rendertarget.med_precision_color_format = pix_fmt::RGB10A2;
     else
         out.rendertarget.high_precision_color_format =
-            out.rendertarget.med_precision_color_format = PixFmt::RGBA8;
+            out.rendertarget.med_precision_color_format = pix_fmt::RGBA8;
     out.rendertarget.low_precision_color_format =
-        api_type == api_type_t::es ? PixFmt::RGB565 : PixFmt::RGBA8;
+        api_type == api_type_t::es ? pix_fmt::RGB565 : pix_fmt::RGBA8;
 
     out.debug.khr.debug = supports_extension(extensions, khr::debug::name);
 

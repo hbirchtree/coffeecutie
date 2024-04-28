@@ -225,7 +225,7 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
                          .count         = static_cast<u32>(indices.size() * 3),
                          .offset        = element_ptr * sizeof(blam::vert::face),
                          .vertex_offset = vert_ptr / mat.vertex_size(),
-                         .type          = semantic::TypeEnum::UShort,
+                         .type          = semantic::type_t::u16,
                     },
                  .instances =
                     {
@@ -264,130 +264,6 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
     //                "Leaf surface {} in node {}",
     //                surface.surface,
     //                surface.node);
-    //        }
-
-    //        for(auto const& group : submeshes.value())
-    //        {
-    //            auto meshes = group.materials.data(bsp_magic);
-    //            if(meshes.has_error())
-    //                continue;
-    //            out.groups.emplace_back();
-    //            auto& group_data = out.groups.back();
-    //            group_data.group = &group;
-    //            for(auto const& mesh : meshes.value())
-    //            {
-    //                group_data.meshes.emplace_back();
-    //                auto& mesh_data = group_data.meshes.back();
-
-    //                /* Just dig up the textures, long process */
-    //                mesh_data.shader = shader_cache.predict(mesh.shader);
-    //                if(group.lightmap_idx != -1)
-    //                    mesh_data.light_bitm = bitm_cache.resolve(
-    //                        section.lightmap_, group.lightmap_idx);
-
-    //                /* ... and moving on */
-
-    //                if(version == blam::version_t::xbox)
-    //                {
-    //                    auto indices
-    //                        =
-    //                        mesh.indices(section).data(bsp_magic).value();
-    //                    auto vertices
-    //                        =
-    //                        mesh.xbox_vertices().data(bsp_magic).value();
-    //                    auto light_verts
-    //                        =
-    //                        mesh.xbox_light_verts().data(bsp_magic).value();
-
-    //                    if(vertices.empty() || indices.empty())
-    //                    {
-    //                        group_data.meshes.erase(--group_data.meshes.end());
-    //                        continue;
-    //                    }
-
-    //                    using vertex_type = typename std::remove_const<
-    //                        typename
-    //                        decltype(vertices)::value_type>::type;
-    //                    using light_type = typename std::remove_const<
-    //                        typename
-    //                        decltype(light_verts)::value_type>::type;
-    //                    using element_type = typename std::remove_const<
-    //                        typename decltype(indices)::value_type>::type;
-
-    //                    mesh_data.mesh          = &mesh;
-    //                    mesh_data.draw.elements = {
-    //                        .count         = C_FCAST<u32>(indices.size()),
-    //                        .offset        = element_ptr,
-    //                        .vertex_offset = vert_ptr /
-    //                        sizeof(vertex_type), .type          =
-    //                        semantic::TypeEnum::UShort,
-    //                    };
-    //                    mesh_data.draw.instances.count = 1;
-
-    //                    MemCpy(
-    //                        vertices,
-    //                        (*vert_buffer.at(vert_ptr)).template
-    //                        as<vertex_type>());
-    //                    MemCpy(
-    //                        indices,
-    //                        (*element_buffer.at(element_ptr))
-    //                            .template as<element_type>());
-    //                    MemCpy(
-    //                        light_verts,
-    //                        (*light_buffer.at(light_ptr))
-    //                            .template as<light_type>());
-
-    //                    vert_ptr += vertices.size_bytes();
-    //                    element_ptr += indices.size_bytes();
-    //                    light_ptr += light_verts.size_bytes();
-    //                } else
-    //                {
-    //                    auto indices
-    //                        =
-    //                        mesh.indices(section).data(bsp_magic).value();
-    //                    auto vertices =
-    //                    mesh.pc_vertices().data(bsp_magic).value(); auto
-    //                    light_verts
-    //                        =
-    //                        mesh.pc_light_verts().data(bsp_magic).value();
-
-    //                    using vertex_type = typename std::remove_const<
-    //                        typename
-    //                        decltype(vertices)::value_type>::type;
-    //                    using light_type = typename std::remove_const<
-    //                        typename
-    //                        decltype(light_verts)::value_type>::type;
-    //                    using element_type = typename std::remove_const<
-    //                        typename decltype(indices)::value_type>::type;
-
-    //                    mesh_data.mesh          = &mesh;
-    //                    mesh_data.draw.elements = {
-    //                        .count         = C_FCAST<u32>(indices.size()),
-    //                        .offset        = element_ptr,
-    //                        .vertex_offset = vert_ptr /
-    //                        sizeof(vertex_type), .type          =
-    //                        semantic::TypeEnum::UShort,
-    //                    };
-    //                    mesh_data.draw.instances.count = 1;
-
-    //                    MemCpy(
-    //                        vertices,
-    //                        (*vert_buffer.at(vert_ptr)).template
-    //                        as<vertex_type>());
-    //                    MemCpy(
-    //                        indices,
-    //                        (*element_buffer.at(element_ptr))
-    //                            .template as<element_type>());
-    //                    MemCpy(
-    //                        light_verts,
-    //                        (*light_buffer.at(light_ptr))
-    //                            .template as<light_type>());
-
-    //                    vert_ptr += vertices.size_bytes();
-    //                    element_ptr += indices.size_bytes();
-    //                    light_ptr += light_verts.size_bytes();
-    //                }
-    //            }
     //        }
 
     return out;
@@ -466,7 +342,7 @@ ModelItem<V> ModelCache<V>::predict_impl(
                 .count         = static_cast<u32>(elements.size()),
                 .offset        = element_ptr,
                 .vertex_offset = vert_ptr / sizeof(vertex_type),
-                .type          = semantic::TypeEnum::UShort,
+                .type          = semantic::type_t::u16,
             };
             draw_data.draw.instances.count = 1;
             draw_data.shader =
@@ -964,7 +840,7 @@ void BitmapCache<V>::allocate_storage()
 
         //            u32 mipmaps = surface->m_mipmaps;
         u32 pad = 0;
-        //                = surface->m_format.pixfmt != PixFmt::RGB565 ? 4
+        //                = surface->m_format.pixfmt != pix_fmt::RGB565 ? 4
         //                << mipmaps : 0;
 
         pool.num++;
@@ -989,7 +865,7 @@ void BitmapCache<V>::allocate_storage()
 
         u32 layer = 0;
         //            u32 mipmaps = surface->m_mipmaps;
-        u32 max_pad = 0; // surface->m_format.pixfmt != PixFmt::RGB565 ? 4
+        u32 max_pad = 0; // surface->m_format.pixfmt != pix_fmt::RGB565 ? 4
                          // << mipmaps : 0;
 
         for(auto [id, fmt] : pool.images)
@@ -1157,7 +1033,7 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
         {
             std::tie(fmt.pixfmt, fmt.cmpflg) = image.to_compressed_fmt();
 
-            fmt.comp = convert::to<PixCmp>(fmt.c);
+            fmt.comp = convert::to<pix_components>(fmt.c);
         } else
         {
             fmt.pixfmt                   = image.to_pixfmt();

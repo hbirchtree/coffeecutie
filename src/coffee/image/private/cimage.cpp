@@ -164,7 +164,7 @@ bool ResizeImage(
 
 template<typename PixType>
 bool LoadData(
-    image<PixType>* target, BytesConst const& src, stb_error& ec, PixCmp comp)
+    image<PixType>* target, BytesConst const& src, stb_error& ec, pix_components comp)
 {
     DProfContext _(STB_ABI "Loading image");
 
@@ -172,16 +172,16 @@ bool LoadData(
 
     switch(comp)
     {
-    case PixCmp::R:
+    case pix_components::R:
         scomp = STBI_grey;
         break;
-    case PixCmp::RG:
+    case pix_components::RG:
         scomp = STBI_grey_alpha;
         break;
-    case PixCmp::RGB:
+    case pix_components::RGB:
         scomp = STBI_rgb;
         break;
-    case PixCmp::RGBA:
+    case pix_components::RGBA:
         scomp = STBI_rgb_alpha;
         break;
     default:
@@ -234,7 +234,7 @@ image<PixType> Resize(
     if(target.w > 96 || !sharpen)
     {
         if(!stb_templates::ResizeImage(img, target, out_image, channels, ec))
-            ec = STBError::InvalidPixFmt;
+            ec = STBError::Invalidpix_fmt;
     } else
     {
         stb_templates::NearestNeighborResize(
@@ -299,13 +299,13 @@ static void ReshapeRGBA(Bytes& src, szptr numPixels, u32 channels)
 
 /* Instantiate some templates as symbols here */
 bool LoadData(
-    image<u8>* target, BytesConst const& src, stb_error& ec, PixCmp comp)
+    image<u8>* target, BytesConst const& src, stb_error& ec, pix_components comp)
 {
     return stb_templates::LoadData(target, src, ec, comp);
 }
 
 bool LoadData(
-    image<f32>* target, BytesConst const& src, stb_error& ec, PixCmp comp)
+    image<f32>* target, BytesConst const& src, stb_error& ec, pix_components comp)
 {
     return stb_templates::LoadData(target, src, ec, comp);
 }
@@ -440,7 +440,7 @@ std::string stb_error_category::message(int error_code) const
         return "Resizing error";
     case STBError::InvalidComponents:
         return "Invalid components specified";
-    case STBError::InvalidPixFmt:
+    case STBError::Invalidpix_fmt:
         return "Invalid pixel format specified";
     }
 

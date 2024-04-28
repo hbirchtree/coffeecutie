@@ -119,7 +119,7 @@ struct light_vertex<RType, false>
 {
     // Compressed Xbox variant
     typing::pixels::r11g11b10u       normal;   /*!< R11G11B10 */
-    typing::vectors::tvector<i16, 2> texcoord; /*!< PixFmt::R16, Normalized */
+    typing::vectors::tvector<i16, 2> texcoord; /*!< pix_fmt::R16, Normalized */
 };
 
 } // namespace blam::vert
