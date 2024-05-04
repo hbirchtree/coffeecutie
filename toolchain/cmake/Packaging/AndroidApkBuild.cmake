@@ -353,30 +353,41 @@ function(ANDROIDAPK_PACKAGE)
   if(CMAKE_BUILD_TYPE MATCHES "Rel")
     set(APK_ASSEMBLE_TARGET Release)
   endif()
+  set(APK_ASSEMBLE_FLAVOR Modern)
+  if(AAPK_APK_MIN_TARGET LESS_EQUAL 19)
+    set(APK_ASSEMBLE_FLAVOR Legacy)
+  endif()
 
   add_custom_command(
     TARGET "${AAPK_TARGET}.apk"
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E env GRADLE_OPTS="-Dorg.gradle.daemon=false"
-            ${BUILD_OUTDIR}/gradlew assemble
+            ${BUILD_OUTDIR}/gradlew assemble${APK_ASSEMBLE_FLAVOR}
     WORKING_DIRECTORY ${BUILD_OUTDIR}
   )
-  add_custom_command(
-    TARGET "${AAPK_TARGET}.apk"
-    POST_BUILD
-    COMMAND
-      ${CMAKE_COMMAND} -E copy
-      "${BUILD_OUTDIR}/app/build/outputs/apk/legacy/${RELEASE_PREFIX}/app-legacy-${RELEASE_PREFIX}.apk"
-      "${ANDROID_APK_LEGACY_FILE_OUTPUT}"
-    COMMAND
-      ${CMAKE_COMMAND} -E copy
-      "${BUILD_OUTDIR}/app/build/outputs/apk/modern/${RELEASE_PREFIX}/app-modern-${RELEASE_PREFIX}.apk"
-      "${ANDROID_APK_FILE_OUTPUT}"
-  )
+  if(AAPK_APK_MIN_TARGET LESS_EQUAL 19)
+    add_custom_command(
+      TARGET "${AAPK_TARGET}.apk"
+      POST_BUILD
+      COMMAND
+        ${CMAKE_COMMAND} -E copy
+        "${BUILD_OUTDIR}/app/build/outputs/apk/legacy/${RELEASE_PREFIX}/app-legacy-${RELEASE_PREFIX}.apk"
+        "${ANDROID_APK_LEGACY_FILE_OUTPUT}"
+    )
+  else()
+    add_custom_command(
+      TARGET "${AAPK_TARGET}.apk"
+      POST_BUILD
+      COMMAND
+        ${CMAKE_COMMAND} -E copy
+        "${BUILD_OUTDIR}/app/build/outputs/apk/modern/${RELEASE_PREFIX}/app-modern-${RELEASE_PREFIX}.apk"
+        "${ANDROID_APK_FILE_OUTPUT}"
+    )
+  endif()
   add_custom_target(
     "${AAPK_TARGET}.install"
     COMMAND ${CMAKE_COMMAND} -E env GRADLE_OPTS="-Dorg.gradle.daemon=false"
-            ${BUILD_OUTDIR}/gradlew install${APK_ASSEMBLE_TARGET}
+            ${BUILD_OUTDIR}/gradlew install${APK_ASSEMBLE_FLAVOR}${APK_ASSEMBLE_TARGET}
     WORKING_DIRECTORY ${BUILD_OUTDIR}
   )
   add_custom_target(

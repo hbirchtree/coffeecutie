@@ -8,7 +8,6 @@
 #include <oaf/api_system.h>
 #include <oaf/ogg/ogg_decode.h>
 #include <peripherals/stl/enumerate.h>
-#include <ranges>
 
 #if defined(OAF_IMA_DECODER_ENABLED)
 #include <oaf/ima_adpcm/decode.h>
