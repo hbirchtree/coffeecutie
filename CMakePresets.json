@@ -626,8 +626,47 @@
             }
         },
         {
+            "name": "host-arm64-linux-native",
+            "displayName": "Host tools for Linux AArch64",
+            "inherits": ["host-tools"],
+            "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Linux"
+            },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_C_FLAGS": "-march=native",
+                "CMAKE_CXX_FLAGS": "-march=native",
+                "CMAKE_MAKE_PROGRAM": "$env{NINJA}"
+            },
+            "environment": {
+                "NINJA": "$penv{NINJA}"
+            }
+        },
+        {
             "name": "host-x64-osx",
             "displayName": "Host tools for Darwin/macOS x86_64",
+            "inherits": ["host-tools"],
+            "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Darwin"
+            },
+            "cacheVariables": {
+                "CMAKE_C_FLAGS": "-march=native",
+                "CMAKE_CXX_FLAGS": "-march=native"
+            },
+            "environment": {
+                "NINJA": "$penv{NINJA}"
+            }
+        },
+        {
+            "name": "host-arm64-osx",
+            "displayName": "Host tools for Darwin/macOS ARM64",
             "inherits": ["host-tools"],
             "generator": "Ninja",
             "condition": {
@@ -840,9 +879,21 @@
             "inherits": "base-linux"
         },
         {
+            "name": "host-arm64-linux-native-rel",
+            "configuration": "Release",
+            "configurePreset": "host-arm64-linux-native",
+            "inherits": "base-linux"
+        },
+        {
             "name": "host-x64-osx-rel",
             "configuration": "Release",
             "configurePreset": "host-x64-osx",
+            "inherits": "base-mac"
+        },
+        {
+            "name": "host-arm64-osx-rel",
+            "configuration": "Release",
+            "configurePreset": "host-arm64-osx",
             "inherits": "base-mac"
         },
         {
