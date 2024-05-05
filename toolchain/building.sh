@@ -18,9 +18,7 @@ case $(uname -m) in
 x86_64)
     HOST_TOOLCHAIN_TRIPLET=x64${HOST_TOOLCHAIN_TRIPLET}
 ;;
-arm64)
-;&
-aarch64)
+aarch64|arm64)
     HOST_TOOLCHAIN_TRIPLET=arm64${HOST_TOOLCHAIN_TRIPLET}
 ;;
 *)
