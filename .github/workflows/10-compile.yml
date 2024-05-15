@@ -116,7 +116,7 @@ jobs:
           source/multi_build/${{matrix.artifact}}/packaged
         if-no-files-found: error
   macOS:
-    runs-on: macos-latest
+    runs-on: macos-13
     needs: Release
     strategy:
       fail-fast: false
