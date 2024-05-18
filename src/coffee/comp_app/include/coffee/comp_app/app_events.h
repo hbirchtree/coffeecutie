@@ -23,6 +23,7 @@ struct NavigationEvent
     {
         None,
         Back = 1,
+        Confirm,
 
         Left,
         Right,

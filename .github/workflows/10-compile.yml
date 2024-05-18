@@ -105,6 +105,8 @@ jobs:
     - name: Build validation
       if: steps.buildProject.outcome == 'failure'
       run: false
+    - name: Summarize binary sizes
+      run: du -h source/multi_build/${{matrix.artifact}}/bin/* source/multi_build/${{matrix.artifact}}/lib/*.so* source/multi_build/${{matrix.artifact}}/packaged/*/*
     - name: Uploading artifacts
       uses: actions/upload-artifact@v4
       with:

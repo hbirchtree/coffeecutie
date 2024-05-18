@@ -180,6 +180,8 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
     template<typename T = std::byte>
     inline Span<T> map(size_t offset, std::optional<size_t> size = std::nullopt)
     {
+        Coffee::DProfContext _;
+
         auto   buffer_size = this->size();
         size_t actual_size = size.value_or(buffer_size - offset);
 
@@ -265,6 +267,7 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
 
     inline void unmap(void* = nullptr)
     {
+        Coffee::DProfContext _;
         m_pointer_all = {};
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && m_features.mapping)

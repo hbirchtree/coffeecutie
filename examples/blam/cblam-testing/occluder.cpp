@@ -22,6 +22,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
     void start_restricted(Proxy& p, time_point const&)
     {
+        if constexpr(compile_info::platform::is_android)
+            return;
+
         BSPCache<V>*   bsp_cache;
         BlamCamera*    camera;
         BlamResources* resources;
@@ -133,5 +136,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
 void alloc_occluder(compo::EntityContainer& container)
 {
+    ProfContext _;
     container.register_subsystem_inplace<Occluder<halo_version>>();
 }

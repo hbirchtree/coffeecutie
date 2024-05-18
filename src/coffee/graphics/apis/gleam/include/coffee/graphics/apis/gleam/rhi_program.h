@@ -166,6 +166,8 @@ struct program_t
 
     NO_DISCARD semantic::result<compile_log_t, compile_error_t> compile()
     {
+        Coffee::DProfContext __;
+
         m_buffer_locations.clear();
         m_uniform_locations.clear();
 

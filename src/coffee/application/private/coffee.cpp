@@ -331,6 +331,8 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 #if defined(COFFEE_ANDROID)
     for(auto const& [key, value] : android::intent().extras())
     {
+        if(std::isupper(key[0]))
+            continue;
         arg_storage.push_back(fmt::format("--{}", key));
         arg_storage.push_back(value);
     }

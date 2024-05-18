@@ -898,6 +898,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 
 void alloc_networking(compo::EntityContainer& e)
 {
+    ProfContext _;
     e.register_subsystem_inplace<NetworkState>();
 #if defined(USE_NETWORKING)
     e.register_subsystem_inplace<Networking>(

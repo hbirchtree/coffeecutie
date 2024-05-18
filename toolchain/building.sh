@@ -242,6 +242,7 @@ function native_build()
 
     export NINJA=$(which ninja)
     export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
+    export PATH=${PATH}:${TOOLCHAIN_ROOT}/bin
 
     pushd $BASE_DIR
 

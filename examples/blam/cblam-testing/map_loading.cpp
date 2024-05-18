@@ -446,6 +446,7 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
 
 void setup_load_eventhandlers(compo::EntityContainer& e)
 {
+    ProfContext _;
     auto& gbus = e.subsystem_cast<GameEventBus>();
     gbus.addEventFunction<MapLoadEvent>(
         0, [&e](GameEvent&, MapLoadEvent* load) {

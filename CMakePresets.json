@@ -54,6 +54,7 @@
                 "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools",
                 "MKSQUASH_PROGRAM": "/usr/bin/mksquashfs",
                 "NINJA": "$penv{NINJA}",
+                "PATH_": "$penv{PATH}:$env{TOOLCHAIN_ROOT}/bin",
                 "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
                 "TOOLCHAIN_VERSION": "v2.1.1",
                 "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/compilers/$env{PLATFORM}-$env{ARCHITECTURE}/$env{TOOLCHAIN_VERSION}",
@@ -181,6 +182,7 @@
             "environment": {
                 "ARCHITECTURE": "powerpc-eabi",
                 "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
+                "PATH_": "$penv{PATH}:$env{TOOLCHAIN_ROOT}/bin",
                 "PLATFORM": "console",
                 "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
                 "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/compilers/gamecube-$env{ARCHITECTURE}/$env{TOOLCHAIN_VERSION}",
@@ -214,7 +216,8 @@
                 "EMSCRIPTEN": "$env{EMSDK}/upstream/emscripten",
                 "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
                 "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools",
-                "NINJA": "$penv{NINJA}"
+                "NINJA": "$penv{NINJA}",
+                "PATH_": "$penv{PATH}:$env{EMSCRIPTEN}/"
             }
         },
         {
@@ -278,6 +281,8 @@
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_C_FLAGS": "-march=native",
+                "CMAKE_CXX_FLAGS": "-march=native",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
                 "MKSQUASH_PROGRAM": "$env{MKSQUASH_PROGRAM}"
             },
@@ -289,7 +294,11 @@
         {
             "name": "android-arm64-32",
             "displayName": "Android 12 ARM64",
-            "inherits": ["vcpkg-base-android"]
+            "inherits": ["vcpkg-base-android"],
+            "cacheVariables": {
+                "CMAKE_C_FLAGS": "-march=armv8-a",
+                "CMAKE_CXX_FLAGS": "-march=armv8-a"
+            }
         },
         {
             "name": "android-arm64-30-gl",
@@ -298,7 +307,10 @@
             "cacheVariables": {
                 "BUILD_GLES": "OFF",
                 "BUILD_GLAD_GETPROC": "ON",
-                "BUILD_GL_SOFTWARE_BCN": "OFF"
+                "BUILD_GL_SOFTWARE_BCN": "OFF",
+                "BUILD_GL_SOFTWARE_PVRTC": "OFF",
+                "CMAKE_C_FLAGS": "-mcpu=cortex-a57",
+                "CMAKE_CXX_FLAGS": "-mcpu=cortex-a57"
             },
             "environment": {
                 "API": "30"
@@ -308,6 +320,10 @@
             "name": "android-arm64-25",
             "displayName": "Android 7 ARM64",
             "inherits": ["vcpkg-base-android"],
+            "cacheVariables": {
+                "CMAKE_C_FLAGS": "-march=armv8-a",
+                "CMAKE_CXX_FLAGS": "-march=armv8-a"
+            },
             "environment": {
                 "API": "25"
             }
@@ -319,6 +335,8 @@
             "cacheVariables": {
                 "BUILD_GLES_31": "OFF",
                 "BUILD_GLES_32": "OFF",
+                "CMAKE_C_FLAGS": "-march=armv7-a+simd+vfpv3",
+                "CMAKE_CXX_FLAGS": "-march=armv7-a+simd+vfpv3",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;arm;arm32;arm_neon"
             },
             "environment": {
@@ -332,6 +350,8 @@
             "displayName": "Android 10 ARMv7+NEON",
             "inherits": ["vcpkg-base-android"],
             "cacheVariables": {
+                "CMAKE_C_FLAGS": "-march=armv7-a+simd+vfpv3",
+                "CMAKE_CXX_FLAGS": "-march=armv7-a+simd+vfpv3",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;arm;arm32;arm_neon"
             },
             "environment": {
@@ -375,7 +395,7 @@
         },
         {
             "name": "desktop-x86_64-buildroot-linux-gnu-multi",
-            "displayName": "Linux x86_64 Core OpenGL (SDL2)",
+            "displayName": "Linux x86_64 AVX2 Core OpenGL (SDL2)",
             "inherits": ["vcpkg-base-linux"],
             "cacheVariables": {
                 "BUILD_DISCORD_RPC": "ON",
@@ -392,12 +412,14 @@
         },
         {
             "name": "desktop-aarch64-buildroot-linux-gnu-multi",
-            "displayName": "Linux aarch64 OpenGL ES 3.x (SDL2)",
+            "displayName": "Linux aarch64v8.1 OpenGL ES 3.x (SDL2)",
             "inherits": ["vcpkg-base-linux"],
             "cacheVariables": {
                 "BUILD_GL_SOFTWARE_BCN": "ON",
                 "BUILD_GLES": "ON",
                 "BUILD_GLES_31": "ON",
+                "CMAKE_C_FLAGS": "-march=armv8.1-a",
+                "CMAKE_CXX_FLAGS": "-march=armv8.1-a",
                 "GENERATE_APPIMAGE": "ON",
                 "GENERATE_FLATPAK": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;arm64;aarch64"
@@ -413,6 +435,8 @@
             "inherits": ["vcpkg-base-linux-es20"],
             "cacheVariables": {
                 "BUILD_EGL": "OFF",
+                "CMAKE_C_FLAGS": "-march=armv7-a+simd+vfpv4",
+                "CMAKE_CXX_FLAGS": "-march=armv7-a+simd+vfpv4",
                 "GENERATE_FLATPAK": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "arm;arm32;linux;wayland;x11"
             },

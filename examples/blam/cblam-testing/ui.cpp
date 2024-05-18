@@ -466,6 +466,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
 void alloc_ui_system(compo::EntityContainer& e)
 {
+    ProfContext _;
     if(!e.subsystem_cast<gfx::system>().workarounds().bugs.adreno_3xx)
         e.register_subsystem_inplace<UIRenderer>(
             std::ref(e.subsystem_cast<gfx::system>()),

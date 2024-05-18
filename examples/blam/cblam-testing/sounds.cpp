@@ -285,6 +285,7 @@ struct SoundSystem
 
 void alloc_sound_system(compo::EntityContainer& e)
 {
+    ProfContext _;
     e.register_subsystem_inplace<SoundPreferences>();
     auto& sound_sys = e.register_subsystem_inplace<SoundSystem<halo_version>>(
         std::ref(e.subsystem_cast<oaf::system>()),

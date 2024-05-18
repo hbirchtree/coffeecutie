@@ -9,6 +9,8 @@
 
 #include <peripherals/stl/source_location.h>
 
+#include <coffee/core/CProfiling>
+
 namespace gleam::debug {
 
 struct null_api

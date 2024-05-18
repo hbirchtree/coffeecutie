@@ -69,7 +69,7 @@ void create_resources(compo::EntityContainer& e)
 
     e.register_subsystem_inplace<PostProcessParameters>();
 
-    auto access = RSCA::ReadWrite | RSCA::Persistent | RSCA::Immutable;
+    auto access = RSCA::WriteOnly | RSCA::Persistent | RSCA::Immutable;
 
     if constexpr(compile_info::platform::is_emscripten)
         access = RSCA::WriteOnly | RSCA::Immutable | RSCA::Discard;
@@ -218,6 +218,7 @@ void create_resources(compo::EntityContainer& e)
     resources.debug_line_colors->alloc();
     resources.debug_line_colors->commit(memory_budget::debug_buffer / 2);
 
+    if constexpr(!compile_info::platform::is_android)
     {
         auto pos = resources.debug_lines->map<Vecf3>(0);
         auto col = resources.debug_line_colors->map<Vecf3>(0);
@@ -531,6 +532,7 @@ void create_shaders(compo::EntityContainer& e)
     BlamResources& resources = e.subsystem_cast<BlamResources>();
 
     auto _ = gfx.debug().scope();
+    ProfContext __;
 
     auto const& features = gfx.feature_info();
     auto const& bugs     = gfx.workarounds().bugs;

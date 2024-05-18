@@ -283,16 +283,28 @@ bool AndroidEventBus::handleGamepadEvent(AInputEvent* event)
 
     if(it == controllers->m_mapping.end())
     {
+        controllers->m_cache.push_back({});
         it = controllers->m_mapping
                  .insert({deviceId, controllers->m_cache.size() - 1})
                  .first;
-        controllers->m_cache.push_back({});
+        Coffee::cDebug(
+            "Creating controller mapping: {}({}, {}) -> {}",
+            it->first,
+            type,
+            source,
+            it->second);
     }
 
     auto& c = controllers->m_cache.at(it->second);
 
     auto& axes    = c.axes.e;
     auto& buttons = c.buttons.e;
+
+    const auto apply_deadzone = [](i16 x, i16 y) -> std::pair<i16, i16> {
+        return std::abs(std::sqrt(x * x + y * y)) < 4000
+                   ? std::pair<i16, i16>{0, 0}
+                   : std::make_pair(x, y);
+    };
 
     switch(type)
     {
@@ -354,10 +366,14 @@ bool AndroidEventBus::handleGamepadEvent(AInputEvent* event)
         axes.l_y = convert_f32<i16>(
             AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_Y, 0));
 
+        std::tie(axes.l_x, axes.l_y) = apply_deadzone(axes.l_x, axes.l_y);
+
         axes.r_x = convert_f32<i16>(
             AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_Z, 0));
         axes.r_y = convert_f32<i16>(
             AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_RZ, 0));
+
+        std::tie(axes.r_x, axes.r_y) = apply_deadzone(axes.r_x, axes.r_y);
 
         std::tie(axes.t_l, axes.t_r) = trigger_values(event);
 
@@ -480,6 +496,9 @@ void AndroidEventBus::handleKeyEvent(AInputEvent* event)
     case AKEYCODE_DPAD_DOWN:
         navEvent(comp_app::NavigationEvent::Down);
         break;
+    case AKEYCODE_DPAD_CENTER:
+        navEvent(comp_app::NavigationEvent::Confirm);
+        break;
         // clang-format off
     case AKEYCODE_SHIFT_LEFT: keyEvent(CK_LShift); break;
     case AKEYCODE_SHIFT_RIGHT: keyEvent(CK_RShift); break;
@@ -541,7 +560,7 @@ void AndroidEventBus::handleInputEvent(AInputEvent* event)
             return;
     }
 
-    if(source & AINPUT_SOURCE_KEYBOARD)
+    if((source & AINPUT_SOURCE_KEYBOARD) == AINPUT_SOURCE_KEYBOARD)
     {
         handleKeyEvent(event);
         return;

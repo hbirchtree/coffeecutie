@@ -378,6 +378,7 @@ struct MeshRenderer
             return;
 
         auto _ = m_api->debug().scope(pass.name);
+        ProfContext __;
 
         auto& player = m_camera.player(m_camera.focused_player);
 
@@ -450,6 +451,7 @@ struct MeshRenderer
             return;
 
         auto _ = m_api->debug().scope(pass.name);
+        ProfContext __;
 
         auto& player = m_camera.player(idx);
 
@@ -1528,6 +1530,7 @@ void main()
 
 void alloc_renderer(EntityContainer& container)
 {
+    ProfContext _;
     container.register_subsystem_inplace<MeshRenderer<halo_version>>(
         &container.subsystem_cast<gfx::system>(),
         std::ref(container.subsystem_cast<BlamResources>()),

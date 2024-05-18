@@ -43,7 +43,6 @@ struct ControllerInput
     using type = ControllerInput;
 
     ControllerInput()
-        : m_cache(1)
     {
     }
 

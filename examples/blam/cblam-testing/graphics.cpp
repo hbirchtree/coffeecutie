@@ -336,19 +336,20 @@ i32 blam_main()
                     camera.camera_->tick(t);
                 if(i != 0 && compile_info::platform::is_emscripten)
                     continue;
-                if(controllers)
+                if(controllers && i < controllers->count())
                 {
+                    auto num_controllers = controllers->count();
                     auto prev     = camera.active;
-                    camera.active = i >= controllers->count() ? i == 0 : true;
+                    camera.active = true;
                     if(prev != camera.active)
                         cDebug("Player {} -> {}", i, camera.active);
-                }
-                if(controllers && !compile_info::platform::is_emscripten)
                     controller_camera_update(
                         camera.camera_,
                         camera.controller_opts,
                         controllers->state(i),
                         t);
+                } else if(i != 0)
+                    break;
                 using namespace typing::vectors::scene;
                 // camera.camera.aspect
                 //     = e.service<comp_app::Windowing>()->size().aspect();
