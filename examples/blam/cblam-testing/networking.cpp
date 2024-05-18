@@ -2,6 +2,8 @@
 
 #include <coffee/core/CProfiling>
 
+using Coffee::ProfContext;
+
 #if defined(USE_NETWORKING)
 
 #include "components.h"
