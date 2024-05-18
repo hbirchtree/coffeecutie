@@ -25,7 +25,7 @@ add_compile_options(
 add_link_options(
   #[[-static-libstdc++ -static-libgcc]]
   -Wl,-rpath-link,../lib
-  -fuse-ld=gold
+  # -fuse-ld=gold
 )
 if(CMAKE_BUILD_TYPE MATCHES "Deb")
   add_link_options(
