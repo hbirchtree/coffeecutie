@@ -80,7 +80,7 @@ struct SoundSystem
     {
         SoundPreferences* sound_pref{};
         p.subsystem(sound_pref);
-        snd.listener().set_property<oaf::listener_property::gain>(
+        snd.listener().template set_property<oaf::listener_property::gain>(
             sound_pref->master_volume);
 
         if(!queued_events.empty() &&
