@@ -1,5 +1,7 @@
 #include "networking.h"
 
+#include <coffee/core/CProfiling>
+
 #if defined(USE_NETWORKING)
 
 #include "components.h"
