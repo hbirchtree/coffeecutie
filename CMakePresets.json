@@ -953,7 +953,7 @@
             "inherits": "base-linux"
         },
         {
-            "name": "web-wasm32-emscripten-webgl2-custom-dbg",
+            "name": "web-wasm32-emscripten-webgl2-custom-rel",
             "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "web-wasm32-emscripten-webgl2-custom",
             "inherits": "base-linux"
