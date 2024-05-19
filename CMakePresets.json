@@ -333,10 +333,11 @@
             "displayName": "Android 4.4 ARMv7+NEON",
             "inherits": ["vcpkg-base-android"],
             "cacheVariables": {
+                "ANDROID_ARM_NEON": "ON",
                 "BUILD_GLES_31": "OFF",
                 "BUILD_GLES_32": "OFF",
-                "CMAKE_C_FLAGS": "-march=armv7-a -mfloat-abi=hard",
-                "CMAKE_CXX_FLAGS": "-march=armv7-a -mfloat-abi=hard",
+                "CMAKE_C_FLAGS": "-march=armv7-a",
+                "CMAKE_CXX_FLAGS": "-march=armv7-a",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;arm;arm32;arm_neon"
             },
             "environment": {
@@ -350,8 +351,9 @@
             "displayName": "Android 10 ARMv7+NEON",
             "inherits": ["vcpkg-base-android"],
             "cacheVariables": {
-                "CMAKE_C_FLAGS": "-march=armv7-a -mfloat-abi=hard",
-                "CMAKE_CXX_FLAGS": "-march=armv7-a -mfloat-abi=hard",
+                "ANDROID_ARM_NEON": "ON",
+                "CMAKE_C_FLAGS": "-march=armv7-a",
+                "CMAKE_CXX_FLAGS": "-march=armv7-a",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;arm;arm32;arm_neon"
             },
             "environment": {
