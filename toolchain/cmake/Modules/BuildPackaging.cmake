@@ -127,7 +127,8 @@ function(COFFEE_APPLICATION)
     add_executable(${APP_TARGET} ${SOURCES_MOD})
     if(DWP_TOOL)
       # Reference: https://www.tweag.io/blog/2023-11-23-debug-fission/
-      add_custom_command(TARGET ${APP_TARGET}
+      add_custom_command(
+        TARGET ${APP_TARGET}
         POST_BUILD
         COMMAND ${DWP_TOOL}
           --exec $<TARGET_FILE:${APP_TARGET}>
