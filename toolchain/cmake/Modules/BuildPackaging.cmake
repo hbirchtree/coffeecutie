@@ -125,7 +125,7 @@ function(COFFEE_APPLICATION)
     )
   elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     add_executable(${APP_TARGET} ${SOURCES_MOD})
-    if(DWP_TOOL)
+    if(DWP_TOOL AND CMAKE_BUILD_TYPE MATCHES "Deb")
       # Reference: https://www.tweag.io/blog/2023-11-23-debug-fission/
       add_custom_command(
         TARGET ${APP_TARGET}

@@ -28,34 +28,24 @@ jobs:
         include:
         - variant: android:arm-neon:19:rel
           artifact: android-arm-neon-19
-          mode: rel
         - variant: android:arm64:30-gl:rel
           artifact: android-arm64-30-gl
-          mode: rel
         - variant: android:arm64:32:rel
           artifact: android-arm64-32
-          mode: rel
         - variant: beaglebone:arm-buildroot-linux-gnueabihf:ti-sgx:rel
           artifact: beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx
-          mode: rel
         - variant: desktop:aarch64-buildroot-linux-gnu:multi:rel
           artifact: desktop-aarch64-buildroot-linux-gnu-multi
-          mode: rel
         - variant: desktop:arm-buildroot-linux-gnueabihf:sdl2:rel
           artifact: desktop-arm-buildroot-linux-gnueabihf-sdl2
-          mode: rel
         - variant: desktop:x86_64-buildroot-linux-gnu:multi:rel
           artifact: desktop-x86_64-buildroot-linux-gnu-multi
-          mode: rel
         - variant: desktop:x86_64-w64-mingw32:posix:rel
           artifact: desktop-x86_64-w64-mingw32-posix
-          mode: rel
         - variant: web:wasm32-emscripten:webgl2:rel
           artifact: web-wasm32-emscripten-webgl2
-          mode: rel
         - variant: web:wasm32-emscripten:webgl2-custom:rel
           artifact: web-wasm32-emscripten-webgl2-custom
-          mode: rel
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     name: ${{ matrix.variant }}
