@@ -264,7 +264,7 @@
                 "BUILD_SDL2": "OFF",
                 "BUILD_TESTS": "OFF",
                 "BUILD_WITH_WERROR": "OFF",
-                "VCPKG_MANIFEST_FEATURES": "network;pressure-cooker",
+                "VCPKG_MANIFEST_FEATURES": "assimp;network;pressure-cooker",
                 "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON"
             }
         },
