@@ -125,6 +125,17 @@ function(COFFEE_APPLICATION)
     )
   elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     add_executable(${APP_TARGET} ${SOURCES_MOD})
+    if(DWP_TOOL)
+      # Reference: https://www.tweag.io/blog/2023-11-23-debug-fission/
+      add_custom_command(TARGET ${APP_TARGET}
+        POST_BUILD
+        COMMAND ${DWP_TOOL}
+          --exec $<TARGET_FILE:${APP_TARGET}>
+          -o $<TARGET_FILE:${APP_TARGET}>.dwp
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        VERBATIM
+      )
+    endif()
 
     set(EMBED_SRC ${CMAKE_CURRENT_BINARY_DIR}/${APP_TARGET}_files.cpp)
     set(EMBEDDED_RESOURCES ${APP_RESOURCES})

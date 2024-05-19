@@ -21,7 +21,7 @@ function all_source_files()
     find "${SRC_BASE_DIR}/src" "${SRC_BASE_DIR}/examples" -regex '.*\.\(cpp\|h\)' -type f $@
 }
 
-case $1 in
+case ${1:-} in
 "print-env")
     cmake -N --preset $2 | grep -A512 'Preset environment variables' | grep -v 'Preset environment variables' | sed '/^$/d' | sed -e 's/^\s*//g'
     echo NINJA=$(which ninja)

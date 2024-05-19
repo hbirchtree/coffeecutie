@@ -22,16 +22,7 @@ set(CMAKE_CXX_COMPILER
 add_compile_options(
     -march=x86-64-v3
 )
-add_link_options(
-  #[[-static-libstdc++ -static-libgcc]]
-  -Wl,-rpath-link,../lib
-  # -fuse-ld=gold
-)
-if(CMAKE_BUILD_TYPE MATCHES "Deb")
-  add_link_options(
-    -gsplit-dwarf
-  )
-endif()
+include(${CMAKE_CURRENT_LIST_DIR}/common/gold-options.cmake)
 
 # set ( SHARED_LINK_FLAGS "${CMAKE_SYSROOT}/lib/libstdc++.a" "-static-libssp"
 # "-static-libgcc" "-static-libstdc++ -Wl,-rpath-link,${CMAKE_SYSROOT}/usr/lib"

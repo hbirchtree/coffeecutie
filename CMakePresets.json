@@ -41,8 +41,8 @@
                 "APPIMAGE_RUNTIME_BINARY": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{TOOLCHAIN_PREFIX}/bin/runtime",
                 "CMAKE_C_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-gcc",
                 "CMAKE_CXX_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-g++",
-                "FLATPAK_EXTRA_LIBRARIES": "$env{TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6;$env{TOOLCHAIN_SYSROOT}/lib/libssp.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
+                "FLATPAK_EXTRA_LIBRARIES": "$env{TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6;$env{TOOLCHAIN_SYSROOT}/lib/libssp.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0",
                 "MKSQUASH_PROGRAM": "$env{MKSQUASH_PROGRAM}",
                 "TOOLCHAIN_PREFIX": "$env{TOOLCHAIN_PREFIX}",
                 "TOOLCHAIN_ROOT": "$env{TOOLCHAIN_ROOT}",
@@ -54,9 +54,9 @@
                 "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools",
                 "MKSQUASH_PROGRAM": "/usr/bin/mksquashfs",
                 "NINJA": "$penv{NINJA}",
-                "PATH_": "$penv{PATH}:$env{TOOLCHAIN_ROOT}/bin",
+                "PATH": "$penv{PATH}:$env{TOOLCHAIN_ROOT}/bin",
                 "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
-                "TOOLCHAIN_VERSION": "v2.1.1",
+                "TOOLCHAIN_VERSION": "v2.1.3",
                 "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/compilers/$env{PLATFORM}-$env{ARCHITECTURE}/$env{TOOLCHAIN_VERSION}",
                 "TOOLCHAIN_SYSROOT": "$env{TOOLCHAIN_ROOT}/$env{TOOLCHAIN_PREFIX}/sysroot",
                 "VCPKG_INSTALL_DIR": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{ARCHITECTURE}"
@@ -335,8 +335,8 @@
             "cacheVariables": {
                 "BUILD_GLES_31": "OFF",
                 "BUILD_GLES_32": "OFF",
-                "CMAKE_C_FLAGS": "-march=armv7-a+simd+vfpv3",
-                "CMAKE_CXX_FLAGS": "-march=armv7-a+simd+vfpv3",
+                "CMAKE_C_FLAGS": "-march=armv7-a -mfloat-abi=hard",
+                "CMAKE_CXX_FLAGS": "-march=armv7-a -mfloat-abi=hard",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;arm;arm32;arm_neon"
             },
             "environment": {
@@ -350,8 +350,8 @@
             "displayName": "Android 10 ARMv7+NEON",
             "inherits": ["vcpkg-base-android"],
             "cacheVariables": {
-                "CMAKE_C_FLAGS": "-march=armv7-a+simd+vfpv3",
-                "CMAKE_CXX_FLAGS": "-march=armv7-a+simd+vfpv3",
+                "CMAKE_C_FLAGS": "-march=armv7-a -mfloat-abi=hard",
+                "CMAKE_CXX_FLAGS": "-march=armv7-a -mfloat-abi=hard",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;arm;arm32;arm_neon"
             },
             "environment": {
@@ -403,7 +403,8 @@
                 "BUILD_GL_SOFTWARE_PVRTC": "ON",
                 "GENERATE_APPIMAGE": "ON",
                 "GENERATE_FLATPAK": "ON",
-                "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64"
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
+                "VCPKG_MANIFEST_FEATURES": "network;pressure-cooker"
             },
             "environment": {
                 "ARCHITECTURE": "x86_64-buildroot-linux-gnu",
@@ -420,6 +421,9 @@
                 "BUILD_GLES_31": "ON",
                 "CMAKE_C_FLAGS": "-march=armv8.1-a",
                 "CMAKE_CXX_FLAGS": "-march=armv8.1-a",
+                "CMAKE_LINKER_FLAGS": "-fuse-ld=gold",
+                "CMAKE_SHARED_LINKER_FLAGS": "-fuse-ld=gold",
+                "CMAKE_EXE_LINKER_FLAGS": "-fuse-ld=gold",
                 "GENERATE_APPIMAGE": "ON",
                 "GENERATE_FLATPAK": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;arm64;aarch64"
@@ -437,6 +441,9 @@
                 "BUILD_EGL": "OFF",
                 "CMAKE_C_FLAGS": "-march=armv7-a+simd+vfpv4",
                 "CMAKE_CXX_FLAGS": "-march=armv7-a+simd+vfpv4",
+                "CMAKE_LINKER_FLAGS": "-fuse-ld=gold",
+                "CMAKE_SHARED_LINKER_FLAGS": "-fuse-ld=gold",
+                "CMAKE_EXE_LINKER_FLAGS": "-fuse-ld=gold",
                 "GENERATE_FLATPAK": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "arm;arm32;linux;wayland;x11"
             },
@@ -731,229 +738,229 @@
         },
         {
             "name": "android-arm-neon-19-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "android-arm-neon-19",
             "inherits": "base-linux"
         },
         {
             "name": "android-arm-neon-19-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "android-arm-neon-19",
             "inherits": "base-linux"
         },
         {
             "name": "android-arm64-25-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "android-arm64-25",
             "inherits": "base-linux"
         },
         {
             "name": "android-arm64-25-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "android-arm64-25",
             "inherits": "base-linux"
         },
         {
             "name": "android-arm-neon-29-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "android-arm-neon-29",
             "inherits": "base-linux"
         },
         {
             "name": "android-arm-neon-29-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "android-arm-neon-29",
             "inherits": "base-linux"
         },
         {
             "name": "android-arm64-30-gl-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "android-arm64-30-gl",
             "inherits": "base-linux"
         },
         {
             "name": "android-arm64-30-gl-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "android-arm64-30-gl",
             "inherits": "base-linux"
         },
         {
             "name": "android-arm64-32-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "android-arm64-32",
             "inherits": "base-linux"
         },
         {
             "name": "android-arm64-32-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "android-arm64-32",
             "inherits": "base-linux"
         },
         {
             "name": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx",
             "inherits": "base-linux"
         },
         {
             "name": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx",
             "inherits": "base-linux"
         },
         {
             "name": "console-powerpc-eabi-cube-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "console-powerpc-eabi-cube",
             "inherits": "base-linux"
         },
         {
             "name": "desktop-aarch64-buildroot-linux-gnu-multi-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "desktop-aarch64-buildroot-linux-gnu-multi",
             "inherits": "base-linux"
         },
         {
             "name": "desktop-aarch64-buildroot-linux-gnu-multi-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "desktop-aarch64-buildroot-linux-gnu-multi",
             "inherits": "base-linux"
         },
         {
             "name": "desktop-x86_64-buildroot-linux-gnu-multi-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "desktop-x86_64-buildroot-linux-gnu-multi",
             "inherits": "base-linux"
         },
         {
             "name": "desktop-x86_64-buildroot-linux-gnu-multi-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "desktop-x86_64-buildroot-linux-gnu-multi",
             "inherits": "base-linux"
         },
         {
             "name": "desktop-x86_64-w64-mingw32-posix-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "desktop-x86_64-w64-mingw32-posix",
             "inherits": "base-linux"
         },
         {
             "name": "desktop-x86_64-w64-mingw32-posix-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "desktop-x86_64-w64-mingw32-posix",
             "inherits": "base-linux"
         },
         {
             "name": "desktop-i686-w64-mingw32-posix-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "desktop-i686-w64-mingw32-posix",
             "inherits": "base-linux"
         },
         {
             "name": "desktop-arm-buildroot-linux-gnueabihf-sdl2-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "desktop-arm-buildroot-linux-gnueabihf-sdl2",
             "inherits": "base-linux"
         },
         {
             "name": "desktop-arm-buildroot-linux-gnueabihf-sdl2-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "desktop-arm-buildroot-linux-gnueabihf-sdl2",
             "inherits": "base-linux"
         },
         {
             "name": "desktop-x86_64-darwin-macos-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "desktop-x86_64-darwin-macos",
             "inherits": "base-mac"
         },
         {
             "name": "desktop-x86_64-darwin-macos-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "desktop-x86_64-darwin-macos",
             "inherits": "base-mac"
         },
         {
             "name": "desktop-universal-darwin-macos-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "desktop-universal-darwin-macos",
             "inherits": "base-mac"
         },
         {
             "name": "desktop-universal-darwin-macos-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "desktop-universal-darwin-macos",
             "inherits": "base-mac"
         },
         {
             "name": "ios-x86_64-darwin-simulator-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "ios-x86_64-darwin-simulator",
             "inherits": "base-mac"
         },
         {
             "name": "ios-x86_64-darwin-simulator-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "ios-x86_64-darwin-simulator",
             "inherits": "base-mac"
         },
         {
             "name": "host-x64-linux-native-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "host-x64-linux-native",
             "inherits": "base-linux"
         },
         {
             "name": "host-arm64-linux-native-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "host-arm64-linux-native",
             "inherits": "base-linux"
         },
         {
             "name": "host-x64-osx-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "host-x64-osx",
             "inherits": "base-mac"
         },
         {
             "name": "host-arm64-osx-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "host-arm64-osx",
             "inherits": "base-mac"
         },
         {
             "name": "native-linux-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "native-linux",
             "inherits": "base-linux"
         },
         {
             "name": "raspberry-armv6-buildroot-linux-gnueabihf-vc-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "raspberry-armv6-buildroot-linux-gnueabihf-vc",
             "inherits": "base-linux"
         },
         {
             "name": "raspberry-armv6-buildroot-linux-gnueabihf-vc-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "raspberry-armv6-buildroot-linux-gnueabihf-vc",
             "inherits": "base-linux"
         },
         {
             "name": "web-wasm32-emscripten-webgl2-rel",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "web-wasm32-emscripten-webgl2",
             "inherits": "base-linux"
         },
         {
             "name": "web-wasm32-emscripten-webgl2-custom-dbg",
-            "configuration": "Release",
+            "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "web-wasm32-emscripten-webgl2-custom",
             "inherits": "base-linux"
         },
         {
             "name": "web-wasm32-emscripten-webgl2-dbg",
-            "configuration": "Debug",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "web-wasm32-emscripten-webgl2",
             "inherits": "base-linux"
         }

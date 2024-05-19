@@ -21,5 +21,6 @@ add_link_options(
     # -mfpu=vfp
     -latomic
 )
+include(${CMAKE_CURRENT_LIST_DIR}/common/gold-options.cmake)
 
 include(${CMAKE_CURRENT_LIST_DIR}/common/configure-paths.cmake)

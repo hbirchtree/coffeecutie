@@ -53,7 +53,11 @@ function identify_target()
     PLATFORM="$(echo $1 | cut -d: -f1)"
     ARCHITECTURE="$(echo $1 | cut -d: -f2)"
     SYSROOT="$(echo $1 | cut -d: -f3)"
-    TARGET="$(echo $1 | cut -d: -f4)"
+    BUILD_MODE="$(echo $1 | cut -d: -f4)"
+    TARGET="$(echo $1 | cut -d/ -f2)"
+    [[ -z "$BUILD_MODE" ]] && BUILD_MODE=dbg
+    [[ "$TARGET" = "$1" ]] && TARGET=
+
     [[ "${ARCHITECTURE}" = *"linux"* ]] && IS_LINUX=1 || IS_LINUX=0
     [[ "${ARCHITECTURE}" = *"windows"* ]] && IS_WINDOWS=1 || IS_WINDOWS=0
     [[ "${ARCHITECTURE}" = *"osx"* ]] && IS_MACOS=1 || IS_MACOS=0
@@ -62,10 +66,13 @@ function identify_target()
     else
         IS_DOWNLOADABLE=0
     fi
-    if [[ ${BUILD_TYPE:-} = "rel" ]]; then
-        BUILD_TYPE=Release
+    if [[ ${BUILD_MODE:-} = "rel" ]]; then
+        export BUILD_TYPE=Release
+    elif [[ ${BUILD_MODE:-} = "reldeb" ]]; then
+        BUILD_MODE=rel
+        export BUILD_TYPE=RelWithDebInfo
     else
-        BUILD_TYPE=Debug
+        export BUILD_TYPE=Debug
     fi
 }
 
@@ -130,10 +137,18 @@ function host_tools_build()
     echo "::endgroup::"
 }
 
+function toolchain_version()
+{
+#    VERSION=$(cmake -N --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT} | grep TOOLCHAIN_VERSION | cut -d'"' -f2)
+#    [[ -z "$VERSION" ]] && VERSION=$($SELF build-info toolchain version)
+#    echo "$VERSION"
+    cmake -S $BASE_DIR -N --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT} | grep TOOLCHAIN_VERSION | cut -d'"' -f2
+}
+
 function toolchain_registry()
 {
     mkdir -p $BASE_DIR/multi_build/compilers/meta
-    VERSION=$($SELF build-info toolchain version)
+    VERSION=$(toolchain_version)
     if [[ ! -f "$BASE_DIR/multi_build/compilers/meta/$VERSION.json" ]]; then
         gh release download \
             -R "$($SELF build-info toolchain source)" \
@@ -153,7 +168,10 @@ function toolchain_download()
         echo "Found no toolchain for $1, aborting"
         return
     fi
-    gh release download -R "$($SELF build-info toolchain source)" "$($SELF build-info toolchain version)" -p "$FILE"
+    gh release download \
+        -R "$($SELF build-info toolchain source)" \
+        "$(toolchain_version)" \
+        -p "$FILE"
     case "$2" in
     ".compiler")
         mv "$FILE" "compiler.tar.xz"
@@ -175,7 +193,7 @@ function native_build()
     identify_target $1
     TOOLCHAIN_DOWNLOAD="${PLATFORM}-${ARCHITECTURE}_${SYSROOT}"
 
-    TOOLCHAIN_VER=$($SELF build-info toolchain version)
+    TOOLCHAIN_VER=$(toolchain_version)
     if [[ -z "$TOOLCHAIN_VER" ]]; then
         echo \
     "No compiler version found in .build.yml, add one with:
@@ -283,7 +301,7 @@ function native_build()
     echo "::group::Building project"
     cmake \
         --build \
-        --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg \
+        --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_MODE} \
         ${TARGET_SPEC}
     echo "::endgroup::"
 
@@ -342,7 +360,7 @@ function emscripten_build()
     echo "::endgroup::"
 
     echo "::group::Building project"
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg ${TARGET_SPEC}
+    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_MODE} ${TARGET_SPEC}
     echo "::endgroup::"
 
     popd
@@ -373,7 +391,7 @@ function xcode_build()
     echo "::endgroup::"
 
     echo "::group::Building project"
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg ${TARGET_SPEC}
+    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_MODE} ${TARGET_SPEC}
     echo "::endgroup::"
 
     popd
@@ -440,7 +458,7 @@ function android_build()
     echo "::endgroup::"
 
     echo "::group::Building project"
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg ${TARGET_SPEC}
+    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_MODE} ${TARGET_SPEC}
     echo "::endgroup::"
 
     popd
@@ -527,7 +545,7 @@ function mingw_build()
     echo "::endgroup::"
 
     echo "::group::Building project"
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg
+    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_MODE}
     echo "::endgroup::"
     popd
 }
