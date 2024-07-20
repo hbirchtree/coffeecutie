@@ -45,7 +45,7 @@ foreach(PATH ${CMAKE_FIND_ROOT_PATH})
 endforeach()
 
 add_compile_options(
-  -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer
+  -fno-omit-frame-pointer
 )
 
 set(CMAKE_INSTALL_RPATH
