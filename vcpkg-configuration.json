@@ -5,8 +5,6 @@
         "./toolchain/vcpkg/ports/gamenetworkingsockets",
         "./toolchain/vcpkg/ports/hash-library",
         "./toolchain/vcpkg/ports/sdl2",
-        "./toolchain/vcpkg/ports/shaderc",
-        "./toolchain/vcpkg/ports/spirv-tools",
         "./toolchain/vcpkg/ports/status-code",
         "./toolchain/vcpkg/ports/stb"
     ],
