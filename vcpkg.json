@@ -23,7 +23,7 @@
         "zstd",
         { "name": "gctools", "platform": "gamecube | wii", "host": true },
         { "name": "libogc", "platform": "gamecube | wii" },
-        { "name": "glslang", "host": true }
+        { "name": "glslang", "host": true, "features": ["tools"] }
     ],
     "features": {
         "assimp": {
