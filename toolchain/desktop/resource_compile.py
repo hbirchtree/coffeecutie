@@ -51,6 +51,10 @@ DEFAULT_TEX_MATRIX = {
         'etc1',
         'etc2',
     ],
+    'iOS': [
+        'pvrtc1',
+        'raw',
+    ],
     'Linux': [
         'astc', # For Mali
         'bc1',
@@ -81,6 +85,7 @@ DEFAULT_SHADER_MATRIX = {
     'Android': ['spv', 'es:', 'core:460'], # core:460 for Shield
     'Darwin': ['core:410'],
     'Emscripten': ['es:300'],
+    'iOS': ['es:300'],
     # Linux, omitted because it supports all
     'Windows': ['spv', 'core:'],
 }
