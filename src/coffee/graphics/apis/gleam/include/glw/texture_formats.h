@@ -1,8 +1,6 @@
 #pragma once
 
 #include <fmt/format.h>
-#include <optional>
-#include <string_view>
 
 #include <peripherals/libc/types.h>
 #include <peripherals/typing/enum/pixels/format.h>

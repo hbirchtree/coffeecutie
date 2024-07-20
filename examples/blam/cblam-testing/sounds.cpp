@@ -159,10 +159,12 @@ struct SoundSystem
         track_t::entry_t const&        props)
     {
         auto const& [tag, sound, heap] = sound_;
-        auto ranges                    = *sound->pitch_ranges(heap);
+        auto ranges = *index.deref(*tag, sound->pitch_ranges_);
+        // auto ranges                    = *sound->pitch_ranges(heap);
         if(ranges.empty())
             return;
-        auto perms = *ranges[0].permutations(heap);
+        auto perms = *index.deref(*tag, ranges[0].permutations_);
+        // auto perms = *ranges[0].permutations(heap);
         if(perms.empty())
             return;
 

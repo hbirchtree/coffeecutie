@@ -219,7 +219,7 @@ function native_build()
 
     export TOOLCHAIN_ROOT="${TOOLCHAIN_ROOT:-$DEFAULT_ROOT}"
 
-    echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
+    echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT} ($TOOLCHAIN_VER)"
 
     echo "${DEFAULT_ROOT} ${TOOLCHAIN_ROOT} ${IS_DOWNLOADABLE}"
     if [[ "$DEFAULT_ROOT" = "$TOOLCHAIN_ROOT" ]] && [[ ! -d "${TOOLCHAIN_ROOT}" ]] && [[ $IS_DOWNLOADABLE = "1" ]]; then

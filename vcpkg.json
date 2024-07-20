@@ -7,7 +7,7 @@
         { "name": "boost-outcome", "platform": "android | (arm & linux) | (x64 & linux) | osx | windows" },
         { "name": "cppcodec", "platform": "!bare" },
         "cxxopts",
-        { "name": "fmt" },
+        "fmt",
         "glm",
         "hash-library",
         { "name": "ktx", "features": ["vulkan"], "platform": "!bare" },

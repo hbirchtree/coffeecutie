@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fmt/format.h>
+#include <fmt/std.h>
 #include <url/url.h>
 
 template<>
@@ -13,10 +14,13 @@ struct fmt::formatter<platform::url::Url>
     }
 
     template<typename FormatCtx>
-    auto format(platform::url::Url const& p, FormatCtx& ctx)
+    auto format(platform::url::Url const& p, FormatCtx& ctx) const
     {
         return fmt::format_to(
-            ctx.out(), "url(path={}, category={})", p.internUrl, p.category);
+            ctx.out(),
+            "url(path={}, category={})",
+            p.internUrl,
+            static_cast<uint32_t>(p.category));
     }
 };
 
@@ -30,7 +34,7 @@ struct fmt::formatter<platform::url::Path>
     }
 
     template<typename FormatCtx>
-    auto format(platform::url::Path const& p, FormatCtx& ctx)
+    auto format(platform::url::Path const& p, FormatCtx& ctx) const
     {
         return fmt::format_to(ctx.out(), "path({})", p.internUrl);
     }

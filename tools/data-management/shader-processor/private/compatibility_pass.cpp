@@ -21,8 +21,8 @@ using spvtools::opt::Instruction;
 class LegacyCompatibilityPass : public spvtools::opt::Pass
 {
   public:
-    LegacyCompatibilityPass(compatibility_options&& options) :
-        options(std::move(options))
+    LegacyCompatibilityPass(compatibility_options&& options)
+        : options(std::move(options))
     {
     }
 
@@ -52,7 +52,7 @@ class LegacyCompatibilityPass : public spvtools::opt::Pass
         return out;
     }
 
-    auto create_instruction(SpvOp op)
+    auto create_instruction(spv::Op op)
     {
         return std::make_unique<Instruction>(context(), op);
     }
@@ -67,19 +67,20 @@ class LegacyCompatibilityPass : public spvtools::opt::Pass
     {
         switch(instruction->opcode())
         {
-        case SpvOpDecorate: {
+        case spv::Op::OpDecorate: {
             auto& type_op = instruction->GetInOperand(1);
-            if(type_op.words[0] != spv::DecorationBufferBlock)
+            if(static_cast<spv::Decoration>(type_op.words[0]) !=
+               spv::Decoration::BufferBlock)
                 return std::nullopt;
             auto decorator     = instruction->GetInOperand(1);
-            decorator.words[0] = spv::DecorationBlock;
+            decorator.words[0] = static_cast<uint32_t>(spv::Decoration::Block);
             instruction->RemoveInOperand(1);
             instruction->AddOperand(std::move(decorator));
             return Status::SuccessWithChange;
         }
-        case SpvOpTypeRuntimeArray: {
+        case spv::Op::OpTypeRuntimeArray: {
             auto identifier = instruction->GetInOperand(0);
-            instruction->SetOpcode(SpvOpTypeArray);
+            instruction->SetOpcode(spv::Op::OpTypeArray);
 
             spv_parsed_instruction_t            const_type{};
             std::array<spv_parsed_operand_t, 3> type_operands = {{
@@ -99,13 +100,13 @@ class LegacyCompatibilityPass : public spvtools::opt::Pass
                     32},
             }};
 
-            const_type.opcode       = SpvOpTypeInt;
+            const_type.opcode       = static_cast<uint16_t>(spv::Op::OpTypeInt);
             const_type.type_id      = SPV_OPERAND_TYPE_TYPE_ID;
             const_type.result_id    = context()->TakeNextId();
             const_type.operands     = type_operands.data();
             const_type.num_operands = 3;
-            std::array<uint32_t, 3> type_words
-                = {{const_type.result_id, 32, 1}};
+            std::array<uint32_t, 3> type_words = {
+                {const_type.result_id, 32, 1}};
             const_type.words     = type_words.data();
             const_type.num_words = 3;
 
@@ -123,13 +124,13 @@ class LegacyCompatibilityPass : public spvtools::opt::Pass
                     32},
             }};
 
-            constant.opcode       = SpvOpSpecConstant;
-            constant.type_id      = SPV_OPERAND_TYPE_RESULT_ID;
-            constant.result_id    = context()->TakeNextId();
-            constant.operands     = constant_operands.data();
-            constant.num_operands = 3;
-            std::array<uint32_t, 3> constant_words
-                = {{const_type.result_id, constant.result_id, 1}};
+            constant.opcode    = static_cast<uint16_t>(spv::Op::OpSpecConstant);
+            constant.type_id   = SPV_OPERAND_TYPE_RESULT_ID;
+            constant.result_id = context()->TakeNextId();
+            constant.operands  = constant_operands.data();
+            constant.num_operands                  = 3;
+            std::array<uint32_t, 3> constant_words = {
+                {const_type.result_id, constant.result_id, 1}};
             constant.words     = constant_words.data();
             constant.num_words = 3;
 
@@ -146,9 +147,8 @@ class LegacyCompatibilityPass : public spvtools::opt::Pass
             while(next)
             {
                 auto op = next->opcode();
-                if(op == SpvOpTypeStruct
-                   && next->GetInOperand(0).words[0]
-                          == instruction->result_id())
+                if(op == spv::Op::OpTypeStruct &&
+                   next->GetInOperand(0).words[0] == instruction->result_id())
                     break;
                 next = next->NextNode();
             }
@@ -189,7 +189,7 @@ class LegacyCompatibilityPass : public spvtools::opt::Pass
             name_words.insert(
                 name_words.end(), name_cast.begin(), name_cast.end());
 
-            constant_name.opcode       = SpvOpName;
+            constant_name.opcode       = static_cast<uint16_t>(spv::Op::OpName);
             constant_name.num_operands = 2;
             constant_name.operands     = name_operands.data();
             constant_name.num_words    = name_words.size();
@@ -209,14 +209,16 @@ class LegacyCompatibilityPass : public spvtools::opt::Pass
     {
         switch(instruction->opcode())
         {
-        case SpvOpDecorate: {
-            if(instruction->GetInOperand(1).words[0] != spv::DecorationFlat)
+        case spv::Op::OpDecorate: {
+            if(instruction->GetInOperand(1).words[0] !=
+               static_cast<uint32_t>(spv::Decoration::Flat))
                 return std::nullopt;
             instruction->ToNop();
             return Status::SuccessWithChange;
         }
-        case SpvOpMemberDecorate: {
-            if(instruction->GetInOperand(2).words[0] != spv::DecorationFlat)
+        case spv::Op::OpMemberDecorate: {
+            if(instruction->GetInOperand(2).words[0] !=
+               static_cast<uint32_t>(spv::Decoration::Flat))
                 return std::nullopt;
             instruction->ToNop();
             return Status::SuccessWithChange;
@@ -230,7 +232,7 @@ class LegacyCompatibilityPass : public spvtools::opt::Pass
     {
         switch(instruction->opcode())
         {
-        case SpvOpTypeInt: {
+        case spv::Op::OpTypeInt: {
             if(instruction->GetInOperand(1).words[0])
                 return std::nullopt;
             instruction->GetInOperand(1).words[0] = 1;
@@ -245,7 +247,7 @@ class LegacyCompatibilityPass : public spvtools::opt::Pass
     {
         switch(instruction->opcode())
         {
-        case SpvOpTypeFloat: {
+        case spv::Op::OpTypeFloat: {
             if(instruction->GetInOperand(0).words[0] == 32)
                 return std::nullopt;
             instruction->GetInOperand(0).words[0] = 32;
@@ -258,16 +260,17 @@ class LegacyCompatibilityPass : public spvtools::opt::Pass
 
     std::optional<Status> int_stage_input_to_float(Instruction* instruction)
     {
-//        Instruction* type_def = nullptr;
+        //        Instruction* type_def = nullptr;
         switch(instruction->opcode())
         {
-        case SpvOpAccessChain: {
+        case spv::Op::OpAccessChain: {
             Instruction* type = context()->get_def_use_mgr()->GetDef(
                 instruction->GetOperand(0).words[0]);
             if(!stl_types::any_of(
-                   type->GetSingleWordInOperand(0),
-                   spv::StorageClassInput,
-                   spv::StorageClassOutput))
+                   static_cast<spv::StorageClass>(
+                       type->GetSingleWordInOperand(0)),
+                   spv::StorageClass::Input,
+                   spv::StorageClass::Output))
                 return std::nullopt;
             break;
         }
@@ -308,7 +311,7 @@ class RenameEntrypointPass : public spvtools::opt::Pass
   public:
     RenameEntrypointPass(std::string_view new_name)
     {
-        auto size = new_name.size();
+        auto size   = new_name.size();
         auto padded = size & 0b11;
         size += 4;
         if(padded > 0)
@@ -327,8 +330,7 @@ class RenameEntrypointPass : public spvtools::opt::Pass
     Status Process()
     {
         Status result = Status::SuccessWithoutChange;
-        get_module()->ForEachInst([this, &result](Instruction* instruction)
-        {
+        get_module()->ForEachInst([this, &result](Instruction* instruction) {
             auto current_status = per_instruction(instruction);
             if(current_status == Status::SuccessWithoutChange)
                 return;
@@ -341,7 +343,7 @@ class RenameEntrypointPass : public spvtools::opt::Pass
     Status per_instruction(Instruction* instruction)
     {
         using OperandData = spvtools::opt::Operand::OperandData;
-        if(instruction->opcode() == SpvOpEntryPoint)
+        if(instruction->opcode() == spv::Op::OpEntryPoint)
         {
             instruction->SetInOperand(2, OperandData(m_entrypoint_name));
             return Status::SuccessWithChange;

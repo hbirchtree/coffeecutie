@@ -39,6 +39,7 @@
 #include <coffee/comp_app/fps_counter.h>
 
 #include <fmt_extensions/info.h>
+#include <fmt_extensions/format.h>
 #include <fmt_extensions/vector_types.h>
 
 #include <coffee/core/CDebug>

@@ -125,17 +125,18 @@ struct Resource
     void setHeaderField(http::header_field field, std::string const& value);
     void setHeaderField(std::string const& field, std::string const& value);
 
-    http::request_t&                request();
-    std::optional<http::response_t> response() const;
+    http::request_t&           request();
+    std::optional<std::string> mimeType() const;
 
     std::optional<asio::error_code> fetch();
     std::optional<asio::error_code> push(const_chunk_u8 const& data);
     std::optional<asio::error_code> push(
         http::method_t method, const_chunk_u8 const& data);
 
-    std::optional<std::string>    mimeType() const;
-    libc_types::u32               responseCode() const;
-    std::optional<const_chunk_u8> data() const;
+    std::optional<http::response_t> response() const;
+    libc_types::u32                 responseCode() const;
+    std::optional<Url>              responseLocation() const;
+    std::optional<const_chunk_u8>   data() const;
 
     std::optional<chunk_u8>       move();
     std::optional<const_chunk_u8> move_const() const;

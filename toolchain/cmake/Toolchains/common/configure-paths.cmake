@@ -44,6 +44,10 @@ foreach(PATH ${CMAKE_FIND_ROOT_PATH})
   set(PKG_CONFIG_PATH ${PKG_CONFIG_PATH}:${PATH}/lib/pkgconfig)
 endforeach()
 
+add_compile_options(
+  -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer
+)
+
 set(CMAKE_INSTALL_RPATH
     "../lib"
     CACHE STRING ""

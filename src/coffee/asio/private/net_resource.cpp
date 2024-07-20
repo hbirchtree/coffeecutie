@@ -127,9 +127,7 @@ std::optional<asio::error_code> Resource::close()
     return ec ? std::make_optional(ec) : std::nullopt;
 }
 
-Resource::Resource(
-    std::shared_ptr<Coffee::ASIO::Service> ctxt,
-    const Url& url)
+Resource::Resource(std::shared_ptr<Coffee::ASIO::Service> ctxt, const Url& url)
     : m_resource(url)
 #if !defined(USE_EMSCRIPTEN_HTTP)
     , m_ctxt(ctxt)
@@ -203,13 +201,6 @@ http::request_t& Resource::request()
     return m_request;
 }
 
-std::optional<http::response_t> Resource::response() const
-{
-    if(isResponseReady())
-        return m_response;
-    return std::nullopt;
-}
-
 std::optional<asio::error_code> Resource::fetch()
 {
     return push(http::method_t::get, const_chunk_u8());
@@ -269,11 +260,21 @@ void emscripten_push_statechange(emscripten_fetch_t* fetch)
     const char* status = nullptr;
     switch(fetch->readyState)
     {
-    case 0: status = "unsent"; break;
-    case 1: status = "opened"; break;
-    case 2: status = "headers_received"; break;
-    case 3: status = "loading"; break;
-    case 4: status = "done"; break;
+    case 0:
+        status = "unsent";
+        break;
+    case 1:
+        status = "opened";
+        break;
+    case 2:
+        status = "headers_received";
+        break;
+    case 3:
+        status = "loading";
+        break;
+    case 4:
+        status = "done";
+        break;
     default:
         return;
     }
@@ -588,21 +589,47 @@ std::optional<asio::error_code> Resource::push(
 }
 #endif
 
+std::optional<http::response_t> Resource::response() const
+{
+    if(isResponseReady())
+        return m_response;
+    return std::nullopt;
+}
+
 std::optional<std::string> Resource::mimeType() const
 {
     using field = http::header_field;
 
     auto const it = m_response.header.standard_fields.find(field::content_type);
 
-    if(it != m_response.header.standard_fields.end())
+    if(it == m_response.header.standard_fields.end())
         return std::nullopt;
-
     return it->second;
 }
 
 libc_types::u32 Resource::responseCode() const
 {
     return m_response.header.code;
+}
+
+std::optional<Url> Resource::responseLocation() const
+{
+    using field = http::header_field;
+
+    auto const it = m_response.header.standard_fields.find(field::location);
+
+    if(it == m_response.header.standard_fields.end())
+        return std::nullopt;
+    if(it->second.find("://") == std::string::npos)
+    {
+        auto [protocol, host, resource, port] = UrlParse::from(m_resource);
+        if(port != 0)
+            host = fmt::format("{}:{}", host, port);
+        return MkUrl(fmt::format("{}://{}{}", protocol, host, it->second));
+    } else
+    {
+        return MkUrl(it->second);
+    }
 }
 
 std::optional<const_chunk_u8> Resource::data() const

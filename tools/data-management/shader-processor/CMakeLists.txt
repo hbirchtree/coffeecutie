@@ -4,7 +4,7 @@ find_package(spirv_cross_reflect CONFIG REQUIRED)
 find_package(spirv_cross_glsl CONFIG REQUIRED)
 find_package(spirv_cross_cpp CONFIG REQUIRED)
 
-find_package(unofficial-shaderc_util CONFIG REQUIRED)
+# find_package(unofficial-shaderc_util CONFIG REQUIRED)
 find_package(unofficial-shaderc CONFIG REQUIRED)
 
 find_package(glslang CONFIG REQUIRED)
@@ -29,8 +29,8 @@ coffee_library(
             spirv-cross-reflect
             spirv-cross-util
             unofficial::shaderc::shaderc
-            unofficial::shaderc_util::shaderc_util
-            glslang::OGLCompiler
+            # unofficial::shaderc_util::shaderc_util
+            # glslang::OGLCompiler
             glslang::glslang
             glslang::SPIRV
             glslang::SPVRemapper

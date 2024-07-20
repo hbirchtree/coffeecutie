@@ -128,6 +128,11 @@ void ProfilingExport()
                 10,
                 "Network export successful with response: {0}",
                 str::encapsulate_view<char>(data->view));
+            if(auto location = reportBinRsc.responseLocation())
+            {
+                cVerbose(
+                    10, "Network export located at: {0}", location.value());
+            }
         } else
         {
             cWarning("Got no data back from server?");

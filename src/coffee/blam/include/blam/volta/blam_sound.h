@@ -57,21 +57,21 @@ struct pitch_range_t
     i32       padding[2];
     reference<pitch_permutation_t, grbx_t, atlas_type_t::sounds> permutations_;
 
-    inline std::optional<gsl::span<const pitch_permutation_t>> permutations(
-        map_ptr const& map) const
-    {
-        if(map.file_offset && permutations_.offset > map.file_offset)
-        {
-            if(auto ptr = permutations_.data(map); ptr.has_value())
-                return ptr.value();
-            return std::nullopt;
-        }
-        auto base_ptr = reinterpret_cast<const byte_t*>(&this[0]);
-        return gsl::span(
-            reinterpret_cast<const pitch_permutation_t*>(
-                &base_ptr[permutations_.offset]),
-            permutations_.count);
-    }
+    // inline std::optional<gsl::span<const pitch_permutation_t>> permutations(
+    //     map_ptr const& map) const
+    // {
+    //     if(map.file_offset && permutations_.offset > map.file_offset)
+    //     {
+    //         if(auto ptr = permutations_.data(map); ptr.has_value())
+    //             return ptr.value();
+    //         return std::nullopt;
+    //     }
+    //     auto base_ptr = reinterpret_cast<const byte_t*>(&this[0]);
+    //     return gsl::span(
+    //         reinterpret_cast<const pitch_permutation_t*>(
+    //             &base_ptr[permutations_.offset]),
+    //         permutations_.count);
+    // }
 };
 
 struct sound
@@ -160,16 +160,16 @@ struct sound
     i32                                                    unknown[4];
     reference<pitch_range_t, grbx_t, atlas_type_t::sounds> pitch_ranges_;
 
-    inline std::optional<gsl::span<const pitch_range_t>> pitch_ranges(
-        map_ptr const& map) const
-    {
-        if(auto ptr = pitch_ranges_.data(map); ptr.has_value())
-            return ptr.value();
-        if(map.file_offset && pitch_ranges_.offset > map.file_offset)
-            return std::nullopt;
-        auto* base_ptr = reinterpret_cast<const pitch_range_t*>(&this[1]);
-        return gsl::span(base_ptr, pitch_ranges_.count);
-    }
+    // inline std::optional<gsl::span<const pitch_range_t>> pitch_ranges(
+    //     map_ptr const& map) const
+    // {
+    //     if(auto ptr = pitch_ranges_.data(map); ptr.has_value())
+    //         return ptr.value();
+    //     if(map.file_offset && pitch_ranges_.offset > map.file_offset)
+    //         return std::nullopt;
+    //     auto* base_ptr = reinterpret_cast<const pitch_range_t*>(&this[1]);
+    //     return gsl::span(base_ptr, pitch_ranges_.count);
+    // }
 };
 
 static_assert(sizeof(sound) == 164);

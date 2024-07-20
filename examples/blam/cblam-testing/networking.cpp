@@ -15,6 +15,7 @@ using Coffee::ProfContext;
 #include <GameNetworkingSockets/steam/steamnetworkingsockets.h>
 #include <coffee/components/restricted_subsystem.h>
 
+#include <fmt_extensions/format.h>
 #include <fmt_extensions/url_types.h>
 
 using NetworkingManifest = compo::SubsystemManifest<
@@ -203,6 +204,22 @@ bool is_client_network_event(GameEvent const& event)
 }
 
 } // namespace
+
+template<>
+struct fmt::formatter<MessageBase::Type>
+{
+    template<typename ParseCtx>
+    constexpr auto parse(ParseCtx& ctx)
+    {
+        return ctx.begin();
+    }
+
+    template<typename FormatCtx>
+    auto format(const MessageBase::Type t, FormatCtx& ctx) const
+    {
+        return fmt::format_to(ctx.out(), "{}", magic_enum::enum_name(t));
+    }
+};
 
 struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 {
