@@ -34,7 +34,7 @@
         {
             "kind": "git",
             "repository": "https://github.com/hbirchtree/vcpkg-graphics",
-            "baseline": "e20355bdbdf56ab4b1ef0ec75ad925c2602f5b69",
+            "baseline": "0b85ebc344377518752ed19714b57207a8c44587",
             "packages": [
                 "bc7enc",
                 "bcdec",
