@@ -188,6 +188,9 @@ struct BlamScript
         if(!m_scenario)
             return;
 
+        if constexpr(compile_info::platform::is_32bit)
+            return;
+
         if(ImGui::Begin("Scripts"))
         {
             if(ImGui::BeginTabBar("scripting"))
