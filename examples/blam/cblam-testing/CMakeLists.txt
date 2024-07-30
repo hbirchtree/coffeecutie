@@ -61,7 +61,7 @@ set_target_properties(
 target_compile_definitions(BlamGraphics
     PUBLIC
     -DBLAM_HALO_VERSION=${BLAM_HALO_VERSION}
-    -DEMBEDDED_REPORT_URL="\"${BLAMG_EMBEDDED_REPORT_URL}\""
+    -DEMBEDDED_REPORT_URL=\"${BLAMG_EMBEDDED_REPORT_URL}\"
 )
 
 if(TARGET ASIO)
