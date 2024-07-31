@@ -181,8 +181,17 @@ FORCEDINLINE std::optional<posix_error> remove(Url const& file)
 FORCEDINLINE std::optional<posix_error> truncate(Url const& file)
 {
     auto resolved = *file;
+#if defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_ARM32)
+    if(auto fd = open_file(file, RSCA::ReadWrite); fd.has_value())
+    {
+        if(auto status = ::ftruncate(fd.value(), 0); status != 0)
+            return detail::posix_failure().error();
+    } else
+        return detail::posix_failure().error();
+#else
     if(auto status = ::truncate(resolved.c_str(), 0); status != 0)
         return detail::posix_failure().error();
+#endif
     return std::nullopt;
 }
 
