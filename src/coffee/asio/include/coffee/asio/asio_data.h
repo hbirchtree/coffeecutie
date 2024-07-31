@@ -2,6 +2,8 @@
 
 #if !defined(USE_EMSCRIPTEN_HTTP)
 #include <asio.hpp>
+#include <asio/awaitable.hpp>
+#include <asio/use_awaitable.hpp>
 #if defined(ASIO_USE_SSL)
 #include <asio/ssl.hpp>
 #endif

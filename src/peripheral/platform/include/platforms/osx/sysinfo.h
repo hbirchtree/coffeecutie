@@ -98,7 +98,7 @@ inline u32 frequency(
     bool /*current*/ = false, u32 /*cpu*/ = 0, u32 /*node*/ = 0)
 {
     return static_cast<u32>(
-        info::apple::sysctl_by_name<u64>("machdep.tsc.frequency"));
+        info::apple::sysctl_by_name<u64>("machdep.tsc.frequency")) / 1000000;
 }
 
 } // namespace proc::apple
@@ -118,6 +118,20 @@ inline std::optional<std::pair<std::string, std::string>> device()
 namespace display::apple {
 
 libc_types::f32 dpi();
+
+}
+
+namespace memory::apple {
+
+inline libc_types::u64 resident()
+{
+    return 0u;
+}
+
+inline libc_types::u64 total()
+{
+    return info::apple::sysctl_by_name<libc_types::u64>("hw.memsize");
+}
 
 }
 } // namespace platform::info

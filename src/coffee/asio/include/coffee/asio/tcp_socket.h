@@ -85,7 +85,7 @@ FORCEDINLINE auto socket_shutdown<socket_types::ssl>(
 
 } // namespace detail
 
-template<typename SocketType>
+template<typename SocketType = asio::ip::tcp::socket>
 struct socket_base
 {
     using socket_type = SocketType;

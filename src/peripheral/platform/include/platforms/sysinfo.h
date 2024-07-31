@@ -134,6 +134,11 @@ constexpr bool has_meminfo = true;
 
 using emscripten::resident;
 using emscripten::total;
+#elif defined(COFFEE_APPLE)
+constexpr bool has_meminfo = true;
+
+using apple::resident;
+using apple::total;
 #elif defined(COFFEE_WINDOWS)
 constexpr bool has_meminfo = true;
 
