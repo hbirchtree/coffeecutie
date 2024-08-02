@@ -73,6 +73,10 @@
 #include <coffee/dispmanx/dispmanx_comp.h>
 #endif
 
+#if defined(FEATURE_ENABLE_OSMesaComponent)
+#include <coffee/osmesa/osmesa_comp.h>
+#endif
+
 #if defined(FEATURE_ENABLE_NVMLComponents)
 #include <nvml_comp/nvml_comp.h>
 #endif
@@ -480,6 +484,12 @@ void addDefaults(
         dispmanx::Windowing>>(container, ec);
     C_ERROR_CHECK(ec);
     appInfo.add("window:library", "DispManX");
+#elif defined(FEATURE_ENABLE_OSMesaComponent)
+    loader.registerAll<type_safety::type_list_t<
+        comp_app::PtrNativeWindowInfoService,
+        osmesa::Windowing>>(container, ec);
+    C_ERROR_CHECK(ec);
+    appInfo.add("window:library", "OSMesa");
 #elif defined(FEATURE_ENABLE_EGLComponent)
     // For when there's no window creation necessary
     // For example NullWS on SGX
@@ -505,6 +515,9 @@ void addDefaults(
     loader.registerAll<emscripten::GLServices>(container, ec);
     C_ERROR_CHECK(ec);
     appInfo.add("gl:context", "Emscripten WebGL");
+#elif defined(FEATURE_ENABLE_OSMesaComponent)
+    loader.registerAll<osmesa::Services>(container, ec);
+    appInfo.add("gl:context", "OSMesa");
 #elif defined(FEATURE_ENABLE_SDL2Components)
     loader.registerAll<sdl2::GLServices>(container, ec);
     appInfo.add("gl:context", "SDL2");

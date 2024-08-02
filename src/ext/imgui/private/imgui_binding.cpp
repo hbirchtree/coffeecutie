@@ -375,7 +375,9 @@ void ImGuiSystem::end_restricted(Proxy& e, time_point const&)
         return;
 
     ImGui::Render();
+#if !defined(FEATURE_ENABLE_OSMesaComponent)
     submit_draws(e);
+#endif
 }
 
 void ImGuiSystem::save_imgui_ini()
