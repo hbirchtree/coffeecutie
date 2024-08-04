@@ -22,6 +22,7 @@ ln -s \
     $PWD/full-sysroot/usr/lib/libEGL* \
     $PWD/full-sysroot/usr/lib/libOSMesa* \
     $PWD/full-sysroot/usr/lib/libbacktrace* \
+    $PWD/full-sysroot/usr/lib/libstdc++* \
     sysroot/lib/
 
 export LD_LIBRARY_PATH=$PWD/sysroot/lib
@@ -30,8 +31,6 @@ BUILDDIR=$SRCDIR/multi_build/desktop-x86_64-buildroot-linux-gnu-multi
 
 $BUILDDIR/bin/BlamGraphics $BUILDDIR/examples/blam/cblam-testing/assets $MAPDIR/pc/bloodgulch.map
 
-pushd /tmp/Blam\ Graphics/
-tar Jcvf $SRCDIR/../blam_test_results.tar.xz .
-popd
+pushd /tmp/Blam\ Graphics/ && tar Jcvf $SRCDIR/../blam_test_results.tar.xz . && popd
 
 popd
