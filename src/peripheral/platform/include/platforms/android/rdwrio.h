@@ -26,9 +26,9 @@ FORCEDINLINE result<mem_chunk<char>, posix::posix_error> read(
 }
 
 FORCEDINLINE std::optional<posix::posix_error> write(
-    detail::android_fd_t const&  file,
-    mem_chunk<const char> const& data,
-    write_params_t const&        params = {})
+    detail::android_fd_t const&       file,
+    semantic::Span<const char> const& data,
+    write_params_t const&             params = {})
 {
     if(detail::is_asset(file))
         return posix::posix_error{EACCES};
