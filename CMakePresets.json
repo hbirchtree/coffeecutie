@@ -403,6 +403,7 @@
                 "BUILD_DISCORD_RPC": "ON",
                 "BUILD_GL_SOFTWARE_BCN": "ON",
                 "BUILD_GL_SOFTWARE_PVRTC": "ON",
+                "BUILD_OSMESA": "ON",
                 "GENERATE_APPIMAGE": "ON",
                 "GENERATE_FLATPAK": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64"
