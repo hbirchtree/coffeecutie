@@ -6,8 +6,8 @@
 #include <AL/alext.h>
 #endif
 
-#include <coffee/comp_app/subsystems.h>
 #include <coffee/comp_app/dummy_plug.h>
+#include <coffee/comp_app/subsystems.h>
 #include <coffee/core/debug/formatting.h>
 #include <fmt/format.h>
 #include <magic_enum.hpp>
@@ -201,6 +201,7 @@ std::optional<std::string> api::load(DeviceHandle&& device)
         return "loopback was requested, but not supported by platform";
 
     auto name = device.name.value_or("");
+#if defined(ALC_SOFT_loopback)
     if(loopback_supported && loopback_requested)
     {
         using namespace platform::url::constructors;
@@ -227,6 +228,7 @@ std::optional<std::string> api::load(DeviceHandle&& device)
         get_proc("alcRenderSamplesSOFT", renderSamplesSOFT);
         m_device = alcLoopbackOpenDeviceSOFT(nullptr);
     } else
+#endif
         m_device = alcOpenDevice(name != "" ? name.c_str() : nullptr);
 
     if(!m_device)
@@ -264,6 +266,7 @@ std::optional<std::string> api::load(DeviceHandle&& device)
         get_proc("alcDevicePauseSOFT", devicePauseSOFT);
         get_proc("alcDeviceResumeSOFT", deviceResumeSOFT);
     }
+#if defined(ALC_SOFT_loopback)
     if(m_loopback.has_value())
     {
         auto info = *device.dummy;
@@ -289,6 +292,7 @@ std::optional<std::string> api::load(DeviceHandle&& device)
         attrs.push_back(ALC_FREQUENCY);
         attrs.push_back(info.fmt.frequency);
     }
+#endif
 
     attrs.push_back(0);
 
@@ -382,18 +386,19 @@ ALenum enum_to_al(source_property prop)
 std::optional<std::string> system::load(
     compo::EntityContainer& e, DeviceHandle&& device)
 {
-    auto const& dummyPlug =
-        e.service<comp_app::AppLoader>()->config<comp_app::dummy_plug::Config>();
+    auto const& dummyPlug = e.service<comp_app::AppLoader>()
+                                ->config<comp_app::dummy_plug::Config>();
 
     if(dummyPlug.enabled)
     {
         device.dummy = DummyInfo{
-            .fmt = Format{
-                .frequency = dummyPlug.audio_config.frequency,
-                .channels  = dummyPlug.audio_config.channels,
-                .bits      = dummyPlug.audio_config.bits,
-                .format    = dummyPlug.audio_config.format,
-            },
+            .fmt =
+                Format{
+                    .frequency = dummyPlug.audio_config.frequency,
+                    .channels  = dummyPlug.audio_config.channels,
+                    .bits      = dummyPlug.audio_config.bits,
+                    .format    = dummyPlug.audio_config.format,
+                },
             .speed = 1.f,
         };
     }
@@ -403,6 +408,7 @@ std::optional<std::string> system::load(
 
 void system::start_frame(compo::ContainerProxy& p, const compo::time_point& t)
 {
+#if defined(ALC_SOFT_loopback)
     if(m_loopback.has_value())
     {
         using namespace std::chrono_literals;
@@ -433,6 +439,7 @@ void system::start_frame(compo::ContainerProxy& p, const compo::time_point& t)
                 platform::file::posix::error_message(err.value()));
         loopback.last_render_time = t;
     }
+#endif
     if(auto err = current_error(); err != std::string())
     {
         cWarning("Audio system error: {}", err);
