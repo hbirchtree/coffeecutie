@@ -22,12 +22,18 @@ ln -s \
     $PWD/full-sysroot/usr/lib/libEGL* \
     $PWD/full-sysroot/usr/lib/libOSMesa* \
     $PWD/full-sysroot/usr/lib/libbacktrace* \
-    $PWD/full-sysroot/usr/lib/libstdc++* \
+    $PWD/full-sysroot/lib/libstdc++* \
     sysroot/lib/
 
 export LD_LIBRARY_PATH=$PWD/sysroot/lib
 
 BUILDDIR=$SRCDIR/multi_build/desktop-x86_64-buildroot-linux-gnu-multi
+
+echo "===================================="
+echo "========= Library linkage =========="
+ldd $BUILDDIR/bin/BlamGraphics
+echo "===================================="
+echo "===================================="
 
 $BUILDDIR/bin/BlamGraphics $BUILDDIR/examples/blam/cblam-testing/assets $MAPDIR/pc/bloodgulch.map
 
