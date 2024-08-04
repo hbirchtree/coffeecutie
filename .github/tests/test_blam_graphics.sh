@@ -20,8 +20,11 @@ rm *.tar.xz
 ln -s \
     $PWD/full-sysroot/usr/lib/libGL* \
     $PWD/full-sysroot/usr/lib/libEGL* \
+    $PWD/full-sysroot/usr/lib/libLLVM* \
     $PWD/full-sysroot/usr/lib/libOSMesa* \
     $PWD/full-sysroot/usr/lib/libbacktrace* \
+    $PWD/full-sysroot/usr/lib/libdrm* \
+    $PWD/full-sysroot/usr/lib/libglapi* \
     $PWD/full-sysroot/lib/libstdc++* \
     sysroot/lib/
 
@@ -34,6 +37,7 @@ echo "========= Library linkage =========="
 ldd $BUILDDIR/bin/BlamGraphics
 echo "===================================="
 echo "===================================="
+ldd $BUILDDIR/bin/BlamGraphics > linkage.txt
 
 $BUILDDIR/bin/BlamGraphics $BUILDDIR/examples/blam/cblam-testing/assets $MAPDIR/pc/bloodgulch.map
 
