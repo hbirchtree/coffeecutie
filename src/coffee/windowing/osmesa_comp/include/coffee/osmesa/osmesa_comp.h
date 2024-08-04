@@ -16,13 +16,23 @@ struct GraphicsContext
 struct GraphicsFramebuffer
     : comp_app::interfaces::GraphicsFramebuffer
     , comp_app::AppService<GraphicsFramebuffer, comp_app::GraphicsFramebuffer>
+    , comp_app::AppLoadableService
 {
     using type = GraphicsFramebuffer;
-    
-    void start_frame(compo::ContainerProxy&, compo::time_point const&);
 
-    virtual comp_app::size_2d_t size() const final { return comp_app::size_2d_t{1280, 720}; }
+    GraphicsFramebuffer()
+    {
+        this->priority = 514;
+    }
+
+    void load(entity_container& e, comp_app::app_error&);
+    
+    void end_frame(compo::ContainerProxy&, compo::time_point const&);
+
+    virtual comp_app::size_2d_t size() const final { return m_size; }
     virtual void                swapBuffers(comp_app::app_error&) final;
+  private:
+    comp_app::size_2d_t m_size{};
 };
 
 struct GraphicsSwapControl
@@ -39,9 +49,12 @@ struct Windowing
     , comp_app::AppLoadableService
 {
   public:
-    void load(entity_container& e, comp_app::app_error& ec);
+    Windowing()
+    {
+        this->priority = 515;
+    }
 
-    void end_frame(compo::ContainerProxy&, compo::time_point const&);
+    void load(entity_container& e, comp_app::app_error& ec);
 
     comp_app::size_2d_t      size() const final;
     comp_app::window_flags_t state() const final;
@@ -52,6 +65,7 @@ struct Windowing
 
     OSMesaContext m_context{};
     std::vector<typing::pixels::rgba_t> m_framebuffer{};
+    comp_app::size_2d_t m_size{};
     libc_types::u64 m_targetFrames{0};
 };
 

@@ -45,6 +45,16 @@ if(BUILD_ASAN)
   target_link_options(PeripheralLib PUBLIC -fsanitize=address)
 endif()
 
+if(CMAKE_BUILD_TYPE MATCHES "Deb" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_compile_options(
+    -gsplit-dwarf
+    -gdwarf-4
+  )
+  add_link_options(
+    # -Wl,--gdb-index
+  )
+endif()
+
 # ##############################################################################
 # Base system libraries
 # ##############################################################################

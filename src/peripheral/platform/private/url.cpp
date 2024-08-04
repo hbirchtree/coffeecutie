@@ -618,6 +618,26 @@ const UrlParse UrlParse::from(const Url& url)
     return p;
 }
 
+void overrideSystemPath(RSCA storage, const Url &dir)
+{
+    auto& paths = GetSystemPaths();
+
+    switch(storage)
+    {
+    case RSCA::CachedFile:
+        paths.cacheDir = dir;
+        break;
+    case RSCA::TempFile:
+        paths.tempDir = dir;
+        break;
+    case RSCA::ConfigFile:
+        paths.configDir = dir;
+        break;
+    default:
+        break;
+    }
+}
+
 } // namespace url
 } // namespace platform
 

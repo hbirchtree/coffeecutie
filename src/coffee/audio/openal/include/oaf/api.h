@@ -1,9 +1,11 @@
 #pragma once
 
 #include <memory>
+#include <coffee/components/types.h>
 #include <peripherals/concepts/sound_api.h>
 #include <peripherals/error/result.h>
 #include <peripherals/semantic/handle.h>
+#include <platforms/file.h>
 
 #include <AL/al.h>
 #if __has_include(<AL/alext.h>)
@@ -51,6 +53,7 @@ struct features_t
     {
         bool block_alignment{false};
         bool spatialize{false};
+        bool loopback{false};
     } soft;
 };
 
@@ -247,6 +250,15 @@ struct api
     listener_t m_listener;
     formats_t  m_formats{};
     features_t m_features{};
+    struct loopback_data_t
+    {
+        Format fmt{};
+        compo::time_point last_render_time{};
+        platform::file::file_handle rendered;
+        f32 speed{1.f};
+        u32 sample_size{1};
+    };
+    std::optional<loopback_data_t> m_loopback{};
 };
 
 // static_assert(API<api>);

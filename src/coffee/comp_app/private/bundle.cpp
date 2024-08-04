@@ -1,6 +1,7 @@
 #include <coffee/comp_app/bundle.h>
 
 #include <coffee/comp_app/app_events.h>
+#include <coffee/comp_app/dummy_plug.h>
 #include <coffee/comp_app/eventapp_wrapper.h>
 #include <coffee/comp_app/file_mapper.h>
 #include <coffee/comp_app/file_watcher.h>
@@ -223,6 +224,20 @@ bool loop_container(detail::EntityContainer& container)
     container.exec();
     if(loop_main_queue)
         loop_main_queue->execute_tasks();
+
+    if(auto windowing = container.service<Windowing>();
+       windowing && windowing->notifiedClose())
+    {
+        if(auto* display_bus =
+               container
+                   .service<comp_app::BasicEventBus<Coffee::Display::Event>>())
+        {
+            Coffee::Display::Event event;
+            event.type = Coffee::Display::Event::TransitionBackground;
+            display_bus->inject(event, nullptr);
+        }
+    }
+
     return true;
 }
 
@@ -259,6 +274,12 @@ struct DefaultAppInfo
 {
     virtual void        add(text_type key, text_type value) final;
     virtual text_type_t get(text_type key) final;
+
+    virtual state_t state() const;
+    virtual void    setState(state_t state);
+
+  private:
+    state_t m_current_state{state_t::unloaded};
 };
 
 void DefaultAppInfo::add(text_type key, text_type value)
@@ -275,6 +296,16 @@ text_type_t DefaultAppInfo::get(text_type key)
         return {};
 
     return it->second;
+}
+
+interfaces::AppInfo::state_t DefaultAppInfo::state() const
+{
+    return m_current_state;
+}
+
+void DefaultAppInfo::setState(interfaces::AppInfo::state_t state)
+{
+    m_current_state = state;
 }
 
 void emscripten_loop()
@@ -326,7 +357,8 @@ void configureDefaults(AppLoader& loader)
         WindowConfig,
         ControllerConfig,
         TouchConfig,
-        GraphicsBindingConfig>>();
+        GraphicsBindingConfig,
+        dummy_plug::Config>>();
 
 #if USES_GL
     loader.addConfigs<detail::TypeList<GLConfig>>();
@@ -352,7 +384,21 @@ void configureDefaults(AppLoader& loader)
     glConfig.profile       = GLConfig::Core;
     glConfig.version.major = 4;
     glConfig.version.minor = 6;
+
 #endif
+#endif
+
+    auto& dummyPlug = loader.config<dummy_plug::Config>();
+#if defined(FEATURE_ENABLE_OSMesaComponent)
+    dummyPlug.enabled = platform::env::var("DUMMY_PLUG_CONFIG").has_value();
+    if(dummyPlug.enabled)
+    {
+#if USES_GL
+        glConfig.framebufferFmt = pix_fmt::RGBA8;
+        glConfig.depthFmt       = pix_fmt::Depth32;
+#endif
+        dummy_plug::fork_dummy_plugs(createContainer(), dummyPlug);
+    }
 #endif
 
     /*
@@ -379,6 +425,19 @@ void configureDefaults(AppLoader& loader)
     if(compile_info::platform::is_macos || compile_info::platform::is_ios ||
        compile_info::platform::is_android || compile_info::platform::is_windows)
         window.flags |= window_flags_t::high_dpi;
+    if(dummyPlug.enabled)
+    {
+        auto const& config = dummyPlug.config;
+        if(config.contains("graphics") && config["graphics"].contains("window"))
+        {
+            auto const& window_config = config["graphics"]["window"];
+
+            window.size = {
+                window_config.value("width", 0),
+                window_config.value("height", 0),
+            };
+        }
+    }
 }
 
 void addDefaults(
@@ -450,55 +509,67 @@ void addDefaults(
             compile_info::profiler::enabled);
     }
 
+    auto& dummyPlug = loader.config<dummy_plug::Config>();
+
+    if(dummyPlug.enabled)
+        dummy_plug::insert_dummy_plug(createContainer(), dummyPlug);
+
     /* Selection of window/event manager */
     cVerbose(10, "Loading windowing library");
+#if defined(FEATURE_ENABLE_OSMesaComponent)
+    if(dummyPlug.enabled)
+    {
+        loader.registerAll<type_safety::type_list_t<
+            comp_app::PtrNativeWindowInfoService,
+            osmesa::Windowing>>(container, ec);
+        C_ERROR_CHECK(ec);
+        appInfo.add("window:library", "OSMesa");
+    } else
+#endif
+    {
 #if defined(FEATURE_ENABLE_SDL2Components)
-    loader.registerAll<sdl2::Services>(container, ec);
-    C_ERROR_CHECK(ec);
+        loader.registerAll<sdl2::Services>(container, ec);
+        C_ERROR_CHECK(ec);
 
 #if !defined(FEATURE_ENABLE_EmscriptenComponents)
-    /* Controller API in Emscripten is not part of the SDL2 port */
-    loader.registerAll<type_safety::type_list_t<sdl2::ControllerInput>>(
-        container, ec);
-    C_ERROR_CHECK(ec);
+        /* Controller API in Emscripten is not part of the SDL2 port */
+        loader.registerAll<type_safety::type_list_t<sdl2::ControllerInput>>(
+            container, ec);
+        C_ERROR_CHECK(ec);
 #endif
 
-    appInfo.add("window:library", "SDL2 " + appInfo.get("sdl2:version"));
+        appInfo.add("window:library", "SDL2 " + appInfo.get("sdl2:version"));
 #elif defined(FEATURE_ENABLE_X11Component)
-    loader.registerAll<x11::Services>(container, ec);
-    C_ERROR_CHECK(ec);
-    appInfo.add("window:library", "X11");
+        loader.registerAll<x11::Services>(container, ec);
+        C_ERROR_CHECK(ec);
+        appInfo.add("window:library", "X11");
 #elif defined(FEATURE_ENABLE_GLKitComponent)
-    loader.registerAll<glkit::Services>(container, ec);
-    C_ERROR_CHECK(ec);
-    appInfo.add("window:library", "Apple GLKit");
+        loader.registerAll<glkit::Services>(container, ec);
+        C_ERROR_CHECK(ec);
+        appInfo.add("window:library", "Apple GLKit");
 #elif defined(FEATURE_ENABLE_ANativeComponent)
-    loader.registerAll<anative::Services>(container, ec);
-    C_ERROR_CHECK(ec);
-    appInfo.add("window:library", "Android NativeActivity");
+        loader.registerAll<anative::Services>(container, ec);
+        C_ERROR_CHECK(ec);
+        appInfo.add("window:library", "Android NativeActivity");
 #elif defined(FEATURE_ENABLE_CogComponent)
-    /* There is no window */
+        /* There is no window */
 #elif defined(FEATURE_ENABLE_DispManXComponent)
-    loader.registerAll<type_safety::type_list_t<
-        comp_app::PtrNativeWindowInfoService,
-        dispmanx::Windowing>>(container, ec);
-    C_ERROR_CHECK(ec);
-    appInfo.add("window:library", "DispManX");
-#elif defined(FEATURE_ENABLE_OSMesaComponent)
-    loader.registerAll<type_safety::type_list_t<
-        comp_app::PtrNativeWindowInfoService,
-        osmesa::Windowing>>(container, ec);
-    C_ERROR_CHECK(ec);
-    appInfo.add("window:library", "OSMesa");
+        loader.registerAll<type_safety::type_list_t<
+            comp_app::PtrNativeWindowInfoService,
+            dispmanx::Windowing>>(container, ec);
+        C_ERROR_CHECK(ec);
+        appInfo.add("window:library", "DispManX");
 #elif defined(FEATURE_ENABLE_EGLComponent)
-    // For when there's no window creation necessary
-    // For example NullWS on SGX
-    loader.registerAll<type_safety::type_list_t<egl::Windowing>>(container, ec);
-    C_ERROR_CHECK(ec);
-    appInfo.add("window:library", "EGL Headless");
+        // For when there's no window creation necessary
+        // For example NullWS on SGX
+        loader.registerAll<type_safety::type_list_t<egl::Windowing>>(
+            container, ec);
+        C_ERROR_CHECK(ec);
+        appInfo.add("window:library", "EGL Headless");
 #else
 #error No window manager
 #endif
+    }
 
 #if defined(FEATURE_ENABLE_EmscriptenComponents)
     loader.registerAll<type_safety::type_list_t<emscripten::ControllerInput>>(
@@ -510,24 +581,30 @@ void addDefaults(
 #if defined(SELECT_API_OPENGL)
     appInfo.add("graphics:library", "OpenGL");
 
-    /* Selection of (E)GL context */
+/* Selection of (E)GL context */
+#if defined(FEATURE_ENABLE_OSMesaComponent)
+    if(dummyPlug.enabled)
+    {
+        loader.registerAll<osmesa::Services>(container, ec);
+        appInfo.add("gl:context", "OSMesa");
+    } else
+#endif
+    {
 #if defined(COFFEE_EMSCRIPTEN) && 0
-    loader.registerAll<emscripten::GLServices>(container, ec);
-    C_ERROR_CHECK(ec);
-    appInfo.add("gl:context", "Emscripten WebGL");
-#elif defined(FEATURE_ENABLE_OSMesaComponent)
-    loader.registerAll<osmesa::Services>(container, ec);
-    appInfo.add("gl:context", "OSMesa");
+        loader.registerAll<emscripten::GLServices>(container, ec);
+        C_ERROR_CHECK(ec);
+        appInfo.add("gl:context", "Emscripten WebGL");
 #elif defined(FEATURE_ENABLE_SDL2Components)
-    loader.registerAll<sdl2::GLServices>(container, ec);
-    appInfo.add("gl:context", "SDL2");
+        loader.registerAll<sdl2::GLServices>(container, ec);
+        appInfo.add("gl:context", "SDL2");
 #elif defined(FEATURE_ENABLE_EGLComponent)
-    loader.registerAll<egl::Services>(container, ec);
-    C_ERROR_CHECK(ec);
-    appInfo.add("gl:context", "EGL");
+        loader.registerAll<egl::Services>(container, ec);
+        C_ERROR_CHECK(ec);
+        appInfo.add("gl:context", "EGL");
 #else
 #error No context manager
 #endif
+    }
 
     cVerbose(10, "Loading graphics binding");
     /* Selection of GL binding */
@@ -641,10 +718,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
         Coffee::Logging::cWarning(
             "Frame hitch detected! {}ms", frametime.count() * 1000.f);
         json::CaptureMetrics(
-            "Frame hitch",
-            MetricVariant::Marker,
-            0,
-            timestamp);
+            "Frame hitch", MetricVariant::Marker, 0, timestamp);
     }
 
     json::CaptureMetrics(

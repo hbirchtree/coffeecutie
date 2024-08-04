@@ -169,6 +169,8 @@ struct UrlParse
     }
 };
 
+void overrideSystemPath(RSCA storage, Url const& dir);
+
 namespace constructors {
 
 FORCEDINLINE Url MkUrl(std::string const& p, RSCA access = RSCA::SystemFile)

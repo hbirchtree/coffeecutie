@@ -151,12 +151,13 @@ struct LoadingStatus : compo::SubsystemBase
         loaded,
     };
 
-    std::string     status;
-    libc_types::i16 progress;
-    bool            loading{false};
-    loading_t       loaded_map{none};
-    loading_t       loaded_bitmaps{none};
-    loading_t       loaded_sounds{none};
+    comp_app::interfaces::AppInfo* app_info{};
+    std::string                    status;
+    libc_types::i16                progress;
+    bool                           loading{false};
+    loading_t                      loaded_map{none};
+    loading_t                      loaded_bitmaps{none};
+    loading_t                      loaded_sounds{none};
 
     void check_all_loaded()
     {
@@ -165,6 +166,7 @@ struct LoadingStatus : compo::SubsystemBase
         {
             loading  = false;
             progress = -1;
+            app_info->setState(comp_app::interfaces::AppInfo::loaded);
         }
     }
 };

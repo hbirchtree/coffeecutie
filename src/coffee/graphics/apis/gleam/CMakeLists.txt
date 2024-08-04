@@ -91,8 +91,12 @@ function(GEN_GLEAM_TARGET GLVERSION SUFFIX)
   if(BUILD_GLEAM)
     coffee_library(
       TARGET GLeamRHI_${SUFFIX}
-      SOURCES private/rhi/rhi.cpp private/rhi/rhi_submit.cpp
-              private/rhi/rhi_texture.cpp private/rhi/rhi_translate.cpp
+      SOURCES
+        private/rhi/rhi.cpp
+        private/rhi/rhi_submit.cpp
+        private/rhi/rhi_system.cpp
+        private/rhi/rhi_texture.cpp
+        private/rhi/rhi_translate.cpp
       LIBRARIES GLeamCommon_${SUFFIX} ComponentApp
       HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )

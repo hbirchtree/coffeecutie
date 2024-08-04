@@ -13,6 +13,7 @@
         { "name": "ktx", "features": ["vulkan"], "platform": "!bare" },
         "magic-enum",
         "ms-gsl",
+        "nlohmann-json",
         { "name": "outcome", "platform": "!android & !emscripten & !(arm & linux) & !(x64 & linux) & !osx & !windows" },
         { "name": "pvrtcdec", "platform": "android | emscripten | (linux & x64)" },
         "rapidjson",

@@ -38,8 +38,8 @@
 #include <coffee/comp_app/bundle.h>
 #include <coffee/comp_app/fps_counter.h>
 
-#include <fmt_extensions/info.h>
 #include <fmt_extensions/format.h>
+#include <fmt_extensions/info.h>
 #include <fmt_extensions/vector_types.h>
 
 #include <coffee/core/CDebug>
@@ -681,6 +681,9 @@ void SetupRendering(
     cVerbose(8, "Acquire and set shader uniforms");
 
     cDebug("Resolution: {0}", e.service<comp_app::Windowing>()->size());
+
+    e.service<comp_app::AppInfo>()->setState(
+        comp_app::interfaces::AppInfo::loaded);
 }
 
 void RendererLoop(
@@ -733,7 +736,10 @@ void RendererLoop(
                     ShaderStage::Fragment,
                     gleam::uniform_key{{"texdata"sv}},
                     g.tex,
-                    g.sampler}));
+                    g.sampler}),
+            gleam::view_state{
+                .depth = gleam::depth_state{},
+            });
         if(err.has_value())
         {
             auto [code, msg] = *err;

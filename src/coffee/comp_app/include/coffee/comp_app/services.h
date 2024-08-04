@@ -32,7 +32,7 @@ using text_type   = std::string const&;
 using text_type_t = std::string;
 using position_t  = typing::geometry::point_2d<libc_types::i32>;
 using size_2d_t   = typing::geometry::size_2d<libc_types::i32>;
-using pix_fmt      = typing::pixels::pix_fmt;
+using pix_fmt     = typing::pixels::pix_fmt;
 
 using Coffee::Components::component_list;
 using Coffee::Components::subsystem_list;
@@ -66,6 +66,16 @@ struct AppInfo
 {
     virtual void        add(text_type key, text_type value) = 0;
     virtual text_type_t get(text_type key)                  = 0;
+
+    enum state_t
+    {
+        unloaded,
+        loading,
+        loaded,
+    };
+
+    virtual state_t state() const           = 0;
+    virtual void    setState(state_t state) = 0;
 };
 
 struct Windowing
@@ -565,7 +575,7 @@ struct ScreenshotProvider
     struct dump_t
     {
         size_2d_t                   size;
-        typing::pixels::pix_fmt      format;
+        typing::pixels::pix_fmt     format;
         std::vector<libc_types::u8> data;
     };
 
@@ -792,11 +802,6 @@ struct BasicEventBus
           BasicEventBus<EType>,
           detail::tag_t<interfaces::BasicEventBus<EType>>>
 {
-    //    using services = detail::subsystem_list<
-    //        BasicEventBus<EType>,
-    //        interfaces::EventBus<EType>,
-    //        interfaces::BasicEventBus<EType>>;
-
     using readable_services = type_safety::empty_list_t;
     using proxy_type        = detail::restricted::proxy_t<BasicEventBus<EType>>;
 

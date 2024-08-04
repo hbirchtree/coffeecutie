@@ -6,8 +6,11 @@
 #include <AL/alext.h>
 #endif
 
+#include <coffee/comp_app/subsystems.h>
+#include <coffee/comp_app/dummy_plug.h>
 #include <coffee/core/debug/formatting.h>
 #include <fmt/format.h>
+#include <magic_enum.hpp>
 #include <peripherals/stl/string/hex.h>
 
 namespace oaf {
@@ -37,6 +40,31 @@ constexpr u32 AL_AUTO_SOFT              = 0x0002;
 constexpr u32 AL_FORMAT_MONO_FLOAT32   = 0x10010;
 constexpr u32 AL_FORMAT_STEREO_FLOAT32 = 0x10011;
 #endif
+
+using LOOPBACKOPENDEVICESOFT = ALCdevice* (*)(const ALCchar*);
+using ISRENDERFORMATSUPPORTEDSOFT =
+    ALCboolean (*)(ALCdevice*, ALCsizei, ALCenum, ALCenum);
+using RENDERSAMPLESSOFT = void (*)(ALCdevice*, ALCvoid*, ALCsizei);
+
+LOOPBACKOPENDEVICESOFT      loopbackOpenDeviceSOFT;
+ISRENDERFORMATSUPPORTEDSOFT isRenderFormatSupportedSOFT;
+RENDERSAMPLESSOFT           renderSamplesSOFT;
+
+ALCdevice* alcLoopbackOpenDeviceSOFT(const ALCchar* name)
+{
+    return loopbackOpenDeviceSOFT(name);
+}
+
+ALCboolean alcIsRenderFormatSupportedSOFT(
+    ALCdevice* device, ALCsizei frequency, ALCenum channels, ALCenum type)
+{
+    return isRenderFormatSupportedSOFT(device, frequency, channels, type);
+}
+
+void alcRenderSamplesSOFT(ALCdevice* device, ALCvoid* buffer, ALCsizei samples)
+{
+    return renderSamplesSOFT(device, buffer, samples);
+}
 
 using GETSTRINGISOFT   = ALCchar* (*)(ALCdevice*, ALCenum, ALCsizei);
 using DEVICEPAUSESOFT  = void (*)(ALCdevice*);
@@ -158,12 +186,6 @@ std::string api::error_string(ALCenum err)
 
 std::optional<std::string> api::load(DeviceHandle&& device)
 {
-    auto name = device.name.value_or("");
-    m_device  = alcOpenDevice(name != "" ? name.c_str() : nullptr);
-
-    if(!m_device)
-        return fmt::format("failed to open device: \"{}\"", name);
-
     const auto has_extension = [this](const char* name) -> bool {
         return alcIsExtensionPresent(m_device, name);
     };
@@ -172,7 +194,45 @@ std::optional<std::string> api::load(DeviceHandle&& device)
         proc          = reinterpret_cast<T>(proc_ptr);
     };
 
-    std::vector<ALCuint> attrs{};
+    const bool loopback_supported = has_extension("ALC_SOFT_loopback");
+    const bool loopback_requested = device.dummy.has_value();
+
+    if(!loopback_supported && loopback_requested)
+        return "loopback was requested, but not supported by platform";
+
+    auto name = device.name.value_or("");
+    if(loopback_supported && loopback_requested)
+    {
+        using namespace platform::url::constructors;
+        using semantic::RSCA;
+
+        auto rendered_fd = platform::file::open_file(
+            "rendered_audio"_tmp,
+            RSCA::Truncate | RSCA::NewFile | RSCA::Append | RSCA::WriteOnly);
+        if(rendered_fd.has_error())
+            return "failed to open dummy output file";
+        auto const& fmt = device.dummy->fmt;
+        m_loopback      = loopback_data_t{
+                 .fmt              = fmt,
+                 .last_render_time = compo::clock::now(),
+                 .rendered         = std::move(rendered_fd.value()),
+                 .speed            = device.dummy->speed,
+                 .sample_size      = fmt.format == Format::f32 ? 4u
+                                     : fmt.bits == 8           ? 1u
+                                     : fmt.bits == 16          ? 2u
+                                                               : 4u,
+        };
+        get_proc("alcLoopbackOpenDeviceSOFT", loopbackOpenDeviceSOFT);
+        get_proc("alcIsRenderFormatSupportedSOFT", isRenderFormatSupportedSOFT);
+        get_proc("alcRenderSamplesSOFT", renderSamplesSOFT);
+        m_device = alcLoopbackOpenDeviceSOFT(nullptr);
+    } else
+        m_device = alcOpenDevice(name != "" ? name.c_str() : nullptr);
+
+    if(!m_device)
+        return fmt::format("failed to open device: \"{}\"", name);
+
+    std::vector<ALCint> attrs{};
 
     while(has_extension("ALC_SOFT_HRTF") && device.enable_hrtf)
     {
@@ -204,16 +264,42 @@ std::optional<std::string> api::load(DeviceHandle&& device)
         get_proc("alcDevicePauseSOFT", devicePauseSOFT);
         get_proc("alcDeviceResumeSOFT", deviceResumeSOFT);
     }
+    if(m_loopback.has_value())
+    {
+        auto info = *device.dummy;
+        auto channelFormat =
+            info.fmt.channels == 2 ? ALC_STEREO_SOFT : ALC_MONO_SOFT;
+        auto dataType = info.fmt.format == Format::f32 ? ALC_FLOAT_SOFT
+                        : info.fmt.bits == 8           ? ALC_BYTE_SOFT
+                        : info.fmt.bits == 16          ? ALC_SHORT_SOFT
+                                                       : ALC_INT_SOFT;
+        if(!alcIsRenderFormatSupportedSOFT(
+               m_device, info.fmt.frequency, channelFormat, dataType))
+            return fmt::format(
+                "unsupported render format: freq={}, channels={}, type={}",
+                info.fmt.frequency,
+                info.fmt.channels,
+                magic_enum::enum_name(info.fmt.format));
+
+        using format_t = Format::format_t;
+        attrs.push_back(ALC_FORMAT_CHANNELS_SOFT);
+        attrs.push_back(channelFormat);
+        attrs.push_back(ALC_FORMAT_TYPE_SOFT);
+        attrs.push_back(dataType);
+        attrs.push_back(ALC_FREQUENCY);
+        attrs.push_back(info.fmt.frequency);
+    }
 
     attrs.push_back(0);
 
-    m_context = alcCreateContext(m_device, nullptr);
+    m_context = alcCreateContext(m_device, attrs.data());
 
     if(!m_context)
-        return current_error();
+        return fmt::format("failed to create context: {}", current_error());
 
     if(!alcMakeContextCurrent(m_context))
-        return current_error();
+        return fmt::format(
+            "failed to make context current: {}", current_error());
 
     m_formats.float32    = alIsExtensionPresent("AL_EXT_float32");
     m_formats.ima4_adpcm = alIsExtensionPresent("AL_EXT_IMA4");
@@ -293,12 +379,64 @@ ALenum enum_to_al(source_property prop)
     }
 }
 
-void system::start_frame(compo::ContainerProxy& p, const compo::time_point&)
+std::optional<std::string> system::load(
+    compo::EntityContainer& e, DeviceHandle&& device)
 {
-    // if(auto err = current_error(); err != std::string())
-    // {
-    //     cWarning("Audio system error: {}", err);
-    // }
+    auto const& dummyPlug =
+        e.service<comp_app::AppLoader>()->config<comp_app::dummy_plug::Config>();
+
+    if(dummyPlug.enabled)
+    {
+        device.dummy = DummyInfo{
+            .fmt = Format{
+                .frequency = dummyPlug.audio_config.frequency,
+                .channels  = dummyPlug.audio_config.channels,
+                .bits      = dummyPlug.audio_config.bits,
+                .format    = dummyPlug.audio_config.format,
+            },
+            .speed = 1.f,
+        };
+    }
+
+    return api::load(std::move(device));
+}
+
+void system::start_frame(compo::ContainerProxy& p, const compo::time_point& t)
+{
+    if(m_loopback.has_value())
+    {
+        using namespace std::chrono_literals;
+        auto&             loopback = *m_loopback;
+        std::vector<char> rendered;
+
+        auto time_delta = t - loopback.last_render_time;
+        u32  num_millis =
+            (time_delta > 0ms)
+                 ? std::chrono::duration_cast<std::chrono::milliseconds>(
+                      time_delta)
+                      .count()
+                 : 0u;
+        num_millis *= loopback.speed;
+        rendered.resize(
+            (loopback.sample_size * loopback.fmt.channels *
+             loopback.fmt.frequency * num_millis) /
+            1000);
+        const u32 num_samples =
+            rendered.size() / (loopback.sample_size * loopback.fmt.channels);
+        alcRenderSamplesSOFT(m_device, rendered.data(), num_samples);
+        auto err = platform::file::write(
+            loopback.rendered,
+            gsl::span<const char>(rendered.data(), rendered.size()));
+        if(err.has_value())
+            cDebug(
+                "Error writing loopback audio: {}",
+                platform::file::posix::error_message(err.value()));
+        loopback.last_render_time = t;
+    }
+    if(auto err = current_error(); err != std::string())
+    {
+        cWarning("Audio system error: {}", err);
+    }
 }
 
 void system::collect_info(comp_app::interfaces::AppInfo& appInfo)

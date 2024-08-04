@@ -69,6 +69,7 @@ static void load_sounds(compo::EntityContainer& e, blam::map_ptr const& magic)
     auto& loading_status = e.subsystem_cast<LoadingStatus>();
     sounds.load_sounds_from(magic);
     loading_status.loaded_sounds = LoadingStatus::loaded;
+    loading_status.check_all_loaded();
 }
 
 static void init_map(
@@ -81,6 +82,8 @@ static void init_map(
     auto& shaders        = e.subsystem_cast<ShaderCache<halo_version>>();
     auto& sounds         = e.subsystem_cast<SoundCache<halo_version>>();
     auto& ui_elements    = e.subsystem_cast<UIElementCache<halo_version>>();
+
+    loading_status.app_info = e.service<comp_app::AppInfo>();
 
     u32 num = 0;
     for([[maybe_unused]] auto const& i : e.select(ObjectGC))

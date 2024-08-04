@@ -107,7 +107,8 @@ i32 blam_main()
 
             auto& gfx = e.register_subsystem_inplace<gfx::system>();
             auto  load_error =
-                gfx.load(/*gfx::emulation::webgl::desktop()*/
+                gfx.load(e
+                         /*gfx::emulation::webgl::desktop()*/
                          // gfx::emulation::qcom::adreno_320()
                          // gfx::emulation::arm::mali_g710()
                          // gfx::emulation::arm::mali_400mp()
@@ -141,7 +142,7 @@ i32 blam_main()
             cDebug("GL extensions: {0}", gfx.extensions());
 
             auto& snd = e.register_subsystem_inplace<oaf::system>();
-            if(auto error = snd.load())
+            if(auto error = snd.load(e))
             {
                 cWarning("Failed to load audio: {}", error.value());
                 return;
@@ -339,8 +340,8 @@ i32 blam_main()
                 if(controllers && i < controllers->count())
                 {
                     auto num_controllers = controllers->count();
-                    auto prev     = camera.active;
-                    camera.active = true;
+                    auto prev            = camera.active;
+                    camera.active        = true;
                     if(prev != camera.active)
                         cDebug("Player {} -> {}", i, camera.active);
                     controller_camera_update(

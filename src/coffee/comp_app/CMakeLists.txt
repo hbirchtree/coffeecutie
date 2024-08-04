@@ -17,7 +17,9 @@ coffee_library(
 
 coffee_library(
   TARGET ComponentBundleSetup
-  SOURCES private/bundle.cpp
+  SOURCES
+    private/bundle.cpp
+    private/dummy_plug.cpp
   LIBRARIES ComponentApp ComponentBundle GraphicsBundle MobileBundle Image
   HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bundle_include>
 )

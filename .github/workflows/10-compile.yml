@@ -107,6 +107,11 @@ jobs:
           !source/multi_build/${{matrix.artifact}}/lib/*.a
           source/multi_build/${{matrix.artifact}}/packaged
         if-no-files-found: error
+    - name: Run dummy plug tests
+      if: matrix.variant == 'desktop:x86_64-buildroot-linux-gnu:multi:rel'
+      continue-on-error: true
+      run: |
+        MAPDIR=maps/ source/.github/tests/test_blam_graphics.sh
   macOS:
     runs-on: macos-13
     needs: Release

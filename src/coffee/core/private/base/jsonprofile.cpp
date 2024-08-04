@@ -28,7 +28,7 @@ using semantic::BytesConst;
 using semantic::RSCA;
 
 static constexpr cstring event_format =
-    R"({{"ts":{0},"name":"{1}","pid":1,"tid":{2},"cat":"{3}","ph":"{4}","s":"t"}},
+    R"({{"ts":{0},"name":"{1}","pid":{5},"tid":{2},"cat":"{3}","ph":"{4}","s":"t"}},
 )";
 
 struct MetricData
@@ -72,12 +72,14 @@ struct ProfileWriter : GlobalState
            disable.has_value() && disable.value() == "1")
             disable_frequent = true;
         //        disable_frequent = true;
+        init_pid = getpid();
     }
 
     declreturntype(platform::file::open_file)::value_type logfile;
     std::shared_ptr<GlobalState>             threadState;
     std::shared_ptr<platform::info::AppData> appData;
     std::atomic_uint64_t                     event_count;
+    pid_t                                    init_pid{};
     bool                                     block_writes{false};
     bool                                     disable_frequent{false};
 
@@ -101,16 +103,18 @@ ProfileWriter::~ProfileWriter()
     block_writes = true;
 
     auto thread_name = Coffee::Strings::fmt(
-        R"({{"name":"process_name","ph":"M","pid":1,"args":{{"name":"{0}"}}}},)",
-        appData ? appData->application_name : "Coffee App");
+        R"({{"name":"process_name","ph":"M","pid":{1},"args":{{"name":"{0}"}}}},)",
+        appData ? appData->application_name : "Coffee App",
+        getpid());
     write(BytesConst::ofContainer(thread_name));
 
     for(auto const& thread : stl_types::Threads::GetNames(threadState.get()))
     {
         thread_name = Coffee::Strings::fmt(
-            R"({{"name":"thread_name","ph":"M","pid":1,"tid":{0},"args":{{"name":"{1}"}}}},)",
+            R"({{"name":"thread_name","ph":"M","pid":{2},"tid":{0},"args":{{"name":"{1}"}}}},)",
             thread.first,
-            thread.second);
+            thread.second,
+            getpid());
         write(BytesConst::ofContainer(thread_name));
     }
 
@@ -122,6 +126,12 @@ ProfileWriter::~ProfileWriter()
             metric.first,
             C_CAST<int>(metric.second.variant));
         write(BytesConst::ofContainer(out));
+    }
+
+    if(init_pid != getpid())
+    {
+        logfile = {};
+        return;
     }
 
     write(BytesConst::ofString("{}],"));
@@ -218,7 +228,8 @@ void Push(profiling::ThreadState& tdata, profiling::DataPoint const& point)
         point.name,
         point.tid,
         point.component,
-        eventType);
+        eventType,
+        getpid());
 
     event = str::transform::printclean(event);
 
