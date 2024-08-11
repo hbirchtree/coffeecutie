@@ -114,7 +114,7 @@ jobs:
         mkdir -p maps/
         wget -O maps/beavercreek.map --header=\'Authorization: ${{ secrets.MAP_ACCESS_TOKEN }}\' https://maps.speen.dev/pc/beavercreek.map
         wget -O maps/bitmaps.map --header=\'Authorization: ${{ secrets.MAP_ACCESS_TOKEN }}\' https://maps.speen.dev/pc/bitmaps.map
-        wget -O maps/sounds.map --header=\'Authorization: ${{ secrets.MAP_ACCESS_TOKEN }}\' https://maps.speen.dev/pc/sounds.map
+        wget -O maps/sounds.map --header='Authorization: ${{ secrets.MAP_ACCESS_TOKEN }}' https://maps.speen.dev/pc/sounds.map
         MAPDIR=maps/ source/.github/tests/test_blam_graphics.sh
   macOS:
     runs-on: macos-13
