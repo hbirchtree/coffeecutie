@@ -389,17 +389,15 @@ void configureDefaults(AppLoader& loader)
 #endif
 
     auto& dummyPlug = loader.config<dummy_plug::Config>();
-#if defined(FEATURE_ENABLE_OSMesaComponent)
     dummyPlug.enabled = platform::env::var("DUMMY_PLUG_CONFIG").has_value();
     if(dummyPlug.enabled)
     {
-#if USES_GL
+#if defined(FEATURE_ENABLE_OSMesaComponent) && USES_GL
         glConfig.framebufferFmt = pix_fmt::RGBA8;
         glConfig.depthFmt       = pix_fmt::Depth32;
 #endif
         dummy_plug::fork_dummy_plugs(createContainer(), dummyPlug);
     }
-#endif
 
     /*
      * We *can* enable sRGB on desktop, and on Android

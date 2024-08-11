@@ -414,6 +414,24 @@
             }
         },
         {
+            "name": "desktop-x86_64v2-buildroot-linux-gnu-multi",
+            "displayName": "Linux x86_64 SSE4.2 Core OpenGL (SDL2)",
+            "inherits": ["vcpkg-base-linux"],
+            "cacheVariables": {
+                "BUILD_DISCORD_RPC": "ON",
+                "BUILD_GL_SOFTWARE_BCN": "ON",
+                "BUILD_GL_SOFTWARE_PVRTC": "ON",
+                "GENERATE_APPIMAGE": "ON",
+                "GENERATE_FLATPAK": "ON",
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
+                "VCPKG_TARGET_TRIPLET": "desktop-x86_64v2-buildroot-linux-gnu"
+            },
+            "environment": {
+                "ARCHITECTURE": "x86_64-buildroot-linux-gnu",
+                "PLATFORM": "desktop"
+            }
+        },
+        {
             "name": "desktop-aarch64-buildroot-linux-gnu-multi",
             "displayName": "Linux aarch64v8.1 OpenGL ES 3.x (SDL2)",
             "inherits": ["vcpkg-base-linux"],
@@ -838,6 +856,12 @@
             "name": "desktop-x86_64-buildroot-linux-gnu-multi-dbg",
             "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "desktop-x86_64-buildroot-linux-gnu-multi",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "desktop-x86_64v2-buildroot-linux-gnu-multi-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "desktop-x86_64v2-buildroot-linux-gnu-multi",
             "inherits": "base-linux"
         },
         {

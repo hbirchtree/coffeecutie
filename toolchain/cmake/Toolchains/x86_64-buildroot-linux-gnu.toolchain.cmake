@@ -19,9 +19,6 @@ set(CMAKE_CXX_COMPILER
     CACHE FILEPATH ""
 )
 
-add_compile_options(
-    -march=x86-64-v3
-)
 include(${CMAKE_CURRENT_LIST_DIR}/common/gold-options.cmake)
 
 # set ( SHARED_LINK_FLAGS "${CMAKE_SYSROOT}/lib/libstdc++.a" "-static-libssp"

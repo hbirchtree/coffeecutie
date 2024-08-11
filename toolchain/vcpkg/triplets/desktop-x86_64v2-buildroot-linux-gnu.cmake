@@ -6,4 +6,4 @@ set(VCPKG_CMAKE_SYSTEM_NAME Linux)
 
 set(TOOLCHAIN_PREFIX x86_64-unknown-linux-gnu)
 set(VCPKG_OVERLAY_PORTS ${CMAKE_CURRENT_LIST_DIR}/../ports)
-set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/../../cmake/Toolchains/x86_64v3-buildroot-linux-gnu.toolchain.cmake)
+set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/../../cmake/Toolchains/x86_64v2-buildroot-linux-gnu.toolchain.cmake)

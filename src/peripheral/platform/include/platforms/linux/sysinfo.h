@@ -56,38 +56,99 @@ inline auto read_cpu(std::string_view const& id, url::Path const& path)
     return read_sysfs(url::Path{"/sys/devices/system/cpu"} / cpu_id / path);
 }
 
-inline std::vector<u16> online_cores()
+using cpu_hierarchy_t =
+    std::map<u16, std::map<u16, std::map<u16, std::vector<u16>>>>;
+
+inline cpu_hierarchy_t online_cpus()
 {
+    using namespace stl_types::str;
+    using namespace std::literals::string_view_literals;
     using namespace url::constructors;
+    using libc::str::from_string;
 
-    if(auto content = read_sysfs("/sys/devices/system/cpu/online"_sys);
-       content.has_error())
-        return {};
-    else
+    if(auto lines = file::libc::read_lines("/proc/cpuinfo"_sys);
+       lines.has_value())
     {
-        using libc::str::from_string;
-        using stl_types::Range;
-        using stl_types::str::split::spliterator;
+        auto it = lines.value();
 
-        auto data = content.value();
-        auto view = std::string_view(data.data(), data.size() - 1);
-        view      = view.substr(0, view.find('\n'));
-        auto             listings = spliterator(view, ',');
-        std::vector<u16> out;
+        std::vector<std::tuple<u16, u16, u16>> cpus;
+
+        std::string cpu_id  = "0";
+        std::string phys_id = "0";
         do
         {
-            auto id = *listings;
-            if(auto split = id.find('-'); split != std::string::npos)
+            using libc::str::from_string;
+
+            auto comps = stl_types::str::split::str(*it, ':');
+            std::vector<std::string_view> components(
+                comps.begin(), comps.end());
+            if(components.size() < 2)
+                continue;
+            auto field_key   = trim::right(components.at(0));
+            auto field_value = trim::left(components.at(1));
+
+            std::string core_id;
+            if(field_key == "processor"sv)
             {
-                auto first = from_string<u16>(id.substr(0, split).data());
-                auto end   = from_string<u16>(id.substr(split + 1).data());
-                for(auto i : Range<>(end - first + 1))
-                    out.push_back(first + i);
-            } else
-                out.push_back(from_string<u16>(id.data()));
-        } while(++listings != spliterator<char>());
-        return out;
+                cpu_id = field_value;
+                if(auto physid = read_cpu(
+                       cpu_id, url::Path{"topology/physical_package_id"});
+                   physid.has_value() && physid.value().size())
+                {
+                    phys_id = physid.value();
+                    if(phys_id == "-1")
+                        phys_id = "0";
+                }
+                if(auto coreid =
+                       read_cpu(cpu_id, url::Path{"topology/core_id"});
+                   coreid.has_value() && coreid.value().size())
+                {
+                    core_id = coreid.value();
+                }
+                cpus.push_back(std::make_tuple(
+                    from_string<u16>(phys_id.c_str()),
+                    from_string<u16>(core_id.c_str()),
+                    from_string<u16>(cpu_id.c_str())));
+            }
+        } while(!(++it).empty());
+        cpu_hierarchy_t first_pass;
+        const auto get_cluster_id = [](u16 cpuid) -> u16
+        {
+            if(compile_info::architecture == std::string("AMD64"))
+                return 0;
+            if(auto clusterid_ =
+                   read_cpu(cpuid, url::Path{"topology/cluster_id"});
+               clusterid_.has_value() && clusterid_.value().size())
+                return from_string<u16>(clusterid_.value().c_str());
+            return 0;
+        };
+        for(auto [physid, coreid, cpuid] : cpus)
+            first_pass[physid][get_cluster_id(cpuid)][coreid].push_back(cpuid);
+        if(first_pass.size() == 1 && first_pass[0].size() != 1)
+            return first_pass;
+        cpu_hierarchy_t mapped_cpus;
+        /* With the full list of CPUs, try to group into clusters based on how
+         * many threads each core has.
+         * This is the tell-tale sign of P/E cores in newer Intel CPUs */
+        for(auto const& [physid, all] : first_pass)
+            for(auto const& [_, cores] : all)
+            {
+                u16                counter{0};
+                std::map<u16, u16> count_to_idx;
+                for(auto const& [coreid, cpus] : cores)
+                {
+                    u16 idx{0};
+                    u16 curr_count = cpus.size();
+                    if(count_to_idx.contains(curr_count))
+                        idx = count_to_idx[curr_count];
+                    else
+                        idx = count_to_idx[curr_count] = counter++;
+                    mapped_cpus[physid][idx][coreid] = cpus;
+                }
+            }
+        return mapped_cpus;
     }
+    return {};
 }
 
 inline void foreach_cpuinfo(stl_types::Function<bool(
@@ -154,66 +215,45 @@ inline u32 cpu_count()
 {
     using url::Path;
 
-    std::set<std::string> die_ids;
-    for(auto const& id : detail::online_cores())
-    {
-        if(auto die_id =
-               detail::read_cpu(id, Path{"topology/physical_package_id"});
-           die_id.has_value())
-            die_ids.insert(die_id.value().data());
-    }
-
-    return die_ids.size();
+    u32 cpu_count{0};
+    for(auto const& [phys, clusters] : detail::online_cpus())
+        cpu_count += clusters.size();
+    return cpu_count;
 }
 
 inline u32 core_count(u32 cpu = 0, [[maybe_unused]] u32 /*node*/ = 0)
 {
-    using url::Path;
-
-    std::string           selected_cpu = std::to_string(cpu);
-    std::set<std::string> core_ids;
-    for(auto const& id : detail::online_cores())
+    u32 cpu_idx{0};
+    for(auto const& [phys, clusters] : detail::online_cpus())
     {
-        if(auto die_id =
-               detail::read_cpu(id, Path{"topology/physical_package_id"});
-           die_id.has_value())
+        for(auto const& [cluster, cores] : clusters)
         {
-            auto die_id_ = die_id.value();
-            if(die_id_ != selected_cpu && die_id_ != "-1")
-                continue;
-        } else
-            continue;
-
-        if(auto core_id = detail::read_cpu(id, Path{"topology/core_id"});
-           core_id.has_value())
-            core_ids.insert(core_id.value());
+            if(cpu_idx == cpu)
+                return cores.size();
+            cpu_idx++;
+        }
     }
-
-    return core_ids.size();
+    return 0;
 }
 
 inline u32 thread_count(u32 cpu = 0, [[maybe_unused]] u32 /*node*/ = 0)
 {
-    using url::Path;
-
-    std::string                  selected_cpu = std::to_string(cpu);
-    std::vector<libc_types::u16> thread_ids;
-    for(auto const& id : detail::online_cores())
+    u32 cpu_idx{0};
+    for(auto const& [phys, clusters] : detail::online_cpus())
     {
-        if(auto die_id =
-               detail::read_cpu(id, Path{"topology/physical_package_id"});
-           die_id.has_value())
+        for(auto const& [cluster, cores] : clusters)
         {
-            auto die_id_ = die_id.value();
-            if(die_id_ != selected_cpu && die_id_ != "-1")
-                continue;
-        } else
-            continue;
-
-        thread_ids.push_back(id);
+            if(cpu_idx == cpu)
+            {
+                u32 thread_count{0};
+                for(auto const& [core, cpus] : cores)
+                    thread_count += cpus.size();
+                return thread_count;
+            }
+            cpu_idx++;
+        }
     }
-
-    return thread_ids.size();
+    return 0;
 }
 
 inline std::optional<std::pair<std::string, std::string>> model(
@@ -224,11 +264,25 @@ inline std::optional<std::pair<std::string, std::string>> model(
 
     std::string vendor, model;
     std::string implementer, variant, part;
-    detail::foreach_cpuinfo([&](std::string_view const& physical,
-                                std::string_view const&,
+
+    cpu = [&]() -> u32 {
+        u32 cpu_i{0};
+        for(auto const& [phys, clusters] : detail::online_cpus())
+            for(auto const& [cluster, cores] : clusters)
+            {
+                if(cpu_i == cpu)
+                    for(auto const& [core, cpus] : cores)
+                        return cpus.at(0);
+                cpu_i++;
+            }
+        return cpu;
+    }();
+
+    detail::foreach_cpuinfo([&](std::string_view const&,
+                                std::string_view const& cpui,
                                 std::string_view const& key,
                                 std::string_view const& value) {
-        if(physical == std::to_string(cpu).c_str())
+        if(cpui == std::to_string(cpu).c_str())
         {
             if(key == "model name")
                 model = trim::both(value);
@@ -259,58 +313,27 @@ inline std::optional<std::pair<std::string, std::string>> model(
         std::pair<std::string, std::string>(vendor, model));
 }
 
-template<typename T>
-using topological_map = std::map<i32, std::map<u32, T>>;
-
-inline topological_map<u32> topo_frequency()
-{
-    using namespace std::string_literals;
-    using url::Path;
-
-    topological_map<u32> freqs;
-    for(auto const& id : detail::online_cores())
-    {
-        auto die_id =
-            detail::read_cpu(id, Path{"topology/physical_package_id"});
-        auto core_id   = detail::read_cpu(id, Path{"topology/core_id"});
-        auto frequency = detail::read_cpu(id, Path{"cpufreq/cpuinfo_max_freq"});
-
-        if(core_id.has_error() || frequency.has_error())
-            continue;
-
-        auto die_id_ = libc::str::from_string<i32>(
-            (die_id && die_id.value() != "-1" ? die_id.value() : "0"s).data());
-        auto core_id_ = libc::str::from_string<u32>(core_id.value().data());
-        freqs[die_id_][core_id_] =
-            libc::str::from_string<u32>(frequency.value().data());
-    }
-
-    return freqs;
-}
-
 inline u32 frequency(bool current = false, u32 cpu = 0, u32 core = 0)
 {
     using url::Path;
-    auto select_id = std::to_string(cpu);
+    auto select_id   = std::to_string(cpu);
     auto select_core = std::to_string(core);
-    auto freq_path = current ? "scaling_cur_freq" : "cpuinfo_max_freq";
-    for(auto const& id : detail::online_cores())
-    {
-        auto cpu_id =
-            detail::read_cpu(id, Path{"topology/physical_package_id"});
-
-        if(cpu_id.has_error() ||
-           (cpu_id.value() != select_id && cpu_id.value() != "-1"))
-            continue;
-        auto core_id = detail::read_cpu(id, Path{"topology/core_id"});
-        if(core_id.has_error() ||
-            core_id.value() != select_core && core_id.value() != "-1")
-            continue;
-        auto freq = detail::read_cpu(id, Path{"cpufreq"} / freq_path);
-        if(freq.has_error())
-            continue;
-        return libc::str::from_string<u32>(freq.value().data());
-    }
+    auto freq_path   = current ? "scaling_cur_freq" : "cpuinfo_max_freq";
+    u32  cpu_i{0};
+    for(auto const& [phys, clusters] : detail::online_cpus())
+        for(auto const& [cluster, cores] : clusters)
+        {
+            if(cpu == cpu_i)
+                for(auto const& [core, cpus] : cores)
+                {
+                    auto freq =
+                        detail::read_cpu(cpus[0], Path{"cpufreq"} / freq_path);
+                    if(freq.has_error())
+                        continue;
+                    return libc::str::from_string<u32>(freq.value().data());
+                }
+            cpu_i++;
+        }
     return 0;
 }
 

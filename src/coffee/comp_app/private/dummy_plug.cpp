@@ -105,14 +105,26 @@ void fork_dummy_plugs(
 {
     Coffee::DProfContext _;
 
+    cDebug("Dummy plug activated");
+
     auto config_file = platform::url::constructors::MkUrl(
         platform::env::var("DUMMY_PLUG_CONFIG").value());
     auto config_content = Coffee::Resource(config_file);
     if(!Coffee::FileMap(config_content))
         return;
 
+    if(config_content.data().empty())
+    {
+        Coffee::Logging::cFatal("Dummy plug config file is empty");
+    }
+
     dummy_plug.config  = nlohmann::json::parse(config_content.data());
     auto const& config = dummy_plug.config;
+
+    if(config.empty())
+    {
+        Coffee::Logging::cFatal("Dummy plug config contains nothing");
+    }
 
 #if defined(FEATURE_ENABLE_OSMesaComponent)
     if(!config.contains("graphics"))
@@ -260,31 +272,33 @@ void insert_dummy_plug(
                    event.value("type", std::string_view()))
             .value();
     };
-    for(auto const& event : config["events"])
-    {
-        if(!event.contains("type"))
-            continue;
-        const auto type = type_to_enum(event, "type");
 
-        cDebug("- {}: {}", magic_enum::enum_name(type), event.dump());
-
-        switch(type)
+    if(config.contains("events"))
+        for(auto const& event : config["events"])
         {
-        case type_t::controller_axis:
-        case type_t::controller_button:
-        case type_t::controller_connect:
-        case type_t::key:
-        case type_t::mouse_button:
-        case type_t::mouse_move:
-            queue_input_event(input_bus, type, event);
-            break;
-        case type_t::screenshot:
-            // ...
-            break;
-        case type_t::none:
-            break;
+            if(!event.contains("type"))
+                continue;
+            const auto type = type_to_enum(event, "type");
+
+            cDebug("- {}: {}", magic_enum::enum_name(type), event.dump());
+
+            switch(type)
+            {
+            case type_t::controller_axis:
+            case type_t::controller_button:
+            case type_t::controller_connect:
+            case type_t::key:
+            case type_t::mouse_button:
+            case type_t::mouse_move:
+                queue_input_event(input_bus, type, event);
+                break;
+            case type_t::screenshot:
+                // ...
+                break;
+            case type_t::none:
+                break;
+            }
         }
-    }
 
     if(config.contains("audio"))
     {

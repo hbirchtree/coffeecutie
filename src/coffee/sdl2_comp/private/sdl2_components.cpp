@@ -4,6 +4,7 @@
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/components/entity_container.inl>
 #include <coffee/core/CProfiling>
+#include <magic_enum.hpp>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
 #include <platforms/sysinfo.h>
@@ -329,7 +330,10 @@ void Windowing::show()
 void Windowing::close()
 {
     SDL_HideWindow(m_window);
-    m_container->service<Context>()->m_shouldClose = true;
+    if(!m_container)
+        return;
+    if(auto ctxt = m_container->service<Context>())
+        ctxt->m_shouldClose = true;
 }
 
 comp_app::size_2d_t Windowing::size() const
@@ -1103,7 +1107,8 @@ void getWindow(
         break;
 #endif
 #if defined(SDL_VIDEO_DRIVER_OFFSCREEN)
-        // Nothing?
+    case SDL_SYSWM_KMSDRM:
+        break;
 #endif
 #elif defined(SDL_VIDEO_DRIVER_WINDOWS)
     case SDL_SYSWM_WINDOWS:
@@ -1124,7 +1129,13 @@ void getWindow(
 #if defined(COFFEE_EMSCRIPTEN) // Emscripten does not need this info
         break;
 #else
-        Throw(std::runtime_error("no video driver was chosen"));
+    {
+        // auto subsystem_name = magic_enum::enum_name(windowInfo.subsystem);
+        // Throw(std::runtime_error(
+        //     "no video driver was chosen: " +
+        //     std::string(subsystem_name.begin(), subsystem_name.end())));
+        break;
+    }
 #endif
     }
 }
