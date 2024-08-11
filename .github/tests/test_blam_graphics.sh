@@ -39,7 +39,16 @@ echo "===================================="
 echo "===================================="
 ldd $BUILDDIR/bin/BlamGraphics > linkage.txt
 
-$BUILDDIR/bin/BlamGraphics $BUILDDIR/examples/blam/cblam-testing/assets $MAPDIR/pc/bloodgulch.map
+echo "===================================="
+echo "===== Dowloading test assets ======="
+mkdir -p maps/pc/
+wget -O maps/pc/beavercreek.map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/beavercreek.map
+wget -O maps/pc/bitmaps.map     --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bitmaps.map
+wget -O maps/pc/sounds.map      --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/sounds.map
+echo "===================================="
+echo "===================================="
+
+$BUILDDIR/bin/BlamGraphics $BUILDDIR/examples/blam/cblam-testing/assets maps/pc/beavercreek.map
 
 pushd /tmp/Blam\ Graphics/ && tar Jcvf $SRCDIR/../blam_test_results.tar.xz . && popd
 
