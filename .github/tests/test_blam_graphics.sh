@@ -48,7 +48,8 @@ wget -O maps/pc/sounds.map      --header="Authorization: $MAP_ACCESS_TOKEN" http
 echo "===================================="
 echo "===================================="
 
-$BUILDDIR/bin/BlamGraphics $BUILDDIR/examples/blam/cblam-testing/assets maps/pc/beavercreek.map
+echo "-- " $BUILDDIR/bin/BlamGraphics $BUILDDIR/examples/blam/cblam-testing/assets $PWD/maps/pc/beavercreek.map
+$BUILDDIR/bin/BlamGraphics $BUILDDIR/examples/blam/cblam-testing/assets $PWD/maps/pc/beavercreek.map
 
 pushd /tmp/Blam\ Graphics/ && tar Jcvf $SRCDIR/../blam_test_results.tar.xz . && popd
 

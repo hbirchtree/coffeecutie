@@ -388,14 +388,13 @@ void configureDefaults(AppLoader& loader)
 #endif
 #endif
 
-    auto& dummyPlug = loader.config<dummy_plug::Config>();
+    auto& dummyPlug   = loader.config<dummy_plug::Config>();
     dummyPlug.enabled = platform::env::var("DUMMY_PLUG_CONFIG").has_value();
     if(dummyPlug.enabled)
     {
-#if defined(FEATURE_ENABLE_OSMesaComponent) && USES_GL
         glConfig.framebufferFmt = pix_fmt::RGBA8;
         glConfig.depthFmt       = pix_fmt::Depth32;
-#endif
+
         dummy_plug::fork_dummy_plugs(createContainer(), dummyPlug);
     }
 

@@ -48,6 +48,7 @@ jobs:
           artifact: web-wasm32-emscripten-webgl2-custom
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
     name: ${{ matrix.variant }}
     steps:
     - uses: lukka/get-cmake@latest
@@ -111,11 +112,7 @@ jobs:
       if: matrix.variant == 'desktop:x86_64-buildroot-linux-gnu:multi:rel'
       continue-on-error: true
       run: |
-        mkdir -p maps/
-        wget -O maps/beavercreek.map --header='Authorization: ${{ secrets.MAP_ACCESS_TOKEN }}' https://maps.speen.dev/pc/beavercreek.map
-        wget -O maps/bitmaps.map --header='Authorization: ${{ secrets.MAP_ACCESS_TOKEN }}' https://maps.speen.dev/pc/bitmaps.map
-        wget -O maps/sounds.map --header='Authorization: ${{ secrets.MAP_ACCESS_TOKEN }}' https://maps.speen.dev/pc/sounds.map
-        MAPDIR=maps/ source/.github/tests/test_blam_graphics.sh
+        source/.github/tests/test_blam_graphics.sh
   macOS:
     runs-on: macos-13
     needs: Release

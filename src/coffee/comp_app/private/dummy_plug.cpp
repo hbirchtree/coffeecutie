@@ -130,6 +130,21 @@ void fork_dummy_plugs(
     if(!config.contains("graphics"))
         return;
 
+    dummy_plug.swrender = config["graphics"].value("software_render", false);
+
+    auto& glConfig = container.service<AppLoader>()->config<GLConfig>();
+    if(dummy_plug.swrender)
+    {
+        glConfig.profile       = GLConfig::Core;
+        glConfig.version.major = 4;
+        glConfig.version.minor = 5;
+
+        dummy_plug.graphics_config            = nlohmann::json();
+        dummy_plug.graphics_config["profile"] = "Core";
+        dummy_plug.graphics_config["major"]   = 4u;
+        dummy_plug.graphics_config["minor"]   = 5u;
+    }
+
     struct version_t
     {
         libc_types::u32   major{}, minor{};
@@ -169,8 +184,7 @@ void fork_dummy_plugs(
     // We're gonna do some funny business here; we'll fork the process into X
     // amount of processes, each with their own GL config, all running in
     // software mode. It's gonna be great!
-    std::vector<pid_t> children;
-    auto& glConfig = container.service<AppLoader>()->config<GLConfig>();
+    std::vector<std::tuple<pid_t, version_t, int>> children;
     for(auto const& version : versions)
     {
         if(version.profile == GLConfig::Core)
@@ -186,6 +200,8 @@ void fork_dummy_plugs(
         glConfig.depthFmt =
             version.depth == 32 ? pix_fmt::Depth32 : pix_fmt::Depth16;
 
+        cDebug("-------------------------------------------------");
+        cDebug("------------ Spawning child ---------------------");
         pid_t    child_pid{};
         posix_ec ec;
         if(auto res = proc::fork(child_pid, ec);
@@ -217,29 +233,27 @@ void fork_dummy_plugs(
             // in the forked process, keep running as usual :)
             return;
         } else
-            children.push_back(child_pid);
+        {
+            int result{};
+            proc::wait_for(proc::wait_by::child_pid, ec, child_pid, &result);
+            cDebug("------------ Returning to parent ------------");
+            children.push_back(std::make_tuple(child_pid, version, result));
+            if(result != 0)
+                break;
+        }
     }
 
     if(!children.empty())
     {
-        posix_ec         ec;
-        std::vector<int> results;
-        for(auto [i, child] : stl_types::enumerate(children))
-        {
-            results.push_back(0);
-            proc::wait_for(
-                proc::wait_by::child_pid, ec, child, &results.back());
-        }
-        cDebug("------------ Returning to parent ------------");
+        cDebug("-------------------------------------------------");
         cDebug("Child results:");
-        for(auto [i, child] : stl_types::enumerate(children))
+        for(auto [child, version, result] : children)
         {
-            auto const& version   = versions[i];
-            auto        indicator = results[i] != 0 ? "<====== !!! ====" : "";
+            auto indicator = result != 0 ? " <====== !!! ====" : "";
             cDebug(
-                " - {}: exit={}, GL {} {}.{} {}",
+                " - {}: exit={}, GL {} {}.{}{}",
                 child,
-                results[i],
+                result,
                 magic_enum::enum_name(version.profile),
                 version.major,
                 version.minor,

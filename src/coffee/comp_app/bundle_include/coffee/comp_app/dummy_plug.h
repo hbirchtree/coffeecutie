@@ -20,6 +20,7 @@ struct Config : comp_app::Config<Config>
     nlohmann::json graphics_config{};
     nlohmann::json config{};
     bool enabled{false};
+    bool swrender{false};
 };
 
 void fork_dummy_plugs(
