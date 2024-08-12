@@ -113,6 +113,12 @@ jobs:
       continue-on-error: true
       run: |
         source/.github/tests/test_blam_graphics.sh
+    - name: Uploading test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dummy_plug_test
+        path: "/tmp/Blam Graphics"
+        if-no-files-found: error
   macOS:
     runs-on: macos-13
     needs: Release

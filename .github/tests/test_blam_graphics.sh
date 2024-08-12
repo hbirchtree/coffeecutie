@@ -49,8 +49,7 @@ echo "===================================="
 echo "===================================="
 
 echo "-- " $BUILDDIR/bin/BlamGraphics $BUILDDIR/examples/blam/cblam-testing/assets $PWD/maps/pc/beavercreek.map
-$BUILDDIR/bin/BlamGraphics $BUILDDIR/examples/blam/cblam-testing/assets $PWD/maps/pc/beavercreek.map
-
-pushd /tmp/Blam\ Graphics/ && tar Jcvf $SRCDIR/../blam_test_results.tar.xz . && popd
+mkdir -p "/tmp/Blam Graphics"
+$BUILDDIR/bin/BlamGraphics $BUILDDIR/examples/blam/cblam-testing/assets $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
 
 popd
