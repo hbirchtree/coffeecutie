@@ -17,10 +17,13 @@ struct Config : comp_app::Config<Config>
         audio_format_t  format{audio_format_t::pcm};
         libc_types::u16 bits{16};
     } audio_config;
-    nlohmann::json graphics_config{};
-    nlohmann::json config{};
-    bool enabled{false};
-    bool swrender{false};
+
+    nlohmann::json         graphics_config{};
+    nlohmann::json         config{};
+    libc_types::u64        frame_index{0};
+    compo::clock::duration frame_delta{std::chrono::microseconds{16667}};
+    bool                   enabled{false};
+    bool                   swrender{false};
 };
 
 void fork_dummy_plugs(

@@ -442,6 +442,9 @@ class runtime_queue
     static detail::result<runtime_queue*, RuntimeQueueVerboseError>
     CreateNewThreadQueue(std::string_view name);
 
+    static void OverrideClock(std::function<detail::time_point()>&& clock);
+    static detail::time_point ClockNow();
+
     static detail::result<runtime_queue*, RuntimeQueueError> GetCurrentQueue();
 
     /*!
@@ -512,7 +515,7 @@ class runtime_queue
             runtime_task::CreateTask(
                 std::move(task),
                 task_flags::single_shot,
-                detail::clock::now() + time));
+                ClockNow() + time));
     }
 
     /*!
@@ -544,7 +547,7 @@ class runtime_queue
                runtime_task::CreateTask(
                    std::move(task),
                    task_flags::single_shot | task_flags::immediate,
-                   detail::clock::now()));
+                   ClockNow()));
            res.has_error())
             return detail::failure(res.error());
         else if(await)
@@ -575,7 +578,7 @@ class runtime_queue
             runtime_task::CreateTask(
                 std::move(task),
                 task_flags::single_shot | task_flags::immediate,
-                detail::clock::now() + time));
+                ClockNow() + time));
     }
 
     [[nodiscard]] STATICINLINE detail::result<u64, RuntimeQueueError>

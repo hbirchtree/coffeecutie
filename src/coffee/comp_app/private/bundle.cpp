@@ -514,7 +514,7 @@ void addDefaults(
     /* Selection of window/event manager */
     cVerbose(10, "Loading windowing library");
 #if defined(FEATURE_ENABLE_OSMesaComponent)
-    if(dummyPlug.enabled)
+    if(dummyPlug.enabled && dummyPlug.swrender)
     {
         loader.registerAll<type_safety::type_list_t<
             comp_app::PtrNativeWindowInfoService,
@@ -580,7 +580,7 @@ void addDefaults(
 
 /* Selection of (E)GL context */
 #if defined(FEATURE_ENABLE_OSMesaComponent)
-    if(dummyPlug.enabled)
+    if(dummyPlug.enabled && dummyPlug.swrender)
     {
         loader.registerAll<osmesa::Services>(container, ec);
         appInfo.add("gl:context", "OSMesa");
@@ -710,7 +710,9 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
     auto frametime = std::chrono::duration_cast<stl_types::Chrono::seconds_f32>(
         time - m_prevFrame);
 
-    if(frametime > 200ms)
+    auto& dummy = p.service<AppLoader>()->config<dummy_plug::Config>();
+
+    if(frametime > 200ms && !dummy.enabled)
     {
         Coffee::Logging::cWarning(
             "Frame hitch detected! {}ms", frametime.count() * 1000.f);

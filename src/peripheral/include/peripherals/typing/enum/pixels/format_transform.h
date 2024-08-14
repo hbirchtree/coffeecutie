@@ -614,6 +614,7 @@ FORCEDINLINE constexpr layout_t get(pix_fmt fmt)
     case F::Depth16F:
         return layout_t::ds(16, 0);
     case F::Depth32F:
+    case F::Depth32:
         return layout_t::ds(32, 0);
     case F::Depth32FStencil8:
         return layout_t::ds(32, 8);

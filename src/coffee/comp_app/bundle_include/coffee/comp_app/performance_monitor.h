@@ -15,6 +15,7 @@ struct PerformanceMonitor
 {
     using readable_services = detail::subsystem_list<
         PerformanceMonitor,
+        AppLoader,
         CPUClockProvider,
         CPUTempProvider,
         GPUTempProvider,

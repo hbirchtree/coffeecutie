@@ -138,7 +138,8 @@ coffee_library(
 coffee_library(
   TARGET EntComp
   LIBRARIES CoreCommon CoreProfiling
-  SOURCES private/components/allocators.cpp
+  SOURCES
+    private/components/allocators.cpp
   HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/components>
     HEADER_BASE coffee

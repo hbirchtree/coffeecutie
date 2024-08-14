@@ -14,6 +14,15 @@
 using Profiler     = Coffee::Profiler;
 using DProfContext = Coffee::DProfContext;
 
+namespace {
+
+std::function<rq::detail::time_point()> clock_now = []()
+{
+    return rq::detail::clock::now();
+};
+
+}
+
 namespace rq {
 
 using RQE  = RuntimeQueueError;
@@ -67,7 +76,7 @@ static std::optional<RQE> VerifyTask(runtime_task const& t)
         return RQE::InvalidTaskFlags;
     if(enum_helpers::feval(t.flags, task_flags::single_shot) &&
        !enum_helpers::feval(t.flags, task_flags::immediate) &&
-       t.time < detail::clock::now())
+       t.time < clock_now())
         return RQE::ExpiredTaskDeadline;
     return std::nullopt;
 }
@@ -165,7 +174,7 @@ STATICINLINE void ThreadQueueSleep(
 
     {
         detail::unique_lock<detail::recursive_mutex> _(queue->m_tasks_lock);
-        auto currentTime     = detail::clock::now();
+        auto currentTime     = clock_now();
         sleepTime            = queue->time_till_next(currentTime);
         queue->m_next_wakeup = currentTime + sleepTime;
     }
@@ -279,6 +288,16 @@ detail::result<runtime_queue*, RuntimeQueueVerboseError> runtime_queue::
     }
 }
 
+void runtime_queue::OverrideClock(std::function<detail::time_point()>&& clock)
+{
+    clock_now = std::move(clock);
+}
+
+detail::time_point runtime_queue::ClockNow()
+{
+    return clock_now();
+}
+
 detail::result<runtime_queue*, RuntimeQueueError> runtime_queue::
     GetCurrentQueue()
 {
@@ -332,7 +351,7 @@ detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
         return *error;
 
     if(enum_helpers::feval(task.flags, task_flags::periodic))
-        task.time = detail::clock::now() + task.interval;
+        task.time = clock_now() + task.interval;
 
     if(!context->global_lock.try_lock())
         return RQE::ShuttingDown;
@@ -363,7 +382,7 @@ detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
 
     detail::unique_lock<detail::recursive_mutex> __(queue->m_tasks_lock);
 
-    auto currentBase      = detail::clock::now();
+    auto currentBase      = clock_now();
     auto previousNextTime = ref.time_till_next(currentBase);
 
     auto id = ref.enqueue(std::move(task));
@@ -439,7 +458,7 @@ std::optional<RuntimeQueueError> runtime_queue::Block(
             return RQE::TaskAlreadyBlocked;
         }
 
-        auto currentBase      = detail::clock::now();
+        auto currentBase      = clock_now();
         auto previousNextTime = queue.time_till_next(currentBase);
 
         queue.m_tasks[idx].alive = false;
@@ -482,7 +501,7 @@ std::optional<RuntimeQueueError> runtime_queue::Unblock(
         if(queue.m_tasks[idx].alive)
             return RQE::TaskAlreadyStarted;
 
-        auto currentBase      = detail::clock::now();
+        auto currentBase      = clock_now();
         auto previousNextTime = queue.time_till_next(currentBase);
 
         queue.m_tasks[idx].alive = true;
@@ -524,7 +543,7 @@ std::optional<RuntimeQueueError> runtime_queue::CancelTask(
         queue.m_tasks[idx].alive      = false;
         queue.m_tasks[idx].to_dispose = true;
 
-        auto currentBase      = detail::clock::now();
+        auto currentBase      = clock_now();
         auto previousNextTime = queue.time_till_next(currentBase);
 
         NotifyThread(context, targetThread, previousNextTime, currentBase);
@@ -571,7 +590,7 @@ std::optional<RuntimeQueueError> runtime_queue::AwaitTask(
 
         /* Do not await a past event */
         if(!enum_helpers::feval(task->flags, task_flags::immediate) &&
-           detail::clock::now() > task->time)
+           clock_now() > task->time)
         {
             return RQE::ExpiredTaskDeadline;
         }
@@ -685,7 +704,7 @@ void runtime_queue::execute_tasks()
     detail::unique_lock<detail::recursive_mutex> _(m_tasks_lock);
     Profiler::DeepPopContext();
 
-    auto currTime = detail::clock::now();
+    auto currTime = clock_now();
 
     auto tasks = std::move(m_tasks);
     for(task_data_t& task : tasks)
@@ -717,7 +736,7 @@ void runtime_queue::execute_tasks()
             task.to_dispose = true;
         } else if(enum_helpers::feval(task.task.flags & task_flags::periodic))
         {
-            task.task.time = detail::clock::now() + task.task.interval;
+            task.task.time = clock_now() + task.task.interval;
         } else
         {
             Throw(implementation_error("unknown task type"));
@@ -772,7 +791,7 @@ void runtime_queue::execute_tasks()
 
 detail::duration runtime_queue::time_till_next() const
 {
-    detail::time_point current = detail::clock::now();
+    detail::time_point current = clock_now();
     return time_till_next(current);
 }
 

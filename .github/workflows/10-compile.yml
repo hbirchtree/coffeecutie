@@ -114,6 +114,7 @@ jobs:
       run: |
         source/.github/tests/test_blam_graphics.sh
     - name: Uploading test artifacts
+      if: matrix.variant == 'desktop:x86_64-buildroot-linux-gnu:multi:rel'
       uses: actions/upload-artifact@v4
       with:
         name: dummy_plug_test

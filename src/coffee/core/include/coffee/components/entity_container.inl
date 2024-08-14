@@ -251,6 +251,12 @@ void EntityContainer::exec()
         else
             subsys.end_frame(proxy, time_now);
     }
+
+    for(auto const& callback : frame_end_callbacks)
+    {
+        if(callback)
+            callback();
+    }
 }
 
 FORCEDINLINE EntityContainer::visitor_graph EntityContainer::create_task_graph()
