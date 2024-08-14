@@ -32,6 +32,6 @@
         {"time": 12000, "type":"controller_button", "index":0, "button": "A", "duration": 500},
         {"time": 13000, "type":"screenshot", "name":"splitscreen"}
     ],
-    "frame_delta": 16.67,
+    "frame_delta": 66.667,
     "end_time": 15000
 }
