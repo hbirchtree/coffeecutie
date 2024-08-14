@@ -335,13 +335,16 @@ void insert_dummy_plug(
 
     if(config.contains("events"))
     {
-        auto  emit_events = [&config, input_bus, &container]() {
-            auto* app_info    = container.service<comp_app::AppInfo>();
+        auto emit_events = [&config,
+                            input_bus,
+                            &container,
+                            flag = false]() mutable {
+            auto* app_info = container.service<comp_app::AppInfo>();
             if(app_info->state() != comp_app::interfaces::AppInfo::loaded)
                 return;
 
-            rq::runtime_queue::CancelTask(
-                rq::runtime_queue::GetSelfId().value());
+            if(flag)
+                return;
 
             const auto type_to_enum = [](nlohmann::json const&   event,
                                          std::string_view const& key) {
@@ -386,6 +389,7 @@ void insert_dummy_plug(
                     window->close();
                 })
                 .assume_value();
+            flag = true;
         };
 
         rq::runtime_queue::QueuePeriodic(
