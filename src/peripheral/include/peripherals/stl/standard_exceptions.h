@@ -62,7 +62,7 @@ struct memory_error : public std::logic_error
         Throw(undefined_behavior("bad access to *this: " __FILE__ \
                                  ":" C_STR(__LINE__)));
 
-#if MODE_DEBUG
+#if MODE_DEBUG == 1
 #define C_ERROR_CHECK(ec)                                           \
     {                                                               \
         if(ec)                                                      \
@@ -81,7 +81,7 @@ struct memory_error : public std::logic_error
 #define C_ERROR_CHECK_TYPED(ec, etype)
 #endif
 
-#if MODE_DEBUG
+#if MODE_DEBUG == 1
 #define CASSERT(condition) \
     if(!(condition))       \
         Throw(undefined_behavior("assertion failed: " C_STR(condition)));

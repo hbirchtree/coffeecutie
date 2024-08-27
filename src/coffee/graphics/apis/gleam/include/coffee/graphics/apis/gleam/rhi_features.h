@@ -280,8 +280,9 @@ struct workarounds
 
     struct
     {
-        bool adreno_3xx; /*!< Adreno 3xx drivers seemingly
-                          *   can't handle complex shaders */
+        bool adreno_3xx{false}; /*!< Adreno 3xx drivers seemingly
+                                 *   can't handle complex shaders */
+        bool adreno{false};
     } bugs;
 
     bool ignore_all_warnings{false};

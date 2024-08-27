@@ -97,10 +97,10 @@ struct BlamResources : compo::SubsystemBase
     std::shared_ptr<gfx::vertex_array_t> debug_attr;
     std::shared_ptr<gfx::program_t>      debug_lines_pipeline;
 
-    std::shared_ptr<gfx::buffer_t> model_matrix_store;
-    std::shared_ptr<gfx::buffer_t> material_store;
-    std::shared_ptr<gfx::buffer_t> transparent_store;
-    std::shared_ptr<gfx::buffer_t> world_store;
+    std::shared_ptr<gfx::revolving_buffer_t> model_matrix_store;
+    std::shared_ptr<gfx::revolving_buffer_t> material_store;
+    std::shared_ptr<gfx::revolving_buffer_t> transparent_store;
+    std::shared_ptr<gfx::buffer_t>           world_store;
 
     typing::vector_types::Veci2          offscreen_size{1920, 1080};
     std::shared_ptr<gfx::rendertarget_t> offscreen;
@@ -124,13 +124,14 @@ struct RenderingParameters : compo::SubsystemBase
 {
     using type = RenderingParameters;
 
-    libc_types::u32 mipmap_bias{compile_info::platform::is_32bit ? 2 : 0};
+    libc_types::u32 mipmap_bias{compile_info::platform::is_32bit ? 2 : 3};
 
     bool render_scenery{true};
     bool render_ui{false};
     bool debug_clear{true};
 
-    bool debug_markers{compile_info::debug_mode};
+    bool debug_markers{
+        compile_info::debug_mode && !compile_info::platform::is_mobile};
     bool debug_portals{false};
     bool debug_clusters{false};
     bool debug_triggers{false};

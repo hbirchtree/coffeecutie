@@ -201,11 +201,17 @@ struct NativeWindowInfo
 
 struct PtrNativeWindowInfo : NativeWindowInfo
 {
-    using NDisplay = void*;
-    using NWindow  = void*;
+    enum window_system_t
+    {
+        android,
+        nullws,
+        wayland,
+        x11,
+    } window_system{nullws};
 
-    NDisplay display{nullptr};
-    NWindow  window{nullptr};
+    void* display{nullptr};
+    void* window{nullptr};
+    void* surface{nullptr};
 };
 
 template<typename EventType>
@@ -731,14 +737,14 @@ struct AppLoadableService
     {
         load(e, ec);
         m_state = ec ? Error : Initialized;
-        return static_cast<bool>(ec);
+        return !static_cast<bool>(ec);
     }
 
     bool do_unload(entity_container& e, app_error& ec)
     {
         unload(e, ec);
         m_state = ec ? Error : Uninitialized;
-        return static_cast<bool>(ec);
+        return !static_cast<bool>(ec);
     }
 
     bool is_loaded() const
@@ -812,7 +818,7 @@ struct BasicEventBus
 
 struct PtrNativeWindowInfoService
     : interfaces::PtrNativeWindowInfo
-    , AppService<PtrNativeWindowInfoService>
+    , AppService<PtrNativeWindowInfoService, PtrNativeWindowInfo>
 {
     PtrNativeWindowInfoService()
     {

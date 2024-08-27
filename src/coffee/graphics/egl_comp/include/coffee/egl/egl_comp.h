@@ -24,7 +24,7 @@ struct DisplayHandle
 {
     DisplayHandle()
     {
-        priority = 512;
+        priority = 514;
     }
 
     virtual void load(entity_container&, comp_app::app_error& ec) final;
@@ -35,6 +35,22 @@ struct DisplayHandle
     std::unique_ptr<detail::EGLData, detail::EGLDataDeleter> m_data;
 
     libc_types::i32 m_major{}, m_minor{};
+
+    struct
+    {
+        struct
+        {
+            bool bt2020_hlg{false};
+            bool bt2020_linear{false};
+            bool bt2020_pq{false};
+            bool display_p3{false};
+            bool display_p3_linear{false};
+            bool display_p3_passthrough{false};
+            bool linear{true};
+            bool srgb{true};
+        } colorspaces;
+        bool surface_SMPTE2086_metadata{false};
+    } ext;
 };
 
 struct GraphicsContext
@@ -46,7 +62,7 @@ struct GraphicsContext
 
     GraphicsContext()
     {
-        priority = 513;
+        priority = 515;
     }
 
     virtual void load(entity_container& e, comp_app::app_error& ec) final;
@@ -70,7 +86,7 @@ struct GraphicsFramebuffer
 {
     GraphicsFramebuffer()
     {
-        priority = 514;
+        priority = 516;
     }
 
     virtual void load(entity_container& e, comp_app::app_error& ec) final;

@@ -577,16 +577,14 @@ struct MeshRenderer
         ProfContext _;
 
         bool invalidated = true;
-        if(time - last_update > std::chrono::seconds(5) || invalidated)
+        if(time - last_update > std::chrono::seconds(1) || invalidated)
         {
             generate_draws(p);
+            update_materials(p, time);
             last_update = time;
+            if(m_api->feature_info().program.buffer_binding)
+                m_resources.material_store->unmap();
         }
-
-        update_materials(p, time);
-
-        if(m_api->feature_info().program.buffer_binding)
-            m_resources.material_store->unmap();
 
         RenderingParameters const* rendering_props;
         p.subsystem(rendering_props);
@@ -706,6 +704,10 @@ struct MeshRenderer
         //        render_bsp_pass(p, m_bsp[Pass_Wireframe]);
 
         render_debug_lines(p);
+
+        m_resources.model_matrix_store->next();
+        m_resources.transparent_store->next();
+        m_resources.material_store->next();
     }
 
     void end_restricted(Proxy& /*p*/, time_point const& /*time*/)

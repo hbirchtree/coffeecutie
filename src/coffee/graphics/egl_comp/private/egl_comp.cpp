@@ -19,12 +19,18 @@
 #include <EGL/eglext.h>
 #endif
 
+#if defined(EGL_USE_ANGLE)
+#include <EGL/eglext_angle.h>
+#endif
+
 #if !defined(EGL_VERSION_1_3)
 #error EGL version 1.3 is required for OpenGL ES 2.0
 #endif
 
 namespace egl {
 
+using Coffee::cDebug;
+using Coffee::cWarning;
 using stl_types::str::fmt::hexify;
 
 namespace detail {
@@ -86,9 +92,61 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
     m_data = stl_types::
         make_unique_with_destructor<detail::EGLData, detail::EGLDataDeleter>();
 
-    m_data->display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    const auto extensions =
+        std::string_view(eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS));
+    auto supportsExtension = [&extensions](std::string_view ext) {
+        return extensions.find(ext) != std::string_view::npos;
+    };
+    cDebug(
+        "EGL extensions: {}", eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS));
 
-    if(!m_data->display)
+#if defined(EGL_VERSION_1_5)
+    auto& windowInfo = *e.service<comp_app::PtrNativeWindowInfo>();
+    using ws_t = comp_app::interfaces::PtrNativeWindowInfo::window_system_t;
+    if(windowInfo.window_system != ws_t::nullws)
+    {
+        std::vector<EGLAttrib> attributes;
+        auto                   platform = [&]() {
+            switch(windowInfo.window_system)
+            {
+            case ws_t::android:
+                if(!supportsExtension("EGL_KHR_platform_android"))
+                    throw std::runtime_error(
+                        "EGL_KHR_platform_android not supported");
+                windowInfo.display = EGL_DEFAULT_DISPLAY;
+                return EGL_PLATFORM_ANDROID_KHR;
+            case ws_t::wayland:
+                if(!supportsExtension("EGL_KHR_platform_wayland"))
+                    throw std::runtime_error(
+                        "EGL_KHR_platform_wayland not supported");
+                return EGL_PLATFORM_WAYLAND_KHR;
+            case ws_t::x11:
+                if(!supportsExtension("EGL_KHR_platform_x11"))
+                    throw std::runtime_error(
+                        "EGL_KHR_platform_x11 not supported");
+                return EGL_PLATFORM_X11_KHR;
+            default:
+                throw std::out_of_range("no window system defined");
+            }
+        }();
+        attributes.push_back(EGL_NONE);
+        m_data->display =
+            eglGetPlatformDisplay(platform, windowInfo.display, nullptr);
+    } else
+        m_data->display = eglGetDisplay(
+            windowInfo.display ? windowInfo.display : EGL_DEFAULT_DISPLAY);
+
+    if(m_data->display == EGL_NO_DISPLAY)
+    {
+        cWarning("Failed to get display on first try: {}", egl_to_error());
+        cWarning("Falling back to eglGetDisplay(EGL_DEFAULT_DISPLAY)");
+        eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    }
+#else
+    m_data->display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+#endif
+
+    if(m_data->display == EGL_NO_DISPLAY)
     {
         ec = "eglGetDisplay:" + egl_to_error();
         ec = comp_app::AppError::NoDisplay;
@@ -203,7 +261,7 @@ static stl_types::result<EGLConfig, std::string> eglTryConfig(
 
         {EGL_COLOR_BUFFER_TYPE, EGL_RGB_BUFFER},
         {EGL_RENDERABLE_TYPE, render_type},
-        {EGL_CONFORMANT, render_type},
+        // {EGL_CONFORMANT, render_type},
 
         {EGL_DEPTH_SIZE, depth.depth},
 
@@ -213,7 +271,6 @@ static stl_types::result<EGLConfig, std::string> eglTryConfig(
         {EGL_GREEN_SIZE, color.g},
         {EGL_BLUE_SIZE, color.b},
         {EGL_ALPHA_SIZE, color.a},
-
     };
     // clang-format on
 
@@ -355,6 +412,26 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
 #endif
     }
 
+    if(extensions.contains("EGL_KHR_gl_colorspace"))
+    {
+        handle.ext.colorspaces.linear = true;
+        handle.ext.colorspaces.srgb   = true;
+    }
+    handle.ext.surface_SMPTE2086_metadata =
+        extensions.contains("EGL_EXT_surface_SMPTE2086_metadata");
+    handle.ext.colorspaces.bt2020_hlg =
+        extensions.contains("EGL_EXT_gl_colorspace_bt2020_hlg");
+    handle.ext.colorspaces.bt2020_linear =
+        extensions.contains("EGL_EXT_gl_colorspace_bt2020_linear");
+    handle.ext.colorspaces.bt2020_pq =
+        extensions.contains("EGL_EXT_gl_colorspace_bt2020_pq");
+    handle.ext.colorspaces.display_p3 =
+        extensions.contains("EGL_EXT_gl_colorspace_display_p3");
+    handle.ext.colorspaces.display_p3_linear =
+        extensions.contains("EGL_EXT_gl_colorspace_display_p3_linear");
+    handle.ext.colorspaces.display_p3_passthrough =
+        extensions.contains("EGL_EXT_gl_colorspace_display_p3_passthrough");
+
 #if defined(EGL_VERSION_1_5) && defined(EGL_EXT_pixel_format_float)
     if(gl::tex::format_of(config.framebufferFmt).raw_format->floating_point)
     {
@@ -451,50 +528,76 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
     m_container = &e;
 
     auto display  = e.service<DisplayHandle>()->context().display;
-    auto ptr_info = e.service<comp_app::PtrNativeWindowInfoService>();
+    auto ptr_info = e.service<comp_app::PtrNativeWindowInfo>();
+    std::vector<std::pair<EGLAttrib, EGLAttrib>> attribs;
 #if defined(EGL_VERSION_1_5)
     auto&          config = comp_app::AppLoader::config<comp_app::GLConfig>(e);
     DisplayHandle& handle = *e.service<DisplayHandle>();
+
+    const bool srgb_requested = config.framebufferFmt == pix_fmt::SRGB8A8 ||
+                                config.framebufferFmt == pix_fmt::SRGB8;
+    const bool egl_15_supported =
+        handle.m_major > 1 || (handle.m_major == 1 && handle.m_minor >= 5);
+
+    if(srgb_requested && egl_15_supported)
+    {
+        EGLAttrib colorspace{EGL_GL_COLORSPACE_LINEAR};
+        if(false)
+            colorspace = EGL_NONE;
+        // else if(handle.ext.colorspaces.bt2020_linear)
+        //     colorspace = EGL_GL_COLORSPACE_BT2020_LINEAR_EXT;
+        // else if(handle.ext.colorspaces.display_p3)
+        //     colorspace = EGL_GL_COLORSPACE_DISPLAY_P3_EXT;
+        // else if(handle.ext.colorspaces.display_p3_linear)
+        //     colorspace = EGL_GL_COLORSPACE_DISPLAY_P3_LINEAR_EXT;
+#if defined(EGL_GL_COLORSPACE_BT2020_PQ_EXT)
+        // else if(handle.ext.colorspaces.bt2020_pq)
+        //     colorspace = EGL_GL_COLORSPACE_BT2020_PQ_EXT;
+#endif
+#if defined(EGL_GL_COLORSPACE_BT2020_HLG_EXT)
+        else if(handle.ext.colorspaces.bt2020_hlg)
+            colorspace = EGL_GL_COLORSPACE_BT2020_HLG_EXT;
 #endif
 
-    std::vector<std::pair<EGLint, EGLint>> attribs;
-
-#if defined(EGL_VERSION_1_5)
-    if((config.framebufferFmt == pix_fmt::SRGB8A8 ||
-        config.framebufferFmt == pix_fmt::SRGB8) &&
-       (handle.m_major > 1 || (handle.m_major == 1 && handle.m_minor >= 5)))
-        attribs.push_back({EGL_GL_COLORSPACE, EGL_GL_COLORSPACE_SRGB});
+        attribs.push_back({EGL_GL_COLORSPACE, colorspace});
+    }
 #endif
 
     attribs.push_back({EGL_NONE, EGL_NONE});
 
-#if defined(EGL_VERSION_1_5) && 0
-    if(handle.m_major > 1 || (handle.m_major == 1 && handle.m_minor >= 5))
-    {
-        m_surface = eglCreatePlatformWindowSurface(
-            display,
-            e.service<egl::GraphicsContext>()->m_config,
-            C_RCAST<EGLNativeWindowType>(ptr_info->window),
-            C_RCAST<EGLint*>(attribs.data()));
-    } else
-#endif
-        m_surface = eglCreateWindowSurface(
-            display,
-            e.service<egl::GraphicsContext>()->m_config,
-            C_RCAST<EGLNativeWindowType>(ptr_info->window),
-            C_RCAST<EGLint*>(attribs.data()));
+    m_surface = eglGetCurrentSurface(EGL_DRAW);
 
-    if(!m_surface)
+    if(m_surface == EGL_NO_SURFACE)
     {
+#if defined(EGL_VERSION_1_5)
+        if(handle.m_major > 1 || (handle.m_major == 1 && handle.m_minor >= 5))
+        {
+            m_surface = eglCreatePlatformWindowSurface(
+                display,
+                e.service<egl::GraphicsContext>()->m_config,
+                ptr_info->window,
+                C_RCAST<EGLAttrib*>(attribs.data()));
+        } else
+#endif
+            m_surface = eglCreateWindowSurface(
+                display,
+                e.service<egl::GraphicsContext>()->m_config,
+                C_RCAST<EGLNativeWindowType>(ptr_info->window),
+                C_RCAST<EGLint*>(attribs.data()));
+    }
+
+    if(m_surface == EGL_NO_SURFACE)
+    {
+        cWarning("Failed to create surface on first try: {}", egl_to_error());
         m_surface = eglCreateWindowSurface(
             display,
             e.service<egl::GraphicsContext>()->m_config,
             C_RCAST<EGLNativeWindowType>(ptr_info->window),
             nullptr);
-        Coffee::cDebug("Falling back to default window configuration");
+        cWarning("Falling back to default window configuration");
     }
 
-    if(!m_surface)
+    if(m_surface == EGL_NO_SURFACE)
     {
         ec = "eglCreateWindowSurface:" + egl_to_error();
         ec = comp_app::AppError::FramebufferMismatch;

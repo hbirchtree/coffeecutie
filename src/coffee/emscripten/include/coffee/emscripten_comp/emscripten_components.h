@@ -72,8 +72,8 @@ struct ControllerInput
   private:
     struct state_t
     {
-        std::string    name;
-        controller_map state;
+        std::string    name{};
+        controller_map state{};
     };
 
     std::map<libc_types::u32, state_t> m_controllers;

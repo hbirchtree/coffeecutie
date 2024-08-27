@@ -179,13 +179,15 @@ void setup_container(detail::EntityContainer& container)
     {
         if(service->is_loaded())
             continue;
-        cDebug(
-            " - Loading {0}",
-            platform::stacktrace::demangle::name(
-                dynamic_cast<compo::SubsystemBase*>(service)
-                    ->subsystem_name()
-                    .data()));
-        service->do_load(container, appec);
+        auto service_name = platform::stacktrace::demangle::name(
+            dynamic_cast<compo::SubsystemBase*>(service)
+                ->subsystem_name()
+                .data());
+        cDebug(" - Loading {0}", service_name);
+        if(!service->do_load(container, appec))
+            Throw(std::runtime_error(
+                "failed to start service: " + service_name + ": " +
+                appec.message()));
         C_ERROR_CHECK(appec);
     }
 
@@ -591,13 +593,13 @@ void addDefaults(
         loader.registerAll<emscripten::GLServices>(container, ec);
         C_ERROR_CHECK(ec);
         appInfo.add("gl:context", "Emscripten WebGL");
-#elif defined(FEATURE_ENABLE_SDL2Components)
-        loader.registerAll<sdl2::GLServices>(container, ec);
-        appInfo.add("gl:context", "SDL2");
 #elif defined(FEATURE_ENABLE_EGLComponent)
         loader.registerAll<egl::Services>(container, ec);
         C_ERROR_CHECK(ec);
         appInfo.add("gl:context", "EGL");
+#elif defined(FEATURE_ENABLE_SDL2Components)
+        loader.registerAll<sdl2::GLServices>(container, ec);
+        appInfo.add("gl:context", "SDL2");
 #else
 #error No context manager
 #endif

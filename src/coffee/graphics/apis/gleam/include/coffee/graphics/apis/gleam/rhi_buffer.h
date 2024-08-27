@@ -1,5 +1,6 @@
 #pragma once
 
+#include "peripherals/stl/range.h"
 #include "rhi_debug.h"
 #include "rhi_features.h"
 #include "rhi_translate.h"
@@ -396,6 +397,8 @@ struct buffer_slice_t
     inline auto buffer()
     {
         auto parent = m_parent.lock();
+        if(parent->size() < (m_offset + m_size))
+            throw std::out_of_range("buffer mapping out of bounds");
         return parent->map_all<std::byte>().view.subspan(m_offset, m_size);
     }
 
@@ -456,6 +459,124 @@ inline buffer_slice_t buffer_t::slice(size_t offset, std::optional<size_t> size)
         .m_size   = size.value_or(this->size()),
     };
 }
+
+/*!
+ * \brief A class containing N buffers that are meant for per-frame data
+ * Switches buffer per frame such that pipeline stalls are avoided
+ * Only necessary on some GPU drivers, such as Qualcomm
+ * Other drivers properly implement buffer discard, which effectively tells the
+ * driver that we don't need the buffer on the next frame, but Qualcomm seems to
+ * have missed the memo :)
+ */
+struct revolving_buffer_t
+{
+    revolving_buffer_t(
+        u32               num_buffers,
+        features::buffers features,
+        workarounds       workarounds,
+        usage&            usage,
+        buffers::type     type,
+        semantic::RSCA    access)
+    {
+        underlying_buffers.reserve(num_buffers);
+        for(auto _ : stl_types::range<>(num_buffers))
+            underlying_buffers.emplace_back(std::make_shared<buffer_t>(
+                features, workarounds, std::ref(usage), type, access));
+    }
+
+    /*!
+     * \brief Advance the revolving buffer, wrapping around if needed
+     */
+    void next()
+    {
+        index++;
+        if(index == underlying_buffers.size())
+            index = 0;
+    }
+
+    void alloc()
+    {
+        for(auto& buffer : underlying_buffers)
+            buffer->alloc();
+    }
+
+    void dealloc()
+    {
+        for(auto& buffer : underlying_buffers)
+            buffer->dealloc();
+    }
+
+    void commit(size_t size)
+    {
+        for(auto& buffer : underlying_buffers)
+            buffer->commit(size);
+    }
+
+    template<typename Span>
+    void commit(Span const& data)
+    {
+        current().commit(data);
+    }
+
+    template<typename Span>
+    void update(size_t offset, Span const& data)
+    {
+        current().update(offset, data);
+    }
+
+    template<typename T = std::byte>
+    auto map(size_t offset, std::optional<size_t> size = std::nullopt)
+    {
+        return current().map<T>(offset, size);
+    }
+
+    template<typename T>
+    void map_all()
+    {
+        current().map_all<T>();
+    }
+
+    void unmap(void* = nullptr)
+    {
+        current().unmap();
+    }
+
+    void discard()
+    {
+        current().discard();
+    }
+
+    size_t size()
+    {
+        return current().size();
+    }
+
+    auto& handle()
+    {
+        return current().handle();
+    }
+
+    void setState(buffers::property, u32)
+    {
+    }
+
+    auto slice(size_t offset, std::optional<size_t> size = std::nullopt)
+    {
+        return current().slice(offset, size);
+    }
+
+  private:
+    buffer_t& current()
+    {
+        return *underlying_buffers[index];
+    }
+    std::shared_ptr<buffer_t>& current_ptr()
+    {
+        return underlying_buffers[index];
+    }
+    std::vector<std::shared_ptr<buffer_t>> underlying_buffers;
+    u32                                    index{0};
+};
 
 #if GLEAM_MAX_VERSION_ES != 0x200
 struct circular_buffer_t

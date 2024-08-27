@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdexcept>
+
 #include "iterator.h"
 #include <peripherals/stl/type_safety.h>
 

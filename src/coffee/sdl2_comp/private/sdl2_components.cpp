@@ -47,13 +47,6 @@ int canvas_width = 0, canvas_height = 0;
 
 using Coffee::Logging::cDebug;
 
-enum class wm_selection_t
-{
-    default_,
-    wayland,
-    x11,
-};
-
 struct current_config_t
 {
     int major_version, minor_version;
@@ -62,7 +55,9 @@ struct current_config_t
     int profile;
 };
 
-static wm_selection_t get_wm_selection(SDL_Window* window);
+using ws_t = comp_app::interfaces::PtrNativeWindowInfo::window_system_t;
+
+static ws_t get_wm_selection(SDL_Window* window);
 
 inline void print_current_config()
 {
@@ -203,10 +198,10 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
 
     Uint32 extraFlags = 0 /*SDL_WINDOW_ALLOW_HIGHDPI*/;
 
-    if([[maybe_unused]] auto glContext = c.service<GLContext>())
-        extraFlags |= SDL_WINDOW_OPENGL;
-    else
-        extraFlags |= SDL_WINDOW_VULKAN;
+    extraFlags |= SDL_WINDOW_OPENGL;
+    // if([[maybe_unused]] auto glContext = c.service<GLContext>())
+    // else
+    //     extraFlags |= SDL_WINDOW_VULKAN;
 
     m_window = SDL_CreateWindow(
         config.title.c_str(),
@@ -236,10 +231,10 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
         std::string wm_selection;
         switch(get_wm_selection(m_window))
         {
-        case sdl2::wm_selection_t::wayland:
+        case ws_t::wayland:
             wm_selection = "Wayland";
             break;
-        case sdl2::wm_selection_t::x11:
+        case ws_t::x11:
             wm_selection = "X11";
             break;
         default:
@@ -1098,12 +1093,16 @@ void getWindow(
     case SDL_SYSWM_X11:
         info.display = windowInfo.info.x11.display;
         info.window  = reinterpret_cast<void*>(windowInfo.info.x11.window);
+        info.window_system = ws_t::x11;
         break;
 #endif
 #if defined(SDL_VIDEO_DRIVER_WAYLAND)
     case SDL_SYSWM_WAYLAND:
         info.display = windowInfo.info.wl.display;
         info.window  = windowInfo.info.wl.egl_window;
+        info.surface = windowInfo.info.wl.surface;
+
+        info.window_system = ws_t::wayland;
         break;
 #endif
 #if defined(SDL_VIDEO_DRIVER_OFFSCREEN)
@@ -1140,7 +1139,7 @@ void getWindow(
     }
 }
 
-static wm_selection_t get_wm_selection(SDL_Window* window)
+static ws_t get_wm_selection(SDL_Window* window)
 {
     SDL_SysWMinfo windowInfo;
     SDL_VERSION(&windowInfo.version)
@@ -1150,14 +1149,14 @@ static wm_selection_t get_wm_selection(SDL_Window* window)
     {
 #if defined(SDL_VIDEO_DRIVER_WAYLAND)
     case SDL_SYSWM_WAYLAND:
-        return wm_selection_t::wayland;
+        return ws_t::wayland;
 #endif
 #if defined(SDL_VIDEO_DRIVER_X11)
     case SDL_SYSWM_X11:
-        return wm_selection_t::x11;
+        return ws_t::x11;
 #endif
     default:
-        return wm_selection_t::default_;
+        return ws_t::nullws;
     }
 }
 

@@ -100,6 +100,15 @@ struct AndroidEventBus
     ndk_helper::PinchDetector*     m_pinchDetector;
     ndk_helper::DragDetector*      m_dragDetector;
 
+    std::optional<typing::vector_types::Vecf2> m_pinchOrigin;
+    std::optional<libc_types::f32>             m_pinchDistance;
+
+    struct drag_data_t
+    {
+        typing::vector_types::Vecf2 origin;
+    };
+    std::map<libc_types::i32, drag_data_t> m_dragData;
+
     comp_app::TouchConfig*                           m_touchConfig;
     comp_app::BasicEventBus<Coffee::Input::CIEvent>* m_inputBus;
     comp_app::BasicEventBus<comp_app::AppEvent>*     m_appBus;

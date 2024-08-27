@@ -5,6 +5,7 @@ option(
 )
 option(BUILD_EGL_STATIC "Use EGL_static library, eg. for Raspberry Pi" OFF)
 option(BUILD_EGL_DYNAMIC "Use GLAD for finding EGL functions" OFF)
+option(BUILD_EGL_ANGLE "Use EGL_angle library" OFF)
 
 coffee_library(
   TARGET EGLComponent
@@ -16,6 +17,14 @@ coffee_library(
 if(BUILD_GLKIT)
   target_link_libraries(EGLComponent PUBLIC CEAGL)
   target_compile_definitions(EGLComponent PUBLIC -DEGL_USE_CEAGL)
+elseif(BUILD_EGL_ANGLE)
+  find_library(EGL_ANGLE_LIB EGL_angle)
+  find_library(ANGLE_LIB ANGLE)
+  target_link_libraries(EGLComponent PUBLIC GLAD ${EGL_ANGLE_LIB} ${ANGLE_LIB})
+  target_compile_definitions(EGLComponent PUBLIC
+    -DEGL_USE_STATIC
+    -DEGL_USE_ANGLE
+  )
 elseif(BUILD_EGL_DYNAMIC)
   target_link_libraries(EGLComponent PUBLIC GLAD)
   target_compile_definitions(EGLComponent PUBLIC -DEGL_USE_DYNAMIC)

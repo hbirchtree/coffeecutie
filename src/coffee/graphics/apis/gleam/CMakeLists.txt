@@ -14,6 +14,8 @@ option(
   ON
 )
 
+option(BUILD_GL_ANGLE "Use ANGLE as the backend for GL (ES)" OFF)
+
 option(BUILD_GL_SOFTWARE_BCN "Build software-decode for BCn using bcdec" OFF)
 option(BUILD_GL_SOFTWARE_PVRTC "Build software-decode for PVRTC" OFF)
 
@@ -135,6 +137,7 @@ function(GEN_GLEAM_TARGET GLVERSION SUFFIX)
   if(APPLE
      AND IOS
      AND ${GLVERSION} MATCHES "_ES"
+
   )
     target_compile_definitions(
       GLeamCommon_${SUFFIX} PUBLIC -DGLES_SILENCE_DEPRECATION=1
@@ -156,6 +159,10 @@ function(GEN_GLEAM_TARGET GLVERSION SUFFIX)
       -sMAX_WEBGL_VERSION=2
       -sFULL_ES3
     )
+  elseif(BUILD_GL_ANGLE)
+    find_library(ANGLE_LIB NAMES ANGLE.a libANGLE.a)
+    find_library(GLESV2_ANGLE_LIB GLESv2_angle)
+    target_link_libraries(GLeamCommon_${SUFFIX} PUBLIC ${GLESV2_ANGLE_LIB} ${ANGLE_LIB})
   elseif(${GLVERSION} MATCHES "_ESDynamic")
     # No-op
   elseif(${GLVERSION} MATCHES "_ES")

@@ -62,6 +62,20 @@ struct api
             access);
     }
 
+    template<class T>
+    requires Buffer<revolving_buffer_t, buffer_slice_t>
+    inline auto alloc_revolving_buffer(
+        T, u32 num_buffers, semantic::RSCA access)
+    {
+        return std::make_shared<revolving_buffer_t>(
+            num_buffers,
+            m_features.buffer,
+            m_workarounds,
+            std::ref(m_usage),
+            T::value,
+            access);
+    }
+
     inline auto alloc_program()
     {
         return std::make_shared<program_t>(

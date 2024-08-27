@@ -79,8 +79,8 @@ i32 blam_main()
                    comp_app::window_flags_t::resizable;
     if constexpr(compile_info::platform::is_emscripten)
         window.flags = comp_app::window_flags_t::resizable;
-    auto& touch = loader.config<comp_app::TouchConfig>();
-    touch.options |= comp_app::TouchConfig::TouchToMouse;
+    // auto& touch = loader.config<comp_app::TouchConfig>();
+    // touch.options |= comp_app::TouchConfig::TouchToMouse;
 
 #if defined(SELECT_API_OPENGL)
     auto& glConfig        = loader.config<comp_app::GLConfig>();
@@ -109,7 +109,7 @@ i32 blam_main()
             auto  load_error =
                 gfx.load(e
                          /*gfx::emulation::webgl::desktop()*/
-                         // gfx::emulation::qcom::adreno_320()
+                         // , gfx::emulation::qcom::adreno_320()
                          // gfx::emulation::arm::mali_g710()
                          // gfx::emulation::arm::mali_400mp()
                          // gfx::emulation::amd::rx560_pro()
@@ -298,6 +298,8 @@ i32 blam_main()
             };
             if(map_filename.valid())
                 load.file = map_filename;
+            else
+                load.file = MkUrl("bloodgulch.map", RSCA::AssetFile);
             e.subsystem_cast<GameEventBus>().inject(event, &load);
             if(arguments.count("listen"))
             {

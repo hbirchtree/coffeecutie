@@ -33,14 +33,18 @@ struct TouchOverlay
 
     void operator()(CIEvent& ev, CIMouseMoveEvent* event);
     void operator()(CIEvent& ev, CITouchMotionEvent* event);
+    void operator()(CIEvent& ev, CITouchPinchEvent* event);
 
     std::shared_ptr<gfx::texture_2d_t> controller;
     std::shared_ptr<gfx::sampler_t>    controller_sampler;
 
     glm::mat2 move_transform;
     glm::vec2 move_displacement;
+    glm::vec2 move_ui_offset;
     glm::mat2 look_transform;
     glm::vec2 look_displacement;
+    glm::vec2 look_immediate_displacement;
+    glm::vec2 look_ui_offset;
 
     ktx::texture_t atlas_storage;
     bool           loaded{false};

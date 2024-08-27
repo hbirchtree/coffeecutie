@@ -71,16 +71,6 @@ struct Windowing
     entity_container* m_container = nullptr;
 };
 
-struct NativeWindowInfo
-    : comp_app::interfaces::PtrNativeWindowInfo
-    , comp_app::AppService<NativeWindowInfo, comp_app::PtrNativeWindowInfo>
-{
-    NativeWindowInfo()
-    {
-        priority = 511;
-    }
-};
-
 struct WindowInfo
     : comp_app::interfaces::WindowInfo
     , comp_app::AppService<WindowInfo, comp_app::WindowInfo>
@@ -253,7 +243,7 @@ using Services = comp_app::subsystem_list<
     Windowing,
     WindowInfo,
     DisplayInfo,
-    NativeWindowInfo,
+    comp_app::PtrNativeWindowInfoService,
     KeyboardInput,
     MouseInput>;
 

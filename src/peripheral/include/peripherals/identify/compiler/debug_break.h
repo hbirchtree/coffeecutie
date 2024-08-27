@@ -1,6 +1,7 @@
 #pragma once
 
 #include <peripherals/identify/system.h>
+#include <peripherals/identify/compiler/function_inlining.h>
 
 #if defined(COFFEE_EMSCRIPTEN)
 #include <emscripten.h>

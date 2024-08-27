@@ -17,7 +17,7 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-copy-with-user-provided-copy"
-#include <gestureDetector.h>
+#include <coffee/anative/gestureDetector.h>
 #pragma GCC diagnostic pop
 
 namespace anative {
@@ -53,7 +53,9 @@ void Windowing::load(entity_container& e, comp_app::app_error& ec)
         return;
     }
 
-    windowInfo->window = window_info->window;
+    using ws_t = comp_app::interfaces::PtrNativeWindowInfo::window_system_t;
+    windowInfo->window        = window_info->window;
+    windowInfo->window_system = ws_t::android;
 }
 
 comp_app::size_2d_t Windowing::size() const
@@ -584,41 +586,135 @@ bool AndroidEventBus::filterTouchEvent(AInputEvent* event)
     using namespace ndk_helper;
     using namespace Coffee::Input;
     using namespace typing::vector_types;
+    using Coffee::cDebug;
 
     CIEvent out;
 
     const bool mouseMapping =
         m_touchConfig->options & comp_app::TouchConfig::TouchToMouse;
 
-    if(m_pinchDetector->Detect(event) != GESTURE_STATE_NONE)
-    {
-        // TODO
-        //        ndk_helper::Vec2 v1, v2;
-        //        m_pinchDetector->GetPointers(v1, v2);
+    const auto pointer_idx = (AMotionEvent_getAction(event) &
+                              AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >>
+                             AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+    const auto pointer_id = AMotionEvent_getPointerId(event, pointer_idx);
 
-        //        out.type = CIEvent::TouchPinch;
-        //        CITouchPinchEvent pinch;
-        //        inputBus->inject(out, &pinch);
-        Coffee::cDebug("Pinch");
-    }
-    if(auto state = m_dragDetector->Detect(event); state != GESTURE_STATE_NONE)
+    if(auto state = m_pinchDetector->Detect(event); state != GESTURE_STATE_NONE)
     {
-        Vec2  pos_;
-        Vecf2 pos;
-        m_dragDetector->GetPointer(pos_);
-        pos_.Value(pos.x, pos.y);
-        if(mouseMapping)
+        Vec2 v1_, v2_;
+        m_pinchDetector->GetPointers(v1_, v2_);
+        Vecf2 v1, v2;
+        v1_.Value(v1.x, v1.y);
+        v2_.Value(v2.x, v2.y);
+        if(state == GESTURE_STATE_START)
+        {
+            m_pinchOrigin   = (v1 + v2) / 2.f;
+            m_pinchDistance = glm::length(v1 - v2);
+        } else if(state == GESTURE_STATE_MOVE)
+        {
+            out.type = CIEvent::TouchPinch;
+            CITouchPinchEvent pinch;
+            pinch.origin = *m_pinchOrigin;
+            pinch.factor = glm::length(v1 - v2) / *m_pinchDistance;
+            m_inputBus->inject(out, &pinch);
+        } else if(state == GESTURE_STATE_END)
+        {
+            out.type = CIEvent::TouchPinch;
+            CITouchPinchEvent pinch;
+            pinch.origin = *m_pinchOrigin;
+            pinch.factor = 1.f;
+            m_inputBus->inject(out, &pinch);
+
+            m_pinchOrigin   = std::nullopt;
+            m_pinchDistance = std::nullopt;
+        }
+    }
+    {
+        /* Drag detection; it's pretty simple on paper */
+        const auto action = AMotionEvent_getAction(event);
+        const auto flags  = action & AMOTION_EVENT_ACTION_MASK;
+
+        Vecf2 pos = {
+            AMotionEvent_getX(event, pointer_idx),
+            AMotionEvent_getY(event, pointer_idx),
+        };
+
+        enum
+        {
+            NONE,
+            MOVED,
+            STOPPED,
+        } state{NONE};
+
+        switch(flags)
+        {
+        case AMOTION_EVENT_ACTION_HOVER_ENTER:
+        case AMOTION_EVENT_ACTION_POINTER_DOWN:
+        case AMOTION_EVENT_ACTION_DOWN: {
+            cDebug("Starting drag from {} with pointer {}", pos, pointer_idx);
+            m_dragData.emplace(
+                pointer_id,
+                drag_data_t{
+                    .origin = pos,
+                });
+            break;
+        }
+        case AMOTION_EVENT_ACTION_HOVER_MOVE:
+        case AMOTION_EVENT_ACTION_MOVE: {
+            cDebug("Pointer moved: {}", pointer_idx);
+            state = MOVED;
+            break;
+        }
+        case AMOTION_EVENT_ACTION_HOVER_EXIT:
+        case AMOTION_EVENT_ACTION_POINTER_UP:
+        case AMOTION_EVENT_ACTION_UP: {
+            state = STOPPED;
+            break;
+        }
+        }
+
+        const auto is_hover = stl_types::one_of<i32, i32, i32, i32>(
+            flags,
+            AMOTION_EVENT_ACTION_HOVER_ENTER,
+            AMOTION_EVENT_ACTION_HOVER_MOVE,
+            AMOTION_EVENT_ACTION_HOVER_EXIT);
+
+        if(state != NONE && !is_hover)
+        {
+            out.type = CITouchMotionEvent::event_type;
+            CITouchMotionEvent move{};
+            for(auto i : stl_types::range(AMotionEvent_getPointerCount(event)))
+            {
+                const auto id = AMotionEvent_getPointerId(event, i);
+                move.finger   = id;
+                move.origin   = m_dragData[id].origin;
+                move.previous = {
+                    AMotionEvent_getHistoricalX(event, i, 0),
+                    AMotionEvent_getHistoricalY(event, i, 0),
+                };
+                move.current = {
+                    AMotionEvent_getX(event, i),
+                    AMotionEvent_getY(event, i),
+                };
+                move.end      = state == STOPPED;
+                move.hover    = is_hover;
+                move.pressure = AMotionEvent_getPressure(event, i);
+                m_inputBus->inject(out, &move);
+            }
+        }
+        if(state != NONE && is_hover)
         {
             out.type = CIMouseMoveEvent::event_type;
-            CIMouseMoveEvent move;
-            move.origin.x = AMotionEvent_getHistoricalX(event, 0, 0);
-            move.origin.y = AMotionEvent_getHistoricalY(event, 0, 0);
-            move.delta    = pos - move.origin;
-            move.btn      = CIMouseButtonEvent::LeftButton;
-            if(state == GESTURE_STATE_END)
-                move.btn = 0;
+            CIMouseMoveEvent move{};
+            move.origin = {
+                AMotionEvent_getHistoricalX(event, 0, 0),
+                AMotionEvent_getHistoricalY(event, 0, 0),
+            };
+            move.delta = pos - move.origin;
+            move.hover = true;
             m_inputBus->inject(out, &move);
         }
+        if(state == STOPPED)
+            m_dragData.erase(pointer_id);
     }
     if(m_doubleDetector->Detect(event) != GESTURE_STATE_NONE)
     {

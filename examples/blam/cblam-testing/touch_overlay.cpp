@@ -16,7 +16,8 @@ void TouchOverlay::start_restricted(Proxy& proxy, const time_point&)
         if(!gfx->feature_info().texture.tex.gl.etc2)
             return;
 
-        auto tex = ktx::load_from("textures/controller_atlas.0.etc2"_rsc.data());
+        auto tex =
+            ktx::load_from("textures/controller_atlas.0.etc2"_rsc.data());
 
         if(tex.has_error())
         {
@@ -61,10 +62,14 @@ void TouchOverlay::start_restricted(Proxy& proxy, const time_point&)
 
     f32 stick_range = half_screen / 2.f;
     // Movement stick
-    draw_stick(proxy, Vecf2{0, 0}, move_displacement * stick_range);
+    draw_stick(
+        proxy, Vecf2{0, 0}, move_displacement * stick_range + move_ui_offset);
 
     // Look stick
-    draw_stick(proxy, Vecf2{look_stick_x, 0}, look_displacement * stick_range);
+    draw_stick(
+        proxy,
+        Vecf2{look_stick_x, 0},
+        look_displacement * stick_range + look_ui_offset);
 }
 
 void TouchOverlay::end_restricted(Proxy& proxy, const time_point&)
@@ -74,7 +79,10 @@ void TouchOverlay::end_restricted(Proxy& proxy, const time_point&)
 
     camera->player(0).camera_->move(
         move_displacement.y, -move_displacement.x, 0);
-    //    camera->std_camera->rotate(look_displacement.y, look_displacement.x);
+    camera->player(0).camera_->rotate(
+        -look_displacement.x, look_displacement.y);
+    camera->player(0).camera_->rotate(
+        -look_immediate_displacement.x, look_immediate_displacement.y);
 }
 
 void TouchOverlay::draw_stick(
@@ -137,7 +145,6 @@ void TouchOverlay::operator()(CIEvent& ev, CIMouseMoveEvent* event)
     {
         ev.type           = CIEvent::NoneType;
         move_displacement = xf.value() * 2.f - 1.f;
-        cDebug("Move displacement: {0}", move_displacement);
         return;
     }
     if(auto xf = point_in(pos, look_transform); xf.has_value())
@@ -149,10 +156,37 @@ void TouchOverlay::operator()(CIEvent& ev, CIMouseMoveEvent* event)
     }
 }
 
-void TouchOverlay::operator()(CIEvent& /*ev*/, CITouchMotionEvent* /*event*/)
+void TouchOverlay::operator()(CIEvent& ev, CITouchMotionEvent* event)
 {
-    //    comp_app::interfaces::GraphicsFramebuffer* framebuffer
-    //        = proxy.service<comp_app::GraphicsFramebuffer>();
+    if(event->hover)
+        return;
+
+    glm::vec2 pos = event->origin;
+    if(auto xf = point_in(pos, move_transform); xf.has_value())
+    {
+        auto delta        = event->delta() * move_transform[1];
+        move_displacement = event->end ? Vecf2{} : delta;
+        move_ui_offset =
+            (event->origin - move_transform[0]) * move_transform[1];
+    }
+    if(auto xf = point_in(pos, look_transform); xf.has_value())
+    {
+        auto delta        = event->delta() * look_transform[1];
+        look_displacement = event->end ? Vecf2{} : delta;
+        look_ui_offset =
+            (event->origin - look_transform[0]) * look_transform[1];
+    }
+    if(!point_in(pos, move_transform) && !point_in(pos, look_transform))
+    {
+        look_immediate_displacement =
+            event->end ? Vecf2{}
+                       : event->frame_delta() * look_transform[1] * 30.f;
+    }
+}
+
+void TouchOverlay::operator()(CIEvent& ev, CITouchPinchEvent* event)
+{
+    move_displacement.y = event->factor - 1.f;
 }
 
 void create_touch_overlay(compo::EntityContainer& container)
@@ -170,6 +204,10 @@ void create_touch_overlay(compo::EntityContainer& container)
         });
     eventhandler->addEventFunction<CITouchMotionEvent>(
         768, [&overlay](CIEvent& ev, CITouchMotionEvent* event) {
+            overlay(ev, event);
+        });
+    eventhandler->addEventFunction<CITouchPinchEvent>(
+        768, [&overlay](CIEvent& ev, CITouchPinchEvent* event) {
             overlay(ev, event);
         });
 }

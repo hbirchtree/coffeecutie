@@ -317,6 +317,18 @@
             }
         },
         {
+            "name": "android-arm64-30",
+            "displayName": "Android 11 ARM64",
+            "inherits": ["vcpkg-base-android"],
+            "cacheVariables": {
+                "CMAKE_C_FLAGS": "-march=armv8-a",
+                "CMAKE_CXX_FLAGS": "-march=armv8-a"
+            },
+            "environment": {
+                "API": "30"
+            }
+        },
+        {
             "name": "android-arm64-25",
             "displayName": "Android 7 ARM64",
             "inherits": ["vcpkg-base-android"],
@@ -790,6 +802,18 @@
             "name": "android-arm-neon-29-dbg",
             "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "android-arm-neon-29",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "android-arm64-30-rel",
+            "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "android-arm64-30",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "android-arm64-30-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "android-arm64-30",
             "inherits": "base-linux"
         },
         {

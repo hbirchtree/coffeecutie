@@ -107,16 +107,16 @@ void load_scenario_bsp(
     auto encounters = scenario->ai.encounters.data(magic).value();
     for(blam::scn::ai::encounter const& enc : encounters)
     {
-        cDebug(" - Encounter: {}", enc.text.str());
+        // cDebug(" - Encounter: {}", enc.text.str());
         auto platoons         = enc.platoons.data(magic).value();
         auto firing_positions = enc.firing_positions.data(magic).value();
         auto squads           = enc.squads.data(magic).value();
         auto start_locs       = enc.start_locations.data(magic).value();
-        for(auto const& platoon : platoons)
-            cDebug("   - Platoon: {}", platoon.name.str());
+        // for(auto const& platoon : platoons)
+        //     cDebug("   - Platoon: {}", platoon.name.str());
         for(auto const& firing_pos : firing_positions)
         {
-            cDebug("   - Firing pos: {}", firing_pos.position);
+            // cDebug("   - Firing pos: {}", firing_pos.position);
             auto  marker = e.create_entity(map_marker);
             auto& draw   = marker.get<DebugDraw>();
 
@@ -132,7 +132,7 @@ void load_scenario_bsp(
         }
         for(auto const& loc : start_locs)
         {
-            cDebug("   - Start location: {}", loc.position);
+            // cDebug("   - Start location: {}", loc.position);
             auto  marker = e.create_entity(map_marker);
             auto& draw   = marker.get<DebugDraw>();
 
@@ -148,7 +148,7 @@ void load_scenario_bsp(
         }
         for(auto const& squad : squads)
         {
-            cDebug("   - Squad: {}", squad.name.str());
+            // cDebug("   - Squad: {}", squad.name.str());
             // auto locations = squad.
         }
     }

@@ -325,12 +325,12 @@ struct CIControllerState
             i16 t_r; /*!< Right trigger */
         } e;
 
-        i16 d[6];
+        i16 d[6]{};
     } axes;
 
     union
     {
-        u16 d;
+        u16 d{};
 
         struct
         {
@@ -466,19 +466,21 @@ struct CITouchTapEvent : BaseEvent<CIEvent::TouchTap>
 struct CITouchMotionEvent : BaseEvent<CIEvent::TouchMotion>
 {
     Vecf2 origin;
-    Vecf2 delta;
+    Vecf2 previous;
+    Vecf2 current;
+    f32   pressure;
+    u16   finger : 14;
+    bool  hover : 1;
+    bool  end : 1;
 
-    union
+    inline Vecf2 delta() const
     {
-        struct
-        {
-            u16  pressure;
-            u16  finger : 15;
-            bool hover : 1;
-        };
-
-        u32 evdata;
-    };
+        return current - origin;
+    }
+    inline Vecf2 frame_delta() const
+    {
+        return current - previous;
+    }
 };
 
 struct CIMTouchMotionEvent : BaseEvent<CIEvent::MultiTouch>
@@ -486,18 +488,9 @@ struct CIMTouchMotionEvent : BaseEvent<CIEvent::MultiTouch>
     Vecf2 origin;
     Vecf2 translation;
     Vecf2 velocity;
-
-    union
-    {
-        struct
-        {
-            u16 fingers;
-            i16 angle;
-            i16 dist;
-        };
-
-        u64 evdata;
-    };
+    u16   fingers;
+    i16   angle;
+    i16   dist;
 };
 
 struct CIGestureEvent : BaseEvent<CIEvent::Gesture>

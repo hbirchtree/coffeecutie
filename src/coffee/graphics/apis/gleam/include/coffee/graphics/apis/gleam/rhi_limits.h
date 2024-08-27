@@ -103,7 +103,8 @@ struct api_limits
         if(m_features.buffer.ubo)
         {
             buffers = {
-                .ubo_size     = get_limit(prop::max_uniform_block_size),
+                .ubo_size             = get_limit(prop::max_uniform_block_size),
+                .ubo_recommended_size = get_limit(prop::max_uniform_block_size),
                 .ubo_vertex   = get_limit(prop::max_vertex_uniform_blocks),
                 .ubo_fragment = get_limit(prop::max_fragment_uniform_blocks),
                 .ubo_alignment =
@@ -205,14 +206,14 @@ struct api_limits
             textures.d2_max_layers,
             textures.cube_size,
             //
-            get_all_limits()
-        );
+            get_all_limits());
     }
 
     struct buffer_limits_t
     {
         u32 ssbo_size{0};
         u32 ubo_size{0};
+        u32 ubo_recommended_size{0};
 
         u32 ssbo_vertex{0};
         u32 ssbo_fragment{0};

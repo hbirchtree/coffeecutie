@@ -91,30 +91,40 @@ void create_resources(compo::EntityContainer& e)
     resources.model_index->alloc();
     resources.model_index->commit(memory_budget::mesh_elements);
 
-    resources.model_matrix_store =
-        api.alloc_buffer(gfx::buffers::constants, access);
+    /* On Adreno's native OpenGL ES driver we need 3 buffers to make things work
+     * smoothly
+     * Other GPU drivers seems to understand the pattern of map-use-discard
+     * correctly, so we don't need multiple :)
+     */
+    const u32 per_frame_bufs =
+        api.workarounds().bugs.adreno && !compile_info::platform::is_emscripten
+            ? 3
+            : 1;
+
+    resources.model_matrix_store = api.alloc_revolving_buffer(
+        gfx::buffers::constants, per_frame_bufs, access);
     if(api.feature_info().buffer.ssbo && false)
     {
         //        resources.model_matrix_store
         //            = api.alloc_buffer(gfx::buffers::shader_writable, access);
-        resources.material_store =
-            api.alloc_buffer(gfx::buffers::shader_writable, access);
-        resources.transparent_store =
-            api.alloc_buffer(gfx::buffers::shader_writable, access);
+        resources.material_store = api.alloc_revolving_buffer(
+            gfx::buffers::shader_writable, per_frame_bufs, access);
+        resources.transparent_store = api.alloc_revolving_buffer(
+            gfx::buffers::shader_writable, per_frame_bufs, access);
     } else if(api.feature_info().buffer.ubo)
     {
-        resources.material_store =
-            api.alloc_buffer(gfx::buffers::constants, access);
-        resources.transparent_store =
-            api.alloc_buffer(gfx::buffers::constants, access);
+        resources.material_store = api.alloc_revolving_buffer(
+            gfx::buffers::constants, per_frame_bufs, access);
+        resources.transparent_store = api.alloc_revolving_buffer(
+            gfx::buffers::constants, per_frame_bufs, access);
     } else
     {
-        resources.model_matrix_store =
-            api.alloc_buffer(gfx::buffers::vertex, access);
-        resources.material_store =
-            api.alloc_buffer(gfx::buffers::vertex, access);
-        resources.transparent_store =
-            api.alloc_buffer(gfx::buffers::vertex, access);
+        resources.model_matrix_store = api.alloc_revolving_buffer(
+            gfx::buffers::vertex, per_frame_bufs, access);
+        resources.material_store = api.alloc_revolving_buffer(
+            gfx::buffers::vertex, per_frame_bufs, access);
+        resources.transparent_store = api.alloc_revolving_buffer(
+            gfx::buffers::vertex, per_frame_bufs, access);
     }
     resources.model_matrix_store->alloc();
     resources.model_matrix_store->commit(memory_budget::matrix_buffer);
@@ -531,7 +541,7 @@ void create_shaders(compo::EntityContainer& e)
     gfx::api&      gfx       = e.subsystem_cast<gfx::system>();
     BlamResources& resources = e.subsystem_cast<BlamResources>();
 
-    auto _ = gfx.debug().scope();
+    auto        _ = gfx.debug().scope();
     ProfContext __;
 
     auto const& features = gfx.feature_info();
@@ -540,7 +550,7 @@ void create_shaders(compo::EntityContainer& e)
     const bool use_spv = features.program.spirv;
     const bool use_uber =
         features.texture.cube_array /*&& features.buffer.ssbo*/
-        && !lowspec_hardware && !bugs.adreno_3xx;
+        && !lowspec_hardware && !bugs.adreno;
     const bool use_uber_lite = features.buffer.ubo && !bugs.adreno_3xx;
 
     if(use_spv && false)
@@ -592,8 +602,8 @@ void set_resource_labels(EntityContainer& e)
     debug.annotate(*resources.model_buf, "model_vertex_buf");
     debug.annotate(*resources.model_index, "model_index_buf");
 
-    debug.annotate(*resources.material_store, "material_buffer");
-    debug.annotate(*resources.model_matrix_store, "model_matrices");
+    // debug.annotate(*resources.material_store, "material_buffer");
+    // debug.annotate(*resources.model_matrix_store, "model_matrices");
 
     debug.annotate(*resources.debug_attr, "debug_vao");
     debug.annotate(*resources.debug_lines, "debug_vertices");

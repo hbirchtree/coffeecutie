@@ -587,7 +587,7 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.program.khr.parallel_shader_compile =
             supports_extension(extensions, khr::parallel_shader_compile::name);
     }
-    
+
     using typing::pixels::pix_fmt;
 
     out.rendertarget.depth32f =
@@ -1074,9 +1074,16 @@ optional<error> api::load(load_options_t options)
 
     {
         auto [vendor, renderer] = device();
-        if(vendor.starts_with("Qualcomm") &&
-           renderer.starts_with("Adreno (TM) 3"))
-            m_workarounds.bugs.adreno_3xx = true;
+        if(vendor.starts_with("Qualcomm"))
+        {
+            if(renderer.starts_with("Adreno (TM) 3"))
+                m_workarounds.bugs.adreno_3xx = true;
+            m_workarounds.bugs.adreno = true;
+            /* Qualcomm may say that the limit for UBOs is 64k, but they prefer
+             * if it's 8k */
+            m_limits.buffers.ubo_recommended_size = 8192;
+            m_features.texture.tex.ext.s3tc       = false;
+        }
     }
 
     /* Let's skip ES 2.0 implementations that don't fulfill a minimum */
