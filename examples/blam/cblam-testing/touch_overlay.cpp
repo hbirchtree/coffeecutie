@@ -6,6 +6,16 @@
 
 using namespace Coffee::resource_literals;
 
+namespace {
+
+bool point_in(glm::vec2 const& pos, glm::mat2 const& box)
+{
+    return pos.x > box[0].x && pos.y > box[0].y && pos.x < box[1].x &&
+           pos.y < box[1].y;
+}
+
+} // namespace
+
 void TouchOverlay::start_restricted(Proxy& proxy, const time_point&)
 {
     if(!controller)
@@ -54,60 +64,70 @@ void TouchOverlay::start_restricted(Proxy& proxy, const time_point&)
     f32 screen_height = framebuffer->size().h;
     f32 look_stick_x  = framebuffer->size().w - half_screen;
 
-    move_transform[0] = glm::vec2{0, -screen_height};
-    move_transform[1] = glm::vec2{1.f / half_screen, -1.f / half_screen};
+    control_scale = {1.f / half_screen, -1.f / half_screen};
 
-    look_transform[0] = glm::vec2{-look_stick_x, -screen_height};
-    look_transform[1] = glm::vec2{1.f / half_screen, -1.f / half_screen};
+    movement.box[0] = glm::vec2{
+        0,
+        screen_height - controller_size(proxy),
+    };
+    movement.box[1] = glm::vec2{controller_size(proxy), screen_height};
+    movement.size   = {half_screen / 3.f, half_screen / 3.f};
+
+    dpi = proxy.service<comp_app::DisplayInfo>()->dpi();
 
     f32 stick_range = half_screen / 2.f;
     // Movement stick
-    draw_stick(
-        proxy, Vecf2{0, 0}, move_displacement * stick_range + move_ui_offset);
+    if(movement.visible)
+        draw_stick(proxy, movement);
 
     // Look stick
-    draw_stick(
-        proxy,
-        Vecf2{look_stick_x, 0},
-        look_displacement * stick_range + look_ui_offset);
+    // draw_stick(proxy, Vecf2{look_stick_x, 0}, look_ui_offset);
 }
 
-void TouchOverlay::end_restricted(Proxy& proxy, const time_point&)
+void TouchOverlay::end_restricted(Proxy& proxy, const time_point& time)
 {
+    using namespace std::chrono_literals;
+
     BlamCamera* camera;
     proxy.subsystem(camera);
 
+    auto delta    = time - previous_time;
+    previous_time = time;
+
+    if(delta > 1s)
+        delta = 10ms;
+    auto delta_s = stl_types::Chrono::to_f32(delta);
+
     camera->player(0).camera_->move(
-        move_displacement.y, -move_displacement.x, 0);
+        movement.control.y * delta_s, -movement.control.x * delta_s, 0);
     camera->player(0).camera_->rotate(
-        -look_displacement.x, look_displacement.y);
+        -look.control.x * delta_s, look.control.y * delta_s);
     camera->player(0).camera_->rotate(
-        -look_immediate_displacement.x, look_immediate_displacement.y);
+        -look.instant_control.x * delta_s, look.instant_control.y * delta_s);
 }
 
-void TouchOverlay::draw_stick(
-    Proxy& proxy, Vecf2 const& origin, Vecf2 const& stick_offset)
+void TouchOverlay::draw_stick(Proxy& proxy, stick_definition_t const& stick)
 {
     ScreenClear* screen;
     proxy.subsystem(screen);
 
-    f32 half_screen = controller_size(proxy);
-    f32 stick_size  = half_screen / 3.f;
+    auto screen_size_ = proxy.service<comp_app::GraphicsFramebuffer>()->size();
+    f32  half_screen  = controller_size(proxy);
+    f32  stick_size   = half_screen / 3.f;
+
+    const auto flip_y = [height = screen_size_.h](const auto& vec) {
+        return Vecf2{vec.x, height - vec.y};
+    };
 
     screen->extra_quads.push_back({
-        .position     = origin,
+        .position     = flip_y(stick.origin),
         .size         = Vecf2{half_screen, half_screen},
         .atlas_offset = Vecf2{0.02f, 0.02f},
         .atlas_scale  = Vecf2{0.5f, 0.5f},
         .sampler      = controller_sampler,
     });
     screen->extra_quads.push_back({
-        .position =
-            Vecf2{
-                half_screen / 2.f - stick_size / 2.f,
-                half_screen / 2.f - stick_size / 2.f,
-            } +
-            origin + stick_offset,
+        .position     = flip_y(stick.offset),
         .size         = Vecf2{stick_size, stick_size},
         .atlas_offset = Vecf2{0.55f, 0.03f},
         .atlas_scale  = Vecf2{0.23f, 0.23f},
@@ -122,38 +142,27 @@ f32 TouchOverlay::controller_size(Proxy& proxy) const
     return glm::min(framebuffer->size().h / 2.f, framebuffer->size().w / 2.f);
 }
 
-std::optional<glm::vec2> TouchOverlay::point_in(
-    glm::vec2 const& pos, glm::mat2 const& box)
-{
-    glm::vec2 xf = (pos + box[0]) * box[1];
-    return (xf.x > 0 && xf.x < 1 && xf.y > 0 && xf.y < 1)
-               ? std::make_optional(xf)
-               : std::nullopt;
-}
-
 void TouchOverlay::operator()(CIEvent& ev, CIMouseMoveEvent* event)
 {
-    if(event->btn == 0)
-    {
-        move_displacement = {};
-        look_displacement = {};
-        return;
-    }
+    // if(event->btn == 0)
+    // {
+    //     move_displacement = {};
+    //     look_displacement = {};
+    //     return;
+    // }
 
-    glm::vec2 pos = event->origin + event->delta;
-    if(auto xf = point_in(pos, move_transform); xf.has_value())
-    {
-        ev.type           = CIEvent::NoneType;
-        move_displacement = xf.value() * 2.f - 1.f;
-        return;
-    }
-    if(auto xf = point_in(pos, look_transform); xf.has_value())
-    {
-        //        ev.type           = CIEvent::NoneType;
-        look_displacement = xf.value() * 2.f - 1.f;
-        //        cDebug("Look displacement: {0}", look_displacement);
-        //        return;
-    }
+    // glm::vec2 pos = event->origin + event->delta;
+    // if(auto xf = point_in(pos, move_transform); xf.has_value())
+    // {
+    //     ev.type        = CIEvent::NoneType;
+    //     move_ui_offset = move_displacement = xf.value() * 2.f - 1.f;
+    //     return;
+    // }
+    // if(auto xf = point_in(pos, look_transform); xf.has_value())
+    // {
+    //     ev.type        = CIEvent::NoneType;
+    //     look_ui_offset = look_displacement = xf.value() * 2.f - 1.f;
+    // }
 }
 
 void TouchOverlay::operator()(CIEvent& ev, CITouchMotionEvent* event)
@@ -161,32 +170,26 @@ void TouchOverlay::operator()(CIEvent& ev, CITouchMotionEvent* event)
     if(event->hover)
         return;
 
-    glm::vec2 pos = event->origin;
-    if(auto xf = point_in(pos, move_transform); xf.has_value())
+    if(point_in(event->origin, movement.box))
     {
-        auto delta        = event->delta() * move_transform[1];
-        move_displacement = event->end ? Vecf2{} : delta;
-        move_ui_offset =
-            (event->origin - move_transform[0]) * move_transform[1];
+        ev.type = CIEvent::NoneType;
+        movement.origin =
+            event->origin - Vecf2{movement.size.x * 1.5f} * Vecf2{1, -1};
+        movement.offset = event->origin + event->delta() -
+                          Vecf2{movement.size.x / 2.f} * Vecf2{1, -1};
+        movement.control =
+            event->end ? Vecf2{} : event->delta() * control_scale * dpi * 3.f;
+        movement.visible = !event->end;
+        return;
     }
-    if(auto xf = point_in(pos, look_transform); xf.has_value())
-    {
-        auto delta        = event->delta() * look_transform[1];
-        look_displacement = event->end ? Vecf2{} : delta;
-        look_ui_offset =
-            (event->origin - look_transform[0]) * look_transform[1];
-    }
-    if(!point_in(pos, move_transform) && !point_in(pos, look_transform))
-    {
-        look_immediate_displacement =
-            event->end ? Vecf2{}
-                       : event->frame_delta() * look_transform[1] * 30.f;
-    }
+    look.instant_control =
+        event->end ? Vecf2{}
+                   : event->frame_delta() * control_scale * 100.f * dpi;
 }
 
 void TouchOverlay::operator()(CIEvent& ev, CITouchPinchEvent* event)
 {
-    move_displacement.y = event->factor - 1.f;
+    movement.control.y = (event->factor - 1.f) * dpi;
 }
 
 void create_touch_overlay(compo::EntityContainer& container)

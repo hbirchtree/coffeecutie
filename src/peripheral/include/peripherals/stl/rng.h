@@ -55,6 +55,11 @@ struct rng
     {
         gen.seed(seed);
     }
+
+    auto seed_automatically()
+    {
+        gen.seed(std::random_device{}());
+    }
 };
 
 } // namespace math

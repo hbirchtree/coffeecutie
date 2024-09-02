@@ -1,6 +1,7 @@
 #include "networking.h"
 
 #include <coffee/core/CProfiling>
+#include <coffee/core/files/cfiles.h>
 
 using Coffee::ProfContext;
 
@@ -251,6 +252,41 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         });
     }
 
+    auto get_random_name()
+    {
+        using Coffee::FileMap;
+        using stl_types::str::split::spliterator;
+        using namespace Coffee::resource_literals;
+        using namespace std::string_literals;
+
+        auto all_names = "names.txt"_rsc;
+
+        if(!FileMap(all_names))
+            return "John Chief"s;
+
+        std::string_view name_list(all_names.data_ro.data());
+        size_t           num_names{0};
+        for(auto it = spliterator(name_list, '\n'); it != spliterator<char>();
+            ++it)
+        {
+            num_names++;
+        }
+        auto   target_i = m_local_random.rand<u32>(0, num_names);
+        size_t i{0};
+        std::string_view out{};
+        for(auto it = spliterator(name_list, '\n'); it != spliterator<char>();
+            ++it)
+        {
+            if(target_i == i)
+            {
+                out = *it;
+                break;
+            }
+            i++;
+        }
+        return std::string(out);
+    }
+
     Networking(
         GameEventBus& game_bus, NetworkState& net_state, BlamCamera& camera)
         : m_game_bus(game_bus)
@@ -258,6 +294,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         , m_camera(camera)
     {
         network_instance = this;
+
+        m_local_random.seed_automatically();
 
         this->priority = 1280;
         m_identity.Clear();
@@ -813,7 +851,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .seed   = join.seed,
             };
             m_game_bus.inject(ev, &data);
-            std::string player_name = "John Chief";
+            std::string player_name = get_random_name();
             // TODO: Create global storage for player name + save to disk?
             send_single(
                 m_connection,
@@ -913,6 +951,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     /* Game/map state */
     u32 m_seed{164829}; /*!< Randomly typed number */
     blam::map_container<halo_version>* m_map{nullptr};
+    stl_types::math::rng               m_local_random{};
 };
 
 #endif

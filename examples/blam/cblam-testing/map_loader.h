@@ -34,7 +34,7 @@ struct BlamMapBrowser
         : m_map_selected(std::move(map_selected))
     {
         priority       = 2048;
-        remote_address = "127.0.0.1:16420";
+        remote_address = "0.0.0.0:16420";
         remote_address.resize(64);
     }
 

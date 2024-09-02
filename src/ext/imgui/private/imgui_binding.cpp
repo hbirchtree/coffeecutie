@@ -67,39 +67,6 @@ struct ImGuiData
     u32 _pad;
 };
 
-// bool Init(EntityContainer& container)
-//{
-//     DProfContext _(IM_API "Initializing state");
-
-//    ImGui::CreateContext();
-//    ImGuiIO& io = ImGui::GetIO();
-
-//    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-//    io.ConfigDockingWithShift    = true;
-//    io.ConfigDockingAlwaysTabBar = true;
-
-//    /* io is statically allocated, this is safe */
-//    container.service<comp_app::BasicEventBus<CIEvent>>()->addEventData(
-//        {100, ImGui_InputHandle});
-
-//    for(auto const& p : ImKeyMap)
-//    {
-//        io.KeyMap[p.first] = p.second;
-//    }
-
-//    SetStyle();
-
-//    return true;
-//}
-
-// void Shutdown()
-//{
-//     DProfContext _(IM_API "Shutting down");
-
-//    InvalidateDeviceObjects();
-//    ImGui::DestroyContext();
-//}
-
 static void SetStyle()
 {
     DProfContext _(IM_API "Applying custom style");
@@ -311,25 +278,6 @@ void ImGuiSystem::start_restricted(Proxy& p, time_point const& t)
         auto pos        = mouse->position();
         io.MousePosPrev = io.MousePos;
         io.MousePos     = ImVec2(pos.x / uiScaling, pos.y / uiScaling);
-        //    if(!io.MouseClicked[0])
-        //        io.MouseClicked[0] = mouse->buttons() &
-        //        CIMouseButtonEvent::LeftButton;
-        //    if(!io.MouseClicked[1])
-        //        io.MouseClicked[1]
-        //            = mouse->buttons() & CIMouseButtonEvent::MiddleButton;
-        //    if(!io.MouseClicked[2])
-        //        io.MouseClicked[2] = mouse->buttons() &
-        //        CIMouseButtonEvent::RightButton;
-        //    for(auto i : Range<>{5})
-        //        if(io.MouseClicked[i])
-        //        {
-        //            io.MouseDown[i]        = true;
-        //            io.MouseClickedPos[i]  = io.MousePos;
-        //            io.MouseClickedTime[i] = time;
-        //        } else
-        //        {
-        //            io.MouseDown[i] = false;
-        //        }
         io.MouseWheel     = m_im_data->scroll;
         m_im_data->scroll = 0.0f;
     }
@@ -343,11 +291,11 @@ void ImGuiSystem::start_restricted(Proxy& p, time_point const& t)
         if(io.WantTextInput && !m_textInputActive)
         {
             m_textInputActive = true;
-            keyboard->openVirtual();
+            keyboard->startWriting();
         } else if(!io.WantTextInput && m_textInputActive)
         {
             m_textInputActive = false;
-            keyboard->closeVirtual();
+            keyboard->stopWriting();
         }
     }
 

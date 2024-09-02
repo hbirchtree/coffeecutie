@@ -22,6 +22,8 @@ struct Windowing
     , comp_app::AppService<Windowing, comp_app::Windowing>
     , comp_app::AppLoadableService
 {
+    using type = Windowing;
+
     Windowing()
     {
         priority = 511;
@@ -34,6 +36,25 @@ struct Windowing
     virtual void setState(comp_app::window_flags_t /*state*/) override;
 
     void close() final;
+};
+
+struct DisplayInfo
+    : comp_app::interfaces::DisplayInfo
+    , comp_app::AppService<DisplayInfo, comp_app::DisplayInfo>
+    , comp_app::AppLoadableService
+{
+    virtual void load(entity_container& e, comp_app::app_error&) override;
+
+    comp_app::size_2d_t virtualSize() const override;
+    libc_types::u32     count() const override;
+    libc_types::u32     currentDisplay() const override;
+    comp_app::size_2d_t size(libc_types::u32 idx) const override;
+    comp_app::size_2d_t physicalSize(libc_types::u32 idx) const override;
+    libc_types::f32     dpi(libc_types::u32 idx) const override;
+    libc_types::f32     diagonal(libc_types::u32 idx) const override;
+
+  private:
+    Windowing* m_windowing{nullptr};
 };
 
 struct ControllerInput
@@ -58,8 +79,8 @@ struct KeyboardInput
     : comp_app::interfaces::BasicKeyboardInput
     , comp_app::AppService<KeyboardInput, comp_app::KeyboardInput>
 {
-    void openVirtual() const;
-    void closeVirtual() const;
+    void startWriting() const;
+    void stopWriting() const;
 };
 
 struct MouseInput
@@ -87,8 +108,9 @@ struct AndroidEventBus
 
     void handleMouseEvent(AInputEvent* event);
     bool handleGamepadEvent(AInputEvent* event);
+    bool handleTouchEvent(AInputEvent* event);
+
     void handleInputEvent(AInputEvent* event);
-    bool filterTouchEvent(AInputEvent* event);
     void handleWindowEvent(android_app* app, libc_types::i32 event);
 
     void emitLifecycleEvent(comp_app::LifecycleEvent event);
@@ -107,7 +129,10 @@ struct AndroidEventBus
     {
         typing::vector_types::Vecf2 origin;
     };
+
     std::map<libc_types::i32, drag_data_t> m_dragData;
+
+    std::optional<typing::vector_types::Vecf2> m_mouseOrigin;
 
     comp_app::TouchConfig*                           m_touchConfig;
     comp_app::BasicEventBus<Coffee::Input::CIEvent>* m_inputBus;
@@ -119,6 +144,7 @@ struct AndroidEventBus
 using Services = comp_app::detail::TypeList<
     comp_app::PtrNativeWindowInfoService,
     Windowing,
+    DisplayInfo,
     ControllerInput,
     KeyboardInput,
     MouseInput,

@@ -98,6 +98,8 @@ struct ImGuiSystem
     std::unique_ptr<ImGuiData, ImGuiDataDeleter>                 m_im_data;
     std::unique_ptr<ImGuiGraphicsData, ImGuiGraphicsDataDeleter> m_gfx_data;
 
+    std::map<u32, ImGuiKey> m_keymap{};
+
     time_point m_previousTime{};
     time_point m_nextIniSaveTime{};
     bool       m_textInputActive{false};

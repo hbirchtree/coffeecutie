@@ -207,8 +207,8 @@ struct KeyboardInput
 
     void start_restricted(proxy_type& p, time_point const&);
 
-    virtual void openVirtual() const final;
-    virtual void closeVirtual() const final;
+    virtual void startWriting() const final;
+    virtual void stopWriting() const final;
 };
 
 struct MouseInput

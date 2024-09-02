@@ -22,9 +22,73 @@
 
 namespace anative {
 
+using Coffee::cDebug;
 using Coffee::Input::CIEvent;
 using Coffee::Input::CIKeyEvent;
+using libc_types::i16;
 using libc_types::i32;
+
+namespace {
+
+CIKeyEvent::KeyModifiers meta_to_key_modifier(i32 meta)
+{
+    CIKeyEvent::KeyModifiers mod = CIKeyEvent::NoneModifier;
+    if(meta & AMETA_ALT_LEFT_ON)
+        mod |= CIKeyEvent::LAltModifier;
+    if(meta & AMETA_ALT_RIGHT_ON)
+        mod |= CIKeyEvent::RAltModifier;
+    if(meta & AMETA_SHIFT_LEFT_ON)
+        mod |= CIKeyEvent::LShiftModifier;
+    if(meta & AMETA_SHIFT_RIGHT_ON)
+        mod |= CIKeyEvent::RShiftModifier;
+    if(meta & AMETA_CTRL_LEFT_ON)
+        mod |= CIKeyEvent::LCtrlModifier;
+    if(meta & AMETA_CTRL_RIGHT_ON)
+        mod |= CIKeyEvent::RCtrlModifier;
+    if(meta & AMETA_SYM_ON)
+        mod |= CIKeyEvent::SuperModifier;
+    if(meta & AMETA_CAPS_LOCK_ON)
+        mod |= CIKeyEvent::CapsLockModifier;
+    if(meta & AMETA_NUM_LOCK_ON)
+        mod |= CIKeyEvent::NumLockModifier;
+    return mod;
+}
+
+std::pair<i16, i16> trigger_values(AInputEvent* event)
+{
+    /* Trigger values are fucked up.
+     * Stolen logic from:
+     * https://github.com/moonlight-stream/moonlight-android/blob/master/app/src/main/java/com/limelight/binding/input/ControllerHandler.java
+     */
+
+    using libc_types::convert_f32;
+
+    std::pair<i16, i16> out;
+
+    out.first = convert_f32<i16>(
+        AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_LTRIGGER, 0));
+    out.second = convert_f32<i16>(
+        AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_RTRIGGER, 0));
+    out.first = std::max(
+        out.first,
+        convert_f32<i16>(
+            AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_BRAKE, 0)));
+    out.second = std::max(
+        out.second,
+        convert_f32<i16>(
+            AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_GAS, 0)));
+    out.second = std::max(
+        out.second,
+        convert_f32<i16>(
+            AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_THROTTLE, 0)));
+
+    if(out.first > 0 || out.second > 0)
+        return out;
+
+    return out;
+}
+
+} // namespace
 
 void Windowing::load(entity_container& e, comp_app::app_error& ec)
 {
@@ -85,6 +149,51 @@ void Windowing::close()
 #endif
 }
 
+void DisplayInfo::load(entity_container& e, comp_app::app_error&)
+{
+    m_windowing = e.service<Windowing>();
+}
+
+comp_app::size_2d_t DisplayInfo::virtualSize() const
+{
+    return m_windowing->size();
+}
+
+libc_types::u32 DisplayInfo::count() const
+{
+    return 1;
+}
+
+libc_types::u32 DisplayInfo::currentDisplay() const
+{
+    return 0;
+}
+
+comp_app::size_2d_t DisplayInfo::size(libc_types::u32 idx) const
+{
+    return m_windowing->size();
+}
+
+comp_app::size_2d_t DisplayInfo::physicalSize(libc_types::u32 idx) const
+{
+    auto size = android::display_info().physical_size();
+    return comp_app::size_2d_t{
+        static_cast<i32>(size.x),
+        static_cast<i32>(size.y),
+    };
+}
+
+libc_types::f32 DisplayInfo::dpi(libc_types::u32 idx) const
+{
+    return android::display_info().dpi();
+}
+
+libc_types::f32 DisplayInfo::diagonal(libc_types::u32 idx) const
+{
+    auto size = android::display_info().physical_size();
+    return std::sqrt(size.x * size.x + size.y * size.y);
+}
+
 libc_types::u32 ControllerInput::count() const
 {
     return m_cache.size();
@@ -104,22 +213,24 @@ comp_app::text_type_t ControllerInput::name(libc_types::u32 /*idx*/) const
     return "Generic Controller";
 }
 
-void KeyboardInput::openVirtual() const
+void KeyboardInput::startWriting() const
 {
-#if ANDROID_API_LEVEL >= 23
-    if(auto window = android::activity_manager().window())
-        ANativeActivity_showSoftInput(
-            (*window).activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_IMPLICIT);
-#endif
+// #if ANDROID_API_LEVEL >= 23
+//     if(auto window = android::activity_manager().window())
+//         ANativeActivity_showSoftInput(
+//             (*window).activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED);
+// #endif
+    android::input_method_manager::show_soft_input();
 }
 
-void KeyboardInput::closeVirtual() const
+void KeyboardInput::stopWriting() const
 {
-#if ANDROID_API_LEVEL >= 23
-    if(auto window = android::activity_manager().window())
-        ANativeActivity_hideSoftInput(
-            (*window).activity, ANATIVEACTIVITY_HIDE_SOFT_INPUT_IMPLICIT_ONLY);
-#endif
+// #if ANDROID_API_LEVEL >= 23
+//     if(auto window = android::activity_manager().window())
+//         ANativeActivity_hideSoftInput(
+//             (*window).activity, ANATIVEACTIVITY_HIDE_SOFT_INPUT_IMPLICIT_ONLY);
+// #endif
+    android::input_method_manager::hide_soft_input();
 }
 
 bool MouseInput::mouseGrabbed() const
@@ -176,50 +287,96 @@ void AndroidEventBus::handleMouseEvent(AInputEvent* event)
     anative::MouseInput* mouse    = m_container->service<anative::MouseInput>();
 
     i32 type = AInputEvent_getType(event);
+    // AMotionEvent_getMetaState
+
+    constexpr std::array<MouseButton, 3> supported_buttons = {{
+        MouseButton::LeftButton,
+        MouseButton::MiddleButton,
+        MouseButton::RightButton,
+    }};
 
     switch(type)
     {
     case AINPUT_EVENT_TYPE_MOTION: {
-        auto action = AMotionEvent_getAction(event);
-        auto x      = AMotionEvent_getX(event, 0);
-        auto y      = AMotionEvent_getY(event, 0);
-
-        switch(action)
-        {
-        case AMOTION_EVENT_ACTION_BUTTON_PRESS:
-        case AMOTION_EVENT_ACTION_BUTTON_RELEASE: {
+        auto action         = AMotionEvent_getAction(event);
+        auto x              = AMotionEvent_getX(event, 0);
+        auto y              = AMotionEvent_getY(event, 0);
+        auto currentButtons = [event, mouse]() {
             constexpr std::array<std::pair<int, MouseButton>, 3> mapping = {{
                 {AMOTION_EVENT_BUTTON_PRIMARY, MouseButton::LeftButton},
                 {AMOTION_EVENT_BUTTON_SECONDARY, MouseButton::RightButton},
                 {AMOTION_EVENT_BUTTON_TERTIARY, MouseButton::MiddleButton},
             }};
-
-            auto currentButtons = AMotionEvent_getButtonState(event);
-            auto prevButtons    = mouse->m_buttons;
-            for(auto const& map : mapping)
+            auto         android_buttons = AMotionEvent_getButtonState(event);
+            MouseButton& buttons         = mouse->m_buttons;
+            MouseButton  changed         = MouseButton::NoneBtn;
+            for(auto [native, mapped] : mapping)
             {
-                auto current  = static_cast<bool>(currentButtons & map.first);
-                auto previous = static_cast<bool>(prevButtons & map.second);
-
+                const bool current  = android_buttons & native;
+                const bool previous = buttons & mapped;
                 if(current == previous)
                     continue;
 
                 if(current)
-                    mouse->m_buttons |= map.second;
+                    buttons |= mapped;
                 else
-                    mouse->m_buttons = mouse->m_buttons &
-                                       (MouseButton::AllButtons ^ map.second);
+                    buttons = buttons & (MouseButton::AllButtons ^ mapped);
+                changed |= mapped;
+            }
+            return changed;
+        }();
 
-                CIEvent event;
-                event.type = CIEvent::MouseButton;
+        CIEvent ievent;
+
+        switch(action)
+        {
+        case AMOTION_EVENT_ACTION_HOVER_ENTER:
+        case AMOTION_EVENT_ACTION_HOVER_MOVE: {
+            ievent.type = CIEvent::MouseMove;
+            CIMouseMoveEvent hover;
+            hover.origin = Vecf2{x, y};
+            hover.delta  = {};
+            inputBus->inject(ievent, &hover);
+            break;
+        }
+        case AMOTION_EVENT_ACTION_BUTTON_PRESS:
+        case AMOTION_EVENT_ACTION_BUTTON_RELEASE: {
+            for(auto button : supported_buttons)
+            {
+                if((button & currentButtons) == MouseButton::NoneBtn)
+                    continue;
+                const bool current = mouse->buttons() & button;
+                ievent.type        = CIEvent::MouseButton;
                 CIMouseButtonEvent click;
-                click.btn = map.second;
+                click.btn = button;
                 click.mod = current ? CIMouseButtonEvent::Pressed
                                     : CIMouseButtonEvent::NoneModifier;
                 click.pos = Vecf2(x, y);
-                inputBus->inject(event, &click);
+                inputBus->inject(ievent, &click);
+                cDebug(
+                    "Click: {} = {}:{}",
+                    click.pos,
+                    static_cast<int>(click.btn),
+                    static_cast<int>(click.mod));
             }
 
+            break;
+        }
+        case AMOTION_EVENT_ACTION_UP:
+        case AMOTION_EVENT_ACTION_DOWN: {
+            ievent.type = CIEvent::MouseButton;
+            CIMouseButtonEvent click;
+
+            auto buttons = AMotionEvent_getButtonState(event);
+            click.btn    = buttons & AMOTION_EVENT_BUTTON_STYLUS_PRIMARY
+                               ? MouseButton::RightButton
+                               : MouseButton::LeftButton;
+
+            click.mod = action == AMOTION_EVENT_ACTION_DOWN
+                            ? CIMouseButtonEvent::Pressed
+                            : CIMouseButtonEvent::NoneModifier;
+            click.pos = Vecf2(x, y);
+            inputBus->inject(ievent, &click);
             break;
         }
         default:
@@ -234,42 +391,6 @@ void AndroidEventBus::handleMouseEvent(AInputEvent* event)
         Coffee::cDebug("Unrecognized mouse event: {0}", type);
         break;
     }
-}
-
-using libc_types::i16;
-
-static std::pair<i16, i16> trigger_values(AInputEvent* event)
-{
-    /* Trigger values are fucked up.
-     * Stolen logic from:
-     * https://github.com/moonlight-stream/moonlight-android/blob/master/app/src/main/java/com/limelight/binding/input/ControllerHandler.java
-     */
-
-    using libc_types::convert_f32;
-
-    std::pair<i16, i16> out;
-
-    out.first = convert_f32<i16>(
-        AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_LTRIGGER, 0));
-    out.second = convert_f32<i16>(
-        AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_RTRIGGER, 0));
-    out.first = std::max(
-        out.first,
-        convert_f32<i16>(
-            AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_BRAKE, 0)));
-    out.second = std::max(
-        out.second,
-        convert_f32<i16>(
-            AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_GAS, 0)));
-    out.second = std::max(
-        out.second,
-        convert_f32<i16>(
-            AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_THROTTLE, 0)));
-
-    if(out.first > 0 || out.second > 0)
-        return out;
-
-    return out;
 }
 
 bool AndroidEventBus::handleGamepadEvent(AInputEvent* event)
@@ -289,7 +410,7 @@ bool AndroidEventBus::handleGamepadEvent(AInputEvent* event)
         it = controllers->m_mapping
                  .insert({deviceId, controllers->m_cache.size() - 1})
                  .first;
-        Coffee::cDebug(
+        cDebug(
             "Creating controller mapping: {}({}, {}) -> {}",
             it->first,
             type,
@@ -395,30 +516,6 @@ bool AndroidEventBus::handleGamepadEvent(AInputEvent* event)
     return false;
 }
 
-inline CIKeyEvent::KeyModifiers meta_to_key_modifier(i32 meta)
-{
-    CIKeyEvent::KeyModifiers mod = CIKeyEvent::NoneModifier;
-    if(meta & AMETA_ALT_LEFT_ON)
-        mod |= CIKeyEvent::LAltModifier;
-    if(meta & AMETA_ALT_RIGHT_ON)
-        mod |= CIKeyEvent::RAltModifier;
-    if(meta & AMETA_SHIFT_LEFT_ON)
-        mod |= CIKeyEvent::LShiftModifier;
-    if(meta & AMETA_SHIFT_RIGHT_ON)
-        mod |= CIKeyEvent::RShiftModifier;
-    if(meta & AMETA_CTRL_LEFT_ON)
-        mod |= CIKeyEvent::LCtrlModifier;
-    if(meta & AMETA_CTRL_RIGHT_ON)
-        mod |= CIKeyEvent::RCtrlModifier;
-    if(meta & AMETA_SYM_ON)
-        mod |= CIKeyEvent::SuperModifier;
-    if(meta & AMETA_CAPS_LOCK_ON)
-        mod |= CIKeyEvent::CapsLockModifier;
-    if(meta & AMETA_NUM_LOCK_ON)
-        mod |= CIKeyEvent::NumLockModifier;
-    return mod;
-}
-
 void AndroidEventBus::handleKeyEvent(AInputEvent* event)
 {
     using namespace libc_types;
@@ -508,9 +605,11 @@ void AndroidEventBus::handleKeyEvent(AInputEvent* event)
     case AKEYCODE_CTRL_RIGHT: keyEvent(CK_RCtrl); break;
     case AKEYCODE_SPACE: keyEvent(CK_Space); break;
     case AKEYCODE_ENTER: keyEvent(CK_EnterNL); break;
+    case AKEYCODE_DEL: keyEvent(CK_Delete); break;
+    case AKEYCODE_FORWARD_DEL: keyEvent(CK_BackSpace); break;
         // clang-format on
     default:
-        Coffee::cDebug("Keycode: {0} {1} {2}", deviceId, source, button);
+        cDebug("Keycode: {0} {1} {2}", deviceId, source, button);
         break;
     }
 }
@@ -534,54 +633,20 @@ void AndroidEventBus::handleMotionEvent(AInputEvent* event)
             AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_Y, 0);
     } else if(feval<i32>(source, AINPUT_SOURCE_JOYSTICK))
     {
-        [[maybe_unused]] float x =
-            AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_X, 0);
-        [[maybe_unused]] float y =
-            AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_Y, 0);
-    } else if(feval<i32>(source, AINPUT_SOURCE_TOUCHSCREEN))
-    {
-        [[maybe_unused]] i32 edgeFlags = AMotionEvent_getEdgeFlags(event);
-        filterTouchEvent(event);
-    } else if(feval<i32>(source, AINPUT_SOURCE_MOUSE))
-    {
+        float x = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_X, 0);
+        float y = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_Y, 0);
+        cDebug("Joystick event: {0},{1}", x, y);
+    } else if(
+        feval<i32>(source, AINPUT_SOURCE_TOUCHSCREEN) &&
+        !feval<i32>(source, AINPUT_SOURCE_STYLUS))
+        handleTouchEvent(event);
+    else if(
+        feval<i32>(source, AINPUT_SOURCE_MOUSE) ||
+        feval<i32>(source, AINPUT_SOURCE_STYLUS))
         handleMouseEvent(event);
-    }
 }
 
-void AndroidEventBus::handleInputEvent(AInputEvent* event)
-{
-    using namespace enum_helpers;
-    using namespace libc_types;
-
-    i32 type   = AInputEvent_getType(event);
-    i32 source = AInputEvent_getSource(event);
-
-    if(source & AINPUT_SOURCE_GAMEPAD || source & AINPUT_SOURCE_JOYSTICK)
-    {
-        if(handleGamepadEvent(event))
-            return;
-    }
-
-    if((source & AINPUT_SOURCE_KEYBOARD) == AINPUT_SOURCE_KEYBOARD)
-    {
-        handleKeyEvent(event);
-        return;
-    }
-
-    switch(type)
-    {
-    case AINPUT_EVENT_TYPE_KEY: {
-        handleKeyEvent(event);
-        break;
-    }
-    case AINPUT_EVENT_TYPE_MOTION: {
-        handleMotionEvent(event);
-        break;
-    }
-    }
-}
-
-bool AndroidEventBus::filterTouchEvent(AInputEvent* event)
+bool AndroidEventBus::handleTouchEvent(AInputEvent* event)
 {
     using namespace ndk_helper;
     using namespace Coffee::Input;
@@ -647,10 +712,8 @@ bool AndroidEventBus::filterTouchEvent(AInputEvent* event)
 
         switch(flags)
         {
-        case AMOTION_EVENT_ACTION_HOVER_ENTER:
         case AMOTION_EVENT_ACTION_POINTER_DOWN:
         case AMOTION_EVENT_ACTION_DOWN: {
-            cDebug("Starting drag from {} with pointer {}", pos, pointer_idx);
             m_dragData.emplace(
                 pointer_id,
                 drag_data_t{
@@ -658,13 +721,10 @@ bool AndroidEventBus::filterTouchEvent(AInputEvent* event)
                 });
             break;
         }
-        case AMOTION_EVENT_ACTION_HOVER_MOVE:
         case AMOTION_EVENT_ACTION_MOVE: {
-            cDebug("Pointer moved: {}", pointer_idx);
             state = MOVED;
             break;
         }
-        case AMOTION_EVENT_ACTION_HOVER_EXIT:
         case AMOTION_EVENT_ACTION_POINTER_UP:
         case AMOTION_EVENT_ACTION_UP: {
             state = STOPPED;
@@ -672,13 +732,7 @@ bool AndroidEventBus::filterTouchEvent(AInputEvent* event)
         }
         }
 
-        const auto is_hover = stl_types::one_of<i32, i32, i32, i32>(
-            flags,
-            AMOTION_EVENT_ACTION_HOVER_ENTER,
-            AMOTION_EVENT_ACTION_HOVER_MOVE,
-            AMOTION_EVENT_ACTION_HOVER_EXIT);
-
-        if(state != NONE && !is_hover)
+        if(state != NONE)
         {
             out.type = CITouchMotionEvent::event_type;
             CITouchMotionEvent move{};
@@ -696,22 +750,9 @@ bool AndroidEventBus::filterTouchEvent(AInputEvent* event)
                     AMotionEvent_getY(event, i),
                 };
                 move.end      = state == STOPPED;
-                move.hover    = is_hover;
                 move.pressure = AMotionEvent_getPressure(event, i);
                 m_inputBus->inject(out, &move);
             }
-        }
-        if(state != NONE && is_hover)
-        {
-            out.type = CIMouseMoveEvent::event_type;
-            CIMouseMoveEvent move{};
-            move.origin = {
-                AMotionEvent_getHistoricalX(event, 0, 0),
-                AMotionEvent_getHistoricalY(event, 0, 0),
-            };
-            move.delta = pos - move.origin;
-            move.hover = true;
-            m_inputBus->inject(out, &move);
         }
         if(state == STOPPED)
             m_dragData.erase(pointer_id);
@@ -750,6 +791,51 @@ bool AndroidEventBus::filterTouchEvent(AInputEvent* event)
     }
 
     return false;
+}
+
+void AndroidEventBus::handleInputEvent(AInputEvent* event)
+{
+    using namespace enum_helpers;
+    using namespace libc_types;
+
+    i32 type   = AInputEvent_getType(event);
+    i32 source = AInputEvent_getSource(event);
+
+    if(source & AINPUT_SOURCE_GAMEPAD)
+    {
+        if(handleGamepadEvent(event))
+            return;
+    }
+
+    if((source & AINPUT_SOURCE_KEYBOARD) == AINPUT_SOURCE_KEYBOARD)
+    {
+        handleKeyEvent(event);
+        return;
+    }
+
+    switch(type)
+    {
+    case AINPUT_EVENT_TYPE_KEY: {
+        handleKeyEvent(event);
+        break;
+    }
+    case AINPUT_EVENT_TYPE_MOTION: {
+        handleMotionEvent(event);
+        break;
+    }
+    case AINPUT_EVENT_TYPE_CAPTURE:
+        cDebug("AINPUT_CAPTURE");
+        break;
+    case AINPUT_EVENT_TYPE_DRAG:
+        cDebug("AINPUT_DRAG");
+        break;
+    case AINPUT_EVENT_TYPE_TOUCH_MODE:
+        cDebug("AINPUT_TOUCH_MODE");
+        break;
+    case AINPUT_EVENT_TYPE_FOCUS:
+        cDebug("AINPUT_FOCUS");
+        break;
+    }
 }
 
 void AndroidEventBus::handleWindowEvent(android_app* app, libc_types::i32 event)

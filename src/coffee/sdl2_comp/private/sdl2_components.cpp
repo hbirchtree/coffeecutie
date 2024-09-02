@@ -924,6 +924,7 @@ void KeyboardInput::start_restricted(proxy_type& p, time_point const&)
             CIWEditEvent edit;
             edit.cursor = event.edit.start;
             edit.len    = event.edit.length;
+            edit.text = event.edit.text;
             EMIT_IEVENT(edit)
             break;
         }
@@ -939,12 +940,12 @@ void KeyboardInput::start_restricted(proxy_type& p, time_point const&)
     }
 }
 
-void KeyboardInput::openVirtual() const
+void KeyboardInput::startWriting() const
 {
     SDL_StartTextInput();
 }
 
-void KeyboardInput::closeVirtual() const
+void KeyboardInput::stopWriting() const
 {
     SDL_StopTextInput();
 }

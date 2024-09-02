@@ -215,7 +215,7 @@ struct CIScrollEvent : BaseEvent<CIEvent::Scroll>
  */
 struct CIWriteEvent : BaseEvent<CIEvent::TextInput>
 {
-    cstring text; /*! Submitted text*/
+    std::string text; /*! Submitted text*/
 };
 
 /*!
@@ -223,9 +223,9 @@ struct CIWriteEvent : BaseEvent<CIEvent::TextInput>
  */
 struct CIWEditEvent : BaseEvent<CIEvent::TextEdit>
 {
-    i32     cursor; /*!< Cursor position*/
-    i32     len;    /*!< Text length*/
-    cstring text;   /*!< Current text*/
+    i32         cursor; /*!< Cursor position*/
+    i32         len;    /*!< Text length*/
+    std::string text;   /*!< Current text*/
 };
 
 /*!
@@ -477,6 +477,7 @@ struct CITouchMotionEvent : BaseEvent<CIEvent::TouchMotion>
     {
         return current - origin;
     }
+
     inline Vecf2 frame_delta() const
     {
         return current - previous;

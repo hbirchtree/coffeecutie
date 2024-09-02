@@ -1,4 +1,4 @@
-﻿#include <coffee/android/android_main.h>
+#include <coffee/android/android_main.h>
 
 #include <coffee/anative/anative_comp.h>
 #include <coffee/comp_app/bundle.h>
@@ -72,6 +72,55 @@ using namespace Coffee;
 using namespace jnipp_operators;
 using namespace platform::url;
 using re = jnipp::return_type;
+
+namespace {
+
+auto get_activity()
+{
+    return "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
+}
+
+auto get_window()
+{
+    auto getWindow = "getWindow"_jmethod.ret("android.view.Window");
+    auto Window    = "android.view.Window"_jclass;
+    return Window(get_activity()[getWindow]());
+}
+
+auto get_decor_view()
+{
+    auto getDecorView = "getDecorView"_jmethod.ret("android.view.View");
+    auto View         = "android.view.View"_jclass;
+    return View(get_window()[getDecorView]());
+}
+
+auto get_display()
+{
+    auto activityObject =
+        "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
+    auto getDisplay = "getDisplay"_jmethod.ret("android.view.Display");
+
+    return "android.view.Display"_jclass(activityObject[getDisplay]());
+}
+
+auto get_display_metrics()
+{
+    auto activityObject =
+        "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
+
+    auto Resources      = "android.content.res.Resources"_jclass;
+    auto DisplayMetrics = "android.util.DisplayMetrics"_jclass;
+
+    auto getResources =
+        "getResources"_jmethod.ret("android.content.res.Resources");
+    auto getDisplayMetrics =
+        "getDisplayMetrics"_jmethod.ret("android.util.DisplayMetrics");
+
+    auto resourceObject = Resources(activityObject[getResources]());
+    return DisplayMetrics(resourceObject[getDisplayMetrics]());
+}
+
+} // namespace
 
 intent::intent()
     : m_intent({{}, {}})
@@ -264,6 +313,35 @@ Url app_info::external_data_path()
     }
 }
 
+std::vector<std::string> app_info::abis()
+{
+    auto Build = "android.os.Build"_jclass;
+
+    std::vector<std::string> out;
+
+    try
+    {
+        auto SUPPORTED_ABIS = "SUPPORTED_ABIS"_jfield.as("java.lang.String");
+
+        auto abis = jnipp::java::array_type_unwrapper<re::object_>(
+            *Build[SUPPORTED_ABIS]);
+
+        for(auto abi : *abis)
+            out.push_back(jnipp::java::type_unwrapper<std::string>(abi));
+    } catch(jnipp::java_exception const&)
+    {
+        auto CPU_ABI  = "CPU_ABI"_jfield.as("java.lang.String");
+        auto CPU_ABI2 = "CPU_ABI2"_jfield.as("java.lang.String");
+
+        out.push_back(
+            jnipp::java::type_unwrapper<std::string>(*Build[CPU_ABI]));
+        out.push_back(
+            jnipp::java::type_unwrapper<std::string>(*Build[CPU_ABI2]));
+    }
+
+    return out;
+}
+
 std::optional<::jnipp::java::object> app_info::get_service(
     std::string const& service)
 {
@@ -277,6 +355,20 @@ std::optional<::jnipp::java::object> app_info::get_service(
     auto class_type = jnipp::java::objects::get_class(instance);
 
     return jnipp::java::object{Context.clazz, instance};
+}
+
+std::optional<jnipp::wrapping::jobject> app_info::input_method_service()
+{
+    auto InputMethodManager =
+        "android.view.inputmethod.InputMethodManager"_jclass;
+    if(auto service = get_service("input_method"); service.has_value())
+        return InputMethodManager(service->instance);
+    return std::nullopt;
+}
+
+std::optional<::jnipp::java::object> app_info::input_service()
+{
+    return get_service("input");
 }
 
 ANativeActivity* app_info::activity() const
@@ -353,6 +445,31 @@ std::vector<std::string> app_info::system_features() const
     std::sort(features.begin(), features.end());
 
     return features;
+}
+
+void input_method_manager::show_soft_input()
+{
+    auto view          = get_decor_view();
+    auto showSoftInput = "showSoftInput"_jmethod.arg("android.view.View")
+                             .arg<jint>()
+                             .ret<jnipp::return_type::bool_>();
+    auto input_method_manager = *app_info().input_method_service();
+    input_method_manager[showSoftInput](view, 0);
+}
+
+void input_method_manager::hide_soft_input()
+{
+    auto view           = get_decor_view();
+    auto getWindowToken = "getWindowToken"_jmethod.ret("android.os.IBinder");
+    auto IBinder        = "android.os.IBinder"_jclass;
+    auto token          = IBinder(view[getWindowToken]());
+
+    auto hideSoftInputFromWindow =
+        "hideSoftInputFromWindow"_jmethod.arg("android.os.IBinder")
+            .arg<jint>()
+            .ret<jnipp::return_type::bool_>();
+    auto input_method_manager = *app_info().input_method_service();
+    input_method_manager[hideSoftInputFromWindow](token, 0);
 }
 
 std::optional<network_stats::result_t> network_stats::query(network_class net)
@@ -462,50 +579,12 @@ AAssetManager* activity_manager::asset_manager()
     return Coffee::coffee_app->activity->assetManager;
 }
 
-std::vector<std::string> cpu_abis()
-{
-    auto Build = "android.os.Build"_jclass;
-
-    std::vector<std::string> out;
-
-    try
-    {
-        auto SUPPORTED_ABIS = "SUPPORTED_ABIS"_jfield.as("java.lang.String");
-
-        auto abis = jnipp::java::array_type_unwrapper<re::object_>(
-            *Build[SUPPORTED_ABIS]);
-
-        for(auto abi : *abis)
-            out.push_back(jnipp::java::type_unwrapper<std::string>(abi));
-    } catch(jnipp::java_exception const&)
-    {
-        auto CPU_ABI  = "CPU_ABI"_jfield.as("java.lang.String");
-        auto CPU_ABI2 = "CPU_ABI2"_jfield.as("java.lang.String");
-
-        out.push_back(
-            jnipp::java::type_unwrapper<std::string>(*Build[CPU_ABI]));
-        out.push_back(
-            jnipp::java::type_unwrapper<std::string>(*Build[CPU_ABI2]));
-    }
-
-    return out;
-}
-
-static auto getDisplay()
-{
-    auto activityObject =
-        "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
-    auto getDisplay = "getDisplay"_jmethod.ret("android.view.Display");
-
-    return "android.view.Display"_jclass(activityObject[getDisplay]());
-}
-
 display_info::hdr_mode_t display_info::hdr_modes()
 {
     if(coffee_app->activity->sdkVersion < 30)
         return hdr_mode_t::none;
 
-    auto display = getDisplay();
+    auto display = get_display();
 
     auto getHdrCapabilities = "getHdrCapabilities"_jmethod.ret(
         "android.view.Display$HdrCapabilities");
@@ -550,7 +629,7 @@ bool display_info::is_low_latency()
     if(coffee_app->activity->sdkVersion < 30)
         return false;
 
-    auto display = getDisplay();
+    auto display = get_display();
     auto isMinimalPostProcessingSupported =
         "isMinimalPostProcessingSupported"_jmethod.ret<re::bool_>();
 
@@ -562,7 +641,7 @@ bool display_info::is_wide_gamut()
     if(coffee_app->activity->sdkVersion < 30)
         return false;
 
-    auto display          = getDisplay();
+    auto display          = get_display();
     auto isWideColorGamut = "isWideColorGamut"_jmethod.ret<re::bool_>();
     return display[isWideColorGamut]();
 }
@@ -574,7 +653,12 @@ std::optional<display_info::insets_t> display_info::safe_insets()
     if(coffee_app->activity->sdkVersion < 30)
         return std::nullopt;
 
-    auto display   = getDisplay();
+    static std::optional<display_info::insets_t> cached_insets;
+
+    if(cached_insets.has_value())
+        return *cached_insets;
+
+    auto display   = get_display();
     auto getCutout = "getCutout"_jmethod.ret("android.view.DisplayCutout");
 
     auto cutoutValue = display[getCutout]();
@@ -588,50 +672,63 @@ std::optional<display_info::insets_t> display_info::safe_insets()
     auto getSafeInsetRight  = "getSafeInsetRight"_jmethod.ret<re::int_>();
     auto getSafeInsetTop    = "getSafeInsetTop"_jmethod.ret<re::int_>();
 
-    return insets_t{
+    cached_insets = insets_t{
         .top    = static_cast<f32>(cutout[getSafeInsetTop]()),
         .bottom = static_cast<f32>(cutout[getSafeInsetBottom]()),
         .left   = static_cast<f32>(cutout[getSafeInsetLeft]()),
         .right  = static_cast<f32>(cutout[getSafeInsetRight]()),
     };
+    return *cached_insets;
 }
 
 display_info::rotation_t display_info::rotation()
 {
     if(coffee_app->activity->sdkVersion < 30)
         return display_info::rotation_t::portrait_0;
-    auto display          = getDisplay();
+    auto display          = get_display();
     auto getRotation      = "getRotation"_jmethod.ret<re::int_>();
     auto current_rotation = display[getRotation]();
     return static_cast<rotation_t>(current_rotation);
 }
 
+typing::vector_types::Vecf2 display_info::physical_size()
+{
+    static std::optional<typing::vector_types::Vecf2> cached_size;
+
+    if(cached_size.has_value())
+        return *cached_size;
+
+    auto displayMetrics = get_display_metrics();
+    auto xdpi           = *displayMetrics["xdpi"_jfield.as<re::float_>()];
+    auto ydpi           = *displayMetrics["ydpi"_jfield.as<re::float_>()];
+    auto heightPixels   = *displayMetrics["heightPixels"_jfield.as<re::int_>()];
+    auto widthPixels    = *displayMetrics["widthPixels"_jfield.as<re::int_>()];
+
+    cached_size = typing::vector_types::Vecf2{
+        widthPixels / xdpi,
+        heightPixels / ydpi,
+    };
+    return *cached_size;
+}
+
 f32 display_info::dpi()
 {
-    auto activityObject =
-        "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
+    static std::optional<f32> cached_dpi{};
 
-    auto Resources      = "android.content.res.Resources"_jclass;
-    auto DisplayMetrics = "android.util.DisplayMetrics"_jclass;
+    if(cached_dpi.has_value())
+        return *cached_dpi;
 
-    auto getResources =
-        "getResources"_jmethod.ret("android.content.res.Resources");
-    auto getDisplayMetrics =
-        "getDisplayMetrics"_jmethod.ret("android.util.DisplayMetrics");
+    auto displayMetrics = get_display_metrics();
 
-    auto resourceObject = Resources(activityObject[getResources]());
-    auto displayMetrics = DisplayMetrics(resourceObject[getDisplayMetrics]());
-
-    auto displayDpi = *displayMetrics["densityDpi"_jfield.as<re::int_>()];
-
-    return displayDpi;
+    cached_dpi = *displayMetrics["densityDpi"_jfield.as<re::int_>()] / 160.f;
+    return *cached_dpi;
 }
 
 f32 display_info::refresh_rate()
 {
     if(coffee_app->activity->sdkVersion < 30)
         return 60.f;
-    auto display        = getDisplay();
+    auto display        = get_display();
     auto getRefreshRate = "getRefreshRate"_jmethod.ret<re::float_>();
 
     return display[getRefreshRate]();
@@ -688,7 +785,7 @@ STATICINLINE void GetExtras()
 
     {
         /* Get system ABIs */
-        for(auto const& abi : android::cpu_abis())
+        for(auto const& abi : android::app_info().abis())
             cDebug("{0}", abi);
     }
 

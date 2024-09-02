@@ -156,13 +156,13 @@ struct Dialogs
 
 struct DisplayInfo
 {
-    virtual size_2d_t       virtualSize() const                     = 0;
-    virtual libc_types::u32 count() const                           = 0;
-    virtual libc_types::u32 currentDisplay() const                  = 0;
-    virtual size_2d_t       size(libc_types::u32 idx) const         = 0;
-    virtual size_2d_t       physicalSize(libc_types::u32 idx) const = 0;
-    virtual libc_types::f32 dpi(libc_types::u32 idx) const          = 0;
-    virtual libc_types::f32 diagonal(libc_types::u32 idx) const     = 0;
+    virtual size_2d_t       virtualSize() const                         = 0;
+    virtual libc_types::u32 count() const                               = 0;
+    virtual libc_types::u32 currentDisplay() const                      = 0;
+    virtual size_2d_t       size(libc_types::u32 idx = 0) const         = 0;
+    virtual size_2d_t       physicalSize(libc_types::u32 idx = 0) const = 0;
+    virtual libc_types::f32 dpi(libc_types::u32 idx = 0) const          = 0;
+    virtual libc_types::f32 diagonal(libc_types::u32 idx = 0) const     = 0;
 };
 
 struct SingleDisplayInfo : DisplayInfo
@@ -309,11 +309,11 @@ struct KeyboardInput
 {
     using KeyModifiers = Coffee::Input::CIKeyEvent::KeyModifiers;
 
-    virtual void openVirtual() const
+    virtual void startWriting() const
     {
     }
 
-    virtual void closeVirtual() const
+    virtual void stopWriting() const
     {
     }
 

@@ -4,6 +4,7 @@
 #include <peripherals/stl/error_code.h>
 #include <peripherals/stl/standard_exceptions.h>
 #include <peripherals/stl/types.h>
+#include <peripherals/typing/vectors/vector_types.h>
 #include <url/url.h>
 
 #include <map>
@@ -115,9 +116,13 @@ struct app_info
     platform::url::Url                cache_path();
     platform::url::Url                external_data_path();
     std::optional<platform::url::Url> obb_path();
+    std::vector<std::string>          abis();
 
     std::optional<::jnipp::java::object> get_service(
         std::string const& service);
+
+    std::optional<jnipp::wrapping::jobject> input_method_service();
+    std::optional<::jnipp::java::object> input_service();
 
     ANativeActivity* activity() const;
     AConfiguration*  configuration() const;
@@ -135,6 +140,12 @@ struct app_info
 
     device_type_t            device_type() const;
     std::vector<std::string> system_features() const;
+};
+
+struct input_method_manager
+{
+    static void show_soft_input();
+    static void hide_soft_input();
 };
 
 struct network_stats
@@ -230,13 +241,14 @@ struct display_info
     std::optional<insets_t> safe_insets();
     rotation_t              rotation();
 
+    typing::vector_types::Vecf2 size();
+    typing::vector_types::Vecf2 physical_size();
+
     f32 dpi();
     f32 refresh_rate();
 };
 
 C_FLAGS(display_info::hdr_mode_t, u32);
-
-extern std::vector<std::string> cpu_abis();
 
 } // namespace android
 
