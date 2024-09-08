@@ -41,12 +41,13 @@ void install_imgui_widgets(
 
     if(false)
     {
-        auto frame_ui                      = e.create_entity({
-                                 .components =
+        auto frame_ui = e.create_entity({
+            .components =
                 {
                     typeid(imgui::ImGuiWidget).hash_code(),
                 },
         });
+
         frame_ui.get<imgui::ImGuiWidget>() = imgui::widgets::StatsMenu();
     }
 }

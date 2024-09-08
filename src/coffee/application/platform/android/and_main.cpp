@@ -69,46 +69,14 @@ std::string jni_error_category::message(int error_code) const
 }
 
 using namespace Coffee;
-using namespace jnipp_operators;
+using namespace jnipp::literals;
 using namespace platform::url;
 using re = jnipp::return_type;
 
 namespace {
 
-auto get_activity()
-{
-    return "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
-}
-
-auto get_window()
-{
-    auto getWindow = "getWindow"_jmethod.ret("android.view.Window");
-    auto Window    = "android.view.Window"_jclass;
-    return Window(get_activity()[getWindow]());
-}
-
-auto get_decor_view()
-{
-    auto getDecorView = "getDecorView"_jmethod.ret("android.view.View");
-    auto View         = "android.view.View"_jclass;
-    return View(get_window()[getDecorView]());
-}
-
-auto get_display()
-{
-    auto activityObject =
-        "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
-    auto getDisplay = "getDisplay"_jmethod.ret("android.view.Display");
-
-    return "android.view.Display"_jclass(activityObject[getDisplay]());
-}
-
 auto get_display_metrics()
 {
-    auto activityObject =
-        "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
-
-    auto Resources      = "android.content.res.Resources"_jclass;
     auto DisplayMetrics = "android.util.DisplayMetrics"_jclass;
 
     auto getResources =
@@ -116,22 +84,40 @@ auto get_display_metrics()
     auto getDisplayMetrics =
         "getDisplayMetrics"_jmethod.ret("android.util.DisplayMetrics");
 
-    auto resourceObject = Resources(activityObject[getResources]());
-    return DisplayMetrics(resourceObject[getDisplayMetrics]());
+    auto resourceObject = app_objects::activity()[getResources]();
+    return resourceObject[getDisplayMetrics]();
 }
 
 } // namespace
 
+jnipp::wrapping::jobject app_objects::display()
+{
+    auto getDisplay = "getDisplay"_jmethod.ret("android.view.Display");
+    return activity()[getDisplay]();
+}
+
+jnipp::wrapping::jobject app_objects::window()
+{
+    auto getWindow = "getWindow"_jmethod.ret("android.view.Window");
+    return activity()[getWindow]();
+}
+
+jnipp::wrapping::jobject app_objects::activity()
+{
+    return "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
+}
+
+jnipp::wrapping::jobject app_objects::decor_view()
+{
+    auto getDecorView = "getDecorView"_jmethod.ret("android.view.View");
+    return window()[getDecorView]();
+}
+
 intent::intent()
     : m_intent({{}, {}})
 {
-    auto activity =
-        "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
-    auto Intent = "android.content.Intent"_jclass;
-
     auto getIntent = "getIntent"_jmethod.ret("android.content.Intent");
-
-    m_intent = Intent(activity[getIntent]());
+    m_intent       = app_objects::activity()[getIntent]();
 }
 
 std::string intent::action()
@@ -154,19 +140,15 @@ std::string intent::data()
     if(!java::objects::not_null(m_intent))
         return {};
 
-    auto Uri = "android.net.Uri"_jclass;
-
     auto getData  = "getData"_jmethod.ret("android.net.Uri");
     auto toString = "toString"_jmethod.ret("java.lang.String");
 
     auto intentData = m_intent[getData]();
 
-    if(!intentData)
+    if(java::objects::is_null(intentData))
         return {};
 
-    auto intentUri = Uri(intentData);
-
-    return jnipp::java::type_unwrapper<std::string>(intentUri[toString]());
+    return jnipp::java::type_unwrapper<std::string>(intentData[toString]());
 }
 
 std::set<std::string> intent::categories()
@@ -181,12 +163,11 @@ std::set<std::string> intent::categories()
 
     auto categories = m_intent[getCategories]();
 
-    if(!categories)
+    if(java::objects::is_null(categories))
         return {};
 
-    auto categorySet = Set(categories);
     auto categoryArray =
-        jnipp::java::array_type_unwrapper<re::object_>(categorySet[toArray]());
+        jnipp::java::array_type_unwrapper<re::object_>(categories[toArray]());
 
     std::set<std::string> outCategories;
 
@@ -204,9 +185,6 @@ std::map<std::string, std::string> intent::extras()
 
     std::map<std::string, std::string> out;
 
-    auto Bundle = "android.os.Bundle"_jclass;
-    auto Set    = "java.util.Set"_jclass;
-
     auto getExtras      = "getExtras"_jmethod.ret("android.os.Bundle");
     auto getStringExtra = "getStringExtra"_jmethod.ret("java.lang.String")
                               .arg<std::string>("java.lang.String");
@@ -214,12 +192,11 @@ std::map<std::string, std::string> intent::extras()
     auto setArray =
         "toArray"_jmethod.ret<re::object_array_>("java.lang.Object");
 
-    auto extrasRef = m_intent[getExtras]();
+    auto extras = m_intent[getExtras]();
 
-    if(jnipp::java::objects::not_null(extrasRef))
+    if(jnipp::java::objects::not_null(extras))
     {
-        auto extras       = Bundle(extrasRef);
-        auto extrasKeySet = Set(extras[keySet]());
+        auto extrasKeySet = extras[keySet]();
 
         auto extraKeys = jnipp::java::array_type_unwrapper<re::object_>(
             extrasKeySet[setArray]());
@@ -287,12 +264,11 @@ Url app_info::data_path()
 Url app_info::cache_path()
 {
     auto Context         = "android.content.Context"_jclass;
-    auto File            = "java.io.File"_jclass;
     auto getCacheDir     = "getCacheDir"_jmethod.ret("java.io.File");
     auto getAbsolutePath = "getAbsolutePath"_jmethod.ret("java.lang.String");
 
     auto context  = Context(coffee_app->activity->clazz);
-    auto cacheDir = File(context[getCacheDir]());
+    auto cacheDir = context[getCacheDir]();
 
     return constructors::MkSysUrl(
         java::type_unwrapper<std::string>(cacheDir[getAbsolutePath]()));
@@ -342,8 +318,8 @@ std::vector<std::string> app_info::abis()
     return out;
 }
 
-std::optional<::jnipp::java::object> app_info::get_service(
-    std::string const& service)
+std::optional<::jnipp::wrapping::jobject> app_info::get_service(
+    std::string const& service, std::optional<std::string> service_type)
 {
     auto Context          = "android.content.Context"_jclass;
     auto getSystemService = "getSystemService"_jmethod.arg("java.lang.String")
@@ -352,23 +328,22 @@ std::optional<::jnipp::java::object> app_info::get_service(
     auto instance = Context(coffee_app->activity->clazz)[getSystemService](
         jnipp::java::type_wrapper(service));
 
-    auto class_type = jnipp::java::objects::get_class(instance);
+    auto class_type = jnipp::get_class_name(instance);
 
-    return jnipp::java::object{Context.clazz, instance};
+    if(service_type.has_value())
+        instance = instance.cast({*service_type});
+    return instance;
 }
 
 std::optional<jnipp::wrapping::jobject> app_info::input_method_service()
 {
-    auto InputMethodManager =
-        "android.view.inputmethod.InputMethodManager"_jclass;
-    if(auto service = get_service("input_method"); service.has_value())
-        return InputMethodManager(service->instance);
-    return std::nullopt;
+    return get_service(
+        "input_method", "android.view.inputmethod.InputMethodManager");
 }
 
-std::optional<::jnipp::java::object> app_info::input_service()
+std::optional<jnipp::wrapping::jobject> app_info::input_service()
 {
-    return get_service("input");
+    return get_service("input", "android.hardware.input.InputManager");
 }
 
 ANativeActivity* app_info::activity() const
@@ -417,9 +392,8 @@ std::vector<std::string> app_info::system_features() const
 
     std::vector<std::string> features;
 
-    auto Context        = "android.content.Context"_jclass;
-    auto PackageManager = "android.content.pm.PackageManager"_jclass;
-    auto FeatureInfo    = "android.content.pm.FeatureInfo"_jclass;
+    auto Context     = "android.content.Context"_jclass;
+    auto FeatureInfo = "android.content.pm.FeatureInfo"_jclass;
 
     auto getPackageManager =
         "getPackageManager"_jmethod.ret("android.content.pm.PackageManager");
@@ -429,8 +403,8 @@ std::vector<std::string> app_info::system_features() const
                 "android.content.pm.FeatureInfo");
     auto name = "name"_jfield.as("java.lang.String");
 
-    auto packageManager = PackageManager(
-        Context(coffee_app->activity->clazz)[getPackageManager]());
+    auto packageManager =
+        Context(coffee_app->activity->clazz)[getPackageManager]();
     auto systemFeatures = array_type_unwrapper<re::object_>(
         packageManager[getSystemAvailableFeatures]());
 
@@ -449,7 +423,7 @@ std::vector<std::string> app_info::system_features() const
 
 void input_method_manager::show_soft_input()
 {
-    auto view          = get_decor_view();
+    auto view          = app_objects::decor_view();
     auto showSoftInput = "showSoftInput"_jmethod.arg("android.view.View")
                              .arg<jint>()
                              .ret<jnipp::return_type::bool_>();
@@ -459,10 +433,9 @@ void input_method_manager::show_soft_input()
 
 void input_method_manager::hide_soft_input()
 {
-    auto view           = get_decor_view();
+    auto view           = app_objects::decor_view();
     auto getWindowToken = "getWindowToken"_jmethod.ret("android.os.IBinder");
-    auto IBinder        = "android.os.IBinder"_jclass;
-    auto token          = IBinder(view[getWindowToken]());
+    auto token          = view[getWindowToken]();
 
     auto hideSoftInputFromWindow =
         "hideSoftInputFromWindow"_jmethod.arg("android.os.IBinder")
@@ -480,14 +453,12 @@ std::optional<network_stats::result_t> network_stats::query(network_class net)
     auto System            = "java.lang.System"_jclass;
     auto currentTimeMillis = "currentTimeMillis"_jmethod.ret<re::long_>();
 
-    auto NetStats     = "android.app.usage.NetworkStatsManager"_jclass;
     auto querySummary = "querySummary"_jmethod.arg<jint>()
                             .arg("java.lang.String")
                             .arg<jlong>()
                             .arg<jlong>()
                             .ret("android.app.usage.NetworkStats");
 
-    auto NetworkStats = "android.app.usage.NetworkStats"_jclass;
     auto getNextBucket =
         "getNextBucket"_jmethod.arg("android.app.usage.NetworkStats$Bucket")
             .ret<re::bool_>();
@@ -499,14 +470,15 @@ std::optional<network_stats::result_t> network_stats::query(network_class net)
     auto getRxBytes = "getRxBytes"_jmethod.ret<re::long_>();
     auto getTxBytes = "getTxBytes"_jmethod.ret<re::long_>();
 
-    auto net_stats = NetStats(*app_info().get_service("netstats"));
+    auto net_stats = *app_info().get_service(
+        "netstats", "android.app.usage.NetworkStatsManager");
 
     java::value sub_id = ::jvalue();
     sub_id->l          = 0;
 
     auto now = System[currentTimeMillis]();
 
-    auto stats = NetworkStats(net_stats[querySummary](net, *sub_id, 0, now));
+    auto stats = net_stats[querySummary](net, *sub_id, 0, now);
 
     auto bucket = Bucket.construct(bucketConstruct);
 
@@ -529,14 +501,12 @@ std::optional<network_stats::result_t> network_stats::query(network_class net)
 
 std::optional<activity_manager::memory_info> activity_manager::get_mem_info()
 {
-    auto Activity      = "android.app.ActivityManager"_jclass;
-    auto MemoryInfo    = "android.app.ActivityManager$MemoryInfo"_jclass;
-    auto getMemoryInfo = "getMemoryInfo"_jmethod.arg(MemoryInfo);
-
+    auto MemoryInfo          = "android.app.ActivityManager$MemoryInfo"_jclass;
     auto memoryInfoConstruct = "<init>"_jmethod;
+    auto mem_info            = MemoryInfo.construct(memoryInfoConstruct);
 
-    auto mem_info         = MemoryInfo.construct(memoryInfoConstruct);
-    auto activity_manager = Activity(*app_info().get_service("activity"));
+    auto activity_manager =
+        *app_info().get_service("activity", "android.app.ActivityManager");
 
     if(!C_OCAST<::jvalue>(mem_info).z || !C_OCAST<::jvalue>(activity_manager).z)
         return {};
@@ -546,6 +516,7 @@ std::optional<activity_manager::memory_info> activity_manager::get_mem_info()
     auto total      = "totalMem"_jfield.as<re::long_>();
     auto is_low_mem = "lowMemory"_jfield.as<re::bool_>();
 
+    auto getMemoryInfo = "getMemoryInfo"_jmethod.arg(MemoryInfo);
     activity_manager[getMemoryInfo](mem_info);
 
     return memory_info{
@@ -584,7 +555,7 @@ display_info::hdr_mode_t display_info::hdr_modes()
     if(coffee_app->activity->sdkVersion < 30)
         return hdr_mode_t::none;
 
-    auto display = get_display();
+    auto display = app_objects::display();
 
     auto getHdrCapabilities = "getHdrCapabilities"_jmethod.ret(
         "android.view.Display$HdrCapabilities");
@@ -601,11 +572,10 @@ display_info::hdr_mode_t display_info::hdr_modes()
         hdr10_plus,
     };
 
-    auto HdrCapabilities = "android.view.Display$HdrCapabilities"_jclass;
     auto getSupportedHdrTypes =
         "getSupportedHdrTypes"_jmethod.ret<re::int_array_>();
 
-    auto hdrCapabilities = HdrCapabilities(display[getHdrCapabilities]());
+    auto hdrCapabilities = display[getHdrCapabilities]();
     auto hdrTypes        = hdrCapabilities[getSupportedHdrTypes]();
 
     hdr_mode_t out = none;
@@ -629,7 +599,7 @@ bool display_info::is_low_latency()
     if(coffee_app->activity->sdkVersion < 30)
         return false;
 
-    auto display = get_display();
+    auto display = app_objects::display();
     auto isMinimalPostProcessingSupported =
         "isMinimalPostProcessingSupported"_jmethod.ret<re::bool_>();
 
@@ -641,7 +611,7 @@ bool display_info::is_wide_gamut()
     if(coffee_app->activity->sdkVersion < 30)
         return false;
 
-    auto display          = get_display();
+    auto display          = app_objects::display();
     auto isWideColorGamut = "isWideColorGamut"_jmethod.ret<re::bool_>();
     return display[isWideColorGamut]();
 }
@@ -658,14 +628,12 @@ std::optional<display_info::insets_t> display_info::safe_insets()
     if(cached_insets.has_value())
         return *cached_insets;
 
-    auto display   = get_display();
-    auto getCutout = "getCutout"_jmethod.ret("android.view.DisplayCutout");
+    auto display = app_objects::display();
 
-    auto cutoutValue = display[getCutout]();
-    if(!cutoutValue)
+    auto getCutout = "getCutout"_jmethod.ret("android.view.DisplayCutout");
+    auto cutout    = display[getCutout]();
+    if(jnipp::java::objects::is_null(cutout))
         return std::nullopt;
-    auto DisplayCutout = "android.view.DisplayCutout"_jclass;
-    auto cutout        = DisplayCutout(cutoutValue);
 
     auto getSafeInsetBottom = "getSafeInsetBottom"_jmethod.ret<re::int_>();
     auto getSafeInsetLeft   = "getSafeInsetLeft"_jmethod.ret<re::int_>();
@@ -685,7 +653,7 @@ display_info::rotation_t display_info::rotation()
 {
     if(coffee_app->activity->sdkVersion < 30)
         return display_info::rotation_t::portrait_0;
-    auto display          = get_display();
+    auto display          = app_objects::display();
     auto getRotation      = "getRotation"_jmethod.ret<re::int_>();
     auto current_rotation = display[getRotation]();
     return static_cast<rotation_t>(current_rotation);
@@ -728,7 +696,7 @@ f32 display_info::refresh_rate()
 {
     if(coffee_app->activity->sdkVersion < 30)
         return 60.f;
-    auto display        = get_display();
+    auto display        = app_objects::display();
     auto getRefreshRate = "getRefreshRate"_jmethod.ret<re::float_>();
 
     return display[getRefreshRate]();
@@ -753,7 +721,7 @@ using namespace android;
 
 STATICINLINE void GetExtras()
 {
-    using namespace jnipp_operators;
+    using namespace jnipp::literals;
 
     {
         /* Get display DPI */
@@ -827,7 +795,7 @@ static std::chrono::steady_clock::time_point launch_time;
 
 STATICINLINE void InitializeState(struct android_app* state)
 {
-    using namespace jnipp_operators;
+    using namespace jnipp::literals;
 
     coffee_app = state;
 
@@ -931,8 +899,8 @@ STATICINLINE void InitializeState(struct android_app* state)
         return 1;
     };
 
-    auto activityName = jnipp::java::objects::get_class(
-        jnipp::java::object({}, state->activity->clazz));
+    auto activityName =
+        jnipp::get_class_name(jnipp::java::object({}, state->activity->clazz));
 
     cDebug("State:       {0}", str::fmt::pointerify(state));
     cDebug("Activity:    {0}", activityName);

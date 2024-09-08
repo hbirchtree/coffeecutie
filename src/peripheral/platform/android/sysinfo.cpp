@@ -4,7 +4,7 @@
 #include <coffee/jni/jnipp.h>
 
 using re = ::jnipp::return_type;
-using namespace ::jnipp_operators;
+using namespace ::jnipp::literals;
 
 namespace platform::info::os::android {
 

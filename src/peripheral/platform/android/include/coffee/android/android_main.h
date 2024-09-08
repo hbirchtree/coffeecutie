@@ -118,11 +118,12 @@ struct app_info
     std::optional<platform::url::Url> obb_path();
     std::vector<std::string>          abis();
 
-    std::optional<::jnipp::java::object> get_service(
-        std::string const& service);
+    std::optional<jnipp::wrapping::jobject> get_service(
+        std::string const&         service,
+        std::optional<std::string> service_type);
 
     std::optional<jnipp::wrapping::jobject> input_method_service();
-    std::optional<::jnipp::java::object> input_service();
+    std::optional<jnipp::wrapping::jobject> input_service();
 
     ANativeActivity* activity() const;
     AConfiguration*  configuration() const;
@@ -140,6 +141,14 @@ struct app_info
 
     device_type_t            device_type() const;
     std::vector<std::string> system_features() const;
+};
+
+struct app_objects
+{
+    static jnipp::wrapping::jobject display();
+    static jnipp::wrapping::jobject window();
+    static jnipp::wrapping::jobject activity();
+    static jnipp::wrapping::jobject decor_view();
 };
 
 struct input_method_manager

@@ -280,7 +280,7 @@ std::string GetSystemDirectedPath(std::string suffix, RSCA storage)
 {
     DProfContext _("JNI path resolution");
 
-    using namespace ::jnipp_operators;
+    using namespace ::jnipp::literals;
 
     //    using FileType = JavaClass<javaioFile, void, void>;
 
@@ -301,7 +301,7 @@ std::string GetSystemDirectedPath(std::string suffix, RSCA storage)
         auto fileInstance = File[createTempFile](
             filePath.removeExt().internUrl, "." + filePath.extension());
 
-        auto tempFile = File(fileInstance)[getCanonicalPath]();
+        auto tempFile = fileInstance[getCanonicalPath]();
 
         return jnipp::java::type_unwrapper<std::string>(tempFile);
     }
