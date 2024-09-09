@@ -529,8 +529,8 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
 
     auto display  = e.service<DisplayHandle>()->context().display;
     auto ptr_info = e.service<comp_app::PtrNativeWindowInfo>();
-    std::vector<std::pair<EGLAttrib, EGLAttrib>> attribs;
 #if defined(EGL_VERSION_1_5)
+    std::vector<std::pair<EGLAttrib, EGLAttrib>> attribs;
     auto&          config = comp_app::AppLoader::config<comp_app::GLConfig>(e);
     DisplayHandle& handle = *e.service<DisplayHandle>();
 
@@ -553,38 +553,36 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
 #if defined(EGL_GL_COLORSPACE_BT2020_PQ_EXT)
         // else if(handle.ext.colorspaces.bt2020_pq)
         //     colorspace = EGL_GL_COLORSPACE_BT2020_PQ_EXT;
-#endif
+#endif // defined(EGL_GL_COLORSPACE_BT2020_PQ_EXT)
 #if defined(EGL_GL_COLORSPACE_BT2020_HLG_EXT)
         else if(handle.ext.colorspaces.bt2020_hlg)
             colorspace = EGL_GL_COLORSPACE_BT2020_HLG_EXT;
-#endif
+#endif // defined(EGL_GL_COLORSPACE_BT2020_HLG_EXT)
 
         attribs.push_back({EGL_GL_COLORSPACE, colorspace});
     }
-#endif
 
     attribs.push_back({EGL_NONE, EGL_NONE});
+#endif // defined(EGL_VERSION_1_5)
 
-    m_surface = eglGetCurrentSurface(EGL_DRAW);
 
-    if(m_surface == EGL_NO_SURFACE)
-    {
+    m_surface = {};
+
 #if defined(EGL_VERSION_1_5)
-        if(handle.m_major > 1 || (handle.m_major == 1 && handle.m_minor >= 5))
-        {
-            m_surface = eglCreatePlatformWindowSurface(
-                display,
-                e.service<egl::GraphicsContext>()->m_config,
-                ptr_info->window,
-                C_RCAST<EGLAttrib*>(attribs.data()));
-        } else
-#endif
-            m_surface = eglCreateWindowSurface(
-                display,
-                e.service<egl::GraphicsContext>()->m_config,
-                C_RCAST<EGLNativeWindowType>(ptr_info->window),
-                C_RCAST<EGLint*>(attribs.data()));
-    }
+    if(egl_15_supported)
+    {
+        m_surface = eglCreatePlatformWindowSurface(
+            display,
+            e.service<egl::GraphicsContext>()->m_config,
+            ptr_info->window,
+            C_RCAST<EGLAttrib*>(attribs.data()));
+    } else
+#endif // defined(EGL_VERSION_1_5)
+        m_surface = eglCreateWindowSurface(
+            display,
+            e.service<egl::GraphicsContext>()->m_config,
+            C_RCAST<EGLNativeWindowType>(ptr_info->window),
+            nullptr);
 
     if(m_surface == EGL_NO_SURFACE)
     {
