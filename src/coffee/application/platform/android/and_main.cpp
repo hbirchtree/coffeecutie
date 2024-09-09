@@ -122,14 +122,14 @@ intent::intent()
 
 std::string intent::action()
 {
-    if(!java::objects::not_null(m_intent))
+    if(!m_intent)
         return {};
 
     auto getAction = "getAction"_jmethod.ret("java.lang.String");
 
     auto out = m_intent[getAction]();
 
-    if(!java::objects::not_null(out))
+    if(!out)
         return {};
 
     return jnipp::java::type_unwrapper<std::string>(out);
@@ -137,7 +137,7 @@ std::string intent::action()
 
 std::string intent::data()
 {
-    if(!java::objects::not_null(m_intent))
+    if(!m_intent)
         return {};
 
     auto getData  = "getData"_jmethod.ret("android.net.Uri");
@@ -145,7 +145,7 @@ std::string intent::data()
 
     auto intentData = m_intent[getData]();
 
-    if(java::objects::is_null(intentData))
+    if(!intentData)
         return {};
 
     return jnipp::java::type_unwrapper<std::string>(intentData[toString]());
@@ -153,7 +153,7 @@ std::string intent::data()
 
 std::set<std::string> intent::categories()
 {
-    if(!java::objects::not_null(m_intent))
+    if(!m_intent)
         return {};
 
     auto Set = "java.util.Set"_jclass;
@@ -163,11 +163,10 @@ std::set<std::string> intent::categories()
 
     auto categories = m_intent[getCategories]();
 
-    if(java::objects::is_null(categories))
+    if(!categories)
         return {};
 
-    auto categoryArray =
-        jnipp::java::array_type_unwrapper<re::object_>(categories[toArray]());
+    auto categoryArray = categories[toArray]();
 
     std::set<std::string> outCategories;
 
@@ -180,7 +179,7 @@ std::set<std::string> intent::categories()
 
 std::map<std::string, std::string> intent::extras()
 {
-    if(!java::objects::not_null(m_intent))
+    if(!m_intent)
         return {};
 
     std::map<std::string, std::string> out;
@@ -194,12 +193,10 @@ std::map<std::string, std::string> intent::extras()
 
     auto extras = m_intent[getExtras]();
 
-    if(jnipp::java::objects::not_null(extras))
+    if(!extras)
     {
         auto extrasKeySet = extras[keySet]();
-
-        auto extraKeys = jnipp::java::array_type_unwrapper<re::object_>(
-            extrasKeySet[setArray]());
+        auto extraKeys = extrasKeySet[setArray]();
 
         for(auto key : *extraKeys)
         {
@@ -207,7 +204,7 @@ std::map<std::string, std::string> intent::extras()
 
             auto extraVal = m_intent[getStringExtra](key_s);
 
-            if(!jnipp::java::objects::not_null(extraVal))
+            if(!extraVal)
             {
                 cDebug("Extra value not included: {0}", key_s);
                 continue;
@@ -233,7 +230,7 @@ std::optional<std::string> intent::extra(const std::string& key)
 
 int intent::flags()
 {
-    if(!java::objects::not_null(m_intent))
+    if(!m_intent)
         return {};
 
     auto getFlags = "getFlags"_jmethod.ret<re::int_>();
@@ -405,14 +402,12 @@ std::vector<std::string> app_info::system_features() const
 
     auto packageManager =
         Context(coffee_app->activity->clazz)[getPackageManager]();
-    auto systemFeatures = array_type_unwrapper<re::object_>(
-        packageManager[getSystemAvailableFeatures]());
+    auto systemFeatures = packageManager[getSystemAvailableFeatures]();
 
-    for(auto feature_ : *systemFeatures)
+    for(auto feature : *systemFeatures)
     {
-        auto feature = FeatureInfo(feature_);
-        auto name_   = *feature[name];
-        if(!jnipp::java::objects::not_null(name_))
+        auto name_ = *feature[name];
+        if(!name_)
             continue;
         features.push_back(type_unwrapper<std::string>(name_));
     }
@@ -579,7 +574,7 @@ display_info::hdr_mode_t display_info::hdr_modes()
     auto hdrTypes        = hdrCapabilities[getSupportedHdrTypes]();
 
     hdr_mode_t out = none;
-    for(i32 type : jnipp::java::array_extractors::container<re::int_>(hdrTypes))
+    for(i32 type : *hdrTypes)
     {
         if(type == dolby_vision)
             out |= hdr_mode_t::dolby_vision;
@@ -632,7 +627,7 @@ std::optional<display_info::insets_t> display_info::safe_insets()
 
     auto getCutout = "getCutout"_jmethod.ret("android.view.DisplayCutout");
     auto cutout    = display[getCutout]();
-    if(jnipp::java::objects::is_null(cutout))
+    if(!cutout)
         return std::nullopt;
 
     auto getSafeInsetBottom = "getSafeInsetBottom"_jmethod.ret<re::int_>();
