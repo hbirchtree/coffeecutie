@@ -18,7 +18,13 @@ source $BASE_DIR/toolchain/building.sh
 function all_source_files()
 {
     local SRC_BASE_DIR=$(dirname "${0}")
-    find "${SRC_BASE_DIR}/src" "${SRC_BASE_DIR}/examples" -regex '.*\.\(cpp\|h\)' -type f $@
+    find \
+        "${SRC_BASE_DIR}/examples" \
+        "${SRC_BASE_DIR}/src" \
+        "${SRC_BASE_DIR}/tools" \
+        -regex '.*\.\(cpp\|h\)' \
+        -type f \
+        $@
 }
 
 case ${1:-} in
@@ -82,21 +88,6 @@ ios-build|xcode-build)
     fi
     native_build ${@:2}
 ;;
-"push-asset")
-    echo "::group::Pushing asset"
-    TAG_NAME=$(git tag --points-at HEAD)
-
-    if [ -z "$TAG_NAME" ]; then
-        echo "::debug::Tag not found, not pushing"
-        echo "::endgroup::"
-        exit 0
-    fi
-
-    for FILE in $(find . -maxdepth 1 -type f -name '*.'$2); do
-        gh release upload -R "$GITHUB_REPOSITORY" "$TAG_NAME" "$FILE" --clobber
-    done
-    echo "::endgroup::"
-;;
 "lint-cmake")
     echo "::group::Linting CMake files"
     cmake-format -i -c ${BASE_DIR}/.cmake-format ${BASE_DIR}/{examples,src,tests,toolchain,tools}
@@ -112,12 +103,6 @@ ios-build|xcode-build)
     #echo "::warning file=${FILE_IN}::${DIFF}"
 
     popd
-;;
-"version")
-    "${TC_DIR}"/version.py ${@:2}
-;;
-"build-info")
-    "${TC_DIR}"/buildinfo.py ${@:2}
 ;;
 "format")
     CLANG_FORMAT=${CLANG_FORMAT:-${BASE_DIR}/multi_build/compilers/bin/clang-format}

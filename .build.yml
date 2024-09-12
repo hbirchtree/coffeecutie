@@ -1,24 +1,5 @@
-allow_fail:
-- env: BUILDVARIANT=maemo.armel
-- env: BUILDVARIANT=uwp.amd64
-- env: BUILDVARIANT=uwp.arm
-- env: BUILDVARIANT=raspberry.armhf
-- env: BUILDVARIANT=testing.linux.lowfat.debug
-- env: BUILDVARIANT=testing.linux.lowfat.release
-- env: BUILDVARIANT=testing.linux.release
-- env: BUILDVARIANT=ubuntu.i686.gles
-- env: BUILDVARIANT=gamecube
-branches:
-- build: true
-  deploy: true
-  name: master
-- build: true
-  name: /^testing.*$/
-- build: true
-  name: /^feature.*$/
 coverage: true
 display_name: Coffeecutie
-makefile_location: toolchain/makers
 name: Coffee
 script_location: toolchain/ci
 template_location: toolchain/cmake/Templates
@@ -27,8 +8,6 @@ toolchain:
   version: v2.1.1
   emsdk:
     version: 3.1.57
-  android:
-    ndk: '15c'
 version:
   hotfix: 5
   major: 4

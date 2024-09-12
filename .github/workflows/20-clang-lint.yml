@@ -6,8 +6,11 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v2
+            - name: Install dependencies
             - name: Running clang-format
               env: 
                 CI: 1
-              run: ./cb lint
+              run: ./cb lint-code
+            - name: Running cmake-format
+              run: ./cb lint-cmake
 

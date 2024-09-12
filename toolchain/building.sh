@@ -140,7 +140,7 @@ function host_tools_build()
 function toolchain_version()
 {
 #    VERSION=$(cmake -N --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT} | grep TOOLCHAIN_VERSION | cut -d'"' -f2)
-#    [[ -z "$VERSION" ]] && VERSION=$($SELF build-info toolchain version)
+#    [[ -z "$VERSION" ]] && VERSION=$(jq .toolchain.git.tag $BASE_DIR/.build.json)
 #    echo "$VERSION"
     cmake -S $BASE_DIR -N --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT} | grep TOOLCHAIN_VERSION | cut -d'"' -f2
 }
@@ -151,7 +151,7 @@ function toolchain_registry()
     VERSION=$(toolchain_version)
     if [[ ! -f "$BASE_DIR/multi_build/compilers/meta/$VERSION.json" ]]; then
         gh release download \
-            -R "$($SELF build-info toolchain source)" \
+            -R "$(jq .toolchain.git.repo $BASE_DIR/.build.json)" \
             -D "$BASE_DIR/multi_build/compilers/meta" \
             "$VERSION" \
             -p registry.json
@@ -169,7 +169,7 @@ function toolchain_download()
         return
     fi
     gh release download \
-        -R "$($SELF build-info toolchain source)" \
+        -R "$(jq .toolchain.git.repo $BASE_DIR/.build.json)" \
         "$(toolchain_version)" \
         -p "$FILE"
     case "$2" in
@@ -224,7 +224,7 @@ function native_build()
     echo "${DEFAULT_ROOT} ${TOOLCHAIN_ROOT} ${IS_DOWNLOADABLE}"
     if [[ "$DEFAULT_ROOT" = "$TOOLCHAIN_ROOT" ]] && [[ ! -d "${TOOLCHAIN_ROOT}" ]] && [[ $IS_DOWNLOADABLE = "1" ]]; then
         echo "::group::Getting compiler"
-        TOOLCHAIN_REPO=$($SELF build-info toolchain source)
+        TOOLCHAIN_REPO=$(jq .toolchain.git.repo $BASE_DIR/.build.json)
         mkdir -p ${TOOLCHAIN_ROOT}
         pushd ${TOOLCHAIN_ROOT}
 
@@ -321,7 +321,7 @@ function emscripten_build()
     TOOLCHAIN_ROOT=${TOOLCHAIN_ROOT:-$DEFAULT_ROOT}
     if [ "${DEFAULT_ROOT}" = "${TOOLCHAIN_ROOT}" ] && [ ! -d ${TOOLCHAIN_ROOT} ]; then
         echo "::group::Getting compiler"
-        CONFIG_VERSION=$($SELF build-info toolchain emsdk version)
+        CONFIG_VERSION=$(jq .toolchain.emsdk.version $BASE_DIR/.build.json)
         SELECTED_VERSION=${CONFIG_VERSION:-latest}
         git clone https://github.com/emscripten-core/emsdk.git ${TOOLCHAIN_ROOT}
         ${TOOLCHAIN_ROOT}/emsdk install $SELECTED_VERSION
@@ -472,7 +472,7 @@ function mingw_build()
     identify_target $1
     TOOLCHAIN_DOWNLOAD="${PLATFORM}-${ARCHITECTURE}_${SYSROOT}"
 
-    TOOLCHAIN_VER=$($SELF build-info toolchain version)
+    TOOLCHAIN_VER=$(jq .toolchain.git.tag $BASE_DIR/.build.json)
     if [[ -z "$TOOLCHAIN_VER" ]]; then
         echo \
     "No compiler version found in .build.yml, add one with:
@@ -496,7 +496,7 @@ function mingw_build()
 
     if [[ "$DEFAULT_ROOT" = "$TOOLCHAIN_ROOT" ]] && [[ ! -d "${TOOLCHAIN_ROOT}" ]] && [[ $IS_DOWNLOADABLE = "1" ]]; then
         echo "::group::Getting compiler"
-        TOOLCHAIN_REPO=$($SELF build-info toolchain source)
+        TOOLCHAIN_REPO=$(jq .toolchain.git.repo $BASE_DIR/.build.json)
         mkdir -p ${TOOLCHAIN_ROOT}
         pushd ${TOOLCHAIN_ROOT}
 
