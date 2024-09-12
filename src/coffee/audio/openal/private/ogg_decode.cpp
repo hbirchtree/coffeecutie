@@ -91,9 +91,9 @@ bool decoder::decode(
 
     using namespace std::chrono_literals;
 
-    auto total          = ov_pcm_total(&file, -1);
-    auto audio_duration = std::chrono::milliseconds(
-        (total * 1000) / fmt.frequency);
+    auto total = ov_pcm_total(&file, -1);
+    auto audio_duration =
+        std::chrono::milliseconds((total * 1000) / fmt.frequency);
     cDebug(
         "OGG stream: rate={}, channels={}, total={}, duration={}ms",
         fmt.frequency,

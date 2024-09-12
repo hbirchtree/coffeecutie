@@ -27,11 +27,11 @@ stl_types::result<spv_blob, std::string> perform_optimization(
         opt.RegisterSizePasses();
 
     passes::compatibility_options comp_options = {};
-    if((out_options.profile == profile_t::core && out_options.version < 430)
-       || (out_options.profile == profile_t::es && out_options.version < 310))
+    if((out_options.profile == profile_t::core && out_options.version < 430) ||
+       (out_options.profile == profile_t::es && out_options.version < 310))
         comp_options.ssbo_as_ubo = true;
-    if((out_options.profile == profile_t::core && out_options.version < 420)
-       || out_options.profile == profile_t::es)
+    if((out_options.profile == profile_t::core && out_options.version < 420) ||
+       out_options.profile == profile_t::es)
         comp_options.float64_to_float32 = true;
     if(out_options.version == 100)
     {

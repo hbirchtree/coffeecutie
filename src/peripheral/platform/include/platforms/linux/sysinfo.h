@@ -112,8 +112,7 @@ inline cpu_hierarchy_t online_cpus()
             }
         } while(!(++it).empty());
         cpu_hierarchy_t first_pass;
-        const auto get_cluster_id = [](u16 cpuid) -> u16
-        {
+        const auto      get_cluster_id = [](u16 cpuid) -> u16 {
             if(compile_info::architecture == std::string("AMD64"))
                 return 0;
             if(auto clusterid_ =

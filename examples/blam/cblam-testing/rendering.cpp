@@ -377,7 +377,7 @@ struct MeshRenderer
         if(!supports_splitscreen && idx != 0)
             return;
 
-        auto _ = m_api->debug().scope(pass.name);
+        auto        _ = m_api->debug().scope(pass.name);
         ProfContext __;
 
         auto& player = m_camera.player(m_camera.focused_player);
@@ -450,7 +450,7 @@ struct MeshRenderer
         if(!supports_splitscreen && idx != 0)
             return;
 
-        auto _ = m_api->debug().scope(pass.name);
+        auto        _ = m_api->debug().scope(pass.name);
         ProfContext __;
 
         auto& player = m_camera.player(idx);
@@ -869,7 +869,8 @@ struct MeshRenderer
                 pass.draws[track.model_id.bucket].at(track.model_id.draw);
             auto instance_id = draw.instances.offset + track.model_id.instance;
             pass.matrix_mapping[instance_id] = model.transform;
-            auto name = model.origin_object->to_name().to_string(shader_cache.magic);
+            auto name =
+                model.origin_object->to_name().to_string(shader_cache.magic);
             populate_mod2_material(
                 smodel,
                 model_cache->find(model.model)->second,

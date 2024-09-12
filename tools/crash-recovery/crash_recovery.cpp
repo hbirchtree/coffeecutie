@@ -16,8 +16,8 @@
 #include <coffee/ssl/hmac.h>
 #endif
 
-#include <coffee/strings/format.h>
 #include <coffee/core/CDebug>
+#include <coffee/strings/format.h>
 
 #if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
 #include <fcntl.h>
@@ -96,10 +96,10 @@ i32 crash_main(i32, cstring_w*)
 
 #if defined(COFFEE_APPLE)
     if(!workingDir.isLocal())
-        workingDir = platform::path::dir(
-                         platform::path::dir(MkUrl(args.at(0))).value())
-                         .value()
-                     + platform::url::Path("Resources");
+        workingDir =
+            platform::path::dir(platform::path::dir(MkUrl(args.at(0))).value())
+                .value() +
+            platform::url::Path("Resources");
 #endif
 
     cDebug("Spawning child");
@@ -182,15 +182,15 @@ i32 crash_main(i32, cstring_w*)
         {
             auto appName = stdoutBuf.substr(0, appNameIdx);
 
-            profileLocation
-                = (Path("..") / appName / "profile.json").url(RSCA::TempFile);
-            machineProfileLocation
-                = (Path("..") / appName
-                   / (platform::path::base(MkUrl(args.at(0))).value().internUrl
-                      + "-chrome.json"))
-                      .url(RSCA::TempFile);
-            stacktraceLocation = (Path("..") / appName / "stacktrace.json")
-                                     .url(RSCA::TempFile);
+            profileLocation =
+                (Path("..") / appName / "profile.json").url(RSCA::TempFile);
+            machineProfileLocation =
+                (Path("..") / appName /
+                 (platform::path::base(MkUrl(args.at(0))).value().internUrl +
+                  "-chrome.json"))
+                    .url(RSCA::TempFile);
+            stacktraceLocation =
+                (Path("..") / appName / "stacktrace.json").url(RSCA::TempFile);
         }
     }
 
@@ -205,8 +205,8 @@ i32 crash_main(i32, cstring_w*)
             {{"Content-Type", "text/plain"}});
     }
 
-    if(machineProfileLocation.valid()
-       && platform::file::exists(machineProfileLocation))
+    if(machineProfileLocation.valid() &&
+       platform::file::exists(machineProfileLocation))
     {
         cDebug("Located machine profile: {0}", *machineProfileLocation);
         auto machineProfile = Resource(machineProfileLocation);
@@ -259,10 +259,9 @@ i32 crash_main(i32, cstring_w*)
 
     crashPush.setHeaderField(
         "X-Coffee-Signature",
-        "sha1="
-            + hex::encode(net::hmac::digest(
-                semantic::Span<char>(multipart.m_data),
-                platform::env::var("COFFEE_HMAC_KEY").value_or("0000"))));
+        "sha1=" + hex::encode(net::hmac::digest(
+                      semantic::Span<char>(multipart.m_data),
+                      platform::env::var("COFFEE_HMAC_KEY").value_or("0000"))));
 
     if(auto error = crashPush.push(http::method_t::post, multipart))
     {

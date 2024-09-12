@@ -65,7 +65,7 @@ struct ImGuiSystem
 {
     ImGuiSystem(u32 priority = default_prio);
 
-    using type = ImGuiSystem;
+    using type  = ImGuiSystem;
     using Proxy = compo::proxy_of<ImGuiManifest>;
 
     virtual const ImGuiSystem& get() const final

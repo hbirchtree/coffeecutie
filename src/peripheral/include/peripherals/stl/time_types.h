@@ -9,7 +9,7 @@
 namespace stl_types {
 namespace Chrono {
 
-using seconds_f32  = std::chrono::duration<libc_types::f32>;
+using seconds_f32 = std::chrono::duration<libc_types::f32>;
 using seconds_f64 = std::chrono::duration<libc_types::f64>;
 
 using Clock = std::chrono::steady_clock;

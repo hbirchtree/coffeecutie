@@ -152,9 +152,9 @@ struct StandardCamera
     inline void rotate(f32 pitch, f32 yaw)
     {
         auto& rotation = m_camera->rotation;
-        rotation       =
-            rotation * glm::normalize(glm::quat(cached.right * yaw * -1.f) *
-            glm::quat(cached.up * pitch * -1.f));
+        rotation       = rotation * glm::normalize(
+                                  glm::quat(cached.right * yaw * -1.f) *
+                                  glm::quat(cached.up * pitch * -1.f));
     }
 
     void tick(std::chrono::system_clock::duration const& t)

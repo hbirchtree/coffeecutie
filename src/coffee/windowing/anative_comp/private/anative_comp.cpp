@@ -215,21 +215,22 @@ comp_app::text_type_t ControllerInput::name(libc_types::u32 /*idx*/) const
 
 void KeyboardInput::startWriting() const
 {
-// #if ANDROID_API_LEVEL >= 23
-//     if(auto window = android::activity_manager().window())
-//         ANativeActivity_showSoftInput(
-//             (*window).activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED);
-// #endif
+    // #if ANDROID_API_LEVEL >= 23
+    //     if(auto window = android::activity_manager().window())
+    //         ANativeActivity_showSoftInput(
+    //             (*window).activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED);
+    // #endif
     android::input_method_manager::show_soft_input();
 }
 
 void KeyboardInput::stopWriting() const
 {
-// #if ANDROID_API_LEVEL >= 23
-//     if(auto window = android::activity_manager().window())
-//         ANativeActivity_hideSoftInput(
-//             (*window).activity, ANATIVEACTIVITY_HIDE_SOFT_INPUT_IMPLICIT_ONLY);
-// #endif
+    // #if ANDROID_API_LEVEL >= 23
+    //     if(auto window = android::activity_manager().window())
+    //         ANativeActivity_hideSoftInput(
+    //             (*window).activity,
+    //             ANATIVEACTIVITY_HIDE_SOFT_INPUT_IMPLICIT_ONLY);
+    // #endif
     android::input_method_manager::hide_soft_input();
 }
 

@@ -31,8 +31,11 @@ result<detail::win32_fd_t, posix::posix_error> open_file(
     if(detail::is_resource(file, access))
     {
         auto hashed = detail::resource_hash(file);
-        fprintf(stderr, "win32::open_file: %s -> %s: ",
-            file.internUrl.c_str(), hashed.c_str());
+        fprintf(
+            stderr,
+            "win32::open_file: %s -> %s: ",
+            file.internUrl.c_str(),
+            hashed.c_str());
         if(auto rsrc = FindResourceEx(nullptr, "CF_RES", hashed.c_str(), 1033))
         {
             fprintf(stderr, "FOUND\n");

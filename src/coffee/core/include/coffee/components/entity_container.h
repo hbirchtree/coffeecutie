@@ -475,20 +475,24 @@ struct EntityContainer : stl_types::non_copy
     {
         time_stamp_source = std::move(func);
     }
+
     clock::duration epoch_offset() const
     {
         return time_offset;
     }
+
     clock::time_point relative_timestamp() const
     {
         auto current_time = time_stamp_source();
         return current_time - time_offset;
     }
+
     size_t add_frame_end_callback(std::function<void()>&& cb)
     {
         frame_end_callbacks.emplace_back(std::move(cb));
         return frame_end_callbacks.size() - 1u;
     }
+
     void remove_frame_end_callback(size_t i)
     {
         frame_end_callbacks.at(i) = {};
@@ -509,11 +513,10 @@ struct EntityContainer : stl_types::non_copy
     std::vector<std::unique_ptr<EntityVisitorBase>>               visitors;
     std::unordered_map<type_hash, SubsystemBase*>                 services;
 
-    std::function<clock::time_point()> time_stamp_source = []()
-    {
+    std::function<clock::time_point()> time_stamp_source = []() {
         return clock::now();
     };
-    clock::duration time_offset;
+    clock::duration                    time_offset;
     std::vector<std::function<void()>> frame_end_callbacks;
 
   public:

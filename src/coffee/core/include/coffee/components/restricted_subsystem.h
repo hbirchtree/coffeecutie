@@ -34,7 +34,7 @@ using proxy_t = ConstrainedProxy<
     typename T::readable_services>;
 
 template<class T>
-requires (!is_start_restricted_subsystem<T>)
+requires(!is_start_restricted_subsystem<T>)
 void start_frame(T&, EntityContainer&, time_point const&)
 {
 }
@@ -48,7 +48,7 @@ void start_frame(T& subsys, EntityContainer& container, time_point const& t)
 }
 
 template<class T>
-requires (!is_end_restricted_subsystem<T>)
+requires(!is_end_restricted_subsystem<T>)
 void end_frame(T&, EntityContainer&, time_point const&)
 {
 }

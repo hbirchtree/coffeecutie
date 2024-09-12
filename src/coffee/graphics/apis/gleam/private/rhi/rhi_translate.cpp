@@ -17,7 +17,7 @@ std::tuple<T, group::pixel_type, group::pixel_format> to(
     using f = T;
     using b = group::pixel_type;
     using p = group::pixel_format;
-    
+
     using P = typing::pixels::pix_fmt;
     using F = typing::pixels::pix_flags;
     using C = typing::pix_components;
@@ -76,8 +76,10 @@ std::tuple<T, group::pixel_type, group::pixel_format> to(
             {P::RGBA16F, {f::rgba16f, b::float_, p::rgba}},
             {P::RGBA32F, {f::rgba32f, b::float_, p::rgba}},
 #endif
-            {P::RGB10A2, {f::rgb10_a2, b::unsigned_int_2_10_10_10_rev, p::rgba}},
-            {P::RGB10A2UI, {f::rgb10_a2ui, b::unsigned_int_2_10_10_10_rev, p::rgba}},
+            {P::RGB10A2,
+             {f::rgb10_a2, b::unsigned_int_2_10_10_10_rev, p::rgba}},
+            {P::RGB10A2UI,
+             {f::rgb10_a2ui, b::unsigned_int_2_10_10_10_rev, p::rgba}},
 
             /* Special formats */
             {P::Depth16,

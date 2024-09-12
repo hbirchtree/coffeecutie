@@ -59,7 +59,7 @@ struct header
     Vecf2 uvscale;
 
     u32 unknown2[29];
-    
+
     reference<marker>              markers;
     reference<bone>                bones;
     reference<region>              regions;
@@ -86,8 +86,8 @@ struct marker
         Vecf4 rotation;
     };
 
-    bl_string               name;
-    u32                     unknown[5];
+    bl_string             name;
+    u32                   unknown[5];
     reference<instance_t> instances;
 };
 
@@ -115,8 +115,8 @@ struct region_permutation;
 
 struct region
 {
-    bl_string                       name;
-    u32                             unknown[8];
+    bl_string                     name;
+    u32                           unknown[8];
     reference<region_permutation> permutations;
 };
 
@@ -136,8 +136,8 @@ struct region_permutation
     /* Uses reverse order of LOD compared to mod2_lod!
      * References the geometries data in the header
      */
-    std::array<u16, 5>  meshindex_lod;
-    reference<marker> markers;
+    std::array<u16, 5> meshindex_lod;
+    reference<marker>  markers;
 };
 
 static_assert(sizeof(region_permutation) == 88);
@@ -179,13 +179,13 @@ struct part
     std::array<u16, 2> centroids;
     std::array<f32, 2> centroid_weights;
     Vecf3              centroid;
-    
+
     reference<vert::uncompressed> uncompressed_vertices;
     reference<vert::compressed>   compressed_vertices;
-    
+
     reference<u32> triangles;
-    u32              pad_[1];
-    
+    u32            pad_[1];
+
     reference<vert::idx_t, xbox_t> indices;
 
     u32 pad2;
@@ -272,9 +272,9 @@ template<typename Version>
 struct geometry_header
 {
     u32 unknown[9];
-    
+
     reference<part_wrap_header<Version>> meshes_;
-    
+
     inline auto meshes(map_ptr const& magic) const
     {
         if(auto out = meshes_.data(magic); out.has_value())

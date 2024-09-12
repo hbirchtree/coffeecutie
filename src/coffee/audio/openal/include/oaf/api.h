@@ -1,7 +1,7 @@
 #pragma once
 
-#include <memory>
 #include <coffee/components/types.h>
+#include <memory>
 #include <peripherals/concepts/sound_api.h>
 #include <peripherals/error/result.h>
 #include <peripherals/semantic/handle.h>
@@ -250,14 +250,16 @@ struct api
     listener_t m_listener;
     formats_t  m_formats{};
     features_t m_features{};
+
     struct loopback_data_t
     {
-        Format fmt{};
-        compo::time_point last_render_time{};
+        Format                      fmt{};
+        compo::time_point           last_render_time{};
         platform::file::file_handle rendered;
-        f32 speed{1.f};
-        u32 sample_size{1};
+        f32                         speed{1.f};
+        u32                         sample_size{1};
     };
+
     std::optional<loopback_data_t> m_loopback{};
 };
 

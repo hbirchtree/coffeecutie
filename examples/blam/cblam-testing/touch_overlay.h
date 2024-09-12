@@ -34,7 +34,7 @@ struct TouchOverlay
     };
 
     void start_restricted(Proxy& proxy, time_point const&);
-    void end_restricted(Proxy& proxy, time_point const&time);
+    void end_restricted(Proxy& proxy, time_point const& time);
 
     void draw_stick(Proxy& proxy, stick_definition_t const& stick);
 
@@ -49,7 +49,7 @@ struct TouchOverlay
 
     stick_definition_t movement;
     stick_definition_t look;
-    Vecf2 control_scale{1.f, 1.f};
+    Vecf2              control_scale{1.f, 1.f};
 
     // glm::mat2 move_transform;
     // glm::vec2 move_displacement;
@@ -62,7 +62,7 @@ struct TouchOverlay
     // glm::vec2 look_ui_offset;
 
     time_point previous_time{};
-    f32 dpi{1.f};
+    f32        dpi{1.f};
 
     ktx::texture_t atlas_storage;
     bool           loaded{false};

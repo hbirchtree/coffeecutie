@@ -25,8 +25,8 @@ inline libc_types::u64 resident()
 inline libc_types::u64 total()
 {
     return static_cast<libc_types::u64>(
-            EM_ASM_INT({ return navigator['deviceMemory']; })
-        ) * 1024 * 1024 * 1024;
+               EM_ASM_INT({ return navigator['deviceMemory']; })) *
+           1024 * 1024 * 1024;
 }
 
 } // namespace platform::info::memory::emscripten

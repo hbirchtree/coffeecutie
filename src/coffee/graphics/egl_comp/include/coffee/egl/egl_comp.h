@@ -49,6 +49,7 @@ struct DisplayHandle
             bool linear{true};
             bool srgb{true};
         } colorspaces;
+
         bool surface_SMPTE2086_metadata{false};
     } ext;
 };

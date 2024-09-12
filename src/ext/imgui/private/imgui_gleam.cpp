@@ -378,7 +378,7 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
         unsigned char* pixels;
         int            width, height;
         io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
-        
+
         using typing::pix_components;
         using typing::pixels::bit_fmt;
         auto pixelDataSize = gl::tex::format_of(typing::pixels::pix_fmt::R8)

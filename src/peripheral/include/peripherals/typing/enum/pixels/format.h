@@ -243,9 +243,9 @@ static_assert(sizeof(r11g11b10f) == 4, "Invalid size");
 PACKED(struct) r11g11b10u
 {
 #if defined(COFFEE_UNIXPLAT)
-    u16 r:11;
-    u16 g:11;
-    u16 b:10;
+    u16 r : 11;
+    u16 g : 11;
+    u16 b : 10;
 #else
     u32 d;
 #endif

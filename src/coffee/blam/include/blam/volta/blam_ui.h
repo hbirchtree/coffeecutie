@@ -60,7 +60,7 @@ struct ui_element
         function_t function;
         u32        unknown[8];
     };
-    
+
     reference<data_input_t> data_inputs;
 
     struct event_handler_t
@@ -122,7 +122,7 @@ struct ui_element
         tagref_typed_t<tag_class_t::snd>  sound;
         bl_string                         script;
     };
-    
+
     reference<event_handler_t> event_handlers;
 
     struct search_and_replace_t
@@ -181,7 +181,7 @@ struct ui_element
         i16 horizontal_offset;
         u32 unknown[5];
     };
-    
+
     reference<child_widget_t> child_widgets;
 };
 
@@ -195,7 +195,7 @@ struct ui_item_collection
     {
         tagref_typed_t<tag_class_t::DeLa> definition;
     };
-    
+
     reference<widget_definition_t> widget_definitions;
 };
 
@@ -208,7 +208,7 @@ struct multiplayer_scenarios
         bl_string                         directory_path;
         u32                               padding[4];
     };
-    
+
     reference<map_t> maps;
 };
 

@@ -34,7 +34,7 @@ struct alignas(4) tagref_typed_t
     }
 
     template<typename Dummy = void>
-    requires (sizeof...(Tags) > 0)
+    requires(sizeof...(Tags) > 0)
     inline operator tagref_typed_t<> const&() const
     {
         return *C_RCAST<tagref_typed_t<> const*>(this);

@@ -119,8 +119,7 @@ struct app_info
     std::vector<std::string>          abis();
 
     std::optional<jnipp::wrapping::jobject> get_service(
-        std::string const&         service,
-        std::optional<std::string> service_type);
+        std::string const& service, std::optional<std::string> service_type);
 
     std::optional<jnipp::wrapping::jobject> input_method_service();
     std::optional<jnipp::wrapping::jobject> input_service();

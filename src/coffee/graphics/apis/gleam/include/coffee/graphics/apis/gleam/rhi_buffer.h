@@ -570,10 +570,12 @@ struct revolving_buffer_t
     {
         return *underlying_buffers[index];
     }
+
     std::shared_ptr<buffer_t>& current_ptr()
     {
         return underlying_buffers[index];
     }
+
     std::vector<std::shared_ptr<buffer_t>> underlying_buffers;
     u32                                    index{0};
 };

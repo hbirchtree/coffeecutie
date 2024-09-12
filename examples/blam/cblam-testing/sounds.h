@@ -10,6 +10,7 @@ struct SoundEvent
         play_sound,
         clear_all,
     } type;
+
     libc_types::u64 entity_id{0};
 };
 

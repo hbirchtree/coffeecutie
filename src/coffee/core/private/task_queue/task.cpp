@@ -16,8 +16,7 @@ using DProfContext = Coffee::DProfContext;
 
 namespace {
 
-std::function<rq::detail::time_point()> clock_now = []()
-{
+std::function<rq::detail::time_point()> clock_now = []() {
     return rq::detail::clock::now();
 };
 
@@ -174,7 +173,7 @@ STATICINLINE void ThreadQueueSleep(
 
     {
         detail::unique_lock<detail::recursive_mutex> _(queue->m_tasks_lock);
-        auto currentTime     = clock_now();
+        auto                                         currentTime = clock_now();
         sleepTime            = queue->time_till_next(currentTime);
         queue->m_next_wakeup = currentTime + sleepTime;
     }

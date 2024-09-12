@@ -33,12 +33,12 @@ struct spv_input
 
 struct target_options
 {
-    profile_t profile;
-    uint32_t  version;
+    profile_t                               profile;
+    uint32_t                                version;
     std::string_view                        entrypoint{"main"sv};
     std::map<std::string_view, std::string> specializations{};
-    bool strip_debug{false};
-    bool targets_spv{false};
+    bool                                    strip_debug{false};
+    bool                                    targets_spv{false};
 };
 
 } // namespace shader_proc

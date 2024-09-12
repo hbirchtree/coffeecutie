@@ -19,10 +19,10 @@ using typing::vector_types::Vecf4;
 template<typename... Values>
 Vecf4 partitioned_vec4(Values... values)
 {
-    size_t num_values = sizeof...(Values);
-    std::array<Vecf4, sizeof...(Values)> vecs = {{values...}};
-    Vecf4 out{};
-    f32 offset = 1.f / num_values;
+    size_t                               num_values = sizeof...(Values);
+    std::array<Vecf4, sizeof...(Values)> vecs       = {{values...}};
+    Vecf4                                out{};
+    f32                                  offset = 1.f / num_values;
     for(auto i : stl_types::range<size_t>(num_values))
     {
         out += (vecs[i] / num_values) + Vecf4(offset * i);

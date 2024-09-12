@@ -164,7 +164,10 @@ bool ResizeImage(
 
 template<typename PixType>
 bool LoadData(
-    image<PixType>* target, BytesConst const& src, stb_error& ec, pix_components comp)
+    image<PixType>*   target,
+    BytesConst const& src,
+    stb_error&        ec,
+    pix_components    comp)
 {
     DProfContext _(STB_ABI "Loading image");
 
@@ -299,13 +302,19 @@ static void ReshapeRGBA(Bytes& src, szptr numPixels, u32 channels)
 
 /* Instantiate some templates as symbols here */
 bool LoadData(
-    image<u8>* target, BytesConst const& src, stb_error& ec, pix_components comp)
+    image<u8>*        target,
+    BytesConst const& src,
+    stb_error&        ec,
+    pix_components    comp)
 {
     return stb_templates::LoadData(target, src, ec, comp);
 }
 
 bool LoadData(
-    image<f32>* target, BytesConst const& src, stb_error& ec, pix_components comp)
+    image<f32>*       target,
+    BytesConst const& src,
+    stb_error&        ec,
+    pix_components    comp)
 {
     return stb_templates::LoadData(target, src, ec, comp);
 }

@@ -112,7 +112,7 @@ struct section
     /* Below values are only valid on Xbox */
     reference<comp_vertex, xbox_t>   xbox_vertices;
     reference<comp_lightmap, xbox_t> xbox_lightmaps;
-    bl_tag                             tag;
+    bl_tag                           tag;
 
     /*!
      * \brief to_header
@@ -132,19 +132,18 @@ struct info
     u32      magic;
     u32      zero;
     tagref_t tag;
-    
+
     inline map_ptr bsp_magic(map_ptr const& map_magic) const
     {
         return {{map_magic.base_ptr, map_magic.max_size}, magic - offset};
     }
-    
+
     inline section const& to_bsp(map_ptr const& magic) const
     {
         return *C_RCAST<section const*>(magic.base_ptr + offset);
     }
 
-    inline std::optional<header const*> to_header(
-        map_ptr const& magic) const
+    inline std::optional<header const*> to_header(map_ptr const& magic) const
     {
         auto res = to_bsp(bsp_magic(magic)).to_header().data(bsp_magic(magic));
         if(!res.has_value())
@@ -174,35 +173,35 @@ struct material
         Vecf3 direction;
     };
 
-    tagref_t                        shader;
-    u16                             shader_permutation;
-    flags_t                         flags; /*!< Mesh indices */
+    tagref_t                      shader;
+    u16                           shader_permutation;
+    flags_t                       flags; /*!< Mesh indices */
     reference<vert::face, xbox_t> surfaces;
-    Vecf3                           centroid;
-    Vecf3                           ambient_col;
-    u32                             dist_light_count;
-    std::array<dist_light, 2>       dist_lights;
-    Vecf4                           reflect_tint;
-    Vecf3                           shadow_dirw;
-    Vecf3                           shadow_color;
-    Vecf4                           plane;
-    i32                             breakable_surface;
-    u32                             padding1;
+    Vecf3                         centroid;
+    Vecf3                         ambient_col;
+    u32                           dist_light_count;
+    std::array<dist_light, 2>     dist_lights;
+    Vecf4                         reflect_tint;
+    Vecf3                         shadow_dirw;
+    Vecf3                         shadow_color;
+    Vecf4                         plane;
+    i32                           breakable_surface;
+    u32                           padding1;
 
     union
     {
         struct
         {
-            u32                         garbage[2];
-            vert::vertex_type_t         type;
-            u32                         count;
-            u32                         padding1[4];
-            u32                         count2;
-            u32                         padding2[3];
-            u32                         something;
-            u32                         padding3;
+            u32                       garbage[2];
+            vert::vertex_type_t       type;
+            u32                       count;
+            u32                       padding1[4];
+            u32                       count2;
+            u32                       padding2[3];
+            u32                       something;
+            u32                       padding3;
             reference<byte_t, xbox_t> uncompressed_vertices;
-            u32                         padding4[3];
+            u32                       padding4[3];
             reference<byte_t, xbox_t> compressed_vertices;
         } pc;
 
@@ -212,28 +211,28 @@ struct material
 
         struct
         {
-            u32                              pad[3];
+            u32                            pad[3];
             reference<pc_vertex, xbox_t>   pc_vertices_data;
-            u32                              memory_vertex_offset;
-            u32                              vert_reflexive;
-            u32                              unknown_always_3;
+            u32                            memory_vertex_offset;
+            u32                            vert_reflexive;
+            u32                            unknown_always_3;
             reference<xbox_vertex, xbox_t> xbox_vertices_data;
-            u32                              memory_lightmap_offset;
-            u32                              lightmap_vert_reflexive;
-            u32                              unknown_zero[2];
-            u32                              unknown_offset1;
-            u32                              pc_vertex_data_offset;
-            u32                              unkown_zero1;
-            u32                              comp_vertex_buffer_size;
-            u32                              unkown_zero2;
-            u32                              unknown_offset2;
-            u32                              vertex_data_offset;
-            u32                              unkown_zero3;
+            u32                            memory_lightmap_offset;
+            u32                            lightmap_vert_reflexive;
+            u32                            unknown_zero[2];
+            u32                            unknown_offset1;
+            u32                            pc_vertex_data_offset;
+            u32                            unkown_zero1;
+            u32                            comp_vertex_buffer_size;
+            u32                            unkown_zero2;
+            u32                            unknown_offset2;
+            u32                            vertex_data_offset;
+            u32                            unkown_zero3;
         } old;
 
         u32 all[22];
     };
-    
+
     inline reference<byte_t, xbox_t> vertices() const
     {
         //        reflexive_t<pc_vertex, xbox_t> base = pc_vertices_data;
@@ -253,7 +252,7 @@ struct material
                 .offset = pc.compressed_vertices.offset,
             };
     }
-    
+
     inline reference<byte_t, xbox_t> light_verts() const
     {
         //        reflexive_t<pc_light_vertex, xbox_t> out;
@@ -317,7 +316,7 @@ struct predicted_resource
 
 struct subcluster
 {
-    bounding_box     bounds;
+    bounding_box   bounds;
     reference<u32> indices; /* Points into surfaces on header */
 };
 
@@ -326,22 +325,22 @@ struct mirror
     Vecf3                             plane;
     f32                               d;
     tagref_typed_t<tag_class_t::shdr> shader;
-    reference<Vecf3>                vertices;
+    reference<Vecf3>                  vertices;
 };
 
 struct cluster
 {
-    i16                             sky;
-    i16                             fog;
-    i16                             background_sound;
-    i16                             sound_env;
-    i16                             weather;
-    i16                             transition_bsp;
-    u32                             unknown1[7];
+    i16                           sky;
+    i16                           fog;
+    i16                           background_sound;
+    i16                           sound_env;
+    i16                           weather;
+    i16                           transition_bsp;
+    u32                           unknown1[7];
     reference<predicted_resource> predicted_resources;
     reference<subcluster>         sub_clusters;
-    u16                             first_lens_flare_marker;
-    u16                             lens_flare_marker_count;
+    u16                           first_lens_flare_marker;
+    u16                           lens_flare_marker_count;
     reference<vert::idx_t>        surface_indices;
     reference<mirror>             mirrors;
     reference<i16>                portals;
@@ -349,12 +348,12 @@ struct cluster
 
 struct cluster_portal
 {
-    i16                front_cluster;
-    i16                back_cluster;
-    i32                plane_index;
-    Vecf3              centroid;
-    f32                bound_radius;
-    u32                unknown[7];
+    i16              front_cluster;
+    i16              back_cluster;
+    i32              plane_index;
+    Vecf3            centroid;
+    f32              bound_radius;
+    u32              unknown[7];
     reference<Vecf3> vertices;
 };
 
@@ -394,7 +393,7 @@ struct alignas(4) lightmap
 {
     i16 lightmap_idx;
     /* Intentionally leave 2 bytes here for padding */
-    u32                   unknown[4];
+    u32                 unknown[4];
     reference<material> materials;
 };
 
@@ -428,7 +427,7 @@ struct weather_polyhedra
         Vecf3 plane;
         f32   d;
     };
-    
+
     reference<plane> planes;
 };
 
@@ -474,33 +473,33 @@ struct leaf_map_leaf
 {
     struct face
     {
-        u16                node_index;
+        u16              node_index;
         reference<Vecf2> vertices;
     };
-    
+
     reference<face> faces;
     reference<u16>  portal_indices;
 };
 
 struct leaf_map_portal
 {
-    i32                plane_idx;
-    i32                back_leaf;
-    i32                front_leaf;
+    i32              plane_idx;
+    i32              back_leaf;
+    i32              front_leaf;
     reference<Vecf3> vertices;
 };
 
 struct header
 {
-    tagref_t                         lightmap_; /* Lightmap texture(s) */
-    f32                              vehicle_floor;
-    f32                              vehicle_ceiling;
-    u32                              unknown1[35];
+    tagref_t                       lightmap_; /* Lightmap texture(s) */
+    f32                            vehicle_floor;
+    f32                            vehicle_ceiling;
+    u32                            unknown1[35];
     reference<shader::shader_desc> collision_materials;
     reference<collision::bsp>      collision_header;
     /* Volumes in world-space where leaf surfaces reside */
     reference<node> nodes;
-    bounding_box      world_bounds;
+    bounding_box    world_bounds;
     reference<leaf> leaves;
     /* Grouping of surfaces, each one a pair of surfaces and node */
     reference<leaf_surface>                      leaf_surfaces;
@@ -508,35 +507,35 @@ struct header
     reference<lightmap>                          lightmaps;
     reference<tagref_typed_t<tag_class_t::lens>> lens_flares;
     reference<lens_flare_marker>                 lens_flare_markers;
-    u32                                            padding0[3];
+    u32                                          padding0[3];
     /* Clusters contain some properties such as sky, fog, sound, weather
      * Subclusters contain surface indices
      */
     reference<cluster>                   clusters;
-    i32                                    cluster_data_size;
-    u32                                    padding1[4];
+    i32                                  cluster_data_size;
+    u32                                  padding1[4];
     reference<cluster_portal>            cluster_portals;
-    u32                                    padding2[3];
+    u32                                  padding2[3];
     reference<breakable_surface>         breakables_surfaces;
     reference<byte_t>                    fog_planes;
     reference<byte_t>                    fog_regions;
-    u32                                    padding3[9];
+    u32                                  padding3[9];
     reference<weather_palette>           weather_palettes;
     reference<weather_polyhedra>         weather_polyhedras;
-    u32                                    padding4[6];
+    u32                                  padding4[6];
     reference<pathfinding_surface>       pathfinding_surfaces;
     reference<pathfinding_edge>          pathfinding_edges;
     reference<background_sound_palette>  background_sound;
     reference<sound_environment_palette> sound_env;
-    i32                                    sound_pas_data_size;
-    u32                                    padding5[10];
+    i32                                  sound_pas_data_size;
+    u32                                  padding5[10];
     reference<marker>                    markers;
     reference<detail_object>             detail_objects;
     reference<runtime_decal>             runtime_decals;
     reference<leaf_map_leaf>             leaf_map_leaves;
     reference<leaf_map_portal>           leaf_map_portals;
-    u32                                    unkown4[3];
-    
+    u32                                  unkown4[3];
+
     inline reference<vert::face> all_indices() const
     {
         return surfaces;

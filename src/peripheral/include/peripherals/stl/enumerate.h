@@ -8,7 +8,7 @@ namespace stl_types {
 // iterable container
 // In the future maybe make it operate on iterators, but I'm lazy
 template<typename Container>
-requires (!std::is_const_v<typename Container::value_type>)
+requires(!std::is_const_v<typename Container::value_type>)
 struct enumerate
     : std::vector<std::pair<std::size_t, typename Container::reference>>
 {

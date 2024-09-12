@@ -229,7 +229,7 @@ void inspect_bitm(
 
         if(image.compressed())
         {
-            pix_fmt    pfmt;
+            pix_fmt   pfmt;
             CompFlags cflags;
             std::tie(pfmt, cflags) = image.to_compressed_fmt();
 

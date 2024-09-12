@@ -37,9 +37,8 @@ requires(sizeof...(T) > 0)
 inline R reduce_add(std::tuple<T...>& src, auto&& predicate)
 {
     R out{};
-    detail::tuple_for_each<0, T...>(src, [&out, &predicate](auto const& v) {
-        out += predicate(v);
-    });
+    detail::tuple_for_each<0, T...>(
+        src, [&out, &predicate](auto const& v) { out += predicate(v); });
     return out;
 }
 
@@ -49,9 +48,8 @@ requires(sizeof...(T) > 0)
 inline bool reduce_and(std::tuple<T...>& src, auto&& predicate)
 {
     bool out{true};
-    detail::tuple_for_each<0, T...>(src, [&out, &predicate](auto const& v) {
-        out &= predicate(v);
-    });
+    detail::tuple_for_each<0, T...>(
+        src, [&out, &predicate](auto const& v) { out &= predicate(v); });
     return out;
 }
 
@@ -61,9 +59,8 @@ requires(sizeof...(T) > 0)
 inline bool reduce_or(std::tuple<T...>& src, auto&& predicate)
 {
     bool out{false};
-    detail::tuple_for_each<0, T...>(src, [&out, &predicate](auto const& v) {
-        out |= predicate(v);
-    });
+    detail::tuple_for_each<0, T...>(
+        src, [&out, &predicate](auto const& v) { out |= predicate(v); });
     return out;
 }
 

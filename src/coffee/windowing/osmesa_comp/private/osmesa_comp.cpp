@@ -6,8 +6,8 @@
 #include <coffee/core/debug/formatting.h>
 #include <coffee/image/cimage.h>
 
-using Coffee::Logging::cWarning;
 using Coffee::Logging::cVerbose;
+using Coffee::Logging::cWarning;
 
 namespace osmesa {
 namespace {
@@ -69,11 +69,12 @@ void Windowing::load(entity_container& e, comp_app::app_error& ec)
     using Coffee::Display::Event;
     e.service<comp_app::BasicEventBus<Event>>()->addEventData({
         .prio = 0,
-        .handler = [this](Event& event, libc_types::c_ptr) {
-            if(event.type != Event::TransitionBackground)
-                return;
-            dump_framebuffer();
-        },
+        .handler =
+            [this](Event& event, libc_types::c_ptr) {
+                if(event.type != Event::TransitionBackground)
+                    return;
+                dump_framebuffer();
+            },
     });
 }
 
@@ -144,7 +145,7 @@ void Windowing::dump_framebuffer()
 
     int   depthHeight{}, depthWidth{}, depthBytes{};
     void* depthPtr{};
-    auto res = OSMesaGetDepthBuffer(
+    auto  res = OSMesaGetDepthBuffer(
         m_context, &depthWidth, &depthHeight, &depthBytes, &depthPtr);
 
     if(!res)

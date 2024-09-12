@@ -41,9 +41,9 @@ struct alignas(4) tag_t
         std::array<tag_class_t, 3> tagclass_e; /*!< enum-ified tagclass value */
     };
 
-    u32        tag_id;
-    string_ref name;
-    u32        offset; /*!< A byte offset to associated data*/
+    u32           tag_id;
+    string_ref    name;
+    u32           offset;  /*!< A byte offset to associated data*/
     tag_storage_t storage; /*!< Only applies to custom_edition */
 
     i32 padding;
@@ -167,8 +167,7 @@ struct alignas(4) tag_index_t : stl_types::non_copy
 
     bl_tag pc_tag_sentinel; /*!< Says "tags" */
 
-    inline map_ptr get_magic(
-        file_header_t const* base, u32 file_size) const
+    inline map_ptr get_magic(file_header_t const* base, u32 file_size) const
     {
         byte_t const* base_ptr   = C_RCAST<byte_t const*>(base);
         u32           index_size = base->version == version_t::xbox

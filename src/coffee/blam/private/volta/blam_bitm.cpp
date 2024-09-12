@@ -8,7 +8,8 @@
 
 namespace blam::bitm {
 
-std::tuple<typing::pixels::bit_fmt, typing::pix_components> image_t::to_fmt() const
+std::tuple<typing::pixels::bit_fmt, typing::pix_components> image_t::to_fmt()
+    const
 {
     switch(format)
     {
@@ -152,8 +153,8 @@ semantic::Span<const libc_types::u8> image_t::data(
 
 namespace blam {
 
-stl_types::result<std::pair<const bitm::header_t*, map_ptr>, error_msg>
-tag_t::image(const map_ptr& magic, const atlas_view& source) const
+stl_types::result<std::pair<const bitm::header_t*, map_ptr>, error_msg> tag_t::
+    image(const map_ptr& magic, const atlas_view& source) const
 {
     /* CE changes! */
     if(storage == tag_storage_t::external)

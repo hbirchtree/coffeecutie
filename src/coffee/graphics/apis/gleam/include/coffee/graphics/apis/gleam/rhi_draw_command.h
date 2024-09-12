@@ -216,7 +216,7 @@ struct draw_command
             u32 count{0};         /*!< Count of elements */
             u64 offset{0};        /*!< Offset in bytes */
             u64 vertex_offset{0}; /*!< Offset in vertices */
-            
+
             semantic::type_t type{semantic::type_t::u32};
         } elements{};
 

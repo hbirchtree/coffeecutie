@@ -78,8 +78,8 @@ std::optional<std::pair<uint32_t, shader_proc::profile_t>> from_source(
     auto version_data = source_code.substr(
         version_string + "#version "sv.size(),
         version_end - version_string - "#version "sv.size());
-    auto version
-        = stl_types::cast_string_view<uint32_t>(version_data.substr(0, 3));
+    auto version =
+        stl_types::cast_string_view<uint32_t>(version_data.substr(0, 3));
     version_data = version_data.substr(3);
     if(version_data.size() < 3)
         return std::make_pair(version, shader_proc::profile_t::none);
@@ -157,8 +157,8 @@ libc_types::i32 cooker_main()
         cFatal("No outputs specified for SPV binary");
         return 1;
     }
-    if(res.unmatched().size() != res.count("stage")
-       && !(res.count("spirv") && res.count("module")))
+    if(res.unmatched().size() != res.count("stage") &&
+       !(res.count("spirv") && res.count("module")))
     {
         cFatal("Number of stages does not match number of files");
         for(auto const& unmatched : res.unmatched())
@@ -169,8 +169,8 @@ libc_types::i32 cooker_main()
                 cDebug(" - {0}", arg.value());
         return 1;
     }
-    if(res.unmatched().size() != res.count("output")
-       && !(res.count("spirv") && res.count("module")))
+    if(res.unmatched().size() != res.count("output") &&
+       !(res.count("spirv") && res.count("module")))
     {
         cFatal("Number of outputs does not match number of files");
         return 1;
@@ -212,9 +212,9 @@ libc_types::i32 cooker_main()
         auto             source_data = source_file.data();
         std::string_view source_code(source_data.data(), source_data.size());
 
-        auto [version, profile]
-            = from_source(source_code)
-                  .value_or(std::make_pair(460u, shader_proc::profile_t::core));
+        auto [version, profile] =
+            from_source(source_code)
+                .value_or(std::make_pair(460u, shader_proc::profile_t::core));
 
         // First, compile to SPV
         auto spv = shader_proc::spirv::compile(
@@ -256,8 +256,8 @@ libc_types::i32 cooker_main()
                 platform::url::Path(inputs[i].second)
                     .fileBasename()
                     .removeExt()
-                    .internUrl
-                + "_main");
+                    .internUrl +
+                "_main");
             auto optimized = shader_proc::opt::perform_optimization(
                 {
                     .content = std::move(blob),
@@ -299,8 +299,8 @@ libc_types::i32 cooker_main()
             out_spv = semantic::BytesConst::ofContainer(optimized.value());
             Coffee::FileCommit(
                 out_spv,
-                RSCA::NewFile | RSCA::WriteOnly | RSCA::Truncate
-                    | (res.count("force") ? RSCA::Discard : RSCA::None));
+                RSCA::NewFile | RSCA::WriteOnly | RSCA::Truncate |
+                    (res.count("force") ? RSCA::Discard : RSCA::None));
             ++i;
         }
 
@@ -359,16 +359,16 @@ libc_types::i32 cooker_main()
         {
             auto stage = inputs[i].first;
             // TODO: Skip if version < 430 on core or version < 310 on ES
-            auto glsl  = shader_proc::glsl::generate(
+            auto glsl = shader_proc::glsl::generate(
                 {
-                     .content = std::move(blob),
-                     .stage   = stage,
+                    .content = std::move(blob),
+                    .stage   = stage,
                 },
                 {
-                     .profile
-                    = from_profile_string(res["profile"].as<std::string>()),
-                     .version
-                    = cast_string<u32>(res["version"].as<std::string>()),
+                    .profile =
+                        from_profile_string(res["profile"].as<std::string>()),
+                    .version =
+                        cast_string<u32>(res["version"].as<std::string>()),
                 });
             if(glsl.has_error())
             {
@@ -383,8 +383,8 @@ libc_types::i32 cooker_main()
             {
                 Coffee::Resource output(MkUrl(outputs[i]));
                 output = semantic::BytesConst::ofContainer(glsl.value());
-                auto overwrite_flag
-                    = res.count("force") ? RSCA::Discard : RSCA::None;
+                auto overwrite_flag =
+                    res.count("force") ? RSCA::Discard : RSCA::None;
                 if(Coffee::FileExists(output) && overwrite_flag == RSCA::None)
                 {
                     cBasicPrint(
@@ -393,8 +393,8 @@ libc_types::i32 cooker_main()
                 }
                 Coffee::FileCommit(
                     output,
-                    RSCA::NewFile | RSCA::WriteOnly | RSCA::Truncate
-                        | overwrite_flag);
+                    RSCA::NewFile | RSCA::WriteOnly | RSCA::Truncate |
+                        overwrite_flag);
             } // else
               // cBasicPrint("{0}", glsl.value());
         }

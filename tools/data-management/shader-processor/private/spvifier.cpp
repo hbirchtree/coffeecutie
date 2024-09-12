@@ -50,13 +50,14 @@ class ShaderIncluder : public shaderc::CompileOptions::IncluderInterface
             m_cache.push_back(include_data{
                 .filename = lookup_path.internUrl,
                 .mapping  = std::move(mapping.value()),
-                .result   = {
-                    .source_name = nullptr,
-                    .source_name_length = 0,
-                    .content = data.data(),
-                    .content_length = data.size_bytes(),
-                    .user_data = nullptr,
-                },
+                .result =
+                    {
+                        .source_name        = nullptr,
+                        .source_name_length = 0,
+                        .content            = data.data(),
+                        .content_length     = data.size_bytes(),
+                        .user_data          = nullptr,
+                    },
             });
             for(include_data& res : m_cache)
                 if(res.filename == lookup_path.internUrl)
@@ -75,6 +76,7 @@ class ShaderIncluder : public shaderc::CompileOptions::IncluderInterface
             }
         }
     }
+
     void ReleaseInclude(shaderc_include_result* data)
     {
         auto it = std::find_if(

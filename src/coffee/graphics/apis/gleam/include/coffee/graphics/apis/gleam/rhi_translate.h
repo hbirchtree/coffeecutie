@@ -214,15 +214,15 @@ inline std::
     using f = group::internal_format;
     using b = group::pixel_type;
     using p = group::pixel_format;
-    
+
     using P = typing::pixels::pix_fmt;
     using B = typing::pixels::bit_fmt;
-    
+
     if(fmt.pixfmt == P::RGBA8 && fmt.bfmt == B::u8)
         return {f::rgba, b::unsigned_byte, p::rgba};
     if(fmt.pixfmt == P::RGB8 && fmt.bfmt == B::u8)
         return {f::rgb, b::unsigned_byte, p::rgb};
-    
+
     if(fmt.pixfmt == P::RGB565 && fmt.bfmt == B::u16_565)
         return {f::rgb, b::unsigned_short_5_6_5, p::rgb};
     if(fmt.pixfmt == P::RGB5A1 && fmt.bfmt == B::u16_5551)

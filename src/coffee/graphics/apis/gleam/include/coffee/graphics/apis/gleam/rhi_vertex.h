@@ -149,11 +149,11 @@ struct vertex_attribute
 
     struct
     {
-        u64                offset{0};
-        u64                stride{0};
-        u32                count{4};
+        u64              offset{0};
+        u64              stride{0};
+        u32              count{4};
         semantic::type_t type{semantic::type_t::f32};
-        attribute_flags    flags{attribute_flags::none};
+        attribute_flags  flags{attribute_flags::none};
     } value;
 
     struct

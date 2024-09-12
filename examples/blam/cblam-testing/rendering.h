@@ -85,7 +85,7 @@ struct LoadingScreen
     std::shared_ptr<gfx::sampler_t>      loading_sampler;
 
     std::optional<compo::time_point> loading_screen_gone_time;
-    bool was_loading{false};
+    bool                             was_loading{false};
 };
 
 void alloc_renderer(compo::EntityContainer& container);

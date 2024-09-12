@@ -22,6 +22,7 @@ struct generation_idx_t
     {
         return i != 0 && gen != 0;
     }
+
     inline bool operator==(generation_idx_t const& idx) const
     {
         return gen == idx.gen && i == idx.i;

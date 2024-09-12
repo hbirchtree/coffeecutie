@@ -738,7 +738,7 @@ void RendererLoop(
                     g.tex,
                     g.sampler}),
             gleam::view_state{
-                .depth = gleam::depth_state{},
+                       .depth = gleam::depth_state{},
             });
         if(err.has_value())
         {

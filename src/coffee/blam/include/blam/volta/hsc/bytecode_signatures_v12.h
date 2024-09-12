@@ -111,8 +111,8 @@ inline typename Getter::return_type opcode_signature(
     case o::game_safe_to_save:
         return Getter::template get<sig_t<t::bool_, t::short_>>();
 
-    // case o::game_skip_ticks:
-    //     return Getter::template get<sig_t<t::void_, t::short_>>();
+        // case o::game_skip_ticks:
+        //     return Getter::template get<sig_t<t::void_, t::short_>>();
 
     case o::game_difficulty_get:
         return Getter::template get<sig_t<t::game_difficulty>>();
@@ -580,8 +580,8 @@ inline typename Getter::return_type opcode_signature(
     case o::player_action_test_zoom:
     case o::player_action_test_grenade_trigger:
         return Getter::template get<sig_t<t::bool_, t::short_>>();
-    // case o::player_camera_control:
-    //     return Getter::template get<sig_t<t::void_, t::bool_>>();
+        // case o::player_camera_control:
+        //     return Getter::template get<sig_t<t::void_, t::bool_>>();
 
     case o::player0_joystick_set_is_normal:
     case o::player0_look_pitch_is_inverted:

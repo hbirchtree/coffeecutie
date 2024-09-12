@@ -257,9 +257,9 @@ inline PixDesc desc_of(texture_format_t const& fmt)
     using typing::pix_components;
     using typing::pixels::comp_flags;
     using typing::pixels::CompFmt;
-    using typing::pixels::PixDesc;
     using typing::pixels::pix_flags;
     using typing::pixels::pix_fmt;
+    using typing::pixels::PixDesc;
     switch(fmt.type)
     {
         /* ETC1 */

@@ -1,7 +1,7 @@
 #include "script_component.h"
 
-#include <blam/volta/blam_stl.h>
 #include <blam/volta/blam_scenario.h>
+#include <blam/volta/blam_stl.h>
 #include <blam/volta/hsc/blam_bytecode.h>
 #include <blam/volta/hsc/bytecode_eval.h>
 
@@ -417,7 +417,7 @@ struct BlamScript
     /* Read-only map data */
     blam::map_container<Ver> const* m_map{nullptr};
     blam::tag_index_view<Ver>       m_tags{};
-    blam::map_ptr              m_magic{};
+    blam::map_ptr                   m_magic{};
     blam::scn::scenario<Ver> const* m_scenario{nullptr};
     blam::string_segment_ref        m_strings{};
 

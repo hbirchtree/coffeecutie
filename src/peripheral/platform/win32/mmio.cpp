@@ -90,8 +90,8 @@ result<mem_mapping_t, posix::posix_error> map(
         }
         fprintf(stderr, " - Success\n");
         return mem_mapping_t{
-            .view   = data.value().subspan(params.offset, map_size),
-            .access = params.access,
+            .view     = data.value().subspan(params.offset, map_size),
+            .access   = params.access,
             .resource = fd.resource,
         };
     }

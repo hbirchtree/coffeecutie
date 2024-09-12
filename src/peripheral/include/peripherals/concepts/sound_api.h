@@ -153,7 +153,7 @@ concept Listener = requires(T v) {
 
 struct DummyInfo
 {
-    Format fmt{};
+    Format          fmt{};
     libc_types::f32 speed{1.f};
 };
 
@@ -161,7 +161,7 @@ struct DeviceHandle
 {
     std::optional<std::string> name;
     bool                       enable_hrtf{true};
-    std::optional<DummyInfo>      dummy{};
+    std::optional<DummyInfo>   dummy{};
 };
 
 template<class T>

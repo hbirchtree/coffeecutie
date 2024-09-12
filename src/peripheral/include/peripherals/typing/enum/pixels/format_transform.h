@@ -26,7 +26,9 @@ struct CompFmt
     }
 
     constexpr CompFmt(
-        pix_fmt base, pix_flags flg, comp_flags cf = comp_flags::CompressionNone)
+        pix_fmt    base,
+        pix_flags  flg,
+        comp_flags cf = comp_flags::CompressionNone)
         : base_fmt(base)
         , c_flags(cf)
         , p_flags(flg)
@@ -35,7 +37,7 @@ struct CompFmt
 
     pix_fmt    base_fmt;
     comp_flags c_flags;
-    pix_flags    p_flags;
+    pix_flags  p_flags;
 };
 
 namespace convert {
@@ -263,8 +265,8 @@ FORCEDINLINE constexpr pix_flags to(pix_fmt fmt)
 
 template<
     typename ToType,
-    typename std::enable_if<std::is_same<ToType, pix_components>::value>::type* =
-        nullptr>
+    typename std::enable_if<
+        std::is_same<ToType, pix_components>::value>::type* = nullptr>
 FORCEDINLINE constexpr pix_components to(pix_fmt fmt)
 {
     using C = pix_components;
@@ -679,11 +681,11 @@ struct PixDesc
         {
             pix_fmt    pixfmt;
             comp_flags cmpflg;
-            pix_flags    pixflg;
+            pix_flags  pixflg;
         };
     };
 
-    bit_fmt bfmt;
+    bit_fmt        bfmt;
     pix_components comp;
 };
 

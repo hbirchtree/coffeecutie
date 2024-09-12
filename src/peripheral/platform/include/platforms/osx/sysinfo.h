@@ -55,11 +55,11 @@ inline std::optional<std::string> version()
 #if TARGET_OS_OSX
     return info::apple::sysctl_by_name<std::string>("kern.osproductversion");
 #else
-    #error apple::version not defined
+#error apple::version not defined
 #endif
 }
 
-}
+} // namespace os::apple
 
 namespace proc::apple {
 using libc_types::u32;
@@ -98,7 +98,8 @@ inline u32 frequency(
     bool /*current*/ = false, u32 /*cpu*/ = 0, u32 /*node*/ = 0)
 {
     return static_cast<u32>(
-        info::apple::sysctl_by_name<u64>("machdep.tsc.frequency")) / 1000000;
+               info::apple::sysctl_by_name<u64>("machdep.tsc.frequency")) /
+           1000000;
 }
 
 } // namespace proc::apple
@@ -133,7 +134,7 @@ inline libc_types::u64 total()
     return info::apple::sysctl_by_name<libc_types::u64>("hw.memsize");
 }
 
-}
+} // namespace memory::apple
 } // namespace platform::info
 
 #endif

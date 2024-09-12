@@ -392,12 +392,13 @@ std::optional<std::string> system::load(
     if(dummyPlug.enabled)
     {
         device.dummy = DummyInfo{
-            .fmt = Format{
-                .frequency = dummyPlug.audio_config.frequency,
-                .channels  = dummyPlug.audio_config.channels,
-                .bits      = dummyPlug.audio_config.bits,
-                .format    = dummyPlug.audio_config.format,
-            },
+            .fmt =
+                Format{
+                    .frequency = dummyPlug.audio_config.frequency,
+                    .channels  = dummyPlug.audio_config.channels,
+                    .bits      = dummyPlug.audio_config.bits,
+                    .format    = dummyPlug.audio_config.format,
+                },
             .speed = 1.f,
         };
     }

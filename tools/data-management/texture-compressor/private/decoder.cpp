@@ -40,8 +40,8 @@ std::optional<ImageType> map_channels(
         image.size.area() * 4 * sizeof(decltype(*output.data)));
     output.bpp  = channels.size();
     output.size = image.size;
-    output.data
-        = reinterpret_cast<decltype(output.data)>(output.data_owner.data);
+    output.data =
+        reinterpret_cast<decltype(output.data)>(output.data_owner.data);
 
     for(auto i : stl_types::range(output.size.area()))
     {

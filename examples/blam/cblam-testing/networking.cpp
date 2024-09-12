@@ -271,8 +271,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         {
             num_names++;
         }
-        auto   target_i = m_local_random.rand<u32>(0, num_names);
-        size_t i{0};
+        auto             target_i = m_local_random.rand<u32>(0, num_names);
+        size_t           i{0};
         std::string_view out{};
         for(auto it = spliterator(name_list, '\n'); it != spliterator<char>();
             ++it)

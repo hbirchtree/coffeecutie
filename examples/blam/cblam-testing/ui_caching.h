@@ -133,8 +133,7 @@ struct UIElementCache
         };
         if(ui_el->background.valid())
         {
-            auto all_bitms =
-                bitm_cache.resolve_all(ui_el->background);
+            auto all_bitms = bitm_cache.resolve_all(ui_el->background);
             out.background = all_bitms.front();
             if(all_bitms.size() > 1)
                 out.background_alt = all_bitms.at(1);
@@ -160,7 +159,8 @@ struct UIElementCache
 
     virtual blam::ui_element const* get_id(blam::tagref_t const& ui_tag)
     {
-        if(auto data = index.template data<blam::ui_element>(ui_tag); !data.has_value())
+        if(auto data = index.template data<blam::ui_element>(ui_tag);
+           !data.has_value())
             return nullptr;
         else
             return *data;
@@ -180,9 +180,7 @@ struct UIElementCache
             std::begin(widgets),
             std::end(widgets),
             std::back_inserter(root_widgets),
-            [this](auto const& widget) {
-                return predict(widget.definition);
-            });
+            [this](auto const& widget) { return predict(widget.definition); });
         return root_widgets;
     }
 

@@ -78,8 +78,8 @@ stl_types::result<std::string, glsl_error> generate(
     using namespace std::string_literals;
     using Stage       = typing::graphics::ShaderStage;
     const bool legacy = output.version == 100;
-    if(!stl_types::any_of(input.stage, Stage::Vertex, Stage::Fragment)
-       && legacy)
+    if(!stl_types::any_of(input.stage, Stage::Vertex, Stage::Fragment) &&
+       legacy)
         return stl_types::failure(std::make_pair(
             "invalid shader stage"s,
             "OpenGL SL 1.00 only supports vertex and fragment shaders"s));
@@ -97,8 +97,8 @@ stl_types::result<std::string, glsl_error> generate(
         to_execution_model(input.stage));
     spirv_cross::CompilerGLSL::Options opts;
 
-    opts.es                   = output.profile == profile_t::es;
-    opts.version              = output.version;
+    opts.es      = output.profile == profile_t::es;
+    opts.version = output.version;
 
     opts.vertex.support_nonzero_base_instance = false;
 

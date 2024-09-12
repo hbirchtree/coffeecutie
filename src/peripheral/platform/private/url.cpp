@@ -618,7 +618,7 @@ const UrlParse UrlParse::from(const Url& url)
     return p;
 }
 
-void overrideSystemPath(RSCA storage, const Url &dir)
+void overrideSystemPath(RSCA storage, const Url& dir)
 {
     auto& paths = GetSystemPaths();
 

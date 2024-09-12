@@ -328,12 +328,11 @@ struct multi_dependent_task : public dependent_task_invoker
     bool ready() override
     {
         using namespace std::chrono_literals;
-        return stl_types::tuple::reduce_and(
-            dependencies, []<typename T>(T& f) {
-                if(!f.valid())
-                    return true;
-                return f.wait_for(0ms) == std::future_status::ready;
-            });
+        return stl_types::tuple::reduce_and(dependencies, []<typename T>(T& f) {
+            if(!f.valid())
+                return true;
+            return f.wait_for(0ms) == std::future_status::ready;
+        });
     }
 
     bool cancelled() override
@@ -513,9 +512,7 @@ class runtime_queue
         return Queue(
             q->thread_id(),
             runtime_task::CreateTask(
-                std::move(task),
-                task_flags::single_shot,
-                ClockNow() + time));
+                std::move(task), task_flags::single_shot, ClockNow() + time));
     }
 
     /*!

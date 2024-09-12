@@ -318,9 +318,9 @@ struct alignas(4) shader_chicago : radiosity_properties /* aka schi */
 {
     chicago::base          transparent;
     chicago::lens_flares_t lens_flares;
-    
+
     reference<tagref_typed_t<tag_class_t::shdr>, V> layers;
-    
+
     reference<chicago::map_t, V> maps;
 
     chicago::extra_flags ex_flags;
@@ -340,12 +340,12 @@ struct reflection_properties
 template<typename V>
 struct alignas(4) shader_chicago_extended : radiosity_properties /* aka scex */
 {
-    chicago::base                                     transparent;
-    chicago::lens_flares_t                            lens_flares;
+    chicago::base                                   transparent;
+    chicago::lens_flares_t                          lens_flares;
     reference<tagref_typed_t<tag_class_t::shdr>, V> layers;
     reference<chicago::map_t, V>                    maps_4stage;
     reference<chicago::map_t, V>                    maps_2stage;
-    chicago::extra_flags                              extra_flags;
+    chicago::extra_flags                            extra_flags;
 };
 
 static_assert(
@@ -493,7 +493,7 @@ struct alignas(4) shader_water : radiosity_properties /* aka swat */
         f32 mipmap_bias;
 
         u32 padding_[16];
-        
+
         reference<ripple_t> ripples;
     } ripple;
 
@@ -917,7 +917,7 @@ struct alignas(32) shader_transparent : radiosity_properties /* aka sotr */
 {
     chicago::base          transparent;
     chicago::lens_flares_t lens_flares;
-    
+
     reference<tagref_typed_t<tag_class_t::shdr>> layers;
 
     enum class map_flags_t : u16
@@ -1047,7 +1047,7 @@ struct alignas(32) shader_transparent : radiosity_properties /* aka sotr */
          * YIKES
          */
     };
-    
+
     reference<map_t>   maps;
     reference<stage_t> stages;
 };

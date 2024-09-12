@@ -54,8 +54,8 @@ struct NVMLGPUStats
         using namespace std::string_view_literals;
         nvmlGpuOperationMode_t operating_mode = {}, pending_mode = {};
         nvmlDeviceGetGpuOperationMode(m_device, &operating_mode, &pending_mode);
-        auto op_mode_ = magic_enum::enum_name(operating_mode);
-        constexpr auto prefix = "NVML_GOM_"sv;
+        auto           op_mode_ = magic_enum::enum_name(operating_mode);
+        constexpr auto prefix   = "NVML_GOM_"sv;
         if(op_mode_.size() > prefix.size())
             op_mode_ = op_mode_.substr(prefix.size());
         return {

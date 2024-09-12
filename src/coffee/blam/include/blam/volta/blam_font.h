@@ -40,18 +40,18 @@ struct alignas(32) font
     u16          leadin_width;
 
     u32 unknown_1[9];
-    
+
     reference<character_mapping> character_table;
 
     tagref_typed_t<tag_class_t::font> bold;
     tagref_typed_t<tag_class_t::font> italic;
     tagref_typed_t<tag_class_t::font> condense;
     tagref_typed_t<tag_class_t::font> underline;
-    
+
     reference<character_t> characters;
     reference<char>        pixels;
-    u32                      pixels_offset;
-    
+    u32                    pixels_offset;
+
     reference<char> pixel_data(u32 offset = 0, u32 size = 0) const
     {
         auto p   = pixels;
@@ -64,7 +64,7 @@ struct alignas(32) font
 
     using character_pair_t =
         std::optional<std::tuple<character_t const*, Span<const char>>>;
-    
+
     character_pair_t character(u16 c, map_ptr const& magic) const
     {
         character_t const* selection{nullptr};

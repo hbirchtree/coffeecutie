@@ -924,7 +924,7 @@ void KeyboardInput::start_restricted(proxy_type& p, time_point const&)
             CIWEditEvent edit;
             edit.cursor = event.edit.start;
             edit.len    = event.edit.length;
-            edit.text = event.edit.text;
+            edit.text   = event.edit.text;
             EMIT_IEVENT(edit)
             break;
         }

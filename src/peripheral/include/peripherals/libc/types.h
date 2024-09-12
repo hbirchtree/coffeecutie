@@ -33,8 +33,8 @@ using byte_t  = u8;     /*!< System byte*/
 using ubyte_t = byte_t; /*!< System byte*/
 using sbyte_t = i8;     /*!< System unsigned byte*/
 
-using cstring    = const char*;    /*!< Typical C-string*/
-using cstring_w  = char*;          /*!< Writable C-string*/
+using cstring   = const char*; /*!< Typical C-string*/
+using cstring_w = char*;       /*!< Writable C-string*/
 
 using szptr  = size_t;   /*!< Usable as offset into data, or size of data */
 using ptroff = intptr_t; /*!< Signed offset into data */
