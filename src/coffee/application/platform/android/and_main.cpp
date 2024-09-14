@@ -193,7 +193,7 @@ std::map<std::string, std::string> intent::extras()
 
     auto extras = m_intent[getExtras]();
 
-    if(!extras)
+    if(extras)
     {
         auto extrasKeySet = extras[keySet]();
         auto extraKeys    = extrasKeySet[setArray]();

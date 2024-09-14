@@ -9,6 +9,8 @@
 #include <peripherals/stl/time_types.h>
 #include <peripherals/stl/tuple_foreach.h>
 
+#include <shared_mutex>
+
 namespace rq {
 namespace detail {
 
@@ -16,15 +18,8 @@ using clock      = std::chrono::steady_clock;
 using time_point = clock::time_point;
 using duration   = clock::duration;
 
-using thread          = std::thread;
-using thread_id       = stl_types::ThreadId::Hash;
-using mutex           = stl_types::Mutex;
-using recursive_mutex = stl_types::RecMutex;
-
-template<typename T = std::mutex>
-using lock_guard = std::lock_guard<T>;
-template<typename T = std::mutex>
-using unique_lock = std::unique_lock<T>;
+using thread    = std::thread;
+using thread_id = stl_types::ThreadId::Hash;
 
 template<typename T, typename E>
 using result = stl_types::result<T, E>;
@@ -35,12 +30,6 @@ using stl_types::success;
 inline thread_id current_thread_id()
 {
     return std::hash<thread::id>()(std::this_thread::get_id());
-}
-
-inline void on_thread_created()
-{
-    Coffee::State::SetInternalThreadState(
-        Coffee::State::CreateNewThreadState());
 }
 
 template<typename R, typename... Args>
@@ -407,6 +396,7 @@ class runtime_queue
         std::condition_variable condition;
         std::mutex              mutex;
         std::atomic_bool        running;
+        std::atomic_bool        notified{false};
     };
 
     struct QueueContext
@@ -422,8 +412,8 @@ class runtime_queue
                 (void)error;
         }
 
-        std::mutex       global_lock;
-        std::atomic_bool shutdown_flag;
+        std::shared_mutex global_lock;
+        std::atomic_bool  shutdown_flag;
 
         std::map<u64, runtime_queue>  queues;
         std::map<u64, detail::thread> queue_threads;
@@ -624,8 +614,8 @@ class runtime_queue
         {
             struct
             {
-                bool alive : 1;
-                bool to_dispose : 1;
+                bool alive : 1 {true};
+                bool to_dispose : 1 {false};
             };
         };
 
@@ -737,6 +727,8 @@ class runtime_queue
     detail::thread_id                  m_thread_id{0};
     u64                                m_task_index{0};
     u64                                m_current_task_id{0};
+
+    static runtime_queue* find_queue(detail::thread_id id);
 
     static std::shared_ptr<QueueContext> context;
 };

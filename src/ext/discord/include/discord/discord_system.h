@@ -22,13 +22,14 @@ struct Subsystem : compo::SubsystemBase
         m_delegate        = std::make_shared<DiscordDelegate>();
         m_delegate->ready = [this](PlayerInfo&& info) {
             m_playerInfo = std::move(info);
-            m_startAwaiter.set_value();
+            m_startAwaiter.set_value(true);
         };
     }
 
     void start()
     {
         using namespace std::chrono_literals;
+        compo::DProfContext _("discord::Subsystem launch");
 
         if(m_taskId)
         {
@@ -36,11 +37,27 @@ struct Subsystem : compo::SubsystemBase
             return;
         }
 
+        using namespace std::chrono_literals;
+        m_startDeadline = std::chrono::system_clock().now() + 10s;
+
         auto err =
             rq::runtime_queue::QueueImmediate(m_discordQueue, 0ms, [this]() {
+                compo::DProfContext _("discord::Subsystem start thread");
                 m_service = CreateService(std::move(m_options), m_delegate);
 
-                auto task = [service = m_service]() { service->poll(); };
+                auto task = [this, service = m_service]() {
+                    compo::DProfContext _("discord::Subsystem::poll");
+                    service->poll();
+
+                    if(m_playerInfo.has_value())
+                        return;
+                    if(std::chrono::system_clock::now() > m_startDeadline)
+                    {
+                        m_startAwaiter.set_value(false);
+                        rq::runtime_queue::Block(
+                            rq::runtime_queue::GetSelfId().value());
+                    }
+                };
                 if(auto taskId = rq::runtime_queue::QueuePeriodic(
                        m_discordQueue, std::chrono::milliseconds(100), task);
                    taskId.has_value())
@@ -82,14 +99,14 @@ struct Subsystem : compo::SubsystemBase
         return *m_service;
     }
 
-    std::future<void> startCondition()
+    std::future<bool> startCondition()
     {
         return m_startAwaiter.get_future();
     }
 
     PlayerInfo const& playerInfo() const
     {
-        return m_playerInfo;
+        return m_playerInfo.value();
     }
 
     rq::runtime_queue* queue() const
@@ -98,10 +115,18 @@ struct Subsystem : compo::SubsystemBase
     }
 
     template<typename T>
-    auto on_started(std::function<T(discord::Subsystem&)>&& func)
+    auto on_started(
+        std::function<T(discord::Subsystem&)>&& func,
+        std::function<T()>&&                    failed)
     {
-        auto task = rq::dependent_task<void, T>::CreateProcessor(
-            startCondition(), [this, func](void*) { return func(*this); });
+        auto task = rq::dependent_task<bool, T>::CreateProcessor(
+            startCondition(),
+            [this, func = std::move(func), failed = std::move(failed)](
+                bool* started) {
+                if(!(*started))
+                    return failed();
+                return func(*this);
+            });
         auto output = task->output.get_future();
         if(rq::runtime_queue::Queue(m_discordQueue, std::move(task))
                .has_error())
@@ -116,9 +141,10 @@ struct Subsystem : compo::SubsystemBase
     rq::runtime_queue*                         m_mainQueue{nullptr};
     libc_types::u64                            m_taskId{0};
     DiscordOptions                             m_options;
-    std::promise<void>                         m_startAwaiter;
+    std::promise<bool>                         m_startAwaiter;
+    std::chrono::system_clock::time_point      m_startDeadline{};
 
-    PlayerInfo m_playerInfo;
+    std::optional<PlayerInfo> m_playerInfo;
 };
 
 } // namespace discord
