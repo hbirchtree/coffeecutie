@@ -102,6 +102,7 @@ function download_host_tools()
         [[ -f clang-${TOOL} ]] && continue
         wget \
             "https://github.com/muttleyxd/clang-tools-static-binaries/releases/download/master-f7f02c1d/clang-${TOOL}-${CLANG_TOOLS_VER}_${TOOL_SUFFIX}" \
+            -q \
             -O clang-${TOOL}
         chmod +x clang-${TOOL}
     done

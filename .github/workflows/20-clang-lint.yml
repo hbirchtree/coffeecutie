@@ -14,3 +14,5 @@ jobs:
               run: ./cb format
             - name: Running cmake-format
               run: ./cb lint-cmake
+            - name: Print out diff
+              run: git diff
