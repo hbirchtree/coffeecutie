@@ -101,6 +101,7 @@ struct DiscordPresenceDelegate : platform::online::PresenceDelegate
     }
 
     virtual void put(platform::online::PartyDesc&& party);
+    virtual void update(platform::online::PartyDescUpdate&& party);
 
     virtual void putState(std::string const& state);
 

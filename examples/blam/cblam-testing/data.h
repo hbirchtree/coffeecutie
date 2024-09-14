@@ -54,12 +54,12 @@ struct BlamCamera : compo::SubsystemBase
         bool                          active{false};
     };
 
-    std::array<viewport_t, 4> viewports;
+    std::array<viewport_t, 8> viewports;
     libc_types::u32           focused_player{0};
 
     viewport_t& player(libc_types::u32 idx = 0)
     {
-        if(idx > 3)
+        if(idx >= viewports.size())
             Throw(implementation_error("player idx > 3 does not exist"));
         return viewports[idx];
     }
@@ -188,6 +188,8 @@ struct GameEvent
         ServerConnected,
         ServerCameraControl,
         ServerDisconnect,
+        ServerStateUpdate,
+        ServerPlayerStateUpdate,
     };
 
     EventType type{None};
@@ -249,14 +251,13 @@ struct ServerConnectEvent
 {
     static constexpr auto event_type = GameEvent::ServerConnect;
 
-    enum ConnectType
+    enum ConnectType : libc_types::u32
     {
         Peer,
         Server,
         Listen,
-    };
+    } type{Server};
 
-    ConnectType type{Server};
     std::string remote;
 };
 
@@ -272,7 +273,7 @@ struct ServerCameraControl
 {
     static constexpr auto event_type = GameEvent::ServerCameraControl;
 
-    enum RequestType
+    enum RequestType : libc_types::u32
     {
         None,
         RequestCameraFocus,
@@ -284,6 +285,44 @@ struct ServerCameraControl
 struct ServerDisconnectEvent
 {
     static constexpr auto event_type = GameEvent::ServerDisconnect;
+};
+
+struct ServerStateUpdate
+{
+    static constexpr auto event_type = GameEvent::ServerStateUpdate;
+
+    enum StateField : libc_types::u32
+    {
+        None,
+        ServerName,
+        PlayerCount,
+        PlayerMaxCount,
+    } type{None};
+
+    union
+    {
+        blam::bl_string string_field;
+        libc_types::i32 num_field;
+    };
+};
+
+struct ServerPlayerStateUpdate
+{
+    static constexpr auto event_type = GameEvent::ServerPlayerStateUpdate;
+
+    enum StateField : libc_types::u32
+    {
+        None,
+        Name,
+    } type{None};
+
+    libc_types::u32 index{0};
+
+    union
+    {
+        blam::bl_string string_field;
+        libc_types::i32 num_field;
+    };
 };
 
 using GameEventBus = comp_app::BasicEventBus<GameEvent>;

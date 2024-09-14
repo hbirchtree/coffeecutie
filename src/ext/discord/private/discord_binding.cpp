@@ -299,6 +299,36 @@ void DiscordPresenceDelegate::put(online::PartyDesc&& party)
     Discord_UpdatePresence(m_presence);
 }
 
+void DiscordPresenceDelegate::update(platform::online::PartyDescUpdate&& party)
+{
+    if(party.partyId)
+    {
+        m_desc.partyId      = *party.partyId;
+        m_presence->partyId = m_desc.partyId.c_str();
+    }
+    if(party.curPlayers)
+    {
+        m_desc.curPlayers = *party.curPlayers;
+        m_presence->partySize = m_desc.curPlayers;
+    }
+    if(party.maxPlayers)
+    {
+        m_desc.maxPlayers = *party.maxPlayers;
+        m_presence->partyMax = m_desc.maxPlayers;
+    }
+    if(party.spectate.secret)
+    {
+        m_desc.spectate.secret = *party.spectate.secret;
+        m_presence->spectateSecret = m_desc.spectate.secret.c_str();
+    }
+    if(party.join.secret)
+    {
+        m_desc.join.secret = *party.join.secret;
+        m_presence->joinSecret = m_desc.join.secret.c_str();
+    }
+    Discord_UpdatePresence(m_presence);
+}
+
 void DiscordPresenceDelegate::putState(const std::string& state)
 {
     extra.state = std::move(state);

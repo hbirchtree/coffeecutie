@@ -198,6 +198,8 @@ bool is_client_network_event(GameEvent const& event)
     switch(event.type)
     {
     case GameEvent::ServerCameraControl:
+    case GameEvent::ServerPlayerStateUpdate:
+    case GameEvent::ServerStateUpdate:
         return true;
     default:
         return false;
@@ -250,6 +252,21 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                               : blam::bl_string{},
             .seed     = m_seed,
         });
+    }
+
+    void update_player_counts()
+    {
+        GameEvent update{.type = GameEvent::ServerStateUpdate};
+        ServerStateUpdate data = {
+            .type = ServerStateUpdate::PlayerCount,
+            .num_field = static_cast<i32>(m_connections.size() + 1),
+        };
+        m_game_bus.inject(update, &data);
+        data = {
+            .type = ServerStateUpdate::PlayerMaxCount,
+            .num_field = 16,
+        };
+        m_game_bus.inject(update, &data);
     }
 
     auto get_random_name()
@@ -349,6 +366,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                          "Distributing {} event",
                          magic_enum::enum_name(event.type));
                      forward_game_event<MapLoadByName>(event, data);
+                     forward_game_event<ServerStateUpdate>(event, data);
+                     forward_game_event<ServerPlayerStateUpdate>(event, data);
                      return;
                  } else if(is_client_network_event(event))
                  {
@@ -785,6 +804,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 Message<PlayerJoinConfirm>({
                     .player_idx = player_info.idx,
                 }));
+            update_player_counts();
             break;
         }
         case MessageBase::GameEvent: {

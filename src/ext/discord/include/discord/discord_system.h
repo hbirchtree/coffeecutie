@@ -117,7 +117,7 @@ struct Subsystem : compo::SubsystemBase
     template<typename T>
     auto on_started(
         std::function<T(discord::Subsystem&)>&& func,
-        std::function<T()>&&                    failed)
+        std::function<T()>&&                    failed = []() { return T(); })
     {
         auto task = rq::dependent_task<bool, T>::CreateProcessor(
             startCondition(),

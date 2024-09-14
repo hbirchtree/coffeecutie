@@ -837,7 +837,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
 
 void PerformanceMonitor::end_restricted(proxy_type& p, const time_point& time)
 {
-    capture_screenshot(p, time);
+    // capture_screenshot(p, time);
 }
 
 void PerformanceMonitor::capture_screenshot(

@@ -177,31 +177,60 @@ i32 blam_main()
                 discord::DiscordOptions("1194446879027646576"));
             discord.start();
 
-            discord.on_started<bool>([](discord::Subsystem& discord) {
-                discord.game().put(discord::DiscordGameDelegate::Builder(
-                    "Blam!",
-                    "Gaming",
-                    "https://assetsio.reedpopcdn.com/"
-                    "digitalfoundry-2021-halo-combat-evolved-season-7-"
-                    "master-chief-collection-1622735120728.jpg?width=1600&"
-                    "height=900&fit=crop&quality=100&format=png&enable="
-                    "upscale&auto=webp"_https));
-                discord.presence().put({
-                    .partyId    = "16420",
-                    .curPlayers = 1,
-                    .maxPlayers = 16,
-                    .spectate =
-                        {
-                            .secret = "",
-                        },
-                    .join =
-                        {
-                            .secret = "poopy",
-                        },
+            discord.on_started<bool>(
+                [&e](discord::Subsystem& discord) {
+                    discord.game().put(discord::DiscordGameDelegate::Builder(
+                        "Blam!",
+                        "Gaming",
+                        "https://assetsio.reedpopcdn.com/"
+                        "digitalfoundry-2021-halo-combat-evolved-season-7-"
+                        "master-chief-collection-1622735120728.jpg?width=1600&"
+                        "height=900&fit=crop&quality=100&format=png&enable="
+                        "upscale&auto=webp"_https));
+                    discord.presence().put({
+                        .partyId    = "16420",
+                        .curPlayers = 1,
+                        .maxPlayers = 16,
+                        .spectate =
+                            {
+                                .secret = "",
+                            },
+                        .join =
+                            {
+                                .secret = "poopy",
+                            },
+                    });
+                    discord.presence().putState("Campaign");
+                    auto handler =
+                        [&discord](GameEvent&, ServerStateUpdate* update) {
+                            platform::online::PartyDescUpdate data;
+                            switch(update->type)
+                            {
+                            case ServerStateUpdate::PlayerCount:
+                                cDebug("Player count update: {}", update->num_field);
+                                data.curPlayers = update->num_field;
+                                break;
+                            case ServerStateUpdate::PlayerMaxCount:
+                                data.maxPlayers = update->num_field;
+                                break;
+                            case ServerStateUpdate::ServerName:
+                                discord.presence().putState(
+                                    std::string(update->string_field.str()));
+                                return;
+                            default:
+                                return;
+                            }
+                            discord.presence().update(std::move(data));
+                        };
+                    e.subsystem_cast<GameEventBus>()
+                        .addEventFunction<ServerStateUpdate>(
+                            0, std::move(handler));
+                    return false;
+                },
+                []() {
+                    cDebug("No Discord today :(");
+                    return false;
                 });
-                discord.presence().putState("Campaign");
-                return false;
-            });
 #endif
 
             install_imgui_widgets(e, [](Url const&) {});
@@ -331,7 +360,7 @@ i32 blam_main()
             auto& camera_     = e.subsystem_cast<BlamCamera>();
             auto  controllers = e.service<comp_app::ControllerInput>();
 
-            for(auto i : range<u32>(4))
+            for(auto i : range<u32>(8))
             {
                 auto& camera = camera_.player(i);
                 /* Mouse/keyboard only applies to player 1 */
@@ -351,8 +380,8 @@ i32 blam_main()
                         camera.controller_opts,
                         controllers->state(i),
                         t);
-                } else if(i != 0)
-                    break;
+                } /*else if(i != 0)
+                    break;*/
                 using namespace typing::vectors::scene;
                 // camera.camera.aspect
                 //     = e.service<comp_app::Windowing>()->size().aspect();

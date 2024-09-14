@@ -80,6 +80,22 @@ struct PartyDesc
     } join;
 };
 
+struct PartyDescUpdate
+{
+    std::optional<std::string> partyId;
+    std::optional<i32>         curPlayers, maxPlayers;
+
+    struct
+    {
+        std::optional<std::string> secret;
+    } spectate;
+
+    struct
+    {
+        std::optional<std::string> secret;
+    } join;
+};
+
 class AchievementDelegate
 {
   public:
@@ -125,7 +141,8 @@ class PresenceDelegate
 {
   public:
     virtual ~PresenceDelegate();
-    virtual void put(PartyDesc&& party) = 0;
+    virtual void put(PartyDesc&& party)                            = 0;
+    virtual void update(platform::online::PartyDescUpdate&& party) = 0;
 };
 
 class GameDelegate
