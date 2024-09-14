@@ -7,11 +7,11 @@ jobs:
         steps:
             - uses: actions/checkout@v2
             - name: Install dependencies
-              run: sudo apt install cmake-format clang-format-18
+              run: sudo apt install cmake-format clang-format
             - name: Running clang-format
               env: 
                 CI: 1
-              run: ./cb lint-code
+              run: CLANG_FORMAT=clang-format ./cb lint-code
             - name: Running cmake-format
               run: ./cb lint-cmake
 
