@@ -108,18 +108,6 @@ jobs:
           !source/multi_build/${{matrix.artifact}}/lib/*.a
           source/multi_build/${{matrix.artifact}}/packaged
         if-no-files-found: error
-    - name: Run dummy plug tests
-      if: matrix.variant == 'desktop:x86_64-buildroot-linux-gnu:multi:rel'
-      continue-on-error: true
-      run: |
-        source/.github/tests/test_blam_graphics.sh
-    - name: Uploading test artifacts
-      if: matrix.variant == 'desktop:x86_64-buildroot-linux-gnu:multi:rel'
-      uses: actions/upload-artifact@v4
-      with:
-        name: dummy_plug_test
-        path: "/tmp/Blam Graphics"
-        if-no-files-found: error
   macOS:
     runs-on: macos-13
     needs: Release
@@ -177,6 +165,41 @@ jobs:
       with:
         name: ${{matrix.artifact}}
         path: apps.tar
+        if-no-files-found: error
+  Test:
+    if: ${{ always() }}
+    needs:
+    - Linux
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        path: source
+    - name: Downloading desktop-x86_64-buildroot-linux-gnu-multi artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: desktop-x86_64-buildroot-linux-gnu-multi
+        path: artifacts/
+    - name: List artifacts
+      run: |
+        ls -R artifacts/
+        mkdir -p source/multi_build/desktop_x86_64-buildroot-linux-gnu_multi
+        cp -r artifacts/desktop-x86_64-buildroot-linux-gnu-multi/* source/multi_build/desktop_x86_64-buildroot-linux-gnu_multi
+        chmod +x source/multi_build/desktop_x86_64-buildroot-linux-gnu_multi/packaged/*/*
+    - name: Run dummy plug tests
+      continue-on-error: true
+      run: |
+        source/.github/tests/test_blam_graphics.sh
+    - name: Uploading test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dummy_plug_test
+        path: "/tmp/Blam Graphics"
         if-no-files-found: error
   Deploy:
     if: ${{ always() }}
