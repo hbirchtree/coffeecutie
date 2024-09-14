@@ -83,6 +83,32 @@ function cmake_debug()
     cmake $@
 }
 
+function download_host_tools()
+{
+    echo "::group::Downloading code tools"
+    mkdir -p ${BASE_DIR}/multi_build/compilers/bin
+    pushd ${BASE_DIR}/multi_build/compilers/bin
+    TOOL_SUFFIX=
+    CLANG_TOOLS_VER=17
+    case ${HOST_TOOLCHAIN_TRIPLET} in
+    "x64-linux-native")
+        TOOL_SUFFIX=linux-amd64
+        ;;
+    "x64-osx")
+        TOOL_SUFFIX=macosx-amd64
+        ;;
+    esac
+    for TOOL in format tidy; do
+        [[ -f clang-${TOOL} ]] && continue
+        wget \
+            "https://github.com/muttleyxd/clang-tools-static-binaries/releases/download/master-f7f02c1d/clang-${TOOL}-${CLANG_TOOLS_VER}_${TOOL_SUFFIX}" \
+            -O clang-${TOOL}
+        chmod +x clang-${TOOL}
+    done
+    popd
+    echo "::endgroup::"
+}
+
 function host_tools_build()
 {
     echo "::group::Building host tools"
@@ -109,32 +135,8 @@ function host_tools_build()
     if [[ ${GITHUB_ACTIONS:-false} = "true" ]]; then
         return
     fi
-    echo "::group::Downloading code tools"
 
-    mkdir -p ${BASE_DIR}/multi_build/compilers/bin
-    pushd ${BASE_DIR}/multi_build/compilers/bin
-
-    TOOL_SUFFIX=
-    CLANG_TOOLS_VER=17
-    case ${HOST_TOOLCHAIN_TRIPLET} in
-    "x64-linux-native")
-        TOOL_SUFFIX=linux-amd64
-        ;;
-    "x64-osx")
-        TOOL_SUFFIX=macosx-amd64
-        ;;
-    esac
-    for TOOL in format tidy; do
-        [[ -f clang-${TOOL} ]] && continue
-        wget \
-            "https://github.com/muttleyxd/clang-tools-static-binaries/releases/download/master-f7f02c1d/clang-${TOOL}-${CLANG_TOOLS_VER}_${TOOL_SUFFIX}" \
-            -O clang-${TOOL}
-        chmod +x clang-${TOOL}
-    done
-
-    popd
-
-    echo "::endgroup::"
+    download_host_tools
 }
 
 function toolchain_version()
