@@ -177,6 +177,7 @@ void fork_dummy_plugs(
 
     dummy_plug.swrender = config["graphics"].value("software_renderer", "none");
 
+    cDebug("Rendering backend selected: {}", dummy_plug.swrender);
     auto& glConfig = container.service<AppLoader>()->config<GLConfig>();
     if(dummy_plug.swrender == "mesa")
     {

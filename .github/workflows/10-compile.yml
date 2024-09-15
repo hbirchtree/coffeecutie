@@ -206,7 +206,7 @@ jobs:
     - name: Run dummy plug tests
       continue-on-error: true
       run: |
-        DUMMY_PLUG=source/.github/tests/${{ matrix.dummy_plug }} source/.github/tests/test_blam_graphics.sh
+        DUMMY_PLUG=${{ matrix.dummy_plug }} source/.github/tests/test_blam_graphics.sh
     - name: Uploading test artifacts
       uses: actions/upload-artifact@v4
       with:
