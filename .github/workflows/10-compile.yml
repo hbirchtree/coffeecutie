@@ -166,8 +166,9 @@ jobs:
         name: ${{matrix.artifact}}
         path: apps.tar
         if-no-files-found: error
-  Test:
+  Test_x86_64_mesa:
     if: ${{ always() }}
+    name: "MESA software rendering test (x86_64)"
     needs:
     - Linux
     runs-on: ubuntu-latest
