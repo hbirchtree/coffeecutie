@@ -175,10 +175,10 @@ void fork_dummy_plugs(
     if(!config.contains("graphics"))
         return;
 
-    dummy_plug.swrender = config["graphics"].value("software_render", false);
+    dummy_plug.swrender = config["graphics"].value("software_renderer", "none");
 
     auto& glConfig = container.service<AppLoader>()->config<GLConfig>();
-    if(dummy_plug.swrender)
+    if(dummy_plug.swrender == "mesa")
     {
         glConfig.profile       = GLConfig::Core;
         glConfig.version.major = 4;
@@ -188,6 +188,16 @@ void fork_dummy_plugs(
         dummy_plug.graphics_config["profile"] = "Core";
         dummy_plug.graphics_config["major"]   = 4u;
         dummy_plug.graphics_config["minor"]   = 5u;
+    } else if(dummy_plug.swrender == "angle")
+    {
+        glConfig.profile = GLConfig::Embedded;
+        glConfig.version.major = 3;
+        glConfig.version.minor = 2;
+
+        dummy_plug.graphics_config            = nlohmann::json();
+        dummy_plug.graphics_config["profile"] = "Embedded";
+        dummy_plug.graphics_config["major"]   = 3u;
+        dummy_plug.graphics_config["minor"]   = 2u;
     } else
     {
         dummy_plug.graphics_config = nlohmann::json();

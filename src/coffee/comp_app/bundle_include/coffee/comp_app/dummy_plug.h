@@ -23,7 +23,7 @@ struct Config : comp_app::Config<Config>
     libc_types::u64        frame_index{0};
     compo::clock::duration frame_delta{std::chrono::microseconds{16667}};
     bool                   enabled{false};
-    bool                   swrender{false};
+    std::string            swrender{"none"};
 };
 
 void fork_dummy_plugs(

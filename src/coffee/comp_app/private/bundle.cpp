@@ -516,7 +516,7 @@ void addDefaults(
     /* Selection of window/event manager */
     cVerbose(10, "Loading windowing library");
 #if defined(FEATURE_ENABLE_OSMesaComponent)
-    if(dummyPlug.enabled && dummyPlug.swrender)
+    if(dummyPlug.enabled && dummyPlug.swrender == "mesa")
     {
         loader.registerAll<type_safety::type_list_t<
             comp_app::PtrNativeWindowInfoService,
@@ -582,7 +582,7 @@ void addDefaults(
 
 /* Selection of (E)GL context */
 #if defined(FEATURE_ENABLE_OSMesaComponent)
-    if(dummyPlug.enabled && dummyPlug.swrender)
+    if(dummyPlug.enabled && dummyPlug.swrender == "mesa")
     {
         loader.registerAll<osmesa::Services>(container, ec);
         appInfo.add("gl:context", "OSMesa");
