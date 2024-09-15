@@ -689,7 +689,8 @@ void addDefaults(
                 if(auto size = winfo->size(); size.w != 0)
                     appInfo.add(
                         "window:size", fmt::format("{}x{}", size.w, size.h));
-        }).assume_value();
+        })
+        .assume_value();
 }
 
 } // namespace comp_app
@@ -837,14 +838,20 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
 
 void PerformanceMonitor::end_restricted(proxy_type& p, const time_point& time)
 {
-    // capture_screenshot(p, time);
+    if(time < m_nextScreenshot)
+    {
+        // capture_screenshot(p, "screenshot", time);
+        m_nextScreenshot = time + std::chrono::seconds(10);
+    }
 }
 
 void PerformanceMonitor::capture_screenshot(
-    proxy_type& p, time_point const& time)
+    proxy_type& p, std::string const& name, time_point const& time)
 {
     using namespace platform::profiling;
     using namespace Coffee::resource_literals;
+    using namespace platform::url::constructors;
+    using semantic::RSCA;
 
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
         compo::clock::now().time_since_epoch());
@@ -859,13 +866,12 @@ void PerformanceMonitor::capture_screenshot(
 
             auto screenshot = p.service<ScreenshotProvider>();
 
-            if(!screenshot || time < m_nextScreenshot)
+            if(!screenshot)
                 break;
 
             screenshot->set_worker(m_worker_queue);
 
-            m_nextScreenshot = time + std::chrono::seconds(10);
-            auto pixels      = screenshot->pixels();
+            auto pixels = screenshot->pixels();
 
             /* If we're still waiting for the previous one, don't proceed */
             if(!pixels.valid())
@@ -889,8 +895,10 @@ void PerformanceMonitor::capture_screenshot(
                 }
                 return encoded;
             };
-            auto export_file = [](semantic::Bytes const* data) {
-                auto screenshot_file = "screenshot.jpg"_tmpfile;
+            auto export_file = [name](semantic::Bytes const* data) {
+                DProfContext _("PerfMonitor::Dumping screenshot to file");
+                auto         screenshot_file =
+                    Resource(MkUrl(name + ".jpg", RSCA::TempFile));
                 screenshot_file.data_ro =
                     semantic::BytesConst::ofBytes(data->data, data->size);
                 FileCommit(
@@ -899,6 +907,7 @@ void PerformanceMonitor::capture_screenshot(
             };
 
             auto export_profile = [timestamp](semantic::Bytes const* data) {
+                DProfContext _("PerfMonitor::Export profile point");
                 json::CaptureMetrics(
                     "Screenshots",
                     MetricVariant::Image,

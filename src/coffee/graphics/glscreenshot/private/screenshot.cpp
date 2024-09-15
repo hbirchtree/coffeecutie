@@ -151,10 +151,12 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
         };
         auto copy_buffer = [dump =
                                 std::move(dump)](gpu_buffer* buffer) mutable {
+            Coffee::DProfContext _("ScreenshotProvider::Copy to CPU memory");
             std::copy(buffer->begin(), buffer->end(), dump.data.begin());
             return dump;
         };
         auto unmap_buffer = [this](dump_t* dump) {
+            Coffee::DProfContext _("ScreenshotProvider::Unmapping buffer");
             glw::bind_buffer(pixel_pack_buffer, m_pbo);
             glw::unmap_buffer(pixel_pack_buffer);
             glw::bind_buffer(pixel_pack_buffer, 0);

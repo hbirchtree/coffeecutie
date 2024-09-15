@@ -2,6 +2,7 @@
 
 #include <coffee/comp_app/app_events.h>
 #include <coffee/comp_app/gl_config.h>
+#include <coffee/comp_app/performance_monitor.h>
 #include <coffee/core/debug/formatting.h>
 #include <coffee/core/files/cfiles.h>
 #include <coffee/core/task_queue/task.h>
@@ -193,7 +194,7 @@ void fork_dummy_plugs(
     } else if(dummy_plug.swrender == "angle")
     {
         cDebug("ANGLE software rendering activated");
-        glConfig.profile = GLConfig::Embedded;
+        glConfig.profile       = GLConfig::Embedded;
         glConfig.version.major = 3;
         glConfig.version.minor = 2;
 
@@ -365,6 +366,8 @@ void insert_dummy_plug(
                            event.value("type", std::string_view()))
                     .value();
             };
+            auto& perf_monitor =
+                container.subsystem_cast<comp_app::PerformanceMonitor>();
             for(auto const& event : config["events"])
             {
                 if(!event.contains("type"))
@@ -383,9 +386,22 @@ void insert_dummy_plug(
                 case type_t::mouse_move:
                     queue_input_event(input_bus, type, event);
                     break;
-                case type_t::screenshot:
-                    // ...
+                case type_t::screenshot: {
+                    auto start_time =
+                        std::chrono::milliseconds(event.value("time", 0u));
+                    rq::runtime_queue::QueueShot(
+                        rq::runtime_queue::GetCurrentQueue().value(),
+                        start_time,
+                        [&perf_monitor, &container, event]()
+                        {
+                            PerformanceMonitor::proxy_type proxy(container);
+                            perf_monitor.capture_screenshot(
+                                proxy,
+                                event.value("name", "dummy_screenshot"),
+                                container.relative_timestamp());
+                        }).assume_value();
                     break;
+                }
                 case type_t::none:
                     break;
                 }
