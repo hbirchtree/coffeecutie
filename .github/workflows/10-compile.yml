@@ -181,16 +181,17 @@ jobs:
     - uses: actions/checkout@v4
       with:
         path: source
+    - name: Installing AppImage dependencies
+      run: sudo apt install libfuse2
     - name: Downloading desktop-x86_64-buildroot-linux-gnu-multi artifacts
       uses: actions/download-artifact@v4
       with:
         name: desktop-x86_64-buildroot-linux-gnu-multi
         path: artifacts/
-    - name: List artifacts
+    - name: Relocating artifacts
       run: |
-        ls -R artifacts/
         mkdir -p source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi
-        cp -r artifacts/* source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi
+        mv artifacts/* source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi/
         chmod +x source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi/packaged/*/*
     - name: Run dummy plug tests
       continue-on-error: true
