@@ -189,7 +189,7 @@ jobs:
       run: |
         ls -R artifacts/
         mkdir -p source/multi_build/desktop_x86_64-buildroot-linux-gnu_multi
-        cp -r artifacts/desktop-x86_64-buildroot-linux-gnu-multi/* source/multi_build/desktop_x86_64-buildroot-linux-gnu_multi
+        cp -r artifacts/* source/multi_build/desktop_x86_64-buildroot-linux-gnu_multi
         chmod +x source/multi_build/desktop_x86_64-buildroot-linux-gnu_multi/packaged/*/*
     - name: Run dummy plug tests
       continue-on-error: true
