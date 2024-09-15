@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 SRCDIR=$(realpath $(dirname $0))/../..
@@ -40,18 +41,19 @@ echo "===================================="
 ldd $BUILDDIR/bin/BlamGraphics > linkage.txt
 
 echo "===================================="
-echo "===== Dowloading test assets ======="
+echo "::group::Downloading test assets"
 mkdir -p maps/pc/
-wget -O maps/pc/beavercreek.map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/beavercreek.map
-wget -O maps/pc/bitmaps.map     --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bitmaps.map
-wget -O maps/pc/sounds.map      --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/sounds.map
+wget -q -O maps/pc/beavercreek.map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/beavercreek.map
+wget -q -O maps/pc/bitmaps.map     --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bitmaps.map
+wget -q -O maps/pc/sounds.map      --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/sounds.map
+echo "::endgroup::"
 echo "===================================="
 echo "===================================="
 
 #echo "-- " $BUILDDIR/bin/BlamGraphics $BUILDDIR/examples/blam/cblam-testing/assets $PWD/maps/pc/beavercreek.map
-echo "-- " $BUILDDIR/packaged/linux-appimage/BlamGraphics $PWD/maps/pc/beavercreek.map
+echo "-- " $BUILDDIR/packaged/linux-appimage/Blam Graphics.AppImage $PWD/maps/pc/beavercreek.map
 mkdir -p "/tmp/Blam Graphics"
 #$BUILDDIR/bin/BlamGraphics $BUILDDIR/examples/blam/cblam-testing/assets $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
-$BUILDDIR/packaged/linux-appimage/BlamGraphics $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
+$BUILDDIR/packaged/linux-appimage/Blam\ Graphics.AppImage $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
 
 popd
