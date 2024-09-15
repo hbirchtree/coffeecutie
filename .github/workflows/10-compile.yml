@@ -170,7 +170,7 @@ jobs:
   Test_x86_64_mesa:
     if: ${{ always() }}
     name: "MESA software rendering test (x86_64)"
-    needs: [[ Linux
+    needs: Linux
     runs-on: ubuntu-latest
     permissions:
       actions: read
