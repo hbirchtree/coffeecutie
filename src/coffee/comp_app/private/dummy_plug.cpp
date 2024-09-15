@@ -180,6 +180,7 @@ void fork_dummy_plugs(
     auto& glConfig = container.service<AppLoader>()->config<GLConfig>();
     if(dummy_plug.swrender == "mesa")
     {
+        cDebug("MESA software rendering activated");
         glConfig.profile       = GLConfig::Core;
         glConfig.version.major = 4;
         glConfig.version.minor = 5;
@@ -190,6 +191,7 @@ void fork_dummy_plugs(
         dummy_plug.graphics_config["minor"]   = 5u;
     } else if(dummy_plug.swrender == "angle")
     {
+        cDebug("ANGLE software rendering activated");
         glConfig.profile = GLConfig::Embedded;
         glConfig.version.major = 3;
         glConfig.version.minor = 2;
