@@ -189,9 +189,9 @@ jobs:
     - name: List artifacts
       run: |
         ls -R artifacts/
-        mkdir -p source/multi_build/desktop_x86_64-buildroot-linux-gnu_multi
-        cp -r artifacts/* source/multi_build/desktop_x86_64-buildroot-linux-gnu_multi
-        chmod +x source/multi_build/desktop_x86_64-buildroot-linux-gnu_multi/packaged/*/*
+        mkdir -p source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi
+        cp -r artifacts/* source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi
+        chmod +x source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi/packaged/*/*
     - name: Run dummy plug tests
       continue-on-error: true
       run: |
