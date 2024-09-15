@@ -169,7 +169,7 @@ jobs:
         if-no-files-found: error
   Test_x86_64_mesa:
     if: ${{ always() }}
-    name: "MESA software rendering test (x86_64)"
+    name: "Software render test (MESA, ${{ matrix.variant }})"
     needs: Linux
     runs-on: ubuntu-latest
     permissions:
@@ -177,6 +177,16 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - variant: core_33
+          dummy_plug: dummy_plug_core_33.json
+        - variant: core_43
+          dummy_plug: dummy_plug_core_43.json
+        - variant: core_45
+          dummy_plug: dummy_plug_core_45.json
     steps:
     - uses: actions/checkout@v4
       with:
@@ -196,7 +206,7 @@ jobs:
     - name: Run dummy plug tests
       continue-on-error: true
       run: |
-        source/.github/tests/test_blam_graphics.sh
+        DUMMY_PLUG=source/.github/tests/${{ matrix.dummy_plug }} source/.github/tests/test_blam_graphics.sh
     - name: Uploading test artifacts
       uses: actions/upload-artifact@v4
       with:

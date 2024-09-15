@@ -1,0 +1,93 @@
+{
+  "graphics": {
+    "window": {
+      "width": 640,
+      "height": 360,
+      "depth": 32
+    },
+    "software_renderer": "mesa",
+    "gl": [
+      {
+        "major": 4,
+        "minor": 5
+      }
+    ],
+    "gles": []
+  },
+  "audio": {
+    "frequency": 48000,
+    "channels": 2,
+    "format": "f32"
+  },
+  "events": [
+    {
+      "time": 0,
+      "type": "screenshot",
+      "name": "start"
+    },
+    {
+      "time": 5000,
+      "type": "key",
+      "key": "CK_s",
+      "duration": 3000
+    },
+    {
+      "time": 5000,
+      "type": "key",
+      "key": "CK_d",
+      "duration": 3000
+    },
+    {
+      "time": 4500,
+      "type": "mouse_button",
+      "x": 320,
+      "y": 180,
+      "duration": 4000
+    },
+    {
+      "time": 5000,
+      "type": "mouse_move",
+      "x": 320,
+      "y": 180,
+      "dx": 160,
+      "dy": 90,
+      "duration": 3000
+    },
+    {
+      "time": 10000,
+      "type": "screenshot",
+      "name": "moved"
+    },
+    {
+      "time": 10100,
+      "type": "controller_connect",
+      "index": 0
+    },
+    {
+      "time": 10200,
+      "type": "controller_connect",
+      "index": 1
+    },
+    {
+      "time": 11000,
+      "type": "controller_button",
+      "index": 0,
+      "button": "LB",
+      "duration": 500
+    },
+    {
+      "time": 12000,
+      "type": "controller_button",
+      "index": 0,
+      "button": "A",
+      "duration": 500
+    },
+    {
+      "time": 13000,
+      "type": "screenshot",
+      "name": "splitscreen"
+    }
+  ],
+  "frame_delta": 66.667,
+  "end_time": 15000
+}
