@@ -689,7 +689,7 @@ void addDefaults(
                 if(auto size = winfo->size(); size.w != 0)
                     appInfo.add(
                         "window:size", fmt::format("{}x{}", size.w, size.h));
-        });
+        }).assume_value();
 }
 
 } // namespace comp_app

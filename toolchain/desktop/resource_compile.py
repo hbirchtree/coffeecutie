@@ -52,6 +52,7 @@ DEFAULT_TEX_MATRIX = {
         'etc2',
     ],
     'iOS': [
+
         'pvrtc1',
         'raw',
     ],
@@ -125,9 +126,9 @@ def shader_dependencies(shader_file: str, cache_directory: str):
 def run(program, *args):
     program = PROGRAMS[program]
     process_args = [program, *args]
-    print(' '.join(process_args))
     ret = subprocess.run(process_args, capture_output=True)
     if ret.returncode != 0:
+        print(' '.join(process_args))
         print(f'ERROR:\n{ret.stdout}\n{ret.stderr}')
 
 
@@ -168,7 +169,7 @@ def compile_shaders(
             file_dependencies = shader_dependencies(in_file, cache_directory)
             if not needs_update(out_file, [in_file] + extra_dependencies + file_dependencies):
                 continue
-            print(f' * Emitting {file} as {profile} {version}')
+            # print(f' * Emitting {file} as {profile} {version}')
             run(
                 'ShaderCooker',
                 '-f',
@@ -192,7 +193,7 @@ def compile_shaders(
             in_files = in_files + shader_dependencies(in_file, cache_directory)
         if not needs_update(out_file, in_files):
             continue
-        print(f' * Emitting shader assembly {assembly}.spv <- {shaders}')
+        # print(f' * Emitting shader assembly {assembly}.spv <- {shaders}')
         extra_args = []
         if values['strip_assemblies']:
             extra_args.append('--strip-debug')
@@ -249,7 +250,7 @@ def encode_textures(
         extension = source.split('.')[-1]
         basename = '.'.join(source.split('.')[:-1])
         file_dir = dirname(source)
-        print(f'{basename}[{extension}] -> {descriptor}')
+        # print(f'{basename}[{extension}] -> {descriptor}')
         rendered_file = f'{cache_directory}/{basename}.png'
         if extension == 'svg':
             if needs_update(rendered_file, [f'{root_directory}/{source}']):
@@ -265,7 +266,6 @@ def encode_textures(
             return [f'{out_directory}/{basename}.0.{codec}' for codec, _ in codecs]
         outputs = _predict_names(basename)
         res = [needs_update(x, [rendered_file]) for x in outputs]
-        print(res)
         for out_of_date in res:
             if out_of_date:
                 break
