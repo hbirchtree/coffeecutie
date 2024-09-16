@@ -452,7 +452,7 @@ inline bool apply_command_modifier_per_call(
 }
 
 inline bool apply_command_modifier(
-    program_t const& /*program*/,
+    program_t const&      program,
     shader_bookkeeping_t& bookkeeping,
     view_state&           view_info)
 {
@@ -461,6 +461,8 @@ inline bool apply_command_modifier(
 
     if(bookkeeping.view_idx > 0 && !view_info.indexed)
         return false;
+
+    auto const& features = program.m_features;
 
 #if GLEAM_MAX_VERSION >= 0x410
     if(view_info.indexed)
@@ -517,7 +519,7 @@ inline bool apply_command_modifier(
                 depth.reversed ? group::depth_function::gequal
                                : group::depth_function::less);
 #if GLEAM_MAX_VERSION >= 0x450
-            if(depth.reversed)
+            if(depth.reversed && features.dsa)
                 cmd::clip_control(
                     group::clip_control_origin::lower_left,
                     group::clip_control_depth::zero_to_one);

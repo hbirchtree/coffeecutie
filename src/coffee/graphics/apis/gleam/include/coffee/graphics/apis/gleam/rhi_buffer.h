@@ -286,6 +286,18 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
             //     semantic::Span<char>(
             //         m_allocation.data() + m_mapping.first,
             //         m_mapping.second));
+            if(stl_types::any_of(
+                   m_type, buffers::type::vertex, buffers::type::element))
+            {
+                // For these buffer types, we need to dump the data on the GPU
+                // on unmap
+                cmd::bind_buffer(convert::to(m_type), m_handle);
+                cmd::buffer_data(
+                    convert::to(m_type),
+                    m_allocation,
+                    convert::to<group::buffer_usage_arb>(m_features, m_access));
+                cmd::bind_buffer(convert::to(m_type), 0);
+            }
             m_mapping = {};
             return;
         }

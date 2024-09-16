@@ -81,6 +81,8 @@ struct features
         bool multi_indirect{false};
         bool base_instance{false};
         bool shader_base_instance{false};
+        bool clip_control{false};
+        bool indexed{false};
 
         struct
         {

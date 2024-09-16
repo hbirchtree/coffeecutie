@@ -453,6 +453,8 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
 
         out.texture.cube_array = api_version >= 0x400;
 
+        out.draw.indexed = api_version >= 0x410;
+
         out.buffer.barrier = api_version >= 0x420;
         // out.draw.indirect                 = api_version >= 0x420;
         out.draw.base_instance            = api_version >= 0x420;
@@ -478,13 +480,14 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.buffer.storage    = api_version >= 0x440;
         out.texture.multibind = api_version >= 0x440;
 
-        auto dsa_mode        = api_version >= 0x450;
-        out.buffer.dsa       = dsa_mode;
-        out.program.dsa      = dsa_mode;
-        out.query.dsa        = dsa_mode;
-        out.rendertarget.dsa = dsa_mode;
-        out.texture.dsa      = dsa_mode;
-        out.vertex.dsa       = dsa_mode;
+        auto dsa_mode         = api_version >= 0x450;
+        out.buffer.dsa        = dsa_mode;
+        out.program.dsa       = dsa_mode;
+        out.query.dsa         = dsa_mode;
+        out.rendertarget.dsa  = dsa_mode;
+        out.texture.dsa       = dsa_mode;
+        out.vertex.dsa        = dsa_mode;
+        out.draw.clip_control = api_version >= 0x450;
 
         out.draw.shader_base_instance = api_version >= 0x460;
         out.program.spirv             = api_version >= 0x460;

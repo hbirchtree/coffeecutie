@@ -648,6 +648,11 @@ void addDefaults(
         loader.registerAll<
             detail::subsystem_list<glscreenshot::ScreenshotProvider>>(
             container, ec);
+        auto& provider =
+            container.subsystem_cast<glscreenshot::ScreenshotProvider>();
+
+        provider.m_config       = &loader.config<GLConfig>();
+        provider.m_dummy_config = &loader.config<dummy_plug::Config>();
     }
 #endif
 

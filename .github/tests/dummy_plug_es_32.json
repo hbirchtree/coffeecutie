@@ -5,7 +5,7 @@
       "height": 360,
       "depth": 32
     },
-    "software_renderer": "angle",
+    "software_renderer": "mesa",
     "gl": [],
     "gles": [
       {

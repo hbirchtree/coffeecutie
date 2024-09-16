@@ -187,6 +187,12 @@ jobs:
           dummy_plug: dummy_plug_core_43.json
         - variant: core_45
           dummy_plug: dummy_plug_core_45.json
+        - variant: es_20
+          dummy_plug: dummy_plug_es_20.json
+        - variant: es_30
+          dummy_plug: dummy_plug_es_30.json
+        - variant: es_32
+          dummy_plug: dummy_plug_es_32.json
     steps:
     - uses: actions/checkout@v4
       with:

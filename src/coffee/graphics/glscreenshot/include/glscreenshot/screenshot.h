@@ -1,5 +1,7 @@
 #pragma once
 
+#include <coffee/comp_app/dummy_plug.h>
+#include <coffee/comp_app/gl_config.h>
 #include <coffee/comp_app/services.h>
 #include <coffee/core/task_queue/task.h>
 
@@ -21,6 +23,9 @@ struct ScreenshotProvider
     {
         m_work_queue = worker;
     }
+
+    comp_app::GLConfig const*           m_config{nullptr};
+    comp_app::dummy_plug::Config const* m_dummy_config{nullptr};
 
     libc_types::u32    m_pbo{0};
     void*              m_pbo_fence{nullptr};

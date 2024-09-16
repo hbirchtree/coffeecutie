@@ -209,10 +209,8 @@ void fork_dummy_plugs(
             magic_enum::enum_name(glConfig.profile);
         dummy_plug.graphics_config["major"] = glConfig.version.major;
         dummy_plug.graphics_config["minor"] = glConfig.version.minor;
-        return;
     }
 
-#if defined(FEATURE_ENABLE_OSMesaComponent)
     struct version_t
     {
         libc_types::u32   major{}, minor{};
@@ -244,6 +242,39 @@ void fork_dummy_plugs(
                 versions.back().depth = 16;
         }
 
+    const auto apply_version = [&glConfig,
+                                &dummy_plug](version_t const& version) {
+        if(version.profile == GLConfig::Core)
+        {
+            glConfig.version.major = version.major;
+            glConfig.version.minor = version.minor;
+        } else
+        {
+            glConfig.version.major = 4;
+            glConfig.version.minor = 5;
+        }
+        // glConfig.profile = version.profile;
+        glConfig.depthFmt =
+            version.depth == 32 ? pix_fmt::Depth32 : pix_fmt::Depth16;
+
+        dummy_plug.graphics_config = nlohmann::json();
+        dummy_plug.graphics_config["profile"] =
+            magic_enum::enum_name(version.profile);
+        dummy_plug.graphics_config["major"] = version.major;
+        dummy_plug.graphics_config["minor"] = version.minor;
+    };
+
+    if(versions.empty())
+        return;
+
+    /* Special case: If there's only one config, don't fork */
+    if(versions.size() == 1 || dummy_plug.swrender == "none")
+    {
+        apply_version(versions.at(0));
+        return;
+    }
+
+#if defined(FEATURE_ENABLE_OSMesaComponent)
     using platform::url::constructors::MkUrl;
     using semantic::RSCA;
 
@@ -255,19 +286,6 @@ void fork_dummy_plugs(
     std::vector<std::tuple<pid_t, version_t, int>> children;
     for(auto const& version : versions)
     {
-        if(version.profile == GLConfig::Core)
-        {
-            glConfig.version.major = version.major;
-            glConfig.version.minor = version.minor;
-        } else
-        {
-            glConfig.version.major = 4;
-            glConfig.version.minor = 5;
-        }
-        glConfig.profile = version.profile;
-        glConfig.depthFmt =
-            version.depth == 32 ? pix_fmt::Depth32 : pix_fmt::Depth16;
-
         cDebug("-------------------------------------------------");
         cDebug("------------ Spawning child ---------------------");
         pid_t    child_pid{};
@@ -279,11 +297,7 @@ void fork_dummy_plugs(
             C_BREAK();
         } else if(res == proc::fork_process::child)
         {
-            dummy_plug.graphics_config = nlohmann::json();
-            dummy_plug.graphics_config["profile"] =
-                magic_enum::enum_name(version.profile);
-            dummy_plug.graphics_config["major"] = version.major;
-            dummy_plug.graphics_config["minor"] = version.minor;
+            apply_version(version);
 
             platform::url::overrideSystemPath(
                 RSCA::TempFile,
@@ -392,14 +406,14 @@ void insert_dummy_plug(
                     rq::runtime_queue::QueueShot(
                         rq::runtime_queue::GetCurrentQueue().value(),
                         start_time,
-                        [&perf_monitor, &container, event]()
-                        {
+                        [&perf_monitor, &container, event]() {
                             PerformanceMonitor::proxy_type proxy(container);
                             perf_monitor.capture_screenshot(
                                 proxy,
                                 event.value("name", "dummy_screenshot"),
                                 container.relative_timestamp());
-                        }).assume_value();
+                        })
+                        .assume_value();
                     break;
                 }
                 case type_t::none:

@@ -12,5 +12,5 @@ done
 for CFG in $ES_CONFIGS; do
     MAJOR=$(jq .major <<< "$CFG")
     MINOR=$(jq .minor <<< "$CFG")
-    jq ".graphics.gles |= [$CFG] | .graphics.gl = [] | .graphics.software_renderer = \"angle\"" dummy_plug.json > dummy_plug_es_$MAJOR$MINOR.json
+    jq ".graphics.gles |= [$CFG] | .graphics.gl = []" dummy_plug.json > dummy_plug_es_$MAJOR$MINOR.json
 done

@@ -467,7 +467,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 void alloc_ui_system(compo::EntityContainer& e)
 {
     ProfContext _;
-    if(!e.subsystem_cast<gfx::system>().workarounds().bugs.adreno_3xx)
+    auto&       gfx = e.subsystem_cast<gfx::system>();
+    if(!gfx.workarounds().bugs.adreno_3xx &&
+       std::get<0>(gfx.api_version()) != 2)
         e.register_subsystem_inplace<UIRenderer>(
             std::ref(e.subsystem_cast<gfx::system>()),
             std::ref(e.subsystem_cast<UIElementCache<halo_version>>()),

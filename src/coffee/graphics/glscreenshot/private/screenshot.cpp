@@ -43,11 +43,10 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
 
     Coffee::DProfContext _("glscreenshot::ScreenshotProvider::pixels");
 
-    GLint major_ver{2};
-#if GLEAM_MAX_VERSION >= 0x100 || GLEAM_MAX_VERSION_ES >= 0x300
-    glw::get_integerv(get_prop::major_version, semantic::SpanOne(major_ver));
-#endif
-    const bool use_pbo = major_ver >= 3;
+    const auto major_version = std::min(
+        m_config->version.major,
+        m_dummy_config->graphics_config.value("major", i32(99)));
+    const bool use_pbo = major_version >= 3;
 
     auto read_pixels = [this, use_pbo] {
         auto                        size_ = size();
@@ -63,18 +62,20 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
         i32 currentBinding = 0;
         glw::get_integerv(
 #if GLEAM_MAX_VERSION >= 0x100 || GLEAM_MAX_VERSION_ES >= 0x300
-            gl::group::get_prop::draw_framebuffer_binding,
-#else
-            gl::group::get_prop::framebuffer_binding,
+            use_pbo ? gl::group::get_prop::draw_framebuffer_binding :
 #endif
+                    gl::group::get_prop::framebuffer_binding,
             semantic::SpanOne(currentBinding));
 #if GLEAM_MAX_VERSION >= 0x100 || GLEAM_MAX_VERSION_ES >= 0x300
-        glw::bind_framebuffer(
-            gl::group::framebuffer_target::draw_framebuffer, 0);
-        glw::read_buffer(gl::group::read_buffer_mode::back);
-#else
-        glw::bind_framebuffer(gl::group::framebuffer_target::framebuffer, 0);
+        if(use_pbo)
+        {
+            glw::bind_framebuffer(
+                gl::group::framebuffer_target::draw_framebuffer, 0);
+            glw::read_buffer(gl::group::read_buffer_mode::back);
+        } else
 #endif
+            glw::bind_framebuffer(
+                gl::group::framebuffer_target::framebuffer, 0);
 
         // Now set up the framebuffer copy
         semantic::concepts::offset_span offset;
@@ -115,13 +116,12 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
 #endif
 
         // Aaaand restore state
+        glw::bind_framebuffer(
 #if GLEAM_MAX_VERSION >= 0x100 || GLEAM_MAX_VERSION_ES >= 0x300
-        glw::bind_framebuffer(
-            gl::group::framebuffer_target::draw_framebuffer, currentBinding);
-#else
-        glw::bind_framebuffer(
-            gl::group::framebuffer_target::framebuffer, currentBinding);
+            use_pbo ? gl::group::framebuffer_target::draw_framebuffer :
 #endif
+                    gl::group::framebuffer_target::framebuffer,
+            currentBinding);
         return dump_t{
             .size   = size_,
             .format = typing::pixels::pix_fmt::RGBA8,
@@ -146,6 +146,12 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
             glw::bind_buffer(pixel_pack_buffer, m_pbo);
             auto ptr = glw::map_buffer(
                 pixel_pack_buffer, gl::group::buffer_access_arb::read_only);
+            if(!ptr)
+            {
+                auto err = glw::get_error(gl::error_check::off);
+                Coffee::cDebug(
+                    "Failed to map_buffer: {}", static_cast<u32>(err));
+            }
             glw::bind_buffer(pixel_pack_buffer, 0);
             return gpu_buffer(reinterpret_cast<u8 const*>(ptr), size);
         };

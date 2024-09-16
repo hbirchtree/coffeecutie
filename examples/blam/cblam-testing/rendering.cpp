@@ -288,6 +288,8 @@ struct MeshRenderer
                     PixDesc(pix_fmt::RGBA8))
                 .sampler});
 #if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION_ES >= 0x320
+        if(std::get<0>(m_api->api_version()) == 2)
+            return;
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_cube_bc1"sv, 9},
