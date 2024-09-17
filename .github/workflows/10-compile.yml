@@ -218,6 +218,28 @@ jobs:
         name: dummy_plug_test_${{ matrix.variant }}
         path: "/tmp/Blam Graphics"
         if-no-files-found: error
+  Test_x86_64_mesa_gather:
+    if: ${{ always() }}
+    name: "Gather test results"
+    needs: Test_x86_64_mesa
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        path: source
+    - name: Downloading test artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: dummy_plug_test_*
+        path: artifacts/
+    - name: Gathering test results into HTML page
+      run: |
+        ls -R artifacts/
+        source/.github/tests/generate_test_page.sh artifacts/
   Deploy:
     if: ${{ always() }}
     needs:
