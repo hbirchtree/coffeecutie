@@ -4,12 +4,27 @@ ARTIFACT_DIR=${1:-artifacts/}
 
 TEST_VARIANTS=$(ls $ARTIFACT_DIR)
 
+mkdir $ARTIFACT_DIR/generated
+
+OUT_FILE=$ARTIFACT_DIR/generated/results.html
+
+echo '<html>
+<head>
+    <title>Test results!</title>
+</head>
+<body>' > $OUT_FILE
+
 for TEST_VARIANT in $TEST_VARIANTS; do
     echo $ARTIFACT_DIR/$TEST_VARIANT
+    echo "<h1>$TEST_VARIANT</h1>" >> $OUT_FILE
     for IMG in $(find $ARTIFACT_DIR/$TEST_VARIANT/ -name *.jpg); do
-        echo " - Appending $IMG"
+        echo "<h3>$(basename $IMG)</h3>" >> $OUT_FILE
+        echo "<img src=\"data:image/jpeg;base64,$(base64 $IMG)\"/>" >> $OUT_FILE
     done
     for LOG in $(find $ARTIFACT_DIR/$TEST_VARIANT/ -name *.log); do
-        echo " - Appending $LOG"
+        echo "<textarea rows=\"20\" cols=\"80\">$(cat $LOG)</textarea>" >> $OUT_FILE
     done
 done
+
+echo '</body>
+</html>' >> $OUT_FILE
