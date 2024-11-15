@@ -201,27 +201,28 @@ i32 blam_main()
                             },
                     });
                     discord.presence().putState("Campaign");
-                    auto handler =
-                        [&discord](GameEvent&, ServerStateUpdate* update) {
-                            platform::online::PartyDescUpdate data;
-                            switch(update->type)
-                            {
-                            case ServerStateUpdate::PlayerCount:
-                                cDebug("Player count update: {}", update->num_field);
-                                data.curPlayers = update->num_field;
-                                break;
-                            case ServerStateUpdate::PlayerMaxCount:
-                                data.maxPlayers = update->num_field;
-                                break;
-                            case ServerStateUpdate::ServerName:
-                                discord.presence().putState(
-                                    std::string(update->string_field.str()));
-                                return;
-                            default:
-                                return;
-                            }
-                            discord.presence().update(std::move(data));
-                        };
+                    auto handler = [&discord](
+                                       GameEvent&, ServerStateUpdate* update) {
+                        platform::online::PartyDescUpdate data;
+                        switch(update->type)
+                        {
+                        case ServerStateUpdate::PlayerCount:
+                            cDebug(
+                                "Player count update: {}", update->num_field);
+                            data.curPlayers = update->num_field;
+                            break;
+                        case ServerStateUpdate::PlayerMaxCount:
+                            data.maxPlayers = update->num_field;
+                            break;
+                        case ServerStateUpdate::ServerName:
+                            discord.presence().putState(
+                                std::string(update->string_field.str()));
+                            return;
+                        default:
+                            return;
+                        }
+                        discord.presence().update(std::move(data));
+                    };
                     e.subsystem_cast<GameEventBus>()
                         .addEventFunction<ServerStateUpdate>(
                             0, std::move(handler));
