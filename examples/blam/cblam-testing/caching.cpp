@@ -72,6 +72,11 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
     //            portal_color_ptr++;
     //        }
 
+    Matf4 cluster_xf = glm::rotate(
+        glm::scale(glm::identity<Matf4>(), Vecf3{1, -1, 1}),
+        -glm::pi<f32>() / 2.f,
+        Vecf3{0, 0, 1});
+
     auto bclusters = section.clusters.data(bsp_magic).value();
     for(blam::bsp::cluster const& cluster : bclusters)
     {
@@ -85,8 +90,8 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             it.portals.push_back(&portals[portal_idx]);
         for(blam::bsp::subcluster const& sub : subclusters)
         {
-            auto indices                  = sub.indices.data(bsp_magic).value();
-            auto [min, max]               = sub.bounds.points();
+            auto indices    = sub.indices.data(bsp_magic).value();
+            auto [min, max] = sub.bounds.points();
             std::array<Vecf3, 8> vertices = {{
                 min,
                 Vecf3(max.x, min.y, min.z),

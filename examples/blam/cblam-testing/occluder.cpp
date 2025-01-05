@@ -32,7 +32,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         p.subsystem(camera);
         p.subsystem(resources);
 
-        auto camera_pos = -camera->player(0).camera.position;
+        auto camera_pos = camera->player(0).camera.position * Vecf3{-1, -1, 1};
 
         // for(auto& ent : p.select(ObjectBsp))
         // {
@@ -80,9 +80,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         }
 
         resources->debug_lines->unmap();
-        resources->debug_line_colors->unmap();
-
-        return;
+        // resources->debug_line_colors->unmap();
 
         BSPItem const* current_bsp{nullptr};
         u32            current_cluster{0};
@@ -102,12 +100,12 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 auto [cluster_, sub_] = cluster.value();
                 current_bsp           = &bsp;
                 current_cluster       = cluster_;
-                bsp_ref.visible       = true;
+                // bsp_ref.visible       = true;
                 auto const& sub       = bsp.clusters.at(cluster_).sub.at(sub_);
                 portal_colors[sub.debug_color_idx] = Vecf3(0, 1, 0);
             } else
             {
-                bsp_ref.visible = false;
+                // bsp_ref.visible = false;
             }
         }
 

@@ -110,7 +110,7 @@ static Quatf spawn_rotation_to_quat(SpawnType const* spawn)
 {
     return Quatf(Vecf3(0, 0, 1) * spawn->rot.x) *
            Quatf(Vecf3(0, 1, 0) * spawn->rot.y) *
-           Quatf(Vecf3(1, 0, 0) * -spawn->rot.z);
+           Quatf(Vecf3(1, 0, 0) * spawn->rot.z);
 }
 
 template<typename SpawnType>

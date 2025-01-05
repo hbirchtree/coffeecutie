@@ -596,7 +596,7 @@ struct MeshRenderer
 
         f32 t = stl_types::Chrono::to_f32(time);
 
-        gfx::cull_state cull_state{.front_face = true};
+        // gfx::cull_state cull_state{.front_face = false};
 
         for(auto const& pass : stl_types::slice_num(m_bsp, Pass_LastOpaque + 1))
         {
@@ -605,7 +605,6 @@ struct MeshRenderer
                 m_camera.focused_player,
                 t,
                 pass,
-                gfx::cull_state{.front_face = true},
                 gfx::stencil_state{
                     .depth_pass = gfx::stencil_state::operation_t::write,
                     .mask       = 0x1,
@@ -617,7 +616,6 @@ struct MeshRenderer
                     i + 1,
                     t,
                     pass,
-                    gfx::cull_state{.front_face = true},
                     gfx::stencil_state{
                         .depth_pass = gfx::stencil_state::operation_t::write,
                         .mask       = 0x1,
@@ -632,7 +630,7 @@ struct MeshRenderer
                 m_camera.focused_player,
                 t,
                 pass,
-                cull_state,
+                // cull_state,
                 gfx::stencil_state{
                     .depth_pass = gfx::stencil_state::operation_t::write,
                     .mask       = 0x1,
@@ -650,7 +648,6 @@ struct MeshRenderer
                 m_camera.focused_player,
                 t,
                 m_bsp[Pass_Sky],
-                cull_state,
                 gfx::depth_extended_state{.depth_write = false},
                 stencil_state,
                 gfx::blend_state{});
@@ -659,7 +656,7 @@ struct MeshRenderer
                 m_camera.focused_player,
                 t,
                 m_model[Pass_Sky],
-                cull_state,
+                // cull_state,
                 gfx::depth_extended_state{.depth_write = false},
                 stencil_state,
                 gfx::blend_state{});

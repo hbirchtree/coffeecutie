@@ -633,12 +633,11 @@ void create_camera(
     for(auto i : range<u32>(4))
     {
         auto& location = i < spawns.size() ? spawns[i] : spawns[0];
-        camera.viewports[i].camera.position = location.pos * Vecf3(-1);
+        camera.viewports[i].camera.position = location.pos * Vecf3{-1, -1, -1};
         cDebug("Facing of player: {0}", location.rot);
         camera.viewports[i].camera.rotation = glm::normalize(glm::quat(Vecf3{
             0,
             location.rot,
-            //                0,
             glm::pi<f32>() / 2.f,
         }));
         camera.viewports[i].camera.aspect   = fb->size().aspect();

@@ -384,19 +384,14 @@ i32 blam_main()
                 } /*else if(i != 0)
                     break;*/
                 using namespace typing::vectors::scene;
-                // camera.camera.aspect
-                //     = e.service<comp_app::Windowing>()->size().aspect();
-                camera.camera.zVals = {1500.f, 0.001f};
+                camera.camera.zVals = {100.f, 0.001f};
 
                 Matf4 view_matrix = glm::translate(
-                    glm::scale(glm::identity<glm::mat4>(), glm::vec3(1)) *
-                        glm::mat4_cast(camera.camera.rotation),
+                    glm::mat4_cast(camera.camera.rotation),
                     camera.camera.position);
 
                 camera.matrix       = GenPerspective(camera.camera);
                 camera.matrix[2][2] = 0.f;
-                camera.matrix[2][3] = -1.f;
-                camera.matrix[3][2] = 0.001f;
                 camera.matrix       = camera.matrix * view_matrix;
                 camera.rotation     = glm::mat3_cast(camera.camera.rotation);
             }
