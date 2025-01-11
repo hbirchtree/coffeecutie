@@ -398,6 +398,7 @@
         },
         {
             "name": "console-powerpc-eabi-wii",
+
             "displayName": "Wii",
             "inherits": ["vcpkg-base-wiicube"],
             "cacheVariables": {
@@ -419,7 +420,8 @@
                 "BUILD_OSMESA": "ON",
                 "GENERATE_APPIMAGE": "ON",
                 "GENERATE_FLATPAK": "ON",
-                "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64"
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
+                "VCPKG_TARGET_TRIPLET": "desktop-x86-64-buildroot-linux-gnu"
             },
             "environment": {
                 "ARCHITECTURE": "x86_64-buildroot-linux-gnu",
@@ -438,7 +440,7 @@
                 "GENERATE_APPIMAGE": "ON",
                 "GENERATE_FLATPAK": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
-                "VCPKG_TARGET_TRIPLET": "desktop-x86_64v2-buildroot-linux-gnu"
+                "VCPKG_TARGET_TRIPLET": "desktop-x86-64v2-buildroot-linux-gnu"
             },
             "environment": {
                 "ARCHITECTURE": "x86_64-buildroot-linux-gnu",
