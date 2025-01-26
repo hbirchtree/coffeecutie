@@ -1,6 +1,7 @@
 #pragma once
 
 #include <coffee/core/CProfiling>
+#include <coffee/core/debug/formatting.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/functional_types.h>
 #include <peripherals/stl/string_casting.h>
@@ -106,9 +107,16 @@ struct socket_base
     template<typename T>
     asio::error_code connect(host_t const& host, T port)
     {
+        using namespace Coffee::Logging;
+
         asio::error_code ec;
 
         auto it = m_resolver.resolve(host, stl_types::cast_pod(port), ec);
+        cVerbose(10, "Connection to {} resolved to:", host);
+        for(auto const& addr : it)
+        {
+            cVerbose(10, " - {}", addr.endpoint().address().to_string());
+        }
         VALIDATE();
         asio::connect(m_socket.lowest_layer(), it, ec);
         VALIDATE();

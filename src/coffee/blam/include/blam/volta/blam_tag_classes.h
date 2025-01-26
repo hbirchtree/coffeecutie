@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/type_safety.h>
 
@@ -180,6 +182,17 @@ FORCEDINLINE bool tag_class_cmp(tag_class_t v1, tag_class_t v2)
     auto v2_i = C_CAST<u32>(v2);
 
     return v1_i == v2_i || v1 == v2;
+}
+
+FORCEDINLINE std::string to_string(tag_class_t tcl)
+{
+    using namespace std::string_literals;
+    if(tcl == tag_class_t::undefined)
+        return "undefined"s;
+    std::string casted(reinterpret_cast<const char*>(&tcl), 4);
+    if(auto idx = casted.find('\0'); idx != std::string::npos)
+        casted.resize(idx);
+    return casted;
 }
 
 #if !defined(COFFEE_MSVCXX)

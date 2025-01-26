@@ -9,6 +9,7 @@ vcpkg_from_github(
         fix-android-support.patch
         skip-openssl-version-check.patch
         fix-mingw-compat.patch
+        fix-openssl-dependency.patch
 )
 
 set(CRYPTO_BACKEND OpenSSL)

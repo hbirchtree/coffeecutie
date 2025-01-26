@@ -21,7 +21,7 @@ struct fmt::formatter<semantic::debug::Component>
     }
 
     template<typename FormatCtx>
-    auto format(semantic::debug::Component p, FormatCtx& ctx)
+    auto format(semantic::debug::Component p, FormatCtx& ctx) const
     {
         return fmt::format_to(
             ctx.out(), "{}", semantic::detail::enum_to_string(p));
@@ -38,7 +38,7 @@ struct fmt::formatter<semantic::debug::Severity>
     }
 
     template<typename FormatCtx>
-    auto format(semantic::debug::Severity p, FormatCtx& ctx)
+    auto format(semantic::debug::Severity p, FormatCtx& ctx) const
     {
         return fmt::format_to(
             ctx.out(), "{}", semantic::detail::enum_to_string(p));
@@ -55,7 +55,7 @@ struct fmt::formatter<semantic::debug::Type>
     }
 
     template<typename FormatCtx>
-    auto format(semantic::debug::Type p, FormatCtx& ctx)
+    auto format(semantic::debug::Type p, FormatCtx& ctx) const
     {
         return fmt::format_to(
             ctx.out(), "{}", semantic::detail::enum_to_string(p));

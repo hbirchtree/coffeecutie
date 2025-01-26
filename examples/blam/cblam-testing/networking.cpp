@@ -902,7 +902,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             for(auto const& spawn : spawns)
                 cDebug(
                     " - {}:{} / {}",
-                    magic_enum::enum_name(spawn.tag.object.tag_class),
+                    blam::to_string(spawn.tag.object.tag_class),
                     spawn.tag.object.tag_id,
                     spawn.tag.instance_id);
             break;

@@ -11,7 +11,7 @@
 template<typename V>
 using OccluderManifest = compo::SubsystemManifest<
     type_list_t<BspReference, Model>,
-    type_list_t<BSPCache<V>, BlamCamera, BlamResources>,
+    type_list_t<BSPCache<V>, BlamCamera, BlamResources, RenderingParameters>,
     empty_list_t>;
 
 template<typename V>
@@ -25,14 +25,18 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         if constexpr(compile_info::platform::is_android)
             return;
 
-        BSPCache<V>*   bsp_cache;
-        BlamCamera*    camera;
-        BlamResources* resources;
+        BSPCache<V>*         bsp_cache;
+        BlamCamera*          camera;
+        BlamResources*       resources;
+        RenderingParameters* rendering;
         p.subsystem(bsp_cache);
         p.subsystem(camera);
         p.subsystem(resources);
+        p.subsystem(rendering);
 
-        auto camera_pos = camera->player(0).camera.position * Vecf3{-1, -1, 1};
+        auto camera_pos =
+            camera->player(camera->focused_player).camera.position *
+            Vecf3{-1, -1, 1};
 
         // for(auto& ent : p.select(ObjectBsp))
         // {
@@ -101,7 +105,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 current_bsp           = &bsp;
                 current_cluster       = cluster_;
                 // bsp_ref.visible       = true;
-                auto const& sub       = bsp.clusters.at(cluster_).sub.at(sub_);
+                auto const& sub = bsp.clusters.at(cluster_).sub.at(sub_);
                 portal_colors[sub.debug_color_idx] = Vecf3(0, 1, 0);
             } else
             {
@@ -111,19 +115,34 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
         resources->debug_line_colors->unmap();
 
-        if(!current_bsp)
-            return;
+        // if(!current_bsp)
+        //     return;
+
+        const auto in_draw_distance =
+            [camera_pos =
+                 camera->player(camera->focused_player).camera.position,
+             rendering,
+             draw_dist = rendering->draw_distance](Model const& mod) {
+                return glm::distance(mod.position, camera_pos) < draw_dist;
+            };
 
         for(auto& ent : p.select(PositioningStatic))
         {
             auto   ref   = p.template ref<Proxy>(ent);
             Model& model = ref.template get<Model>();
-            if(auto cluster = current_bsp->find_cluster(-model.position);
-               !cluster.has_value())
-                model.visible = false;
-            else
-                model.visible = cluster.value().first == current_cluster;
+            // if(auto cluster = current_bsp->find_cluster(-model.position);
+            //    !cluster.has_value())
+            //     model.visible = false;
+            // else
+            //     model.visible = cluster.value().first == current_cluster;
             // model.visible = true;
+            model.visible = in_draw_distance(model);
+        }
+        for(auto& ent : p.select(PositioningDynamic))
+        {
+            auto   ref    = p.template ref<Proxy>(ent);
+            Model& model  = ref.template get<Model>();
+            model.visible = in_draw_distance(model);
         }
     }
 

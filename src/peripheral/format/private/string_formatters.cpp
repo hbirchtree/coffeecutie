@@ -1,6 +1,6 @@
 #include <fmt_extensions/info.h>
 
-#include <magic_enum.hpp>
+#include <peripherals/stl/magic_enum.hpp>
 
 namespace semantic::detail {
 

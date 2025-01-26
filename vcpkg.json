@@ -98,7 +98,7 @@
         "physics": {
             "description": "Physics support",
             "dependencies": [
-                "bullet2"
+                "bullet3"
             ]
         },
         "pressure-cooker": {

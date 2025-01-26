@@ -37,12 +37,13 @@
                 "rhs": "Linux"
             },
             "cacheVariables": {
-                "APPIMAGE_EXTRA_LIBRARIES": "$env{TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6;$env{TOOLCHAIN_SYSROOT}/lib/libssp.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0",
+                "APPIMAGE_EXTRA_LIBRARIES": "$env{TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6;$env{TOOLCHAIN_SYSROOT}/lib/libssp.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libOSMesa.so.8",
                 "APPIMAGE_RUNTIME_BINARY": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{TOOLCHAIN_PREFIX}/bin/runtime",
                 "CMAKE_C_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-gcc",
                 "CMAKE_CXX_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-g++",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
-                "FLATPAK_EXTRA_LIBRARIES": "$env{TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6;$env{TOOLCHAIN_SYSROOT}/lib/libssp.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0",
+                "FLATPAK_EXTRA_LIBRARIES": "$env{TOOLCHAI
+                N_SYSROOT}/lib/libstdc++.so.6;$env{TOOLCHAIN_SYSROOT}/lib/libssp.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libOSMesa.so.8",
                 "MKSQUASH_PROGRAM": "$env{MKSQUASH_PROGRAM}",
                 "TOOLCHAIN_PREFIX": "$env{TOOLCHAIN_PREFIX}",
                 "TOOLCHAIN_ROOT": "$env{TOOLCHAIN_ROOT}",
@@ -176,7 +177,7 @@
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/$env{TOOLCHAIN_PREFIX}-$env{VARIANT}.toolchain.cmake",
                 "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON",
                 "VCPKG_MANIFEST_FEATURES": "headful;image",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports-gamecube/outcome;${sourceDir}/toolchain/vcpkg/ports-gamecube/status-code;${sourceDir}/toolchain/vcpkg/ports-gamecube/zstd;${sourceDir}/toolchain/vcpkg/ports-gamecube/openexr;${sourceDir}/toolchain/vcpkg/ports-gamecube/sdl2",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports-gamecube/outcome:${sourceDir}/toolchain/vcpkg/ports-gamecube/status-code:${sourceDir}/toolchain/vcpkg/ports-gamecube/zstd:${sourceDir}/toolchain/vcpkg/ports-gamecube/openexr:${sourceDir}/toolchain/vcpkg/ports-gamecube/sdl2",
                 "VCPKG_TARGET_TRIPLET": "$env{ARCHITECTURE}-$env{VARIANT}"
             },
             "environment": {
@@ -421,11 +422,13 @@
                 "GENERATE_APPIMAGE": "ON",
                 "GENERATE_FLATPAK": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl2",
                 "VCPKG_TARGET_TRIPLET": "desktop-x86-64-buildroot-linux-gnu"
             },
             "environment": {
                 "ARCHITECTURE": "x86_64-buildroot-linux-gnu",
-                "PLATFORM": "desktop"
+                "PLATFORM": "desktop",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl2"
             }
         },
         {
@@ -440,11 +443,13 @@
                 "GENERATE_APPIMAGE": "ON",
                 "GENERATE_FLATPAK": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl2",
                 "VCPKG_TARGET_TRIPLET": "desktop-x86-64v2-buildroot-linux-gnu"
             },
             "environment": {
                 "ARCHITECTURE": "x86_64-buildroot-linux-gnu",
-                "PLATFORM": "desktop"
+                "PLATFORM": "desktop",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl2"
             }
         },
         {
@@ -515,7 +520,7 @@
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "x64;mingw;windows",
                 "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON",
                 "VCPKG_MANIFEST_FEATURES": "audio;blam;gleam;headful;network;openssl",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/openal-soft",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports-mingw/openal-soft;${sourceDir}/toolchain/vcpkg/ports-mingw/protobuf;${sourceDir}/toolchain/vcpkg/ports-mingw/openssl;${sourceDir}/toolchain/vcpkg/ports-mingw/abseil;${sourceDir}/toolchain/vcpkg/ports-mingw/hash-library",
                 "VCPKG_TARGET_TRIPLET": "x64-mingw-posix-static"
             },
             "environment": {
@@ -526,7 +531,7 @@
                 "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
                 "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools",
                 "NINJA": "$penv{NINJA}",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/openal-soft"
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports-mingw/openal-soft:${sourceDir}/toolchain/vcpkg/ports-mingw/openssl:${sourceDir}/toolchain/vcpkg/ports-mingw/abseil:${sourceDir}/toolchain/vcpkg/ports-mingw/protobuf:${sourceDir}/toolchain/vcpkg/ports-mingw/hash-library"
             }
         },
         {

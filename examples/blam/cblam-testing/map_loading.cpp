@@ -363,6 +363,12 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
                 file_mapper.fetch(*load.file),
                 [&e, progress_cb](std::shared_ptr<AsyncResource>* data) mutable
                 -> result_type {
+                    if(!(*data))
+                    {
+                        rq::runtime_queue::CancelTask(
+                            rq::runtime_queue::GetSelfId().assume_value());
+                        return blam::map_load_error::map_file_too_small;
+                    }
                     auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
                     auto  map   = blam::map_container<halo_version>::from_bytes(
                         **data, halo_version_v, std::move(progress_cb));
@@ -419,6 +425,12 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
             rq::runtime_queue::Queue(
                 rq::CreateMultiTask<void>(
                     [&e](int, std::shared_ptr<AsyncResource> data) mutable {
+                        if(!data)
+                        {
+                            rq::runtime_queue::CancelTask(
+                                rq::runtime_queue::GetSelfId().assume_value());
+                            return;
+                        }
                         auto& files =
                             e.subsystem_cast<BlamFiles<halo_version>>();
                         files.sound_file = std::move(data);

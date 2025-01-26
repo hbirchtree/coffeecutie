@@ -1,6 +1,6 @@
 #define MAGIC_ENUM_RANGE_MIN 0x8000
 #define MAGIC_ENUM_RANGE_MAX 0x9FFF
-#include <magic_enum.hpp>
+#include <peripherals/stl/magic_enum.hpp>
 
 #include <coffee/graphics/apis/gleam/rhi_texture.h>
 #include <coffee/graphics/apis/gleam/rhi_urls.h>

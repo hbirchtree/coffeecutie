@@ -7,7 +7,7 @@ if(NOT EMSCRIPTEN)
       set(OPENSSL_ROOT_DIR "${OpenSSL_DIR}")
       set(ENV{OPENSSL_ROOT_DIR} "${OpenSSL_DIR}")
 
-      find_package(OpenSSL REQUIRED)
+      find_package(OpenSSL CONFIG REQUIRED)
     endif()
 
     set(LIBS OpenSSL::SSL)
@@ -42,3 +42,4 @@ else()
     target_compile_options(ASIO PUBLIC -sFETCH)
     target_link_options(ASIO PUBLIC -sFETCH)
 endif()
+

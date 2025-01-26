@@ -1,4 +1,4 @@
-#include <magic_enum.hpp>
+#include <peripherals/stl/magic_enum.hpp>
 
 #include <coffee/components/components.h>
 #include <coffee/components/proxy.h>

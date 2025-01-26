@@ -3,6 +3,7 @@ find_package(Etc2Comp CONFIG REQUIRED)
 find_package(Ktx CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 find_package(zstd CONFIG REQUIRED)
+find_package(magic_enum CONFIG REQUIRED)
 
 coffee_library(
   TARGET TextureCompression
@@ -15,6 +16,7 @@ coffee_library(
             KTX::ktx
             Threads::Threads
             zstd::libzstd_static
+            magic_enum::magic_enum
 )
 
 coffee_application(

@@ -1,4 +1,4 @@
-#include <magic_enum.hpp>
+#include <peripherals/stl/magic_enum.hpp>
 
 #include <coffee/graphics/apis/gleam/rhi.h>
 

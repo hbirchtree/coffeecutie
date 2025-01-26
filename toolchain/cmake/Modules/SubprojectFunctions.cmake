@@ -127,6 +127,7 @@ macro(INIT_SUBPROJECT)
   # The multiple Linux packaging formats
   if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
     option(GENERATE_APPIMAGE "Generate AppImage binaries" OFF)
+    option(GENERATE_APPDIR "Generate AppDir structures (good for legacy systems)" OFF)
     option(GENERATE_SNAPPY "Generate Snap packages" OFF)
     option(GENERATE_FLATPAK "Generate Flatpaks" OFF)
     option(GENERATE_RWIMAGE "Generate read/write images" OFF)

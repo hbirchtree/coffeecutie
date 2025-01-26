@@ -12,7 +12,7 @@
 #include "ui.h"
 #include "ui_caching.h"
 
-#include <magic_enum.hpp>
+#include <peripherals/stl/magic_enum.hpp>
 
 #include <coffee/comp_app/fps_counter.h>
 #include <coffee/core/coffee_args.h>
@@ -365,9 +365,10 @@ i32 blam_main()
             {
                 auto& camera = camera_.player(i);
                 /* Mouse/keyboard only applies to player 1 */
-                if(i == 0)
+                if(i == camera_.focused_player)
                     camera.camera_->tick(t);
-                if(i != 0 && compile_info::platform::is_emscripten)
+                if(i != camera_.focused_player &&
+                   compile_info::platform::is_emscripten)
                     continue;
                 if(controllers && i < controllers->count())
                 {

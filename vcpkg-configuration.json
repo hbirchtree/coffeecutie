@@ -1,11 +1,7 @@
 {
     "overlay-ports": [
-        "./toolchain/vcpkg/ports/bullet2",
         "./toolchain/vcpkg/ports/discord-rpc",
         "./toolchain/vcpkg/ports/gamenetworkingsockets",
-        "./toolchain/vcpkg/ports/hash-library",
-        "./toolchain/vcpkg/ports/sdl2",
-        "./toolchain/vcpkg/ports/status-code",
         "./toolchain/vcpkg/ports/stb"
     ],
     "overlay-triplets": [
@@ -16,26 +12,26 @@
         {
             "kind": "git",
             "repository": "https://github.com/Microsoft/vcpkg",
-            "baseline": "1de2026f28ead93ff1773e6e680387643e914ea1",
+            "baseline": "b322364f06308bdd24823f9d8f03fe0cc86fd46f",
             "packages": [
                 "*"
             ]
-        },{
+        },
+        {
             "kind": "git",
             "repository": "https://github.com/Microsoft/vcpkg",
-            "baseline": "959f8e317599dd439bc86f5cb5f0aca648d88c3f",
+            "baseline": "1de2026f28ead93ff1773e6e680387643e914ea1",
             "packages": [
-                "abseil",
-                "openssl",
-                "protobuf"
+                "spirv-cross",
+                "spirv-headers",
+                "vulkan-headers"
             ]
-        },{
+        },
+        {
             "kind": "git",
             "repository": "https://github.com/Microsoft/vcpkg",
             "baseline": "a34c873a9717a888f58dc05268dea15592c2f0ff",
             "packages": [
-                "imgui",
-                "magic-enum",
                 "openal-soft"
             ]
         },

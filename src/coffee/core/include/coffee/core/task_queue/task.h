@@ -263,7 +263,7 @@ struct dependent_task : public dependent_task_invoker
     {
         if(dependency.has_value())
             return !dependency->valid();
-        return false;
+        return cancelled_flag;
     }
 
     void execute() override final
@@ -298,6 +298,7 @@ struct dependent_task : public dependent_task_invoker
 
     std::optional<Future> dependency{};
     std::promise<Out>     output{};
+    bool                  cancelled_flag{false};
 };
 
 namespace {
@@ -630,6 +631,7 @@ class runtime_queue
     struct dependent_task_data_t
     {
         std::unique_ptr<dependent_task_invoker> task;
+        u64                                     index;
         bool                                    alive{true};
     };
 

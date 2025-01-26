@@ -6,8 +6,12 @@
 #include <coffee/core/debug/formatting.h>
 #include <coffee/core/files/cfiles.h>
 #include <coffee/core/task_queue/task.h>
-#include <magic_enum.hpp>
+#include <coffee/core/types/input/keymap.h>
 #include <peripherals/stl/enumerate.h>
+
+#define MAGIC_ENUM_RANGE_MIN 0
+#define MAGIC_ENUM_RANGE_MAX 0xFFF
+#include <peripherals/stl/magic_enum.hpp>
 
 #if defined(FEATURE_ENABLE_OSMesaComponent)
 #include <peripherals/posix/process.h>

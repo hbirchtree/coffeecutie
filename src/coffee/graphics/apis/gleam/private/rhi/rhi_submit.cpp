@@ -1,6 +1,6 @@
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
 
-#include <magic_enum.hpp>
+#include <peripherals/stl/magic_enum.hpp>
 
 namespace gleam::detail {
 

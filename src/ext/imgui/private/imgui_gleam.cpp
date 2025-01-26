@@ -408,13 +408,13 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
 
         union
         {
-            void* ptr;
+            u64 tex_id;
             u32   handle;
         } tex_handle = {
             .handle = data.font_atlas->m_handle,
         };
 
-        io.Fonts->SetTexID(tex_handle.ptr);
+        io.Fonts->SetTexID(tex_handle.tex_id);
 
         data.shell_texture = api.alloc_texture(
             gleam::textures::d2,

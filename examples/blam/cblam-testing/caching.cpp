@@ -4,7 +4,7 @@
 #include "selected_version.h"
 #include <coffee/graphics/apis/gleam/rhi_texture_atlas.h>
 
-#include <magic_enum.hpp>
+#include <peripherals/stl/magic_enum.hpp>
 
 template<typename V>
 BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)

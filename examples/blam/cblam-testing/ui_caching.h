@@ -5,7 +5,7 @@
 #include "shader_cache.h"
 #include "ui_caching_item.h"
 
-#include <magic_enum.hpp>
+#include <peripherals/stl/magic_enum.hpp>
 
 using libc_types::u8;
 

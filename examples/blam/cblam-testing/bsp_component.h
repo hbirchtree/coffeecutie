@@ -166,7 +166,11 @@ struct BlamBspWidget
                             auto label = fmt::format("Player {}", i);
                             if(ImGui::Selectable(label.c_str()))
                             {
+                                auto& current_camera =
+                                    camera->player(camera->focused_player);
+
                                 camera->focused_player   = i;
+                                current_camera.active    = false;
                                 camera->player(i).active = true;
                             }
                         }
@@ -181,6 +185,11 @@ struct BlamBspWidget
                         player.camera.position[0],
                         player.camera.position[1],
                         player.camera.position[2]);
+                    ImGui::SliderFloat(
+                        "Draw distance",
+                        &rendering->draw_distance,
+                        1.f,
+                        5000.f);
                     ImGui::SliderFloat(
                         "FOV", &player.camera.fieldOfView, 10.f, 120.f);
                     ImGui::SliderFloat("Gamma", &postprocess->gamma, 0.1, 5.0);

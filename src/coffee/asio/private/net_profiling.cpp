@@ -36,28 +36,35 @@ void ProfilingExport()
 
     cVerbose(10, "Checking for network profiling...");
 
-    if(auto server = env::var("COFFEE_REPORT_URL"); server.has_value())
+    auto server = env::var("COFFEE_REPORT_URL");
+    if(!server.has_value())
     {
-        cVerbose(10, "Network export starting");
+        cVerbose(10, "Network export cancelled");
+        return;
+    }
 
-        if constexpr(!compile_info::platform::is_emscripten)
-        {
-            State::SwapState("jsonProfiler", {});
+    cVerbose(10, "Network export starting");
 
-            auto profilerState = State::GetProfilerStore();
+    if constexpr(!compile_info::platform::is_emscripten)
+    {
+        State::SwapState("jsonProfiler", {});
 
-            if(profilerState)
-                profilerState->disable();
-        }
+        auto profilerState = State::GetProfilerStore();
 
-        auto worker = ASIO::GenWorker();
+        if(profilerState)
+            profilerState->disable();
+    }
 
-        auto ctxt = worker ? worker->context : ASIO::InitService();
+    auto worker = ASIO::GenWorker();
 
-        Coffee::Resource profile("profile.json", RSCA::TempFile);
+    auto ctxt = worker ? worker->context : ASIO::InitService();
 
-        auto reportBin = net::MkUrl(
-            server.value(), HTTPAccess::DefaultPOST | HTTPAccess::NoVerify);
+    Coffee::Resource profile("profile.json", RSCA::TempFile);
+
+    auto reportBin = net::MkUrl(
+        server.value(), HTTPAccess::DefaultPOST | HTTPAccess::NoVerify);
+    try
+    {
         static net::Resource reportBinRsc(ctxt, reportBin);
 
         if(!reportBinRsc.connected())
@@ -88,6 +95,8 @@ void ProfilingExport()
         reportBinRsc.setHeaderField(
             http::header_field::accept,
             http::header::to_string::content_type(http::content_type::json));
+        reportBinRsc.setHeaderField(
+            http::header_field::user_agent, "Coffee/1.0");
 
         std::string target_chrome;
         Profiling::ExportChromeTracerData(target_chrome);
@@ -130,18 +139,18 @@ void ProfilingExport()
                 str::encapsulate_view<char>(data->view));
             if(auto location = reportBinRsc.responseLocation())
             {
-                cVerbose(
-                    10, "Network export located at: {0}", location.value());
+                cVerbose(10, "Network export located at: {0}", location.value());
             }
         } else
         {
             cWarning("Got no data back from server?");
         }
+    } catch(net::net_error const& e)
+    {
+        cWarning("Network export failed: {}", e.what());
+    }
 
-        worker->stop();
-
-    } else
-        cVerbose(10, "Network export cancelled");
+    worker->stop();
 }
 
 int RegisterProfilingAtExit()

@@ -1,0 +1,33 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 69912cf..5a1534e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -110,13 +110,13 @@ if (USE_CRYPTO STREQUAL "OpenSSL")
+ 	# functionality.
+ 	cmake_push_check_state()
+ 		set(CMAKE_REQUIRED_INCLUDES ${OPENSSL_INCLUDE_DIR})
+-		set(CMAKE_REQUIRED_LIBRARIES OpenSSL::Crypto)
++		set(CMAKE_REQUIRED_LIBRARIES OpenSSL::applink)
+ 		if(WIN32 AND OPENSSL_USE_STATIC_LIBS)
+ 			list(APPEND CMAKE_REQUIRED_LIBRARIES ws2_32 crypt32)
+ 		endif()
+ 	cmake_pop_check_state()
+ 	cmake_push_check_state()
+-		set(CMAKE_REQUIRED_LIBRARIES OpenSSL::Crypto)
++		set(CMAKE_REQUIRED_LIBRARIES OpenSSL::applink)
+ 		if(WIN32 AND OPENSSL_USE_STATIC_LIBS)
+ 			list(APPEND CMAKE_REQUIRED_LIBRARIES ws2_32 crypt32)
+ 		endif()
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index e9f36cb..f81bfa2 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -180,7 +180,7 @@ endfunction()
+ function(gns_set_target_crypto_properties TGT)
+ 	if(USE_CRYPTO STREQUAL "OpenSSL" OR USE_CRYPTO25519 STREQUAL "OpenSSL")
+ 		target_link_libraries(${TGT} PUBLIC
+-			OpenSSL::Crypto
++			OpenSSL::applink
+ 			)
+ 		if(WIN32 AND OPENSSL_USE_STATIC_LIBS)
+ 			target_link_libraries(${TGT} PUBLIC

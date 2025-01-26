@@ -3,7 +3,7 @@
 #include <fmt/format.h>
 #include <glad/gl.h>
 #include <ktx.h>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 #define RGBCX_IMPLEMENTATION 1
 #include <bc7enc/bc7enc.h>

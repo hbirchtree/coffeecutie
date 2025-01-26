@@ -525,6 +525,14 @@ std::optional<RuntimeQueueError> runtime_queue::CancelTask(
 
     std::unique_lock _(queue->m_tasks_lock);
 
+    for(auto& dependent_task : queue->m_dependent_tasks)
+    {
+        if(dependent_task.index != taskId)
+            continue;
+        dependent_task.alive = false;
+        return std::nullopt;
+    }
+
     if(auto res = GetTask(queue->m_tasks, taskId); res.has_error())
         return res.error();
     else
@@ -743,9 +751,11 @@ void runtime_queue::execute_tasks()
         if(!task.task->ready())
             continue;
 
+        m_current_task_id = task.index;
         Profiler::DeepPushContext(RQ_API "Running dependent task");
         task.task->execute();
         Profiler::DeepPopContext();
+        m_current_task_id = 0;
 
         task.alive = false;
     }
@@ -844,10 +854,12 @@ u64 runtime_queue::enqueue(std::unique_ptr<dependent_task_invoker>&& task)
     if(!task)
         Throw(undefined_behavior("nullptr passed as dependent_task!"));
     std::unique_lock _(m_tasks_lock);
+    u64 output = ++m_task_index;
     m_dependent_tasks.emplace_back(dependent_task_data_t{
         .task = std::move(task),
+        .index = output,
     });
-    return ++m_task_index;
+    return output;
 }
 
 void runtime_queue::sortTasks()

@@ -4,7 +4,7 @@
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/components/entity_container.inl>
 #include <coffee/core/CProfiling>
-#include <magic_enum.hpp>
+#include <peripherals/stl/magic_enum.hpp>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
 #include <platforms/sysinfo.h>

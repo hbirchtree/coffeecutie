@@ -187,6 +187,16 @@ StartupWMClass=${APP_TARGET}
         ICON_ASSET "${ICON_ASSET}"
       )
     endif()
+    if(GENERATE_APPDIR AND NOT GENERATE_APPIMAGE)
+      appimage_package(
+        TARGET ${APP_TARGET}
+        TITLE "${APP_TITLE}"
+        RESOURCES "${APP_RESOURCES}" ""
+        BUNDLE_LIBRARIES "${APP_BUNDLE_LIBRARIES}"
+        ICON_ASSET "${ICON_ASSET}"
+        APPDIR_ONLY
+      )
+    endif()
     if(GENERATE_FLATPAK)
       flatpak_package(
         TARGET ${APP_TARGET}

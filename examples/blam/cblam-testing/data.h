@@ -139,6 +139,7 @@ struct RenderingParameters : compo::SubsystemBase
     bool color_changing{true};
 
     f32 tex_res{0.f};
+    f32 draw_distance{500.f};
 };
 
 struct LoadingStatus : compo::SubsystemBase

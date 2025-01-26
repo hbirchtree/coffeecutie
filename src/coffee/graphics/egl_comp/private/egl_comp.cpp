@@ -31,6 +31,8 @@ namespace egl {
 
 using Coffee::cDebug;
 using Coffee::cWarning;
+using Coffee::DProfContext;
+using Coffee::Profiler;
 using stl_types::str::fmt::hexify;
 
 namespace detail {
@@ -86,20 +88,28 @@ static std::string egl_to_error()
 
 void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
 {
+    DProfContext _("EGL::DisplayHandle::load");
     auto& config  = comp_app::AppLoader::config<comp_app::GLConfig>(e);
     auto& appInfo = *e.service<comp_app::AppInfo>();
 
     m_data = stl_types::
         make_unique_with_destructor<detail::EGLData, detail::EGLDataDeleter>();
 
-    const auto extensions =
-        std::string_view(eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS));
+    Profiler::DeepPushContext("Query extensions");
+    std::string_view extensions;
     auto supportsExtension = [&extensions](std::string_view ext) {
         return extensions.find(ext) != std::string_view::npos;
     };
-    cDebug(
-        "EGL extensions: {}", eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS));
+    // std::string_view does not like nullptrs
+    // PowerVR SGX driver also does not return anything in this case
+    if(auto exts = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS))
+    {
+        extensions = std::string_view(exts);
+        cDebug("EGL extensions: {}", exts);
+    }
+    Profiler::DeepPopContext();
 
+    Profiler::DeepPushContext("Get display");
 #if defined(EGL_VERSION_1_5)
     auto& windowInfo = *e.service<comp_app::PtrNativeWindowInfo>();
     using ws_t = comp_app::interfaces::PtrNativeWindowInfo::window_system_t;
@@ -152,13 +162,16 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
         ec = comp_app::AppError::NoDisplay;
         return;
     }
+    Profiler::DeepPopContext();
 
+    Profiler::DeepPushContext("Initialize display");
     if(eglInitialize(m_data->display, &m_major, &m_minor) == EGL_FALSE)
     {
         ec = comp_app::AppError::ContextNotAvailable;
         ec = "eglInitialize:" + egl_to_error();
         return;
     }
+    Profiler::DeepPopContext();
 
     appInfo.add("egl:vendor", eglQueryString(m_data->display, EGL_VENDOR));
     appInfo.add("egl:version", eglQueryString(m_data->display, EGL_VERSION));
@@ -227,6 +240,7 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
 
 void DisplayHandle::unload(entity_container& /*e*/, comp_app::app_error& /*ec*/)
 {
+    DProfContext _("EGL::DisplayHandle::unload");
     eglTerminate(m_data->display);
 }
 

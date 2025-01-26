@@ -10,7 +10,7 @@
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/core/debug/formatting.h>
 #include <fmt/format.h>
-#include <magic_enum.hpp>
+#include <peripherals/stl/magic_enum.hpp>
 #include <peripherals/stl/string/hex.h>
 
 namespace oaf {

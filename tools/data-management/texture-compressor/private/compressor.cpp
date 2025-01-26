@@ -5,7 +5,7 @@
 #include <cxxopts.hpp>
 #include <glad/gl.h>
 #include <ktx.h>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 #include "decoder.h"
 #include "encoder.h"

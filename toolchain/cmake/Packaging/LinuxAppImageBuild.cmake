@@ -35,18 +35,27 @@ function(
   # LIBRARY_FILES
   # ICON_ASSET
 )
+  set(FLAG_OPTS
+      APPDIR_ONLY
+  )
   set(ONE_OPTS
       TARGET
       TITLE
       ICON_ASSET
   )
   set(MULTI_OPTS RESOURCES LIBRARIES BUNDLE_LIBRARIES)
-  cmake_parse_arguments(APPIMAGE "" "${ONE_OPTS}" "${MULTI_OPTS}" ${ARGN})
+  cmake_parse_arguments(
+    APPIMAGE
+    "${FLAG_OPTS}"
+    "${ONE_OPTS}"
+    "${MULTI_OPTS}"
+    ${ARGN}
+  )
 
   string(TOLOWER "${APPIMAGE_TITLE}" APPIMAGE_INTERNALNAME)
   string(MAKE_C_IDENTIFIER "${APPIMAGE_INTERNALNAME}" APPIMAGE_INTERNALNAME)
 
-  if(NOT EXISTS "${APPIMAGE_RUNTIME_BINARY}")
+  if(NOT EXISTS "${APPIMAGE_RUNTIME_BINARY}" AND NOT APPIMAGE_APPDIR_ONLY)
     find_program(RUNTIME_BIN_TMP runtime)
     if(NOT EXISTS "${RUNTIME_BIN_TMP}")
       message(STATUS "No runtime binary for AppImage")
@@ -169,6 +178,7 @@ function(
     endif()
     add_custom_command(
       TARGET ${APPIMAGE_TARGET}.AppDir
+
       POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy "${LIB}" "${APPIMAGE_LIBRARY_DIR}"
     )
@@ -213,6 +223,13 @@ function(
             "${APPIMAGE_BINARY_DIR}"
   )
 
+  if(APPIMAGE_APPDIR_ONLY)
+    install(
+      DIRECTORY "${APPIMAGE_INTERMEDIATE_DIR}"
+      DESTINATION "${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-appdir"
+    )
+  endif()
+
   if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     add_custom_command(
       TARGET ${APPIMAGE_TARGET}.AppDir
@@ -229,6 +246,7 @@ function(
     # First create squashfs
     COMMAND "${MKSQUASH_PROGRAM}" "${APPIMAGE_INTERMEDIATE_DIR}"
             "${APPIMAGE_INTERMEDIATE_SQUASH}" -root-owned -noappend -comp zstd
+            -processors 1
     # Concatenate AppImage runtime with image
     COMMAND cat "${APPIMAGE_RUNTIME_BINARY}" >> "${APPIMAGE_FINAL_NAME}"
     COMMAND cat "${APPIMAGE_INTERMEDIATE_SQUASH}" >> "${APPIMAGE_FINAL_NAME}"
