@@ -314,7 +314,7 @@ struct SimpleProfilerImpl
 struct SimpleProfilerImpl
 {
     STATICINLINE void PushContext(
-        std::string_view, DataPoint::Attr = DataPoint::AttrNone)
+        std::string_view, datapoint_t::attr_t = datapoint_t::none_attr)
     {
     }
 
@@ -323,12 +323,12 @@ struct SimpleProfilerImpl
     }
 
     STATICINLINE void Profile(
-        std::string_view, DataPoint::Attr = DataPoint::AttrNone)
+        std::string_view, datapoint_t::attr_t = datapoint_t::none_attr)
     {
     }
 
     STATICINLINE void DeepPushContext(
-        std::string_view, DataPoint::Attr = DataPoint::AttrNone)
+        std::string_view, datapoint_t::attr_t = datapoint_t::none_attr)
     {
     }
 
@@ -337,7 +337,7 @@ struct SimpleProfilerImpl
     }
 
     STATICINLINE void DeepProfile(
-        std::string_view, DataPoint::Attr = DataPoint::AttrNone)
+        std::string_view, datapoint_t::attr_t = datapoint_t::none_attr)
     {
     }
 

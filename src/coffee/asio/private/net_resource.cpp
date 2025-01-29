@@ -9,6 +9,7 @@
 #define NETRSC_TAG "NetRsc::"
 
 #include <curl/curl.h>
+#include <nlohmann/json.hpp>
 
 using namespace ::semantic;
 using namespace Coffee::Logging;
@@ -467,18 +468,30 @@ std::optional<error_code> Resource::push(
     for(auto const& header : m_response.header.fields)
         cVerbose(12, NETRSC_TAG "  {}: {}", header.first, header.second);
     {
-        auto content_type = http::header::from_string::content_type(
-            m_response.header
-                .standard_fields[http::header_field::content_type]);
+        auto content_type_ =
+            m_response.header.standard_fields[http::header_field::content_type];
+        auto content_type =
+            http::header::from_string::content_type(content_type_);
         switch(content_type)
         {
-        case http::content_type::html:
         case http::content_type::json:
+            cVerbose(
+                12,
+                NETRSC_TAG "HTTP payload(application/json): {}",
+                nlohmann::json::parse(
+                    std::string_view(
+                        m_response.payload.data(), m_response.payload.size()),
+                    nullptr,
+                    false)
+                    .dump(2));
+            break;
+        case http::content_type::html:
         case http::content_type::text:
         case http::content_type::xml:
             cVerbose(
                 12,
-                NETRSC_TAG "HTTP payload:\n-------\n{}\n-------",
+                NETRSC_TAG "HTTP payload ({}):\n-------\n{}\n-------",
+                content_type_,
                 std::string_view(
                     &m_response.payload[0], m_response.payload.size()));
             break;
