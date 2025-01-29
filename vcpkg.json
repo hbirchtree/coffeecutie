@@ -84,6 +84,7 @@
             "description": "Networking support",
             "dependencies": [
                 "asio",
+                "curl",
                 "flatbuffers",
                 { "name": "flatbuffers", "host": true },
                 { "name": "gamenetworkingsockets", "platform": "!emscripten & !(android & arm32)" }
