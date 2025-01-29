@@ -10,9 +10,8 @@
 #include <platforms/file.h>
 
 #if defined(FEATURE_ENABLE_ASIO)
-#include <coffee/asio/asio_worker.h>
-#include <coffee/asio/http.h>
-#include <coffee/asio/net_resource.h>
+#include <coffee/net/http.h>
+#include <coffee/net/net_resource.h>
 #include <coffee/ssl/hmac.h>
 #endif
 
@@ -249,10 +248,9 @@ i32 crash_main(i32, cstring_w*)
         multipart.m_data.size(),
         multipart.m_data.size() / 1_MB);
 
-    auto worker = ASIO::GenWorker();
-
     net::Resource crashPush(
-        worker->context, net::MkUrl(platform::env::var("CRASH_API").value()));
+        net::create_curl_context(),
+        net::MkUrl(platform::env::var("CRASH_API").value()));
 
     crashPush.setHeaderField(
         http::header_field::content_type, multipart.content_type());
@@ -282,8 +280,6 @@ i32 crash_main(i32, cstring_w*)
             cDebug(" >> Crash report available at: {0}", loc->second);
         }
     }
-
-    worker->stop();
 
     return exitCode;
 }
