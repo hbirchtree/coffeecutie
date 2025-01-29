@@ -276,7 +276,7 @@ jobs:
         cp -r artifacts/web-wasm32-emscripten-webgl2-custom/bin _site/custom/
         for f in $(find artifacts/ -mindepth 1 -maxdepth 1); do pushd $f; [[ -f apps.tar ]] && (tar xvf apps.tar && rm apps.tar); tar Jcvf ../../_site/downloads/$(basename $f).tar.xz .; popd; done
     - name: Uploading GitHub Pages examples
-      uses: actions/upload-pages-artifact@v4
+      uses: actions/upload-pages-artifact@v3
     - name: Deploy examples to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
