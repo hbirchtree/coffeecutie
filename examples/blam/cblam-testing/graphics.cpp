@@ -22,8 +22,9 @@
 #include <platforms/sysinfo.h>
 
 #if defined(FEATURE_ENABLE_ASIO)
-#include <coffee/asio/net_profiling.h>
-#include <coffee/asio/net_resource.h>
+#include <coffee/net/curl_network_stats.h>
+#include <coffee/net/net_profiling.h>
+#include <coffee/net/net_resource.h>
 #endif
 #if defined(FEATURE_ENABLE_DiscordLatte)
 #include <discord/discord_system.h>
@@ -104,6 +105,9 @@ i32 blam_main()
             BlamData<halo_version>& /*data*/,
             time_point const&) {
             ProfContext _(__FUNCTION__);
+
+            e.register_subsystem_inplace<net::CurlNetStats>(
+                net::create_curl_context());
 
             auto& gfx = e.register_subsystem_inplace<gfx::system>();
             auto  load_error =

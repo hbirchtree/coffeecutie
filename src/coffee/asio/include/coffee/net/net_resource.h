@@ -37,19 +37,56 @@ struct error_code
 
 #include <coffee/asio/asio_data.h>
 #include <emscripten/fetch.h>
-#else
-#include <coffee/asio/tcp_socket.h>
+#elif defined(USE_CURL)
+#include <future>
 #endif
-#include <coffee/asio/http.h>
 
 #include <coffee/core/url.h>
 #include <coffee/interfaces/byte_provider.h>
+#include <coffee/net/curl_context.h>
+#include <coffee/net/http.h>
+#include <fmt/format.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/semantic/enum/http_access.h>
 
 namespace net {
 
 using platform::url::Url;
+
+using resource_context = curl_context;
+
+struct error_code
+{
+    int         err_code{};
+    std::string err_msg{};
+
+    inline operator bool() const
+    {
+        return err_code != 0;
+    }
+
+    inline operator std::string() const
+    {
+        return err_msg;
+    }
+
+#if !defined(USE_CURL)
+    enum code_t
+    {
+        no_error,
+        request_failed,
+    };
+
+    error_code()
+    {
+    }
+
+    error_code(code_t err_code)
+        : err_code(err_code)
+    {
+    }
+#endif
+};
 
 struct net_error : resource_error
 {
@@ -78,8 +115,11 @@ struct Resource
     Url m_resource;
 #if defined(USE_EMSCRIPTEN_HTTP)
     emscripten_fetch_t* m_fetch{nullptr};
+#elif defined(USE_CURL)
+    resource_context m_ctxt{};
+    curl_request     m_handle{};
 #else
-    std::shared_ptr<Coffee::ASIO::Service> m_ctxt;
+    resource_context m_ctxt{};
 #if defined(ASIO_USE_SSL)
     std::unique_ptr<net::tcp::ssl_socket> ssl;
 #endif
@@ -91,26 +131,26 @@ struct Resource
 
     semantic::HTTPAccess m_access;
 
-    asio::error_code m_error;
+    error_code m_error;
 
-    void                            initRsc(Url const& url);
-    std::optional<asio::error_code> close();
+    void                      initRsc(Url const& url);
+    std::optional<error_code> close();
 
 #if !defined(USE_EMSCRIPTEN_HTTP)
-    std::optional<asio::error_code> readResponseHeader(
+    std::optional<error_code> readResponseHeader(
         net_buffer& buffer, libc_types::szptr& consumed);
-    std::optional<asio::error_code> readResponsePayload(net_buffer& buffer);
+    std::optional<error_code> readResponsePayload(net_buffer& buffer);
 #endif
 
   public:
-    Resource(std::shared_ptr<Coffee::ASIO::Service> ctxt, Url const& url);
+    Resource(resource_context ctxt, Url const& url);
     ~Resource();
 
     C_MOVE_CONSTRUCTOR(Resource);
 
-    bool             secure() const;
-    bool             connected() const;
-    asio::error_code connectError() const;
+    bool       secure() const;
+    bool       connected() const;
+    error_code connectError() const;
 
     Url resource() const;
 
@@ -128,9 +168,13 @@ struct Resource
     http::request_t&           request();
     std::optional<std::string> mimeType() const;
 
-    std::optional<asio::error_code> fetch();
-    std::optional<asio::error_code> push(const_chunk_u8 const& data);
-    std::optional<asio::error_code> push(
+    std::optional<error_code> fetch();
+#if defined(USE_CURL)
+    std::future<error_code> pushAsync(
+        http::method_t method, const_chunk_u8 const& data);
+#endif
+    std::optional<error_code> push(const_chunk_u8 const& data);
+    std::optional<error_code> push(
         http::method_t method, const_chunk_u8 const& data);
 
     std::optional<http::response_t> response() const;
@@ -175,3 +219,19 @@ FORCEDINLINE platform::url::Url operator"" _web(const char* url, size_t)
 
 } // namespace url_literals
 } // namespace net
+
+template<>
+struct fmt::formatter<net::error_code>
+{
+    template<typename ParseCtx>
+    constexpr auto parse(ParseCtx& ctx)
+    {
+        return ctx.begin();
+    }
+
+    template<typename FormatCtx>
+    auto format(net::error_code const& p, FormatCtx& ctx) const
+    {
+        return fmt::format_to(ctx.out(), "{} ({})", p.err_msg, p.err_code);
+    }
+};

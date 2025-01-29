@@ -6,6 +6,7 @@
 #include <peripherals/stl/string/trim.h>
 #include <peripherals/stl/string_casting.h>
 #include <sstream>
+#include <string_view>
 
 #if !defined(COFFEE_GEKKO)
 #define COFFEE_HTTP_MULTIPART
@@ -30,7 +31,7 @@ inline bool not_space(string::value_type c)
 }
 } // namespace detail
 
-inline bool iequals(string const& v1, string const& v2)
+inline bool iequals(std::string_view const& v1, std::string_view const& v2)
 {
     if(v1.size() != v2.size())
         return false;
@@ -97,6 +98,7 @@ enum class content_type : u8
     multipart_form,
 
     /* text types */
+    html,
     text,
     json,
     xml,
@@ -377,7 +379,7 @@ inline plain_string connection_policy(http::connection_policy pol)
 } // namespace to_string
 
 namespace from_string {
-inline version_t version(string const& v)
+inline version_t version(std::string_view const& v)
 {
     if(v.substr(0, 5) != "HTTP/")
         return version_t::v10;
@@ -394,7 +396,7 @@ inline version_t version(string const& v)
     return version_t::v10;
 }
 
-inline header_field field(string const& f)
+inline header_field field(std::string_view f)
 {
     if(util::strings::iequals(f, "Accept"))
         return header_field::accept;
@@ -469,7 +471,7 @@ inline http::content_type content_type(string v)
     if(v == "multipart/form-data")
         return c::multipart_form;
 
-    if(v == "text/plain")
+    if(v.starts_with("text/"))
         return c::text;
     if(v == "application/json")
         return c::json;

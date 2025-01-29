@@ -3,7 +3,7 @@
 #include <discord_register.h>
 #include <discord_rpc.h>
 
-#include <coffee/asio/net_resource.h>
+#include <coffee/net/net_resource.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/internal_state.h>
 #include <fmt_extensions/info.h>

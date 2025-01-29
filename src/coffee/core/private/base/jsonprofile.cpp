@@ -5,8 +5,10 @@
 #include <peripherals/stl/string/hex.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string_ops.h>
+#include <peripherals/stl/thread_types.h>
 #include <platforms/environment.h>
 #include <platforms/file.h>
+#include <platforms/profiling.h>
 
 #include <atomic>
 
@@ -169,21 +171,22 @@ std::shared_ptr<Coffee::State::GlobalState> CreateProfiler()
 }
 
 static void platform_trace_begin(
-    UNUSED_PARAM(profiling::DataPoint const&, point))
+    UNUSED_PARAM(profiling::datapoint_t const&, point))
 {
 #if defined(COFFEE_ANDROID) && ANDROID_API_LEVEL > 23
     ATrace_beginSection(point.name.c_str());
 #endif
 }
 
-static void platform_trace_end(UNUSED_PARAM(profiling::DataPoint const&, point))
+static void platform_trace_end(
+    UNUSED_PARAM(profiling::datapoint_t const&, point))
 {
 #if defined(COFFEE_ANDROID) && ANDROID_API_LEVEL > 23
     ATrace_endSection();
 #endif
 }
 
-void Push(profiling::ThreadState& tdata, profiling::DataPoint const& point)
+void Push(profiling::ThreadState& tdata, profiling::datapoint_t const& point)
 {
     if constexpr(!compile_info::profiler::enabled)
         return;
@@ -196,17 +199,17 @@ void Push(profiling::ThreadState& tdata, profiling::DataPoint const& point)
         return;
 
     const char* eventType   = "i";
-    bool        is_async    = point.flags.attrs & DataPoint::Async;
-    bool is_explicit_thread = point.flags.attrs & DataPoint::ExplicitThread;
+    bool        is_async    = point.flags.attrs & datapoint_t::async;
+    bool is_explicit_thread = point.flags.attrs & datapoint_t::explicit_thread;
 
     switch(point.flags.type)
     {
-    case DataPoint::Push:
+    case datapoint_t::push:
         if(!is_async && !is_explicit_thread)
             platform_trace_begin(point);
         eventType = is_async ? "b" : "B";
         break;
-    case DataPoint::Pop:
+    case datapoint_t::pop:
         if(!is_async && !is_explicit_thread)
             platform_trace_end(point);
         eventType = is_async ? "e" : "E";

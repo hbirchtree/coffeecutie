@@ -81,8 +81,7 @@ struct InternalThreadState
         : current_thread_id()
         , profiler_data(std::make_shared<profiling::ThreadState>())
     {
-        using RuntimeProperties = profiling::Profiler::runtime_options;
-        auto runtimeProps       = std::make_unique<RuntimeProperties>();
+        auto runtimeProps = std::make_unique<profiling::RuntimeProperties>();
 
         runtimeProps->push               = profiling::json::Push;
         runtimeProps->context            = profiler_data;
@@ -101,10 +100,9 @@ struct InternalThreadState
 
     ~InternalThreadState()
     {
-        using RuntimeOptions = profiling::Profiler::runtime_options;
-
-        RuntimeOptions* internal_state =
-            C_DCAST<RuntimeOptions>(profiler_data->internal_state.get());
+        profiling::RuntimeProperties* internal_state =
+            C_DCAST<profiling::RuntimeProperties>(
+                profiler_data->internal_state.get());
 
         if(internal_state)
             internal_state->context.reset();

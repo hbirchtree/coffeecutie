@@ -1,9 +1,19 @@
 #pragma once
 
-#include <platforms/profiling.h>
+#include <chrono>
+#include <memory>
+#include <peripherals/constants.h>
+#include <peripherals/libc/types.h>
+#include <platforms/pimpl_state.h>
 
 namespace platform {
 namespace profiling {
+
+using libc_types::f32;
+using libc_types::u32;
+
+struct datapoint_t;
+struct ThreadState;
 
 enum class MetricVariant
 {
@@ -19,10 +29,10 @@ namespace json {
 extern std::shared_ptr<GlobalState> CreateProfiler();
 
 extern void Push(
-    profiling::ThreadState& tdata, profiling::DataPoint const& point);
+    ThreadState& tdata, profiling::datapoint_t const& point);
 
 extern void CaptureMetrics(
-    profiling::ThreadState&   tdata,
+    ThreadState&   tdata,
     std::string_view          name,
     MetricVariant             variant,
     std::string const&        value,

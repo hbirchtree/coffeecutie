@@ -2,6 +2,7 @@
 
 #include <coffee/components/subsystem.h>
 
+#include <future>
 #include <url/url.h>
 
 namespace comp_app {

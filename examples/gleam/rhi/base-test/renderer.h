@@ -26,9 +26,8 @@
 #endif
 
 #if defined(FEATURE_ENABLE_ASIO)
-#include <coffee/asio/asio_network_stats.h>
-#include <coffee/asio/asio_system.h>
-#include <coffee/asio/net_resource.h>
+#include <coffee/net/net_resource.h>
+#include <coffee/net/curl_network_stats.h>
 #endif
 
 #if defined(FEATURE_ENABLE_DiscordLatte)
@@ -347,11 +346,11 @@ void SetupRendering(
     } else
         Throw(std::runtime_error("Failed to create queue for Discord"));
 
-    e.register_subsystem_inplace<ASIO::Subsystem>();
-    auto asio_context = e.subsystem_cast<ASIO::Subsystem>().context();
+    e.register_subsystem_inplace<net::CurlNetStats>(net::create_curl_context());
+    // auto asio_context = e.subsystem_cast<ASIO::Subsystem>().context();
 
-    ASIO::NetStats::register_service<ASIO::NetStats>(
-        comp_app::createContainer(), std::ref(*asio_context));
+    net::CurlNetStats::register_service<net::CurlNetStats>(
+        comp_app::createContainer(), net::create_curl_context());
 #endif
     d.g_data.reset();
 
@@ -545,7 +544,7 @@ void SetupRendering(
     if(net::Supported())
     {
         using namespace net::url_literals;
-        auto img_download = e.subsystem_cast<ASIO::Subsystem>().create_download(
+        auto img_download = net::create_curl_context()->create_download(
             "http://i.imgur.com/nQdOmCJ.png"_http);
         auto img_decode = IMG::create_decoder(
             img_download->output.get_future(), typing::pix_components::RGBA);
@@ -572,7 +571,7 @@ void SetupRendering(
 
         auto& discord = e.subsystem_cast<discord::Subsystem>();
 
-        auto img_data = e.subsystem_cast<ASIO::Subsystem>().create_download(
+        auto img_data = net::create_curl_context()->create_download(
             e.subsystem_cast<discord::Subsystem>().on_started<Url>(
                 [](discord::Subsystem& system) {
                     return system.playerInfo().avatarUrl;
@@ -755,9 +754,9 @@ void RendererCleanup(
 {
     Profiler::PushContext("Stopping workers");
 
-#if defined(FEATURE_ENABLE_ASIO)
-    entities.subsystem_cast<ASIO::Subsystem>().stop();
-#endif
+// #if defined(FEATURE_ENABLE_ASIO)
+//     entities.subsystem_cast<ASIO::Subsystem>().stop();
+// #endif
 #if defined(FEATURE_ENABLE_DiscordLatte)
     entities.subsystem_cast<discord::Subsystem>().stop();
 #endif

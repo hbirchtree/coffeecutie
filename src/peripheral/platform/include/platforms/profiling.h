@@ -1,9 +1,10 @@
 #pragma once
 
 #include <peripherals/constants.h>
-#include <peripherals/profiler/profiler.h>
 #include <peripherals/stl/source_location.h>
+#include <peripherals/stl/standard_exceptions.h>
 #include <platforms/pimpl_state.h>
+#include <thread>
 
 #ifndef COFFEE_COMPONENT_NAME
 #define COFFEE_COMPONENT_NAME "(unknown)"
@@ -15,14 +16,57 @@ namespace profiling {
 using namespace ::libc_types;
 using namespace ::stl_types;
 
-#if PERIPHERAL_PROFILER_ENABLED
-using profiler_compile_opts = ::profiler::options::compile<true, true>;
-#else
-using profiler_compile_opts = ::profiler::options::compile_default;
-#endif
-
 using PClock     = std::chrono::high_resolution_clock;
 using PExtraData = std::map<std::string, std::string>;
+
+struct datapoint_t
+{
+    using duration_t = PClock::duration;
+
+    enum type_t
+    {
+        profile,
+        push,
+        pop,
+        complete,
+    };
+
+    enum attr_t
+    {
+        none_attr       = 0x0,
+        explicit_thread = 0x1,
+        async           = 0x2,
+    };
+
+    datapoint_t(
+        type_t type, std::string_view name, PClock::duration duration = {})
+        : tid(std::hash<std::thread::id>()(std::this_thread::get_id()))
+        , name(name.begin(), name.end())
+        , component(COFFEE_COMPONENT_NAME)
+        , ts(PClock::now().time_since_epoch())
+        , flags{
+              .type  = type,
+              .attrs = none_attr,
+          }
+    {
+    }
+
+    u64              tid;
+    std::string      name;
+    std::string_view component;
+    std::string      thread_name;
+    duration_t       ts;
+    duration_t       dur;
+
+    struct
+    {
+        type_t type : 3;
+        attr_t attrs : 2;
+        u16    _extra : 11;
+        u16    _extra2;
+        u32    _extra3;
+    } flags;
+};
 
 struct ThreadInternalState
 {
@@ -33,7 +77,7 @@ struct ThreadState
 {
     GlobalState*                         writer;
     std::vector<std::string_view>        context_stack;
-    ThreadId::Hash                       thread_id;
+    u64                                  thread_id;
     std::unique_ptr<ThreadInternalState> internal_state;
 };
 
@@ -46,10 +90,10 @@ struct PContext
         flags.deep_enabled = false;
     }
 
-    PClock::time_point                                     start_time;
-    std::mutex                                             access;
-    std::map<ThreadId::Hash, std::shared_ptr<ThreadState>> thread_states;
-    std::map<std::string, std::string>                     extra_data;
+    PClock::time_point                          start_time;
+    std::mutex                                  access;
+    std::map<u64, std::shared_ptr<ThreadState>> thread_states;
+    std::map<std::string, std::string>          extra_data;
 
     struct
     {
@@ -84,16 +128,13 @@ struct PContext
     }
 };
 
-template<typename Context, typename Clock, typename Types>
 struct RuntimeProperties : ThreadInternalState
 {
-    using ThisType = RuntimeProperties<Context, Clock, Types>;
-    using PFunc =
-        void (*)(Context& ctxt, typename Types::datapoint const& data);
+    using PFunc = void (*)(ThreadState& ctxt, datapoint_t const& data);
 
-    static ThisType& get_properties()
+    static auto& get_properties()
     {
-        return *C_DCAST<ThisType>(
+        return *C_DCAST<RuntimeProperties>(
             PContext::ProfilerTStore()->internal_state.get());
     }
 
@@ -143,18 +184,8 @@ struct RuntimeProperties : ThreadInternalState
         return out;
     }
 
-    FORCEDINLINE cstring component()
-    {
-        return COFFEE_COMPONENT_NAME;
-    }
-
     PFunc push;
 };
-
-using Profiler = ::profiler::
-    prof<ThreadState, PClock, RuntimeProperties, profiler_compile_opts>;
-
-using DataPoint = Profiler::datapoint;
 
 struct ExtraDataImpl
 {
@@ -189,95 +220,94 @@ struct ExtraDataImpl
 };
 
 #if PERIPHERAL_PROFILER_ENABLED
+template<bool library>
+struct profile_wrapper
+{
+    STATICINLINE bool enabled()
+    {
+        if(library && !compile_info::profiler::deep_enabled)
+            return false;
+        else if(!compile_info::profiler::enabled)
+            return false;
+
+        if(!state || !state->ProfilerEnabled())
+            return false;
+        auto context = PContext::ProfilerStore();
+        auto _ = std::unique_lock(context->access);
+        if(library)
+            return context->flags.deep_enabled;
+        else
+            return context->flags.enabled;
+    }
+
+    STATICINLINE void push(std::string_view name)
+    {
+        if(!enabled())
+            return;
+
+        auto props   = RuntimeProperties::get_properties();
+        if(!props.context)
+            return;
+        props.push_stack(name);
+        props.push(*props.context, datapoint_t(datapoint_t::push, name));
+    }
+
+    STATICINLINE void pop()
+    {
+        if(!enabled())
+            return;
+
+        auto props = RuntimeProperties::get_properties();
+        auto name = props.pop_stack();
+        if(name.empty())
+            return;
+        props.push(*props.context, datapoint_t(datapoint_t::pop, name));
+    }
+
+    STATICINLINE void profile(std::string_view name)
+    {
+        if(!enabled())
+            return;
+
+        auto props = RuntimeProperties::get_properties();
+        props.push(*props.context, datapoint_t(datapoint_t::profile, name));
+    }
+};
+
 struct SimpleProfilerImpl
 {
     STATICINLINE void PushContext(
-        std::string_view name, DataPoint::Attr = DataPoint::AttrNone)
+        std::string_view name, datapoint_t::attr_t = datapoint_t::none_attr)
     {
-        Profiler::app::push(name);
+        profile_wrapper<false>::push(name);
     }
 
     STATICINLINE void PopContext()
     {
-        Profiler::app::pop();
+        profile_wrapper<false>::pop();
     }
 
     STATICINLINE void Profile(
-        std::string_view name, DataPoint::Attr = DataPoint::AttrNone)
+        std::string_view name, datapoint_t::attr_t = datapoint_t::none_attr)
     {
-        Profiler::app::profile(name);
+        profile_wrapper<false>::profile(name);
     }
 
     STATICINLINE void DeepPushContext(
-        std::string_view name, DataPoint::Attr = DataPoint::AttrNone)
+        std::string_view name, datapoint_t::attr_t = datapoint_t::none_attr)
     {
-        Profiler::lib::push(name);
+        profile_wrapper<true>::push(name);
     }
 
     STATICINLINE void DeepPopContext()
     {
-        Profiler::lib::pop();
+        profile_wrapper<true>::pop();
     }
 
     STATICINLINE void DeepProfile(
-        std::string_view name, DataPoint::Attr = DataPoint::AttrNone)
+        std::string_view name, datapoint_t::attr_t = datapoint_t::none_attr)
     {
-        Profiler::lib::profile(name);
-    }
-
-    C_DEPRECATED_S("Doesn't do anything")
-
-    STATICINLINE void InitProfiler()
-    {
-    }
-
-    C_DEPRECATED_S("use State::GetProfilerStore()")
-
-    STATICINLINE void DisableProfiler()
-    {
-    }
-
-    C_DEPRECATED_S("use State::GetProfilerStore()->flags instead")
-
-    STATICINLINE void SetDeepProfileMode(bool)
-    {
-    }
-
-    C_DEPRECATED_S("use ExtraData::Add() instead")
-
-    STATICINLINE void AddExtraData(std::string const&, std::string_view const&)
-    {
-    }
-
-    C_DEPRECATED_S("use ExtraData::Get() instead")
-
-    STATICINLINE PExtraData* ExtraInfo()
-    {
-        return &Context().extra_data;
-    }
-
-    STATICINLINE i64 StartTime()
-    {
-        return Context().start_time.time_since_epoch().count();
-    }
-
-  private:
-    STATICINLINE ThreadState& ThreadContext()
-    {
-        auto state = PContext::ProfilerTStore();
-
-        C_PTR_CHECK(state);
-
-        return *state;
-    }
-
-    STATICINLINE PContext& Context()
-    {
-        auto context = PContext::ProfilerStore();
-
-        C_PTR_CHECK(context);
-
-        return *context;
+        profile_wrapper<true>::profile(name);
     }
 };
 #else
@@ -336,10 +366,9 @@ struct SimpleProfilerImpl
 struct ProfilerContext
 {
     FORCEDINLINE ProfilerContext(
-        std::string_view name = stl_types::source_location().function_name(),
-        DataPoint::Attr  at   = DataPoint::AttrNone)
+        std::string_view name = stl_types::source_location().function_name())
     {
-        SimpleProfilerImpl::PushContext(name, at);
+        SimpleProfilerImpl::PushContext(name);
     }
 
     FORCEDINLINE ~ProfilerContext()
@@ -351,10 +380,9 @@ struct ProfilerContext
 struct DeepProfilerContext
 {
     FORCEDINLINE DeepProfilerContext(
-        std::string_view name = stl_types::source_location().function_name(),
-        DataPoint::Attr  at   = DataPoint::AttrNone)
+        std::string_view name = stl_types::source_location().function_name())
     {
-        SimpleProfilerImpl::DeepPushContext(name, at);
+        SimpleProfilerImpl::DeepPushContext(name);
     }
 
     FORCEDINLINE ~DeepProfilerContext()
@@ -369,7 +397,7 @@ struct GpuProfilerContext
     FORCEDINLINE GpuProfilerContext(
         std::shared_ptr<QueryType> query,
         std::string_view name = stl_types::source_location().function_name(),
-        ThreadId::Hash   gpu_thread = 0x8085)
+        u64              gpu_thread = 0x8085)
         : m_thread(gpu_thread)
         , m_name(name)
         , m_query(query)
@@ -396,21 +424,17 @@ struct GpuProfilerContext
     FORCEDINLINE void push_event(
         cstring name, PClock::time_point::rep offset = 0)
     {
-        auto props = Profiler::runtime_options::get_properties();
+        auto props = RuntimeProperties::get_properties();
 
-        Profiler::datapoint event;
-        event.flags.type =
-            offset ? Profiler::datapoint::Pop : Profiler::datapoint::Push;
+        datapoint_t event(offset ? datapoint_t::pop : datapoint_t::push, name);
         event.ts =
             (m_start + std::chrono::nanoseconds(offset)).time_since_epoch();
-        event.name      = name;
-        event.tid       = m_thread;
-        event.component = COFFEE_COMPONENT_NAME;
+        event.tid = m_thread;
 
         props.push(*props.context, event);
     }
 
-    ThreadId::Hash             m_thread;
+    u64                        m_thread;
     std::string_view           m_name;
     PClock::time_point         m_start;
     std::shared_ptr<QueryType> m_query;

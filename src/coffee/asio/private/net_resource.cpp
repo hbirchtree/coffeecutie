@@ -1,4 +1,4 @@
-#include <coffee/asio/net_resource.h>
+#include <coffee/net/net_resource.h>
 
 #include <coffee/core/CProfiling>
 #include <peripherals/enum/helpers.h>
@@ -7,6 +7,8 @@
 #include <coffee/core/CDebug>
 
 #define NETRSC_TAG "NetRsc::"
+
+#include <curl/curl.h>
 
 using namespace ::semantic;
 using namespace Coffee::Logging;
@@ -57,7 +59,7 @@ void Resource::initRsc(const Url& url)
 
     //    const auto verify_https = !feval(m_access, HTTPAccess::NoVerify);
 
-    m_error = asio::error_code();
+    m_error = error_code();
 
 #if defined(ASIO_USE_SSL)
     if(protocol == "http" && secure())
@@ -68,24 +70,35 @@ void Resource::initRsc(const Url& url)
 #endif
 
 #if !defined(USE_EMSCRIPTEN_HTTP)
+    m_handle = std::make_shared<curl_request_data>();
     {
-        DProfContext b(DTEXT(NETRSC_TAG "Connecting to host"));
-#if defined(ASIO_USE_SSL)
-        if(secure())
+        auto full_url = *url;
+        if(auto err = curl_easy_setopt(
+               m_handle->handle, CURLOPT_URL, full_url.c_str());
+           err != CURLE_OK)
         {
-            ssl = std::make_unique<net::tcp::ssl_socket>(std::ref(*m_ctxt));
-
-            m_error = ssl->connect(m_request.host, m_request.port);
-
-        } else
-#endif
-        {
-            normal = std::make_unique<net::tcp::raw_socket>(std::ref(*m_ctxt));
-
-            m_error = normal->connect(m_request.host, m_request.port);
+            cWarning("Failed setting URL");
         }
-        C_ERROR_CHECK_TYPED(m_error, net_error)
     }
+//     {
+//         DProfContext b(DTEXT(NETRSC_TAG "Connecting to host"));
+// #if defined(ASIO_USE_SSL)
+//         if(secure())
+//         {
+//             ssl = std::make_unique<net::tcp::ssl_socket>(std::ref(*m_ctxt));
+
+//             m_error = ssl->connect(m_request.host, m_request.port);
+
+//         } else
+// #endif
+//         {
+//             normal =
+//             std::make_unique<net::tcp::raw_socket>(std::ref(*m_ctxt));
+
+//             m_error = normal->connect(m_request.host, m_request.port);
+//         }
+//         C_ERROR_CHECK_TYPED(m_error, net_error)
+//     }
 #endif
 
     if(!connected())
@@ -99,35 +112,39 @@ void Resource::initRsc(const Url& url)
     m_response = {};
 }
 
-std::optional<asio::error_code> Resource::close()
+std::optional<error_code> Resource::close()
 {
-    asio::error_code ec;
-#if defined(ASIO_USE_SSL)
-    if(secure())
-    {
-        if(!ssl)
-            return std::nullopt;
+    error_code ec;
+// #if defined(ASIO_USE_SSL)
+//     if(secure())
+//     {
+//         if(!ssl)
+//             return std::nullopt;
 
-        ec = ssl->disconnect();
-        ssl.release();
-    } else
-#endif
+//         ec = ssl->disconnect();
+//         ssl.release();
+//     } else
+// #endif
 #if defined(USE_EMSCRIPTEN_HTTP)
-        emscripten_fetch_close(m_fetch);
+    emscripten_fetch_close(m_fetch);
 #else
+    if(m_handle->active)
     {
-        if(!normal)
-            return std::nullopt;
-
-        ec = normal->disconnect();
-        normal.release();
+        curl_multi_remove_handle(m_ctxt->context, m_handle->handle);
     }
+    // {
+    //     if(!normal)
+    //         return std::nullopt;
+
+    //     ec = normal->disconnect();
+    //     normal.release();
+    // }
 #endif
 
     return ec ? std::make_optional(ec) : std::nullopt;
 }
 
-Resource::Resource(std::shared_ptr<Coffee::ASIO::Service> ctxt, const Url& url)
+Resource::Resource(resource_context ctxt, const Url& url)
     : m_resource(url)
 #if !defined(USE_EMSCRIPTEN_HTTP)
     , m_ctxt(ctxt)
@@ -164,7 +181,7 @@ bool Resource::connected() const
     return !m_error;
 }
 
-asio::error_code Resource::connectError() const
+error_code Resource::connectError() const
 {
     return m_error;
 }
@@ -201,12 +218,12 @@ http::request_t& Resource::request()
     return m_request;
 }
 
-std::optional<asio::error_code> Resource::fetch()
+std::optional<error_code> Resource::fetch()
 {
     return push(http::method_t::get, const_chunk_u8());
 }
 
-std::optional<asio::error_code> Resource::push(const const_chunk_u8& data)
+std::optional<error_code> Resource::push(const const_chunk_u8& data)
 {
     using method_t = http::method_t;
 
@@ -281,7 +298,7 @@ void emscripten_push_statechange(emscripten_fetch_t* fetch)
     cDebug("emscripten_fetch: url={}, state={}", fetch->url, status);
 }
 
-std::optional<asio::error_code> Resource::push(
+std::optional<error_code> Resource::push(
     http::method_t method, const_chunk_u8 const& data)
 {
     std::string resource, param;
@@ -331,262 +348,186 @@ std::optional<asio::error_code> Resource::push(
     m_fetch = emscripten_fetch(&attr, url.c_str());
 
     if(!m_fetch)
-        return asio::error_code::request_failed;
+        return error_code::request_failed;
     return std::nullopt;
 }
-#else
-std::optional<asio::error_code> Resource::readResponseHeader(
-    net_buffer& buffer, libc_types::szptr& consumed)
-{
-    asio::error_code ec;
+#elif defined(USE_CURL)
 
-#if defined(ASIO_USE_SSL)
-    if(secure())
-    {
-        DProfContext __(NETRSC_TAG "Read response");
-        auto         socketError = ssl->flush();
-
-        if(socketError)
-            cWarning(NETRSC_TAG "asio error: {0}", socketError.message());
-
-        ssl->read_until(buffer, http::header_terminator, ec);
-
-        if(socketError)
-            cWarning(NETRSC_TAG "asio error: {0}", socketError.message());
-    } else
-#endif
-    {
-        DProfContext __(NETRSC_TAG "Read response");
-        normal->flush();
-        normal->read_until(buffer, http::header_terminator, ec);
-    }
-    if(ec.value() != asio::error::eof)
-        C_ERROR_CHECK(ec)
-
-        {
-            DProfContext __(NETRSC_TAG "Parsing response");
-            consumed = http::buffer::read_response(
-                m_response.header, chunk_u8::ofContainer(buffer).view);
-        }
-
-    if constexpr(compile_info::debug_mode)
-    {
-        cVerbose(
-            12,
-            NETRSC_TAG "Response: {0} {1} {2}",
-            http::header::to_string::version(m_response.header.version),
-            m_response.header.code,
-            m_response.header.message);
-        for(auto const& header : m_response.header.standard_fields)
-            cVerbose(
-                12,
-                NETRSC_TAG "-- {0}: {1}",
-                http::header::to_string::field(header.first),
-                header.second);
-        for(auto const& header : m_response.header.fields)
-            cVerbose(12, NETRSC_TAG "-- {0}: {1}", header.first, header.second);
-    }
-    return std::nullopt;
-}
-
-std::optional<asio::error_code> Resource::readResponsePayload(
-    net_buffer& buffer)
-{
-    using namespace http;
-
-    asio::error_code ec;
-    auto&            response_fields = m_response.header.standard_fields;
-    auto content_len_it = response_fields.find(header_field::content_length);
-
-    if(content_len_it == response_fields.end())
-        return asio::error_code();
-
-    {
-        DProfContext __(NETRSC_TAG "Reading payload");
-        auto         content_len = cast_string<u64>(content_len_it->second);
-
-        cVerbose(12, NETRSC_TAG "Reading {0} chunk_u8...", content_len);
-
-        m_response.payload.insert(
-            m_response.payload.begin(), buffer.begin(), buffer.end());
-        m_response.payload.resize(content_len);
-
-        /* If we're lucky, we already got all the data */
-        if(content_len == buffer.size())
-        {
-            cVerbose(12, NETRSC_TAG "All data ready");
-            return asio::error_code();
-        }
-
-        if(auto view =
-               chunk_u8::ofContainer(m_response.payload).at(buffer.size()))
-        {
-#if defined(ASIO_USE_SSL)
-            if(secure())
-            {
-                ssl->read(view->view, ec);
-            } else
-#endif
-                normal->read(view->view, ec);
-            if(ec)
-                return ec;
-
-            cVerbose(12, NETRSC_TAG "Read complete");
-        } else
-        {
-            cVerbose(12, NETRSC_TAG "Failed to read response");
-        }
-    }
-
-    cVerbose(10, NETRSC_TAG "Payload size: {0}", m_response.payload.size());
-    return std::nullopt;
-}
-
-std::optional<asio::error_code> Resource::push(
+std::future<error_code> pushAsync(
     http::method_t method, const_chunk_u8 const& data)
 {
-    using namespace http;
+    return {};
+}
+
+namespace {
+
+size_t write_payload(void* data, size_t size, size_t nmemb, void* ptr)
+{
+    size_t num_bytes = size * nmemb;
+    auto*  request   = reinterpret_cast<curl_request_data*>(ptr);
+    auto input_view = gsl::span<char>(reinterpret_cast<char*>(data), num_bytes);
+    auto& payload   = request->payload;
+    payload.insert(payload.end(), input_view.begin(), input_view.end());
+    return num_bytes;
+}
+
+} // namespace
+
+std::optional<error_code> Resource::push(
+    http::method_t method, const_chunk_u8 const& data)
+{
+    using HA = HTTPAccess;
 
     DProfContext a(NETRSC_TAG "Sending HTTP request");
 
-    auto& st_fields = m_request.header.standard_fields;
+    curl_easy_setopt(m_handle->handle, CURLOPT_FAILONERROR, 1);
+    if((m_access & HA::NoRedirect) != HA::NoRedirect)
+        curl_easy_setopt(m_handle->handle, CURLOPT_FOLLOWLOCATION, 1);
 
-    if(!isRequestReady())
+    switch(method)
     {
-        Profiler::DeepProfile(NETRSC_TAG "Resource not ready");
-        return asio::error_code(asio::error::basic_errors::invalid_argument);
+    case http::method_t::get:
+        curl_easy_setopt(m_handle->handle, CURLOPT_HTTPGET, 1);
+        break;
+    case http::method_t::put:
+    case http::method_t::post:
+        curl_easy_setopt(m_handle->handle, CURLOPT_POST, 1);
+        if(data.data)
+        {
+            curl_easy_setopt(m_handle->handle, CURLOPT_POSTFIELDS, data.data);
+            curl_easy_setopt(
+                m_handle->handle, CURLOPT_POSTFIELDSIZE_LARGE, data.size);
+        }
+        break;
+    case http::method_t::head:
+        curl_easy_setopt(m_handle->handle, CURLOPT_CUSTOMREQUEST, "HEAD");
+        curl_easy_setopt(m_handle->handle, CURLOPT_NOBODY, 1);
+        break;
+    default: {
+        curl_easy_setopt(
+            m_handle->handle,
+            CURLOPT_CUSTOMREQUEST,
+            http::header::to_string::method(method));
+        break;
+    }
     }
 
-    asio::error_code ec;
+    auto add_header = [this](std::string_view field, std::string_view value) {
+        m_handle->header_strings.push_back(fmt::format("{}: {}", field, value));
+    };
+    for(auto const& field : m_request.header.standard_fields)
+        add_header(http::header::to_string::field(field.first), field.second);
+    for(auto const& field : m_request.header.fields)
+        add_header(field.first, field.second);
+    for(auto const& field : m_handle->header_strings)
+        m_handle->headers = curl_slist_append(m_handle->headers, field.c_str());
+    if(m_handle->header_strings.size() > 0)
+        curl_easy_setopt(
+            m_handle->handle, CURLOPT_HTTPHEADER, m_handle->headers);
 
-    bool has_payload = data.size > 0;
-    bool should_expect =
-        m_request.header.version != version_t::v10 && has_payload;
+    curl_easy_setopt(m_handle->handle, CURLOPT_WRITEFUNCTION, write_payload);
+    curl_easy_setopt(m_handle->handle, CURLOPT_WRITEDATA, m_handle.get());
 
-    /* We do this to allow GET/POST/PUT/UPDATE/whatever */
-    m_request.header.method = method;
-
-    /* Most services require a MIME-type with the request */
-    if(has_payload &&
-       st_fields.find(header_field::content_type) == st_fields.end())
-        st_fields[header_field::content_type] =
-            header::to_string::content_type(content_type::octet_stream);
-
-    if(st_fields.find(header_field::expect) == st_fields.end() && should_expect)
-        st_fields[header_field::expect] = "100-continue";
-
-    if(has_payload)
-        st_fields[header_field::content_length] = cast_pod(data.size);
-
-    auto header = header::serialize::request(m_request.header);
-
-    cVerbose(8, NETRSC_TAG "Sending request:\n{0}", header);
-
-    Profiler::DeepPushContext(NETRSC_TAG "Writing header");
-
-#if defined(ASIO_USE_SSL)
-    if(secure())
-        ssl->write(const_chunk_u8::ofContainer(header).view, ec);
-    else
-#endif
-        normal->write(const_chunk_u8::ofContainer(header).view, ec);
-    if(ec)
-        return ec;
-
-    szptr           consumed = 0;
-    std::vector<u8> recv_buf;
-    if(should_expect)
+    if(auto ret = curl_easy_perform(m_handle->handle); ret != CURLE_OK)
     {
-        readResponseHeader(recv_buf, consumed);
-        if(m_response.header.code != status::continue_)
+        Profiler::DeepProfile(NETRSC_TAG "Failed HTTP request");
+        return error_code{
+            .err_code = ret,
+            .err_msg  = curl_easy_strerror(ret),
+        };
+    }
+
+    long response_code{};
+    curl_easy_getinfo(m_handle->handle, CURLINFO_RESPONSE_CODE, &response_code);
+    m_response.header.code = static_cast<libc_types::u16>(response_code);
+
+    struct curl_header* header{nullptr};
+    do
+    {
+        header =
+            curl_easy_nextheader(m_handle->handle, CURLH_HEADER, -1, header);
+        if(!header)
+            break;
+        if(auto field = http::header::from_string::field(header->name);
+           field != http::header_field::none)
+            m_response.header.standard_fields[field] = header->value;
+        else
+            m_response.header.fields[header->name] = header->value;
+    } while(true);
+
+    m_response.payload = std::move(m_handle->payload);
+
+    cVerbose(12, NETRSC_TAG "HTTP headers received({}):", m_request.host);
+    for(auto const& header : m_response.header.standard_fields)
+        cVerbose(
+            12,
+            NETRSC_TAG "  {}: {}",
+            http::header::to_string::field(header.first),
+            header.second);
+    for(auto const& header : m_response.header.fields)
+        cVerbose(12, NETRSC_TAG "  {}: {}", header.first, header.second);
+    {
+        auto content_type = http::header::from_string::content_type(
+            m_response.header
+                .standard_fields[http::header_field::content_type]);
+        switch(content_type)
         {
-            auto& head = m_response.header;
-
-            cWarning(NETRSC_TAG "No continue received, got {0}", head.code);
-
-            cVerbose(12, NETRSC_TAG "HTTP header dump:");
+        case http::content_type::html:
+        case http::content_type::json:
+        case http::content_type::text:
+        case http::content_type::xml:
             cVerbose(
                 12,
-                NETRSC_TAG "{0} {1} {2}",
-                http::header::to_string::method(head.method),
-                head.resource,
-                cast_pod(head.code),
-                head.message);
-
-            for(auto const& header : head.fields)
-                cVerbose(
-                    12, NETRSC_TAG "{0}: {1}", header.first, header.second);
-
-            recv_buf.erase(
-                recv_buf.begin(), recv_buf.begin() + C_FCAST<ptroff>(consumed));
-
-            readResponsePayload(recv_buf);
-
-            auto type = http::header::from_string::content_type(
-                head.standard_fields[header_field::content_type]);
-            if(type == content_type::json || type == content_type::text)
-            {
-                cWarning(NETRSC_TAG "Payload:\n{0}", m_response.payload.data());
-            }
-
-            close();
-            return ec;
-        }
-    }
-    recv_buf.clear();
-
-    Profiler::DeepPopContext();
-
-    if(has_payload)
-    {
-        DProfContext _(NETRSC_TAG "Writing payload");
-
-        cVerbose(12, NETRSC_TAG "Pushed payload size: {0}", data.size);
-
-#if defined(ASIO_USE_SSL)
-        if(secure())
-        {
-            ssl->write(data.view, ec);
-            ssl->flush();
-        } else
-#endif
-        {
-            normal->write(data.view, ec);
-            normal->flush();
-        }
-        if(ec)
-            return ec;
-    }
-
-    consumed = 0;
-    readResponseHeader(recv_buf, consumed);
-    consumed = std::min(consumed, recv_buf.size());
-    recv_buf.erase(recv_buf.begin(), recv_buf.begin() + consumed);
-    readResponsePayload(recv_buf);
-
-    auto& response_fields = m_response.header.standard_fields;
-
-    auto response_code = header::classify_status(m_response.header.code);
-
-    if(response_code == response_class::redirect)
-    {
-        if(auto loc = response_fields.find(header_field::location);
-           loc != response_fields.end())
-        {
-            if(auto conn = response_fields.find(header_field::connection);
-               conn != response_fields.end() &&
-               util::strings::iequals(conn->second, "close"))
-                close();
-            initRsc(MkUrl(loc->second, m_access));
-            return push(method, data);
+                NETRSC_TAG "HTTP payload:\n-------\n{}\n-------",
+                std::string_view(
+                    &m_response.payload[0], m_response.payload.size()));
+            break;
+        default:
+            break;
         }
     }
 
-    close();
-    if(response_code == response_class::success)
-        return std::nullopt;
-    return ec;
+    auto&      stats = m_handle->stats;
+    curl_off_t prev_time{}, time{};
+    /* Collect timing info */
+    curl_easy_getinfo(m_handle->handle, CURLINFO_QUEUE_TIME_T, &time);
+    stats.queue = std::chrono::milliseconds(time / 1000);
+    prev_time   = time;
+    curl_easy_getinfo(m_handle->handle, CURLINFO_NAMELOOKUP_TIME_T, &time);
+    stats.name_lookup = std::chrono::milliseconds((time - prev_time) / 1000);
+    prev_time         = time;
+    curl_easy_getinfo(m_handle->handle, CURLINFO_APPCONNECT_TIME_T, &time);
+    stats.connect = std::chrono::milliseconds((time - prev_time) / 1000);
+    prev_time     = time;
+    curl_easy_getinfo(m_handle->handle, CURLINFO_STARTTRANSFER_TIME_T, &time);
+    stats.transfer = std::chrono::milliseconds((time - prev_time) / 1000);
+    prev_time      = time;
+    curl_easy_getinfo(m_handle->handle, CURLINFO_TOTAL_TIME_T, &time);
+    stats.total = std::chrono::milliseconds(time / 1000);
+
+    long request_size{};
+    long response_size{};
+    long num_connects{};
+    curl_easy_getinfo(m_handle->handle, CURLINFO_SIZE_UPLOAD_T, &request_size);
+    curl_easy_getinfo(
+        m_handle->handle, CURLINFO_SIZE_DOWNLOAD_T, &response_size);
+    curl_easy_getinfo(m_handle->handle, CURLINFO_NUM_CONNECTS, &num_connects);
+    m_ctxt->stats.connections += num_connects;
+    m_ctxt->stats.received += response_size;
+    m_ctxt->stats.transmitted += request_size;
+
+    cVerbose(
+        10,
+        NETRSC_TAG
+        "HTTP request timing: resolve/connect/transfer/total {}/{}/{}/{}",
+        stats.name_lookup,
+        stats.connect,
+        stats.transfer,
+        stats.total);
+
+    return std::nullopt;
 }
+
 #endif
 
 std::optional<http::response_t> Resource::response() const

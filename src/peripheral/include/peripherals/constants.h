@@ -417,14 +417,16 @@ constexpr bool is_simple    = platform::is_gekko;
 namespace profiler {
 
 constexpr bool enabled =
-// #if defined(COFFEE_GEKKO) || MODE_RELEASE
-// #define PERIPHERAL_PROFILER_ENABLED 0
-//     false
-// #else
+#if defined(COFFEE_GEKKO) || MODE_RELEASE
+#define PERIPHERAL_PROFILER_ENABLED 0
+    false
+#else
 #define PERIPHERAL_PROFILER_ENABLED 1
     true
-    // #endif
+#endif
     ;
+
+constexpr bool deep_enabled = enabled;
 
 namespace gpu {
 

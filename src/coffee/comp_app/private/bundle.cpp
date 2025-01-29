@@ -947,13 +947,12 @@ void PerformanceMonitor::capture_screenshot(
         MetricVariant::Marker,
         0,
         std::chrono::duration_cast<std::chrono::microseconds>(
-            Profiler::clock::now().time_since_epoch()));
+            platform::profiling::PClock::now().time_since_epoch()));
 }
 
 void PerformanceMonitor::load(AppLoadableService::entity_container&, app_error&)
 {
-    m_nextScreenshot = m_prevFrame =
-        platform::profiling::Profiler::clock::now();
+    m_nextScreenshot = m_prevFrame = platform::profiling::PClock::now();
     if constexpr(enable_screenshots)
         m_worker_queue =
             rq::runtime_queue::CreateNewThreadQueue("Profiling worker")

@@ -24,22 +24,26 @@ if(NOT EMSCRIPTEN)
     if(TARGET Threads::Threads AND NOT ANDROID AND NOT WIN32)
       set(LIBS ${LIBS} Threads::Threads)
     endif()
+
+    find_package(CURL REQUIRED)
+    set(LIBS CURL::libcurl)
 endif()
 
 coffee_library(
   TARGET ASIO
-  SOURCES private/asio_worker.cpp private/net_resource.cpp
-          private/net_profiling.cpp
+  SOURCES
+    # private/asio_worker.cpp
+    private/curl_context.cpp
+    private/net_resource.cpp
+    private/net_profiling.cpp
   LIBRARIES Core CoreState ${LIBS}
   HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-
 if(NOT EMSCRIPTEN)
-    target_compile_definitions(ASIO PUBLIC -DASIO_STANDALONE -DASIO_USE_SSL)
+    target_compile_definitions(ASIO PUBLIC -DUSE_CURL)
 else()
     target_compile_definitions(ASIO PUBLIC -DUSE_EMSCRIPTEN_HTTP)
     target_compile_options(ASIO PUBLIC -sFETCH)
     target_link_options(ASIO PUBLIC -sFETCH)
 endif()
-

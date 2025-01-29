@@ -1,6 +1,8 @@
 #pragma once
 
 #include <coffee/components/subsystem.h>
+
+#include <future>
 #include <map>
 #include <url/url.h>
 

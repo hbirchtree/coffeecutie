@@ -17,7 +17,7 @@
 #include <coffee/core/CDebug>
 
 #if defined(FEATURE_ENABLE_ASIO)
-#include <coffee/asio/net_profiling.h>
+#include <coffee/net/net_profiling.h>
 #endif
 
 using namespace Coffee;

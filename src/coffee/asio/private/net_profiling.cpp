@@ -1,9 +1,10 @@
-#include <coffee/core/profiler/profiling-export.h>
+#include <coffee/net/net_profiling.h>
 
 #include <coffee/asio/asio_worker.h>
-#include <coffee/asio/net_resource.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
+#include <coffee/core/profiler/profiling-export.h>
+#include <coffee/net/net_resource.h>
 #include <peripherals/libc/signals.h>
 #include <peripherals/stl/string/hex.h>
 #include <peripherals/stl/string_ops.h>
@@ -55,9 +56,10 @@ void ProfilingExport()
             profilerState->disable();
     }
 
-    auto worker = ASIO::GenWorker();
+    // auto worker = ASIO::GenWorker();
 
-    auto ctxt = worker ? worker->context : ASIO::InitService();
+    // auto ctxt = worker ? worker->context : ASIO::InitService();
+    auto ctxt = net::create_curl_context();
 
     Coffee::Resource profile("profile.json", RSCA::TempFile);
 
@@ -72,7 +74,7 @@ void ProfilingExport()
             cDebug(
                 "Failed to connect to {0}: {1}",
                 reportBinRsc.resource(),
-                reportBinRsc.connectError().message());
+                reportBinRsc.connectError());
             return;
         }
 
@@ -139,7 +141,8 @@ void ProfilingExport()
                 str::encapsulate_view<char>(data->view));
             if(auto location = reportBinRsc.responseLocation())
             {
-                cVerbose(10, "Network export located at: {0}", location.value());
+                cVerbose(
+                    10, "Network export located at: {0}", location.value());
             }
         } else
         {
@@ -150,7 +153,7 @@ void ProfilingExport()
         cWarning("Network export failed: {}", e.what());
     }
 
-    worker->stop();
+    // worker->stop();
 }
 
 int RegisterProfilingAtExit()
