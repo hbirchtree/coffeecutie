@@ -9,7 +9,7 @@
 #include <type_traits>
 
 #define _USE_MATH_DEFINES
-#include <cmath>
+// #include <cmath>
 #include <math.h>
 
 #include "rng.h"

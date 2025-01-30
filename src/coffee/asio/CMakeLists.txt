@@ -1,16 +1,19 @@
 set(LIBS)
 if(NOT EMSCRIPTEN)
     option(BUILD_OPENSSL "Build ASIO with OpenSSL support" ON)
-
-    # OpenSSL used for ASIO networking
-    if(BUILD_OPENSSL)
+    if(BUILD_OPENSSL AND MINGW)
+      # Version used in MinGW is older, because newer versions
+      # from vcpkg refuse to build on the MinGW toolchain used :(
+      find_package(OpenSSL REQUIRED)
+      set(LIBS ${OPENSSL_LIBRARIES})
+    elseif(BUILD_OPENSSL)
       set(OPENSSL_ROOT_DIR "${OpenSSL_DIR}")
       set(ENV{OPENSSL_ROOT_DIR} "${OpenSSL_DIR}")
 
       find_package(OpenSSL CONFIG REQUIRED)
+      set(LIBS OpenSSL::SSL)
     endif()
 
-    set(LIBS OpenSSL::SSL)
     if(NOT WIN32
      AND NOT MINGW
      AND NOT MSYS
@@ -26,7 +29,7 @@ if(NOT EMSCRIPTEN)
     endif()
 
     find_package(CURL REQUIRED)
-    set(LIBS CURL::libcurl)
+    set(LIBS ${LIBS} CURL::libcurl)
 endif()
 
 coffee_library(

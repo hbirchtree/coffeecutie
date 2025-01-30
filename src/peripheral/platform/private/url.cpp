@@ -13,8 +13,7 @@
 #include <platforms/pimpl_state.h>
 #include <platforms/profiling.h>
 
-#include <fmt/format.h>
-#include <fmt/std.h>
+#include <fmt_extensions/format.h>
 
 #if defined(COFFEE_ANDROID)
 #include <coffee/android/android_main.h>

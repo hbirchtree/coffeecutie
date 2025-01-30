@@ -11,6 +11,10 @@
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
+#if defined(COFFEE_MINGW32)
+#undef DELETE
+#endif
+
 using namespace ::semantic;
 using namespace Coffee::Logging;
 using Coffee::DProfContext;
