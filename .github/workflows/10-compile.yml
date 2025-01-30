@@ -200,8 +200,8 @@ jobs:
     - uses: actions/checkout@v4
       with:
         path: source
-    - name: Installing AppImage dependencies
-      run: sudo apt install libfuse2
+    - name: Installing AppImage/media dependencies
+      run: sudo apt install libfuse2 ffmpeg
     - name: Downloading desktop-x86_64-buildroot-linux-gnu-multi artifacts
       uses: actions/download-artifact@v4
       with:
@@ -215,6 +215,10 @@ jobs:
     - name: Run dummy plug tests
       run: |
         DUMMY_PLUG=${{ matrix.dummy_plug }} source/.github/tests/test_blam_graphics.sh
+    - name: Convert audio samples to .wav
+      run: |
+        ffmpeg -f f32le -ar 48k -ac 2 -i "/tmp/Blam Graphics/rendered_audio" -c:a copy "/tmp/Blam Graphics/rendered_audio.wav"
+        rm "/tmp/Blam Graphics/rendered_audio"
     - name: Uploading test artifacts
       uses: actions/upload-artifact@v4
       with:
