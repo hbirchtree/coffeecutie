@@ -121,7 +121,7 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
 #if defined(EGL_VERSION_1_5) && SUPPORTS_PLATFORM_DISPLAY_API
     auto& windowInfo = *e.service<comp_app::PtrNativeWindowInfo>();
     using ws_t = comp_app::interfaces::PtrNativeWindowInfo::window_system_t;
-    if(windowInfo.window_system != ws_t::nullws && supports_platform_api)
+    if(windowInfo.window_system != ws_t::nullws)
     {
         std::vector<EGLAttrib> attributes;
         auto                   platform = [&]() {
