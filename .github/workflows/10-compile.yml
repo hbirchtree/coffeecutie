@@ -29,6 +29,8 @@ jobs:
         include:
         - variant: android:arm-neon:19:rel
           artifact: android-arm-neon-19
+        - variant: android:arm-neon:24:rel
+          artifact: android-arm-neon-24
         - variant: android:arm64:30-gl:rel
           artifact: android-arm64-30-gl
         - variant: android:arm64:32:rel

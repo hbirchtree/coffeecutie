@@ -3,7 +3,7 @@
     "license": "MIT",
     "version-string": "4.0",
     "dependencies": [
-        { "name": "boost-outcome", "platform": "android | (arm & linux) | (x64 & linux) | osx | windows" },
+        { "name": "boost-outcome", "platform": "(android & !arm) | (arm & linux) | (x64 & linux) | osx | windows" },
         { "name": "boost-stacktrace", "platform": "!bare & !emscripten" },
         { "name": "cppcodec", "platform": "!bare" },
         "cxxopts",
@@ -14,7 +14,7 @@
         "magic-enum",
         "ms-gsl",
         "nlohmann-json",
-        { "name": "outcome", "platform": "!android & !emscripten & !(arm & linux) & !(x64 & linux) & !osx & !windows" },
+        { "name": "outcome", "platform": "(android & arm) & !emscripten & !(arm & linux) & !(x64 & linux) & !osx & !windows" },
         { "name": "pvrtcdec", "platform": "android | emscripten | (linux & x64)" },
         "rapidjson",
         "stb",

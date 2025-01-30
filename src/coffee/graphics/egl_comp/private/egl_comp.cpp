@@ -53,6 +53,14 @@ static void* gles2_dl{};
 
 } // namespace detail
 
+// For some reason, 32-bit ARM Android does not support the egl*Platform* APIs
+// But it's happy to say it supports EGL 1.5
+#if defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_ARM32)
+#define SUPPORTS_PLATFORM_DISPLAY_API 0
+#else
+#define SUPPORTS_PLATFORM_DISPLAY_API 1
+#endif
+
 static std::string egl_to_error()
 {
     using namespace std::string_view_literals;
@@ -89,15 +97,15 @@ static std::string egl_to_error()
 void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
 {
     DProfContext _("EGL::DisplayHandle::load");
-    auto& config  = comp_app::AppLoader::config<comp_app::GLConfig>(e);
-    auto& appInfo = *e.service<comp_app::AppInfo>();
+    auto&        config  = comp_app::AppLoader::config<comp_app::GLConfig>(e);
+    auto&        appInfo = *e.service<comp_app::AppInfo>();
 
     m_data = stl_types::
         make_unique_with_destructor<detail::EGLData, detail::EGLDataDeleter>();
 
     Profiler::DeepPushContext("Query extensions");
     std::string_view extensions;
-    auto supportsExtension = [&extensions](std::string_view ext) {
+    auto             supportsExtension = [&extensions](std::string_view ext) {
         return extensions.find(ext) != std::string_view::npos;
     };
     // std::string_view does not like nullptrs
@@ -110,10 +118,10 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
     Profiler::DeepPopContext();
 
     Profiler::DeepPushContext("Get display");
-#if defined(EGL_VERSION_1_5)
+#if defined(EGL_VERSION_1_5) && SUPPORTS_PLATFORM_DISPLAY_API
     auto& windowInfo = *e.service<comp_app::PtrNativeWindowInfo>();
     using ws_t = comp_app::interfaces::PtrNativeWindowInfo::window_system_t;
-    if(windowInfo.window_system != ws_t::nullws)
+    if(windowInfo.window_system != ws_t::nullws && supports_platform_api)
     {
         std::vector<EGLAttrib> attributes;
         auto                   platform = [&]() {
@@ -581,7 +589,7 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
 
     m_surface = {};
 
-#if defined(EGL_VERSION_1_5)
+#if defined(EGL_VERSION_1_5) && SUPPORTS_PLATFORM_DISPLAY_API
     if(egl_15_supported)
     {
         m_surface = eglCreatePlatformWindowSurface(

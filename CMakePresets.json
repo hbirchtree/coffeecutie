@@ -361,6 +361,37 @@
             }
         },
         {
+            "name": "android-arm-neon-21",
+            "displayName": "Android 5 ARMv7+NEON",
+            "inherits": ["vcpkg-base-android"],
+            "cacheVariables": {
+                "ANDROID_ARM_NEON": "ON",
+                "BUILD_GLES_32": "OFF",
+                "CMAKE_C_FLAGS": "-march=armv7-a",
+                "CMAKE_CXX_FLAGS": "-march=armv7-a",
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;arm;arm32;arm_neon"
+            },
+            "environment": {
+                "API": "21",
+                "ARCHITECTURE": "arm-neon"
+            }
+        },
+        {
+            "name": "android-arm-neon-24",
+            "displayName": "Android 7 ARMv7+NEON",
+            "inherits": ["vcpkg-base-android"],
+            "cacheVariables": {
+                "ANDROID_ARM_NEON": "ON",
+                "CMAKE_C_FLAGS": "-march=armv7-a",
+                "CMAKE_CXX_FLAGS": "-march=armv7-a",
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;arm;arm32;arm_neon"
+            },
+            "environment": {
+                "API": "24",
+                "ARCHITECTURE": "arm-neon"
+            }
+        },
+        {
             "name": "android-arm-neon-29",
             "displayName": "Android 10 ARMv7+NEON",
             "inherits": ["vcpkg-base-android"],
@@ -788,6 +819,30 @@
             "name": "android-arm-neon-19-dbg",
             "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "android-arm-neon-19",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "android-arm-neon-21-rel",
+            "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "android-arm-neon-21",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "android-arm-neon-21-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "android-arm-neon-21",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "android-arm-neon-24-rel",
+            "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "android-arm-neon-24",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "android-arm-neon-24-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "android-arm-neon-24",
             "inherits": "base-linux"
         },
         {
