@@ -56,18 +56,36 @@ function(EMSCRIPTEN_PACKAGE)
   )
   add_custom_command(
     TARGET ${EM_TARGET}
-    COMMAND ${CMAKE_COMMAND}
-        -E copy
-        ${COFFEE_DESKTOP_DIRECTORY}/common/favicon.ico
+    COMMAND convert
+        -density 300
+        -define icon:auto-resize=256,128,96,64,48,32,16
+        -background none
+        ${EM_ICON}
         ${BUNDLE_DIR}/favicon.ico
   )
   add_custom_command(
     TARGET ${EM_TARGET}
-    COMMAND ${CMAKE_COMMAND}
-        -E copy
-        ${COFFEE_DESKTOP_DIRECTORY}/common/favicon.ico
-        ${BUNDLE_DIR}/..
+    COMMAND convert
+        -density 300
+        -define icon:auto-resize=256,128,96,64,48,32,16
+        -background none
+        ${EM_ICON}
+        ${BUNDLE_DIR}/../favicon.ico
   )
+  # add_custom_command(
+  #   TARGET ${EM_TARGET}
+  #   COMMAND ${CMAKE_COMMAND}
+  #       -E copy
+  #       ${COFFEE_DESKTOP_DIRECTORY}/common/favicon.ico
+  #       ${BUNDLE_DIR}/favicon.ico
+  # )
+  # add_custom_command(
+  #   TARGET ${EM_TARGET}
+  #   COMMAND ${CMAKE_COMMAND}
+  #       -E copy
+  #       ${COFFEE_DESKTOP_DIRECTORY}/common/favicon.ico
+  #       ${BUNDLE_DIR}/..
+  # )
   foreach(LIB ${EM_BUNDLE_MODULES})
     add_custom_command(
         TARGET ${EM_TARGET}
