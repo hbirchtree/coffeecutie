@@ -201,7 +201,9 @@ jobs:
       with:
         path: source
     - name: Installing AppImage/media dependencies
-      run: sudo apt install libfuse2 ffmpeg
+      run: |
+        sudo apt update
+        sudo apt install libfuse2 ffmpeg
     - name: Downloading desktop-x86_64-buildroot-linux-gnu-multi artifacts
       uses: actions/download-artifact@v4
       with:
