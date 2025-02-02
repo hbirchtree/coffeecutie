@@ -9,10 +9,8 @@
 
 #include <coffee/core/debug/logging.h>
 
-#if PERIPHERAL_PROFILER_ENABLED
-#include <coffee/core/profiler/profiling-export.h>
 #include <platforms/profiling.h>
-#endif
+#include <coffee/core/profiler/profiling-export.h>
 
 using namespace ::platform;
 
