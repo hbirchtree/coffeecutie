@@ -44,8 +44,10 @@ struct curl_data : std::enable_shared_from_this<curl_data>
         libc_types::u64 sockets_opened{0};
     } stats;
 
+#if defined(USE_CURL)
     std::vector<curl_request> queued_requests{};
     std::vector<curl_request> finished_requests{};
+#endif
 
     using download_task_t = std::unique_ptr<
         rq::dependent_task<void, semantic::mem_chunk<const u8>>>;
@@ -55,6 +57,7 @@ struct curl_data : std::enable_shared_from_this<curl_data>
     download_task_t           create_download(Url const& source);
     dependent_download_task_t create_download(std::future<Url>&& source);
 
+#if defined(USE_CURL)
     bool process(curl_request awaitable = {});
     void run(
         poll_interval_t interval  = std::chrono::milliseconds(10),
@@ -67,6 +70,7 @@ struct curl_data : std::enable_shared_from_this<curl_data>
     void remove_request(curl_request request);
 
     void await_request(curl_request request);
+#endif
 };
 
 struct curl_request_data : std::enable_shared_from_this<curl_request_data>

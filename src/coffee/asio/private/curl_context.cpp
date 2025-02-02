@@ -15,6 +15,7 @@ curl_data::curl_data(queue_behavior behavior, poll_interval_t queue_interval)
     : context(curl_multi_init())
 #endif
 {
+#if defined(USE_CURL)
     if(behavior != queue_behavior::queue_self)
         return;
     if(auto q = rq::runtime_queue::GetCurrentQueue(); q.has_value())
@@ -25,6 +26,7 @@ curl_data::curl_data(queue_behavior behavior, poll_interval_t queue_interval)
                 ptr->process();
         }).assume_value();
     }
+#endif
 }
 
 curl_data::~curl_data()
@@ -34,6 +36,7 @@ curl_data::~curl_data()
 #endif
 }
 
+#if defined(USE_CURL)
 bool curl_data::process(curl_request awaitable)
 {
     int       num_requests{};
@@ -108,6 +111,7 @@ void curl_data::remove_request(curl_request request)
         return req == request;
     });
 }
+#endif
 
 curl_data::download_task_t curl_data::create_download(const Url& source)
 {
