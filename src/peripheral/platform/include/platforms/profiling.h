@@ -193,28 +193,18 @@ struct ExtraDataImpl
         UNUSED_PARAM(std::string const&, k),
         UNUSED_PARAM(std::string_view const&, v))
     {
-        if constexpr(!compile_info::profiler::enabled)
-            return;
-
         auto context = PContext::ProfilerStore();
-
-        C_PTR_CHECK(context)
-
+        if(!context)
+            return;
         Lock _(context->access);
-
         context->extra_data[k] = std::string(v.begin(), v.end());
     }
 
     STATICINLINE PExtraData Get()
     {
-        if constexpr(!compile_info::profiler::enabled)
-            return {};
-
         auto context = PContext::ProfilerStore();
-
         if(!context)
             return {};
-
         return context->extra_data;
     }
 };
