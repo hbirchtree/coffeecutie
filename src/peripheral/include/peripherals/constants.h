@@ -435,4 +435,7 @@ constexpr bool enabled = true;
 }
 
 } // namespace profiler
+
+constexpr bool low_memory = platform::is_gekko;
+
 } // namespace compile_info

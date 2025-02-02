@@ -358,12 +358,6 @@ std::optional<error_code> Resource::push(
 }
 #elif defined(USE_CURL)
 
-std::future<error_code> pushAsync(
-    http::method_t method, const_chunk_u8 const& data)
-{
-    return {};
-}
-
 namespace {
 
 size_t write_payload(void* data, size_t size, size_t nmemb, void* ptr)
@@ -378,12 +372,11 @@ size_t write_payload(void* data, size_t size, size_t nmemb, void* ptr)
 
 } // namespace
 
-std::optional<error_code> Resource::push(
-    http::method_t method, const_chunk_u8 const& data)
+void Resource::preRequest(http::method_t method, const const_chunk_u8& data)
 {
     using HA = HTTPAccess;
 
-    DProfContext a(NETRSC_TAG "Sending HTTP request");
+    DProfContext a(NETRSC_TAG "Preparing HTTP request");
 
     curl_easy_setopt(m_handle->handle, CURLOPT_FAILONERROR, 1);
     if((m_access & HA::NoRedirect) != HA::NoRedirect)
@@ -432,18 +425,17 @@ std::optional<error_code> Resource::push(
 
     curl_easy_setopt(m_handle->handle, CURLOPT_WRITEFUNCTION, write_payload);
     curl_easy_setopt(m_handle->handle, CURLOPT_WRITEDATA, m_handle.get());
+}
 
-    if(auto ret = curl_easy_perform(m_handle->handle); ret != CURLE_OK)
-    {
-        Profiler::DeepProfile(NETRSC_TAG "Failed HTTP request");
-        return error_code{
-            .err_code = ret,
-            .err_msg  = curl_easy_strerror(ret),
-        };
-    }
+void Resource::postRequest()
+{
+    DProfContext _(NETRSC_TAG "Post-processing HTTP request");
+
+    CURLcode ecode;
 
     long response_code{};
-    curl_easy_getinfo(m_handle->handle, CURLINFO_RESPONSE_CODE, &response_code);
+    ecode = curl_easy_getinfo(
+        m_handle->handle, CURLINFO_RESPONSE_CODE, &response_code);
     m_response.header.code = static_cast<libc_types::u16>(response_code);
 
     struct curl_header* header{nullptr};
@@ -507,28 +499,33 @@ std::optional<error_code> Resource::push(
     auto&      stats = m_handle->stats;
     curl_off_t prev_time{}, time{};
     /* Collect timing info */
-    curl_easy_getinfo(m_handle->handle, CURLINFO_QUEUE_TIME_T, &time);
+    ecode = curl_easy_getinfo(m_handle->handle, CURLINFO_QUEUE_TIME_T, &time);
     stats.queue = std::chrono::milliseconds(time / 1000);
     prev_time   = time;
-    curl_easy_getinfo(m_handle->handle, CURLINFO_NAMELOOKUP_TIME_T, &time);
+    ecode =
+        curl_easy_getinfo(m_handle->handle, CURLINFO_NAMELOOKUP_TIME_T, &time);
     stats.name_lookup = std::chrono::milliseconds((time - prev_time) / 1000);
     prev_time         = time;
-    curl_easy_getinfo(m_handle->handle, CURLINFO_APPCONNECT_TIME_T, &time);
+    ecode =
+        curl_easy_getinfo(m_handle->handle, CURLINFO_APPCONNECT_TIME_T, &time);
     stats.connect = std::chrono::milliseconds((time - prev_time) / 1000);
     prev_time     = time;
-    curl_easy_getinfo(m_handle->handle, CURLINFO_STARTTRANSFER_TIME_T, &time);
+    ecode         = curl_easy_getinfo(
+        m_handle->handle, CURLINFO_STARTTRANSFER_TIME_T, &time);
     stats.transfer = std::chrono::milliseconds((time - prev_time) / 1000);
     prev_time      = time;
-    curl_easy_getinfo(m_handle->handle, CURLINFO_TOTAL_TIME_T, &time);
+    ecode = curl_easy_getinfo(m_handle->handle, CURLINFO_TOTAL_TIME_T, &time);
     stats.total = std::chrono::milliseconds(time / 1000);
 
     long request_size{};
     long response_size{};
     long num_connects{};
-    curl_easy_getinfo(m_handle->handle, CURLINFO_SIZE_UPLOAD_T, &request_size);
-    curl_easy_getinfo(
+    ecode = curl_easy_getinfo(
+        m_handle->handle, CURLINFO_SIZE_UPLOAD_T, &request_size);
+    ecode = curl_easy_getinfo(
         m_handle->handle, CURLINFO_SIZE_DOWNLOAD_T, &response_size);
-    curl_easy_getinfo(m_handle->handle, CURLINFO_NUM_CONNECTS, &num_connects);
+    ecode = curl_easy_getinfo(
+        m_handle->handle, CURLINFO_NUM_CONNECTS, &num_connects);
     m_ctxt->stats.connections += num_connects;
     m_ctxt->stats.received += response_size;
     m_ctxt->stats.transmitted += request_size;
@@ -541,6 +538,51 @@ std::optional<error_code> Resource::push(
         stats.connect,
         stats.transfer,
         stats.total);
+}
+
+std::future<void> Resource::pushAsync(
+    http::method_t          method,
+    const_chunk_u8 const&   data,
+    std::function<void()>&& success,
+    std::function<void()>&& error)
+{
+    preRequest(method, data);
+    return m_ctxt->add_request(
+        m_handle,
+        [this, success] {
+            postRequest();
+            success();
+        },
+        [this, error](int error_code) {
+            cWarning(
+                NETRSC_TAG "HTTP request failed({}): {}",
+                m_request.host,
+                curl_easy_strerror(static_cast<CURLcode>(error_code)));
+            postRequest();
+            error();
+        });
+}
+
+std::optional<error_code> Resource::push(
+    http::method_t method, const_chunk_u8 const& data)
+{
+    preRequest(method, data);
+
+    {
+        DProfContext _(NETRSC_TAG "Sending HTTP request");
+        auto         future = m_ctxt->add_request(
+            m_handle,
+            [this] { postRequest(); },
+            [this](int error) {
+                cWarning(
+                    NETRSC_TAG "HTTP request failed({}): {}",
+                    m_request.host,
+                    curl_easy_strerror(static_cast<CURLcode>(error)));
+                postRequest();
+            });
+        m_ctxt->run(std::chrono::milliseconds(10), m_handle);
+        future.get();
+    }
 
     return std::nullopt;
 }

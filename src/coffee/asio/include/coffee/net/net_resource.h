@@ -142,6 +142,11 @@ struct Resource
     std::optional<error_code> readResponsePayload(net_buffer& buffer);
 #endif
 
+#if defined(USE_CURL)
+    void preRequest(http::method_t method, const_chunk_u8 const& data);
+    void postRequest();
+#endif
+
   public:
     Resource(resource_context ctxt, Url const& url);
     ~Resource();
@@ -170,8 +175,11 @@ struct Resource
 
     std::optional<error_code> fetch();
 #if defined(USE_CURL)
-    std::future<error_code> pushAsync(
-        http::method_t method, const_chunk_u8 const& data);
+    std::future<void> pushAsync(
+        http::method_t          method,
+        const_chunk_u8 const&   data,
+        std::function<void()>&& success,
+        std::function<void()>&& error);
 #endif
     std::optional<error_code> push(const_chunk_u8 const& data);
     std::optional<error_code> push(

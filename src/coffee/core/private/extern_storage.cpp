@@ -26,13 +26,10 @@ struct InternalState
 
     InternalState()
         : current_app(std::make_shared<platform::info::AppData>())
-        ,
-#if PERIPHERAL_PROFILER_ENABLED
-        profiler_store(std::make_shared<profiling::PContext>())
-        ,
-#endif
-        bits()
+        , bits()
     {
+        if constexpr(!compile_info::lowfat_mode && !compile_info::low_memory)
+            profiler_store = std::make_shared<platform::profiling::PContext>();
     }
 
     DebugFun::LogInterface logger = {Logging::log};
@@ -51,9 +48,7 @@ struct InternalState
 
     std::vector<const char*> initial_args{};
 
-#if PERIPHERAL_PROFILER_ENABLED
     std::shared_ptr<profiling::PContext> profiler_store;
-#endif
 
     StateStorage pointer_storage;
 
@@ -208,14 +203,10 @@ bool ProfilerEnabled()
 
 std::shared_ptr<profiling::PContext> GetProfilerStore()
 {
-#if PERIPHERAL_PROFILER_ENABLED
     if(!ISTATE)
         return {};
 
     return ISTATE->profiler_store;
-#else
-    return {};
-#endif
 }
 
 std::shared_ptr<platform::profiling::ThreadState> GetProfilerTStore()

@@ -15,9 +15,23 @@ namespace net {
 using libc_types::u8;
 using platform::url::Url;
 
+struct curl_data;
+struct curl_request_data;
+
+using curl_context = std::shared_ptr<curl_data>;
+using curl_request = std::shared_ptr<curl_request_data>;
+
+enum class queue_behavior
+{
+    none,
+    queue_self,
+};
+
 struct curl_data : std::enable_shared_from_this<curl_data>
 {
-    curl_data();
+    using poll_interval_t = std::chrono::steady_clock::duration;
+
+    curl_data(queue_behavior behavior, poll_interval_t queue_interval);
     ~curl_data();
 
     void* context{nullptr};
@@ -30,6 +44,9 @@ struct curl_data : std::enable_shared_from_this<curl_data>
         libc_types::u64 sockets_opened{0};
     } stats;
 
+    std::vector<curl_request> queued_requests{};
+    std::vector<curl_request> finished_requests{};
+
     using download_task_t = std::unique_ptr<
         rq::dependent_task<void, semantic::mem_chunk<const u8>>>;
     using dependent_download_task_t =
@@ -37,18 +54,34 @@ struct curl_data : std::enable_shared_from_this<curl_data>
 
     download_task_t           create_download(Url const& source);
     dependent_download_task_t create_download(std::future<Url>&& source);
+
+    bool process(curl_request awaitable = {});
+    void run(
+        poll_interval_t interval  = std::chrono::milliseconds(10),
+        curl_request    awaitable = {});
+
+    std::future<void> add_request(
+        curl_request                     request,
+        std::function<void()>&&          completion_handler = {},
+        std::function<void(int error)>&& error_handler      = {});
+    void remove_request(curl_request request);
+
+    void await_request(curl_request request);
 };
 
-struct curl_request_data
+struct curl_request_data : std::enable_shared_from_this<curl_request_data>
 {
     curl_request_data();
     ~curl_request_data();
 
-    void*                    handle{nullptr};
-    struct curl_slist*       headers{nullptr};
-    std::vector<std::string> header_strings{};
-    std::vector<char>        payload{};
-    bool                     active{false};
+    void*                          handle{nullptr};
+    struct curl_slist*             headers{nullptr};
+    std::vector<std::string>       header_strings{};
+    std::vector<char>              payload{};
+    std::promise<void>             completion{};
+    std::function<void()>          completion_handler{};
+    std::function<void(int error)> error_handler{};
+    bool                           active{false};
 
     struct stats_t
     {
@@ -60,9 +93,8 @@ struct curl_request_data
     } stats{};
 };
 
-using curl_context = std::shared_ptr<curl_data>;
-using curl_request = std::shared_ptr<curl_request_data>;
-
-curl_context create_curl_context();
+curl_context create_curl_context(
+    queue_behavior             behavior       = queue_behavior::none,
+    curl_data::poll_interval_t queue_interval = std::chrono::milliseconds(10));
 
 } // namespace net

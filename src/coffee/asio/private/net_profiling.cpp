@@ -5,14 +5,11 @@
 #include <coffee/core/CProfiling>
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/net/net_resource.h>
+#include <coffee/ssl/hmac.h>
 #include <peripherals/libc/signals.h>
 #include <peripherals/stl/string/hex.h>
 #include <peripherals/stl/string_ops.h>
 #include <platforms/environment.h>
-
-#if defined(COFFEE_ENABLE_SSL)
-#include <coffee/ssl/hmac.h>
-#endif
 
 #include <fmt_extensions/url_types.h>
 
@@ -67,37 +64,35 @@ void ProfilingExport()
         server.value(), HTTPAccess::DefaultPOST | HTTPAccess::NoVerify);
     try
     {
-        static net::Resource reportBinRsc(ctxt, reportBin);
+        auto reportBinRsc = std::make_shared<net::Resource>(ctxt, reportBin);
 
-        if(!reportBinRsc.connected())
+        if(!reportBinRsc->connected())
         {
             cDebug(
                 "Failed to connect to {0}: {1}",
-                reportBinRsc.resource(),
-                reportBinRsc.connectError());
+                reportBinRsc->resource(),
+                reportBinRsc->connectError());
             return;
         }
 
         if(auto report_id = env::var("COFFEE_REPORT_ID"); report_id.has_value())
-            reportBinRsc.setHeaderField(
+            reportBinRsc->setHeaderField(
                 "X-Coffee-Token",
                 "token " + env::var("COFFEE_REPORT_ID").value());
-#if defined(COFFEE_ENABLE_SSL)
-        reportBinRsc.setHeaderField(
+        reportBinRsc->setHeaderField(
             "X-Coffee-Signature",
-            "sha1=" + hex::encode(net::hmac::digest(
+            "sha1=" + hex::encode(net::hmac::digest<>(
                           C_OCAST<BytesConst>(profile).view,
                           env::var("COFFEE_HMAC_KEY").value_or("0000"))));
-#endif
 
         http::multipart::builder out("-----------NetProfile");
 
-        reportBinRsc.setHeaderField(
+        reportBinRsc->setHeaderField(
             http::header_field::content_type, out.content_type());
-        reportBinRsc.setHeaderField(
+        reportBinRsc->setHeaderField(
             http::header_field::accept,
             http::header::to_string::content_type(http::content_type::json));
-        reportBinRsc.setHeaderField(
+        reportBinRsc->setHeaderField(
             http::header_field::user_agent, "Coffee/1.0");
 
         std::string target_chrome;
@@ -123,23 +118,23 @@ void ProfilingExport()
 
         out.finalize();
 
-        reportBinRsc.push(out);
+        reportBinRsc->push(out);
 
-        auto response_status = classify_status(reportBinRsc.responseCode());
-        if(auto data = reportBinRsc.data();
+        auto response_status = classify_status(reportBinRsc->responseCode());
+        if(auto data = reportBinRsc->data();
            response_status != response_class::success && data.has_value())
         {
             cWarning(
                 "Got bad response from server: {1}\n{0}",
                 str::encapsulate_view<char>(data->view),
-                reportBinRsc.responseCode());
+                reportBinRsc->responseCode());
         } else if(data.has_value())
         {
             cVerbose(
                 10,
                 "Network export successful with response: {0}",
                 str::encapsulate_view<char>(data->view));
-            if(auto location = reportBinRsc.responseLocation())
+            if(auto location = reportBinRsc->responseLocation())
             {
                 cVerbose(
                     10, "Network export located at: {0}", location.value());
