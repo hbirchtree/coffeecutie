@@ -91,6 +91,7 @@ jobs:
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
         EMBEDDED_REPORT_URL: "https://reports.speen.dev"
+        TARGET: "install"
     - name: Upload vcpkg logs
       if: steps.buildProject.outcome == 'failure'
       uses: actions/upload-artifact@v4
@@ -107,10 +108,10 @@ jobs:
       with:
         name: ${{matrix.artifact}}
         path: |
-          source/multi_build/${{matrix.artifact}}/bin
-          source/multi_build/${{matrix.artifact}}/lib
-          !source/multi_build/${{matrix.artifact}}/lib/*.a
-          source/multi_build/${{matrix.artifact}}/packaged
+          source/multi_build/${{matrix.artifact}}/install/bin
+          source/multi_build/${{matrix.artifact}}/install/lib
+          !source/multi_build/${{matrix.artifact}}/install/lib/*.a
+          source/multi_build/${{matrix.artifact}}/install/packaged
         if-no-files-found: error
   macOS:
     runs-on: macos-13

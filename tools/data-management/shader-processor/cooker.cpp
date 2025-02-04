@@ -142,7 +142,8 @@ libc_types::i32 cooker_main()
         //
         ("M,module",
          "Combine SPIR-V binaries into a large module (only if -B is "
-         "specified)");
+         "specified)")
+        ("compact", "Generate compact GLSL code by compacting spacing");
     opts.allow_unrecognised_options();
 
     auto res = opts.parse(arguments.size(), arguments.data());
@@ -369,6 +370,7 @@ libc_types::i32 cooker_main()
                         from_profile_string(res["profile"].as<std::string>()),
                     .version =
                         cast_string<u32>(res["version"].as<std::string>()),
+                    .compact = res.count("compact") > 0,
                 });
             if(glsl.has_error())
             {

@@ -22,7 +22,6 @@ using typing::pixels::bit_fmt;
 using typing::pixels::comp_flags;
 using typing::pixels::pix_fmt;
 using typing::vector_types::Quatf;
-using TexType = typing::graphics::TexType;
 
 enum class map_load_error
 {
@@ -41,12 +40,6 @@ enum class map_load_error
 
     failed_async_launch,
 };
-
-/*!
- * \brief Function pointers for blam bitmap processing, raw function pointer is
- * much faster than Function
- */
-using BitmProcess = u32 (*)(u32, u16, byte_t);
 
 using namespace std::string_view_literals;
 

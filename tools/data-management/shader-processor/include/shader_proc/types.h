@@ -39,6 +39,7 @@ struct target_options
     std::map<std::string_view, std::string> specializations{};
     bool                                    strip_debug{false};
     bool                                    targets_spv{false};
+    bool                                    compact{false};
 };
 
 } // namespace shader_proc

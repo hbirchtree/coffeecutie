@@ -172,7 +172,8 @@ def compile_shaders(
             # print(f' * Emitting {file} as {profile} {version}')
             run(
                 'ShaderCooker',
-                '-f',
+                '--force',
+                '--compact',
                 in_file,
                 opt_level,
                 '-p', profile,
@@ -200,6 +201,7 @@ def compile_shaders(
         run(
             'ShaderCooker',
             '--force',
+            '--compact',
             '-M',
             '-B',
             opt_level,

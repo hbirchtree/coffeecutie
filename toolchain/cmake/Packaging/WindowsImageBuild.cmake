@@ -1,3 +1,7 @@
+# List of libraries provided by toolchain that will need to be copied to the bin/ dir
+# Should include libgcc, libwinpthread and libstdc++
+set(WINDOWS_EXTRA_LIBRARIES CACHE STRING "")
+
 macro(
   WINPE_PACKAGE
   TARGET
@@ -15,15 +19,15 @@ macro(
   set(INCLUDED_LIBS "")
   # Locate necessary binary files
   set(BASE_LIBS)
-  if(NOT MINGW64)
-    foreach(lib_target ${BASE_LIBS})
-      get_target_property(lib ${lib_target} IMPORTED_LOCATION)
-      get_filename_component(LIB_BASE "${lib}" NAME_WE)
-      get_filename_component(LIB_DIR "${lib}" DIRECTORY)
+  # if(NOT MINGW64)
+  #   foreach(lib_target ${BASE_LIBS})
+  #     get_target_property(lib ${lib_target} IMPORTED_LOCATION)
+  #     get_filename_component(LIB_BASE "${lib}" NAME_WE)
+  #     get_filename_component(LIB_DIR "${lib}" DIRECTORY)
 
-      set(INCLUDED_LIBS "${INCLUDED_LIBS};${LIB_DIR}/${LIB_BASE}.dll")
-    endforeach()
-  endif()
+  #     set(INCLUDED_LIBS "${INCLUDED_LIBS};${LIB_DIR}/${LIB_BASE}.dll")
+  #   endforeach()
+  # endif()
 
   set(WINDOWS_DIST_COMPANY "${COMPANY}")
 
@@ -128,5 +132,5 @@ macro(
   #   ${TARGET} PROPERTIES VERSION ${COFFEE_BUILD_STRING} SOVERSION 1
   # )
   install(TARGETS ${TARGET} DESTINATION bin)
-  install(FILES ${BUNDLE_LIBS} DESTINATION bin)
+  install(FILES ${BUNDLE_LIBS} ${WINDOWS_EXTRA_LIBRARIES} DESTINATION bin)
 endmacro()

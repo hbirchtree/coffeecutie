@@ -8,6 +8,8 @@
 #include <glslang/Public/ShaderLang.h>
 #include <spirv_cross/spirv_glsl.hpp>
 
+#include <regex>
+
 namespace shader_proc::glsl {
 
 namespace {
@@ -137,7 +139,10 @@ stl_types::result<std::string, glsl_error> generate(
 
     try
     {
-        return stl_types::success(compiler.compile());
+        auto source = compiler.compile();
+        if(output.compact)
+            source = std::regex_replace(source, std::regex(" +"), " ");
+        return stl_types::success(std::move(source));
     } catch(std::exception const& exc)
     {
         return stl_types::failure(std::make_pair<std::string>(
