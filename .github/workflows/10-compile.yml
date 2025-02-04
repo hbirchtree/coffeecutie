@@ -165,7 +165,7 @@ jobs:
       if: steps.buildProject.outcome == 'failure'
       run: false
     - name: Creating archive of artifacts
-      run: tar cvf apps.tar source/multi_build/${{matrix.artifact}}/bin
+      run: tar cvf apps.tar source/multi_build/${{matrix.artifact}}/install/bin
     - name: Uploading artifacts
       uses: actions/upload-artifact@v4
       with:
