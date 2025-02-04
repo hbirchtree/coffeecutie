@@ -87,11 +87,10 @@ jobs:
     - name: Building project
       id: buildProject
       continue-on-error: true
-      run: source/cb build ${{matrix.variant}}
+      run: source/cb build ${{matrix.variant}}/install
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
         EMBEDDED_REPORT_URL: "https://reports.speen.dev"
-        TARGET: "install"
     - name: Upload vcpkg logs
       if: steps.buildProject.outcome == 'failure'
       uses: actions/upload-artifact@v4

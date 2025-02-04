@@ -50,10 +50,10 @@ function identify_host()
 
 function identify_target()
 {
-    PLATFORM="$(echo $1 | cut -d: -f1)"
-    ARCHITECTURE="$(echo $1 | cut -d: -f2)"
-    SYSROOT="$(echo $1 | cut -d: -f3)"
-    BUILD_MODE="$(echo $1 | cut -d: -f4)"
+    PLATFORM="$(echo $1 | cut -d/ -f1 | cut -d: -f1)"
+    ARCHITECTURE="$(echo $1 | cut -d/ -f1 | cut -d: -f2)"
+    SYSROOT="$(echo $1 | cut -d/ -f1 | cut -d: -f3)"
+    BUILD_MODE="$(echo $1 | cut -d/ -f1 | cut -d: -f4)"
     TARGET="$(echo $1 | cut -d/ -f2)"
     [[ -z "$BUILD_MODE" ]] && BUILD_MODE=dbg
     [[ "$TARGET" = "$1" ]] && TARGET=
@@ -524,6 +524,11 @@ function mingw_build()
 
     export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
 
+    TARGET_SPEC=""
+    if [ -n "${TARGET}" ]; then
+        TARGET_SPEC="--target ${TARGET}"
+    fi
+
     echo "::group::Configuring project"
     echo "::info::Set up for ${TOOLCHAIN_PREFIX} (system)"
 
@@ -548,7 +553,7 @@ function mingw_build()
     echo "::endgroup::"
 
     echo "::group::Building project"
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_MODE}
+    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_MODE} ${TARGET_SPEC}
     echo "::endgroup::"
     popd
 }
