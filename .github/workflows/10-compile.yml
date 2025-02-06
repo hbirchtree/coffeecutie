@@ -152,7 +152,7 @@ jobs:
     - name: Building project
       id: buildProject
       continue-on-error: true
-      run: source/cb build ${{matrix.variant}}
+      run: source/cb build ${{matrix.variant}}/install
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Upload vcpkg logs
