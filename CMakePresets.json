@@ -129,7 +129,6 @@
                 "BUILD_SDL2": "OFF",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/vcpkg/toolchains/android.cmake",
-
                 "VCPKG_CMAKE_SYSTEM_VERSION": "$env{API}",
                 "VCPKG_CRT_LINKAGE": "static",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;arm;arm64",
@@ -211,6 +210,7 @@
                 "EMSCRIPTEN_ROOT_PATH": "$env{EMSDK}/upstream/emscripten",
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "emscripten;wasm",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/fmt",
                 "VCPKG_TARGET_TRIPLET": "wasm32-emscripten"
             },
             "environment": {

@@ -1,6 +1,7 @@
 #include <coffee/net/net_resource.h>
 
 #include <coffee/core/CProfiling>
+#include <nlohmann/json.hpp>
 #include <peripherals/enum/helpers.h>
 #include <peripherals/stl/string_casting.h>
 
@@ -8,8 +9,9 @@
 
 #define NETRSC_TAG "NetRsc::"
 
+#if defined(USE_CURL)
 #include <curl/curl.h>
-#include <nlohmann/json.hpp>
+#endif
 
 #if defined(COFFEE_MINGW32)
 #undef DELETE

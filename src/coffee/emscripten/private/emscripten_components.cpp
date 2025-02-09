@@ -113,12 +113,12 @@ void GLContext::load(entity_container& c, comp_app::app_error& ec)
     emscripten_set_webglcontextlost_callback(
         "#canvas", nullptr, false, ([](int, const void*, void*) {
             Coffee::Logging::cDebug("WebGL context lost");
-            return 0;
+            return false;
         }));
     emscripten_set_webglcontextrestored_callback(
         "#canvas", nullptr, false, ([](int, const void*, void*) {
             Coffee::Logging::cDebug("WebGL context restored");
-            return 0;
+            return false;
         }));
 
     auto& bindConf =

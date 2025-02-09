@@ -174,22 +174,22 @@ extern bool FileMkdir(const Url& dirname, bool recursive);
 
 namespace resource_literals {
 
-FORCEDINLINE Resource operator"" _rsc(const char* fn, size_t)
+FORCEDINLINE Resource operator""_rsc(const char* fn, size_t)
 {
     return Resource(fn, RSCA::AssetFile);
 }
 
-FORCEDINLINE Resource operator"" _config(const char* fn, size_t)
+FORCEDINLINE Resource operator""_config(const char* fn, size_t)
 {
     return Resource(fn, RSCA::ConfigFile);
 }
 
-FORCEDINLINE Resource operator"" _sysfile(const char* fn, size_t)
+FORCEDINLINE Resource operator""_sysfile(const char* fn, size_t)
 {
     return Resource(fn, RSCA::SystemFile);
 }
 
-FORCEDINLINE Resource operator"" _tmpfile(const char* fn, size_t)
+FORCEDINLINE Resource operator""_tmpfile(const char* fn, size_t)
 {
     return Resource(fn, RSCA::TempFile);
 }

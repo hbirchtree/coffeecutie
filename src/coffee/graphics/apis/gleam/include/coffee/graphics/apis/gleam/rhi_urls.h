@@ -19,7 +19,7 @@ struct TextureUrl
 
 } // namespace detail
 
-inline detail::TextureUrl operator"" _texture(const char* url, size_t)
+inline detail::TextureUrl operator""_texture(const char* url, size_t)
 {
     return {.path = url};
 }

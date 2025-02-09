@@ -209,18 +209,18 @@ FORCEDINLINE Url MkUrl(
 #endif
 
 namespace url_literals {
-FORCEDINLINE platform::url::Url operator"" _http(const char* url, size_t)
+FORCEDINLINE platform::url::Url operator""_http(const char* url, size_t)
 {
     return net::MkUrl(url, semantic::HTTPAccess::GET);
 }
 
-FORCEDINLINE platform::url::Url operator"" _https(const char* url, size_t)
+FORCEDINLINE platform::url::Url operator""_https(const char* url, size_t)
 {
     return net::MkUrl(
         url, semantic::HTTPAccess::GET | semantic::HTTPAccess::Secure);
 }
 
-FORCEDINLINE platform::url::Url operator"" _web(const char* url, size_t)
+FORCEDINLINE platform::url::Url operator""_web(const char* url, size_t)
 {
     return net::MkUrl(url, semantic::HTTPAccess::DefaultAccess);
 }

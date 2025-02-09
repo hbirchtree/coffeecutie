@@ -84,7 +84,7 @@
             "description": "Networking support",
             "dependencies": [
                 "asio",
-                "curl",
+                { "name": "curl", "platform": "!emscripten" },
                 "flatbuffers",
                 { "name": "flatbuffers", "host": true },
                 { "name": "gamenetworkingsockets", "platform": "!emscripten & !(android & arm32)" }
@@ -93,7 +93,7 @@
         "openssl": {
             "description": "OpenSSL support in ASIO + some crypto functionality",
             "dependencies": [
-                { "name": "openssl", "platform": "!emscripten" }
+                "openssl"
             ]
         },
         "physics": {

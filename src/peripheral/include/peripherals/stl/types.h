@@ -24,15 +24,11 @@
 #include <system_error>
 #include <type_traits>
 
-#include <tinyutf8/tinyutf8.h>
-
 #include <optional>
 
 namespace stl_types {
 
 using namespace type_safety;
-
-using u8string = tiny_utf8::utf8_string;
 
 template<typename T, class Deleter, typename... Args>
 inline std::unique_ptr<T, Deleter> make_unique_with_destructor(Args... a)

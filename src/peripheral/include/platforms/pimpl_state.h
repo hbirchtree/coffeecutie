@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <peripherals/build/application.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/mutex.h>

@@ -200,27 +200,27 @@ FORCEDINLINE Url MkSysUrl(std::string const& urlString)
  *
  */
 
-FORCEDINLINE Url operator"" _asset(const char* url, size_t)
+FORCEDINLINE Url operator""_asset(const char* url, size_t)
 {
     return MkUrl(url, RSCA::AssetFile);
 }
 
-FORCEDINLINE Url operator"" _tmp(const char* url, size_t)
+FORCEDINLINE Url operator""_tmp(const char* url, size_t)
 {
     return MkUrl(url, RSCA::TempFile);
 }
 
-FORCEDINLINE Url operator"" _cache(const char* url, size_t)
+FORCEDINLINE Url operator""_cache(const char* url, size_t)
 {
     return MkUrl(url, RSCA::CachedFile);
 }
 
-FORCEDINLINE Url operator"" _config(const char* url, size_t)
+FORCEDINLINE Url operator""_config(const char* url, size_t)
 {
     return MkUrl(url, RSCA::ConfigFile);
 }
 
-FORCEDINLINE Url operator"" _sys(const char* url, size_t)
+FORCEDINLINE Url operator""_sys(const char* url, size_t)
 {
     return MkUrl(url, RSCA::SystemFile);
 }

@@ -298,7 +298,7 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
                     convert::to<group::buffer_usage_arb>(m_features, m_access));
                 cmd::bind_buffer(convert::to(m_type), 0);
             }
-            m_mapping = {};
+            m_mapping = std::make_pair<size_t, size_t>(0, 0);
             return;
         }
 #if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300

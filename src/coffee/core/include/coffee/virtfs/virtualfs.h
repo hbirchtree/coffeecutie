@@ -919,7 +919,7 @@ struct generation_settings
 extern stl_types::result<std::vector<libc_types::byte_t>, error> generate(
     std::vector<desc>& filenames, generation_settings&& settings = {});
 
-NO_DISCARD FORCEDINLINE Url operator"" _vfs(const char* url, size_t)
+NO_DISCARD FORCEDINLINE Url operator""_vfs(const char* url, size_t)
 {
     Url out      = Coffee::MkUrl(url);
     out.category = Url::Local;
