@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 SRCDIR=$(realpath $(dirname $0))/../..

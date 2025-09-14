@@ -7,6 +7,8 @@
 #include <coffee/core/printing/log_interface.h>
 #include <peripherals/stl/quick_container.h>
 
+#include <platforms/stacktrace.h>
+
 namespace compo {
 namespace convenience {
 
@@ -254,7 +256,9 @@ struct EntityContainer : stl_types::non_copy
         static const type_hash type_id = typeid(OutputType).hash_code();
 
         if(subsystems.find(type_id) != subsystems.end())
-            throw implementation_error("cannot register subsystem twice");
+            throw implementation_error(
+                "cannot register subsystem twice: " +
+                platform::stacktrace::demangle::type_name<OutputType>());
 
         subsystems.emplace(type_id, std::move(sys));
     }

@@ -18,7 +18,6 @@
 #include <coffee/core/coffee_args.h>
 #include <coffee/graphics/apis/gleam/rhi_emulation.h>
 #include <oaf/api_system.h>
-#include <oaf/ogg/ogg_decode.h>
 #include <platforms/sysinfo.h>
 
 #if defined(FEATURE_ENABLE_ASIO)
@@ -133,7 +132,7 @@ i32 blam_main()
 
             gfx.debug().enable();
             gfx.debug().add_callback([](gfx::group::debug_severity sev,
-                                        std::string_view const&    msg) {
+                                        std::string_view const& msg) {
                 if(sev == gfx::group::debug_severity::notification)
                     return;
                 cDebug("GL: {0}", msg);

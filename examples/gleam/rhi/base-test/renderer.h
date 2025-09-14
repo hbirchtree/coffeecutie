@@ -346,9 +346,6 @@ void SetupRendering(
     } else
         Throw(std::runtime_error("Failed to create queue for Discord"));
 
-    e.register_subsystem_inplace<net::CurlNetStats>(net::create_curl_context());
-    // auto asio_context = e.subsystem_cast<ASIO::Subsystem>().context();
-
     net::CurlNetStats::register_service<net::CurlNetStats>(
         comp_app::createContainer(), net::create_curl_context());
 #endif

@@ -15,6 +15,7 @@
                 "CMAKE_BUILD_TYPE": "$env{BUILD_TYPE}",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/multi_build/${presetName}/install",
+                "CMAKE_POLICY_VERSION_MINIMUM": "3.5",
                 "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
                 "HOST_TOOLS_BINARY_DIR": "$env{HOST_TOOLS_BINARY_DIR}",
                 "GLSLANG_PROGRAM": "$env{GLSLANG_PROGRAM}",
@@ -42,8 +43,7 @@
                 "CMAKE_C_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-gcc",
                 "CMAKE_CXX_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-g++",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
-                "FLATPAK_EXTRA_LIBRARIES": "$env{TOOLCHAI
-                N_SYSROOT}/lib/libstdc++.so.6;$env{TOOLCHAIN_SYSROOT}/lib/libssp.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libOSMesa.so.8",
+                "FLATPAK_EXTRA_LIBRARIES": "$env{TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6;$env{TOOLCHAIN_SYSROOT}/lib/libssp.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libOSMesa.so.8",
                 "MKSQUASH_PROGRAM": "$env{MKSQUASH_PROGRAM}",
                 "TOOLCHAIN_PREFIX": "$env{TOOLCHAIN_PREFIX}",
                 "TOOLCHAIN_ROOT": "$env{TOOLCHAIN_ROOT}",
@@ -303,6 +303,17 @@
             }
         },
         {
+            "name": "android-x64-32",
+            "displayName": "Android 12 x86_64",
+            "inherits": ["vcpkg-base-android"],
+            "cacheVariables": {
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;x64"
+            },
+            "environment": {
+                "ARCHITECTURE": "x64"
+            }
+        },
+        {
             "name": "android-arm64-30-gl",
             "displayName": "Android 11 ARM64 Core OpenGL",
             "inherits": ["vcpkg-base-android"],
@@ -443,7 +454,7 @@
         },
         {
             "name": "desktop-x86_64-buildroot-linux-gnu-multi",
-            "displayName": "Linux x86_64 AVX2 Core OpenGL (SDL2)",
+            "displayName": "Linux x86_64v3 AVX2 Core OpenGL (SDL2)",
             "inherits": ["vcpkg-base-linux"],
             "cacheVariables": {
                 "BUILD_DISCORD_RPC": "ON",
@@ -464,8 +475,44 @@
             }
         },
         {
+            "name": "desktop-x64-linux-multi",
+            "displayName": "Linux x86_64 AVX2 Core OpenGL (SDL2) (System libs)",
+            "inherits": ["vcpkg-base"],
+            "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Linux"
+            },
+            "cacheVariables": {
+                "APPIMAGE_RUNTIME_BINARY": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/x64-linux/bin/runtime",
+                "BUILD_DISCORD_RPC": "ON",
+                "BUILD_GLSCREENSHOT": "ON",
+                "BUILD_GL_SOFTWARE_PVRTC": "ON",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_C_FLAGS": "-march=native",
+                "CMAKE_CXX_FLAGS": "-march=native",
+                "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
+                "MKSQUASH_PROGRAM": "$env{MKSQUASH_PROGRAM}",
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl2"
+            },
+            "environment": {
+                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
+                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools",
+                "MKSQUASH_PROGRAM": "/usr/bin/mksquashfs",
+                "NINJA": "$penv{NINJA}",
+                "TOOLCHAIN_REQUIRED": "1",
+                "PATH": "$penv{PATH}:$env{TOOLCHAIN_ROOT}/bin",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl2",
+                "VCPKG_INSTALL_DIR": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{ARCHITECTURE}"
+
+            }
+        },
+        {
             "name": "desktop-x86_64v2-buildroot-linux-gnu-multi",
-            "displayName": "Linux x86_64 SSE4.2 Core OpenGL (SDL2)",
+            "displayName": "Linux x86_64v2 SSE4.2 Core OpenGL (SDL2)",
             "inherits": ["vcpkg-base-linux"],
             "cacheVariables": {
                 "BUILD_DISCORD_RPC": "ON",
@@ -486,7 +533,7 @@
         },
         {
             "name": "desktop-aarch64-buildroot-linux-gnu-multi",
-            "displayName": "Linux aarch64v8.1 OpenGL ES 3.x (SDL2)",
+            "displayName": "Linux ARMv8.1 OpenGL ES 3.x (SDL2)",
             "inherits": ["vcpkg-base-linux"],
             "cacheVariables": {
                 "BUILD_GL_SOFTWARE_BCN": "ON",
@@ -527,7 +574,7 @@
         },
         {
             "name": "desktop-x86_64-w64-mingw32-posix",
-            "displayName": "Windows x86_64 (SDL2/MinGW)",
+            "displayName": "Windows x86_64v2 SSE4.2 (SDL2/MinGW)",
             "inherits": ["vcpkg-base"],
             "generator": "Ninja",
             "condition": {
@@ -907,6 +954,12 @@
             "inherits": "base-linux"
         },
         {
+            "name": "android-x64-32-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "android-x64-32",
+            "inherits": "base-linux"
+        },
+        {
             "name": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx-rel",
             "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx",
@@ -946,6 +999,12 @@
             "name": "desktop-x86_64-buildroot-linux-gnu-multi-dbg",
             "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "desktop-x86_64-buildroot-linux-gnu-multi",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "desktop-x64-linux-multi-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "desktop-x64-linux-multi",
             "inherits": "base-linux"
         },
         {

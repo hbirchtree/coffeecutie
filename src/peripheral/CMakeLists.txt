@@ -1,12 +1,15 @@
 find_package(Microsoft.GSL CONFIG REQUIRED)
-find_package(tinyutf8 CONFIG REQUIRED)
+# find_package(tinyutf8 CONFIG REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
 
 coffee_library(
   TARGET PeripheralLib
   SOURCES private/error_types.cpp private/build_info.cpp
           private/libc_functions.cpp private/pimpl_state.cpp
-  LIBRARIES Microsoft.GSL::GSL tinyutf8::tinyutf8 magic_enum::magic_enum
+  LIBRARIES
+    Microsoft.GSL::GSL
+    # tinyutf8::tinyutf8
+    magic_enum::magic_enum
   HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
               $<INSTALL_INTERFACE:include>
 )

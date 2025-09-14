@@ -136,8 +136,12 @@ STATICINLINE SystemPaths& GetSystemPaths()
     else
         paths.assetDir = path::current_dir().value();
 
+    Url home_dir = MkSysUrl("./");
+    if(auto home = env::home_dir(); home.has_value())
+        home_dir = home.value();
+
     /* Cache goes in ~/.cache/ORGNAME/APPNAME */
-    paths.cacheDir = env::home_dir().value() / ".cache" /
+    paths.cacheDir = home_dir / ".cache" /
                      appData.organization_name / appData.application_name;
 
     /* Temporary files go in /tmp */
@@ -150,8 +154,7 @@ STATICINLINE SystemPaths& GetSystemPaths()
         auto& orgname = appData.organization_name;
         auto& appname = appData.application_name;
 
-        paths.configDir =
-            env::home_dir().value() / ".local" / "share" / orgname / appname;
+        paths.configDir = home_dir / ".local" / "share" / orgname / appname;
     }
 
 #elif defined(COFFEE_WINDOWS)

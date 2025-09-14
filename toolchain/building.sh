@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -ex
 
 case $(uname) in
 Linux)
@@ -145,7 +145,12 @@ function toolchain_version()
 #    VERSION=$(cmake -N --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT} | grep TOOLCHAIN_VERSION | cut -d'"' -f2)
 #    [[ -z "$VERSION" ]] && VERSION=$(jq -r .toolchain.git.tag $BASE_DIR/.build.json)
 #    echo "$VERSION"
-    cmake -S $BASE_DIR -N --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT} | grep TOOLCHAIN_VERSION | cut -d'"' -f2
+    cmake -S $BASE_DIR --log-level DEBUG -N --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT} | grep TOOLCHAIN_VERSION | cut -d'"' -f2
+}
+
+function toolchain_required()
+{
+    cmake -S $BASE_DIR --log-level DEBUG -N --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT} | grep TOOLCHAIN_REQUIRED | cut -d'"' -f2
 }
 
 function toolchain_registry()
@@ -194,60 +199,64 @@ function native_build()
     fi
 
     identify_target $1
-    TOOLCHAIN_DOWNLOAD="${PLATFORM}-${ARCHITECTURE}_${SYSROOT}"
-
-    TOOLCHAIN_VER=$(toolchain_version)
-    if [[ -z "$TOOLCHAIN_VER" ]]; then
-        echo \
-    "No compiler version found in .build.yml, add one with:
-    toolchain:
-        source: <repo>
-        version: <version>
-
-    Example:
-    toolchain:
-        source: hbirchtree/coffeecutie-automation-tools
-        version: v1.0.18"
-        exit 1
-    fi
-
-    DEFAULT_ROOT="${BASE_DIR}/multi_build/compilers/${PLATFORM}-${ARCHITECTURE}/${TOOLCHAIN_VER}"
     export TOOLCHAIN_PREFIX="${ARCHITECTURE}"
 
-    if [[ "${PLATFORM}-${ARCHITECTURE}" = "console-powerpc-eabi"* ]]; then
-        TOOLCHAIN_DOWNLOAD="gamecube-powerpc-eabi"
-        DEFAULT_ROOT="${BASE_DIR}/multi_build/compilers/${TOOLCHAIN_DOWNLOAD}/${TOOLCHAIN_VER}"
-        export TOOLCHAIN_PREFIX="powerpc-eabi"
+    if [ "$(toolchain_required)" != "1" ]; then
+        TOOLCHAIN_DOWNLOAD="${PLATFORM}-${ARCHITECTURE}_${SYSROOT}"
+
+        TOOLCHAIN_VER=$(toolchain_version)
+        if [[ -z "$TOOLCHAIN_VER" ]]; then
+            echo \
+        "No compiler version found in .build.yml, add one with:
+        toolchain:
+            source: <repo>
+            version: <version>
+
+        Example:
+        toolchain:
+            source: hbirchtree/coffeecutie-automation-tools
+            version: v1.0.18"
+            exit 1
+        fi
+
+        DEFAULT_ROOT="${BASE_DIR}/multi_build/compilers/${PLATFORM}-${ARCHITECTURE}/${TOOLCHAIN_VER}"
+
+        if [[ "${PLATFORM}-${ARCHITECTURE}" = "console-powerpc-eabi"* ]]; then
+            TOOLCHAIN_DOWNLOAD="gamecube-powerpc-eabi"
+            DEFAULT_ROOT="${BASE_DIR}/multi_build/compilers/${TOOLCHAIN_DOWNLOAD}/${TOOLCHAIN_VER}"
+            export TOOLCHAIN_PREFIX="powerpc-eabi"
+        fi
+
+        export TOOLCHAIN_ROOT="${TOOLCHAIN_ROOT:-$DEFAULT_ROOT}"
+
+        echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT} ($TOOLCHAIN_VER)"
+
+        echo "${DEFAULT_ROOT} ${TOOLCHAIN_ROOT} ${IS_DOWNLOADABLE}"
+        if [[ "$DEFAULT_ROOT" = "$TOOLCHAIN_ROOT" ]] && [[ ! -d "${TOOLCHAIN_ROOT}" ]] && [[ $IS_DOWNLOADABLE = "1" ]]; then
+            echo "::group::Getting compiler"
+            TOOLCHAIN_REPO=$(jq -r .toolchain.git.repo $BASE_DIR/.build.json)
+            mkdir -p ${TOOLCHAIN_ROOT}
+            pushd ${TOOLCHAIN_ROOT}
+
+            rm ${TOOLCHAIN_DOWNLOAD}.manifest ${TOOLCHAIN_DOWNLOAD}.tar.xz || true
+            toolchain_download "${TOOLCHAIN_DOWNLOAD}" .compiler
+            toolchain_download "${TOOLCHAIN_DOWNLOAD}" .manifest && cat compiler.manifest
+
+            umask 022
+            tar x \
+                --exclude=*/sysroot/dev \
+                --no-same-owner \
+                --no-same-permissions \
+                --file=compiler.tar.xz
+            chmod -R u+w $(realpath .)
+            popd
+
+            echo "::endgroup::"
+        fi
+
+        export PATH=${PATH}:${TOOLCHAIN_ROOT}/bin
+        TOOLCHAIN_SYSROOT="${TOOLCHAIN_ROOT}/${ARCHITECTURE}/sysroot"
     fi
-
-    export TOOLCHAIN_ROOT="${TOOLCHAIN_ROOT:-$DEFAULT_ROOT}"
-
-    echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT} ($TOOLCHAIN_VER)"
-
-    echo "${DEFAULT_ROOT} ${TOOLCHAIN_ROOT} ${IS_DOWNLOADABLE}"
-    if [[ "$DEFAULT_ROOT" = "$TOOLCHAIN_ROOT" ]] && [[ ! -d "${TOOLCHAIN_ROOT}" ]] && [[ $IS_DOWNLOADABLE = "1" ]]; then
-        echo "::group::Getting compiler"
-        TOOLCHAIN_REPO=$(jq -r .toolchain.git.repo $BASE_DIR/.build.json)
-        mkdir -p ${TOOLCHAIN_ROOT}
-        pushd ${TOOLCHAIN_ROOT}
-
-        rm ${TOOLCHAIN_DOWNLOAD}.manifest ${TOOLCHAIN_DOWNLOAD}.tar.xz || true
-        toolchain_download "${TOOLCHAIN_DOWNLOAD}" .compiler
-        toolchain_download "${TOOLCHAIN_DOWNLOAD}" .manifest && cat compiler.manifest
-
-        umask 022
-        tar x \
-            --exclude=*/sysroot/dev \
-            --no-same-owner \
-            --no-same-permissions \
-            --file=compiler.tar.xz
-        chmod -R u+w $(realpath .)
-        popd
-
-        echo "::endgroup::"
-    fi
-
-    export PATH=$PATH:$TOOLCHAIN_ROOT/bin
 
     export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
 
@@ -256,14 +265,11 @@ function native_build()
         TARGET_SPEC="--target ${TARGET}"
     fi
 
-    TOOLCHAIN_SYSROOT="${TOOLCHAIN_ROOT}/${ARCHITECTURE}/sysroot"
-
     echo "::group::Configuring project"
-    echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT})"
+    echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT:-/usr})"
 
     export NINJA=$(which ninja)
     export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
-    export PATH=${PATH}:${TOOLCHAIN_ROOT}/bin
 
     pushd $BASE_DIR
 
@@ -274,10 +280,12 @@ function native_build()
         mkdir -p $BASE_DIR/multi_build/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
         pushd $BASE_DIR/multi_build/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
         mkdir -p lib/
-        for f in ${TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6 ${TOOLCHAIN_SYSROOT}/lib/libssp.so.0 ${TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0; do
-            rm -f "lib/$(basename $f)"
-            ln -s "$f" lib/
-        done
+        if [ "$(toolchain_required)" != "1" ]; then
+            for f in ${TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6 ${TOOLCHAIN_SYSROOT}/lib/libssp.so.0 ${TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0; do
+                rm -f "lib/$(basename $f)"
+                ln -s "$f" lib/
+            done
+        fi
         popd
     elif [[ $IS_WINDOWS = "1" ]]; then
         cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}

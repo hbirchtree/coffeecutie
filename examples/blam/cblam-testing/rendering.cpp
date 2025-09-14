@@ -1,5 +1,6 @@
 #include "rendering.h"
 
+#include <blam/volta/blam_bitm.h>
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
 #include <coffee/graphics/apis/gleam/rhi_system.h>
 #include <coffee/graphics/apis/gleam/rhi_urls.h>
@@ -7,6 +8,7 @@
 #include <glw/texture_formats_desc.h>
 #include <peripherals/stl/iterator_slice.h>
 #include <peripherals/stl/tuple_hash.h>
+#include <peripherals/typing/enum/graphics/shader_stage.h>
 
 #include "caching.h"
 #include "data.h"

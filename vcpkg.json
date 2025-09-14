@@ -4,7 +4,8 @@
     "version-string": "4.0",
     "dependencies": [
         { "name": "boost-outcome", "platform": "(android & arm64) | (arm & linux) | (x64 & linux) | osx | windows" },
-        { "name": "boost-stacktrace", "platform": "!bare & !emscripten" },
+        { "name": "boost-stacktrace", "platform": "!bare & !emscripten & !android" },
+        { "name": "boost-stacktrace", "platform": "android", "default-features": false },
         { "name": "cppcodec", "platform": "!bare" },
         "cxxopts",
         "fmt",

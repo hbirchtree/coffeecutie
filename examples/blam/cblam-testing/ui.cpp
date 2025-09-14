@@ -237,9 +237,10 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     if(eh.flags == eh_t::flags_t::open_widget)
                     {
                         auto widget_ = ui_cache.predict(eh.widget);
+                        cDebug("Opening widget {}", eh.widget.name.to_string(bitm_cache.magic));
                         if(!widget_.valid())
                             break;
-                        create_element(e.underlying(), widget_);
+                        // create_element(e.underlying(), widget_);
                     } else if(eh.flags == eh_t::flags_t::run_function)
                     {
                         cDebug("Running function #{}", eh.function);
@@ -290,8 +291,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
             auto children =
                 el.ui_element->child_widgets.data(bitm_cache.magic).value();
-            for(auto const& [i, child] :
-                stl_types::const_enumerate(el.children))
+            for(auto const& [i, child] : stl_types::const_enumerate(el.children))
             {
                 auto const& meta = children[i];
                 process_widget(
@@ -311,8 +311,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         default: {
             auto children =
                 el.ui_element->child_widgets.data(bitm_cache.magic).value();
-            for(auto const& [i, child] :
-                stl_types::const_enumerate(el.children))
+            for(auto const& [i, child] : stl_types::const_enumerate(el.children))
             {
                 auto const& meta = children[i];
                 process_widget(

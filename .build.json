@@ -7,6 +7,7 @@
         },
         "emsdk": {
             "version": "4.0.3"
-        }
+        },
+        "vcpkg": "09b8d93e613ba1c0309cf3ab358242d33af634dc"
     }
 }

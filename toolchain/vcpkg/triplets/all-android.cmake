@@ -4,5 +4,5 @@ set(VCPKG_LIBRARY_LINKAGE static)
 set(VCPKG_CMAKE_SYSTEM_NAME Android)
 
 if(PORT STREQUAL "openal-soft")
-  set(VCPKG_LIBRARY_LINKAGE shared)
+  set(VCPKG_LIBRARY_LINKAGE dynamic)
 endif()
