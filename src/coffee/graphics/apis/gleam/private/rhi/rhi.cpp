@@ -238,10 +238,12 @@ void texture_t::alloc(size_type const& size, bool create_storage)
 #endif
             if(m_type == textures::type::cube_array)
             {
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
                 cmd::tex_parameter(
                     convert::to(m_type),
                     group::texture_parameter_name::texture_wrap_r,
                     static_cast<i32>(group::texture_wrap_mode::clamp_to_edge));
+#endif
                 cmd::tex_parameter(
                     convert::to(m_type),
                     group::texture_parameter_name::texture_wrap_s,

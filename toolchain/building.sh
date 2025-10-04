@@ -483,7 +483,7 @@ function mingw_build()
     identify_target $1
     TOOLCHAIN_DOWNLOAD="${PLATFORM}-${ARCHITECTURE}_${SYSROOT}"
 
-    TOOLCHAIN_VER=$(jq -r .toolchain.git.tag $BASE_DIR/.build.json)
+    TOOLCHAIN_VER=$(toolchain_version)
     if [[ -z "$TOOLCHAIN_VER" ]]; then
         echo \
     "No compiler version found in .build.yml, add one with:

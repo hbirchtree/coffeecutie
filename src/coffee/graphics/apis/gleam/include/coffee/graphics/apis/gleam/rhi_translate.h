@@ -639,6 +639,7 @@ inline GLenum to(
     return GL_NEAREST;
 }
 
+#if GLEAM_MAX_VERSION_ES >= 0x300 || GLEAM_MAX_VERSION > 0x0
 inline GLenum to(textures::swizzle_t channel)
 {
     switch(channel)
@@ -658,5 +659,6 @@ inline GLenum to(textures::swizzle_t channel)
     }
     __builtin_unreachable();
 }
+#endif
 
 } // namespace gleam::convert

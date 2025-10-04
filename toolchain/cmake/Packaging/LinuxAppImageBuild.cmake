@@ -223,11 +223,14 @@ function(
             "${APPIMAGE_BINARY_DIR}"
   )
 
-  if(APPIMAGE_APPDIR_ONLY)
+  if(APPIMAGE_APPDIR_ONLY OR GENERATE_APPDIR)
     install(
       DIRECTORY "${APPIMAGE_INTERMEDIATE_DIR}"
       DESTINATION "${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-appdir"
     )
+    if(APPIMAGE_APPDIR_ONLY)
+      return()
+    endif()
   endif()
 
   if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
@@ -239,24 +242,26 @@ function(
     )
   endif()
 
-  # Do the actual packaging
-  add_custom_command(
-    TARGET ${APPIMAGE_TARGET}.AppImage
-    POST_BUILD USES_TERMINAL
-    # First create squashfs
-    COMMAND "${MKSQUASH_PROGRAM}" "${APPIMAGE_INTERMEDIATE_DIR}"
-            "${APPIMAGE_INTERMEDIATE_SQUASH}" -root-owned -noappend -comp zstd
-            -processors 1
-    # Concatenate AppImage runtime with image
-    COMMAND cat "${APPIMAGE_RUNTIME_BINARY}" >> "${APPIMAGE_FINAL_NAME}"
-    COMMAND cat "${APPIMAGE_INTERMEDIATE_SQUASH}" >> "${APPIMAGE_FINAL_NAME}"
-    # Make image executable
-    COMMAND chmod +x "${APPIMAGE_FINAL_NAME}"
-  )
+  if(GENERATE_APPIMAGE)
+    # Do the actual packaging
+    add_custom_command(
+      TARGET ${APPIMAGE_TARGET}.AppImage
+      POST_BUILD USES_TERMINAL
+      # First create squashfs
+      COMMAND "${MKSQUASH_PROGRAM}" "${APPIMAGE_INTERMEDIATE_DIR}"
+              "${APPIMAGE_INTERMEDIATE_SQUASH}" -root-owned -noappend -comp zstd
+              -processors 1
+      # Concatenate AppImage runtime with image
+      COMMAND cat "${APPIMAGE_RUNTIME_BINARY}" >> "${APPIMAGE_FINAL_NAME}"
+      COMMAND cat "${APPIMAGE_INTERMEDIATE_SQUASH}" >> "${APPIMAGE_FINAL_NAME}"
+      # Make image executable
+      COMMAND chmod +x "${APPIMAGE_FINAL_NAME}"
+    )
 
-  install(
-    FILES "${APPIMAGE_FINAL_NAME}"
-    DESTINATION "${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-appimage"
-    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
-  )
+    install(
+      FILES "${APPIMAGE_FINAL_NAME}"
+      DESTINATION "${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-appimage"
+      PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+    )
+  endif()
 endfunction()

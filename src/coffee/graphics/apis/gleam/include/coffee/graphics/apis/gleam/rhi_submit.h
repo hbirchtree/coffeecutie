@@ -96,6 +96,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
     if(!program)
         return std::make_tuple(error::no_program, "program is null");
 
+#if defined(GL_KHR_parallel_shader_compile)
     if(program->m_async_waiting)
     {
         if(program->m_error_state)
@@ -115,6 +116,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 error::async_shader_compile_failed, "program linking failed");
         }
     }
+#endif
 
     [[maybe_unused]] auto _ = debug().scope();
 

@@ -12,7 +12,7 @@
         {
             "kind": "git",
             "repository": "https://github.com/Microsoft/vcpkg",
-            "baseline": "b322364f06308bdd24823f9d8f03fe0cc86fd46f",
+            "baseline": "120deac3062162151622ca4860575a33844ba10b",
             "packages": [
                 "*"
             ]
@@ -25,14 +25,6 @@
                 "spirv-cross",
                 "spirv-headers",
                 "vulkan-headers"
-            ]
-        },
-        {
-            "kind": "git",
-            "repository": "https://github.com/Microsoft/vcpkg",
-            "baseline": "a34c873a9717a888f58dc05268dea15592c2f0ff",
-            "packages": [
-                "openal-soft"
             ]
         },
         {
@@ -54,7 +46,7 @@
         {
             "kind": "git",
             "repository": "https://github.com/hbirchtree/vcpkg-appimage",
-            "baseline": "864719a8bd62d0e2ac0d3e6335fbe3ee991a76a2",
+            "baseline": "b68627ac9f804aa051cf5f6821c1c2b6b90b7d6f",
             "packages": [
                 "appimage-runtime",
                 "squashfuse"

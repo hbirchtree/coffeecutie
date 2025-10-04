@@ -75,22 +75,20 @@ std::tuple<T, group::pixel_type, group::pixel_format> to(
             {P::RGBA8, {f::rgba8, b::unsigned_byte, p::rgba}},
             {P::RGBA16F, {f::rgba16f, b::float_, p::rgba}},
             {P::RGBA32F, {f::rgba32f, b::float_, p::rgba}},
-#endif
             {P::RGB10A2,
              {f::rgb10_a2, b::unsigned_int_2_10_10_10_rev, p::rgba}},
             {P::RGB10A2UI,
              {f::rgb10_a2ui, b::unsigned_int_2_10_10_10_rev, p::rgba}},
+#endif
 
             /* Special formats */
             {P::Depth16,
              {f::depth_component16, b::unsigned_short, p::depth_component}},
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
             {P::Depth24,
              {f::depth_component24, b::unsigned_int, p::depth_component}},
             {P::Depth32,
              {f::depth_component24, b::unsigned_int, p::depth_component}},
-//        {P::Depth16F, {f::depth_component, b::half_float,
-//        p::depth_component}},
-#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
             {P::Depth32F,
              {f::depth_component32f, b::float_, p::depth_component}},
             {P::Depth24Stencil8,

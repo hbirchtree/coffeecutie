@@ -90,7 +90,9 @@ struct shader_t
 
 struct program_t
 {
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300 || defined(GL_KHR_debug)
     static constexpr auto debug_identifier = group::object_identifier::program;
+#endif
 
     using stage_t     = typing::graphics::ShaderStage;
     using stage_map_t = std::map<stage_t, std::shared_ptr<shader_t>>;

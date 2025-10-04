@@ -15,7 +15,10 @@ struct buffer_slice_t;
 
 struct buffer_t : std::enable_shared_from_this<buffer_t>
 {
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300 || defined(GL_KHR_debug)
     static constexpr auto debug_identifier = group::object_identifier::buffer;
+#endif
+
 
     buffer_t(
         features::buffers features,

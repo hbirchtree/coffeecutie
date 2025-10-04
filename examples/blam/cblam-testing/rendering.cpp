@@ -11,6 +11,7 @@
 #include <peripherals/typing/enum/graphics/shader_stage.h>
 
 #include "caching.h"
+#include "coffee/core/CProfiling"
 #include "data.h"
 #include "selected_version.h"
 
@@ -717,6 +718,7 @@ struct MeshRenderer
 
     void generate_static_draws(Proxy& p, size_t& materials_ptr)
     {
+        ProfContext _;
         /* First go through al lthe BSPs, will at the same time count the amount
          * of material instances we need for the BSP passes */
         std::map<Passes, i32> instance_offsets;
@@ -816,6 +818,7 @@ struct MeshRenderer
             };
             track.model_id = wf.insert_draw(model.draw.data.front());
         }
+        Coffee::Profiler::PopContext();
 
         for(Pass& pass : m_model)
         {

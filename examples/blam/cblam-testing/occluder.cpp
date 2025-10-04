@@ -24,6 +24,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
     {
         if constexpr(compile_info::platform::is_android)
             return;
+        return;
 
         BSPCache<V>*         bsp_cache;
         BlamCamera*          camera;

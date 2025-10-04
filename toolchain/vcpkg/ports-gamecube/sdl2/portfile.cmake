@@ -26,7 +26,7 @@ vcpkg_cmake_configure(
         -DSDL_FILESYSTEM=ON
         -DSDL_FUSIONSOUND=OFF
         -DSDL_RENDER=OFF
-        -DSDL_THREADS=ON
+        -DSDL_THREADS=OFF
         -DSDL_TIMERS=ON
     MAYBE_UNUSED_VARIABLES
         SDL_FORCE_STATIC_VCRT

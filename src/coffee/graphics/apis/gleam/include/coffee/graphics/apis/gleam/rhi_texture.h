@@ -143,6 +143,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
                 m_handle, channel, static_cast<i32>(convert::to(*value)));
         } else
 #endif
+#if GLEAM_MAX_VERSION_ES >= 0x300 || GLEAM_MAX_VERSION > 0x0
         {
             cmd::bind_texture(convert::to(m_type), m_handle);
             cmd::tex_parameter(
@@ -151,6 +152,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
                 static_cast<i32>(convert::to(*value)));
             cmd::bind_texture(convert::to(m_type), 0);
         }
+#endif
     }
 
     inline void set_swizzle(
@@ -159,6 +161,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
         std::optional<textures::swizzle_t> blue,
         std::optional<textures::swizzle_t> alpha)
     {
+#if GLEAM_MAX_VERSION_ES >= 0x300 || GLEAM_MAX_VERSION > 0x0
         set_channel_swizzle(
             group::texture_parameter_name::texture_swizzle_r, red);
         set_channel_swizzle(
@@ -167,6 +170,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
             group::texture_parameter_name::texture_swizzle_b, blue);
         set_channel_swizzle(
             group::texture_parameter_name::texture_swizzle_a, alpha);
+#endif
     }
 
     features::textures  m_features{};
@@ -866,6 +870,7 @@ enum class pbo_error
     texture_state_not_supported,
 };
 
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
 template<typename T, typename... Args>
 [[nodiscard]] inline std::optional<pbo_error> texture_upload_from(
     texture_2d_t& texture, buffer_slice_t& pbo, Args&&... args)
@@ -887,5 +892,6 @@ template<typename T, typename... Args>
     cmd::bind_buffer(buf_target::pixel_unpack_buffer, 0);
     return std::nullopt;
 }
+#endif
 
 } // namespace gleam

@@ -1,5 +1,4 @@
 find_package(Microsoft.GSL CONFIG REQUIRED)
-# find_package(tinyutf8 CONFIG REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
 
 coffee_library(
@@ -8,7 +7,6 @@ coffee_library(
           private/libc_functions.cpp private/pimpl_state.cpp
   LIBRARIES
     Microsoft.GSL::GSL
-    # tinyutf8::tinyutf8
     magic_enum::magic_enum
   HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
               $<INSTALL_INTERFACE:include>
@@ -144,14 +142,14 @@ elseif(EMSCRIPTEN)
   if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     target_compile_options(PeripheralLib PUBLIC -gsource-map)
     target_link_options(
-      PeripheralLib PUBLIC -gsource-map -sDEMANGLE_SUPPORT=1 -sASSERTIONS=1
+      PeripheralLib PUBLIC -gsource-map -sASSERTIONS=1 #-sDEMANGLE_SUPPORT=1
     )
   elseif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
     target_compile_options(
       PeripheralLib PUBLIC -gsource-map -O1 # -sDEMANGLE_SUPPORT=1
     )
     target_link_options(
-      PeripheralLib PUBLIC -gsource-map -O1 -sDEMANGLE_SUPPORT=1 -sASSERTIONS=1
+      PeripheralLib PUBLIC -gsource-map -O1 -sASSERTIONS=1 #-sDEMANGLE_SUPPORT=1
     )
   else()
     target_compile_options(PeripheralLib PUBLIC -O3)

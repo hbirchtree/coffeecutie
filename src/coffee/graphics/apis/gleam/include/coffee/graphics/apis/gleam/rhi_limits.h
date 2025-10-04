@@ -43,7 +43,9 @@ struct hw_limits
         limits::tex out;
 
         cmd::get_integerv(get::max_texture_size, u32_span(out.size.d2));
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
         cmd::get_integerv(get::max_3d_texture_size, u32_span(out.size.d3));
+#endif
         cmd::get_integerv(
             get::max_cube_map_texture_size, u32_span(out.size.cube));
 
@@ -81,11 +83,13 @@ struct api_limits
         using prop = group::get_prop;
 
         buffers = {};
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
         if(m_features.draw.instancing)
             draws = {
                 .element_index = get_limit(prop::max_element_index),
             };
         else
+#endif
             draws = {
                 .element_index = std::numeric_limits<libc_types::i32>::max(),
             };
@@ -100,6 +104,7 @@ struct api_limits
             .d2_size       = get_limit(prop::max_texture_size),
             .cube_size     = get_limit(prop::max_cube_map_texture_size),
         };
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
         if(m_features.buffer.ubo)
         {
             buffers = {
@@ -137,6 +142,7 @@ struct api_limits
             textures.d3_size       = get_limit(prop::max_3d_texture_size);
             textures.d2_max_layers = get_limit(prop::max_array_texture_layers);
         }
+#endif
     }
 
     std::string get_all_limits() const;

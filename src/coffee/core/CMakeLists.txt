@@ -1,6 +1,3 @@
-find_package(RapidJSON CONFIG REQUIRED)
-find_package(tinyxml2 CONFIG REQUIRED)
-
 add_library(CoreCommon INTERFACE)
 
 target_include_directories(
@@ -10,30 +7,11 @@ target_include_directories(
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core_include>
 )
 
-target_link_libraries(
-  CoreCommon INTERFACE # rapidjson
-                       tinyxml2::tinyxml2
-)
-
 header_install(
   CoreCommon $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core_include> ""
 )
 
 target_link_libraries(CoreCommon INTERFACE PeripheralLib PeripheralPlatform)
-
-#coffee_library(
-#  TARGET CoreDebug
-#  SOURCES # private/strings.cpp
-#  LIBRARIES CoreCommon PeripheralThreadNaming
-#  HEADER_DIRS
-#    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/debug>
-#    $<INSTALL_INTERFACE:include> HEADER_BASE coffee/core
-#)
-
-#header_install(
-#  "CoreDebug"
-#  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/strings> coffee
-#)
 
 coffee_library(
   TARGET CoreState
@@ -98,18 +76,6 @@ coffee_library(
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/virtfs>
     HEADER_BASE coffee
 )
-
-#
-# Utilities for printing in the terminal
-#
-#coffee_library(
-#  TARGET CoreTerminal
-#  SOURCES # private/terminal/table_print.cpp
-#  LIBRARIES CoreCommon
-#  HEADER_DIRS
-#    # $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/terminal>
-#    HEADER_BASE coffee/core
-#)
 
 #
 # Generic application data storage, for application state

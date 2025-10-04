@@ -117,9 +117,12 @@ inline texture_format_t const& format_of(PixDesc const& desc)
         return format_of(format_t::rgb565);
     case P::RGB5A1:
         return format_of(format_t::rgb5_a1);
+#if defined(GL_RGB9_E5)
     case P::RGB9E5:
         return format_of(format_t::rgb9_e5);
+#endif
 
+#if defined(GL_R8)
     case P::R8:
         return format_of(format_t::r8);
     case P::R8UI:
@@ -200,14 +203,18 @@ inline texture_format_t const& format_of(PixDesc const& desc)
         return format_of(format_t::rgb10_a2);
     case P::RGB10A2UI:
         return format_of(format_t::rgb10_a2ui);
+#endif
 
+#if defined(GL_SRGB8)
     case P::SRGB8:
         return format_of(format_t::srgb8);
     case P::SRGB8A8:
         return format_of(format_t::srgb8_alpha8);
+#endif
 
     case P::Depth16:
         return format_of(format_t::depth_component16);
+#if defined(GL_DEPTH_COMPONENT24)
     case P::Depth24: {
         static texture_format_t d24 = {
             .type = gl::group::internal_format::depth_component24,
@@ -234,16 +241,23 @@ inline texture_format_t const& format_of(PixDesc const& desc)
         };
         return d24;
     }
+#endif
+#if defined(GL_DEPTH24_STENCIL8)
     case P::Depth24Stencil8:
         return format_of(format_t::depth24_stencil8);
+#endif
 #if defined(GL_DEPTH_COMPONENT32)
     case P::Depth32:
         return format_of(format_t::depth_component32);
 #endif
+#if defined(GL_DEPTH_COMPONENT32F)
     case P::Depth32F:
         return format_of(format_t::depth_component32f);
+#endif
+#if defined(GL_DEPTH32F_STENCIL8)
     case P::Depth32FStencil8:
         return format_of(format_t::depth32f_stencil8);
+#endif
     default:
         break;
     }
@@ -332,9 +346,12 @@ inline PixDesc desc_of(texture_format_t const& fmt)
         return PixDesc(pix_fmt::RGB565);
     case format_t::rgb5_a1:
         return PixDesc(pix_fmt::RGB5A1);
+#if defined(GL_RGB9_E5)
     case format_t::rgb9_e5:
         return PixDesc(pix_fmt::RGB9E5);
+#endif
 
+#if defined(GL_R8)
     case format_t::r8:
         return PixDesc(pix_fmt::R8);
     case format_t::r8i:
@@ -410,6 +427,7 @@ inline PixDesc desc_of(texture_format_t const& fmt)
         return PixDesc(pix_fmt::RGBA32I);
     case format_t::rgba32ui:
         return PixDesc(pix_fmt::RGBA32UI);
+#endif
     default:
         break;
     }

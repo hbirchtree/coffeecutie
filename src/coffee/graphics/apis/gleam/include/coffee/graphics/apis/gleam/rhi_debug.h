@@ -11,6 +11,7 @@
 
 #include <coffee/core/CProfiling>
 
+
 namespace gleam::debug {
 
 struct null_api
@@ -207,7 +208,9 @@ struct api
     template<typename T>
     inline void annotate(T& object, std::string_view const& label)
     {
+#if GL_DEBUG_AVAILABLE == 1
         annotate(T::debug_identifier, object.m_handle, label);
+#endif
     }
 
     using debug_function  = stl_types::Function<void(
