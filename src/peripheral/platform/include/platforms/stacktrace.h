@@ -1,5 +1,6 @@
 #pragma once
 
+#include "peripherals/constants.h"
 #include <exception>
 #include <optional>
 #include <peripherals/base.h>
@@ -18,16 +19,14 @@
 #define BOOST_STACKTRACE_USE_BACKTRACE
 #endif
 
+#if !defined(COFFEE_WINDOWS)
 #include <boost/stacktrace.hpp>
-
-// #include "base/stacktrace.h"
-// #include "posix/stacktrace.h"
-// #include "linux/stacktrace.h"
-// #include "win32/stacktrace.h"
+#endif
 
 namespace platform::stacktrace {
 
-constexpr bool supports_stacktrace = !compile_info::platform::is_emscripten;
+constexpr bool supports_stacktrace = !compile_info::platform::is_emscripten &&
+    !compile_info::platform::is_windows;
 
 namespace detail {
 
@@ -48,8 +47,12 @@ namespace demangle {
 
 FORCEDINLINE auto name(std::string const& symbol)
 {
+#if defined(COFFEE_WINDOWS)
+    return std::string();
+#else
     boost::core::scoped_demangled_name demangler(symbol.c_str());
     return std::string(demangler.get());
+#endif
 }
 
 template<typename T>
@@ -66,11 +69,21 @@ FORCEDINLINE auto type_name(T& e)
 
 } // namespace demangle
 
-using boost::stacktrace::stacktrace;
+#if !defined(COFFEE_WINDOWS)
+using stacktrace = boost::stacktrace::stacktrace;
+#else
+struct frame_t
+{
+    std::string name() const { return {}; }
+    std::string source_file() const { return {}; }
+    uint32_t source_line() const { return 0; }
+};
+using stacktrace = std::vector<frame_t>;
+#endif
 
 FORCEDINLINE auto frames()
 {
-    return boost::stacktrace::stacktrace();
+    return stacktrace();
 }
 
 FORCEDINLINE
