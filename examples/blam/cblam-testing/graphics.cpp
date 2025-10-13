@@ -54,6 +54,10 @@ i32 blam_main()
             //
             ("listen",
              "Interface to start a server on",
+             cxxopts::value<std::string>())
+            //
+            ("master-server",
+             "Master server to query for servers",
              cxxopts::value<std::string>());
         if constexpr(!compile_info::supports_command_line)
             options.add_options("Game")(

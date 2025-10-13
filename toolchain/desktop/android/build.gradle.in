@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
-    compileSdkVersion @ANDROID_API_TARGET@
+    compileSdk @ANDROID_API_TARGET@
     ndkVersion '@ANDROID_NDK_VER@'
     buildToolsVersion '@ANDROID_BUILD_TOOLS_VER@'
 

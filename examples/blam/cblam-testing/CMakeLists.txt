@@ -35,6 +35,7 @@ coffee_application(
         rendering.cpp
         resource_creation.cpp
         script_component.cpp
+        server_browser.cpp
         sounds.cpp
         touch_overlay.cpp
         ui.cpp

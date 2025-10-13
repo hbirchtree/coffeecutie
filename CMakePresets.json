@@ -133,17 +133,17 @@
                 "VCPKG_CRT_LINKAGE": "static",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;arm;arm64",
                 "VCPKG_LIBRARY_LINKAGE": "static",
-                "VCPKG_TARGET_TRIPLET": "$env{ARCHITECTURE}-android"
+                "VCPKG_TARGET_TRIPLET": "$env{ARCHITECTURE}-android-$env{API}"
             },
             "environment": {
                 "ANDROID_NDK": "$env{ANDROID_SDK}/ndk/$env{NDK_VERSION}",
                 "ANDROID_NDK_HOME": "$env{ANDROID_SDK}/ndk/$env{NDK_VERSION}",
                 "ANDROID_SDK": "${sourceDir}/multi_build/compilers/android/latest",
-                "API": "32",
+                "API": "35",
                 "ARCHITECTURE": "arm64",
                 "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
                 "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools",
-                "NDK_VERSION": "26.3.11579264",
+                "NDK_VERSION": "29.0.14206865",
                 "NINJA": "$penv{NINJA}"
             }
         },
@@ -294,12 +294,25 @@
             }
         },
         {
+            "name": "android-arm64-35",
+            "displayName": "Android 15 ARM64",
+            "inherits": ["vcpkg-base-android"],
+            "cacheVariables": {
+                "ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES": "ON",
+                "CMAKE_C_FLAGS": "-march=armv8-a",
+                "CMAKE_CXX_FLAGS": "-march=armv8-a"
+            }
+        },
+        {
             "name": "android-arm64-32",
             "displayName": "Android 12 ARM64",
             "inherits": ["vcpkg-base-android"],
             "cacheVariables": {
                 "CMAKE_C_FLAGS": "-march=armv8-a",
                 "CMAKE_CXX_FLAGS": "-march=armv8-a"
+            },
+            "environment": {
+                "API": "32"
             }
         },
         {
@@ -310,6 +323,7 @@
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;x64"
             },
             "environment": {
+                "API": "32",
                 "ARCHITECTURE": "x64"
             }
         },
@@ -940,6 +954,18 @@
             "name": "android-arm64-30-gl-dbg",
             "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "android-arm64-30-gl",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "android-arm64-35-rel",
+            "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "android-arm64-35",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "android-arm64-35-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "android-arm64-35",
             "inherits": "base-linux"
         },
         {
