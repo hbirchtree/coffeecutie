@@ -208,7 +208,7 @@
                 "BLAMG_EMBEDDED_REPORT_URL": "$env{EMBEDDED_REPORT_URL}",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
                 "EMSCRIPTEN_ROOT_PATH": "$env{EMSDK}/upstream/emscripten",
-                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Platform/Emscripten.cmake",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "emscripten;wasm",
                 "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/fmt",
                 "VCPKG_TARGET_TRIPLET": "wasm32-emscripten"

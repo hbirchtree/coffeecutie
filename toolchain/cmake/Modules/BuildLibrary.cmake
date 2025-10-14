@@ -130,22 +130,20 @@ macro(COFFEE_LIBRARY)
       "${LIB_RESOURCES}"
       "${LIB_BUNDLE_HEADERS}"
     )
+  elseif(EMSCRIPTEN AND "${LIB_LINKAGE}" STREQUAL "SHARED")
+    add_library(${LIB_TARGET} SHARED ${LIB_SOURCES} ${ALL_HEADERS})
+    target_link_options(${LIB_TARGET} PRIVATE -sSIDE_MODULE)
+    set_target_properties(${LIB_TARGET} PROPERTIES
+      SUFFIX ".wasm"
+    )
   else()
-    if(EMSCRIPTEN AND "${LIB_LINKAGE}" STREQUAL "SHARED")
-      add_executable(${LIB_TARGET} ${LIB_SOURCES} ${ALL_HEADERS})
-      target_link_options(${LIB_TARGET} PRIVATE -sSIDE_MODULE)
-      set_target_properties(${LIB_TARGET} PROPERTIES
-        SUFFIX ".wasm"
+    add_library(${LIB_TARGET} ${LIB_LINKAGE} ${LIB_SOURCES} ${ALL_HEADERS})
+    if(APPLE)
+      set_target_properties(${LIB_TARGET} PROPERTIES MACOSX_RPATH ".")
+    elseif(WIN32)
+      set_target_properties(
+        ${LIB_TARGET} PROPERTIES VERSION ${COFFEE_BUILD_STRING} SOVERSION 1
       )
-    else()
-      add_library(${LIB_TARGET} ${LIB_LINKAGE} ${LIB_SOURCES} ${ALL_HEADERS})
-      if(APPLE)
-        set_target_properties(${LIB_TARGET} PROPERTIES MACOSX_RPATH ".")
-      elseif(WIN32)
-        set_target_properties(
-          ${LIB_TARGET} PROPERTIES VERSION ${COFFEE_BUILD_STRING} SOVERSION 1
-        )
-      endif()
     endif()
   endif()
 
