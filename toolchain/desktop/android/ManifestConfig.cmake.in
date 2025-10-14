@@ -53,6 +53,11 @@ configure_file (
     )
 
 configure_file (
+    "${DATA_EXTRACTION_TEMPLATE}"
+    "${PROJECT_DIR}/app/src/main/res/xml/data_extraction_rules.xml"
+    )
+
+configure_file (
     "${STRINGS_TEMPLATE}"
     "${PROJECT_DIR}/@APK_RSC_PREFIX@/values/strings.xml"
     @ONLY
