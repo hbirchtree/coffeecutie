@@ -1,17 +1,18 @@
 #include "rendering.h"
 
 #include <blam/volta/blam_bitm.h>
+#include <coffee/core/CProfiling>
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
 #include <coffee/graphics/apis/gleam/rhi_system.h>
 #include <coffee/graphics/apis/gleam/rhi_urls.h>
 #include <glw/texture_formats.h>
 #include <glw/texture_formats_desc.h>
+#include <peripherals/constants.h>
 #include <peripherals/stl/iterator_slice.h>
 #include <peripherals/stl/tuple_hash.h>
 #include <peripherals/typing/enum/graphics/shader_stage.h>
 
 #include "caching.h"
-#include "coffee/core/CProfiling"
 #include "data.h"
 #include "selected_version.h"
 
@@ -369,7 +370,9 @@ struct MeshRenderer
         view.y = m_resources.offscreen_size.y - view.y;
 
         return gfx::view_state{
+#if !defined(COFFEE_EMSCRIPTEN)
             .view  = view,
+#endif
             .depth = depth,
         };
     }
@@ -581,7 +584,9 @@ struct MeshRenderer
     {
         ProfContext _;
 
-        bool invalidated = true;
+        // Performance is terrible on Emscripten when updating every frame
+        // We need a more efficient way to update the buffer in that case
+        bool invalidated = !compile_info::platform::is_emscripten;
         if(time - last_update > std::chrono::seconds(1) || invalidated)
         {
             generate_draws(p);

@@ -4,6 +4,7 @@
 #include <peripherals/identify/system.h>
 
 #if defined(COFFEE_EMSCRIPTEN)
+#include <csignal>
 #include <emscripten.h>
 #else
 #include <csignal>

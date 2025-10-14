@@ -42,6 +42,7 @@ function(EMSCRIPTEN_PACKAGE)
   if("${CMAKE_BUILD_TYPE}" MATCHES ".*Deb.*")
     add_custom_command(
       TARGET ${EM_TARGET}
+      POST_BUILD
       COMMAND ${COFFEE_DESKTOP_DIRECTORY}/emscripten/fix-source-map.py
               ${BUNDLE_DIR}/${EM_TARGET}.wasm.map
       WORKING_DIRECTORY ${BUNDLE_DIR}
@@ -49,6 +50,7 @@ function(EMSCRIPTEN_PACKAGE)
   endif()
   add_custom_command(
     TARGET ${EM_TARGET}
+    POST_BUILD
     COMMAND ${CMAKE_COMMAND}
         -E copy
         ${COFFEE_DESKTOP_DIRECTORY}/emscripten/coi-serviceworker.min.js
@@ -56,6 +58,7 @@ function(EMSCRIPTEN_PACKAGE)
   )
   add_custom_command(
     TARGET ${EM_TARGET}
+    POST_BUILD
     COMMAND convert
         -density 300
         -define icon:auto-resize=256,128,96,64,48,32,16
@@ -65,6 +68,7 @@ function(EMSCRIPTEN_PACKAGE)
   )
   add_custom_command(
     TARGET ${EM_TARGET}
+    POST_BUILD
     COMMAND convert
         -density 300
         -define icon:auto-resize=256,128,96,64,48,32,16
@@ -75,6 +79,7 @@ function(EMSCRIPTEN_PACKAGE)
   foreach(LIB ${EM_BUNDLE_MODULES})
     add_custom_command(
         TARGET ${EM_TARGET}
+        POST_BUILD
         COMMAND ${CMAKE_COMMAND}
             -E copy
             $<TARGET_FILE:${LIB}>

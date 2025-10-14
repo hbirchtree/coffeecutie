@@ -140,9 +140,9 @@ elseif(APPLE)
   )
 elseif(EMSCRIPTEN)
   if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    target_compile_options(PeripheralLib PUBLIC -gsource-map)
+    target_compile_options(PeripheralLib PUBLIC -gsource-map -fwasm-exceptions)
     target_link_options(
-      PeripheralLib PUBLIC -gsource-map -sASSERTIONS=1 #-sDEMANGLE_SUPPORT=1
+      PeripheralLib PUBLIC -gsource-map -sASSERTIONS=1 -fwasm-exceptions #-sDEMANGLE_SUPPORT=1
     )
   elseif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
     target_compile_options(
