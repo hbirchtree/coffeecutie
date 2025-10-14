@@ -1,0 +1,41 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
+
+android {
+    namespace = "@ANDROID_PACKAGE_NAME@"
+    compileSdk {
+        version = release(@ANDROID_API_TARGET@)
+    }
+    defaultConfig {
+        applicationId = "@ANDROID_PACKAGE_NAME@"
+        minSdk = @ANDROID_API_MIN_TARGET@
+        targetSdk = @ANDROID_API_TARGET@
+        versionCode = @ANDROID_VERSION_CODE@
+        versionName = "@ANDROID_VERSION_NAME@"
+    }
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+        debug {
+            isMinifyEnabled = false
+            isDebuggable = true
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+}
+
+dependencies {
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.material)
+}

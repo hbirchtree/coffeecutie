@@ -434,7 +434,6 @@ function android_build()
         printf "y\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\n" | cmdline-tools/latest/bin/sdkmanager \
             --install build-tools\;36.1.0 \
             ndk\;25.2.9519653 \
-            ndk\;26.3.11579264 \
             ndk\;29.0.14206865 \
             platforms\;android-19 \
             platforms\;android-25 \

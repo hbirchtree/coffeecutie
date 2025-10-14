@@ -129,7 +129,8 @@ def run(program, *args):
     ret = subprocess.run(process_args, capture_output=True)
     if ret.returncode != 0:
         print(' '.join(process_args))
-        print(f'ERROR:\n{ret.stdout}\n{ret.stderr}')
+        print(f'ERROR:\n{ret.stdout.decode()}\n{ret.stderr.decode()}')
+        exit(1)
 
 
 def compile_shaders(
@@ -268,12 +269,16 @@ def encode_textures(
             return [f'{out_directory}/{basename}.0.{codec}' for codec, _ in codecs]
         outputs = _predict_names(basename)
         res = [needs_update(x, [rendered_file]) for x in outputs]
+        print(f'* Processing file {source}')
         for out_of_date in res:
             if out_of_date:
                 break
         else:
             if len(res) > 0:
+                print('  - Up to date')
                 return
+        for fmt in codecs:
+            print(f'  - Will emit {fmt}')
         compress_mode = 'fast' if 'Deb' in build_mode else 'release'
         run(
             'TextureCompressor',

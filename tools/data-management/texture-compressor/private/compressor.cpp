@@ -67,7 +67,10 @@ bool save_ktx_to_file(std::string const& out_name, ktxTexture1* texture)
     }
     auto error = ktxTexture_WriteToStdioStream(ktxTexture(texture), out_stream);
     if(error != ktx_error_code_e::KTX_SUCCESS)
+    {
         cBasicPrint("Error writing KTX: {0}", magic_enum::enum_name(error));
+        return false;
+    }
     fclose(out_stream);
     return true;
 }
@@ -153,7 +156,10 @@ bool bcn_compress(
     {
         auto remapped = compressor::map_channels(image, channels);
         if(!remapped.has_value())
+        {
+            cBasicPrint("Failed to remap color channels");
             return false;
+        }
         image = std::move(remapped.value());
     }
 
@@ -196,7 +202,10 @@ bool png_compress(
     {
         auto remapped = compressor::map_channels(image, channels);
         if(!remapped.has_value())
+        {
+            cBasicPrint("Failed to remap color channels");
             return false;
+        }
         image = std::move(remapped.value());
     }
 
@@ -206,17 +215,23 @@ bool png_compress(
     auto                   png = Coffee::PNG::Save(image, img_ec);
     out                        = png;
     if(img_ec)
+    {
         cBasicPrint("Failed to encode PNG");
+        return false;
+    }
     if(!Coffee::FileCommit(
            out,
            semantic::RSCA::NewFile | semantic::RSCA::WriteOnly |
                semantic::RSCA::Discard))
+    {
         cBasicPrint(
             "Failed to save PNG file, {} bytes, {}x{} {} channels",
             png.size,
             image.size.w,
             image.size.h,
             image.bpp);
+        return false;
+    }
 
     return true;
 }
@@ -307,8 +322,12 @@ i32 cooker_main(i32 argc, char** argv)
 {
     cxxopts::Options opts(
         "TextureCompressor", "All-purpose texture compressor");
+    opts.show_positional_help();
+    opts.help();
     opts.positional_help("input files")
         .add_options()
+        //
+        ("h,help", "Show this help text")
         //
         ("c,codec",
          "Codec with pixel format to output in the format [codec]:[format], "
@@ -335,6 +354,12 @@ i32 cooker_main(i32 argc, char** argv)
          cxxopts::value<std::string>());
 
     auto res = opts.parse(argc, argv);
+
+    if(res.count("help"))
+    {
+        cBasicPrint("{}", opts.help());
+        return 0;
+    }
 
     if(res.unmatched().size() < 1)
     {
@@ -391,32 +416,36 @@ i32 cooker_main(i32 argc, char** argv)
                               : typing::pix_components::R;
 
             if(codec == "etc2")
-                etc2_compress(
+                if(!etc2_compress(
                     base_dir,
                     file,
                     resolutions,
                     pixcmp,
                     format,
-                    release_quality);
+                    release_quality))
+                    return 1;
             else if(codec.starts_with("bc"))
-                bcn_compress(
+                if(!bcn_compress(
                     base_dir,
                     file,
                     resolutions,
                     codec,
                     pixcmp,
                     format,
-                    release_quality);
+                    release_quality))
+                    return 1;
             else if(codec == "png")
-                png_compress(
+                if(!png_compress(
                     base_dir,
                     file,
                     resolutions,
                     pixcmp,
                     format,
-                    release_quality);
+                    release_quality))
+                    return 1;
             else if(codec == "raw")
-                raw_include(base_dir, file, resolutions, pixcmp, format);
+                if(!raw_include(base_dir, file, resolutions, pixcmp, format))
+                    return 1;
         }
 
         image_cache.clear();

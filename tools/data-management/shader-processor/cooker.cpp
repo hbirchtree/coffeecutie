@@ -105,8 +105,12 @@ libc_types::i32 cooker_main()
         arguments.push_back(arg);
 
     cxxopts::Options opts("ShaderCooker", "SPIR-V shader processor");
+    opts.show_positional_help();
+    opts.help();
     opts.positional_help("shader files")
         .add_options()
+        //
+        ("h,help", "Show this help text")
         //
         ("s,stage",
          "Shader stage for single-shader processing",
@@ -147,6 +151,12 @@ libc_types::i32 cooker_main()
     opts.allow_unrecognised_options();
 
     auto res = opts.parse(arguments.size(), arguments.data());
+
+    if(res.count("help"))
+    {
+        cBasicPrint("{}", opts.help());
+        return 0;
+    }
 
     if(res.unmatched().size() < 1)
     {

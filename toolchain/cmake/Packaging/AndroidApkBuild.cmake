@@ -196,7 +196,7 @@ function(ANDROIDAPK_PACKAGE)
       ANDROID_MANIFEST_TEMPLATE
       "${ANDROID_PROJECT_INPUT}/AndroidManifest.xml.in"
       ANDROID_STRINGS_TEMPLATE "${ANDROID_PROJECT_INPUT}/strings.xml.in"
-      ANDROID_BUILD_TEMPLATE "${ANDROID_PROJECT_INPUT}/build.gradle.in"
+      ANDROID_BUILD_TEMPLATE "${ANDROID_PROJECT_INPUT}/build.gradle.kts.in"
       ANDROID_LIB "${AAPK_TARGET}"
       ANDROID_START "ANativeActivity_onCreate"
       ANDROID_ACTIVITY "dev.birchy.CoffeeNativeActivity"
@@ -267,9 +267,19 @@ function(ANDROIDAPK_PACKAGE)
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${ANDROID_PROJECT_INPUT}/Gradle" "${BUILD_OUTDIR}"
   )
+  
+  configure_file(
+    ${ANDROID_PROJECT_INPUT}/Gradle/settings.gradle.kts ${BUILD_OUTDIR}/settings.gradle.kts
+    @ONLY
+  )
 
   configure_file(
-    ${ANDROID_PROJECT_INPUT}/build.root.gradle.in ${BUILD_OUTDIR}/build.gradle
+    ${ANDROID_PROJECT_INPUT}/build.root.gradle.kts.in ${BUILD_OUTDIR}/build.gradle.kts
+    @ONLY
+  )
+
+  configure_file(
+    ${ANDROID_PROJECT_INPUT}/libs.versions.toml ${BUILD_OUTDIR}/gradle/libs.versions.toml
     @ONLY
   )
 
@@ -280,7 +290,7 @@ function(ANDROIDAPK_PACKAGE)
       "${BUILD_OUTDIR}/gradle/wrapper/gradle-wrapper.properties"
   )
   file(READ "${GRADLE_WRAPPER_FILE}" GRADLE_PROPERTIES)
-  string(REGEX REPLACE "gradle-[0-9\.]+-all" "gradle-${ANDROID_GRADLE_VER}-all"
+  string(REGEX REPLACE "gradle-[0-9\.]+-bin" "gradle-${ANDROID_GRADLE_VER}-bin"
                        GRADLE_PROPERTIES "${GRADLE_PROPERTIES}"
   )
   file(WRITE "${GRADLE_WRAPPER_FILE}" "${GRADLE_PROPERTIES}")
@@ -353,7 +363,7 @@ function(ANDROIDAPK_PACKAGE)
   if(CMAKE_BUILD_TYPE MATCHES "Rel")
     set(APK_ASSEMBLE_TARGET Release)
   endif()
-  set(APK_ASSEMBLE_FLAVOR Modern)
+  set(APK_ASSEMBLE_FLAVOR)
   if(AAPK_APK_MIN_TARGET LESS_EQUAL 19)
     set(APK_ASSEMBLE_FLAVOR Legacy)
   endif()

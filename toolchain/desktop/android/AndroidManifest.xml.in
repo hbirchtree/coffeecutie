@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      android:versionCode="@ANDROID_VERSION_CODE@"
-      android:versionName="@ANDROID_VERSION_NAME@"
-      android:installLocation="auto">
+        android:versionCode="@ANDROID_VERSION_CODE@"
+        android:versionName="@ANDROID_VERSION_NAME@"
+        android:installLocation="auto">
 
     @ANDROID_FEATURES@
     @ANDROID_PERMISSIONS@
@@ -14,14 +14,15 @@
     />
 
     <application
-            android:label="@string/app_name"
-            android:hasCode="true"
-            android:banner="@drawable/ic_banner"
-            android:icon="@mipmap/ic_launcher"
-            android:allowBackup="true"
-            android:theme="@style/Fullscreen"
-            android:hardwareAccelerated="true"
-            android:fullBackupContent="@xml/backup_descriptor">
+        android:label="@string/app_name"
+        android:hasCode="true"
+        android:banner="@drawable/ic_banner"
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:theme="@style/Fullscreen"
+        android:hardwareAccelerated="true"
+        android:fullBackupContent="@xml/backup_descriptor">
         <activity 
                 android:name="@ANDROID_ACTIVITY_NAME@"
                 android:exported="true"

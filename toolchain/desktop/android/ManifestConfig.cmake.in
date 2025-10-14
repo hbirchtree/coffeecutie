@@ -49,7 +49,7 @@ configure_file (
 
 configure_file (
     "${BUILD_GRADLE_TEMPLATE}"
-    "${PROJECT_DIR}/app/build.gradle"
+    "${PROJECT_DIR}/app/build.gradle.kts"
     )
 
 configure_file (
