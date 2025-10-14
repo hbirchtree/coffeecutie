@@ -432,7 +432,7 @@ function android_build()
         popd
         pushd ${ANDROID_SDK}
         printf "y\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\n" | cmdline-tools/latest/bin/sdkmanager \
-            --install build-tools\;36.1.0 \
+            --install build-tools\;35.0.0 \
             ndk\;25.2.9519653 \
             ndk\;29.0.14206865 \
             platforms\;android-19 \
