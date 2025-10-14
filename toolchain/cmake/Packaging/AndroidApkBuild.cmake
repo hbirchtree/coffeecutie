@@ -384,7 +384,7 @@ function(ANDROIDAPK_PACKAGE)
       POST_BUILD
       COMMAND
         ${CMAKE_COMMAND} -E copy
-        "${BUILD_OUTDIR}/app/build/outputs/apk/legacy/${RELEASE_PREFIX}/app-legacy-${RELEASE_PREFIX}.apk"
+        "${BUILD_OUTDIR}/app/build/outputs/apk/${RELEASE_PREFIX}/app-${RELEASE_PREFIX}.apk"
         "${ANDROID_APK_LEGACY_FILE_OUTPUT}"
     )
   else()
@@ -393,7 +393,7 @@ function(ANDROIDAPK_PACKAGE)
       POST_BUILD
       COMMAND
         ${CMAKE_COMMAND} -E copy
-        "${BUILD_OUTDIR}/app/build/outputs/apk/modern/${RELEASE_PREFIX}/app-modern-${RELEASE_PREFIX}.apk"
+        "${BUILD_OUTDIR}/app/build/outputs/apk/${RELEASE_PREFIX}/app-${RELEASE_PREFIX}.apk"
         "${ANDROID_APK_FILE_OUTPUT}"
     )
   endif()
