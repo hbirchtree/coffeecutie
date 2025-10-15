@@ -26,7 +26,7 @@ coffee_library(
 )
 
 if(BUILD_COMP_DUMMY_PLUG)
-  target_sources(ComponentBundleSetup PUBLIC
+  target_sources(ComponentBundleSetup PRIVATE
     private/dummy_plug.cpp
   )
   target_compile_definitions(ComponentBundleSetup PUBLIC

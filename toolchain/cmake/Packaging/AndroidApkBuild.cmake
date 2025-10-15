@@ -366,16 +366,12 @@ function(ANDROIDAPK_PACKAGE)
   if(CMAKE_BUILD_TYPE MATCHES "Rel")
     set(APK_ASSEMBLE_TARGET Release)
   endif()
-  set(APK_ASSEMBLE_FLAVOR)
-  if(AAPK_APK_MIN_TARGET LESS_EQUAL 19)
-    set(APK_ASSEMBLE_FLAVOR Legacy)
-  endif()
 
   add_custom_command(
     TARGET "${AAPK_TARGET}.apk"
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E env GRADLE_OPTS="-Dorg.gradle.daemon=false"
-            ${BUILD_OUTDIR}/gradlew assemble${APK_ASSEMBLE_FLAVOR}
+            ${BUILD_OUTDIR}/gradlew assemble
     WORKING_DIRECTORY ${BUILD_OUTDIR}
   )
   if(AAPK_APK_MIN_TARGET LESS_EQUAL 19)

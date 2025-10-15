@@ -411,10 +411,10 @@ void configureDefaults(AppLoader& loader)
      * We *can* enable sRGB on desktop, and on Android
      * On iOS we don't have as much control over the colorspace used
      */
-    if(compile_info::platform::is_android ||
-       (compile_info::platform::is_linux && !compile_info::platform::is_iot) ||
-       compile_info::platform::is_macos || compile_info::platform::is_windows)
-        glConfig.framebufferFmt = pix_fmt::SRGB8;
+    // if(compile_info::platform::is_android ||
+    //    (compile_info::platform::is_linux && !compile_info::platform::is_iot) ||
+    //    compile_info::platform::is_macos || compile_info::platform::is_windows)
+    //     glConfig.framebufferFmt = pix_fmt::SRGB8;
 
 #if defined(FEATURE_ENABLE_X11Component)
     loader.addConfigs<detail::TypeList<x11::X11Config>>();

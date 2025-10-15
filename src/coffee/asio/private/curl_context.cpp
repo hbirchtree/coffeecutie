@@ -3,6 +3,7 @@
 #include <coffee/core/debug/formatting.h>
 #include <coffee/net/net_resource.h>
 #include <future>
+#include <peripherals/stl/vector.h>
 
 #if defined(USE_CURL)
 #include <curl/curl.h>
@@ -69,7 +70,7 @@ bool curl_data::process(curl_request awaitable)
                 req = {};
         }
     }
-    std::erase_if(queued_requests, [](curl_request& req) {
+    stl_types::erase_if(queued_requests, [](curl_request& req) {
         return !static_cast<bool>(req);
     });
     return num_requests == 0;
@@ -102,12 +103,12 @@ std::future<void> curl_data::add_request(
 void curl_data::remove_request(curl_request request)
 {
     auto queued_count =
-        std::erase_if(queued_requests, [&request](curl_request const& req) {
+        stl_types::erase_if(queued_requests, [&request](curl_request const& req) {
             return req == request;
         });
     if(queued_count > 0)
         curl_multi_remove_handle(context, request->handle);
-    std::erase_if(finished_requests, [&request](curl_request const& req) {
+    stl_types::erase_if(finished_requests, [&request](curl_request const& req) {
         return req == request;
     });
 }

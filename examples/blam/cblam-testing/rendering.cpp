@@ -600,7 +600,7 @@ struct MeshRenderer
         p.subsystem(rendering_props);
 
         if(rendering_props->debug_clear)
-            m_resources.offscreen->clear(Vecf4(0, 0, 0, 1));
+            m_resources.offscreen->clear(Vecf4(0, 0.2f, 0.5f, 1));
 
         f32 t = stl_types::Chrono::to_f32(time);
 
@@ -1490,7 +1490,7 @@ precision highp float;
 varying vec2 in_pos;
 varying vec2 in_tex;
 
-sampler2D noise;
+uniform sampler2D noise;
 uniform float curtain_fade;
 
 void main()
@@ -1553,5 +1553,5 @@ void alloc_renderer(EntityContainer& container)
         std::ref(container.subsystem_cast<BSPCache<halo_version>>()));
 
     container.register_subsystem_inplace<ScreenClear>();
-    container.register_subsystem_inplace<LoadingScreen>();
+    //container.register_subsystem_inplace<LoadingScreen>();
 }
