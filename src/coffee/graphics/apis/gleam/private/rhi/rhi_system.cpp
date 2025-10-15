@@ -1,8 +1,11 @@
 #include <coffee/graphics/apis/gleam/rhi_system.h>
 
-#include <coffee/comp_app/dummy_plug.h>
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/comp_app/subsystems.h>
+
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+#include <coffee/comp_app/dummy_plug.h>
+#endif
 
 namespace gleam {
 
@@ -10,6 +13,7 @@ optional<error> system::load(
     compo::EntityContainer& container, load_options_t options)
 {
     auto loader = container.service<comp_app::AppLoader>();
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
     if(auto const& dummy_plug = loader->config<comp_app::dummy_plug::Config>();
        dummy_plug.enabled)
     {
@@ -21,7 +25,7 @@ optional<error> system::load(
         options.api_version = version_tuple_to_u32(std::make_tuple(
             gfx_config.value("major", 0u), gfx_config.value("minor", 0u)));
     }
-
+#endif
     return api::load(options);
 }
 

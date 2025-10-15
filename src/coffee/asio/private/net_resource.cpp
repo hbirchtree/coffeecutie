@@ -1,8 +1,8 @@
 #include <coffee/net/net_resource.h>
 
 #include <coffee/core/CProfiling>
-#include <nlohmann/json.hpp>
 #include <peripherals/enum/helpers.h>
+#include <peripherals/stl/json.h>
 #include <peripherals/stl/string_casting.h>
 
 #include <coffee/core/CDebug>

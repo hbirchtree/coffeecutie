@@ -1,3 +1,5 @@
+option(BUILD_COMP_DUMMY_PLUG "Build dummy plug support in ComponentApp" ON)
+
 coffee_library(
   TARGET ComponentApp
   SOURCES
@@ -19,10 +21,18 @@ coffee_library(
   TARGET ComponentBundleSetup
   SOURCES
     private/bundle.cpp
-    private/dummy_plug.cpp
   LIBRARIES ComponentApp ComponentBundle GraphicsBundle MobileBundle Image
   HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bundle_include>
 )
+
+if(BUILD_COMP_DUMMY_PLUG)
+  target_sources(ComponentBundleSetup PUBLIC
+    private/dummy_plug.cpp
+  )
+  target_compile_definitions(ComponentBundleSetup PUBLIC
+    -DFEATURE_ENABLE_ComponentBundleSetup_DummyPlug=1
+  )
+endif()
 
 #target_precompile_headers(
 #  ComponentBundleSetup

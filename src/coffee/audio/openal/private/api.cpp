@@ -6,12 +6,15 @@
 #include <AL/alext.h>
 #endif
 
-#include <coffee/comp_app/dummy_plug.h>
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/core/debug/formatting.h>
 #include <fmt/format.h>
 #include <peripherals/stl/magic_enum.hpp>
 #include <peripherals/stl/string/hex.h>
+
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+#include <coffee/comp_app/dummy_plug.h>
+#endif
 
 namespace oaf {
 
@@ -386,6 +389,7 @@ ALenum enum_to_al(source_property prop)
 std::optional<std::string> system::load(
     compo::EntityContainer& e, DeviceHandle&& device)
 {
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
     auto const& dummyPlug = e.service<comp_app::AppLoader>()
                                 ->config<comp_app::dummy_plug::Config>();
 
@@ -402,6 +406,7 @@ std::optional<std::string> system::load(
             .speed = 1.f,
         };
     }
+#endif
 
     return api::load(std::move(device));
 }

@@ -11,7 +11,6 @@
 
 #include <coffee/imgui/imgui_binding.h>
 
-#include <coffee/comp_app/dummy_plug.h>
 #include <coffee/comp_app/file_watcher.h>
 #include <coffee/core/CProfiling>
 #include <coffee/core/base_state.h>
@@ -24,6 +23,10 @@
 #include <peripherals/typing/vectors/vector_types.h>
 
 #include <coffee/core/CDebug>
+
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+#include <coffee/comp_app/dummy_plug.h>
+#endif
 
 using namespace imgui::detail;
 
@@ -324,10 +327,14 @@ void ImGuiSystem::end_restricted(Proxy& e, time_point const&)
         return;
 
     ImGui::Render();
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
     auto const& dummyPlug = e.service<comp_app::AppLoader>()
                                 ->config<comp_app::dummy_plug::Config>();
     if(!dummyPlug.enabled)
+#endif
+    {
         submit_draws(e);
+    }
 }
 
 void ImGuiSystem::save_imgui_ini()

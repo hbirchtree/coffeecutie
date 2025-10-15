@@ -202,6 +202,7 @@
             },
             "cacheVariables": {
                 "BUILD_ASIO": "ON",
+                "BUILD_COMP_DUMMY_PLUG": "OFF",
                 "BUILD_EMSCRIPTEN": "ON",
                 "BUILD_GL_SOFTWARE_BCN": "ON",
                 "BUILD_GLES": "ON",
@@ -373,6 +374,7 @@
             "inherits": ["vcpkg-base-android"],
             "cacheVariables": {
                 "ANDROID_ARM_NEON": "ON",
+                "BUILD_COMP_DUMMY_PLUG": "OFF",
                 "BUILD_GLES_31": "OFF",
                 "BUILD_GLES_32": "OFF",
                 "CMAKE_C_FLAGS": "-march=armv7-a",

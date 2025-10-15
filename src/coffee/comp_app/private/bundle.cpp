@@ -1,7 +1,6 @@
 #include <coffee/comp_app/bundle.h>
 
 #include <coffee/comp_app/app_events.h>
-#include <coffee/comp_app/dummy_plug.h>
 #include <coffee/comp_app/eventapp_wrapper.h>
 #include <coffee/comp_app/file_mapper.h>
 #include <coffee/comp_app/file_watcher.h>
@@ -27,6 +26,10 @@
 
 #include <coffee/core/debug/formatting.h>
 #include <coffee/strings/format.h>
+
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+#include <coffee/comp_app/dummy_plug.h>
+#endif
 
 #if defined(COFFEE_EMSCRIPTEN)
 #include <emscripten/emscripten.h>
@@ -359,8 +362,10 @@ void configureDefaults(AppLoader& loader)
         WindowConfig,
         ControllerConfig,
         TouchConfig,
-        GraphicsBindingConfig,
-        dummy_plug::Config>>();
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+        dummy_plug::Config,
+#endif
+        GraphicsBindingConfig>>();
 
 #if USES_GL
     loader.addConfigs<detail::TypeList<GLConfig>>();
@@ -390,6 +395,7 @@ void configureDefaults(AppLoader& loader)
 #endif
 #endif
 
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
     auto& dummyPlug   = loader.config<dummy_plug::Config>();
     dummyPlug.enabled = platform::env::var("DUMMY_PLUG_CONFIG").has_value();
     if(dummyPlug.enabled)
@@ -399,6 +405,7 @@ void configureDefaults(AppLoader& loader)
 
         dummy_plug::fork_dummy_plugs(createContainer(), dummyPlug);
     }
+#endif
 
     /*
      * We *can* enable sRGB on desktop, and on Android
@@ -424,6 +431,7 @@ void configureDefaults(AppLoader& loader)
     if(compile_info::platform::is_macos || compile_info::platform::is_ios ||
        compile_info::platform::is_android || compile_info::platform::is_windows)
         window.flags |= window_flags_t::high_dpi;
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
     if(dummyPlug.enabled)
     {
         auto const& config = dummyPlug.config;
@@ -437,6 +445,7 @@ void configureDefaults(AppLoader& loader)
             };
         }
     }
+#endif
 }
 
 void addDefaults(
@@ -508,10 +517,12 @@ void addDefaults(
             compile_info::profiler::enabled);
     }
 
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
     auto& dummyPlug = loader.config<dummy_plug::Config>();
 
     if(dummyPlug.enabled)
         dummy_plug::insert_dummy_plug(createContainer(), dummyPlug);
+#endif
 
     /* Selection of window/event manager */
     cVerbose(10, "Loading windowing library");
@@ -652,7 +663,9 @@ void addDefaults(
             container.subsystem_cast<glscreenshot::ScreenshotProvider>();
 
         provider.m_config       = &loader.config<GLConfig>();
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
         provider.m_dummy_config = &loader.config<dummy_plug::Config>();
+#endif
     }
 #endif
 
@@ -718,7 +731,13 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
     auto frametime = std::chrono::duration_cast<stl_types::Chrono::seconds_f32>(
         time - m_prevFrame);
 
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
     auto& dummy = p.service<AppLoader>()->config<dummy_plug::Config>();
+#else
+    constexpr struct dummy_the_dummy_t {
+        const bool enabled = false;
+    } dummy;
+#endif
 
     if(frametime > 200ms && !dummy.enabled)
     {
