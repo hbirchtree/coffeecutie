@@ -140,17 +140,18 @@ function host_tools_build()
     download_host_tools
 }
 
+function get_preset_value() {
+    cmake -S $BASE_DIR --log-level DEBUG -N --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT} | grep "$1" | cut -d'"' -f2
+}
+
 function toolchain_version()
 {
-#    VERSION=$(cmake -N --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT} | grep TOOLCHAIN_VERSION | cut -d'"' -f2)
-#    [[ -z "$VERSION" ]] && VERSION=$(jq -r .toolchain.git.tag $BASE_DIR/.build.json)
-#    echo "$VERSION"
-    cmake -S $BASE_DIR --log-level DEBUG -N --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT} | grep TOOLCHAIN_VERSION | cut -d'"' -f2
+    get_preset_value TOOLCHAIN_VERSION
 }
 
 function toolchain_required()
 {
-    cmake -S $BASE_DIR --log-level DEBUG -N --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT} | grep TOOLCHAIN_REQUIRED | cut -d'"' -f2
+    get_preset_value TOOLCHAIN_REQUIRED
 }
 
 function info_dump()
@@ -367,6 +368,7 @@ function android_build()
     identify_target $1
 
     export ANDROID_SDK=${ANDROID_SDK:-${BASE_DIR}/multi_build/compilers/android/latest}
+    NDK_VERSION=$(get_preset_value NDK_VERSION)
     if [[ ! -d "${ANDROID_SDK}" ]]; then
         echo "::group::Fetching Android SDK"
         SDKTOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip"
@@ -382,17 +384,22 @@ function android_build()
         mv platform-tools latest/
         popd
         pushd ${ANDROID_SDK}
-        printf "y\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\n" | cmdline-tools/latest/bin/sdkmanager \
-            --install build-tools\;35.0.0 \
-            ndk\;25.2.9519653 \
-            ndk\;29.0.14206865 \
-            platforms\;android-19 \
-            platforms\;android-25 \
-            platforms\;android-30 \
-            platforms\;android-32 \
-            platforms\;android-33 \
-            platforms\;android-34 \
-            platforms\;android-35
+        if [ "$CI" = "1" ]; then
+            printf "y\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\n" | cmdline-tools/latest/bin/sdkmanager \
+                --install build-tools\;35.0.0 \
+                ndk\;${NDK_VERSION} \
+                platforms\;android-19 \
+                platforms\;android-33 \
+                platforms\;android-35
+        else
+            printf "y\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\n" | cmdline-tools/latest/bin/sdkmanager \
+                --install build-tools\;35.0.0 \
+                ndk\;25.2.9519653 \
+                ndk\;29.0.14206865 \
+                platforms\;android-19 \
+                platforms\;android-33 \
+                platforms\;android-35
+        fi
         popd
         echo "::endgroup::"
     else
@@ -403,6 +410,9 @@ function android_build()
     echo " * Selected vcpkg triplet ${ARCHITECTURE}-android"
     echo " * Selected Android SDK ${ANDROID_SDK}"
     export ANDROID_SDK=${ANDROID_SDK}
+
+    export TOOLCHAIN_PREFIX="${ARCHITECTURE}"
+    export TOOLCHAIN_ROOT="${ANDROID_SDK}/ndk/${NDK_VERSION}"
 
     configure_preset_and_build
 }
