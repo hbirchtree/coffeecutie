@@ -159,7 +159,7 @@ function info_dump()
     echo "::info::Preset config"
     cmake -S $BASE_DIR --log-level DEBUG -N --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
     echo "::info::CMake cache"
-    cmake -LA
+    cmake -B $BASE_DIR/multi_build/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}/ -LA
     echo "::endgroup::"
 }
 
@@ -198,6 +198,29 @@ function toolchain_download()
         mv "$FILE" "compiler.manifest"
         ;;
     esac
+}
+
+function configure_preset_and_build()
+{
+    TARGET_SPEC=""
+    if [ -n "${TARGET}" ]; then
+        TARGET_SPEC="--target ${TARGET}"
+    fi
+
+    pushd $BASE_DIR
+
+    echo "::group::Configuring project"
+    echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT})"
+    export NINJA=$(which ninja)
+    export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
+    cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT} || info_dump
+    echo "::endgroup::"
+
+    echo "::group::Building project"
+    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_MODE} ${TARGET_SPEC} || info_dump
+    echo "::endgroup::"
+
+    popd
 }
 
 function native_build()
@@ -268,24 +291,7 @@ function native_build()
         TOOLCHAIN_SYSROOT="${TOOLCHAIN_ROOT}/${ARCHITECTURE}/sysroot"
     fi
 
-    export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
-
-    TARGET_SPEC=""
-    if [ -n "${TARGET}" ]; then
-        TARGET_SPEC="--target ${TARGET}"
-    fi
-
-    echo "::group::Configuring project"
-    echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT:-/usr})"
-
-    export NINJA=$(which ninja)
-    export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
-
-    pushd $BASE_DIR
-
     if [[ $IS_LINUX = "1" ]]; then
-        cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
-
         echo "::info::Installing stdc++ libs into lib/ directory"
         mkdir -p $BASE_DIR/multi_build/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
         pushd $BASE_DIR/multi_build/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
@@ -297,36 +303,9 @@ function native_build()
             done
         fi
         popd
-    elif [[ $IS_WINDOWS = "1" ]]; then
-        cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
-    elif [[ $IS_MACOS = "1" ]]; then
-        echo "TODO"
-#        cmake_debug \
-#            -GNinja \
-#            -C${PRELOAD_FILE} \
-#            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-#            -DCMAKE_INSTALL_PREFIX=$PWD/install \
-#            -DCMAKE_MAKE_PROGRAM=$(which ninja) \
-#            -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
-#            -DVCPKG_DEP_INFO_OVERRIDE_VARS=${VCPKG_DEP_INFO_OVERRIDE_VARS} \
-#            -DVCPKG_MANIFEST_FEATURES=${TARGET_FEATURES} \
-#            -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
-#            -DHOST_TOOLS_BINARY_DIR=$HOST_TOOLS_BINARY_DIR \
-#            ${BASE_DIR} ${@:2}
-    elif [[ $SYSROOT = "cube" ]] || [[ $SYSROOT = "wii" ]]; then
-        echo "::info::Using PowerPC presets"
-        cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
     fi
-    echo "::endgroup::"
 
-    echo "::group::Building project"
-    cmake \
-        --build \
-        --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_MODE} \
-        ${TARGET_SPEC}
-    echo "::endgroup::"
-
-    popd
+    configure_preset_and_build
 }
 
 function emscripten_build()
@@ -339,7 +318,8 @@ function emscripten_build()
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
 
     DEFAULT_ROOT=$BASE_DIR/multi_build/compilers/emsdk
-    TOOLCHAIN_ROOT=${TOOLCHAIN_ROOT:-$DEFAULT_ROOT}
+    export TOOLCHAIN_ROOT=${TOOLCHAIN_ROOT:-$DEFAULT_ROOT}
+    export TOOLCHAIN_PREFIX=${ARCHITECTURE}
     if [ "${DEFAULT_ROOT}" = "${TOOLCHAIN_ROOT}" ] && [ ! -d ${TOOLCHAIN_ROOT} ]; then
         echo "::group::Getting compiler"
         CONFIG_VERSION=$(jq -r .toolchain.emsdk.version $BASE_DIR/.build.json)
@@ -362,29 +342,8 @@ function emscripten_build()
     echo "::group::Setting up emsdk environment"
     source ${TOOLCHAIN_ROOT}/emsdk_env.sh
     echo "::endgroup::"
-    echo "::info::Set up for ${PLATFORM}:${ARCHITECTURE}:${SYSROOT} (${TOOLCHAIN_ROOT})"
-    export TOOLCHAIN_ROOT=$TOOLCHAIN_ROOT
-    export TOOLCHAIN_PREFIX=${ARCHITECTURE}
 
-    TARGET_SPEC=""
-    if [ -n "${TARGET}" ]; then
-        TARGET_SPEC="--target ${TARGET}"
-    fi
-
-    pushd $BASE_DIR
-
-    echo "::group::Configuring project"
-    echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT})"
-    export NINJA=$(which ninja)
-    export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
-    cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
-    echo "::endgroup::"
-
-    echo "::group::Building project"
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_MODE} ${TARGET_SPEC}
-    echo "::endgroup::"
-
-    popd
+    configure_preset_and_build
 }
 
 function xcode_build()
@@ -397,25 +356,7 @@ function xcode_build()
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
     echo "::info::Set up for ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
 
-    export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
-
-    TARGET_SPEC=""
-    if [ -n "${TARGET}" ]; then
-        TARGET_SPEC="--target ${TARGET}"
-    fi
-
-    pushd $BASE_DIR
-
-    export NINJA=$(which ninja)
-    echo "::group::Configuring project"
-    cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
-    echo "::endgroup::"
-
-    echo "::group::Building project"
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_MODE} ${TARGET_SPEC}
-    echo "::endgroup::"
-
-    popd
+    configure_preset_and_build
 }
 
 function android_build()
@@ -460,30 +401,10 @@ function android_build()
 
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
     echo " * Selected vcpkg triplet ${ARCHITECTURE}-android"
-#    echo " * Selected Android NDK ${ANDROID_NDK} ($(cat ${ANDROID_NDK}/source.properties | grep Pkg.Revision | cut -d= -f2))"
     echo " * Selected Android SDK ${ANDROID_SDK}"
-
-    TARGET_SPEC=""
-    if [ -n "${TARGET}" ]; then
-        TARGET_SPEC="--target ${TARGET}"
-    fi
-
-    pushd $BASE_DIR
-
-    echo "::group::Configuring project"
-    echo "::info::Set up for ${ARCHITECTURE}-${SYSROOT} (${ANDROID_SDK})"
-
-    export NINJA=$(which ninja)
     export ANDROID_SDK=${ANDROID_SDK}
-    export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
-    cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
-    echo "::endgroup::"
 
-    echo "::group::Building project"
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_MODE} ${TARGET_SPEC}
-    echo "::endgroup::"
-
-    popd
+    configure_preset_and_build
 }
 
 function mingw_build()
@@ -541,38 +462,5 @@ function mingw_build()
 
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
 
-    export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
-
-    TARGET_SPEC=""
-    if [ -n "${TARGET}" ]; then
-        TARGET_SPEC="--target ${TARGET}"
-    fi
-
-    echo "::group::Configuring project"
-    echo "::info::Set up for ${TOOLCHAIN_PREFIX} (system)"
-
-    pushd ${BASE_DIR}
-
-    cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
-#    cmake_debug \
-#        -GNinja \
-#        -C${PRELOAD_FILE} \
-#        -DCMAKE_C_COMPILER=${TOOLCHAIN_PREFIX}-gcc \
-#        -DCMAKE_CXX_COMPILER=${TOOLCHAIN_PREFIX}-g++ \
-#        -DCMAKE_INSTALL_PREFIX=$PWD/install \
-#        -DCMAKE_MAKE_PROGRAM=$(which ninja) \
-#        -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
-#        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-#        -DVCPKG_DEP_INFO_OVERRIDE_VARS=${VCPKG_DEP_INFO_OVERRIDE_VARS} \
-#        -DVCPKG_TARGET_TRIPLET=x64-mingw-static \
-#        -DVCPKG_MANIFEST_NO_DEFAULT_FEATURES=ON \
-#        -DVCPKG_MANIFEST_FEATURES='blam;headful;openssl' \
-#        -DHOST_TOOLS_BINARY_DIR=$HOST_TOOLS_BINARY_DIR \
-#        ${BASE_DIR} ${@:2}
-    echo "::endgroup::"
-
-    echo "::group::Building project"
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_MODE} ${TARGET_SPEC}
-    echo "::endgroup::"
-    popd
+    configure_preset_and_build
 }
