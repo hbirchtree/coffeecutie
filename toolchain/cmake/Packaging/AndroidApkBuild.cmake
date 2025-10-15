@@ -243,7 +243,7 @@ function(ANDROIDAPK_PACKAGE)
       "${ANDROID_APK_OUTPUT_DIR}/${AAPK_DOM_NAME}.${AAPK_TARGET}-legacy_${RELEASE_PREFIX}.apk"
   )
   set(ANDROID_AAB_FILE_OUTPUT
-      "${ANDROID_APK_OUTPUT_DIR}/${AAPK_DOM_NAME}.${AAPK_TARGET}_${RELEASE_PREFIX}.apk"
+      "${ANDROID_APK_OUTPUT_DIR}/${AAPK_DOM_NAME}.${AAPK_TARGET}_${RELEASE_PREFIX}.aab"
   )
 
   set(BUILD_OUTDIR ${ANDROID_BUILD_OUTPUT}/${AAPK_TARGET})
@@ -371,45 +371,37 @@ function(ANDROIDAPK_PACKAGE)
     TARGET "${AAPK_TARGET}.apk"
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E env GRADLE_OPTS="-Dorg.gradle.daemon=false"
-            ${BUILD_OUTDIR}/gradlew assemble
+      ${BUILD_OUTDIR}/gradlew assemble${APK_ASSEMBLE_TARGET}
     WORKING_DIRECTORY ${BUILD_OUTDIR}
   )
-  if(AAPK_APK_MIN_TARGET LESS_EQUAL 19)
-    add_custom_command(
-      TARGET "${AAPK_TARGET}.apk"
-      POST_BUILD
-      COMMAND
-        ${CMAKE_COMMAND} -E copy
-        "${BUILD_OUTDIR}/app/build/outputs/apk/${RELEASE_PREFIX}/app-${RELEASE_PREFIX}.apk"
-        "${ANDROID_APK_LEGACY_FILE_OUTPUT}"
-    )
-  else()
-    add_custom_command(
-      TARGET "${AAPK_TARGET}.apk"
-      POST_BUILD
-      COMMAND
-        ${CMAKE_COMMAND} -E copy
-        "${BUILD_OUTDIR}/app/build/outputs/apk/${RELEASE_PREFIX}/app-${RELEASE_PREFIX}.apk"
-        "${ANDROID_APK_FILE_OUTPUT}"
-    )
-  endif()
+  add_custom_command(
+    TARGET "${AAPK_TARGET}.apk"
+    POST_BUILD
+    COMMAND
+      ${CMAKE_COMMAND} -E copy
+      "${BUILD_OUTDIR}/app/build/outputs/apk/${RELEASE_PREFIX}/app-${RELEASE_PREFIX}.apk"
+      "${ANDROID_APK_FILE_OUTPUT}"
+  )
   add_custom_target(
     "${AAPK_TARGET}.install"
     COMMAND ${CMAKE_COMMAND} -E env GRADLE_OPTS="-Dorg.gradle.daemon=false"
-            ${BUILD_OUTDIR}/gradlew install${APK_ASSEMBLE_FLAVOR}${APK_ASSEMBLE_TARGET}
+            ${BUILD_OUTDIR}/gradlew install${APK_ASSEMBLE_TARGET}
     WORKING_DIRECTORY ${BUILD_OUTDIR}
   )
   add_custom_target(
     "${AAPK_TARGET}.aab"
+    DEPENDS ${AAPK_TARGET}.project
+    COMMAND ${CMAKE_COMMAND} -E env GRADLE_OPTS="-Dorg.gradle.daemon=false"
+      ${BUILD_OUTDIR}/gradlew bundle${APK_ASSEMBLE_TARGET}
     COMMAND
       ${CMAKE_COMMAND} -E copy
-      "${BUILD_OUTDIR}/app/modern/${RELEASE_PREFIX}/app-modern-${RELEASE_PREFIX}.aab"
+      "${BUILD_OUTDIR}/app/build/outputs/bundle/${RELEASE_PREFIX}/app-${RELEASE_PREFIX}.aab"
       "${ANDROID_AAB_FILE_OUTPUT}"
     WORKING_DIRECTORY ${BUILD_OUTDIR}
   )
 
   add_dependencies("${AAPK_TARGET}.install" "${AAPK_TARGET}.apk")
-  add_dependencies("${AAPK_TARGET}.aab" "${AAPK_TARGET}.apk")
+  add_dependencies("${AAPK_TARGET}.install" "${AAPK_TARGET}.aab")
 
   # ############################################################################
   # ############################################################################
