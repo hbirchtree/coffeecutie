@@ -153,6 +153,16 @@ function toolchain_required()
     cmake -S $BASE_DIR --log-level DEBUG -N --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT} | grep TOOLCHAIN_REQUIRED | cut -d'"' -f2
 }
 
+function info_dump()
+{
+    echo "::group::Configure and build info"
+    echo "::info::Preset config"
+    cmake -S $BASE_DIR --log-level DEBUG -N --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
+    echo "::info::CMake cache"
+    cmake -LA
+    echo "::endgroup::"
+}
+
 function toolchain_registry()
 {
     mkdir -p $BASE_DIR/multi_build/compilers/meta
