@@ -27,7 +27,7 @@ aarch64|arm64)
 ;;
 esac
 
-HOST_TOOLS_BINARY_DIR=$BASE_DIR/multi_build/host_$HOST_TOOLCHAIN_TRIPLET/bin
+HOST_TOOLS_BINARY_DIR=$BASE_DIR/multi_build/host-$HOST_TOOLCHAIN_TRIPLET/bin
 
 export PATH=$PATH:${BASE_DIR}/multi_build/host-${HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/x64-linux/tools/glslang:${BASE_DIR}/multi_build/host-${HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/x64-linux/tools/spirv-tools/
 export GLSLANG_PROGRAM=$(which glslangValidator)

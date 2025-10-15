@@ -170,7 +170,7 @@ jobs:
     - name: Host tools cache
       uses: actions/cache@v4
       with:
-        path: source/multi_build/host_x64-osx
+        path: source/multi_build/host-x64-osx
         key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools') }}
     - name: Building host tools
       run: source/cb host-build
