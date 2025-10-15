@@ -146,7 +146,7 @@ jobs:
           source/multi_build/${{matrix.artifact}}/install/packaged
         if-no-files-found: error
   macOS_HostTools:
-    runs-on: macos-13
+    runs-on: macos-latest-large
     needs: Release
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -177,7 +177,7 @@ jobs:
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
   macOS:
-    runs-on: macos-13
+    runs-on: macos-latest-large
     needs: macOS_HostTools
     strategy:
       fail-fast: false
