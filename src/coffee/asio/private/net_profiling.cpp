@@ -1,3 +1,4 @@
+#include "peripherals/constants.h"
 #include <coffee/net/net_profiling.h>
 
 #include <coffee/asio/asio_worker.h>
@@ -93,8 +94,9 @@ void ProfilingExport()
         reportBinRsc.setHeaderField(
             http::header_field::accept,
             http::header::to_string::content_type(http::content_type::json));
-        reportBinRsc.setHeaderField(
-            http::header_field::user_agent, "Coffee/1.0");
+        if constexpr(!compile_info::platform::is_emscripten)
+            reportBinRsc.setHeaderField(
+                http::header_field::user_agent, "Coffee/1.0");
 
         std::string target_chrome;
         Profiling::ExportChromeTracerData(target_chrome);
