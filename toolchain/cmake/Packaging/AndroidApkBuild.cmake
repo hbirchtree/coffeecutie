@@ -234,6 +234,7 @@ function(ANDROIDAPK_PACKAGE)
   set(RELEASE_PREFIX "debug")
   if(CMAKE_BUILD_TYPE MATCHES "Rel")
     set(APK_ASSEMBLE_TARGET release)
+    set(RELEASE_PREFIX release)
   endif()
 
   set(ANDROID_APK_FILE_OUTPUT
@@ -374,12 +375,16 @@ function(ANDROIDAPK_PACKAGE)
       ${BUILD_OUTDIR}/gradlew assemble${APK_ASSEMBLE_TARGET}
     WORKING_DIRECTORY ${BUILD_OUTDIR}
   )
+  set(APK_SUFFIX "")
+  if(RELEASE_PREFIX STREQUAL "release")
+      set(APK_SUFFIX "-unsigned")
+  endif()
   add_custom_command(
     TARGET "${AAPK_TARGET}.apk"
     POST_BUILD
     COMMAND
       ${CMAKE_COMMAND} -E copy
-      "${BUILD_OUTDIR}/app/build/outputs/apk/${RELEASE_PREFIX}/app-${RELEASE_PREFIX}.apk"
+      "${BUILD_OUTDIR}/app/build/outputs/apk/${RELEASE_PREFIX}/app-${RELEASE_PREFIX}${APK_SUFFIX}.apk"
       "${ANDROID_APK_FILE_OUTPUT}"
   )
   add_custom_target(
