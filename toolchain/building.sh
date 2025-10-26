@@ -156,6 +156,7 @@ function toolchain_required()
 
 function info_dump()
 {
+    if [ -z "${CI:-}" ]; then return; fi
     echo "::group::Configure and build info"
     echo "::info::Preset config"
     cmake -S $BASE_DIR --log-level DEBUG -N --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
@@ -328,6 +329,8 @@ function emscripten_build()
         git clone https://github.com/emscripten-core/emsdk.git ${TOOLCHAIN_ROOT}
         ${TOOLCHAIN_ROOT}/emsdk install $SELECTED_VERSION
         ${TOOLCHAIN_ROOT}/emsdk activate $SELECTED_VERSION
+        echo "::info::Transplanting patched Emscripten.cmake into EMSDK"
+        cp ${BASE_DIR}/toolchain/cmake/Platform/Emscripten.cmake ${TOOLCHAIN_ROOT}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
         echo "::endgroup::"
     else
         echo "::info::Using compiler on disk"
@@ -343,6 +346,8 @@ function emscripten_build()
     echo "::group::Setting up emsdk environment"
     source ${TOOLCHAIN_ROOT}/emsdk_env.sh
     echo "::endgroup::"
+
+    export EMSCRIPTEN=${TOOLCHAIN_ROOT}
 
     configure_preset_and_build
 }
@@ -384,7 +389,7 @@ function android_build()
         mv platform-tools latest/
         popd
         pushd ${ANDROID_SDK}
-        if [ "$CI" = "1" ]; then
+        if [ "${CI:-0}" = "1" ]; then
             printf "y\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\n" | cmdline-tools/latest/bin/sdkmanager \
                 --install build-tools\;35.0.0 \
                 ndk\;${NDK_VERSION} \

@@ -32,6 +32,11 @@ case ${1:-} in
     cmake -N --log-level DEBUG --preset $2 | grep -A512 'Preset environment variables' | grep -v 'Preset environment variables' | sed '/^$/d' | sed -e 's/^\s*//g'
     echo NINJA=$(which ninja)
     echo VCPKG_ROOT=$(dirname $(realpath $(which vcpkg)))
+    if [[ "$2" =~ ^web:wasm32-emscripten* ]]; then
+        echo EMSCRIPTEN=${BASE_DIR}/compilers/emsdk
+        echo EMSDK=${BASE_DIR}/compilers/emsdk
+        echo PATH=${BASE_DIR}/compilers/emsdk/upstream/bin:${PATH}
+    fi
 ;;
 "env")
     VARS=$(${0} print-env ${2//:/-} | tr  '\n' ' ')
@@ -135,9 +140,11 @@ Build tools:
 cmake -S ${BASE_DIR} --list-presets | grep '\-' \
     | sed -E 's/ti-sgx/tisgx/g' \
     | sed -E 's/30-gl/30gl/g' \
+    | sed -E 's/webgl2-custom/webgl2custom/g' \
     | sed -E 's/^  "([a-z]+)-(.*)-([a-z0-9]+)"( +- .*)$/        \1:\2:\3\4/g' \
     | sed -E 's/tisgx/ti-sgx/g' \
     | sed -E 's/30gl/30-gl/g' \
+    | sed -E 's/webgl2custom/webgl2-custom/g' \
     | sed -E 's/^  "([a-z0-9-]+)"( +-.*)$/        \1\2/g'
 
 # echo "

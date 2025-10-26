@@ -45,7 +45,12 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
 
     const auto major_version = std::min(
         m_config->version.major,
-        m_dummy_config->graphics_config.value("major", i32(99)));
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+        m_dummy_config->graphics_config.value("major", i32(99))
+#else
+        99
+#endif
+        );
     const bool use_pbo = major_version >= 3;
 
     auto read_pixels = [this, use_pbo] {
