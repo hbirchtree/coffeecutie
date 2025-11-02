@@ -208,7 +208,7 @@ jobs:
     - name: Installing Inkscape + other stuff
       run: |
         brew install --cask inkscape
-        brew install automake
+        brew install automake autoconf libtool
     - name: Building host tools
       run: source/cb host-build
       env:
