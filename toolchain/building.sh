@@ -114,6 +114,13 @@ function host_tools_build()
 {
     if [[ "${BUILD_HOST_TOOLS:-1}" != "1" ]]; then
         echo "::info::Skipping host tools build"
+        if [[ "${CI:-0}" = "true" ]]; then
+            echo "::group::Trimming host toolchain directory"
+            find "$BASE_DIR/multi_build/host-$HOST_TOOLCHAIN_TRIPLET" -name *.o -delete
+            find "$BASE_DIR/multi_build/host-$HOST_TOOLCHAIN_TRIPLET" -name *.a -delete
+            find multi_build/host-${HOST_TOOLCHAIN_TRIPLET}/bin -type f -exec strip {} \;
+            echo "::endgroup::"
+        fi
         return
     fi
 
@@ -223,6 +230,15 @@ function configure_preset_and_build()
     fi
 
     pushd $BASE_DIR
+
+    if [ "${CI:-0}" = "true" ]; then
+        echo "::group::Pre-configure space summary"
+        echo "::info::df"
+        df -h ${BASE_DIR}/..
+        echo "::info::du"
+        du -hd2 ${BASE_DIR}
+        echo "::endgroup::"
+    fi
 
     echo "::group::Configuring project"
     echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT})"
@@ -430,22 +446,6 @@ function android_build()
         echo "::endgroup::"
     else
         echo "::info::Using preinstalled Android SDK: ${ANDROID_SDK}"
-    fi
-
-    if [ "${CI:-0}" = "true" ]; then
-        echo "::group::Trimming host toolchain directory"
-        find "$BASE_DIR/multi_build/host-$HOST_TOOLCHAIN_TRIPLET" -name *.o -delete
-        find "$BASE_DIR/multi_build/host-$HOST_TOOLCHAIN_TRIPLET" -name *.a -delete
-        echo "::endgroup::"
-    fi
-
-    if [ "${CI:-0}" = "true" ]; then
-        echo "::group::Pre-configure space summary"
-        echo "::info::df"
-        df -h ${BASE_DIR}/..
-        echo "::info::du"
-        du -hd2 ${BASE_DIR}
-        echo "::endgroup::"
     fi
 
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
