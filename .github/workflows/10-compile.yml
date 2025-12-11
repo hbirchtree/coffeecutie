@@ -116,6 +116,10 @@ jobs:
       run: source/cb host-build
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+    - name: Space summary
+      run: |
+        df -h
+        du -hd2 source/
     - name: Building project
       id: buildProject
       continue-on-error: true
