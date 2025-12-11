@@ -120,7 +120,7 @@ function host_tools_build()
     export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
     cmake_debug --preset host-${HOST_TOOLCHAIN_TRIPLET}
     cmake_debug --build --preset host-${HOST_TOOLCHAIN_TRIPLET}-rel
-    if [[ "${CI:-0}" = "1" ]]; then
+    if [[ "${CI:-0}" = "true" ]]; then
         # Save some space
         find multi_build/host-${HOST_TOOLCHAIN_TRIPLET}/bin -type f -exec strip {} \;
     fi
@@ -137,7 +137,7 @@ function host_tools_build()
 
     echo "::endgroup::"
 
-    if [[ "${CI:-0}" = "1" ]]; then
+    if [[ "${CI:-0}" = "true" ]]; then
         # Not needed on CI
         return
     fi
@@ -397,7 +397,7 @@ function android_build()
         mv platform-tools latest/
         popd
         pushd ${ANDROID_SDK}
-        if [ "${CI:-0}" = "1" ]; then
+        if [ "${CI:-0}" = "true" ]; then
             printf "y\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\ny\n" | cmdline-tools/latest/bin/sdkmanager \
                 --install build-tools\;35.0.0 \
                 ndk\;${NDK_VERSION} \
@@ -419,7 +419,7 @@ function android_build()
         echo "::info::Using preinstalled Android SDK: ${ANDROID_SDK}"
     fi
 
-    if [ "${CI:-0}" = "1" ]; then
+    if [ "${CI:-0}" = "true" ]; then
         echo "::group::Trimming host toolchain directory"
         find "$BASE_DIR/multi_build/host-$HOST_TOOLCHAIN_TRIPLET" -name *.o -delete
         find "$BASE_DIR/multi_build/host-$HOST_TOOLCHAIN_TRIPLET" -name *.a -delete

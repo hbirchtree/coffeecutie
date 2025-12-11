@@ -121,7 +121,6 @@ jobs:
       continue-on-error: true
       run: source/cb build ${{matrix.variant}}/install
       env:
-        CI: "1" # used to determine if we should be careful with disk space
         EMBEDDED_REPORT_URL: "https://reports.speen.dev"
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Upload vcpkg logs
