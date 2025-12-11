@@ -112,10 +112,7 @@ jobs:
       with:
         path: source/multi_build/host-x64-linux-native
         key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools') }}
-    - name: Building host tools
-      run: source/cb host-build
-      env:
-        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+        fail-on-cache-miss: true
     - name: Space summary
       run: |
         df -h
@@ -125,6 +122,7 @@ jobs:
       continue-on-error: true
       run: source/cb build ${{matrix.variant}}/install
       env:
+        BUILD_HOST_TOOLS: '1'
         EMBEDDED_REPORT_URL: "https://reports.speen.dev"
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Upload vcpkg logs

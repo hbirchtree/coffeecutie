@@ -112,6 +112,11 @@ function download_host_tools()
 
 function host_tools_build()
 {
+    if [[ "${BUILD_HOST_TOOLS:-1}" != "1" ]]; then
+        echo "::info::Skipping host tools build"
+        return
+    fi
+
     echo "::group::Building host tools"
 
     pushd ${BASE_DIR}
@@ -236,7 +241,6 @@ function configure_preset_and_build()
 function native_build()
 {
     # Prepare the host tools
-    BUILD_HOST_TOOLS=${BUILD_HOST_TOOLS:-1}
     if [ ${BUILD_HOST_TOOLS} = 1 ]; then
         host_tools_build
     fi
