@@ -115,8 +115,14 @@ jobs:
         fail-on-cache-miss: true
     - name: Space summary
       run: |
+        echo "::info::Total disk usage"
         df -h
+        echo "::info::Source dir space usage"
+        df -h source/
+        echo "::info::du in source/"
         du -hd2 source/
+        echo "::info::du in ."
+        du -hd2 .
     - name: Building project
       id: buildProject
       continue-on-error: true
