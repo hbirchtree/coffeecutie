@@ -231,6 +231,15 @@ function configure_preset_and_build()
     cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT} || info_dump
     echo "::endgroup::"
 
+    if [ "${CI:-0}" = "true" ]; then
+        echo "::group::Post-configure space summary"
+        echo "::info::df"
+        df -h ${BASE_DIR}/..
+        echo "::info::du"
+        du -hd2 ${BASE_DIR}
+        echo "::endgroup::"
+    fi
+
     echo "::group::Building project"
     cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_MODE} ${TARGET_SPEC} || info_dump
     echo "::endgroup::"
@@ -427,6 +436,15 @@ function android_build()
         echo "::group::Trimming host toolchain directory"
         find "$BASE_DIR/multi_build/host-$HOST_TOOLCHAIN_TRIPLET" -name *.o -delete
         find "$BASE_DIR/multi_build/host-$HOST_TOOLCHAIN_TRIPLET" -name *.a -delete
+        echo "::endgroup::"
+    fi
+
+    if [ "${CI:-0}" = "true" ]; then
+        echo "::group::Pre-configure space summary"
+        echo "::info::df"
+        df -h ${BASE_DIR}/..
+        echo "::info::du"
+        du -hd2 ${BASE_DIR}
         echo "::endgroup::"
     fi
 
