@@ -47,7 +47,8 @@ jobs:
       uses: actions/cache@v4
       with:
         path: source/multi_build/host-x64-linux-native
-        key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools') }}
+        key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools','toolchain/building.sh','vcpkg.json','vcpkg-configuration.json') }}
+        fail-on-cache-miss: true
     - name: Building host tools
       run: source/cb host-build
       env:
@@ -111,7 +112,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: source/multi_build/host-x64-linux-native
-        key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools') }}
+        key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools','toolchain/building.sh','vcpkg.json','vcpkg-configuration.json') }}
         fail-on-cache-miss: true
     - name: Space summary
       run: |
@@ -178,7 +179,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: source/multi_build/host-x64-osx
-        key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools') }}
+        key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools','toolchain/building.sh','vcpkg.json','vcpkg-configuration.json') }}
     - name: Building host tools
       run: source/cb host-build
       env:
