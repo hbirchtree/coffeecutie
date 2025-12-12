@@ -118,7 +118,7 @@ function host_tools_build()
             echo "::group::Trimming host toolchain directory"
             find "$BASE_DIR/multi_build/host-$HOST_TOOLCHAIN_TRIPLET" -name *.o -delete
             find "$BASE_DIR/multi_build/host-$HOST_TOOLCHAIN_TRIPLET" -name *.a -delete
-            find multi_build/host-${HOST_TOOLCHAIN_TRIPLET}/bin -type f -exec strip {} \;
+            find "$BASE_DIR/multi_build/host-${HOST_TOOLCHAIN_TRIPLET}/bin" -type f -exec strip {} \;
             echo "::endgroup::"
         fi
         return
