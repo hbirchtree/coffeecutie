@@ -182,6 +182,9 @@ function info_dump()
     cmake -S $BASE_DIR --log-level DEBUG -N --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
     echo "::info::CMake cache"
     cmake -B $BASE_DIR/multi_build/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}/ -LA
+    echo "::info::Disk usage"
+    df -h ${BASE_DIR}
+    du -hd2 ${BASE_DIR}
     echo "::endgroup::"
 }
 
@@ -253,6 +256,20 @@ function configure_preset_and_build()
         df -h ${BASE_DIR}/..
         echo "::info::du"
         du -hd2 ${BASE_DIR}
+        echo "::endgroup::"
+        echo "::group::Trimming VCPKG_ROOT buildtrees"
+        rm -rf ${VCPKG_ROOT}/buildtrees || true
+        echo "::endgroup::"
+        echo "::group::Trimming debug libraries"
+        case $(uname) in
+            Linux)
+                rm -r multi_build/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}/vcpkg_installed/$(get_preset_value VCPKG_TRIPLET)/debug || true
+                rm -r multi_build/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}/vcpkg_installed/x64-linux/debug || true
+            ;;
+            *)
+                echo "::info::Missing debug trim for $(uname)"
+            ;;
+        esac
         echo "::endgroup::"
     fi
 

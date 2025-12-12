@@ -11,20 +11,17 @@
         "fmt",
         "glm",
         { "name": "hash-library", "platform": "!bare" },
-        { "name": "ktx", "features": ["vulkan"], "platform": "!bare" },
         "magic-enum",
         "ms-gsl",
         "nlohmann-json",
         { "name": "outcome", "platform": "(android & !arm64) & !emscripten & !(arm & linux) & !(x64 & linux) & !osx & !windows" },
-        { "name": "pvrtcdec", "platform": "android | emscripten | (linux & x64)" },
         "rapidjson",
         "stb",
         "utfcpp",
         { "name": "zlib-ng", "platform": "(linux & x64) | osx | windows" },
         "zstd",
         { "name": "gctools", "platform": "gamecube | wii", "host": true },
-        { "name": "libogc", "platform": "gamecube | wii" },
-        { "name": "glslang", "host": true, "features": ["tools"] }
+        { "name": "libogc", "platform": "gamecube | wii" }
     ],
     "features": {
         "assimp": {
@@ -45,7 +42,6 @@
         "headful": { 
             "description": "Graphical support",
             "dependencies": [
-                { "name": "angle", "platform": "(android & arm64) | (linux & x64)" },
                 { "name": "appimage-runtime", "platform": "linux & (x64 | arm64)" },
                 { "name": "discord-rpc", "platform": "(linux & x64) | osx | (windows & !mingw)" },
                 { "name": "sdl2", "platform": "linux & x64", "default-features": false, "features": ["offscreen", "wayland", "x11"] },
@@ -63,8 +59,9 @@
             "dependencies": [
                 { "name": "angle", "platform": "windows & uwp" },
                 "bcdec",
-                { "name": "glslang", "features": ["tools"], "host": true },
                 { "name": "imgui", "features": ["docking-experimental"]},
+                { "name": "ktx", "features": ["vulkan"], "platform": "!bare" },
+                { "name": "pvrtcdec", "platform": "android | emscripten | (linux & x64)" },
                 "vulkan-headers"
             ]
         },
@@ -84,8 +81,6 @@
             "dependencies": [
                 "asio",
                 { "name": "curl", "platform": "!emscripten" },
-                "flatbuffers",
-                { "name": "flatbuffers", "host": true },
                 { "name": "gamenetworkingsockets", "platform": "!emscripten & !(android & arm32)" }
             ]
         },
@@ -123,7 +118,6 @@
         "image",
         "media",
         "network",
-        "openssl",
-        "physics"
+        "openssl"
     ]
 }
