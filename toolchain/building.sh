@@ -251,12 +251,6 @@ function configure_preset_and_build()
     echo "::endgroup::"
 
     if [ "${CI:-0}" = "true" ]; then
-        echo "::group::Post-configure space summary"
-        echo "::info::df"
-        df -h ${BASE_DIR}/..
-        echo "::info::du"
-        du -hd2 ${BASE_DIR}
-        echo "::endgroup::"
         echo "::group::Trimming VCPKG_ROOT buildtrees"
         rm -rf ${VCPKG_ROOT}/buildtrees || true
         echo "::endgroup::"
@@ -270,6 +264,12 @@ function configure_preset_and_build()
                 echo "::info::Missing debug trim for $(uname)"
             ;;
         esac
+        echo "::endgroup::"
+        echo "::group::Post-configure space summary"
+        echo "::info::df"
+        df -h ${BASE_DIR}/..
+        echo "::info::du"
+        du -hd2 ${BASE_DIR}
         echo "::endgroup::"
     fi
 
