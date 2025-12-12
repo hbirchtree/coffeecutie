@@ -263,7 +263,7 @@ function configure_preset_and_build()
         echo "::group::Trimming debug libraries"
         case $(uname) in
             Linux)
-                rm -r multi_build/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}/vcpkg_installed/$(get_preset_value VCPKG_TRIPLET)/debug || true
+                rm -r multi_build/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}/vcpkg_installed/$(get_preset_value VCPKG_TARGET_TRIPLET)/debug || true
                 rm -r multi_build/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}/vcpkg_installed/x64-linux/debug || true
             ;;
             *)
