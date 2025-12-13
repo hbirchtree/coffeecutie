@@ -174,7 +174,7 @@ jobs:
     - name: Installing Inkscape + other stuff
       run: |
         brew install --cask inkscape
-        brew install automake
+        brew install automake libtool
     - name: Host tools cache
       uses: actions/cache@v4
       with:
