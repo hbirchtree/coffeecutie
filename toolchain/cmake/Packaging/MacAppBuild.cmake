@@ -231,7 +231,6 @@ macro(
             set(OUT_NAME "icon_${SIZE}x${SIZE}${SCALE_STRING}.png")
             add_custom_command(
                 TARGET ${TARGET}.icns
-                DEPENDS ${TARGET}.iconset
                 PRE_BUILD
                 COMMAND
                     sips -z ${ICON_SIZE} ${ICON_SIZE}
