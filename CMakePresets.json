@@ -99,8 +99,8 @@
                 "VCPKG_TARGET_TRIPLET": "$env{ARCHITECTURE}"
             },
             "environment": {
-                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-osx/bin",
-                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-osx/vcpkg_installed/x64-osx/tools"
+                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-$env{HOST_TOOLCHAIN_TRIPLET}/bin",
+                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-$env{HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/$env{HOST_TOOLCHAIN_TRIPLET}/tools"
             }
         },
         {
