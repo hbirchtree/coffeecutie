@@ -1,0 +1,207 @@
+{
+    "version": 10,
+    "include": [
+        "CMakePresets.base.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "vcpkg-base-mac-ninja",
+            "inherits": ["vcpkg-base"],
+            "hidden": true,
+            "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Darwin"
+            },
+            "cacheVariables": {
+                "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/all-ios.toolchain.cmake",
+                "VCPKG_TARGET_TRIPLET": "$env{ARCHITECTURE}"
+            },
+            "environment": {
+                "NINJA": "$penv{NINJA}"
+            }
+        },
+        {
+            "name": "vcpkg-base-mac",
+            "inherits": ["vcpkg-base"],
+            "hidden": true,
+            "generator": "Xcode",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Darwin"
+            },
+            "cacheVariables": {
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/all-ios.toolchain.cmake",
+                "VCPKG_TARGET_TRIPLET": "$env{ARCHITECTURE}"
+            },
+            "environment": {
+            }
+        },
+        {
+            "name": "host-x64-osx",
+            "displayName": "Host tools for Darwin/macOS x86_64",
+            "inherits": ["host-tools"],
+            "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Darwin"
+            },
+            "cacheVariables": {
+                "CMAKE_C_FLAGS": "-march=native",
+                "CMAKE_CXX_FLAGS": "-march=native"
+            },
+            "environment": {
+                "NINJA": "$penv{NINJA}"
+            }
+        },
+        {
+            "name": "host-arm64-osx",
+            "displayName": "Host tools for Darwin/macOS ARM64",
+            "inherits": ["host-tools"],
+            "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Darwin"
+            },
+            "cacheVariables": {
+                "CMAKE_C_FLAGS": "-march=native",
+                "CMAKE_CXX_FLAGS": "-march=native",
+                "CMAKE_MAKE_PROGRAM": "$env{NINJA}"
+            },
+            "environment": {
+                "NINJA": "$penv{NINJA}"
+            }
+        },
+        {
+            "name": "desktop-x86_64-darwin-macos",
+            "displayName": "Darwin/macOS x86_64 Core OpenGL (SDL2)",
+            "inherits": ["vcpkg-base-mac-ninja"],
+            "cacheVariables": {
+                "BUILD_DISCORD_RPC": "ON",
+                "DEPLOYMENT_TARGET": "10.15",
+                "PLATFORM": "MAC"
+            },
+            "environment": {
+                "ARCHITECTURE": "x64-osx"
+            }
+        },
+        {
+            "name": "desktop-universal-darwin-macos",
+            "displayName": "macOS Universal Core OpenGL (SDL2)",
+            "inherits": ["vcpkg-base-mac"],
+            "cacheVariables": {
+                "BUILD_DISCORD_RPC": "ON",
+                "DEPLOYMENT_TARGET": "10.15",
+                "PLATFORM": "MAC"
+            },
+            "environment": {
+                "ARCHITECTURE": "x64-osx"
+            }
+        },
+        {
+            "name": "desktop-universal-darwin-catalyst",
+            "displayName": "macOS Catalyst Core OpenGL (SDL2) (Experimental)",
+            "inherits": ["vcpkg-base-mac"],
+            "cacheVariables": {
+                "BUILD_DISCORD_RPC": "ON",
+                "DEPLOYMENT_TARGET": "13.1",
+                "PLATFORM": "MAC_CATALYST"
+            },
+            "environment": {
+                "ARCHITECTURE": "x64-osx"
+            }
+        },
+        {
+            "name": "ios-arm64-darwin-iphone",
+            "displayName": "iOS ARM64 + UIKit + OpenGL ES",
+            "inherits": ["vcpkg-base-mac"],
+            "cacheVariables": {
+                "BUILD_DISCORD_RPC": "ON",
+                "CMAKE_MAKE_PROGRAM": "",
+                "PLATFORM": "OS64COMBINED"
+            },
+            "environment": {
+                "ARCHITECTURE": "arm64-ios"
+            }
+        },
+        {
+            "name": "ios-arm64-darwin-tvos",
+            "displayName": "tvOS ARM64 + UIKit + OpenGL ES",
+            "inherits": ["vcpkg-base-mac"],
+            "cacheVariables": {
+                "BUILD_DISCORD_RPC": "ON",
+                "PLATFORM": "TVOSCOMBINED"
+            },
+            "environment": {
+                "ARCHITECTURE": "arm64-ios"
+            }
+        },
+        {
+            "name": "ios-x86_64-darwin-simulator",
+            "displayName": "iOS Simulator x86_64 + UIKit + OpenGL ES",
+            "inherits": ["vcpkg-base-mac"],
+            "cacheVariables": {
+                "BUILD_DISCORD_RPC": "ON",
+                "PLATFORM": "SIMULATOR64"
+            },
+            "environment": {
+                "ARCHITECTURE": "x64-osx"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "host-x64-osx-rel",
+            "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "host-x64-osx",
+            "inherits": "base-mac"
+        },
+        {
+            "name": "host-arm64-osx-rel",
+            "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "host-arm64-osx",
+            "inherits": "base-mac"
+        },
+        {
+            "name": "desktop-x86_64-darwin-macos-rel",
+            "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "desktop-x86_64-darwin-macos",
+            "inherits": "base-mac"
+        },
+        {
+            "name": "desktop-x86_64-darwin-macos-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "desktop-x86_64-darwin-macos",
+            "inherits": "base-mac"
+        },
+        {
+            "name": "desktop-universal-darwin-macos-rel",
+            "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "desktop-universal-darwin-macos",
+            "inherits": "base-mac"
+        },
+        {
+            "name": "desktop-universal-darwin-macos-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "desktop-universal-darwin-macos",
+            "inherits": "base-mac"
+        },
+        {
+            "name": "ios-x86_64-darwin-simulator-rel",
+            "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "ios-x86_64-darwin-simulator",
+            "inherits": "base-mac"
+        },
+        {
+            "name": "ios-x86_64-darwin-simulator-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "ios-x86_64-darwin-simulator",
+            "inherits": "base-mac"
+        }
+    ]
+}

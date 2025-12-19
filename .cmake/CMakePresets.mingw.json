@@ -1,0 +1,105 @@
+{
+    "version": 10,
+    "include": [
+        "CMakePresets.base.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "vcpkg-base-mingw",
+            "inherits": ["vcpkg-base"],
+            "hidden": true,
+            "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Linux"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
+                "CMAKE_C_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-gcc",
+                "CMAKE_C_FLAGS": "-D_WIN32_WINNT=0x0602 -Wa,-mbig-obj",
+                "CMAKE_CXX_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-g++",
+                "CMAKE_CXX_FLAGS": "-D_WIN32_WINNT=0x0602 -Wa,-mbig-obj",
+                "CMAKE_DLLTOOL": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-dlltool",
+                "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
+                "CMAKE_RC_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-windres",
+                "CMAKE_READELF": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-readelf",
+                "CMAKE_STRIP": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-strip",
+                "CMAKE_SYSTEM_NAME": "Windows",
+                "MINGW": "1",
+                "MINGW64": "1",
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "x64;mingw;windows",
+                "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON",
+                "VCPKG_MANIFEST_FEATURES": "audio;blam;gleam;headful;network;openssl",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports-mingw/protobuf;${sourceDir}/toolchain/vcpkg/ports-mingw/openssl;${sourceDir}/toolchain/vcpkg/ports-mingw/hash-library",
+                "VCPKG_TARGET_TRIPLET": "x64-mingw-posix-static",
+                "WINDOWS_EXTRA_LIBRARIES": "$env{TOOLCHAIN_ROOT}/$env{ARCHITECTURE}/bin/libwinpthread-1.dll;$env{TOOLCHAIN_ROOT}/$env{ARCHITECTURE}/lib/libgcc_s_seh-1.dll;$env{TOOLCHAIN_ROOT}/$env{ARCHITECTURE}/lib/libstdc++-6.dll"
+            },
+            "environment": {
+                "ARCHITECTURE": "x86_64-w64-mingw32",
+                "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/compilers/mingw/$env{ARCHITECTURE}/$env{TOOLCHAIN_VERSION}",
+                "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
+                "NINJA": "$penv{NINJA}",
+                "TOOLCHAIN_VERSION": "v2.2"
+            }
+        },
+        {
+            "name": "desktop-x86_64-w64-mingw32-posix",
+            "displayName": "Windows x86_64v2 SSE4.2 (SDL2/MinGW)",
+            "inherits": ["vcpkg-base-mingw"],
+            "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Linux"
+            },
+            "cacheVariables": {
+                "MINGW64": "1",
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "x64;mingw;windows",
+                "VCPKG_TARGET_TRIPLET": "x64-mingw-posix-static"
+            },
+            "environment": {
+                "ARCHITECTURE": "x86_64-w64-mingw32"
+            }
+        },
+        {
+            "name": "desktop-i686-w64-mingw32-posix",
+            "displayName": "Windows x86 (SDL2/Win32)",
+            "inherits": ["vcpkg-base-mingw"],
+            "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Linux"
+            },
+            "cacheVariables": {
+                "MINGW64": "1",
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "x86;mingw;windows",
+                "VCPKG_TARGET_TRIPLET": "x86-mingw-posix-static"
+            },
+            "environment": {
+                "ARCHITECTURE": "i686-w64-mingw32"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "desktop-x86_64-w64-mingw32-posix-rel",
+            "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "desktop-x86_64-w64-mingw32-posix",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "desktop-x86_64-w64-mingw32-posix-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "desktop-x86_64-w64-mingw32-posix",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "desktop-i686-w64-mingw32-posix-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "desktop-i686-w64-mingw32-posix",
+            "inherits": "base-linux"
+        }
+    ]
+}

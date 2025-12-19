@@ -1,0 +1,114 @@
+{
+    "version": 10,
+    "configurePresets": [
+        {
+            "name": "vcpkg-base-underlying",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/multi_build/${presetName}",
+            "cacheVariables": {
+                "BUILD_TESTS": "OFF",
+                "BUILD_SHARED_LIBS": "FALSE",
+                "CMAKE_BUILD_TYPE": "$env{BUILD_TYPE}",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/multi_build/${presetName}/install",
+                "CMAKE_POLICY_VERSION_MINIMUM": "3.5",
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "HOST_TOOLS_BINARY_DIR": "$env{HOST_TOOLS_BINARY_DIR}",
+                "GLSLANG_PROGRAM": "$env{GLSLANG_PROGRAM}",
+                "VCPKG_MANIFEST_FEATURES": "$penv{TARGET_FEATURES}"
+            },
+            "environment": {
+                "GLSLANG_PROGRAM": "$env{HOST_TOOLS_DIR}/glslang/glslangValidator",
+                "FLATC_PROGRAM": "$env{HOST_TOOLS_DIR}/flatbuffers/flatc",
+                "VCPKG_ROOT": "$penv{VCPKG_ROOT}"
+            }
+        },
+        {
+            "name": "vcpkg-base-underlying-x64-linux",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/multi_build/${presetName}",
+            "environment": {
+                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
+                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools"
+            }
+        },
+        {
+            "name": "vcpkg-base-underlying-arm64-linux",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/multi_build/${presetName}",
+            "environment": {
+                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-$env{HOST_TOOLCHAIN_TRIPLET}/bin",
+                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-$env{HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/$env{HOST_TOOLCHAIN_TRIPLET}/tools"
+            }
+        },
+        {
+            "name": "vcpkg-base-underlying-arm64-osx",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/multi_build/${presetName}",
+            "environment": {
+                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-$env{HOST_TOOLCHAIN_TRIPLET}/bin",
+                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-$env{HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/$env{HOST_TOOLCHAIN_TRIPLET}/tools"
+            }
+        },
+        {
+            "name": "vcpkg-base-underlying-x64-osx",
+            "inherits": ["vcpkg-base-underlying"],
+            "hidden": true,
+            "binaryDir": "${sourceDir}/multi_build/${presetName}",
+            "environment": {
+                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-$env{HOST_TOOLCHAIN_TRIPLET}/bin",
+                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-$env{HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/$env{HOST_TOOLCHAIN_TRIPLET}/tools"
+            }
+        },
+        {
+            "name": "vcpkg-base",
+            "inherits": ["vcpkg-base-underlying-x64-linux"],
+            "hidden": true,
+            "binaryDir": "${sourceDir}/multi_build/${presetName}"
+        },
+        {
+            "name": "host-tools",
+            "inherits": ["vcpkg-base"],
+            "hidden": true,
+            "binaryDir": "${sourceDir}/multi_build/${presetName}",
+            "cacheVariables": {
+                "BUILD_ASIO": "ON",
+                "BUILD_ASSET_TOOLS": "ON",
+                "BUILD_BLAM": "OFF",
+                "BUILD_COMPONENT_APP": "OFF",
+                "BUILD_EXAMPLES": "OFF",
+                "BUILD_HEADFUL": "OFF",
+                "BUILD_IMGUI": "OFF",
+                "BUILD_MEDIA": "OFF",
+                "BUILD_OPENAL": "OFF",
+                "BUILD_SDL2": "OFF",
+                "BUILD_TESTS": "OFF",
+                "BUILD_WITH_WERROR": "OFF",
+                "VCPKG_MANIFEST_FEATURES": "assimp;network;pressure-cooker",
+                "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "base-linux",
+            "hidden": true,
+            "inheritConfigureEnvironment": true,
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
+        },
+        {
+            "name": "base-mac",
+            "hidden": true,
+            "inheritConfigureEnvironment": true,
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            }
+        }
+    ]
+}

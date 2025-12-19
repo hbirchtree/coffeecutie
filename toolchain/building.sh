@@ -1,6 +1,10 @@
 #!/bin/bash
 
-set -ex
+set -e
+
+if [[ "${CI:-0}" = "true" ]]; then
+    set -x
+fi
 
 case $(uname) in
 Linux)
@@ -284,7 +288,7 @@ function configure_preset_and_build()
 function native_build()
 {
     # Prepare the host tools
-    if [ ${BUILD_HOST_TOOLS} = 1 ]; then
+    if [ ${BUILD_HOST_TOOLS:-1} = 1 ]; then
         host_tools_build
     fi
 

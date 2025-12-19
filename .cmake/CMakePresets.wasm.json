@@ -1,0 +1,80 @@
+{
+    "version": 10,
+    "include": [
+        "CMakePresets.base.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "vcpkg-base-emscripten",
+            "inherits": ["vcpkg-base"],
+            "hidden": true,
+            "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Linux"
+            },
+            "cacheVariables": {
+                "BUILD_ASIO": "ON",
+                "BUILD_COMP_DUMMY_PLUG": "OFF",
+                "BUILD_EMSCRIPTEN": "ON",
+                "BUILD_GL_SOFTWARE_BCN": "ON",
+                "BUILD_GLES": "ON",
+                "BLAMG_EMBEDDED_REPORT_URL": "$env{EMBEDDED_REPORT_URL}",
+                "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
+                "EMSCRIPTEN_ROOT_PATH": "$env{EMSDK}/upstream/emscripten",
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "$env{EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake",
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "emscripten;wasm",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/fmt",
+                "VCPKG_TARGET_TRIPLET": "wasm32-emscripten"
+            },
+            "environment": {
+                "EMSDK": "${sourceDir}/multi_build/compilers/emsdk",
+                "EMSCRIPTEN": "$env{EMSDK}/upstream/emscripten",
+                "NINJA": "$penv{NINJA}",
+                "PATH_": "$penv{PATH}:$env{EMSCRIPTEN}/"
+            }
+        },
+        {
+            "name": "web-wasm32-emscripten-node",
+            "displayName": "Wasm32 for Node",
+            "inherits": ["vcpkg-base-emscripten"],
+            "cacheVariables": {
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "emscripten;wasm"
+            }
+        },
+        {
+            "name": "web-wasm32-emscripten-webgl2",
+            "displayName": "Wasm32 for Web + WebGL2 (SDL2)",
+            "inherits": ["vcpkg-base-emscripten"]
+        },
+        {
+            "name": "web-wasm32-emscripten-webgl2-custom",
+            "displayName": "Wasm32 for Web + WebGL2 (SDL2)",
+            "inherits": ["vcpkg-base-emscripten"],
+            "cacheVariables": {
+                "BLAM_HALO_VERSION": "custom_version_t"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "web-wasm32-emscripten-webgl2-rel",
+            "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "web-wasm32-emscripten-webgl2",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "web-wasm32-emscripten-webgl2-custom-rel",
+            "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "web-wasm32-emscripten-webgl2-custom",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "web-wasm32-emscripten-webgl2-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "web-wasm32-emscripten-webgl2",
+            "inherits": "base-linux"
+        }
+    ]
+}

@@ -1,0 +1,81 @@
+{
+    "version": 10,
+    "include": [
+        "CMakePresets.base.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "vcpkg-base-wiicube",
+            "inherits": ["vcpkg-base"],
+            "hidden": true,
+            "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Linux"
+            },
+            "cacheVariables": {
+                "BUILD_ASIO": "OFF",
+                "BUILD_AUDIO": "OFF",
+                "BUILD_BLAM": "ON",
+                "BUILD_COMPRESS_ZLIB": "OFF",
+                "BUILD_GLEAM": "OFF",
+                "BUILD_GRAPHICS_COMMON": "OFF",
+                "BUILD_GX": "ON",
+                "BUILD_IMGUI": "OFF",
+                "BUILD_LIBOGC": "ON",
+                "BUILD_OPENGL": "OFF",
+                "BUILD_SDL2": "OFF",
+                "CMAKE_C_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-gcc",
+                "CMAKE_CXX_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-g++",
+                "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
+                "CMAKE_SYSTEM_NAME": "Baremetal",
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/$env{TOOLCHAIN_PREFIX}-$env{VARIANT}.toolchain.cmake",
+                "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON",
+                "VCPKG_MANIFEST_FEATURES": "headful;image",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports-gamecube/outcome;${sourceDir}/toolchain/vcpkg/ports-gamecube/status-code;${sourceDir}/toolchain/vcpkg/ports-gamecube/zstd;${sourceDir}/toolchain/vcpkg/ports-gamecube/openexr;${sourceDir}/toolchain/vcpkg/ports-gamecube/sdl2",
+                "VCPKG_TARGET_TRIPLET": "$env{ARCHITECTURE}-$env{VARIANT}"
+            },
+            "environment": {
+                "ARCHITECTURE": "powerpc-eabi",
+                "PATH_": "$penv{PATH}:$env{TOOLCHAIN_ROOT}/bin",
+                "PLATFORM": "console",
+                "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
+                "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/compilers/gamecube-$env{ARCHITECTURE}/$env{TOOLCHAIN_VERSION}",
+                "TOOLCHAIN_SYSROOT": "$env{TOOLCHAIN_ROOT}/$env{TOOLCHAIN_PREFIX}/sysroot",
+                "TOOLCHAIN_VERSION": "v2.2"
+            }
+        },
+        {
+            "name": "console-powerpc-eabi-cube",
+            "displayName": "Gamecube",
+            "inherits": ["vcpkg-base-wiicube"],
+            "cacheVariables": {
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "bare;powerpc;gamecube;cube"
+            },
+            "environment": {
+                "VARIANT": "cube"
+            }
+        },
+        {
+            "name": "console-powerpc-eabi-wii",
+
+            "displayName": "Wii",
+            "inherits": ["vcpkg-base-wiicube"],
+            "cacheVariables": {
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "bare;powerpc;wii"
+            },
+            "environment": {
+                "VARIANT": "wii"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "console-powerpc-eabi-cube-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "console-powerpc-eabi-cube",
+            "inherits": "base-linux"
+        }
+    ]
+}
