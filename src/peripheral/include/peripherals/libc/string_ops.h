@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
