@@ -217,15 +217,12 @@ jobs:
       run: |
         brew install --cask inkscape
         brew install automake autoconf libtool
-    - name: Building host tools
-      run: source/cb host-build
-      env:
-        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Building project
       id: buildProject
       continue-on-error: true
       run: source/cb build ${{matrix.variant}}/install
       env:
+        BUILD_HOST_TOOLS: no
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Upload vcpkg logs
       if: steps.buildProject.outcome == 'failure'

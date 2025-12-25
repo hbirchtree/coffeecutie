@@ -9,6 +9,7 @@
 #endif
 #endif
 
+#include <memory>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/standard_exceptions.h>
 
