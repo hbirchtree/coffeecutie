@@ -9,9 +9,11 @@ fi
 case $(uname) in
 Linux)
     HOST_TOOLCHAIN_TRIPLET=-linux-native
+    HOST_TOOLCHAIN_TRIPLET_=-linux
 ;;
 Darwin)
     HOST_TOOLCHAIN_TRIPLET=-osx
+    HOST_TOOLCHAIN_TRIPLET_=-osx
 ;;
 *)
     echo "::error::Host kernel could not be determined"
@@ -21,9 +23,11 @@ esac
 case $(uname -m) in
 x86_64)
     HOST_TOOLCHAIN_TRIPLET=x64${HOST_TOOLCHAIN_TRIPLET}
+    HOST_TOOLCHAIN_TRIPLET_=x64${HOST_TOOLCHAIN_TRIPLET_}
 ;;
 aarch64|arm64)
     HOST_TOOLCHAIN_TRIPLET=arm64${HOST_TOOLCHAIN_TRIPLET}
+    HOST_TOOLCHAIN_TRIPLET_=arm64${HOST_TOOLCHAIN_TRIPLET_}
 ;;
 *)
     echo "::error::Host architecture could not be determined"
@@ -34,7 +38,7 @@ esac
 export HOST_TOOLCHAIN_TRIPLET=$HOST_TOOLCHAIN_TRIPLET
 HOST_TOOLS_BINARY_DIR=$BASE_DIR/multi_build/host-$HOST_TOOLCHAIN_TRIPLET/bin
 
-export PATH=$PATH:${BASE_DIR}/multi_build/host-${HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/x64-linux/tools/glslang:${BASE_DIR}/multi_build/host-${HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/x64-linux/tools/spirv-tools/
+export PATH=$PATH:${BASE_DIR}/multi_build/host-${HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/${HOST_TOOLCHAIN_TRIPLET_}/tools/glslang:${BASE_DIR}/multi_build/host-${HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/${HOST_TOOLCHAIN_TRIPLET_}/tools/spirv-tools/
 export GLSLANG_PROGRAM=$(which glslangValidator)
 export NINJA=$(which ninja)
 
