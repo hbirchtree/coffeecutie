@@ -6,7 +6,7 @@
     "configurePresets": [
         {
             "name": "vcpkg-base-mac-ninja",
-            "inherits": ["vcpkg-base"],
+            "inherits": ["vcpkg-base-underlying-arm64-osx"],
             "hidden": true,
             "generator": "Ninja",
             "condition": {
@@ -25,7 +25,7 @@
         },
         {
             "name": "vcpkg-base-mac",
-            "inherits": ["vcpkg-base"],
+            "inherits": ["vcpkg-base-underlying-arm64-osx"],
             "hidden": true,
             "generator": "Xcode",
             "condition": {

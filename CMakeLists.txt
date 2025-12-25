@@ -7,7 +7,7 @@ project(Coffee LANGUAGES C CXX VERSION 4.0)
 
 include(toolchain/cmake/Modules/SubprojectFunctions.cmake)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
