@@ -43,7 +43,7 @@
         {
             "name": "host-x64-osx",
             "displayName": "Host tools for Darwin/macOS x86_64",
-            "inherits": ["host-tools"],
+            "inherits": ["host-tools-x64-osx"],
             "generator": "Ninja",
             "condition": {
                 "lhs": "${hostSystemName}",
@@ -61,7 +61,7 @@
         {
             "name": "host-arm64-osx",
             "displayName": "Host tools for Darwin/macOS ARM64",
-            "inherits": ["host-tools"],
+            "inherits": ["host-tools-arm64-osx"],
             "generator": "Ninja",
             "condition": {
                 "lhs": "${hostSystemName}",

@@ -67,8 +67,7 @@
             "binaryDir": "${sourceDir}/multi_build/${presetName}"
         },
         {
-            "name": "host-tools",
-            "inherits": ["vcpkg-base"],
+            "name": "host-tools-base",
             "hidden": true,
             "binaryDir": "${sourceDir}/multi_build/${presetName}",
             "cacheVariables": {
@@ -87,6 +86,21 @@
                 "VCPKG_MANIFEST_FEATURES": "assimp;network;pressure-cooker",
                 "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON"
             }
+        },
+        {
+            "name": "host-tools",
+            "inherits": ["vcpkg-base", "host-tools-base"],
+            "hidden": true
+        },
+        {
+            "name": "host-tools-arm64-osx",
+            "inherits": ["vcpkg-base-underlying-arm64-osx", "host-tools-base"],
+            "hidden": true
+        },
+        {
+            "name": "host-tools-x64-osx",
+            "inherits": ["vcpkg-base-underlying-x64-osx", "host-tools-base"],
+            "hidden": true
         }
     ],
     "buildPresets": [
