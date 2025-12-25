@@ -153,8 +153,8 @@ function host_tools_build()
     elif [ $(uname) = "Linux" ]; then
         TOOLS_DIR=${BASE_DIR}/multi_build/x64-linux-native/vcpkg_installed/x64-linux/tools
     fi
-    PROTOC_PROGRAM=${TOOLS_DIR}/protobuf/protoc
-    GLSLANG_PROGRAM=${TOOLS_DIR}/glslang/glslangValidator
+    export PROTOC_PROGRAM=${TOOLS_DIR}/protobuf/protoc
+    export GLSLANG_PROGRAM=${TOOLS_DIR}/glslang/glslangValidator
 
     echo "::endgroup::"
 
@@ -424,6 +424,14 @@ function xcode_build()
 
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
     echo "::info::Set up for ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
+
+    if [ $(uname) = "Darwin" ]; then
+        TOOLS_DIR=${BASE_DIR}/multi_build/${HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/${HOST_TOOLCHAIN_TRIPLET}/tools
+    elif [ $(uname) = "Linux" ]; then
+        TOOLS_DIR=${BASE_DIR}/multi_build/x64-linux-native/vcpkg_installed/x64-linux/tools
+    fi
+    export PROTOC_PROGRAM=${TOOLS_DIR}/protobuf/protoc
+    export GLSLANG_PROGRAM=${TOOLS_DIR}/glslang/glslangValidator
 
     configure_preset_and_build
 }
