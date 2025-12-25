@@ -25,6 +25,7 @@
         },
         {
             "name": "vcpkg-base-underlying-x64-linux",
+            "inherits": ["vcpkg-base-underlying"],
             "hidden": true,
             "binaryDir": "${sourceDir}/multi_build/${presetName}",
             "environment": {
@@ -34,6 +35,7 @@
         },
         {
             "name": "vcpkg-base-underlying-arm64-linux",
+            "inherits": ["vcpkg-base-underlying"],
             "hidden": true,
             "binaryDir": "${sourceDir}/multi_build/${presetName}",
             "environment": {
@@ -43,6 +45,7 @@
         },
         {
             "name": "vcpkg-base-underlying-arm64-osx",
+            "inherits": ["vcpkg-base-underlying"],
             "hidden": true,
             "binaryDir": "${sourceDir}/multi_build/${presetName}",
             "environment": {
