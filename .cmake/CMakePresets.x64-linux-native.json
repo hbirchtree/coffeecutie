@@ -1,0 +1,16 @@
+{
+    "version": 10,
+    "include": ["CMakePresets.base.json"],
+    "configurePresets": [
+        {
+            "name": "vcpkg-base",
+            "inherits": ["vcpkg-base-underlying-x64-linux"],
+            "hidden": true
+        },
+        {
+            "name": "host-tools",
+            "inherits": ["host-tools-base"],
+            "hidden": true
+        }
+    ]
+}

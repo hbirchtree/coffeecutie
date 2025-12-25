@@ -1,7 +1,7 @@
 {
     "version": 10,
     "include": [
-        "CMakePresets.base.json"
+        "CMakePresets.$penv{HOST_TOOLCHAIN_TRIPLET}.json"
     ],
     "configurePresets": [
         {
