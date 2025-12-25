@@ -145,7 +145,7 @@ function host_tools_build()
     popd
 
     if [ $(uname) = "Darwin" ]; then
-        TOOLS_DIR=${BASE_DIR}/multi_build/x64-osx/vcpkg_installed/x64-osx/tools
+        TOOLS_DIR=${BASE_DIR}/multi_build/${HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/${HOST_TOOLCHAIN_TRIPLET}/tools
     elif [ $(uname) = "Linux" ]; then
         TOOLS_DIR=${BASE_DIR}/multi_build/x64-linux-native/vcpkg_installed/x64-linux/tools
     fi
