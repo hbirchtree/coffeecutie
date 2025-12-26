@@ -185,7 +185,7 @@ jobs:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: List files
       run: |
-        du -hd4 source/mutli_build/host-arm64-osx/
+        du -hd4 source/multi_build/host-arm64-osx/
   macOS:
     runs-on: macos-latest
     needs: macOS_HostTools
