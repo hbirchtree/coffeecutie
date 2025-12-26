@@ -186,6 +186,7 @@ jobs:
     - name: List files
       run: |
         du -hd4 source/multi_build/host-arm64-osx/
+        find source/multi_build/host-arm64-osx/vcpkg_installed/arm64-osx/tools -type f
   macOS:
     runs-on: macos-latest
     needs: macOS_HostTools
