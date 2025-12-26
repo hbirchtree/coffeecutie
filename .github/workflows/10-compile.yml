@@ -183,6 +183,10 @@ jobs:
       run: source/cb host-build
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+    - name: List files
+      run: |
+        du -hd3 source/mutli_build/host-arm64-osx/vcpkg_installed
+        du -hd3 source/mutli_build/host-arm64-osx/bin
   macOS:
     runs-on: macos-latest
     needs: macOS_HostTools
