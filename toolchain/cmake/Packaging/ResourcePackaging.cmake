@@ -1,4 +1,4 @@
-find_program ( GLSLANG_PROGRAM glslangValidator )
+find_program ( GLSLANG_PROGRAM glslang )
 find_program ( INKSCAPE_PROGRAM inkscape
     PATHS
         /usr
