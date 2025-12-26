@@ -39,7 +39,7 @@ export HOST_TOOLCHAIN_TRIPLET=$HOST_TOOLCHAIN_TRIPLET
 HOST_TOOLS_BINARY_DIR=$BASE_DIR/multi_build/host-$HOST_TOOLCHAIN_TRIPLET/bin
 
 export PATH=$PATH:${BASE_DIR}/multi_build/host-${HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/${HOST_TOOLCHAIN_TRIPLET_}/tools/glslang:${BASE_DIR}/multi_build/host-${HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/${HOST_TOOLCHAIN_TRIPLET_}/tools/spirv-tools/
-export GLSLANG_PROGRAM=$(which glslangValidator)
+export GLSLANG_PROGRAM=$(which glslang)
 export NINJA=$(which ninja)
 
 function die()
@@ -154,7 +154,7 @@ function host_tools_build()
         TOOLS_DIR=${BASE_DIR}/multi_build/x64-linux-native/vcpkg_installed/x64-linux/tools
     fi
     export PROTOC_PROGRAM=${TOOLS_DIR}/protobuf/protoc
-    export GLSLANG_PROGRAM=${TOOLS_DIR}/glslang/glslangValidator
+    export GLSLANG_PROGRAM=${TOOLS_DIR}/glslang/glslang
 
     echo "::endgroup::"
 
@@ -431,7 +431,7 @@ function xcode_build()
         TOOLS_DIR=${BASE_DIR}/multi_build/x64-linux-native/vcpkg_installed/x64-linux/tools
     fi
     export PROTOC_PROGRAM=${TOOLS_DIR}/protobuf/protoc
-    export GLSLANG_PROGRAM=${TOOLS_DIR}/glslang/glslangValidator
+    export GLSLANG_PROGRAM=${TOOLS_DIR}/glslang/glslang
 
     configure_preset_and_build
 }
