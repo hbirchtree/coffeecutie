@@ -18,7 +18,7 @@
                 "VCPKG_MANIFEST_FEATURES": "$penv{TARGET_FEATURES}"
             },
             "environment": {
-                "GLSLANG_PROGRAM": "$env{HOST_TOOLS_DIR}/glslang/glslangValidator",
+                "GLSLANG_PROGRAM": "$env{HOST_TOOLS_DIR}/glslang/glslang",
                 "FLATC_PROGRAM": "$env{HOST_TOOLS_DIR}/flatbuffers/flatc",
                 "VCPKG_ROOT": "$penv{VCPKG_ROOT}"
             }
