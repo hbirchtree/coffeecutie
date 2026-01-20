@@ -220,6 +220,7 @@ jobs:
       run: |
         brew install --cask inkscape
         brew install automake autoconf libtool
+        # git cmake ninja pkg-config wget
     - name: Host tools cache
       uses: actions/cache@v4
       with:
