@@ -2,12 +2,14 @@
 
 #include "components.h"
 #include "data.h"
+#include "discord/discord_system.h"
 #include "networking.h"
 #include "selected_version.h"
 
 #include <coffee/core/debug/formatting.h>
 #include <coffee/core/files/cfiles.h>
 #include <coffee/imgui/imgui_binding.h>
+#include <imgui.h>
 #include <peripherals/stl/type_list.h>
 #include <url/url.h>
 
@@ -21,7 +23,14 @@ using Coffee::cDebug;
 
 using BlamMapBrowserManifest = compo::SubsystemManifest<
     type_list_t<PlayerInfo>,
-    type_list_t<GameEventBus, NetworkState, BlamCamera>,
+    type_list_t<
+        GameEventBus
+        , NetworkState
+        , BlamCamera
+#if defined(FEATURE_ENABLE_DiscordLatte)
+        , discord::Subsystem
+#endif
+    >,
     empty_list_t>;
 
 struct BlamMapBrowser
@@ -101,6 +110,11 @@ struct BlamMapBrowser
                 if(ImGui::BeginTabItem("Client"))
                 {
                     ImGui::Columns(2);
+#if defined(FEATURE_ENABLE_DiscordLatte)
+                    ImGui::Text("Candidate name: %s (from Discord)", e.subsystem<discord::Subsystem>().playerInfo().username.c_str());
+                    ImGui::NextColumn();
+                    ImGui::NextColumn();
+#endif
                     ImGui::InputText(
                         "Server", remote_address.data(), remote_address.size());
                     ImGui::NextColumn();
@@ -172,9 +186,9 @@ struct BlamMapBrowser
                     BlamCamera& camera = e.subsystem<BlamCamera>();
                     if(auto local_name = net_state->local_address)
                     {
-                        ImGui::Text(" - Server (%s)", local_name->c_str());
+                        ImGui::Text("Server (%s)", local_name->c_str());
                         ImGui::NextColumn();
-                        if(ImGui::Button("Focus"))
+                        if(ImGui::Button("Return"))
                             camera.focused_player = 0;
                         ImGui::NextColumn();
                     }

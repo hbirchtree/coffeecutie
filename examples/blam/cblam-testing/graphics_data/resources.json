@@ -31,29 +31,18 @@
         "strip_assemblies": true,
         "optimization_level": "none",
         "assemblies": {
-            "debug_lines": [
+            "shaders/debug_lines": [
                 "shaders/debug_lines.vert",
                 "shaders/debug_lines.frag"
             ],
-            "map_uber_xbox": [
-                "shaders/map.vert",
-                "shaders/map_xbox.vert",
-                "shaders/map_uber.frag",
-                "shaders/white.frag",
-                "shaders/wireframe.frag"
-            ],
-            "map_uber": [
+            "shaders/map_uber": [
                 "shaders/map.vert",
                 "shaders/map_uber.frag",
                 "shaders/white.frag",
                 "shaders/wireframe.frag"
             ],
-            "scenery": [
+            "shaders/scenery": [
                 "shaders/scenery.vert",
-                "shaders/scenery.frag"
-            ],
-            "scenery_xbox": [
-                "shaders/scenery_xbox.vert",
                 "shaders/scenery.frag"
             ]
         },

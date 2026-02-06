@@ -170,7 +170,7 @@ def compile_shaders(
             file_dependencies = shader_dependencies(in_file, cache_directory)
             if not needs_update(out_file, [in_file] + extra_dependencies + file_dependencies):
                 continue
-            # print(f' * Emitting {file} as {profile} {version}')
+            print(f' * Emitting {file} as {profile} {version}')
             run(
                 'ShaderCooker',
                 '--force',
@@ -195,7 +195,7 @@ def compile_shaders(
             in_files = in_files + shader_dependencies(in_file, cache_directory)
         if not needs_update(out_file, in_files):
             continue
-        # print(f' * Emitting shader assembly {assembly}.spv <- {shaders}')
+        print(f' * Emitting shader assembly {assembly}.spv <- {shaders}')
         extra_args = []
         if values['strip_assemblies']:
             extra_args.append('--strip-debug')
@@ -269,16 +269,13 @@ def encode_textures(
             return [f'{out_directory}/{basename}.0.{codec}' for codec, _ in codecs]
         outputs = _predict_names(basename)
         res = [needs_update(x, [rendered_file]) for x in outputs]
-        print(f'* Processing file {source}')
         for out_of_date in res:
             if out_of_date:
                 break
         else:
             if len(res) > 0:
-                print('  - Up to date')
                 return
-        for fmt in codecs:
-            print(f'  - Will emit {fmt}')
+        print(f'* Processing file {source} -> {codecs}')
         compress_mode = 'fast' if 'Deb' in build_mode else 'release'
         run(
             'TextureCompressor',

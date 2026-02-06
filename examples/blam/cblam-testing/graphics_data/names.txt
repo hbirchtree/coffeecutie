@@ -81,6 +81,7 @@ Ingot
 Italian Joel
 Jenkins
 Jesus Christ
+Lamp Post
 Light Bulb
 Mantis Pepperoni
 Master Boot Record
@@ -112,6 +113,7 @@ Togepi
 Trash Bin
 Tugboat
 V
+Vdub
 V-Sauce
 Varsity Jacket
 Verboten
@@ -131,7 +133,9 @@ Vootbi
 Waffle House
 Warp-Pot
 Wasteyard
+Weed Eater
 Wendy
+Wind Boat
 Wing Slot
 Woodblock
 Woodstock

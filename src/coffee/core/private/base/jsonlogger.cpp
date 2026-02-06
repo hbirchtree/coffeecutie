@@ -28,15 +28,6 @@ struct JsonLogState : State::GlobalState
     platform::file::file_handle handle;
 };
 
-// static const cstring JsonFormat =
-//     R"({
-//     "message": "{0}",
-//     "severity": "{1}",
-//     "pipe": "{2}",
-//     "level": "{3}",
-//     "time": "{4}"
-//   },)";
-
 static std::string JsonFilter(std::string_view message)
 {
     std::string filtered_message(message.begin(), message.end());

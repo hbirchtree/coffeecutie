@@ -253,7 +253,7 @@ function configure_preset_and_build()
     fi
 
     echo "::group::Configuring project"
-    echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT})"
+    echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT:-/})"
     export NINJA=$(which ninja)
     export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
     cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT} || info_dump
