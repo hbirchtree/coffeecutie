@@ -139,6 +139,18 @@ struct BlamMapBrowser
                             state.data());
                     if(auto remote = net_state->remote_address)
                         ImGui::Text("Connected to %s", remote->c_str());
+                    if(!net_state->player_roster.empty())
+                    {
+                        ImGui::Separator();
+                        ImGui::Text("Players:");
+                        for(auto const& entry : net_state->player_roster)
+                        {
+                            if(entry.is_self)
+                                ImGui::Text(" > %s (you)", entry.name.c_str());
+                            else
+                                ImGui::Text(" - %s", entry.name.c_str());
+                        }
+                    }
                     if(ImGui::Button("Look at me!"))
                     {
                         auto& gbus = e.subsystem<GameEventBus>();
@@ -196,12 +208,19 @@ struct BlamMapBrowser
                     {
                         auto const& pinfo =
                             e.ref<Proxy>(player.id).get<PlayerInfo>();
-                        ImGui::Text(
-                            " - %s (%s)",
-                            pinfo.name.c_str(),
-                            pinfo.remote.c_str());
+                        if(pinfo.loading_progress < 100)
+                            ImGui::Text(
+                                " - %s (%s) [%u%%]",
+                                pinfo.name.c_str(),
+                                pinfo.remote.c_str(),
+                                pinfo.loading_progress);
+                        else
+                            ImGui::Text(
+                                " - %s (%s)",
+                                pinfo.name.c_str(),
+                                pinfo.remote.c_str());
                         ImGui::NextColumn();
-                        if(ImGui::Button("Focus"))
+                        if(ImGui::Button(Coffee::Strings::fmt("Focus {}", pinfo.player_idx).c_str()))
                             camera.focused_player = pinfo.player_idx;
                         ImGui::NextColumn();
                     }

@@ -408,7 +408,7 @@ struct PlayerInfo
     std::string name;
     std::string remote;
     u32         player_idx{0};
-    /* Maybe stash some more info here in the future */
+    u32         loading_progress{100};
 };
 
 struct SoundEffects

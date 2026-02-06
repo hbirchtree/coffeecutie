@@ -20,7 +20,7 @@ using Coffee::ProfContext;
 #include <fmt_extensions/url_types.h>
 
 using NetworkingManifest = compo::SubsystemManifest<
-    empty_list_t,
+    type_list_t<PlayerInfo>,
     type_list_t<BlamCamera, NetworkState>,
     type_list_t<comp_app::ScreenshotProvider>>;
 
@@ -51,6 +51,7 @@ struct MessageBase
 
         /* Control */
         GameJoin,
+        GameLoadState,
         PlayerJoin,
         PlayerJoinConfirm,
         GameEvent,
@@ -62,6 +63,9 @@ struct MessageBase
 
         /* Debug */
         Screenshot,
+
+        /* Roster */
+        PlayerSync,
     } type{None};
 
     u32 request{};
@@ -118,6 +122,13 @@ struct GameJoin
 
     blam::bl_string map_name;
     u32             seed{0};
+};
+
+struct GameLoadState
+{
+    static constexpr auto message_type = MessageBase::GameLoadState;
+
+    u32 progress{0};
 };
 
 struct GameLeave
@@ -180,6 +191,17 @@ struct EntitySpawn
     EntityTag tag;
     i32       permutation{-1};
 };
+
+struct PlayerSyncEntry
+{
+    static constexpr auto message_type = MessageBase::PlayerSync;
+
+    blam::bl_string name;
+    u32             player_idx{0};
+    u32             loading_progress{100};
+};
+
+static_assert(sizeof(PlayerSyncEntry) == 40);
 
 /*
  * Some ground rules for networking:
@@ -269,6 +291,51 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_game_bus.inject(update, &data);
     }
 
+    void send_player_roster()
+    {
+        std::vector<PlayerSyncEntry> entries;
+        for(auto const& local : m_local_player_info)
+        {
+            if(!local.m_ref)
+                continue;
+            auto const& info = (*local);
+            entries.push_back({
+                .name             = *blam::bl_string::from(info.name),
+                .player_idx       = info.player_idx,
+                .loading_progress = 100,
+            });
+        }
+        for(auto const& [_, state] : m_connections)
+        {
+            if(!state.player_info.m_ref)
+                continue;
+            auto const& info = (*state.player_info);
+            entries.push_back({
+                .name             = *blam::bl_string::from(info.name),
+                .player_idx       = state.idx,
+                .loading_progress = state.loading_progress,
+            });
+        }
+        MessageBase header{.type = MessageBase::PlayerSync};
+        send_all(
+            std::move(header),
+            gsl::make_span(entries));
+    }
+
+    bool players_ready() const
+    {
+        if(m_socket && !m_map)
+            return false;
+        if(m_connections.empty())
+            return m_socket && m_map;
+        for(auto const& [_, state] : m_connections)
+        {
+            if(state.loading_progress < 100)
+                return false;
+        }
+        return true;
+    }
+
     auto get_random_name()
     {
         using Coffee::FileMap;
@@ -346,6 +413,16 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 if(!load->file || !m_socket)
                     return;
                 auto map_name = (*load->file).path().fileBasename().removeExt();
+                send_all(Message<GameJoin>({
+                    .map_name = *blam::bl_string::from(map_name.internUrl),
+                    .seed     = m_seed,
+                }));
+                for(auto& [_, state] : m_connections)
+                {
+                    state.loading_progress = 0;
+                    if(state.player_info.m_ref)
+                        (*state.player_info).loading_progress = 0;
+                }
             });
         m_game_bus.addEventFunction<ServerCameraControl>(
             0, [this](GameEvent&, ServerCameraControl* cam) {
@@ -365,7 +442,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                      cDebug(
                          "Distributing {} event",
                          magic_enum::enum_name(event.type));
-                     forward_game_event<MapLoadByName>(event, data);
+                     forward_game_event<MapLoadByName>(event, data); // TODO: Use this instead of GameJoin
                      forward_game_event<ServerStateUpdate>(event, data);
                      forward_game_event<ServerPlayerStateUpdate>(event, data);
                      return;
@@ -382,13 +459,29 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                          magic_enum::enum_name(event.type));
                  }
              }});
+        m_game_bus.addEventFunction<MapDataLoadEvent>(
+            0, [this](GameEvent&, MapDataLoadEvent*) {
+                if(!m_socket)
+                {
+                    send_single(m_connection, Message<GameLoadState>({
+                        .progress = 20,
+                    }));
+                }
+            });
         m_game_bus.addEventFunction<MapLoadFinishedEvent<halo_version>>(
             0,
             [this](GameEvent&, MapLoadFinishedEvent<halo_version>* finished) {
                 m_map = finished->container;
                 if(!m_socket)
-                    return;
-                send_all(generate_game_join());
+                {
+                    rq::runtime_queue::QueueShot(
+                        rq::runtime_queue::GetCurrentQueue().value(), 
+                        std::chrono::seconds(5), [this] {
+                        send_single(m_connection, Message<GameLoadState>({
+                            .progress = 100,
+                        }));
+                    }).assume_value();
+                }
             });
 
         m_utils->SetDebugOutputFunction(
@@ -507,7 +600,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             return;
         }
         m_poll_group = m_impl->CreatePollGroup();
-        cDebug("Started server on {}", local);
+        m_host_name  = get_random_name();
+        cDebug("Started server on {} as {}", local, m_host_name);
         // TODO: We could advertise join info with Discord?
         m_net_state.local_address = local_name();
         m_net_state.server_state  = NetworkState::ServerState::Listening;
@@ -561,7 +655,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }
             configure_weights(info->m_hConn);
             m_connections[info->m_hConn] = connection_state_t{
-                .idx = static_cast<u32>(m_connections.size()) + 1,
+                .idx = m_next_remote_idx++,
             };
             break;
         }
@@ -575,6 +669,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             if(!m_map)
                 break;
             send_single(info->m_hConn, generate_game_join());
+            m_connections[info->m_hConn].loading_progress = 0;
             break;
         }
 
@@ -595,6 +690,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     });
             }
             m_connections.erase(info->m_hConn);
+            send_player_roster();
             m_impl->CloseConnection(
                 info->m_hConn,
                 0,
@@ -725,6 +821,21 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     {
         if(m_socket)
         {
+            if(m_local_player_info.empty())
+            {
+                for(auto& player : p.select<PlayerInfo>())
+                {
+                    auto  ref      = p.underlying().ref(player);
+                    auto  info_ref = ref.ref<PlayerInfo>();
+                    auto& info     = (*info_ref);
+                    if(info.player_idx == 0)
+                        info.name = m_host_name;
+                    else
+                        info.name = get_random_name();
+                    m_local_player_info.push_back(info_ref);
+                }
+            }
+
             int                       num_msgs = -1;
             SteamNetworkingMessage_t* message  = nullptr;
             while(true)
@@ -805,6 +916,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     .player_idx = player_info.idx,
                 }));
             update_player_counts();
+            send_player_roster();
+            break;
+        }
+        case MessageBase::GameLoadState: {
+            auto const& event = payload.value<GameLoadState>();
+            cDebug("Player {} is at {}% loaded", m_connections[connection].idx, event.progress);
+            m_connections[connection].loading_progress = event.progress;
+            if(auto& pi = m_connections[connection].player_info; pi.m_ref)
+                (*pi).loading_progress = event.progress;
             break;
         }
         case MessageBase::GameEvent: {
@@ -845,7 +965,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             BlamCamera* camera;
             p.subsystem(camera);
 
-            auto&       player     = camera->player(1);
+            auto&       player     = camera->player(4);
             auto const& sync       = payload.value<CameraSync>();
             player.camera.position = sync.position;
             player.camera.rotation = sync.rotation;
@@ -856,9 +976,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto         map_name = join.map_name.str();
             GameEvent    ev{.type = GameEvent::MapLoadStart};
             MapLoadEvent data{
-                .file = (m_map_directory.path() / map_name)
-                            .addExtension("map")
-                            .url(m_map_directory.flags),
+                .origin = MapLoadEvent::Remote,
+                .file   = (m_map_directory.path() / map_name)
+                               .addExtension("map")
+                               .url(m_map_directory.flags),
             };
             cDebug(
                 "Loading map {} as requested by server({})",
@@ -905,6 +1026,23 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     blam::to_string(spawn.tag.object.tag_class),
                     spawn.tag.object.tag_id,
                     spawn.tag.instance_id);
+            break;
+        }
+        case MessageBase::PlayerSync: {
+            auto  players   = payload.values<PlayerSyncEntry>();
+            auto& net_state = p.subsystem<NetworkState>();
+            auto  self_idx  = net_state.remote_player_idx.value_or(0xFFFF);
+            net_state.player_roster.clear();
+            for(auto const& player : players)
+            {
+                net_state.player_roster.push_back(
+                    NetworkState::RosterEntry{
+                    .name             = std::string(player.name.str()),
+                    .remote_idx       = player.player_idx,
+                    .loading_progress = player.loading_progress,
+                    .is_self          = (player.player_idx == self_idx),
+                });
+            }
             break;
         }
         default:
@@ -962,13 +1100,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         /*! Controlled by the associated player */
         compo::EntityRef<EntityContainer> biped{};
         u32                               idx{0};
+        u32                               loading_progress{};
     };
 
     std::map<HSteamNetConnection, connection_state_t> m_connections{};
+    std::vector<ComponentRef<EntityContainer, PlayerInfo>> m_local_player_info;
+    u32 m_next_remote_idx{4};
 
     /* For loading maps requested by the server */
     platform::url::Url m_map_directory;
     /* Game/map state */
+    std::string                        m_host_name;
     u32 m_seed{164829}; /*!< Randomly typed number */
     blam::map_container<halo_version>* m_map{nullptr};
     stl_types::math::rng               m_local_random{};

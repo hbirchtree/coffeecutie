@@ -26,6 +26,15 @@ struct NetworkState : compo::SubsystemBase
     std::optional<std::string> remote_address;
 
     std::optional<libc_types::u32> remote_player_idx;
+
+    struct RosterEntry
+    {
+        std::string name;
+        libc_types::u32 remote_idx{0};
+        libc_types::u32 loading_progress{100};
+        bool            is_self{false};
+    };
+    std::vector<RosterEntry> player_roster;
 };
 
 void alloc_networking(compo::EntityContainer& e);

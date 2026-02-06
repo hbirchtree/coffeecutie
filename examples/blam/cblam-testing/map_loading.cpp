@@ -4,6 +4,7 @@
 #include "components.h"
 #include "data.h"
 #include "loading.h"
+#include "networking.h"
 #include "resource_creation.h"
 #include "selected_version.h"
 #include "shader_cache.h"
@@ -465,6 +466,11 @@ void setup_load_eventhandlers(compo::EntityContainer& e)
     auto&       gbus = e.subsystem_cast<GameEventBus>();
     gbus.addEventFunction<MapLoadEvent>(
         0, [&e](GameEvent&, MapLoadEvent* load) {
+            auto& net_state = e.subsystem_cast<NetworkState>();
+            /* Reject local map changes while connected to a server */
+            if(load->origin == MapLoadEvent::Local &&
+               net_state.client_state == NetworkState::ClientState::Connected)
+                return;
             cDebug("Starting MapLoad handler");
             open_map(e, *load);
         });

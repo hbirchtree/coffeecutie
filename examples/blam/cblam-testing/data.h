@@ -207,6 +207,12 @@ struct MapLoadEvent
 {
     static constexpr auto event_type = GameEvent::MapLoadStart;
 
+    enum Origin
+    {
+        Local,
+        Remote,
+    } origin{Local};
+
     std::optional<platform::url::Url> directory{};
     std::optional<platform::url::Url> file{};
 };
