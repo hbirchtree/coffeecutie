@@ -23,6 +23,7 @@ struct Subsystem : compo::SubsystemBase
         m_delegate->ready = [this](PlayerInfo&& info) {
             m_playerInfo = std::move(info);
             m_startAwaiter.set_value(true);
+            m_started = true;
         };
     }
 
@@ -114,6 +115,11 @@ struct Subsystem : compo::SubsystemBase
         return m_discordQueue;
     }
 
+    bool connected() const
+    {
+        return m_started;
+    }
+
     template<typename T>
     auto on_started(
         std::function<T(discord::Subsystem&)>&& func,
@@ -143,6 +149,7 @@ struct Subsystem : compo::SubsystemBase
     DiscordOptions                             m_options;
     std::promise<bool>                         m_startAwaiter;
     std::chrono::system_clock::time_point      m_startDeadline{};
+    bool                                       m_started{false};
 
     std::optional<PlayerInfo> m_playerInfo;
 };

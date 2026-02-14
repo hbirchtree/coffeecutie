@@ -1,7 +1,11 @@
 #include "networking.h"
+#include "blam/volta/blam_scenario.h"
+#include "peripherals/typing/vectors/glm_vector_types.h"
+#include "types.h"
 
 #include <coffee/core/CProfiling>
 #include <coffee/core/files/cfiles.h>
+#include <steam/steamnetworkingtypes.h>
 
 using Coffee::ProfContext;
 
@@ -20,7 +24,7 @@ using Coffee::ProfContext;
 #include <fmt_extensions/url_types.h>
 
 using NetworkingManifest = compo::SubsystemManifest<
-    type_list_t<PlayerInfo>,
+    type_list_t<PlayerInfo, NetworkInfo>,
     type_list_t<BlamCamera, NetworkState>,
     type_list_t<comp_app::ScreenshotProvider>>;
 
@@ -57,9 +61,12 @@ struct MessageBase
         GameEvent,
         GameLeave,
 
+        UpdatePermission,
+
         /* Replication */
         CameraSync,
         EntitySpawn,
+        PlayerSpawn,
 
         /* Debug */
         Screenshot,
@@ -138,6 +145,20 @@ struct GameLeave
     blam::bl_string_var<128> reason;
 };
 
+struct UpdatePermission
+{
+    static constexpr auto message_type = MessageBase::UpdatePermission;
+
+    u32 player_idx{};
+
+    enum Permission : libc_types::u16
+    {
+        Movement,
+        Camera,
+    } permission;
+    u16 mode{0};
+};
+
 struct PlayerJoin
 {
     static constexpr auto message_type = MessageBase::PlayerJoin;
@@ -169,6 +190,7 @@ struct alignas(8) CameraSync
     Vecf4 position;
     Quatf rotation;
     u32   target_player{0xFFFF};
+    f32   fade{1.f};
 };
 
 struct alignas(8) Screenshot
@@ -178,13 +200,13 @@ struct alignas(8) Screenshot
     pix_fmt format{pix_fmt::None};
 };
 
-struct EntityTag
+struct alignas(8) EntityTag
 {
     blam::tagref_t object;
     u32            instance_id;
 };
 
-struct EntitySpawn
+struct alignas(8) EntitySpawn
 {
     static constexpr auto message_type = MessageBase::EntitySpawn;
 
@@ -192,16 +214,26 @@ struct EntitySpawn
     i32       permutation{-1};
 };
 
-struct PlayerSyncEntry
+struct alignas(8) PlayerSpawn
+{
+    static constexpr auto message_type = MessageBase::PlayerSpawn;
+
+    typing::vector_types::Vecf4 position;
+    u32 target_player{0xFFFF}; // Targets local players
+    f32 facing;
+};
+
+struct alignas(8) PlayerSyncEntry
 {
     static constexpr auto message_type = MessageBase::PlayerSync;
 
     blam::bl_string name;
     u32             player_idx{0};
     u32             loading_progress{100};
+    u32             connected{0x0};
 };
 
-static_assert(sizeof(PlayerSyncEntry) == 40);
+static_assert(sizeof(PlayerSyncEntry) == 48);
 
 /*
  * Some ground rules for networking:
@@ -296,24 +328,26 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         std::vector<PlayerSyncEntry> entries;
         for(auto const& local : m_local_player_info)
         {
-            if(!local.m_ref)
+            if(!local)
                 continue;
             auto const& info = (*local);
             entries.push_back({
                 .name             = *blam::bl_string::from(info.name),
                 .player_idx       = info.player_idx,
                 .loading_progress = 100,
+                .connected        = 0xFFFF,
             });
         }
         for(auto const& [_, state] : m_connections)
         {
-            if(!state.player_info.m_ref)
+            if(!state.player_info)
                 continue;
             auto const& info = (*state.player_info);
             entries.push_back({
                 .name             = *blam::bl_string::from(info.name),
                 .player_idx       = state.idx,
                 .loading_progress = state.loading_progress,
+                .connected        = state.biped.get<NetworkInfo>().connected ? 0xFFFFu : 0x0u,
             });
         }
         MessageBase header{.type = MessageBase::PlayerSync};
@@ -334,6 +368,131 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 return false;
         }
         return true;
+    }
+
+    void send_permission(
+        HSteamNetConnection          connection,
+        u32                          player_idx,
+        UpdatePermission::Permission perm,
+        u16                          mode)
+    {
+        send_single(
+            connection,
+            Message<UpdatePermission>({
+                .player_idx = player_idx,
+                .permission = perm,
+                .mode       = mode,
+            }));
+    }
+
+    void player_init(compo::EntityContainer& e, PlayerInfo& player)
+    {
+        using namespace std::chrono_literals;
+
+        auto constexpr birds_eye_pos = Vecf4{-29, -7, -7, 1};
+        auto constexpr birds_eye_rot = Quatf{1, 0, 0, 0};
+
+        auto spawn_loc = [this] -> std::optional<blam::scn::player_starting_location>
+        {
+            if(!m_map)
+                return std::nullopt;
+            auto scenario =
+                m_map->tags->scenario(m_map->map, m_map->magic);
+            auto spawns_ = scenario.value()
+                               ->player_start.locations
+                               .data(m_map->magic);
+            if(!spawns_.has_value())
+                return std::nullopt;
+            auto spawns = spawns_.value();
+            if(spawns.empty())
+                return std::nullopt;
+            auto  spawn_idx = m_local_random.rand<u32>(0, spawns.size());
+            return spawns[spawn_idx];
+        }();
+
+        if(player.is_remote())
+        {
+            // Find the connection for this remote player
+            HSteamNetConnection conn{};
+            for(auto& [c, state] : m_connections)
+            {
+                if(state.idx == player.player_idx)
+                {
+                    conn = c;
+                    break;
+                }
+            }
+            if(!conn)
+                return;
+
+            // Lock camera
+            send_permission(conn, player.player_idx, UpdatePermission::Camera, 0);
+            // Set birds-eye position
+            send_single(conn, Message<CameraSync>({
+                .position      = birds_eye_pos,
+                .rotation      = birds_eye_rot,
+                .target_player = player.player_idx,
+            }));
+
+            // Schedule delayed unlock with random spawn
+            auto idx = player.player_idx;
+            rq::runtime_queue::QueueImmediate(
+                rq::runtime_queue::GetCurrentQueue().value(),
+                5s,
+                [this, conn, idx, spawn = *spawn_loc]() mutable {
+                    send_single(
+                        conn,
+                        Message<CameraSync>({
+                            .position = Vecf4(
+                                spawn.pos * Vecf3{-1, -1, -1}, 0),
+                            .rotation = glm::normalize(Quatf(Vecf3{
+                                0.f,
+                                spawn.rot,
+                                glm::pi<f32>() / 2.f})),
+                            .target_player = idx,
+                        }));
+                    send_permission(conn, idx, UpdatePermission::Camera, 1);
+                }).assume_value();
+        }
+        else
+        {
+            auto& camera = e.subsystem_cast<BlamCamera>();
+            auto& vp     = camera.player(player.seat_idx);
+
+            // Lock camera
+            player.permissions.camera   = false;
+            vp.camera_input_allowed     = false;
+
+            // Set birds-eye position
+            vp.camera.position = Vecf3(birds_eye_pos);
+            vp.camera.rotation = birds_eye_rot;
+
+            // Schedule delayed unlock with random spawn
+            auto  seat = player.seat_idx;
+            auto  pidx = player.player_idx;
+            rq::runtime_queue::QueueImmediate(
+                rq::runtime_queue::GetCurrentQueue().value(),
+                5s,
+                [this, &e, seat, pidx, spawn = *spawn_loc]() mutable {
+                    auto& cam = e.subsystem_cast<BlamCamera>();
+                    auto& vp  = cam.player(seat);
+                    vp.camera.position = spawn.pos * Vecf3{-1, -1, -1};
+                    vp.camera.rotation = glm::normalize(Quatf(Vecf3{
+                        0.f, spawn.rot, glm::pi<f32>() / 2.f}));
+
+                    // Find the PlayerInfo and unlock
+                    for(auto& entity : e.select<PlayerInfo>())
+                    {
+                        auto* info = e.get<PlayerInfo>(entity.id);
+                        if(info && info->player_idx == pidx)
+                        {
+                            info->permissions.camera = true;
+                            break;
+                        }
+                    }
+                    vp.camera_input_allowed = true;
+                }).assume_value();
+        }
     }
 
     auto get_random_name()
@@ -413,14 +572,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 if(!load->file || !m_socket)
                     return;
                 auto map_name = (*load->file).path().fileBasename().removeExt();
-                send_all(Message<GameJoin>({
-                    .map_name = *blam::bl_string::from(map_name.internUrl),
-                    .seed     = m_seed,
+                send_all(Message<GameEventWrapper<MapLoadByNameEvent>>({
+                    .event = {GameEvent::MapLoadByName},
+                    .data  = MapLoadByNameEvent{
+                        .origin = MapLoadEvent::Remote,
+                        .map_name = blam::bl_string::from(map_name.internUrl).value(),
+                    },
                 }));
                 for(auto& [_, state] : m_connections)
                 {
                     state.loading_progress = 0;
-                    if(state.player_info.m_ref)
+                    if(state.player_info)
                         (*state.player_info).loading_progress = 0;
                 }
             });
@@ -442,7 +604,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                      cDebug(
                          "Distributing {} event",
                          magic_enum::enum_name(event.type));
-                     forward_game_event<MapLoadByName>(event, data); // TODO: Use this instead of GameJoin
                      forward_game_event<ServerStateUpdate>(event, data);
                      forward_game_event<ServerPlayerStateUpdate>(event, data);
                      return;
@@ -472,17 +633,22 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             0,
             [this](GameEvent&, MapLoadFinishedEvent<halo_version>* finished) {
                 m_map = finished->container;
+            });
+        m_game_bus.addEventData({
+            0,
+            [this](GameEvent& ev, const void*) {
+                if(ev.type != GameEvent::MapAllLoaded)
+                    return;
+                if(m_socket)
+                    m_needs_local_init = true;
                 if(!m_socket)
                 {
-                    rq::runtime_queue::QueueShot(
-                        rq::runtime_queue::GetCurrentQueue().value(), 
-                        std::chrono::seconds(5), [this] {
-                        send_single(m_connection, Message<GameLoadState>({
-                            .progress = 100,
-                        }));
-                    }).assume_value();
+                    send_single(m_connection, Message<GameLoadState>({
+                        .progress = 100,
+                    }));
                 }
-            });
+            },
+        });
 
         m_utils->SetDebugOutputFunction(
             k_ESteamNetworkingSocketsDebugOutputType_Everything,
@@ -670,33 +836,26 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 break;
             send_single(info->m_hConn, generate_game_join());
             m_connections[info->m_hConn].loading_progress = 0;
+            m_connections[info->m_hConn].last_seen = std::nullopt;
             break;
         }
 
-        case k_ESteamNetworkingConnectionState_ClosedByPeer:
-        case k_ESteamNetworkingConnectionState_Dead:
         case k_ESteamNetworkingConnectionState_ProblemDetectedLocally: {
-            cDebug(
-                "peer={} disconnected ({})",
-                info->m_hConn,
-                client_name(info->m_hConn));
-            if(auto it = m_connections.find(info->m_hConn);
-               it != m_connections.end())
+            cDebug("Problem detected with connection to {}", client_name(info->m_hConn));
+            if(auto& player = m_connections[info->m_hConn].biped)
             {
-                auto& player = it->second.player_info;
-                player.m_ref->remove_entity_if(
-                    [&player](compo::Entity const& e) {
-                        return player.m_id == e.id;
-                    });
+                player.get<NetworkInfo>().connected = false;
+                send_player_roster();
             }
-            m_connections.erase(info->m_hConn);
-            send_player_roster();
-            m_impl->CloseConnection(
+            server_close_peer_connection(info->m_hConn, 0, false);
+            break;
+        }
+        case k_ESteamNetworkingConnectionState_ClosedByPeer:
+        case k_ESteamNetworkingConnectionState_Dead: {
+            server_close_peer_connection(
                 info->m_hConn,
                 0,
-                nullptr,
-                info->m_info.m_eState ==
-                    k_ESteamNetworkingConnectionState_ClosedByPeer);
+                info->m_info.m_eState == k_ESteamNetworkingConnectionState_ClosedByPeer);
             break;
         }
         default:
@@ -717,11 +876,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_net_state.client_state   = NetworkState::ClientState::Connected;
             m_net_state.remote_address = remote_name();
             cDebug("Connection to server/peer established ({})", remote_name());
+            m_connection_last_seen = std::nullopt;
             break;
         }
+        case k_ESteamNetworkingConnectionState_ProblemDetectedLocally:
+            cDebug("Problem with connection to server {}", client_name(info->m_hConn));
+            m_connection_last_seen = compo::clock::now();
+            break;
         case k_ESteamNetworkingConnectionState_ClosedByPeer:
-        case k_ESteamNetworkingConnectionState_Dead:
-        case k_ESteamNetworkingConnectionState_ProblemDetectedLocally: {
+        case k_ESteamNetworkingConnectionState_Dead: {
             m_net_state.client_state = NetworkState::ClientState::Disconnecting;
             cDebug("Disonnected from server/peer ({})", remote_name());
             m_impl->CloseConnection(
@@ -787,6 +950,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             message->m_nFlags  = flags;
             message->m_idxLane = lane;
         }
+        if(messages.empty())
+        {
+            cWarning("Was supposed to send message, but none generated");
+            return;
+        }
         messages.back()->m_pfnFreeData = [](SteamNetworkingMessage_t* msg) {
             delete static_cast<char*>(msg->m_pData);
         };
@@ -817,7 +985,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return send_all(std::move(data), flags, {connection});
     }
 
-    void start_restricted(Proxy& p, time_point const&)
+    void start_restricted(Proxy& p, time_point const& t)
     {
         if(m_socket)
         {
@@ -825,7 +993,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             {
                 for(auto& player : p.select<PlayerInfo>())
                 {
-                    auto  ref      = p.underlying().ref(player);
+                    auto  ref      = p.ref(player);
                     auto  info_ref = ref.ref<PlayerInfo>();
                     auto& info     = (*info_ref);
                     if(info.player_idx == 0)
@@ -846,23 +1014,59 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     break;
                 auto const& payload =
                     *reinterpret_cast<MessageBase const*>(message->GetData());
+                auto& pinfo = m_connections[message->m_conn].player_info;
+                if(pinfo)
+                    shared_receive_payload(p, *pinfo, payload);
                 server_receive_payload(p, message->m_conn, payload);
                 message->Release();
+            }
+
+            if(m_needs_local_init && !m_local_player_info.empty())
+            {
+                m_needs_local_init = false;
+                for(auto& pi : m_local_player_info)
+                {
+                    if(pi)
+                        player_init(p.underlying(), *pi);
+                }
+            }
+
+            using namespace std::chrono_literals;
+
+            // Look over connections and find timed out ones
+            for(auto& [connection, player_info] : m_connections)
+            {
+                if(!player_info.last_seen || (t - *player_info.last_seen) < 30s)
+                    continue;
+                server_close_peer_connection(connection, 0, false);
             }
 
             BlamCamera* camera;
             p.subsystem(camera);
 
             const auto& player = camera->player(0);
-            send_all(
-                Message<CameraSync>({
-                    .position = Vecf4(player.camera.position, 0),
-                    .rotation = player.camera.rotation,
-                }),
-                k_nSteamNetworkingSend_UnreliableNoDelay);
+            // send_all(
+            //     Message<CameraSync>({
+            //         .position = Vecf4(player.camera.position, 0),
+            //         .rotation = player.camera.rotation,
+            //     }),
+            //     k_nSteamNetworkingSend_UnreliableNoDelay);
         }
         if(m_connection)
         {
+            if(!m_client_player)
+            {
+                for(auto& player : p.select<PlayerInfo>())
+                {
+                    auto ref = p.ref(player);
+                    auto& pinfo = ref.get<PlayerInfo>();
+                    if(pinfo.is_remote() || pinfo.seat_idx != 0)
+                        continue;
+                    m_client_player = ref;
+                    break;
+                }
+            }
+
             int                       num_msgs = -1;
             SteamNetworkingMessage_t* message  = nullptr;
             while(true)
@@ -873,6 +1077,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     break;
                 auto const& payload =
                     *reinterpret_cast<MessageBase const*>(message->GetData());
+                if(m_client_player)
+                    shared_receive_payload(p, m_client_player.get<PlayerInfo>(), payload);
                 client_receive_payload(p, payload);
                 message->Release();
             }
@@ -881,15 +1087,74 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             p.subsystem(camera);
 
             const auto& player = camera->player(0);
-            send_single(
-                m_connection,
-                Message<CameraSync>({
-                    .position = Vecf4(player.camera.position, 0),
-                    .rotation = player.camera.rotation,
-                }),
-                k_nSteamNetworkingSend_UnreliableNoDelay);
+            // send_single(
+            //     m_connection,
+            //     Message<CameraSync>({
+            //         .position = Vecf4(player.camera.position, 0),
+            //         .rotation = player.camera.rotation,
+            //     }),
+            //     k_nSteamNetworkingSend_UnreliableNoDelay);
         }
         m_impl->RunCallbacks();
+    }
+
+    void server_close_peer_connection(HSteamNetConnection connection, int code, bool linger)
+    {
+        if(auto& player = m_connections[connection].biped)
+            player.get<NetworkInfo>().connected = false;
+        cDebug(
+            "peer={} disconnected ({})",
+            connection,
+            client_name(connection));
+        if(auto it = m_connections.find(connection);
+           it != m_connections.end())
+        {
+            auto& player = it->second.player_info;
+            if(player)
+            {
+                player.m_ref->remove_entity_if(
+                    [&player](compo::Entity const& e) {
+                        return player.m_id == e.id;
+                    });
+            }
+        }
+        m_connections.erase(connection);
+        send_player_roster();
+        m_impl->CloseConnection(
+            connection,
+            code,
+            nullptr,
+            linger);
+    }
+
+    bool shared_receive_payload(Proxy& p, PlayerInfo& self, MessageBase const& payload)
+    {
+        switch(payload.type)
+        {
+        case MessageBase::CameraSync: {
+            auto const& sync   = payload.value<CameraSync>();
+            PlayerInfo* player = 
+                sync.target_player == CameraSync::self_id ? &self : nullptr;
+            
+            if(!player)
+                for(auto const& pi : p.select<PlayerInfo>())
+                {
+                    auto* player_info = p.get<PlayerInfo>(pi.id);
+                    if(player_info->player_idx != sync.target_player)
+                        continue;
+                    player = player_info;
+                }
+            if(!player)
+                break;
+            auto& camera = player->viewport(p.subsystem<BlamCamera>());
+            camera.camera.position = sync.position;
+            camera.camera.rotation = sync.rotation;
+            break;
+        }
+        default:
+            return false;
+        }
+        return true;
     }
 
     void server_receive_payload(
@@ -901,12 +1166,24 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         case MessageBase::PlayerJoin: {
             auto const& player_join = payload.value<PlayerJoin>();
             cDebug("Player joined: {}", player_join.player_name.str());
-            auto ref = p.underlying().create_entity(
-                compo::EntityRecipe{{compo::type_hash_v<PlayerInfo>()}, 0x0});
+            auto ref = p.create_entity(compo::EntityRecipe{
+                    {
+                        compo::type_hash_v<PlayerInfo>(),
+                        compo::type_hash_v<NetworkInfo>(),
+                        compo::type_hash_v<SoundEffects>(),
+                    },
+                    PlayerBiped,
+                });
             player_info.player_info = ref.ref<PlayerInfo>();
+            player_info.biped = ref;
+
+            auto& net_info = ref.get<NetworkInfo>();
+            net_info.connected = true;
 
             auto& info      = (*player_info.player_info);
             info.name       = player_join.player_name.str();
+
+
             info.remote     = client_name(connection);
             info.player_idx = player_info.idx;
 
@@ -923,8 +1200,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto const& event = payload.value<GameLoadState>();
             cDebug("Player {} is at {}% loaded", m_connections[connection].idx, event.progress);
             m_connections[connection].loading_progress = event.progress;
-            if(auto& pi = m_connections[connection].player_info; pi.m_ref)
+            if(auto& pi = m_connections[connection].player_info; pi)
                 (*pi).loading_progress = event.progress;
+            if(event.progress != 100)
+                break;
+            if(player_info.player_info)
+                player_init(p.underlying(), *player_info.player_info);
             break;
         }
         case MessageBase::GameEvent: {
@@ -939,20 +1220,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_game_bus.inject(event_, const_cast<char*>(&event.data));
             break;
         }
-        case MessageBase::CameraSync: {
-            BlamCamera* camera;
-            p.subsystem(camera);
-
-            auto const& sync   = payload.value<CameraSync>();
-            auto&       player = camera->player(
-                sync.target_player == CameraSync::self_id ? player_info.idx
-                                                          : sync.target_player);
-            player.camera.position = sync.position;
-            player.camera.rotation = sync.rotation;
-            break;
-        }
         default:
-            cDebug("Unrecognized event: {}", payload.type);
             break;
         }
     }
@@ -961,29 +1229,16 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     {
         switch(payload.type)
         {
-        case MessageBase::CameraSync: {
-            BlamCamera* camera;
-            p.subsystem(camera);
-
-            auto&       player     = camera->player(4);
-            auto const& sync       = payload.value<CameraSync>();
-            player.camera.position = sync.position;
-            player.camera.rotation = sync.rotation;
-            break;
-        }
         case MessageBase::GameJoin: {
             auto const&  join     = payload.value<GameJoin>();
-            auto         map_name = join.map_name.str();
-            GameEvent    ev{.type = GameEvent::MapLoadStart};
-            MapLoadEvent data{
-                .origin = MapLoadEvent::Remote,
-                .file   = (m_map_directory.path() / map_name)
-                               .addExtension("map")
-                               .url(m_map_directory.flags),
+            GameEvent    ev{.type = GameEvent::MapLoadByName};
+            MapLoadByNameEvent data{
+                .origin   = MapLoadEvent::Remote,
+                .map_name = join.map_name,
             };
             cDebug(
                 "Loading map {} as requested by server({})",
-                data.file,
+                data.map_name.str(),
                 remote_name());
             m_game_bus.inject(ev, &data);
             ev.type = GameEvent::ServerConnected;
@@ -1006,6 +1261,18 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto&       net_state = p.subsystem<NetworkState>();
 
             net_state.remote_player_idx = confirm.player_idx;
+
+            // Map local player 0 to server-assigned index
+            for(auto& player : p.select<PlayerInfo>())
+            {
+                auto* info = p.get<PlayerInfo>(player.id);
+                if(info && info->player_idx == 0 && !info->is_remote())
+                {
+                    info->player_idx = confirm.player_idx;
+                    break;
+                }
+            }
+
             cDebug("Received join confirmation");
             break;
         }
@@ -1032,16 +1299,95 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto  players   = payload.values<PlayerSyncEntry>();
             auto& net_state = p.subsystem<NetworkState>();
             auto  self_idx  = net_state.remote_player_idx.value_or(0xFFFF);
-            net_state.player_roster.clear();
+
+            // Build set of server-known player indices
+            std::set<u32> server_indices;
+            for(auto const& player : players)
+                server_indices.insert(player.player_idx);
+
+            // Remove remote entities for players no longer on server
+            p.remove_entity_if([&](compo::Entity const& e) {
+                auto* info = p.get<PlayerInfo>(e.id);
+                if(!info || !info->is_remote())
+                    return false;
+                return server_indices.find(info->player_idx) ==
+                       server_indices.end();
+            });
+
+            // Collect existing player indices in ECS
+            std::map<u32, u64> existing; // player_idx -> entity id
+            for(auto& entity : p.select<PlayerInfo>())
+            {
+                auto* info = p.get<PlayerInfo>(entity.id);
+                if(info)
+                    existing[info->player_idx] = entity.id;
+            }
+
             for(auto const& player : players)
             {
-                net_state.player_roster.push_back(
-                    NetworkState::RosterEntry{
-                    .name             = std::string(player.name.str()),
-                    .remote_idx       = player.player_idx,
-                    .loading_progress = player.loading_progress,
-                    .is_self          = (player.player_idx == self_idx),
-                });
+                bool is_self = (player.player_idx == self_idx);
+
+                if(auto it = existing.find(player.player_idx);
+                   it != existing.end())
+                {
+                    // Update existing entity
+                    auto* info = p.get<PlayerInfo>(it->second);
+                    if(info)
+                    {
+                        info->name             = std::string(player.name.str());
+                        info->loading_progress = player.loading_progress;
+                    }
+                    auto* net_info = p.get<NetworkInfo>(it->second);
+                    if(net_info)
+                    {
+                        net_info->connected = player.connected == 0xFFFF;
+                    }
+                }
+                else if(!is_self)
+                {
+                    // Create entity for remote player
+                    auto  ref  = p.create_entity(compo::EntityRecipe{
+                        {
+                            compo::type_hash_v<PlayerInfo>(),
+                            compo::type_hash_v<NetworkInfo>(),
+                            compo::type_hash_v<SoundEffects>(),
+                        }, 
+                        ObjectGC | PlayerBiped,
+                    });
+                    auto& info = ref.get<PlayerInfo>();
+                    info.name       = std::string(player.name.str());
+                    info.player_idx = player.player_idx;
+                    info.loading_progress = player.loading_progress;
+                    info.remote     = "remote";
+                    auto& netinfo = ref.get<NetworkInfo>();
+                    netinfo.connected = player.connected == 0xFFFF;
+                }
+            }
+            break;
+        }
+        case MessageBase::UpdatePermission: {
+            auto const& perm = payload.value<UpdatePermission>();
+            for(auto& entity : p.select<PlayerInfo>())
+            {
+                auto* info = p.get<PlayerInfo>(entity.id);
+                if(!info || info->player_idx != perm.player_idx)
+                    continue;
+                switch(perm.permission)
+                {
+                case UpdatePermission::Camera:
+                    info->permissions.camera = perm.mode != 0;
+                    break;
+                case UpdatePermission::Movement:
+                    info->permissions.move = perm.mode != 0;
+                    break;
+                }
+                if(!info->is_remote())
+                {
+                    auto& camera = p.subsystem<BlamCamera>();
+                    camera.player(info->seat_idx).camera_input_allowed =
+                        info->permissions.camera;
+                }
+                break;
             }
             break;
         }
@@ -1083,15 +1429,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return out;
     }
 
-    GameEventBus&            m_game_bus;
-    NetworkState&            m_net_state;
-    BlamCamera&              m_camera;
-    ISteamNetworkingSockets* m_impl{nullptr};
-    ISteamNetworkingUtils*   m_utils{nullptr};
-    SteamNetworkingIdentity  m_identity;
-    HSteamListenSocket       m_socket{};
-    HSteamNetPollGroup       m_poll_group{};
-    HSteamNetConnection      m_connection{};
+    GameEventBus&             m_game_bus;
+    NetworkState&             m_net_state;
+    BlamCamera&               m_camera;
+    ISteamNetworkingSockets*  m_impl{nullptr};
+    ISteamNetworkingUtils*    m_utils{nullptr};
+    SteamNetworkingIdentity   m_identity;
+    HSteamListenSocket        m_socket{};
+    HSteamNetPollGroup        m_poll_group{};
+    HSteamNetConnection       m_connection{};
+    std::optional<time_point> m_connection_last_seen{};
+    compo::EntityRef<EntityContainer> m_client_player{};
 
     struct connection_state_t
     {
@@ -1101,6 +1449,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         compo::EntityRef<EntityContainer> biped{};
         u32                               idx{0};
         u32                               loading_progress{};
+        std::optional<time_point>         last_seen{};
     };
 
     std::map<HSteamNetConnection, connection_state_t> m_connections{};
@@ -1112,16 +1461,48 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     /* Game/map state */
     std::string                        m_host_name;
     u32 m_seed{164829}; /*!< Randomly typed number */
+    bool m_needs_local_init{false};
     blam::map_container<halo_version>* m_map{nullptr};
     stl_types::math::rng               m_local_random{};
 };
 
 #endif
 
+#include "components.h"
+
+u32 PlayerRoster::player_count()
+{
+    u32 count = 0;
+    for(auto& _ : m_container.select<PlayerInfo>())
+        ++count;
+    return count;
+}
+
+std::vector<NetworkState::RosterEntry> PlayerRoster::roster(
+    std::optional<u32> self_idx)
+{
+    std::vector<NetworkState::RosterEntry> entries;
+    for(auto& player : m_container.select<PlayerInfo>())
+    {
+        auto* info = m_container.get<PlayerInfo>(player.id);
+        if(!info)
+            continue;
+        entries.push_back(NetworkState::RosterEntry{
+            .name             = info->name,
+            .remote_idx       = info->player_idx,
+            .loading_progress = info->loading_progress,
+            .is_self          = self_idx.has_value() &&
+                                (info->player_idx == *self_idx),
+        });
+    }
+    return entries;
+}
+
 void alloc_networking(compo::EntityContainer& e)
 {
     ProfContext _;
     e.register_subsystem_inplace<NetworkState>();
+    e.register_subsystem_inplace<PlayerRoster>(std::ref(e));
 #if defined(USE_NETWORKING)
     e.register_subsystem_inplace<Networking>(
         std::ref(e.subsystem_cast<GameEventBus>()),

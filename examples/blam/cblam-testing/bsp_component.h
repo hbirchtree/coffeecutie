@@ -161,7 +161,7 @@ struct BlamBspWidget
                            : camera->focused_player == 3 ? "Player 3"
                                                          : "Unknown"))
                     {
-                        for(auto i : range<>(4))
+                        for(auto i : range<>(camera->num_players()))
                         {
                             auto label = fmt::format("Player {}", i);
                             if(ImGui::Selectable(label.c_str()))
@@ -170,8 +170,8 @@ struct BlamBspWidget
                                     camera->player(camera->focused_player);
 
                                 camera->focused_player   = i;
-                                current_camera.active    = false;
-                                camera->player(i).active = true;
+                                //current_camera.active    = false;
+                                //camera->player(i).active = true;
                             }
                         }
                         ImGui::EndCombo();

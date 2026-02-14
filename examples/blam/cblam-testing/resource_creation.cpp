@@ -34,9 +34,17 @@ void create_resources(compo::EntityContainer& e)
                 }));
 
         eventhandler->addEventHandler(
-            1024, std_camera_t::KeyboardInput(camera.player(0).camera_));
+            1024,
+            std_camera_t::KeyboardInput([&camera]() -> std_camera_t* {
+                auto& vp = camera.player(camera.focused_player);
+                return vp.camera_input_allowed ? vp.camera_.get() : nullptr;
+            }));
         eventhandler->addEventHandler(
-            1024, std_camera_t::MouseInput(camera.player(0).camera_));
+            1024,
+            std_camera_t::MouseInput([&camera]() -> std_camera_t* {
+                auto& vp = camera.player(camera.focused_player);
+                return vp.camera_input_allowed ? vp.camera_.get() : nullptr;
+            }));
 
         auto eventhandler_w = e.service<comp_app::BasicEventBus<Event>>();
 

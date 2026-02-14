@@ -393,10 +393,13 @@ struct NetworkInfo
 
     blam::tagref_t object;
     u32            instance_id{0};
+    bool connected{};
 
     struct
     {
         bool transform : 1;
+        bool viewport : 1;
+        bool permissions : 1;
     } changes;
 };
 
@@ -408,7 +411,22 @@ struct PlayerInfo
     std::string name;
     std::string remote;
     u32         player_idx{0};
+    u32         seat_idx{0};
     u32         loading_progress{100};
+
+    struct permissions_t
+    {
+        bool move{true};
+        bool camera{true};
+    } permissions;
+
+    bool is_remote() const { return !remote.empty(); }
+
+    template<typename CameraSource>
+    CameraSource::viewport_t& viewport(CameraSource& source)
+    {
+        return source.player(seat_idx);
+    }
 };
 
 struct SoundEffects

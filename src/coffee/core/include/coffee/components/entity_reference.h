@@ -29,6 +29,11 @@ struct ComponentRef
         return *m_ref->template get<ComponentType>(m_id);
     }
 
+    operator bool() const
+    {
+        return m_ref && m_ref->exists(m_id);
+    }
+
     u64            m_id;
     ContainerType* m_ref;
 };
@@ -83,9 +88,14 @@ struct EntityRef
         return ComponentRef<ContainerType, T>(m_id, container);
     }
 
+    operator bool() const
+    {
+        return container && container->exists(m_id);
+    }
+
   private:
-    u64            m_id;
-    ContainerType* container;
+    u64            m_id{};
+    ContainerType* container{};
 };
 
 } // namespace compo

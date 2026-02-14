@@ -2,8 +2,8 @@
 
 #include <peripherals/error/result.h>
 
-#include <codecvt>
-#include <locale>
+#include <utf8cpp/utf8.h>
+#include <utf8cpp/utf8/cpp17.h>
 
 #include "blam_magic_data.h"
 #include "blam_reference.h"
@@ -119,8 +119,12 @@ struct unicode_var
 
     inline std::string flat_str(u16 /*off*/ = 0) const
     {
+#if 0
         std::wstring_convert<std::codecvt_utf8<value_type>> converter;
         return converter.to_bytes(str());
+#else
+        return utf8::utf16to8(str());
+#endif
     }
 };
 

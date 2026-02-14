@@ -2,7 +2,7 @@
 
 #include <peripherals/stl/type_list.h>
 
-#include "entity_container.h"
+#include "entity_reference.h"
 
 namespace compo {
 
@@ -45,6 +45,34 @@ struct ContainerProxy : stl_types::non_copy
     FORCEDINLINE EntityRef<ContainerType> ref(u64 e)
     {
         return EntityRef<ContainerType>(e, C_CAST<ContainerType*>(this));
+    }
+
+    FORCEDINLINE EntityRef<EntityContainer> ref(Entity const& e)
+    {
+        return m_container.ref(e);
+    }
+
+    FORCEDINLINE EntityRef<EntityContainer> ref(u64 e)
+    {
+        return m_container.ref(e);
+    }
+
+    FORCEDINLINE EntityRef<EntityContainer> create_entity(
+        EntityRecipe const& recipe)
+    {
+        return m_container.create_entity(recipe);
+    }
+
+    FORCEDINLINE void remove_entity_if(
+        std::function<bool(Entity const&)>&& predicate)
+    {
+        m_container.remove_entity_if(std::move(predicate));
+    }
+
+    template<is_tag_type Service>
+    FORCEDINLINE typename Service::type* service()
+    {
+        return m_container.service<Service>();
     }
 
     auto& underlying()

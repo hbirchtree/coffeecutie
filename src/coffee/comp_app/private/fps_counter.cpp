@@ -29,7 +29,7 @@ void FrameCounter::start_frame(ContainerProxy& p, const time_point& current)
     }
     if(close_time.has_value() && *close_time < current)
     {
-        if(auto window = p.underlying().service<comp_app::Windowing>())
+        if(auto window = p.service<comp_app::Windowing>())
             window->close();
     }
 }

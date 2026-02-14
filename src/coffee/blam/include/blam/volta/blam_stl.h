@@ -110,10 +110,8 @@ struct map_container
         if(!header)
             return map_load_error::not_a_map;
 
-        progress("Reading tag index", 100);
+        progress("Reading tag index", 50);
         auto const* tags_index = &tag_index_t<Ver>::from_header(header);
-
-        progress("Complete!", 100);
 
         return map_container{
             .map          = header,

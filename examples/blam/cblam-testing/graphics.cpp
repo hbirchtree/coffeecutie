@@ -298,6 +298,7 @@ i32 blam_main()
 
             using namespace ::platform::url::constructors;
 
+            /* Figure out if have a map to load OR what's the map directory */
             Url map_filename;
             Url map_dir;
 
@@ -329,31 +330,42 @@ i32 blam_main()
                 map_dir = map_filename.path().dirname().url(map_filename.flags);
             }
 
-            GameEvent    event{GameEvent::MapLoadStart};
-            MapLoadEvent load{
-                .directory = map_dir,
-            };
-            if(map_filename.valid())
-                load.file = map_filename;
-            else
-                load.file = MkUrl("bloodgulch.map", RSCA::AssetFile);
-            e.subsystem_cast<GameEventBus>().inject(event, &load);
-            if(arguments.count("listen"))
+            auto& gbus = e.subsystem_cast<GameEventBus>();
+
+            if(arguments.count("server"))
             {
-                event.type = GameEvent::ServerConnect;
-                ServerConnectEvent connect{
-                    .type   = ServerConnectEvent::Listen,
-                    .remote = arguments["listen"].as<std::string>(),
-                };
-                e.subsystem_cast<GameEventBus>().inject(event, &connect);
-            } else if(arguments.count("server"))
-            {
-                event.type = GameEvent::ServerConnect;
+                /* When we're a client, skip trying to load a map on startup */
+                e.subsystem_cast<BlamFiles<halo_version>>().map_directory = map_dir;
+                GameEvent event{GameEvent::MapRequestListing};
+                MapRequestListingEvent request{};
+                gbus.inject(event, &request);
+                event = {GameEvent::ServerConnect};
                 ServerConnectEvent connect{
                     .type   = ServerConnectEvent::Server,
                     .remote = arguments["server"].as<std::string>(),
                 };
-                e.subsystem_cast<GameEventBus>().inject(event, &connect);
+                gbus.inject(event, &connect);
+            } else
+            {
+                GameEvent    event{GameEvent::MapLoadStart};
+                MapLoadEvent load{
+                    .directory = map_dir,
+                };
+                if(map_filename.valid())
+                    load.file = map_filename;
+                else
+                    load.file = MkUrl("bloodgulch.map", RSCA::AssetFile);
+                gbus.inject(event, &load);
+
+                if(arguments.count("listen"))
+                {
+                    GameEvent event{GameEvent::ServerConnect};
+                    ServerConnectEvent connect{
+                        .type   = ServerConnectEvent::Listen,
+                        .remote = arguments["listen"].as<std::string>(),
+                    };
+                    gbus.inject(event, &connect);
+                }
             }
 
 #if defined(COFFEE_EMSCRIPTEN) && defined(FEATURE_ENABLE_ASIO)
@@ -368,16 +380,16 @@ i32 blam_main()
             auto& camera_     = e.subsystem_cast<BlamCamera>();
             auto  controllers = e.service<comp_app::ControllerInput>();
 
-            for(auto i : range<u32>(8))
+            for(auto i : range<u32>(4))
             {
                 auto& camera = camera_.player(i);
-                /* Mouse/keyboard only applies to player 1 */
-                if(i == camera_.focused_player)
+                if(i == camera_.focused_player && camera.camera_input_allowed)
                     camera.camera_->tick(t);
                 if(i != camera_.focused_player &&
                    compile_info::platform::is_emscripten)
                     continue;
-                if(controllers && i < controllers->count())
+                if(controllers && i < controllers->count() &&
+                   camera.camera_input_allowed)
                 {
                     auto num_controllers = controllers->count();
                     auto prev            = camera.active;

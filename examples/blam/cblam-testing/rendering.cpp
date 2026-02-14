@@ -388,7 +388,7 @@ struct MeshRenderer
         auto        _ = m_api->debug().scope(pass.name);
         ProfContext __;
 
-        auto& player = m_camera.player(m_camera.focused_player);
+        auto& player = m_camera.player(idx);
 
         auto vertex_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Vertex,
@@ -575,7 +575,7 @@ struct MeshRenderer
                 gfx::uniform_pair{
                     {"camera"sv, 0},
                     semantic::SpanOne<const Matf4>(
-                        m_camera.player(m_camera.focused_player).matrix),
+                        m_camera.player(0).matrix),
                 }),
             get_view_state(0));
     }
@@ -608,20 +608,10 @@ struct MeshRenderer
 
         for(auto const& pass : stl_types::slice_num(m_bsp, Pass_LastOpaque + 1))
         {
-            render_bsp_pass(
-                p,
-                m_camera.focused_player,
-                t,
-                pass,
-                gfx::stencil_state{
-                    .depth_pass = gfx::stencil_state::operation_t::write,
-                    .mask       = 0x1,
-                    .reference  = 0x1,
-                });
-            for(auto i : stl_types::range<u32>(m_camera.num_players() - 1))
+            for(auto i : stl_types::range<u32>(m_camera.num_players()))
                 render_bsp_pass(
                     p,
-                    i + 1,
+                    i,
                     t,
                     pass,
                     gfx::stencil_state{
@@ -631,11 +621,13 @@ struct MeshRenderer
                     });
         }
 
+        u32 primary_player = m_camera.focused_player;
+
         for(auto const& pass :
             stl_types::slice_num(m_model, Pass_LastOpaque + 1))
             render_pass(
                 p,
-                m_camera.focused_player,
+                primary_player,
                 t,
                 pass,
                 // cull_state,
@@ -653,7 +645,7 @@ struct MeshRenderer
             };
             render_bsp_pass(
                 p,
-                m_camera.focused_player,
+                primary_player,
                 t,
                 m_bsp[Pass_Sky],
                 gfx::depth_extended_state{.depth_write = false},
@@ -661,7 +653,7 @@ struct MeshRenderer
                 gfx::blend_state{});
             render_pass(
                 p,
-                m_camera.focused_player,
+                primary_player,
                 t,
                 m_model[Pass_Sky],
                 // cull_state,
@@ -674,35 +666,35 @@ struct MeshRenderer
 
         render_pass(
             p,
-            m_camera.focused_player,
+            primary_player,
             t,
             m_model[Pass_Additive],
             gfx::blend_state{.additive = true},
             nowrite);
         render_pass(
             p,
-            m_camera.focused_player,
+            primary_player,
             t,
             m_model[Pass_Multiply],
             gfx::blend_state{.multiply = true},
             nowrite);
         render_pass(
             p,
-            m_camera.focused_player,
+            primary_player,
             t,
             m_model[Pass_Glass],
             gfx::blend_state{},
             nowrite);
         render_bsp_pass(
             p,
-            m_camera.focused_player,
+            primary_player,
             t,
             m_bsp[Pass_Additive],
             gfx::blend_state{.additive = true},
             nowrite);
         render_bsp_pass(
             p,
-            m_camera.focused_player,
+            primary_player,
             t,
             m_bsp[Pass_Glass],
             gfx::blend_state{},
@@ -1553,5 +1545,5 @@ void alloc_renderer(EntityContainer& container)
         std::ref(container.subsystem_cast<BSPCache<halo_version>>()));
 
     container.register_subsystem_inplace<ScreenClear>();
-    //container.register_subsystem_inplace<LoadingScreen>();
+    container.register_subsystem_inplace<LoadingScreen>();
 }

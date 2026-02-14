@@ -471,6 +471,7 @@ struct EntityContainer : stl_types::non_copy
 
     EntityRef<EntityContainer> create_entity(EntityRecipe const& recipe);
     void remove_entity_if(std::function<bool(Entity const&)>&& predicate);
+    bool exists(u64 id) const;
 
     u64 tags_of(u64 id) const;
 

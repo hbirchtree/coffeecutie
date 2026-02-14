@@ -11,6 +11,8 @@ struct BlamFiles : compo::SubsystemBase
 {
     using type = BlamFiles;
 
+    platform::url::Url map_directory;
+
     std::shared_ptr<comp_app::FileMapper::Resource> map_file;
     std::shared_ptr<comp_app::FileMapper::Resource> bitmap_file;
     std::shared_ptr<comp_app::FileMapper::Resource> sound_file;

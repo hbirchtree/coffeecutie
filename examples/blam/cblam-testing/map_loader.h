@@ -22,10 +22,11 @@ using type_safety::type_list_t;
 using Coffee::cDebug;
 
 using BlamMapBrowserManifest = compo::SubsystemManifest<
-    type_list_t<PlayerInfo>,
+    type_list_t<PlayerInfo, NetworkInfo>,
     type_list_t<
         GameEventBus
         , NetworkState
+        , PlayerRoster
         , BlamCamera
 #if defined(FEATURE_ENABLE_DiscordLatte)
         , discord::Subsystem
@@ -111,9 +112,12 @@ struct BlamMapBrowser
                 {
                     ImGui::Columns(2);
 #if defined(FEATURE_ENABLE_DiscordLatte)
-                    ImGui::Text("Candidate name: %s (from Discord)", e.subsystem<discord::Subsystem>().playerInfo().username.c_str());
-                    ImGui::NextColumn();
-                    ImGui::NextColumn();
+                    if(auto& discord = e.subsystem<discord::Subsystem>(); discord.connected())
+                    {
+                        ImGui::Text("Candidate name: %s (from Discord)", e.subsystem<discord::Subsystem>().playerInfo().username.c_str());
+                        ImGui::NextColumn();
+                        ImGui::NextColumn();
+                    }
 #endif
                     ImGui::InputText(
                         "Server", remote_address.data(), remote_address.size());
@@ -139,16 +143,27 @@ struct BlamMapBrowser
                             state.data());
                     if(auto remote = net_state->remote_address)
                         ImGui::Text("Connected to %s", remote->c_str());
-                    if(!net_state->player_roster.empty())
                     {
-                        ImGui::Separator();
-                        ImGui::Text("Players:");
-                        for(auto const& entry : net_state->player_roster)
+                        auto& roster_sys = e.subsystem<PlayerRoster>();
+                        auto  roster = roster_sys.roster(
+                            net_state->remote_player_idx);
+                        if(!roster.empty())
                         {
-                            if(entry.is_self)
-                                ImGui::Text(" > %s (you)", entry.name.c_str());
-                            else
-                                ImGui::Text(" - %s", entry.name.c_str());
+                            ImGui::Separator();
+                            ImGui::Text("Players:");
+                            for(auto const& entry : roster)
+                            {
+                                if(entry.is_self)
+                                    ImGui::Text(
+                                        " > [%u] %s (you)",
+                                        entry.remote_idx,
+                                        entry.name.c_str());
+                                else
+                                    ImGui::Text(
+                                        " - [%u] %s",
+                                        entry.remote_idx,
+                                        entry.name.c_str());
+                            }
                         }
                     }
                     if(ImGui::Button("Look at me!"))
@@ -206,9 +221,15 @@ struct BlamMapBrowser
                     }
                     for(auto const& player : e.select<PlayerInfo>())
                     {
-                        auto const& pinfo =
-                            e.ref<Proxy>(player.id).get<PlayerInfo>();
-                        if(pinfo.loading_progress < 100)
+                        auto const& pinfo = *e.get<PlayerInfo>(player.id);
+                        auto const& net = *e.get<NetworkInfo>(player.id);
+                        if(!net.connected && !pinfo.remote.empty())
+                            ImGui::TextColored(
+                                ImVec4(0.7, 0.7, 0.7, 1.0),
+                                " - %s (%s) [unstable]",
+                                pinfo.name.c_str(),
+                                pinfo.remote.c_str());
+                        else if(pinfo.loading_progress < 100)
                             ImGui::Text(
                                 " - %s (%s) [%u%%]",
                                 pinfo.name.c_str(),
@@ -225,6 +246,108 @@ struct BlamMapBrowser
                         ImGui::NextColumn();
                     }
                     ImGui::Columns();
+                    ImGui::EndTabItem();
+                }
+                if(ImGui::BeginTabItem("Entities"))
+                {
+                    auto& ec = e.underlying();
+                    if(ImGui::BeginListBox("##entities"))
+                    {
+                        u32 entity_idx = 0;
+                        for(auto& entity : e.select(0))
+                        {
+                            char label[64];
+                            snprintf(
+                                label,
+                                sizeof(label),
+                                "E %llu [0x%llX]##%u",
+                                static_cast<unsigned long long>(entity.id),
+                                static_cast<unsigned long long>(entity.tags),
+                                entity_idx);
+                            if(ImGui::Selectable(
+                                   label,
+                                   m_selected_entity == entity.id))
+                                m_selected_entity = entity.id;
+                            entity_idx++;
+                        }
+                        ImGui::EndListBox();
+                    }
+                    if(m_selected_entity && ec.exists(m_selected_entity))
+                    {
+                        ImGui::Text(
+                            "Entity %llu",
+                            static_cast<unsigned long long>(m_selected_entity));
+                        auto tags = ec.tags_of(m_selected_entity);
+                        ImGui::Text(
+                            "Tags: 0x%llX",
+                            static_cast<unsigned long long>(tags));
+                        ImGui::Text("Components:");
+                        auto check = [&](const char* name, auto* ptr) {
+                            if(ptr)
+                                ImGui::BulletText("%s", name);
+                        };
+                        check("Model", ec.get<Model>(m_selected_entity));
+                        check("SubModel", ec.get<SubModel>(m_selected_entity));
+                        check(
+                            "BspReference",
+                            ec.get<BspReference>(m_selected_entity));
+                        check(
+                            "ObjectSpawn",
+                            ec.get<ObjectSpawn>(m_selected_entity));
+                        check(
+                            "NetworkInfo",
+                            ec.get<NetworkInfo>(m_selected_entity));
+                        check(
+                            "PlayerInfo",
+                            ec.get<PlayerInfo>(m_selected_entity));
+                        check(
+                            "SoundEffects",
+                            ec.get<SoundEffects>(m_selected_entity));
+                        check(
+                            "MultiplayerSpawn",
+                            ec.get<MultiplayerSpawn>(m_selected_entity));
+                        check(
+                            "ShaderData",
+                            ec.get<ShaderData>(m_selected_entity));
+                        check(
+                            "MeshTrackingData",
+                            ec.get<MeshTrackingData>(m_selected_entity));
+                        check(
+                            "DebugDraw",
+                            ec.get<DebugDraw>(m_selected_entity));
+                        check(
+                            "TriggerVolume",
+                            ec.get<TriggerVolume>(m_selected_entity));
+                        check("Light", ec.get<Light>(m_selected_entity));
+                        check(
+                            "DepthInfo",
+                            ec.get<DepthInfo>(m_selected_entity));
+
+                        if(auto* pinfo = ec.get<PlayerInfo>(m_selected_entity))
+                        {
+                            ImGui::Separator();
+                            ImGui::Text("PlayerInfo:");
+                            ImGui::Text(
+                                "  name: %s", pinfo->name.c_str());
+                            ImGui::Text(
+                                "  remote: %s", pinfo->remote.c_str());
+                            ImGui::Text(
+                                "  player_idx: %u", pinfo->player_idx);
+                            ImGui::Text(
+                                "  loading: %u%%",
+                                pinfo->loading_progress);
+                        }
+                        if(auto* neti = ec.get<NetworkInfo>(m_selected_entity))
+                        {
+                            ImGui::Separator();
+                            ImGui::Text("NetworkInfo");
+                            ImGui::Text("  connected: %s", neti->connected ? "true" : "false");
+                            ImGui::Text("  tag: class=%.*s id=%u instance=%u", 4,
+                                        neti->object.tag_class_name().data(),
+                                        neti->object.tag_id,
+                                        neti->instance_id);
+                        }
+                    }
                     ImGui::EndTabItem();
                 }
                 if(m_error)
@@ -285,4 +408,5 @@ struct BlamMapBrowser
     std::optional<blam::map_load_error>            m_error;
     std::vector<Url>                               m_maps;
     std::string                                    remote_address;
+    u64                                            m_selected_entity{0};
 };

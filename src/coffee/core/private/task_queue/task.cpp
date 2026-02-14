@@ -288,7 +288,7 @@ detail::result<runtime_queue*, RuntimeQueueVerboseError> runtime_queue::
         auto tid = std::hash<detail::thread::id>()(worker.get_id());
 
         /* Wait for the runtime_queue to be created on the thread */
-        if(thread_started_signal.wait_for(10ms) != std::future_status::ready)
+        if(thread_started_signal.wait_for(500ms) != std::future_status::ready)
         {
             Coffee::cWarning("Creation of thread {} timed out", name);
             return RuntimeQueueVerboseError{

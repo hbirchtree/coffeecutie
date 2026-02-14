@@ -4,10 +4,9 @@
 #include <peripherals/stl/time_types.h>
 #include <peripherals/typing/enum/graphics/direction.h>
 
-#include <algorithm>
+#include <functional>
 #include <map>
 #include <memory>
-#include <set>
 
 namespace Coffee::StandardInput {
 
@@ -88,18 +87,21 @@ struct StandardCamera
     {
         using event_type = CIKeyEvent;
 
-        KeyboardInput(std::weak_ptr<StandardCamera> cam)
-            : m_container(cam)
+        KeyboardInput(std::function<StandardCamera*()>&& cam)
+            : m_camera(std::move(cam))
         {
         }
 
         void operator()(CIEvent const& e, CIKeyEvent const* ev)
         {
+            auto* camera = m_camera();
+            if(!camera)
+                return;
             StandardKeyRegister<Reg, CIEvent::Keyboard>(
-                m_container.lock().get()->m_reg, e, ev);
+                camera->m_reg, e, ev);
         }
 
-        std::weak_ptr<StandardCamera> m_container;
+        std::function<StandardCamera*()> m_camera;
     };
 
     struct MouseInput
@@ -107,10 +109,10 @@ struct StandardCamera
         using event_type = CIMouseMoveEvent;
 
         MouseInput(
-            std::shared_ptr<StandardCamera> cam,
+            std::function<StandardCamera*()>&& cam,
             u32 button = CIMouseButtonEvent::LeftButton)
             : m_button(button)
-            , m_container(cam)
+            , m_camera(std::move(cam))
         {
         }
 
@@ -118,13 +120,16 @@ struct StandardCamera
         {
             if(ev->btn != m_button)
                 return;
+            auto* camera = m_camera();
+            if(!camera)
+                return;
             auto yaw   = 0.01f * ev->delta.y;
             auto pitch = 0.01f * ev->delta.x;
-            m_container->rotate(-pitch, -yaw);
+            camera->rotate(-pitch, -yaw);
         }
 
         u32                             m_button;
-        std::shared_ptr<StandardCamera> m_container;
+        std::function<StandardCamera*()> m_camera;
     };
 
     using Reg = std::map<u16, u16>;

@@ -283,7 +283,7 @@ function configure_preset_and_build()
     fi
 
     echo "::group::Building project"
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_MODE} ${TARGET_SPEC} || info_dump
+    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_MODE} ${TARGET_SPEC} | tee /tmp/${USER}-${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_MODE}.log || info_dump
     echo "::endgroup::"
 
     popd

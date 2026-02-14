@@ -353,16 +353,26 @@ FORCEDINLINE EntityRef<EntityContainer> EntityContainer::create_entity(
 FORCEDINLINE void EntityContainer::remove_entity_if(
     std::function<bool(Entity const&)>&& predicate)
 {
-    auto remove_it
-        = std::remove_if(entities.begin(), entities.end(), predicate);
-    auto removed_entities
-        = semantic::Span<Entity>(&(*remove_it), entities.end() - remove_it);
+    std::vector<u64> removed_ids;
+    for(auto const& entity : entities)
+    {
+        if(predicate(entity))
+            removed_ids.push_back(entity.id);
+    }
+    auto remove_it = std::remove_if(entities.begin(), entities.end(), predicate);
     for(auto& component : components)
     {
-        for(auto const& entity : removed_entities)
-            component.second->unregister_entity(entity.id);
+        for(auto id : removed_ids)
+            component.second->unregister_entity(id);
     }
     entities.erase(remove_it, entities.end());
+}
+
+inline bool EntityContainer::exists(u64 id) const
+{
+    return std::find_if(entities.begin(), entities.end(), [id](Entity const& entity) {
+            return entity.id == id;
+        }) != entities.end();
 }
 
 inline u64 EntityContainer::tags_of(u64 id) const

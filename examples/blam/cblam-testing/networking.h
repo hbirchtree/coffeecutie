@@ -2,6 +2,9 @@
 
 #include <coffee/components/entity_container.h>
 
+#include <optional>
+#include <vector>
+
 struct NetworkState : compo::SubsystemBase
 {
     using type = NetworkState;
@@ -11,6 +14,7 @@ struct NetworkState : compo::SubsystemBase
         None,
         Establishing,
         Connecting,
+        Unstable,
         Connected,
         Error,
         Disconnecting,
@@ -34,7 +38,26 @@ struct NetworkState : compo::SubsystemBase
         libc_types::u32 loading_progress{100};
         bool            is_self{false};
     };
-    std::vector<RosterEntry> player_roster;
+};
+
+struct PlayerInfo;
+
+struct PlayerRoster : compo::SubsystemBase
+{
+    using type = PlayerRoster;
+
+    PlayerRoster(compo::EntityContainer& container)
+        : m_container(container)
+    {
+    }
+
+    libc_types::u32 player_count();
+
+    std::vector<NetworkState::RosterEntry> roster(
+        std::optional<libc_types::u32> self_idx = std::nullopt);
+
+  private:
+    compo::EntityContainer& m_container;
 };
 
 void alloc_networking(compo::EntityContainer& e);

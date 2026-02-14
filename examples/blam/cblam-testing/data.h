@@ -9,12 +9,15 @@
 #include <peripherals/typing/vectors/vector_types.h>
 
 #include "graphics_api.h"
+#include "peripherals/typing/vectors/glm_vector_types.h"
 
 using namespace Coffee::StandardInput;
 
 constexpr libc_types::u32 reserved_debug_points = 24 + 16 * 7;
 constexpr libc_types::u32 reserved_debug_colors = 6 + 16;
 
+using libc_types::i32;
+using libc_types::u32;
 using libc_types::f32;
 using semantic::Span;
 using typing::vector_types::Matf4;
@@ -51,7 +54,9 @@ struct BlamCamera : compo::SubsystemBase
         Matf4                         matrix{};
         Matf4                         rotation{};
         ControllerOpts                controller_opts;
+        i32                           controller_idx{-1};
         bool                          active{false};
+        bool                          camera_input_allowed{true};
     };
 
     std::array<viewport_t, 8> viewports;
@@ -160,16 +165,24 @@ struct LoadingStatus : compo::SubsystemBase
     loading_t                      loaded_map{none};
     loading_t                      loaded_bitmaps{none};
     loading_t                      loaded_sounds{none};
+    std::promise<void>             finished{};
 
     void check_all_loaded()
     {
+        using namespace Coffee::Logging;
+        bool old_loading = loading;
+        libc_types::i16 old_progress = progress;
         if(loaded_map == loaded && loaded_bitmaps == loaded &&
            loaded_sounds == loaded)
         {
+            if(loading == true)
+                finished.set_value();
             loading  = false;
             progress = -1;
             app_info->setState(comp_app::interfaces::AppInfo::loaded);
         }
+        cDebug("Re-evaluating loading state: loading={} -> {} progress={} -> {}",
+               old_loading, loading, old_progress, progress);
     }
 };
 
@@ -180,9 +193,12 @@ struct GameEvent
         None,
         MapLoadByName,
         MapLoadStart,
+        MapRequestListing,
         MapListing,
         MapDataLoad,
         MapLoadFinished,
+        MapDataReady,
+        MapAllLoaded,
         MapChanged,
 
         ServerConnect,
@@ -194,13 +210,6 @@ struct GameEvent
     };
 
     EventType type{None};
-};
-
-struct MapLoadByName
-{
-    static constexpr auto event_type = GameEvent::MapLoadByName;
-
-    blam::bl_string map_name;
 };
 
 struct MapLoadEvent
@@ -215,6 +224,19 @@ struct MapLoadEvent
 
     std::optional<platform::url::Url> directory{};
     std::optional<platform::url::Url> file{};
+};
+
+struct MapLoadByNameEvent
+{
+    static constexpr auto event_type = GameEvent::MapLoadByName;
+
+    MapLoadEvent::Origin origin{MapLoadEvent::Local};
+    blam::bl_string map_name;
+};
+
+struct MapRequestListingEvent
+{
+    static constexpr auto event_type = GameEvent::MapRequestListing;
 };
 
 struct MapListingEvent
@@ -243,6 +265,11 @@ struct MapLoadFinishedEvent
     std::string                  map_name{};
     std::string                  map_title{};
     std::optional<blam::map_ptr> bitmaps{};
+};
+
+struct MapDataReadyEvent
+{
+    static constexpr auto event_type = GameEvent::MapDataReady;
 };
 
 template<typename V>
@@ -284,9 +311,12 @@ struct ServerCameraControl
     {
         None,
         RequestCameraFocus,
+        OverrideCamera,
     } request{None};
 
     libc_types::u32 target_player{0xFFFF};
+    typing::vector_types::Vecf4 position{};
+    Quatf rotation{};
 };
 
 struct ServerDisconnectEvent
