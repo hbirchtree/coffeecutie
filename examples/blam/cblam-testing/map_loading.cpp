@@ -1,6 +1,7 @@
 #include "bitmap_cache.h"
 #include "blam_files.h"
 #include "caching.h"
+#include "coffee/comp_app/services.h"
 #include "components.h"
 #include "data.h"
 #include "loading.h"
@@ -166,6 +167,7 @@ static void load_resources(compo::EntityContainer& e, MapLoadFinishedEvent<halo_
             {
                 compo::type_hash_v<PlayerInfo>(),
                 compo::type_hash_v<NetworkInfo>(),
+                compo::type_hash_v<PlayerCamera>(),
                 compo::type_hash_v<SoundEffects>(),
             },
         .tags = PlayerBiped,
@@ -177,20 +179,34 @@ static void load_resources(compo::EntityContainer& e, MapLoadFinishedEvent<halo_
     //     recipe.components.push_back(compo::type_hash_v<Model>());
     u64 main_biped_id{0};
     if(num_pinfo == 0)
+    {
+        auto* controllers = e.service<comp_app::ControllerInput>();
+        auto* window = e.service<comp_app::Windowing>();
+        u32 num_controllers = controllers->count(), allocated_controllers = 0;
+        f32 aspect = window->size().aspect();
+        if(num_controllers == 1)
+        {
+            auto size = window->size();
+            aspect = static_cast<f32>(size.w) / (size.h / 2.f);
+        }
         for(auto i : range<>(4))
         {
             auto  ref       = e.create_entity(recipe);
             auto& info      = ref.get<PlayerInfo>();
             info.player_idx = i;
             info.seat_idx = i;
+            auto& camera = ref.get<PlayerCamera>();
             if(i == 0)
+            {
                 main_biped_id = ref.id();
-            // if(!player_model.valid())
-            //     continue;
-            // TODO: Set up biped model here
-            // auto& model = ref.get<Model>();
-            // model.model = player_model;
+                camera.keyboard.enabled = true;
+            } else if(num_controllers > allocated_controllers)
+            {
+                camera.controller.index = allocated_controllers;
+                ++allocated_controllers;
+            }
         }
+    }
     rq::runtime_queue::Queue(rq::dependent_task<void, void>::CreateSink(
         loading_status.finished.get_future(), [&e](void*) {
             cDebug("Load finish signalled!");

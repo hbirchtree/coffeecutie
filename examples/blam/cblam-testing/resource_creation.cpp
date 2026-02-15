@@ -1,5 +1,7 @@
 #include "resource_creation.h"
 
+#include "coffee/comp_app/services.h"
+#include "coffee/core/types/input/event_types.h"
 #include "components.h"
 #include "shader_compiler.h"
 #include "touch_overlay.h"
@@ -15,8 +17,6 @@ using namespace Coffee::resource_literals;
 void create_resources(compo::EntityContainer& e)
 {
     ProfContext _(__FUNCTION__);
-
-    BlamCamera& camera = e.register_subsystem_inplace<BlamCamera>();
 
     {
         using namespace Coffee::Display;
@@ -35,26 +35,83 @@ void create_resources(compo::EntityContainer& e)
 
         eventhandler->addEventHandler(
             1024,
-            std_camera_t::KeyboardInput([&camera]() -> std_camera_t* {
-                auto& vp = camera.player(camera.focused_player);
-                return vp.camera_input_allowed ? vp.camera_.get() : nullptr;
+            std_camera_t::KeyboardInput([&e] -> std_camera_t* {
+                for(auto& entity : e.select<PlayerCamera>())
+                {
+                    auto* cam  = e.get<PlayerCamera>(entity.id);
+                    auto* info = e.get<PlayerInfo>(entity.id);
+                    if(cam->keyboard.enabled && info && info->permissions.camera)
+                        return cam->camera_.get();
+                }
+                cWarning("No camera selected");
+                return nullptr;
             }));
         eventhandler->addEventHandler(
             1024,
-            std_camera_t::MouseInput([&camera]() -> std_camera_t* {
-                auto& vp = camera.player(camera.focused_player);
-                return vp.camera_input_allowed ? vp.camera_.get() : nullptr;
+            std_camera_t::MouseInput([&e] -> std_camera_t* {
+                for(auto& entity : e.select<PlayerCamera>())
+                {
+                    auto* cam  = e.get<PlayerCamera>(entity.id);
+                    auto* info = e.get<PlayerInfo>(entity.id);
+                    if(cam->keyboard.enabled && info && info->permissions.camera)
+                        return cam->camera_.get();
+                }
+                cWarning("No camera selected");
+                return nullptr;
             }));
+        eventhandler->addEventFunction<CIControllerConnectEvent>(
+            1024, [&e](CIEvent& ev, CIControllerConnectEvent* connect) {
+                auto* controllers = e.service<comp_app::ControllerInput>();
+                auto name = controllers->name(connect->player_index);
+                cDebug("Controller {}connected: {} (idx={})",
+                       connect->connected ? "" : "dis", name, connect->player_index);
+                for(auto& player : e.select<PlayerCamera>())
+                {
+                    auto* info = e.get<PlayerInfo>(player.id);
+                    // Don't assign it to remote seat
+                    if(info->is_remote())
+                        continue;
+                    auto* cam = e.get<PlayerCamera>(player.id);
+                    if(connect->connected)
+                    {
+                        // Assign controller to first available seat
+                        if(cam->is_active())
+                            continue;
+                        cDebug("Assigning controller {} to player {} (seat {})",
+                               connect->player_index, info->player_idx, info->seat_idx);
+                        cam->controller.index = connect->player_index;
+                        break;
+                    } else if(cam->controller.index.value_or(0xFF) == connect->player_index)
+                    {
+                        cDebug("Unassigning controller {} from player {} (seat {})",
+                               connect->player_index, info->player_idx, info->seat_idx);
+                        cam->controller.index = std::nullopt;
+                        break;
+                    }
+                }
+            });
+
 
         auto eventhandler_w = e.service<comp_app::BasicEventBus<Event>>();
 
         eventhandler_w->addEventFunction<ResizeEvent>(
-            0, [&camera](Event&, ResizeEvent* resize) {
+            0, [&e](Event&, ResizeEvent* resize) {
+                u32 count = 0;
+                for(auto& _ : e.select<PlayerCamera>())
+                {
+                    auto* cam = e.get<PlayerCamera>(_.id);
+                    if(auto* info = e.get<PlayerInfo>(_.id); cam->is_active())
+                        ++count;
+                }
                 f32 aspect = static_cast<f32>(resize->w) / resize->h;
-                if(camera.num_players() == 2)
+                if(count == 2)
                     aspect = static_cast<f32>(resize->w) / (resize->h / 2);
-                for(auto& viewport : camera.viewports)
-                    viewport.camera.aspect = aspect;
+                for(auto& entity : e.select<PlayerCamera>())
+                {
+                    auto* cam = e.get<PlayerCamera>(entity.id);
+                    if(cam)
+                        cam->camera->aspect = aspect;
+                }
                 cDebug("Window resize: {}x{}", resize->w, resize->h);
             });
 
@@ -624,44 +681,37 @@ void create_camera(
     compo::EntityContainer&                                          e,
     semantic::Span<const blam::scn::player_starting_location> const& spawns)
 {
-    BlamCamera& camera = e.subsystem_cast<BlamCamera>();
-    auto*       fb     = e.service<comp_app::Windowing>();
-
-    for(auto& viewport : camera.viewports)
+    u32 count{0};
+    for(auto& _ : e.select<PlayerCamera>())
+        if(auto* info = e.get<PlayerInfo>(_.id); info && !info->is_remote())
+            ++count;
+    for(auto& entity : e.select<PlayerCamera>())
     {
-        viewport.controller_opts.sens.move = {.1f, .1f};
-        viewport.camera_opts.accel.alt     = 50.f;
-    }
+        auto* cam  = e.get<PlayerCamera>(entity.id);
+        auto* info = e.get<PlayerInfo>(entity.id);
+        if(!cam || !info)
+            continue;
+        cam->controller.opts.sens.move = {.1f, .1f};
+        cam->camera_opts->accel.alt     = 50.f;
 
-    if(spawns.empty())
-        return;
+        if(spawns.empty())
+            continue;
+        auto& location = info->seat_idx < spawns.size()
+            ? spawns[info->seat_idx] : spawns[0];
+        cam->camera->position = location.pos * Vecf3{-1, -1, -1};
+        cam->camera->rotation = glm::normalize(glm::quat(Vecf3{
+            0, location.rot, glm::pi<f32>() / 2.f}));
 
-    cDebug("Initial aspect ratio: {}", fb->size().aspect());
-
-    for(auto i : range<u32>(4))
-    {
-        auto& location = i < spawns.size() ? spawns[i] : spawns[0];
-        camera.viewports[i].camera.position = location.pos * Vecf3{-1, -1, -1};
-        cDebug("Facing of player: {0}", location.rot);
-        camera.viewports[i].camera.rotation = glm::normalize(glm::quat(Vecf3{
-            0,
-            location.rot,
-            glm::pi<f32>() / 2.f,
-        }));
-        camera.viewports[i].camera.aspect   = fb->size().aspect();
-    }
-
-    /* Move the camera to a player spawn location */
-    {
-        //        auto transform
-        //            =
-        //            typing::vectors::matrixify(typing::vectors::normalize_quat(
-        //                  Quatf(1, -math::pi_f / 4, 0, 0)))
-        //              * typing::vectors::scale(Matf4(), {10})
-        //              ;
-
-        if(!spawns.empty())
+        auto* fb = e.service<comp_app::Windowing>();
+        if(fb)
         {
+            if(count != 2)
+                cam->camera->aspect = fb->size().aspect();
+            else
+            {
+                auto size = fb->size();
+                cam->camera->aspect = static_cast<f32>(size.w) / (size.h / 2.f);
+            }
         }
     }
 }

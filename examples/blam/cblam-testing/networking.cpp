@@ -24,8 +24,8 @@ using Coffee::ProfContext;
 #include <fmt_extensions/url_types.h>
 
 using NetworkingManifest = compo::SubsystemManifest<
-    type_list_t<PlayerInfo, NetworkInfo>,
-    type_list_t<BlamCamera, NetworkState>,
+    type_list_t<PlayerInfo, NetworkInfo, PlayerCamera>,
+    type_list_t<NetworkState>,
     type_list_t<comp_app::ScreenshotProvider>>;
 
 /* Lane 0 should be used for most common packets */
@@ -389,10 +389,33 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     {
         using namespace std::chrono_literals;
 
-        auto constexpr birds_eye_pos = Vecf4{-29, -7, -7, 1};
+        auto constexpr birds_eye_pos = Vecf3{-29, -7, -7};
         auto constexpr birds_eye_rot = Quatf{1, 0, 0, 0};
 
-        auto spawn_loc = [this] -> std::optional<blam::scn::player_starting_location>
+        player.permissions.camera = false;
+
+        /* Write birds-eye position to PlayerCamera + mark dirty */
+        for(auto& entity : e.select<PlayerInfo>())
+        {
+            auto* info = e.get<PlayerInfo>(entity.id);
+            if(info != &player)
+                continue;
+            auto* cam = e.get<PlayerCamera>(entity.id);
+            if(cam)
+            {
+                cam->camera->position = birds_eye_pos;
+                cam->camera->rotation = birds_eye_rot;
+            }
+            auto* net = e.get<NetworkInfo>(entity.id);
+            if(net)
+            {
+                net->changes.viewport    = true;
+                net->changes.permissions = true;
+            }
+            break;
+        }
+
+        auto spawn_loc = [this]() -> std::optional<blam::scn::player_starting_location>
         {
             if(!m_map)
                 return std::nullopt;
@@ -410,89 +433,35 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             return spawns[spawn_idx];
         }();
 
-        if(player.is_remote())
-        {
-            // Find the connection for this remote player
-            HSteamNetConnection conn{};
-            for(auto& [c, state] : m_connections)
-            {
-                if(state.idx == player.player_idx)
+        if(!spawn_loc)
+            return;
+
+        auto pidx = player.player_idx;
+        rq::runtime_queue::QueueImmediate(
+            rq::runtime_queue::GetCurrentQueue().value(), 5s,
+            [this, &e, pidx, spawn = *spawn_loc]() {
+                for(auto& entity : e.select<PlayerInfo>())
                 {
-                    conn = c;
+                    auto* info = e.get<PlayerInfo>(entity.id);
+                    if(!info || info->player_idx != pidx)
+                        continue;
+                    auto* cam = e.get<PlayerCamera>(entity.id);
+                    if(cam)
+                    {
+                        cam->camera->position = spawn.pos * Vecf3{-1, -1, -1};
+                        cam->camera->rotation = glm::normalize(Quatf(Vecf3{
+                            0.f, spawn.rot, glm::pi<f32>() / 2.f}));
+                    }
+                    info->permissions.camera = true;
+                    auto* net = e.get<NetworkInfo>(entity.id);
+                    if(net)
+                    {
+                        net->changes.viewport    = true;
+                        net->changes.permissions = true;
+                    }
                     break;
                 }
-            }
-            if(!conn)
-                return;
-
-            // Lock camera
-            send_permission(conn, player.player_idx, UpdatePermission::Camera, 0);
-            // Set birds-eye position
-            send_single(conn, Message<CameraSync>({
-                .position      = birds_eye_pos,
-                .rotation      = birds_eye_rot,
-                .target_player = player.player_idx,
-            }));
-
-            // Schedule delayed unlock with random spawn
-            auto idx = player.player_idx;
-            rq::runtime_queue::QueueImmediate(
-                rq::runtime_queue::GetCurrentQueue().value(),
-                5s,
-                [this, conn, idx, spawn = *spawn_loc]() mutable {
-                    send_single(
-                        conn,
-                        Message<CameraSync>({
-                            .position = Vecf4(
-                                spawn.pos * Vecf3{-1, -1, -1}, 0),
-                            .rotation = glm::normalize(Quatf(Vecf3{
-                                0.f,
-                                spawn.rot,
-                                glm::pi<f32>() / 2.f})),
-                            .target_player = idx,
-                        }));
-                    send_permission(conn, idx, UpdatePermission::Camera, 1);
-                }).assume_value();
-        }
-        else
-        {
-            auto& camera = e.subsystem_cast<BlamCamera>();
-            auto& vp     = camera.player(player.seat_idx);
-
-            // Lock camera
-            player.permissions.camera   = false;
-            vp.camera_input_allowed     = false;
-
-            // Set birds-eye position
-            vp.camera.position = Vecf3(birds_eye_pos);
-            vp.camera.rotation = birds_eye_rot;
-
-            // Schedule delayed unlock with random spawn
-            auto  seat = player.seat_idx;
-            auto  pidx = player.player_idx;
-            rq::runtime_queue::QueueImmediate(
-                rq::runtime_queue::GetCurrentQueue().value(),
-                5s,
-                [this, &e, seat, pidx, spawn = *spawn_loc]() mutable {
-                    auto& cam = e.subsystem_cast<BlamCamera>();
-                    auto& vp  = cam.player(seat);
-                    vp.camera.position = spawn.pos * Vecf3{-1, -1, -1};
-                    vp.camera.rotation = glm::normalize(Quatf(Vecf3{
-                        0.f, spawn.rot, glm::pi<f32>() / 2.f}));
-
-                    // Find the PlayerInfo and unlock
-                    for(auto& entity : e.select<PlayerInfo>())
-                    {
-                        auto* info = e.get<PlayerInfo>(entity.id);
-                        if(info && info->player_idx == pidx)
-                        {
-                            info->permissions.camera = true;
-                            break;
-                        }
-                    }
-                    vp.camera_input_allowed = true;
-                }).assume_value();
-        }
+            }).assume_value();
     }
 
     auto get_random_name()
@@ -531,10 +500,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     }
 
     Networking(
-        GameEventBus& game_bus, NetworkState& net_state, BlamCamera& camera)
+        GameEventBus& game_bus, NetworkState& net_state)
         : m_game_bus(game_bus)
         , m_net_state(net_state)
-        , m_camera(camera)
     {
         network_instance = this;
 
@@ -590,9 +558,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             0, [this](GameEvent&, ServerCameraControl* cam) {
                 if(!m_socket)
                     return;
-                m_camera.focused_player =
-                    cam->target_player == 0xFFFF ? 0 : cam->target_player;
                 cDebug("Setting camera to {}", cam->target_player);
+                m_pending_focus = cam->target_player == 0xFFFF
+                    ? 0 : cam->target_player;
             });
         m_game_bus.addEventData(
             {0, [this](GameEvent& event, const void* data) {
@@ -1041,16 +1009,78 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 server_close_peer_connection(connection, 0, false);
             }
 
-            BlamCamera* camera;
-            p.subsystem(camera);
+            /* Process pending focus change (swap seat_idx) */
+            if(m_pending_focus.has_value())
+            {
+                u32 target_pidx = *m_pending_focus;
+                m_pending_focus.reset();
+                PlayerInfo* old_seat0 = nullptr;
+                PlayerInfo* target = nullptr;
+                PlayerCamera* old_seat0_cam = nullptr;
+                PlayerCamera* target_cam = nullptr;
+                u64 old_seat0_id = 0, target_id = 0;
+                for(auto& entity : p.select<PlayerInfo>())
+                {
+                    auto* info = p.get<PlayerInfo>(entity.id);
+                    if(!info) continue;
+                    if(info->seat_idx == 0)
+                    {
+                        old_seat0 = info;
+                        old_seat0_cam = p.get<PlayerCamera>(entity.id);
+                        old_seat0_id = entity.id;
+                    }
+                    if(info->player_idx == target_pidx)
+                    {
+                        target = info;
+                        target_cam = p.get<PlayerCamera>(entity.id);
+                        target_id = entity.id;
+                    }
+                }
+                if(old_seat0 && target && old_seat0 != target)
+                {
+                    std::swap(old_seat0->seat_idx, target->seat_idx);
+                    if(old_seat0_cam) old_seat0_cam->keyboard.enabled = false;
+                    if(target_cam) target_cam->keyboard.enabled = true;
+                }
+            }
 
-            const auto& player = camera->player(0);
-            // send_all(
-            //     Message<CameraSync>({
-            //         .position = Vecf4(player.camera.position, 0),
-            //         .rotation = player.camera.rotation,
-            //     }),
-            //     k_nSteamNetworkingSend_UnreliableNoDelay);
+            /* Sync dirty player components to network */
+            for(auto& entity : p.select<PlayerInfo>())
+            {
+                auto* info = p.get<PlayerInfo>(entity.id);
+                auto* net  = p.get<NetworkInfo>(entity.id);
+                auto* cam  = p.get<PlayerCamera>(entity.id);
+                if(!info || !net || !cam)
+                    continue;
+
+                if(net->changes.permissions && info->is_remote())
+                {
+                    for(auto& [conn, state] : m_connections)
+                    {
+                        if(state.idx != info->player_idx) continue;
+                        send_permission(conn, info->player_idx,
+                            UpdatePermission::Camera,
+                            info->permissions.camera ? 1 : 0);
+                        break;
+                    }
+                    net->changes.permissions = false;
+                }
+
+                if(net->changes.viewport && info->is_remote())
+                {
+                    for(auto& [conn, state] : m_connections)
+                    {
+                        if(state.idx != info->player_idx) continue;
+                        send_single(conn, Message<CameraSync>({
+                            .position      = Vecf4(cam->camera->position, 0),
+                            .rotation      = cam->camera->rotation,
+                            .target_player = info->player_idx,
+                        }));
+                        break;
+                    }
+                    net->changes.viewport = false;
+                }
+            }
         }
         if(m_connection)
         {
@@ -1083,17 +1113,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 message->Release();
             }
 
-            BlamCamera* camera;
-            p.subsystem(camera);
-
-            const auto& player = camera->player(0);
-            // send_single(
-            //     m_connection,
-            //     Message<CameraSync>({
-            //         .position = Vecf4(player.camera.position, 0),
-            //         .rotation = player.camera.rotation,
-            //     }),
-            //     k_nSteamNetworkingSend_UnreliableNoDelay);
         }
         m_impl->RunCallbacks();
     }
@@ -1132,23 +1151,23 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         switch(payload.type)
         {
         case MessageBase::CameraSync: {
-            auto const& sync   = payload.value<CameraSync>();
-            PlayerInfo* player = 
-                sync.target_player == CameraSync::self_id ? &self : nullptr;
-            
-            if(!player)
-                for(auto const& pi : p.select<PlayerInfo>())
+            auto const& sync = payload.value<CameraSync>();
+            for(auto const& pi : p.select<PlayerInfo>())
+            {
+                auto* player_info = p.get<PlayerInfo>(pi.id);
+                bool match = (sync.target_player == CameraSync::self_id)
+                    ? (player_info == &self)
+                    : (player_info->player_idx == sync.target_player);
+                if(!match)
+                    continue;
+                auto* cam = p.get<PlayerCamera>(pi.id);
+                if(cam)
                 {
-                    auto* player_info = p.get<PlayerInfo>(pi.id);
-                    if(player_info->player_idx != sync.target_player)
-                        continue;
-                    player = player_info;
+                    cam->camera->position = Vecf3(sync.position);
+                    cam->camera->rotation = sync.rotation;
                 }
-            if(!player)
                 break;
-            auto& camera = player->viewport(p.subsystem<BlamCamera>());
-            camera.camera.position = sync.position;
-            camera.camera.rotation = sync.rotation;
+            }
             break;
         }
         default:
@@ -1170,6 +1189,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     {
                         compo::type_hash_v<PlayerInfo>(),
                         compo::type_hash_v<NetworkInfo>(),
+                        compo::type_hash_v<PlayerCamera>(),
                         compo::type_hash_v<SoundEffects>(),
                     },
                     PlayerBiped,
@@ -1350,8 +1370,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         {
                             compo::type_hash_v<PlayerInfo>(),
                             compo::type_hash_v<NetworkInfo>(),
+                            compo::type_hash_v<PlayerCamera>(),
                             compo::type_hash_v<SoundEffects>(),
-                        }, 
+                        },
                         ObjectGC | PlayerBiped,
                     });
                     auto& info = ref.get<PlayerInfo>();
@@ -1380,12 +1401,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 case UpdatePermission::Movement:
                     info->permissions.move = perm.mode != 0;
                     break;
-                }
-                if(!info->is_remote())
-                {
-                    auto& camera = p.subsystem<BlamCamera>();
-                    camera.player(info->seat_idx).camera_input_allowed =
-                        info->permissions.camera;
                 }
                 break;
             }
@@ -1431,7 +1446,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 
     GameEventBus&             m_game_bus;
     NetworkState&             m_net_state;
-    BlamCamera&               m_camera;
     ISteamNetworkingSockets*  m_impl{nullptr};
     ISteamNetworkingUtils*    m_utils{nullptr};
     SteamNetworkingIdentity   m_identity;
@@ -1462,6 +1476,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::string                        m_host_name;
     u32 m_seed{164829}; /*!< Randomly typed number */
     bool m_needs_local_init{false};
+    std::optional<u32> m_pending_focus{};
     blam::map_container<halo_version>* m_map{nullptr};
     stl_types::math::rng               m_local_random{};
 };
@@ -1506,7 +1521,6 @@ void alloc_networking(compo::EntityContainer& e)
 #if defined(USE_NETWORKING)
     e.register_subsystem_inplace<Networking>(
         std::ref(e.subsystem_cast<GameEventBus>()),
-        std::ref(e.subsystem_cast<NetworkState>()),
-        std::ref(e.subsystem_cast<BlamCamera>()));
+        std::ref(e.subsystem_cast<NetworkState>()));
 #endif
 }

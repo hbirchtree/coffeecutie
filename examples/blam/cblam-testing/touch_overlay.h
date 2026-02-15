@@ -7,8 +7,8 @@
 #include "rendering.h"
 
 using TouchOverlayManifest = compo::SubsystemManifest<
-    compo::empty_list_t,
-    compo::type_list_t<gfx::system, ScreenClear, BlamCamera>,
+    compo::type_list_t<PlayerCamera, PlayerInfo>,
+    compo::type_list_t<gfx::system, ScreenClear>,
     compo::type_list_t<
         comp_app::DisplayInfo,
         comp_app::GraphicsFramebuffer,

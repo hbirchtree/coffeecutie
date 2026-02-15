@@ -10,8 +10,8 @@
 
 template<typename V>
 using OccluderManifest = compo::SubsystemManifest<
-    type_list_t<BspReference, Model>,
-    type_list_t<BSPCache<V>, BlamCamera, BlamResources, RenderingParameters>,
+    type_list_t<BspReference, Model, PlayerCamera, PlayerInfo>,
+    type_list_t<BSPCache<V>, BlamResources, RenderingParameters>,
     empty_list_t>;
 
 template<typename V>
@@ -27,17 +27,26 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         return;
 
         BSPCache<V>*         bsp_cache;
-        BlamCamera*          camera;
         BlamResources*       resources;
         RenderingParameters* rendering;
         p.subsystem(bsp_cache);
-        p.subsystem(camera);
         p.subsystem(resources);
         p.subsystem(rendering);
 
-        auto camera_pos =
-            camera->player(camera->focused_player).camera.position *
-            Vecf3{-1, -1, 1};
+        /* Find primary player (seat_idx == 0) camera position */
+        Vecf3 primary_pos{};
+        for(auto& ent : p.template select<PlayerCamera>())
+        {
+            auto* info = p.template get<PlayerInfo>(ent.id);
+            auto* cam  = p.template get<PlayerCamera>(ent.id);
+            if(info && cam && info->seat_idx == 0)
+            {
+                primary_pos = cam->camera->position;
+                break;
+            }
+        }
+
+        auto camera_pos = primary_pos * Vecf3{-1, -1, 1};
 
         // for(auto& ent : p.select(ObjectBsp))
         // {
@@ -60,11 +69,18 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         //     portal_colors[3 + i] = Vecf3{1, 0, 1};
 
         u32 player_i = 0;
-        for(auto const& player : camera->viewports)
+        for(auto& ent : p.template select<PlayerCamera>())
         {
-            auto pos = player.camera.position * Vecf3(-1);
+            auto* cam  = p.template get<PlayerCamera>(ent.id);
+            auto* info = p.template get<PlayerInfo>(ent.id);
+            if(!cam || !info)
+                continue;
+            if(player_i >= 16)
+                break;
 
-            if(camera->focused_player == player_i)
+            auto pos = cam->camera->position * Vecf3(-1);
+
+            if(info->seat_idx == 0)
                 pos = Vecf3(0);
 
             std::array<Vecf3, 7> points = {{
@@ -120,8 +136,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         //     return;
 
         const auto in_draw_distance =
-            [camera_pos =
-                 camera->player(camera->focused_player).camera.position,
+            [camera_pos = primary_pos,
              rendering,
              draw_dist = rendering->draw_distance](Model const& mod) {
                 return glm::distance(mod.position, camera_pos) < draw_dist;

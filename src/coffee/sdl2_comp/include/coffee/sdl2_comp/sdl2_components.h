@@ -188,6 +188,7 @@ struct ControllerInput
     libc_types::f32 m_axisScale;
     libc_types::i16 m_axisDeadzone;
 
+    std::map<int, int> m_deviceToPlayer;
     std::map<int, void*> m_controllers;
     std::map<int, void*> m_playerIndex;
 };

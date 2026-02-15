@@ -30,54 +30,6 @@ struct BlamData
     using type = BlamData<Version>;
 };
 
-struct BlamCamera : compo::SubsystemBase
-{
-    using type = BlamCamera;
-
-    BlamCamera()
-    {
-        viewports[0].active = true;
-    }
-
-    struct viewport_t
-    {
-        viewport_t()
-            : camera_(std::make_shared<std_camera_t>(&camera, &camera_opts))
-        {
-        }
-
-        viewport_t(const viewport_t&) = delete;
-
-        StandardCameraOpts            camera_opts;
-        camera_t                      camera;
-        std::shared_ptr<std_camera_t> camera_;
-        Matf4                         matrix{};
-        Matf4                         rotation{};
-        ControllerOpts                controller_opts;
-        i32                           controller_idx{-1};
-        bool                          active{false};
-        bool                          camera_input_allowed{true};
-    };
-
-    std::array<viewport_t, 8> viewports;
-    libc_types::u32           focused_player{0};
-
-    viewport_t& player(libc_types::u32 idx = 0)
-    {
-        if(idx >= viewports.size())
-            Throw(implementation_error("player idx > 3 does not exist"));
-        return viewports[idx];
-    }
-
-    libc_types::u32 num_players() const
-    {
-        libc_types::u32 sum = 0;
-        for(auto const& viewport : viewports)
-            sum += viewport.active ? 1 : 0;
-        return sum;
-    }
-};
-
 struct BlamResources : compo::SubsystemBase
 {
     using type = BlamResources;

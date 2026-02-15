@@ -171,6 +171,7 @@ i32 blam_main()
             e.register_component_inplace<TriggerVolume>();
             e.register_component_inplace<Light>();
             e.register_component_inplace<DepthInfo>();
+            e.register_component_inplace<PlayerCamera>();
 
             e.register_subsystem_inplace<comp_app::FrameTag>();
             e.register_subsystem_inplace<GameEventBus>();
@@ -377,50 +378,59 @@ i32 blam_main()
            BlamData<halo_version>&,
            time_point const&,
            duration const& t) {
-            auto& camera_     = e.subsystem_cast<BlamCamera>();
-            auto  controllers = e.service<comp_app::ControllerInput>();
+            using namespace typing::vectors::scene;
 
-            for(auto i : range<u32>(4))
+            auto controllers = e.service<comp_app::ControllerInput>();
+
+            for(auto& entity : e.select<PlayerCamera>())
             {
-                auto& camera = camera_.player(i);
-                if(i == camera_.focused_player && camera.camera_input_allowed)
-                    camera.camera_->tick(t);
-                if(i != camera_.focused_player &&
-                   compile_info::platform::is_emscripten)
+                auto* cam  = e.get<PlayerCamera>(entity.id);
+                auto* info = e.get<PlayerInfo>(entity.id);
+                if(!cam || !info)
                     continue;
-                if(controllers && i < controllers->count() &&
-                   camera.camera_input_allowed)
+
+                if(info->permissions.camera)
                 {
-                    auto num_controllers = controllers->count();
-                    auto prev            = camera.active;
-                    camera.active        = true;
-                    if(prev != camera.active)
-                        cDebug("Player {} -> {}", i, camera.active);
-                    controller_camera_update(
-                        camera.camera_,
-                        camera.controller_opts,
-                        controllers->state(i),
-                        t);
-                } /*else if(i != 0)
-                    break;*/
-                using namespace typing::vectors::scene;
-                camera.camera.zVals = {100.f, 0.001f};
+                    if(cam->keyboard.enabled)
+                       cam->camera_->tick(t);
+                    if(controllers && cam->controller.index.has_value())
+                    {
+                        cam->camera_->tick(t);
+                        auto state = controllers->state(*cam->controller.index);
+                        controller_camera_update(
+                            cam->camera_,
+                            cam->controller.opts,
+                            controllers->state(*cam->controller.index),
+                            t);
+                    }
+                }
+
+                cam->camera->zVals = {100.f, 0.001f};
 
                 Matf4 view_matrix = glm::translate(
-                    glm::mat4_cast(camera.camera.rotation),
-                    camera.camera.position);
+                    glm::mat4_cast(cam->camera->rotation),
+                    cam->camera->position);
 
-                camera.matrix       = GenPerspective(camera.camera);
-                camera.matrix[2][2] = 0.f;
-                camera.matrix       = camera.matrix * view_matrix;
-                camera.rotation     = glm::mat3_cast(camera.camera.rotation);
+                cam->matrix       = GenPerspective(*cam->camera);
+                cam->matrix[2][2] = 0.f;
+                cam->matrix       = cam->matrix * view_matrix;
+                cam->rotation     = glm::mat3_cast(cam->camera->rotation);
             }
 
-            auto& snd = e.subsystem_cast<oaf::system>();
-            snd.listener().set_property<oaf::listener_property::position>(
-                camera_.player().camera.position);
-            snd.listener().set_property<oaf::listener_property::orientation>(
-                glm::mat3_cast(camera_.player().camera.rotation));
+            for(auto& entity : e.select<PlayerCamera>())
+            {
+                auto* cam  = e.get<PlayerCamera>(entity.id);
+                auto* info = e.get<PlayerInfo>(entity.id);
+                if(cam && info && info->seat_idx == 0)
+                {
+                    auto& snd = e.subsystem_cast<oaf::system>();
+                    snd.listener().set_property<oaf::listener_property::position>(
+                        cam->camera->position);
+                    snd.listener().set_property<oaf::listener_property::orientation>(
+                        glm::mat3_cast(cam->camera->rotation));
+                    break;
+                }
+            }
         },
         [](EntityContainer&, BlamData<halo_version>&, time_point const&) {
 

@@ -1,3 +1,4 @@
+#include <SDL_gamecontroller.h>
 #include <coffee/sdl2_comp/sdl2_components.h>
 
 #include <coffee/comp_app/gl_config.h>
@@ -669,10 +670,18 @@ void GLFramebuffer::start_frame(
 
 void ControllerInput::load(entity_container& c, comp_app::app_error& ec)
 {
+    using namespace platform::url::constructors;
+
     auto& config = comp_app::AppLoader::config<comp_app::ControllerConfig>(c);
 
-    if(!config.mapping.empty())
-        SDL_SetHint(SDL_HINT_GAMECONTROLLERCONFIG_FILE, "controllerdb.txt");
+    if(config.mapping.empty())
+    {
+        auto controllerdb = *"controllerdb.txt"_config;
+        cDebug("Looking for controllerdb in: {}", controllerdb);
+        SDL_GameControllerAddMappingsFromFile(controllerdb.c_str());
+        SDL_SetHint(SDL_HINT_GAMECONTROLLERCONFIG_FILE, controllerdb.c_str());
+    } else
+        SDL_SetHint(SDL_HINT_GAMECONTROLLERCONFIG_FILE, config.mapping.c_str());
     if(config.options & comp_app::ControllerConfig::BackgroundInput)
         SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 
@@ -725,6 +734,7 @@ void ControllerInput::start_restricted(proxy_type& p, time_point const&)
         SDL_CONTROLLERDEVICEADDED,
         SDL_CONTROLLERDEVICEREMAPPED))
     {
+
         if(event.type == SDL_CONTROLLERDEVICEADDED)
         {
             auto controller = SDL_GameControllerOpen(event.cdevice.which);
@@ -749,16 +759,35 @@ void ControllerInput::start_restricted(proxy_type& p, time_point const&)
 
             m_playerIndex.insert({playerIdx, controller});
             m_controllers.insert({instanceId, controller});
+            m_deviceToPlayer.insert({event.cdevice.which, playerIdx});
+
+            CIEvent ev{.type = CIEvent::ControllerConnect};
+            CIControllerConnectEvent connect = {
+                .index = static_cast<libc_types::u16>(event.cdevice.which),
+                .player_index = static_cast<libc_types::i16>(playerIdx),
+                .connected = true,
+            };
+            inputBus->process(ev, &connect);
 
 #if SDL_VERSION_ATLEAST(2, 0, 8) && 0
             SDL_GameControllerRumble(controller, 7000, 9000, 200);
 #endif
-            Coffee::Logging::cDebug("Player {} connected", playerIdx);
+            Coffee::Logging::cDebug("Player {} connected (playerIdx={}, instance={}, which={})",
+                playerIdx, playerIdx, instanceId, event.cdevice.which);
         } else if(event.type == SDL_CONTROLLERDEVICEREMOVED)
         {
+            auto playerIdx = m_deviceToPlayer[event.cdevice.which];
+            CIEvent ev{.type = CIEvent::ControllerConnect};
+            CIControllerConnectEvent connect = {
+                .index = static_cast<libc_types::u16>(event.cdevice.which),
+                .player_index = static_cast<libc_types::i16>(playerIdx),
+                .connected = false,
+            };
+            inputBus->process(ev, &connect);
+
             controllerDisconnect(event.cdevice.which);
             Coffee::Logging::cDebug(
-                "Player {} disconnected", event.cdevice.which);
+                "Player {} disconnected", playerIdx);
         } else if(event.type == SDL_CONTROLLERDEVICEREMAPPED)
         {
             Coffee::Logging::cDebug("Player {} remapped", event.cdevice.which);
@@ -894,6 +923,7 @@ int ControllerInput::controllerDisconnect(int device)
 
     m_playerIndex.erase(delete_key);
     m_controllers.erase(instanceIdx);
+    m_deviceToPlayer.erase(device);
 
     return delete_key;
 }

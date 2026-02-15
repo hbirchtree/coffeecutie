@@ -12,11 +12,11 @@ struct BlamBspWidget;
 
 template<typename V>
 using BlamBspWidgetManifest = compo::SubsystemManifest<
-    type_list_t<BspReference, ShaderData, SubModel, TriggerVolume, DebugDraw>,
+    type_list_t<BspReference, ShaderData, SubModel, TriggerVolume, DebugDraw,
+                PlayerCamera, PlayerInfo>,
     type_list_t<
         ShaderCache<V>,
         BSPCache<V>,
-        BlamCamera,
         BlamResources,
         PostProcessParameters,
         RenderingParameters,
@@ -145,53 +145,58 @@ struct BlamBspWidget
                 }
                 if(ImGui::BeginTabItem("Camera"))
                 {
-                    BlamCamera*            camera;
                     BlamResources*         resources;
                     PostProcessParameters* postprocess;
                     e.subsystem(postprocess);
-                    e.subsystem(camera);
                     e.subsystem(resources);
 
-                    ImGui::Text("Camera properties");
-                    if(ImGui::BeginCombo(
-                           "Selected camera",
-                           camera->focused_player == 0   ? "Player 0"
-                           : camera->focused_player == 1 ? "Player 1"
-                           : camera->focused_player == 2 ? "Player 2"
-                           : camera->focused_player == 3 ? "Player 3"
-                                                         : "Unknown"))
+                    /* Find primary (seat_idx==0) PlayerCamera */
+                    PlayerCamera* primary_cam = nullptr;
+                    u32 num_cameras = 0;
+                    for(auto& ent : e.template select<PlayerCamera>())
                     {
-                        for(auto i : range<>(camera->num_players()))
-                        {
-                            auto label = fmt::format("Player {}", i);
-                            if(ImGui::Selectable(label.c_str()))
-                            {
-                                auto& current_camera =
-                                    camera->player(camera->focused_player);
+                        auto* info = e.template get<PlayerInfo>(ent.id);
+                        auto* cam  = e.template get<PlayerCamera>(ent.id);
+                        if(!info || !cam)
+                            continue;
+                        ++num_cameras;
+                        if(info->seat_idx == m_selected_camera)
+                            primary_cam = cam;
+                    }
 
-                                camera->focused_player   = i;
-                                //current_camera.active    = false;
-                                //camera->player(i).active = true;
+                    ImGui::Text("Camera properties");
+                    {
+                        auto label = fmt::format("Player {}", m_selected_camera);
+                        if(ImGui::BeginCombo("Selected camera", label.c_str()))
+                        {
+                            for(auto i : range<>(num_cameras))
+                            {
+                                auto opt = fmt::format("Player {}", i);
+                                if(ImGui::Selectable(opt.c_str()))
+                                    m_selected_camera = i;
                             }
+                            ImGui::EndCombo();
                         }
-                        ImGui::EndCombo();
                     }
                     ImGui::Columns(2);
                     ImGui::Text("Position");
                     ImGui::NextColumn();
-                    auto& player = camera->player(camera->focused_player);
-                    ImGui::Text(
-                        "vec3(%f, %f, %f)",
-                        player.camera.position[0],
-                        player.camera.position[1],
-                        player.camera.position[2]);
-                    ImGui::SliderFloat(
-                        "Draw distance",
-                        &rendering->draw_distance,
-                        1.f,
-                        5000.f);
-                    ImGui::SliderFloat(
-                        "FOV", &player.camera.fieldOfView, 10.f, 120.f);
+                    if(primary_cam)
+                    {
+                        ImGui::Text(
+                            "vec3(%f, %f, %f)",
+                            primary_cam->camera->position[0],
+                            primary_cam->camera->position[1],
+                            primary_cam->camera->position[2]);
+                        ImGui::Text("Aspect: %f", primary_cam->camera->aspect);
+                        ImGui::SliderFloat(
+                            "Draw distance",
+                            &rendering->draw_distance,
+                            1.f,
+                            5000.f);
+                        ImGui::SliderFloat(
+                            "FOV", &primary_cam->camera->fieldOfView, 10.f, 120.f);
+                    }
                     ImGui::SliderFloat("Gamma", &postprocess->gamma, 0.1, 5.0);
                     ImGui::SliderFloat(
                         "Exposure", &postprocess->exposure, -10.f, 10.f);
@@ -237,4 +242,5 @@ struct BlamBspWidget
     // blam::map_container<V> const* m_map{nullptr};
 
     std::map<std::string_view, bool> m_bsps;
+    u32 m_selected_camera{0};
 };

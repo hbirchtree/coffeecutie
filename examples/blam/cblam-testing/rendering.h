@@ -8,7 +8,8 @@
 
 template<typename V>
 using MeshRendererManifest = compo::SubsystemManifest<
-    type_list_t<BspReference, SubModel, Model, MeshTrackingData, DebugDraw>,
+    type_list_t<BspReference, SubModel, Model, MeshTrackingData, DebugDraw,
+                PlayerCamera, PlayerInfo>,
     type_list_t<
         BitmapCache<V>,
         ModelCache<V>,

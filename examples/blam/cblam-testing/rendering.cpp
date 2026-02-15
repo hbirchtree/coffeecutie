@@ -149,14 +149,22 @@ struct MeshRenderer
 
     time_point last_update{};
 
+    struct cached_player_t
+    {
+        u32   seat_idx;
+        Matf4 matrix;
+        Vecf3 position;
+    };
+
     gfx::api*            m_api;
     BlamResources&       m_resources;
     RenderingParameters& m_render_params;
-    BlamCamera&          m_camera;
 
     ShaderCache<Version>& shader_cache;
     BitmapCache<Version>& bitm_cache;
     BSPCache<Version>&    bsp_cache;
+
+    std::vector<cached_player_t> m_players;
 
     std::array<Pass, Pass_Count> m_bsp;
     std::array<Pass, Pass_Count> m_model;
@@ -167,14 +175,12 @@ struct MeshRenderer
         gfx::api*             api,
         BlamResources&        resources,
         RenderingParameters&  render,
-        BlamCamera&           camera,
         ShaderCache<Version>& shader_cache,
         BitmapCache<Version>& bitm_cache,
         BSPCache<Version>&    bsp_cache)
         : m_api(api)
         , m_resources(resources)
         , m_render_params(render)
-        , m_camera(camera)
         , shader_cache(shader_cache)
         , bitm_cache(bitm_cache)
         , bsp_cache(bsp_cache)
@@ -347,7 +353,7 @@ struct MeshRenderer
             m_resources.offscreen_size.y,
         };
 
-        switch(m_camera.num_players())
+        switch(m_players.size())
         {
         case 1:
             view.y = m_resources.offscreen_size.y;
@@ -384,11 +390,13 @@ struct MeshRenderer
 
         if(!supports_splitscreen && idx != 0)
             return;
+        if(idx >= m_players.size())
+            return;
 
         auto        _ = m_api->debug().scope(pass.name);
         ProfContext __;
 
-        auto& player = m_camera.player(idx);
+        auto const& player = m_players[idx];
 
         auto vertex_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Vertex,
@@ -399,7 +407,7 @@ struct MeshRenderer
             typing::graphics::ShaderStage::Fragment,
             gfx::uniform_pair{
                 {"camera_position", 21},
-                semantic::SpanOne<const Vecf3>(player.camera.position),
+                semantic::SpanOne(player.position),
             },
             gfx::uniform_pair{
                 {"time", 22},
@@ -457,23 +465,25 @@ struct MeshRenderer
 
         if(!supports_splitscreen && idx != 0)
             return;
+        if(idx >= m_players.size())
+            return;
 
         auto        _ = m_api->debug().scope(pass.name);
         ProfContext __;
 
-        auto& player = m_camera.player(idx);
+        auto const& player = m_players[idx];
 
         /* Step 1: Set up shared uniform state + buffers */
         auto vertex_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair{
                 {"camera"sv, 1},
-                semantic::SpanOne<const Matf4>(player.matrix)});
+                semantic::SpanOne(player.matrix)});
         auto fragment_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Fragment,
             gfx::uniform_pair{
                 {"camera_position", 21},
-                semantic::SpanOne<const Vecf3>(player.camera.position),
+                semantic::SpanOne<const Vecf3>(player.position),
             },
             gfx::uniform_pair{
                 {"time", 22},
@@ -558,6 +568,8 @@ struct MeshRenderer
 
         m_resources.debug_line_colors->unmap();
 
+        Matf4 debug_matrix = m_players.empty()
+            ? glm::identity<Matf4>() : m_players[0].matrix;
         m_api->submit(
             {
                 .program       = m_resources.debug_lines_pipeline,
@@ -572,17 +584,30 @@ struct MeshRenderer
             },
             gfx::make_uniform_list(
                 typing::graphics::ShaderStage::Vertex,
-                gfx::uniform_pair{
-                    {"camera"sv, 0},
-                    semantic::SpanOne<const Matf4>(
-                        m_camera.player(0).matrix),
-                }),
+                gfx::uniform_pair{{"camera"sv, 0}, semantic::SpanOne(debug_matrix)}),
             get_view_state(0));
     }
 
     void start_restricted(Proxy& p, time_point const& time)
     {
         ProfContext _;
+
+        /* Collect active local players sorted by seat_idx */
+        m_players.clear();
+        for(auto& entity : p.template select<PlayerCamera>())
+        {
+            auto* cam  = p.template get<PlayerCamera>(entity.id);
+            auto* info = p.template get<PlayerInfo>(entity.id);
+            if(!info || info->is_remote() || !cam->is_active())
+                continue;
+            m_players.push_back({
+                .seat_idx = info->seat_idx,
+                .matrix   = cam->matrix,
+                .position = cam->camera->position,
+            });
+        }
+        std::sort(m_players.begin(), m_players.end(),
+            [](auto const& a, auto const& b) { return a.seat_idx < b.seat_idx; });
 
         // Performance is terrible on Emscripten when updating every frame
         // We need a more efficient way to update the buffer in that case
@@ -608,7 +633,7 @@ struct MeshRenderer
 
         for(auto const& pass : stl_types::slice_num(m_bsp, Pass_LastOpaque + 1))
         {
-            for(auto i : stl_types::range<u32>(m_camera.num_players()))
+            for(auto i : stl_types::range<u32>(m_players.size()))
                 render_bsp_pass(
                     p,
                     i,
@@ -621,7 +646,8 @@ struct MeshRenderer
                     });
         }
 
-        u32 primary_player = m_camera.focused_player;
+        /* Primary player is always the first one (seat_idx == 0) */
+        u32 primary_player = 0;
 
         for(auto const& pass :
             stl_types::slice_num(m_model, Pass_LastOpaque + 1))
@@ -1539,7 +1565,6 @@ void alloc_renderer(EntityContainer& container)
         &container.subsystem_cast<gfx::system>(),
         std::ref(container.subsystem_cast<BlamResources>()),
         std::ref(container.subsystem_cast<RenderingParameters>()),
-        std::ref(container.subsystem_cast<BlamCamera>()),
         std::ref(container.subsystem_cast<ShaderCache<halo_version>>()),
         std::ref(container.subsystem_cast<BitmapCache<halo_version>>()),
         std::ref(container.subsystem_cast<BSPCache<halo_version>>()));

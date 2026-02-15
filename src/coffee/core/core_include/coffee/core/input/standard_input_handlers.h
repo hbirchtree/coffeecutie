@@ -228,7 +228,7 @@ struct ControllerOpts
     {
         deadzone    = 6000;
         curve       = 600.f;
-        sens.move.x = sens.move.y = 1.f;
+        sens.move.x = sens.move.y = .1f;
         sens.look.x = sens.look.y = 2.f;
 
         invertYLook();

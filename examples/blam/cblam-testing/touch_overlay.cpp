@@ -88,9 +88,6 @@ void TouchOverlay::end_restricted(Proxy& proxy, const time_point& time)
 {
     using namespace std::chrono_literals;
 
-    BlamCamera* camera;
-    proxy.subsystem(camera);
-
     auto delta    = time - previous_time;
     previous_time = time;
 
@@ -98,12 +95,21 @@ void TouchOverlay::end_restricted(Proxy& proxy, const time_point& time)
         delta = 10ms;
     auto delta_s = stl_types::Chrono::to_f32(delta);
 
-    camera->player(0).camera_->move(
-        movement.control.y * delta_s, -movement.control.x * delta_s, 0);
-    camera->player(0).camera_->rotate(
-        -look.control.x * delta_s, look.control.y * delta_s);
-    camera->player(0).camera_->rotate(
-        -look.instant_control.x * delta_s, look.instant_control.y * delta_s);
+    /* Find seat_idx==0 PlayerCamera */
+    for(auto& entity : proxy.select<PlayerCamera>())
+    {
+        auto* info = proxy.get<PlayerInfo>(entity.id);
+        auto* cam  = proxy.get<PlayerCamera>(entity.id);
+        if(!info || !cam || info->seat_idx != 0)
+            continue;
+        cam->camera_->move(
+            movement.control.y * delta_s, -movement.control.x * delta_s, 0);
+        cam->camera_->rotate(
+            -look.control.x * delta_s, look.control.y * delta_s);
+        cam->camera_->rotate(
+            -look.instant_control.x * delta_s, look.instant_control.y * delta_s);
+        break;
+    }
 }
 
 void TouchOverlay::draw_stick(Proxy& proxy, stick_definition_t const& stick)

@@ -445,12 +445,14 @@ FORCEDINLINE auto SpanOne(T& value)
 }
 
 template<typename T, typename U>
+requires (!std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<U>>)
 FORCEDINLINE auto SpanOne(U& value)
 {
     return mem_chunk<T>::ofBytes(value).view;
 }
 
 template<typename T, typename U>
+requires (!std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<U>>)
 FORCEDINLINE auto SpanOne(U const& value)
 {
     return mem_chunk<T>::ofBytes(value).view;

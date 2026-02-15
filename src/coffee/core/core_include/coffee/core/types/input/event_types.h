@@ -37,6 +37,7 @@ struct CIEvent
 
         Controller,       /*!< CIControllerAtomicEvent */
         ControllerUpdate, /*!< CIControllerAtomicUpdateEvent */
+        ControllerConnect,
 
         Drop, /*!< CIDropEvent */
 
@@ -309,6 +310,13 @@ struct CIControllerAtomicUpdateEvent : BaseEvent<CIEvent::ControllerUpdate>
     };
 
     u32 pad1;
+};
+
+struct CIControllerConnectEvent : BaseEvent<CIEvent::ControllerConnect>
+{
+    u16 index{0};
+    i16 player_index{-1};
+    bool connected{false};
 };
 
 struct CIControllerState
