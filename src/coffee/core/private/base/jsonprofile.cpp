@@ -218,12 +218,16 @@ void Push(profiling::ThreadState& tdata, profiling::datapoint_t const& point)
         break;
     }
 
+    std::string thread_name_store{};
     auto thread_name = is_explicit_thread
                            ? stl_types::Threads::GetName(point.tid)
                            : point.thread_name;
 
     if(thread_name.empty())
-        thread_name = str::fmt::pointerify(point.tid);
+    {
+        thread_name_store = str::fmt::pointerify(point.tid);
+        thread_name = thread_name_store;
+    }
 
     auto event = Coffee::Strings::fmt(
         event_format,
