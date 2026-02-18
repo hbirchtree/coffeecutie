@@ -2,7 +2,9 @@
 
 #include "components.h"
 #include "data.h"
+#if defined(FEATURE_ENABLE_DiscordLatte)
 #include "discord/discord_system.h"
+#endif
 #include "networking.h"
 #include "selected_version.h"
 
