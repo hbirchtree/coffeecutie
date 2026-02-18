@@ -5,7 +5,6 @@
 
 #include <coffee/core/CProfiling>
 #include <coffee/core/files/cfiles.h>
-#include <steam/steamnetworkingtypes.h>
 
 using Coffee::ProfContext;
 
