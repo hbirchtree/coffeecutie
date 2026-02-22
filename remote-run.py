@@ -10,6 +10,10 @@ import subprocess
 import sys
 import time
 
+from textual import work
+from textual.app import App, ComposeResult
+from textual.widgets import RichLog, Rule, Static
+
 
 def load_config(script_dir):
     config_path = os.path.join(script_dir, '.targets.json')
@@ -27,18 +31,70 @@ def expand_vars(value, scratchdir, build_dir):
     return value.replace('$SCRATCH_DIR', scratchdir).replace('$BUILD_DIR', build_dir)
 
 
-def print_viewer_info(device):
-    viewer = device.get('viewer')
-    if not viewer:
-        return
-    kind = viewer.get('type')
+def viewer_message(device):
+    viewer = device.get('viewer', {})
+    kind = viewer.get('type', '')
     address = viewer.get('address', '')
     if kind == 'web':
-        print(f"View the display at {address}")
+        return f"View the display at {address}"
     elif kind == 'scrcpy':
-        print(f"View the display by pointing scrcpy at {address}")
-    else:
-        print(f"View the display ({kind}) at {address}")
+        return f"View the display by pointing scrcpy at {address}"
+    elif kind:
+        return f"View the display ({kind}) at {address}"
+    return None
+
+
+class OutputViewerApp(App):
+    CSS = """
+    Static {
+        height: 1;
+        background: $panel-darken-1;
+        padding: 0 1;
+    }
+    """
+    BINDINGS = [("ctrl+c", "quit", "Quit")]
+
+    def __init__(self, cmd, viewer_msg, on_quit=None):
+        super().__init__()
+        self.cmd = cmd
+        self.viewer_msg = viewer_msg
+        self._on_quit = on_quit
+        self._proc = None
+
+    def compose(self) -> ComposeResult:
+        if self.viewer_msg:
+            yield Static(self.viewer_msg)
+            yield Rule()
+        yield RichLog(highlight=False, markup=False)
+
+    def on_mount(self) -> None:
+        self._stream()
+
+    @work(thread=True)
+    def _stream(self) -> None:
+        self._proc = subprocess.Popen(
+            self.cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+        )
+        log = self.query_one(RichLog)
+        for line in self._proc.stdout:
+            def write_line(l=line.rstrip()):
+                log.auto_scroll = log.is_vertical_scroll_end
+                log.write(l)
+            self.call_from_thread(write_line)
+
+    def action_quit(self) -> None:
+        if self._proc:
+            self._proc.terminate()
+            self._proc.wait()
+        if self._on_quit:
+            self._on_quit()
+        self.exit()
+
+
+def stream_logcat(hostname, package, logcat_cmd, device):
+    def cleanup():
+        subprocess.run(['adb', '-s', hostname, 'shell', 'am', 'force-stop', package])
+    OutputViewerApp(logcat_cmd, viewer_message(device), on_quit=cleanup).run()
 
 
 def find_linux_binary(build_root, target_dir, binary):
@@ -105,8 +161,7 @@ def run_linux(device_name, device, preset_name, preset, extra_args, script_dir, 
         cmd_parts = [env_str] + cmd_parts
     remote_cmd = f'cd {shlex.quote(workdir)} && {" ".join(cmd_parts)}'
 
-    print_viewer_info(device)
-    subprocess.run(['ssh', '-t', hostname, '--', remote_cmd], check=True)
+    OutputViewerApp(['ssh', hostname, '--', remote_cmd], viewer_message(device)).run()
 
 
 def run_android(device_name, device, preset_name, preset, extra_args, build_root, target_dir):
@@ -141,8 +196,6 @@ def run_android(device_name, device, preset_name, preset, extra_args, build_root
         **preset.get('extras', {}),
     }
 
-    print_viewer_info(device)
-
     # Clear log buffer before launch so we don't see stale output
     subprocess.run(['adb', '-s', hostname, 'logcat', '-c'], check=True)
 
@@ -170,15 +223,7 @@ def run_android(device_name, device, preset_name, preset, extra_args, build_root
         print(f"Warning: could not resolve PID for {package}, logcat will be unfiltered",
               file=sys.stderr)
 
-    logcat_proc = subprocess.Popen(logcat_cmd)
-    try:
-        logcat_proc.wait()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        logcat_proc.terminate()
-        logcat_proc.wait()
-        subprocess.run(['adb', '-s', hostname, 'shell', 'am', 'force-stop', package])
+    stream_logcat(hostname, package, logcat_cmd, device)
 
 
 def main():
