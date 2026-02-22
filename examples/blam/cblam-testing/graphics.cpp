@@ -152,7 +152,11 @@ i32 blam_main()
             if(auto error = snd.load(e))
             {
                 cWarning("Failed to load audio: {}", error.value());
-                return;
+                if(auto error = snd.load(e, oaf::system::dummy()))
+                {
+                    cWarning("Failed to load audio dummy: {}", error.value());
+                    return;
+                }
             }
             snd.set_distance_model(oaf::api::exponential);
             snd.collect_info(*e.service<comp_app::AppInfo>());
