@@ -12,7 +12,7 @@ import time
 
 from textual import work
 from textual.app import App, ComposeResult
-from textual.widgets import RichLog, Rule, Static
+from textual.widgets import RichLog, Rule, Markdown
 
 
 def load_config(script_dir):
@@ -31,17 +31,25 @@ def expand_vars(value, scratchdir, build_dir):
     return value.replace('$SCRATCH_DIR', scratchdir).replace('$BUILD_DIR', build_dir)
 
 
-def viewer_message(device):
-    viewer = device.get('viewer', {})
-    kind = viewer.get('type', '')
-    address = viewer.get('address', '')
-    if kind == 'web':
-        return f"View the display at {address}"
-    elif kind == 'scrcpy':
-        return f"View the display by pointing scrcpy at {address}"
-    elif kind:
-        return f"View the display ({kind}) at {address}"
-    return None
+def toptext_message(device):
+    def _viewer():
+        viewer = device.get('viewer', {})
+        kind = viewer.get('type', '')
+        address = viewer.get('address', '')
+        if kind == 'web':
+            return f"View the display at **{address}**"
+        elif kind == 'scrcpy':
+            return f"View the display by pointing **scrcpy** at **{address}**"
+        elif kind:
+            return f"View the display ({kind}) at **{address}**"
+        return ""
+    def _deploy():
+        target = device.get('target', '<unknown>')
+        hostname = device.get('hostname', '<unknown>')
+        return f"Deployed **{target}** to **{hostname}**"
+    return f"""{_deploy()}
+
+{_viewer()}"""
 
 
 class OutputViewerApp(App):
@@ -51,19 +59,23 @@ class OutputViewerApp(App):
         background: $panel-darken-1;
         padding: 0 1;
     }
+    Rule {
+        height: 1;
+        margin: 0;
+    }
     """
     BINDINGS = [("ctrl+c", "quit", "Quit")]
 
-    def __init__(self, cmd, viewer_msg, on_quit=None):
+    def __init__(self, cmd, toptext_msg, on_quit=None):
         super().__init__()
         self.cmd = cmd
-        self.viewer_msg = viewer_msg
+        self.toptext_msg = toptext_msg
         self._on_quit = on_quit
         self._proc = None
 
     def compose(self) -> ComposeResult:
-        if self.viewer_msg:
-            yield Static(self.viewer_msg)
+        if self.toptext_msg:
+            yield Markdown(self.toptext_msg, open_links=False)
             yield Rule()
         yield RichLog(highlight=False, markup=False)
 
@@ -94,7 +106,11 @@ class OutputViewerApp(App):
 def stream_logcat(hostname, package, logcat_cmd, device):
     def cleanup():
         subprocess.run(['adb', '-s', hostname, 'shell', 'am', 'force-stop', package])
-    OutputViewerApp(logcat_cmd, viewer_message(device), on_quit=cleanup).run()
+    OutputViewerApp(
+        logcat_cmd, 
+        toptext_message(device), 
+        on_quit=cleanup
+    ).run()
 
 
 def find_linux_binary(build_root, target_dir, binary):
@@ -161,7 +177,10 @@ def run_linux(device_name, device, preset_name, preset, extra_args, script_dir, 
         cmd_parts = [env_str] + cmd_parts
     remote_cmd = f'cd {shlex.quote(workdir)} && {" ".join(cmd_parts)}'
 
-    OutputViewerApp(['ssh', hostname, '--', remote_cmd], viewer_message(device)).run()
+    OutputViewerApp(
+        ['ssh', hostname, '--', remote_cmd], 
+        toptext_message(device),
+    ).run()
 
 
 def run_android(device_name, device, preset_name, preset, extra_args, build_root, target_dir):
