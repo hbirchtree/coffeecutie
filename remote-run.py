@@ -6,13 +6,16 @@ import glob
 import json
 import os
 import shlex
+import signal
 import subprocess
 import sys
 import time
 
+from rich.text import Text as RichText
 from textual import work
 from textual.app import App, ComposeResult
-from textual.widgets import RichLog, Rule, Markdown
+from textual.widgets import Markdown, OptionList, RichLog, Rule, Static
+from textual.widgets.option_list import Option
 
 
 def load_config(script_dir):
@@ -31,11 +34,12 @@ def expand_vars(value, scratchdir, build_dir):
     return value.replace('$SCRATCH_DIR', scratchdir).replace('$BUILD_DIR', build_dir)
 
 
-def toptext_message(device):
+def toptext_message(device, hostname=None):
+    hostname = hostname or device.get('hostname', '<unknown>')
     def _viewer():
         viewer = device.get('viewer', {})
         kind = viewer.get('type', '')
-        address = viewer.get('address', '')
+        address = viewer.get('address', '') or hostname
         if kind == 'web':
             return f"View the display at **{address}**"
         elif kind == 'scrcpy':
@@ -43,13 +47,74 @@ def toptext_message(device):
         elif kind:
             return f"View the display ({kind}) at **{address}**"
         return ""
-    def _deploy():
-        target = device.get('target', '<unknown>')
-        hostname = device.get('hostname', '<unknown>')
-        return f"Deployed **{target}** to **{hostname}**"
-    return f"""{_deploy()}
+    target = device.get('target', '<unknown>')
+    return f"""Deployed **{target}** to **{hostname}**
 
 {_viewer()}"""
+
+
+def parse_adb_devices():
+    """Return list of (identifier, model, device_name) from `adb devices -l`."""
+    result = subprocess.run(['adb', 'devices', '-l'], capture_output=True, text=True)
+    if result.returncode != 0:
+        sys.exit("Error: adb devices failed — is adb installed and on PATH?")
+    devices = []
+    for line in result.stdout.splitlines():
+        parts = line.split()
+        if len(parts) < 2 or parts[1] != 'device':
+            continue
+        identifier = parts[0]
+        attrs = {}
+        for part in parts[2:]:
+            if ':' in part:
+                k, _, v = part.partition(':')
+                attrs[k] = v
+        model = attrs.get('model', identifier).replace('_', ' ')
+        device_name = attrs.get('device', '')
+        devices.append((identifier, model, device_name))
+    return devices
+
+
+class DevicePickerApp(App):
+    CSS = """
+    Markdown { height: auto; margin: 0 1; }
+    Rule { height: 1; margin: 0; }
+    OptionList { height: 1fr; }
+    """
+    BINDINGS = [("ctrl+c", "quit", "Cancel")]
+
+    def __init__(self, devices):
+        super().__init__()
+        self.devices = devices
+        self.selected = None
+
+    def compose(self) -> ComposeResult:
+        yield Markdown("**Select an ADB device:**", open_links=False)
+        yield Rule()
+        yield OptionList(*[
+            Option(f"{model}  ({device_name})  —  {identifier}", id=identifier)
+            for identifier, model, device_name in self.devices
+        ])
+
+    def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
+        self.selected = str(event.option.id)
+        self.exit()
+
+    def action_quit(self) -> None:
+        self.exit()
+
+
+def pick_adb_device():
+    devices = parse_adb_devices()
+    if not devices:
+        sys.exit("No ADB devices found. Connect a device or set 'hostname' in .targets.json.")
+    if len(devices) == 1:
+        return devices[0][0]
+    app = DevicePickerApp(devices)
+    app.run()
+    if not app.selected:
+        sys.exit("No device selected.")
+    return app.selected
 
 
 class OutputViewerApp(App):
@@ -63,53 +128,113 @@ class OutputViewerApp(App):
         height: 1;
         margin: 0;
     }
+    #close-prompt {
+        display: none;
+        text-align: center;
+    }
     """
-    BINDINGS = [("ctrl+c", "quit", "Quit")]
+    BINDINGS = [("ctrl+c", "quit", "Quit"), ("enter", "close", "Close")]
 
-    def __init__(self, cmd, toptext_msg, on_quit=None):
+    def __init__(self, cmd, toptext_msg, setup_cmds=None, on_quit=None):
         super().__init__()
-        self.cmd = cmd
+        self.cmd = cmd          # list[str] or callable returning list[str]
         self.toptext_msg = toptext_msg
+        self.setup_cmds = setup_cmds or []
         self._on_quit = on_quit
         self._proc = None
+        self._quitting = False
+        self._on_quit_called = False
+        self._stream_done = False
 
     def compose(self) -> ComposeResult:
         if self.toptext_msg:
             yield Markdown(self.toptext_msg, open_links=False)
             yield Rule()
         yield RichLog(highlight=False, markup=False)
+        yield Static("Press Enter to close", id="close-prompt")
 
     def on_mount(self) -> None:
         self._stream()
 
-    @work(thread=True)
-    def _stream(self) -> None:
-        self._proc = subprocess.Popen(
-            self.cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-        )
-        log = self.query_one(RichLog)
+    def _run_setup(self, log, cmd) -> bool:
+        """Run a setup command, writing heading/output/exit code. Returns True on success."""
+        self.call_from_thread(log.write, "")
+        self.call_from_thread(log.write, RichText("$ " + " ".join(str(c) for c in cmd), style="bold"))
+        self._proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         for line in self._proc.stdout:
             def write_line(l=line.rstrip()):
                 log.auto_scroll = log.is_vertical_scroll_end
                 log.write(l)
             self.call_from_thread(write_line)
+        self._proc.wait()
+        code = self._proc.returncode
+        self.call_from_thread(log.write, RichText(f"exit {code}", style="green" if code == 0 else "bold red"))
+        return code == 0
+
+    @work(thread=True)
+    def _stream(self) -> None:
+        log = self.query_one(RichLog)
+
+        for cmd in self.setup_cmds:
+            if not self._run_setup(log, cmd):
+                break
+        else:
+            actual_cmd = self.cmd() if callable(self.cmd) else self.cmd
+            self.call_from_thread(log.write, "")
+            self.call_from_thread(log.write, RichText("$ " + " ".join(str(c) for c in actual_cmd), style="bold"))
+            self._proc = subprocess.Popen(
+                actual_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+            )
+            for line in self._proc.stdout:
+                def write_line(l=line.rstrip()):
+                    log.auto_scroll = log.is_vertical_scroll_end
+                    log.write(l)
+                self.call_from_thread(write_line)
+            self._proc.wait()
+            code = self._proc.returncode
+            self.call_from_thread(log.write, RichText(f"exit {code}", style="green" if code == 0 else "bold red"))
+
+        self._do_cleanup()
+        self._stream_done = True
+        self.call_from_thread(self._show_close_prompt)
+
+    def _do_cleanup(self) -> None:
+        if not self._on_quit_called:
+            self._on_quit_called = True
+            if self._on_quit:
+                self._on_quit()
+
+    def _show_close_prompt(self) -> None:
+        self.query_one("#close-prompt").display = True
+
+    def action_close(self) -> None:
+        if self._stream_done:
+            self.exit()
 
     def action_quit(self) -> None:
-        if self._proc:
-            self._proc.terminate()
-            self._proc.wait()
-        if self._on_quit:
-            self._on_quit()
-        self.exit()
+        if self._proc and self._proc.poll() is None:
+            if not self._quitting:
+                self._quitting = True
+                self._proc.send_signal(signal.SIGINT)
+                # _stream will drain remaining output, show exit code, then prompt
+            else:
+                # Second Ctrl-C: force terminate and exit immediately
+                self._proc.terminate()
+                self._do_cleanup()
+                self.exit()
+        else:
+            self._do_cleanup()
+            self.exit()
 
 
-def stream_logcat(hostname, package, logcat_cmd, device):
+def stream_logcat(hostname, package, cmd, device, setup_cmds=None):
     def cleanup():
         subprocess.run(['adb', '-s', hostname, 'shell', 'am', 'force-stop', package])
     OutputViewerApp(
-        logcat_cmd, 
-        toptext_message(device), 
-        on_quit=cleanup
+        cmd,
+        toptext_message(device, hostname),
+        setup_cmds=setup_cmds,
+        on_quit=cleanup,
     ).run()
 
 
@@ -144,26 +269,6 @@ def run_linux(device_name, device, preset_name, preset, extra_args, script_dir, 
     def ev(s):
         return expand_vars(s, scratchdir, build_dir)
 
-    # Ensure scratch directory exists
-    subprocess.run(['ssh', hostname, f'mkdir -p {shlex.quote(scratchdir)}'], check=True)
-
-    # Copy binary only if changed
-    subprocess.run(
-        ['rsync', '-av', '--checksum', '--chmod=+x', binary_path, f'{hostname}:{remote_binary}'],
-        check=True,
-    )
-
-    # Sync data files
-    for entry in preset.get('files', []):
-        local_abs = ev(entry['local'])
-        if not os.path.isabs(local_abs):
-            local_abs = os.path.join(script_dir, local_abs)
-        remote_path = ev(entry['remote'])
-        subprocess.run(
-            ['rsync', '-av', '--checksum', local_abs, f'{hostname}:{remote_path}'],
-            check=True,
-        )
-
     # Merge env: device env overridden by preset env
     merged_env = {**device.get('env', {}), **preset.get('env', {})}
 
@@ -177,14 +282,26 @@ def run_linux(device_name, device, preset_name, preset, extra_args, script_dir, 
         cmd_parts = [env_str] + cmd_parts
     remote_cmd = f'cd {shlex.quote(workdir)} && {" ".join(cmd_parts)}'
 
+    setup_cmds = [
+        ['ssh', hostname, f'mkdir -p {shlex.quote(scratchdir)}'],
+        ['rsync', '-av', '--checksum', '--chmod=+x', binary_path, f'{hostname}:{remote_binary}'],
+    ]
+    for entry in preset.get('files', []):
+        local_abs = ev(entry['local'])
+        if not os.path.isabs(local_abs):
+            local_abs = os.path.join(script_dir, local_abs)
+        remote_path = ev(entry['remote'])
+        setup_cmds.append(['rsync', '-av', '--checksum', local_abs, f'{hostname}:{remote_path}'])
+
     OutputViewerApp(
-        ['ssh', hostname, '--', remote_cmd], 
-        toptext_message(device),
+        ['ssh', hostname, '--', remote_cmd],
+        toptext_message(device, hostname),
+        setup_cmds=setup_cmds,
     ).run()
 
 
 def run_android(device_name, device, preset_name, preset, extra_args, build_root, target_dir):
-    hostname = device['hostname']
+    hostname = device.get('hostname') or pick_adb_device()
     package = preset.get('package')
     if not package:
         sys.exit(f"Error: preset '{preset_name}' is missing required 'package' for Android target")
@@ -197,9 +314,7 @@ def run_android(device_name, device, preset_name, preset, extra_args, build_root
             "Did you run the build first?"
         )
 
-    subprocess.run(['adb', '-s', hostname, 'install', '-r', apk_path], check=True)
-
-    # Resolve the launcher activity so we can use am start (monkey doesn't support extras)
+    # Resolve the launcher activity (needed before TUI starts to build launch_cmd)
     result = subprocess.run(
         ['adb', '-s', hostname, 'shell', 'cmd', 'package', 'resolve-activity',
          '--brief', '-a', 'android.intent.action.MAIN',
@@ -208,57 +323,85 @@ def run_android(device_name, device, preset_name, preset, extra_args, build_root
     )
     component = result.stdout.strip().split('\n')[-1]
 
-    # Merged extras: device env + preset env + preset android extras
     merged_extras = {
         **device.get('env', {}),
         **preset.get('env', {}),
         **preset.get('extras', {}),
     }
 
-    # Clear log buffer before launch so we don't see stale output
-    subprocess.run(['adb', '-s', hostname, 'logcat', '-c'], check=True)
-
     launch_cmd = ['adb', '-s', hostname, 'shell', 'am', 'start', '-n', component]
     for key, value in merged_extras.items():
         launch_cmd += ['--es', key, str(value)]
-    subprocess.run(launch_cmd, check=True)
 
-    # Poll for the app's PID so logcat can be filtered to this process
-    pid = None
-    for _ in range(20):
-        result = subprocess.run(
-            ['adb', '-s', hostname, 'shell', 'pidof', '-s', package],
-            capture_output=True, text=True,
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            pid = result.stdout.strip()
-            break
-        time.sleep(0.5)
+    def get_logcat_cmd():
+        pid = None
+        for _ in range(20):
+            result = subprocess.run(
+                ['adb', '-s', hostname, 'shell', 'pidof', '-s', package],
+                capture_output=True, text=True,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                pid = result.stdout.strip()
+                break
+            time.sleep(0.5)
+        cmd = ['adb', '-s', hostname, 'logcat']
+        if pid:
+            cmd += ['--pid', pid]
+        return cmd
 
-    logcat_cmd = ['adb', '-s', hostname, 'logcat']
-    if pid:
-        logcat_cmd += ['--pid', pid]
-    else:
-        print(f"Warning: could not resolve PID for {package}, logcat will be unfiltered",
-              file=sys.stderr)
+    setup_cmds = [
+        ['adb', '-s', hostname, 'install', '-r', apk_path],
+        ['adb', '-s', hostname, 'logcat', '-c'],
+        launch_cmd,
+    ]
+    stream_logcat(hostname, package, get_logcat_cmd, device, setup_cmds=setup_cmds)
 
-    stream_logcat(hostname, package, logcat_cmd, device)
+
+def print_config_list(config):
+    devices = config.get('devices', {})
+    presets = config.get('presets', {})
+
+    name_w = max((len(n) for n in devices), default=0)
+    target_w = max((len(d.get('target', '')) for d in devices.values()), default=0)
+    print("Devices:")
+    for name, dev in devices.items():
+        target = dev.get('target', '')
+        hostname = dev.get('hostname', '(no hostname)')
+        print(f"  {name:<{name_w}}  {target:<{target_w}}  {hostname}")
+
+    print()
+
+    name_w = max((len(n) for n in presets), default=0)
+    print("Presets:")
+    for name, preset in presets.items():
+        parts = [f"binary: {preset.get('binary', '')}"]
+        if preset.get('package'):
+            parts.append(f"package: {preset['package']}")
+        print(f"  {name:<{name_w}}  {'  '.join(parts)}")
 
 
 def main():
     parser = argparse.ArgumentParser(
         description='Run a built binary on a remote device using .targets.json'
     )
-    parser.add_argument('device', help='Device name from .targets.json')
-    parser.add_argument('preset', help='Preset name from .targets.json')
+    parser.add_argument('--list', action='store_true', help='List available devices and presets')
+    parser.add_argument('device', nargs='?', help='Device name from .targets.json')
+    parser.add_argument('preset', nargs='?', help='Preset name from .targets.json')
     parser.add_argument('extra_args', nargs='*', help='Extra arguments passed to the binary')
     args = parser.parse_args()
 
     script_dir = os.path.dirname(os.path.realpath(__file__))
     config = load_config(script_dir)
 
+    if args.list:
+        print_config_list(config)
+        sys.exit(0)
+
     devices = config.get('devices', {})
     presets = config.get('presets', {})
+
+    if not args.device or not args.preset:
+        parser.error("device and preset are required (or use --list to see available options)")
 
     if args.device not in devices:
         available = ', '.join(devices.keys())
