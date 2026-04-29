@@ -74,8 +74,8 @@ inline constexpr std::string_view kernel()
 inline constexpr std::string_view kernel_version()
 {
     using namespace std::literals;
-    return C_STR(__EMSCRIPTEN_major__) "." C_STR(
-        __EMSCRIPTEN_minor__) "." C_STR(__EMSCRIPTEN_tiny__) ""sv;
+    return C_STR(__EMSCRIPTEN_MAJOR__) "." C_STR(
+        __EMSCRIPTEN_MINOR__) "." C_STR(__EMSCRIPTEN_TINY__) ""sv;
 }
 
 inline std::string architecture()
