@@ -166,16 +166,17 @@ bool bcn_compress(
     auto out_name = create_output_name(base_dir, file, 0, "png");
 
     comp_flags bcn_format = comp_flags::BC1;
-    if(codec == "bc2" || codec == "bc3")
+    if(codec == "bc2" || codec == "bc3") {
         bcn_format = comp_flags::BC3;
-    else if(codec == "bc4")
+    } else if(codec == "bc4") {
         bcn_format = comp_flags::BC4;
-    else if(codec == "bc5")
+    } else if(codec == "bc5") {
         bcn_format = comp_flags::BC5;
-    else if(codec == "bc6")
+    } else if(codec == "bc6") {
         bcn_format = comp_flags::BC6H;
-    else if(codec == "bc7")
+    } else if(codec == "bc7") {
         bcn_format = comp_flags::BC7;
+    }
 
     auto res = compressor::bcn::encode(image, bcn_format, format);
 
