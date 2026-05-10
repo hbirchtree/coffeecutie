@@ -225,32 +225,50 @@ class Runner:
             plan.print_steps()
             return
         for step in plan.steps:
-            with _ci_group(step.name):
+            # Evaluate skip_if once so the result can be used for both the
+            # group title and the execution branch below.
+            skipped = (
+                not isinstance(step, SourceEnvStep)
+                and step.skip_if is not None
+                and step.skip_if()
+            )
+
+            if isinstance(step, SourceEnvStep):
+                title = f"[source] {step.name}"
+            elif isinstance(step, PythonStep):
+                title = (
+                    f"[skip]   {step.name}: {step.skip_reason}"
+                    if skipped
+                    else f"[python] {step.name}: {step.description}"
+                )
+            else:
+                title = (
+                    f"[skip]   {step.name}: {step.skip_reason}"
+                    if skipped
+                    else f"[run]    {step.name}: {' '.join(step.cmd)}"
+                )
+
+            with _ci_group(title):
+                _banner(title)
                 if isinstance(step, SourceEnvStep):
-                    _banner(f"[source] {step.name}")
                     self._absorb_shell_env(step.script)
                 elif isinstance(step, PythonStep):
-                    if step.skip_if and step.skip_if():
-                        _banner(f"[skip]   {step.name}: {step.skip_reason}")
-                        continue
-                    _banner(f"[python] {step.name}: {step.description}")
-                    step.fn()
+                    if not skipped:
+                        step.fn()
                 else:
-                    if step.skip_if and step.skip_if():
-                        _banner(f"[skip]   {step.name}: {step.skip_reason}")
+                    if skipped:
                         # Env side-effects still apply so later steps see the
                         # variables even when the step itself was skipped.
                         self.env.update(step.env)
-                        continue
-                    merged = {**self.env, **step.env}
-                    _banner(f"[run]    {step.name}: {' '.join(step.cmd)}")
-                    subprocess.run(
-                        step.cmd,
-                        env=merged,
-                        cwd=str(step.cwd or Path.cwd()),
-                        check=True,
-                    )
-                    self.env.update(step.env)
+                    else:
+                        merged = {**self.env, **step.env}
+                        subprocess.run(
+                            step.cmd,
+                            env=merged,
+                            cwd=str(step.cwd or Path.cwd()),
+                            check=True,
+                        )
+                        self.env.update(step.env)
 
     def _absorb_shell_env(self, script: Path) -> None:
         """Source a shell script and merge its environment into self.env."""

@@ -28,12 +28,12 @@ jobs:
     name: Linux host tools
     steps:
     - uses: lukka/get-cmake@latest
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@latest
       with:
         submodules: true
         path: source
     - name: Export GitHub Actions cache environment variables
-      uses: actions/github-script@v7
+      uses: actions/github-script@latest
       with:
         script: |
           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
@@ -44,7 +44,7 @@ jobs:
         sudo apt-get update
         sudo apt install build-essential nasm
     - name: Host tools cache
-      uses: actions/cache@v4
+      uses: actions/cache@latest
       with:
         path: source/multi_build/host-x64-linux-native
         key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools','toolchain/building.sh','vcpkg.json','vcpkg-configuration.json') }}
@@ -87,17 +87,17 @@ jobs:
     name: ${{ matrix.variant }}
     steps:
     - uses: lukka/get-cmake@latest
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@latest
       with:
         submodules: true
         path: source
     - name: Export GitHub Actions cache environment variables
-      uses: actions/github-script@v7
+      uses: actions/github-script@latest
       with:
         script: |
           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
           core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
-    - uses: actions/setup-java@v4
+    - uses: actions/setup-java@latest
       if: startsWith(matrix.variant, 'android:')
       with:
         distribution: 'adopt'
@@ -108,7 +108,7 @@ jobs:
         sudo apt-get update
         sudo apt install build-essential inkscape flatpak nasm squashfs-tools
     - name: Host tools cache
-      uses: actions/cache@v4
+      uses: actions/cache@latest
       with:
         path: source/multi_build/host-x64-linux-native
         key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools','toolchain/building.sh','vcpkg.json','vcpkg-configuration.json') }}
@@ -133,7 +133,7 @@ jobs:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Upload vcpkg logs
       if: steps.buildProject.outcome == 'failure'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@latest
       with:
         name: ${{matrix.artifact}}-vcpkg-logs
         path: /usr/local/share/vcpkg/buildtrees/*/*.log
@@ -143,7 +143,7 @@ jobs:
     - name: Summarize binary sizes
       run: du -h source/multi_build/${{matrix.artifact}}/bin/* source/multi_build/${{matrix.artifact}}/lib/*.so* source/multi_build/${{matrix.artifact}}/packaged/*/* || true
     - name: Uploading artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@latest
       with:
         name: ${{matrix.artifact}}
         path: |
@@ -160,12 +160,12 @@ jobs:
     name: macOS host tools
     steps:
     - uses: lukka/get-cmake@latest
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@latest
       with:
         submodules: true
         path: source
     - name: Export GitHub Actions cache environment variables
-      uses: actions/github-script@v7
+      uses: actions/github-script@latest
       with:
         script: |
           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
@@ -175,7 +175,7 @@ jobs:
         brew install --cask inkscape
         brew install automake libtool
     - name: Host tools cache
-      uses: actions/cache@v4
+      uses: actions/cache@latest
       with:
         path: source/multi_build/host-arm64-osx
         key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools','toolchain/building.sh','vcpkg.json','vcpkg-configuration.json') }}
@@ -206,12 +206,12 @@ jobs:
     name: ${{ matrix.variant }}
     steps:
     - uses: lukka/get-cmake@latest
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@latest
       with:
         submodules: true
         path: source
     - name: Export GitHub Actions cache environment variables
-      uses: actions/github-script@v7
+      uses: actions/github-script@latest
       with:
         script: |
           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
@@ -222,7 +222,7 @@ jobs:
         brew install automake autoconf libtool
         # git cmake ninja pkg-config wget
     - name: Host tools cache
-      uses: actions/cache@v4
+      uses: actions/cache@latest
       with:
         path: source/multi_build/host-arm64-osx
         key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools','toolchain/building.sh','vcpkg.json','vcpkg-configuration.json') }}
@@ -236,7 +236,7 @@ jobs:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Upload vcpkg logs
       if: steps.buildProject.outcome == 'failure'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@latest
       with:
         name: ${{matrix.artifact}}-vcpkg-logs
         path: /usr/local/share/vcpkg/buildtrees/*/*.log
@@ -246,7 +246,7 @@ jobs:
     - name: Creating archive of artifacts
       run: tar cvf apps.tar source/multi_build/${{matrix.artifact}}/install/bin
     - name: Uploading artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@latest
       with:
         name: ${{matrix.artifact}}
         path: apps.tar
@@ -278,7 +278,7 @@ jobs:
         - variant: es_32
           dummy_plug: dummy_plug_es_32.json
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@latest
       with:
         path: source
     - name: Installing AppImage/media dependencies
@@ -286,7 +286,7 @@ jobs:
         sudo apt update
         sudo apt install libfuse2 ffmpeg
     - name: Downloading desktop-x86_64-buildroot-linux-gnu-multi artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@latest
       with:
         name: desktop-x86_64-buildroot-linux-gnu-multi
         path: artifacts/
@@ -303,7 +303,7 @@ jobs:
         ffmpeg -f f32le -ar 48k -ac 2 -i "/tmp/Blam Graphics/rendered_audio" -c:a copy "/tmp/Blam Graphics/rendered_audio.wav"
         rm "/tmp/Blam Graphics/rendered_audio"
     - name: Uploading test artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@latest
       with:
         name: dummy_plug_test_${{ matrix.variant }}
         path: "/tmp/Blam Graphics"
@@ -318,11 +318,11 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@latest
       with:
         path: source
     - name: Downloading test artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@latest
       with:
         pattern: dummy_plug_test_*
         path: artifacts/
@@ -331,7 +331,7 @@ jobs:
         ls -R artifacts/
         source/.github/tests/generate_test_page.sh artifacts/
     - name: Upload generated page
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@latest
       with:
         name: dummy_plug_results
         path: "artifacts/generated/"
@@ -353,7 +353,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Gathering artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@latest
       with:
         path: artifacts/
     - name: Generating GitHub Pages archive
@@ -365,7 +365,7 @@ jobs:
         cp -r artifacts/web-wasm32-emscripten-webgl2-custom/bin _site/custom/
         for f in $(find artifacts/ -mindepth 1 -maxdepth 1); do pushd $f; [[ -f apps.tar ]] && (tar xvf apps.tar && rm apps.tar); tar Jcvf ../../_site/downloads/$(basename $f).tar.xz .; popd; done
     - name: Uploading GitHub Pages examples
-      uses: actions/upload-pages-artifact@v3
+      uses: actions/upload-pages-artifact@latest
     - name: Deploy examples to GitHub Pages
       id: deployment
-      uses: actions/deploy-pages@v4
+      uses: actions/deploy-pages@latest
