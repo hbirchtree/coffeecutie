@@ -75,9 +75,10 @@ std::optional<std::pair<uint32_t, shader_proc::profile_t>> from_source(
     auto version_end = source_code.find_first_of("\n", version_string);
     if(version_end == std::string_view::npos)
         return std::nullopt;
-    auto version_data = source_code.substr(
-        version_string + "#version "sv.size(),
-        version_end - version_string - "#version "sv.size());
+    auto prefix_end = version_string + "#version "sv.size();
+    if(prefix_end >= version_end)
+        return std::nullopt;
+    auto version_data = source_code.substr(prefix_end, version_end - prefix_end);
     auto version =
         stl_types::cast_string_view<uint32_t>(version_data.substr(0, 3));
     if(version_data.size() < 3)
@@ -86,6 +87,8 @@ std::optional<std::pair<uint32_t, shader_proc::profile_t>> from_source(
     if(version_data.size() < 3)
         return std::make_pair(version, shader_proc::profile_t::none);
     auto profile = version_data.substr(1);
+    if(profile != "es" && profile != "core")
+        return std::make_pair(version, shader_proc::profile_t::none);
     return std::make_pair(version, from_profile_string(profile));
 }
 
