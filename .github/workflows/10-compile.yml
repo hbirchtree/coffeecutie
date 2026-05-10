@@ -180,7 +180,7 @@ jobs:
         path: source/multi_build/host-arm64-osx
         key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools','toolchain/building.py','vcpkg.json','vcpkg-configuration.json') }}
     - name: Building host tools
-      run: source/cb host-build
+      run: source/cb host-build dbg
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: List files

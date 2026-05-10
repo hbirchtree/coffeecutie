@@ -30,6 +30,7 @@ from typing import Callable
 class HostInfo:
     os: str    # "linux" | "darwin"
     arch: str  # "x86_64" | "aarch64"
+    build_mode: str = "rel"  # dbg | rel
 
     @property
     def triplet(self) -> str:
@@ -481,10 +482,10 @@ def host_tools_plan(host: HostInfo, base_dir: Path) -> BuildPlan:
     ))
     plan.add(Step(
         name="host-tools-build",
-        cmd=["cmake", "--build", "--preset", f"host-{host.triplet}-rel"],
+        cmd=["cmake", "--build", "--preset", f"host-{host.triplet}-{host.build_mode}"],
         env=host_env,
         cwd=base_dir,
-        description="Build host tools in release mode",
+        description=f"Build host tools ({host.build_mode})",
     ))
 
     if _is_ci():
@@ -1199,7 +1200,11 @@ def main() -> None:
     p.add_argument("target")
 
     # host-build
-    sub.add_parser("host-build", help="Build the host tools only")
+    p = sub.add_parser("host-build", help="Build the host tools only")
+    p.add_argument(
+        "mode", nargs="?", default="rel", choices=["dbg", "rel"],
+        help="Build mode: dbg or rel (default: rel)",
+    )
 
     # print-env
     p = sub.add_parser("print-env", help="Print environment variables for a preset")
@@ -1288,6 +1293,7 @@ def main() -> None:
 
     elif cmd == "host-build":
         check_programs("cmake", "ninja", "vcpkg")
+        host.build_mode = args.mode
         plan = host_tools_plan(host, base_dir)
         plan.execute(dry_run=dry_run)
 

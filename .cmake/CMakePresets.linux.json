@@ -348,8 +348,20 @@
             "inherits": "base-linux"
         },
         {
+            "name": "host-x64-linux-native-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "host-x64-linux-native",
+            "inherits": "base-linux"
+        },
+        {
             "name": "host-arm64-linux-native-rel",
             "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "host-arm64-linux-native",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "host-arm64-linux-native-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "host-arm64-linux-native",
             "inherits": "base-linux"
         },

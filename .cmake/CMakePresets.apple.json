@@ -162,8 +162,20 @@
             "inherits": "base-mac"
         },
         {
+            "name": "host-x64-osx-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "host-x64-osx",
+            "inherits": "base-mac"
+        },
+        {
             "name": "host-arm64-osx-rel",
             "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "host-arm64-osx",
+            "inherits": "base-mac"
+        },
+        {
+            "name": "host-arm64-osx-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "host-arm64-osx",
             "inherits": "base-mac"
         },
