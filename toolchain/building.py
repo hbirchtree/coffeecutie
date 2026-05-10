@@ -364,6 +364,21 @@ def _is_ci() -> bool:
     return os.environ.get("CI", "").lower() in ("true", "1")
 
 
+def _fmt_bytes(n: int) -> str:
+    v = float(n)
+    for unit in ("B", "KB", "MB", "GB"):
+        if v < 1024:
+            return f"{v:.1f} {unit}"
+        v /= 1024
+    return f"{v:.1f} TB"
+
+
+def _dir_stats(path: Path) -> tuple[int, int]:
+    """Return (file_count, total_bytes) for all files under path."""
+    files = [f for f in path.rglob("*") if f.is_file()]
+    return len(files), sum(f.stat().st_size for f in files)
+
+
 @contextmanager
 def _ci_group(title: str):
     if _is_ci():
@@ -433,12 +448,18 @@ def host_tools_plan(host: HostInfo, base_dir: Path) -> BuildPlan:
             build_dir = base_dir / f"multi_build/host-{host.triplet}"
 
             def trim_host_build(d=build_dir):
-                for suffix in ("*.o", "*.a"):
-                    for f in d.rglob(suffix):
-                        f.unlink(missing_ok=True)
-                for f in (d / "bin").iterdir():
-                    if f.is_file():
-                        subprocess.run(["strip", str(f)], check=True)
+                obj_files = [f for s in ("*.o", "*.a") for f in d.rglob(s)]
+                obj_bytes = sum(f.stat().st_size for f in obj_files)
+                for f in obj_files:
+                    f.unlink(missing_ok=True)
+                print(f"  Removed {len(obj_files)} object files ({_fmt_bytes(obj_bytes)} freed)")
+
+                bins = [f for f in (d / "bin").iterdir() if f.is_file()]
+                before = sum(f.stat().st_size for f in bins)
+                for f in bins:
+                    subprocess.run(["strip", str(f)], check=True)
+                after = sum(f.stat().st_size for f in bins)
+                print(f"  Stripped {len(bins)} binaries ({_fmt_bytes(before - after)} freed)")
 
             plan.add(PythonStep(
                 name="trim-host-toolchain",
@@ -470,9 +491,12 @@ def host_tools_plan(host: HostInfo, base_dir: Path) -> BuildPlan:
         bin_dir = base_dir / f"multi_build/host-{host.triplet}/bin"
 
         def strip_host_binaries(d=bin_dir):
-            for f in d.iterdir():
-                if f.is_file():
-                    subprocess.run(["strip", str(f)], check=True)
+            bins = [f for f in d.iterdir() if f.is_file()]
+            before = sum(f.stat().st_size for f in bins)
+            for f in bins:
+                subprocess.run(["strip", str(f)], check=True)
+            after = sum(f.stat().st_size for f in bins)
+            print(f"  Stripped {len(bins)} binaries ({_fmt_bytes(before - after)} freed)")
 
         plan.add(PythonStep(
             name="strip-host-binaries",
@@ -638,13 +662,24 @@ def configure_and_build_plan(
         build_dir = base_dir / "multi_build" / target.preset
 
         def trim_vcpkg(vr=vcpkg_root, vt=vcpkg_triplet, bd=build_dir):
+            total_files, total_bytes = 0, 0
+
             buildtrees = Path(vr) / "buildtrees"
             if buildtrees.exists():
+                n, b = _dir_stats(buildtrees)
+                total_files += n
+                total_bytes += b
                 shutil.rmtree(buildtrees, ignore_errors=True)
+
             for triplet in filter(None, (vt, "x64-linux")):
                 debug_dir = bd / "vcpkg_installed" / triplet / "debug"
                 if debug_dir.exists():
+                    n, b = _dir_stats(debug_dir)
+                    total_files += n
+                    total_bytes += b
                     shutil.rmtree(debug_dir, ignore_errors=True)
+
+            print(f"  Removed {total_files} files ({_fmt_bytes(total_bytes)} freed)")
 
         plan.add(PythonStep(
             name="trim-vcpkg",
