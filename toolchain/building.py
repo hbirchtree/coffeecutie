@@ -267,7 +267,7 @@ class Runner:
 
 
 def _banner(msg: str) -> None:
-    print(f"\n:: {msg}")
+    print(f"\n:: {msg}", flush=True)
 
 
 # ---------------------------------------------------------------------------
