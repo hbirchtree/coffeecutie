@@ -16,6 +16,7 @@ import shutil
 import subprocess
 import sys
 import platform as _platform
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
@@ -224,31 +225,32 @@ class Runner:
             plan.print_steps()
             return
         for step in plan.steps:
-            if isinstance(step, SourceEnvStep):
-                _banner(f"[source] {step.name}")
-                self._absorb_shell_env(step.script)
-            elif isinstance(step, PythonStep):
-                if step.skip_if and step.skip_if():
-                    _banner(f"[skip]   {step.name}: {step.skip_reason}")
-                    continue
-                _banner(f"[python] {step.name}: {step.description}")
-                step.fn()
-            else:
-                if step.skip_if and step.skip_if():
-                    _banner(f"[skip]   {step.name}: {step.skip_reason}")
-                    # Env side-effects still apply so later steps see the
-                    # variables even when the step itself was skipped.
+            with _ci_group(step.name):
+                if isinstance(step, SourceEnvStep):
+                    _banner(f"[source] {step.name}")
+                    self._absorb_shell_env(step.script)
+                elif isinstance(step, PythonStep):
+                    if step.skip_if and step.skip_if():
+                        _banner(f"[skip]   {step.name}: {step.skip_reason}")
+                        continue
+                    _banner(f"[python] {step.name}: {step.description}")
+                    step.fn()
+                else:
+                    if step.skip_if and step.skip_if():
+                        _banner(f"[skip]   {step.name}: {step.skip_reason}")
+                        # Env side-effects still apply so later steps see the
+                        # variables even when the step itself was skipped.
+                        self.env.update(step.env)
+                        continue
+                    merged = {**self.env, **step.env}
+                    _banner(f"[run]    {step.name}: {' '.join(step.cmd)}")
+                    subprocess.run(
+                        step.cmd,
+                        env=merged,
+                        cwd=str(step.cwd or Path.cwd()),
+                        check=True,
+                    )
                     self.env.update(step.env)
-                    continue
-                merged = {**self.env, **step.env}
-                _banner(f"[run]    {step.name}: {' '.join(step.cmd)}")
-                subprocess.run(
-                    step.cmd,
-                    env=merged,
-                    cwd=str(step.cwd or Path.cwd()),
-                    check=True,
-                )
-                self.env.update(step.env)
 
     def _absorb_shell_env(self, script: Path) -> None:
         """Source a shell script and merge its environment into self.env."""
@@ -342,6 +344,17 @@ def host_tools_dir(host: HostInfo, base_dir: Path) -> Path:
 
 def _is_ci() -> bool:
     return os.environ.get("CI", "").lower() in ("true", "1")
+
+
+@contextmanager
+def _ci_group(title: str):
+    if _is_ci():
+        print(f"::group::{title}", flush=True)
+    try:
+        yield
+    finally:
+        if _is_ci():
+            print("::endgroup::", flush=True)
 
 
 # ---------------------------------------------------------------------------
