@@ -133,7 +133,7 @@ jobs:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Upload vcpkg logs
       if: steps.buildProject.outcome == 'failure'
-      uses: actions/upload-artifact@v8
+      uses: actions/upload-artifact@v7
       with:
         name: ${{matrix.artifact}}-vcpkg-logs
         path: /usr/local/share/vcpkg/buildtrees/*/*.log
@@ -143,7 +143,7 @@ jobs:
     - name: Summarize binary sizes
       run: du -h source/multi_build/${{matrix.artifact}}/bin/* source/multi_build/${{matrix.artifact}}/lib/*.so* source/multi_build/${{matrix.artifact}}/packaged/*/* || true
     - name: Uploading artifacts
-      uses: actions/upload-artifact@v8
+      uses: actions/upload-artifact@v7
       with:
         name: ${{matrix.artifact}}
         path: |
@@ -236,7 +236,7 @@ jobs:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Upload vcpkg logs
       if: steps.buildProject.outcome == 'failure'
-      uses: actions/upload-artifact@v8
+      uses: actions/upload-artifact@v7
       with:
         name: ${{matrix.artifact}}-vcpkg-logs
         path: /usr/local/share/vcpkg/buildtrees/*/*.log
@@ -246,7 +246,7 @@ jobs:
     - name: Creating archive of artifacts
       run: tar cvf apps.tar source/multi_build/${{matrix.artifact}}/install/bin
     - name: Uploading artifacts
-      uses: actions/upload-artifact@v8
+      uses: actions/upload-artifact@v7
       with:
         name: ${{matrix.artifact}}
         path: apps.tar
@@ -303,7 +303,7 @@ jobs:
         ffmpeg -f f32le -ar 48k -ac 2 -i "/tmp/Blam Graphics/rendered_audio" -c:a copy "/tmp/Blam Graphics/rendered_audio.wav"
         rm "/tmp/Blam Graphics/rendered_audio"
     - name: Uploading test artifacts
-      uses: actions/upload-artifact@v8
+      uses: actions/upload-artifact@v7
       with:
         name: dummy_plug_test_${{ matrix.variant }}
         path: "/tmp/Blam Graphics"
@@ -331,7 +331,7 @@ jobs:
         ls -R artifacts/
         source/.github/tests/generate_test_page.sh artifacts/
     - name: Upload generated page
-      uses: actions/upload-artifact@v8
+      uses: actions/upload-artifact@v7
       with:
         name: dummy_plug_results
         path: "artifacts/generated/"
