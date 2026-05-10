@@ -32,7 +32,7 @@ case ${1:-} in
     cmake -N --log-level DEBUG --preset $2 | grep -A512 'Preset environment variables' | grep -v 'Preset environment variables' | sed '/^$/d' | sed -e 's/^\s*//g'
     echo NINJA=$(which ninja)
     echo VCPKG_ROOT=$(dirname $(realpath $(which vcpkg)))
-    if [[ "$2" =~ ^web:wasm32-emscripten* ]]; then
+    if [[ "$2" =~ ^web-wasm* ]]; then
         echo EMSCRIPTEN=${BASE_DIR}/compilers/emsdk
         echo EMSDK=${BASE_DIR}/compilers/emsdk
         echo PATH=${BASE_DIR}/compilers/emsdk/upstream/bin:${PATH}

@@ -64,6 +64,7 @@ if (NOT DEFINED EMSCRIPTEN_ROOT_PATH)
     set(EMSCRIPTEN_ROOT_PATH "${GUESS_EMSCRIPTEN_ROOT_PATH}")
   else()
     # If not found by above search, locate using the EMSCRIPTEN environment variable.
+    set(EMSCRIPTEN_ROOT_PATH "$ENV{EMSCRIPTEN}/upstream/emscripten")
     set(EMSCRIPTEN_ROOT_PATH "$ENV{EMSCRIPTEN}")
     # Abort if not found.
     if ("${EMSCRIPTEN_ROOT_PATH}" STREQUAL "")

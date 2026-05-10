@@ -173,7 +173,8 @@ elseif(EMSCRIPTEN)
     -fwasm-exceptions
     # -flto
     -pthread
-    --no-heap-copy
+    -Wno-pthreads-mem-growth
+    #--no-heap-copy # DEPRECATED
     -sLLD_REPORT_UNDEFINED
     -sUSE_BOOST_HEADERS=1
     # -sSAFE_HEAP=1 -sALLOW_MEMORY_GROWTH

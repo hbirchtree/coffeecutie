@@ -36,6 +36,20 @@
             }
         },
         {
+            "name": "vcpkg-base-emscripten64",
+            "inherits": ["vcpkg-base"],
+            "hidden": true,
+            "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Linux"
+            },
+            "cacheVariables": {
+                "VCPKG_TARGET_TRIPLET": "wasm64-emscripten"
+            }
+        },
+        {
             "name": "web-wasm32-emscripten-node",
             "displayName": "Wasm32 for Node",
             "inherits": ["vcpkg-base-emscripten"],
@@ -55,6 +69,11 @@
             "cacheVariables": {
                 "BLAM_HALO_VERSION": "custom_version_t"
             }
+        },
+        {
+            "name": "web-wasm64-emscripten-webgl2",
+            "displayName": "Wasm64 for Web + WebGL2 (SDL2)",
+            "inherits": ["vcpkg-base-emscripten64"]
         }
     ],
     "buildPresets": [
@@ -74,6 +93,12 @@
             "name": "web-wasm32-emscripten-webgl2-dbg",
             "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "web-wasm32-emscripten-webgl2",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "web-wasm64-emscripten-webgl2-rel",
+            "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "web-wasm64-emscripten-webgl2",
             "inherits": "base-linux"
         }
     ]
