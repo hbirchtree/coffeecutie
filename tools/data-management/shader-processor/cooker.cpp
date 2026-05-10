@@ -80,10 +80,12 @@ std::optional<std::pair<uint32_t, shader_proc::profile_t>> from_source(
         version_end - version_string - "#version "sv.size());
     auto version =
         stl_types::cast_string_view<uint32_t>(version_data.substr(0, 3));
+    if(version_data.size() < 3)
+        return std::make_pair(version, shader_proc::profile_t::none);
     version_data = version_data.substr(3);
     if(version_data.size() < 3)
         return std::make_pair(version, shader_proc::profile_t::none);
-    auto profile = version_data.substr(1, version_end);
+    auto profile = version_data.substr(1);
     return std::make_pair(version, from_profile_string(profile));
 }
 
