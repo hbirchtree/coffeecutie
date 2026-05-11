@@ -1,0 +1,35 @@
+name: Build project
+description: Build a variant, upload vcpkg logs on failure, and propagate the failure
+inputs:
+  variant:
+    description: Build variant string (e.g. android:arm64:30-gl:rel)
+    required: true
+  artifact:
+    description: Artifact name prefix used for vcpkg log uploads
+    required: true
+  embedded_report_url:
+    description: Optional URL passed as EMBEDDED_REPORT_URL to the build
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Building project
+      id: buildProject
+      continue-on-error: true
+      shell: bash
+      run: source/cb build ${{ inputs.variant }}/install
+      env:
+        BUILD_HOST_TOOLS: no
+        EMBEDDED_REPORT_URL: ${{ inputs.embedded_report_url }}
+        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+    - name: Upload vcpkg logs
+      if: steps.buildProject.outcome == 'failure'
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ inputs.artifact }}-vcpkg-logs
+        path: /usr/local/share/vcpkg/buildtrees/*/*.log
+    - name: Build validation
+      if: steps.buildProject.outcome == 'failure'
+      shell: bash
+      run: false

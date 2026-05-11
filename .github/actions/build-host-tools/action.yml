@@ -1,0 +1,23 @@
+name: Build host tools
+description: Restore host tools from cache and build if missing
+inputs:
+  cache_path:
+    description: Path to the host tools build directory (used as cache path and key discriminator)
+    required: true
+  build_args:
+    description: Extra arguments passed to source/cb host-build (e.g. dbg)
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Host tools cache
+      uses: actions/cache@v5
+      with:
+        path: ${{ inputs.cache_path }}
+        key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools','toolchain/building.py','vcpkg.json','vcpkg-configuration.json') }}
+    - name: Building host tools
+      shell: bash
+      run: source/cb host-build ${{ inputs.build_args }}
+      env:
+        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"

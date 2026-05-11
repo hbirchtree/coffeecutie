@@ -27,31 +27,19 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     name: Linux host tools
     steps:
-    - uses: lukka/get-cmake@latest
     - uses: actions/checkout@v6
       with:
         submodules: true
         path: source
-    - name: Export GitHub Actions cache environment variables
-      uses: actions/github-script@v9
-      with:
-        script: |
-          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+    - uses: ./.github/actions/cmake-setup
     - name: Installing build-essential
       run: |
         sudo rm /etc/apt/sources.list.d/microsoft-prod.list
         sudo apt-get update
         sudo apt install build-essential nasm
-    - name: Host tools cache
-      uses: actions/cache@v5
+    - uses: ./.github/actions/build-host-tools
       with:
-        path: source/multi_build/host-x64-linux-native
-        key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools','toolchain/building.py','vcpkg.json','vcpkg-configuration.json') }}
-    - name: Building host tools
-      run: source/cb host-build
-      env:
-        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+        cache_path: source/multi_build/host-x64-linux-native
   Linux:
     runs-on: ubuntu-latest
     needs: Linux_HostTools
@@ -86,17 +74,11 @@ jobs:
       MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
     name: ${{ matrix.variant }}
     steps:
-    - uses: lukka/get-cmake@latest
     - uses: actions/checkout@v6
       with:
         submodules: true
         path: source
-    - name: Export GitHub Actions cache environment variables
-      uses: actions/github-script@v9
-      with:
-        script: |
-          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+    - uses: ./.github/actions/cmake-setup
     - uses: actions/setup-java@v5
       if: startsWith(matrix.variant, 'android:')
       with:
@@ -123,23 +105,11 @@ jobs:
         du -hd2 source/
         echo "::info::du in ."
         du -hd2 .
-    - name: Building project
-      id: buildProject
-      continue-on-error: true
-      run: source/cb build ${{matrix.variant}}/install
-      env:
-        BUILD_HOST_TOOLS: no
-        EMBEDDED_REPORT_URL: "https://reports.speen.dev"
-        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
-    - name: Upload vcpkg logs
-      if: steps.buildProject.outcome == 'failure'
-      uses: actions/upload-artifact@v7
+    - uses: ./.github/actions/build-project
       with:
-        name: ${{matrix.artifact}}-vcpkg-logs
-        path: /usr/local/share/vcpkg/buildtrees/*/*.log
-    - name: Build validation
-      if: steps.buildProject.outcome == 'failure'
-      run: false
+        variant: ${{ matrix.variant }}
+        artifact: ${{ matrix.artifact }}
+        embedded_report_url: "https://reports.speen.dev"
     - name: Summarize binary sizes
       run: du -h source/multi_build/${{matrix.artifact}}/bin/* source/multi_build/${{matrix.artifact}}/lib/*.so* source/multi_build/${{matrix.artifact}}/packaged/*/* || true
     - name: Uploading artifacts
@@ -159,30 +129,19 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     name: macOS host tools
     steps:
-    - uses: lukka/get-cmake@latest
     - uses: actions/checkout@v6
       with:
         submodules: true
         path: source
-    - name: Export GitHub Actions cache environment variables
-      uses: actions/github-script@v9
-      with:
-        script: |
-          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+    - uses: ./.github/actions/cmake-setup
     - name: Installing Inkscape + other stuff
       run: |
         brew install --cask inkscape
         brew install automake libtool
-    - name: Host tools cache
-      uses: actions/cache@v5
+    - uses: ./.github/actions/build-host-tools
       with:
-        path: source/multi_build/host-arm64-osx
-        key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools','toolchain/building.py','vcpkg.json','vcpkg-configuration.json') }}
-    - name: Building host tools
-      run: source/cb host-build dbg
-      env:
-        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+        cache_path: source/multi_build/host-arm64-osx
+        build_args: dbg
     - name: List files
       run: |
         du -hd4 source/multi_build/host-arm64-osx/
@@ -205,17 +164,11 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     name: ${{ matrix.variant }}
     steps:
-    - uses: lukka/get-cmake@latest
     - uses: actions/checkout@v6
       with:
         submodules: true
         path: source
-    - name: Export GitHub Actions cache environment variables
-      uses: actions/github-script@v9
-      with:
-        script: |
-          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+    - uses: ./.github/actions/cmake-setup
     - name: Installing Inkscape + other stuff
       run: |
         brew install --cask inkscape
@@ -227,22 +180,10 @@ jobs:
         path: source/multi_build/host-arm64-osx
         key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools','toolchain/building.py','vcpkg.json','vcpkg-configuration.json') }}
         fail-on-cache-miss: true
-    - name: Building project
-      id: buildProject
-      continue-on-error: true
-      run: source/cb build ${{matrix.variant}}/install
-      env:
-        BUILD_HOST_TOOLS: no
-        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
-    - name: Upload vcpkg logs
-      if: steps.buildProject.outcome == 'failure'
-      uses: actions/upload-artifact@v7
+    - uses: ./.github/actions/build-project
       with:
-        name: ${{matrix.artifact}}-vcpkg-logs
-        path: /usr/local/share/vcpkg/buildtrees/*/*.log
-    - name: Build validation
-      if: steps.buildProject.outcome == 'failure'
-      run: false
+        variant: ${{ matrix.variant }}
+        artifact: ${{ matrix.artifact }}
     - name: Creating archive of artifacts
       run: tar cvf apps.tar source/multi_build/${{matrix.artifact}}/install/bin
     - name: Uploading artifacts
