@@ -11,8 +11,7 @@ FORCEDINLINE result<file_info_t, posix::posix_error> file_info(
     if(detail::is_asset(file))
     {
         using libc_types::u64;
-        return file_info_t
-        {
+        return file_info_t{
 #if defined(COFFEE_ARCH_ARM64)
             .size = static_cast<szptr>(AAsset_getLength64(file.asset)),
 #else
@@ -84,10 +83,11 @@ FORCEDINLINE result<std::vector<file_entry_t>, posix::posix_error> list(
     const char* fname = AAssetDir_getNextFileName(adir);
     while(fname)
     {
-        files.push_back(file_entry_t{
-            .mode = mode_t::file,
-            .name = std::string(fname),
-        });
+        files.push_back(
+            file_entry_t{
+                .mode = mode_t::file,
+                .name = std::string(fname),
+            });
         fname = AAssetDir_getNextFileName(adir);
     }
     AAssetDir_close(adir);

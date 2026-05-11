@@ -22,8 +22,9 @@ optional<error> system::load(
         options.api_type = gfx_config.value("profile", std::string()) == "Core"
                                ? api_type_t::core
                                : api_type_t::es;
-        options.api_version = version_tuple_to_u32(std::make_tuple(
-            gfx_config.value("major", 0u), gfx_config.value("minor", 0u)));
+        options.api_version = version_tuple_to_u32(
+            std::make_tuple(
+                gfx_config.value("major", 0u), gfx_config.value("minor", 0u)));
     }
 #endif
     return api::load(options);

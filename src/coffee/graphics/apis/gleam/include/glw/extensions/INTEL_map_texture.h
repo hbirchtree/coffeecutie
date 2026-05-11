@@ -32,7 +32,7 @@ STATICINLINE void* map_texture_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(MapTexture2DINTEL)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -55,7 +55,7 @@ STATICINLINE void sync_texture(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SyncTextureINTEL)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -78,7 +78,7 @@ STATICINLINE void unmap_texture_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UnmapTexture2DINTEL)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);

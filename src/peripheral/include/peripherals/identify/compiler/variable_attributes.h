@@ -47,7 +47,7 @@
 #define C_DEPRECATED [[deprecated]]
 #define C_DEPRECATED_S(reason) [[deprecated(reason)]]
 
-#elif(defined(COFFEE_GCC) && __GNUC_MAJOR > 4) || defined(COFFEE_CLANG)
+#elif (defined(COFFEE_GCC) && __GNUC_MAJOR > 4) || defined(COFFEE_CLANG)
 #define C_DEPRECATED __attribute__((deprecated))
 #define C_DEPRECATED_S(reason) __attribute__((deprecated(reason, "")))
 

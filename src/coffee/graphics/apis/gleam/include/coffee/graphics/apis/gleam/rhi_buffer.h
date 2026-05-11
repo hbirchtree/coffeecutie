@@ -15,10 +15,10 @@ struct buffer_slice_t;
 
 struct buffer_t : std::enable_shared_from_this<buffer_t>
 {
-#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300 || defined(GL_KHR_debug)
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300 || \
+    defined(GL_KHR_debug)
     static constexpr auto debug_identifier = group::object_identifier::buffer;
 #endif
-
 
     buffer_t(
         features::buffers features,
@@ -495,8 +495,9 @@ struct revolving_buffer_t
     {
         underlying_buffers.reserve(num_buffers);
         for(auto _ : stl_types::range<>(num_buffers))
-            underlying_buffers.emplace_back(std::make_shared<buffer_t>(
-                features, workarounds, std::ref(usage), type, access));
+            underlying_buffers.emplace_back(
+                std::make_shared<buffer_t>(
+                    features, workarounds, std::ref(usage), type, access));
     }
 
     /*!
@@ -686,8 +687,9 @@ struct circular_buffer_t
                 timeout = m_timeout;
                 break;
             }
-            m_debug.message("circular buffer waiting on reset, consider "
-                            "increasing buffer size");
+            m_debug.message(
+                "circular buffer waiting on reset, consider "
+                "increasing buffer size");
         }
     }
 
@@ -705,11 +707,12 @@ struct circular_buffer_t
 
     void add_fence([[maybe_unused]] fence_options&& ptr)
     {
-        m_fences.push_back(std::make_pair(
-            ptr.ptr,
-            cmd::fence_sync(
-                group::sync_condition::sync_gpu_commands_complete,
-                group::sync_behavior_flags::none)));
+        m_fences.push_back(
+            std::make_pair(
+                ptr.ptr,
+                cmd::fence_sync(
+                    group::sync_condition::sync_gpu_commands_complete,
+                    group::sync_behavior_flags::none)));
         ptr.used = true;
     }
 

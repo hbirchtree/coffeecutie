@@ -50,7 +50,7 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
 #else
         99
 #endif
-        );
+    );
     const bool use_pbo = major_version >= 3;
 
     auto read_pixels = [this, use_pbo] {

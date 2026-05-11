@@ -102,11 +102,12 @@ struct texture_atlas_t
                 layer_offsets.push_back({num_layers, horizontal_shift});
                 horizontal_shift += texture.l0_size.x;
             }
-            tex.alloc(size_3d<u32>{
-                .w = static_cast<u32>(max_size.x),
-                .h = static_cast<u32>(max_size.y),
-                .d = num_layers,
-            });
+            tex.alloc(
+                size_3d<u32>{
+                    .w = static_cast<u32>(max_size.x),
+                    .h = static_cast<u32>(max_size.y),
+                    .d = num_layers,
+                });
             u32 i = 0;
             for(auto const& texture : textures)
             {

@@ -26,13 +26,14 @@ using Coffee::cDebug;
 using BlamMapBrowserManifest = compo::SubsystemManifest<
     type_list_t<PlayerInfo, NetworkInfo, PlayerCamera>,
     type_list_t<
-        GameEventBus
-        , NetworkState
-        , PlayerRoster
+        GameEventBus,
+        NetworkState,
+        PlayerRoster
 #if defined(FEATURE_ENABLE_DiscordLatte)
-        , discord::Subsystem
+        ,
+        discord::Subsystem
 #endif
-    >,
+        >,
     empty_list_t>;
 
 struct BlamMapBrowser
@@ -113,9 +114,14 @@ struct BlamMapBrowser
                 {
                     ImGui::Columns(2);
 #if defined(FEATURE_ENABLE_DiscordLatte)
-                    if(auto& discord = e.subsystem<discord::Subsystem>(); discord.connected())
+                    if(auto& discord = e.subsystem<discord::Subsystem>();
+                       discord.connected())
                     {
-                        ImGui::Text("Candidate name: %s (from Discord)", e.subsystem<discord::Subsystem>().playerInfo().username.c_str());
+                        ImGui::Text(
+                            "Candidate name: %s (from Discord)",
+                            e.subsystem<discord::Subsystem>()
+                                .playerInfo()
+                                .username.c_str());
                         ImGui::NextColumn();
                         ImGui::NextColumn();
                     }
@@ -146,8 +152,8 @@ struct BlamMapBrowser
                         ImGui::Text("Connected to %s", remote->c_str());
                     {
                         auto& roster_sys = e.subsystem<PlayerRoster>();
-                        auto  roster = roster_sys.roster(
-                            net_state->remote_player_idx);
+                        auto  roster =
+                            roster_sys.roster(net_state->remote_player_idx);
                         if(!roster.empty())
                         {
                             ImGui::Separator();
@@ -219,23 +225,27 @@ struct BlamMapBrowser
                         {
                             /* Swap seat 0 back to player_idx 0 */
                             PlayerInfo* old_seat0 = nullptr;
-                            PlayerInfo* original = nullptr;
+                            PlayerInfo* original  = nullptr;
                             for(auto& pe : e.select<PlayerInfo>())
                             {
                                 auto* pi = e.get<PlayerInfo>(pe.id);
-                                if(pi && pi->seat_idx == 0) old_seat0 = pi;
-                                if(pi && pi->player_idx == 0) original = pi;
+                                if(pi && pi->seat_idx == 0)
+                                    old_seat0 = pi;
+                                if(pi && pi->player_idx == 0)
+                                    original = pi;
                             }
                             if(old_seat0 && original && old_seat0 != original)
                             {
-                                std::swap(old_seat0->seat_idx, original->seat_idx);
+                                std::swap(
+                                    old_seat0->seat_idx, original->seat_idx);
                                 /* Move keyboard.enabled */
                                 for(auto& pe : e.select<PlayerCamera>())
                                 {
                                     auto* cam = e.get<PlayerCamera>(pe.id);
                                     auto* pi  = e.get<PlayerInfo>(pe.id);
                                     if(cam && pi)
-                                        cam->keyboard.enabled = (pi->seat_idx == 0);
+                                        cam->keyboard.enabled =
+                                            (pi->seat_idx == 0);
                                 }
                             }
                         }
@@ -263,32 +273,46 @@ struct BlamMapBrowser
                                 pinfo.name.c_str(),
                                 pinfo.remote.c_str());
                         ImGui::NextColumn();
-                        if(ImGui::Button(Coffee::Strings::fmt("Focus {}", pinfo.player_idx).c_str()))
+                        if(ImGui::Button(
+                               Coffee::Strings::fmt(
+                                   "Focus {}", pinfo.player_idx)
+                                   .c_str()))
                         {
-                            /* Swap seat_idx: target gets seat 0, old seat 0 gets target's seat */
-                            PlayerInfo* old_seat0 = nullptr;
-                            u32 target_pidx = pinfo.player_idx;
+                            /* Swap seat_idx: target gets seat 0, old seat 0
+                             * gets target's seat */
+                            PlayerInfo* old_seat0   = nullptr;
+                            u32         target_pidx = pinfo.player_idx;
                             for(auto& pe : e.select<PlayerInfo>())
                             {
                                 auto* pi = e.get<PlayerInfo>(pe.id);
-                                if(pi && pi->seat_idx == 0) { old_seat0 = pi; break; }
+                                if(pi && pi->seat_idx == 0)
+                                {
+                                    old_seat0 = pi;
+                                    break;
+                                }
                             }
                             /* pinfo is const here, find mutable */
                             PlayerInfo* target = nullptr;
                             for(auto& pe : e.select<PlayerInfo>())
                             {
                                 auto* pi = e.get<PlayerInfo>(pe.id);
-                                if(pi && pi->player_idx == target_pidx) { target = pi; break; }
+                                if(pi && pi->player_idx == target_pidx)
+                                {
+                                    target = pi;
+                                    break;
+                                }
                             }
                             if(old_seat0 && target && old_seat0 != target)
                             {
-                                std::swap(old_seat0->seat_idx, target->seat_idx);
+                                std::swap(
+                                    old_seat0->seat_idx, target->seat_idx);
                                 for(auto& pe : e.select<PlayerCamera>())
                                 {
                                     auto* cam = e.get<PlayerCamera>(pe.id);
                                     auto* pi  = e.get<PlayerInfo>(pe.id);
                                     if(cam && pi)
-                                        cam->keyboard.enabled = (pi->seat_idx == 0);
+                                        cam->keyboard.enabled =
+                                            (pi->seat_idx == 0);
                                 }
                             }
                         }
@@ -314,8 +338,7 @@ struct BlamMapBrowser
                                 static_cast<unsigned long long>(entity.tags),
                                 entity_idx);
                             if(ImGui::Selectable(
-                                   label,
-                                   m_selected_entity == entity.id))
+                                   label, m_selected_entity == entity.id))
                                 m_selected_entity = entity.id;
                             entity_idx++;
                         }
@@ -365,46 +388,64 @@ struct BlamMapBrowser
                             "MeshTrackingData",
                             ec.get<MeshTrackingData>(m_selected_entity));
                         check(
-                            "DebugDraw",
-                            ec.get<DebugDraw>(m_selected_entity));
+                            "DebugDraw", ec.get<DebugDraw>(m_selected_entity));
                         check(
                             "TriggerVolume",
                             ec.get<TriggerVolume>(m_selected_entity));
                         check("Light", ec.get<Light>(m_selected_entity));
                         check(
-                            "DepthInfo",
-                            ec.get<DepthInfo>(m_selected_entity));
+                            "DepthInfo", ec.get<DepthInfo>(m_selected_entity));
 
                         if(auto* pinfo = ec.get<PlayerInfo>(m_selected_entity))
                         {
                             ImGui::Separator();
                             ImGui::Text("PlayerInfo:");
                             ImGui::Text("  name: %s", pinfo->name.c_str());
-                            ImGui::Text("  loading: %u%%", pinfo->loading_progress);
-                            ImGui::Text("  remote: %s", pinfo->remote.empty() ? "<local>" : pinfo->remote.c_str());
+                            ImGui::Text(
+                                "  loading: %u%%", pinfo->loading_progress);
+                            ImGui::Text(
+                                "  remote: %s",
+                                pinfo->remote.empty() ? "<local>"
+                                                      : pinfo->remote.c_str());
                             ImGui::Text("  seat_idx: %u", pinfo->seat_idx);
                             ImGui::Text("  player_idx: %u", pinfo->player_idx);
                             ImGui::Text("  permissions:");
-                            ImGui::Text("    move: %u", pinfo->permissions.move);
-                            ImGui::Text("    camera: %u", pinfo->permissions.camera);
+                            ImGui::Text(
+                                "    move: %u", pinfo->permissions.move);
+                            ImGui::Text(
+                                "    camera: %u", pinfo->permissions.camera);
                         }
                         if(auto* pcam = ec.get<PlayerCamera>(m_selected_entity))
                         {
                             ImGui::Separator();
                             ImGui::Text("PlayerCamera");
-                            ImGui::Text("  keyboard and mouse: %s", pcam->keyboard.enabled ? "enabled" : "disabled");
-                            ImGui::Text("  controller: %u", pcam->controller.index.value_or(0xFF));
-                            ImGui::DragFloat3("  position", &pcam->camera->position.x, 2.f, -1000.f, 1000.f);
+                            ImGui::Text(
+                                "  keyboard and mouse: %s",
+                                pcam->keyboard.enabled ? "enabled"
+                                                       : "disabled");
+                            ImGui::Text(
+                                "  controller: %u",
+                                pcam->controller.index.value_or(0xFF));
+                            ImGui::DragFloat3(
+                                "  position",
+                                &pcam->camera->position.x,
+                                2.f,
+                                -1000.f,
+                                1000.f);
                         }
                         if(auto* neti = ec.get<NetworkInfo>(m_selected_entity))
                         {
                             ImGui::Separator();
                             ImGui::Text("NetworkInfo");
-                            ImGui::Text("  connected: %s", neti->connected ? "true" : "false");
-                            ImGui::Text("  tag: class=%.*s id=%u instance=%u", 4,
-                                        neti->object.tag_class_name().data(),
-                                        neti->object.tag_id,
-                                        neti->instance_id);
+                            ImGui::Text(
+                                "  connected: %s",
+                                neti->connected ? "true" : "false");
+                            ImGui::Text(
+                                "  tag: class=%.*s id=%u instance=%u",
+                                4,
+                                neti->object.tag_class_name().data(),
+                                neti->object.tag_id,
+                                neti->instance_id);
                         }
                     }
                     ImGui::EndTabItem();

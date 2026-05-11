@@ -12,8 +12,14 @@ struct BlamBspWidget;
 
 template<typename V>
 using BlamBspWidgetManifest = compo::SubsystemManifest<
-    type_list_t<BspReference, ShaderData, SubModel, TriggerVolume, DebugDraw,
-                PlayerCamera, PlayerInfo>,
+    type_list_t<
+        BspReference,
+        ShaderData,
+        SubModel,
+        TriggerVolume,
+        DebugDraw,
+        PlayerCamera,
+        PlayerInfo>,
     type_list_t<
         ShaderCache<V>,
         BSPCache<V>,
@@ -152,7 +158,7 @@ struct BlamBspWidget
 
                     /* Find primary (seat_idx==0) PlayerCamera */
                     PlayerCamera* primary_cam = nullptr;
-                    u32 num_cameras = 0;
+                    u32           num_cameras = 0;
                     for(auto& ent : e.template select<PlayerCamera>())
                     {
                         auto* info = e.template get<PlayerInfo>(ent.id);
@@ -166,7 +172,8 @@ struct BlamBspWidget
 
                     ImGui::Text("Camera properties");
                     {
-                        auto label = fmt::format("Player {}", m_selected_camera);
+                        auto label =
+                            fmt::format("Player {}", m_selected_camera);
                         if(ImGui::BeginCombo("Selected camera", label.c_str()))
                         {
                             for(auto i : range<>(num_cameras))
@@ -195,7 +202,10 @@ struct BlamBspWidget
                             1.f,
                             5000.f);
                         ImGui::SliderFloat(
-                            "FOV", &primary_cam->camera->fieldOfView, 10.f, 120.f);
+                            "FOV",
+                            &primary_cam->camera->fieldOfView,
+                            10.f,
+                            120.f);
                     }
                     ImGui::SliderFloat("Gamma", &postprocess->gamma, 0.1, 5.0);
                     ImGui::SliderFloat(
@@ -242,5 +252,5 @@ struct BlamBspWidget
     // blam::map_container<V> const* m_map{nullptr};
 
     std::map<std::string_view, bool> m_bsps;
-    u32 m_selected_camera{0};
+    u32                              m_selected_camera{0};
 };

@@ -83,9 +83,11 @@ void ProfilingExport()
         if constexpr(!compile_info::platform::is_emscripten)
             reportBinRsc.setHeaderField(
                 "X-Coffee-Signature",
-                "sha1=" + hex::encode(net::hmac::digest<>(
-                              C_OCAST<BytesConst>(profile).view,
-                              env::var("COFFEE_HMAC_KEY").value_or("0000"))));
+                "sha1=" +
+                    hex::encode(
+                        net::hmac::digest<>(
+                            C_OCAST<BytesConst>(profile).view,
+                            env::var("COFFEE_HMAC_KEY").value_or("0000"))));
 
         http::multipart::builder out("-----------NetProfile");
 

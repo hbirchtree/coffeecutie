@@ -350,13 +350,14 @@ struct multi_dependent_task : public dependent_task_invoker
     requires(!std::is_same_v<Out, void>)
     void operator()()
     {
-        output.set_value(std::apply(
-            task,
+        output.set_value(
             std::apply(
-                [this](Future&... deps) -> future_values<Future...> {
-                    return gather_futures(deps...);
-                },
-                dependencies)));
+                task,
+                std::apply(
+                    [this](Future&... deps) -> future_values<Future...> {
+                        return gather_futures(deps...);
+                    },
+                    dependencies)));
     }
 
     template<typename Dummy = void>
@@ -383,7 +384,7 @@ inline auto CreateMultiTask(Func&& task, Future... futures)
 {
     auto task_wrapped = std::function(std::move(task));
     auto out          = std::make_unique<
-        multi_dependent_task<Out, decltype(task_wrapped), Future...>>();
+                 multi_dependent_task<Out, decltype(task_wrapped), Future...>>();
     out->dependencies = std::make_tuple<Future...>(std::move(futures)...);
     out->task         = std::move(task_wrapped);
     return out;

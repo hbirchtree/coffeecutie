@@ -676,9 +676,9 @@ struct AppService : detail::SubsystemBase
     using components   = type_safety::empty_list_t;
     using subsystems   = type_safety::empty_list_t;
     using services     = typename std::conditional_t<
-        std::is_same_v<Iface, void>,
-        detail::subsystem_list<ExposedType>,
-        detail::subsystem_list<ExposedType, Iface>>;
+            std::is_same_v<Iface, void>,
+            detail::subsystem_list<ExposedType>,
+            detail::subsystem_list<ExposedType, Iface>>;
     using time_point = detail::time_point;
 
     virtual ~AppService()

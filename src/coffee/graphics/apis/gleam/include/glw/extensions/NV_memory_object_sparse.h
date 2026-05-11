@@ -108,7 +108,7 @@ STATICINLINE void named_buffer_page_commitment_mem(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedBufferPageCommitmentMemNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -153,7 +153,7 @@ STATICINLINE void texture_page_commitment_mem(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TexturePageCommitmentMemNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);

@@ -942,8 +942,8 @@ STATICINLINE void StartEventProcessing(android_app* state)
 
         struct android_poll_source* source = nullptr;
 
-        while((ident = ALooper_pollOnce(0, nullptr, &events, (void**)&source)) >=
-              0)
+        while((ident =
+                   ALooper_pollOnce(0, nullptr, &events, (void**)&source)) >= 0)
         {
             if(source != nullptr)
                 source->process(state, source);

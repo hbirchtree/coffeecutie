@@ -35,12 +35,14 @@ struct alignas(4) tagref_typed_t
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wclass-conversion"
+
     template<typename Dummy = void>
     requires(sizeof...(Tags) > 0)
     inline operator tagref_typed_t<> const&() const
     {
         return *C_RCAST<tagref_typed_t<> const*>(this);
     }
+
 #pragma GCC diagnostic pop
 };
 

@@ -33,7 +33,7 @@ struct NetworkState : compo::SubsystemBase
 
     struct RosterEntry
     {
-        std::string name;
+        std::string     name;
         libc_types::u32 remote_idx{0};
         libc_types::u32 loading_progress{100};
         bool            is_self{false};

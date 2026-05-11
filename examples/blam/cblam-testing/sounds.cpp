@@ -177,11 +177,12 @@ struct SoundSystem
             if(!data_.has_value())
                 break;
             auto data = data_.value();
-            cDebug("{} data {}: {}+{}",
-                   magic_enum::enum_name(sound->codec),
-                   tag->name.to_string(heap),
-                   (void*)data.data(),
-                   data.size());
+            cDebug(
+                "{} data {}: {}+{}",
+                magic_enum::enum_name(sound->codec),
+                tag->name.to_string(heap),
+                (void*)data.data(),
+                data.size());
             switch(sound->codec)
             {
             case blam::sound::sound::codec_t::ogg: {

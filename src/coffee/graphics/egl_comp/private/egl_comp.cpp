@@ -566,15 +566,15 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
         EGLAttrib colorspace{EGL_GL_COLORSPACE_LINEAR};
         if(false)
             colorspace = EGL_NONE;
-            // else if(handle.ext.colorspaces.bt2020_linear)
-            //     colorspace = EGL_GL_COLORSPACE_BT2020_LINEAR_EXT;
-            // else if(handle.ext.colorspaces.display_p3)
-            //     colorspace = EGL_GL_COLORSPACE_DISPLAY_P3_EXT;
-            // else if(handle.ext.colorspaces.display_p3_linear)
-            //     colorspace = EGL_GL_COLORSPACE_DISPLAY_P3_LINEAR_EXT;
+        // else if(handle.ext.colorspaces.bt2020_linear)
+        //     colorspace = EGL_GL_COLORSPACE_BT2020_LINEAR_EXT;
+        // else if(handle.ext.colorspaces.display_p3)
+        //     colorspace = EGL_GL_COLORSPACE_DISPLAY_P3_EXT;
+        // else if(handle.ext.colorspaces.display_p3_linear)
+        //     colorspace = EGL_GL_COLORSPACE_DISPLAY_P3_LINEAR_EXT;
 #if defined(EGL_GL_COLORSPACE_BT2020_PQ_EXT)
-            // else if(handle.ext.colorspaces.bt2020_pq)
-            //     colorspace = EGL_GL_COLORSPACE_BT2020_PQ_EXT;
+        // else if(handle.ext.colorspaces.bt2020_pq)
+        //     colorspace = EGL_GL_COLORSPACE_BT2020_PQ_EXT;
 #endif // defined(EGL_GL_COLORSPACE_BT2020_PQ_EXT)
 #if defined(EGL_GL_COLORSPACE_BT2020_HLG_EXT)
         else if(handle.ext.colorspaces.bt2020_hlg)

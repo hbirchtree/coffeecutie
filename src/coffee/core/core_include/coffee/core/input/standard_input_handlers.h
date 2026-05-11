@@ -97,8 +97,7 @@ struct StandardCamera
             auto* camera = m_camera();
             if(!camera)
                 return;
-            StandardKeyRegister<Reg, CIEvent::Keyboard>(
-                camera->m_reg, e, ev);
+            StandardKeyRegister<Reg, CIEvent::Keyboard>(camera->m_reg, e, ev);
         }
 
         std::function<StandardCamera*()> m_camera;
@@ -128,7 +127,7 @@ struct StandardCamera
             camera->rotate(-pitch, -yaw);
         }
 
-        u32                             m_button;
+        u32                              m_button;
         std::function<StandardCamera*()> m_camera;
     };
 

@@ -78,7 +78,8 @@ std::optional<std::pair<uint32_t, shader_proc::profile_t>> from_source(
     auto prefix_end = version_string + "#version "sv.size();
     if(prefix_end >= version_end)
         return std::nullopt;
-    auto version_data = source_code.substr(prefix_end, version_end - prefix_end);
+    auto version_data =
+        source_code.substr(prefix_end, version_end - prefix_end);
     auto version =
         stl_types::cast_string_view<uint32_t>(version_data.substr(0, 3));
     if(version_data.size() < 3)
@@ -151,8 +152,8 @@ libc_types::i32 cooker_main()
         //
         ("M,module",
          "Combine SPIR-V binaries into a large module (only if -B is "
-         "specified)")
-        ("compact", "Generate compact GLSL code by compacting spacing");
+         "specified)")(
+            "compact", "Generate compact GLSL code by compacting spacing");
     opts.allow_unrecognised_options();
 
     auto res = opts.parse(arguments.size(), arguments.data());

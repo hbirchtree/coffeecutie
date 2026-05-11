@@ -38,7 +38,7 @@ STATICINLINE void named_renderbuffer_storage_multisample_advanced(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedRenderbufferStorageMultisampleAdvancedAMD)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsRenderbuffer)
             glIsRenderbuffer(renderbuffer);

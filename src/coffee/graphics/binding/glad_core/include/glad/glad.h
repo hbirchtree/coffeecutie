@@ -2899,8 +2899,8 @@ typedef void(APIENTRYP PFNGLCLEARBUFFERFIPROC)(
     GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil);
 GLAPI PFNGLCLEARBUFFERFIPROC glad_glClearBufferfi;
 #define glClearBufferfi glad_glClearBufferfi
-typedef const GLubyte*(APIENTRYP PFNGLGETSTRINGIPROC)(
-    GLenum name, GLuint index);
+typedef const GLubyte*(APIENTRYP PFNGLGETSTRINGIPROC)(GLenum name,
+                                                      GLuint index);
 GLAPI PFNGLGETSTRINGIPROC glad_glGetStringi;
 #define glGetStringi glad_glGetStringi
 typedef GLboolean(APIENTRYP PFNGLISRENDERBUFFERPROC)(GLuint renderbuffer);
@@ -3011,8 +3011,10 @@ typedef void(APIENTRYP PFNGLFRAMEBUFFERTEXTURELAYERPROC)(
     GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer);
 GLAPI PFNGLFRAMEBUFFERTEXTURELAYERPROC glad_glFramebufferTextureLayer;
 #define glFramebufferTextureLayer glad_glFramebufferTextureLayer
-typedef void*(APIENTRYP PFNGLMAPBUFFERRANGEPROC)(
-    GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
+typedef void*(APIENTRYP PFNGLMAPBUFFERRANGEPROC)(GLenum     target,
+                                                 GLintptr   offset,
+                                                 GLsizeiptr length,
+                                                 GLbitfield access);
 GLAPI PFNGLMAPBUFFERRANGEPROC glad_glMapBufferRange;
 #define glMapBufferRange glad_glMapBufferRange
 typedef void(APIENTRYP PFNGLFLUSHMAPPEDBUFFERRANGEPROC)(
@@ -4568,8 +4570,10 @@ GLAPI PFNGLCLEARNAMEDBUFFERSUBDATAPROC glad_glClearNamedBufferSubData;
 typedef void*(APIENTRYP PFNGLMAPNAMEDBUFFERPROC)(GLuint buffer, GLenum access);
 GLAPI PFNGLMAPNAMEDBUFFERPROC glad_glMapNamedBuffer;
 #define glMapNamedBuffer glad_glMapNamedBuffer
-typedef void*(APIENTRYP PFNGLMAPNAMEDBUFFERRANGEPROC)(
-    GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access);
+typedef void*(APIENTRYP PFNGLMAPNAMEDBUFFERRANGEPROC)(GLuint     buffer,
+                                                      GLintptr   offset,
+                                                      GLsizeiptr length,
+                                                      GLbitfield access);
 GLAPI PFNGLMAPNAMEDBUFFERRANGEPROC glad_glMapNamedBufferRange;
 #define glMapNamedBufferRange glad_glMapNamedBufferRange
 typedef GLboolean(APIENTRYP PFNGLUNMAPNAMEDBUFFERPROC)(GLuint buffer);
@@ -9152,8 +9156,8 @@ typedef void(APIENTRYP PFNGLNAMEDBUFFERSUBDATAEXTPROC)(
     GLuint buffer, GLintptr offset, GLsizeiptr size, const void* data);
 GLAPI PFNGLNAMEDBUFFERSUBDATAEXTPROC glad_glNamedBufferSubDataEXT;
 #define glNamedBufferSubDataEXT glad_glNamedBufferSubDataEXT
-typedef void*(APIENTRYP PFNGLMAPNAMEDBUFFEREXTPROC)(
-    GLuint buffer, GLenum access);
+typedef void*(APIENTRYP PFNGLMAPNAMEDBUFFEREXTPROC)(GLuint buffer,
+                                                    GLenum access);
 GLAPI PFNGLMAPNAMEDBUFFEREXTPROC glad_glMapNamedBufferEXT;
 #define glMapNamedBufferEXT glad_glMapNamedBufferEXT
 typedef GLboolean(APIENTRYP PFNGLUNMAPNAMEDBUFFEREXTPROC)(GLuint buffer);
@@ -9804,8 +9808,10 @@ typedef void(APIENTRYP PFNGLGETVERTEXARRAYPOINTERI_VEXTPROC)(
     GLuint vaobj, GLuint index, GLenum pname, void** param);
 GLAPI PFNGLGETVERTEXARRAYPOINTERI_VEXTPROC glad_glGetVertexArrayPointeri_vEXT;
 #define glGetVertexArrayPointeri_vEXT glad_glGetVertexArrayPointeri_vEXT
-typedef void*(APIENTRYP PFNGLMAPNAMEDBUFFERRANGEEXTPROC)(
-    GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access);
+typedef void*(APIENTRYP PFNGLMAPNAMEDBUFFERRANGEEXTPROC)(GLuint     buffer,
+                                                         GLintptr   offset,
+                                                         GLsizeiptr length,
+                                                         GLbitfield access);
 GLAPI PFNGLMAPNAMEDBUFFERRANGEEXTPROC glad_glMapNamedBufferRangeEXT;
 #define glMapNamedBufferRangeEXT glad_glMapNamedBufferRangeEXT
 typedef void(APIENTRYP PFNGLFLUSHMAPPEDNAMEDBUFFERRANGEEXTPROC)(

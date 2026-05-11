@@ -9,28 +9,32 @@ namespace semantic::concepts {
 using stream_writer = std::function<void(semantic::Span<char>&&)>;
 
 template<typename T, typename InType = libc_types::u8>
-concept is_compressor = std::is_same_v<
-    typename declreturntype(T::compress),
-    std::optional<typename T::error_t>>&&
-requires(T)
-{
-    {T::compress(
-        std::declval<semantic::Span<const InType> const&>(),
-        std::declval<std::vector<char>&>(),
-        std::declval<typename T::options_t&&>())};
-};
+concept is_compressor =
+    std::is_same_v<
+        typename declreturntype(T::compress),
+        std::optional<typename T::error_t>> &&
+    requires(T) {
+        {
+            T::compress(
+                std::declval<semantic::Span<const InType> const&>(),
+                std::declval<std::vector<char>&>(),
+                std::declval<typename T::options_t &&>())
+        };
+    };
 
 template<typename T, typename OutType = char>
-concept is_decompressor = std::is_same_v<
-    typename declreturntype(T::decompress),
-    std::optional<typename T::error_t>>&&
-requires(T)
-{
-    {T::decompress(
-        std::declval<semantic::Span<const libc_types::u8> const&>(),
-        std::declval<std::vector<char>&>(),
-        std::declval<typename T::options_t&&>())};
-};
+concept is_decompressor =
+    std::is_same_v<
+        typename declreturntype(T::decompress),
+        std::optional<typename T::error_t>> &&
+    requires(T) {
+        {
+            T::decompress(
+                std::declval<semantic::Span<const libc_types::u8> const&>(),
+                std::declval<std::vector<char>&>(),
+                std::declval<typename T::options_t &&>())
+        };
+    };
 
 template<typename T>
 concept is_codec = is_compressor<T> && is_decompressor<T>;
@@ -38,28 +42,32 @@ concept is_codec = is_compressor<T> && is_decompressor<T>;
 /* Chunk codec, returns (de)compressed data chunk-wislibc_types::u8e */
 
 template<typename T, typename InType = libc_types::u8>
-concept is_stream_compressor = std::is_same_v<
-    typename declreturntype(T::compress),
-    std::optional<typename T::error_t>>&&
-requires(T)
-{
-    {T::compress(
-        std::declval<semantic::Span<const InType> const&>(),
-        std::declval<stream_writer>(),
-        std::declval<typename T::options_t&&>())};
-};
+concept is_stream_compressor =
+    std::is_same_v<
+        typename declreturntype(T::compress),
+        std::optional<typename T::error_t>> &&
+    requires(T) {
+        {
+            T::compress(
+                std::declval<semantic::Span<const InType> const&>(),
+                std::declval<stream_writer>(),
+                std::declval<typename T::options_t &&>())
+        };
+    };
 
 template<typename T>
-concept is_stream_decompressor = std::is_same_v<
-    typename declreturntype(T::decompress),
-    std::optional<typename T::error_t>>&&
-requires(T)
-{
-    {T::decompress(
-        std::declval<semantic::Span<const libc_types::u8> const&>(),
-        std::declval<stream_writer>(),
-        std::declval<typename T::options_t&&>())};
-};
+concept is_stream_decompressor =
+    std::is_same_v<
+        typename declreturntype(T::decompress),
+        std::optional<typename T::error_t>> &&
+    requires(T) {
+        {
+            T::decompress(
+                std::declval<semantic::Span<const libc_types::u8> const&>(),
+                std::declval<stream_writer>(),
+                std::declval<typename T::options_t &&>())
+        };
+    };
 
 template<typename T>
 concept is_stream_codec = is_stream_compressor<T> && is_stream_decompressor<T>;

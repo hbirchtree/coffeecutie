@@ -38,8 +38,9 @@ void error_check(std::string_view cmd_name, enum error_check check_errors)
             if(!error_name.empty())
                 out.insert(out.end(), error_name.begin(), error_name.end());
             else
-                out.append(stl_types::str::fmt::pointerify(
-                    static_cast<libc_types::u32>(error)));
+                out.append(
+                    stl_types::str::fmt::pointerify(
+                        static_cast<libc_types::u32>(error)));
             return;
             Throw(undefined_behavior(out));
         }

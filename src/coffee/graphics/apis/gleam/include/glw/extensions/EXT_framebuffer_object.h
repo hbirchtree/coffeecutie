@@ -49,7 +49,7 @@ STATICINLINE void bind_framebuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindFramebufferEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
@@ -74,7 +74,7 @@ STATICINLINE void bind_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindRenderbufferEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsRenderbuffer)
             glIsRenderbuffer(renderbuffer);
@@ -180,7 +180,7 @@ STATICINLINE void framebuffer_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferRenderbufferEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsRenderbuffer)
             glIsRenderbuffer(renderbuffer);
@@ -215,7 +215,7 @@ STATICINLINE void framebuffer_texture_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture1DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -251,7 +251,7 @@ STATICINLINE void framebuffer_texture_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture2DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -289,7 +289,7 @@ STATICINLINE void framebuffer_texture_3d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture3DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -450,7 +450,7 @@ STATICINLINE bool is_framebuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsFramebufferEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
@@ -473,7 +473,7 @@ STATICINLINE bool is_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsRenderbufferEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsRenderbuffer)
             glIsRenderbuffer(renderbuffer);

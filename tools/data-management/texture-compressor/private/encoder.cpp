@@ -86,11 +86,13 @@ std::optional<ktxTexture1*> encode(
     for(Etc::RawImage const& img : images)
     {
         auto expected_size = ktxTexture_GetImageSize(ktxTexture(texture), i);
-        auto given_size = img.uiEncodingBitsBytes;
+        auto given_size    = img.uiEncodingBitsBytes;
         if(expected_size != given_size)
         {
-            printf("Mismatched ETC2 encoding size: needed %i, got %i\n",
-                   static_cast<int>(expected_size), static_cast<int>(given_size));
+            printf(
+                "Mismatched ETC2 encoding size: needed %i, got %i\n",
+                static_cast<int>(expected_size),
+                static_cast<int>(given_size));
             return std::nullopt;
         }
         auto error = ktxTexture_SetImageFromMemory(
@@ -103,7 +105,11 @@ std::optional<ktxTexture1*> encode(
         if(error != ktx_error_code_e::KTX_SUCCESS)
         {
             auto error_msg = magic_enum::enum_name(error);
-            printf("Failed setting mipmap image %u: %.*s\n", i - 1, static_cast<int>(error_msg.size()), error_msg.data());
+            printf(
+                "Failed setting mipmap image %u: %.*s\n",
+                i - 1,
+                static_cast<int>(error_msg.size()),
+                error_msg.data());
             return std::nullopt;
         }
     }

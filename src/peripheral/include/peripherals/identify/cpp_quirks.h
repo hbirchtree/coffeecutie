@@ -40,7 +40,7 @@
     defined(COFFEE_MAEMO)
 /* In this case, it doesn't exist at all, with no fallback */
 #define thread_local
-#elif(defined(COFFEE_APPLE) && defined(COFFEE_XCODE_NO_TLS))
+#elif (defined(COFFEE_APPLE) && defined(COFFEE_XCODE_NO_TLS))
 /* In this case it only supports POD types, __thread is an old feature */
 #define thread_local __thread
 #endif

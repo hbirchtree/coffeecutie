@@ -16,12 +16,8 @@ template<typename T, typename Manifest>
 concept is_restricted_subsystem =
     is_subsystem_manifest<Manifest> &&
     requires(T& v, typename compo::proxy_of<Manifest>& p) {
-        {
-            v.start_restricted(p, SubsystemBase::time_point())
-        };
-        {
-            v.end_restricted(p, SubsystemBase::time_point())
-        };
+        { v.start_restricted(p, SubsystemBase::time_point()) };
+        { v.end_restricted(p, SubsystemBase::time_point()) };
     };
 
 template<typename ComponentList, typename SubsystemList, typename ServiceList>

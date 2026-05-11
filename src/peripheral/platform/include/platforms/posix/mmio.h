@@ -69,10 +69,12 @@ FORCEDINLINE result<mem_mapping_t, posix_error> map(
         return failure(common::posix::get_error());
     }
 
-    return success(mem_mapping_t{
-        .view = mem_mapping_t::span_type(C_RCAST<char*>(mapping), params.size),
-        .access = params.access,
-    });
+    return success(
+        mem_mapping_t{
+            .view =
+                mem_mapping_t::span_type(C_RCAST<char*>(mapping), params.size),
+            .access = params.access,
+        });
 }
 
 FORCEDINLINE std::optional<posix_error> unmap(mem_mapping_t&& mapping)

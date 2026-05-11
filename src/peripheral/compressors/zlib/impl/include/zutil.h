@@ -85,7 +85,7 @@ extern z_const char* const z_errmsg[10]; /* indexed by 2-zlib_error */
 #define OS_CODE 0x00
 #ifndef Z_SOLO
 #if defined(__TURBOC__) || defined(__BORLANDC__)
-#if(__STDC__ == 1) && (defined(__LARGE__) || defined(__COMPACT__))
+#if (__STDC__ == 1) && (defined(__LARGE__) || defined(__COMPACT__))
 /* Allow compilation with ANSI keywords only enabled */
 void _Cdecl  farfree(void* block);
 void* _Cdecl farmalloc(unsigned long nbytes);
@@ -166,7 +166,7 @@ void* _Cdecl farmalloc(unsigned long nbytes);
 #define fdopen(fd, mode) NULL /* No fdopen() */
 #endif
 
-#if(defined(_MSC_VER) && (_MSC_VER > 600)) && !defined __INTERIX
+#if (defined(_MSC_VER) && (_MSC_VER > 600)) && !defined __INTERIX
 #if defined(_WIN32_WCE)
 #define fdopen(fd, mode) NULL /* No fdopen() */
 #ifndef _PTRDIFF_T_DEFINED

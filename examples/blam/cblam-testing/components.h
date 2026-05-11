@@ -393,13 +393,13 @@ struct NetworkInfo
 
     blam::tagref_t object;
     u32            instance_id{0};
-    bool connected{};
+    bool           connected{};
 
     struct
     {
-        bool transform : 1{false};
-        bool viewport : 1{false};
-        bool permissions : 1{false};
+        bool transform : 1 {false};
+        bool viewport : 1 {false};
+        bool permissions : 1 {false};
     } changes;
 };
 
@@ -407,7 +407,7 @@ struct PlayerInfo
 {
     using value_type = PlayerInfo;
     using type       = compo::alloc::VectorContainer<value_type>;
-    
+
     std::string name;
     std::string remote;
     u32         player_idx{0};
@@ -420,26 +420,32 @@ struct PlayerInfo
         bool camera{true};
     } permissions;
 
-    bool is_remote() const { return !remote.empty(); }
+    bool is_remote() const
+    {
+        return !remote.empty();
+    }
 };
 
 struct PlayerCamera
 {
     using value_type = PlayerCamera;
-    using type = compo::alloc::VectorContainer<value_type>;
+    using type       = compo::alloc::VectorContainer<value_type>;
 
-    using camera_t = typing::vectors::scene::camera<f32>;
+    using camera_t         = typing::vectors::scene::camera<f32>;
     using camera_wrapper_t = StandardCamera<camera_t*, StandardCameraOpts*>;
 
-    std::unique_ptr<StandardCameraOpts> camera_opts = std::make_unique<StandardCameraOpts>();
-    std::unique_ptr<camera_t>           camera = std::make_unique<camera_t>();
-    std::shared_ptr<camera_wrapper_t>   camera_ = std::make_shared<camera_wrapper_t>(camera.get(), camera_opts.get());
+    std::unique_ptr<StandardCameraOpts> camera_opts =
+        std::make_unique<StandardCameraOpts>();
+    std::unique_ptr<camera_t>         camera = std::make_unique<camera_t>();
+    std::shared_ptr<camera_wrapper_t> camera_ =
+        std::make_shared<camera_wrapper_t>(camera.get(), camera_opts.get());
 
     struct
     {
         ControllerOpts     opts{};
         std::optional<i32> index{};
     } controller;
+
     struct
     {
         bool enabled{false};
@@ -448,7 +454,10 @@ struct PlayerCamera
     Matf4 matrix{};
     Matf4 rotation{};
 
-    bool is_active() const { return keyboard.enabled || controller.index.has_value(); }
+    bool is_active() const
+    {
+        return keyboard.enabled || controller.index.has_value();
+    }
 };
 
 struct SoundEffects

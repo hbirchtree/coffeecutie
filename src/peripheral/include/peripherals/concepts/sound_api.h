@@ -37,9 +37,7 @@ struct Format
 
 template<class T>
 concept Buffer = requires(T v) {
-    {
-        v.upload(gsl::span<char>())
-    };
+    { v.upload(gsl::span<char>()) };
 };
 
 template<class T, class Buffer, class Source>
@@ -53,25 +51,15 @@ concept Decoder = requires(T dec) {
             std::declval<std::chrono::system_clock::duration>(),
             std::declval<Buffer&>())
     };
-    {
-        std::is_same_v<decltype(dec.extension()), std::string_view>
-    };
-    {
-        std::is_same_v<decltype(dec.format()), Format::format_t>
-    };
+    { std::is_same_v<decltype(dec.extension()), std::string_view> };
+    { std::is_same_v<decltype(dec.format()), Format::format_t> };
 };
 
 template<class T>
 concept Timing = requires(T v) {
-    {
-        v.current_time()
-    };
-    {
-        v.timestamp_at(std::chrono::system_clock::duration())
-    };
-    {
-        v.time_until(std::chrono::system_clock::time_point())
-    };
+    { v.current_time() };
+    { v.timestamp_at(std::chrono::system_clock::duration()) };
+    { v.time_until(std::chrono::system_clock::time_point()) };
 };
 
 enum class source_property
@@ -127,9 +115,7 @@ concept Source = Buffer<BufferT> && requires(T v, BufferT buffer) {
             v.template set_property<source_property::looping>(true),
             v.template set_property<source_property::position>(Vecf3{})
     };
-    {
-        v.queue(buffer)
-    };
+    { v.queue(buffer) };
 };
 
 template<source_property Prop>
@@ -167,21 +153,11 @@ struct DeviceHandle
 template<class T>
 concept API = Source<typename T::source_type, typename T::buffer_type> &&
               Listener<typename T::listener_type> && requires(T v) {
-                  {
-                      T::create(DeviceHandle{.name = "default"})
-                  };
-                  {
-                      v.alloc_buffer(Format())
-                  };
-                  {
-                      v.alloc_source()
-                  };
-                  {
-                      v.listener()
-                  };
-                  {
-                      v.tick()
-                  };
+                  { T::create(DeviceHandle{.name = "default"}) };
+                  { v.alloc_buffer(Format()) };
+                  { v.alloc_source() };
+                  { v.listener() };
+                  { v.tick() };
               };
 
 } // namespace semantic::concepts::sound

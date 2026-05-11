@@ -141,8 +141,8 @@ STATICINLINE SystemPaths& GetSystemPaths()
         home_dir = home.value();
 
     /* Cache goes in ~/.cache/ORGNAME/APPNAME */
-    paths.cacheDir = home_dir / ".cache" /
-                     appData.organization_name / appData.application_name;
+    paths.cacheDir = home_dir / ".cache" / appData.organization_name /
+                     appData.application_name;
 
     /* Temporary files go in /tmp */
     paths.tempDir = "/tmp"_sys / appData.application_name;

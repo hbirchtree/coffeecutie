@@ -313,8 +313,9 @@ void ImGuiSystem::start_restricted(Proxy& p, time_point const& t)
     {
         using namespace std::chrono_literals;
         save_imgui_ini();
-        m_nextIniSaveTime = t + std::chrono::seconds(static_cast<int>(
-                                    ImGui::GetIO().IniSavingRate));
+        m_nextIniSaveTime =
+            t + std::chrono::seconds(
+                    static_cast<int>(ImGui::GetIO().IniSavingRate));
     }
 }
 

@@ -45,7 +45,7 @@ STATICINLINE void get_active_subroutine_name(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveSubroutineName)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -89,7 +89,7 @@ STATICINLINE void get_active_subroutine_uniform_name(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveSubroutineUniformName)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -131,7 +131,7 @@ STATICINLINE void get_active_subroutine_uniformiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveSubroutineUniformiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -165,7 +165,7 @@ STATICINLINE void get_program_stageiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramStageiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -196,7 +196,7 @@ STATICINLINE GLuint get_subroutine_index(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSubroutineIndex)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -225,7 +225,7 @@ STATICINLINE GLint get_subroutine_uniform_location(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSubroutineUniformLocation)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);

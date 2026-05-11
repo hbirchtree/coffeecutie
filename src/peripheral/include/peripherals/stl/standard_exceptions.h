@@ -49,18 +49,18 @@ struct memory_error : public std::logic_error
 #define C_ERROR_CODE_OUT_OF_BOUNDS() \
     Throw(undefined_behavior("invalid error code"))
 
-#define C_PTR_CHECK(ptr)                                        \
-    if(!ptr)                                                    \
-        Throw(undefined_behavior("bad pointer deref: " __FILE__ \
-                                 ":" C_STR(__LINE__)));
+#define C_PTR_CHECK(ptr)          \
+    if(!ptr)                      \
+        Throw(undefined_behavior( \
+            "bad pointer deref: " __FILE__ ":" C_STR(__LINE__)));
 #define C_PTR_CHECK_MSG(ptr, msg) \
     if(!ptr)                      \
         Throw(undefined_behavior("bad pointer deref: " msg));
 
-#define C_THIS_CHECK                                              \
-    if(!this)                                                     \
-        Throw(undefined_behavior("bad access to *this: " __FILE__ \
-                                 ":" C_STR(__LINE__)));
+#define C_THIS_CHECK              \
+    if(!this)                     \
+        Throw(undefined_behavior( \
+            "bad access to *this: " __FILE__ ":" C_STR(__LINE__)));
 
 #if MODE_DEBUG == 1
 #define C_ERROR_CHECK(ec)                                           \

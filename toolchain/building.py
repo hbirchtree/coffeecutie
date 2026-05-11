@@ -398,11 +398,14 @@ def _ci_group(title: str):
 def download_host_tools_plan(host: HostInfo, base_dir: Path) -> BuildPlan:
     plan = BuildPlan("download-host-tools")
     bin_dir = base_dir / "multi_build/compilers/bin"
-    clang_ver = 17
+    clang_ver = 20
+    release_tag = "master-796e77c"
+    stamp_id = f"{clang_ver}-{release_tag}"
 
     suffix_map = {
         "x64-linux-native": "linux-amd64",
         "x64-osx": "macosx-amd64",
+        "arm64-osx": "macosx-arm-arm64",
     }
     tool_suffix = suffix_map.get(host.triplet, "")
 
@@ -414,17 +417,22 @@ def download_host_tools_plan(host: HostInfo, base_dir: Path) -> BuildPlan:
 
     base_url = (
         "https://github.com/muttleyxd/clang-tools-static-binaries"
-        "/releases/download/master-f7f02c1d"
+        f"/releases/download/{release_tag}"
     )
     for tool in ("format", "tidy"):
         tool_path = bin_dir / f"clang-{tool}"
+        stamp_path = bin_dir / f"clang-{tool}.version"
         url = f"{base_url}/clang-{tool}-{clang_ver}_{tool_suffix}"
+
+        def _up_to_date(p=tool_path, s=stamp_path, sid=stamp_id) -> bool:
+            return p.exists() and s.exists() and s.read_text().strip() == sid
+
         plan.add(Step(
             name=f"download-clang-{tool}",
             cmd=["wget", url, "-q", "-O", str(tool_path)],
             description=f"Download clang-{tool} v{clang_ver} ({tool_suffix})",
-            skip_if=lambda p=tool_path: p.exists(),
-            skip_reason=f"{tool_path} already present",
+            skip_if=_up_to_date,
+            skip_reason=f"clang-{tool} already at {stamp_id}",
         ))
         plan.add(PythonStep(
             name=f"chmod-clang-{tool}",
@@ -432,6 +440,13 @@ def download_host_tools_plan(host: HostInfo, base_dir: Path) -> BuildPlan:
             description=f"Make {tool_path} executable",
             skip_if=lambda p=tool_path: not p.exists(),
             skip_reason="tool was not downloaded",
+        ))
+        plan.add(PythonStep(
+            name=f"stamp-clang-{tool}",
+            fn=lambda s=stamp_path, sid=stamp_id: s.write_text(sid),
+            description=f"Write version stamp {stamp_path.name}",
+            skip_if=_up_to_date,
+            skip_reason=f"stamp already at {stamp_id}",
         ))
 
     return plan
@@ -1062,6 +1077,8 @@ _NATIVE_PLATFORMS = frozenset(
 
 def build_plan_for(target: TargetSpec, host: HostInfo, base_dir: Path) -> BuildPlan:
     """Select and construct the correct BuildPlan for the given target."""
+    if target.platform == "host":
+        return host_tools_plan(host, base_dir)
     if "mingw32" in target.architecture:
         return mingw_plan(target, host, base_dir)
     if target.platform in _NATIVE_PLATFORMS:
@@ -1082,6 +1099,54 @@ def build_plan_for(target: TargetSpec, host: HostInfo, base_dir: Path) -> BuildP
 # ---------------------------------------------------------------------------
 # Subcommand helpers
 # ---------------------------------------------------------------------------
+
+# GCC-specific flags that clang-tidy doesn't understand:
+#   -fmodule-mapper=<path>  per-TU module-mapper file
+#   -fmodules-ts            C++ modules TS enable
+#   -fdeps-format=<fmt>     P1689 dependency scanning output format
+_GCC_STRIP_FLAGS = re.compile(r"-fmodule-mapper=\S+|-fmodules-ts|-fdeps-format=\S+")
+
+
+def _gcc_implicit_includes(toolchain_root: Path) -> list[Path]:
+    """GCC dirs injected implicitly at compile time; absent from compile_commands.json."""
+    dirs: list[Path] = []
+    for p in sorted(toolchain_root.glob("compiler/lib/gcc/*/*/include")):
+        if p.is_dir():
+            dirs.append(p)
+    for p in sorted(toolchain_root.glob("compiler/lib/gcc/*/*/include-fixed")):
+        if p.is_dir():
+            dirs.append(p)
+    for cxx in sorted(toolchain_root.glob("compiler/*/include/c++/*")):
+        if cxx.is_dir():
+            dirs.append(cxx)
+            for sub in sorted(cxx.iterdir()):
+                if sub.is_dir():
+                    dirs.append(sub)
+    return dirs
+
+
+def _tidy_compile_db(db_path: Path) -> Path:
+    """Strip GCC-specific flags and inject implicit includes; return dir of filtered copy."""
+    db = json.loads(db_path.read_text())
+
+    extra_isystem: list[str] = []
+    if db:
+        compiler = Path(db[0]["command"].split()[0])
+        if compiler.is_absolute() and compiler.parent.name == "bin":
+            toolchain_root = compiler.parent.parent
+            extra_isystem = [
+                f"-isystem{p}" for p in _gcc_implicit_includes(toolchain_root)
+            ]
+
+    suffix = (" " + " ".join(extra_isystem)) if extra_isystem else ""
+    for entry in db:
+        entry["command"] = _GCC_STRIP_FLAGS.sub("", entry["command"]) + suffix
+
+    out_dir = db_path.parent.with_suffix(".tidy")
+    out_dir.mkdir(exist_ok=True)
+    (out_dir / "compile_commands.json").write_text(json.dumps(db, indent=2))
+    return out_dir
+
 
 def _source_dirs(base_dir: Path) -> list[Path]:
     return [base_dir / d for d in ("examples", "src", "tools") if (base_dir / d).exists()]
@@ -1217,6 +1282,17 @@ def main() -> None:
     # format
     sub.add_parser("format", help="Format all C++ source files with clang-format")
 
+    # tidy
+    p = sub.add_parser("tidy", help="Run clang-tidy on all C++ source files")
+    p.add_argument(
+        "preset", nargs="?", default=None,
+        help="CMake preset (e.g. desktop:x86_64-buildroot-linux-gnu:multi) to locate compile_commands.json",
+    )
+    p.add_argument(
+        "--dir", dest="tidy_dir", default=None, metavar="DIR",
+        help="Limit scan to this directory (default: all source dirs)",
+    )
+
     # lint-cmake
     sub.add_parser("lint-cmake", help="Lint CMake files with cmake-format")
 
@@ -1329,7 +1405,43 @@ def main() -> None:
             print(f"Would run: {clang_format} -i -style=file <each source file>")
         else:
             for f in _all_source_files(base_dir):
+                _banner(f"format: {f.relative_to(base_dir)}")
                 subprocess.run([clang_format, "-i", "-style=file", str(f)], check=True)
+
+    elif cmd == "tidy":
+        check_programs("wget")
+        if not dry_run:
+            download_host_tools_plan(host, base_dir).execute()
+        clang_tidy = os.environ.get(
+            "CLANG_TIDY",
+            str(base_dir / "multi_build/compilers/bin/clang-tidy"),
+        )
+        tidy_cmd = [clang_tidy]
+        if args.preset:
+            raw_db = base_dir / "multi_build" / args.preset.replace(":", "-") / "compile_commands.json"
+            tidy_db_dir = _tidy_compile_db(raw_db)
+            tidy_cmd += ["-p", str(tidy_db_dir)]
+        scan_root = Path(args.tidy_dir).resolve() if args.tidy_dir else None
+        if dry_run:
+            p_flag = f" -p {tidy_db_dir}" if args.preset else ""
+            dir_flag = f" --dir {scan_root}" if scan_root else ""
+            print(f"Would run: {clang_tidy}{p_flag}{dir_flag} <each .cpp source file>")
+        else:
+            if scan_root:
+                source_files = list(scan_root.rglob("*.cpp"))
+            else:
+                source_files = [f for f in _all_source_files(base_dir) if f.suffix == ".cpp"]
+            failures: list[Path] = []
+            for f in source_files:
+                _banner(f"tidy: {f.relative_to(base_dir)}")
+                r = subprocess.run(tidy_cmd + [str(f)])
+                if r.returncode != 0:
+                    failures.append(f)
+            if failures:
+                print("\n:: tidy: failed files:")
+                for f in failures:
+                    print(f"     {f.relative_to(base_dir)}")
+                sys.exit(1)
 
     elif cmd == "lint-cmake":
         check_programs("cmake-format")
@@ -1393,6 +1505,7 @@ def main() -> None:
         print(
             "\nUtility commands:\n"
             "    format              — Format C++ source files with clang-format\n"
+            "    tidy [preset]       — Run clang-tidy on C++ source files\n"
             "    lint-cmake          — Lint CMake files with cmake-format\n"
             "    get-notes           — Print TODO/NOTE/WARNING/BUG/FIXME from source\n"
             "    type-guards         — Find deprecated [u]int[8|16|32|64] uses\n"

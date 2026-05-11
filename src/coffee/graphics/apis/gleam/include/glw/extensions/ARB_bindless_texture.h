@@ -32,7 +32,7 @@ STATICINLINE GLuint64 get_image_handle(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetImageHandleARB)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -56,7 +56,7 @@ get_texture_handle(u32 texture, error_check check_errors = error_check::on)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureHandleARB)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -80,12 +80,12 @@ STATICINLINE GLuint64 get_texture_sampler_handle(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureSamplerHandleARB)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
@@ -250,7 +250,7 @@ STATICINLINE void program_uniform_handle(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformHandleui64ARB)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -284,7 +284,7 @@ STATICINLINE void program_uniform_handle(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformHandleui64vARB)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);

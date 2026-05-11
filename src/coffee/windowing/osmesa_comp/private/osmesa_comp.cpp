@@ -134,14 +134,15 @@ void Windowing::dump_framebuffer()
         FileCommit(
             screenshot_file, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
     };
-    save_buffer(descriptor_t<typing::pixels::rgba_t>{
-        .buffer = gsl::span<typing::pixels::rgba_t>(
-            m_framebuffer.data(), m_framebuffer.size()),
-        .components = 4,
-        .width      = m_size.w,
-        .height     = m_size.h,
-        .output     = "framebuffer_color.png"_tmpfile,
-    });
+    save_buffer(
+        descriptor_t<typing::pixels::rgba_t>{
+            .buffer = gsl::span<typing::pixels::rgba_t>(
+                m_framebuffer.data(), m_framebuffer.size()),
+            .components = 4,
+            .width      = m_size.w,
+            .height     = m_size.h,
+            .output     = "framebuffer_color.png"_tmpfile,
+        });
 
     int   depthHeight{}, depthWidth{}, depthBytes{};
     void* depthPtr{};
@@ -176,13 +177,14 @@ void Windowing::dump_framebuffer()
     {
         depthBuffer.push_back(static_cast<u8>((pixel - min_depth) * scale));
     }
-    save_buffer(descriptor_t<u8>{
-        .buffer     = gsl::span<u8>(depthBuffer.data(), depthBuffer.size()),
-        .components = 1,
-        .width      = depthWidth,
-        .height     = depthHeight,
-        .output     = "framebuffer_depth.png"_tmpfile,
-    });
+    save_buffer(
+        descriptor_t<u8>{
+            .buffer     = gsl::span<u8>(depthBuffer.data(), depthBuffer.size()),
+            .components = 1,
+            .width      = depthWidth,
+            .height     = depthHeight,
+            .output     = "framebuffer_depth.png"_tmpfile,
+        });
     cDebug("Saved framebuffer");
 }
 

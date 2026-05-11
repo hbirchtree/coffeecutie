@@ -34,26 +34,26 @@ void create_resources(compo::EntityContainer& e)
                 }));
 
         eventhandler->addEventHandler(
-            1024,
-            std_camera_t::KeyboardInput([&e] -> std_camera_t* {
+            1024, std_camera_t::KeyboardInput([&e] -> std_camera_t* {
                 for(auto& entity : e.select<PlayerCamera>())
                 {
                     auto* cam  = e.get<PlayerCamera>(entity.id);
                     auto* info = e.get<PlayerInfo>(entity.id);
-                    if(cam->keyboard.enabled && info && info->permissions.camera)
+                    if(cam->keyboard.enabled && info &&
+                       info->permissions.camera)
                         return cam->camera_.get();
                 }
                 cWarning("No camera selected");
                 return nullptr;
             }));
         eventhandler->addEventHandler(
-            1024,
-            std_camera_t::MouseInput([&e] -> std_camera_t* {
+            1024, std_camera_t::MouseInput([&e] -> std_camera_t* {
                 for(auto& entity : e.select<PlayerCamera>())
                 {
                     auto* cam  = e.get<PlayerCamera>(entity.id);
                     auto* info = e.get<PlayerInfo>(entity.id);
-                    if(cam->keyboard.enabled && info && info->permissions.camera)
+                    if(cam->keyboard.enabled && info &&
+                       info->permissions.camera)
                         return cam->camera_.get();
                 }
                 cWarning("No camera selected");
@@ -62,9 +62,12 @@ void create_resources(compo::EntityContainer& e)
         eventhandler->addEventFunction<CIControllerConnectEvent>(
             1024, [&e](CIEvent& ev, CIControllerConnectEvent* connect) {
                 auto* controllers = e.service<comp_app::ControllerInput>();
-                auto name = controllers->name(connect->player_index);
-                cDebug("Controller {}connected: {} (idx={})",
-                       connect->connected ? "" : "dis", name, connect->player_index);
+                auto  name        = controllers->name(connect->player_index);
+                cDebug(
+                    "Controller {}connected: {} (idx={})",
+                    connect->connected ? "" : "dis",
+                    name,
+                    connect->player_index);
                 for(auto& player : e.select<PlayerCamera>())
                 {
                     auto* info = e.get<PlayerInfo>(player.id);
@@ -77,20 +80,28 @@ void create_resources(compo::EntityContainer& e)
                         // Assign controller to first available seat
                         if(cam->is_active())
                             continue;
-                        cDebug("Assigning controller {} to player {} (seat {})",
-                               connect->player_index, info->player_idx, info->seat_idx);
+                        cDebug(
+                            "Assigning controller {} to player {} (seat {})",
+                            connect->player_index,
+                            info->player_idx,
+                            info->seat_idx);
                         cam->controller.index = connect->player_index;
                         break;
-                    } else if(cam->controller.index.value_or(0xFF) == connect->player_index)
+                    } else if(
+                        cam->controller.index.value_or(0xFF) ==
+                        connect->player_index)
                     {
-                        cDebug("Unassigning controller {} from player {} (seat {})",
-                               connect->player_index, info->player_idx, info->seat_idx);
+                        cDebug(
+                            "Unassigning controller {} from player {} (seat "
+                            "{})",
+                            connect->player_index,
+                            info->player_idx,
+                            info->seat_idx);
                         cam->controller.index = std::nullopt;
                         break;
                     }
                 }
             });
-
 
         auto eventhandler_w = e.service<comp_app::BasicEventBus<Event>>();
 
@@ -692,15 +703,15 @@ void create_camera(
         if(!cam || !info)
             continue;
         cam->controller.opts.sens.move = {.1f, .1f};
-        cam->camera_opts->accel.alt     = 50.f;
+        cam->camera_opts->accel.alt    = 50.f;
 
         if(spawns.empty())
             continue;
-        auto& location = info->seat_idx < spawns.size()
-            ? spawns[info->seat_idx] : spawns[0];
+        auto& location =
+            info->seat_idx < spawns.size() ? spawns[info->seat_idx] : spawns[0];
         cam->camera->position = location.pos * Vecf3{-1, -1, -1};
-        cam->camera->rotation = glm::normalize(glm::quat(Vecf3{
-            0, location.rot, glm::pi<f32>() / 2.f}));
+        cam->camera->rotation = glm::normalize(
+            glm::quat(Vecf3{0, location.rot, glm::pi<f32>() / 2.f}));
 
         auto* fb = e.service<comp_app::Windowing>();
         if(fb)
@@ -709,7 +720,7 @@ void create_camera(
                 cam->camera->aspect = fb->size().aspect();
             else
             {
-                auto size = fb->size();
+                auto size           = fb->size();
                 cam->camera->aspect = static_cast<f32>(size.w) / (size.h / 2.f);
             }
         }

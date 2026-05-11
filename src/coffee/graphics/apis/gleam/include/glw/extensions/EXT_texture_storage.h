@@ -134,7 +134,7 @@ STATICINLINE void texture_storage_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage1DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -169,7 +169,7 @@ STATICINLINE void texture_storage_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage2DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -210,7 +210,7 @@ STATICINLINE void texture_storage_3d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage3DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);

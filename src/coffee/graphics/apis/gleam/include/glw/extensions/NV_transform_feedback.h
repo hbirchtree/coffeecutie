@@ -50,7 +50,7 @@ STATICINLINE void active_varying(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ActiveVaryingNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -95,7 +95,7 @@ STATICINLINE void bind_buffer_base(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferBaseNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -124,7 +124,7 @@ STATICINLINE void bind_buffer_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferOffsetNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -155,7 +155,7 @@ STATICINLINE void bind_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferRangeNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -213,7 +213,7 @@ STATICINLINE void get_active_varying(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveVaryingNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -241,7 +241,7 @@ STATICINLINE void get_transform_feedback_varying(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTransformFeedbackVaryingNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -266,7 +266,7 @@ STATICINLINE GLint get_varying_location(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetVaryingLocationNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -333,7 +333,7 @@ STATICINLINE void transform_feedback_varyings(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TransformFeedbackVaryingsNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);

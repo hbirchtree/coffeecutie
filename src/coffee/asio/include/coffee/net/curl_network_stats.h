@@ -19,21 +19,24 @@ struct CurlNetStats
     {
         return m_context->stats.received;
     }
+
     libc_types::u32 transmitted() const
     {
         return m_context->stats.transmitted;
     }
+
     libc_types::u32 connections() const
     {
         return m_context->stats.connections;
     }
+
     void reset_counters()
     {
         m_context->stats = {};
     }
 
-private:
+  private:
     std::shared_ptr<curl_data> m_context;
 };
 
-}
+} // namespace net

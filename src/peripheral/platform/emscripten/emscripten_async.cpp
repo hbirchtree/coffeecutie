@@ -96,12 +96,13 @@ std::future<posix::mem_mapping_t> mmap_async(Url const& file)
     attrs.onsuccess = [](emscripten_fetch_t* fetch) {
         auto& data =
             mmap_async_data[reinterpret_cast<const char*>(fetch->userData)];
-        data.promise.set_value(posix::mem_mapping_t{
-            .view = posix::mem_mapping_t::span_type(
-                const_cast<char*>(fetch->data), fetch->numBytes),
-            .access   = RSCA::ReadOnly,
-            .fetch_fd = fetch,
-        });
+        data.promise.set_value(
+            posix::mem_mapping_t{
+                .view = posix::mem_mapping_t::span_type(
+                    const_cast<char*>(fetch->data), fetch->numBytes),
+                .access   = RSCA::ReadOnly,
+                .fetch_fd = fetch,
+            });
     };
     attrs.onerror = [](emscripten_fetch_t* fetch) {
         auto  key  = reinterpret_cast<const char*>(fetch->userData);

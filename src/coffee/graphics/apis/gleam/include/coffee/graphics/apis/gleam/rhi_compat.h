@@ -72,11 +72,14 @@ struct texture_2da_t : texture_array_base_t
         }
 #endif
         if(size[2] > 1)
-            Throw(std::out_of_range(
-                "compat::texture_2da_t: does not support multi-layer uploads"));
+            Throw(
+                std::out_of_range(
+                    "compat::texture_2da_t: does not support multi-layer "
+                    "uploads"));
         if(offset[2] >= static_cast<i32>(m_textures.size()))
-            Throw(std::out_of_range(
-                "compat::texture_2da_t: offset out of range"));
+            Throw(
+                std::out_of_range(
+                    "compat::texture_2da_t: offset out of range"));
 
         m_textures.at(offset[2])->upload(
             data,
@@ -135,11 +138,12 @@ inline bool apply_command_modifier(
         sampler_list samplers;
         samplers.reserve(textures.size());
         for(auto const& tex : textures)
-            samplers.push_back(sampler_definition_t{
-                std::get<0>(tex),
-                std::get<1>(tex),
-                std::get<3>(tex),
-            });
+            samplers.push_back(
+                sampler_definition_t{
+                    std::get<0>(tex),
+                    std::get<1>(tex),
+                    std::get<3>(tex),
+                });
         return apply_command_modifier(program, bookkeeping, samplers);
     }
 

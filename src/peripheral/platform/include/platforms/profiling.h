@@ -223,7 +223,7 @@ struct profile_wrapper
         if(!state || !state->ProfilerEnabled())
             return false;
         auto context = PContext::ProfilerStore();
-        auto _ = std::unique_lock(context->access);
+        auto _       = std::unique_lock(context->access);
         if(library)
             return context->flags.deep_enabled;
         else
@@ -235,7 +235,7 @@ struct profile_wrapper
         if(!enabled())
             return;
 
-        auto props   = RuntimeProperties::get_properties();
+        auto props = RuntimeProperties::get_properties();
         if(!props.context)
             return;
         props.push_stack(name);
@@ -248,7 +248,7 @@ struct profile_wrapper
             return;
 
         auto props = RuntimeProperties::get_properties();
-        auto name = props.pop_stack();
+        auto name  = props.pop_stack();
         if(name.empty())
             return;
         props.push(*props.context, datapoint_t(datapoint_t::pop, name));

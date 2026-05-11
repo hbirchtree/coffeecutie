@@ -26,24 +26,12 @@ inline void casts_to_path(platform::url::Path const&)
 
 template<typename T>
 concept Resource = requires(T rsc) {
-    {
-        detail::casts_to_bytes(rsc)
-    };
-    {
-        detail::casts_to_const_bytes(rsc)
-    };
-    {
-        detail::casts_to_path(rsc)
-    };
-    {
-        rsc = detail::byte_chunk_t()
-    };
-    {
-        rsc = detail::const_byte_chunk_t()
-    };
-    {
-        *rsc
-    };
+    { detail::casts_to_bytes(rsc) };
+    { detail::casts_to_const_bytes(rsc) };
+    { detail::casts_to_path(rsc) };
+    { rsc = detail::byte_chunk_t() };
+    { rsc = detail::const_byte_chunk_t() };
+    { *rsc };
     std::is_same_v<decltype(rsc.valid()), bool>;
 };
 

@@ -314,8 +314,8 @@ struct CIControllerAtomicUpdateEvent : BaseEvent<CIEvent::ControllerUpdate>
 
 struct CIControllerConnectEvent : BaseEvent<CIEvent::ControllerConnect>
 {
-    u16 index{0};
-    i16 player_index{-1};
+    u16  index{0};
+    i16  player_index{-1};
     bool connected{false};
 };
 

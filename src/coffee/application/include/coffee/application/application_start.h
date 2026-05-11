@@ -11,7 +11,7 @@
 #include <coffee/core/task_queue/task.h>
 #endif
 
-#if(defined(COFFEE_ANDROID) && defined(COFFEE_USE_SDL2))
+#if (defined(COFFEE_ANDROID) && defined(COFFEE_USE_SDL2))
 #include <jni.h>
 #endif
 

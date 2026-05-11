@@ -43,10 +43,11 @@ void TouchOverlay::start_restricted(Proxy& proxy, const time_point&)
 
         atlas_storage = std::move(tex.value());
 
-        controller->alloc(size_3d<u32>{
-            atlas_storage.mips.at(0).size.x,
-            atlas_storage.mips.at(0).size.y,
-            1});
+        controller->alloc(
+            size_3d<u32>{
+                atlas_storage.mips.at(0).size.x,
+                atlas_storage.mips.at(0).size.y,
+                1});
         controller->upload(
             atlas_storage.mips.at(0).data,
             Veci2{},
@@ -107,7 +108,8 @@ void TouchOverlay::end_restricted(Proxy& proxy, const time_point& time)
         cam->camera_->rotate(
             -look.control.x * delta_s, look.control.y * delta_s);
         cam->camera_->rotate(
-            -look.instant_control.x * delta_s, look.instant_control.y * delta_s);
+            -look.instant_control.x * delta_s,
+            look.instant_control.y * delta_s);
         break;
     }
 }

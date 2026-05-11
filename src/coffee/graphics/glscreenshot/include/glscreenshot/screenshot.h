@@ -27,7 +27,7 @@ struct ScreenshotProvider
         m_work_queue = worker;
     }
 
-    comp_app::GLConfig const*           m_config{nullptr};
+    comp_app::GLConfig const* m_config{nullptr};
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
     comp_app::dummy_plug::Config const* m_dummy_config{nullptr};
 #endif

@@ -28,11 +28,10 @@ namespace json {
 
 extern std::shared_ptr<GlobalState> CreateProfiler();
 
-extern void Push(
-    ThreadState& tdata, profiling::datapoint_t const& point);
+extern void Push(ThreadState& tdata, profiling::datapoint_t const& point);
 
 extern void CaptureMetrics(
-    ThreadState&   tdata,
+    ThreadState&              tdata,
     std::string_view          name,
     MetricVariant             variant,
     std::string const&        value,

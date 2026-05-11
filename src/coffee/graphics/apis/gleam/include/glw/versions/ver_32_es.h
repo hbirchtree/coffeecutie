@@ -772,7 +772,7 @@ STATICINLINE void framebuffer_texture(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -865,7 +865,7 @@ STATICINLINE void getn_uniformfv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetnUniformfv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -904,7 +904,7 @@ STATICINLINE void getn_uniformiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetnUniformiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -943,7 +943,7 @@ STATICINLINE void getn_uniformuiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetnUniformuiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -1063,7 +1063,7 @@ STATICINLINE void get_sampler_parameter_iiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameterIiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
@@ -1099,7 +1099,7 @@ STATICINLINE void get_sampler_parameter_iuiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameterIuiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
@@ -1197,7 +1197,7 @@ STATICINLINE void sampler_parameter_iiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterIiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
@@ -1233,7 +1233,7 @@ STATICINLINE void sampler_parameter_iuiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterIuiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
@@ -1329,7 +1329,7 @@ STATICINLINE void tex_buffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TexBuffer)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -1365,7 +1365,7 @@ STATICINLINE void tex_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TexBufferRange)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);

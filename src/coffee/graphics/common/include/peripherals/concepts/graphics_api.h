@@ -283,12 +283,8 @@ enum class shader_format_t
 template<class T>
 concept Texture =
     requires(T v) {
-        {
-            v.alloc(std::declval<typing::geometry::size_3d<u32>>())
-        };
-        {
-            v.dealloc()
-        };
+        { v.alloc(std::declval<typing::geometry::size_3d<u32>>()) };
+        { v.dealloc() };
 
         {
             v.upload(
@@ -297,13 +293,9 @@ concept Texture =
                 std::declval<typing::geometry::size_3d<u32>>(),
                 0)
         };
-        {
-            v.size()
-        };
+        { v.size() };
 
-        {
-            v.view(textures::d2, std::declval<textures::view_params>())
-        };
+        { v.view(textures::d2, std::declval<textures::view_params>()) };
     } &&
     //    (Size2D<stl_types::mem_function_traits(&T::size)::result_type, u32>/*
     //    || Size3D<declmemtype2(T, size), u32>*/);
@@ -311,17 +303,11 @@ concept Texture =
 
 template<class T>
 concept Sampler = requires(T v) {
-    {
-        v.alloc()
-    };
-    {
-        v.dealloc()
-    };
+    { v.alloc() };
+    { v.dealloc() };
 
     /* Changing properties */
-    {
-        v.set(textures::sample_properties::anisotropic, f32())
-    };
+    { v.set(textures::sample_properties::anisotropic, f32()) };
     {
         v.set(
             textures::sample_properties::edge_policy,
@@ -341,35 +327,23 @@ concept Sampler = requires(T v) {
     };
 
     /* For shader pipeline */
-    {
-        v.handle()
-    };
+    { v.handle() };
 };
 
 template<class T>
 concept BufferSlice = requires(T v) {
-    {
-        v.handle()
-    };
-    {
-        v.buffer()
-    };
+    { v.handle() };
+    { v.buffer() };
     std::is_same_v<decltype(v.slice(0)), T>;
 };
 
 template<class T, class BufferSliceT>
 concept Buffer = BufferSlice<BufferSliceT> && requires(T v) {
-    {
-        v.alloc()
-    };
-    {
-        v.dealloc()
-    };
+    { v.alloc() };
+    { v.dealloc() };
 
     /* Population */
-    {
-        v.commit(100ULL)
-    };
+    { v.commit(100ULL) };
     {
         v.commit(
             std::declval<gsl::span<libc_types::i32, gsl::dynamic_extent>>())
@@ -380,60 +354,36 @@ concept Buffer = BufferSlice<BufferSliceT> && requires(T v) {
     };
 
     /* Memory ops */
-    {
-        v.map(0ULL, 10ULL)
-    };
-    {
-        v.unmap(nullptr)
-    };
-    {
-        v.setState(buffers::property::pixel_pack, 1)
-    };
-    {
-        v.size()
-    };
+    { v.map(0ULL, 10ULL) };
+    { v.unmap(nullptr) };
+    { v.setState(buffers::property::pixel_pack, 1) };
+    { v.size() };
 
     /* For shader pipeline */
-    {
-        v.handle()
-    }; /* Full buffer */
+    { v.handle() }; /* Full buffer */
     std::is_same_v<decltype(v.slice(0)), BufferSliceT>;
 };
 
 template<class T>
 concept Query = requires(T v) {
-    {
-        v.start()
-    };
-    {
-        v.stop()
-    };
+    { v.start() };
+    { v.stop() };
 
-    {
-        v.resultSync()
-    };
-    {
-        v.result()
-    };
+    { v.resultSync() };
+    { v.result() };
 };
 
 template<class T, class ShaderT>
 concept Pipeline = requires(T v) {
-    {
-        v.alloc()
-    };
-    {
-        v.dealloc()
-    };
+    { v.alloc() };
+    { v.dealloc() };
 
     {
         v.attach(
             std::declval<std::shared_ptr<ShaderT>>(),
             typing::graphics::ShaderStage::Vertex)
     };
-    {
-        v.compile()
-    };
+    { v.compile() };
 };
 
 template<class T>
@@ -447,12 +397,8 @@ concept Shader = requires(T v) {
 
 template<class T, class TextureT>
 concept RenderTarget = requires(T v) {
-    {
-        v.alloc()
-    };
-    {
-        v.dealloc()
-    };
+    { v.alloc() };
+    { v.dealloc() };
 
     {
         v.attach(
@@ -469,182 +415,84 @@ concept RenderTarget = requires(T v) {
             0,
             0)
     };
-    {
-        v.resize(std::declval<typing::geometry::rect<i32>>(), 0)
-    };
-    {
-        v.size()
-    };
+    { v.resize(std::declval<typing::geometry::rect<i32>>(), 0) };
+    { v.size() };
 
-    {
-        v.clear(std::declval<typing::vector_types::Vecf4>(), 0)
-    };
-    {
-        v.clear(f64())
-    };
-    {
-        v.clear(i32())
-    };
-    {
-        v.clear(std::declval<typing::vector_types::Vecf4>(), f64(), i32(), 0)
-    };
+    { v.clear(std::declval<typing::vector_types::Vecf4>(), 0) };
+    { v.clear(f64()) };
+    { v.clear(i32()) };
+    { v.clear(std::declval<typing::vector_types::Vecf4>(), f64(), i32(), 0) };
 };
 
 template<class T>
 concept VertexAttribute = requires(T v) {
-    {
-        v.index
-    };
+    { v.index };
 
     /* Value properties */
-    {
-        v.value.type
-    };
-    {
-        v.value.count
-    };
-    {
-        v.value.size
-    };
-    {
-        v.value.flags
-    };
-    {
-        v.value.stride
-    };
-    {
-        v.value.offset
-    };
+    { v.value.type };
+    { v.value.count };
+    { v.value.size };
+    { v.value.flags };
+    { v.value.stride };
+    { v.value.offset };
 
     /* Buffer properties */
-    {
-        v.buffer.id
-    };
-    {
-        v.buffer.offset
-    };
+    { v.buffer.id };
+    { v.buffer.offset };
 };
 
 template<class T, class BufferT>
 concept VertexArray = requires(T v) {
-    {
-        v.alloc()
-    };
-    {
-        v.dealloc()
-    };
+    { v.alloc() };
+    { v.dealloc() };
 
-    {
-        v.add(std::declval<typename T::attribute_type>())
-    };
-    {
-        v.set_buffer(buffers::vertex, std::shared_ptr<BufferT>(), 0)
-    };
-    {
-        v.set_buffer(buffers::element, std::shared_ptr<BufferT>())
-    };
+    { v.add(std::declval<typename T::attribute_type>()) };
+    { v.set_buffer(buffers::vertex, std::shared_ptr<BufferT>(), 0) };
+    { v.set_buffer(buffers::element, std::shared_ptr<BufferT>()) };
 };
 
 template<class T>
 concept DrawCommand = requires(T v) {
-    {
-        v.call.indexed
-    };
-    {
-        v.call.instanced
-    };
-    {
-        v.call.mode
-    };
-    {
-        v.data.elements.count
-    };
-    {
-        v.data.elements.offset
-    };
-    {
-        v.data.elements.type
-    };
-    {
-        v.data.arrays.count
-    };
-    {
-        v.data.arrays.offset
-    };
-    {
-        v.data.instances.count
-    };
-    {
-        v.data.instances.offset
-    };
+    { v.call.indexed };
+    { v.call.instanced };
+    { v.call.mode };
+    { v.data.elements.count };
+    { v.data.elements.offset };
+    { v.data.elements.type };
+    { v.data.arrays.count };
+    { v.data.arrays.offset };
+    { v.data.instances.count };
+    { v.data.instances.offset };
 
-    {
-        v.conditional_query
-    };
-    {
-        v.vertices
-    };
-    {
-        v.uniforms
-    };
-    {
-        v.buffers
-    };
-    {
-        v.samplers
-    };
+    { v.conditional_query };
+    { v.vertices };
+    { v.uniforms };
+    { v.buffers };
+    { v.samplers };
 };
 
 template<class T>
 concept RenderPass = DrawCommand<typename T::command_type> && requires(T v) {
-    {
-        v.commands
-    };
-    {
-        v.pipeline
-    };
+    { v.commands };
+    { v.pipeline };
 
-    {
-        v.framebuffer
-    };
+    { v.framebuffer };
 
-    {
-        v.state.blend
-    };
-    {
-        v.state.depth
-    };
-    {
-        v.state.pixel
-    };
-    {
-        v.state.raster
-    };
-    {
-        v.state.stencil
-    };
-    {
-        v.state.view
-    };
+    { v.state.blend };
+    { v.state.depth };
+    { v.state.pixel };
+    { v.state.raster };
+    { v.state.stencil };
+    { v.state.view };
 };
 
 template<class T>
 concept PipelineInfo = requires(T v) {
-    {
-        v.uniforms
-    };
-    {
-        v.samplers
-    };
-    {
-        v.buffers
-    };
-    {
-        v.inputs
-    };
-    {
-        v.outputs
-    };
+    { v.uniforms };
+    { v.samplers };
+    { v.buffers };
+    { v.inputs };
+    { v.outputs };
 };
 
 template<class T>
@@ -671,29 +519,19 @@ concept DebugTools = PipelineDump<typename T::pipeline_dump_type> &&
                      DebugScope<typename T::debug_scope_type> &&
                      PerfScope<typename T::perf_scope_type> &&
                      DebugDrawer<typename T::debug_draw_type> && requires(T v) {
-                         {
-                             v.enable()
-                         };
-                         {
-                             v.scope()
-                         };
-                         {
-                             v.perf_scope()
-                         };
+                         { v.enable() };
+                         { v.scope() };
+                         { v.perf_scope() };
                      };
 
 template<class T>
 concept InfoTools = requires(T v) {
-    {
-        v.max_of()
-    };
+    { v.max_of() };
 };
 
 template<class T>
 concept Queue = requires(T v) {
-    {
-        v.queue(std::declval<std::function<void()>>())
-    };
+    { v.queue(std::declval<std::function<void()>>()) };
 };
 
 template<class T>
@@ -704,18 +542,10 @@ concept FixedPipeline =
     Pipeline<typename T::program_type, typename T::shader_type> &&
     RenderTarget<typename T::render_target_type, typename T::texture_type> &&
     requires(T v) {
-        {
-            v.alloc_buffer(buffers::vertex, semantic::RSCA::None)
-        };
-        {
-            v.alloc_program()
-        };
-        {
-            v.alloc_rendertarget()
-        };
-        {
-            v.alloc_shader()
-        };
+        { v.alloc_buffer(buffers::vertex, semantic::RSCA::None) };
+        { v.alloc_program() };
+        { v.alloc_rendertarget() };
+        { v.alloc_shader() };
         {
             v.alloc_texture(
                 textures::type::d2_array,
@@ -723,16 +553,10 @@ concept FixedPipeline =
                 1,
                 textures::property::none)
         };
-        {
-            v.alloc_vertex_array()
-        };
+        { v.alloc_vertex_array() };
 
-        {
-            v.api_name()
-        };
-        {
-            v.api_version()
-        };
+        { v.api_name() };
+        { v.api_version() };
     };
 
 template<class T>
@@ -741,37 +565,19 @@ concept API = FixedPipeline<T> && Sampler<typename T::sampler_type> &&
               DrawCommand<typename T::draw_command_type> &&
               DebugTools<typename T::debug_type, T> &&
               Queue<typename T::queue_type> && requires(T v) {
-                  {
-                      v.alloc_query()
-                  };
+                  { v.alloc_query() };
 
-                  {
-                      v.debug()
-                  };
+                  { v.debug() };
 
-                  {
-                      v.submit(std::declval<typename T::optimized_pass_type>())
-                  };
-                  {
-                      v.submit(std::declval<typename T::render_pass_type>())
-                  };
+                  { v.submit(std::declval<typename T::optimized_pass_type>()) };
+                  { v.submit(std::declval<typename T::render_pass_type>()) };
 
-                  {
-                      v.shaderlang_name()
-                  };
-                  {
-                      v.shaderlang_version()
-                  };
-                  {
-                      v.device()
-                  };
-                  {
-                      v.device_driver()
-                  };
+                  { v.shaderlang_name() };
+                  { v.shaderlang_version() };
+                  { v.device() };
+                  { v.device_driver() };
 
-                  {
-                      v.default_rendertarget()
-                  };
+                  { v.default_rendertarget() };
               };
 
 namespace detail {

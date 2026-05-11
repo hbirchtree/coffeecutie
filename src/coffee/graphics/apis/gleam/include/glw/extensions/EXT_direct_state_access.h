@@ -443,7 +443,7 @@ STATICINLINE void copy_texture_image_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CopyTextureImage1DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -491,7 +491,7 @@ STATICINLINE void copy_texture_image_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CopyTextureImage2DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -536,7 +536,7 @@ STATICINLINE void copy_texture_sub_image_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CopyTextureSubImage1DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -582,7 +582,7 @@ STATICINLINE void copy_texture_sub_image_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CopyTextureSubImage2DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -626,7 +626,7 @@ STATICINLINE void get_texture_image(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureImageEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -668,7 +668,7 @@ STATICINLINE void get_texture_level_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureLevelParameterfvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -709,7 +709,7 @@ STATICINLINE void get_texture_level_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureLevelParameterivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -748,7 +748,7 @@ STATICINLINE void get_texture_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureParameterfvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -786,7 +786,7 @@ STATICINLINE void get_texture_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureParameterivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -831,7 +831,7 @@ STATICINLINE void texture_image_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureImage1DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -882,7 +882,7 @@ STATICINLINE void texture_image_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureImage2DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -921,7 +921,7 @@ STATICINLINE void texture_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameterfEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -960,7 +960,7 @@ STATICINLINE void texture_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameterfvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -994,7 +994,7 @@ STATICINLINE void texture_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameteriEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -1033,7 +1033,7 @@ STATICINLINE void texture_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameterivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -1077,7 +1077,7 @@ STATICINLINE void texture_sub_image_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureSubImage1DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -1128,7 +1128,7 @@ STATICINLINE void texture_sub_image_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureSubImage2DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -1179,7 +1179,7 @@ STATICINLINE void copy_texture_sub_image_3d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CopyTextureSubImage3DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -1232,7 +1232,7 @@ STATICINLINE void texture_image_3d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureImage3DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -1288,7 +1288,7 @@ STATICINLINE void texture_sub_image_3d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureSubImage3DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -1327,7 +1327,7 @@ STATICINLINE void bind_multi_texture(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindMultiTextureEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -2924,7 +2924,7 @@ STATICINLINE void compressed_texture_image_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompressedTextureImage1DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -2972,7 +2972,7 @@ STATICINLINE void compressed_texture_image_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompressedTextureImage2DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -3022,7 +3022,7 @@ STATICINLINE void compressed_texture_image_3d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompressedTextureImage3DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -3071,7 +3071,7 @@ STATICINLINE void compressed_texture_sub_image_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompressedTextureSubImage1DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -3122,7 +3122,7 @@ STATICINLINE void compressed_texture_sub_image_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompressedTextureSubImage2DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -3177,7 +3177,7 @@ STATICINLINE void compressed_texture_sub_image_3d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompressedTextureSubImage3DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -3221,7 +3221,7 @@ STATICINLINE void get_compressed_texture_image(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetCompressedTextureImageEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -3673,7 +3673,7 @@ STATICINLINE void get_named_buffer_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedBufferParameterivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -3705,7 +3705,7 @@ STATICINLINE void get_named_buffer_pointerv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedBufferPointervEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -3739,7 +3739,7 @@ STATICINLINE void get_named_buffer_sub_data(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedBufferSubDataEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -3768,7 +3768,7 @@ STATICINLINE void* map_named_buffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(MapNamedBufferEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -3800,7 +3800,7 @@ STATICINLINE void named_buffer_data(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedBufferDataEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -3835,7 +3835,7 @@ STATICINLINE void named_buffer_sub_data(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedBufferSubDataEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -3861,7 +3861,7 @@ STATICINLINE bool unmap_named_buffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UnmapNamedBufferEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -3889,7 +3889,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1fEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -3923,7 +3923,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1fvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -3954,7 +3954,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1iEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -3988,7 +3988,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1ivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4022,7 +4022,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2fEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4054,7 +4054,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2fvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4088,7 +4088,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2iEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4120,7 +4120,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2ivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4155,7 +4155,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3fEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4187,7 +4187,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3fvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4222,7 +4222,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3iEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4254,7 +4254,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3ivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4290,7 +4290,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4fEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4322,7 +4322,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4fvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4358,7 +4358,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4iEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4390,7 +4390,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4ivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4428,7 +4428,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2fvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4467,7 +4467,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3fvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4506,7 +4506,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4fvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4545,7 +4545,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x3fvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4584,7 +4584,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x4fvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4623,7 +4623,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x2fvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4662,7 +4662,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x4fvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4701,7 +4701,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x2fvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4740,7 +4740,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x3fvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -4774,7 +4774,7 @@ STATICINLINE void multi_tex_buffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(MultiTexBufferEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -4807,12 +4807,12 @@ STATICINLINE void texture_buffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureBufferEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -4916,7 +4916,7 @@ STATICINLINE void get_texture_parameter_iiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureParameterIivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -4954,7 +4954,7 @@ STATICINLINE void get_texture_parameter_iuiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureParameterIuivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -5063,7 +5063,7 @@ STATICINLINE void texture_parameter_iiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameterIivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -5103,7 +5103,7 @@ STATICINLINE void texture_parameter_iuiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameterIuivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -5135,7 +5135,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1uiEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5169,7 +5169,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1uivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5203,7 +5203,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2uiEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5235,7 +5235,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2uivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5270,7 +5270,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3uiEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5302,7 +5302,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3uivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5338,7 +5338,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4uiEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5370,7 +5370,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4uivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5408,7 +5408,7 @@ STATICINLINE void named_program_local_parameters4fv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameters4fvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5447,7 +5447,7 @@ STATICINLINE void get_named_program_local_parameter_iiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedProgramLocalParameterIivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5485,7 +5485,7 @@ STATICINLINE void get_named_program_local_parameter_iuiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedProgramLocalParameterIuivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5523,7 +5523,7 @@ STATICINLINE void named_program_local_parameter_i4i(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameterI4iEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5557,7 +5557,7 @@ STATICINLINE void named_program_local_parameter_i4iv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameterI4ivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5595,7 +5595,7 @@ STATICINLINE void named_program_local_parameter_i4ui(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameterI4uiEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5629,7 +5629,7 @@ STATICINLINE void named_program_local_parameter_i4uiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameterI4uivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5667,7 +5667,7 @@ STATICINLINE void named_program_local_parameters_i4iv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParametersI4ivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5706,7 +5706,7 @@ STATICINLINE void named_program_local_parameters_i4uiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParametersI4uivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5872,7 +5872,7 @@ STATICINLINE void get_named_program_local_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedProgramLocalParameterdvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5910,7 +5910,7 @@ STATICINLINE void get_named_program_local_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedProgramLocalParameterfvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5945,7 +5945,7 @@ STATICINLINE void get_named_program_string(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedProgramStringEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -5978,7 +5978,7 @@ STATICINLINE void get_named_programiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedProgramivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -6016,7 +6016,7 @@ STATICINLINE void named_program_local_parameter4d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameter4dEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -6050,7 +6050,7 @@ STATICINLINE void named_program_local_parameter4dv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameter4dvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -6088,7 +6088,7 @@ STATICINLINE void named_program_local_parameter4f(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameter4fEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -6122,7 +6122,7 @@ STATICINLINE void named_program_local_parameter4fv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameter4fvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -6158,7 +6158,7 @@ STATICINLINE void named_program_string(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramStringEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -6196,7 +6196,7 @@ STATICINLINE void get_named_renderbuffer_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedRenderbufferParameterivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsRenderbuffer)
             glIsRenderbuffer(renderbuffer);
@@ -6229,7 +6229,7 @@ STATICINLINE void named_renderbuffer_storage(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedRenderbufferStorageEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsRenderbuffer)
             glIsRenderbuffer(renderbuffer);
@@ -6262,7 +6262,7 @@ STATICINLINE void named_renderbuffer_storage_multisample(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedRenderbufferStorageMultisampleEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsRenderbuffer)
             glIsRenderbuffer(renderbuffer);
@@ -6302,7 +6302,7 @@ STATICINLINE void named_renderbuffer_storage_multisample_coverage(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedRenderbufferStorageMultisampleCoverageEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsRenderbuffer)
             glIsRenderbuffer(renderbuffer);
@@ -6334,7 +6334,7 @@ STATICINLINE group::framebuffer_status check_named_framebuffer_status(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CheckNamedFramebufferStatusEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
@@ -6370,7 +6370,7 @@ STATICINLINE void get_named_framebuffer_attachment_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedFramebufferAttachmentParameterivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
@@ -6404,12 +6404,12 @@ STATICINLINE void named_framebuffer_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferRenderbufferEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsRenderbuffer)
             glIsRenderbuffer(renderbuffer);
@@ -6444,12 +6444,12 @@ STATICINLINE void named_framebuffer_texture_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferTexture1DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -6485,12 +6485,12 @@ STATICINLINE void named_framebuffer_texture_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferTexture2DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -6528,12 +6528,12 @@ STATICINLINE void named_framebuffer_texture_3d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferTexture3DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -6585,7 +6585,7 @@ STATICINLINE void generate_texture_mipmap(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GenerateTextureMipmapEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -6610,7 +6610,7 @@ STATICINLINE void framebuffer_draw_buffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferDrawBufferEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
@@ -6642,7 +6642,7 @@ STATICINLINE void framebuffer_draw_buffers(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferDrawBuffersEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
@@ -6670,7 +6670,7 @@ STATICINLINE void framebuffer_read_buffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferReadBufferEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
@@ -6702,7 +6702,7 @@ STATICINLINE void get_framebuffer_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetFramebufferParameterivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
@@ -6761,12 +6761,12 @@ STATICINLINE void named_framebuffer_texture(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferTextureEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -6798,12 +6798,12 @@ STATICINLINE void named_framebuffer_texture_face(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferTextureFaceEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -6839,12 +6839,12 @@ STATICINLINE void named_framebuffer_texture_layer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferTextureLayerEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -6872,7 +6872,7 @@ STATICINLINE void multi_tex_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(MultiTexRenderbufferEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsRenderbuffer)
             glIsRenderbuffer(renderbuffer);
@@ -6902,12 +6902,12 @@ STATICINLINE void texture_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureRenderbufferEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsRenderbuffer)
             glIsRenderbuffer(renderbuffer);
@@ -6941,12 +6941,12 @@ STATICINLINE void vertex_array_color_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayColorOffsetEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -6976,12 +6976,12 @@ STATICINLINE void vertex_array_edge_flag_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayEdgeFlagOffsetEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -7012,12 +7012,12 @@ STATICINLINE void vertex_array_fog_coord_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayFogCoordOffsetEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -7049,12 +7049,12 @@ STATICINLINE void vertex_array_index_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayIndexOffsetEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -7090,12 +7090,12 @@ STATICINLINE void vertex_array_multi_tex_coord_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayMultiTexCoordOffsetEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -7133,12 +7133,12 @@ STATICINLINE void vertex_array_normal_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayNormalOffsetEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -7172,12 +7172,12 @@ STATICINLINE void vertex_array_secondary_color_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArraySecondaryColorOffsetEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -7211,12 +7211,12 @@ STATICINLINE void vertex_array_tex_coord_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayTexCoordOffsetEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -7252,12 +7252,12 @@ STATICINLINE void vertex_array_vertex_attrib_i_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexAttribIOffsetEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -7295,12 +7295,12 @@ STATICINLINE void vertex_array_vertex_attrib_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexAttribOffsetEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -7341,12 +7341,12 @@ STATICINLINE void vertex_array_vertex_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexOffsetEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -7372,7 +7372,7 @@ STATICINLINE void disable_vertex_array(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(DisableVertexArrayEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
@@ -7397,7 +7397,7 @@ STATICINLINE void enable_vertex_array(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(EnableVertexArrayEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
@@ -7420,7 +7420,7 @@ STATICINLINE void disable_vertex_array_attrib(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(DisableVertexArrayAttribEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
@@ -7443,7 +7443,7 @@ STATICINLINE void enable_vertex_array_attrib(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(EnableVertexArrayAttribEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
@@ -7477,7 +7477,7 @@ STATICINLINE void get_vertex_array_integeri_v(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetVertexArrayIntegeri_vEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
@@ -7513,7 +7513,7 @@ STATICINLINE void get_vertex_array_integerv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetVertexArrayIntegervEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
@@ -7547,7 +7547,7 @@ STATICINLINE void get_vertex_array_pointeri_v(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetVertexArrayPointeri_vEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
@@ -7580,7 +7580,7 @@ STATICINLINE void get_vertex_array_pointerv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetVertexArrayPointervEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
@@ -7610,7 +7610,7 @@ STATICINLINE void flush_mapped_named_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FlushMappedNamedBufferRangeEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -7639,7 +7639,7 @@ STATICINLINE void* map_named_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(MapNamedBufferRangeEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -7671,7 +7671,7 @@ STATICINLINE void named_buffer_storage(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedBufferStorageEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -7709,7 +7709,7 @@ STATICINLINE void clear_named_buffer_data(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ClearNamedBufferDataEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -7751,7 +7751,7 @@ STATICINLINE void clear_named_buffer_sub_data(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ClearNamedBufferSubDataEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -7790,7 +7790,7 @@ STATICINLINE void get_named_framebuffer_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedFramebufferParameterivEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
@@ -7820,7 +7820,7 @@ STATICINLINE void named_framebuffer_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferParameteriEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
@@ -7848,7 +7848,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1dEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -7882,7 +7882,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1dvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -7916,7 +7916,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2dEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -7948,7 +7948,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2dvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -7983,7 +7983,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3dEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -8015,7 +8015,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3dvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -8051,7 +8051,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4dEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -8083,7 +8083,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4dvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -8121,7 +8121,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2dvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -8160,7 +8160,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x3dvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -8199,7 +8199,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x4dvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -8238,7 +8238,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3dvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -8277,7 +8277,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x2dvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -8316,7 +8316,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x4dvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -8355,7 +8355,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4dvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -8394,7 +8394,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x2dvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -8433,7 +8433,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x3dvEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -8471,12 +8471,12 @@ STATICINLINE void texture_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureBufferRangeEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -8513,7 +8513,7 @@ STATICINLINE void texture_storage_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage1DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -8548,7 +8548,7 @@ STATICINLINE void texture_storage_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage2DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -8589,7 +8589,7 @@ STATICINLINE void texture_storage_3d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage3DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -8632,7 +8632,7 @@ STATICINLINE void texture_storage_2d_multisample(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage2DMultisampleEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -8676,7 +8676,7 @@ STATICINLINE void texture_storage_3d_multisample(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage3DMultisampleEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -8715,12 +8715,12 @@ STATICINLINE void vertex_array_bind_vertex_buffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayBindVertexBufferEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -8748,7 +8748,7 @@ STATICINLINE void vertex_array_vertex_attrib_binding(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexAttribBindingEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
@@ -8781,7 +8781,7 @@ STATICINLINE void vertex_array_vertex_attrib_format(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexAttribFormatEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
@@ -8818,7 +8818,7 @@ STATICINLINE void vertex_array_vertex_attrib_i_format(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexAttribIFormatEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
@@ -8850,7 +8850,7 @@ STATICINLINE void vertex_array_vertex_attrib_l_format(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexAttribLFormatEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
@@ -8878,7 +8878,7 @@ STATICINLINE void vertex_array_vertex_binding_divisor(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexBindingDivisorEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
@@ -8913,12 +8913,12 @@ STATICINLINE void vertex_array_vertex_attrib_l_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexAttribLOffsetEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -8957,7 +8957,7 @@ STATICINLINE void texture_page_commitment(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TexturePageCommitmentEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -8993,7 +8993,7 @@ STATICINLINE void vertex_array_vertex_attrib_divisor(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexAttribDivisorEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(vaobj);

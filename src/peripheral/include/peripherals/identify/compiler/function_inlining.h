@@ -2,7 +2,7 @@
 
 #include <peripherals/identify/compiler.h>
 
-#if(defined(COFFEE_GCC) || defined(COFFEE_CLANG)) && !defined(COFFEE_ANDROID)
+#if (defined(COFFEE_GCC) || defined(COFFEE_CLANG)) && !defined(COFFEE_ANDROID)
 #define C_FORCE_INLINE __attribute__((always_inline))
 #elif defined(COFFEE_MSVCXX)
 // #include "plat/plat_windows.h"

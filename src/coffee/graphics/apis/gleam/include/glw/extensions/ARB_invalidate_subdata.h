@@ -17,7 +17,7 @@ STATICINLINE void invalidate_buffer_data(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateBufferData)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -44,7 +44,7 @@ STATICINLINE void invalidate_buffer_sub_data(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateBufferSubData)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -145,7 +145,7 @@ STATICINLINE void invalidate_tex_image(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateTexImage)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -181,7 +181,7 @@ STATICINLINE void invalidate_tex_sub_image(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateTexSubImage)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);

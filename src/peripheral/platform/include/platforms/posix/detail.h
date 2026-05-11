@@ -174,10 +174,10 @@ constexpr auto lseek_ = ::lseek64;
 
 using posix_error = int;
 using posix_fd_t  = semantic::generic_handle_t<
-    int,
-    semantic::handle_modes::auto_close,
-    -1,
-    detail::close_fd>;
+     int,
+     semantic::handle_modes::auto_close,
+     -1,
+     detail::close_fd>;
 
 FORCEDINLINE result<posix_fd_t, posix_error> open_file(
     Url const&    file,

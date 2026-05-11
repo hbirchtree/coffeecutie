@@ -11,7 +11,6 @@
 
 #include <coffee/core/CProfiling>
 
-
 namespace gleam::debug {
 
 struct null_api
@@ -46,7 +45,8 @@ struct null_api
     }
 };
 
-#if(GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320 || \
+#if (                                                              \
+    GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320 || \
     defined(GL_KHR_debug)) &&                                      \
     !defined(COFFEE_MINGW32)
 struct scope

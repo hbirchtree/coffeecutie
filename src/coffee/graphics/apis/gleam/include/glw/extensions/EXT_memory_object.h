@@ -416,7 +416,7 @@ STATICINLINE void named_buffer_storage_mem(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedBufferStorageMemEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -452,7 +452,7 @@ STATICINLINE void texture_storage_mem_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorageMem2DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -497,7 +497,7 @@ STATICINLINE void texture_storage_mem_2d_multisample(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorageMem2DMultisampleEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -542,7 +542,7 @@ STATICINLINE void texture_storage_mem_3d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorageMem3DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -589,7 +589,7 @@ STATICINLINE void texture_storage_mem_3d_multisample(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorageMem3DMultisampleEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -668,7 +668,7 @@ STATICINLINE void texture_storage_mem_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorageMem1DEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);

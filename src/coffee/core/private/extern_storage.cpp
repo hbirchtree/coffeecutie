@@ -9,8 +9,8 @@
 
 #include <coffee/core/debug/logging.h>
 
-#include <platforms/profiling.h>
 #include <coffee/core/profiler/profiling-export.h>
+#include <platforms/profiling.h>
 
 using namespace ::platform;
 

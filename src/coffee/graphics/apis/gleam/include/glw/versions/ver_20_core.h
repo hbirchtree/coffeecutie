@@ -14,12 +14,12 @@ STATICINLINE void attach_shader(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(AttachShader)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsShader)
             glIsShader(shader);
@@ -48,7 +48,7 @@ STATICINLINE void bind_attrib_location(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindAttribLocation)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -95,7 +95,7 @@ STATICINLINE void compile_shader(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompileShader)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsShader)
             glIsShader(shader);
@@ -158,7 +158,7 @@ STATICINLINE void delete_program(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(DeleteProgram)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -182,7 +182,7 @@ STATICINLINE void delete_shader(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(DeleteShader)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsShader)
             glIsShader(shader);
@@ -207,12 +207,12 @@ STATICINLINE void detach_shader(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(DetachShader)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsShader)
             glIsShader(shader);
@@ -318,7 +318,7 @@ STATICINLINE void get_active_attrib(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveAttrib)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -359,7 +359,7 @@ STATICINLINE void get_active_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniform)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -394,7 +394,7 @@ STATICINLINE void get_attached_shaders(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetAttachedShaders)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -425,7 +425,7 @@ STATICINLINE GLint get_attrib_location(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetAttribLocation)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -460,7 +460,7 @@ STATICINLINE void get_program_info_log(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramInfoLog)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -493,7 +493,7 @@ STATICINLINE void get_programiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -530,7 +530,7 @@ STATICINLINE void get_shader_info_log(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetShaderInfoLog)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsShader)
             glIsShader(shader);
@@ -564,7 +564,7 @@ STATICINLINE void get_shader_source(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetShaderSource)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsShader)
             glIsShader(shader);
@@ -597,7 +597,7 @@ STATICINLINE void get_shaderiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetShaderiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsShader)
             glIsShader(shader);
@@ -627,7 +627,7 @@ STATICINLINE GLint get_uniform_location(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformLocation)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -661,7 +661,7 @@ STATICINLINE void get_uniformfv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformfv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -697,7 +697,7 @@ STATICINLINE void get_uniformiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -844,7 +844,7 @@ STATICINLINE bool is_program(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsProgram)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -869,7 +869,7 @@ STATICINLINE bool is_shader(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsShader)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsShader)
             glIsShader(shader);
@@ -894,7 +894,7 @@ STATICINLINE void link_program(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(LinkProgram)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -928,7 +928,7 @@ STATICINLINE void shader_source(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ShaderSource)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsShader)
             glIsShader(shader);
@@ -1548,7 +1548,7 @@ STATICINLINE void use_program(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UseProgram)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -1572,7 +1572,7 @@ STATICINLINE void validate_program(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ValidateProgram)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);

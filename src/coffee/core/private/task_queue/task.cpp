@@ -27,7 +27,7 @@ std::function<rq::detail::time_point()> clock_now = []() {
     return detail::clock::now();
 };
 
-}
+} // namespace
 
 runtime_queue* runtime_queue::find_queue(detail::thread_id id)
 {
@@ -839,12 +839,13 @@ u64 runtime_queue::enqueue(runtime_task&& task)
 {
     std::unique_lock _(m_tasks_lock);
     u64              output = ++m_task_index;
-    m_tasks.emplace_back(task_data_t{
-        .task  = std::move(task),
-        .index = output,
-        .alive = true,
-        .to_dispose = false,
-    });
+    m_tasks.emplace_back(
+        task_data_t{
+            .task       = std::move(task),
+            .index      = output,
+            .alive      = true,
+            .to_dispose = false,
+        });
     sortTasks();
     return output;
 }
@@ -854,11 +855,12 @@ u64 runtime_queue::enqueue(std::unique_ptr<dependent_task_invoker>&& task)
     if(!task)
         Throw(undefined_behavior("nullptr passed as dependent_task!"));
     std::unique_lock _(m_tasks_lock);
-    u64 output = ++m_task_index;
-    m_dependent_tasks.emplace_back(dependent_task_data_t{
-        .task = std::move(task),
-        .index = output,
-    });
+    u64              output = ++m_task_index;
+    m_dependent_tasks.emplace_back(
+        dependent_task_data_t{
+            .task  = std::move(task),
+            .index = output,
+        });
     return output;
 }
 

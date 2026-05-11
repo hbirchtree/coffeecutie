@@ -26,7 +26,7 @@
 namespace platform::stacktrace {
 
 constexpr bool supports_stacktrace = !compile_info::platform::is_emscripten &&
-    !compile_info::platform::is_windows;
+                                     !compile_info::platform::is_windows;
 
 namespace detail {
 
@@ -74,10 +74,22 @@ using stacktrace = boost::stacktrace::stacktrace;
 #else
 struct frame_t
 {
-    std::string name() const { return {}; }
-    std::string source_file() const { return {}; }
-    uint32_t source_line() const { return 0; }
+    std::string name() const
+    {
+        return {};
+    }
+
+    std::string source_file() const
+    {
+        return {};
+    }
+
+    uint32_t source_line() const
+    {
+        return 0;
+    }
 };
+
 using stacktrace = std::vector<frame_t>;
 #endif
 
@@ -98,8 +110,9 @@ std::optional<std::pair<std::string, stacktrace>> frames_of(
         std::rethrow_exception(exc);
     } catch(std::exception& e)
     {
-        return std::make_optional(std::pair<std::string, stacktrace>(
-            demangle::type_name(e) + ": " + e.what(), frames()));
+        return std::make_optional(
+            std::pair<std::string, stacktrace>(
+                demangle::type_name(e) + ": " + e.what(), frames()));
     }
     return std::nullopt;
 }

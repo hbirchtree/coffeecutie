@@ -237,7 +237,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     if(eh.flags == eh_t::flags_t::open_widget)
                     {
                         auto widget_ = ui_cache.predict(eh.widget);
-                        cDebug("Opening widget {}", eh.widget.name.to_string(bitm_cache.magic));
+                        cDebug(
+                            "Opening widget {}",
+                            eh.widget.name.to_string(bitm_cache.magic));
                         if(!widget_.valid())
                             break;
                         // create_element(e.underlying(), widget_);
@@ -291,7 +293,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
             auto children =
                 el.ui_element->child_widgets.data(bitm_cache.magic).value();
-            for(auto const& [i, child] : stl_types::const_enumerate(el.children))
+            for(auto const& [i, child] :
+                stl_types::const_enumerate(el.children))
             {
                 auto const& meta = children[i];
                 process_widget(
@@ -311,7 +314,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         default: {
             auto children =
                 el.ui_element->child_widgets.data(bitm_cache.magic).value();
-            for(auto const& [i, child] : stl_types::const_enumerate(el.children))
+            for(auto const& [i, child] :
+                stl_types::const_enumerate(el.children))
             {
                 auto const& meta = children[i];
                 process_widget(
@@ -453,12 +457,13 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                         .template get_bucket<gfx::compat::texture_2da_t>(
                             PixDesc(pix_fmt::RGBA8))
                         .sampler}),
-            gfx::make_buffer_list(gfx::buffer_definition_t{
-                .stage  = typing::graphics::ShaderStage::Fragment,
-                .key    = {"InstanceData"sv, 0},
-                .buffer = instance_vertices->slice(0),
-                .stride = 0,
-            }),
+            gfx::make_buffer_list(
+                gfx::buffer_definition_t{
+                    .stage  = typing::graphics::ShaderStage::Fragment,
+                    .key    = {"InstanceData"sv, 0},
+                    .buffer = instance_vertices->slice(0),
+                    .stride = 0,
+                }),
             gfx::blend_state{.additive = false});
     }
 };

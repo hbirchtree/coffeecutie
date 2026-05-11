@@ -107,8 +107,9 @@ int32_t JNIHelper::GetNativeAudioBufferSize()
 {
     if(activity_ == NULL)
     {
-        LOGI("JNIHelper has not been initialized. Call init() to initialize "
-             "the helper");
+        LOGI(
+            "JNIHelper has not been initialized. Call init() to initialize "
+            "the helper");
         return 0;
     }
 
@@ -131,8 +132,9 @@ int32_t JNIHelper::GetNativeAudioSampleRate()
 {
     if(activity_ == NULL)
     {
-        LOGI("JNIHelper has not been initialized. Call init() to initialize "
-             "the helper");
+        LOGI(
+            "JNIHelper has not been initialized. Call init() to initialize "
+            "the helper");
         return 0;
     }
 
@@ -175,8 +177,9 @@ jstring JNIHelper::GetExternalFilesDirJString(JNIEnv* env)
 {
     if(activity_ == NULL)
     {
-        LOGI("JNIHelper has not been initialized. Call init() to initialize "
-             "the helper");
+        LOGI(
+            "JNIHelper has not been initialized. Call init() to initialize "
+            "the helper");
         return NULL;
     }
 

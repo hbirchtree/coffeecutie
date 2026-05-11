@@ -734,7 +734,6 @@ void ControllerInput::start_restricted(proxy_type& p, time_point const&)
         SDL_CONTROLLERDEVICEADDED,
         SDL_CONTROLLERDEVICEREMAPPED))
     {
-
         if(event.type == SDL_CONTROLLERDEVICEADDED)
         {
             auto controller = SDL_GameControllerOpen(event.cdevice.which);
@@ -761,33 +760,36 @@ void ControllerInput::start_restricted(proxy_type& p, time_point const&)
             m_controllers.insert({instanceId, controller});
             m_deviceToPlayer.insert({event.cdevice.which, playerIdx});
 
-            CIEvent ev{.type = CIEvent::ControllerConnect};
+            CIEvent                  ev{.type = CIEvent::ControllerConnect};
             CIControllerConnectEvent connect = {
                 .index = static_cast<libc_types::u16>(event.cdevice.which),
                 .player_index = static_cast<libc_types::i16>(playerIdx),
-                .connected = true,
+                .connected    = true,
             };
             inputBus->process(ev, &connect);
 
 #if SDL_VERSION_ATLEAST(2, 0, 8) && 0
             SDL_GameControllerRumble(controller, 7000, 9000, 200);
 #endif
-            Coffee::Logging::cDebug("Player {} connected (playerIdx={}, instance={}, which={})",
-                playerIdx, playerIdx, instanceId, event.cdevice.which);
+            Coffee::Logging::cDebug(
+                "Player {} connected (playerIdx={}, instance={}, which={})",
+                playerIdx,
+                playerIdx,
+                instanceId,
+                event.cdevice.which);
         } else if(event.type == SDL_CONTROLLERDEVICEREMOVED)
         {
-            auto playerIdx = m_deviceToPlayer[event.cdevice.which];
+            auto    playerIdx = m_deviceToPlayer[event.cdevice.which];
             CIEvent ev{.type = CIEvent::ControllerConnect};
             CIControllerConnectEvent connect = {
                 .index = static_cast<libc_types::u16>(event.cdevice.which),
                 .player_index = static_cast<libc_types::i16>(playerIdx),
-                .connected = false,
+                .connected    = false,
             };
             inputBus->process(ev, &connect);
 
             controllerDisconnect(event.cdevice.which);
-            Coffee::Logging::cDebug(
-                "Player {} disconnected", playerIdx);
+            Coffee::Logging::cDebug("Player {} disconnected", playerIdx);
         } else if(event.type == SDL_CONTROLLERDEVICEREMAPPED)
         {
             Coffee::Logging::cDebug("Player {} remapped", event.cdevice.which);

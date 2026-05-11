@@ -86,9 +86,10 @@ FORCEDINLINE result<dynamic_lib, dl_error> load(
         return failure(detail::error().value_or("[no error]"));
     } else
     {
-        return success(dynamic_lib{
-            .handle = dl_handle_t(handle),
-        });
+        return success(
+            dynamic_lib{
+                .handle = dl_handle_t(handle),
+            });
     }
 }
 

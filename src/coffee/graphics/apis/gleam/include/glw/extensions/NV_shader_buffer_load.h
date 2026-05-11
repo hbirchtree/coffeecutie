@@ -92,7 +92,7 @@ STATICINLINE void get_named_buffer_parameterui64v(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedBufferParameterui64vNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -129,7 +129,7 @@ STATICINLINE void get_uniformui64v(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformui64vNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -173,7 +173,7 @@ STATICINLINE bool is_named_buffer_resident(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsNamedBufferResidentNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -231,7 +231,7 @@ STATICINLINE void make_named_buffer_non_resident(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(MakeNamedBufferNonResidentNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -254,7 +254,7 @@ STATICINLINE void make_named_buffer_resident(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(MakeNamedBufferResidentNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -281,7 +281,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformui64NV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -315,7 +315,7 @@ STATICINLINE void program_uniform(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformui64vNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);

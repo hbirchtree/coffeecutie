@@ -60,7 +60,7 @@ STATICINLINE void bind_buffer_base(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferBase)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -93,7 +93,7 @@ STATICINLINE void bind_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferRange)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -118,7 +118,7 @@ STATICINLINE void bind_sampler(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindSampler)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
@@ -164,7 +164,7 @@ STATICINLINE void bind_vertex_array(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindVertexArray)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(array);
@@ -899,7 +899,7 @@ STATICINLINE void framebuffer_texture_layer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTextureLayer)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -1044,7 +1044,7 @@ STATICINLINE void get_active_uniform_block_name(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformBlockName)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -1084,7 +1084,7 @@ STATICINLINE void get_active_uniform_blockiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformBlockiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -1128,7 +1128,7 @@ STATICINLINE void get_active_uniformsiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformsiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -1220,7 +1220,7 @@ STATICINLINE GLint get_frag_data_location(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetFragDataLocation)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -1379,7 +1379,7 @@ STATICINLINE void get_program_binary(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramBinary)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -1479,7 +1479,7 @@ STATICINLINE void get_sampler_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameterfv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
@@ -1515,7 +1515,7 @@ STATICINLINE void get_sampler_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameteriv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
@@ -1617,7 +1617,7 @@ STATICINLINE void get_transform_feedback_varying(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTransformFeedbackVarying)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -1645,7 +1645,7 @@ STATICINLINE GLuint get_uniform_block_index(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformBlockIndex)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -1681,7 +1681,7 @@ STATICINLINE void get_uniform_indices(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformIndices)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -1721,7 +1721,7 @@ STATICINLINE void get_uniformuiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformuiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -1895,7 +1895,7 @@ STATICINLINE bool is_sampler(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsSampler)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
@@ -1960,7 +1960,7 @@ STATICINLINE bool is_vertex_array(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsVertexArray)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsVertexArray)
             glIsVertexArray(array);
@@ -2043,7 +2043,7 @@ STATICINLINE void program_binary(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramBinary)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -2076,7 +2076,7 @@ STATICINLINE void program_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramParameteri)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -2177,7 +2177,7 @@ STATICINLINE void sampler_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterf)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
@@ -2210,7 +2210,7 @@ STATICINLINE void sampler_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterfv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
@@ -2243,7 +2243,7 @@ STATICINLINE void sampler_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameteri)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
@@ -2276,7 +2276,7 @@ STATICINLINE void sampler_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameteriv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
@@ -2477,7 +2477,7 @@ STATICINLINE void transform_feedback_varyings(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TransformFeedbackVaryings)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -2719,7 +2719,7 @@ STATICINLINE void uniform_block_binding(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UniformBlockBinding)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);

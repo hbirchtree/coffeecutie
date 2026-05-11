@@ -50,10 +50,10 @@ constexpr u32 Unit_MB = 1024 * 1024;
 constexpr u32 Unit_GB = 1024 * 1024 * 1024;
 constexpr u64 Unit_TB = 1024ULL * 1024ULL * 1024ULL * 1024ULL;
 
-#define GEN_SIZE_LITERAL(unit)                                           \
+#define GEN_SIZE_LITERAL(unit)                                          \
     constexpr inline u64 operator""_##unit##B(unsigned long long int v) \
-    {                                                                    \
-        return v * Unit_##unit##B;                                       \
+    {                                                                   \
+        return v * Unit_##unit##B;                                      \
     }
 
 namespace size_literals {
@@ -65,10 +65,10 @@ GEN_SIZE_LITERAL(T)
 
 } // namespace size_literals
 
-#define GEN_TIME_LITERAL(unit, div)                                      \
+#define GEN_TIME_LITERAL(unit, div)                                     \
     constexpr inline f64 operator""_##unit##s(unsigned long long int v) \
-    {                                                                    \
-        return f64(v) / div;                                             \
+    {                                                                   \
+        return f64(v) / div;                                            \
     }
 
 GEN_TIME_LITERAL(m, 1000)

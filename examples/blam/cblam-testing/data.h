@@ -16,9 +16,9 @@ using namespace Coffee::StandardInput;
 constexpr libc_types::u32 reserved_debug_points = 24 + 16 * 7;
 constexpr libc_types::u32 reserved_debug_colors = 6 + 16;
 
+using libc_types::f32;
 using libc_types::i32;
 using libc_types::u32;
-using libc_types::f32;
 using semantic::Span;
 using typing::vector_types::Matf4;
 using camera_t     = typing::vectors::scene::camera<f32>;
@@ -122,7 +122,7 @@ struct LoadingStatus : compo::SubsystemBase
     void check_all_loaded()
     {
         using namespace Coffee::Logging;
-        bool old_loading = loading;
+        bool            old_loading  = loading;
         libc_types::i16 old_progress = progress;
         if(loaded_map == loaded && loaded_bitmaps == loaded &&
            loaded_sounds == loaded)
@@ -133,8 +133,12 @@ struct LoadingStatus : compo::SubsystemBase
             progress = -1;
             app_info->setState(comp_app::interfaces::AppInfo::loaded);
         }
-        cDebug("Re-evaluating loading state: loading={} -> {} progress={} -> {}",
-               old_loading, loading, old_progress, progress);
+        cDebug(
+            "Re-evaluating loading state: loading={} -> {} progress={} -> {}",
+            old_loading,
+            loading,
+            old_progress,
+            progress);
     }
 };
 
@@ -183,7 +187,7 @@ struct MapLoadByNameEvent
     static constexpr auto event_type = GameEvent::MapLoadByName;
 
     MapLoadEvent::Origin origin{MapLoadEvent::Local};
-    blam::bl_string map_name;
+    blam::bl_string      map_name;
 };
 
 struct MapRequestListingEvent
@@ -266,9 +270,9 @@ struct ServerCameraControl
         OverrideCamera,
     } request{None};
 
-    libc_types::u32 target_player{0xFFFF};
+    libc_types::u32             target_player{0xFFFF};
     typing::vector_types::Vecf4 position{};
-    Quatf rotation{};
+    Quatf                       rotation{};
 };
 
 struct ServerDisconnectEvent

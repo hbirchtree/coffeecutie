@@ -163,7 +163,7 @@ struct vertex_attribute
     } buffer{};
 
     template<typename T, typename V>
-    static inline constexpr auto from_member(V T::*member)
+    static inline constexpr auto from_member(V T::* member)
     {
         auto [type, flags, count] = detail::vector_info_of<V>();
         auto member_info          = stl_types::member_traits(member);
@@ -183,7 +183,7 @@ struct vertex_attribute
     template<typename T, typename V>
     requires(!std::is_floating_point_v<V>)
     static inline auto from_member(
-        V T::*member, detail::vertex_attribute_float_type)
+        V T::* member, detail::vertex_attribute_float_type)
     {
         auto attr = from_member<T, V>(member);
         attr.value.flags =
@@ -194,7 +194,7 @@ struct vertex_attribute
     template<typename T, typename V>
     requires std::is_floating_point_v<V>
     static inline auto from_member(
-        V T::*member, detail::vertex_attribute_float_type)
+        V T::* member, detail::vertex_attribute_float_type)
     {
         return from_member<T, V>(member);
     }

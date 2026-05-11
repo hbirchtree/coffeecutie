@@ -171,11 +171,12 @@ void ImGuiSystem::submit_draws(Proxy& e)
 
                 auto ec = api.submit(
                     draw,
-                    gfx::make_sampler_list(gfx::sampler_definition_t{
-                        typing::graphics::ShaderStage::Fragment,
-                        {"Texture"sv},
-                        data.shell_sampler,
-                    }),
+                    gfx::make_sampler_list(
+                        gfx::sampler_definition_t{
+                            typing::graphics::ShaderStage::Fragment,
+                            {"Texture"sv},
+                            data.shell_sampler,
+                        }),
                     uniform_list,
                     gfx::view_state{
                         .scissor = Veci4(
@@ -309,12 +310,14 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
 
         pip->add(
             gfx::program_t::stage_t::Vertex,
-            api.alloc_shader(mem_chunk<byte_t const>::ofContainer(
-                needs_v100 ? vertex_shader_100 : vertex_shader)));
+            api.alloc_shader(
+                mem_chunk<byte_t const>::ofContainer(
+                    needs_v100 ? vertex_shader_100 : vertex_shader)));
         pip->add(
             gfx::program_t::stage_t::Fragment,
-            api.alloc_shader(mem_chunk<byte_t const>::ofContainer(
-                needs_v100 ? fragment_shader_100 : fragment_shader)));
+            api.alloc_shader(
+                mem_chunk<byte_t const>::ofContainer(
+                    needs_v100 ? fragment_shader_100 : fragment_shader)));
         if(auto res = pip->compile(); res.has_error())
             cWarning("Shader compile error: {0}", res.error());
         else
@@ -409,7 +412,7 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
         union
         {
             u64 tex_id;
-            u32   handle;
+            u32 handle;
         } tex_handle = {
             .handle = data.font_atlas->m_handle,
         };

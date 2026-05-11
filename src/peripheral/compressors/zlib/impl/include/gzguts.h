@@ -204,8 +204,8 @@ typedef struct
 typedef gz_state FAR* gz_statep;
 
 /* shared functions */
-void ZLIB_INTERNAL gz_error        OF((gz_statep, int, const char*));
-#if defined                        UNDER_CE
+void ZLIB_INTERNAL gz_error OF((gz_statep, int, const char*));
+#if defined UNDER_CE
 char ZLIB_INTERNAL* gz_strwinerror OF((DWORD error));
 #endif
 

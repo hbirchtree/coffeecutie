@@ -60,7 +60,7 @@ STATICINLINE void egl_image_target_texture_storage(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(EGLImageTargetTextureStorageEXT)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);

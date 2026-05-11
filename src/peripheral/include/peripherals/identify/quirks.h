@@ -122,7 +122,8 @@
 
 /* For Android 32-bit, we need this neat little trick. */
 /* This might apply to win32 and lin32 as well, but they don't exist */
-#if((defined(COFFEE_WINDOWS) || defined(COFFEE_EMSCRIPTEN) ||   \
+#if (                                                           \
+    (defined(COFFEE_WINDOWS) || defined(COFFEE_EMSCRIPTEN) ||   \
      (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_ARM32)) || \
      (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_MIPS)) ||  \
      (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_X86)) ||   \
@@ -209,7 +210,7 @@
 #endif
 
 /* Unwind and terminal control signals are desktop-only */
-#if(defined(COFFEE_LINUX) || defined(COFFEE_APPLE)) &&           \
+#if (defined(COFFEE_LINUX) || defined(COFFEE_APPLE)) &&          \
     !defined(COFFEE_ANDROID) && !defined(COFFEE_APPLE_MOBILE) && \
     !defined(COFFEE_MAEMO)
 #define COFFEE_USE_TERMINAL_CTL

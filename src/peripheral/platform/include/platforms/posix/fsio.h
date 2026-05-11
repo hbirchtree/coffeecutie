@@ -21,22 +21,23 @@ FORCEDINLINE result<file_info_t, posix_error> file_info(posix_fd_t const& file)
         return detail::posix_failure();
     }
     using namespace permission_t;
-    return success(file_info_t{
-        .size = C_CAST<szptr>(file_.st_size),
-        .mode = detail::mode_from_native(file_.st_mode),
-        .perms =
-            {
-                .owner = (file_.st_mode & S_IRUSR ? read : none) |
-                         (file_.st_mode & S_IWUSR ? write : none) |
-                         (file_.st_mode & S_IXUSR ? execute : none),
-                .group = (file_.st_mode & S_IRGRP ? read : none) |
-                         (file_.st_mode & S_IWGRP ? write : none) |
-                         (file_.st_mode & S_IXGRP ? execute : none),
-                .other = (file_.st_mode & S_IROTH ? read : none) |
-                         (file_.st_mode & S_IWOTH ? write : none) |
-                         (file_.st_mode & S_IXOTH ? execute : none),
-            },
-    });
+    return success(
+        file_info_t{
+            .size = C_CAST<szptr>(file_.st_size),
+            .mode = detail::mode_from_native(file_.st_mode),
+            .perms =
+                {
+                    .owner = (file_.st_mode & S_IRUSR ? read : none) |
+                             (file_.st_mode & S_IWUSR ? write : none) |
+                             (file_.st_mode & S_IXUSR ? execute : none),
+                    .group = (file_.st_mode & S_IRGRP ? read : none) |
+                             (file_.st_mode & S_IWGRP ? write : none) |
+                             (file_.st_mode & S_IXGRP ? execute : none),
+                    .other = (file_.st_mode & S_IROTH ? read : none) |
+                             (file_.st_mode & S_IWOTH ? write : none) |
+                             (file_.st_mode & S_IXOTH ? execute : none),
+                },
+        });
 }
 
 FORCEDINLINE result<file_info_t, posix_error> file_info(Url const& file)
@@ -88,14 +89,15 @@ FORCEDINLINE result<std::vector<file_entry_t>, posix_error> list(Url const& dir)
         if(auto name = std::string(direntry->d_name);
            name == "." || name == "..")
             continue;
-        result.push_back(file_entry_t {
+        result.push_back(
+            file_entry_t{
 #if defined(COFFEE_MINGW64) || defined(COFFEE_MINGW32)
-            .mode = mode_t::file,
+                .mode = mode_t::file,
 #else
-            .mode = detail::dirmode_from_native(direntry->d_type),
+                .mode = detail::dirmode_from_native(direntry->d_type),
 #endif
-            .name = direntry->d_name,
-        });
+                .name = direntry->d_name,
+            });
     }
     if(closedir(directory) != 0)
         return detail::posix_failure();
@@ -340,9 +342,7 @@ FORCEDINLINE result<mode_t, posix_error> exists(Url const& path)
         return success(mode_t::directory);
     }
 #else
-    struct stat dirstat
-    {
-    };
+    struct stat dirstat{};
 
     if(auto res = stat(path.internUrl.c_str(), &dirstat);
        res == 0 && S_ISDIR(dirstat.st_mode))

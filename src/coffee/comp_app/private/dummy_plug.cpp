@@ -157,8 +157,8 @@ void fork_dummy_plugs(
 
     if(config.contains("frame_delta"))
     {
-        dummy_plug.frame_delta =
-            std::chrono::microseconds(static_cast<libc_types::u32>(
+        dummy_plug.frame_delta = std::chrono::microseconds(
+            static_cast<libc_types::u32>(
                 config.value("frame_delta", 0.0) * 1000));
         /* Replace the original timestamp provider, so we can step the frames
          * consistently. As long as everything is based on ECS-provided

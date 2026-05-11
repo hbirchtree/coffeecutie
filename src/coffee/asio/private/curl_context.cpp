@@ -102,10 +102,9 @@ std::future<void> curl_data::add_request(
 
 void curl_data::remove_request(curl_request request)
 {
-    auto queued_count =
-        stl_types::erase_if(queued_requests, [&request](curl_request const& req) {
-            return req == request;
-        });
+    auto queued_count = stl_types::erase_if(
+        queued_requests,
+        [&request](curl_request const& req) { return req == request; });
     if(queued_count > 0)
         curl_multi_remove_handle(context, request->handle);
     stl_types::erase_if(finished_requests, [&request](curl_request const& req) {
@@ -151,7 +150,8 @@ curl_request_data::~curl_request_data()
 #endif
 }
 
-curl_context create_curl_context(queue_behavior behavior, curl_data::poll_interval_t queue_interval)
+curl_context create_curl_context(
+    queue_behavior behavior, curl_data::poll_interval_t queue_interval)
 {
     static curl_context context;
     if(!context)

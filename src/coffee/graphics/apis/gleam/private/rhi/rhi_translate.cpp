@@ -169,7 +169,7 @@ std::tuple<T, group::pixel_type, group::pixel_format> to(
         }
 #endif
 
-        /* Formats behind extensions */
+    /* Formats behind extensions */
 #if defined(GL_EXT_texture_compression_s3tc)
     if(fmt.pixfmt == P::BCn && features.tex.ext.s3tc)
         switch(fmt.cmpflg)

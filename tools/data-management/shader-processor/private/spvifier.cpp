@@ -47,18 +47,19 @@ class ShaderIncluder : public shaderc::CompileOptions::IncluderInterface
         } else
         {
             auto const& data = mapping.value().view;
-            m_cache.push_back(include_data{
-                .filename = lookup_path.internUrl,
-                .mapping  = std::move(mapping.value()),
-                .result =
-                    {
-                        .source_name        = nullptr,
-                        .source_name_length = 0,
-                        .content            = data.data(),
-                        .content_length     = data.size_bytes(),
-                        .user_data          = nullptr,
-                    },
-            });
+            m_cache.push_back(
+                include_data{
+                    .filename = lookup_path.internUrl,
+                    .mapping  = std::move(mapping.value()),
+                    .result =
+                        {
+                            .source_name        = nullptr,
+                            .source_name_length = 0,
+                            .content            = data.data(),
+                            .content_length     = data.size_bytes(),
+                            .user_data          = nullptr,
+                        },
+                });
             for(include_data& res : m_cache)
                 if(res.filename == lookup_path.internUrl)
                 {

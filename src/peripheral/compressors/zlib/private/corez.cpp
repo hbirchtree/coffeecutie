@@ -72,9 +72,10 @@ std::optional<codec::error_t> compression_routine(
     const auto emit_chunk = [&chunk, &strm, &output, chunk_size] {
         if(chunk_size - strm.avail_out == 0)
             return;
-        output(semantic::mem_chunk<char>::ofBytes(
-                   chunk.data(), chunk_size - strm.avail_out)
-                   .view);
+        output(
+            semantic::mem_chunk<char>::ofBytes(
+                chunk.data(), chunk_size - strm.avail_out)
+                .view);
     };
 
     while(strm.avail_in > 0 && ret != Z_STREAM_END)

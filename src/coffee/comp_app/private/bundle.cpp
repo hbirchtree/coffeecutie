@@ -188,9 +188,10 @@ void setup_container(detail::EntityContainer& container)
                 .data());
         cDebug(" - Loading {0}", service_name);
         if(!service->do_load(container, appec))
-            Throw(std::runtime_error(
-                "failed to start service: " + service_name + ": " +
-                appec.message()));
+            Throw(
+                std::runtime_error(
+                    "failed to start service: " + service_name + ": " +
+                    appec.message()));
         C_ERROR_CHECK(appec);
     }
 
@@ -412,8 +413,9 @@ void configureDefaults(AppLoader& loader)
      * On iOS we don't have as much control over the colorspace used
      */
     // if(compile_info::platform::is_android ||
-    //    (compile_info::platform::is_linux && !compile_info::platform::is_iot) ||
-    //    compile_info::platform::is_macos || compile_info::platform::is_windows)
+    //    (compile_info::platform::is_linux && !compile_info::platform::is_iot)
+    //    || compile_info::platform::is_macos ||
+    //    compile_info::platform::is_windows)
     //     glConfig.framebufferFmt = pix_fmt::SRGB8;
 
 #if defined(FEATURE_ENABLE_X11Component)
@@ -662,7 +664,7 @@ void addDefaults(
         auto& provider =
             container.subsystem_cast<glscreenshot::ScreenshotProvider>();
 
-        provider.m_config       = &loader.config<GLConfig>();
+        provider.m_config = &loader.config<GLConfig>();
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
         provider.m_dummy_config = &loader.config<dummy_plug::Config>();
 #endif
@@ -734,7 +736,8 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
     auto& dummy = p.service<AppLoader>()->config<dummy_plug::Config>();
 #else
-    constexpr struct dummy_the_dummy_t {
+    constexpr struct dummy_the_dummy_t
+    {
         const bool enabled = false;
     } dummy;
 #endif

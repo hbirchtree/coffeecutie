@@ -114,7 +114,7 @@ STATICINLINE void get_named_framebuffer_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedFramebufferParameterfvAMD)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
@@ -155,7 +155,7 @@ STATICINLINE void named_framebuffer_sample_positionsfv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferSamplePositionsfvAMD)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);

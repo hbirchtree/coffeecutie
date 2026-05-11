@@ -105,10 +105,11 @@ inline cpu_hierarchy_t online_cpus()
                 {
                     core_id = coreid.value();
                 }
-                cpus.push_back(std::make_tuple(
-                    from_string<u16>(phys_id.c_str()),
-                    from_string<u16>(core_id.c_str()),
-                    from_string<u16>(cpu_id.c_str())));
+                cpus.push_back(
+                    std::make_tuple(
+                        from_string<u16>(phys_id.c_str()),
+                        from_string<u16>(core_id.c_str()),
+                        from_string<u16>(cpu_id.c_str())));
             }
         } while(!(++it).empty());
         cpu_hierarchy_t first_pass;
@@ -150,11 +151,12 @@ inline cpu_hierarchy_t online_cpus()
     return {};
 }
 
-inline void foreach_cpuinfo(stl_types::Function<bool(
-                                std::string_view const& physical,
-                                std::string_view const& cpu,
-                                std::string_view const& key,
-                                std::string_view const& value)>&& pred)
+inline void foreach_cpuinfo(
+    stl_types::Function<bool(
+        std::string_view const& physical,
+        std::string_view const& cpu,
+        std::string_view const& key,
+        std::string_view const& value)>&& pred)
 {
     using namespace stl_types::str;
     using namespace std::literals::string_view_literals;

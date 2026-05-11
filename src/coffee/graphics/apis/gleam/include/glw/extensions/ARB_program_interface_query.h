@@ -45,7 +45,7 @@ STATICINLINE void get_program_interfaceiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramInterfaceiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -76,7 +76,7 @@ STATICINLINE GLuint get_program_resource_index(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceIndex)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -105,7 +105,7 @@ STATICINLINE GLint get_program_resource_location(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceLocation)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -134,7 +134,7 @@ STATICINLINE GLint get_program_resource_location_index(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceLocationIndex)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -174,7 +174,7 @@ STATICINLINE void get_program_resource_name(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceName)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -225,7 +225,7 @@ STATICINLINE void get_program_resourceiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);

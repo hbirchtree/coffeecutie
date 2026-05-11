@@ -71,7 +71,7 @@ struct mem_function_traits
 template<class T, typename V>
 struct member_traits
 {
-    constexpr member_traits(V T::*member)
+    constexpr member_traits(V T::* member)
         : member(member)
     {
     }
@@ -88,7 +88,7 @@ struct member_traits
         return reinterpret_cast<uintptr_t>(&(base->*member));
     }
 
-    V T::*member;
+    V T::* member;
 };
 
 } // namespace stl_types

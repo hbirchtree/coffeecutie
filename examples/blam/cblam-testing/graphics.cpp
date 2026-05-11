@@ -83,8 +83,8 @@ i32 blam_main()
                    comp_app::window_flags_t::resizable;
     if constexpr(compile_info::platform::is_emscripten)
         window.flags = comp_app::window_flags_t::resizable;
-        // auto& touch = loader.config<comp_app::TouchConfig>();
-        // touch.options |= comp_app::TouchConfig::TouchToMouse;
+    // auto& touch = loader.config<comp_app::TouchConfig>();
+    // touch.options |= comp_app::TouchConfig::TouchToMouse;
 
 #if defined(SELECT_API_OPENGL)
     auto& glConfig        = loader.config<comp_app::GLConfig>();
@@ -112,17 +112,17 @@ i32 blam_main()
             e.register_subsystem_inplace<net::CurlNetStats>(
                 net::create_curl_context());
 
-            auto& gfx = e.register_subsystem_inplace<gfx::system>();
-            auto  load_error =
-                gfx.load(e
-                         /*gfx::emulation::webgl::desktop()*/
-                         // , gfx::emulation::qcom::adreno_320()
-                         // gfx::emulation::arm::mali_g710()
-                         // gfx::emulation::arm::mali_400mp()
-                         // gfx::emulation::amd::rx560_pro()
-                         // gfx::emulation::webgl::desktop()
-                         // gfx::emulation::img::powervr_sgx530_bbb()
-                );
+            auto& gfx        = e.register_subsystem_inplace<gfx::system>();
+            auto  load_error = gfx.load(
+                e
+                /*gfx::emulation::webgl::desktop()*/
+                // , gfx::emulation::qcom::adreno_320()
+                // gfx::emulation::arm::mali_g710()
+                // gfx::emulation::arm::mali_400mp()
+                // gfx::emulation::amd::rx560_pro()
+                // gfx::emulation::webgl::desktop()
+                // gfx::emulation::img::powervr_sgx530_bbb()
+            );
 
             if(load_error)
             {
@@ -136,7 +136,7 @@ i32 blam_main()
 
             gfx.debug().enable();
             gfx.debug().add_callback([](gfx::group::debug_severity sev,
-                                        std::string_view const& msg) {
+                                        std::string_view const&    msg) {
                 if(sev == gfx::group::debug_severity::notification)
                     return;
                 cDebug("GL: {0}", msg);
@@ -191,14 +191,16 @@ i32 blam_main()
 
             discord.on_started<bool>(
                 [&e](discord::Subsystem& discord) {
-                    discord.game().put(discord::DiscordGameDelegate::Builder(
-                        "Blam!",
-                        "Gaming",
-                        "https://assetsio.reedpopcdn.com/"
-                        "digitalfoundry-2021-halo-combat-evolved-season-7-"
-                        "master-chief-collection-1622735120728.jpg?width=1600&"
-                        "height=900&fit=crop&quality=100&format=png&enable="
-                        "upscale&auto=webp"_https));
+                    discord.game().put(
+                        discord::DiscordGameDelegate::Builder(
+                            "Blam!",
+                            "Gaming",
+                            "https://assetsio.reedpopcdn.com/"
+                            "digitalfoundry-2021-halo-combat-evolved-season-7-"
+                            "master-chief-collection-1622735120728.jpg?width="
+                            "1600&"
+                            "height=900&fit=crop&quality=100&format=png&enable="
+                            "upscale&auto=webp"_https));
                     discord.presence().put({
                         .partyId    = "16420",
                         .curPlayers = 1,
@@ -340,8 +342,9 @@ i32 blam_main()
             if(arguments.count("server"))
             {
                 /* When we're a client, skip trying to load a map on startup */
-                e.subsystem_cast<BlamFiles<halo_version>>().map_directory = map_dir;
-                GameEvent event{GameEvent::MapRequestListing};
+                e.subsystem_cast<BlamFiles<halo_version>>().map_directory =
+                    map_dir;
+                GameEvent              event{GameEvent::MapRequestListing};
                 MapRequestListingEvent request{};
                 gbus.inject(event, &request);
                 event = {GameEvent::ServerConnect};
@@ -364,7 +367,7 @@ i32 blam_main()
 
                 if(arguments.count("listen"))
                 {
-                    GameEvent event{GameEvent::ServerConnect};
+                    GameEvent          event{GameEvent::ServerConnect};
                     ServerConnectEvent connect{
                         .type   = ServerConnectEvent::Listen,
                         .remote = arguments["listen"].as<std::string>(),
@@ -396,7 +399,7 @@ i32 blam_main()
                 if(info->permissions.camera)
                 {
                     if(cam->keyboard.enabled)
-                       cam->camera_->tick(t);
+                        cam->camera_->tick(t);
                     if(controllers && cam->controller.index.has_value())
                     {
                         cam->camera_->tick(t);
@@ -428,10 +431,12 @@ i32 blam_main()
                 if(cam && info && info->seat_idx == 0)
                 {
                     auto& snd = e.subsystem_cast<oaf::system>();
-                    snd.listener().set_property<oaf::listener_property::position>(
-                        cam->camera->position);
-                    snd.listener().set_property<oaf::listener_property::orientation>(
-                        glm::mat3_cast(cam->camera->rotation));
+                    snd.listener()
+                        .set_property<oaf::listener_property::position>(
+                            cam->camera->position);
+                    snd.listener()
+                        .set_property<oaf::listener_property::orientation>(
+                            glm::mat3_cast(cam->camera->rotation));
                     break;
                 }
             }

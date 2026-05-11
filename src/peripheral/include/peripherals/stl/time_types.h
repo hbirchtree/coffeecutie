@@ -35,9 +35,10 @@ inline libc_types::u64 to_unix(Clock::time_point ts)
         type_safety::is_pod_v<std::time_t>, "std::time_t is not a POD type");
 
     return C_FCAST<libc_types::u64>(std::chrono::system_clock::to_time_t(
-        std::chrono::system_clock::time_point(std::chrono::seconds(
-            duration_cast<std::chrono::seconds>(ts.time_since_epoch())
-                .count()))));
+        std::chrono::system_clock::time_point(
+            std::chrono::seconds(
+                duration_cast<std::chrono::seconds>(ts.time_since_epoch())
+                    .count()))));
 }
 
 template<typename Clock, typename Rep>

@@ -65,8 +65,9 @@ i32 crash_main(i32, cstring_w*)
         cOutputPrint("No program specified");
         cOutputPrint(" - Specify CRASH_API to submit reports");
         cOutputPrint(" - Specify CRASH_APITRACE to enable apitrace");
-        cOutputPrint(" - Specify CRASH_WORKING_DIR to change working directory "
-                     "of child");
+        cOutputPrint(
+            " - Specify CRASH_WORKING_DIR to change working directory "
+            "of child");
         return -1;
     }
 
@@ -257,9 +258,11 @@ i32 crash_main(i32, cstring_w*)
 
     crashPush.setHeaderField(
         "X-Coffee-Signature",
-        "sha1=" + hex::encode(net::hmac::digest(
-                      semantic::Span<char>(multipart.m_data),
-                      platform::env::var("COFFEE_HMAC_KEY").value_or("0000"))));
+        "sha1=" +
+            hex::encode(
+                net::hmac::digest(
+                    semantic::Span<char>(multipart.m_data),
+                    platform::env::var("COFFEE_HMAC_KEY").value_or("0000"))));
 
     if(auto error = crashPush.push(http::method_t::post, multipart))
     {

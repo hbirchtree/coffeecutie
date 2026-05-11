@@ -3,9 +3,9 @@
 #include <discord_register.h>
 #include <discord_rpc.h>
 
-#include <coffee/net/net_resource.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/internal_state.h>
+#include <coffee/net/net_resource.h>
 #include <fmt_extensions/info.h>
 #include <platforms/environment.h>
 
@@ -308,22 +308,22 @@ void DiscordPresenceDelegate::update(platform::online::PartyDescUpdate&& party)
     }
     if(party.curPlayers)
     {
-        m_desc.curPlayers = *party.curPlayers;
+        m_desc.curPlayers     = *party.curPlayers;
         m_presence->partySize = m_desc.curPlayers;
     }
     if(party.maxPlayers)
     {
-        m_desc.maxPlayers = *party.maxPlayers;
+        m_desc.maxPlayers    = *party.maxPlayers;
         m_presence->partyMax = m_desc.maxPlayers;
     }
     if(party.spectate.secret)
     {
-        m_desc.spectate.secret = *party.spectate.secret;
+        m_desc.spectate.secret     = *party.spectate.secret;
         m_presence->spectateSecret = m_desc.spectate.secret.c_str();
     }
     if(party.join.secret)
     {
-        m_desc.join.secret = *party.join.secret;
+        m_desc.join.secret     = *party.join.secret;
         m_presence->joinSecret = m_desc.join.secret.c_str();
     }
     Discord_UpdatePresence(m_presence);

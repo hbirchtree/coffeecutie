@@ -90,7 +90,8 @@ struct shader_t
 
 struct program_t
 {
-#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300 || defined(GL_KHR_debug)
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300 || \
+    defined(GL_KHR_debug)
     static constexpr auto debug_identifier = group::object_identifier::program;
 #endif
 
@@ -295,8 +296,9 @@ struct program_t
                 i32 data_length = static_cast<i32>(stage_info->m_data.size());
 
                 if(stage_info->m_data.empty())
-                    return stl_types::failure(compile_error_t{
-                        "No data provided for one of the shaders"});
+                    return stl_types::failure(
+                        compile_error_t{
+                            "No data provided for one of the shaders"});
 
                 cmd::shader_source(
                     stage_info->m_handle,
@@ -324,8 +326,9 @@ struct program_t
             {
                 return validate_program();
             } else
-                return stl_types::success(compile_log_t{
-                    "Waiting with KHR_parallel_shader_compile", 1});
+                return stl_types::success(
+                    compile_log_t{
+                        "Waiting with KHR_parallel_shader_compile", 1});
         }
     }
 

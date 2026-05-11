@@ -31,9 +31,9 @@ using platform::url::Url;
 using semantic::RSCA;
 
 static void load_resources(
-    compo::EntityContainer& e,
+    compo::EntityContainer&             e,
     MapLoadFinishedEvent<halo_version>& finished,
-    MapChangedEvent<halo_version>& changed);
+    MapChangedEvent<halo_version>&      changed);
 
 static void filter_maps(std::vector<platform::file::file_entry_t>& files)
 {
@@ -130,7 +130,10 @@ static void init_map(
     load_resources(e, finished, changed);
 }
 
-static void load_resources(compo::EntityContainer& e, MapLoadFinishedEvent<halo_version>& finished, MapChangedEvent<halo_version>& changed)
+static void load_resources(
+    compo::EntityContainer&             e,
+    MapLoadFinishedEvent<halo_version>& finished,
+    MapChangedEvent<halo_version>&      changed)
 {
     auto& loading_status = e.subsystem_cast<LoadingStatus>();
     auto& bitmaps        = e.subsystem_cast<BitmapCache<halo_version>>();
@@ -139,8 +142,8 @@ static void load_resources(compo::EntityContainer& e, MapLoadFinishedEvent<halo_
     auto& shaders        = e.subsystem_cast<ShaderCache<halo_version>>();
     auto& sounds         = e.subsystem_cast<SoundCache<halo_version>>();
     auto& ui_elements    = e.subsystem_cast<UIElementCache<halo_version>>();
-    auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
-    auto* sound_bus = e.service<comp_app::EventBus<SoundEvent>>();
+    auto& files          = e.subsystem_cast<BlamFiles<halo_version>>();
+    auto* sound_bus      = e.service<comp_app::EventBus<SoundEvent>>();
 
     load_scenario_bsp(e, changed);
     load_scenario_scenery(e, changed);
@@ -180,25 +183,25 @@ static void load_resources(compo::EntityContainer& e, MapLoadFinishedEvent<halo_
     u64 main_biped_id{0};
     if(num_pinfo == 0)
     {
-        auto* controllers = e.service<comp_app::ControllerInput>();
-        auto* window = e.service<comp_app::Windowing>();
-        u32 num_controllers = controllers->count(), allocated_controllers = 0;
-        f32 aspect = window->size().aspect();
+        auto* controllers     = e.service<comp_app::ControllerInput>();
+        auto* window          = e.service<comp_app::Windowing>();
+        u32   num_controllers = controllers->count(), allocated_controllers = 0;
+        f32   aspect = window->size().aspect();
         if(num_controllers == 1)
         {
             auto size = window->size();
-            aspect = static_cast<f32>(size.w) / (size.h / 2.f);
+            aspect    = static_cast<f32>(size.w) / (size.h / 2.f);
         }
         for(auto i : range<>(4))
         {
             auto  ref       = e.create_entity(recipe);
             auto& info      = ref.get<PlayerInfo>();
             info.player_idx = i;
-            info.seat_idx = i;
-            auto& camera = ref.get<PlayerCamera>();
+            info.seat_idx   = i;
+            auto& camera    = ref.get<PlayerCamera>();
             if(i == 0)
             {
-                main_biped_id = ref.id();
+                main_biped_id           = ref.id();
                 camera.keyboard.enabled = true;
             } else if(num_controllers > allocated_controllers)
             {
@@ -207,25 +210,28 @@ static void load_resources(compo::EntityContainer& e, MapLoadFinishedEvent<halo_
             }
         }
     }
-    rq::runtime_queue::Queue(rq::dependent_task<void, void>::CreateSink(
-        loading_status.finished.get_future(), [&e](void*) {
-            cDebug("Load finish signalled!");
-            for(auto& player : e.select<PlayerInfo>())
-            {
-                auto* player_info = e.get<PlayerInfo>(player.id);
-                if(!player_info->is_remote())
+    rq::runtime_queue::Queue(
+        rq::dependent_task<void, void>::CreateSink(
+            loading_status.finished.get_future(),
+            [&e](void*) {
+                cDebug("Load finish signalled!");
+                for(auto& player : e.select<PlayerInfo>())
                 {
-                    player_info->loading_progress = 100;
+                    auto* player_info = e.get<PlayerInfo>(player.id);
+                    if(!player_info->is_remote())
+                    {
+                        player_info->loading_progress = 100;
+                    }
                 }
-            }
-            auto& loading = e.subsystem_cast<LoadingStatus>();
-            loading.progress = -1;
-            loading.status = "Complete!";
-            loading.check_all_loaded();
+                auto& loading    = e.subsystem_cast<LoadingStatus>();
+                loading.progress = -1;
+                loading.status   = "Complete!";
+                loading.check_all_loaded();
 
-            GameEvent ev{.type = GameEvent::MapAllLoaded};
-            e.subsystem_cast<GameEventBus>().process(ev, nullptr);
-        })).assume_value();
+                GameEvent ev{.type = GameEvent::MapAllLoaded};
+                e.subsystem_cast<GameEventBus>().process(ev, nullptr);
+            }))
+        .assume_value();
 
     // For debugging: go through all the bitmaps
     u32 num_snds{0}, num_bitms{0}, num_mod{0};
@@ -338,7 +344,8 @@ static void load_resources(compo::EntityContainer& e, MapLoadFinishedEvent<halo_
     }
 }
 
-static MapListingEvent list_maps(compo::EntityContainer& e, MapLoadEvent const& load)
+static MapListingEvent list_maps(
+    compo::EntityContainer& e, MapLoadEvent const& load)
 {
     MapListingEvent listing;
     if(load.directory)
@@ -417,7 +424,7 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
 
     using result_type = blam::map_container<halo_version>::result_type;
 
-    auto&          files   = e.subsystem_cast<BlamFiles<halo_version>>();
+    auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
 
     files.bitmap_file.reset();
     files.sound_file.reset();
@@ -435,12 +442,11 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
         rq::runtime_queue::BindToQueue(
             std::function<void(std::string_view, i16)>(
                 [&loading](std::string_view status, i16 progress) {
-                    loading.status =
-                        std::string(status.begin(), status.end());
-                    loading.progress = progress;
+                    loading.status = std::string(status.begin(), status.end());
+                    loading.progress   = progress;
                     loading.loaded_map = progress == 100
-                        ? LoadingStatus::loaded
-                        : LoadingStatus::in_progress;
+                                             ? LoadingStatus::loaded
+                                             : LoadingStatus::in_progress;
                     loading.check_all_loaded();
                 }));
 
@@ -455,9 +461,9 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
         rq::dependent_task<std::shared_ptr<AsyncResource>, result_type>::
             CreateProcessor(
                 file_mapper.fetch(*load.file),
-                [progress_cb, store_map_file](
-                    std::shared_ptr<AsyncResource>* data) mutable
-                -> result_type {
+                [progress_cb,
+                 store_map_file](std::shared_ptr<AsyncResource>* data) mutable
+                    -> result_type {
                     if(!data || !(*data))
                     {
                         rq::runtime_queue::CancelTask(
@@ -488,8 +494,8 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
         files.container   = std::move(map.value());
         files.bitmap_file = std::move(bitmap_data);
 
-        auto&            gbus = e.subsystem_cast<GameEventBus>();
-        GameEvent        event{GameEvent::MapLoadFinished};
+        auto&     gbus = e.subsystem_cast<GameEventBus>();
+        GameEvent event{GameEvent::MapLoadFinished};
         MapLoadFinishedEvent<halo_version> finished = {
             .container = &files.container,
         };
@@ -554,12 +560,13 @@ void setup_load_eventhandlers(compo::EntityContainer& e)
     auto&       gbus = e.subsystem_cast<GameEventBus>();
     gbus.addEventFunction<MapLoadByNameEvent>(
         0, [&e](GameEvent&, MapLoadByNameEvent* load) {
-            auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
-            auto& gbus = e.subsystem_cast<GameEventBus>();
-            GameEvent event{GameEvent::MapLoadStart};
+            auto&        files = e.subsystem_cast<BlamFiles<halo_version>>();
+            auto&        gbus  = e.subsystem_cast<GameEventBus>();
+            GameEvent    event{GameEvent::MapLoadStart};
             MapLoadEvent map_load = {
                 .origin = load->origin,
-                .file = files.map_directory / Path(load->map_name).addExtension("map"),
+                .file   = files.map_directory /
+                        Path(load->map_name).addExtension("map"),
             };
             gbus.inject(event, &map_load);
         });
@@ -584,8 +591,10 @@ void setup_load_eventhandlers(compo::EntityContainer& e)
     gbus.addEventFunction<MapRequestListingEvent>(
         0, [&e](GameEvent&, MapRequestListingEvent*) {
             auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
-            list_maps(e, MapLoadEvent{
-                .directory = files.map_directory,
-            });
+            list_maps(
+                e,
+                MapLoadEvent{
+                    .directory = files.map_directory,
+                });
         });
 }

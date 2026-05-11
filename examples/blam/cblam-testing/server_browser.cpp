@@ -1,15 +1,19 @@
 #include "data.h"
 #include "networking.h"
 
-#include <coffee/components/subsystem.h>
 #include <coffee/components/restricted_subsystem.h>
+#include <coffee/components/subsystem.h>
 #include <coffee/net/net_resource.h>
 
-using ServerBrowserManifest = compo::SubsystemManifest<compo::empty_list_t, compo::empty_list_t, compo::empty_list_t>;
+using ServerBrowserManifest = compo::SubsystemManifest<
+    compo::empty_list_t,
+    compo::empty_list_t,
+    compo::empty_list_t>;
 
-struct ServerBrowser : compo::RestrictedSubsystem<ServerBrowser, ServerBrowserManifest>
+struct ServerBrowser
+    : compo::RestrictedSubsystem<ServerBrowser, ServerBrowserManifest>
 {
-    using type = ServerBrowser;
+    using type  = ServerBrowser;
     using Proxy = compo::proxy_of<ServerBrowserManifest>;
 
     ServerBrowser(GameEventBus& bus)

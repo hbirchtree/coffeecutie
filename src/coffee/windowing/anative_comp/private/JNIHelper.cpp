@@ -110,8 +110,9 @@ bool JNIHelper::ReadFile(const char* fileName, std::vector<uint8_t>* buffer_ref)
 {
     if(activity_ == NULL)
     {
-        LOGI("JNIHelper has not been initialized.Call init() to initialize the "
-             "helper");
+        LOGI(
+            "JNIHelper has not been initialized.Call init() to initialize the "
+            "helper");
         return false;
     }
 
@@ -185,8 +186,9 @@ std::string JNIHelper::GetExternalFilesDir()
 {
     if(activity_ == NULL)
     {
-        LOGI("JNIHelper has not been initialized. Call init() to initialize "
-             "the helper");
+        LOGI(
+            "JNIHelper has not been initialized. Call init() to initialize "
+            "the helper");
         return std::string("");
     }
 
@@ -214,8 +216,9 @@ uint32_t JNIHelper::LoadTexture(const char* file_name)
 {
     if(activity_ == NULL)
     {
-        LOGI("JNIHelper has not been initialized. Call init() to initialize "
-             "the helper");
+        LOGI(
+            "JNIHelper has not been initialized. Call init() to initialize "
+            "the helper");
         return 0;
     }
 
@@ -259,8 +262,9 @@ std::string JNIHelper::ConvertString(const char* str, const char* encode)
 {
     if(activity_ == NULL)
     {
-        LOGI("JNIHelper has not been initialized. Call init() to initialize "
-             "the helper");
+        LOGI(
+            "JNIHelper has not been initialized. Call init() to initialize "
+            "the helper");
         return std::string("");
     }
 
@@ -300,8 +304,9 @@ int32_t JNIHelper::GetNativeAudioBufferSize()
 {
     if(activity_ == NULL)
     {
-        LOGI("JNIHelper has not been initialized. Call init() to initialize "
-             "the helper");
+        LOGI(
+            "JNIHelper has not been initialized. Call init() to initialize "
+            "the helper");
         return 0;
     }
 
@@ -324,8 +329,9 @@ int32_t JNIHelper::GetNativeAudioSampleRate()
 {
     if(activity_ == NULL)
     {
-        LOGI("JNIHelper has not been initialized. Call init() to initialize "
-             "the helper");
+        LOGI(
+            "JNIHelper has not been initialized. Call init() to initialize "
+            "the helper");
         return 0;
     }
 
@@ -368,8 +374,9 @@ jstring JNIHelper::GetExternalFilesDirJString(JNIEnv* env)
 {
     if(activity_ == NULL)
     {
-        LOGI("JNIHelper has not been initialized. Call init() to initialize "
-             "the helper");
+        LOGI(
+            "JNIHelper has not been initialized. Call init() to initialize "
+            "the helper");
         return NULL;
     }
 

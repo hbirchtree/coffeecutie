@@ -166,15 +166,20 @@ bool bcn_compress(
     auto out_name = create_output_name(base_dir, file, 0, "png");
 
     comp_flags bcn_format = comp_flags::BC1;
-    if(codec == "bc2" || codec == "bc3") {
+    if(codec == "bc2" || codec == "bc3")
+    {
         bcn_format = comp_flags::BC3;
-    } else if(codec == "bc4") {
+    } else if(codec == "bc4")
+    {
         bcn_format = comp_flags::BC4;
-    } else if(codec == "bc5") {
+    } else if(codec == "bc5")
+    {
         bcn_format = comp_flags::BC5;
-    } else if(codec == "bc6") {
+    } else if(codec == "bc6")
+    {
         bcn_format = comp_flags::BC6H;
-    } else if(codec == "bc7") {
+    } else if(codec == "bc7")
+    {
         bcn_format = comp_flags::BC7;
     }
 
@@ -210,8 +215,9 @@ bool png_compress(
         image = std::move(remapped.value());
     }
 
-    Coffee::Resource       out(platform::url::constructors::MkSysUrl(
-        create_output_name(base_dir, file, 0, "png")));
+    Coffee::Resource out(
+        platform::url::constructors::MkSysUrl(
+            create_output_name(base_dir, file, 0, "png")));
     Coffee::stb::stb_error img_ec;
     auto                   png = Coffee::PNG::Save(image, img_ec);
     out                        = png;
@@ -418,35 +424,36 @@ i32 cooker_main(i32 argc, char** argv)
 
             if(codec == "etc2")
                 if(!etc2_compress(
-                    base_dir,
-                    file,
-                    resolutions,
-                    pixcmp,
-                    format,
-                    release_quality))
+                       base_dir,
+                       file,
+                       resolutions,
+                       pixcmp,
+                       format,
+                       release_quality))
                     return 1;
-            else if(codec.starts_with("bc"))
-                if(!bcn_compress(
-                    base_dir,
-                    file,
-                    resolutions,
-                    codec,
-                    pixcmp,
-                    format,
-                    release_quality))
-                    return 1;
-            else if(codec == "png")
-                if(!png_compress(
-                    base_dir,
-                    file,
-                    resolutions,
-                    pixcmp,
-                    format,
-                    release_quality))
-                    return 1;
-            else if(codec == "raw")
-                if(!raw_include(base_dir, file, resolutions, pixcmp, format))
-                    return 1;
+                else if(codec.starts_with("bc"))
+                    if(!bcn_compress(
+                           base_dir,
+                           file,
+                           resolutions,
+                           codec,
+                           pixcmp,
+                           format,
+                           release_quality))
+                        return 1;
+                    else if(codec == "png")
+                        if(!png_compress(
+                               base_dir,
+                               file,
+                               resolutions,
+                               pixcmp,
+                               format,
+                               release_quality))
+                            return 1;
+                        else if(codec == "raw")
+                            if(!raw_include(
+                                   base_dir, file, resolutions, pixcmp, format))
+                                return 1;
         }
 
         image_cache.clear();

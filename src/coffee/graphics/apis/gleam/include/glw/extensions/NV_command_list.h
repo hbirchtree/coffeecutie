@@ -234,7 +234,7 @@ STATICINLINE void draw_commands(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(DrawCommandsNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -334,7 +334,7 @@ STATICINLINE void draw_commands_states(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(DrawCommandsStatesNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);

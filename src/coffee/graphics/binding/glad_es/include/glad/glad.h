@@ -2146,8 +2146,10 @@ typedef void(APIENTRYP PFNGLFRAMEBUFFERTEXTURELAYERPROC)(
     GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer);
 GLAPI PFNGLFRAMEBUFFERTEXTURELAYERPROC glad_glFramebufferTextureLayer;
 #define glFramebufferTextureLayer glad_glFramebufferTextureLayer
-typedef void*(APIENTRYP PFNGLMAPBUFFERRANGEPROC)(
-    GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
+typedef void*(APIENTRYP PFNGLMAPBUFFERRANGEPROC)(GLenum     target,
+                                                 GLintptr   offset,
+                                                 GLsizeiptr length,
+                                                 GLbitfield access);
 GLAPI PFNGLMAPBUFFERRANGEPROC glad_glMapBufferRange;
 #define glMapBufferRange glad_glMapBufferRange
 typedef void(APIENTRYP PFNGLFLUSHMAPPEDBUFFERRANGEPROC)(
@@ -2288,8 +2290,8 @@ typedef void(APIENTRYP PFNGLCLEARBUFFERFIPROC)(
     GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil);
 GLAPI PFNGLCLEARBUFFERFIPROC glad_glClearBufferfi;
 #define glClearBufferfi glad_glClearBufferfi
-typedef const GLubyte*(APIENTRYP PFNGLGETSTRINGIPROC)(
-    GLenum name, GLuint index);
+typedef const GLubyte*(APIENTRYP PFNGLGETSTRINGIPROC)(GLenum name,
+                                                      GLuint index);
 GLAPI PFNGLGETSTRINGIPROC glad_glGetStringi;
 #define glGetStringi glad_glGetStringi
 typedef void(APIENTRYP PFNGLCOPYBUFFERSUBDATAPROC)(
@@ -4576,8 +4578,10 @@ GLAPI PFNGLVERTEXATTRIBDIVISOREXTPROC glad_glVertexAttribDivisorEXT;
 #ifndef GL_EXT_map_buffer_range
 #define GL_EXT_map_buffer_range 1
 GLAPI int GLAD_GL_EXT_map_buffer_range;
-typedef void*(APIENTRYP PFNGLMAPBUFFERRANGEEXTPROC)(
-    GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
+typedef void*(APIENTRYP PFNGLMAPBUFFERRANGEEXTPROC)(GLenum     target,
+                                                    GLintptr   offset,
+                                                    GLsizeiptr length,
+                                                    GLbitfield access);
 GLAPI PFNGLMAPBUFFERRANGEEXTPROC glad_glMapBufferRangeEXT;
 #define glMapBufferRangeEXT glad_glMapBufferRangeEXT
 typedef void(APIENTRYP PFNGLFLUSHMAPPEDBUFFERRANGEEXTPROC)(

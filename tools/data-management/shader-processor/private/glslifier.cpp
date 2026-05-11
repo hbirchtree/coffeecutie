@@ -82,16 +82,18 @@ stl_types::result<std::string, glsl_error> generate(
     const bool legacy = output.version == 100;
     if(!stl_types::any_of(input.stage, Stage::Vertex, Stage::Fragment) &&
        legacy)
-        return stl_types::failure(std::make_pair(
-            "invalid shader stage"s,
-            "OpenGL SL 1.00 only supports vertex and fragment shaders"s));
+        return stl_types::failure(
+            std::make_pair(
+                "invalid shader stage"s,
+                "OpenGL SL 1.00 only supports vertex and fragment shaders"s));
 
     if(auto optimized = opt::perform_optimization(input, output);
        optimized.has_value())
         input.content = optimized.value();
     else
-        return stl_types::failure(std::make_pair<std::string>(
-            "failed to optimize", optimized.error()));
+        return stl_types::failure(
+            std::make_pair<std::string>(
+                "failed to optimize", optimized.error()));
 
     spirv_cross::CompilerGLSL compiler(input.content);
     compiler.set_entry_point(
@@ -145,8 +147,9 @@ stl_types::result<std::string, glsl_error> generate(
         return stl_types::success(std::move(source));
     } catch(std::exception const& exc)
     {
-        return stl_types::failure(std::make_pair<std::string>(
-            exc.what(), compiler.get_partial_source()));
+        return stl_types::failure(
+            std::make_pair<std::string>(
+                exc.what(), compiler.get_partial_source()));
     }
 }
 

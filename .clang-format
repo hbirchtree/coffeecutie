@@ -1,3 +1,4 @@
+---
 AlignAfterOpenBracket: AlwaysBreak
 AlignEscapedNewlines: Left
 AlignConsecutiveAssignments: 'true'
@@ -33,7 +34,6 @@ FixNamespaceComments: 'true'
 IndentWidth: '4'
 IndentRequires: 'false'
 KeepEmptyLinesAtTheStartOfBlocks: 'false'
-Language: Cpp
 NamespaceIndentation: None
 PointerAlignment: Left
 RequiresExpressionIndentation: OuterScope
@@ -43,7 +43,12 @@ SortUsingDeclarations: 'true'
 SpaceAfterTemplateKeyword: 'false'
 SpaceBeforeAssignmentOperators: 'true'
 SpaceBeforeParens: Never
-Standard: Cpp11
 UseTab: Never
 PenaltyReturnTypeOnItsOwnLine: 10000
 WhitespaceSensitiveMacros: ['C_HAS_INCLUDE']
+---
+Language: ObjC
+ObjCBinPackProtocolList: Never
+ObjCBlockIndentWidth: 4
+ObjCSpaceAfterProperty: true
+ObjCSpaceBeforeProtocolList: false

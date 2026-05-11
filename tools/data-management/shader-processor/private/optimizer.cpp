@@ -55,8 +55,9 @@ stl_types::result<spv_blob, std::string> perform_optimization(
 
     if(optimizations.rename_entrypoint)
     {
-        opt.RegisterPass(passes::CreateRenameEntrypointPass(
-            *optimizations.rename_entrypoint));
+        opt.RegisterPass(
+            passes::CreateRenameEntrypointPass(
+                *optimizations.rename_entrypoint));
     }
 
     std::string messages;

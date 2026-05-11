@@ -113,7 +113,7 @@ STATICINLINE void texture_image_2d_multisample_coverage(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureImage2DMultisampleCoverageNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -157,7 +157,7 @@ STATICINLINE void texture_image_2d_multisample(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureImage2DMultisampleNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -203,7 +203,7 @@ STATICINLINE void texture_image_3d_multisample_coverage(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureImage3DMultisampleCoverageNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -249,7 +249,7 @@ STATICINLINE void texture_image_3d_multisample(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureImage3DMultisampleNV)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);

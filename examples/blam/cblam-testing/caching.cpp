@@ -90,8 +90,8 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             it.portals.push_back(&portals[portal_idx]);
         for(blam::bsp::subcluster const& sub : subclusters)
         {
-            auto indices    = sub.indices.data(bsp_magic).value();
-            auto [min, max] = sub.bounds.points();
+            auto indices                  = sub.indices.data(bsp_magic).value();
+            auto [min, max]               = sub.bounds.points();
             std::array<Vecf3, 8> vertices = {{
                 min,
                 Vecf3(max.x, min.y, min.z),
@@ -114,10 +114,11 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
                         .offset = static_cast<u32>(portal_ptr),
                     },
             });
-            it.sub.push_back(BSPItem::Subcluster{
-                .cluster = &sub,
-                .indices = indices,
-            });
+            it.sub.push_back(
+                BSPItem::Subcluster{
+                    .cluster = &sub,
+                    .indices = indices,
+                });
             portal_ptr += 8;
             portal_color_ptr++;
         }

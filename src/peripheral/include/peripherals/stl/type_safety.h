@@ -45,8 +45,10 @@ template<typename T>
     {
         int stat = 0;
 
-        std::throw_with_nested(std::runtime_error(
-            abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, &stat)));
+        std::throw_with_nested(
+            std::runtime_error(
+                abi::__cxa_demangle(
+                    typeid(T).name(), nullptr, nullptr, &stat)));
     }
 }
 #else

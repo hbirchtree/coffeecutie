@@ -42,7 +42,7 @@ STATICINLINE void bind_buffer_base(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferBase)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -73,7 +73,7 @@ STATICINLINE void bind_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferRange)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
@@ -109,7 +109,7 @@ STATICINLINE void get_active_uniform_block_name(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformBlockName)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -148,7 +148,7 @@ STATICINLINE void get_active_uniform_blockiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformBlockiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -188,7 +188,7 @@ STATICINLINE void get_active_uniform_name(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformName)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -229,7 +229,7 @@ STATICINLINE void get_active_uniformsiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformsiv)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -291,7 +291,7 @@ STATICINLINE GLuint get_uniform_block_index(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformBlockIndex)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -326,7 +326,7 @@ STATICINLINE void get_uniform_indices(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformIndices)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
@@ -360,7 +360,7 @@ STATICINLINE void uniform_block_binding(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UniformBlockBinding)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);

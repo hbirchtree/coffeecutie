@@ -669,7 +669,7 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
             world_data[0].fog.distances.w = 1000.f;
 
         if(skybox_.model.valid())
-            skybox_mod.tag           = *index.tag_of(skybox_.model);
+            skybox_mod.tag = *index.tag_of(skybox_.model);
         skybox_mod.origin_object = skybox_tag;
         skybox_mod.transform     = glm::identity<Matf4>();
 

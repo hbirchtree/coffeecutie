@@ -35,7 +35,7 @@ STATICINLINE void get_compressed_texture_sub_image(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetCompressedTextureSubImage)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
@@ -89,7 +89,7 @@ STATICINLINE void get_texture_sub_image(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureSubImage)
-#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);

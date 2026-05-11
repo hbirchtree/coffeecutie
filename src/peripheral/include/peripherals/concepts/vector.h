@@ -8,25 +8,13 @@ namespace semantic::concepts {
 template<class T, typename E, size_t N>
 concept Vector = std::is_same_v<typename T::value_type, E> &&
                  T::length() == N && requires(T v) {
-                     {
-                         v[0] = 1.f
-                     };
-                     {
-                         v[N - 1] = 1.f
-                     };
+                     { v[0] = 1.f };
+                     { v[N - 1] = 1.f };
 
-                     {
-                         v += 1.f
-                     };
-                     {
-                         v -= 1.f
-                     };
-                     {
-                         v *= 1.f
-                     };
-                     {
-                         v /= 1.f
-                     };
+                     { v += 1.f };
+                     { v -= 1.f };
+                     { v *= 1.f };
+                     { v /= 1.f };
                      //    {v += T(1.f)};
                      //    {v -= T(1.f)};
                      //    {v *= T(1.f)};
@@ -44,9 +32,7 @@ template<class T, typename E>
 concept Size2D = std::is_same_v<typename T::value_type, E> && requires(T v) {
     //    { v.volume() };
     //    { v.aspect() };
-    {
-        v[0]
-    };
+    { v[0] };
 };
 
 template<class T, typename E>

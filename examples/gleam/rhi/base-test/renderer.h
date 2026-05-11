@@ -26,8 +26,8 @@
 #endif
 
 #if defined(FEATURE_ENABLE_ASIO)
-#include <coffee/net/net_resource.h>
 #include <coffee/net/curl_network_stats.h>
+#include <coffee/net/net_resource.h>
 #endif
 
 #if defined(FEATURE_ENABLE_DiscordLatte)

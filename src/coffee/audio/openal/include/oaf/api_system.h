@@ -20,15 +20,17 @@ struct system
     static DeviceHandle dummy()
     {
         return DeviceHandle{
-            .dummy = DummyInfo{
-                .fmt = Format{
-                    .frequency = 48000,
-                    .channels = 2,
-                    .bits = 16,
-                    .format = format_t::f32,
+            .dummy =
+                DummyInfo{
+                    .fmt =
+                        Format{
+                            .frequency = 48000,
+                            .channels  = 2,
+                            .bits      = 16,
+                            .format    = format_t::f32,
+                        },
+                    .speed = 1.f,
                 },
-                .speed = 1.f,
-            },
         };
     }
 };
