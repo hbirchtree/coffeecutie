@@ -19,7 +19,8 @@ requires std::is_same_v<T, std::string>
 inline auto sysctl_by_name(const char* name)
 {
     size_t len = 0;
-    sysctlbyname(name, nullptr, &len, nullptr, 0);
+    if(sysctlbyname(name, nullptr, &len, nullptr, 0) != 0 || len == 0)
+        return std::string{};
     std::string out(len - 1, '\0');
     sysctlbyname(name, out.data(), &len, nullptr, 0);
     return out;
@@ -29,7 +30,7 @@ template<typename T>
 requires std::is_same_v<T, u64>
 inline auto sysctl_by_name(const char* name)
 {
-    u64    out;
+    u64    out = 0;
     size_t len = sizeof(out);
     sysctlbyname(name, &out, &len, nullptr, 0);
     return out;
@@ -71,9 +72,18 @@ inline std::optional<std::pair<std::string, std::string>> model(
 #if defined(COFFEE_IOS)
     return std::pair<std::string, std::string>("Apple", "A");
 #else
-    return std::make_pair(
-        info::apple::sysctl_by_name<std::string>("machdep.cpu.vendor"),
-        info::apple::sysctl_by_name<std::string>("machdep.cpu.brand_string"));
+    /* machdep.cpu.* keys only exist on Intel Macs; Apple Silicon lacks them */
+    auto vendor = info::apple::sysctl_by_name<std::string>("machdep.cpu.vendor");
+    if(!vendor.empty())
+        return std::make_pair(
+            vendor,
+            info::apple::sysctl_by_name<std::string>(
+                "machdep.cpu.brand_string"));
+    auto hw_model =
+        info::apple::sysctl_by_name<std::string>("hw.model");
+    if(!hw_model.empty())
+        return std::make_pair(std::string("Apple"), hw_model);
+    return std::nullopt;
 #endif
 }
 
