@@ -1,5 +1,58 @@
 #!/usr/bin/env python3
-"""Run a built binary on a remote device using .targets.json configuration."""
+"""Run a built binary on a remote device using .targets.json configuration.
+
+Example .targets.json:
+
+    {
+        "devices": {
+            "myboard": {
+                "target": "desktop:aarch64-buildroot-linux-gnu:multi",
+                "hostname": "myboard.local",
+                "scratchdir": "/home/user/scratch",
+                "env": {
+                    "DISPLAY": ":0"
+                },
+                "viewer": {
+                    "type": "web",
+                    "address": "http://myboard.local:8888"
+                }
+            },
+            "myphone": {
+                "target": "android:arm64:32",
+                "hostname": "192.168.1.10:5555",
+                "env": {},
+                "viewer": {
+                    "type": "scrcpy"
+                }
+            }
+        },
+        "presets": {
+            "MyApp": {
+                "binary": "MyApp",
+                "package": "com.example.MyApp",
+                "workdir": "$SCRATCH_DIR",
+                "files": [
+                    {"local": "$BUILD_DIR/assets/", "remote": "$SCRATCH_DIR/assets/"}
+                ],
+                "env": {},
+                "args": ["$SCRATCH_DIR/assets"]
+            }
+        }
+    }
+
+Keys:
+  devices[name].target     — platform:arch:sysroot (determines build dir under multi_build/)
+  devices[name].hostname   — SSH host or ADB serial; omit for android to auto-pick via adb
+  devices[name].scratchdir — remote working directory (Linux only)
+  devices[name].env        — environment variables set on the remote
+  devices[name].viewer     — optional display viewer: {type: "web"|"scrcpy", address: "..."}
+  presets[name].binary     — executable name under multi_build/<target>/bin/
+  presets[name].package    — Android package name (required for android targets)
+  presets[name].workdir    — remote cwd, supports $SCRATCH_DIR and $BUILD_DIR
+  presets[name].files      — list of {local, remote} rsync transfers before launch
+  presets[name].args       — command-line args passed to the binary
+  presets[name].extras     — Android --es intent extras (merged with device env)
+"""
 
 import argparse
 import glob
@@ -349,7 +402,10 @@ def run_android(device_name, device, preset_name, preset, extra_args, build_root
             cmd += ['--pid', pid]
         return cmd
 
-    setup_cmds = [
+    setup_cmds = []
+    if device.get('hostname'):
+        setup_cmds.append(['adb', 'connect', hostname])
+    setup_cmds += [
         ['adb', '-s', hostname, 'install', '-r', apk_path],
         ['adb', '-s', hostname, 'logcat', '-c'],
         launch_cmd,
