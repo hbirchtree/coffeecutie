@@ -134,6 +134,8 @@ jobs:
         submodules: true
         path: source
     - uses: ./source/.github/actions/cmake-setup
+    - name: List sysctl
+      run: sysctl -a
     - name: Installing Inkscape + other stuff
       run: |
         brew install --cask inkscape
