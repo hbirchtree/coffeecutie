@@ -31,13 +31,13 @@ jobs:
       with:
         submodules: true
         path: source
-    - uses: ./.github/actions/cmake-setup
+    - uses: ./source/.github/actions/cmake-setup
     - name: Installing build-essential
       run: |
         sudo rm /etc/apt/sources.list.d/microsoft-prod.list
         sudo apt-get update
         sudo apt install build-essential nasm
-    - uses: ./.github/actions/build-host-tools
+    - uses: ./source/.github/actions/build-host-tools
       with:
         cache_path: source/multi_build/host-x64-linux-native
   Linux:
@@ -78,7 +78,7 @@ jobs:
       with:
         submodules: true
         path: source
-    - uses: ./.github/actions/cmake-setup
+    - uses: ./source/.github/actions/cmake-setup
     - uses: actions/setup-java@v5
       if: startsWith(matrix.variant, 'android:')
       with:
@@ -105,7 +105,7 @@ jobs:
         du -hd2 source/
         echo "::info::du in ."
         du -hd2 .
-    - uses: ./.github/actions/build-project
+    - uses: ./source/.github/actions/build-project
       with:
         variant: ${{ matrix.variant }}
         artifact: ${{ matrix.artifact }}
@@ -133,12 +133,12 @@ jobs:
       with:
         submodules: true
         path: source
-    - uses: ./.github/actions/cmake-setup
+    - uses: ./source/.github/actions/cmake-setup
     - name: Installing Inkscape + other stuff
       run: |
         brew install --cask inkscape
         brew install automake libtool
-    - uses: ./.github/actions/build-host-tools
+    - uses: ./source/.github/actions/build-host-tools
       with:
         cache_path: source/multi_build/host-arm64-osx
         build_args: dbg
@@ -168,7 +168,7 @@ jobs:
       with:
         submodules: true
         path: source
-    - uses: ./.github/actions/cmake-setup
+    - uses: ./source/.github/actions/cmake-setup
     - name: Installing Inkscape + other stuff
       run: |
         brew install --cask inkscape
@@ -180,7 +180,7 @@ jobs:
         path: source/multi_build/host-arm64-osx
         key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools','toolchain/building.py','vcpkg.json','vcpkg-configuration.json') }}
         fail-on-cache-miss: true
-    - uses: ./.github/actions/build-project
+    - uses: ./source/.github/actions/build-project
       with:
         variant: ${{ matrix.variant }}
         artifact: ${{ matrix.artifact }}
