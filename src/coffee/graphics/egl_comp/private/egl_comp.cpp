@@ -132,17 +132,27 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
                     throw std::runtime_error(
                         "EGL_KHR_platform_android not supported");
                 windowInfo.display = EGL_DEFAULT_DISPLAY;
+                cDebug("Selecting ANDROID_KHR as EGL backend");
                 return EGL_PLATFORM_ANDROID_KHR;
             case ws_t::wayland:
                 if(!supportsExtension("EGL_KHR_platform_wayland"))
                     throw std::runtime_error(
                         "EGL_KHR_platform_wayland not supported");
+                cDebug("Selecting WAYLAND_KHR as EGL backend");
                 return EGL_PLATFORM_WAYLAND_KHR;
             case ws_t::x11:
                 if(!supportsExtension("EGL_KHR_platform_x11"))
                     throw std::runtime_error(
                         "EGL_KHR_platform_x11 not supported");
+                cDebug("Selecting X11_KHR as EGL backend");
                 return EGL_PLATFORM_X11_KHR;
+            case ws_t::surfaceless:
+                if(!supportsExtension("EGL_MESA_platform_surfaceless"))
+                    throw std::runtime_error(
+                        "EGL_MESA_platform_surfaceless not supported");
+                cDebug("Selecting SURFACELESS_MESA as EGL backend");
+                windowInfo.display = EGL_DEFAULT_DISPLAY;
+                return EGL_PLATFORM_SURFACELESS_MESA;
             default:
                 throw std::out_of_range("no window system defined");
             }
@@ -163,6 +173,10 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
 #else
     m_data->display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 #endif
+    if(auto vendor = eglQueryString(EGL_NO_DISPLAY, EGL_VENDOR))
+    {
+        cDebug("EGL vendor: {}", std::string_view(vendor));
+    }
 
     if(m_data->display == EGL_NO_DISPLAY)
     {
@@ -184,6 +198,8 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
     appInfo.add("egl:vendor", eglQueryString(m_data->display, EGL_VENDOR));
     appInfo.add("egl:version", eglQueryString(m_data->display, EGL_VERSION));
 
+    cDebug("EGL vendor: {}", eglQueryString(m_data->display, EGL_VENDOR));
+
     if(auto extensions = eglQueryString(m_data->display, EGL_EXTENSIONS))
     {
         appInfo.add("egl:extensions", extensions);
@@ -200,6 +216,7 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
 #if defined(EGL_VERSION_1_4)
         if(eglBindAPI(EGL_OPENGL_API) == EGL_FALSE)
         {
+            Profiler::DeepProfile("Failed to bind OpenGL");
             ec = "failed to bind EGL API OpenGL";
             ec = comp_app::AppError::ContextFailedBind;
             return;
@@ -211,6 +228,7 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
     {
         if(eglBindAPI(EGL_OPENGL_ES_API) == EGL_FALSE)
         {
+            Profiler::DeepProfile("Failed to bind OpenGL ES");
             ec = "failed to bind EGL API OpenGLES";
             ec = comp_app::AppError::ContextFailedBind;
             return;
@@ -262,7 +280,8 @@ static stl_types::result<EGLConfig, std::string> eglTryConfig(
     comp_app::GLConfig const&                          config,
     gl::tex::texture_format_t::bit_layout_t const&     color,
     gl::tex::texture_format_t::bit_layout_t const&     depth,
-    [[maybe_unused]] std::set<std::string_view> const& extensions)
+    [[maybe_unused]] std::set<std::string_view> const& extensions,
+    bool surfaceless)
 {
     using Profile = comp_app::GLConfig::Profile;
     using namespace typing::pixels;
@@ -279,7 +298,7 @@ static stl_types::result<EGLConfig, std::string> eglTryConfig(
 
     // clang-format off
     std::vector<std::pair<EGLint, EGLint>> surfaceConfig = {
-        {EGL_SURFACE_TYPE, EGL_WINDOW_BIT},
+        {EGL_SURFACE_TYPE, surfaceless ? EGL_PBUFFER_BIT : EGL_WINDOW_BIT},
 
         {EGL_COLOR_BUFFER_TYPE, EGL_RGB_BUFFER},
         {EGL_RENDERABLE_TYPE, render_type},
@@ -468,9 +487,41 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
         }
     }
 #endif
-    if(auto res = eglTryConfig(display, config, color, depth, extensions);
+    using ws_t = comp_app::interfaces::PtrNativeWindowInfo::window_system_t;
+    auto window_info = e.service<comp_app::PtrNativeWindowInfo>();
+    bool surfaceless = window_info->window_system == ws_t::surfaceless;
+
+    if(auto res = eglTryConfig(display, config, color, depth, extensions, surfaceless);
        res.has_error())
     {
+        std::vector<EGLConfig> configs(100);
+        EGLint num_configs;
+        eglGetConfigs(display, configs.data(), configs.size(), &num_configs);
+        configs.resize(num_configs);
+        cWarning("No config selected, enumerating:");
+        for(auto const& config : configs)
+        {
+            struct config_t
+            {
+                EGLint red{}, green{}, blue{}, alpha{};
+                EGLint depth{}, stencil{};
+                EGLint renderable_type{}, color_buffer_type{};
+            } config_values;
+            eglGetConfigAttrib(display, config, EGL_RED_SIZE, &config_values.red);
+            eglGetConfigAttrib(display, config, EGL_GREEN_SIZE, &config_values.green);
+            eglGetConfigAttrib(display, config, EGL_BLUE_SIZE, &config_values.blue);
+            eglGetConfigAttrib(display, config, EGL_ALPHA_SIZE, &config_values.alpha);
+            eglGetConfigAttrib(display, config, EGL_DEPTH_SIZE, &config_values.depth);
+            eglGetConfigAttrib(display, config, EGL_STENCIL_SIZE, &config_values.stencil);
+            eglGetConfigAttrib(display, config, EGL_RENDERABLE_TYPE, &config_values.renderable_type);
+            eglGetConfigAttrib(display, config, EGL_COLOR_BUFFER_TYPE, &config_values.color_buffer_type);
+
+            cWarning(" - {} : R{}G{}B{}A{} D{}S{} renderable={} color_buffer={}",
+                     config,
+                     config_values.red, config_values.green, config_values.blue, config_values.alpha,
+                     config_values.depth, config_values.stencil,
+                     reinterpret_cast<void*>(config_values.renderable_type), reinterpret_cast<void*>(config_values.color_buffer_type));
+        }
         ec = res.error();
         ec = comp_app::AppError::FramebufferMismatch;
         return;
@@ -526,12 +577,19 @@ void GraphicsFramebuffer::swapBuffers(comp_app::app_error& ec)
     if constexpr(compile_info::debug_mode)
         Coffee::Profiler::PushContext("egl::GraphicsFramebuffer::swapBuffers");
 
-    auto display = m_container->service<DisplayHandle>()->context().display;
-
-    if(!eglSwapBuffers(display, m_surface))
+    using ws_t = comp_app::interfaces::PtrNativeWindowInfo::window_system_t;
+    if(m_container->service<comp_app::PtrNativeWindowInfo>()->window_system ==
+       ws_t::surfaceless)
     {
-        ec = "eglSwapBuffers:" + egl_to_error();
-        ec = comp_app::AppError::SwapBuffersFailed;
+        glFinish();
+    } else
+    {
+        auto display = m_container->service<DisplayHandle>()->context().display;
+        if(!eglSwapBuffers(display, m_surface))
+        {
+            ec = "eglSwapBuffers:" + egl_to_error();
+            ec = comp_app::AppError::SwapBuffersFailed;
+        }
     }
 
     if constexpr(compile_info::debug_mode)
@@ -589,6 +647,22 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
 
     m_surface = {};
 
+    using ws_t = comp_app::interfaces::PtrNativeWindowInfo::window_system_t;
+    if(ptr_info->window_system == ws_t::surfaceless)
+    {
+        auto const& windowConfig =
+            comp_app::AppLoader::config<comp_app::WindowConfig>(e);
+        std::array<EGLint, 5> pbufattrs = {{
+            EGL_WIDTH,  windowConfig.size.w,
+            EGL_HEIGHT, windowConfig.size.h,
+            EGL_NONE,
+        }};
+        m_surface = eglCreatePbufferSurface(
+            display,
+            e.service<egl::GraphicsContext>()->m_config,
+            pbufattrs.data());
+    } else
+    {
 #if defined(EGL_VERSION_1_5) && SUPPORTS_PLATFORM_DISPLAY_API
     if(egl_15_supported)
     {
@@ -615,6 +689,7 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
             nullptr);
         cWarning("Falling back to default window configuration");
     }
+    } // end non-surfaceless block
 
     if(m_surface == EGL_NO_SURFACE)
     {
@@ -720,6 +795,28 @@ comp_app::window_flags_t Windowing::state() const
 }
 
 void Windowing::setState(comp_app::window_flags_t)
+{
+}
+
+void SurfacelessWindowing::load(entity_container& e, comp_app::app_error&)
+{
+    using ws_t = comp_app::interfaces::PtrNativeWindowInfo::window_system_t;
+    e.service<comp_app::PtrNativeWindowInfo>()->window_system = ws_t::surfaceless;
+    m_container = &e;
+}
+
+comp_app::size_2d_t SurfacelessWindowing::size() const
+{
+    return m_container->service<GraphicsFramebuffer>()->size();
+}
+
+comp_app::window_flags_t SurfacelessWindowing::state() const
+{
+    using W = comp_app::window_flags_t;
+    return W::maximized | W::fullscreen | W::focused | W::undecorated;
+}
+
+void SurfacelessWindowing::setState(comp_app::window_flags_t)
 {
 }
 

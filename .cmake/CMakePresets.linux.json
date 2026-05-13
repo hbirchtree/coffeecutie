@@ -108,6 +108,7 @@
             "inherits": ["vcpkg-base-linux"],
             "cacheVariables": {
                 "BUILD_DISCORD_RPC": "ON",
+                "BUILD_EGL": "ON",
                 "BUILD_GLSCREENSHOT": "ON",
                 "BUILD_GL_SOFTWARE_BCN": "ON",
                 "BUILD_GL_SOFTWARE_PVRTC": "ON",

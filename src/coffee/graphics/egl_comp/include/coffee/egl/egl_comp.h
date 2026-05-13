@@ -130,8 +130,31 @@ struct Windowing
     entity_container* m_container;
 };
 
+struct SurfacelessWindowing
+    : comp_app::interfaces::StaticWindowing
+    , comp_app::AppService<SurfacelessWindowing, comp_app::Windowing>
+    , comp_app::AppLoadableService
+{
+    void load(entity_container& e, comp_app::app_error& ec);
+
+    comp_app::size_2d_t      size() const final;
+    comp_app::window_flags_t state() const final;
+    void                     setState(comp_app::window_flags_t) final;
+
+  private:
+    entity_container* m_container;
+};
+
 using Services = comp_app::detail::TypeList<
     comp_app::PtrNativeWindowInfoService,
+    DisplayHandle,
+    GraphicsContext,
+    GraphicsFramebuffer,
+    GraphicsSwapControl>;
+
+using SurfacelessServices = comp_app::detail::TypeList<
+    comp_app::PtrNativeWindowInfoService,
+    SurfacelessWindowing,
     DisplayHandle,
     GraphicsContext,
     GraphicsFramebuffer,

@@ -4,9 +4,9 @@
 #include <coffee/comp_app/services.h>
 #include <coffee/core/task_queue/task.h>
 
-#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
-#include <coffee/comp_app/dummy_plug.h>
-#endif
+namespace comp_app::dummy_plug {
+struct Config;
+}
 
 namespace glscreenshot {
 
@@ -28,9 +28,7 @@ struct ScreenshotProvider
     }
 
     comp_app::GLConfig const* m_config{nullptr};
-#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
     comp_app::dummy_plug::Config const* m_dummy_config{nullptr};
-#endif
 
     libc_types::u32    m_pbo{0};
     void*              m_pbo_fence{nullptr};

@@ -10,6 +10,12 @@ foreach(GLIMPL Dynamic ESDynamic ES2Dynamic ES ES2)
                 $<INSTALL_INTERFACE:include>
   )
 
+  if(BUILD_COMP_DUMMY_PLUG)
+    target_compile_definitions(GLScreenshot_${GLIMPL} PRIVATE 
+      -DFEATURE_ENABLE_ComponentBundleSetup_DummyPlug=1
+    )
+  endif()
+
   if("${GLIMPL}" MATCHES "ES")
     target_compile_definitions(
       GLScreenshot_${GLIMPL} PRIVATE -DGLADCOMP_COMPILE_ES

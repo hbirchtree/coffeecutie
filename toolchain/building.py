@@ -1097,6 +1097,87 @@ def build_plan_for(target: TargetSpec, host: HostInfo, base_dir: Path) -> BuildP
 
 
 # ---------------------------------------------------------------------------
+# Environment helper (shared by build plans and the `env` shell command)
+# ---------------------------------------------------------------------------
+
+def _env_for_target(target: TargetSpec, host: HostInfo, base_dir: Path) -> dict[str, str]:
+    """Return the full environment dict needed to build/work with *target*.
+
+    Mirrors the env-building logic spread across the plan factories so the
+    `env` subcommand can exec a shell with the same variables the build would
+    use, including the cross-compiler PATH entries.
+    """
+    env = {**os.environ}
+
+    if target.platform == "host":
+        return env
+
+    env.update(_base_env(target, host, base_dir))
+
+    if target.platform == "web":
+        default_root = base_dir / "multi_build/compilers/emsdk"
+        toolchain_root = Path(os.environ.get("TOOLCHAIN_ROOT", str(default_root)))
+        env.update({
+            "TOOLCHAIN_PREFIX": target.architecture,
+            "TOOLCHAIN_ROOT": str(toolchain_root),
+            "EMSCRIPTEN": str(toolchain_root),
+            "EMSDK": str(toolchain_root),
+        })
+
+    elif target.platform == "android":
+        default_sdk = base_dir / "multi_build/compilers/android/latest"
+        android_sdk = Path(os.environ.get("ANDROID_SDK", str(default_sdk)))
+        ndk_version = get_preset_value(base_dir, target.preset, "NDK_VERSION")
+        env.update({
+            "ANDROID_SDK": str(android_sdk),
+            "TOOLCHAIN_PREFIX": target.architecture,
+            "TOOLCHAIN_ROOT": str(android_sdk / "ndk" / ndk_version),
+        })
+
+    elif "mingw32" in target.architecture or target.platform == "windows":
+        toolchain_ver = get_preset_value(base_dir, target.preset, "TOOLCHAIN_VERSION")
+        default_root = (
+            base_dir / "multi_build/compilers/mingw" / target.architecture / toolchain_ver
+        )
+        toolchain_root = Path(os.environ.get("TOOLCHAIN_ROOT", str(default_root)))
+        env.update({
+            "TOOLCHAIN_PREFIX": target.architecture,
+            "TOOLCHAIN_ROOT": str(toolchain_root),
+        })
+
+    elif target.platform in _NATIVE_PLATFORMS:
+        toolchain_required = (
+            get_preset_value(base_dir, target.preset, "TOOLCHAIN_REQUIRED") == "1"
+        )
+        is_gamecube = (
+            f"{target.platform}-{target.architecture}".startswith("console-powerpc-eabi")
+        )
+        toolchain_prefix = "powerpc-eabi" if is_gamecube else target.architecture
+        env["TOOLCHAIN_PREFIX"] = toolchain_prefix
+
+        if not toolchain_required:
+            toolchain_ver = get_preset_value(base_dir, target.preset, "TOOLCHAIN_VERSION")
+            if is_gamecube:
+                default_root = (
+                    base_dir / "multi_build/compilers/gamecube-powerpc-eabi" / toolchain_ver
+                )
+            else:
+                default_root = (
+                    base_dir
+                    / "multi_build/compilers"
+                    / f"{target.platform}-{target.architecture}"
+                    / toolchain_ver
+                )
+            toolchain_root = Path(os.environ.get("TOOLCHAIN_ROOT", str(default_root)))
+            toolchain_sysroot = toolchain_root / toolchain_prefix / "sysroot"
+            env["TOOLCHAIN_ROOT"] = str(toolchain_root)
+            env["TOOLCHAIN_SYSROOT"] = str(toolchain_sysroot)
+            env["PATH"] = f"{toolchain_root / 'bin'}:{os.environ.get('PATH', '')}"
+
+    return env
+
+
+# ---------------------------------------------------------------------------
 # Subcommand helpers
 # ---------------------------------------------------------------------------
 
@@ -1382,14 +1463,16 @@ def main() -> None:
 
     elif cmd == "env":
         check_programs("cmake")
-        preset = args.target.replace(":", "-")
-        build_dir = base_dir / "multi_build" / preset
+        target = TargetSpec.parse(args.target)
+        build_dir = base_dir / "multi_build" / target.preset
         build_dir.mkdir(parents=True, exist_ok=True)
-        print(f"Entering env for preset {preset}")
-        cmd_print_env(preset, base_dir)
+        merged_env = _env_for_target(target, host, base_dir)
+        print(f"Entering env for preset {target.preset}")
+        for k, v in sorted(merged_env.items() - os.environ.items()):
+            print(f"  {k}={v}")
         os.chdir(str(build_dir))
-        shell = os.environ.get("SHELL", "bash")
-        os.execlp(shell, shell)
+        shell = merged_env.get("SHELL", "bash")
+        os.execvpe(shell, [shell], merged_env)
 
     # --- code tool commands ----------------------------------------------
 

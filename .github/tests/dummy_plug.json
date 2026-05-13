@@ -1,7 +1,7 @@
 {
     "graphics": {
-        "window": {"width": 640, "height": 360, "depth": 32},
-        "software_renderer": "mesa",
+        "window": {"width": 640, "height": 360, "depth": 16},
+        "software_renderer": "llvmpipe",
         "gl": [
             {"major": 3, "minor": 3},
             {"major": 4, "minor": 1},

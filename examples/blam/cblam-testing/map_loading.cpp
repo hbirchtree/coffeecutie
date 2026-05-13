@@ -185,7 +185,7 @@ static void load_resources(
     {
         auto* controllers     = e.service<comp_app::ControllerInput>();
         auto* window          = e.service<comp_app::Windowing>();
-        u32   num_controllers = controllers->count(), allocated_controllers = 0;
+        u32   num_controllers = controllers ? controllers->count() : 0, allocated_controllers = 0;
         f32   aspect = window->size().aspect();
         if(num_controllers == 1)
         {

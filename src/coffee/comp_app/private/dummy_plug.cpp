@@ -206,6 +206,18 @@ void fork_dummy_plugs(
         dummy_plug.graphics_config["profile"] = "Embedded";
         dummy_plug.graphics_config["major"]   = 3u;
         dummy_plug.graphics_config["minor"]   = 2u;
+    } else if(dummy_plug.swrender == "llvmpipe")
+    {
+        cDebug("llvmpipe software rendering activated");
+        glConfig.profile = GLConfig::Core;
+        glConfig.version.major = 4u;
+        glConfig.version.minor = 6u;
+
+        dummy_plug.graphics_config            = nlohmann::json();
+        dummy_plug.graphics_config["profile"] =
+            magic_enum::enum_name(glConfig.profile);
+        dummy_plug.graphics_config["major"] = glConfig.version.major;
+        dummy_plug.graphics_config["minor"] = glConfig.version.minor;
     } else
     {
         dummy_plug.graphics_config = nlohmann::json();
@@ -248,18 +260,28 @@ void fork_dummy_plugs(
 
     const auto apply_version = [&glConfig,
                                 &dummy_plug](version_t const& version) {
-        if(version.profile == GLConfig::Core)
+        if(dummy_plug.swrender == "mesa")
         {
+            if(version.profile == GLConfig::Core)
+            {
+                glConfig.version.major = version.major;
+                glConfig.version.minor = version.minor;
+            } else
+            {
+                glConfig.version.major = 4;
+                glConfig.version.minor = 5;
+            }
+            glConfig.depthFmt =
+                version.depth == 32 ? pix_fmt::Depth32 : pix_fmt::Depth16;
+        } else if (dummy_plug.swrender == "llvmpipe")
+        {
+            glConfig.profile = version.profile;
             glConfig.version.major = version.major;
             glConfig.version.minor = version.minor;
-        } else
-        {
-            glConfig.version.major = 4;
-            glConfig.version.minor = 5;
+            glConfig.depthFmt =
+                version.depth == 32 ? pix_fmt::Depth32F : pix_fmt::Depth16F;
+            glConfig.depthFmt = pix_fmt::Depth24Stencil8;
         }
-        // glConfig.profile = version.profile;
-        glConfig.depthFmt =
-            version.depth == 32 ? pix_fmt::Depth32 : pix_fmt::Depth16;
 
         dummy_plug.graphics_config = nlohmann::json();
         dummy_plug.graphics_config["profile"] =
@@ -373,10 +395,14 @@ void insert_dummy_plug(
                             flag = false]() mutable {
             auto* app_info = container.service<comp_app::AppInfo>();
             if(app_info->state() != comp_app::interfaces::AppInfo::loaded)
+            {
+                cDebug("Waiting for application to load");
                 return;
+            }
 
             if(flag)
                 return;
+            cDebug("Queueing dummy plug events");
 
             const auto type_to_enum = [](nlohmann::json const&   event,
                                          std::string_view const& key) {
@@ -412,6 +438,7 @@ void insert_dummy_plug(
                         start_time,
                         [&perf_monitor, &container, event]() {
                             PerformanceMonitor::proxy_type proxy(container);
+                            cDebug("Capturing dummyplug screenshot");
                             perf_monitor.capture_screenshot(
                                 proxy,
                                 event.value("name", "dummy_screenshot"),

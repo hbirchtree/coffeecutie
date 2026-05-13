@@ -1,3 +1,4 @@
+#include "coffee/graphics/apis/gleam/rhi_versioning.h"
 #include <peripherals/stl/magic_enum.hpp>
 
 #include <coffee/graphics/apis/gleam/rhi.h>
@@ -597,8 +598,9 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
 
     out.rendertarget.depth32f =
         out.rendertarget.depth32f ||
-        supports_render_format(out, pix_fmt::Depth32F) ||
         supports_extension(extensions, arb::depth_buffer_float::name);
+    if(api_type == api_type_t::core)
+        out.rendertarget.depth32 |= supports_render_format(out, pix_fmt::Depth32F);
 
     /* Selection of preferred pix_fmt for color/depth buffers
      * For easier use by other code
@@ -935,15 +937,17 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
     exts = {};
     appInfo.add("gl:extensions", exts_list);
     exts_list.clear();
-    auto        fmts = enumerate_compressed_formats(m_features.texture);
     std::string formats_list;
-    for(auto const& fmt : fmts)
+    if(m_api_type == api_type_t::core)
     {
-        if(!formats_list.empty())
-            formats_list.push_back(' ');
-        formats_list.insert(formats_list.end(), fmt.begin(), fmt.end());
+        auto        fmts = enumerate_compressed_formats(m_features.texture);
+        for(auto const& fmt : fmts)
+        {
+            if(!formats_list.empty())
+                formats_list.push_back(' ');
+            formats_list.insert(formats_list.end(), fmt.begin(), fmt.end());
+        }
     }
-    fmts = {};
     appInfo.add("gl:compressedFormats", formats_list);
     appInfo.add("gl:limits", m_limits.serialize());
 #if defined(GL_NUM_SHADER_BINARY_FORMATS)

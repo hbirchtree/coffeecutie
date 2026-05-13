@@ -8,6 +8,10 @@
 #include <peripherals/typing/geometry/size.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+#include <coffee/comp_app/dummy_plug.h>
+#endif
+
 namespace glscreenshot {
 
 using namespace gl::group;
@@ -43,15 +47,21 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
 
     Coffee::DProfContext _("glscreenshot::ScreenshotProvider::pixels");
 
-    const auto major_version = std::min(
+    auto major_version = std::min(
         m_config->version.major,
-#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
-        m_dummy_config->graphics_config.value("major", i32(99))
-#else
         99
-#endif
     );
-    const bool use_pbo = major_version >= 3;
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+    if(m_dummy_config)
+        if(auto dummy_ver = m_dummy_config->graphics_config.value("major", i32(99));
+                dummy_ver != 99)
+            major_version = dummy_ver;
+#endif
+    const bool use_pbo = major_version >= 3
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+        && !m_dummy_config->enabled
+#endif
+        ;
 
     auto read_pixels = [this, use_pbo] {
         auto                        size_ = size();

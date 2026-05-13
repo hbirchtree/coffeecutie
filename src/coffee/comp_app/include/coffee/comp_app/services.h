@@ -205,6 +205,7 @@ struct PtrNativeWindowInfo : NativeWindowInfo
     {
         android,
         nullws,
+        surfaceless,
         wayland,
         x11,
     } window_system{nullws};
