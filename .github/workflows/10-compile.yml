@@ -32,7 +32,6 @@ jobs:
         submodules: true
         path: source
     - uses: ./source/.github/actions/cmake-setup
-    - run: sudo modprobe vgem
     - name: Installing build-essential
       run: |
         sudo rm /etc/apt/sources.list.d/microsoft-prod.list
