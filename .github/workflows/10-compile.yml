@@ -238,6 +238,8 @@ jobs:
         mkdir -p source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi
         mv artifacts/* source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi/
         chmod +x source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi/packaged/*/*
+    - name: Apply VGEM driver
+      run: sudo modprobe vgem
     - name: Run dummy plug tests
       run: |
         DUMMY_PLUG=${{ matrix.dummy_plug }} source/.github/tests/test_blam_graphics.sh
