@@ -39,6 +39,12 @@ echo "===================================="
 echo "===================================="
 ldd $BUILDDIR/bin/BlamGraphics > linkage.txt
 
+APPDIR=$BUILDDIR/packaged/linux-appdir/blam_graphics.AppDir
+chmod +x \
+    $APPDIR/AppRun \
+    $APPDIR/BlamGraphics \
+    $APPDIR/CrashRecovery
+
 echo "===================================="
 echo "::group::Downloading test assets"
 mkdir -p maps/pc/
@@ -53,6 +59,6 @@ echo "===================================="
 echo "-- " $BUILDDIR/packaged/linux-appimage/Blam Graphics.AppImage $PWD/maps/pc/beavercreek.map
 mkdir -p "/tmp/Blam Graphics"
 #$BUILDDIR/bin/BlamGraphics $BUILDDIR/examples/blam/cblam-testing/assets $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
-$BUILDDIR/packaged/linux-appimage/Blam\ Graphics.AppImage $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
+$BUILDDIR/packaged/linux-appdir/blam_graphics.AppDir/AppRun $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
 
 popd
