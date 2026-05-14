@@ -227,7 +227,7 @@ jobs:
     - name: Installing AppImage/media dependencies
       run: |
         sudo apt update
-        sudo apt install libfuse2 ffmpeg
+        sudo apt install libfuse2 ffmpeg xvfb
     - name: Downloading desktop-x86_64-buildroot-linux-gnu-multi artifacts
       uses: actions/download-artifact@v8
       with:
@@ -238,11 +238,9 @@ jobs:
         mkdir -p source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi
         mv artifacts/* source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi/
         chmod +x source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi/packaged/*/*
-    - name: Apply VGEM driver
-      run: sudo modprobe vgem
     - name: Run dummy plug tests
       run: |
-        DUMMY_PLUG=${{ matrix.dummy_plug }} source/.github/tests/test_blam_graphics.sh
+        DUMMY_PLUG=${{ matrix.dummy_plug }} xvfb-run --auto-servernum source/.github/tests/test_blam_graphics.sh
     - name: Convert audio samples to .wav
       run: |
         ffmpeg -f f32le -ar 48k -ac 2 -i "/tmp/Blam Graphics/rendered_audio" -c:a copy "/tmp/Blam Graphics/rendered_audio.wav"

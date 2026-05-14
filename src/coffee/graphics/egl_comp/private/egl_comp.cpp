@@ -124,7 +124,8 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
     if(windowInfo.window_system != ws_t::nullws)
     {
         std::vector<EGLAttrib> attributes;
-        auto                   platform = [&]() {
+        bool                   use_default_display = false;
+        auto                   platform            = [&]() {
             switch(windowInfo.window_system)
             {
             case ws_t::android:
@@ -148,8 +149,13 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
                 return EGL_PLATFORM_X11_KHR;
             case ws_t::surfaceless:
                 if(!supportsExtension("EGL_MESA_platform_surfaceless"))
-                    throw std::runtime_error(
-                        "EGL_MESA_platform_surfaceless not supported");
+                {
+                    cWarning(
+                        "EGL_MESA_platform_surfaceless not supported, "
+                        "falling back to default display");
+                    use_default_display = true;
+                    return EGL_NONE;
+                }
                 cDebug("Selecting SURFACELESS_MESA as EGL backend");
                 windowInfo.display = EGL_DEFAULT_DISPLAY;
                 return EGL_PLATFORM_SURFACELESS_MESA;
@@ -158,8 +164,11 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
             }
         }();
         attributes.push_back(EGL_NONE);
-        m_data->display =
-            eglGetPlatformDisplay(platform, windowInfo.display, nullptr);
+        if(!use_default_display)
+            m_data->display =
+                eglGetPlatformDisplay(platform, windowInfo.display, nullptr);
+        else
+            m_data->display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     } else
         m_data->display = eglGetDisplay(
             windowInfo.display ? windowInfo.display : EGL_DEFAULT_DISPLAY);
