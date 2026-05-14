@@ -3,6 +3,8 @@
 SRCDIR=$(realpath $(dirname $0))/../..
 TESTDIR=/tmp/BlamTest_$RANDOM
 
+export LIBGL_ALWAYS_SOFTWARE=1
+export GALLIUM_DRIVER=llvmpipe
 export DUMMY_PLUG_CONFIG=$(realpath $(dirname $0))/${DUMMY_PLUG:-dummy_plug.json}
 
 mkdir -p $TESTDIR
