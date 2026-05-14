@@ -9,7 +9,7 @@
     "gl": [
       {
         "major": 4,
-        "minor": 3
+        "minor": 6
       }
     ],
     "gles": []

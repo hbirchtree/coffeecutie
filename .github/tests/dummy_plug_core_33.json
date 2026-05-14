@@ -3,7 +3,7 @@
     "window": {
       "width": 640,
       "height": 360,
-      "depth": 32
+      "depth": 16
     },
     "software_renderer": "llvmpipe",
     "gl": [
