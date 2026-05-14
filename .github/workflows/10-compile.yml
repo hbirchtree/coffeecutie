@@ -227,7 +227,7 @@ jobs:
     - name: Installing AppImage/media dependencies
       run: |
         sudo apt update
-        sudo apt install libfuse2 ffmpeg xvfb
+        sudo apt install libfuse2 ffmpeg xvfb mesa-utils
     - name: Downloading desktop-x86_64-buildroot-linux-gnu-multi artifacts
       uses: actions/download-artifact@v8
       with:

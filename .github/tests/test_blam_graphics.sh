@@ -32,6 +32,12 @@ ln -s \
 
 export LD_LIBRARY_PATH=$PWD/sysroot/lib
 
+echo "===================================="
+echo "::group::EGL info"
+eglinfo -v
+echo "::endgroup::"
+echo "===================================="
+
 BUILDDIR=$SRCDIR/multi_build/desktop-x86_64-buildroot-linux-gnu-multi
 
 echo "===================================="
