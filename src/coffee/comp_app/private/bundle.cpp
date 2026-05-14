@@ -553,7 +553,7 @@ void addDefaults(
         cVerbose(10, "Selecting surfaceless OSMesa backend");
     } else
 #endif
-#if defined(FEATURE_ENABLE_EGLComponent)
+#if defined(FEATURE_ENABLE_EGLComponent) && defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
     if(dummyPlug.enabled && dummyPlug.swrender == "llvmpipe")
     {
         loader.registerAll<egl::SurfacelessServices>(container, ec);
@@ -664,7 +664,7 @@ void addDefaults(
         appInfo.add("gl:context", "OSMesa");
     } else
 #endif
-#if defined(FEATURE_ENABLE_EGLComponent)
+#if defined(FEATURE_ENABLE_EGLComponent) && defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
     if(dummyPlug.enabled && dummyPlug.swrender == "llvmpipe")
     {
         appInfo.add("gl:context", "EGL (llvmpipe)");
