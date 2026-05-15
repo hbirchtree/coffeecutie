@@ -392,7 +392,7 @@ def _ci_group(title: str):
 
 
 # ---------------------------------------------------------------------------
-# Plan: download host tools (clang-format, clang-tidy static binaries)
+# Plan: download host tools (clang-format, clang-tidy static binaries, mold linker)
 # ---------------------------------------------------------------------------
 
 def download_host_tools_plan(host: HostInfo, base_dir: Path) -> BuildPlan:
@@ -447,6 +447,55 @@ def download_host_tools_plan(host: HostInfo, base_dir: Path) -> BuildPlan:
             description=f"Write version stamp {stamp_path.name}",
             skip_if=_up_to_date,
             skip_reason=f"stamp already at {stamp_id}",
+        ))
+
+    # mold linker (Linux hosts only)
+    if host.os == "linux":
+        mold_ver = "2.41.0"
+        mold_stamp_id = f"v{mold_ver}"
+        mold_arch = host.arch  # "x86_64" or "aarch64"
+        mold_tarball = f"mold-{mold_ver}-{mold_arch}-linux.tar.gz"
+        mold_url = (
+            f"https://github.com/rui314/mold/releases/download"
+            f"/v{mold_ver}/{mold_tarball}"
+        )
+        mold_path = bin_dir / "mold"
+        mold_stamp_path = bin_dir / "mold.version"
+
+        def _mold_up_to_date(p=mold_path, s=mold_stamp_path, sid=mold_stamp_id) -> bool:
+            return p.exists() and s.exists() and s.read_text().strip() == sid
+
+        def _download_mold(
+            bd=bin_dir, url=mold_url, ver=mold_ver, arch=mold_arch,
+            p=mold_path, s=mold_stamp_path, sid=mold_stamp_id,
+        ) -> None:
+            install_dir = bd.parent  # multi_build/compilers/
+            tarball = install_dir / f"mold-{ver}-{arch}-linux.tar.gz"
+            subprocess.run(["wget", url, "-q", "-O", str(tarball)], check=True)
+            # Extract bin/, lib/, and libexec/ — skip share/ (docs only).
+            # --strip-components=1 drops the top-level "mold-X.Y.Z-arch-linux/"
+            # prefix so bin/mold lands at multi_build/compilers/bin/mold and
+            # mold can find lib/mold/mold-wrapper.so and libexec/mold/ld via
+            # relative paths from its own location.
+            subprocess.run(
+                [
+                    "tar", "xf", str(tarball),
+                    "-C", str(install_dir),
+                    "--strip-components=1",
+                    "--exclude=*/share",
+                ],
+                check=True,
+            )
+            tarball.unlink(missing_ok=True)
+            p.chmod(p.stat().st_mode | 0o111)
+            s.write_text(sid)
+
+        plan.add(PythonStep(
+            name="download-mold",
+            fn=_download_mold,
+            description=f"Download and extract mold v{mold_ver} ({mold_arch}-linux)",
+            skip_if=_mold_up_to_date,
+            skip_reason=f"mold already at {mold_stamp_id}",
         ))
 
     return plan
@@ -1113,6 +1162,8 @@ def _env_for_target(target: TargetSpec, host: HostInfo, base_dir: Path) -> dict[
         return env
 
     env.update(_base_env(target, host, base_dir))
+    compilers_bin = base_dir / "multi_build/compilers/bin"
+    env["PATH"] = f"{compilers_bin}:{os.environ.get('PATH', '')}"
 
     if target.platform == "web":
         default_root = base_dir / "multi_build/compilers/emsdk"
@@ -1172,7 +1223,7 @@ def _env_for_target(target: TargetSpec, host: HostInfo, base_dir: Path) -> dict[
             toolchain_sysroot = toolchain_root / toolchain_prefix / "sysroot"
             env["TOOLCHAIN_ROOT"] = str(toolchain_root)
             env["TOOLCHAIN_SYSROOT"] = str(toolchain_sysroot)
-            env["PATH"] = f"{toolchain_root / 'bin'}:{os.environ.get('PATH', '')}"
+            env["PATH"] = f"{toolchain_root / 'bin'}:{env.get('PATH', '')}"
 
     return env
 
