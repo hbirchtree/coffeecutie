@@ -1,7 +1,7 @@
 add_link_options(
   #[[-static-libstdc++ -static-libgcc]]
   -Wl,-rpath-link,../lib
-  -fuse-ld=lld
+  -fuse-ld=mold
   -fuse-linker-plugin
   -flto
 )

@@ -392,7 +392,71 @@ def _ci_group(title: str):
 
 
 # ---------------------------------------------------------------------------
-# Plan: download host tools (clang-format, clang-tidy static binaries, mold linker)
+# Plan: download mold linker
+# ---------------------------------------------------------------------------
+
+def download_mold_plan(host: HostInfo, base_dir: Path) -> BuildPlan:
+    plan = BuildPlan("download-mold")
+    if host.os != "linux":
+        return plan
+
+    bin_dir = base_dir / "multi_build/compilers/bin"
+    mold_ver = "2.41.0"
+    mold_stamp_id = f"v{mold_ver}"
+    mold_arch = host.arch  # "x86_64" or "aarch64"
+    mold_tarball = f"mold-{mold_ver}-{mold_arch}-linux.tar.gz"
+    mold_url = (
+        f"https://github.com/rui314/mold/releases/download"
+        f"/v{mold_ver}/{mold_tarball}"
+    )
+    mold_path = bin_dir / "mold"
+    mold_stamp_path = bin_dir / "mold.version"
+
+    def _mold_up_to_date(p=mold_path, s=mold_stamp_path, sid=mold_stamp_id) -> bool:
+        return p.exists() and s.exists() and s.read_text().strip() == sid
+
+    def _download_mold(
+        bd=bin_dir, url=mold_url, ver=mold_ver, arch=mold_arch,
+        p=mold_path, s=mold_stamp_path, sid=mold_stamp_id,
+    ) -> None:
+        install_dir = bd.parent  # multi_build/compilers/
+        tarball = install_dir / f"mold-{ver}-{arch}-linux.tar.gz"
+        subprocess.run(["wget", url, "-q", "-O", str(tarball)], check=True)
+        # Extract bin/, lib/, and libexec/ — skip share/ (docs only).
+        # --strip-components=1 drops the top-level "mold-X.Y.Z-arch-linux/"
+        # prefix so bin/mold lands at multi_build/compilers/bin/mold and
+        # mold can find lib/mold/mold-wrapper.so and libexec/mold/ld via
+        # relative paths from its own location.
+        subprocess.run(
+            [
+                "tar", "xf", str(tarball),
+                "-C", str(install_dir),
+                "--strip-components=1",
+                "--exclude=*/share",
+            ],
+            check=True,
+        )
+        tarball.unlink(missing_ok=True)
+        p.chmod(p.stat().st_mode | 0o111)
+        s.write_text(sid)
+
+    plan.add(PythonStep(
+        name="mkdir-compilers-bin",
+        fn=lambda: bin_dir.mkdir(parents=True, exist_ok=True),
+        description=f"Create {bin_dir}",
+    ))
+    plan.add(PythonStep(
+        name="download-mold",
+        fn=_download_mold,
+        description=f"Download and extract mold v{mold_ver} ({mold_arch}-linux)",
+        skip_if=_mold_up_to_date,
+        skip_reason=f"mold already at {mold_stamp_id}",
+    ))
+    return plan
+
+
+# ---------------------------------------------------------------------------
+# Plan: download host tools (clang-format, clang-tidy static binaries)
 # ---------------------------------------------------------------------------
 
 def download_host_tools_plan(host: HostInfo, base_dir: Path) -> BuildPlan:
@@ -449,55 +513,7 @@ def download_host_tools_plan(host: HostInfo, base_dir: Path) -> BuildPlan:
             skip_reason=f"stamp already at {stamp_id}",
         ))
 
-    # mold linker (Linux hosts only)
-    if host.os == "linux":
-        mold_ver = "2.41.0"
-        mold_stamp_id = f"v{mold_ver}"
-        mold_arch = host.arch  # "x86_64" or "aarch64"
-        mold_tarball = f"mold-{mold_ver}-{mold_arch}-linux.tar.gz"
-        mold_url = (
-            f"https://github.com/rui314/mold/releases/download"
-            f"/v{mold_ver}/{mold_tarball}"
-        )
-        mold_path = bin_dir / "mold"
-        mold_stamp_path = bin_dir / "mold.version"
-
-        def _mold_up_to_date(p=mold_path, s=mold_stamp_path, sid=mold_stamp_id) -> bool:
-            return p.exists() and s.exists() and s.read_text().strip() == sid
-
-        def _download_mold(
-            bd=bin_dir, url=mold_url, ver=mold_ver, arch=mold_arch,
-            p=mold_path, s=mold_stamp_path, sid=mold_stamp_id,
-        ) -> None:
-            install_dir = bd.parent  # multi_build/compilers/
-            tarball = install_dir / f"mold-{ver}-{arch}-linux.tar.gz"
-            subprocess.run(["wget", url, "-q", "-O", str(tarball)], check=True)
-            # Extract bin/, lib/, and libexec/ — skip share/ (docs only).
-            # --strip-components=1 drops the top-level "mold-X.Y.Z-arch-linux/"
-            # prefix so bin/mold lands at multi_build/compilers/bin/mold and
-            # mold can find lib/mold/mold-wrapper.so and libexec/mold/ld via
-            # relative paths from its own location.
-            subprocess.run(
-                [
-                    "tar", "xf", str(tarball),
-                    "-C", str(install_dir),
-                    "--strip-components=1",
-                    "--exclude=*/share",
-                ],
-                check=True,
-            )
-            tarball.unlink(missing_ok=True)
-            p.chmod(p.stat().st_mode | 0o111)
-            s.write_text(sid)
-
-        plan.add(PythonStep(
-            name="download-mold",
-            fn=_download_mold,
-            description=f"Download and extract mold v{mold_ver} ({mold_arch}-linux)",
-            skip_if=_mold_up_to_date,
-            skip_reason=f"mold already at {mold_stamp_id}",
-        ))
-
+    plan.extend(download_mold_plan(host, base_dir))
     return plan
 
 
@@ -571,6 +587,7 @@ def host_tools_plan(host: HostInfo, base_dir: Path) -> BuildPlan:
     else:
         plan.extend(download_host_tools_plan(host, base_dir))
 
+    plan.extend(download_mold_plan(host, base_dir))
     return plan
 
 
@@ -847,7 +864,8 @@ def native_plan(
 
         env["TOOLCHAIN_ROOT"] = str(toolchain_root)
         env["TOOLCHAIN_SYSROOT"] = str(toolchain_sysroot)
-        env["PATH"] = f"{os.environ.get('PATH', '')}:{toolchain_root / 'bin'}"
+        compilers_bin = base_dir / "multi_build/compilers/bin"
+        env["PATH"] = f"{compilers_bin}:{os.environ.get('PATH', '')}:{toolchain_root / 'bin'}"
 
         if target.is_downloadable:
             download_name = f"{target.platform}-{target.architecture}_{target.sysroot}"
@@ -1319,27 +1337,58 @@ def cmd_print_env(preset: str, base_dir: Path) -> None:
         print(f"PATH={emsdk}/upstream/bin:{os.environ.get('PATH', '')}")
 
 
+_ARCH_RE = re.compile(
+    r'^('
+    r'[a-z0-9_]+(?:v[0-9]+)?-buildroot-linux-gnu[a-z0-9]*'  # buildroot triple
+    r'|[a-z0-9_]+-w64-mingw32'                                # MinGW triple
+    r'|[a-z0-9]+-eabi'                                        # bare EABI triple
+    r'|[a-z0-9]+-(?:linux|darwin|osx)'                        # native OS triple
+    r'|[a-z0-9]+(?:-[a-z][a-z0-9]*)?'                        # short / android arch
+    r')-(.+)$'
+)
+
+
+def _split_preset_name(name: str) -> tuple[str, str, str] | None:
+    """Split a preset name 'platform-arch-sysroot' into its three parts.
+
+    Both arch and sysroot can contain hyphens, so a simple rsplit is not
+    sufficient.  The arch pattern is matched most-specific-first so that e.g.
+    'arm-buildroot-linux-gnueabihf' is captured whole rather than just 'arm'.
+    """
+    try:
+        dash = name.index('-')
+    except ValueError:
+        return None
+    platform = name[:dash]
+    rest = name[dash + 1:]
+    m = _ARCH_RE.match(rest)
+    if not m:
+        return None
+    return platform, m.group(1), m.group(2)
+
+
 def _list_presets(base_dir: Path) -> None:
+    """Print available targets using cmake --list-presets for condition filtering."""
     result = subprocess.run(
         ["cmake", "-S", str(base_dir), "--list-presets"],
         capture_output=True,
         text=True,
     )
-    # Convert cmake preset names  desktop-x86_64-buildroot-linux-gnu-multi
-    # back to the platform:arch:sysroot form used by this tool.
-    # The pattern captures  ([platform])-([everything-in-the-middle])-([sysroot])
-    # where sysroot is the last lowercase-alphanumeric word.
-    pat = re.compile(r'^\s+"([a-z][a-z0-9]*)-(.+)-([a-z0-9]+)"(\s+-.*)?$')
+    # Each visible preset line looks like:  "name" - Description
+    line_pat = re.compile(r'^\s+"([^"]+)"(?:\s+-\s+(.*))?$')
     rows: list[tuple[str, str]] = []
     for line in result.stdout.splitlines():
-        m = pat.match(line)
-        if m:
-            platform_, arch, sysroot, desc = m.groups()
-            name = f"{platform_}:{arch}:{sysroot}"
-            rows.append((name, (desc or "").strip("- ").strip()))
-    col = max((len(name) for name, _ in rows), default=0)
-    for name, desc in rows:
-        print(f"    {name:<{col}}  {desc}")
+        m = line_pat.match(line)
+        if not m:
+            continue
+        parts = _split_preset_name(m.group(1))
+        if not parts:
+            continue
+        platform_, arch, sysroot = parts
+        rows.append((f"{platform_}:{arch}:{sysroot}", m.group(2) or ""))
+    col = max((len(t) for t, _ in rows), default=0)
+    for target, desc in rows:
+        print(f"    {target:<{col}}  {desc}")
 
 
 # ---------------------------------------------------------------------------
