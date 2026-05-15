@@ -513,7 +513,6 @@ def download_host_tools_plan(host: HostInfo, base_dir: Path) -> BuildPlan:
             skip_reason=f"stamp already at {stamp_id}",
         ))
 
-    plan.extend(download_mold_plan(host, base_dir))
     return plan
 
 
