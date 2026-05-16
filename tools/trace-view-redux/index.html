@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Trace Viewer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#1e1e1e;color:#ccc;font-family:ui-monospace,monospace;height:100vh;display:flex;flex-direction:column;overflow:hidden;user-select:none}
+#toolbar{display:flex;align-items:center;gap:6px;padding:5px 10px;background:#252526;border-bottom:1px solid #3c3c3c;flex-shrink:0;flex-wrap:wrap}
+#toolbar button{padding:3px 9px;background:#3c3c3c;color:#ccc;border:1px solid #555;cursor:pointer;border-radius:3px;font:12px ui-monospace,monospace}
+#toolbar button:hover{background:#4a4a4a}
+#toolbar button.active{background:#0e639c;border-color:#1177bb}
+#info{font-size:11px;color:#888;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#drop-zone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#555;font-size:16px;gap:10px;cursor:pointer;border:2px dashed #333;margin:20px;border-radius:8px;position:absolute;inset:0;margin:20px}
+#drop-zone:hover{border-color:#555;color:#777}
+#drop-zone svg{opacity:.3}
+canvas{display:block;cursor:crosshair}
+#tooltip{position:fixed;background:rgba(20,20,20,.95);color:#ddd;padding:7px 10px;border-radius:4px;font-size:11px;pointer-events:none;display:none;z-index:50;border:1px solid #444;max-width:340px;line-height:1.5}
+#tooltip strong{color:#fff;font-size:12px}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:100}
+#modal img{max-width:90vw;max-height:90vh;border:2px solid #555;cursor:zoom-out}
+#scrollbar{position:absolute;right:0;top:0;width:8px;height:100%;background:#1a1a1a}
+#scrollbar-thumb{position:absolute;right:1px;width:6px;background:#444;border-radius:3px;cursor:pointer;min-height:20px}
+#main-area{display:flex;flex:1;overflow:hidden;min-height:0;position:relative}
+#canvas-wrap{flex:1;position:relative;overflow:hidden;display:none;min-width:0}
+#details-pane{width:0;overflow:hidden;background:#1e1e1e;border-left:1px solid #3a3a3a;display:flex;flex-direction:column;transition:width .15s;flex-shrink:0}
+#details-pane.open{width:300px;overflow-x:hidden;overflow-y:auto}
+#details-header{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#252526;border-bottom:1px solid #3a3a3a;font:bold 12px ui-monospace,monospace;color:#ccc;position:sticky;top:0;z-index:10}
+#details-header button{padding:1px 6px;background:#3c3c3c;color:#aaa;border:1px solid #555;cursor:pointer;border-radius:3px;font:11px ui-monospace,monospace}
+.det-section{border-bottom:1px solid #2d2d2d}
+.det-summary{list-style:none;padding:6px 10px;cursor:pointer;font:bold 11px ui-monospace,monospace;color:#9cdcfe;background:#252526;user-select:none;display:flex;align-items:center;gap:6px}
+.det-summary::-webkit-details-marker{display:none}
+.det-summary::before{content:'▶';font-size:9px;transition:transform .1s;display:inline-block}
+details[open]>.det-summary::before{transform:rotate(90deg)}
+.det-rows{padding:4px 0 6px}
+.det-row{display:grid;grid-template-columns:110px 1fr;gap:4px;padding:2px 10px;align-items:baseline}
+.det-k{color:#888;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.det-v{color:#ddd;font-size:11px;word-break:break-all;line-height:1.4}
+.det-v.num{color:#b5cea8}
+.det-v.bool{color:#569cd6}
+.det-v.list{color:#ce9178}
+.det-subhead{padding:5px 10px 3px;margin-top:4px;font:bold 10px ui-monospace,monospace;color:#9cdcfe;text-transform:uppercase;letter-spacing:.08em;background:#252526;border-top:1px solid #3a3a3a;border-bottom:1px solid #2d2d2d}
+/* complex / JSON value rendering */
+.det-block{padding:3px 10px 5px}
+.det-bk{color:#888;font-size:10px;margin-bottom:3px}
+.det-bv{padding-left:8px;border-left:2px solid #3a3a3a;margin-left:2px}
+.jobj{font-size:11px;color:#ddd}
+.jkv{display:grid;grid-template-columns:100px 1fr;gap:4px;padding:1px 2px;align-items:baseline}
+.jkv-block{padding:2px 0 1px}
+.jk{color:#888;font-size:10px;padding-right:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jlist{margin:1px 0}
+.jsum{font-size:10px;color:#888;cursor:pointer;user-select:none;list-style:none;padding:1px 4px;border-radius:2px;display:inline-block}
+.jsum:hover{background:#2d2d2d;color:#aaa}
+.jsum::-webkit-details-marker{display:none}
+.jsum::before{content:'▶ ';font-size:8px;display:inline-block;transition:transform .1s}
+details[open]>.jsum::before{transform:rotate(90deg)}
+.jitems{padding-left:10px;border-left:1px solid #333;margin:2px 0 2px 4px}
+.jitem{font-size:11px;color:#ddd;padding:1px 0;word-break:break-all}
+.jext-wrap{display:flex;flex-wrap:wrap;gap:3px;padding:4px 2px}
+.jiext{font-size:10px;color:#ce9178;background:#2d1f10;border:1px solid #4a3318;padding:1px 5px;border-radius:2px;line-height:1.5;word-break:break-all}
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <button id="btn-open">Open File</button>
+  <input type="file" id="file-input" accept=".json" style="display:none">
+  <button id="btn-zoomin">Zoom In</button>
+  <button id="btn-zoomout">Zoom Out</button>
+  <button id="btn-fit">Fit</button>
+  <button id="btn-reset-scroll">Top</button>
+  <button id="btn-details">Details</button>
+  <span id="info">Drop a trace JSON file or click Open File &nbsp;·&nbsp; Scroll to pan vertically &nbsp;·&nbsp; Ctrl+Scroll to zoom &nbsp;·&nbsp; Drag to pan horizontally</span>
+</div>
+<div id="main-area">
+  <div id="drop-zone">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v10m0 0l-3-3m3 3l3-3M3 15v4a2 2 0 002 2h14a2 2 0 002-2v-4"/></svg>
+    Drop trace JSON here, or click to browse
+  </div>
+  <div id="canvas-wrap">
+    <canvas id="cv"></canvas>
+    <div id="scrollbar"><div id="scrollbar-thumb"></div></div>
+  </div>
+  <div id="details-pane">
+    <div id="details-header">
+      Machine Details
+      <button id="btn-details-close">✕</button>
+    </div>
+    <div id="details-body"></div>
+  </div>
+</div>
+<div id="tooltip"></div>
+<div id="modal"><img id="modal-img" src="" alt="screenshot"></div>
+<script>
+'use strict';
+
+// ── Constants ────────────────────────────────────────────────────────────────
+const LW    = 200;   // label width
+const RH    = 30;    // ruler height
+const HH    = 24;    // track header height
+const SH    = 18;    // span height
+const SG    = 1;     // span gap
+const TPad  = 4;     // track bottom padding
+const MinPx = 0.5;   // min span width to render
+
+const PALETTE = [
+  '#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f',
+  '#edc948','#b07aa1','#ff9da7','#9c755f','#4fc3f7',
+  '#81c784','#ffb74d','#e57373','#ba68c8','#4dd0e1',
+];
+// Colors cycling per call-stack depth level
+const DEPTH_COLORS = [
+  '#4e79a7','#f28e2b','#59a14f','#e15759','#b07aa1',
+  '#76b7b2','#edc948','#ff9da7','#4dd0e1','#9c755f',
+  '#81c784','#ba68c8','#ffb74d','#4fc3f7','#e57373',
+];
+const SER_COLORS = ['#4fc3f7','#81c784','#ffb74d','#e57373','#ba68c8','#4dd0e1','#aed581','#ffd54f'];
+
+// ── State ────────────────────────────────────────────────────────────────────
+const S = {
+  threads:[],metrics:[],layout:[],minTs:0,maxTs:1,totalH:0,
+  vs:0,ve:1,          // view start/end in µs
+  sy:0,               // scroll y in px
+  drag:false,dragX:0,dragVs:0,
+  hover:null,selected:null,
+};
+
+let cv, cx, raf=false;
+
+// ── Colors ───────────────────────────────────────────────────────────────────
+const CC = new Map();
+function color(k){
+  if(!k) k='';
+  if(CC.has(k)) return CC.get(k);
+  let h=5381;
+  for(let i=0;i<k.length;i++) h=(h*33^k.charCodeAt(i))&0xffffffff;
+  const c=PALETTE[(h>>>0)%PALETTE.length];
+  CC.set(k,c); return c;
+}
+function lum(hex){
+  const r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;
+  return .299*r+.587*g+.114*b;
+}
+function textClr(bg){ return lum(bg)>.45?'#111':'#eee'; }
+
+// ── Formatting ───────────────────────────────────────────────────────────────
+function fmtUs(us){
+  const a=Math.abs(us);
+  if(a<1e3)  return us.toFixed(1)+'µs';
+  if(a<1e6)  return (us/1e3).toFixed(3)+'ms';
+  return (us/1e6).toFixed(4)+'s';
+}
+function fmtVal(v){
+  if(Math.abs(v)>=1e9) return (v/1e9).toFixed(2)+'G';
+  if(Math.abs(v)>=1e6) return (v/1e6).toFixed(2)+'M';
+  if(Math.abs(v)>=1e3) return (v/1e3).toFixed(2)+'K';
+  return v.toFixed(2);
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── Parsing ──────────────────────────────────────────────────────────────────
+function parse(raw){
+  const evs = Array.isArray(raw) ? raw : (raw.traceEvents||[]);
+
+  // pass 1: metadata
+  const tnames=new Map(), pnames=new Map(), mdesc=new Map();
+  for(const e of evs){
+    if(e.ph!=='M') continue;
+    const n=e.name, args=e.args||{};
+    if(n==='thread_name')  tnames.set(String(e.tid), args.name||'');
+    else if(n==='process_name') pnames.set(String(e.pid), args.name||'');
+    else if(n==='metric_name') mdesc.set(e.id,{name:args.name||String(e.id),type:args.type??0});
+  }
+
+  // pass 2: group events
+  const tmap=new Map(), mmap=new Map();
+  let mn=Infinity, mx=-Infinity;
+  for(const e of evs){
+    const ph=e.ph;
+    // only count timestamps from actual trace events (M metadata events often lack ts)
+    if(e.ts!==undefined&&ph!=='M'){
+      if(e.ts<mn) mn=e.ts; if(e.ts>mx) mx=e.ts;
+    }
+    if(ph==='B'||ph==='E'||ph==='X'||ph==='i'){
+      const k=String(e.tid)+'|'+String(e.pid);
+      if(!tmap.has(k)) tmap.set(k,{tid:e.tid,pid:e.pid,evs:[]});
+      tmap.get(k).evs.push(e);
+    } else if(ph==='m'){
+      if(!mmap.has(e.id)) mmap.set(e.id,[]);
+      mmap.get(e.id).push(e);
+    }
+  }
+  if(!isFinite(mn)) mn=0;
+  if(!isFinite(mx)||mx<=mn) mx=mn+1;
+
+  // build threads
+  const threads=[];
+  for(const [,{tid,pid,evs:te}] of tmap){
+    te.sort((a,b)=>a.ts-b.ts||(a.ph==='B'?-1:1));
+    const spans=[], insts=[], stk=[];
+    let maxD=0;
+    for(const e of te){
+      if(e.ph==='B'){
+        stk.push({ts:e.ts,name:e.name||'',cat:e.cat||'',args:e.args,depth:stk.length});
+        if(stk.length-1>maxD) maxD=stk.length-1;
+      } else if(e.ph==='E'){
+        if(stk.length){
+          const s=stk.pop();
+          spans.push({ts:s.ts,end:e.ts,dur:e.ts-s.ts,name:s.name,cat:s.cat,args:s.args,depth:s.depth});
+        }
+      } else if(e.ph==='X'){
+        const dur=e.dur??0;
+        const d=stk.length;
+        spans.push({ts:e.ts,end:e.ts+dur,dur,name:e.name||'',cat:e.cat||'',args:e.args,depth:d});
+        if(d>maxD) maxD=d;
+      } else if(e.ph==='i'){
+        insts.push({ts:e.ts,name:e.name||'',cat:e.cat||'',depth:stk.length});
+      }
+    }
+    while(stk.length){
+      const s=stk.pop();
+      spans.push({ts:s.ts,end:mx,dur:mx-s.ts,name:s.name,cat:s.cat,args:s.args,depth:s.depth,open:true});
+    }
+    spans.sort((a,b)=>a.ts-b.ts);
+    threads.push({
+      tid,pid,
+      name:tnames.get(String(tid))||`tid:${String(tid).slice(-8)}`,
+      proc:pnames.get(String(pid))||'',
+      spans,insts,maxD
+    });
+  }
+  threads.sort((a,b)=>(a.spans[0]?.ts??0)-(b.spans[0]?.ts??0));
+
+  // build metrics
+  const metrics=[];
+  for(const [id,d] of mdesc){
+    const me=(mmap.get(id)||[]).sort((a,b)=>a.ts-b.ts);
+    const series=new Map();
+    for(const e of me){
+      const i=e.i??0;
+      if(!series.has(i)) series.set(i,[]);
+      series.get(i).push({ts:e.ts,v:parseFloat(e.v)||0,raw:String(e.v)});
+    }
+    metrics.push({id,name:d.name,type:d.type,series});
+  }
+  metrics.sort((a,b)=>a.id-b.id);
+
+  return {threads,metrics,minTs:mn,maxTs:mx};
+}
+
+// ── Layout ───────────────────────────────────────────────────────────────────
+function buildLayout(threads,metrics){
+  const layout=[];
+  let y=RH;
+  for(const t of threads){
+    const h=HH+(t.maxD+1)*(SH+SG)+TPad;
+    layout.push({kind:'thread',track:t,y,h});
+    y+=h;
+  }
+  for(const m of metrics){
+    const gh=m.type===3?80:m.type===1?28:m.type===2?0:64;
+    const h=HH+gh+TPad;
+    layout.push({kind:'metric',track:m,y,h});
+    y+=h;
+  }
+  return {layout,totalH:y};
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function sched(){ if(!raf){raf=true;requestAnimationFrame(draw);} }
+
+function updateLayout(){
+  const {vs,ve}=S;
+  let y=RH;
+  for(const item of S.layout){
+    item.y=y;
+    if(item.kind==='thread'){
+      const t=item.track;
+      let vMaxD=0;
+      // binary search: first span with ts >= vs
+      let lo=0,hi=t.spans.length;
+      while(lo<hi){ const m=(lo+hi)>>1; if(t.spans[m].ts<vs) lo=m+1; else hi=m; }
+      // outer frames: started before vs, still active
+      for(let i=lo-1;i>=0;i--){
+        const s=t.spans[i];
+        if(s.end>=vs&&s.depth>vMaxD) vMaxD=s.depth;
+      }
+      // spans starting within viewport
+      for(let i=lo;i<t.spans.length;i++){
+        if(t.spans[i].ts>ve) break;
+        if(t.spans[i].depth>vMaxD) vMaxD=t.spans[i].depth;
+      }
+      // instants
+      for(const ins of t.insts){
+        if(ins.ts>=vs&&ins.ts<=ve&&ins.depth>vMaxD) vMaxD=ins.depth;
+      }
+      item.h=HH+(vMaxD+1)*(SH+SG)+TPad;
+    }
+    y+=item.h;
+  }
+  S.totalH=y;
+}
+
+function draw(){
+  raf=false;
+  if(!cv) return;
+  if(S.layout.length) updateLayout();
+  const W=cv.width, H=cv.height;
+  const tw=W-LW;                        // track width
+  const {vs,ve,sy}=S;
+  const sc=tw/(ve-vs);                  // px per µs
+  const x2t = x => vs+(x-LW)/sc;       // canvas x → timestamp
+  const t2x = t => LW+(t-vs)*sc;       // timestamp → canvas x
+
+  cx.fillStyle='#1e1e1e';
+  cx.fillRect(0,0,W,H);
+
+  // tracks (clipped below ruler)
+  cx.save();
+  cx.beginPath();
+  cx.rect(0,RH,W,H-RH);
+  cx.clip();
+
+  for(const item of S.layout){
+    const iy=item.y-sy;
+    if(iy+item.h<RH||iy>H) continue;
+    if(item.kind==='thread') drawThread(item,iy,W,tw,sc,t2x);
+    else drawMetric(item,iy,W,tw,sc,t2x);
+  }
+
+  cx.restore();
+
+  drawRuler(W,tw,sc,t2x);
+
+  // label divider
+  cx.strokeStyle='#3c3c3c'; cx.lineWidth=1;
+  cx.beginPath(); cx.moveTo(LW,.5); cx.lineTo(LW,H); cx.stroke();
+
+  updateScrollbar(H);
+}
+
+// ── Thread track ─────────────────────────────────────────────────────────────
+function drawThread({track:t},y,W,tw,sc,t2x){
+  // bg
+  cx.fillStyle='#252526';
+  cx.fillRect(0,y,W,HH);
+  cx.fillStyle='#1a1a1a';
+  cx.fillRect(0,y+HH,W,t.h-(HH+TPad));
+  cx.fillStyle='#2a2a2a';
+  cx.fillRect(0,y+t.h-TPad,W,TPad);
+
+  // header label
+  cx.fillStyle='#ccc';
+  cx.font='bold 12px ui-monospace,monospace';
+  cx.textBaseline='middle';
+  cx.fillText(t.name,8,y+HH/2);
+  if(t.proc){
+    cx.fillStyle='#555'; cx.font='10px ui-monospace,monospace';
+    const pw=cx.measureText(t.proc).width;
+    cx.fillText(t.proc,LW-pw-6,y+HH/2);
+  }
+  cx.fillStyle='#333'; cx.fillRect(0,y+HH-1,W,1);
+
+  const {vs,ve}=S;
+  const spans=t.spans;
+
+  function drawSpan(s){
+    const x1=t2x(s.ts), x2=t2x(s.end);
+    const pw=x2-x1;
+    if(pw<MinPx) return;
+    const rx=Math.max(x1,LW), rw=Math.min(x2,LW+tw)-rx;
+    if(rw<=0) return;
+    const ry=y+HH+s.depth*(SH+SG);
+    const bg=DEPTH_COLORS[s.depth%DEPTH_COLORS.length];
+    cx.fillStyle=s.open?'#4a3030':bg;
+    cx.fillRect(rx,ry,rw,SH-1);
+    if(S.selected===s){ cx.strokeStyle='#fff'; cx.lineWidth=1.5; cx.strokeRect(rx,ry,rw,SH-1); }
+    if(pw>6){
+      cx.fillStyle=s.open?'#aaa':textClr(bg);
+      cx.font='11px ui-monospace,monospace';
+      cx.textBaseline='middle';
+      cx.save();
+      cx.beginPath(); cx.rect(rx,ry,rw,SH-1); cx.clip();
+      cx.fillText(s.name,Math.max(x1,LW)+2,ry+(SH-1)/2);
+      cx.restore();
+    }
+  }
+
+  // Binary search on ts: first span with ts >= vs
+  // (spans sorted by ts, so binary search on end is wrong for nested frames)
+  let lo=0,hi=spans.length;
+  while(lo<hi){ const m=(lo+hi)>>1; if(spans[m].ts<vs) lo=m+1; else hi=m; }
+  const firstInView=lo;
+
+  // Outer frames: started before vs but still active (end >= vs)
+  for(let i=firstInView-1;i>=0;i--){
+    const s=spans[i];
+    if(s.end>=vs) drawSpan(s);
+  }
+
+  // Spans starting within the viewport
+  for(let i=firstInView;i<spans.length;i++){
+    const s=spans[i];
+    if(s.ts>ve) break;
+    drawSpan(s);
+  }
+
+  // instant events
+  // Instant events — fixed-width rectangles, gold outline to distinguish from spans
+  const IW=8;
+  for(const ins of t.insts){
+    if(ins.ts<vs||ins.ts>ve) continue;
+    const cx_=t2x(ins.ts);
+    const rx=Math.max(cx_-IW/2,LW), rx2=Math.min(cx_+IW/2,LW+tw);
+    const rw=rx2-rx;
+    if(rw<=0) continue;
+    const ry=y+HH+ins.depth*(SH+SG);
+    const bg=DEPTH_COLORS[ins.depth%DEPTH_COLORS.length];
+    cx.fillStyle=bg;
+    cx.fillRect(rx,ry,rw,SH-1);
+    cx.strokeStyle='#ffd700'; cx.lineWidth=1;
+    cx.strokeRect(rx,ry,rw,SH-1);
+    if(S.selected===ins){ cx.strokeStyle='#fff'; cx.lineWidth=1.5; cx.strokeRect(rx,ry,rw,SH-1); }
+    if(rw>20){
+      cx.fillStyle=textClr(bg);
+      cx.font='11px ui-monospace,monospace'; cx.textBaseline='middle';
+      cx.save();
+      cx.beginPath(); cx.rect(rx,ry,rw,SH-1); cx.clip();
+      cx.fillText(ins.name,rx+2,ry+(SH-1)/2);
+      cx.restore();
+    }
+  }
+}
+
+// ── Metric track ─────────────────────────────────────────────────────────────
+function drawMetric({track:m,h},y,W,tw,sc,t2x){
+  cx.fillStyle='#252526';
+  cx.fillRect(0,y,W,HH);
+  cx.fillStyle='#333'; cx.fillRect(0,y+HH-1,W,1);
+
+  cx.fillStyle='#bbb'; cx.font='bold 12px ui-monospace,monospace'; cx.textBaseline='middle';
+  cx.fillText(m.name,8,y+HH/2);
+  const typeL=['scalar','symbolic','marker','screenshot'];
+  cx.fillStyle='#555'; cx.font='9px ui-monospace,monospace';
+  cx.fillText(typeL[m.type]??'',LW-50,y+HH/2);
+
+  const gy=y+HH, gh=h-HH-TPad;
+  // fill label-column body so previous tracks don't bleed through
+  cx.fillStyle='#1a1a1a'; cx.fillRect(0,gy,LW,gh);
+  const {vs,ve}=S;
+  if(m.type===0) drawScalar(m,gy,gh,tw,sc,t2x,vs,ve);
+  else if(m.type===1) drawSymbolic(m,gy,gh,tw,t2x,vs,ve);
+  else if(m.type===2) drawMarkers(m,t2x,vs,ve);
+  else if(m.type===3) drawScreenshots(m,gy,gh,tw,t2x,vs,ve);
+}
+
+function drawScalar(m,y,h,tw,sc,t2x,vs,ve){
+  cx.fillStyle='#111'; cx.fillRect(LW,y,tw,h);
+  // grid
+  cx.strokeStyle='#222'; cx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const gy=y+h-i/4*h;
+    cx.beginPath(); cx.moveTo(LW,gy); cx.lineTo(LW+tw,gy); cx.stroke();
+  }
+
+  // compute global min/max across all sub-series
+  let gmin=Infinity, gmax=-Infinity;
+  for(const pts of m.series.values()){
+    for(const p of pts){ if(p.v<gmin) gmin=p.v; if(p.v>gmax) gmax=p.v; }
+  }
+  if(gmin===gmax){ gmin-=1; gmax+=1; }
+
+  // min/max labels in label area
+  cx.fillStyle='#555'; cx.font='9px ui-monospace,monospace';
+  cx.textBaseline='top';    cx.fillText(fmtVal(gmax),8,y);
+  cx.textBaseline='bottom'; cx.fillText(fmtVal(gmin),8,y+h);
+
+  let si=0;
+  for(const [idx,pts] of m.series){
+    if(!pts.length) continue;
+    const clr=SER_COLORS[si++%SER_COLORS.length];
+
+    // legend
+    cx.fillStyle=clr; cx.font='9px ui-monospace,monospace'; cx.textBaseline='middle';
+    if(m.series.size>1) cx.fillText('['+idx+']',8,y+h/2+si*12-12);
+
+    // find start
+    let lo=0,hi=pts.length;
+    while(lo<hi){ const mid=(lo+hi)>>1; if(pts[mid].ts<vs) lo=mid+1; else hi=mid; }
+    const start=Math.max(0,lo-1);
+
+    cx.strokeStyle=clr; cx.lineWidth=1.5; cx.beginPath();
+    let first=true, lastPy=0;
+    for(let i=start;i<pts.length;i++){
+      const p=pts[i];
+      if(p.ts>ve&&i>start+1) break;
+      const px=t2x(p.ts);
+      const py=y+h-((p.v-gmin)/(gmax-gmin))*h;
+      lastPy=py;
+      if(first){cx.moveTo(px,py);first=false;} else cx.lineTo(px,py);
+    }
+    if(!first) cx.lineTo(LW+tw, lastPy);
+    cx.stroke();
+  }
+
+  // hover cursor: vertical line + dot at closest point per series
+  if(S.cursorTs!==undefined&&S.cursorTs>=vs&&S.cursorTs<=ve){
+    const cx_=t2x(S.cursorTs);
+    cx.strokeStyle='rgba(255,255,255,0.25)'; cx.lineWidth=1;
+    cx.beginPath(); cx.moveTo(cx_,y); cx.lineTo(cx_,y+h); cx.stroke();
+
+    let si2=0;
+    for(const [,pts] of m.series){
+      if(!pts.length){si2++;continue;}
+      // find the last sample at or before cursorTs (step interpolation)
+      let lo=0,hi=pts.length;
+      while(lo<hi){const mid=(lo+hi)>>1; if(pts[mid].ts<=S.cursorTs) lo=mid+1; else hi=mid;}
+      const pi=lo>0?lo-1:0;
+      const bp=pts[pi];
+      // draw dot at cursor x, y from the sample value — dot follows cursor smoothly
+      const by=y+h-((bp.v-gmin)/(gmax-gmin))*h;
+      const clr=SER_COLORS[si2%SER_COLORS.length];
+      cx.fillStyle=clr;
+      cx.beginPath(); cx.arc(cx_,by,3,0,Math.PI*2); cx.fill();
+      si2++;
+    }
+  }
+}
+
+function drawSymbolic(m,y,h,tw,t2x,vs,ve){
+  cx.fillStyle='#111'; cx.fillRect(LW,y,tw,h);
+  const vc=new Map(); let ci=0;
+  for(const [,pts] of m.series){
+    for(let i=0;i<pts.length;i++){
+      const p=pts[i], nxt=pts[i+1]?.ts??ve;
+      if(nxt<vs||p.ts>ve) continue;
+      const x1=t2x(Math.max(p.ts,vs)), x2=t2x(Math.min(nxt,ve));
+      const rx=Math.max(x1,LW), rw=Math.min(x2,LW+tw)-rx;
+      if(rw<=0) continue;
+      if(!vc.has(p.raw)) vc.set(p.raw,SER_COLORS[ci++%SER_COLORS.length]);
+      const clr=vc.get(p.raw);
+      cx.fillStyle=clr; cx.fillRect(rx,y,rw,h);
+      if(rw>16){
+        cx.fillStyle=textClr(clr); cx.font='10px ui-monospace,monospace'; cx.textBaseline='middle';
+        cx.save(); cx.beginPath(); cx.rect(rx,y,rw,h); cx.clip();
+        cx.fillText(p.raw,rx+2,y+h/2);
+        cx.restore();
+      }
+    }
+  }
+}
+
+function drawMarkers(m,t2x,vs,ve){
+  cx.lineWidth=1; cx.setLineDash([5,4]);
+  for(const [,pts] of m.series){
+    for(const p of pts){
+      if(p.ts<vs||p.ts>ve) continue;
+      const x=t2x(p.ts);
+      cx.strokeStyle='#e06b8c';
+      cx.beginPath(); cx.moveTo(x,0); cx.lineTo(x,cv.height); cx.stroke();
+    }
+  }
+  cx.setLineDash([]);
+}
+
+const SSCACHE=new Map();
+function drawScreenshots(m,y,h,tw,t2x,vs,ve){
+  cx.fillStyle='#111'; cx.fillRect(LW,y,tw,h);
+  for(const [,pts] of m.series){
+    for(const p of pts){
+      if(p.ts<vs||p.ts>ve) continue;
+      const x=t2x(p.ts);
+      if(x<LW||x>LW+tw) continue;
+      if(!SSCACHE.has(p.ts)){
+        SSCACHE.set(p.ts,null);
+        const img=new Image();
+        img.onload=()=>{SSCACHE.set(p.ts,img);sched();};
+        img.src='data:image/jpeg;base64,'+p.raw;
+      }
+      const img=SSCACHE.get(p.ts);
+      cx.strokeStyle='#555'; cx.lineWidth=1;
+      cx.beginPath(); cx.moveTo(x,y); cx.lineTo(x,y+h); cx.stroke();
+      if(img){
+        const iw=h*(img.width/img.height);
+        cx.drawImage(img,x+1,y+1,iw-2,h-2);
+      } else {
+        cx.fillStyle='#2a2a2a'; cx.fillRect(x+1,y+1,h*1.7,h-2);
+      }
+    }
+  }
+}
+
+// ── Ruler ────────────────────────────────────────────────────────────────────
+function drawRuler(W,tw,sc,t2x){
+  const {vs,ve,minTs}=S;
+  cx.fillStyle='#2d2d2d'; cx.fillRect(0,0,W,RH);
+  cx.fillStyle='#333';    cx.fillRect(0,RH-1,W,1);
+
+  const dur=ve-vs;
+  const raw=dur/(tw/100);
+  const mag=Math.pow(10,Math.floor(Math.log10(raw)));
+  let iv=mag;
+  for(const m of [1,2,5,10,20,50,100,200,500,1000]){
+    iv=m*mag; if(iv>=raw) break;
+  }
+
+  const first=Math.ceil(vs/iv)*iv;
+  cx.font='10px ui-monospace,monospace'; cx.fillStyle='#666'; cx.textBaseline='bottom';
+  cx.strokeStyle='#444'; cx.lineWidth=1;
+
+  for(let t=first;t<=ve+iv;t+=iv){
+    const x=t2x(t);
+    if(x<LW||x>W) continue;
+    cx.beginPath(); cx.moveTo(x,RH-8); cx.lineTo(x,RH); cx.stroke();
+    cx.fillText(fmtUs(t-minTs),x+2,RH-1);
+  }
+
+  // minor ticks
+  const miv=iv/5;
+  if(miv*sc>6){
+    const mf=Math.ceil(vs/miv)*miv;
+    cx.strokeStyle='#333';
+    for(let t=mf;t<=ve;t+=miv){
+      const x=t2x(t);
+      if(x<LW||x>W) continue;
+      cx.beginPath(); cx.moveTo(x,RH-4); cx.lineTo(x,RH); cx.stroke();
+    }
+  }
+
+  // cursor time indicator
+  if(S.cursorTs!==undefined){
+    const x=t2x(S.cursorTs);
+    if(x>=LW&&x<=W){
+      cx.strokeStyle='#888'; cx.lineWidth=1;
+      cx.beginPath(); cx.moveTo(x,0); cx.lineTo(x,RH); cx.stroke();
+      cx.fillStyle='#999'; cx.font='10px ui-monospace,monospace'; cx.textBaseline='bottom';
+      cx.fillText(fmtUs(S.cursorTs-minTs),x+3,RH-1);
+    }
+  }
+}
+
+// ── Scrollbar ────────────────────────────────────────────────────────────────
+function updateScrollbar(H){
+  const vis=H-RH, total=S.totalH-RH;
+  if(total<=vis){ document.getElementById('scrollbar-thumb').style.display='none'; return; }
+  const pct=S.sy/total, sz=Math.max(20,(vis/total)*vis);
+  const thumb=document.getElementById('scrollbar-thumb');
+  thumb.style.display='block';
+  thumb.style.height=sz+'px';
+  thumb.style.top=RH+(pct*(vis-sz))+'px';
+}
+
+// ── Hit test ─────────────────────────────────────────────────────────────────
+function hitTest(mx,my){
+  if(mx<LW) return null;
+  const {vs,ve,sy}=S;
+  const tw=cv.width-LW, sc=tw/(ve-vs);
+  const ts=vs+(mx-LW)/sc;
+  const ay=my+sy;
+
+  for(const item of S.layout){
+    if(ay<item.y||ay>item.y+item.h) continue;
+    if(item.kind==='thread'){
+      const t=item.track;
+      const ry=ay-item.y-HH;
+      if(ry<0) return {k:'thr',t};
+      const depth=Math.floor(ry/(SH+SG));
+      // spans are sorted by ts; binary-search for first span starting after cursor,
+      // then scan backward — this correctly finds long outer frames whose end times
+      // are large even when short inner spans sort between them
+      let lo=0,hi=t.spans.length;
+      while(lo<hi){ const m=(lo+hi)>>1; if(t.spans[m].ts<=ts) lo=m+1; else hi=m; }
+      for(let i=lo-1;i>=0;i--){
+        const s=t.spans[i];
+        if(s.end<ts) continue;
+        if(s.depth===depth) return {k:'span',s,t};
+      }
+      // check instants — hit if cursor is within IW/2 px of the instant's x position
+      const IW_TS=(8/2)*(ve-vs)/tw;
+      for(const ins of t.insts){
+        if(ins.depth!==depth) continue;
+        if(Math.abs(ins.ts-ts)<=IW_TS) return {k:'inst',ins,t};
+      }
+    } else {
+      const m=item.track;
+      // for screenshots: check which one we're hovering
+      if(m.type===3){
+        for(const [,pts] of m.series){
+          for(const p of pts){
+            const x=LW+(p.ts-vs)*sc;
+            if(mx>=x&&mx<=x+80) return {k:'ss',p,m};
+          }
+        }
+      }
+      return {k:'metric',m};
+    }
+  }
+  return null;
+}
+
+// ── Tooltip ───────────────────────────────────────────────────────────────────
+function showTip(mx,my,hit){
+  const tip=document.getElementById('tooltip');
+  if(!hit){tip.style.display='none';return;}
+  let html='';
+  if(hit.k==='span'){
+    const s=hit.s;
+    html=`<strong>${esc(s.name)}</strong><br>`+
+         `Duration: <b>${fmtUs(s.dur)}</b><br>`+
+         `Start: ${fmtUs(s.ts-S.minTs)}<br>`+
+         (s.cat?`Cat: ${esc(s.cat)}<br>`:'')+
+         (s.open?`<span style="color:#e57373">⚠ unclosed</span>`:'');
+    if(s.args&&Object.keys(s.args).length){
+      html+='<hr style="border-color:#444;margin:4px 0">';
+      for(const [k,v] of Object.entries(s.args)) html+=`${esc(k)}: ${esc(String(v))}<br>`;
+    }
+  } else if(hit.k==='metric'){
+    const m=hit.m;
+    if(m.type===0&&S.cursorTs!==undefined){
+      html=`<strong>${esc(m.name)}</strong><br>`;
+      html+=`t = ${fmtUs(S.cursorTs-S.minTs)}<br>`;
+      let si=0;
+      for(const [idx,pts] of m.series){
+        if(!pts.length){si++;continue;}
+        let lo=0,hi=pts.length;
+        while(lo<hi){const mid=(lo+hi)>>1;if(pts[mid].ts<=S.cursorTs)lo=mid+1;else hi=mid;}
+        if(lo===0&&pts.length===0){si++;continue;}
+        const bp=pts[lo>0?lo-1:0];
+        const clr=SER_COLORS[si%SER_COLORS.length];
+        const label=m.series.size>1?`[${idx}] `:'';
+        html+=`<span style="color:${clr}">■</span> ${label}<b>${fmtVal(bp.v)}</b>`+
+              ` <span style="color:#666">@ ${fmtUs(bp.ts-S.minTs)}</span><br>`;
+        si++;
+      }
+    } else {
+      html=`<strong>${esc(m.name)}</strong><br>type: ${['scalar','symbolic','marker','screenshot'][m.type]??'?'}`;
+    }
+  } else if(hit.k==='inst'){
+    const ins=hit.ins;
+    html=`<strong>${esc(ins.name)}</strong><br>`+
+         `Instant @ ${fmtUs(ins.ts-S.minTs)}`+
+         (ins.cat?`<br>Cat: ${esc(ins.cat)}`:'');
+  } else if(hit.k==='ss'){
+    html=`<strong>Screenshot</strong><br>at ${fmtUs(hit.p.ts-S.minTs)}<br><em>Click to expand</em>`;
+  } else if(hit.k==='thr'){
+    html=`<strong>${esc(hit.t.name)}</strong><br>${hit.t.spans.length} spans`;
+  }
+  if(!html){tip.style.display='none';return;}
+  tip.innerHTML=html;
+  tip.style.display='block';
+  const br=cv.getBoundingClientRect();
+  let tx=br.left+mx+14, ty=br.top+my-10;
+  if(tx+tip.offsetWidth>window.innerWidth) tx=br.left+mx-tip.offsetWidth-10;
+  if(ty+tip.offsetHeight>window.innerHeight) ty=window.innerHeight-tip.offsetHeight-4;
+  tip.style.left=tx+'px'; tip.style.top=ty+'px';
+}
+
+// ── Zoom / pan ────────────────────────────────────────────────────────────────
+function zoom(factor,cx_){
+  const {vs,ve}=S;
+  const tw=cv.width-LW;
+  const pivot=vs+(cx_-LW)/tw*(ve-vs);
+  const dur=(ve-vs)*factor;
+  const min=1, max=(S.maxTs-S.minTs)*4;
+  const d=Math.max(min,Math.min(max,dur));
+  const r=(pivot-vs)/(ve-vs);
+  S.vs=pivot-r*d;
+  S.ve=S.vs+d;
+  clamp();
+}
+
+function clamp(){
+  const span=S.maxTs-S.minTs;
+  const pad=span*.05||1;
+  const dur=S.ve-S.vs;
+  if(S.vs<S.minTs-pad){ S.vs=S.minTs-pad; S.ve=S.vs+dur; }
+  if(S.ve>S.maxTs+pad){ S.ve=S.maxTs+pad; S.vs=S.ve-dur; }
+  const H=cv.height;
+  const vis=H-RH;
+  S.sy=Math.max(0,Math.min(S.sy,Math.max(0,S.totalH-vis)));
+}
+
+// ── Details pane ─────────────────────────────────────────────────────────────
+function fmtBytes(n){ const g=n/1073741824; return g>=1?g.toFixed(1)+' GB':(n/1048576).toFixed(0)+' MB'; }
+function fmtFreqs(arr){ return arr.map(f=>f.toFixed(2)+' GHz').join(' / '); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderVal(v, depth){
+  depth=depth||0;
+  if(v===null||v===undefined) return `<span class="det-v">—</span>`;
+  if(typeof v==='boolean') return `<span class="det-v bool">${v}</span>`;
+  if(typeof v==='number')  return `<span class="det-v num">${v}</span>`;
+  if(typeof v==='string'){
+    // Attempt JSON parse
+    const t=v.trim();
+    if(t.length>1&&(t[0]==='{' || t[0]==='[')){
+      try{ return renderVal(JSON.parse(t),depth); }catch(e){}
+    }
+    // Long whitespace-separated token list (extension strings etc.)
+    if(v.length>80&&/^\S+(\s+\S+){4,}$/.test(v)){
+      const parts=v.split(/\s+/).filter(Boolean);
+      return `<details class="jlist"><summary class="jsum">${parts.length} items</summary>`+
+             `<div class="jext-wrap">${parts.map(p=>`<span class="jiext">${esc(p)}</span>`).join('')}</div></details>`;
+    }
+    return `<span class="det-v">${esc(v)}</span>`;
+  }
+  if(Array.isArray(v)){
+    if(v.length===0) return `<span class="det-v">[]</span>`;
+    const allPrim=v.every(x=>x===null||typeof x!=='object');
+    if(allPrim){
+      const all=v.every(x=>typeof x==='number');
+      if(v.length<=8) return `<span class="det-v ${all?'num':''}">${v.map(esc).join(', ')}</span>`;
+      return `<details class="jlist"><summary class="jsum">[${v.length}]</summary>`+
+             `<div class="jitems">${v.map(x=>`<div class="jitem">${renderVal(x,depth+1)}</div>`).join('')}</div></details>`;
+    }
+    // Array of objects
+    return `<div class="jobj">${v.map((item,i)=>
+      `<details class="jlist"><summary class="jsum">[${i}]</summary>`+
+      `<div class="jitems">${renderObj(item,depth+1)}</div></details>`
+    ).join('')}</div>`;
+  }
+  if(typeof v==='object'){
+    const entries=Object.entries(v);
+    if(depth>0&&entries.length>3){
+      return `<details class="jlist"><summary class="jsum">{${entries.length}}</summary>`+
+             `<div class="jitems">${renderObj(v,depth+1)}</div></details>`;
+    }
+    return `<div class="jobj">${renderObj(v,depth)}</div>`;
+  }
+  return `<span class="det-v">${esc(String(v))}</span>`;
+}
+
+function renderObj(obj, depth){
+  depth=depth||0;
+  return Object.entries(obj).map(([k,v])=>{
+    const complex=v!==null&&typeof v==='object';
+    const jsonStr=typeof v==='string'&&v.trim().length>1&&(v.trim()[0]==='{' || v.trim()[0]==='[');
+    if(complex||jsonStr){
+      return `<div class="jkv-block"><div class="jk">${esc(k)}</div>${renderVal(v,depth+1)}</div>`;
+    }
+    return `<div class="jkv"><span class="jk">${esc(k)}</span>${renderVal(v,depth+1)}</div>`;
+  }).join('');
+}
+
+function makeRow(key, rawVal, customText, customCls){
+  if(customText!==undefined)
+    return `<div class="det-row"><span class="det-k" title="${esc(key)}">${esc(key)}</span><span class="det-v ${customCls||''}">${esc(customText)}</span></div>`;
+  const v=rawVal;
+  const complex=v!==null&&(typeof v==='object'||Array.isArray(v));
+  const jsonStr=typeof v==='string'&&v.trim().length>1&&(v.trim()[0]==='{' || v.trim()[0]==='[');
+  if(complex||jsonStr)
+    return `<div class="det-block"><div class="det-bk">${esc(key)}</div><div class="det-bv">${renderVal(v,0)}</div></div>`;
+  // simple primitive
+  let cls='', text=String(v??'—');
+  if(typeof v==='boolean') cls='bool';
+  else if(typeof v==='number') cls='num';
+  return `<div class="det-row"><span class="det-k" title="${esc(key)}">${esc(key)}</span><span class="det-v ${cls}">${esc(text)}</span></div>`;
+}
+
+function makeSection(title, rows, open=true){
+  return `<details class="det-section"${open?' open':''}><summary class="det-summary">${esc(title)}</summary><div class="det-rows">${rows}</div></details>`;
+}
+
+function buildDetailsPane(obj){
+  const body=document.getElementById('details-body');
+  let html='';
+
+  // Application
+  const app=obj.application||{};
+  if(Object.keys(app).length){
+    let rows='';
+    if(app.name)         rows+=makeRow('Name',app.name);
+    if(app.organization) rows+=makeRow('Organization',app.organization);
+    if(app.version!==undefined) rows+=makeRow('Version',app.version);
+    html+=makeSection('Application',rows);
+  }
+
+  // Build
+  const bld=obj.build||{};
+  if(Object.keys(bld).length){
+    let rows='';
+    if(bld.version)         rows+=makeRow('Version',bld.version);
+    if(bld.compiler)        rows+=makeRow('Compiler',bld.compiler);
+    if(bld.compilerVersion) rows+=makeRow('Compiler version',bld.compilerVersion);
+    if(bld.architecture)    rows+=makeRow('Architecture',bld.architecture);
+    if(bld.target)          rows+=makeRow('Target',bld.target);
+    if(bld.buildMode)       rows+=makeRow('Build mode',bld.buildMode);
+    if(bld.libcRuntime)     rows+=makeRow('libc runtime',bld.libcRuntime);
+    if(bld.libcVersion)     rows+=makeRow('libc version',bld.libcVersion);
+    html+=makeSection('Build',rows);
+  }
+
+  // Runtime
+  const rt=obj.runtime||{};
+  if(Object.keys(rt).length){
+    let rows='';
+    if(rt.kernel)        rows+=makeRow('Kernel',rt.kernel);
+    if(rt.kernelVersion) rows+=makeRow('Kernel version',rt.kernelVersion);
+    if(rt.system)        rows+=makeRow('System',rt.system);
+    if(rt.distro)        rows+=makeRow('Distro',rt.distro+(rt.distroVersion?' '+rt.distroVersion:''));
+    if(rt.architecture)  rows+=makeRow('Architecture',rt.architecture);
+    if(rt.libcVersion)   rows+=makeRow('libc version',rt.libcVersion);
+    if(rt.cwd)           rows+=makeRow('Working dir',rt.cwd);
+    if(rt.arguments)     rows+=makeRow('Arguments',rt.arguments);
+    html+=makeSection('Runtime',rows);
+  }
+
+  // Device
+  const dev=obj.device||{};
+  if(Object.keys(dev).length){
+    let rows='';
+    if(dev.name||dev.machineModel) rows+=makeRow('Model',dev.name||dev.machineModel);
+    if(dev.machineManufacturer)    rows+=makeRow('Manufacturer',dev.machineManufacturer);
+    if(dev.motherboard)            rows+=makeRow('Motherboard',dev.motherboard.trim());
+    if(dev.chassis)                rows+=makeRow('Chassis',dev.chassis);
+    html+=makeSection('Device',rows);
+  }
+
+  // Processor
+  const cpu=obj.processor||{};
+  if(Object.keys(cpu).length){
+    let rows='';
+    if(cpu.model)          rows+=makeRow('Model',cpu.model);
+    if(cpu.manufacturer)   rows+=makeRow('Manufacturer',cpu.manufacturer);
+    if(cpu.cores!==undefined)   rows+=makeRow('Cores',cpu.cores);
+    if(cpu.threads!==undefined) rows+=makeRow('Threads',cpu.threads);
+    if(cpu.cpus!==undefined)    rows+=makeRow('CPUs',cpu.cpus);
+    if(cpu.nodes!==undefined)   rows+=makeRow('NUMA nodes',cpu.nodes);
+    if(cpu.hyperthreading!==undefined) rows+=makeRow('Hyperthreading',cpu.hyperthreading);
+    if(cpu.frequencies&&cpu.frequencies.length) rows+=makeRow('Frequencies',undefined,fmtFreqs(cpu.frequencies),'num');
+    if(cpu.firmware)       rows+=makeRow('Firmware',cpu.firmware);
+    if(cpu.clusters&&cpu.clusters.length) rows+=makeRow('Clusters',cpu.clusters);
+    html+=makeSection('Processor',rows);
+  }
+
+  // Memory
+  const mem=obj.memory||{};
+  if(Object.keys(mem).length){
+    let rows='';
+    if(mem.total!==undefined) rows+=makeRow('Total',undefined,fmtBytes(mem.total),'num');
+    html+=makeSection('Memory',rows);
+  }
+
+  // Extras
+  const extra=obj.extra||{};
+  const ekeys=Object.keys(extra);
+  if(ekeys.length){
+    // group by prefix before first ':'
+    const groups=new Map();
+    for(const k of ekeys){
+      const colon=k.indexOf(':');
+      const prefix=colon>=0?k.slice(0,colon):'other';
+      if(!groups.has(prefix)) groups.set(prefix,[]);
+      groups.get(prefix).push(k);
+    }
+    let rows='';
+    for(const [prefix,ks] of groups){
+      rows+=`<div class="det-subhead">${prefix}</div>`;
+      for(const k of ks){
+        const label=k.slice(prefix.length+1)||k;
+        rows+=makeRow(label,extra[k]);
+      }
+    }
+    html+=makeSection('Extra',rows,false);
+  }
+
+  body.innerHTML=html;
+}
+
+// ── Load trace ────────────────────────────────────────────────────────────────
+function loadTrace(obj){
+  const {threads,metrics,minTs,maxTs}=parse(obj);
+  const {layout,totalH}=buildLayout(threads,metrics);
+  Object.assign(S,{threads,metrics,layout,totalH,minTs,maxTs,vs:minTs,ve:maxTs,sy:0});
+  const nspan=threads.reduce((a,t)=>a+t.spans.length,0);
+  document.getElementById('info').textContent=
+    `${threads.length} thread${threads.length!==1?'s':''} · ${metrics.length} metric${metrics.length!==1?'s':''} · ${nspan.toLocaleString()} spans`;
+  document.getElementById('drop-zone').style.display='none';
+  document.getElementById('canvas-wrap').style.display='block';
+  buildDetailsPane(obj);
+  resize(); sched();
+}
+
+function resize(){
+  const wrap=document.getElementById('canvas-wrap');
+  cv.width=wrap.clientWidth-8; // leave space for scrollbar
+  cv.height=wrap.clientHeight;
+  clamp(); sched();
+}
+
+// ── Event wiring ──────────────────────────────────────────────────────────────
+window.addEventListener('load',()=>{
+  cv=document.getElementById('cv');
+  cx=cv.getContext('2d');
+
+  const fi=document.getElementById('file-input');
+  document.getElementById('btn-open').onclick=()=>fi.click();
+  fi.onchange=e=>loadFile(e.target.files[0]);
+  document.getElementById('drop-zone').onclick=()=>fi.click();
+  document.getElementById('btn-zoomin').onclick=()=>{zoom(.4,cv.width/2);sched();};
+  document.getElementById('btn-zoomout').onclick=()=>{zoom(2.5,cv.width/2);sched();};
+  document.getElementById('btn-fit').onclick=()=>{S.vs=S.minTs;S.ve=S.maxTs;clamp();sched();};
+  document.getElementById('btn-reset-scroll').onclick=()=>{S.sy=0;sched();};
+  function toggleDetails(){
+    const pane=document.getElementById('details-pane');
+    const btn=document.getElementById('btn-details');
+    pane.classList.toggle('open');
+    btn.classList.toggle('active',pane.classList.contains('open'));
+    resize();
+  }
+  document.getElementById('btn-details').onclick=toggleDetails;
+  document.getElementById('btn-details-close').onclick=toggleDetails;
+
+  document.body.ondragover=e=>e.preventDefault();
+  document.body.ondrop=e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)loadFile(f);};
+
+  cv.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const r=cv.getBoundingClientRect(), mx=e.clientX-r.left;
+    if(e.ctrlKey){
+      // Ctrl+wheel: horizontal zoom centered on cursor
+      const f=e.deltaY>0?1.15:1/1.15;
+      zoom(f,mx); sched();
+    } else {
+      // Plain wheel: vertical scroll
+      S.sy=Math.max(0,S.sy+e.deltaY);
+      clamp(); sched();
+    }
+  },{passive:false});
+
+  cv.addEventListener('mousedown',e=>{
+    if(e.button!==0) return;
+    const r=cv.getBoundingClientRect(), mx=e.clientX-r.left;
+    if(mx<LW) return;
+    S.drag=true; S.dragX=e.clientX; S.dragVs=S.vs;
+    cv.style.cursor='grabbing';
+  });
+
+  window.addEventListener('mousemove',e=>{
+    const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+    if(S.drag){
+      const dx=e.clientX-S.dragX;
+      const tw=cv.width-LW, sc=(S.ve-S.vs)/tw;
+      const dur=S.ve-S.vs;
+      S.vs=S.dragVs-dx*sc; S.ve=S.vs+dur;
+      clamp(); sched();
+    } else if(S.layout.length){
+      if(mx>=LW){
+        const tw=cv.width-LW, sc=(S.ve-S.vs)/tw;  // µs/px — same convention as drag
+        S.cursorTs=S.vs+(mx-LW)*sc;               // px * µs/px = µs ✓
+      } else { delete S.cursorTs; }
+      const hit=hitTest(mx,my);
+      S.hover=hit;
+      showTip(mx,my,hit);
+      sched();
+    }
+  });
+
+  window.addEventListener('mouseup',e=>{
+    if(!S.drag) return;
+    S.drag=false; cv.style.cursor='crosshair';
+    // click (no drag) → select span
+    if(Math.abs(e.clientX-S.dragX)<3){
+      const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+      const hit=hitTest(mx,my);
+      if(hit?.k==='span') S.selected=(S.selected===hit.s?null:hit.s);
+      else if(hit?.k==='inst') S.selected=(S.selected===hit.ins?null:hit.ins);
+      else if(hit?.k==='ss'){
+        const modal=document.getElementById('modal');
+        document.getElementById('modal-img').src='data:image/jpeg;base64,'+hit.p.raw;
+        modal.style.display='flex';
+      } else S.selected=null;
+      sched();
+    }
+  });
+
+  cv.addEventListener('mouseleave',()=>{
+    document.getElementById('tooltip').style.display='none';
+    delete S.cursorTs; sched();
+  });
+
+  document.getElementById('modal').onclick=()=>{
+    document.getElementById('modal').style.display='none';
+  };
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){
+      S.selected=null;
+      document.getElementById('modal').style.display='none';
+      sched();
+    }
+    if(!S.layout.length) return;
+    const tw=cv.width-LW, dur=S.ve-S.vs;
+    if(e.key==='+'||e.key==='='){ zoom(.4,cv.width/2); sched(); }
+    else if(e.key==='-'||e.key==="_"){ zoom(2.5,cv.width/2); sched(); }
+    else if(e.key==='ArrowLeft'){ S.vs-=dur*.2; S.ve-=dur*.2; clamp(); sched(); }
+    else if(e.key==='ArrowRight'){ S.vs+=dur*.2; S.ve+=dur*.2; clamp(); sched(); }
+    else if(e.key==='ArrowUp'){ S.sy=Math.max(0,S.sy-60); sched(); }
+    else if(e.key==='ArrowDown'){ S.sy+=60; clamp(); sched(); }
+    else if(e.key==='f'||e.key==='F'||e.key==='Home'){ S.vs=S.minTs; S.ve=S.maxTs; clamp(); sched(); }
+  });
+
+  window.addEventListener('resize',resize);
+});
+
+function loadFile(f){
+  if(!f) return;
+  document.getElementById('info').textContent='Loading '+f.name+'…';
+  const rd=new FileReader();
+  rd.onload=e=>{
+    try{ loadTrace(JSON.parse(e.target.result)); }
+    catch(err){ document.getElementById('info').textContent='Error: '+err.message; }
+  };
+  rd.readAsText(f);
+}
+</script>
+</body>
+</html>
