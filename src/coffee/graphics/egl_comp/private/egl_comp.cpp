@@ -152,7 +152,7 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
                 {
                     cWarning(
                         "EGL_MESA_platform_surfaceless not supported, "
-                        "falling back to default display");
+                                                     "falling back to default display");
                     use_default_display = true;
                     return EGL_NONE;
                 }
@@ -290,7 +290,7 @@ static stl_types::result<EGLConfig, std::string> eglTryConfig(
     gl::tex::texture_format_t::bit_layout_t const&     color,
     gl::tex::texture_format_t::bit_layout_t const&     depth,
     [[maybe_unused]] std::set<std::string_view> const& extensions,
-    bool surfaceless)
+    bool                                               surfaceless)
 {
     using Profile = comp_app::GLConfig::Profile;
     using namespace typing::pixels;
@@ -500,11 +500,12 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
     auto window_info = e.service<comp_app::PtrNativeWindowInfo>();
     bool surfaceless = window_info->window_system == ws_t::surfaceless;
 
-    if(auto res = eglTryConfig(display, config, color, depth, extensions, surfaceless);
+    if(auto res =
+           eglTryConfig(display, config, color, depth, extensions, surfaceless);
        res.has_error())
     {
         std::vector<EGLConfig> configs(100);
-        EGLint num_configs;
+        EGLint                 num_configs;
         eglGetConfigs(display, configs.data(), configs.size(), &num_configs);
         configs.resize(num_configs);
         cWarning("No config selected, enumerating:");
@@ -516,20 +517,41 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
                 EGLint depth{}, stencil{};
                 EGLint renderable_type{}, color_buffer_type{};
             } config_values;
-            eglGetConfigAttrib(display, config, EGL_RED_SIZE, &config_values.red);
-            eglGetConfigAttrib(display, config, EGL_GREEN_SIZE, &config_values.green);
-            eglGetConfigAttrib(display, config, EGL_BLUE_SIZE, &config_values.blue);
-            eglGetConfigAttrib(display, config, EGL_ALPHA_SIZE, &config_values.alpha);
-            eglGetConfigAttrib(display, config, EGL_DEPTH_SIZE, &config_values.depth);
-            eglGetConfigAttrib(display, config, EGL_STENCIL_SIZE, &config_values.stencil);
-            eglGetConfigAttrib(display, config, EGL_RENDERABLE_TYPE, &config_values.renderable_type);
-            eglGetConfigAttrib(display, config, EGL_COLOR_BUFFER_TYPE, &config_values.color_buffer_type);
 
-            cWarning(" - {} : R{}G{}B{}A{} D{}S{} renderable={} color_buffer={}",
-                     config,
-                     config_values.red, config_values.green, config_values.blue, config_values.alpha,
-                     config_values.depth, config_values.stencil,
-                     reinterpret_cast<void*>(config_values.renderable_type), reinterpret_cast<void*>(config_values.color_buffer_type));
+            eglGetConfigAttrib(
+                display, config, EGL_RED_SIZE, &config_values.red);
+            eglGetConfigAttrib(
+                display, config, EGL_GREEN_SIZE, &config_values.green);
+            eglGetConfigAttrib(
+                display, config, EGL_BLUE_SIZE, &config_values.blue);
+            eglGetConfigAttrib(
+                display, config, EGL_ALPHA_SIZE, &config_values.alpha);
+            eglGetConfigAttrib(
+                display, config, EGL_DEPTH_SIZE, &config_values.depth);
+            eglGetConfigAttrib(
+                display, config, EGL_STENCIL_SIZE, &config_values.stencil);
+            eglGetConfigAttrib(
+                display,
+                config,
+                EGL_RENDERABLE_TYPE,
+                &config_values.renderable_type);
+            eglGetConfigAttrib(
+                display,
+                config,
+                EGL_COLOR_BUFFER_TYPE,
+                &config_values.color_buffer_type);
+
+            cWarning(
+                " - {} : R{}G{}B{}A{} D{}S{} renderable={} color_buffer={}",
+                config,
+                config_values.red,
+                config_values.green,
+                config_values.blue,
+                config_values.alpha,
+                config_values.depth,
+                config_values.stencil,
+                reinterpret_cast<void*>(config_values.renderable_type),
+                reinterpret_cast<void*>(config_values.color_buffer_type));
         }
         ec = res.error();
         ec = comp_app::AppError::FramebufferMismatch;
@@ -662,42 +684,45 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
         auto const& windowConfig =
             comp_app::AppLoader::config<comp_app::WindowConfig>(e);
         std::array<EGLint, 5> pbufattrs = {{
-            EGL_WIDTH,  windowConfig.size.w,
-            EGL_HEIGHT, windowConfig.size.h,
+            EGL_WIDTH,
+            windowConfig.size.w,
+            EGL_HEIGHT,
+            windowConfig.size.h,
             EGL_NONE,
         }};
-        m_surface = eglCreatePbufferSurface(
+        m_surface                       = eglCreatePbufferSurface(
             display,
             e.service<egl::GraphicsContext>()->m_config,
             pbufattrs.data());
     } else
     {
 #if defined(EGL_VERSION_1_5) && SUPPORTS_PLATFORM_DISPLAY_API
-    if(egl_15_supported)
-    {
-        m_surface = eglCreatePlatformWindowSurface(
-            display,
-            e.service<egl::GraphicsContext>()->m_config,
-            ptr_info->window,
-            C_RCAST<EGLAttrib*>(attribs.data()));
-    } else
+        if(egl_15_supported)
+        {
+            m_surface = eglCreatePlatformWindowSurface(
+                display,
+                e.service<egl::GraphicsContext>()->m_config,
+                ptr_info->window,
+                C_RCAST<EGLAttrib*>(attribs.data()));
+        } else
 #endif // defined(EGL_VERSION_1_5)
-        m_surface = eglCreateWindowSurface(
-            display,
-            e.service<egl::GraphicsContext>()->m_config,
-            C_RCAST<EGLNativeWindowType>(ptr_info->window),
-            nullptr);
+            m_surface = eglCreateWindowSurface(
+                display,
+                e.service<egl::GraphicsContext>()->m_config,
+                C_RCAST<EGLNativeWindowType>(ptr_info->window),
+                nullptr);
 
-    if(m_surface == EGL_NO_SURFACE)
-    {
-        cWarning("Failed to create surface on first try: {}", egl_to_error());
-        m_surface = eglCreateWindowSurface(
-            display,
-            e.service<egl::GraphicsContext>()->m_config,
-            C_RCAST<EGLNativeWindowType>(ptr_info->window),
-            nullptr);
-        cWarning("Falling back to default window configuration");
-    }
+        if(m_surface == EGL_NO_SURFACE)
+        {
+            cWarning(
+                "Failed to create surface on first try: {}", egl_to_error());
+            m_surface = eglCreateWindowSurface(
+                display,
+                e.service<egl::GraphicsContext>()->m_config,
+                C_RCAST<EGLNativeWindowType>(ptr_info->window),
+                nullptr);
+            cWarning("Falling back to default window configuration");
+        }
     } // end non-surfaceless block
 
     if(m_surface == EGL_NO_SURFACE)
@@ -810,7 +835,8 @@ void Windowing::setState(comp_app::window_flags_t)
 void SurfacelessWindowing::load(entity_container& e, comp_app::app_error&)
 {
     using ws_t = comp_app::interfaces::PtrNativeWindowInfo::window_system_t;
-    e.service<comp_app::PtrNativeWindowInfo>()->window_system = ws_t::surfaceless;
+    e.service<comp_app::PtrNativeWindowInfo>()->window_system =
+        ws_t::surfaceless;
     m_container = &e;
 }
 

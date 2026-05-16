@@ -209,11 +209,11 @@ void fork_dummy_plugs(
     } else if(dummy_plug.swrender == "llvmpipe")
     {
         cDebug("llvmpipe software rendering activated");
-        glConfig.profile = GLConfig::Core;
+        glConfig.profile       = GLConfig::Core;
         glConfig.version.major = 4u;
         glConfig.version.minor = 6u;
 
-        dummy_plug.graphics_config            = nlohmann::json();
+        dummy_plug.graphics_config = nlohmann::json();
         dummy_plug.graphics_config["profile"] =
             magic_enum::enum_name(glConfig.profile);
         dummy_plug.graphics_config["major"] = glConfig.version.major;
@@ -273,9 +273,9 @@ void fork_dummy_plugs(
             }
             glConfig.depthFmt =
                 version.depth == 32 ? pix_fmt::Depth32 : pix_fmt::Depth16;
-        } else if (dummy_plug.swrender == "llvmpipe")
+        } else if(dummy_plug.swrender == "llvmpipe")
         {
-            glConfig.profile = version.profile;
+            glConfig.profile       = version.profile;
             glConfig.version.major = version.major;
             glConfig.version.minor = version.minor;
             glConfig.depthFmt =

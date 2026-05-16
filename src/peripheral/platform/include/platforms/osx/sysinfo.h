@@ -73,14 +73,14 @@ inline std::optional<std::pair<std::string, std::string>> model(
     return std::pair<std::string, std::string>("Apple", "A");
 #else
     /* machdep.cpu.* keys only exist on Intel Macs; Apple Silicon lacks them */
-    auto vendor = info::apple::sysctl_by_name<std::string>("machdep.cpu.vendor");
+    auto vendor =
+        info::apple::sysctl_by_name<std::string>("machdep.cpu.vendor");
     if(!vendor.empty())
         return std::make_pair(
             vendor,
             info::apple::sysctl_by_name<std::string>(
                 "machdep.cpu.brand_string"));
-    auto hw_model =
-        info::apple::sysctl_by_name<std::string>("hw.model");
+    auto hw_model = info::apple::sysctl_by_name<std::string>("hw.model");
     if(!hw_model.empty())
         return std::make_pair(std::string("Apple"), hw_model);
     return std::nullopt;

@@ -553,8 +553,9 @@ void addDefaults(
         cVerbose(10, "Selecting surfaceless OSMesa backend");
     } else
 #endif
-#if defined(FEATURE_ENABLE_EGLComponent) && defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
-    if(dummyPlug.enabled && dummyPlug.swrender == "llvmpipe")
+#if defined(FEATURE_ENABLE_EGLComponent) && \
+    defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+        if(dummyPlug.enabled && dummyPlug.swrender == "llvmpipe")
     {
         loader.registerAll<egl::SurfacelessServices>(container, ec);
         C_ERROR_CHECK(ec);
@@ -564,84 +565,97 @@ void addDefaults(
     } else
 #endif
     {
-        std::map<SelectedWindowLibrary, std::function<void()>> windowingCandidates = {
+        std::map<SelectedWindowLibrary, std::function<void()>>
+            windowingCandidates = {
 #if defined(FEATURE_ENABLE_SDL2Components)
-            {Windower_SDL2, [&] -> void {
-                loader.registerAll<sdl2::Services>(container, ec);
-                C_ERROR_CHECK(ec);
-    #if !defined(FEATURE_ENABLE_EmscriptenComponents)
-                /* Controller API in Emscripten is not part of the SDL2 port */
-                loader.registerAll<type_safety::type_list_t<sdl2::ControllerInput>>(
-                    container, ec);
-                C_ERROR_CHECK(ec);
-    #endif
-                appInfo.add("window:library", "SDL2 " + appInfo.get("sdl2:version"));
-            }},
+                {Windower_SDL2,
+                 [&] -> void {
+                     loader.registerAll<sdl2::Services>(container, ec);
+                     C_ERROR_CHECK(ec);
+#if !defined(FEATURE_ENABLE_EmscriptenComponents)
+                     /* Controller API in Emscripten is not part of the SDL2
+                      * port */
+                     loader.registerAll<
+                         type_safety::type_list_t<sdl2::ControllerInput>>(
+                         container, ec);
+                     C_ERROR_CHECK(ec);
+#endif
+                     appInfo.add(
+                         "window:library",
+                         "SDL2 " + appInfo.get("sdl2:version"));
+                 }},
 #endif
 #if defined(FEATURE_ENABLE_X11Component)
-            {Windower_X11, [&] -> {
-                loader.registerAll<x11::Services>(container, ec);
-                C_ERROR_CHECK(ec);
-                appInfo.add("window:library", "X11");
-            }},
+                {Windower_X11,
+                 [&] -> {
+                     loader.registerAll<x11::Services>(container, ec);
+                     C_ERROR_CHECK(ec);
+                     appInfo.add("window:library", "X11");
+                 }},
 #endif
 #if defined(FEATURE_ENABLE_GLKitComponent)
-            {Windower_UIKit, [&] -> void {
-                loader.registerAll<glkit::Services>(container, ec);
-                C_ERROR_CHECK(ec);
-                appInfo.add("window:library", "Apple GLKit");
-            }},
+                {Windower_UIKit,
+                 [&] -> void {
+                     loader.registerAll<glkit::Services>(container, ec);
+                     C_ERROR_CHECK(ec);
+                     appInfo.add("window:library", "Apple GLKit");
+                 }},
 #endif
 #if defined(FEATURE_ENABLE_ANativeComponent)
-            {Windower_UIKit, [&] -> void {
-                loader.registerAll<anative::Services>(container, ec);
-                C_ERROR_CHECK(ec);
-                appInfo.add("window:library", "Android NativeActivity");
-            }},
+                {Windower_UIKit,
+                 [&] -> void {
+                     loader.registerAll<anative::Services>(container, ec);
+                     C_ERROR_CHECK(ec);
+                     appInfo.add("window:library", "Android NativeActivity");
+                 }},
 #endif
 #if defined(FEATURE_ENABLE_CogComponent)
-            {Windower_COG, [&] -> void {
-                /* There is no window */
-            }},
+                {Windower_COG,
+                 [&] -> void {
+                     /* There is no window */
+                 }},
 #endif
 #if defined(FEATURE_ENABLE_DispManXComponent)
-            {Windower_DispManX, [&] -> void {
-                loader.registerAll<type_safety::type_list_t<
-                    comp_app::PtrNativeWindowInfoService,
-                    dispmanx::Windowing>>(container, ec);
-                C_ERROR_CHECK(ec);
-                appInfo.add("window:library", "DispManX");
-            }},
+                {Windower_DispManX,
+                 [&] -> void {
+                     loader.registerAll<type_safety::type_list_t<
+                         comp_app::PtrNativeWindowInfoService,
+                         dispmanx::Windowing>>(container, ec);
+                     C_ERROR_CHECK(ec);
+                     appInfo.add("window:library", "DispManX");
+                 }},
 #endif
 #if defined(FEATURE_ENABLE_EGLComponent)
-            {Windower_EGL, [&] -> void {
-                // For when there's no window creation necessary
-                // For example NullWS on SGX
-                loader.registerAll<type_safety::type_list_t<egl::Windowing>>(
-                    container, ec);
-                C_ERROR_CHECK(ec);
-                appInfo.add("window:library", "EGL Headless");
-            }},
+                {Windower_EGL,
+                 [&] -> void {
+                     // For when there's no window creation necessary
+                     // For example NullWS on SGX
+                     loader
+                         .registerAll<type_safety::type_list_t<egl::Windowing>>(
+                             container, ec);
+                     C_ERROR_CHECK(ec);
+                     appInfo.add("window:library", "EGL Headless");
+                 }},
 #endif
-    };
+            };
 
-    if(selected_windowing != Windower_Default)
-        windowingCandidates[selected_windowing]();
-    else
-    {
-        for(auto const& [_, activator] : windowingCandidates)
+        if(selected_windowing != Windower_Default)
+            windowingCandidates[selected_windowing]();
+        else
         {
-            activator();
-            break;
+            for(auto const& [_, activator] : windowingCandidates)
+            {
+                activator();
+                break;
+            }
         }
-    }
 
-#if !defined(FEATURE_ENABLE_SDL2Components) && \
-        !defined(FEATURE_ENABLE_X11Component) && \
-        !defined(FEATURE_ENABLE_GLKitComponent) && \
-        !defined(FEATURE_ENABLE_ANativeComponent) && \
-        !defined(FEATURE_ENABLE_DispManXComponent) && \
-        !defined(FEATURE_ENABLE_EGLComponent)
+#if !defined(FEATURE_ENABLE_SDL2Components) &&    \
+    !defined(FEATURE_ENABLE_X11Component) &&      \
+    !defined(FEATURE_ENABLE_GLKitComponent) &&    \
+    !defined(FEATURE_ENABLE_ANativeComponent) &&  \
+    !defined(FEATURE_ENABLE_DispManXComponent) && \
+    !defined(FEATURE_ENABLE_EGLComponent)
 #error No window manager
 #endif
     }
@@ -664,8 +678,9 @@ void addDefaults(
         appInfo.add("gl:context", "OSMesa");
     } else
 #endif
-#if defined(FEATURE_ENABLE_EGLComponent) && defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
-    if(dummyPlug.enabled && dummyPlug.swrender == "llvmpipe")
+#if defined(FEATURE_ENABLE_EGLComponent) && \
+    defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+        if(dummyPlug.enabled && dummyPlug.swrender == "llvmpipe")
     {
         appInfo.add("gl:context", "EGL (llvmpipe)");
     } else

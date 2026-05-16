@@ -600,7 +600,8 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.rendertarget.depth32f ||
         supports_extension(extensions, arb::depth_buffer_float::name);
     if(api_type == api_type_t::core)
-        out.rendertarget.depth32 |= supports_render_format(out, pix_fmt::Depth32F);
+        out.rendertarget.depth32 |=
+            supports_render_format(out, pix_fmt::Depth32F);
 
     /* Selection of preferred pix_fmt for color/depth buffers
      * For easier use by other code
@@ -940,7 +941,7 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
     std::string formats_list;
     if(m_api_type == api_type_t::core)
     {
-        auto        fmts = enumerate_compressed_formats(m_features.texture);
+        auto fmts = enumerate_compressed_formats(m_features.texture);
         for(auto const& fmt : fmts)
         {
             if(!formats_list.empty())

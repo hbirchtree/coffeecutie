@@ -27,7 +27,7 @@ struct ScreenshotProvider
         m_work_queue = worker;
     }
 
-    comp_app::GLConfig const* m_config{nullptr};
+    comp_app::GLConfig const*           m_config{nullptr};
     comp_app::dummy_plug::Config const* m_dummy_config{nullptr};
 
     libc_types::u32    m_pbo{0};

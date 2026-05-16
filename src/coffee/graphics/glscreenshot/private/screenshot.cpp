@@ -47,19 +47,17 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
 
     Coffee::DProfContext _("glscreenshot::ScreenshotProvider::pixels");
 
-    auto major_version = std::min(
-        m_config->version.major,
-        99
-    );
+    auto major_version = std::min(m_config->version.major, 99);
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
     if(m_dummy_config)
-        if(auto dummy_ver = m_dummy_config->graphics_config.value("major", i32(99));
-                dummy_ver != 99)
+        if(auto dummy_ver =
+               m_dummy_config->graphics_config.value("major", i32(99));
+           dummy_ver != 99)
             major_version = dummy_ver;
 #endif
     const bool use_pbo = major_version >= 3
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
-        && !m_dummy_config->enabled
+                         && !m_dummy_config->enabled
 #endif
         ;
 
