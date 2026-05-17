@@ -848,84 +848,89 @@ function buildDetailsPane(obj){
   // Application
   const app=obj.application||{};
   if(Object.keys(app).length){
-    let rows='';
-    if(app.name)         rows+=makeRow('Name',app.name);
-    if(app.organization) rows+=makeRow('Organization',app.organization);
-    if(app.version!==undefined) rows+=makeRow('Version',app.version);
+    const rows=[
+      app.name         && makeRow('Name',app.name),
+      app.organization && makeRow('Organization',app.organization),
+      app.version!==undefined && makeRow('Version',app.version),
+    ].filter(Boolean).sort().join('');
     html+=makeSection('Application',rows);
   }
 
   // Build
   const bld=obj.build||{};
   if(Object.keys(bld).length){
-    let rows='';
-    if(bld.version)         rows+=makeRow('Version',bld.version);
-    if(bld.compiler)        rows+=makeRow('Compiler',bld.compiler);
-    if(bld.compilerVersion) rows+=makeRow('Compiler version',bld.compilerVersion);
-    if(bld.architecture)    rows+=makeRow('Architecture',bld.architecture);
-    if(bld.target)          rows+=makeRow('Target',bld.target);
-    if(bld.buildMode)       rows+=makeRow('Build mode',bld.buildMode);
-    if(bld.libcRuntime)     rows+=makeRow('libc runtime',bld.libcRuntime);
-    if(bld.libcVersion)     rows+=makeRow('libc version',bld.libcVersion);
+    const rows=[
+      bld.architecture    && makeRow('Architecture',bld.architecture),
+      bld.buildMode       && makeRow('Build mode',bld.buildMode),
+      bld.compiler        && makeRow('Compiler',bld.compiler),
+      bld.compilerVersion && makeRow('Compiler version',bld.compilerVersion),
+      bld.libcRuntime     && makeRow('libc runtime',bld.libcRuntime),
+      bld.libcVersion     && makeRow('libc version',bld.libcVersion),
+      bld.target          && makeRow('Target',bld.target),
+      bld.version         && makeRow('Version',bld.version),
+    ].filter(Boolean).join('');
     html+=makeSection('Build',rows);
   }
 
   // Runtime
   const rt=obj.runtime||{};
   if(Object.keys(rt).length){
-    let rows='';
-    if(rt.kernel)        rows+=makeRow('Kernel',rt.kernel);
-    if(rt.kernelVersion) rows+=makeRow('Kernel version',rt.kernelVersion);
-    if(rt.system)        rows+=makeRow('System',rt.system);
-    if(rt.distro)        rows+=makeRow('Distro',rt.distro+(rt.distroVersion?' '+rt.distroVersion:''));
-    if(rt.architecture)  rows+=makeRow('Architecture',rt.architecture);
-    if(rt.libcVersion)   rows+=makeRow('libc version',rt.libcVersion);
-    if(rt.cwd)           rows+=makeRow('Working dir',rt.cwd);
-    if(rt.arguments)     rows+=makeRow('Arguments',rt.arguments);
+    const rows=[
+      rt.architecture  && makeRow('Architecture',rt.architecture),
+      rt.arguments     && makeRow('Arguments',rt.arguments),
+      rt.cwd           && makeRow('Working dir',rt.cwd),
+      rt.distro        && makeRow('Distro',rt.distro+(rt.distroVersion?' '+rt.distroVersion:'')),
+      rt.kernel        && makeRow('Kernel',rt.kernel),
+      rt.kernelVersion && makeRow('Kernel version',rt.kernelVersion),
+      rt.libcVersion   && makeRow('libc version',rt.libcVersion),
+      rt.system        && makeRow('System',rt.system),
+    ].filter(Boolean).join('');
     html+=makeSection('Runtime',rows);
   }
 
   // Device
   const dev=obj.device||{};
   if(Object.keys(dev).length){
-    let rows='';
-    if(dev.name||dev.machineModel) rows+=makeRow('Model',dev.name||dev.machineModel);
-    if(dev.machineManufacturer)    rows+=makeRow('Manufacturer',dev.machineManufacturer);
-    if(dev.motherboard)            rows+=makeRow('Motherboard',dev.motherboard.trim());
-    if(dev.chassis)                rows+=makeRow('Chassis',dev.chassis);
+    const rows=[
+      dev.chassis                        && makeRow('Chassis',dev.chassis),
+      dev.machineManufacturer            && makeRow('Manufacturer',dev.machineManufacturer),
+      (dev.name||dev.machineModel)       && makeRow('Model',dev.name||dev.machineModel),
+      dev.motherboard                    && makeRow('Motherboard',dev.motherboard.trim()),
+    ].filter(Boolean).join('');
     html+=makeSection('Device',rows);
   }
 
   // Processor
   const cpu=obj.processor||{};
   if(Object.keys(cpu).length){
-    let rows='';
-    if(cpu.model)          rows+=makeRow('Model',cpu.model);
-    if(cpu.manufacturer)   rows+=makeRow('Manufacturer',cpu.manufacturer);
-    if(cpu.cores!==undefined)   rows+=makeRow('Cores',cpu.cores);
-    if(cpu.threads!==undefined) rows+=makeRow('Threads',cpu.threads);
-    if(cpu.cpus!==undefined)    rows+=makeRow('CPUs',cpu.cpus);
-    if(cpu.nodes!==undefined)   rows+=makeRow('NUMA nodes',cpu.nodes);
-    if(cpu.hyperthreading!==undefined) rows+=makeRow('Hyperthreading',cpu.hyperthreading);
-    if(cpu.frequencies&&cpu.frequencies.length) rows+=makeRow('Frequencies',undefined,fmtFreqs(cpu.frequencies),'num');
-    if(cpu.firmware)       rows+=makeRow('Firmware',cpu.firmware);
-    if(cpu.clusters&&cpu.clusters.length) rows+=makeRow('Clusters',cpu.clusters);
+    const rows=[
+      cpu.clusters&&cpu.clusters.length  && makeRow('Clusters',cpu.clusters),
+      cpu.cores!==undefined              && makeRow('Cores',cpu.cores),
+      cpu.cpus!==undefined               && makeRow('CPUs',cpu.cpus),
+      cpu.firmware                       && makeRow('Firmware',cpu.firmware),
+      cpu.frequencies&&cpu.frequencies.length && makeRow('Frequencies',undefined,fmtFreqs(cpu.frequencies),'num'),
+      cpu.hyperthreading!==undefined     && makeRow('Hyperthreading',cpu.hyperthreading),
+      cpu.manufacturer                   && makeRow('Manufacturer',cpu.manufacturer),
+      cpu.model                          && makeRow('Model',cpu.model),
+      cpu.nodes!==undefined              && makeRow('NUMA nodes',cpu.nodes),
+      cpu.threads!==undefined            && makeRow('Threads',cpu.threads),
+    ].filter(Boolean).join('');
     html+=makeSection('Processor',rows);
   }
 
   // Memory
   const mem=obj.memory||{};
   if(Object.keys(mem).length){
-    let rows='';
-    if(mem.total!==undefined) rows+=makeRow('Total',undefined,fmtBytes(mem.total),'num');
+    const rows=[
+      mem.total!==undefined && makeRow('Total',undefined,fmtBytes(mem.total),'num'),
+    ].filter(Boolean).join('');
     html+=makeSection('Memory',rows);
   }
 
   // Extras
   const extra=obj.extra||{};
-  const ekeys=Object.keys(extra);
+  const ekeys=Object.keys(extra).sort();
   if(ekeys.length){
-    // group by prefix before first ':'
     const groups=new Map();
     for(const k of ekeys){
       const colon=k.indexOf(':');
@@ -934,7 +939,7 @@ function buildDetailsPane(obj){
       groups.get(prefix).push(k);
     }
     let rows='';
-    for(const [prefix,ks] of groups){
+    for(const [prefix,ks] of [...groups.entries()].sort()){
       rows+=`<div class="det-subhead">${prefix}</div>`;
       for(const k of ks){
         const label=k.slice(prefix.length+1)||k;
