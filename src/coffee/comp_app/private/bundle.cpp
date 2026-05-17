@@ -951,7 +951,7 @@ void PerformanceMonitor::end_restricted(proxy_type& p, const time_point& time)
 {
     if(time < m_nextScreenshot)
     {
-        // capture_screenshot(p, "screenshot", time);
+        capture_screenshot(p, "screenshot", time);
         m_nextScreenshot = time + std::chrono::seconds(10);
     }
 }
