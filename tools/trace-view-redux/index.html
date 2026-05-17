@@ -23,8 +23,10 @@ canvas{display:block;cursor:crosshair}
 #scrollbar-thumb{position:absolute;right:1px;width:6px;background:#444;border-radius:3px;cursor:pointer;min-height:20px}
 #main-area{display:flex;flex:1;overflow:hidden;min-height:0;position:relative}
 #canvas-wrap{flex:1;position:relative;overflow:hidden;display:none;min-width:0}
-#details-pane{width:0;overflow:hidden;background:#1e1e1e;border-left:1px solid #3a3a3a;display:flex;flex-direction:column;transition:width .15s;flex-shrink:0}
-#details-pane.open{width:300px;overflow-x:hidden;overflow-y:auto}
+#details-pane{width:0;overflow:hidden;border-left:1px solid #3a3a3a;flex-shrink:0}
+#details-pane.open{width:300px}
+#details-inner{width:300px;height:100%;display:flex;flex-direction:column;background:#1e1e1e;transform:translateX(100%);transition:transform .18s ease;overflow-x:hidden;overflow-y:auto}
+#details-pane.open #details-inner{transform:translateX(0)}
 #details-header{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#252526;border-bottom:1px solid #3a3a3a;font:bold 12px ui-monospace,monospace;color:#ccc;position:sticky;top:0;z-index:10}
 #details-header button{padding:1px 6px;background:#3c3c3c;color:#aaa;border:1px solid #555;cursor:pointer;border-radius:3px;font:11px ui-monospace,monospace}
 .det-section{border-bottom:1px solid #2d2d2d}
@@ -81,11 +83,13 @@ details[open]>.jsum::before{transform:rotate(90deg)}
     <div id="scrollbar"><div id="scrollbar-thumb"></div></div>
   </div>
   <div id="details-pane">
-    <div id="details-header">
-      Machine Details
-      <button id="btn-details-close">✕</button>
+    <div id="details-inner">
+      <div id="details-header">
+        Machine Details
+        <button id="btn-details-close">✕</button>
+      </div>
+      <div id="details-body"></div>
     </div>
-    <div id="details-body"></div>
   </div>
 </div>
 <div id="tooltip"></div>
@@ -213,7 +217,9 @@ function parse(raw){
         spans.push({ts:e.ts,end:e.ts+dur,dur,name:e.name||'',cat:e.cat||'',args:e.args,depth:d});
         if(d>maxD) maxD=d;
       } else if(e.ph==='i'){
-        insts.push({ts:e.ts,name:e.name||'',cat:e.cat||'',depth:stk.length});
+        const id=stk.length;
+        if(id>maxD) maxD=id;
+        insts.push({ts:e.ts,name:e.name||'',cat:e.cat||'',depth:id});
       }
     }
     while(stk.length){
@@ -268,42 +274,9 @@ function buildLayout(threads,metrics){
 // ── Render ───────────────────────────────────────────────────────────────────
 function sched(){ if(!raf){raf=true;requestAnimationFrame(draw);} }
 
-function updateLayout(){
-  const {vs,ve}=S;
-  let y=RH;
-  for(const item of S.layout){
-    item.y=y;
-    if(item.kind==='thread'){
-      const t=item.track;
-      let vMaxD=0;
-      // binary search: first span with ts >= vs
-      let lo=0,hi=t.spans.length;
-      while(lo<hi){ const m=(lo+hi)>>1; if(t.spans[m].ts<vs) lo=m+1; else hi=m; }
-      // outer frames: started before vs, still active
-      for(let i=lo-1;i>=0;i--){
-        const s=t.spans[i];
-        if(s.end>=vs&&s.depth>vMaxD) vMaxD=s.depth;
-      }
-      // spans starting within viewport
-      for(let i=lo;i<t.spans.length;i++){
-        if(t.spans[i].ts>ve) break;
-        if(t.spans[i].depth>vMaxD) vMaxD=t.spans[i].depth;
-      }
-      // instants
-      for(const ins of t.insts){
-        if(ins.ts>=vs&&ins.ts<=ve&&ins.depth>vMaxD) vMaxD=ins.depth;
-      }
-      item.h=HH+(vMaxD+1)*(SH+SG)+TPad;
-    }
-    y+=item.h;
-  }
-  S.totalH=y;
-}
-
 function draw(){
   raf=false;
   if(!cv) return;
-  if(S.layout.length) updateLayout();
   const W=cv.width, H=cv.height;
   const tw=W-LW;                        // track width
   const {vs,ve,sy}=S;
@@ -339,14 +312,14 @@ function draw(){
 }
 
 // ── Thread track ─────────────────────────────────────────────────────────────
-function drawThread({track:t},y,W,tw,sc,t2x){
+function drawThread({track:t,h},y,W,tw,sc,t2x){
   // bg
   cx.fillStyle='#252526';
   cx.fillRect(0,y,W,HH);
   cx.fillStyle='#1a1a1a';
-  cx.fillRect(0,y+HH,W,t.h-(HH+TPad));
+  cx.fillRect(0,y+HH,W,h-(HH+TPad));
   cx.fillStyle='#2a2a2a';
-  cx.fillRect(0,y+t.h-TPad,W,TPad);
+  cx.fillRect(0,y+h-TPad,W,TPad);
 
   // header label
   cx.fillStyle='#ccc';
@@ -771,9 +744,17 @@ function zoom(factor,cx_){
 function clamp(){
   const span=S.maxTs-S.minTs;
   const pad=span*.05||1;
+  const lo=S.minTs-pad, hi=S.maxTs+pad;
+  const maxDur=hi-lo;
   const dur=S.ve-S.vs;
-  if(S.vs<S.minTs-pad){ S.vs=S.minTs-pad; S.ve=S.vs+dur; }
-  if(S.ve>S.maxTs+pad){ S.ve=S.maxTs+pad; S.vs=S.ve-dur; }
+  if(dur>=maxDur){
+    // zoomed out past full range — snap to bounds
+    S.vs=lo; S.ve=hi;
+  } else {
+    // safe to shift without changing duration: at most one boundary will be hit
+    if(S.vs<lo){ S.vs=lo; S.ve=S.vs+dur; }
+    if(S.ve>hi){ S.ve=hi; S.vs=S.ve-dur; }
+  }
   const H=cv.height;
   const vis=H-RH;
   S.sy=Math.max(0,Math.min(S.sy,Math.max(0,S.totalH-vis)));
@@ -970,7 +951,10 @@ function buildDetailsPane(obj){
 function loadTrace(obj){
   const {threads,metrics,minTs,maxTs}=parse(obj);
   const {layout,totalH}=buildLayout(threads,metrics);
-  Object.assign(S,{threads,metrics,layout,totalH,minTs,maxTs,vs:minTs,ve:maxTs,sy:0});
+  SSCACHE.clear();
+  Object.assign(S,{threads,metrics,layout,totalH,minTs,maxTs,vs:minTs,ve:maxTs,sy:0,
+    hover:null,selected:null,drag:false});
+  delete S.cursorTs;
   const nspan=threads.reduce((a,t)=>a+t.spans.length,0);
   document.getElementById('info').textContent=
     `${threads.length} thread${threads.length!==1?'s':''} · ${metrics.length} metric${metrics.length!==1?'s':''} · ${nspan.toLocaleString()} spans`;
@@ -1104,6 +1088,8 @@ window.addEventListener('load',()=>{
 
 function loadFile(f){
   if(!f) return;
+  // reset input value so the same file can be re-opened and onchange fires again
+  document.getElementById('file-input').value='';
   document.getElementById('info').textContent='Loading '+f.name+'…';
   const rd=new FileReader();
   rd.onload=e=>{
