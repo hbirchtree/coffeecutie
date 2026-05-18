@@ -1089,6 +1089,16 @@ window.addEventListener('load',()=>{
   });
 
   window.addEventListener('resize',resize);
+
+  // Load trace from ?trace=<url> query parameter
+  const traceUrl=new URLSearchParams(location.search).get('trace');
+  if(traceUrl){
+    document.getElementById('info').textContent='Loading '+traceUrl+'…';
+    fetch(traceUrl)
+      .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(loadTrace)
+      .catch(err=>{ document.getElementById('info').textContent='Error: '+err.message; });
+  }
 });
 
 function loadFile(f){
