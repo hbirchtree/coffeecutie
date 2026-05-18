@@ -24,7 +24,7 @@ struct SysMemoryStats
     : interfaces::MemoryStatProvider
     , AppService<SysMemoryStats, MemoryStatProvider>
 {
-    virtual libc_types::u32 resident() final;
+    virtual libc_types::u64 resident() final;
 };
 
 struct SysBattery

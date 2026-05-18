@@ -357,7 +357,7 @@ inline libc_types::u64 resident()
 {
     struct rusage usage;
     if(getrusage(RUSAGE_SELF, &usage) == 0)
-        return usage.ru_idrss + usage.ru_ixrss + usage.ru_isrss;
+        return usage.ru_maxrss * 1024;
     return 0;
 }
 

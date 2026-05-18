@@ -27,7 +27,7 @@ libc_types::f32 SysGPUTemp::value(DeviceClass)
     Throw(unimplemented_path(""));
 }
 
-libc_types::u32 SysMemoryStats::resident()
+libc_types::u64 SysMemoryStats::resident()
 {
     return platform::info::memory::resident();
 }

@@ -529,7 +529,7 @@ struct NetworkStatProvider
 
 struct MemoryStatProvider
 {
-    virtual libc_types::u32 resident() = 0;
+    virtual libc_types::u64 resident() = 0;
 };
 
 struct GPUStatProvider

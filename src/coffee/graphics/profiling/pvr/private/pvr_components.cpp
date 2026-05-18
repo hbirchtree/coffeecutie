@@ -2,8 +2,7 @@
 
 #include <PVRScopeStats.h>
 #include <coffee/core/debug/formatting.h>
-#include <magic_enum.hpp>
-#include <string_view>
+#include <peripherals/stl/magic_enum.hpp>
 
 using namespace Coffee::Logging;
 
