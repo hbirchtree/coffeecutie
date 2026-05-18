@@ -302,7 +302,12 @@ def find_android_apk(build_root, target_dir, package):
     return matches[0] if matches else None
 
 
-def run_linux(device_name, device, preset_name, preset, extra_args, script_dir, build_root, target_dir):
+def print_dry_run(cmds):
+    for cmd in cmds:
+        print('$', ' '.join(shlex.quote(str(c)) for c in cmd))
+
+
+def run_linux(device_name, device, preset_name, preset, extra_args, script_dir, build_root, target_dir, dry_run=False):
     hostname = device['hostname']
     scratchdir = device.get('scratchdir')
     if not scratchdir:
@@ -310,11 +315,13 @@ def run_linux(device_name, device, preset_name, preset, extra_args, script_dir, 
 
     binary = preset['binary']
     binary_path = find_linux_binary(build_root, target_dir, binary)
-    if not binary_path:
+    if not binary_path and not dry_run:
         sys.exit(
             f"Error: binary '{binary}' not found at multi_build/{target_dir}/bin/{binary}\n"
             "Did you run the build first?"
         )
+    if not binary_path:
+        binary_path = os.path.join(build_root, target_dir, 'bin', binary)
 
     remote_binary = f"{scratchdir}/{binary}"
     build_dir = os.path.join(build_root, target_dir)
@@ -346,6 +353,10 @@ def run_linux(device_name, device, preset_name, preset, extra_args, script_dir, 
         remote_path = ev(entry['remote'])
         setup_cmds.append(['rsync', '-av', '--checksum', local_abs, f'{hostname}:{remote_path}'])
 
+    if dry_run:
+        print_dry_run(setup_cmds + [['ssh', hostname, '--', remote_cmd]])
+        return
+
     OutputViewerApp(
         ['ssh', hostname, '--', remote_cmd],
         toptext_message(device, hostname),
@@ -353,28 +364,35 @@ def run_linux(device_name, device, preset_name, preset, extra_args, script_dir, 
     ).run()
 
 
-def run_android(device_name, device, preset_name, preset, extra_args, build_root, target_dir):
-    hostname = device.get('hostname') or pick_adb_device()
+def run_android(device_name, device, preset_name, preset, extra_args, build_root, target_dir, dry_run=False):
+    hostname = device.get('hostname') or (None if dry_run else pick_adb_device())
+    if dry_run and not hostname:
+        hostname = '<adb-device>'
     package = preset.get('package')
     if not package:
         sys.exit(f"Error: preset '{preset_name}' is missing required 'package' for Android target")
 
     apk_path = find_android_apk(build_root, target_dir, package)
-    if not apk_path:
+    if not apk_path and not dry_run:
         apk_dir = f"multi_build/{target_dir}/packaged/android-apk/"
         sys.exit(
             f"Error: no APK found for package '{package}' in {apk_dir}\n"
             "Did you run the build first?"
         )
+    if not apk_path:
+        apk_path = os.path.join(build_root, target_dir, 'packaged', 'android-apk', f'{package}.apk')
 
-    # Resolve the launcher activity (needed before TUI starts to build launch_cmd)
-    result = subprocess.run(
-        ['adb', '-s', hostname, 'shell', 'cmd', 'package', 'resolve-activity',
-         '--brief', '-a', 'android.intent.action.MAIN',
-         '-c', 'android.intent.category.LAUNCHER', package],
-        capture_output=True, text=True, check=True,
-    )
-    component = result.stdout.strip().split('\n')[-1]
+    if dry_run:
+        component = f'<launcher-activity-of/{package}>'
+    else:
+        # Resolve the launcher activity (needed before TUI starts to build launch_cmd)
+        result = subprocess.run(
+            ['adb', '-s', hostname, 'shell', 'cmd', 'package', 'resolve-activity',
+             '--brief', '-a', 'android.intent.action.MAIN',
+             '-c', 'android.intent.category.LAUNCHER', package],
+            capture_output=True, text=True, check=True,
+        )
+        component = result.stdout.strip().split('\n')[-1]
 
     merged_extras = {
         **device.get('env', {}),
@@ -410,6 +428,12 @@ def run_android(device_name, device, preset_name, preset, extra_args, build_root
         ['adb', '-s', hostname, 'logcat', '-c'],
         launch_cmd,
     ]
+
+    if dry_run:
+        logcat_cmd = ['adb', '-s', hostname, 'logcat', '--pid', f'<pid-of/{package}>']
+        print_dry_run(setup_cmds + [logcat_cmd])
+        return
+
     stream_logcat(hostname, package, get_logcat_cmd, device, setup_cmds=setup_cmds)
 
 
@@ -441,6 +465,7 @@ def main():
         description='Run a built binary on a remote device using .targets.json'
     )
     parser.add_argument('--list', action='store_true', help='List available devices and presets')
+    parser.add_argument('--dry-run', action='store_true', help='Print commands that would be executed without running them')
     parser.add_argument('device', nargs='?', help='Device name from .targets.json')
     parser.add_argument('preset', nargs='?', help='Preset name from .targets.json')
     parser.add_argument('extra_args', nargs='*', help='Extra arguments passed to the binary')
@@ -474,9 +499,9 @@ def main():
     build_root = os.path.join(script_dir, 'multi_build')
 
     if target.startswith('android:'):
-        run_android(args.device, device, args.preset, preset, args.extra_args, build_root, target_dir)
+        run_android(args.device, device, args.preset, preset, args.extra_args, build_root, target_dir, dry_run=args.dry_run)
     else:
-        run_linux(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir)
+        run_linux(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run)
 
 
 if __name__ == '__main__':
