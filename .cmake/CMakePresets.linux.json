@@ -95,6 +95,7 @@
             "inherits": ["vcpkg-base-linux-egl-es20"],
             "cacheVariables": {
                 "APPIMAGE_RUNTIME_BINARY": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{TOOLCHAIN_PREFIX}/bin/runtime",
+                "BUILD_PVRSCOPE": "ON",
                 "GENERATE_APPIMAGE": "OFF",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "beaglebone;sgx;arm;arm32;linux"
             },
