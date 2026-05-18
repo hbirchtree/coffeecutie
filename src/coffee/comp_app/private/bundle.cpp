@@ -949,10 +949,18 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
 
 void PerformanceMonitor::end_restricted(proxy_type& p, const time_point& time)
 {
-    if(time < m_nextScreenshot)
+    using namespace platform::profiling;
+    if(time > m_nextScreenshot)
     {
-        capture_screenshot(p, "screenshot", time);
+        //capture_screenshot(p, "screenshot", time);
+        json::CaptureMetrics(
+            "VSYNC",
+            MetricVariant::Marker,
+            0,
+            std::chrono::duration_cast<std::chrono::microseconds>(
+                platform::profiling::PClock::now().time_since_epoch()));
         m_nextScreenshot = time + std::chrono::seconds(10);
+        cVerbose(10, "Screenshot queued: {}", m_nextScreenshot);
     }
 }
 
