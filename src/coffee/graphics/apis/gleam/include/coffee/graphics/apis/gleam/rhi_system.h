@@ -4,6 +4,9 @@
 #include <coffee/components/subsystem.h>
 #include <coffee/core/debug/formatting.h>
 
+#include "coffee/graphics/apis/gleam/rhi_rendertarget.h"
+#include "coffee/graphics/apis/gleam/rhi_texture.h"
+#include "coffee/graphics/apis/gleam/rhi_versioning.h"
 #include "rhi.h"
 #include "rhi_context.h"
 
@@ -62,6 +65,15 @@ class system
 
     comp_app::size_2d_t m_last_size;
     time_point          m_next_stats{};
+
+    // Capture FBO for GL ES 2.0 platforms
+    // Because ReadPixels doesn't work well
+    comp_app::interfaces::ScreenshotProvider *m_screenshot_provider{};
+    std::shared_ptr<rendertarget_t> m_capture_fbo{};
+    std::shared_ptr<texture_t> m_color_capture{};
+    hnd m_depth_capture{};
+    bool m_capture_fbo_active{false};
+    bool m_capture_requested{false};
 };
 
 } // namespace gleam

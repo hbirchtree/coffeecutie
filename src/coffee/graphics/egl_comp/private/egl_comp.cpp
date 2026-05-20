@@ -377,7 +377,7 @@ static stl_types::result<EGLConfig, std::string> eglTryConfig(
 using attrib_list = std::vector<std::pair<EGLint, EGLint>>;
 
 static attrib_list create_context_attribs(
-    [[maybe_unused]] comp_app::GLConfig const&         config,
+    [[maybe_unused]] comp_app::GLConfig&               config,
     [[maybe_unused]] DisplayHandle const&              handle,
     [[maybe_unused]] std::set<std::string_view> const& extensions)
 {
@@ -402,6 +402,8 @@ static attrib_list create_context_attribs(
         attribs.push_back(
             {EGL_CONTEXT_CLIENT_VERSION,
              compile_info::platform::is_ios ? 3 : 2});
+        config.version.major = attribs.back().second;
+        config.version.minor = 0;
     }
 #if defined(EGL_IMG_context_priority)
     if(extensions.contains("EGL_IMG_context_priority"))

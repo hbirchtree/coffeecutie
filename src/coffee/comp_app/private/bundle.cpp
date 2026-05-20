@@ -952,7 +952,7 @@ void PerformanceMonitor::end_restricted(proxy_type& p, const time_point& time)
     using namespace platform::profiling;
     if(time > m_nextScreenshot)
     {
-        //capture_screenshot(p, "screenshot", time);
+        capture_screenshot(p, "screenshot", time);
         json::CaptureMetrics(
             "VSYNC",
             MetricVariant::Marker,
@@ -1064,9 +1064,9 @@ void PerformanceMonitor::capture_screenshot(
             platform::profiling::PClock::now().time_since_epoch()));
 }
 
-void PerformanceMonitor::load(AppLoadableService::entity_container&, app_error&)
+void PerformanceMonitor::load(AppLoadableService::entity_container& e, app_error&)
 {
-    m_nextScreenshot = m_prevFrame = platform::profiling::PClock::now();
+    m_nextScreenshot = m_prevFrame = e.relative_timestamp();
     if constexpr(enable_screenshots)
         m_worker_queue =
             rq::runtime_queue::CreateNewThreadQueue("Profiling worker")

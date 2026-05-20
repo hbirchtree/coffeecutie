@@ -589,6 +589,12 @@ struct ScreenshotProvider
     virtual size_2d_t           size() const = 0;
     virtual std::future<dump_t> pixels()     = 0;
 
+    /* Signals to RHI that we want a capture FBO setup
+     * For platforms where reading from the window framebuffer is broken */
+    virtual bool captureRequested() = 0;
+    /* Response method for RHI to ensure we're synced */
+    virtual void signalCaptureReady(libc_types::u32 hnd) = 0;
+
     /* For cases where the provider might need a worker thread */
     virtual void set_worker(rq::runtime_queue*)
     {

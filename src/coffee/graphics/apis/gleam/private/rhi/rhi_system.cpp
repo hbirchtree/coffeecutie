@@ -1,3 +1,11 @@
+#include "coffee/comp_app/services.h"
+#include "coffee/graphics/apis/gleam/rhi_versioning.h"
+#include "glw/enums/FramebufferTarget.h"
+#include "glw/enums/GetPName.h"
+#include "glw/enums/RenderbufferTarget.h"
+#include "peripherals/semantic/chunk.h"
+#include "peripherals/typing/enum/pixels/format_transform.h"
+#include "peripherals/typing/geometry/size.h"
 #include <coffee/graphics/apis/gleam/rhi_system.h>
 
 #include <coffee/comp_app/gl_config.h>
@@ -12,8 +20,8 @@ namespace gleam {
 optional<error> system::load(
     compo::EntityContainer& container, load_options_t options)
 {
-    auto loader = container.service<comp_app::AppLoader>();
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+    auto loader = container.service<comp_app::AppLoader>();
     if(auto const& dummy_plug = loader->config<comp_app::dummy_plug::Config>();
        dummy_plug.enabled)
     {
@@ -27,7 +35,27 @@ optional<error> system::load(
                 gfx_config.value("major", 0u), gfx_config.value("minor", 0u)));
     }
 #endif
-    return api::load(options);
+    auto out = api::load(options);
+    if(api_type() == api_type_t::es && api_version() == std::make_tuple<u32, u32>(2, 0))
+    {
+        m_capture_fbo_active = true;
+        m_screenshot_provider = container.service<comp_app::ScreenshotProvider>();
+        m_color_capture = alloc_texture(textures::d2, PixDesc(comp_app::pix_fmt::RGBA8), 1);
+        cmd::gen_renderbuffers(semantic::SpanOne(m_depth_capture.hnd));
+        m_color_capture->alloc(size_3d<u32>(16, 16, 1));
+        m_capture_fbo = alloc_rendertarget();
+        m_capture_fbo->alloc();
+        m_capture_fbo->attach(render_targets::attachment::color, *m_color_capture, 0);
+        i32 currentFbo{};
+        cmd::get_integerv(group::get_prop::framebuffer_binding, SpanOne(currentFbo));
+        cmd::bind_framebuffer(group::framebuffer_target::framebuffer, m_capture_fbo->m_handle);
+        cmd::framebuffer_renderbuffer(
+            group::framebuffer_target::framebuffer,
+            group::framebuffer_attachment::depth_attachment,
+            group::renderbuffer_target::renderbuffer, m_depth_capture);
+        cmd::bind_framebuffer(group::framebuffer_target::framebuffer, currentFbo);
+    }
+    return out;
 }
 
 void system::start_restricted(Proxy& e, time_point const& ts)
@@ -72,6 +100,20 @@ void system::start_restricted(Proxy& e, time_point const& ts)
 
 void system::end_restricted(Proxy&, time_point const&)
 {
+    if(m_screenshot_provider && m_capture_fbo_active && m_screenshot_provider->captureRequested())
+    {
+        if(!m_capture_requested)
+        {
+            m_capture_fbo->internal_bind(group::framebuffer_target::framebuffer);
+            default_rendertarget()->m_handle = m_capture_fbo->m_handle.hnd;
+            m_capture_requested = true;
+        } else
+        {
+            m_screenshot_provider->signalCaptureReady(m_capture_fbo->m_handle.hnd);
+            default_rendertarget()->m_handle = 0;
+            m_capture_requested = false;
+        }
+    }
 }
 
 void system::activate_resize(Proxy& e)
@@ -87,6 +129,13 @@ void system::activate_resize(Proxy& e)
         if(size.w == m_last_size.w && size.h == m_last_size.h)
             return;
         default_rendertarget()->resize({0, 0, size.w, size.h});
+        if(m_capture_fbo_active)
+        {
+            m_color_capture->alloc(size_3d<u32>(size.w, size.h, 1));
+            cmd::bind_renderbuffer(group::renderbuffer_target::renderbuffer, m_depth_capture);
+            cmd::renderbuffer_storage(group::renderbuffer_target::renderbuffer, group::internal_format::depth24_stencil8, size);
+            cmd::bind_renderbuffer(group::renderbuffer_target::renderbuffer, 0);
+        }
         m_viewport_not_set = false;
         m_last_size        = size;
     }

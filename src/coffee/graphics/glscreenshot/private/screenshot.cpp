@@ -12,6 +12,8 @@
 #include <coffee/comp_app/dummy_plug.h>
 #endif
 
+using namespace Coffee::Logging;
+
 namespace glscreenshot {
 
 using namespace gl::group;
@@ -60,8 +62,9 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
                          && !m_dummy_config->enabled
 #endif
         ;
+    const bool use_fbo = major_version == 2;
 
-    auto read_pixels = [this, use_pbo] {
+    auto read_pixels = [this, use_pbo, use_fbo](libc_types::u32 fbo) -> dump_t {
         auto                        size_ = size();
         std::vector<libc_types::u8> data(size_.area() * 4);
 
@@ -83,12 +86,14 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
         if(use_pbo)
         {
             glw::bind_framebuffer(
-                gl::group::framebuffer_target::draw_framebuffer, 0);
+                gl::group::framebuffer_target::draw_framebuffer, fbo);
             glw::read_buffer(gl::group::read_buffer_mode::back);
         } else
 #endif
+        {
             glw::bind_framebuffer(
-                gl::group::framebuffer_target::framebuffer, 0);
+                gl::group::framebuffer_target::framebuffer, fbo);
+        }
 
         // Now set up the framebuffer copy
         semantic::concepts::offset_span offset;
@@ -110,6 +115,9 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
 #endif
         {
             offset = semantic::concepts::offset_span::of(data.data());
+            // FBOs don't sync on swap, so flush pipeline
+            if(use_fbo)
+                glw::finish();
         }
         glw::read_pixels(
             Veci2{0, 0},
@@ -129,12 +137,13 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
 #endif
 
         // Aaaand restore state
-        glw::bind_framebuffer(
+        if(!use_fbo)
+            glw::bind_framebuffer(
 #if GLEAM_MAX_VERSION >= 0x100 || GLEAM_MAX_VERSION_ES >= 0x300
-            use_pbo ? gl::group::framebuffer_target::draw_framebuffer :
+                use_pbo ? gl::group::framebuffer_target::draw_framebuffer :
 #endif
-                    gl::group::framebuffer_target::framebuffer,
-            currentBinding);
+                        gl::group::framebuffer_target::framebuffer,
+                currentBinding);
         return dump_t{
             .size   = size_,
             .format = typing::pixels::pix_fmt::RGBA8,
@@ -151,7 +160,7 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
 
         /* Synchronously set up the GPU copy to the PBO,
          * should take virtually no time */
-        auto dump = read_pixels();
+        auto dump = read_pixels(0);
 
         /* Set up copy from PBO after it's complete */
         auto map_buffer = [this, size = dump.data.size()] {
@@ -210,12 +219,28 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
     } else
 #endif
     {
-        /* Set up a task to run the read + copy */
-        auto out = rq::dependent_task<void, dump_t>::CreateSource(read_pixels);
-        auto dump_future = out->output.get_future();
-        rq::runtime_queue::Queue(m_main_queue, std::move(out)).assume_value();
-        return dump_future;
+        if(use_fbo)
+        {
+            m_capture_requested = true;
+            m_dump_promise = std::promise<dump_t>();
+            m_pending_capture = read_pixels;
+            return m_dump_promise.get_future();
+        } else
+        {
+            /* Set up a task to run the read + copy */
+            auto out = rq::dependent_task<void, dump_t>::CreateSource(
+                [read_pixels = std::move(read_pixels)] { return read_pixels(0); });
+            auto dump_future = out->output.get_future();
+            rq::runtime_queue::Queue(m_main_queue, std::move(out)).assume_value();
+            return dump_future;
+        }
     }
+}
+
+void ScreenshotProvider::signalCaptureReady(libc_types::u32 hnd)
+{
+    m_dump_promise.set_value(m_pending_capture(hnd));
+    m_capture_requested = false;
 }
 
 } // namespace glscreenshot
