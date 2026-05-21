@@ -403,8 +403,11 @@ void configureDefaults(AppLoader& loader)
     dummyPlug.enabled = platform::env::var("DUMMY_PLUG_CONFIG").has_value();
     if(dummyPlug.enabled)
     {
-        glConfig.framebufferFmt = pix_fmt::RGBA8;
-        glConfig.depthFmt       = pix_fmt::Depth32;
+        if(dummyPlug.swrender != "none")
+        {
+            glConfig.framebufferFmt = pix_fmt::RGBA8;
+            glConfig.depthFmt       = pix_fmt::Depth32;
+        }
 
         dummy_plug::fork_dummy_plugs(createContainer(), dummyPlug);
     }
@@ -439,15 +442,15 @@ void configureDefaults(AppLoader& loader)
     if(dummyPlug.enabled)
     {
         auto const& config = dummyPlug.config;
-        if(config.contains("graphics") && config["graphics"].contains("window"))
-        {
-            auto const& window_config = config["graphics"]["window"];
-
-            window.size = {
-                window_config.value("width", 0),
-                window_config.value("height", 0),
-            };
-        }
+        if(config.contains("graphics"))
+            if(config["graphics"].contains("window"))
+            {
+                auto const& window_config = config["graphics"]["window"];
+                window.size = {
+                    window_config.value("width", 0),
+                    window_config.value("height", 0),
+                };
+            }
     }
 #endif
 }

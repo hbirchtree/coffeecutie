@@ -1,3 +1,4 @@
+#include "peripherals/libc/types.h"
 #include <coffee/comp_app/dummy_plug.h>
 
 #include <coffee/comp_app/app_events.h>
@@ -154,6 +155,15 @@ void fork_dummy_plugs(
     {
         Coffee::Logging::cFatal("Dummy plug config contains nothing");
     }
+
+    cDebug("Dummy plug plan: graphics={} audio={} events={}",
+        config.contains("graphics"),
+        config.contains("audio"),
+        [&] -> libc_types::u32 {
+            if(!config.contains("events")) return 0u;
+            if(!config["events"].is_array()) return 0u;
+            return config["events"].size();
+        }());
 
     if(config.contains("frame_delta"))
     {

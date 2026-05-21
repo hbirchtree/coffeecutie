@@ -1,3 +1,4 @@
+#include "glw/enums/MapBufferAccessMask.h"
 #include <glscreenshot/screenshot.h>
 
 #include <coffee/core/CProfiling>
@@ -51,7 +52,9 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
 
     auto major_version = std::min(m_config->version.major, 99);
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
-    if(m_dummy_config && m_dummy_config->enabled)
+    if(m_dummy_config &&
+        m_dummy_config->enabled &&
+        !m_dummy_config->graphics_config.empty())
         if(auto dummy_ver =
                m_dummy_config->graphics_config.value("major", i32(99));
            dummy_ver != 99)
@@ -170,8 +173,17 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
         auto map_buffer = [this, size = dump.data.size()] {
             Coffee::DProfContext _("ScreenshotProvider::PBO copy to CPU");
             glw::bind_buffer(pixel_pack_buffer, m_pbo);
+#if GLEAM_MAX_VERSION_ES >= 0x300
+            using access_t = gl::group::map_buffer_access_mask;
+            auto ptr = glw::map_buffer_range(
+                pixel_pack_buffer,
+                0,
+                size,
+                access_t::map_read_bit);
+#else
             auto ptr = glw::map_buffer(
                 pixel_pack_buffer, gl::group::buffer_access_arb::read_only);
+#endif
             if(!ptr)
             {
                 auto err = glw::get_error(gl::error_check::off);
@@ -252,6 +264,7 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
 
 void ScreenshotProvider::signalCaptureReady(libc_types::u32 hnd)
 {
+    Coffee::DProfContext _("glscreenshot::ScreenshotProvider::Reading back capture FBO");
     m_dump_promise.set_value(m_pending_capture(hnd));
     m_capture_requested = false;
 }

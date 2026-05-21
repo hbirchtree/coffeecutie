@@ -3,6 +3,7 @@
 #include "glw/enums/FramebufferTarget.h"
 #include "glw/enums/GetPName.h"
 #include "glw/enums/RenderbufferTarget.h"
+#include "peripherals/constants.h"
 #include "peripherals/semantic/chunk.h"
 #include "peripherals/typing/enum/pixels/format_transform.h"
 #include "peripherals/typing/geometry/size.h"
@@ -36,8 +37,11 @@ optional<error> system::load(
     }
 #endif
     auto out = api::load(options);
-    if(api_type() == api_type_t::es && api_version() == std::make_tuple<u32, u32>(2, 0))
+    if(compile_info::debug_mode &&
+       api_type() == api_type_t::es &&
+       api_version() == std::make_tuple<u32, u32>(2, 0))
     {
+        Coffee::DProfContext _("gleam::system::Setting up capture FBO");
         m_capture_fbo_active = true;
         m_screenshot_provider = container.service<comp_app::ScreenshotProvider>();
         m_color_capture = alloc_texture(textures::d2, PixDesc(comp_app::pix_fmt::RGBA8), 1);
@@ -93,7 +97,7 @@ void system::start_restricted(Proxy& e, time_point const& ts)
             0
             //
         );
-        m_next_stats = ts + 1s;
+        m_next_stats = ts + 5s;
     }
     this->usage() = {};
 }
@@ -104,11 +108,13 @@ void system::end_restricted(Proxy&, time_point const&)
     {
         if(!m_capture_requested)
         {
+            Coffee::DProfContext _("gleam::system::end_restricted::Enabling capture FBO");
             m_capture_fbo->internal_bind(group::framebuffer_target::framebuffer);
             default_rendertarget()->m_handle = m_capture_fbo->m_handle.hnd;
             m_capture_requested = true;
         } else
         {
+            Coffee::DProfContext _("gleam::system::end_restricted::Submitting capture FBO");
             m_screenshot_provider->signalCaptureReady(m_capture_fbo->m_handle.hnd);
             default_rendertarget()->m_handle = 0;
             m_capture_requested = false;

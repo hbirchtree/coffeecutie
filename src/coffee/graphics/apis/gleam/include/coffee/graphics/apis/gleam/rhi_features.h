@@ -1,5 +1,8 @@
 #pragma once
 
+#include <fmt/format.h>
+#include <string>
+
 #include <peripherals/libc/types.h>
 #include <peripherals/typing/enum/pixels/format.h>
 
@@ -288,6 +291,43 @@ struct workarounds
     } bugs;
 
     bool ignore_all_warnings{false};
+
+    std::string serialize() const
+    {
+        return fmt::format(
+            // clang-format off
+            // So apparently writing JSON in fmt::format is a pain
+            "{{"
+                "\"draw\":{{"
+                    "\"emulated_instance_id\":{},"
+                    "\"emulated_base_instance\":{},"
+                    "\"emulated_vertex_offset\":{},"
+                    "\"force_vertex_attrib_names\":{},"
+                    "\"advance_ubos_by_baseinstance\":{}"
+                "}},"
+                "\"buffer\":{{"
+                    "\"emulated_mapbuffer\":{},"
+                    "\"slow_mapbuffer\":{},"
+                    "\"disable_immutable_buffers\":{}"
+                "}},"
+                "\"bugs\":{{"
+                    "\"adreno_3xx\":{},"
+                    "\"adreno\":{}"
+                "}}"
+            "}}",
+            // clang-format on
+            draw.emulated_instance_id,
+            draw.emulated_base_instance,
+            draw.emulated_vertex_offset,
+            draw.force_vertex_attrib_names,
+            draw.advance_ubos_by_baseinstance,
+            buffer.emulated_mapbuffer,
+            buffer.slow_mapbuffer,
+            buffer.disable_immutable_buffers,
+            bugs.adreno_3xx,
+            bugs.adreno
+            );
+    }
 };
 
 using libc_types::u32;

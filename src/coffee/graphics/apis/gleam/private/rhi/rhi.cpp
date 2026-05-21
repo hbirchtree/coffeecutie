@@ -951,6 +951,7 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
     }
     appInfo.add("gl:compressedFormats", formats_list);
     appInfo.add("gl:limits", m_limits.serialize());
+    appInfo.add("gl:workarounds", m_workarounds.serialize());
 #if defined(GL_NUM_SHADER_BINARY_FORMATS)
     {
         i32 num_formats{0};
@@ -1084,7 +1085,7 @@ optional<error> api::load(load_options_t options)
 
     {
         auto [vendor, renderer] = device();
-        if(vendor.starts_with("Qualcomm"))
+        if(vendor.starts_with("Qualcomm") || vendor == "freedreno")
         {
             if(renderer.starts_with("Adreno (TM) 3"))
                 m_workarounds.bugs.adreno_3xx = true;
@@ -1092,7 +1093,6 @@ optional<error> api::load(load_options_t options)
             /* Qualcomm may say that the limit for UBOs is 64k, but they prefer
              * if it's 8k */
             m_limits.buffers.ubo_recommended_size = 8192;
-            m_features.texture.tex.ext.s3tc       = false;
         }
     }
 
