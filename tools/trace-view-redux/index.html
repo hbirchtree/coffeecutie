@@ -5,7 +5,7 @@
 <title>Trace Viewer</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#1e1e1e;color:#ccc;font-family:ui-monospace,monospace;height:100vh;display:flex;flex-direction:column;overflow:hidden;user-select:none}
+body{background:#1e1e1e;color:#ccc;font-family:ui-monospace,monospace;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;user-select:none}
 #toolbar{display:flex;align-items:center;gap:6px;padding:5px 10px;background:#252526;border-bottom:1px solid #3c3c3c;flex-shrink:0;flex-wrap:wrap}
 #toolbar button{padding:3px 9px;background:#3c3c3c;color:#ccc;border:1px solid #555;cursor:pointer;border-radius:3px;font:12px ui-monospace,monospace}
 #toolbar button:hover{background:#4a4a4a}
@@ -58,6 +58,17 @@ details[open]>.det-summary::before{transform:rotate(90deg)}
 details[open]>.jsum::before{transform:rotate(90deg)}
 .jitems{padding-left:10px;border-left:1px solid #333;margin:2px 0 2px 4px}
 .jitem{font-size:11px;color:#ddd;padding:1px 0;word-break:break-all}
+/* bottom span detail pane */
+#bottom-pane{height:0;overflow:hidden;background:#1e1e1e;border-top:1px solid #3a3a3a;flex-shrink:0;display:flex;flex-direction:column}
+#bottom-pane.open{height:110px}
+#bp-header{display:flex;align-items:baseline;gap:10px;padding:7px 12px 5px;background:#252526;border-bottom:1px solid #333;flex-shrink:0}
+#bp-name{font:bold 13px ui-monospace,monospace;color:#fff;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#bp-cat{font:11px ui-monospace,monospace;color:#666;flex-shrink:0}
+#bp-close{margin-left:auto;padding:1px 7px;background:#3c3c3c;color:#aaa;border:1px solid #555;cursor:pointer;border-radius:3px;font:11px ui-monospace,monospace;flex-shrink:0}
+#bp-stats{display:flex;align-items:stretch;flex:1;overflow-x:auto}
+.bp-stat{padding:6px 16px;border-right:1px solid #2d2d2d;display:flex;flex-direction:column;justify-content:center;flex-shrink:0}
+.bp-k{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.bp-v{font-size:13px;color:#b5cea8;font-weight:bold;white-space:nowrap}
 .jext-wrap{display:flex;flex-wrap:wrap;gap:3px;padding:4px 2px}
 .jiext{font-size:10px;color:#ce9178;background:#2d1f10;border:1px solid #4a3318;padding:1px 5px;border-radius:2px;line-height:1.5;word-break:break-all}
 </style>
@@ -90,6 +101,21 @@ details[open]>.jsum::before{transform:rotate(90deg)}
       </div>
       <div id="details-body"></div>
     </div>
+  </div>
+</div>
+<div id="bottom-pane">
+  <div id="bp-header">
+    <div id="bp-name"></div>
+    <div id="bp-cat"></div>
+    <button id="bp-close">✕</button>
+  </div>
+  <div id="bp-stats">
+    <div class="bp-stat"><div class="bp-k">Timestamp</div><div class="bp-v" id="bp-ts"></div></div>
+    <div class="bp-stat"><div class="bp-k">Duration</div><div class="bp-v" id="bp-dur"></div></div>
+    <div class="bp-stat"><div class="bp-k">Min</div><div class="bp-v" id="bp-min"></div></div>
+    <div class="bp-stat"><div class="bp-k">Max</div><div class="bp-v" id="bp-max"></div></div>
+    <div class="bp-stat"><div class="bp-k">Average</div><div class="bp-v" id="bp-avg"></div></div>
+    <div class="bp-stat"><div class="bp-k">Count</div><div class="bp-v" id="bp-count"></div></div>
   </div>
 </div>
 <div id="tooltip"></div>
@@ -172,7 +198,7 @@ function parse(raw){
     const n=e.name, args=e.args||{};
     if(n==='thread_name')  tnames.set(String(e.tid), args.name||'');
     else if(n==='process_name') pnames.set(String(e.pid), args.name||'');
-    else if(n==='metric_name') mdesc.set(e.id,{name:args.name||String(e.id),type:args.type??0});
+    else if(n==='metric_name') mdesc.set(e.id,{name:args.name||String(e.id),type:args.type??0,indexNames:args.index_names||{}});
   }
 
   // pass 2: group events
@@ -246,7 +272,13 @@ function parse(raw){
       if(!series.has(i)) series.set(i,[]);
       series.get(i).push({ts:e.ts,v:parseFloat(e.v)||0,raw:String(e.v)});
     }
-    metrics.push({id,name:d.name,type:d.type,series});
+    const indexNames=d.indexNames||{};
+    const nameCnt=new Map();
+    for(const n of Object.values(indexNames)) if(n) nameCnt.set(n,(nameCnt.get(n)||0)+1);
+    const seriesLabels={};
+    for(const [k,n] of Object.entries(indexNames))
+      if(n) seriesLabels[k]=nameCnt.get(n)>1?`${n} [${k}]`:n;
+    metrics.push({id,name:d.name,type:d.type,series,indexNames,seriesLabels});
   }
   metrics.sort((a,b)=>a.id-b.id);
 
@@ -277,7 +309,9 @@ function sched(){ if(!raf){raf=true;requestAnimationFrame(draw);} }
 function draw(){
   raf=false;
   if(!cv) return;
-  const W=cv.width, H=cv.height;
+  const dpr=S.dpr||1;
+  const W=S.W||cv.width, H=S.H||cv.height;
+  cx.setTransform(dpr,0,0,dpr,0,0);
   const tw=W-LW;                        // track width
   const {vs,ve,sy}=S;
   const sc=tw/(ve-vs);                  // px per µs
@@ -454,7 +488,10 @@ function drawScalar(m,y,h,tw,sc,t2x,vs,ve){
 
     // legend
     cx.fillStyle=clr; cx.font='9px ui-monospace,monospace'; cx.textBaseline='middle';
-    if(m.series.size>1) cx.fillText('['+idx+']',8,y+h/2+si*12-12);
+    if(m.series.size>1){
+      const idxLabel=m.seriesLabels[String(idx)]||('['+idx+']');
+      cx.fillText(idxLabel,8,y+h/2+si*12-12);
+    }
 
     // find start
     let lo=0,hi=pts.length;
@@ -529,7 +566,7 @@ function drawMarkers(m,t2x,vs,ve){
       if(p.ts<vs||p.ts>ve) continue;
       const x=t2x(p.ts);
       cx.strokeStyle='#e06b8c';
-      cx.beginPath(); cx.moveTo(x,0); cx.lineTo(x,cv.height); cx.stroke();
+      cx.beginPath(); cx.moveTo(x,0); cx.lineTo(x,S.H||cv.height); cx.stroke();
     }
   }
   cx.setLineDash([]);
@@ -626,7 +663,7 @@ function updateScrollbar(H){
 function hitTest(mx,my){
   if(mx<LW) return null;
   const {vs,ve,sy}=S;
-  const tw=cv.width-LW, sc=tw/(ve-vs);
+  const tw=(S.W||cv.width)-LW, sc=tw/(ve-vs);
   const ts=vs+(mx-LW)/sc;
   const ay=my+sy;
 
@@ -699,7 +736,8 @@ function showTip(mx,my,hit){
         if(lo===0&&pts.length===0){si++;continue;}
         const bp=pts[lo>0?lo-1:0];
         const clr=SER_COLORS[si%SER_COLORS.length];
-        const label=m.series.size>1?`[${idx}] `:'';
+        const idxName=m.seriesLabels&&m.seriesLabels[String(idx)]||null;
+        const label=m.series.size>1?(idxName?`${esc(idxName)} `:`[${idx}] `):'';
         html+=`<span style="color:${clr}">■</span> ${label}<b>${fmtVal(bp.v)}</b>`+
               ` <span style="color:#666">@ ${fmtUs(bp.ts-S.minTs)}</span><br>`;
         si++;
@@ -730,7 +768,7 @@ function showTip(mx,my,hit){
 // ── Zoom / pan ────────────────────────────────────────────────────────────────
 function zoom(factor,cx_){
   const {vs,ve}=S;
-  const tw=cv.width-LW;
+  const tw=(S.W||cv.width)-LW;
   const pivot=vs+(cx_-LW)/tw*(ve-vs);
   const dur=(ve-vs)*factor;
   const min=1, max=(S.maxTs-S.minTs)*4;
@@ -755,7 +793,7 @@ function clamp(){
     if(S.vs<lo){ S.vs=lo; S.ve=S.vs+dur; }
     if(S.ve>hi){ S.ve=hi; S.vs=S.ve-dur; }
   }
-  const H=cv.height;
+  const H=S.H||cv.height;
   const vis=H-RH;
   S.sy=Math.max(0,Math.min(S.sy,Math.max(0,S.totalH-vis)));
 }
@@ -952,6 +990,34 @@ function buildDetailsPane(obj){
   body.innerHTML=html;
 }
 
+// ── Bottom span pane ─────────────────────────────────────────────────────────
+function updateBottomPane(){
+  const pane=document.getElementById('bottom-pane');
+  const s=S.selected;
+  const isSpan=s&&'dur'in s;   // spans have dur; instant events do not
+  const wasOpen=pane.classList.contains('open');
+  if(!isSpan){
+    pane.classList.remove('open');
+    if(wasOpen) resize();
+    return;
+  }
+  // compute stats across all threads for spans with the same name
+  let mn=Infinity,mx=-Infinity,sum=0,cnt=0;
+  for(const t of S.threads)
+    for(const sp of t.spans)
+      if(sp.name===s.name){ mn=Math.min(mn,sp.dur); mx=Math.max(mx,sp.dur); sum+=sp.dur; cnt++; }
+  document.getElementById('bp-name').textContent=s.name;
+  document.getElementById('bp-cat').textContent=s.cat&&s.cat!==s.name?s.cat:'';
+  document.getElementById('bp-ts').textContent=fmtUs(s.ts-S.minTs);
+  document.getElementById('bp-dur').textContent=fmtUs(s.dur);
+  document.getElementById('bp-min').textContent=fmtUs(mn);
+  document.getElementById('bp-max').textContent=fmtUs(mx);
+  document.getElementById('bp-avg').textContent=fmtUs(sum/cnt);
+  document.getElementById('bp-count').textContent=cnt;
+  pane.classList.add('open');
+  if(!wasOpen) resize();
+}
+
 // ── Load trace ────────────────────────────────────────────────────────────────
 function loadTrace(obj){
   const {threads,metrics,minTs,maxTs}=parse(obj);
@@ -960,6 +1026,7 @@ function loadTrace(obj){
   Object.assign(S,{threads,metrics,layout,totalH,minTs,maxTs,vs:minTs,ve:maxTs,sy:0,
     hover:null,selected:null,drag:false});
   delete S.cursorTs;
+  document.getElementById('bottom-pane').classList.remove('open');
   const nspan=threads.reduce((a,t)=>a+t.spans.length,0);
   document.getElementById('info').textContent=
     `${threads.length} thread${threads.length!==1?'s':''} · ${metrics.length} metric${metrics.length!==1?'s':''} · ${nspan.toLocaleString()} spans`;
@@ -971,8 +1038,11 @@ function loadTrace(obj){
 
 function resize(){
   const wrap=document.getElementById('canvas-wrap');
-  cv.width=wrap.clientWidth-8; // leave space for scrollbar
-  cv.height=wrap.clientHeight;
+  const dpr=window.devicePixelRatio||1;
+  const logW=wrap.clientWidth-8, logH=wrap.clientHeight;
+  S.W=logW; S.H=logH; S.dpr=dpr;
+  cv.style.width=logW+'px'; cv.style.height=logH+'px';
+  cv.width=Math.round(logW*dpr); cv.height=Math.round(logH*dpr);
   clamp(); sched();
 }
 
@@ -985,8 +1055,8 @@ window.addEventListener('load',()=>{
   document.getElementById('btn-open').onclick=()=>fi.click();
   fi.onchange=e=>loadFile(e.target.files[0]);
   document.getElementById('drop-zone').onclick=()=>fi.click();
-  document.getElementById('btn-zoomin').onclick=()=>{zoom(.4,cv.width/2);sched();};
-  document.getElementById('btn-zoomout').onclick=()=>{zoom(2.5,cv.width/2);sched();};
+  document.getElementById('btn-zoomin').onclick=()=>{zoom(.4,(S.W||cv.width)/2);sched();};
+  document.getElementById('btn-zoomout').onclick=()=>{zoom(2.5,(S.W||cv.width)/2);sched();};
   document.getElementById('btn-fit').onclick=()=>{S.vs=S.minTs;S.ve=S.maxTs;clamp();sched();};
   document.getElementById('btn-reset-scroll').onclick=()=>{S.sy=0;sched();};
   function toggleDetails(){
@@ -998,6 +1068,7 @@ window.addEventListener('load',()=>{
   }
   document.getElementById('btn-details').onclick=toggleDetails;
   document.getElementById('btn-details-close').onclick=toggleDetails;
+  document.getElementById('bp-close').onclick=()=>{S.selected=null;updateBottomPane();sched();};
 
   document.body.ondragover=e=>e.preventDefault();
   document.body.ondrop=e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)loadFile(f);};
@@ -1028,13 +1099,13 @@ window.addEventListener('load',()=>{
     const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
     if(S.drag){
       const dx=e.clientX-S.dragX;
-      const tw=cv.width-LW, sc=(S.ve-S.vs)/tw;
+      const tw=(S.W||cv.width)-LW, sc=(S.ve-S.vs)/tw;
       const dur=S.ve-S.vs;
       S.vs=S.dragVs-dx*sc; S.ve=S.vs+dur;
       clamp(); sched();
     } else if(S.layout.length){
       if(mx>=LW){
-        const tw=cv.width-LW, sc=(S.ve-S.vs)/tw;  // µs/px — same convention as drag
+        const tw=(S.W||cv.width)-LW, sc=(S.ve-S.vs)/tw;  // µs/px — same convention as drag
         S.cursorTs=S.vs+(mx-LW)*sc;               // px * µs/px = µs ✓
       } else { delete S.cursorTs; }
       const hit=hitTest(mx,my);
@@ -1058,7 +1129,7 @@ window.addEventListener('load',()=>{
         document.getElementById('modal-img').src='data:image/jpeg;base64,'+hit.p.raw;
         modal.style.display='flex';
       } else S.selected=null;
-      sched();
+      updateBottomPane(); sched();
     }
   });
 
@@ -1066,6 +1137,72 @@ window.addEventListener('load',()=>{
     document.getElementById('tooltip').style.display='none';
     delete S.cursorTs; sched();
   });
+
+  // ── Touch (pan + pinch zoom) ──────────────────────────────────────────────
+  let touch=null;
+  cv.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    if(e.touches.length===1){
+      touch={type:'pan',x:e.touches[0].clientX,y:e.touches[0].clientY,dragVs:S.vs,dragSy:S.sy};
+    } else if(e.touches.length===2){
+      const r=cv.getBoundingClientRect();
+      const t0=e.touches[0], t1=e.touches[1];
+      touch={
+        type:'pinch',
+        dist:Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY),
+        midX:(t0.clientX+t1.clientX)/2-r.left,
+        vs:S.vs, ve:S.ve,
+      };
+    }
+  },{passive:false});
+
+  cv.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    if(!touch) return;
+    const r=cv.getBoundingClientRect();
+    if(touch.type==='pan'&&e.touches.length===1){
+      const dx=e.touches[0].clientX-touch.x;
+      const dy=e.touches[0].clientY-touch.y;
+      const tw=(S.W||cv.width)-LW, sc=(S.ve-S.vs)/tw;
+      const dur=S.ve-S.vs;
+      S.vs=touch.dragVs-dx*sc; S.ve=S.vs+dur;
+      S.sy=Math.max(0,touch.dragSy-dy);
+      clamp(); sched();
+    } else if(touch.type==='pinch'&&e.touches.length===2){
+      const t0=e.touches[0], t1=e.touches[1];
+      const dist=Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY);
+      S.vs=touch.vs; S.ve=touch.ve;           // restore base before applying new zoom
+      zoom(touch.dist/dist, touch.midX);
+      sched();
+    }
+  },{passive:false});
+
+  cv.addEventListener('touchend',e=>{
+    e.preventDefault();
+    if(e.touches.length===0){
+      // tap detection: if finger barely moved, treat as a click
+      if(touch?.type==='pan'){
+        const t=e.changedTouches[0];
+        const dx=t.clientX-touch.x, dy=t.clientY-touch.y;
+        if(Math.hypot(dx,dy)<8){
+          const r=cv.getBoundingClientRect();
+          const mx=t.clientX-r.left, my=t.clientY-r.top;
+          const hit=hitTest(mx,my);
+          if(hit?.k==='span') S.selected=(S.selected===hit.s?null:hit.s);
+          else if(hit?.k==='inst') S.selected=(S.selected===hit.ins?null:hit.ins);
+          else if(hit?.k==='ss'){
+            const modal=document.getElementById('modal');
+            document.getElementById('modal-img').src='data:image/jpeg;base64,'+hit.p.raw;
+            modal.style.display='flex';
+          } else S.selected=null;
+          updateBottomPane(); sched();
+        }
+      }
+      touch=null;
+    } else if(e.touches.length===1&&touch?.type==='pinch'){
+      touch={type:'pan',x:e.touches[0].clientX,y:e.touches[0].clientY,dragVs:S.vs,dragSy:S.sy};
+    }
+  },{passive:false});
 
   document.getElementById('modal').onclick=()=>{
     document.getElementById('modal').style.display='none';
@@ -1075,12 +1212,12 @@ window.addEventListener('load',()=>{
     if(e.key==='Escape'){
       S.selected=null;
       document.getElementById('modal').style.display='none';
-      sched();
+      updateBottomPane(); sched();
     }
     if(!S.layout.length) return;
-    const tw=cv.width-LW, dur=S.ve-S.vs;
-    if(e.key==='+'||e.key==='='){ zoom(.4,cv.width/2); sched(); }
-    else if(e.key==='-'||e.key==="_"){ zoom(2.5,cv.width/2); sched(); }
+    const tw=(S.W||cv.width)-LW, dur=S.ve-S.vs;
+    if(e.key==='+'||e.key==='='){ zoom(.4,(S.W||cv.width)/2); sched(); }
+    else if(e.key==='-'||e.key==="_"){ zoom(2.5,(S.W||cv.width)/2); sched(); }
     else if(e.key==='ArrowLeft'){ S.vs-=dur*.2; S.ve-=dur*.2; clamp(); sched(); }
     else if(e.key==='ArrowRight'){ S.vs+=dur*.2; S.ve+=dur*.2; clamp(); sched(); }
     else if(e.key==='ArrowUp'){ S.sy=Math.max(0,S.sy-60); sched(); }
