@@ -1,3 +1,4 @@
+#include "platforms/sysinfo.h"
 #include <coffee/comp_app/bundle.h>
 
 #include <coffee/comp_app/app_events.h>
@@ -26,6 +27,7 @@
 
 #include <coffee/core/debug/formatting.h>
 #include <coffee/strings/format.h>
+#include <utility>
 
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
 #include <coffee/comp_app/dummy_plug.h>
@@ -844,7 +846,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
     if(time < m_nextTime)
         return;
 
-    m_nextTime = time + std::chrono::seconds(5);
+    m_nextTime = time + std::chrono::seconds(1);
 
     auto clock    = p.service<CPUClockProvider>();
     auto cpu_temp = p.service<CPUTempProvider>();
@@ -874,8 +876,22 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
                 MetricVariant::Value,
                 C_CAST<u32>(clock->governor(i)),
                 timestamp,
-                i);
+                i,
+                platform::info::proc::model(i).value_or(std::make_pair(std::string(), std::string())).second);
         }
+        json::CaptureMetrics(
+            "CPU process load",
+            MetricVariant::Value,
+            clock->processCpuLoad(),
+            timestamp);
+        for(auto const& tl : clock->threadCpuLoads())
+            json::CaptureMetrics(
+                "CPU thread load",
+                MetricVariant::Value,
+                tl.cpu_load,
+                timestamp,
+                tl.tid,
+                tl.name);
     }
 
     if(cpu_temp)

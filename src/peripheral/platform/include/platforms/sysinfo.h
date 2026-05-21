@@ -88,8 +88,12 @@ inline libc_types::u32 thread_count(libc_types::u32 = 0)
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
 constexpr bool has_cpuinfo = true;
 
+using linux_::cpu_time;
 using linux_::frequency;
 using linux_::model;
+using linux_::thread_cpu_ticks;
+using linux_::thread_names;
+using linux_::ticks_per_second;
 
 #elif defined(COFFEE_MACOS)
 
@@ -103,6 +107,26 @@ using win32::model;
 
 #else
 constexpr bool has_cpuinfo = false;
+
+inline libc_types::u64 cpu_time()
+{
+    return 0;
+}
+
+inline libc_types::u64 ticks_per_second()
+{
+    return 100;
+}
+
+inline std::map<libc_types::u32, libc_types::u64> thread_cpu_ticks()
+{
+    return {};
+}
+
+inline std::map<libc_types::u32, std::string> thread_names()
+{
+    return {};
+}
 
 inline u32 frequency(bool = false, u32 = 0, u32 = 0)
 {

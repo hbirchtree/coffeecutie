@@ -9,10 +9,14 @@
 
 #include "data.h"
 #include "selected_version.h"
+#include <url/url.h>
+
+using platform::url::Url;
 
 void install_imgui_widgets(
     compo::EntityContainer& e, std::function<void(Url const&)>&& map_select)
 {
+#if defined(FEATURE_ENABLE_ImGui)
     // auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
 
     auto& imgui = e.register_subsystem_inplace<imgui::ImGuiSystem>(1024);
@@ -50,4 +54,5 @@ void install_imgui_widgets(
 
         frame_ui.get<imgui::ImGuiWidget>() = imgui::widgets::StatsMenu();
     }
+#endif
 }

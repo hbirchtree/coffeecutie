@@ -15,6 +15,7 @@
 #include <coffee/core/profiler/profiling-export.h>
 
 #include <coffee/strings/format.h>
+#include <thread>
 
 #if defined(COFFEE_ANDROID)
 #include <android/trace.h>
@@ -37,6 +38,7 @@ struct MetricData
 {
     MetricVariant variant;
     u32           id;
+    std::map<u32, std::string> index_names;
 };
 
 namespace metrics {
@@ -75,6 +77,7 @@ struct ProfileWriter : GlobalState
             disable_frequent = true;
         //        disable_frequent = true;
         init_pid = getpid();
+        init_thread = std::this_thread::get_id();
     }
 
     declreturntype(platform::file::open_file)::value_type logfile;
@@ -82,6 +85,7 @@ struct ProfileWriter : GlobalState
     std::shared_ptr<platform::info::AppData> appData;
     std::atomic_uint64_t                     event_count;
     pid_t                                    init_pid{};
+    std::thread::id                          init_thread{};
     bool                                     block_writes{false};
     bool                                     disable_frequent{false};
 
@@ -99,12 +103,13 @@ struct ProfileWriter : GlobalState
 
 ProfileWriter::~ProfileWriter()
 {
+    using Coffee::Strings::fmt;
     if constexpr(!compile_info::profiler::enabled)
         return;
 
     block_writes = true;
 
-    auto thread_name = Coffee::Strings::fmt(
+    auto thread_name = fmt(
         R"({{"name":"process_name","ph":"M","pid":{1},"args":{{"name":"{0}"}}}},)",
         appData ? appData->application_name : "Coffee App",
         getpid());
@@ -112,7 +117,7 @@ ProfileWriter::~ProfileWriter()
 
     for(auto const& thread : stl_types::Threads::GetNames(threadState.get()))
     {
-        thread_name = Coffee::Strings::fmt(
+        thread_name = fmt(
             R"({{"name":"thread_name","ph":"M","pid":{2},"tid":{0},"args":{{"name":"{1}"}}}},)",
             thread.first,
             thread.second,
@@ -122,11 +127,20 @@ ProfileWriter::~ProfileWriter()
 
     for(auto const& metric : metrics::data)
     {
-        auto out = Coffee::Strings::fmt(
-            R"({{"name":"metric_name","ph":"M","id":{0},"args":{{"name":"{1}","type":{2}}}}},)",
+        std::string index_names;
+        if(!metric.second.index_names.empty())
+        {
+            auto const& names = metric.second.index_names;
+            for(auto const& [id, name] : names)
+                index_names = fmt("{0}{1}\"{2}\":\"{3}\"", index_names, index_names.empty() ? "" : ",", id, name);
+            index_names = ",\"index_names\":{" + index_names + "}";
+        }
+        auto out = fmt(
+            R"({{"name":"metric_name","ph":"M","id":{0},"args":{{"name":"{1}","type":{2}{3}}}}},)",
             metric.second.id,
             metric.first,
-            C_CAST<int>(metric.second.variant));
+            C_CAST<int>(metric.second.variant),
+            index_names);
         write(BytesConst::ofContainer(out));
     }
 
@@ -250,7 +264,8 @@ extern void CaptureMetrics(
     MetricVariant             variant,
     std::string const&        value,
     std::chrono::microseconds ts,
-    u32                       index)
+    u32                       index,
+    std::string_view index_name)
 {
     if constexpr(!compile_info::profiler::enabled)
         return;
@@ -259,6 +274,12 @@ extern void CaptureMetrics(
 
     if(profiler.disable_frequent)
         return;
+
+    if(std::this_thread::get_id() != profiler.init_thread)
+    {
+        fprintf(stderr, "Metrics posted on wrong thread\n");
+        abort();
+    }
 
     auto it = metrics::data.find(name);
 
@@ -270,7 +291,8 @@ extern void CaptureMetrics(
         data.variant = variant;
     }
 
-    auto const& data = it->second;
+    auto& data = it->second;
+    data.index_names.emplace(index, std::string(index_name));
 
     constexpr auto metric_format =
         R"({{"ts":{2},"ph":"m","i":{3},"id":{0},"v":"{1}"}},
@@ -288,10 +310,11 @@ void CaptureMetrics(
     MetricVariant             variant,
     f32                       value,
     std::chrono::microseconds ts,
-    u32                       index)
+    u32                       index,
+    std::string_view index_name)
 {
     using stl_types::cast_pod;
-    CaptureMetrics(tdata, name, variant, cast_pod(value), ts, index);
+    CaptureMetrics(tdata, name, variant, cast_pod(value), ts, index, index_name);
 }
 
 } // namespace json

@@ -64,6 +64,10 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
         ;
     const bool use_fbo = major_version == 2;
 
+    if(use_fbo && m_capture_requested)
+        // We're still waiting for the last request to be fulfilled
+        return {};
+
     auto read_pixels = [this, use_pbo, use_fbo](libc_types::u32 fbo) -> dump_t {
         auto                        size_ = size();
         std::vector<libc_types::u8> data(size_.area() * 4);
@@ -221,9 +225,18 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
     {
         if(use_fbo)
         {
+            using namespace std::chrono_literals;
             m_capture_requested = true;
             m_dump_promise = std::promise<dump_t>();
             m_pending_capture = read_pixels;
+            // Set a timeout so we don't break promises all the time
+            rq::runtime_queue::QueueShot(
+                m_main_queue, 3s, [this] {
+                    if(!m_capture_requested)
+                        return;
+                    m_capture_requested = false;
+                    m_dump_promise.set_value(dump_t{});
+                }).assume_value();
             return m_dump_promise.get_future();
         } else
         {

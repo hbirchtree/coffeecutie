@@ -5,6 +5,7 @@
 #include <peripherals/constants.h>
 #include <peripherals/libc/types.h>
 #include <platforms/pimpl_state.h>
+#include <string_view>
 
 namespace platform {
 namespace profiling {
@@ -36,7 +37,8 @@ extern void CaptureMetrics(
     MetricVariant             variant,
     std::string const&        value,
     std::chrono::microseconds ts,
-    u32                       index = 0);
+    u32                       index = 0,
+    std::string_view index_name = {});
 
 extern void CaptureMetrics(
     profiling::ThreadState&   tdata,
@@ -44,7 +46,8 @@ extern void CaptureMetrics(
     MetricVariant             variant,
     f32                       value,
     std::chrono::microseconds ts,
-    u32                       index = 0);
+    u32                       index = 0,
+    std::string_view index_name = {});
 
 template<typename T>
 FORCEDINLINE void CaptureMetrics(
@@ -52,7 +55,8 @@ FORCEDINLINE void CaptureMetrics(
     MetricVariant             variant,
     T const&                  value,
     std::chrono::microseconds ts,
-    u32                       index = 0)
+    u32                       index = 0,
+    std::string_view index_name = {})
 {
     if constexpr(!compile_info::profiler::enabled)
         return;
@@ -62,7 +66,7 @@ FORCEDINLINE void CaptureMetrics(
     if(!thread_state)
         return;
 
-    CaptureMetrics(*thread_state, name, variant, value, ts, index);
+    CaptureMetrics(*thread_state, name, variant, value, ts, index, index_name);
 }
 
 } // namespace json

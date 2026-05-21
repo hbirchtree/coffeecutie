@@ -459,6 +459,21 @@ struct ClockProvider
 
 struct CPUClockProvider : ClockProvider<CPUClockProvider>
 {
+    struct thread_load_t
+    {
+        libc_types::u32 tid;
+        std::string     name;
+        libc_types::f32 cpu_load;
+    };
+
+    /* Percentage of one logical CPU used by this process since last call.
+     * Computed as delta CPU time / delta wall time × 100. */
+    virtual libc_types::f32 processCpuLoad() = 0;
+
+    /* Per-thread CPU load since last call. Each entry carries the OS TID,
+     * the thread name (from /proc/self/task/<tid>/comm on Linux), and the
+     * load percentage. Sorted by TID. */
+    virtual std::vector<thread_load_t> threadCpuLoads() = 0;
 };
 
 template<typename T>

@@ -6,8 +6,11 @@
 #include <blam/volta/hsc/bytecode_eval.h>
 
 #include <coffee/core/debug/formatting.h>
-#include <coffee/imgui/imgui_binding.h>
 #include <peripherals/stl/type_list.h>
+
+#if defined(FEATURE_ENABLE_ImGui)
+#include <coffee/imgui/imgui_binding.h>
+#endif
 
 #include "data.h"
 #include "selected_version.h"
@@ -21,6 +24,7 @@ using Coffee::cDebug;
 
 using namespace std::chrono_literals;
 
+#if defined(FEATURE_ENABLE_ImGui)
 using BlamScriptManifest =
     compo::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
 
@@ -431,9 +435,11 @@ struct BlamScript
     std::vector<std::string> m_log;
     bool                     m_running{false};
 };
+#endif
 
 void alloc_scripting(compo::EntityContainer& e)
 {
+#if defined(FEATURE_ENABLE_ImGui)
     auto& script = e.register_subsystem_inplace<BlamScript<halo_version>>();
 
     auto& gbus = e.subsystem_cast<GameEventBus>();
@@ -443,4 +449,5 @@ void alloc_scripting(compo::EntityContainer& e)
         0, [&script](auto&, MapChangedEvent<halo_version>* changed) {
             script.load_from(changed->container, changed->scenario);
         });
+#endif
 }

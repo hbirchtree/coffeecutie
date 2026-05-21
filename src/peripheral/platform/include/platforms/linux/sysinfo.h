@@ -12,7 +12,12 @@
 #include <sys/resource.h>
 #include <sys/sysinfo.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
+
+#include <cstdio>
+#include <cstring>
+#include <dirent.h>
 
 #include "sysinfo_cpumap.h"
 
@@ -312,6 +317,115 @@ inline std::optional<std::pair<std::string, std::string>> model(
         return std::nullopt;
     return std::make_optional(
         std::pair<std::string, std::string>(vendor, model));
+}
+
+/* Returns total CPU time consumed by this process in nanoseconds
+ * (user + system), via CLOCK_PROCESS_CPUTIME_ID. */
+inline libc_types::u64 cpu_time()
+{
+    struct timespec ts;
+    if(clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts) == 0)
+        return static_cast<libc_types::u64>(ts.tv_sec) * 1'000'000'000ULL +
+               static_cast<libc_types::u64>(ts.tv_nsec);
+    return 0;
+}
+
+/* Returns a map of TID → thread name from /proc/self/task/<tid>/comm.
+ * Names are at most 15 characters (TASK_COMM_LEN - 1).
+ * Uses fopen/fgets directly: /proc files report size 0 in stat(), so
+ * file::posix::read would allocate a zero-byte buffer and read nothing. */
+inline std::map<u32, std::string> thread_names()
+{
+    std::map<u32, std::string> result;
+
+    DIR* dir = opendir("/proc/self/task");
+    if(!dir)
+        return result;
+
+    char           path[64];
+    char           buf[20]; /* TASK_COMM_LEN = 16, plus newline + NUL */
+    struct dirent* ent;
+    while((ent = readdir(dir)) != nullptr)
+    {
+        if(ent->d_name[0] == '.')
+            continue;
+        u32 tid = libc::str::from_string<u32>(ent->d_name);
+        std::snprintf(path, sizeof(path), "/proc/self/task/%s/comm", ent->d_name);
+        FILE* f = std::fopen(path, "r");
+        if(!f)
+        {
+            result[tid] = {};
+            continue;
+        }
+        std::string name;
+        if(std::fgets(buf, sizeof(buf), f))
+        {
+            std::size_t len = std::strlen(buf);
+            if(len > 0 && buf[len - 1] == '\n')
+                buf[len - 1] = '\0';
+            name = buf;
+        }
+        std::fclose(f);
+        result[tid] = std::move(name);
+    }
+    closedir(dir);
+    return result;
+}
+
+inline libc_types::u64 ticks_per_second()
+{
+    return static_cast<libc_types::u64>(sysconf(_SC_CLK_TCK));
+}
+
+/* Returns a map of TID → accumulated CPU ticks (utime + stime) for every
+ * thread in the current process, read from /proc/self/task/<tid>/stat.
+ * Fields 14+15 in the stat format: utime and stime, both in clock ticks.
+ * Uses fopen/fgets directly for the same reason as thread_names(). */
+inline std::map<u32, libc_types::u64> thread_cpu_ticks()
+{
+    std::map<u32, libc_types::u64> result;
+
+    DIR* dir = opendir("/proc/self/task");
+    if(!dir)
+        return result;
+
+    char           path[64];
+    char           line[512]; /* stat lines are ~200-300 bytes in practice */
+    struct dirent* ent;
+    while((ent = readdir(dir)) != nullptr)
+    {
+        if(ent->d_name[0] == '.')
+            continue;
+
+        u32 tid = libc::str::from_string<u32>(ent->d_name);
+        std::snprintf(path, sizeof(path), "/proc/self/task/%s/stat", ent->d_name);
+        FILE* f = std::fopen(path, "r");
+        if(!f)
+            continue;
+
+        if(std::fgets(line, sizeof(line), f))
+        {
+            /* After ')': state ppid pgrp session tty_nr tty_pgrp flags
+             *            minflt cminflt majflt cmajflt utime stime ... */
+            char* rparen = std::strrchr(line, ')');
+            if(rparen)
+            {
+                unsigned long utime{0}, stime{0};
+                if(std::sscanf(
+                       rparen + 1,
+                       " %*c %*d %*d %*d %*d %*d %*u %*lu %*lu %*lu %*lu"
+                       " %lu %lu",
+                       &utime,
+                       &stime) == 2)
+                    result[tid] =
+                        static_cast<libc_types::u64>(utime) +
+                        static_cast<libc_types::u64>(stime);
+            }
+        }
+        std::fclose(f);
+    }
+    closedir(dir);
+    return result;
 }
 
 inline u32 frequency(bool current = false, u32 cpu = 0, u32 core = 0)

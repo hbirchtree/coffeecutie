@@ -138,7 +138,7 @@ FORCEDINLINE int permissions_to_native(permissions_t const& perms)
 
 FORCEDINLINE auto align_offset(szptr offset)
 {
-    const szptr alignment_mask = ~C_CAST<szptr>(libc::mem::page_size());
+    const szptr alignment_mask = ~C_CAST<szptr>(::libc::mem::page_size());
     return C_CAST<ptroff>(offset & alignment_mask);
 }
 
