@@ -979,7 +979,6 @@ void PerformanceMonitor::end_restricted(proxy_type& p, const time_point& time)
             std::chrono::duration_cast<std::chrono::microseconds>(
                 platform::profiling::PClock::now().time_since_epoch()));
         m_nextScreenshot = time + std::chrono::seconds(10);
-        cVerbose(10, "Screenshot queued: {}", m_nextScreenshot);
     }
 }
 
