@@ -37,7 +37,7 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
 
     {
         auto bg_sound = section.background_sound.data(bsp_magic);
-        if(bg_sound.has_value())
+        if(bg_sound.has_value() && sound_bus)
         {
             SoundEvent ev   = {.type = SoundEvent::loop_sound};
             auto       snds = bg_sound.value();

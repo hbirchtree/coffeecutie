@@ -4,6 +4,8 @@
 #include "selected_version.h"
 #include "sound_cache.h"
 
+#if defined(FEATURE_ENABLE_OAF)
+
 #include <deque>
 #include <oaf/api_system.h>
 #include <oaf/ogg/ogg_decode.h>
@@ -295,8 +297,11 @@ struct SoundSystem
     }
 };
 
+#endif
+
 void alloc_sound_system(compo::EntityContainer& e)
 {
+#if defined(FEATURE_ENABLE_OAF)
     ProfContext _;
     e.register_subsystem_inplace<SoundPreferences>();
     auto& sound_sys = e.register_subsystem_inplace<SoundSystem<halo_version>>(
@@ -304,4 +309,5 @@ void alloc_sound_system(compo::EntityContainer& e)
         std::ref(e.subsystem_cast<SoundCache<halo_version>>()),
         &e.subsystem_cast<LoadingStatus>());
     e.register_subsystem_services<SoundSystem<halo_version>>(&sound_sys);
+#endif
 }

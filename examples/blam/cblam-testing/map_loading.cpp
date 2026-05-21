@@ -21,9 +21,6 @@
 
 #include <fmt_extensions/url_types.h>
 
-#include <oaf/api_system.h>
-#include <oaf/ogg/ogg_decode.h>
-
 using Coffee::cDebug;
 using Coffee::Resource;
 using platform::url::Path;
@@ -264,7 +261,8 @@ static void load_resources(
                     .type      = SoundEvent::loop_sound,
                     .entity_id = main_biped_id,
                 };
-                sound_bus->inject(ev, &loop);
+                if(sound_bus)
+                    sound_bus->inject(ev, &loop);
                 break;
             }
             case blam::tag_class_t::tagc: {
@@ -407,9 +405,8 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
         return stl_types::any_flag_of(en.tags, ObjectGC);
     });
 
+    if(auto* sound_bus = e.service<comp_app::EventBus<SoundEvent>>())
     {
-        comp_app::EventBus<SoundEvent>* sound_bus =
-            e.service<comp_app::EventBus<SoundEvent>>();
         SoundEvent ev = {.type = SoundEvent::clear_all};
         sound_bus->process(ev, nullptr);
     }

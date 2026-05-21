@@ -545,6 +545,9 @@ struct MeshRenderer
 
     void render_debug_lines(Proxy& e)
     {
+        if(m_api->workarounds().bugs.adreno)
+            return;
+
         std::vector<gfx::draw_command::data_t> groups;
         RenderingParameters*                   params;
         e.subsystem(params);
@@ -628,7 +631,7 @@ struct MeshRenderer
         // Performance is terrible on Emscripten when updating every frame
         // We need a more efficient way to update the buffer in that case
         bool invalidated = !compile_info::platform::is_emscripten;
-        if(time - last_update > std::chrono::seconds(1) || invalidated)
+        if(time - last_update > std::chrono::seconds(10) || invalidated)
         {
             generate_draws(p);
             update_materials(p, time);

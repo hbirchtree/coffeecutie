@@ -40,7 +40,7 @@ coffee_application(
         touch_overlay.cpp
         ui.cpp
         widgets.cpp
-  LIBRARIES Blam Core Image GLeamRHI OAF ComponentBundleSetup
+  LIBRARIES Blam Core Image GLeamRHI ComponentBundleSetup
   BUNDLE_LIBRARIES ${BUNDLED_LIBS}
   SCHEMES blam halo
   ICON_ASSET ${CMAKE_CURRENT_SOURCE_DIR}/icon_asset_plain.svg
@@ -79,6 +79,9 @@ if(GameNetworkingSockets_FOUND)
 endif()
 if(TARGET ImGui)
     target_link_libraries(BlamGraphics PUBLIC ImGui)
+endif()
+if(TARGET OAF)
+    target_link_libraries(BlamGraphics PUBLIC OAF)
 endif()
 
 # coffee_application(

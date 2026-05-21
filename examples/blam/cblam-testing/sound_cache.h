@@ -5,7 +5,8 @@
 #include <blam/volta/blam_sound.h>
 #include <blam/volta/blam_stl.h>
 #include <coffee/components/subsystem.h>
-#include <oaf/api.h>
+
+namespace oaf { struct api; }
 
 using sound_ptr =
     std::tuple<blam::tag_t const*, blam::sound::sound const*, blam::map_ptr>;

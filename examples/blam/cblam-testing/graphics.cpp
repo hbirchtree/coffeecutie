@@ -17,8 +17,11 @@
 #include <coffee/comp_app/fps_counter.h>
 #include <coffee/core/coffee_args.h>
 #include <coffee/graphics/apis/gleam/rhi_emulation.h>
-#include <oaf/api_system.h>
 #include <platforms/sysinfo.h>
+
+#if defined(FEATURE_ENABLE_OAF)
+#include <oaf/api_system.h>
+#endif
 
 #if defined(FEATURE_ENABLE_ASIO)
 #include <coffee/net/curl_network_stats.h>
@@ -148,6 +151,7 @@ i32 blam_main()
             }
             cDebug("GL extensions: {0}", gfx.extensions());
 
+#if defined(FEATURE_ENABLE_OAF)
             auto& snd = e.register_subsystem_inplace<oaf::system>();
             if(auto error = snd.load(e))
             {
@@ -160,6 +164,7 @@ i32 blam_main()
             }
             snd.set_distance_model(oaf::api::exponential);
             snd.collect_info(*e.service<comp_app::AppInfo>());
+#endif
 
             e.register_component_inplace<Model>();
             e.register_component_inplace<SubModel>();
@@ -254,7 +259,13 @@ i32 blam_main()
             e.register_subsystem_inplace<LoadingStatus>();
 
             auto& sound_cache =
-                e.register_subsystem_inplace<SoundCache<halo_version>>(&snd);
+                e.register_subsystem_inplace<SoundCache<halo_version>>(
+#if defined(FEATURE_ENABLE_OAF)
+                    &snd
+#else
+                    nullptr
+#endif
+                );
             alloc_sound_system(e);
 
             {
@@ -424,6 +435,7 @@ i32 blam_main()
                 cam->rotation     = glm::mat3_cast(cam->camera->rotation);
             }
 
+#if defined(FEATURE_ENABLE_OAF)
             for(auto& entity : e.select<PlayerCamera>())
             {
                 auto* cam  = e.get<PlayerCamera>(entity.id);
@@ -440,6 +452,7 @@ i32 blam_main()
                     break;
                 }
             }
+#endif
         },
         [](EntityContainer&, BlamData<halo_version>&, time_point const&) {
 
