@@ -139,7 +139,7 @@ void system::activate_resize(Proxy& e)
         {
             m_color_capture->alloc(size_3d<u32>(size.w, size.h, 1));
             cmd::bind_renderbuffer(group::renderbuffer_target::renderbuffer, m_depth_capture);
-            cmd::renderbuffer_storage(group::renderbuffer_target::renderbuffer, group::internal_format::depth24_stencil8, size);
+            cmd::renderbuffer_storage(group::renderbuffer_target::renderbuffer, group::internal_format::depth_component16, size);
             cmd::bind_renderbuffer(group::renderbuffer_target::renderbuffer, 0);
         }
         m_viewport_not_set = false;

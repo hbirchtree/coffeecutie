@@ -1,8 +1,7 @@
 #pragma once
 
+#include <peripherals/constants.h>
 #include <peripherals/identify/system.h>
-
-#include <thread>
 
 #include <platforms/base/device_variant.h>
 
@@ -128,13 +127,13 @@ inline std::map<libc_types::u32, std::string> thread_names()
     return {};
 }
 
-inline u32 frequency(bool = false, u32 = 0, u32 = 0)
+inline libc_types::u32 frequency(bool = false, libc_types::u32 = 0, libc_types::u32 = 0)
 {
     return 0;
 }
 
 inline std::optional<std::pair<std::string, std::string>> model(
-    u32 = 0, u32 = 0)
+    libc_types::u32 = 0, libc_types::u32 = 0)
 {
     return {};
 }
