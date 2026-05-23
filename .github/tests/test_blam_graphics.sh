@@ -18,52 +18,77 @@ tar xf ../*.tar.xz
 cd ..
 rm *.tar.xz
 
-# Now set up a minimal lib directory for running MESA
-ln -s \
-    $PWD/full-sysroot/usr/lib/libGL* \
-    $PWD/full-sysroot/usr/lib/libEGL* \
-    $PWD/full-sysroot/usr/lib/libGLESv2* \
-    $PWD/full-sysroot/usr/lib/libgbm* \
-    $PWD/full-sysroot/usr/lib/libLLVM* \
-    $PWD/full-sysroot/usr/lib/libOSMesa* \
-    $PWD/full-sysroot/usr/lib/libbacktrace* \
-    $PWD/full-sysroot/usr/lib/libdrm* \
-    $PWD/full-sysroot/usr/lib/libglapi* \
-    $PWD/full-sysroot/lib/libstdc++* \
-    sysroot/lib/
+# Diagnostic: check sysroot structure
+echo "::group::Sysroot structure"
+find full-sysroot -maxdepth 3
+echo "::endgroup::"
 
+# Set up a more complete lib directory
+# We link all .so files from the sysroot to ensure nothing is missed
+echo "::group::Linking sysroot libraries"
+find $PWD/full-sysroot/usr/lib -maxdepth 1 -name "*.so*" -exec ln -sf {} $PWD/sysroot/lib/ \;
+find $PWD/full-sysroot/lib -maxdepth 1 -name "*.so*" -exec ln -sf {} $PWD/sysroot/lib/ \;
+echo "::endgroup::"
+
+# Ensure we have the DRI path set correctly
+DRI_PATH=$(find $PWD/full-sysroot -name dri -type d | head -n 1)
+SYS_LD=$(find $PWD/full-sysroot -name "ld-linux-x86-64.so.2" | head -n 1)
+
+export LIBGL_DRIVERS_PATH=$DRI_PATH
+export MESA_LOADER_DRIVER_PATH=$DRI_PATH
 export LD_LIBRARY_PATH=$PWD/sysroot/lib
-export LIBGL_DRIVERS_PATH=$(find $PWD/full-sysroot -name dri -type d | head -n 1)
-export MESA_LOADER_DRIVER_PATH=$LIBGL_DRIVERS_PATH
 export EGL_LOG_LEVEL=debug
 export LIBGL_DEBUG=verbose
+export MESA_DEBUG=1
 export LIBGL_DRI3_DISABLE=1
+export EGL_PLATFORM=surfaceless
 
 echo "===================================="
 echo "::group::EGL info"
+# Try with host loader first
 eglinfo -v
+# Then try with sysroot loader if available
+if [ -n "$SYS_LD" ]; then
+    $SYS_LD --library-path $PWD/sysroot/lib $(which eglinfo) -v
+fi
 echo "::endgroup::"
 echo "===================================="
 
 BUILDDIR=$SRCDIR/multi_build/desktop-x86_64-buildroot-linux-gnu-multi
+
+# Flatten artifacts if they were uploaded with full paths (common in upload-artifact@v4+)
+if [ -d "$BUILDDIR/source" ]; then
+    echo "Flattening deep artifact structure..."
+    mv $BUILDDIR/source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi/install/* $BUILDDIR/
+fi
+
+# Fix BUILDDIR if it contains an 'install' directory
+if [ -d "$BUILDDIR/install" ]; then
+    BUILDDIR=$BUILDDIR/install
+fi
 
 echo "===================================="
 echo "========= Artifact structure ======="
 ls -R $BUILDDIR
 echo "===================================="
 
-echo "===================================="
-echo "========= Library linkage =========="
-ldd $BUILDDIR/bin/BlamGraphics
-echo "===================================="
-echo "===================================="
-ldd $BUILDDIR/bin/BlamGraphics > linkage.txt
+# Find the actual binary
+BINARY=$(find $BUILDDIR -name BlamGraphics -type f | head -n 1)
+
+if [ -f "$BINARY" ]; then
+    echo "===================================="
+    echo "========= Library linkage =========="
+    ldd $BINARY
+    echo "===================================="
+fi
 
 APPDIR=$BUILDDIR/packaged/linux-appdir/blam_graphics.AppDir
-chmod +x \
-    $APPDIR/AppRun \
-    $APPDIR/BlamGraphics \
-    $APPDIR/CrashRecovery
+if [ -d "$APPDIR" ]; then
+    chmod +x \
+        $APPDIR/AppRun \
+        $APPDIR/BlamGraphics \
+        $APPDIR/CrashRecovery
+fi
 
 echo "===================================="
 echo "::group::Downloading test assets"
@@ -75,10 +100,22 @@ echo "::endgroup::"
 echo "===================================="
 echo "===================================="
 
-#echo "-- " $BUILDDIR/bin/BlamGraphics $BUILDDIR/examples/blam/cblam-testing/assets $PWD/maps/pc/beavercreek.map
-echo "-- " $BUILDDIR/packaged/linux-appimage/Blam Graphics.AppImage $PWD/maps/pc/beavercreek.map
 mkdir -p "/tmp/Blam Graphics"
-#$BUILDDIR/bin/BlamGraphics $BUILDDIR/examples/blam/cblam-testing/assets $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
-$BUILDDIR/packaged/linux-appdir/blam_graphics.AppDir/AppRun $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
+
+# Find assets directory
+ASSETS_DIR=$(find $BUILDDIR -name assets -type d | head -n 1)
+
+if [ -n "$SYS_LD" ] && [ -f "$BINARY" ]; then
+    echo "-- Running binary directly with sysroot loader"
+    $SYS_LD --library-path $PWD/sysroot/lib $BINARY $ASSETS_DIR $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
+elif [ -d "$APPDIR" ]; then
+    echo "-- Running via AppRun"
+    $APPDIR/AppRun $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
+else
+    echo "ERROR: Could not find a way to run the application"
+    exit 1
+fi
+
+popd
 
 popd
