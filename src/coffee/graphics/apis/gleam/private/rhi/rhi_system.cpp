@@ -46,7 +46,7 @@ optional<error> system::load(
         m_screenshot_provider = container.service<comp_app::ScreenshotProvider>();
         m_color_capture = alloc_texture(textures::d2, PixDesc(comp_app::pix_fmt::RGBA8), 1);
         cmd::gen_renderbuffers(semantic::SpanOne(m_depth_capture.hnd));
-        m_color_capture->alloc(size_3d<u32>(16, 16, 1));
+        m_color_capture->alloc(size_3d<u32>{16u, 16u, 1u});
         m_capture_fbo = alloc_rendertarget();
         m_capture_fbo->alloc();
         m_capture_fbo->attach(render_targets::attachment::color, *m_color_capture, 0);
@@ -137,7 +137,7 @@ void system::activate_resize(Proxy& e)
         default_rendertarget()->resize({0, 0, size.w, size.h});
         if(m_capture_fbo_active)
         {
-            m_color_capture->alloc(size_3d<u32>(size.w, size.h, 1));
+            m_color_capture->alloc(size_3d<u32>{static_cast<u32>(size.w), static_cast<u32>(size.h), 1u});
             cmd::bind_renderbuffer(group::renderbuffer_target::renderbuffer, m_depth_capture);
             cmd::renderbuffer_storage(group::renderbuffer_target::renderbuffer, group::internal_format::depth_component16, size);
             cmd::bind_renderbuffer(group::renderbuffer_target::renderbuffer, 0);

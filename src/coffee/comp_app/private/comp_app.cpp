@@ -88,6 +88,7 @@ libc_types::f32 SysCPUClock::processCpuLoad()
 std::vector<interfaces::CPUClockProvider::thread_load_t>
 SysCPUClock::threadCpuLoads()
 {
+#if defined(COFFEE_LINUX)
     using namespace std::chrono;
     using thread_load_t = interfaces::CPUClockProvider::thread_load_t;
 
@@ -123,6 +124,9 @@ SysCPUClock::threadCpuLoads()
     m_lastThreadTicks    = std::move(now_ticks);
     m_lastThreadWallTime = now_wall;
     return loads;
+#else
+    return {};
+#endif
 }
 
 } // namespace comp_app
