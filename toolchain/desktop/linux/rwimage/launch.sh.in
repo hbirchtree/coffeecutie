@@ -1,40 +1,47 @@
 #!/bin/sh
 
-RWIMAGE_ROOT=$(dirname $0)
+# RWIMAGE_MOUNT is set by the runtime; fall back to dirname for manual invocation
+if [ -n "$RWIMAGE_MOUNT" ]; then
+    RWIMAGE_ROOT="$RWIMAGE_MOUNT"
+else
+    RWIMAGE_ROOT="$(dirname "$0")"
+fi
 
-
-if [ -z $(which python3) ]; then
+# Find a Python interpreter for icon registration
+if [ -n "$(which python3)" ]; then
     PYTHON_EXEC=python3
-elif [ -z $(which python2) ]; then
+elif [ -n "$(which python2)" ]; then
     PYTHON_EXEC=python2
-elif [ -z $(which python) ]; then
+elif [ -n "$(which python)" ]; then
     PYTHON_EXEC=python
 fi
 
-# Add icon for the file
+# Register the app icon into the user's icon theme on first run
 ICON_DIR="$HOME/.local/share/icons/hicolor/scalable/apps"
-if [ ! -f "${ICON_DIR}/${ICON_NAME}" ] && [ -n "${PYTHON_EXEC}" ]; then
-    mkdir -p "${ICON_DIR}"
-    cp "${RWIMAGE_ROOT}/icon.svg" "${ICON_DIR}/${RWI_TARGET}.svg"
-    python "${RWIMAGE_ROOT}/set_icon.py" "${RWIMAGE}" "${ICON_DIR}/${RWI_TARGET}.svg"
+if [ ! -f "${ICON_DIR}/@RWI_TARGET@.svg" ]; then
+    mkdir -p "$ICON_DIR"
+    cp "${RWIMAGE_ROOT}/icon.svg" "${ICON_DIR}/@RWI_TARGET@.svg" 2>/dev/null || true
+    if [ -n "${PYTHON_EXEC}" ]; then
+        "${PYTHON_EXEC}" "${RWIMAGE_ROOT}/set_icon.py" "${RWIMAGE}" "${ICON_DIR}/@RWI_TARGET@.svg" 2>/dev/null || true
+    fi
 fi
 
-# This is used by the application
-export RWIMAGE_DATA_DIR="${RWIMAGE_ROOT}/assets"
-export RWIMAGE_STORE_DIR="${RWIMAGE_ROOT}/store"
+# Writable store lives outside the read-only image
+STORE_DIR="${HOME}/.local/share/@RWI_DOM_NAME@/store"
+mkdir -p "$STORE_DIR"
 
-# Set up environment
+export RWIMAGE_DATA_DIR="${RWIMAGE_ROOT}/assets"
+export RWIMAGE_STORE_DIR="${STORE_DIR}"
+
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${RWIMAGE_ROOT}/lib"
-export XDG_DATA_HOME="${RWIMAGE_ROOT}/share"
+export XDG_DATA_HOME="${HOME}/.local/share"
 export XDG_DATA_DIRS="$XDG_DATA_DIRS:${RWIMAGE_ROOT}/share"
 
-# Coffee-specific
 export COFFEE_NO_PROFILER_EXPORT="${COFFEE_NO_PROFILER_EXPORT:-1}"
 
 CRASH="${RWIMAGE_ROOT}/bin/CrashRecovery"
-# Executing application, we might as well destroy the current bash shell
 if [ -f "$CRASH" ]; then
-    exec "$CRASH" "${RWIMAGE_ROOT}/bin/@RWI_TARGET@" "${RWIMAGE_ROOT}/assets" $@
+    exec "$CRASH" "${RWIMAGE_ROOT}/bin/@RWI_TARGET@" "${RWIMAGE_ROOT}/assets" "$@"
 else
-    exec "${RWIMAGE_ROOT}/bin/@RWI_TARGET@" "${RWIMAGE_ROOT}/assets" $@
+    exec "${RWIMAGE_ROOT}/bin/@RWI_TARGET@" "${RWIMAGE_ROOT}/assets" "$@"
 fi

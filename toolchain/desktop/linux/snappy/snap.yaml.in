@@ -1,8 +1,0 @@
-name: @SNAPPY_PACKAGE_NAME@
-grade: @SNAPPY_GRADE@
-version: @SNAPPY_VERSION@
-confinement: @SNAPPY_CONFINEMENT@
-icon: meta/gui/icon.svg
-architectures: [ @SNAPPY_ARCHITECTURES@ ]
-summary: @SNAPPY_TITLE@
-description: @SNAPPY_SUMMARY@
