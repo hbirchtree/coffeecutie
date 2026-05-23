@@ -177,7 +177,7 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
     {
         cWarning("Failed to get display on first try: {}", egl_to_error());
         cWarning("Falling back to eglGetDisplay(EGL_DEFAULT_DISPLAY)");
-        eglGetDisplay(EGL_DEFAULT_DISPLAY);
+        m_data->display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     }
 #else
     m_data->display = eglGetDisplay(EGL_DEFAULT_DISPLAY);

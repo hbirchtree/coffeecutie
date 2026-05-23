@@ -22,6 +22,8 @@ rm *.tar.xz
 ln -s \
     $PWD/full-sysroot/usr/lib/libGL* \
     $PWD/full-sysroot/usr/lib/libEGL* \
+    $PWD/full-sysroot/usr/lib/libGLESv2* \
+    $PWD/full-sysroot/usr/lib/libgbm* \
     $PWD/full-sysroot/usr/lib/libLLVM* \
     $PWD/full-sysroot/usr/lib/libOSMesa* \
     $PWD/full-sysroot/usr/lib/libbacktrace* \
@@ -31,6 +33,11 @@ ln -s \
     sysroot/lib/
 
 export LD_LIBRARY_PATH=$PWD/sysroot/lib
+export LIBGL_DRIVERS_PATH=$(find $PWD/full-sysroot -name dri -type d | head -n 1)
+export MESA_LOADER_DRIVER_PATH=$LIBGL_DRIVERS_PATH
+export EGL_LOG_LEVEL=debug
+export LIBGL_DEBUG=verbose
+export LIBGL_DRI3_DISABLE=1
 
 echo "===================================="
 echo "::group::EGL info"
@@ -39,6 +46,11 @@ echo "::endgroup::"
 echo "===================================="
 
 BUILDDIR=$SRCDIR/multi_build/desktop-x86_64-buildroot-linux-gnu-multi
+
+echo "===================================="
+echo "========= Artifact structure ======="
+ls -R $BUILDDIR
+echo "===================================="
 
 echo "===================================="
 echo "========= Library linkage =========="
