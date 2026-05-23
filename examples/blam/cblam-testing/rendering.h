@@ -6,24 +6,6 @@
 #include "components.h"
 #include "data.h"
 
-template<typename V>
-using MeshRendererManifest = compo::SubsystemManifest<
-    type_list_t<
-        BspReference,
-        SubModel,
-        Model,
-        MeshTrackingData,
-        DebugDraw,
-        PlayerCamera,
-        PlayerInfo>,
-    type_list_t<
-        BitmapCache<V>,
-        ModelCache<V>,
-        BSPCache<V>,
-        ShaderCache<V>,
-        RenderingParameters>,
-    empty_list_t>;
-
 using ScreenClearManifest = compo::SubsystemManifest<
     empty_list_t,
     type_list_t<gfx::system, BlamResources, PostProcessParameters>,
@@ -62,6 +44,27 @@ struct ScreenClear
 
     std::vector<screen_quad_t> extra_quads;
 };
+
+template<typename V>
+using MeshRendererManifest = compo::SubsystemManifest<
+    type_list_t<
+        BspReference,
+        SubModel,
+        Model,
+        MeshTrackingData,
+        DebugDraw,
+        PlayerCamera,
+        PlayerInfo>,
+    type_list_t<
+        BitmapCache<V>,
+        ModelCache<V>,
+        BSPCache<V>,
+        ShaderCache<V>,
+        RenderingParameters,
+        ScreenClear>,
+    type_list_t<
+        comp_app::GraphicsFramebuffer
+    >>;
 
 using LoadingScreenManifest = compo::SubsystemManifest<
     empty_list_t,

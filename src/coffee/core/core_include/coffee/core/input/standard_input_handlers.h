@@ -1,6 +1,7 @@
 #pragma once
 
 #include <coffee/core/types/input/event_types.h>
+#include <glm/geometric.hpp>
 #include <peripherals/stl/time_types.h>
 #include <peripherals/typing/enum/graphics/direction.h>
 
@@ -70,7 +71,8 @@ struct StandardCameraOpts
         f32 fast{100.f};
     } accel;
 
-    Vecf3 up{};
+    Vecf3     up{};
+    glm::mat3 world_basis{1.f}; /* transforms camera-space column vectors to world/position space */
 };
 
 template<typename CameraPtr, typename CameraOptsPtr>
@@ -155,10 +157,17 @@ struct StandardCamera
 
     inline void rotate(f32 pitch, f32 yaw)
     {
-        auto& rotation = m_camera->rotation;
-        rotation       = rotation * glm::normalize(
-                                  glm::quat(cached.right * yaw * -1.f) *
-                                  glm::quat(cached.up * pitch * -1.f));
+        auto& q = m_camera->rotation;
+        /* Pitch (look up/down): pre-multiply around the world-space camera right axis.
+         * Must be glm::angleAxis, not glm::quat(vec3) — the latter is the Euler
+         * constructor and produces wrong rotations for non-cardinal axes. */
+        q = glm::normalize(glm::angleAxis(yaw, glm::normalize(cached.right)) * q);
+        /* Yaw (turn left/right): post-multiply around the fixed GL Y axis.
+         * Using cached.up (BSP Z) here would roll the camera instead of turning it,
+         * because R_vertex lives in GL-intermediate space. The GL Y axis maps to
+         * BSP Z (world up) via bsp_basis, so this produces correct horizontal turning
+         * without S-curves. */
+        q = glm::normalize(q * glm::angleAxis(-pitch, Vecf3{0.f, 1.f, 0.f}));
     }
 
     void tick(std::chrono::system_clock::duration const& t)
@@ -167,9 +176,14 @@ struct StandardCamera
 
         auto& rotation = cached.rotation = glm::mat3_cast(m_camera->rotation);
 
-        cached.forward = Vecf3{rotation[0][2], rotation[1][2], rotation[2][2]};
-        cached.right   = Vecf3{rotation[0][0], rotation[1][0], rotation[2][0]};
-        cached.up      = cross(cached.forward, cached.right);
+        /* Movement directions in world/position space.
+         * Row_i(V_rot) = Row_i(R_vertex * bsp_basis) = world_basis * Row_i(R_vertex).
+         * Extract rows via transpose; col 2 of the transposed matrix is negated
+         * because OpenGL's -Z is the forward direction. */
+        glm::mat3 Rt = glm::transpose(rotation);
+        cached.right   = m_opts->world_basis * Vecf3(Rt[0]);
+        cached.up      = m_opts->world_basis * Vecf3(Rt[1]);
+        cached.forward = m_opts->world_basis * -Vecf3(Rt[2]);
         f32 acceleration = m_opts->accel.base;
 
         if(has_key(CK_LShift))
@@ -277,7 +291,7 @@ void controller_camera_update(
         1.f + convert_i16_f(state.axes.e.t_l) * opt.curve * to_f32(t);
     camera->move(
         filter(state.axes.e.l_y, opt.sens.move.y) * -1.f,
-        filter(state.axes.e.l_x, opt.sens.move.x) * -1.f,
+        filter(state.axes.e.l_x, opt.sens.move.x) * 1.f,
         0.f,
         acceleration);
     camera->rotate(

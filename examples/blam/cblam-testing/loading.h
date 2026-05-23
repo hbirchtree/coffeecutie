@@ -156,7 +156,7 @@ void load_scenario_bsp(
     auto mp_flags = scenario->netgame.flags.data(magic).value();
     for(blam::scn::multiplayer_flag const& flag : mp_flags)
     {
-        cDebug("MP flag: {}", flag.pos);
+        // cDebug("MP flag: {}", flag.pos);
         auto  marker = e.create_entity(map_marker);
         auto& draw   = marker.get<DebugDraw>();
 
@@ -174,7 +174,7 @@ void load_scenario_bsp(
     auto spawns = scenario->player_start.locations.data(magic).value();
     for(blam::scn::player_starting_location const& spawn : spawns)
     {
-        cDebug(" - Spawn: @{}", spawn.pos);
+        // cDebug(" - Spawn: @{}", spawn.pos);
         auto  marker = e.create_entity(map_marker);
         auto& draw   = marker.get<DebugDraw>();
         draw         = create_debug_marker(
@@ -231,8 +231,10 @@ void load_scenario_bsp(
     std::vector<generation_idx_t> bsp_meshes;
     if(auto bsps = scenario->bsp_info.data(magic); bsps.has_value())
     {
+        u32 i{};
         for(blam::bsp::info const& bsp : bsps.value())
         {
+            cDebug("- BSP info #{}", ++i);
             bsp_meshes.push_back(bsp_cache.predict(bsp));
         }
     }
@@ -263,6 +265,7 @@ void load_scenario_bsp(
                 bsp_ref.shader   = mesh.shader;
                 bsp_ref.lightmap = mesh.light_bitm;
                 bsp_ref.bsp      = mesh_id;
+                bsp_ref.cluster_idx = mesh.cluster_idx;
                 bsp_ref.visible  = true;
                 bsp_ref.draw.data.push_back(mesh.draw);
 
@@ -632,7 +635,7 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
 
         for([[maybe_unused]] auto const& light : lights)
         {
-            cDebug("Light: {0}", light.marker_name.str());
+            // cDebug("Light: {0}", light.marker_name.str());
             Vecf3 rotation =
                 glm::mat3_cast(
                     glm::quat(Vecf3{0, light.radiosity.direction.x, 0}) *

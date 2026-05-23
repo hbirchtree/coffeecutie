@@ -11,9 +11,12 @@
 #include <peripherals/stl/iterator_slice.h>
 #include <peripherals/stl/tuple_hash.h>
 #include <peripherals/typing/enum/graphics/shader_stage.h>
+#include <coffee/image/ktx_load.h>
 
 #include "caching.h"
+#include "coffee/graphics/apis/gleam/rhi_texture.h"
 #include "data.h"
+#include "peripherals/concepts/graphics_api.h"
 #include "selected_version.h"
 
 using namespace libc_types::size_literals;
@@ -170,6 +173,9 @@ struct MeshRenderer
     std::array<Pass, Pass_Count> m_model;
 
     const bool supports_splitscreen = !compile_info::platform::is_emscripten;
+
+    std::shared_ptr<gfx::texture_2d_t> meow_tex;
+    std::shared_ptr<gfx::sampler_t> meow_sampler;
 
     MeshRenderer(
         gfx::api*             api,
@@ -556,14 +562,27 @@ struct MeshRenderer
 
         for(auto& ent : e.select(ObjectBsp))
         {
-            if(!params->debug_portals)
+            if(!params->debug_portals && !params->debug_clusters)
                 break;
             auto           ref  = e.template ref<Proxy>(ent);
             BspReference&  bsp_ = ref.template get<BspReference>();
             BSPItem const* bsp  = get_bsp(bsp_.bsp);
 
-            groups.insert(
-                groups.end(), bsp->portals.begin(), bsp->portals.end());
+            if(params->debug_portals)
+            {
+                groups.insert(
+                    groups.end(), bsp->portals.begin(), bsp->portals.end());
+            }
+            else if(params->debug_clusters)
+            {
+                u32 cur = params->current_bsp_cluster;
+                if(cur < bsp->clusters.size())
+                {
+                    for(auto const& sub : bsp->clusters[cur].sub)
+                        if(sub.debug_color_idx < bsp->portals.size())
+                            groups.push_back(bsp->portals[sub.debug_color_idx]);
+                }
+            }
         }
         for(auto& ent : e.template select<DebugDraw>())
         {
@@ -663,8 +682,55 @@ struct MeshRenderer
                         .mask       = 0x1,
                         .reference  = 0x1,
                     });
+            
         }
 
+        // Special case for 3 players; black out the 4th quadrant
+        if(m_players.size() == 3)
+        {
+            ScreenClear* clear;
+            p.subsystem(clear);
+
+            while(!meow_tex)
+            {
+                auto pause_tex = ktx::load_from("textures/meow.0.etc2"_rsc.data());
+                if(!pause_tex)
+                {
+                    cWarning("Failed to load blanking texture");
+                    break;
+                }
+                auto meow_data = std::move(pause_tex.value());
+                auto const& meow_size = meow_data.mips.at(0).size;
+                meow_tex = m_api->alloc_texture(
+                    gfx::textures::d2,
+                    CompFmt(comp_app::pix_fmt::ETC2, typing::pixels::pix_flags::RG),
+                    1);
+                meow_tex->alloc(size_3d<u32>{meow_size.x, meow_size.y, 1u});
+                meow_tex->upload(
+                        meow_data.mips.at(0).data,
+                        Veci2{},
+                        Veci2{meow_size.x, meow_size.y}
+                    );
+                meow_sampler = meow_tex->sampler();
+                meow_sampler->alloc();
+                meow_sampler->set_edge_policy(1, typing::WrapPolicy::MirrorClamp);
+                meow_tex->set_swizzle(
+                    gfx::textures::swizzle_t::red,
+                    gfx::textures::swizzle_t::red,
+                    gfx::textures::swizzle_t::red,
+                    gfx::textures::swizzle_t::alpha
+                );
+                break;
+            }
+
+            auto size = p.template service<comp_app::GraphicsFramebuffer>()->size();
+            clear->extra_quads.push_back({
+                .position = Vecf2(size.w / 2.f, 0),
+                .size = Vecf2(size.w / 2.f, size.h / 2.f),
+                .atlas_scale = Vecf2{1.f, -1.f},
+                .sampler = meow_sampler,
+            });
+        }
         /* Primary player is always the first one (seat_idx == 0) */
         u32 primary_player = 0;
 

@@ -66,7 +66,7 @@ vec3 view_direction()
 {
     return normalize(
             tbn_matrix() *
-            (camera_position.xzy - frag.position.xzy)
+            (camera_position - frag.position)
         ) *
         vec3(1, -1, -1);
 }

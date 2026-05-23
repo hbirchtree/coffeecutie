@@ -180,6 +180,7 @@ static void load_resources(
     u64 main_biped_id{0};
     if(num_pinfo == 0)
     {
+        cDebug("Creating player data");
         auto* controllers         = e.service<comp_app::ControllerInput>();
         auto* window              = e.service<comp_app::Windowing>();
         u32   num_controllers     = controllers ? controllers->count() : 0,
@@ -199,9 +200,11 @@ static void load_resources(
             auto& camera    = ref.get<PlayerCamera>();
             if(i == 0)
             {
+                cDebug("Keyboard seat assigned");
                 main_biped_id           = ref.id();
                 camera.keyboard.enabled = true;
-            } else if(num_controllers > allocated_controllers)
+            }
+            if(num_controllers > allocated_controllers)
             {
                 camera.controller.index = allocated_controllers;
                 ++allocated_controllers;
@@ -295,7 +298,7 @@ static void load_resources(
         }
         if(tag.matches(blam::tag_class_t::tag_collection))
         {
-            explore_tagc(tag);
+            // explore_tagc(tag);
         }
         // cDebug(
         //     " - {}:{}: {}",

@@ -72,11 +72,6 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
     //            portal_color_ptr++;
     //        }
 
-    Matf4 cluster_xf = glm::rotate(
-        glm::scale(glm::identity<Matf4>(), Vecf3{1, -1, 1}),
-        -glm::pi<f32>() / 2.f,
-        Vecf3{0, 0, 1});
-
     auto bclusters = section.clusters.data(bsp_magic).value();
     for(blam::bsp::cluster const& cluster : bclusters)
     {
@@ -90,8 +85,15 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             it.portals.push_back(&portals[portal_idx]);
         for(blam::bsp::subcluster const& sub : subclusters)
         {
-            auto indices                  = sub.indices.data(bsp_magic).value();
-            auto [min, max]               = sub.bounds.points();
+            auto indices    = sub.indices.data(bsp_magic).value();
+            auto [bmin, bmax] = sub.bounds.points();
+            /* Sub-cluster bounds are in BSP space: (world_y, world_z, world_x).
+             * Convert to world space ({p.z, p.x, p.y}) for correct rendering. */
+            auto to_world = [](Vecf3 const& p) -> Vecf3 {
+                return {p.z, p.x, p.y};
+            };
+            auto min = to_world(bmin);
+            auto max = to_world(bmax);
             std::array<Vecf3, 8> vertices = {{
                 min,
                 Vecf3(max.x, min.y, min.z),
@@ -116,12 +118,46 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             });
             it.sub.push_back(
                 BSPItem::Subcluster{
-                    .cluster = &sub,
-                    .indices = indices,
+                    .cluster         = &sub,
+                    .indices         = indices,
+                    .debug_color_idx = portal_color_ptr,
                 });
             portal_ptr += 8;
             portal_color_ptr++;
         }
+    }
+
+    /* Populate PVS bitset.
+     * The cluster data blob is stored immediately after the cluster array.
+     * cluster_data_size = n_clusters * ceil(n_clusters / 8) bytes (PVS only). */
+    if(section.cluster_data_size > 0 && !bclusters.empty())
+    {
+        auto const* pvs_ptr =
+            reinterpret_cast<libc_types::byte_t const*>(
+                bclusters.data() + bclusters.size());
+
+        u32 n            = static_cast<u32>(bclusters.size());
+        u32 expected_row = (n + 7u) / 8u;
+        u32 actual_row   = static_cast<u32>(section.cluster_data_size) / n;
+
+        /* Hex-dump the first 32 bytes of the PVS to verify it contains data */
+        std::string hex;
+        for(int i = 0; i < std::min(32, section.cluster_data_size); i++)
+            hex += std::format("{:02x} ", static_cast<u8>(pvs_ptr[i]));
+
+        cDebug(
+            "BSP PVS: {} clusters, cluster_data_size={}"
+            ", expected_row_stride={}, actual_row_stride={}\n"
+            "  pvs[0..31]: {}",
+            n,
+            section.cluster_data_size,
+            expected_row,
+            actual_row,
+            hex);
+
+        out.pvs_data      = Span<libc_types::byte_t const>(pvs_ptr,
+                                static_cast<u32>(section.cluster_data_size));
+        out.pvs_row_stride = actual_row;
     }
 
     /* TODO: Find link between indices in cluster and submeshes */
@@ -180,6 +216,29 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
     cDebug("Nodes with surfaces: {}", node_surfaces.size());
     cDebug("Clusters with surfaces: {}", cluster_surfaces.size());
 
+    /* Build authoritative face → cluster map using the leaf hierarchy.
+     * leaf.cluster names the cluster; leaf.surface_reference_{index,count}
+     * index into leaf_surfaces[]; leaf_surface.surface is the face index
+     * into header.surfaces (same index space as material::surfaces.count). */
+    std::vector<u32> face_cluster(
+        surfaces.size(), std::numeric_limits<u32>::max());
+    for(auto const& leaf : leaves)
+    {
+        if(leaf.cluster < 0)
+            continue;
+        u32 cid = static_cast<u32>(leaf.cluster);
+        u16 ref_end =
+            leaf.surface_reference_index + leaf.surface_reference_count;
+        for(u16 ri = leaf.surface_reference_index; ri < ref_end; ri++)
+        {
+            if(ri >= leaf_surfaces.size())
+                break;
+            u32 fi = leaf_surfaces[ri].surface;
+            if(fi < face_cluster.size())
+                face_cluster[fi] = cid;
+        }
+    }
+
     /* First, load up the vertices into the vertex buffer
      * We leave references to where they are in the vertex_ranges map
      * Later we want to point to them from each of the leaves
@@ -217,38 +276,70 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
                 light_vertices.end(),
                 light_buffer.begin() + light_ptr);
 
-            auto indices = mat.indices(section).data(bsp_magic).value();
-            std::copy(
-                indices.begin(),
-                indices.end(),
-                element_buffer.begin() + element_ptr);
-            group.meshes.emplace_back();
-            auto& mesh = group.meshes.back();
-            mesh.mesh  = &mat;
-            mesh.draw  = {
-                 .elements =
-                    {
-                         .count         = static_cast<u32>(indices.size() * 3),
-                         .offset        = element_ptr * sizeof(blam::vert::face),
-                         .vertex_offset = vert_ptr / mat.vertex_size(),
-                         .type          = semantic::type_t::u16,
-                    },
-                 .instances =
-                    {
-                         .count = 1,
-                    },
-            };
-            mesh.shader     = shader_cache.predict(mat.shader);
-            mesh.light_bitm = light_bitm;
+            /* Split material faces into per-cluster sub-meshes.
+             * Faces with no cluster assignment keep cluster_idx == max and
+             * are always visible (cluster_ok falls back to true for them). */
+            auto faces     = mat.indices(section).data(bsp_magic).value();
+            u32  mat_start = mat.surfaces.count;
+            u32  mat_end   = mat_start + mat.surfaces.offset;
+            u32  vert_base = vert_ptr / mat.vertex_size();
+
+            std::map<u32, std::vector<u32>> cluster_faces;
+            for(u32 fi = mat_start; fi < mat_end; fi++)
+            {
+                u32 cid = (fi < face_cluster.size())
+                              ? face_cluster[fi]
+                              : std::numeric_limits<u32>::max();
+                cluster_faces[cid].push_back(fi);
+            }
+
+            for(auto const& [cid, face_idxs] : cluster_faces)
+            {
+                u32 sub_start = element_ptr;
+                for(u32 fi : face_idxs)
+                {
+                    element_buffer[element_ptr] = faces[fi - mat_start];
+                    element_ptr++;
+                }
+
+                group.meshes.emplace_back();
+                auto& mesh    = group.meshes.back();
+                mesh.mesh     = &mat;
+                mesh.draw     = {
+                    .elements =
+                        {
+                            .count         = static_cast<u32>(face_idxs.size() * 3),
+                            .offset        = sub_start * sizeof(blam::vert::face),
+                            .vertex_offset = vert_base,
+                            .type          = semantic::type_t::u16,
+                        },
+                    .instances =
+                        {
+                            .count = 1,
+                        },
+                };
+                mesh.shader      = shader_cache.predict(mat.shader);
+                mesh.light_bitm  = light_bitm;
+                mesh.cluster_idx = cid;
+            }
 
             vert_ptr += vertices.size_bytes();
             light_ptr += light_vertices.size_bytes();
-            element_ptr += indices.size();
         }
     }
 
-    cDebug("Vertex ranges: {}", vertex_ranges);
-    cDebug("Index ranges: {}", index_ranges);
+    {
+        u32 assigned = 0, unassigned = 0;
+        for(auto const& grp : out.groups)
+            for(auto const& m : grp.meshes)
+                (m.cluster_idx == std::numeric_limits<u32>::max()
+                     ? unassigned
+                     : assigned)++;
+        cDebug("BSP mesh cluster assignment: {}/{} assigned, {} unassigned",
+               assigned, assigned + unassigned, unassigned);
+    }
+    // cDebug("Vertex ranges: {}", vertex_ranges);
+    // cDebug("Index ranges: {}", index_ranges);
 
     //        for(auto const& cluster : cluster_surfaces)
     //        {

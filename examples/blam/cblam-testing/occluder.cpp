@@ -20,6 +20,13 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
     using type  = Occluder<V>;
     using Proxy = compo::proxy_of<OccluderManifest<V>>;
 
+    u32              last_cluster{std::numeric_limits<u32>::max()};
+    bool             last_found{false};
+    u32              frame_counter{0};
+    BSPItem const*   pvs_bsp{nullptr};
+    u32              pvs_cluster{0};
+    std::vector<bool> pvs_visible{}; /* portal-traversal visible set, recomputed on cluster change */
+
     void start_restricted(Proxy& p, time_point const&)
     {
         if constexpr(compile_info::platform::is_android)
@@ -33,40 +40,28 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         p.subsystem(resources);
         p.subsystem(rendering);
 
-        /* Find primary player (seat_idx == 0) camera position */
-        Vecf3 primary_pos{};
+        /* cam->camera->position is the vertex-space world position (positive). */
+        Vecf3 camera_pos{};
         for(auto& ent : p.template select<PlayerCamera>())
         {
             auto* info = p.template get<PlayerInfo>(ent.id);
             auto* cam  = p.template get<PlayerCamera>(ent.id);
             if(info && cam && info->seat_idx == 0)
             {
-                primary_pos = cam->camera->position;
+                camera_pos = cam->camera->position;
                 break;
             }
         }
 
-        auto camera_pos = primary_pos * Vecf3{-1, -1, 1};
-
-        // for(auto& ent : p.select(ObjectBsp))
-        // {
-        //     auto          ref     = p.template ref<Proxy>(ent);
-        //     BspReference& bsp_ref = ref.template get<BspReference>();
-        // }
+        /* BSP cluster bounds are in BSP space (y,z,x); convert vertex-space
+         * positions before looking up clusters. */
+        auto to_bsp_space = [](Vecf3 const& p) -> Vecf3 {
+            return {p.y, p.z, p.x};
+        };
 
         Span<Vecf3> portal_colors = resources->debug_line_colors->map<Vecf3>(0);
         Span<Vecf3> portal_pos    = resources->debug_lines->map<Vecf3>(
             sizeof(Vecf3) * 6, sizeof(Vecf3) * (18 + 16 * 7));
-
-        // portal_pos[0] = camera_pos;
-        // portal_pos[1] = camera_pos + Vecf3{5, 0, 5};
-        // portal_pos[2] = camera_pos;
-        // portal_pos[3] = camera_pos + Vecf3{0, 5, 5};
-        // portal_pos[4] = camera_pos;
-        // portal_pos[5] = camera_pos + Vecf3{5, 5, 0};
-
-        // for(auto i : range<u32>(3))
-        //     portal_colors[3 + i] = Vecf3{1, 0, 1};
 
         u32 player_i = 0;
         for(auto& ent : p.template select<PlayerCamera>())
@@ -78,7 +73,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             if(player_i >= 16)
                 break;
 
-            auto pos = cam->camera->position * Vecf3(-1);
+            auto pos = cam->camera->position;
 
             if(info->seat_idx == 0)
                 pos = Vecf3(0);
@@ -101,7 +96,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         }
 
         resources->debug_lines->unmap();
-        // resources->debug_line_colors->unmap();
 
         BSPItem const* current_bsp{nullptr};
         u32            current_cluster{0};
@@ -121,44 +115,258 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 auto [cluster_, sub_] = cluster.value();
                 current_bsp           = &bsp;
                 current_cluster       = cluster_;
-                // bsp_ref.visible       = true;
                 auto const& sub = bsp.clusters.at(cluster_).sub.at(sub_);
                 portal_colors[sub.debug_color_idx] = Vecf3(0, 1, 0);
-            } else
-            {
-                // bsp_ref.visible = false;
             }
         }
 
         resources->debug_line_colors->unmap();
 
-        // if(!current_bsp)
-        //     return;
+        /* When the camera enters a new cluster, recompute the portal-traversal
+         * visible set. When between clusters, keep the last valid set so
+         * culling doesn't snap to all-visible at cluster boundaries. */
+        bool cluster_changed =
+            (current_bsp != nullptr) != last_found ||
+            current_cluster != last_cluster;
+        last_found   = current_bsp != nullptr;
+        last_cluster = current_cluster;
+
+        if(current_bsp)
+        {
+            pvs_bsp     = current_bsp;
+            pvs_cluster = current_cluster;
+            if(cluster_changed)
+                pvs_visible = pvs_bsp->portal_visible_set(pvs_cluster, 1);
+        }
+
+        rendering->current_bsp_cluster = pvs_cluster;
+
+        BSPItem const* cull_bsp = pvs_bsp;
+
+        /* Returns true if cluster ci is visible from the camera cluster.
+         * Falls back to visible when no set is computed yet. */
+        const auto cluster_ok = [&](u32 ci) -> bool {
+            if(pvs_visible.empty() || ci >= pvs_visible.size())
+                return true;
+            return pvs_visible[ci];
+        };
+
+        bool periodic = (frame_counter++ % 300) == 0;
+
+        u32 bsp_visible = 0, bsp_total = 0, bsp_no_cluster = 0;
+
+        /* Cull BSP meshes via portal visibility.
+         * cluster_idx was assigned once at load time by sampling vertices. */
+        if(cull_bsp)
+        {
+            for(auto& ent : p.select(ObjectBsp))
+            {
+                auto          ref     = p.template ref<Proxy>(ent);
+                BspReference& bsp_ref = ref.template get<BspReference>();
+
+                bsp_total++;
+                if(bsp_ref.cluster_idx != std::numeric_limits<u32>::max())
+                {
+                    bsp_ref.visible = cluster_ok(bsp_ref.cluster_idx);
+                } else
+                {
+                    /* No cluster assigned — can't cull safely, keep visible. */
+                    bsp_ref.visible = true;
+                    bsp_no_cluster++;
+                }
+                if(bsp_ref.visible)
+                    bsp_visible++;
+            }
+        }
 
         const auto in_draw_distance =
-            [camera_pos = primary_pos,
-             rendering,
+            [&camera_pos, rendering,
              draw_dist = rendering->draw_distance](Model const& mod) {
                 return glm::distance(mod.position, camera_pos) < draw_dist;
             };
+
+        u32 model_visible = 0, model_pvs_culled = 0, model_dist_culled = 0,
+            model_total = 0;
 
         for(auto& ent : p.select(PositioningStatic))
         {
             auto   ref   = p.template ref<Proxy>(ent);
             Model& model = ref.template get<Model>();
-            // if(auto cluster = current_bsp->find_cluster(-model.position);
-            //    !cluster.has_value())
-            //     model.visible = false;
-            // else
-            //     model.visible = cluster.value().first == current_cluster;
-            // model.visible = true;
-            model.visible = in_draw_distance(model);
+
+            model_total++;
+            if(cull_bsp)
+            {
+                if(auto mc = cull_bsp->find_cluster(to_bsp_space(model.position));
+                   mc.has_value())
+                {
+                    bool pvs_ok  = cluster_ok(mc.value().first);
+                    bool dist_ok = in_draw_distance(model);
+                    model.visible = pvs_ok && dist_ok;
+                    if(!pvs_ok)
+                        model_pvs_culled++;
+                    else if(!dist_ok)
+                        model_dist_culled++;
+                    else
+                        model_visible++;
+                } else
+                {
+                    model.visible = in_draw_distance(model);
+                    if(model.visible)
+                        model_visible++;
+                    else
+                        model_dist_culled++;
+                }
+            } else
+            {
+                model.visible = in_draw_distance(model);
+                if(model.visible)
+                    model_visible++;
+                else
+                    model_dist_culled++;
+            }
         }
         for(auto& ent : p.select(PositioningDynamic))
         {
             auto   ref    = p.template ref<Proxy>(ent);
             Model& model  = ref.template get<Model>();
             model.visible = in_draw_distance(model);
+        }
+
+        if(cluster_changed || periodic)
+        {
+            u32 total_clusters =
+                current_bsp ? static_cast<u32>(current_bsp->clusters.size()) : 0;
+            if(current_bsp)
+            {
+                cDebug(
+                    "Occluder [frame {}]: cluster {}/{}"
+                    " bsp=({:.1f},{:.1f},{:.1f})"
+                    " | BSP {}/{} visible ({} no-cluster)"
+                    " | models {}/{} visible ({} PVS-culled, {} dist-culled)",
+                    frame_counter,
+                    current_cluster,
+                    total_clusters,
+                    camera_pos.x, camera_pos.y, camera_pos.z,
+                    bsp_visible,
+                    bsp_total,
+                    bsp_no_cluster,
+                    model_visible,
+                    model_total,
+                    model_pvs_culled,
+                    model_dist_culled);
+
+                /* Print current cluster's subcluster bounds */
+                {
+                    auto const& cc = current_bsp->clusters.at(current_cluster);
+                    u32 si = 0;
+                    for(auto const& sub : cc.sub)
+                    {
+                        auto [bmin, bmax] = sub.cluster->bounds.points();
+                        cDebug(
+                            "  cluster[{}] sub[{}] bounds:"
+                            " ({:.1f},{:.1f},{:.1f})..({:.1f},{:.1f},{:.1f})",
+                            current_cluster, si++,
+                            bmin.x, bmin.y, bmin.z,
+                            bmax.x, bmax.y, bmax.z);
+                    }
+                }
+
+                /* Show portal-reachable cluster count */
+                {
+                    u32 reachable = 0;
+                    for(bool v : pvs_visible)
+                        if(v) reachable++;
+                    cDebug(
+                        "  portal-reachable clusters: {}/{}",
+                        reachable,
+                        static_cast<u32>(current_bsp->clusters.size()));
+                }
+
+                /* Sample first 5 model and BSP centroid positions */
+                {
+                    u32 sample = 0;
+                    for(auto& ent : p.select(PositioningStatic))
+                    {
+                        if(sample++ >= 5)
+                            break;
+                        auto   ref   = p.template ref<Proxy>(ent);
+                        Model& model = ref.template get<Model>();
+                        auto   bsp_p = to_bsp_space(model.position);
+                        auto   mc    = current_bsp->find_cluster(bsp_p);
+                        cDebug(
+                            "  model[{}] scenario=({:.1f},{:.1f},{:.1f})"
+                            " bsp=({:.1f},{:.1f},{:.1f}) cluster={} visible={}",
+                            sample - 1,
+                            model.position.x, model.position.y, model.position.z,
+                            bsp_p.x, bsp_p.y, bsp_p.z,
+                            mc.has_value()
+                                ? std::to_string(mc.value().first)
+                                : std::string("none"),
+                            model.visible);
+                    }
+                }
+                {
+                    u32 sample = 0;
+                    for(auto& ent : p.select(ObjectBsp))
+                    {
+                        if(sample++ >= 5)
+                            break;
+                        auto          ref     = p.template ref<Proxy>(ent);
+                        BspReference& bsp_ref = ref.template get<BspReference>();
+                        bool has_cluster = bsp_ref.cluster_idx
+                                        != std::numeric_limits<u32>::max();
+                        cDebug(
+                            "  bsp[{}] cluster={} visible={}",
+                            sample - 1,
+                            has_cluster ? std::to_string(bsp_ref.cluster_idx)
+                                        : std::string("none"),
+                            bsp_ref.visible);
+                    }
+                }
+            }
+            else
+            {
+                cDebug(
+                    "Occluder [frame {}]: camera outside all BSP clusters"
+                    " | bsp=({:.1f},{:.1f},{:.1f})",
+                    frame_counter,
+                    camera_pos.x, camera_pos.y, camera_pos.z);
+
+                /* Print BSP world bounds + first cluster bounds so we can
+                 * see the coordinate space the BSP lives in */
+                for(auto& ent : p.select(ObjectBsp))
+                {
+                    auto          ref = p.template ref<Proxy>(ent);
+                    BspReference& bsp_ref = ref.template get<BspReference>();
+                    BSPItem const& bsp = bsp_cache->find(bsp_ref.bsp)->second;
+                    if(!bsp.valid())
+                        break;
+                    auto [wmin, wmax] = bsp.mesh->world_bounds.points();
+                    cDebug(
+                        "  BSP world_bounds: ({:.1f},{:.1f},{:.1f})"
+                        " .. ({:.1f},{:.1f},{:.1f})",
+                        wmin.x, wmin.y, wmin.z,
+                        wmax.x, wmax.y, wmax.z);
+                    u32 ci = 0;
+                    for(auto const& cluster : bsp.clusters)
+                    {
+                        for(auto const& sub : cluster.sub)
+                        {
+                            auto [bmin, bmax] = sub.cluster->bounds.points();
+                            cDebug(
+                                "  cluster[{}] subcluster bounds:"
+                                " ({:.1f},{:.1f},{:.1f})"
+                                " .. ({:.1f},{:.1f},{:.1f})",
+                                ci,
+                                bmin.x, bmin.y, bmin.z,
+                                bmax.x, bmax.y, bmax.z);
+                        }
+                        if(++ci >= 3)
+                            break;  /* Only print first few clusters */
+                    }
+                    break;  /* One BSP is enough */
+                }
+            }
         }
     }
 

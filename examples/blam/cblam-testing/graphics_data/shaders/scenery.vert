@@ -39,6 +39,6 @@ void main()
     frag.tangent = (transform * vec4(tangent, 0.0)).xyz;
     frag.binormal = (transform * vec4(binormal, 0.0)).xyz;
     frag.normal = (transform * vec4(normal, 0.0)).xyz;
-    frag.position = world_pos.xyz * vec3(-1);
+    frag.position = world_pos.xyz;
     gl_Position = camera * world_pos;
 }

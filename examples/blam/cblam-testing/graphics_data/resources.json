@@ -61,6 +61,12 @@
                 "punchthrough_color": "0xFF00FF"
             },
             {
+                "source": "textures/meow.svg",
+                "formats": ["ra"],
+                "mipmap_range": [512, 512],
+                "punchthrough_color": "0xFF00FF"
+            },
+            {
                 "source": "textures/spinner.svg",
                 "formats": ["ra"],
                 "mipmap_range": [512, 128],

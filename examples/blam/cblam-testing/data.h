@@ -1,5 +1,7 @@
 #pragma once
 
+#include <limits>
+
 #include <blam/volta/blam_stl.h>
 #include <coffee/comp_app/services.h>
 #include <coffee/core/input/standard_input_handlers.h>
@@ -83,7 +85,7 @@ struct RenderingParameters : compo::SubsystemBase
 
     libc_types::u32 mipmap_bias{compile_info::platform::is_32bit ? 2 : 3};
 
-    bool render_scenery{true};
+    bool render_scenery{false};
     bool render_ui{false};
     bool debug_clear{true};
 
@@ -97,6 +99,8 @@ struct RenderingParameters : compo::SubsystemBase
 
     f32 tex_res{0.f};
     f32 draw_distance{500.f};
+
+    libc_types::u32 current_bsp_cluster{std::numeric_limits<libc_types::u32>::max()};
 };
 
 struct LoadingStatus : compo::SubsystemBase

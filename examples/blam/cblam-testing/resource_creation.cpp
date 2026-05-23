@@ -14,6 +14,26 @@ using semantic::RSCA;
 
 using namespace Coffee::resource_literals;
 
+void update_camera_aspect(compo::EntityContainer& e)
+{
+    u32 count{0};
+    for(auto& _ : e.select<PlayerCamera>())
+        if(auto* info = e.get<PlayerInfo>(_.id); info && !info->is_remote())
+            ++count;
+    auto* window = e.service<comp_app::Windowing>();
+    for(const auto& player : e.select<PlayerCamera>())
+    {
+        auto* cam = e.get<PlayerCamera>(player.id);
+        if(count != 2)
+            cam->camera->aspect = window->size().aspect();
+        else
+        {
+            auto size           = window->size();
+            cam->camera->aspect = static_cast<f32>(size.w) / (size.h / 2.f);
+        }
+    }
+}
+
 void create_resources(compo::EntityContainer& e)
 {
     ProfContext _(__FUNCTION__);
@@ -41,7 +61,11 @@ void create_resources(compo::EntityContainer& e)
                     auto* info = e.get<PlayerInfo>(entity.id);
                     if(cam->keyboard.enabled && info &&
                        info->permissions.camera)
+                    {
+                        cDebug("Camera applied to player={} seat={}", info->player_idx, info->seat_idx);
                         return cam->camera_.get();
+                    }
+
                 }
                 cWarning("No camera selected");
                 return nullptr;
@@ -62,6 +86,7 @@ void create_resources(compo::EntityContainer& e)
         eventhandler->addEventFunction<CIControllerConnectEvent>(
             1024, [&e](CIEvent& ev, CIControllerConnectEvent* connect) {
                 auto* controllers = e.service<comp_app::ControllerInput>();
+                auto* window = e.service<comp_app::Windowing>();
                 auto  name        = controllers->name(connect->player_index);
                 cDebug(
                     "Controller {}connected: {} (idx={})",
@@ -101,28 +126,14 @@ void create_resources(compo::EntityContainer& e)
                         break;
                     }
                 }
+                update_camera_aspect(e);
             });
 
         auto eventhandler_w = e.service<comp_app::BasicEventBus<Event>>();
 
         eventhandler_w->addEventFunction<ResizeEvent>(
             0, [&e](Event&, ResizeEvent* resize) {
-                u32 count = 0;
-                for(auto& _ : e.select<PlayerCamera>())
-                {
-                    auto* cam = e.get<PlayerCamera>(_.id);
-                    if(auto* info = e.get<PlayerInfo>(_.id); cam->is_active())
-                        ++count;
-                }
-                f32 aspect = static_cast<f32>(resize->w) / resize->h;
-                if(count == 2)
-                    aspect = static_cast<f32>(resize->w) / (resize->h / 2);
-                for(auto& entity : e.select<PlayerCamera>())
-                {
-                    auto* cam = e.get<PlayerCamera>(entity.id);
-                    if(cam)
-                        cam->camera->aspect = aspect;
-                }
+                update_camera_aspect(e);
                 cDebug("Window resize: {}x{}", resize->w, resize->h);
             });
 
@@ -709,20 +720,23 @@ void create_camera(
             continue;
         auto& location =
             info->seat_idx < spawns.size() ? spawns[info->seat_idx] : spawns[0];
-        cam->camera->position = location.pos * Vecf3{-1, -1, -1};
-        cam->camera->rotation = glm::normalize(
-            glm::quat(Vecf3{0, location.rot, glm::pi<f32>() / 2.f}));
+        cam->camera->position = location.pos;
+        /* R_vertex = R_bsp * bsp_basis^T.
+         * Ensures R_vertex * bsp_basis == R_bsp in the view matrix, so
+         * rendering is correct while controller direction vectors are in
+         * vertex space and can be added directly to the vertex-space position. */
+        static const glm::mat3 bsp_basis_inv{
+            {0, 1, 0},
+            {0, 0, 1},
+            {1, 0, 0}};
+        cam->camera_opts->world_basis = bsp_basis_inv;
+        cam->camera->rotation =
+            glm::angleAxis(glm::pi<f32>() - location.rot, Vecf3{0.f, 1.f, 0.f});
 
         auto* fb = e.service<comp_app::Windowing>();
         if(fb)
         {
-            if(count != 2)
-                cam->camera->aspect = fb->size().aspect();
-            else
-            {
-                auto size           = fb->size();
-                cam->camera->aspect = static_cast<f32>(size.w) / (size.h / 2.f);
-            }
+            
         }
     }
 }

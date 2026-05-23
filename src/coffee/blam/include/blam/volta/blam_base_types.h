@@ -46,15 +46,12 @@ struct bounding_box
 
     inline bool contains(Vecf3 const& point) const
     {
-        auto [o, e] = points();
-
-        auto origin_diff = point - o;
-        auto extent_diff = e - point;
-        bool within_origin =
-            origin_diff.x < 0 && origin_diff.y < 0 && origin_diff.z < 0;
-        bool within_extents =
-            extent_diff.x > 0 && extent_diff.y > 0 && extent_diff.z > 0;
-        return within_origin && within_extents;
+        Vecf3 lo = glm::min(p1, p2);
+        Vecf3 hi = glm::max(p1, p2);
+        auto  lo_diff = point - lo;
+        auto  hi_diff = hi - point;
+        return lo_diff.x >= 0 && lo_diff.y >= 0 && lo_diff.z >= 0
+            && hi_diff.x >= 0 && hi_diff.y >= 0 && hi_diff.z >= 0;
     }
 
     std::pair<Vecf3, Vecf3> points() const

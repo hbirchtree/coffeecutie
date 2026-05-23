@@ -35,5 +35,5 @@ void main()
     frag.tangent = tangent;
     frag.binormal = binormal;
     frag.normal = normal;
-    frag.position = position * vec3(-1);
+    frag.position = position;
 }

@@ -48,7 +48,7 @@ Keys:
   devices[name].viewer     — optional display viewer: {type: "web"|"scrcpy", address: "..."}
   presets[name].binary     — executable name under multi_build/<target>/bin/
   presets[name].package    — Android package name (required for android targets)
-  presets[name].workdir    — remote cwd, supports $SCRATCH_DIR and $BUILD_DIR
+  presets[name].workdir    — remote cwd, supports $SCRATCH_DIR, $BUILD_DIR, and $SRC_DIR
   presets[name].files      — list of {local, remote} rsync transfers before launch
   presets[name].args       — command-line args passed to the binary
   presets[name].extras     — Android --es intent extras (merged with device env)
@@ -82,9 +82,12 @@ def target_to_dir(target):
     return target.replace(':', '-')
 
 
-def expand_vars(value, scratchdir, build_dir):
-    """Expand $SCRATCH_DIR and $BUILD_DIR in a string."""
-    return value.replace('$SCRATCH_DIR', scratchdir).replace('$BUILD_DIR', build_dir)
+def expand_vars(value, scratchdir, build_dir, src_dir=None):
+    """Expand $SCRATCH_DIR, $BUILD_DIR, and $SRC_DIR in a string."""
+    result = value.replace('$SCRATCH_DIR', scratchdir).replace('$BUILD_DIR', build_dir)
+    if src_dir is not None:
+        result = result.replace('$SRC_DIR', src_dir)
+    return result
 
 
 def toptext_message(device, hostname=None):
@@ -327,10 +330,10 @@ def run_linux(device_name, device, preset_name, preset, extra_args, script_dir, 
     build_dir = os.path.join(build_root, target_dir)
 
     def ev(s):
-        return expand_vars(s, scratchdir, build_dir)
+        return expand_vars(s, scratchdir, build_dir, script_dir)
 
     # Merge env: device env overridden by preset env
-    merged_env = {**device.get('env', {}), **preset.get('env', {})}
+    merged_env = {k: ev(str(v)) for k, v in {**device.get('env', {}), **preset.get('env', {})}.items()}
 
     # Build remote shell command
     workdir = ev(preset.get('workdir', '$SCRATCH_DIR'))
