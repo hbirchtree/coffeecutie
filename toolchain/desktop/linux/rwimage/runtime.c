@@ -20,9 +20,9 @@
 #include <squashfuse/fuseprivate.h>
 
 #include <elf.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

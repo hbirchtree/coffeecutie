@@ -15,12 +15,13 @@
                 "rhs": "Linux"
             },
             "cacheVariables": {
-                "APPIMAGE_EXTRA_LIBRARIES": "$env{TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6;$env{TOOLCHAIN_SYSROOT}/lib/libssp.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libOSMesa.so.8",
+                "APPIMAGE_EXTRA_LIBRARIES": "$env{TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6;$env{TOOLCHAIN_SYSROOT}/lib/libssp.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0",
                 "APPIMAGE_RUNTIME_BINARY": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{TOOLCHAIN_PREFIX}/bin/runtime",
                 "CMAKE_C_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-gcc",
                 "CMAKE_CXX_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-g++",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
                 "FLATPAK_EXTRA_LIBRARIES": "$env{TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6;$env{TOOLCHAIN_SYSROOT}/lib/libssp.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libOSMesa.so.8",
+                "RWIMAGE_EXTRA_LIBRARIES": "$env{TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6;$env{TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0",
                 "MKSQUASH_PROGRAM": "$env{MKSQUASH_PROGRAM}",
                 "TOOLCHAIN_PREFIX": "$env{TOOLCHAIN_PREFIX}",
                 "TOOLCHAIN_ROOT": "$env{TOOLCHAIN_ROOT}",
@@ -94,11 +95,10 @@
             "displayName": "Beaglebone ARMv7 TI-SGX OpenGL ES 2.0 (NullWS)",
             "inherits": ["vcpkg-base-linux-egl-es20"],
             "cacheVariables": {
-                "APPIMAGE_RUNTIME_BINARY": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{TOOLCHAIN_PREFIX}/bin/runtime",
                 "BUILD_GLSCREENSHOT": "ON",
                 "BUILD_OPENAL": "OFF",
                 "BUILD_PVRSCOPE": "ON",
-                "GENERATE_APPIMAGE": "OFF",
+                "GENERATE_RWIMAGE": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "beaglebone;sgx;arm;arm32;linux"
             },
             "environment": {
@@ -116,9 +116,9 @@
                 "BUILD_GL_SOFTWARE_BCN": "ON",
                 "BUILD_GL_SOFTWARE_PVRTC": "ON",
                 "BUILD_OSMESA": "OFF",
-                "GENERATE_APPIMAGE": "OFF",
                 "GENERATE_APPDIR": "ON",
                 "GENERATE_FLATPAK": "ON",
+                "GENERATE_RWIMAGE": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
                 "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl2",
                 "VCPKG_TARGET_TRIPLET": "desktop-x86-64-buildroot-linux-gnu"
@@ -140,7 +140,6 @@
                 "rhs": "Linux"
             },
             "cacheVariables": {
-                "APPIMAGE_RUNTIME_BINARY": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/x64-linux/bin/runtime",
                 "BUILD_DISCORD_RPC": "ON",
                 "BUILD_GLSCREENSHOT": "ON",
                 "BUILD_GL_SOFTWARE_PVRTC": "ON",
@@ -149,7 +148,6 @@
                 "CMAKE_C_FLAGS": "-march=native",
                 "CMAKE_CXX_FLAGS": "-march=native",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
-                "MKSQUASH_PROGRAM": "$env{MKSQUASH_PROGRAM}",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
                 "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl2"
             },
@@ -174,9 +172,9 @@
                 "BUILD_GLSCREENSHOT": "ON",
                 "BUILD_GL_SOFTWARE_BCN": "ON",
                 "BUILD_GL_SOFTWARE_PVRTC": "ON",
-                "GENERATE_APPIMAGE": "OFF",
                 "GENERATE_APPDIR": "ON",
                 "GENERATE_FLATPAK": "ON",
+                "GENERATE_RWIMAGE": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
                 "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl2",
                 "VCPKG_TARGET_TRIPLET": "desktop-x86-64v2-buildroot-linux-gnu"
@@ -201,9 +199,9 @@
                 "CMAKE_LINKER_FLAGS": "-fuse-ld=gold",
                 "CMAKE_SHARED_LINKER_FLAGS": "-fuse-ld=gold",
                 "CMAKE_EXE_LINKER_FLAGS": "-fuse-ld=gold",
-                "GENERATE_APPIMAGE": "OFF",
                 "GENERATE_APPDIR": "ON",
                 "GENERATE_FLATPAK": "ON",
+                "GENERATE_RWIMAGE": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;arm64;aarch64"
             },
             "environment": {

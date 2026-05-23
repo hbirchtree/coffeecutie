@@ -67,6 +67,7 @@ libc_types::f64 SysCPUClock::frequency(libc_types::u32 i, libc_types::u32 core)
 
 libc_types::f32 SysCPUClock::processCpuLoad()
 {
+#if defined(COFFEE_LINUX)
     using namespace std::chrono;
     auto now_cpu  = platform::info::proc::cpu_time();
     auto now_wall = steady_clock::now();
@@ -83,6 +84,9 @@ libc_types::f32 SysCPUClock::processCpuLoad()
     m_lastCpuTime  = now_cpu;
     m_lastWallTime = now_wall;
     return result;
+#else
+    return 0.f;
+#endif
 }
 
 std::vector<interfaces::CPUClockProvider::thread_load_t>
