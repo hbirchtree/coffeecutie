@@ -194,7 +194,8 @@ STATICINLINE void ThreadQueueSleep(
 
     Profiler::DeepProfile(fmt::format("Sleeping for {}ns", sleepTime.count()));
     sem_->condition.wait_for(thread_lock, sleepTime, [queue, sem_]() {
-        return queue->time_till_next(clock_now()) < 20ms ||
+        return !sem_->running ||
+               queue->time_till_next(clock_now()) < 20ms ||
                sem_->notified.load();
     });
     if(sem_->notified.load())
@@ -638,6 +639,7 @@ std::optional<RuntimeQueueError> runtime_queue::TerminateThread(
     auto& queueFlags = context->queue_flags[tid];
 
     queueFlags->running.store(false);
+    queueFlags->notified.store(true);
     queueFlags->condition.notify_one();
 
     context->queue_threads[tid].join();
@@ -656,6 +658,7 @@ std::optional<RuntimeQueueError> runtime_queue::TerminateThreads()
     for(auto const& t : context->queue_flags)
     {
         t.second->running.store(false);
+        t.second->notified.store(true);
         t.second->condition.notify_one();
     }
 
