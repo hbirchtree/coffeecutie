@@ -711,6 +711,7 @@ void main()
     } else
         color = vec4(0, 1, 0, 1);
 
+
     vec4 fog_color = vec4(world.fog.outdoor_color.xyz, 1);
     float fog_distance = length(frag.position - camera_position);
     fog_distance = (fog_distance - world.fog.distances.z) / world.fog.distances.w;

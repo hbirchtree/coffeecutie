@@ -246,7 +246,8 @@ struct BasicEventBus : EventBus<EventType>
     template<typename HandlerType>
     void addEventHandler(libc_types::u32 prio, HandlerType&& hnd)
     {
-        auto handler = [hnd](EventType& ev, libc_types::c_ptr data) mutable {
+        auto handler = [hnd = std::forward<HandlerType>(hnd)](
+                           EventType& ev, libc_types::c_ptr data) mutable {
             if(ev.type == HandlerType::event_type::event_type)
                 hnd(ev, C_RCAST<typename HandlerType::event_type*>(data));
         };
@@ -260,7 +261,8 @@ struct BasicEventBus : EventBus<EventType>
         libc_types::u32                                  prio,
         std::function<void(EventType&, SubEventType*)>&& hnd)
     {
-        auto handler = [hnd](EventType& ev, libc_types::c_ptr data) mutable {
+        auto handler = [hnd = std::move(hnd)](
+                           EventType& ev, libc_types::c_ptr data) mutable {
             if(ev.type == SubEventType::event_type)
                 hnd(ev, C_RCAST<SubEventType*>(data));
         };

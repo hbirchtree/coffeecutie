@@ -158,10 +158,11 @@ struct StandardCamera
     inline void rotate(f32 pitch, f32 yaw)
     {
         auto& q = m_camera->rotation;
-        /* Pitch (look up/down): pre-multiply around the world-space camera right axis.
-         * Must be glm::angleAxis, not glm::quat(vec3) — the latter is the Euler
-         * constructor and produces wrong rotations for non-cardinal axes. */
-        q = glm::normalize(glm::angleAxis(yaw, glm::normalize(cached.right)) * q);
+        /* Pitch (look up/down): pre-multiply around view-space +X = {1,0,0}.
+         * cached.right is a BSP-space vector and is NOT the same 3D vector as view +X,
+         * so using it only accidentally produces correct pitch at the spawn facing angle.
+         * Pre-multiplying by angleAxis({1,0,0}) always rotates around screen-right. */
+        q = glm::normalize(glm::angleAxis(yaw, Vecf3{-1.f, 0.f, 0.f}) * q);
         /* Yaw (turn left/right): post-multiply around the fixed GL Y axis.
          * Using cached.up (BSP Z) here would roll the camera instead of turning it,
          * because R_vertex lives in GL-intermediate space. The GL Y axis maps to
