@@ -3,9 +3,11 @@
 #include "caching.h"
 #include "components.h"
 #include "data.h"
+#include "peripherals/stl/string/hex.h"
 #include "resource_creation.h"
 
 #include <coffee/imgui/imgui_binding.h>
+#include <imgui.h>
 
 template<typename Version>
 struct BlamBspWidget;
@@ -49,54 +51,7 @@ struct BlamBspWidget
         auto bsps     = e.template select<BspReference>();
         auto models   = e.template select<SubModel>();
         auto triggers = e.template select<TriggerVolume>();
-        //        auto& shader_cache = e.template subsystem<ShaderCache<V>>();
-        //        auto& bsp_cache    = e.template subsystem<BSPCache<V>>();
-
-        //        if(ImGui::Begin("Static models"))
-        //        {
-        //            std::string current_bsp;
-        //            bool        current_hidden = true;
-
-        //            for(Entity& bsp_ : bsps)
-        //            {
-        //                auto          bsp_e = e.template ref<Proxy>(bsp_);
-        //                BspReference& bsp   = bsp_e.template
-        //                get<BspReference>();
-
-        //                BSPItem const&    bsp_it =
-        //                bsp_cache.find(bsp.bsp)->second; ShaderItem const&
-        //                shader
-        //                    = shader_cache.find(bsp.shader)->second;
-
-        //                auto bsp_name    = m_map->get_name(bsp_it.tag);
-        //                auto shader_name = m_map->get_name(shader.tag);
-
-        //                if(current_bsp != bsp_name)
-        //                {
-        //                    if(!current_bsp.empty() && !current_hidden)
-        //                        ImGui::TreePop();
-        //                    current_bsp    = bsp_name;
-        //                    current_hidden =
-        //                    !ImGui::TreeNode(current_bsp.c_str());
-        //                }
-
-        //                if(auto it = m_bsps.find(bsp_name); it ==
-        //                m_bsps.end())
-        //                    m_bsps.insert({bsp_name, true});
-
-        //                bsp.visible = m_bsps.at(bsp_name);
-
-        //                if(current_hidden)
-        //                    continue;
-
-        //                ImGui::Checkbox(shader_name.data(),
-        //                &m_bsps.at(bsp_name));
-        //            }
-
-        //            if(!current_bsp.empty() && !current_hidden)
-        //                ImGui::TreePop();
-        //        }
-        //        ImGui::End();
+        auto& bsp_cache = e.template subsystem<BSPCache<V>>();
 
         if(ImGui::Begin("Rendering"))
         {
@@ -110,24 +65,34 @@ struct BlamBspWidget
                 if(ImGui::BeginTabItem("BSP"))
                 {
                     ImGui::Checkbox(
-                        "Render scenery", &rendering->render_scenery);
-                    ImGui::Checkbox(
                         "Clear before draw", &rendering->debug_clear);
                     ImGui::Checkbox(
                         "Show clusters", &rendering->debug_clusters);
                     ImGui::Checkbox(
                         "Show debug markers", &rendering->debug_markers);
                     ImGui::Checkbox("Show portals", &rendering->debug_portals);
-                    for(auto& region : m_bsps)
+                    if(ImGui::BeginListBox("Clusters"))
                     {
-                        std::string name(
-                            region.first.begin(), region.first.end());
-                        ImGui::Checkbox(name.c_str(), &region.second);
+                        for(auto& bsp : bsps)
+                        {
+                            auto* bsp_ref = e.template get<BspReference>(bsp.id);
+                            // auto& bsp_ = bsp_cache->predict(bsp_ref->bsp);
+                            auto name = fmt::format("{} cluster={}", stl_types::str::fmt::pointerify(bsp_ref), bsp_ref->cluster_idx);
+                            ImGui::Checkbox(name.c_str(), &bsp_ref->visible);
+                        }
+                        ImGui::EndListBox();
                     }
+                    ImGui::EndTabItem();
+                }
+                if(ImGui::BeginTabItem("Clusters"))
+                {
+                    
                     ImGui::EndTabItem();
                 }
                 if(ImGui::BeginTabItem("Models"))
                 {
+                    ImGui::Checkbox(
+                        "Render scenery", &rendering->render_scenery);
                     ImGui::Checkbox(
                         "Color changing", &rendering->color_changing);
                     ImGui::EndTabItem();

@@ -732,11 +732,6 @@ void create_camera(
         cam->camera_opts->world_basis = bsp_basis_inv;
         cam->camera->rotation =
             glm::angleAxis(glm::pi<f32>() - location.rot, Vecf3{0.f, 1.f, 0.f});
-
-        auto* fb = e.service<comp_app::Windowing>();
-        if(fb)
-        {
-            
-        }
     }
+    update_camera_aspect(e);
 }

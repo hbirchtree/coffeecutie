@@ -30,6 +30,8 @@
 #include "sound_cache.h"
 #include "sounds.h"
 
+struct DebugMarkers;
+
 using gfx_api = gleam::api;
 using libc_types::byte_t;
 using libc_types::u64;
@@ -180,9 +182,7 @@ struct BSPCache
     {
         index    = blam::tag_index_view(map);
         magic    = map.magic;
-        vert_ptr = 0, element_ptr = 0, light_ptr = 0,
-        portal_ptr       = reserved_debug_points,
-        portal_color_ptr = reserved_debug_colors;
+        vert_ptr = 0, element_ptr = 0, light_ptr = 0;
         evict_all();
     }
 
@@ -198,9 +198,9 @@ struct BSPCache
     Span<byte_t>           light_buffer;
     Span<blam::vert::face> element_buffer;
 
-    Span<Vecf3> portal_buffer, portal_color_buffer;
+    DebugMarkers* debug_markers{nullptr};
 
-    u32 vert_ptr, element_ptr, light_ptr, portal_ptr, portal_color_ptr;
+    u32 vert_ptr, element_ptr, light_ptr;
 
     virtual BSPItem predict_impl(blam::bsp::info const& bsp) override;
 

@@ -38,25 +38,24 @@ using bl_rect = typing::geometry::rect<i16>;
 
 /*!
  * \brief The blam_bounding_box struct
+ * Stored as three min/max pairs: {x_min, x_max, y_min, y_max, z_min, z_max}.
  */
 struct bounding_box
 {
-    Vecf3 p1;
-    Vecf3 p2;
+    f32 x_min, x_max;
+    f32 y_min, y_max;
+    f32 z_min, z_max;
 
     inline bool contains(Vecf3 const& point) const
     {
-        Vecf3 lo = glm::min(p1, p2);
-        Vecf3 hi = glm::max(p1, p2);
-        auto  lo_diff = point - lo;
-        auto  hi_diff = hi - point;
-        return lo_diff.x >= 0 && lo_diff.y >= 0 && lo_diff.z >= 0
-            && hi_diff.x >= 0 && hi_diff.y >= 0 && hi_diff.z >= 0;
+        return point.x >= x_min && point.x <= x_max
+            && point.y >= y_min && point.y <= y_max
+            && point.z >= z_min && point.z <= z_max;
     }
 
     std::pair<Vecf3, Vecf3> points() const
     {
-        return {p1, p2};
+        return {{x_min, y_min, z_min}, {x_max, y_max, z_max}};
     }
 };
 

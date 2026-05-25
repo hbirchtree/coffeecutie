@@ -446,7 +446,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     auto* cam = e.get<PlayerCamera>(entity.id);
                     if(cam)
                     {
-                        cam->camera->position = spawn.pos * Vecf3{-1, -1, -1};
+                        cam->camera->position = spawn.pos;
                         cam->camera->rotation = glm::normalize(
                             Quatf(Vecf3{0.f, spawn.rot, glm::pi<f32>() / 2.f}));
                     }

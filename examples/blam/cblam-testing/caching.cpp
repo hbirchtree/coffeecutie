@@ -1,5 +1,6 @@
 #include "caching.h"
 
+#include "map_marker.h"
 #include "materials.h"
 #include "selected_version.h"
 #include <coffee/graphics/apis/gleam/rhi_texture_atlas.h>
@@ -86,44 +87,50 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         for(blam::bsp::subcluster const& sub : subclusters)
         {
             auto indices    = sub.indices.data(bsp_magic).value();
-            auto [bmin, bmax] = sub.bounds.points();
-            /* Sub-cluster bounds are in BSP space: (world_y, world_z, world_x).
-             * Convert to world space ({p.z, p.x, p.y}) for correct rendering. */
-            auto to_world = [](Vecf3 const& p) -> Vecf3 {
-                return {p.z, p.x, p.y};
-            };
-            auto min = to_world(bmin);
-            auto max = to_world(bmax);
-            std::array<Vecf3, 8> vertices = {{
-                min,
-                Vecf3(max.x, min.y, min.z),
-                Vecf3(max.x, max.y, min.z),
-                Vecf3(min.x, max.y, min.z),
-                Vecf3(min.x, max.y, max.z),
-                Vecf3(min.x, min.y, max.z),
-                Vecf3(max.x, min.y, max.z),
-                max,
+            auto [p1, p2] = sub.bounds.points();
+            Vecf3 lo = glm::min(p1, p2);
+            Vecf3 hi = glm::max(p1, p2);
+            /* 16-vertex line_strip tracing all 12 edges of the AABB.
+             * Bottom face → front-left vertical → top face → remaining 3 verticals. */
+            std::array<Vecf3, 16> vertices = {{
+                lo,
+                Vecf3(hi.x, lo.y, lo.z),
+                Vecf3(hi.x, hi.y, lo.z),
+                Vecf3(lo.x, hi.y, lo.z),
+                lo,
+                Vecf3(lo.x, lo.y, hi.z),
+                Vecf3(hi.x, lo.y, hi.z),
+                hi,
+                Vecf3(lo.x, hi.y, hi.z),
+                Vecf3(lo.x, lo.y, hi.z),
+                Vecf3(lo.x, hi.y, hi.z),
+                Vecf3(lo.x, hi.y, lo.z),
+                Vecf3(hi.x, hi.y, lo.z),
+                hi,
+                Vecf3(hi.x, lo.y, hi.z),
+                Vecf3(hi.x, lo.y, lo.z),
             }};
             std::copy(
                 vertices.begin(),
                 vertices.end(),
-                portal_buffer.begin() + portal_ptr);
-            portal_color_buffer[portal_color_ptr] = Vecf3(0, 1, 0);
+                debug_markers->portal_buffer.begin() + debug_markers->portal_ptr);
+            debug_markers->portal_color_buffer[debug_markers->portal_color_ptr] =
+                Vecf3(0, 1, 0);
             out.portals.push_back({
                 .arrays =
                     {
-                        .count  = static_cast<u32>(8),
-                        .offset = static_cast<u32>(portal_ptr),
+                        .count  = static_cast<u32>(16),
+                        .offset = static_cast<u32>(debug_markers->portal_ptr),
                     },
             });
             it.sub.push_back(
                 BSPItem::Subcluster{
                     .cluster         = &sub,
                     .indices         = indices,
-                    .debug_color_idx = portal_color_ptr,
+                    .debug_color_idx = debug_markers->portal_color_ptr,
                 });
-            portal_ptr += 8;
-            portal_color_ptr++;
+            debug_markers->portal_ptr += 16;
+            debug_markers->portal_color_ptr++;
         }
     }
 
@@ -182,6 +189,9 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
     auto leaf_surfaces = leaf_surfaces_.value();
     auto nodes         = nodes_.value();
     auto clusters      = clusters_.value();
+
+    cDebug("Surfaces={} lightmaps={} leaves={} leaf_surfaces={} nodes={} clusters={}",
+        surfaces.size(), lightmaps.size(), leaves.size(), leaf_surfaces.size(), nodes.size(), clusters.size());
 
     std::map<i32, std::vector<blam::vert::face const*>> node_surfaces;
 

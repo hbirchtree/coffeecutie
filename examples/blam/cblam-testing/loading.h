@@ -3,6 +3,7 @@
 #include "caching.h"
 #include "components.h"
 #include "data.h"
+#include "map_marker.h"
 
 template<typename Version>
 void load_scenario_bsp(
@@ -16,14 +17,19 @@ void load_scenario_bsp(
     BSPCache<Version>&    bsp_cache = e.subsystem_cast<BSPCache<Version>>();
     ShaderCache<Version>& shader_cache =
         e.subsystem_cast<ShaderCache<Version>>();
-    BlamResources& gpu = e.subsystem_cast<BlamResources>();
+    BlamResources& gpu          = e.subsystem_cast<BlamResources>();
+    DebugMarkers&  debug_markers = e.subsystem_cast<DebugMarkers>();
 
     {
-        bsp_cache.vert_buffer         = gpu.bsp_buf->map<byte_t>(0);
-        bsp_cache.element_buffer      = gpu.bsp_index->map<blam::vert::face>(0);
-        bsp_cache.light_buffer        = gpu.bsp_light_buf->map<byte_t>(0);
-        bsp_cache.portal_buffer       = gpu.debug_lines->map<Vecf3>(0);
-        bsp_cache.portal_color_buffer = gpu.debug_line_colors->map<Vecf3>(0);
+        bsp_cache.vert_buffer    = gpu.bsp_buf->map<byte_t>(0);
+        bsp_cache.element_buffer = gpu.bsp_index->map<blam::vert::face>(0);
+        bsp_cache.light_buffer   = gpu.bsp_light_buf->map<byte_t>(0);
+
+        debug_markers.portal_buffer       = gpu.debug_lines->map<Vecf3>(0);
+        debug_markers.portal_color_buffer = gpu.debug_line_colors->map<Vecf3>(0);
+        debug_markers.portal_ptr          = reserved_debug_points;
+        debug_markers.portal_color_ptr    = reserved_debug_colors;
+        bsp_cache.debug_markers           = &debug_markers;
     }
 
     /* Start loading up vertex data */
@@ -36,29 +42,6 @@ void load_scenario_bsp(
     };
     trigger_obj.tags = ObjectScriptObject | ObjectTriggerVolume | ObjectGC;
 
-    const auto create_debug_marker =
-        [&]<size_t N>(std::array<Vecf3, N> const& points, Vecf3 const& color) {
-            auto vertices = bsp_cache.portal_buffer.subspan(
-                bsp_cache.portal_ptr, points.size());
-            std::copy(points.begin(), points.end(), vertices.begin());
-            bsp_cache.portal_color_buffer[bsp_cache.portal_color_ptr] = color;
-
-            DebugDraw draw = {
-                .data =
-                    {
-                        .arrays =
-                            {
-                                .count  = static_cast<u32>(points.size()),
-                                .offset = bsp_cache.portal_ptr,
-                            },
-                    },
-                .color_ptr = bsp_cache.portal_color_ptr,
-            };
-            bsp_cache.portal_ptr += static_cast<u32>(points.size());
-            bsp_cache.portal_color_ptr++;
-            return draw;
-        };
-
     auto trigger_vols = scenario->trigger_volumes.data(magic).value();
     for(blam::scn::trigger_volume const& trigger : trigger_vols)
     {
@@ -68,20 +51,7 @@ void load_scenario_bsp(
         TriggerVolume& volume = trig.get<TriggerVolume>();
         DebugDraw&     draw   = trig.get<DebugDraw>();
 
-        draw = create_debug_marker(
-            std::array<Vecf3, 10>{{
-                origin,
-                origin + Vecf3{second.x, 0, 0},
-                origin + Vecf3{second.x, second.y, 0},
-                origin + Vecf3{0, second.y, 0},
-                origin,
-                origin + Vecf3{0, 0, second.z},
-                origin + Vecf3{second.x, 0, second.z},
-                origin + Vecf3{second.x, second.y, second.z},
-                origin + Vecf3{0, second.y, second.z},
-                origin + Vecf3{0, 0, second.z},
-            }},
-            Vecf3(1));
+        draw = debug_markers.create_box(origin, second, Vecf3(1, 0, 0.5f));
 
         volume.trigger_volume = &trigger;
     }
@@ -120,7 +90,7 @@ void load_scenario_bsp(
             auto  marker = e.create_entity(map_marker);
             auto& draw   = marker.get<DebugDraw>();
 
-            draw = create_debug_marker(
+            draw = debug_markers.create_marker(
                 std::array<Vecf3, 5>{{
                     firing_pos.position + Vecf3{.1f, .1f, 0},
                     firing_pos.position + Vecf3{-.1f, -.1f, 0},
@@ -136,7 +106,7 @@ void load_scenario_bsp(
             auto  marker = e.create_entity(map_marker);
             auto& draw   = marker.get<DebugDraw>();
 
-            draw = create_debug_marker(
+            draw = debug_markers.create_marker(
                 std::array<Vecf3, 5>{{
                     loc.position + Vecf3{0, 0, .3f},
                     loc.position + Vecf3{0, 0, 0},
@@ -160,7 +130,7 @@ void load_scenario_bsp(
         auto  marker = e.create_entity(map_marker);
         auto& draw   = marker.get<DebugDraw>();
 
-        draw = create_debug_marker(
+        draw = debug_markers.create_marker(
             std::array<Vecf3, 5>{{
                 flag.pos,
                 flag.pos + Vecf3{0, 0, 1.f},
@@ -177,7 +147,7 @@ void load_scenario_bsp(
         // cDebug(" - Spawn: @{}", spawn.pos);
         auto  marker = e.create_entity(map_marker);
         auto& draw   = marker.get<DebugDraw>();
-        draw         = create_debug_marker(
+        draw         = debug_markers.create_marker(
             std::array<Vecf3, 6>{{
                 spawn.pos,
                 spawn.pos + Vecf3{0, 0, 1.f},
@@ -197,7 +167,7 @@ void load_scenario_bsp(
         cDebug(" - Cutscene flag: {}", flag.position);
         auto  marker = e.create_entity(map_marker);
         auto& draw   = marker.get<DebugDraw>();
-        draw         = create_debug_marker(
+        draw         = debug_markers.create_marker(
             std::array<Vecf3, 5>{{
                 flag.position,
                 flag.position + Vecf3{0.2f, 0, 0.2f},
@@ -215,7 +185,7 @@ void load_scenario_bsp(
         cDebug(" - Camera pos: {}", cam.position);
         auto  marker = e.create_entity(map_marker);
         auto& draw   = marker.get<DebugDraw>();
-        draw         = create_debug_marker(
+        draw         = debug_markers.create_marker(
             std::array<Vecf3, 7>{{
                 cam.position,
                 cam.position + Vecf3{-.1f, .1f, -.1f},

@@ -31,7 +31,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
     {
         if constexpr(compile_info::platform::is_android)
             return;
-        return;
 
         BSPCache<V>*         bsp_cache;
         BlamResources*       resources;
@@ -40,7 +39,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         p.subsystem(resources);
         p.subsystem(rendering);
 
-        /* cam->camera->position is the vertex-space world position (positive). */
         Vecf3 camera_pos{};
         for(auto& ent : p.template select<PlayerCamera>())
         {
@@ -53,10 +51,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             }
         }
 
-        /* BSP cluster bounds are in BSP space (y,z,x); convert vertex-space
-         * positions before looking up clusters. */
         auto to_bsp_space = [](Vecf3 const& p) -> Vecf3 {
-            return {p.y, p.z, p.x};
+            return p;
         };
 
         Span<Vecf3> portal_colors = resources->debug_line_colors->map<Vecf3>(0);

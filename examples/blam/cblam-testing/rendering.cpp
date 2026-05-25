@@ -594,9 +594,9 @@ struct MeshRenderer
             DebugDraw const& draw = ref.template get<DebugDraw>();
             groups.push_back(draw.data);
             groups.back().instances.offset = draw.color_ptr;
-            if(ent.tags & ObjectTriggerVolume)
-                colors[draw.color_ptr] =
-                    draw.selected ? Vecf3{0, 1, 0} : Vecf3{1};
+            // if(ent.tags & ObjectTriggerVolume)
+            //     colors[draw.color_ptr] =
+            //         draw.selected ? Vecf3{0, 1, 0} : Vecf3{1};
         }
 
         m_resources.debug_line_colors->unmap();
