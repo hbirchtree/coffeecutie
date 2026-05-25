@@ -18,6 +18,7 @@
 #include <coffee/image/cimage.h>
 
 #include <peripherals/libc/signals.h>
+#include <peripherals/libc/output_ops.h>
 #include <peripherals/stl/base64.h>
 #include <peripherals/stl/magic_enum.hpp>
 #include <peripherals/stl/string_ops.h>
@@ -81,6 +82,10 @@
 
 #if defined(FEATURE_ENABLE_OSMesaComponent)
 #include <coffee/osmesa/osmesa_comp.h>
+#endif
+
+#if defined(FEATURE_ENABLE_TerminalComponents)
+#include <coffee/terminal_comp/terminal_components.h>
 #endif
 
 #if defined(FEATURE_ENABLE_NVMLComponents)
@@ -654,6 +659,15 @@ void addDefaults(
                 break;
             }
         }
+
+#if defined(FEATURE_ENABLE_TerminalComponents)
+        if(libc::io::terminal::interactive())
+        {
+            loader.registerAll<terminal::Services>(container, ec);
+            C_ERROR_CHECK(ec);
+            appInfo.add("input:terminal", "enabled");
+        }
+#endif
 
 #if !defined(FEATURE_ENABLE_SDL2Components) &&    \
     !defined(FEATURE_ENABLE_X11Component) &&      \

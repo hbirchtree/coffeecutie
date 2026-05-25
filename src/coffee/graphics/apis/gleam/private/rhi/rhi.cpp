@@ -1094,6 +1094,10 @@ optional<error> api::load(load_options_t options)
              * if it's 8k */
             m_limits.buffers.ubo_recommended_size = 8192;
         }
+        if(vendor.starts_with("Imagination Tech"))
+        {
+            m_workarounds.bugs.powervr = true;
+        }
     }
 
     /* Let's skip ES 2.0 implementations that don't fulfill a minimum */
