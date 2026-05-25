@@ -124,6 +124,7 @@ void TerminalInput::start_restricted(proxy_type& p, time_point const&)
             esc_poll.fd = STDIN_FILENO;
             esc_poll.events = POLLIN;
 
+            ev.key = CK_Escape;
             if(poll(&esc_poll, 1, 0) > 0 && read(STDIN_FILENO, &seq[0], 1) == 1 && seq[0] == '[')
             {
                 if(poll(&esc_poll, 1, 0) > 0 && read(STDIN_FILENO, &seq[1], 1) == 1)
@@ -137,8 +138,6 @@ void TerminalInput::start_restricted(proxy_type& p, time_point const&)
                     default: break;
                     }
                 }
-            } else {
-                ev.key = CK_Escape;
             }
         } else if(c == 0x7F) {
             ev.key = CK_BackSpace;
