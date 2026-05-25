@@ -41,8 +41,11 @@ bool StandardKeyRegister(
 
         bool pressed = ev.mod & CIKeyEvent::PressedModifier;
 
-        auto v              = keyRegister[ev.key];
-        keyRegister[ev.key] = pressed | (v ^ (v & 0x1));
+        auto& v = keyRegister[ev.key];
+        if(pressed)
+            v |= 0x1;
+        else
+            v &= ~0x1;
         break;
     }
     case CIEvent::MouseButton: {
@@ -50,8 +53,11 @@ bool StandardKeyRegister(
 
         bool pressed = ev.mod & CIMouseButtonEvent::Pressed;
 
-        auto v              = keyRegister[ev.btn];
-        keyRegister[ev.btn] = pressed | (v ^ (v & 0x1));
+        auto& v = keyRegister[ev.btn];
+        if(pressed)
+            v |= 0x1;
+        else
+            v &= ~0x1;
 
         break;
     }

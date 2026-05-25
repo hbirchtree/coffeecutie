@@ -74,7 +74,7 @@ struct ExitOn
     {
         if constexpr(compile_info::platform::is_emscripten)
             return;
-        if(ev->key != Event::key)
+        if(ev->key != Event::key || !(ev->mod & CIKeyEvent::PressedModifier))
             return;
         m_action();
     }
