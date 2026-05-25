@@ -61,10 +61,6 @@ void TerminalInput::load(entity_container&, comp_app::app_error& ec)
         }
         state.saved = true;
         std::atexit(restore_terminal_state);
-
-        using libc::signal::sig;
-        //libc::signal::install(sig::interrupt, handle_signal);
-        //libc::signal::install(sig::terminate, handle_signal);
     }
 
     m_original_termios = state.original;
@@ -92,10 +88,7 @@ void TerminalInput::start_restricted(proxy_type& p, time_point const&)
     auto inputBus = p.service<comp_app::BasicEventBus<CIEvent>>();
 
     if(!inputBus)
-    {
-        fmt::print("No input bus!!\n");
         return;
-    }
 
     while(!m_pressed.empty())
     {
@@ -131,20 +124,17 @@ void TerminalInput::start_restricted(proxy_type& p, time_point const&)
             esc_poll.fd = STDIN_FILENO;
             esc_poll.events = POLLIN;
 
-            if(poll(&esc_poll, 1, 10) > 0 && read(STDIN_FILENO, &seq[0], 1) == 1)
+            if(poll(&esc_poll, 1, 0) > 0 && read(STDIN_FILENO, &seq[0], 1) == 1 && seq[0] == '[')
             {
-                if(seq[0] == '[')
+                if(poll(&esc_poll, 1, 0) > 0 && read(STDIN_FILENO, &seq[1], 1) == 1)
                 {
-                    if(poll(&esc_poll, 1, 10) > 0 && read(STDIN_FILENO, &seq[1], 1) == 1)
+                    switch(seq[1])
                     {
-                        switch(seq[1])
-                        {
-                        case 'A': ev.key = CK_Up; break;
-                        case 'B': ev.key = CK_Down; break;
-                        case 'C': ev.key = CK_Right; break;
-                        case 'D': ev.key = CK_Left; break;
-                        default: break;
-                        }
+                    case 'A': ev.key = CK_Up; break;
+                    case 'B': ev.key = CK_Down; break;
+                    case 'C': ev.key = CK_Right; break;
+                    case 'D': ev.key = CK_Left; break;
+                    default: break;
                     }
                 }
             } else {
@@ -172,7 +162,6 @@ void TerminalInput::start_restricted(proxy_type& p, time_point const&)
 
         if(ev.key != CK_Null)
         {
-            fmt::print("Emitting key from TerminalInput: {}", ev.key);
             m_register[ev.key] = ev.mod;
             CIEvent inputEv;
             inputEv.type = CIEvent::Keyboard;
