@@ -36,7 +36,10 @@ SYS_LD=$(find $PWD/full-sysroot -name "ld-linux-x86-64.so.2" | head -n 1)
 
 export LIBGL_DRIVERS_PATH=$DRI_PATH
 export MESA_LOADER_DRIVER_PATH=$DRI_PATH
-export LD_LIBRARY_PATH=$PWD/sysroot/lib
+# We don't export LD_LIBRARY_PATH globally because it breaks host tools
+# like ls, grep, etc. which might be called by the script or xvfb-run
+# and they would try to load the sysroot's libc.
+# export LD_LIBRARY_PATH=$PWD/sysroot/lib 
 export EGL_LOG_LEVEL=debug
 export LIBGL_DEBUG=verbose
 export MESA_DEBUG=1
@@ -47,10 +50,6 @@ echo "===================================="
 echo "::group::EGL info"
 # Try with host loader first
 eglinfo -v
-# Then try with sysroot loader if available
-if [ -n "$SYS_LD" ]; then
-    $SYS_LD --library-path $PWD/sysroot/lib $(which eglinfo) -v
-fi
 echo "::endgroup::"
 echo "===================================="
 
@@ -78,7 +77,11 @@ BINARY=$(find $BUILDDIR -name BlamGraphics -type f | head -n 1)
 if [ -f "$BINARY" ]; then
     echo "===================================="
     echo "========= Library linkage =========="
-    ldd $BINARY
+    if [ -n "$SYS_LD" ]; then
+        $SYS_LD --library-path $PWD/sysroot/lib --list $BINARY
+    else
+        ldd $BINARY
+    fi
     echo "===================================="
 fi
 
@@ -107,7 +110,7 @@ ASSETS_DIR=$(find $BUILDDIR -name assets -type d | head -n 1)
 
 if [ -n "$SYS_LD" ] && [ -f "$BINARY" ]; then
     echo "-- Running binary directly with sysroot loader"
-    $SYS_LD --library-path $PWD/sysroot/lib $BINARY $ASSETS_DIR $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
+    LD_LIBRARY_PATH=$PWD/sysroot/lib $SYS_LD --library-path $PWD/sysroot/lib $BINARY $ASSETS_DIR $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
 elif [ -d "$APPDIR" ]; then
     echo "-- Running via AppRun"
     $APPDIR/AppRun $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
@@ -115,7 +118,5 @@ else
     echo "ERROR: Could not find a way to run the application"
     exit 1
 fi
-
-popd
 
 popd
