@@ -10,6 +10,7 @@ include(toolchain/cmake/Modules/SubprojectFunctions.cmake)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+set(CMAKE_CXX_SCAN_FOR_MODULES FALSE)
 
 if(NOT IOS AND NOT MINGW)
   include(CheckIPOSupported)
