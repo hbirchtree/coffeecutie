@@ -684,6 +684,21 @@ struct MeshRenderer
                     });
             
         }
+        for(auto const& pass : stl_types::slice_num(m_model, Pass_LastOpaque + 1))
+        {
+            for(auto i : stl_types::range<u32>(m_players.size()))
+                render_pass(
+                    p,
+                    i,
+                    t,
+                    pass,
+                    // cull_state,
+                    gfx::stencil_state{
+                        .depth_pass = gfx::stencil_state::operation_t::write,
+                        .mask       = 0x1,
+                        .reference  = 0x1,
+                    });
+        }
 
         // Special case for 3 players; black out the 4th quadrant
         if(m_players.size() == 3)
@@ -734,19 +749,6 @@ struct MeshRenderer
         /* Primary player is always the first one (seat_idx == 0) */
         u32 primary_player = 0;
 
-        for(auto const& pass :
-            stl_types::slice_num(m_model, Pass_LastOpaque + 1))
-            render_pass(
-                p,
-                primary_player,
-                t,
-                pass,
-                // cull_state,
-                gfx::stencil_state{
-                    .depth_pass = gfx::stencil_state::operation_t::write,
-                    .mask       = 0x1,
-                    .reference  = 0x1,
-                });
 
         {
             gfx::stencil_state stencil_state{

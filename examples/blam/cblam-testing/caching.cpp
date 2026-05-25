@@ -83,7 +83,15 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         auto              portal_idxs = cluster.portals.data(bsp_magic).value();
         auto subclusters = cluster.sub_clusters.data(bsp_magic).value();
         for(auto const& portal_idx : portal_idxs)
-            it.portals.push_back(&portals[portal_idx]);
+        {
+            auto const& p    = portals[portal_idx];
+            auto        verts = p.vertices.data(bsp_magic);
+            BSPItem::Portal entry;
+            entry.data = &p;
+            if(verts.has_value())
+                entry.vertices.assign(verts.value().begin(), verts.value().end());
+            it.portals.push_back(std::move(entry));
+        }
         for(blam::bsp::subcluster const& sub : subclusters)
         {
             auto indices    = sub.indices.data(bsp_magic).value();

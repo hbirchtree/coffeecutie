@@ -383,17 +383,18 @@ void create_resources(compo::EntityContainer& e)
     }
 
     //    if constexpr(compile_info::platform::is_android)
-    if(api.api_version() != std::make_tuple(2u, 0u))
+    if(api.api_version() != std::make_tuple(2u, 0u) && !api.workarounds().bugs.adreno)
     {
         auto const& features = api.feature_info().rendertarget;
 
+        auto col_format = features.med_precision_color_format;
+        auto dep_format = features.high_precision_depth_format;
+
         resources.offscreen = api.alloc_rendertarget();
         resources.color     = api.alloc_texture(
-            gfx::textures::d2, PixDesc(features.med_precision_color_format), 1);
+            gfx::textures::d2, PixDesc(col_format), 1);
         resources.depth = api.alloc_texture(
-            gfx::textures::d2,
-            PixDesc(features.high_precision_depth_format),
-            1);
+            gfx::textures::d2, PixDesc(dep_format), 1);
         cDebug(
             "Creating offscreen buffer with: color={} depth={}",
             magic_enum::enum_name(resources.color->m_format.pixfmt),

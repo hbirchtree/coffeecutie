@@ -1,0 +1,6 @@
+{
+    "events": [
+        {"time": 2000, "type":"key", "key": "CK_w", "duration": 3000}
+    ],
+    "end_time": 5000
+}

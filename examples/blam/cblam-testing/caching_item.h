@@ -44,6 +44,95 @@ using typing::vector_types::Vecui3;
 using bitm_format_hash = std::
     tuple<blam::bitm::type_t, pix_fmt, pix_components, bit_fmt, comp_flags>;
 
+/* Camera frustum built from a projection×view matrix (Gribb-Hartmann).
+ * Only the four side planes are used; near/far are skipped because the
+ * projection matrix in this codebase sets m[2][2]=0 for an infinite far
+ * plane, making those two rows unreliable.
+ * cam_plane (row3 of MVP) identifies vertices in front of the camera:
+ * dot(cam_plane.xyz, v) + cam_plane.w > 0  ↔  clip_w > 0  ↔  in front. */
+struct Frustum
+{
+    std::array<Vecf4, 4> planes; /* left, right, bottom, top */
+    Vecf4                cam_plane; /* row3 of MVP — NOT normalised */
+
+    static Frustum from_mvp(Matf4 const& m)
+    {
+        auto row = [&](int j) {
+            return Vecf4(m[0][j], m[1][j], m[2][j], m[3][j]);
+        };
+        Vecf4 r0 = row(0), r1 = row(1), r3 = row(3);
+        Frustum f;
+        f.cam_plane = r3;
+        f.planes[0] = r3 + r0; /* left   */
+        f.planes[1] = r3 - r0; /* right  */
+        f.planes[2] = r3 + r1; /* bottom */
+        f.planes[3] = r3 - r1; /* top    */
+        for(auto& p : f.planes)
+        {
+            f32 len = glm::length(Vecf3(p));
+            if(len > 0.f)
+                p /= len;
+        }
+        return f;
+    }
+
+    /* Returns false if the polygon is entirely outside any single plane.
+     * Vertices behind the camera (clip_w ≤ 0) are treated as "inside" all
+     * planes because Gribb-Hartmann gives inverted results for them.
+     * If ALL vertices are behind the camera the portal is culled.
+     * If cam_plane is degenerate (zero — happens on the first frame before
+     * the camera quaternion is initialised) the camera-side test is skipped
+     * and we fall back to the plain per-plane polygon test. */
+    bool polygon_inside(std::vector<Vecf3> const& verts) const
+    {
+        if(verts.empty())
+            return true;
+
+        bool cam_valid =
+            glm::dot(Vecf3(cam_plane), Vecf3(cam_plane)) > 1e-10f;
+
+        if(cam_valid)
+        {
+            /* All vertices behind camera → portal is behind us. */
+            bool any_front = false;
+            for(auto const& v : verts)
+            {
+                if(glm::dot(Vecf3(cam_plane), v) + cam_plane.w > 0.f)
+                {
+                    any_front = true;
+                    break;
+                }
+            }
+            if(!any_front)
+                return false;
+        }
+
+        for(auto const& p : planes)
+        {
+            bool all_outside = true;
+            for(auto const& v : verts)
+            {
+                /* When cam_plane is valid, behind-camera vertices count as
+                 * "inside" — their clip_w < 0 inverts the half-space test. */
+                if(cam_valid
+                   && glm::dot(Vecf3(cam_plane), v) + cam_plane.w <= 0.f)
+                {
+                    all_outside = false;
+                    break;
+                }
+                if(glm::dot(Vecf3(p), v) + p.w >= 0.f)
+                {
+                    all_outside = false;
+                    break;
+                }
+            }
+            if(all_outside)
+                return false;
+        }
+        return true;
+    }
+};
+
 struct BSPItem
 {
     struct Mesh
@@ -68,11 +157,17 @@ struct BSPItem
         u32                          debug_color_idx{0};
     };
 
+    struct Portal
+    {
+        blam::bsp::cluster_portal const* data{nullptr};
+        std::vector<Vecf3>               vertices{};
+    };
+
     struct Cluster
     {
-        blam::bsp::cluster const*                     cluster{nullptr};
-        std::vector<Subcluster>                       sub{};
-        std::vector<blam::bsp::cluster_portal const*> portals{};
+        blam::bsp::cluster const* cluster{nullptr};
+        std::vector<Subcluster>   sub{};
+        std::vector<Portal>       portals{};
     };
 
     blam::bsp::header const*                 mesh{nullptr};
@@ -110,16 +205,138 @@ struct BSPItem
             std::vector<u32> next;
             for(u32 ci : frontier)
             {
-                for(auto const* portal : clusters[ci].portals)
+                for(auto const& portal : clusters[ci].portals)
                 {
-                    i32 adj = (portal->front_cluster == static_cast<i16>(ci))
-                                  ? portal->back_cluster
-                                  : portal->front_cluster;
+                    i32 adj =
+                        (portal.data->front_cluster == static_cast<i16>(ci))
+                            ? portal.data->back_cluster
+                            : portal.data->front_cluster;
                     if(adj >= 0 && static_cast<u32>(adj) < clusters.size()
                        && !visible[static_cast<u32>(adj)])
                     {
                         visible[static_cast<u32>(adj)] = true;
                         next.push_back(static_cast<u32>(adj));
+                    }
+                }
+            }
+            frontier = std::move(next);
+        }
+        return visible;
+    }
+
+    /* Compute inward-facing cone planes from eye through a portal polygon.
+     * Each plane passes through eye and one edge; normals point toward the
+     * interior of the view cone so that "inside" means visible through the portal. */
+    static std::vector<Vecf4> portal_cone_planes(
+        Vecf3 const& eye, std::vector<Vecf3> const& verts)
+    {
+        std::vector<Vecf4> result;
+        int n = static_cast<int>(verts.size());
+        if(n < 3)
+            return result;
+        Vecf3 centroid(0.f);
+        for(auto const& v : verts)
+            centroid += v;
+        centroid /= static_cast<f32>(n);
+        result.reserve(n);
+        for(int i = 0; i < n; i++)
+        {
+            Vecf3 const& v0 = verts[i];
+            Vecf3 const& v1 = verts[(i + 1) % n];
+            Vecf3        normal = glm::cross(v0 - eye, v1 - eye);
+            f32          len    = glm::length(normal);
+            if(len < 1e-6f)
+                continue;
+            normal /= len;
+            f32 d = -glm::dot(normal, eye);
+            if(glm::dot(normal, centroid) + d < 0.f)
+            {
+                normal = -normal;
+                d      = -d;
+            }
+            result.push_back(Vecf4(normal, d));
+        }
+        return result;
+    }
+
+    static bool polygon_passes_planes(
+        std::vector<Vecf3> const& verts, std::vector<Vecf4> const& planes)
+    {
+        for(auto const& p : planes)
+        {
+            bool all_outside = true;
+            for(auto const& v : verts)
+            {
+                if(glm::dot(Vecf3(p), v) + p.w >= 0.f)
+                {
+                    all_outside = false;
+                    break;
+                }
+            }
+            if(all_outside)
+                return false;
+        }
+        return true;
+    }
+
+    /* Frustum-gated portal traversal with sequential portal clipping.
+     * Each frontier entry carries the accumulated cone planes from camera
+     * through every portal in its path, progressively narrowing the visible
+     * region to prevent "going around corners".
+     * frustum_start_depth=1: direct neighbours always shown; clip from depth 2+. */
+    inline std::vector<bool> portal_visible_set(
+        u32 from_idx, Vecf3 const& camera_pos, Matf4 const& mvp,
+        u32 max_depth           = std::numeric_limits<u32>::max(),
+        u32 frustum_start_depth = 1) const
+    {
+        Frustum frustum = Frustum::from_mvp(mvp);
+
+        std::vector<bool> visible(clusters.size(), false);
+        if(from_idx >= clusters.size())
+            return visible;
+        visible[from_idx] = true;
+
+        struct Entry
+        {
+            u32               ci;
+            std::vector<Vecf4> cone; /* accumulated portal cone planes */
+        };
+        std::vector<Entry> frontier = {{from_idx, {}}};
+
+        for(u32 depth = 0; depth < max_depth && !frontier.empty(); depth++)
+        {
+            bool               use_frustum = depth >= frustum_start_depth;
+            std::vector<Entry> next;
+            for(auto& entry : frontier)
+            {
+                for(auto const& portal : clusters[entry.ci].portals)
+                {
+                    if(use_frustum)
+                    {
+                        bool near = glm::distance(camera_pos, portal.data->centroid)
+                                    <= portal.data->bound_radius;
+                        if(!near)
+                        {
+                            if(!frustum.polygon_inside(portal.vertices))
+                                continue;
+                            if(!polygon_passes_planes(portal.vertices, entry.cone))
+                                continue;
+                        }
+                    }
+                    i32 adj =
+                        (portal.data->front_cluster == static_cast<i16>(entry.ci))
+                            ? portal.data->back_cluster
+                            : portal.data->front_cluster;
+                    if(adj >= 0 && static_cast<u32>(adj) < clusters.size()
+                       && !visible[static_cast<u32>(adj)])
+                    {
+                        visible[static_cast<u32>(adj)] = true;
+                        auto merged = entry.cone;
+                        auto new_planes =
+                            portal_cone_planes(camera_pos, portal.vertices);
+                        merged.insert(
+                            merged.end(), new_planes.begin(), new_planes.end());
+                        next.push_back({static_cast<u32>(adj), std::move(merged)});
                     }
                 }
             }

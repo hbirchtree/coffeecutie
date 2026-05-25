@@ -25,7 +25,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
     u32              frame_counter{0};
     BSPItem const*   pvs_bsp{nullptr};
     u32              pvs_cluster{0};
-    std::vector<bool> pvs_visible{}; /* portal-traversal visible set, recomputed on cluster change */
+    generation_idx_t pvs_bsp_id{};   /* which BSP section the camera is currently in */
+    std::vector<bool> pvs_visible{}; /* portal-traversal visible set, recomputed every frame */
 
     void start_restricted(Proxy& p, time_point const&)
     {
@@ -40,6 +41,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         p.subsystem(rendering);
 
         Vecf3 camera_pos{};
+        Matf4 camera_mvp = glm::identity<Matf4>();
         for(auto& ent : p.template select<PlayerCamera>())
         {
             auto* info = p.template get<PlayerInfo>(ent.id);
@@ -47,6 +49,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             if(info && cam && info->seat_idx == 0)
             {
                 camera_pos = cam->camera->position;
+                camera_mvp = cam->matrix;
                 break;
             }
         }
@@ -93,8 +96,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
         resources->debug_lines->unmap();
 
-        BSPItem const* current_bsp{nullptr};
-        u32            current_cluster{0};
+        BSPItem const*   current_bsp{nullptr};
+        u32              current_cluster{0};
+        generation_idx_t current_bsp_id{};
 
         for(auto& ent : p.select(ObjectBsp))
         {
@@ -111,6 +115,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 auto [cluster_, sub_] = cluster.value();
                 current_bsp           = &bsp;
                 current_cluster       = cluster_;
+                current_bsp_id        = bsp_ref.bsp;
                 auto const& sub = bsp.clusters.at(cluster_).sub.at(sub_);
                 portal_colors[sub.debug_color_idx] = Vecf3(0, 1, 0);
             }
@@ -131,8 +136,14 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         {
             pvs_bsp     = current_bsp;
             pvs_cluster = current_cluster;
-            if(cluster_changed)
-                pvs_visible = pvs_bsp->portal_visible_set(pvs_cluster, 1);
+            pvs_bsp_id  = current_bsp_id;
+            pvs_visible = pvs_bsp->portal_visible_set(pvs_cluster, camera_pos, camera_mvp);
+        }
+        else if(pvs_bsp)
+        {
+            /* Camera outside all clusters (e.g. in the air): show everything in
+             * the last-known BSP section to prevent geometry disappearing. */
+            pvs_visible.assign(pvs_bsp->clusters.size(), true);
         }
 
         rendering->current_bsp_cluster = pvs_cluster;
@@ -161,14 +172,22 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 BspReference& bsp_ref = ref.template get<BspReference>();
 
                 bsp_total++;
-                if(bsp_ref.cluster_idx != std::numeric_limits<u32>::max())
+                if(bsp_ref.bsp == pvs_bsp_id)
                 {
-                    bsp_ref.visible = cluster_ok(bsp_ref.cluster_idx);
-                } else
+                    /* Same BSP section as camera: apply portal visibility culling. */
+                    if(bsp_ref.cluster_idx != std::numeric_limits<u32>::max())
+                        bsp_ref.visible = cluster_ok(bsp_ref.cluster_idx);
+                    else
+                    {
+                        bsp_ref.visible = true;
+                        bsp_no_cluster++;
+                    }
+                }
+                else
                 {
-                    /* No cluster assigned — can't cull safely, keep visible. */
-                    bsp_ref.visible = true;
-                    bsp_no_cluster++;
+                    /* Different BSP section: cluster IDs don't share the same
+                     * space — hide entirely since the camera is not in this section. */
+                    bsp_ref.visible = false;
                 }
                 if(bsp_ref.visible)
                     bsp_visible++;
@@ -276,6 +295,47 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                         "  portal-reachable clusters: {}/{}",
                         reachable,
                         static_cast<u32>(current_bsp->clusters.size()));
+                }
+
+                /* Per-portal frustum debug: show pass/cull for each portal
+                 * of the camera cluster, with centroid and front-vertex count. */
+                {
+                    Frustum frustum = Frustum::from_mvp(camera_mvp);
+                    cDebug(
+                        "  cam_plane=({:.3f},{:.3f},{:.3f},{:.3f})",
+                        frustum.cam_plane.x, frustum.cam_plane.y,
+                        frustum.cam_plane.z, frustum.cam_plane.w);
+                    auto const& cc  = current_bsp->clusters.at(current_cluster);
+                    u32 pi = 0;
+                    for(auto const& portal : cc.portals)
+                    {
+                        i32 adj = (portal.data->front_cluster
+                                   == static_cast<i16>(current_cluster))
+                                      ? portal.data->back_cluster
+                                      : portal.data->front_cluster;
+                        bool near = glm::distance(camera_pos, portal.data->centroid)
+                                    <= portal.data->bound_radius;
+                        bool poly = frustum.polygon_inside(portal.vertices);
+
+                        u32 front_count = 0;
+                        for(auto const& v : portal.vertices)
+                            if(glm::dot(Vecf3(frustum.cam_plane), v)
+                                   + frustum.cam_plane.w > 0.f)
+                                front_count++;
+
+                        cDebug(
+                            "  portal[{}]→cluster[{}] centroid=({:.1f},{:.1f},{:.1f})"
+                            " r={:.1f} verts={} front={}"
+                            " near={} poly={} result={}",
+                            pi++, adj,
+                            portal.data->centroid.x,
+                            portal.data->centroid.y,
+                            portal.data->centroid.z,
+                            portal.data->bound_radius,
+                            portal.vertices.size(), front_count,
+                            near, poly,
+                            (near || poly) ? "PASS" : "CULL");
+                    }
                 }
 
                 /* Sample first 5 model and BSP centroid positions */
