@@ -232,11 +232,12 @@ void load_scenario_bsp(
                 auto          mesh_ent = e.create_entity(bsp_);
                 BspReference& bsp_ref  = mesh_ent.get<BspReference>();
 
-                bsp_ref.shader   = mesh.shader;
-                bsp_ref.lightmap = mesh.light_bitm;
-                bsp_ref.bsp      = mesh_id;
-                bsp_ref.cluster_idx = mesh.cluster_idx;
-                bsp_ref.visible  = true;
+                bsp_ref.shader        = mesh.shader;
+                bsp_ref.lightmap      = mesh.light_bitm;
+                bsp_ref.bsp           = mesh_id;
+                bsp_ref.cluster_idx   = mesh.cluster_idx;
+                bsp_ref.subcluster_idx = mesh.subcluster_idx;
+                bsp_ref.visible       = true;
                 bsp_ref.draw.data.push_back(mesh.draw);
 
                 ShaderData&       shader_   = mesh_ent.get<ShaderData>();

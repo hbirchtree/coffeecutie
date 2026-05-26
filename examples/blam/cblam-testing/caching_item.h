@@ -142,6 +142,7 @@ struct BSPItem
         generation_idx_t            light_bitm;
         generation_idx_t            shader;
         u32                         cluster_idx{std::numeric_limits<u32>::max()};
+        u32                         subcluster_idx{std::numeric_limits<u32>::max()};
     };
 
     struct Group

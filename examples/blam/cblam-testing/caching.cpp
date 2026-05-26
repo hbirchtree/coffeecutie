@@ -257,6 +257,29 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         }
     }
 
+    /* Build face → (cluster, subcluster) map from the subcluster index lists.
+     * Each subcluster stores the global face indices (into header.surfaces)
+     * that fall within its AABB.  This gives a finer split than the cluster-only
+     * leaf map: one ECS entity per (material × subcluster) instead of per
+     * (material × cluster), so the occluder can cull per-AABB rather than
+     * per-cluster. */
+    constexpr u32 kInvalid = std::numeric_limits<u32>::max();
+    using SubclusterKey    = std::pair<u32, u32>; /* (cluster_idx, subcluster_idx) */
+
+    std::vector<SubclusterKey> face_subcluster(
+        surfaces.size(), {kInvalid, kInvalid});
+    for(u32 ci = 0; ci < out.clusters.size(); ci++)
+    {
+        for(u32 si = 0; si < out.clusters[ci].sub.size(); si++)
+        {
+            for(u32 fi : out.clusters[ci].sub[si].indices)
+            {
+                if(fi < face_subcluster.size())
+                    face_subcluster[fi] = {ci, si};
+            }
+        }
+    }
+
     /* First, load up the vertices into the vertex buffer
      * We leave references to where they are in the vertex_ranges map
      * Later we want to point to them from each of the leaves
@@ -294,26 +317,40 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
                 light_vertices.end(),
                 light_buffer.begin() + light_ptr);
 
-            /* Split material faces into per-cluster sub-meshes.
-             * Faces with no cluster assignment keep cluster_idx == max and
-             * are always visible (cluster_ok falls back to true for them). */
+            /* Split material faces into per-subcluster sub-meshes.
+             * face_subcluster gives (cluster, subcluster) from the spatial
+             * index; fall back to (cluster, max) from the leaf hierarchy for
+             * faces not covered by any subcluster.
+             * Faces with no assignment at all keep both indices == max and
+             * are always visible (cluster_ok falls back to true). */
             auto faces     = mat.indices(section).data(bsp_magic).value();
             u32  mat_start = mat.surfaces.count;
             u32  mat_end   = mat_start + mat.surfaces.offset;
             u32  vert_base = vert_ptr / mat.vertex_size();
 
-            std::map<u32, std::vector<u32>> cluster_faces;
+            std::map<SubclusterKey, std::vector<u32>> sub_faces;
             for(u32 fi = mat_start; fi < mat_end; fi++)
             {
-                u32 cid = (fi < face_cluster.size())
-                              ? face_cluster[fi]
-                              : std::numeric_limits<u32>::max();
-                cluster_faces[cid].push_back(fi);
+                SubclusterKey key;
+                if(fi < face_subcluster.size()
+                   && face_subcluster[fi].first != kInvalid)
+                {
+                    key = face_subcluster[fi];
+                }
+                else
+                {
+                    u32 cid = (fi < face_cluster.size())
+                                  ? face_cluster[fi]
+                                  : kInvalid;
+                    key = {cid, kInvalid};
+                }
+                sub_faces[key].push_back(fi);
             }
 
-            for(auto const& [cid, face_idxs] : cluster_faces)
+            for(auto const& [key, face_idxs] : sub_faces)
             {
-                u32 sub_start = element_ptr;
+                auto [cid, sid] = key;
+                u32 sub_start   = element_ptr;
                 for(u32 fi : face_idxs)
                 {
                     element_buffer[element_ptr] = faces[fi - mat_start];
@@ -336,9 +373,10 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
                             .count = 1,
                         },
                 };
-                mesh.shader      = shader_cache.predict(mat.shader);
-                mesh.light_bitm  = light_bitm;
-                mesh.cluster_idx = cid;
+                mesh.shader        = shader_cache.predict(mat.shader);
+                mesh.light_bitm    = light_bitm;
+                mesh.cluster_idx   = cid;
+                mesh.subcluster_idx = sid;
             }
 
             vert_ptr += vertices.size_bytes();

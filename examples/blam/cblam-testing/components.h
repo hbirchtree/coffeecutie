@@ -47,6 +47,7 @@ struct BspReference
     Passes current_pass;
 
     u32 cluster_idx{std::numeric_limits<u32>::max()};
+    u32 subcluster_idx{std::numeric_limits<u32>::max()};
 
     gfx::draw_command draw;
     bool              visible{true};
