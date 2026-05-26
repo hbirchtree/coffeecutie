@@ -40,6 +40,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         p.subsystem(resources);
         p.subsystem(rendering);
 
+        if(!rendering->occluder_update)
+            return;
+
         Vecf3 camera_pos{};
         Matf4 camera_mvp = glm::identity<Matf4>();
         for(auto& ent : p.template select<PlayerCamera>())
@@ -160,10 +163,14 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
         bool periodic = (frame_counter++ % 300) == 0;
 
+        Frustum const frustum = Frustum::from_mvp(camera_mvp);
+
         u32 bsp_visible = 0, bsp_total = 0, bsp_no_cluster = 0;
 
-        /* Cull BSP meshes via portal visibility.
-         * cluster_idx was assigned once at load time by sampling vertices. */
+        /* Cull BSP meshes: two-pass.
+         * Pass 1 – cluster PVS (portal-cone traversal).
+         * Pass 2 – subcluster AABB frustum test (when subcluster_idx is valid).
+         * Meshes without subcluster assignment skip pass 2 and rely on PVS alone. */
         if(cull_bsp)
         {
             for(auto& ent : p.select(ObjectBsp))
@@ -174,9 +181,27 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 bsp_total++;
                 if(bsp_ref.bsp == pvs_bsp_id)
                 {
-                    /* Same BSP section as camera: apply portal visibility culling. */
+                    /* Same BSP section as camera: apply portal + AABB culling. */
                     if(bsp_ref.cluster_idx != std::numeric_limits<u32>::max())
-                        bsp_ref.visible = cluster_ok(bsp_ref.cluster_idx);
+                    {
+                        bool pvs_ok = cluster_ok(bsp_ref.cluster_idx);
+                        if(pvs_ok
+                           && bsp_ref.subcluster_idx != std::numeric_limits<u32>::max()
+                           && bsp_ref.cluster_idx < cull_bsp->clusters.size()
+                           && bsp_ref.subcluster_idx
+                                  < cull_bsp->clusters[bsp_ref.cluster_idx].sub.size())
+                        {
+                            auto const& sub =
+                                cull_bsp->clusters[bsp_ref.cluster_idx]
+                                         .sub[bsp_ref.subcluster_idx];
+                            auto [bmin, bmax] = sub.cluster->bounds.points();
+                            bsp_ref.visible   = frustum.aabb_visible(bmin, bmax);
+                        }
+                        else
+                        {
+                            bsp_ref.visible = pvs_ok;
+                        }
+                    }
                     else
                     {
                         bsp_ref.visible = true;
@@ -185,8 +210,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 }
                 else
                 {
-                    /* Different BSP section: cluster IDs don't share the same
-                     * space — hide entirely since the camera is not in this section. */
+                    /* Different BSP section: hide entirely. */
                     bsp_ref.visible = false;
                 }
                 if(bsp_ref.visible)

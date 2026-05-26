@@ -343,11 +343,12 @@ struct cluster
     u16                           lens_flare_marker_count;
     reference<vert::idx_t>        surface_indices;
     reference<mirror>             mirrors;
-    reference<i16>                portals;
+    reference<i16>                portals; /* points into cluster_portals on header */
 };
 
 struct cluster_portal
 {
+    // Does this form a singly-linked list?
     i16              front_cluster;
     i16              back_cluster;
     i32              plane_index;
@@ -446,12 +447,14 @@ struct background_sound_palette
     bl_string                         name;
     tagref_typed_t<tag_class_t::lsnd> bg_sound;
     u32                               padding[17];
+    // Probably some data here? Or maybe not
 };
 
 struct sound_environment_palette
 {
     bl_string                         name;
     tagref_typed_t<tag_class_t::snde> environment;
+    // snde structure has not been added in blam_sound.h yet
 };
 
 struct marker

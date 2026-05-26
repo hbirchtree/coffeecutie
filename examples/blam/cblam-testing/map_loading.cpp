@@ -185,12 +185,6 @@ static void load_resources(
         auto* window              = e.service<comp_app::Windowing>();
         u32   num_controllers     = controllers ? controllers->count() : 0,
             allocated_controllers = 0;
-        f32 aspect                = window->size().aspect();
-        if(num_controllers == 1)
-        {
-            auto size = window->size();
-            aspect    = static_cast<f32>(size.w) / (size.h / 2.f);
-        }
         for(auto i : range<>(4))
         {
             auto  ref       = e.create_entity(recipe);
@@ -203,8 +197,7 @@ static void load_resources(
                 cDebug("Keyboard seat assigned");
                 main_biped_id           = ref.id();
                 camera.keyboard.enabled = true;
-            }
-            if(num_controllers > allocated_controllers)
+            } else if(num_controllers > allocated_controllers)
             {
                 camera.controller.index = allocated_controllers;
                 ++allocated_controllers;

@@ -4,6 +4,8 @@ We're attempting to re-implement the Halo: Combat Evoled engine with enhancement
 
 - Rendering
   - BSPs
+    - What is the leaf data really?
+    - What's the leaf map data for?
   - Scenery
   - Vehicles
   - Bipeds
@@ -20,10 +22,20 @@ We're attempting to re-implement the Halo: Combat Evoled engine with enhancement
   - Culling
     - CPU-based frustum culling for BSPs and models
     - Needs to rely on potentially visible set culling
-    - Draw distance should not be the focus
+      - Clusters detail which BSPs are visible in a given area
+      - Portals determine visibility from each cluster
+        - Directional? Or bidirectional?
+      - Clusters can connect to other BSPs using its `transition_bsp` member, details are not fully known
+      - What are mirrors?
 - Audio
   - Background music
     - Variations on background music, and selecting new tracks to add to the playlist
+    - Clusters each have their own background music
+      - When entering a new cluster, we optimally want an event to be emitted that the sound system can pick up
+    - Clusters also specify a sound environment
+      - Describes their audio properties, eg. reverb and etc.
+- Weather
+  - Clusters have weather polyhedra associated with them, with a corresponding weather effect, eg. rain or snow
 - Physics
   - Integrating Bullet into the build
   - Hooking up bipeds and vehicles to physics
@@ -47,7 +59,7 @@ Stretch goals:
 
 In order to build and run the application, one can run:
 
-    ./cb build desktop:x86_64-buildroot-linux-gnu:multi/BlamGraphics
+    ./cb build desktop:x86_64-buildroot-linux-gnu:multi:rel/BlamGraphics
     DUMMY_PLUG_CONFIG=.github/tests/dummy_plug_short.json COFFEE_DISABLE_PROFILER=1 LD_LIBRARY_PATH=multi_build/desktop-x86_64-buildroot-linux-gnu-multi/lib/ multi_build/desktop-x86_64-buildroot-linux-gnu-multi/bin/BlamGraphics multi_build/desktop-x86_64-buildroot-linux-gnu-multi/examples/blam/cblam-testing/assets/ /mnt/blam/pc/beavercreek.map
 
 There is a dummy plug inserted in the application when using the current command line, which will move the camera in a straight line for 3 seconds upon start of the program.

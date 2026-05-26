@@ -19,7 +19,10 @@ void update_camera_aspect(compo::EntityContainer& e)
     u32 count{0};
     for(auto& _ : e.select<PlayerCamera>())
         if(auto* info = e.get<PlayerInfo>(_.id); info && !info->is_remote())
-            ++count;
+        {
+            if(auto* cam = e.get<PlayerCamera>(_.id); cam->is_active())
+                ++count;
+        }
     auto* window = e.service<comp_app::Windowing>();
     for(const auto& player : e.select<PlayerCamera>())
     {
@@ -61,10 +64,7 @@ void create_resources(compo::EntityContainer& e)
                     auto* info = e.get<PlayerInfo>(entity.id);
                     if(cam->keyboard.enabled && info &&
                        info->permissions.camera)
-                    {
-                        cDebug("Camera applied to player={} seat={}", info->player_idx, info->seat_idx);
                         return cam->camera_.get();
-                    }
 
                 }
                 cWarning("No camera selected");

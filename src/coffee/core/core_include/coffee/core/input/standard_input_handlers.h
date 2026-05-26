@@ -213,10 +213,10 @@ struct StandardCamera
                 move(-1, 0, 0, acceleration);
                 break;
             case CK_a:
-                move(0, 1, 0, acceleration);
+                move(0, -1, 0, acceleration);
                 break;
             case CK_d:
-                move(0, -1, 0, acceleration);
+                move(0, 1, 0, acceleration);
                 break;
             case CK_q:
                 move(0, 0, 1, acceleration);

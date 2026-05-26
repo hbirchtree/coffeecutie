@@ -104,6 +104,28 @@ struct BlamMapBrowser
                     }
                     ImGui::EndTabItem();
                 }
+                if(ImGui::BeginTabItem("Player inputs"))
+                {
+                    ImGui::Columns(3);
+                    for(auto const& player : e.select<PlayerInfo>())
+                    {
+                        auto* info = e.get<PlayerInfo>(player.id);
+                        ImGui::PushID(info->player_idx);
+                        auto* camera = e.get<PlayerCamera>(player.id);
+                        ImGui::Text("[i=%02i, seat=%02i] %s", 
+                            info->player_idx,
+                            info->seat_idx,
+                            info->name.c_str());
+                        ImGui::NextColumn();
+                        ImGui::Checkbox("Keyboard", &camera->keyboard.enabled);
+                        ImGui::NextColumn();
+                        ImGui::Text("Controller: #%02i", camera->controller.index.value_or(-1));
+                        ImGui::NextColumn();
+                        ImGui::PopID();
+                    }
+                    ImGui::Columns();
+                    ImGui::EndTabItem();
+                }
                 NetworkState* net_state;
                 e.subsystem(net_state);
                 // auto server_active = net_state->server_state

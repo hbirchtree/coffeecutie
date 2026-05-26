@@ -67,10 +67,15 @@ struct BlamBspWidget
                     ImGui::Checkbox(
                         "Clear before draw", &rendering->debug_clear);
                     ImGui::Checkbox(
-                        "Show clusters", &rendering->debug_clusters);
-                    ImGui::Checkbox(
                         "Show debug markers", &rendering->debug_markers);
+                    ImGui::EndTabItem();
+                }
+                if(ImGui::BeginTabItem("Clusters"))
+                {
+                    ImGui::Checkbox(
+                        "Show clusters", &rendering->debug_clusters);
                     ImGui::Checkbox("Show portals", &rendering->debug_portals);
+                    ImGui::Checkbox("Update occlusion", &rendering->occluder_update);
                     if(ImGui::BeginListBox("Clusters"))
                     {
                         for(auto& bsp : bsps)
@@ -82,11 +87,6 @@ struct BlamBspWidget
                         }
                         ImGui::EndListBox();
                     }
-                    ImGui::EndTabItem();
-                }
-                if(ImGui::BeginTabItem("Clusters"))
-                {
-                    
                     ImGui::EndTabItem();
                 }
                 if(ImGui::BeginTabItem("Models"))
