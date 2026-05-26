@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Report Browser</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#1e1e1e;color:#ccc;font-family:ui-monospace,monospace;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;user-select:none}
+#toolbar{display:flex;align-items:center;gap:6px;padding:5px 10px;background:#252526;border-bottom:1px solid #3c3c3c;flex-shrink:0;flex-wrap:wrap}
+button{padding:3px 9px;background:#3c3c3c;color:#ccc;border:1px solid #555;cursor:pointer;border-radius:3px;font:12px ui-monospace,monospace}
+button:hover{background:#4a4a4a}
+button.active{background:#0e639c;border-color:#1177bb}
+#status{font-size:11px;color:#888;margin-left:4px;flex:1}
+#tabs{display:flex;gap:4px;margin-left:auto}
+#main{display:flex;flex:1;overflow:hidden;min-height:0}
+.tab-panel{display:none;flex:1;overflow:hidden;min-height:0;flex-direction:row}
+.tab-panel.active{display:flex}
+.list-pane{width:300px;flex-shrink:0;overflow-y:auto;background:#1e1e1e;display:flex;flex-direction:column}
+.list-search-wrap{padding:5px 8px;background:#252526;border-bottom:1px solid #3a3a3a;flex-shrink:0;position:sticky;top:0;z-index:5}
+.list-search{width:100%;padding:3px 7px;background:#3c3c3c;color:#ccc;border:1px solid #555;border-radius:3px;font:12px ui-monospace,monospace;outline:none}
+.list-search:focus{border-color:#0e639c}
+.resize-handle{width:5px;flex-shrink:0;cursor:col-resize;background:#2a2a2a;border-left:1px solid #3a3a3a;border-right:1px solid #3a3a3a;transition:background .1s}
+.resize-handle:hover,.resize-handle.dragging{background:#0e639c}
+.list-item{padding:8px 12px;border-bottom:1px solid #2a2a2a;cursor:pointer;border-left:3px solid transparent}
+.list-item:hover{background:#252525}
+.list-item.selected{background:#1e3a5f;border-left-color:#0e639c}
+.list-title{font-size:12px;color:#ddd;font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list-sub{font-size:10px;color:#888;margin-top:3px}
+.badge{display:inline-block;padding:1px 5px;border-radius:2px;font-size:9px;font-weight:bold;margin-right:3px;letter-spacing:.04em}
+.badge.yes{background:#1a3d1a;color:#6abf6a;border:1px solid #2a5a2a}
+.badge.no{background:#3d1a1a;color:#bf6a6a;border:1px solid #5a2a2a}
+.detail-pane{flex:1;overflow-y:auto;background:#1e1e1e;min-width:0}
+.detail-empty{display:flex;align-items:center;justify-content:center;height:100%;color:#555;font-size:13px}
+.detail-header{padding:8px 12px;background:#252526;border-bottom:1px solid #3a3a3a;font:bold 12px ui-monospace,monospace;color:#ccc;position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:8px;word-break:break-all}
+/* machine detail styles (from trace-view-redux) */
+.det-section{border-bottom:1px solid #2d2d2d}
+.det-summary{list-style:none;padding:6px 10px;cursor:pointer;font:bold 11px ui-monospace,monospace;color:#9cdcfe;background:#252526;user-select:none;display:flex;align-items:center;gap:6px}
+.det-summary::-webkit-details-marker{display:none}
+.det-summary::before{content:'▶';font-size:9px;transition:transform .1s;display:inline-block}
+details[open]>.det-summary::before{transform:rotate(90deg)}
+.det-rows{padding:4px 0 6px}
+.det-row{display:grid;grid-template-columns:140px 1fr;gap:4px;padding:2px 10px;align-items:baseline}
+.det-k{color:#888;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.det-v{color:#ddd;font-size:11px;word-break:break-all;line-height:1.4}
+.det-v.num{color:#b5cea8}
+.det-v.bool{color:#569cd6}
+.det-subhead{padding:5px 10px 3px;margin-top:4px;font:bold 10px ui-monospace,monospace;color:#9cdcfe;text-transform:uppercase;letter-spacing:.08em;background:#252526;border-top:1px solid #3a3a3a;border-bottom:1px solid #2d2d2d}
+.det-block{padding:3px 10px 5px}
+.det-bk{color:#888;font-size:10px;margin-bottom:3px}
+.det-bv{padding-left:8px;border-left:2px solid #3a3a3a;margin-left:2px}
+.jobj{font-size:11px;color:#ddd}
+.jkv{display:grid;grid-template-columns:120px 1fr;gap:4px;padding:1px 2px;align-items:baseline}
+.jkv-block{padding:2px 0 1px}
+.jk{color:#888;font-size:10px;padding-right:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jlist{margin:1px 0}
+.jsum{font-size:10px;color:#888;cursor:pointer;user-select:none;list-style:none;padding:1px 4px;border-radius:2px;display:inline-block}
+.jsum:hover{background:#2d2d2d;color:#aaa}
+.jsum::-webkit-details-marker{display:none}
+.jsum::before{content:'▶ ';font-size:8px;display:inline-block;transition:transform .1s}
+details[open]>.jsum::before{transform:rotate(90deg)}
+.jitems{padding-left:10px;border-left:1px solid #333;margin:2px 0 2px 4px}
+.jitem{font-size:11px;color:#ddd;padding:1px 0;word-break:break-all}
+.jext-wrap{display:flex;flex-wrap:wrap;gap:3px;padding:4px 2px}
+.jiext{font-size:10px;color:#ce9178;background:#2d1f10;border:1px solid #4a3318;padding:1px 5px;border-radius:2px;line-height:1.5}
+/* ext viewer link */
+.ext-link-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:#0e3352;color:#4fc3f7;border:1px solid #0e639c;border-radius:3px;font:12px ui-monospace,monospace;text-decoration:none;margin:10px 12px 4px;cursor:pointer}
+.ext-link-btn:hover{background:#1e4a6a;color:#81d4fa}
+/* GPU extensions bar chart */
+#ext-search-wrap{padding:6px 8px;background:#252526;border-bottom:1px solid #3a3a3a;position:sticky;top:0;z-index:10;display:flex;flex-direction:column;gap:5px}
+#ext-search,#ext-gpu-filter{width:100%;padding:3px 7px;background:#3c3c3c;color:#ccc;border:1px solid #555;border-radius:3px;font:12px ui-monospace,monospace;outline:none}
+#ext-search:focus,#ext-gpu-filter:focus{border-color:#0e639c}
+#ext-gpu-filter{cursor:pointer}
+.ext-ctx-head{padding:6px 12px 4px;font:bold 11px ui-monospace,monospace;color:#9cdcfe;background:#252526;border-bottom:1px solid #2d2d2d;border-top:1px solid #3a3a3a;position:sticky;top:63px;z-index:5}
+.ext-bar-row{display:flex;align-items:center;gap:8px;padding:2px 12px;border-bottom:1px solid #222}
+.ext-bar-row:hover{background:#252525}
+.ext-name{font-size:10px;color:#ddd;width:300px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ext-name a{color:#4fc3f7;text-decoration:none}
+.ext-name a:hover{text-decoration:underline;color:#81d4fa}
+.ext-count{font-size:10px;color:#b5cea8;width:28px;text-align:right;flex-shrink:0}
+.ext-bar{height:7px;background:#0e639c;border-radius:2px;flex-shrink:0;min-width:2px}
+/* GPU limits */
+.limits-cat{padding:5px 10px 3px;font:bold 10px ui-monospace,monospace;color:#9cdcfe;background:#252526;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid #2d2d2d;border-top:1px solid #3a3a3a}
+.limits-row{display:grid;grid-template-columns:220px 1fr;gap:4px;padding:2px 10px;border-bottom:1px solid #222}
+.limits-k{color:#888;font-size:10px}
+.limits-v{color:#b5cea8;font-size:10px;word-break:break-all}
+/* GPU limits visualization */
+.viz-section{border-bottom:1px solid #2d2d2d}
+.viz-cat-head{padding:6px 12px;font:bold 11px ui-monospace,monospace;color:#9cdcfe;background:#252526;border-bottom:1px solid #2d2d2d;position:sticky;top:0;z-index:5}
+/* loading overlay */
+#loading{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);align-items:center;justify-content:center;color:#ccc;font-size:13px;z-index:200}
+#loading.show{display:flex}
+/* Windows 98 Theme Overrides */
+body.win98 { background: #008080; color: #000; font-family: "Segoe UI", Tahoma, sans-serif; }
+body.win98 #toolbar { background: #c0c0c0; border-bottom: 2px solid #808080; padding: 2px 4px; }
+body.win98 #tabs { gap: 2px; }
+body.win98 button, body.win98 .tab { background: #c0c0c0; color: #000; border: 1px solid; border-color: #fff #444 #444 #fff; box-shadow: inset 1px 1px #fff, inset -1px -1px #888; border-radius: 0; font-size: 11px; padding: 2px 8px; }
+body.win98 button:hover, body.win98 .tab:hover { background: #c0c0c0; }
+body.win98 button:active, body.win98 button.active, body.win98 .tab.active { border-color: #444 #fff #fff #444; box-shadow: inset 1px 1px #888; background: #c0c0c0; padding: 3px 7px 1px 9px; }
+body.win98 #status { color: #000; padding-left: 4px; }
+body.win98 .list-pane, body.win98 .detail-pane { background: #fff; border: 2px solid; border-color: #888 #fff #fff #888; margin: 2px; }
+body.win98 .list-search-wrap, body.win98 .detail-header, body.win98 .viz-cat-head, body.win98 .ext-ctx-head { background: #c0c0c0; color: #000; border-bottom: 1px solid #888; padding: 4px 8px; }
+body.win98 .detail-header { background: linear-gradient(90deg, #000080, #1084d0); color: #fff; }
+body.win98 .list-title { color: #000; }
+body.win98 .list-sub { color: #444; }
+body.win98 .list-item { border-bottom: 1px solid #d0d0d0; }
+body.win98 .list-item:hover { background: #e0e0e0; }
+body.win98 .list-item.selected { background: #000080 !important; color: #fff !important; }
+body.win98 .list-item.selected .list-title { color: #fff; }
+body.win98 .list-item.selected .list-sub { color: #ccc; }
+body.win98 .list-search, body.win98 #ext-search, body.win98 #ext-gpu-filter, body.win98 #egl-ext-search, body.win98 #egl-device-filter { background: #fff !important; color: #000 !important; border: 1px solid !important; border-color: #888 #fff #fff #888 !important; border-radius: 0 !important; }
+body.win98 #ext-search-wrap, body.win98 #egl-ext-search-wrap { background: #c0c0c0 !important; border-bottom: 1px solid #888 !important; }
+body.win98 .ext-name { color: #000; }
+body.win98 .ext-name a { color: #000080; }
+body.win98 .ext-count { color: #444; }
+body.win98 .ext-bar { background: #000080; }
+body.win98 .limits-row { border-bottom: 1px solid #d0d0d0; }
+body.win98 .limits-k { color: #444; }
+body.win98 .limits-v { color: #000; }
+body.win98 #loading { background: rgba(192, 192, 192, 0.8); color: #000; font-weight: bold; }
+</style>
+</head>
+<body>
+<div id="toolbar">
+<span id="status"></span>
+  <div id="tabs">
+    <button class="tab active" data-tab="reports">Reports</button>
+    <button class="tab" data-tab="devices">Devices</button>
+    <button class="tab" data-tab="machines">Machines</button>
+    <button class="tab" data-tab="gpus">GPUs</button>
+    <button class="tab" data-tab="gpu-limits">GPU Limits</button>
+    <button class="tab" data-tab="gpu-extensions">GL Extensions</button>
+    <button class="tab" data-tab="egl-extensions">EGL Extensions</button>
+    <button class="tab" data-tab="gpu-viz">Limits Chart</button>
+  </div>
+</div>
+<div id="main">
+  <div id="tab-reports" class="tab-panel active">
+    <div class="list-pane" id="list-reports">
+      <div class="list-search-wrap" style="display:flex;flex-direction:column;gap:4px">
+        <div style="display:flex;gap:4px">
+          <button id="btn-refresh-reports" style="flex:1">↻ Refresh</button>
+          <button id="btn-sort-reports" style="flex:1">↓ Newest</button>
+          <button id="btn-reset-reports" style="flex:1">Reset</button>
+        </div>
+        <select class="list-search" id="report-mfr-filter" style="cursor:pointer"><option value="">All manufacturers</option></select>
+        <select class="list-search" id="report-arch-filter" style="cursor:pointer"><option value="">All architectures</option></select>
+        <select class="list-search" id="report-target-filter" style="cursor:pointer"><option value="">All targets</option></select>
+        <input class="list-search" id="search-reports" type="search" placeholder="Filter reports…" spellcheck="false" autocomplete="off">
+      </div>
+      <div id="list-reports-items"></div>
+    </div>
+    <div class="resize-handle"></div>
+    <div class="detail-pane" id="detail-reports"><div class="detail-empty">Select a report</div></div>
+  </div>
+  <div id="tab-devices" class="tab-panel">
+    <div class="list-pane" id="list-devices">
+      <div class="list-search-wrap" style="display:flex;flex-direction:column;gap:4px">
+        <select class="list-search" id="device-mfr-filter" style="cursor:pointer"><option value="">All manufacturers</option></select>
+        <select class="list-search" id="device-cpu-mfr-filter" style="cursor:pointer"><option value="">All CPU manufacturers</option></select>
+        <select class="list-search" id="device-cpu-model-filter" style="cursor:pointer"><option value="">All CPU models</option></select>
+        <input class="list-search" id="search-devices" type="search" placeholder="Filter devices…" spellcheck="false" autocomplete="off">
+      </div>
+      <div id="list-devices-items"></div>
+    </div>
+    <div class="resize-handle"></div>
+    <div class="detail-pane" id="detail-devices"><div class="detail-empty">Select a device</div></div>
+  </div>
+  <div id="tab-machines" class="tab-panel">
+    <div class="list-pane" id="list-machines">
+      <div class="list-search-wrap" style="display:flex;flex-direction:column;gap:4px">
+        <select class="list-search" id="machine-mfr-filter" style="cursor:pointer"><option value="">All manufacturers</option></select>
+        <select class="list-search" id="machine-arch-filter" style="cursor:pointer"><option value="">All architectures</option></select>
+        <select class="list-search" id="machine-target-filter" style="cursor:pointer"><option value="">All targets</option></select>
+        <input class="list-search" id="search-machines" type="search" placeholder="Filter machines…" spellcheck="false" autocomplete="off">
+      </div>
+      <div id="list-machines-items"></div>
+    </div>
+    <div class="resize-handle"></div>
+    <div class="detail-pane" id="detail-machines"><div class="detail-empty">Select a machine</div></div>
+  </div>
+  <div id="tab-gpus" class="tab-panel">
+    <div class="list-pane" id="list-gpus">
+      <div class="list-search-wrap" style="display:flex;flex-direction:column;gap:4px">
+        <select class="list-search" id="gpu-vendor-filter" style="cursor:pointer"><option value="">All vendors</option></select>
+        <input class="list-search" id="search-gpus" type="search" placeholder="Filter GPUs…" spellcheck="false" autocomplete="off">
+      </div>
+      <div id="list-gpus-items"></div>
+    </div>
+    <div class="resize-handle"></div>
+    <div class="detail-pane" id="detail-gpus"><div class="detail-empty">Select a GPU</div></div>
+  </div>
+  <div id="tab-gpu-limits" class="tab-panel">
+    <div class="list-pane" id="list-gpu-limits"></div>
+    <div class="resize-handle"></div>
+    <div class="detail-pane" id="detail-gpu-limits"><div class="detail-empty">Select a GPU to view limits</div></div>
+  </div>
+  <div id="tab-gpu-extensions" class="tab-panel">
+    <div class="detail-pane" id="detail-gpu-extensions" style="width:100%"><div class="detail-empty">Connect to an API to view extension statistics</div></div>
+  </div>
+  <div id="tab-egl-extensions" class="tab-panel">
+    <div class="detail-pane" id="detail-egl-extensions" style="width:100%"><div class="detail-empty">Connect to an API to view EGL extension statistics</div></div>
+  </div>
+  <div id="tab-gpu-viz" class="tab-panel">
+    <div class="detail-pane" id="detail-gpu-viz" style="width:100%"><div class="detail-empty">Connect to an API to view GPU limit charts</div></div>
+  </div>
+</div>
+<div id="loading">Loading…</div>
+<script>
+'use strict';
+if (new URLSearchParams(location.search).get('theme') === 'win98') document.body.classList.add('win98');
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtBytes(n){ n=Number(n); const g=n/1073741824; return g>=1?g.toFixed(1)+' GB':(n/1048576).toFixed(0)+' MB'; }
+function fmtFreqs(arr){ return arr.map(f=>(typeof f==='number'?f.toFixed?f.toFixed(2):f:f)+' GHz').join(' / '); }
+
+function fmtDate(s){
+  if(!s) return '—';
+  try{ return new Date(s.replace('Z+0000','Z')).toLocaleString(); }catch(e){ return s; }
+}
+
+function renderVal(v, depth){
+  depth=depth||0;
+  if(v===null||v===undefined) return `<span class="det-v">—</span>`;
+  if(typeof v==='boolean')    return `<span class="det-v bool">${v}</span>`;
+  if(typeof v==='number')     return `<span class="det-v num">${v}</span>`;
+  if(typeof v==='string'){
+    const t=v.trim();
+    if(t.length>1&&(t[0]==='{' || t[0]==='[')){
+      try{ return renderVal(JSON.parse(t),depth); }catch(e){}
+    }
+    if(v.length>80&&/^\S+(\s+\S+){4,}$/.test(v)){
+      const parts=v.split(/\s+/).filter(Boolean);
+      return `<details class="jlist"><summary class="jsum">${parts.length} items</summary>`+
+             `<div class="jext-wrap">${parts.map(p=>`<span class="jiext">${esc(p)}</span>`).join('')}</div></details>`;
+    }
+    return `<span class="det-v">${esc(v)}</span>`;
+  }
+  if(Array.isArray(v)){
+    if(!v.length) return `<span class="det-v">[]</span>`;
+    const allPrim=v.every(x=>x===null||typeof x!=='object');
+    if(allPrim){
+      const allNum=v.every(x=>typeof x==='number');
+      if(v.length<=8) return `<span class="det-v ${allNum?'num':''}">${v.map(esc).join(', ')}</span>`;
+      return `<details class="jlist"><summary class="jsum">[${v.length}]</summary>`+
+             `<div class="jitems">${v.map(x=>`<div class="jitem">${renderVal(x,depth+1)}</div>`).join('')}</div></details>`;
+    }
+    return `<div class="jobj">${v.map((item,i)=>
+      `<details class="jlist"><summary class="jsum">[${i}]</summary>`+
+      `<div class="jitems">${renderObj(item,depth+1)}</div></details>`
+    ).join('')}</div>`;
+  }
+  if(typeof v==='object'){
+    const entries=Object.entries(v);
+    if(depth>0&&entries.length>3)
+      return `<details class="jlist"><summary class="jsum">{${entries.length}}</summary>`+
+             `<div class="jitems">${renderObj(v,depth+1)}</div></details>`;
+    return `<div class="jobj">${renderObj(v,depth)}</div>`;
+  }
+  return `<span class="det-v">${esc(String(v))}</span>`;
+}
+
+function renderObj(obj, depth){
+  depth=depth||0;
+  return Object.entries(obj).map(([k,v])=>{
+    const complex=v!==null&&typeof v==='object';
+    const jsonStr=typeof v==='string'&&v.trim().length>1&&(v.trim()[0]==='{' || v.trim()[0]==='[');
+    if(complex||jsonStr)
+      return `<div class="jkv-block"><div class="jk">${esc(k)}</div>${renderVal(v,depth+1)}</div>`;
+    return `<div class="jkv"><span class="jk">${esc(k)}</span>${renderVal(v,depth+1)}</div>`;
+  }).join('');
+}
+
+function makeRow(key, rawVal, customText, customCls){
+  if(customText!==undefined)
+    return `<div class="det-row"><span class="det-k" title="${esc(key)}">${esc(key)}</span><span class="det-v ${customCls||''}">${esc(customText)}</span></div>`;
+  const v=rawVal;
+  const complex=v!==null&&(typeof v==='object'||Array.isArray(v));
+  const jsonStr=typeof v==='string'&&v.trim().length>1&&(v.trim()[0]==='{' || v.trim()[0]==='[');
+  if(complex||jsonStr)
+    return `<div class="det-block"><div class="det-bk">${esc(key)}</div><div class="det-bv">${renderVal(v,0)}</div></div>`;
+  let cls='', text=String(v??'—');
+  if(typeof v==='boolean') cls='bool';
+  else if(typeof v==='number') cls='num';
+  return `<div class="det-row"><span class="det-k" title="${esc(key)}">${esc(key)}</span><span class="det-v ${cls}">${esc(text)}</span></div>`;
+}
+
+function renderLimits(lim){
+  const CATS=['buffers','draws','shaders','textures'];
+  let html='';
+  for(const cat of CATS){
+    const entries=lim[cat]?Object.entries(lim[cat]):[];
+    if(!entries.length) continue;
+    html+=`<div class="limits-cat">${cat}</div>`;
+    html+=entries.map(([k,v])=>
+      `<div class="limits-row"><span class="limits-k">${esc(k)}</span><span class="limits-v">${esc(Array.isArray(v)?v.join(', '):v)}</span></div>`
+    ).join('');
+  }
+  const known=new Set(CATS);
+  for(const [cat,val] of Object.entries(lim).filter(([k])=>!known.has(k))){
+    if(val&&typeof val==='object'&&!Array.isArray(val)){
+      const entries=Object.entries(val);
+      if(!entries.length) continue;
+      html+=`<div class="limits-cat">${esc(cat)}</div>`;
+      html+=entries.map(([k,v])=>
+        `<div class="limits-row"><span class="limits-k">${esc(k)}</span><span class="limits-v">${esc(Array.isArray(v)?v.join(', '):v)}</span></div>`
+      ).join('');
+    } else {
+      html+=`<div class="limits-row"><span class="limits-k">${esc(cat)}</span><span class="limits-v">${esc(Array.isArray(val)?val.join(', '):String(val??''))}</span></div>`;
+    }
+  }
+  return `<div class="det-block"><div class="det-bk">limits</div><div style="margin-top:2px;border:1px solid #2d2d2d;border-radius:2px;overflow:hidden">${html}</div></div>`;
+}
+
+function makeExtraRow(prefix, fullKey, value){
+  const short=fullKey.slice(prefix.length+1)||fullKey;
+  if(short==='limits'&&value&&typeof value==='object'&&!Array.isArray(value))
+    return renderLimits(value);
+  return makeRow(short, value);
+}
+
+function makeSection(title, rows, open=true){
+  return `<details class="det-section"${open?' open':''}><summary class="det-summary">${esc(title)}</summary><div class="det-rows">${rows}</div></details>`;
+}
+
+// ── Machine detail HTML ───────────────────────────────────────────────────────
+function buildMachineHTML(obj){
+  let html='';
+
+  const app=obj.application||{};
+  if(Object.keys(app).length){
+    const rows=[
+      app.name         && makeRow('Name',app.name),
+      app.organization && makeRow('Organization',app.organization),
+      app.version!==undefined && makeRow('Version',app.version),
+    ].filter(Boolean).join('');
+    if(rows) html+=makeSection('Application',rows);
+  }
+
+  const bld=obj.build||{};
+  if(Object.keys(bld).length){
+    const rows=[
+      bld.architecture    && makeRow('Architecture',bld.architecture),
+      bld.buildMode       && makeRow('Build mode',bld.buildMode),
+      bld.compiler        && makeRow('Compiler',bld.compiler),
+      bld.compilerVersion && makeRow('Compiler version',bld.compilerVersion),
+      bld.libcRuntime     && makeRow('libc runtime',bld.libcRuntime),
+      bld.libcVersion     && makeRow('libc version',bld.libcVersion),
+      bld.target          && makeRow('Target',bld.target),
+      bld.version         && makeRow('Version',bld.version),
+    ].filter(Boolean).join('');
+    if(rows) html+=makeSection('Build',rows);
+  }
+
+  const rt=obj.runtime||{};
+  if(Object.keys(rt).length){
+    const rows=[
+      rt.architecture  && makeRow('Architecture',rt.architecture),
+      rt.distro        && makeRow('Distro',rt.distro+(rt.distroVersion?' '+rt.distroVersion:'')),
+      rt.kernel        && makeRow('Kernel',rt.kernel+(rt.kernelVersion?' '+rt.kernelVersion:'')),
+      rt.libcVersion   && makeRow('libc version',rt.libcVersion),
+      rt.system        && makeRow('System',rt.system),
+    ].filter(Boolean).join('');
+    if(rows) html+=makeSection('Runtime',rows);
+  }
+
+  const dev=obj.device||{};
+  if(Object.keys(dev).length){
+    const rows=[
+      dev.chassis                  && makeRow('Chassis',dev.chassis),
+      dev.machineManufacturer      && makeRow('Manufacturer',dev.machineManufacturer),
+      (dev.name||dev.machineModel) && makeRow('Model',dev.name||dev.machineModel),
+      dev.motherboard              && makeRow('Motherboard',dev.motherboard.trim()),
+    ].filter(Boolean).join('');
+    if(rows) html+=makeSection('Device',rows);
+  }
+
+  const cpu=obj.processor||{};
+  if(Object.keys(cpu).length){
+    const rows=[
+      cpu.manufacturer                        && makeRow('Manufacturer',cpu.manufacturer),
+      cpu.model                               && makeRow('Model',cpu.model),
+      cpu.cpus!==undefined                    && makeRow('CPUs',cpu.cpus),
+      cpu.cores!==undefined                   && makeRow('Cores',cpu.cores),
+      cpu.threads!==undefined                 && makeRow('Threads',cpu.threads),
+      cpu.nodes!==undefined                   && makeRow('NUMA nodes',cpu.nodes),
+      cpu.hyperthreading!==undefined          && makeRow('Hyperthreading',cpu.hyperthreading),
+      cpu.frequencies&&cpu.frequencies.length && makeRow('Frequencies',undefined,fmtFreqs(cpu.frequencies),'num'),
+      cpu.clusters&&cpu.clusters.length       && makeRow('Clusters',cpu.clusters),
+      cpu.firmware                            && makeRow('Firmware',cpu.firmware),
+    ].filter(Boolean).join('');
+    if(rows) html+=makeSection('Processor',rows);
+  }
+
+  const mem=obj.memory||{};
+  if(Object.keys(mem).length){
+    const rows=[
+      mem.total!=null && makeRow('Total',undefined,fmtBytes(mem.total),'num'),
+    ].filter(Boolean).join('');
+    if(rows) html+=makeSection('Memory',rows);
+  }
+
+  const extra=obj.extra||{};
+  const ekeys=Object.keys(extra).sort();
+  if(ekeys.length){
+    const groups=new Map();
+    for(const k of ekeys){
+      const colon=k.indexOf(':');
+      const prefix=colon>=0?k.slice(0,colon):'other';
+      if(!groups.has(prefix)) groups.set(prefix,[]);
+      groups.get(prefix).push(k);
+    }
+    let rows='';
+    for(const [prefix,ks] of [...groups.entries()].sort()){
+      rows+=`<div class="det-subhead">${esc(prefix)}</div>`;
+      for(const k of ks) rows+=makeExtraRow(prefix, k, extra[k]);
+    }
+    html+=makeSection('Extra',rows,false);
+  }
+
+  return html||'<div style="padding:12px;color:#888;font-size:11px">No machine data</div>';
+}
+
+// ── State / Data ──────────────────────────────────────────────────────────────
+let apiBase='';
+let reportSortDesc=true;
+const DATA={reports:[],devices:[],machines:[],gpus:[],gpuLimits:{},gpuExtensions:{}};
+
+// ── API ───────────────────────────────────────────────────────────────────────
+function setStatus(msg, err=false){
+  const el=document.getElementById('status');
+  el.textContent=msg;
+  el.style.color=err?'#e57373':'#888';
+}
+
+async function apiFetch(path){
+  const r=await fetch(apiBase+path);
+  if(!r.ok) throw new Error(`HTTP ${r.status} on ${path}`);
+  return r.json();
+}
+
+async function loadAll(){
+  if(!apiBase){ setStatus('No API configured',true); return; }
+  document.getElementById('loading').classList.add('show');
+  setStatus('Loading…');
+  try{
+    const results=await Promise.allSettled([
+      apiFetch('/all'),
+      apiFetch('/all/devices'),
+      apiFetch('/all/machines'),
+      apiFetch('/all/gpus'),
+      apiFetch('/all/gpu/limits'),
+      apiFetch('/all/gpu/extensions'),
+    ]);
+    const [r,d,m,g,gl,ge]=results;
+    if(r.status==='fulfilled') DATA.reports         = r.value.data||[];
+    if(d.status==='fulfilled') DATA.devices         = d.value.data||[];
+    if(m.status==='fulfilled') DATA.machines        = m.value.data||[];
+    if(g.status==='fulfilled') DATA.gpus            = g.value.data||[];
+    if(gl.status==='fulfilled') DATA.gpuLimits      = gl.value.data||{};
+    if(ge.status==='fulfilled') DATA.gpuExtensions  = ge.value.data||{};
+
+    renderReports();
+    renderDevices();
+    renderMachines();
+    renderGPUs();
+    renderGPULimits();
+    renderEGLExtensions();
+    renderGPUExtensions();
+    renderGPULimitsViz();
+
+    const errs=results.filter(x=>x.status==='rejected');
+    if(errs.length)
+      setStatus(`${DATA.reports.length} reports · ${errs.length} endpoint(s) failed`,true);
+    else
+      setStatus(`${DATA.reports.length} report${DATA.reports.length!==1?'s':''} · ${DATA.devices.length} device${DATA.devices.length!==1?'s':''}`);
+  }catch(e){
+    setStatus('Error: '+e.message,true);
+  }finally{
+    document.getElementById('loading').classList.remove('show');
+  }
+}
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+function renderReports(){
+  const items=document.getElementById('list-reports-items');
+  const sortBtn=document.getElementById('btn-sort-reports');
+  if(sortBtn) sortBtn.textContent=reportSortDesc?'↓ Newest':'↑ Oldest';
+  if(!DATA.reports.length){
+    items.innerHTML='<div class="list-item" style="cursor:default"><div class="list-title" style="color:#555">No reports</div></div>';
+    return;
+  }
+  // Save current values; fall back to URL params on first load when DOM is still empty
+  const _rp=new URLSearchParams(location.search);
+  const savedMfr=document.getElementById('report-mfr-filter')?.value||_rp.get('rmfr')||'';
+  const savedArch=document.getElementById('report-arch-filter')?.value||_rp.get('rarch')||'';
+  const savedTarget=document.getElementById('report-target-filter')?.value||_rp.get('rtarget')||'';
+
+  const machineById=new Map(DATA.machines.map(m=>[m.id,m.machine||{}]));
+  fillSelect('report-mfr-filter',    DATA.machines.map(m=>m.machine?.device?.machineManufacturer), 'All manufacturers');
+  fillSelect('report-arch-filter',   DATA.machines.map(m=>m.machine?.build?.architecture),         'All architectures');
+  fillSelect('report-target-filter', DATA.machines.map(m=>m.machine?.build?.target),               'All targets');
+
+  // Restore selections after fillSelect replaced the options
+  const mfrEl=document.getElementById('report-mfr-filter');
+  const archEl=document.getElementById('report-arch-filter');
+  const targetEl=document.getElementById('report-target-filter');
+  if(mfrEl&&savedMfr)    mfrEl.value=savedMfr;
+  if(archEl&&savedArch)  archEl.value=savedArch;
+  if(targetEl&&savedTarget) targetEl.value=savedTarget;
+
+  const sorted=[...DATA.reports].sort((a,b)=>{
+    const ta=new Date((a.submit_time||'').replace('Z+0000','Z')).getTime()||0;
+    const tb=new Date((b.submit_time||'').replace('Z+0000','Z')).getTime()||0;
+    return reportSortDesc?tb-ta:ta-tb;
+  });
+  items.innerHTML=sorted.map(r=>{
+    const m=machineById.get(r.id)||{};
+    const mfr=m.device?.machineManufacturer||'';
+    const arch=m.build?.architecture||'';
+    const target=m.build?.target||'';
+    return `<div class="list-item" data-id="${r.id}"
+       data-title="${esc(('#'+r.id+' '+r.sender_ip).toLowerCase())}"
+       data-mfr="${esc(mfr)}" data-arch="${esc(arch)}" data-target="${esc(target)}">
+      <div class="list-title">#${r.id} <span style="color:#888;font-weight:normal;font-size:10px">${esc(r.sender_ip)}</span></div>
+      <div class="list-sub">${esc(fmtDate(r.submit_time))}</div>
+      <div style="margin-top:4px">
+        ${r.has_profile?'<span class="badge yes">Profile</span>':'<span class="badge no">No Profile</span>'}
+        ${r.has_machine_profile?'<span class="badge yes">Machine</span>':'<span class="badge no">No Machine</span>'}
+      </div>
+    </div>`;
+  }).join('');
+  filterReports();
+}
+
+function filterReports(){
+  filterByAttrs('#list-reports-items .list-item[data-id]',[
+    [(document.getElementById('search-reports')?.value||'').toLowerCase(), null],
+    [document.getElementById('report-mfr-filter')?.value||'',    'mfr'],
+    [document.getElementById('report-arch-filter')?.value||'',   'arch'],
+    [document.getElementById('report-target-filter')?.value||'', 'target'],
+  ]);
+  syncReportParams();
+}
+
+function syncReportParams(){
+  const u=new URL(location.href);
+  const q=document.getElementById('search-reports')?.value||'';
+  const mfr=document.getElementById('report-mfr-filter')?.value||'';
+  const arch=document.getElementById('report-arch-filter')?.value||'';
+  const target=document.getElementById('report-target-filter')?.value||'';
+  q      ? u.searchParams.set('rq',q)          : u.searchParams.delete('rq');
+  mfr    ? u.searchParams.set('rmfr',mfr)      : u.searchParams.delete('rmfr');
+  arch   ? u.searchParams.set('rarch',arch)    : u.searchParams.delete('rarch');
+  target ? u.searchParams.set('rtarget',target): u.searchParams.delete('rtarget');
+  reportSortDesc ? u.searchParams.delete('rsort') : u.searchParams.set('rsort','asc');
+  history.replaceState(null,'',u);
+}
+
+async function loadReports(){
+  if(!apiBase) return;
+  const btn=document.getElementById('btn-refresh-reports');
+  if(btn){ btn.disabled=true; btn.textContent='↻…'; }
+  try{
+    const [r,m]=await Promise.all([apiFetch('/all'), apiFetch('/all/machines')]);
+    DATA.reports=r.data||[];
+    DATA.machines=m.data||[];
+    renderReports();
+    setStatus(`${DATA.reports.length} report${DATA.reports.length!==1?'s':''} · refreshed`);
+  }catch(e){
+    setStatus('Error: '+e.message,true);
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent='↻ Refresh'; }
+  }
+}
+
+function showReport(id){
+  document.querySelectorAll('#list-reports-items .list-item').forEach(el=>
+    el.classList.toggle('selected',Number(el.dataset.id)===id));
+  const r=DATA.reports.find(x=>x.id===id);
+  if(!r) return;
+  const detail=document.getElementById('detail-reports');
+  const traceUrl=apiBase+'/'+id+'/profile';
+  const viewerUrl='/?trace='+encodeURIComponent(traceUrl);
+  let html=`<div class="detail-header">#${id} <span style="color:#888;font-size:10px;font-weight:normal">${esc(r.sender_ip)}</span></div>`;
+  html+=`<div style="padding:6px 10px;border-bottom:1px solid #2d2d2d;background:#252526;font-size:10px;color:#888">${esc(fmtDate(r.submit_time))}</div>`;
+  if(r.has_profile)
+    html+=`<a class="ext-link-btn" href="${esc(viewerUrl)}" target="_blank" rel="noopener">↗ Open Trace in External Viewer</a>`;
+  if(r.has_machine_profile){
+    html+=`<div id="report-machine-loading" style="padding:10px 12px;color:#888;font-size:11px">Loading machine info…</div>`;
+    detail.innerHTML=html;
+    fetch(apiBase+'/'+id+'/machine')
+      .then(res=>res.json())
+      .then(j=>{
+        const el=document.getElementById('report-machine-loading');
+        if(el) el.outerHTML=buildMachineHTML(j.data||{});
+      })
+      .catch(()=>{ const el=document.getElementById('report-machine-loading'); if(el) el.textContent='Failed to load machine info'; });
+  }else{
+    if(!r.has_profile) html+=`<div style="padding:12px;color:#555;font-size:11px">No data available for this report</div>`;
+    detail.innerHTML=html;
+  }
+}
+
+// ── Devices ───────────────────────────────────────────────────────────────────
+function deviceLabel(item){
+  const dev=item.machine&&item.machine.device||{};
+  return dev.name||dev.machineModel||(dev.machineManufacturer?dev.machineManufacturer+' device':null)||'Unknown Device';
+}
+
+function fillSelect(id, values, allLabel){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.innerHTML=`<option value="">${allLabel}</option>`+
+    [...new Set(values)].filter(Boolean).sort().map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+}
+
+function renderDevices(){
+  const items=document.getElementById('list-devices-items');
+  if(!DATA.devices.length){
+    items.innerHTML='<div class="list-item" style="cursor:default"><div class="list-title" style="color:#555">No devices</div></div>';
+    return;
+  }
+  fillSelect('device-mfr-filter',       DATA.devices.map(d=>d.machine?.device?.machineManufacturer), 'All manufacturers');
+  fillSelect('device-cpu-mfr-filter',   DATA.devices.map(d=>d.machine?.processor?.manufacturer),     'All CPU manufacturers');
+  fillSelect('device-cpu-model-filter', DATA.devices.flatMap(d=>{
+    const p=d.machine?.processor; if(!p) return [];
+    const s=new Set(); if(p.model) s.add(p.model);
+    (p.clusters||[]).forEach(c=>{if(c.model) s.add(c.model);}); return [...s];
+  }), 'All CPU models');
+
+  items.innerHTML=[...DATA.devices].sort((a,b)=>deviceLabel(a).localeCompare(deviceLabel(b))).map(item=>{
+    const m=item.machine||{};
+    return `<div class="list-item" data-id="${item.id}" data-title="${esc(deviceLabel(item).toLowerCase())}"
+      data-mfr="${esc(m.device?.machineManufacturer||'')}"
+      data-cpumfr="${esc(m.processor?.manufacturer||'')}"
+      data-cpumodels="${esc([...new Set([m.processor?.model,...(m.processor?.clusters||[]).map(c=>c.model)].filter(Boolean))].join('|'))}">
+      <div class="list-title">${esc(deviceLabel(item))}</div>
+      <div class="list-sub">#${item.id}</div>
+    </div>`;
+  }).join('');
+  items.addEventListener('click',e=>{
+    const item=e.target.closest('.list-item[data-id]');
+    if(!item) return;
+    const id=Number(item.dataset.id);
+    document.querySelectorAll('#list-devices-items .list-item').forEach(el=>
+      el.classList.toggle('selected',Number(el.dataset.id)===id));
+    const d=DATA.devices.find(x=>x.id===id);
+    if(!d) return;
+    document.getElementById('detail-devices').innerHTML=
+      `<div class="detail-header">${esc(deviceLabel(d))} <span style="color:#888;font-size:10px;font-weight:normal">#${id}</span></div>`+
+      buildMachineHTML(d.machine||{});
+  });
+}
+
+// ── Machines ──────────────────────────────────────────────────────────────────
+function machineLabel(item){
+  const m=item.machine||{};
+  const dev=m.device||{}, rt=m.runtime||{};
+  const name=dev.name||dev.machineModel||dev.machineManufacturer||'';
+  const sys=rt.system||(rt.distro?rt.distro+(rt.distroVersion?' '+rt.distroVersion:''):'');
+  return name&&sys?`${name} (${sys})`:name||sys||'Unknown Machine';
+}
+
+function renderMachines(){
+  const items=document.getElementById('list-machines-items');
+  if(!DATA.machines.length){
+    items.innerHTML='<div class="list-item" style="cursor:default"><div class="list-title" style="color:#555">No machines</div></div>';
+    return;
+  }
+  fillSelect('machine-mfr-filter',    DATA.machines.map(m=>m.machine?.device?.machineManufacturer), 'All manufacturers');
+  fillSelect('machine-arch-filter',   DATA.machines.map(m=>m.machine?.build?.architecture),         'All architectures');
+  fillSelect('machine-target-filter', DATA.machines.map(m=>m.machine?.build?.target),               'All targets');
+
+  items.innerHTML=[...DATA.machines].sort((a,b)=>machineLabel(a).localeCompare(machineLabel(b))).map(item=>{
+    const m=item.machine||{};
+    return `<div class="list-item" data-id="${item.id}" data-title="${esc(machineLabel(item).toLowerCase())}"
+      data-mfr="${esc(m.device?.machineManufacturer||'')}"
+      data-arch="${esc(m.build?.architecture||'')}"
+      data-target="${esc(m.build?.target||'')}">
+      <div class="list-title">${esc(machineLabel(item))}</div>
+      <div class="list-sub">#${item.id}</div>
+    </div>`;
+  }).join('');
+  items.addEventListener('click',e=>{
+    const item=e.target.closest('.list-item[data-id]');
+    if(!item) return;
+    const id=Number(item.dataset.id);
+    document.querySelectorAll('#list-machines-items .list-item').forEach(el=>
+      el.classList.toggle('selected',Number(el.dataset.id)===id));
+    const m=DATA.machines.find(x=>x.id===id);
+    if(!m) return;
+    document.getElementById('detail-machines').innerHTML=
+      `<div class="detail-header">${esc(machineLabel(m))} <span style="color:#888;font-size:10px;font-weight:normal">#${id}</span></div>`+
+      buildMachineHTML(m.machine||{});
+  });
+}
+
+// ── GPUs ──────────────────────────────────────────────────────────────────────
+function gpuLabel(item){
+  const ex=item.machine&&item.machine.extra||{};
+  return [ex['gl:vendor'],ex['gl:device']].filter(Boolean).join(' ')||'Unknown GPU';
+}
+
+function renderGPUs(){
+  const items=document.getElementById('list-gpus-items');
+  if(!DATA.gpus.length){
+    items.innerHTML='<div class="list-item" style="cursor:default"><div class="list-title" style="color:#555">No GPUs</div></div>';
+    return;
+  }
+  const vendors=[...new Set(DATA.gpus.map(g=>(g.machine?.extra||{})['gl:vendor']).filter(Boolean))].sort();
+  const vendorSel=document.getElementById('gpu-vendor-filter');
+  vendorSel.innerHTML='<option value="">All vendors</option>'+vendors.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+
+  items.innerHTML=[...DATA.gpus].sort((a,b)=>gpuLabel(a).localeCompare(gpuLabel(b))).map(item=>{
+    const ex=item.machine&&item.machine.extra||{};
+    return `<div class="list-item" data-id="${item.id}" data-title="${esc(gpuLabel(item).toLowerCase())}" data-vendor="${esc(ex['gl:vendor']||'')}">
+      <div class="list-title">${esc(gpuLabel(item))}</div>
+      <div class="list-sub">#${item.id} · ${esc(ex['gl:api']||ex['graphics:library']||'')} ${esc(ex['gl:versionString']||'')}</div>
+    </div>`;
+  }).join('');
+  items.addEventListener('click',e=>{
+    const item=e.target.closest('.list-item[data-id]');
+    if(!item) return;
+    const id=Number(item.dataset.id);
+    document.querySelectorAll('#list-gpus-items .list-item').forEach(el=>
+      el.classList.toggle('selected',Number(el.dataset.id)===id));
+    const g=DATA.gpus.find(x=>x.id===id);
+    if(!g) return;
+    const extra=g.machine&&g.machine.extra||{};
+    let html=`<div class="detail-header">${esc(gpuLabel(g))} <span style="color:#888;font-size:10px;font-weight:normal">#${id}</span></div>`;
+    // group extra keys by prefix
+    const ekeys=Object.keys(extra).sort();
+    const groups=new Map();
+    for(const k of ekeys){
+      const colon=k.indexOf(':');
+      const prefix=colon>=0?k.slice(0,colon):'other';
+      if(!groups.has(prefix)) groups.set(prefix,[]);
+      groups.get(prefix).push(k);
+    }
+    let rows='';
+    for(const [prefix,ks] of [...groups.entries()].sort()){
+      rows+=`<div class="det-subhead">${esc(prefix)}</div>`;
+      for(const k of ks) rows+=makeExtraRow(prefix, k, extra[k]);
+    }
+    if(rows) html+=makeSection('GPU Info',rows);
+    document.getElementById('detail-gpus').innerHTML=html;
+  });
+}
+
+// ── GPU Limits ────────────────────────────────────────────────────────────────
+function renderGPULimits(){
+  const list=document.getElementById('list-gpu-limits');
+  const keys=Object.keys(DATA.gpuLimits).sort((a,b)=>a.localeCompare(b));
+  if(!keys.length){
+    list.innerHTML='<div class="list-item" style="cursor:default"><div class="list-title" style="color:#555">No GPU limits</div></div>';
+    return;
+  }
+  list.innerHTML=keys.map(k=>
+    `<div class="list-item" data-key="${esc(k)}">
+      <div class="list-title" style="font-size:11px;white-space:normal">${esc(k)}</div>
+    </div>`
+  ).join('');
+  list.addEventListener('click',e=>{
+    const item=e.target.closest('.list-item[data-key]');
+    if(!item) return;
+    const key=item.dataset.key;
+    document.querySelectorAll('#list-gpu-limits .list-item').forEach(el=>
+      el.classList.toggle('selected',el.dataset.key===key));
+    const lim=DATA.gpuLimits[key];
+    let html=`<div class="detail-header" style="white-space:normal">${esc(key)}</div>`;
+    for(const cat of ['buffers','draws','shaders','textures']){
+      if(!lim[cat]||!Object.keys(lim[cat]).length) continue;
+      html+=`<div class="limits-cat">${cat}</div>`;
+      html+=Object.entries(lim[cat]).map(([k,v])=>
+        `<div class="limits-row"><span class="limits-k">${esc(k)}</span><span class="limits-v">${esc(v)}</span></div>`
+      ).join('');
+    }
+    if(lim.all&&Object.keys(lim.all).length){
+      html+=`<div class="limits-cat">All</div>`;
+      html+=Object.entries(lim.all).map(([k,v])=>
+        `<div class="limits-row"><span class="limits-k">${esc(k)}</span><span class="limits-v">${esc(Array.isArray(v)?v.join(', '):v)}</span></div>`
+      ).join('');
+    }
+    document.getElementById('detail-gpu-limits').innerHTML=html;
+  });
+}
+
+// ── EGL Extensions ────────────────────────────────────────────────────────────
+function eglExtRegistryUrl(name){
+  const m=name.match(/^EGL_([A-Z0-9]+)_(.+)$/);
+  if(!m) return null;
+  return `https://registry.khronos.org/EGL/extensions/${m[1]}/${name}.txt`;
+}
+
+function renderEGLExtensions(){
+  const detail=document.getElementById('detail-egl-extensions');
+  const counts={};
+  for(const item of DATA.gpus){
+    const exts=item.machine?.extra?.['egl:extensions'];
+    if(!Array.isArray(exts)) continue;
+    for(const ext of exts) counts[ext]=(counts[ext]||0)+1;
+  }
+  const sorted=Object.entries(counts).sort(([,a],[,b])=>b-a);
+  if(!sorted.length){
+    detail.innerHTML='<div class="detail-empty">No EGL extension data</div>';
+    return;
+  }
+  const maxCount=sorted[0][1]||1;
+  const gpusWithEGL=DATA.gpus.filter(g=>Array.isArray(g.machine?.extra?.['egl:extensions'])&&g.machine.extra['egl:extensions'].length);
+  const deviceOptions='<option value="">All GPUs</option>'+
+    [...gpusWithEGL].sort((a,b)=>gpuLabel(a).localeCompare(gpuLabel(b))).map(g=>
+      `<option value="${g.id}">${esc(gpuLabel(g))} (#${g.id})</option>`
+    ).join('');
+  let html=`<div id="egl-ext-search-wrap" style="padding:6px 8px;background:#252526;border-bottom:1px solid #3a3a3a;position:sticky;top:0;z-index:10;display:flex;flex-direction:column;gap:5px">
+    <select id="egl-device-filter" style="width:100%;padding:3px 7px;background:#3c3c3c;color:#ccc;border:1px solid #555;border-radius:3px;font:12px ui-monospace,monospace;outline:none;cursor:pointer">${deviceOptions}</select>
+    <input id="egl-ext-search" type="search" placeholder="Search EGL extensions…" spellcheck="false" autocomplete="off" style="width:100%;padding:3px 7px;background:#3c3c3c;color:#ccc;border:1px solid #555;border-radius:3px;font:12px ui-monospace,monospace;outline:none">
+  </div>`;
+  html+=`<div class="ext-ctx-head" style="top:63px">${sorted.length} EGL extensions</div>`;
+  html+=sorted.map(([name,count])=>{
+    const url=eglExtRegistryUrl(name);
+    const label=url?`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(name)}</a>`:esc(name);
+    return `<div class="ext-bar-row" data-name="${esc(name)}">
+      <span class="ext-name" title="${esc(name)}">${label}</span>
+      <div class="ext-bar" style="width:${Math.max(2,Math.round(180*count/maxCount))}px"></div>
+      <span class="ext-count">${count}</span>
+    </div>`;
+  }).join('');
+  detail.innerHTML=html;
+  document.getElementById('egl-ext-search').addEventListener('input',applyEGLExtensionFilters);
+  document.getElementById('egl-device-filter').addEventListener('change',applyEGLExtensionFilters);
+}
+
+function applyEGLExtensionFilters(){
+  const q=(document.getElementById('egl-ext-search')?.value||'').toLowerCase();
+  const deviceId=document.getElementById('egl-device-filter')?.value||'';
+  const gpu=deviceId?DATA.gpus.find(x=>x.id===Number(deviceId)):null;
+  const exts=gpu?.machine?.extra?.['egl:extensions'];
+  const allowed=Array.isArray(exts)?new Set(exts):null;
+  let visible=0;
+  document.querySelectorAll('#detail-egl-extensions .ext-bar-row').forEach(el=>{
+    const show=(!q||el.dataset.name.toLowerCase().includes(q))&&(!allowed||allowed.has(el.dataset.name));
+    el.style.display=show?'':'none';
+    if(show) visible++;
+  });
+  const head=document.querySelector('#detail-egl-extensions .ext-ctx-head');
+  if(head) head.style.display=visible?'':'none';
+}
+
+// ── GPU Extensions ────────────────────────────────────────────────────────────
+function extRegistryUrl(name){
+  if(name.startsWith('WEBGL_'))
+    return `https://registry.khronos.org/webgl/extensions/${name}/`;
+  if(name.startsWith('GL_WEBGL_'))
+    return `https://registry.khronos.org/webgl/extensions/${name.slice(3)}/`;
+  const m=name.match(/^GL_([A-Z0-9]+)_(.+)$/);
+  if(!m) return null;
+  return `https://registry.khronos.org/OpenGL/extensions/${m[1]}/${m[1]}_${m[2]}.txt`;
+}
+
+function renderGPUExtensions(){
+  const data=DATA.gpuExtensions;
+  const detail=document.getElementById('detail-gpu-extensions');
+  const contexts=Object.keys(data).filter(k=>k!=='counts').sort();
+  if(!contexts.length){
+    detail.innerHTML='<div class="detail-empty">No extension data</div>';
+    return;
+  }
+  const gpuOptions='<option value="">All GPUs</option>'+
+    [...DATA.gpus].sort((a,b)=>gpuLabel(a).localeCompare(gpuLabel(b))).map(g=>
+      `<option value="${g.id}">${esc(gpuLabel(g))} (#${g.id})</option>`
+    ).join('');
+  let html=`<div id="ext-search-wrap">
+    <select id="ext-gpu-filter">${gpuOptions}</select>
+    <input id="ext-search" type="search" placeholder="Search extensions…" spellcheck="false" autocomplete="off">
+  </div>`;
+  for(const ctx of contexts){
+    const exts=data[ctx];
+    const sorted=Object.entries(exts).sort(([,a],[,b])=>b-a);
+    const maxCount=sorted[0]?.[1]||1;
+    html+=`<div class="ext-ctx-head" data-ctx="${esc(ctx)}">${esc(ctx)} <span style="font-weight:normal;color:#888">(${sorted.length} extensions)</span></div>`;
+    html+=sorted.map(([name,count])=>{
+      const url=extRegistryUrl(name);
+      const label=url?`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(name)}</a>`:esc(name);
+      return `<div class="ext-bar-row" data-name="${esc(name)}">
+        <span class="ext-name" title="${esc(name)}">${label}</span>
+        <div class="ext-bar" style="width:${Math.max(2,Math.round(180*count/maxCount))}px"></div>
+        <span class="ext-count">${count}</span>
+      </div>`;
+    }).join('');
+  }
+  detail.innerHTML=html;
+  document.getElementById('ext-search').addEventListener('input',applyExtensionFilters);
+  document.getElementById('ext-gpu-filter').addEventListener('change',applyExtensionFilters);
+}
+
+function apiMatchesContext(api, ctx){
+  // Normalise by stripping trailing "Core" so "OpenGL" matches "OpenGL Core",
+  // while keeping "OpenGL ES" distinct from "OpenGL Core".
+  const norm=s=>s.toLowerCase().replace(/\s+core$/,'').trim();
+  return norm(api)===norm(ctx);
+}
+
+function applyExtensionFilters(){
+  const q=(document.getElementById('ext-search')?.value||'').toLowerCase();
+  const gpuId=document.getElementById('ext-gpu-filter')?.value||'';
+  const gpu=gpuId?DATA.gpus.find(x=>x.id===Number(gpuId)):null;
+  const api=gpu&&gpu.machine&&gpu.machine.extra&&gpu.machine.extra['gl:api']||null;
+  const exts=gpu&&gpu.machine&&gpu.machine.extra&&gpu.machine.extra['gl:extensions'];
+  const allowed=Array.isArray(exts)?new Set(exts):null;
+  document.querySelectorAll('#detail-gpu-extensions .ext-ctx-head').forEach(head=>{
+    const ctxMatch=!api||apiMatchesContext(api,head.dataset.ctx||'');
+    if(!ctxMatch){
+      head.style.display='none';
+      let el=head.nextElementSibling;
+      while(el&&el.classList.contains('ext-bar-row')){ el.style.display='none'; el=el.nextElementSibling; }
+      return;
+    }
+    let visible=0;
+    let el=head.nextElementSibling;
+    while(el&&el.classList.contains('ext-bar-row')){
+      const name=el.dataset.name;
+      const show=(!q||name.toLowerCase().includes(q))&&(!allowed||allowed.has(name));
+      el.style.display=show?'':'none';
+      if(show) visible++;
+      el=el.nextElementSibling;
+    }
+    head.style.display=visible?'':'none';
+  });
+}
+
+function filterByAttrs(itemsSelector, filters){
+  document.querySelectorAll(itemsSelector).forEach(el=>{
+    el.style.display=filters.every(([val,attr])=>!val||(attr?el.dataset[attr]===val:el.dataset.title.includes(val)))?'':'none';
+  });
+}
+
+function filterDevices(){
+  const q=(document.getElementById('search-devices')?.value||'').toLowerCase();
+  const mfr=document.getElementById('device-mfr-filter')?.value||'';
+  const cpumfr=document.getElementById('device-cpu-mfr-filter')?.value||'';
+  const cpumodel=document.getElementById('device-cpu-model-filter')?.value||'';
+  document.querySelectorAll('#list-devices-items .list-item[data-title]').forEach(el=>{
+    el.style.display=
+      (!q||el.dataset.title.includes(q))&&
+      (!mfr||el.dataset.mfr===mfr)&&
+      (!cpumfr||el.dataset.cpumfr===cpumfr)&&
+      (!cpumodel||(el.dataset.cpumodels||'').split('|').includes(cpumodel))
+      ?'':'none';
+  });
+}
+
+function filterMachines(){
+  filterByAttrs('#list-machines-items .list-item[data-title]',[
+    [(document.getElementById('search-machines')?.value||'').toLowerCase(), null],
+    [document.getElementById('machine-mfr-filter')?.value||'',    'mfr'],
+    [document.getElementById('machine-arch-filter')?.value||'',   'arch'],
+    [document.getElementById('machine-target-filter')?.value||'', 'target'],
+  ]);
+}
+
+function filterGPUs(){
+  const q=(document.getElementById('search-gpus')?.value||'').toLowerCase();
+  const vendor=document.getElementById('gpu-vendor-filter')?.value||'';
+  document.querySelectorAll('#list-gpus-items .list-item[data-title]').forEach(el=>{
+    el.style.display=(!q||el.dataset.title.includes(q))&&(!vendor||el.dataset.vendor===vendor)?'':'none';
+  });
+}
+
+function filterListPane(itemsId, query){
+  const q=query.toLowerCase();
+  document.querySelectorAll('#'+itemsId+' .list-item[data-title]').forEach(el=>{
+    el.style.display=!q||el.dataset.title.includes(q)?'':'none';
+  });
+}
+
+// ── GPU Limits Visualization ──────────────────────────────────────────────────
+const VIZ_UNLIMITED = 2147483647;
+const VIZ_CATS = ['buffers','draws','shaders','textures','all'];
+const VIZ_ROW_H = 26;
+const VIZ_LABEL_W = 230;
+const VIZ_PAD_T = 20;
+const VIZ_PAD_B = 8;
+const VIZ_PAD_R = 36;
+let vizDrawAll = null;
+
+function vizStats(vals){
+  const v=[...vals].sort((a,b)=>a-b);
+  const n=v.length;
+  if(!n) return null;
+  const q=p=>v[Math.min(n-1,Math.max(0,Math.round(p*(n-1))))];
+  return {min:v[0],q1:q(.25),med:q(.5),q3:q(.75),max:v[n-1],n};
+}
+
+function fmtLimitVal(v){
+  if(v>=VIZ_UNLIMITED) return '∞';
+  if(v===-1) return '—';
+  if(v>=1073741824) return (v/1073741824).toFixed(1)+'G';
+  if(v>=1048576) return (v/1048576).toFixed(0)+'M';
+  if(v>=1024 && v%1024===0) return (v/1024)+'K';
+  return String(v);
+}
+
+function renderGPULimitsViz(){
+  const panel=document.getElementById('detail-gpu-viz');
+  const gpuEntries=Object.entries(DATA.gpuLimits);
+  if(!gpuEntries.length){
+    panel.innerHTML='<div class="detail-empty">No GPU limits data</div>';
+    vizDrawAll=null;
+    return;
+  }
+
+  // Build sections
+  const sections=[];
+  for(const cat of VIZ_CATS){
+    const metricSet=new Set();
+    for(const [,lim] of gpuEntries) if(lim[cat]) Object.keys(lim[cat]).forEach(k=>metricSet.add(k));
+    if(!metricSet.size) continue;
+    const rows=[...metricSet].sort().map(metric=>{
+      const pts=[];
+      for(const [name,lim] of gpuEntries){
+        const v=lim[cat]?.[metric];
+        if(v!==undefined) pts.push({name,value:Number(v)|0});
+      }
+      const bounded=pts.map(p=>p.value).filter(v=>v!==VIZ_UNLIMITED&&v!==-1&&v>=0);
+      return {metric,pts,bounded,stats:vizStats(bounded)};
+    });
+    sections.push({cat,rows});
+  }
+
+  // Build HTML
+  let html='';
+  for(const sec of sections){
+    const h=VIZ_PAD_T+sec.rows.length*VIZ_ROW_H+VIZ_PAD_B;
+    html+=`<div class="viz-section">
+      <div class="viz-cat-head">${esc(sec.cat)} <span style="font-weight:normal;color:#888">(${sec.rows.length} metrics · ${gpuEntries.length} GPU${gpuEntries.length!==1?'s':''})</span></div>
+      <canvas class="viz-canvas" data-cat="${esc(sec.cat)}" data-lh="${h}"></canvas>
+    </div>`;
+  }
+  panel.innerHTML=html;
+
+  const sectionMap=Object.fromEntries(sections.map(s=>[s.cat,s]));
+  const canvases=[...panel.querySelectorAll('.viz-canvas')];
+
+  function drawAll(){
+    const dpr=window.devicePixelRatio||1;
+    for(const cv of canvases){
+      const sec=sectionMap[cv.dataset.cat];
+      if(!sec) continue;
+      const W=cv.parentElement.clientWidth;
+      if(!W) continue;
+      const H=Number(cv.dataset.lh);
+      cv.width=Math.round(W*dpr);
+      cv.height=Math.round(H*dpr);
+      cv.style.width=W+'px';
+      cv.style.height=H+'px';
+      const ctx=cv.getContext('2d');
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      drawVizSection(ctx,W,H,sec);
+    }
+  }
+  vizDrawAll=drawAll;
+
+  // Tooltip
+  let tip=document.getElementById('viz-tip');
+  if(!tip){
+    tip=document.createElement('div');
+    tip.id='viz-tip';
+    tip.style.cssText='position:fixed;background:rgba(20,20,20,.95);color:#ddd;padding:6px 9px;border-radius:4px;font:11px ui-monospace,monospace;pointer-events:none;display:none;z-index:100;border:1px solid #444;line-height:1.6;max-width:380px;word-break:break-all';
+    document.body.appendChild(tip);
+  }
+  for(const cv of canvases){
+    cv.addEventListener('mousemove',e=>{
+      const sec=sectionMap[cv.dataset.cat];
+      if(!sec) return;
+      const rect=cv.getBoundingClientRect();
+      const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+      const W=cv.clientWidth, plotW=W-VIZ_LABEL_W-VIZ_PAD_R;
+      const ri=Math.floor((my-VIZ_PAD_T)/VIZ_ROW_H);
+      if(ri<0||ri>=sec.rows.length){tip.style.display='none';return;}
+      const row=sec.rows[ri];
+      const maxV=row.bounded.length?Math.max(...row.bounded):0;
+      const toX=v=>(v>=VIZ_UNLIMITED||v===-1)?VIZ_LABEL_W+plotW+8:VIZ_LABEL_W+(maxV>0?(v/maxV)*plotW:0);
+      let closest=null,best=14;
+      for(const pt of row.pts){ const d=Math.abs(mx-toX(pt.value)); if(d<best){best=d;closest=pt;} }
+      if(closest){
+        tip.innerHTML=`<strong style="color:#fff">${esc(row.metric)}</strong><br><span style="color:#888;font-size:10px">${esc(closest.name)}</span><br><span style="color:#b5cea8">${fmtLimitVal(closest.value)}</span>`;
+        tip.style.display='block';
+        const tw=tip.offsetWidth;
+        const flipped=e.clientX+14+tw>window.innerWidth;
+        tip.style.left=(flipped?e.clientX-14-tw:e.clientX+14)+'px';
+        tip.style.top=(e.clientY-10)+'px';
+      } else { tip.style.display='none'; }
+    });
+    cv.addEventListener('mouseleave',()=>{tip.style.display='none';});
+  }
+
+  if(window._vizRO) window._vizRO.disconnect();
+  const ro=new ResizeObserver(drawAll);
+  for(const cv of canvases) ro.observe(cv.parentElement);
+  window._vizRO=ro;
+  drawAll();
+}
+
+function drawVizSection(ctx,W,H,sec){
+  const plotW=W-VIZ_LABEL_W-VIZ_PAD_R;
+  const isWin98=document.body.classList.contains('win98');
+  const colors = isWin98 ? {
+    divider: '#888',
+    rowSep: '#d0d0d0',
+    label: '#000',
+    muted: '#444',
+    boxBg: 'rgba(0,0,128,0.1)',
+    boxStroke: '#000080',
+    median: '#0000ff',
+    whisker: '#444',
+    point: 'rgba(0,0,128,0.6)'
+  } : {
+    divider: '#555',
+    rowSep: '#2d2d2d',
+    label: '#bbb',
+    muted: '#666',
+    boxBg: 'rgba(14,99,156,0.22)',
+    boxStroke: '#1177bb',
+    median: '#4fc3f7',
+    whisker: '#777',
+    point: 'rgba(79,195,247,0.65)'
+  };
+
+  ctx.clearRect(0,0,W,H);
+
+  // Vertical divider
+  ctx.strokeStyle=colors.divider; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(VIZ_LABEL_W,0); ctx.lineTo(VIZ_LABEL_W,H); ctx.stroke();
+
+  sec.rows.forEach((row,i)=>{
+    const y=VIZ_PAD_T+i*VIZ_ROW_H;
+    const cy=y+VIZ_ROW_H/2;
+    const maxV=row.bounded.length?Math.max(...row.bounded):0;
+    const toX=v=>(v>=VIZ_UNLIMITED||v===-1)?VIZ_LABEL_W+plotW+12:VIZ_LABEL_W+(maxV>0?(v/maxV)*plotW:2);
+
+    // Row separator
+    if(i>0){
+      ctx.strokeStyle=colors.rowSep; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(VIZ_LABEL_W,y); ctx.lineTo(W,y); ctx.stroke();
+    }
+
+    // Metric label
+    ctx.fillStyle=colors.label; ctx.font='10px ui-monospace,monospace';
+    ctx.textBaseline='middle'; ctx.textAlign='right';
+    ctx.fillText(row.metric,VIZ_LABEL_W-8,cy);
+
+    // All-zeros case
+    if(!maxV&&!row.pts.some(p=>p.value>=VIZ_UNLIMITED||p.value===-1)){
+      ctx.fillStyle=colors.muted; ctx.font='9px ui-monospace,monospace';
+      ctx.textAlign='left'; ctx.textBaseline='middle';
+      ctx.fillText('0',VIZ_LABEL_W+6,cy);
+      return;
+    }
+
+    // Max value label at right edge
+    if(maxV>0){
+      ctx.fillStyle=colors.muted; ctx.font='9px ui-monospace,monospace';
+      ctx.textAlign='right'; ctx.textBaseline='top';
+      ctx.fillText(fmtLimitVal(maxV),VIZ_LABEL_W+plotW,y+1);
+    }
+
+    // Box plot (2+ bounded values)
+    const {stats}=row;
+    if(stats&&row.bounded.length>=2){
+      const x1=toX(stats.q1), x2=toX(stats.q3), xm=toX(stats.med);
+      const xmin=toX(stats.min), xmx=toX(Math.min(stats.max,maxV));
+      const bh=9;
+
+      ctx.fillStyle=colors.boxBg;
+      ctx.fillRect(x1,cy-bh/2,Math.max(1,x2-x1),bh);
+      ctx.strokeStyle=colors.boxStroke; ctx.lineWidth=1;
+      ctx.strokeRect(x1,cy-bh/2,Math.max(1,x2-x1),bh);
+
+      ctx.strokeStyle=colors.median; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(xm,cy-bh/2); ctx.lineTo(xm,cy+bh/2); ctx.stroke();
+
+      ctx.strokeStyle=colors.whisker; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(xmin,cy); ctx.lineTo(x1,cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xmin,cy-3); ctx.lineTo(xmin,cy+3); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x2,cy); ctx.lineTo(xmx,cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xmx,cy-3); ctx.lineTo(xmx,cy+3); ctx.stroke();
+    }
+
+    // Individual data points
+    for(const pt of row.pts){
+      if(pt.value>=VIZ_UNLIMITED||pt.value===-1){
+        ctx.fillStyle=colors.muted; ctx.font='bold 10px ui-monospace,monospace';
+        ctx.textAlign='left'; ctx.textBaseline='middle';
+        ctx.fillText('∞',VIZ_LABEL_W+plotW+4,cy);
+      } else {
+        ctx.fillStyle=colors.point;
+        ctx.beginPath(); ctx.arc(toX(pt.value),cy,3,0,Math.PI*2); ctx.fill();
+      }
+    }
+  });
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function switchTab(name){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+name));
+  document.querySelectorAll('#tabs .tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  if(name==='gpu-viz'&&vizDrawAll) vizDrawAll();
+  const u=new URL(location.href);
+  u.searchParams.set('tab',name);
+  history.replaceState(null,'',u);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+window.addEventListener('load',()=>{
+  const params=new URLSearchParams(location.search);
+  const api=params.get('api');
+  if(api){
+    apiBase=api.replace(/\/+$/,'');
+    loadAll();
+  }
+  const tab=params.get('tab');
+  if(tab) switchTab(tab);
+
+  if(params.get('rsort')==='asc') reportSortDesc=false;
+  const rq=params.get('rq');
+  if(rq){ const el=document.getElementById('search-reports'); if(el) el.value=rq; }
+
+  document.getElementById('btn-refresh-reports').addEventListener('click',loadReports);
+  document.getElementById('btn-sort-reports').addEventListener('click',()=>{
+    reportSortDesc=!reportSortDesc;
+    renderReports();
+  });
+  document.getElementById('btn-reset-reports').addEventListener('click',()=>{
+    document.getElementById('search-reports').value='';
+    document.getElementById('report-mfr-filter').value='';
+    document.getElementById('report-arch-filter').value='';
+    document.getElementById('report-target-filter').value='';
+    reportSortDesc=true;
+    syncReportParams(); // clear URL before renderReports reads it
+    renderReports();
+  });
+  document.getElementById('search-reports').addEventListener('input',filterReports);
+  ['report-mfr-filter','report-arch-filter','report-target-filter'].forEach(id=>document.getElementById(id).addEventListener('change',filterReports));
+
+  // wire up click delegation for reports list (once, at init)
+  document.getElementById('list-reports-items').addEventListener('click',e=>{
+    const item=e.target.closest('.list-item[data-id]');
+    if(!item) return;
+    showReport(Number(item.dataset.id));
+  });
+
+  document.getElementById('search-devices').addEventListener('input',filterDevices);
+  ['device-mfr-filter','device-cpu-mfr-filter','device-cpu-model-filter'].forEach(id=>document.getElementById(id).addEventListener('change',filterDevices));
+  document.getElementById('search-machines').addEventListener('input',filterMachines);
+  ['machine-mfr-filter','machine-arch-filter','machine-target-filter'].forEach(id=>document.getElementById(id).addEventListener('change',filterMachines));
+  document.getElementById('search-gpus').addEventListener('input',filterGPUs);
+  document.getElementById('gpu-vendor-filter').addEventListener('change',filterGPUs);
+
+  document.querySelectorAll('#tabs .tab').forEach(btn=>{
+    btn.addEventListener('click',()=>switchTab(btn.dataset.tab));
+  });
+
+  // ── Resize handles ──────────────────────────────────────────────────────────
+  let listWidth=300;
+  function applyListWidth(w){
+    listWidth=w;
+    document.querySelectorAll('.list-pane').forEach(el=>{ el.style.width=w+'px'; });
+  }
+  document.querySelectorAll('.resize-handle').forEach(handle=>{
+    handle.addEventListener('mousedown',e=>{
+      e.preventDefault();
+      const startX=e.clientX;
+      const startW=listWidth;
+      handle.classList.add('dragging');
+      document.body.style.cursor='col-resize';
+      document.body.style.userSelect='none';
+      function onMove(e){
+        applyListWidth(Math.max(120,Math.min(700,startW+(e.clientX-startX))));
+      }
+      function onUp(){
+        handle.classList.remove('dragging');
+        document.body.style.cursor='';
+        document.body.style.userSelect='';
+        document.removeEventListener('mousemove',onMove);
+        document.removeEventListener('mouseup',onUp);
+      }
+      document.addEventListener('mousemove',onMove);
+      document.addEventListener('mouseup',onUp);
+    });
+  });
+});
+</script>
+</body>
+</html>

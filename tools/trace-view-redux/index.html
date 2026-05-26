@@ -71,6 +71,23 @@ details[open]>.jsum::before{transform:rotate(90deg)}
 .bp-v{font-size:13px;color:#b5cea8;font-weight:bold;white-space:nowrap}
 .jext-wrap{display:flex;flex-wrap:wrap;gap:3px;padding:4px 2px}
 .jiext{font-size:10px;color:#ce9178;background:#2d1f10;border:1px solid #4a3318;padding:1px 5px;border-radius:2px;line-height:1.5;word-break:break-all}
+/* Windows 98 Theme Overrides */
+body.win98 { background: #008080; color: #000; font-family: "Segoe UI", Tahoma, sans-serif; }
+body.win98 #toolbar { background: #c0c0c0; border-bottom: 2px solid #808080; gap: 4px; padding: 2px 4px; }
+body.win98 #toolbar button { background: #c0c0c0; color: #000; border: 1px solid; border-color: #fff #444 #444 #fff; box-shadow: inset 1px 1px #fff, inset -1px -1px #888; border-radius: 0; font-size: 11px; padding: 2px 6px; }
+body.win98 #toolbar button:hover { background: #c0c0c0; }
+body.win98 #toolbar button:active, body.win98 #toolbar button.active { border-color: #444 #fff #fff #444; box-shadow: inset 1px 1px #888; background: #c0c0c0; padding: 3px 5px 1px 7px; }
+body.win98 #info { color: #000; background: #c0c0c0; border: 1px solid; border-color: #888 #fff #fff #888; padding: 2px 6px; margin: 2px 0; }
+body.win98 #main-area { background: #008080; }
+body.win98 #details-inner, body.win98 #bottom-pane { background: #c0c0c0; color: #000; border-left: 2px solid #fff; border-top: 2px solid #fff; box-shadow: 1px 1px #000; }
+body.win98 #details-header, body.win98 #bp-header { background: linear-gradient(90deg, #000080, #1084d0); color: #fff; padding: 3px 6px; }
+body.win98 .det-summary, body.win98 .det-subhead { background: #d0d0d0; color: #000; border: 1px solid #888; }
+body.win98 .det-k, body.win98 .jk, body.win98 .bp-k { color: #444; }
+body.win98 .det-v, body.win98 .jobj, body.win98 .bp-v { color: #000; }
+body.win98 #canvas-wrap { background: #fff; border: 2px solid; border-color: #888 #fff #fff #888; margin: 4px; }
+body.win98 #drop-zone { background: #fff; color: #000; border: 2px dashed #888; }
+body.win98 #tooltip { background: #ffffe1; color: #000; border: 1px solid #000; box-shadow: 2px 2px 0 rgba(0,0,0,0.2); border-radius: 0; }
+body.win98 #tooltip strong { color: #000; }
 </style>
 </head>
 <body>
@@ -122,6 +139,8 @@ details[open]>.jsum::before{transform:rotate(90deg)}
 <div id="modal"><img id="modal-img" src="" alt="screenshot"></div>
 <script>
 'use strict';
+const isWin98 = new URLSearchParams(location.search).get('theme') === 'win98';
+if (isWin98) document.body.classList.add('win98');
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const LW    = 200;   // label width
@@ -132,18 +151,54 @@ const SG    = 1;     // span gap
 const TPad  = 4;     // track bottom padding
 const MinPx = 0.5;   // min span width to render
 
-const PALETTE = [
+const PALETTE = isWin98 ? [
+  '#ff0000','#0000ff','#008000','#800080','#ff00ff','#008080','#800000','#000080'
+] : [
   '#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f',
   '#edc948','#b07aa1','#ff9da7','#9c755f','#4fc3f7',
   '#81c784','#ffb74d','#e57373','#ba68c8','#4dd0e1',
 ];
 // Colors cycling per call-stack depth level
-const DEPTH_COLORS = [
+const DEPTH_COLORS = isWin98 ? [
+  '#000080','#008000','#800000','#008080','#800080','#808000','#c0c0c0','#0000ff'
+] : [
   '#4e79a7','#f28e2b','#59a14f','#e15759','#b07aa1',
   '#76b7b2','#edc948','#ff9da7','#4dd0e1','#9c755f',
   '#81c784','#ba68c8','#ffb74d','#4fc3f7','#e57373',
 ];
-const SER_COLORS = ['#4fc3f7','#81c784','#ffb74d','#e57373','#ba68c8','#4dd0e1','#aed581','#ffd54f'];
+const SER_COLORS = isWin98 ? DEPTH_COLORS : ['#4fc3f7','#81c784','#ffb74d','#e57373','#ba68c8','#4dd0e1','#aed581','#ffd54f'];
+
+const THEME = isWin98 ? {
+  bg: '#ffffff',
+  headerBg: '#c0c0c0',
+  trackBg: '#ffffff',
+  padBg: '#d0d0d0',
+  text: '#000000',
+  textMuted: '#444444',
+  divider: '#808080',
+  grid: '#e0e0e0',
+  rulerBg: '#c0c0c0',
+  rulerTick: '#808080',
+  rulerText: '#000000',
+  cursor: '#000000',
+  scrollbar: '#dfdfdf',
+  thumb: '#c0c0c0',
+} : {
+  bg: '#1e1e1e',
+  headerBg: '#252526',
+  trackBg: '#1a1a1a',
+  padBg: '#2a2a2a',
+  text: '#cccccc',
+  textMuted: '#555555',
+  divider: '#3c3c3c',
+  grid: '#222222',
+  rulerBg: '#2d2d2d',
+  rulerTick: '#444444',
+  rulerText: '#666666',
+  cursor: '#888888',
+  scrollbar: '#1a1a1a',
+  thumb: '#444444',
+};
 
 // ── State ────────────────────────────────────────────────────────────────────
 const S = {
@@ -318,7 +373,7 @@ function draw(){
   const x2t = x => vs+(x-LW)/sc;       // canvas x → timestamp
   const t2x = t => LW+(t-vs)*sc;       // timestamp → canvas x
 
-  cx.fillStyle='#1e1e1e';
+  cx.fillStyle=THEME.bg;
   cx.fillRect(0,0,W,H);
 
   // tracks (clipped below ruler)
@@ -339,7 +394,7 @@ function draw(){
   drawRuler(W,tw,sc,t2x);
 
   // label divider
-  cx.strokeStyle='#3c3c3c'; cx.lineWidth=1;
+  cx.strokeStyle=THEME.divider; cx.lineWidth=1;
   cx.beginPath(); cx.moveTo(LW,.5); cx.lineTo(LW,H); cx.stroke();
 
   updateScrollbar(H);
@@ -348,24 +403,24 @@ function draw(){
 // ── Thread track ─────────────────────────────────────────────────────────────
 function drawThread({track:t,h},y,W,tw,sc,t2x){
   // bg
-  cx.fillStyle='#252526';
+  cx.fillStyle=THEME.headerBg;
   cx.fillRect(0,y,W,HH);
-  cx.fillStyle='#1a1a1a';
+  cx.fillStyle=THEME.trackBg;
   cx.fillRect(0,y+HH,W,h-(HH+TPad));
-  cx.fillStyle='#2a2a2a';
+  cx.fillStyle=THEME.padBg;
   cx.fillRect(0,y+h-TPad,W,TPad);
 
   // header label
-  cx.fillStyle='#ccc';
+  cx.fillStyle=THEME.text;
   cx.font='bold 12px ui-monospace,monospace';
   cx.textBaseline='middle';
   cx.fillText(t.name,8,y+HH/2);
   if(t.proc){
-    cx.fillStyle='#555'; cx.font='10px ui-monospace,monospace';
+    cx.fillStyle=THEME.textMuted; cx.font='10px ui-monospace,monospace';
     const pw=cx.measureText(t.proc).width;
     cx.fillText(t.proc,LW-pw-6,y+HH/2);
   }
-  cx.fillStyle='#333'; cx.fillRect(0,y+HH-1,W,1);
+  cx.fillStyle=THEME.divider; cx.fillRect(0,y+HH-1,W,1);
 
   const {vs,ve}=S;
   const spans=t.spans;
@@ -378,11 +433,11 @@ function drawThread({track:t,h},y,W,tw,sc,t2x){
     if(rw<=0) return;
     const ry=y+HH+s.depth*(SH+SG);
     const bg=DEPTH_COLORS[s.depth%DEPTH_COLORS.length];
-    cx.fillStyle=s.open?'#4a3030':bg;
+    cx.fillStyle=s.open?(isWin98?'#ff0000':'#4a3030'):bg;
     cx.fillRect(rx,ry,rw,SH-1);
-    if(S.selected===s){ cx.strokeStyle='#fff'; cx.lineWidth=1.5; cx.strokeRect(rx,ry,rw,SH-1); }
+    if(S.selected===s){ cx.strokeStyle=isWin98?'#000':'#fff'; cx.lineWidth=1.5; cx.strokeRect(rx,ry,rw,SH-1); }
     if(pw>6){
-      cx.fillStyle=s.open?'#aaa':textClr(bg);
+      cx.fillStyle=s.open?(isWin98?'#fff':'#aaa'):textClr(bg);
       cx.font='11px ui-monospace,monospace';
       cx.textBaseline='middle';
       cx.save();
@@ -426,7 +481,7 @@ function drawThread({track:t,h},y,W,tw,sc,t2x){
     cx.fillRect(rx,ry,rw,SH-1);
     cx.strokeStyle='#ffd700'; cx.lineWidth=1;
     cx.strokeRect(rx,ry,rw,SH-1);
-    if(S.selected===ins){ cx.strokeStyle='#fff'; cx.lineWidth=1.5; cx.strokeRect(rx,ry,rw,SH-1); }
+    if(S.selected===ins){ cx.strokeStyle=isWin98?'#000':'#fff'; cx.lineWidth=1.5; cx.strokeRect(rx,ry,rw,SH-1); }
     if(rw>20){
       cx.fillStyle=textClr(bg);
       cx.font='11px ui-monospace,monospace'; cx.textBaseline='middle';
@@ -440,19 +495,19 @@ function drawThread({track:t,h},y,W,tw,sc,t2x){
 
 // ── Metric track ─────────────────────────────────────────────────────────────
 function drawMetric({track:m,h},y,W,tw,sc,t2x){
-  cx.fillStyle='#252526';
+  cx.fillStyle=THEME.headerBg;
   cx.fillRect(0,y,W,HH);
-  cx.fillStyle='#333'; cx.fillRect(0,y+HH-1,W,1);
+  cx.fillStyle=THEME.divider; cx.fillRect(0,y+HH-1,W,1);
 
-  cx.fillStyle='#bbb'; cx.font='bold 12px ui-monospace,monospace'; cx.textBaseline='middle';
+  cx.fillStyle=THEME.text; cx.font='bold 12px ui-monospace,monospace'; cx.textBaseline='middle';
   cx.fillText(m.name,8,y+HH/2);
   const typeL=['scalar','symbolic','marker','screenshot'];
-  cx.fillStyle='#555'; cx.font='9px ui-monospace,monospace';
+  cx.fillStyle=THEME.textMuted; cx.font='9px ui-monospace,monospace';
   cx.fillText(typeL[m.type]??'',LW-50,y+HH/2);
 
   const gy=y+HH, gh=h-HH-TPad;
   // fill label-column body so previous tracks don't bleed through
-  cx.fillStyle='#1a1a1a'; cx.fillRect(0,gy,LW,gh);
+  cx.fillStyle=THEME.trackBg; cx.fillRect(0,gy,LW,gh);
   const {vs,ve}=S;
   if(m.type===0) drawScalar(m,gy,gh,tw,sc,t2x,vs,ve);
   else if(m.type===1) drawSymbolic(m,gy,gh,tw,t2x,vs,ve);
@@ -461,9 +516,9 @@ function drawMetric({track:m,h},y,W,tw,sc,t2x){
 }
 
 function drawScalar(m,y,h,tw,sc,t2x,vs,ve){
-  cx.fillStyle='#111'; cx.fillRect(LW,y,tw,h);
+  cx.fillStyle=isWin98?'#fff':'#111'; cx.fillRect(LW,y,tw,h);
   // grid
-  cx.strokeStyle='#222'; cx.lineWidth=1;
+  cx.strokeStyle=THEME.grid; cx.lineWidth=1;
   for(let i=0;i<=4;i++){
     const gy=y+h-i/4*h;
     cx.beginPath(); cx.moveTo(LW,gy); cx.lineTo(LW+tw,gy); cx.stroke();
@@ -477,7 +532,7 @@ function drawScalar(m,y,h,tw,sc,t2x,vs,ve){
   if(gmin===gmax){ gmin-=1; gmax+=1; }
 
   // min/max labels in label area
-  cx.fillStyle='#555'; cx.font='9px ui-monospace,monospace';
+  cx.fillStyle=THEME.textMuted; cx.font='9px ui-monospace,monospace';
   cx.textBaseline='top';    cx.fillText(fmtVal(gmax),8,y);
   cx.textBaseline='bottom'; cx.fillText(fmtVal(gmin),8,y+h);
 
@@ -515,7 +570,7 @@ function drawScalar(m,y,h,tw,sc,t2x,vs,ve){
   // hover cursor: vertical line + dot at closest point per series
   if(S.cursorTs!==undefined&&S.cursorTs>=vs&&S.cursorTs<=ve){
     const cx_=t2x(S.cursorTs);
-    cx.strokeStyle='rgba(255,255,255,0.25)'; cx.lineWidth=1;
+    cx.strokeStyle=isWin98?'rgba(0,0,0,0.25)':'rgba(255,255,255,0.25)'; cx.lineWidth=1;
     cx.beginPath(); cx.moveTo(cx_,y); cx.lineTo(cx_,y+h); cx.stroke();
 
     let si2=0;
@@ -537,7 +592,7 @@ function drawScalar(m,y,h,tw,sc,t2x,vs,ve){
 }
 
 function drawSymbolic(m,y,h,tw,t2x,vs,ve){
-  cx.fillStyle='#111'; cx.fillRect(LW,y,tw,h);
+  cx.fillStyle=isWin98?'#fff':'#111'; cx.fillRect(LW,y,tw,h);
   const vc=new Map(); let ci=0;
   for(const [,pts] of m.series){
     for(let i=0;i<pts.length;i++){
@@ -574,7 +629,7 @@ function drawMarkers(m,t2x,vs,ve){
 
 const SSCACHE=new Map();
 function drawScreenshots(m,y,h,tw,t2x,vs,ve){
-  cx.fillStyle='#111'; cx.fillRect(LW,y,tw,h);
+  cx.fillStyle=isWin98?'#fff':'#111'; cx.fillRect(LW,y,tw,h);
   for(const [,pts] of m.series){
     for(const p of pts){
       if(p.ts<vs||p.ts>ve) continue;
@@ -587,13 +642,13 @@ function drawScreenshots(m,y,h,tw,t2x,vs,ve){
         img.src='data:image/jpeg;base64,'+p.raw;
       }
       const img=SSCACHE.get(p.ts);
-      cx.strokeStyle='#555'; cx.lineWidth=1;
+      cx.strokeStyle=THEME.divider; cx.lineWidth=1;
       cx.beginPath(); cx.moveTo(x,y); cx.lineTo(x,y+h); cx.stroke();
       if(img){
         const iw=h*(img.width/img.height);
         cx.drawImage(img,x+1,y+1,iw-2,h-2);
       } else {
-        cx.fillStyle='#2a2a2a'; cx.fillRect(x+1,y+1,h*1.7,h-2);
+        cx.fillStyle=THEME.padBg; cx.fillRect(x+1,y+1,h*1.7,h-2);
       }
     }
   }
@@ -602,8 +657,8 @@ function drawScreenshots(m,y,h,tw,t2x,vs,ve){
 // ── Ruler ────────────────────────────────────────────────────────────────────
 function drawRuler(W,tw,sc,t2x){
   const {vs,ve,minTs}=S;
-  cx.fillStyle='#2d2d2d'; cx.fillRect(0,0,W,RH);
-  cx.fillStyle='#333';    cx.fillRect(0,RH-1,W,1);
+  cx.fillStyle=THEME.rulerBg; cx.fillRect(0,0,W,RH);
+  cx.fillStyle=THEME.divider;    cx.fillRect(0,RH-1,W,1);
 
   const dur=ve-vs;
   const raw=dur/(tw/100);
@@ -614,8 +669,8 @@ function drawRuler(W,tw,sc,t2x){
   }
 
   const first=Math.ceil(vs/iv)*iv;
-  cx.font='10px ui-monospace,monospace'; cx.fillStyle='#666'; cx.textBaseline='bottom';
-  cx.strokeStyle='#444'; cx.lineWidth=1;
+  cx.font='10px ui-monospace,monospace'; cx.fillStyle=THEME.rulerText; cx.textBaseline='bottom';
+  cx.strokeStyle=THEME.rulerTick; cx.lineWidth=1;
 
   for(let t=first;t<=ve+iv;t+=iv){
     const x=t2x(t);
@@ -628,7 +683,7 @@ function drawRuler(W,tw,sc,t2x){
   const miv=iv/5;
   if(miv*sc>6){
     const mf=Math.ceil(vs/miv)*miv;
-    cx.strokeStyle='#333';
+    cx.strokeStyle=THEME.divider;
     for(let t=mf;t<=ve;t+=miv){
       const x=t2x(t);
       if(x<LW||x>W) continue;
@@ -640,9 +695,9 @@ function drawRuler(W,tw,sc,t2x){
   if(S.cursorTs!==undefined){
     const x=t2x(S.cursorTs);
     if(x>=LW&&x<=W){
-      cx.strokeStyle='#888'; cx.lineWidth=1;
+      cx.strokeStyle=THEME.cursor; cx.lineWidth=1;
       cx.beginPath(); cx.moveTo(x,0); cx.lineTo(x,RH); cx.stroke();
-      cx.fillStyle='#999'; cx.font='10px ui-monospace,monospace'; cx.textBaseline='bottom';
+      cx.fillStyle=THEME.cursor; cx.font='10px ui-monospace,monospace'; cx.textBaseline='bottom';
       cx.fillText(fmtUs(S.cursorTs-minTs),x+3,RH-1);
     }
   }
@@ -657,6 +712,8 @@ function updateScrollbar(H){
   thumb.style.display='block';
   thumb.style.height=sz+'px';
   thumb.style.top=RH+(pct*(vis-sz))+'px';
+  thumb.style.background=THEME.thumb;
+  document.getElementById('scrollbar').style.background=THEME.scrollbar;
 }
 
 // ── Hit test ─────────────────────────────────────────────────────────────────
