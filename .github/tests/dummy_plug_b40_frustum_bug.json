@@ -1,0 +1,10 @@
+{
+    "comment": "On b40, reproduces an issue where far-off clusters become visible when they should not",
+    "events": [
+        {"time": 1000, "type":"key", "key": "CK_d", "duration": 10000},
+        {"time": 1000, "type":"key", "key": "CK_w", "duration": 40000},
+        {"time": 1000, "type":"key", "key": "CK_e", "duration": 6000}
+    ],
+    "frame_delta": 10.0,
+    "end_time": 70000
+}

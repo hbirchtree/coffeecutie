@@ -20,8 +20,9 @@
         "format": "f32"
     },
     "events": [
+        {"time": 1500, "type": "mouse_move", "x": 320, "y": 240},
         {"time": 2000, "type": "screenshot", "name": "ui_test"}
     ],
     "frame_delta": 66.667,
-    "end_time": 5000
+    "end_time": 10000
 }
