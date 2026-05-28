@@ -33,6 +33,7 @@ void update_camera_aspect(compo::EntityContainer& e)
         {
             auto size           = window->size();
             cam->camera->aspect = static_cast<f32>(size.w) / (size.h / 2.f);
+            cDebug("Assigning aspect ratio {}", cam->camera->aspect);
         }
     }
 }

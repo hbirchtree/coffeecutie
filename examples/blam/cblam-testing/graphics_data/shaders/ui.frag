@@ -22,12 +22,14 @@ layout(location = 11, binding = 1) uniform sampler2DArray source_bc2;
 layout(location = 12, binding = 2) uniform sampler2DArray source_bc3;
 layout(location = 13, binding = 3) uniform sampler2DArray source_rgba4;
 layout(location = 14, binding = 4) uniform sampler2DArray source_rgba8;
+layout(location = 15, binding = 5) uniform sampler2DArray source_font;
 
 const uint TEX_BC1    = 1u;
 const uint TEX_BC2    = 2u;
 const uint TEX_BC3    = 3u;
 const uint TEX_RGBA4  = 7u;
 const uint TEX_RGBA8  = 8u;
+const uint TEX_FONT   = 9u;
 
 vec4 sample_color()
 {
@@ -47,6 +49,12 @@ vec4 sample_color()
         return texture(source_rgba4, vec3(sample_coord, layer), bias).bgra;
     else if(source == TEX_RGBA8)
         return texture(source_rgba8, vec3(sample_coord, layer), bias).bgra;
+    else if(source == TEX_FONT)
+    {
+        float alpha = texture(source_font, vec3(sample_coord, layer)).r;
+        vec4 col = elements.instances[frag.element_id].color;
+        return vec4(col.rgb, alpha * col.a);
+    }
     else
         return vec4(1.0, 0.0, 1.0, 0.0);
 }
@@ -57,5 +65,9 @@ void main()
 {
     vec3 coloring = elements.instances[frag.element_id].color.rgb;
     vec4 background_color = sample_color();
-    out_color = vec4(coloring.rgb * background_color.rgb, background_color.a);
+    uint source = elements.instances[frag.element_id].texture_source.x >> 24;
+    if(source == TEX_FONT)
+        out_color = background_color;
+    else
+        out_color = vec4(coloring.rgb * background_color.rgb, background_color.a);
 }

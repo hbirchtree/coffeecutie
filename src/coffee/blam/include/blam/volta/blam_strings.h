@@ -113,7 +113,7 @@ struct unicode_var
     inline ucs_string str(u16 off = 0) const
     {
         auto string_data = ucs_string(data + off, 256);
-        auto res         = string_data.find(terminator);
+        auto res         = string_data.find(value_type(0));
         return ucs_string(data + off, res != ucs_string::npos ? res : 0);
     }
 

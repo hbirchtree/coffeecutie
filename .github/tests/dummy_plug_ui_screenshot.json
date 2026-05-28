@@ -1,0 +1,27 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 16
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 3,
+                "minor": 3
+            }
+        ],
+        "gles": []
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "events": [
+        {"time": 2000, "type": "screenshot", "name": "ui_test"}
+    ],
+    "frame_delta": 66.667,
+    "end_time": 5000
+}

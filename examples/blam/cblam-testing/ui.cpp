@@ -1,5 +1,6 @@
 #include "ui.h"
 
+#include "coffee/core/types/input/event_types.h"
 #include "components.h"
 #include "data.h"
 #include "graphics_api.h"
@@ -59,10 +60,12 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     UIRenderer(
         gfx::api&                     api,
         UIElementCache<halo_version>& ui_cache,
-        BitmapCache<halo_version>&    bitm_cache)
+        BitmapCache<halo_version>&    bitm_cache,
+        FontCache<halo_version>&      font_cache)
         : api(api)
         , ui_cache(ui_cache)
         , bitm_cache(bitm_cache)
+        , font_cache(font_cache)
     {
         using namespace std::string_view_literals;
 
@@ -96,6 +99,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     gfx::api&                     api;
     UIElementCache<halo_version>& ui_cache;
     BitmapCache<halo_version>&    bitm_cache;
+    FontCache<halo_version>&      font_cache;
 
     std::shared_ptr<gfx::program_t>      ui_painter;
     std::shared_ptr<gfx::buffer_t>       vertices;
@@ -104,6 +108,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
     Vecf2                           screen_size;
     Vecf2                           mouse_pos;
+    Vecf2                           m_mouse_raw{};
+    bool                            m_bus_subscribed{false};
     CIMouseButtonEvent::MouseButton mouse_buttons{CIMouseButtonEvent::NoneBtn};
 
     struct widget_data_t
@@ -232,20 +238,22 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 for(auto const& eh : eventhandlers)
                 {
                     using eh_t = blam::ui_element::event_handler_t;
-                    if(eh.event_type != eh_t::type_t::a_btn)
-                        continue;
+                    // if(eh.event_type != eh_t::type_t::a_btn)
+                    //     continue;
+                    cDebug("- Listener: {}", magic_enum::enum_name(eh.event_type));
+                    cDebug("- Flags: {}", magic_enum::enum_name(eh.flags));
                     if(eh.flags == eh_t::flags_t::open_widget)
                     {
                         auto widget_ = ui_cache.predict(eh.widget);
                         cDebug(
-                            "Opening widget {}",
+                            "- Opening widget {}",
                             eh.widget.name.to_string(bitm_cache.magic));
                         if(!widget_.valid())
                             break;
                         // create_element(e.underlying(), widget_);
                     } else if(eh.flags == eh_t::flags_t::run_function)
                     {
-                        cDebug("Running function #{}", eh.function);
+                        cDebug("- Running function #{}", eh.function);
                     }
                 }
             }
@@ -280,6 +288,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             inst.texture_source.x = tmp.layer;
         }
 
+
         switch(el.ui_element->widget_type)
         {
         case widget_type::spinner_list:
@@ -308,9 +317,94 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             }
             break;
         }
-        case widget_type::text_box:
-            // TODO: Render the text, for now just render the background
+        case widget_type::text_box: {
+            auto const& tb = el.ui_element->text_box;
+            if(!el.font_id.valid())
+                break;
+            auto font_it = font_cache.find(el.font_id);
+            if(font_it == font_cache.end())
+                break;
+            FontItem const& font_item = font_it->second;
+            if(font_item.glyph_map.empty())
+                break;
+
+            i32 str_idx = tb.string_list_index;
+            if(str_idx < 0 || static_cast<size_t>(str_idx) >= el.text_strings.size())
+                break;
+            std::u16string const& text = el.text_strings[static_cast<size_t>(str_idx)];
+            if(text.empty())
+                break;
+
+            constexpr f32 kAtlasSize  = 256.f;
+            constexpr u32 kFontSource = 9u;
+            u32 tex_source = (kFontSource << 24) | font_item.atlas_layer;
+
+            /* Compute total text width for justification */
+            f32 text_width = 0.f;
+            for(char16_t c : text)
+            {
+                auto git = font_item.glyph_map.find(static_cast<u16>(c));
+                if(git != font_item.glyph_map.end())
+                    text_width += git->second.advance;
+            }
+
+            f32 box_x      = min.x;
+            f32 box_y      = min.y;
+            f32 box_w      = max.x - min.x;
+            f32 start_x    = box_x + tb.horizontal_offset;
+            f32 baseline_y = box_y + tb.vertical_offset
+                             + static_cast<f32>(font_item.font->ascend_height);
+
+            using just_t = blam::ui_element::text_box_t::justification_t;
+            if(tb.justification == just_t::center)
+                start_x = box_x + (box_w - text_width) * 0.5f;
+            else if(tb.justification == just_t::right)
+                start_x = box_x + box_w - text_width - tb.horizontal_offset;
+
+            f32 cursor_x = start_x;
+            for(char16_t c : text)
+            {
+                auto git = font_item.glyph_map.find(static_cast<u16>(c));
+                if(git == font_item.glyph_map.end())
+                    continue;
+                GlyphEntry const& g = git->second;
+
+                if(g.bitmap_width > 0 && g.bitmap_height > 0)
+                {
+                    f32 gx  = cursor_x + g.origin_x;
+                    f32 gy  = baseline_y - g.origin_y;
+                    f32 gx2 = gx + g.bitmap_width;
+                    f32 gy2 = gy + g.bitmap_height;
+
+                    std::array<vertex_t, 6> glyph_verts = {{
+                        {{gx,  gy},  {0, 0}},
+                        {{gx2, gy},  {1, 0}},
+                        {{gx2, gy2}, {1, 1}},
+                        {{gx,  gy},  {0, 0}},
+                        {{gx2, gy2}, {1, 1}},
+                        {{gx,  gy2}, {0, 1}},
+                    }};
+                    data.vertex_data.insert(
+                        data.vertex_data.end(),
+                        glyph_verts.begin(),
+                        glyph_verts.end());
+
+                    f32 u0 = g.atlas_x / kAtlasSize;
+                    f32 v0 = g.atlas_y / kAtlasSize;
+                    f32 uw = g.bitmap_width  / kAtlasSize;
+                    f32 vh = g.bitmap_height / kAtlasSize;
+
+                    instance_vertex_t inst{};
+                    inst.color = (tb.color.a > 0.f) ? Vecf4(tb.color)
+                                                     : Vecf4{1, 1, 1, 1};
+                    inst.tex_scale_offset = Vecf4(uw, vh, u0, v0);
+                    inst.texture_source.x = tex_source;
+                    data.instance_data.push_back(inst);
+                }
+                cursor_x += g.advance;
+            }
             break;
+        }
         default: {
             auto children =
                 el.ui_element->child_widgets.data(bitm_cache.magic).value();
@@ -365,12 +459,28 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         //     glm::translate(Matf3(1), Vecf2{-size.w / 2.f, -size.h / 2.f}) *
         //     glm::scale(Matf3(1), Vecf2{.5f / size.w, .5f / size.h});
 
-        if(auto* mouse = e.service<comp_app::MouseInput>())
+        if(!m_bus_subscribed)
         {
-            mouse_pos =
-                window_to_ui(Vecf2(mouse->position().x, mouse->position().y));
-            mouse_buttons = mouse->buttons();
+            m_bus_subscribed = true;
+            using Coffee::Input::CIEvent;
+            using Coffee::Input::CIMouseMoveEvent;
+            if(auto* bus = e.underlying()
+                               .service<comp_app::BasicEventBus<CIEvent>>())
+            {
+                bus->addEventFunction<CIMouseMoveEvent>(
+                    1024, [this](CIEvent&, CIMouseMoveEvent* mv) {
+                        m_mouse_raw = {mv->origin.x, mv->origin.y};
+                    });
+                bus->addEventFunction<CIMouseButtonEvent>(
+                    1024, [this](CIEvent&, CIMouseButtonEvent* mb) {
+                        if(mb->mod == CIMouseButtonEvent::Pressed)
+                            mouse_buttons |= mb->btn;
+                        else
+                            mouse_buttons &= mouse_buttons ^ mb->btn;
+                    });
+            }
         }
+        mouse_pos = window_to_ui(m_mouse_raw);
 
         std::vector<vertex_t>          vertex_data;
         std::vector<instance_vertex_t> instance_vertex_data;
@@ -408,7 +518,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                             .arrays =
                                 {
                                     .count = static_cast<u32>(
-                                        instance_vertex_data.size() * 6),
+                                        vertex_data.size()),
                                 },
                             // .instances = {
                             //     .count = static_cast<u32>(
@@ -456,7 +566,11 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     bitm_cache
                         .template get_bucket<gfx::compat::texture_2da_t>(
                             PixDesc(pix_fmt::RGBA8))
-                        .sampler}),
+                        .sampler},
+                gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"source_font"sv, 5},
+                    font_cache.font_sampler}),
             gfx::make_buffer_list(
                 gfx::buffer_definition_t{
                     .stage  = typing::graphics::ShaderStage::Fragment,
@@ -477,7 +591,8 @@ void alloc_ui_system(compo::EntityContainer& e)
         e.register_subsystem_inplace<UIRenderer>(
             std::ref(e.subsystem_cast<gfx::system>()),
             std::ref(e.subsystem_cast<UIElementCache<halo_version>>()),
-            std::ref(e.subsystem_cast<BitmapCache<halo_version>>()));
+            std::ref(e.subsystem_cast<BitmapCache<halo_version>>()),
+            std::ref(e.subsystem_cast<FontCache<halo_version>>()));
     e.register_component_inplace<UIElement>();
 }
 
@@ -486,22 +601,148 @@ void load_ui_items(
 {
     auto& fonts       = e.subsystem_cast<FontCache<halo_version>>();
     auto& ui_elements = e.subsystem_cast<UIElementCache<halo_version>>();
-    // auto& ui_renderer = e.subsystem_cast<UIRenderer>();
 
     fonts.load_from(data.container);
     ui_elements.load_from(data.container);
 
-    std::vector<generation_idx_t> root_widgets;
-    for(blam::tag_t const& tag : blam::tag_index_view(data.container))
+    blam::tag_index_view<halo_version> tag_view(data.container);
+
+    // Preload large_ui font for text_box widgets
+    generation_idx_t large_ui_font;
+    for(blam::tag_t const& tag : tag_view)
     {
-        /*if(tag.matches(blam::tag_class_t::font))
+        if(!tag.matches(blam::tag_class_t::font))
+            continue;
+        auto name = tag.to_name().to_string(data.container.magic);
+        if(name.find("large_ui") != std::string_view::npos)
         {
-            fonts.predict(tag.as_ref());
-        } else */
-        if(tag.matches(blam::tag_class_t::Soul))
-        {
-            root_widgets = ui_elements.explore(tag.as_ref());
+            large_ui_font = fonts.predict(tag.as_ref());
+            break;
         }
+    }
+
+    // Parse pause_game_options strings
+    std::vector<std::u16string> pause_strings;
+    for(blam::tag_t const& tag : tag_view)
+    {
+        if(!tag.matches(blam::tag_class_t::unicode_string))
+            continue;
+        auto name = tag.to_name().to_string(data.container.magic);
+        if(name.find("pause_game_options") == std::string_view::npos)
+            continue;
+
+        auto us_opt = tag.template data<blam::ui::unicode_string>(data.container.magic);
+        if(!us_opt.has_value())
+            continue;
+        auto subs_opt = us_opt.value()->sub_strings.data(data.container.magic);
+        if(!subs_opt.has_value() || subs_opt.value().empty())
+            continue;
+
+        std::vector<std::u16string> strings;
+        for(auto const& ref : subs_opt.value())
+        {
+            auto s = ref.str(data.container.magic);
+            if(!s.has_error() && !s.value().empty())
+                strings.emplace_back(s.value());
+        }
+
+        bool is_mp = name.find("multiplayer") != std::string_view::npos;
+        if(is_mp || pause_strings.empty())
+            pause_strings = std::move(strings);
+        if(is_mp)
+            break;
+    }
+
+    // Build widget tree
+    std::vector<generation_idx_t> root_widgets;
+    for(blam::tag_t const& tag : tag_view)
+    {
+        if(tag.matches(blam::tag_class_t::Soul))
+            root_widgets = ui_elements.explore(tag.as_ref());
+    }
+
+    cDebug(
+        "UI load: {} pause strings, font valid={}, {} root widgets",
+        pause_strings.size(),
+        large_ui_font.valid(),
+        root_widgets.size());
+
+    // Collect text_boxes with accumulated screen Y, sort, then assign strings in
+    // visual top-to-bottom order so the string list index matches screen position.
+    if(!pause_strings.empty() && large_ui_font.valid())
+    {
+        struct Entry
+        {
+            generation_idx_t id;
+            i32              screen_y;
+        };
+        std::vector<Entry> entries;
+
+        std::function<void(generation_idx_t, i32)> collect =
+            [&](generation_idx_t id, i32 parent_y) {
+                auto it = ui_elements.find(id);
+                if(it == ui_elements.end())
+                    return;
+                UIElementItem const& item = it->second;
+                using wt                  = blam::ui_element::widget_type_t;
+
+                /* bounds stored [y1, x1, y2, x2]; .x = y1 */
+                i32 this_y = parent_y + item.ui_element->bounds.x;
+
+                if(item.ui_element->widget_type == wt::text_box &&
+                   it->second.text_strings.empty())
+                    entries.push_back({id, this_y});
+
+                auto child_meta =
+                    item.ui_element->child_widgets.data(data.container.magic);
+                if(!child_meta.has_value())
+                    return;
+                for(size_t i = 0; i < item.children.size(); i++)
+                {
+                    i32 child_y = this_y + child_meta.value()[i].vertical_offset;
+                    collect(item.children[i], child_y);
+                }
+            };
+
+        if(!root_widgets.empty())
+            collect(root_widgets[0], 0);
+
+        std::stable_sort(
+            entries.begin(),
+            entries.end(),
+            [](Entry const& a, Entry const& b) { return a.screen_y < b.screen_y; });
+
+        /* Map pause menu button names to their string index in the pause_strings
+         * list.  The game engine assigns strings by game logic, not tag data;
+         * button names are the only stable identifier available to us. */
+        static constexpr std::array<std::pair<std::string_view, i32>, 4>
+            kButtonStringMap{{
+                {"resume_game_button",     0},
+                {"quit_netgame_button",    1},
+                {"change_settings_button", 2},
+                {"game_options_button",    3}, /* repurposed as team select in MP */
+            }};
+
+        for(auto& [id, y] : entries)
+        {
+            auto it = ui_elements.find(id);
+            if(it == ui_elements.end())
+                continue;
+            UIElementItem& item  = it->second;
+            auto           wname = item.ui_element->name.str();
+            i32            sidx  = -1;
+            for(auto const& [bname, bidx] : kButtonStringMap)
+                if(bname == wname)
+                {
+                    sidx = bidx;
+                    break;
+                }
+            if(sidx < 0 || static_cast<size_t>(sidx) >= pause_strings.size())
+                continue;
+            item.text_strings.push_back(pause_strings[static_cast<size_t>(sidx)]);
+            item.font_id = large_ui_font;
+        }
+        cDebug("  {} text_boxes found", entries.size());
     }
 
     compo::EntityRecipe rec;

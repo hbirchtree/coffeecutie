@@ -5,7 +5,10 @@
 #include "shader_cache.h"
 #include "ui_caching_item.h"
 
+#include <blam/volta/blam_scenario.h>
 #include <peripherals/stl/magic_enum.hpp>
+
+#include <cstring>
 
 using libc_types::u8;
 
@@ -43,8 +46,6 @@ struct FontCache
     virtual FontItem predict_impl(blam::tagref_t const& font_tag)
     {
         blam::font const* font = get_id(font_tag);
-        // auto              name = font_tag.to_name().to_string(magic);
-        // auto              data = font->pixel_data().data(magic);
         return FontItem{
             .font        = font,
             .atlas_layer = 0,
@@ -61,40 +62,84 @@ struct FontCache
 
     void allocate_font_texture()
     {
-        using namespace std::string_view_literals;
-
-        Vecui3 total_size{0, 0, m_cache.size()};
+        constexpr u32 kAtlasSize = 256;
 
         font_textures->alloc(
-            gleam::size_3d<u32>{256, 256, static_cast<u32>(m_cache.size())});
+            gleam::size_3d<u32>{kAtlasSize, kAtlasSize, static_cast<u32>(m_cache.size())});
         font_sampler->alloc();
         api->debug().annotate(*font_textures, "fonts_r8");
 
-        u32 i = 0;
-        for(auto& [id, font_] : m_cache)
+        u32 layer = 0;
+        for(auto& [id, font_item] : m_cache)
         {
-            FontItem& font   = font_;
-            font.atlas_layer = i;
+            font_item.atlas_layer = layer;
+            font_item.glyph_map.clear();
 
-            u32 advance = 0;
-            for(auto c : "HALO IS COOL"sv)
+            auto chars_opt = font_item.font->characters.data(magic);
+            if(!chars_opt.has_value())
             {
-                auto c_ = font.font->character(c, magic);
-                if(!c_.has_value())
-                    continue;
-                auto [desc, data] = c_.value();
-                if(desc->bitmap_width < 1 || desc->bitmap_height < 1)
-                {
-                    advance += desc->character_width;
-                    continue;
-                }
-                font_textures->upload(
-                    data,
-                    Veci3{advance, 0, i},
-                    Veci3{desc->bitmap_width, desc->bitmap_height, 1});
-                advance += desc->character_width;
+                layer++;
+                continue;
             }
-            i++;
+
+            /* Pack into CPU buffer with stride=kAtlasSize (always 4-byte aligned)
+             * to avoid GL_UNPACK_ALIGNMENT issues with odd glyph widths. */
+            std::vector<u8> atlas_buf(kAtlasSize * kAtlasSize, 0);
+
+            i32 cursor_x   = 0;
+            i32 cursor_y   = 0;
+            i32 row_height = 0;
+
+            for(auto const& ch : chars_opt.value())
+            {
+                i32 bw = ch.bitmap_width;
+                i32 bh = ch.bitmap_height;
+
+                GlyphEntry entry;
+                entry.advance       = ch.character_width;
+                entry.bitmap_width  = static_cast<i16>(bw);
+                entry.bitmap_height = static_cast<i16>(bh);
+                entry.origin_x      = ch.origin.x;
+                entry.origin_y      = ch.origin.y;
+
+                if(bw > 0 && bh > 0)
+                {
+                    if(cursor_x + bw > static_cast<i32>(kAtlasSize))
+                    {
+                        cursor_x   = 0;
+                        cursor_y  += row_height;
+                        row_height = 0;
+                    }
+                    if(cursor_y + bh <= static_cast<i32>(kAtlasSize))
+                    {
+                        auto data_size = static_cast<u32>(bw) * static_cast<u32>(bh);
+                        auto pix       = font_item.font->pixel_data(
+                            ch.pixel_offset, data_size).data(magic);
+                        if(pix.has_value())
+                        {
+                            auto const* src =
+                                reinterpret_cast<u8 const*>(pix.value().data());
+                            for(i32 row = 0; row < bh; row++)
+                            {
+                                u8* dst = atlas_buf.data() +
+                                          (cursor_y + row) * kAtlasSize + cursor_x;
+                                std::memcpy(dst, src + row * bw, static_cast<u32>(bw));
+                            }
+                        }
+                        entry.atlas_x = static_cast<i16>(cursor_x);
+                        entry.atlas_y = static_cast<i16>(cursor_y);
+                        cursor_x += bw;
+                        row_height = std::max(row_height, bh);
+                    }
+                }
+                font_item.glyph_map[ch.character] = entry;
+            }
+
+            font_textures->upload(
+                semantic::Bytes::ofContainer(atlas_buf).view,
+                Veci3{0, 0, static_cast<i32>(layer)},
+                Veci3{static_cast<i32>(kAtlasSize), static_cast<i32>(kAtlasSize), 1});
+            layer++;
         }
     }
 };
@@ -149,6 +194,32 @@ struct UIElementCache
             {
                 if(auto c = predict(child.widget); c.valid())
                     out.children.push_back(c);
+            }
+            break;
+        }
+        case widget_type::text_box: {
+            auto const& tb = ui_el->text_box;
+            if(tb.font.valid())
+                out.font_id = font_cache.predict(tb.font);
+            if(tb.unicode_strings.valid())
+            {
+                if(auto us_data =
+                       index.template data<blam::ui::unicode_string>(
+                           tb.unicode_strings);
+                   us_data.has_value())
+                {
+                    auto const* us = us_data.value();
+                    if(auto subs = us->sub_strings.data(magic); subs.has_value())
+                    {
+                        for(auto const& ref : subs.value())
+                        {
+                            if(auto s = ref.str(magic); !s.has_error())
+                                out.text_strings.emplace_back(s.value());
+                            else
+                                out.text_strings.emplace_back();
+                        }
+                    }
+                }
             }
             break;
         }

@@ -6,6 +6,7 @@
 #include <coffee/core/task_queue/task.h>
 #include <glw/glw.h>
 #include <glw/gpu_dependent_task.h>
+#include <peripherals/identify/architecture.h>
 #include <peripherals/typing/geometry/size.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
@@ -151,6 +152,21 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
 #endif
                         gl::group::framebuffer_target::framebuffer,
                 currentBinding);
+
+        /* glReadPixels gives bottom-up rows; flip to top-down for image files.
+         * ARM32 systems have their framebuffer already in the correct orientation. */
+#if !defined(COFFEE_ARCH_ARM32)
+        {
+            auto stride = static_cast<libc_types::u32>(size_.w) * 4u;
+            for(libc_types::i32 y = 0; y < size_.h / 2; ++y)
+            {
+                auto* row_top = data.data() + y * stride;
+                auto* row_bot = data.data() + (size_.h - 1 - y) * stride;
+                std::swap_ranges(row_top, row_top + stride, row_bot);
+            }
+        }
+#endif
+
         return dump_t{
             .size   = size_,
             .format = typing::pixels::pix_fmt::RGBA8,
