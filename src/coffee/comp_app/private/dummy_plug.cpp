@@ -122,6 +122,14 @@ void queue_input_event(
         emit_future_event(start_time + unpress_delay, ievent, key);
         break;
     }
+    case type_t::mouse_move: {
+        ievent.type = CIEvent::MouseMove;
+        CIMouseMoveEvent move;
+        move.origin = {event.value("x", 0.f), event.value("y", 0.f)};
+        move.delta  = {};
+        emit_future_event(start_time, ievent, move);
+        break;
+    }
     default:
         break;
     }
