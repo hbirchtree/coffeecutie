@@ -83,7 +83,7 @@
             "inherits": ["vcpkg-base-mac-ninja"],
             "cacheVariables": {
                 "BUILD_DISCORD_RPC": "ON",
-                "DEPLOYMENT_TARGET": "10.15",
+                "DEPLOYMENT_TARGET": "13.3",
                 "PLATFORM": "MAC"
             },
             "environment": {
@@ -96,7 +96,7 @@
             "inherits": ["vcpkg-base-mac"],
             "cacheVariables": {
                 "BUILD_DISCORD_RPC": "ON",
-                "DEPLOYMENT_TARGET": "10.15",
+                "DEPLOYMENT_TARGET": "13.3",
                 "PLATFORM": "MAC"
             },
             "environment": {
