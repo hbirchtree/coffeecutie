@@ -47,8 +47,10 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
                 cDebug("BG sound tag: {}", snd.name.str());
                 LoopSoundEvent loop = {
                     .sound = &static_cast<blam::tagref_t const&>(snd.bg_sound),
+                    .usage = LoopSoundEvent::usage_t::background_track,
                 };
                 sound_bus->process(ev, &loop);
+                break;
             }
         }
     }

@@ -1,8 +1,12 @@
 #include "sounds.h"
 
+#include "blam/volta/blam_tag_ref.h"
 #include "components.h"
+#include "data_cache.h"
+#include "peripherals/stl/range.h"
 #include "selected_version.h"
 #include "sound_cache.h"
+#include <algorithm>
 
 #if defined(FEATURE_ENABLE_OAF)
 
@@ -29,20 +33,23 @@ enum class status_t
     played,
 };
 
-struct track_t
+struct sound_unit_t
 {
-    std::shared_ptr<oaf::source_t> source;
-
-    struct entry_t
+    struct track_t
     {
-        std::shared_ptr<oaf::buffer_t> buffer;
-        bool                           looping{false};
-        status_t                       status{status_t::unplayed};
-        blam::sound::sound const*      sound{nullptr};
+        struct
+        {
+            SoundItem::role_t role{};
+            u32 pitch{0};
+            u32 permutation{0};
+        } active;
+        std::deque<std::shared_ptr<oaf::buffer_t>> queued_bufs;
+        std::shared_ptr<oaf::source_t> source;
     };
 
-    std::vector<entry_t> buffers;
-    size_t               position{0};
+    generation_idx_t index{};
+    std::vector<track_t> tracks;
+    LoopSoundEvent::usage_t usage{LoopSoundEvent::usage_t::general};
 };
 
 template<typename Ver>
@@ -68,7 +75,7 @@ struct SoundSystem
     blam::tag_index_view<Ver>& index;
     LoadingStatus*             loading;
 
-    std::map<u64, track_t> active_tracks;
+    std::map<u64, sound_unit_t> active_sounds;
 
     struct queued_event_t
     {
@@ -104,140 +111,97 @@ struct SoundSystem
             }
             queued_events.clear();
         }
-
-        for(auto& [id, track] : active_tracks)
+        
+        std::vector<u64> finished;
+        for(auto& [id, sound] : active_sounds)
         {
-            auto&              src = track.source;
-            std::deque<size_t> deletions;
-            for(auto& [i, buffer] : stl_types::enumerate(track.buffers))
+            SoundItem const& item = (*sound_cache.find(sound.index)).second;
+            for(auto i : stl_types::range<size_t>(item.tracks.size()))
             {
-                if(i < track.position)
-                    continue;
-                if(buffer.status == status_t::unplayed)
+                using role_t = SoundItem::role_t;
+                auto const& track = item.tracks.at(i);
+                auto& meta = sound.tracks.at(i);
+
+                if(meta.queued_bufs.size() >= 4)
                 {
-                    src->queue(*buffer.buffer);
-                    src->template set_property<oaf::source_property::gain>(
-                        buffer.sound->gain_modifier);
-                    cDebug("Queueing {}", i);
-                    buffer.status  = status_t::queued;
-                    track.position = i;
-                    break;
-                }
-                if(buffer.status == status_t::queued)
-                {
-                    auto [queued, processed] = src->buffer_queue();
-                    if(queued != processed)
+                    // Look and see if any buffers are done
+                    auto [queued, processed] = meta.source->buffer_queue();
+                    // If we're fully queued up, skip
+                    if(queued >= 4 && processed == 0)
+                        continue;
+                    for(auto _ : stl_types::range<size_t>(processed))
                     {
-                        track.position = i;
+                        meta.source->unqueue(*meta.queued_bufs.front());
+                        meta.queued_bufs.pop_front();
+                    }
+                }
+                
+                auto const [tag, props, heap] = track.sounds.find(meta.active.role)->second;
+                auto const& bufs = track.buffers.find(meta.active.role)->second;
+
+                // TODO: Figure out pitch variation
+                // Just use natural for now
+                auto const& pitch = bufs.at(meta.active.pitch);
+                if(pitch.permutations.empty())
+                    continue;
+                auto const& current_buf = pitch.permutations.at(meta.active.permutation);
+
+                // TODO: If memory is tight, stream audio here instead of preloading
+                cDebug("Queueing sound={} perm=#{}",
+                    tag->to_name().to_string(heap),
+                    meta.active.permutation);
+                meta.source->queue(*current_buf.buffer);
+                meta.source->template set_property<oaf::source_property::gain>(
+                    props->gain_modifier
+                );
+                meta.queued_bufs.push_back(current_buf.buffer);
+
+                bool looping = item.looping_sound;
+                bool eos_permutation = meta.active.permutation + 1 == pitch.permutations.size();
+
+                if(looping && eos_permutation)
+                {
+                    switch(meta.active.role)
+                    {
+                    case role_t::start:
+                        meta.active.role = role_t::loop;
+                        meta.active.permutation = 0;
+                        break;
+                    case role_t::loop:
+                        // TODO: Add 50/50 chance of alt_loop
+                        meta.active.permutation = 0;
+                        break;
+                    case role_t::alt_loop:
+                        meta.active.role = role_t::loop;
+                        meta.active.permutation = 0;
+                        break;
+                    default:
+                        // TODO: Figure out when to play end
                         break;
                     }
-                    cDebug("Finished playing {}", i);
-                    src->unqueue(*buffer.buffer);
-                    buffer.status =
-                        buffer.looping ? status_t::unplayed : status_t::played;
-                    track.position++;
-                }
-                if(buffer.status == status_t::played)
+                } else if(eos_permutation)
                 {
-                    cDebug("Freeing up {}", i);
-                    buffer.buffer.reset();
-                    deletions.push_back(i);
+                    finished.push_back(id);
+                } else
+                {
+                    meta.active.permutation++;
                 }
             }
-            if(track.position == track.buffers.size())
-                track.position = 0;
-            // for(auto const& i : deletions | std::views::reverse)
-            //     track.buffers.erase(track.buffers.begin() + i);
         }
+
+        for(auto id : finished)
+            active_sounds.erase(id);
     }
 
     void end_restricted(Proxy&, compo::time_point const&)
     {
     }
 
-    void decode_audio(
-        sound_ptr const&               sound_,
-        std::vector<track_t::entry_t>& buffers,
-        track_t::entry_t const&        props)
-    {
-        auto const& [tag, sound, heap] = sound_;
-        auto ranges = *index.deref(*tag, sound->pitch_ranges_);
-        // auto ranges                    = *sound->pitch_ranges(heap);
-        if(ranges.empty())
-            return;
-        auto perms = *index.deref(*tag, ranges[0].permutations_);
-        // auto perms = *ranges[0].permutations(heap);
-        if(perms.empty())
-            return;
-
-        blam::sound::pitch_permutation_t const* perm = &perms[0];
-        using sound_t                                = blam::sound::sound;
-
-        while(perm)
-        {
-            auto data_ = index.deref(*tag, perm->sample_data());
-            if(!data_.has_value())
-                break;
-            auto data = data_.value();
-            cDebug(
-                "{} data {}: {}+{}",
-                magic_enum::enum_name(sound->codec),
-                tag->name.to_string(heap),
-                (void*)data.data(),
-                data.size());
-            switch(sound->codec)
-            {
-            case blam::sound::sound::codec_t::ogg: {
-                auto                      buf = snd.alloc_buffer();
-                oaf::decode::ogg::decoder decoder;
-                decoder.decode(data, {}, {}, *buf);
-                buffers.push_back({
-                    .buffer  = buf,
-                    .looping = props.looping,
-                    .sound   = sound,
-                });
-                break;
-            }
-            case blam::sound::sound::codec_t::ima_adpcm:
-            case blam::sound::sound::codec_t::xbox_adpcm: {
-                auto          buf = snd.alloc_buffer();
-                oaf::format_t fmt;
-                fmt.format = oaf::Format::ima_adpcm;
-                fmt.frequency =
-                    sound->sample_rate == sound_t::_22kHz ? 22050 : 44100;
-                fmt.channels = sound->channels == sound_t::mono ? 1 : 2;
-                if(snd.formats().ima4_adpcm)
-                {
-                    buf->upload(data, fmt);
-                }
-#if defined(OAF_IMA_DECODER_ENABLED)
-                else
-                {
-                    oaf::decode::ima_adpcm::decoder decoder;
-                    decoder.decode(data, fmt, *buf);
-                }
-#endif
-                buffers.push_back({
-                    .buffer  = buf,
-                    .looping = props.looping,
-                    .sound   = sound,
-                });
-                break;
-            }
-            default:
-                break;
-            }
-            if(perm->next_permutation_idx == -1)
-                break;
-            perm = &perms[perm->next_permutation_idx];
-        }
-    }
-
     virtual void process(SoundEvent& ev, libc_types::c_ptr data) final
     {
         if(ev.type == SoundEvent::clear_all)
         {
-            active_tracks.clear();
+            active_sounds.clear();
             queued_events.clear();
             return;
         }
@@ -267,32 +231,31 @@ struct SoundSystem
             if(!sound.valid())
                 return;
             SoundItem const& item  = (*sound_cache.find(sound)).second;
-            auto const&      track = item.tracks.front();
-            auto start_ = track.sounds.find(SoundItem::role_t::start);
-            auto loop_  = track.sounds.find(SoundItem::role_t::loop);
-            /* Custom maps apparently do this thing... */
-            if(loop_ == track.sounds.end())
-                return;
-            std::vector<track_t::entry_t> buffers;
-            if(start_ != track.sounds.end())
-                decode_audio(start_->second, buffers, track_t::entry_t{});
-            decode_audio(
-                loop_->second,
-                buffers,
-                track_t::entry_t{
-                    .looping = true,
+            std::vector<sound_unit_t::track_t> tracks;
+            auto select_first_role = [](SoundItem::track_t const& track) {
+                if(track.sounds.find(SoundItem::role_t::start) != track.sounds.end())
+                    return SoundItem::role_t::start;
+                return SoundItem::role_t::loop;
+            };
+            for(auto const& track : item.tracks)
+            {
+                tracks.emplace_back(sound_unit_t::track_t{
+                    .active = {
+                        .role = select_first_role(track),
+                    },
+                    .source = snd.alloc_source(),
                 });
-            cDebug("Queueing {} audio buffers", buffers.size());
-            active_tracks.emplace(
-                ev.entity_id,
-                track_t{
-                    .source  = snd.alloc_source(),
-                    .buffers = std::move(buffers),
-                });
+            }
+            active_sounds[ev.entity_id] = sound_unit_t{
+                .index = sound,
+                .tracks = std::move(tracks),
+                .usage = loop->usage,
+            };
         }
         if(ev.type == SoundEvent::play_sound)
         {
             auto const& play = reinterpret_cast<PlaySoundEvent const*>(data);
+            auto sound = sound_cache.predict(*play->sound);
         }
     }
 };

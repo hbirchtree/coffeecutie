@@ -2,11 +2,18 @@
 
 #include "caching_item.h"
 #include "data_cache.h"
+#include "oaf/ogg/ogg_decode.h"
+#include "peripherals/concepts/sound_api.h"
 #include <blam/volta/blam_sound.h>
 #include <blam/volta/blam_stl.h>
 #include <coffee/components/subsystem.h>
+#include <optional>
 
+#if defined(FEATURE_ENABLE_OAF)
+#include <oaf/api.h>
+#else
 namespace oaf { struct api; }
+#endif
 
 using sound_ptr =
     std::tuple<blam::tag_t const*, blam::sound::sound const*, blam::map_ptr>;
@@ -23,20 +30,37 @@ struct SoundItem
         main,
     };
 
+    struct permutation_t
+    {
+        std::shared_ptr<oaf::buffer_t> buffer;
+    };
+
+    struct pitch_range_t
+    {
+        std::vector<permutation_t> permutations;
+    };
+
     struct track_t
     {
         blam::sound::track_t const* track{nullptr};
         std::map<role_t, sound_ptr> sounds;
+        std::map<role_t, std::vector<pitch_range_t>> buffers;
     };
 
     blam::sound::looping_sound const* looping_sound{nullptr};
-    sound_ptr                         sound{};
-
     std::vector<track_t> tracks;
+    std::vector<track_t> detail_sounds;
+
+    bool single() const
+    {
+        if(tracks.size() == 1)
+            return tracks[0].sounds.size() == 1;
+        return false;
+    }
 
     bool valid() const
     {
-        return looping_sound || std::get<1>(sound);
+        return !tracks.empty();
     }
 };
 
@@ -67,6 +91,86 @@ struct SoundCache
 
     oaf::api*               api{nullptr};
     blam::tag_index_view<V> index;
+
+    void upload_singular_samples(
+        std::vector<SoundItem::pitch_range_t>& ranges,
+        sound_ptr const& sound_)
+    {
+        auto [tag, sound, heap] = sound_;
+        auto ranges_ = *index.deref(*tag, sound->pitch_ranges_);
+        if(ranges_.empty())
+            return;
+        for(auto const& range : ranges_)
+        {
+            cDebug("- Range");
+            ranges.emplace_back();
+            auto perms_ = index.deref(*tag, range.permutations_);
+            if(!perms_.has_value())
+                continue;
+            auto& out = ranges.back();
+            for(auto const& perm : perms_.value())
+            {
+                cDebug("  - Permutation");
+                out.permutations.emplace_back();
+                auto data_ = index.deref(*tag, perm.sample_data());
+                if(!data_.has_value())
+                    continue;
+                auto data = data_.value();
+                auto& buffer = out.permutations.back().buffer;
+                using codec_t = blam::sound::sound::codec_t;
+                switch(sound->codec)
+                {
+                case codec_t::ima_adpcm:
+                case codec_t::xbox_adpcm: {
+                    oaf::format_t fmt;
+                    fmt.format = oaf::Format::ima_adpcm;
+                    fmt.frequency =
+                        sound->sample_rate == blam::sound::sound::_22kHz
+                            ? 22050 
+                            : 44100;
+                    fmt.channels =
+                        sound->channels == blam::sound::sound::stereo
+                            ? 2
+                            : 1;
+                    buffer = api->alloc_buffer();
+                    if(api->formats().ima4_adpcm)
+                    {
+                        buffer->upload(data, fmt);
+                    }
+#if defined(OAF_IMA_DECODER_ENABLED)
+                    else
+                    {
+                        oaf::decode::ima_adpcm::decoder decoder;
+                        decoder.decode(data, fmt, *buffer);
+                    }
+#endif
+                    break;
+                }
+                case codec_t::ogg: {
+                    oaf::decode::ogg::decoder decoder;
+                    decoder.decode(data, {}, {}, *buffer);
+                    break;
+                }
+                case codec_t::pcm: {
+                    cWarning("Implement PCM loading");
+                    break;
+                }
+                }
+            }
+        }
+    }
+
+    void upload_samples(SoundItem& item)
+    {
+        for(auto& track : item.tracks)
+            for(auto& [role, sound] : track.sounds)
+            {
+                auto it = track.buffers.emplace(
+                    role,
+                    std::vector<SoundItem::pitch_range_t>{});
+                upload_singular_samples(it.first->second, sound);
+            }
+    }
 
     sound_ptr parse_simple_sound(blam::tagref_t const& tag)
     {
@@ -99,6 +203,16 @@ struct SoundCache
                 return std::get<1>(p.second) == nullptr;
             });
         }
+        auto detail_sounds = index.deref(lsnd->detail_sounds).value();
+        for(blam::sound::detail_sound_t const& d_sound : detail_sounds)
+        {
+            cDebug("Detail sound");
+            item.detail_sounds.push_back({
+                .sounds = {
+                    {SoundItem::main, parse_simple_sound(d_sound.sound)},
+                },
+            });
+        }
     }
 
     SoundItem predict_impl(blam::tagref_t const& tag)
@@ -115,11 +229,17 @@ struct SoundCache
             parse_loop_sound(out, tag);
             break;
         case blam::tag_class_t::snd:
-            out.sound = parse_simple_sound(tag);
+            out.tracks.push_back({
+                    .sounds = {{SoundItem::main, parse_simple_sound(tag)}}
+            });
             break;
         default:
             break;
         }
+
+        // TODO: Make smartness about discarding unplayed buffers
+        cDebug("Sound:");
+        upload_samples(out);
 
         return out;
     }

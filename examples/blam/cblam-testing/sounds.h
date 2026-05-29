@@ -18,7 +18,14 @@ struct LoopSoundEvent
 {
     static constexpr auto event_type = SoundEvent::loop_sound;
 
+    enum class usage_t
+    {
+        general,
+        background_track,
+    };
+
     blam::tagref_t const* sound{};
+    usage_t usage{usage_t::general};
 };
 
 struct PlaySoundEvent
