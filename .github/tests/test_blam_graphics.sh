@@ -111,9 +111,11 @@ ASSETS_DIR=$(find $BUILDDIR -name assets -type d | head -n 1)
 if [ -n "$SYS_LD" ] && [ -f "$BINARY" ]; then
     echo "-- Running binary directly with sysroot loader"
     LD_LIBRARY_PATH=$PWD/sysroot/lib $SYS_LD --library-path $PWD/sysroot/lib $BINARY $ASSETS_DIR $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
+    echo "Return code: $?"
 elif [ -d "$APPDIR" ]; then
     echo "-- Running via AppRun"
     $APPDIR/AppRun $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
+    echo "Return code: $?"
 else
     echo "ERROR: Could not find a way to run the application"
     exit 1
