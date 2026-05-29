@@ -151,6 +151,32 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
         rendering->current_bsp_cluster = pvs_cluster;
 
+        if(cluster_changed)
+        {
+            auto* sound_bus = bsp_cache->sound_bus;
+            if(sound_bus)
+            {
+                BackgroundSoundTransitionEvent trans; /* sound = nullptr by default */
+                if(current_bsp)
+                {
+                    i16 bg_idx =
+                        current_bsp->clusters.at(current_cluster).cluster->background_sound;
+                    if(bg_idx >= 0 &&
+                       static_cast<u32>(bg_idx) < current_bsp->bg_sound_palette.size() &&
+                       current_bsp->bg_sound_palette[bg_idx])
+                    {
+                        trans.sound = &static_cast<blam::tagref_t const&>(
+                            current_bsp->bg_sound_palette[bg_idx]->bg_sound);
+                    }
+                }
+                SoundEvent ev = {
+                    .type      = SoundEvent::background_sound_transition,
+                    .entity_id = 0,
+                };
+                sound_bus->process(ev, &trans);
+            }
+        }
+
         BSPItem const* cull_bsp = pvs_bsp;
 
         /* Returns true if cluster ci is visible from the camera cluster.

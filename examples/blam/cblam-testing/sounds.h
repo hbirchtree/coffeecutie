@@ -9,6 +9,8 @@ struct SoundEvent
         loop_sound,
         play_sound,
         clear_all,
+        stop_sound,
+        background_sound_transition,
     } type;
 
     libc_types::u64 entity_id{0};
@@ -34,6 +36,14 @@ struct PlaySoundEvent
 
     blam::tagref_t const* sound{};
     compo::time_point     time{};
+};
+
+struct BackgroundSoundTransitionEvent
+{
+    static constexpr auto event_type = SoundEvent::background_sound_transition;
+
+    /* nullptr = fade out only, no new track */
+    blam::tagref_t const* sound{nullptr};
 };
 
 struct SoundPreferences : compo::SubsystemBase

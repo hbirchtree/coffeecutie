@@ -206,12 +206,13 @@ struct BSPItem
         std::vector<Portal>       portals{};
     };
 
-    blam::bsp::header const*                 mesh{nullptr};
-    blam::tag_t const*                       tag{nullptr};
-    std::vector<Group>                       groups;
-    std::vector<Cluster>                     clusters;
-    std::vector<gleam::draw_command::data_t> portals;
-    std::vector<u32>                         portal_color_ptrs;
+    blam::bsp::header const*                            mesh{nullptr};
+    blam::tag_t const*                                  tag{nullptr};
+    std::vector<Group>                                  groups;
+    std::vector<Cluster>                                clusters;
+    std::vector<gleam::draw_command::data_t>            portals;
+    std::vector<u32>                                    portal_color_ptrs;
+    std::vector<blam::bsp::background_sound_palette const*> bg_sound_palette;
 
     /* PVS (Potentially Visible Set) data: one bit per cluster per row,
      * row i says which clusters are visible from cluster i */

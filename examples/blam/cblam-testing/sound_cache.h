@@ -32,11 +32,13 @@ struct SoundItem
 
     struct permutation_t
     {
+        blam::sound::pitch_permutation_t const* permutation{nullptr};
         std::shared_ptr<oaf::buffer_t> buffer;
     };
 
     struct pitch_range_t
     {
+        blam::sound::pitch_range_t const* range{nullptr};
         std::vector<permutation_t> permutations;
     };
 
@@ -103,7 +105,9 @@ struct SoundCache
         for(auto const& range : ranges_)
         {
             cDebug("- Range");
-            ranges.emplace_back();
+            ranges.emplace_back(SoundItem::pitch_range_t{
+                .range = &range,
+            });
             auto perms_ = index.deref(*tag, range.permutations_);
             if(!perms_.has_value())
                 continue;
@@ -111,7 +115,9 @@ struct SoundCache
             for(auto const& perm : perms_.value())
             {
                 cDebug("  - Permutation");
-                out.permutations.emplace_back();
+                out.permutations.emplace_back(SoundItem::permutation_t{
+                    .permutation = &perm,
+                });
                 auto data_ = index.deref(*tag, perm.sample_data());
                 if(!data_.has_value())
                     continue;

@@ -38,20 +38,10 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
 
     {
         auto bg_sound = section.background_sound.data(bsp_magic);
-        if(bg_sound.has_value() && sound_bus)
+        if(bg_sound.has_value())
         {
-            SoundEvent ev   = {.type = SoundEvent::loop_sound};
-            auto       snds = bg_sound.value();
-            for(auto const& snd : snds)
-            {
-                cDebug("BG sound tag: {}", snd.name.str());
-                LoopSoundEvent loop = {
-                    .sound = &static_cast<blam::tagref_t const&>(snd.bg_sound),
-                    .usage = LoopSoundEvent::usage_t::background_track,
-                };
-                sound_bus->process(ev, &loop);
-                break;
-            }
+            for(auto const& snd : bg_sound.value())
+                out.bg_sound_palette.push_back(&snd);
         }
     }
 
