@@ -157,10 +157,9 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         u32 expected_row = (n + 7u) / 8u;
         u32 actual_row   = static_cast<u32>(section.cluster_data_size) / n;
 
-        /* Hex-dump the first 32 bytes of the PVS to verify it contains data */
         std::string hex;
         for(int i = 0; i < std::min(32, section.cluster_data_size); i++)
-            hex += std::format("{:02x} ", static_cast<u8>(pvs_ptr[i]));
+            hex += fmt::format("{:02x} ", static_cast<u8>(pvs_ptr[i]));
 
         cDebug(
             "BSP PVS: {} clusters, cluster_data_size={}"

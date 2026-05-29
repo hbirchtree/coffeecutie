@@ -289,11 +289,6 @@ static void load_resources(
         {
             // explore_tagc(tag);
         }
-        // cDebug(
-        //     " - {}:{}: {}",
-        //     tag.tagclass[0].str(),
-        //     stl_types::str::fmt::hexify(tag.tag_id),
-        //     tag.to_name().to_string(files.container.magic));
     }
 
     cDebug(

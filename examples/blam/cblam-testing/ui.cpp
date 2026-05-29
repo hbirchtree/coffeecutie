@@ -1,5 +1,7 @@
 #include "ui.h"
 
+#include <cctype>
+
 #include "coffee/core/types/input/event_types.h"
 #include "components.h"
 #include "data.h"
@@ -111,8 +113,10 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     Vecf2                           m_mouse_raw{};
     bool                            m_bus_subscribed{false};
     bool                            m_mouse_active{false};
+    bool                            m_click_pending{false};
     CIMouseButtonEvent::MouseButton mouse_buttons{CIMouseButtonEvent::NoneBtn};
     generation_idx_t                m_cursor_bitmap;
+    std::vector<generation_idx_t>   m_widget_history;
 
     struct widget_data_t
     {
@@ -140,10 +144,20 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         return offset_normalized * Vecf2(640 / x_scale, 480);
     }
 
-    bool mouse_in_bounds(Vecf2 const& min, Vecf2 const& max)
+    Vecf2 ui_to_screen(Vecf2 const& ui_point)
     {
-        return mouse_pos.x > min.x && mouse_pos.x < max.x &&
-               mouse_pos.y > min.y && mouse_pos.y < max.y;
+        f32   x_offset    = (screen_size.x - 640) / (2.f * screen_size.x);
+        f32   x_scale     = 1.f - x_offset * 2.f;
+        Vecf2 normalized  = ui_point / Vecf2(640.f / x_scale, 480.f);
+        return (normalized + Vecf2(x_offset, 0.f)) * screen_size;
+    }
+
+    bool mouse_in_bounds(Vecf2 const& ui_min, Vecf2 const& ui_max)
+    {
+        Vecf2 smin = ui_to_screen(ui_min);
+        Vecf2 smax = ui_to_screen(ui_max);
+        return m_mouse_raw.x > smin.x && m_mouse_raw.x < smax.x &&
+               m_mouse_raw.y > smin.y && m_mouse_raw.y < smax.y;
     }
 
     bool mouse_down(
@@ -173,7 +187,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
     struct event_result
     {
-        bool consumed{false};
+        bool             consumed{false};
+        generation_idx_t open_widget{};
+        bool             go_back{false};
     };
 
     /* Walk the widget tree depth-first.
@@ -228,34 +244,51 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             item, data.box, layout,
             [&](UIElementItem& el, Vecf2 min, Vecf2 max) -> bool {
                 el.focused = mouse_in_bounds(min, max);
-                if(!el.focused || !mouse_down())
+                if(!el.focused || !m_click_pending)
                     return true;
+
+                cDebug(
+                    "Widget clicked: {} pending={}",
+                    el.ui_element->name.str(),
+                    m_click_pending);
 
                 auto handlers_opt =
                     el.ui_element->event_handlers.data(bitm_cache.magic);
                 if(!handlers_opt.has_value())
                     return true;
-                [[maybe_unused]] auto widget_name = el.ui_element->name.str();
-                cDebug(
-                    "Clicked {}, {} handlers",
-                    widget_name,
-                    handlers_opt.value().size());
+
                 for(auto const& eh : handlers_opt.value())
                 {
+                    /* left mouse acts as both direct mouse event and confirm
+                     * (a_btn), since PC maps mouse click to controller confirm */
+                    bool mouse_event =
+                        eh.event_type == eh_t::type_t::left_mouse ||
+                        eh.event_type == eh_t::type_t::a_btn;
                     cDebug(
-                        "- {} / {}",
+                        "handler: type={} flags={} match={}",
                         magic_enum::enum_name(eh.event_type),
-                        magic_enum::enum_name(eh.flags));
-                    if(eh.flags == eh_t::flags_t::open_widget)
+                        magic_enum::enum_name(eh.flags),
+                        mouse_event);
+                    if(!mouse_event)
+                        continue;
+                    auto flags = static_cast<u32>(eh.flags);
+                    if(flags & static_cast<u32>(eh_t::flags_t::open_widget))
                     {
                         auto widget_ = ui_cache.predict(eh.widget);
-                        cDebug(
-                            "  opening {}",
-                            eh.widget.name.to_string(bitm_cache.magic));
-                        result.consumed = widget_.valid();
-                    } else if(eh.flags == eh_t::flags_t::run_function)
+                        if(widget_.valid())
+                        {
+                            cDebug(
+                                "open_widget: {}",
+                                eh.widget.name.to_string(bitm_cache.magic));
+                            result.open_widget = widget_;
+                            result.consumed    = true;
+                        }
+                    }
+                    if(flags &
+                       static_cast<u32>(
+                           eh_t::flags_t::go_back_to_previous_widget))
                     {
-                        cDebug("  function #{}", eh.function);
+                        result.go_back  = true;
                         result.consumed = true;
                     }
                 }
@@ -432,7 +465,11 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     1024, [this](CIEvent&, CIMouseButtonEvent* mb) {
                         m_mouse_active = true;
                         if(mb->mod == CIMouseButtonEvent::Pressed)
+                        {
                             mouse_buttons |= mb->btn;
+                            if(mb->btn == CIMouseButtonEvent::LeftButton)
+                                m_click_pending = true;
+                        }
                         else
                             mouse_buttons &= mouse_buttons ^ mb->btn;
                     });
@@ -451,26 +488,41 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         {
             for(auto const& widget : e.select<UIElement>())
             {
-                auto        ref     = e.ref<Proxy>(widget);
-                auto const& element = ref.get<UIElement>();
+                auto  ref     = e.ref<Proxy>(widget);
+                auto& element = ref.get<UIElement>();
                 widget_data_t root_data{
                     .vertex_data   = vertex_data,
                     .instance_data = instance_vertex_data,
                     .box           = blam::vec4i16{0, 0, 640, 480},
                 };
-                process_input(element.element, root_data);
+                auto result = process_input(element.element, root_data);
                 process_render(element.element, root_data);
+
+                if(result.open_widget.valid())
+                {
+                    m_widget_history.push_back(element.element);
+                    element.element = result.open_widget;
+                }
+                else if(result.go_back && !m_widget_history.empty())
+                {
+                    element.element = m_widget_history.back();
+                    m_widget_history.pop_back();
+                }
             }
+            m_click_pending = false;
         }
 
-        if(m_mouse_active && m_cursor_bitmap.valid())
+        u32 ui_vert_count = static_cast<u32>(vertex_data.size());
+
+        bool cursor_visible = m_mouse_active && m_cursor_bitmap.valid();
+        if(cursor_visible)
         {
             atlas_intermediate_t tmp{};
             auto const* bitm = bitm_cache.assign_atlas_data(tmp, m_cursor_bitmap);
             auto const* img  = bitm->image.mip;
             Vecf2       csz{(f32)img->isize.x, (f32)img->isize.y};
-            Vecf2       cmin = mouse_pos;
-            Vecf2       cmax = mouse_pos + csz;
+            Vecf2       cmin = m_mouse_raw;
+            Vecf2       cmax = m_mouse_raw + csz;
             std::array<vertex_t, 6> verts = {{
                 {.position = {cmin.x, cmin.y}, .tex_coord = {0, 0}},
                 {.position = {cmax.x, cmin.y}, .tex_coord = {1, 0}},
@@ -496,82 +548,83 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         instance_vertices->commit(
             Bytes::ofContainer(instance_vertex_data).view);
 
-        api.submit(
-            gfx::draw_command{
-                .program  = ui_painter,
-                .vertices = array,
-                .call =
-                    {
-                        .instanced = false,
-                        .mode      = gfx::drawing::primitive::triangle,
-                    },
-                .data =
-                    {
+        auto cursor_scale =
+            glm::scale(Matf3(1), Vecf2{2.f / screen_size.x, -2.f / screen_size.y}) *
+            glm::translate(
+                Matf3(1), Vecf2{-screen_size.x / 2.f, -screen_size.y / 2.f});
+
+        auto do_submit = [&](Matf3 const& matrix, u32 offset, u32 count) {
+            api.submit(
+                gfx::draw_command{
+                    .program  = ui_painter,
+                    .vertices = array,
+                    .call =
                         {
-                            .arrays =
-                                {
-                                    .count = static_cast<u32>(
-                                        vertex_data.size()),
-                                },
-                            // .instances = {
-                            //     .count = static_cast<u32>(
-                            //         instance_vertex_data.size()),
-                            // },
+                            .instanced = false,
+                            .mode      = gfx::drawing::primitive::triangle,
                         },
+                    .data = {
+                        {.arrays = {.count = count, .offset = offset}},
                     },
-            },
-            gfx::make_uniform_list(
-                typing::graphics::ShaderStage::Vertex,
-                gfx::uniform_pair{
-                    {"screen_scale"sv, 0}, semantic::SpanOne(screen_scale)}),
-            gfx::make_sampler_list(
-                gleam::sampler_definition_t{
-                    typing::graphics::ShaderStage::Fragment,
-                    {"source_bc1"sv, 0},
-                    bitm_cache
-                        .template get_bucket<gfx::compat::texture_2da_t>(
-                            CompFmt(pix_fmt::BCn, comp_flags::BC1))
-                        .sampler},
-                gleam::sampler_definition_t{
-                    typing::graphics::ShaderStage::Fragment,
-                    {"source_bc2"sv, 1},
-                    bitm_cache
-                        .template get_bucket<gfx::compat::texture_2da_t>(
-                            CompFmt(pix_fmt::BCn, comp_flags::BC2))
-                        .sampler},
-                gleam::sampler_definition_t{
-                    typing::graphics::ShaderStage::Fragment,
-                    {"source_bc3"sv, 2},
-                    bitm_cache
-                        .template get_bucket<gfx::compat::texture_2da_t>(
-                            CompFmt(pix_fmt::BCn, comp_flags::BC3))
-                        .sampler},
-                gleam::sampler_definition_t{
-                    typing::graphics::ShaderStage::Fragment,
-                    {"source_rgba4"sv, 3},
-                    bitm_cache
-                        .template get_bucket<gfx::compat::texture_2da_t>(
-                            PixDesc(pix_fmt::RGBA4))
-                        .sampler},
-                gleam::sampler_definition_t{
-                    typing::graphics::ShaderStage::Fragment,
-                    {"source_rgba8"sv, 4},
-                    bitm_cache
-                        .template get_bucket<gfx::compat::texture_2da_t>(
-                            PixDesc(pix_fmt::RGBA8))
-                        .sampler},
-                gleam::sampler_definition_t{
-                    typing::graphics::ShaderStage::Fragment,
-                    {"source_font"sv, 5},
-                    font_cache.font_sampler}),
-            gfx::make_buffer_list(
-                gfx::buffer_definition_t{
-                    .stage  = typing::graphics::ShaderStage::Fragment,
-                    .key    = {"InstanceData"sv, 0},
-                    .buffer = instance_vertices->slice(0),
-                    .stride = 0,
-                }),
-            gfx::blend_state{.additive = false});
+                },
+                gfx::make_uniform_list(
+                    typing::graphics::ShaderStage::Vertex,
+                    gfx::uniform_pair{
+                        {"screen_scale"sv, 0}, semantic::SpanOne(matrix)}),
+                gfx::make_sampler_list(
+                    gleam::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"source_bc1"sv, 0},
+                        bitm_cache
+                            .template get_bucket<gfx::compat::texture_2da_t>(
+                                CompFmt(pix_fmt::BCn, comp_flags::BC1))
+                            .sampler},
+                    gleam::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"source_bc2"sv, 1},
+                        bitm_cache
+                            .template get_bucket<gfx::compat::texture_2da_t>(
+                                CompFmt(pix_fmt::BCn, comp_flags::BC2))
+                            .sampler},
+                    gleam::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"source_bc3"sv, 2},
+                        bitm_cache
+                            .template get_bucket<gfx::compat::texture_2da_t>(
+                                CompFmt(pix_fmt::BCn, comp_flags::BC3))
+                            .sampler},
+                    gleam::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"source_rgba4"sv, 3},
+                        bitm_cache
+                            .template get_bucket<gfx::compat::texture_2da_t>(
+                                PixDesc(pix_fmt::RGBA4))
+                            .sampler},
+                    gleam::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"source_rgba8"sv, 4},
+                        bitm_cache
+                            .template get_bucket<gfx::compat::texture_2da_t>(
+                                PixDesc(pix_fmt::RGBA8))
+                            .sampler},
+                    gleam::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"source_font"sv, 5},
+                        font_cache.font_sampler}),
+                gfx::make_buffer_list(
+                    gfx::buffer_definition_t{
+                        .stage  = typing::graphics::ShaderStage::Fragment,
+                        .key    = {"InstanceData"sv, 0},
+                        .buffer = instance_vertices->slice(0),
+                        .stride = 0,
+                    }),
+                gfx::blend_state{.additive = false});
+        };
+
+        if(ui_vert_count > 0)
+            do_submit(screen_scale, 0, ui_vert_count);
+        if(cursor_visible)
+            do_submit(cursor_scale, ui_vert_count, 6);
     }
 };
 
@@ -738,14 +791,56 @@ void load_ui_items(
         cDebug("  {} text_boxes found", entries.size());
     }
 
+    u32 player_count = 0;
+    for(auto& ent : e.select<PlayerCamera>())
+    {
+        auto* cam = e.get<PlayerCamera>(ent.id);
+        if(cam && cam->is_active())
+            ++player_count;
+    }
+    if(player_count == 0)
+        player_count = 1;
+
+    struct PauseVariant
+    {
+        u32              players;
+        generation_idx_t id;
+    };
+    std::vector<PauseVariant> pause_variants;
+    for(auto const& id : root_widgets)
+    {
+        auto it = ui_elements.find(id);
+        if(it == ui_elements.end())
+            continue;
+        auto wname = it->second.ui_element->name.str();
+        if(wname.size() >= 12 && wname.substr(1) == "p_pause_game" &&
+           std::isdigit(static_cast<unsigned char>(wname[0])))
+            pause_variants.push_back({u32(wname[0] - '0'), id});
+    }
+    std::sort(
+        pause_variants.begin(),
+        pause_variants.end(),
+        [](PauseVariant const& a, PauseVariant const& b) {
+            return a.players < b.players;
+        });
+
+    generation_idx_t selected_id{};
+    for(auto const& v : pause_variants)
+    {
+        selected_id = v.id;
+        if(v.players >= player_count)
+            break;
+    }
+    if(!selected_id.valid() && !root_widgets.empty())
+        selected_id = root_widgets[0];
+
     compo::EntityRecipe rec;
     rec.tags       = ObjectGC;
     rec.components = {compo::type_hash_v<UIElement>()};
-    for(auto const& id : root_widgets)
+    if(selected_id.valid())
     {
         auto ref                     = e.create_entity(rec);
-        ref.get<UIElement>().element = id;
-        break;
+        ref.get<UIElement>().element = selected_id;
     }
 
     fonts.allocate_font_texture();

@@ -45,8 +45,13 @@ vec4 sample_color()
         return texture(source_bc2, vec3(sample_coord, layer), bias);
     else if(source == TEX_BC3)
         return texture(source_bc3, vec3(sample_coord, layer), bias);
+    /* RGBA4 = D3DFMT_A4R4G4B4: GL reads (A,R,G,B) in bits[15:12..3:0],
+     * giving texture.rgba=(Halo.A, Halo.R, Halo.G, Halo.B).
+     * .gbar reorders to (Halo.R, Halo.G, Halo.B, Halo.A). */
     else if(source == TEX_RGBA4)
-        return texture(source_rgba4, vec3(sample_coord, layer), bias).bgra;
+        return texture(source_rgba4, vec3(sample_coord, layer), bias).gbar;
+    /* RGBA8 = D3DFMT_A8R8G8B8: bytes in memory are B,G,R,A (little-endian),
+     * giving texture.rgba=(B, G, R, A). .bgra reorders to (R, G, B, A). */
     else if(source == TEX_RGBA8)
         return texture(source_rgba8, vec3(sample_coord, layer), bias).bgra;
     else if(source == TEX_FONT)
