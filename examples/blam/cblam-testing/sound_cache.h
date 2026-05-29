@@ -7,10 +7,12 @@
 #include <blam/volta/blam_sound.h>
 #include <blam/volta/blam_stl.h>
 #include <coffee/components/subsystem.h>
-#include <optional>
 
 #if defined(FEATURE_ENABLE_OAF)
 #include <oaf/api.h>
+#if defined(OAF_IMA_DECODER_ENABLED)
+#include <oaf/ima_adpcm/decode.h>
+#endif
 #else
 namespace oaf { struct api; }
 #endif

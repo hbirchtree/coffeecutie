@@ -94,6 +94,35 @@ struct SoundSystem
 
     std::vector<queued_event_t> queued_events;
 
+    /* Push current sound.volume to every OAF source as gain.
+     * Called every frame so fades are smooth regardless of buffer queue state. */
+    void apply_volume(sound_unit_t& sound, SoundItem const& item)
+    {
+        for(auto i : stl_types::range<size_t>(item.tracks.size()))
+        {
+            auto const& track = item.tracks.at(i);
+            auto const& meta  = sound.tracks.at(i);
+
+            auto sounds_it = track.sounds.find(meta.active.role);
+            if(sounds_it == track.sounds.end())
+                continue;
+            auto const [tag, props, heap] = sounds_it->second;
+
+            auto bufs_it = track.buffers.find(meta.active.role);
+            if(bufs_it == track.buffers.end())
+                continue;
+            auto const& pitch = bufs_it->second.at(meta.active.pitch);
+            if(pitch.permutations.empty() ||
+               meta.active.permutation >= pitch.permutations.size())
+                continue;
+
+            f32 perm_gain =
+                pitch.permutations[meta.active.permutation].permutation->gain;
+            meta.source->template set_property<oaf::source_property::gain>(
+                props->gain_modifier * perm_gain * sound.volume);
+        }
+    }
+
     /* Returns true if the sound played to a non-looping end and should be
      * removed.  Applies effective_volume as the OAF source gain multiplier. */
     bool update_sound_tracks(sound_unit_t& sound, SoundItem const& item, f32 effective_volume)
@@ -218,7 +247,8 @@ struct SoundSystem
             if(sound.fading_in)
             {
                 sound.volume = std::min(1.f, sound.volume + sound.fade_rate * dt);
-                if(sound.volume > 0.99f)
+                apply_volume(sound, item);
+                if(sound.volume >= 1.f)
                     sound.fading_in = false;
             }
             if(update_sound_tracks(sound, item, sound.volume))
@@ -232,6 +262,7 @@ struct SoundSystem
         {
             SoundItem const& item = (*sound_cache.find(sound.index)).second;
             sound.volume = std::max(0.f, sound.volume + sound.fade_rate * dt);
+            apply_volume(sound, item);
             update_sound_tracks(sound, item, sound.volume);
             if(sound.volume <= 0.f)
                 fading_finished.push_back(id);
