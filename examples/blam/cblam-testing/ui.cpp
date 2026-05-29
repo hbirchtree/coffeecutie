@@ -169,265 +169,230 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         return ui_element;
     }
 
-    void process_widget(
-        Proxy&                  e,
+    struct event_result
+    {
+        bool consumed{false};
+    };
+
+    /* Walk the widget tree depth-first.
+     * visit(el, min, max) -> bool: return false to skip children. */
+    template<typename Fn>
+    void traverse_widget(
+        generation_idx_t const& item,
+        blam::vec4i16           box,
+        layout_data_t           layout,
+        Fn&&                    visit)
+    {
+        UIElementItem& el = ui_cache.find(item)->second;
+        if(!el.visible)
+            return;
+
+        auto& bounds = el.ui_element->bounds;
+        // bounds stored [y1, x1, y2, x2] as [.x, .y, .z, .w]
+        Vecf2 global_origin =
+            Vecf2(box.x, box.y) + layout.offset + Vecf2(bounds.y, bounds.x);
+        Vecf2 min = global_origin;
+        Vecf2 max = global_origin + Vecf2(bounds.w - bounds.y, bounds.z - bounds.x);
+
+        if(!visit(el, min, max) || el.children.empty())
+            return;
+
+        auto children_opt = el.ui_element->child_widgets.data(bitm_cache.magic);
+        if(!children_opt.has_value())
+            return;
+        auto const      children  = children_opt.value();
+        blam::vec4i16   child_box = {(i16)min.x, (i16)min.y, (i16)max.x, (i16)max.y};
+        for(auto const& [i, child] : stl_types::const_enumerate(el.children))
+        {
+            auto const& meta = children[i];
+            traverse_widget(
+                child,
+                child_box,
+                layout_data_t{
+                    .offset = Vecf2(meta.horizontal_offset, meta.vertical_offset)},
+                std::forward<Fn>(visit));
+        }
+    }
+
+    event_result process_input(
+        generation_idx_t const& item,
+        widget_data_t           data,
+        layout_data_t           layout = {})
+    {
+        using eh_t = blam::ui_element::event_handler_t;
+        event_result result;
+
+        traverse_widget(
+            item, data.box, layout,
+            [&](UIElementItem& el, Vecf2 min, Vecf2 max) -> bool {
+                el.focused = mouse_in_bounds(min, max);
+                if(!el.focused || !mouse_down())
+                    return true;
+
+                auto handlers_opt =
+                    el.ui_element->event_handlers.data(bitm_cache.magic);
+                if(!handlers_opt.has_value())
+                    return true;
+                [[maybe_unused]] auto widget_name = el.ui_element->name.str();
+                cDebug(
+                    "Clicked {}, {} handlers",
+                    widget_name,
+                    handlers_opt.value().size());
+                for(auto const& eh : handlers_opt.value())
+                {
+                    cDebug(
+                        "- {} / {}",
+                        magic_enum::enum_name(eh.event_type),
+                        magic_enum::enum_name(eh.flags));
+                    if(eh.flags == eh_t::flags_t::open_widget)
+                    {
+                        auto widget_ = ui_cache.predict(eh.widget);
+                        cDebug(
+                            "  opening {}",
+                            eh.widget.name.to_string(bitm_cache.magic));
+                        result.consumed = widget_.valid();
+                    } else if(eh.flags == eh_t::flags_t::run_function)
+                    {
+                        cDebug("  function #{}", eh.function);
+                        result.consumed = true;
+                    }
+                }
+                return true;
+            });
+
+        return result;
+    }
+
+    void process_render(
         generation_idx_t const& item,
         widget_data_t           data,
         layout_data_t           layout = {})
     {
         using widget_type = blam::ui_element::widget_type_t;
-        UIElementItem& el = ui_cache.find(item)->second;
 
-        [[maybe_unused]] auto widget_name = el.ui_element->name.str();
+        traverse_widget(
+            item, data.box, layout,
+            [&](UIElementItem& el, Vecf2 min, Vecf2 max) -> bool {
+                auto dimensions = max - min;
 
-        if(!el.visible)
-            return;
-
-        auto& bounds = el.ui_element->bounds;
-        // Coords + dimensions we can derive purely from the bounding box
-        // The bounding box coordinates are in [y1, x1, y2, x2]
-        auto dimensions   = Vecf2(bounds.w - bounds.y, bounds.z - bounds.x);
-        auto local_origin = Vecf2(bounds.y, bounds.x);
-        // Now calculate the global screen position,
-        // depending on the parent-provided box on screen
-        auto global_origin =
-            Vecf2(data.box.x, data.box.y) + layout.offset + local_origin;
-
-        auto const& min = global_origin;
-        auto        max = global_origin + dimensions;
-
-        std::array<vertex_t, 6> vertices = {{
-            {
-                .position  = Vecf2{min.x, min.y},
-                .tex_coord = Vecf2{0, 0},
-            },
-            {
-                .position  = Vecf2{max.x, min.y},
-                .tex_coord = Vecf2{1, 0},
-            },
-            {
-                .position  = Vecf2{max.x, max.y},
-                .tex_coord = Vecf2{1, 1},
-            },
-            {
-                .position  = Vecf2{min.x, min.y},
-                .tex_coord = Vecf2{0, 0},
-            },
-            {
-                .position  = Vecf2{max.x, max.y},
-                .tex_coord = Vecf2{1, 1},
-            },
-            {
-                .position  = Vecf2{min.x, max.y},
-                .tex_coord = Vecf2{0, 1},
-            },
-        }};
-
-        auto eventhandlers =
-            el.ui_element->event_handlers.data(bitm_cache.magic).value();
-
-        if(mouse_in_bounds(min, max))
-        {
-            el.focused = true;
-            if(mouse_down())
-            {
-                cDebug(
-                    "Clicked {}, contains {} eventhandlers",
-                    widget_name,
-                    eventhandlers.size());
-                for(auto const& eh : eventhandlers)
+                if(el.background.valid())
                 {
-                    using eh_t = blam::ui_element::event_handler_t;
-                    // if(eh.event_type != eh_t::type_t::a_btn)
-                    //     continue;
-                    cDebug("- Listener: {}", magic_enum::enum_name(eh.event_type));
-                    cDebug("- Flags: {}", magic_enum::enum_name(eh.flags));
-                    if(eh.flags == eh_t::flags_t::open_widget)
-                    {
-                        auto widget_ = ui_cache.predict(eh.widget);
-                        cDebug(
-                            "- Opening widget {}",
-                            eh.widget.name.to_string(bitm_cache.magic));
-                        if(!widget_.valid())
-                            break;
-                        // create_element(e.underlying(), widget_);
-                    } else if(eh.flags == eh_t::flags_t::run_function)
-                    {
-                        cDebug("- Running function #{}", eh.function);
-                    }
+                    std::array<vertex_t, 6> verts = {{
+                        {.position = {min.x, min.y}, .tex_coord = {0, 0}},
+                        {.position = {max.x, min.y}, .tex_coord = {1, 0}},
+                        {.position = {max.x, max.y}, .tex_coord = {1, 1}},
+                        {.position = {min.x, min.y}, .tex_coord = {0, 0}},
+                        {.position = {max.x, max.y}, .tex_coord = {1, 1}},
+                        {.position = {min.x, max.y}, .tex_coord = {0, 1}},
+                    }};
+                    data.vertex_data.insert(
+                        data.vertex_data.end(), verts.begin(), verts.end());
+                    data.instance_data.push_back({.color = Vecf4{1, 1, 1, 0}});
+
+                    auto& inst = data.instance_data.back();
+                    atlas_intermediate_t tmp{};
+                    auto const& im = el.focused && el.background_alt.valid()
+                                         ? el.background_alt
+                                         : el.background;
+                    auto const* bitm = bitm_cache.assign_atlas_data(tmp, im);
+                    auto const* img  = bitm->image.mip;
+                    auto        imscale =
+                        Vecf2(dimensions.x / img->isize.x, dimensions.y / img->isize.y);
+                    inst.tex_scale_offset = Vecf4(
+                        tmp.atlas_scale.x * std::min(imscale.x, 1.f),
+                        tmp.atlas_scale.y * std::min(imscale.y, 1.f),
+                        tmp.atlas_offset.x,
+                        tmp.atlas_offset.y);
+                    inst.texture_source.x = tmp.layer;
                 }
-            }
-        }
 
-        if(el.background.valid())
-        {
-            data.vertex_data.insert(
-                data.vertex_data.end(), vertices.begin(), vertices.end());
-            data.instance_data.push_back({
-                .color = Vecf4{1, 1, 1, 0},
-            });
+                if(el.ui_element->widget_type != widget_type::text_box)
+                    return true;
 
-            auto& inst = data.instance_data.back();
+                auto const& tb = el.ui_element->text_box;
+                if(!el.font_id.valid())
+                    return false;
+                auto font_it = font_cache.find(el.font_id);
+                if(font_it == font_cache.end())
+                    return false;
+                FontItem const& font_item = font_it->second;
+                if(font_item.glyph_map.empty())
+                    return false;
 
-            atlas_intermediate_t tmp{};
+                i32 str_idx = tb.string_list_index;
+                if(str_idx < 0 ||
+                   static_cast<size_t>(str_idx) >= el.text_strings.size())
+                    return false;
+                std::u16string const& text =
+                    el.text_strings[static_cast<size_t>(str_idx)];
+                if(text.empty())
+                    return false;
 
-            auto const& im =
-                mouse_in_bounds(min, max) && el.background_alt.valid()
-                    ? el.background_alt
-                    : el.background;
+                constexpr f32 kAtlasSize  = 256.f;
+                constexpr u32 kFontSource = 9u;
+                u32           tex_source  = (kFontSource << 24) | font_item.atlas_layer;
 
-            auto const* bitm = bitm_cache.assign_atlas_data(tmp, im);
-            auto const* img  = bitm->image.mip;
-            auto        imscale =
-                Vecf2(dimensions.x / img->isize.x, dimensions.y / img->isize.y);
-            inst.tex_scale_offset = Vecf4(
-                tmp.atlas_scale.x * std::min(imscale.x, 1.f),
-                tmp.atlas_scale.y * std::min(imscale.y, 1.f),
-                tmp.atlas_offset.x,
-                tmp.atlas_offset.y);
-            inst.texture_source.x = tmp.layer;
-        }
-
-
-        switch(el.ui_element->widget_type)
-        {
-        case widget_type::spinner_list:
-        case widget_type::column_list:
-        case widget_type::container: {
-            widget_data_t child_data = {
-                .vertex_data   = data.vertex_data,
-                .instance_data = data.instance_data,
-                .box           = {min.x, min.y, max.x, max.y},
-            };
-
-            auto children =
-                el.ui_element->child_widgets.data(bitm_cache.magic).value();
-            for(auto const& [i, child] :
-                stl_types::const_enumerate(el.children))
-            {
-                auto const& meta = children[i];
-                process_widget(
-                    e,
-                    child,
-                    child_data,
-                    layout_data_t{
-                        .offset =
-                            Vecf2(meta.horizontal_offset, meta.vertical_offset),
-                    });
-            }
-            break;
-        }
-        case widget_type::text_box: {
-            auto const& tb = el.ui_element->text_box;
-            if(!el.font_id.valid())
-                break;
-            auto font_it = font_cache.find(el.font_id);
-            if(font_it == font_cache.end())
-                break;
-            FontItem const& font_item = font_it->second;
-            if(font_item.glyph_map.empty())
-                break;
-
-            i32 str_idx = tb.string_list_index;
-            if(str_idx < 0 || static_cast<size_t>(str_idx) >= el.text_strings.size())
-                break;
-            std::u16string const& text = el.text_strings[static_cast<size_t>(str_idx)];
-            if(text.empty())
-                break;
-
-            constexpr f32 kAtlasSize  = 256.f;
-            constexpr u32 kFontSource = 9u;
-            u32 tex_source = (kFontSource << 24) | font_item.atlas_layer;
-
-            /* Compute total text width for justification */
-            f32 text_width = 0.f;
-            for(char16_t c : text)
-            {
-                auto git = font_item.glyph_map.find(static_cast<u16>(c));
-                if(git != font_item.glyph_map.end())
-                    text_width += git->second.advance;
-            }
-
-            f32 box_x      = min.x;
-            f32 box_y      = min.y;
-            f32 box_w      = max.x - min.x;
-            f32 start_x    = box_x + tb.horizontal_offset;
-            f32 baseline_y = box_y + tb.vertical_offset
-                             + static_cast<f32>(font_item.font->ascend_height);
-
-            using just_t = blam::ui_element::text_box_t::justification_t;
-            if(tb.justification == just_t::center)
-                start_x = box_x + (box_w - text_width) * 0.5f;
-            else if(tb.justification == just_t::right)
-                start_x = box_x + box_w - text_width - tb.horizontal_offset;
-
-            f32 cursor_x = start_x;
-            for(char16_t c : text)
-            {
-                auto git = font_item.glyph_map.find(static_cast<u16>(c));
-                if(git == font_item.glyph_map.end())
-                    continue;
-                GlyphEntry const& g = git->second;
-
-                if(g.bitmap_width > 0 && g.bitmap_height > 0)
+                f32 text_width = 0.f;
+                for(char16_t c : text)
                 {
+                    auto git = font_item.glyph_map.find(static_cast<u16>(c));
+                    if(git != font_item.glyph_map.end())
+                        text_width += git->second.advance;
+                }
+
+                f32 box_w      = max.x - min.x;
+                f32 start_x    = min.x + tb.horizontal_offset;
+                f32 baseline_y = min.y + tb.vertical_offset +
+                                 static_cast<f32>(font_item.font->ascend_height);
+
+                using just_t = blam::ui_element::text_box_t::justification_t;
+                if(tb.justification == just_t::center)
+                    start_x = min.x + (box_w - text_width) * 0.5f;
+                else if(tb.justification == just_t::right)
+                    start_x = min.x + box_w - text_width - tb.horizontal_offset;
+
+                f32 cursor_x = start_x;
+                for(char16_t c : text)
+                {
+                    auto git = font_item.glyph_map.find(static_cast<u16>(c));
+                    if(git == font_item.glyph_map.end())
+                        continue;
+                    GlyphEntry const& g = git->second;
+                    if(g.bitmap_width <= 0 || g.bitmap_height <= 0)
+                    {
+                        cursor_x += g.advance;
+                        continue;
+                    }
+
                     f32 gx  = cursor_x + g.origin_x;
                     f32 gy  = baseline_y - g.origin_y;
                     f32 gx2 = gx + g.bitmap_width;
                     f32 gy2 = gy + g.bitmap_height;
 
                     std::array<vertex_t, 6> glyph_verts = {{
-                        {{gx,  gy},  {0, 0}},
-                        {{gx2, gy},  {1, 0}},
-                        {{gx2, gy2}, {1, 1}},
-                        {{gx,  gy},  {0, 0}},
-                        {{gx2, gy2}, {1, 1}},
-                        {{gx,  gy2}, {0, 1}},
+                        {{gx, gy}, {0, 0}},   {{gx2, gy}, {1, 0}},
+                        {{gx2, gy2}, {1, 1}}, {{gx, gy}, {0, 0}},
+                        {{gx2, gy2}, {1, 1}}, {{gx, gy2}, {0, 1}},
                     }};
                     data.vertex_data.insert(
                         data.vertex_data.end(),
                         glyph_verts.begin(),
                         glyph_verts.end());
 
-                    f32 u0 = g.atlas_x / kAtlasSize;
-                    f32 v0 = g.atlas_y / kAtlasSize;
-                    f32 uw = g.bitmap_width  / kAtlasSize;
-                    f32 vh = g.bitmap_height / kAtlasSize;
-
                     instance_vertex_t inst{};
-                    inst.color = (tb.color.a > 0.f) ? Vecf4(tb.color)
-                                                     : Vecf4{1, 1, 1, 1};
-                    inst.tex_scale_offset = Vecf4(uw, vh, u0, v0);
+                    inst.color            = (tb.color.a > 0.f) ? Vecf4(tb.color)
+                                                                : Vecf4{1, 1, 1, 1};
+                    inst.tex_scale_offset = Vecf4(
+                        g.bitmap_width / kAtlasSize,
+                        g.bitmap_height / kAtlasSize,
+                        g.atlas_x / kAtlasSize,
+                        g.atlas_y / kAtlasSize);
                     inst.texture_source.x = tex_source;
                     data.instance_data.push_back(inst);
+                    cursor_x += g.advance;
                 }
-                cursor_x += g.advance;
-            }
-            break;
-        }
-        default: {
-            auto children =
-                el.ui_element->child_widgets.data(bitm_cache.magic).value();
-            for(auto const& [i, child] :
-                stl_types::const_enumerate(el.children))
-            {
-                auto const& meta = children[i];
-                process_widget(
-                    e,
-                    child,
-                    widget_data_t{
-                        .vertex_data   = data.vertex_data,
-                        .instance_data = data.instance_data,
-                        .box           = {min.x, min.y, max.x, max.y},
-                    },
-                    layout_data_t{
-                        .offset =
-                            Vecf2(meta.horizontal_offset, meta.vertical_offset),
-                    });
-            }
-            break;
-        }
-        }
+                return false;
+            });
     }
 
     void start_restricted(Proxy&, time_point const&)
@@ -489,14 +454,13 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         {
             auto        ref     = e.ref<Proxy>(widget);
             auto const& element = ref.get<UIElement>();
-            process_widget(
-                e,
-                element.element,
-                widget_data_t{
-                    .vertex_data   = vertex_data,
-                    .instance_data = instance_vertex_data,
-                    .box           = blam::vec4i16{0, 0, 640, 480},
-                });
+            widget_data_t root_data{
+                .vertex_data   = vertex_data,
+                .instance_data = instance_vertex_data,
+                .box           = blam::vec4i16{0, 0, 640, 480},
+            };
+            process_input(element.element, root_data);
+            process_render(element.element, root_data);
         }
 
         vertices->commit(Bytes::ofContainer(vertex_data).view);
