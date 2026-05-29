@@ -275,10 +275,6 @@ static void load_resources(
     {
         if(tag.matches(blam::tag_class_t::bitm))
         {
-            // cDebug(
-            //     "Loading bitmap {0}",
-            //     tag.to_name().to_string(files.container.magic));
-            // bitmaps.predict(tag.as_ref(), 0);
             num_bitms++;
         }
         if(tag.matches(blam::tag_class_t::snd))

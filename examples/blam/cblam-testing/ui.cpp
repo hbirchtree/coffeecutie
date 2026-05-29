@@ -110,7 +110,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     Vecf2                           mouse_pos;
     Vecf2                           m_mouse_raw{};
     bool                            m_bus_subscribed{false};
+    bool                            m_mouse_active{false};
     CIMouseButtonEvent::MouseButton mouse_buttons{CIMouseButtonEvent::NoneBtn};
+    generation_idx_t                m_cursor_bitmap;
 
     struct widget_data_t
     {
@@ -404,29 +406,18 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         using namespace std::string_view_literals;
         using typing::pixels::CompFmt;
 
-        if(!e.subsystem<RenderingParameters>().render_ui)
-            return;
-
         auto* fb    = e.service<comp_app::GraphicsFramebuffer>();
         screen_size = Vecf2(fb->size().w, fb->size().h);
 
-        /* Used for anything centered on screen, in the typical 640x480
-         * screenspace
-         * This is what most of the widgets are aimed at
-         */
         f32  aspect = 1.f / fb->size().aspect();
         auto screen_scale =
             glm::scale(Matf3(1), Vecf2{aspect / 320.f * 1.33f, -1.f / 240.f}) *
             glm::translate(Matf3(1), Vecf2{-320.f, -240.f});
 
-        // window_to_ui_xf =
-        //     glm::scale(Matf3(1), Vecf2{aspect / 320.f, -1.f / 240.f}) *
-        //     glm::translate(Matf3(1), Vecf2{-size.w / 2.f, -size.h / 2.f}) *
-        //     glm::scale(Matf3(1), Vecf2{.5f / size.w, .5f / size.h});
-
         if(!m_bus_subscribed)
         {
             m_bus_subscribed = true;
+            using Coffee::Input::CIControllerAtomicEvent;
             using Coffee::Input::CIEvent;
             using Coffee::Input::CIMouseMoveEvent;
             if(auto* bus = e.underlying()
@@ -434,14 +425,20 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             {
                 bus->addEventFunction<CIMouseMoveEvent>(
                     1024, [this](CIEvent&, CIMouseMoveEvent* mv) {
-                        m_mouse_raw = {mv->origin.x, mv->origin.y};
+                        m_mouse_raw    = {mv->origin.x, mv->origin.y};
+                        m_mouse_active = true;
                     });
                 bus->addEventFunction<CIMouseButtonEvent>(
                     1024, [this](CIEvent&, CIMouseButtonEvent* mb) {
+                        m_mouse_active = true;
                         if(mb->mod == CIMouseButtonEvent::Pressed)
                             mouse_buttons |= mb->btn;
                         else
                             mouse_buttons &= mouse_buttons ^ mb->btn;
+                    });
+                bus->addEventFunction<CIControllerAtomicEvent>(
+                    1024, [this](CIEvent&, CIControllerAtomicEvent*) {
+                        m_mouse_active = false;
                     });
             }
         }
@@ -450,18 +447,50 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         std::vector<vertex_t>          vertex_data;
         std::vector<instance_vertex_t> instance_vertex_data;
 
-        for(auto const& widget : e.select<UIElement>())
+        if(e.subsystem<RenderingParameters>().render_ui)
         {
-            auto        ref     = e.ref<Proxy>(widget);
-            auto const& element = ref.get<UIElement>();
-            widget_data_t root_data{
-                .vertex_data   = vertex_data,
-                .instance_data = instance_vertex_data,
-                .box           = blam::vec4i16{0, 0, 640, 480},
-            };
-            process_input(element.element, root_data);
-            process_render(element.element, root_data);
+            for(auto const& widget : e.select<UIElement>())
+            {
+                auto        ref     = e.ref<Proxy>(widget);
+                auto const& element = ref.get<UIElement>();
+                widget_data_t root_data{
+                    .vertex_data   = vertex_data,
+                    .instance_data = instance_vertex_data,
+                    .box           = blam::vec4i16{0, 0, 640, 480},
+                };
+                process_input(element.element, root_data);
+                process_render(element.element, root_data);
+            }
         }
+
+        if(m_mouse_active && m_cursor_bitmap.valid())
+        {
+            atlas_intermediate_t tmp{};
+            auto const* bitm = bitm_cache.assign_atlas_data(tmp, m_cursor_bitmap);
+            auto const* img  = bitm->image.mip;
+            Vecf2       csz{(f32)img->isize.x, (f32)img->isize.y};
+            Vecf2       cmin = mouse_pos;
+            Vecf2       cmax = mouse_pos + csz;
+            std::array<vertex_t, 6> verts = {{
+                {.position = {cmin.x, cmin.y}, .tex_coord = {0, 0}},
+                {.position = {cmax.x, cmin.y}, .tex_coord = {1, 0}},
+                {.position = {cmax.x, cmax.y}, .tex_coord = {1, 1}},
+                {.position = {cmin.x, cmin.y}, .tex_coord = {0, 0}},
+                {.position = {cmax.x, cmax.y}, .tex_coord = {1, 1}},
+                {.position = {cmin.x, cmax.y}, .tex_coord = {0, 1}},
+            }};
+            vertex_data.insert(vertex_data.end(), verts.begin(), verts.end());
+            instance_vertex_t inst{};
+            inst.color            = {1, 1, 1, 1};
+            inst.tex_scale_offset = Vecf4(
+                tmp.atlas_scale.x, tmp.atlas_scale.y,
+                tmp.atlas_offset.x, tmp.atlas_offset.y);
+            inst.texture_source.x = tmp.layer;
+            instance_vertex_data.push_back(inst);
+        }
+
+        if(vertex_data.empty())
+            return;
 
         vertices->commit(Bytes::ofContainer(vertex_data).view);
         instance_vertices->commit(
@@ -720,4 +749,21 @@ void load_ui_items(
     }
 
     fonts.allocate_font_texture();
+
+    auto& bitmaps = e.subsystem_cast<BitmapCache<halo_version>>();
+    for(blam::tag_t const& tag : tag_view)
+    {
+        if(!tag.matches(blam::tag_class_t::bitm))
+            continue;
+        if(tag.to_name().to_string(data.container.magic) !=
+           "ui\\shell\\bitmaps\\cursor")
+            continue;
+        try
+        {
+            e.subsystem_cast<UIRenderer>().m_cursor_bitmap =
+                bitmaps.predict(tag.as_ref(), 0);
+        }
+        catch(...) {}
+        break;
+    }
 }
