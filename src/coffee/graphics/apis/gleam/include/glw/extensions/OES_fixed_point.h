@@ -22,6 +22,9 @@ STATICINLINE void alpha_funcx(
     {
         GLW_FPTR_CHECK(AlphaFuncxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glAlphaFuncxOES, func, ref);
+#endif
     glAlphaFuncxOES(static_cast<GLenum>(func), ref);
     detail::error_check("AlphaFuncxOES"sv, check_errors);
 }
@@ -44,6 +47,9 @@ STATICINLINE void clear_colorx(
     {
         GLW_FPTR_CHECK(ClearColorxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glClearColorxOES, red);
+#endif
     glClearColorxOES(red[0], red[1], red[2], red[3]);
     detail::error_check("ClearColorxOES"sv, check_errors);
 }
@@ -61,6 +67,9 @@ STATICINLINE void clear_depthx(
     {
         GLW_FPTR_CHECK(ClearDepthxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glClearDepthxOES, depth);
+#endif
     glClearDepthxOES(depth);
     detail::error_check("ClearDepthxOES"sv, check_errors);
 }
@@ -87,6 +96,14 @@ STATICINLINE void clip_planex(
     {
         GLW_FPTR_CHECK(ClipPlanexOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glClipPlanexOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(equation.data()),
+            equation.size_bytes()),
+        plane);
+#endif
     glClipPlanexOES(
         static_cast<GLenum>(plane),
         equation.size() ? reinterpret_cast<const GLfixed*>(equation.data())
@@ -112,6 +129,9 @@ STATICINLINE void color4x(
     {
         GLW_FPTR_CHECK(Color4xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glColor4xOES, red);
+#endif
     glColor4xOES(red[0], red[1], red[2], red[3]);
     detail::error_check("Color4xOES"sv, check_errors);
 }
@@ -130,6 +150,9 @@ STATICINLINE void depth_rangex(
     {
         GLW_FPTR_CHECK(DepthRangexOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDepthRangexOES, n, f);
+#endif
     glDepthRangexOES(n, f);
     detail::error_check("DepthRangexOES"sv, check_errors);
 }
@@ -150,6 +173,9 @@ STATICINLINE void fogx(
     {
         GLW_FPTR_CHECK(FogxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFogxOES, pname, param);
+#endif
     glFogxOES(static_cast<GLenum>(pname), param);
     detail::error_check("FogxOES"sv, check_errors);
 }
@@ -176,6 +202,13 @@ STATICINLINE void fogxv(
     {
         GLW_FPTR_CHECK(FogxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glFogxvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(param.data()), param.size_bytes()),
+        pname);
+#endif
     glFogxvOES(
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<const GLfixed*>(param.data())
@@ -207,6 +240,9 @@ STATICINLINE void frustumx(
     {
         GLW_FPTR_CHECK(FrustumxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFrustumxOES, l, r, b, t, n, f);
+#endif
     glFrustumxOES(l, r, b, t, n, f);
     detail::error_check("FrustumxOES"sv, check_errors);
 }
@@ -233,6 +269,13 @@ STATICINLINE void get_clip_planex(
     {
         GLW_FPTR_CHECK(GetClipPlanexOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetClipPlanexOES,
+        gsl::span<char>(
+            reinterpret_cast<char*>(equation.data()), equation.size_bytes()),
+        plane);
+#endif
     glGetClipPlanexOES(
         static_cast<GLenum>(plane),
         equation.size() ? reinterpret_cast<GLfixed*>(equation.data())
@@ -262,6 +305,13 @@ STATICINLINE void get_fixedv(
     {
         GLW_FPTR_CHECK(GetFixedvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetFixedvOES,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        pname);
+#endif
     glGetFixedvOES(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfixed*>(params.data()) : nullptr);
@@ -292,6 +342,14 @@ STATICINLINE void get_tex_envxv(
     {
         GLW_FPTR_CHECK(GetTexEnvxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetTexEnvxvOES,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetTexEnvxvOES(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -323,6 +381,14 @@ STATICINLINE void get_tex_parameterxv(
     {
         GLW_FPTR_CHECK(GetTexParameterxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetTexParameterxvOES,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetTexParameterxvOES(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -346,6 +412,9 @@ STATICINLINE void light_modelx(
     {
         GLW_FPTR_CHECK(LightModelxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glLightModelxOES, pname, param);
+#endif
     glLightModelxOES(static_cast<GLenum>(pname), param);
     detail::error_check("LightModelxOES"sv, check_errors);
 }
@@ -372,6 +441,13 @@ STATICINLINE void light_modelxv(
     {
         GLW_FPTR_CHECK(LightModelxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glLightModelxvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(param.data()), param.size_bytes()),
+        pname);
+#endif
     glLightModelxvOES(
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<const GLfixed*>(param.data())
@@ -397,6 +473,9 @@ STATICINLINE void lightx(
     {
         GLW_FPTR_CHECK(LightxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glLightxOES, light, pname, param);
+#endif
     glLightxOES(static_cast<GLenum>(light), static_cast<GLenum>(pname), param);
     detail::error_check("LightxOES"sv, check_errors);
 }
@@ -425,6 +504,14 @@ STATICINLINE void lightxv(
     {
         GLW_FPTR_CHECK(LightxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glLightxvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        light,
+        pname);
+#endif
     glLightxvOES(
         static_cast<GLenum>(light),
         static_cast<GLenum>(pname),
@@ -446,6 +533,9 @@ STATICINLINE void line_widthx(
     {
         GLW_FPTR_CHECK(LineWidthxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glLineWidthxOES, width);
+#endif
     glLineWidthxOES(width);
     detail::error_check("LineWidthxOES"sv, check_errors);
 }
@@ -469,6 +559,12 @@ STATICINLINE void load_matrixx(
     {
         GLW_FPTR_CHECK(LoadMatrixxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glLoadMatrixxOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(m.data()), m.size_bytes()));
+#endif
     glLoadMatrixxOES(
         m.size() ? reinterpret_cast<const GLfixed*>(m.data()) : nullptr);
     detail::error_check("LoadMatrixxOES"sv, check_errors);
@@ -492,6 +588,9 @@ STATICINLINE void materialx(
     {
         GLW_FPTR_CHECK(MaterialxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMaterialxOES, face, pname, param);
+#endif
     glMaterialxOES(
         static_cast<GLenum>(face), static_cast<GLenum>(pname), param);
     detail::error_check("MaterialxOES"sv, check_errors);
@@ -521,6 +620,14 @@ STATICINLINE void materialxv(
     {
         GLW_FPTR_CHECK(MaterialxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMaterialxvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(param.data()), param.size_bytes()),
+        face,
+        pname);
+#endif
     glMaterialxvOES(
         static_cast<GLenum>(face),
         static_cast<GLenum>(pname),
@@ -548,6 +655,12 @@ STATICINLINE void mult_matrixx(
     {
         GLW_FPTR_CHECK(MultMatrixxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultMatrixxOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(m.data()), m.size_bytes()));
+#endif
     glMultMatrixxOES(
         m.size() ? reinterpret_cast<const GLfixed*>(m.data()) : nullptr);
     detail::error_check("MultMatrixxOES"sv, check_errors);
@@ -575,6 +688,9 @@ STATICINLINE void multi_tex_coord4x(
     {
         GLW_FPTR_CHECK(MultiTexCoord4xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord4xOES, texture, s, t, r, q);
+#endif
     glMultiTexCoord4xOES(static_cast<GLenum>(texture), s, t, r, q);
     detail::error_check("MultiTexCoord4xOES"sv, check_errors);
 }
@@ -597,6 +713,9 @@ STATICINLINE void normal3x(
     {
         GLW_FPTR_CHECK(Normal3xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glNormal3xOES, nx, ny, nz);
+#endif
     glNormal3xOES(nx, ny, nz);
     detail::error_check("Normal3xOES"sv, check_errors);
 }
@@ -625,6 +744,9 @@ STATICINLINE void orthox(
     {
         GLW_FPTR_CHECK(OrthoxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glOrthoxOES, l, r, b, t, n, f);
+#endif
     glOrthoxOES(l, r, b, t, n, f);
     detail::error_check("OrthoxOES"sv, check_errors);
 }
@@ -651,6 +773,13 @@ STATICINLINE void point_parameterxv(
     {
         GLW_FPTR_CHECK(PointParameterxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glPointParameterxvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        pname);
+#endif
     glPointParameterxvOES(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfixed*>(params.data())
@@ -671,6 +800,9 @@ STATICINLINE void point_sizex(
     {
         GLW_FPTR_CHECK(PointSizexOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPointSizexOES, size);
+#endif
     glPointSizexOES(size);
     detail::error_check("PointSizexOES"sv, check_errors);
 }
@@ -689,6 +821,9 @@ STATICINLINE void polygon_offsetx(
     {
         GLW_FPTR_CHECK(PolygonOffsetxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPolygonOffsetxOES, factor, units);
+#endif
     glPolygonOffsetxOES(factor, units);
     detail::error_check("PolygonOffsetxOES"sv, check_errors);
 }
@@ -713,6 +848,9 @@ STATICINLINE void rotatex(
     {
         GLW_FPTR_CHECK(RotatexOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glRotatexOES, angle, x);
+#endif
     glRotatexOES(angle, x[0], x[1], x[2]);
     detail::error_check("RotatexOES"sv, check_errors);
 }
@@ -734,6 +872,9 @@ STATICINLINE void scalex(
     {
         GLW_FPTR_CHECK(ScalexOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glScalexOES, x);
+#endif
     glScalexOES(x[0], x[1], x[2]);
     detail::error_check("ScalexOES"sv, check_errors);
 }
@@ -756,6 +897,9 @@ STATICINLINE void tex_envx(
     {
         GLW_FPTR_CHECK(TexEnvxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexEnvxOES, target, pname, param);
+#endif
     glTexEnvxOES(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), param);
     detail::error_check("TexEnvxOES"sv, check_errors);
@@ -785,6 +929,14 @@ STATICINLINE void tex_envxv(
     {
         GLW_FPTR_CHECK(TexEnvxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexEnvxvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glTexEnvxvOES(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -811,6 +963,9 @@ STATICINLINE void tex_parameterx(
     {
         GLW_FPTR_CHECK(TexParameterxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexParameterxOES, target, pname, param);
+#endif
     glTexParameterxOES(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), param);
     detail::error_check("TexParameterxOES"sv, check_errors);
@@ -840,6 +995,14 @@ STATICINLINE void tex_parameterxv(
     {
         GLW_FPTR_CHECK(TexParameterxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexParameterxvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glTexParameterxvOES(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -865,6 +1028,9 @@ STATICINLINE void translatex(
     {
         GLW_FPTR_CHECK(TranslatexOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTranslatexOES, x);
+#endif
     glTranslatexOES(x[0], x[1], x[2]);
     detail::error_check("TranslatexOES"sv, check_errors);
 }
@@ -894,6 +1060,14 @@ STATICINLINE void get_lightxv(
     {
         GLW_FPTR_CHECK(GetLightxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetLightxvOES,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        light,
+        pname);
+#endif
     glGetLightxvOES(
         static_cast<GLenum>(light),
         static_cast<GLenum>(pname),
@@ -927,6 +1101,14 @@ STATICINLINE void get_materialxv(
     {
         GLW_FPTR_CHECK(GetMaterialxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetMaterialxvOES,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        face,
+        pname);
+#endif
     glGetMaterialxvOES(
         static_cast<GLenum>(face),
         static_cast<GLenum>(pname),
@@ -952,6 +1134,9 @@ STATICINLINE void point_parameterx(
     {
         GLW_FPTR_CHECK(PointParameterxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPointParameterxOES, pname, param);
+#endif
     glPointParameterxOES(static_cast<GLenum>(pname), param);
     detail::error_check("PointParameterxOES"sv, check_errors);
 }
@@ -972,6 +1157,9 @@ STATICINLINE void sample_coveragex(
     {
         GLW_FPTR_CHECK(SampleCoveragexOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSampleCoveragexOES, value, invert);
+#endif
     glSampleCoveragexOES(value, invert);
     detail::error_check("SampleCoveragexOES"sv, check_errors);
 }
@@ -992,6 +1180,9 @@ STATICINLINE void accumx(
     {
         GLW_FPTR_CHECK(AccumxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glAccumxOES, op, value);
+#endif
     glAccumxOES(op, value);
     detail::error_check("AccumxOES"sv, check_errors);
 }
@@ -1029,6 +1220,17 @@ STATICINLINE void bitmapx(
     {
         GLW_FPTR_CHECK(BitmapxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glBitmapxOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(bitmap.data()), bitmap.size_bytes()),
+        width,
+        xorig,
+        yorig,
+        xmove,
+        ymove);
+#endif
     glBitmapxOES(
         width[0],
         width[1],
@@ -1061,6 +1263,9 @@ STATICINLINE void blend_colorx(
     {
         GLW_FPTR_CHECK(BlendColorxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendColorxOES, red);
+#endif
     glBlendColorxOES(red[0], red[1], red[2], red[3]);
     detail::error_check("BlendColorxOES"sv, check_errors);
 }
@@ -1085,6 +1290,9 @@ STATICINLINE void clear_accumx(
     {
         GLW_FPTR_CHECK(ClearAccumxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glClearAccumxOES, red);
+#endif
     glClearAccumxOES(red[0], red[1], red[2], red[3]);
     detail::error_check("ClearAccumxOES"sv, check_errors);
 }
@@ -1108,6 +1316,9 @@ STATICINLINE void color3x(
     {
         GLW_FPTR_CHECK(Color3xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glColor3xOES, red);
+#endif
     glColor3xOES(red[0], red[1], red[2]);
     detail::error_check("Color3xOES"sv, check_errors);
 }
@@ -1134,6 +1345,13 @@ STATICINLINE void color3xv(
     {
         GLW_FPTR_CHECK(Color3xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glColor3xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(components.data()),
+            components.size_bytes()));
+#endif
     glColor3xvOES(
         components.size() ? reinterpret_cast<const GLfixed*>(components.data())
                           : nullptr);
@@ -1162,6 +1380,13 @@ STATICINLINE void color4xv(
     {
         GLW_FPTR_CHECK(Color4xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glColor4xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(components.data()),
+            components.size_bytes()));
+#endif
     glColor4xvOES(
         components.size() ? reinterpret_cast<const GLfixed*>(components.data())
                           : nullptr);
@@ -1188,6 +1413,9 @@ STATICINLINE void convolution_parameterx(
     {
         GLW_FPTR_CHECK(ConvolutionParameterxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glConvolutionParameterxOES, target, pname, param);
+#endif
     glConvolutionParameterxOES(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), param);
     detail::error_check("ConvolutionParameterxOES"sv, check_errors);
@@ -1219,6 +1447,14 @@ STATICINLINE void convolution_parameterxv(
     {
         GLW_FPTR_CHECK(ConvolutionParameterxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glConvolutionParameterxvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glConvolutionParameterxvOES(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -1242,6 +1478,9 @@ STATICINLINE void eval_coord1x(
     {
         GLW_FPTR_CHECK(EvalCoord1xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEvalCoord1xOES, u);
+#endif
     glEvalCoord1xOES(u);
     detail::error_check("EvalCoord1xOES"sv, check_errors);
 }
@@ -1268,6 +1507,12 @@ STATICINLINE void eval_coord1xv(
     {
         GLW_FPTR_CHECK(EvalCoord1xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glEvalCoord1xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glEvalCoord1xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
@@ -1290,6 +1535,9 @@ STATICINLINE void eval_coord2x(
     {
         GLW_FPTR_CHECK(EvalCoord2xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEvalCoord2xOES, u, v);
+#endif
     glEvalCoord2xOES(u, v);
     detail::error_check("EvalCoord2xOES"sv, check_errors);
 }
@@ -1316,6 +1564,12 @@ STATICINLINE void eval_coord2xv(
     {
         GLW_FPTR_CHECK(EvalCoord2xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glEvalCoord2xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glEvalCoord2xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
@@ -1347,6 +1601,13 @@ STATICINLINE void feedback_bufferx(
     {
         GLW_FPTR_CHECK(FeedbackBufferxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glFeedbackBufferxOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(buffer.data()), buffer.size_bytes()),
+        type);
+#endif
     glFeedbackBufferxOES(
         buffer.size(),
         type,
@@ -1381,6 +1642,14 @@ STATICINLINE void get_convolution_parameterxv(
     {
         GLW_FPTR_CHECK(GetConvolutionParameterxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetConvolutionParameterxvOES,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetConvolutionParameterxvOES(
         target,
         pname,
@@ -1414,6 +1683,14 @@ STATICINLINE void get_histogram_parameterxv(
     {
         GLW_FPTR_CHECK(GetHistogramParameterxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetHistogramParameterxvOES,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetHistogramParameterxvOES(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -1447,6 +1724,14 @@ STATICINLINE void get_lightx(
     {
         GLW_FPTR_CHECK(GetLightxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetLightxOES,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        light,
+        pname);
+#endif
     glGetLightxOES(
         static_cast<GLenum>(light),
         static_cast<GLenum>(pname),
@@ -1480,6 +1765,13 @@ STATICINLINE void get_mapxv(
     {
         GLW_FPTR_CHECK(GetMapxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetMapxvOES,
+        gsl::span<char>(reinterpret_cast<char*>(v.data()), v.size_bytes()),
+        target,
+        query);
+#endif
     glGetMapxvOES(
         static_cast<GLenum>(target),
         static_cast<GLenum>(query),
@@ -1507,6 +1799,9 @@ STATICINLINE void get_materialx(
     {
         GLW_FPTR_CHECK(GetMaterialxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetMaterialxOES, face, pname, param);
+#endif
     glGetMaterialxOES(
         static_cast<GLenum>(face), static_cast<GLenum>(pname), param);
     detail::error_check("GetMaterialxOES"sv, check_errors);
@@ -1537,6 +1832,13 @@ STATICINLINE void get_pixel_mapxv(
     {
         GLW_FPTR_CHECK(GetPixelMapxv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetPixelMapxv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(values.data()), values.size_bytes()),
+        map);
+#endif
     glGetPixelMapxv(
         static_cast<GLenum>(map),
         values.size(),
@@ -1570,6 +1872,14 @@ STATICINLINE void get_tex_genxv(
     {
         GLW_FPTR_CHECK(GetTexGenxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetTexGenxvOES,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        coord,
+        pname);
+#endif
     glGetTexGenxvOES(
         static_cast<GLenum>(coord),
         static_cast<GLenum>(pname),
@@ -1605,6 +1915,15 @@ STATICINLINE void get_tex_level_parameterxv(
     {
         GLW_FPTR_CHECK(GetTexLevelParameterxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetTexLevelParameterxvOES,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        level,
+        pname);
+#endif
     glGetTexLevelParameterxvOES(
         static_cast<GLenum>(target),
         level,
@@ -1628,6 +1947,9 @@ STATICINLINE void indexx(
     {
         GLW_FPTR_CHECK(IndexxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIndexxOES, component);
+#endif
     glIndexxOES(component);
     detail::error_check("IndexxOES"sv, check_errors);
 }
@@ -1654,6 +1976,13 @@ STATICINLINE void indexxv(
     {
         GLW_FPTR_CHECK(IndexxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glIndexxvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(component.data()),
+            component.size_bytes()));
+#endif
     glIndexxvOES(
         component.size() ? reinterpret_cast<const GLfixed*>(component.data())
                          : nullptr);
@@ -1681,6 +2010,12 @@ STATICINLINE void load_transpose_matrixx(
     {
         GLW_FPTR_CHECK(LoadTransposeMatrixxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glLoadTransposeMatrixxOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(m.data()), m.size_bytes()));
+#endif
     glLoadTransposeMatrixxOES(
         m.size() ? reinterpret_cast<const GLfixed*>(m.data()) : nullptr);
     detail::error_check("LoadTransposeMatrixxOES"sv, check_errors);
@@ -1712,6 +2047,9 @@ STATICINLINE void map1x(
     {
         GLW_FPTR_CHECK(Map1xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMap1xOES, target, u1, u2, stride, order, points);
+#endif
     glMap1xOES(static_cast<GLenum>(target), u1, u2, stride, order, points);
     detail::error_check("Map1xOES"sv, check_errors);
 }
@@ -1750,6 +2088,20 @@ STATICINLINE void map2x(
     {
         GLW_FPTR_CHECK(Map2xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMap2xOES,
+        target,
+        u1,
+        u2,
+        ustride,
+        uorder,
+        v1,
+        v2,
+        vstride,
+        vorder,
+        points);
+#endif
     glMap2xOES(
         static_cast<GLenum>(target),
         u1,
@@ -1781,6 +2133,9 @@ STATICINLINE void map_grid1x(
     {
         GLW_FPTR_CHECK(MapGrid1xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMapGrid1xOES, n, u1, u2);
+#endif
     glMapGrid1xOES(n, u1, u2);
     detail::error_check("MapGrid1xOES"sv, check_errors);
 }
@@ -1809,6 +2164,9 @@ STATICINLINE void map_grid2x(
     {
         GLW_FPTR_CHECK(MapGrid2xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMapGrid2xOES, n, u1, u2, v1, v2);
+#endif
     glMapGrid2xOES(n, u1, u2, v1, v2);
     detail::error_check("MapGrid2xOES"sv, check_errors);
 }
@@ -1834,6 +2192,12 @@ STATICINLINE void mult_transpose_matrixx(
     {
         GLW_FPTR_CHECK(MultTransposeMatrixxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultTransposeMatrixxOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(m.data()), m.size_bytes()));
+#endif
     glMultTransposeMatrixxOES(
         m.size() ? reinterpret_cast<const GLfixed*>(m.data()) : nullptr);
     detail::error_check("MultTransposeMatrixxOES"sv, check_errors);
@@ -1857,6 +2221,9 @@ STATICINLINE void multi_tex_coord1x(
     {
         GLW_FPTR_CHECK(MultiTexCoord1xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord1xOES, texture, s);
+#endif
     glMultiTexCoord1xOES(static_cast<GLenum>(texture), s);
     detail::error_check("MultiTexCoord1xOES"sv, check_errors);
 }
@@ -1885,6 +2252,13 @@ STATICINLINE void multi_tex_coord1xv(
     {
         GLW_FPTR_CHECK(MultiTexCoord1xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord1xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()),
+        texture);
+#endif
     glMultiTexCoord1xvOES(
         static_cast<GLenum>(texture),
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
@@ -1912,6 +2286,9 @@ STATICINLINE void multi_tex_coord2x(
     {
         GLW_FPTR_CHECK(MultiTexCoord2xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord2xOES, texture, s, t);
+#endif
     glMultiTexCoord2xOES(static_cast<GLenum>(texture), s, t);
     detail::error_check("MultiTexCoord2xOES"sv, check_errors);
 }
@@ -1940,6 +2317,13 @@ STATICINLINE void multi_tex_coord2xv(
     {
         GLW_FPTR_CHECK(MultiTexCoord2xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord2xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()),
+        texture);
+#endif
     glMultiTexCoord2xvOES(
         static_cast<GLenum>(texture),
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
@@ -1969,6 +2353,9 @@ STATICINLINE void multi_tex_coord3x(
     {
         GLW_FPTR_CHECK(MultiTexCoord3xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord3xOES, texture, s, t, r);
+#endif
     glMultiTexCoord3xOES(static_cast<GLenum>(texture), s, t, r);
     detail::error_check("MultiTexCoord3xOES"sv, check_errors);
 }
@@ -1997,6 +2384,13 @@ STATICINLINE void multi_tex_coord3xv(
     {
         GLW_FPTR_CHECK(MultiTexCoord3xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord3xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()),
+        texture);
+#endif
     glMultiTexCoord3xvOES(
         static_cast<GLenum>(texture),
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
@@ -2028,6 +2422,13 @@ STATICINLINE void multi_tex_coord4xv(
     {
         GLW_FPTR_CHECK(MultiTexCoord4xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord4xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()),
+        texture);
+#endif
     glMultiTexCoord4xvOES(
         static_cast<GLenum>(texture),
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
@@ -2057,6 +2458,12 @@ STATICINLINE void normal3xv(
     {
         GLW_FPTR_CHECK(Normal3xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glNormal3xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glNormal3xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
@@ -2078,6 +2485,9 @@ STATICINLINE void pass_throughx(
     {
         GLW_FPTR_CHECK(PassThroughxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPassThroughxOES, token);
+#endif
     glPassThroughxOES(token);
     detail::error_check("PassThroughxOES"sv, check_errors);
 }
@@ -2107,6 +2517,13 @@ STATICINLINE void pixel_mapx(
     {
         GLW_FPTR_CHECK(PixelMapx)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glPixelMapx,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(values.data()), values.size_bytes()),
+        map);
+#endif
     glPixelMapx(
         static_cast<GLenum>(map),
         values.size(),
@@ -2133,6 +2550,9 @@ STATICINLINE void pixel_storex(
     {
         GLW_FPTR_CHECK(PixelStorex)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPixelStorex, pname, param);
+#endif
     glPixelStorex(static_cast<GLenum>(pname), param);
     detail::error_check("PixelStorex"sv, check_errors);
 }
@@ -2155,6 +2575,9 @@ STATICINLINE void pixel_transferx(
     {
         GLW_FPTR_CHECK(PixelTransferxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPixelTransferxOES, pname, param);
+#endif
     glPixelTransferxOES(static_cast<GLenum>(pname), param);
     detail::error_check("PixelTransferxOES"sv, check_errors);
 }
@@ -2177,6 +2600,9 @@ STATICINLINE void pixel_zoomx(
     {
         GLW_FPTR_CHECK(PixelZoomxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPixelZoomxOES, xfactor, yfactor);
+#endif
     glPixelZoomxOES(xfactor, yfactor);
     detail::error_check("PixelZoomxOES"sv, check_errors);
 }
@@ -2210,6 +2636,16 @@ STATICINLINE void prioritize_texturesx(
     {
         GLW_FPTR_CHECK(PrioritizeTexturesxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glPrioritizeTexturesxOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(textures.data()),
+            textures.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(priorities.data()),
+            priorities.size_bytes()));
+#endif
     glPrioritizeTexturesxOES(
         textures.size(),
         textures.size() ? reinterpret_cast<const GLuint*>(textures.data())
@@ -2237,6 +2673,9 @@ STATICINLINE void raster_pos2x(
     {
         GLW_FPTR_CHECK(RasterPos2xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glRasterPos2xOES, x);
+#endif
     glRasterPos2xOES(x[0], x[1]);
     detail::error_check("RasterPos2xOES"sv, check_errors);
 }
@@ -2263,6 +2702,12 @@ STATICINLINE void raster_pos2xv(
     {
         GLW_FPTR_CHECK(RasterPos2xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glRasterPos2xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glRasterPos2xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
@@ -2288,6 +2733,9 @@ STATICINLINE void raster_pos3x(
     {
         GLW_FPTR_CHECK(RasterPos3xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glRasterPos3xOES, x);
+#endif
     glRasterPos3xOES(x[0], x[1], x[2]);
     detail::error_check("RasterPos3xOES"sv, check_errors);
 }
@@ -2314,6 +2762,12 @@ STATICINLINE void raster_pos3xv(
     {
         GLW_FPTR_CHECK(RasterPos3xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glRasterPos3xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glRasterPos3xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
@@ -2340,6 +2794,9 @@ STATICINLINE void raster_pos4x(
     {
         GLW_FPTR_CHECK(RasterPos4xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glRasterPos4xOES, x);
+#endif
     glRasterPos4xOES(x[0], x[1], x[2], x[3]);
     detail::error_check("RasterPos4xOES"sv, check_errors);
 }
@@ -2366,6 +2823,12 @@ STATICINLINE void raster_pos4xv(
     {
         GLW_FPTR_CHECK(RasterPos4xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glRasterPos4xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glRasterPos4xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
@@ -2394,6 +2857,9 @@ STATICINLINE void rectx(
     {
         GLW_FPTR_CHECK(RectxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glRectxOES, x1, y1, x2, y2);
+#endif
     glRectxOES(x1, y1, x2, y2);
     detail::error_check("RectxOES"sv, check_errors);
 }
@@ -2422,6 +2888,14 @@ STATICINLINE void rectxv(
     {
         GLW_FPTR_CHECK(RectxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glRectxvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v1.data()), v1.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v2.data()), v2.size_bytes()));
+#endif
     glRectxvOES(
         v1.size() ? reinterpret_cast<const GLfixed*>(v1.data()) : nullptr,
         v2.size() ? reinterpret_cast<const GLfixed*>(v2.data()) : nullptr);
@@ -2443,6 +2917,9 @@ STATICINLINE void tex_coord1x(
     {
         GLW_FPTR_CHECK(TexCoord1xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexCoord1xOES, s);
+#endif
     glTexCoord1xOES(s);
     detail::error_check("TexCoord1xOES"sv, check_errors);
 }
@@ -2469,6 +2946,12 @@ STATICINLINE void tex_coord1xv(
     {
         GLW_FPTR_CHECK(TexCoord1xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexCoord1xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glTexCoord1xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
@@ -2491,6 +2974,9 @@ STATICINLINE void tex_coord2x(
     {
         GLW_FPTR_CHECK(TexCoord2xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexCoord2xOES, s, t);
+#endif
     glTexCoord2xOES(s, t);
     detail::error_check("TexCoord2xOES"sv, check_errors);
 }
@@ -2517,6 +3003,12 @@ STATICINLINE void tex_coord2xv(
     {
         GLW_FPTR_CHECK(TexCoord2xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexCoord2xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glTexCoord2xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
@@ -2540,6 +3032,9 @@ STATICINLINE void tex_coord3x(
     {
         GLW_FPTR_CHECK(TexCoord3xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexCoord3xOES, s, t, r);
+#endif
     glTexCoord3xOES(s, t, r);
     detail::error_check("TexCoord3xOES"sv, check_errors);
 }
@@ -2566,6 +3061,12 @@ STATICINLINE void tex_coord3xv(
     {
         GLW_FPTR_CHECK(TexCoord3xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexCoord3xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glTexCoord3xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
@@ -2594,6 +3095,9 @@ STATICINLINE void tex_coord4x(
     {
         GLW_FPTR_CHECK(TexCoord4xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexCoord4xOES, s, t, r, q);
+#endif
     glTexCoord4xOES(s, t, r, q);
     detail::error_check("TexCoord4xOES"sv, check_errors);
 }
@@ -2620,6 +3124,12 @@ STATICINLINE void tex_coord4xv(
     {
         GLW_FPTR_CHECK(TexCoord4xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexCoord4xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glTexCoord4xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
@@ -2646,6 +3156,9 @@ STATICINLINE void tex_genx(
     {
         GLW_FPTR_CHECK(TexGenxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexGenxOES, coord, pname, param);
+#endif
     glTexGenxOES(static_cast<GLenum>(coord), static_cast<GLenum>(pname), param);
     detail::error_check("TexGenxOES"sv, check_errors);
 }
@@ -2676,6 +3189,14 @@ STATICINLINE void tex_genxv(
     {
         GLW_FPTR_CHECK(TexGenxvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexGenxvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        coord,
+        pname);
+#endif
     glTexGenxvOES(
         static_cast<GLenum>(coord),
         static_cast<GLenum>(pname),
@@ -2699,6 +3220,9 @@ STATICINLINE void vertex2x(
     {
         GLW_FPTR_CHECK(Vertex2xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertex2xOES, x);
+#endif
     glVertex2xOES(x);
     detail::error_check("Vertex2xOES"sv, check_errors);
 }
@@ -2725,6 +3249,12 @@ STATICINLINE void vertex2xv(
     {
         GLW_FPTR_CHECK(Vertex2xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertex2xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glVertex2xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
@@ -2749,6 +3279,9 @@ STATICINLINE void vertex3x(
     {
         GLW_FPTR_CHECK(Vertex3xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertex3xOES, x);
+#endif
     glVertex3xOES(x[0], x[1]);
     detail::error_check("Vertex3xOES"sv, check_errors);
 }
@@ -2775,6 +3308,12 @@ STATICINLINE void vertex3xv(
     {
         GLW_FPTR_CHECK(Vertex3xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertex3xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glVertex3xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
@@ -2800,6 +3339,9 @@ STATICINLINE void vertex4x(
     {
         GLW_FPTR_CHECK(Vertex4xOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertex4xOES, x);
+#endif
     glVertex4xOES(x[0], x[1], x[2]);
     detail::error_check("Vertex4xOES"sv, check_errors);
 }
@@ -2826,6 +3368,12 @@ STATICINLINE void vertex4xv(
     {
         GLW_FPTR_CHECK(Vertex4xvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertex4xvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glVertex4xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);

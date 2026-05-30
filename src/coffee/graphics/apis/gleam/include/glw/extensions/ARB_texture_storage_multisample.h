@@ -30,6 +30,15 @@ STATICINLINE void tex_storage_2d_multisample(
     {
         GLW_FPTR_CHECK(TexStorage2DMultisample)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexStorage2DMultisample,
+        target,
+        samples,
+        internalformat,
+        width,
+        fixedsamplelocations);
+#endif
     glTexStorage2DMultisample(
         static_cast<GLenum>(target),
         samples,
@@ -66,6 +75,15 @@ STATICINLINE void tex_storage_3d_multisample(
     {
         GLW_FPTR_CHECK(TexStorage3DMultisample)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexStorage3DMultisample,
+        target,
+        samples,
+        internalformat,
+        width,
+        fixedsamplelocations);
+#endif
     glTexStorage3DMultisample(
         static_cast<GLenum>(target),
         samples,

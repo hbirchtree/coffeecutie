@@ -29,6 +29,16 @@ STATICINLINE void buffer_page_commitment_mem(
     {
         GLW_FPTR_CHECK(BufferPageCommitmentMemNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glBufferPageCommitmentMemNV,
+        target,
+        offset,
+        size,
+        memory,
+        memOffset,
+        commit);
+#endif
     glBufferPageCommitmentMemNV(
         static_cast<GLenum>(target), offset, size, memory, memOffset, commit);
     detail::error_check("BufferPageCommitmentMemNV"sv, check_errors);
@@ -69,6 +79,18 @@ STATICINLINE void tex_page_commitment_mem(
     {
         GLW_FPTR_CHECK(TexPageCommitmentMemNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexPageCommitmentMemNV,
+        target,
+        layer,
+        level,
+        xoffset,
+        width,
+        memory,
+        offset,
+        commit);
+#endif
     glTexPageCommitmentMemNV(
         static_cast<GLenum>(target),
         layer,
@@ -114,6 +136,16 @@ STATICINLINE void named_buffer_page_commitment_mem(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glNamedBufferPageCommitmentMemNV,
+        buffer,
+        offset,
+        size,
+        memory,
+        memOffset,
+        commit);
+#endif
     glNamedBufferPageCommitmentMemNV(
         buffer, offset, size, memory, memOffset, commit);
     detail::error_check("NamedBufferPageCommitmentMemNV"sv, check_errors);
@@ -159,6 +191,18 @@ STATICINLINE void texture_page_commitment_mem(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexturePageCommitmentMemNV,
+        texture,
+        layer,
+        level,
+        xoffset,
+        width,
+        memory,
+        offset,
+        commit);
+#endif
     glTexturePageCommitmentMemNV(
         texture,
         layer,

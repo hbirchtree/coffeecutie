@@ -36,6 +36,18 @@ STATICINLINE void primitive_bounding_box(
     {
         GLW_FPTR_CHECK(PrimitiveBoundingBoxARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glPrimitiveBoundingBoxARB,
+        minX,
+        minY,
+        minZ,
+        minW,
+        maxX,
+        maxY,
+        maxZ,
+        maxW);
+#endif
     glPrimitiveBoundingBoxARB(minX, minY, minZ, minW, maxX, maxY, maxZ, maxW);
     detail::error_check("PrimitiveBoundingBoxARB"sv, check_errors);
 }

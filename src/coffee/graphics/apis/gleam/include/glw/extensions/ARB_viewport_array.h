@@ -38,6 +38,14 @@ STATICINLINE void depth_range_arrayv(
     {
         GLW_FPTR_CHECK(DepthRangeArrayv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDepthRangeArrayv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        first,
+        count);
+#endif
     glDepthRangeArrayv(
         first,
         count,
@@ -60,6 +68,9 @@ STATICINLINE void depth_range_indexed(
     {
         GLW_FPTR_CHECK(DepthRangeIndexed)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDepthRangeIndexed, index, n, f);
+#endif
     glDepthRangeIndexed(index, n, f);
     detail::error_check("DepthRangeIndexed"sv, check_errors);
 }
@@ -87,6 +98,14 @@ STATICINLINE void get_doublei_v(
     {
         GLW_FPTR_CHECK(GetDoublei_v)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetDoublei_v,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        target,
+        index);
+#endif
     glGetDoublei_v(
         static_cast<GLenum>(target),
         index,
@@ -117,6 +136,14 @@ STATICINLINE void get_floati_v(
     {
         GLW_FPTR_CHECK(GetFloati_v)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetFloati_v,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        target,
+        index);
+#endif
     glGetFloati_v(
         static_cast<GLenum>(target),
         index,
@@ -148,6 +175,14 @@ STATICINLINE void scissor_arrayv(
     {
         GLW_FPTR_CHECK(ScissorArrayv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glScissorArrayv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        first,
+        count);
+#endif
     glScissorArrayv(
         first,
         count,
@@ -178,6 +213,9 @@ STATICINLINE void scissor_indexed(
     {
         GLW_FPTR_CHECK(ScissorIndexed)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glScissorIndexed, index, left, bottom, width);
+#endif
     glScissorIndexed(index, left, bottom, width[0], width[1]);
     detail::error_check("ScissorIndexed"sv, check_errors);
 }
@@ -204,6 +242,13 @@ STATICINLINE void scissor_indexedv(
     {
         GLW_FPTR_CHECK(ScissorIndexedv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glScissorIndexedv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glScissorIndexedv(
         index, v.size() ? reinterpret_cast<const GLint*>(v.data()) : nullptr);
     detail::error_check("ScissorIndexedv"sv, check_errors);
@@ -233,6 +278,14 @@ STATICINLINE void viewport_arrayv(
     {
         GLW_FPTR_CHECK(ViewportArrayv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glViewportArrayv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        first,
+        count);
+#endif
     glViewportArrayv(
         first,
         count,
@@ -263,6 +316,9 @@ STATICINLINE void viewport_indexedf(
     {
         GLW_FPTR_CHECK(ViewportIndexedf)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glViewportIndexedf, index, x, w);
+#endif
     glViewportIndexedf(index, x[0], x[1], w[0], w[1]);
     detail::error_check("ViewportIndexedf"sv, check_errors);
 }
@@ -289,6 +345,13 @@ STATICINLINE void viewport_indexedfv(
     {
         GLW_FPTR_CHECK(ViewportIndexedfv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glViewportIndexedfv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glViewportIndexedfv(
         index, v.size() ? reinterpret_cast<const GLfloat*>(v.data()) : nullptr);
     detail::error_check("ViewportIndexedfv"sv, check_errors);
@@ -318,6 +381,14 @@ STATICINLINE void depth_range_arraydv_nv(
     {
         GLW_FPTR_CHECK(DepthRangeArraydvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDepthRangeArraydvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        first,
+        count);
+#endif
     glDepthRangeArraydvNV(
         first,
         count,
@@ -340,6 +411,9 @@ STATICINLINE void depth_range_indexedd_nv(
     {
         GLW_FPTR_CHECK(DepthRangeIndexeddNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDepthRangeIndexeddNV, index, n, f);
+#endif
     glDepthRangeIndexeddNV(index, n, f);
     detail::error_check("DepthRangeIndexeddNV"sv, check_errors);
 }

@@ -47,6 +47,9 @@ STATICINLINE void framebuffer_texture_ext(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFramebufferTextureEXT, target, attachment, texture, level);
+#endif
     glFramebufferTextureEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),
@@ -82,6 +85,10 @@ STATICINLINE void framebuffer_texture_face_ext(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFramebufferTextureFaceEXT, target, attachment, texture, level, face);
+#endif
     glFramebufferTextureFaceEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),
@@ -118,6 +125,15 @@ STATICINLINE void framebuffer_texture_layer_ext(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFramebufferTextureLayerEXT,
+        target,
+        attachment,
+        texture,
+        level,
+        layer);
+#endif
     glFramebufferTextureLayerEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),
@@ -143,6 +159,9 @@ STATICINLINE void program_vertex_limit(
     {
         GLW_FPTR_CHECK(ProgramVertexLimitNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramVertexLimitNV, target, limit);
+#endif
     glProgramVertexLimitNV(static_cast<GLenum>(target), limit);
     detail::error_check("ProgramVertexLimitNV"sv, check_errors);
 }

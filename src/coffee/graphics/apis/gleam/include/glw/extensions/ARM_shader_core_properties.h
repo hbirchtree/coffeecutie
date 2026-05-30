@@ -22,6 +22,9 @@ STATICINLINE void max_active_shader_cores(
     {
         GLW_FPTR_CHECK(MaxActiveShaderCoresARM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMaxActiveShaderCoresARM, count);
+#endif
     glMaxActiveShaderCoresARM(count);
     detail::error_check("MaxActiveShaderCoresARM"sv, check_errors);
 }

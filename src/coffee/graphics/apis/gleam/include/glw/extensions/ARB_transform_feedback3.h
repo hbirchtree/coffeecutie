@@ -25,6 +25,9 @@ STATICINLINE void begin_query_indexed(
     {
         GLW_FPTR_CHECK(BeginQueryIndexed)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBeginQueryIndexed, target, index, id);
+#endif
     glBeginQueryIndexed(static_cast<GLenum>(target), index, id);
     detail::error_check("BeginQueryIndexed"sv, check_errors);
 }
@@ -47,6 +50,9 @@ STATICINLINE void draw_transform_feedback_stream(
     {
         GLW_FPTR_CHECK(DrawTransformFeedbackStream)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDrawTransformFeedbackStream, mode, id, stream);
+#endif
     glDrawTransformFeedbackStream(static_cast<GLenum>(mode), id, stream);
     detail::error_check("DrawTransformFeedbackStream"sv, check_errors);
 }
@@ -67,6 +73,9 @@ STATICINLINE void end_query_indexed(
     {
         GLW_FPTR_CHECK(EndQueryIndexed)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEndQueryIndexed, target, index);
+#endif
     glEndQueryIndexed(static_cast<GLenum>(target), index);
     detail::error_check("EndQueryIndexed"sv, check_errors);
 }
@@ -96,6 +105,15 @@ STATICINLINE void get_query_indexediv(
     {
         GLW_FPTR_CHECK(GetQueryIndexediv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetQueryIndexediv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        index,
+        pname);
+#endif
     glGetQueryIndexediv(
         static_cast<GLenum>(target),
         index,

@@ -30,6 +30,9 @@ STATICINLINE void polygon_mode(
     {
         GLW_FPTR_CHECK(PolygonModeNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPolygonModeNV, face, mode);
+#endif
     glPolygonModeNV(static_cast<GLenum>(face), static_cast<GLenum>(mode));
     detail::error_check("PolygonModeNV"sv, check_errors);
 }

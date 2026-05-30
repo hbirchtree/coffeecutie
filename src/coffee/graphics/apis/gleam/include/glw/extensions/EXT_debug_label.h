@@ -45,6 +45,15 @@ STATICINLINE void get_object_label(
     {
         GLW_FPTR_CHECK(GetObjectLabelEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetObjectLabelEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(label.data()), label.size_bytes()),
+        type,
+        object,
+        length);
+#endif
     glGetObjectLabelEXT(type, object, label.size(), &length, label.data());
     detail::error_check("GetObjectLabelEXT"sv, check_errors);
 }
@@ -69,6 +78,9 @@ STATICINLINE void label_object(
     {
         GLW_FPTR_CHECK(LabelObjectEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glLabelObjectEXT, type, object, length, label);
+#endif
     glLabelObjectEXT(type, object, length, label.data());
     detail::error_check("LabelObjectEXT"sv, check_errors);
 }

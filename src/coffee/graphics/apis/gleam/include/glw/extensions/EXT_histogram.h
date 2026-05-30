@@ -45,6 +45,16 @@ STATICINLINE void get_histogram(
     {
         GLW_FPTR_CHECK(GetHistogramEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetHistogramEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(values.data()), values.size_bytes()),
+        target,
+        reset,
+        format,
+        type);
+#endif
     glGetHistogramEXT(
         static_cast<GLenum>(target),
         reset,
@@ -77,6 +87,14 @@ STATICINLINE void get_histogram_parameter(
     {
         GLW_FPTR_CHECK(GetHistogramParameterfvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetHistogramParameterfvEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetHistogramParameterfvEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -107,6 +125,14 @@ STATICINLINE void get_histogram_parameter(
     {
         GLW_FPTR_CHECK(GetHistogramParameterivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetHistogramParameterivEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetHistogramParameterivEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -138,6 +164,16 @@ STATICINLINE void get_minmax(
     {
         GLW_FPTR_CHECK(GetMinmaxEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetMinmaxEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(values.data()), values.size_bytes()),
+        target,
+        reset,
+        format,
+        type);
+#endif
     glGetMinmaxEXT(
         static_cast<GLenum>(target),
         reset,
@@ -170,6 +206,14 @@ STATICINLINE void get_minmax_parameter(
     {
         GLW_FPTR_CHECK(GetMinmaxParameterfvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetMinmaxParameterfvEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetMinmaxParameterfvEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -200,6 +244,14 @@ STATICINLINE void get_minmax_parameter(
     {
         GLW_FPTR_CHECK(GetMinmaxParameterivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetMinmaxParameterivEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetMinmaxParameterivEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -227,6 +279,9 @@ STATICINLINE void histogram(
     {
         GLW_FPTR_CHECK(HistogramEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glHistogramEXT, target, width, internalformat, sink);
+#endif
     glHistogramEXT(
         static_cast<GLenum>(target),
         width,
@@ -253,6 +308,9 @@ STATICINLINE void minmax(
     {
         GLW_FPTR_CHECK(MinmaxEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMinmaxEXT, target, internalformat, sink);
+#endif
     glMinmaxEXT(
         static_cast<GLenum>(target), static_cast<GLenum>(internalformat), sink);
     detail::error_check("MinmaxEXT"sv, check_errors);
@@ -272,6 +330,9 @@ STATICINLINE void reset_histogram(
     {
         GLW_FPTR_CHECK(ResetHistogramEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glResetHistogramEXT, target);
+#endif
     glResetHistogramEXT(static_cast<GLenum>(target));
     detail::error_check("ResetHistogramEXT"sv, check_errors);
 }
@@ -289,6 +350,9 @@ STATICINLINE void reset_minmax(
     {
         GLW_FPTR_CHECK(ResetMinmaxEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glResetMinmaxEXT, target);
+#endif
     glResetMinmaxEXT(static_cast<GLenum>(target));
     detail::error_check("ResetMinmaxEXT"sv, check_errors);
 }

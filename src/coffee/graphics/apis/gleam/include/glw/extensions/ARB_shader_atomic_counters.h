@@ -62,6 +62,15 @@ STATICINLINE void get_active_atomic_counter_bufferiv(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetActiveAtomicCounterBufferiv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        program,
+        bufferIndex,
+        pname);
+#endif
     glGetActiveAtomicCounterBufferiv(
         program,
         bufferIndex,

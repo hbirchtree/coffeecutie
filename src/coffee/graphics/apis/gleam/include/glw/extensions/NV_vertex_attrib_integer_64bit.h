@@ -35,6 +35,14 @@ STATICINLINE void get_vertex_attrib_li64v(
     {
         GLW_FPTR_CHECK(GetVertexAttribLi64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetVertexAttribLi64vNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        index,
+        pname);
+#endif
     glGetVertexAttribLi64vNV(
         index,
         static_cast<GLenum>(pname),
@@ -66,6 +74,14 @@ STATICINLINE void get_vertex_attrib_lui64v(
     {
         GLW_FPTR_CHECK(GetVertexAttribLui64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetVertexAttribLui64vNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        index,
+        pname);
+#endif
     glGetVertexAttribLui64vNV(
         index,
         static_cast<GLenum>(pname),
@@ -88,6 +104,9 @@ STATICINLINE void vertex_attrib_l1i64(
     {
         GLW_FPTR_CHECK(VertexAttribL1i64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribL1i64NV, index, x);
+#endif
     glVertexAttribL1i64NV(index, x);
     detail::error_check("VertexAttribL1i64NV"sv, check_errors);
 }
@@ -114,6 +133,13 @@ STATICINLINE void vertex_attrib_l1i64v(
     {
         GLW_FPTR_CHECK(VertexAttribL1i64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribL1i64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttribL1i64vNV(
         index, reinterpret_cast<const GLint64EXT*>(v.data()));
     detail::error_check("VertexAttribL1i64vNV"sv, check_errors);
@@ -133,6 +159,9 @@ STATICINLINE void vertex_attrib_l1ui64(
     {
         GLW_FPTR_CHECK(VertexAttribL1ui64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribL1ui64NV, index, x);
+#endif
     glVertexAttribL1ui64NV(index, x);
     detail::error_check("VertexAttribL1ui64NV"sv, check_errors);
 }
@@ -159,6 +188,13 @@ STATICINLINE void vertex_attrib_l1ui64v(
     {
         GLW_FPTR_CHECK(VertexAttribL1ui64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribL1ui64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttribL1ui64vNV(
         index, reinterpret_cast<const GLuint64EXT*>(v.data()));
     detail::error_check("VertexAttribL1ui64vNV"sv, check_errors);
@@ -183,6 +219,9 @@ STATICINLINE void vertex_attrib_l2i64(
     {
         GLW_FPTR_CHECK(VertexAttribL2i64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribL2i64NV, index, x);
+#endif
     glVertexAttribL2i64NV(index, x[0], x[1]);
     detail::error_check("VertexAttribL2i64NV"sv, check_errors);
 }
@@ -208,6 +247,13 @@ STATICINLINE void vertex_attrib_l2i64v(
     {
         GLW_FPTR_CHECK(VertexAttribL2i64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribL2i64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttribL2i64vNV(
         index, reinterpret_cast<const GLint64EXT*>(v.data()));
     detail::error_check("VertexAttribL2i64vNV"sv, check_errors);
@@ -232,6 +278,9 @@ STATICINLINE void vertex_attrib_l2ui64(
     {
         GLW_FPTR_CHECK(VertexAttribL2ui64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribL2ui64NV, index, x);
+#endif
     glVertexAttribL2ui64NV(index, x[0], x[1]);
     detail::error_check("VertexAttribL2ui64NV"sv, check_errors);
 }
@@ -259,6 +308,13 @@ STATICINLINE void vertex_attrib_l2ui64v(
     {
         GLW_FPTR_CHECK(VertexAttribL2ui64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribL2ui64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttribL2ui64vNV(
         index, reinterpret_cast<const GLuint64EXT*>(v.data()));
     detail::error_check("VertexAttribL2ui64vNV"sv, check_errors);
@@ -284,6 +340,9 @@ STATICINLINE void vertex_attrib_l3i64(
     {
         GLW_FPTR_CHECK(VertexAttribL3i64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribL3i64NV, index, x);
+#endif
     glVertexAttribL3i64NV(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttribL3i64NV"sv, check_errors);
 }
@@ -309,6 +368,13 @@ STATICINLINE void vertex_attrib_l3i64v(
     {
         GLW_FPTR_CHECK(VertexAttribL3i64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribL3i64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttribL3i64vNV(
         index, reinterpret_cast<const GLint64EXT*>(v.data()));
     detail::error_check("VertexAttribL3i64vNV"sv, check_errors);
@@ -334,6 +400,9 @@ STATICINLINE void vertex_attrib_l3ui64(
     {
         GLW_FPTR_CHECK(VertexAttribL3ui64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribL3ui64NV, index, x);
+#endif
     glVertexAttribL3ui64NV(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttribL3ui64NV"sv, check_errors);
 }
@@ -361,6 +430,13 @@ STATICINLINE void vertex_attrib_l3ui64v(
     {
         GLW_FPTR_CHECK(VertexAttribL3ui64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribL3ui64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttribL3ui64vNV(
         index, reinterpret_cast<const GLuint64EXT*>(v.data()));
     detail::error_check("VertexAttribL3ui64vNV"sv, check_errors);
@@ -387,6 +463,9 @@ STATICINLINE void vertex_attrib_l4i64(
     {
         GLW_FPTR_CHECK(VertexAttribL4i64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribL4i64NV, index, x);
+#endif
     glVertexAttribL4i64NV(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttribL4i64NV"sv, check_errors);
 }
@@ -412,6 +491,13 @@ STATICINLINE void vertex_attrib_l4i64v(
     {
         GLW_FPTR_CHECK(VertexAttribL4i64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribL4i64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttribL4i64vNV(
         index, reinterpret_cast<const GLint64EXT*>(v.data()));
     detail::error_check("VertexAttribL4i64vNV"sv, check_errors);
@@ -438,6 +524,9 @@ STATICINLINE void vertex_attrib_l4ui64(
     {
         GLW_FPTR_CHECK(VertexAttribL4ui64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribL4ui64NV, index, x);
+#endif
     glVertexAttribL4ui64NV(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttribL4ui64NV"sv, check_errors);
 }
@@ -465,6 +554,13 @@ STATICINLINE void vertex_attrib_l4ui64v(
     {
         GLW_FPTR_CHECK(VertexAttribL4ui64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribL4ui64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttribL4ui64vNV(
         index, reinterpret_cast<const GLuint64EXT*>(v.data()));
     detail::error_check("VertexAttribL4ui64vNV"sv, check_errors);
@@ -490,6 +586,9 @@ STATICINLINE void vertex_attrib_l_format(
     {
         GLW_FPTR_CHECK(VertexAttribLFormatNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribLFormatNV, index, size, type, stride);
+#endif
     glVertexAttribLFormatNV(index, size, static_cast<GLenum>(type), stride);
     detail::error_check("VertexAttribLFormatNV"sv, check_errors);
 }

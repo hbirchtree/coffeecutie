@@ -23,6 +23,9 @@ STATICINLINE void flush_vertex_array_range(
     {
         GLW_FPTR_CHECK(FlushVertexArrayRangeNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFlushVertexArrayRangeNV);
+#endif
     glFlushVertexArrayRangeNV();
     detail::error_check("FlushVertexArrayRangeNV"sv, check_errors);
 }
@@ -45,6 +48,14 @@ STATICINLINE void vertex_array_range(
     {
         GLW_FPTR_CHECK(VertexArrayRangeNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexArrayRangeNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pointer.data()),
+            pointer.size_bytes()),
+        length);
+#endif
     glVertexArrayRangeNV(
         length,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())

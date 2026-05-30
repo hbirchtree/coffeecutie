@@ -73,6 +73,9 @@ STATICINLINE void bind_framebuffer(
             glIsFramebuffer(framebuffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindFramebuffer, target, framebuffer);
+#endif
     glBindFramebuffer(static_cast<GLenum>(target), framebuffer);
     detail::error_check("BindFramebuffer"sv, check_errors);
 }
@@ -98,6 +101,9 @@ STATICINLINE void bind_renderbuffer(
             glIsRenderbuffer(renderbuffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindRenderbuffer, target, renderbuffer);
+#endif
     glBindRenderbuffer(static_cast<GLenum>(target), renderbuffer);
     detail::error_check("BindRenderbuffer"sv, check_errors);
 }
@@ -134,6 +140,20 @@ STATICINLINE void blit_framebuffer(
     {
         GLW_FPTR_CHECK(BlitFramebuffer)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glBlitFramebuffer,
+        srcX0,
+        srcY0,
+        srcX1,
+        srcY1,
+        dstX0,
+        dstY0,
+        dstX1,
+        dstY1,
+        mask,
+        filter);
+#endif
     glBlitFramebuffer(
         srcX0,
         srcY0,
@@ -162,6 +182,9 @@ STATICINLINE group::framebuffer_status check_framebuffer_status(
     {
         GLW_FPTR_CHECK(CheckFramebufferStatus)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCheckFramebufferStatus, target);
+#endif
     auto out = glCheckFramebufferStatus(static_cast<GLenum>(target));
     detail::error_check("CheckFramebufferStatus"sv, check_errors);
     return static_cast<group::framebuffer_status>(out);
@@ -188,6 +211,13 @@ STATICINLINE void delete_framebuffers(
     {
         GLW_FPTR_CHECK(DeleteFramebuffers)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteFramebuffers,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(framebuffers.data()),
+            framebuffers.size_bytes()));
+#endif
     glDeleteFramebuffers(
         framebuffers.size(),
         framebuffers.size()
@@ -217,6 +247,13 @@ STATICINLINE void delete_renderbuffers(
     {
         GLW_FPTR_CHECK(DeleteRenderbuffers)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteRenderbuffers,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(renderbuffers.data()),
+            renderbuffers.size_bytes()));
+#endif
     glDeleteRenderbuffers(
         renderbuffers.size(),
         renderbuffers.size()
@@ -250,6 +287,14 @@ STATICINLINE void framebuffer_renderbuffer(
             glIsRenderbuffer(renderbuffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFramebufferRenderbuffer,
+        target,
+        attachment,
+        renderbuffertarget,
+        renderbuffer);
+#endif
     glFramebufferRenderbuffer(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),
@@ -285,6 +330,10 @@ STATICINLINE void framebuffer_texture_1d(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFramebufferTexture1D, target, attachment, textarget, texture, level);
+#endif
     glFramebufferTexture1D(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),
@@ -321,6 +370,10 @@ STATICINLINE void framebuffer_texture_2d(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFramebufferTexture2D, target, attachment, textarget, texture, level);
+#endif
     glFramebufferTexture2D(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),
@@ -359,6 +412,16 @@ STATICINLINE void framebuffer_texture_3d(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFramebufferTexture3D,
+        target,
+        attachment,
+        textarget,
+        texture,
+        level,
+        zoffset);
+#endif
     glFramebufferTexture3D(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),
@@ -396,6 +459,10 @@ STATICINLINE void framebuffer_texture_layer(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFramebufferTextureLayer, target, attachment, texture, level, layer);
+#endif
     glFramebufferTextureLayer(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),
@@ -424,6 +491,13 @@ STATICINLINE void gen_framebuffers(
     {
         GLW_FPTR_CHECK(GenFramebuffers)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenFramebuffers,
+        gsl::span<char>(
+            reinterpret_cast<char*>(framebuffers.data()),
+            framebuffers.size_bytes()));
+#endif
     glGenFramebuffers(
         framebuffers.size(),
         framebuffers.size() ? reinterpret_cast<GLuint*>(framebuffers.data())
@@ -450,6 +524,13 @@ STATICINLINE void gen_renderbuffers(
     {
         GLW_FPTR_CHECK(GenRenderbuffers)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenRenderbuffers,
+        gsl::span<char>(
+            reinterpret_cast<char*>(renderbuffers.data()),
+            renderbuffers.size_bytes()));
+#endif
     glGenRenderbuffers(
         renderbuffers.size(),
         renderbuffers.size() ? reinterpret_cast<GLuint*>(renderbuffers.data())
@@ -470,6 +551,9 @@ STATICINLINE void generate_mipmap(
     {
         GLW_FPTR_CHECK(GenerateMipmap)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGenerateMipmap, target);
+#endif
     glGenerateMipmap(static_cast<GLenum>(target));
     detail::error_check("GenerateMipmap"sv, check_errors);
 }
@@ -499,6 +583,15 @@ STATICINLINE void get_framebuffer_attachment_parameter(
     {
         GLW_FPTR_CHECK(GetFramebufferAttachmentParameteriv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetFramebufferAttachmentParameteriv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        attachment,
+        pname);
+#endif
     glGetFramebufferAttachmentParameteriv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),
@@ -530,6 +623,14 @@ STATICINLINE void get_renderbuffer_parameter(
     {
         GLW_FPTR_CHECK(GetRenderbufferParameteriv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetRenderbufferParameteriv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetRenderbufferParameteriv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -555,6 +656,9 @@ is_framebuffer(u32 framebuffer, error_check check_errors = error_check::on)
             glIsFramebuffer(framebuffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsFramebuffer, framebuffer);
+#endif
     auto out = glIsFramebuffer(framebuffer);
     detail::error_check("IsFramebuffer"sv, check_errors);
     return out;
@@ -578,6 +682,9 @@ is_renderbuffer(u32 renderbuffer, error_check check_errors = error_check::on)
             glIsRenderbuffer(renderbuffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsRenderbuffer, renderbuffer);
+#endif
     auto out = glIsRenderbuffer(renderbuffer);
     detail::error_check("IsRenderbuffer"sv, check_errors);
     return out;
@@ -604,6 +711,9 @@ STATICINLINE void renderbuffer_storage(
     {
         GLW_FPTR_CHECK(RenderbufferStorage)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glRenderbufferStorage, target, internalformat, width);
+#endif
     glRenderbufferStorage(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
@@ -635,6 +745,14 @@ STATICINLINE void renderbuffer_storage_multisample(
     {
         GLW_FPTR_CHECK(RenderbufferStorageMultisample)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glRenderbufferStorageMultisample,
+        target,
+        samples,
+        internalformat,
+        width);
+#endif
     glRenderbufferStorageMultisample(
         static_cast<GLenum>(target),
         samples,

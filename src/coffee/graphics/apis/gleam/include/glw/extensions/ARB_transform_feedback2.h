@@ -30,6 +30,9 @@ STATICINLINE void bind_transform_feedback(
     {
         GLW_FPTR_CHECK(BindTransformFeedback)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindTransformFeedback, target, id);
+#endif
     glBindTransformFeedback(static_cast<GLenum>(target), id);
     detail::error_check("BindTransformFeedback"sv, check_errors);
 }
@@ -54,6 +57,12 @@ STATICINLINE void delete_transform_feedbacks(
     {
         GLW_FPTR_CHECK(DeleteTransformFeedbacks)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteTransformFeedbacks,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()));
+#endif
     glDeleteTransformFeedbacks(
         ids.size(),
         ids.size() ? reinterpret_cast<const GLuint*>(ids.data()) : nullptr);
@@ -76,6 +85,9 @@ STATICINLINE void draw_transform_feedback(
     {
         GLW_FPTR_CHECK(DrawTransformFeedback)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDrawTransformFeedback, mode, id);
+#endif
     glDrawTransformFeedback(static_cast<GLenum>(mode), id);
     detail::error_check("DrawTransformFeedback"sv, check_errors);
 }
@@ -99,6 +111,11 @@ STATICINLINE void gen_transform_feedbacks(
     {
         GLW_FPTR_CHECK(GenTransformFeedbacks)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenTransformFeedbacks,
+        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()));
+#endif
     glGenTransformFeedbacks(
         ids.size(),
         ids.size() ? reinterpret_cast<GLuint*>(ids.data()) : nullptr);
@@ -118,6 +135,9 @@ is_transform_feedback(u32 id, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(IsTransformFeedback)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsTransformFeedback, id);
+#endif
     auto out = glIsTransformFeedback(id);
     detail::error_check("IsTransformFeedback"sv, check_errors);
     return out;
@@ -136,6 +156,9 @@ STATICINLINE void pause_transform_feedback(
     {
         GLW_FPTR_CHECK(PauseTransformFeedback)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPauseTransformFeedback);
+#endif
     glPauseTransformFeedback();
     detail::error_check("PauseTransformFeedback"sv, check_errors);
 }
@@ -153,6 +176,9 @@ STATICINLINE void resume_transform_feedback(
     {
         GLW_FPTR_CHECK(ResumeTransformFeedback)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glResumeTransformFeedback);
+#endif
     glResumeTransformFeedback();
     detail::error_check("ResumeTransformFeedback"sv, check_errors);
 }

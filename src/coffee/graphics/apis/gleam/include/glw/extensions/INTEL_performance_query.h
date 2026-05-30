@@ -39,6 +39,9 @@ STATICINLINE void begin_perf_query(
     {
         GLW_FPTR_CHECK(BeginPerfQueryINTEL)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBeginPerfQueryINTEL, queryHandle);
+#endif
     glBeginPerfQueryINTEL(queryHandle);
     detail::error_check("BeginPerfQueryINTEL"sv, check_errors);
 }
@@ -64,6 +67,14 @@ STATICINLINE void create_perf_query(
     {
         GLW_FPTR_CHECK(CreatePerfQueryINTEL)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCreatePerfQueryINTEL,
+        gsl::span<char>(
+            reinterpret_cast<char*>(queryHandle.data()),
+            queryHandle.size_bytes()),
+        queryId);
+#endif
     glCreatePerfQueryINTEL(
         queryId,
         queryHandle.size() ? reinterpret_cast<GLuint*>(queryHandle.data())
@@ -84,6 +95,9 @@ STATICINLINE void delete_perf_query(
     {
         GLW_FPTR_CHECK(DeletePerfQueryINTEL)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDeletePerfQueryINTEL, queryHandle);
+#endif
     glDeletePerfQueryINTEL(queryHandle);
     detail::error_check("DeletePerfQueryINTEL"sv, check_errors);
 }
@@ -101,6 +115,9 @@ STATICINLINE void end_perf_query(
     {
         GLW_FPTR_CHECK(EndPerfQueryINTEL)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEndPerfQueryINTEL, queryHandle);
+#endif
     glEndPerfQueryINTEL(queryHandle);
     detail::error_check("EndPerfQueryINTEL"sv, check_errors);
 }
@@ -123,6 +140,12 @@ STATICINLINE void get_first_perf_query_id(
     {
         GLW_FPTR_CHECK(GetFirstPerfQueryIdINTEL)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetFirstPerfQueryIdINTEL,
+        gsl::span<char>(
+            reinterpret_cast<char*>(queryId.data()), queryId.size_bytes()));
+#endif
     glGetFirstPerfQueryIdINTEL(
         queryId.size() ? reinterpret_cast<GLuint*>(queryId.data()) : nullptr);
     detail::error_check("GetFirstPerfQueryIdINTEL"sv, check_errors);
@@ -149,6 +172,14 @@ STATICINLINE void get_next_perf_query_id(
     {
         GLW_FPTR_CHECK(GetNextPerfQueryIdINTEL)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetNextPerfQueryIdINTEL,
+        gsl::span<char>(
+            reinterpret_cast<char*>(nextQueryId.data()),
+            nextQueryId.size_bytes()),
+        queryId);
+#endif
     glGetNextPerfQueryIdINTEL(
         queryId,
         nextQueryId.size() ? reinterpret_cast<GLuint*>(nextQueryId.data())
@@ -202,6 +233,33 @@ STATICINLINE void get_perf_counter_info(
     {
         GLW_FPTR_CHECK(GetPerfCounterInfoINTEL)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetPerfCounterInfoINTEL,
+        queryId,
+        counterId,
+        gsl::span<char>(
+            reinterpret_cast<char*>(counterName.data()),
+            counterName.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(counterDesc.data()),
+            counterDesc.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(counterOffset.data()),
+            counterOffset.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(counterDataSize.data()),
+            counterDataSize.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(counterTypeEnum.data()),
+            counterTypeEnum.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(counterDataTypeEnum.data()),
+            counterDataTypeEnum.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(rawCounterMaxValue.data()),
+            rawCounterMaxValue.size_bytes()));
+#endif
     glGetPerfCounterInfoINTEL(
         queryId,
         counterId,
@@ -254,6 +312,18 @@ STATICINLINE void get_perf_query_data(
     {
         GLW_FPTR_CHECK(GetPerfQueryDataINTEL)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetPerfQueryDataINTEL,
+        queryHandle,
+        flags,
+        dataSize,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(bytesWritten.data()),
+            bytesWritten.size_bytes()));
+#endif
     glGetPerfQueryDataINTEL(
         queryHandle,
         flags,
@@ -283,6 +353,12 @@ STATICINLINE void get_perf_query_id_by_name(
     {
         GLW_FPTR_CHECK(GetPerfQueryIdByNameINTEL)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetPerfQueryIdByNameINTEL,
+        gsl::span<char>(
+            reinterpret_cast<char*>(queryId.data()), queryId.size_bytes()));
+#endif
     glGetPerfQueryIdByNameINTEL(
         queryId.size() ? reinterpret_cast<GLuint*>(queryId.data()) : nullptr);
     detail::error_check("GetPerfQueryIdByNameINTEL"sv, check_errors);
@@ -323,6 +399,23 @@ STATICINLINE void get_perf_query_info(
     {
         GLW_FPTR_CHECK(GetPerfQueryInfoINTEL)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetPerfQueryInfoINTEL,
+        queryId,
+        gsl::span<char>(
+            reinterpret_cast<char*>(queryName.data()), queryName.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(dataSize.data()), dataSize.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(noCounters.data()),
+            noCounters.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(noInstances.data()),
+            noInstances.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(capsMask.data()), capsMask.size_bytes()));
+#endif
     glGetPerfQueryInfoINTEL(
         queryId,
         queryName.size(),

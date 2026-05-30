@@ -21,6 +21,9 @@ STATICINLINE void egl_image_target_renderbuffer_storage(
     {
         GLW_FPTR_CHECK(EGLImageTargetRenderbufferStorageOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEGLImageTargetRenderbufferStorageOES, target, image);
+#endif
     glEGLImageTargetRenderbufferStorageOES(target, image);
     detail::error_check("EGLImageTargetRenderbufferStorageOES"sv, check_errors);
 }
@@ -41,6 +44,9 @@ STATICINLINE void egl_image_target_texture_2d(
     {
         GLW_FPTR_CHECK(EGLImageTargetTexture2DOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEGLImageTargetTexture2DOES, target, image);
+#endif
     glEGLImageTargetTexture2DOES(target, image);
     detail::error_check("EGLImageTargetTexture2DOES"sv, check_errors);
 }

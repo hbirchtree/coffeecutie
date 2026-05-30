@@ -29,6 +29,16 @@ STATICINLINE void clear_buffer_data(
     {
         GLW_FPTR_CHECK(ClearBufferData)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glClearBufferData,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        target,
+        internalformat,
+        format,
+        type);
+#endif
     glClearBufferData(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
@@ -66,6 +76,18 @@ STATICINLINE void clear_buffer_sub_data(
     {
         GLW_FPTR_CHECK(ClearBufferSubData)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glClearBufferSubData,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        target,
+        internalformat,
+        offset,
+        size,
+        format,
+        type);
+#endif
     glClearBufferSubData(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),

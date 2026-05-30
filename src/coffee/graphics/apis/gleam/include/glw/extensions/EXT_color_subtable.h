@@ -31,6 +31,17 @@ STATICINLINE void color_sub_table(
     {
         GLW_FPTR_CHECK(ColorSubTableEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glColorSubTableEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        target,
+        start,
+        count,
+        format,
+        type);
+#endif
     glColorSubTableEXT(
         static_cast<GLenum>(target),
         start,
@@ -64,6 +75,9 @@ STATICINLINE void copy_color_sub_table(
     {
         GLW_FPTR_CHECK(CopyColorSubTableEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCopyColorSubTableEXT, target, start, x, width);
+#endif
     glCopyColorSubTableEXT(
         static_cast<GLenum>(target), start, x[0], x[1], width);
     detail::error_check("CopyColorSubTableEXT"sv, check_errors);

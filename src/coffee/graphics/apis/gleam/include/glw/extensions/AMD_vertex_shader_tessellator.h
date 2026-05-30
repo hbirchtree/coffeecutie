@@ -25,6 +25,9 @@ STATICINLINE void tessellation_factor(
     {
         GLW_FPTR_CHECK(TessellationFactorAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTessellationFactorAMD, factor);
+#endif
     glTessellationFactorAMD(factor);
     detail::error_check("TessellationFactorAMD"sv, check_errors);
 }
@@ -42,6 +45,9 @@ STATICINLINE void tessellation_mode(
     {
         GLW_FPTR_CHECK(TessellationModeAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTessellationModeAMD, mode);
+#endif
     glTessellationModeAMD(mode);
     detail::error_check("TessellationModeAMD"sv, check_errors);
 }

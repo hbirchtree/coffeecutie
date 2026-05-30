@@ -38,6 +38,17 @@ STATICINLINE void color_table(
     {
         GLW_FPTR_CHECK(ColorTableEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glColorTableEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(table.data()), table.size_bytes()),
+        target,
+        internalFormat,
+        width,
+        format,
+        type);
+#endif
     glColorTableEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalFormat),
@@ -70,6 +81,15 @@ STATICINLINE void get_color_table(
     {
         GLW_FPTR_CHECK(GetColorTableEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetColorTableEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        target,
+        format,
+        type);
+#endif
     glGetColorTableEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(format),
@@ -101,6 +121,14 @@ STATICINLINE void get_color_table_parameter(
     {
         GLW_FPTR_CHECK(GetColorTableParameterfvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetColorTableParameterfvEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetColorTableParameterfvEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -131,6 +159,14 @@ STATICINLINE void get_color_table_parameter(
     {
         GLW_FPTR_CHECK(GetColorTableParameterivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetColorTableParameterivEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetColorTableParameterivEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),

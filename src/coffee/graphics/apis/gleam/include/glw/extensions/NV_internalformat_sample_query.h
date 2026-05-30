@@ -47,6 +47,16 @@ STATICINLINE void get_internalformat_sampleiv(
     {
         GLW_FPTR_CHECK(GetInternalformatSampleivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetInternalformatSampleivNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        internalformat,
+        samples,
+        pname);
+#endif
     glGetInternalformatSampleivNV(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),

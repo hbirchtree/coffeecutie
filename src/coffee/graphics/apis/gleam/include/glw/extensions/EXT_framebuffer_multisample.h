@@ -34,6 +34,14 @@ STATICINLINE void renderbuffer_storage_multisample(
     {
         GLW_FPTR_CHECK(RenderbufferStorageMultisampleEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glRenderbufferStorageMultisampleEXT,
+        target,
+        samples,
+        internalformat,
+        width);
+#endif
     glRenderbufferStorageMultisampleEXT(
         static_cast<GLenum>(target),
         samples,

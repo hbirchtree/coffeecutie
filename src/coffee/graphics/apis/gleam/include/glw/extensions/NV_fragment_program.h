@@ -41,6 +41,16 @@ STATICINLINE void get_program_named_parameter(
     {
         GLW_FPTR_CHECK(GetProgramNamedParameterdvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetProgramNamedParameterdvNV,
+        id,
+        len,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(name.data()), name.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()));
+#endif
     glGetProgramNamedParameterdvNV(
         id,
         len,
@@ -79,6 +89,16 @@ STATICINLINE void get_program_named_parameter(
     {
         GLW_FPTR_CHECK(GetProgramNamedParameterfvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetProgramNamedParameterfvNV,
+        id,
+        len,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(name.data()), name.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()));
+#endif
     glGetProgramNamedParameterfvNV(
         id,
         len,
@@ -115,6 +135,15 @@ STATICINLINE void program_named_parameter4d(
     {
         GLW_FPTR_CHECK(ProgramNamedParameter4dNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramNamedParameter4dNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(name.data()), name.size_bytes()),
+        id,
+        len,
+        x);
+#endif
     glProgramNamedParameter4dNV(
         id,
         len,
@@ -152,6 +181,16 @@ STATICINLINE void program_named_parameter4dv(
     {
         GLW_FPTR_CHECK(ProgramNamedParameter4dvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glProgramNamedParameter4dvNV,
+        id,
+        len,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(name.data()), name.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+#endif
     glProgramNamedParameter4dvNV(
         id,
         len,
@@ -188,6 +227,15 @@ STATICINLINE void program_named_parameter4f(
     {
         GLW_FPTR_CHECK(ProgramNamedParameter4fNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramNamedParameter4fNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(name.data()), name.size_bytes()),
+        id,
+        len,
+        x);
+#endif
     glProgramNamedParameter4fNV(
         id,
         len,
@@ -225,6 +273,16 @@ STATICINLINE void program_named_parameter4fv(
     {
         GLW_FPTR_CHECK(ProgramNamedParameter4fvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glProgramNamedParameter4fvNV,
+        id,
+        len,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(name.data()), name.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+#endif
     glProgramNamedParameter4fvNV(
         id,
         len,

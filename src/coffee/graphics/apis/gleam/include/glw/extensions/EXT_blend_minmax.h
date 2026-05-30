@@ -25,6 +25,9 @@ STATICINLINE void blend_equation(
     {
         GLW_FPTR_CHECK(BlendEquationEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendEquationEXT, mode);
+#endif
     glBlendEquationEXT(static_cast<GLenum>(mode));
     detail::error_check("BlendEquationEXT"sv, check_errors);
 }

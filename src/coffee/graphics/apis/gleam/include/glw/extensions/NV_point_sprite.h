@@ -24,6 +24,9 @@ STATICINLINE void point_parameter(
     {
         GLW_FPTR_CHECK(PointParameteriNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPointParameteriNV, pname, param);
+#endif
     glPointParameteriNV(static_cast<GLenum>(pname), param);
     detail::error_check("PointParameteriNV"sv, check_errors);
 }
@@ -50,6 +53,13 @@ STATICINLINE void point_parameter(
     {
         GLW_FPTR_CHECK(PointParameterivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glPointParameterivNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        pname);
+#endif
     glPointParameterivNV(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())

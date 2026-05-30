@@ -35,6 +35,15 @@ STATICINLINE void get_internalformativ(
     {
         GLW_FPTR_CHECK(GetInternalformativ)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetInternalformativ,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        internalformat,
+        pname);
+#endif
     glGetInternalformativ(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),

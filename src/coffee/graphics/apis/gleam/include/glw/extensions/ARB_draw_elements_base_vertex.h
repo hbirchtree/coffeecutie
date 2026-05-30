@@ -27,6 +27,10 @@ STATICINLINE void draw_elements_base_vertex(
     {
         GLW_FPTR_CHECK(DrawElementsBaseVertex)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawElementsBaseVertex, mode, count, type, indices, basevertex);
+#endif
     glDrawElementsBaseVertex(
         static_cast<GLenum>(mode),
         count,
@@ -60,6 +64,16 @@ STATICINLINE void draw_elements_instanced_base_vertex(
     {
         GLW_FPTR_CHECK(DrawElementsInstancedBaseVertex)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawElementsInstancedBaseVertex,
+        mode,
+        count,
+        type,
+        indices,
+        instancecount,
+        basevertex);
+#endif
     glDrawElementsInstancedBaseVertex(
         static_cast<GLenum>(mode),
         count,
@@ -98,6 +112,19 @@ STATICINLINE void draw_range_elements_base_vertex(
     {
         GLW_FPTR_CHECK(DrawRangeElementsBaseVertex)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDrawRangeElementsBaseVertex,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(indices.data()),
+            indices.size_bytes()),
+        mode,
+        start,
+        end,
+        count,
+        type,
+        basevertex);
+#endif
     glDrawRangeElementsBaseVertex(
         static_cast<GLenum>(mode),
         start,
@@ -142,6 +169,18 @@ STATICINLINE void multi_draw_elements_base_vertex(
     GLsizei drawcount = count.size();
     detail::assert_equal(count.size(), drawcount);
     detail::assert_equal(basevertex.size(), drawcount);
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMultiDrawElementsBaseVertex,
+        mode,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(count.data()), count.size_bytes()),
+        type,
+        indices,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(basevertex.data()),
+            basevertex.size_bytes()));
+#endif
     glMultiDrawElementsBaseVertex(
         static_cast<GLenum>(mode),
         count.data(),

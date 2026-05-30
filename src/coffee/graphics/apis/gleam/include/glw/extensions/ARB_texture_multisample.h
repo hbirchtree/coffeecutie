@@ -47,6 +47,13 @@ STATICINLINE void get_multisamplefv(
     {
         GLW_FPTR_CHECK(GetMultisamplefv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetMultisamplefv,
+        gsl::span<char>(reinterpret_cast<char*>(val.data()), val.size_bytes()),
+        pname,
+        index);
+#endif
     glGetMultisamplefv(
         static_cast<GLenum>(pname),
         index,
@@ -68,6 +75,9 @@ STATICINLINE void sample_maski(
     {
         GLW_FPTR_CHECK(SampleMaski)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSampleMaski, maskNumber, mask);
+#endif
     glSampleMaski(maskNumber, mask);
     detail::error_check("SampleMaski"sv, check_errors);
 }
@@ -97,6 +107,15 @@ STATICINLINE void tex_image_2d_multisample(
     {
         GLW_FPTR_CHECK(TexImage2DMultisample)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexImage2DMultisample,
+        target,
+        samples,
+        internalformat,
+        width,
+        fixedsamplelocations);
+#endif
     glTexImage2DMultisample(
         static_cast<GLenum>(target),
         samples,
@@ -133,6 +152,15 @@ STATICINLINE void tex_image_3d_multisample(
     {
         GLW_FPTR_CHECK(TexImage3DMultisample)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexImage3DMultisample,
+        target,
+        samples,
+        internalformat,
+        width,
+        fixedsamplelocations);
+#endif
     glTexImage3DMultisample(
         static_cast<GLenum>(target),
         samples,

@@ -24,6 +24,9 @@ STATICINLINE void polygon_offset_clamp(
     {
         GLW_FPTR_CHECK(PolygonOffsetClamp)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPolygonOffsetClamp, factor, units, clamp);
+#endif
     glPolygonOffsetClamp(factor, units, clamp);
     detail::error_check("PolygonOffsetClamp"sv, check_errors);
 }

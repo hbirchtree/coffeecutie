@@ -21,6 +21,14 @@ STATICINLINE void blend_func_separate(
     {
         GLW_FPTR_CHECK(BlendFuncSeparate)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glBlendFuncSeparate,
+        sfactorRGB,
+        dfactorRGB,
+        sfactorAlpha,
+        dfactorAlpha);
+#endif
     glBlendFuncSeparate(
         static_cast<GLenum>(sfactorRGB),
         static_cast<GLenum>(dfactorRGB),
@@ -57,6 +65,15 @@ STATICINLINE void multi_draw_arrays(
     GLsizei drawcount = first.size();
     detail::assert_equal(first.size(), drawcount);
     detail::assert_equal(count.size(), drawcount);
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMultiDrawArrays,
+        mode,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(first.data()), first.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(count.data()), count.size_bytes()));
+#endif
     glMultiDrawArrays(static_cast<GLenum>(mode), first.data(), count.data());
     detail::error_check("MultiDrawArrays"sv, check_errors);
 }
@@ -90,6 +107,15 @@ STATICINLINE void multi_draw_elements(
     }
     GLsizei drawcount = count.size();
     detail::assert_equal(count.size(), drawcount);
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiDrawElements,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(count.data()), count.size_bytes()),
+        mode,
+        type,
+        indices);
+#endif
     glMultiDrawElements(
         static_cast<GLenum>(mode),
         count.data(),
@@ -116,6 +142,9 @@ STATICINLINE void point_parameter(
     {
         GLW_FPTR_CHECK(PointParameterf)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPointParameterf, pname, param);
+#endif
     glPointParameterf(static_cast<GLenum>(pname), param);
     detail::error_check("PointParameterf"sv, check_errors);
 }
@@ -142,6 +171,13 @@ STATICINLINE void point_parameter(
     {
         GLW_FPTR_CHECK(PointParameterfv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glPointParameterfv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        pname);
+#endif
     glPointParameterfv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfloat*>(params.data())
@@ -167,6 +203,9 @@ STATICINLINE void point_parameter(
     {
         GLW_FPTR_CHECK(PointParameteri)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPointParameteri, pname, param);
+#endif
     glPointParameteri(static_cast<GLenum>(pname), param);
     detail::error_check("PointParameteri"sv, check_errors);
 }
@@ -193,6 +232,13 @@ STATICINLINE void point_parameter(
     {
         GLW_FPTR_CHECK(PointParameteriv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glPointParameteriv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        pname);
+#endif
     glPointParameteriv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
@@ -220,6 +266,9 @@ STATICINLINE void blend_color(
     {
         GLW_FPTR_CHECK(BlendColor)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendColor, red);
+#endif
     glBlendColor(red[0], red[1], red[2], red[3]);
     detail::error_check("BlendColor"sv, check_errors);
 }
@@ -240,6 +289,9 @@ STATICINLINE void blend_equation(
     {
         GLW_FPTR_CHECK(BlendEquation)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendEquation, mode);
+#endif
     glBlendEquation(static_cast<GLenum>(mode));
     detail::error_check("BlendEquation"sv, check_errors);
 }

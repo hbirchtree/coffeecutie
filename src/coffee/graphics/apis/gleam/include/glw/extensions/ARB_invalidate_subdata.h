@@ -23,6 +23,9 @@ STATICINLINE void invalidate_buffer_data(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glInvalidateBufferData, buffer);
+#endif
     glInvalidateBufferData(buffer);
     detail::error_check("InvalidateBufferData"sv, check_errors);
 }
@@ -50,6 +53,9 @@ STATICINLINE void invalidate_buffer_sub_data(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glInvalidateBufferSubData, buffer, offset, length);
+#endif
     glInvalidateBufferSubData(buffer, offset, length);
     detail::error_check("InvalidateBufferSubData"sv, check_errors);
 }
@@ -78,6 +84,14 @@ STATICINLINE void invalidate_framebuffer(
     {
         GLW_FPTR_CHECK(InvalidateFramebuffer)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glInvalidateFramebuffer,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(attachments.data()),
+            attachments.size_bytes()),
+        target);
+#endif
     glInvalidateFramebuffer(
         static_cast<GLenum>(target),
         attachments.size(),
@@ -120,6 +134,16 @@ STATICINLINE void invalidate_sub_framebuffer(
     {
         GLW_FPTR_CHECK(InvalidateSubFramebuffer)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glInvalidateSubFramebuffer,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(attachments.data()),
+            attachments.size_bytes()),
+        target,
+        x,
+        width);
+#endif
     glInvalidateSubFramebuffer(
         static_cast<GLenum>(target),
         attachments.size(),
@@ -151,6 +175,9 @@ STATICINLINE void invalidate_tex_image(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glInvalidateTexImage, texture, level);
+#endif
     glInvalidateTexImage(texture, level);
     detail::error_check("InvalidateTexImage"sv, check_errors);
 }
@@ -187,6 +214,9 @@ STATICINLINE void invalidate_tex_sub_image(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glInvalidateTexSubImage, texture, level, xoffset, width);
+#endif
     glInvalidateTexSubImage(
         texture,
         level,

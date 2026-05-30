@@ -43,6 +43,9 @@ STATICINLINE void multi_tex_coord1b(
     {
         GLW_FPTR_CHECK(MultiTexCoord1bOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord1bOES, texture, s);
+#endif
     glMultiTexCoord1bOES(static_cast<GLenum>(texture), s);
     detail::error_check("MultiTexCoord1bOES"sv, check_errors);
 }
@@ -71,6 +74,13 @@ STATICINLINE void multi_tex_coord1bv(
     {
         GLW_FPTR_CHECK(MultiTexCoord1bvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord1bvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()),
+        texture);
+#endif
     glMultiTexCoord1bvOES(
         static_cast<GLenum>(texture),
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
@@ -98,6 +108,9 @@ STATICINLINE void multi_tex_coord2b(
     {
         GLW_FPTR_CHECK(MultiTexCoord2bOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord2bOES, texture, s, t);
+#endif
     glMultiTexCoord2bOES(static_cast<GLenum>(texture), s, t);
     detail::error_check("MultiTexCoord2bOES"sv, check_errors);
 }
@@ -126,6 +139,13 @@ STATICINLINE void multi_tex_coord2bv(
     {
         GLW_FPTR_CHECK(MultiTexCoord2bvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord2bvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()),
+        texture);
+#endif
     glMultiTexCoord2bvOES(
         static_cast<GLenum>(texture),
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
@@ -155,6 +175,9 @@ STATICINLINE void multi_tex_coord3b(
     {
         GLW_FPTR_CHECK(MultiTexCoord3bOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord3bOES, texture, s, t, r);
+#endif
     glMultiTexCoord3bOES(static_cast<GLenum>(texture), s, t, r);
     detail::error_check("MultiTexCoord3bOES"sv, check_errors);
 }
@@ -183,6 +206,13 @@ STATICINLINE void multi_tex_coord3bv(
     {
         GLW_FPTR_CHECK(MultiTexCoord3bvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord3bvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()),
+        texture);
+#endif
     glMultiTexCoord3bvOES(
         static_cast<GLenum>(texture),
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
@@ -214,6 +244,9 @@ STATICINLINE void multi_tex_coord4b(
     {
         GLW_FPTR_CHECK(MultiTexCoord4bOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord4bOES, texture, s, t, r, q);
+#endif
     glMultiTexCoord4bOES(static_cast<GLenum>(texture), s, t, r, q);
     detail::error_check("MultiTexCoord4bOES"sv, check_errors);
 }
@@ -242,6 +275,13 @@ STATICINLINE void multi_tex_coord4bv(
     {
         GLW_FPTR_CHECK(MultiTexCoord4bvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord4bvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()),
+        texture);
+#endif
     glMultiTexCoord4bvOES(
         static_cast<GLenum>(texture),
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
@@ -263,6 +303,9 @@ STATICINLINE void tex_coord1b(i8 s, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(TexCoord1bOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexCoord1bOES, s);
+#endif
     glTexCoord1bOES(s);
     detail::error_check("TexCoord1bOES"sv, check_errors);
 }
@@ -288,6 +331,12 @@ STATICINLINE void tex_coord1bv(
     {
         GLW_FPTR_CHECK(TexCoord1bvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexCoord1bvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glTexCoord1bvOES(
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);
@@ -310,6 +359,9 @@ STATICINLINE void tex_coord2b(
     {
         GLW_FPTR_CHECK(TexCoord2bOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexCoord2bOES, s, t);
+#endif
     glTexCoord2bOES(s, t);
     detail::error_check("TexCoord2bOES"sv, check_errors);
 }
@@ -335,6 +387,12 @@ STATICINLINE void tex_coord2bv(
     {
         GLW_FPTR_CHECK(TexCoord2bvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexCoord2bvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glTexCoord2bvOES(
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);
@@ -358,6 +416,9 @@ STATICINLINE void tex_coord3b(
     {
         GLW_FPTR_CHECK(TexCoord3bOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexCoord3bOES, s, t, r);
+#endif
     glTexCoord3bOES(s, t, r);
     detail::error_check("TexCoord3bOES"sv, check_errors);
 }
@@ -383,6 +444,12 @@ STATICINLINE void tex_coord3bv(
     {
         GLW_FPTR_CHECK(TexCoord3bvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexCoord3bvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glTexCoord3bvOES(
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);
@@ -407,6 +474,9 @@ STATICINLINE void tex_coord4b(
     {
         GLW_FPTR_CHECK(TexCoord4bOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexCoord4bOES, s, t, r, q);
+#endif
     glTexCoord4bOES(s, t, r, q);
     detail::error_check("TexCoord4bOES"sv, check_errors);
 }
@@ -432,6 +502,12 @@ STATICINLINE void tex_coord4bv(
     {
         GLW_FPTR_CHECK(TexCoord4bvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexCoord4bvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glTexCoord4bvOES(
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);
@@ -456,6 +532,9 @@ STATICINLINE void vertex2b(
     {
         GLW_FPTR_CHECK(Vertex2bOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertex2bOES, x);
+#endif
     glVertex2bOES(x[0], x[1]);
     detail::error_check("Vertex2bOES"sv, check_errors);
 }
@@ -481,6 +560,12 @@ STATICINLINE void vertex2bv(
     {
         GLW_FPTR_CHECK(Vertex2bvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertex2bvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glVertex2bvOES(
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);
@@ -506,6 +591,9 @@ STATICINLINE void vertex3b(
     {
         GLW_FPTR_CHECK(Vertex3bOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertex3bOES, x);
+#endif
     glVertex3bOES(x[0], x[1], x[2]);
     detail::error_check("Vertex3bOES"sv, check_errors);
 }
@@ -531,6 +619,12 @@ STATICINLINE void vertex3bv(
     {
         GLW_FPTR_CHECK(Vertex3bvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertex3bvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glVertex3bvOES(
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);
@@ -557,6 +651,9 @@ STATICINLINE void vertex4b(
     {
         GLW_FPTR_CHECK(Vertex4bOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertex4bOES, x);
+#endif
     glVertex4bOES(x[0], x[1], x[2], x[3]);
     detail::error_check("Vertex4bOES"sv, check_errors);
 }
@@ -582,6 +679,12 @@ STATICINLINE void vertex4bv(
     {
         GLW_FPTR_CHECK(Vertex4bvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertex4bvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+#endif
     glVertex4bvOES(
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);

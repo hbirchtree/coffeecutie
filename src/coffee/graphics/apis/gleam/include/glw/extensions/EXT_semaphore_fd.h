@@ -27,6 +27,9 @@ STATICINLINE void import_semaphore_fd(
     {
         GLW_FPTR_CHECK(ImportSemaphoreFdEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glImportSemaphoreFdEXT, semaphore, handleType, fd);
+#endif
     glImportSemaphoreFdEXT(semaphore, static_cast<GLenum>(handleType), fd);
     detail::error_check("ImportSemaphoreFdEXT"sv, check_errors);
 }

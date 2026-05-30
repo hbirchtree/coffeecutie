@@ -45,6 +45,9 @@ STATICINLINE void vertex_attrib_parameter(
     {
         GLW_FPTR_CHECK(VertexAttribParameteriAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribParameteriAMD, index, pname, param);
+#endif
     glVertexAttribParameteriAMD(index, pname, param);
     detail::error_check("VertexAttribParameteriAMD"sv, check_errors);
 }

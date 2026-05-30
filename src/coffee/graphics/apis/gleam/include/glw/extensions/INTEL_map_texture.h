@@ -38,6 +38,9 @@ STATICINLINE void* map_texture_2d(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMapTexture2DINTEL, texture, level, access, stride, layout);
+#endif
     auto out = glMapTexture2DINTEL(texture, level, access, &stride, &layout);
     detail::error_check("MapTexture2DINTEL"sv, check_errors);
     return out;
@@ -61,6 +64,9 @@ STATICINLINE void sync_texture(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSyncTextureINTEL, texture);
+#endif
     glSyncTextureINTEL(texture);
     detail::error_check("SyncTextureINTEL"sv, check_errors);
 }
@@ -84,6 +90,9 @@ STATICINLINE void unmap_texture_2d(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUnmapTexture2DINTEL, texture, level);
+#endif
     glUnmapTexture2DINTEL(texture, level);
     detail::error_check("UnmapTexture2DINTEL"sv, check_errors);
 }

@@ -47,6 +47,18 @@ STATICINLINE void texture_foveation_parameter(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTextureFoveationParametersQCOM,
+        texture,
+        layer,
+        focalPoint,
+        focalX,
+        focalY,
+        gainX,
+        gainY,
+        foveaArea);
+#endif
     glTextureFoveationParametersQCOM(
         texture, layer, focalPoint, focalX, focalY, gainX, gainY, foveaArea);
     detail::error_check("TextureFoveationParametersQCOM"sv, check_errors);

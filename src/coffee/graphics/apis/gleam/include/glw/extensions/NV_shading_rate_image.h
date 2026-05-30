@@ -44,6 +44,9 @@ STATICINLINE void bind_shading_rate_image(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindShadingRateImageNV, texture);
+#endif
     glBindShadingRateImageNV(texture);
     detail::error_check("BindShadingRateImageNV"sv, check_errors);
 }
@@ -66,6 +69,9 @@ STATICINLINE void get_shading_rate_image_palette(
     {
         GLW_FPTR_CHECK(GetShadingRateImagePaletteNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetShadingRateImagePaletteNV, viewport, entry, rate);
+#endif
     glGetShadingRateImagePaletteNV(viewport, entry, &rate);
     detail::error_check("GetShadingRateImagePaletteNV"sv, check_errors);
 }
@@ -95,6 +101,15 @@ STATICINLINE void get_shading_rate_sample_locationiv(
     {
         GLW_FPTR_CHECK(GetShadingRateSampleLocationivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetShadingRateSampleLocationivNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(location.data()), location.size_bytes()),
+        rate,
+        samples,
+        index);
+#endif
     glGetShadingRateSampleLocationivNV(
         rate,
         samples,
@@ -116,6 +131,9 @@ STATICINLINE void shading_rate_image_barrier(
     {
         GLW_FPTR_CHECK(ShadingRateImageBarrierNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glShadingRateImageBarrierNV, synchronize);
+#endif
     glShadingRateImageBarrierNV(synchronize);
     detail::error_check("ShadingRateImageBarrierNV"sv, check_errors);
 }
@@ -145,6 +163,14 @@ STATICINLINE void shading_rate_image_palette(
     {
         GLW_FPTR_CHECK(ShadingRateImagePaletteNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glShadingRateImagePaletteNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(rates.data()), rates.size_bytes()),
+        viewport,
+        first);
+#endif
     glShadingRateImagePaletteNV(
         viewport,
         first,
@@ -166,6 +192,9 @@ STATICINLINE void shading_rate_sample_order(
     {
         GLW_FPTR_CHECK(ShadingRateSampleOrderNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glShadingRateSampleOrderNV, order);
+#endif
     glShadingRateSampleOrderNV(order);
     detail::error_check("ShadingRateSampleOrderNV"sv, check_errors);
 }
@@ -194,6 +223,15 @@ STATICINLINE void shading_rate_sample_order_custom(
     {
         GLW_FPTR_CHECK(ShadingRateSampleOrderCustomNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glShadingRateSampleOrderCustomNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(locations.data()),
+            locations.size_bytes()),
+        rate,
+        samples);
+#endif
     glShadingRateSampleOrderCustomNV(
         rate,
         samples,

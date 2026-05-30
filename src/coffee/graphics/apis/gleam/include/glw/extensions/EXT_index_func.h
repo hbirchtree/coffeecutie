@@ -24,6 +24,9 @@ STATICINLINE void index_func(
     {
         GLW_FPTR_CHECK(IndexFuncEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIndexFuncEXT, func, ref);
+#endif
     glIndexFuncEXT(static_cast<GLenum>(func), ref);
     detail::error_check("IndexFuncEXT"sv, check_errors);
 }

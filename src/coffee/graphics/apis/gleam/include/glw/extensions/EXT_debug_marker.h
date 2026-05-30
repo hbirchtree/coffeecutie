@@ -21,6 +21,9 @@ STATICINLINE void insert_event_marker(
     {
         GLW_FPTR_CHECK(InsertEventMarkerEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glInsertEventMarkerEXT, length, marker);
+#endif
     glInsertEventMarkerEXT(length, marker.data());
     detail::error_check("InsertEventMarkerEXT"sv, check_errors);
 }
@@ -37,6 +40,9 @@ STATICINLINE void pop_group_marker(error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(PopGroupMarkerEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPopGroupMarkerEXT);
+#endif
     glPopGroupMarkerEXT();
     detail::error_check("PopGroupMarkerEXT"sv, check_errors);
 }
@@ -57,6 +63,9 @@ STATICINLINE void push_group_marker(
     {
         GLW_FPTR_CHECK(PushGroupMarkerEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPushGroupMarkerEXT, length, marker);
+#endif
     glPushGroupMarkerEXT(length, marker.data());
     detail::error_check("PushGroupMarkerEXT"sv, check_errors);
 }

@@ -31,6 +31,18 @@ STATICINLINE void specialize_shader(
             glIsShader(shader);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glSpecializeShader,
+        shader,
+        pEntryPoint,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pConstantIndex.data()),
+            pConstantIndex.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pConstantValue.data()),
+            pConstantValue.size_bytes()));
+#endif
     glSpecializeShader(
         shader,
         pEntryPoint.data(),
@@ -68,6 +80,15 @@ STATICINLINE void multi_draw_arrays_indirect_count(
     {
         GLW_FPTR_CHECK(MultiDrawArraysIndirectCount)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMultiDrawArraysIndirectCount,
+        mode,
+        indirect,
+        drawcount,
+        maxdrawcount,
+        stride);
+#endif
     glMultiDrawArraysIndirectCount(
         static_cast<GLenum>(mode),
         reinterpret_cast<const void*>(indirect),
@@ -104,6 +125,16 @@ STATICINLINE void multi_draw_elements_indirect_count(
     {
         GLW_FPTR_CHECK(MultiDrawElementsIndirectCount)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMultiDrawElementsIndirectCount,
+        mode,
+        type,
+        indirect,
+        drawcount,
+        maxdrawcount,
+        stride);
+#endif
     glMultiDrawElementsIndirectCount(
         static_cast<GLenum>(mode),
         static_cast<GLenum>(type),
@@ -134,6 +165,9 @@ STATICINLINE void polygon_offset_clamp(
     {
         GLW_FPTR_CHECK(PolygonOffsetClamp)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPolygonOffsetClamp, factor, units, clamp);
+#endif
     glPolygonOffsetClamp(factor, units, clamp);
     detail::error_check("PolygonOffsetClamp"sv, check_errors);
 }

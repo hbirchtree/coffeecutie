@@ -32,6 +32,10 @@ STATICINLINE void copy_tex_image_1d(
     {
         GLW_FPTR_CHECK(CopyTexImage1DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glCopyTexImage1DEXT, target, level, internalformat, x, width, border);
+#endif
     glCopyTexImage1DEXT(
         static_cast<GLenum>(target),
         level,
@@ -72,6 +76,10 @@ STATICINLINE void copy_tex_image_2d(
     {
         GLW_FPTR_CHECK(CopyTexImage2DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glCopyTexImage2DEXT, target, level, internalformat, x, width, border);
+#endif
     glCopyTexImage2DEXT(
         static_cast<GLenum>(target),
         level,
@@ -109,6 +117,9 @@ STATICINLINE void copy_tex_sub_image_1d(
     {
         GLW_FPTR_CHECK(CopyTexSubImage1DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCopyTexSubImage1DEXT, target, level, xoffset, x, width);
+#endif
     glCopyTexSubImage1DEXT(
         static_cast<GLenum>(target), level, xoffset, x[0], x[1], width);
     detail::error_check("CopyTexSubImage1DEXT"sv, check_errors);
@@ -142,6 +153,9 @@ STATICINLINE void copy_tex_sub_image_2d(
     {
         GLW_FPTR_CHECK(CopyTexSubImage2DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCopyTexSubImage2DEXT, target, level, xoffset, x, width);
+#endif
     glCopyTexSubImage2DEXT(
         static_cast<GLenum>(target),
         level,
@@ -184,6 +198,9 @@ STATICINLINE void copy_tex_sub_image_3d(
     {
         GLW_FPTR_CHECK(CopyTexSubImage3DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCopyTexSubImage3DEXT, target, level, xoffset, x, width);
+#endif
     glCopyTexSubImage3DEXT(
         static_cast<GLenum>(target),
         level,

@@ -18,6 +18,9 @@ STATICINLINE void disable_driver_control(
     {
         GLW_FPTR_CHECK(DisableDriverControlQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDisableDriverControlQCOM, driverControl);
+#endif
     glDisableDriverControlQCOM(driverControl);
     detail::error_check("DisableDriverControlQCOM"sv, check_errors);
 }
@@ -35,6 +38,9 @@ STATICINLINE void enable_driver_control(
     {
         GLW_FPTR_CHECK(EnableDriverControlQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEnableDriverControlQCOM, driverControl);
+#endif
     glEnableDriverControlQCOM(driverControl);
     detail::error_check("EnableDriverControlQCOM"sv, check_errors);
 }
@@ -68,6 +74,16 @@ STATICINLINE void get_driver_control_string(
     {
         GLW_FPTR_CHECK(GetDriverControlStringQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetDriverControlStringQCOM,
+        driverControl,
+        gsl::span<char>(
+            reinterpret_cast<char*>(length.data()), length.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(driverControlString.data()),
+            driverControlString.size_bytes()));
+#endif
     glGetDriverControlStringQCOM(
         driverControl,
         driverControlString.size(),
@@ -103,6 +119,14 @@ STATICINLINE void get_driver_controls(
     {
         GLW_FPTR_CHECK(GetDriverControlsQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetDriverControlsQCOM,
+        gsl::span<char>(reinterpret_cast<char*>(num.data()), num.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(driverControls.data()),
+            driverControls.size_bytes()));
+#endif
     glGetDriverControlsQCOM(
         num.size() ? reinterpret_cast<GLint*>(num.data()) : nullptr,
         driverControls.size(),

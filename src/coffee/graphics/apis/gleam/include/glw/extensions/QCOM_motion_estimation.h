@@ -26,6 +26,9 @@ STATICINLINE void tex_estimate_motion(
     {
         GLW_FPTR_CHECK(TexEstimateMotionQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexEstimateMotionQCOM, ref, target, output);
+#endif
     glTexEstimateMotionQCOM(ref, target, output);
     detail::error_check("TexEstimateMotionQCOM"sv, check_errors);
 }
@@ -50,6 +53,9 @@ STATICINLINE void tex_estimate_motion_regions(
     {
         GLW_FPTR_CHECK(TexEstimateMotionRegionsQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexEstimateMotionRegionsQCOM, ref, target, output, mask);
+#endif
     glTexEstimateMotionRegionsQCOM(ref, target, output, mask);
     detail::error_check("TexEstimateMotionRegionsQCOM"sv, check_errors);
 }

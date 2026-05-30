@@ -47,6 +47,25 @@ STATICINLINE void copy_image_sub_data(
     {
         GLW_FPTR_CHECK(CopyImageSubDataOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glCopyImageSubDataOES,
+        srcName,
+        srcTarget,
+        srcLevel,
+        srcX,
+        srcY,
+        srcZ,
+        dstName,
+        dstTarget,
+        dstLevel,
+        dstX,
+        dstY,
+        dstZ,
+        srcWidth,
+        srcHeight,
+        srcDepth);
+#endif
     glCopyImageSubDataOES(
         srcName,
         static_cast<GLenum>(srcTarget),

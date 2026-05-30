@@ -25,6 +25,12 @@ STATICINLINE void delete_query_resource_tag(
     {
         GLW_FPTR_CHECK(DeleteQueryResourceTagNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteQueryResourceTagNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(tagIds.data()), tagIds.size_bytes()));
+#endif
     glDeleteQueryResourceTagNV(
         tagIds.size(),
         tagIds.size() ? reinterpret_cast<const GLint*>(tagIds.data())
@@ -51,6 +57,12 @@ STATICINLINE void gen_query_resource_tag(
     {
         GLW_FPTR_CHECK(GenQueryResourceTagNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenQueryResourceTagNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(tagIds.data()), tagIds.size_bytes()));
+#endif
     glGenQueryResourceTagNV(
         tagIds.size(),
         tagIds.size() ? reinterpret_cast<GLint*>(tagIds.data()) : nullptr);
@@ -73,6 +85,9 @@ STATICINLINE void query_resource_tag(
     {
         GLW_FPTR_CHECK(QueryResourceTagNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glQueryResourceTagNV, tagId, tagString);
+#endif
     glQueryResourceTagNV(tagId, tagString.data());
     detail::error_check("QueryResourceTagNV"sv, check_errors);
 }

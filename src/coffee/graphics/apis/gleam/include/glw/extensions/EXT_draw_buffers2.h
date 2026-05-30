@@ -27,6 +27,9 @@ STATICINLINE void color_mask_indexed(
     {
         GLW_FPTR_CHECK(ColorMaskIndexedEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glColorMaskIndexedEXT, index, r, g, b, a);
+#endif
     glColorMaskIndexedEXT(index, r, g, b, a);
     detail::error_check("ColorMaskIndexedEXT"sv, check_errors);
 }
@@ -47,6 +50,9 @@ STATICINLINE void disable_indexed(
     {
         GLW_FPTR_CHECK(DisableIndexedEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDisableIndexedEXT, target, index);
+#endif
     glDisableIndexedEXT(static_cast<GLenum>(target), index);
     detail::error_check("DisableIndexedEXT"sv, check_errors);
 }
@@ -67,6 +73,9 @@ STATICINLINE void enable_indexed(
     {
         GLW_FPTR_CHECK(EnableIndexedEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEnableIndexedEXT, target, index);
+#endif
     glEnableIndexedEXT(static_cast<GLenum>(target), index);
     detail::error_check("EnableIndexedEXT"sv, check_errors);
 }
@@ -95,6 +104,14 @@ STATICINLINE void get_boolean_indexedv(
     {
         GLW_FPTR_CHECK(GetBooleanIndexedvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetBooleanIndexedvEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        target,
+        index);
+#endif
     glGetBooleanIndexedvEXT(
         static_cast<GLenum>(target),
         index,
@@ -125,6 +142,14 @@ STATICINLINE void get_integer_indexedv(
     {
         GLW_FPTR_CHECK(GetIntegerIndexedvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetIntegerIndexedvEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        target,
+        index);
+#endif
     glGetIntegerIndexedvEXT(
         static_cast<GLenum>(target),
         index,
@@ -148,6 +173,9 @@ STATICINLINE GLboolean is_enabled_indexed(
     {
         GLW_FPTR_CHECK(IsEnabledIndexedEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsEnabledIndexedEXT, target, index);
+#endif
     auto out = glIsEnabledIndexedEXT(static_cast<GLenum>(target), index);
     detail::error_check("IsEnabledIndexedEXT"sv, check_errors);
     return out;

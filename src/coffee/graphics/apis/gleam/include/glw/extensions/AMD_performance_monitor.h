@@ -25,6 +25,9 @@ STATICINLINE void begin_perf_monitor(
     {
         GLW_FPTR_CHECK(BeginPerfMonitorAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBeginPerfMonitorAMD, monitor);
+#endif
     glBeginPerfMonitorAMD(monitor);
     detail::error_check("BeginPerfMonitorAMD"sv, check_errors);
 }
@@ -48,6 +51,12 @@ STATICINLINE void delete_perf_monitors(
     {
         GLW_FPTR_CHECK(DeletePerfMonitorsAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeletePerfMonitorsAMD,
+        gsl::span<char>(
+            reinterpret_cast<char*>(monitors.data()), monitors.size_bytes()));
+#endif
     glDeletePerfMonitorsAMD(
         monitors.size(),
         monitors.size() ? reinterpret_cast<GLuint*>(monitors.data()) : nullptr);
@@ -67,6 +76,9 @@ STATICINLINE void end_perf_monitor(
     {
         GLW_FPTR_CHECK(EndPerfMonitorAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEndPerfMonitorAMD, monitor);
+#endif
     glEndPerfMonitorAMD(monitor);
     detail::error_check("EndPerfMonitorAMD"sv, check_errors);
 }
@@ -90,6 +102,12 @@ STATICINLINE void gen_perf_monitors(
     {
         GLW_FPTR_CHECK(GenPerfMonitorsAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenPerfMonitorsAMD,
+        gsl::span<char>(
+            reinterpret_cast<char*>(monitors.data()), monitors.size_bytes()));
+#endif
     glGenPerfMonitorsAMD(
         monitors.size(),
         monitors.size() ? reinterpret_cast<GLuint*>(monitors.data()) : nullptr);
@@ -123,6 +141,16 @@ STATICINLINE void get_perf_monitor_counter_data(
     {
         GLW_FPTR_CHECK(GetPerfMonitorCounterDataAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetPerfMonitorCounterDataAMD,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        monitor,
+        pname,
+        dataSize,
+        bytesWritten);
+#endif
     glGetPerfMonitorCounterDataAMD(
         monitor,
         pname,
@@ -154,6 +182,15 @@ STATICINLINE void get_perf_monitor_counter_info(
     {
         GLW_FPTR_CHECK(GetPerfMonitorCounterInfoAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetPerfMonitorCounterInfoAMD,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        group,
+        counter,
+        pname);
+#endif
     glGetPerfMonitorCounterInfoAMD(
         group,
         counter,
@@ -189,6 +226,16 @@ STATICINLINE void get_perf_monitor_counter_string(
     {
         GLW_FPTR_CHECK(GetPerfMonitorCounterStringAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetPerfMonitorCounterStringAMD,
+        gsl::span<char>(
+            reinterpret_cast<char*>(counterString.data()),
+            counterString.size_bytes()),
+        group,
+        counter,
+        length);
+#endif
     glGetPerfMonitorCounterStringAMD(
         group, counter, counterString.size(), &length, counterString.data());
     detail::error_check("GetPerfMonitorCounterStringAMD"sv, check_errors);
@@ -220,6 +267,15 @@ STATICINLINE void get_perf_monitor_counters(
     {
         GLW_FPTR_CHECK(GetPerfMonitorCountersAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetPerfMonitorCountersAMD,
+        gsl::span<char>(
+            reinterpret_cast<char*>(counters.data()), counters.size_bytes()),
+        group,
+        numCounters,
+        maxActiveCounters);
+#endif
     glGetPerfMonitorCountersAMD(
         group,
         &numCounters,
@@ -254,6 +310,15 @@ STATICINLINE void get_perf_monitor_group_string(
     {
         GLW_FPTR_CHECK(GetPerfMonitorGroupStringAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetPerfMonitorGroupStringAMD,
+        gsl::span<char>(
+            reinterpret_cast<char*>(groupString.data()),
+            groupString.size_bytes()),
+        group,
+        length);
+#endif
     glGetPerfMonitorGroupStringAMD(
         group, groupString.size(), &length, groupString.data());
     detail::error_check("GetPerfMonitorGroupStringAMD"sv, check_errors);
@@ -279,6 +344,13 @@ STATICINLINE void get_perf_monitor_groups(
     {
         GLW_FPTR_CHECK(GetPerfMonitorGroupsAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetPerfMonitorGroupsAMD,
+        gsl::span<char>(
+            reinterpret_cast<char*>(groups.data()), groups.size_bytes()),
+        numGroups);
+#endif
     glGetPerfMonitorGroupsAMD(
         &numGroups,
         groups.size(),
@@ -312,6 +384,16 @@ STATICINLINE void select_perf_monitor_counters(
     {
         GLW_FPTR_CHECK(SelectPerfMonitorCountersAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glSelectPerfMonitorCountersAMD,
+        gsl::span<char>(
+            reinterpret_cast<char*>(counterList.data()),
+            counterList.size_bytes()),
+        monitor,
+        enable,
+        group);
+#endif
     glSelectPerfMonitorCountersAMD(
         monitor,
         enable,

@@ -27,6 +27,10 @@ STATICINLINE void buffer_storage_external(
     {
         GLW_FPTR_CHECK(BufferStorageExternalEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glBufferStorageExternalEXT, target, offset, size, clientBuffer, flags);
+#endif
     glBufferStorageExternalEXT(
         target, offset, size, clientBuffer, static_cast<GLenum>(flags));
     detail::error_check("BufferStorageExternalEXT"sv, check_errors);
@@ -59,6 +63,15 @@ STATICINLINE void named_buffer_storage_external(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glNamedBufferStorageExternalEXT,
+        buffer,
+        offset,
+        size,
+        clientBuffer,
+        flags);
+#endif
     glNamedBufferStorageExternalEXT(
         buffer, offset, size, clientBuffer, static_cast<GLenum>(flags));
     detail::error_check("NamedBufferStorageExternalEXT"sv, check_errors);

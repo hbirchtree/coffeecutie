@@ -43,6 +43,17 @@ STATICINLINE void framebuffer_texture_2d_downsample(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFramebufferTexture2DDownsampleIMG,
+        target,
+        attachment,
+        textarget,
+        texture,
+        level,
+        xscale,
+        yscale);
+#endif
     glFramebufferTexture2DDownsampleIMG(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),
@@ -85,6 +96,17 @@ STATICINLINE void framebuffer_texture_layer_downsample(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFramebufferTextureLayerDownsampleIMG,
+        target,
+        attachment,
+        texture,
+        level,
+        layer,
+        xscale,
+        yscale);
+#endif
     glFramebufferTextureLayerDownsampleIMG(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),

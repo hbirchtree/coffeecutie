@@ -25,6 +25,10 @@ STATICINLINE void multi_draw_arrays_indirect(
     {
         GLW_FPTR_CHECK(MultiDrawArraysIndirectEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMultiDrawArraysIndirectEXT, mode, indirect, drawcount, stride);
+#endif
     glMultiDrawArraysIndirectEXT(
         static_cast<GLenum>(mode),
         reinterpret_cast<const void*>(indirect),
@@ -55,6 +59,15 @@ STATICINLINE void multi_draw_elements_indirect(
     {
         GLW_FPTR_CHECK(MultiDrawElementsIndirectEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMultiDrawElementsIndirectEXT,
+        mode,
+        type,
+        indirect,
+        drawcount,
+        stride);
+#endif
     glMultiDrawElementsIndirectEXT(
         static_cast<GLenum>(mode),
         static_cast<GLenum>(type),

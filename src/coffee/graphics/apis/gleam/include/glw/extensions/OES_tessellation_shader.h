@@ -78,6 +78,9 @@ STATICINLINE void patch_parameter(
     {
         GLW_FPTR_CHECK(PatchParameteriOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPatchParameteriOES, pname, value);
+#endif
     glPatchParameteriOES(static_cast<GLenum>(pname), value);
     detail::error_check("PatchParameteriOES"sv, check_errors);
 }

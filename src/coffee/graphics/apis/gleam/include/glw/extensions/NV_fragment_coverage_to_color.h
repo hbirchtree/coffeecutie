@@ -20,6 +20,9 @@ STATICINLINE void fragment_coverage_color(
     {
         GLW_FPTR_CHECK(FragmentCoverageColorNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFragmentCoverageColorNV, color);
+#endif
     glFragmentCoverageColorNV(color);
     detail::error_check("FragmentCoverageColorNV"sv, check_errors);
 }

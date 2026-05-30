@@ -23,6 +23,9 @@ STATICINLINE void alpha_func(
     {
         GLW_FPTR_CHECK(AlphaFuncQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glAlphaFuncQCOM, func, ref);
+#endif
     glAlphaFuncQCOM(func, ref);
     detail::error_check("AlphaFuncQCOM"sv, check_errors);
 }

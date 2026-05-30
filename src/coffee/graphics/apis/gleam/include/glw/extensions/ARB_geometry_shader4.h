@@ -51,6 +51,9 @@ STATICINLINE void framebuffer_texture(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFramebufferTextureARB, target, attachment, texture, level);
+#endif
     glFramebufferTextureARB(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),
@@ -86,6 +89,10 @@ STATICINLINE void framebuffer_texture_face(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFramebufferTextureFaceARB, target, attachment, texture, level, face);
+#endif
     glFramebufferTextureFaceARB(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),
@@ -122,6 +129,15 @@ STATICINLINE void framebuffer_texture_layer(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFramebufferTextureLayerARB,
+        target,
+        attachment,
+        texture,
+        level,
+        layer);
+#endif
     glFramebufferTextureLayerARB(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),
@@ -154,6 +170,9 @@ STATICINLINE void program_parameter(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramParameteriARB, program, pname, value);
+#endif
     glProgramParameteriARB(program, static_cast<GLenum>(pname), value);
     detail::error_check("ProgramParameteriARB"sv, check_errors);
 }

@@ -35,6 +35,14 @@ STATICINLINE void get_videoi64v(
     {
         GLW_FPTR_CHECK(GetVideoi64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetVideoi64vNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        video_slot,
+        pname);
+#endif
     glGetVideoi64vNV(
         video_slot,
         pname,
@@ -65,6 +73,14 @@ STATICINLINE void get_videoiv(
     {
         GLW_FPTR_CHECK(GetVideoivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetVideoivNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        video_slot,
+        pname);
+#endif
     glGetVideoivNV(
         video_slot,
         pname,
@@ -96,6 +112,14 @@ STATICINLINE void get_videoui64v(
     {
         GLW_FPTR_CHECK(GetVideoui64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetVideoui64vNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        video_slot,
+        pname);
+#endif
     glGetVideoui64vNV(
         video_slot,
         pname,
@@ -127,6 +151,14 @@ STATICINLINE void get_videouiv(
     {
         GLW_FPTR_CHECK(GetVideouivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetVideouivNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        video_slot,
+        pname);
+#endif
     glGetVideouivNV(
         video_slot,
         pname,
@@ -172,6 +204,23 @@ STATICINLINE void present_frame_dual_fill(
     {
         GLW_FPTR_CHECK(PresentFrameDualFillNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glPresentFrameDualFillNV,
+        video_slot,
+        minPresentTime,
+        beginPresentTimeId,
+        presentDurationId,
+        type,
+        target0,
+        fill0,
+        target1,
+        fill1,
+        target2,
+        fill2,
+        target3,
+        fill3);
+#endif
     glPresentFrameDualFillNV(
         video_slot,
         minPresentTime,
@@ -223,6 +272,21 @@ STATICINLINE void present_frame_keyed(
     {
         GLW_FPTR_CHECK(PresentFrameKeyedNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glPresentFrameKeyedNV,
+        video_slot,
+        minPresentTime,
+        beginPresentTimeId,
+        presentDurationId,
+        type,
+        target0,
+        fill0,
+        key0,
+        target1,
+        fill1,
+        key1);
+#endif
     glPresentFrameKeyedNV(
         video_slot,
         minPresentTime,

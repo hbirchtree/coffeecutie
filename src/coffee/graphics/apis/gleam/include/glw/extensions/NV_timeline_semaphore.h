@@ -30,6 +30,13 @@ STATICINLINE void create_semaphores(
     {
         GLW_FPTR_CHECK(CreateSemaphoresNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCreateSemaphoresNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(semaphores.data()),
+            semaphores.size_bytes()));
+#endif
     glCreateSemaphoresNV(
         semaphores.size(),
         semaphores.size() ? reinterpret_cast<GLuint*>(semaphores.data())
@@ -60,6 +67,14 @@ STATICINLINE void get_semaphore_parameter(
     {
         GLW_FPTR_CHECK(GetSemaphoreParameterivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetSemaphoreParameterivNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        semaphore,
+        pname);
+#endif
     glGetSemaphoreParameterivNV(
         semaphore,
         static_cast<GLenum>(pname),
@@ -91,6 +106,14 @@ STATICINLINE void semaphore_parameter(
     {
         GLW_FPTR_CHECK(SemaphoreParameterivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glSemaphoreParameterivNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        semaphore,
+        pname);
+#endif
     glSemaphoreParameterivNV(
         semaphore,
         static_cast<GLenum>(pname),

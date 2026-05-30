@@ -39,6 +39,9 @@ STATICINLINE void tex_storage_1d(
     {
         GLW_FPTR_CHECK(TexStorage1DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexStorage1DEXT, target, levels, internalformat, width);
+#endif
     glTexStorage1DEXT(
         static_cast<GLenum>(target),
         levels,
@@ -70,6 +73,9 @@ STATICINLINE void tex_storage_2d(
     {
         GLW_FPTR_CHECK(TexStorage2DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexStorage2DEXT, target, levels, internalformat, width);
+#endif
     glTexStorage2DEXT(
         static_cast<GLenum>(target),
         levels,
@@ -103,6 +109,9 @@ STATICINLINE void tex_storage_3d(
     {
         GLW_FPTR_CHECK(TexStorage3DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexStorage3DEXT, target, levels, internalformat, width);
+#endif
     glTexStorage3DEXT(
         static_cast<GLenum>(target),
         levels,
@@ -140,6 +149,10 @@ STATICINLINE void texture_storage_1d(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTextureStorage1DEXT, texture, target, levels, internalformat, width);
+#endif
     glTextureStorage1DEXT(
         texture, target, levels, static_cast<GLenum>(internalformat), width);
     detail::error_check("TextureStorage1DEXT"sv, check_errors);
@@ -175,6 +188,10 @@ STATICINLINE void texture_storage_2d(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTextureStorage2DEXT, texture, target, levels, internalformat, width);
+#endif
     glTextureStorage2DEXT(
         texture,
         target,
@@ -216,6 +233,10 @@ STATICINLINE void texture_storage_3d(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTextureStorage3DEXT, texture, target, levels, internalformat, width);
+#endif
     glTextureStorage3DEXT(
         texture,
         target,

@@ -40,6 +40,9 @@ STATICINLINE group::sync_status client_wait_sync(
     {
         GLW_FPTR_CHECK(ClientWaitSync)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glClientWaitSync, sync, flags, timeout);
+#endif
     auto out = glClientWaitSync(sync, static_cast<GLenum>(flags), timeout);
     detail::error_check("ClientWaitSync"sv, check_errors);
     return static_cast<group::sync_status>(out);
@@ -58,6 +61,9 @@ STATICINLINE void delete_sync(
     {
         GLW_FPTR_CHECK(DeleteSync)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDeleteSync, sync);
+#endif
     glDeleteSync(sync);
     detail::error_check("DeleteSync"sv, check_errors);
 }
@@ -78,6 +84,9 @@ STATICINLINE GLsync fence_sync(
     {
         GLW_FPTR_CHECK(FenceSync)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFenceSync, condition, flags);
+#endif
     auto out =
         glFenceSync(static_cast<GLenum>(condition), static_cast<GLenum>(flags));
     detail::error_check("FenceSync"sv, check_errors);
@@ -105,6 +114,13 @@ STATICINLINE void get_integer64v(
     {
         GLW_FPTR_CHECK(GetInteger64v)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetInteger64v,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        pname);
+#endif
     glGetInteger64v(
         static_cast<GLenum>(pname),
         data.size() ? reinterpret_cast<GLint64*>(data.data()) : nullptr);
@@ -137,6 +153,15 @@ STATICINLINE void get_synciv(
     {
         GLW_FPTR_CHECK(GetSynciv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetSynciv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(values.data()), values.size_bytes()),
+        sync,
+        pname,
+        length);
+#endif
     glGetSynciv(
         sync,
         static_cast<GLenum>(pname),
@@ -159,6 +184,9 @@ is_sync(GLsync sync, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(IsSync)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsSync, sync);
+#endif
     auto out = glIsSync(sync);
     detail::error_check("IsSync"sv, check_errors);
     return out;
@@ -182,6 +210,9 @@ STATICINLINE void wait_sync(
     {
         GLW_FPTR_CHECK(WaitSync)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glWaitSync, sync, flags, timeout);
+#endif
     glWaitSync(sync, static_cast<GLenum>(flags), timeout);
     detail::error_check("WaitSync"sv, check_errors);
 }

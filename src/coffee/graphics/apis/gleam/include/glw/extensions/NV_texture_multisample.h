@@ -34,6 +34,16 @@ STATICINLINE void tex_image_2d_multisample_coverage(
     {
         GLW_FPTR_CHECK(TexImage2DMultisampleCoverageNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexImage2DMultisampleCoverageNV,
+        target,
+        coverageSamples,
+        colorSamples,
+        internalFormat,
+        width,
+        fixedSampleLocations);
+#endif
     glTexImage2DMultisampleCoverageNV(
         static_cast<GLenum>(target),
         coverageSamples,
@@ -73,6 +83,16 @@ STATICINLINE void tex_image_3d_multisample_coverage(
     {
         GLW_FPTR_CHECK(TexImage3DMultisampleCoverageNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexImage3DMultisampleCoverageNV,
+        target,
+        coverageSamples,
+        colorSamples,
+        internalFormat,
+        width,
+        fixedSampleLocations);
+#endif
     glTexImage3DMultisampleCoverageNV(
         static_cast<GLenum>(target),
         coverageSamples,
@@ -119,6 +139,17 @@ STATICINLINE void texture_image_2d_multisample_coverage(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTextureImage2DMultisampleCoverageNV,
+        texture,
+        target,
+        coverageSamples,
+        colorSamples,
+        internalFormat,
+        width,
+        fixedSampleLocations);
+#endif
     glTextureImage2DMultisampleCoverageNV(
         texture,
         static_cast<GLenum>(target),
@@ -163,6 +194,16 @@ STATICINLINE void texture_image_2d_multisample(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTextureImage2DMultisampleNV,
+        texture,
+        target,
+        samples,
+        internalFormat,
+        width,
+        fixedSampleLocations);
+#endif
     glTextureImage2DMultisampleNV(
         texture,
         static_cast<GLenum>(target),
@@ -209,6 +250,17 @@ STATICINLINE void texture_image_3d_multisample_coverage(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTextureImage3DMultisampleCoverageNV,
+        texture,
+        target,
+        coverageSamples,
+        colorSamples,
+        internalFormat,
+        width,
+        fixedSampleLocations);
+#endif
     glTextureImage3DMultisampleCoverageNV(
         texture,
         static_cast<GLenum>(target),
@@ -255,6 +307,16 @@ STATICINLINE void texture_image_3d_multisample(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTextureImage3DMultisampleNV,
+        texture,
+        target,
+        samples,
+        internalFormat,
+        width,
+        fixedSampleLocations);
+#endif
     glTextureImage3DMultisampleNV(
         texture,
         static_cast<GLenum>(target),

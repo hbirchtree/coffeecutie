@@ -48,6 +48,9 @@ STATICINLINE void program_parameter(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramParameteriEXT, program, pname, value);
+#endif
     glProgramParameteriEXT(program, static_cast<GLenum>(pname), value);
     detail::error_check("ProgramParameteriEXT"sv, check_errors);
 }

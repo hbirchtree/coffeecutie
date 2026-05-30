@@ -38,6 +38,9 @@ STATICINLINE GLuint64 get_image_handle(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetImageHandleARB, texture, level, layered, layer, format);
+#endif
     auto out = glGetImageHandleARB(
         texture, level, layered, layer, static_cast<GLenum>(format));
     detail::error_check("GetImageHandleARB"sv, check_errors);
@@ -62,6 +65,9 @@ get_texture_handle(u32 texture, error_check check_errors = error_check::on)
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetTextureHandleARB, texture);
+#endif
     auto out = glGetTextureHandleARB(texture);
     detail::error_check("GetTextureHandleARB"sv, check_errors);
     return out;
@@ -91,6 +97,9 @@ STATICINLINE GLuint64 get_texture_sampler_handle(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetTextureSamplerHandleARB, texture, sampler);
+#endif
     auto out = glGetTextureSamplerHandleARB(texture, sampler);
     detail::error_check("GetTextureSamplerHandleARB"sv, check_errors);
     return out;
@@ -120,6 +129,14 @@ STATICINLINE void get_vertex_attrib_lui64v(
     {
         GLW_FPTR_CHECK(GetVertexAttribLui64vARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetVertexAttribLui64vARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        index,
+        pname);
+#endif
     glGetVertexAttribLui64vARB(
         index,
         static_cast<GLenum>(pname),
@@ -141,6 +158,9 @@ is_image_handle_resident(u64 handle, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(IsImageHandleResidentARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsImageHandleResidentARB, handle);
+#endif
     auto out = glIsImageHandleResidentARB(handle);
     detail::error_check("IsImageHandleResidentARB"sv, check_errors);
     return out;
@@ -159,6 +179,9 @@ STATICINLINE GLboolean is_texture_handle_resident(
     {
         GLW_FPTR_CHECK(IsTextureHandleResidentARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsTextureHandleResidentARB, handle);
+#endif
     auto out = glIsTextureHandleResidentARB(handle);
     detail::error_check("IsTextureHandleResidentARB"sv, check_errors);
     return out;
@@ -177,6 +200,9 @@ STATICINLINE void make_image_handle_non_resident(
     {
         GLW_FPTR_CHECK(MakeImageHandleNonResidentARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMakeImageHandleNonResidentARB, handle);
+#endif
     glMakeImageHandleNonResidentARB(handle);
     detail::error_check("MakeImageHandleNonResidentARB"sv, check_errors);
 }
@@ -195,6 +221,9 @@ STATICINLINE void make_image_handle_resident(
     {
         GLW_FPTR_CHECK(MakeImageHandleResidentARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMakeImageHandleResidentARB, handle, access);
+#endif
     glMakeImageHandleResidentARB(handle, access);
     detail::error_check("MakeImageHandleResidentARB"sv, check_errors);
 }
@@ -212,6 +241,9 @@ STATICINLINE void make_texture_handle_non_resident(
     {
         GLW_FPTR_CHECK(MakeTextureHandleNonResidentARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMakeTextureHandleNonResidentARB, handle);
+#endif
     glMakeTextureHandleNonResidentARB(handle);
     detail::error_check("MakeTextureHandleNonResidentARB"sv, check_errors);
 }
@@ -229,6 +261,9 @@ STATICINLINE void make_texture_handle_resident(
     {
         GLW_FPTR_CHECK(MakeTextureHandleResidentARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMakeTextureHandleResidentARB, handle);
+#endif
     glMakeTextureHandleResidentARB(handle);
     detail::error_check("MakeTextureHandleResidentARB"sv, check_errors);
 }
@@ -256,6 +291,9 @@ STATICINLINE void program_uniform_handle(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniformHandleui64ARB, program, location, value);
+#endif
     glProgramUniformHandleui64ARB(program, location, value);
     detail::error_check("ProgramUniformHandleui64ARB"sv, check_errors);
 }
@@ -290,6 +328,14 @@ STATICINLINE void program_uniform_handle(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniformHandleui64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(values.data()), values.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniformHandleui64vARB(
         program,
         location,
@@ -313,6 +359,9 @@ STATICINLINE void uniform_handle(
     {
         GLW_FPTR_CHECK(UniformHandleui64ARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniformHandleui64ARB, location, value);
+#endif
     glUniformHandleui64ARB(location, value);
     detail::error_check("UniformHandleui64ARB"sv, check_errors);
 }
@@ -340,6 +389,13 @@ STATICINLINE void uniform_handle(
     {
         GLW_FPTR_CHECK(UniformHandleui64vARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniformHandleui64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniformHandleui64vARB(
         location,
         value.size(),
@@ -362,6 +418,9 @@ STATICINLINE void vertex_attrib_l1ui64(
     {
         GLW_FPTR_CHECK(VertexAttribL1ui64ARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribL1ui64ARB, index, x);
+#endif
     glVertexAttribL1ui64ARB(index, x);
     detail::error_check("VertexAttribL1ui64ARB"sv, check_errors);
 }
@@ -388,6 +447,13 @@ STATICINLINE void vertex_attrib_l1ui64v(
     {
         GLW_FPTR_CHECK(VertexAttribL1ui64vARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribL1ui64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttribL1ui64vARB(
         index, reinterpret_cast<const GLuint64EXT*>(v.data()));
     detail::error_check("VertexAttribL1ui64vARB"sv, check_errors);

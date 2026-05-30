@@ -30,6 +30,15 @@ STATICINLINE void bind_buffers_base(
     {
         GLW_FPTR_CHECK(BindBuffersBase)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glBindBuffersBase,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(buffers.data()),
+            buffers.size_bytes()),
+        target,
+        first);
+#endif
     glBindBuffersBase(
         static_cast<GLenum>(target),
         first,
@@ -79,6 +88,20 @@ STATICINLINE void bind_buffers_range(
     {
         GLW_FPTR_CHECK(BindBuffersRange)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glBindBuffersRange,
+        target,
+        first,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(buffers.data()),
+            buffers.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(offsets.data()),
+            offsets.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(sizes.data()), sizes.size_bytes()));
+#endif
     glBindBuffersRange(
         static_cast<GLenum>(target),
         first,
@@ -115,6 +138,14 @@ STATICINLINE void bind_image_textures(
     {
         GLW_FPTR_CHECK(BindImageTextures)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glBindImageTextures,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(textures.data()),
+            textures.size_bytes()),
+        first);
+#endif
     glBindImageTextures(
         first,
         textures.size(),
@@ -146,6 +177,14 @@ STATICINLINE void bind_samplers(
     {
         GLW_FPTR_CHECK(BindSamplers)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glBindSamplers,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(samplers.data()),
+            samplers.size_bytes()),
+        first);
+#endif
     glBindSamplers(
         first,
         samplers.size(),
@@ -177,6 +216,14 @@ STATICINLINE void bind_textures(
     {
         GLW_FPTR_CHECK(BindTextures)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glBindTextures,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(textures.data()),
+            textures.size_bytes()),
+        first);
+#endif
     glBindTextures(
         first,
         textures.size(),
@@ -220,6 +267,20 @@ STATICINLINE void bind_vertex_buffers(
     {
         GLW_FPTR_CHECK(BindVertexBuffers)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glBindVertexBuffers,
+        first,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(buffers.data()),
+            buffers.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(offsets.data()),
+            offsets.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(strides.data()),
+            strides.size_bytes()));
+#endif
     glBindVertexBuffers(
         first,
         buffers.size(),

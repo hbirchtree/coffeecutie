@@ -35,6 +35,15 @@ STATICINLINE void import_memory_win32_handle(
     {
         GLW_FPTR_CHECK(ImportMemoryWin32HandleEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glImportMemoryWin32HandleEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(handle.data()), handle.size_bytes()),
+        memory,
+        size,
+        handleType);
+#endif
     glImportMemoryWin32HandleEXT(
         memory,
         size,
@@ -65,6 +74,15 @@ STATICINLINE void import_memory_win32_name(
     {
         GLW_FPTR_CHECK(ImportMemoryWin32NameEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glImportMemoryWin32NameEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(name.data()), name.size_bytes()),
+        memory,
+        size,
+        handleType);
+#endif
     glImportMemoryWin32NameEXT(
         memory,
         size,

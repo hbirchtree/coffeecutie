@@ -31,6 +31,13 @@ STATICINLINE void cull_parameter(
     {
         GLW_FPTR_CHECK(CullParameterdvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCullParameterdvEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        pname);
+#endif
     glCullParameterdvEXT(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLdouble*>(params.data()) : nullptr);
@@ -58,6 +65,13 @@ STATICINLINE void cull_parameter(
     {
         GLW_FPTR_CHECK(CullParameterfvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCullParameterfvEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        pname);
+#endif
     glCullParameterfvEXT(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);

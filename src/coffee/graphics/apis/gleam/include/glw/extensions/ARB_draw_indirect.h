@@ -30,6 +30,9 @@ STATICINLINE void draw_arrays_indirect(
     {
         GLW_FPTR_CHECK(DrawArraysIndirect)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDrawArraysIndirect, mode, indirect);
+#endif
     glDrawArraysIndirect(
         static_cast<GLenum>(mode), reinterpret_cast<const void*>(indirect));
     detail::error_check("DrawArraysIndirect"sv, check_errors);
@@ -53,6 +56,9 @@ STATICINLINE void draw_elements_indirect(
     {
         GLW_FPTR_CHECK(DrawElementsIndirect)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDrawElementsIndirect, mode, type, indirect);
+#endif
     glDrawElementsIndirect(
         static_cast<GLenum>(mode),
         static_cast<GLenum>(type),

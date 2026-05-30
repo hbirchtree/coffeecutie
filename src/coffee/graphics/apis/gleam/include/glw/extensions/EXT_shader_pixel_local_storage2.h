@@ -32,6 +32,13 @@ STATICINLINE void clear_pixel_local_storageui(
     {
         GLW_FPTR_CHECK(ClearPixelLocalStorageuiEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glClearPixelLocalStorageuiEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(values.data()), values.size_bytes()),
+        offset);
+#endif
     glClearPixelLocalStorageuiEXT(
         offset,
         values.size(),
@@ -54,6 +61,9 @@ STATICINLINE void framebuffer_pixel_local_storage_size(
     {
         GLW_FPTR_CHECK(FramebufferPixelLocalStorageSizeEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFramebufferPixelLocalStorageSizeEXT, target, size);
+#endif
     glFramebufferPixelLocalStorageSizeEXT(target, size);
     detail::error_check("FramebufferPixelLocalStorageSizeEXT"sv, check_errors);
 }
@@ -71,6 +81,9 @@ STATICINLINE GLsizei get_framebuffer_pixel_local_storage_size(
     {
         GLW_FPTR_CHECK(GetFramebufferPixelLocalStorageSizeEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetFramebufferPixelLocalStorageSizeEXT, target);
+#endif
     auto out = glGetFramebufferPixelLocalStorageSizeEXT(target);
     detail::error_check(
         "GetFramebufferPixelLocalStorageSizeEXT"sv, check_errors);

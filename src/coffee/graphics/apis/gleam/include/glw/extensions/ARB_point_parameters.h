@@ -27,6 +27,9 @@ STATICINLINE void point_parameter(
     {
         GLW_FPTR_CHECK(PointParameterfARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPointParameterfARB, pname, param);
+#endif
     glPointParameterfARB(static_cast<GLenum>(pname), param);
     detail::error_check("PointParameterfARB"sv, check_errors);
 }
@@ -53,6 +56,13 @@ STATICINLINE void point_parameter(
     {
         GLW_FPTR_CHECK(PointParameterfvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glPointParameterfvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        pname);
+#endif
     glPointParameterfvARB(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfloat*>(params.data())

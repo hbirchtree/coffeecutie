@@ -39,6 +39,14 @@ STATICINLINE void compile_shader_include(
 #endif
     }
     auto [path_lens, path_cstr, path_store] = detail::transform_strings(path);
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCompileShaderIncludeARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(length.data()), length.size_bytes()),
+        shader,
+        path);
+#endif
     glCompileShaderIncludeARB(
         shader,
         path_cstr.size(),
@@ -62,6 +70,9 @@ STATICINLINE void delete_named_string(
     {
         GLW_FPTR_CHECK(DeleteNamedStringARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDeleteNamedStringARB, name);
+#endif
     glDeleteNamedStringARB(name.size(), name.data());
     detail::error_check("DeleteNamedStringARB"sv, check_errors);
 }
@@ -92,6 +103,14 @@ STATICINLINE void get_named_string(
     {
         GLW_FPTR_CHECK(GetNamedStringARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetNamedStringARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(string.data()), string.size_bytes()),
+        name,
+        stringlen);
+#endif
     glGetNamedStringARB(
         name.size(), name.data(), string.size(), &stringlen, string.data());
     detail::error_check("GetNamedStringARB"sv, check_errors);
@@ -121,6 +140,14 @@ STATICINLINE void get_named_stringiv(
     {
         GLW_FPTR_CHECK(GetNamedStringivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetNamedStringivARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        name,
+        pname);
+#endif
     glGetNamedStringivARB(
         name.size(),
         name.data(),
@@ -143,6 +170,9 @@ STATICINLINE GLboolean is_named_string(
     {
         GLW_FPTR_CHECK(IsNamedStringARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsNamedStringARB, name);
+#endif
     auto out = glIsNamedStringARB(name.size(), name.data());
     detail::error_check("IsNamedStringARB"sv, check_errors);
     return out;
@@ -168,6 +198,9 @@ STATICINLINE void named_string(
     {
         GLW_FPTR_CHECK(NamedStringARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glNamedStringARB, type, name, string);
+#endif
     glNamedStringARB(
         type, name.size(), name.data(), string.size(), string.data());
     detail::error_check("NamedStringARB"sv, check_errors);

@@ -73,6 +73,13 @@ STATICINLINE void patch_parameter(
     {
         GLW_FPTR_CHECK(PatchParameterfv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glPatchParameterfv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(values.data()), values.size_bytes()),
+        pname);
+#endif
     glPatchParameterfv(
         static_cast<GLenum>(pname),
         values.size() ? reinterpret_cast<const GLfloat*>(values.data())
@@ -96,6 +103,9 @@ STATICINLINE void patch_parameter(
     {
         GLW_FPTR_CHECK(PatchParameteri)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPatchParameteri, pname, value);
+#endif
     glPatchParameteri(static_cast<GLenum>(pname), value);
     detail::error_check("PatchParameteri"sv, check_errors);
 }

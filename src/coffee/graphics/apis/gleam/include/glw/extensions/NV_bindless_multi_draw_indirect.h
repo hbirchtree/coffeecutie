@@ -27,6 +27,15 @@ STATICINLINE void multi_draw_arrays_indirect_bindless(
     {
         GLW_FPTR_CHECK(MultiDrawArraysIndirectBindlessNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMultiDrawArraysIndirectBindlessNV,
+        mode,
+        indirect,
+        drawCount,
+        stride,
+        vertexBufferCount);
+#endif
     glMultiDrawArraysIndirectBindlessNV(
         static_cast<GLenum>(mode),
         reinterpret_cast<const void*>(indirect),
@@ -60,6 +69,16 @@ STATICINLINE void multi_draw_elements_indirect_bindless(
     {
         GLW_FPTR_CHECK(MultiDrawElementsIndirectBindlessNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMultiDrawElementsIndirectBindlessNV,
+        mode,
+        type,
+        indirect,
+        drawCount,
+        stride,
+        vertexBufferCount);
+#endif
     glMultiDrawElementsIndirectBindlessNV(
         static_cast<GLenum>(mode),
         static_cast<GLenum>(type),

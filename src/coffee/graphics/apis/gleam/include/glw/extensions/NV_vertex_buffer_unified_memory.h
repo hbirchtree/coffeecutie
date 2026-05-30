@@ -50,6 +50,9 @@ STATICINLINE void buffer_address_range(
     {
         GLW_FPTR_CHECK(BufferAddressRangeNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBufferAddressRangeNV, pname, index, address, length);
+#endif
     glBufferAddressRangeNV(pname, index, address, length);
     detail::error_check("BufferAddressRangeNV"sv, check_errors);
 }
@@ -72,6 +75,9 @@ STATICINLINE void color_format(
     {
         GLW_FPTR_CHECK(ColorFormatNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glColorFormatNV, size, type, stride);
+#endif
     glColorFormatNV(size, static_cast<GLenum>(type), stride);
     detail::error_check("ColorFormatNV"sv, check_errors);
 }
@@ -89,6 +95,9 @@ STATICINLINE void edge_flag_format(
     {
         GLW_FPTR_CHECK(EdgeFlagFormatNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEdgeFlagFormatNV, stride);
+#endif
     glEdgeFlagFormatNV(stride);
     detail::error_check("EdgeFlagFormatNV"sv, check_errors);
 }
@@ -107,6 +116,9 @@ STATICINLINE void fog_coord_format(
     {
         GLW_FPTR_CHECK(FogCoordFormatNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFogCoordFormatNV, type, stride);
+#endif
     glFogCoordFormatNV(type, stride);
     detail::error_check("FogCoordFormatNV"sv, check_errors);
 }
@@ -135,6 +147,14 @@ STATICINLINE void get_integerui64i_v(
     {
         GLW_FPTR_CHECK(GetIntegerui64i_vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetIntegerui64i_vNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(result.data()), result.size_bytes()),
+        value,
+        index);
+#endif
     glGetIntegerui64i_vNV(
         value,
         index,
@@ -157,6 +177,9 @@ STATICINLINE void index_format(
     {
         GLW_FPTR_CHECK(IndexFormatNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIndexFormatNV, type, stride);
+#endif
     glIndexFormatNV(type, stride);
     detail::error_check("IndexFormatNV"sv, check_errors);
 }
@@ -175,6 +198,9 @@ STATICINLINE void normal_format(
     {
         GLW_FPTR_CHECK(NormalFormatNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glNormalFormatNV, type, stride);
+#endif
     glNormalFormatNV(type, stride);
     detail::error_check("NormalFormatNV"sv, check_errors);
 }
@@ -197,6 +223,9 @@ STATICINLINE void secondary_color_format(
     {
         GLW_FPTR_CHECK(SecondaryColorFormatNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSecondaryColorFormatNV, size, type, stride);
+#endif
     glSecondaryColorFormatNV(size, static_cast<GLenum>(type), stride);
     detail::error_check("SecondaryColorFormatNV"sv, check_errors);
 }
@@ -219,6 +248,9 @@ STATICINLINE void tex_coord_format(
     {
         GLW_FPTR_CHECK(TexCoordFormatNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexCoordFormatNV, size, type, stride);
+#endif
     glTexCoordFormatNV(size, type, stride);
     detail::error_check("TexCoordFormatNV"sv, check_errors);
 }
@@ -245,6 +277,10 @@ STATICINLINE void vertex_attrib_format(
     {
         GLW_FPTR_CHECK(VertexAttribFormatNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glVertexAttribFormatNV, index, size, type, normalized, stride);
+#endif
     glVertexAttribFormatNV(
         index, size, static_cast<GLenum>(type), normalized, stride);
     detail::error_check("VertexAttribFormatNV"sv, check_errors);
@@ -270,6 +306,9 @@ STATICINLINE void vertex_attrib_i_format(
     {
         GLW_FPTR_CHECK(VertexAttribIFormatNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribIFormatNV, index, size, type, stride);
+#endif
     glVertexAttribIFormatNV(index, size, static_cast<GLenum>(type), stride);
     detail::error_check("VertexAttribIFormatNV"sv, check_errors);
 }
@@ -292,6 +331,9 @@ STATICINLINE void vertex_format(
     {
         GLW_FPTR_CHECK(VertexFormatNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexFormatNV, size, type, stride);
+#endif
     glVertexFormatNV(size, static_cast<GLenum>(type), stride);
     detail::error_check("VertexFormatNV"sv, check_errors);
 }

@@ -24,6 +24,16 @@ STATICINLINE void clear_buffer_data(
     {
         GLW_FPTR_CHECK(ClearBufferData)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glClearBufferData,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        target,
+        internalformat,
+        format,
+        type);
+#endif
     glClearBufferData(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
@@ -62,6 +72,18 @@ STATICINLINE void clear_buffer_sub_data(
     {
         GLW_FPTR_CHECK(ClearBufferSubData)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glClearBufferSubData,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        target,
+        internalformat,
+        offset,
+        size,
+        format,
+        type);
+#endif
     glClearBufferSubData(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
@@ -93,6 +115,9 @@ STATICINLINE void dispatch_compute(
     {
         GLW_FPTR_CHECK(DispatchCompute)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDispatchCompute, num_groups_x, num_groups_y, num_groups_z);
+#endif
     glDispatchCompute(num_groups_x, num_groups_y, num_groups_z);
     detail::error_check("DispatchCompute"sv, check_errors);
 }
@@ -112,6 +137,9 @@ STATICINLINE void dispatch_compute_indirect(
     {
         GLW_FPTR_CHECK(DispatchComputeIndirect)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDispatchComputeIndirect, indirect);
+#endif
     glDispatchComputeIndirect(indirect);
     detail::error_check("DispatchComputeIndirect"sv, check_errors);
 }
@@ -160,6 +188,25 @@ STATICINLINE void copy_image_sub_data(
     {
         GLW_FPTR_CHECK(CopyImageSubData)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glCopyImageSubData,
+        srcName,
+        srcTarget,
+        srcLevel,
+        srcX,
+        srcY,
+        srcZ,
+        dstName,
+        dstTarget,
+        dstLevel,
+        dstX,
+        dstY,
+        dstZ,
+        srcWidth,
+        srcHeight,
+        srcDepth);
+#endif
     glCopyImageSubData(
         srcName,
         static_cast<GLenum>(srcTarget),
@@ -199,6 +246,9 @@ STATICINLINE void framebuffer_parameter(
     {
         GLW_FPTR_CHECK(FramebufferParameteri)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFramebufferParameteri, target, pname, param);
+#endif
     glFramebufferParameteri(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), param);
     detail::error_check("FramebufferParameteri"sv, check_errors);
@@ -228,6 +278,14 @@ STATICINLINE void get_framebuffer_parameter(
     {
         GLW_FPTR_CHECK(GetFramebufferParameteriv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetFramebufferParameteriv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetFramebufferParameteriv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -262,6 +320,15 @@ STATICINLINE void get_internalformati64v(
     {
         GLW_FPTR_CHECK(GetInternalformati64v)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetInternalformati64v,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        internalformat,
+        pname);
+#endif
     glGetInternalformati64v(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
@@ -291,6 +358,9 @@ STATICINLINE void invalidate_buffer_data(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glInvalidateBufferData, buffer);
+#endif
     glInvalidateBufferData(buffer);
     detail::error_check("InvalidateBufferData"sv, check_errors);
 }
@@ -320,6 +390,9 @@ STATICINLINE void invalidate_buffer_sub_data(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glInvalidateBufferSubData, buffer, offset, length);
+#endif
     glInvalidateBufferSubData(buffer, offset, length);
     detail::error_check("InvalidateBufferSubData"sv, check_errors);
 }
@@ -349,6 +422,14 @@ STATICINLINE void invalidate_framebuffer(
     {
         GLW_FPTR_CHECK(InvalidateFramebuffer)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glInvalidateFramebuffer,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(attachments.data()),
+            attachments.size_bytes()),
+        target);
+#endif
     glInvalidateFramebuffer(
         static_cast<GLenum>(target),
         attachments.size(),
@@ -392,6 +473,16 @@ STATICINLINE void invalidate_sub_framebuffer(
     {
         GLW_FPTR_CHECK(InvalidateSubFramebuffer)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glInvalidateSubFramebuffer,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(attachments.data()),
+            attachments.size_bytes()),
+        target,
+        x,
+        width);
+#endif
     glInvalidateSubFramebuffer(
         static_cast<GLenum>(target),
         attachments.size(),
@@ -425,6 +516,9 @@ STATICINLINE void invalidate_tex_image(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glInvalidateTexImage, texture, level);
+#endif
     glInvalidateTexImage(texture, level);
     detail::error_check("InvalidateTexImage"sv, check_errors);
 }
@@ -462,6 +556,9 @@ STATICINLINE void invalidate_tex_sub_image(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glInvalidateTexSubImage, texture, level, xoffset, width);
+#endif
     glInvalidateTexSubImage(
         texture,
         level,
@@ -496,6 +593,10 @@ STATICINLINE void multi_draw_arrays_indirect(
     {
         GLW_FPTR_CHECK(MultiDrawArraysIndirect)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMultiDrawArraysIndirect, mode, indirect, drawcount, stride);
+#endif
     glMultiDrawArraysIndirect(
         static_cast<GLenum>(mode),
         reinterpret_cast<const void*>(indirect),
@@ -528,6 +629,10 @@ STATICINLINE void multi_draw_elements_indirect(
     {
         GLW_FPTR_CHECK(MultiDrawElementsIndirect)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMultiDrawElementsIndirect, mode, type, indirect, drawcount, stride);
+#endif
     glMultiDrawElementsIndirect(
         static_cast<GLenum>(mode),
         static_cast<GLenum>(type),
@@ -568,6 +673,15 @@ STATICINLINE void get_program_interfaceiv(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetProgramInterfaceiv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        program,
+        programInterface,
+        pname);
+#endif
     glGetProgramInterfaceiv(
         program,
         static_cast<GLenum>(programInterface),
@@ -601,6 +715,9 @@ STATICINLINE GLuint get_program_resource_index(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetProgramResourceIndex, program, programInterface, name);
+#endif
     auto out = glGetProgramResourceIndex(
         program, static_cast<GLenum>(programInterface), name.data());
     detail::error_check("GetProgramResourceIndex"sv, check_errors);
@@ -632,6 +749,10 @@ STATICINLINE GLint get_program_resource_location(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetProgramResourceLocation, program, programInterface, name);
+#endif
     auto out = glGetProgramResourceLocation(
         program, static_cast<GLenum>(programInterface), name.data());
     detail::error_check("GetProgramResourceLocation"sv, check_errors);
@@ -664,6 +785,10 @@ STATICINLINE GLint get_program_resource_location_index(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetProgramResourceLocationIndex, program, programInterface, name);
+#endif
     auto out = glGetProgramResourceLocationIndex(
         program, static_cast<GLenum>(programInterface), name.data());
     detail::error_check("GetProgramResourceLocationIndex"sv, check_errors);
@@ -704,6 +829,16 @@ STATICINLINE void get_program_resource_name(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetProgramResourceName,
+        gsl::span<char>(
+            reinterpret_cast<char*>(name.data()), name.size_bytes()),
+        program,
+        programInterface,
+        index,
+        length);
+#endif
     glGetProgramResourceName(
         program,
         static_cast<GLenum>(programInterface),
@@ -756,6 +891,18 @@ STATICINLINE void get_program_resourceiv(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetProgramResourceiv,
+        program,
+        programInterface,
+        index,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(props.data()), props.size_bytes()),
+        length,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()));
+#endif
     glGetProgramResourceiv(
         program,
         static_cast<GLenum>(programInterface),
@@ -793,6 +940,13 @@ STATICINLINE void shader_storage_block_binding(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glShaderStorageBlockBinding,
+        program,
+        storageBlockIndex,
+        storageBlockBinding);
+#endif
     glShaderStorageBlockBinding(
         program, storageBlockIndex, storageBlockBinding);
     detail::error_check("ShaderStorageBlockBinding"sv, check_errors);
@@ -827,6 +981,10 @@ STATICINLINE void tex_buffer_range(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexBufferRange, target, internalformat, buffer, offset, size);
+#endif
     glTexBufferRange(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
@@ -863,6 +1021,15 @@ STATICINLINE void tex_storage_2d_multisample(
     {
         GLW_FPTR_CHECK(TexStorage2DMultisample)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexStorage2DMultisample,
+        target,
+        samples,
+        internalformat,
+        width,
+        fixedsamplelocations);
+#endif
     glTexStorage2DMultisample(
         static_cast<GLenum>(target),
         samples,
@@ -901,6 +1068,15 @@ STATICINLINE void tex_storage_3d_multisample(
     {
         GLW_FPTR_CHECK(TexStorage3DMultisample)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexStorage3DMultisample,
+        target,
+        samples,
+        internalformat,
+        width,
+        fixedsamplelocations);
+#endif
     glTexStorage3DMultisample(
         static_cast<GLenum>(target),
         samples,
@@ -947,6 +1123,18 @@ STATICINLINE void texture_view(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTextureView,
+        texture,
+        target,
+        origtexture,
+        internalformat,
+        minlevel,
+        numlevels,
+        minlayer,
+        numlayers);
+#endif
     glTextureView(
         texture,
         static_cast<GLenum>(target),
@@ -986,6 +1174,9 @@ STATICINLINE void bind_vertex_buffer(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindVertexBuffer, bindingindex, buffer, offset, stride);
+#endif
     glBindVertexBuffer(bindingindex, buffer, offset, stride);
     detail::error_check("BindVertexBuffer"sv, check_errors);
 }
@@ -1008,6 +1199,9 @@ STATICINLINE void vertex_attrib_binding(
     {
         GLW_FPTR_CHECK(VertexAttribBinding)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribBinding, attribindex, bindingindex);
+#endif
     glVertexAttribBinding(attribindex, bindingindex);
     detail::error_check("VertexAttribBinding"sv, check_errors);
 }
@@ -1036,6 +1230,15 @@ STATICINLINE void vertex_attrib_format(
     {
         GLW_FPTR_CHECK(VertexAttribFormat)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glVertexAttribFormat,
+        attribindex,
+        size,
+        type,
+        normalized,
+        relativeoffset);
+#endif
     glVertexAttribFormat(
         attribindex,
         size,
@@ -1067,6 +1270,10 @@ STATICINLINE void vertex_attrib_i_format(
     {
         GLW_FPTR_CHECK(VertexAttribIFormat)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glVertexAttribIFormat, attribindex, size, type, relativeoffset);
+#endif
     glVertexAttribIFormat(
         attribindex, size, static_cast<GLenum>(type), relativeoffset);
     detail::error_check("VertexAttribIFormat"sv, check_errors);
@@ -1094,6 +1301,10 @@ STATICINLINE void vertex_attrib_l_format(
     {
         GLW_FPTR_CHECK(VertexAttribLFormat)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glVertexAttribLFormat, attribindex, size, type, relativeoffset);
+#endif
     glVertexAttribLFormat(
         attribindex, size, static_cast<GLenum>(type), relativeoffset);
     detail::error_check("VertexAttribLFormat"sv, check_errors);
@@ -1115,6 +1326,9 @@ STATICINLINE void vertex_binding_divisor(
     {
         GLW_FPTR_CHECK(VertexBindingDivisor)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexBindingDivisor, bindingindex, divisor);
+#endif
     glVertexBindingDivisor(bindingindex, divisor);
     detail::error_check("VertexBindingDivisor"sv, check_errors);
 }
@@ -1138,6 +1352,14 @@ STATICINLINE void debug_message_callback(
     {
         GLW_FPTR_CHECK(DebugMessageCallback)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDebugMessageCallback,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(userParam.data()),
+            userParam.size_bytes()),
+        callback);
+#endif
     glDebugMessageCallback(
         callback,
         userParam.size() ? reinterpret_cast<const void*>(userParam.data())
@@ -1174,6 +1396,16 @@ STATICINLINE void debug_message_control(
     {
         GLW_FPTR_CHECK(DebugMessageControl)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDebugMessageControl,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()),
+        source,
+        type,
+        severity,
+        enabled);
+#endif
     glDebugMessageControl(
         static_cast<GLenum>(source),
         static_cast<GLenum>(type),
@@ -1210,6 +1442,10 @@ STATICINLINE void debug_message_insert(
     {
         GLW_FPTR_CHECK(DebugMessageInsert)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDebugMessageInsert, source, type, id, severity, length, buf);
+#endif
     glDebugMessageInsert(
         static_cast<GLenum>(source),
         static_cast<GLenum>(type),
@@ -1279,6 +1515,23 @@ STATICINLINE GLuint get_debug_message_log(
     {
         GLW_FPTR_CHECK(GetDebugMessageLog)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetDebugMessageLog,
+        gsl::span<char>(
+            reinterpret_cast<char*>(sources.data()), sources.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(types.data()), types.size_bytes()),
+        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(severities.data()),
+            severities.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(lengths.data()), lengths.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(messageLog.data()),
+            messageLog.size_bytes()));
+#endif
     auto out = glGetDebugMessageLog(
         sources.size(),
         messageLog.size(),
@@ -1320,6 +1573,15 @@ STATICINLINE void get_object_label(
     {
         GLW_FPTR_CHECK(GetObjectLabel)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetObjectLabel,
+        gsl::span<char>(
+            reinterpret_cast<char*>(label.data()), label.size_bytes()),
+        identifier,
+        name,
+        length);
+#endif
     glGetObjectLabel(
         static_cast<GLenum>(identifier),
         name,
@@ -1355,6 +1617,15 @@ STATICINLINE void get_object_ptr_label(
     {
         GLW_FPTR_CHECK(GetObjectPtrLabel)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetObjectPtrLabel,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(ptr.data()), ptr.size_bytes()),
+        length,
+        gsl::span<char>(
+            reinterpret_cast<char*>(label.data()), label.size_bytes()));
+#endif
     glGetObjectPtrLabel(
         ptr.size() ? reinterpret_cast<const void*>(ptr.data()) : nullptr,
         label.size(),
@@ -1385,6 +1656,9 @@ STATICINLINE void object_label(
     {
         GLW_FPTR_CHECK(ObjectLabel)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glObjectLabel, identifier, name, length, label);
+#endif
     glObjectLabel(static_cast<GLenum>(identifier), name, length, label.data());
     detail::error_check("ObjectLabel"sv, check_errors);
 }
@@ -1410,6 +1684,14 @@ STATICINLINE void object_ptr_label(
     {
         GLW_FPTR_CHECK(ObjectPtrLabel)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glObjectPtrLabel,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(ptr.data()), ptr.size_bytes()),
+        length,
+        label);
+#endif
     glObjectPtrLabel(
         ptr.size() ? reinterpret_cast<const void*>(ptr.data()) : nullptr,
         length,
@@ -1431,6 +1713,9 @@ STATICINLINE void pop_debug_group(error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(PopDebugGroup)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPopDebugGroup);
+#endif
     glPopDebugGroup();
     detail::error_check("PopDebugGroup"sv, check_errors);
 }
@@ -1457,6 +1742,9 @@ STATICINLINE void push_debug_group(
     {
         GLW_FPTR_CHECK(PushDebugGroup)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPushDebugGroup, source, id, length, message);
+#endif
     glPushDebugGroup(static_cast<GLenum>(source), id, length, message.data());
     detail::error_check("PushDebugGroup"sv, check_errors);
 }

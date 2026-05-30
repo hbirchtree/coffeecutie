@@ -33,6 +33,18 @@ STATICINLINE void draw_range_elements(
     {
         GLW_FPTR_CHECK(DrawRangeElementsEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDrawRangeElementsEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(indices.data()),
+            indices.size_bytes()),
+        mode,
+        start,
+        end,
+        count,
+        type);
+#endif
     glDrawRangeElementsEXT(
         static_cast<GLenum>(mode),
         start,

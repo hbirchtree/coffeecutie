@@ -44,6 +44,15 @@ STATICINLINE void named_renderbuffer_storage_multisample_advanced(
             glIsRenderbuffer(renderbuffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glNamedRenderbufferStorageMultisampleAdvancedAMD,
+        renderbuffer,
+        samples,
+        storageSamples,
+        internalformat,
+        width);
+#endif
     glNamedRenderbufferStorageMultisampleAdvancedAMD(
         renderbuffer,
         samples,
@@ -80,6 +89,15 @@ STATICINLINE void renderbuffer_storage_multisample_advanced(
     {
         GLW_FPTR_CHECK(RenderbufferStorageMultisampleAdvancedAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glRenderbufferStorageMultisampleAdvancedAMD,
+        target,
+        samples,
+        storageSamples,
+        internalformat,
+        width);
+#endif
     glRenderbufferStorageMultisampleAdvancedAMD(
         static_cast<GLenum>(target),
         samples,

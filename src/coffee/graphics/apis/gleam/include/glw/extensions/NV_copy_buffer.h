@@ -29,6 +29,15 @@ STATICINLINE void copy_buffer_sub_data(
     {
         GLW_FPTR_CHECK(CopyBufferSubDataNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glCopyBufferSubDataNV,
+        readTarget,
+        writeTarget,
+        readOffset,
+        writeOffset,
+        size);
+#endif
     glCopyBufferSubDataNV(
         static_cast<GLenum>(readTarget),
         static_cast<GLenum>(writeTarget),

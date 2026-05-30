@@ -28,6 +28,9 @@ STATICINLINE void bind_sampler(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindSampler, unit, sampler);
+#endif
     glBindSampler(unit, sampler);
     detail::error_check("BindSampler"sv, check_errors);
 }
@@ -52,6 +55,13 @@ STATICINLINE void delete_samplers(
     {
         GLW_FPTR_CHECK(DeleteSamplers)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteSamplers,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(samplers.data()),
+            samplers.size_bytes()));
+#endif
     glDeleteSamplers(
         samplers.size(),
         samplers.size() ? reinterpret_cast<const GLuint*>(samplers.data())
@@ -78,6 +88,12 @@ STATICINLINE void gen_samplers(
     {
         GLW_FPTR_CHECK(GenSamplers)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenSamplers,
+        gsl::span<char>(
+            reinterpret_cast<char*>(samplers.data()), samplers.size_bytes()));
+#endif
     glGenSamplers(
         samplers.size(),
         samplers.size() ? reinterpret_cast<GLuint*>(samplers.data()) : nullptr);
@@ -112,6 +128,14 @@ STATICINLINE void get_sampler_parameter_iiv(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetSamplerParameterIiv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        sampler,
+        pname);
+#endif
     glGetSamplerParameterIiv(
         sampler,
         static_cast<GLenum>(pname),
@@ -147,6 +171,14 @@ STATICINLINE void get_sampler_parameter_iuiv(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetSamplerParameterIuiv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        sampler,
+        pname);
+#endif
     glGetSamplerParameterIuiv(
         sampler,
         static_cast<GLenum>(pname),
@@ -182,6 +214,14 @@ STATICINLINE void get_sampler_parameter(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetSamplerParameterfv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        sampler,
+        pname);
+#endif
     glGetSamplerParameterfv(
         sampler,
         static_cast<GLenum>(pname),
@@ -217,6 +257,14 @@ STATICINLINE void get_sampler_parameter(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetSamplerParameteriv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        sampler,
+        pname);
+#endif
     glGetSamplerParameteriv(
         sampler,
         static_cast<GLenum>(pname),
@@ -242,6 +290,9 @@ is_sampler(u32 sampler, error_check check_errors = error_check::on)
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsSampler, sampler);
+#endif
     auto out = glIsSampler(sampler);
     detail::error_check("IsSampler"sv, check_errors);
     return out;
@@ -276,6 +327,14 @@ STATICINLINE void sampler_parameter_iiv(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glSamplerParameterIiv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(param.data()), param.size_bytes()),
+        sampler,
+        pname);
+#endif
     glSamplerParameterIiv(
         sampler,
         static_cast<GLenum>(pname),
@@ -312,6 +371,14 @@ STATICINLINE void sampler_parameter_iuiv(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glSamplerParameterIuiv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(param.data()), param.size_bytes()),
+        sampler,
+        pname);
+#endif
     glSamplerParameterIuiv(
         sampler,
         static_cast<GLenum>(pname),
@@ -342,6 +409,9 @@ STATICINLINE void sampler_parameter(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSamplerParameterf, sampler, pname, param);
+#endif
     glSamplerParameterf(sampler, static_cast<GLenum>(pname), param);
     detail::error_check("SamplerParameterf"sv, check_errors);
 }
@@ -375,6 +445,14 @@ STATICINLINE void sampler_parameter(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glSamplerParameterfv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(param.data()), param.size_bytes()),
+        sampler,
+        pname);
+#endif
     glSamplerParameterfv(
         sampler,
         static_cast<GLenum>(pname),
@@ -406,6 +484,9 @@ STATICINLINE void sampler_parameter(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSamplerParameteri, sampler, pname, param);
+#endif
     glSamplerParameteri(sampler, static_cast<GLenum>(pname), param);
     detail::error_check("SamplerParameteri"sv, check_errors);
 }
@@ -439,6 +520,14 @@ STATICINLINE void sampler_parameter(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glSamplerParameteriv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(param.data()), param.size_bytes()),
+        sampler,
+        pname);
+#endif
     glSamplerParameteriv(
         sampler,
         static_cast<GLenum>(pname),

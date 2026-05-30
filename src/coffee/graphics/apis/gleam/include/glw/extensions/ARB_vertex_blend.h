@@ -60,6 +60,9 @@ STATICINLINE void vertex_blend(
     {
         GLW_FPTR_CHECK(VertexBlendARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexBlendARB, count);
+#endif
     glVertexBlendARB(count);
     detail::error_check("VertexBlendARB"sv, check_errors);
 }
@@ -86,6 +89,16 @@ STATICINLINE void weight_pointer(
     {
         GLW_FPTR_CHECK(WeightPointerARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glWeightPointerARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pointer.data()),
+            pointer.size_bytes()),
+        size,
+        type,
+        stride);
+#endif
     glWeightPointerARB(
         size,
         static_cast<GLenum>(type),
@@ -115,6 +128,13 @@ STATICINLINE void weightbv(
     {
         GLW_FPTR_CHECK(WeightbvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glWeightbvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(weights.data()),
+            weights.size_bytes()));
+#endif
     glWeightbvARB(
         weights.size(),
         weights.size() ? reinterpret_cast<const GLbyte*>(weights.data())
@@ -142,6 +162,13 @@ STATICINLINE void weightdv(
     {
         GLW_FPTR_CHECK(WeightdvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glWeightdvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(weights.data()),
+            weights.size_bytes()));
+#endif
     glWeightdvARB(
         weights.size(),
         weights.size() ? reinterpret_cast<const GLdouble*>(weights.data())
@@ -169,6 +196,13 @@ STATICINLINE void weightfv(
     {
         GLW_FPTR_CHECK(WeightfvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glWeightfvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(weights.data()),
+            weights.size_bytes()));
+#endif
     glWeightfvARB(
         weights.size(),
         weights.size() ? reinterpret_cast<const GLfloat*>(weights.data())
@@ -196,6 +230,13 @@ STATICINLINE void weightiv(
     {
         GLW_FPTR_CHECK(WeightivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glWeightivARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(weights.data()),
+            weights.size_bytes()));
+#endif
     glWeightivARB(
         weights.size(),
         weights.size() ? reinterpret_cast<const GLint*>(weights.data())
@@ -223,6 +264,13 @@ STATICINLINE void weightsv(
     {
         GLW_FPTR_CHECK(WeightsvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glWeightsvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(weights.data()),
+            weights.size_bytes()));
+#endif
     glWeightsvARB(
         weights.size(),
         weights.size() ? reinterpret_cast<const GLshort*>(weights.data())
@@ -250,6 +298,13 @@ STATICINLINE void weightubv(
     {
         GLW_FPTR_CHECK(WeightubvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glWeightubvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(weights.data()),
+            weights.size_bytes()));
+#endif
     glWeightubvARB(
         weights.size(),
         weights.size() ? reinterpret_cast<const GLubyte*>(weights.data())
@@ -277,6 +332,13 @@ STATICINLINE void weightuiv(
     {
         GLW_FPTR_CHECK(WeightuivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glWeightuivARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(weights.data()),
+            weights.size_bytes()));
+#endif
     glWeightuivARB(
         weights.size(),
         weights.size() ? reinterpret_cast<const GLuint*>(weights.data())
@@ -304,6 +366,13 @@ STATICINLINE void weightusv(
     {
         GLW_FPTR_CHECK(WeightusvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glWeightusvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(weights.data()),
+            weights.size_bytes()));
+#endif
     glWeightusvARB(
         weights.size(),
         weights.size() ? reinterpret_cast<const GLushort*>(weights.data())

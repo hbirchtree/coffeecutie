@@ -23,6 +23,9 @@ STATICINLINE void max_shader_compiler_threads(
     {
         GLW_FPTR_CHECK(MaxShaderCompilerThreadsARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMaxShaderCompilerThreadsARB, count);
+#endif
     glMaxShaderCompilerThreadsARB(count);
     detail::error_check("MaxShaderCompilerThreadsARB"sv, check_errors);
 }

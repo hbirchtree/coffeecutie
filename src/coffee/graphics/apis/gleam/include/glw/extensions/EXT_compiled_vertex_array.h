@@ -21,6 +21,9 @@ STATICINLINE void lock_arrays(
     {
         GLW_FPTR_CHECK(LockArraysEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glLockArraysEXT, first, count);
+#endif
     glLockArraysEXT(first, count);
     detail::error_check("LockArraysEXT"sv, check_errors);
 }
@@ -37,6 +40,9 @@ STATICINLINE void unlock_arrays(error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(UnlockArraysEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUnlockArraysEXT);
+#endif
     glUnlockArraysEXT();
     detail::error_check("UnlockArraysEXT"sv, check_errors);
 }

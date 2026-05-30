@@ -43,6 +43,9 @@ STATICINLINE void blend_equation_separatei(
     {
         GLW_FPTR_CHECK(BlendEquationSeparateiEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendEquationSeparateiEXT, buf, modeRGB, modeAlpha);
+#endif
     glBlendEquationSeparateiEXT(
         buf, static_cast<GLenum>(modeRGB), static_cast<GLenum>(modeAlpha));
     detail::error_check("BlendEquationSeparateiEXT"sv, check_errors);
@@ -64,6 +67,9 @@ STATICINLINE void blend_equationi(
     {
         GLW_FPTR_CHECK(BlendEquationiEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendEquationiEXT, buf, mode);
+#endif
     glBlendEquationiEXT(buf, static_cast<GLenum>(mode));
     detail::error_check("BlendEquationiEXT"sv, check_errors);
 }
@@ -90,6 +96,10 @@ STATICINLINE void blend_func_separatei(
     {
         GLW_FPTR_CHECK(BlendFuncSeparateiEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glBlendFuncSeparateiEXT, buf, srcRGB, dstRGB, srcAlpha, dstAlpha);
+#endif
     glBlendFuncSeparateiEXT(
         buf,
         static_cast<GLenum>(srcRGB),
@@ -117,6 +127,9 @@ STATICINLINE void blend_funci(
     {
         GLW_FPTR_CHECK(BlendFunciEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendFunciEXT, buf, src, dst);
+#endif
     glBlendFunciEXT(buf, static_cast<GLenum>(src), static_cast<GLenum>(dst));
     detail::error_check("BlendFunciEXT"sv, check_errors);
 }
@@ -143,6 +156,9 @@ STATICINLINE void color_maski(
     {
         GLW_FPTR_CHECK(ColorMaskiEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glColorMaskiEXT, index, r, g, b, a);
+#endif
     glColorMaskiEXT(index, r, g, b, a);
     detail::error_check("ColorMaskiEXT"sv, check_errors);
 }
@@ -163,6 +179,9 @@ STATICINLINE void disablei(
     {
         GLW_FPTR_CHECK(DisableiEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDisableiEXT, target, index);
+#endif
     glDisableiEXT(static_cast<GLenum>(target), index);
     detail::error_check("DisableiEXT"sv, check_errors);
 }
@@ -183,6 +202,9 @@ STATICINLINE void enablei(
     {
         GLW_FPTR_CHECK(EnableiEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEnableiEXT, target, index);
+#endif
     glEnableiEXT(static_cast<GLenum>(target), index);
     detail::error_check("EnableiEXT"sv, check_errors);
 }
@@ -203,6 +225,9 @@ STATICINLINE GLboolean is_enabledi(
     {
         GLW_FPTR_CHECK(IsEnablediEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsEnablediEXT, target, index);
+#endif
     auto out = glIsEnablediEXT(static_cast<GLenum>(target), index);
     detail::error_check("IsEnablediEXT"sv, check_errors);
     return out;

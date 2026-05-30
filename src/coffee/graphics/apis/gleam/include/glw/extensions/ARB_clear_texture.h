@@ -38,6 +38,16 @@ STATICINLINE void clear_tex_image(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glClearTexImage,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        texture,
+        level,
+        format,
+        type);
+#endif
     glClearTexImage(
         texture,
         level,
@@ -86,6 +96,18 @@ STATICINLINE void clear_tex_sub_image(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glClearTexSubImage,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        texture,
+        level,
+        xoffset,
+        width,
+        format,
+        type);
+#endif
     glClearTexSubImage(
         texture,
         level,

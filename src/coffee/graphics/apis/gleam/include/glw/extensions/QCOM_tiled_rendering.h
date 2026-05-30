@@ -23,6 +23,9 @@ STATICINLINE void end_tiling(
     {
         GLW_FPTR_CHECK(EndTilingQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEndTilingQCOM, preserveMask);
+#endif
     glEndTilingQCOM(static_cast<GLenum>(preserveMask));
     detail::error_check("EndTilingQCOM"sv, check_errors);
 }
@@ -50,6 +53,9 @@ STATICINLINE void start_tiling(
     {
         GLW_FPTR_CHECK(StartTilingQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glStartTilingQCOM, x, width, preserveMask);
+#endif
     glStartTilingQCOM(
         x[0], x[1], width[0], width[1], static_cast<GLenum>(preserveMask));
     detail::error_check("StartTilingQCOM"sv, check_errors);

@@ -29,6 +29,9 @@ STATICINLINE void tex_storage_1d(
     {
         GLW_FPTR_CHECK(TexStorage1D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexStorage1D, target, levels, internalformat, width);
+#endif
     glTexStorage1D(
         static_cast<GLenum>(target),
         levels,
@@ -60,6 +63,9 @@ STATICINLINE void tex_storage_2d(
     {
         GLW_FPTR_CHECK(TexStorage2D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexStorage2D, target, levels, internalformat, width);
+#endif
     glTexStorage2D(
         static_cast<GLenum>(target),
         levels,
@@ -93,6 +99,9 @@ STATICINLINE void tex_storage_3d(
     {
         GLW_FPTR_CHECK(TexStorage3D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexStorage3D, target, levels, internalformat, width);
+#endif
     glTexStorage3D(
         static_cast<GLenum>(target),
         levels,

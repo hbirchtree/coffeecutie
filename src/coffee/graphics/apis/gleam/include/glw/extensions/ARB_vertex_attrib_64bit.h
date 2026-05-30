@@ -38,6 +38,14 @@ STATICINLINE void get_vertex_attrib_ldv(
     {
         GLW_FPTR_CHECK(GetVertexAttribLdv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetVertexAttribLdv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        index,
+        pname);
+#endif
     glGetVertexAttribLdv(
         index,
         static_cast<GLenum>(pname),
@@ -59,6 +67,9 @@ STATICINLINE void vertex_attrib_l1d(
     {
         GLW_FPTR_CHECK(VertexAttribL1d)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribL1d, index, x);
+#endif
     glVertexAttribL1d(index, x);
     detail::error_check("VertexAttribL1d"sv, check_errors);
 }
@@ -85,6 +96,13 @@ STATICINLINE void vertex_attrib_l1dv(
     {
         GLW_FPTR_CHECK(VertexAttribL1dv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribL1dv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttribL1dv(index, reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("VertexAttribL1dv"sv, check_errors);
 }
@@ -106,6 +124,9 @@ STATICINLINE void vertex_attrib_l2d(
     {
         GLW_FPTR_CHECK(VertexAttribL2d)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribL2d, index, x);
+#endif
     glVertexAttribL2d(index, x[0], x[1]);
     detail::error_check("VertexAttribL2d"sv, check_errors);
 }
@@ -130,6 +151,13 @@ STATICINLINE void vertex_attrib_l2dv(
     {
         GLW_FPTR_CHECK(VertexAttribL2dv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribL2dv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttribL2dv(index, reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("VertexAttribL2dv"sv, check_errors);
 }
@@ -152,6 +180,9 @@ STATICINLINE void vertex_attrib_l3d(
     {
         GLW_FPTR_CHECK(VertexAttribL3d)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribL3d, index, x);
+#endif
     glVertexAttribL3d(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttribL3d"sv, check_errors);
 }
@@ -176,6 +207,13 @@ STATICINLINE void vertex_attrib_l3dv(
     {
         GLW_FPTR_CHECK(VertexAttribL3dv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribL3dv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttribL3dv(index, reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("VertexAttribL3dv"sv, check_errors);
 }
@@ -199,6 +237,9 @@ STATICINLINE void vertex_attrib_l4d(
     {
         GLW_FPTR_CHECK(VertexAttribL4d)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribL4d, index, x);
+#endif
     glVertexAttribL4d(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttribL4d"sv, check_errors);
 }
@@ -223,6 +264,13 @@ STATICINLINE void vertex_attrib_l4dv(
     {
         GLW_FPTR_CHECK(VertexAttribL4dv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribL4dv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttribL4dv(index, reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("VertexAttribL4dv"sv, check_errors);
 }
@@ -251,6 +299,17 @@ STATICINLINE void vertex_attrib_l_pointer(
     {
         GLW_FPTR_CHECK(VertexAttribLPointer)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribLPointer,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pointer.data()),
+            pointer.size_bytes()),
+        index,
+        size,
+        type,
+        stride);
+#endif
     glVertexAttribLPointer(
         index,
         size,

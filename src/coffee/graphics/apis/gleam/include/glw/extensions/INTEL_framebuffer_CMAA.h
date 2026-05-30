@@ -18,6 +18,9 @@ STATICINLINE void apply_framebuffer_attachment_cmaa(
     {
         GLW_FPTR_CHECK(ApplyFramebufferAttachmentCMAAINTEL)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glApplyFramebufferAttachmentCMAAINTEL);
+#endif
     glApplyFramebufferAttachmentCMAAINTEL();
     detail::error_check("ApplyFramebufferAttachmentCMAAINTEL"sv, check_errors);
 }

@@ -29,6 +29,14 @@ STATICINLINE void blend_func_separate(
     {
         GLW_FPTR_CHECK(BlendFuncSeparateEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glBlendFuncSeparateEXT,
+        sfactorRGB,
+        dfactorRGB,
+        sfactorAlpha,
+        dfactorAlpha);
+#endif
     glBlendFuncSeparateEXT(
         static_cast<GLenum>(sfactorRGB),
         static_cast<GLenum>(dfactorRGB),

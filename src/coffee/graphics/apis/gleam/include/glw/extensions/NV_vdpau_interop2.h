@@ -33,6 +33,18 @@ vdpau_register_video_surface_with_picture_structure(
     {
         GLW_FPTR_CHECK(VDPAURegisterVideoSurfaceWithPictureStructureNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glVDPAURegisterVideoSurfaceWithPictureStructureNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(vdpSurface.data()),
+            vdpSurface.size_bytes()),
+        target,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(textureNames.data()),
+            textureNames.size_bytes()),
+        isFrameStructure);
+#endif
     auto out = glVDPAURegisterVideoSurfaceWithPictureStructureNV(
         vdpSurface.size() ? reinterpret_cast<const void*>(vdpSurface.data())
                           : nullptr,

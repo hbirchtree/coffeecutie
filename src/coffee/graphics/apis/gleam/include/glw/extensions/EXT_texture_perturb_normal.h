@@ -24,6 +24,9 @@ STATICINLINE void texture_normal(
     {
         GLW_FPTR_CHECK(TextureNormalEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTextureNormalEXT, mode);
+#endif
     glTextureNormalEXT(static_cast<GLenum>(mode));
     detail::error_check("TextureNormalEXT"sv, check_errors);
 }

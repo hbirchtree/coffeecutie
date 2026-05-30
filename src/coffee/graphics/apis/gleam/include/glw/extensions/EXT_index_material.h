@@ -24,6 +24,9 @@ STATICINLINE void index_material(
     {
         GLW_FPTR_CHECK(IndexMaterialEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIndexMaterialEXT, face, mode);
+#endif
     glIndexMaterialEXT(static_cast<GLenum>(face), static_cast<GLenum>(mode));
     detail::error_check("IndexMaterialEXT"sv, check_errors);
 }

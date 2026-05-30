@@ -51,6 +51,19 @@ STATICINLINE void tex_image_3d(
     {
         GLW_FPTR_CHECK(TexImage3DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexImage3DEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        target,
+        level,
+        internalformat,
+        width,
+        border,
+        format,
+        type);
+#endif
     glTexImage3DEXT(
         static_cast<GLenum>(target),
         level,
@@ -99,6 +112,18 @@ STATICINLINE void tex_sub_image_3d(
     {
         GLW_FPTR_CHECK(TexSubImage3DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexSubImage3DEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        target,
+        level,
+        xoffset,
+        width,
+        format,
+        type);
+#endif
     glTexSubImage3DEXT(
         static_cast<GLenum>(target),
         level,

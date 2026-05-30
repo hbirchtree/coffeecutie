@@ -31,6 +31,14 @@ STATICINLINE void scissor_exclusive_arrayv(
     {
         GLW_FPTR_CHECK(ScissorExclusiveArrayvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glScissorExclusiveArrayvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        first,
+        count);
+#endif
     glScissorExclusiveArrayvNV(
         first,
         count,
@@ -59,6 +67,9 @@ STATICINLINE void scissor_exclusive(
     {
         GLW_FPTR_CHECK(ScissorExclusiveNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glScissorExclusiveNV, x, width);
+#endif
     glScissorExclusiveNV(x[0], x[1], width[0], width[1]);
     detail::error_check("ScissorExclusiveNV"sv, check_errors);
 }

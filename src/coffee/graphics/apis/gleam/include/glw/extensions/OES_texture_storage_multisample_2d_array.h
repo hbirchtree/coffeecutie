@@ -36,6 +36,15 @@ STATICINLINE void tex_storage_3d_multisample(
     {
         GLW_FPTR_CHECK(TexStorage3DMultisampleOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexStorage3DMultisampleOES,
+        target,
+        samples,
+        internalformat,
+        width,
+        fixedsamplelocations);
+#endif
     glTexStorage3DMultisampleOES(
         static_cast<GLenum>(target),
         samples,

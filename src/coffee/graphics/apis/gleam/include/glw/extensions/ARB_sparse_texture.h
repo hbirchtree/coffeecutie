@@ -45,6 +45,10 @@ STATICINLINE void tex_page_commitment(
     {
         GLW_FPTR_CHECK(TexPageCommitmentARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexPageCommitmentARB, target, level, xoffset, width, commit);
+#endif
     glTexPageCommitmentARB(
         target,
         level,

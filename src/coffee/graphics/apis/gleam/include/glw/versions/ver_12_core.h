@@ -30,6 +30,9 @@ STATICINLINE void copy_tex_sub_image_3d(
     {
         GLW_FPTR_CHECK(CopyTexSubImage3D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCopyTexSubImage3D, target, level, xoffset, x, width);
+#endif
     glCopyTexSubImage3D(
         static_cast<GLenum>(target),
         level,
@@ -70,6 +73,18 @@ STATICINLINE void draw_range_elements(
     {
         GLW_FPTR_CHECK(DrawRangeElements)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDrawRangeElements,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(indices.data()),
+            indices.size_bytes()),
+        mode,
+        start,
+        end,
+        count,
+        type);
+#endif
     glDrawRangeElements(
         static_cast<GLenum>(mode),
         start,
@@ -115,6 +130,19 @@ STATICINLINE void tex_image_3d(
     {
         GLW_FPTR_CHECK(TexImage3D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexImage3D,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        target,
+        level,
+        internalformat,
+        width,
+        border,
+        format,
+        type);
+#endif
     glTexImage3D(
         static_cast<GLenum>(target),
         level,
@@ -164,6 +192,18 @@ STATICINLINE void tex_sub_image_3d(
     {
         GLW_FPTR_CHECK(TexSubImage3D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexSubImage3D,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        target,
+        level,
+        xoffset,
+        width,
+        format,
+        type);
+#endif
     glTexSubImage3D(
         static_cast<GLenum>(target),
         level,

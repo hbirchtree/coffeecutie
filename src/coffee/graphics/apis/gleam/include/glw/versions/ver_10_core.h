@@ -17,6 +17,9 @@ STATICINLINE void blend_func(
     {
         GLW_FPTR_CHECK(BlendFunc)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendFunc, sfactor, dfactor);
+#endif
     glBlendFunc(static_cast<GLenum>(sfactor), static_cast<GLenum>(dfactor));
     detail::error_check("BlendFunc"sv, check_errors);
 }
@@ -36,6 +39,9 @@ STATICINLINE void clear(
     {
         GLW_FPTR_CHECK(Clear)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glClear, mask);
+#endif
     glClear(static_cast<GLenum>(mask));
     detail::error_check("Clear"sv, check_errors);
 }
@@ -60,6 +66,9 @@ STATICINLINE void clear_color(
     {
         GLW_FPTR_CHECK(ClearColor)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glClearColor, red);
+#endif
     glClearColor(red[0], red[1], red[2], red[3]);
     detail::error_check("ClearColor"sv, check_errors);
 }
@@ -79,6 +88,9 @@ STATICINLINE void clear_depth(
     {
         GLW_FPTR_CHECK(ClearDepth)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glClearDepth, depth);
+#endif
     glClearDepth(depth);
     detail::error_check("ClearDepth"sv, check_errors);
 }
@@ -98,6 +110,9 @@ STATICINLINE void clear_stencil(
     {
         GLW_FPTR_CHECK(ClearStencil)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glClearStencil, s);
+#endif
     glClearStencil(s);
     detail::error_check("ClearStencil"sv, check_errors);
 }
@@ -122,6 +137,9 @@ STATICINLINE void color_mask(
     {
         GLW_FPTR_CHECK(ColorMask)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glColorMask, red);
+#endif
     glColorMask(red[0], red[1], red[2], red[3]);
     detail::error_check("ColorMask"sv, check_errors);
 }
@@ -141,6 +159,9 @@ STATICINLINE void cull_face(
     {
         GLW_FPTR_CHECK(CullFace)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCullFace, mode);
+#endif
     glCullFace(static_cast<GLenum>(mode));
     detail::error_check("CullFace"sv, check_errors);
 }
@@ -160,6 +181,9 @@ STATICINLINE void depth_func(
     {
         GLW_FPTR_CHECK(DepthFunc)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDepthFunc, func);
+#endif
     glDepthFunc(static_cast<GLenum>(func));
     detail::error_check("DepthFunc"sv, check_errors);
 }
@@ -179,6 +203,9 @@ STATICINLINE void depth_mask(
     {
         GLW_FPTR_CHECK(DepthMask)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDepthMask, flag);
+#endif
     glDepthMask(flag);
     detail::error_check("DepthMask"sv, check_errors);
 }
@@ -199,6 +226,9 @@ STATICINLINE void depth_range(
     {
         GLW_FPTR_CHECK(DepthRange)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDepthRange, n, f);
+#endif
     glDepthRange(n, f);
     detail::error_check("DepthRange"sv, check_errors);
 }
@@ -218,6 +248,9 @@ STATICINLINE void disable(
     {
         GLW_FPTR_CHECK(Disable)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDisable, cap);
+#endif
     glDisable(static_cast<GLenum>(cap));
     detail::error_check("Disable"sv, check_errors);
 }
@@ -237,6 +270,9 @@ STATICINLINE void draw_buffer(
     {
         GLW_FPTR_CHECK(DrawBuffer)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDrawBuffer, buf);
+#endif
     glDrawBuffer(static_cast<GLenum>(buf));
     detail::error_check("DrawBuffer"sv, check_errors);
 }
@@ -256,6 +292,9 @@ STATICINLINE void enable(
     {
         GLW_FPTR_CHECK(Enable)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEnable, cap);
+#endif
     glEnable(static_cast<GLenum>(cap));
     detail::error_check("Enable"sv, check_errors);
 }
@@ -274,6 +313,9 @@ STATICINLINE void finish(error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(Finish)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFinish);
+#endif
     glFinish();
     detail::error_check("Finish"sv, check_errors);
 }
@@ -292,6 +334,9 @@ STATICINLINE void flush(error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(Flush)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFlush);
+#endif
     glFlush();
     detail::error_check("Flush"sv, check_errors);
 }
@@ -312,6 +357,9 @@ STATICINLINE void front_face(
     {
         GLW_FPTR_CHECK(FrontFace)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFrontFace, mode);
+#endif
     glFrontFace(static_cast<GLenum>(mode));
     detail::error_check("FrontFace"sv, check_errors);
 }
@@ -338,6 +386,13 @@ STATICINLINE void get_booleanv(
     {
         GLW_FPTR_CHECK(GetBooleanv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetBooleanv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        pname);
+#endif
     glGetBooleanv(
         static_cast<GLenum>(pname),
         data.size() ? reinterpret_cast<GLboolean*>(data.data()) : nullptr);
@@ -366,6 +421,13 @@ STATICINLINE void get_doublev(
     {
         GLW_FPTR_CHECK(GetDoublev)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetDoublev,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        pname);
+#endif
     glGetDoublev(
         static_cast<GLenum>(pname),
         data.size() ? reinterpret_cast<GLdouble*>(data.data()) : nullptr);
@@ -387,6 +449,9 @@ STATICINLINE group::error_code get_error(
     {
         GLW_FPTR_CHECK(GetError)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetError);
+#endif
     auto out = glGetError();
     detail::error_check("GetError"sv, check_errors);
     return static_cast<group::error_code>(out);
@@ -414,6 +479,13 @@ STATICINLINE void get_floatv(
     {
         GLW_FPTR_CHECK(GetFloatv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetFloatv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        pname);
+#endif
     glGetFloatv(
         static_cast<GLenum>(pname),
         data.size() ? reinterpret_cast<GLfloat*>(data.data()) : nullptr);
@@ -442,6 +514,13 @@ STATICINLINE void get_integerv(
     {
         GLW_FPTR_CHECK(GetIntegerv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetIntegerv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        pname);
+#endif
     glGetIntegerv(
         static_cast<GLenum>(pname),
         data.size() ? reinterpret_cast<GLint*>(data.data()) : nullptr);
@@ -463,6 +542,9 @@ STATICINLINE std::string get_string(
     {
         GLW_FPTR_CHECK(GetString)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetString, name);
+#endif
     auto out = glGetString(static_cast<GLenum>(name));
     detail::error_check("GetString"sv, check_errors);
     return reinterpret_cast<const char*>(out);
@@ -492,6 +574,16 @@ STATICINLINE void get_tex_image(
     {
         GLW_FPTR_CHECK(GetTexImage)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetTexImage,
+        gsl::span<char>(
+            reinterpret_cast<char*>(pixels.data()), pixels.size_bytes()),
+        target,
+        level,
+        format,
+        type);
+#endif
     glGetTexImage(
         static_cast<GLenum>(target),
         level,
@@ -527,6 +619,15 @@ STATICINLINE void get_tex_level_parameter(
     {
         GLW_FPTR_CHECK(GetTexLevelParameterfv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetTexLevelParameterfv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        level,
+        pname);
+#endif
     glGetTexLevelParameterfv(
         static_cast<GLenum>(target),
         level,
@@ -561,6 +662,15 @@ STATICINLINE void get_tex_level_parameter(
     {
         GLW_FPTR_CHECK(GetTexLevelParameteriv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetTexLevelParameteriv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        level,
+        pname);
+#endif
     glGetTexLevelParameteriv(
         static_cast<GLenum>(target),
         level,
@@ -593,6 +703,14 @@ STATICINLINE void get_tex_parameter(
     {
         GLW_FPTR_CHECK(GetTexParameterfv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetTexParameterfv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetTexParameterfv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -624,6 +742,14 @@ STATICINLINE void get_tex_parameter(
     {
         GLW_FPTR_CHECK(GetTexParameteriv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetTexParameteriv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetTexParameteriv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -649,6 +775,9 @@ STATICINLINE void hint(
     {
         GLW_FPTR_CHECK(Hint)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glHint, target, mode);
+#endif
     glHint(static_cast<GLenum>(target), static_cast<GLenum>(mode));
     detail::error_check("Hint"sv, check_errors);
 }
@@ -668,6 +797,9 @@ is_enabled(group::enable_cap cap, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(IsEnabled)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsEnabled, cap);
+#endif
     auto out = glIsEnabled(static_cast<GLenum>(cap));
     detail::error_check("IsEnabled"sv, check_errors);
     return out;
@@ -688,6 +820,9 @@ STATICINLINE void line_width(
     {
         GLW_FPTR_CHECK(LineWidth)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glLineWidth, width);
+#endif
     glLineWidth(width);
     detail::error_check("LineWidth"sv, check_errors);
 }
@@ -707,6 +842,9 @@ STATICINLINE void logic_op(
     {
         GLW_FPTR_CHECK(LogicOp)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glLogicOp, opcode);
+#endif
     glLogicOp(static_cast<GLenum>(opcode));
     detail::error_check("LogicOp"sv, check_errors);
 }
@@ -729,6 +867,9 @@ STATICINLINE void pixel_storef(
     {
         GLW_FPTR_CHECK(PixelStoref)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPixelStoref, pname, param);
+#endif
     glPixelStoref(static_cast<GLenum>(pname), param);
     detail::error_check("PixelStoref"sv, check_errors);
 }
@@ -751,6 +892,9 @@ STATICINLINE void pixel_storei(
     {
         GLW_FPTR_CHECK(PixelStorei)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPixelStorei, pname, param);
+#endif
     glPixelStorei(static_cast<GLenum>(pname), param);
     detail::error_check("PixelStorei"sv, check_errors);
 }
@@ -770,6 +914,9 @@ STATICINLINE void point_size(
     {
         GLW_FPTR_CHECK(PointSize)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPointSize, size);
+#endif
     glPointSize(size);
     detail::error_check("PointSize"sv, check_errors);
 }
@@ -792,6 +939,9 @@ STATICINLINE void polygon_mode(
     {
         GLW_FPTR_CHECK(PolygonMode)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPolygonMode, face, mode);
+#endif
     glPolygonMode(static_cast<GLenum>(face), static_cast<GLenum>(mode));
     detail::error_check("PolygonMode"sv, check_errors);
 }
@@ -811,6 +961,9 @@ STATICINLINE void read_buffer(
     {
         GLW_FPTR_CHECK(ReadBuffer)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glReadBuffer, src);
+#endif
     glReadBuffer(static_cast<GLenum>(src));
     detail::error_check("ReadBuffer"sv, check_errors);
 }
@@ -844,6 +997,16 @@ STATICINLINE void read_pixels(
     {
         GLW_FPTR_CHECK(ReadPixels)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glReadPixels,
+        gsl::span<char>(
+            reinterpret_cast<char*>(pixels.data()), pixels.size_bytes()),
+        x,
+        width,
+        format,
+        type);
+#endif
     glReadPixels(
         x[0],
         x[1],
@@ -877,6 +1040,9 @@ STATICINLINE void scissor(
     {
         GLW_FPTR_CHECK(Scissor)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glScissor, x, width);
+#endif
     glScissor(x[0], x[1], width[0], width[1]);
     detail::error_check("Scissor"sv, check_errors);
 }
@@ -901,6 +1067,9 @@ STATICINLINE void stencil_func(
     {
         GLW_FPTR_CHECK(StencilFunc)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glStencilFunc, func, ref, mask);
+#endif
     glStencilFunc(static_cast<GLenum>(func), ref, mask);
     detail::error_check("StencilFunc"sv, check_errors);
 }
@@ -920,6 +1089,9 @@ STATICINLINE void stencil_mask(
     {
         GLW_FPTR_CHECK(StencilMask)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glStencilMask, mask);
+#endif
     glStencilMask(mask);
     detail::error_check("StencilMask"sv, check_errors);
 }
@@ -944,6 +1116,9 @@ STATICINLINE void stencil_op(
     {
         GLW_FPTR_CHECK(StencilOp)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glStencilOp, fail, zfail, zpass);
+#endif
     glStencilOp(
         static_cast<GLenum>(fail),
         static_cast<GLenum>(zfail),
@@ -982,6 +1157,19 @@ STATICINLINE void tex_image_1d(
     {
         GLW_FPTR_CHECK(TexImage1D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexImage1D,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        target,
+        level,
+        internalformat,
+        width,
+        border,
+        format,
+        type);
+#endif
     glTexImage1D(
         static_cast<GLenum>(target),
         level,
@@ -1027,6 +1215,19 @@ STATICINLINE void tex_image_2d(
     {
         GLW_FPTR_CHECK(TexImage2D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexImage2D,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        target,
+        level,
+        internalformat,
+        width,
+        border,
+        format,
+        type);
+#endif
     glTexImage2D(
         static_cast<GLenum>(target),
         level,
@@ -1060,6 +1261,9 @@ STATICINLINE void tex_parameter(
     {
         GLW_FPTR_CHECK(TexParameterf)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexParameterf, target, pname, param);
+#endif
     glTexParameterf(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), param);
     detail::error_check("TexParameterf"sv, check_errors);
@@ -1089,6 +1293,14 @@ STATICINLINE void tex_parameter(
     {
         GLW_FPTR_CHECK(TexParameterfv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexParameterfv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glTexParameterfv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -1117,6 +1329,9 @@ STATICINLINE void tex_parameter(
     {
         GLW_FPTR_CHECK(TexParameteri)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexParameteri, target, pname, param);
+#endif
     glTexParameteri(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), param);
     detail::error_check("TexParameteri"sv, check_errors);
@@ -1146,6 +1361,14 @@ STATICINLINE void tex_parameter(
     {
         GLW_FPTR_CHECK(TexParameteriv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexParameteriv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glTexParameteriv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -1176,6 +1399,9 @@ STATICINLINE void viewport(
     {
         GLW_FPTR_CHECK(Viewport)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glViewport, x, width);
+#endif
     glViewport(x[0], x[1], width[0], width[1]);
     detail::error_check("Viewport"sv, check_errors);
 }

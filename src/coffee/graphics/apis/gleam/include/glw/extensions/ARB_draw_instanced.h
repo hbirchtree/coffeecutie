@@ -25,6 +25,9 @@ STATICINLINE void draw_arrays_instanced(
     {
         GLW_FPTR_CHECK(DrawArraysInstancedARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDrawArraysInstancedARB, mode, first, count, primcount);
+#endif
     glDrawArraysInstancedARB(
         static_cast<GLenum>(mode), first, count, primcount);
     detail::error_check("DrawArraysInstancedARB"sv, check_errors);
@@ -52,6 +55,10 @@ STATICINLINE void draw_elements_instanced(
     {
         GLW_FPTR_CHECK(DrawElementsInstancedARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawElementsInstancedARB, mode, count, type, indices, primcount);
+#endif
     glDrawElementsInstancedARB(
         static_cast<GLenum>(mode),
         count,

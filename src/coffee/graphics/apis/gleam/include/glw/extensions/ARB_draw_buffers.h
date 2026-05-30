@@ -43,6 +43,12 @@ STATICINLINE void draw_buffers(
     {
         GLW_FPTR_CHECK(DrawBuffersARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDrawBuffersARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(bufs.data()), bufs.size_bytes()));
+#endif
     glDrawBuffersARB(
         bufs.size(),
         bufs.size() ? reinterpret_cast<const GLenum*>(bufs.data()) : nullptr);

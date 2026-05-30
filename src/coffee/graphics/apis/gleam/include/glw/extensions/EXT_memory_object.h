@@ -39,6 +39,9 @@ STATICINLINE void buffer_storage_mem(
     {
         GLW_FPTR_CHECK(BufferStorageMemEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBufferStorageMemEXT, target, size, memory, offset);
+#endif
     glBufferStorageMemEXT(static_cast<GLenum>(target), size, memory, offset);
     detail::error_check("BufferStorageMemEXT"sv, check_errors);
 }
@@ -62,6 +65,14 @@ STATICINLINE void create_memory_objects(
     {
         GLW_FPTR_CHECK(CreateMemoryObjectsEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCreateMemoryObjectsEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(memoryObjects.data()),
+            memoryObjects.size_bytes()),
+        n);
+#endif
     glCreateMemoryObjectsEXT(
         n,
         memoryObjects.size() ? reinterpret_cast<GLuint*>(memoryObjects.data())
@@ -90,6 +101,13 @@ STATICINLINE void delete_memory_objects(
     {
         GLW_FPTR_CHECK(DeleteMemoryObjectsEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteMemoryObjectsEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(memoryObjects.data()),
+            memoryObjects.size_bytes()));
+#endif
     glDeleteMemoryObjectsEXT(
         memoryObjects.size(),
         memoryObjects.size()
@@ -121,6 +139,14 @@ STATICINLINE void get_memory_object_parameter(
     {
         GLW_FPTR_CHECK(GetMemoryObjectParameterivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetMemoryObjectParameterivEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        memoryObject,
+        pname);
+#endif
     glGetMemoryObjectParameterivEXT(
         memoryObject,
         static_cast<GLenum>(pname),
@@ -149,6 +175,13 @@ STATICINLINE void get_unsigned_bytev(
     {
         GLW_FPTR_CHECK(GetUnsignedBytevEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetUnsignedBytevEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        pname);
+#endif
     glGetUnsignedBytevEXT(
         static_cast<GLenum>(pname),
         data.size() ? reinterpret_cast<GLubyte*>(data.data()) : nullptr);
@@ -178,6 +211,14 @@ STATICINLINE void get_unsigned_bytei_v(
     {
         GLW_FPTR_CHECK(GetUnsignedBytei_vEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetUnsignedBytei_vEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        target,
+        index);
+#endif
     glGetUnsignedBytei_vEXT(
         target,
         index,
@@ -198,6 +239,9 @@ is_memory_object(u32 memoryObject, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(IsMemoryObjectEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsMemoryObjectEXT, memoryObject);
+#endif
     auto out = glIsMemoryObjectEXT(memoryObject);
     detail::error_check("IsMemoryObjectEXT"sv, check_errors);
     return out;
@@ -227,6 +271,14 @@ STATICINLINE void memory_object_parameter(
     {
         GLW_FPTR_CHECK(MemoryObjectParameterivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMemoryObjectParameterivEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        memoryObject,
+        pname);
+#endif
     glMemoryObjectParameterivEXT(
         memoryObject,
         static_cast<GLenum>(pname),
@@ -262,6 +314,16 @@ STATICINLINE void tex_storage_mem_2d(
     {
         GLW_FPTR_CHECK(TexStorageMem2DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexStorageMem2DEXT,
+        target,
+        levels,
+        internalFormat,
+        width,
+        memory,
+        offset);
+#endif
     glTexStorageMem2DEXT(
         static_cast<GLenum>(target),
         levels,
@@ -302,6 +364,17 @@ STATICINLINE void tex_storage_mem_2d_multisample(
     {
         GLW_FPTR_CHECK(TexStorageMem2DMultisampleEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexStorageMem2DMultisampleEXT,
+        target,
+        samples,
+        internalFormat,
+        width,
+        fixedSampleLocations,
+        memory,
+        offset);
+#endif
     glTexStorageMem2DMultisampleEXT(
         static_cast<GLenum>(target),
         samples,
@@ -342,6 +415,16 @@ STATICINLINE void tex_storage_mem_3d(
     {
         GLW_FPTR_CHECK(TexStorageMem3DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexStorageMem3DEXT,
+        target,
+        levels,
+        internalFormat,
+        width,
+        memory,
+        offset);
+#endif
     glTexStorageMem3DEXT(
         static_cast<GLenum>(target),
         levels,
@@ -384,6 +467,17 @@ STATICINLINE void tex_storage_mem_3d_multisample(
     {
         GLW_FPTR_CHECK(TexStorageMem3DMultisampleEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexStorageMem3DMultisampleEXT,
+        target,
+        samples,
+        internalFormat,
+        width,
+        fixedSampleLocations,
+        memory,
+        offset);
+#endif
     glTexStorageMem3DMultisampleEXT(
         static_cast<GLenum>(target),
         samples,
@@ -422,6 +516,9 @@ STATICINLINE void named_buffer_storage_mem(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glNamedBufferStorageMemEXT, buffer, size, memory, offset);
+#endif
     glNamedBufferStorageMemEXT(buffer, size, memory, offset);
     detail::error_check("NamedBufferStorageMemEXT"sv, check_errors);
 }
@@ -458,6 +555,16 @@ STATICINLINE void texture_storage_mem_2d(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTextureStorageMem2DEXT,
+        texture,
+        levels,
+        internalFormat,
+        width,
+        memory,
+        offset);
+#endif
     glTextureStorageMem2DEXT(
         texture,
         levels,
@@ -503,6 +610,17 @@ STATICINLINE void texture_storage_mem_2d_multisample(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTextureStorageMem2DMultisampleEXT,
+        texture,
+        samples,
+        internalFormat,
+        width,
+        fixedSampleLocations,
+        memory,
+        offset);
+#endif
     glTextureStorageMem2DMultisampleEXT(
         texture,
         samples,
@@ -548,6 +666,16 @@ STATICINLINE void texture_storage_mem_3d(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTextureStorageMem3DEXT,
+        texture,
+        levels,
+        internalFormat,
+        width,
+        memory,
+        offset);
+#endif
     glTextureStorageMem3DEXT(
         texture,
         levels,
@@ -595,6 +723,17 @@ STATICINLINE void texture_storage_mem_3d_multisample(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTextureStorageMem3DMultisampleEXT,
+        texture,
+        samples,
+        internalFormat,
+        width,
+        fixedSampleLocations,
+        memory,
+        offset);
+#endif
     glTextureStorageMem3DMultisampleEXT(
         texture,
         samples,
@@ -633,6 +772,16 @@ STATICINLINE void tex_storage_mem_1d(
     {
         GLW_FPTR_CHECK(TexStorageMem1DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexStorageMem1DEXT,
+        target,
+        levels,
+        internalFormat,
+        width,
+        memory,
+        offset);
+#endif
     glTexStorageMem1DEXT(
         static_cast<GLenum>(target),
         levels,
@@ -674,6 +823,16 @@ STATICINLINE void texture_storage_mem_1d(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTextureStorageMem1DEXT,
+        texture,
+        levels,
+        internalFormat,
+        width,
+        memory,
+        offset);
+#endif
     glTextureStorageMem1DEXT(
         texture,
         levels,

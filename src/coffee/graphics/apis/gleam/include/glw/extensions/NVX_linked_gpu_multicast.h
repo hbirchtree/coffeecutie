@@ -56,6 +56,25 @@ STATICINLINE void lgpu_copy_image_sub_data(
     {
         GLW_FPTR_CHECK(LGPUCopyImageSubDataNVX)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glLGPUCopyImageSubDataNVX,
+        sourceGpu,
+        destinationGpuMask,
+        srcName,
+        srcTarget,
+        srcLevel,
+        srcX,
+        srxY,
+        srcZ,
+        dstName,
+        dstTarget,
+        dstLevel,
+        dstX,
+        dstY,
+        dstZ,
+        width);
+#endif
     glLGPUCopyImageSubDataNVX(
         sourceGpu,
         destinationGpuMask,
@@ -89,6 +108,9 @@ STATICINLINE void lgpu_interlock(error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(LGPUInterlockNVX)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glLGPUInterlockNVX);
+#endif
     glLGPUInterlockNVX();
     detail::error_check("LGPUInterlockNVX"sv, check_errors);
 }
@@ -122,6 +144,16 @@ STATICINLINE void lgpu_named_buffer_sub_data(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glLGPUNamedBufferSubDataNVX,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        gpuMask,
+        buffer,
+        offset,
+        size);
+#endif
     glLGPUNamedBufferSubDataNVX(
         gpuMask,
         buffer,

@@ -76,6 +76,9 @@ STATICINLINE void patch_parameter(
     {
         GLW_FPTR_CHECK(PatchParameteriEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPatchParameteriEXT, pname, value);
+#endif
     glPatchParameteriEXT(static_cast<GLenum>(pname), value);
     detail::error_check("PatchParameteriEXT"sv, check_errors);
 }

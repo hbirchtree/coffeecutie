@@ -45,6 +45,9 @@ STATICINLINE void dispatch_compute(
     {
         GLW_FPTR_CHECK(DispatchCompute)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDispatchCompute, num_groups_x, num_groups_y, num_groups_z);
+#endif
     glDispatchCompute(num_groups_x, num_groups_y, num_groups_z);
     detail::error_check("DispatchCompute"sv, check_errors);
 }
@@ -62,6 +65,9 @@ STATICINLINE void dispatch_compute_indirect(
     {
         GLW_FPTR_CHECK(DispatchComputeIndirect)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDispatchComputeIndirect, indirect);
+#endif
     glDispatchComputeIndirect(indirect);
     detail::error_check("DispatchComputeIndirect"sv, check_errors);
 }

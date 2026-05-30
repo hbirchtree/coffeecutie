@@ -33,6 +33,9 @@ STATICINLINE void begin_query(
     {
         GLW_FPTR_CHECK(BeginQueryEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBeginQueryEXT, target, id);
+#endif
     glBeginQueryEXT(static_cast<GLenum>(target), id);
     detail::error_check("BeginQueryEXT"sv, check_errors);
 }
@@ -57,6 +60,12 @@ STATICINLINE void delete_queries(
     {
         GLW_FPTR_CHECK(DeleteQueriesEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteQueriesEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()));
+#endif
     glDeleteQueriesEXT(
         ids.size(),
         ids.size() ? reinterpret_cast<const GLuint*>(ids.data()) : nullptr);
@@ -76,6 +85,9 @@ STATICINLINE void end_query(
     {
         GLW_FPTR_CHECK(EndQueryEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEndQueryEXT, target);
+#endif
     glEndQueryEXT(static_cast<GLenum>(target));
     detail::error_check("EndQueryEXT"sv, check_errors);
 }
@@ -99,6 +111,11 @@ STATICINLINE void gen_queries(
     {
         GLW_FPTR_CHECK(GenQueriesEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenQueriesEXT,
+        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()));
+#endif
     glGenQueriesEXT(
         ids.size(),
         ids.size() ? reinterpret_cast<GLuint*>(ids.data()) : nullptr);
@@ -126,6 +143,13 @@ STATICINLINE void get_integer64v(
     {
         GLW_FPTR_CHECK(GetInteger64vEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetInteger64vEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        pname);
+#endif
     glGetInteger64vEXT(
         static_cast<GLenum>(pname),
         data.size() ? reinterpret_cast<GLint64*>(data.data()) : nullptr);
@@ -155,6 +179,14 @@ STATICINLINE void get_query_objecti64v(
     {
         GLW_FPTR_CHECK(GetQueryObjecti64vEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetQueryObjecti64vEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        id,
+        pname);
+#endif
     glGetQueryObjecti64vEXT(
         id,
         static_cast<GLenum>(pname),
@@ -185,6 +217,14 @@ STATICINLINE void get_query_objectiv(
     {
         GLW_FPTR_CHECK(GetQueryObjectivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetQueryObjectivEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        id,
+        pname);
+#endif
     glGetQueryObjectivEXT(
         id,
         static_cast<GLenum>(pname),
@@ -215,6 +255,14 @@ STATICINLINE void get_query_objectui64v(
     {
         GLW_FPTR_CHECK(GetQueryObjectui64vEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetQueryObjectui64vEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        id,
+        pname);
+#endif
     glGetQueryObjectui64vEXT(
         id,
         static_cast<GLenum>(pname),
@@ -245,6 +293,14 @@ STATICINLINE void get_query_objectuiv(
     {
         GLW_FPTR_CHECK(GetQueryObjectuivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetQueryObjectuivEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        id,
+        pname);
+#endif
     glGetQueryObjectuivEXT(
         id,
         static_cast<GLenum>(pname),
@@ -275,6 +331,14 @@ STATICINLINE void get_queryiv(
     {
         GLW_FPTR_CHECK(GetQueryivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetQueryivEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetQueryivEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -295,6 +359,9 @@ is_query(u32 id, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(IsQueryEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsQueryEXT, id);
+#endif
     auto out = glIsQueryEXT(id);
     detail::error_check("IsQueryEXT"sv, check_errors);
     return out;
@@ -316,6 +383,9 @@ STATICINLINE void query_counter(
     {
         GLW_FPTR_CHECK(QueryCounterEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glQueryCounterEXT, id, target);
+#endif
     glQueryCounterEXT(id, static_cast<GLenum>(target));
     detail::error_check("QueryCounterEXT"sv, check_errors);
 }

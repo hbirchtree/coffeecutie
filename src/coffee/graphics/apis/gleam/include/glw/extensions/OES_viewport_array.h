@@ -39,6 +39,14 @@ STATICINLINE void depth_range_arrayfv(
     {
         GLW_FPTR_CHECK(DepthRangeArrayfvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDepthRangeArrayfvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        first,
+        count);
+#endif
     glDepthRangeArrayfvOES(
         first,
         count,
@@ -61,6 +69,9 @@ STATICINLINE void depth_range_indexedf(
     {
         GLW_FPTR_CHECK(DepthRangeIndexedfOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDepthRangeIndexedfOES, index, n, f);
+#endif
     glDepthRangeIndexedfOES(index, n, f);
     detail::error_check("DepthRangeIndexedfOES"sv, check_errors);
 }
@@ -81,6 +92,9 @@ STATICINLINE void disablei(
     {
         GLW_FPTR_CHECK(DisableiOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDisableiOES, target, index);
+#endif
     glDisableiOES(static_cast<GLenum>(target), index);
     detail::error_check("DisableiOES"sv, check_errors);
 }
@@ -101,6 +115,9 @@ STATICINLINE void enablei(
     {
         GLW_FPTR_CHECK(EnableiOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEnableiOES, target, index);
+#endif
     glEnableiOES(static_cast<GLenum>(target), index);
     detail::error_check("EnableiOES"sv, check_errors);
 }
@@ -128,6 +145,14 @@ STATICINLINE void get_floati_v(
     {
         GLW_FPTR_CHECK(GetFloati_vOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetFloati_vOES,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        target,
+        index);
+#endif
     glGetFloati_vOES(
         static_cast<GLenum>(target),
         index,
@@ -151,6 +176,9 @@ STATICINLINE GLboolean is_enabledi(
     {
         GLW_FPTR_CHECK(IsEnablediOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsEnablediOES, target, index);
+#endif
     auto out = glIsEnablediOES(static_cast<GLenum>(target), index);
     detail::error_check("IsEnablediOES"sv, check_errors);
     return out;
@@ -180,6 +208,14 @@ STATICINLINE void scissor_arrayv(
     {
         GLW_FPTR_CHECK(ScissorArrayvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glScissorArrayvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        first,
+        count);
+#endif
     glScissorArrayvOES(
         first,
         count,
@@ -210,6 +246,9 @@ STATICINLINE void scissor_indexed(
     {
         GLW_FPTR_CHECK(ScissorIndexedOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glScissorIndexedOES, index, left, bottom, width);
+#endif
     glScissorIndexedOES(index, left, bottom, width[0], width[1]);
     detail::error_check("ScissorIndexedOES"sv, check_errors);
 }
@@ -236,6 +275,13 @@ STATICINLINE void scissor_indexedv(
     {
         GLW_FPTR_CHECK(ScissorIndexedvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glScissorIndexedvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glScissorIndexedvOES(
         index, v.size() ? reinterpret_cast<const GLint*>(v.data()) : nullptr);
     detail::error_check("ScissorIndexedvOES"sv, check_errors);
@@ -265,6 +311,14 @@ STATICINLINE void viewport_arrayv(
     {
         GLW_FPTR_CHECK(ViewportArrayvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glViewportArrayvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        first,
+        count);
+#endif
     glViewportArrayvOES(
         first,
         count,
@@ -295,6 +349,9 @@ STATICINLINE void viewport_indexedf(
     {
         GLW_FPTR_CHECK(ViewportIndexedfOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glViewportIndexedfOES, index, x, w);
+#endif
     glViewportIndexedfOES(index, x[0], x[1], w[0], w[1]);
     detail::error_check("ViewportIndexedfOES"sv, check_errors);
 }
@@ -321,6 +378,13 @@ STATICINLINE void viewport_indexedfv(
     {
         GLW_FPTR_CHECK(ViewportIndexedfvOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glViewportIndexedfvOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glViewportIndexedfvOES(
         index, v.size() ? reinterpret_cast<const GLfloat*>(v.data()) : nullptr);
     detail::error_check("ViewportIndexedfvOES"sv, check_errors);

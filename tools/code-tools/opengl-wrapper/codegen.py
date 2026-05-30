@@ -610,6 +610,20 @@ def generate_function(command, usages: dict, version: tuple = None, override_nam
     param_string.append('error_check check_errors = error_check::on')
     param_string = ', '.join(param_string)
     input_string = ', '.join(inputs)
+
+    trace_inputs = []
+    trace_spans = []
+    for p_name, p_type, _ in params:
+        t = p_type.strip()
+        if 'span_' in t:
+            is_const = 'const_' in t or t.endswith('const&')
+            char_t = 'const char' if is_const else 'char'
+            span_expr = f'gsl::span<{char_t}>(reinterpret_cast<{char_t}*>({p_name}.data()), {p_name}.size_bytes())'
+            trace_spans.append(span_expr)
+            trace_inputs.append(span_expr)
+        else:
+            trace_inputs.append(p_name)
+    trace_string = ', '.join(trace_inputs)
     if override_name is not None:
         visible_name = map_function_name(override_name)
     else:
@@ -648,6 +662,17 @@ def generate_function(command, usages: dict, version: tuple = None, override_nam
             yield f'    {line}'
     
     ret_statement = 'auto out = ' if return_type != 'void' else ''
+    if len(trace_spans) == 1:
+        non_span_args = ', '.join(t for t in trace_inputs if t != trace_spans[0])
+        data_args = f', {non_span_args}' if non_span_args else ''
+        yield f'#ifdef GLW_FPTR_TRACE'
+        yield f'    GLW_FPTR_TRACE_DATA(gl{func_name}, {trace_spans[0]}{data_args});'
+        yield f'#endif'
+    else:
+        trace_args = f', {trace_string}' if trace_string else ''
+        yield f'#ifdef GLW_FPTR_TRACE'
+        yield f'    GLW_FPTR_TRACE(gl{func_name}{trace_args});'
+        yield f'#endif'
     yield f'    {ret_statement}gl{func_name}({input_string});'
 
     yield f'''    detail::error_check("{func_name}"sv, check_errors);'''

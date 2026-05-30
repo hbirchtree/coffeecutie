@@ -25,6 +25,9 @@ STATICINLINE void draw_arrays_instanced(
     {
         GLW_FPTR_CHECK(DrawArraysInstancedEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDrawArraysInstancedEXT, mode, start, count, primcount);
+#endif
     glDrawArraysInstancedEXT(
         static_cast<GLenum>(mode), start, count, primcount);
     detail::error_check("DrawArraysInstancedEXT"sv, check_errors);
@@ -52,6 +55,10 @@ STATICINLINE void draw_elements_instanced(
     {
         GLW_FPTR_CHECK(DrawElementsInstancedEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawElementsInstancedEXT, mode, count, type, indices, primcount);
+#endif
     glDrawElementsInstancedEXT(
         static_cast<GLenum>(mode),
         count,

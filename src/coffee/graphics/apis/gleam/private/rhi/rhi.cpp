@@ -1,7 +1,3 @@
-#include <magic_enum/magic_enum.hpp>
-#define MAGIC_ENUM_RANGE_MIN 0x0
-#define MAGIC_ENUM_RANGE_MAX 0x9FFF
-
 #include "coffee/graphics/apis/gleam/rhi_translate.h"
 #include "coffee/graphics/apis/gleam/rhi_versioning.h"
 #include "glw/enums/InternalFormat.h"

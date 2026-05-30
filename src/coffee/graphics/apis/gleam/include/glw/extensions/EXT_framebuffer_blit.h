@@ -41,6 +41,20 @@ STATICINLINE void blit_framebuffer(
     {
         GLW_FPTR_CHECK(BlitFramebufferEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glBlitFramebufferEXT,
+        srcX0,
+        srcY0,
+        srcX1,
+        srcY1,
+        dstX0,
+        dstY0,
+        dstX1,
+        dstY1,
+        mask,
+        filter);
+#endif
     glBlitFramebufferEXT(
         srcX0,
         srcY0,

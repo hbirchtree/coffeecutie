@@ -22,6 +22,9 @@ STATICINLINE void bind_texture(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindTexture, target, texture);
+#endif
     glBindTexture(static_cast<GLenum>(target), texture);
     detail::error_check("BindTexture"sv, check_errors);
 }
@@ -55,6 +58,10 @@ STATICINLINE void copy_tex_image_1d(
     {
         GLW_FPTR_CHECK(CopyTexImage1D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glCopyTexImage1D, target, level, internalformat, x, width, border);
+#endif
     glCopyTexImage1D(
         static_cast<GLenum>(target),
         level,
@@ -96,6 +103,10 @@ STATICINLINE void copy_tex_image_2d(
     {
         GLW_FPTR_CHECK(CopyTexImage2D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glCopyTexImage2D, target, level, internalformat, x, width, border);
+#endif
     glCopyTexImage2D(
         static_cast<GLenum>(target),
         level,
@@ -135,6 +146,9 @@ STATICINLINE void copy_tex_sub_image_1d(
     {
         GLW_FPTR_CHECK(CopyTexSubImage1D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCopyTexSubImage1D, target, level, xoffset, x, width);
+#endif
     glCopyTexSubImage1D(
         static_cast<GLenum>(target), level, xoffset, x[0], x[1], width);
     detail::error_check("CopyTexSubImage1D"sv, check_errors);
@@ -169,6 +183,9 @@ STATICINLINE void copy_tex_sub_image_2d(
     {
         GLW_FPTR_CHECK(CopyTexSubImage2D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCopyTexSubImage2D, target, level, xoffset, x, width);
+#endif
     glCopyTexSubImage2D(
         static_cast<GLenum>(target),
         level,
@@ -201,6 +218,13 @@ STATICINLINE void delete_textures(
     {
         GLW_FPTR_CHECK(DeleteTextures)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteTextures,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(textures.data()),
+            textures.size_bytes()));
+#endif
     glDeleteTextures(
         textures.size(),
         textures.size() ? reinterpret_cast<const GLuint*>(textures.data())
@@ -228,6 +252,9 @@ STATICINLINE void draw_arrays(
     {
         GLW_FPTR_CHECK(DrawArrays)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDrawArrays, mode, first, count);
+#endif
     glDrawArrays(static_cast<GLenum>(mode), first, count);
     detail::error_check("DrawArrays"sv, check_errors);
 }
@@ -254,6 +281,9 @@ STATICINLINE void draw_elements(
     {
         GLW_FPTR_CHECK(DrawElements)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDrawElements, mode, count, type, indices);
+#endif
     glDrawElements(
         static_cast<GLenum>(mode),
         count,
@@ -282,6 +312,12 @@ STATICINLINE void gen_textures(
     {
         GLW_FPTR_CHECK(GenTextures)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenTextures,
+        gsl::span<char>(
+            reinterpret_cast<char*>(textures.data()), textures.size_bytes()));
+#endif
     glGenTextures(
         textures.size(),
         textures.size() ? reinterpret_cast<GLuint*>(textures.data()) : nullptr);
@@ -308,6 +344,9 @@ is_texture(u32 texture, error_check check_errors = error_check::on)
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsTexture, texture);
+#endif
     auto out = glIsTexture(texture);
     detail::error_check("IsTexture"sv, check_errors);
     return out;
@@ -329,6 +368,9 @@ STATICINLINE void polygon_offset(
     {
         GLW_FPTR_CHECK(PolygonOffset)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPolygonOffset, factor, units);
+#endif
     glPolygonOffset(factor, units);
     detail::error_check("PolygonOffset"sv, check_errors);
 }
@@ -362,6 +404,18 @@ STATICINLINE void tex_sub_image_1d(
     {
         GLW_FPTR_CHECK(TexSubImage1D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexSubImage1D,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        target,
+        level,
+        xoffset,
+        width,
+        format,
+        type);
+#endif
     glTexSubImage1D(
         static_cast<GLenum>(target),
         level,
@@ -406,6 +460,18 @@ STATICINLINE void tex_sub_image_2d(
     {
         GLW_FPTR_CHECK(TexSubImage2D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexSubImage2D,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        target,
+        level,
+        xoffset,
+        width,
+        format,
+        type);
+#endif
     glTexSubImage2D(
         static_cast<GLenum>(target),
         level,

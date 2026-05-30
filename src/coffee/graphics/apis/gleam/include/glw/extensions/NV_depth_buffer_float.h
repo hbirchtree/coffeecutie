@@ -27,6 +27,9 @@ STATICINLINE void clear_depthd(
     {
         GLW_FPTR_CHECK(ClearDepthdNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glClearDepthdNV, depth);
+#endif
     glClearDepthdNV(depth);
     detail::error_check("ClearDepthdNV"sv, check_errors);
 }
@@ -45,6 +48,9 @@ STATICINLINE void depth_boundsd(
     {
         GLW_FPTR_CHECK(DepthBoundsdNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDepthBoundsdNV, zmin, zmax);
+#endif
     glDepthBoundsdNV(zmin, zmax);
     detail::error_check("DepthBoundsdNV"sv, check_errors);
 }
@@ -63,6 +69,9 @@ STATICINLINE void depth_ranged(
     {
         GLW_FPTR_CHECK(DepthRangedNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDepthRangedNV, zNear, zFar);
+#endif
     glDepthRangedNV(zNear, zFar);
     detail::error_check("DepthRangedNV"sv, check_errors);
 }

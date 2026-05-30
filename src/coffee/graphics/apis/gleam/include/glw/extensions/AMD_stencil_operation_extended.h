@@ -25,6 +25,9 @@ STATICINLINE void stencil_op_value(
     {
         GLW_FPTR_CHECK(StencilOpValueAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glStencilOpValueAMD, face, value);
+#endif
     glStencilOpValueAMD(static_cast<GLenum>(face), value);
     detail::error_check("StencilOpValueAMD"sv, check_errors);
 }

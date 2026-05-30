@@ -40,6 +40,14 @@ STATICINLINE void debug_message_callback(
     {
         GLW_FPTR_CHECK(DebugMessageCallbackARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDebugMessageCallbackARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(userParam.data()),
+            userParam.size_bytes()),
+        callback);
+#endif
     glDebugMessageCallbackARB(
         callback,
         userParam.size() ? reinterpret_cast<const void*>(userParam.data())
@@ -76,6 +84,16 @@ STATICINLINE void debug_message_control(
     {
         GLW_FPTR_CHECK(DebugMessageControlARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDebugMessageControlARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()),
+        source,
+        type,
+        severity,
+        enabled);
+#endif
     glDebugMessageControlARB(
         static_cast<GLenum>(source),
         static_cast<GLenum>(type),
@@ -109,6 +127,9 @@ STATICINLINE void debug_message_insert(
     {
         GLW_FPTR_CHECK(DebugMessageInsertARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDebugMessageInsertARB, source, type, id, severity, buf);
+#endif
     glDebugMessageInsertARB(
         static_cast<GLenum>(source),
         static_cast<GLenum>(type),
@@ -177,6 +198,23 @@ STATICINLINE GLuint get_debug_message_log(
     {
         GLW_FPTR_CHECK(GetDebugMessageLogARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetDebugMessageLogARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(sources.data()), sources.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(types.data()), types.size_bytes()),
+        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(severities.data()),
+            severities.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(lengths.data()), lengths.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(messageLog.data()),
+            messageLog.size_bytes()));
+#endif
     auto out = glGetDebugMessageLogARB(
         sources.size(),
         messageLog.size(),

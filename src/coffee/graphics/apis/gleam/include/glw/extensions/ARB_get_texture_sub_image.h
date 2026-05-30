@@ -41,6 +41,16 @@ STATICINLINE void get_compressed_texture_sub_image(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetCompressedTextureSubImage,
+        gsl::span<char>(
+            reinterpret_cast<char*>(pixels.data()), pixels.size_bytes()),
+        texture,
+        level,
+        xoffset,
+        width);
+#endif
     glGetCompressedTextureSubImage(
         texture,
         level,
@@ -95,6 +105,18 @@ STATICINLINE void get_texture_sub_image(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetTextureSubImage,
+        gsl::span<char>(
+            reinterpret_cast<char*>(pixels.data()), pixels.size_bytes()),
+        texture,
+        level,
+        xoffset,
+        width,
+        format,
+        type);
+#endif
     glGetTextureSubImage(
         texture,
         level,

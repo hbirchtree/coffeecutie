@@ -38,6 +38,9 @@ STATICINLINE void bind_frag_data_location(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindFragDataLocationEXT, program, color, name);
+#endif
     glBindFragDataLocationEXT(program, color, name.data());
     detail::error_check("BindFragDataLocationEXT"sv, check_errors);
 }
@@ -67,6 +70,10 @@ STATICINLINE void bind_frag_data_location_indexed(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glBindFragDataLocationIndexedEXT, program, colorNumber, index, name);
+#endif
     glBindFragDataLocationIndexedEXT(program, colorNumber, index, name.data());
     detail::error_check("BindFragDataLocationIndexedEXT"sv, check_errors);
 }
@@ -92,6 +99,9 @@ STATICINLINE GLint get_frag_data_index(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetFragDataIndexEXT, program, name);
+#endif
     auto out = glGetFragDataIndexEXT(program, name.data());
     detail::error_check("GetFragDataIndexEXT"sv, check_errors);
     return out;
@@ -120,6 +130,10 @@ STATICINLINE GLint get_program_resource_location_index(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetProgramResourceLocationIndexEXT, program, programInterface, name);
+#endif
     auto out = glGetProgramResourceLocationIndexEXT(
         program, static_cast<GLenum>(programInterface), name.data());
     detail::error_check("GetProgramResourceLocationIndexEXT"sv, check_errors);

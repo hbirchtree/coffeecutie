@@ -38,6 +38,10 @@ STATICINLINE void bind_frag_data_location_indexed(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glBindFragDataLocationIndexed, program, colorNumber, index, name);
+#endif
     glBindFragDataLocationIndexed(program, colorNumber, index, name.data());
     detail::error_check("BindFragDataLocationIndexed"sv, check_errors);
 }
@@ -63,6 +67,9 @@ STATICINLINE GLint get_frag_data_index(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetFragDataIndex, program, name);
+#endif
     auto out = glGetFragDataIndex(program, name.data());
     detail::error_check("GetFragDataIndex"sv, check_errors);
     return out;

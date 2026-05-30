@@ -30,6 +30,9 @@ STATICINLINE void buffer_page_commitment(
     {
         GLW_FPTR_CHECK(BufferPageCommitmentARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBufferPageCommitmentARB, target, offset, size, commit);
+#endif
     glBufferPageCommitmentARB(target, offset, size, commit);
     detail::error_check("BufferPageCommitmentARB"sv, check_errors);
 }
@@ -59,6 +62,10 @@ STATICINLINE void named_buffer_page_commitment_ext(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glNamedBufferPageCommitmentEXT, buffer, offset, size, commit);
+#endif
     glNamedBufferPageCommitmentEXT(buffer, offset, size, commit);
     detail::error_check("NamedBufferPageCommitmentEXT"sv, check_errors);
 }
@@ -88,6 +95,10 @@ STATICINLINE void named_buffer_page_commitment(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glNamedBufferPageCommitmentARB, buffer, offset, size, commit);
+#endif
     glNamedBufferPageCommitmentARB(buffer, offset, size, commit);
     detail::error_check("NamedBufferPageCommitmentARB"sv, check_errors);
 }

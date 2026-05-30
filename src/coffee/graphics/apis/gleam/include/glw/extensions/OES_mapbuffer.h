@@ -32,6 +32,14 @@ STATICINLINE void get_buffer_pointerv(
     {
         GLW_FPTR_CHECK(GetBufferPointervOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetBufferPointervOES,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetBufferPointervOES(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -55,6 +63,9 @@ STATICINLINE void* map_buffer(
     {
         GLW_FPTR_CHECK(MapBufferOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMapBufferOES, target, access);
+#endif
     auto out = glMapBufferOES(
         static_cast<GLenum>(target), static_cast<GLenum>(access));
     detail::error_check("MapBufferOES"sv, check_errors);
@@ -74,6 +85,9 @@ STATICINLINE bool unmap_buffer(
     {
         GLW_FPTR_CHECK(UnmapBufferOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUnmapBufferOES, target);
+#endif
     auto out = glUnmapBufferOES(static_cast<GLenum>(target));
     detail::error_check("UnmapBufferOES"sv, check_errors);
     return out == GL_TRUE ? true : false;

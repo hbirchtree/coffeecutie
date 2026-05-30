@@ -58,6 +58,9 @@ STATICINLINE void bind_buffer(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindBufferARB, target, buffer);
+#endif
     glBindBufferARB(static_cast<GLenum>(target), buffer);
     detail::error_check("BindBufferARB"sv, check_errors);
 }
@@ -83,6 +86,14 @@ STATICINLINE void buffer_data(
     {
         GLW_FPTR_CHECK(BufferDataARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glBufferDataARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        target,
+        usage);
+#endif
     glBufferDataARB(
         static_cast<GLenum>(target),
         data.size() *
@@ -113,6 +124,14 @@ STATICINLINE void buffer_sub_data(
     {
         GLW_FPTR_CHECK(BufferSubDataARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glBufferSubDataARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        target,
+        offset);
+#endif
     glBufferSubDataARB(
         static_cast<GLenum>(target),
         offset,
@@ -142,6 +161,13 @@ STATICINLINE void delete_buffers(
     {
         GLW_FPTR_CHECK(DeleteBuffersARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteBuffersARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(buffers.data()),
+            buffers.size_bytes()));
+#endif
     glDeleteBuffersARB(
         buffers.size(),
         buffers.size() ? reinterpret_cast<const GLuint*>(buffers.data())
@@ -168,6 +194,12 @@ STATICINLINE void gen_buffers(
     {
         GLW_FPTR_CHECK(GenBuffersARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenBuffersARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(buffers.data()), buffers.size_bytes()));
+#endif
     glGenBuffersARB(
         buffers.size(),
         buffers.size() ? reinterpret_cast<GLuint*>(buffers.data()) : nullptr);
@@ -197,6 +229,14 @@ STATICINLINE void get_buffer_parameter(
     {
         GLW_FPTR_CHECK(GetBufferParameterivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetBufferParameterivARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetBufferParameterivARB(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -224,6 +264,14 @@ STATICINLINE void get_buffer_pointerv(
     {
         GLW_FPTR_CHECK(GetBufferPointervARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetBufferPointervARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetBufferPointervARB(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -252,6 +300,14 @@ STATICINLINE void get_buffer_sub_data(
     {
         GLW_FPTR_CHECK(GetBufferSubDataARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetBufferSubDataARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        target,
+        offset);
+#endif
     glGetBufferSubDataARB(
         static_cast<GLenum>(target),
         offset,
@@ -278,6 +334,9 @@ is_buffer(u32 buffer, error_check check_errors = error_check::on)
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsBufferARB, buffer);
+#endif
     auto out = glIsBufferARB(buffer);
     detail::error_check("IsBufferARB"sv, check_errors);
     return out;
@@ -299,6 +358,9 @@ STATICINLINE void* map_buffer(
     {
         GLW_FPTR_CHECK(MapBufferARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMapBufferARB, target, access);
+#endif
     auto out = glMapBufferARB(
         static_cast<GLenum>(target), static_cast<GLenum>(access));
     detail::error_check("MapBufferARB"sv, check_errors);
@@ -318,6 +380,9 @@ STATICINLINE GLboolean unmap_buffer(
     {
         GLW_FPTR_CHECK(UnmapBufferARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUnmapBufferARB, target);
+#endif
     auto out = glUnmapBufferARB(static_cast<GLenum>(target));
     detail::error_check("UnmapBufferARB"sv, check_errors);
     return out;

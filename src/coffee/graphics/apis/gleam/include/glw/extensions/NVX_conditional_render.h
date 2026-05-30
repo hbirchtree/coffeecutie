@@ -18,6 +18,9 @@ STATICINLINE void begin_conditional_render(
     {
         GLW_FPTR_CHECK(BeginConditionalRenderNVX)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBeginConditionalRenderNVX, id);
+#endif
     glBeginConditionalRenderNVX(id);
     detail::error_check("BeginConditionalRenderNVX"sv, check_errors);
 }
@@ -35,6 +38,9 @@ STATICINLINE void end_conditional_render(
     {
         GLW_FPTR_CHECK(EndConditionalRenderNVX)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEndConditionalRenderNVX);
+#endif
     glEndConditionalRenderNVX();
     detail::error_check("EndConditionalRenderNVX"sv, check_errors);
 }

@@ -44,6 +44,9 @@ STATICINLINE void array_element(
     {
         GLW_FPTR_CHECK(ArrayElementEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glArrayElementEXT, i);
+#endif
     glArrayElementEXT(i);
     detail::error_check("ArrayElementEXT"sv, check_errors);
 }
@@ -72,6 +75,17 @@ STATICINLINE void color_pointer(
     {
         GLW_FPTR_CHECK(ColorPointerEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glColorPointerEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pointer.data()),
+            pointer.size_bytes()),
+        size,
+        type,
+        stride,
+        count);
+#endif
     glColorPointerEXT(
         size,
         static_cast<GLenum>(type),
@@ -100,6 +114,9 @@ STATICINLINE void draw_arrays(
     {
         GLW_FPTR_CHECK(DrawArraysEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDrawArraysEXT, mode, first, count);
+#endif
     glDrawArraysEXT(static_cast<GLenum>(mode), first, count);
     detail::error_check("DrawArraysEXT"sv, check_errors);
 }
@@ -128,6 +145,15 @@ STATICINLINE void edge_flag_pointer(
     {
         GLW_FPTR_CHECK(EdgeFlagPointerEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glEdgeFlagPointerEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pointer.data()),
+            pointer.size_bytes()),
+        stride,
+        count);
+#endif
     glEdgeFlagPointerEXT(
         stride,
         count,
@@ -154,6 +180,13 @@ STATICINLINE void get_pointerv(
     {
         GLW_FPTR_CHECK(GetPointervEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetPointervEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        pname);
+#endif
     glGetPointervEXT(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<void**>(params.data()) : nullptr);
@@ -182,6 +215,16 @@ STATICINLINE void index_pointer(
     {
         GLW_FPTR_CHECK(IndexPointerEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glIndexPointerEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pointer.data()),
+            pointer.size_bytes()),
+        type,
+        stride,
+        count);
+#endif
     glIndexPointerEXT(
         static_cast<GLenum>(type),
         stride,
@@ -213,6 +256,16 @@ STATICINLINE void normal_pointer(
     {
         GLW_FPTR_CHECK(NormalPointerEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glNormalPointerEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pointer.data()),
+            pointer.size_bytes()),
+        type,
+        stride,
+        count);
+#endif
     glNormalPointerEXT(
         static_cast<GLenum>(type),
         stride,
@@ -246,6 +299,17 @@ STATICINLINE void tex_coord_pointer(
     {
         GLW_FPTR_CHECK(TexCoordPointerEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexCoordPointerEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pointer.data()),
+            pointer.size_bytes()),
+        size,
+        type,
+        stride,
+        count);
+#endif
     glTexCoordPointerEXT(
         size,
         static_cast<GLenum>(type),
@@ -280,6 +344,17 @@ STATICINLINE void vertex_pointer(
     {
         GLW_FPTR_CHECK(VertexPointerEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexPointerEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pointer.data()),
+            pointer.size_bytes()),
+        size,
+        type,
+        stride,
+        count);
+#endif
     glVertexPointerEXT(
         size,
         static_cast<GLenum>(type),

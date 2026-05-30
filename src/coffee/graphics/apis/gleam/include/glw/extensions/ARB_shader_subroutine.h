@@ -51,6 +51,16 @@ STATICINLINE void get_active_subroutine_name(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetActiveSubroutineName,
+        gsl::span<char>(
+            reinterpret_cast<char*>(name.data()), name.size_bytes()),
+        program,
+        shadertype,
+        index,
+        length);
+#endif
     glGetActiveSubroutineName(
         program,
         static_cast<GLenum>(shadertype),
@@ -95,6 +105,16 @@ STATICINLINE void get_active_subroutine_uniform_name(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetActiveSubroutineUniformName,
+        gsl::span<char>(
+            reinterpret_cast<char*>(name.data()), name.size_bytes()),
+        program,
+        shadertype,
+        index,
+        length);
+#endif
     glGetActiveSubroutineUniformName(
         program,
         static_cast<GLenum>(shadertype),
@@ -137,6 +157,16 @@ STATICINLINE void get_active_subroutine_uniformiv(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetActiveSubroutineUniformiv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(values.data()), values.size_bytes()),
+        program,
+        shadertype,
+        index,
+        pname);
+#endif
     glGetActiveSubroutineUniformiv(
         program,
         static_cast<GLenum>(shadertype),
@@ -171,6 +201,9 @@ STATICINLINE void get_program_stageiv(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetProgramStageiv, program, shadertype, pname, values);
+#endif
     glGetProgramStageiv(
         program,
         static_cast<GLenum>(shadertype),
@@ -202,6 +235,9 @@ STATICINLINE GLuint get_subroutine_index(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetSubroutineIndex, program, shadertype, name);
+#endif
     auto out = glGetSubroutineIndex(
         program, static_cast<GLenum>(shadertype), name.data());
     detail::error_check("GetSubroutineIndex"sv, check_errors);
@@ -231,6 +267,9 @@ STATICINLINE GLint get_subroutine_uniform_location(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetSubroutineUniformLocation, program, shadertype, name);
+#endif
     auto out = glGetSubroutineUniformLocation(
         program, static_cast<GLenum>(shadertype), name.data());
     detail::error_check("GetSubroutineUniformLocation"sv, check_errors);
@@ -255,6 +294,9 @@ STATICINLINE void get_uniform_subroutineuiv(
     {
         GLW_FPTR_CHECK(GetUniformSubroutineuiv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetUniformSubroutineuiv, shadertype, location, params);
+#endif
     glGetUniformSubroutineuiv(
         static_cast<GLenum>(shadertype), location, &params);
     detail::error_check("GetUniformSubroutineuiv"sv, check_errors);
@@ -283,6 +325,14 @@ STATICINLINE void uniform_subroutines(
     {
         GLW_FPTR_CHECK(UniformSubroutinesuiv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniformSubroutinesuiv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(indices.data()),
+            indices.size_bytes()),
+        shadertype);
+#endif
     glUniformSubroutinesuiv(
         static_cast<GLenum>(shadertype),
         indices.size(),

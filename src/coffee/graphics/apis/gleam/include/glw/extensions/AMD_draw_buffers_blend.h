@@ -21,6 +21,9 @@ STATICINLINE void blend_equation_indexed(
     {
         GLW_FPTR_CHECK(BlendEquationIndexedAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendEquationIndexedAMD, buf, mode);
+#endif
     glBlendEquationIndexedAMD(buf, static_cast<GLenum>(mode));
     detail::error_check("BlendEquationIndexedAMD"sv, check_errors);
 }
@@ -43,6 +46,9 @@ STATICINLINE void blend_equation_separate_indexed(
     {
         GLW_FPTR_CHECK(BlendEquationSeparateIndexedAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendEquationSeparateIndexedAMD, buf, modeRGB, modeAlpha);
+#endif
     glBlendEquationSeparateIndexedAMD(
         buf, static_cast<GLenum>(modeRGB), static_cast<GLenum>(modeAlpha));
     detail::error_check("BlendEquationSeparateIndexedAMD"sv, check_errors);
@@ -63,6 +69,9 @@ STATICINLINE void blend_func_indexed(
     {
         GLW_FPTR_CHECK(BlendFuncIndexedAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendFuncIndexedAMD, buf, src, dst);
+#endif
     glBlendFuncIndexedAMD(buf, src, dst);
     detail::error_check("BlendFuncIndexedAMD"sv, check_errors);
 }
@@ -89,6 +98,10 @@ STATICINLINE void blend_func_separate_indexed(
     {
         GLW_FPTR_CHECK(BlendFuncSeparateIndexedAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glBlendFuncSeparateIndexedAMD, buf, srcRGB, dstRGB, srcAlpha, dstAlpha);
+#endif
     glBlendFuncSeparateIndexedAMD(
         buf,
         static_cast<GLenum>(srcRGB),

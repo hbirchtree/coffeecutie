@@ -31,6 +31,14 @@ STATICINLINE GLbitfield query_matrixx(
     {
         GLW_FPTR_CHECK(QueryMatrixxOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glQueryMatrixxOES,
+        gsl::span<char>(
+            reinterpret_cast<char*>(mantissa.data()), mantissa.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(exponent.data()), exponent.size_bytes()));
+#endif
     auto out = glQueryMatrixxOES(
         mantissa.size() ? reinterpret_cast<GLfixed*>(mantissa.data()) : nullptr,
         exponent.size() ? reinterpret_cast<GLint*>(exponent.data()) : nullptr);

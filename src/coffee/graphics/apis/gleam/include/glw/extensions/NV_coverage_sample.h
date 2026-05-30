@@ -30,6 +30,9 @@ STATICINLINE void coverage_mask(
     {
         GLW_FPTR_CHECK(CoverageMaskNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCoverageMaskNV, mask);
+#endif
     glCoverageMaskNV(mask);
     detail::error_check("CoverageMaskNV"sv, check_errors);
 }
@@ -47,6 +50,9 @@ STATICINLINE void coverage_operation(
     {
         GLW_FPTR_CHECK(CoverageOperationNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCoverageOperationNV, operation);
+#endif
     glCoverageOperationNV(operation);
     detail::error_check("CoverageOperationNV"sv, check_errors);
 }

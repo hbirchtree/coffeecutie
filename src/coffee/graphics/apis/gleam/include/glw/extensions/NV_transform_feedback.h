@@ -56,6 +56,9 @@ STATICINLINE void active_varying(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glActiveVaryingNV, program, name);
+#endif
     glActiveVaryingNV(program, name.data());
     detail::error_check("ActiveVaryingNV"sv, check_errors);
 }
@@ -74,6 +77,9 @@ STATICINLINE void begin_transform_feedback(
     {
         GLW_FPTR_CHECK(BeginTransformFeedbackNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBeginTransformFeedbackNV, primitiveMode);
+#endif
     glBeginTransformFeedbackNV(static_cast<GLenum>(primitiveMode));
     detail::error_check("BeginTransformFeedbackNV"sv, check_errors);
 }
@@ -101,6 +107,9 @@ STATICINLINE void bind_buffer_base(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindBufferBaseNV, target, index, buffer);
+#endif
     glBindBufferBaseNV(static_cast<GLenum>(target), index, buffer);
     detail::error_check("BindBufferBaseNV"sv, check_errors);
 }
@@ -130,6 +139,9 @@ STATICINLINE void bind_buffer_offset(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindBufferOffsetNV, target, index, buffer, offset);
+#endif
     glBindBufferOffsetNV(static_cast<GLenum>(target), index, buffer, offset);
     detail::error_check("BindBufferOffsetNV"sv, check_errors);
 }
@@ -161,6 +173,9 @@ STATICINLINE void bind_buffer_range(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindBufferRangeNV, target, index, buffer, offset, size);
+#endif
     glBindBufferRangeNV(
         static_cast<GLenum>(target), index, buffer, offset, size);
     detail::error_check("BindBufferRangeNV"sv, check_errors);
@@ -179,6 +194,9 @@ STATICINLINE void end_transform_feedback(
     {
         GLW_FPTR_CHECK(EndTransformFeedbackNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEndTransformFeedbackNV);
+#endif
     glEndTransformFeedbackNV();
     detail::error_check("EndTransformFeedbackNV"sv, check_errors);
 }
@@ -219,6 +237,17 @@ STATICINLINE void get_active_varying(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetActiveVaryingNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(name.data()), name.size_bytes()),
+        program,
+        index,
+        length,
+        size,
+        type);
+#endif
     glGetActiveVaryingNV(
         program, index, name.size(), &length, &size, &type, name.data());
     detail::error_check("GetActiveVaryingNV"sv, check_errors);
@@ -247,6 +276,9 @@ STATICINLINE void get_transform_feedback_varying(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetTransformFeedbackVaryingNV, program, index, location);
+#endif
     glGetTransformFeedbackVaryingNV(program, index, &location);
     detail::error_check("GetTransformFeedbackVaryingNV"sv, check_errors);
 }
@@ -272,6 +304,9 @@ STATICINLINE GLint get_varying_location(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetVaryingLocationNV, program, name);
+#endif
     auto out = glGetVaryingLocationNV(program, name.data());
     detail::error_check("GetVaryingLocationNV"sv, check_errors);
     return out;
@@ -301,6 +336,15 @@ STATICINLINE void transform_feedback_attribs(
     {
         GLW_FPTR_CHECK(TransformFeedbackAttribsNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTransformFeedbackAttribsNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(attribs.data()),
+            attribs.size_bytes()),
+        count,
+        bufferMode);
+#endif
     glTransformFeedbackAttribsNV(
         count,
         attribs.size() ? reinterpret_cast<const GLint*>(attribs.data())
@@ -339,6 +383,15 @@ STATICINLINE void transform_feedback_varyings(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTransformFeedbackVaryingsNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(locations.data()),
+            locations.size_bytes()),
+        program,
+        bufferMode);
+#endif
     glTransformFeedbackVaryingsNV(
         program,
         locations.size(),
@@ -374,6 +427,17 @@ STATICINLINE void transform_feedback_stream_attribs(
     {
         GLW_FPTR_CHECK(TransformFeedbackStreamAttribsNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTransformFeedbackStreamAttribsNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(attribs.data()),
+            attribs.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(bufstreams.data()),
+            bufstreams.size_bytes()),
+        bufferMode);
+#endif
     glTransformFeedbackStreamAttribsNV(
         attribs.size(),
         attribs.size() ? reinterpret_cast<const GLint*>(attribs.data())

@@ -22,6 +22,9 @@ STATICINLINE void call_command_list(
     {
         GLW_FPTR_CHECK(CallCommandListNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCallCommandListNV, list);
+#endif
     glCallCommandListNV(list);
     detail::error_check("CallCommandListNV"sv, check_errors);
 }
@@ -40,6 +43,9 @@ STATICINLINE void command_list_segments(
     {
         GLW_FPTR_CHECK(CommandListSegmentsNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCommandListSegmentsNV, list, segments);
+#endif
     glCommandListSegmentsNV(list, segments);
     detail::error_check("CommandListSegmentsNV"sv, check_errors);
 }
@@ -57,6 +63,9 @@ STATICINLINE void compile_command_list(
     {
         GLW_FPTR_CHECK(CompileCommandListNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCompileCommandListNV, list);
+#endif
     glCompileCommandListNV(list);
     detail::error_check("CompileCommandListNV"sv, check_errors);
 }
@@ -80,6 +89,12 @@ STATICINLINE void create_command_lists(
     {
         GLW_FPTR_CHECK(CreateCommandListsNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCreateCommandListsNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(lists.data()), lists.size_bytes()));
+#endif
     glCreateCommandListsNV(
         lists.size(),
         lists.size() ? reinterpret_cast<GLuint*>(lists.data()) : nullptr);
@@ -105,6 +120,12 @@ STATICINLINE void create_states(
     {
         GLW_FPTR_CHECK(CreateStatesNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCreateStatesNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(states.data()), states.size_bytes()));
+#endif
     glCreateStatesNV(
         states.size(),
         states.size() ? reinterpret_cast<GLuint*>(states.data()) : nullptr);
@@ -131,6 +152,12 @@ STATICINLINE void delete_command_lists(
     {
         GLW_FPTR_CHECK(DeleteCommandListsNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteCommandListsNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(lists.data()), lists.size_bytes()));
+#endif
     glDeleteCommandListsNV(
         lists.size(),
         lists.size() ? reinterpret_cast<const GLuint*>(lists.data()) : nullptr);
@@ -157,6 +184,12 @@ STATICINLINE void delete_states(
     {
         GLW_FPTR_CHECK(DeleteStatesNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteStatesNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(states.data()), states.size_bytes()));
+#endif
     glDeleteStatesNV(
         states.size(),
         states.size() ? reinterpret_cast<const GLuint*>(states.data())
@@ -194,6 +227,17 @@ STATICINLINE void draw_commands_address(
     {
         GLW_FPTR_CHECK(DrawCommandsAddressNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawCommandsAddressNV,
+        primitiveMode,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(indirects.data()),
+            indirects.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(sizes.data()), sizes.size_bytes()),
+        count);
+#endif
     glDrawCommandsAddressNV(
         primitiveMode,
         indirects.size() ? reinterpret_cast<const GLuint64*>(indirects.data())
@@ -240,6 +284,18 @@ STATICINLINE void draw_commands(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawCommandsNV,
+        primitiveMode,
+        buffer,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(indirects.data()),
+            indirects.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(sizes.data()), sizes.size_bytes()),
+        count);
+#endif
     glDrawCommandsNV(
         primitiveMode,
         buffer,
@@ -286,6 +342,20 @@ STATICINLINE void draw_commands_states_address(
     {
         GLW_FPTR_CHECK(DrawCommandsStatesAddressNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawCommandsStatesAddressNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(indirects.data()),
+            indirects.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(sizes.data()), sizes.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(states.data()), states.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(fbos.data()), fbos.size_bytes()),
+        count);
+#endif
     glDrawCommandsStatesAddressNV(
         indirects.size() ? reinterpret_cast<const GLuint64*>(indirects.data())
                          : nullptr,
@@ -340,6 +410,21 @@ STATICINLINE void draw_commands_states(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawCommandsStatesNV,
+        buffer,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(indirects.data()),
+            indirects.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(sizes.data()), sizes.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(states.data()), states.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(fbos.data()), fbos.size_bytes()),
+        count);
+#endif
     glDrawCommandsStatesNV(
         buffer,
         indirects.size() ? reinterpret_cast<const GLintptr*>(indirects.data())
@@ -368,6 +453,9 @@ STATICINLINE GLuint get_command_header(
     {
         GLW_FPTR_CHECK(GetCommandHeaderNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetCommandHeaderNV, tokenID, size);
+#endif
     auto out = glGetCommandHeaderNV(static_cast<GLenum>(tokenID), size);
     detail::error_check("GetCommandHeaderNV"sv, check_errors);
     return out;
@@ -386,6 +474,9 @@ STATICINLINE GLushort get_stage_index(
     {
         GLW_FPTR_CHECK(GetStageIndexNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetStageIndexNV, shadertype);
+#endif
     auto out = glGetStageIndexNV(static_cast<GLenum>(shadertype));
     detail::error_check("GetStageIndexNV"sv, check_errors);
     return out;
@@ -404,6 +495,9 @@ is_command_list(u32 list, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(IsCommandListNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsCommandListNV, list);
+#endif
     auto out = glIsCommandListNV(list);
     detail::error_check("IsCommandListNV"sv, check_errors);
     return out;
@@ -422,6 +516,9 @@ is_state(u32 state, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(IsStateNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsStateNV, state);
+#endif
     auto out = glIsStateNV(state);
     detail::error_check("IsStateNV"sv, check_errors);
     return out;
@@ -463,6 +560,22 @@ STATICINLINE void list_draw_commands_states_client(
     {
         GLW_FPTR_CHECK(ListDrawCommandsStatesClientNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glListDrawCommandsStatesClientNV,
+        list,
+        segment,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(indirects.data()),
+            indirects.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(sizes.data()), sizes.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(states.data()), states.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(fbos.data()), fbos.size_bytes()),
+        count);
+#endif
     glListDrawCommandsStatesClientNV(
         list,
         segment,
@@ -490,6 +603,9 @@ STATICINLINE void state_capture(
     {
         GLW_FPTR_CHECK(StateCaptureNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glStateCaptureNV, state, mode);
+#endif
     glStateCaptureNV(state, mode);
     detail::error_check("StateCaptureNV"sv, check_errors);
 }

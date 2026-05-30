@@ -36,6 +36,15 @@ STATICINLINE void framebuffer_foveation_config(
             glIsFramebuffer(framebuffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFramebufferFoveationConfigQCOM,
+        framebuffer,
+        numLayers,
+        focalPointsPerLayer,
+        requestedFeatures,
+        providedFeatures);
+#endif
     glFramebufferFoveationConfigQCOM(
         framebuffer,
         numLayers,
@@ -78,6 +87,18 @@ STATICINLINE void framebuffer_foveation_parameter(
             glIsFramebuffer(framebuffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFramebufferFoveationParametersQCOM,
+        framebuffer,
+        layer,
+        focalPoint,
+        focalX,
+        focalY,
+        gainX,
+        gainY,
+        foveaArea);
+#endif
     glFramebufferFoveationParametersQCOM(
         framebuffer,
         layer,

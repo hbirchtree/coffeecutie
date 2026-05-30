@@ -44,6 +44,10 @@ STATICINLINE void draw_vk_image(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawVkImageNV, vkImage, sampler, x0, y0, x1, y1, z, s0, t0, s1, t1);
+#endif
     glDrawVkImageNV(vkImage, sampler, x0, y0, x1, y1, z, s0, t0, s1, t1);
     detail::error_check("DrawVkImageNV"sv, check_errors);
 }
@@ -61,6 +65,9 @@ STATICINLINE GLVULKANPROCNV get_vk_proc_addr(
     {
         GLW_FPTR_CHECK(GetVkProcAddrNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetVkProcAddrNV, name);
+#endif
     auto out = glGetVkProcAddrNV(name.data());
     detail::error_check("GetVkProcAddrNV"sv, check_errors);
     return out;
@@ -79,6 +86,9 @@ STATICINLINE void wait_vk_semaphore(
     {
         GLW_FPTR_CHECK(WaitVkSemaphoreNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glWaitVkSemaphoreNV, vkSemaphore);
+#endif
     glWaitVkSemaphoreNV(vkSemaphore);
     detail::error_check("WaitVkSemaphoreNV"sv, check_errors);
 }
@@ -96,6 +106,9 @@ STATICINLINE void signal_vk_semaphore(
     {
         GLW_FPTR_CHECK(SignalVkSemaphoreNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSignalVkSemaphoreNV, vkSemaphore);
+#endif
     glSignalVkSemaphoreNV(vkSemaphore);
     detail::error_check("SignalVkSemaphoreNV"sv, check_errors);
 }
@@ -113,6 +126,9 @@ STATICINLINE void signal_vk_fence(
     {
         GLW_FPTR_CHECK(SignalVkFenceNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSignalVkFenceNV, vkFence);
+#endif
     glSignalVkFenceNV(vkFence);
     detail::error_check("SignalVkFenceNV"sv, check_errors);
 }

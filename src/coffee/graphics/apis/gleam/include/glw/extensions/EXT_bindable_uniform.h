@@ -30,6 +30,9 @@ STATICINLINE GLint get_uniform_buffer_size(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetUniformBufferSizeEXT, program, location);
+#endif
     auto out = glGetUniformBufferSizeEXT(program, location);
     detail::error_check("GetUniformBufferSizeEXT"sv, check_errors);
     return out;
@@ -54,6 +57,9 @@ STATICINLINE GLintptr get_uniform_offset(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetUniformOffsetEXT, program, location);
+#endif
     auto out = glGetUniformOffsetEXT(program, location);
     detail::error_check("GetUniformOffsetEXT"sv, check_errors);
     return out;
@@ -87,6 +93,9 @@ STATICINLINE void uniform_buffer(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniformBufferEXT, program, location, buffer);
+#endif
     glUniformBufferEXT(program, location, buffer);
     detail::error_check("UniformBufferEXT"sv, check_errors);
 }

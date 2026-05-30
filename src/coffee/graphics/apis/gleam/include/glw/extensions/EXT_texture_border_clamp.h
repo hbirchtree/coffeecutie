@@ -38,6 +38,14 @@ STATICINLINE void get_sampler_parameter_iiv(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetSamplerParameterIivEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        sampler,
+        pname);
+#endif
     glGetSamplerParameterIivEXT(
         sampler,
         static_cast<GLenum>(pname),
@@ -73,6 +81,14 @@ STATICINLINE void get_sampler_parameter_iuiv(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetSamplerParameterIuivEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        sampler,
+        pname);
+#endif
     glGetSamplerParameterIuivEXT(
         sampler,
         static_cast<GLenum>(pname),
@@ -103,6 +119,14 @@ STATICINLINE void get_tex_parameter_iiv(
     {
         GLW_FPTR_CHECK(GetTexParameterIivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetTexParameterIivEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetTexParameterIivEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -133,6 +157,14 @@ STATICINLINE void get_tex_parameter_iuiv(
     {
         GLW_FPTR_CHECK(GetTexParameterIuivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetTexParameterIuivEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetTexParameterIuivEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -169,6 +201,14 @@ STATICINLINE void sampler_parameter_iiv(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glSamplerParameterIivEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(param.data()), param.size_bytes()),
+        sampler,
+        pname);
+#endif
     glSamplerParameterIivEXT(
         sampler,
         static_cast<GLenum>(pname),
@@ -205,6 +245,14 @@ STATICINLINE void sampler_parameter_iuiv(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glSamplerParameterIuivEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(param.data()), param.size_bytes()),
+        sampler,
+        pname);
+#endif
     glSamplerParameterIuivEXT(
         sampler,
         static_cast<GLenum>(pname),
@@ -236,6 +284,14 @@ STATICINLINE void tex_parameter_iiv(
     {
         GLW_FPTR_CHECK(TexParameterIivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexParameterIivEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glTexParameterIivEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -268,6 +324,14 @@ STATICINLINE void tex_parameter_iuiv(
     {
         GLW_FPTR_CHECK(TexParameterIuivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexParameterIuivEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glTexParameterIuivEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),

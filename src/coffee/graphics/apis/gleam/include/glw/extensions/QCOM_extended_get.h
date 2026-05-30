@@ -32,6 +32,13 @@ STATICINLINE void ext_get_buffer_pointerv(
     {
         GLW_FPTR_CHECK(ExtGetBufferPointervQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glExtGetBufferPointervQCOM,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target);
+#endif
     glExtGetBufferPointervQCOM(
         target,
         params.size() ? reinterpret_cast<void**>(params.data()) : nullptr);
@@ -61,6 +68,14 @@ STATICINLINE void ext_get_buffers(
     {
         GLW_FPTR_CHECK(ExtGetBuffersQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glExtGetBuffersQCOM,
+        gsl::span<char>(
+            reinterpret_cast<char*>(buffers.data()), buffers.size_bytes()),
+        maxBuffers,
+        numBuffers);
+#endif
     glExtGetBuffersQCOM(
         buffers.size() ? reinterpret_cast<GLuint*>(buffers.data()) : nullptr,
         maxBuffers,
@@ -91,6 +106,15 @@ STATICINLINE void ext_get_framebuffers(
     {
         GLW_FPTR_CHECK(ExtGetFramebuffersQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glExtGetFramebuffersQCOM,
+        gsl::span<char>(
+            reinterpret_cast<char*>(framebuffers.data()),
+            framebuffers.size_bytes()),
+        maxFramebuffers,
+        numFramebuffers);
+#endif
     glExtGetFramebuffersQCOM(
         framebuffers.size() ? reinterpret_cast<GLuint*>(framebuffers.data())
                             : nullptr,
@@ -122,6 +146,15 @@ STATICINLINE void ext_get_renderbuffers(
     {
         GLW_FPTR_CHECK(ExtGetRenderbuffersQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glExtGetRenderbuffersQCOM,
+        gsl::span<char>(
+            reinterpret_cast<char*>(renderbuffers.data()),
+            renderbuffers.size_bytes()),
+        maxRenderbuffers,
+        numRenderbuffers);
+#endif
     glExtGetRenderbuffersQCOM(
         renderbuffers.size() ? reinterpret_cast<GLuint*>(renderbuffers.data())
                              : nullptr,
@@ -162,6 +195,16 @@ STATICINLINE void ext_get_tex_level_parameter(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glExtGetTexLevelParameterivQCOM,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        texture,
+        face,
+        level,
+        pname);
+#endif
     glExtGetTexLevelParameterivQCOM(
         texture,
         face,
@@ -205,6 +248,18 @@ STATICINLINE void ext_get_tex_sub_image(
     {
         GLW_FPTR_CHECK(ExtGetTexSubImageQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glExtGetTexSubImageQCOM,
+        gsl::span<char>(
+            reinterpret_cast<char*>(texels.data()), texels.size_bytes()),
+        target,
+        level,
+        xoffset,
+        width,
+        format,
+        type);
+#endif
     glExtGetTexSubImageQCOM(
         target,
         level,
@@ -248,6 +303,16 @@ STATICINLINE void ext_get_textures(
     {
         GLW_FPTR_CHECK(ExtGetTexturesQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glExtGetTexturesQCOM,
+        gsl::span<char>(
+            reinterpret_cast<char*>(textures.data()), textures.size_bytes()),
+        maxTextures,
+        gsl::span<char>(
+            reinterpret_cast<char*>(numTextures.data()),
+            numTextures.size_bytes()));
+#endif
     glExtGetTexturesQCOM(
         textures.size() ? reinterpret_cast<GLuint*>(textures.data()) : nullptr,
         maxTextures,
@@ -274,6 +339,9 @@ STATICINLINE void ext_tex_object_state_overridei(
     {
         GLW_FPTR_CHECK(ExtTexObjectStateOverrideiQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glExtTexObjectStateOverrideiQCOM, target, pname, param);
+#endif
     glExtTexObjectStateOverrideiQCOM(target, pname, param);
     detail::error_check("ExtTexObjectStateOverrideiQCOM"sv, check_errors);
 }

@@ -36,6 +36,15 @@ STATICINLINE void renderbuffer_storage_multisample_coverage(
     {
         GLW_FPTR_CHECK(RenderbufferStorageMultisampleCoverageNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glRenderbufferStorageMultisampleCoverageNV,
+        target,
+        coverageSamples,
+        colorSamples,
+        internalformat,
+        width);
+#endif
     glRenderbufferStorageMultisampleCoverageNV(
         static_cast<GLenum>(target),
         coverageSamples,

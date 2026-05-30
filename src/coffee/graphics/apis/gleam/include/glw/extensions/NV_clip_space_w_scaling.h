@@ -26,6 +26,9 @@ STATICINLINE void viewport_position_w_scale(
     {
         GLW_FPTR_CHECK(ViewportPositionWScaleNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glViewportPositionWScaleNV, index, xcoeff, ycoeff);
+#endif
     glViewportPositionWScaleNV(index, xcoeff, ycoeff);
     detail::error_check("ViewportPositionWScaleNV"sv, check_errors);
 }

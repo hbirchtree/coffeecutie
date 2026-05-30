@@ -19,6 +19,9 @@ STATICINLINE void framebuffer_fetch_barrier(
     {
         GLW_FPTR_CHECK(FramebufferFetchBarrierEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFramebufferFetchBarrierEXT);
+#endif
     glFramebufferFetchBarrierEXT();
     detail::error_check("FramebufferFetchBarrierEXT"sv, check_errors);
 }

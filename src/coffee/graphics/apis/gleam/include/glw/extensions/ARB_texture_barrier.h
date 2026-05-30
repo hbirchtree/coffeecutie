@@ -17,6 +17,9 @@ STATICINLINE void texture_barrier(error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(TextureBarrier)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTextureBarrier);
+#endif
     glTextureBarrier();
     detail::error_check("TextureBarrier"sv, check_errors);
 }

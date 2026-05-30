@@ -68,6 +68,14 @@ STATICINLINE void get_uniformi64v(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetUniformi64vNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        program,
+        location);
+#endif
     glGetUniformi64vNV(
         program,
         location,
@@ -89,6 +97,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform1i64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform1i64NV, location, x);
+#endif
     glUniform1i64NV(location, x);
     detail::error_check("Uniform1i64NV"sv, check_errors);
 }
@@ -116,6 +127,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform1i64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform1i64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform1i64vNV(
         location,
         value.size(),
@@ -137,6 +155,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform1ui64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform1ui64NV, location, x);
+#endif
     glUniform1ui64NV(location, x);
     detail::error_check("Uniform1ui64NV"sv, check_errors);
 }
@@ -164,6 +185,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform1ui64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform1ui64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform1ui64vNV(
         location,
         value.size(),
@@ -190,6 +218,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform2i64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform2i64NV, location, x);
+#endif
     glUniform2i64NV(location, x[0], x[1]);
     detail::error_check("Uniform2i64NV"sv, check_errors);
 }
@@ -216,6 +247,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform2i64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform2i64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform2i64vNV(
         location,
         value.size(),
@@ -242,6 +280,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform2ui64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform2ui64NV, location, x);
+#endif
     glUniform2ui64NV(location, x[0], x[1]);
     detail::error_check("Uniform2ui64NV"sv, check_errors);
 }
@@ -270,6 +311,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform2ui64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform2ui64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform2ui64vNV(
         location,
         value.size(),
@@ -297,6 +345,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform3i64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform3i64NV, location, x);
+#endif
     glUniform3i64NV(location, x[0], x[1], x[2]);
     detail::error_check("Uniform3i64NV"sv, check_errors);
 }
@@ -323,6 +374,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform3i64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform3i64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform3i64vNV(
         location,
         value.size(),
@@ -350,6 +408,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform3ui64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform3ui64NV, location, x);
+#endif
     glUniform3ui64NV(location, x[0], x[1], x[2]);
     detail::error_check("Uniform3ui64NV"sv, check_errors);
 }
@@ -378,6 +439,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform3ui64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform3ui64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform3ui64vNV(
         location,
         value.size(),
@@ -406,6 +474,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform4i64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform4i64NV, location, x);
+#endif
     glUniform4i64NV(location, x[0], x[1], x[2], x[3]);
     detail::error_check("Uniform4i64NV"sv, check_errors);
 }
@@ -432,6 +503,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform4i64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform4i64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform4i64vNV(
         location,
         value.size(),
@@ -460,6 +538,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform4ui64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform4ui64NV, location, x);
+#endif
     glUniform4ui64NV(location, x[0], x[1], x[2], x[3]);
     detail::error_check("Uniform4ui64NV"sv, check_errors);
 }
@@ -488,6 +569,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform4ui64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform4ui64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform4ui64vNV(
         location,
         value.size(),
@@ -518,6 +606,9 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniform1i64NV, program, location, x);
+#endif
     glProgramUniform1i64NV(program, location, x);
     detail::error_check("ProgramUniform1i64NV"sv, check_errors);
 }
@@ -552,6 +643,14 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniform1i64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniform1i64vNV(
         program,
         location,
@@ -583,6 +682,9 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniform1ui64NV, program, location, x);
+#endif
     glProgramUniform1ui64NV(program, location, x);
     detail::error_check("ProgramUniform1ui64NV"sv, check_errors);
 }
@@ -617,6 +719,14 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniform1ui64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniform1ui64vNV(
         program,
         location,
@@ -651,6 +761,9 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniform2i64NV, program, location, x);
+#endif
     glProgramUniform2i64NV(program, location, x[0], x[1]);
     detail::error_check("ProgramUniform2i64NV"sv, check_errors);
 }
@@ -684,6 +797,14 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniform2i64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniform2i64vNV(
         program,
         location,
@@ -718,6 +839,9 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniform2ui64NV, program, location, x);
+#endif
     glProgramUniform2ui64NV(program, location, x[0], x[1]);
     detail::error_check("ProgramUniform2ui64NV"sv, check_errors);
 }
@@ -753,6 +877,14 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniform2ui64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniform2ui64vNV(
         program,
         location,
@@ -788,6 +920,9 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniform3i64NV, program, location, x);
+#endif
     glProgramUniform3i64NV(program, location, x[0], x[1], x[2]);
     detail::error_check("ProgramUniform3i64NV"sv, check_errors);
 }
@@ -821,6 +956,14 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniform3i64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniform3i64vNV(
         program,
         location,
@@ -856,6 +999,9 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniform3ui64NV, program, location, x);
+#endif
     glProgramUniform3ui64NV(program, location, x[0], x[1], x[2]);
     detail::error_check("ProgramUniform3ui64NV"sv, check_errors);
 }
@@ -891,6 +1037,14 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniform3ui64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniform3ui64vNV(
         program,
         location,
@@ -927,6 +1081,9 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniform4i64NV, program, location, x);
+#endif
     glProgramUniform4i64NV(program, location, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramUniform4i64NV"sv, check_errors);
 }
@@ -960,6 +1117,14 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniform4i64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniform4i64vNV(
         program,
         location,
@@ -996,6 +1161,9 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniform4ui64NV, program, location, x);
+#endif
     glProgramUniform4ui64NV(program, location, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramUniform4ui64NV"sv, check_errors);
 }
@@ -1031,6 +1199,14 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniform4ui64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniform4ui64vNV(
         program,
         location,

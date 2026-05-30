@@ -31,6 +31,9 @@ STATICINLINE void framebuffer_parameter(
     {
         GLW_FPTR_CHECK(FramebufferParameteri)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFramebufferParameteri, target, pname, param);
+#endif
     glFramebufferParameteri(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), param);
     detail::error_check("FramebufferParameteri"sv, check_errors);
@@ -59,6 +62,14 @@ STATICINLINE void get_framebuffer_parameter(
     {
         GLW_FPTR_CHECK(GetFramebufferParameteriv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetFramebufferParameteriv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetFramebufferParameteriv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),

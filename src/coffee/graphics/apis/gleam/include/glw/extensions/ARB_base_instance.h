@@ -27,6 +27,15 @@ STATICINLINE void draw_arrays_instanced_base_instance(
     {
         GLW_FPTR_CHECK(DrawArraysInstancedBaseInstance)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawArraysInstancedBaseInstance,
+        mode,
+        first,
+        count,
+        instancecount,
+        baseinstance);
+#endif
     glDrawArraysInstancedBaseInstance(
         static_cast<GLenum>(mode), first, count, instancecount, baseinstance);
     detail::error_check("DrawArraysInstancedBaseInstance"sv, check_errors);
@@ -56,6 +65,16 @@ STATICINLINE void draw_elements_instanced_base_instance(
     {
         GLW_FPTR_CHECK(DrawElementsInstancedBaseInstance)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawElementsInstancedBaseInstance,
+        mode,
+        count,
+        type,
+        indices,
+        instancecount,
+        baseinstance);
+#endif
     glDrawElementsInstancedBaseInstance(
         static_cast<GLenum>(mode),
         count,
@@ -92,6 +111,17 @@ STATICINLINE void draw_elements_instanced_base_vertex_base_instance(
     {
         GLW_FPTR_CHECK(DrawElementsInstancedBaseVertexBaseInstance)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawElementsInstancedBaseVertexBaseInstance,
+        mode,
+        count,
+        type,
+        indices,
+        instancecount,
+        basevertex,
+        baseinstance);
+#endif
     glDrawElementsInstancedBaseVertexBaseInstance(
         static_cast<GLenum>(mode),
         count,

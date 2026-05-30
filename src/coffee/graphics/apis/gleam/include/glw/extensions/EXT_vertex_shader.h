@@ -95,6 +95,9 @@ STATICINLINE void begin_vertex_shader(
     {
         GLW_FPTR_CHECK(BeginVertexShaderEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBeginVertexShaderEXT);
+#endif
     glBeginVertexShaderEXT();
     detail::error_check("BeginVertexShaderEXT"sv, check_errors);
 }
@@ -115,6 +118,9 @@ STATICINLINE GLuint bind_light_parameter(
     {
         GLW_FPTR_CHECK(BindLightParameterEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindLightParameterEXT, light, value);
+#endif
     auto out = glBindLightParameterEXT(
         static_cast<GLenum>(light), static_cast<GLenum>(value));
     detail::error_check("BindLightParameterEXT"sv, check_errors);
@@ -137,6 +143,9 @@ STATICINLINE GLuint bind_material_parameter(
     {
         GLW_FPTR_CHECK(BindMaterialParameterEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindMaterialParameterEXT, face, value);
+#endif
     auto out = glBindMaterialParameterEXT(
         static_cast<GLenum>(face), static_cast<GLenum>(value));
     detail::error_check("BindMaterialParameterEXT"sv, check_errors);
@@ -157,6 +166,9 @@ STATICINLINE GLuint bind_parameter(
     {
         GLW_FPTR_CHECK(BindParameterEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindParameterEXT, value);
+#endif
     auto out = glBindParameterEXT(static_cast<GLenum>(value));
     detail::error_check("BindParameterEXT"sv, check_errors);
     return out;
@@ -180,6 +192,9 @@ STATICINLINE GLuint bind_tex_gen_parameter(
     {
         GLW_FPTR_CHECK(BindTexGenParameterEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindTexGenParameterEXT, unit, coord, value);
+#endif
     auto out = glBindTexGenParameterEXT(
         static_cast<GLenum>(unit),
         static_cast<GLenum>(coord),
@@ -204,6 +219,9 @@ STATICINLINE GLuint bind_texture_unit_parameter(
     {
         GLW_FPTR_CHECK(BindTextureUnitParameterEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindTextureUnitParameterEXT, unit, value);
+#endif
     auto out = glBindTextureUnitParameterEXT(
         static_cast<GLenum>(unit), static_cast<GLenum>(value));
     detail::error_check("BindTextureUnitParameterEXT"sv, check_errors);
@@ -223,6 +241,9 @@ STATICINLINE void bind_vertex_shader(
     {
         GLW_FPTR_CHECK(BindVertexShaderEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindVertexShaderEXT, id);
+#endif
     glBindVertexShaderEXT(id);
     detail::error_check("BindVertexShaderEXT"sv, check_errors);
 }
@@ -240,6 +261,9 @@ STATICINLINE void delete_vertex_shader(
     {
         GLW_FPTR_CHECK(DeleteVertexShaderEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDeleteVertexShaderEXT, id);
+#endif
     glDeleteVertexShaderEXT(id);
     detail::error_check("DeleteVertexShaderEXT"sv, check_errors);
 }
@@ -257,6 +281,9 @@ STATICINLINE void disable_variant_client_state(
     {
         GLW_FPTR_CHECK(DisableVariantClientStateEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDisableVariantClientStateEXT, id);
+#endif
     glDisableVariantClientStateEXT(id);
     detail::error_check("DisableVariantClientStateEXT"sv, check_errors);
 }
@@ -274,6 +301,9 @@ STATICINLINE void enable_variant_client_state(
     {
         GLW_FPTR_CHECK(EnableVariantClientStateEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEnableVariantClientStateEXT, id);
+#endif
     glEnableVariantClientStateEXT(id);
     detail::error_check("EnableVariantClientStateEXT"sv, check_errors);
 }
@@ -290,6 +320,9 @@ STATICINLINE void end_vertex_shader(error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(EndVertexShaderEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEndVertexShaderEXT);
+#endif
     glEndVertexShaderEXT();
     detail::error_check("EndVertexShaderEXT"sv, check_errors);
 }
@@ -309,6 +342,9 @@ STATICINLINE void extract_component(
     {
         GLW_FPTR_CHECK(ExtractComponentEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glExtractComponentEXT, res, src, num);
+#endif
     glExtractComponentEXT(res, src, num);
     detail::error_check("ExtractComponentEXT"sv, check_errors);
 }
@@ -333,6 +369,9 @@ STATICINLINE GLuint gen_symbols(
     {
         GLW_FPTR_CHECK(GenSymbolsEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGenSymbolsEXT, datatype, storagetype, range, components);
+#endif
     auto out = glGenSymbolsEXT(
         static_cast<GLenum>(datatype),
         static_cast<GLenum>(storagetype),
@@ -355,6 +394,9 @@ gen_vertex_shaders(u32 range, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(GenVertexShadersEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGenVertexShadersEXT, range);
+#endif
     auto out = glGenVertexShadersEXT(range);
     detail::error_check("GenVertexShadersEXT"sv, check_errors);
     return out;
@@ -384,6 +426,14 @@ STATICINLINE void get_invariant_booleanv(
     {
         GLW_FPTR_CHECK(GetInvariantBooleanvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetInvariantBooleanvEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        id,
+        value);
+#endif
     glGetInvariantBooleanvEXT(
         id,
         static_cast<GLenum>(value),
@@ -414,6 +464,14 @@ STATICINLINE void get_invariant_floatv(
     {
         GLW_FPTR_CHECK(GetInvariantFloatvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetInvariantFloatvEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        id,
+        value);
+#endif
     glGetInvariantFloatvEXT(
         id,
         static_cast<GLenum>(value),
@@ -444,6 +502,14 @@ STATICINLINE void get_invariant_integerv(
     {
         GLW_FPTR_CHECK(GetInvariantIntegervEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetInvariantIntegervEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        id,
+        value);
+#endif
     glGetInvariantIntegervEXT(
         id,
         static_cast<GLenum>(value),
@@ -475,6 +541,14 @@ STATICINLINE void get_local_constant_booleanv(
     {
         GLW_FPTR_CHECK(GetLocalConstantBooleanvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetLocalConstantBooleanvEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        id,
+        value);
+#endif
     glGetLocalConstantBooleanvEXT(
         id,
         static_cast<GLenum>(value),
@@ -505,6 +579,14 @@ STATICINLINE void get_local_constant_floatv(
     {
         GLW_FPTR_CHECK(GetLocalConstantFloatvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetLocalConstantFloatvEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        id,
+        value);
+#endif
     glGetLocalConstantFloatvEXT(
         id,
         static_cast<GLenum>(value),
@@ -535,6 +617,14 @@ STATICINLINE void get_local_constant_integerv(
     {
         GLW_FPTR_CHECK(GetLocalConstantIntegervEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetLocalConstantIntegervEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        id,
+        value);
+#endif
     glGetLocalConstantIntegervEXT(
         id,
         static_cast<GLenum>(value),
@@ -566,6 +656,14 @@ STATICINLINE void get_variant_booleanv(
     {
         GLW_FPTR_CHECK(GetVariantBooleanvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetVariantBooleanvEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        id,
+        value);
+#endif
     glGetVariantBooleanvEXT(
         id,
         static_cast<GLenum>(value),
@@ -596,6 +694,14 @@ STATICINLINE void get_variant_floatv(
     {
         GLW_FPTR_CHECK(GetVariantFloatvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetVariantFloatvEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        id,
+        value);
+#endif
     glGetVariantFloatvEXT(
         id,
         static_cast<GLenum>(value),
@@ -626,6 +732,14 @@ STATICINLINE void get_variant_integerv(
     {
         GLW_FPTR_CHECK(GetVariantIntegervEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetVariantIntegervEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        id,
+        value);
+#endif
     glGetVariantIntegervEXT(
         id,
         static_cast<GLenum>(value),
@@ -653,6 +767,14 @@ STATICINLINE void get_variant_pointerv(
     {
         GLW_FPTR_CHECK(GetVariantPointervEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetVariantPointervEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        id,
+        value);
+#endif
     glGetVariantPointervEXT(
         id,
         static_cast<GLenum>(value),
@@ -675,6 +797,9 @@ STATICINLINE void insert_component(
     {
         GLW_FPTR_CHECK(InsertComponentEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glInsertComponentEXT, res, src, num);
+#endif
     glInsertComponentEXT(res, src, num);
     detail::error_check("InsertComponentEXT"sv, check_errors);
 }
@@ -695,6 +820,9 @@ STATICINLINE GLboolean is_variant_enabled(
     {
         GLW_FPTR_CHECK(IsVariantEnabledEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsVariantEnabledEXT, id, cap);
+#endif
     auto out = glIsVariantEnabledEXT(id, static_cast<GLenum>(cap));
     detail::error_check("IsVariantEnabledEXT"sv, check_errors);
     return out;
@@ -720,6 +848,14 @@ STATICINLINE void set_invariant(
     {
         GLW_FPTR_CHECK(SetInvariantEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glSetInvariantEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
+        id,
+        type);
+#endif
     glSetInvariantEXT(
         id,
         static_cast<GLenum>(type),
@@ -747,6 +883,14 @@ STATICINLINE void set_local_constant(
     {
         GLW_FPTR_CHECK(SetLocalConstantEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glSetLocalConstantEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
+        id,
+        type);
+#endif
     glSetLocalConstantEXT(
         id,
         static_cast<GLenum>(type),
@@ -772,6 +916,9 @@ STATICINLINE void shader_op1(
     {
         GLW_FPTR_CHECK(ShaderOp1EXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glShaderOp1EXT, op, res, arg1);
+#endif
     glShaderOp1EXT(static_cast<GLenum>(op), res, arg1);
     detail::error_check("ShaderOp1EXT"sv, check_errors);
 }
@@ -796,6 +943,9 @@ STATICINLINE void shader_op2(
     {
         GLW_FPTR_CHECK(ShaderOp2EXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glShaderOp2EXT, op, res, arg1, arg2);
+#endif
     glShaderOp2EXT(static_cast<GLenum>(op), res, arg1, arg2);
     detail::error_check("ShaderOp2EXT"sv, check_errors);
 }
@@ -822,6 +972,9 @@ STATICINLINE void shader_op3(
     {
         GLW_FPTR_CHECK(ShaderOp3EXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glShaderOp3EXT, op, res, arg1, arg2, arg3);
+#endif
     glShaderOp3EXT(static_cast<GLenum>(op), res, arg1, arg2, arg3);
     detail::error_check("ShaderOp3EXT"sv, check_errors);
 }
@@ -850,6 +1003,9 @@ STATICINLINE void swizzle(
     {
         GLW_FPTR_CHECK(SwizzleEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSwizzleEXT, res, in, outX, outY, outZ, outW);
+#endif
     glSwizzleEXT(
         res,
         in,
@@ -882,6 +1038,15 @@ STATICINLINE void variant_pointer(
     {
         GLW_FPTR_CHECK(VariantPointerEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVariantPointerEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
+        id,
+        type,
+        stride);
+#endif
     glVariantPointerEXT(
         id,
         static_cast<GLenum>(type),
@@ -912,6 +1077,13 @@ STATICINLINE void variantbv(
     {
         GLW_FPTR_CHECK(VariantbvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVariantbvEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
+        id);
+#endif
     glVariantbvEXT(
         id,
         addr.size() ? reinterpret_cast<const GLbyte*>(addr.data()) : nullptr);
@@ -940,6 +1112,13 @@ STATICINLINE void variantdv(
     {
         GLW_FPTR_CHECK(VariantdvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVariantdvEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
+        id);
+#endif
     glVariantdvEXT(
         id,
         addr.size() ? reinterpret_cast<const GLdouble*>(addr.data()) : nullptr);
@@ -968,6 +1147,13 @@ STATICINLINE void variantfv(
     {
         GLW_FPTR_CHECK(VariantfvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVariantfvEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
+        id);
+#endif
     glVariantfvEXT(
         id,
         addr.size() ? reinterpret_cast<const GLfloat*>(addr.data()) : nullptr);
@@ -996,6 +1182,13 @@ STATICINLINE void variantiv(
     {
         GLW_FPTR_CHECK(VariantivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVariantivEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
+        id);
+#endif
     glVariantivEXT(
         id,
         addr.size() ? reinterpret_cast<const GLint*>(addr.data()) : nullptr);
@@ -1024,6 +1217,13 @@ STATICINLINE void variantsv(
     {
         GLW_FPTR_CHECK(VariantsvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVariantsvEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
+        id);
+#endif
     glVariantsvEXT(
         id,
         addr.size() ? reinterpret_cast<const GLshort*>(addr.data()) : nullptr);
@@ -1052,6 +1252,13 @@ STATICINLINE void variantubv(
     {
         GLW_FPTR_CHECK(VariantubvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVariantubvEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
+        id);
+#endif
     glVariantubvEXT(
         id,
         addr.size() ? reinterpret_cast<const GLubyte*>(addr.data()) : nullptr);
@@ -1080,6 +1287,13 @@ STATICINLINE void variantuiv(
     {
         GLW_FPTR_CHECK(VariantuivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVariantuivEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
+        id);
+#endif
     glVariantuivEXT(
         id,
         addr.size() ? reinterpret_cast<const GLuint*>(addr.data()) : nullptr);
@@ -1108,6 +1322,13 @@ STATICINLINE void variantusv(
     {
         GLW_FPTR_CHECK(VariantusvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVariantusvEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
+        id);
+#endif
     glVariantusvEXT(
         id,
         addr.size() ? reinterpret_cast<const GLushort*>(addr.data()) : nullptr);
@@ -1138,6 +1359,9 @@ STATICINLINE void write_mask(
     {
         GLW_FPTR_CHECK(WriteMaskEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glWriteMaskEXT, res, in, outX, outY, outZ, outW);
+#endif
     glWriteMaskEXT(
         res,
         in,

@@ -42,6 +42,16 @@ STATICINLINE void framebuffer_texture_2d_multisample(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFramebufferTexture2DMultisampleEXT,
+        target,
+        attachment,
+        textarget,
+        texture,
+        level,
+        samples);
+#endif
     glFramebufferTexture2DMultisampleEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),
@@ -75,6 +85,14 @@ STATICINLINE void renderbuffer_storage_multisample(
     {
         GLW_FPTR_CHECK(RenderbufferStorageMultisampleEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glRenderbufferStorageMultisampleEXT,
+        target,
+        samples,
+        internalformat,
+        width);
+#endif
     glRenderbufferStorageMultisampleEXT(
         static_cast<GLenum>(target),
         samples,

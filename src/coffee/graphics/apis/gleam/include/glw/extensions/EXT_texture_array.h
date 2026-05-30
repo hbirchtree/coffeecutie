@@ -44,6 +44,15 @@ STATICINLINE void framebuffer_texture_layer(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFramebufferTextureLayerEXT,
+        target,
+        attachment,
+        texture,
+        level,
+        layer);
+#endif
     glFramebufferTextureLayerEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),

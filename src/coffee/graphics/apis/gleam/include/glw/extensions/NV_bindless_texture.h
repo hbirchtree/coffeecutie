@@ -32,6 +32,9 @@ STATICINLINE GLuint64 get_image_handle(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetImageHandleNV, texture, level, layered, layer, format);
+#endif
     auto out = glGetImageHandleNV(
         texture, level, layered, layer, static_cast<GLenum>(format));
     detail::error_check("GetImageHandleNV"sv, check_errors);
@@ -56,6 +59,9 @@ get_texture_handle(u32 texture, error_check check_errors = error_check::on)
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetTextureHandleNV, texture);
+#endif
     auto out = glGetTextureHandleNV(texture);
     detail::error_check("GetTextureHandleNV"sv, check_errors);
     return out;
@@ -85,6 +91,9 @@ STATICINLINE GLuint64 get_texture_sampler_handle(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetTextureSamplerHandleNV, texture, sampler);
+#endif
     auto out = glGetTextureSamplerHandleNV(texture, sampler);
     detail::error_check("GetTextureSamplerHandleNV"sv, check_errors);
     return out;
@@ -103,6 +112,9 @@ is_image_handle_resident(u64 handle, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(IsImageHandleResidentNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsImageHandleResidentNV, handle);
+#endif
     auto out = glIsImageHandleResidentNV(handle);
     detail::error_check("IsImageHandleResidentNV"sv, check_errors);
     return out;
@@ -121,6 +133,9 @@ STATICINLINE GLboolean is_texture_handle_resident(
     {
         GLW_FPTR_CHECK(IsTextureHandleResidentNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsTextureHandleResidentNV, handle);
+#endif
     auto out = glIsTextureHandleResidentNV(handle);
     detail::error_check("IsTextureHandleResidentNV"sv, check_errors);
     return out;
@@ -139,6 +154,9 @@ STATICINLINE void make_image_handle_non_resident(
     {
         GLW_FPTR_CHECK(MakeImageHandleNonResidentNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMakeImageHandleNonResidentNV, handle);
+#endif
     glMakeImageHandleNonResidentNV(handle);
     detail::error_check("MakeImageHandleNonResidentNV"sv, check_errors);
 }
@@ -157,6 +175,9 @@ STATICINLINE void make_image_handle_resident(
     {
         GLW_FPTR_CHECK(MakeImageHandleResidentNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMakeImageHandleResidentNV, handle, access);
+#endif
     glMakeImageHandleResidentNV(handle, access);
     detail::error_check("MakeImageHandleResidentNV"sv, check_errors);
 }
@@ -174,6 +195,9 @@ STATICINLINE void make_texture_handle_non_resident(
     {
         GLW_FPTR_CHECK(MakeTextureHandleNonResidentNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMakeTextureHandleNonResidentNV, handle);
+#endif
     glMakeTextureHandleNonResidentNV(handle);
     detail::error_check("MakeTextureHandleNonResidentNV"sv, check_errors);
 }
@@ -191,6 +215,9 @@ STATICINLINE void make_texture_handle_resident(
     {
         GLW_FPTR_CHECK(MakeTextureHandleResidentNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMakeTextureHandleResidentNV, handle);
+#endif
     glMakeTextureHandleResidentNV(handle);
     detail::error_check("MakeTextureHandleResidentNV"sv, check_errors);
 }
@@ -218,6 +245,9 @@ STATICINLINE void program_uniform_handle(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniformHandleui64NV, program, location, value);
+#endif
     glProgramUniformHandleui64NV(program, location, value);
     detail::error_check("ProgramUniformHandleui64NV"sv, check_errors);
 }
@@ -252,6 +282,14 @@ STATICINLINE void program_uniform_handle(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniformHandleui64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(values.data()), values.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniformHandleui64vNV(
         program,
         location,
@@ -275,6 +313,9 @@ STATICINLINE void uniform_handle(
     {
         GLW_FPTR_CHECK(UniformHandleui64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniformHandleui64NV, location, value);
+#endif
     glUniformHandleui64NV(location, value);
     detail::error_check("UniformHandleui64NV"sv, check_errors);
 }
@@ -302,6 +343,13 @@ STATICINLINE void uniform_handle(
     {
         GLW_FPTR_CHECK(UniformHandleui64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniformHandleui64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniformHandleui64vNV(
         location,
         value.size(),

@@ -31,6 +31,12 @@ STATICINLINE void delete_fences(
     {
         GLW_FPTR_CHECK(DeleteFencesNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteFencesNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(fences.data()), fences.size_bytes()));
+#endif
     glDeleteFencesNV(
         fences.size(),
         fences.size() ? reinterpret_cast<const GLuint*>(fences.data())
@@ -51,6 +57,9 @@ STATICINLINE void finish_fence(
     {
         GLW_FPTR_CHECK(FinishFenceNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFinishFenceNV, fence);
+#endif
     glFinishFenceNV(fence);
     detail::error_check("FinishFenceNV"sv, check_errors);
 }
@@ -74,6 +83,12 @@ STATICINLINE void gen_fences(
     {
         GLW_FPTR_CHECK(GenFencesNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenFencesNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(fences.data()), fences.size_bytes()));
+#endif
     glGenFencesNV(
         fences.size(),
         fences.size() ? reinterpret_cast<GLuint*>(fences.data()) : nullptr);
@@ -103,6 +118,14 @@ STATICINLINE void get_fenceiv(
     {
         GLW_FPTR_CHECK(GetFenceivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetFenceivNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        fence,
+        pname);
+#endif
     glGetFenceivNV(
         fence,
         static_cast<GLenum>(pname),
@@ -123,6 +146,9 @@ is_fence(u32 fence, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(IsFenceNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsFenceNV, fence);
+#endif
     auto out = glIsFenceNV(fence);
     detail::error_check("IsFenceNV"sv, check_errors);
     return out;
@@ -144,6 +170,9 @@ STATICINLINE void set_fence(
     {
         GLW_FPTR_CHECK(SetFenceNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSetFenceNV, fence, condition);
+#endif
     glSetFenceNV(fence, static_cast<GLenum>(condition));
     detail::error_check("SetFenceNV"sv, check_errors);
 }
@@ -161,6 +190,9 @@ test_fence(u32 fence, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(TestFenceNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTestFenceNV, fence);
+#endif
     auto out = glTestFenceNV(fence);
     detail::error_check("TestFenceNV"sv, check_errors);
     return out;

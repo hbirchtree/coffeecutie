@@ -33,6 +33,9 @@ STATICINLINE void vertex_attrib_p1ui(
     {
         GLW_FPTR_CHECK(VertexAttribP1ui)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribP1ui, index, type, normalized, value);
+#endif
     glVertexAttribP1ui(index, static_cast<GLenum>(type), normalized, value);
     detail::error_check("VertexAttribP1ui"sv, check_errors);
 }
@@ -63,6 +66,15 @@ STATICINLINE void vertex_attrib_p1uiv(
     {
         GLW_FPTR_CHECK(VertexAttribP1uiv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribP1uiv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        index,
+        type,
+        normalized);
+#endif
     glVertexAttribP1uiv(
         index,
         static_cast<GLenum>(type),
@@ -91,6 +103,9 @@ STATICINLINE void vertex_attrib_p2ui(
     {
         GLW_FPTR_CHECK(VertexAttribP2ui)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribP2ui, index, type, normalized, value);
+#endif
     glVertexAttribP2ui(index, static_cast<GLenum>(type), normalized, value);
     detail::error_check("VertexAttribP2ui"sv, check_errors);
 }
@@ -119,6 +134,15 @@ STATICINLINE void vertex_attrib_p2uiv(
     {
         GLW_FPTR_CHECK(VertexAttribP2uiv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribP2uiv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        index,
+        type,
+        normalized);
+#endif
     glVertexAttribP2uiv(
         index,
         static_cast<GLenum>(type),
@@ -147,6 +171,9 @@ STATICINLINE void vertex_attrib_p3ui(
     {
         GLW_FPTR_CHECK(VertexAttribP3ui)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribP3ui, index, type, normalized, value);
+#endif
     glVertexAttribP3ui(index, static_cast<GLenum>(type), normalized, value);
     detail::error_check("VertexAttribP3ui"sv, check_errors);
 }
@@ -175,6 +202,15 @@ STATICINLINE void vertex_attrib_p3uiv(
     {
         GLW_FPTR_CHECK(VertexAttribP3uiv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribP3uiv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        index,
+        type,
+        normalized);
+#endif
     glVertexAttribP3uiv(
         index,
         static_cast<GLenum>(type),
@@ -203,6 +239,9 @@ STATICINLINE void vertex_attrib_p4ui(
     {
         GLW_FPTR_CHECK(VertexAttribP4ui)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribP4ui, index, type, normalized, value);
+#endif
     glVertexAttribP4ui(index, static_cast<GLenum>(type), normalized, value);
     detail::error_check("VertexAttribP4ui"sv, check_errors);
 }
@@ -231,6 +270,15 @@ STATICINLINE void vertex_attrib_p4uiv(
     {
         GLW_FPTR_CHECK(VertexAttribP4uiv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribP4uiv,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        index,
+        type,
+        normalized);
+#endif
     glVertexAttribP4uiv(
         index,
         static_cast<GLenum>(type),

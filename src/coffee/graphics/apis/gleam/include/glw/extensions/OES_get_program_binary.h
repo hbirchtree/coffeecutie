@@ -36,6 +36,15 @@ STATICINLINE void get_program_binary(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetProgramBinaryOES,
+        gsl::span<char>(
+            reinterpret_cast<char*>(binary.data()), binary.size_bytes()),
+        program,
+        length,
+        binaryFormat);
+#endif
     glGetProgramBinaryOES(
         program,
         binary.size() * sizeof(typename std::decay_t<span_void>::value_type),
@@ -72,6 +81,15 @@ STATICINLINE void program_binary(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramBinaryOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(binary.data()), binary.size_bytes()),
+        program,
+        binaryFormat,
+        length);
+#endif
     glProgramBinaryOES(
         program,
         binaryFormat,

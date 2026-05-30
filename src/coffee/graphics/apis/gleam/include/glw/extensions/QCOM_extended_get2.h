@@ -40,6 +40,16 @@ STATICINLINE void ext_get_program_binary_source(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glExtGetProgramBinarySourceQCOM,
+        program,
+        shadertype,
+        gsl::span<char>(
+            reinterpret_cast<char*>(source.data()), source.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(length.data()), length.size_bytes()));
+#endif
     glExtGetProgramBinarySourceQCOM(
         program,
         static_cast<GLenum>(shadertype),
@@ -71,6 +81,14 @@ STATICINLINE void ext_get_programs(
     {
         GLW_FPTR_CHECK(ExtGetProgramsQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glExtGetProgramsQCOM,
+        gsl::span<char>(
+            reinterpret_cast<char*>(programs.data()), programs.size_bytes()),
+        maxPrograms,
+        numPrograms);
+#endif
     glExtGetProgramsQCOM(
         programs.size() ? reinterpret_cast<GLuint*>(programs.data()) : nullptr,
         maxPrograms,
@@ -101,6 +119,14 @@ STATICINLINE void ext_get_shaders(
     {
         GLW_FPTR_CHECK(ExtGetShadersQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glExtGetShadersQCOM,
+        gsl::span<char>(
+            reinterpret_cast<char*>(shaders.data()), shaders.size_bytes()),
+        maxShaders,
+        numShaders);
+#endif
     glExtGetShadersQCOM(
         shaders.size() ? reinterpret_cast<GLuint*>(shaders.data()) : nullptr,
         maxShaders,
@@ -126,6 +152,9 @@ ext_is_program_binary(u32 program, error_check check_errors = error_check::on)
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glExtIsProgramBinaryQCOM, program);
+#endif
     auto out = glExtIsProgramBinaryQCOM(program);
     detail::error_check("ExtIsProgramBinaryQCOM"sv, check_errors);
     return out;

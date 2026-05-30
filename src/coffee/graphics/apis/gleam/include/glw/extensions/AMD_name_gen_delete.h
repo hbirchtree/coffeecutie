@@ -33,6 +33,13 @@ STATICINLINE void delete_names(
     {
         GLW_FPTR_CHECK(DeleteNamesAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteNamesAMD,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(names.data()), names.size_bytes()),
+        identifier);
+#endif
     glDeleteNamesAMD(
         identifier,
         names.size(),
@@ -62,6 +69,13 @@ STATICINLINE void gen_names(
     {
         GLW_FPTR_CHECK(GenNamesAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenNamesAMD,
+        gsl::span<char>(
+            reinterpret_cast<char*>(names.data()), names.size_bytes()),
+        identifier);
+#endif
     glGenNamesAMD(
         identifier,
         names.size(),
@@ -83,6 +97,9 @@ is_name(GLenum identifier, u32 name, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(IsNameAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsNameAMD, identifier, name);
+#endif
     auto out = glIsNameAMD(identifier, name);
     detail::error_check("IsNameAMD"sv, check_errors);
     return out;

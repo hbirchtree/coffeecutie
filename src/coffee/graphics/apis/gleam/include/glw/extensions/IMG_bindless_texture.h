@@ -23,6 +23,9 @@ get_texture_handle(u32 texture, error_check check_errors = error_check::on)
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetTextureHandleIMG, texture);
+#endif
     auto out = glGetTextureHandleIMG(texture);
     detail::error_check("GetTextureHandleIMG"sv, check_errors);
     return out;
@@ -52,6 +55,9 @@ STATICINLINE GLuint64 get_texture_sampler_handle(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetTextureSamplerHandleIMG, texture, sampler);
+#endif
     auto out = glGetTextureSamplerHandleIMG(texture, sampler);
     detail::error_check("GetTextureSamplerHandleIMG"sv, check_errors);
     return out;
@@ -80,6 +86,9 @@ STATICINLINE void program_uniform_handle(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniformHandleui64IMG, program, location, value);
+#endif
     glProgramUniformHandleui64IMG(program, location, value);
     detail::error_check("ProgramUniformHandleui64IMG"sv, check_errors);
 }
@@ -114,6 +123,14 @@ STATICINLINE void program_uniform_handle(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniformHandleui64vIMG,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(values.data()), values.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniformHandleui64vIMG(
         program,
         location,
@@ -137,6 +154,9 @@ STATICINLINE void uniform_handle(
     {
         GLW_FPTR_CHECK(UniformHandleui64IMG)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniformHandleui64IMG, location, value);
+#endif
     glUniformHandleui64IMG(location, value);
     detail::error_check("UniformHandleui64IMG"sv, check_errors);
 }
@@ -164,6 +184,13 @@ STATICINLINE void uniform_handle(
     {
         GLW_FPTR_CHECK(UniformHandleui64vIMG)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniformHandleui64vIMG,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniformHandleui64vIMG(
         location,
         value.size(),

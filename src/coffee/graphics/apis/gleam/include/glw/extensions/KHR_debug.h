@@ -118,6 +118,14 @@ STATICINLINE void debug_message_callback(
     {
         GLW_FPTR_CHECK(DebugMessageCallback)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDebugMessageCallback,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(userParam.data()),
+            userParam.size_bytes()),
+        callback);
+#endif
     glDebugMessageCallback(
         callback,
         userParam.size() ? reinterpret_cast<const void*>(userParam.data())
@@ -156,6 +164,16 @@ STATICINLINE void debug_message_control(
     {
         GLW_FPTR_CHECK(DebugMessageControl)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDebugMessageControl,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()),
+        source,
+        type,
+        severity,
+        enabled);
+#endif
     glDebugMessageControl(
         static_cast<GLenum>(source),
         static_cast<GLenum>(type),
@@ -192,6 +210,10 @@ STATICINLINE void debug_message_insert(
     {
         GLW_FPTR_CHECK(DebugMessageInsert)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDebugMessageInsert, source, type, id, severity, length, buf);
+#endif
     glDebugMessageInsert(
         static_cast<GLenum>(source),
         static_cast<GLenum>(type),
@@ -262,6 +284,23 @@ STATICINLINE GLuint get_debug_message_log(
     {
         GLW_FPTR_CHECK(GetDebugMessageLog)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetDebugMessageLog,
+        gsl::span<char>(
+            reinterpret_cast<char*>(sources.data()), sources.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(types.data()), types.size_bytes()),
+        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(severities.data()),
+            severities.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(lengths.data()), lengths.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(messageLog.data()),
+            messageLog.size_bytes()));
+#endif
     auto out = glGetDebugMessageLog(
         sources.size(),
         messageLog.size(),
@@ -305,6 +344,15 @@ STATICINLINE void get_object_label(
     {
         GLW_FPTR_CHECK(GetObjectLabel)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetObjectLabel,
+        gsl::span<char>(
+            reinterpret_cast<char*>(label.data()), label.size_bytes()),
+        identifier,
+        name,
+        length);
+#endif
     glGetObjectLabel(
         static_cast<GLenum>(identifier),
         name,
@@ -341,6 +389,15 @@ STATICINLINE void get_object_ptr_label(
     {
         GLW_FPTR_CHECK(GetObjectPtrLabel)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetObjectPtrLabel,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(ptr.data()), ptr.size_bytes()),
+        length,
+        gsl::span<char>(
+            reinterpret_cast<char*>(label.data()), label.size_bytes()));
+#endif
     glGetObjectPtrLabel(
         ptr.size() ? reinterpret_cast<const void*>(ptr.data()) : nullptr,
         label.size(),
@@ -369,6 +426,13 @@ STATICINLINE void get_pointerv(
     {
         GLW_FPTR_CHECK(GetPointerv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetPointerv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        pname);
+#endif
     glGetPointerv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<void**>(params.data()) : nullptr);
@@ -397,6 +461,9 @@ STATICINLINE void object_label(
     {
         GLW_FPTR_CHECK(ObjectLabel)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glObjectLabel, identifier, name, length, label);
+#endif
     glObjectLabel(static_cast<GLenum>(identifier), name, length, label.data());
     detail::error_check("ObjectLabel"sv, check_errors);
 }
@@ -423,6 +490,14 @@ STATICINLINE void object_ptr_label(
     {
         GLW_FPTR_CHECK(ObjectPtrLabel)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glObjectPtrLabel,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(ptr.data()), ptr.size_bytes()),
+        length,
+        label);
+#endif
     glObjectPtrLabel(
         ptr.size() ? reinterpret_cast<const void*>(ptr.data()) : nullptr,
         length,
@@ -444,6 +519,9 @@ STATICINLINE void pop_debug_group(error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(PopDebugGroup)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPopDebugGroup);
+#endif
     glPopDebugGroup();
     detail::error_check("PopDebugGroup"sv, check_errors);
 }
@@ -470,6 +548,9 @@ STATICINLINE void push_debug_group(
     {
         GLW_FPTR_CHECK(PushDebugGroup)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPushDebugGroup, source, id, length, message);
+#endif
     glPushDebugGroup(static_cast<GLenum>(source), id, length, message.data());
     detail::error_check("PushDebugGroup"sv, check_errors);
 }
@@ -494,6 +575,14 @@ STATICINLINE void debug_message_callback(
     {
         GLW_FPTR_CHECK(DebugMessageCallbackKHR)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDebugMessageCallbackKHR,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(userParam.data()),
+            userParam.size_bytes()),
+        callback);
+#endif
     glDebugMessageCallbackKHR(
         callback,
         userParam.size() ? reinterpret_cast<const void*>(userParam.data())
@@ -533,6 +622,17 @@ STATICINLINE void debug_message_control(
     {
         GLW_FPTR_CHECK(DebugMessageControlKHR)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDebugMessageControlKHR,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()),
+        source,
+        type,
+        severity,
+        count,
+        enabled);
+#endif
     glDebugMessageControlKHR(
         static_cast<GLenum>(source),
         static_cast<GLenum>(type),
@@ -569,6 +669,10 @@ STATICINLINE void debug_message_insert(
     {
         GLW_FPTR_CHECK(DebugMessageInsertKHR)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDebugMessageInsertKHR, source, type, id, severity, length, buf);
+#endif
     glDebugMessageInsertKHR(
         static_cast<GLenum>(source),
         static_cast<GLenum>(type),
@@ -639,6 +743,23 @@ STATICINLINE GLuint get_debug_message_log(
     {
         GLW_FPTR_CHECK(GetDebugMessageLogKHR)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetDebugMessageLogKHR,
+        gsl::span<char>(
+            reinterpret_cast<char*>(sources.data()), sources.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(types.data()), types.size_bytes()),
+        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(severities.data()),
+            severities.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(lengths.data()), lengths.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(messageLog.data()),
+            messageLog.size_bytes()));
+#endif
     auto out = glGetDebugMessageLogKHR(
         sources.size(),
         messageLog.size(),
@@ -682,6 +803,15 @@ STATICINLINE void get_object_label(
     {
         GLW_FPTR_CHECK(GetObjectLabelKHR)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetObjectLabelKHR,
+        gsl::span<char>(
+            reinterpret_cast<char*>(label.data()), label.size_bytes()),
+        identifier,
+        name,
+        length);
+#endif
     glGetObjectLabelKHR(identifier, name, label.size(), &length, label.data());
     detail::error_check("GetObjectLabelKHR"sv, check_errors);
 }
@@ -713,6 +843,15 @@ STATICINLINE void get_object_ptr_label(
     {
         GLW_FPTR_CHECK(GetObjectPtrLabelKHR)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetObjectPtrLabelKHR,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(ptr.data()), ptr.size_bytes()),
+        length,
+        gsl::span<char>(
+            reinterpret_cast<char*>(label.data()), label.size_bytes()));
+#endif
     glGetObjectPtrLabelKHR(
         ptr.size() ? reinterpret_cast<const void*>(ptr.data()) : nullptr,
         label.size(),
@@ -739,6 +878,13 @@ STATICINLINE void get_pointerv(
     {
         GLW_FPTR_CHECK(GetPointervKHR)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetPointervKHR,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        pname);
+#endif
     glGetPointervKHR(
         pname,
         params.size() ? reinterpret_cast<void**>(params.data()) : nullptr);
@@ -767,6 +913,9 @@ STATICINLINE void object_label(
     {
         GLW_FPTR_CHECK(ObjectLabelKHR)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glObjectLabelKHR, identifier, name, length, label);
+#endif
     glObjectLabelKHR(
         static_cast<GLenum>(identifier), name, length, label.data());
     detail::error_check("ObjectLabelKHR"sv, check_errors);
@@ -794,6 +943,14 @@ STATICINLINE void object_ptr_label(
     {
         GLW_FPTR_CHECK(ObjectPtrLabelKHR)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glObjectPtrLabelKHR,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(ptr.data()), ptr.size_bytes()),
+        length,
+        label);
+#endif
     glObjectPtrLabelKHR(
         ptr.size() ? reinterpret_cast<const void*>(ptr.data()) : nullptr,
         length,
@@ -815,6 +972,9 @@ STATICINLINE void pop_debug_group(error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(PopDebugGroupKHR)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPopDebugGroupKHR);
+#endif
     glPopDebugGroupKHR();
     detail::error_check("PopDebugGroupKHR"sv, check_errors);
 }
@@ -841,6 +1001,9 @@ STATICINLINE void push_debug_group(
     {
         GLW_FPTR_CHECK(PushDebugGroupKHR)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPushDebugGroupKHR, source, id, length, message);
+#endif
     glPushDebugGroupKHR(
         static_cast<GLenum>(source), id, length, message.data());
     detail::error_check("PushDebugGroupKHR"sv, check_errors);

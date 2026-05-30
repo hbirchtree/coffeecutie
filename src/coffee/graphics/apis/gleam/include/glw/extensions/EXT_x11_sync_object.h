@@ -24,6 +24,9 @@ STATICINLINE GLsync import_sync(
     {
         GLW_FPTR_CHECK(ImportSyncEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glImportSyncEXT, external_sync_type, external_sync, flags);
+#endif
     auto out = glImportSyncEXT(external_sync_type, external_sync, flags);
     detail::error_check("ImportSyncEXT"sv, check_errors);
     return out;

@@ -43,6 +43,15 @@ STATICINLINE void get_program_binary(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetProgramBinary,
+        gsl::span<char>(
+            reinterpret_cast<char*>(binary.data()), binary.size_bytes()),
+        program,
+        length,
+        binaryFormat);
+#endif
     glGetProgramBinary(
         program,
         binary.size() * sizeof(typename std::decay_t<span_void>::value_type),
@@ -79,6 +88,15 @@ STATICINLINE void program_binary(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramBinary,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(binary.data()), binary.size_bytes()),
+        program,
+        binaryFormat,
+        length);
+#endif
     glProgramBinary(
         program,
         binaryFormat,
@@ -110,6 +128,9 @@ STATICINLINE void program_parameter(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramParameteri, program, pname, value);
+#endif
     glProgramParameteri(program, static_cast<GLenum>(pname), value);
     detail::error_check("ProgramParameteri"sv, check_errors);
 }

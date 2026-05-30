@@ -29,6 +29,15 @@ STATICINLINE void multi_draw_arrays_indirect_count(
     {
         GLW_FPTR_CHECK(MultiDrawArraysIndirectCountARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMultiDrawArraysIndirectCountARB,
+        mode,
+        indirect,
+        drawcount,
+        maxdrawcount,
+        stride);
+#endif
     glMultiDrawArraysIndirectCountARB(
         static_cast<GLenum>(mode),
         reinterpret_cast<const void*>(indirect),
@@ -62,6 +71,16 @@ STATICINLINE void multi_draw_elements_indirect_count(
     {
         GLW_FPTR_CHECK(MultiDrawElementsIndirectCountARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMultiDrawElementsIndirectCountARB,
+        mode,
+        type,
+        indirect,
+        drawcount,
+        maxdrawcount,
+        stride);
+#endif
     glMultiDrawElementsIndirectCountARB(
         static_cast<GLenum>(mode),
         static_cast<GLenum>(type),

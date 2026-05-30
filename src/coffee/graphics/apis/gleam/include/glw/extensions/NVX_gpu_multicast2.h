@@ -52,6 +52,29 @@ STATICINLINE GLuint async_copy_buffer_sub_data(
     {
         GLW_FPTR_CHECK(AsyncCopyBufferSubDataNVX)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glAsyncCopyBufferSubDataNVX,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(waitSemaphoreArray.data()),
+            waitSemaphoreArray.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(fenceValueArray.data()),
+            fenceValueArray.size_bytes()),
+        readGpu,
+        writeGpuMask,
+        readBuffer,
+        writeBuffer,
+        readOffset,
+        writeOffset,
+        size,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(signalSemaphoreArray.data()),
+            signalSemaphoreArray.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(signalValueArray.data()),
+            signalValueArray.size_bytes()));
+#endif
     auto out = glAsyncCopyBufferSubDataNVX(
         waitSemaphoreArray.size(),
         waitSemaphoreArray.size()
@@ -144,6 +167,39 @@ STATICINLINE GLuint async_copy_image_sub_data(
     {
         GLW_FPTR_CHECK(AsyncCopyImageSubDataNVX)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glAsyncCopyImageSubDataNVX,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(waitSemaphoreArray.data()),
+            waitSemaphoreArray.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(waitValueArray.data()),
+            waitValueArray.size_bytes()),
+        srcGpu,
+        dstGpuMask,
+        srcName,
+        srcTarget,
+        srcLevel,
+        srcX,
+        srcY,
+        srcZ,
+        dstName,
+        dstTarget,
+        dstLevel,
+        dstX,
+        dstY,
+        dstZ,
+        srcWidth,
+        srcHeight,
+        srcDepth,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(signalSemaphoreArray.data()),
+            signalSemaphoreArray.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(signalValueArray.data()),
+            signalValueArray.size_bytes()));
+#endif
     auto out = glAsyncCopyImageSubDataNVX(
         waitSemaphoreArray.size(),
         waitSemaphoreArray.size()
@@ -206,6 +262,15 @@ STATICINLINE void multicast_scissor_arrayv(
     {
         GLW_FPTR_CHECK(MulticastScissorArrayvNVX)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMulticastScissorArrayvNVX,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        gpu,
+        first,
+        count);
+#endif
     glMulticastScissorArrayvNVX(
         gpu,
         first,
@@ -240,6 +305,15 @@ STATICINLINE void multicast_viewport_arrayv(
     {
         GLW_FPTR_CHECK(MulticastViewportArrayvNVX)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMulticastViewportArrayvNVX,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        gpu,
+        first,
+        count);
+#endif
     glMulticastViewportArrayvNVX(
         gpu,
         first,
@@ -268,6 +342,10 @@ STATICINLINE void multicast_viewport_position_w_scale(
     {
         GLW_FPTR_CHECK(MulticastViewportPositionWScaleNVX)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMulticastViewportPositionWScaleNVX, gpu, index, xcoeff, ycoeff);
+#endif
     glMulticastViewportPositionWScaleNVX(gpu, index, xcoeff, ycoeff);
     detail::error_check("MulticastViewportPositionWScaleNVX"sv, check_errors);
 }
@@ -285,6 +363,9 @@ STATICINLINE void upload_gpu_mask(
     {
         GLW_FPTR_CHECK(UploadGpuMaskNVX)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUploadGpuMaskNVX, mask);
+#endif
     glUploadGpuMaskNVX(mask);
     detail::error_check("UploadGpuMaskNVX"sv, check_errors);
 }

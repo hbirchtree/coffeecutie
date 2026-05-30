@@ -43,6 +43,18 @@ STATICINLINE void texture_view(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTextureViewEXT,
+        texture,
+        target,
+        origtexture,
+        internalformat,
+        minlevel,
+        numlevels,
+        minlayer,
+        numlayers);
+#endif
     glTextureViewEXT(
         texture,
         static_cast<GLenum>(target),

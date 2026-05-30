@@ -21,6 +21,9 @@ STATICINLINE void vdpau_fini(error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(VDPAUFiniNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVDPAUFiniNV);
+#endif
     glVDPAUFiniNV();
     detail::error_check("VDPAUFiniNV"sv, check_errors);
 }
@@ -51,6 +54,16 @@ STATICINLINE void vdpau_get_surfaceiv(
     {
         GLW_FPTR_CHECK(VDPAUGetSurfaceivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glVDPAUGetSurfaceivNV,
+        surface,
+        pname,
+        gsl::span<char>(
+            reinterpret_cast<char*>(length.data()), length.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(values.data()), values.size_bytes()));
+#endif
     glVDPAUGetSurfaceivNV(
         surface,
         pname,
@@ -78,6 +91,16 @@ STATICINLINE void vdpau_init(
     {
         GLW_FPTR_CHECK(VDPAUInitNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glVDPAUInitNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(vdpDevice.data()),
+            vdpDevice.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(getProcAddress.data()),
+            getProcAddress.size_bytes()));
+#endif
     glVDPAUInitNV(
         vdpDevice.size() ? reinterpret_cast<const void*>(vdpDevice.data())
                          : nullptr,
@@ -100,6 +123,9 @@ STATICINLINE GLboolean vdpau_is_surface(
     {
         GLW_FPTR_CHECK(VDPAUIsSurfaceNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVDPAUIsSurfaceNV, surface);
+#endif
     auto out = glVDPAUIsSurfaceNV(surface);
     detail::error_check("VDPAUIsSurfaceNV"sv, check_errors);
     return out;
@@ -126,6 +152,13 @@ STATICINLINE void vdpau_map_surfaces(
     {
         GLW_FPTR_CHECK(VDPAUMapSurfacesNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVDPAUMapSurfacesNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(surfaces.data()),
+            surfaces.size_bytes()));
+#endif
     glVDPAUMapSurfacesNV(
         surfaces.size(),
         surfaces.size()
@@ -159,6 +192,17 @@ STATICINLINE GLvdpauSurfaceNV vdpau_register_output_surface(
     {
         GLW_FPTR_CHECK(VDPAURegisterOutputSurfaceNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glVDPAURegisterOutputSurfaceNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(vdpSurface.data()),
+            vdpSurface.size_bytes()),
+        target,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(textureNames.data()),
+            textureNames.size_bytes()));
+#endif
     auto out = glVDPAURegisterOutputSurfaceNV(
         vdpSurface.size() ? reinterpret_cast<const void*>(vdpSurface.data())
                           : nullptr,
@@ -196,6 +240,17 @@ STATICINLINE GLvdpauSurfaceNV vdpau_register_video_surface(
     {
         GLW_FPTR_CHECK(VDPAURegisterVideoSurfaceNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glVDPAURegisterVideoSurfaceNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(vdpSurface.data()),
+            vdpSurface.size_bytes()),
+        target,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(textureNames.data()),
+            textureNames.size_bytes()));
+#endif
     auto out = glVDPAURegisterVideoSurfaceNV(
         vdpSurface.size() ? reinterpret_cast<const void*>(vdpSurface.data())
                           : nullptr,
@@ -224,6 +279,9 @@ STATICINLINE void vdpau_surface_access(
     {
         GLW_FPTR_CHECK(VDPAUSurfaceAccessNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVDPAUSurfaceAccessNV, surface, access);
+#endif
     glVDPAUSurfaceAccessNV(surface, access);
     detail::error_check("VDPAUSurfaceAccessNV"sv, check_errors);
 }
@@ -249,6 +307,13 @@ STATICINLINE void vdpau_unmap_surfaces(
     {
         GLW_FPTR_CHECK(VDPAUUnmapSurfacesNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVDPAUUnmapSurfacesNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(surfaces.data()),
+            surfaces.size_bytes()));
+#endif
     glVDPAUUnmapSurfacesNV(
         surfaces.size(),
         surfaces.size()
@@ -270,6 +335,9 @@ STATICINLINE void vdpau_unregister_surface(
     {
         GLW_FPTR_CHECK(VDPAUUnregisterSurfaceNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVDPAUUnregisterSurfaceNV, surface);
+#endif
     glVDPAUUnregisterSurfaceNV(surface);
     detail::error_check("VDPAUUnregisterSurfaceNV"sv, check_errors);
 }

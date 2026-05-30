@@ -22,6 +22,9 @@ STATICINLINE void read_buffer(
     {
         GLW_FPTR_CHECK(ReadBufferNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glReadBufferNV, mode);
+#endif
     glReadBufferNV(mode);
     detail::error_check("ReadBufferNV"sv, check_errors);
 }

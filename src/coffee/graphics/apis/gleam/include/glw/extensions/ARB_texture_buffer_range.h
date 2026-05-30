@@ -38,6 +38,10 @@ STATICINLINE void tex_buffer_range(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexBufferRange, target, internalformat, buffer, offset, size);
+#endif
     glTexBufferRange(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),

@@ -109,6 +109,9 @@ STATICINLINE void bind_program(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindProgramARB, target, program);
+#endif
     glBindProgramARB(static_cast<GLenum>(target), program);
     detail::error_check("BindProgramARB"sv, check_errors);
 }
@@ -133,6 +136,13 @@ STATICINLINE void delete_programs(
     {
         GLW_FPTR_CHECK(DeleteProgramsARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteProgramsARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(programs.data()),
+            programs.size_bytes()));
+#endif
     glDeleteProgramsARB(
         programs.size(),
         programs.size() ? reinterpret_cast<const GLuint*>(programs.data())
@@ -159,6 +169,12 @@ STATICINLINE void gen_programs(
     {
         GLW_FPTR_CHECK(GenProgramsARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenProgramsARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(programs.data()), programs.size_bytes()));
+#endif
     glGenProgramsARB(
         programs.size(),
         programs.size() ? reinterpret_cast<GLuint*>(programs.data()) : nullptr);
@@ -188,6 +204,14 @@ STATICINLINE void get_program_env_parameter(
     {
         GLW_FPTR_CHECK(GetProgramEnvParameterdvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetProgramEnvParameterdvARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glGetProgramEnvParameterdvARB(
         static_cast<GLenum>(target),
         index,
@@ -218,6 +242,14 @@ STATICINLINE void get_program_env_parameter(
     {
         GLW_FPTR_CHECK(GetProgramEnvParameterfvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetProgramEnvParameterfvARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glGetProgramEnvParameterfvARB(
         static_cast<GLenum>(target),
         index,
@@ -248,6 +280,14 @@ STATICINLINE void get_program_local_parameter(
     {
         GLW_FPTR_CHECK(GetProgramLocalParameterdvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetProgramLocalParameterdvARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glGetProgramLocalParameterdvARB(
         static_cast<GLenum>(target),
         index,
@@ -278,6 +318,14 @@ STATICINLINE void get_program_local_parameter(
     {
         GLW_FPTR_CHECK(GetProgramLocalParameterfvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetProgramLocalParameterfvARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glGetProgramLocalParameterfvARB(
         static_cast<GLenum>(target),
         index,
@@ -305,6 +353,14 @@ STATICINLINE void get_program_string(
     {
         GLW_FPTR_CHECK(GetProgramStringARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetProgramStringARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(string.data()), string.size_bytes()),
+        target,
+        pname);
+#endif
     glGetProgramStringARB(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -330,6 +386,9 @@ STATICINLINE void get_programiv(
     {
         GLW_FPTR_CHECK(GetProgramivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetProgramivARB, target, pname, params);
+#endif
     glGetProgramivARB(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), &params);
     detail::error_check("GetProgramivARB"sv, check_errors);
@@ -353,6 +412,9 @@ is_program(u32 program, error_check check_errors = error_check::on)
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsProgramARB, program);
+#endif
     auto out = glIsProgramARB(program);
     detail::error_check("IsProgramARB"sv, check_errors);
     return out;
@@ -381,6 +443,9 @@ STATICINLINE void program_env_parameter4d(
     {
         GLW_FPTR_CHECK(ProgramEnvParameter4dARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramEnvParameter4dARB, target, index, x);
+#endif
     glProgramEnvParameter4dARB(
         static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramEnvParameter4dARB"sv, check_errors);
@@ -408,6 +473,14 @@ STATICINLINE void program_env_parameter4dv(
     {
         GLW_FPTR_CHECK(ProgramEnvParameter4dvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramEnvParameter4dvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glProgramEnvParameter4dvARB(
         static_cast<GLenum>(target),
         index,
@@ -438,6 +511,9 @@ STATICINLINE void program_env_parameter4f(
     {
         GLW_FPTR_CHECK(ProgramEnvParameter4fARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramEnvParameter4fARB, target, index, x);
+#endif
     glProgramEnvParameter4fARB(
         static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramEnvParameter4fARB"sv, check_errors);
@@ -465,6 +541,14 @@ STATICINLINE void program_env_parameter4fv(
     {
         GLW_FPTR_CHECK(ProgramEnvParameter4fvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramEnvParameter4fvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glProgramEnvParameter4fvARB(
         static_cast<GLenum>(target),
         index,
@@ -495,6 +579,9 @@ STATICINLINE void program_local_parameter4d(
     {
         GLW_FPTR_CHECK(ProgramLocalParameter4dARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramLocalParameter4dARB, target, index, x);
+#endif
     glProgramLocalParameter4dARB(
         static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramLocalParameter4dARB"sv, check_errors);
@@ -522,6 +609,14 @@ STATICINLINE void program_local_parameter4dv(
     {
         GLW_FPTR_CHECK(ProgramLocalParameter4dvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramLocalParameter4dvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glProgramLocalParameter4dvARB(
         static_cast<GLenum>(target),
         index,
@@ -552,6 +647,9 @@ STATICINLINE void program_local_parameter4f(
     {
         GLW_FPTR_CHECK(ProgramLocalParameter4fARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramLocalParameter4fARB, target, index, x);
+#endif
     glProgramLocalParameter4fARB(
         static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramLocalParameter4fARB"sv, check_errors);
@@ -579,6 +677,14 @@ STATICINLINE void program_local_parameter4fv(
     {
         GLW_FPTR_CHECK(ProgramLocalParameter4fvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramLocalParameter4fvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glProgramLocalParameter4fvARB(
         static_cast<GLenum>(target),
         index,
@@ -607,6 +713,14 @@ STATICINLINE void program_string(
     {
         GLW_FPTR_CHECK(ProgramStringARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramStringARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(string.data()), string.size_bytes()),
+        target,
+        format);
+#endif
     glProgramStringARB(
         static_cast<GLenum>(target),
         static_cast<GLenum>(format),

@@ -21,6 +21,9 @@ STATICINLINE void depth_bounds(
     {
         GLW_FPTR_CHECK(DepthBoundsEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDepthBoundsEXT, zmin, zmax);
+#endif
     glDepthBoundsEXT(zmin, zmax);
     detail::error_check("DepthBoundsEXT"sv, check_errors);
 }

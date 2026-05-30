@@ -25,6 +25,9 @@ STATICINLINE void polygon_offset(
     {
         GLW_FPTR_CHECK(PolygonOffsetEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPolygonOffsetEXT, factor, bias);
+#endif
     glPolygonOffsetEXT(factor, bias);
     detail::error_check("PolygonOffsetEXT"sv, check_errors);
 }

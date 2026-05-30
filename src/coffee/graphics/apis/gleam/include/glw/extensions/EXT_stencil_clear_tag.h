@@ -23,6 +23,9 @@ STATICINLINE void stencil_clear_tag(
     {
         GLW_FPTR_CHECK(StencilClearTagEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glStencilClearTagEXT, stencilTagBits, stencilClearTag);
+#endif
     glStencilClearTagEXT(stencilTagBits, stencilClearTag);
     detail::error_check("StencilClearTagEXT"sv, check_errors);
 }

@@ -17,6 +17,9 @@ STATICINLINE void begin_query(
     {
         GLW_FPTR_CHECK(BeginQuery)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBeginQuery, target, id);
+#endif
     glBeginQuery(static_cast<GLenum>(target), id);
     detail::error_check("BeginQuery"sv, check_errors);
 }
@@ -44,6 +47,9 @@ STATICINLINE void bind_buffer(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindBuffer, target, buffer);
+#endif
     glBindBuffer(static_cast<GLenum>(target), buffer);
     detail::error_check("BindBuffer"sv, check_errors);
 }
@@ -70,6 +76,14 @@ STATICINLINE void buffer_data(
     {
         GLW_FPTR_CHECK(BufferData)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glBufferData,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        target,
+        usage);
+#endif
     glBufferData(
         static_cast<GLenum>(target),
         data.size() *
@@ -101,6 +115,14 @@ STATICINLINE void buffer_sub_data(
     {
         GLW_FPTR_CHECK(BufferSubData)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glBufferSubData,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        target,
+        offset);
+#endif
     glBufferSubData(
         static_cast<GLenum>(target),
         offset,
@@ -130,6 +152,13 @@ STATICINLINE void delete_buffers(
     {
         GLW_FPTR_CHECK(DeleteBuffers)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteBuffers,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(buffers.data()),
+            buffers.size_bytes()));
+#endif
     glDeleteBuffers(
         buffers.size(),
         buffers.size() ? reinterpret_cast<const GLuint*>(buffers.data())
@@ -157,6 +186,12 @@ STATICINLINE void delete_queries(
     {
         GLW_FPTR_CHECK(DeleteQueries)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteQueries,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()));
+#endif
     glDeleteQueries(
         ids.size(),
         ids.size() ? reinterpret_cast<const GLuint*>(ids.data()) : nullptr);
@@ -178,6 +213,9 @@ STATICINLINE void end_query(
     {
         GLW_FPTR_CHECK(EndQuery)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEndQuery, target);
+#endif
     glEndQuery(static_cast<GLenum>(target));
     detail::error_check("EndQuery"sv, check_errors);
 }
@@ -202,6 +240,12 @@ STATICINLINE void gen_buffers(
     {
         GLW_FPTR_CHECK(GenBuffers)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenBuffers,
+        gsl::span<char>(
+            reinterpret_cast<char*>(buffers.data()), buffers.size_bytes()));
+#endif
     glGenBuffers(
         buffers.size(),
         buffers.size() ? reinterpret_cast<GLuint*>(buffers.data()) : nullptr);
@@ -228,6 +272,11 @@ STATICINLINE void gen_queries(
     {
         GLW_FPTR_CHECK(GenQueries)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenQueries,
+        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()));
+#endif
     glGenQueries(
         ids.size(),
         ids.size() ? reinterpret_cast<GLuint*>(ids.data()) : nullptr);
@@ -258,6 +307,14 @@ STATICINLINE void get_buffer_parameter(
     {
         GLW_FPTR_CHECK(GetBufferParameteriv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetBufferParameteriv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetBufferParameteriv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -285,6 +342,14 @@ STATICINLINE void get_buffer_pointerv(
     {
         GLW_FPTR_CHECK(GetBufferPointerv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetBufferPointerv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetBufferPointerv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -313,6 +378,14 @@ STATICINLINE void get_buffer_sub_data(
     {
         GLW_FPTR_CHECK(GetBufferSubData)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetBufferSubData,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        target,
+        offset);
+#endif
     glGetBufferSubData(
         static_cast<GLenum>(target),
         offset,
@@ -345,6 +418,14 @@ STATICINLINE void get_query_objectiv(
     {
         GLW_FPTR_CHECK(GetQueryObjectiv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetQueryObjectiv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        id,
+        pname);
+#endif
     glGetQueryObjectiv(
         id,
         static_cast<GLenum>(pname),
@@ -376,6 +457,14 @@ STATICINLINE void get_query_objectuiv(
     {
         GLW_FPTR_CHECK(GetQueryObjectuiv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetQueryObjectuiv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        id,
+        pname);
+#endif
     glGetQueryObjectuiv(
         id,
         static_cast<GLenum>(pname),
@@ -407,6 +496,14 @@ STATICINLINE void get_queryiv(
     {
         GLW_FPTR_CHECK(GetQueryiv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetQueryiv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetQueryiv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -434,6 +531,9 @@ is_buffer(u32 buffer, error_check check_errors = error_check::on)
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsBuffer, buffer);
+#endif
     auto out = glIsBuffer(buffer);
     detail::error_check("IsBuffer"sv, check_errors);
     return out;
@@ -454,6 +554,9 @@ is_query(u32 id, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(IsQuery)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsQuery, id);
+#endif
     auto out = glIsQuery(id);
     detail::error_check("IsQuery"sv, check_errors);
     return out;
@@ -477,6 +580,9 @@ STATICINLINE void* map_buffer(
     {
         GLW_FPTR_CHECK(MapBuffer)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMapBuffer, target, access);
+#endif
     auto out =
         glMapBuffer(static_cast<GLenum>(target), static_cast<GLenum>(access));
     detail::error_check("MapBuffer"sv, check_errors);
@@ -498,6 +604,9 @@ STATICINLINE GLboolean unmap_buffer(
     {
         GLW_FPTR_CHECK(UnmapBuffer)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUnmapBuffer, target);
+#endif
     auto out = glUnmapBuffer(static_cast<GLenum>(target));
     detail::error_check("UnmapBuffer"sv, check_errors);
     return out;

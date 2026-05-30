@@ -27,6 +27,9 @@ STATICINLINE void flush_pixel_data_range(
     {
         GLW_FPTR_CHECK(FlushPixelDataRangeNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFlushPixelDataRangeNV, target);
+#endif
     glFlushPixelDataRangeNV(static_cast<GLenum>(target));
     detail::error_check("FlushPixelDataRangeNV"sv, check_errors);
 }
@@ -50,6 +53,14 @@ STATICINLINE void pixel_data_range(
     {
         GLW_FPTR_CHECK(PixelDataRangeNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glPixelDataRangeNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pointer.data()),
+            pointer.size_bytes()),
+        target);
+#endif
     glPixelDataRangeNV(
         static_cast<GLenum>(target),
         pointer.size() *

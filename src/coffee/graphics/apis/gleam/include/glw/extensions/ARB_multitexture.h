@@ -55,6 +55,9 @@ STATICINLINE void active_texture(
     {
         GLW_FPTR_CHECK(ActiveTextureARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glActiveTextureARB, texture);
+#endif
     glActiveTextureARB(static_cast<GLenum>(texture));
     detail::error_check("ActiveTextureARB"sv, check_errors);
 }
@@ -72,6 +75,9 @@ STATICINLINE void client_active_texture(
     {
         GLW_FPTR_CHECK(ClientActiveTextureARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glClientActiveTextureARB, texture);
+#endif
     glClientActiveTextureARB(static_cast<GLenum>(texture));
     detail::error_check("ClientActiveTextureARB"sv, check_errors);
 }
@@ -92,6 +98,9 @@ STATICINLINE void multi_tex_coord1d(
     {
         GLW_FPTR_CHECK(MultiTexCoord1dARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord1dARB, target, s);
+#endif
     glMultiTexCoord1dARB(static_cast<GLenum>(target), s);
     detail::error_check("MultiTexCoord1dARB"sv, check_errors);
 }
@@ -118,6 +127,13 @@ STATICINLINE void multi_tex_coord1dv(
     {
         GLW_FPTR_CHECK(MultiTexCoord1dvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord1dvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord1dvARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLdouble*>(v.data()));
@@ -140,6 +156,9 @@ STATICINLINE void multi_tex_coord1f(
     {
         GLW_FPTR_CHECK(MultiTexCoord1fARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord1fARB, target, s);
+#endif
     glMultiTexCoord1fARB(static_cast<GLenum>(target), s);
     detail::error_check("MultiTexCoord1fARB"sv, check_errors);
 }
@@ -166,6 +185,13 @@ STATICINLINE void multi_tex_coord1fv(
     {
         GLW_FPTR_CHECK(MultiTexCoord1fvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord1fvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord1fvARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLfloat*>(v.data()));
@@ -188,6 +214,9 @@ STATICINLINE void multi_tex_coord1i(
     {
         GLW_FPTR_CHECK(MultiTexCoord1iARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord1iARB, target, s);
+#endif
     glMultiTexCoord1iARB(static_cast<GLenum>(target), s);
     detail::error_check("MultiTexCoord1iARB"sv, check_errors);
 }
@@ -214,6 +243,13 @@ STATICINLINE void multi_tex_coord1iv(
     {
         GLW_FPTR_CHECK(MultiTexCoord1ivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord1ivARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord1ivARB(
         static_cast<GLenum>(target), reinterpret_cast<const GLint*>(v.data()));
     detail::error_check("MultiTexCoord1ivARB"sv, check_errors);
@@ -235,6 +271,9 @@ STATICINLINE void multi_tex_coord1s(
     {
         GLW_FPTR_CHECK(MultiTexCoord1sARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord1sARB, target, s);
+#endif
     glMultiTexCoord1sARB(static_cast<GLenum>(target), s);
     detail::error_check("MultiTexCoord1sARB"sv, check_errors);
 }
@@ -261,6 +300,13 @@ STATICINLINE void multi_tex_coord1sv(
     {
         GLW_FPTR_CHECK(MultiTexCoord1svARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord1svARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord1svARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLshort*>(v.data()));
@@ -285,6 +331,9 @@ STATICINLINE void multi_tex_coord2d(
     {
         GLW_FPTR_CHECK(MultiTexCoord2dARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord2dARB, target, s, t);
+#endif
     glMultiTexCoord2dARB(static_cast<GLenum>(target), s, t);
     detail::error_check("MultiTexCoord2dARB"sv, check_errors);
 }
@@ -309,6 +358,13 @@ STATICINLINE void multi_tex_coord2dv(
     {
         GLW_FPTR_CHECK(MultiTexCoord2dvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord2dvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord2dvARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLdouble*>(v.data()));
@@ -333,6 +389,9 @@ STATICINLINE void multi_tex_coord2f(
     {
         GLW_FPTR_CHECK(MultiTexCoord2fARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord2fARB, target, s, t);
+#endif
     glMultiTexCoord2fARB(static_cast<GLenum>(target), s, t);
     detail::error_check("MultiTexCoord2fARB"sv, check_errors);
 }
@@ -357,6 +416,13 @@ STATICINLINE void multi_tex_coord2fv(
     {
         GLW_FPTR_CHECK(MultiTexCoord2fvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord2fvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord2fvARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLfloat*>(v.data()));
@@ -381,6 +447,9 @@ STATICINLINE void multi_tex_coord2i(
     {
         GLW_FPTR_CHECK(MultiTexCoord2iARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord2iARB, target, s, t);
+#endif
     glMultiTexCoord2iARB(static_cast<GLenum>(target), s, t);
     detail::error_check("MultiTexCoord2iARB"sv, check_errors);
 }
@@ -405,6 +474,13 @@ STATICINLINE void multi_tex_coord2iv(
     {
         GLW_FPTR_CHECK(MultiTexCoord2ivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord2ivARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord2ivARB(
         static_cast<GLenum>(target), reinterpret_cast<const GLint*>(v.data()));
     detail::error_check("MultiTexCoord2ivARB"sv, check_errors);
@@ -428,6 +504,9 @@ STATICINLINE void multi_tex_coord2s(
     {
         GLW_FPTR_CHECK(MultiTexCoord2sARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord2sARB, target, s, t);
+#endif
     glMultiTexCoord2sARB(static_cast<GLenum>(target), s, t);
     detail::error_check("MultiTexCoord2sARB"sv, check_errors);
 }
@@ -452,6 +531,13 @@ STATICINLINE void multi_tex_coord2sv(
     {
         GLW_FPTR_CHECK(MultiTexCoord2svARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord2svARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord2svARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLshort*>(v.data()));
@@ -478,6 +564,9 @@ STATICINLINE void multi_tex_coord3d(
     {
         GLW_FPTR_CHECK(MultiTexCoord3dARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord3dARB, target, s, t, r);
+#endif
     glMultiTexCoord3dARB(static_cast<GLenum>(target), s, t, r);
     detail::error_check("MultiTexCoord3dARB"sv, check_errors);
 }
@@ -502,6 +591,13 @@ STATICINLINE void multi_tex_coord3dv(
     {
         GLW_FPTR_CHECK(MultiTexCoord3dvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord3dvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord3dvARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLdouble*>(v.data()));
@@ -528,6 +624,9 @@ STATICINLINE void multi_tex_coord3f(
     {
         GLW_FPTR_CHECK(MultiTexCoord3fARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord3fARB, target, s, t, r);
+#endif
     glMultiTexCoord3fARB(static_cast<GLenum>(target), s, t, r);
     detail::error_check("MultiTexCoord3fARB"sv, check_errors);
 }
@@ -552,6 +651,13 @@ STATICINLINE void multi_tex_coord3fv(
     {
         GLW_FPTR_CHECK(MultiTexCoord3fvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord3fvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord3fvARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLfloat*>(v.data()));
@@ -578,6 +684,9 @@ STATICINLINE void multi_tex_coord3i(
     {
         GLW_FPTR_CHECK(MultiTexCoord3iARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord3iARB, target, s, t, r);
+#endif
     glMultiTexCoord3iARB(static_cast<GLenum>(target), s, t, r);
     detail::error_check("MultiTexCoord3iARB"sv, check_errors);
 }
@@ -602,6 +711,13 @@ STATICINLINE void multi_tex_coord3iv(
     {
         GLW_FPTR_CHECK(MultiTexCoord3ivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord3ivARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord3ivARB(
         static_cast<GLenum>(target), reinterpret_cast<const GLint*>(v.data()));
     detail::error_check("MultiTexCoord3ivARB"sv, check_errors);
@@ -627,6 +743,9 @@ STATICINLINE void multi_tex_coord3s(
     {
         GLW_FPTR_CHECK(MultiTexCoord3sARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord3sARB, target, s, t, r);
+#endif
     glMultiTexCoord3sARB(static_cast<GLenum>(target), s, t, r);
     detail::error_check("MultiTexCoord3sARB"sv, check_errors);
 }
@@ -651,6 +770,13 @@ STATICINLINE void multi_tex_coord3sv(
     {
         GLW_FPTR_CHECK(MultiTexCoord3svARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord3svARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord3svARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLshort*>(v.data()));
@@ -679,6 +805,9 @@ STATICINLINE void multi_tex_coord4d(
     {
         GLW_FPTR_CHECK(MultiTexCoord4dARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord4dARB, target, s, t, r, q);
+#endif
     glMultiTexCoord4dARB(static_cast<GLenum>(target), s, t, r, q);
     detail::error_check("MultiTexCoord4dARB"sv, check_errors);
 }
@@ -703,6 +832,13 @@ STATICINLINE void multi_tex_coord4dv(
     {
         GLW_FPTR_CHECK(MultiTexCoord4dvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord4dvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord4dvARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLdouble*>(v.data()));
@@ -731,6 +867,9 @@ STATICINLINE void multi_tex_coord4f(
     {
         GLW_FPTR_CHECK(MultiTexCoord4fARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord4fARB, target, s, t, r, q);
+#endif
     glMultiTexCoord4fARB(static_cast<GLenum>(target), s, t, r, q);
     detail::error_check("MultiTexCoord4fARB"sv, check_errors);
 }
@@ -755,6 +894,13 @@ STATICINLINE void multi_tex_coord4fv(
     {
         GLW_FPTR_CHECK(MultiTexCoord4fvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord4fvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord4fvARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLfloat*>(v.data()));
@@ -783,6 +929,9 @@ STATICINLINE void multi_tex_coord4i(
     {
         GLW_FPTR_CHECK(MultiTexCoord4iARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord4iARB, target, s, t, r, q);
+#endif
     glMultiTexCoord4iARB(static_cast<GLenum>(target), s, t, r, q);
     detail::error_check("MultiTexCoord4iARB"sv, check_errors);
 }
@@ -807,6 +956,13 @@ STATICINLINE void multi_tex_coord4iv(
     {
         GLW_FPTR_CHECK(MultiTexCoord4ivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord4ivARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord4ivARB(
         static_cast<GLenum>(target), reinterpret_cast<const GLint*>(v.data()));
     detail::error_check("MultiTexCoord4ivARB"sv, check_errors);
@@ -834,6 +990,9 @@ STATICINLINE void multi_tex_coord4s(
     {
         GLW_FPTR_CHECK(MultiTexCoord4sARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord4sARB, target, s, t, r, q);
+#endif
     glMultiTexCoord4sARB(static_cast<GLenum>(target), s, t, r, q);
     detail::error_check("MultiTexCoord4sARB"sv, check_errors);
 }
@@ -858,6 +1017,13 @@ STATICINLINE void multi_tex_coord4sv(
     {
         GLW_FPTR_CHECK(MultiTexCoord4svARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord4svARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord4svARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLshort*>(v.data()));

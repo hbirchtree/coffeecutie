@@ -38,6 +38,9 @@ STATICINLINE void bind_vertex_buffer(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindVertexBuffer, bindingindex, buffer, offset, stride);
+#endif
     glBindVertexBuffer(bindingindex, buffer, offset, stride);
     detail::error_check("BindVertexBuffer"sv, check_errors);
 }
@@ -58,6 +61,9 @@ STATICINLINE void vertex_attrib_binding(
     {
         GLW_FPTR_CHECK(VertexAttribBinding)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribBinding, attribindex, bindingindex);
+#endif
     glVertexAttribBinding(attribindex, bindingindex);
     detail::error_check("VertexAttribBinding"sv, check_errors);
 }
@@ -84,6 +90,15 @@ STATICINLINE void vertex_attrib_format(
     {
         GLW_FPTR_CHECK(VertexAttribFormat)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glVertexAttribFormat,
+        attribindex,
+        size,
+        type,
+        normalized,
+        relativeoffset);
+#endif
     glVertexAttribFormat(
         attribindex,
         size,
@@ -113,6 +128,10 @@ STATICINLINE void vertex_attrib_i_format(
     {
         GLW_FPTR_CHECK(VertexAttribIFormat)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glVertexAttribIFormat, attribindex, size, type, relativeoffset);
+#endif
     glVertexAttribIFormat(
         attribindex, size, static_cast<GLenum>(type), relativeoffset);
     detail::error_check("VertexAttribIFormat"sv, check_errors);
@@ -138,6 +157,10 @@ STATICINLINE void vertex_attrib_l_format(
     {
         GLW_FPTR_CHECK(VertexAttribLFormat)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glVertexAttribLFormat, attribindex, size, type, relativeoffset);
+#endif
     glVertexAttribLFormat(
         attribindex, size, static_cast<GLenum>(type), relativeoffset);
     detail::error_check("VertexAttribLFormat"sv, check_errors);
@@ -157,6 +180,9 @@ STATICINLINE void vertex_binding_divisor(
     {
         GLW_FPTR_CHECK(VertexBindingDivisor)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexBindingDivisor, bindingindex, divisor);
+#endif
     glVertexBindingDivisor(bindingindex, divisor);
     detail::error_check("VertexBindingDivisor"sv, check_errors);
 }

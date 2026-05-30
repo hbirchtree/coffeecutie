@@ -39,6 +39,14 @@ STATICINLINE void depth_range_arrayfv(
     {
         GLW_FPTR_CHECK(DepthRangeArrayfvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDepthRangeArrayfvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        first,
+        count);
+#endif
     glDepthRangeArrayfvNV(
         first,
         count,
@@ -61,6 +69,9 @@ STATICINLINE void depth_range_indexedf(
     {
         GLW_FPTR_CHECK(DepthRangeIndexedfNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDepthRangeIndexedfNV, index, n, f);
+#endif
     glDepthRangeIndexedfNV(index, n, f);
     detail::error_check("DepthRangeIndexedfNV"sv, check_errors);
 }
@@ -81,6 +92,9 @@ STATICINLINE void disablei(
     {
         GLW_FPTR_CHECK(DisableiNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDisableiNV, target, index);
+#endif
     glDisableiNV(static_cast<GLenum>(target), index);
     detail::error_check("DisableiNV"sv, check_errors);
 }
@@ -101,6 +115,9 @@ STATICINLINE void enablei(
     {
         GLW_FPTR_CHECK(EnableiNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEnableiNV, target, index);
+#endif
     glEnableiNV(static_cast<GLenum>(target), index);
     detail::error_check("EnableiNV"sv, check_errors);
 }
@@ -128,6 +145,14 @@ STATICINLINE void get_floati_v(
     {
         GLW_FPTR_CHECK(GetFloati_vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetFloati_vNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        target,
+        index);
+#endif
     glGetFloati_vNV(
         static_cast<GLenum>(target),
         index,
@@ -151,6 +176,9 @@ STATICINLINE GLboolean is_enabledi(
     {
         GLW_FPTR_CHECK(IsEnablediNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsEnablediNV, target, index);
+#endif
     auto out = glIsEnablediNV(static_cast<GLenum>(target), index);
     detail::error_check("IsEnablediNV"sv, check_errors);
     return out;
@@ -180,6 +208,14 @@ STATICINLINE void scissor_arrayv(
     {
         GLW_FPTR_CHECK(ScissorArrayvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glScissorArrayvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        first,
+        count);
+#endif
     glScissorArrayvNV(
         first,
         count,
@@ -210,6 +246,9 @@ STATICINLINE void scissor_indexed(
     {
         GLW_FPTR_CHECK(ScissorIndexedNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glScissorIndexedNV, index, left, bottom, width);
+#endif
     glScissorIndexedNV(index, left, bottom, width[0], width[1]);
     detail::error_check("ScissorIndexedNV"sv, check_errors);
 }
@@ -236,6 +275,13 @@ STATICINLINE void scissor_indexedv(
     {
         GLW_FPTR_CHECK(ScissorIndexedvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glScissorIndexedvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glScissorIndexedvNV(
         index, v.size() ? reinterpret_cast<const GLint*>(v.data()) : nullptr);
     detail::error_check("ScissorIndexedvNV"sv, check_errors);
@@ -265,6 +311,14 @@ STATICINLINE void viewport_arrayv(
     {
         GLW_FPTR_CHECK(ViewportArrayvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glViewportArrayvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        first,
+        count);
+#endif
     glViewportArrayvNV(
         first,
         count,
@@ -295,6 +349,9 @@ STATICINLINE void viewport_indexedf(
     {
         GLW_FPTR_CHECK(ViewportIndexedfNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glViewportIndexedfNV, index, x, w);
+#endif
     glViewportIndexedfNV(index, x[0], x[1], w[0], w[1]);
     detail::error_check("ViewportIndexedfNV"sv, check_errors);
 }
@@ -321,6 +378,13 @@ STATICINLINE void viewport_indexedfv(
     {
         GLW_FPTR_CHECK(ViewportIndexedfvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glViewportIndexedfvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glViewportIndexedfvNV(
         index, v.size() ? reinterpret_cast<const GLfloat*>(v.data()) : nullptr);
     detail::error_check("ViewportIndexedfvNV"sv, check_errors);

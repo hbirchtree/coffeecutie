@@ -38,6 +38,13 @@ STATICINLINE void debug_message_callback(
     {
         GLW_FPTR_CHECK(DebugMessageCallbackAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDebugMessageCallbackAMD,
+        gsl::span<char>(
+            reinterpret_cast<char*>(userParam.data()), userParam.size_bytes()),
+        callback);
+#endif
     glDebugMessageCallbackAMD(
         callback,
         userParam.size() ? reinterpret_cast<void*>(userParam.data()) : nullptr);
@@ -71,6 +78,15 @@ STATICINLINE void debug_message_enable(
     {
         GLW_FPTR_CHECK(DebugMessageEnableAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDebugMessageEnableAMD,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()),
+        category,
+        severity,
+        enabled);
+#endif
     glDebugMessageEnableAMD(
         category,
         static_cast<GLenum>(severity),
@@ -101,6 +117,9 @@ STATICINLINE void debug_message_insert(
     {
         GLW_FPTR_CHECK(DebugMessageInsertAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDebugMessageInsertAMD, category, severity, id, buf);
+#endif
     glDebugMessageInsertAMD(
         category, static_cast<GLenum>(severity), id, buf.size(), buf.data());
     detail::error_check("DebugMessageInsertAMD"sv, check_errors);
@@ -157,6 +176,21 @@ STATICINLINE GLuint get_debug_message_log(
     {
         GLW_FPTR_CHECK(GetDebugMessageLogAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetDebugMessageLogAMD,
+        gsl::span<char>(
+            reinterpret_cast<char*>(categories.data()),
+            categories.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(severities.data()),
+            severities.size_bytes()),
+        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(lengths.data()), lengths.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(message.data()), message.size_bytes()));
+#endif
     auto out = glGetDebugMessageLogAMD(
         categories.size(),
         message.size(),

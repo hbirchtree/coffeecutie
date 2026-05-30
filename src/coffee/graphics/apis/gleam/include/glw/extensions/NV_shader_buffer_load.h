@@ -32,6 +32,14 @@ STATICINLINE void get_buffer_parameterui64v(
     {
         GLW_FPTR_CHECK(GetBufferParameterui64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetBufferParameterui64vNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetBufferParameterui64vNV(
         static_cast<GLenum>(target),
         pname,
@@ -62,6 +70,13 @@ STATICINLINE void get_integerui64v(
     {
         GLW_FPTR_CHECK(GetIntegerui64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetIntegerui64vNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(result.data()), result.size_bytes()),
+        value);
+#endif
     glGetIntegerui64vNV(
         value,
         result.size() ? reinterpret_cast<GLuint64EXT*>(result.data())
@@ -98,6 +113,14 @@ STATICINLINE void get_named_buffer_parameterui64v(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetNamedBufferParameterui64vNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        buffer,
+        pname);
+#endif
     glGetNamedBufferParameterui64vNV(
         buffer,
         static_cast<GLenum>(pname),
@@ -135,6 +158,14 @@ STATICINLINE void get_uniformui64v(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetUniformui64vNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        program,
+        location);
+#endif
     glGetUniformui64vNV(
         program,
         location,
@@ -156,6 +187,9 @@ is_buffer_resident(GLenum target, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(IsBufferResidentNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsBufferResidentNV, target);
+#endif
     auto out = glIsBufferResidentNV(target);
     detail::error_check("IsBufferResidentNV"sv, check_errors);
     return out;
@@ -179,6 +213,9 @@ is_named_buffer_resident(u32 buffer, error_check check_errors = error_check::on)
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsNamedBufferResidentNV, buffer);
+#endif
     auto out = glIsNamedBufferResidentNV(buffer);
     detail::error_check("IsNamedBufferResidentNV"sv, check_errors);
     return out;
@@ -197,6 +234,9 @@ STATICINLINE void make_buffer_non_resident(
     {
         GLW_FPTR_CHECK(MakeBufferNonResidentNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMakeBufferNonResidentNV, target);
+#endif
     glMakeBufferNonResidentNV(target);
     detail::error_check("MakeBufferNonResidentNV"sv, check_errors);
 }
@@ -215,6 +255,9 @@ STATICINLINE void make_buffer_resident(
     {
         GLW_FPTR_CHECK(MakeBufferResidentNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMakeBufferResidentNV, target, access);
+#endif
     glMakeBufferResidentNV(target, access);
     detail::error_check("MakeBufferResidentNV"sv, check_errors);
 }
@@ -237,6 +280,9 @@ STATICINLINE void make_named_buffer_non_resident(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMakeNamedBufferNonResidentNV, buffer);
+#endif
     glMakeNamedBufferNonResidentNV(buffer);
     detail::error_check("MakeNamedBufferNonResidentNV"sv, check_errors);
 }
@@ -260,6 +306,9 @@ STATICINLINE void make_named_buffer_resident(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMakeNamedBufferResidentNV, buffer, access);
+#endif
     glMakeNamedBufferResidentNV(buffer, access);
     detail::error_check("MakeNamedBufferResidentNV"sv, check_errors);
 }
@@ -287,6 +336,9 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniformui64NV, program, location, value);
+#endif
     glProgramUniformui64NV(program, location, value);
     detail::error_check("ProgramUniformui64NV"sv, check_errors);
 }
@@ -321,6 +373,14 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniformui64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniformui64vNV(
         program,
         location,
@@ -344,6 +404,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniformui64NV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniformui64NV, location, value);
+#endif
     glUniformui64NV(location, value);
     detail::error_check("Uniformui64NV"sv, check_errors);
 }
@@ -372,6 +435,14 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniformui64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniformui64vNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location,
+        count);
+#endif
     glUniformui64vNV(
         location,
         count,

@@ -25,6 +25,9 @@ STATICINLINE void clip_control(
     {
         GLW_FPTR_CHECK(ClipControlEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glClipControlEXT, origin, depth);
+#endif
     glClipControlEXT(origin, depth);
     detail::error_check("ClipControlEXT"sv, check_errors);
 }

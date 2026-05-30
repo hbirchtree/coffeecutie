@@ -39,6 +39,15 @@ STATICINLINE void framebuffer_sample_locationsfv(
     {
         GLW_FPTR_CHECK(FramebufferSampleLocationsfvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glFramebufferSampleLocationsfvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target,
+        start,
+        count);
+#endif
     glFramebufferSampleLocationsfvNV(
         static_cast<GLenum>(target),
         start,
@@ -78,6 +87,15 @@ STATICINLINE void named_framebuffer_sample_locationsfv(
             glIsFramebuffer(framebuffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glNamedFramebufferSampleLocationsfvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        framebuffer,
+        start,
+        count);
+#endif
     glNamedFramebufferSampleLocationsfvNV(
         framebuffer,
         start,
@@ -99,6 +117,9 @@ STATICINLINE void resolve_depth_values(
     {
         GLW_FPTR_CHECK(ResolveDepthValuesNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glResolveDepthValuesNV);
+#endif
     glResolveDepthValuesNV();
     detail::error_check("ResolveDepthValuesNV"sv, check_errors);
 }

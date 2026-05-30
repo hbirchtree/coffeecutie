@@ -39,6 +39,14 @@ STATICINLINE void get_pixel_transform_parameter(
     {
         GLW_FPTR_CHECK(GetPixelTransformParameterfvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetPixelTransformParameterfvEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetPixelTransformParameterfvEXT(
         target,
         pname,
@@ -69,6 +77,14 @@ STATICINLINE void get_pixel_transform_parameter(
     {
         GLW_FPTR_CHECK(GetPixelTransformParameterivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetPixelTransformParameterivEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetPixelTransformParameterivEXT(
         target,
         pname,
@@ -94,6 +110,9 @@ STATICINLINE void pixel_transform_parameter(
     {
         GLW_FPTR_CHECK(PixelTransformParameterfEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPixelTransformParameterfEXT, target, pname, param);
+#endif
     glPixelTransformParameterfEXT(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), param);
     detail::error_check("PixelTransformParameterfEXT"sv, check_errors);
@@ -123,6 +142,14 @@ STATICINLINE void pixel_transform_parameter(
     {
         GLW_FPTR_CHECK(PixelTransformParameterfvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glPixelTransformParameterfvEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glPixelTransformParameterfvEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -149,6 +176,9 @@ STATICINLINE void pixel_transform_parameter(
     {
         GLW_FPTR_CHECK(PixelTransformParameteriEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPixelTransformParameteriEXT, target, pname, param);
+#endif
     glPixelTransformParameteriEXT(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), param);
     detail::error_check("PixelTransformParameteriEXT"sv, check_errors);
@@ -178,6 +208,14 @@ STATICINLINE void pixel_transform_parameter(
     {
         GLW_FPTR_CHECK(PixelTransformParameterivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glPixelTransformParameterivEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glPixelTransformParameterivEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),

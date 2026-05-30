@@ -28,6 +28,9 @@ STATICINLINE void current_palette_matrix(
     {
         GLW_FPTR_CHECK(CurrentPaletteMatrixARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCurrentPaletteMatrixARB, index);
+#endif
     glCurrentPaletteMatrixARB(index);
     detail::error_check("CurrentPaletteMatrixARB"sv, check_errors);
 }
@@ -54,6 +57,16 @@ STATICINLINE void matrix_index_pointer(
     {
         GLW_FPTR_CHECK(MatrixIndexPointerARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMatrixIndexPointerARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pointer.data()),
+            pointer.size_bytes()),
+        size,
+        type,
+        stride);
+#endif
     glMatrixIndexPointerARB(
         size,
         static_cast<GLenum>(type),
@@ -83,6 +96,13 @@ STATICINLINE void matrix_indexubv(
     {
         GLW_FPTR_CHECK(MatrixIndexubvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMatrixIndexubvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(indices.data()),
+            indices.size_bytes()));
+#endif
     glMatrixIndexubvARB(
         indices.size(),
         indices.size() ? reinterpret_cast<const GLubyte*>(indices.data())
@@ -110,6 +130,13 @@ STATICINLINE void matrix_indexuiv(
     {
         GLW_FPTR_CHECK(MatrixIndexuivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMatrixIndexuivARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(indices.data()),
+            indices.size_bytes()));
+#endif
     glMatrixIndexuivARB(
         indices.size(),
         indices.size() ? reinterpret_cast<const GLuint*>(indices.data())
@@ -137,6 +164,13 @@ STATICINLINE void matrix_indexusv(
     {
         GLW_FPTR_CHECK(MatrixIndexusvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMatrixIndexusvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(indices.data()),
+            indices.size_bytes()));
+#endif
     glMatrixIndexusvARB(
         indices.size(),
         indices.size() ? reinterpret_cast<const GLushort*>(indices.data())

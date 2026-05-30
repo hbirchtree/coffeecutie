@@ -20,6 +20,9 @@ STATICINLINE void primitive_restart_index(
     {
         GLW_FPTR_CHECK(PrimitiveRestartIndexNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPrimitiveRestartIndexNV, index);
+#endif
     glPrimitiveRestartIndexNV(index);
     detail::error_check("PrimitiveRestartIndexNV"sv, check_errors);
 }
@@ -36,6 +39,9 @@ STATICINLINE void primitive_restart(error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(PrimitiveRestartNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPrimitiveRestartNV);
+#endif
     glPrimitiveRestartNV();
     detail::error_check("PrimitiveRestartNV"sv, check_errors);
 }

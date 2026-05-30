@@ -27,6 +27,9 @@ STATICINLINE void raster_samples(
     {
         GLW_FPTR_CHECK(RasterSamplesEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glRasterSamplesEXT, samples, fixedsamplelocations);
+#endif
     glRasterSamplesEXT(samples, fixedsamplelocations);
     detail::error_check("RasterSamplesEXT"sv, check_errors);
 }

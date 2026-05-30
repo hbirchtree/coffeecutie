@@ -26,6 +26,9 @@ STATICINLINE void shading_rate(
     {
         GLW_FPTR_CHECK(ShadingRateQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glShadingRateQCOM, rate);
+#endif
     glShadingRateQCOM(static_cast<GLenum>(rate));
     detail::error_check("ShadingRateQCOM"sv, check_errors);
 }

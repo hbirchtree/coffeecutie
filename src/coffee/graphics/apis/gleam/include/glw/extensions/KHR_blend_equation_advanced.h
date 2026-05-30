@@ -32,6 +32,9 @@ STATICINLINE void blend_barrier(error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(BlendBarrierKHR)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendBarrierKHR);
+#endif
     glBlendBarrierKHR();
     detail::error_check("BlendBarrierKHR"sv, check_errors);
 }

@@ -32,6 +32,9 @@ STATICINLINE void coverage_modulation(
     {
         GLW_FPTR_CHECK(CoverageModulationNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCoverageModulationNV, components);
+#endif
     glCoverageModulationNV(components);
     detail::error_check("CoverageModulationNV"sv, check_errors);
 }
@@ -56,6 +59,12 @@ STATICINLINE void coverage_modulation_table(
     {
         GLW_FPTR_CHECK(CoverageModulationTableNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCoverageModulationTableNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+#endif
     glCoverageModulationTableNV(
         v.size(),
         v.size() ? reinterpret_cast<const GLfloat*>(v.data()) : nullptr);
@@ -81,6 +90,12 @@ STATICINLINE void get_coverage_modulation_table(
     {
         GLW_FPTR_CHECK(GetCoverageModulationTableNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetCoverageModulationTableNV,
+        gsl::span<char>(reinterpret_cast<char*>(v.data()), v.size_bytes()),
+        bufSize);
+#endif
     glGetCoverageModulationTableNV(
         bufSize, v.size() ? reinterpret_cast<GLfloat*>(v.data()) : nullptr);
     detail::error_check("GetCoverageModulationTableNV"sv, check_errors);
@@ -102,6 +117,9 @@ STATICINLINE void raster_samples_ext(
     {
         GLW_FPTR_CHECK(RasterSamplesEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glRasterSamplesEXT, samples, fixedsamplelocations);
+#endif
     glRasterSamplesEXT(samples, fixedsamplelocations);
     detail::error_check("RasterSamplesEXT"sv, check_errors);
 }

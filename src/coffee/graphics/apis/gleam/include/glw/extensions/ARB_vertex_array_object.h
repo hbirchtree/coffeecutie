@@ -27,6 +27,9 @@ STATICINLINE void bind_vertex_array(
             glIsVertexArray(array);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindVertexArray, array);
+#endif
     glBindVertexArray(array);
     detail::error_check("BindVertexArray"sv, check_errors);
 }
@@ -51,6 +54,12 @@ STATICINLINE void delete_vertex_arrays(
     {
         GLW_FPTR_CHECK(DeleteVertexArrays)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteVertexArrays,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(arrays.data()), arrays.size_bytes()));
+#endif
     glDeleteVertexArrays(
         arrays.size(),
         arrays.size() ? reinterpret_cast<const GLuint*>(arrays.data())
@@ -77,6 +86,12 @@ STATICINLINE void gen_vertex_arrays(
     {
         GLW_FPTR_CHECK(GenVertexArrays)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenVertexArrays,
+        gsl::span<char>(
+            reinterpret_cast<char*>(arrays.data()), arrays.size_bytes()));
+#endif
     glGenVertexArrays(
         arrays.size(),
         arrays.size() ? reinterpret_cast<GLuint*>(arrays.data()) : nullptr);
@@ -101,6 +116,9 @@ is_vertex_array(u32 array, error_check check_errors = error_check::on)
             glIsVertexArray(array);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsVertexArray, array);
+#endif
     auto out = glIsVertexArray(array);
     detail::error_check("IsVertexArray"sv, check_errors);
     return out;

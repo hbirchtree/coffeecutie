@@ -48,6 +48,9 @@ STATICINLINE void bind_buffer_base(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindBufferBase, target, index, buffer);
+#endif
     glBindBufferBase(static_cast<GLenum>(target), index, buffer);
     detail::error_check("BindBufferBase"sv, check_errors);
 }
@@ -79,6 +82,9 @@ STATICINLINE void bind_buffer_range(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindBufferRange, target, index, buffer, offset, size);
+#endif
     glBindBufferRange(static_cast<GLenum>(target), index, buffer, offset, size);
     detail::error_check("BindBufferRange"sv, check_errors);
 }
@@ -115,6 +121,16 @@ STATICINLINE void get_active_uniform_block_name(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetActiveUniformBlockName,
+        gsl::span<char>(
+            reinterpret_cast<char*>(uniformBlockName.data()),
+            uniformBlockName.size_bytes()),
+        program,
+        uniformBlockIndex,
+        length);
+#endif
     glGetActiveUniformBlockName(
         program,
         uniformBlockIndex,
@@ -154,6 +170,15 @@ STATICINLINE void get_active_uniform_blockiv(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetActiveUniformBlockiv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        program,
+        uniformBlockIndex,
+        pname);
+#endif
     glGetActiveUniformBlockiv(
         program,
         uniformBlockIndex,
@@ -194,6 +219,16 @@ STATICINLINE void get_active_uniform_name(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetActiveUniformName,
+        gsl::span<char>(
+            reinterpret_cast<char*>(uniformName.data()),
+            uniformName.size_bytes()),
+        program,
+        uniformIndex,
+        length);
+#endif
     glGetActiveUniformName(
         program, uniformIndex, uniformName.size(), &length, uniformName.data());
     detail::error_check("GetActiveUniformName"sv, check_errors);
@@ -235,6 +270,17 @@ STATICINLINE void get_active_uniformsiv(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetActiveUniformsiv,
+        program,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(uniformIndices.data()),
+            uniformIndices.size_bytes()),
+        pname,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()));
+#endif
     glGetActiveUniformsiv(
         program,
         uniformIndices.size(),
@@ -269,6 +315,14 @@ STATICINLINE void get_integeri_v(
     {
         GLW_FPTR_CHECK(GetIntegeri_v)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetIntegeri_v,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        target,
+        index);
+#endif
     glGetIntegeri_v(
         static_cast<GLenum>(target),
         index,
@@ -297,6 +351,9 @@ STATICINLINE GLuint get_uniform_block_index(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetUniformBlockIndex, program, uniformBlockName);
+#endif
     auto out = glGetUniformBlockIndex(program, uniformBlockName.data());
     detail::error_check("GetUniformBlockIndex"sv, check_errors);
     return out;
@@ -334,6 +391,16 @@ STATICINLINE void get_uniform_indices(
     }
     auto [uniformNames_lens, uniformNames_cstr, uniformNames_store] =
         detail::transform_strings(uniformNames);
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetUniformIndices,
+        gsl::span<char>(
+            reinterpret_cast<char*>(uniformIndices.data()),
+            uniformIndices.size_bytes()),
+        program,
+        uniformCount,
+        uniformNames);
+#endif
     glGetUniformIndices(
         program,
         uniformCount,
@@ -366,6 +433,10 @@ STATICINLINE void uniform_block_binding(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glUniformBlockBinding, program, uniformBlockIndex, uniformBlockBinding);
+#endif
     glUniformBlockBinding(program, uniformBlockIndex, uniformBlockBinding);
     detail::error_check("UniformBlockBinding"sv, check_errors);
 }

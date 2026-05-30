@@ -34,6 +34,9 @@ STATICINLINE void begin_transform_feedback(
     {
         GLW_FPTR_CHECK(BeginTransformFeedbackEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBeginTransformFeedbackEXT, primitiveMode);
+#endif
     glBeginTransformFeedbackEXT(static_cast<GLenum>(primitiveMode));
     detail::error_check("BeginTransformFeedbackEXT"sv, check_errors);
 }
@@ -61,6 +64,9 @@ STATICINLINE void bind_buffer_base(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindBufferBaseEXT, target, index, buffer);
+#endif
     glBindBufferBaseEXT(static_cast<GLenum>(target), index, buffer);
     detail::error_check("BindBufferBaseEXT"sv, check_errors);
 }
@@ -90,6 +96,9 @@ STATICINLINE void bind_buffer_offset(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindBufferOffsetEXT, target, index, buffer, offset);
+#endif
     glBindBufferOffsetEXT(static_cast<GLenum>(target), index, buffer, offset);
     detail::error_check("BindBufferOffsetEXT"sv, check_errors);
 }
@@ -121,6 +130,9 @@ STATICINLINE void bind_buffer_range(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindBufferRangeEXT, target, index, buffer, offset, size);
+#endif
     glBindBufferRangeEXT(
         static_cast<GLenum>(target), index, buffer, offset, size);
     detail::error_check("BindBufferRangeEXT"sv, check_errors);
@@ -139,6 +151,9 @@ STATICINLINE void end_transform_feedback(
     {
         GLW_FPTR_CHECK(EndTransformFeedbackEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEndTransformFeedbackEXT);
+#endif
     glEndTransformFeedbackEXT();
     detail::error_check("EndTransformFeedbackEXT"sv, check_errors);
 }
@@ -179,6 +194,17 @@ STATICINLINE void get_transform_feedback_varying(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetTransformFeedbackVaryingEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(name.data()), name.size_bytes()),
+        program,
+        index,
+        length,
+        size,
+        type);
+#endif
     glGetTransformFeedbackVaryingEXT(
         program, index, name.size(), &length, &size, &type, name.data());
     detail::error_check("GetTransformFeedbackVaryingEXT"sv, check_errors);
@@ -210,6 +236,10 @@ STATICINLINE void transform_feedback_varyings(
     }
     auto [varyings_lens, varyings_cstr, varyings_store] =
         detail::transform_strings(varyings);
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTransformFeedbackVaryingsEXT, program, varyings, bufferMode);
+#endif
     glTransformFeedbackVaryingsEXT(
         program,
         varyings_cstr.size(),

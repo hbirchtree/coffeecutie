@@ -23,6 +23,9 @@ STATICINLINE void blend_equation_separatei(
     {
         GLW_FPTR_CHECK(BlendEquationSeparateiARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendEquationSeparateiARB, buf, modeRGB, modeAlpha);
+#endif
     glBlendEquationSeparateiARB(
         buf, static_cast<GLenum>(modeRGB), static_cast<GLenum>(modeAlpha));
     detail::error_check("BlendEquationSeparateiARB"sv, check_errors);
@@ -44,6 +47,9 @@ STATICINLINE void blend_equationi(
     {
         GLW_FPTR_CHECK(BlendEquationiARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendEquationiARB, buf, mode);
+#endif
     glBlendEquationiARB(buf, static_cast<GLenum>(mode));
     detail::error_check("BlendEquationiARB"sv, check_errors);
 }
@@ -70,6 +76,10 @@ STATICINLINE void blend_func_separatei(
     {
         GLW_FPTR_CHECK(BlendFuncSeparateiARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glBlendFuncSeparateiARB, buf, srcRGB, dstRGB, srcAlpha, dstAlpha);
+#endif
     glBlendFuncSeparateiARB(
         buf,
         static_cast<GLenum>(srcRGB),
@@ -97,6 +107,9 @@ STATICINLINE void blend_funci(
     {
         GLW_FPTR_CHECK(BlendFunciARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendFunciARB, buf, src, dst);
+#endif
     glBlendFunciARB(buf, static_cast<GLenum>(src), static_cast<GLenum>(dst));
     detail::error_check("BlendFunciARB"sv, check_errors);
 }

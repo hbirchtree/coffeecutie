@@ -20,6 +20,9 @@ STATICINLINE void vertex_attrib_divisor(
     {
         GLW_FPTR_CHECK(VertexAttribDivisorARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttribDivisorARB, index, divisor);
+#endif
     glVertexAttribDivisorARB(index, divisor);
     detail::error_check("VertexAttribDivisorARB"sv, check_errors);
 }

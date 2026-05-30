@@ -82,6 +82,17 @@ STATICINLINE void bind_image_texture(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glBindImageTextureEXT,
+        index,
+        texture,
+        level,
+        layered,
+        layer,
+        access,
+        format);
+#endif
     glBindImageTextureEXT(
         index,
         texture,
@@ -107,6 +118,9 @@ STATICINLINE void memory_barrier(
     {
         GLW_FPTR_CHECK(MemoryBarrierEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMemoryBarrierEXT, barriers);
+#endif
     glMemoryBarrierEXT(static_cast<GLenum>(barriers));
     detail::error_check("MemoryBarrierEXT"sv, check_errors);
 }

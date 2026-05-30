@@ -30,6 +30,9 @@ STATICINLINE void query_object_parameter(
     {
         GLW_FPTR_CHECK(QueryObjectParameteruiAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glQueryObjectParameteruiAMD, target, id, pname, param);
+#endif
     glQueryObjectParameteruiAMD(static_cast<GLenum>(target), id, pname, param);
     detail::error_check("QueryObjectParameteruiAMD"sv, check_errors);
 }

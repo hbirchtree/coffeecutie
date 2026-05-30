@@ -35,6 +35,14 @@ STATICINLINE void import_semaphore_win32_handle(
     {
         GLW_FPTR_CHECK(ImportSemaphoreWin32HandleEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glImportSemaphoreWin32HandleEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(handle.data()), handle.size_bytes()),
+        semaphore,
+        handleType);
+#endif
     glImportSemaphoreWin32HandleEXT(
         semaphore,
         static_cast<GLenum>(handleType),
@@ -62,6 +70,14 @@ STATICINLINE void import_semaphore_win32_name(
     {
         GLW_FPTR_CHECK(ImportSemaphoreWin32NameEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glImportSemaphoreWin32NameEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(name.data()), name.size_bytes()),
+        semaphore,
+        handleType);
+#endif
     glImportSemaphoreWin32NameEXT(
         semaphore,
         static_cast<GLenum>(handleType),

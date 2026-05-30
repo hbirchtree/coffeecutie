@@ -23,6 +23,9 @@ STATICINLINE GLboolean acquire_keyed_mutex_win32(
     {
         GLW_FPTR_CHECK(AcquireKeyedMutexWin32EXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glAcquireKeyedMutexWin32EXT, memory, key, timeout);
+#endif
     auto out = glAcquireKeyedMutexWin32EXT(memory, key, timeout);
     detail::error_check("AcquireKeyedMutexWin32EXT"sv, check_errors);
     return out;
@@ -42,6 +45,9 @@ STATICINLINE GLboolean release_keyed_mutex_win32(
     {
         GLW_FPTR_CHECK(ReleaseKeyedMutexWin32EXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glReleaseKeyedMutexWin32EXT, memory, key);
+#endif
     auto out = glReleaseKeyedMutexWin32EXT(memory, key);
     detail::error_check("ReleaseKeyedMutexWin32EXT"sv, check_errors);
     return out;

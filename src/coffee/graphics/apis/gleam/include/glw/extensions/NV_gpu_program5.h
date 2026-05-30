@@ -36,6 +36,14 @@ STATICINLINE void get_program_subroutine_parameter(
     {
         GLW_FPTR_CHECK(GetProgramSubroutineParameteruivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetProgramSubroutineParameteruivNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(param.data()), param.size_bytes()),
+        target,
+        index);
+#endif
     glGetProgramSubroutineParameteruivNV(
         target,
         index,
@@ -66,6 +74,13 @@ STATICINLINE void program_subroutine_parameters(
     {
         GLW_FPTR_CHECK(ProgramSubroutineParametersuivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramSubroutineParametersuivNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target);
+#endif
     glProgramSubroutineParametersuivNV(
         target,
         params.size(),

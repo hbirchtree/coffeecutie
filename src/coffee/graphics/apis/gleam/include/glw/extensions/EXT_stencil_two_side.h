@@ -20,6 +20,9 @@ STATICINLINE void active_stencil_face(
     {
         GLW_FPTR_CHECK(ActiveStencilFaceEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glActiveStencilFaceEXT, face);
+#endif
     glActiveStencilFaceEXT(static_cast<GLenum>(face));
     detail::error_check("ActiveStencilFaceEXT"sv, check_errors);
 }

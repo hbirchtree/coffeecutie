@@ -25,6 +25,9 @@ STATICINLINE void bind_transform_feedback(
     {
         GLW_FPTR_CHECK(BindTransformFeedbackNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindTransformFeedbackNV, target, id);
+#endif
     glBindTransformFeedbackNV(static_cast<GLenum>(target), id);
     detail::error_check("BindTransformFeedbackNV"sv, check_errors);
 }
@@ -49,6 +52,12 @@ STATICINLINE void delete_transform_feedbacks(
     {
         GLW_FPTR_CHECK(DeleteTransformFeedbacksNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteTransformFeedbacksNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()));
+#endif
     glDeleteTransformFeedbacksNV(
         ids.size(),
         ids.size() ? reinterpret_cast<const GLuint*>(ids.data()) : nullptr);
@@ -71,6 +80,9 @@ STATICINLINE void draw_transform_feedback(
     {
         GLW_FPTR_CHECK(DrawTransformFeedbackNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDrawTransformFeedbackNV, mode, id);
+#endif
     glDrawTransformFeedbackNV(static_cast<GLenum>(mode), id);
     detail::error_check("DrawTransformFeedbackNV"sv, check_errors);
 }
@@ -94,6 +106,11 @@ STATICINLINE void gen_transform_feedbacks(
     {
         GLW_FPTR_CHECK(GenTransformFeedbacksNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenTransformFeedbacksNV,
+        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()));
+#endif
     glGenTransformFeedbacksNV(
         ids.size(),
         ids.size() ? reinterpret_cast<GLuint*>(ids.data()) : nullptr);
@@ -113,6 +130,9 @@ is_transform_feedback(u32 id, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(IsTransformFeedbackNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsTransformFeedbackNV, id);
+#endif
     auto out = glIsTransformFeedbackNV(id);
     detail::error_check("IsTransformFeedbackNV"sv, check_errors);
     return out;
@@ -131,6 +151,9 @@ STATICINLINE void pause_transform_feedback(
     {
         GLW_FPTR_CHECK(PauseTransformFeedbackNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glPauseTransformFeedbackNV);
+#endif
     glPauseTransformFeedbackNV();
     detail::error_check("PauseTransformFeedbackNV"sv, check_errors);
 }
@@ -148,6 +171,9 @@ STATICINLINE void resume_transform_feedback(
     {
         GLW_FPTR_CHECK(ResumeTransformFeedbackNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glResumeTransformFeedbackNV);
+#endif
     glResumeTransformFeedbackNV();
     detail::error_check("ResumeTransformFeedbackNV"sv, check_errors);
 }

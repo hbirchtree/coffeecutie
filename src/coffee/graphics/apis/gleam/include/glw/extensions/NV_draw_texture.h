@@ -49,6 +49,10 @@ STATICINLINE void draw_texture(
             glIsSampler(sampler);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawTextureNV, texture, sampler, x0, y0, x1, y1, z, s0, t0, s1, t1);
+#endif
     glDrawTextureNV(texture, sampler, x0, y0, x1, y1, z, s0, t0, s1, t1);
     detail::error_check("DrawTextureNV"sv, check_errors);
 }

@@ -26,6 +26,9 @@ STATICINLINE void begin_query(
     {
         GLW_FPTR_CHECK(BeginQueryARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBeginQueryARB, target, id);
+#endif
     glBeginQueryARB(static_cast<GLenum>(target), id);
     detail::error_check("BeginQueryARB"sv, check_errors);
 }
@@ -50,6 +53,12 @@ STATICINLINE void delete_queries(
     {
         GLW_FPTR_CHECK(DeleteQueriesARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteQueriesARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()));
+#endif
     glDeleteQueriesARB(
         ids.size(),
         ids.size() ? reinterpret_cast<const GLuint*>(ids.data()) : nullptr);
@@ -69,6 +78,9 @@ STATICINLINE void end_query(
     {
         GLW_FPTR_CHECK(EndQueryARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEndQueryARB, target);
+#endif
     glEndQueryARB(static_cast<GLenum>(target));
     detail::error_check("EndQueryARB"sv, check_errors);
 }
@@ -92,6 +104,11 @@ STATICINLINE void gen_queries(
     {
         GLW_FPTR_CHECK(GenQueriesARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenQueriesARB,
+        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()));
+#endif
     glGenQueriesARB(
         ids.size(),
         ids.size() ? reinterpret_cast<GLuint*>(ids.data()) : nullptr);
@@ -121,6 +138,14 @@ STATICINLINE void get_query_objectiv(
     {
         GLW_FPTR_CHECK(GetQueryObjectivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetQueryObjectivARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        id,
+        pname);
+#endif
     glGetQueryObjectivARB(
         id,
         static_cast<GLenum>(pname),
@@ -151,6 +176,14 @@ STATICINLINE void get_query_objectuiv(
     {
         GLW_FPTR_CHECK(GetQueryObjectuivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetQueryObjectuivARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        id,
+        pname);
+#endif
     glGetQueryObjectuivARB(
         id,
         static_cast<GLenum>(pname),
@@ -181,6 +214,14 @@ STATICINLINE void get_queryiv(
     {
         GLW_FPTR_CHECK(GetQueryivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetQueryivARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetQueryivARB(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -201,6 +242,9 @@ is_query(u32 id, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(IsQueryARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsQueryARB, id);
+#endif
     auto out = glIsQueryARB(id);
     detail::error_check("IsQueryARB"sv, check_errors);
     return out;

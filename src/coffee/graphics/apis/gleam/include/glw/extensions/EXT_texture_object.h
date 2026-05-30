@@ -41,6 +41,16 @@ STATICINLINE GLboolean are_textures_resident(
     {
         GLW_FPTR_CHECK(AreTexturesResidentEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glAreTexturesResidentEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(textures.data()),
+            textures.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(residences.data()),
+            residences.size_bytes()));
+#endif
     auto out = glAreTexturesResidentEXT(
         textures.size(),
         textures.size() ? reinterpret_cast<const GLuint*>(textures.data())
@@ -72,6 +82,9 @@ STATICINLINE void bind_texture(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBindTextureEXT, target, texture);
+#endif
     glBindTextureEXT(static_cast<GLenum>(target), texture);
     detail::error_check("BindTextureEXT"sv, check_errors);
 }
@@ -96,6 +109,13 @@ STATICINLINE void delete_textures(
     {
         GLW_FPTR_CHECK(DeleteTexturesEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDeleteTexturesEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(textures.data()),
+            textures.size_bytes()));
+#endif
     glDeleteTexturesEXT(
         textures.size(),
         textures.size() ? reinterpret_cast<const GLuint*>(textures.data())
@@ -122,6 +142,12 @@ STATICINLINE void gen_textures(
     {
         GLW_FPTR_CHECK(GenTexturesEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGenTexturesEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(textures.data()), textures.size_bytes()));
+#endif
     glGenTexturesEXT(
         textures.size(),
         textures.size() ? reinterpret_cast<GLuint*>(textures.data()) : nullptr);
@@ -146,6 +172,9 @@ is_texture(u32 texture, error_check check_errors = error_check::on)
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsTextureEXT, texture);
+#endif
     auto out = glIsTextureEXT(texture);
     detail::error_check("IsTextureEXT"sv, check_errors);
     return out;
@@ -178,6 +207,16 @@ STATICINLINE void prioritize_textures(
     {
         GLW_FPTR_CHECK(PrioritizeTexturesEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glPrioritizeTexturesEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(textures.data()),
+            textures.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(priorities.data()),
+            priorities.size_bytes()));
+#endif
     glPrioritizeTexturesEXT(
         textures.size(),
         textures.size() ? reinterpret_cast<const GLuint*>(textures.data())

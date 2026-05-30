@@ -24,6 +24,9 @@ STATICINLINE void framebuffer_fetch_barrier(
     {
         GLW_FPTR_CHECK(FramebufferFetchBarrierQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFramebufferFetchBarrierQCOM);
+#endif
     glFramebufferFetchBarrierQCOM();
     detail::error_check("FramebufferFetchBarrierQCOM"sv, check_errors);
 }

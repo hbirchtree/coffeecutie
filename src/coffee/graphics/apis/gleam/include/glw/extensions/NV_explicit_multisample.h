@@ -38,6 +38,13 @@ STATICINLINE void get_multisamplefv(
     {
         GLW_FPTR_CHECK(GetMultisamplefvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetMultisamplefvNV,
+        gsl::span<char>(reinterpret_cast<char*>(val.data()), val.size_bytes()),
+        pname,
+        index);
+#endif
     glGetMultisamplefvNV(
         static_cast<GLenum>(pname),
         index,
@@ -59,6 +66,9 @@ STATICINLINE void sample_mask_indexed(
     {
         GLW_FPTR_CHECK(SampleMaskIndexedNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSampleMaskIndexedNV, index, mask);
+#endif
     glSampleMaskIndexedNV(index, mask);
     detail::error_check("SampleMaskIndexedNV"sv, check_errors);
 }
@@ -84,6 +94,9 @@ STATICINLINE void tex_renderbuffer(
             glIsRenderbuffer(renderbuffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexRenderbufferNV, target, renderbuffer);
+#endif
     glTexRenderbufferNV(static_cast<GLenum>(target), renderbuffer);
     detail::error_check("TexRenderbufferNV"sv, check_errors);
 }

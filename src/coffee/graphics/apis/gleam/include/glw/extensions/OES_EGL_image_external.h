@@ -27,6 +27,9 @@ STATICINLINE void egl_image_target_texture_2d(
     {
         GLW_FPTR_CHECK(EGLImageTargetTexture2DOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEGLImageTargetTexture2DOES, target, image);
+#endif
     glEGLImageTargetTexture2DOES(target, image);
     detail::error_check("EGLImageTargetTexture2DOES"sv, check_errors);
 }

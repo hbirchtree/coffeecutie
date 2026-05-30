@@ -29,6 +29,9 @@ STATICINLINE void memory_barrier_by_region(
     {
         GLW_FPTR_CHECK(MemoryBarrierByRegion)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMemoryBarrierByRegion, barriers);
+#endif
     glMemoryBarrierByRegion(static_cast<GLenum>(barriers));
     detail::error_check("MemoryBarrierByRegion"sv, check_errors);
 }

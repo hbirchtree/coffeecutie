@@ -46,6 +46,17 @@ STATICINLINE void compressed_tex_image_3d(
     {
         GLW_FPTR_CHECK(CompressedTexImage3DOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCompressedTexImage3DOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        target,
+        level,
+        internalformat,
+        width,
+        border);
+#endif
     glCompressedTexImage3DOES(
         static_cast<GLenum>(target),
         level,
@@ -93,6 +104,17 @@ STATICINLINE void compressed_tex_sub_image_3d(
     {
         GLW_FPTR_CHECK(CompressedTexSubImage3DOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCompressedTexSubImage3DOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        target,
+        level,
+        xoffset,
+        width,
+        format);
+#endif
     glCompressedTexSubImage3DOES(
         static_cast<GLenum>(target),
         level,
@@ -139,6 +161,9 @@ STATICINLINE void copy_tex_sub_image_3d(
     {
         GLW_FPTR_CHECK(CopyTexSubImage3DOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCopyTexSubImage3DOES, target, level, xoffset, x, width);
+#endif
     glCopyTexSubImage3DOES(
         target,
         level,
@@ -181,6 +206,16 @@ STATICINLINE void framebuffer_texture_3d(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFramebufferTexture3DOES,
+        target,
+        attachment,
+        textarget,
+        texture,
+        level,
+        zoffset);
+#endif
     glFramebufferTexture3DOES(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),
@@ -223,6 +258,19 @@ STATICINLINE void tex_image_3d(
     {
         GLW_FPTR_CHECK(TexImage3DOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexImage3DOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        target,
+        level,
+        internalformat,
+        width,
+        border,
+        format,
+        type);
+#endif
     glTexImage3DOES(
         static_cast<GLenum>(target),
         level,
@@ -271,6 +319,18 @@ STATICINLINE void tex_sub_image_3d(
     {
         GLW_FPTR_CHECK(TexSubImage3DOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexSubImage3DOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        target,
+        level,
+        xoffset,
+        width,
+        format,
+        type);
+#endif
     glTexSubImage3DOES(
         static_cast<GLenum>(target),
         level,

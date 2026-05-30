@@ -20,6 +20,9 @@ STATICINLINE void min_sample_shading(
     {
         GLW_FPTR_CHECK(MinSampleShadingARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMinSampleShadingARB, value);
+#endif
     glMinSampleShadingARB(value);
     detail::error_check("MinSampleShadingARB"sv, check_errors);
 }

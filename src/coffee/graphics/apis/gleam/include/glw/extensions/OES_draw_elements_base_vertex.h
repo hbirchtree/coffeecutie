@@ -27,6 +27,10 @@ STATICINLINE void draw_elements_base_vertex(
     {
         GLW_FPTR_CHECK(DrawElementsBaseVertexOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawElementsBaseVertexOES, mode, count, type, indices, basevertex);
+#endif
     glDrawElementsBaseVertexOES(
         static_cast<GLenum>(mode),
         count,
@@ -60,6 +64,16 @@ STATICINLINE void draw_elements_instanced_base_vertex(
     {
         GLW_FPTR_CHECK(DrawElementsInstancedBaseVertexOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawElementsInstancedBaseVertexOES,
+        mode,
+        count,
+        type,
+        indices,
+        instancecount,
+        basevertex);
+#endif
     glDrawElementsInstancedBaseVertexOES(
         static_cast<GLenum>(mode),
         count,
@@ -98,6 +112,19 @@ STATICINLINE void draw_range_elements_base_vertex(
     {
         GLW_FPTR_CHECK(DrawRangeElementsBaseVertexOES)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDrawRangeElementsBaseVertexOES,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(indices.data()),
+            indices.size_bytes()),
+        mode,
+        start,
+        end,
+        count,
+        type,
+        basevertex);
+#endif
     glDrawRangeElementsBaseVertexOES(
         static_cast<GLenum>(mode),
         start,
@@ -142,6 +169,18 @@ STATICINLINE void multi_draw_elements_base_vertex_ext(
     GLsizei drawcount = count.size();
     detail::assert_equal(count.size(), drawcount);
     detail::assert_equal(basevertex.size(), drawcount);
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMultiDrawElementsBaseVertexEXT,
+        mode,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(count.data()), count.size_bytes()),
+        type,
+        indices,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(basevertex.data()),
+            basevertex.size_bytes()));
+#endif
     glMultiDrawElementsBaseVertexEXT(
         static_cast<GLenum>(mode),
         count.data(),

@@ -35,6 +35,16 @@ STATICINLINE GLsync create_sync_from_c_levent(
     {
         GLW_FPTR_CHECK(CreateSyncFromCLeventARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glCreateSyncFromCLeventARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(context.data()),
+            context.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(event.data()), event.size_bytes()),
+        flags);
+#endif
     auto out = glCreateSyncFromCLeventARB(
         context.size() ? reinterpret_cast<struct _cl_context*>(context.data())
                        : nullptr,

@@ -29,6 +29,9 @@ STATICINLINE void import_memory_fd(
     {
         GLW_FPTR_CHECK(ImportMemoryFdEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glImportMemoryFdEXT, memory, size, handleType, fd);
+#endif
     glImportMemoryFdEXT(memory, size, static_cast<GLenum>(handleType), fd);
     detail::error_check("ImportMemoryFdEXT"sv, check_errors);
 }

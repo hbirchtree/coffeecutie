@@ -42,6 +42,17 @@ STATICINLINE void tex_storage_attribs_2d(
     {
         GLW_FPTR_CHECK(TexStorageAttribs2DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexStorageAttribs2DEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(attrib_list.data()),
+            attrib_list.size_bytes()),
+        target,
+        levels,
+        internalformat,
+        width);
+#endif
     glTexStorageAttribs2DEXT(
         static_cast<GLenum>(target),
         levels,
@@ -83,6 +94,17 @@ STATICINLINE void tex_storage_attribs_3d(
     {
         GLW_FPTR_CHECK(TexStorageAttribs3DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexStorageAttribs3DEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(attrib_list.data()),
+            attrib_list.size_bytes()),
+        target,
+        levels,
+        internalformat,
+        width);
+#endif
     glTexStorageAttribs3DEXT(
         static_cast<GLenum>(target),
         levels,

@@ -41,6 +41,22 @@ STATICINLINE void blit_framebuffer_layer(
     {
         GLW_FPTR_CHECK(BlitFramebufferLayerEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glBlitFramebufferLayerEXT,
+        srcX0,
+        srcY0,
+        srcX1,
+        srcY1,
+        srcLayer,
+        dstX0,
+        dstY0,
+        dstX1,
+        dstY1,
+        dstLayer,
+        mask,
+        filter);
+#endif
     glBlitFramebufferLayerEXT(
         srcX0,
         srcY0,
@@ -89,6 +105,20 @@ STATICINLINE void blit_framebuffer_layers(
     {
         GLW_FPTR_CHECK(BlitFramebufferLayersEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glBlitFramebufferLayersEXT,
+        srcX0,
+        srcY0,
+        srcX1,
+        srcY1,
+        dstX0,
+        dstY0,
+        dstX1,
+        dstY1,
+        mask,
+        filter);
+#endif
     glBlitFramebufferLayersEXT(
         srcX0,
         srcY0,

@@ -40,6 +40,9 @@ STATICINLINE void clear_color_ii(
     {
         GLW_FPTR_CHECK(ClearColorIiEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glClearColorIiEXT, red);
+#endif
     glClearColorIiEXT(red[0], red[1], red[2], red[3]);
     detail::error_check("ClearColorIiEXT"sv, check_errors);
 }
@@ -62,6 +65,9 @@ STATICINLINE void clear_color_iui(
     {
         GLW_FPTR_CHECK(ClearColorIuiEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glClearColorIuiEXT, red);
+#endif
     glClearColorIuiEXT(red[0], red[1], red[2], red[3]);
     detail::error_check("ClearColorIuiEXT"sv, check_errors);
 }
@@ -89,6 +95,14 @@ STATICINLINE void get_tex_parameter_iiv(
     {
         GLW_FPTR_CHECK(GetTexParameterIivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetTexParameterIivEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetTexParameterIivEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -119,6 +133,14 @@ STATICINLINE void get_tex_parameter_iuiv(
     {
         GLW_FPTR_CHECK(GetTexParameterIuivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetTexParameterIuivEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetTexParameterIuivEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -150,6 +172,14 @@ STATICINLINE void tex_parameter_iiv(
     {
         GLW_FPTR_CHECK(TexParameterIivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexParameterIivEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glTexParameterIivEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -182,6 +212,14 @@ STATICINLINE void tex_parameter_iuiv(
     {
         GLW_FPTR_CHECK(TexParameterIuivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexParameterIuivEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glTexParameterIuivEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),

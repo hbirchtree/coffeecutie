@@ -43,6 +43,13 @@ STATICINLINE void shader_storage_block_binding(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glShaderStorageBlockBinding,
+        program,
+        storageBlockIndex,
+        storageBlockBinding);
+#endif
     glShaderStorageBlockBinding(
         program, storageBlockIndex, storageBlockBinding);
     detail::error_check("ShaderStorageBlockBinding"sv, check_errors);

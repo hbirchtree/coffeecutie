@@ -28,6 +28,9 @@ STATICINLINE void clamp_color(
     {
         GLW_FPTR_CHECK(ClampColorARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glClampColorARB, target, clamp);
+#endif
     glClampColorARB(static_cast<GLenum>(target), static_cast<GLenum>(clamp));
     detail::error_check("ClampColorARB"sv, check_errors);
 }

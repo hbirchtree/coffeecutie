@@ -28,6 +28,9 @@ STATICINLINE void evaluate_depth_values(
     {
         GLW_FPTR_CHECK(EvaluateDepthValuesARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glEvaluateDepthValuesARB);
+#endif
     glEvaluateDepthValuesARB();
     detail::error_check("EvaluateDepthValuesARB"sv, check_errors);
 }
@@ -58,6 +61,15 @@ STATICINLINE void framebuffer_sample_locationsfv(
     {
         GLW_FPTR_CHECK(FramebufferSampleLocationsfvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glFramebufferSampleLocationsfvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target,
+        start,
+        count);
+#endif
     glFramebufferSampleLocationsfvARB(
         static_cast<GLenum>(target),
         start,
@@ -97,6 +109,15 @@ STATICINLINE void named_framebuffer_sample_locationsfv(
             glIsFramebuffer(framebuffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glNamedFramebufferSampleLocationsfvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        framebuffer,
+        start,
+        count);
+#endif
     glNamedFramebufferSampleLocationsfvARB(
         framebuffer,
         start,

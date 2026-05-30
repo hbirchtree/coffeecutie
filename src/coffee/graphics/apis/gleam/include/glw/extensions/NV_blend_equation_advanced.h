@@ -82,6 +82,9 @@ STATICINLINE void blend_barrier(error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(BlendBarrierNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendBarrierNV);
+#endif
     glBlendBarrierNV();
     detail::error_check("BlendBarrierNV"sv, check_errors);
 }
@@ -100,6 +103,9 @@ STATICINLINE void blend_parameter(
     {
         GLW_FPTR_CHECK(BlendParameteriNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendParameteriNV, pname, value);
+#endif
     glBlendParameteriNV(pname, value);
     detail::error_check("BlendParameteriNV"sv, check_errors);
 }

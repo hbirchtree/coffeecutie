@@ -39,6 +39,10 @@ STATICINLINE void viewport_swizzle(
     {
         GLW_FPTR_CHECK(ViewportSwizzleNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glViewportSwizzleNV, index, swizzlex, swizzley, swizzlez, swizzlew);
+#endif
     glViewportSwizzleNV(index, swizzlex, swizzley, swizzlez, swizzlew);
     detail::error_check("ViewportSwizzleNV"sv, check_errors);
 }

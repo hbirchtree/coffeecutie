@@ -36,6 +36,9 @@ STATICINLINE void sample_mask(
     {
         GLW_FPTR_CHECK(SampleMaskEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSampleMaskEXT, value, invert);
+#endif
     glSampleMaskEXT(value, invert);
     detail::error_check("SampleMaskEXT"sv, check_errors);
 }
@@ -54,6 +57,9 @@ STATICINLINE void sample_pattern(
     {
         GLW_FPTR_CHECK(SamplePatternEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSamplePatternEXT, pattern);
+#endif
     glSamplePatternEXT(static_cast<GLenum>(pattern));
     detail::error_check("SamplePatternEXT"sv, check_errors);
 }

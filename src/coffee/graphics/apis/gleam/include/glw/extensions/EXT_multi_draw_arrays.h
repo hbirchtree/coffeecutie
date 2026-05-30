@@ -33,6 +33,15 @@ STATICINLINE void multi_draw_arrays(
     GLsizei primcount = first.size();
     detail::assert_equal(first.size(), primcount);
     detail::assert_equal(count.size(), primcount);
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMultiDrawArraysEXT,
+        mode,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(first.data()), first.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(count.data()), count.size_bytes()));
+#endif
     glMultiDrawArraysEXT(static_cast<GLenum>(mode), first.data(), count.data());
     detail::error_check("MultiDrawArraysEXT"sv, check_errors);
 }
@@ -66,6 +75,15 @@ STATICINLINE void multi_draw_elements(
     }
     GLsizei primcount = count.size();
     detail::assert_equal(count.size(), primcount);
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiDrawElementsEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(count.data()), count.size_bytes()),
+        mode,
+        type,
+        indices);
+#endif
     glMultiDrawElementsEXT(
         static_cast<GLenum>(mode),
         count.data(),

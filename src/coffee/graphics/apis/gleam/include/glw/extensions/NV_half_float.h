@@ -26,6 +26,9 @@ STATICINLINE void color3h(
     {
         GLW_FPTR_CHECK(Color3hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glColor3hNV, red);
+#endif
     glColor3hNV(red[0], red[1], red[2]);
     detail::error_check("Color3hNV"sv, check_errors);
 }
@@ -49,6 +52,12 @@ STATICINLINE void color3hv(
     {
         GLW_FPTR_CHECK(Color3hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glColor3hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+#endif
     glColor3hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
     detail::error_check("Color3hvNV"sv, check_errors);
@@ -72,6 +81,9 @@ STATICINLINE void color4h(
     {
         GLW_FPTR_CHECK(Color4hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glColor4hNV, red);
+#endif
     glColor4hNV(red[0], red[1], red[2], red[3]);
     detail::error_check("Color4hNV"sv, check_errors);
 }
@@ -95,6 +107,12 @@ STATICINLINE void color4hv(
     {
         GLW_FPTR_CHECK(Color4hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glColor4hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+#endif
     glColor4hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
     detail::error_check("Color4hvNV"sv, check_errors);
@@ -116,6 +134,9 @@ STATICINLINE void multi_tex_coord1h(
     {
         GLW_FPTR_CHECK(MultiTexCoord1hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord1hNV, target, s);
+#endif
     glMultiTexCoord1hNV(static_cast<GLenum>(target), s);
     detail::error_check("MultiTexCoord1hNV"sv, check_errors);
 }
@@ -142,6 +163,13 @@ STATICINLINE void multi_tex_coord1hv(
     {
         GLW_FPTR_CHECK(MultiTexCoord1hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord1hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord1hvNV(
         static_cast<GLenum>(target),
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
@@ -166,6 +194,9 @@ STATICINLINE void multi_tex_coord2h(
     {
         GLW_FPTR_CHECK(MultiTexCoord2hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord2hNV, target, s, t);
+#endif
     glMultiTexCoord2hNV(static_cast<GLenum>(target), s, t);
     detail::error_check("MultiTexCoord2hNV"sv, check_errors);
 }
@@ -192,6 +223,13 @@ STATICINLINE void multi_tex_coord2hv(
     {
         GLW_FPTR_CHECK(MultiTexCoord2hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord2hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord2hvNV(
         static_cast<GLenum>(target),
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
@@ -218,6 +256,9 @@ STATICINLINE void multi_tex_coord3h(
     {
         GLW_FPTR_CHECK(MultiTexCoord3hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord3hNV, target, s, t, r);
+#endif
     glMultiTexCoord3hNV(static_cast<GLenum>(target), s, t, r);
     detail::error_check("MultiTexCoord3hNV"sv, check_errors);
 }
@@ -244,6 +285,13 @@ STATICINLINE void multi_tex_coord3hv(
     {
         GLW_FPTR_CHECK(MultiTexCoord3hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord3hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord3hvNV(
         static_cast<GLenum>(target),
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
@@ -272,6 +320,9 @@ STATICINLINE void multi_tex_coord4h(
     {
         GLW_FPTR_CHECK(MultiTexCoord4hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiTexCoord4hNV, target, s, t, r, q);
+#endif
     glMultiTexCoord4hNV(static_cast<GLenum>(target), s, t, r, q);
     detail::error_check("MultiTexCoord4hNV"sv, check_errors);
 }
@@ -298,6 +349,13 @@ STATICINLINE void multi_tex_coord4hv(
     {
         GLW_FPTR_CHECK(MultiTexCoord4hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMultiTexCoord4hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        target);
+#endif
     glMultiTexCoord4hvNV(
         static_cast<GLenum>(target),
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
@@ -322,6 +380,9 @@ STATICINLINE void normal3h(
     {
         GLW_FPTR_CHECK(Normal3hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glNormal3hNV, nx, ny, nz);
+#endif
     glNormal3hNV(nx, ny, nz);
     detail::error_check("Normal3hNV"sv, check_errors);
 }
@@ -345,6 +406,12 @@ STATICINLINE void normal3hv(
     {
         GLW_FPTR_CHECK(Normal3hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glNormal3hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+#endif
     glNormal3hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
     detail::error_check("Normal3hvNV"sv, check_errors);
@@ -363,6 +430,9 @@ STATICINLINE void tex_coord1h(
     {
         GLW_FPTR_CHECK(TexCoord1hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexCoord1hNV, s);
+#endif
     glTexCoord1hNV(s);
     detail::error_check("TexCoord1hNV"sv, check_errors);
 }
@@ -386,6 +456,12 @@ STATICINLINE void tex_coord1hv(
     {
         GLW_FPTR_CHECK(TexCoord1hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexCoord1hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+#endif
     glTexCoord1hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
     detail::error_check("TexCoord1hvNV"sv, check_errors);
@@ -405,6 +481,9 @@ STATICINLINE void tex_coord2h(
     {
         GLW_FPTR_CHECK(TexCoord2hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexCoord2hNV, s, t);
+#endif
     glTexCoord2hNV(s, t);
     detail::error_check("TexCoord2hNV"sv, check_errors);
 }
@@ -428,6 +507,12 @@ STATICINLINE void tex_coord2hv(
     {
         GLW_FPTR_CHECK(TexCoord2hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexCoord2hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+#endif
     glTexCoord2hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
     detail::error_check("TexCoord2hvNV"sv, check_errors);
@@ -451,6 +536,9 @@ STATICINLINE void tex_coord3h(
     {
         GLW_FPTR_CHECK(TexCoord3hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexCoord3hNV, s, t, r);
+#endif
     glTexCoord3hNV(s, t, r);
     detail::error_check("TexCoord3hNV"sv, check_errors);
 }
@@ -474,6 +562,12 @@ STATICINLINE void tex_coord3hv(
     {
         GLW_FPTR_CHECK(TexCoord3hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexCoord3hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+#endif
     glTexCoord3hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
     detail::error_check("TexCoord3hvNV"sv, check_errors);
@@ -499,6 +593,9 @@ STATICINLINE void tex_coord4h(
     {
         GLW_FPTR_CHECK(TexCoord4hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexCoord4hNV, s, t, r, q);
+#endif
     glTexCoord4hNV(s, t, r, q);
     detail::error_check("TexCoord4hNV"sv, check_errors);
 }
@@ -522,6 +619,12 @@ STATICINLINE void tex_coord4hv(
     {
         GLW_FPTR_CHECK(TexCoord4hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glTexCoord4hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+#endif
     glTexCoord4hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
     detail::error_check("TexCoord4hvNV"sv, check_errors);
@@ -543,6 +646,9 @@ STATICINLINE void vertex2h(
     {
         GLW_FPTR_CHECK(Vertex2hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertex2hNV, x);
+#endif
     glVertex2hNV(x[0], x[1]);
     detail::error_check("Vertex2hNV"sv, check_errors);
 }
@@ -566,6 +672,12 @@ STATICINLINE void vertex2hv(
     {
         GLW_FPTR_CHECK(Vertex2hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertex2hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+#endif
     glVertex2hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
     detail::error_check("Vertex2hvNV"sv, check_errors);
@@ -588,6 +700,9 @@ STATICINLINE void vertex3h(
     {
         GLW_FPTR_CHECK(Vertex3hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertex3hNV, x);
+#endif
     glVertex3hNV(x[0], x[1], x[2]);
     detail::error_check("Vertex3hNV"sv, check_errors);
 }
@@ -611,6 +726,12 @@ STATICINLINE void vertex3hv(
     {
         GLW_FPTR_CHECK(Vertex3hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertex3hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+#endif
     glVertex3hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
     detail::error_check("Vertex3hvNV"sv, check_errors);
@@ -634,6 +755,9 @@ STATICINLINE void vertex4h(
     {
         GLW_FPTR_CHECK(Vertex4hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertex4hNV, x);
+#endif
     glVertex4hNV(x[0], x[1], x[2], x[3]);
     detail::error_check("Vertex4hNV"sv, check_errors);
 }
@@ -657,6 +781,12 @@ STATICINLINE void vertex4hv(
     {
         GLW_FPTR_CHECK(Vertex4hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertex4hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+#endif
     glVertex4hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
     detail::error_check("Vertex4hvNV"sv, check_errors);
@@ -676,6 +806,9 @@ STATICINLINE void vertex_attrib1h(
     {
         GLW_FPTR_CHECK(VertexAttrib1hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttrib1hNV, index, x);
+#endif
     glVertexAttrib1hNV(index, x);
     detail::error_check("VertexAttrib1hNV"sv, check_errors);
 }
@@ -702,6 +835,13 @@ STATICINLINE void vertex_attrib1hv(
     {
         GLW_FPTR_CHECK(VertexAttrib1hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttrib1hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttrib1hvNV(
         index,
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
@@ -727,6 +867,9 @@ STATICINLINE void vertex_attrib2h(
     {
         GLW_FPTR_CHECK(VertexAttrib2hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttrib2hNV, index, x);
+#endif
     glVertexAttrib2hNV(index, x[0], x[1]);
     detail::error_check("VertexAttrib2hNV"sv, check_errors);
 }
@@ -753,6 +896,13 @@ STATICINLINE void vertex_attrib2hv(
     {
         GLW_FPTR_CHECK(VertexAttrib2hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttrib2hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttrib2hvNV(
         index,
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
@@ -779,6 +929,9 @@ STATICINLINE void vertex_attrib3h(
     {
         GLW_FPTR_CHECK(VertexAttrib3hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttrib3hNV, index, x);
+#endif
     glVertexAttrib3hNV(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttrib3hNV"sv, check_errors);
 }
@@ -805,6 +958,13 @@ STATICINLINE void vertex_attrib3hv(
     {
         GLW_FPTR_CHECK(VertexAttrib3hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttrib3hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttrib3hvNV(
         index,
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
@@ -832,6 +992,9 @@ STATICINLINE void vertex_attrib4h(
     {
         GLW_FPTR_CHECK(VertexAttrib4hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexAttrib4hNV, index, x);
+#endif
     glVertexAttrib4hNV(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttrib4hNV"sv, check_errors);
 }
@@ -858,6 +1021,13 @@ STATICINLINE void vertex_attrib4hv(
     {
         GLW_FPTR_CHECK(VertexAttrib4hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttrib4hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttrib4hvNV(
         index,
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
@@ -887,6 +1057,13 @@ STATICINLINE void vertex_attribs1hv(
     {
         GLW_FPTR_CHECK(VertexAttribs1hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribs1hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttribs1hvNV(
         index,
         v.size(),
@@ -917,6 +1094,13 @@ STATICINLINE void vertex_attribs2hv(
     {
         GLW_FPTR_CHECK(VertexAttribs2hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribs2hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttribs2hvNV(
         index,
         v.size(),
@@ -947,6 +1131,13 @@ STATICINLINE void vertex_attribs3hv(
     {
         GLW_FPTR_CHECK(VertexAttribs3hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribs3hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttribs3hvNV(
         index,
         v.size(),
@@ -977,6 +1168,13 @@ STATICINLINE void vertex_attribs4hv(
     {
         GLW_FPTR_CHECK(VertexAttribs4hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexAttribs4hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        index);
+#endif
     glVertexAttribs4hvNV(
         index,
         v.size(),
@@ -997,6 +1195,9 @@ STATICINLINE void fog_coordh(
     {
         GLW_FPTR_CHECK(FogCoordhNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFogCoordhNV, fog);
+#endif
     glFogCoordhNV(fog);
     detail::error_check("FogCoordhNV"sv, check_errors);
 }
@@ -1020,6 +1221,12 @@ STATICINLINE void fog_coordhv(
     {
         GLW_FPTR_CHECK(FogCoordhvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glFogCoordhvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(fog.data()), fog.size_bytes()));
+#endif
     glFogCoordhvNV(
         fog.size() ? reinterpret_cast<const GLhalfNV*>(fog.data()) : nullptr);
     detail::error_check("FogCoordhvNV"sv, check_errors);
@@ -1042,6 +1249,9 @@ STATICINLINE void secondary_color3h(
     {
         GLW_FPTR_CHECK(SecondaryColor3hNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSecondaryColor3hNV, red);
+#endif
     glSecondaryColor3hNV(red[0], red[1], red[2]);
     detail::error_check("SecondaryColor3hNV"sv, check_errors);
 }
@@ -1065,6 +1275,12 @@ STATICINLINE void secondary_color3hv(
     {
         GLW_FPTR_CHECK(SecondaryColor3hvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glSecondaryColor3hvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+#endif
     glSecondaryColor3hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
     detail::error_check("SecondaryColor3hvNV"sv, check_errors);
@@ -1083,6 +1299,9 @@ STATICINLINE void vertex_weighth(
     {
         GLW_FPTR_CHECK(VertexWeighthNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glVertexWeighthNV, weight);
+#endif
     glVertexWeighthNV(weight);
     detail::error_check("VertexWeighthNV"sv, check_errors);
 }
@@ -1107,6 +1326,12 @@ STATICINLINE void vertex_weighthv(
     {
         GLW_FPTR_CHECK(VertexWeighthvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glVertexWeighthvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(weight.data()), weight.size_bytes()));
+#endif
     glVertexWeighthvNV(
         weight.size() ? reinterpret_cast<const GLhalfNV*>(weight.data())
                       : nullptr);

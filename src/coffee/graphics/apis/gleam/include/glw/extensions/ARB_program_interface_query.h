@@ -51,6 +51,15 @@ STATICINLINE void get_program_interfaceiv(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetProgramInterfaceiv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        program,
+        programInterface,
+        pname);
+#endif
     glGetProgramInterfaceiv(
         program,
         static_cast<GLenum>(programInterface),
@@ -82,6 +91,9 @@ STATICINLINE GLuint get_program_resource_index(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetProgramResourceIndex, program, programInterface, name);
+#endif
     auto out = glGetProgramResourceIndex(
         program, static_cast<GLenum>(programInterface), name.data());
     detail::error_check("GetProgramResourceIndex"sv, check_errors);
@@ -111,6 +123,10 @@ STATICINLINE GLint get_program_resource_location(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetProgramResourceLocation, program, programInterface, name);
+#endif
     auto out = glGetProgramResourceLocation(
         program, static_cast<GLenum>(programInterface), name.data());
     detail::error_check("GetProgramResourceLocation"sv, check_errors);
@@ -140,6 +156,10 @@ STATICINLINE GLint get_program_resource_location_index(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetProgramResourceLocationIndex, program, programInterface, name);
+#endif
     auto out = glGetProgramResourceLocationIndex(
         program, static_cast<GLenum>(programInterface), name.data());
     detail::error_check("GetProgramResourceLocationIndex"sv, check_errors);
@@ -180,6 +200,16 @@ STATICINLINE void get_program_resource_name(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetProgramResourceName,
+        gsl::span<char>(
+            reinterpret_cast<char*>(name.data()), name.size_bytes()),
+        program,
+        programInterface,
+        index,
+        length);
+#endif
     glGetProgramResourceName(
         program,
         static_cast<GLenum>(programInterface),
@@ -231,6 +261,18 @@ STATICINLINE void get_program_resourceiv(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetProgramResourceiv,
+        program,
+        programInterface,
+        index,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(props.data()), props.size_bytes()),
+        length,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()));
+#endif
     glGetProgramResourceiv(
         program,
         static_cast<GLenum>(programInterface),

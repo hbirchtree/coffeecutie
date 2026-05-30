@@ -31,6 +31,9 @@ STATICINLINE void sample_coverage(
     {
         GLW_FPTR_CHECK(SampleCoverageARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSampleCoverageARB, value, invert);
+#endif
     glSampleCoverageARB(value, invert);
     detail::error_check("SampleCoverageARB"sv, check_errors);
 }

@@ -32,6 +32,16 @@ STATICINLINE void client_wait_semaphoreui64(
     {
         GLW_FPTR_CHECK(ClientWaitSemaphoreui64NVX)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glClientWaitSemaphoreui64NVX,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(semaphoreArray.data()),
+            semaphoreArray.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(fenceValueArray.data()),
+            fenceValueArray.size_bytes()));
+#endif
     glClientWaitSemaphoreui64NVX(
         semaphoreArray.size(),
         semaphoreArray.size()
@@ -56,6 +66,9 @@ create_progress_fence(error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(CreateProgressFenceNVX)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCreateProgressFenceNVX);
+#endif
     auto out = glCreateProgressFenceNVX();
     detail::error_check("CreateProgressFenceNVX"sv, check_errors);
     return out;
@@ -90,6 +103,17 @@ STATICINLINE void signal_semaphoreui64(
     {
         GLW_FPTR_CHECK(SignalSemaphoreui64NVX)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glSignalSemaphoreui64NVX,
+        signalGpu,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(semaphoreArray.data()),
+            semaphoreArray.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(fenceValueArray.data()),
+            fenceValueArray.size_bytes()));
+#endif
     glSignalSemaphoreui64NVX(
         signalGpu,
         semaphoreArray.size(),
@@ -131,6 +155,17 @@ STATICINLINE void wait_semaphoreui64(
     {
         GLW_FPTR_CHECK(WaitSemaphoreui64NVX)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glWaitSemaphoreui64NVX,
+        waitGpu,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(semaphoreArray.data()),
+            semaphoreArray.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(fenceValueArray.data()),
+            fenceValueArray.size_bytes()));
+#endif
     glWaitSemaphoreui64NVX(
         waitGpu,
         semaphoreArray.size(),

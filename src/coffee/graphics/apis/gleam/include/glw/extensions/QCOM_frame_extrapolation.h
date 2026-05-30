@@ -25,6 +25,9 @@ STATICINLINE void extrapolate_tex_2d(
     {
         GLW_FPTR_CHECK(ExtrapolateTex2DQCOM)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glExtrapolateTex2DQCOM, src1, src2, output, scaleFactor);
+#endif
     glExtrapolateTex2DQCOM(src1, src2, output, scaleFactor);
     detail::error_check("ExtrapolateTex2DQCOM"sv, check_errors);
 }

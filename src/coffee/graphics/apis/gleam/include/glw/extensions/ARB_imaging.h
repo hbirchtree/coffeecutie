@@ -82,6 +82,9 @@ STATICINLINE void blend_color(
     {
         GLW_FPTR_CHECK(BlendColor)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendColor, red);
+#endif
     glBlendColor(red[0], red[1], red[2], red[3]);
     detail::error_check("BlendColor"sv, check_errors);
 }
@@ -100,6 +103,9 @@ STATICINLINE void blend_equation(
     {
         GLW_FPTR_CHECK(BlendEquation)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendEquation, mode);
+#endif
     glBlendEquation(static_cast<GLenum>(mode));
     detail::error_check("BlendEquation"sv, check_errors);
 }

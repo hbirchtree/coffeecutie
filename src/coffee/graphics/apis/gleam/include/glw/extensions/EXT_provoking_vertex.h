@@ -23,6 +23,9 @@ STATICINLINE void provoking_vertex(
     {
         GLW_FPTR_CHECK(ProvokingVertexEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProvokingVertexEXT, mode);
+#endif
     glProvokingVertexEXT(static_cast<GLenum>(mode));
     detail::error_check("ProvokingVertexEXT"sv, check_errors);
 }

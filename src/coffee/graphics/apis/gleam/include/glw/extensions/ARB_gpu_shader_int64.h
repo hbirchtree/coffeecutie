@@ -39,6 +39,14 @@ STATICINLINE void get_uniformi64v(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetUniformi64vARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        program,
+        location);
+#endif
     glGetUniformi64vARB(
         program,
         location,
@@ -74,6 +82,14 @@ STATICINLINE void get_uniformui64v(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetUniformui64vARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        program,
+        location);
+#endif
     glGetUniformui64vARB(
         program,
         location,
@@ -111,6 +127,15 @@ STATICINLINE void getn_uniformi64v(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetnUniformi64vARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        program,
+        location,
+        bufSize);
+#endif
     glGetnUniformi64vARB(
         program,
         location,
@@ -149,6 +174,15 @@ STATICINLINE void getn_uniformui64v(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetnUniformui64vARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        program,
+        location,
+        bufSize);
+#endif
     glGetnUniformui64vARB(
         program,
         location,
@@ -180,6 +214,9 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniform1i64ARB, program, location, x);
+#endif
     glProgramUniform1i64ARB(program, location, x);
     detail::error_check("ProgramUniform1i64ARB"sv, check_errors);
 }
@@ -214,6 +251,14 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniform1i64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniform1i64vARB(
         program,
         location,
@@ -245,6 +290,9 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniform1ui64ARB, program, location, x);
+#endif
     glProgramUniform1ui64ARB(program, location, x);
     detail::error_check("ProgramUniform1ui64ARB"sv, check_errors);
 }
@@ -279,6 +327,14 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniform1ui64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniform1ui64vARB(
         program,
         location,
@@ -313,6 +369,9 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniform2i64ARB, program, location, x);
+#endif
     glProgramUniform2i64ARB(program, location, x[0], x[1]);
     detail::error_check("ProgramUniform2i64ARB"sv, check_errors);
 }
@@ -345,6 +404,14 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniform2i64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniform2i64vARB(
         program,
         location,
@@ -379,6 +446,9 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniform2ui64ARB, program, location, x);
+#endif
     glProgramUniform2ui64ARB(program, location, x[0], x[1]);
     detail::error_check("ProgramUniform2ui64ARB"sv, check_errors);
 }
@@ -411,6 +481,14 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniform2ui64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniform2ui64vARB(
         program,
         location,
@@ -446,6 +524,9 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniform3i64ARB, program, location, x);
+#endif
     glProgramUniform3i64ARB(program, location, x[0], x[1], x[2]);
     detail::error_check("ProgramUniform3i64ARB"sv, check_errors);
 }
@@ -478,6 +559,14 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniform3i64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniform3i64vARB(
         program,
         location,
@@ -513,6 +602,9 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniform3ui64ARB, program, location, x);
+#endif
     glProgramUniform3ui64ARB(program, location, x[0], x[1], x[2]);
     detail::error_check("ProgramUniform3ui64ARB"sv, check_errors);
 }
@@ -545,6 +637,14 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniform3ui64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniform3ui64vARB(
         program,
         location,
@@ -581,6 +681,9 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniform4i64ARB, program, location, x);
+#endif
     glProgramUniform4i64ARB(program, location, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramUniform4i64ARB"sv, check_errors);
 }
@@ -613,6 +716,14 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniform4i64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniform4i64vARB(
         program,
         location,
@@ -649,6 +760,9 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramUniform4ui64ARB, program, location, x);
+#endif
     glProgramUniform4ui64ARB(program, location, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramUniform4ui64ARB"sv, check_errors);
 }
@@ -681,6 +795,14 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramUniform4ui64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        program,
+        location);
+#endif
     glProgramUniform4ui64vARB(
         program,
         location,
@@ -703,6 +825,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform1i64ARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform1i64ARB, location, x);
+#endif
     glUniform1i64ARB(location, x);
     detail::error_check("Uniform1i64ARB"sv, check_errors);
 }
@@ -730,6 +855,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform1i64vARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform1i64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform1i64vARB(
         location, value.size(), reinterpret_cast<const GLint64*>(value.data()));
     detail::error_check("Uniform1i64vARB"sv, check_errors);
@@ -749,6 +881,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform1ui64ARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform1ui64ARB, location, x);
+#endif
     glUniform1ui64ARB(location, x);
     detail::error_check("Uniform1ui64ARB"sv, check_errors);
 }
@@ -776,6 +911,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform1ui64vARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform1ui64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform1ui64vARB(
         location,
         value.size(),
@@ -802,6 +944,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform2i64ARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform2i64ARB, location, x);
+#endif
     glUniform2i64ARB(location, x[0], x[1]);
     detail::error_check("Uniform2i64ARB"sv, check_errors);
 }
@@ -827,6 +972,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform2i64vARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform2i64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform2i64vARB(
         location, value.size(), reinterpret_cast<const GLint64*>(value.data()));
     detail::error_check("Uniform2i64vARB"sv, check_errors);
@@ -851,6 +1003,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform2ui64ARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform2ui64ARB, location, x);
+#endif
     glUniform2ui64ARB(location, x[0], x[1]);
     detail::error_check("Uniform2ui64ARB"sv, check_errors);
 }
@@ -876,6 +1031,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform2ui64vARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform2ui64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform2ui64vARB(
         location,
         value.size(),
@@ -903,6 +1065,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform3i64ARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform3i64ARB, location, x);
+#endif
     glUniform3i64ARB(location, x[0], x[1], x[2]);
     detail::error_check("Uniform3i64ARB"sv, check_errors);
 }
@@ -928,6 +1093,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform3i64vARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform3i64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform3i64vARB(
         location, value.size(), reinterpret_cast<const GLint64*>(value.data()));
     detail::error_check("Uniform3i64vARB"sv, check_errors);
@@ -953,6 +1125,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform3ui64ARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform3ui64ARB, location, x);
+#endif
     glUniform3ui64ARB(location, x[0], x[1], x[2]);
     detail::error_check("Uniform3ui64ARB"sv, check_errors);
 }
@@ -978,6 +1153,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform3ui64vARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform3ui64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform3ui64vARB(
         location,
         value.size(),
@@ -1006,6 +1188,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform4i64ARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform4i64ARB, location, x);
+#endif
     glUniform4i64ARB(location, x[0], x[1], x[2], x[3]);
     detail::error_check("Uniform4i64ARB"sv, check_errors);
 }
@@ -1031,6 +1216,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform4i64vARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform4i64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform4i64vARB(
         location, value.size(), reinterpret_cast<const GLint64*>(value.data()));
     detail::error_check("Uniform4i64vARB"sv, check_errors);
@@ -1057,6 +1249,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform4ui64ARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform4ui64ARB, location, x);
+#endif
     glUniform4ui64ARB(location, x[0], x[1], x[2], x[3]);
     detail::error_check("Uniform4ui64ARB"sv, check_errors);
 }
@@ -1082,6 +1277,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform4ui64vARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform4ui64vARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform4ui64vARB(
         location,
         value.size(),

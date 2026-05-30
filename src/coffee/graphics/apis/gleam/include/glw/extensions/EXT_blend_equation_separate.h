@@ -23,6 +23,9 @@ STATICINLINE void blend_equation_separate(
     {
         GLW_FPTR_CHECK(BlendEquationSeparateEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendEquationSeparateEXT, modeRGB, modeAlpha);
+#endif
     glBlendEquationSeparateEXT(
         static_cast<GLenum>(modeRGB), static_cast<GLenum>(modeAlpha));
     detail::error_check("BlendEquationSeparateEXT"sv, check_errors);

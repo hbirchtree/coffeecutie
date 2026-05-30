@@ -43,6 +43,10 @@ STATICINLINE void tex_storage_sparse(
     {
         GLW_FPTR_CHECK(TexStorageSparseAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexStorageSparseAMD, target, internalFormat, width, layers, flags);
+#endif
     glTexStorageSparseAMD(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalFormat),
@@ -87,6 +91,16 @@ STATICINLINE void texture_storage_sparse(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTextureStorageSparseAMD,
+        texture,
+        target,
+        internalFormat,
+        width,
+        layers,
+        flags);
+#endif
     glTextureStorageSparseAMD(
         texture,
         target,

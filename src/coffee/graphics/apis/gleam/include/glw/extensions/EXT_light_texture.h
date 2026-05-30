@@ -31,6 +31,9 @@ STATICINLINE void apply_texture(
     {
         GLW_FPTR_CHECK(ApplyTextureEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glApplyTextureEXT, mode);
+#endif
     glApplyTextureEXT(static_cast<GLenum>(mode));
     detail::error_check("ApplyTextureEXT"sv, check_errors);
 }
@@ -49,6 +52,9 @@ STATICINLINE void texture_light(
     {
         GLW_FPTR_CHECK(TextureLightEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTextureLightEXT, pname);
+#endif
     glTextureLightEXT(static_cast<GLenum>(pname));
     detail::error_check("TextureLightEXT"sv, check_errors);
 }
@@ -69,6 +75,9 @@ STATICINLINE void texture_material(
     {
         GLW_FPTR_CHECK(TextureMaterialEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTextureMaterialEXT, face, mode);
+#endif
     glTextureMaterialEXT(static_cast<GLenum>(face), static_cast<GLenum>(mode));
     detail::error_check("TextureMaterialEXT"sv, check_errors);
 }

@@ -23,6 +23,10 @@ STATICINLINE void draw_elements_base_vertex(
     {
         GLW_FPTR_CHECK(DrawElementsBaseVertex)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawElementsBaseVertex, mode, count, type, indices, basevertex);
+#endif
     glDrawElementsBaseVertex(
         static_cast<GLenum>(mode),
         count,
@@ -59,6 +63,16 @@ STATICINLINE void draw_elements_instanced_base_vertex(
     {
         GLW_FPTR_CHECK(DrawElementsInstancedBaseVertex)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawElementsInstancedBaseVertex,
+        mode,
+        count,
+        type,
+        indices,
+        instancecount,
+        basevertex);
+#endif
     glDrawElementsInstancedBaseVertex(
         static_cast<GLenum>(mode),
         count,
@@ -98,6 +112,19 @@ STATICINLINE void draw_range_elements_base_vertex(
     {
         GLW_FPTR_CHECK(DrawRangeElementsBaseVertex)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glDrawRangeElementsBaseVertex,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(indices.data()),
+            indices.size_bytes()),
+        mode,
+        start,
+        end,
+        count,
+        type,
+        basevertex);
+#endif
     glDrawRangeElementsBaseVertex(
         static_cast<GLenum>(mode),
         start,
@@ -142,6 +169,18 @@ STATICINLINE void multi_draw_elements_base_vertex(
     GLsizei drawcount = count.size();
     detail::assert_equal(count.size(), drawcount);
     detail::assert_equal(basevertex.size(), drawcount);
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMultiDrawElementsBaseVertex,
+        mode,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(count.data()), count.size_bytes()),
+        type,
+        indices,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(basevertex.data()),
+            basevertex.size_bytes()));
+#endif
     glMultiDrawElementsBaseVertex(
         static_cast<GLenum>(mode),
         count.data(),
@@ -167,6 +206,9 @@ STATICINLINE void provoking_vertex(
     {
         GLW_FPTR_CHECK(ProvokingVertex)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProvokingVertex, mode);
+#endif
     glProvokingVertex(static_cast<GLenum>(mode));
     detail::error_check("ProvokingVertex"sv, check_errors);
 }
@@ -191,6 +233,9 @@ STATICINLINE group::sync_status client_wait_sync(
     {
         GLW_FPTR_CHECK(ClientWaitSync)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glClientWaitSync, sync, flags, timeout);
+#endif
     auto out = glClientWaitSync(sync, static_cast<GLenum>(flags), timeout);
     detail::error_check("ClientWaitSync"sv, check_errors);
     return static_cast<group::sync_status>(out);
@@ -211,6 +256,9 @@ STATICINLINE void delete_sync(
     {
         GLW_FPTR_CHECK(DeleteSync)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDeleteSync, sync);
+#endif
     glDeleteSync(sync);
     detail::error_check("DeleteSync"sv, check_errors);
 }
@@ -233,6 +281,9 @@ STATICINLINE GLsync fence_sync(
     {
         GLW_FPTR_CHECK(FenceSync)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFenceSync, condition, flags);
+#endif
     auto out =
         glFenceSync(static_cast<GLenum>(condition), static_cast<GLenum>(flags));
     detail::error_check("FenceSync"sv, check_errors);
@@ -261,6 +312,13 @@ STATICINLINE void get_integer64v(
     {
         GLW_FPTR_CHECK(GetInteger64v)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetInteger64v,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        pname);
+#endif
     glGetInteger64v(
         static_cast<GLenum>(pname),
         data.size() ? reinterpret_cast<GLint64*>(data.data()) : nullptr);
@@ -294,6 +352,15 @@ STATICINLINE void get_synciv(
     {
         GLW_FPTR_CHECK(GetSynciv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetSynciv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(values.data()), values.size_bytes()),
+        sync,
+        pname,
+        length);
+#endif
     glGetSynciv(
         sync,
         static_cast<GLenum>(pname),
@@ -318,6 +385,9 @@ is_sync(GLsync sync, error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(IsSync)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glIsSync, sync);
+#endif
     auto out = glIsSync(sync);
     detail::error_check("IsSync"sv, check_errors);
     return out;
@@ -343,6 +413,9 @@ STATICINLINE void wait_sync(
     {
         GLW_FPTR_CHECK(WaitSync)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glWaitSync, sync, flags, timeout);
+#endif
     glWaitSync(sync, static_cast<GLenum>(flags), timeout);
     detail::error_check("WaitSync"sv, check_errors);
 }
@@ -374,6 +447,9 @@ STATICINLINE void framebuffer_texture(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFramebufferTexture, target, attachment, texture, level);
+#endif
     glFramebufferTexture(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),
@@ -406,6 +482,14 @@ STATICINLINE void get_buffer_parameteri64v(
     {
         GLW_FPTR_CHECK(GetBufferParameteri64v)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetBufferParameteri64v,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetBufferParameteri64v(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -437,6 +521,14 @@ STATICINLINE void get_integer64i_v(
     {
         GLW_FPTR_CHECK(GetInteger64i_v)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetInteger64i_v,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        target,
+        index);
+#endif
     glGetInteger64i_v(
         static_cast<GLenum>(target),
         index,
@@ -468,6 +560,13 @@ STATICINLINE void get_multisamplefv(
     {
         GLW_FPTR_CHECK(GetMultisamplefv)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetMultisamplefv,
+        gsl::span<char>(reinterpret_cast<char*>(val.data()), val.size_bytes()),
+        pname,
+        index);
+#endif
     glGetMultisamplefv(
         static_cast<GLenum>(pname),
         index,
@@ -491,6 +590,9 @@ STATICINLINE void sample_maski(
     {
         GLW_FPTR_CHECK(SampleMaski)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSampleMaski, maskNumber, mask);
+#endif
     glSampleMaski(maskNumber, mask);
     detail::error_check("SampleMaski"sv, check_errors);
 }
@@ -522,6 +624,15 @@ STATICINLINE void tex_image_2d_multisample(
     {
         GLW_FPTR_CHECK(TexImage2DMultisample)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexImage2DMultisample,
+        target,
+        samples,
+        internalformat,
+        width,
+        fixedsamplelocations);
+#endif
     glTexImage2DMultisample(
         static_cast<GLenum>(target),
         samples,
@@ -560,6 +671,15 @@ STATICINLINE void tex_image_3d_multisample(
     {
         GLW_FPTR_CHECK(TexImage3DMultisample)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glTexImage3DMultisample,
+        target,
+        samples,
+        internalformat,
+        width,
+        fixedsamplelocations);
+#endif
     glTexImage3DMultisample(
         static_cast<GLenum>(target),
         samples,

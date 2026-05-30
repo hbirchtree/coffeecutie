@@ -69,6 +69,9 @@ STATICINLINE void draw_mesh_tasks(
     {
         GLW_FPTR_CHECK(DrawMeshTasksNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDrawMeshTasksNV, first, count);
+#endif
     glDrawMeshTasksNV(first, count);
     detail::error_check("DrawMeshTasksNV"sv, check_errors);
 }
@@ -86,6 +89,9 @@ STATICINLINE void draw_mesh_tasks_indirect(
     {
         GLW_FPTR_CHECK(DrawMeshTasksIndirectNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDrawMeshTasksIndirectNV, indirect);
+#endif
     glDrawMeshTasksIndirectNV(indirect);
     detail::error_check("DrawMeshTasksIndirectNV"sv, check_errors);
 }
@@ -108,6 +114,9 @@ STATICINLINE void multi_draw_mesh_tasks_indirect(
     {
         GLW_FPTR_CHECK(MultiDrawMeshTasksIndirectNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMultiDrawMeshTasksIndirectNV, indirect, drawcount, stride);
+#endif
     glMultiDrawMeshTasksIndirectNV(indirect, drawcount, stride);
     detail::error_check("MultiDrawMeshTasksIndirectNV"sv, check_errors);
 }
@@ -132,6 +141,14 @@ STATICINLINE void multi_draw_mesh_tasks_indirect_count(
     {
         GLW_FPTR_CHECK(MultiDrawMeshTasksIndirectCountNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMultiDrawMeshTasksIndirectCountNV,
+        indirect,
+        drawcount,
+        maxdrawcount,
+        stride);
+#endif
     glMultiDrawMeshTasksIndirectCountNV(
         indirect, drawcount, maxdrawcount, stride);
     detail::error_check("MultiDrawMeshTasksIndirectCountNV"sv, check_errors);

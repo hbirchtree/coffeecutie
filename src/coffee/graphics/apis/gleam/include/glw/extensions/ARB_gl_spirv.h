@@ -40,6 +40,19 @@ STATICINLINE void specialize_shader(
             glIsShader(shader);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glSpecializeShaderARB,
+        shader,
+        pEntryPoint,
+        numSpecializationConstants,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pConstantIndex.data()),
+            pConstantIndex.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(pConstantValue.data()),
+            pConstantValue.size_bytes()));
+#endif
     glSpecializeShaderARB(
         shader,
         pEntryPoint.data(),

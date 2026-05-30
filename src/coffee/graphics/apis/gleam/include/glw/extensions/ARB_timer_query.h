@@ -36,6 +36,14 @@ STATICINLINE void get_query_objecti64v(
     {
         GLW_FPTR_CHECK(GetQueryObjecti64v)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetQueryObjecti64v,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        id,
+        pname);
+#endif
     glGetQueryObjecti64v(
         id,
         static_cast<GLenum>(pname),
@@ -66,6 +74,14 @@ STATICINLINE void get_query_objectui64v(
     {
         GLW_FPTR_CHECK(GetQueryObjectui64v)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetQueryObjectui64v,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        id,
+        pname);
+#endif
     glGetQueryObjectui64v(
         id,
         static_cast<GLenum>(pname),
@@ -89,6 +105,9 @@ STATICINLINE void query_counter(
     {
         GLW_FPTR_CHECK(QueryCounter)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glQueryCounter, id, target);
+#endif
     glQueryCounter(id, static_cast<GLenum>(target));
     detail::error_check("QueryCounter"sv, check_errors);
 }

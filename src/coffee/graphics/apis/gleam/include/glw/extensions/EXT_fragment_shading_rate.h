@@ -46,6 +46,17 @@ STATICINLINE void framebuffer_shading_rate(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFramebufferShadingRateEXT,
+        target,
+        attachment,
+        texture,
+        baseLayer,
+        numLayers,
+        texelWidth,
+        texelHeight);
+#endif
     glFramebufferShadingRateEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(attachment),
@@ -82,6 +93,15 @@ STATICINLINE void get_fragment_shading_rates(
     {
         GLW_FPTR_CHECK(GetFragmentShadingRatesEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetFragmentShadingRatesEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(shadingRates.data()),
+            shadingRates.size_bytes()),
+        samples,
+        count);
+#endif
     glGetFragmentShadingRatesEXT(
         samples,
         shadingRates.size(),
@@ -104,6 +124,9 @@ STATICINLINE void shading_rate(
     {
         GLW_FPTR_CHECK(ShadingRateEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glShadingRateEXT, rate);
+#endif
     glShadingRateEXT(static_cast<GLenum>(rate));
     detail::error_check("ShadingRateEXT"sv, check_errors);
 }
@@ -124,6 +147,9 @@ STATICINLINE void shading_rate_combiner_ops(
     {
         GLW_FPTR_CHECK(ShadingRateCombinerOpsEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glShadingRateCombinerOpsEXT, combinerOp0, combinerOp1);
+#endif
     glShadingRateCombinerOpsEXT(
         static_cast<GLenum>(combinerOp0), static_cast<GLenum>(combinerOp1));
     detail::error_check("ShadingRateCombinerOpsEXT"sv, check_errors);

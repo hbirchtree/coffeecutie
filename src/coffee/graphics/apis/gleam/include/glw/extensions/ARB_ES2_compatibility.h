@@ -34,6 +34,9 @@ STATICINLINE void clear_depthf(
     {
         GLW_FPTR_CHECK(ClearDepthf)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glClearDepthf, d);
+#endif
     glClearDepthf(d);
     detail::error_check("ClearDepthf"sv, check_errors);
 }
@@ -52,6 +55,9 @@ STATICINLINE void depth_rangef(
     {
         GLW_FPTR_CHECK(DepthRangef)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDepthRangef, n, f);
+#endif
     glDepthRangef(n, f);
     detail::error_check("DepthRangef"sv, check_errors);
 }
@@ -81,6 +87,15 @@ STATICINLINE void get_shader_precision_format(
     {
         GLW_FPTR_CHECK(GetShaderPrecisionFormat)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetShaderPrecisionFormat,
+        gsl::span<char>(
+            reinterpret_cast<char*>(range.data()), range.size_bytes()),
+        shadertype,
+        precisiontype,
+        precision);
+#endif
     glGetShaderPrecisionFormat(
         static_cast<GLenum>(shadertype),
         static_cast<GLenum>(precisiontype),
@@ -102,6 +117,9 @@ STATICINLINE void release_shader_compiler(
     {
         GLW_FPTR_CHECK(ReleaseShaderCompiler)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glReleaseShaderCompiler);
+#endif
     glReleaseShaderCompiler();
     detail::error_check("ReleaseShaderCompiler"sv, check_errors);
 }
@@ -134,6 +152,17 @@ STATICINLINE void shader_binary(
     {
         GLW_FPTR_CHECK(ShaderBinary)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glShaderBinary,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(shaders.data()),
+            shaders.size_bytes()),
+        binaryFormat,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(binary.data()), binary.size_bytes()),
+        length);
+#endif
     glShaderBinary(
         shaders.size(),
         shaders.size() ? reinterpret_cast<const GLuint*>(shaders.data())

@@ -14,6 +14,9 @@ STATICINLINE void active_texture(
     {
         GLW_FPTR_CHECK(ActiveTexture)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glActiveTexture, texture);
+#endif
     glActiveTexture(static_cast<GLenum>(texture));
     detail::error_check("ActiveTexture"sv, check_errors);
 }
@@ -46,6 +49,17 @@ STATICINLINE void compressed_tex_image_1d(
     {
         GLW_FPTR_CHECK(CompressedTexImage1D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCompressedTexImage1D,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        target,
+        level,
+        internalformat,
+        width,
+        border);
+#endif
     glCompressedTexImage1D(
         static_cast<GLenum>(target),
         level,
@@ -88,6 +102,17 @@ STATICINLINE void compressed_tex_image_2d(
     {
         GLW_FPTR_CHECK(CompressedTexImage2D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCompressedTexImage2D,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        target,
+        level,
+        internalformat,
+        width,
+        border);
+#endif
     glCompressedTexImage2D(
         static_cast<GLenum>(target),
         level,
@@ -132,6 +157,17 @@ STATICINLINE void compressed_tex_image_3d(
     {
         GLW_FPTR_CHECK(CompressedTexImage3D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCompressedTexImage3D,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        target,
+        level,
+        internalformat,
+        width,
+        border);
+#endif
     glCompressedTexImage3D(
         static_cast<GLenum>(target),
         level,
@@ -174,6 +210,17 @@ STATICINLINE void compressed_tex_sub_image_1d(
     {
         GLW_FPTR_CHECK(CompressedTexSubImage1D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCompressedTexSubImage1D,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        target,
+        level,
+        xoffset,
+        width,
+        format);
+#endif
     glCompressedTexSubImage1D(
         static_cast<GLenum>(target),
         level,
@@ -218,6 +265,17 @@ STATICINLINE void compressed_tex_sub_image_2d(
     {
         GLW_FPTR_CHECK(CompressedTexSubImage2D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCompressedTexSubImage2D,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        target,
+        level,
+        xoffset,
+        width,
+        format);
+#endif
     glCompressedTexSubImage2D(
         static_cast<GLenum>(target),
         level,
@@ -266,6 +324,17 @@ STATICINLINE void compressed_tex_sub_image_3d(
     {
         GLW_FPTR_CHECK(CompressedTexSubImage3D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCompressedTexSubImage3D,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        target,
+        level,
+        xoffset,
+        width,
+        format);
+#endif
     glCompressedTexSubImage3D(
         static_cast<GLenum>(target),
         level,
@@ -302,6 +371,13 @@ STATICINLINE void get_compressed_tex_image(
     {
         GLW_FPTR_CHECK(GetCompressedTexImage)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetCompressedTexImage,
+        gsl::span<char>(reinterpret_cast<char*>(img.data()), img.size_bytes()),
+        target,
+        level);
+#endif
     glGetCompressedTexImage(
         static_cast<GLenum>(target),
         level,
@@ -325,6 +401,9 @@ STATICINLINE void sample_coverage(
     {
         GLW_FPTR_CHECK(SampleCoverage)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSampleCoverage, value, invert);
+#endif
     glSampleCoverage(value, invert);
     detail::error_check("SampleCoverage"sv, check_errors);
 }

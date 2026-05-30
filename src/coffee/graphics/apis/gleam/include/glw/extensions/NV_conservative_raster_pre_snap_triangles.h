@@ -22,6 +22,9 @@ STATICINLINE void conservative_raster_parameter(
     {
         GLW_FPTR_CHECK(ConservativeRasterParameteriNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glConservativeRasterParameteriNV, pname, param);
+#endif
     glConservativeRasterParameteriNV(pname, param);
     detail::error_check("ConservativeRasterParameteriNV"sv, check_errors);
 }

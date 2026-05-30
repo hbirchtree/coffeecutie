@@ -22,6 +22,9 @@ STATICINLINE void alpha_to_coverage_dither_control(
     {
         GLW_FPTR_CHECK(AlphaToCoverageDitherControlNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glAlphaToCoverageDitherControlNV, mode);
+#endif
     glAlphaToCoverageDitherControlNV(mode);
     detail::error_check("AlphaToCoverageDitherControlNV"sv, check_errors);
 }

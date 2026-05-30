@@ -31,6 +31,9 @@ STATICINLINE void blend_color(
     {
         GLW_FPTR_CHECK(BlendColorEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBlendColorEXT, red);
+#endif
     glBlendColorEXT(red[0], red[1], red[2], red[3]);
     detail::error_check("BlendColorEXT"sv, check_errors);
 }

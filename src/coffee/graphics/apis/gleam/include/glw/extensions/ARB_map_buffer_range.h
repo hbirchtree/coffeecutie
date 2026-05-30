@@ -29,6 +29,9 @@ STATICINLINE void flush_mapped_buffer_range(
     {
         GLW_FPTR_CHECK(FlushMappedBufferRange)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glFlushMappedBufferRange, target, offset, length);
+#endif
     glFlushMappedBufferRange(static_cast<GLenum>(target), offset, length);
     detail::error_check("FlushMappedBufferRange"sv, check_errors);
 }
@@ -53,6 +56,9 @@ STATICINLINE void* map_buffer_range(
     {
         GLW_FPTR_CHECK(MapBufferRange)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMapBufferRange, target, offset, length, access);
+#endif
     auto out = glMapBufferRange(
         static_cast<GLenum>(target),
         offset,

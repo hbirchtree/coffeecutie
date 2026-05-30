@@ -38,6 +38,15 @@ STATICINLINE void framebuffer_sample_positionsfv(
     {
         GLW_FPTR_CHECK(FramebufferSamplePositionsfvAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glFramebufferSamplePositionsfvAMD,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(values.data()), values.size_bytes()),
+        target,
+        numsamples,
+        pixelindex);
+#endif
     glFramebufferSamplePositionsfvAMD(
         static_cast<GLenum>(target),
         numsamples,
@@ -76,6 +85,17 @@ STATICINLINE void get_framebuffer_parameter(
     {
         GLW_FPTR_CHECK(GetFramebufferParameterfvAMD)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetFramebufferParameterfvAMD,
+        gsl::span<char>(
+            reinterpret_cast<char*>(values.data()), values.size_bytes()),
+        target,
+        pname,
+        numsamples,
+        pixelindex,
+        size);
+#endif
     glGetFramebufferParameterfvAMD(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -120,6 +140,17 @@ STATICINLINE void get_named_framebuffer_parameter(
             glIsFramebuffer(framebuffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetNamedFramebufferParameterfvAMD,
+        gsl::span<char>(
+            reinterpret_cast<char*>(values.data()), values.size_bytes()),
+        framebuffer,
+        pname,
+        numsamples,
+        pixelindex,
+        size);
+#endif
     glGetNamedFramebufferParameterfvAMD(
         framebuffer,
         pname,
@@ -161,6 +192,15 @@ STATICINLINE void named_framebuffer_sample_positionsfv(
             glIsFramebuffer(framebuffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glNamedFramebufferSamplePositionsfvAMD,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(values.data()), values.size_bytes()),
+        framebuffer,
+        numsamples,
+        pixelindex);
+#endif
     glNamedFramebufferSamplePositionsfvAMD(
         framebuffer,
         numsamples,

@@ -23,6 +23,9 @@ STATICINLINE void subpixel_precision_bias(
     {
         GLW_FPTR_CHECK(SubpixelPrecisionBiasNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glSubpixelPrecisionBiasNV, xbits, ybits);
+#endif
     glSubpixelPrecisionBiasNV(xbits, ybits);
     detail::error_check("SubpixelPrecisionBiasNV"sv, check_errors);
 }

@@ -77,6 +77,16 @@ STATICINLINE void combiner_input(
     {
         GLW_FPTR_CHECK(CombinerInputNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glCombinerInputNV,
+        stage,
+        portion,
+        variable,
+        input,
+        mapping,
+        componentUsage);
+#endif
     glCombinerInputNV(
         static_cast<GLenum>(stage),
         static_cast<GLenum>(portion),
@@ -119,6 +129,20 @@ STATICINLINE void combiner_output(
     {
         GLW_FPTR_CHECK(CombinerOutputNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glCombinerOutputNV,
+        stage,
+        portion,
+        abOutput,
+        cdOutput,
+        sumOutput,
+        scale,
+        bias,
+        abDotProduct,
+        cdDotProduct,
+        muxSum);
+#endif
     glCombinerOutputNV(
         static_cast<GLenum>(stage),
         static_cast<GLenum>(portion),
@@ -149,6 +173,9 @@ STATICINLINE void combiner_parameter(
     {
         GLW_FPTR_CHECK(CombinerParameterfNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCombinerParameterfNV, pname, param);
+#endif
     glCombinerParameterfNV(static_cast<GLenum>(pname), param);
     detail::error_check("CombinerParameterfNV"sv, check_errors);
 }
@@ -175,6 +202,13 @@ STATICINLINE void combiner_parameter(
     {
         GLW_FPTR_CHECK(CombinerParameterfvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCombinerParameterfvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        pname);
+#endif
     glCombinerParameterfvNV(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfloat*>(params.data())
@@ -198,6 +232,9 @@ STATICINLINE void combiner_parameter(
     {
         GLW_FPTR_CHECK(CombinerParameteriNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCombinerParameteriNV, pname, param);
+#endif
     glCombinerParameteriNV(static_cast<GLenum>(pname), param);
     detail::error_check("CombinerParameteriNV"sv, check_errors);
 }
@@ -224,6 +261,13 @@ STATICINLINE void combiner_parameter(
     {
         GLW_FPTR_CHECK(CombinerParameterivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glCombinerParameterivNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        pname);
+#endif
     glCombinerParameterivNV(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
@@ -251,6 +295,10 @@ STATICINLINE void final_combiner_input(
     {
         GLW_FPTR_CHECK(FinalCombinerInputNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glFinalCombinerInputNV, variable, input, mapping, componentUsage);
+#endif
     glFinalCombinerInputNV(
         static_cast<GLenum>(variable),
         static_cast<GLenum>(input),
@@ -286,6 +334,16 @@ STATICINLINE void get_combiner_input_parameter(
     {
         GLW_FPTR_CHECK(GetCombinerInputParameterfvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetCombinerInputParameterfvNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        stage,
+        portion,
+        variable,
+        pname);
+#endif
     glGetCombinerInputParameterfvNV(
         static_cast<GLenum>(stage),
         static_cast<GLenum>(portion),
@@ -322,6 +380,16 @@ STATICINLINE void get_combiner_input_parameter(
     {
         GLW_FPTR_CHECK(GetCombinerInputParameterivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetCombinerInputParameterivNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        stage,
+        portion,
+        variable,
+        pname);
+#endif
     glGetCombinerInputParameterivNV(
         static_cast<GLenum>(stage),
         static_cast<GLenum>(portion),
@@ -356,6 +424,15 @@ STATICINLINE void get_combiner_output_parameter(
     {
         GLW_FPTR_CHECK(GetCombinerOutputParameterfvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetCombinerOutputParameterfvNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        stage,
+        portion,
+        pname);
+#endif
     glGetCombinerOutputParameterfvNV(
         static_cast<GLenum>(stage),
         static_cast<GLenum>(portion),
@@ -389,6 +466,15 @@ STATICINLINE void get_combiner_output_parameter(
     {
         GLW_FPTR_CHECK(GetCombinerOutputParameterivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetCombinerOutputParameterivNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        stage,
+        portion,
+        pname);
+#endif
     glGetCombinerOutputParameterivNV(
         static_cast<GLenum>(stage),
         static_cast<GLenum>(portion),
@@ -420,6 +506,14 @@ STATICINLINE void get_final_combiner_input_parameter(
     {
         GLW_FPTR_CHECK(GetFinalCombinerInputParameterfvNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetFinalCombinerInputParameterfvNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        variable,
+        pname);
+#endif
     glGetFinalCombinerInputParameterfvNV(
         static_cast<GLenum>(variable),
         static_cast<GLenum>(pname),
@@ -450,6 +544,14 @@ STATICINLINE void get_final_combiner_input_parameter(
     {
         GLW_FPTR_CHECK(GetFinalCombinerInputParameterivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetFinalCombinerInputParameterivNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        variable,
+        pname);
+#endif
     glGetFinalCombinerInputParameterivNV(
         static_cast<GLenum>(variable),
         static_cast<GLenum>(pname),

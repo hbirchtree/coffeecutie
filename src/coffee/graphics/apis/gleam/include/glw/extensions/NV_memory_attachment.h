@@ -33,6 +33,9 @@ STATICINLINE void buffer_attach_memory(
     {
         GLW_FPTR_CHECK(BufferAttachMemoryNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glBufferAttachMemoryNV, target, memory, offset);
+#endif
     glBufferAttachMemoryNV(static_cast<GLenum>(target), memory, offset);
     detail::error_check("BufferAttachMemoryNV"sv, check_errors);
 }
@@ -64,6 +67,16 @@ STATICINLINE void get_memory_object_detached_resourcesuiv(
     {
         GLW_FPTR_CHECK(GetMemoryObjectDetachedResourcesuivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetMemoryObjectDetachedResourcesuivNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        memory,
+        pname,
+        first,
+        count);
+#endif
     glGetMemoryObjectDetachedResourcesuivNV(
         memory,
         pname,
@@ -88,6 +101,9 @@ STATICINLINE void reset_memory_object_parameter(
     {
         GLW_FPTR_CHECK(ResetMemoryObjectParameterNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glResetMemoryObjectParameterNV, memory, pname);
+#endif
     glResetMemoryObjectParameterNV(memory, pname);
     detail::error_check("ResetMemoryObjectParameterNV"sv, check_errors);
 }
@@ -110,6 +126,9 @@ STATICINLINE void tex_attach_memory(
     {
         GLW_FPTR_CHECK(TexAttachMemoryNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexAttachMemoryNV, target, memory, offset);
+#endif
     glTexAttachMemoryNV(static_cast<GLenum>(target), memory, offset);
     detail::error_check("TexAttachMemoryNV"sv, check_errors);
 }
@@ -137,6 +156,9 @@ STATICINLINE void named_buffer_attach_memory(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glNamedBufferAttachMemoryNV, buffer, memory, offset);
+#endif
     glNamedBufferAttachMemoryNV(buffer, memory, offset);
     detail::error_check("NamedBufferAttachMemoryNV"sv, check_errors);
 }
@@ -164,6 +186,9 @@ STATICINLINE void texture_attach_memory(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTextureAttachMemoryNV, texture, memory, offset);
+#endif
     glTextureAttachMemoryNV(texture, memory, offset);
     detail::error_check("TextureAttachMemoryNV"sv, check_errors);
 }

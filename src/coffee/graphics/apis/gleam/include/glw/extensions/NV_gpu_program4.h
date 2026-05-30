@@ -36,6 +36,14 @@ STATICINLINE void get_program_env_parameter_iiv(
     {
         GLW_FPTR_CHECK(GetProgramEnvParameterIivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetProgramEnvParameterIivNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glGetProgramEnvParameterIivNV(
         static_cast<GLenum>(target),
         index,
@@ -66,6 +74,14 @@ STATICINLINE void get_program_env_parameter_iuiv(
     {
         GLW_FPTR_CHECK(GetProgramEnvParameterIuivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetProgramEnvParameterIuivNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glGetProgramEnvParameterIuivNV(
         static_cast<GLenum>(target),
         index,
@@ -96,6 +112,14 @@ STATICINLINE void get_program_local_parameter_iiv(
     {
         GLW_FPTR_CHECK(GetProgramLocalParameterIivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetProgramLocalParameterIivNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glGetProgramLocalParameterIivNV(
         static_cast<GLenum>(target),
         index,
@@ -126,6 +150,14 @@ STATICINLINE void get_program_local_parameter_iuiv(
     {
         GLW_FPTR_CHECK(GetProgramLocalParameterIuivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetProgramLocalParameterIuivNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glGetProgramLocalParameterIuivNV(
         static_cast<GLenum>(target),
         index,
@@ -156,6 +188,9 @@ STATICINLINE void program_env_parameter_i4i(
     {
         GLW_FPTR_CHECK(ProgramEnvParameterI4iNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramEnvParameterI4iNV, target, index, x);
+#endif
     glProgramEnvParameterI4iNV(
         static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramEnvParameterI4iNV"sv, check_errors);
@@ -183,6 +218,14 @@ STATICINLINE void program_env_parameter_i4iv(
     {
         GLW_FPTR_CHECK(ProgramEnvParameterI4ivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramEnvParameterI4ivNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glProgramEnvParameterI4ivNV(
         static_cast<GLenum>(target),
         index,
@@ -213,6 +256,9 @@ STATICINLINE void program_env_parameter_i4ui(
     {
         GLW_FPTR_CHECK(ProgramEnvParameterI4uiNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramEnvParameterI4uiNV, target, index, x);
+#endif
     glProgramEnvParameterI4uiNV(
         static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramEnvParameterI4uiNV"sv, check_errors);
@@ -240,6 +286,14 @@ STATICINLINE void program_env_parameter_i4uiv(
     {
         GLW_FPTR_CHECK(ProgramEnvParameterI4uivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramEnvParameterI4uivNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glProgramEnvParameterI4uivNV(
         static_cast<GLenum>(target),
         index,
@@ -270,6 +324,14 @@ STATICINLINE void program_env_parameters_i4iv(
     {
         GLW_FPTR_CHECK(ProgramEnvParametersI4ivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramEnvParametersI4ivNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glProgramEnvParametersI4ivNV(
         static_cast<GLenum>(target),
         index,
@@ -301,6 +363,14 @@ STATICINLINE void program_env_parameters_i4uiv(
     {
         GLW_FPTR_CHECK(ProgramEnvParametersI4uivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramEnvParametersI4uivNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glProgramEnvParametersI4uivNV(
         static_cast<GLenum>(target),
         index,
@@ -332,6 +402,9 @@ STATICINLINE void program_local_parameter_i4i(
     {
         GLW_FPTR_CHECK(ProgramLocalParameterI4iNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramLocalParameterI4iNV, target, index, x);
+#endif
     glProgramLocalParameterI4iNV(
         static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramLocalParameterI4iNV"sv, check_errors);
@@ -359,6 +432,14 @@ STATICINLINE void program_local_parameter_i4iv(
     {
         GLW_FPTR_CHECK(ProgramLocalParameterI4ivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramLocalParameterI4ivNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glProgramLocalParameterI4ivNV(
         static_cast<GLenum>(target),
         index,
@@ -389,6 +470,9 @@ STATICINLINE void program_local_parameter_i4ui(
     {
         GLW_FPTR_CHECK(ProgramLocalParameterI4uiNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glProgramLocalParameterI4uiNV, target, index, x);
+#endif
     glProgramLocalParameterI4uiNV(
         static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramLocalParameterI4uiNV"sv, check_errors);
@@ -416,6 +500,14 @@ STATICINLINE void program_local_parameter_i4uiv(
     {
         GLW_FPTR_CHECK(ProgramLocalParameterI4uivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramLocalParameterI4uivNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glProgramLocalParameterI4uivNV(
         static_cast<GLenum>(target),
         index,
@@ -446,6 +538,14 @@ STATICINLINE void program_local_parameters_i4iv(
     {
         GLW_FPTR_CHECK(ProgramLocalParametersI4ivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramLocalParametersI4ivNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glProgramLocalParametersI4ivNV(
         static_cast<GLenum>(target),
         index,
@@ -477,6 +577,14 @@ STATICINLINE void program_local_parameters_i4uiv(
     {
         GLW_FPTR_CHECK(ProgramLocalParametersI4uivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glProgramLocalParametersI4uivNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        index);
+#endif
     glProgramLocalParametersI4uivNV(
         static_cast<GLenum>(target),
         index,

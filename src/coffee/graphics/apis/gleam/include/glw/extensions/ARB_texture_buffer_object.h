@@ -33,6 +33,9 @@ STATICINLINE void tex_buffer(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexBufferARB, target, internalformat, buffer);
+#endif
     glTexBufferARB(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),

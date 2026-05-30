@@ -23,6 +23,9 @@ STATICINLINE void draw_transform_feedback_instanced(
     {
         GLW_FPTR_CHECK(DrawTransformFeedbackInstanced)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDrawTransformFeedbackInstanced, mode, id, instancecount);
+#endif
     glDrawTransformFeedbackInstanced(
         static_cast<GLenum>(mode), id, instancecount);
     detail::error_check("DrawTransformFeedbackInstanced"sv, check_errors);
@@ -48,6 +51,14 @@ STATICINLINE void draw_transform_feedback_stream_instanced(
     {
         GLW_FPTR_CHECK(DrawTransformFeedbackStreamInstanced)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawTransformFeedbackStreamInstanced,
+        mode,
+        id,
+        stream,
+        instancecount);
+#endif
     glDrawTransformFeedbackStreamInstanced(
         static_cast<GLenum>(mode), id, stream, instancecount);
     detail::error_check("DrawTransformFeedbackStreamInstanced"sv, check_errors);

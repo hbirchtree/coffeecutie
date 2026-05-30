@@ -47,6 +47,17 @@ STATICINLINE void convolution_filter_1d(
     {
         GLW_FPTR_CHECK(ConvolutionFilter1DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glConvolutionFilter1DEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(image.data()), image.size_bytes()),
+        target,
+        internalformat,
+        width,
+        format,
+        type);
+#endif
     glConvolutionFilter1DEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
@@ -84,6 +95,17 @@ STATICINLINE void convolution_filter_2d(
     {
         GLW_FPTR_CHECK(ConvolutionFilter2DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glConvolutionFilter2DEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(image.data()), image.size_bytes()),
+        target,
+        internalformat,
+        width,
+        format,
+        type);
+#endif
     glConvolutionFilter2DEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
@@ -113,6 +135,9 @@ STATICINLINE void convolution_parameter(
     {
         GLW_FPTR_CHECK(ConvolutionParameterfEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glConvolutionParameterfEXT, target, pname, params);
+#endif
     glConvolutionParameterfEXT(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), params);
     detail::error_check("ConvolutionParameterfEXT"sv, check_errors);
@@ -142,6 +167,14 @@ STATICINLINE void convolution_parameter(
     {
         GLW_FPTR_CHECK(ConvolutionParameterfvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glConvolutionParameterfvEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glConvolutionParameterfvEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -168,6 +201,9 @@ STATICINLINE void convolution_parameter(
     {
         GLW_FPTR_CHECK(ConvolutionParameteriEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glConvolutionParameteriEXT, target, pname, params);
+#endif
     glConvolutionParameteriEXT(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), params);
     detail::error_check("ConvolutionParameteriEXT"sv, check_errors);
@@ -197,6 +233,14 @@ STATICINLINE void convolution_parameter(
     {
         GLW_FPTR_CHECK(ConvolutionParameterivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glConvolutionParameterivEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glConvolutionParameterivEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -228,6 +272,10 @@ STATICINLINE void copy_convolution_filter_1d(
     {
         GLW_FPTR_CHECK(CopyConvolutionFilter1DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glCopyConvolutionFilter1DEXT, target, internalformat, x, width);
+#endif
     glCopyConvolutionFilter1DEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
@@ -262,6 +310,10 @@ STATICINLINE void copy_convolution_filter_2d(
     {
         GLW_FPTR_CHECK(CopyConvolutionFilter2DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glCopyConvolutionFilter2DEXT, target, internalformat, x, width);
+#endif
     glCopyConvolutionFilter2DEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
@@ -294,6 +346,15 @@ STATICINLINE void get_convolution_filter(
     {
         GLW_FPTR_CHECK(GetConvolutionFilterEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetConvolutionFilterEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(image.data()), image.size_bytes()),
+        target,
+        format,
+        type);
+#endif
     glGetConvolutionFilterEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(format),
@@ -325,6 +386,14 @@ STATICINLINE void get_convolution_parameter(
     {
         GLW_FPTR_CHECK(GetConvolutionParameterfvEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetConvolutionParameterfvEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetConvolutionParameterfvEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -355,6 +424,14 @@ STATICINLINE void get_convolution_parameter(
     {
         GLW_FPTR_CHECK(GetConvolutionParameterivEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetConvolutionParameterivEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        pname);
+#endif
     glGetConvolutionParameterivEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
@@ -388,6 +465,18 @@ STATICINLINE void get_separable_filter(
     {
         GLW_FPTR_CHECK(GetSeparableFilterEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glGetSeparableFilterEXT,
+        target,
+        format,
+        type,
+        gsl::span<char>(reinterpret_cast<char*>(row.data()), row.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(column.data()), column.size_bytes()),
+        gsl::span<char>(
+            reinterpret_cast<char*>(span.data()), span.size_bytes()));
+#endif
     glGetSeparableFilterEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(format),
@@ -427,6 +516,19 @@ STATICINLINE void separable_filter_2d(
     {
         GLW_FPTR_CHECK(SeparableFilter2DEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glSeparableFilter2DEXT,
+        target,
+        internalformat,
+        width,
+        format,
+        type,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(row.data()), row.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(column.data()), column.size_bytes()));
+#endif
     glSeparableFilter2DEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),

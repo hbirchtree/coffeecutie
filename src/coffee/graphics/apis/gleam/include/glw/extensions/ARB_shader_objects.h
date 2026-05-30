@@ -39,6 +39,9 @@ STATICINLINE void attach_object(
     {
         GLW_FPTR_CHECK(AttachObjectARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glAttachObjectARB, containerObj, obj);
+#endif
     glAttachObjectARB(containerObj, obj);
     detail::error_check("AttachObjectARB"sv, check_errors);
 }
@@ -56,6 +59,9 @@ STATICINLINE void compile_shader(
     {
         GLW_FPTR_CHECK(CompileShaderARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCompileShaderARB, shaderObj);
+#endif
     glCompileShaderARB(shaderObj);
     detail::error_check("CompileShaderARB"sv, check_errors);
 }
@@ -73,6 +79,9 @@ create_program_object(error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(CreateProgramObjectARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCreateProgramObjectARB);
+#endif
     auto out = glCreateProgramObjectARB();
     detail::error_check("CreateProgramObjectARB"sv, check_errors);
     return out;
@@ -91,6 +100,9 @@ STATICINLINE GLhandleARB create_shader_object(
     {
         GLW_FPTR_CHECK(CreateShaderObjectARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glCreateShaderObjectARB, shaderType);
+#endif
     auto out = glCreateShaderObjectARB(static_cast<GLenum>(shaderType));
     detail::error_check("CreateShaderObjectARB"sv, check_errors);
     return out;
@@ -109,6 +121,9 @@ STATICINLINE void delete_object(
     {
         GLW_FPTR_CHECK(DeleteObjectARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDeleteObjectARB, obj);
+#endif
     glDeleteObjectARB(obj);
     detail::error_check("DeleteObjectARB"sv, check_errors);
 }
@@ -129,6 +144,9 @@ STATICINLINE void detach_object(
     {
         GLW_FPTR_CHECK(DetachObjectARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDetachObjectARB, containerObj, attachedObj);
+#endif
     glDetachObjectARB(containerObj, attachedObj);
     detail::error_check("DetachObjectARB"sv, check_errors);
 }
@@ -164,6 +182,17 @@ STATICINLINE void get_active_uniform(
     {
         GLW_FPTR_CHECK(GetActiveUniformARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetActiveUniformARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(name.data()), name.size_bytes()),
+        programObj,
+        index,
+        length,
+        size,
+        type);
+#endif
     glGetActiveUniformARB(
         programObj,
         index,
@@ -200,6 +229,13 @@ STATICINLINE void get_attached_objects(
     {
         GLW_FPTR_CHECK(GetAttachedObjectsARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetAttachedObjectsARB,
+        gsl::span<char>(reinterpret_cast<char*>(obj.data()), obj.size_bytes()),
+        containerObj,
+        count);
+#endif
     glGetAttachedObjectsARB(
         containerObj,
         obj.size(),
@@ -221,6 +257,9 @@ STATICINLINE GLhandleARB get_handle(
     {
         GLW_FPTR_CHECK(GetHandleARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetHandleARB, pname);
+#endif
     auto out = glGetHandleARB(static_cast<GLenum>(pname));
     detail::error_check("GetHandleARB"sv, check_errors);
     return out;
@@ -251,6 +290,14 @@ STATICINLINE void get_info_log(
     {
         GLW_FPTR_CHECK(GetInfoLogARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetInfoLogARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(infoLog.data()), infoLog.size_bytes()),
+        obj,
+        length);
+#endif
     glGetInfoLogARB(
         obj,
         infoLog.size(),
@@ -283,6 +330,14 @@ STATICINLINE void get_object_parameter(
     {
         GLW_FPTR_CHECK(GetObjectParameterfvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetObjectParameterfvARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        obj,
+        pname);
+#endif
     glGetObjectParameterfvARB(
         obj,
         pname,
@@ -313,6 +368,14 @@ STATICINLINE void get_object_parameter(
     {
         GLW_FPTR_CHECK(GetObjectParameterivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetObjectParameterivARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        obj,
+        pname);
+#endif
     glGetObjectParameterivARB(
         obj,
         pname,
@@ -345,6 +408,14 @@ STATICINLINE void get_shader_source(
     {
         GLW_FPTR_CHECK(GetShaderSourceARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetShaderSourceARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(source.data()), source.size_bytes()),
+        obj,
+        length);
+#endif
     glGetShaderSourceARB(
         obj,
         source.size(),
@@ -375,6 +446,13 @@ STATICINLINE GLint get_uniform_location(
     {
         GLW_FPTR_CHECK(GetUniformLocationARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetUniformLocationARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(name.data()), name.size_bytes()),
+        programObj);
+#endif
     auto out = glGetUniformLocationARB(
         programObj,
         name.size() ? reinterpret_cast<const GLcharARB*>(name.data())
@@ -406,6 +484,14 @@ STATICINLINE void get_uniformfv(
     {
         GLW_FPTR_CHECK(GetUniformfvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetUniformfvARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        programObj,
+        location);
+#endif
     glGetUniformfvARB(
         programObj,
         location,
@@ -436,6 +522,14 @@ STATICINLINE void get_uniformiv(
     {
         GLW_FPTR_CHECK(GetUniformivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetUniformivARB,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        programObj,
+        location);
+#endif
     glGetUniformivARB(
         programObj,
         location,
@@ -456,6 +550,9 @@ STATICINLINE void link_program(
     {
         GLW_FPTR_CHECK(LinkProgramARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glLinkProgramARB, programObj);
+#endif
     glLinkProgramARB(programObj);
     detail::error_check("LinkProgramARB"sv, check_errors);
 }
@@ -489,6 +586,15 @@ STATICINLINE void shader_source(
     {
         GLW_FPTR_CHECK(ShaderSourceARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glShaderSourceARB,
+        shaderObj,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(string.data()), string.size_bytes()),
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(length.data()), length.size_bytes()));
+#endif
     glShaderSourceARB(
         shaderObj,
         string.size(),
@@ -513,6 +619,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform1fARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform1fARB, location, v0);
+#endif
     glUniform1fARB(location, v0);
     detail::error_check("Uniform1fARB"sv, check_errors);
 }
@@ -540,6 +649,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform1fvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform1fvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform1fvARB(
         location, value.size(), reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("Uniform1fvARB"sv, check_errors);
@@ -559,6 +675,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform1iARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform1iARB, location, v0);
+#endif
     glUniform1iARB(location, v0);
     detail::error_check("Uniform1iARB"sv, check_errors);
 }
@@ -586,6 +705,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform1ivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform1ivARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform1ivARB(
         location, value.size(), reinterpret_cast<const GLint*>(value.data()));
     detail::error_check("Uniform1ivARB"sv, check_errors);
@@ -610,6 +736,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform2fARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform2fARB, location, v0);
+#endif
     glUniform2fARB(location, v0[0], v0[1]);
     detail::error_check("Uniform2fARB"sv, check_errors);
 }
@@ -635,6 +764,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform2fvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform2fvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform2fvARB(
         location, value.size(), reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("Uniform2fvARB"sv, check_errors);
@@ -659,6 +795,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform2iARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform2iARB, location, v0);
+#endif
     glUniform2iARB(location, v0[0], v0[1]);
     detail::error_check("Uniform2iARB"sv, check_errors);
 }
@@ -684,6 +823,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform2ivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform2ivARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform2ivARB(
         location, value.size(), reinterpret_cast<const GLint*>(value.data()));
     detail::error_check("Uniform2ivARB"sv, check_errors);
@@ -709,6 +855,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform3fARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform3fARB, location, v0);
+#endif
     glUniform3fARB(location, v0[0], v0[1], v0[2]);
     detail::error_check("Uniform3fARB"sv, check_errors);
 }
@@ -734,6 +883,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform3fvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform3fvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform3fvARB(
         location, value.size(), reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("Uniform3fvARB"sv, check_errors);
@@ -759,6 +915,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform3iARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform3iARB, location, v0);
+#endif
     glUniform3iARB(location, v0[0], v0[1], v0[2]);
     detail::error_check("Uniform3iARB"sv, check_errors);
 }
@@ -784,6 +943,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform3ivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform3ivARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform3ivARB(
         location, value.size(), reinterpret_cast<const GLint*>(value.data()));
     detail::error_check("Uniform3ivARB"sv, check_errors);
@@ -810,6 +976,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform4fARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform4fARB, location, v0);
+#endif
     glUniform4fARB(location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("Uniform4fARB"sv, check_errors);
 }
@@ -835,6 +1004,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform4fvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform4fvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform4fvARB(
         location, value.size(), reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("Uniform4fvARB"sv, check_errors);
@@ -861,6 +1037,9 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform4iARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUniform4iARB, location, v0);
+#endif
     glUniform4iARB(location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("Uniform4iARB"sv, check_errors);
 }
@@ -886,6 +1065,13 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform4ivARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniform4ivARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location);
+#endif
     glUniform4ivARB(
         location, value.size(), reinterpret_cast<const GLint*>(value.data()));
     detail::error_check("Uniform4ivARB"sv, check_errors);
@@ -914,6 +1100,14 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix2fvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniformMatrix2fvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location,
+        transpose);
+#endif
     glUniformMatrix2fvARB(
         location,
         value.size(),
@@ -945,6 +1139,14 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix3fvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniformMatrix3fvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location,
+        transpose);
+#endif
     glUniformMatrix3fvARB(
         location,
         value.size(),
@@ -976,6 +1178,14 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix4fvARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glUniformMatrix4fvARB,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        location,
+        transpose);
+#endif
     glUniformMatrix4fvARB(
         location,
         value.size(),
@@ -997,6 +1207,9 @@ STATICINLINE void use_program_object(
     {
         GLW_FPTR_CHECK(UseProgramObjectARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glUseProgramObjectARB, programObj);
+#endif
     glUseProgramObjectARB(programObj);
     detail::error_check("UseProgramObjectARB"sv, check_errors);
 }
@@ -1014,6 +1227,9 @@ STATICINLINE void validate_program(
     {
         GLW_FPTR_CHECK(ValidateProgramARB)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glValidateProgramARB, programObj);
+#endif
     glValidateProgramARB(programObj);
     detail::error_check("ValidateProgramARB"sv, check_errors);
 }

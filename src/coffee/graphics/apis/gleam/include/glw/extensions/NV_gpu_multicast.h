@@ -25,6 +25,9 @@ STATICINLINE void multicast_barrier(error_check check_errors = error_check::on)
     {
         GLW_FPTR_CHECK(MulticastBarrierNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMulticastBarrierNV);
+#endif
     glMulticastBarrierNV();
     detail::error_check("MulticastBarrierNV"sv, check_errors);
 }
@@ -65,6 +68,22 @@ STATICINLINE void multicast_blit_framebuffer(
     {
         GLW_FPTR_CHECK(MulticastBlitFramebufferNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMulticastBlitFramebufferNV,
+        srcGpu,
+        dstGpu,
+        srcX0,
+        srcY0,
+        srcX1,
+        srcY1,
+        dstX0,
+        dstY0,
+        dstX1,
+        dstY1,
+        mask,
+        filter);
+#endif
     glMulticastBlitFramebufferNV(
         srcGpu,
         dstGpu,
@@ -110,6 +129,16 @@ STATICINLINE void multicast_buffer_sub_data(
             glIsBuffer(buffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMulticastBufferSubDataNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        gpuMask,
+        buffer,
+        offset,
+        size);
+#endif
     glMulticastBufferSubDataNV(
         gpuMask,
         buffer,
@@ -145,6 +174,17 @@ STATICINLINE void multicast_copy_buffer_sub_data(
     {
         GLW_FPTR_CHECK(MulticastCopyBufferSubDataNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMulticastCopyBufferSubDataNV,
+        readGpu,
+        writeGpuMask,
+        readBuffer,
+        writeBuffer,
+        readOffset,
+        writeOffset,
+        size);
+#endif
     glMulticastCopyBufferSubDataNV(
         readGpu,
         writeGpuMask,
@@ -202,6 +242,27 @@ STATICINLINE void multicast_copy_image_sub_data(
     {
         GLW_FPTR_CHECK(MulticastCopyImageSubDataNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glMulticastCopyImageSubDataNV,
+        srcGpu,
+        dstGpuMask,
+        srcName,
+        srcTarget,
+        srcLevel,
+        srcX,
+        srcY,
+        srcZ,
+        dstName,
+        dstTarget,
+        dstLevel,
+        dstX,
+        dstY,
+        dstZ,
+        srcWidth,
+        srcHeight,
+        srcDepth);
+#endif
     glMulticastCopyImageSubDataNV(
         srcGpu,
         dstGpuMask,
@@ -256,6 +317,16 @@ STATICINLINE void multicast_framebuffer_sample_locationsfv(
             glIsFramebuffer(framebuffer);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMulticastFramebufferSampleLocationsfvNV,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        gpu,
+        framebuffer,
+        start,
+        count);
+#endif
     glMulticastFramebufferSampleLocationsfvNV(
         gpu,
         framebuffer,
@@ -291,6 +362,15 @@ STATICINLINE void multicast_get_query_objecti64v(
     {
         GLW_FPTR_CHECK(MulticastGetQueryObjecti64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMulticastGetQueryObjecti64vNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        gpu,
+        id,
+        pname);
+#endif
     glMulticastGetQueryObjecti64vNV(
         gpu,
         id,
@@ -324,6 +404,15 @@ STATICINLINE void multicast_get_query_objectiv(
     {
         GLW_FPTR_CHECK(MulticastGetQueryObjectivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMulticastGetQueryObjectivNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        gpu,
+        id,
+        pname);
+#endif
     glMulticastGetQueryObjectivNV(
         gpu,
         id,
@@ -357,6 +446,15 @@ STATICINLINE void multicast_get_query_objectui64v(
     {
         GLW_FPTR_CHECK(MulticastGetQueryObjectui64vNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMulticastGetQueryObjectui64vNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        gpu,
+        id,
+        pname);
+#endif
     glMulticastGetQueryObjectui64vNV(
         gpu,
         id,
@@ -390,6 +488,15 @@ STATICINLINE void multicast_get_query_objectuiv(
     {
         GLW_FPTR_CHECK(MulticastGetQueryObjectuivNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glMulticastGetQueryObjectuivNV,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        gpu,
+        id,
+        pname);
+#endif
     glMulticastGetQueryObjectuivNV(
         gpu,
         id,
@@ -414,6 +521,9 @@ STATICINLINE void multicast_wait_sync(
     {
         GLW_FPTR_CHECK(MulticastWaitSyncNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMulticastWaitSyncNV, signalGpu, waitGpuMask);
+#endif
     glMulticastWaitSyncNV(signalGpu, waitGpuMask);
     detail::error_check("MulticastWaitSyncNV"sv, check_errors);
 }
@@ -431,6 +541,9 @@ STATICINLINE void render_gpu_mask(
     {
         GLW_FPTR_CHECK(RenderGpuMaskNV)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glRenderGpuMaskNV, mask);
+#endif
     glRenderGpuMaskNV(mask);
     detail::error_check("RenderGpuMaskNV"sv, check_errors);
 }

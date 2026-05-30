@@ -24,6 +24,15 @@ STATICINLINE void draw_arrays_instanced_base_instance(
     {
         GLW_FPTR_CHECK(DrawArraysInstancedBaseInstance)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawArraysInstancedBaseInstance,
+        mode,
+        first,
+        count,
+        instancecount,
+        baseinstance);
+#endif
     glDrawArraysInstancedBaseInstance(
         static_cast<GLenum>(mode), first, count, instancecount, baseinstance);
     detail::error_check("DrawArraysInstancedBaseInstance"sv, check_errors);
@@ -56,6 +65,16 @@ STATICINLINE void draw_elements_instanced_base_instance(
     {
         GLW_FPTR_CHECK(DrawElementsInstancedBaseInstance)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawElementsInstancedBaseInstance,
+        mode,
+        count,
+        type,
+        indices,
+        instancecount,
+        baseinstance);
+#endif
     glDrawElementsInstancedBaseInstance(
         static_cast<GLenum>(mode),
         count,
@@ -95,6 +114,17 @@ STATICINLINE void draw_elements_instanced_base_vertex_base_instance(
     {
         GLW_FPTR_CHECK(DrawElementsInstancedBaseVertexBaseInstance)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawElementsInstancedBaseVertexBaseInstance,
+        mode,
+        count,
+        type,
+        indices,
+        instancecount,
+        basevertex,
+        baseinstance);
+#endif
     glDrawElementsInstancedBaseVertexBaseInstance(
         static_cast<GLenum>(mode),
         count,
@@ -134,6 +164,15 @@ STATICINLINE void get_internalformativ(
     {
         GLW_FPTR_CHECK(GetInternalformativ)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetInternalformativ,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        target,
+        internalformat,
+        pname);
+#endif
     glGetInternalformativ(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
@@ -175,6 +214,15 @@ STATICINLINE void get_active_atomic_counter_bufferiv(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetActiveAtomicCounterBufferiv,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        program,
+        bufferIndex,
+        pname);
+#endif
     glGetActiveAtomicCounterBufferiv(
         program,
         bufferIndex,
@@ -216,6 +264,17 @@ STATICINLINE void bind_image_texture(
             glIsTexture(texture);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glBindImageTexture,
+        unit,
+        texture,
+        level,
+        layered,
+        layer,
+        access,
+        format);
+#endif
     glBindImageTexture(
         unit,
         texture,
@@ -243,6 +302,9 @@ STATICINLINE void memory_barrier(
     {
         GLW_FPTR_CHECK(MemoryBarrier)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glMemoryBarrier, barriers);
+#endif
     glMemoryBarrier(static_cast<GLenum>(barriers));
     detail::error_check("MemoryBarrier"sv, check_errors);
 }
@@ -269,6 +331,9 @@ STATICINLINE void tex_storage_1d(
     {
         GLW_FPTR_CHECK(TexStorage1D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexStorage1D, target, levels, internalformat, width);
+#endif
     glTexStorage1D(
         static_cast<GLenum>(target),
         levels,
@@ -302,6 +367,9 @@ STATICINLINE void tex_storage_2d(
     {
         GLW_FPTR_CHECK(TexStorage2D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexStorage2D, target, levels, internalformat, width);
+#endif
     glTexStorage2D(
         static_cast<GLenum>(target),
         levels,
@@ -337,6 +405,9 @@ STATICINLINE void tex_storage_3d(
     {
         GLW_FPTR_CHECK(TexStorage3D)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glTexStorage3D, target, levels, internalformat, width);
+#endif
     glTexStorage3D(
         static_cast<GLenum>(target),
         levels,
@@ -368,6 +439,9 @@ STATICINLINE void draw_transform_feedback_instanced(
     {
         GLW_FPTR_CHECK(DrawTransformFeedbackInstanced)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glDrawTransformFeedbackInstanced, mode, id, instancecount);
+#endif
     glDrawTransformFeedbackInstanced(
         static_cast<GLenum>(mode), id, instancecount);
     detail::error_check("DrawTransformFeedbackInstanced"sv, check_errors);
@@ -396,6 +470,14 @@ STATICINLINE void draw_transform_feedback_stream_instanced(
     {
         GLW_FPTR_CHECK(DrawTransformFeedbackStreamInstanced)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(
+        glDrawTransformFeedbackStreamInstanced,
+        mode,
+        id,
+        stream,
+        instancecount);
+#endif
     glDrawTransformFeedbackStreamInstanced(
         static_cast<GLenum>(mode), id, stream, instancecount);
     detail::error_check("DrawTransformFeedbackStreamInstanced"sv, check_errors);

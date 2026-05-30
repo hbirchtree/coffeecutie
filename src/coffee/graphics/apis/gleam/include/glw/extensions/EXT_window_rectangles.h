@@ -35,6 +35,14 @@ STATICINLINE void window_rectangles(
     {
         GLW_FPTR_CHECK(WindowRectanglesEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glWindowRectanglesEXT,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(box.data()), box.size_bytes()),
+        mode,
+        count);
+#endif
     glWindowRectanglesEXT(
         mode,
         count,

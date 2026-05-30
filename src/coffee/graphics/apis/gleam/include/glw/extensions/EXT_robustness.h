@@ -30,6 +30,9 @@ STATICINLINE group::graphics_reset_status get_graphics_reset_status(
     {
         GLW_FPTR_CHECK(GetGraphicsResetStatusEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE(glGetGraphicsResetStatusEXT);
+#endif
     auto out = glGetGraphicsResetStatusEXT();
     detail::error_check("GetGraphicsResetStatusEXT"sv, check_errors);
     return static_cast<group::graphics_reset_status>(out);
@@ -65,6 +68,15 @@ STATICINLINE void getn_uniformfv(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetnUniformfvEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        program,
+        location,
+        bufSize);
+#endif
     glGetnUniformfvEXT(
         program,
         location,
@@ -103,6 +115,15 @@ STATICINLINE void getn_uniformiv(
             glIsProgram(program);
 #endif
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glGetnUniformivEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        program,
+        location,
+        bufSize);
+#endif
     glGetnUniformivEXT(
         program,
         location,
@@ -140,6 +161,16 @@ STATICINLINE void readn_pixels(
     {
         GLW_FPTR_CHECK(ReadnPixelsEXT)
     }
+#ifdef GLW_FPTR_TRACE
+    GLW_FPTR_TRACE_DATA(
+        glReadnPixelsEXT,
+        gsl::span<char>(
+            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        x,
+        width,
+        format,
+        type);
+#endif
     glReadnPixelsEXT(
         x[0],
         x[1],
