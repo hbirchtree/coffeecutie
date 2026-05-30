@@ -56,8 +56,10 @@ struct FontCache
     {
         if(auto tag_it = index.find(font_tag); tag_it == index.end())
             return nullptr;
+        else if(auto data = (*tag_it).template data<blam::font>(magic); !data.has_value())
+            return nullptr;
         else
-            return (*tag_it).template data<blam::font>(magic).value();
+            return data.value();
     }
 
     void allocate_font_texture()

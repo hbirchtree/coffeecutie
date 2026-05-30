@@ -97,6 +97,12 @@
             "inherits": "base-linux"
         },
         {
+            "name": "web-wasm32-emscripten-webgl2-custom-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "web-wasm32-emscripten-webgl2-custom",
+            "inherits": "base-linux"
+        },
+        {
             "name": "web-wasm64-emscripten-webgl2-dbg",
             "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "web-wasm64-emscripten-webgl2",
