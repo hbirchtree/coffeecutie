@@ -701,7 +701,7 @@ struct MeshRenderer
         }
 
         // Special case for 3 players; black out the 4th quadrant
-        if(m_players.size() == 3)
+        if(m_players.size() == 3 && !compile_info::platform::is_emscripten)
         {
             ScreenClear* clear;
             p.subsystem(clear);
