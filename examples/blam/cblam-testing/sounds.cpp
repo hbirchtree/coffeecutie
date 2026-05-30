@@ -26,13 +26,6 @@ using SoundManifest = compo::SubsystemManifest<
     type_list_t<LoadingStatus, SoundPreferences>,
     empty_list_t>;
 
-enum class status_t
-{
-    unplayed,
-    queued,
-    played,
-};
-
 struct sound_unit_t
 {
     struct track_t
