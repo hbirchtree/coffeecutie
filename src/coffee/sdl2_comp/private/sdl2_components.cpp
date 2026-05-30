@@ -312,6 +312,11 @@ void Windowing::start_restricted(proxy_type& p, time_point const&)
         EMIT_DEVENT(ResizeEvent(current_width, current_height));
         canvas_width  = current_width;
         canvas_height = current_height;
+        // SDL's internal window->w/h can drift from canvas dimensions (e.g. when
+        // JS sets canvas.height from body.offsetHeight after the 1s template
+        // timeout). This drifts SDL's mouse yscale = window->h / css_h off by
+        // a large factor until a browser resize triggers Emscripten_HandleResize.
+        SDL_SetWindowSize(m_window, current_width, current_height);
     }
 #endif
 
