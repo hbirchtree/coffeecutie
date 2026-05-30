@@ -129,6 +129,7 @@ struct SoundCache
                     continue;
                 auto data = data_.value();
                 auto& buffer = out.permutations.back().buffer;
+                buffer = api->alloc_buffer();
                 using codec_t = blam::sound::sound::codec_t;
                 switch(sound->codec)
                 {
@@ -144,7 +145,6 @@ struct SoundCache
                         sound->channels == blam::sound::sound::stereo
                             ? 2
                             : 1;
-                    buffer = api->alloc_buffer();
                     if(api->formats().ima4_adpcm)
                     {
                         buffer->upload(data, fmt);
