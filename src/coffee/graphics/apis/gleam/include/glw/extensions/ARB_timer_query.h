@@ -36,7 +36,7 @@ STATICINLINE void get_query_objecti64v(
     {
         GLW_FPTR_CHECK(GetQueryObjecti64v)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetQueryObjecti64v,
         gsl::span<char>(
@@ -74,7 +74,7 @@ STATICINLINE void get_query_objectui64v(
     {
         GLW_FPTR_CHECK(GetQueryObjectui64v)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetQueryObjectui64v,
         gsl::span<char>(

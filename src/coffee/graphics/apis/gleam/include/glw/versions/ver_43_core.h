@@ -24,7 +24,7 @@ STATICINLINE void clear_buffer_data(
     {
         GLW_FPTR_CHECK(ClearBufferData)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glClearBufferData,
         gsl::span<const char>(
@@ -72,7 +72,7 @@ STATICINLINE void clear_buffer_sub_data(
     {
         GLW_FPTR_CHECK(ClearBufferSubData)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glClearBufferSubData,
         gsl::span<const char>(
@@ -278,7 +278,7 @@ STATICINLINE void get_framebuffer_parameter(
     {
         GLW_FPTR_CHECK(GetFramebufferParameteriv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetFramebufferParameteriv,
         gsl::span<char>(
@@ -320,7 +320,7 @@ STATICINLINE void get_internalformati64v(
     {
         GLW_FPTR_CHECK(GetInternalformati64v)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetInternalformati64v,
         gsl::span<char>(
@@ -422,7 +422,7 @@ STATICINLINE void invalidate_framebuffer(
     {
         GLW_FPTR_CHECK(InvalidateFramebuffer)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glInvalidateFramebuffer,
         gsl::span<const char>(
@@ -473,7 +473,7 @@ STATICINLINE void invalidate_sub_framebuffer(
     {
         GLW_FPTR_CHECK(InvalidateSubFramebuffer)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glInvalidateSubFramebuffer,
         gsl::span<const char>(
@@ -673,7 +673,7 @@ STATICINLINE void get_program_interfaceiv(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramInterfaceiv,
         gsl::span<char>(
@@ -829,7 +829,7 @@ STATICINLINE void get_program_resource_name(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramResourceName,
         gsl::span<char>(
@@ -1352,7 +1352,7 @@ STATICINLINE void debug_message_callback(
     {
         GLW_FPTR_CHECK(DebugMessageCallback)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDebugMessageCallback,
         gsl::span<const char>(
@@ -1396,7 +1396,7 @@ STATICINLINE void debug_message_control(
     {
         GLW_FPTR_CHECK(DebugMessageControl)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDebugMessageControl,
         gsl::span<const char>(
@@ -1573,7 +1573,7 @@ STATICINLINE void get_object_label(
     {
         GLW_FPTR_CHECK(GetObjectLabel)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetObjectLabel,
         gsl::span<char>(
@@ -1684,7 +1684,7 @@ STATICINLINE void object_ptr_label(
     {
         GLW_FPTR_CHECK(ObjectPtrLabel)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glObjectPtrLabel,
         gsl::span<const char>(

@@ -35,7 +35,7 @@ STATICINLINE void get_videoi64v(
     {
         GLW_FPTR_CHECK(GetVideoi64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVideoi64vNV,
         gsl::span<char>(
@@ -73,7 +73,7 @@ STATICINLINE void get_videoiv(
     {
         GLW_FPTR_CHECK(GetVideoivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVideoivNV,
         gsl::span<char>(
@@ -112,7 +112,7 @@ STATICINLINE void get_videoui64v(
     {
         GLW_FPTR_CHECK(GetVideoui64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVideoui64vNV,
         gsl::span<char>(
@@ -151,7 +151,7 @@ STATICINLINE void get_videouiv(
     {
         GLW_FPTR_CHECK(GetVideouivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVideouivNV,
         gsl::span<char>(

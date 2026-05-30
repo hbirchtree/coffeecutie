@@ -89,7 +89,7 @@ STATICINLINE void create_command_lists(
     {
         GLW_FPTR_CHECK(CreateCommandListsNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCreateCommandListsNV,
         gsl::span<char>(
@@ -120,7 +120,7 @@ STATICINLINE void create_states(
     {
         GLW_FPTR_CHECK(CreateStatesNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCreateStatesNV,
         gsl::span<char>(
@@ -152,7 +152,7 @@ STATICINLINE void delete_command_lists(
     {
         GLW_FPTR_CHECK(DeleteCommandListsNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteCommandListsNV,
         gsl::span<const char>(
@@ -184,7 +184,7 @@ STATICINLINE void delete_states(
     {
         GLW_FPTR_CHECK(DeleteStatesNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteStatesNV,
         gsl::span<const char>(

@@ -156,7 +156,7 @@ STATICINLINE void get_framebuffer_parameter(
     {
         GLW_FPTR_CHECK(GetFramebufferParameteriv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetFramebufferParameteriv,
         gsl::span<char>(
@@ -202,7 +202,7 @@ STATICINLINE void get_program_interfaceiv(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramInterfaceiv,
         gsl::span<char>(
@@ -322,7 +322,7 @@ STATICINLINE void get_program_resource_name(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramResourceName,
         gsl::span<char>(
@@ -518,7 +518,7 @@ STATICINLINE void delete_program_pipelines(
     {
         GLW_FPTR_CHECK(DeleteProgramPipelines)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteProgramPipelines,
         gsl::span<const char>(
@@ -552,7 +552,7 @@ STATICINLINE void gen_program_pipelines(
     {
         GLW_FPTR_CHECK(GenProgramPipelines)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenProgramPipelines,
         gsl::span<char>(
@@ -595,7 +595,7 @@ STATICINLINE void get_program_pipeline_info_log(
             glIsProgramPipeline(pipeline);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramPipelineInfoLog,
         gsl::span<char>(
@@ -637,7 +637,7 @@ STATICINLINE void get_program_pipelineiv(
             glIsProgramPipeline(pipeline);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramPipelineiv,
         gsl::span<char>(
@@ -742,7 +742,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform1fv,
         gsl::span<const char>(
@@ -820,7 +820,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform1iv,
         gsl::span<const char>(
@@ -898,7 +898,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform1uiv,
         gsl::span<const char>(
@@ -978,7 +978,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform2fv,
         gsl::span<const char>(
@@ -1058,7 +1058,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform2iv,
         gsl::span<const char>(
@@ -1138,7 +1138,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform2uiv,
         gsl::span<const char>(
@@ -1219,7 +1219,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform3fv,
         gsl::span<const char>(
@@ -1300,7 +1300,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform3iv,
         gsl::span<const char>(
@@ -1381,7 +1381,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform3uiv,
         gsl::span<const char>(
@@ -1463,7 +1463,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform4fv,
         gsl::span<const char>(
@@ -1545,7 +1545,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform4iv,
         gsl::span<const char>(
@@ -1627,7 +1627,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform4uiv,
         gsl::span<const char>(
@@ -1674,7 +1674,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniformMatrix2fv,
         gsl::span<const char>(
@@ -1723,7 +1723,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniformMatrix2x3fv,
         gsl::span<const char>(
@@ -1772,7 +1772,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniformMatrix2x4fv,
         gsl::span<const char>(
@@ -1821,7 +1821,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniformMatrix3fv,
         gsl::span<const char>(
@@ -1870,7 +1870,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniformMatrix3x2fv,
         gsl::span<const char>(
@@ -1919,7 +1919,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniformMatrix3x4fv,
         gsl::span<const char>(
@@ -1968,7 +1968,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniformMatrix4fv,
         gsl::span<const char>(
@@ -2017,7 +2017,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniformMatrix4x2fv,
         gsl::span<const char>(
@@ -2066,7 +2066,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniformMatrix4x3fv,
         gsl::span<const char>(
@@ -2227,7 +2227,7 @@ STATICINLINE void get_booleani_v(
     {
         GLW_FPTR_CHECK(GetBooleani_v)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetBooleani_v,
         gsl::span<char>(
@@ -2312,7 +2312,7 @@ STATICINLINE void get_multisamplefv(
     {
         GLW_FPTR_CHECK(GetMultisamplefv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMultisamplefv,
         gsl::span<char>(reinterpret_cast<char*>(val.data()), val.size_bytes()),
@@ -2352,7 +2352,7 @@ STATICINLINE void get_tex_level_parameter(
     {
         GLW_FPTR_CHECK(GetTexLevelParameterfv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetTexLevelParameterfv,
         gsl::span<char>(
@@ -2395,7 +2395,7 @@ STATICINLINE void get_tex_level_parameter(
     {
         GLW_FPTR_CHECK(GetTexLevelParameteriv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetTexLevelParameteriv,
         gsl::span<char>(

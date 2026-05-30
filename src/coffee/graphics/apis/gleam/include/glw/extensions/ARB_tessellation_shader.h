@@ -73,7 +73,7 @@ STATICINLINE void patch_parameter(
     {
         GLW_FPTR_CHECK(PatchParameterfv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPatchParameterfv,
         gsl::span<const char>(

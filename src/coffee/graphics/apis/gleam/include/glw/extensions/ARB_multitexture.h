@@ -127,7 +127,7 @@ STATICINLINE void multi_tex_coord1dv(
     {
         GLW_FPTR_CHECK(MultiTexCoord1dvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord1dvARB,
         gsl::span<const char>(
@@ -185,7 +185,7 @@ STATICINLINE void multi_tex_coord1fv(
     {
         GLW_FPTR_CHECK(MultiTexCoord1fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord1fvARB,
         gsl::span<const char>(
@@ -243,7 +243,7 @@ STATICINLINE void multi_tex_coord1iv(
     {
         GLW_FPTR_CHECK(MultiTexCoord1ivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord1ivARB,
         gsl::span<const char>(
@@ -300,7 +300,7 @@ STATICINLINE void multi_tex_coord1sv(
     {
         GLW_FPTR_CHECK(MultiTexCoord1svARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord1svARB,
         gsl::span<const char>(
@@ -358,7 +358,7 @@ STATICINLINE void multi_tex_coord2dv(
     {
         GLW_FPTR_CHECK(MultiTexCoord2dvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord2dvARB,
         gsl::span<const char>(
@@ -416,7 +416,7 @@ STATICINLINE void multi_tex_coord2fv(
     {
         GLW_FPTR_CHECK(MultiTexCoord2fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord2fvARB,
         gsl::span<const char>(
@@ -474,7 +474,7 @@ STATICINLINE void multi_tex_coord2iv(
     {
         GLW_FPTR_CHECK(MultiTexCoord2ivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord2ivARB,
         gsl::span<const char>(
@@ -531,7 +531,7 @@ STATICINLINE void multi_tex_coord2sv(
     {
         GLW_FPTR_CHECK(MultiTexCoord2svARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord2svARB,
         gsl::span<const char>(
@@ -591,7 +591,7 @@ STATICINLINE void multi_tex_coord3dv(
     {
         GLW_FPTR_CHECK(MultiTexCoord3dvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord3dvARB,
         gsl::span<const char>(
@@ -651,7 +651,7 @@ STATICINLINE void multi_tex_coord3fv(
     {
         GLW_FPTR_CHECK(MultiTexCoord3fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord3fvARB,
         gsl::span<const char>(
@@ -711,7 +711,7 @@ STATICINLINE void multi_tex_coord3iv(
     {
         GLW_FPTR_CHECK(MultiTexCoord3ivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord3ivARB,
         gsl::span<const char>(
@@ -770,7 +770,7 @@ STATICINLINE void multi_tex_coord3sv(
     {
         GLW_FPTR_CHECK(MultiTexCoord3svARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord3svARB,
         gsl::span<const char>(
@@ -832,7 +832,7 @@ STATICINLINE void multi_tex_coord4dv(
     {
         GLW_FPTR_CHECK(MultiTexCoord4dvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord4dvARB,
         gsl::span<const char>(
@@ -894,7 +894,7 @@ STATICINLINE void multi_tex_coord4fv(
     {
         GLW_FPTR_CHECK(MultiTexCoord4fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord4fvARB,
         gsl::span<const char>(
@@ -956,7 +956,7 @@ STATICINLINE void multi_tex_coord4iv(
     {
         GLW_FPTR_CHECK(MultiTexCoord4ivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord4ivARB,
         gsl::span<const char>(
@@ -1017,7 +1017,7 @@ STATICINLINE void multi_tex_coord4sv(
     {
         GLW_FPTR_CHECK(MultiTexCoord4svARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord4svARB,
         gsl::span<const char>(

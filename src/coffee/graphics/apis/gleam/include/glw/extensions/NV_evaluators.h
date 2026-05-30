@@ -80,7 +80,7 @@ STATICINLINE void get_map_attrib_parameter(
     {
         GLW_FPTR_CHECK(GetMapAttribParameterfvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMapAttribParameterfvNV,
         gsl::span<char>(
@@ -122,7 +122,7 @@ STATICINLINE void get_map_attrib_parameter(
     {
         GLW_FPTR_CHECK(GetMapAttribParameterivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMapAttribParameterivNV,
         gsl::span<char>(
@@ -167,7 +167,7 @@ STATICINLINE void get_map_control_points(
     {
         GLW_FPTR_CHECK(GetMapControlPointsNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMapControlPointsNV,
         gsl::span<char>(
@@ -213,7 +213,7 @@ STATICINLINE void get_map_parameter(
     {
         GLW_FPTR_CHECK(GetMapParameterfvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMapParameterfvNV,
         gsl::span<char>(
@@ -251,7 +251,7 @@ STATICINLINE void get_map_parameter(
     {
         GLW_FPTR_CHECK(GetMapParameterivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMapParameterivNV,
         gsl::span<char>(
@@ -298,7 +298,7 @@ STATICINLINE void map_control_points(
     {
         GLW_FPTR_CHECK(MapControlPointsNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMapControlPointsNV,
         gsl::span<const char>(
@@ -349,7 +349,7 @@ STATICINLINE void map_parameter(
     {
         GLW_FPTR_CHECK(MapParameterfvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMapParameterfvNV,
         gsl::span<const char>(
@@ -389,7 +389,7 @@ STATICINLINE void map_parameter(
     {
         GLW_FPTR_CHECK(MapParameterivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMapParameterivNV,
         gsl::span<const char>(

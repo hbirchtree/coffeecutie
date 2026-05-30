@@ -51,7 +51,7 @@ STATICINLINE void delete_occlusion_queries(
     {
         GLW_FPTR_CHECK(DeleteOcclusionQueriesNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteOcclusionQueriesNV,
         gsl::span<const char>(
@@ -102,7 +102,7 @@ STATICINLINE void gen_occlusion_queries(
     {
         GLW_FPTR_CHECK(GenOcclusionQueriesNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenOcclusionQueriesNV,
         gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()));
@@ -136,7 +136,7 @@ STATICINLINE void get_occlusion_queryiv(
     {
         GLW_FPTR_CHECK(GetOcclusionQueryivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetOcclusionQueryivNV,
         gsl::span<char>(
@@ -174,7 +174,7 @@ STATICINLINE void get_occlusion_queryuiv(
     {
         GLW_FPTR_CHECK(GetOcclusionQueryuivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetOcclusionQueryuivNV,
         gsl::span<char>(

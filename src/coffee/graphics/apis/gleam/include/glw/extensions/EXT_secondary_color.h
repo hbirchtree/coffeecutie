@@ -55,7 +55,7 @@ STATICINLINE void secondary_color3bv(
     {
         GLW_FPTR_CHECK(SecondaryColor3bvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSecondaryColor3bvEXT,
         gsl::span<const char>(
@@ -107,7 +107,7 @@ STATICINLINE void secondary_color3dv(
     {
         GLW_FPTR_CHECK(SecondaryColor3dvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSecondaryColor3dvEXT,
         gsl::span<const char>(
@@ -158,7 +158,7 @@ STATICINLINE void secondary_color3fv(
     {
         GLW_FPTR_CHECK(SecondaryColor3fvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSecondaryColor3fvEXT,
         gsl::span<const char>(
@@ -209,7 +209,7 @@ STATICINLINE void secondary_color3iv(
     {
         GLW_FPTR_CHECK(SecondaryColor3ivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSecondaryColor3ivEXT,
         gsl::span<const char>(
@@ -260,7 +260,7 @@ STATICINLINE void secondary_color3sv(
     {
         GLW_FPTR_CHECK(SecondaryColor3svEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSecondaryColor3svEXT,
         gsl::span<const char>(
@@ -313,7 +313,7 @@ STATICINLINE void secondary_color3ubv(
     {
         GLW_FPTR_CHECK(SecondaryColor3ubvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSecondaryColor3ubvEXT,
         gsl::span<const char>(
@@ -365,7 +365,7 @@ STATICINLINE void secondary_color3uiv(
     {
         GLW_FPTR_CHECK(SecondaryColor3uivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSecondaryColor3uivEXT,
         gsl::span<const char>(
@@ -416,7 +416,7 @@ STATICINLINE void secondary_color3usv(
     {
         GLW_FPTR_CHECK(SecondaryColor3usvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSecondaryColor3usvEXT,
         gsl::span<const char>(
@@ -448,7 +448,7 @@ STATICINLINE void secondary_color_pointer(
     {
         GLW_FPTR_CHECK(SecondaryColorPointerEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSecondaryColorPointerEXT,
         gsl::span<const char>(

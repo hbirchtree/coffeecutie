@@ -57,7 +57,7 @@ STATICINLINE void matrix_index_pointer(
     {
         GLW_FPTR_CHECK(MatrixIndexPointerARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixIndexPointerARB,
         gsl::span<const char>(
@@ -96,7 +96,7 @@ STATICINLINE void matrix_indexubv(
     {
         GLW_FPTR_CHECK(MatrixIndexubvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixIndexubvARB,
         gsl::span<const char>(
@@ -130,7 +130,7 @@ STATICINLINE void matrix_indexuiv(
     {
         GLW_FPTR_CHECK(MatrixIndexuivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixIndexuivARB,
         gsl::span<const char>(
@@ -164,7 +164,7 @@ STATICINLINE void matrix_indexusv(
     {
         GLW_FPTR_CHECK(MatrixIndexusvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixIndexusvARB,
         gsl::span<const char>(

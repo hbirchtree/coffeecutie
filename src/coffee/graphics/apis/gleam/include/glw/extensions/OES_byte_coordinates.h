@@ -74,7 +74,7 @@ STATICINLINE void multi_tex_coord1bv(
     {
         GLW_FPTR_CHECK(MultiTexCoord1bvOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord1bvOES,
         gsl::span<const char>(
@@ -139,7 +139,7 @@ STATICINLINE void multi_tex_coord2bv(
     {
         GLW_FPTR_CHECK(MultiTexCoord2bvOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord2bvOES,
         gsl::span<const char>(
@@ -206,7 +206,7 @@ STATICINLINE void multi_tex_coord3bv(
     {
         GLW_FPTR_CHECK(MultiTexCoord3bvOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord3bvOES,
         gsl::span<const char>(
@@ -275,7 +275,7 @@ STATICINLINE void multi_tex_coord4bv(
     {
         GLW_FPTR_CHECK(MultiTexCoord4bvOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord4bvOES,
         gsl::span<const char>(
@@ -331,7 +331,7 @@ STATICINLINE void tex_coord1bv(
     {
         GLW_FPTR_CHECK(TexCoord1bvOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexCoord1bvOES,
         gsl::span<const char>(
@@ -387,7 +387,7 @@ STATICINLINE void tex_coord2bv(
     {
         GLW_FPTR_CHECK(TexCoord2bvOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexCoord2bvOES,
         gsl::span<const char>(
@@ -444,7 +444,7 @@ STATICINLINE void tex_coord3bv(
     {
         GLW_FPTR_CHECK(TexCoord3bvOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexCoord3bvOES,
         gsl::span<const char>(
@@ -502,7 +502,7 @@ STATICINLINE void tex_coord4bv(
     {
         GLW_FPTR_CHECK(TexCoord4bvOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexCoord4bvOES,
         gsl::span<const char>(
@@ -560,7 +560,7 @@ STATICINLINE void vertex2bv(
     {
         GLW_FPTR_CHECK(Vertex2bvOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertex2bvOES,
         gsl::span<const char>(
@@ -619,7 +619,7 @@ STATICINLINE void vertex3bv(
     {
         GLW_FPTR_CHECK(Vertex3bvOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertex3bvOES,
         gsl::span<const char>(
@@ -679,7 +679,7 @@ STATICINLINE void vertex4bv(
     {
         GLW_FPTR_CHECK(Vertex4bvOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertex4bvOES,
         gsl::span<const char>(

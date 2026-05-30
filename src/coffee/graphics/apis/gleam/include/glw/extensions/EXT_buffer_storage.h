@@ -36,7 +36,7 @@ STATICINLINE void buffer_storage(
     {
         GLW_FPTR_CHECK(BufferStorageEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBufferStorageEXT,
         gsl::span<const char>(

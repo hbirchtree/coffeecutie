@@ -59,7 +59,7 @@ STATICINLINE void coverage_modulation_table(
     {
         GLW_FPTR_CHECK(CoverageModulationTableNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCoverageModulationTableNV,
         gsl::span<const char>(
@@ -90,7 +90,7 @@ STATICINLINE void get_coverage_modulation_table(
     {
         GLW_FPTR_CHECK(GetCoverageModulationTableNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetCoverageModulationTableNV,
         gsl::span<char>(reinterpret_cast<char*>(v.data()), v.size_bytes()),

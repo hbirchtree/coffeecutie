@@ -37,7 +37,7 @@ STATICINLINE void program_buffer_parameters_iiv(
     {
         GLW_FPTR_CHECK(ProgramBufferParametersIivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramBufferParametersIivNV,
         gsl::span<const char>(
@@ -83,7 +83,7 @@ STATICINLINE void program_buffer_parameters_iuiv(
     {
         GLW_FPTR_CHECK(ProgramBufferParametersIuivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramBufferParametersIuivNV,
         gsl::span<const char>(
@@ -129,7 +129,7 @@ STATICINLINE void program_buffer_parameter(
     {
         GLW_FPTR_CHECK(ProgramBufferParametersfvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramBufferParametersfvNV,
         gsl::span<const char>(

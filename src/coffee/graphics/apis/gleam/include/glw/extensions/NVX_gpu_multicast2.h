@@ -262,7 +262,7 @@ STATICINLINE void multicast_scissor_arrayv(
     {
         GLW_FPTR_CHECK(MulticastScissorArrayvNVX)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMulticastScissorArrayvNVX,
         gsl::span<const char>(
@@ -305,7 +305,7 @@ STATICINLINE void multicast_viewport_arrayv(
     {
         GLW_FPTR_CHECK(MulticastViewportArrayvNVX)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMulticastViewportArrayvNVX,
         gsl::span<const char>(

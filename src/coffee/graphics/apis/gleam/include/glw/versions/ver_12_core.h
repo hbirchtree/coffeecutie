@@ -73,7 +73,7 @@ STATICINLINE void draw_range_elements(
     {
         GLW_FPTR_CHECK(DrawRangeElements)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDrawRangeElements,
         gsl::span<const char>(
@@ -130,7 +130,7 @@ STATICINLINE void tex_image_3d(
     {
         GLW_FPTR_CHECK(TexImage3D)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexImage3D,
         gsl::span<const char>(
@@ -192,7 +192,7 @@ STATICINLINE void tex_sub_image_3d(
     {
         GLW_FPTR_CHECK(TexSubImage3D)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexSubImage3D,
         gsl::span<const char>(

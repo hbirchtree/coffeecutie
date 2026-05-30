@@ -31,7 +31,7 @@ STATICINLINE void cull_parameter(
     {
         GLW_FPTR_CHECK(CullParameterdvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCullParameterdvEXT,
         gsl::span<char>(
@@ -65,7 +65,7 @@ STATICINLINE void cull_parameter(
     {
         GLW_FPTR_CHECK(CullParameterfvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCullParameterfvEXT,
         gsl::span<char>(

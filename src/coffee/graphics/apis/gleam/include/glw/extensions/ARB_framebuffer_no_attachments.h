@@ -62,7 +62,7 @@ STATICINLINE void get_framebuffer_parameter(
     {
         GLW_FPTR_CHECK(GetFramebufferParameteriv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetFramebufferParameteriv,
         gsl::span<char>(

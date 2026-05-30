@@ -218,7 +218,7 @@ STATICINLINE void delete_textures(
     {
         GLW_FPTR_CHECK(DeleteTextures)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteTextures,
         gsl::span<const char>(
@@ -312,7 +312,7 @@ STATICINLINE void gen_textures(
     {
         GLW_FPTR_CHECK(GenTextures)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenTextures,
         gsl::span<char>(
@@ -404,7 +404,7 @@ STATICINLINE void tex_sub_image_1d(
     {
         GLW_FPTR_CHECK(TexSubImage1D)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexSubImage1D,
         gsl::span<const char>(
@@ -460,7 +460,7 @@ STATICINLINE void tex_sub_image_2d(
     {
         GLW_FPTR_CHECK(TexSubImage2D)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexSubImage2D,
         gsl::span<const char>(

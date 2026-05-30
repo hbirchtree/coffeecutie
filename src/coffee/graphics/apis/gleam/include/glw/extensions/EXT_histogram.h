@@ -45,7 +45,7 @@ STATICINLINE void get_histogram(
     {
         GLW_FPTR_CHECK(GetHistogramEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetHistogramEXT,
         gsl::span<char>(
@@ -87,7 +87,7 @@ STATICINLINE void get_histogram_parameter(
     {
         GLW_FPTR_CHECK(GetHistogramParameterfvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetHistogramParameterfvEXT,
         gsl::span<char>(
@@ -125,7 +125,7 @@ STATICINLINE void get_histogram_parameter(
     {
         GLW_FPTR_CHECK(GetHistogramParameterivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetHistogramParameterivEXT,
         gsl::span<char>(
@@ -164,7 +164,7 @@ STATICINLINE void get_minmax(
     {
         GLW_FPTR_CHECK(GetMinmaxEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMinmaxEXT,
         gsl::span<char>(
@@ -206,7 +206,7 @@ STATICINLINE void get_minmax_parameter(
     {
         GLW_FPTR_CHECK(GetMinmaxParameterfvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMinmaxParameterfvEXT,
         gsl::span<char>(
@@ -244,7 +244,7 @@ STATICINLINE void get_minmax_parameter(
     {
         GLW_FPTR_CHECK(GetMinmaxParameterivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMinmaxParameterivEXT,
         gsl::span<char>(

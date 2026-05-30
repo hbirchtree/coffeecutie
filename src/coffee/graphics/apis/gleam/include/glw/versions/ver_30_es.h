@@ -310,7 +310,7 @@ STATICINLINE void clear_bufferfv(
     {
         GLW_FPTR_CHECK(ClearBufferfv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glClearBufferfv,
         gsl::span<const char>(
@@ -350,7 +350,7 @@ STATICINLINE void clear_bufferiv(
     {
         GLW_FPTR_CHECK(ClearBufferiv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glClearBufferiv,
         gsl::span<const char>(
@@ -389,7 +389,7 @@ STATICINLINE void clear_bufferuiv(
     {
         GLW_FPTR_CHECK(ClearBufferuiv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glClearBufferuiv,
         gsl::span<const char>(
@@ -463,7 +463,7 @@ STATICINLINE void compressed_tex_image_3d(
     {
         GLW_FPTR_CHECK(CompressedTexImage3D)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCompressedTexImage3D,
         gsl::span<const char>(
@@ -522,7 +522,7 @@ STATICINLINE void compressed_tex_sub_image_3d(
     {
         GLW_FPTR_CHECK(CompressedTexSubImage3D)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCompressedTexSubImage3D,
         gsl::span<const char>(
@@ -658,7 +658,7 @@ STATICINLINE void delete_queries(
     {
         GLW_FPTR_CHECK(DeleteQueries)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteQueries,
         gsl::span<const char>(
@@ -690,7 +690,7 @@ STATICINLINE void delete_samplers(
     {
         GLW_FPTR_CHECK(DeleteSamplers)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteSamplers,
         gsl::span<const char>(
@@ -746,7 +746,7 @@ STATICINLINE void delete_transform_feedbacks(
     {
         GLW_FPTR_CHECK(DeleteTransformFeedbacks)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteTransformFeedbacks,
         gsl::span<const char>(
@@ -778,7 +778,7 @@ STATICINLINE void delete_vertex_arrays(
     {
         GLW_FPTR_CHECK(DeleteVertexArrays)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteVertexArrays,
         gsl::span<const char>(
@@ -843,7 +843,7 @@ STATICINLINE void draw_buffers(
     {
         GLW_FPTR_CHECK(DrawBuffers)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDrawBuffers,
         gsl::span<const char>(
@@ -919,7 +919,7 @@ STATICINLINE void draw_range_elements(
     {
         GLW_FPTR_CHECK(DrawRangeElements)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDrawRangeElements,
         gsl::span<const char>(
@@ -1102,7 +1102,7 @@ STATICINLINE void gen_queries(
     {
         GLW_FPTR_CHECK(GenQueries)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenQueries,
         gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()));
@@ -1133,7 +1133,7 @@ STATICINLINE void gen_samplers(
     {
         GLW_FPTR_CHECK(GenSamplers)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenSamplers,
         gsl::span<char>(
@@ -1165,7 +1165,7 @@ STATICINLINE void gen_transform_feedbacks(
     {
         GLW_FPTR_CHECK(GenTransformFeedbacks)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenTransformFeedbacks,
         gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()));
@@ -1196,7 +1196,7 @@ STATICINLINE void gen_vertex_arrays(
     {
         GLW_FPTR_CHECK(GenVertexArrays)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenVertexArrays,
         gsl::span<char>(
@@ -1240,7 +1240,7 @@ STATICINLINE void get_active_uniform_block_name(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveUniformBlockName,
         gsl::span<char>(
@@ -1290,7 +1290,7 @@ STATICINLINE void get_active_uniform_blockiv(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveUniformBlockiv,
         gsl::span<char>(
@@ -1389,7 +1389,7 @@ STATICINLINE void get_buffer_parameteri64v(
     {
         GLW_FPTR_CHECK(GetBufferParameteri64v)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetBufferParameteri64v,
         gsl::span<char>(
@@ -1424,7 +1424,7 @@ STATICINLINE void get_buffer_pointerv(
     {
         GLW_FPTR_CHECK(GetBufferPointerv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetBufferPointerv,
         gsl::span<char>(
@@ -1494,7 +1494,7 @@ STATICINLINE void get_integer64i_v(
     {
         GLW_FPTR_CHECK(GetInteger64i_v)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetInteger64i_v,
         gsl::span<char>(
@@ -1531,7 +1531,7 @@ STATICINLINE void get_integer64v(
     {
         GLW_FPTR_CHECK(GetInteger64v)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetInteger64v,
         gsl::span<char>(
@@ -1568,7 +1568,7 @@ STATICINLINE void get_integeri_v(
     {
         GLW_FPTR_CHECK(GetIntegeri_v)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetIntegeri_v,
         gsl::span<char>(
@@ -1610,7 +1610,7 @@ STATICINLINE void get_internalformativ(
     {
         GLW_FPTR_CHECK(GetInternalformativ)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetInternalformativ,
         gsl::span<char>(
@@ -1656,7 +1656,7 @@ STATICINLINE void get_program_binary(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramBinary,
         gsl::span<char>(
@@ -1698,7 +1698,7 @@ STATICINLINE void get_query_objectuiv(
     {
         GLW_FPTR_CHECK(GetQueryObjectuiv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetQueryObjectuiv,
         gsl::span<char>(
@@ -1737,7 +1737,7 @@ STATICINLINE void get_queryiv(
     {
         GLW_FPTR_CHECK(GetQueryiv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetQueryiv,
         gsl::span<char>(
@@ -1781,7 +1781,7 @@ STATICINLINE void get_sampler_parameter(
             glIsSampler(sampler);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSamplerParameterfv,
         gsl::span<char>(
@@ -1825,7 +1825,7 @@ STATICINLINE void get_sampler_parameter(
             glIsSampler(sampler);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSamplerParameteriv,
         gsl::span<char>(
@@ -1893,7 +1893,7 @@ STATICINLINE void get_synciv(
     {
         GLW_FPTR_CHECK(GetSynciv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSynciv,
         gsl::span<char>(
@@ -1947,7 +1947,7 @@ STATICINLINE void get_transform_feedback_varying(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetTransformFeedbackVarying,
         gsl::span<char>(
@@ -2027,7 +2027,7 @@ STATICINLINE void get_uniform_indices(
     }
     auto [uniformNames_lens, uniformNames_cstr, uniformNames_store] =
         detail::transform_strings(uniformNames);
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetUniformIndices,
         gsl::span<char>(
@@ -2075,7 +2075,7 @@ STATICINLINE void get_uniformuiv(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetUniformuiv,
         gsl::span<char>(
@@ -2169,7 +2169,7 @@ STATICINLINE void invalidate_framebuffer(
     {
         GLW_FPTR_CHECK(InvalidateFramebuffer)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glInvalidateFramebuffer,
         gsl::span<const char>(
@@ -2220,7 +2220,7 @@ STATICINLINE void invalidate_sub_framebuffer(
     {
         GLW_FPTR_CHECK(InvalidateSubFramebuffer)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glInvalidateSubFramebuffer,
         gsl::span<const char>(
@@ -2451,7 +2451,7 @@ STATICINLINE void program_binary(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramBinary,
         gsl::span<const char>(
@@ -2647,7 +2647,7 @@ STATICINLINE void sampler_parameter(
             glIsSampler(sampler);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSamplerParameterfv,
         gsl::span<const char>(
@@ -2724,7 +2724,7 @@ STATICINLINE void sampler_parameter(
             glIsSampler(sampler);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSamplerParameteriv,
         gsl::span<const char>(
@@ -2773,7 +2773,7 @@ STATICINLINE void tex_image_3d(
     {
         GLW_FPTR_CHECK(TexImage3D)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexImage3D,
         gsl::span<const char>(
@@ -2911,7 +2911,7 @@ STATICINLINE void tex_sub_image_3d(
     {
         GLW_FPTR_CHECK(TexSubImage3D)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexSubImage3D,
         gsl::span<const char>(
@@ -3023,7 +3023,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform1uiv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform1uiv,
         gsl::span<const char>(
@@ -3085,7 +3085,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform2uiv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform2uiv,
         gsl::span<const char>(
@@ -3148,7 +3148,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform3uiv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform3uiv,
         gsl::span<const char>(
@@ -3212,7 +3212,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform4uiv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform4uiv,
         gsl::span<const char>(
@@ -3281,7 +3281,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix2x3fv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix2x3fv,
         gsl::span<const char>(
@@ -3321,7 +3321,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix2x4fv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix2x4fv,
         gsl::span<const char>(
@@ -3361,7 +3361,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix3x2fv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix3x2fv,
         gsl::span<const char>(
@@ -3401,7 +3401,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix3x4fv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix3x4fv,
         gsl::span<const char>(
@@ -3441,7 +3441,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix4x2fv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix4x2fv,
         gsl::span<const char>(
@@ -3481,7 +3481,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix4x3fv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix4x3fv,
         gsl::span<const char>(
@@ -3592,7 +3592,7 @@ STATICINLINE void vertex_attrib_i4iv(
     {
         GLW_FPTR_CHECK(VertexAttribI4iv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribI4iv,
         gsl::span<const char>(
@@ -3652,7 +3652,7 @@ STATICINLINE void vertex_attrib_i4uiv(
     {
         GLW_FPTR_CHECK(VertexAttribI4uiv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribI4uiv,
         gsl::span<const char>(
@@ -3688,7 +3688,7 @@ STATICINLINE void vertex_attrib_i_pointer(
     {
         GLW_FPTR_CHECK(VertexAttribIPointer)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribIPointer,
         gsl::span<const char>(

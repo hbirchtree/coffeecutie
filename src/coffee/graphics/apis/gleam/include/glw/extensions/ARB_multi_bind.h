@@ -30,7 +30,7 @@ STATICINLINE void bind_buffers_base(
     {
         GLW_FPTR_CHECK(BindBuffersBase)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBindBuffersBase,
         gsl::span<const char>(
@@ -138,7 +138,7 @@ STATICINLINE void bind_image_textures(
     {
         GLW_FPTR_CHECK(BindImageTextures)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBindImageTextures,
         gsl::span<const char>(
@@ -177,7 +177,7 @@ STATICINLINE void bind_samplers(
     {
         GLW_FPTR_CHECK(BindSamplers)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBindSamplers,
         gsl::span<const char>(
@@ -216,7 +216,7 @@ STATICINLINE void bind_textures(
     {
         GLW_FPTR_CHECK(BindTextures)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBindTextures,
         gsl::span<const char>(

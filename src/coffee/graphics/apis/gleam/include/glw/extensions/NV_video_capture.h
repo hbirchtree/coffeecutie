@@ -173,7 +173,7 @@ STATICINLINE void get_video_capture_streamdv(
     {
         GLW_FPTR_CHECK(GetVideoCaptureStreamdvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVideoCaptureStreamdvNV,
         gsl::span<char>(
@@ -215,7 +215,7 @@ STATICINLINE void get_video_capture_streamfv(
     {
         GLW_FPTR_CHECK(GetVideoCaptureStreamfvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVideoCaptureStreamfvNV,
         gsl::span<char>(
@@ -257,7 +257,7 @@ STATICINLINE void get_video_capture_streamiv(
     {
         GLW_FPTR_CHECK(GetVideoCaptureStreamivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVideoCaptureStreamivNV,
         gsl::span<char>(
@@ -297,7 +297,7 @@ STATICINLINE void get_video_captureiv(
     {
         GLW_FPTR_CHECK(GetVideoCaptureivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVideoCaptureivNV,
         gsl::span<char>(
@@ -388,7 +388,7 @@ STATICINLINE void video_capture_stream_parameter(
     {
         GLW_FPTR_CHECK(VideoCaptureStreamParameterdvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVideoCaptureStreamParameterdvNV,
         gsl::span<const char>(
@@ -432,7 +432,7 @@ STATICINLINE void video_capture_stream_parameter(
     {
         GLW_FPTR_CHECK(VideoCaptureStreamParameterfvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVideoCaptureStreamParameterfvNV,
         gsl::span<const char>(
@@ -476,7 +476,7 @@ STATICINLINE void video_capture_stream_parameter(
     {
         GLW_FPTR_CHECK(VideoCaptureStreamParameterivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVideoCaptureStreamParameterivNV,
         gsl::span<const char>(

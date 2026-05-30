@@ -38,7 +38,7 @@ STATICINLINE void debug_message_callback(
     {
         GLW_FPTR_CHECK(DebugMessageCallbackAMD)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDebugMessageCallbackAMD,
         gsl::span<char>(
@@ -78,7 +78,7 @@ STATICINLINE void debug_message_enable(
     {
         GLW_FPTR_CHECK(DebugMessageEnableAMD)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDebugMessageEnableAMD,
         gsl::span<const char>(

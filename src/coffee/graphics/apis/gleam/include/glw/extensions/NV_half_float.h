@@ -52,7 +52,7 @@ STATICINLINE void color3hv(
     {
         GLW_FPTR_CHECK(Color3hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glColor3hvNV,
         gsl::span<const char>(
@@ -107,7 +107,7 @@ STATICINLINE void color4hv(
     {
         GLW_FPTR_CHECK(Color4hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glColor4hvNV,
         gsl::span<const char>(
@@ -163,7 +163,7 @@ STATICINLINE void multi_tex_coord1hv(
     {
         GLW_FPTR_CHECK(MultiTexCoord1hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord1hvNV,
         gsl::span<const char>(
@@ -223,7 +223,7 @@ STATICINLINE void multi_tex_coord2hv(
     {
         GLW_FPTR_CHECK(MultiTexCoord2hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord2hvNV,
         gsl::span<const char>(
@@ -285,7 +285,7 @@ STATICINLINE void multi_tex_coord3hv(
     {
         GLW_FPTR_CHECK(MultiTexCoord3hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord3hvNV,
         gsl::span<const char>(
@@ -349,7 +349,7 @@ STATICINLINE void multi_tex_coord4hv(
     {
         GLW_FPTR_CHECK(MultiTexCoord4hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiTexCoord4hvNV,
         gsl::span<const char>(
@@ -406,7 +406,7 @@ STATICINLINE void normal3hv(
     {
         GLW_FPTR_CHECK(Normal3hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glNormal3hvNV,
         gsl::span<const char>(
@@ -456,7 +456,7 @@ STATICINLINE void tex_coord1hv(
     {
         GLW_FPTR_CHECK(TexCoord1hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexCoord1hvNV,
         gsl::span<const char>(
@@ -507,7 +507,7 @@ STATICINLINE void tex_coord2hv(
     {
         GLW_FPTR_CHECK(TexCoord2hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexCoord2hvNV,
         gsl::span<const char>(
@@ -562,7 +562,7 @@ STATICINLINE void tex_coord3hv(
     {
         GLW_FPTR_CHECK(TexCoord3hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexCoord3hvNV,
         gsl::span<const char>(
@@ -619,7 +619,7 @@ STATICINLINE void tex_coord4hv(
     {
         GLW_FPTR_CHECK(TexCoord4hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexCoord4hvNV,
         gsl::span<const char>(
@@ -672,7 +672,7 @@ STATICINLINE void vertex2hv(
     {
         GLW_FPTR_CHECK(Vertex2hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertex2hvNV,
         gsl::span<const char>(
@@ -726,7 +726,7 @@ STATICINLINE void vertex3hv(
     {
         GLW_FPTR_CHECK(Vertex3hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertex3hvNV,
         gsl::span<const char>(
@@ -781,7 +781,7 @@ STATICINLINE void vertex4hv(
     {
         GLW_FPTR_CHECK(Vertex4hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertex4hvNV,
         gsl::span<const char>(
@@ -835,7 +835,7 @@ STATICINLINE void vertex_attrib1hv(
     {
         GLW_FPTR_CHECK(VertexAttrib1hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib1hvNV,
         gsl::span<const char>(
@@ -896,7 +896,7 @@ STATICINLINE void vertex_attrib2hv(
     {
         GLW_FPTR_CHECK(VertexAttrib2hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib2hvNV,
         gsl::span<const char>(
@@ -958,7 +958,7 @@ STATICINLINE void vertex_attrib3hv(
     {
         GLW_FPTR_CHECK(VertexAttrib3hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib3hvNV,
         gsl::span<const char>(
@@ -1021,7 +1021,7 @@ STATICINLINE void vertex_attrib4hv(
     {
         GLW_FPTR_CHECK(VertexAttrib4hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib4hvNV,
         gsl::span<const char>(
@@ -1057,7 +1057,7 @@ STATICINLINE void vertex_attribs1hv(
     {
         GLW_FPTR_CHECK(VertexAttribs1hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribs1hvNV,
         gsl::span<const char>(
@@ -1094,7 +1094,7 @@ STATICINLINE void vertex_attribs2hv(
     {
         GLW_FPTR_CHECK(VertexAttribs2hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribs2hvNV,
         gsl::span<const char>(
@@ -1131,7 +1131,7 @@ STATICINLINE void vertex_attribs3hv(
     {
         GLW_FPTR_CHECK(VertexAttribs3hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribs3hvNV,
         gsl::span<const char>(
@@ -1168,7 +1168,7 @@ STATICINLINE void vertex_attribs4hv(
     {
         GLW_FPTR_CHECK(VertexAttribs4hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribs4hvNV,
         gsl::span<const char>(
@@ -1221,7 +1221,7 @@ STATICINLINE void fog_coordhv(
     {
         GLW_FPTR_CHECK(FogCoordhvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glFogCoordhvNV,
         gsl::span<const char>(
@@ -1275,7 +1275,7 @@ STATICINLINE void secondary_color3hv(
     {
         GLW_FPTR_CHECK(SecondaryColor3hvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSecondaryColor3hvNV,
         gsl::span<const char>(
@@ -1326,7 +1326,7 @@ STATICINLINE void vertex_weighthv(
     {
         GLW_FPTR_CHECK(VertexWeighthvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexWeighthvNV,
         gsl::span<const char>(

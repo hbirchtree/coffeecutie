@@ -426,7 +426,7 @@ STATICINLINE void get_invariant_booleanv(
     {
         GLW_FPTR_CHECK(GetInvariantBooleanvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetInvariantBooleanvEXT,
         gsl::span<char>(
@@ -464,7 +464,7 @@ STATICINLINE void get_invariant_floatv(
     {
         GLW_FPTR_CHECK(GetInvariantFloatvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetInvariantFloatvEXT,
         gsl::span<char>(
@@ -502,7 +502,7 @@ STATICINLINE void get_invariant_integerv(
     {
         GLW_FPTR_CHECK(GetInvariantIntegervEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetInvariantIntegervEXT,
         gsl::span<char>(
@@ -541,7 +541,7 @@ STATICINLINE void get_local_constant_booleanv(
     {
         GLW_FPTR_CHECK(GetLocalConstantBooleanvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetLocalConstantBooleanvEXT,
         gsl::span<char>(
@@ -579,7 +579,7 @@ STATICINLINE void get_local_constant_floatv(
     {
         GLW_FPTR_CHECK(GetLocalConstantFloatvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetLocalConstantFloatvEXT,
         gsl::span<char>(
@@ -617,7 +617,7 @@ STATICINLINE void get_local_constant_integerv(
     {
         GLW_FPTR_CHECK(GetLocalConstantIntegervEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetLocalConstantIntegervEXT,
         gsl::span<char>(
@@ -656,7 +656,7 @@ STATICINLINE void get_variant_booleanv(
     {
         GLW_FPTR_CHECK(GetVariantBooleanvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVariantBooleanvEXT,
         gsl::span<char>(
@@ -694,7 +694,7 @@ STATICINLINE void get_variant_floatv(
     {
         GLW_FPTR_CHECK(GetVariantFloatvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVariantFloatvEXT,
         gsl::span<char>(
@@ -732,7 +732,7 @@ STATICINLINE void get_variant_integerv(
     {
         GLW_FPTR_CHECK(GetVariantIntegervEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVariantIntegervEXT,
         gsl::span<char>(
@@ -767,7 +767,7 @@ STATICINLINE void get_variant_pointerv(
     {
         GLW_FPTR_CHECK(GetVariantPointervEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVariantPointervEXT,
         gsl::span<char>(
@@ -848,7 +848,7 @@ STATICINLINE void set_invariant(
     {
         GLW_FPTR_CHECK(SetInvariantEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSetInvariantEXT,
         gsl::span<const char>(
@@ -883,7 +883,7 @@ STATICINLINE void set_local_constant(
     {
         GLW_FPTR_CHECK(SetLocalConstantEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSetLocalConstantEXT,
         gsl::span<const char>(
@@ -1038,7 +1038,7 @@ STATICINLINE void variant_pointer(
     {
         GLW_FPTR_CHECK(VariantPointerEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVariantPointerEXT,
         gsl::span<const char>(
@@ -1077,7 +1077,7 @@ STATICINLINE void variantbv(
     {
         GLW_FPTR_CHECK(VariantbvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVariantbvEXT,
         gsl::span<const char>(
@@ -1112,7 +1112,7 @@ STATICINLINE void variantdv(
     {
         GLW_FPTR_CHECK(VariantdvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVariantdvEXT,
         gsl::span<const char>(
@@ -1147,7 +1147,7 @@ STATICINLINE void variantfv(
     {
         GLW_FPTR_CHECK(VariantfvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVariantfvEXT,
         gsl::span<const char>(
@@ -1182,7 +1182,7 @@ STATICINLINE void variantiv(
     {
         GLW_FPTR_CHECK(VariantivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVariantivEXT,
         gsl::span<const char>(
@@ -1217,7 +1217,7 @@ STATICINLINE void variantsv(
     {
         GLW_FPTR_CHECK(VariantsvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVariantsvEXT,
         gsl::span<const char>(
@@ -1252,7 +1252,7 @@ STATICINLINE void variantubv(
     {
         GLW_FPTR_CHECK(VariantubvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVariantubvEXT,
         gsl::span<const char>(
@@ -1287,7 +1287,7 @@ STATICINLINE void variantuiv(
     {
         GLW_FPTR_CHECK(VariantuivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVariantuivEXT,
         gsl::span<const char>(
@@ -1322,7 +1322,7 @@ STATICINLINE void variantusv(
     {
         GLW_FPTR_CHECK(VariantusvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVariantusvEXT,
         gsl::span<const char>(

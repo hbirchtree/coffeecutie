@@ -92,7 +92,7 @@ STATICINLINE void bind_attrib_location(
     {
         GLW_FPTR_CHECK(BindAttribLocationARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBindAttribLocationARB,
         gsl::span<const char>(
@@ -179,7 +179,7 @@ STATICINLINE void get_active_attrib(
     {
         GLW_FPTR_CHECK(GetActiveAttribARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveAttribARB,
         gsl::span<char>(
@@ -223,7 +223,7 @@ STATICINLINE GLint get_attrib_location(
     {
         GLW_FPTR_CHECK(GetAttribLocationARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetAttribLocationARB,
         gsl::span<const char>(
@@ -258,7 +258,7 @@ STATICINLINE void get_vertex_attrib_pointerv(
     {
         GLW_FPTR_CHECK(GetVertexAttribPointervARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVertexAttribPointervARB,
         gsl::span<char>(
@@ -296,7 +296,7 @@ STATICINLINE void get_vertex_attribdv(
     {
         GLW_FPTR_CHECK(GetVertexAttribdvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVertexAttribdvARB,
         gsl::span<char>(
@@ -334,7 +334,7 @@ STATICINLINE void get_vertex_attribfv(
     {
         GLW_FPTR_CHECK(GetVertexAttribfvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVertexAttribfvARB,
         gsl::span<char>(
@@ -372,7 +372,7 @@ STATICINLINE void get_vertex_attribiv(
     {
         GLW_FPTR_CHECK(GetVertexAttribivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVertexAttribivARB,
         gsl::span<char>(
@@ -430,7 +430,7 @@ STATICINLINE void vertex_attrib1dv(
     {
         GLW_FPTR_CHECK(VertexAttrib1dvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib1dvARB,
         gsl::span<const char>(
@@ -484,7 +484,7 @@ STATICINLINE void vertex_attrib1fv(
     {
         GLW_FPTR_CHECK(VertexAttrib1fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib1fvARB,
         gsl::span<const char>(
@@ -538,7 +538,7 @@ STATICINLINE void vertex_attrib1sv(
     {
         GLW_FPTR_CHECK(VertexAttrib1svARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib1svARB,
         gsl::span<const char>(
@@ -593,7 +593,7 @@ STATICINLINE void vertex_attrib2dv(
     {
         GLW_FPTR_CHECK(VertexAttrib2dvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib2dvARB,
         gsl::span<const char>(
@@ -648,7 +648,7 @@ STATICINLINE void vertex_attrib2fv(
     {
         GLW_FPTR_CHECK(VertexAttrib2fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib2fvARB,
         gsl::span<const char>(
@@ -703,7 +703,7 @@ STATICINLINE void vertex_attrib2sv(
     {
         GLW_FPTR_CHECK(VertexAttrib2svARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib2svARB,
         gsl::span<const char>(
@@ -759,7 +759,7 @@ STATICINLINE void vertex_attrib3dv(
     {
         GLW_FPTR_CHECK(VertexAttrib3dvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib3dvARB,
         gsl::span<const char>(
@@ -815,7 +815,7 @@ STATICINLINE void vertex_attrib3fv(
     {
         GLW_FPTR_CHECK(VertexAttrib3fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib3fvARB,
         gsl::span<const char>(
@@ -871,7 +871,7 @@ STATICINLINE void vertex_attrib3sv(
     {
         GLW_FPTR_CHECK(VertexAttrib3svARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib3svARB,
         gsl::span<const char>(
@@ -904,7 +904,7 @@ STATICINLINE void vertex_attrib4_nbv(
     {
         GLW_FPTR_CHECK(VertexAttrib4NbvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib4NbvARB,
         gsl::span<const char>(
@@ -938,7 +938,7 @@ STATICINLINE void vertex_attrib4_niv(
     {
         GLW_FPTR_CHECK(VertexAttrib4NivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib4NivARB,
         gsl::span<const char>(
@@ -972,7 +972,7 @@ STATICINLINE void vertex_attrib4_nsv(
     {
         GLW_FPTR_CHECK(VertexAttrib4NsvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib4NsvARB,
         gsl::span<const char>(
@@ -1032,7 +1032,7 @@ STATICINLINE void vertex_attrib4_nubv(
     {
         GLW_FPTR_CHECK(VertexAttrib4NubvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib4NubvARB,
         gsl::span<const char>(
@@ -1066,7 +1066,7 @@ STATICINLINE void vertex_attrib4_nuiv(
     {
         GLW_FPTR_CHECK(VertexAttrib4NuivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib4NuivARB,
         gsl::span<const char>(
@@ -1100,7 +1100,7 @@ STATICINLINE void vertex_attrib4_nusv(
     {
         GLW_FPTR_CHECK(VertexAttrib4NusvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib4NusvARB,
         gsl::span<const char>(
@@ -1135,7 +1135,7 @@ STATICINLINE void vertex_attrib4bv(
     {
         GLW_FPTR_CHECK(VertexAttrib4bvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib4bvARB,
         gsl::span<const char>(
@@ -1193,7 +1193,7 @@ STATICINLINE void vertex_attrib4dv(
     {
         GLW_FPTR_CHECK(VertexAttrib4dvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib4dvARB,
         gsl::span<const char>(
@@ -1250,7 +1250,7 @@ STATICINLINE void vertex_attrib4fv(
     {
         GLW_FPTR_CHECK(VertexAttrib4fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib4fvARB,
         gsl::span<const char>(
@@ -1281,7 +1281,7 @@ STATICINLINE void vertex_attrib4iv(
     {
         GLW_FPTR_CHECK(VertexAttrib4ivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib4ivARB,
         gsl::span<const char>(
@@ -1338,7 +1338,7 @@ STATICINLINE void vertex_attrib4sv(
     {
         GLW_FPTR_CHECK(VertexAttrib4svARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib4svARB,
         gsl::span<const char>(
@@ -1371,7 +1371,7 @@ STATICINLINE void vertex_attrib4ubv(
     {
         GLW_FPTR_CHECK(VertexAttrib4ubvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib4ubvARB,
         gsl::span<const char>(
@@ -1403,7 +1403,7 @@ STATICINLINE void vertex_attrib4uiv(
     {
         GLW_FPTR_CHECK(VertexAttrib4uivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib4uivARB,
         gsl::span<const char>(
@@ -1434,7 +1434,7 @@ STATICINLINE void vertex_attrib4usv(
     {
         GLW_FPTR_CHECK(VertexAttrib4usvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttrib4usvARB,
         gsl::span<const char>(
@@ -1471,7 +1471,7 @@ STATICINLINE void vertex_attrib_pointer(
     {
         GLW_FPTR_CHECK(VertexAttribPointerARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribPointerARB,
         gsl::span<const char>(

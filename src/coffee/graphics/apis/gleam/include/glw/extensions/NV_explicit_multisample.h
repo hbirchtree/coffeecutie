@@ -38,7 +38,7 @@ STATICINLINE void get_multisamplefv(
     {
         GLW_FPTR_CHECK(GetMultisamplefvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMultisamplefvNV,
         gsl::span<char>(reinterpret_cast<char*>(val.data()), val.size_bytes()),

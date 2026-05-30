@@ -105,7 +105,7 @@ STATICINLINE void get_query_indexediv(
     {
         GLW_FPTR_CHECK(GetQueryIndexediv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetQueryIndexediv,
         gsl::span<char>(

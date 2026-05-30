@@ -39,7 +39,7 @@ STATICINLINE void get_pixel_transform_parameter(
     {
         GLW_FPTR_CHECK(GetPixelTransformParameterfvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPixelTransformParameterfvEXT,
         gsl::span<char>(
@@ -77,7 +77,7 @@ STATICINLINE void get_pixel_transform_parameter(
     {
         GLW_FPTR_CHECK(GetPixelTransformParameterivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPixelTransformParameterivEXT,
         gsl::span<char>(
@@ -142,7 +142,7 @@ STATICINLINE void pixel_transform_parameter(
     {
         GLW_FPTR_CHECK(PixelTransformParameterfvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPixelTransformParameterfvEXT,
         gsl::span<const char>(
@@ -208,7 +208,7 @@ STATICINLINE void pixel_transform_parameter(
     {
         GLW_FPTR_CHECK(PixelTransformParameterivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPixelTransformParameterivEXT,
         gsl::span<const char>(

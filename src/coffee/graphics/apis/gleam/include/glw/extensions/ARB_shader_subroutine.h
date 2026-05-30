@@ -51,7 +51,7 @@ STATICINLINE void get_active_subroutine_name(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveSubroutineName,
         gsl::span<char>(
@@ -105,7 +105,7 @@ STATICINLINE void get_active_subroutine_uniform_name(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveSubroutineUniformName,
         gsl::span<char>(
@@ -157,7 +157,7 @@ STATICINLINE void get_active_subroutine_uniformiv(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveSubroutineUniformiv,
         gsl::span<char>(
@@ -325,7 +325,7 @@ STATICINLINE void uniform_subroutines(
     {
         GLW_FPTR_CHECK(UniformSubroutinesuiv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformSubroutinesuiv,
         gsl::span<const char>(

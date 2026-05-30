@@ -32,7 +32,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix2x3fvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix2x3fvNV,
         gsl::span<const char>(
@@ -71,7 +71,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix2x4fvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix2x4fvNV,
         gsl::span<const char>(
@@ -110,7 +110,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix3x2fvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix3x2fvNV,
         gsl::span<const char>(
@@ -149,7 +149,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix3x4fvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix3x4fvNV,
         gsl::span<const char>(
@@ -188,7 +188,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix4x2fvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix4x2fvNV,
         gsl::span<const char>(
@@ -227,7 +227,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix4x3fvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix4x3fvNV,
         gsl::span<const char>(

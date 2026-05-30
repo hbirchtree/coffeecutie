@@ -32,7 +32,7 @@ STATICINLINE void ext_get_buffer_pointerv(
     {
         GLW_FPTR_CHECK(ExtGetBufferPointervQCOM)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glExtGetBufferPointervQCOM,
         gsl::span<char>(
@@ -68,7 +68,7 @@ STATICINLINE void ext_get_buffers(
     {
         GLW_FPTR_CHECK(ExtGetBuffersQCOM)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glExtGetBuffersQCOM,
         gsl::span<char>(
@@ -106,7 +106,7 @@ STATICINLINE void ext_get_framebuffers(
     {
         GLW_FPTR_CHECK(ExtGetFramebuffersQCOM)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glExtGetFramebuffersQCOM,
         gsl::span<char>(
@@ -146,7 +146,7 @@ STATICINLINE void ext_get_renderbuffers(
     {
         GLW_FPTR_CHECK(ExtGetRenderbuffersQCOM)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glExtGetRenderbuffersQCOM,
         gsl::span<char>(
@@ -195,7 +195,7 @@ STATICINLINE void ext_get_tex_level_parameter(
             glIsTexture(texture);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glExtGetTexLevelParameterivQCOM,
         gsl::span<char>(
@@ -248,7 +248,7 @@ STATICINLINE void ext_get_tex_sub_image(
     {
         GLW_FPTR_CHECK(ExtGetTexSubImageQCOM)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glExtGetTexSubImageQCOM,
         gsl::span<char>(

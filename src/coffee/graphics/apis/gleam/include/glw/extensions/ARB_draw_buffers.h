@@ -43,7 +43,7 @@ STATICINLINE void draw_buffers(
     {
         GLW_FPTR_CHECK(DrawBuffersARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDrawBuffersARB,
         gsl::span<const char>(

@@ -56,7 +56,7 @@ STATICINLINE void point_parameter(
     {
         GLW_FPTR_CHECK(PointParameterfvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPointParameterfvEXT,
         gsl::span<const char>(

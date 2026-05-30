@@ -197,7 +197,7 @@ STATICINLINE void get_active_uniform_block_name(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveUniformBlockName,
         gsl::span<char>(
@@ -247,7 +247,7 @@ STATICINLINE void get_active_uniform_blockiv(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveUniformBlockiv,
         gsl::span<char>(
@@ -296,7 +296,7 @@ STATICINLINE void get_active_uniform_name(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveUniformName,
         gsl::span<char>(
@@ -433,7 +433,7 @@ STATICINLINE void get_uniform_indices(
     }
     auto [uniformNames_lens, uniformNames_cstr, uniformNames_store] =
         detail::transform_strings(uniformNames);
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetUniformIndices,
         gsl::span<char>(

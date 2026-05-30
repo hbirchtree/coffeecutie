@@ -30,7 +30,7 @@ STATICINLINE void create_semaphores(
     {
         GLW_FPTR_CHECK(CreateSemaphoresNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCreateSemaphoresNV,
         gsl::span<char>(
@@ -67,7 +67,7 @@ STATICINLINE void get_semaphore_parameter(
     {
         GLW_FPTR_CHECK(GetSemaphoreParameterivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSemaphoreParameterivNV,
         gsl::span<char>(
@@ -106,7 +106,7 @@ STATICINLINE void semaphore_parameter(
     {
         GLW_FPTR_CHECK(SemaphoreParameterivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSemaphoreParameterivNV,
         gsl::span<const char>(

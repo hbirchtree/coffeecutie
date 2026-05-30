@@ -43,7 +43,7 @@ STATICINLINE void vertex_weight_pointer(
     {
         GLW_FPTR_CHECK(VertexWeightPointerEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexWeightPointerEXT,
         gsl::span<const char>(
@@ -101,7 +101,7 @@ STATICINLINE void vertex_weightfv(
     {
         GLW_FPTR_CHECK(VertexWeightfvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexWeightfvEXT,
         gsl::span<const char>(

@@ -104,7 +104,7 @@ STATICINLINE void get_boolean_indexedv(
     {
         GLW_FPTR_CHECK(GetBooleanIndexedvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetBooleanIndexedvEXT,
         gsl::span<char>(
@@ -142,7 +142,7 @@ STATICINLINE void get_integer_indexedv(
     {
         GLW_FPTR_CHECK(GetIntegerIndexedvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetIntegerIndexedvEXT,
         gsl::span<char>(

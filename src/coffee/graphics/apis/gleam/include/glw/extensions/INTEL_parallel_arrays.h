@@ -30,7 +30,7 @@ STATICINLINE void color_pointerv(
     {
         GLW_FPTR_CHECK(ColorPointervINTEL)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glColorPointervINTEL,
         gsl::span<const char>(
@@ -65,7 +65,7 @@ STATICINLINE void normal_pointerv(
     {
         GLW_FPTR_CHECK(NormalPointervINTEL)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glNormalPointervINTEL,
         gsl::span<const char>(
@@ -100,7 +100,7 @@ STATICINLINE void tex_coord_pointerv(
     {
         GLW_FPTR_CHECK(TexCoordPointervINTEL)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexCoordPointervINTEL,
         gsl::span<const char>(
@@ -137,7 +137,7 @@ STATICINLINE void vertex_pointerv(
     {
         GLW_FPTR_CHECK(VertexPointervINTEL)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexPointervINTEL,
         gsl::span<const char>(

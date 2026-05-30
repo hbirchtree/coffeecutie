@@ -37,7 +37,7 @@ STATICINLINE void fog_coord_pointer(
     {
         GLW_FPTR_CHECK(FogCoordPointerEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glFogCoordPointerEXT,
         gsl::span<const char>(
@@ -93,7 +93,7 @@ STATICINLINE void fog_coorddv(
     {
         GLW_FPTR_CHECK(FogCoorddvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glFogCoorddvEXT,
         gsl::span<const char>(
@@ -144,7 +144,7 @@ STATICINLINE void fog_coordfv(
     {
         GLW_FPTR_CHECK(FogCoordfvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glFogCoordfvEXT,
         gsl::span<const char>(

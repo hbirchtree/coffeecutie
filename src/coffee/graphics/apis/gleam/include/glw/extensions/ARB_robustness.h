@@ -60,7 +60,7 @@ STATICINLINE void getn_compressed_tex_image(
     {
         GLW_FPTR_CHECK(GetnCompressedTexImageARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetnCompressedTexImageARB,
         gsl::span<char>(reinterpret_cast<char*>(img.data()), img.size_bytes()),
@@ -100,7 +100,7 @@ STATICINLINE void getn_tex_image(
     {
         GLW_FPTR_CHECK(GetnTexImageARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetnTexImageARB,
         gsl::span<char>(reinterpret_cast<char*>(img.data()), img.size_bytes()),
@@ -149,7 +149,7 @@ STATICINLINE void getn_uniformdv(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetnUniformdvARB,
         gsl::span<char>(
@@ -196,7 +196,7 @@ STATICINLINE void getn_uniformfv(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetnUniformfvARB,
         gsl::span<char>(
@@ -243,7 +243,7 @@ STATICINLINE void getn_uniformiv(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetnUniformivARB,
         gsl::span<char>(
@@ -290,7 +290,7 @@ STATICINLINE void getn_uniformuiv(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetnUniformuivARB,
         gsl::span<char>(
@@ -336,7 +336,7 @@ STATICINLINE void readn_pixels(
     {
         GLW_FPTR_CHECK(ReadnPixelsARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glReadnPixelsARB,
         gsl::span<char>(

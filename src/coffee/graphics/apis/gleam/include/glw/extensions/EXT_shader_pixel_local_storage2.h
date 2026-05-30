@@ -32,7 +32,7 @@ STATICINLINE void clear_pixel_local_storageui(
     {
         GLW_FPTR_CHECK(ClearPixelLocalStorageuiEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glClearPixelLocalStorageuiEXT,
         gsl::span<const char>(

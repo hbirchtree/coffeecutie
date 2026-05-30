@@ -38,7 +38,7 @@ STATICINLINE void get_sampler_parameter_iiv(
             glIsSampler(sampler);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSamplerParameterIivEXT,
         gsl::span<char>(
@@ -81,7 +81,7 @@ STATICINLINE void get_sampler_parameter_iuiv(
             glIsSampler(sampler);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSamplerParameterIuivEXT,
         gsl::span<char>(
@@ -119,7 +119,7 @@ STATICINLINE void get_tex_parameter_iiv(
     {
         GLW_FPTR_CHECK(GetTexParameterIivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetTexParameterIivEXT,
         gsl::span<char>(
@@ -157,7 +157,7 @@ STATICINLINE void get_tex_parameter_iuiv(
     {
         GLW_FPTR_CHECK(GetTexParameterIuivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetTexParameterIuivEXT,
         gsl::span<char>(
@@ -201,7 +201,7 @@ STATICINLINE void sampler_parameter_iiv(
             glIsSampler(sampler);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSamplerParameterIivEXT,
         gsl::span<const char>(
@@ -245,7 +245,7 @@ STATICINLINE void sampler_parameter_iuiv(
             glIsSampler(sampler);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSamplerParameterIuivEXT,
         gsl::span<const char>(
@@ -284,7 +284,7 @@ STATICINLINE void tex_parameter_iiv(
     {
         GLW_FPTR_CHECK(TexParameterIivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexParameterIivEXT,
         gsl::span<const char>(
@@ -324,7 +324,7 @@ STATICINLINE void tex_parameter_iuiv(
     {
         GLW_FPTR_CHECK(TexParameterIuivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexParameterIuivEXT,
         gsl::span<const char>(

@@ -35,7 +35,7 @@ STATICINLINE void get_internalformativ(
     {
         GLW_FPTR_CHECK(GetInternalformativ)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetInternalformativ,
         gsl::span<char>(

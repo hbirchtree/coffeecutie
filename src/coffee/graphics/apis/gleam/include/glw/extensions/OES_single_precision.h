@@ -47,7 +47,7 @@ STATICINLINE void clip_planef(
     {
         GLW_FPTR_CHECK(ClipPlanefOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glClipPlanefOES,
         gsl::span<const char>(
@@ -135,7 +135,7 @@ STATICINLINE void get_clip_planef(
     {
         GLW_FPTR_CHECK(GetClipPlanefOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetClipPlanefOES,
         gsl::span<char>(

@@ -30,7 +30,7 @@ STATICINLINE void set_multisamplefv(
     {
         GLW_FPTR_CHECK(SetMultisamplefvAMD)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSetMultisamplefvAMD,
         gsl::span<const char>(

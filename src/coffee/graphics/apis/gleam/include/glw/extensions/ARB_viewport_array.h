@@ -38,7 +38,7 @@ STATICINLINE void depth_range_arrayv(
     {
         GLW_FPTR_CHECK(DepthRangeArrayv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDepthRangeArrayv,
         gsl::span<const char>(
@@ -98,7 +98,7 @@ STATICINLINE void get_doublei_v(
     {
         GLW_FPTR_CHECK(GetDoublei_v)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetDoublei_v,
         gsl::span<char>(
@@ -136,7 +136,7 @@ STATICINLINE void get_floati_v(
     {
         GLW_FPTR_CHECK(GetFloati_v)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetFloati_v,
         gsl::span<char>(
@@ -175,7 +175,7 @@ STATICINLINE void scissor_arrayv(
     {
         GLW_FPTR_CHECK(ScissorArrayv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glScissorArrayv,
         gsl::span<const char>(
@@ -242,7 +242,7 @@ STATICINLINE void scissor_indexedv(
     {
         GLW_FPTR_CHECK(ScissorIndexedv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glScissorIndexedv,
         gsl::span<const char>(
@@ -278,7 +278,7 @@ STATICINLINE void viewport_arrayv(
     {
         GLW_FPTR_CHECK(ViewportArrayv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glViewportArrayv,
         gsl::span<const char>(
@@ -345,7 +345,7 @@ STATICINLINE void viewport_indexedfv(
     {
         GLW_FPTR_CHECK(ViewportIndexedfv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glViewportIndexedfv,
         gsl::span<const char>(
@@ -381,7 +381,7 @@ STATICINLINE void depth_range_arraydv_nv(
     {
         GLW_FPTR_CHECK(DepthRangeArraydvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDepthRangeArraydvNV,
         gsl::span<const char>(

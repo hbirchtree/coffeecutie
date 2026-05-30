@@ -67,7 +67,7 @@ STATICINLINE void get_memory_object_detached_resourcesuiv(
     {
         GLW_FPTR_CHECK(GetMemoryObjectDetachedResourcesuivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMemoryObjectDetachedResourcesuivNV,
         gsl::span<char>(

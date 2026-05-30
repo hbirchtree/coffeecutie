@@ -75,7 +75,7 @@ STATICINLINE void multi_draw_elements(
     }
     GLsizei primcount = count.size();
     detail::assert_equal(count.size(), primcount);
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiDrawElementsEXT,
         gsl::span<const char>(

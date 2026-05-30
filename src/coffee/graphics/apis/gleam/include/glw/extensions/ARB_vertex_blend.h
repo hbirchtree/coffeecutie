@@ -89,7 +89,7 @@ STATICINLINE void weight_pointer(
     {
         GLW_FPTR_CHECK(WeightPointerARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWeightPointerARB,
         gsl::span<const char>(
@@ -128,7 +128,7 @@ STATICINLINE void weightbv(
     {
         GLW_FPTR_CHECK(WeightbvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWeightbvARB,
         gsl::span<const char>(
@@ -162,7 +162,7 @@ STATICINLINE void weightdv(
     {
         GLW_FPTR_CHECK(WeightdvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWeightdvARB,
         gsl::span<const char>(
@@ -196,7 +196,7 @@ STATICINLINE void weightfv(
     {
         GLW_FPTR_CHECK(WeightfvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWeightfvARB,
         gsl::span<const char>(
@@ -230,7 +230,7 @@ STATICINLINE void weightiv(
     {
         GLW_FPTR_CHECK(WeightivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWeightivARB,
         gsl::span<const char>(
@@ -264,7 +264,7 @@ STATICINLINE void weightsv(
     {
         GLW_FPTR_CHECK(WeightsvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWeightsvARB,
         gsl::span<const char>(
@@ -298,7 +298,7 @@ STATICINLINE void weightubv(
     {
         GLW_FPTR_CHECK(WeightubvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWeightubvARB,
         gsl::span<const char>(
@@ -332,7 +332,7 @@ STATICINLINE void weightuiv(
     {
         GLW_FPTR_CHECK(WeightuivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWeightuivARB,
         gsl::span<const char>(
@@ -366,7 +366,7 @@ STATICINLINE void weightusv(
     {
         GLW_FPTR_CHECK(WeightusvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWeightusvARB,
         gsl::span<const char>(

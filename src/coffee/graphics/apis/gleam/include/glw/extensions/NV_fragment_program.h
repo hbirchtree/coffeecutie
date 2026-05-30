@@ -135,7 +135,7 @@ STATICINLINE void program_named_parameter4d(
     {
         GLW_FPTR_CHECK(ProgramNamedParameter4dNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramNamedParameter4dNV,
         gsl::span<const char>(
@@ -227,7 +227,7 @@ STATICINLINE void program_named_parameter4f(
     {
         GLW_FPTR_CHECK(ProgramNamedParameter4fNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramNamedParameter4fNV,
         gsl::span<const char>(

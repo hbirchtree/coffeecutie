@@ -38,7 +38,7 @@ STATICINLINE void framebuffer_sample_positionsfv(
     {
         GLW_FPTR_CHECK(FramebufferSamplePositionsfvAMD)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glFramebufferSamplePositionsfvAMD,
         gsl::span<const char>(
@@ -85,7 +85,7 @@ STATICINLINE void get_framebuffer_parameter(
     {
         GLW_FPTR_CHECK(GetFramebufferParameterfvAMD)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetFramebufferParameterfvAMD,
         gsl::span<char>(
@@ -140,7 +140,7 @@ STATICINLINE void get_named_framebuffer_parameter(
             glIsFramebuffer(framebuffer);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetNamedFramebufferParameterfvAMD,
         gsl::span<char>(
@@ -192,7 +192,7 @@ STATICINLINE void named_framebuffer_sample_positionsfv(
             glIsFramebuffer(framebuffer);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glNamedFramebufferSamplePositionsfvAMD,
         gsl::span<const char>(

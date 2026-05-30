@@ -60,7 +60,7 @@ STATICINLINE void binormal3bv(
     {
         GLW_FPTR_CHECK(Binormal3bvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBinormal3bvEXT,
         gsl::span<const char>(
@@ -110,7 +110,7 @@ STATICINLINE void binormal3dv(
     {
         GLW_FPTR_CHECK(Binormal3dvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBinormal3dvEXT,
         gsl::span<const char>(
@@ -159,7 +159,7 @@ STATICINLINE void binormal3fv(
     {
         GLW_FPTR_CHECK(Binormal3fvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBinormal3fvEXT,
         gsl::span<const char>(
@@ -208,7 +208,7 @@ STATICINLINE void binormal3iv(
     {
         GLW_FPTR_CHECK(Binormal3ivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBinormal3ivEXT,
         gsl::span<const char>(
@@ -257,7 +257,7 @@ STATICINLINE void binormal3sv(
     {
         GLW_FPTR_CHECK(Binormal3svEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBinormal3svEXT,
         gsl::span<const char>(
@@ -287,7 +287,7 @@ STATICINLINE void binormal_pointer(
     {
         GLW_FPTR_CHECK(BinormalPointerEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBinormalPointerEXT,
         gsl::span<const char>(
@@ -345,7 +345,7 @@ STATICINLINE void tangent3bv(
     {
         GLW_FPTR_CHECK(Tangent3bvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTangent3bvEXT,
         gsl::span<const char>(
@@ -395,7 +395,7 @@ STATICINLINE void tangent3dv(
     {
         GLW_FPTR_CHECK(Tangent3dvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTangent3dvEXT,
         gsl::span<const char>(
@@ -444,7 +444,7 @@ STATICINLINE void tangent3fv(
     {
         GLW_FPTR_CHECK(Tangent3fvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTangent3fvEXT,
         gsl::span<const char>(
@@ -493,7 +493,7 @@ STATICINLINE void tangent3iv(
     {
         GLW_FPTR_CHECK(Tangent3ivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTangent3ivEXT,
         gsl::span<const char>(
@@ -542,7 +542,7 @@ STATICINLINE void tangent3sv(
     {
         GLW_FPTR_CHECK(Tangent3svEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTangent3svEXT,
         gsl::span<const char>(
@@ -572,7 +572,7 @@ STATICINLINE void tangent_pointer(
     {
         GLW_FPTR_CHECK(TangentPointerEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTangentPointerEXT,
         gsl::span<const char>(

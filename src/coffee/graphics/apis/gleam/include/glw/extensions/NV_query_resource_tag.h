@@ -25,7 +25,7 @@ STATICINLINE void delete_query_resource_tag(
     {
         GLW_FPTR_CHECK(DeleteQueryResourceTagNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteQueryResourceTagNV,
         gsl::span<const char>(
@@ -57,7 +57,7 @@ STATICINLINE void gen_query_resource_tag(
     {
         GLW_FPTR_CHECK(GenQueryResourceTagNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenQueryResourceTagNV,
         gsl::span<char>(

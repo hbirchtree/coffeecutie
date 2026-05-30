@@ -107,7 +107,7 @@ STATICINLINE void multi_draw_elements(
     }
     GLsizei drawcount = count.size();
     detail::assert_equal(count.size(), drawcount);
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiDrawElements,
         gsl::span<const char>(
@@ -171,7 +171,7 @@ STATICINLINE void point_parameter(
     {
         GLW_FPTR_CHECK(PointParameterfv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPointParameterfv,
         gsl::span<const char>(
@@ -232,7 +232,7 @@ STATICINLINE void point_parameter(
     {
         GLW_FPTR_CHECK(PointParameteriv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPointParameteriv,
         gsl::span<const char>(

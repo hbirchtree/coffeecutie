@@ -51,7 +51,7 @@ STATICINLINE void delete_perf_monitors(
     {
         GLW_FPTR_CHECK(DeletePerfMonitorsAMD)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeletePerfMonitorsAMD,
         gsl::span<char>(
@@ -102,7 +102,7 @@ STATICINLINE void gen_perf_monitors(
     {
         GLW_FPTR_CHECK(GenPerfMonitorsAMD)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenPerfMonitorsAMD,
         gsl::span<char>(
@@ -141,7 +141,7 @@ STATICINLINE void get_perf_monitor_counter_data(
     {
         GLW_FPTR_CHECK(GetPerfMonitorCounterDataAMD)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPerfMonitorCounterDataAMD,
         gsl::span<char>(
@@ -182,7 +182,7 @@ STATICINLINE void get_perf_monitor_counter_info(
     {
         GLW_FPTR_CHECK(GetPerfMonitorCounterInfoAMD)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPerfMonitorCounterInfoAMD,
         gsl::span<char>(
@@ -226,7 +226,7 @@ STATICINLINE void get_perf_monitor_counter_string(
     {
         GLW_FPTR_CHECK(GetPerfMonitorCounterStringAMD)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPerfMonitorCounterStringAMD,
         gsl::span<char>(
@@ -267,7 +267,7 @@ STATICINLINE void get_perf_monitor_counters(
     {
         GLW_FPTR_CHECK(GetPerfMonitorCountersAMD)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPerfMonitorCountersAMD,
         gsl::span<char>(
@@ -310,7 +310,7 @@ STATICINLINE void get_perf_monitor_group_string(
     {
         GLW_FPTR_CHECK(GetPerfMonitorGroupStringAMD)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPerfMonitorGroupStringAMD,
         gsl::span<char>(
@@ -344,7 +344,7 @@ STATICINLINE void get_perf_monitor_groups(
     {
         GLW_FPTR_CHECK(GetPerfMonitorGroupsAMD)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPerfMonitorGroupsAMD,
         gsl::span<char>(
@@ -384,7 +384,7 @@ STATICINLINE void select_perf_monitor_counters(
     {
         GLW_FPTR_CHECK(SelectPerfMonitorCountersAMD)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSelectPerfMonitorCountersAMD,
         gsl::span<char>(

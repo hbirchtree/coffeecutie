@@ -34,7 +34,7 @@ STATICINLINE void delete_semaphores(
     {
         GLW_FPTR_CHECK(DeleteSemaphoresEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteSemaphoresEXT,
         gsl::span<const char>(
@@ -67,7 +67,7 @@ STATICINLINE void gen_semaphores(
     {
         GLW_FPTR_CHECK(GenSemaphoresEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenSemaphoresEXT,
         gsl::span<char>(
@@ -104,7 +104,7 @@ STATICINLINE void get_semaphore_parameterui64v(
     {
         GLW_FPTR_CHECK(GetSemaphoreParameterui64vEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSemaphoreParameterui64vEXT,
         gsl::span<char>(
@@ -140,7 +140,7 @@ STATICINLINE void get_unsigned_bytev(
     {
         GLW_FPTR_CHECK(GetUnsignedBytevEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetUnsignedBytevEXT,
         gsl::span<char>(
@@ -176,7 +176,7 @@ STATICINLINE void get_unsigned_bytei_v(
     {
         GLW_FPTR_CHECK(GetUnsignedBytei_vEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetUnsignedBytei_vEXT,
         gsl::span<char>(
@@ -236,7 +236,7 @@ STATICINLINE void semaphore_parameterui64v(
     {
         GLW_FPTR_CHECK(SemaphoreParameterui64vEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSemaphoreParameterui64vEXT,
         gsl::span<const char>(

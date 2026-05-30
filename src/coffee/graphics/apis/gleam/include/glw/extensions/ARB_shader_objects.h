@@ -182,7 +182,7 @@ STATICINLINE void get_active_uniform(
     {
         GLW_FPTR_CHECK(GetActiveUniformARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveUniformARB,
         gsl::span<char>(
@@ -229,7 +229,7 @@ STATICINLINE void get_attached_objects(
     {
         GLW_FPTR_CHECK(GetAttachedObjectsARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetAttachedObjectsARB,
         gsl::span<char>(reinterpret_cast<char*>(obj.data()), obj.size_bytes()),
@@ -290,7 +290,7 @@ STATICINLINE void get_info_log(
     {
         GLW_FPTR_CHECK(GetInfoLogARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetInfoLogARB,
         gsl::span<char>(
@@ -330,7 +330,7 @@ STATICINLINE void get_object_parameter(
     {
         GLW_FPTR_CHECK(GetObjectParameterfvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetObjectParameterfvARB,
         gsl::span<char>(
@@ -368,7 +368,7 @@ STATICINLINE void get_object_parameter(
     {
         GLW_FPTR_CHECK(GetObjectParameterivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetObjectParameterivARB,
         gsl::span<char>(
@@ -408,7 +408,7 @@ STATICINLINE void get_shader_source(
     {
         GLW_FPTR_CHECK(GetShaderSourceARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetShaderSourceARB,
         gsl::span<char>(
@@ -446,7 +446,7 @@ STATICINLINE GLint get_uniform_location(
     {
         GLW_FPTR_CHECK(GetUniformLocationARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetUniformLocationARB,
         gsl::span<const char>(
@@ -484,7 +484,7 @@ STATICINLINE void get_uniformfv(
     {
         GLW_FPTR_CHECK(GetUniformfvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetUniformfvARB,
         gsl::span<char>(
@@ -522,7 +522,7 @@ STATICINLINE void get_uniformiv(
     {
         GLW_FPTR_CHECK(GetUniformivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetUniformivARB,
         gsl::span<char>(
@@ -649,7 +649,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform1fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform1fvARB,
         gsl::span<const char>(
@@ -705,7 +705,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform1ivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform1ivARB,
         gsl::span<const char>(
@@ -764,7 +764,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform2fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform2fvARB,
         gsl::span<const char>(
@@ -823,7 +823,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform2ivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform2ivARB,
         gsl::span<const char>(
@@ -883,7 +883,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform3fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform3fvARB,
         gsl::span<const char>(
@@ -943,7 +943,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform3ivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform3ivARB,
         gsl::span<const char>(
@@ -1004,7 +1004,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform4fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform4fvARB,
         gsl::span<const char>(
@@ -1065,7 +1065,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform4ivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform4ivARB,
         gsl::span<const char>(
@@ -1100,7 +1100,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix2fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix2fvARB,
         gsl::span<const char>(
@@ -1139,7 +1139,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix3fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix3fvARB,
         gsl::span<const char>(
@@ -1178,7 +1178,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(UniformMatrix4fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix4fvARB,
         gsl::span<const char>(

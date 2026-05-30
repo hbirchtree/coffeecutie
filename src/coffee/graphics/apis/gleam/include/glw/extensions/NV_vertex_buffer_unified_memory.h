@@ -147,7 +147,7 @@ STATICINLINE void get_integerui64i_v(
     {
         GLW_FPTR_CHECK(GetIntegerui64i_vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetIntegerui64i_vNV,
         gsl::span<char>(

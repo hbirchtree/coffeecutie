@@ -144,7 +144,7 @@ STATICINLINE void lgpu_named_buffer_sub_data(
             glIsBuffer(buffer);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glLGPUNamedBufferSubDataNVX,
         gsl::span<const char>(

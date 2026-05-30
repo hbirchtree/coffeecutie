@@ -108,7 +108,7 @@ STATICINLINE void get_internalformati64v(
     {
         GLW_FPTR_CHECK(GetInternalformati64v)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetInternalformati64v,
         gsl::span<char>(

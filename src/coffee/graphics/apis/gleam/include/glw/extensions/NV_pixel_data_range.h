@@ -53,7 +53,7 @@ STATICINLINE void pixel_data_range(
     {
         GLW_FPTR_CHECK(PixelDataRangeNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPixelDataRangeNV,
         gsl::span<const char>(

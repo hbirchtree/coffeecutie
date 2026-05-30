@@ -46,7 +46,7 @@ STATICINLINE void compressed_tex_image_3d(
     {
         GLW_FPTR_CHECK(CompressedTexImage3DOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCompressedTexImage3DOES,
         gsl::span<const char>(
@@ -104,7 +104,7 @@ STATICINLINE void compressed_tex_sub_image_3d(
     {
         GLW_FPTR_CHECK(CompressedTexSubImage3DOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCompressedTexSubImage3DOES,
         gsl::span<const char>(
@@ -258,7 +258,7 @@ STATICINLINE void tex_image_3d(
     {
         GLW_FPTR_CHECK(TexImage3DOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexImage3DOES,
         gsl::span<const char>(
@@ -319,7 +319,7 @@ STATICINLINE void tex_sub_image_3d(
     {
         GLW_FPTR_CHECK(TexSubImage3DOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexSubImage3DOES,
         gsl::span<const char>(

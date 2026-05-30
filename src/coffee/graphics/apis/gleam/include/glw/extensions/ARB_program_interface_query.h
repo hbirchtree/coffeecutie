@@ -51,7 +51,7 @@ STATICINLINE void get_program_interfaceiv(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramInterfaceiv,
         gsl::span<char>(
@@ -200,7 +200,7 @@ STATICINLINE void get_program_resource_name(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramResourceName,
         gsl::span<char>(

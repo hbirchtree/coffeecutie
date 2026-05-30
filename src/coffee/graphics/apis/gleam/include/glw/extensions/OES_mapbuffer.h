@@ -32,7 +32,7 @@ STATICINLINE void get_buffer_pointerv(
     {
         GLW_FPTR_CHECK(GetBufferPointervOES)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetBufferPointervOES,
         gsl::span<char>(

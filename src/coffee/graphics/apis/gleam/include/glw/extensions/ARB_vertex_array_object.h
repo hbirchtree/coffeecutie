@@ -54,7 +54,7 @@ STATICINLINE void delete_vertex_arrays(
     {
         GLW_FPTR_CHECK(DeleteVertexArrays)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteVertexArrays,
         gsl::span<const char>(
@@ -86,7 +86,7 @@ STATICINLINE void gen_vertex_arrays(
     {
         GLW_FPTR_CHECK(GenVertexArrays)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenVertexArrays,
         gsl::span<char>(

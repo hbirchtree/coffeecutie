@@ -93,7 +93,7 @@ STATICINLINE void get_fragment_shading_rates(
     {
         GLW_FPTR_CHECK(GetFragmentShadingRatesEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetFragmentShadingRatesEXT,
         gsl::span<char>(

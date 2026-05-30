@@ -31,7 +31,7 @@ STATICINLINE void color_sub_table(
     {
         GLW_FPTR_CHECK(ColorSubTableEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glColorSubTableEXT,
         gsl::span<const char>(

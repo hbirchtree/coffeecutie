@@ -30,7 +30,7 @@ STATICINLINE void combiner_stage_parameter(
     {
         GLW_FPTR_CHECK(CombinerStageParameterfvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCombinerStageParameterfvNV,
         gsl::span<const char>(
@@ -69,7 +69,7 @@ STATICINLINE void get_combiner_stage_parameter(
     {
         GLW_FPTR_CHECK(GetCombinerStageParameterfvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetCombinerStageParameterfvNV,
         gsl::span<char>(

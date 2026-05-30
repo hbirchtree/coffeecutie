@@ -33,7 +33,7 @@ STATICINLINE void discard_framebuffer(
     {
         GLW_FPTR_CHECK(DiscardFramebufferEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDiscardFramebufferEXT,
         gsl::span<const char>(

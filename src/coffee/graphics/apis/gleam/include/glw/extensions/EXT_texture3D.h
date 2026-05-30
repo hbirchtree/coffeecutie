@@ -51,7 +51,7 @@ STATICINLINE void tex_image_3d(
     {
         GLW_FPTR_CHECK(TexImage3DEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexImage3DEXT,
         gsl::span<const char>(
@@ -112,7 +112,7 @@ STATICINLINE void tex_sub_image_3d(
     {
         GLW_FPTR_CHECK(TexSubImage3DEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexSubImage3DEXT,
         gsl::span<const char>(

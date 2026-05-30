@@ -47,7 +47,7 @@ STATICINLINE void get_internalformat_sampleiv(
     {
         GLW_FPTR_CHECK(GetInternalformatSampleivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetInternalformatSampleivNV,
         gsl::span<char>(

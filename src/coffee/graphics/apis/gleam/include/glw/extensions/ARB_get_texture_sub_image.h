@@ -41,7 +41,7 @@ STATICINLINE void get_compressed_texture_sub_image(
             glIsTexture(texture);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetCompressedTextureSubImage,
         gsl::span<char>(
@@ -105,7 +105,7 @@ STATICINLINE void get_texture_sub_image(
             glIsTexture(texture);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetTextureSubImage,
         gsl::span<char>(

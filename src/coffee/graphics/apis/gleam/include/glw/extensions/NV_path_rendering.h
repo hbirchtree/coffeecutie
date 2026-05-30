@@ -344,7 +344,7 @@ STATICINLINE void get_path_commands(
     {
         GLW_FPTR_CHECK(GetPathCommandsNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPathCommandsNV,
         gsl::span<char>(
@@ -377,7 +377,7 @@ STATICINLINE void get_path_coords(
     {
         GLW_FPTR_CHECK(GetPathCoordsNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPathCoordsNV,
         gsl::span<char>(
@@ -409,7 +409,7 @@ STATICINLINE void get_path_dash_array(
     {
         GLW_FPTR_CHECK(GetPathDashArrayNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPathDashArrayNV,
         gsl::span<char>(
@@ -476,7 +476,7 @@ STATICINLINE void get_path_metric_range(
     {
         GLW_FPTR_CHECK(GetPathMetricRangeNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPathMetricRangeNV,
         gsl::span<char>(
@@ -574,7 +574,7 @@ STATICINLINE void get_path_parameter(
     {
         GLW_FPTR_CHECK(GetPathParameterfvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPathParameterfvNV,
         gsl::span<char>(
@@ -612,7 +612,7 @@ STATICINLINE void get_path_parameter(
     {
         GLW_FPTR_CHECK(GetPathParameterivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPathParameterivNV,
         gsl::span<char>(
@@ -871,7 +871,7 @@ STATICINLINE void path_coords(
     {
         GLW_FPTR_CHECK(PathCoordsNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPathCoordsNV,
         gsl::span<const char>(
@@ -931,7 +931,7 @@ STATICINLINE void path_dash_array(
     {
         GLW_FPTR_CHECK(PathDashArrayNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPathDashArrayNV,
         gsl::span<const char>(
@@ -979,7 +979,7 @@ STATICINLINE void path_glyph_range(
     {
         GLW_FPTR_CHECK(PathGlyphRangeNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPathGlyphRangeNV,
         gsl::span<const char>(
@@ -1125,7 +1125,7 @@ STATICINLINE void path_parameter(
     {
         GLW_FPTR_CHECK(PathParameterfvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPathParameterfvNV,
         gsl::span<const char>(
@@ -1190,7 +1190,7 @@ STATICINLINE void path_parameter(
     {
         GLW_FPTR_CHECK(PathParameterivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPathParameterivNV,
         gsl::span<const char>(
@@ -1272,7 +1272,7 @@ STATICINLINE void path_string(
     {
         GLW_FPTR_CHECK(PathStringNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPathStringNV,
         gsl::span<const char>(
@@ -1376,7 +1376,7 @@ STATICINLINE void path_sub_coords(
     {
         GLW_FPTR_CHECK(PathSubCoordsNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPathSubCoordsNV,
         gsl::span<const char>(
@@ -1650,7 +1650,7 @@ STATICINLINE void transform_path(
     {
         GLW_FPTR_CHECK(TransformPathNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTransformPathNV,
         gsl::span<const char>(
@@ -1738,7 +1738,7 @@ STATICINLINE void matrix_load3x2f(
     {
         GLW_FPTR_CHECK(MatrixLoad3x2fNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixLoad3x2fNV,
         gsl::span<const char>(
@@ -1769,7 +1769,7 @@ STATICINLINE void matrix_load3x3f(
     {
         GLW_FPTR_CHECK(MatrixLoad3x3fNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixLoad3x3fNV,
         gsl::span<const char>(
@@ -1800,7 +1800,7 @@ STATICINLINE void matrix_load_transpose3x3f(
     {
         GLW_FPTR_CHECK(MatrixLoadTranspose3x3fNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixLoadTranspose3x3fNV,
         gsl::span<const char>(
@@ -1832,7 +1832,7 @@ STATICINLINE void matrix_mult3x2f(
     {
         GLW_FPTR_CHECK(MatrixMult3x2fNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixMult3x2fNV,
         gsl::span<const char>(
@@ -1863,7 +1863,7 @@ STATICINLINE void matrix_mult3x3f(
     {
         GLW_FPTR_CHECK(MatrixMult3x3fNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixMult3x3fNV,
         gsl::span<const char>(
@@ -1894,7 +1894,7 @@ STATICINLINE void matrix_mult_transpose3x3f(
     {
         GLW_FPTR_CHECK(MatrixMultTranspose3x3fNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixMultTranspose3x3fNV,
         gsl::span<const char>(
@@ -2256,7 +2256,7 @@ STATICINLINE GLenum path_glyph_index_array(
     {
         GLW_FPTR_CHECK(PathGlyphIndexArrayNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPathGlyphIndexArrayNV,
         gsl::span<const char>(
@@ -2316,7 +2316,7 @@ STATICINLINE GLenum path_memory_glyph_index_array(
     {
         GLW_FPTR_CHECK(PathMemoryGlyphIndexArrayNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPathMemoryGlyphIndexArrayNV,
         gsl::span<const char>(
@@ -2379,7 +2379,7 @@ STATICINLINE void program_path_fragment_input_gen(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramPathFragmentInputGenNV,
         gsl::span<const char>(
@@ -2476,7 +2476,7 @@ STATICINLINE void matrix_load_transposed_ext(
     {
         GLW_FPTR_CHECK(MatrixLoadTransposedEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixLoadTransposedEXT,
         gsl::span<const char>(
@@ -2511,7 +2511,7 @@ STATICINLINE void matrix_load_transposef_ext(
     {
         GLW_FPTR_CHECK(MatrixLoadTransposefEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixLoadTransposefEXT,
         gsl::span<const char>(
@@ -2546,7 +2546,7 @@ STATICINLINE void matrix_loadd_ext(
     {
         GLW_FPTR_CHECK(MatrixLoaddEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixLoaddEXT,
         gsl::span<const char>(
@@ -2581,7 +2581,7 @@ STATICINLINE void matrix_loadf_ext(
     {
         GLW_FPTR_CHECK(MatrixLoadfEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixLoadfEXT,
         gsl::span<const char>(
@@ -2616,7 +2616,7 @@ STATICINLINE void matrix_mult_transposed_ext(
     {
         GLW_FPTR_CHECK(MatrixMultTransposedEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixMultTransposedEXT,
         gsl::span<const char>(
@@ -2651,7 +2651,7 @@ STATICINLINE void matrix_mult_transposef_ext(
     {
         GLW_FPTR_CHECK(MatrixMultTransposefEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixMultTransposefEXT,
         gsl::span<const char>(
@@ -2686,7 +2686,7 @@ STATICINLINE void matrix_multd_ext(
     {
         GLW_FPTR_CHECK(MatrixMultdEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixMultdEXT,
         gsl::span<const char>(
@@ -2721,7 +2721,7 @@ STATICINLINE void matrix_multf_ext(
     {
         GLW_FPTR_CHECK(MatrixMultfEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixMultfEXT,
         gsl::span<const char>(

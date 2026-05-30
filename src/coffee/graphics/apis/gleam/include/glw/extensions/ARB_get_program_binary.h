@@ -43,7 +43,7 @@ STATICINLINE void get_program_binary(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramBinary,
         gsl::span<char>(
@@ -88,7 +88,7 @@ STATICINLINE void program_binary(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramBinary,
         gsl::span<const char>(

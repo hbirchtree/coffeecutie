@@ -35,7 +35,7 @@ STATICINLINE void import_memory_win32_handle(
     {
         GLW_FPTR_CHECK(ImportMemoryWin32HandleEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glImportMemoryWin32HandleEXT,
         gsl::span<char>(
@@ -74,7 +74,7 @@ STATICINLINE void import_memory_win32_name(
     {
         GLW_FPTR_CHECK(ImportMemoryWin32NameEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glImportMemoryWin32NameEXT,
         gsl::span<const char>(

@@ -67,7 +67,7 @@ STATICINLINE void create_perf_query(
     {
         GLW_FPTR_CHECK(CreatePerfQueryINTEL)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCreatePerfQueryINTEL,
         gsl::span<char>(
@@ -140,7 +140,7 @@ STATICINLINE void get_first_perf_query_id(
     {
         GLW_FPTR_CHECK(GetFirstPerfQueryIdINTEL)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetFirstPerfQueryIdINTEL,
         gsl::span<char>(
@@ -172,7 +172,7 @@ STATICINLINE void get_next_perf_query_id(
     {
         GLW_FPTR_CHECK(GetNextPerfQueryIdINTEL)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetNextPerfQueryIdINTEL,
         gsl::span<char>(
@@ -353,7 +353,7 @@ STATICINLINE void get_perf_query_id_by_name(
     {
         GLW_FPTR_CHECK(GetPerfQueryIdByNameINTEL)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPerfQueryIdByNameINTEL,
         gsl::span<char>(

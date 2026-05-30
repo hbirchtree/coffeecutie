@@ -38,7 +38,7 @@ STATICINLINE void clear_tex_image(
             glIsTexture(texture);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glClearTexImage,
         gsl::span<const char>(
@@ -96,7 +96,7 @@ STATICINLINE void clear_tex_sub_image(
             glIsTexture(texture);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glClearTexSubImage,
         gsl::span<const char>(

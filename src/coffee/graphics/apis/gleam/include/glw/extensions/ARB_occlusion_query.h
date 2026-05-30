@@ -53,7 +53,7 @@ STATICINLINE void delete_queries(
     {
         GLW_FPTR_CHECK(DeleteQueriesARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteQueriesARB,
         gsl::span<const char>(
@@ -104,7 +104,7 @@ STATICINLINE void gen_queries(
     {
         GLW_FPTR_CHECK(GenQueriesARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenQueriesARB,
         gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()));
@@ -138,7 +138,7 @@ STATICINLINE void get_query_objectiv(
     {
         GLW_FPTR_CHECK(GetQueryObjectivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetQueryObjectivARB,
         gsl::span<char>(
@@ -176,7 +176,7 @@ STATICINLINE void get_query_objectuiv(
     {
         GLW_FPTR_CHECK(GetQueryObjectuivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetQueryObjectuivARB,
         gsl::span<char>(
@@ -214,7 +214,7 @@ STATICINLINE void get_queryiv(
     {
         GLW_FPTR_CHECK(GetQueryivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetQueryivARB,
         gsl::span<char>(

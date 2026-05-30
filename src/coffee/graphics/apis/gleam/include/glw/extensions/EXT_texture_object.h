@@ -109,7 +109,7 @@ STATICINLINE void delete_textures(
     {
         GLW_FPTR_CHECK(DeleteTexturesEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteTexturesEXT,
         gsl::span<const char>(
@@ -142,7 +142,7 @@ STATICINLINE void gen_textures(
     {
         GLW_FPTR_CHECK(GenTexturesEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenTexturesEXT,
         gsl::span<char>(

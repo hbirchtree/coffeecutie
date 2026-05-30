@@ -31,7 +31,7 @@ STATICINLINE void delete_fences(
     {
         GLW_FPTR_CHECK(DeleteFencesNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteFencesNV,
         gsl::span<const char>(
@@ -83,7 +83,7 @@ STATICINLINE void gen_fences(
     {
         GLW_FPTR_CHECK(GenFencesNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenFencesNV,
         gsl::span<char>(
@@ -118,7 +118,7 @@ STATICINLINE void get_fenceiv(
     {
         GLW_FPTR_CHECK(GetFenceivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetFenceivNV,
         gsl::span<char>(

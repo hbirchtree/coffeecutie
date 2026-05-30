@@ -39,7 +39,7 @@ STATICINLINE void compile_shader_include(
 #endif
     }
     auto [path_lens, path_cstr, path_store] = detail::transform_strings(path);
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCompileShaderIncludeARB,
         gsl::span<const char>(
@@ -103,7 +103,7 @@ STATICINLINE void get_named_string(
     {
         GLW_FPTR_CHECK(GetNamedStringARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetNamedStringARB,
         gsl::span<char>(
@@ -140,7 +140,7 @@ STATICINLINE void get_named_stringiv(
     {
         GLW_FPTR_CHECK(GetNamedStringivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetNamedStringivARB,
         gsl::span<char>(

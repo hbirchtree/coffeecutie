@@ -45,7 +45,7 @@ STATICINLINE void get_object_label(
     {
         GLW_FPTR_CHECK(GetObjectLabelEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetObjectLabelEXT,
         gsl::span<char>(

@@ -84,7 +84,7 @@ STATICINLINE void invalidate_framebuffer(
     {
         GLW_FPTR_CHECK(InvalidateFramebuffer)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glInvalidateFramebuffer,
         gsl::span<const char>(
@@ -134,7 +134,7 @@ STATICINLINE void invalidate_sub_framebuffer(
     {
         GLW_FPTR_CHECK(InvalidateSubFramebuffer)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glInvalidateSubFramebuffer,
         gsl::span<const char>(

@@ -42,7 +42,7 @@ STATICINLINE void tex_storage_attribs_2d(
     {
         GLW_FPTR_CHECK(TexStorageAttribs2DEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexStorageAttribs2DEXT,
         gsl::span<const char>(
@@ -94,7 +94,7 @@ STATICINLINE void tex_storage_attribs_3d(
     {
         GLW_FPTR_CHECK(TexStorageAttribs3DEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexStorageAttribs3DEXT,
         gsl::span<const char>(

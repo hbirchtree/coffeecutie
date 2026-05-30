@@ -40,7 +40,7 @@ STATICINLINE void debug_message_callback(
     {
         GLW_FPTR_CHECK(DebugMessageCallbackARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDebugMessageCallbackARB,
         gsl::span<const char>(
@@ -84,7 +84,7 @@ STATICINLINE void debug_message_control(
     {
         GLW_FPTR_CHECK(DebugMessageControlARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDebugMessageControlARB,
         gsl::span<const char>(

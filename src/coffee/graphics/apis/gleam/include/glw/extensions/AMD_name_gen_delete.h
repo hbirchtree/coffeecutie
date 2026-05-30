@@ -33,7 +33,7 @@ STATICINLINE void delete_names(
     {
         GLW_FPTR_CHECK(DeleteNamesAMD)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteNamesAMD,
         gsl::span<const char>(
@@ -69,7 +69,7 @@ STATICINLINE void gen_names(
     {
         GLW_FPTR_CHECK(GenNamesAMD)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenNamesAMD,
         gsl::span<char>(

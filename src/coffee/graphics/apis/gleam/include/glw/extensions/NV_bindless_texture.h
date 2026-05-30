@@ -282,7 +282,7 @@ STATICINLINE void program_uniform_handle(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniformHandleui64vNV,
         gsl::span<const char>(
@@ -343,7 +343,7 @@ STATICINLINE void uniform_handle(
     {
         GLW_FPTR_CHECK(UniformHandleui64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformHandleui64vNV,
         gsl::span<const char>(

@@ -66,7 +66,7 @@ STATICINLINE void get_uniformi64v_nv(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetUniformi64vNV,
         gsl::span<char>(
@@ -110,7 +110,7 @@ STATICINLINE void get_uniformui64v_nv(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetUniformui64vNV,
         gsl::span<char>(
@@ -170,7 +170,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform1i64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform1i64vNV,
         gsl::span<const char>(
@@ -228,7 +228,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform1ui64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform1ui64vNV,
         gsl::span<const char>(
@@ -290,7 +290,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform2i64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform2i64vNV,
         gsl::span<const char>(
@@ -354,7 +354,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform2ui64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform2ui64vNV,
         gsl::span<const char>(
@@ -417,7 +417,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform3i64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform3i64vNV,
         gsl::span<const char>(
@@ -482,7 +482,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform3ui64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform3ui64vNV,
         gsl::span<const char>(
@@ -546,7 +546,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform4i64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform4i64vNV,
         gsl::span<const char>(
@@ -612,7 +612,7 @@ STATICINLINE void uniform(
     {
         GLW_FPTR_CHECK(Uniform4ui64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniform4ui64vNV,
         gsl::span<const char>(
@@ -686,7 +686,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform1i64vNV,
         gsl::span<const char>(
@@ -762,7 +762,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform1ui64vNV,
         gsl::span<const char>(
@@ -840,7 +840,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform2i64vNV,
         gsl::span<const char>(
@@ -920,7 +920,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform2ui64vNV,
         gsl::span<const char>(
@@ -999,7 +999,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform3i64vNV,
         gsl::span<const char>(
@@ -1080,7 +1080,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform3ui64vNV,
         gsl::span<const char>(
@@ -1160,7 +1160,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform4i64vNV,
         gsl::span<const char>(
@@ -1242,7 +1242,7 @@ STATICINLINE void program_uniform(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniform4ui64vNV,
         gsl::span<const char>(

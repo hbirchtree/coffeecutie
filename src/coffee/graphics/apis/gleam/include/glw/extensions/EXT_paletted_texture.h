@@ -38,7 +38,7 @@ STATICINLINE void color_table(
     {
         GLW_FPTR_CHECK(ColorTableEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glColorTableEXT,
         gsl::span<const char>(
@@ -81,7 +81,7 @@ STATICINLINE void get_color_table(
     {
         GLW_FPTR_CHECK(GetColorTableEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetColorTableEXT,
         gsl::span<char>(
@@ -121,7 +121,7 @@ STATICINLINE void get_color_table_parameter(
     {
         GLW_FPTR_CHECK(GetColorTableParameterfvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetColorTableParameterfvEXT,
         gsl::span<char>(
@@ -159,7 +159,7 @@ STATICINLINE void get_color_table_parameter(
     {
         GLW_FPTR_CHECK(GetColorTableParameterivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetColorTableParameterivEXT,
         gsl::span<char>(

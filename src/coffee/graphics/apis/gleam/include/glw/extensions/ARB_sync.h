@@ -114,7 +114,7 @@ STATICINLINE void get_integer64v(
     {
         GLW_FPTR_CHECK(GetInteger64v)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetInteger64v,
         gsl::span<char>(
@@ -153,7 +153,7 @@ STATICINLINE void get_synciv(
     {
         GLW_FPTR_CHECK(GetSynciv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSynciv,
         gsl::span<char>(

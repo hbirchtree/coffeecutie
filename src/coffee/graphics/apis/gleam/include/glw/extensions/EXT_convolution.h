@@ -47,7 +47,7 @@ STATICINLINE void convolution_filter_1d(
     {
         GLW_FPTR_CHECK(ConvolutionFilter1DEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glConvolutionFilter1DEXT,
         gsl::span<const char>(
@@ -95,7 +95,7 @@ STATICINLINE void convolution_filter_2d(
     {
         GLW_FPTR_CHECK(ConvolutionFilter2DEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glConvolutionFilter2DEXT,
         gsl::span<const char>(
@@ -167,7 +167,7 @@ STATICINLINE void convolution_parameter(
     {
         GLW_FPTR_CHECK(ConvolutionParameterfvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glConvolutionParameterfvEXT,
         gsl::span<const char>(
@@ -233,7 +233,7 @@ STATICINLINE void convolution_parameter(
     {
         GLW_FPTR_CHECK(ConvolutionParameterivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glConvolutionParameterivEXT,
         gsl::span<const char>(
@@ -346,7 +346,7 @@ STATICINLINE void get_convolution_filter(
     {
         GLW_FPTR_CHECK(GetConvolutionFilterEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetConvolutionFilterEXT,
         gsl::span<char>(
@@ -386,7 +386,7 @@ STATICINLINE void get_convolution_parameter(
     {
         GLW_FPTR_CHECK(GetConvolutionParameterfvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetConvolutionParameterfvEXT,
         gsl::span<char>(
@@ -424,7 +424,7 @@ STATICINLINE void get_convolution_parameter(
     {
         GLW_FPTR_CHECK(GetConvolutionParameterivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetConvolutionParameterivEXT,
         gsl::span<char>(

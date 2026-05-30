@@ -53,7 +53,7 @@ STATICINLINE void delete_queries(
     {
         GLW_FPTR_CHECK(DeleteQueriesEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteQueriesEXT,
         gsl::span<const char>(
@@ -104,7 +104,7 @@ STATICINLINE void gen_queries(
     {
         GLW_FPTR_CHECK(GenQueriesEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenQueriesEXT,
         gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()));
@@ -138,7 +138,7 @@ STATICINLINE void get_query_objectuiv(
     {
         GLW_FPTR_CHECK(GetQueryObjectuivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetQueryObjectuivEXT,
         gsl::span<char>(
@@ -176,7 +176,7 @@ STATICINLINE void get_queryiv(
     {
         GLW_FPTR_CHECK(GetQueryivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetQueryivEXT,
         gsl::span<char>(

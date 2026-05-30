@@ -65,7 +65,7 @@ STATICINLINE void create_memory_objects(
     {
         GLW_FPTR_CHECK(CreateMemoryObjectsEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCreateMemoryObjectsEXT,
         gsl::span<char>(
@@ -101,7 +101,7 @@ STATICINLINE void delete_memory_objects(
     {
         GLW_FPTR_CHECK(DeleteMemoryObjectsEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteMemoryObjectsEXT,
         gsl::span<const char>(
@@ -139,7 +139,7 @@ STATICINLINE void get_memory_object_parameter(
     {
         GLW_FPTR_CHECK(GetMemoryObjectParameterivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMemoryObjectParameterivEXT,
         gsl::span<char>(
@@ -175,7 +175,7 @@ STATICINLINE void get_unsigned_bytev(
     {
         GLW_FPTR_CHECK(GetUnsignedBytevEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetUnsignedBytevEXT,
         gsl::span<char>(
@@ -211,7 +211,7 @@ STATICINLINE void get_unsigned_bytei_v(
     {
         GLW_FPTR_CHECK(GetUnsignedBytei_vEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetUnsignedBytei_vEXT,
         gsl::span<char>(
@@ -271,7 +271,7 @@ STATICINLINE void memory_object_parameter(
     {
         GLW_FPTR_CHECK(MemoryObjectParameterivEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMemoryObjectParameterivEXT,
         gsl::span<const char>(

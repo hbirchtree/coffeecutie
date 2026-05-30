@@ -112,7 +112,7 @@ STATICINLINE void draw_range_elements_base_vertex(
     {
         GLW_FPTR_CHECK(DrawRangeElementsBaseVertexEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDrawRangeElementsBaseVertexEXT,
         gsl::span<const char>(

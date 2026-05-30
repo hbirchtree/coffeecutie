@@ -39,7 +39,7 @@ STATICINLINE void framebuffer_sample_locationsfv(
     {
         GLW_FPTR_CHECK(FramebufferSampleLocationsfvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glFramebufferSampleLocationsfvNV,
         gsl::span<const char>(
@@ -87,7 +87,7 @@ STATICINLINE void named_framebuffer_sample_locationsfv(
             glIsFramebuffer(framebuffer);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glNamedFramebufferSampleLocationsfvNV,
         gsl::span<const char>(

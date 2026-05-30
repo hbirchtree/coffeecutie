@@ -28,7 +28,7 @@ STATICINLINE void program_env_parameters4fv(
     {
         GLW_FPTR_CHECK(ProgramEnvParameters4fvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramEnvParameters4fvEXT,
         gsl::span<const char>(
@@ -67,7 +67,7 @@ STATICINLINE void program_local_parameters4fv(
     {
         GLW_FPTR_CHECK(ProgramLocalParameters4fvEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramLocalParameters4fvEXT,
         gsl::span<const char>(

@@ -136,7 +136,7 @@ STATICINLINE void delete_programs(
     {
         GLW_FPTR_CHECK(DeleteProgramsARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteProgramsARB,
         gsl::span<const char>(
@@ -169,7 +169,7 @@ STATICINLINE void gen_programs(
     {
         GLW_FPTR_CHECK(GenProgramsARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenProgramsARB,
         gsl::span<char>(
@@ -204,7 +204,7 @@ STATICINLINE void get_program_env_parameter(
     {
         GLW_FPTR_CHECK(GetProgramEnvParameterdvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramEnvParameterdvARB,
         gsl::span<char>(
@@ -242,7 +242,7 @@ STATICINLINE void get_program_env_parameter(
     {
         GLW_FPTR_CHECK(GetProgramEnvParameterfvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramEnvParameterfvARB,
         gsl::span<char>(
@@ -280,7 +280,7 @@ STATICINLINE void get_program_local_parameter(
     {
         GLW_FPTR_CHECK(GetProgramLocalParameterdvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramLocalParameterdvARB,
         gsl::span<char>(
@@ -318,7 +318,7 @@ STATICINLINE void get_program_local_parameter(
     {
         GLW_FPTR_CHECK(GetProgramLocalParameterfvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramLocalParameterfvARB,
         gsl::span<char>(
@@ -353,7 +353,7 @@ STATICINLINE void get_program_string(
     {
         GLW_FPTR_CHECK(GetProgramStringARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramStringARB,
         gsl::span<char>(
@@ -473,7 +473,7 @@ STATICINLINE void program_env_parameter4dv(
     {
         GLW_FPTR_CHECK(ProgramEnvParameter4dvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramEnvParameter4dvARB,
         gsl::span<const char>(
@@ -541,7 +541,7 @@ STATICINLINE void program_env_parameter4fv(
     {
         GLW_FPTR_CHECK(ProgramEnvParameter4fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramEnvParameter4fvARB,
         gsl::span<const char>(
@@ -609,7 +609,7 @@ STATICINLINE void program_local_parameter4dv(
     {
         GLW_FPTR_CHECK(ProgramLocalParameter4dvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramLocalParameter4dvARB,
         gsl::span<const char>(
@@ -677,7 +677,7 @@ STATICINLINE void program_local_parameter4fv(
     {
         GLW_FPTR_CHECK(ProgramLocalParameter4fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramLocalParameter4fvARB,
         gsl::span<const char>(
@@ -713,7 +713,7 @@ STATICINLINE void program_string(
     {
         GLW_FPTR_CHECK(ProgramStringARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramStringARB,
         gsl::span<const char>(

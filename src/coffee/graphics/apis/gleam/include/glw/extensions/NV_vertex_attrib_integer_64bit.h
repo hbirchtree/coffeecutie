@@ -35,7 +35,7 @@ STATICINLINE void get_vertex_attrib_li64v(
     {
         GLW_FPTR_CHECK(GetVertexAttribLi64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVertexAttribLi64vNV,
         gsl::span<char>(
@@ -74,7 +74,7 @@ STATICINLINE void get_vertex_attrib_lui64v(
     {
         GLW_FPTR_CHECK(GetVertexAttribLui64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVertexAttribLui64vNV,
         gsl::span<char>(
@@ -133,7 +133,7 @@ STATICINLINE void vertex_attrib_l1i64v(
     {
         GLW_FPTR_CHECK(VertexAttribL1i64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribL1i64vNV,
         gsl::span<const char>(
@@ -188,7 +188,7 @@ STATICINLINE void vertex_attrib_l1ui64v(
     {
         GLW_FPTR_CHECK(VertexAttribL1ui64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribL1ui64vNV,
         gsl::span<const char>(
@@ -247,7 +247,7 @@ STATICINLINE void vertex_attrib_l2i64v(
     {
         GLW_FPTR_CHECK(VertexAttribL2i64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribL2i64vNV,
         gsl::span<const char>(
@@ -308,7 +308,7 @@ STATICINLINE void vertex_attrib_l2ui64v(
     {
         GLW_FPTR_CHECK(VertexAttribL2ui64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribL2ui64vNV,
         gsl::span<const char>(
@@ -368,7 +368,7 @@ STATICINLINE void vertex_attrib_l3i64v(
     {
         GLW_FPTR_CHECK(VertexAttribL3i64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribL3i64vNV,
         gsl::span<const char>(
@@ -430,7 +430,7 @@ STATICINLINE void vertex_attrib_l3ui64v(
     {
         GLW_FPTR_CHECK(VertexAttribL3ui64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribL3ui64vNV,
         gsl::span<const char>(
@@ -491,7 +491,7 @@ STATICINLINE void vertex_attrib_l4i64v(
     {
         GLW_FPTR_CHECK(VertexAttribL4i64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribL4i64vNV,
         gsl::span<const char>(
@@ -554,7 +554,7 @@ STATICINLINE void vertex_attrib_l4ui64v(
     {
         GLW_FPTR_CHECK(VertexAttribL4ui64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribL4ui64vNV,
         gsl::span<const char>(

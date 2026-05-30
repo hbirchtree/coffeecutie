@@ -202,7 +202,7 @@ STATICINLINE void combiner_parameter(
     {
         GLW_FPTR_CHECK(CombinerParameterfvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCombinerParameterfvNV,
         gsl::span<const char>(
@@ -261,7 +261,7 @@ STATICINLINE void combiner_parameter(
     {
         GLW_FPTR_CHECK(CombinerParameterivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCombinerParameterivNV,
         gsl::span<const char>(
@@ -334,7 +334,7 @@ STATICINLINE void get_combiner_input_parameter(
     {
         GLW_FPTR_CHECK(GetCombinerInputParameterfvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetCombinerInputParameterfvNV,
         gsl::span<char>(
@@ -380,7 +380,7 @@ STATICINLINE void get_combiner_input_parameter(
     {
         GLW_FPTR_CHECK(GetCombinerInputParameterivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetCombinerInputParameterivNV,
         gsl::span<char>(
@@ -424,7 +424,7 @@ STATICINLINE void get_combiner_output_parameter(
     {
         GLW_FPTR_CHECK(GetCombinerOutputParameterfvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetCombinerOutputParameterfvNV,
         gsl::span<char>(
@@ -466,7 +466,7 @@ STATICINLINE void get_combiner_output_parameter(
     {
         GLW_FPTR_CHECK(GetCombinerOutputParameterivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetCombinerOutputParameterivNV,
         gsl::span<char>(
@@ -506,7 +506,7 @@ STATICINLINE void get_final_combiner_input_parameter(
     {
         GLW_FPTR_CHECK(GetFinalCombinerInputParameterfvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetFinalCombinerInputParameterfvNV,
         gsl::span<char>(
@@ -544,7 +544,7 @@ STATICINLINE void get_final_combiner_input_parameter(
     {
         GLW_FPTR_CHECK(GetFinalCombinerInputParameterivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetFinalCombinerInputParameterivNV,
         gsl::span<char>(

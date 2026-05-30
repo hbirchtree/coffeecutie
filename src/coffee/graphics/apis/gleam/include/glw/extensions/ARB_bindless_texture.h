@@ -129,7 +129,7 @@ STATICINLINE void get_vertex_attrib_lui64v(
     {
         GLW_FPTR_CHECK(GetVertexAttribLui64vARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVertexAttribLui64vARB,
         gsl::span<char>(
@@ -328,7 +328,7 @@ STATICINLINE void program_uniform_handle(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniformHandleui64vARB,
         gsl::span<const char>(
@@ -389,7 +389,7 @@ STATICINLINE void uniform_handle(
     {
         GLW_FPTR_CHECK(UniformHandleui64vARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformHandleui64vARB,
         gsl::span<const char>(
@@ -447,7 +447,7 @@ STATICINLINE void vertex_attrib_l1ui64v(
     {
         GLW_FPTR_CHECK(VertexAttribL1ui64vARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribL1ui64vARB,
         gsl::span<const char>(

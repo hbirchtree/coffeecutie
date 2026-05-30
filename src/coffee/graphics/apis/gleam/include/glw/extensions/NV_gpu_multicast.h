@@ -129,7 +129,7 @@ STATICINLINE void multicast_buffer_sub_data(
             glIsBuffer(buffer);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMulticastBufferSubDataNV,
         gsl::span<const char>(
@@ -317,7 +317,7 @@ STATICINLINE void multicast_framebuffer_sample_locationsfv(
             glIsFramebuffer(framebuffer);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMulticastFramebufferSampleLocationsfvNV,
         gsl::span<const char>(
@@ -362,7 +362,7 @@ STATICINLINE void multicast_get_query_objecti64v(
     {
         GLW_FPTR_CHECK(MulticastGetQueryObjecti64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMulticastGetQueryObjecti64vNV,
         gsl::span<char>(
@@ -404,7 +404,7 @@ STATICINLINE void multicast_get_query_objectiv(
     {
         GLW_FPTR_CHECK(MulticastGetQueryObjectivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMulticastGetQueryObjectivNV,
         gsl::span<char>(
@@ -446,7 +446,7 @@ STATICINLINE void multicast_get_query_objectui64v(
     {
         GLW_FPTR_CHECK(MulticastGetQueryObjectui64vNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMulticastGetQueryObjectui64vNV,
         gsl::span<char>(
@@ -488,7 +488,7 @@ STATICINLINE void multicast_get_query_objectuiv(
     {
         GLW_FPTR_CHECK(MulticastGetQueryObjectuivNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMulticastGetQueryObjectuivNV,
         gsl::span<char>(

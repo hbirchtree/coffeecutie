@@ -152,7 +152,7 @@ STATICINLINE void vdpau_map_surfaces(
     {
         GLW_FPTR_CHECK(VDPAUMapSurfacesNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVDPAUMapSurfacesNV,
         gsl::span<const char>(
@@ -307,7 +307,7 @@ STATICINLINE void vdpau_unmap_surfaces(
     {
         GLW_FPTR_CHECK(VDPAUUnmapSurfacesNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVDPAUUnmapSurfacesNV,
         gsl::span<const char>(

@@ -81,7 +81,7 @@ STATICINLINE void get_integeri_v(
     {
         GLW_FPTR_CHECK(GetIntegeri_vEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetIntegeri_vEXT,
         gsl::span<char>(

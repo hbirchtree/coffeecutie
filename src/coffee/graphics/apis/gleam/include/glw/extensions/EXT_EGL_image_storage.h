@@ -29,7 +29,7 @@ STATICINLINE void egl_image_target_tex_storage(
     {
         GLW_FPTR_CHECK(EGLImageTargetTexStorageEXT)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glEGLImageTargetTexStorageEXT,
         gsl::span<const char>(
@@ -75,7 +75,7 @@ STATICINLINE void egl_image_target_texture_storage(
             glIsTexture(texture);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glEGLImageTargetTextureStorageEXT,
         gsl::span<const char>(

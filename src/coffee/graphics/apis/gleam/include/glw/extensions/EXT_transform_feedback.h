@@ -194,7 +194,7 @@ STATICINLINE void get_transform_feedback_varying(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetTransformFeedbackVaryingEXT,
         gsl::span<char>(

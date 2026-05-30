@@ -76,7 +76,7 @@ STATICINLINE void buffer_data(
     {
         GLW_FPTR_CHECK(BufferData)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBufferData,
         gsl::span<const char>(
@@ -115,7 +115,7 @@ STATICINLINE void buffer_sub_data(
     {
         GLW_FPTR_CHECK(BufferSubData)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBufferSubData,
         gsl::span<const char>(
@@ -152,7 +152,7 @@ STATICINLINE void delete_buffers(
     {
         GLW_FPTR_CHECK(DeleteBuffers)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteBuffers,
         gsl::span<const char>(
@@ -186,7 +186,7 @@ STATICINLINE void delete_queries(
     {
         GLW_FPTR_CHECK(DeleteQueries)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteQueries,
         gsl::span<const char>(
@@ -240,7 +240,7 @@ STATICINLINE void gen_buffers(
     {
         GLW_FPTR_CHECK(GenBuffers)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenBuffers,
         gsl::span<char>(
@@ -272,7 +272,7 @@ STATICINLINE void gen_queries(
     {
         GLW_FPTR_CHECK(GenQueries)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenQueries,
         gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()));
@@ -307,7 +307,7 @@ STATICINLINE void get_buffer_parameter(
     {
         GLW_FPTR_CHECK(GetBufferParameteriv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetBufferParameteriv,
         gsl::span<char>(
@@ -342,7 +342,7 @@ STATICINLINE void get_buffer_pointerv(
     {
         GLW_FPTR_CHECK(GetBufferPointerv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetBufferPointerv,
         gsl::span<char>(
@@ -378,7 +378,7 @@ STATICINLINE void get_buffer_sub_data(
     {
         GLW_FPTR_CHECK(GetBufferSubData)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetBufferSubData,
         gsl::span<char>(
@@ -418,7 +418,7 @@ STATICINLINE void get_query_objectiv(
     {
         GLW_FPTR_CHECK(GetQueryObjectiv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetQueryObjectiv,
         gsl::span<char>(
@@ -457,7 +457,7 @@ STATICINLINE void get_query_objectuiv(
     {
         GLW_FPTR_CHECK(GetQueryObjectuiv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetQueryObjectuiv,
         gsl::span<char>(
@@ -496,7 +496,7 @@ STATICINLINE void get_queryiv(
     {
         GLW_FPTR_CHECK(GetQueryiv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetQueryiv,
         gsl::span<char>(

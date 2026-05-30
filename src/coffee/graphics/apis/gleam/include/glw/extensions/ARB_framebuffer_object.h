@@ -211,7 +211,7 @@ STATICINLINE void delete_framebuffers(
     {
         GLW_FPTR_CHECK(DeleteFramebuffers)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteFramebuffers,
         gsl::span<const char>(
@@ -247,7 +247,7 @@ STATICINLINE void delete_renderbuffers(
     {
         GLW_FPTR_CHECK(DeleteRenderbuffers)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteRenderbuffers,
         gsl::span<const char>(
@@ -491,7 +491,7 @@ STATICINLINE void gen_framebuffers(
     {
         GLW_FPTR_CHECK(GenFramebuffers)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenFramebuffers,
         gsl::span<char>(
@@ -524,7 +524,7 @@ STATICINLINE void gen_renderbuffers(
     {
         GLW_FPTR_CHECK(GenRenderbuffers)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenRenderbuffers,
         gsl::span<char>(
@@ -583,7 +583,7 @@ STATICINLINE void get_framebuffer_attachment_parameter(
     {
         GLW_FPTR_CHECK(GetFramebufferAttachmentParameteriv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetFramebufferAttachmentParameteriv,
         gsl::span<char>(
@@ -623,7 +623,7 @@ STATICINLINE void get_renderbuffer_parameter(
     {
         GLW_FPTR_CHECK(GetRenderbufferParameteriv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetRenderbufferParameteriv,
         gsl::span<char>(

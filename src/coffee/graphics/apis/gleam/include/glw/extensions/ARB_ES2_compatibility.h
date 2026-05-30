@@ -87,7 +87,7 @@ STATICINLINE void get_shader_precision_format(
     {
         GLW_FPTR_CHECK(GetShaderPrecisionFormat)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetShaderPrecisionFormat,
         gsl::span<char>(

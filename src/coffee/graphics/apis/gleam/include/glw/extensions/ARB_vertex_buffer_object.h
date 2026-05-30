@@ -86,7 +86,7 @@ STATICINLINE void buffer_data(
     {
         GLW_FPTR_CHECK(BufferDataARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBufferDataARB,
         gsl::span<const char>(
@@ -124,7 +124,7 @@ STATICINLINE void buffer_sub_data(
     {
         GLW_FPTR_CHECK(BufferSubDataARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBufferSubDataARB,
         gsl::span<const char>(
@@ -161,7 +161,7 @@ STATICINLINE void delete_buffers(
     {
         GLW_FPTR_CHECK(DeleteBuffersARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteBuffersARB,
         gsl::span<const char>(
@@ -194,7 +194,7 @@ STATICINLINE void gen_buffers(
     {
         GLW_FPTR_CHECK(GenBuffersARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenBuffersARB,
         gsl::span<char>(
@@ -229,7 +229,7 @@ STATICINLINE void get_buffer_parameter(
     {
         GLW_FPTR_CHECK(GetBufferParameterivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetBufferParameterivARB,
         gsl::span<char>(
@@ -264,7 +264,7 @@ STATICINLINE void get_buffer_pointerv(
     {
         GLW_FPTR_CHECK(GetBufferPointervARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetBufferPointervARB,
         gsl::span<char>(
@@ -300,7 +300,7 @@ STATICINLINE void get_buffer_sub_data(
     {
         GLW_FPTR_CHECK(GetBufferSubDataARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetBufferSubDataARB,
         gsl::span<char>(

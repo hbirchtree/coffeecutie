@@ -81,7 +81,7 @@ STATICINLINE void ext_get_programs(
     {
         GLW_FPTR_CHECK(ExtGetProgramsQCOM)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glExtGetProgramsQCOM,
         gsl::span<char>(
@@ -119,7 +119,7 @@ STATICINLINE void ext_get_shaders(
     {
         GLW_FPTR_CHECK(ExtGetShadersQCOM)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glExtGetShadersQCOM,
         gsl::span<char>(

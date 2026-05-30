@@ -29,7 +29,7 @@ STATICINLINE void clear_buffer_data(
     {
         GLW_FPTR_CHECK(ClearBufferData)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glClearBufferData,
         gsl::span<const char>(
@@ -76,7 +76,7 @@ STATICINLINE void clear_buffer_sub_data(
     {
         GLW_FPTR_CHECK(ClearBufferSubData)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glClearBufferSubData,
         gsl::span<const char>(

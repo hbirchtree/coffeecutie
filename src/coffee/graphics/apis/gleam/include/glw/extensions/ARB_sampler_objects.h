@@ -55,7 +55,7 @@ STATICINLINE void delete_samplers(
     {
         GLW_FPTR_CHECK(DeleteSamplers)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDeleteSamplers,
         gsl::span<const char>(
@@ -88,7 +88,7 @@ STATICINLINE void gen_samplers(
     {
         GLW_FPTR_CHECK(GenSamplers)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGenSamplers,
         gsl::span<char>(
@@ -128,7 +128,7 @@ STATICINLINE void get_sampler_parameter_iiv(
             glIsSampler(sampler);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSamplerParameterIiv,
         gsl::span<char>(
@@ -171,7 +171,7 @@ STATICINLINE void get_sampler_parameter_iuiv(
             glIsSampler(sampler);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSamplerParameterIuiv,
         gsl::span<char>(
@@ -214,7 +214,7 @@ STATICINLINE void get_sampler_parameter(
             glIsSampler(sampler);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSamplerParameterfv,
         gsl::span<char>(
@@ -257,7 +257,7 @@ STATICINLINE void get_sampler_parameter(
             glIsSampler(sampler);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSamplerParameteriv,
         gsl::span<char>(
@@ -327,7 +327,7 @@ STATICINLINE void sampler_parameter_iiv(
             glIsSampler(sampler);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSamplerParameterIiv,
         gsl::span<const char>(
@@ -371,7 +371,7 @@ STATICINLINE void sampler_parameter_iuiv(
             glIsSampler(sampler);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSamplerParameterIuiv,
         gsl::span<const char>(
@@ -445,7 +445,7 @@ STATICINLINE void sampler_parameter(
             glIsSampler(sampler);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSamplerParameterfv,
         gsl::span<const char>(
@@ -520,7 +520,7 @@ STATICINLINE void sampler_parameter(
             glIsSampler(sampler);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSamplerParameteriv,
         gsl::span<const char>(

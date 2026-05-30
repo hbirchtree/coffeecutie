@@ -45,7 +45,7 @@ STATICINLINE void window_pos2dv(
     {
         GLW_FPTR_CHECK(WindowPos2dvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWindowPos2dvARB,
         gsl::span<const char>(
@@ -95,7 +95,7 @@ STATICINLINE void window_pos2fv(
     {
         GLW_FPTR_CHECK(WindowPos2fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWindowPos2fvARB,
         gsl::span<const char>(
@@ -145,7 +145,7 @@ STATICINLINE void window_pos2iv(
     {
         GLW_FPTR_CHECK(WindowPos2ivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWindowPos2ivARB,
         gsl::span<const char>(
@@ -195,7 +195,7 @@ STATICINLINE void window_pos2sv(
     {
         GLW_FPTR_CHECK(WindowPos2svARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWindowPos2svARB,
         gsl::span<const char>(
@@ -246,7 +246,7 @@ STATICINLINE void window_pos3dv(
     {
         GLW_FPTR_CHECK(WindowPos3dvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWindowPos3dvARB,
         gsl::span<const char>(
@@ -297,7 +297,7 @@ STATICINLINE void window_pos3fv(
     {
         GLW_FPTR_CHECK(WindowPos3fvARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWindowPos3fvARB,
         gsl::span<const char>(
@@ -348,7 +348,7 @@ STATICINLINE void window_pos3iv(
     {
         GLW_FPTR_CHECK(WindowPos3ivARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWindowPos3ivARB,
         gsl::span<const char>(
@@ -399,7 +399,7 @@ STATICINLINE void window_pos3sv(
     {
         GLW_FPTR_CHECK(WindowPos3svARB)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWindowPos3svARB,
         gsl::span<const char>(

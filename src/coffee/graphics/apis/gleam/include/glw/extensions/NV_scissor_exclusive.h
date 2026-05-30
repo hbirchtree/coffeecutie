@@ -31,7 +31,7 @@ STATICINLINE void scissor_exclusive_arrayv(
     {
         GLW_FPTR_CHECK(ScissorExclusiveArrayvNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glScissorExclusiveArrayvNV,
         gsl::span<const char>(

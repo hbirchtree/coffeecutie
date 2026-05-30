@@ -7,6 +7,71 @@
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/string/hex.h>
 
+#if defined(FEATURE_ENABLE_CoreJsonLogger)
+#include <fmt_extensions/format.h>
+#include <platforms/pimpl_state.h>
+#include <platforms/profiling/jsonprofile.h>
+#include <type_traits>
+
+namespace glw::trace::detail {
+template<typename T>
+requires (!std::is_enum_v<std::remove_cv_t<T>> &&
+          !std::is_integral_v<std::remove_cv_t<T>> &&
+          !std::is_floating_point_v<std::remove_cv_t<T>> &&
+          !std::is_pointer_v<T>)
+inline std::string to_string(T const& arg)
+{
+    return "?";
+}
+
+template<typename T>
+requires (!std::is_enum_v<std::remove_cv_t<T>> &&
+        (std::is_integral_v<std::remove_cv_t<T>> ||
+         std::is_floating_point_v<std::remove_cv_t<T>> ||
+         std::is_pointer_v<T>))
+inline std::string to_string(T const& arg)
+{
+    if constexpr(std::is_pointer_v<T>)
+        return fmt::format("{}", static_cast<const void*>(arg));
+    else
+        return fmt::format("{}", arg);
+}
+
+template<typename T>
+requires std::is_enum_v<std::remove_cv_t<T>>
+inline std::string to_string(T const& arg)
+{
+    return fmt::format("0x{:X}", static_cast<unsigned int>(arg));
+}
+
+template<typename... T>
+inline void capture_gl_trace(std::string_view func, T... args)
+{
+    std::vector<std::string> args_;
+    (args_.push_back(to_string(args)), ...);
+    platform::profiling::json::CaptureTrace(
+        *platform::state->GetProfilerTStore(), func, args_);
+}
+
+template<typename DataT, typename... T>
+inline void capture_gl_trace_data(
+    std::string_view func, gsl::span<DataT> const& data, T... args)
+{
+    std::vector<std::string> args_;
+    (args_.push_back(to_string(args)), ...);
+    platform::profiling::json::CaptureTrace(
+        *platform::state->GetProfilerTStore(),
+        func,
+        args_,
+        gsl::span<const char>(
+            reinterpret_cast<const char*>(data.data()), data.size()));
+}
+} // namespace glw::trace::detail
+
+#define GLW_FPTR_TRACE(func, ...) \
+    glw::trace::detail::capture_gl_trace(#func, ##__VA_ARGS__)
+#endif
+
 // clang-format off
 
 #define GL_BASE_ES_MASK 0x1000

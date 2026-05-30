@@ -118,7 +118,7 @@ STATICINLINE void debug_message_callback(
     {
         GLW_FPTR_CHECK(DebugMessageCallback)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDebugMessageCallback,
         gsl::span<const char>(
@@ -164,7 +164,7 @@ STATICINLINE void debug_message_control(
     {
         GLW_FPTR_CHECK(DebugMessageControl)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDebugMessageControl,
         gsl::span<const char>(
@@ -344,7 +344,7 @@ STATICINLINE void get_object_label(
     {
         GLW_FPTR_CHECK(GetObjectLabel)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetObjectLabel,
         gsl::span<char>(
@@ -426,7 +426,7 @@ STATICINLINE void get_pointerv(
     {
         GLW_FPTR_CHECK(GetPointerv)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPointerv,
         gsl::span<char>(
@@ -490,7 +490,7 @@ STATICINLINE void object_ptr_label(
     {
         GLW_FPTR_CHECK(ObjectPtrLabel)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glObjectPtrLabel,
         gsl::span<const char>(
@@ -575,7 +575,7 @@ STATICINLINE void debug_message_callback(
     {
         GLW_FPTR_CHECK(DebugMessageCallbackKHR)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDebugMessageCallbackKHR,
         gsl::span<const char>(
@@ -622,7 +622,7 @@ STATICINLINE void debug_message_control(
     {
         GLW_FPTR_CHECK(DebugMessageControlKHR)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDebugMessageControlKHR,
         gsl::span<const char>(
@@ -803,7 +803,7 @@ STATICINLINE void get_object_label(
     {
         GLW_FPTR_CHECK(GetObjectLabelKHR)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetObjectLabelKHR,
         gsl::span<char>(
@@ -878,7 +878,7 @@ STATICINLINE void get_pointerv(
     {
         GLW_FPTR_CHECK(GetPointervKHR)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPointervKHR,
         gsl::span<char>(
@@ -943,7 +943,7 @@ STATICINLINE void object_ptr_label(
     {
         GLW_FPTR_CHECK(ObjectPtrLabelKHR)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glObjectPtrLabelKHR,
         gsl::span<const char>(

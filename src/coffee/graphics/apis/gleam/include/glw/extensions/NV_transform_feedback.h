@@ -237,7 +237,7 @@ STATICINLINE void get_active_varying(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveVaryingNV,
         gsl::span<char>(
@@ -336,7 +336,7 @@ STATICINLINE void transform_feedback_attribs(
     {
         GLW_FPTR_CHECK(TransformFeedbackAttribsNV)
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTransformFeedbackAttribsNV,
         gsl::span<const char>(
@@ -383,7 +383,7 @@ STATICINLINE void transform_feedback_varyings(
             glIsProgram(program);
 #endif
     }
-#ifdef GLW_FPTR_TRACE
+#ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTransformFeedbackVaryingsNV,
         gsl::span<const char>(
