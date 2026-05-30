@@ -5,6 +5,7 @@
 #include "selected_version.h"
 #include <coffee/graphics/apis/gleam/rhi_texture_atlas.h>
 
+#include <algorithm>
 #include <peripherals/stl/magic_enum.hpp>
 
 template<typename V>
@@ -132,6 +133,34 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             debug_markers->portal_ptr += 16;
             debug_markers->portal_color_ptr++;
         }
+    }
+
+    /* Build flat sorted subcluster list for find_cluster().
+     * Sorted by volume ascending so find_cluster() can return on first hit. */
+    {
+        out.sorted_subclusters.reserve(out.clusters.size() * 4);
+        for(u32 ci = 0; ci < static_cast<u32>(out.clusters.size()); ci++)
+        {
+            auto const& cluster = out.clusters[ci];
+            for(u32 si = 0; si < static_cast<u32>(cluster.sub.size()); si++)
+            {
+                auto [p1, p2] = cluster.sub[si].cluster->bounds.points();
+                out.sorted_subclusters.push_back({
+                    .bmin        = glm::min(p1, p2),
+                    .bmax        = glm::max(p1, p2),
+                    .cluster_idx = ci,
+                    .sub_idx     = si,
+                });
+            }
+        }
+        std::sort(
+            out.sorted_subclusters.begin(),
+            out.sorted_subclusters.end(),
+            [](BSPItem::FlatSubcluster const& a, BSPItem::FlatSubcluster const& b) {
+                auto da = a.bmax - a.bmin;
+                auto db = b.bmax - b.bmin;
+                return (da.x * da.y * da.z) < (db.x * db.y * db.z);
+            });
     }
 
     /* Populate PVS bitset.

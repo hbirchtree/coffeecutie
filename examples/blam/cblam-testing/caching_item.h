@@ -206,10 +206,22 @@ struct BSPItem
         std::vector<Portal>       portals{};
     };
 
+    /* Flat entry for fast position-to-cluster lookup.
+     * Sorted by volume ascending so find_cluster() returns on the first hit.
+     * bmin/bmax stored inline to avoid pointer chasing. Struct is 32 bytes. */
+    struct FlatSubcluster
+    {
+        Vecf3 bmin, bmax;       /* 12+12 bytes */
+        u32   cluster_idx;      /* 4 bytes */
+        u32   sub_idx;          /* 4 bytes */
+    };
+    static_assert(sizeof(FlatSubcluster) == 32);
+
     blam::bsp::header const*                            mesh{nullptr};
     blam::tag_t const*                                  tag{nullptr};
     std::vector<Group>                                  groups;
     std::vector<Cluster>                                clusters;
+    std::vector<FlatSubcluster>                         sorted_subclusters;
     std::vector<gleam::draw_command::data_t>            portals;
     std::vector<u32>                                    portal_color_ptrs;
     std::vector<blam::bsp::background_sound_palette const*> bg_sound_palette;
@@ -440,34 +452,30 @@ struct BSPItem
     inline std::optional<std::pair<u32, u32>> find_cluster(
         Vecf3 const& point) const
     {
-        /* Pick the smallest-volume subcluster AABB that contains the point.
-         * BSP subclusters can overlap; the most specific (smallest) one is
-         * most likely to give the correct cluster assignment. */
-        std::optional<std::pair<u32, u32>> best;
-        float                              best_vol = std::numeric_limits<float>::max();
-
-        u32 cluster_id = 0;
-        for(auto const& cluster : clusters)
+        /* sorted_subclusters is sorted by volume ascending, so the first
+         * hit is the smallest-volume (most specific) containing subcluster. */
+        for(auto const& fs : sorted_subclusters)
         {
-            u32 sub_id = 0;
-            for(auto const& sub : cluster.sub)
-            {
-                if(sub.cluster->bounds.contains(point))
-                {
-                    auto [bmin, bmax] = sub.cluster->bounds.points();
-                    auto  diag        = glm::abs(bmax - bmin);
-                    float vol         = diag.x * diag.y * diag.z;
-                    if(vol < best_vol)
-                    {
-                        best_vol = vol;
-                        best     = std::pair{cluster_id, sub_id};
-                    }
-                }
-                sub_id++;
-            }
-            cluster_id++;
+            if(fs.bmin.x <= point.x && point.x <= fs.bmax.x &&
+               fs.bmin.y <= point.y && point.y <= fs.bmax.y &&
+               fs.bmin.z <= point.z && point.z <= fs.bmax.z)
+                return std::pair{fs.cluster_idx, fs.sub_idx};
         }
-        return best;
+        return std::nullopt;
+    }
+
+    /* Returns nullopt when either position falls outside all clusters.
+     * Otherwise returns true if target is PVS-visible from observer. */
+    inline std::optional<bool> visible_from(
+        Vecf3 const& observer, Vecf3 const& target) const
+    {
+        auto from = find_cluster(observer);
+        if(!from)
+            return std::nullopt;
+        auto to = find_cluster(target);
+        if(!to)
+            return std::nullopt;
+        return cluster_visible_from(from->first, to->first);
     }
 };
 

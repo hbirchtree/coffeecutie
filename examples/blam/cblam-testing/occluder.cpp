@@ -294,7 +294,14 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         {
             auto   ref    = p.template ref<Proxy>(ent);
             Model& model  = ref.template get<Model>();
-            model.visible = in_draw_distance(model);
+            if(cull_bsp)
+            {
+                auto vis = cull_bsp->visible_from(
+                    camera_pos, to_bsp_space(model.position));
+                model.visible = vis.value_or(true) && in_draw_distance(model);
+            }
+            else
+                model.visible = in_draw_distance(model);
         }
 
         if(cluster_changed || periodic)
