@@ -22,6 +22,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
     u32              last_cluster{std::numeric_limits<u32>::max()};
     bool             last_found{false};
+    i16              last_sky_idx{-1};
     u32              frame_counter{0};
     BSPItem const*   pvs_bsp{nullptr};
     u32              pvs_cluster{0};
@@ -174,6 +175,49 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                     .entity_id = 0,
                 };
                 sound_bus->process(ev, &trans);
+            }
+
+            i16 sky_idx = current_bsp
+                ? current_bsp->clusters.at(current_cluster).cluster->sky
+                : -1;
+            if(sky_idx != last_sky_idx)
+            {
+                last_sky_idx = sky_idx;
+                if(sky_idx >= 0 &&
+                   static_cast<u32>(sky_idx) < bsp_cache->sky_palette.size() &&
+                   bsp_cache->sky_palette[sky_idx])
+                {
+                    auto const& sky = *bsp_cache->sky_palette[sky_idx];
+                    auto world_data = resources->world_store->map<materials::world_data>(0);
+                    world_data[0].fog.indoor_color =
+                        Vecf4(sky.indoor_fog.color, sky.indoor_fog.density);
+                    world_data[0].fog.indoor_ambient =
+                        Vecf4(sky.indoor_ambient.color, sky.indoor_ambient.power);
+                    world_data[0].fog.outdoor_color =
+                        Vecf4(sky.outdoor_fog.color, sky.outdoor_fog.density);
+                    world_data[0].fog.outdoor_ambient =
+                        Vecf4(sky.outdoor_ambient.color, sky.outdoor_ambient.power);
+                    world_data[0].fog.distances = Vecf4(
+                        sky.indoor_fog.start_distance,
+                        sky.indoor_fog.opaque_distance,
+                        sky.outdoor_fog.start_distance,
+                        sky.outdoor_fog.opaque_distance);
+                    if(sky.outdoor_fog.opaque_distance < 1)
+                        world_data[0].fog.distances.w = 1000.f;
+                    if(auto lights = sky.lights.data(bsp_cache->magic))
+                        for(auto const& light : lights.value())
+                        {
+                            Vecf3 dir = glm::mat3_cast(
+                                glm::quat(Vecf3{0, light.radiosity.direction.x, 0}) *
+                                glm::quat(Vecf3{0, 0, light.radiosity.direction.y})) *
+                                Vecf3{0, 0, 1};
+                            world_data[0].lighting[0].light_direction =
+                                Vecf4{dir, light.radiosity.test_distance};
+                            world_data[0].lighting[0].light_color =
+                                Vecf4{light.radiosity.color, light.radiosity.power};
+                        }
+                    resources->world_store->unmap();
+                }
             }
         }
 

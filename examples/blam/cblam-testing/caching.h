@@ -2,6 +2,7 @@
 
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_font.h>
+#include <blam/volta/blam_scenario.h>
 #include <blam/volta/blam_sound.h>
 
 #include <coffee/comp_app/AppWrap>
@@ -184,15 +185,33 @@ struct BSPCache
         magic    = map.magic;
         vert_ptr = 0, element_ptr = 0, light_ptr = 0;
         evict_all();
+
+        sky_palette.clear();
+        if(auto scen_opt = map.tags->scenario(map.map, map.magic))
+        {
+            auto const* scen = scen_opt.value();
+            if(auto skyboxes = scen->info.skyboxes.data(magic))
+                for(auto const& sky_ref : skyboxes.value())
+                {
+                    blam::scn::skybox const* sky_ptr = nullptr;
+                    if(sky_ref.valid())
+                        if(auto tag = index.tag_of(sky_ref))
+                            if(auto data = (*tag)->template data<blam::scn::skybox>(magic);
+                               data.has_value() && data.value())
+                                sky_ptr = data.value();
+                    sky_palette.push_back(sky_ptr);
+                }
+        }
     }
 
-    blam::version_t                 version;
-    BitmapCache<V>&                 bitm_cache;
-    ShaderCache<V>&                 shader_cache;
-    SoundCache<V>&                  sound_cache;
-    comp_app::EventBus<SoundEvent>* sound_bus;
-    blam::tag_index_view<V>         index;
-    blam::map_ptr                   magic;
+    blam::version_t                  version;
+    BitmapCache<V>&                  bitm_cache;
+    ShaderCache<V>&                  shader_cache;
+    SoundCache<V>&                   sound_cache;
+    comp_app::EventBus<SoundEvent>*  sound_bus;
+    blam::tag_index_view<V>          index;
+    blam::map_ptr                    magic;
+    std::vector<blam::scn::skybox const*> sky_palette;
 
     Span<byte_t>           vert_buffer;
     Span<byte_t>           light_buffer;
