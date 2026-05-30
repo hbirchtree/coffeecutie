@@ -1,4 +1,11 @@
+#include "coffee/graphics/apis/gleam/rhi_versioning.h"
+#include "glw/enums/InternalFormat.h"
+#include "glw/enums/PixelFormat.h"
+#include "glw/enums/PixelType.h"
+#include "peripherals/typing/enum/pixels/format_transform.h"
+#include <array>
 #include <coffee/graphics/apis/gleam/rhi_translate.h>
+#include <tuple>
 
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 1024
@@ -7,10 +14,7 @@
 namespace gleam::convert {
 
 template<typename T>
-requires std::is_same_v<T, group::sized_internal_format> ||
-         std::is_same_v<T, group::internal_format>
-std::tuple<T, group::pixel_type, group::pixel_format> to(
-    PixDesc const& fmt, [[maybe_unused]] features::textures const& features)
+std::array<std::pair<typing::pixels::pix_fmt, std::tuple<T, group::pixel_type, group::pixel_format>>, 26> uncompressed_formats()
 {
     using ::enum_helpers::feval;
 
@@ -22,12 +26,6 @@ std::tuple<T, group::pixel_type, group::pixel_format> to(
     using F = typing::pixels::pix_flags;
     using C = typing::pix_components;
     using M = typing::pixels::comp_flags;
-
-    if(auto fmt_ = detail::to_internal<T>(fmt);
-       static_cast<u32>(std::get<0>(fmt_)) != 0)
-    {
-        return fmt_;
-    }
 
     constexpr std::array<std::pair<P, std::tuple<f, b, p>>, 26> direct_mapping =
         {{
@@ -64,9 +62,6 @@ std::tuple<T, group::pixel_type, group::pixel_format> to(
             {P::R11G11B10F,
              {f::r11f_g11f_b10f, b::unsigned_int_10f_11f_11f_rev, p::rgb}},
 #endif
-#if defined(GL_ETC1_RGB8_OES)
-            {P::ETC1, {f::etc1_rgb8_oes, b::unsigned_byte, p::rgb}},
-#endif
 
             /* RGBA */
             {P::RGBA4, {f::rgba4, b::unsigned_short_4_4_4_4, p::rgba}},
@@ -99,6 +94,101 @@ std::tuple<T, group::pixel_type, group::pixel_format> to(
               p::depth_stencil}},
 #endif
         }};
+    return direct_mapping;
+}
+
+template std::array<std::pair<typing::pixels::pix_fmt, std::tuple<group::internal_format, group::pixel_type, group::pixel_format>>, 26> uncompressed_formats();
+
+template<typename T>
+std::array<compressed_format_t<T>, 27> compressed_formats(features::textures const& features)
+{
+    using ::enum_helpers::feval;
+
+    using f = T;
+    using b = group::pixel_type;
+    using p = group::pixel_format;
+
+    using P = typing::pixels::pix_fmt;
+    using F = typing::pixels::pix_flags;
+    using C = typing::pix_components;
+    using M = typing::pixels::comp_flags;
+
+    using CF = typing::pixels::CompFmt;
+
+
+    const bool rgtc = features.tex.gl.rgtc || features.tex.ext.rgtc || features.tex.arb.rgtc;
+    const bool bptc = features.tex.gl.bptc || features.tex.ext.bptc || features.tex.arb.bptc;
+    const bool etc2 = features.tex.gl.etc2;
+    const bool astc = features.tex.gl.astc || features.tex.khr.astc;
+    const bool s3tc = features.tex.ext.s3tc || features.tex.angle.s3tc;
+
+    std::array<compressed_format_t<T>, 27> compressed_formats = {{
+        // clang-format off
+#if defined(GL_EXT_texture_compression_s3tc)
+        {CF(P::BCn, F::RGB,  M::BC1), {f::compressed_rgb_s3tc_dxt1_ext,  b::unsigned_byte, p::rgb},  s3tc},
+        {CF(P::BCn, F::RGBA, M::BC1), {f::compressed_rgba_s3tc_dxt1_ext, b::unsigned_byte, p::rgba}, s3tc},
+        {CF(P::BCn, M::BC2),          {f::compressed_rgba_s3tc_dxt3_ext, b::unsigned_byte, p::rgba}, s3tc},
+        {CF(P::BCn, M::BC3),          {f::compressed_rgba_s3tc_dxt5_ext, b::unsigned_byte, p::rgba}, s3tc},
+#endif
+#if GLEAM_MAX_VERSION >= 0x300
+        {CF(P::BCn, M::BC4),  {f::compressed_red_rgtc1,               b::unsigned_byte, p::red},  rgtc},
+        {CF(P::BCn, M::BC5),  {f::compressed_rg_rgtc2,                b::unsigned_byte, p::rg},   rgtc},
+#endif
+#if GLEAM_MAX_VERSION >= 0x420
+        {CF(P::BCn, M::BC6H), {f::compressed_rgb_bptc_unsigned_float,  b::unsigned_byte, p::rgb},  bptc},
+        {CF(P::BCn, M::BC7),  {f::compressed_rgba_bptc_unorm,          b::unsigned_byte, p::rgba}, bptc},
+#endif
+#if defined(GL_ETC1_RGB8_OES)
+        {CF(P::ETC1), {f::etc1_rgb8_oes, b::unsigned_byte, p::rgb}, features.tex.oes.etc1},
+#endif
+#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x300
+        {CF(P::ETC2, F::R),                 {f::compressed_r11_eac,                       b::unsigned_byte, p::red},  etc2},
+        {CF(P::ETC2, F::RG),                {f::compressed_rg11_eac,                      b::unsigned_byte, p::rg},   etc2},
+        {CF(P::ETC2, F::RGB),               {f::compressed_rgb8_etc2,                     b::unsigned_byte, p::rgb},  etc2},
+        {CF(P::ETC2, F::RGBA_Punchthrough), {f::compressed_rgb8_punchthrough_alpha1_etc2, b::unsigned_byte, p::rgb},  etc2},
+        {CF(P::ETC2, F::RGBA),              {f::compressed_rgba8_etc2_eac,                b::unsigned_byte, p::rgba}, etc2},
+#endif
+#if defined(GL_KHR_texture_compression_astc_ldr) || GLEAM_MAX_VERSION_ES >= 0x320
+        {CF(P::ASTC, M::ASTC_4x4),   {f::compressed_rgba_astc_4x4_khr,   b::unsigned_byte, p::rgba}, astc},
+        {CF(P::ASTC, M::ASTC_8x8),   {f::compressed_rgba_astc_8x8_khr,   b::unsigned_byte, p::rgba}, astc},
+        {CF(P::ASTC, M::ASTC_10x10), {f::compressed_rgba_astc_10x10_khr, b::unsigned_byte, p::rgba}, astc},
+        {CF(P::ASTC, M::ASTC_12x12), {f::compressed_rgba_astc_12x12_khr, b::unsigned_byte, p::rgba}, astc},
+#endif
+#if defined(GL_OES_rgb8_rgba8)
+        {P::RGBA8, {f::rgba8_oes, b::unsigned_byte, p::rgba}, features.tex.oes.rgba8},
+        {P::RGB8,  {f::rgb8_oes,  b::unsigned_byte, p::rgb},  features.tex.oes.rgba8},
+#endif
+        // clang-format on
+    }};
+    return compressed_formats;
+}
+
+template std::array<compressed_format_t<group::internal_format>, 27> compressed_formats(features::textures const& features);
+
+template<typename T>
+requires std::is_same_v<T, group::sized_internal_format> ||
+         std::is_same_v<T, group::internal_format>
+std::tuple<T, group::pixel_type, group::pixel_format> to(
+    PixDesc const& fmt, [[maybe_unused]] features::textures const& features)
+{
+    using ::enum_helpers::feval;
+
+    using f = T;
+    using b = group::pixel_type;
+    using p = group::pixel_format;
+
+    using P = typing::pixels::pix_fmt;
+    using F = typing::pixels::pix_flags;
+    using C = typing::pix_components;
+    using M = typing::pixels::comp_flags;
+
+    if(auto fmt_ = detail::to_internal<T>(fmt);
+       static_cast<u32>(std::get<0>(fmt_)) != 0)
+    {
+        return fmt_;
+    }
+
+    auto direct_mapping = uncompressed_formats<T>();
 
     auto it = std::find_if(
         direct_mapping.begin(),
@@ -107,162 +197,19 @@ std::tuple<T, group::pixel_type, group::pixel_format> to(
     if(it != direct_mapping.end())
         return it->second;
 
-#if GLEAM_MAX_VERSION >= 0x300
-    if(fmt.pixfmt == P::BCn && features.tex.gl.rgtc)
-        switch(fmt.cmpflg)
-        {
-        case M::BC4:
-            return {f::compressed_red_rgtc1, b::unsigned_byte, p::red};
-        case M::BC5:
-            return {f::compressed_rg_rgtc2, b::unsigned_byte, p::rg};
-        default:
-            break;
-        }
-#endif
-#if GLEAM_MAX_VERSION >= 0x420
-    if(fmt.pixfmt == P::BCn && features.tex.gl.bptc)
-        switch(fmt.cmpflg)
-        {
-        case M::BC6H:
-            return {
-                f::compressed_rgb_bptc_unsigned_float,
-                b::unsigned_byte,
-                p::rgb};
-        case M::BC7:
-            return {f::compressed_rgba_bptc_unorm, b::unsigned_byte, p::rgba};
-        default:
-            break;
-        }
-#endif
-#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x300
-    if(fmt.pixfmt == P::ETC2 && features.tex.gl.etc2)
-    {
-        if(feval(fmt.pixflg & F::R))
-            return {f::compressed_r11_eac, b::unsigned_byte, p::red};
-        else if(feval(fmt.pixflg & F::RG))
-            return {f::compressed_rg11_eac, b::unsigned_byte, p::rg};
-        else if(feval(fmt.pixflg & F::RGB))
-            return {f::compressed_rgb8_etc2, b::unsigned_byte, p::rgb};
-        else if(feval(fmt.pixflg & F::RGBA_Punchthrough))
-            return {
-                f::compressed_rgb8_punchthrough_alpha1_etc2,
-                b::unsigned_byte,
-                p::rgb};
-        else
-            return {f::compressed_rgba8_etc2_eac, b::unsigned_byte, p::rgb};
-    }
-#endif
-#if GLEAM_MAX_VERSION_ES >= 0x320
-    if(fmt.pixfmt == P::ASTC && features.tex.gl.astc)
-        switch(fmt.cmpflg)
-        {
-        case M::ASTC_4x4:
-            return {f::compressed_rgba_astc_4x4, b::unsigned_byte, p::rgba};
-        case M::ASTC_8x8:
-            return {f::compressed_rgba_astc_8x8, b::unsigned_byte, p::rgba};
-        case M::ASTC_10x10:
-            return {f::compressed_rgba_astc_10x10, b::unsigned_byte, p::rgba};
-        case M::ASTC_12x12:
-            return {f::compressed_rgba_astc_12x12, b::unsigned_byte, p::rgba};
-        default:
-            break;
-        }
-#endif
-
-    /* Formats behind extensions */
-#if defined(GL_EXT_texture_compression_s3tc)
-    if(fmt.pixfmt == P::BCn && features.tex.ext.s3tc)
-        switch(fmt.cmpflg)
-        {
-        case M::BC1: {
-            //            if(feval(fmt.pixflg & F::sRGB))
-            //            {
-            //                return {
-            //                    f::compressed_srgb_s3tc_dxt1_ext,
-            //                    b::unsigned_byte, p::rgb};
-            //            }
-            switch(fmt.comp)
-            {
-            case C::RGB:
-                return {
-                    f::compressed_rgb_s3tc_dxt1_ext, b::unsigned_byte, p::rgb};
-            case C::RGBA:
-                return {
-                    f::compressed_rgba_s3tc_dxt1_ext,
-                    b::unsigned_byte,
-                    p::rgba};
-            default:
-                break;
-            }
-            break;
-        }
-        case M::BC2:
-            return {
-                f::compressed_rgba_s3tc_dxt3_ext, b::unsigned_byte, p::rgba};
-        case M::BC3:
-            return {
-                f::compressed_rgba_s3tc_dxt5_ext, b::unsigned_byte, p::rgba};
-        default:
-            break;
-        };
-#endif
-#if defined(GL_ARB_texture_compression_rgtc)
-    if(fmt.pixfmt == P::BCn && features.tex.arb.rgtc)
-        switch(fmt.cmpflg)
-        {
-        case M::BC4:
-            return {f::compressed_red_rgtc1, b::unsigned_byte, p::red};
-        case M::BC5:
-            return {f::compressed_rg_rgtc2, b::unsigned_byte, p::rg};
-        default:
-            break;
-        }
-#endif
-#if defined(GL_ARB_texture_compression_bptc)
-    if(fmt.pixfmt == P::BCn && features.tex.arb.bptc)
-        switch(fmt.cmpflg)
-        {
-        case M::BC6H:
-            return {
-                f::compressed_rgb_bptc_unsigned_float,
-                b::unsigned_byte,
-                p::rgb};
-        case M::BC7:
-            return {f::compressed_rgba_bptc_unorm, b::unsigned_byte, p::rgba};
-        default:
-            break;
-        }
-#endif
-#if defined(GL_KHR_texture_compression_astc_ldr)
-    if(fmt.pixfmt == P::ASTC && features.tex.khr.astc)
-        switch(fmt.cmpflg)
-        {
-        case M::ASTC_4x4:
-            return {f::compressed_rgba_astc_4x4_khr, b::unsigned_byte, p::rgba};
-        case M::ASTC_8x8:
-            return {f::compressed_rgba_astc_8x8_khr, b::unsigned_byte, p::rgba};
-        case M::ASTC_10x10:
-            return {
-                f::compressed_rgba_astc_10x10_khr, b::unsigned_byte, p::rgba};
-        case M::ASTC_12x12:
-            return {
-                f::compressed_rgba_astc_12x12_khr, b::unsigned_byte, p::rgba};
-        default:
-            break;
-        }
-#endif
-
-#if defined(GL_OES_rgb8_rgba8)
-    if(fmt.pixfmt == P::RGBA8 && features.tex.oes.rgba8)
-    {
-        return {f::rgba8_oes, b::unsigned_byte, p::rgba};
-    } else if(fmt.pixfmt == P::RGB8 && features.tex.oes.rgba8)
-    {
-        return {f::rgb8_oes, b::unsigned_byte, p::rgb};
-    }
-#endif
     auto fmt_name = compile_info::debug_mode ? magic_enum::enum_name(fmt.pixfmt)
                                              : std::string_view();
+
+    for(auto const& format : compressed_formats<T>(features))
+    {
+        const bool matching =
+            fmt.pixfmt == format.desc.pixfmt &&
+            fmt.comp == format.desc.comp &&
+            fmt.cmpflg == format.desc.cmpflg;
+        if(matching && format.condition)
+            return format.out;
+    }
+
     Throw(undefined_behavior(
         "unhandled pixel format: " +
         std::string(fmt_name.begin(), fmt_name.end())));

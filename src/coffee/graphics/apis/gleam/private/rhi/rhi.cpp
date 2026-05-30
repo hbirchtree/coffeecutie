@@ -1,4 +1,10 @@
+#include <magic_enum/magic_enum.hpp>
+#define MAGIC_ENUM_RANGE_MIN 0x0
+#define MAGIC_ENUM_RANGE_MAX 0x9FFF
+
+#include "coffee/graphics/apis/gleam/rhi_translate.h"
 #include "coffee/graphics/apis/gleam/rhi_versioning.h"
+#include "glw/enums/InternalFormat.h"
 #include <peripherals/stl/magic_enum.hpp>
 
 #include <coffee/graphics/apis/gleam/rhi.h>
@@ -948,8 +954,20 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
                 formats_list.push_back(' ');
             formats_list.insert(formats_list.end(), fmt.begin(), fmt.end());
         }
+    } else
+    {
+        for(auto const& fmt : convert::compressed_formats<group::internal_format>(m_features.texture))
+        {
+            if(!fmt.condition)
+                continue;
+            if(!formats_list.empty())
+                formats_list.push_back(' ');
+            // auto name = magic_enum::enum_name(std::get<0>(fmt.out));
+            // formats_list.insert(formats_list.end(), name.begin(), name.end());
+        }
     }
     appInfo.add("gl:compressedFormats", formats_list);
+    appInfo.add("gl:features", m_features.serialize());
     appInfo.add("gl:limits", m_limits.serialize());
     appInfo.add("gl:workarounds", m_workarounds.serialize());
 #if defined(GL_NUM_SHADER_BINARY_FORMATS)
@@ -992,14 +1010,22 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
 #endif
     if constexpr(gleam::platform_api == api_type_t::webgl)
     {
-        Coffee::Logging::cDebug(
+        using namespace Coffee::Logging;
+        cDebug(
             "WebGL support summary:\nDriver: {}\nDevice: {} {}\n - Compressed "
-            "formats: {}\nLimits: {}",
+            "formats: {}\n - Limits: {}\n - Workarounds: {}",
             device_driver().value_or("Unknown"),
             std::get<0>(device()),
             std::get<1>(device()),
             formats_list,
-            m_limits.serialize());
+            m_limits.serialize(),
+            m_workarounds.serialize());
+        cDebug("Texture formats:");
+        for(auto const& [fmt, out] : convert::uncompressed_formats<group::internal_format>())
+            cDebug("- {}", magic_enum::enum_name(fmt));
+        // for(auto const& fmt : convert::compressed_formats<group::internal_format>(m_features.texture))
+        //     if(fmt.condition)
+        //         cDebug("- {}", magic_enum::enum_name(std::get<0>(fmt.out)));
     }
 }
 

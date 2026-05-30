@@ -251,6 +251,20 @@ requires std::is_same_v<T, group::sized_internal_format> || std::
 std::tuple<T, group::pixel_type, group::pixel_format> to(
     PixDesc const& fmt, [[maybe_unused]] features::textures const& features);
 
+template<typename T>
+std::array<std::pair<typing::pixels::pix_fmt, std::tuple<T, group::pixel_type, group::pixel_format>>, 26> uncompressed_formats();
+
+template<typename T>
+struct compressed_format_t
+{
+    PixDesc desc;
+    std::tuple<T, group::pixel_type, group::pixel_format> out;
+    bool condition;
+};
+
+template<typename T>
+std::array<compressed_format_t<T>, 27> compressed_formats(features::textures const& features);
+
 // clang-format on
 
 template<typename T = group::framebuffer_attachment>
