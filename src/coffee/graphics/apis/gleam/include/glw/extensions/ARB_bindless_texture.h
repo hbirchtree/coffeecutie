@@ -131,10 +131,10 @@ STATICINLINE void get_vertex_attrib_lui64v(
 /*!
  * \brief Part of GL_ARB_bindless_texture
  * \param handle GLuint64
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_image_handle_resident(
-    u64 handle, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_image_handle_resident(u64 handle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -143,15 +143,15 @@ STATICINLINE bool is_image_handle_resident(
     }
     auto out = glIsImageHandleResidentARB(handle);
     detail::error_check("IsImageHandleResidentARB"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 /*!
  * \brief Part of GL_ARB_bindless_texture
  * \param handle GLuint64
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_texture_handle_resident(
+STATICINLINE GLboolean is_texture_handle_resident(
     u64 handle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
@@ -161,7 +161,7 @@ STATICINLINE bool is_texture_handle_resident(
     }
     auto out = glIsTextureHandleResidentARB(handle);
     detail::error_check("IsTextureHandleResidentARB"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 /*!

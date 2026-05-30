@@ -136,9 +136,9 @@ STATICINLINE void get_integer_indexedv(
  * \brief Part of GL_EXT_draw_buffers2
  * \param target GLenum
  * \param index GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_enabled_indexed(
+STATICINLINE GLboolean is_enabled_indexed(
     group::enable_cap target,
     u32               index,
     error_check       check_errors = error_check::on)
@@ -150,7 +150,7 @@ STATICINLINE bool is_enabled_indexed(
     }
     auto out = glIsEnabledIndexedEXT(static_cast<GLenum>(target), index);
     detail::error_check("IsEnabledIndexedEXT"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 } // namespace gl::ext::draw_buffers2

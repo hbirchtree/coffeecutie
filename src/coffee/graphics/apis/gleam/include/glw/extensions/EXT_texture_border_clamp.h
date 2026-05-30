@@ -1,10 +1,13 @@
 #pragma once
 
 #ifdef GL_EXT_texture_border_clamp
+#include "../enums/TextureWrapMode.h"
+
 namespace gl::ext::texture_border_clamp {
+using gl::group::texture_wrap_mode;
+
 namespace values {
 constexpr u32 texture_border_color = 0x1004;
-constexpr u32 clamp_to_border      = 0x812D;
 } // namespace values
 
 template<class span_i32>

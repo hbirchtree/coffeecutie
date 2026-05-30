@@ -66,7 +66,7 @@ STATICINLINE void delete_sync(
  * \brief Part of GL_ARB_sync
  * \param condition GLenum
  * \param flags GLbitfield
- * \return sync
+ * \return GLsync
  */
 STATICINLINE GLsync fence_sync(
     group::sync_condition      condition,
@@ -149,10 +149,10 @@ STATICINLINE void get_synciv(
 /*!
  * \brief Part of GL_ARB_sync
  * \param sync GLsync
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_sync(
-    GLsync sync, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_sync(GLsync sync, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -161,7 +161,7 @@ STATICINLINE bool is_sync(
     }
     auto out = glIsSync(sync);
     detail::error_check("IsSync"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 /*!

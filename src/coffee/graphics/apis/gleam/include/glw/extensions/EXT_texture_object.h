@@ -29,9 +29,9 @@ requires(
  * \param n GLsizei
  * \param textures const GLuint *
  * \param residences GLboolean *
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool are_textures_resident(
+STATICINLINE GLboolean are_textures_resident(
     span_const_u32 const& textures,
     span_bool             residences,
     error_check           check_errors = error_check::on)
@@ -48,7 +48,7 @@ STATICINLINE bool are_textures_resident(
         residences.size() ? reinterpret_cast<GLboolean*>(residences.data())
                           : nullptr);
     detail::error_check("AreTexturesResidentEXT"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 /*!
@@ -131,10 +131,10 @@ STATICINLINE void gen_textures(
 /*!
  * \brief Part of GL_EXT_texture_object
  * \param texture GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_texture(
-    u32 texture, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_texture(u32 texture, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -148,7 +148,7 @@ STATICINLINE bool is_texture(
     }
     auto out = glIsTextureEXT(texture);
     detail::error_check("IsTextureEXT"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<class span_const_GLclampf, class span_const_u32>

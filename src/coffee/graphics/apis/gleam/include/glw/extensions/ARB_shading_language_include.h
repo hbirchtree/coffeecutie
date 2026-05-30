@@ -133,9 +133,9 @@ STATICINLINE void get_named_stringiv(
  * \brief Part of GL_ARB_shading_language_include
  * \param namelen GLint
  * \param name const GLchar *
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_named_string(
+STATICINLINE GLboolean is_named_string(
     std::string_view const& name, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
@@ -145,7 +145,7 @@ STATICINLINE bool is_named_string(
     }
     auto out = glIsNamedStringARB(name.size(), name.data());
     detail::error_check("IsNamedStringARB"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 /*!

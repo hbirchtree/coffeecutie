@@ -191,9 +191,9 @@ STATICINLINE void enablei(
  * \brief Part of GL_EXT_draw_buffers_indexed
  * \param target GLenum
  * \param index GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_enabledi(
+STATICINLINE GLboolean is_enabledi(
     group::enable_cap target,
     u32               index,
     error_check       check_errors = error_check::on)
@@ -205,7 +205,7 @@ STATICINLINE bool is_enabledi(
     }
     auto out = glIsEnablediEXT(static_cast<GLenum>(target), index);
     detail::error_check("IsEnablediEXT"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 } // namespace gl::ext::draw_buffers_indexed

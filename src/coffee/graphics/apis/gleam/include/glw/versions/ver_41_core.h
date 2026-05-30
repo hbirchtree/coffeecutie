@@ -442,10 +442,10 @@ requires(MinimumVersion<Current, Version<4, 1>>)
 /*!
  * \brief Wraps around glIsProgramPipeline. Introduced in GL core 4.1
  * \param pipeline GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_program_pipeline(
-    u32 pipeline, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_program_pipeline(u32 pipeline, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -459,7 +459,7 @@ STATICINLINE bool is_program_pipeline(
     }
     auto out = glIsProgramPipeline(pipeline);
     detail::error_check("IsProgramPipeline"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>
@@ -2586,6 +2586,7 @@ requires(
  */
 STATICINLINE void vertex_attrib_l_pointer(
     u32                       index,
+    i32                       size,
     group::vertex_attrib_long type,
     i32                       stride,
     span_const_void const&    pointer,
@@ -2598,8 +2599,7 @@ STATICINLINE void vertex_attrib_l_pointer(
     }
     glVertexAttribLPointer(
         index,
-        pointer.size() *
-            sizeof(typename std::decay_t<span_const_void const&>::value_type),
+        size,
         static_cast<GLenum>(type),
         stride,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())

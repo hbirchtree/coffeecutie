@@ -159,10 +159,10 @@ STATICINLINE void get_occlusion_queryuiv(
 /*!
  * \brief Part of GL_NV_occlusion_query
  * \param id GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_occlusion_query(
-    u32 id, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_occlusion_query(u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -171,7 +171,7 @@ STATICINLINE bool is_occlusion_query(
     }
     auto out = glIsOcclusionQueryNV(id);
     detail::error_check("IsOcclusionQueryNV"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 } // namespace gl::nv::occlusion_query

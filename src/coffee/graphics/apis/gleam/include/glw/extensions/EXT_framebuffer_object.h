@@ -441,10 +441,10 @@ STATICINLINE void get_renderbuffer_parameter(
 /*!
  * \brief Part of GL_EXT_framebuffer_object
  * \param framebuffer GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_framebuffer(
-    u32 framebuffer, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_framebuffer(u32 framebuffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -458,16 +458,16 @@ STATICINLINE bool is_framebuffer(
     }
     auto out = glIsFramebufferEXT(framebuffer);
     detail::error_check("IsFramebufferEXT"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 /*!
  * \brief Part of GL_EXT_framebuffer_object
  * \param renderbuffer GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_renderbuffer(
-    u32 renderbuffer, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_renderbuffer(u32 renderbuffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -481,7 +481,7 @@ STATICINLINE bool is_renderbuffer(
     }
     auto out = glIsRenderbufferEXT(renderbuffer);
     detail::error_check("IsRenderbufferEXT"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<class size_2_i32>

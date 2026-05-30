@@ -1,10 +1,14 @@
 #pragma once
 
 #ifdef GL_AMD_compressed_3DC_texture
+#include "../enums/InternalFormat.h"
+#include "../enums/SizedInternalFormat.h"
+
 namespace gl::amd::compressed_3dc_texture {
+using gl::group::internal_format;
+using gl::group::sized_internal_format;
+
 namespace values {
-constexpr u32 n3dc_x  = 0x87F9;
-constexpr u32 n3dc_xy = 0x87FA;
 } // namespace values
 } // namespace gl::amd::compressed_3dc_texture
 #endif // GL_AMD_compressed_3DC_texture

@@ -658,10 +658,10 @@ requires(MinimumVersion<Current, Version<1, 0>>)
 /*!
  * \brief Wraps around glIsEnabled. Introduced in GL core 1.0
  * \param cap GLenum
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_enabled(
-    group::enable_cap cap, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_enabled(group::enable_cap cap, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -670,7 +670,7 @@ STATICINLINE bool is_enabled(
     }
     auto out = glIsEnabled(static_cast<GLenum>(cap));
     detail::error_check("IsEnabled"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>

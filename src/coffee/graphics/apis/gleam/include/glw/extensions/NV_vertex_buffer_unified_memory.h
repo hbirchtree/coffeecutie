@@ -62,17 +62,17 @@ STATICINLINE void buffer_address_range(
  * \return void
  */
 STATICINLINE void color_format(
-    i32         size,
-    GLenum      type,
-    i32         stride,
-    error_check check_errors = error_check::on)
+    i32                       size,
+    group::color_pointer_type type,
+    i32                       stride,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ColorFormatNV)
     }
-    glColorFormatNV(size, type, stride);
+    glColorFormatNV(size, static_cast<GLenum>(type), stride);
     detail::error_check("ColorFormatNV"sv, check_errors);
 }
 

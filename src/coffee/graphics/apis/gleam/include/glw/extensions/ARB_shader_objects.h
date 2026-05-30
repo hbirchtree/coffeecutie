@@ -63,7 +63,7 @@ STATICINLINE void compile_shader(
 /*!
  * \brief Part of GL_ARB_shader_objects
 
- * \return handleARB
+ * \return GLhandleARB
  */
 STATICINLINE GLhandleARB
 create_program_object(error_check check_errors = error_check::on)
@@ -81,7 +81,7 @@ create_program_object(error_check check_errors = error_check::on)
 /*!
  * \brief Part of GL_ARB_shader_objects
  * \param shaderType GLenum
- * \return handleARB
+ * \return GLhandleARB
  */
 STATICINLINE GLhandleARB create_shader_object(
     group::shader_type shaderType, error_check check_errors = error_check::on)
@@ -211,7 +211,7 @@ STATICINLINE void get_attached_objects(
 /*!
  * \brief Part of GL_ARB_shader_objects
  * \param pname GLenum
- * \return handleARB
+ * \return GLhandleARB
  */
 STATICINLINE GLhandleARB get_handle(
     group::container_type pname, error_check check_errors = error_check::on)

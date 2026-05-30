@@ -579,10 +579,10 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void named_buffer_data(
-    u32                               buffer,
-    span_const_void const&            data,
-    group::vertex_buffer_object_usage usage,
-    error_check                       check_errors = error_check::on)
+    u32                     buffer,
+    span_const_void const&  data,
+    group::buffer_usage_arb usage,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -676,10 +676,10 @@ STATICINLINE void named_buffer_sub_data(
 /*!
  * \brief Part of GL_ARB_direct_state_access
  * \param buffer GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool unmap_named_buffer(
-    u32 buffer, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+unmap_named_buffer(u32 buffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -693,7 +693,7 @@ STATICINLINE bool unmap_named_buffer(
     }
     auto out = glUnmapNamedBuffer(buffer);
     detail::error_check("UnmapNamedBuffer"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 /*!

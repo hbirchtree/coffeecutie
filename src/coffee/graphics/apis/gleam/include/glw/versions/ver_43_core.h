@@ -642,8 +642,11 @@ template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<4, 3>>)
 /*!
  * \brief Wraps around glGetProgramResourceLocationIndex. Introduced in GL
- * core 4.3 \param program GLuint \param programInterface GLenum \param name
- * const GLchar * \return GLint
+ * core 4.3
+ * \param program GLuint
+ * \param programInterface GLenum
+ * \param name const GLchar *
+ * \return GLint
  */
 STATICINLINE GLint get_program_resource_location_index(
     u32                      program,

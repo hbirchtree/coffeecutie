@@ -73,10 +73,10 @@ STATICINLINE void gen_names(
  * \brief Part of GL_AMD_name_gen_delete
  * \param identifier GLenum
  * \param name GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_name(
-    GLenum identifier, u32 name, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_name(GLenum identifier, u32 name, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -85,7 +85,7 @@ STATICINLINE bool is_name(
     }
     auto out = glIsNameAMD(identifier, name);
     detail::error_check("IsNameAMD"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 } // namespace gl::amd::name_gen_delete

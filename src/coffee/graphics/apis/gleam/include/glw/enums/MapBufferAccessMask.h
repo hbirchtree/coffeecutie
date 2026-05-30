@@ -7,6 +7,9 @@ namespace gl::group {
 // MapBufferAccessMask
 enum class map_buffer_access_mask : u32
 {
+#ifdef GL_MAP_CLIENT_POINTER_BIT_MESA
+    map_client_pointer_bit_mesa = GL_MAP_CLIENT_POINTER_BIT_MESA,
+#endif
 #ifdef GL_MAP_COHERENT_BIT
     map_coherent_bit = GL_MAP_COHERENT_BIT,
 #endif

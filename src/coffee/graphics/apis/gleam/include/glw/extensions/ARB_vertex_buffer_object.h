@@ -263,10 +263,10 @@ STATICINLINE void get_buffer_sub_data(
 /*!
  * \brief Part of GL_ARB_vertex_buffer_object
  * \param buffer GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_buffer(
-    u32 buffer, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_buffer(u32 buffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -280,7 +280,7 @@ STATICINLINE bool is_buffer(
     }
     auto out = glIsBufferARB(buffer);
     detail::error_check("IsBufferARB"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 /*!
@@ -308,9 +308,9 @@ STATICINLINE void* map_buffer(
 /*!
  * \brief Part of GL_ARB_vertex_buffer_object
  * \param target GLenum
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool unmap_buffer(
+STATICINLINE GLboolean unmap_buffer(
     group::buffer_target_arb target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
@@ -320,7 +320,7 @@ STATICINLINE bool unmap_buffer(
     }
     auto out = glUnmapBufferARB(static_cast<GLenum>(target));
     detail::error_check("UnmapBufferARB"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 } // namespace gl::arb::vertex_buffer_object

@@ -111,10 +111,10 @@ STATICINLINE void ext_get_shaders(
 /*!
  * \brief Part of GL_QCOM_extended_get2
  * \param program GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool ext_is_program_binary(
-    u32 program, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+ext_is_program_binary(u32 program, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -128,7 +128,7 @@ STATICINLINE bool ext_is_program_binary(
     }
     auto out = glExtIsProgramBinaryQCOM(program);
     detail::error_check("ExtIsProgramBinaryQCOM"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 } // namespace gl::qcom::extended_get2

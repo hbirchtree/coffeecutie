@@ -433,6 +433,10 @@ enum class get_prop : u32
     fragment_shading_rate_non_trivial_combiners_supported_ext =
         GL_FRAGMENT_SHADING_RATE_NON_TRIVIAL_COMBINERS_SUPPORTED_EXT,
 #endif
+#ifdef GL_FRAGMENT_SHADING_RATE_PRIMITIVE_RATE_WITH_MULTI_VIEWPORT_SUPPORTED_EXT
+    fragment_shading_rate_primitive_rate_with_multi_viewport_supported_ext =
+        GL_FRAGMENT_SHADING_RATE_PRIMITIVE_RATE_WITH_MULTI_VIEWPORT_SUPPORTED_EXT,
+#endif
 #ifdef GL_FRAGMENT_SHADING_RATE_WITH_SAMPLE_MASK_SUPPORTED_EXT
     fragment_shading_rate_with_sample_mask_supported_ext =
         GL_FRAGMENT_SHADING_RATE_WITH_SAMPLE_MASK_SUPPORTED_EXT,
@@ -920,6 +924,43 @@ enum class get_prop : u32
 #ifdef GL_MAX_LIST_NESTING
     max_list_nesting = GL_MAX_LIST_NESTING,
 #endif
+#ifdef GL_MAX_MESH_OUTPUT_COMPONENTS_EXT
+    max_mesh_output_components_ext = GL_MAX_MESH_OUTPUT_COMPONENTS_EXT,
+#endif
+#ifdef GL_MAX_MESH_OUTPUT_LAYERS_EXT
+    max_mesh_output_layers_ext = GL_MAX_MESH_OUTPUT_LAYERS_EXT,
+#endif
+#ifdef GL_MAX_MESH_OUTPUT_MEMORY_SIZE_EXT
+    max_mesh_output_memory_size_ext = GL_MAX_MESH_OUTPUT_MEMORY_SIZE_EXT,
+#endif
+#ifdef GL_MAX_MESH_OUTPUT_PRIMITIVES_EXT
+    max_mesh_output_primitives_ext = GL_MAX_MESH_OUTPUT_PRIMITIVES_EXT,
+#endif
+#ifdef GL_MAX_MESH_PAYLOAD_AND_OUTPUT_MEMORY_SIZE_EXT
+    max_mesh_payload_and_output_memory_size_ext =
+        GL_MAX_MESH_PAYLOAD_AND_OUTPUT_MEMORY_SIZE_EXT,
+#endif
+#ifdef GL_MAX_MESH_PAYLOAD_AND_SHARED_MEMORY_SIZE_EXT
+    max_mesh_payload_and_shared_memory_size_ext =
+        GL_MAX_MESH_PAYLOAD_AND_SHARED_MEMORY_SIZE_EXT,
+#endif
+#ifdef GL_MAX_MESH_SHARED_MEMORY_SIZE_EXT
+    max_mesh_shared_memory_size_ext = GL_MAX_MESH_SHARED_MEMORY_SIZE_EXT,
+#endif
+#ifdef GL_MAX_MESH_WORK_GROUP_COUNT_EXT
+    max_mesh_work_group_count_ext = GL_MAX_MESH_WORK_GROUP_COUNT_EXT,
+#endif
+#ifdef GL_MAX_MESH_WORK_GROUP_INVOCATIONS_EXT
+    max_mesh_work_group_invocations_ext =
+        GL_MAX_MESH_WORK_GROUP_INVOCATIONS_EXT,
+#endif
+#ifdef GL_MAX_MESH_WORK_GROUP_SIZE_EXT
+    max_mesh_work_group_size_ext = GL_MAX_MESH_WORK_GROUP_SIZE_EXT,
+#endif
+#ifdef GL_MAX_MESH_WORK_GROUP_TOTAL_COUNT_EXT
+    max_mesh_work_group_total_count_ext =
+        GL_MAX_MESH_WORK_GROUP_TOTAL_COUNT_EXT,
+#endif
 #ifdef GL_MAX_MODELVIEW_STACK_DEPTH
     max_modelview_stack_depth = GL_MAX_MODELVIEW_STACK_DEPTH,
 #endif
@@ -928,6 +969,14 @@ enum class get_prop : u32
 #endif
 #ifdef GL_MAX_PIXEL_MAP_TABLE
     max_pixel_map_table = GL_MAX_PIXEL_MAP_TABLE,
+#endif
+#ifdef GL_MAX_PREFERRED_MESH_WORK_GROUP_INVOCATIONS_EXT
+    max_preferred_mesh_work_group_invocations_ext =
+        GL_MAX_PREFERRED_MESH_WORK_GROUP_INVOCATIONS_EXT,
+#endif
+#ifdef GL_MAX_PREFERRED_TASK_WORK_GROUP_INVOCATIONS_EXT
+    max_preferred_task_work_group_invocations_ext =
+        GL_MAX_PREFERRED_TASK_WORK_GROUP_INVOCATIONS_EXT,
 #endif
 #ifdef GL_MAX_PROGRAM_TEXEL_OFFSET
     max_program_texel_offset = GL_MAX_PROGRAM_TEXEL_OFFSET,
@@ -949,6 +998,30 @@ enum class get_prop : u32
 #endif
 #ifdef GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS
     max_shader_storage_buffer_bindings = GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS,
+#endif
+#ifdef GL_MAX_TASK_PAYLOAD_AND_SHARED_MEMORY_SIZE_EXT
+    max_task_payload_and_shared_memory_size_ext =
+        GL_MAX_TASK_PAYLOAD_AND_SHARED_MEMORY_SIZE_EXT,
+#endif
+#ifdef GL_MAX_TASK_PAYLOAD_SIZE_EXT
+    max_task_payload_size_ext = GL_MAX_TASK_PAYLOAD_SIZE_EXT,
+#endif
+#ifdef GL_MAX_TASK_SHARED_MEMORY_SIZE_EXT
+    max_task_shared_memory_size_ext = GL_MAX_TASK_SHARED_MEMORY_SIZE_EXT,
+#endif
+#ifdef GL_MAX_TASK_WORK_GROUP_COUNT_EXT
+    max_task_work_group_count_ext = GL_MAX_TASK_WORK_GROUP_COUNT_EXT,
+#endif
+#ifdef GL_MAX_TASK_WORK_GROUP_INVOCATIONS_EXT
+    max_task_work_group_invocations_ext =
+        GL_MAX_TASK_WORK_GROUP_INVOCATIONS_EXT,
+#endif
+#ifdef GL_MAX_TASK_WORK_GROUP_SIZE_EXT
+    max_task_work_group_size_ext = GL_MAX_TASK_WORK_GROUP_SIZE_EXT,
+#endif
+#ifdef GL_MAX_TASK_WORK_GROUP_TOTAL_COUNT_EXT
+    max_task_work_group_total_count_ext =
+        GL_MAX_TASK_WORK_GROUP_TOTAL_COUNT_EXT,
 #endif
 #ifdef GL_MAX_TESS_CONTROL_ATOMIC_COUNTERS
     max_tess_control_atomic_counters = GL_MAX_TESS_CONTROL_ATOMIC_COUNTERS,
@@ -979,9 +1052,6 @@ enum class get_prop : u32
 #endif
 #ifdef GL_MAX_TEXTURE_LOD_BIAS
     max_texture_lod_bias = GL_MAX_TEXTURE_LOD_BIAS,
-#endif
-#ifdef GL_MAX_TEXTURE_LOD_BIAS_EXT
-    max_texture_lod_bias_ext = GL_MAX_TEXTURE_LOD_BIAS_EXT,
 #endif
 #ifdef GL_MAX_TEXTURE_MAX_ANISOTROPY
     max_texture_max_anisotropy = GL_MAX_TEXTURE_MAX_ANISOTROPY,
@@ -1052,6 +1122,22 @@ enum class get_prop : u32
 #endif
 #ifdef GL_MAX_VIEWPORT_DIMS
     max_viewport_dims = GL_MAX_VIEWPORT_DIMS,
+#endif
+#ifdef GL_MESH_PREFERS_COMPACT_PRIMITIVE_OUTPUT_EXT
+    mesh_prefers_compact_primitive_output_ext =
+        GL_MESH_PREFERS_COMPACT_PRIMITIVE_OUTPUT_EXT,
+#endif
+#ifdef GL_MESH_PREFERS_COMPACT_VERTEX_OUTPUT_EXT
+    mesh_prefers_compact_vertex_output_ext =
+        GL_MESH_PREFERS_COMPACT_VERTEX_OUTPUT_EXT,
+#endif
+#ifdef GL_MESH_PREFERS_LOCAL_INVOCATION_PRIMITIVE_OUTPUT_EXT
+    mesh_prefers_local_invocation_primitive_output_ext =
+        GL_MESH_PREFERS_LOCAL_INVOCATION_PRIMITIVE_OUTPUT_EXT,
+#endif
+#ifdef GL_MESH_PREFERS_LOCAL_INVOCATION_VERTEX_OUTPUT_EXT
+    mesh_prefers_local_invocation_vertex_output_ext =
+        GL_MESH_PREFERS_LOCAL_INVOCATION_VERTEX_OUTPUT_EXT,
 #endif
 #ifdef GL_MINMAX_EXT
     minmax_ext = GL_MINMAX_EXT,
@@ -1153,6 +1239,9 @@ enum class get_prop : u32
 #ifdef GL_PACK_ROW_LENGTH
     pack_row_length = GL_PACK_ROW_LENGTH,
 #endif
+#ifdef GL_PACK_ROW_LENGTH_NV
+    pack_row_length_nv = GL_PACK_ROW_LENGTH_NV,
+#endif
 #ifdef GL_PACK_SKIP_IMAGES
     pack_skip_images = GL_PACK_SKIP_IMAGES,
 #endif
@@ -1162,8 +1251,14 @@ enum class get_prop : u32
 #ifdef GL_PACK_SKIP_PIXELS
     pack_skip_pixels = GL_PACK_SKIP_PIXELS,
 #endif
+#ifdef GL_PACK_SKIP_PIXELS_NV
+    pack_skip_pixels_nv = GL_PACK_SKIP_PIXELS_NV,
+#endif
 #ifdef GL_PACK_SKIP_ROWS
     pack_skip_rows = GL_PACK_SKIP_ROWS,
+#endif
+#ifdef GL_PACK_SKIP_ROWS_NV
+    pack_skip_rows_nv = GL_PACK_SKIP_ROWS_NV,
 #endif
 #ifdef GL_PACK_SKIP_VOLUMES_SGIS
     pack_skip_volumes_sgis = GL_PACK_SKIP_VOLUMES_SGIS,
@@ -1511,6 +1606,27 @@ enum class get_prop : u32
 #endif
 #ifdef GL_SHADER_COMPILER
     shader_compiler = GL_SHADER_COMPILER,
+#endif
+#ifdef GL_SHADER_CORE_ACTIVE_COUNT_ARM
+    shader_core_active_count_arm = GL_SHADER_CORE_ACTIVE_COUNT_ARM,
+#endif
+#ifdef GL_SHADER_CORE_COUNT_ARM
+    shader_core_count_arm = GL_SHADER_CORE_COUNT_ARM,
+#endif
+#ifdef GL_SHADER_CORE_FMA_RATE_ARM
+    shader_core_fma_rate_arm = GL_SHADER_CORE_FMA_RATE_ARM,
+#endif
+#ifdef GL_SHADER_CORE_MAX_WARP_COUNT_ARM
+    shader_core_max_warp_count_arm = GL_SHADER_CORE_MAX_WARP_COUNT_ARM,
+#endif
+#ifdef GL_SHADER_CORE_PIXEL_RATE_ARM
+    shader_core_pixel_rate_arm = GL_SHADER_CORE_PIXEL_RATE_ARM,
+#endif
+#ifdef GL_SHADER_CORE_PRESENT_MASK_ARM
+    shader_core_present_mask_arm = GL_SHADER_CORE_PRESENT_MASK_ARM,
+#endif
+#ifdef GL_SHADER_CORE_TEXEL_RATE_ARM
+    shader_core_texel_rate_arm = GL_SHADER_CORE_TEXEL_RATE_ARM,
 #endif
 #ifdef GL_SHADER_STORAGE_BUFFER_BINDING
     shader_storage_buffer_binding = GL_SHADER_STORAGE_BUFFER_BINDING,

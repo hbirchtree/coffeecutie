@@ -139,9 +139,9 @@ STATICINLINE void get_floati_v(
  * \brief Part of GL_NV_viewport_array
  * \param target GLenum
  * \param index GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_enabledi(
+STATICINLINE GLboolean is_enabledi(
     group::enable_cap target,
     u32               index,
     error_check       check_errors = error_check::on)
@@ -153,7 +153,7 @@ STATICINLINE bool is_enabledi(
     }
     auto out = glIsEnablediNV(static_cast<GLenum>(target), index);
     detail::error_check("IsEnablediNV"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<class span_const_i32>

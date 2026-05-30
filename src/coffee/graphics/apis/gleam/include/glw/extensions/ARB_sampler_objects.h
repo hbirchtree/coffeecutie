@@ -227,10 +227,10 @@ STATICINLINE void get_sampler_parameter(
 /*!
  * \brief Part of GL_ARB_sampler_objects
  * \param sampler GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_sampler(
-    u32 sampler, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_sampler(u32 sampler, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -244,7 +244,7 @@ STATICINLINE bool is_sampler(
     }
     auto out = glIsSampler(sampler);
     detail::error_check("IsSampler"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<class span_const_i32>

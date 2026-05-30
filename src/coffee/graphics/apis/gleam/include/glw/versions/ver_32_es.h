@@ -628,9 +628,9 @@ requires(MinimumVersion<Current, Version<3, 2>>)
  * \brief Wraps around glIsEnabledi. Introduced in GL es 3.2
  * \param target GLenum
  * \param index GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_enabledi(
+STATICINLINE GLboolean is_enabledi(
     group::enable_cap target,
     u32               index,
     error_check       check_errors = error_check::on)
@@ -642,7 +642,7 @@ STATICINLINE bool is_enabledi(
     }
     auto out = glIsEnabledi(static_cast<GLenum>(target), index);
     detail::error_check("IsEnabledi"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>
@@ -682,8 +682,13 @@ template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 2>>)
 /*!
  * \brief Wraps around glDrawElementsInstancedBaseVertex. Introduced in GL
- * es 3.2 \param mode GLenum \param count GLsizei \param type GLenum \param
- * indices const void * \param instancecount GLsizei \param basevertex GLint
+ * es 3.2
+ * \param mode GLenum
+ * \param count GLsizei
+ * \param type GLenum
+ * \param indices const void *
+ * \param instancecount GLsizei
+ * \param basevertex GLint
  * \return void
  */
 STATICINLINE void draw_elements_instanced_base_vertex(

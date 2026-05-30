@@ -491,10 +491,10 @@ STATICINLINE void get_vertex_attribiv(
 /*!
  * \brief Part of GL_ARB_vertex_program
  * \param program GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_program(
-    u32 program, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_program(u32 program, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -508,7 +508,7 @@ STATICINLINE bool is_program(
     }
     auto out = glIsProgramARB(program);
     detail::error_check("IsProgramARB"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<class vec_4_f64>

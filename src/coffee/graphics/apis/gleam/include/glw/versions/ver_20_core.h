@@ -835,10 +835,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
 /*!
  * \brief Wraps around glIsProgram. Introduced in GL core 2.0
  * \param program GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_program(
-    u32 program, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_program(u32 program, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -852,7 +852,7 @@ STATICINLINE bool is_program(
     }
     auto out = glIsProgram(program);
     detail::error_check("IsProgram"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>
@@ -860,10 +860,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
 /*!
  * \brief Wraps around glIsShader. Introduced in GL core 2.0
  * \param shader GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_shader(
-    u32 shader, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_shader(u32 shader, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -877,7 +877,7 @@ STATICINLINE bool is_shader(
     }
     auto out = glIsShader(shader);
     detail::error_check("IsShader"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>

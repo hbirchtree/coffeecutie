@@ -419,10 +419,10 @@ requires(MinimumVersion<Current, Version<1, 5>>)
 /*!
  * \brief Wraps around glIsBuffer. Introduced in GL core 1.5
  * \param buffer GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_buffer(
-    u32 buffer, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_buffer(u32 buffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -436,7 +436,7 @@ STATICINLINE bool is_buffer(
     }
     auto out = glIsBuffer(buffer);
     detail::error_check("IsBuffer"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>
@@ -444,9 +444,10 @@ requires(MinimumVersion<Current, Version<1, 5>>)
 /*!
  * \brief Wraps around glIsQuery. Introduced in GL core 1.5
  * \param id GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_query(u32 id, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_query(u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -455,7 +456,7 @@ STATICINLINE bool is_query(u32 id, error_check check_errors = error_check::on)
     }
     auto out = glIsQuery(id);
     detail::error_check("IsQuery"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>
@@ -487,9 +488,9 @@ requires(MinimumVersion<Current, Version<1, 5>>)
 /*!
  * \brief Wraps around glUnmapBuffer. Introduced in GL core 1.5
  * \param target GLenum
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool unmap_buffer(
+STATICINLINE GLboolean unmap_buffer(
     group::buffer_target_arb target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
@@ -499,7 +500,7 @@ STATICINLINE bool unmap_buffer(
     }
     auto out = glUnmapBuffer(static_cast<GLenum>(target));
     detail::error_check("UnmapBuffer"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 #endif // GL_VERSION_1_5

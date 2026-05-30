@@ -1641,7 +1641,10 @@ requires(
         std::decay_t<i32>>)
 /*!
  * \brief Wraps around glGetFramebufferAttachmentParameteriv. Introduced in GL
- * es 2.0 \param target GLenum \param attachment GLenum \param pname GLenum
+ * es 2.0
+ * \param target GLenum
+ * \param attachment GLenum
+ * \param pname GLenum
  * \param params GLint *
  * \return void
  */
@@ -2230,10 +2233,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
 /*!
  * \brief Wraps around glIsBuffer. Introduced in GL es 2.0
  * \param buffer GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_buffer(
-    u32 buffer, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_buffer(u32 buffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2247,7 +2250,7 @@ STATICINLINE bool is_buffer(
     }
     auto out = glIsBuffer(buffer);
     detail::error_check("IsBuffer"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>
@@ -2255,10 +2258,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
 /*!
  * \brief Wraps around glIsEnabled. Introduced in GL es 2.0
  * \param cap GLenum
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_enabled(
-    group::enable_cap cap, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_enabled(group::enable_cap cap, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2267,7 +2270,7 @@ STATICINLINE bool is_enabled(
     }
     auto out = glIsEnabled(static_cast<GLenum>(cap));
     detail::error_check("IsEnabled"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>
@@ -2275,10 +2278,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
 /*!
  * \brief Wraps around glIsFramebuffer. Introduced in GL es 2.0
  * \param framebuffer GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_framebuffer(
-    u32 framebuffer, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_framebuffer(u32 framebuffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2292,7 +2295,7 @@ STATICINLINE bool is_framebuffer(
     }
     auto out = glIsFramebuffer(framebuffer);
     detail::error_check("IsFramebuffer"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>
@@ -2300,10 +2303,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
 /*!
  * \brief Wraps around glIsProgram. Introduced in GL es 2.0
  * \param program GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_program(
-    u32 program, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_program(u32 program, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2317,7 +2320,7 @@ STATICINLINE bool is_program(
     }
     auto out = glIsProgram(program);
     detail::error_check("IsProgram"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>
@@ -2325,10 +2328,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
 /*!
  * \brief Wraps around glIsRenderbuffer. Introduced in GL es 2.0
  * \param renderbuffer GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_renderbuffer(
-    u32 renderbuffer, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_renderbuffer(u32 renderbuffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2342,7 +2345,7 @@ STATICINLINE bool is_renderbuffer(
     }
     auto out = glIsRenderbuffer(renderbuffer);
     detail::error_check("IsRenderbuffer"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>
@@ -2350,10 +2353,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
 /*!
  * \brief Wraps around glIsShader. Introduced in GL es 2.0
  * \param shader GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_shader(
-    u32 shader, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_shader(u32 shader, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2367,7 +2370,7 @@ STATICINLINE bool is_shader(
     }
     auto out = glIsShader(shader);
     detail::error_check("IsShader"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>
@@ -2375,10 +2378,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
 /*!
  * \brief Wraps around glIsTexture. Introduced in GL es 2.0
  * \param texture GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_texture(
-    u32 texture, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_texture(u32 texture, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2392,7 +2395,7 @@ STATICINLINE bool is_texture(
     }
     auto out = glIsTexture(texture);
     detail::error_check("IsTexture"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>

@@ -86,10 +86,10 @@ STATICINLINE void gen_vertex_arrays(
 /*!
  * \brief Part of GL_ARB_vertex_array_object
  * \param array GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_vertex_array(
-    u32 array, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_vertex_array(u32 array, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -103,7 +103,7 @@ STATICINLINE bool is_vertex_array(
     }
     auto out = glIsVertexArray(array);
     detail::error_check("IsVertexArray"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 } // namespace gl::arb::vertex_array_object

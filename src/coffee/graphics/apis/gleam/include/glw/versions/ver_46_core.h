@@ -81,7 +81,10 @@ template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<4, 6>>)
 /*!
  * \brief Wraps around glMultiDrawElementsIndirectCount. Introduced in GL
- * core 4.6 \param mode GLenum \param type GLenum \param indirect const void *
+ * core 4.6
+ * \param mode GLenum
+ * \param type GLenum
+ * \param indirect const void *
  * \param drawcount GLintptr
  * \param maxdrawcount GLsizei
  * \param stride GLsizei

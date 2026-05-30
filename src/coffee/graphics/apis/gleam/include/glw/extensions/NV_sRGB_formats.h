@@ -9,7 +9,6 @@ using gl::group::internal_format;
 using gl::group::sized_internal_format;
 
 namespace values {
-constexpr u32 etc1_srgb8         = 0x88EE;
 constexpr u32 sluminance_alpha   = 0x8C44;
 constexpr u32 sluminance8_alpha8 = 0x8C45;
 constexpr u32 sluminance         = 0x8C46;

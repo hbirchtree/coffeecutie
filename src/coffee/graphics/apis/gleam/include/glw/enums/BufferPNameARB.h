@@ -16,6 +16,9 @@ enum class buffer_prop_arb : u32
 #ifdef GL_BUFFER_ACCESS_FLAGS
     buffer_access_flags = GL_BUFFER_ACCESS_FLAGS,
 #endif
+#ifdef GL_BUFFER_CLIENT_POINTER_SIZE_MESA
+    buffer_client_pointer_size_mesa = GL_BUFFER_CLIENT_POINTER_SIZE_MESA,
+#endif
 #ifdef GL_BUFFER_IMMUTABLE_STORAGE
     buffer_immutable_storage = GL_BUFFER_IMMUTABLE_STORAGE,
 #endif

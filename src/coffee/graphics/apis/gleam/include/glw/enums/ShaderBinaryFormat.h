@@ -22,6 +22,9 @@ enum class shader_binary_format : u32
 #ifdef GL_SHADER_BINARY_FORMAT_SPIR_V
     spir_v = GL_SHADER_BINARY_FORMAT_SPIR_V,
 #endif
+#ifdef GL_SHADER_BINARY_HUAWEI
+    shader_binary_huawei = GL_SHADER_BINARY_HUAWEI,
+#endif
 #ifdef GL_SHADER_BINARY_VIV
     shader_binary_viv = GL_SHADER_BINARY_VIV,
 #endif

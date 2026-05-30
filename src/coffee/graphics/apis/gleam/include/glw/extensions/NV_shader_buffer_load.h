@@ -146,10 +146,10 @@ STATICINLINE void get_uniformui64v(
 /*!
  * \brief Part of GL_NV_shader_buffer_load
  * \param target GLenum
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_buffer_resident(
-    GLenum target, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_buffer_resident(GLenum target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -158,16 +158,16 @@ STATICINLINE bool is_buffer_resident(
     }
     auto out = glIsBufferResidentNV(target);
     detail::error_check("IsBufferResidentNV"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 /*!
  * \brief Part of GL_NV_shader_buffer_load
  * \param buffer GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_named_buffer_resident(
-    u32 buffer, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_named_buffer_resident(u32 buffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -181,7 +181,7 @@ STATICINLINE bool is_named_buffer_resident(
     }
     auto out = glIsNamedBufferResidentNV(buffer);
     detail::error_check("IsNamedBufferResidentNV"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 /*!

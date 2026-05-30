@@ -224,7 +224,11 @@ inline std::
         return {f::rgb, b::unsigned_byte, p::rgb};
 
     if(fmt.pixfmt == P::RGB565 && fmt.bfmt == B::u16_565)
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+        return {f::rgb565, b::unsigned_short_5_6_5, p::rgb};
+#else
         return {f::rgb, b::unsigned_short_5_6_5, p::rgb};
+#endif
     if(fmt.pixfmt == P::RGB5A1 && fmt.bfmt == B::u16_5551)
         return {f::rgba, b::unsigned_short_5_5_5_1, p::rgba};
     if(fmt.pixfmt == P::RGBA4 && fmt.bfmt == B::u16_4444)
@@ -314,8 +318,7 @@ inline T to(render_targets::attachment attachment, u32 i)
 }
 
 template<typename T = group::buffer_usage_arb>
-requires stl_types::
-    is_any_of<T, group::buffer_usage_arb, group::vertex_buffer_object_usage>
+requires stl_types::is_any_of<T, group::buffer_usage_arb>
     inline T to(
         [[maybe_unused]] features::buffers const& features,
         semantic::RSCA                            flags)

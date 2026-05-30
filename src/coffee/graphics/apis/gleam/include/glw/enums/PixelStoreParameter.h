@@ -31,6 +31,9 @@ enum class pixel_store_parameter : u32
 #ifdef GL_PACK_ROW_LENGTH
     pack_row_length = GL_PACK_ROW_LENGTH,
 #endif
+#ifdef GL_PACK_ROW_LENGTH_NV
+    pack_row_length_nv = GL_PACK_ROW_LENGTH_NV,
+#endif
 #ifdef GL_PACK_SKIP_IMAGES
     pack_skip_images = GL_PACK_SKIP_IMAGES,
 #endif
@@ -40,8 +43,14 @@ enum class pixel_store_parameter : u32
 #ifdef GL_PACK_SKIP_PIXELS
     pack_skip_pixels = GL_PACK_SKIP_PIXELS,
 #endif
+#ifdef GL_PACK_SKIP_PIXELS_NV
+    pack_skip_pixels_nv = GL_PACK_SKIP_PIXELS_NV,
+#endif
 #ifdef GL_PACK_SKIP_ROWS
     pack_skip_rows = GL_PACK_SKIP_ROWS,
+#endif
+#ifdef GL_PACK_SKIP_ROWS_NV
+    pack_skip_rows_nv = GL_PACK_SKIP_ROWS_NV,
 #endif
 #ifdef GL_PACK_SKIP_VOLUMES_SGIS
     pack_skip_volumes_sgis = GL_PACK_SKIP_VOLUMES_SGIS,

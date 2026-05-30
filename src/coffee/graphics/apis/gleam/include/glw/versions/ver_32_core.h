@@ -36,8 +36,13 @@ template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 2>>)
 /*!
  * \brief Wraps around glDrawElementsInstancedBaseVertex. Introduced in GL
- * core 3.2 \param mode GLenum \param count GLsizei \param type GLenum \param
- * indices const void * \param instancecount GLsizei \param basevertex GLint
+ * core 3.2
+ * \param mode GLenum
+ * \param count GLsizei
+ * \param type GLenum
+ * \param indices const void *
+ * \param instancecount GLsizei
+ * \param basevertex GLint
  * \return void
  */
 STATICINLINE void draw_elements_instanced_base_vertex(
@@ -216,7 +221,7 @@ requires(MinimumVersion<Current, Version<3, 2>>)
  * \brief Wraps around glFenceSync. Introduced in GL core 3.2
  * \param condition GLenum
  * \param flags GLbitfield
- * \return sync
+ * \return GLsync
  */
 STATICINLINE GLsync fence_sync(
     group::sync_condition      condition,
@@ -303,10 +308,10 @@ requires(MinimumVersion<Current, Version<3, 2>>)
 /*!
  * \brief Wraps around glIsSync. Introduced in GL core 3.2
  * \param sync GLsync
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_sync(
-    GLsync sync, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_sync(GLsync sync, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -315,7 +320,7 @@ STATICINLINE bool is_sync(
     }
     auto out = glIsSync(sync);
     detail::error_check("IsSync"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>

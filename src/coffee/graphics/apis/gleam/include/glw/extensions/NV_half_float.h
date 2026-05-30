@@ -102,47 +102,6 @@ STATICINLINE void color4hv(
 
 /*!
  * \brief Part of GL_NV_half_float
- * \param fog GLhalfNV
- * \return void
- */
-STATICINLINE void fog_coordh(
-    GLhalfNV fog, error_check check_errors = error_check::on)
-{
-    using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
-    {
-        GLW_FPTR_CHECK(FogCoordhNV)
-    }
-    glFogCoordhNV(fog);
-    detail::error_check("FogCoordhNV"sv, check_errors);
-}
-
-template<class span_const_GLhalfNV>
-requires(
-    concepts::span<span_const_GLhalfNV> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_GLhalfNV::value_type>,
-        std::decay_t<GLhalfNV>>)
-/*!
- * \brief Part of GL_NV_half_float
- * \param fog const GLhalfNV *
- * \return void
- */
-STATICINLINE void fog_coordhv(
-    span_const_GLhalfNV const& fog, error_check check_errors = error_check::on)
-{
-    using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
-    {
-        GLW_FPTR_CHECK(FogCoordhvNV)
-    }
-    glFogCoordhvNV(
-        fog.size() ? reinterpret_cast<const GLhalfNV*>(fog.data()) : nullptr);
-    detail::error_check("FogCoordhvNV"sv, check_errors);
-}
-
-/*!
- * \brief Part of GL_NV_half_float
  * \param target GLenum
  * \param s GLhalfNV
  * \return void
@@ -389,51 +348,6 @@ STATICINLINE void normal3hv(
     glNormal3hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
     detail::error_check("Normal3hvNV"sv, check_errors);
-}
-
-template<class vec_3_GLhalfNV>
-requires(concepts::vector<vec_3_GLhalfNV, GLhalfNV, 3>)
-/*!
- * \brief Part of GL_NV_half_float
- * \param red GLhalfNV
- * \param green GLhalfNV
- * \param blue GLhalfNV
- * \return void
- */
-STATICINLINE void secondary_color3h(
-    vec_3_GLhalfNV const& red, error_check check_errors = error_check::on)
-{
-    using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
-    {
-        GLW_FPTR_CHECK(SecondaryColor3hNV)
-    }
-    glSecondaryColor3hNV(red[0], red[1], red[2]);
-    detail::error_check("SecondaryColor3hNV"sv, check_errors);
-}
-
-template<class span_const_GLhalfNV>
-requires(
-    concepts::span<span_const_GLhalfNV> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_GLhalfNV::value_type>,
-        std::decay_t<GLhalfNV>>)
-/*!
- * \brief Part of GL_NV_half_float
- * \param v const GLhalfNV *
- * \return void
- */
-STATICINLINE void secondary_color3hv(
-    span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
-{
-    using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
-    {
-        GLW_FPTR_CHECK(SecondaryColor3hvNV)
-    }
-    glSecondaryColor3hvNV(
-        v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("SecondaryColor3hvNV"sv, check_errors);
 }
 
 /*!
@@ -1068,6 +982,92 @@ STATICINLINE void vertex_attribs4hv(
         v.size(),
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
     detail::error_check("VertexAttribs4hvNV"sv, check_errors);
+}
+
+/*!
+ * \brief Part of GL_NV_half_float
+ * \param fog GLhalfNV
+ * \return void
+ */
+STATICINLINE void fog_coordh(
+    GLhalfNV fog, error_check check_errors = error_check::on)
+{
+    using namespace std::string_view_literals;
+    if constexpr(compile_info::debug_mode)
+    {
+        GLW_FPTR_CHECK(FogCoordhNV)
+    }
+    glFogCoordhNV(fog);
+    detail::error_check("FogCoordhNV"sv, check_errors);
+}
+
+template<class span_const_GLhalfNV>
+requires(
+    concepts::span<span_const_GLhalfNV> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLhalfNV::value_type>,
+        std::decay_t<GLhalfNV>>)
+/*!
+ * \brief Part of GL_NV_half_float
+ * \param fog const GLhalfNV *
+ * \return void
+ */
+STATICINLINE void fog_coordhv(
+    span_const_GLhalfNV const& fog, error_check check_errors = error_check::on)
+{
+    using namespace std::string_view_literals;
+    if constexpr(compile_info::debug_mode)
+    {
+        GLW_FPTR_CHECK(FogCoordhvNV)
+    }
+    glFogCoordhvNV(
+        fog.size() ? reinterpret_cast<const GLhalfNV*>(fog.data()) : nullptr);
+    detail::error_check("FogCoordhvNV"sv, check_errors);
+}
+
+template<class vec_3_GLhalfNV>
+requires(concepts::vector<vec_3_GLhalfNV, GLhalfNV, 3>)
+/*!
+ * \brief Part of GL_NV_half_float
+ * \param red GLhalfNV
+ * \param green GLhalfNV
+ * \param blue GLhalfNV
+ * \return void
+ */
+STATICINLINE void secondary_color3h(
+    vec_3_GLhalfNV const& red, error_check check_errors = error_check::on)
+{
+    using namespace std::string_view_literals;
+    if constexpr(compile_info::debug_mode)
+    {
+        GLW_FPTR_CHECK(SecondaryColor3hNV)
+    }
+    glSecondaryColor3hNV(red[0], red[1], red[2]);
+    detail::error_check("SecondaryColor3hNV"sv, check_errors);
+}
+
+template<class span_const_GLhalfNV>
+requires(
+    concepts::span<span_const_GLhalfNV> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLhalfNV::value_type>,
+        std::decay_t<GLhalfNV>>)
+/*!
+ * \brief Part of GL_NV_half_float
+ * \param v const GLhalfNV *
+ * \return void
+ */
+STATICINLINE void secondary_color3hv(
+    span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
+{
+    using namespace std::string_view_literals;
+    if constexpr(compile_info::debug_mode)
+    {
+        GLW_FPTR_CHECK(SecondaryColor3hvNV)
+    }
+    glSecondaryColor3hvNV(
+        v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
+    detail::error_check("SecondaryColor3hvNV"sv, check_errors);
 }
 
 /*!

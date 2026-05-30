@@ -87,7 +87,7 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
             cmd::named_buffer_data(
                 m_handle,
                 null_span<>{size},
-                convert::to<group::vertex_buffer_object_usage>(
+                convert::to<group::buffer_usage_arb>(
                     m_features, m_access));
         } else
 #endif
@@ -136,7 +136,7 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
             cmd::named_buffer_data(
                 m_handle,
                 data,
-                convert::to<group::vertex_buffer_object_usage>(
+                convert::to<group::buffer_usage_arb>(
                     m_features, m_access));
         } else
 #endif

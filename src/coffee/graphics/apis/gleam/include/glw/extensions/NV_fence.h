@@ -113,10 +113,10 @@ STATICINLINE void get_fenceiv(
 /*!
  * \brief Part of GL_NV_fence
  * \param fence GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_fence(
-    u32 fence, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_fence(u32 fence, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -125,7 +125,7 @@ STATICINLINE bool is_fence(
     }
     auto out = glIsFenceNV(fence);
     detail::error_check("IsFenceNV"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 /*!
@@ -151,10 +151,10 @@ STATICINLINE void set_fence(
 /*!
  * \brief Part of GL_NV_fence
  * \param fence GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool test_fence(
-    u32 fence, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+test_fence(u32 fence, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -163,7 +163,7 @@ STATICINLINE bool test_fence(
     }
     auto out = glTestFenceNV(fence);
     detail::error_check("TestFenceNV"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 } // namespace gl::nv::fence

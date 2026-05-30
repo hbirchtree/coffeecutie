@@ -690,9 +690,9 @@ requires(MinimumVersion<Current, Version<3, 0>>)
  * \brief Wraps around glIsEnabledi. Introduced in GL core 3.0
  * \param target GLenum
  * \param index GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_enabledi(
+STATICINLINE GLboolean is_enabledi(
     group::enable_cap target,
     u32               index,
     error_check       check_errors = error_check::on)
@@ -704,7 +704,7 @@ STATICINLINE bool is_enabledi(
     }
     auto out = glIsEnabledi(static_cast<GLenum>(target), index);
     detail::error_check("IsEnabledi"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<class span_const_i32>
@@ -1991,7 +1991,10 @@ requires(
         std::decay_t<i32>>)
 /*!
  * \brief Wraps around glGetFramebufferAttachmentParameteriv. Introduced in GL
- * core 3.0 \param target GLenum \param attachment GLenum \param pname GLenum
+ * core 3.0
+ * \param target GLenum
+ * \param attachment GLenum
+ * \param pname GLenum
  * \param params GLint *
  * \return void
  */
@@ -2051,10 +2054,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
 /*!
  * \brief Wraps around glIsFramebuffer. Introduced in GL core 3.0
  * \param framebuffer GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_framebuffer(
-    u32 framebuffer, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_framebuffer(u32 framebuffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2068,7 +2071,7 @@ STATICINLINE bool is_framebuffer(
     }
     auto out = glIsFramebuffer(framebuffer);
     detail::error_check("IsFramebuffer"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>
@@ -2076,10 +2079,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
 /*!
  * \brief Wraps around glIsRenderbuffer. Introduced in GL core 3.0
  * \param renderbuffer GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_renderbuffer(
-    u32 renderbuffer, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_renderbuffer(u32 renderbuffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2093,7 +2096,7 @@ STATICINLINE bool is_renderbuffer(
     }
     auto out = glIsRenderbuffer(renderbuffer);
     detail::error_check("IsRenderbuffer"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<class size_2_i32>
@@ -2133,8 +2136,13 @@ requires(
     concepts::size_2d<size_2_i32, i32>)
 /*!
  * \brief Wraps around glRenderbufferStorageMultisample. Introduced in GL
- * core 3.0 \param target GLenum \param samples GLsizei \param internalformat
- * GLenum \param width GLsizei \param height GLsizei \return void
+ * core 3.0
+ * \param target GLenum
+ * \param samples GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \return void
  */
 STATICINLINE void renderbuffer_storage_multisample(
     group::renderbuffer_target target,
@@ -2294,10 +2302,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
 /*!
  * \brief Wraps around glIsVertexArray. Introduced in GL core 3.0
  * \param array GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_vertex_array(
-    u32 array, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_vertex_array(u32 array, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2311,7 +2319,7 @@ STATICINLINE bool is_vertex_array(
     }
     auto out = glIsVertexArray(array);
     detail::error_check("IsVertexArray"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 #endif // GL_VERSION_3_0

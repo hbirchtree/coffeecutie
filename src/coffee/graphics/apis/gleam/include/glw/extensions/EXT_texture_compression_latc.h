@@ -1,12 +1,14 @@
 #pragma once
 
 #ifdef GL_EXT_texture_compression_latc
+#include "../enums/InternalFormat.h"
+#include "../enums/SizedInternalFormat.h"
+
 namespace gl::ext::texture_compression_latc {
+using gl::group::internal_format;
+using gl::group::sized_internal_format;
+
 namespace values {
-constexpr u32 compressed_luminance_latc1              = 0x8C70;
-constexpr u32 compressed_signed_luminance_latc1       = 0x8C71;
-constexpr u32 compressed_luminance_alpha_latc2        = 0x8C72;
-constexpr u32 compressed_signed_luminance_alpha_latc2 = 0x8C73;
 } // namespace values
 } // namespace gl::ext::texture_compression_latc
 #endif // GL_EXT_texture_compression_latc

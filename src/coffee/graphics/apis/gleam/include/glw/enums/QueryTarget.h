@@ -13,6 +13,12 @@ enum class query_target : u32
 #ifdef GL_ANY_SAMPLES_PASSED_CONSERVATIVE
     any_samples_passed_conservative = GL_ANY_SAMPLES_PASSED_CONSERVATIVE,
 #endif
+#ifdef GL_MESH_PRIMITIVES_GENERATED_EXT
+    mesh_primitives_generated_ext = GL_MESH_PRIMITIVES_GENERATED_EXT,
+#endif
+#ifdef GL_MESH_SHADER_INVOCATIONS_EXT
+    mesh_shader_invocations_ext = GL_MESH_SHADER_INVOCATIONS_EXT,
+#endif
 #ifdef GL_PRIMITIVES_GENERATED
     primitives_generated = GL_PRIMITIVES_GENERATED,
 #endif
@@ -21,6 +27,9 @@ enum class query_target : u32
 #endif
 #ifdef GL_SAMPLES_PASSED
     samples_passed = GL_SAMPLES_PASSED,
+#endif
+#ifdef GL_TASK_SHADER_INVOCATIONS_EXT
+    task_shader_invocations_ext = GL_TASK_SHADER_INVOCATIONS_EXT,
 #endif
 #ifdef GL_TIME_ELAPSED
     time_elapsed = GL_TIME_ELAPSED,

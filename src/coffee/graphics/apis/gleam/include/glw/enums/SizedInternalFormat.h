@@ -7,6 +7,12 @@ namespace gl::group {
 // SizedInternalFormat
 enum class sized_internal_format : u32
 {
+#ifdef GL_3DC_XY_AMD
+    3dc_xy_amd = GL_3DC_XY_AMD,
+#endif
+#ifdef GL_3DC_X_AMD
+    3dc_x_amd = GL_3DC_X_AMD,
+#endif
 #ifdef GL_ALPHA12
     alpha12 = GL_ALPHA12,
 #endif
@@ -51,6 +57,22 @@ enum class sized_internal_format : u32
 #endif
 #ifdef GL_ALPHA8_OES
     alpha8_oes = GL_ALPHA8_OES,
+#endif
+#ifdef GL_ATC_RGBA_EXPLICIT_ALPHA_AMD
+    atc_rgba_explicit_alpha_amd = GL_ATC_RGBA_EXPLICIT_ALPHA_AMD,
+#endif
+#ifdef GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD
+    atc_rgba_interpolated_alpha_amd = GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD,
+#endif
+#ifdef GL_ATC_RGB_AMD
+    atc_rgb_amd = GL_ATC_RGB_AMD,
+#endif
+#ifdef GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT
+    compressed_luminance_alpha_latc2_ext =
+        GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,
+#endif
+#ifdef GL_COMPRESSED_LUMINANCE_LATC1_EXT
+    compressed_luminance_latc1_ext = GL_COMPRESSED_LUMINANCE_LATC1_EXT,
 #endif
 #ifdef GL_COMPRESSED_R11_EAC
     compressed_r11_eac = GL_COMPRESSED_R11_EAC,
@@ -216,6 +238,9 @@ enum class sized_internal_format : u32
 #ifdef GL_COMPRESSED_RGBA_BPTC_UNORM_EXT
     compressed_rgba_bptc_unorm_ext = GL_COMPRESSED_RGBA_BPTC_UNORM_EXT,
 #endif
+#ifdef GL_COMPRESSED_RGBA_FXT1_3DFX
+    compressed_rgba_fxt1_3dfx = GL_COMPRESSED_RGBA_FXT1_3DFX,
+#endif
 #ifdef GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG
     compressed_rgba_pvrtc_2bppv1_img = GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG,
 #endif
@@ -265,6 +290,9 @@ enum class sized_internal_format : u32
     compressed_rgb_bptc_unsigned_float_ext =
         GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_EXT,
 #endif
+#ifdef GL_COMPRESSED_RGB_FXT1_3DFX
+    compressed_rgb_fxt1_3dfx = GL_COMPRESSED_RGB_FXT1_3DFX,
+#endif
 #ifdef GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG
     compressed_rgb_pvrtc_2bppv1_img = GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG,
 #endif
@@ -276,6 +304,14 @@ enum class sized_internal_format : u32
 #endif
 #ifdef GL_COMPRESSED_RG_RGTC2
     compressed_rg_rgtc2 = GL_COMPRESSED_RG_RGTC2,
+#endif
+#ifdef GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT
+    compressed_signed_luminance_alpha_latc2_ext =
+        GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT,
+#endif
+#ifdef GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT
+    compressed_signed_luminance_latc1_ext =
+        GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT,
 #endif
 #ifdef GL_COMPRESSED_SIGNED_R11_EAC
     compressed_signed_r11_eac = GL_COMPRESSED_SIGNED_R11_EAC,
@@ -580,6 +616,9 @@ enum class sized_internal_format : u32
 #endif
 #ifdef GL_ETC1_RGB8_OES
     etc1_rgb8_oes = GL_ETC1_RGB8_OES,
+#endif
+#ifdef GL_ETC1_SRGB8_NV
+    etc1_srgb8_nv = GL_ETC1_SRGB8_NV,
 #endif
 #ifdef GL_INTENSITY12
     intensity12 = GL_INTENSITY12,

@@ -22,7 +22,7 @@ requires(
  * \param context struct _cl_context *
  * \param event struct _cl_event *
  * \param flags GLbitfield
- * \return sync
+ * \return GLsync
  */
 STATICINLINE GLsync create_sync_from_c_levent(
     span__cl_context const& context,

@@ -106,9 +106,9 @@ requires(
  * \param n GLsizei
  * \param programs const GLuint *
  * \param residences GLboolean *
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool are_programs_resident(
+STATICINLINE GLboolean are_programs_resident(
     span_const_u32 const& programs,
     span_bool             residences,
     error_check           check_errors = error_check::on)
@@ -125,7 +125,7 @@ STATICINLINE bool are_programs_resident(
         residences.size() ? reinterpret_cast<GLboolean*>(residences.data())
                           : nullptr);
     detail::error_check("AreProgramsResidentNV"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 /*!
@@ -482,9 +482,10 @@ STATICINLINE void get_vertex_attribiv(
 /*!
  * \brief Part of GL_NV_vertex_program
  * \param id GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_program(u32 id, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_program(u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -493,7 +494,7 @@ STATICINLINE bool is_program(u32 id, error_check check_errors = error_check::on)
     }
     auto out = glIsProgramNV(id);
     detail::error_check("IsProgramNV"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<class span_const_u8>

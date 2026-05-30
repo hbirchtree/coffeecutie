@@ -11,7 +11,7 @@ constexpr u32 sync_x11_fence = 0x90E1;
  * \param external_sync_type GLenum
  * \param external_sync GLintptr
  * \param flags GLbitfield
- * \return sync
+ * \return GLsync
  */
 STATICINLINE GLsync import_sync(
     GLenum      external_sync_type,

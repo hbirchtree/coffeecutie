@@ -157,10 +157,10 @@ STATICINLINE void get_unsigned_bytei_v(
 /*!
  * \brief Part of GL_EXT_semaphore
  * \param semaphore GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_semaphore(
-    u32 semaphore, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_semaphore(u32 semaphore, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -169,7 +169,7 @@ STATICINLINE bool is_semaphore(
     }
     auto out = glIsSemaphoreEXT(semaphore);
     detail::error_check("IsSemaphoreEXT"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<class span_const_u64>

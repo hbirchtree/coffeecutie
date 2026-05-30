@@ -90,9 +90,9 @@ STATICINLINE void vdpau_init(
 /*!
  * \brief Part of GL_NV_vdpau_interop
  * \param surface GLvdpauSurfaceNV
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool vdpau_is_surface(
+STATICINLINE GLboolean vdpau_is_surface(
     GLvdpauSurfaceNV surface, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
@@ -102,7 +102,7 @@ STATICINLINE bool vdpau_is_surface(
     }
     auto out = glVDPAUIsSurfaceNV(surface);
     detail::error_check("VDPAUIsSurfaceNV"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<class span_const_GLvdpauSurfaceNV>
@@ -146,7 +146,7 @@ requires(
  * \param target GLenum
  * \param numTextureNames GLsizei
  * \param textureNames const GLuint *
- * \return vdpauSurfaceNV
+ * \return GLvdpauSurfaceNV
  */
 STATICINLINE GLvdpauSurfaceNV vdpau_register_output_surface(
     span_const_void const& vdpSurface,
@@ -183,7 +183,7 @@ requires(
  * \param target GLenum
  * \param numTextureNames GLsizei
  * \param textureNames const GLuint *
- * \return vdpauSurfaceNV
+ * \return GLvdpauSurfaceNV
  */
 STATICINLINE GLvdpauSurfaceNV vdpau_register_video_surface(
     span_const_void const& vdpSurface,

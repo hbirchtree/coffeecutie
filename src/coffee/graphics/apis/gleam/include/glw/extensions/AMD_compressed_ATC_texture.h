@@ -1,11 +1,14 @@
 #pragma once
 
 #ifdef GL_AMD_compressed_ATC_texture
+#include "../enums/InternalFormat.h"
+#include "../enums/SizedInternalFormat.h"
+
 namespace gl::amd::compressed_atc_texture {
+using gl::group::internal_format;
+using gl::group::sized_internal_format;
+
 namespace values {
-constexpr u32 atc_rgba_interpolated_alpha = 0x87EE;
-constexpr u32 atc_rgb                     = 0x8C92;
-constexpr u32 atc_rgba_explicit_alpha     = 0x8C93;
 } // namespace values
 } // namespace gl::amd::compressed_atc_texture
 #endif // GL_AMD_compressed_ATC_texture

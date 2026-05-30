@@ -3,8 +3,13 @@ template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<4, 2>>)
 /*!
  * \brief Wraps around glDrawArraysInstancedBaseInstance. Introduced in GL
- * core 4.2 \param mode GLenum \param first GLint \param count GLsizei \param
- * instancecount GLsizei \param baseinstance GLuint \return void
+ * core 4.2
+ * \param mode GLenum
+ * \param first GLint
+ * \param count GLsizei
+ * \param instancecount GLsizei
+ * \param baseinstance GLuint
+ * \return void
  */
 STATICINLINE void draw_arrays_instanced_base_instance(
     group::primitive_type mode,
@@ -28,8 +33,13 @@ template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<4, 2>>)
 /*!
  * \brief Wraps around glDrawElementsInstancedBaseInstance. Introduced in GL
- * core 4.2 \param mode GLenum \param count GLsizei \param type GLenum \param
- * indices const void * \param instancecount GLsizei \param baseinstance GLuint
+ * core 4.2
+ * \param mode GLenum
+ * \param count GLsizei
+ * \param type GLenum
+ * \param indices const void *
+ * \param instancecount GLsizei
+ * \param baseinstance GLuint
  * \return void
  */
 STATICINLINE void draw_elements_instanced_base_instance(
@@ -60,7 +70,10 @@ template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<4, 2>>)
 /*!
  * \brief Wraps around glDrawElementsInstancedBaseVertexBaseInstance. Introduced
- * in GL core 4.2 \param mode GLenum \param count GLsizei \param type GLenum
+ * in GL core 4.2
+ * \param mode GLenum
+ * \param count GLsizei
+ * \param type GLenum
  * \param indices const void *
  * \param instancecount GLsizei
  * \param basevertex GLint
@@ -138,7 +151,10 @@ requires(
         std::decay_t<i32>>)
 /*!
  * \brief Wraps around glGetActiveAtomicCounterBufferiv. Introduced in GL
- * core 4.2 \param program GLuint \param bufferIndex GLuint \param pname GLenum
+ * core 4.2
+ * \param program GLuint
+ * \param bufferIndex GLuint
+ * \param pname GLenum
  * \param params GLint *
  * \return void
  */
@@ -335,7 +351,10 @@ template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<4, 2>>)
 /*!
  * \brief Wraps around glDrawTransformFeedbackInstanced. Introduced in GL
- * core 4.2 \param mode GLenum \param id GLuint \param instancecount GLsizei
+ * core 4.2
+ * \param mode GLenum
+ * \param id GLuint
+ * \param instancecount GLsizei
  * \return void
  */
 STATICINLINE void draw_transform_feedback_instanced(
@@ -358,8 +377,12 @@ template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<4, 2>>)
 /*!
  * \brief Wraps around glDrawTransformFeedbackStreamInstanced. Introduced in GL
- * core 4.2 \param mode GLenum \param id GLuint \param stream GLuint \param
- * instancecount GLsizei \return void
+ * core 4.2
+ * \param mode GLenum
+ * \param id GLuint
+ * \param stream GLuint
+ * \param instancecount GLsizei
+ * \return void
  */
 STATICINLINE void draw_transform_feedback_stream_instanced(
     group::primitive_type mode,

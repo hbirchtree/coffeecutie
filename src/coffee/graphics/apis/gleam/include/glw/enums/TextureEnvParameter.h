@@ -16,6 +16,9 @@ enum class texture_env_parameter : u32
 #ifdef GL_ADD_SIGNED_EXT
     add_signed_ext = GL_ADD_SIGNED_EXT,
 #endif
+#ifdef GL_ALPHA_SCALE
+    alpha_scale = GL_ALPHA_SCALE,
+#endif
 #ifdef GL_COMBINE
     combine = GL_COMBINE,
 #endif
@@ -54,6 +57,9 @@ enum class texture_env_parameter : u32
 #endif
 #ifdef GL_CONSTANT_NV
     constant_nv = GL_CONSTANT_NV,
+#endif
+#ifdef GL_COORD_REPLACE
+    coord_replace = GL_COORD_REPLACE,
 #endif
 #ifdef GL_INTERPOLATE
     interpolate = GL_INTERPOLATE,
@@ -237,6 +243,9 @@ enum class texture_env_parameter : u32
 #endif
 #ifdef GL_TEXTURE_ENV_MODE
     texture_env_mode = GL_TEXTURE_ENV_MODE,
+#endif
+#ifdef GL_TEXTURE_LOD_BIAS
+    texture_lod_bias = GL_TEXTURE_LOD_BIAS,
 #endif
 }; // enum class texture_env_parameter
 

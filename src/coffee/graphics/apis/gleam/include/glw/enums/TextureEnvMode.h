@@ -13,11 +13,17 @@ enum class texture_env_mode : u32
 #ifdef GL_BLEND
     blend = GL_BLEND,
 #endif
+#ifdef GL_COMBINE
+    combine = GL_COMBINE,
+#endif
 #ifdef GL_DECAL
     decal = GL_DECAL,
 #endif
 #ifdef GL_MODULATE
     modulate = GL_MODULATE,
+#endif
+#ifdef GL_REPLACE
+    replace = GL_REPLACE,
 #endif
 #ifdef GL_REPLACE_EXT
     replace_ext = GL_REPLACE_EXT,

@@ -655,12 +655,8 @@ STATICINLINE GLuint get_debug_message_log(
 
 #endif
 #if defined(GL_ES_VERSION_2_0)
-template<class span_GLchar, class span_i32>
+template<class span_GLchar>
 requires(
-    concepts::span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>> &&
     concepts::span<span_GLchar> &&
     std::is_same_v<
         std::decay_t<typename span_GLchar::value_type>,
@@ -677,7 +673,7 @@ requires(
 STATICINLINE void get_object_label(
     GLenum      identifier,
     u32         name,
-    span_i32    length,
+    i32&        length,
     span_GLchar label,
     error_check check_errors = error_check::on)
 {
@@ -686,12 +682,7 @@ STATICINLINE void get_object_label(
     {
         GLW_FPTR_CHECK(GetObjectLabelKHR)
     }
-    glGetObjectLabelKHR(
-        identifier,
-        name,
-        label.size(),
-        length.size() ? reinterpret_cast<GLsizei*>(length.data()) : nullptr,
-        label.data());
+    glGetObjectLabelKHR(identifier, name, label.size(), &length, label.data());
     detail::error_check("GetObjectLabelKHR"sv, check_errors);
 }
 

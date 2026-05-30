@@ -52,16 +52,14 @@ STATICINLINE void get_multisamplefv(
  * \return void
  */
 STATICINLINE void sample_mask_indexed(
-    u32                   index,
-    group::sample_mask_nv mask,
-    error_check           check_errors = error_check::on)
+    u32 index, GLbitfield mask, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SampleMaskIndexedNV)
     }
-    glSampleMaskIndexedNV(index, static_cast<GLenum>(mask));
+    glSampleMaskIndexedNV(index, mask);
     detail::error_check("SampleMaskIndexedNV"sv, check_errors);
 }
 

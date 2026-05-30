@@ -91,6 +91,9 @@ enum class get_texture_parameter : u32
 #ifdef GL_TEXTURE_BORDER_COLOR_NV
     texture_border_color_nv = GL_TEXTURE_BORDER_COLOR_NV,
 #endif
+#ifdef GL_TEXTURE_CBCR_DEGAMMA_QCOM
+    texture_cbcr_degamma_qcom = GL_TEXTURE_CBCR_DEGAMMA_QCOM,
+#endif
 #ifdef GL_TEXTURE_CLIPMAP_CENTER_SGIX
     texture_clipmap_center_sgix = GL_TEXTURE_CLIPMAP_CENTER_SGIX,
 #endif
@@ -211,6 +214,9 @@ enum class get_texture_parameter : u32
 #endif
 #ifdef GL_TEXTURE_WRAP_T
     texture_wrap_t = GL_TEXTURE_WRAP_T,
+#endif
+#ifdef GL_TEXTURE_Y_DEGAMMA_QCOM
+    texture_y_degamma_qcom = GL_TEXTURE_Y_DEGAMMA_QCOM,
 #endif
 }; // enum class get_texture_parameter
 

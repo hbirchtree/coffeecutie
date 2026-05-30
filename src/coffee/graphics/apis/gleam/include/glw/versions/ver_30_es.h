@@ -834,7 +834,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
  * \brief Wraps around glFenceSync. Introduced in GL es 3.0
  * \param condition GLenum
  * \param flags GLbitfield
- * \return sync
+ * \return GLsync
  */
 STATICINLINE GLsync fence_sync(
     group::sync_condition      condition,
@@ -1867,9 +1867,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
 /*!
  * \brief Wraps around glIsQuery. Introduced in GL es 3.0
  * \param id GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_query(u32 id, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_query(u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1878,7 +1879,7 @@ STATICINLINE bool is_query(u32 id, error_check check_errors = error_check::on)
     }
     auto out = glIsQuery(id);
     detail::error_check("IsQuery"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>
@@ -1886,10 +1887,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
 /*!
  * \brief Wraps around glIsSampler. Introduced in GL es 3.0
  * \param sampler GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_sampler(
-    u32 sampler, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_sampler(u32 sampler, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1903,7 +1904,7 @@ STATICINLINE bool is_sampler(
     }
     auto out = glIsSampler(sampler);
     detail::error_check("IsSampler"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>
@@ -1911,10 +1912,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
 /*!
  * \brief Wraps around glIsSync. Introduced in GL es 3.0
  * \param sync GLsync
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_sync(
-    GLsync sync, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_sync(GLsync sync, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1923,7 +1924,7 @@ STATICINLINE bool is_sync(
     }
     auto out = glIsSync(sync);
     detail::error_check("IsSync"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>
@@ -1931,10 +1932,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
 /*!
  * \brief Wraps around glIsTransformFeedback. Introduced in GL es 3.0
  * \param id GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_transform_feedback(
-    u32 id, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_transform_feedback(u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1943,7 +1944,7 @@ STATICINLINE bool is_transform_feedback(
     }
     auto out = glIsTransformFeedback(id);
     detail::error_check("IsTransformFeedback"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>
@@ -1951,10 +1952,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
 /*!
  * \brief Wraps around glIsVertexArray. Introduced in GL es 3.0
  * \param array GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_vertex_array(
-    u32 array, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_vertex_array(u32 array, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1968,7 +1969,7 @@ STATICINLINE bool is_vertex_array(
     }
     auto out = glIsVertexArray(array);
     detail::error_check("IsVertexArray"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>
@@ -2926,9 +2927,9 @@ requires(MinimumVersion<Current, Version<3, 0>>)
 /*!
  * \brief Wraps around glUnmapBuffer. Introduced in GL es 3.0
  * \param target GLenum
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool unmap_buffer(
+STATICINLINE GLboolean unmap_buffer(
     group::buffer_target_arb target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
@@ -2938,7 +2939,7 @@ STATICINLINE bool unmap_buffer(
     }
     auto out = glUnmapBuffer(static_cast<GLenum>(target));
     detail::error_check("UnmapBuffer"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>

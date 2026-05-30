@@ -683,9 +683,9 @@ STATICINLINE void insert_component(
  * \brief Part of GL_EXT_vertex_shader
  * \param id GLuint
  * \param cap GLenum
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_variant_enabled(
+STATICINLINE GLboolean is_variant_enabled(
     u32                    id,
     group::variant_cap_ext cap,
     error_check            check_errors = error_check::on)
@@ -697,7 +697,7 @@ STATICINLINE bool is_variant_enabled(
     }
     auto out = glIsVariantEnabledEXT(id, static_cast<GLenum>(cap));
     detail::error_check("IsVariantEnabledEXT"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<class span_const_void>

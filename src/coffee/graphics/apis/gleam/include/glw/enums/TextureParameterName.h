@@ -67,6 +67,9 @@ enum class texture_parameter_name : u32
 #ifdef GL_TEXTURE_BORDER_COLOR_NV
     texture_border_color_nv = GL_TEXTURE_BORDER_COLOR_NV,
 #endif
+#ifdef GL_TEXTURE_CBCR_DEGAMMA_QCOM
+    texture_cbcr_degamma_qcom = GL_TEXTURE_CBCR_DEGAMMA_QCOM,
+#endif
 #ifdef GL_TEXTURE_CLIPMAP_CENTER_SGIX
     texture_clipmap_center_sgix = GL_TEXTURE_CLIPMAP_CENTER_SGIX,
 #endif
@@ -131,9 +134,6 @@ enum class texture_parameter_name : u32
 #ifdef GL_TEXTURE_LOD_BIAS
     texture_lod_bias = GL_TEXTURE_LOD_BIAS,
 #endif
-#ifdef GL_TEXTURE_LOD_BIAS_EXT
-    texture_lod_bias_ext = GL_TEXTURE_LOD_BIAS_EXT,
-#endif
 #ifdef GL_TEXTURE_LOD_BIAS_R_SGIX
     texture_lod_bias_r_sgix = GL_TEXTURE_LOD_BIAS_R_SGIX,
 #endif
@@ -151,9 +151,6 @@ enum class texture_parameter_name : u32
 #endif
 #ifdef GL_TEXTURE_MAX_ANISOTROPY
     texture_max_anisotropy = GL_TEXTURE_MAX_ANISOTROPY,
-#endif
-#ifdef GL_TEXTURE_MAX_ANISOTROPY_EXT
-    texture_max_anisotropy_ext = GL_TEXTURE_MAX_ANISOTROPY_EXT,
 #endif
 #ifdef GL_TEXTURE_MAX_CLAMP_R_SGIX
     texture_max_clamp_r_sgix = GL_TEXTURE_MAX_CLAMP_R_SGIX,
@@ -242,6 +239,9 @@ enum class texture_parameter_name : u32
 #endif
 #ifdef GL_TEXTURE_WRAP_T
     texture_wrap_t = GL_TEXTURE_WRAP_T,
+#endif
+#ifdef GL_TEXTURE_Y_DEGAMMA_QCOM
+    texture_y_degamma_qcom = GL_TEXTURE_Y_DEGAMMA_QCOM,
 #endif
 }; // enum class texture_parameter_name
 

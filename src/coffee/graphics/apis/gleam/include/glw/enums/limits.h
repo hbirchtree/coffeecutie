@@ -256,6 +256,43 @@ inline std::vector<std::pair<group::get_prop, std::string_view>> properties()
 #if defined(GL_MAX_LIST_NESTING)
         {p::max_list_nesting, "max_list_nesting"},
 #endif
+#if defined(GL_MAX_MESH_OUTPUT_COMPONENTS_EXT)
+        {p::max_mesh_output_components_ext, "max_mesh_output_components_ext"},
+#endif
+#if defined(GL_MAX_MESH_OUTPUT_LAYERS_EXT)
+        {p::max_mesh_output_layers_ext, "max_mesh_output_layers_ext"},
+#endif
+#if defined(GL_MAX_MESH_OUTPUT_MEMORY_SIZE_EXT)
+        {p::max_mesh_output_memory_size_ext, "max_mesh_output_memory_size_ext"},
+#endif
+#if defined(GL_MAX_MESH_OUTPUT_PRIMITIVES_EXT)
+        {p::max_mesh_output_primitives_ext, "max_mesh_output_primitives_ext"},
+#endif
+#if defined(GL_MAX_MESH_PAYLOAD_AND_OUTPUT_MEMORY_SIZE_EXT)
+        {p::max_mesh_payload_and_output_memory_size_ext,
+         "max_mesh_payload_and_output_memory_size_ext"},
+#endif
+#if defined(GL_MAX_MESH_PAYLOAD_AND_SHARED_MEMORY_SIZE_EXT)
+        {p::max_mesh_payload_and_shared_memory_size_ext,
+         "max_mesh_payload_and_shared_memory_size_ext"},
+#endif
+#if defined(GL_MAX_MESH_SHARED_MEMORY_SIZE_EXT)
+        {p::max_mesh_shared_memory_size_ext, "max_mesh_shared_memory_size_ext"},
+#endif
+#if defined(GL_MAX_MESH_WORK_GROUP_COUNT_EXT)
+        {p::max_mesh_work_group_count_ext, "max_mesh_work_group_count_ext"},
+#endif
+#if defined(GL_MAX_MESH_WORK_GROUP_INVOCATIONS_EXT)
+        {p::max_mesh_work_group_invocations_ext,
+         "max_mesh_work_group_invocations_ext"},
+#endif
+#if defined(GL_MAX_MESH_WORK_GROUP_SIZE_EXT)
+        {p::max_mesh_work_group_size_ext, "max_mesh_work_group_size_ext"},
+#endif
+#if defined(GL_MAX_MESH_WORK_GROUP_TOTAL_COUNT_EXT)
+        {p::max_mesh_work_group_total_count_ext,
+         "max_mesh_work_group_total_count_ext"},
+#endif
 #if defined(GL_MAX_MODELVIEW_STACK_DEPTH)
         {p::max_modelview_stack_depth, "max_modelview_stack_depth"},
 #endif
@@ -264,6 +301,14 @@ inline std::vector<std::pair<group::get_prop, std::string_view>> properties()
 #endif
 #if defined(GL_MAX_PIXEL_MAP_TABLE)
         {p::max_pixel_map_table, "max_pixel_map_table"},
+#endif
+#if defined(GL_MAX_PREFERRED_MESH_WORK_GROUP_INVOCATIONS_EXT)
+        {p::max_preferred_mesh_work_group_invocations_ext,
+         "max_preferred_mesh_work_group_invocations_ext"},
+#endif
+#if defined(GL_MAX_PREFERRED_TASK_WORK_GROUP_INVOCATIONS_EXT)
+        {p::max_preferred_task_work_group_invocations_ext,
+         "max_preferred_task_work_group_invocations_ext"},
 #endif
 #if defined(GL_MAX_PROGRAM_TEXEL_OFFSET)
         {p::max_program_texel_offset, "max_program_texel_offset"},
@@ -286,6 +331,30 @@ inline std::vector<std::pair<group::get_prop, std::string_view>> properties()
 #if defined(GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS)
         {p::max_shader_storage_buffer_bindings,
          "max_shader_storage_buffer_bindings"},
+#endif
+#if defined(GL_MAX_TASK_PAYLOAD_AND_SHARED_MEMORY_SIZE_EXT)
+        {p::max_task_payload_and_shared_memory_size_ext,
+         "max_task_payload_and_shared_memory_size_ext"},
+#endif
+#if defined(GL_MAX_TASK_PAYLOAD_SIZE_EXT)
+        {p::max_task_payload_size_ext, "max_task_payload_size_ext"},
+#endif
+#if defined(GL_MAX_TASK_SHARED_MEMORY_SIZE_EXT)
+        {p::max_task_shared_memory_size_ext, "max_task_shared_memory_size_ext"},
+#endif
+#if defined(GL_MAX_TASK_WORK_GROUP_COUNT_EXT)
+        {p::max_task_work_group_count_ext, "max_task_work_group_count_ext"},
+#endif
+#if defined(GL_MAX_TASK_WORK_GROUP_INVOCATIONS_EXT)
+        {p::max_task_work_group_invocations_ext,
+         "max_task_work_group_invocations_ext"},
+#endif
+#if defined(GL_MAX_TASK_WORK_GROUP_SIZE_EXT)
+        {p::max_task_work_group_size_ext, "max_task_work_group_size_ext"},
+#endif
+#if defined(GL_MAX_TASK_WORK_GROUP_TOTAL_COUNT_EXT)
+        {p::max_task_work_group_total_count_ext,
+         "max_task_work_group_total_count_ext"},
 #endif
 #if defined(GL_MAX_TESS_CONTROL_ATOMIC_COUNTERS)
         {p::max_tess_control_atomic_counters,
@@ -318,9 +387,6 @@ inline std::vector<std::pair<group::get_prop, std::string_view>> properties()
 #endif
 #if defined(GL_MAX_TEXTURE_LOD_BIAS)
         {p::max_texture_lod_bias, "max_texture_lod_bias"},
-#endif
-#if defined(GL_MAX_TEXTURE_LOD_BIAS_EXT)
-        {p::max_texture_lod_bias_ext, "max_texture_lod_bias_ext"},
 #endif
 #if defined(GL_MAX_TEXTURE_MAX_ANISOTROPY)
         {p::max_texture_max_anisotropy, "max_texture_max_anisotropy"},

@@ -293,10 +293,10 @@ requires(MinimumVersion<Current, Version<1, 1>>)
 /*!
  * \brief Wraps around glIsTexture. Introduced in GL core 1.1
  * \param texture GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_texture(
-    u32 texture, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_texture(u32 texture, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -310,7 +310,7 @@ STATICINLINE bool is_texture(
     }
     auto out = glIsTexture(texture);
     detail::error_check("IsTexture"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>

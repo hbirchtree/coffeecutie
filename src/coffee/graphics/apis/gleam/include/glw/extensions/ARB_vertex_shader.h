@@ -3,6 +3,7 @@
 #ifdef GL_ARB_vertex_shader
 #include "../enums/AttributeType.h"
 #include "../enums/BinormalPointerTypeEXT.h"
+#include "../enums/ColorPointerType.h"
 #include "../enums/FogCoordinatePointerType.h"
 #include "../enums/FogPointerTypeEXT.h"
 #include "../enums/FogPointerTypeIBM.h"
@@ -26,6 +27,7 @@
 namespace gl::arb::vertex_shader {
 using gl::group::attribute_type;
 using gl::group::binormal_pointer_type_ext;
+using gl::group::color_pointer_type;
 using gl::group::fog_coordinate_pointer_type;
 using gl::group::fog_pointer_type_ext;
 using gl::group::fog_pointer_type_ibm;

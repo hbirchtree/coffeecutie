@@ -216,10 +216,10 @@ STATICINLINE void get_program_pipelineiv(
 /*!
  * \brief Part of GL_ARB_separate_shader_objects
  * \param pipeline GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_program_pipeline(
-    u32 pipeline, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_program_pipeline(u32 pipeline, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -233,7 +233,7 @@ STATICINLINE bool is_program_pipeline(
     }
     auto out = glIsProgramPipeline(pipeline);
     detail::error_check("IsProgramPipeline"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 /*!

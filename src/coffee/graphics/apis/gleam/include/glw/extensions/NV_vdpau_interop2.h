@@ -18,7 +18,7 @@ requires(
  * \param numTextureNames GLsizei
  * \param textureNames const GLuint *
  * \param isFrameStructure GLboolean
- * \return vdpauSurfaceNV
+ * \return GLvdpauSurfaceNV
  */
 STATICINLINE GLvdpauSurfaceNV
 vdpau_register_video_surface_with_picture_structure(

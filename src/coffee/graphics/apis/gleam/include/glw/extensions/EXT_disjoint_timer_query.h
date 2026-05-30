@@ -285,9 +285,10 @@ STATICINLINE void get_queryiv(
 /*!
  * \brief Part of GL_EXT_disjoint_timer_query
  * \param id GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_query(u32 id, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_query(u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -296,7 +297,7 @@ STATICINLINE bool is_query(u32 id, error_check check_errors = error_check::on)
     }
     auto out = glIsQueryEXT(id);
     detail::error_check("IsQueryEXT"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 /*!

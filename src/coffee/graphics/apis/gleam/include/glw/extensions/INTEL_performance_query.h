@@ -1,15 +1,14 @@
 #pragma once
 
 #ifdef GL_INTEL_performance_query
+#include "../enums/PerfQueryDataFlags.h"
 #include "../enums/PerformanceQueryCapsMaskINTEL.h"
 
 namespace gl::intel::performance_query {
+using gl::group::perf_query_data_flags;
 using gl::group::performance_query_caps_mask_intel;
 
 namespace values {
-constexpr u32 perfquery_donot_flush             = 0x83F9;
-constexpr u32 perfquery_flush                   = 0x83FA;
-constexpr u32 perfquery_wait                    = 0x83FB;
 constexpr u32 perfquery_counter_event           = 0x94F0;
 constexpr u32 perfquery_counter_duration_norm   = 0x94F1;
 constexpr u32 perfquery_counter_duration_raw    = 0x94F2;

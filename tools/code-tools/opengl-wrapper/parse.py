@@ -59,7 +59,7 @@ def commands_for(requirements, registry):
             proto = command.find('proto')
             return_type = [ x for x in ' '.join(proto.itertext()).split(' ') if x != '' ]
             return_type = ' '.join(return_type[:-1])
-            return_group = proto.get('group')
+            return_group = proto.get('group') or proto.get('kind')
             func_name = proto.find('name').text
             params = command.findall('param')
 

@@ -3,6 +3,7 @@
 #ifdef GL_EXT_vertex_attrib_64bit
 #include "../enums/AttributeType.h"
 #include "../enums/BinormalPointerTypeEXT.h"
+#include "../enums/ColorPointerType.h"
 #include "../enums/FogCoordinatePointerType.h"
 #include "../enums/FogPointerTypeEXT.h"
 #include "../enums/FogPointerTypeIBM.h"
@@ -22,6 +23,7 @@
 namespace gl::ext::vertex_attrib_64bit {
 using gl::group::attribute_type;
 using gl::group::binormal_pointer_type_ext;
+using gl::group::color_pointer_type;
 using gl::group::fog_coordinate_pointer_type;
 using gl::group::fog_pointer_type_ext;
 using gl::group::fog_pointer_type_ibm;
@@ -278,6 +280,7 @@ requires(concepts::span<span_const_void>)
  */
 STATICINLINE void vertex_attrib_l_pointer(
     u32                       index,
+    i32                       size,
     group::vertex_attrib_long type,
     i32                       stride,
     span_const_void const&    pointer,
@@ -290,8 +293,7 @@ STATICINLINE void vertex_attrib_l_pointer(
     }
     glVertexAttribLPointerEXT(
         index,
-        pointer.size() *
-            sizeof(typename std::decay_t<span_const_void const&>::value_type),
+        size,
         static_cast<GLenum>(type),
         stride,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())

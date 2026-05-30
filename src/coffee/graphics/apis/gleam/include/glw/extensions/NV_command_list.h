@@ -394,10 +394,10 @@ STATICINLINE GLushort get_stage_index(
 /*!
  * \brief Part of GL_NV_command_list
  * \param list GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_command_list(
-    u32 list, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_command_list(u32 list, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -406,16 +406,16 @@ STATICINLINE bool is_command_list(
     }
     auto out = glIsCommandListNV(list);
     detail::error_check("IsCommandListNV"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 /*!
  * \brief Part of GL_NV_command_list
  * \param state GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_state(
-    u32 state, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_state(u32 state, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -424,7 +424,7 @@ STATICINLINE bool is_state(
     }
     auto out = glIsStateNV(state);
     detail::error_check("IsStateNV"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<class span_const_i32, class span_const_u32, class span_const_void>

@@ -2879,9 +2879,9 @@ STATICINLINE void get_integer_indexedv(
  * \brief Part of GL_EXT_direct_state_access
  * \param target GLenum
  * \param index GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_enabled_indexed(
+STATICINLINE GLboolean is_enabled_indexed(
     group::enable_cap target,
     u32               index,
     error_check       check_errors = error_check::on)
@@ -2893,7 +2893,7 @@ STATICINLINE bool is_enabled_indexed(
     }
     auto out = glIsEnabledIndexedEXT(static_cast<GLenum>(target), index);
     detail::error_check("IsEnabledIndexedEXT"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<class span_const_void>
@@ -3790,11 +3790,11 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void named_buffer_data(
-    u32                               buffer,
-    GLsizeiptr                        size,
-    span_const_void const&            data,
-    group::vertex_buffer_object_usage usage,
-    error_check                       check_errors = error_check::on)
+    u32                     buffer,
+    GLsizeiptr              size,
+    span_const_void const&  data,
+    group::buffer_usage_arb usage,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3852,10 +3852,10 @@ STATICINLINE void named_buffer_sub_data(
 /*!
  * \brief Part of GL_EXT_direct_state_access
  * \param buffer GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool unmap_named_buffer(
-    u32 buffer, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+unmap_named_buffer(u32 buffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3869,7 +3869,7 @@ STATICINLINE bool unmap_named_buffer(
     }
     auto out = glUnmapNamedBufferEXT(buffer);
     detail::error_check("UnmapNamedBufferEXT"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 /*!

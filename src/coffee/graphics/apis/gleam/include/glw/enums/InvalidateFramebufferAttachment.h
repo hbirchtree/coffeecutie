@@ -205,9 +205,6 @@ enum class invalidate_framebuffer_attachment : u32
 #ifdef GL_COLOR_ATTACHMENT9_NV
     color_attachment9_nv = GL_COLOR_ATTACHMENT9_NV,
 #endif
-#ifdef GL_COLOR_EXT
-    color_ext = GL_COLOR_EXT,
-#endif
 #ifdef GL_DEPTH
     depth = GL_DEPTH,
 #endif
@@ -220,9 +217,6 @@ enum class invalidate_framebuffer_attachment : u32
 #ifdef GL_DEPTH_ATTACHMENT_OES
     depth_attachment_oes = GL_DEPTH_ATTACHMENT_OES,
 #endif
-#ifdef GL_DEPTH_EXT
-    depth_ext = GL_DEPTH_EXT,
-#endif
 #ifdef GL_DEPTH_STENCIL_ATTACHMENT
     depth_stencil_attachment = GL_DEPTH_STENCIL_ATTACHMENT,
 #endif
@@ -234,9 +228,6 @@ enum class invalidate_framebuffer_attachment : u32
 #endif
 #ifdef GL_STENCIL_ATTACHMENT_OES
     stencil_attachment_oes = GL_STENCIL_ATTACHMENT_OES,
-#endif
-#ifdef GL_STENCIL_EXT
-    stencil_ext = GL_STENCIL_EXT,
 #endif
 }; // enum class invalidate_framebuffer_attachment
 

@@ -7,8 +7,14 @@ namespace gl::group {
 // LightParameter
 enum class light_parameter : u32
 {
+#ifdef GL_AMBIENT
+    ambient = GL_AMBIENT,
+#endif
 #ifdef GL_CONSTANT_ATTENUATION
     constant_attenuation = GL_CONSTANT_ATTENUATION,
+#endif
+#ifdef GL_DIFFUSE
+    diffuse = GL_DIFFUSE,
 #endif
 #ifdef GL_LINEAR_ATTENUATION
     linear_attenuation = GL_LINEAR_ATTENUATION,
@@ -18,6 +24,9 @@ enum class light_parameter : u32
 #endif
 #ifdef GL_QUADRATIC_ATTENUATION
     quadratic_attenuation = GL_QUADRATIC_ATTENUATION,
+#endif
+#ifdef GL_SPECULAR
+    specular = GL_SPECULAR,
 #endif
 #ifdef GL_SPOT_CUTOFF
     spot_cutoff = GL_SPOT_CUTOFF,

@@ -1,11 +1,9 @@
 #pragma once
 
 #ifdef GL_EXT_discard_framebuffer
-#include "../enums/InvalidateFramebufferAttachment.h"
 #include "../enums/PixelCopyType.h"
 
 namespace gl::ext::discard_framebuffer {
-using gl::group::invalidate_framebuffer_attachment;
 using gl::group::pixel_copy_type;
 
 namespace values {

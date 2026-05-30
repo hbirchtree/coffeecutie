@@ -3,6 +3,7 @@
 #ifdef GL_NV_path_rendering
 #include "../enums/CombinerRegisterNV.h"
 #include "../enums/FragmentShaderGenericSourceATI.h"
+#include "../enums/InstancedPathCoverMode.h"
 #include "../enums/PathColor.h"
 #include "../enums/PathCoordType.h"
 #include "../enums/PathCoverMode.h"
@@ -22,6 +23,7 @@
 namespace gl::nv::path_rendering {
 using gl::group::combiner_register_nv;
 using gl::group::fragment_shader_generic_source_ati;
+using gl::group::instanced_path_cover_mode;
 using gl::group::path_color;
 using gl::group::path_coord_type;
 using gl::group::path_cover_mode;
@@ -132,14 +134,14 @@ requires(
  * \return void
  */
 STATICINLINE void cover_fill_path_instanced(
-    i32                        numPaths,
-    group::path_element_type   pathNameType,
-    span_const_void const&     paths,
-    u32                        pathBase,
-    group::path_cover_mode     coverMode,
-    group::path_transform_type transformType,
-    span_const_f32 const&      transformValues,
-    error_check                check_errors = error_check::on)
+    i32                              numPaths,
+    group::path_element_type         pathNameType,
+    span_const_void const&           paths,
+    u32                              pathBase,
+    group::instanced_path_cover_mode coverMode,
+    group::path_transform_type       transformType,
+    span_const_f32 const&            transformValues,
+    error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -197,14 +199,14 @@ requires(
  * \return void
  */
 STATICINLINE void cover_stroke_path_instanced(
-    i32                        numPaths,
-    group::path_element_type   pathNameType,
-    span_const_void const&     paths,
-    u32                        pathBase,
-    group::path_cover_mode     coverMode,
-    group::path_transform_type transformType,
-    span_const_f32 const&      transformValues,
-    error_check                check_errors = error_check::on)
+    i32                              numPaths,
+    group::path_element_type         pathNameType,
+    span_const_void const&           paths,
+    u32                              pathBase,
+    group::instanced_path_cover_mode coverMode,
+    group::path_transform_type       transformType,
+    span_const_f32 const&            transformValues,
+    error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -597,9 +599,10 @@ STATICINLINE void interpolate_paths(
 /*!
  * \brief Part of GL_NV_path_rendering
  * \param path GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_path(u32 path, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_path(u32 path, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -608,7 +611,7 @@ STATICINLINE bool is_path(u32 path, error_check check_errors = error_check::on)
     }
     auto out = glIsPathNV(path);
     detail::error_check("IsPathNV"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<class vec_2_f32>
@@ -619,9 +622,9 @@ requires(concepts::vector<vec_2_f32, f32, 2>)
  * \param mask GLuint
  * \param x GLfloat
  * \param y GLfloat
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_point_in_fill_path(
+STATICINLINE GLboolean is_point_in_fill_path(
     u32              path,
     u32              mask,
     vec_2_f32 const& x,
@@ -634,7 +637,7 @@ STATICINLINE bool is_point_in_fill_path(
     }
     auto out = glIsPointInFillPathNV(path, mask, x[0], x[1]);
     detail::error_check("IsPointInFillPathNV"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<class vec_2_f32>
@@ -644,9 +647,9 @@ requires(concepts::vector<vec_2_f32, f32, 2>)
  * \param path GLuint
  * \param x GLfloat
  * \param y GLfloat
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_point_in_stroke_path(
+STATICINLINE GLboolean is_point_in_stroke_path(
     u32 path, vec_2_f32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
@@ -656,7 +659,7 @@ STATICINLINE bool is_point_in_stroke_path(
     }
     auto out = glIsPointInStrokePathNV(path, x[0], x[1]);
     detail::error_check("IsPointInStrokePathNV"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<class span_const_u8, class span_const_void>
@@ -1144,9 +1147,9 @@ requires(concepts::vector<vec_2_f32, f32, 2>)
  * \param y GLfloat *
  * \param tangentX GLfloat *
  * \param tangentY GLfloat *
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool point_along_path(
+STATICINLINE GLboolean point_along_path(
     u32              path,
     i32              startSegment,
     i32              numSegments,
@@ -1171,7 +1174,7 @@ STATICINLINE bool point_along_path(
         &tangentX,
         &tangentY);
     detail::error_check("PointAlongPathNV"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<class span_const_f32, class span_const_void>
@@ -1597,16 +1600,16 @@ requires(
  * \return void
  */
 STATICINLINE void stencil_then_cover_fill_path_instanced(
-    i32                    numPaths,
-    GLenum                 pathNameType,
-    span_const_void const& paths,
-    u32                    pathBase,
-    GLenum                 fillMode,
-    u32                    mask,
-    GLenum                 coverMode,
-    GLenum                 transformType,
-    span_const_f32 const&  transformValues,
-    error_check            check_errors = error_check::on)
+    i32                              numPaths,
+    group::path_element_type         pathNameType,
+    span_const_void const&           paths,
+    u32                              pathBase,
+    group::path_fill_mode            fillMode,
+    u32                              mask,
+    group::instanced_path_cover_mode coverMode,
+    group::path_transform_type       transformType,
+    span_const_f32 const&            transformValues,
+    error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1615,13 +1618,13 @@ STATICINLINE void stencil_then_cover_fill_path_instanced(
     }
     glStencilThenCoverFillPathInstancedNV(
         numPaths,
-        pathNameType,
+        static_cast<GLenum>(pathNameType),
         paths.size() ? reinterpret_cast<const void*>(paths.data()) : nullptr,
         pathBase,
-        fillMode,
+        static_cast<GLenum>(fillMode),
         mask,
-        coverMode,
-        transformType,
+        static_cast<GLenum>(coverMode),
+        static_cast<GLenum>(transformType),
         transformValues.size()
             ? reinterpret_cast<const GLfloat*>(transformValues.data())
             : nullptr);
@@ -1637,18 +1640,22 @@ STATICINLINE void stencil_then_cover_fill_path_instanced(
  * \return void
  */
 STATICINLINE void stencil_then_cover_fill_path(
-    u32         path,
-    GLenum      fillMode,
-    u32         mask,
-    GLenum      coverMode,
-    error_check check_errors = error_check::on)
+    u32                    path,
+    group::path_fill_mode  fillMode,
+    u32                    mask,
+    group::path_cover_mode coverMode,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(StencilThenCoverFillPathNV)
     }
-    glStencilThenCoverFillPathNV(path, fillMode, mask, coverMode);
+    glStencilThenCoverFillPathNV(
+        path,
+        static_cast<GLenum>(fillMode),
+        mask,
+        static_cast<GLenum>(coverMode));
     detail::error_check("StencilThenCoverFillPathNV"sv, check_errors);
 }
 
@@ -1672,16 +1679,16 @@ requires(
  * \return void
  */
 STATICINLINE void stencil_then_cover_stroke_path_instanced(
-    i32                    numPaths,
-    GLenum                 pathNameType,
-    span_const_void const& paths,
-    u32                    pathBase,
-    i32                    reference,
-    u32                    mask,
-    GLenum                 coverMode,
-    GLenum                 transformType,
-    span_const_f32 const&  transformValues,
-    error_check            check_errors = error_check::on)
+    i32                              numPaths,
+    group::path_element_type         pathNameType,
+    span_const_void const&           paths,
+    u32                              pathBase,
+    i32                              reference,
+    u32                              mask,
+    group::instanced_path_cover_mode coverMode,
+    group::path_transform_type       transformType,
+    span_const_f32 const&            transformValues,
+    error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1690,13 +1697,13 @@ STATICINLINE void stencil_then_cover_stroke_path_instanced(
     }
     glStencilThenCoverStrokePathInstancedNV(
         numPaths,
-        pathNameType,
+        static_cast<GLenum>(pathNameType),
         paths.size() ? reinterpret_cast<const void*>(paths.data()) : nullptr,
         pathBase,
         reference,
         mask,
-        coverMode,
-        transformType,
+        static_cast<GLenum>(coverMode),
+        static_cast<GLenum>(transformType),
         transformValues.size()
             ? reinterpret_cast<const GLfloat*>(transformValues.data())
             : nullptr);
@@ -1713,18 +1720,19 @@ STATICINLINE void stencil_then_cover_stroke_path_instanced(
  * \return void
  */
 STATICINLINE void stencil_then_cover_stroke_path(
-    u32         path,
-    i32         reference,
-    u32         mask,
-    GLenum      coverMode,
-    error_check check_errors = error_check::on)
+    u32                    path,
+    i32                    reference,
+    u32                    mask,
+    group::path_cover_mode coverMode,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(StencilThenCoverStrokePathNV)
     }
-    glStencilThenCoverStrokePathNV(path, reference, mask, coverMode);
+    glStencilThenCoverStrokePathNV(
+        path, reference, mask, static_cast<GLenum>(coverMode));
     detail::error_check("StencilThenCoverStrokePathNV"sv, check_errors);
 }
 

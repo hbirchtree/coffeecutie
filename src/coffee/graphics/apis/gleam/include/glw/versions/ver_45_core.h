@@ -1197,8 +1197,12 @@ requires(
         std::decay_t<i32>>)
 /*!
  * \brief Wraps around glGetNamedFramebufferAttachmentParameteriv. Introduced in
- * GL core 4.5 \param framebuffer GLuint \param attachment GLenum \param pname
- * GLenum \param params GLint * \return void
+ * GL core 4.5
+ * \param framebuffer GLuint
+ * \param attachment GLenum
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
  */
 STATICINLINE void get_named_framebuffer_attachment_parameter(
     u32                                          framebuffer,
@@ -1234,7 +1238,10 @@ requires(
         std::decay_t<i32>>)
 /*!
  * \brief Wraps around glGetNamedFramebufferParameteriv. Introduced in GL
- * core 4.5 \param framebuffer GLuint \param pname GLenum \param param GLint *
+ * core 4.5
+ * \param framebuffer GLuint
+ * \param pname GLenum
+ * \param param GLint *
  * \return void
  */
 STATICINLINE void get_named_framebuffer_parameter(
@@ -1268,7 +1275,10 @@ requires(
         std::decay_t<i32>>)
 /*!
  * \brief Wraps around glGetNamedRenderbufferParameteriv. Introduced in GL
- * core 4.5 \param renderbuffer GLuint \param pname GLenum \param params GLint *
+ * core 4.5
+ * \param renderbuffer GLuint
+ * \param pname GLenum
+ * \param params GLint *
  * \return void
  */
 STATICINLINE void get_named_renderbuffer_parameter(
@@ -1917,8 +1927,11 @@ requires(
         std::decay_t<group::framebuffer_attachment>>)
 /*!
  * \brief Wraps around glInvalidateNamedFramebufferData. Introduced in GL
- * core 4.5 \param framebuffer GLuint \param numAttachments GLsizei \param
- * attachments const GLenum * \return void
+ * core 4.5
+ * \param framebuffer GLuint
+ * \param numAttachments GLsizei
+ * \param attachments const GLenum *
+ * \return void
  */
 STATICINLINE void invalidate_named_framebuffer_data(
     u32                                      framebuffer,
@@ -1956,8 +1969,13 @@ requires(
     concepts::vector<vec_2_i32, i32, 2> && concepts::size_2d<size_2_i32, i32>)
 /*!
  * \brief Wraps around glInvalidateNamedFramebufferSubData. Introduced in GL
- * core 4.5 \param framebuffer GLuint \param numAttachments GLsizei \param
- * attachments const GLenum * \param x GLint \param y GLint \param width GLsizei
+ * core 4.5
+ * \param framebuffer GLuint
+ * \param numAttachments GLsizei
+ * \param attachments const GLenum *
+ * \param x GLint
+ * \param y GLint
+ * \param width GLsizei
  * \param height GLsizei
  * \return void
  */
@@ -2063,10 +2081,10 @@ requires(
  * \return void
  */
 STATICINLINE void named_buffer_data(
-    u32                               buffer,
-    span_const_void const&            data,
-    group::vertex_buffer_object_usage usage,
-    error_check                       check_errors = error_check::on)
+    u32                     buffer,
+    span_const_void const&  data,
+    group::buffer_usage_arb usage,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2434,8 +2452,13 @@ requires(
     concepts::size_2d<size_2_i32, i32>)
 /*!
  * \brief Wraps around glNamedRenderbufferStorageMultisample. Introduced in GL
- * core 4.5 \param renderbuffer GLuint \param samples GLsizei \param
- * internalformat GLenum \param width GLsizei \param height GLsizei \return void
+ * core 4.5
+ * \param renderbuffer GLuint
+ * \param samples GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \return void
  */
 STATICINLINE void named_renderbuffer_storage_multisample(
     u32                    renderbuffer,
@@ -3164,10 +3187,10 @@ requires(MinimumVersion<Current, Version<4, 5>>)
 /*!
  * \brief Wraps around glUnmapNamedBuffer. Introduced in GL core 4.5
  * \param buffer GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool unmap_named_buffer(
-    u32 buffer, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+unmap_named_buffer(u32 buffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3181,7 +3204,7 @@ STATICINLINE bool unmap_named_buffer(
     }
     auto out = glUnmapNamedBuffer(buffer);
     detail::error_check("UnmapNamedBuffer"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 template<typename Dummy = void>

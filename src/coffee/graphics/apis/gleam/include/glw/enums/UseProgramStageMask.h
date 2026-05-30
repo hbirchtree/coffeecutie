@@ -31,8 +31,14 @@ enum class use_program_stage_mask : u32
 #ifdef GL_GEOMETRY_SHADER_BIT_OES
     geometry_shader_bit_oes = GL_GEOMETRY_SHADER_BIT_OES,
 #endif
+#ifdef GL_MESH_SHADER_BIT_EXT
+    mesh_shader_bit_ext = GL_MESH_SHADER_BIT_EXT,
+#endif
 #ifdef GL_MESH_SHADER_BIT_NV
     mesh_shader_bit_nv = GL_MESH_SHADER_BIT_NV,
+#endif
+#ifdef GL_TASK_SHADER_BIT_EXT
+    task_shader_bit_ext = GL_TASK_SHADER_BIT_EXT,
 #endif
 #ifdef GL_TASK_SHADER_BIT_NV
     task_shader_bit_nv = GL_TASK_SHADER_BIT_NV,

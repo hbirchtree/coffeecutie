@@ -103,10 +103,10 @@ STATICINLINE void gen_transform_feedbacks(
 /*!
  * \brief Part of GL_NV_transform_feedback2
  * \param id GLuint
- * \return Boolean
+ * \return GLboolean
  */
-STATICINLINE bool is_transform_feedback(
-    u32 id, error_check check_errors = error_check::on)
+STATICINLINE GLboolean
+is_transform_feedback(u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -115,7 +115,7 @@ STATICINLINE bool is_transform_feedback(
     }
     auto out = glIsTransformFeedbackNV(id);
     detail::error_check("IsTransformFeedbackNV"sv, check_errors);
-    return out == GL_TRUE ? true : false;
+    return out;
 }
 
 /*!
