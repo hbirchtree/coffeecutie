@@ -649,7 +649,7 @@ struct MeshRenderer
 
         // Performance is terrible on Emscripten when updating every frame
         // We need a more efficient way to update the buffer in that case
-        bool invalidated = !compile_info::platform::is_emscripten;
+        bool invalidated = true;//!compile_info::platform::is_emscripten;
         if(time - last_update > std::chrono::seconds(10) || invalidated)
         {
             generate_draws(p);

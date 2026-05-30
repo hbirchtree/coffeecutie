@@ -69,6 +69,8 @@ jobs:
           artifact: web-wasm32-emscripten-webgl2
         - variant: web:wasm32-emscripten:webgl2-custom:rel
           artifact: web-wasm32-emscripten-webgl2-custom
+        - variant: web:wasm64-emscripten:webgl2:rel
+          artifact: web-wasm64-emscripten-webgl2
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}

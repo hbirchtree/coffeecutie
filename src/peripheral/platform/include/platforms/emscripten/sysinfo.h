@@ -80,17 +80,20 @@ inline constexpr std::string_view kernel_version()
 
 inline std::string architecture()
 {
+#ifdef COFFEE_WASM32
     if(auto tmp = detail::platform())
     {
         std::string out = tmp;
         ::free(tmp);
         return out;
     }
+#endif
     return COFFEE_ARCH;
 }
 
 inline std::optional<std::string> name()
 {
+#ifdef COFFEE_WASM32
     if(auto ua_ = os::emscripten::detail::user_agent())
     {
         std::string_view ua       = ua_;
@@ -114,17 +117,20 @@ inline std::optional<std::string> name()
         }
         ::free(ua_);
     }
+#endif
     return std::nullopt;
 }
 
 inline std::optional<std::string> browser_name()
 {
+#ifdef COFFEE_WASM32
     if(auto ua_ = os::emscripten::detail::user_agent())
     {
         std::string ua(ua_);
         ::free(ua_);
         return ua;
     }
+#endif
     return std::nullopt;
 }
 
@@ -140,12 +146,14 @@ namespace platform::info::device::emscripten {
 
 inline std::optional<std::pair<std::string, std::string>> device()
 {
+#ifdef COFFEE_WASM32
     if(auto plat = os::emscripten::detail::platform())
     {
         std::string out = plat;
         ::free(plat);
         return std::pair<std::string, std::string>{"<unknown>", out};
     }
+#endif
     return std::nullopt;
 }
 

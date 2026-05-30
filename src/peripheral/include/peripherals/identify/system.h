@@ -97,6 +97,11 @@
 #endif
 
 #if defined(__wasm__)
+#if defined(__wasm32__)
+#define COFFEE_WASM32
+#else
+#define COFFEE_WASM64
+#endif
 #define COFFEE_WASM
 #endif
 #define COFFEE_EMSCRIPTEN

@@ -385,30 +385,6 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         cDebug("BSP mesh cluster assignment: {}/{} assigned, {} unassigned",
                assigned, assigned + unassigned, unassigned);
     }
-    // cDebug("Vertex ranges: {}", vertex_ranges);
-    // cDebug("Index ranges: {}", index_ranges);
-
-    //        for(auto const& cluster : cluster_surfaces)
-    //        {
-    //            out.groups.emplace_back();
-    //            auto& group = out.groups.back();
-    //            cDebug("Cluster: {}", cluster.second);
-    //            for(auto const& surface : cluster.second)
-    //            {
-    //            }
-    //        }
-
-    //        for(auto const& leaf : leaves.value())
-    //        {
-    //            cDebug("Leaf of cluster {}", leaf.cluster);
-    //        }
-    //        for(auto const& surface : leaf_surfaces_.value())
-    //        {
-    //            cDebug(
-    //                "Leaf surface {} in node {}",
-    //                surface.surface,
-    //                surface.node);
-    //        }
 
     return out;
 }

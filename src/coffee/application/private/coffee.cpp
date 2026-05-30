@@ -223,7 +223,7 @@ static void CoffeeInit_Internal(u32)
     if constexpr(compile_info::debug_mode)
     {
         /* Allow core dump by default in debug mode */
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_WASM)
         platform::common::posix::proc::core_dump_enable();
 #endif
 
@@ -338,6 +338,7 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     }
 #endif
 #if defined(COFFEE_EMSCRIPTEN)
+    PrintArchitectureInfo();
     for(auto const& [key, value] : emscripten::args::query_params())
     {
         arg_storage.push_back(fmt::format("--{}", key));

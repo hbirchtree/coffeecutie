@@ -2,7 +2,6 @@
 
 #include "caching_item.h"
 #include "data_cache.h"
-#include "oaf/ogg/ogg_decode.h"
 #include "peripherals/concepts/sound_api.h"
 #include <blam/volta/blam_sound.h>
 #include <blam/volta/blam_stl.h>
@@ -10,11 +9,15 @@
 
 #if defined(FEATURE_ENABLE_OAF)
 #include <oaf/api.h>
+#include <oaf/ogg/ogg_decode.h>
 #if defined(OAF_IMA_DECODER_ENABLED)
 #include <oaf/ima_adpcm/decode.h>
 #endif
 #else
-namespace oaf { struct api; }
+namespace oaf {
+struct api;
+struct buffer_t;
+}
 #endif
 
 using sound_ptr =
@@ -96,6 +99,7 @@ struct SoundCache
     oaf::api*               api{nullptr};
     blam::tag_index_view<V> index;
 
+#if defined(FEATURE_ENABLE_OAF)
     void upload_singular_samples(
         std::vector<SoundItem::pitch_range_t>& ranges,
         sound_ptr const& sound_)
@@ -222,9 +226,11 @@ struct SoundCache
             });
         }
     }
+#endif
 
     SoundItem predict_impl(blam::tagref_t const& tag)
     {
+#if defined(FEATURE_ENABLE_OAF)
         if(!tag.matches(blam::tag_class_t::snd) &&
            !tag.matches(blam::tag_class_t::lsnd))
             return {};
@@ -250,6 +256,9 @@ struct SoundCache
         upload_samples(out);
 
         return out;
+#else
+        return {};
+#endif
     }
 
     u32 get_id(blam::tagref_t const& tag)

@@ -30,6 +30,7 @@ namespace emscripten::args {
 
 std::map<std::string, std::string> query_params()
 {
+#ifdef COFFEE_WASM32
     using namespace stl_types::str::split;
 
     std::string query_string(platform_get_query_string());
@@ -51,6 +52,9 @@ std::map<std::string, std::string> query_params()
             std::string(param.substr(split + 1));
     }
     return out;
+#else
+    return {};
+#endif
 }
 
 } // namespace emscripten::args
@@ -59,20 +63,32 @@ namespace platform::info::os::emscripten::detail {
 
 char* user_agent()
 {
+#ifdef COFFEE_WASM32
     return platform_get_user_agent_internal();
+#else
+    return "Mozilla/5.0";
+#endif
 }
 
 char* platform()
 {
+#ifdef COFFEE_WASM32
     return platform_get_navigator_platform_internal();
+#else
+    return "Linux x86_64";
+#endif
 }
 
 bool is_mobile()
 {
+#ifdef COFFEE_WASM32
     return EM_ASM_INT({
         return navigator.userAgentData && navigator.userAgentData.mobile ? 1
                                                                          : 0;
     });
+#else
+    return false;
+#endif
 }
 
 } // namespace platform::info::os::emscripten::detail
