@@ -1,7 +1,9 @@
+#include <gsl/span>
 #include <platforms/profiling/jsonprofile.h>
 
 #include <coffee/core/base_state.h>
 #include <coffee/core/coffee.h>
+#include <peripherals/stl/base64.h>
 #include <peripherals/stl/string/hex.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string_ops.h>
@@ -315,6 +317,40 @@ void CaptureMetrics(
 {
     using stl_types::cast_pod;
     CaptureMetrics(tdata, name, variant, cast_pod(value), ts, index, index_name);
+}
+
+void CaptureTrace(
+    profiling::ThreadState& tdata,
+    std::string_view function_name,
+    std::vector<std::string> const& args,
+    gsl::span<const char> const& data)
+{
+    // if constexpr(!compile_info::profiler::enabled)
+    //     return;
+    auto& profiler = *C_DCAST<ProfileWriter>(tdata.writer);
+    if(profiler.disable_frequent)
+        return;
+
+    std::string args_;
+    for(auto const& arg : args)
+    {
+        if(!args_.empty())
+            args_.append(",");
+        args_.append("\"" + arg + "\"");
+    }
+    std::string data_;
+    if(!data.empty())
+        data_ = b64::encode<const char>(data);
+
+    auto out = fmt::format(
+        R"({{"ts":{0},"ph":"x","f":"{1}","args":{{"args":[{2}],"data":"{3}"}}}},)",
+        0,
+        function_name,
+        args_,
+        data_
+    );
+    profiler.write(BytesConst::ofContainer(out));
+
 }
 
 } // namespace json

@@ -665,7 +665,7 @@ def generate_function(command, usages: dict, version: tuple = None, override_nam
     if len(trace_spans) == 1:
         non_span_args = ', '.join(t for t in trace_inputs if t != trace_spans[0])
         data_args = f', {non_span_args}' if non_span_args else ''
-        yield f'#ifdef GLW_FPTR_TRACE'
+        yield f'#ifdef GLW_FPTR_TRACE_DATA'
         yield f'    GLW_FPTR_TRACE_DATA(gl{func_name}, {trace_spans[0]}{data_args});'
         yield f'#endif'
     else:

@@ -35,6 +35,11 @@ struct null_span
         return m_size;
     }
 
+    inline size_t size_bytes() const
+    {
+        return m_size * sizeof(T);
+    }
+
     inline std::byte const& operator[](size_t) const
     {
         return m_zero;

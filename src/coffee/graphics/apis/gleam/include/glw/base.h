@@ -7,7 +7,7 @@
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/string/hex.h>
 
-#if defined(FEATURE_ENABLE_CoreJsonLogger)
+#if defined(FEATURE_ENABLE_CoreJsonLogger) && 0
 #include <fmt_extensions/format.h>
 #include <platforms/pimpl_state.h>
 #include <platforms/profiling/jsonprofile.h>
@@ -32,7 +32,7 @@ requires (!std::is_enum_v<std::remove_cv_t<T>> &&
 inline std::string to_string(T const& arg)
 {
     if constexpr(std::is_pointer_v<T>)
-        return fmt::format("{}", static_cast<const void*>(arg));
+        return fmt::format("{}", reinterpret_cast<const void*>(arg));
     else
         return fmt::format("{}", arg);
 }
@@ -69,6 +69,8 @@ inline void capture_gl_trace_data(
 } // namespace glw::trace::detail
 
 #define GLW_FPTR_TRACE(func, ...) \
+    glw::trace::detail::capture_gl_trace(#func, ##__VA_ARGS__)
+#define GLW_FPTR_TRACE_DATA(func, data, ...) \
     glw::trace::detail::capture_gl_trace(#func, ##__VA_ARGS__)
 #endif
 

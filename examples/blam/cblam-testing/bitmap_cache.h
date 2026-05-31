@@ -3,7 +3,6 @@
 #include "caching_item.h"
 #include "data.h"
 #include "data_cache.h"
-#include "graphics_api.h"
 
 using BitmapManifest =
     compo::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;

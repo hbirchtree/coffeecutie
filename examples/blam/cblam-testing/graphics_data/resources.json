@@ -9,6 +9,7 @@
             "shaders/map_senv.frag",
             "shaders/map_senv_base.frag",
             "shaders/map_uber.frag",
+            "shaders/map_uber_nolight.frag",
             "shaders/map_uber_lite.frag",
             "shaders/scenery.vert",
             "shaders/scenery.frag",
@@ -47,7 +48,7 @@
             ]
         },
         "matrix": {
-            "Android": ["spv", "es:", "core:460"],
+            "Android": ["es:", "core:460"],
             "Darwin": ["core:410"],
             "Emscripten": ["es:300"]
         }

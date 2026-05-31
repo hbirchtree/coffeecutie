@@ -3,6 +3,7 @@
 #include "coffee/comp_app/services.h"
 #include "coffee/core/types/input/event_types.h"
 #include "components.h"
+#include "peripherals/constants.h"
 #include "shader_compiler.h"
 #include "touch_overlay.h"
 
@@ -517,7 +518,9 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
         },
         {
             .vertex_file   = map_vertex,
-            .fragment_file = "map_uber"sv,
+            .fragment_file = compile_info::platform::is_emscripten
+                ? "map_uber_nolight"sv
+                : "map_uber"sv,
             .shader        = resources.bsp_pipeline,
         },
         {

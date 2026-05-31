@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <gsl/span>
 #include <memory>
 #include <peripherals/constants.h>
 #include <peripherals/libc/types.h>
@@ -68,6 +69,12 @@ FORCEDINLINE void CaptureMetrics(
 
     CaptureMetrics(*thread_state, name, variant, value, ts, index, index_name);
 }
+
+void CaptureTrace(
+    profiling::ThreadState& tdata,
+    std::string_view function_name,
+    std::vector<std::string> const& args,
+    gsl::span<const char> const& data = {});
 
 } // namespace json
 

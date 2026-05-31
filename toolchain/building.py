@@ -100,7 +100,7 @@ class TargetSpec:
 
     @property
     def build_preset(self) -> str:
-        mode = "rel" if self.build_mode == "reldeb" else self.build_mode
+        mode = self.build_mode
         return f"{self.preset}-{mode}"
 
     @property

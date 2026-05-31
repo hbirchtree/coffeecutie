@@ -144,9 +144,12 @@ void ProfilingExport()
                 cVerbose(
                     10, "Network export located at: {0}", location.value());
             }
+        } else if(response_status == response_class::success)
+        {
+            cVerbose(10, "Got success response {}", reportBinRsc.responseCode());
         } else
         {
-            cWarning("Got no data back from server?");
+            cWarning("Got no data back from server: {}", reportBinRsc.responseCode());
         }
     } catch(net::net_error const& e)
     {
