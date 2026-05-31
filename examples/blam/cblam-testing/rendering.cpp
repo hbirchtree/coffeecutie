@@ -665,7 +665,10 @@ struct MeshRenderer
         if(rendering_props->debug_clear)
             m_resources.offscreen->clear(Vecf4(0, 0.2f, 0.5f, 1));
 
-        f32 t = stl_types::Chrono::to_f32(time);
+        /* to_f32 gives seconds-since-epoch (~1.7e9). At that magnitude
+         * float32 precision is ~128 s, so adjacent frames are identical
+         * and UV animations freeze. Wrap to a shorter cycle. */
+        f32 t = std::fmod(stl_types::Chrono::to_f32(time), 3600.f);
 
         // gfx::cull_state cull_state{.front_face = false};
 

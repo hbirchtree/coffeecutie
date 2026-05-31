@@ -64,11 +64,7 @@ mat3 tbn_matrix()
 
 vec3 view_direction()
 {
-    return normalize(
-            tbn_matrix() *
-            (camera_position - frag.position)
-        ) *
-        vec3(1, -1, -1);
+    return normalize(transpose(tbn_matrix()) * (camera_position - frag.position));
 }
 vec3 light_direction()
 {
@@ -609,57 +605,48 @@ vec4 shader_water()
 {
     const int ALPHA_MODULATES_REFLECT    = 0x1;
     const int COLOR_MODULATES_BACKGROUND = 0x2;
-
     const uint bump_map_id = 1u;
 
-    int flags = mats.instance[frag.instanceId].material.flags & 0x3;
-
-    vec4 base = get_color(base_map_id);
-#if USE_REFLECTIONS == 1
-    vec4 reflection = get_cube_color(view_direction());
-#else
-    vec4 reflection = vec4(1);
-#endif
-#if USE_NORMALMAP == 1
-    float angle_rad = mats.instance[frag.instanceId].material.input1.x;
-    vec2 angle = vec2(sin(angle_rad), cos(angle_rad));
-    float velocity = mats.instance[frag.instanceId].material.input1.y;
-    vec4 normal = get_bump(bump_map_id, angle * velocity * time);
-#endif
-    vec4 parallel = mats.instance[frag.instanceId].material.input2;
+    int  flags         = mats.instance[frag.instanceId].material.flags & 0x3;
+    vec4 parallel      = mats.instance[frag.instanceId].material.input2;
     vec4 perpendicular = mats.instance[frag.instanceId].material.input3;
+    vec4 base          = get_color(base_map_id);
 
-    velocity = 0.001;
-    vec3 normal_1 = get_bump(bump_map_id, vec2(sin(1), cos(1)) * (velocity + 0.001) * time).rgb;
-    vec3 normal_2 = get_bump(bump_map_id, vec2(sin(0), cos(0)) * (velocity - 0.005) * time).rgb;
-    vec3 normal_3 = get_bump(bump_map_id, vec2(sin(2), cos(2)) * (velocity + 0.005) * time).rgb;
-    vec3 normal_4 = get_bump(bump_map_id, vec2(sin(3), cos(3)) * (velocity - 0.010) * time).rgb;
+    float angle_rad = mats.instance[frag.instanceId].material.input1.x;
+    float velocity  = mats.instance[frag.instanceId].material.input1.y;
 
-    /* TODO: This is very broken, does not look right */
+    // Four ripple layers at evenly-spaced angles, varying speeds.
+    // get_bump returns tangent-space normals decoded to [-1, 1].
+    vec3 n1 = get_bump(bump_map_id, vec2(cos(angle_rad),         sin(angle_rad))         * velocity        * time).xyz;
+    vec3 n2 = get_bump(bump_map_id, vec2(cos(angle_rad + 1.047), sin(angle_rad + 1.047)) * velocity * 1.3  * time).xyz;
+    vec3 n3 = get_bump(bump_map_id, vec2(cos(angle_rad + 2.094), sin(angle_rad + 2.094)) * velocity * 0.8  * time).xyz;
+    vec3 n4 = get_bump(bump_map_id, vec2(cos(angle_rad + 3.14),  sin(angle_rad + 3.14))  * velocity * 0.6  * time).xyz;
+    vec3 bump_ts = normalize(n1 + n2 + n3 + n4);
 
-    normal.xyz = normal_1 * normal_2 * normal_3 * normal_4;
-    normal.w = dot(normal.xyz, -view_direction());
+    // World-space quantities for reflection and Fresnel.
+    // tbn_matrix() columns are T/B/N so it transforms tangent -> world.
+    vec3 view_world   = normalize(camera_position - frag.position);
+    vec3 world_normal = normalize(tbn_matrix() * bump_ts);
 
-    float camera_angle = 1 - dot(normal.xyz, view_direction());
+    float NdotV   = clamp(dot(world_normal, view_world), 0.0, 1.0);
+    float fresnel = pow(1.0 - NdotV, 4.0);
+
+    // Fresnel blend: perpendicular at normal incidence, parallel at grazing.
+    // brightness (alpha channel) is the view-angle opacity, not a color scale.
+    vec3  reflect_color = mix(perpendicular.rgb, parallel.rgb, fresnel);
+    float out_alpha     = mix(perpendicular.a,   parallel.a,   fresnel);
+
+#if USE_REFLECTIONS == 1
+    vec3 reflect_dir  = reflect(-view_world, world_normal);
+    reflect_color    *= get_cube_color(reflect_dir).rgb;
+#endif
 
     if((flags & COLOR_MODULATES_BACKGROUND) != 0)
-    {
-//        reflection.rgb = reflection.rgb * base.rgb;
-        reflection.a = base.a * normal.w;
-    }
+        reflect_color *= base.rgb;
     if((flags & ALPHA_MODULATES_REFLECT) != 0)
-        reflection.a = base.a *
-            camera_angle *
-            1;
+        out_alpha *= base.a;
 
-    return vec4(
-        max(mix(pow(reflection.rgb, vec3(8)),
-            reflection.rgb,
-            mix(parallel.rgb,
-                perpendicular.rgb,
-                (parallel.a + perpendicular.a) / 2)) *
-        vec3(reflection.a), vec3(0)),
-        reflection.a);
+    return vec4(reflect_color, out_alpha);
 }
 
 const uint MATERIAL_SENV = 1u;
