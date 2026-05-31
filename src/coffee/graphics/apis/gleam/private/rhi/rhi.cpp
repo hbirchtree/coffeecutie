@@ -1,6 +1,7 @@
 #include "coffee/graphics/apis/gleam/rhi_translate.h"
 #include "coffee/graphics/apis/gleam/rhi_versioning.h"
 #include "glw/enums/InternalFormat.h"
+#include <peripherals/constants.h>
 #include <peripherals/stl/magic_enum.hpp>
 
 #include <coffee/graphics/apis/gleam/rhi.h>
@@ -1067,6 +1068,9 @@ optional<error> api::load(load_options_t options)
             .emulated_mapbuffer = true,
             .disable_immutable_buffers = true,
         },
+        .tex = {
+            .requires_aligned = false,
+        },
         .bugs = {
             .adreno_3xx = false,
         },
@@ -1120,6 +1124,11 @@ optional<error> api::load(load_options_t options)
         {
             m_workarounds.bugs.powervr = true;
         }
+    }
+
+    if(compile_info::platform::is_emscripten)
+    {
+        m_workarounds.tex.requires_aligned = true;
     }
 
     /* Let's skip ES 2.0 implementations that don't fulfill a minimum */

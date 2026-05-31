@@ -518,9 +518,7 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
         },
         {
             .vertex_file   = map_vertex,
-            .fragment_file = compile_info::platform::is_emscripten
-                ? "map_uber_nolight"sv
-                : "map_uber"sv,
+            .fragment_file = "map_uber"sv,
             .shader        = resources.bsp_pipeline,
         },
         {

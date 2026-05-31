@@ -155,17 +155,19 @@ struct BlamTextureBrowser
         BitmapCache<V>& bitmap_cache = e.template subsystem<BitmapCache<V>>();
         if(ImGui::BeginListBox("Textures", ImVec2{0, 512}))
         {
-            for(cache_item_t item : bitmap_cache.m_cache)
+            for(auto const& [id, item] : bitmap_cache.m_cache)
             {
-                auto item_name = item.second.tag->name.to_string(m_map->magic);
+                ImGui::PushID(id);
+                auto item_name = item.tag->name.to_string(m_map->magic);
                 if(item_name.empty())
                     continue;
                 if(ImGui::Selectable(item_name.data()) &&
-                   m_selected.tag != item.second.tag)
+                   m_selected.tag != item.tag)
                 {
-                    m_selected = item.second;
+                    m_selected = item;
                     m_updated  = true;
                 }
+                ImGui::PopID();
             }
             ImGui::EndListBox();
         }

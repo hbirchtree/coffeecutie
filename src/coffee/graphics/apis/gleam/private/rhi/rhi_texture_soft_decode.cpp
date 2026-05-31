@@ -1,4 +1,9 @@
+#include <peripherals/constants.h>
+#include <peripherals/libc/types.h>
+#include <peripherals/typing/enum/pixels/format.h>
+#include <peripherals/typing/enum/pixels/format_transform.h>
 #include <coffee/graphics/apis/gleam/rhi_texture.h>
+#include "task.h"
 
 #include <functional>
 #include <peripherals/stl/range.h>
@@ -70,12 +75,19 @@ bool texture_t::requires_software_decode()
     if(m_format.pixfmt == pix_fmt::PVRTC && !m_features.tex.img.pvrtc)
         Throw(texture_decode_not_available("PVRTC" NOT_SUPPORTED));
 #endif
+    // WebGL2 reads RGB565 uploads via HEAPU16[ptr >>> 1]. If the pixel data
+    // is at an odd byte offset in the WASM heap the shift truncates the low
+    // bit, swapping bytes within every u16 and producing wrong colors.
+    // Decode to RGBA8 in C++ first so the upload pointer is always aligned.
+    if(m_format.pixfmt == pix_fmt::RGB565 && m_workarounds.tex.requires_aligned)
+        return true;
 
     if(m_format.pixfmt == pix_fmt::ASTC && !m_features.tex.gl.astc &&
        !m_features.tex.khr.astc)
         Throw(texture_decode_not_available("ASTC" NOT_SUPPORTED));
     if(m_format.pixfmt == pix_fmt::ETC2 && !m_features.tex.gl.etc2)
         Throw(texture_decode_not_available("ETC2" NOT_SUPPORTED));
+
     return false;
 }
 
@@ -165,7 +177,9 @@ static std::vector<char> software_decode_pvrtc_etc1(
 }
 #endif
 
-#if defined(GLEAM_ENABLE_SOFTWARE_BCN) || defined(GLEAM_ENABLE_SOFTWARE_PVRTC)
+#if defined(GLEAM_ENABLE_SOFTWARE_BCN) || \
+    defined(GLEAM_ENABLE_SOFTWARE_PVRTC) || \
+    defined(COFFEE_EMSCRIPTEN)
 std::future<std::vector<char>> texture_t::software_decode(
     semantic::Span<const char>&& data, size_3d<i32> size, i32 mipmap)
 {
@@ -212,6 +226,31 @@ std::future<std::vector<char>> texture_t::software_decode(
         return fut;
     }
 #endif
+    if(m_workarounds.tex.requires_aligned)
+    {
+        // On Emscripten for example, loading RGB565 from addresses not aligned with 2-bytes
+        // causes clown vomit
+        if(m_format.pixfmt == pix_fmt::RGB565)
+        {
+            auto task = rq::dependent_task<void, std::vector<char>>::CreateSource(
+                [data]() mutable {
+                    /* Source pointer may be at an odd byte offset in the WASM
+                     * heap. Emscripten's glTexSubImage3D does ptr >>> 1 to
+                     * index HEAPU16, truncating the low bit and swapping bytes
+                     * within every u16. Copying to a heap vector guarantees
+                     * 2-byte alignment so the index is correct. */
+                    std::vector<char> out(data.begin(), data.end());
+                    fprintf(stderr, "Alignment: %li",
+                            reinterpret_cast<intptr_t>(out.data()) & 0x1);
+                    return out;
+                });
+            auto fut = task->output.get_future();
+            auto res = rq::runtime_queue::Queue(m_decoder_queue, std::move(task));
+            if(res.has_error())
+                Throw(rq::runtime_queue_error("failed to queue RGB565 decode"));
+            return fut;
+        }
+    }
 
     Throw(texture_decode_not_implemented(
         "attempted doing software decode, but no implementation found"));

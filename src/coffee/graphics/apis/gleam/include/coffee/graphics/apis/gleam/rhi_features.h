@@ -537,6 +537,11 @@ struct workarounds
 
     struct
     {
+        bool requires_aligned{false};
+    } tex;
+
+    struct
+    {
         bool adreno_3xx{false}; /*!< Adreno 3xx drivers seemingly
                                  *   can't handle complex shaders */
         bool adreno{false};

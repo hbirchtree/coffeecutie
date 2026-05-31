@@ -43,6 +43,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
 
     texture_t(
         features::textures const& features,
+        workarounds const&        workarounds,
         rq::runtime_queue*&       decoder_queue,
         debug::api&               debug,
         textures::type            type,
@@ -50,6 +51,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
         u32                       mipmaps,
         textures::property        properties)
         : m_features(features)
+        , m_workarounds(workarounds)
         , m_debug(debug)
         , m_decoder_queue(decoder_queue)
         , m_format(data)
@@ -174,6 +176,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
     }
 
     features::textures  m_features{};
+    workarounds         m_workarounds{};
     debug::api&         m_debug;
     rq::runtime_queue*& m_decoder_queue;
     PixDesc             m_format{};
@@ -769,6 +772,7 @@ inline auto make_texture_view(
     else
         out = std::make_shared<output_type>(
             origin.m_features,
+            origin.m_workarounds,
             std::ref(origin.m_decoder_queue),
             std::ref(origin.m_debug),
             TypeT::value,

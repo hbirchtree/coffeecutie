@@ -138,6 +138,7 @@ struct api
         {
             return std::make_shared<texture_2d_t>(
                 m_features.texture,
+                m_workarounds,
                 std::ref(m_texture_decode_queue),
                 std::ref(*m_debug),
                 T::value,
@@ -152,6 +153,7 @@ struct api
                 return std::shared_ptr<texture_2da_t>();
             return std::make_shared<texture_2da_t>(
                 m_features.texture,
+                m_workarounds,
                 std::ref(m_texture_decode_queue),
                 std::ref(*m_debug),
                 T::value,
@@ -164,6 +166,7 @@ struct api
                 return std::shared_ptr<texture_3d_t>();
             return std::make_shared<texture_3d_t>(
                 m_features.texture,
+                m_workarounds,
                 std::ref(m_texture_decode_queue),
                 std::ref(*m_debug),
                 T::value,
@@ -178,6 +181,7 @@ struct api
                 return std::shared_ptr<texture_cube_array_t>();
             return std::make_shared<texture_cube_array_t>(
                 m_features.texture,
+                m_workarounds,
                 std::ref(m_texture_decode_queue),
                 std::ref(*m_debug),
                 T::value,

@@ -9,7 +9,6 @@
             "shaders/map_senv.frag",
             "shaders/map_senv_base.frag",
             "shaders/map_uber.frag",
-            "shaders/map_uber_nolight.frag",
             "shaders/map_uber_lite.frag",
             "shaders/scenery.vert",
             "shaders/scenery.frag",

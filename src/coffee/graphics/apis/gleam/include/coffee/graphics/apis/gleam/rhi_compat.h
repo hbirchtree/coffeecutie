@@ -31,6 +31,7 @@ struct texture_2da_t : texture_array_base_t
         textures::property properties = textures::property::none)
         : texture_array_base_t(
               api_->feature_info().texture,
+              api_->workarounds(),
               api_->queue<api::queues::texture_decode>(),
               api_->debug(),
               textures::type::d2_array,
