@@ -1,5 +1,6 @@
 #pragma once
 
+#include "coffee/comp_app/services.h"
 #include "components.h"
 #include "data.h"
 #if defined(FEATURE_ENABLE_DiscordLatte)
@@ -34,7 +35,7 @@ using BlamMapBrowserManifest = compo::SubsystemManifest<
         discord::Subsystem
 #endif
         >,
-    empty_list_t>;
+    type_list_t<comp_app::ControllerInput>>;
 
 struct BlamMapBrowser
     : compo::RestrictedSubsystem<BlamMapBrowser, BlamMapBrowserManifest>
@@ -106,9 +107,12 @@ struct BlamMapBrowser
                 }
                 if(ImGui::BeginTabItem("Player inputs"))
                 {
+                    auto controllers = e.service<comp_app::ControllerInput>();
                     ImGui::Columns(3);
                     for(auto const& player : e.select<PlayerInfo>())
                     {
+                        if(!controllers)
+                            continue;
                         auto* info = e.get<PlayerInfo>(player.id);
                         ImGui::PushID(info->player_idx);
                         auto* camera = e.get<PlayerCamera>(player.id);
@@ -119,7 +123,12 @@ struct BlamMapBrowser
                         ImGui::NextColumn();
                         ImGui::Checkbox("Keyboard", &camera->keyboard.enabled);
                         ImGui::NextColumn();
-                        ImGui::Text("Controller: #%02i", camera->controller.index.value_or(-1));
+                        int controller = camera->controller.index.value_or(-1);
+                        ImGui::SliderInt("Controller: #%02i", &controller, -1, controllers->count() - 1);
+                        if(controller == -1)
+                            camera->controller.index.reset();
+                        else
+                            camera->controller.index = controller;
                         ImGui::NextColumn();
                         ImGui::PopID();
                     }

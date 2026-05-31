@@ -552,8 +552,7 @@ ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)
             get_bitm_idx(shader_model.diffuse.secondary.map);
         out.senv.micro_bitm = get_bitm_idx(shader_model.diffuse.micro.map);
 
-        //            out.senv.self_illum =
-        //            get_bitm_idx(shader_model.self_illum.map.map);
+        out.senv.self_illum = get_bitm_idx(shader_model.self_illum.map.map);
         out.senv.bump = get_bitm_idx(shader_model.bump.map);
         out.senv.reflection_bitm =
             get_bitm_idx(shader_model.reflection.reflection);
@@ -694,7 +693,7 @@ void ShaderCache<V>::populate_material(
                 *bitm_cache.assign_atlas_data(mat.maps[i], id);
             chicago::map_t const& map = maps[i];
             mat.maps[i].uv_scale      = map.map.uv_scale * base_map_scale;
-            mat.maps[i].bias          = bitm.image.bias;
+            mat.maps[i].bias          = bitm.image.bias - 2.f;
 
             u16 flags = static_cast<u8>(map.color_func) |
                         (static_cast<u8>(map.alpha_func) << 4);
@@ -718,7 +717,7 @@ void ShaderCache<V>::populate_material(
                 *bitm_cache.assign_atlas_data(mat.maps[i], id);
             chicago::map_t const& map = maps[i];
             mat.maps[i].uv_scale      = map.map.uv_scale * base_map_scale;
-            mat.maps[i].bias          = bitm.image.bias;
+            mat.maps[i].bias          = bitm.image.bias - 2.f;
 
             u16 flags = static_cast<u8>(map.color_func) |
                         (static_cast<u8>(map.alpha_func) << 4);
@@ -895,13 +894,13 @@ void ShaderCache<V>::populate_material(
         shader_model const* info =
             shader.header->as<blam::shader::shader_model>();
 
-        bitm_cache.assign_atlas_data(mat.maps[0], shader.soso.base_bitm);
+        auto* soso_base = bitm_cache.assign_atlas_data(mat.maps[0], shader.soso.base_bitm);
         mat.maps[0].uv_scale = base_map_scale;
-        mat.maps[0].bias     = 2;
+        mat.maps[0].bias     = soso_base ? soso_base->image.bias - 2.f : -2.f;
 
-        bitm_cache.assign_atlas_data(mat.maps[1], shader.soso.multi_bitm);
+        auto* soso_multi = bitm_cache.assign_atlas_data(mat.maps[1], shader.soso.multi_bitm);
         mat.maps[1].uv_scale = base_map_scale;
-        mat.maps[1].bias     = 2;
+        mat.maps[1].bias     = soso_multi ? soso_multi->image.bias - 2.f : -2.f;
 
         auto* detail =
             bitm_cache.assign_atlas_data(mat.maps[2], shader.soso.detail_bitm);
@@ -913,8 +912,13 @@ void ShaderCache<V>::populate_material(
 
         mat.lightmap.reflection =
             bitm_cache.get_atlas_layer(shader.soso.reflection_bitm);
-        if(mat.lightmap.reflection != 0)
-            mat.material.flags |= 0x1;
+
+        mat.material.inputs[1] = Vecf4(
+            info->reflection.perpendicular_tint,
+            info->reflection.perpendicular_brightness);
+        mat.material.inputs[2] = Vecf4(
+            info->reflection.parallel_tint,
+            info->reflection.parallel_brightness);
 
         mat.material.inputs[0] = Vecf4(Vecf3(1.f), 0.f);
         using change_color_t   = blam::shader::shader_model::change_color_t;

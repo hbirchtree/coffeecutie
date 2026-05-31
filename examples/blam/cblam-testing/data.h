@@ -89,7 +89,7 @@ struct RenderingParameters : compo::SubsystemBase
     bool render_ui{false};
     bool debug_clear{true};
 
-    bool occluder_update{true};
+    bool occluder_update{false};
 
     bool debug_markers{
         compile_info::debug_mode && !compile_info::platform::is_mobile};

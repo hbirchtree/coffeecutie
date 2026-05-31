@@ -71,7 +71,8 @@ vec4 get_map(in uint map_id, in int layer, in sampler2DArray sampler, in vec2 te
     vec2 tc = tex_coord * uvscale;
     tc = tc - floor(tc);
 
-    return texture(sampler, vec3(tc * scale + offset, layer & 0xFFFF));
+    float bias = mats.instance[instance].maps[map_id].bias;
+    return texture(sampler, vec3(tc * scale + offset, layer & 0xFFFF), bias);
 }
 
 #if USE_REFLECTIONS == 1

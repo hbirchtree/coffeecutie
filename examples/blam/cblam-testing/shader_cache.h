@@ -84,16 +84,22 @@ struct ShaderCache
     f32 tex_animation(PropertyAnim const& anim, f32 const& time)
     {
         using namespace blam::shader;
+        if(anim.period == 0.f)
+            return 0.f;
         switch(anim.function)
         {
+        case animation_function::one:
+            return 1.f;
+        case animation_function::zero:
+            return 0.f;
         case animation_function::slide:
         case animation_function::slide_variable:
-            return std::fmod(time, anim.period);
+            return time * anim.scale / anim.period;
         case animation_function::cosine:
         case animation_function::cosine_variable:
-            return glm::cos(time * anim.period + anim.phase) * anim.scale;
+            return glm::cos(glm::two_pi<f32>() * time / anim.period + anim.phase) * anim.scale;
         default:
-            return 0;
+            return 0.f;
         }
     }
 
@@ -148,7 +154,7 @@ struct ShaderCache
 
         ShaderItem const& shader = find(shader_id)->second;
 
-        f32 t = stl_types::Chrono::to_f32(time) / 10.f;
+        f32 t = stl_types::Chrono::to_f32(time);
 
         switch(shader.tag_class)
         {
@@ -168,7 +174,18 @@ struct ShaderCache
         }
         case blam::tag_class_t::senv: {
             shader_env const* info = shader.header->as<shader_env>();
-            // mat.material.inputs[2] = uv_animation(info->scrolling, t);
+            using simple_uv = blam::shader::simple_texture_uv_animation;
+            auto uv = uv_animation(static_cast<simple_uv const&>(info->scrolling), t);
+            auto& inp2      = mat.material.inputs[2];
+            inp2            = Vecf4(uv.x, uv.y, inp2.z, inp2.w);
+
+            if(shader.senv.self_illum.valid())
+            {
+                auto const& illum  = info->self_illum.primary;
+                f32         factor = glm::clamp(tex_animation(illum.anim, t), 0.f, 1.f);
+                Vecf3       color  = glm::mix(illum.color_off, illum.color_on, factor);
+                mat.material.inputs[3] = Vecf4(color, 1.f);
+            }
             break;
         }
         default:
