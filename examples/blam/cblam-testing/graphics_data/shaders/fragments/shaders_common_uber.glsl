@@ -213,14 +213,18 @@ vec4 shader_environment()
     if(reflective > 0)
     {
         uint reflect_flags = uint((mats.instance[frag.instanceId].material.flags >> 7) & 0x3);
-        reflection = get_cube_color(view_direction()).rgb;
+        vec3 view_world   = normalize(camera_position - frag.position);
+        vec3 world_bump   = normalize(tbn_matrix() * normal.rgb);
+        float NdotV       = clamp(dot(world_bump, view_world), 0.0, 1.0);
+        vec3 reflect_dir  = reflect(-view_world, world_bump);
+        reflection        = get_cube_color(reflect_dir).rgb;
 
-        vec4 perp_color = mats.instance[frag.instanceId].material.input2;
+        vec4 perp_color     = mats.instance[frag.instanceId].material.input2;
         vec4 parallel_color = mats.instance[frag.instanceId].material.input3;
         reflection_tint = mix(
             perp_color.rgb * perp_color.a,
             parallel_color.rgb * parallel_color.a,
-            dot(normal.rgb, -view_direction()));
+            1.0 - NdotV);
     }
 #endif
 #if USE_SELF_ILLUMINATION == 1
@@ -246,9 +250,7 @@ vec4 shader_environment()
         lightmap.rgb *
 #endif
 #if USE_REFLECTIONS == 1
-        mix(reflection, vec3(1), base.a) *
-//        reflection_tint *
-//        1 +
+        mix(vec3(1), reflection * reflection_tint, 1.0 - base.a) *
 #endif
 #if USE_NORMALMAP == 1
   #if USE_LIGHTMAPS == 1
@@ -563,14 +565,18 @@ vec4 shader_model()
     // coloring.rgb = coloring.rgb * specular.xyz;
 
 #if USE_REFLECTIONS == 1
-    vec3 reflection = get_cube_color(view_direction()).rgb;
+    vec3 view_world  = normalize(camera_position - frag.position);
+    vec3 reflect_dir = reflect(-view_world, frag.normal);
+    vec3 reflection  = get_cube_color(reflect_dir).rgb;
 #else
     vec3 reflection = vec3(1);
 #endif
 
-    // mul r2.xyz, r2.xyz, v2.xyz
-    // reflection = reflection * specular_contribution;
-    color.rgb = clamp(color.rgb
+    // Diffuse lighting via geometry normal (soso has no bump map texture).
+    // frag.normal is world-space and interpolated per-vertex (Gouraud approximation).
+    vec3 world_light = normalize(world.lighting[INTERIOR_LIGHTING].light_direction.xyz);
+    float NdotL = max(0.1, dot(frag.normal, world_light));
+    color.rgb = clamp(color.rgb * NdotL
         /*+ coloring.rgb*/
         /*+ reflection.rgb*/, 0, 1);
 

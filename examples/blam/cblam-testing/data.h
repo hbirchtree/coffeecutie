@@ -86,7 +86,7 @@ struct RenderingParameters : compo::SubsystemBase
     libc_types::u32 mipmap_bias{compile_info::platform::is_32bit ? 2 : 3};
 
     bool render_scenery{true};
-    bool render_ui{true};
+    bool render_ui{false};
     bool debug_clear{true};
 
     bool occluder_update{true};
