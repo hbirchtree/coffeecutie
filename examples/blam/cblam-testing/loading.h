@@ -606,12 +606,15 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
 
         for([[maybe_unused]] auto const& light : lights)
         {
-            // cDebug("Light: {0}", light.marker_name.str());
-            Vecf3 rotation =
-                glm::mat3_cast(
-                    glm::quat(Vecf3{0, light.radiosity.direction.x, 0}) *
-                    glm::quat(Vecf3{0, 0, light.radiosity.direction.y})) *
-                Vecf3{0, 0, 1};
+            // direction: {yaw, pitch} in radians. Halo uses Y-up:
+            // Y = sin(pitch) (elevation), X/Z are horizontal plane.
+            f32   yaw   = light.radiosity.direction.x;
+            f32   pitch = light.radiosity.direction.y;
+            Vecf3 rotation{
+                std::cos(pitch) * std::sin(yaw),
+                std::sin(pitch),
+                std::cos(pitch) * std::cos(yaw),
+            };
             world_data[0].lighting[0].light_direction = Vecf4{
                 rotation,
                 light.radiosity.test_distance,

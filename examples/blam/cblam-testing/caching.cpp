@@ -838,26 +838,20 @@ void ShaderCache<V>::populate_material(
         mat.material.flags    = static_cast<u32>(info->flags);
         /* anim_velocity is in UV tiles/sec at 1x tiling. The bump map's
          * uvscale (= base_map_scale * ripple.scale) multiplies offsets,
-         * so divide by ripple.scale here to keep visual scroll rate
-         * independent of texture tiling. */
+         * so divide by ripple.scale to keep visual scroll rate independent
+         * of texture tiling. Apply a floor so slow-velocity maps (e.g. c10)
+         * still show perceptible animation; effective_rate = max(vel, floor). */
+        constexpr f32 min_tiles_per_sec = 0.03f;
+        f32 effective_vel = std::max(info->ripple.anim_velocity, min_tiles_per_sec);
         f32 norm_velocity = info->ripple.scale > 0.f
-                                ? info->ripple.anim_velocity / info->ripple.scale
-                                : info->ripple.anim_velocity;
+                                ? effective_vel / info->ripple.scale
+                                : effective_vel;
         mat.material.inputs1  = Vecf2{
             glm::radians(info->ripple.anim_angle), norm_velocity};
         mat.material.inputs[0] =
             Vecf4(info->parallel.tint_color, info->parallel.brightness);
         mat.material.inputs[1] = Vecf4(
             info->perpendicular.tint_color, info->perpendicular.brightness);
-        cDebug(
-            "swat: flags={:#x} scale={} vel={} para=({},{},{},{}) perp=({},{},{},{})",
-            static_cast<u32>(info->flags),
-            info->ripple.scale,
-            info->ripple.anim_velocity,
-            info->parallel.tint_color.x, info->parallel.tint_color.y,
-            info->parallel.tint_color.z, info->parallel.brightness,
-            info->perpendicular.tint_color.x, info->perpendicular.tint_color.y,
-            info->perpendicular.tint_color.z, info->perpendicular.brightness);
         break;
     }
     case tag_class_t::sgla: {

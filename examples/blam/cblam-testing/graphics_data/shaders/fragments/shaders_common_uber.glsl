@@ -251,8 +251,13 @@ vec4 shader_environment()
 //        1 +
 #endif
 #if USE_NORMALMAP == 1
+  #if USE_LIGHTMAPS == 1
+        // Half-Lambert ratio: both numerator and denominator in [0,2], never negative.
+        // Flat surface => (L_ts.z+1)/(L_ts.z+1) = 1.0. Crevices < 1.0. Bumps > 1.0.
+        clamp((normal.a + 1.0) / (light_direction().z + 1.0), 0.1, 2.0) *
+  #else
         max(0.1, normal.a) *
-        // normal.rgb *
+  #endif
 #endif
         vec3(1),
         1.0
