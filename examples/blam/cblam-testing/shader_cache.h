@@ -97,7 +97,10 @@ struct ShaderCache
             return time * anim.scale / anim.period;
         case animation_function::cosine:
         case animation_function::cosine_variable:
-            return glm::cos(glm::two_pi<f32>() * time / anim.period + anim.phase) * anim.scale;
+            if constexpr(requires { anim.phase; })
+                return glm::cos(glm::two_pi<f32>() * time / anim.period + anim.phase) * anim.scale;
+            else
+                return glm::cos(glm::two_pi<f32>() * time / anim.period) * anim.scale;
         default:
             return 0.f;
         }

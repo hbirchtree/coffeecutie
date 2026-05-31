@@ -132,7 +132,7 @@ vec4 get_color(in uint map_id)
 
 vec4 get_color_explicit(in uint map_id, in int layer)
 {
-    return get_color_with_offset(map_id, vec2(0));
+    return get_color_explicit_with_offset(map_id, layer, vec2(0));
 }
 
 #if USE_REFLECTIONS == 1
@@ -187,7 +187,8 @@ vec4 shader_environment()
     detailed = 1;
     has_micro = 1;
 
-    vec4 base = get_color(base_map_id);
+    vec2 scroll_uv = mats.instance[frag.instanceId].material.input4.xy;
+    vec4 base = get_color_with_offset(base_map_id, scroll_uv);
     vec4 micro = has_micro == 1 ? get_color(micro_map_id) : vec4(1);
     vec4 primary = get_color(primary_map_id);
     vec4 secondary = get_color(secondary_map_id);
@@ -227,23 +228,7 @@ vec4 shader_environment()
             1.0 - NdotV);
     }
 #endif
-#if USE_SELF_ILLUMINATION == 1
-    int self_illum_layer = mats.instance[frag.instanceId].lightmap.meta1;
-    vec4 self_illum = get_color_explicit(base_map_id, self_illum_layer);
-
-    // get power on/off colors for prim/secondary/plasma
-    // that's 3 * 2 * 3 values
-#endif
-
-//    if(type == TYPE_NORMAL)
-//        return vec4(vec3(base.a * micro.a), 1);
-//    else if(type == TYPE_BLENDED)
-//        return vec4(vec3(secondary.a), 1);
-//    else
-//        return vec4(1, 0, 0, 1);
-
-    return vec4(
-        base.rgb *
+    vec3 out_color = base.rgb *
         micro.rgb *
         blend.rgb *
 #if USE_LIGHTMAPS == 1
@@ -261,9 +246,19 @@ vec4 shader_environment()
         max(0.1, normal.a) *
   #endif
 #endif
-        vec3(1),
-        1.0
-        );
+        vec3(1);
+
+#if USE_SELF_ILLUMINATION == 1
+    int self_illum_layer = int(mats.instance[frag.instanceId].lightmap.meta1);
+    if(self_illum_layer != 0)
+    {
+        vec4 self_illum_tex   = get_color_explicit(base_map_id, self_illum_layer);
+        vec3 self_illum_color = mats.instance[frag.instanceId].material.input5.rgb;
+        out_color += self_illum_tex.rgb * self_illum_color;
+    }
+#endif
+
+    return vec4(out_color, 1.0);
 }
 
 #if USE_CHICAGO == 1
