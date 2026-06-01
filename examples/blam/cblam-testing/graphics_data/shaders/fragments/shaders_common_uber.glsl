@@ -283,103 +283,95 @@ const uint F_BLEND_CURRENT_ALPHA_INVERSE = 10u;
 const uint F_BLEND_NEXT_ALPHA            = 11u;
 const uint F_BLEND_NEXT_ALPHA_INVERSE    = 12u;
 
-// Stage 0 init: map0.color_func combines cur (map0) and nxt (map1).
-// F_CURRENT = use cur, F_NEXT = use nxt, F_MUL = cur*nxt, etc.
-void chicago_init(inout vec4 dst, in vec4 cur, in vec4 nxt, in uint flags)
-{
-    uint cf = flags & 0xFu;
-    uint af = (flags >> 4) & 0xFu;
-
-    if(cf == F_CURRENT) dst.rgb = cur.rgb;
-    else if(cf == F_NEXT) dst.rgb = nxt.rgb;
-    else if(cf == F_MUL) dst.rgb = cur.rgb * nxt.rgb;
-    else if(cf == F_DOUBLE_MUL) dst.rgb = clamp(cur.rgb * nxt.rgb * 2.0, 0.0, 1.0);
-    else if(cf == F_ADD) dst.rgb = cur.rgb + nxt.rgb;
-    else if(cf == F_ADD_SIGNED_CURRENT) dst.rgb = cur.rgb + nxt.rgb - 0.5;
-    else if(cf == F_ADD_SIGNED_NEXT) dst.rgb = nxt.rgb + cur.rgb - 0.5;
-    else if(cf == F_SUB_SIGNED_CURRENT) dst.rgb = cur.rgb - nxt.rgb;
-    else if(cf == F_SUB_SIGNED_NEXT) dst.rgb = nxt.rgb - cur.rgb;
-    else if(cf == F_BLEND_CURRENT_ALPHA) dst.rgb = mix(cur.rgb, nxt.rgb, cur.a);
-    else if(cf == F_BLEND_CURRENT_ALPHA_INVERSE) dst.rgb = mix(cur.rgb, nxt.rgb, 1.0 - cur.a);
-    else if(cf == F_BLEND_NEXT_ALPHA) dst.rgb = mix(cur.rgb, nxt.rgb, nxt.a);
-    else if(cf == F_BLEND_NEXT_ALPHA_INVERSE) dst.rgb = mix(cur.rgb, nxt.rgb, 1.0 - nxt.a);
-
-    if(af == F_CURRENT) dst.a = cur.a;
-    else if(af == F_NEXT) dst.a = nxt.a;
-    else if(af == F_MUL) dst.a = cur.a * nxt.a;
-    else if(af == F_DOUBLE_MUL) dst.a = clamp(cur.a * nxt.a * 2.0, 0.0, 1.0);
-    else if(af == F_ADD) dst.a = cur.a + nxt.a;
-    else if(af == F_ADD_SIGNED_CURRENT) dst.a = cur.a + nxt.a - 0.5;
-    else if(af == F_ADD_SIGNED_NEXT) dst.a = nxt.a + cur.a - 0.5;
-    else if(af == F_SUB_SIGNED_CURRENT) dst.a = cur.a - nxt.a;
-    else if(af == F_SUB_SIGNED_NEXT) dst.a = nxt.a - cur.a;
-    else if(af == F_BLEND_CURRENT_ALPHA) dst.a = mix(cur.a, nxt.a, cur.a);
-    else if(af == F_BLEND_CURRENT_ALPHA_INVERSE) dst.a = mix(cur.a, nxt.a, 1.0 - cur.a);
-    else if(af == F_BLEND_NEXT_ALPHA) dst.a = nxt.a;
-    else if(af == F_BLEND_NEXT_ALPHA_INVERSE) dst.a = mix(cur.a, nxt.a, 1.0 - nxt.a);
-}
-
 // Stage 1+ combine: map1.color_func folds map (c3) into accumulated dst.
 // F_CURRENT = no change, F_NEXT = replace with map, F_MUL = dst*map, etc.
-void chicago_stage(inout vec4 dst, in vec4 map, in uint flags)
+void chicago_stage(out vec4 dst, in vec4 i1, in vec4 i2, in uint flags)
 {
     uint cf = flags & 0xFu;
     uint af = (flags >> 4) & 0xFu;
 
-    if(cf == F_NEXT)
-        dst.rgb = map.rgb;
+    if(cf == F_CURRENT)
+        dst.rgb = i1.rgb;
+    else if(cf == F_NEXT)
+        dst.rgb = i2.rgb;
     else if(cf == F_MUL)
-        dst.rgb = dst.rgb * map.rgb;
+        dst.rgb = i1.rgb * i2.rgb;
     else if(cf == F_DOUBLE_MUL)
-        dst.rgb = clamp(dst.rgb * map.rgb * 2.0, 0.0, 1.0);
+        dst.rgb = clamp(i1.rgb * i2.rgb * i2.rgb, 0.0, 1.0);
     else if(cf == F_ADD)
-        dst.rgb = dst.rgb + map.rgb;
+        dst.rgb = i1.rgb + i2.rgb;
     else if(cf == F_ADD_SIGNED_CURRENT)
-        dst.rgb = dst.rgb + map.rgb - 0.5;
+        dst.rgb = i1.rgb + i2.rgb - 0.5;
     else if(cf == F_ADD_SIGNED_NEXT)
-        dst.rgb = map.rgb + dst.rgb - 0.5;
+        dst.rgb = i1.rgb + i2.rgb - 0.5;
     else if(cf == F_SUB_SIGNED_CURRENT)
-        dst.rgb = dst.rgb - map.rgb;
+        dst.rgb = i1.rgb - i2.rgb;
     else if(cf == F_SUB_SIGNED_NEXT)
-        dst.rgb = map.rgb - dst.rgb;
+        dst.rgb = i1.rgb - i2.rgb;
     else if(cf == F_BLEND_CURRENT_ALPHA)
-        dst.rgb = mix(dst.rgb, map.rgb, dst.a);
+        dst.rgb = mix(i1.rgb, i2.rgb, i1.a);
     else if(cf == F_BLEND_CURRENT_ALPHA_INVERSE)
-        dst.rgb = mix(dst.rgb, map.rgb, 1.0 - dst.a);
+        dst.rgb = mix(i1.rgb, i2.rgb, 1.0 - i1.a);
     else if(cf == F_BLEND_NEXT_ALPHA)
-        dst.rgb = mix(dst.rgb, map.rgb, map.a);
+        dst.rgb = mix(i1.rgb, i2.rgb, i2.a);
     else if(cf == F_BLEND_NEXT_ALPHA_INVERSE)
-        dst.rgb = mix(dst.rgb, map.rgb, 1.0 - map.a);
+        dst.rgb = mix(i1.rgb, i2.rgb, 1.0 - i2.a);
     // F_CURRENT: no change
 
-    if(af == F_NEXT)
-        dst.a = map.a;
+    if(af == F_CURRENT)
+        dst.a = i1.a;
+    else if(af == F_NEXT)
+        dst.a = i2.a;
     else if(af == F_MUL)
-        dst.a = dst.a * map.a;
+        dst.a = i1.a * i2.a;
     else if(af == F_DOUBLE_MUL)
-        dst.a = clamp(dst.a * map.a * 2.0, 0.0, 1.0);
+        dst.a = clamp(i1.a * i2.a * i2.a, 0.0, 1.0);
     else if(af == F_ADD)
-        dst.a = dst.a + map.a;
+        dst.a = i1.a + i2.a;
     else if(af == F_ADD_SIGNED_CURRENT)
-        dst.a = dst.a + map.a - 0.5;
+        dst.a = i1.a + i2.a - 0.5;
     else if(af == F_ADD_SIGNED_NEXT)
-        dst.a = map.a + dst.a - 0.5;
+        dst.a = i1.a + i2.a - 0.5;
     else if(af == F_SUB_SIGNED_CURRENT)
-        dst.a = dst.a - map.a;
+        dst.a = i1.a - i2.a;
     else if(af == F_SUB_SIGNED_NEXT)
-        dst.a = map.a - dst.a;
+        dst.a = i1.a - i2.a;
     else if(af == F_BLEND_CURRENT_ALPHA)
-        dst.a = mix(dst.a, map.a, dst.a);
+        dst.a = mix(i1.a, i2.a, i1.a);
     else if(af == F_BLEND_CURRENT_ALPHA_INVERSE)
-        dst.a = mix(dst.a, map.a, 1.0 - dst.a);
+        dst.a = mix(i1.a, i2.a, 1.0 - i1.a);
     else if(af == F_BLEND_NEXT_ALPHA)
-        dst.a = map.a;
+        dst.a = mix(i1.a, i2.a, i2.a);
     else if(af == F_BLEND_NEXT_ALPHA_INVERSE)
-        dst.a = mix(dst.a, map.a, 1.0 - map.a);
+        dst.a = mix(i1.a, i2.a, 1.0 - i2.a);
     // F_CURRENT: no change
+}
+
+vec4 chicago_blend(vec4 c1, vec4 c2, vec4 c3, vec4 c4, uint flags)
+{
+    uint s0cf      = flags & 0xFu;
+    vec4 out_color;
+    chicago_stage(out_color, c1, c2, flags & 0xFFu);
+    chicago_stage(out_color, out_color, c3, (flags >> 8) & 0xFFu);
+    chicago_stage(out_color, out_color, c4, (flags >> 16) & 0xFFu);
+    return out_color;
 }
 
 vec4 shader_chicago()
+{
+    vec2 o1 = mats.instance[frag.instanceId].material.input1.xy;
+    vec2 o2 = mats.instance[frag.instanceId].material.input2.xy;
+    vec2 o3 = mats.instance[frag.instanceId].material.input2.zw;
+
+    vec4 c1 = get_color_with_offset(0u, o1);
+    vec4 c2 = get_color_with_offset(1u, o2);
+    vec4 c3 = get_color_with_offset(2u, o3);
+
+    uint flags = uint(mats.instance[frag.instanceId].lightmap.meta1);
+    return chicago_blend(c1, c2, vec4(0.0), vec4(0.0), flags);
+}
+
+vec4 shader_chicago_extended()
 {
     vec2 o1 = mats.instance[frag.instanceId].material.input1.xy;
     vec2 o2 = mats.instance[frag.instanceId].material.input2.xy;
@@ -392,20 +384,7 @@ vec4 shader_chicago()
     vec4 c4 = get_color_with_offset(3u, o4);
 
     uint flags = uint(mats.instance[frag.instanceId].lightmap.meta1);
-
-    // Stage 0: map0.color_func combines map0 (c1) and map1 (c2).
-    vec4 out_color;
-    chicago_init(out_color, c1, c2, flags & 0xFFu);
-
-    // Stage 1: map1.color_func folds map2 (c3) into the accumulated result.
-    chicago_stage(out_color, c3, (flags >> 8) & 0xFFu);
-
-    return out_color;
-}
-
-vec4 shader_chicago_extended()
-{
-    return shader_chicago();
+    return chicago_blend(c1, c2, c3, c4, flags);
 }
 
 #else
