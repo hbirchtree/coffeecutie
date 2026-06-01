@@ -1031,7 +1031,7 @@ void PerformanceMonitor::capture_screenshot(
             cDebug("Capturing screenshot...");
 
             /* If not, set up JPG encoding + export to file and profiling */
-            auto encode = [](dump_t* dump) {
+            auto encode = [screenshot_quality = m_screenshot_quality](dump_t* dump) {
                 semantic::Bytes  encoded;
                 stb::stb_error   ec;
                 stb::image_const source = stb::image_const::From(
@@ -1039,7 +1039,7 @@ void PerformanceMonitor::capture_screenshot(
                     dump->size,
                     4);
 
-                if(!stb::SaveJPG(encoded, source, ec, 30))
+                if(!stb::SaveJPG(encoded, source, ec, screenshot_quality))
                 {
                     cWarning("Failed to dump screenshot: {0}", ec.message());
                     return semantic::Bytes();

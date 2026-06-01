@@ -24,6 +24,7 @@ struct Config : comp_app::Config<Config>
     compo::clock::duration frame_delta{std::chrono::microseconds{16667}};
     bool                   enabled{false};
     std::string            swrender{"none"};
+    int                    screenshot_quality{30};
 };
 
 void fork_dummy_plugs(

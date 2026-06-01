@@ -507,7 +507,7 @@ struct alignas(4) shader_env : radiosity_properties /* aka senv */
     enum class flags_t : u16
     {
         none                      = 0x0,
-        alpha_tested              = 0x1,
+        alpha_tested              = 0x1, // If alpha-tested, use bump map alpha as alpha
         bump_map_is_specular_mask = 0x2,
         true_atmospheric_fog      = 0x4,
     };
@@ -586,6 +586,13 @@ struct alignas(4) shader_env : radiosity_properties /* aka senv */
         illumination_props secondary;
         illumination_props plasma;
 
+        // R = primary contribution
+        // G = secondary contribution
+        // B = plasma contribution
+        // A = plasma animation reference
+        //     if animated value is close to reference,
+        //     the final value is stronger,
+        //     and modulates the plasma on color
         detail_map map;
 
         u32 padding2[15];

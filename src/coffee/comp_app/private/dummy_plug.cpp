@@ -199,6 +199,7 @@ void fork_dummy_plugs(
         return;
 
     dummy_plug.swrender = config["graphics"].value("software_renderer", "none");
+    dummy_plug.screenshot_quality = config["graphics"].value("screenshot_quality", 30);
 
     cDebug("Rendering backend selected: {}", dummy_plug.swrender);
     auto& glConfig = container.service<AppLoader>()->config<GLConfig>();
@@ -407,7 +408,8 @@ void insert_dummy_plug(
 
     if(config.contains("events"))
     {
-        auto emit_events = [&config,
+        auto emit_events = [&dummy_plug,
+                            &config,
                             input_bus,
                             &container,
                             flag = false]() mutable {
@@ -430,6 +432,7 @@ void insert_dummy_plug(
             };
             auto& perf_monitor =
                 container.subsystem_cast<comp_app::PerformanceMonitor>();
+            perf_monitor.m_screenshot_quality = dummy_plug.screenshot_quality;
             for(auto const& event : config["events"])
             {
                 if(!event.contains("type"))
