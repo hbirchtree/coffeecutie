@@ -350,7 +350,7 @@ void chicago_stage(out vec4 dst, in vec4 i1, in vec4 i2, in uint flags)
 vec4 chicago_blend(vec4 c1, vec4 c2, vec4 c3, vec4 c4, uint flags)
 {
     uint s0cf      = flags & 0xFu;
-    vec4 out_color;
+    vec4 out_color = vec4(1.0);
     chicago_stage(out_color, c1, c2, flags & 0xFFu);
     chicago_stage(out_color, out_color, c3, (flags >> 8) & 0xFFu);
     chicago_stage(out_color, out_color, c4, (flags >> 16) & 0xFFu);
@@ -443,6 +443,7 @@ vec4 shader_model()
 #if USE_REFLECTIONS == 1
     vec3 view_world = normalize(camera_position - frag.position);
     vec3 reflection = vec3(1);
+    // TODO: Find out why boulder_moss_large.shader_model becomes so glossy
     if((uint(mats.instance[frag.instanceId].lightmap.reflection) >> 24) != 0u)
     {
         float NdotV_m      = clamp(dot(frag.normal, view_world), 0.0, 1.0);
