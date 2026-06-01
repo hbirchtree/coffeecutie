@@ -1,0 +1,40 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1920,
+            "height": 1920,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "comment": "Captures various cases on b40.map",
+    "events": [
+        {"time":  1000, "type":"key", "key": "CK_d", "duration": 10000},
+        {"time":  1000, "type":"key", "key": "CK_w", "duration": 36400},
+        {"time":  1000, "type":"key", "key": "CK_q", "duration":   500},
+        {"time": 40000, "type":"screenshot","name":"b40_bridge"},
+        {"time": 42000, "type":"key", "key": "CK_w", "duration":120000},
+        {"time": 42000, "type":"key", "key": "CK_d", "duration":  5000},
+        {"time": 42000, "type":"key", "key": "CK_e", "duration": 28000},
+        {"time":184000, "type":"screenshot","name":"b40_underground_bridge"},
+        {"time":186000, "type":"key", "key": "CK_e", "duration": 1750},
+        {"time":186000, "type":"key", "key": "CK_a", "duration":  750},
+        {"time":186000, "type":"key", "key": "CK_w", "duration": 3250},
+        {"time":194000, "type":"screenshot","name":"b40_underground_soldier"}
+    ],
+    "frame_delta": 250.0,
+    "end_time": 200000
+}

@@ -1,0 +1,47 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1920,
+            "height": 1920,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "comment": "Captures various cases on b30.map; bumped wall, waves, water, sky",
+    "events": [
+        {"time":  1000, "type":"key", "key": "CK_d", "duration": 10000},
+        {"time":  1000, "type":"key", "key": "CK_w", "duration": 12000},
+        {"time": 14000, "type":"screenshot","name":"b30_bump_wall"},
+        {"time": 16000, "type":"key", "key": "CK_a", "duration": 10000},
+        {"time": 16000, "type":"key", "key": "CK_s", "duration": 12000},
+        {"time": 29000, "type":"key", "key": "CK_d", "duration": 3000},
+        {"time": 29000, "type":"key", "key": "CK_s", "duration": 20000},
+        {"time": 29000, "type":"key", "key": "CK_q", "duration": 3000},
+        {"time": 55000, "type":"screenshot","name":"b30_waves"},
+        {"time": 55800, "type":"screenshot","name":"b30_waves_2"},
+        {"time": 56000, "type":"key", "key": "CK_e", "duration": 3200},
+        {"time": 60000, "type":"screenshot","name":"b30_water"},
+        {"time": 61000, "type":"key", "key": "CK_q", "duration": 10000},
+        {"time": 72000, "type":"screenshot","name":"b30_sky"},
+
+        {"time": 74000, "type":"key", "key": "CK_e", "duration": 5000},
+        {"time": 74000, "type":"key", "key": "CK_a", "duration": 51500},
+        {"time": 74000, "type":"key", "key": "CK_w", "duration": 37000},
+        {"time":150000, "type":"screenshot","name":"b30_security"}
+    ],
+    "frame_delta": 100.0,
+    "end_time": 160000
+}
