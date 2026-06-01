@@ -238,6 +238,7 @@ void load_scenario_bsp(
                 bsp_ref.cluster_idx   = mesh.cluster_idx;
                 bsp_ref.subcluster_idx = mesh.subcluster_idx;
                 bsp_ref.visible       = true;
+                bsp_ref.sort_center   = mesh.mesh ? mesh.mesh->centroid : Vecf3{0};
                 bsp_ref.draw.data.push_back(mesh.draw);
 
                 ShaderData&       shader_   = mesh_ent.get<ShaderData>();

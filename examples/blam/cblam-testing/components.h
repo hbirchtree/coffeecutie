@@ -51,6 +51,7 @@ struct BspReference
 
     u32    draw_idx;
     Passes current_pass;
+    Vecf3  sort_center{};
 
     u32 cluster_idx{std::numeric_limits<u32>::max()};
     u32 subcluster_idx{std::numeric_limits<u32>::max()};
@@ -233,8 +234,11 @@ struct ShaderData
 
         switch(shader_tag->tagclass_e[0])
         {
-        case tc::soso:
-            return sky_pass(Pass_Glass);
+        case tc::soso: {
+            auto info = shader_data<shader_model>();
+            bool alpha_test = !feval(info->flags & shader_model::model_flags::no_alpha_test);
+            return sky_pass(alpha_test ? Pass_Alphatest : Pass_Opaque);
+        }
         case tc::schi: {
             shader_chicago<V> const* info = shader_data<shader_chicago<V>>();
             using fb = chicago::framebuffer_blending;
@@ -267,7 +271,7 @@ struct ShaderData
         case tc::senv: {
             shader_env const* info = shader_data<shader_env>();
             Passes p = feval(info->flags & shader_env::flags_t::alpha_tested)
-                           ? Pass_Glass
+                           ? Pass_Alphatest
                            : Pass_Opaque;
             return sky_pass(p);
         }

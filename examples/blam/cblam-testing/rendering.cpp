@@ -80,6 +80,10 @@ struct MeshRenderer
 
         std::string name;
 
+        // Flat world-space centers parallel to draws (across all buckets).
+        // Only populated for transparent passes; used for depth sorting.
+        std::vector<Vecf3> sort_centers;
+
         model_tracker_t insert_draw(draw_data_t const& draw)
         {
             size_t num_draws = 0;
@@ -114,11 +118,58 @@ struct MeshRenderer
             }
         }
 
-        inline void clear()
+        // Transparent passes: one draw per item (no instancing), records center.
+        model_tracker_t insert_sortable(draw_data_t draw, Vecf3 const& center)
         {
-            //            command.data.clear();
+            draw.instances.count = 1;
+            if(draws.back().size() >= 128)
+                draws.emplace_back();
+            auto& bucket_ = draws.back();
+            bucket_.push_back(draw);
+            sort_centers.push_back(center);
+            return model_tracker_t{
+                .bucket   = static_cast<u16>(draws.size() - 1),
+                .draw     = static_cast<u16>(bucket_.size() - 1),
+                .instance = 0,
+                .enabled  = true,
+            };
+        }
+
+        // Sort transparent draws back-to-front by distance from cam.
+        // Call after update_materials (material slots unchanged by reorder).
+        void sort_by_depth(Vecf3 const& cam)
+        {
+            if(sort_centers.empty())
+                return;
+
+            std::vector<std::pair<Vecf3, draw_data_t>> flat;
+            flat.reserve(sort_centers.size());
+            size_t ci = 0;
+            for(auto& bucket : draws)
+                for(auto& d : bucket)
+                    flat.push_back({sort_centers[ci++], d});
+
+            std::sort(flat.begin(), flat.end(), [&](auto const& a, auto const& b) {
+                return glm::distance2(a.first, cam) > glm::distance2(b.first, cam);
+            });
+
             draws.clear();
             draws.emplace_back();
+            sort_centers.clear();
+            for(auto& [c, d] : flat)
+            {
+                if(draws.back().size() >= 128)
+                    draws.emplace_back();
+                draws.back().push_back(d);
+                sort_centers.push_back(c);
+            }
+        }
+
+        inline void clear()
+        {
+            draws.clear();
+            draws.emplace_back();
+            sort_centers.clear();
         }
 
         inline materials::shader_data& material_of(size_t idx)
@@ -761,8 +812,17 @@ struct MeshRenderer
             });
         }
 
+        // Sort transparent draws back-to-front before rendering.
+        // Safe to do here — update_materials already wrote all material slots.
+        Vecf3 const& cam_pos = m_players.empty() ? Vecf3{0} : m_players[primary_player].position;
+        for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
+        {
+            m_model[static_cast<Passes>(pi)].sort_by_depth(cam_pos);
+            m_bsp[static_cast<Passes>(pi)].sort_by_depth(cam_pos);
+        }
+
         // Transparent world geometry — primary player, no depth write.
-        gfx::depth_extended_state transparent_depth{.depth_write = true};
+        gfx::depth_extended_state transparent_depth{.depth_write = false};
         for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
         {
             auto pass  = static_cast<Passes>(pi);
@@ -811,7 +871,10 @@ struct MeshRenderer
             };
             bsp.draw.data.front().instances.offset = instance_offset;
             instance_offset += bsp.draw.data.front().instances.count;
-            wf.draws[0].push_back(bsp.draw.data.front());
+            if(bsp.current_pass > Pass_LastOpaque)
+                wf.insert_sortable(bsp.draw.data.front(), bsp.sort_center);
+            else
+                wf.draws[0].push_back(bsp.draw.data.front());
         }
 
         if(!m_api->feature_info().program.buffer_binding)
@@ -884,7 +947,13 @@ struct MeshRenderer
                     .instanced = true,
                     .mode      = gfx::drawing::primitive::triangle_strip,
             };
-            track.model_id = wf.insert_draw(model.draw.data.front());
+            if(model.current_pass > Pass_LastOpaque)
+            {
+                Vecf3 center = Vecf3(mod.transform[3]);
+                track.model_id = wf.insert_sortable(model.draw.data.front(), center);
+            }
+            else
+                track.model_id = wf.insert_draw(model.draw.data.front());
         }
         Coffee::Profiler::PopContext();
 
