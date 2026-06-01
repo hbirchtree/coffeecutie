@@ -738,16 +738,6 @@ void ShaderCache<V>::populate_material(
             mat.maps[0].bias     = base->image.bias;
         }
 
-        auto* micro =
-            bitm_cache.assign_atlas_data(mat.maps[1], shader.senv.micro_bitm);
-        if(micro)
-        {
-            mat.maps[1].uv_scale = Vecf2(info->diffuse.micro.scale);
-            mat.maps[1].bias     = micro->image.bias;
-        }
-
-        mat.material.flags |= (micro ? 1 : 0) << 10;
-
         auto* primary =
             bitm_cache.assign_atlas_data(mat.maps[2], shader.senv.primary_bitm);
         if(primary)
@@ -764,10 +754,6 @@ void ShaderCache<V>::populate_material(
             mat.maps[3].bias     = secondary->image.bias;
         }
 
-        mat.material.flags |= (primary && secondary ? 1 : 0) << 9;
-
-        mat.lightmap.meta1 = bitm_cache.get_atlas_layer(shader.senv.self_illum);
-
         auto* bump =
             bitm_cache.assign_atlas_data(mat.maps[4], shader.senv.bump);
         if(bump)
@@ -779,6 +765,29 @@ void ShaderCache<V>::populate_material(
         mat.material.material = materials::id::senv;
         mat.material.flags    = static_cast<u32>(info->flags) |
                              static_cast<u32>(info->shader_type) << 4;
+
+        mat.material.flags |= (primary && secondary ? 1 : 0) << 9;
+
+        // Self-illum takes map slot 1 when present; micro otherwise.
+        if(shader.senv.self_illum.valid())
+        {
+            auto* si = bitm_cache.assign_atlas_data(mat.maps[1], shader.senv.self_illum);
+            if(si)
+                mat.maps[1].uv_scale = Vecf2(info->self_illum.map.scale);
+            mat.lightmap.meta1 = 1;
+        }
+        else
+        {
+            auto* micro =
+                bitm_cache.assign_atlas_data(mat.maps[1], shader.senv.micro_bitm);
+            if(micro)
+            {
+                mat.maps[1].uv_scale = Vecf2(info->diffuse.micro.scale);
+                mat.maps[1].bias     = micro->image.bias;
+            }
+            mat.material.flags |= (micro ? 1 : 0) << 10;
+            mat.lightmap.meta1 = 0;
+        }
         mat.material.inputs1[0] = info->reflection.lightmap_brightness;
         mat.material.inputs1[1] = info->specular.brightness;
 

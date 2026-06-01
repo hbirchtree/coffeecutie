@@ -75,6 +75,39 @@ struct ShaderCache
             mat.stages[i++] = materials::transparent_data::from_blam(stage);
     }
 
+    // color_animation::anim has no source field in tag data; function is at byte 0
+    // (stored as 'source'), and 'scale' is actually phase (amplitude is always 1)
+    f32 color_anim_factor(blam::shader::simple_tex_property_anim const& anim, f32 const& time)
+    {
+        using namespace blam::shader;
+        auto fn    = static_cast<animation_function>(static_cast<u16>(anim.source));
+        f32  phase = anim.scale;
+        switch(fn)
+        {
+        case animation_function::one:
+            return 1.f;
+        case animation_function::zero:
+            return 0.f;
+        case animation_function::jitter:
+            return random.frand();
+        default:
+            break;
+        }
+        if(anim.period == 0.f)
+            return 0.f;
+        switch(fn)
+        {
+        case animation_function::slide:
+        case animation_function::slide_variable:
+            return glm::fract((time + phase) / anim.period);
+        case animation_function::cosine:
+        case animation_function::cosine_variable:
+            return glm::cos(glm::fract((time + phase) / anim.period) * glm::two_pi<f32>()) * 0.5f + 0.5f;
+        default:
+            return 0.f;
+        }
+    }
+
     template<typename PropertyAnim>
     requires stl_types::is_any_of<
         PropertyAnim,
@@ -84,23 +117,34 @@ struct ShaderCache
     f32 tex_animation(PropertyAnim const& anim, f32 const& time)
     {
         using namespace blam::shader;
-        if(anim.period == 0.f)
-            return 0.f;
         switch(anim.function)
         {
         case animation_function::one:
             return 1.f;
         case animation_function::zero:
             return 0.f;
+        case animation_function::jitter:
+            return random.frand() * anim.scale;
+        default:
+            break;
+        }
+        if(anim.period == 0.f)
+            return 0.f;
+        switch(anim.function)
+        {
         case animation_function::slide:
         case animation_function::slide_variable:
-            return time * anim.scale / anim.period;
+            return glm::fract(time / anim.period) * anim.scale;
         case animation_function::cosine:
-        case animation_function::cosine_variable:
+        case animation_function::cosine_variable: {
+            f32 phase = glm::fract(time / anim.period) * glm::two_pi<f32>();
             if constexpr(requires { anim.phase; })
-                return glm::cos(glm::two_pi<f32>() * time / anim.period + anim.phase) * anim.scale;
+                return glm::cos(phase + anim.phase) * anim.scale;
             else
-                return glm::cos(glm::two_pi<f32>() * time / anim.period) * anim.scale;
+                return glm::cos(phase) * anim.scale;
+        }
+        case animation_function::jitter:
+            return random.frand() * anim.scale;
         default:
             return 0.f;
         }
@@ -184,10 +228,16 @@ struct ShaderCache
 
             if(shader.senv.self_illum.valid())
             {
-                auto const& illum  = info->self_illum.primary;
-                f32         factor = glm::clamp(tex_animation(illum.anim, t), 0.f, 1.f);
-                Vecf3       color  = glm::mix(illum.color_off, illum.color_on, factor);
-                mat.material.inputs[3] = Vecf4(color, 1.f);
+                auto illum_color = [&](blam::shader::color_animation const& ch) {
+                    f32 factor = glm::clamp(color_anim_factor(ch.anim, t), 0.f, 1.f);
+                    return glm::mix(ch.color_off, ch.color_on, factor);
+                };
+                auto const& si         = info->self_illum;
+                f32 plasma_anim        = color_anim_factor(si.plasma.anim, t);
+                mat.material.inputs[3] = Vecf4(illum_color(si.primary), 1.f);
+                mat.material.inputs[4] = Vecf4(illum_color(si.secondary), 1.f);
+                // .rgb = plasma on_color, .a = animated value for A-channel proximity
+                mat.material.inputs[5] = Vecf4(si.plasma.color_on, plasma_anim);
             }
             break;
         }

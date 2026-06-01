@@ -185,7 +185,6 @@ vec4 shader_environment()
     int detailed = (mats.instance[frag.instanceId].material.flags >> 9) & 0x1;
     int has_micro = (mats.instance[frag.instanceId].material.flags >> 10) & 0x1;
     detailed = 1;
-    has_micro = 1;
 
     vec2 scroll_uv = mats.instance[frag.instanceId].material.input4.xy;
     vec4 base = get_color_with_offset(base_map_id, scroll_uv);
@@ -249,12 +248,19 @@ vec4 shader_environment()
         vec3(1);
 
 #if USE_SELF_ILLUMINATION == 1
-    int self_illum_layer = int(mats.instance[frag.instanceId].lightmap.meta1);
-    if(self_illum_layer != 0)
+    if(mats.instance[frag.instanceId].lightmap.meta1 != 0)
     {
-        vec4 self_illum_tex   = get_color_explicit(base_map_id, self_illum_layer);
-        vec3 self_illum_color = mats.instance[frag.instanceId].material.input5.rgb;
-        out_color += self_illum_tex.rgb * self_illum_color;
+        vec4 self_illum_tex  = get_color(micro_map_id);
+        vec3 primary_color   = mats.instance[frag.instanceId].material.input5.rgb;
+        vec3 secondary_color = mats.instance[frag.instanceId].material.input6.rgb;
+        vec3 plasma_on_color = mats.instance[frag.instanceId].material.input7.rgb;
+        float plasma_anim    = mats.instance[frag.instanceId].material.input7.a;
+        // B = plasma mask, A = animation reference phase
+        float plasma_prox    = self_illum_tex.b
+            * max(0.0, 1.0 - abs(plasma_anim - self_illum_tex.a));
+        out_color += self_illum_tex.r * primary_color
+                   + self_illum_tex.g * secondary_color
+                   + plasma_prox * plasma_on_color;
     }
 #endif
 
