@@ -345,12 +345,12 @@ void chicago_stage(out vec4 dst, in vec4 i1, in vec4 i2, in uint flags)
 
 vec4 chicago_blend(vec4 c1, vec4 c2, vec4 c3, vec4 c4, uint flags)
 {
-    uint s0cf      = flags & 0xFu;
     vec4 out_color = vec4(1.0);
-    // TODO: Check that next layer is valid before use
     chicago_stage(out_color, c1, c2, flags & 0xFFu);
-    chicago_stage(out_color, out_color, c3, (flags >> 8) & 0xFFu);
-    chicago_stage(out_color, out_color, c4, (flags >> 16) & 0xFFu);
+    if((uint(mats.instance[frag.instanceId].maps[2].layer) >> 24) != 0u)
+        chicago_stage(out_color, out_color, c3, (flags >> 8) & 0xFFu);
+    if((uint(mats.instance[frag.instanceId].maps[3].layer) >> 24) != 0u)
+        chicago_stage(out_color, out_color, c4, (flags >> 16) & 0xFFu);
     return out_color;
 }
 
