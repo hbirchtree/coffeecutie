@@ -99,7 +99,7 @@ struct ShaderCache
         {
         case animation_function::slide:
         case animation_function::slide_variable:
-            return glm::fract((time + phase) / anim.period);
+            return 1.f - glm::abs(2.f * glm::fract((time + phase) / anim.period) - 1.f);
         case animation_function::cosine:
         case animation_function::cosine_variable:
             return glm::cos(glm::fract((time + phase) / anim.period) * glm::two_pi<f32>()) * 0.5f + 0.5f;
@@ -201,7 +201,12 @@ struct ShaderCache
 
         ShaderItem const& shader = find(shader_id)->second;
 
-        f32 t = stl_types::Chrono::to_f32(time);
+        // Wrap to [0, 3600) before converting to f32 to avoid precision loss
+        // at Unix epoch scale (~1.7e9s, where f32 ULP ≈ 256s)
+        double t64 = std::chrono::duration_cast<stl_types::Chrono::seconds_f64>(
+                         time.time_since_epoch())
+                         .count();
+        f32 t = static_cast<f32>(std::fmod(t64, 3600.0));
 
         switch(shader.tag_class)
         {
