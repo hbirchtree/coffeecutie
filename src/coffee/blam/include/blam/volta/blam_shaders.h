@@ -702,6 +702,25 @@ struct alignas(4) shader_model : radiosity_properties /* aka soso */
 
     u32 padding_3[19];
 
+    enum class detail_function_t : u16
+    {
+        double_biased_multiply,
+        multiply,
+        double_biased_add,
+    };
+    enum class detail_mask_t : u16
+    {
+        none,
+        reflection_mask_inverse,
+        reflection_mask,
+        self_illum_mask_inverse,
+        self_illum_mask,
+        change_color_mask_inverse,
+        change_color_mask,
+        multipurpose_map_alpha_inverse,
+        multipurpose_map_alpha,
+    };
+
     struct maps_t
     {
         Vecf2 scale;
@@ -715,8 +734,8 @@ struct alignas(4) shader_model : radiosity_properties /* aka soso */
 
         struct
         {
-            u16                               function;
-            u16                               mask;
+            detail_function_t                 function;
+            detail_mask_t                     mask;
             f32                               scale;
             tagref_typed_t<tag_class_t::bitm> map;
             f32                               v_scale;
