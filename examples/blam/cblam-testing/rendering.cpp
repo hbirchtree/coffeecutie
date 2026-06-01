@@ -664,43 +664,54 @@ struct MeshRenderer
 
         if(rendering_props->debug_clear)
             m_resources.offscreen->clear(Vecf4(0, 0.2f, 0.5f, 1));
+        else
+            m_resources.offscreen->clear(Vecf4(0, 0, 0, 1));
 
         /* to_f32 gives seconds-since-epoch (~1.7e9). At that magnitude
          * float32 precision is ~128 s, so adjacent frames are identical
          * and UV animations freeze. Wrap to a shorter cycle. */
         f32 t = std::fmod(stl_types::Chrono::to_f32(time), 3600.f);
 
-        // gfx::cull_state cull_state{.front_face = false};
+        auto blend_for_pass = [](Passes pass) -> gfx::blend_state {
+            switch(pass)
+            {
+            case Pass_SkyAdditive:
+            case Pass_Additive: return {.additive = true};
+            case Pass_SkyMultiply:
+            case Pass_Multiply: return {.multiply = true};
+            default:            return {};
+            }
+        };
 
-        for(auto const& pass : stl_types::slice_num(m_bsp, Pass_LastOpaque + 1))
+        /* Primary player is always the first one (seat_idx == 0) */
+        u32 primary_player = 0;
+
+        // Sky passes — drawn first so opaque geometry overwrites them naturally.
+        // No depth write; depth test passes everywhere (empty buffer).
         {
-            for(auto i : stl_types::range<u32>(m_players.size()))
-                render_bsp_pass(
-                    p,
-                    i,
-                    t,
-                    pass,
-                    gfx::stencil_state{
-                        .depth_pass = gfx::stencil_state::operation_t::write,
-                        .mask       = 0x1,
-                        .reference  = 0x1,
-                    });
-            
+            gfx::depth_extended_state sky_depth{.depth_write = false};
+            for(i32 pi = Pass_SkyOpaque; pi <= Pass_LastSky; ++pi)
+            {
+                auto pass  = static_cast<Passes>(pi);
+                auto blend = blend_for_pass(pass);
+                render_pass(p, primary_player, t, m_model[pass], blend, sky_depth);
+            }
         }
-        for(auto const& pass : stl_types::slice_num(m_model, Pass_LastOpaque + 1))
+
+        // Opaque world geometry — all players, depth write + stencil write.
+        gfx::stencil_state opaque_stencil{
+            .depth_pass = gfx::stencil_state::operation_t::write,
+            .mask       = 0x1,
+            .reference  = 0x1,
+        };
+        for(i32 pi = Pass_Opaque; pi <= Pass_LastOpaque; ++pi)
         {
+            auto pass = static_cast<Passes>(pi);
             for(auto i : stl_types::range<u32>(m_players.size()))
-                render_pass(
-                    p,
-                    i,
-                    t,
-                    pass,
-                    // cull_state,
-                    gfx::stencil_state{
-                        .depth_pass = gfx::stencil_state::operation_t::write,
-                        .mask       = 0x1,
-                        .reference  = 0x1,
-                    });
+            {
+                render_bsp_pass(p, i, t, m_bsp[pass], opaque_stencil);
+                render_pass(p, i, t, m_model[pass], opaque_stencil);
+            }
         }
 
         // Special case for 3 players; black out the 4th quadrant
@@ -749,72 +760,16 @@ struct MeshRenderer
                 .sampler = meow_sampler,
             });
         }
-        /* Primary player is always the first one (seat_idx == 0) */
-        u32 primary_player = 0;
 
-
+        // Transparent world geometry — primary player, no depth write.
+        gfx::depth_extended_state transparent_depth{.depth_write = true};
+        for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
         {
-            gfx::stencil_state stencil_state{
-                .mask      = 0x1,
-                .reference = 0x1,
-                .condition = gfx::stencil_state::condition_t::less,
-            };
-            render_bsp_pass(
-                p,
-                primary_player,
-                t,
-                m_bsp[Pass_Sky],
-                gfx::depth_extended_state{.depth_write = false},
-                stencil_state,
-                gfx::blend_state{});
-            render_pass(
-                p,
-                primary_player,
-                t,
-                m_model[Pass_Sky],
-                // cull_state,
-                gfx::depth_extended_state{.depth_write = false},
-                stencil_state,
-                gfx::blend_state{});
+            auto pass  = static_cast<Passes>(pi);
+            auto blend = blend_for_pass(pass);
+            render_pass(p, primary_player, t, m_model[pass], blend, transparent_depth);
+            render_bsp_pass(p, primary_player, t, m_bsp[pass], blend, transparent_depth);
         }
-
-        gfx::depth_extended_state nowrite = {.depth_write = true};
-
-        render_pass(
-            p,
-            primary_player,
-            t,
-            m_model[Pass_Additive],
-            gfx::blend_state{.additive = true},
-            nowrite);
-        render_pass(
-            p,
-            primary_player,
-            t,
-            m_model[Pass_Multiply],
-            gfx::blend_state{.multiply = true},
-            nowrite);
-        render_pass(
-            p,
-            primary_player,
-            t,
-            m_model[Pass_Glass],
-            gfx::blend_state{},
-            nowrite);
-        render_bsp_pass(
-            p,
-            primary_player,
-            t,
-            m_bsp[Pass_Additive],
-            gfx::blend_state{.additive = true},
-            nowrite);
-        render_bsp_pass(
-            p,
-            primary_player,
-            t,
-            m_bsp[Pass_Glass],
-            gfx::blend_state{},
-            nowrite);
 
         //        render_bsp_pass(p, m_bsp[Pass_Wireframe]);
 

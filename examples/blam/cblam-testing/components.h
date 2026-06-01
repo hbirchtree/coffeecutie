@@ -20,18 +20,24 @@ using compo::EntityContainer;
 
 enum Passes
 {
+    // Skybox passes — drawn before everything, no depth write
+    Pass_SkyOpaque,
+    Pass_SkyAdditive,
+    Pass_SkyMultiply,
+    Pass_SkyGlass,
+    Pass_LastSky = Pass_SkyGlass,
+
+    // Opaque world geometry — depth write on, stencil write
     Pass_Opaque,
     Pass_Alphatest,
     Pass_LastOpaque = Pass_Alphatest,
-    Pass_Sky,
+
+    // Transparent world geometry — depth write off
     Pass_Additive,
     Pass_Multiply,
     Pass_Glass,
 
-    //    Pass_Wireframe,
-
     Pass_Count,
-
 };
 
 struct BspReference
@@ -203,7 +209,7 @@ struct ShaderData
     }
 
     template<typename V>
-    inline Passes get_render_pass(ShaderCache<V>& cache) const
+    inline Passes get_render_pass(ShaderCache<V>& cache, bool skybox = false) const
     {
         using tc = blam::tag_class_t;
         using namespace enum_helpers;
@@ -212,71 +218,63 @@ struct ShaderData
         [[maybe_unused]] auto name =
             shader_tag->to_name().to_string(cache.magic);
 
+        auto sky_pass = [skybox](Passes p) -> Passes {
+            if(!skybox)
+                return p;
+            switch(p)
+            {
+            case Pass_Opaque:
+            case Pass_Alphatest: return Pass_SkyOpaque;
+            case Pass_Additive:  return Pass_SkyAdditive;
+            case Pass_Multiply:  return Pass_SkyMultiply;
+            default:             return Pass_SkyGlass;
+            }
+        };
+
         switch(shader_tag->tagclass_e[0])
         {
-        case tc::soso: {
-            [[maybe_unused]] auto info = shader_data<shader_model>();
-            //            auto flags = info->flags;
-            //            bool transparent
-            //                = !feval(flags,
-            //                shader_model::model_flags::no_alpha_test);
-            //            return transparent ? Pass_Alphatest : Pass_Opaque;
-            return Pass_Glass;
-        }
+        case tc::soso:
+            return sky_pass(Pass_Glass);
         case tc::schi: {
-            using blam::shader::chicago::flags_t;
-            shader_chicago<V> const* info   = shader_data<shader_chicago<V>>();
-            auto                     maps   = info->maps.data(cache.magic);
-            auto                     layers = info->layers.data(cache.magic);
-
-            auto is_multiplied = info->transparent.blend_function ==
-                                 chicago::framebuffer_blending::multiply;
-            auto is_add = info->transparent.blend_function ==
-                          chicago::framebuffer_blending::add;
-            //            auto is_alpha = info->transparent.blend_function
-            //                            ==
-            //                            chicago::framebuffer_blending::alpha_blend;
-
-            if(is_multiplied)
-                return Pass_Multiply;
-            if(is_add)
-                return Pass_Additive;
-            return Pass_Glass;
+            shader_chicago<V> const* info = shader_data<shader_chicago<V>>();
+            using fb = chicago::framebuffer_blending;
+            switch(info->transparent.blend_function)
+            {
+            case fb::multiply:
+            case fb::double_multiply: return sky_pass(Pass_Multiply);
+            case fb::add:
+            case fb::alpha_multiply_add: return sky_pass(Pass_Additive);
+            default: return sky_pass(Pass_Glass);
+            }
         }
         case tc::scex: {
             shader_chicago_extended<V> const* info =
                 shader_data<shader_chicago_extended<V>>();
-            auto maps_2 = info->maps_2stage.data(cache.magic);
-            auto maps_4 = info->maps_4stage.data(cache.magic);
-            auto layers = info->layers.data(cache.magic);
-
-            auto is_multiplied = info->transparent.blend_function ==
-                                 chicago::framebuffer_blending::multiply;
-            auto is_add = info->transparent.blend_function ==
-                          chicago::framebuffer_blending::add;
-            //            auto is_alpha = info->transparent.blend_function
-            //                            ==
-            //                            chicago::framebuffer_blending::alpha_blend;
-            if(is_multiplied)
-                return Pass_Multiply;
-            if(is_add)
-                return Pass_Additive;
-            return Pass_Glass;
+            using fb = chicago::framebuffer_blending;
+            switch(info->transparent.blend_function)
+            {
+            case fb::multiply:
+            case fb::double_multiply: return sky_pass(Pass_Multiply);
+            case fb::add:
+            case fb::alpha_multiply_add: return sky_pass(Pass_Additive);
+            default: return sky_pass(Pass_Glass);
+            }
         }
         case tc::swat:
         case tc::sotr:
         case tc::sgla:
-            return Pass_Glass;
+            return sky_pass(Pass_Glass);
         case tc::senv: {
             shader_env const* info = shader_data<shader_env>();
-            return feval(info->flags & shader_env::flags_t::alpha_tested)
-                       ? Pass_Glass
-                       : Pass_Opaque;
+            Passes p = feval(info->flags & shader_env::flags_t::alpha_tested)
+                           ? Pass_Glass
+                           : Pass_Opaque;
+            return sky_pass(p);
         }
         case tc::smet:
-            return Pass_Opaque;
+            return sky_pass(Pass_Opaque);
         default:
-            return Pass_Opaque;
+            return sky_pass(Pass_Opaque);
         }
     }
 

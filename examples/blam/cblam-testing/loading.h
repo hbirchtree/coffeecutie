@@ -682,7 +682,7 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
                 ShaderItem const& shader_it = shader_cache.get(region.shader);
                 shader_.initialize(shader_it, submodel);
 
-                submodel.current_pass = Pass_Sky;
+                submodel.current_pass = shader_.get_render_pass(shader_cache, true);
             }
         }
     }
