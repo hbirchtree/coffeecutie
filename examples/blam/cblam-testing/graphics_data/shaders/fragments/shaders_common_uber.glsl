@@ -283,8 +283,6 @@ const uint F_BLEND_CURRENT_ALPHA_INVERSE = 10u;
 const uint F_BLEND_NEXT_ALPHA            = 11u;
 const uint F_BLEND_NEXT_ALPHA_INVERSE    = 12u;
 
-// Stage 1+ combine: map1.color_func folds map (c3) into accumulated dst.
-// F_CURRENT = no change, F_NEXT = replace with map, F_MUL = dst*map, etc.
 void chicago_stage(out vec4 dst, in vec4 i1, in vec4 i2, in uint flags)
 {
     uint cf = flags & 0xFu;
@@ -316,7 +314,6 @@ void chicago_stage(out vec4 dst, in vec4 i1, in vec4 i2, in uint flags)
         dst.rgb = mix(i1.rgb, i2.rgb, i2.a);
     else if(cf == F_BLEND_NEXT_ALPHA_INVERSE)
         dst.rgb = mix(i1.rgb, i2.rgb, 1.0 - i2.a);
-    // F_CURRENT: no change
 
     if(af == F_CURRENT)
         dst.a = i1.a;
@@ -344,13 +341,13 @@ void chicago_stage(out vec4 dst, in vec4 i1, in vec4 i2, in uint flags)
         dst.a = mix(i1.a, i2.a, i2.a);
     else if(af == F_BLEND_NEXT_ALPHA_INVERSE)
         dst.a = mix(i1.a, i2.a, 1.0 - i2.a);
-    // F_CURRENT: no change
 }
 
 vec4 chicago_blend(vec4 c1, vec4 c2, vec4 c3, vec4 c4, uint flags)
 {
     uint s0cf      = flags & 0xFu;
     vec4 out_color = vec4(1.0);
+    // TODO: Check that next layer is valid before use
     chicago_stage(out_color, c1, c2, flags & 0xFFu);
     chicago_stage(out_color, out_color, c3, (flags >> 8) & 0xFFu);
     chicago_stage(out_color, out_color, c4, (flags >> 16) & 0xFFu);
@@ -361,11 +358,9 @@ vec4 shader_chicago()
 {
     vec2 o1 = mats.instance[frag.instanceId].material.input1.xy;
     vec2 o2 = mats.instance[frag.instanceId].material.input2.xy;
-    vec2 o3 = mats.instance[frag.instanceId].material.input2.zw;
 
     vec4 c1 = get_color_with_offset(0u, o1);
     vec4 c2 = get_color_with_offset(1u, o2);
-    vec4 c3 = get_color_with_offset(2u, o3);
 
     uint flags = uint(mats.instance[frag.instanceId].lightmap.meta1);
     return chicago_blend(c1, c2, vec4(0.0), vec4(0.0), flags);
@@ -444,6 +439,8 @@ vec4 shader_model()
     vec3 view_world = normalize(camera_position - frag.position);
     vec3 reflection = vec3(1);
     // TODO: Find out why boulder_moss_large.shader_model becomes so glossy
+    // TODO: Find out why visor is opaque, but flipping the mix()
+    //       makes other shiny objects opaque
     if((uint(mats.instance[frag.instanceId].lightmap.reflection) >> 24) != 0u)
     {
         float NdotV_m      = clamp(dot(frag.normal, view_world), 0.0, 1.0);

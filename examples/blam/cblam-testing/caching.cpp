@@ -687,7 +687,7 @@ void ShaderCache<V>::populate_material(
         for(auto i : range<>(4))
         {
             auto id = shader.scex.maps.at(i);
-            if(!shader.schi.maps.at(i).valid())
+            if(!shader.scex.maps.at(i).valid())
                 continue;
             BitmapItem const& bitm =
                 *bitm_cache.assign_atlas_data(mat.maps[i], id);
