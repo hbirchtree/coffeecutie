@@ -21,7 +21,7 @@
         "format": "f32"
     },
     "events": [
-        {"time": 2000, "type":"key", "key": "CK_w", "duration": 3000}
+        {"time": 3000, "type":"screenshot", "name":"start"}
     ],
-    "end_time": 5000
+    "end_time": 4000
 }

@@ -1,0 +1,34 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1920,
+            "height": 1920,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "comment": "On sidewinder.map, moves the camera to the cave for cluster testing",
+    "events": [
+        {"time":  1000, "type":"key", "key": "CK_w", "duration": 16500},
+        {"time":  1000, "type":"key", "key": "CK_d", "duration":  2000},
+        {"time":  1000, "type":"key", "key": "CK_e", "duration":  1500},
+        {"time": 22000, "type":"screenshot", "name": "sidewinder_ice"},
+        {"time": 23000, "type":"key", "key": "CK_w", "duration": 1000},
+        {"time": 24500, "type":"screenshot", "name": "sidewinder_ice_closer"}
+    ],
+    "frame_delta": 50.0,
+    "end_time": 27000
+}
