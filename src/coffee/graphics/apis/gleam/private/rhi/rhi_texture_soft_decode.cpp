@@ -1,9 +1,9 @@
+#include "task.h"
+#include <coffee/graphics/apis/gleam/rhi_texture.h>
 #include <peripherals/constants.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/typing/enum/pixels/format.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
-#include <coffee/graphics/apis/gleam/rhi_texture.h>
-#include "task.h"
 
 #include <functional>
 #include <peripherals/stl/range.h>
@@ -178,8 +178,7 @@ static std::vector<char> software_decode_pvrtc_etc1(
 #endif
 
 #if defined(GLEAM_ENABLE_SOFTWARE_BCN) || \
-    defined(GLEAM_ENABLE_SOFTWARE_PVRTC) || \
-    defined(COFFEE_EMSCRIPTEN)
+    defined(GLEAM_ENABLE_SOFTWARE_PVRTC) || defined(COFFEE_EMSCRIPTEN)
 std::future<std::vector<char>> texture_t::software_decode(
     semantic::Span<const char>&& data, size_3d<i32> size, i32 mipmap)
 {
@@ -228,24 +227,29 @@ std::future<std::vector<char>> texture_t::software_decode(
 #endif
     if(m_workarounds.tex.requires_aligned)
     {
-        // On Emscripten for example, loading RGB565 from addresses not aligned with 2-bytes
-        // causes clown vomit
+        // On Emscripten for example, loading RGB565 from addresses not aligned
+        // with 2-bytes causes clown vomit
         if(m_format.pixfmt == pix_fmt::RGB565)
         {
-            auto task = rq::dependent_task<void, std::vector<char>>::CreateSource(
-                [data]() mutable {
-                    /* Source pointer may be at an odd byte offset in the WASM
-                     * heap. Emscripten's glTexSubImage3D does ptr >>> 1 to
-                     * index HEAPU16, truncating the low bit and swapping bytes
-                     * within every u16. Copying to a heap vector guarantees
-                     * 2-byte alignment so the index is correct. */
-                    std::vector<char> out(data.begin(), data.end());
-                    fprintf(stderr, "Alignment: %li",
+            auto task =
+                rq::dependent_task<void, std::vector<char>>::CreateSource(
+                    [data]() mutable {
+                        /* Source pointer may be at an odd byte offset in the
+                         * WASM heap. Emscripten's glTexSubImage3D does ptr >>>
+                         * 1 to index HEAPU16, truncating the low bit and
+                         * swapping bytes within every u16. Copying to a heap
+                         * vector guarantees 2-byte alignment so the index is
+                         * correct. */
+                        std::vector<char> out(data.begin(), data.end());
+                        fprintf(
+                            stderr,
+                            "Alignment: %li",
                             reinterpret_cast<intptr_t>(out.data()) & 0x1);
-                    return out;
-                });
+                        return out;
+                    });
             auto fut = task->output.get_future();
-            auto res = rq::runtime_queue::Queue(m_decoder_queue, std::move(task));
+            auto res =
+                rq::runtime_queue::Queue(m_decoder_queue, std::move(task));
             if(res.has_error())
                 Throw(rq::runtime_queue_error("failed to queue RGB565 decode"));
             return fut;

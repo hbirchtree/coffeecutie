@@ -1,11 +1,11 @@
 #include "coffee/core/types/input/event_types.h"
-#include <coffee/terminal_comp/terminal_components.h>
 #include <coffee/core/types/input/keymap.h>
+#include <coffee/terminal_comp/terminal_components.h>
 #include <peripherals/libc/output_ops.h>
 #include <peripherals/libc/signals.h>
 
-#include <unistd.h>
 #include <poll.h>
+#include <unistd.h>
 
 namespace terminal {
 
@@ -95,8 +95,8 @@ void TerminalInput::start_restricted(proxy_type& p, time_point const&)
         auto [key, mod] = m_pressed.front();
         m_pressed.pop();
         CIKeyEvent rel;
-        rel.key = static_cast<decltype(rel.key)>(key);
-        rel.mod = static_cast<decltype(rel.mod)>(mod);
+        rel.key             = static_cast<decltype(rel.key)>(key);
+        rel.mod             = static_cast<decltype(rel.mod)>(mod);
         m_register[rel.key] = rel.mod;
         CIEvent relEv;
         relEv.type = CIEvent::Keyboard;
@@ -104,7 +104,7 @@ void TerminalInput::start_restricted(proxy_type& p, time_point const&)
     }
 
     struct pollfd fds;
-    fds.fd = STDIN_FILENO;
+    fds.fd     = STDIN_FILENO;
     fds.events = POLLIN;
 
     while(poll(&fds, 1, 0) > 0)
@@ -121,40 +121,57 @@ void TerminalInput::start_restricted(proxy_type& p, time_point const&)
         {
             unsigned char seq[2];
             struct pollfd esc_poll;
-            esc_poll.fd = STDIN_FILENO;
+            esc_poll.fd     = STDIN_FILENO;
             esc_poll.events = POLLIN;
 
             ev.key = CK_Escape;
-            if(poll(&esc_poll, 1, 0) > 0 && read(STDIN_FILENO, &seq[0], 1) == 1 && seq[0] == '[')
+            if(poll(&esc_poll, 1, 0) > 0 &&
+               read(STDIN_FILENO, &seq[0], 1) == 1 && seq[0] == '[')
             {
-                if(poll(&esc_poll, 1, 0) > 0 && read(STDIN_FILENO, &seq[1], 1) == 1)
+                if(poll(&esc_poll, 1, 0) > 0 &&
+                   read(STDIN_FILENO, &seq[1], 1) == 1)
                 {
                     switch(seq[1])
                     {
-                    case 'A': ev.key = CK_Up; break;
-                    case 'B': ev.key = CK_Down; break;
-                    case 'C': ev.key = CK_Right; break;
-                    case 'D': ev.key = CK_Left; break;
-                    default: break;
+                    case 'A':
+                        ev.key = CK_Up;
+                        break;
+                    case 'B':
+                        ev.key = CK_Down;
+                        break;
+                    case 'C':
+                        ev.key = CK_Right;
+                        break;
+                    case 'D':
+                        ev.key = CK_Left;
+                        break;
+                    default:
+                        break;
                     }
                 }
             }
-        } else if(c == 0x7F) {
+        } else if(c == 0x7F)
+        {
             ev.key = CK_BackSpace;
-        } else if(c == '\r' || c == '\n') {
+        } else if(c == '\r' || c == '\n')
+        {
             ev.key = CK_EnterNL;
-        } else if(c == '\t') {
+        } else if(c == '\t')
+        {
             ev.key = CK_HTab;
-        } else if(c >= 0x01 && c <= 0x1A) {
+        } else if(c >= 0x01 && c <= 0x1A)
+        {
             // Ctrl+A to Ctrl+Z
             ev.key = CK_a + (c - 1);
             ev.mod |= CIKeyEvent::LCtrlModifier;
-        } else {
+        } else
+        {
             if(c >= 'A' && c <= 'Z')
             {
                 ev.key = CK_A + (c - 'A');
                 ev.mod |= CIKeyEvent::LShiftModifier;
-            } else {
+            } else
+            {
                 ev.key = c;
             }
         }
@@ -166,10 +183,11 @@ void TerminalInput::start_restricted(proxy_type& p, time_point const&)
             inputEv.type = CIEvent::Keyboard;
             inputBus->process(inputEv, &ev);
 
-            auto release_mod = static_cast<libc_types::u32>(ev.mod & ~CIKeyEvent::PressedModifier);
+            auto release_mod = static_cast<libc_types::u32>(
+                ev.mod & ~CIKeyEvent::PressedModifier);
             m_pressed.push({static_cast<libc_types::u16>(ev.key), release_mod});
         }
     }
 }
 
-}
+} // namespace terminal

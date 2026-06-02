@@ -194,8 +194,7 @@ STATICINLINE void ThreadQueueSleep(
 
     Profiler::DeepProfile(fmt::format("Sleeping for {}ns", sleepTime.count()));
     sem_->condition.wait_for(thread_lock, sleepTime, [queue, sem_]() {
-        return !sem_->running ||
-               queue->time_till_next(clock_now()) < 20ms ||
+        return !sem_->running || queue->time_till_next(clock_now()) < 20ms ||
                sem_->notified.load();
     });
     if(sem_->notified.load())

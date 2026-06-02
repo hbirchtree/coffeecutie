@@ -37,27 +37,33 @@ optional<error> system::load(
     }
 #endif
     auto out = api::load(options);
-    if(compile_info::debug_mode &&
-       api_type() == api_type_t::es &&
+    if(compile_info::debug_mode && api_type() == api_type_t::es &&
        api_version() == std::make_tuple<u32, u32>(2, 0))
     {
         Coffee::DProfContext _("gleam::system::Setting up capture FBO");
         m_capture_fbo_active = true;
-        m_screenshot_provider = container.service<comp_app::ScreenshotProvider>();
-        m_color_capture = alloc_texture(textures::d2, PixDesc(comp_app::pix_fmt::RGBA8), 1);
+        m_screenshot_provider =
+            container.service<comp_app::ScreenshotProvider>();
+        m_color_capture =
+            alloc_texture(textures::d2, PixDesc(comp_app::pix_fmt::RGBA8), 1);
         cmd::gen_renderbuffers(semantic::SpanOne(m_depth_capture.hnd));
         m_color_capture->alloc(size_3d<u32>{16u, 16u, 1u});
         m_capture_fbo = alloc_rendertarget();
         m_capture_fbo->alloc();
-        m_capture_fbo->attach(render_targets::attachment::color, *m_color_capture, 0);
+        m_capture_fbo->attach(
+            render_targets::attachment::color, *m_color_capture, 0);
         i32 currentFbo{};
-        cmd::get_integerv(group::get_prop::framebuffer_binding, SpanOne(currentFbo));
-        cmd::bind_framebuffer(group::framebuffer_target::framebuffer, m_capture_fbo->m_handle);
+        cmd::get_integerv(
+            group::get_prop::framebuffer_binding, SpanOne(currentFbo));
+        cmd::bind_framebuffer(
+            group::framebuffer_target::framebuffer, m_capture_fbo->m_handle);
         cmd::framebuffer_renderbuffer(
             group::framebuffer_target::framebuffer,
             group::framebuffer_attachment::depth_attachment,
-            group::renderbuffer_target::renderbuffer, m_depth_capture);
-        cmd::bind_framebuffer(group::framebuffer_target::framebuffer, currentFbo);
+            group::renderbuffer_target::renderbuffer,
+            m_depth_capture);
+        cmd::bind_framebuffer(
+            group::framebuffer_target::framebuffer, currentFbo);
     }
     return out;
 }
@@ -104,20 +110,25 @@ void system::start_restricted(Proxy& e, time_point const& ts)
 
 void system::end_restricted(Proxy&, time_point const&)
 {
-    if(m_screenshot_provider && m_capture_fbo_active && m_screenshot_provider->captureRequested())
+    if(m_screenshot_provider && m_capture_fbo_active &&
+       m_screenshot_provider->captureRequested())
     {
         if(!m_capture_requested)
         {
-            Coffee::DProfContext _("gleam::system::end_restricted::Enabling capture FBO");
-            m_capture_fbo->internal_bind(group::framebuffer_target::framebuffer);
+            Coffee::DProfContext _(
+                "gleam::system::end_restricted::Enabling capture FBO");
+            m_capture_fbo->internal_bind(
+                group::framebuffer_target::framebuffer);
             default_rendertarget()->m_handle = m_capture_fbo->m_handle.hnd;
-            m_capture_requested = true;
+            m_capture_requested              = true;
         } else
         {
-            Coffee::DProfContext _("gleam::system::end_restricted::Submitting capture FBO");
-            m_screenshot_provider->signalCaptureReady(m_capture_fbo->m_handle.hnd);
+            Coffee::DProfContext _(
+                "gleam::system::end_restricted::Submitting capture FBO");
+            m_screenshot_provider->signalCaptureReady(
+                m_capture_fbo->m_handle.hnd);
             default_rendertarget()->m_handle = 0;
-            m_capture_requested = false;
+            m_capture_requested              = false;
         }
     }
 }
@@ -137,9 +148,15 @@ void system::activate_resize(Proxy& e)
         default_rendertarget()->resize({0, 0, size.w, size.h});
         if(m_capture_fbo_active)
         {
-            m_color_capture->alloc(size_3d<u32>{static_cast<u32>(size.w), static_cast<u32>(size.h), 1u});
-            cmd::bind_renderbuffer(group::renderbuffer_target::renderbuffer, m_depth_capture);
-            cmd::renderbuffer_storage(group::renderbuffer_target::renderbuffer, group::internal_format::depth_component16, size);
+            m_color_capture->alloc(
+                size_3d<u32>{
+                    static_cast<u32>(size.w), static_cast<u32>(size.h), 1u});
+            cmd::bind_renderbuffer(
+                group::renderbuffer_target::renderbuffer, m_depth_capture);
+            cmd::renderbuffer_storage(
+                group::renderbuffer_target::renderbuffer,
+                group::internal_format::depth_component16,
+                size);
             cmd::bind_renderbuffer(group::renderbuffer_target::renderbuffer, 0);
         }
         m_viewport_not_set = false;

@@ -27,7 +27,11 @@ struct ScreenshotProvider
         m_work_queue = worker;
     }
 
-    bool captureRequested() { return m_capture_requested; }
+    bool captureRequested()
+    {
+        return m_capture_requested;
+    }
+
     void signalCaptureReady(libc_types::u32 hnd);
 
     comp_app::GLConfig const*           m_config{nullptr};
@@ -39,8 +43,8 @@ struct ScreenshotProvider
     rq::runtime_queue* m_main_queue{nullptr};
     rq::runtime_queue* m_work_queue{nullptr};
 
-    bool m_capture_requested{false};
-    std::promise<dump_t> m_dump_promise{};
+    bool                                   m_capture_requested{false};
+    std::promise<dump_t>                   m_dump_promise{};
     std::function<dump_t(libc_types::u32)> m_pending_capture{};
 };
 

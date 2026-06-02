@@ -221,6 +221,11 @@ inline optional<tuple<error, std::string_view>> api::submit(
         cmd::link_program(program->m_handle);
         for(auto const& attrib : vao->m_attributes)
         {
+            if(vao->m_buffers.at(attrib.buffer.id).expired())
+            {
+                // TODO: Add warning
+                continue;
+            }
             cmd::enable_vertex_attrib_array(attrib.index);
             cmd::bind_buffer(
                 buffer_target::array_buffer,
@@ -256,9 +261,9 @@ inline optional<tuple<error, std::string_view>> api::submit(
         if(auto error = detail::evaluate_draw_state(m_limits, command);
            error.has_value())
         {
-            // usage().draw.failed_draws++;
-            // return std::make_tuple(
-            //     *error, detail::draw_error_to_string(*error));
+            usage().draw.failed_draws++;
+            return std::make_tuple(
+                *error, detail::draw_error_to_string(*error));
         }
     }
 
@@ -325,6 +330,11 @@ inline optional<tuple<error, std::string_view>> api::submit(
         apply_vertex_offset = [&vao](u32 offset) {
             for(auto const& attrib : vao->m_attributes)
             {
+                if(vao->m_buffers.at(attrib.buffer.id).expired())
+                {
+                    // TODO: Add warning
+                    continue;
+                }
                 cmd::bind_buffer(
                     gl::group::buffer_target_arb::array_buffer,
                     vao->m_buffers.at(attrib.buffer.id).lock()->m_handle);
@@ -446,6 +456,11 @@ inline optional<tuple<error, std::string_view>> api::submit(
             if(call.indexed && d.elements.vertex_offset > 0)
                 for(auto const& attrib : vao->m_attributes)
                 {
+                    if(vao->m_buffers.at(attrib.buffer.id).expired())
+                    {
+                        // TODO: Add warning
+                        continue;
+                    }
                     cmd::bind_buffer(
                         group::buffer_target_arb::array_buffer,
                         vao->m_buffers.at(attrib.buffer.id).lock()->m_handle);

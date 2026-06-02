@@ -38,8 +38,8 @@ extern void CaptureMetrics(
     MetricVariant             variant,
     std::string const&        value,
     std::chrono::microseconds ts,
-    u32                       index = 0,
-    std::string_view index_name = {});
+    u32                       index      = 0,
+    std::string_view          index_name = {});
 
 extern void CaptureMetrics(
     profiling::ThreadState&   tdata,
@@ -47,8 +47,8 @@ extern void CaptureMetrics(
     MetricVariant             variant,
     f32                       value,
     std::chrono::microseconds ts,
-    u32                       index = 0,
-    std::string_view index_name = {});
+    u32                       index      = 0,
+    std::string_view          index_name = {});
 
 template<typename T>
 FORCEDINLINE void CaptureMetrics(
@@ -56,8 +56,8 @@ FORCEDINLINE void CaptureMetrics(
     MetricVariant             variant,
     T const&                  value,
     std::chrono::microseconds ts,
-    u32                       index = 0,
-    std::string_view index_name = {})
+    u32                       index      = 0,
+    std::string_view          index_name = {})
 {
     if constexpr(!compile_info::profiler::enabled)
         return;
@@ -71,10 +71,10 @@ FORCEDINLINE void CaptureMetrics(
 }
 
 void CaptureTrace(
-    profiling::ThreadState& tdata,
-    std::string_view function_name,
+    profiling::ThreadState&         tdata,
+    std::string_view                function_name,
     std::vector<std::string> const& args,
-    gsl::span<const char> const& data = {});
+    gsl::span<const char> const&    data = {});
 
 } // namespace json
 

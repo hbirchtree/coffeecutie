@@ -127,7 +127,8 @@ inline std::map<libc_types::u32, std::string> thread_names()
     return {};
 }
 
-inline libc_types::u32 frequency(bool = false, libc_types::u32 = 0, libc_types::u32 = 0)
+inline libc_types::u32 frequency(
+    bool = false, libc_types::u32 = 0, libc_types::u32 = 0)
 {
     return 0;
 }

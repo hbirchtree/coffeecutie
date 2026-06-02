@@ -14,7 +14,12 @@
 namespace gleam::convert {
 
 template<typename T>
-std::array<std::pair<typing::pixels::pix_fmt, std::tuple<T, group::pixel_type, group::pixel_format>>, 26> uncompressed_formats()
+std::array<
+    std::pair<
+        typing::pixels::pix_fmt,
+        std::tuple<T, group::pixel_type, group::pixel_format>>,
+    26>
+uncompressed_formats()
 {
     using ::enum_helpers::feval;
 
@@ -97,10 +102,19 @@ std::array<std::pair<typing::pixels::pix_fmt, std::tuple<T, group::pixel_type, g
     return direct_mapping;
 }
 
-template std::array<std::pair<typing::pixels::pix_fmt, std::tuple<group::internal_format, group::pixel_type, group::pixel_format>>, 26> uncompressed_formats();
+template std::array<
+    std::pair<
+        typing::pixels::pix_fmt,
+        std::tuple<
+            group::internal_format,
+            group::pixel_type,
+            group::pixel_format>>,
+    26>
+uncompressed_formats();
 
 template<typename T>
-std::array<compressed_format_t<T>, 27> compressed_formats(features::textures const& features)
+std::array<compressed_format_t<T>, 27> compressed_formats(
+    features::textures const& features)
 {
     using ::enum_helpers::feval;
 
@@ -115,15 +129,16 @@ std::array<compressed_format_t<T>, 27> compressed_formats(features::textures con
 
     using CF = typing::pixels::CompFmt;
 
-
-    const bool rgtc = features.tex.gl.rgtc || features.tex.ext.rgtc || features.tex.arb.rgtc;
-    const bool bptc = features.tex.gl.bptc || features.tex.ext.bptc || features.tex.arb.bptc;
+    const bool rgtc =
+        features.tex.gl.rgtc || features.tex.ext.rgtc || features.tex.arb.rgtc;
+    const bool bptc =
+        features.tex.gl.bptc || features.tex.ext.bptc || features.tex.arb.bptc;
     const bool etc2 = features.tex.gl.etc2;
     const bool astc = features.tex.gl.astc || features.tex.khr.astc;
     const bool s3tc = features.tex.ext.s3tc || features.tex.angle.s3tc;
 
     std::array<compressed_format_t<T>, 27> compressed_formats = {{
-        // clang-format off
+    // clang-format off
 #if defined(GL_EXT_texture_compression_s3tc)
         {CF(P::BCn, F::RGB,  M::BC1), {f::compressed_rgb_s3tc_dxt1_ext,  b::unsigned_byte, p::rgb},  s3tc},
         {CF(P::BCn, F::RGBA, M::BC1), {f::compressed_rgba_s3tc_dxt1_ext, b::unsigned_byte, p::rgba}, s3tc},
@@ -163,7 +178,8 @@ std::array<compressed_format_t<T>, 27> compressed_formats(features::textures con
     return compressed_formats;
 }
 
-template std::array<compressed_format_t<group::internal_format>, 27> compressed_formats(features::textures const& features);
+template std::array<compressed_format_t<group::internal_format>, 27>
+compressed_formats(features::textures const& features);
 
 template<typename T>
 requires std::is_same_v<T, group::sized_internal_format> ||
@@ -202,10 +218,9 @@ std::tuple<T, group::pixel_type, group::pixel_format> to(
 
     for(auto const& format : compressed_formats<T>(features))
     {
-        const bool matching =
-            fmt.pixfmt == format.desc.pixfmt &&
-            fmt.comp == format.desc.comp &&
-            fmt.cmpflg == format.desc.cmpflg;
+        const bool matching = fmt.pixfmt == format.desc.pixfmt &&
+                              fmt.comp == format.desc.comp &&
+                              fmt.cmpflg == format.desc.cmpflg;
         if(matching && format.condition)
             return format.out;
     }

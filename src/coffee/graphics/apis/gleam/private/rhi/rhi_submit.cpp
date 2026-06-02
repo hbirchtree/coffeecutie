@@ -1,5 +1,7 @@
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
 
+#include <numeric>
+
 #include <peripherals/stl/magic_enum.hpp>
 
 namespace gleam::detail {
@@ -262,35 +264,22 @@ void compute_ubo_instance(
      * If we adjust the baseInstance to say "start drawing at the 3rd instance"
      * this is not so much of a problem.
      *
-     * First we need to find the smallest stride and find out how often we need
-     * to move the baseInstance based on that.
-     * If we say the UBO alignment is 256 bytes, then:
-     * For a 16-byte structure, we only move the baseInstance every 16 instances
-     * For a 64-byte structure we only move it every 4 instances and so on
+     * For each buffer with stride S, the minimum skip such that skip*S is a
+     * multiple of ubo_alignment is: alignment / gcd(alignment, S).
+     * The overall skip is the LCM of all per-buffer skips.
      */
-    u32 smallest_stride{ubo_alignment};
-    u32 biggest_stride{0};
+    u32  skip    = 1;
+    bool has_buf = false;
     for(auto const& buffer : *buffers)
     {
         if(buffer.stride == 0)
             continue;
-        smallest_stride =
-            std::min<u32>(static_cast<u32>(buffer.stride), smallest_stride);
-        biggest_stride =
-            std::max<u32>(static_cast<u32>(buffer.stride), biggest_stride);
+        has_buf      = true;
+        u32 stride   = static_cast<u32>(buffer.stride);
+        u32 buf_skip = ubo_alignment / std::gcd(ubo_alignment, stride);
+        skip         = std::lcm(skip, buf_skip);
     }
-
-    u32 skip = ubo_alignment / smallest_stride;
-
-    if((biggest_stride % ubo_alignment) != 0)
-    {
-        u32 big_skip_stride = biggest_stride;
-        while((big_skip_stride % ubo_alignment) != 0)
-            big_skip_stride *= 2;
-        skip = std::max(big_skip_stride / biggest_stride, skip);
-    }
-
-    if(skip == 1)
+    if(!has_buf || skip == 1)
     {
         bookkeeping.baseInstance = 0;
         return;

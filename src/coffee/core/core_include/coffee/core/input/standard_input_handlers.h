@@ -78,7 +78,8 @@ struct StandardCameraOpts
     } accel;
 
     Vecf3     up{};
-    glm::mat3 world_basis{1.f}; /* transforms camera-space column vectors to world/position space */
+    glm::mat3 world_basis{1.f}; /* transforms camera-space column vectors to
+                                   world/position space */
 };
 
 template<typename CameraPtr, typename CameraOptsPtr>
@@ -165,15 +166,16 @@ struct StandardCamera
     {
         auto& q = m_camera->rotation;
         /* Pitch (look up/down): pre-multiply around view-space +X = {1,0,0}.
-         * cached.right is a BSP-space vector and is NOT the same 3D vector as view +X,
-         * so using it only accidentally produces correct pitch at the spawn facing angle.
-         * Pre-multiplying by angleAxis({1,0,0}) always rotates around screen-right. */
+         * cached.right is a BSP-space vector and is NOT the same 3D vector as
+         * view +X, so using it only accidentally produces correct pitch at the
+         * spawn facing angle. Pre-multiplying by angleAxis({1,0,0}) always
+         * rotates around screen-right. */
         q = glm::normalize(glm::angleAxis(yaw, Vecf3{-1.f, 0.f, 0.f}) * q);
         /* Yaw (turn left/right): post-multiply around the fixed GL Y axis.
-         * Using cached.up (BSP Z) here would roll the camera instead of turning it,
-         * because R_vertex lives in GL-intermediate space. The GL Y axis maps to
-         * BSP Z (world up) via bsp_basis, so this produces correct horizontal turning
-         * without S-curves. */
+         * Using cached.up (BSP Z) here would roll the camera instead of turning
+         * it, because R_vertex lives in GL-intermediate space. The GL Y axis
+         * maps to BSP Z (world up) via bsp_basis, so this produces correct
+         * horizontal turning without S-curves. */
         q = glm::normalize(q * glm::angleAxis(-pitch, Vecf3{0.f, 1.f, 0.f}));
     }
 
@@ -184,13 +186,13 @@ struct StandardCamera
         auto& rotation = cached.rotation = glm::mat3_cast(m_camera->rotation);
 
         /* Movement directions in world/position space.
-         * Row_i(V_rot) = Row_i(R_vertex * bsp_basis) = world_basis * Row_i(R_vertex).
-         * Extract rows via transpose; col 2 of the transposed matrix is negated
-         * because OpenGL's -Z is the forward direction. */
-        glm::mat3 Rt = glm::transpose(rotation);
-        cached.right   = m_opts->world_basis * Vecf3(Rt[0]);
-        cached.up      = m_opts->world_basis * Vecf3(Rt[1]);
-        cached.forward = m_opts->world_basis * -Vecf3(Rt[2]);
+         * Row_i(V_rot) = Row_i(R_vertex * bsp_basis) = world_basis *
+         * Row_i(R_vertex). Extract rows via transpose; col 2 of the transposed
+         * matrix is negated because OpenGL's -Z is the forward direction. */
+        glm::mat3 Rt     = glm::transpose(rotation);
+        cached.right     = m_opts->world_basis * Vecf3(Rt[0]);
+        cached.up        = m_opts->world_basis * Vecf3(Rt[1]);
+        cached.forward   = m_opts->world_basis * -Vecf3(Rt[2]);
         f32 acceleration = m_opts->accel.base;
 
         if(has_key(CK_LShift))

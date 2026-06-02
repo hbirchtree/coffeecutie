@@ -12,8 +12,8 @@ struct TerminalInput
     , comp_app::AppService<TerminalInput>
     , comp_app::AppLoadableService
 {
-    using readable_services =
-        comp_app::subsystem_list<comp_app::BasicEventBus<Coffee::Input::CIEvent>>;
+    using readable_services = comp_app::subsystem_list<
+        comp_app::BasicEventBus<Coffee::Input::CIEvent>>;
     using proxy_type = comp_app::detail::restricted::proxy_t<TerminalInput>;
 
     TerminalInput()
@@ -27,7 +27,7 @@ struct TerminalInput
     void start_restricted(proxy_type& p, time_point const&);
 
   private:
-    struct termios m_original_termios;
+    struct termios                                          m_original_termios;
     std::queue<std::pair<libc_types::u16, libc_types::u32>> m_pressed;
 };
 

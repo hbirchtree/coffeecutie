@@ -40,7 +40,7 @@ struct PerformanceMonitor
         proxy_type& p, std::string const& name, time_point const& time);
 
     rq::runtime_queue* m_worker_queue{nullptr};
-    int m_screenshot_quality{30};
+    int                m_screenshot_quality{30};
 };
 
 } // namespace comp_app

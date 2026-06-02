@@ -15,20 +15,20 @@
 
 namespace glw::trace::detail {
 template<typename T>
-requires (!std::is_enum_v<std::remove_cv_t<T>> &&
-          !std::is_integral_v<std::remove_cv_t<T>> &&
-          !std::is_floating_point_v<std::remove_cv_t<T>> &&
-          !std::is_pointer_v<T>)
+requires(
+    !std::is_enum_v<std::remove_cv_t<T>> &&
+    !std::is_integral_v<std::remove_cv_t<T>> &&
+    !std::is_floating_point_v<std::remove_cv_t<T>> && !std::is_pointer_v<T>)
 inline std::string to_string(T const& arg)
 {
     return "?";
 }
 
 template<typename T>
-requires (!std::is_enum_v<std::remove_cv_t<T>> &&
-        (std::is_integral_v<std::remove_cv_t<T>> ||
-         std::is_floating_point_v<std::remove_cv_t<T>> ||
-         std::is_pointer_v<T>))
+requires(
+    !std::is_enum_v<std::remove_cv_t<T>> &&
+    (std::is_integral_v<std::remove_cv_t<T>> ||
+     std::is_floating_point_v<std::remove_cv_t<T>> || std::is_pointer_v<T>))
 inline std::string to_string(T const& arg)
 {
     if constexpr(std::is_pointer_v<T>)

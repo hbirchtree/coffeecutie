@@ -17,8 +17,8 @@
 #include <coffee/core/types/input/event_types.h>
 #include <coffee/image/cimage.h>
 
-#include <peripherals/libc/signals.h>
 #include <peripherals/libc/output_ops.h>
+#include <peripherals/libc/signals.h>
 #include <peripherals/stl/base64.h>
 #include <peripherals/stl/magic_enum.hpp>
 #include <peripherals/stl/string_ops.h>
@@ -451,7 +451,7 @@ void configureDefaults(AppLoader& loader)
             if(config["graphics"].contains("window"))
             {
                 auto const& window_config = config["graphics"]["window"];
-                window.size = {
+                window.size               = {
                     window_config.value("width", 0),
                     window_config.value("height", 0),
                 };
@@ -894,7 +894,9 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
                 C_CAST<u32>(clock->governor(i)),
                 timestamp,
                 i,
-                platform::info::proc::model(i).value_or(std::make_pair(std::string(), std::string())).second);
+                platform::info::proc::model(i)
+                    .value_or(std::make_pair(std::string(), std::string()))
+                    .second);
         }
         json::CaptureMetrics(
             "CPU process load",
@@ -1031,7 +1033,8 @@ void PerformanceMonitor::capture_screenshot(
             cDebug("Capturing screenshot...");
 
             /* If not, set up JPG encoding + export to file and profiling */
-            auto encode = [screenshot_quality = m_screenshot_quality](dump_t* dump) {
+            auto encode = [screenshot_quality =
+                               m_screenshot_quality](dump_t* dump) {
                 semantic::Bytes  encoded;
                 stb::stb_error   ec;
                 stb::image_const source = stb::image_const::From(
@@ -1096,7 +1099,8 @@ void PerformanceMonitor::capture_screenshot(
             platform::profiling::PClock::now().time_since_epoch()));
 }
 
-void PerformanceMonitor::load(AppLoadableService::entity_container& e, app_error&)
+void PerformanceMonitor::load(
+    AppLoadableService::entity_container& e, app_error&)
 {
     m_nextScreenshot = m_prevFrame = e.relative_timestamp();
     if constexpr(enable_screenshots)

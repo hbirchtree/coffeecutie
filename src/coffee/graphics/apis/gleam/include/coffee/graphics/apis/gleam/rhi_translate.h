@@ -319,9 +319,8 @@ inline T to(render_targets::attachment attachment, u32 i)
 
 template<typename T = group::buffer_usage_arb>
 requires stl_types::is_any_of<T, group::buffer_usage_arb>
-    inline T to(
-        [[maybe_unused]] features::buffers const& features,
-        semantic::RSCA                            flags)
+inline T to(
+    [[maybe_unused]] features::buffers const& features, semantic::RSCA flags)
 {
     using enum_helpers::feval;
     using semantic::RSCA;

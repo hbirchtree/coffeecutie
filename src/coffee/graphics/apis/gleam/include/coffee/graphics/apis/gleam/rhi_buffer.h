@@ -87,8 +87,7 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
             cmd::named_buffer_data(
                 m_handle,
                 null_span<>{size},
-                convert::to<group::buffer_usage_arb>(
-                    m_features, m_access));
+                convert::to<group::buffer_usage_arb>(m_features, m_access));
         } else
 #endif
 #if GLEAM_MAX_VERSION >= 0x440
@@ -136,8 +135,7 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
             cmd::named_buffer_data(
                 m_handle,
                 data,
-                convert::to<group::buffer_usage_arb>(
-                    m_features, m_access));
+                convert::to<group::buffer_usage_arb>(m_features, m_access));
         } else
 #endif
 #if GLEAM_MAX_VERSION >= 0x440

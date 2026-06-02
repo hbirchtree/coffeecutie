@@ -38,8 +38,8 @@ static constexpr cstring event_format =
 
 struct MetricData
 {
-    MetricVariant variant;
-    u32           id;
+    MetricVariant              variant;
+    u32                        id;
     std::map<u32, std::string> index_names;
 };
 
@@ -78,7 +78,7 @@ struct ProfileWriter : GlobalState
            disable.has_value() && disable.value() == "1")
             disable_frequent = true;
         //        disable_frequent = true;
-        init_pid = getpid();
+        init_pid    = getpid();
         init_thread = std::this_thread::get_id();
     }
 
@@ -134,7 +134,12 @@ ProfileWriter::~ProfileWriter()
         {
             auto const& names = metric.second.index_names;
             for(auto const& [id, name] : names)
-                index_names = fmt("{0}{1}\"{2}\":\"{3}\"", index_names, index_names.empty() ? "" : ",", id, name);
+                index_names =
+                    fmt("{0}{1}\"{2}\":\"{3}\"",
+                        index_names,
+                        index_names.empty() ? "" : ",",
+                        id,
+                        name);
             index_names = ",\"index_names\":{" + index_names + "}";
         }
         auto out = fmt(
@@ -267,7 +272,7 @@ extern void CaptureMetrics(
     std::string const&        value,
     std::chrono::microseconds ts,
     u32                       index,
-    std::string_view index_name)
+    std::string_view          index_name)
 {
     if constexpr(!compile_info::profiler::enabled)
         return;
@@ -313,17 +318,18 @@ void CaptureMetrics(
     f32                       value,
     std::chrono::microseconds ts,
     u32                       index,
-    std::string_view index_name)
+    std::string_view          index_name)
 {
     using stl_types::cast_pod;
-    CaptureMetrics(tdata, name, variant, cast_pod(value), ts, index, index_name);
+    CaptureMetrics(
+        tdata, name, variant, cast_pod(value), ts, index, index_name);
 }
 
 void CaptureTrace(
-    profiling::ThreadState& tdata,
-    std::string_view function_name,
+    profiling::ThreadState&         tdata,
+    std::string_view                function_name,
     std::vector<std::string> const& args,
-    gsl::span<const char> const& data)
+    gsl::span<const char> const&    data)
 {
     // if constexpr(!compile_info::profiler::enabled)
     //     return;
@@ -347,10 +353,8 @@ void CaptureTrace(
         0,
         function_name,
         args_,
-        data_
-    );
+        data_);
     profiler.write(BytesConst::ofContainer(out));
-
 }
 
 } // namespace json

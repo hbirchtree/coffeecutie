@@ -46,8 +46,9 @@ struct SysCPUClock
     virtual Governor        governor(libc_types::u32) final;
     virtual libc_types::f64 frequency(
         libc_types::u32 cpu, libc_types::u32 core) final;
-    virtual libc_types::f32                                          processCpuLoad() final;
-    virtual std::vector<interfaces::CPUClockProvider::thread_load_t> threadCpuLoads() final;
+    virtual libc_types::f32 processCpuLoad() final;
+    virtual std::vector<interfaces::CPUClockProvider::thread_load_t>
+    threadCpuLoads() final;
 
   private:
     libc_types::u64                            m_lastCpuTime{0};

@@ -146,10 +146,13 @@ void ProfilingExport()
             }
         } else if(response_status == response_class::success)
         {
-            cVerbose(10, "Got success response {}", reportBinRsc.responseCode());
+            cVerbose(
+                10, "Got success response {}", reportBinRsc.responseCode());
         } else
         {
-            cWarning("Got no data back from server: {}", reportBinRsc.responseCode());
+            cWarning(
+                "Got no data back from server: {}",
+                reportBinRsc.responseCode());
         }
     } catch(net::net_error const& e)
     {

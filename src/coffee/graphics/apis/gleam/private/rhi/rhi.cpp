@@ -953,14 +953,17 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
         }
     } else
     {
-        for(auto const& fmt : convert::compressed_formats<group::internal_format>(m_features.texture))
+        for(auto const& fmt :
+            convert::compressed_formats<group::internal_format>(
+                m_features.texture))
         {
             if(!fmt.condition)
                 continue;
             if(!formats_list.empty())
                 formats_list.push_back(' ');
             // auto name = magic_enum::enum_name(std::get<0>(fmt.out));
-            // formats_list.insert(formats_list.end(), name.begin(), name.end());
+            // formats_list.insert(formats_list.end(), name.begin(),
+            // name.end());
         }
     }
     appInfo.add("gl:compressedFormats", formats_list);
@@ -1018,9 +1021,11 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
             m_limits.serialize(),
             m_workarounds.serialize());
         cDebug("Texture formats:");
-        for(auto const& [fmt, out] : convert::uncompressed_formats<group::internal_format>())
+        for(auto const& [fmt, out] :
+            convert::uncompressed_formats<group::internal_format>())
             cDebug("- {}", magic_enum::enum_name(fmt));
-        // for(auto const& fmt : convert::compressed_formats<group::internal_format>(m_features.texture))
+        // for(auto const& fmt :
+        // convert::compressed_formats<group::internal_format>(m_features.texture))
         //     if(fmt.condition)
         //         cDebug("- {}", magic_enum::enum_name(std::get<0>(fmt.out)));
     }

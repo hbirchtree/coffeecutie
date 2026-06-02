@@ -350,7 +350,8 @@ inline std::map<u32, std::string> thread_names()
         if(ent->d_name[0] == '.')
             continue;
         u32 tid = libc::str::from_string<u32>(ent->d_name);
-        std::snprintf(path, sizeof(path), "/proc/self/task/%s/comm", ent->d_name);
+        std::snprintf(
+            path, sizeof(path), "/proc/self/task/%s/comm", ent->d_name);
         FILE* f = std::fopen(path, "r");
         if(!f)
         {
@@ -398,7 +399,8 @@ inline std::map<u32, libc_types::u64> thread_cpu_ticks()
             continue;
 
         u32 tid = libc::str::from_string<u32>(ent->d_name);
-        std::snprintf(path, sizeof(path), "/proc/self/task/%s/stat", ent->d_name);
+        std::snprintf(
+            path, sizeof(path), "/proc/self/task/%s/stat", ent->d_name);
         FILE* f = std::fopen(path, "r");
         if(!f)
             continue;
@@ -417,9 +419,8 @@ inline std::map<u32, libc_types::u64> thread_cpu_ticks()
                        " %lu %lu",
                        &utime,
                        &stime) == 2)
-                    result[tid] =
-                        static_cast<libc_types::u64>(utime) +
-                        static_cast<libc_types::u64>(stime);
+                    result[tid] = static_cast<libc_types::u64>(utime) +
+                                  static_cast<libc_types::u64>(stime);
             }
         }
         std::fclose(f);

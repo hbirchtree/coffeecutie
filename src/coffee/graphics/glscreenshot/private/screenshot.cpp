@@ -53,9 +53,8 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
 
     auto major_version = std::min(m_config->version.major, 99);
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
-    if(m_dummy_config &&
-        m_dummy_config->enabled &&
-        !m_dummy_config->graphics_config.empty())
+    if(m_dummy_config && m_dummy_config->enabled &&
+       !m_dummy_config->graphics_config.empty())
         if(auto dummy_ver =
                m_dummy_config->graphics_config.value("major", i32(99));
            dummy_ver != 99)
@@ -154,7 +153,8 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
                 currentBinding);
 
         /* glReadPixels gives bottom-up rows; flip to top-down for image files.
-         * ARM32 systems have their framebuffer already in the correct orientation. */
+         * ARM32 systems have their framebuffer already in the correct
+         * orientation. */
 #if !defined(COFFEE_ARCH_ARM32)
         {
             auto stride = static_cast<libc_types::u32>(size_.w) * 4u;
@@ -191,11 +191,8 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
             glw::bind_buffer(pixel_pack_buffer, m_pbo);
 #if GLEAM_MAX_VERSION_ES >= 0x300
             using access_t = gl::group::map_buffer_access_mask;
-            auto ptr = glw::map_buffer_range(
-                pixel_pack_buffer,
-                0,
-                size,
-                access_t::map_read_bit);
+            auto ptr       = glw::map_buffer_range(
+                pixel_pack_buffer, 0, size, access_t::map_read_bit);
 #else
             auto ptr = glw::map_buffer(
                 pixel_pack_buffer, gl::group::buffer_access_arb::read_only);
@@ -255,24 +252,26 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
         {
             using namespace std::chrono_literals;
             m_capture_requested = true;
-            m_dump_promise = std::promise<dump_t>();
-            m_pending_capture = read_pixels;
+            m_dump_promise      = std::promise<dump_t>();
+            m_pending_capture   = read_pixels;
             // Set a timeout so we don't break promises all the time
-            rq::runtime_queue::QueueShot(
-                m_main_queue, 3s, [this] {
-                    if(!m_capture_requested)
-                        return;
-                    m_capture_requested = false;
-                    m_dump_promise.set_value(dump_t{});
-                }).assume_value();
+            rq::runtime_queue::QueueShot(m_main_queue, 3s, [this] {
+                if(!m_capture_requested)
+                    return;
+                m_capture_requested = false;
+                m_dump_promise.set_value(dump_t{});
+            }).assume_value();
             return m_dump_promise.get_future();
         } else
         {
             /* Set up a task to run the read + copy */
             auto out = rq::dependent_task<void, dump_t>::CreateSource(
-                [read_pixels = std::move(read_pixels)] { return read_pixels(0); });
+                [read_pixels = std::move(read_pixels)] {
+                    return read_pixels(0);
+                });
             auto dump_future = out->output.get_future();
-            rq::runtime_queue::Queue(m_main_queue, std::move(out)).assume_value();
+            rq::runtime_queue::Queue(m_main_queue, std::move(out))
+                .assume_value();
             return dump_future;
         }
     }
@@ -280,7 +279,8 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
 
 void ScreenshotProvider::signalCaptureReady(libc_types::u32 hnd)
 {
-    Coffee::DProfContext _("glscreenshot::ScreenshotProvider::Reading back capture FBO");
+    Coffee::DProfContext _(
+        "glscreenshot::ScreenshotProvider::Reading back capture FBO");
     m_dump_promise.set_value(m_pending_capture(hnd));
     m_capture_requested = false;
 }

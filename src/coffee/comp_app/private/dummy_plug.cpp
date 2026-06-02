@@ -164,12 +164,15 @@ void fork_dummy_plugs(
         Coffee::Logging::cFatal("Dummy plug config contains nothing");
     }
 
-    cDebug("Dummy plug plan: graphics={} audio={} events={}",
+    cDebug(
+        "Dummy plug plan: graphics={} audio={} events={}",
         config.contains("graphics"),
         config.contains("audio"),
         [&] -> libc_types::u32 {
-            if(!config.contains("events")) return 0u;
-            if(!config["events"].is_array()) return 0u;
+            if(!config.contains("events"))
+                return 0u;
+            if(!config["events"].is_array())
+                return 0u;
             return config["events"].size();
         }());
 
@@ -199,7 +202,8 @@ void fork_dummy_plugs(
         return;
 
     dummy_plug.swrender = config["graphics"].value("software_renderer", "none");
-    dummy_plug.screenshot_quality = config["graphics"].value("screenshot_quality", 30);
+    dummy_plug.screenshot_quality =
+        config["graphics"].value("screenshot_quality", 30);
 
     cDebug("Rendering backend selected: {}", dummy_plug.swrender);
     auto& glConfig = container.service<AppLoader>()->config<GLConfig>();

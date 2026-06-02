@@ -68,12 +68,12 @@ class system
 
     // Capture FBO for GL ES 2.0 platforms
     // Because ReadPixels doesn't work well
-    comp_app::interfaces::ScreenshotProvider *m_screenshot_provider{};
-    std::shared_ptr<rendertarget_t> m_capture_fbo{};
-    std::shared_ptr<texture_t> m_color_capture{};
-    hnd m_depth_capture{};
-    bool m_capture_fbo_active{false};
-    bool m_capture_requested{false};
+    comp_app::interfaces::ScreenshotProvider* m_screenshot_provider{};
+    std::shared_ptr<rendertarget_t>           m_capture_fbo{};
+    std::shared_ptr<texture_t>                m_color_capture{};
+    hnd                                       m_depth_capture{};
+    bool                                      m_capture_fbo_active{false};
+    bool                                      m_capture_requested{false};
 };
 
 } // namespace gleam

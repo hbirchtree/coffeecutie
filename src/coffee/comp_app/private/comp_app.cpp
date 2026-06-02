@@ -89,8 +89,8 @@ libc_types::f32 SysCPUClock::processCpuLoad()
 #endif
 }
 
-std::vector<interfaces::CPUClockProvider::thread_load_t>
-SysCPUClock::threadCpuLoads()
+std::vector<interfaces::CPUClockProvider::thread_load_t> SysCPUClock::
+    threadCpuLoads()
 {
 #if defined(COFFEE_LINUX)
     using namespace std::chrono;

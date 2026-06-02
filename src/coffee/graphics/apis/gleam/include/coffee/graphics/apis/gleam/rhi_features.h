@@ -512,8 +512,7 @@ struct features
             vertex.layout_binding,
             vertex.vertex_arrays,
             vertex.vertex_offset,
-            vertex.oes.vertex_arrays
-        );
+            vertex.oes.vertex_arrays);
     }
 };
 
@@ -583,8 +582,7 @@ struct workarounds
             buffer.slow_mapbuffer,
             buffer.disable_immutable_buffers,
             bugs.adreno_3xx,
-            bugs.adreno
-            );
+            bugs.adreno);
     }
 };
 
