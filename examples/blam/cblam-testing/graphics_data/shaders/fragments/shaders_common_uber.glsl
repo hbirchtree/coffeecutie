@@ -157,7 +157,6 @@ vec4 get_bump(in uint map_id, in vec2 offset)
     vec3 normal = normalize(get_color_with_offset(map_id, offset).rgb * 2.0 - 1.0);
     normal = /*tbn_matrix() **/ normal;
     return vec4(normal, dot(normal, light_direction()));
-    // return vec4(normal, dot(normal, light_direction()));
 }
 #endif
 
@@ -208,24 +207,39 @@ vec4 shader_environment()
 
 #if USE_REFLECTIONS == 1
     int reflective = (mats.instance[frag.instanceId].material.flags >> 6) & 0x1;
-    vec3 reflection = vec3(1.0);
-    vec3 reflection_tint = vec3(1.0);
+    vec3 reflection   = vec3(1.0);
+    vec3 refl_color   = vec3(1.0);
+    float refl_strength = 0.0;
     if(reflective > 0)
     {
-        uint reflect_flags = uint((mats.instance[frag.instanceId].material.flags >> 7) & 0x3);
-        vec3 view_world   = normalize(camera_position - frag.position);
-        vec3 world_bump   = normalize(tbn_matrix() * normal.rgb);
-        float NdotV       = clamp(dot(world_bump, view_world), 0.0, 1.0);
-        vec3 reflect_dir  = reflect(-view_world, world_bump);
-        reflection        = get_cube_color(reflect_dir).rgb;
+        uint reflect_type = uint((mats.instance[frag.instanceId].material.flags >> 7) & 0x3);
+        float lightmap_brightness = mats.instance[frag.instanceId].material.input1.x;
+
+        vec3 view_world  = normalize(camera_position - frag.position);
+        vec3 world_bump  = normalize(tbn_matrix() * normal.rgb);
+        vec3 surf_normal = normalize(frag.normal);
+
+        // bumped_cube=0: perturbed normal; flat_cube=1: geometric normal; bumped_radiosity=2: bumped
+        vec3 refl_normal = (reflect_type == 1u) ? surf_normal : world_bump;
+        float NdotV      = clamp(dot(refl_normal, view_world), 0.0, 1.0);
+        vec3 reflect_dir = reflect(-view_world, refl_normal);
+        reflection       = get_cube_color(reflect_dir).rgb;
 
         vec4 perp_color     = mats.instance[frag.instanceId].material.input2;
         vec4 parallel_color = mats.instance[frag.instanceId].material.input3;
-        reflection_tint = mix(
-            perp_color.rgb * perp_color.a,
-            parallel_color.rgb * parallel_color.a,
-            1.0 - NdotV);
+        float t   = 1.0 - NdotV; // perp=grazing(NdotV=0), parallel=straight-on(NdotV=1)
+        refl_color    = mix(parallel_color.rgb, perp_color.rgb, t);
+        refl_strength = mix(parallel_color.a,   perp_color.a,   t);
+
+        // lightmap_brightness scales how much the lightmap modulates reflection strength
+#if USE_LIGHTMAPS == 1
+        float lm_luma   = dot(lightmap.rgb, vec3(0.299, 0.587, 0.114));
+        refl_strength  *= mix(1.0, lm_luma, lightmap_brightness);
+#endif
     }
+#endif
+#if USE_NORMALMAP == 1
+    float bump_factor = clamp((normal.a + 1.0) / (light_direction().z + 1.0), 0.1, 2.0);
 #endif
     vec3 out_color = base.rgb *
         micro.rgb *
@@ -234,16 +248,10 @@ vec4 shader_environment()
         lightmap.rgb *
 #endif
 #if USE_REFLECTIONS == 1
-        mix(vec3(1), reflection * reflection_tint, 1.0 - base.a) *
+        mix(vec3(1), reflection * refl_color, refl_strength) *
 #endif
 #if USE_NORMALMAP == 1
-  #if USE_LIGHTMAPS == 1
-        // Half-Lambert ratio: both numerator and denominator in [0,2], never negative.
-        // Flat surface => (L_ts.z+1)/(L_ts.z+1) = 1.0. Crevices < 1.0. Bumps > 1.0.
-        clamp((normal.a + 1.0) / (light_direction().z + 1.0), 0.1, 2.0) *
-  #else
-        max(0.1, normal.a) *
-  #endif
+        bump_factor *
 #endif
         vec3(1);
 

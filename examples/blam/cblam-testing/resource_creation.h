@@ -22,6 +22,7 @@ struct legacy_memory_budget
     static constexpr auto mesh_elements   = 5_MB;
     static constexpr auto matrix_buffer   = 5_MB;
     static constexpr auto material_buffer = 5_MB;
+    static constexpr auto bone_buffer     = 1_MB;
     static constexpr auto debug_buffer    = 5_MB;
 
     static constexpr auto grand_total = bsp_buffer + bsp_elements +
@@ -37,6 +38,7 @@ struct modern_memory_budget
     static constexpr auto mesh_elements   = 16_MB;
     static constexpr auto matrix_buffer   = 8_MB;
     static constexpr auto material_buffer = 16_MB;
+    static constexpr auto bone_buffer     = 4_MB;
     static constexpr auto debug_buffer    = 8_MB;
 
     static constexpr auto grand_total = bsp_buffer + bsp_elements +

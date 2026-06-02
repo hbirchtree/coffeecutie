@@ -52,7 +52,7 @@ using bitm_format_hash = std::
  * dot(cam_plane.xyz, v) + cam_plane.w > 0  ↔  clip_w > 0  ↔  in front. */
 struct Frustum
 {
-    std::array<Vecf4, 4> planes; /* left, right, bottom, top */
+    std::array<Vecf4, 4> planes;    /* left, right, bottom, top */
     Vecf4                cam_plane; /* row3 of MVP — NOT normalised */
 
     static Frustum from_mvp(Matf4 const& m)
@@ -60,7 +60,7 @@ struct Frustum
         auto row = [&](int j) {
             return Vecf4(m[0][j], m[1][j], m[2][j], m[3][j]);
         };
-        Vecf4 r0 = row(0), r1 = row(1), r3 = row(3);
+        Vecf4   r0 = row(0), r1 = row(1), r3 = row(3);
         Frustum f;
         f.cam_plane = r3;
         f.planes[0] = r3 + r0; /* left   */
@@ -119,8 +119,7 @@ struct Frustum
         if(verts.empty())
             return true;
 
-        bool cam_valid =
-            glm::dot(Vecf3(cam_plane), Vecf3(cam_plane)) > 1e-10f;
+        bool cam_valid = glm::dot(Vecf3(cam_plane), Vecf3(cam_plane)) > 1e-10f;
 
         if(cam_valid)
         {
@@ -149,8 +148,8 @@ struct Frustum
             {
                 /* When cam_plane is valid, behind-camera vertices count as
                  * "inside" — their clip_w < 0 inverts the half-space test. */
-                if(cam_valid
-                   && glm::dot(Vecf3(cam_plane), v) + cam_plane.w <= 0.f)
+                if(cam_valid &&
+                   glm::dot(Vecf3(cam_plane), v) + cam_plane.w <= 0.f)
                 {
                     all_outside = false;
                     break;
@@ -176,8 +175,8 @@ struct BSPItem
         gleam::draw_command::data_t draw;
         generation_idx_t            light_bitm;
         generation_idx_t            shader;
-        u32                         cluster_idx{std::numeric_limits<u32>::max()};
-        u32                         subcluster_idx{std::numeric_limits<u32>::max()};
+        u32 cluster_idx{std::numeric_limits<u32>::max()};
+        u32 subcluster_idx{std::numeric_limits<u32>::max()};
     };
 
     struct Group
@@ -211,19 +210,20 @@ struct BSPItem
      * bmin/bmax stored inline to avoid pointer chasing. Struct is 32 bytes. */
     struct FlatSubcluster
     {
-        Vecf3 bmin, bmax;       /* 12+12 bytes */
-        u32   cluster_idx;      /* 4 bytes */
-        u32   sub_idx;          /* 4 bytes */
+        Vecf3 bmin, bmax;  /* 12+12 bytes */
+        u32   cluster_idx; /* 4 bytes */
+        u32   sub_idx;     /* 4 bytes */
     };
+
     static_assert(sizeof(FlatSubcluster) == 32);
 
-    blam::bsp::header const*                            mesh{nullptr};
-    blam::tag_t const*                                  tag{nullptr};
-    std::vector<Group>                                  groups;
-    std::vector<Cluster>                                clusters;
-    std::vector<FlatSubcluster>                         sorted_subclusters;
-    std::vector<gleam::draw_command::data_t>            portals;
-    std::vector<u32>                                    portal_color_ptrs;
+    blam::bsp::header const*                                mesh{nullptr};
+    blam::tag_t const*                                      tag{nullptr};
+    std::vector<Group>                                      groups;
+    std::vector<Cluster>                                    clusters;
+    std::vector<FlatSubcluster>                             sorted_subclusters;
+    std::vector<gleam::draw_command::data_t>                portals;
+    std::vector<u32>                                        portal_color_ptrs;
     std::vector<blam::bsp::background_sound_palette const*> bg_sound_palette;
 
     /* PVS (Potentially Visible Set) data: one bit per cluster per row,
@@ -238,7 +238,8 @@ struct BSPItem
 
     /* BFS through the portal graph from from_idx up to max_depth hops.
      * Returns a bitset (one bool per cluster) of reachable clusters.
-     * max_depth=1 gives the camera cluster + its immediate portal neighbours. */
+     * max_depth=1 gives the camera cluster + its immediate portal neighbours.
+     */
     inline std::vector<bool> portal_visible_set(
         u32 from_idx, u32 max_depth = std::numeric_limits<u32>::max()) const
     {
@@ -247,7 +248,7 @@ struct BSPItem
             return visible;
 
         std::vector<u32> frontier = {from_idx};
-        visible[from_idx]        = true;
+        visible[from_idx]         = true;
 
         for(u32 depth = 0; depth < max_depth && !frontier.empty(); depth++)
         {
@@ -260,8 +261,8 @@ struct BSPItem
                         (portal.data->front_cluster == static_cast<i16>(ci))
                             ? portal.data->back_cluster
                             : portal.data->front_cluster;
-                    if(adj >= 0 && static_cast<u32>(adj) < clusters.size()
-                       && !visible[static_cast<u32>(adj)])
+                    if(adj >= 0 && static_cast<u32>(adj) < clusters.size() &&
+                       !visible[static_cast<u32>(adj)])
                     {
                         visible[static_cast<u32>(adj)] = true;
                         next.push_back(static_cast<u32>(adj));
@@ -275,7 +276,8 @@ struct BSPItem
 
     /* Compute inward-facing cone planes from eye through a portal polygon.
      * Each plane passes through eye and one edge; normals point toward the
-     * interior of the view cone so that "inside" means visible through the portal.
+     * interior of the view cone so that "inside" means visible through the
+     * portal.
      *
      * Only vertical edges (significant Z extent, Halo CE uses Z-up) contribute
      * cone planes.  Horizontal top/bottom edges are skipped: when the camera is
@@ -286,7 +288,7 @@ struct BSPItem
         Vecf3 const& eye, std::vector<Vecf3> const& verts)
     {
         std::vector<Vecf4> result;
-        int n = static_cast<int>(verts.size());
+        int                n = static_cast<int>(verts.size());
         if(n < 3)
             return result;
         Vecf3 centroid(0.f);
@@ -354,19 +356,21 @@ struct BSPItem
      * cluster-boundary straddle cases without a grace depth. */
     struct BFSTrace
     {
-        u32 depth;
-        u32 from_ci;
-        u32 to_ci;
-        u32 cone_planes_before; /* cone planes on entry to from_ci */
-        u32 cone_planes_added;  /* planes added by the portal from_ci→to_ci */
+        u32  depth;
+        u32  from_ci;
+        u32  to_ci;
+        u32  cone_planes_before; /* cone planes on entry to from_ci */
+        u32  cone_planes_added;  /* planes added by the portal from_ci→to_ci */
         bool near;
     };
 
     inline std::vector<bool> portal_visible_set(
-        u32 from_idx, Vecf3 const& camera_pos, Matf4 const& mvp,
-        u32 max_depth           = std::numeric_limits<u32>::max(),
-        u32 frustum_start_depth = 0,
-        std::vector<BFSTrace>* trace = nullptr) const
+        u32                    from_idx,
+        Vecf3 const&           camera_pos,
+        Matf4 const&           mvp,
+        u32                    max_depth = std::numeric_limits<u32>::max(),
+        u32                    frustum_start_depth = 0,
+        std::vector<BFSTrace>* trace               = nullptr) const
     {
         Frustum frustum = Frustum::from_mvp(mvp);
 
@@ -377,9 +381,10 @@ struct BSPItem
 
         struct Entry
         {
-            u32               ci;
+            u32                ci;
             std::vector<Vecf4> cone; /* accumulated portal cone planes */
         };
+
         std::vector<Entry> frontier = {{from_idx, {}}};
 
         for(u32 depth = 0; depth < max_depth && !frontier.empty(); depth++)
@@ -400,17 +405,18 @@ struct BSPItem
                          * straddle), where the cone would be degenerate. */
                         if(!frustum.polygon_inside(portal.vertices))
                             continue;
-                        near = glm::distance(camera_pos, portal.data->centroid)
-                                    <= portal.data->bound_radius;
-                        if(!near
-                           && !polygon_passes_planes(portal.vertices, entry.cone))
+                        near =
+                            glm::distance(camera_pos, portal.data->centroid) <=
+                            portal.data->bound_radius;
+                        if(!near &&
+                           !polygon_passes_planes(portal.vertices, entry.cone))
                             continue;
                     }
-                    i32 adj =
-                        (portal.data->front_cluster == static_cast<i16>(entry.ci))
-                            ? portal.data->back_cluster
-                            : portal.data->front_cluster;
-                    u32 ai = static_cast<u32>(adj);
+                    i32 adj = (portal.data->front_cluster ==
+                               static_cast<i16>(entry.ci))
+                                  ? portal.data->back_cluster
+                                  : portal.data->front_cluster;
+                    u32 ai  = static_cast<u32>(adj);
                     if(adj >= 0 && ai < clusters.size() && !visible[ai])
                     {
                         visible[ai] = true;
@@ -498,6 +504,11 @@ struct ModelItem
     blam::mod2::header<V> const* header{nullptr};
     blam::tag_t const*           tag{nullptr};
     LOD                          mesh;
+
+    std::vector<Matf4>
+        bone_matrices; /* rest-pose skinning matrices (world * inv_bind) */
+    i32 bone_base{
+        -1}; /* base offset into BoneMatrices SSBO (set at render time) */
 
     inline bool valid() const
     {

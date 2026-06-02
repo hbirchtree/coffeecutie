@@ -106,7 +106,12 @@ struct bone
     Vecf3     translation;
     Quatf     rotation;
     f32       offset;
-    f32       unknown_[21];
+    f32       unknown_[8]; /* 0x48-0x64 */
+    f32       inv_scale;
+    Vecf3     inv_forward;
+    Vecf3     inv_left;
+    Vecf3     inv_up;
+    Vecf3     inv_pos;
 };
 
 static_assert(sizeof(bone) == 156);

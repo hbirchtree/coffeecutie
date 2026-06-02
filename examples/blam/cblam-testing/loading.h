@@ -17,7 +17,7 @@ void load_scenario_bsp(
     BSPCache<Version>&    bsp_cache = e.subsystem_cast<BSPCache<Version>>();
     ShaderCache<Version>& shader_cache =
         e.subsystem_cast<ShaderCache<Version>>();
-    BlamResources& gpu          = e.subsystem_cast<BlamResources>();
+    BlamResources& gpu           = e.subsystem_cast<BlamResources>();
     DebugMarkers&  debug_markers = e.subsystem_cast<DebugMarkers>();
 
     {
@@ -25,11 +25,12 @@ void load_scenario_bsp(
         bsp_cache.element_buffer = gpu.bsp_index->map<blam::vert::face>(0);
         bsp_cache.light_buffer   = gpu.bsp_light_buf->map<byte_t>(0);
 
-        debug_markers.portal_buffer       = gpu.debug_lines->map<Vecf3>(0);
-        debug_markers.portal_color_buffer = gpu.debug_line_colors->map<Vecf3>(0);
-        debug_markers.portal_ptr          = reserved_debug_points;
-        debug_markers.portal_color_ptr    = reserved_debug_colors;
-        bsp_cache.debug_markers           = &debug_markers;
+        debug_markers.portal_buffer = gpu.debug_lines->map<Vecf3>(0);
+        debug_markers.portal_color_buffer =
+            gpu.debug_line_colors->map<Vecf3>(0);
+        debug_markers.portal_ptr       = reserved_debug_points;
+        debug_markers.portal_color_ptr = reserved_debug_colors;
+        bsp_cache.debug_markers        = &debug_markers;
     }
 
     /* Start loading up vertex data */
@@ -232,13 +233,14 @@ void load_scenario_bsp(
                 auto          mesh_ent = e.create_entity(bsp_);
                 BspReference& bsp_ref  = mesh_ent.get<BspReference>();
 
-                bsp_ref.shader        = mesh.shader;
-                bsp_ref.lightmap      = mesh.light_bitm;
-                bsp_ref.bsp           = mesh_id;
-                bsp_ref.cluster_idx   = mesh.cluster_idx;
+                bsp_ref.shader         = mesh.shader;
+                bsp_ref.lightmap       = mesh.light_bitm;
+                bsp_ref.bsp            = mesh_id;
+                bsp_ref.cluster_idx    = mesh.cluster_idx;
                 bsp_ref.subcluster_idx = mesh.subcluster_idx;
-                bsp_ref.visible       = true;
-                bsp_ref.sort_center   = mesh.mesh ? mesh.mesh->centroid : Vecf3{0};
+                bsp_ref.visible        = true;
+                bsp_ref.sort_center =
+                    mesh.mesh ? mesh.mesh->centroid : Vecf3{0};
                 bsp_ref.draw.data.push_back(mesh.draw);
 
                 ShaderData&       shader_   = mesh_ent.get<ShaderData>();
@@ -342,8 +344,6 @@ void load_objects(
 
         auto mod_name = model.tag->to_name().to_string(magic);
         auto tag_name = instance_tag->to_name().to_string(magic);
-        if(mod_name == "scenery\\c_storage\\c_storage")
-            cDebug("Halt!!!");
 
         NetworkInfo& netinfo = parent_.get<NetworkInfo>();
         netinfo.object       = tagref;
@@ -683,7 +683,8 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
                 ShaderItem const& shader_it = shader_cache.get(region.shader);
                 shader_.initialize(shader_it, submodel);
 
-                submodel.current_pass = shader_.get_render_pass(shader_cache, true);
+                submodel.current_pass =
+                    shader_.get_render_pass(shader_cache, true);
             }
         }
     }

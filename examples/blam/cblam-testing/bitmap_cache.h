@@ -232,8 +232,8 @@ struct BitmapCache
         }
 
         img.image.bias = -std::max<f32>(
-            static_cast<f32>(bucket.surface->m_mipmaps)
-                - static_cast<f32>(img.image.mip->mipmaps),
+            static_cast<f32>(bucket.surface->m_mipmaps) -
+                static_cast<f32>(img.image.mip->mipmaps),
             0.f);
 
         /* Lightmaps do not use mipmapping */

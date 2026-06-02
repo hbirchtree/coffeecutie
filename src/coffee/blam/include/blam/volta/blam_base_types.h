@@ -48,9 +48,8 @@ struct bounding_box
 
     inline bool contains(Vecf3 const& point) const
     {
-        return point.x >= x_min && point.x <= x_max
-            && point.y >= y_min && point.y <= y_max
-            && point.z >= z_min && point.z <= z_max;
+        return point.x >= x_min && point.x <= x_max && point.y >= y_min &&
+               point.y <= y_max && point.z >= z_min && point.z <= z_max;
     }
 
     std::pair<Vecf3, Vecf3> points() const

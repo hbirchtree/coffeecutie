@@ -82,12 +82,17 @@ static void init_map(
     compo::EntityContainer& e, MapLoadFinishedEvent<halo_version>& finished)
 {
     auto& loading_status = e.subsystem_cast<LoadingStatus>();
-    auto& bitmaps        = e.subsystem_cast<BitmapCache<halo_version>>();
-    auto& bsps           = e.subsystem_cast<BSPCache<halo_version>>();
-    auto& models         = e.subsystem_cast<ModelCache<halo_version>>();
-    auto& shaders        = e.subsystem_cast<ShaderCache<halo_version>>();
-    auto& sounds         = e.subsystem_cast<SoundCache<halo_version>>();
-    auto& ui_elements    = e.subsystem_cast<UIElementCache<halo_version>>();
+    if(std::exchange(loading_status.init_started, true))
+    {
+        cWarning("init_map fired twice for same map load, ignoring");
+        return;
+    }
+    auto& bitmaps     = e.subsystem_cast<BitmapCache<halo_version>>();
+    auto& bsps        = e.subsystem_cast<BSPCache<halo_version>>();
+    auto& models      = e.subsystem_cast<ModelCache<halo_version>>();
+    auto& shaders     = e.subsystem_cast<ShaderCache<halo_version>>();
+    auto& sounds      = e.subsystem_cast<SoundCache<halo_version>>();
+    auto& ui_elements = e.subsystem_cast<UIElementCache<halo_version>>();
 
     loading_status.app_info = e.service<comp_app::AppInfo>();
 
@@ -418,6 +423,7 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     loading.loaded_map     = LoadingStatus::none;
     loading.loaded_bitmaps = LoadingStatus::none;
     loading.loaded_sounds  = LoadingStatus::none;
+    loading.init_started   = false;
     loading.finished       = std::promise<void>();
 
     auto& file_mapper   = e.subsystem_cast<comp_app::FileMapper>();
@@ -568,7 +574,8 @@ void setup_load_eventhandlers(compo::EntityContainer& e)
         });
 
     gbus.addEventFunction<MapLoadFinishedEvent<halo_version>>(
-        0, [&e](GameEvent&, MapLoadFinishedEvent<halo_version>* finished) {
+        0,
+        [&e](GameEvent&, MapLoadFinishedEvent<halo_version>* finished) mutable {
             cDebug("Starting MapFinished handler");
             init_map(e, *finished);
         });

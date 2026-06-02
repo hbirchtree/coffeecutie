@@ -146,9 +146,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
     Vecf2 ui_to_screen(Vecf2 const& ui_point)
     {
-        f32   x_offset    = (screen_size.x - 640) / (2.f * screen_size.x);
-        f32   x_scale     = 1.f - x_offset * 2.f;
-        Vecf2 normalized  = ui_point / Vecf2(640.f / x_scale, 480.f);
+        f32   x_offset   = (screen_size.x - 640) / (2.f * screen_size.x);
+        f32   x_scale    = 1.f - x_offset * 2.f;
+        Vecf2 normalized = ui_point / Vecf2(640.f / x_scale, 480.f);
         return (normalized + Vecf2(x_offset, 0.f)) * screen_size;
     }
 
@@ -210,7 +210,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         Vecf2 global_origin =
             Vecf2(box.x, box.y) + layout.offset + Vecf2(bounds.y, bounds.x);
         Vecf2 min = global_origin;
-        Vecf2 max = global_origin + Vecf2(bounds.w - bounds.y, bounds.z - bounds.x);
+        Vecf2 max =
+            global_origin + Vecf2(bounds.w - bounds.y, bounds.z - bounds.x);
 
         if(!visit(el, min, max) || el.children.empty())
             return;
@@ -218,8 +219,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         auto children_opt = el.ui_element->child_widgets.data(bitm_cache.magic);
         if(!children_opt.has_value())
             return;
-        auto const      children  = children_opt.value();
-        blam::vec4i16   child_box = {(i16)min.x, (i16)min.y, (i16)max.x, (i16)max.y};
+        auto const    children  = children_opt.value();
+        blam::vec4i16 child_box = {
+            (i16)min.x, (i16)min.y, (i16)max.x, (i16)max.y};
         for(auto const& [i, child] : stl_types::const_enumerate(el.children))
         {
             auto const& meta = children[i];
@@ -227,7 +229,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 child,
                 child_box,
                 layout_data_t{
-                    .offset = Vecf2(meta.horizontal_offset, meta.vertical_offset)},
+                    .offset =
+                        Vecf2(meta.horizontal_offset, meta.vertical_offset)},
                 std::forward<Fn>(visit));
         }
     }
@@ -241,7 +244,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         event_result result;
 
         traverse_widget(
-            item, data.box, layout,
+            item,
+            data.box,
+            layout,
             [&](UIElementItem& el, Vecf2 min, Vecf2 max) -> bool {
                 el.focused = mouse_in_bounds(min, max);
                 if(!el.focused || !m_click_pending)
@@ -260,7 +265,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 for(auto const& eh : handlers_opt.value())
                 {
                     /* left mouse acts as both direct mouse event and confirm
-                     * (a_btn), since PC maps mouse click to controller confirm */
+                     * (a_btn), since PC maps mouse click to controller confirm
+                     */
                     bool mouse_event =
                         eh.event_type == eh_t::type_t::left_mouse ||
                         eh.event_type == eh_t::type_t::a_btn;
@@ -284,9 +290,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                             result.consumed    = true;
                         }
                     }
-                    if(flags &
-                       static_cast<u32>(
-                           eh_t::flags_t::go_back_to_previous_widget))
+                    if(flags & static_cast<u32>(
+                                   eh_t::flags_t::go_back_to_previous_widget))
                     {
                         result.go_back  = true;
                         result.consumed = true;
@@ -306,7 +311,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         using widget_type = blam::ui_element::widget_type_t;
 
         traverse_widget(
-            item, data.box, layout,
+            item,
+            data.box,
+            layout,
             [&](UIElementItem& el, Vecf2 min, Vecf2 max) -> bool {
                 auto dimensions = max - min;
 
@@ -324,15 +331,16 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                         data.vertex_data.end(), verts.begin(), verts.end());
                     data.instance_data.push_back({.color = Vecf4{1, 1, 1, 0}});
 
-                    auto& inst = data.instance_data.back();
+                    auto&                inst = data.instance_data.back();
                     atlas_intermediate_t tmp{};
-                    auto const& im = el.focused && el.background_alt.valid()
-                                         ? el.background_alt
-                                         : el.background;
+                    auto const& im   = el.focused && el.background_alt.valid()
+                                           ? el.background_alt
+                                           : el.background;
                     auto const* bitm = bitm_cache.assign_atlas_data(tmp, im);
                     auto const* img  = bitm->image.mip;
-                    auto        imscale =
-                        Vecf2(dimensions.x / img->isize.x, dimensions.y / img->isize.y);
+                    auto        imscale = Vecf2(
+                        dimensions.x / img->isize.x,
+                        dimensions.y / img->isize.y);
                     inst.tex_scale_offset = Vecf4(
                         tmp.atlas_scale.x * std::min(imscale.x, 1.f),
                         tmp.atlas_scale.y * std::min(imscale.y, 1.f),
@@ -365,7 +373,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
                 constexpr f32 kAtlasSize  = 256.f;
                 constexpr u32 kFontSource = 9u;
-                u32           tex_source  = (kFontSource << 24) | font_item.atlas_layer;
+                u32 tex_source = (kFontSource << 24) | font_item.atlas_layer;
 
                 f32 text_width = 0.f;
                 for(char16_t c : text)
@@ -375,10 +383,11 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                         text_width += git->second.advance;
                 }
 
-                f32 box_w      = max.x - min.x;
-                f32 start_x    = min.x + tb.horizontal_offset;
-                f32 baseline_y = min.y + tb.vertical_offset +
-                                 static_cast<f32>(font_item.font->ascend_height);
+                f32 box_w   = max.x - min.x;
+                f32 start_x = min.x + tb.horizontal_offset;
+                f32 baseline_y =
+                    min.y + tb.vertical_offset +
+                    static_cast<f32>(font_item.font->ascend_height);
 
                 using just_t = blam::ui_element::text_box_t::justification_t;
                 if(tb.justification == just_t::center)
@@ -405,9 +414,12 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     f32 gy2 = gy + g.bitmap_height;
 
                     std::array<vertex_t, 6> glyph_verts = {{
-                        {{gx, gy}, {0, 0}},   {{gx2, gy}, {1, 0}},
-                        {{gx2, gy2}, {1, 1}}, {{gx, gy}, {0, 0}},
-                        {{gx2, gy2}, {1, 1}}, {{gx, gy2}, {0, 1}},
+                        {{gx, gy}, {0, 0}},
+                        {{gx2, gy}, {1, 0}},
+                        {{gx2, gy2}, {1, 1}},
+                        {{gx, gy}, {0, 0}},
+                        {{gx2, gy2}, {1, 1}},
+                        {{gx, gy2}, {0, 1}},
                     }};
                     data.vertex_data.insert(
                         data.vertex_data.end(),
@@ -416,7 +428,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
                     instance_vertex_t inst{};
                     inst.color            = (tb.color.a > 0.f) ? Vecf4(tb.color)
-                                                                : Vecf4{1, 1, 1, 1};
+                                                               : Vecf4{1, 1, 1, 1};
                     inst.tex_scale_offset = Vecf4(
                         g.bitmap_width / kAtlasSize,
                         g.bitmap_height / kAtlasSize,
@@ -453,8 +465,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             using Coffee::Input::CIControllerAtomicEvent;
             using Coffee::Input::CIEvent;
             using Coffee::Input::CIMouseMoveEvent;
-            if(auto* bus = e.underlying()
-                               .service<comp_app::BasicEventBus<CIEvent>>())
+            if(auto* bus =
+                   e.underlying().service<comp_app::BasicEventBus<CIEvent>>())
             {
                 bus->addEventFunction<CIMouseMoveEvent>(
                     1024, [this](CIEvent&, CIMouseMoveEvent* mv) {
@@ -469,8 +481,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                             mouse_buttons |= mb->btn;
                             if(mb->btn == CIMouseButtonEvent::LeftButton)
                                 m_click_pending = true;
-                        }
-                        else
+                        } else
                             mouse_buttons &= mouse_buttons ^ mb->btn;
                     });
                 bus->addEventFunction<CIControllerAtomicEvent>(
@@ -488,8 +499,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         {
             for(auto const& widget : e.select<UIElement>())
             {
-                auto  ref     = e.ref<Proxy>(widget);
-                auto& element = ref.get<UIElement>();
+                auto          ref     = e.ref<Proxy>(widget);
+                auto&         element = ref.get<UIElement>();
                 widget_data_t root_data{
                     .vertex_data   = vertex_data,
                     .instance_data = instance_vertex_data,
@@ -502,8 +513,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 {
                     m_widget_history.push_back(element.element);
                     element.element = result.open_widget;
-                }
-                else if(result.go_back && !m_widget_history.empty())
+                } else if(result.go_back && !m_widget_history.empty())
                 {
                     element.element = m_widget_history.back();
                     m_widget_history.pop_back();
@@ -518,11 +528,12 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         if(cursor_visible)
         {
             atlas_intermediate_t tmp{};
-            auto const* bitm = bitm_cache.assign_atlas_data(tmp, m_cursor_bitmap);
-            auto const* img  = bitm->image.mip;
-            Vecf2       csz{(f32)img->isize.x, (f32)img->isize.y};
-            Vecf2       cmin = m_mouse_raw;
-            Vecf2       cmax = m_mouse_raw + csz;
+            auto const*          bitm =
+                bitm_cache.assign_atlas_data(tmp, m_cursor_bitmap);
+            auto const*             img = bitm->image.mip;
+            Vecf2                   csz{(f32)img->isize.x, (f32)img->isize.y};
+            Vecf2                   cmin  = m_mouse_raw;
+            Vecf2                   cmax  = m_mouse_raw + csz;
             std::array<vertex_t, 6> verts = {{
                 {.position = {cmin.x, cmin.y}, .tex_coord = {0, 0}},
                 {.position = {cmax.x, cmin.y}, .tex_coord = {1, 0}},
@@ -535,8 +546,10 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             instance_vertex_t inst{};
             inst.color            = {1, 1, 1, 1};
             inst.tex_scale_offset = Vecf4(
-                tmp.atlas_scale.x, tmp.atlas_scale.y,
-                tmp.atlas_offset.x, tmp.atlas_offset.y);
+                tmp.atlas_scale.x,
+                tmp.atlas_scale.y,
+                tmp.atlas_offset.x,
+                tmp.atlas_offset.y);
             inst.texture_source.x = tmp.layer;
             instance_vertex_data.push_back(inst);
         }
@@ -549,7 +562,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             Bytes::ofContainer(instance_vertex_data).view);
 
         auto cursor_scale =
-            glm::scale(Matf3(1), Vecf2{2.f / screen_size.x, -2.f / screen_size.y}) *
+            glm::scale(
+                Matf3(1), Vecf2{2.f / screen_size.x, -2.f / screen_size.y}) *
             glm::translate(
                 Matf3(1), Vecf2{-screen_size.x / 2.f, -screen_size.y / 2.f});
 
@@ -563,9 +577,10 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                             .instanced = false,
                             .mode      = gfx::drawing::primitive::triangle,
                         },
-                    .data = {
-                        {.arrays = {.count = count, .offset = offset}},
-                    },
+                    .data =
+                        {
+                            {.arrays = {.count = count, .offset = offset}},
+                        },
                 },
                 gfx::make_uniform_list(
                     typing::graphics::ShaderStage::Vertex,
@@ -677,7 +692,8 @@ void load_ui_items(
         if(name.find("pause_game_options") == std::string_view::npos)
             continue;
 
-        auto us_opt = tag.template data<blam::ui::unicode_string>(data.container.magic);
+        auto us_opt =
+            tag.template data<blam::ui::unicode_string>(data.container.magic);
         if(!us_opt.has_value())
             continue;
         auto subs_opt = us_opt.value()->sub_strings.data(data.container.magic);
@@ -713,8 +729,9 @@ void load_ui_items(
         large_ui_font.valid(),
         root_widgets.size());
 
-    // Collect text_boxes with accumulated screen Y, sort, then assign strings in
-    // visual top-to-bottom order so the string list index matches screen position.
+    // Collect text_boxes with accumulated screen Y, sort, then assign strings
+    // in visual top-to-bottom order so the string list index matches screen
+    // position.
     if(!pause_strings.empty() && large_ui_font.valid())
     {
         struct Entry
@@ -722,6 +739,7 @@ void load_ui_items(
             generation_idx_t id;
             i32              screen_y;
         };
+
         std::vector<Entry> entries;
 
         std::function<void(generation_idx_t, i32)> collect =
@@ -745,7 +763,8 @@ void load_ui_items(
                     return;
                 for(size_t i = 0; i < item.children.size(); i++)
                 {
-                    i32 child_y = this_y + child_meta.value()[i].vertical_offset;
+                    i32 child_y =
+                        this_y + child_meta.value()[i].vertical_offset;
                     collect(item.children[i], child_y);
                 }
             };
@@ -754,19 +773,21 @@ void load_ui_items(
             collect(root_widgets[0], 0);
 
         std::stable_sort(
-            entries.begin(),
-            entries.end(),
-            [](Entry const& a, Entry const& b) { return a.screen_y < b.screen_y; });
+            entries.begin(), entries.end(), [](Entry const& a, Entry const& b) {
+                return a.screen_y < b.screen_y;
+            });
 
-        /* Map pause menu button names to their string index in the pause_strings
-         * list.  The game engine assigns strings by game logic, not tag data;
-         * button names are the only stable identifier available to us. */
+        /* Map pause menu button names to their string index in the
+         * pause_strings list.  The game engine assigns strings by game logic,
+         * not tag data; button names are the only stable identifier available
+         * to us. */
         static constexpr std::array<std::pair<std::string_view, i32>, 4>
             kButtonStringMap{{
-                {"resume_game_button",     0},
-                {"quit_netgame_button",    1},
+                {"resume_game_button", 0},
+                {"quit_netgame_button", 1},
                 {"change_settings_button", 2},
-                {"game_options_button",    3}, /* repurposed as team select in MP */
+                {"game_options_button",
+                 3}, /* repurposed as team select in MP */
             }};
 
         for(auto& [id, y] : entries)
@@ -785,7 +806,8 @@ void load_ui_items(
                 }
             if(sidx < 0 || static_cast<size_t>(sidx) >= pause_strings.size())
                 continue;
-            item.text_strings.push_back(pause_strings[static_cast<size_t>(sidx)]);
+            item.text_strings.push_back(
+                pause_strings[static_cast<size_t>(sidx)]);
             item.font_id = large_ui_font;
         }
         cDebug("  {} text_boxes found", entries.size());
@@ -806,6 +828,7 @@ void load_ui_items(
         u32              players;
         generation_idx_t id;
     };
+
     std::vector<PauseVariant> pause_variants;
     for(auto const& id : root_widgets)
     {
@@ -857,8 +880,9 @@ void load_ui_items(
         {
             e.subsystem_cast<UIRenderer>().m_cursor_bitmap =
                 bitmaps.predict(tag.as_ref(), 0);
+        } catch(...)
+        {
         }
-        catch(...) {}
         break;
     }
 }

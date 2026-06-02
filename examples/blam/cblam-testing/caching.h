@@ -196,7 +196,9 @@ struct BSPCache
                     blam::scn::skybox const* sky_ptr = nullptr;
                     if(sky_ref.valid())
                         if(auto tag = index.tag_of(sky_ref))
-                            if(auto data = (*tag)->template data<blam::scn::skybox>(magic);
+                            if(auto data =
+                                   (*tag)->template data<blam::scn::skybox>(
+                                       magic);
                                data.has_value() && data.value())
                                 sky_ptr = data.value();
                     sky_palette.push_back(sky_ptr);
@@ -204,13 +206,13 @@ struct BSPCache
         }
     }
 
-    blam::version_t                  version;
-    BitmapCache<V>&                  bitm_cache;
-    ShaderCache<V>&                  shader_cache;
-    SoundCache<V>&                   sound_cache;
-    comp_app::EventBus<SoundEvent>*  sound_bus;
-    blam::tag_index_view<V>          index;
-    blam::map_ptr                    magic;
+    blam::version_t                       version;
+    BitmapCache<V>&                       bitm_cache;
+    ShaderCache<V>&                       shader_cache;
+    SoundCache<V>&                        sound_cache;
+    comp_app::EventBus<SoundEvent>*       sound_bus;
+    blam::tag_index_view<V>               index;
+    blam::map_ptr                         magic;
     std::vector<blam::scn::skybox const*> sky_palette;
 
     Span<byte_t>           vert_buffer;

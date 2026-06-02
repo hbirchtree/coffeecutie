@@ -48,9 +48,9 @@ struct BlamBspWidget
         using compo::Entity;
         using compo::EntityRef;
 
-        auto bsps     = e.template select<BspReference>();
-        auto models   = e.template select<SubModel>();
-        auto triggers = e.template select<TriggerVolume>();
+        auto  bsps      = e.template select<BspReference>();
+        auto  models    = e.template select<SubModel>();
+        auto  triggers  = e.template select<TriggerVolume>();
         auto& bsp_cache = e.template subsystem<BSPCache<V>>();
 
         if(ImGui::Begin("Rendering"))
@@ -75,14 +75,19 @@ struct BlamBspWidget
                     ImGui::Checkbox(
                         "Show clusters", &rendering->debug_clusters);
                     ImGui::Checkbox("Show portals", &rendering->debug_portals);
-                    ImGui::Checkbox("Update occlusion", &rendering->occluder_update);
+                    ImGui::Checkbox(
+                        "Update occlusion", &rendering->occluder_update);
                     if(ImGui::BeginListBox("Clusters"))
                     {
                         for(auto& bsp : bsps)
                         {
-                            auto* bsp_ref = e.template get<BspReference>(bsp.id);
+                            auto* bsp_ref =
+                                e.template get<BspReference>(bsp.id);
                             // auto& bsp_ = bsp_cache->predict(bsp_ref->bsp);
-                            auto name = fmt::format("{} cluster={}", stl_types::str::fmt::pointerify(bsp_ref), bsp_ref->cluster_idx);
+                            auto name = fmt::format(
+                                "{} cluster={}",
+                                stl_types::str::fmt::pointerify(bsp_ref),
+                                bsp_ref->cluster_idx);
                             ImGui::Checkbox(name.c_str(), &bsp_ref->visible);
                         }
                         ImGui::EndListBox();

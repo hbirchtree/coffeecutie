@@ -506,8 +506,8 @@ struct alignas(4) shader_env : radiosity_properties /* aka senv */
 {
     enum class flags_t : u16
     {
-        none                      = 0x0,
-        alpha_tested              = 0x1, // If alpha-tested, use bump map alpha as alpha
+        none         = 0x0,
+        alpha_tested = 0x1, // If alpha-tested, use bump map alpha as alpha
         bump_map_is_specular_mask = 0x2,
         true_atmospheric_fog      = 0x4,
     };

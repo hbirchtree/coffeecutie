@@ -60,6 +60,9 @@ struct BlamResources : compo::SubsystemBase
     std::shared_ptr<gfx::revolving_buffer_t> material_store;
     std::shared_ptr<gfx::revolving_buffer_t> transparent_store;
     std::shared_ptr<gfx::buffer_t>           world_store;
+    std::shared_ptr<gfx::revolving_buffer_t>
+        bone_matrix_buf; /* per-frame bone transforms, separate from static
+                            vertex data */
 
     typing::vector_types::Veci2          offscreen_size{1920, 1080};
     std::shared_ptr<gfx::rendertarget_t> offscreen;
@@ -102,7 +105,8 @@ struct RenderingParameters : compo::SubsystemBase
     f32 tex_res{0.f};
     f32 draw_distance{500.f};
 
-    libc_types::u32 current_bsp_cluster{std::numeric_limits<libc_types::u32>::max()};
+    libc_types::u32 current_bsp_cluster{
+        std::numeric_limits<libc_types::u32>::max()};
 };
 
 struct LoadingStatus : compo::SubsystemBase
@@ -123,6 +127,7 @@ struct LoadingStatus : compo::SubsystemBase
     loading_t                      loaded_map{none};
     loading_t                      loaded_bitmaps{none};
     loading_t                      loaded_sounds{none};
+    bool                           init_started{false};
     std::promise<void>             finished{};
 
     void check_all_loaded()

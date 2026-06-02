@@ -27,7 +27,7 @@ struct LoopSoundEvent
     };
 
     blam::tagref_t const* sound{};
-    usage_t usage{usage_t::general};
+    usage_t               usage{usage_t::general};
 };
 
 struct PlaySoundEvent

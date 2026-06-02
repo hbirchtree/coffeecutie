@@ -77,22 +77,24 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         auto subclusters = cluster.sub_clusters.data(bsp_magic).value();
         for(auto const& portal_idx : portal_idxs)
         {
-            auto const& p    = portals[portal_idx];
-            auto        verts = p.vertices.data(bsp_magic);
+            auto const&     p     = portals[portal_idx];
+            auto            verts = p.vertices.data(bsp_magic);
             BSPItem::Portal entry;
             entry.data = &p;
             if(verts.has_value())
-                entry.vertices.assign(verts.value().begin(), verts.value().end());
+                entry.vertices.assign(
+                    verts.value().begin(), verts.value().end());
             it.portals.push_back(std::move(entry));
         }
         for(blam::bsp::subcluster const& sub : subclusters)
         {
-            auto indices    = sub.indices.data(bsp_magic).value();
+            auto indices  = sub.indices.data(bsp_magic).value();
             auto [p1, p2] = sub.bounds.points();
-            Vecf3 lo = glm::min(p1, p2);
-            Vecf3 hi = glm::max(p1, p2);
+            Vecf3 lo      = glm::min(p1, p2);
+            Vecf3 hi      = glm::max(p1, p2);
             /* 16-vertex line_strip tracing all 12 edges of the AABB.
-             * Bottom face → front-left vertical → top face → remaining 3 verticals. */
+             * Bottom face → front-left vertical → top face → remaining 3
+             * verticals. */
             std::array<Vecf3, 16> vertices = {{
                 lo,
                 Vecf3(hi.x, lo.y, lo.z),
@@ -114,8 +116,10 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             std::copy(
                 vertices.begin(),
                 vertices.end(),
-                debug_markers->portal_buffer.begin() + debug_markers->portal_ptr);
-            debug_markers->portal_color_buffer[debug_markers->portal_color_ptr] =
+                debug_markers->portal_buffer.begin() +
+                    debug_markers->portal_ptr);
+            debug_markers
+                ->portal_color_buffer[debug_markers->portal_color_ptr] =
                 Vecf3(0, 1, 0);
             out.portals.push_back({
                 .arrays =
@@ -156,7 +160,8 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         std::sort(
             out.sorted_subclusters.begin(),
             out.sorted_subclusters.end(),
-            [](BSPItem::FlatSubcluster const& a, BSPItem::FlatSubcluster const& b) {
+            [](BSPItem::FlatSubcluster const& a,
+               BSPItem::FlatSubcluster const& b) {
                 auto da = a.bmax - a.bmin;
                 auto db = b.bmax - b.bmin;
                 return (da.x * da.y * da.z) < (db.x * db.y * db.z);
@@ -165,12 +170,12 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
 
     /* Populate PVS bitset.
      * The cluster data blob is stored immediately after the cluster array.
-     * cluster_data_size = n_clusters * ceil(n_clusters / 8) bytes (PVS only). */
+     * cluster_data_size = n_clusters * ceil(n_clusters / 8) bytes (PVS only).
+     */
     if(section.cluster_data_size > 0 && !bclusters.empty())
     {
-        auto const* pvs_ptr =
-            reinterpret_cast<libc_types::byte_t const*>(
-                bclusters.data() + bclusters.size());
+        auto const* pvs_ptr = reinterpret_cast<libc_types::byte_t const*>(
+            bclusters.data() + bclusters.size());
 
         u32 n            = static_cast<u32>(bclusters.size());
         u32 expected_row = (n + 7u) / 8u;
@@ -190,8 +195,8 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             actual_row,
             hex);
 
-        out.pvs_data      = Span<libc_types::byte_t const>(pvs_ptr,
-                                static_cast<u32>(section.cluster_data_size));
+        out.pvs_data = Span<libc_types::byte_t const>(
+            pvs_ptr, static_cast<u32>(section.cluster_data_size));
         out.pvs_row_stride = actual_row;
     }
 
@@ -218,8 +223,15 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
     auto nodes         = nodes_.value();
     auto clusters      = clusters_.value();
 
-    cDebug("Surfaces={} lightmaps={} leaves={} leaf_surfaces={} nodes={} clusters={}",
-        surfaces.size(), lightmaps.size(), leaves.size(), leaf_surfaces.size(), nodes.size(), clusters.size());
+    cDebug(
+        "Surfaces={} lightmaps={} leaves={} leaf_surfaces={} nodes={} "
+        "clusters={}",
+        surfaces.size(),
+        lightmaps.size(),
+        leaves.size(),
+        leaf_surfaces.size(),
+        nodes.size(),
+        clusters.size());
 
     std::map<i32, std::vector<blam::vert::face const*>> node_surfaces;
 
@@ -279,12 +291,13 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
 
     /* Build face → (cluster, subcluster) map from the subcluster index lists.
      * Each subcluster stores the global face indices (into header.surfaces)
-     * that fall within its AABB.  This gives a finer split than the cluster-only
-     * leaf map: one ECS entity per (material × subcluster) instead of per
-     * (material × cluster), so the occluder can cull per-AABB rather than
-     * per-cluster. */
+     * that fall within its AABB.  This gives a finer split than the
+     * cluster-only leaf map: one ECS entity per (material × subcluster) instead
+     * of per (material × cluster), so the occluder can cull per-AABB rather
+     * than per-cluster. */
     constexpr u32 kInvalid = std::numeric_limits<u32>::max();
-    using SubclusterKey    = std::pair<u32, u32>; /* (cluster_idx, subcluster_idx) */
+    using SubclusterKey =
+        std::pair<u32, u32>; /* (cluster_idx, subcluster_idx) */
 
     std::vector<SubclusterKey> face_subcluster(
         surfaces.size(), {kInvalid, kInvalid});
@@ -352,17 +365,15 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             for(u32 fi = mat_start; fi < mat_end; fi++)
             {
                 SubclusterKey key;
-                if(fi < face_subcluster.size()
-                   && face_subcluster[fi].first != kInvalid)
+                if(fi < face_subcluster.size() &&
+                   face_subcluster[fi].first != kInvalid)
                 {
                     key = face_subcluster[fi];
-                }
-                else
+                } else
                 {
-                    u32 cid = (fi < face_cluster.size())
-                                  ? face_cluster[fi]
-                                  : kInvalid;
-                    key = {cid, kInvalid};
+                    u32 cid = (fi < face_cluster.size()) ? face_cluster[fi]
+                                                         : kInvalid;
+                    key     = {cid, kInvalid};
                 }
                 sub_faces[key].push_back(fi);
             }
@@ -378,24 +389,24 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
                 }
 
                 group.meshes.emplace_back();
-                auto& mesh    = group.meshes.back();
-                mesh.mesh     = &mat;
-                mesh.draw     = {
-                    .elements =
+                auto& mesh = group.meshes.back();
+                mesh.mesh  = &mat;
+                mesh.draw  = {
+                     .elements =
                         {
-                            .count         = static_cast<u32>(face_idxs.size() * 3),
-                            .offset        = sub_start * sizeof(blam::vert::face),
-                            .vertex_offset = vert_base,
-                            .type          = semantic::type_t::u16,
+                             .count  = static_cast<u32>(face_idxs.size() * 3),
+                             .offset = sub_start * sizeof(blam::vert::face),
+                             .vertex_offset = vert_base,
+                             .type          = semantic::type_t::u16,
                         },
-                    .instances =
+                     .instances =
                         {
-                            .count = 1,
+                             .count = 1,
                         },
                 };
-                mesh.shader        = shader_cache.predict(mat.shader);
-                mesh.light_bitm    = light_bitm;
-                mesh.cluster_idx   = cid;
+                mesh.shader         = shader_cache.predict(mat.shader);
+                mesh.light_bitm     = light_bitm;
+                mesh.cluster_idx    = cid;
                 mesh.subcluster_idx = sid;
             }
 
@@ -408,11 +419,13 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         u32 assigned = 0, unassigned = 0;
         for(auto const& grp : out.groups)
             for(auto const& m : grp.meshes)
-                (m.cluster_idx == std::numeric_limits<u32>::max()
-                     ? unassigned
-                     : assigned)++;
-        cDebug("BSP mesh cluster assignment: {}/{} assigned, {} unassigned",
-               assigned, assigned + unassigned, unassigned);
+                (m.cluster_idx == std::numeric_limits<u32>::max() ? unassigned
+                                                                  : assigned)++;
+        cDebug(
+            "BSP mesh cluster assignment: {}/{} assigned, {} unassigned",
+            assigned,
+            assigned + unassigned,
+            unassigned);
     }
 
     return out;
@@ -505,12 +518,44 @@ ModelItem<V> ModelCache<V>::predict_impl(
             std::copy(vertices.begin(), vertices.end(), vert_dest.begin());
             std::copy(elements.begin(), elements.end(), element_dest.begin());
 
-            //                Array<u16, 2> last_indices = {{elements[0],
-            //                elements[1]}};
+            /* Remap local node indices to global bone indices (PC only) */
+            if constexpr(!std::is_same_v<V, blam::xbox_version_t>)
+            {
+                using flags_t = blam::mod2::model_flags_t;
+                if(static_cast<u16>(header->flags) &
+                   static_cast<u16>(flags_t::local_nodes))
+                {
+                    auto const* wrap = reinterpret_cast<
+                        blam::mod2::part_wrap_header<V> const*>(part);
+                    u8 node_count = wrap->unknown_2[3];
+                    if(node_count > 0)
+                    {
+                        for(auto& v : vert_dest)
+                        {
+                            if(v.weights.node0 < node_count)
+                                v.weights.node0 =
+                                    wrap->unknown_2[4 + v.weights.node0];
+                            if(v.weights.node1 < node_count)
+                                v.weights.node1 =
+                                    wrap->unknown_2[4 + v.weights.node1];
+                        }
+                    }
+                }
+            }
 
             vert_ptr += vertices.size_bytes();
             element_ptr += elements.size_bytes();
         }
+    }
+
+    /* Rest-pose skinning matrices: identity because vertices are in model space
+     * at bind pose. Bone matrices at rest pose are world_bind * inv_bind = I.
+     */
+    if(auto bones_opt = header->bones.data(magic); bones_opt.has_value())
+    {
+        auto bones = bones_opt.value();
+        u32  n     = static_cast<u32>(bones.size());
+        out.bone_matrices.resize(n, Matf4(1));
     }
 
     return out;
@@ -553,7 +598,7 @@ ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)
         out.senv.micro_bitm = get_bitm_idx(shader_model.diffuse.micro.map);
 
         out.senv.self_illum = get_bitm_idx(shader_model.self_illum.map.map);
-        out.senv.bump = get_bitm_idx(shader_model.bump.map);
+        out.senv.bump       = get_bitm_idx(shader_model.bump.map);
         out.senv.reflection_bitm =
             get_bitm_idx(shader_model.reflection.reflection);
 
@@ -771,15 +816,15 @@ void ShaderCache<V>::populate_material(
         // Self-illum takes map slot 1 when present; micro otherwise.
         if(shader.senv.self_illum.valid())
         {
-            auto* si = bitm_cache.assign_atlas_data(mat.maps[1], shader.senv.self_illum);
+            auto* si = bitm_cache.assign_atlas_data(
+                mat.maps[1], shader.senv.self_illum);
             if(si)
                 mat.maps[1].uv_scale = Vecf2(info->self_illum.map.scale);
             mat.lightmap.meta1 = 1;
-        }
-        else
+        } else
         {
-            auto* micro =
-                bitm_cache.assign_atlas_data(mat.maps[1], shader.senv.micro_bitm);
+            auto* micro = bitm_cache.assign_atlas_data(
+                mat.maps[1], shader.senv.micro_bitm);
             if(micro)
             {
                 mat.maps[1].uv_scale = Vecf2(info->diffuse.micro.scale);
@@ -848,14 +893,16 @@ void ShaderCache<V>::populate_material(
          * uvscale (= base_map_scale * ripple.scale) multiplies offsets,
          * so divide by ripple.scale to keep visual scroll rate independent
          * of texture tiling. Apply a floor so slow-velocity maps (e.g. c10)
-         * still show perceptible animation; effective_rate = max(vel, floor). */
+         * still show perceptible animation; effective_rate = max(vel, floor).
+         */
         constexpr f32 min_tiles_per_sec = 0.03f;
-        f32 effective_vel = std::max(info->ripple.anim_velocity, min_tiles_per_sec);
+        f32           effective_vel =
+            std::max(info->ripple.anim_velocity, min_tiles_per_sec);
         f32 norm_velocity = info->ripple.scale > 0.f
                                 ? effective_vel / info->ripple.scale
                                 : effective_vel;
-        mat.material.inputs1  = Vecf2{
-            glm::radians(info->ripple.anim_angle), norm_velocity};
+        mat.material.inputs1 =
+            Vecf2{glm::radians(info->ripple.anim_angle), norm_velocity};
         mat.material.inputs[0] =
             Vecf4(info->parallel.tint_color, info->parallel.brightness);
         mat.material.inputs[1] = Vecf4(
@@ -903,11 +950,13 @@ void ShaderCache<V>::populate_material(
         shader_model const* info =
             shader.header->as<blam::shader::shader_model>();
 
-        auto* soso_base = bitm_cache.assign_atlas_data(mat.maps[0], shader.soso.base_bitm);
+        auto* soso_base =
+            bitm_cache.assign_atlas_data(mat.maps[0], shader.soso.base_bitm);
         mat.maps[0].uv_scale = base_map_scale;
         mat.maps[0].bias     = soso_base ? soso_base->image.bias - 2.f : -2.f;
 
-        auto* soso_multi = bitm_cache.assign_atlas_data(mat.maps[1], shader.soso.multi_bitm);
+        auto* soso_multi =
+            bitm_cache.assign_atlas_data(mat.maps[1], shader.soso.multi_bitm);
         mat.maps[1].uv_scale = base_map_scale;
         mat.maps[1].bias     = soso_multi ? soso_multi->image.bias - 2.f : -2.f;
 

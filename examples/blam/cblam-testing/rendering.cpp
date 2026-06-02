@@ -5,13 +5,13 @@
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
 #include <coffee/graphics/apis/gleam/rhi_system.h>
 #include <coffee/graphics/apis/gleam/rhi_urls.h>
+#include <coffee/image/ktx_load.h>
 #include <glw/texture_formats.h>
 #include <glw/texture_formats_desc.h>
 #include <peripherals/constants.h>
 #include <peripherals/stl/iterator_slice.h>
 #include <peripherals/stl/tuple_hash.h>
 #include <peripherals/typing/enum/graphics/shader_stage.h>
-#include <coffee/image/ktx_load.h>
 
 #include "caching.h"
 #include "coffee/graphics/apis/gleam/rhi_texture.h"
@@ -51,6 +51,15 @@ inline void assign_map(MapType& map, BitmapItem const* bitm)
 
 } // namespace detail
 
+struct alignas(16) PerInstanceData
+{
+    Matf4 transform;
+    i32   bone_base{-1};
+    i32   pad[3]{};
+};
+
+static_assert(sizeof(PerInstanceData) == 80);
+
 template<typename Version>
 struct MeshRenderer
     : compo::RestrictedSubsystem<
@@ -76,7 +85,7 @@ struct MeshRenderer
         gfx::buffer_slice_t               matrix_buffer;
         Span<materials::shader_data>      material_mapping;
         Span<materials::transparent_data> transparent_mapping;
-        Span<Matf4>                       matrix_mapping;
+        Span<PerInstanceData>             matrix_mapping;
 
         std::string name;
 
@@ -118,7 +127,8 @@ struct MeshRenderer
             }
         }
 
-        // Transparent passes: one draw per item (no instancing), records center.
+        // Transparent passes: one draw per item (no instancing), records
+        // center.
         model_tracker_t insert_sortable(draw_data_t draw, Vecf3 const& center)
         {
             draw.instances.count = 1;
@@ -149,9 +159,11 @@ struct MeshRenderer
                 for(auto& d : bucket)
                     flat.push_back({sort_centers[ci++], d});
 
-            std::sort(flat.begin(), flat.end(), [&](auto const& a, auto const& b) {
-                return glm::distance2(a.first, cam) > glm::distance2(b.first, cam);
-            });
+            std::sort(
+                flat.begin(), flat.end(), [&](auto const& a, auto const& b) {
+                    return glm::distance2(a.first, cam) >
+                           glm::distance2(b.first, cam);
+                });
 
             draws.clear();
             draws.emplace_back();
@@ -191,7 +203,7 @@ struct MeshRenderer
         inline size_t required_matrix_storage() const
         {
             return (required_storage() / sizeof(materials::shader_data)) *
-                   sizeof(Matf4);
+                   sizeof(PerInstanceData);
         }
 
         inline size_t required_transparent_storage() const
@@ -226,7 +238,7 @@ struct MeshRenderer
     const bool supports_splitscreen = !compile_info::platform::is_emscripten;
 
     std::shared_ptr<gfx::texture_2d_t> meow_tex;
-    std::shared_ptr<gfx::sampler_t> meow_sampler;
+    std::shared_ptr<gfx::sampler_t>    meow_sampler;
 
     MeshRenderer(
         gfx::api*             api,
@@ -487,7 +499,7 @@ struct MeshRenderer
                 typing::graphics::ShaderStage::Vertex,
                 {"MatrixStore"sv, 0},
                 pass.matrix_buffer,
-                sizeof(Matf4),
+                sizeof(PerInstanceData),
             },
             gfx::buffer_definition_t{
                 typing::graphics::ShaderStage::Vertex,
@@ -499,6 +511,12 @@ struct MeshRenderer
                 typing::graphics::ShaderStage::Fragment,
                 {"WorldProperties"sv, 2},
                 m_resources.world_store->slice(0),
+                0,
+            },
+            gfx::buffer_definition_t{
+                typing::graphics::ShaderStage::Vertex,
+                {"BoneMatrices"sv, 3},
+                m_resources.bone_matrix_buf->slice(0),
                 0,
             });
 
@@ -623,8 +641,7 @@ struct MeshRenderer
             {
                 groups.insert(
                     groups.end(), bsp->portals.begin(), bsp->portals.end());
-            }
-            else if(params->debug_clusters)
+            } else if(params->debug_clusters)
             {
                 u32 cur = params->current_bsp_cluster;
                 if(cur < bsp->clusters.size())
@@ -700,7 +717,7 @@ struct MeshRenderer
 
         // Performance is terrible on Emscripten when updating every frame
         // We need a more efficient way to update the buffer in that case
-        bool invalidated = true;//!compile_info::platform::is_emscripten;
+        bool invalidated = true; //! compile_info::platform::is_emscripten;
         if(time - last_update > std::chrono::seconds(10) || invalidated)
         {
             generate_draws(p);
@@ -727,25 +744,30 @@ struct MeshRenderer
             switch(pass)
             {
             case Pass_SkyAdditive:
-            case Pass_Additive: return {.additive = true};
+            case Pass_Additive:
+                return {.additive = true};
             case Pass_SkyMultiply:
-            case Pass_Multiply: return {.multiply = true};
-            default:            return {};
+            case Pass_Multiply:
+                return {.multiply = true};
+            default:
+                return {};
             }
         };
 
         /* Primary player is always the first one (seat_idx == 0) */
         u32 primary_player = 0;
 
-        // Sky passes — drawn first so opaque geometry overwrites them naturally.
-        // No depth write; depth test passes everywhere (empty buffer).
+        // Sky passes — drawn first so opaque geometry overwrites them
+        // naturally. No depth write; depth test passes everywhere (empty
+        // buffer).
         {
             gfx::depth_extended_state sky_depth{.depth_write = false};
             for(i32 pi = Pass_SkyOpaque; pi <= Pass_LastSky; ++pi)
             {
                 auto pass  = static_cast<Passes>(pi);
                 auto blend = blend_for_pass(pass);
-                render_pass(p, primary_player, t, m_model[pass], blend, sky_depth);
+                render_pass(
+                    p, primary_player, t, m_model[pass], blend, sky_depth);
             }
         }
 
@@ -773,48 +795,51 @@ struct MeshRenderer
 
             while(!meow_tex)
             {
-                auto pause_tex = ktx::load_from("textures/meow.0.etc2"_rsc.data());
+                auto pause_tex =
+                    ktx::load_from("textures/meow.0.etc2"_rsc.data());
                 if(!pause_tex)
                 {
                     cWarning("Failed to load blanking texture");
                     break;
                 }
-                auto meow_data = std::move(pause_tex.value());
+                auto        meow_data = std::move(pause_tex.value());
                 auto const& meow_size = meow_data.mips.at(0).size;
-                meow_tex = m_api->alloc_texture(
+                meow_tex              = m_api->alloc_texture(
                     gfx::textures::d2,
-                    CompFmt(comp_app::pix_fmt::ETC2, typing::pixels::pix_flags::RG),
+                    CompFmt(
+                        comp_app::pix_fmt::ETC2, typing::pixels::pix_flags::RG),
                     1);
                 meow_tex->alloc(size_3d<u32>{meow_size.x, meow_size.y, 1u});
                 meow_tex->upload(
-                        meow_data.mips.at(0).data,
-                        Veci2{},
-                        Veci2{meow_size.x, meow_size.y}
-                    );
+                    meow_data.mips.at(0).data,
+                    Veci2{},
+                    Veci2{meow_size.x, meow_size.y});
                 meow_sampler = meow_tex->sampler();
                 meow_sampler->alloc();
-                meow_sampler->set_edge_policy(1, typing::WrapPolicy::MirrorClamp);
+                meow_sampler->set_edge_policy(
+                    1, typing::WrapPolicy::MirrorClamp);
                 meow_tex->set_swizzle(
                     gfx::textures::swizzle_t::red,
                     gfx::textures::swizzle_t::red,
                     gfx::textures::swizzle_t::red,
-                    gfx::textures::swizzle_t::alpha
-                );
+                    gfx::textures::swizzle_t::alpha);
                 break;
             }
 
-            auto size = p.template service<comp_app::GraphicsFramebuffer>()->size();
+            auto size =
+                p.template service<comp_app::GraphicsFramebuffer>()->size();
             clear->extra_quads.push_back({
-                .position = Vecf2(size.w / 2.f, 0),
-                .size = Vecf2(size.w / 2.f, size.h / 2.f),
+                .position    = Vecf2(size.w / 2.f, 0),
+                .size        = Vecf2(size.w / 2.f, size.h / 2.f),
                 .atlas_scale = Vecf2{1.f, -1.f},
-                .sampler = meow_sampler,
+                .sampler     = meow_sampler,
             });
         }
 
         // Sort transparent draws back-to-front before rendering.
         // Safe to do here — update_materials already wrote all material slots.
-        Vecf3 const& cam_pos = m_players.empty() ? Vecf3{0} : m_players[primary_player].position;
+        Vecf3 const& cam_pos =
+            m_players.empty() ? Vecf3{0} : m_players[primary_player].position;
         for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
         {
             m_model[static_cast<Passes>(pi)].sort_by_depth(cam_pos);
@@ -827,8 +852,10 @@ struct MeshRenderer
         {
             auto pass  = static_cast<Passes>(pi);
             auto blend = blend_for_pass(pass);
-            render_pass(p, primary_player, t, m_model[pass], blend, transparent_depth);
-            render_bsp_pass(p, primary_player, t, m_bsp[pass], blend, transparent_depth);
+            render_pass(
+                p, primary_player, t, m_model[pass], blend, transparent_depth);
+            render_bsp_pass(
+                p, primary_player, t, m_bsp[pass], blend, transparent_depth);
         }
 
         //        render_bsp_pass(p, m_bsp[Pass_Wireframe]);
@@ -838,6 +865,7 @@ struct MeshRenderer
         m_resources.model_matrix_store->next();
         m_resources.transparent_store->next();
         m_resources.material_store->next();
+        m_resources.bone_matrix_buf->next();
     }
 
     void end_restricted(Proxy& /*p*/, time_point const& /*time*/)
@@ -950,9 +978,9 @@ struct MeshRenderer
             if(model.current_pass > Pass_LastOpaque)
             {
                 Vecf3 center = Vecf3(mod.transform[3]);
-                track.model_id = wf.insert_sortable(model.draw.data.front(), center);
-            }
-            else
+                track.model_id =
+                    wf.insert_sortable(model.draw.data.front(), center);
+            } else
                 track.model_id = wf.insert_draw(model.draw.data.front());
         }
         Coffee::Profiler::PopContext();
@@ -985,10 +1013,16 @@ struct MeshRenderer
                 pass.material_buffer
                     .template buffer_cast<materials::shader_data>();
             pass.matrix_mapping =
-                pass.matrix_buffer.template buffer_cast<Matf4>();
+                pass.matrix_buffer.template buffer_cast<PerInstanceData>();
             matrix_ptr += matrix_size;
             materials_ptr += material_size;
         }
+
+        // Reset per-frame bone_base so each model uploads once per frame
+        for(auto& [id, item] : model_cache->m_cache)
+            item.bone_base = -1;
+        std::vector<Matf4> bone_upload;
+        size_t             bone_write_ptr = 0;
 
         for(auto& ent : p.select(ObjectMod2))
         {
@@ -1009,15 +1043,32 @@ struct MeshRenderer
             draw_data_t const& draw =
                 pass.draws[track.model_id.bucket].at(track.model_id.draw);
             auto instance_id = draw.instances.offset + track.model_id.instance;
-            pass.matrix_mapping[instance_id] = model.transform;
-            auto name =
-                model.origin_object->to_name().to_string(shader_cache.magic);
+
+            ModelItem<Version>& cache_item =
+                model_cache->find(model.model)->second;
+            if(!cache_item.bone_matrices.empty() && cache_item.bone_base < 0)
+            {
+                cache_item.bone_base = static_cast<i32>(bone_write_ptr);
+                bone_write_ptr += cache_item.bone_matrices.size();
+                bone_upload.insert(
+                    bone_upload.end(),
+                    cache_item.bone_matrices.begin(),
+                    cache_item.bone_matrices.end());
+            }
+
+            auto& pid     = pass.matrix_mapping[instance_id];
+            pid.transform = model.transform;
+            pid.bone_base = cache_item.bone_base;
             populate_mod2_material(
                 smodel,
-                model_cache->find(model.model)->second,
+                cache_item,
                 model_context(model.origin_object),
                 instance_id);
         }
+
+        if(!bone_upload.empty())
+            m_resources.bone_matrix_buf->update(
+                0, Span<const Matf4>(bone_upload));
 
         m_resources.model_matrix_store->unmap();
     }

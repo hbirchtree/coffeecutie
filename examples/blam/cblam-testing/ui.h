@@ -8,8 +8,9 @@
 struct UIEvent
 {
     std::string element{};
-    bool clicked{true};
+    bool        clicked{true};
 };
+
 using UIEventBus = comp_app::BasicEventBus<UIEvent>;
 
 void alloc_ui_system(compo::EntityContainer& e);

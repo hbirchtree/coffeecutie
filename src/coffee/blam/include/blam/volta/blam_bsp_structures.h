@@ -343,7 +343,7 @@ struct cluster
     u16                           lens_flare_marker_count;
     reference<vert::idx_t>        surface_indices;
     reference<mirror>             mirrors;
-    reference<i16>                portals; /* points into cluster_portals on header */
+    reference<i16> portals; /* points into cluster_portals on header */
 };
 
 struct cluster_portal

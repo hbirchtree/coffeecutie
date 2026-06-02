@@ -5,15 +5,28 @@ layout(location = 1) in vec2 tex;
 layout(location = 2) in vec3 normal;
 layout(location = 3) in vec3 binormal;
 layout(location = 4) in vec3 tangent;
+layout(location = 5) in uvec2 node_indices; /* bone indices (node0, node1) */
+layout(location = 6) in vec2  node_weights; /* blend weights (weight0, weight1) */
+
+struct InstanceData {
+    mat4 transform;
+    int  bone_base;
+    int  _pad0;
+    int  _pad1;
+    int  _pad2;
+};
 
 layout(binding = 0, std140) uniform MatrixStore
 {
-    mat4 transform[128];
+    InstanceData data[128];
 } matrices;
 
 layout(location = 1) uniform mat4 camera;
-//layout(location = 2) uniform mat3 cameraRotation;
-//layout(location = 3) uniform vec3 camera_position;
+
+layout(binding = 3, std430) readonly buffer BoneMatrices
+{
+    mat4 bones[];
+} bone_store;
 
 layout(location = 0) out FragData {
     vec3 position;
@@ -31,14 +44,31 @@ out gl_PerVertex {
 
 void main()
 {
-    mat4 transform = matrices.transform[gl_InstanceID];
-    mat3 rotation = mat3(transform);
-    vec4 world_pos = transform * vec4(position, 1);
-    frag.tex = tex;
+    mat4 transform = matrices.data[gl_InstanceID].transform;
+    int  bone_base = matrices.data[gl_InstanceID].bone_base;
+
+    vec4 local_pos    = vec4(position, 1.0);
+    vec4 local_normal = vec4(normal, 0.0);
+    vec4 local_tan    = vec4(tangent, 0.0);
+    vec4 local_bin    = vec4(binormal, 0.0);
+
+    if(bone_base >= 0)
+    {
+        mat4 b0 = bone_store.bones[bone_base + int(node_indices.x)];
+        mat4 b1 = bone_store.bones[bone_base + int(node_indices.y)];
+        mat4 skin = b0 * node_weights.x + b1 * node_weights.y;
+        local_pos    = skin * local_pos;
+        local_normal = skin * local_normal;
+        local_tan    = skin * local_tan;
+        local_bin    = skin * local_bin;
+    }
+
+    vec4 world_pos = transform * local_pos;
+    frag.tex        = tex;
     frag.instanceId = gl_InstanceID;
-    frag.tangent = (transform * vec4(tangent, 0.0)).xyz;
-    frag.binormal = (transform * vec4(binormal, 0.0)).xyz;
-    frag.normal = (transform * vec4(normal, 0.0)).xyz;
-    frag.position = world_pos.xyz;
-    gl_Position = camera * world_pos;
+    frag.tangent    = (transform * local_tan).xyz;
+    frag.binormal   = (transform * local_bin).xyz;
+    frag.normal     = (transform * local_normal).xyz;
+    frag.position   = world_pos.xyz;
+    gl_Position     = camera * world_pos;
 }

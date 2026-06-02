@@ -116,7 +116,8 @@ struct BlamMapBrowser
                         auto* info = e.get<PlayerInfo>(player.id);
                         ImGui::PushID(info->player_idx);
                         auto* camera = e.get<PlayerCamera>(player.id);
-                        ImGui::Text("[i=%02i, seat=%02i] %s", 
+                        ImGui::Text(
+                            "[i=%02i, seat=%02i] %s",
                             info->player_idx,
                             info->seat_idx,
                             info->name.c_str());
@@ -124,7 +125,11 @@ struct BlamMapBrowser
                         ImGui::Checkbox("Keyboard", &camera->keyboard.enabled);
                         ImGui::NextColumn();
                         int controller = camera->controller.index.value_or(-1);
-                        ImGui::SliderInt("Controller: #%02i", &controller, -1, controllers->count() - 1);
+                        ImGui::SliderInt(
+                            "Controller: #%02i",
+                            &controller,
+                            -1,
+                            controllers->count() - 1);
                         if(controller == -1)
                             camera->controller.index.reset();
                         else

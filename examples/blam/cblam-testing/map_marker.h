@@ -50,14 +50,16 @@ struct DebugMarkers : compo::SubsystemBase
         auto verts = portal_buffer.subspan(portal_ptr, N);
         std::copy(points.begin(), points.end(), verts.begin());
         portal_color_buffer[portal_color_ptr] = color;
-        DebugDraw draw = {
-            .data = {
-                .arrays = {
-                    .count  = static_cast<u32>(N),
-                    .offset = portal_ptr,
+        DebugDraw draw                        = {
+                                   .data =
+                {
+                                           .arrays =
+                        {
+                                                   .count  = static_cast<u32>(N),
+                                                   .offset = portal_ptr,
+                        },
                 },
-            },
-            .color_ptr = portal_color_ptr,
+                                   .color_ptr = portal_color_ptr,
         };
         portal_ptr += static_cast<u32>(N);
         portal_color_ptr++;

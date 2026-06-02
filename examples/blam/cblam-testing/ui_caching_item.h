@@ -29,8 +29,8 @@ struct GlyphEntry
 
 struct FontItem
 {
-    blam::font const* font{nullptr};
-    u32               atlas_layer{0};
+    blam::font const*                   font{nullptr};
+    u32                                 atlas_layer{0};
     std::unordered_map<u16, GlyphEntry> glyph_map;
 
     bool valid() const
@@ -47,7 +47,7 @@ struct UIElementItem
     generation_idx_t              background_alt;
 
     /* For text_box widgets */
-    generation_idx_t          font_id;
+    generation_idx_t            font_id;
     std::vector<std::u16string> text_strings;
 
     bool visible{true};

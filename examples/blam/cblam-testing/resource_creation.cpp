@@ -67,7 +67,6 @@ void create_resources(compo::EntityContainer& e)
                     if(cam->keyboard.enabled && info &&
                        info->permissions.camera)
                         return cam->camera_.get();
-
                 }
                 cWarning("No camera selected");
                 return nullptr;
@@ -88,7 +87,7 @@ void create_resources(compo::EntityContainer& e)
         eventhandler->addEventFunction<CIControllerConnectEvent>(
             1024, [&e](CIEvent& ev, CIControllerConnectEvent* connect) {
                 auto* controllers = e.service<comp_app::ControllerInput>();
-                auto* window = e.service<comp_app::Windowing>();
+                auto* window      = e.service<comp_app::Windowing>();
                 auto  name        = controllers->name(connect->player_index);
                 cDebug(
                     "Controller {}connected: {} (idx={})",
@@ -220,6 +219,13 @@ void create_resources(compo::EntityContainer& e)
     resources.material_store->alloc();
     resources.material_store->commit(memory_budget::material_buffer);
 
+    /* Bone matrices: separate dynamic buffer, not mixed with static vertex data
+     */
+    resources.bone_matrix_buf = api.alloc_revolving_buffer(
+        gfx::buffers::shader_writable, per_frame_bufs, access);
+    resources.bone_matrix_buf->alloc();
+    resources.bone_matrix_buf->commit(memory_budget::bone_buffer);
+
     if(api.feature_info().buffer.ubo)
     {
         resources.world_store =
@@ -299,6 +305,36 @@ void create_resources(compo::EntityContainer& e)
         common_attributes.at(i).index = i;
         mod2_array.add(common_attributes.at(i));
     }
+
+    /* Bone index and weight vertex attributes from mod2_vertex::weights */
+    if constexpr(!std::is_same_v<halo_version, blam::xbox_version_t>)
+    {
+        using uvert = blam::vert::mod2_vertex<blam::vert::uncompressed>;
+        using uwt   = blam::vert::uncompressed_weights;
+        constexpr size_t wt_base = offsetof(uvert, weights);
+
+        gfx::vertex_attribute node_idx_attr;
+        node_idx_attr.index = 5;
+        node_idx_attr.value = {
+            .offset = wt_base + offsetof(uwt, node0),
+            .stride = sizeof(uvert),
+            .count  = 2,
+            .type   = semantic::type_t::u16,
+            .flags  = gfx::vertex_attribute::attribute_flags::none,
+        };
+        gfx::vertex_attribute node_wt_attr;
+        node_wt_attr.index = 6;
+        node_wt_attr.value = {
+            .offset = wt_base + offsetof(uwt, weight0),
+            .stride = sizeof(uvert),
+            .count  = 2,
+            .type   = semantic::type_t::f32,
+            .flags  = gfx::vertex_attribute::attribute_flags::none,
+        };
+        mod2_array.add(node_idx_attr);
+        mod2_array.add(node_wt_attr);
+    }
+
     mod2_array.set_buffer(gfx::buffers::vertex, resources.model_buf, 0);
     mod2_array.set_buffer(gfx::buffers::element, resources.model_index);
     mod2_array.set_attribute_names({
@@ -307,6 +343,8 @@ void create_resources(compo::EntityContainer& e)
         {"normal", 2},
         {"binormal", 3},
         {"tangent", 4},
+        {"node_indices", 5},
+        {"node_weights", 6},
     });
 
     resources.debug_lines = api.alloc_buffer(gfx::buffers::vertex, access);
@@ -385,7 +423,8 @@ void create_resources(compo::EntityContainer& e)
     }
 
     //    if constexpr(compile_info::platform::is_android)
-    if(api.api_version() != std::make_tuple(2u, 0u) && !api.workarounds().bugs.adreno)
+    if(api.api_version() != std::make_tuple(2u, 0u) &&
+       !api.workarounds().bugs.adreno)
     {
         auto const& features = api.feature_info().rendertarget;
 
@@ -393,10 +432,10 @@ void create_resources(compo::EntityContainer& e)
         auto dep_format = features.high_precision_depth_format;
 
         resources.offscreen = api.alloc_rendertarget();
-        resources.color     = api.alloc_texture(
-            gfx::textures::d2, PixDesc(col_format), 1);
-        resources.depth = api.alloc_texture(
-            gfx::textures::d2, PixDesc(dep_format), 1);
+        resources.color =
+            api.alloc_texture(gfx::textures::d2, PixDesc(col_format), 1);
+        resources.depth =
+            api.alloc_texture(gfx::textures::d2, PixDesc(dep_format), 1);
         cDebug(
             "Creating offscreen buffer with: color={} depth={}",
             magic_enum::enum_name(resources.color->m_format.pixfmt),
@@ -727,11 +766,9 @@ void create_camera(
         /* R_vertex = R_bsp * bsp_basis^T.
          * Ensures R_vertex * bsp_basis == R_bsp in the view matrix, so
          * rendering is correct while controller direction vectors are in
-         * vertex space and can be added directly to the vertex-space position. */
-        static const glm::mat3 bsp_basis_inv{
-            {0, 1, 0},
-            {0, 0, 1},
-            {1, 0, 0}};
+         * vertex space and can be added directly to the vertex-space position.
+         */
+        static const glm::mat3 bsp_basis_inv{{0, 1, 0}, {0, 0, 1}, {1, 0, 0}};
         cam->camera_opts->world_basis = bsp_basis_inv;
         cam->camera->rotation =
             glm::angleAxis(glm::pi<f32>() - location.rot, Vecf3{0.f, 1.f, 0.f});

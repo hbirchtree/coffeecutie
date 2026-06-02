@@ -75,13 +75,16 @@ struct ShaderCache
             mat.stages[i++] = materials::transparent_data::from_blam(stage);
     }
 
-    // color_animation::anim has no source field in tag data; function is at byte 0
-    // (stored as 'source'), and 'scale' is actually phase (amplitude is always 1)
-    f32 color_anim_factor(blam::shader::simple_tex_property_anim const& anim, f32 const& time)
+    // color_animation::anim has no source field in tag data; function is at
+    // byte 0 (stored as 'source'), and 'scale' is actually phase (amplitude is
+    // always 1)
+    f32 color_anim_factor(
+        blam::shader::simple_tex_property_anim const& anim, f32 const& time)
     {
         using namespace blam::shader;
-        auto fn    = static_cast<animation_function>(static_cast<u16>(anim.source));
-        f32  phase = anim.scale;
+        auto fn =
+            static_cast<animation_function>(static_cast<u16>(anim.source));
+        f32 phase = anim.scale;
         switch(fn)
         {
         case animation_function::one:
@@ -99,10 +102,16 @@ struct ShaderCache
         {
         case animation_function::slide:
         case animation_function::slide_variable:
-            return 1.f - glm::abs(2.f * glm::fract((time + phase) / anim.period) - 1.f);
+            return 1.f -
+                   glm::abs(
+                       2.f * glm::fract((time + phase) / anim.period) - 1.f);
         case animation_function::cosine:
         case animation_function::cosine_variable:
-            return glm::cos(glm::fract((time + phase) / anim.period) * glm::two_pi<f32>()) * 0.5f + 0.5f;
+            return glm::cos(
+                       glm::fract((time + phase) / anim.period) *
+                       glm::two_pi<f32>()) *
+                       0.5f +
+                   0.5f;
         default:
             return 0.f;
         }
@@ -226,22 +235,26 @@ struct ShaderCache
         }
         case blam::tag_class_t::senv: {
             shader_env const* info = shader.header->as<shader_env>();
-            using simple_uv = blam::shader::simple_texture_uv_animation;
-            auto uv = uv_animation(static_cast<simple_uv const&>(info->scrolling), t);
-            auto& inp2      = mat.material.inputs[2];
-            inp2            = Vecf4(uv.x, uv.y, inp2.z, inp2.w);
+            using simple_uv        = blam::shader::simple_texture_uv_animation;
+            auto uv =
+                uv_animation(static_cast<simple_uv const&>(info->scrolling), t);
+            auto& inp2 = mat.material.inputs[2];
+            inp2       = Vecf4(uv.x, uv.y, inp2.z, inp2.w);
 
             if(shader.senv.self_illum.valid())
             {
-                auto illum_color = [&](blam::shader::color_animation const& ch) {
-                    f32 factor = glm::clamp(color_anim_factor(ch.anim, t), 0.f, 1.f);
-                    return glm::mix(ch.color_off, ch.color_on, factor);
-                };
-                auto const& si         = info->self_illum;
-                f32 plasma_anim        = color_anim_factor(si.plasma.anim, t);
-                mat.material.inputs[3] = Vecf4(illum_color(si.primary), 1.f);
-                mat.material.inputs[4] = Vecf4(illum_color(si.secondary), 1.f);
-                // .rgb = plasma on_color, .a = animated value for A-channel proximity
+                auto illum_color =
+                    [&](blam::shader::color_animation const& ch) {
+                        f32 factor =
+                            glm::clamp(color_anim_factor(ch.anim, t), 0.f, 1.f);
+                        return glm::mix(ch.color_off, ch.color_on, factor);
+                    };
+                auto const& si          = info->self_illum;
+                f32         plasma_anim = color_anim_factor(si.plasma.anim, t);
+                mat.material.inputs[3]  = Vecf4(illum_color(si.primary), 1.f);
+                mat.material.inputs[4]  = Vecf4(illum_color(si.secondary), 1.f);
+                // .rgb = plasma on_color, .a = animated value for A-channel
+                // proximity
                 mat.material.inputs[5] = Vecf4(si.plasma.color_on, plasma_anim);
             }
             break;

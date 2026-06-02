@@ -17,7 +17,7 @@
 namespace oaf {
 struct api;
 struct buffer_t;
-}
+} // namespace oaf
 #endif
 
 using sound_ptr =
@@ -38,25 +38,25 @@ struct SoundItem
     struct permutation_t
     {
         blam::sound::pitch_permutation_t const* permutation{nullptr};
-        std::shared_ptr<oaf::buffer_t> buffer;
+        std::shared_ptr<oaf::buffer_t>          buffer;
     };
 
     struct pitch_range_t
     {
         blam::sound::pitch_range_t const* range{nullptr};
-        std::vector<permutation_t> permutations;
+        std::vector<permutation_t>        permutations;
     };
 
     struct track_t
     {
-        blam::sound::track_t const* track{nullptr};
-        std::map<role_t, sound_ptr> sounds;
+        blam::sound::track_t const*                  track{nullptr};
+        std::map<role_t, sound_ptr>                  sounds;
         std::map<role_t, std::vector<pitch_range_t>> buffers;
     };
 
     blam::sound::looping_sound const* looping_sound{nullptr};
-    std::vector<track_t> tracks;
-    std::vector<track_t> detail_sounds;
+    std::vector<track_t>              tracks;
+    std::vector<track_t>              detail_sounds;
 
     bool single() const
     {
@@ -101,19 +101,19 @@ struct SoundCache
 
 #if defined(FEATURE_ENABLE_OAF)
     void upload_singular_samples(
-        std::vector<SoundItem::pitch_range_t>& ranges,
-        sound_ptr const& sound_)
+        std::vector<SoundItem::pitch_range_t>& ranges, sound_ptr const& sound_)
     {
         auto [tag, sound, heap] = sound_;
-        auto ranges_ = *index.deref(*tag, sound->pitch_ranges_);
+        auto ranges_            = *index.deref(*tag, sound->pitch_ranges_);
         if(ranges_.empty())
             return;
         for(auto const& range : ranges_)
         {
             cDebug("- Range");
-            ranges.emplace_back(SoundItem::pitch_range_t{
-                .range = &range,
-            });
+            ranges.emplace_back(
+                SoundItem::pitch_range_t{
+                    .range = &range,
+                });
             auto perms_ = index.deref(*tag, range.permutations_);
             if(!perms_.has_value())
                 continue;
@@ -121,15 +121,16 @@ struct SoundCache
             for(auto const& perm : perms_.value())
             {
                 cDebug("  - Permutation");
-                out.permutations.emplace_back(SoundItem::permutation_t{
-                    .permutation = &perm,
-                });
+                out.permutations.emplace_back(
+                    SoundItem::permutation_t{
+                        .permutation = &perm,
+                    });
                 auto data_ = index.deref(*tag, perm.sample_data());
                 if(!data_.has_value())
                     continue;
-                auto data = data_.value();
-                auto& buffer = out.permutations.back().buffer;
-                buffer = api->alloc_buffer();
+                auto  data    = data_.value();
+                auto& buffer  = out.permutations.back().buffer;
+                buffer        = api->alloc_buffer();
                 using codec_t = blam::sound::sound::codec_t;
                 switch(sound->codec)
                 {
@@ -139,12 +140,10 @@ struct SoundCache
                     fmt.format = oaf::Format::ima_adpcm;
                     fmt.frequency =
                         sound->sample_rate == blam::sound::sound::_22kHz
-                            ? 22050 
+                            ? 22050
                             : 44100;
                     fmt.channels =
-                        sound->channels == blam::sound::sound::stereo
-                            ? 2
-                            : 1;
+                        sound->channels == blam::sound::sound::stereo ? 2 : 1;
                     if(api->formats().ima4_adpcm)
                     {
                         buffer->upload(data, fmt);
@@ -178,8 +177,7 @@ struct SoundCache
             for(auto& [role, sound] : track.sounds)
             {
                 auto it = track.buffers.emplace(
-                    role,
-                    std::vector<SoundItem::pitch_range_t>{});
+                    role, std::vector<SoundItem::pitch_range_t>{});
                 upload_singular_samples(it.first->second, sound);
             }
     }
@@ -220,9 +218,10 @@ struct SoundCache
         {
             cDebug("Detail sound");
             item.detail_sounds.push_back({
-                .sounds = {
-                    {SoundItem::main, parse_simple_sound(d_sound.sound)},
-                },
+                .sounds =
+                    {
+                        {SoundItem::main, parse_simple_sound(d_sound.sound)},
+                    },
             });
         }
     }
@@ -243,9 +242,10 @@ struct SoundCache
             parse_loop_sound(out, tag);
             break;
         case blam::tag_class_t::snd:
-            out.tracks.push_back({
-                    .sounds = {{SoundItem::main, parse_simple_sound(tag)}}
-            });
+            out.tracks.push_back({.sounds = {
+                { SoundItem::main,
+                  parse_simple_sound(tag) }
+            }});
             break;
         default:
             break;

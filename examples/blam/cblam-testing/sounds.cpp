@@ -33,20 +33,21 @@ struct sound_unit_t
         struct
         {
             SoundItem::role_t role{};
-            u32 pitch{0};
-            u32 permutation{0};
+            u32               pitch{0};
+            u32               permutation{0};
         } active;
+
         std::deque<std::shared_ptr<oaf::buffer_t>> queued_bufs;
-        std::shared_ptr<oaf::source_t> source;
+        std::shared_ptr<oaf::source_t>             source;
     };
 
-    generation_idx_t         index{};
-    std::vector<track_t>     tracks;
-    LoopSoundEvent::usage_t  usage{LoopSoundEvent::usage_t::general};
-    f32                      volume{1.f};
-    f32                      fade_rate{0.f};  /* vol/sec, negative = fade out */
-    bool                     fading_in{true};
-    bool                     fading_out{false};
+    generation_idx_t        index{};
+    std::vector<track_t>    tracks;
+    LoopSoundEvent::usage_t usage{LoopSoundEvent::usage_t::general};
+    f32                     volume{1.f};
+    f32                     fade_rate{0.f}; /* vol/sec, negative = fade out */
+    bool                    fading_in{true};
+    bool                    fading_out{false};
 };
 
 template<typename Ver>
@@ -76,19 +77,24 @@ struct SoundSystem
     std::map<u64, sound_unit_t> fading_sounds;
     u64                         next_fade_id{0x8000000000000000ULL};
 
-    bool               first_frame{true};
-    compo::time_point  last_t{};
+    bool              first_frame{true};
+    compo::time_point last_t{};
 
     struct queued_event_t
     {
         SoundEvent event;
-        std::variant<LoopSoundEvent, PlaySoundEvent, BackgroundSoundTransitionEvent> data;
+        std::variant<
+            LoopSoundEvent,
+            PlaySoundEvent,
+            BackgroundSoundTransitionEvent>
+            data;
     };
 
     std::vector<queued_event_t> queued_events;
 
     /* Push current sound.volume to every OAF source as gain.
-     * Called every frame so fades are smooth regardless of buffer queue state. */
+     * Called every frame so fades are smooth regardless of buffer queue state.
+     */
     void apply_volume(sound_unit_t& sound, SoundItem const& item)
     {
         for(auto i : stl_types::range<size_t>(item.tracks.size()))
@@ -118,9 +124,10 @@ struct SoundSystem
 
     /* Returns true if the sound played to a non-looping end and should be
      * removed.  Applies effective_volume as the OAF source gain multiplier. */
-    bool update_sound_tracks(sound_unit_t& sound, SoundItem const& item, f32 effective_volume)
+    bool update_sound_tracks(
+        sound_unit_t& sound, SoundItem const& item, f32 effective_volume)
     {
-        using role_t = SoundItem::role_t;
+        using role_t  = SoundItem::role_t;
         bool any_done = false;
         for(auto i : stl_types::range<size_t>(item.tracks.size()))
         {
@@ -139,26 +146,30 @@ struct SoundSystem
                 }
             }
 
-            auto const [tag, props, heap] = track.sounds.find(meta.active.role)->second;
-            auto const& bufs              = track.buffers.find(meta.active.role)->second;
+            auto const [tag, props, heap] =
+                track.sounds.find(meta.active.role)->second;
+            auto const& bufs = track.buffers.find(meta.active.role)->second;
 
             // TODO: Figure out pitch variation
             // Just use natural for now
             auto const& pitch = bufs.at(meta.active.pitch);
             if(pitch.permutations.empty())
                 continue;
-            auto const& current_buf = pitch.permutations.at(meta.active.permutation);
+            auto const& current_buf =
+                pitch.permutations.at(meta.active.permutation);
 
             // TODO: If memory is tight, stream audio here instead of preloading
-            cDebug("Queueing sound={} perm=#{}",
+            cDebug(
+                "Queueing sound={} perm=#{}",
                 tag->to_name().to_string(heap),
                 meta.active.permutation);
             meta.source->queue(*current_buf.buffer);
             meta.source->template set_property<oaf::source_property::gain>(
-                props->gain_modifier * current_buf.permutation->gain * effective_volume);
+                props->gain_modifier * current_buf.permutation->gain *
+                effective_volume);
             meta.queued_bufs.push_back(current_buf.buffer);
 
-            bool looping        = item.looping_sound;
+            bool looping = item.looping_sound;
             bool eos_permutation =
                 current_buf.permutation->next_permutation_idx == -1;
 
@@ -182,14 +193,13 @@ struct SoundSystem
                     // TODO: Figure out when to play end
                     break;
                 }
-            }
-            else if(eos_permutation)
+            } else if(eos_permutation)
             {
                 any_done = true;
-            }
-            else
+            } else
             {
-                meta.active.permutation = current_buf.permutation->next_permutation_idx;
+                meta.active.permutation =
+                    current_buf.permutation->next_permutation_idx;
             }
         }
         return any_done;
@@ -239,7 +249,8 @@ struct SoundSystem
             SoundItem const& item = (*sound_cache.find(sound.index)).second;
             if(sound.fading_in)
             {
-                sound.volume = std::min(1.f, sound.volume + sound.fade_rate * dt);
+                sound.volume =
+                    std::min(1.f, sound.volume + sound.fade_rate * dt);
                 apply_volume(sound, item);
                 if(sound.volume >= 1.f)
                     sound.fading_in = false;
@@ -274,19 +285,21 @@ struct SoundSystem
         auto sound = sound_cache.predict(tagref);
         if(!sound.valid())
             return {};
-        SoundItem const& item = (*sound_cache.find(sound)).second;
+        SoundItem const& item  = (*sound_cache.find(sound)).second;
         auto select_first_role = [](SoundItem::track_t const& track) {
-            if(track.sounds.find(SoundItem::role_t::start) != track.sounds.end())
+            if(track.sounds.find(SoundItem::role_t::start) !=
+               track.sounds.end())
                 return SoundItem::role_t::start;
             return SoundItem::role_t::loop;
         };
         std::vector<sound_unit_t::track_t> tracks;
         for(auto const& track : item.tracks)
         {
-            tracks.emplace_back(sound_unit_t::track_t{
-                .active = {.role = select_first_role(track)},
-                .source = snd.alloc_source(),
-            });
+            tracks.emplace_back(
+                sound_unit_t::track_t{
+                    .active = {.role = select_first_role(track)},
+                    .source = snd.alloc_source(),
+                });
         }
         return sound_unit_t{
             .index  = sound,
@@ -325,7 +338,8 @@ struct SoundSystem
                 break;
             case SoundEvent::background_sound_transition:
                 event.data =
-                    *reinterpret_cast<BackgroundSoundTransitionEvent const*>(data);
+                    *reinterpret_cast<BackgroundSoundTransitionEvent const*>(
+                        data);
                 break;
             default:
                 return;
@@ -364,7 +378,7 @@ struct SoundSystem
         if(ev.type == SoundEvent::loop_sound)
         {
             auto const& loop = reinterpret_cast<LoopSoundEvent const*>(data);
-            auto unit = make_sound_unit(*loop->sound, loop->usage);
+            auto        unit = make_sound_unit(*loop->sound, loop->usage);
             if(loop->usage == LoopSoundEvent::usage_t::background_track)
             {
                 unit.fade_rate = 1.f / 2.f;
@@ -376,8 +390,8 @@ struct SoundSystem
         }
         if(ev.type == SoundEvent::play_sound)
         {
-            auto const& play = reinterpret_cast<PlaySoundEvent const*>(data);
-            auto sound = sound_cache.predict(*play->sound);
+            auto const& play  = reinterpret_cast<PlaySoundEvent const*>(data);
+            auto        sound = sound_cache.predict(*play->sound);
         }
     }
 };

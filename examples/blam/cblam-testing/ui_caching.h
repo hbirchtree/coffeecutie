@@ -56,7 +56,8 @@ struct FontCache
     {
         if(auto tag_it = index.find(font_tag); tag_it == index.end())
             return nullptr;
-        else if(auto data = (*tag_it).template data<blam::font>(magic); !data.has_value())
+        else if(auto data = (*tag_it).template data<blam::font>(magic);
+                !data.has_value())
             return nullptr;
         else
             return data.value();
@@ -67,7 +68,8 @@ struct FontCache
         constexpr u32 kAtlasSize = 256;
 
         font_textures->alloc(
-            gleam::size_3d<u32>{kAtlasSize, kAtlasSize, static_cast<u32>(m_cache.size())});
+            gleam::size_3d<u32>{
+                kAtlasSize, kAtlasSize, static_cast<u32>(m_cache.size())});
         font_sampler->alloc();
         api->debug().annotate(*font_textures, "fonts_r8");
 
@@ -84,8 +86,9 @@ struct FontCache
                 continue;
             }
 
-            /* Pack into CPU buffer with stride=kAtlasSize (always 4-byte aligned)
-             * to avoid GL_UNPACK_ALIGNMENT issues with odd glyph widths. */
+            /* Pack into CPU buffer with stride=kAtlasSize (always 4-byte
+             * aligned) to avoid GL_UNPACK_ALIGNMENT issues with odd glyph
+             * widths. */
             std::vector<u8> atlas_buf(kAtlasSize * kAtlasSize, 0);
 
             i32 cursor_x   = 0;
@@ -108,15 +111,17 @@ struct FontCache
                 {
                     if(cursor_x + bw > static_cast<i32>(kAtlasSize))
                     {
-                        cursor_x   = 0;
-                        cursor_y  += row_height;
+                        cursor_x = 0;
+                        cursor_y += row_height;
                         row_height = 0;
                     }
                     if(cursor_y + bh <= static_cast<i32>(kAtlasSize))
                     {
-                        auto data_size = static_cast<u32>(bw) * static_cast<u32>(bh);
-                        auto pix       = font_item.font->pixel_data(
-                            ch.pixel_offset, data_size).data(magic);
+                        auto data_size =
+                            static_cast<u32>(bw) * static_cast<u32>(bh);
+                        auto pix = font_item.font
+                                       ->pixel_data(ch.pixel_offset, data_size)
+                                       .data(magic);
                         if(pix.has_value())
                         {
                             auto const* src =
@@ -124,8 +129,10 @@ struct FontCache
                             for(i32 row = 0; row < bh; row++)
                             {
                                 u8* dst = atlas_buf.data() +
-                                          (cursor_y + row) * kAtlasSize + cursor_x;
-                                std::memcpy(dst, src + row * bw, static_cast<u32>(bw));
+                                          (cursor_y + row) * kAtlasSize +
+                                          cursor_x;
+                                std::memcpy(
+                                    dst, src + row * bw, static_cast<u32>(bw));
                             }
                         }
                         entry.atlas_x = static_cast<i16>(cursor_x);
@@ -140,7 +147,10 @@ struct FontCache
             font_textures->upload(
                 semantic::Bytes::ofContainer(atlas_buf).view,
                 Veci3{0, 0, static_cast<i32>(layer)},
-                Veci3{static_cast<i32>(kAtlasSize), static_cast<i32>(kAtlasSize), 1});
+                Veci3{
+                    static_cast<i32>(kAtlasSize),
+                    static_cast<i32>(kAtlasSize),
+                    1});
             layer++;
         }
     }
@@ -205,13 +215,13 @@ struct UIElementCache
                 out.font_id = font_cache.predict(tb.font);
             if(tb.unicode_strings.valid())
             {
-                if(auto us_data =
-                       index.template data<blam::ui::unicode_string>(
-                           tb.unicode_strings);
+                if(auto us_data = index.template data<blam::ui::unicode_string>(
+                       tb.unicode_strings);
                    us_data.has_value())
                 {
                     auto const* us = us_data.value();
-                    if(auto subs = us->sub_strings.data(magic); subs.has_value())
+                    if(auto subs = us->sub_strings.data(magic);
+                       subs.has_value())
                     {
                         for(auto const& ref : subs.value())
                         {

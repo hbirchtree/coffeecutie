@@ -210,7 +210,8 @@ struct ShaderData
     }
 
     template<typename V>
-    inline Passes get_render_pass(ShaderCache<V>& cache, bool skybox = false) const
+    inline Passes get_render_pass(
+        ShaderCache<V>& cache, bool skybox = false) const
     {
         using tc = blam::tag_class_t;
         using namespace enum_helpers;
@@ -225,10 +226,14 @@ struct ShaderData
             switch(p)
             {
             case Pass_Opaque:
-            case Pass_Alphatest: return Pass_SkyOpaque;
-            case Pass_Additive:  return Pass_SkyAdditive;
-            case Pass_Multiply:  return Pass_SkyMultiply;
-            default:             return Pass_SkyGlass;
+            case Pass_Alphatest:
+                return Pass_SkyOpaque;
+            case Pass_Additive:
+                return Pass_SkyAdditive;
+            case Pass_Multiply:
+                return Pass_SkyMultiply;
+            default:
+                return Pass_SkyGlass;
             }
         };
 
@@ -236,19 +241,23 @@ struct ShaderData
         {
         case tc::soso: {
             auto info = shader_data<shader_model>();
-            bool alpha_test = !feval(info->flags & shader_model::model_flags::no_alpha_test);
+            bool alpha_test =
+                !feval(info->flags & shader_model::model_flags::no_alpha_test);
             return sky_pass(alpha_test ? Pass_Alphatest : Pass_Opaque);
         }
         case tc::schi: {
             shader_chicago<V> const* info = shader_data<shader_chicago<V>>();
-            using fb = chicago::framebuffer_blending;
+            using fb                      = chicago::framebuffer_blending;
             switch(info->transparent.blend_function)
             {
             case fb::multiply:
-            case fb::double_multiply: return sky_pass(Pass_Multiply);
+            case fb::double_multiply:
+                return sky_pass(Pass_Multiply);
             case fb::add:
-            case fb::alpha_multiply_add: return sky_pass(Pass_Additive);
-            default: return sky_pass(Pass_Glass);
+            case fb::alpha_multiply_add:
+                return sky_pass(Pass_Additive);
+            default:
+                return sky_pass(Pass_Glass);
             }
         }
         case tc::scex: {
@@ -258,10 +267,13 @@ struct ShaderData
             switch(info->transparent.blend_function)
             {
             case fb::multiply:
-            case fb::double_multiply: return sky_pass(Pass_Multiply);
+            case fb::double_multiply:
+                return sky_pass(Pass_Multiply);
             case fb::add:
-            case fb::alpha_multiply_add: return sky_pass(Pass_Additive);
-            default: return sky_pass(Pass_Glass);
+            case fb::alpha_multiply_add:
+                return sky_pass(Pass_Additive);
+            default:
+                return sky_pass(Pass_Glass);
             }
         }
         case tc::swat:
