@@ -163,7 +163,13 @@ std::array<compressed_format_t<T>, 27> compressed_formats(
         {CF(P::ETC2, F::RGBA_Punchthrough), {f::compressed_rgb8_punchthrough_alpha1_etc2, b::unsigned_byte, p::rgb},  etc2},
         {CF(P::ETC2, F::RGBA),              {f::compressed_rgba8_etc2_eac,                b::unsigned_byte, p::rgba}, etc2},
 #endif
-#if defined(GL_KHR_texture_compression_astc_ldr) || GLEAM_MAX_VERSION_ES >= 0x320
+#if GLEAM_MAX_VERSION_ES >= 0x320
+        {CF(P::ASTC, M::ASTC_4x4),   {f::compressed_rgba_astc_4x4,   b::unsigned_byte, p::rgba}, astc},
+        {CF(P::ASTC, M::ASTC_8x8),   {f::compressed_rgba_astc_8x8,   b::unsigned_byte, p::rgba}, astc},
+        {CF(P::ASTC, M::ASTC_10x10), {f::compressed_rgba_astc_10x10, b::unsigned_byte, p::rgba}, astc},
+        {CF(P::ASTC, M::ASTC_12x12), {f::compressed_rgba_astc_12x12, b::unsigned_byte, p::rgba}, astc},
+#endif
+#if defined(GL_KHR_texture_compression_astc_ldr)
         {CF(P::ASTC, M::ASTC_4x4),   {f::compressed_rgba_astc_4x4_khr,   b::unsigned_byte, p::rgba}, astc},
         {CF(P::ASTC, M::ASTC_8x8),   {f::compressed_rgba_astc_8x8_khr,   b::unsigned_byte, p::rgba}, astc},
         {CF(P::ASTC, M::ASTC_10x10), {f::compressed_rgba_astc_10x10_khr, b::unsigned_byte, p::rgba}, astc},
