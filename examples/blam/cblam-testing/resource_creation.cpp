@@ -180,7 +180,7 @@ void create_resources(compo::EntityContainer& e)
                 }
                 if(ev.data.contains("position"))
                 {
-                    auto pos = ev.data["position"].array();
+                    auto pos = ev.data["position"];
                     target->camera->position = Vecf3{
                         pos[0].get<float>(),
                         pos[1].get<float>(),
@@ -189,7 +189,7 @@ void create_resources(compo::EntityContainer& e)
                 }
                 if(ev.data.contains("rotation"))
                 {
-                    auto rot = ev.data["rotation"].array();
+                    auto rot = ev.data["rotation"];
                     target->camera->rotation = glm::normalize(
                             glm::angleAxis(rot[0].get<float>(), Vecf3{-1.f,  0.f, 0.f}) *
                             glm::angleAxis(rot[1].get<float>(), Vecf3{ 0.f, -1.f, 0.f})

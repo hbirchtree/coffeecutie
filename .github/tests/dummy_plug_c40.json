@@ -1,0 +1,34 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1920,
+            "height": 1920,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "comment": "Captures various cases on c40.map",
+    "events": [
+        {"time":  1000, "type":"camera", "position":[362, -713.77, 74.24], "rotation":[0, 2.5]},
+        {"time":  5000, "type":"screenshot","name":"c40_cortana"},
+        {"time":  7000, "type":"camera", "position":[362, -689.5, 74.25], "rotation":[0, -1.55]},
+        {"time":  8000, "type":"screenshot","name":"c40_chief_front"},
+        {"time":  9000, "type":"camera", "position":[361.5, -689.0, 74.25], "rotation":[0, 3.14]},
+        {"time": 11000, "type":"screenshot","name":"c40_chief_side"}
+    ],
+    "frame_delta": 500.0,
+    "end_time": 15000
+}

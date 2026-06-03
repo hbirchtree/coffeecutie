@@ -9,20 +9,25 @@
 
 namespace blam::antr {
 
-/* 20-byte raw data reference: reference<u8> + 8 unknown bytes */
+/* 20-byte Halo tag-data block:
+ * [0x00] size  [0x04] flags  [0x08] file_offset  [0x0C] pointer  [0x10] unused
+ * The in-memory pointer (0x0C) is the magic-relative address of the data. */
 struct data_ref_t
 {
-    reference<u8> ref; /* count = byte_count, offset = file_offset */
-    u32           unknown_[2];
+    u32 count;       /* 0x00: byte count */
+    u32 flags;       /* 0x04 */
+    u32 file_offset; /* 0x08: offset within map file */
+    u32 pointer;     /* 0x0C: in-memory address (use with magic) */
+    u32 unused;      /* 0x10 */
 
     auto data(map_ptr const& magic) const
     {
-        return ref.data(magic);
+        return reference<u8>{count, pointer}.data(magic);
     }
 
     u32 size() const
     {
-        return ref.count;
+        return count;
     }
 };
 

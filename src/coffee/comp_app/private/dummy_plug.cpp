@@ -488,7 +488,7 @@ void insert_dummy_plug(
                         rq::runtime_queue::GetCurrentQueue().value(),
                         start_time,
                         [&dummy_bus, out]() mutable {
-                            cDebug("Injecting custom dummy event: {}", out.event);
+                            cDebug("Injecting custom dummy event: {} => {}", out.event, out.data.dump(2));
                             dummy_bus.process(out, nullptr);
                         }).assume_value();
                     break;

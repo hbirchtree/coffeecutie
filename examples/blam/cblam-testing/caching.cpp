@@ -561,8 +561,11 @@ ModelItem<V> ModelCache<V>::predict_impl(
         for(u32 i = 0; i < n; i++)
         {
             auto const& b     = bones[i];
+            /* Halo stores quaternions w-first (w,x,y,z); GLM's memory layout is
+             * x,y,z,w, so the overlaid Quatf is rotated by one component. Undo. */
+            Quatf       br    = Quatf(b.rotation.x, b.rotation.y, b.rotation.z, b.rotation.w);
             Matf4       local = glm::translate(Matf4(1), b.translation) *
-                          glm::mat4_cast(b.rotation);
+                          glm::mat4_cast(br);
             if(b.parent != blam::mod2::bone::invalid_bone && b.parent < i)
                 world_bind[i] = world_bind[b.parent] * local;
             else
@@ -646,6 +649,7 @@ void ModelCache<V>::apply_animation(
 
     for(u32 i = 0; i < n; i++)
     {
+        /* Intra-node channel order: [rotation 8B][translation 12B][scale 4B] */
         /* rotation */
         if(anim.has_rotation(i))
         {
@@ -673,7 +677,12 @@ void ModelCache<V>::apply_animation(
             d += 4;
     }
 
-    /* Build world transforms using mod2 bone parent chain */
+    /* antr quaternions have the same w-first storage vs GLM's x,y,z,w layout
+     * mismatch as the mod2 bones — reorder so (w,x,y,z) = (raw.x,y,z,w). */
+    for(u32 i = 0; i < n; i++)
+        rotations[i] = Quatf(rotations[i].x, rotations[i].y, rotations[i].z, rotations[i].w);
+
+    /* Build world transforms using mod2 bone parent chain (DFS order: parent<i) */
     std::vector<Matf4> world(n);
     for(u32 i = 0; i < n; i++)
     {
