@@ -301,6 +301,10 @@ void load_objects(
 
     auto instances   = group.instances.data(magic).value();
     u32  instance_id = 0;
+    cDebug(
+        "load_objects: {} instances, {} palette entries",
+        instances.size(),
+        palette.size());
     for(T const& instance : instances)
     {
         if(instance.ref == -1 || !palette[instance.ref][0].valid())
@@ -328,6 +332,55 @@ void load_objects(
 
         ModelAssembly mesh_data =
             model_cache.predict_regions(instance_obj[0].model, model_lod);
+
+        /* Apply idle animation frame 0 from the object's animation graph */
+        {
+            blam::tagref_t const& anim_graph = instance_obj[0].anim_graph;
+            cDebug(
+                "load_objects: tag={} anim_graph.valid={}",
+                instance_tag->to_name().to_string(magic),
+                anim_graph.valid());
+            if(anim_graph.valid())
+            {
+                auto antr_it = index.find(anim_graph);
+                if(antr_it != index.end())
+                {
+                    auto antr_data =
+                        (*antr_it)
+                            .template data<blam::antr::header>(magic);
+                    if(antr_data.has_value())
+                    {
+                        auto const* antr_hdr = &antr_data.value()[0];
+                        u32         anim_idx = 0;
+                        /* Find idle: unit → first weapon → idle slot (index 0) */
+                        if(auto units_opt = antr_hdr->units.data(magic);
+                           units_opt.has_value() && !units_opt.value().empty())
+                        {
+                            auto const& unit0 = units_opt.value()[0];
+                            if(auto wpn_opt = unit0.weapons.data(magic);
+                               wpn_opt.has_value() && !wpn_opt.value().empty())
+                            {
+                                auto const& wpn0 = wpn_opt.value()[0];
+                                if(auto ai_opt = wpn0.animations.data(magic);
+                                   ai_opt.has_value() &&
+                                   ai_opt.value().size() >
+                                       blam::antr::unit_weapon::idle)
+                                {
+                                    i16 idx = ai_opt.value()
+                                                  [blam::antr::unit_weapon::idle]
+                                                      .animation;
+                                    if(idx >= 0)
+                                        anim_idx = static_cast<u32>(idx);
+                                }
+                            }
+                        }
+                        for(auto const& mid : mesh_data.models)
+                            model_cache.apply_animation(
+                                mid, antr_hdr, anim_idx, 0);
+                    }
+                }
+            }
+        }
 
         auto         parent_ = e.create_entity(parent);
         Model&       model   = parent_.get<Model>();

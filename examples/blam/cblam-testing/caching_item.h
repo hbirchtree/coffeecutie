@@ -505,10 +505,9 @@ struct ModelItem
     blam::tag_t const*           tag{nullptr};
     LOD                          mesh;
 
-    std::vector<Matf4>
-        bone_matrices; /* rest-pose skinning matrices (world * inv_bind) */
-    i32 bone_base{
-        -1}; /* base offset into BoneMatrices SSBO (set at render time) */
+    std::vector<Matf4> bone_matrices; /* per-bone skinning matrices (world_anim * inv_bind) */
+    std::vector<Matf4> inv_bind;     /* inverse bind-world matrices, built from mod2 bone axes */
+    i32                bone_base{-1};
 
     inline bool valid() const
     {

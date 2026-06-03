@@ -548,14 +548,31 @@ ModelItem<V> ModelCache<V>::predict_impl(
         }
     }
 
-    /* Rest-pose skinning matrices: identity because vertices are in model space
-     * at bind pose. Bone matrices at rest pose are world_bind * inv_bind = I.
-     */
     if(auto bones_opt = header->bones.data(magic); bones_opt.has_value())
     {
         auto bones = bones_opt.value();
         u32  n     = static_cast<u32>(bones.size());
         out.bone_matrices.resize(n, Matf4(1));
+        out.inv_bind.resize(n);
+
+        /* Compute world bind transforms by walking the parent chain.
+         * Bones are stored in DFS order so parent index < child index. */
+        std::vector<Matf4> world_bind(n);
+        for(u32 i = 0; i < n; i++)
+        {
+            auto const& b     = bones[i];
+            Matf4       local = glm::translate(Matf4(1), b.translation) *
+                          glm::mat4_cast(b.rotation);
+            if(b.parent != blam::mod2::bone::invalid_bone && b.parent < i)
+                world_bind[i] = world_bind[b.parent] * local;
+            else
+                world_bind[i] = local;
+
+            /* inv_bind = inverse of world bind transform.
+             * world_bind * inv(world_bind) = I, so bind-pose bone_matrices are identity. */
+            out.inv_bind[i]      = glm::inverse(world_bind[i]);
+            out.bone_matrices[i] = Matf4(1);
+        }
     }
 
     return out;
@@ -563,6 +580,158 @@ ModelItem<V> ModelCache<V>::predict_impl(
 
 template ModelItem<halo_version> ModelCache<halo_version>::predict_impl(
     const blam::tagref_t& mod2, blam::mod2::mod2_lod lod);
+
+template<typename V>
+void ModelCache<V>::apply_animation(
+    generation_idx_t          model_id,
+    blam::antr::header const* antr,
+    u32                       anim_idx,
+    u32                       frame_idx)
+{
+    ModelItem<V>& item = this->get(model_id);
+    if(item.inv_bind.empty())
+    {
+        cDebug("apply_animation: no inv_bind, skipping");
+        return;
+    }
+
+    u32 n = static_cast<u32>(item.inv_bind.size());
+
+    auto anims_opt = antr->animations.data(magic);
+    auto nodes_opt = antr->nodes.data(magic);
+    if(!anims_opt.has_value() || !nodes_opt.has_value())
+    {
+        cDebug("apply_animation: no anims or nodes data");
+        return;
+    }
+
+    auto anims = anims_opt.value();
+    auto nodes = nodes_opt.value();
+
+    cDebug(
+        "apply_animation: {} bones, {} anim nodes, {} anims, anim_idx={}",
+        n,
+        nodes.size(),
+        anims.size(),
+        anim_idx);
+
+    if(anim_idx >= static_cast<u32>(anims.size()))
+    {
+        cDebug("apply_animation: anim_idx out of range");
+        return;
+    }
+    if(static_cast<u32>(nodes.size()) < n)
+    {
+        cDebug("apply_animation: not enough nodes ({} < {})", nodes.size(), n);
+        return;
+    }
+
+    auto const& anim = anims[anim_idx];
+    cDebug(
+        "apply_animation: anim '{}' frames={} frame_size={} compressed={}",
+        anim.name.str(),
+        anim.frame_count,
+        anim.frame_size,
+        anim.is_compressed());
+    if(anim.is_compressed())
+        return;
+    if(frame_idx >= static_cast<u32>(anim.frame_count))
+        frame_idx = 0;
+
+    auto default_bytes_opt = anim.default_data.data(magic);
+    auto frame_bytes_opt   = anim.frame_data.data(magic);
+    if(!default_bytes_opt.has_value() || !frame_bytes_opt.has_value())
+        return;
+
+    auto default_bytes = default_bytes_opt.value();
+    auto frame_bytes   = frame_bytes_opt.value();
+
+    std::vector<Quatf> rotations(n, Quatf(1, 0, 0, 0));
+    std::vector<Vecf3> translations(n, Vecf3(0));
+
+    /* default_data layout: [non-animated rotations] [non-animated translations]
+     * Non-animated nodes keep their transforms constant across all frames. */
+    size_t dr = 0, dt = 0;
+    for(u32 i = 0; i < n; i++)
+        if(!anim.has_rotation(i))
+            dt += 8;
+
+    for(u32 i = 0; i < n; i++)
+    {
+        if(!anim.has_rotation(i) && dr + 8 <= default_bytes.size())
+        {
+            rotations[i] = reinterpret_cast<blam::antr::compressed_quat_t const*>(
+                               default_bytes.data() + dr)
+                               ->decompress();
+            dr += 8;
+        }
+    }
+    for(u32 i = 0; i < n; i++)
+    {
+        if(!anim.has_translation(i) && dt + 12 <= default_bytes.size())
+        {
+            translations[i] =
+                *reinterpret_cast<Vecf3 const*>(default_bytes.data() + dt);
+            dt += 12;
+        }
+    }
+
+    /* frame_data layout per frame: [frame_info] [animated rotations] [animated translations] */
+    size_t frame_info_size = 0;
+    switch(anim.frame_info_type_)
+    {
+    case blam::antr::frame_info_type::dx_dy:         frame_info_size = 8;  break;
+    case blam::antr::frame_info_type::dx_dy_dyaw:    frame_info_size = 12; break;
+    case blam::antr::frame_info_type::dx_dy_dz_dyaw: frame_info_size = 16; break;
+    default:                                         break;
+    }
+
+    size_t frame_base = static_cast<size_t>(frame_idx) * anim.frame_size + frame_info_size;
+    size_t fr         = frame_base;
+    size_t ft         = frame_base;
+    for(u32 i = 0; i < n; i++)
+        if(anim.has_rotation(i))
+            ft += 8;
+
+    for(u32 i = 0; i < n; i++)
+    {
+        if(anim.has_rotation(i) && fr + 8 <= frame_bytes.size())
+        {
+            rotations[i] = reinterpret_cast<blam::antr::compressed_quat_t const*>(
+                               frame_bytes.data() + fr)
+                               ->decompress();
+            fr += 8;
+        }
+    }
+    for(u32 i = 0; i < n; i++)
+    {
+        if(anim.has_translation(i) && ft + 12 <= frame_bytes.size())
+        {
+            translations[i] =
+                *reinterpret_cast<Vecf3 const*>(frame_bytes.data() + ft);
+            ft += 12;
+        }
+    }
+
+    /* Build world transforms from the antr node hierarchy */
+    std::vector<Matf4> world(n);
+    for(u32 i = 0; i < n; i++)
+    {
+        Matf4 local = glm::translate(Matf4(1), translations[i]) *
+                      glm::mat4_cast(rotations[i]);
+        i16 parent = nodes[i].parent;
+        if(parent >= 0 && static_cast<u32>(parent) < n)
+            world[i] = world[parent] * local;
+        else
+            world[i] = local;
+    }
+
+    for(u32 i = 0; i < n; i++)
+        item.bone_matrices[i] = world[i] * item.inv_bind[i];
+}
+
+template void ModelCache<halo_version>::apply_animation(
+    generation_idx_t, blam::antr::header const*, u32, u32);
 
 template<typename V>
 ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)

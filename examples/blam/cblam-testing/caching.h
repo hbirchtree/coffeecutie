@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include <blam/volta/blam_antr.h>
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_font.h>
 #include <blam/volta/blam_scenario.h>
@@ -117,6 +118,12 @@ struct ModelCache
 
     virtual ModelItem<V> predict_impl(
         blam::tagref_t const& mod2, blam::mod2::mod2_lod lod) override;
+
+    void apply_animation(
+        generation_idx_t          model_id,
+        blam::antr::header const* antr,
+        u32                       anim_idx,
+        u32                       frame_idx);
 
     virtual void evict_impl() override
     {
