@@ -1,5 +1,7 @@
 #pragma once
 
+#include "blam/volta/blam_tag_classes.h"
+#include "blam/volta/blam_tag_ref.h"
 #include "blam_base_types.h"
 #include "blam_bsp_structures.h"
 #include "blam_file_header.h"
@@ -664,6 +666,28 @@ struct actor_variant
 };
 
 using actor_variant_ref = tagref_t;
+
+struct antenna
+{
+    bl_string attachment_marker_name;
+    tagref_typed_t<tag_class_t::bitm> bitmaps;
+    tagref_typed_t<tag_class_t::pphy> physics;
+    f32 spring_strength_coeff;
+    f32 falloff_pixels;
+    f32 cutoff_pixels;
+
+    struct vertex
+    {
+        f32 spring_strength_coeff;
+        f32 angle_yaw, angle_pitch;
+        f32 length;
+        i16 sequence_index;
+        i16 padding;
+        Vecf4 color;
+        Vecf4 lod_color;
+    };
+    reference<vertex> vertices;
+};
 
 namespace ai {
 

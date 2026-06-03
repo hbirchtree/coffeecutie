@@ -125,6 +125,8 @@ struct ModelCache
         u32                       anim_idx,
         u32                       frame_idx);
 
+    void tick_animations(f32 time_s);
+
     virtual void evict_impl() override
     {
         vert_ptr    = 0;

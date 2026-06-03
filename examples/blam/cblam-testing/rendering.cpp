@@ -720,6 +720,12 @@ struct MeshRenderer
         bool invalidated = true; //! compile_info::platform::is_emscripten;
         if(time - last_update > std::chrono::seconds(10) || invalidated)
         {
+            f32 t = std::fmod(stl_types::Chrono::to_f32(time), 3600.f);
+            {
+                ModelCache<Version>* model_cache;
+                p.subsystem(model_cache);
+                model_cache->tick_animations(t);
+            }
             generate_draws(p);
             update_materials(p, time);
             last_update = time;

@@ -590,49 +590,24 @@ void ModelCache<V>::apply_animation(
 {
     ModelItem<V>& item = this->get(model_id);
     if(item.inv_bind.empty())
-    {
-        cDebug("apply_animation: no inv_bind, skipping");
         return;
-    }
 
     u32 n = static_cast<u32>(item.inv_bind.size());
 
     auto anims_opt = antr->animations.data(magic);
     auto nodes_opt = antr->nodes.data(magic);
     if(!anims_opt.has_value() || !nodes_opt.has_value())
-    {
-        cDebug("apply_animation: no anims or nodes data");
         return;
-    }
 
     auto anims = anims_opt.value();
     auto nodes = nodes_opt.value();
 
-    cDebug(
-        "apply_animation: {} bones, {} anim nodes, {} anims, anim_idx={}",
-        n,
-        nodes.size(),
-        anims.size(),
-        anim_idx);
-
     if(anim_idx >= static_cast<u32>(anims.size()))
-    {
-        cDebug("apply_animation: anim_idx out of range");
         return;
-    }
     if(static_cast<u32>(nodes.size()) < n)
-    {
-        cDebug("apply_animation: not enough nodes ({} < {})", nodes.size(), n);
         return;
-    }
 
     auto const& anim = anims[anim_idx];
-    cDebug(
-        "apply_animation: anim '{}' frames={} frame_size={} compressed={}",
-        anim.name.str(),
-        anim.frame_count,
-        anim.frame_size,
-        anim.is_compressed());
     if(anim.is_compressed())
         return;
     if(frame_idx >= static_cast<u32>(anim.frame_count))
@@ -732,6 +707,20 @@ void ModelCache<V>::apply_animation(
 
 template void ModelCache<halo_version>::apply_animation(
     generation_idx_t, blam::antr::header const*, u32, u32);
+
+template<typename V>
+void ModelCache<V>::tick_animations(f32 time_s)
+{
+    for(auto& [raw_id, item] : this->m_cache)
+    {
+        if(!item.antr_hdr || item.anim_frame_count == 0 || item.inv_bind.empty())
+            continue;
+        u32              frame  = static_cast<u32>(time_s * 30.f) % item.anim_frame_count;
+        generation_idx_t gen_id = {raw_id, this->generation};
+        apply_animation(gen_id, item.antr_hdr, item.anim_idx, frame);
+    }
+}
+template void ModelCache<halo_version>::tick_animations(f32);
 
 template<typename V>
 ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)

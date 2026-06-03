@@ -352,31 +352,82 @@ void load_objects(
                     {
                         auto const* antr_hdr = &antr_data.value()[0];
                         u32         anim_idx = 0;
-                        /* Find idle: unit → first weapon → idle slot (index 0) */
+                        /* Find idle: scan unit weapons for "stand * idle*" with
+                         * frame data; fall back to weapons[0] idle if none found.
+                         * weapons[0] may be a vehicle-driver slot for some bipeds. */
+                        auto all_anims_opt = antr_hdr->animations.data(magic);
                         if(auto units_opt = antr_hdr->units.data(magic);
-                           units_opt.has_value() && !units_opt.value().empty())
+                           units_opt.has_value() && !units_opt.value().empty() &&
+                           all_anims_opt.has_value())
                         {
-                            auto const& unit0 = units_opt.value()[0];
-                            if(auto wpn_opt = unit0.weapons.data(magic);
-                               wpn_opt.has_value() && !wpn_opt.value().empty())
+                            auto all_anims  = all_anims_opt.value();
+                            u32  fallback   = 0;
+                            bool found_fallback = false;
+                            bool found_stand    = false;
+                            for(auto const& unit : units_opt.value())
                             {
-                                auto const& wpn0 = wpn_opt.value()[0];
-                                if(auto ai_opt = wpn0.animations.data(magic);
-                                   ai_opt.has_value() &&
-                                   ai_opt.value().size() >
-                                       blam::antr::unit_weapon::idle)
+                                if(found_stand)
+                                    break;
+                                auto wpn_opt = unit.weapons.data(magic);
+                                if(!wpn_opt.has_value())
+                                    continue;
+                                for(auto const& wpn : wpn_opt.value())
                                 {
-                                    i16 idx = ai_opt.value()
-                                                  [blam::antr::unit_weapon::idle]
-                                                      .animation;
-                                    if(idx >= 0)
-                                        anim_idx = static_cast<u32>(idx);
+                                    auto ai_opt = wpn.animations.data(magic);
+                                    if(!ai_opt.has_value() ||
+                                       ai_opt.value().size() <=
+                                           blam::antr::unit_weapon::idle)
+                                        continue;
+                                    i16 idx =
+                                        ai_opt.value()[blam::antr::unit_weapon::idle]
+                                            .animation;
+                                    if(idx < 0 ||
+                                       static_cast<u32>(idx) >= static_cast<u32>(all_anims.size()))
+                                        continue;
+                                    if(!found_fallback)
+                                    {
+                                        fallback        = static_cast<u32>(idx);
+                                        found_fallback  = true;
+                                    }
+                                    auto nm = all_anims[idx].name.str();
+                                    if(nm.find("stand") != std::string_view::npos &&
+                                       nm.find("idle") != std::string_view::npos &&
+                                       all_anims[idx].frame_size > 0)
+                                    {
+                                        anim_idx    = static_cast<u32>(idx);
+                                        found_stand = true;
+                                        break;
+                                    }
                                 }
                             }
+                            if(!found_stand && found_fallback)
+                                anim_idx = fallback;
                         }
+                        u32 anim_frame_count = 0;
+                        if(auto ai_opt = antr_hdr->animations.data(magic);
+                           ai_opt.has_value() &&
+                           anim_idx < static_cast<u32>(ai_opt.value().size()))
+                        {
+                            auto const& selected = ai_opt.value()[anim_idx];
+                            anim_frame_count = static_cast<u32>(selected.frame_count);
+                            cDebug(
+                                "load_objects: selected anim '{}' idx={} frames={} frame_size={} compressed={}",
+                                selected.name.str(),
+                                anim_idx,
+                                selected.frame_count,
+                                selected.frame_size,
+                                selected.is_compressed());
+                        }
+
                         for(auto const& mid : mesh_data.models)
+                        {
                             model_cache.apply_animation(
                                 mid, antr_hdr, anim_idx, 0);
+                            auto& mitem           = model_cache.get(mid);
+                            mitem.antr_hdr        = antr_hdr;
+                            mitem.anim_idx        = anim_idx;
+                            mitem.anim_frame_count = anim_frame_count;
+                        }
                     }
                 }
             }
