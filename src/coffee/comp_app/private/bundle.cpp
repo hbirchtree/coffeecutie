@@ -546,7 +546,14 @@ void addDefaults(
     auto& dummyPlug = loader.config<dummy_plug::Config>();
 
     if(dummyPlug.enabled)
-        dummy_plug::insert_dummy_plug(createContainer(), dummyPlug);
+    {
+        auto& container = createContainer();
+        dummy_plug::insert_dummy_plug(container, dummyPlug);
+        app_error ec;
+        loader.loadAll<subsystem_list<
+            dummy_plug::DummyEventBus
+        >>(container, ec);
+    }
 #endif
 
     /* Selection of window/event manager */

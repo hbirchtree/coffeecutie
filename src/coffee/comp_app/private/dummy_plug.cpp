@@ -35,6 +35,8 @@ enum class type_t
     controller_connect,
     controller_button,
     controller_axis,
+
+    custom,
 };
 
 namespace {
@@ -432,11 +434,12 @@ void insert_dummy_plug(
                                          std::string_view const& key) {
                 return magic_enum::enum_cast<type_t>(
                            event.value("type", std::string_view()))
-                    .value();
+                    .value_or(type_t::custom);
             };
             auto& perf_monitor =
                 container.subsystem_cast<comp_app::PerformanceMonitor>();
             perf_monitor.m_screenshot_quality = dummy_plug.screenshot_quality;
+            auto& dummy_bus = container.subsystem_cast<DummyEventBus>();
             for(auto const& event : config["events"])
             {
                 if(!event.contains("type"))
@@ -470,6 +473,24 @@ void insert_dummy_plug(
                                 container.relative_timestamp());
                         })
                         .assume_value();
+                    break;
+                }
+                case type_t::custom:
+                {
+                    DummyEvent out{};
+                    out.event = event.value("type", std::string{});
+                    out.data = event;
+                    out.data.erase("type");
+                    out.data.erase("time");
+                    auto start_time =
+                        std::chrono::milliseconds(event.value("time", 0u));
+                    rq::runtime_queue::QueueShot(
+                        rq::runtime_queue::GetCurrentQueue().value(),
+                        start_time,
+                        [&dummy_bus, out]() mutable {
+                            cDebug("Injecting custom dummy event: {}", out.event);
+                            dummy_bus.process(out, nullptr);
+                        }).assume_value();
                     break;
                 }
                 case type_t::none:

@@ -27,6 +27,15 @@ struct Config : comp_app::Config<Config>
     int                    screenshot_quality{30};
 };
 
+/* Free-form dummy events we can insert and interpret per-application */
+struct DummyEvent
+{
+    std::string event;
+    nlohmann::json data;
+};
+
+using DummyEventBus = BasicEventBus<DummyEvent>;
+
 void fork_dummy_plugs(
     AppLoadableService::entity_container& container,
     dummy_plug::Config&                   dummy_plug);
