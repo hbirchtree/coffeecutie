@@ -23,9 +23,9 @@ layout(binding = 0, std140) uniform MatrixStore
 
 layout(location = 1) uniform mat4 camera;
 
-layout(binding = 3, std430) readonly buffer BoneMatrices
+layout(binding = 3, std140) uniform BoneMatrices
 {
-    mat4 bones[];
+    mat4 bones[128];
 } bone_store;
 
 layout(location = 0) out FragData {

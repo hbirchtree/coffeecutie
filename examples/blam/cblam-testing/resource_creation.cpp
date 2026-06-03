@@ -1,13 +1,19 @@
 #include "resource_creation.h"
 
-#include "coffee/comp_app/services.h"
-#include "coffee/core/types/input/event_types.h"
+#include "coffee/comp_app/subsystems.h"
 #include "components.h"
-#include "peripherals/constants.h"
 #include "shader_compiler.h"
 #include "touch_overlay.h"
 
+#include <coffee/comp_app/services.h>
+#include <coffee/core/types/input/event_types.h>
 #include <coffee/core/input/eventhandlers.h>
+#include <glm/ext/quaternion_trigonometric.hpp>
+#include <glm/geometric.hpp>
+
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+#include <coffee/comp_app/dummy_plug.h>
+#endif
 
 using Coffee::ProfContext;
 using Coffee::Resource;
@@ -148,6 +154,50 @@ void create_resources(compo::EntityContainer& e)
                 gbus.process(ev, &load);
             });
     }
+    
+    auto& dummyConfig = e.subsystem_cast<comp_app::AppLoader>().config<comp_app::dummy_plug::Config>();
+    if(dummyConfig.enabled)
+    {
+        auto& dummy = e.subsystem_cast<comp_app::dummy_plug::DummyEventBus>();
+        dummy.addEventData({
+                .prio = 0,
+                .handler = [&e](comp_app::dummy_plug::DummyEvent& ev, const void*) {
+            if(ev.event == "camera")
+            {
+                PlayerCamera* target{};
+                for(auto const& en : e.select<PlayerCamera>())
+                {
+                    auto* cam = e.get<PlayerCamera>(en.id);
+                    auto const* info = e.get<PlayerInfo>(en.id);
+                    if(info->seat_idx != 0)
+                        continue;
+                    target = cam;
+                }
+                if(!target)
+                {
+                    cWarning("Could not assign dummy event to camera");
+                    return;
+                }
+                if(ev.data.contains("position"))
+                {
+                    auto pos = ev.data["position"].array();
+                    target->camera->position = Vecf3{
+                        pos[0].get<float>(),
+                        pos[1].get<float>(),
+                        pos[2].get<float>()
+                    };
+                }
+                if(ev.data.contains("rotation"))
+                {
+                    auto rot = ev.data["rotation"].array();
+                    target->camera->rotation = glm::normalize(
+                            glm::angleAxis(rot[0].get<float>(), Vecf3{-1.f,  0.f, 0.f}) *
+                            glm::angleAxis(rot[1].get<float>(), Vecf3{ 0.f, -1.f, 0.f})
+                    );
+                }
+            }
+        }});
+    }
 
     gfx::api&      api       = e.subsystem_cast<gfx::system>();
     BlamResources& resources = e.register_subsystem_inplace<BlamResources>();
@@ -189,25 +239,25 @@ void create_resources(compo::EntityContainer& e)
             ? 3
             : 1;
 
+    // For access in the vertex shader, UBOs are better
     resources.model_matrix_store = api.alloc_revolving_buffer(
+        gfx::buffers::constants, per_frame_bufs, access);
+    resources.bone_matrix_buf = api.alloc_revolving_buffer(
         gfx::buffers::constants, per_frame_bufs, access);
     if(api.feature_info().buffer.ssbo && false)
     {
-        //        resources.model_matrix_store
-        //            = api.alloc_buffer(gfx::buffers::shader_writable, access);
+        // From testing, using SSBOs was slower?
+        // Batching into UBOs was consistently faster,
+        // likely since UBOs are backed by faster memory
         resources.material_store = api.alloc_revolving_buffer(
             gfx::buffers::shader_writable, per_frame_bufs, access);
         resources.transparent_store = api.alloc_revolving_buffer(
-            gfx::buffers::shader_writable, per_frame_bufs, access);
-        resources.bone_matrix_buf = api.alloc_revolving_buffer(
             gfx::buffers::shader_writable, per_frame_bufs, access);
     } else if(api.feature_info().buffer.ubo)
     {
         resources.material_store = api.alloc_revolving_buffer(
             gfx::buffers::constants, per_frame_bufs, access);
         resources.transparent_store = api.alloc_revolving_buffer(
-            gfx::buffers::constants, per_frame_bufs, access);
-        resources.bone_matrix_buf = api.alloc_revolving_buffer(
             gfx::buffers::constants, per_frame_bufs, access);
     } else
     {
@@ -226,9 +276,6 @@ void create_resources(compo::EntityContainer& e)
     resources.material_store->commit(memory_budget::material_buffer);
     resources.bone_matrix_buf->alloc();
     resources.bone_matrix_buf->commit(memory_budget::bone_buffer);
-
-    /* Bone matrices: separate dynamic buffer, not mixed with static vertex data
-     */
 
     if(api.feature_info().buffer.ubo)
     {
@@ -712,8 +759,8 @@ void create_shaders(compo::EntityContainer& e)
 
 void set_resource_labels(EntityContainer& e)
 {
-    if constexpr(!compile_info::debug_mode)
-        return;
+    // if constexpr(!compile_info::debug_mode)
+    //     return;
     gfx::api&        api       = e.subsystem_cast<gfx::system>();
     gfx::debug::api& debug     = api.debug();
     BlamResources&   resources = e.subsystem_cast<BlamResources>();
@@ -735,8 +782,9 @@ void set_resource_labels(EntityContainer& e)
     debug.annotate(*resources.model_buf, "model_vertex_buf");
     debug.annotate(*resources.model_index, "model_index_buf");
 
-    // debug.annotate(*resources.material_store, "material_buffer");
-    // debug.annotate(*resources.model_matrix_store, "model_matrices");
+    debug.annotate(*resources.material_store, "material_buffer");
+    debug.annotate(*resources.model_matrix_store, "model_matrices");
+    debug.annotate(*resources.bone_matrix_buf, "bone_matrices");
 
     debug.annotate(*resources.debug_attr, "debug_vao");
     debug.annotate(*resources.debug_lines, "debug_vertices");
