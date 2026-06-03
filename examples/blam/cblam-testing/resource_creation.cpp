@@ -199,11 +199,15 @@ void create_resources(compo::EntityContainer& e)
             gfx::buffers::shader_writable, per_frame_bufs, access);
         resources.transparent_store = api.alloc_revolving_buffer(
             gfx::buffers::shader_writable, per_frame_bufs, access);
+        resources.bone_matrix_buf = api.alloc_revolving_buffer(
+            gfx::buffers::shader_writable, per_frame_bufs, access);
     } else if(api.feature_info().buffer.ubo)
     {
         resources.material_store = api.alloc_revolving_buffer(
             gfx::buffers::constants, per_frame_bufs, access);
         resources.transparent_store = api.alloc_revolving_buffer(
+            gfx::buffers::constants, per_frame_bufs, access);
+        resources.bone_matrix_buf = api.alloc_revolving_buffer(
             gfx::buffers::constants, per_frame_bufs, access);
     } else
     {
@@ -213,18 +217,18 @@ void create_resources(compo::EntityContainer& e)
             gfx::buffers::vertex, per_frame_bufs, access);
         resources.transparent_store = api.alloc_revolving_buffer(
             gfx::buffers::vertex, per_frame_bufs, access);
+        resources.bone_matrix_buf = api.alloc_revolving_buffer(
+            gfx::buffers::vertex, per_frame_bufs, access);
     }
     resources.model_matrix_store->alloc();
     resources.model_matrix_store->commit(memory_budget::matrix_buffer);
     resources.material_store->alloc();
     resources.material_store->commit(memory_budget::material_buffer);
+    resources.bone_matrix_buf->alloc();
+    resources.bone_matrix_buf->commit(memory_budget::bone_buffer);
 
     /* Bone matrices: separate dynamic buffer, not mixed with static vertex data
      */
-    resources.bone_matrix_buf = api.alloc_revolving_buffer(
-        gfx::buffers::shader_writable, per_frame_bufs, access);
-    resources.bone_matrix_buf->alloc();
-    resources.bone_matrix_buf->commit(memory_budget::bone_buffer);
 
     if(api.feature_info().buffer.ubo)
     {
