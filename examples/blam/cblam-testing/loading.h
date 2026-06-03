@@ -336,10 +336,6 @@ void load_objects(
         /* Apply idle animation frame 0 from the object's animation graph */
         {
             blam::tagref_t const& anim_graph = instance_obj[0].anim_graph;
-            cDebug(
-                "load_objects: tag={} anim_graph.valid={}",
-                instance_tag->to_name().to_string(magic),
-                anim_graph.valid());
             if(anim_graph.valid())
             {
                 auto antr_it = index.find(anim_graph);
@@ -410,13 +406,6 @@ void load_objects(
                         {
                             auto const& selected = ai_opt.value()[anim_idx];
                             anim_frame_count = static_cast<u32>(selected.frame_count);
-                            cDebug(
-                                "load_objects: selected anim '{}' idx={} frames={} frame_size={} compressed={}",
-                                selected.name.str(),
-                                anim_idx,
-                                selected.frame_count,
-                                selected.frame_size,
-                                selected.is_compressed());
                         }
 
                         for(auto const& mid : mesh_data.models)

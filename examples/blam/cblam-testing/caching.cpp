@@ -595,17 +595,20 @@ void ModelCache<V>::apply_animation(
     u32 n = static_cast<u32>(item.inv_bind.size());
 
     auto anims_opt = antr->animations.data(magic);
-    auto nodes_opt = antr->nodes.data(magic);
-    if(!anims_opt.has_value() || !nodes_opt.has_value())
+    if(!anims_opt.has_value())
         return;
-
     auto anims = anims_opt.value();
-    auto nodes = nodes_opt.value();
 
     if(anim_idx >= static_cast<u32>(anims.size()))
         return;
-    if(static_cast<u32>(nodes.size()) < n)
+
+    /* In PC cache files, antr::nodes is stripped — use mod2 bone parent chain */
+    if(!item.header)
         return;
+    auto bones_opt = item.header->bones.data(magic);
+    if(!bones_opt.has_value() || bones_opt.value().size() < n)
+        return;
+    auto bones = bones_opt.value();
 
     auto const& anim = anims[anim_idx];
     if(anim.is_compressed())
@@ -624,78 +627,60 @@ void ModelCache<V>::apply_animation(
     std::vector<Quatf> rotations(n, Quatf(1, 0, 0, 0));
     std::vector<Vecf3> translations(n, Vecf3(0));
 
-    /* default_data layout: [non-animated rotations] [non-animated translations]
-     * Non-animated nodes keep their transforms constant across all frames. */
-    size_t dr = 0, dt = 0;
-    for(u32 i = 0; i < n; i++)
-        if(!anim.has_rotation(i))
-            dt += 8;
+    /* Data is interleaved BY NODE: iterate nodes in order; each node emits its
+     * [rotation][translation][scale] channels. Animated channels come from
+     * frame_data (at the current frame), non-animated from default_data.
+     * frame_info (root motion) is a SEPARATE block, not in frame_data.
+     * Scale is a single float we don't use, but its bytes must be skipped. */
+    size_t d = 0;                                            /* default cursor */
+    size_t f = static_cast<size_t>(frame_idx) * anim.frame_size; /* frame cursor */
+
+    auto read_quat = [](semantic::Span<const byte_t> buf, size_t off) {
+        return reinterpret_cast<blam::antr::compressed_quat_t const*>(
+                   buf.data() + off)
+            ->decompress();
+    };
+    auto read_vec3 = [](semantic::Span<const byte_t> buf, size_t off) {
+        return *reinterpret_cast<Vecf3 const*>(buf.data() + off);
+    };
 
     for(u32 i = 0; i < n; i++)
     {
-        if(!anim.has_rotation(i) && dr + 8 <= default_bytes.size())
-        {
-            rotations[i] = reinterpret_cast<blam::antr::compressed_quat_t const*>(
-                               default_bytes.data() + dr)
-                               ->decompress();
-            dr += 8;
-        }
-    }
-    for(u32 i = 0; i < n; i++)
-    {
-        if(!anim.has_translation(i) && dt + 12 <= default_bytes.size())
-        {
-            translations[i] =
-                *reinterpret_cast<Vecf3 const*>(default_bytes.data() + dt);
-            dt += 12;
-        }
-    }
-
-    /* frame_data layout per frame: [frame_info] [animated rotations] [animated translations] */
-    size_t frame_info_size = 0;
-    switch(anim.frame_info_type_)
-    {
-    case blam::antr::frame_info_type::dx_dy:         frame_info_size = 8;  break;
-    case blam::antr::frame_info_type::dx_dy_dyaw:    frame_info_size = 12; break;
-    case blam::antr::frame_info_type::dx_dy_dz_dyaw: frame_info_size = 16; break;
-    default:                                         break;
-    }
-
-    size_t frame_base = static_cast<size_t>(frame_idx) * anim.frame_size + frame_info_size;
-    size_t fr         = frame_base;
-    size_t ft         = frame_base;
-    for(u32 i = 0; i < n; i++)
+        /* rotation */
         if(anim.has_rotation(i))
-            ft += 8;
-
-    for(u32 i = 0; i < n; i++)
-    {
-        if(anim.has_rotation(i) && fr + 8 <= frame_bytes.size())
         {
-            rotations[i] = reinterpret_cast<blam::antr::compressed_quat_t const*>(
-                               frame_bytes.data() + fr)
-                               ->decompress();
-            fr += 8;
-        }
-    }
-    for(u32 i = 0; i < n; i++)
-    {
-        if(anim.has_translation(i) && ft + 12 <= frame_bytes.size())
+            if(f + 8 <= frame_bytes.size()) rotations[i] = read_quat(frame_bytes, f);
+            f += 8;
+        } else
         {
-            translations[i] =
-                *reinterpret_cast<Vecf3 const*>(frame_bytes.data() + ft);
-            ft += 12;
+            if(d + 8 <= default_bytes.size()) rotations[i] = read_quat(default_bytes, d);
+            d += 8;
         }
+        /* translation */
+        if(anim.has_translation(i))
+        {
+            if(f + 12 <= frame_bytes.size()) translations[i] = read_vec3(frame_bytes, f);
+            f += 12;
+        } else
+        {
+            if(d + 12 <= default_bytes.size()) translations[i] = read_vec3(default_bytes, d);
+            d += 12;
+        }
+        /* scale (single float, skipped) */
+        if(anim.has_scale(i))
+            f += 4;
+        else
+            d += 4;
     }
 
-    /* Build world transforms from the antr node hierarchy */
+    /* Build world transforms using mod2 bone parent chain */
     std::vector<Matf4> world(n);
     for(u32 i = 0; i < n; i++)
     {
         Matf4 local = glm::translate(Matf4(1), translations[i]) *
                       glm::mat4_cast(rotations[i]);
-        i16 parent = nodes[i].parent;
-        if(parent >= 0 && static_cast<u32>(parent) < n)
+        u16 parent = bones[i].parent;
+        if(parent != blam::mod2::bone::invalid_bone && parent < i)
             world[i] = world[parent] * local;
         else
             world[i] = local;
@@ -715,7 +700,7 @@ void ModelCache<V>::tick_animations(f32 time_s)
     {
         if(!item.antr_hdr || item.anim_frame_count == 0 || item.inv_bind.empty())
             continue;
-        u32              frame  = static_cast<u32>(time_s * 30.f) % item.anim_frame_count;
+        u32 frame = static_cast<u32>(time_s * 30.f) % item.anim_frame_count;
         generation_idx_t gen_id = {raw_id, this->generation};
         apply_animation(gen_id, item.antr_hdr, item.anim_idx, frame);
     }
