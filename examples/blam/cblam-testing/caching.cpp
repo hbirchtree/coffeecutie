@@ -6,6 +6,7 @@
 #include <coffee/graphics/apis/gleam/rhi_texture_atlas.h>
 
 #include <algorithm>
+
 #include <peripherals/stl/magic_enum.hpp>
 
 template<typename V>
@@ -527,11 +528,15 @@ ModelItem<V> ModelCache<V>::predict_impl(
                 {
                     auto const* wrap = reinterpret_cast<
                         blam::mod2::part_wrap_header<V> const*>(part);
-                    u8 node_count = wrap->unknown_2[3];
+                    u8     node_count = wrap->unknown_2[3];
+                    size_t vcount     = vertices.size();
                     if(node_count > 0)
                     {
-                        for(auto& v : vert_dest)
+                        /* Bound to this part's verts; vert_dest spans the rest
+                         * of the shared buffer. */
+                        for(size_t k = 0; k < vcount; k++)
                         {
+                            auto& v = vert_dest[k];
                             if(v.weights.node0 < node_count)
                                 v.weights.node0 =
                                     wrap->unknown_2[4 + v.weights.node0];
@@ -560,11 +565,11 @@ ModelItem<V> ModelCache<V>::predict_impl(
         std::vector<Matf4> world_bind(n);
         for(u32 i = 0; i < n; i++)
         {
-            auto const& b     = bones[i];
-            /* Halo stores quaternions w-first (w,x,y,z); GLM's memory layout is
-             * x,y,z,w, so the overlaid Quatf is rotated by one component. Undo. */
-            Quatf       br    = Quatf(b.rotation.x, b.rotation.y, b.rotation.z, b.rotation.w);
-            Matf4       local = glm::translate(Matf4(1), b.translation) *
+            auto const& b = bones[i];
+            /* Halo bone rotations are stored as the conjugate (inverse) of the
+             * rotation GLM's forward kinematics expects, so conjugate them. */
+            Quatf br    = glm::conjugate(b.rotation);
+            Matf4 local = glm::translate(Matf4(1), b.translation) *
                           glm::mat4_cast(br);
             if(b.parent != blam::mod2::bone::invalid_bone && b.parent < i)
                 world_bind[i] = world_bind[b.parent] * local;
@@ -677,10 +682,9 @@ void ModelCache<V>::apply_animation(
             d += 4;
     }
 
-    /* antr quaternions have the same w-first storage vs GLM's x,y,z,w layout
-     * mismatch as the mod2 bones — reorder so (w,x,y,z) = (raw.x,y,z,w). */
+    /* antr quats use the same conjugate convention as the mod2 bind quats. */
     for(u32 i = 0; i < n; i++)
-        rotations[i] = Quatf(rotations[i].x, rotations[i].y, rotations[i].z, rotations[i].w);
+        rotations[i] = glm::conjugate(rotations[i]);
 
     /* Build world transforms using mod2 bone parent chain (DFS order: parent<i) */
     std::vector<Matf4> world(n);
