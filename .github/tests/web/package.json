@@ -1,0 +1,13 @@
+{
+  "name": "blam-webgl-test-harness",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Headless software-rendered WebGL smoke test for the emscripten BlamGraphics build",
+  "scripts": {
+    "test": "node webgl_smoke.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}
