@@ -406,12 +406,14 @@ void create_resources(compo::EntityContainer& e)
         };
         gfx::vertex_attribute node_wt_attr;
         node_wt_attr.index = 6;
+        /* Raw u16 (NOT normalized): Halo's full weight is 32767, not 65535, so
+         * the shader divides by 32767 to get weight0 in [0,1]. */
         node_wt_attr.value = {
             .offset = wt_base + offsetof(cwt, weight0),
             .stride = sizeof(cvert),
             .count  = 1,
             .type   = semantic::type_t::u16,
-            .flags  = gfx::vertex_attribute::attribute_flags::normalized,
+            .flags  = gfx::vertex_attribute::attribute_flags::none,
         };
         mod2_array.add(node_idx_attr);
         mod2_array.add(node_wt_attr);

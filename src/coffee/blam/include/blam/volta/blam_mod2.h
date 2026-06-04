@@ -168,7 +168,9 @@ struct xbox_ref
 
     inline auto vertices(u32 vert_count) const
     {
-        reference<vert::vertex<vert::compressed>> out;
+        /* Xbox mod2 vertices are mod2_vertex<compressed> (i16 texcoord + node
+         * weights), NOT the weightless BSP vertex<compressed>. */
+        reference<vert::mod2_vertex<vert::compressed>> out;
         out.count  = vert_count;
         out.offset = offset;
         return out;
