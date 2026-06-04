@@ -44,7 +44,7 @@ OUT_DIR="$(realpath "$OUT_DIR")"
 echo "Bundle : $BUNDLE_DIR"
 echo "Output : $OUT_DIR"
 
-echo "::group::Installing NPM dependencies"
+echo "::group::Installing NPM/Playwright dependencies"
 cd "$HERE"
 if [ ! -d node_modules/playwright ]; then
     echo "Installing playwright..."
@@ -56,16 +56,14 @@ if [ "${CI:-}" = "true" ]; then
 else
     npx playwright install chromium
 fi
+echo "::endgroup::"
 
-echo "===================================="
 echo "::group::Downloading test assets"
 mkdir -p $BUNDLE_DIR/pc/
 wget -q -O $BUNDLE_DIR/pc/beavercreek.map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/beavercreek.map
 wget -q -O $BUNDLE_DIR/pc/bitmaps.map     --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bitmaps.map
 wget -q -O $BUNDLE_DIR/pc/sounds.map      --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/sounds.map
 echo "::endgroup::"
-echo "===================================="
-echo "===================================="
 
 export BUNDLE_DIR OUT_DIR
 exec node webgl_smoke.mjs
