@@ -255,7 +255,7 @@ jobs:
         if-no-files-found: error
   Test_wasm_swiftshader:
     if: ${{ always() }}
-    name: "Software render test (SwiftShader, WebGL2)"
+    name: "Software render test (SwiftShader, ${{ matrix.variant }}-emscripten, WebGL2)"
     needs: Linux
     runs-on: ubuntu-latest
     permissions:
