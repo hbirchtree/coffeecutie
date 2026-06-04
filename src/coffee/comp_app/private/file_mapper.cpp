@@ -65,10 +65,12 @@ std::future<std::shared_ptr<FileMapper::Resource>> FileMapper::fetch(
                 res->m_mapping = std::move(mapping.value());
                 res->m_url     = src;
                 out.set_value(std::move(res));
-            }
+            } else
+                /* mapping failed despite a valid size: return empty rather
+                 * than letting the promise break */
+                out.set_value({});
         } else
             out.set_value({});
-        /* Promise breaks here if we failed to get the file */
         return fut;
     }
 }
