@@ -102,6 +102,7 @@ uint get_material_id(in uint instance)
 #if USE_LIGHTMAPS == 1
 layout(location = 14, binding = 4) uniform sampler2DArray lightmaps;
 
+#ifndef LIGHTMAP_FORMAT_AWARE
 vec4 get_light(in uint instance, in vec2 light_tex)
 {
     vec2 light_scale = mats.instance[instance].lightmap.atlas_scale;
@@ -112,4 +113,5 @@ vec4 get_light(in uint instance, in vec2 light_tex)
                 light_tex * light_scale + light_offset,
                 light_layer), -100.0);
 }
+#endif
 #endif

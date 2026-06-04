@@ -1,3 +1,6 @@
+/* Use the format-aware get_light defined below (samples the correct source_*
+ * bucket per lightmap format) instead of map_sampling.glsl's RGB565-only one. */
+#define LIGHTMAP_FORMAT_AWARE 1
 #include "map_sampling.glsl"
 
 layout(location = 0) in FragData {
@@ -143,6 +146,26 @@ vec4 get_color_explicit(in uint map_id, in int layer)
 {
     return get_color_explicit_with_offset(map_id, layer, vec2(0));
 }
+
+#if USE_LIGHTMAPS == 1
+/* Format-aware lightmap fetch: the lightmap's format is encoded in the high
+ * byte of its layer (same scheme as get_color). Stock maps use RGB565
+ * lightmaps; HD/Refined maps store them as RGBA8. Sample the matching bucket
+ * instead of the old hardcoded RGB565-only `lightmaps` sampler. */
+vec4 get_light(in uint instance, in vec2 light_tex)
+{
+    vec2 light_scale  = mats.instance[instance].lightmap.atlas_scale;
+    vec2 light_offset = mats.instance[instance].lightmap.atlas_offset;
+    int  tex_id       = mats.instance[instance].lightmap.layer;
+    vec2 uv           = light_tex * light_scale + light_offset;
+    int  layer        = tex_id & 0xFFFF;
+    uint source       = uint(tex_id) >> 24;
+
+    if(source == TEX_RGBA8)
+        return texture(source_rgba8, vec3(uv, layer), -100.0).bgra;
+    return texture(source_rgb565, vec3(uv, layer), -100.0);
+}
+#endif
 
 #if USE_REFLECTIONS == 1
 vec4 get_cube_color(in vec3 tex_coord)
