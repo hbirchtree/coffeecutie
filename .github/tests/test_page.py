@@ -11,6 +11,7 @@ output_file = argv[2]
 print(f'Traversing directory: {source_dir}')
 
 images = set()
+videos = set()
 logs = set()
 test_runs = set()
 
@@ -21,15 +22,19 @@ for (dirpath, _, filenames) in walk(source_dir):
     for f in filenames:
         if f.endswith('.jpg'):
             images.add(basename(f))
+        if f.endswith('.webm') or f.endswith('.mp4'):
+            videos.add(basename(f))
         if f.endswith('.log'):
             logs.add(basename(f))
 
 images = sorted(list(images))
+videos = sorted(list(videos))
 logs = sorted(list(logs))
 test_runs = sorted(list(test_runs))
 
 print(f'''Found test runs: {', '.join(test_runs)}
 Found images: {', '.join(images)}
+Found videos: {', '.join(videos)}
 Found logs: {', '.join(logs)}
 ''')
 
@@ -77,6 +82,22 @@ textarea {
             except FileNotFoundError:
                 print(f'ERROR: Image "{img_path}" expected, but not found')
                 results.write(f'\n{tab2}<td class="fail">DNF</td>')
+        results.write('\n    </tr>')
+    if videos:
+        results.write('\n    <tr><th>Videos</th></tr>')
+    for vid in videos:
+        mime = 'video/mp4' if vid.endswith('.mp4') else 'video/webm'
+        results.write('\n    <tr>')
+        results.write(f'\n{tab2}<td>{vid}</td>')
+        for test_run in test_runs:
+            vid_path = f'{test_run}/{vid}'
+            try:
+                with open(vid_path, 'rb') as vid_file:
+                    results.write(f'\n{tab2}<td><video controls preload="metadata" width="320" src="data:{mime};base64,{b64encode(vid_file.read()).decode()}"></video></td>')
+            except FileNotFoundError:
+                # Videos are optional (only the WebGL run records one); a missing video is
+                # not a failure, unlike a missing screenshot.
+                results.write(f'\n{tab2}<td>&mdash;</td>')
         results.write('\n    </tr>')
     results.write('\n    <tr><th>Logs</th></tr>')
     for log in logs:
