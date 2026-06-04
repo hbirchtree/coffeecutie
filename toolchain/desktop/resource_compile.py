@@ -131,8 +131,6 @@ def shader_dependencies(shader_file: str, cache_directory: str):
             return deps
         return []
 
-    if exists(dep_file):
-        return get_deps()
     subprocess.call([
         glslang,
         '--depfile', dep_file,
