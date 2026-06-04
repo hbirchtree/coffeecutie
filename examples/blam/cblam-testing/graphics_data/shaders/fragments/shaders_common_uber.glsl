@@ -32,6 +32,15 @@ layout(location = 30, binding = 11) uniform samplerCube source_cube_rgba8;
 
 layout(location = 21) uniform vec3 camera_position;
 layout(location = 22) uniform float time;
+// TODO: Add constant fallback on release mode
+layout(location = 31) uniform int render_flags;
+
+const int RENDER_FLAG_FOG            = 0x1;
+const int RENDER_FLAG_LIGHTMAP       = 0x2;
+const int RENDER_FLAG_REFLECTION     = 0x4;
+const int RENDER_FLAG_ONLY_NORMALS   = 0x10;
+const int RENDER_FLAG_ONLY_NORMALMAP = 0x20;
+const int RENDER_FLAG_ONLY_LIGHTMAP  = 0x40;
 
 struct LightProperties
 {
@@ -191,7 +200,11 @@ vec4 shader_environment()
     vec4 primary = get_color(primary_map_id);
     vec4 secondary = get_color(secondary_map_id);
 #if USE_LIGHTMAPS == 1
-    vec4 lightmap = get_light(frag.instanceId, frag.light_tex);
+    vec4 lightmap = (render_flags & RENDER_FLAG_LIGHTMAP) != 0
+        ? get_light(frag.instanceId, frag.light_tex)
+        : vec4(1.0);
+    if((render_flags & RENDER_FLAG_ONLY_LIGHTMAP) != 0)
+        return lightmap;
 #endif
 
     float factor = type == TYPE_NORMAL ? secondary.a : base.a;
@@ -210,7 +223,7 @@ vec4 shader_environment()
     vec3 reflection   = vec3(1.0);
     vec3 refl_color   = vec3(1.0);
     float refl_strength = 0.0;
-    if(reflective > 0)
+    if(reflective > 0 && (render_flags & RENDER_FLAG_REFLECTION) != 0)
     {
         uint reflect_type = uint((mats.instance[frag.instanceId].material.flags >> 7) & 0x3);
         float lightmap_brightness = mats.instance[frag.instanceId].material.input1.x;
@@ -240,6 +253,10 @@ vec4 shader_environment()
 #endif
 #if USE_NORMALMAP == 1
     float bump_factor = clamp((normal.a + 1.0) / (light_direction().z + 1.0), 0.1, 2.0);
+    if((render_flags & RENDER_FLAG_ONLY_NORMALS) != 0)
+        return vec4(bump_factor * vec3(1), 1);
+    if((render_flags & RENDER_FLAG_ONLY_NORMALMAP) != 0)
+        return vec4(normal.rgb, 1);
 #endif
     vec3 out_color = base.rgb *
         micro.rgb *
@@ -449,7 +466,8 @@ vec4 shader_model()
     // TODO: Find out why boulder_moss_large.shader_model becomes so glossy
     // TODO: Find out why visor is opaque, but flipping the mix()
     //       makes other shiny objects opaque
-    if((uint(mats.instance[frag.instanceId].lightmap.reflection) >> 24) != 0u)
+    if((uint(mats.instance[frag.instanceId].lightmap.reflection) >> 24) != 0u &&
+            (render_flags & RENDER_FLAG_REFLECTION) != 0)
     {
         float NdotV_m      = clamp(dot(frag.normal, view_world), 0.0, 1.0);
         float fresnel_m    = 1.0 - NdotV_m;
@@ -603,6 +621,11 @@ void main()
     } else
         color = vec4(0, 1, 0, 1);
 
+    if((render_flags & RENDER_FLAG_FOG) != 0)
+    {
+        final_color = color;
+        return;
+    }
 
     vec4 fog_color = vec4(world.fog.outdoor_color.xyz, 1);
     float fog_distance = length(frag.position - camera_position);

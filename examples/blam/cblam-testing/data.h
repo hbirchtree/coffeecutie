@@ -88,9 +88,18 @@ struct RenderingParameters : compo::SubsystemBase
 
     libc_types::u32 mipmap_bias{compile_info::platform::is_32bit ? 2 : 3};
 
+    bool color_changing{true};
+    bool render_fog{true};
+    bool render_lightmaps{true};
+    bool render_model_bones{true};
+    bool render_reflection{true};
     bool render_scenery{true};
+    bool only_normals{false};
+    bool only_normalmaps{false};
+    bool only_lightmaps{false};
+
     bool render_ui{false};
-    bool debug_clear{true};
+    bool debug_clear{false}; // sets a different clear color for visibility
 
     bool occluder_update{false};
 
@@ -100,7 +109,6 @@ struct RenderingParameters : compo::SubsystemBase
     bool debug_clusters{false};
     bool debug_triggers{false};
 
-    bool color_changing{true};
 
     f32 tex_res{0.f};
     f32 draw_distance{500.f};

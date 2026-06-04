@@ -225,6 +225,7 @@ struct MeshRenderer
     gfx::api*            m_api;
     BlamResources&       m_resources;
     RenderingParameters& m_render_params;
+    int m_render_flags{0x0};
 
     ShaderCache<Version>& shader_cache;
     BitmapCache<Version>& bitm_cache;
@@ -464,6 +465,22 @@ struct MeshRenderer
         };
     }
 
+    gfx::uniform_pair<const int> get_renderflag_uniform()
+    {
+        m_render_flags =
+            (m_render_params.render_fog ? 0x1 : 0) |
+            (m_render_params.render_lightmaps ? 0x2 : 0) |
+            (m_render_params.render_reflection ? 0x4 : 0) |
+            (m_render_params.render_model_bones ? 0x8 : 0) |
+            (m_render_params.only_normals ? 0x10 : 0) |
+            (m_render_params.only_normalmaps ? 0x20 : 0) |
+            (m_render_params.only_lightmaps ? 0x40 : 0);
+        return gfx::uniform_pair{
+            {"render_flags"sv, 31},
+            semantic::SpanOne<const int>(m_render_flags),
+        };
+    }
+
     template<typename... Args>
     void render_pass(Proxy&, u32 idx, f32 t, Pass const& pass, Args&&... extra)
     {
@@ -483,7 +500,8 @@ struct MeshRenderer
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair{
                 {"camera"sv, 1},
-                semantic::SpanOne<const Matf4>(player.matrix)});
+                semantic::SpanOne<const Matf4>(player.matrix)},
+            get_renderflag_uniform());
         auto fragment_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Fragment,
             gfx::uniform_pair{
@@ -493,7 +511,8 @@ struct MeshRenderer
             gfx::uniform_pair{
                 {"time", 22},
                 semantic::SpanOne<const f32>(t),
-            });
+            },
+            get_renderflag_uniform());
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
                 typing::graphics::ShaderStage::Vertex,
@@ -564,7 +583,8 @@ struct MeshRenderer
         auto vertex_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair{
-                {"camera"sv, 1}, semantic::SpanOne(player.matrix)});
+                {"camera"sv, 1}, semantic::SpanOne(player.matrix)},
+            get_renderflag_uniform());
         auto fragment_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Fragment,
             gfx::uniform_pair{
@@ -574,7 +594,8 @@ struct MeshRenderer
             gfx::uniform_pair{
                 {"time", 22},
                 semantic::SpanOne<const f32>(t),
-            });
+            },
+            get_renderflag_uniform());
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
                 typing::graphics::ShaderStage::Fragment,

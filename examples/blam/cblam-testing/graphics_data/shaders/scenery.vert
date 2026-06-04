@@ -28,6 +28,9 @@ layout(binding = 3, std140) uniform BoneMatrices
     mat4 bones[128];
 } bone_store;
 
+layout(location = 31) uniform int render_flags;
+const int RENDER_FLAG_BONES = 0x8;
+
 layout(location = 0) out FragData {
     vec3 position;
     vec2 tex;
@@ -52,7 +55,7 @@ void main()
     vec4 local_tan    = vec4(tangent, 0.0);
     vec4 local_bin    = vec4(binormal, 0.0);
 
-    if(bone_base >= 0)
+    if(bone_base >= 0 && (render_flags & RENDER_FLAG_BONES) != 0)
     {
         mat4 b0 = bone_store.bones[bone_base + int(node_indices.x)];
         mat4 b1 = bone_store.bones[bone_base + int(node_indices.y)];

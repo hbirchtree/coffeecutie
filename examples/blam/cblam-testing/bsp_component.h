@@ -58,16 +58,25 @@ struct BlamBspWidget
             RenderingParameters* rendering;
             e.subsystem(rendering);
 
-            ImGui::Checkbox("Render UI", &rendering->render_ui);
 
             if(ImGui::BeginTabBar(""))
             {
-                if(ImGui::BeginTabItem("BSP"))
+                if(ImGui::BeginTabItem("Render"))
                 {
-                    ImGui::Checkbox(
-                        "Clear before draw", &rendering->debug_clear);
-                    ImGui::Checkbox(
-                        "Show debug markers", &rendering->debug_markers);
+                    ImGui::Checkbox("Render UI", &rendering->render_ui);
+                    ImGui::Text("Debug");
+                    ImGui::Checkbox("Clear before draw", &rendering->debug_clear);
+                    ImGui::Checkbox("Show debug markers", &rendering->debug_markers);
+                    ImGui::Checkbox("Render reflections", &rendering->render_reflection);
+                    ImGui::Checkbox("Only normals", &rendering->only_normals);
+                    ImGui::Checkbox("Only normal maps", &rendering->only_normalmaps);
+                    ImGui::Text("BSP-specific");
+                    ImGui::Checkbox("Render lightmaps", &rendering->render_lightmaps);
+                    ImGui::Checkbox("Only lightmaps", &rendering->only_lightmaps);
+                    ImGui::Text("Model-specific");
+                    ImGui::Checkbox("Render scenery", &rendering->render_scenery);
+                    ImGui::Checkbox("Vertex skinning", &rendering->render_model_bones);
+                    ImGui::Checkbox("Color changing", &rendering->color_changing);
                     ImGui::EndTabItem();
                 }
                 if(ImGui::BeginTabItem("Clusters"))
@@ -92,14 +101,6 @@ struct BlamBspWidget
                         }
                         ImGui::EndListBox();
                     }
-                    ImGui::EndTabItem();
-                }
-                if(ImGui::BeginTabItem("Models"))
-                {
-                    ImGui::Checkbox(
-                        "Render scenery", &rendering->render_scenery);
-                    ImGui::Checkbox(
-                        "Color changing", &rendering->color_changing);
                     ImGui::EndTabItem();
                 }
                 if(ImGui::BeginTabItem("Trigger volumes"))
