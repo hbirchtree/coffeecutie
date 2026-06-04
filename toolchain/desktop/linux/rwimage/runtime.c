@@ -246,13 +246,13 @@ int main(int argc, char *argv[])
     setenv("RWIMAGE_MOUNT", mountpoint, 1);
 
     /* Build argv for the launch script, forwarding all original arguments */
-    char apprun[PATH_MAX];
-    snprintf(apprun, sizeof apprun, "%s/launch.sh", mountpoint);
+    char entrypoint[PATH_MAX];
+    snprintf(entrypoint, sizeof entrypoint, "%s/launch.sh", mountpoint);
 
     char **child_argv = malloc(((size_t)argc + 1) * sizeof(char *));
     if (!child_argv)
         die("malloc");
-    child_argv[0] = apprun;
+    child_argv[0] = entrypoint;
     for (int i = 1; i < argc; i++)
         child_argv[i] = argv[i];
     child_argv[argc] = NULL;
@@ -261,7 +261,7 @@ int main(int argc, char *argv[])
     if (app_pid < 0)
         die("fork app");
     if (app_pid == 0) {
-        execv(apprun, child_argv);
+        execv(entrypoint, child_argv);
         perror("execv launch.sh");
         exit(127);
     }
