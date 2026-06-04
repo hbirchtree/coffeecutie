@@ -154,7 +154,8 @@ void create_resources(compo::EntityContainer& e)
                 gbus.process(ev, &load);
             });
     }
-    
+
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
     auto& dummyConfig = e.subsystem_cast<comp_app::AppLoader>().config<comp_app::dummy_plug::Config>();
     if(dummyConfig.enabled)
     {
@@ -198,6 +199,7 @@ void create_resources(compo::EntityContainer& e)
             }
         }});
     }
+#endif
 
     gfx::api&      api       = e.subsystem_cast<gfx::system>();
     BlamResources& resources = e.register_subsystem_inplace<BlamResources>();
