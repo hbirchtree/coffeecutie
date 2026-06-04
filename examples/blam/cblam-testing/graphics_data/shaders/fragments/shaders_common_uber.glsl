@@ -491,6 +491,8 @@ vec4 shader_model()
     color.rgb = clamp(color.rgb * NdotL
         /*+ coloring.rgb*/
         /*+ reflection.rgb*/, 0, 1);
+    if((render_flags & RENDER_FLAG_ONLY_NORMALS) != 0)
+        return vec4(frag.normal, 1);
 
     vec4 detail = get_color(detail_map_id);
 //    color.rgb = detail.rgb * 2 + color.rgb;
