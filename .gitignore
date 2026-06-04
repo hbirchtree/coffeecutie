@@ -1,10 +1,16 @@
 # General
 *~
-*.userprefs
-*.user*
 .DS_Store
 *.swp
 massif.out*
+.targets.json
+
+# Editors
+.exrc
+*.user*
+*.userprefs
+.vscode
+.vim
 
 # Directories
 bin
