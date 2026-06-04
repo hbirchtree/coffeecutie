@@ -27,8 +27,16 @@
         {"time":  7000, "type":"camera", "position":[362, -689.5, 74.25], "rotation":[0, -90]},
         {"time":  8000, "type":"screenshot","name":"c40_chief_front"},
         {"time":  9000, "type":"camera", "position":[361.5, -689.0, 74.25], "rotation":[0, 180]},
-        {"time": 11000, "type":"screenshot","name":"c40_chief_side"}
+        {"time": 11000, "type":"screenshot","name":"c40_chief_side"},
+        {"time": 12000, "type":"camera", "position":[362.5, -689.0, 75.25], "rotation":[0, -140]},
+        {"time": 15000, "type":"screenshot","name":"c40_guilty_spark"},
+        {"time": 17000, "type":"camera", "position":[359.8, -685.0, 74.1], "rotation":[0, -90]},
+        {"time": 19000, "type":"screenshot","name":"c40_sentinel"},
+        {"time": 21000, "type":"camera", "position":[244, -655, 86], "rotation":[-30, 180]},
+        {"time": 23000, "type":"screenshot","name":"c40_control_room"},
+        {"time": 25000, "type":"camera", "position":[148, -260, 8], "rotation":[-30, -160]},
+        {"time": 27000, "type":"screenshot","name":"c40_bridge"}
     ],
     "frame_delta": 500.0,
-    "end_time": 15000
+    "end_time": 40000
 }
