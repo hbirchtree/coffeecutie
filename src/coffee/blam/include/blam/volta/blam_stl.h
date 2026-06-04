@@ -62,13 +62,15 @@ struct map_container
 
         progress("Reading map header", 0);
 
-        file_header_t const* header =
-            file_header_t::from_data(map, ver).value();
+        auto header_res = file_header_t::from_data(map, ver);
+        if(header_res.has_error())
+            return header_res.error();
+        file_header_t const* header = header_res.value();
+        if(!header)
+            return map_load_error::not_a_map;
 
         if(header->version != version_t::xbox)
         {
-            if(!header)
-                return map_load_error::not_a_map;
             progress("Reading tag index", 100);
             auto const* tags_index = &tag_index_t<Ver>::from_header(header);
             progress("Complete!", -1);
@@ -105,7 +107,10 @@ struct map_container
         if(err)
             return map_load_error::decompression_error;
         decompressed = semantic::mem_chunk<char>::ofContainer(map_data);
-        header       = file_header_t::from_data(decompressed, ver).value();
+        auto rehdr   = file_header_t::from_data(decompressed, ver);
+        if(rehdr.has_error())
+            return rehdr.error();
+        header = rehdr.value();
 
         if(!header)
             return map_load_error::not_a_map;
