@@ -22,11 +22,11 @@
     },
     "comment": "Captures various cases on c40.map",
     "events": [
-        {"time":  1000, "type":"camera", "position":[362, -713.77, 74.24], "rotation":[0, 2.5]},
+        {"time":  1000, "type":"camera", "position":[362, -713.77, 74.24], "rotation":[0, 145]},
         {"time":  5000, "type":"screenshot","name":"c40_cortana"},
-        {"time":  7000, "type":"camera", "position":[362, -689.5, 74.25], "rotation":[0, -1.55]},
+        {"time":  7000, "type":"camera", "position":[362, -689.5, 74.25], "rotation":[0, -90]},
         {"time":  8000, "type":"screenshot","name":"c40_chief_front"},
-        {"time":  9000, "type":"camera", "position":[361.5, -689.0, 74.25], "rotation":[0, 3.14]},
+        {"time":  9000, "type":"camera", "position":[361.5, -689.0, 74.25], "rotation":[0, 180]},
         {"time": 11000, "type":"screenshot","name":"c40_chief_side"}
     ],
     "frame_delta": 500.0,
