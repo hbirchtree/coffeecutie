@@ -716,7 +716,9 @@ def configure_and_build_plan(
     target: TargetSpec,
     base_dir: Path,
     env: dict[str, str],
+    cmake_args: list[str] | None = None,
 ) -> BuildPlan:
+    cmake_args = cmake_args or []
     plan = BuildPlan(f"configure-and-build — {target.preset}")
 
     if _is_ci():
@@ -731,7 +733,7 @@ def configure_and_build_plan(
 
     plan.add(Step(
         name="configure",
-        cmd=["cmake", "--preset", target.preset],
+        cmd=["cmake", "--preset", target.preset, *cmake_args],
         env=env,
         cwd=base_dir,
         description=f"CMake configure — preset {target.preset}",
@@ -816,6 +818,7 @@ def native_plan(
     host: HostInfo,
     base_dir: Path,
     build_host_tools: bool = True,
+    cmake_args: list[str] | None = None,
 ) -> BuildPlan:
     plan = BuildPlan(
         f"native — {target.platform}:{target.architecture}:{target.sysroot}"
@@ -908,7 +911,7 @@ def native_plan(
                 ),
             ))
 
-    plan.extend(configure_and_build_plan(target, base_dir, env))
+    plan.extend(configure_and_build_plan(target, base_dir, env, cmake_args))
     return plan
 
 
@@ -920,6 +923,7 @@ def emscripten_plan(
     target: TargetSpec,
     host: HostInfo,
     base_dir: Path,
+    cmake_args: list[str] | None = None,
 ) -> BuildPlan:
     plan = BuildPlan(
         f"emscripten — {target.platform}:{target.architecture}:{target.sysroot}"
@@ -978,7 +982,7 @@ def emscripten_plan(
         "EMSDK": str(toolchain_root),
     })
 
-    plan.extend(configure_and_build_plan(target, base_dir, env))
+    plan.extend(configure_and_build_plan(target, base_dir, env, cmake_args))
     return plan
 
 
@@ -990,6 +994,7 @@ def xcode_plan(
     target: TargetSpec,
     host: HostInfo,
     base_dir: Path,
+    cmake_args: list[str] | None = None,
 ) -> BuildPlan:
     plan = BuildPlan(
         f"xcode — {target.platform}:{target.architecture}:{target.sysroot}"
@@ -997,7 +1002,7 @@ def xcode_plan(
     plan.extend(host_tools_plan(host, base_dir))
 
     env = _base_env(target, host, base_dir)
-    plan.extend(configure_and_build_plan(target, base_dir, env))
+    plan.extend(configure_and_build_plan(target, base_dir, env, cmake_args))
     return plan
 
 
@@ -1009,6 +1014,7 @@ def android_plan(
     target: TargetSpec,
     host: HostInfo,
     base_dir: Path,
+    cmake_args: list[str] | None = None,
 ) -> BuildPlan:
     plan = BuildPlan(
         f"android — {target.platform}:{target.architecture}:{target.sysroot}"
@@ -1074,7 +1080,7 @@ def android_plan(
         "TOOLCHAIN_ROOT": str(android_sdk / "ndk" / ndk_version),
     })
 
-    plan.extend(configure_and_build_plan(target, base_dir, env))
+    plan.extend(configure_and_build_plan(target, base_dir, env, cmake_args))
     return plan
 
 
@@ -1086,6 +1092,7 @@ def mingw_plan(
     target: TargetSpec,
     host: HostInfo,
     base_dir: Path,
+    cmake_args: list[str] | None = None,
 ) -> BuildPlan:
     plan = BuildPlan(
         f"mingw — {target.platform}:{target.architecture}:{target.sysroot}"
@@ -1128,7 +1135,7 @@ def mingw_plan(
         "TOOLCHAIN_ROOT": str(toolchain_root),
     })
 
-    plan.extend(configure_and_build_plan(target, base_dir, env))
+    plan.extend(configure_and_build_plan(target, base_dir, env, cmake_args))
     return plan
 
 
@@ -1141,24 +1148,29 @@ _NATIVE_PLATFORMS = frozenset(
 )
 
 
-def build_plan_for(target: TargetSpec, host: HostInfo, base_dir: Path) -> BuildPlan:
+def build_plan_for(
+    target: TargetSpec,
+    host: HostInfo,
+    base_dir: Path,
+    cmake_args: list[str] | None = None,
+) -> BuildPlan:
     """Select and construct the correct BuildPlan for the given target."""
     if target.platform == "host":
         return host_tools_plan(host, base_dir)
     if "mingw32" in target.architecture:
-        return mingw_plan(target, host, base_dir)
+        return mingw_plan(target, host, base_dir, cmake_args)
     if target.platform in _NATIVE_PLATFORMS:
         if host.os == "darwin" and target.platform == "desktop":
-            return xcode_plan(target, host, base_dir)
-        return native_plan(target, host, base_dir)
+            return xcode_plan(target, host, base_dir, cmake_args)
+        return native_plan(target, host, base_dir, cmake_args=cmake_args)
     if target.platform == "web":
-        return emscripten_plan(target, host, base_dir)
+        return emscripten_plan(target, host, base_dir, cmake_args)
     if target.platform in ("ios", "xcode"):
-        return xcode_plan(target, host, base_dir)
+        return xcode_plan(target, host, base_dir, cmake_args)
     if target.platform == "android":
-        return android_plan(target, host, base_dir)
+        return android_plan(target, host, base_dir, cmake_args)
     if target.platform == "windows":
-        return mingw_plan(target, host, base_dir)
+        return mingw_plan(target, host, base_dir, cmake_args)
     sys.exit(f"::error::Unknown platform: {target.platform}")
 
 
@@ -1411,6 +1423,14 @@ def main() -> None:
         formatter_class=argparse.RawTextHelpFormatter,
         add_help=True,
     )
+    # Everything after a literal `--` is forwarded verbatim to the cmake
+    # configure step (build commands only), e.g. `build <target> -- -DFOO=bar`.
+    cmake_extra_args: list[str] = []
+    if "--" in sys.argv:
+        idx = sys.argv.index("--")
+        cmake_extra_args = sys.argv[idx + 1:]
+        sys.argv = sys.argv[:idx]
+
     # Pre-scan for --dry-run / --list-steps so the flag is accepted anywhere
     # on the command line (before or after the subcommand name).
     _dry_run_flags = {"--dry-run", "--list-steps"}
@@ -1544,7 +1564,7 @@ def main() -> None:
             # gh: toolchain download via GitHub Releases
             check_programs("gh")
 
-        plan = build_plan_for(target, host, base_dir)
+        plan = build_plan_for(target, host, base_dir, cmake_extra_args)
         plan.execute(dry_run=dry_run)
 
     elif cmd == "host-build":
