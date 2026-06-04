@@ -35,6 +35,12 @@ if [ -z "$OUT_DIR" ]; then
     OUT_DIR="/tmp/webgl_test/${VARIANT:-webgl}"
 fi
 
+# Resolve to absolute paths before we cd into the harness dir, otherwise relative
+# args (e.g. "artifacts/bin/BlamGraphics.bundle") would break after the cd.
+BUNDLE_DIR="$(realpath "$BUNDLE_DIR")"
+mkdir -p "$OUT_DIR"
+OUT_DIR="$(realpath "$OUT_DIR")"
+
 echo "Bundle : $BUNDLE_DIR"
 echo "Output : $OUT_DIR"
 
