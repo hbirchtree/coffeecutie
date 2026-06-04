@@ -3,14 +3,33 @@
 import json
 import subprocess
 from argparse import ArgumentParser
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from glob import glob
-from os import makedirs
+from os import makedirs, cpu_count
 from os.path import dirname, getmtime, exists
 from shutil import copyfile, which
 from hashlib import sha256
 
 
 PROGRAMS = {}
+
+# Thread pool for dispatching external compiler processes concurrently.
+# Set in __main__ once job count is known.
+EXECUTOR = None
+FUTURES = []
+
+
+class RunError(Exception):
+    def __init__(self, cmd, stdout, stderr):
+        super().__init__(' '.join(cmd))
+        self.cmd = cmd
+        self.stdout = stdout
+        self.stderr = stderr
+
+
+def submit(fn, *args, **kwargs):
+    """Schedule a work unit on the pool, tracking its future."""
+    FUTURES.append(EXECUTOR.submit(fn, *args, **kwargs))
 
 DEFAULT_TEX_VARIANTS = {
     'astc': ['rgba'],
@@ -128,9 +147,9 @@ def run(program, *args):
     process_args = [program, *args]
     ret = subprocess.run(process_args, capture_output=True)
     if ret.returncode != 0:
-        print(' '.join(process_args))
-        print(f'ERROR:\n{ret.stdout.decode()}\n{ret.stderr.decode()}')
-        exit(1)
+        # Raise instead of exit() so the failure propagates out of the
+        # worker thread and is reported when futures are drained.
+        raise RunError(process_args, ret.stdout.decode(), ret.stderr.decode())
 
 
 def compile_shaders(
@@ -171,7 +190,8 @@ def compile_shaders(
             if not needs_update(out_file, [in_file] + extra_dependencies + file_dependencies):
                 continue
             print(f' * Emitting {file} as {profile} {version}')
-            run(
+            submit(
+                run,
                 'ShaderCooker',
                 '--force',
                 '--compact',
@@ -199,7 +219,8 @@ def compile_shaders(
         extra_args = []
         if values['strip_assemblies']:
             extra_args.append('--strip-debug')
-        run(
+        submit(
+            run,
             'ShaderCooker',
             '--force',
             '--compact',
@@ -255,15 +276,7 @@ def encode_textures(
         file_dir = dirname(source)
         # print(f'{basename}[{extension}] -> {descriptor}')
         rendered_file = f'{cache_directory}/{basename}.png'
-        if extension == 'svg':
-            if needs_update(rendered_file, [f'{root_directory}/{source}']):
-                run(
-                    'Inkscape',
-                    f'{root_directory}/{source}',
-                    f'--export-filename={rendered_file}',
-                    f'--export-width={resolutions[0]}'
-                )
-        else:
+        if extension != 'svg':
             rendered_file = f'{root_directory}/{source}'
         def _predict_names(basename):
             return [f'{out_directory}/{basename}.0.{codec}' for codec, _ in codecs]
@@ -277,14 +290,26 @@ def encode_textures(
                 return
         print(f'* Processing file {source} -> {codecs}')
         compress_mode = 'fast' if 'Deb' in build_mode else 'release'
-        run(
-            'TextureCompressor',
-            *[ f'--codec={codec}:{fmt}' for codec, fmt in codecs ],
-            *[ f'--resolution={res}' for res in resolutions ],
-            f'--mode={compress_mode}',
-            rendered_file,
-            f'--output={out_directory}/{file_dir}'
-            )
+
+        # SVG render must precede compression, so keep both in one task.
+        def _task():
+            if extension == 'svg' and needs_update(
+                    rendered_file, [f'{root_directory}/{source}']):
+                run(
+                    'Inkscape',
+                    f'{root_directory}/{source}',
+                    f'--export-filename={rendered_file}',
+                    f'--export-width={resolutions[0]}'
+                )
+            run(
+                'TextureCompressor',
+                *[ f'--codec={codec}:{fmt}' for codec, fmt in codecs ],
+                *[ f'--resolution={res}' for res in resolutions ],
+                f'--mode={compress_mode}',
+                rendered_file,
+                f'--output={out_directory}/{file_dir}'
+                )
+        submit(_task)
 
     for file in values['files']:
         resolutions = _generate_mipmaps(file['mipmap_range'])
@@ -307,7 +332,7 @@ def copy_files(
         build_mode: str,
         extra_dependencies: list):
     for file in values:
-        copyfile(f'{root_directory}/{file}', f'{out_directory}/{file}')
+        submit(copyfile, f'{root_directory}/{file}', f'{out_directory}/{file}')
 
 
 def process_resources(definition: dict, extra_dependencies: list, **kwargs):
@@ -334,7 +359,11 @@ if __name__ == '__main__':
     parser.add_argument('-P', '--program', dest='programs', action='append')
     parser.add_argument('-t', '--target', dest='target', required=True)
     parser.add_argument('-b', '--build-mode', dest='build_mode', required=True)
+    parser.add_argument('-j', '--jobs', dest='jobs', type=int,
+                        default=cpu_count() or 1,
+                        help='Max concurrent compiler processes')
     args = parser.parse_args()
+    EXECUTOR = ThreadPoolExecutor(max_workers=max(1, args.jobs))
     for program_pair in args.programs:
         program, path = program_pair.split('=')
         PROGRAMS[program] = path
@@ -361,3 +390,16 @@ if __name__ == '__main__':
                 target=args.target,
                 build_mode=args.build_mode,
                 extra_dependencies=[resource_def])
+
+    # Wait for all dispatched compiler processes and report any failures.
+    failed = False
+    for future in as_completed(FUTURES):
+        try:
+            future.result()
+        except RunError as e:
+            print(' '.join(e.cmd))
+            print(f'ERROR:\n{e.stdout}\n{e.stderr}')
+            failed = True
+    EXECUTOR.shutdown()
+    if failed:
+        exit(1)
