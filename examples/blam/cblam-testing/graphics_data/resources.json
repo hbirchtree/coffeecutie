@@ -11,6 +11,7 @@
             "shaders/map_uber.frag",
             "shaders/map_uber_lite.frag",
             "shaders/scenery.vert",
+            "shaders/scenery_xbox.vert",
             "shaders/scenery.frag",
             "shaders/scenery_uber.frag",
             "shaders/scenery_uber_lite.frag",

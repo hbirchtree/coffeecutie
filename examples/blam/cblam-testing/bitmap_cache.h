@@ -4,6 +4,8 @@
 #include "data.h"
 #include "data_cache.h"
 
+#include <blam/volta/blam_swizzle.h>
+
 using BitmapManifest =
     compo::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
 
@@ -199,8 +201,32 @@ struct BitmapCache
             gfx::compat::texture_2da_t& texture =
                 bucket.template texture_as<gfx::compat::texture_2da_t>();
 
+            auto mip_data = img.image.mip->data(magic, mipmap);
+
+            /* Xbox stores uncompressed textures Morton-swizzled; deswizzle into
+             * a linear buffer before upload (compressed are never swizzled). */
+            std::vector<u8> linear;
+            if((static_cast<u16>(img.image.mip->flags) &
+                static_cast<u16>(blam::bitm::flags_t::swizzled)) &&
+               size.x > 0 && size.y > 0)
+            {
+                size_t pixels = static_cast<size_t>(size.x) * size.y;
+                u32    bpp = static_cast<u32>(mip_data.size_bytes() / pixels);
+                linear.resize(mip_data.size_bytes());
+                if(bpp != 0 &&
+                   blam::swizzle::deswizzle_bytes(
+                       semantic::Span<const u8>(
+                           mip_data.data(), mip_data.size_bytes()),
+                       semantic::Span<u8>(linear.data(), linear.size()),
+                       static_cast<u32>(size.x),
+                       static_cast<u32>(size.y),
+                       bpp))
+                    mip_data = semantic::Span<const u8>(
+                        linear.data(), linear.size());
+            }
+
             texture.upload(
-                img.image.mip->data(magic, mipmap),
+                mip_data,
                 Veci3{
                     tex_offset.x + mip_pad,
                     tex_offset.y + mip_pad,

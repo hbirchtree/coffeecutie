@@ -387,6 +387,34 @@ void create_resources(compo::EntityContainer& e)
         };
         mod2_array.add(node_idx_attr);
         mod2_array.add(node_wt_attr);
+    } else
+    {
+        /* Xbox compressed weights: u8 node0/node1 (game stores them *3) and a
+         * single u16 weight (the shader derives weight1 = 1 - weight0). */
+        using cvert = blam::vert::mod2_vertex<blam::vert::compressed>;
+        using cwt   = blam::vert::compressed_weights;
+        constexpr size_t wt_base = offsetof(cvert, weights);
+
+        gfx::vertex_attribute node_idx_attr;
+        node_idx_attr.index = 5;
+        node_idx_attr.value = {
+            .offset = wt_base + offsetof(cwt, node0),
+            .stride = sizeof(cvert),
+            .count  = 2,
+            .type   = semantic::type_t::u8,
+            .flags  = gfx::vertex_attribute::attribute_flags::none,
+        };
+        gfx::vertex_attribute node_wt_attr;
+        node_wt_attr.index = 6;
+        node_wt_attr.value = {
+            .offset = wt_base + offsetof(cwt, weight0),
+            .stride = sizeof(cvert),
+            .count  = 1,
+            .type   = semantic::type_t::u16,
+            .flags  = gfx::vertex_attribute::attribute_flags::normalized,
+        };
+        mod2_array.add(node_idx_attr);
+        mod2_array.add(node_wt_attr);
     }
 
     mod2_array.set_buffer(gfx::buffers::vertex, resources.model_buf, 0);
@@ -597,6 +625,9 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
     const auto map_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
                                 ? "map_xbox"sv
                                 : "map"sv;
+    const auto scenery_vertex =
+        std::is_same_v<halo_version, blam::xbox_version_t> ? "scenery_xbox"sv
+                                                           : "scenery"sv;
 
     std::array<shader_pair_t, 4> shaders = {{
         {
@@ -605,7 +636,7 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
             .shader        = resources.debug_lines_pipeline,
         },
         {
-            .vertex_file   = "scenery"sv,
+            .vertex_file   = scenery_vertex,
             .fragment_file = "scenery_uber"sv,
             .shader        = resources.model_pipeline,
         },
@@ -632,6 +663,9 @@ static void create_uber_lite_shaders(gfx::api& api, BlamResources& resources)
     const auto map_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
                                 ? "map_xbox"sv
                                 : "map"sv;
+    const auto scenery_vertex =
+        std::is_same_v<halo_version, blam::xbox_version_t> ? "scenery_xbox"sv
+                                                           : "scenery"sv;
 
     std::array<shader_pair_t, 4> shaders = {{
         {
@@ -640,7 +674,7 @@ static void create_uber_lite_shaders(gfx::api& api, BlamResources& resources)
             .shader        = resources.debug_lines_pipeline,
         },
         {
-            .vertex_file   = "scenery"sv,
+            .vertex_file   = scenery_vertex,
             .fragment_file = "scenery_uber_lite"sv,
             .shader        = resources.model_pipeline,
         },
