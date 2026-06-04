@@ -16,7 +16,7 @@
 
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
-import { readFile, mkdir, writeFile } from 'node:fs/promises';
+import { readFile, mkdir, writeFile, rename } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, normalize, extname } from 'node:path';
 
@@ -34,6 +34,8 @@ const cfg = {
   // Tier 2: path to a dummy_plug JSON config. Parsed now, acted on once the engine
   // supports dummy_plug on emscripten.
   dummyPlug: process.env.DUMMY_PLUG || '',
+  // Record a (silent) webm of the page into OUT_DIR. On by default; VIDEO=0 disables.
+  video: process.env.VIDEO !== '0',
   viewport: { width: 1280, height: 720 },
 };
 
@@ -183,7 +185,11 @@ async function main() {
     if (FATAL_PATTERNS.some((re) => re.test(text))) sawFatal = true;
   };
 
-  const page = await browser.newPage({ viewport: cfg.viewport });
+  const context = await browser.newContext({
+    viewport: cfg.viewport,
+    recordVideo: cfg.video ? { dir: cfg.outDir, size: cfg.viewport } : undefined,
+  });
+  const page = await context.newPage();
   await page.addInitScript(instrument);
   if (cfg.dummyPlug && existsSync(cfg.dummyPlug)) {
     const configText = await readFile(cfg.dummyPlug, 'utf8');
@@ -228,6 +234,20 @@ async function main() {
     record(`[harness] screenshot written: ${shotPath}`);
   } catch (e) {
     record(`[harness] screenshot failed: ${e.message}`);
+  }
+
+  // Video is only flushed when the context closes; grab the handle first, then rename
+  // it to a stable name in OUT_DIR so it rides along in the uploaded artifact.
+  const video = page.video();
+  await context.close();
+  if (video) {
+    try {
+      const dest = join(cfg.outDir, `${cfg.name}.webm`);
+      await rename(await video.path(), dest);
+      record(`[harness] video written: ${dest}`);
+    } catch (e) {
+      record(`[harness] video save failed: ${e.message}`);
+    }
   }
 
   await browser.close();

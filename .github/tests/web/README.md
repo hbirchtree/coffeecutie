@@ -18,9 +18,10 @@ This harness closes that gap.
    - the app's **render loop runs** (frames + draw calls accumulate),
    - the **renderer is SwiftShader** (software),
    - **no wasm abort/trap** and **no WebGL context loss**.
-4. Writes `<name>.jpg` (canvas screenshot) and `output.log` into `OUT_DIR`, laid out so
-   `.github/tests/test_page.py` can fold it into the same HTML report as the desktop
-   software-render tests.
+4. Writes `<name>.jpg` (canvas screenshot), `<name>.webm` (silent screen recording of the
+   page) and `output.log` into `OUT_DIR`, laid out so `.github/tests/test_page.py` can fold
+   the screenshot/log into the same HTML report as the desktop software-render tests. The
+   `.webm` rides along in the uploaded artifact.
 
 ## Run locally
 
@@ -48,6 +49,7 @@ BUNDLE_DIR=.../BlamGraphics.bundle OUT_DIR=/tmp/webgl_test node webgl_smoke.mjs
 | `BOOT_TIMEOUT_MS` | `45000` | boot wait timeout |
 | `SCREENSHOT_NAME` | `webgl2_swiftshader` | screenshot base name |
 | `SCREENSHOT_QUALITY` | `80` | JPEG quality |
+| `VIDEO` | `1` | record a silent `.webm` of the page (`0` to disable). Video is silent — Playwright cannot record audio; capturing the OpenAL/Web Audio output needs an in-page Web Audio tap (Tier 2). |
 | `STRICT` | unset | also fail on **any** page-level JS error |
 | `DUMMY_PLUG` | unset | Tier 2: dummy_plug config path (see below) |
 
