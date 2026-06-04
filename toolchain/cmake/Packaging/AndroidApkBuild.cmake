@@ -102,6 +102,18 @@ function(ANDROIDAPK_PACKAGE)
   add_custom_target("${AAPK_TARGET}.project" DEPENDS "${AAPK_TARGET}")
   add_custom_target("${AAPK_TARGET}.apk" ALL DEPENDS "${AAPK_TARGET}.project")
 
+  # Serialize Gradle across APKs. Each .apk target runs a gradlew assemble as a
+  # POST_BUILD step that forks its own JVM; building several APKs in parallel
+  # exhausts the runner's memory (Gradle daemon runs out of metaspace during
+  # packaging, failing intermittently). Chain each APK target after the previous
+  # one so only one Gradle runs at a time. Native libraries are separate targets
+  # and still build in parallel.
+  get_property(_prev_apk GLOBAL PROPERTY GRADLE_SERIAL_LAST)
+  if(_prev_apk)
+    add_dependencies("${AAPK_TARGET}.apk" "${_prev_apk}")
+  endif()
+  set_property(GLOBAL PROPERTY GRADLE_SERIAL_LAST "${AAPK_TARGET}.apk")
+
   add_dependencies(AndroidPackage "${AAPK_TARGET}.apk")
 
   # Lowercase the target name for package name
