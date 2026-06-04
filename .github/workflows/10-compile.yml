@@ -276,10 +276,10 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: '22'
-    - name: Downloading web-{{ matrix.variant }}-emscripten-webgl2 artifacts
+    - name: Downloading web-${{ matrix.variant }}-emscripten-webgl2 artifacts
       uses: actions/download-artifact@v8
       with:
-        name: web-{{ matrix.variant }}-emscripten-webgl2
+        name: web-${{ matrix.variant }}-emscripten-webgl2
         path: artifacts/
     - name: Locating WebGL bundle
       id: bundle
@@ -296,7 +296,7 @@ jobs:
     - name: Uploading test artifacts
       uses: actions/upload-artifact@v7
       with:
-        name: dummy_plug_test_{{ matrix.variant }}_webgl2
+        name: dummy_plug_test_${{ matrix.variant }}_webgl2
         path: /tmp/blam_webgl
         if-no-files-found: error
   Test_x86_64_mesa_gather:
