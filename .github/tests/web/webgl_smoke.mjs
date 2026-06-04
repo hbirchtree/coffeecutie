@@ -160,7 +160,7 @@ async function main() {
   await mkdir(cfg.outDir, { recursive: true });
 
   const { server, port } = await startServer(cfg.bundleDir);
-  const url = `http://127.0.0.1:${port}/${cfg.page}`;
+  const url = `http://127.0.0.1:${port}/${cfg.page}?map=pc/beavercreek.map`;
   console.log(`Serving ${cfg.bundleDir} at ${url}`);
 
   const browser = await chromium.launch({
