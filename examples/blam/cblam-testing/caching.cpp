@@ -1112,9 +1112,16 @@ void ShaderCache<V>::populate_material(
 
         mat.material.flags =
             (feval(info->flags & flags_t::detail_after_reflection) ? 0x1 : 0) |
-            (feval(info->maps.detail.function & detail_func_t::multiply) ? 0x2 : 0) |
-            (feval(info->maps.detail.function & detail_func_t::double_biased_add) ? 0x4 : 0) |
-            (feval(info->maps.detail.mask & detail_mask_t::reflection_mask) ? 0x8 : 0);
+            (info->maps.detail.function == detail_func_t::multiply ? 0x2 : 0) |
+            (info->maps.detail.function == detail_func_t::double_biased_add ? 0x4 : 0) |
+            (info->maps.detail.mask == detail_mask_t::reflection_mask ? 0x8 : 0) |
+            (info->maps.detail.mask == detail_mask_t::reflection_mask_inverse ? 0x10 : 0) |
+            (info->maps.detail.mask == detail_mask_t::change_color_mask ? 0x20 : 0) |
+            (info->maps.detail.mask == detail_mask_t::change_color_mask_inverse ? 0x40 : 0) |
+            (info->maps.detail.mask == detail_mask_t::self_illum_mask ? 0x80 : 0) |
+            (info->maps.detail.mask == detail_mask_t::self_illum_mask_inverse ? 0x100 : 0) |
+            (info->maps.detail.mask == detail_mask_t::multipurpose_map_alpha ? 0x200 : 0) |
+            (info->maps.detail.mask == detail_mask_t::multipurpose_map_alpha_inverse ? 0x400 : 0);
 
         auto* soso_base =
             bitm_cache.assign_atlas_data(mat.maps[0], shader.soso.base_bitm);

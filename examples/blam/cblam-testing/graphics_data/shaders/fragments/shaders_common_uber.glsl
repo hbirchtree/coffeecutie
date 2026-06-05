@@ -185,6 +185,11 @@ vec4 get_cube_color(in vec3 tex_coord)
     else
         return vec4(1);
 }
+#else
+vec4 get_cube_color(in vec3 tex_coord)
+{
+    return vec4(1);
+}
 #endif
 
 #if USE_NORMALMAP == 1
@@ -455,6 +460,18 @@ vec4 shader_transparent()
     return color;
 }
 
+const uint SOSO_FLAG_DETAIL_AFTER_REFLECTION      =   0x1;
+const uint SOSO_FLAG_DETAIL_FUNC_MUL              =   0x2;
+const uint SOSO_FLAG_DETAIL_FUNC_DOUBLE_BIAS_ADD  =   0x4;
+const uint SOSO_FLAG_DETAIL_MASK_REFLECTION       =   0x8;
+const uint SOSO_FLAG_DETAIL_MASK_REFLECTION_INV   =  0x10;
+const uint SOSO_FLAG_DETAIL_MASK_CHANGE_COLOR     =  0x20;
+const uint SOSO_FLAG_DETAIL_MASK_CHANGE_COLOR_INV =  0x40;
+const uint SOSO_FLAG_DETAIL_MASK_SELF_ILLUM       =  0x80;
+const uint SOSO_FLAG_DETAIL_MASK_SELF_ILLUM_INV   = 0x100;
+const uint SOSO_FLAG_DETAIL_MASK_MULTI_ALPHA      = 0x200;
+const uint SOSO_FLAG_DETAIL_MASK_MULTI_ALPHA_INV  = 0x400;
+
 vec4 shader_model()
 {
     const uint multi_map_id  = 1u;
@@ -465,48 +482,38 @@ vec4 shader_model()
     if(color.a < alpha_ref)
         discard;
 
-    /* These are shamelessly stolen from the original shader */
-    // vec4 primary_change_color = vec4(1) - vec4(vec3(1), 0); // cb[0]
-    vec4 fog_color_correction_0 = vec4(0, 0, 0, 1); // cb[1]
-    vec4 fog_color_correction_E = vec4(0, 0, 0, 1); // cb[2]
-    vec4 fog_color_correction_1 = vec4(0, 0, 0, 1); // cb[3]
-    vec4 self_illum_color = vec4(0); // cb[4]
-    vec4 fog_color = vec4(0); // cb[5]
+    const int flags = mats.instance[frag.instanceId].material.flags;
+    bool detail_mask_reflection = (flags & SOSO_FLAG_DETAIL_MASK_REFLECTION) != 0;
+    bool detail_mask_reflection_inv = (flags & SOSO_FLAG_DETAIL_MASK_REFLECTION_INV) != 0;
+    bool detail_mask_change_color = (flags & SOSO_FLAG_DETAIL_MASK_CHANGE_COLOR) != 0;
+    bool detail_mask_change_color_inv = (flags & SOSO_FLAG_DETAIL_MASK_CHANGE_COLOR_INV) != 0;
+    bool detail_mask_self_illum = (flags & SOSO_FLAG_DETAIL_MASK_SELF_ILLUM) != 0;
+    bool detail_mask_self_illum_inv = (flags & SOSO_FLAG_DETAIL_MASK_SELF_ILLUM_INV) != 0;
+    bool detail_mask_multi_alpha = (flags & SOSO_FLAG_DETAIL_MASK_MULTI_ALPHA) != 0;
+    bool detail_mask_multi_alpha_inv = (flags & SOSO_FLAG_DETAIL_MASK_MULTI_ALPHA_INV) != 0;
+
     vec4 primary_change_color = mats.instance[frag.instanceId].material.input2;
 
-    // vec4 coloring = vec4(1) * primary_change_color;
-
     vec4 multi = get_color(multi_map_id);
+    float detail_factor = 1.0;
 #ifdef MULTIPURPOSE_XBOX
-    /* Xbox packs the multipurpose differently than PC. The shiny mask (high on
-     * plates AND the visor) is multi.r here; multi.b is plates-only and the
-     * alpha reads ~1.0 (unused). Point both reflection (multi.w) and
-     * color-change (multi.z = multi.b) at multi.r so the visor reflects and
-     * gets tinted, matching PC. */
-    multi.a = multi.r;
-    multi.b = multi.r;
+    float specular_factor = multi.b;
+    float illum_factor = multi.g;
+    float color_change = multi.r;
 #else
-    /* PC: get_color's .bgra puts the sampled red channel into multi.b. That
-     * channel is high everywhere incl. the visor (the shiny/reflective mask),
-     * while the sampled alpha (multi.a) is black on the visor. The shader masks
-     * reflection by multi.w (=multi.a), so the visor never reflects. Point the
-     * reflection mask at multi.b too; color-change keeps reading multi.b. */
-    multi.a = multi.b;
+    float specular_factor = multi.b;
+    float illum_factor = multi.g;
+    float color_change = multi.a;
 #endif
 
+    if((render_flags & RENDER_FLAG_ONLY_DIFFUSE) != 0)
+        return vec4(color.rgb, 1);
     if((render_flags & RENDER_FLAG_ONLY_MULTIPURPOSE) != 0)
-        /* Aligned semantic channels: R = reflection, G = self-illum,
-         * B = color-change. */
-        return vec4(multi.a, multi.g, multi.b, 1);
+        return vec4(multi.rgb, 1);
+    if((render_flags & RENDER_FLAG_ONLY_MULTIPURPOSE2) != 0)
+        return vec4(multi.a, color.a, 0, 1);
 
-    // HLSL does some vec4 -> vec2 cast here, so this might be wrong
-    // vec3 specular = vec3(multi.xy - multi.xw, 0); // add r3.xy, -r2.zwzz, r2.xzxx
-    // multi.xz = fog_color_correction_1.x * specular.xy + multi.zw; // mad r1.xyz, fog_color_correction_1.w, r3.xxyx, r2.zzwz
-    // specular.xyz = clamp(multi.z * self_illum_color.rgb + 1, 0, 1);
-    // coloring.rgb = coloring.rgb * multi.z + 1;
-    float specular_contribution = multi.w * 0.8;
-    // coloring.a = multi.r * specular_contribution;
-    // coloring.rgb = coloring.rgb * specular.xyz;
+    // TODO: Include animation on illum_factor
 
 #if USE_REFLECTIONS == 1
     vec3 view_world = normalize(camera_position - frag.position);
@@ -514,8 +521,7 @@ vec4 shader_model()
     // TODO: Find out why boulder_moss_large.shader_model becomes so glossy
     // TODO: Find out why visor is opaque, but flipping the mix()
     //       makes other shiny objects opaque
-    if((uint(mats.instance[frag.instanceId].lightmap.reflection) >> 24) != 0u &&
-            (render_flags & RENDER_FLAG_REFLECTION) != 0)
+    if((render_flags & RENDER_FLAG_REFLECTION) != 0)
     {
         float NdotV_m      = clamp(dot(frag.normal, view_world), 0.0, 1.0);
         float fresnel_m    = 1.0 - NdotV_m;
@@ -526,7 +532,7 @@ vec4 shader_model()
         // Keeping them separate prevents zero-brightness from darkening the base.
         float refl_strength = mix(perp_m.a, para_m.a, fresnel_m);
         vec3  refl_color    = mix(perp_m.rgb, para_m.rgb, fresnel_m);
-        reflection = mix(vec3(1), get_cube_color(reflect_dir).rgb * refl_color, multi.w * refl_strength);
+        reflection = mix(vec3(1), get_cube_color(reflect_dir).rgb * refl_color, specular_factor * refl_strength);
         if((render_flags & RENDER_FLAG_ONLY_REFLECTIONS) != 0)
             return vec4(get_cube_color(reflect_dir).rgb, 1);
     }
@@ -540,27 +546,35 @@ vec4 shader_model()
     // frag.normal is world-space and interpolated per-vertex (Gouraud approximation).
     vec3 world_light = normalize(world.lighting[INTERIOR_LIGHTING].light_direction.xyz);
     float NdotL = max(0.1, dot(frag.normal, world_light));
-    color.rgb = clamp(color.rgb * NdotL
-        /*+ coloring.rgb*/
-        /*+ reflection.rgb*/, 0, 1);
+    if(illum_factor > NdotL)
+        NdotL = illum_factor;
     if((render_flags & RENDER_FLAG_ONLY_NORMALS) != 0)
         return vec4(normalize(frag.normal), 1);
 
     vec4 detail = get_color(detail_map_id);
-//    color.rgb = detail.rgb * 2 + color.rgb;
-//    color.rgb = clamp(color.rgb - 1, 0, 1);
+    if(detail_mask_reflection)
+        detail_factor = specular_factor;
+    else if(detail_mask_reflection_inv)
+        detail_factor = 1 - specular_factor;
+    else if(detail_mask_change_color)
+        detail_factor = color_change;
+    else if(detail_mask_change_color_inv)
+        detail_factor = 1 - color_change;
+    else if(detail_mask_self_illum)
+        detail_factor = illum_factor;
+    else if(detail_mask_self_illum_inv)
+        detail_factor = 1 - illum_factor;
+    else if(detail_mask_multi_alpha)
+        detail_factor = 4;
+    else if(detail_mask_multi_alpha_inv)
+        detail_factor = 4;
 
-    return vec4(
-        // multi.rgb *
-        mix(
-            color.rgb,
-            primary_change_color.rgb,
-            multi.z * primary_change_color.a) *
-        detail.rgb *
-#if USE_REFLECTIONS == 1
-       reflection *
-#endif
-        1, color.a);
+    color.rgb = color.rgb * mix(
+        vec3(1), primary_change_color.rgb,
+        color_change * primary_change_color.a);
+    color.rgb = clamp(NdotL * color.rgb, 0, 1);
+    color.rgb = color.rgb * mix(vec3(1), detail.rgb, detail_factor) * reflection;
+    return color;
 }
 
 vec4 shader_glass()
@@ -675,7 +689,7 @@ void main()
     } else
         color = vec4(0, 1, 0, 1);
 
-    if((render_flags & RENDER_FLAG_FOG) != 0)
+    if((render_flags & RENDER_FLAG_FOG) == 0)
     {
         final_color = color;
         return;
