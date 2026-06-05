@@ -16,6 +16,7 @@
             "shaders/scenery_xbox.vert",
             "shaders/scenery.frag",
             "shaders/scenery_uber.frag",
+            "shaders/scenery_uber_xbox.frag",
             "shaders/scenery_uber_lite.frag",
             "shaders/ui.vert",
             "shaders/ui.frag",

@@ -631,6 +631,10 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
     const auto scenery_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
         ? (compile_info::platform::is_emscripten ? "scenery_xbox_lite"sv : "scenery_xbox"sv)
         : (compile_info::platform::is_emscripten ? "scenery_lite"sv : "scenery"sv);
+    /* Xbox multipurpose maps are ARGB; use the matching fragment variant. */
+    const auto scenery_frag =
+        std::is_same_v<halo_version, blam::xbox_version_t> ? "scenery_uber_xbox"sv
+                                                           : "scenery_uber"sv;
 
     std::array<shader_pair_t, 4> shaders = {{
         {
@@ -640,7 +644,7 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
         },
         {
             .vertex_file   = scenery_vertex,
-            .fragment_file = "scenery_uber"sv,
+            .fragment_file = scenery_frag,
             .shader        = resources.model_pipeline,
         },
         {

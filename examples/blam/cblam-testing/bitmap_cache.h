@@ -182,13 +182,48 @@ struct BitmapCache
                 bucket.template texture_as<gfx::texture_cube_array_t>();
             auto img_data  = img.image.mip->data(magic, mipmap);
             auto face_size = img_data.size_bytes() / 6;
+
+            /* Xbox swizzles each cube face like a 2D texture; deswizzle per
+             * face into a linear buffer (compressed faces are never swizzled
+             * and don't set the flag). */
+            const bool swizzled =
+                (static_cast<u16>(img.image.mip->flags) &
+                 static_cast<u16>(blam::bitm::flags_t::swizzled)) &&
+                size.x > 0 && size.y > 0;
+            const u32 bpp =
+                swizzled ? static_cast<u32>(
+                               face_size /
+                               (static_cast<size_t>(size.x) * size.y))
+                         : 0u;
+            std::array<std::vector<u8>, 6> linear_faces;
+            auto face = [&](u32 src, u32 slot) -> semantic::Span<const u8> {
+                semantic::Span<const u8> raw =
+                    img_data.subspan(face_size * src, face_size);
+                if(swizzled && bpp != 0)
+                {
+                    linear_faces[slot].resize(face_size);
+                    if(blam::swizzle::deswizzle_bytes(
+                           semantic::Span<const u8>(
+                               raw.data(), raw.size_bytes()),
+                           semantic::Span<u8>(
+                               linear_faces[slot].data(),
+                               linear_faces[slot].size()),
+                           static_cast<u32>(size.x),
+                           static_cast<u32>(size.y),
+                           bpp))
+                        return semantic::Span<const u8>(
+                            linear_faces[slot].data(),
+                            linear_faces[slot].size());
+                }
+                return raw;
+            };
             std::array<semantic::Span<const u8>, 6> faces = {{
-                img_data.subspan(face_size * 0, face_size),
-                img_data.subspan(face_size * 2, face_size),
-                img_data.subspan(face_size * 1, face_size),
-                img_data.subspan(face_size * 3, face_size),
-                img_data.subspan(face_size * 4, face_size),
-                img_data.subspan(face_size * 5, face_size),
+                face(0, 0),
+                face(2, 1),
+                face(1, 2),
+                face(3, 3),
+                face(4, 4),
+                face(5, 5),
             }};
             texture.upload(
                 faces,

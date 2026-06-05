@@ -38,12 +38,14 @@ layout(location = 22) uniform float time;
 // TODO: Add constant fallback on release mode
 layout(location = 31) uniform int render_flags;
 
-const int RENDER_FLAG_FOG            = 0x1;
-const int RENDER_FLAG_LIGHTMAP       = 0x2;
-const int RENDER_FLAG_REFLECTION     = 0x4;
+const int RENDER_FLAG_FOG             = 0x1;
+const int RENDER_FLAG_LIGHTMAP        = 0x2;
+const int RENDER_FLAG_REFLECTION      = 0x4;
+const int RENDER_FLAG_ONLY_REFLECTIONS = 0x80;
 const int RENDER_FLAG_ONLY_NORMALS   = 0x10;
 const int RENDER_FLAG_ONLY_NORMALMAP = 0x20;
 const int RENDER_FLAG_ONLY_LIGHTMAP  = 0x40;
+const int RENDER_FLAG_ONLY_MULTIPURPOSE = 0x100;
 
 struct LightProperties
 {
@@ -277,7 +279,7 @@ vec4 shader_environment()
 #if USE_NORMALMAP == 1
     float bump_factor = clamp((normal.a + 1.0) / (light_direction().z + 1.0), 0.1, 2.0);
     if((render_flags & RENDER_FLAG_ONLY_NORMALS) != 0)
-        return vec4(bump_factor * vec3(1), 1);
+        return vec4(normalize(frag.normal), 1);
     if((render_flags & RENDER_FLAG_ONLY_NORMALMAP) != 0)
         return vec4(normal.rgb, 1);
 #endif
@@ -473,6 +475,27 @@ vec4 shader_model()
     // vec4 coloring = vec4(1) * primary_change_color;
 
     vec4 multi = get_color(multi_map_id);
+#ifdef MULTIPURPOSE_XBOX
+    /* Xbox packs the multipurpose differently than PC. The shiny mask (high on
+     * plates AND the visor) is multi.r here; multi.b is plates-only and the
+     * alpha reads ~1.0 (unused). Point both reflection (multi.w) and
+     * color-change (multi.z = multi.b) at multi.r so the visor reflects and
+     * gets tinted, matching PC. */
+    multi.a = multi.r;
+    multi.b = multi.r;
+#else
+    /* PC: get_color's .bgra puts the sampled red channel into multi.b. That
+     * channel is high everywhere incl. the visor (the shiny/reflective mask),
+     * while the sampled alpha (multi.a) is black on the visor. The shader masks
+     * reflection by multi.w (=multi.a), so the visor never reflects. Point the
+     * reflection mask at multi.b too; color-change keeps reading multi.b. */
+    multi.a = multi.b;
+#endif
+
+    if((render_flags & RENDER_FLAG_ONLY_MULTIPURPOSE) != 0)
+        /* Aligned semantic channels: R = reflection, G = self-illum,
+         * B = color-change. */
+        return vec4(multi.a, multi.g, multi.b, 1);
 
     // HLSL does some vec4 -> vec2 cast here, so this might be wrong
     // vec3 specular = vec3(multi.xy - multi.xw, 0); // add r3.xy, -r2.zwzz, r2.xzxx
@@ -502,7 +525,11 @@ vec4 shader_model()
         float refl_strength = mix(perp_m.a, para_m.a, fresnel_m);
         vec3  refl_color    = mix(perp_m.rgb, para_m.rgb, fresnel_m);
         reflection = mix(vec3(1), get_cube_color(reflect_dir).rgb * refl_color, multi.w * refl_strength);
+        if((render_flags & RENDER_FLAG_ONLY_REFLECTIONS) != 0)
+            return vec4(get_cube_color(reflect_dir).rgb, 1);
     }
+    if((render_flags & RENDER_FLAG_ONLY_REFLECTIONS) != 0)
+        return vec4(0.0, 0.0, 0.0, 1.0); /* non-reflective surfaces -> black */
 #else
     vec3 reflection = vec3(1);
 #endif
@@ -515,7 +542,7 @@ vec4 shader_model()
         /*+ coloring.rgb*/
         /*+ reflection.rgb*/, 0, 1);
     if((render_flags & RENDER_FLAG_ONLY_NORMALS) != 0)
-        return vec4(frag.normal, 1);
+        return vec4(normalize(frag.normal), 1);
 
     vec4 detail = get_color(detail_map_id);
 //    color.rgb = detail.rgb * 2 + color.rgb;

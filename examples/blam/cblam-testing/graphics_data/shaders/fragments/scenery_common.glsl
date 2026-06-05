@@ -68,9 +68,9 @@ void main()
     int  bone_base = matrices.data[gl_InstanceID].bone_base;
 
 #ifdef VERTEX_XBOX
-    vec3  normal       = normalize(unpack_uvec3(i_normal)   * 2.0 - 1.0);
-    vec3  binormal     = normalize(unpack_uvec3(i_binormal) * 2.0 - 1.0);
-    vec3  tangent      = normalize(unpack_uvec3(i_tangent)  * 2.0 - 1.0);
+    vec3  normal       = normalize(unpack_uvec3(i_normal));
+    vec3  binormal     = normalize(unpack_uvec3(i_binormal));
+    vec3  tangent      = normalize(unpack_uvec3(i_tangent));
     uvec2 node_indices = i_node_indices / 3u;
     /* Xbox stores node indices *3 and the weight normalized to 32767 (not
      * 65535). Single-bound verts have weight0=32767 -> w0=1, w1=0, so the

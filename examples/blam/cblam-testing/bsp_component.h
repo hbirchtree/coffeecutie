@@ -70,6 +70,8 @@ struct BlamBspWidget
                     ImGui::Checkbox("Render reflections", &rendering->render_reflection);
                     ImGui::Checkbox("Only normals", &rendering->only_normals);
                     ImGui::Checkbox("Only normal maps", &rendering->only_normalmaps);
+                    ImGui::Checkbox("Only reflections", &rendering->only_reflections);
+                    ImGui::Checkbox("Only multipurpose", &rendering->only_multipurpose);
                     ImGui::Text("BSP-specific");
                     ImGui::Checkbox("Render lightmaps", &rendering->render_lightmaps);
                     ImGui::Checkbox("Only lightmaps", &rendering->only_lightmaps);
