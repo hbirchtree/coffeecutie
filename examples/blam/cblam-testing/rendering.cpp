@@ -476,7 +476,9 @@ struct MeshRenderer
             (m_render_params.only_normalmaps ? 0x20 : 0) |
             (m_render_params.only_lightmaps ? 0x40 : 0) |
             (m_render_params.only_reflections ? 0x80 : 0) |
-            (m_render_params.only_multipurpose ? 0x100 : 0);
+            (m_render_params.only_multipurpose ? 0x100 : 0) |
+            (m_render_params.only_multipurpose2 ? 0x200 : 0) |
+            (m_render_params.only_diffuse ? 0x400 : 0);
         return gfx::uniform_pair{
             {"render_flags"sv, 31},
             semantic::SpanOne<const int>(m_render_flags),

@@ -68,15 +68,17 @@ struct BlamBspWidget
                     ImGui::Checkbox("Clear before draw", &rendering->debug_clear);
                     ImGui::Checkbox("Show debug markers", &rendering->debug_markers);
                     ImGui::Checkbox("Render reflections", &rendering->render_reflection);
+                    ImGui::Checkbox("Only diffuse", &rendering->only_diffuse);
                     ImGui::Checkbox("Only normals", &rendering->only_normals);
                     ImGui::Checkbox("Only normal maps", &rendering->only_normalmaps);
                     ImGui::Checkbox("Only reflections", &rendering->only_reflections);
-                    ImGui::Checkbox("Only multipurpose", &rendering->only_multipurpose);
                     ImGui::Text("BSP-specific");
                     ImGui::Checkbox("Render lightmaps", &rendering->render_lightmaps);
                     ImGui::Checkbox("Only lightmaps", &rendering->only_lightmaps);
                     ImGui::Text("Model-specific");
                     ImGui::Checkbox("Render scenery", &rendering->render_scenery);
+                    ImGui::Checkbox("Only multipurpose", &rendering->only_multipurpose);
+                    ImGui::Checkbox("Only multipurpose2", &rendering->only_multipurpose2);
                     ImGui::Checkbox("Vertex skinning", &rendering->render_model_bones);
                     ImGui::Checkbox("Color changing", &rendering->color_changing);
                     ImGui::EndTabItem();

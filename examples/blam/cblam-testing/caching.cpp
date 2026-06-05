@@ -873,6 +873,7 @@ void ShaderCache<V>::populate_material(
 {
     using blam::tag_class_t;
     using namespace blam::shader;
+    using enum_helpers::feval;
 
     ShaderItem const& shader = find(shader_id)->second;
 
@@ -1105,6 +1106,15 @@ void ShaderCache<V>::populate_material(
     case tag_class_t::soso: {
         shader_model const* info =
             shader.header->as<blam::shader::shader_model>();
+        using flags_t = blam::shader::shader_model::model_flags;
+        using detail_func_t = blam::shader::shader_model::detail_function_t;
+        using detail_mask_t = blam::shader::shader_model::detail_mask_t;
+
+        mat.material.flags =
+            (feval(info->flags & flags_t::detail_after_reflection) ? 0x1 : 0) |
+            (feval(info->maps.detail.function & detail_func_t::multiply) ? 0x2 : 0) |
+            (feval(info->maps.detail.function & detail_func_t::double_biased_add) ? 0x4 : 0) |
+            (feval(info->maps.detail.mask & detail_mask_t::reflection_mask) ? 0x8 : 0);
 
         auto* soso_base =
             bitm_cache.assign_atlas_data(mat.maps[0], shader.soso.base_bitm);

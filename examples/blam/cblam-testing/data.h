@@ -99,6 +99,8 @@ struct RenderingParameters : compo::SubsystemBase
     bool only_lightmaps{false};
     bool only_reflections{false};
     bool only_multipurpose{false};
+    bool only_multipurpose2{false};
+    bool only_diffuse{false};
 
     bool render_ui{false};
     bool debug_clear{false}; // sets a different clear color for visibility
