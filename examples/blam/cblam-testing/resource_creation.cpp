@@ -2,6 +2,7 @@
 
 #include "coffee/comp_app/subsystems.h"
 #include "components.h"
+#include "peripherals/constants.h"
 #include "shader_compiler.h"
 #include "touch_overlay.h"
 
@@ -627,9 +628,9 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
     const auto map_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
                                 ? "map_xbox"sv
                                 : "map"sv;
-    const auto scenery_vertex =
-        std::is_same_v<halo_version, blam::xbox_version_t> ? "scenery_xbox"sv
-                                                           : "scenery"sv;
+    const auto scenery_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
+        ? (compile_info::platform::is_emscripten ? "scenery_xbox_lite"sv : "scenery_xbox"sv)
+        : (compile_info::platform::is_emscripten ? "scenery_lite"sv : "scenery"sv);
 
     std::array<shader_pair_t, 4> shaders = {{
         {
@@ -665,9 +666,9 @@ static void create_uber_lite_shaders(gfx::api& api, BlamResources& resources)
     const auto map_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
                                 ? "map_xbox"sv
                                 : "map"sv;
-    const auto scenery_vertex =
-        std::is_same_v<halo_version, blam::xbox_version_t> ? "scenery_xbox"sv
-                                                           : "scenery"sv;
+    const auto scenery_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
+        ? (compile_info::platform::is_emscripten ? "scenery_xbox_lite"sv : "scenery_xbox"sv)
+        : (compile_info::platform::is_emscripten ? "scenery_lite"sv : "scenery"sv);
 
     std::array<shader_pair_t, 4> shaders = {{
         {
@@ -703,6 +704,9 @@ static void create_standard_shaders(gfx::api& api, BlamResources& resources)
     const auto map_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
                                 ? "map_xbox"sv
                                 : "map"sv;
+    const auto scenery_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
+        ? (compile_info::platform::is_emscripten ? "scenery_xbox_lite"sv : "scenery_xbox"sv)
+        : (compile_info::platform::is_emscripten ? "scenery_lite"sv : "scenery"sv);
 
     std::array<shader_pair_t, 4> shaders = {{
         {
@@ -711,9 +715,7 @@ static void create_standard_shaders(gfx::api& api, BlamResources& resources)
             .shader        = resources.debug_lines_pipeline,
         },
         {
-            .vertex_file   = std::is_same_v<halo_version, blam::xbox_version_t>
-                                 ? "scenery_xbox"sv
-                                 : "scenery"sv,
+            .vertex_file   = scenery_vertex,
             .fragment_file = "scenery"sv,
             .shader        = resources.model_pipeline,
         },

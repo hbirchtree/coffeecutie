@@ -68,9 +68,9 @@ void main()
     int  bone_base = matrices.data[gl_InstanceID].bone_base;
 
 #ifdef VERTEX_XBOX
-    vec3  normal       = unpack_uvec3(i_normal)   * 2.0 - 1.0;
-    vec3  binormal     = unpack_uvec3(i_binormal) * 2.0 - 1.0;
-    vec3  tangent      = unpack_uvec3(i_tangent)  * 2.0 - 1.0;
+    vec3  normal       = normalize(unpack_uvec3(i_normal)   * 2.0 - 1.0);
+    vec3  binormal     = normalize(unpack_uvec3(i_binormal) * 2.0 - 1.0);
+    vec3  tangent      = normalize(unpack_uvec3(i_tangent)  * 2.0 - 1.0);
     uvec2 node_indices = i_node_indices / 3u;
     /* Xbox stores node indices *3 and the weight normalized to 32767 (not
      * 65535). Single-bound verts have weight0=32767 -> w0=1, w1=0, so the
@@ -90,6 +90,7 @@ void main()
     vec4 local_tan    = vec4(tangent, 0.0);
     vec4 local_bin    = vec4(binormal, 0.0);
 
+#if USE_SKINNING == 1
     if(bone_base >= 0 && (render_flags & RENDER_FLAG_BONES) != 0)
     {
         mat4 b0 = bone_store.bones[bone_base + int(node_indices.x)];
@@ -100,6 +101,7 @@ void main()
         local_tan    = skin * local_tan;
         local_bin    = skin * local_bin;
     }
+#endif
 
     vec4 world_pos = transform * local_pos;
     frag.tex        = tex;
