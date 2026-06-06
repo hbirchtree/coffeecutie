@@ -83,7 +83,8 @@
                 "CMAKE_C_FLAGS": "-march=native",
                 "CMAKE_CXX_FLAGS": "-march=native",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
-                "MKSQUASH_PROGRAM": "$env{MKSQUASH_PROGRAM}"
+                "MKSQUASH_PROGRAM": "$env{MKSQUASH_PROGRAM}",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl2"
             },
             "environment": {
                 "MKSQUASH_PROGRAM": "/usr/bin/mksquash",

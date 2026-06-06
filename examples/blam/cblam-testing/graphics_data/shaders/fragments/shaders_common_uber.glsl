@@ -340,7 +340,7 @@ const uint F_BLEND_CURRENT_ALPHA_INVERSE = 10u;
 const uint F_BLEND_NEXT_ALPHA            = 11u;
 const uint F_BLEND_NEXT_ALPHA_INVERSE    = 12u;
 
-void chicago_stage(out vec4 dst, in vec4 i1, in vec4 i2, in uint flags)
+void chicago_stage(out vec4 dst, in vec4 i1, in vec4 last, in vec4 i2, in uint flags)
 {
     uint cf = flags & 0xFu;
     uint af = (flags >> 4) & 0xFu;
@@ -353,61 +353,49 @@ void chicago_stage(out vec4 dst, in vec4 i1, in vec4 i2, in uint flags)
         dst.rgb = i1.rgb * i2.rgb;
     else if(cf == F_DOUBLE_MUL)
         dst.rgb = clamp(i1.rgb * i2.rgb * i2.rgb, 0.0, 1.0);
-    else if(cf == F_ADD)
+    else if(cf == F_ADD || cf == F_ADD_SIGNED_CURRENT || cf == F_ADD_SIGNED_NEXT)
         dst.rgb = i1.rgb + i2.rgb;
-    else if(cf == F_ADD_SIGNED_CURRENT)
-        dst.rgb = i1.rgb + i2.rgb - 0.5;
-    else if(cf == F_ADD_SIGNED_NEXT)
-        dst.rgb = i1.rgb + i2.rgb - 0.5;
-    else if(cf == F_SUB_SIGNED_CURRENT)
-        dst.rgb = i1.rgb - i2.rgb;
-    else if(cf == F_SUB_SIGNED_NEXT)
+    else if(cf == F_SUB_SIGNED_CURRENT || cf == F_SUB_SIGNED_NEXT)
         dst.rgb = i1.rgb - i2.rgb;
     else if(cf == F_BLEND_CURRENT_ALPHA)
-        dst.rgb = mix(i1.rgb, i2.rgb, i1.a);
+        dst.rgb = i1.rgb + i2.rgb * last.a;
     else if(cf == F_BLEND_CURRENT_ALPHA_INVERSE)
-        dst.rgb = mix(i1.rgb, i2.rgb, 1.0 - i1.a);
+        dst.rgb = i1.rgb + i2.rgb * (1 - last.a);
     else if(cf == F_BLEND_NEXT_ALPHA)
-        dst.rgb = mix(i1.rgb, i2.rgb, i2.a);
+        dst.rgb = i1.rgb + i2.rgb * i2.a;
     else if(cf == F_BLEND_NEXT_ALPHA_INVERSE)
-        dst.rgb = mix(i1.rgb, i2.rgb, 1.0 - i2.a);
+        dst.rgb = i1.rgb + i2.rgb * (1 - i2.a);
 
     if(af == F_CURRENT)
         dst.a = i1.a;
     else if(af == F_NEXT)
-        dst.a = i2.a;
+        dst.a = i1.a;
     else if(af == F_MUL)
         dst.a = i1.a * i2.a;
     else if(af == F_DOUBLE_MUL)
         dst.a = clamp(i1.a * i2.a * i2.a, 0.0, 1.0);
-    else if(af == F_ADD)
+    else if(af == F_ADD || af == F_ADD_SIGNED_CURRENT || af == F_ADD_SIGNED_NEXT)
         dst.a = i1.a + i2.a;
-    else if(af == F_ADD_SIGNED_CURRENT)
-        dst.a = i1.a + i2.a - 0.5;
-    else if(af == F_ADD_SIGNED_NEXT)
-        dst.a = i1.a + i2.a - 0.5;
-    else if(af == F_SUB_SIGNED_CURRENT)
-        dst.a = i1.a - i2.a;
-    else if(af == F_SUB_SIGNED_NEXT)
+    else if(af == F_SUB_SIGNED_CURRENT || af == F_SUB_SIGNED_NEXT)
         dst.a = i1.a - i2.a;
     else if(af == F_BLEND_CURRENT_ALPHA)
-        dst.a = mix(i1.a, i2.a, i1.a);
+        dst.a = i1.a * last.a;
     else if(af == F_BLEND_CURRENT_ALPHA_INVERSE)
-        dst.a = mix(i1.a, i2.a, 1.0 - i1.a);
+        dst.a = i1.a * (1 - last.a);
     else if(af == F_BLEND_NEXT_ALPHA)
-        dst.a = mix(i1.a, i2.a, i2.a);
+        dst.a = i1.a * i2.a;
     else if(af == F_BLEND_NEXT_ALPHA_INVERSE)
-        dst.a = mix(i1.a, i2.a, 1.0 - i2.a);
+        dst.a = i1.a * (1 - i2.a);
 }
 
 vec4 chicago_blend(vec4 c1, vec4 c2, vec4 c3, vec4 c4, uint flags)
 {
     vec4 out_color = vec4(1.0);
-    chicago_stage(out_color, c1, c2, flags & 0xFFu);
+    chicago_stage(out_color, c1, c1, c2, flags & 0xFFu);
     if((uint(mats.instance[frag.instanceId].maps[2].layer) >> 24) != 0u)
-        chicago_stage(out_color, out_color, c3, (flags >> 8) & 0xFFu);
+        chicago_stage(out_color, out_color, c2, c3, (flags >> 8) & 0xFFu);
     if((uint(mats.instance[frag.instanceId].maps[3].layer) >> 24) != 0u)
-        chicago_stage(out_color, out_color, c4, (flags >> 16) & 0xFFu);
+        chicago_stage(out_color, out_color, c3, c4, (flags >> 16) & 0xFFu);
     return out_color;
 }
 
