@@ -159,9 +159,18 @@ async function main() {
   }
   await mkdir(cfg.outDir, { recursive: true });
 
+  const logLines = [];
+  const record = (s, level = 'DEBG') => {
+    const d = new Date();
+    const ts = [d.getHours(), d.getMinutes(), d.getSeconds()].map(v => String(v).padStart(2, '0')).join(':');
+    const msg = `${level.padEnd(4)}:${ts}: ${s}`;
+    logLines.push(msg);
+    console.log(msg);
+  };
+
   const { server, port } = await startServer(cfg.bundleDir);
   const url = `http://127.0.0.1:${port}/${cfg.page}?map=pc/beavercreek.map`;
-  console.log(`Serving ${cfg.bundleDir} at ${url}`);
+  record(`Serving ${cfg.bundleDir} at ${url}`);
 
   const browser = await chromium.launch({
     headless: true,
@@ -177,8 +186,6 @@ async function main() {
     ],
   });
 
-  const logLines = [];
-  const record = (s) => { logLines.push(s); console.log(s); };
   let sawFatal = false;
   let pageErrors = 0;
   const scanFatal = (text) => {
@@ -197,12 +204,19 @@ async function main() {
     record(`dummy_plug config staged: ${cfg.dummyPlug} (Tier 2 — engine support pending)`);
   }
 
-  page.on('console', (msg) => { const t = `[${msg.type()}] ${msg.text()}`; record(t); scanFatal(t); });
+  page.on('console', (msg) => {
+    const type = msg.type();
+    let level = 'DEBG';
+    if (type === 'error') level = 'ERR';
+    else if (type === 'warning') level = 'WARN';
+    record(msg.text(), level);
+    scanFatal(msg.text());
+  });
   // Page-level JS errors: counted and logged, but only fatal if they're a wasm trap.
   // emscripten's window.onerror flips the status banner to "Exception thrown" on the
   // first of these, which is a false positive for a no-map smoke run.
-  page.on('pageerror', (err) => { pageErrors++; const t = `[pageerror] ${err.message}`; record(t); scanFatal(t); });
-  page.on('crash', () => { record('[crash] page crashed'); sawFatal = true; });
+  page.on('pageerror', (err) => { pageErrors++; record(err.message, 'ERR'); scanFatal(err.message); });
+  page.on('crash', () => { record('page crashed', 'ERR'); sawFatal = true; });
 
   let timedOut = false;
   try {
@@ -219,7 +233,7 @@ async function main() {
     );
   } catch (e) {
     timedOut = true;
-    record(`[harness] boot wait timed out: ${e.message}`);
+    record(`boot wait timed out: ${e.message}`, 'WARN');
   }
 
   // Let the render loop run for a while so we accumulate frames and a stable image.
@@ -231,9 +245,9 @@ async function main() {
   const shotPath = join(cfg.outDir, `${cfg.name}.jpg`);
   try {
     await page.locator('#canvas').screenshot({ path: shotPath, type: 'jpeg', quality: cfg.screenshotQuality });
-    record(`[harness] screenshot written: ${shotPath}`);
+    record(`screenshot written: ${shotPath}`);
   } catch (e) {
-    record(`[harness] screenshot failed: ${e.message}`);
+    record(`screenshot failed: ${e.message}`, 'ERR');
   }
 
   // Video is only flushed when the context closes; grab the handle first, then rename
@@ -244,9 +258,9 @@ async function main() {
     try {
       const dest = join(cfg.outDir, `${cfg.name}.webm`);
       await rename(await video.path(), dest);
-      record(`[harness] video written: ${dest}`);
+      record(`video written: ${dest}`);
     } catch (e) {
-      record(`[harness] video save failed: ${e.message}`);
+      record(`video save failed: ${e.message}`, 'ERR');
     }
   }
 
