@@ -136,6 +136,30 @@ void create_resources(compo::EntityContainer& e)
                 }
                 update_camera_aspect(e);
             });
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+        eventhandler->addEventFunction<CIKeyEvent>(
+            1024, [&e](CIEvent&, CIKeyEvent* key) {
+                if(key->key != Input::CK_F9)
+                    return;
+                if(!key->pressed())
+                    return;
+                for(auto const& cam_ : e.select<PlayerCamera>())
+                {
+                    auto const* info = e.get<PlayerInfo>(cam_.id);
+                    if(info->seat_idx != 0)
+                        continue;
+                    auto const* cam = e.get<PlayerCamera>(cam_.id);
+                    cDebug(R"({{"time": 0, "type": "camera", "position" :[{}, {}, {}], "rotation":[{}, {}, {}, {}]}})",
+                        cam->camera->position.x,
+                        cam->camera->position.y,
+                        cam->camera->position.z,
+                        cam->camera->rotation.w,
+                        cam->camera->rotation.x,
+                        cam->camera->rotation.y,
+                        cam->camera->rotation.z);
+                }
+            });
+#endif
 
         auto eventhandler_w = e.service<comp_app::BasicEventBus<Event>>();
 
@@ -193,10 +217,17 @@ void create_resources(compo::EntityContainer& e)
                 {
                     auto rot = ev.data["rotation"];
                     f32 deg_to_rad = glm::pi<f32>() / 180.f;
-                    target->camera->rotation = glm::normalize(
-                        glm::angleAxis(rot[0].get<float>() * deg_to_rad, Vecf3{-1.f,  0.f, 0.f}) *
-                        glm::angleAxis(rot[1].get<float>() * deg_to_rad, Vecf3{ 0.f, -1.f, 0.f})
-                    );
+                    if(rot.size() == 2)
+                        target->camera->rotation = glm::normalize(
+                            glm::angleAxis(rot[0].get<float>() * deg_to_rad, Vecf3{-1.f, 0.f,0.f}) *
+                            glm::angleAxis(rot[1].get<float>() * deg_to_rad, Vecf3{ 0.f,-1.f,0.f})
+                        );
+                    else
+                        target->camera->rotation = glm::normalize(Quatf(
+                            rot[0].get<float>(),
+                            rot[1].get<float>(),
+                            rot[2].get<float>(),
+                            rot[3].get<float>()));
                 }
             }
         }});

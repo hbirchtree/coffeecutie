@@ -530,11 +530,14 @@ vec4 shader_model()
         vec4 para_m        = mats.instance[frag.instanceId].material.input4;
         // Brightness controls blend strength; tint colors the reflection.
         // Keeping them separate prevents zero-brightness from darkening the base.
-        float refl_strength = mix(perp_m.a, para_m.a, fresnel_m);
+        float refl_strength = mix(perp_m.a,   para_m.a,   fresnel_m);
         vec3  refl_color    = mix(perp_m.rgb, para_m.rgb, fresnel_m);
-        reflection = mix(vec3(1), get_cube_color(reflect_dir).rgb * refl_color, specular_factor * refl_strength);
+        reflection = mix(
+            vec3(1),
+            get_cube_color(reflect_dir).rgb + refl_color,
+            specular_factor * NdotV_m);
         if((render_flags & RENDER_FLAG_ONLY_REFLECTIONS) != 0)
-            return vec4(get_cube_color(reflect_dir).rgb, 1);
+            return vec4(get_cube_color(reflect_dir).rgb + refl_color, 1);
     }
     if((render_flags & RENDER_FLAG_ONLY_REFLECTIONS) != 0)
         return vec4(0.0, 0.0, 0.0, 1.0); /* non-reflective surfaces -> black */

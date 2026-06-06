@@ -1182,10 +1182,10 @@ void ShaderCache<V>::populate_material(
         break;
     }
     default: {
-        cDebug(
-            "Material not set up: {0}/{1}",
-            shader.tag->tagclass.at(0).str(),
-            shader.tag->to_name().to_string(magic));
+        // cDebug(
+        //     "Material not set up: {0}/{1}",
+        //     shader.tag->tagclass.at(0).str(),
+        //     shader.tag->to_name().to_string(magic));
         break;
     }
     }

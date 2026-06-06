@@ -1,0 +1,48 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1920,
+            "height": 1920,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "comment": "Captures various cases on c10.map",
+    "events": [
+        {"time":  3000, "type": "camera", "position" :[-115.11373, -67.18936, 41.502506], "rotation":[0.44492486, 0.06269975, 0.8846297, 0.12466372]},
+        {"time":  4000, "type":"screenshot","name":"c10_grunt"},
+        {"time":  5000, "type": "camera", "position" :[-117.71673, -63.32268, 40.02757], "rotation":[0.9265346, 0.018533275, -0.37567768, -0.0075146332]},
+        {"time":  6000, "type":"screenshot","name":"c10_marine"},
+        {"time":  7000, "type": "camera", "position" :[-97.12798, -62.960384, 40.293053], "rotation":[0.5390019, 0.07595721, -0.8306653, -0.117059015]},
+        {"time":  8000, "type":"screenshot","name":"c10_jackal"},
+        {"time":  9000, "type": "camera", "position" :[-16.306158, -45.462765, 0.52173305], "rotation":[-0.44608507, -0.04025628, -0.8904662, -0.08035872]},
+        {"time": 10000, "type":"screenshot","name":"c10_keyes"},
+        {"time": 11000, "type": "camera", "position" :[-120.17838, -55.149242, 39.568092], "rotation":[-0.048973445, -0.00048972166, 0.99875003, 0.009987568]},
+        {"time": 12000, "type":"screenshot","name":"c10_light"},
+        {"time": 13000, "type": "camera", "position" :[-129.53242, -35.054226, 39.79832], "rotation":[0.26636192, 0.026725328, 0.9586891, 0.09618973]},
+        {"time": 14000, "type":"screenshot","name":"c10_swamp"},
+        {"time": 15000, "type": "camera", "position" :[-50.47397, -6.880107, 2.724489], "rotation":[-0.1707251, -0.031066734, -0.96891755, -0.17631379]},
+        {"time": 16000, "type":"screenshot","name":"c10_light_bridge"},
+        {"time": 17000, "type": "camera", "position" :[-15.206813, -49.05149, 2.3025653], "rotation":[0.96632457, 0.0048320135, -0.2572777, -0.0012865544]},
+        {"time": 18000, "type":"screenshot","name":"c10_containment"},
+        {"time": 19000, "type": "camera", "position" :[-18.638294, -31.676142, 0.24906369], "rotation":[-0.54213697, -0.12123246, 0.8114575, 0.18145789]},
+        {"time": 20000, "type":"screenshot","name":"c10_pit"},
+        {"time": 21000, "type": "camera", "position" :[-18.393904, -34.95075, 0.4848771], "rotation":[-0.5467461, -0.021881608, 0.83634305, 0.03347181]},
+        {"time": 22000, "type":"screenshot","name":"c10_door"}
+    ],
+    "frame_delta": 500.0,
+    "end_time": 30000
+}
