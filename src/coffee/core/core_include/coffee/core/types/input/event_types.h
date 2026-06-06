@@ -126,6 +126,15 @@ struct CIKeyEvent : BaseEvent<CIEvent::Keyboard>
     KeyModifiers mod  = NoneModifier; /*!< Modifier keys*/
 
     u16 pad1;
+
+    bool pressed() const
+    {
+        return (mod & PressedModifier) && !(mod & RepeatedModifier);
+    }
+    bool released() const
+    {
+        return !(mod & PressedModifier);
+    }
 };
 
 /*!
