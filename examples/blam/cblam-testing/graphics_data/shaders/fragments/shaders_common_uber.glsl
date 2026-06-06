@@ -495,6 +495,9 @@ vec4 shader_model()
     vec4 primary_change_color = mats.instance[frag.instanceId].material.input2;
 
     vec4 multi = get_color(multi_map_id);
+    int multi_source = mats.instance[frag.instanceId].maps[multi_map_id].layer >> 24;
+    if(multi_source == 0)
+        multi = vec4(0);
     float detail_factor = 1.0;
 #ifdef MULTIPURPOSE_XBOX
     float specular_factor = multi.b;
