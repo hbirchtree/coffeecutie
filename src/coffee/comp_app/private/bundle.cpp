@@ -572,11 +572,14 @@ void addDefaults(
 #endif
 #if defined(FEATURE_ENABLE_EGLComponent) && \
     defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
-        if(dummyPlug.enabled && dummyPlug.swrender == "llvmpipe")
+        if(dummyPlug.enabled
+           && (dummyPlug.swrender == "llvmpipe"
+               || dummyPlug.swrender == "surfaceless"))
     {
         loader.registerAll<egl::SurfacelessServices>(container, ec);
         C_ERROR_CHECK(ec);
-        appInfo.add("window:library", "EGL Surfaceless (llvmpipe)");
+        appInfo.add(
+            "window:library", "EGL Surfaceless (" + dummyPlug.swrender + ")");
         selected_windowing = Windower_EGL;
         cVerbose(10, "Selecting surfaceless EGL backend");
     } else
@@ -706,9 +709,11 @@ void addDefaults(
 #endif
 #if defined(FEATURE_ENABLE_EGLComponent) && \
     defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
-        if(dummyPlug.enabled && dummyPlug.swrender == "llvmpipe")
+        if(dummyPlug.enabled
+           && (dummyPlug.swrender == "llvmpipe"
+               || dummyPlug.swrender == "surfaceless"))
     {
-        appInfo.add("gl:context", "EGL (llvmpipe)");
+        appInfo.add("gl:context", "EGL (" + dummyPlug.swrender + ")");
     } else
 #endif
     {

@@ -117,6 +117,13 @@ static void NotifyThread(
 {
     C_PTR_CHECK(context);
 
+    /* Hold the global lock (shared) for the whole notify: this keeps the
+     * queue_flags entry — and the semaphore_t it owns — alive while we touch
+     * its condition variable, so a concurrent TerminateThread() cannot destroy
+     * it underneath us. Callers must NOT already hold global_lock (shared_mutex
+     * is not recursive). */
+    std::shared_lock _(context->global_lock);
+
     auto threadFlags = context->queue_flags.find(threadId);
     auto queueRef    = context->queues.find(threadId);
 
@@ -376,17 +383,19 @@ detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
     if(enum_helpers::feval(task.flags, task_flags::periodic))
         task.time = clock_now() + task.interval;
 
-    std::shared_lock _(context->global_lock);
-
-    auto q_it = context->queues.find(targetThread);
-
-    if(q_it == context->queues.end())
+    /* Resolve the queue pointer under the lock, then release it before
+     * delegating: the inner Queue()/NotifyThread() take the lock themselves,
+     * and queue objects in `queues` are stable (only cleared at full shutdown,
+     * which is gated by shutdown_flag checked inside Queue()). */
+    runtime_queue* queue = nullptr;
     {
-        return RQE::InvalidQueue;
-    } else
-    {
-        return Queue(&q_it->second, std::move(task));
+        std::shared_lock _(context->global_lock);
+        auto q_it = context->queues.find(targetThread);
+        if(q_it == context->queues.end())
+            return RQE::InvalidQueue;
+        queue = &q_it->second;
     }
+    return Queue(queue, std::move(task));
 }
 
 detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
@@ -622,7 +631,10 @@ detail::result<bool, RuntimeQueueError> runtime_queue::IsRunning(
         return RQE::InvalidQueue;
     auto             tid = thread->thread_id();
     std::shared_lock _(context->global_lock);
-    return detail::success(context->queue_flags[tid]->running.load());
+    auto             it = context->queue_flags.find(tid);
+    if(it == context->queue_flags.end() || !it->second)
+        return RQE::InvalidQueue;
+    return detail::success(it->second->running.load());
 }
 
 std::optional<RuntimeQueueError> runtime_queue::TerminateThread(
@@ -633,18 +645,35 @@ std::optional<RuntimeQueueError> runtime_queue::TerminateThread(
 
     auto tid = thread->thread_id();
 
-    std::unique_lock _(context->global_lock);
+    /* Signal the worker to stop and take ownership of its thread handle while
+     * holding the lock, but join() WITHOUT the lock held: the worker may run a
+     * task that needs global_lock (via NotifyThread) on its way out, and
+     * holding the lock across join() would deadlock. */
+    detail::thread worker;
+    {
+        std::unique_lock _(context->global_lock);
 
-    auto& queueFlags = context->queue_flags[tid];
+        auto flags_it  = context->queue_flags.find(tid);
+        auto thread_it = context->queue_threads.find(tid);
+        if(flags_it == context->queue_flags.end() ||
+           thread_it == context->queue_threads.end())
+            return RQE::InvalidQueue;
 
-    queueFlags->running.store(false);
-    queueFlags->notified.store(true);
-    queueFlags->condition.notify_one();
+        flags_it->second->running.store(false);
+        flags_it->second->notified.store(true);
+        flags_it->second->condition.notify_one();
 
-    context->queue_threads[tid].join();
+        worker = std::move(thread_it->second);
+    }
 
-    context->queue_flags.erase(tid);
-    context->queue_threads.erase(tid);
+    if(worker.joinable())
+        worker.join();
+
+    {
+        std::unique_lock _(context->global_lock);
+        context->queue_flags.erase(tid);
+        context->queue_threads.erase(tid);
+    }
 
     return std::nullopt;
 }
@@ -652,21 +681,33 @@ std::optional<RuntimeQueueError> runtime_queue::TerminateThread(
 std::optional<RuntimeQueueError> runtime_queue::TerminateThreads()
 {
     context->shutdown_flag.store(true);
-    std::unique_lock _(context->global_lock);
 
-    for(auto const& t : context->queue_flags)
+    /* Signal all workers under the lock, move out their thread handles, then
+     * join WITHOUT the lock held (see TerminateThread for why). */
+    std::map<u64, detail::thread> threads;
     {
-        t.second->running.store(false);
-        t.second->notified.store(true);
-        t.second->condition.notify_one();
+        std::unique_lock _(context->global_lock);
+
+        for(auto const& t : context->queue_flags)
+        {
+            t.second->running.store(false);
+            t.second->notified.store(true);
+            t.second->condition.notify_one();
+        }
+
+        threads = std::move(context->queue_threads);
+        context->queue_threads.clear();
     }
 
-    for(auto& t : context->queue_threads)
-        t.second.join();
+    for(auto& t : threads)
+        if(t.second.joinable())
+            t.second.join();
 
-    context->queue_flags.clear();
-    context->queue_threads.clear();
-    context->queues.clear();
+    {
+        std::unique_lock _(context->global_lock);
+        context->queue_flags.clear();
+        context->queues.clear();
+    }
 
     return std::nullopt;
 }

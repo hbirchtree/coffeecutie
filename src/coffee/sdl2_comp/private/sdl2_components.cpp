@@ -539,17 +539,17 @@ struct try_create_context
     try_create_context(
         SDL_Window*                 window,
         SDL_GLContext*              context,
-        comp_app::GLConfig::Profile profile)
+        comp_app::GLConfig& config)
         : window(window)
         , context(context)
-        , profile(profile)
+        , config(config)
     {
     }
 
     template<typename version>
     void operator()()
     {
-        if((profile & version::profile) == 0 || *context)
+        if((config.profile & version::profile) == 0 || *context)
             return;
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, version::major);
@@ -558,12 +558,16 @@ struct try_create_context
         *context = SDL_GL_CreateContext(window);
 
         if(*context)
+        {
+            config.version.major = version::major;
+            config.version.minor = version::minor;
             SDL_GetError();
+        }
     }
 
     SDL_Window*                 window;
     SDL_GLContext*              context;
-    comp_app::GLConfig::Profile profile;
+    comp_app::GLConfig& config;
 };
 
 void GLContext::load(entity_container& c, comp_app::app_error& ec)
@@ -576,12 +580,12 @@ void GLContext::load(entity_container& c, comp_app::app_error& ec)
     m_context = nullptr;
 
 #if defined(COFFEE_EMSCRIPTEN)
-    auto try_create = try_create_context(window, &m_context, glConfig.profile);
+    auto try_create = try_create_context(window, &m_context, glConfig);
     try_create.template operator()<GLConfig::gles3_version>();
     try_create.template operator()<GLConfig::gles2_version>();
 #else
     type_list::for_each_rev<GLConfig::valid_versions>(
-        try_create_context(window, &m_context, glConfig.profile));
+        try_create_context(window, &m_context, glConfig));
 #endif
 
     if(!m_context)

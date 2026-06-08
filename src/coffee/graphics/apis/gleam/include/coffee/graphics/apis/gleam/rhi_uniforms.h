@@ -611,6 +611,16 @@ inline bool apply_command_modifier(
     blend_state& view_info)
 {
     cmd::enable(group::enable_cap::blend);
+    if(view_info.maximum)
+    {
+        /* component_max: result = max(src, dst). Equation is global state,
+         * so the other branches reset it to func_add below. */
+        cmd::blend_equation(group::blend_equation_mode_ext::max);
+        cmd::blend_func(
+            group::blending_factor::one, group::blending_factor::one);
+        return true;
+    }
+    cmd::blend_equation(group::blend_equation_mode_ext::func_add);
     if(view_info.additive)
     {
         cmd::blend_func(
@@ -636,8 +646,12 @@ inline bool apply_command_modifier_per_call(
 inline void undo_command_modifier(
     program_t const& /*program*/,
     shader_bookkeeping_t& /*bookkeeping*/,
-    blend_state&& /*view_info*/)
+    blend_state&& view_info)
 {
+    /* Restore default equation so a GL_MAX pass can't leak into later
+     * blend users (UI, post-process). */
+    if(view_info.maximum)
+        cmd::blend_equation(group::blend_equation_mode_ext::func_add);
     cmd::disable(group::enable_cap::blend);
 }
 

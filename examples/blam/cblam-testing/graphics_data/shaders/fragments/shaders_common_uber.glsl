@@ -352,7 +352,7 @@ void chicago_stage(out vec4 dst, in vec4 i1, in vec4 last, in vec4 i2, in uint f
     else if(cf == F_MUL)
         dst.rgb = i1.rgb * i2.rgb;
     else if(cf == F_DOUBLE_MUL)
-        dst.rgb = clamp(i1.rgb * i2.rgb * i2.rgb, 0.0, 1.0);
+        dst.rgb = i1.rgb * i2.rgb * 2;
     else if(cf == F_ADD || cf == F_ADD_SIGNED_CURRENT || cf == F_ADD_SIGNED_NEXT)
         dst.rgb = i1.rgb + i2.rgb;
     else if(cf == F_SUB_SIGNED_CURRENT || cf == F_SUB_SIGNED_NEXT)
@@ -373,7 +373,7 @@ void chicago_stage(out vec4 dst, in vec4 i1, in vec4 last, in vec4 i2, in uint f
     else if(af == F_MUL)
         dst.a = i1.a * i2.a;
     else if(af == F_DOUBLE_MUL)
-        dst.a = clamp(i1.a * i2.a * i2.a, 0.0, 1.0);
+        dst.a = i1.a * i2.a * 2;
     else if(af == F_ADD || af == F_ADD_SIGNED_CURRENT || af == F_ADD_SIGNED_NEXT)
         dst.a = i1.a + i2.a;
     else if(af == F_SUB_SIGNED_CURRENT || af == F_SUB_SIGNED_NEXT)
@@ -383,9 +383,9 @@ void chicago_stage(out vec4 dst, in vec4 i1, in vec4 last, in vec4 i2, in uint f
     else if(af == F_BLEND_CURRENT_ALPHA_INVERSE)
         dst.a = i1.a * (1 - last.a);
     else if(af == F_BLEND_NEXT_ALPHA)
-        dst.a = i1.a * i2.a;
+        dst.a = i1.a + i2.a * last.a;
     else if(af == F_BLEND_NEXT_ALPHA_INVERSE)
-        dst.a = i1.a * (1 - i2.a);
+        dst.a = i1.a + i2.a * (1 - i2.a);
 }
 
 vec4 chicago_blend(vec4 c1, vec4 c2, vec4 c3, vec4 c4, uint flags)

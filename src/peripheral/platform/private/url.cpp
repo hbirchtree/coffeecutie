@@ -145,7 +145,10 @@ STATICINLINE SystemPaths& GetSystemPaths()
                      appData.application_name;
 
     /* Temporary files go in /tmp */
-    paths.tempDir = "/tmp"_sys / appData.application_name;
+    if(auto tmpdir = env::var("TMPDIR"); tmpdir.has_value())
+        paths.tempDir = MkSysUrl(tmpdir.value());
+    else
+        paths.tempDir = "/tmp"_sys / appData.application_name;
 
     if(auto snappy = env::var("SNAP_USER_COMMON"); snappy.has_value())
         paths.configDir = MkSysUrl(snappy.value());

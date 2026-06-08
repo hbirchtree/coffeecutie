@@ -231,9 +231,17 @@ void fork_dummy_plugs(
         dummy_plug.graphics_config["profile"] = "Embedded";
         dummy_plug.graphics_config["major"]   = 3u;
         dummy_plug.graphics_config["minor"]   = 2u;
-    } else if(dummy_plug.swrender == "llvmpipe")
+    } else if(
+        dummy_plug.swrender == "llvmpipe"
+        || dummy_plug.swrender == "surfaceless")
     {
-        cDebug("llvmpipe software rendering activated");
+        /* Both select the EGL surfaceless backend. "surfaceless" runs on
+         * whatever device Mesa picks (the hardware GPU by default); "llvmpipe"
+         * is the same path kept for the software-named config. */
+        if(dummy_plug.swrender == "surfaceless")
+            cDebug("EGL surfaceless (hardware) rendering activated");
+        else
+            cDebug("llvmpipe software rendering activated");
         glConfig.profile       = GLConfig::Core;
         glConfig.version.major = 4u;
         glConfig.version.minor = 6u;
@@ -298,7 +306,9 @@ void fork_dummy_plugs(
             }
             glConfig.depthFmt =
                 version.depth == 32 ? pix_fmt::Depth32 : pix_fmt::Depth16;
-        } else if(dummy_plug.swrender == "llvmpipe")
+        } else if(
+            dummy_plug.swrender == "llvmpipe"
+            || dummy_plug.swrender == "surfaceless")
         {
             glConfig.profile       = version.profile;
             glConfig.version.major = version.major;

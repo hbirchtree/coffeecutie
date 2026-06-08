@@ -400,7 +400,7 @@ struct alignas(32) shader_glass : radiosity_properties /* aka sgla */
     } specular;
 };
 
-struct alignas(64) shader_meter : radiosity_properties /* aka smet, TODO */
+struct alignas(64) shader_meter : radiosity_properties
 {
     enum class meter_flags : u32
     {
