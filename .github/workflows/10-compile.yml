@@ -291,6 +291,7 @@ jobs:
       env:
         CI: "true"
         RUN_SECONDS: "30"
+        ARGS: "map=pc/beavercreek.map"
       run: |
         source/.github/tests/web/run_webgl_test.sh "${{ steps.bundle.outputs.dir }}" /tmp/blam_webgl
     - name: Uploading test artifacts

@@ -37,6 +37,7 @@ const cfg = {
   // Record a (silent) webm of the page into OUT_DIR. On by default; VIDEO=0 disables.
   video: process.env.VIDEO !== '0',
   viewport: { width: 1280, height: 720 },
+  args: process.env.ARGS || '',
 };
 
 const MIME = {
@@ -151,158 +152,197 @@ const FATAL_PATTERNS = [
   /memory access out of bounds/i, /\bOOM\b/, /maximum call stack/i,
 ];
 
+const logLines = [];
+const record = (s, level = 'DEBG') => {
+  const d = new Date();
+  const ts = [d.getHours(), d.getMinutes(), d.getSeconds()].map(v => String(v).padStart(2, '0')).join(':');
+  const msg = `${level.padEnd(4)}:${ts}: ${s}`;
+  logLines.push(msg);
+  console.log(msg);
+};
+
 async function main() {
-  if (!cfg.bundleDir || !existsSync(join(cfg.bundleDir, cfg.page))) {
-    console.error(`ERROR: bundle page not found: ${join(cfg.bundleDir || '<unset>', cfg.page)}`);
-    console.error('Set BUNDLE_DIR to the directory containing', cfg.page);
-    process.exit(2);
-  }
-  await mkdir(cfg.outDir, { recursive: true });
-
-  const logLines = [];
-  const record = (s, level = 'DEBG') => {
-    const d = new Date();
-    const ts = [d.getHours(), d.getMinutes(), d.getSeconds()].map(v => String(v).padStart(2, '0')).join(':');
-    const msg = `${level.padEnd(4)}:${ts}: ${s}`;
-    logLines.push(msg);
-    console.log(msg);
-  };
-
-  const { server, port } = await startServer(cfg.bundleDir);
-  const url = `http://127.0.0.1:${port}/${cfg.page}?map=pc/beavercreek.map`;
-  record(`Serving ${cfg.bundleDir} at ${url}`);
-
-  const browser = await chromium.launch({
-    headless: true,
-    args: [
-      // SwiftShader: pure-software OpenGL ES via ANGLE. Recent Chromium gates this
-      // behind --enable-unsafe-swiftshader for WebGL.
-      '--use-gl=angle',
-      '--use-angle=swiftshader',
-      '--enable-unsafe-swiftshader',
-      '--ignore-gpu-blocklist',
-      '--enable-webgl',
-      '--disable-dev-shm-usage',
-    ],
-  });
-
-  let sawFatal = false;
-  let pageErrors = 0;
-  const scanFatal = (text) => {
-    if (FATAL_PATTERNS.some((re) => re.test(text))) sawFatal = true;
-  };
-
-  const context = await browser.newContext({
-    viewport: cfg.viewport,
-    recordVideo: cfg.video ? { dir: cfg.outDir, size: cfg.viewport } : undefined,
-  });
-  const page = await context.newPage();
-  await page.addInitScript(instrument);
-  if (cfg.dummyPlug && existsSync(cfg.dummyPlug)) {
-    const configText = await readFile(cfg.dummyPlug, 'utf8');
-    await page.addInitScript(installDummyPlug, configText);
-    record(`dummy_plug config staged: ${cfg.dummyPlug} (Tier 2 — engine support pending)`);
-  }
-
-  page.on('console', (msg) => {
-    const type = msg.type();
-    let level = 'DEBG';
-    if (type === 'error') level = 'ERR';
-    else if (type === 'warning') level = 'WARN';
-    record(msg.text(), level);
-    scanFatal(msg.text());
-  });
-  // Page-level JS errors: counted and logged, but only fatal if they're a wasm trap.
-  // emscripten's window.onerror flips the status banner to "Exception thrown" on the
-  // first of these, which is a false positive for a no-map smoke run.
-  page.on('pageerror', (err) => { pageErrors++; record(err.message, 'ERR'); scanFatal(err.message); });
-  page.on('crash', () => { record('page crashed', 'ERR'); sawFatal = true; });
-
-  let timedOut = false;
+  let browser, server;
   try {
-    await page.goto(url, { waitUntil: 'load', timeout: cfg.bootTimeoutMs });
-    // Wait for the app to boot: either it reports "Running..." or we observe frames+context.
-    await page.waitForFunction(
-      (min) => {
-        const h = window.__harness || {};
-        const status = (document.getElementById('status') || {}).innerHTML || '';
-        return (h.contextType && h.frames >= min) || /Running/.test(status) || /Exception/.test(status);
-      },
-      cfg.minFrames,
-      { timeout: cfg.bootTimeoutMs, polling: 250 },
-    );
-  } catch (e) {
-    timedOut = true;
-    record(`boot wait timed out: ${e.message}`, 'WARN');
-  }
+    if (!cfg.bundleDir || !existsSync(join(cfg.bundleDir, cfg.page))) {
+      throw new Error(`bundle page not found: ${join(cfg.bundleDir || '<unset>', cfg.page)}`);
+    }
+    await mkdir(cfg.outDir, { recursive: true });
 
-  // Let the render loop run for a while so we accumulate frames and a stable image.
-  await page.waitForTimeout(cfg.runSeconds * 1000);
+    const serverData = await startServer(cfg.bundleDir);
+    server = serverData.server;
+    const port = serverData.port;
+    
+    let url = `http://127.0.0.1:${port}/${cfg.page}`;
+    if (cfg.args) {
+      url += `?${cfg.args}`;
+    }
+    record(`Serving ${cfg.bundleDir} at ${url}`);
 
-  const h = await page.evaluate(() => window.__harness);
-  const status = await page.evaluate(() => (document.getElementById('status') || {}).innerHTML || '');
+    browser = await chromium.launch({
+      headless: true,
+      args: [
+        // SwiftShader: pure-software OpenGL ES via ANGLE. Recent Chromium gates this
+        // behind --enable-unsafe-swiftshader for WebGL.
+        '--use-gl=angle',
+        '--use-angle=swiftshader',
+        '--enable-unsafe-swiftshader',
+        '--ignore-gpu-blocklist',
+        '--enable-webgl',
+        '--disable-dev-shm-usage',
+      ],
+    });
 
-  const shotPath = join(cfg.outDir, `${cfg.name}.jpg`);
-  try {
-    await page.locator('#canvas').screenshot({ path: shotPath, type: 'jpeg', quality: cfg.screenshotQuality });
-    record(`screenshot written: ${shotPath}`);
-  } catch (e) {
-    record(`screenshot failed: ${e.message}`, 'ERR');
-  }
+    let sawFatal = false;
+    let pageErrors = 0;
+    const scanFatal = (text) => {
+      if (FATAL_PATTERNS.some((re) => re.test(text))) sawFatal = true;
+    };
 
-  // Video is only flushed when the context closes; grab the handle first, then rename
-  // it to a stable name in OUT_DIR so it rides along in the uploaded artifact.
-  const video = page.video();
-  await context.close();
-  if (video) {
+    const context = await browser.newContext({
+      viewport: cfg.viewport,
+      recordVideo: cfg.video ? { dir: cfg.outDir, size: cfg.viewport } : undefined,
+    });
+    const page = await context.newPage();
+    await page.addInitScript(instrument);
+    if (cfg.dummyPlug && existsSync(cfg.dummyPlug)) {
+      const configText = await readFile(cfg.dummyPlug, 'utf8');
+      await page.addInitScript(installDummyPlug, configText);
+      record(`dummy_plug config staged: ${cfg.dummyPlug} (Tier 2 — engine support pending)`);
+    }
+
+    page.on('console', (msg) => {
+      const type = msg.type();
+      let level = 'DEBG';
+      if (type === 'error') level = 'ERR';
+      else if (type === 'warning') level = 'WARN';
+      
+      const text = msg.text();
+      record(text, level);
+      scanFatal(text);
+      
+      // If it's an error, also try to log the stack trace if Playwright captured it
+      if (type === 'error' && msg.location()) {
+        const loc = msg.location();
+        record(`  at ${loc.url}:${loc.lineNumber}:${loc.columnNumber}`, 'ERR');
+      }
+    });
+    // Page-level JS errors: counted and logged with stack trace if available.
+    page.on('pageerror', (err) => {
+      pageErrors++;
+      const msg = err.stack || err.message || String(err);
+      record(msg, 'ERR');
+      scanFatal(msg);
+    });
+    page.on('requestfailed', (req) => {
+      const err = req.failure();
+      const msg = `Request failed: ${req.method()} ${req.url()} - ${err ? err.errorText : 'unknown error'}`;
+      record(msg, 'ERR');
+      scanFatal(msg);
+    });
+    page.on('crash', () => { record('page crashed', 'ERR'); sawFatal = true; });
+
+    let timedOut = false;
     try {
-      const dest = join(cfg.outDir, `${cfg.name}.webm`);
-      await rename(await video.path(), dest);
-      record(`video written: ${dest}`);
+      await page.goto(url, { waitUntil: 'load', timeout: cfg.bootTimeoutMs });
+      // Wait for the app to boot: either it reports "Running..." or we observe frames+context.
+      await page.waitForFunction(
+        (min) => {
+          const h = window.__harness || {};
+          const status = (document.getElementById('status') || {}).innerHTML || '';
+          return (h.contextType && h.frames >= min) || /Running/.test(status) || /Exception/.test(status);
+        },
+        cfg.minFrames,
+        { timeout: cfg.bootTimeoutMs, polling: 250 },
+      );
     } catch (e) {
-      record(`video save failed: ${e.message}`, 'ERR');
+      timedOut = true;
+      record(`boot wait timed out: ${e.message}`, 'WARN');
+    }
+
+    // Run the render loop to accumulate frames and a stable image. Only a real
+    // wasm trap (sawFatal) cuts this short. emscripten's window.onerror flips the
+    // status banner to "Exception thrown" on the first page-level JS error (e.g. a
+    // failed map fetch), which is a false positive for the smoke run — it must NOT
+    // skip the run wait, or we never accumulate enough frames to pass.
+    if (!sawFatal) {
+      record(`Running render loop for ${cfg.runSeconds}s...`);
+      await page.waitForTimeout(cfg.runSeconds * 1000);
+    } else {
+      record('Fatal wasm error detected during boot, skipping run wait.', 'WARN');
+    }
+
+    const h = await page.evaluate(() => window.__harness);
+    const status = await page.evaluate(() => (document.getElementById('status') || {}).innerHTML || '');
+
+    const shotPath = join(cfg.outDir, `${cfg.name}.jpg`);
+    try {
+      await page.locator('#canvas').screenshot({ path: shotPath, type: 'jpeg', quality: cfg.screenshotQuality });
+      record(`screenshot written: ${shotPath}`);
+    } catch (e) {
+      record(`screenshot failed: ${e.message}`, 'ERR');
+    }
+
+    // Video is only flushed when the context closes; grab the handle first, then rename
+    // it to a stable name in OUT_DIR so it rides along in the uploaded artifact.
+    const video = page.video();
+    await context.close();
+    if (video) {
+      try {
+        const dest = join(cfg.outDir, `${cfg.name}.webm`);
+        await rename(await video.path(), dest);
+        record(`video written: ${dest}`);
+      } catch (e) {
+        record(`video save failed: ${e.message}`, 'ERR');
+      }
+    }
+
+    // Verdict. STRICT=1 additionally fails on any page-level JS error (use once a map is
+    // fed in and the app is expected to be error-clean).
+    const strict = process.env.STRICT === '1';
+    const checks = [];
+    const ok = (label, pass) => { checks.push({ label, pass }); return pass; };
+    ok('WebGL context created', !!h.contextType);
+    ok('context is webgl2', h.contextType === 'webgl2');
+    ok(`>= ${cfg.minFrames} frames rendered (got ${h.frames})`, h.frames >= cfg.minFrames);
+    ok(`draw calls issued (got ${h.drawCalls})`, h.drawCalls > 0);
+    ok('no wasm abort/trap', !sawFatal);
+    ok('no WebGL context loss', !h.contextLost);
+    ok('did not time out booting', !timedOut);
+    if (strict) ok(`no page errors (got ${pageErrors})`, pageErrors === 0);
+
+    record('');
+    record('================ WebGL smoke result ================');
+    record(`renderer : ${h.glRenderer}`);
+    record(`gl version: ${h.glVersion}`);
+    record(`status    : ${status}`);
+    record(`frames=${h.frames} drawCalls=${h.drawCalls} contextLost=${h.contextLost} pageErrors=${pageErrors}`);
+    const swiftshader = /swiftshader/i.test(String(h.glRenderer || ''));
+    record(`software renderer (SwiftShader): ${swiftshader ? 'yes' : 'NO (check --use-angle=swiftshader)'}`);
+    if (pageErrors > 0 && !strict) {
+      record(`note: ${pageErrors} page error(s) seen (non-fatal; expected without a map fed in)`);
+    }
+    for (const c of checks) record(`  ${c.pass ? 'PASS' : 'FAIL'}  ${c.label}`);
+    record('====================================================');
+
+    const failed = checks.filter((c) => !c.pass);
+    if (failed.length) {
+      record(`${failed.length} check(s) failed.`, 'ERR');
+      process.exit(1);
+    }
+    record('\nAll checks passed.');
+  } catch (e) {
+    record(e.stack || e.message || String(e), 'ERR');
+    process.exit(1);
+  } finally {
+    if (browser) await browser.close().catch(() => {});
+    if (server) server.close();
+    try {
+      await writeFile(join(cfg.outDir, 'output.log'), logLines.join('\n') + '\n');
+    } catch (e) {
+      console.error('Failed to write output.log:', e);
     }
   }
-
-  await browser.close();
-  server.close();
-
-  // Verdict. STRICT=1 additionally fails on any page-level JS error (use once a map is
-  // fed in and the app is expected to be error-clean).
-  const strict = process.env.STRICT === '1';
-  const checks = [];
-  const ok = (label, pass) => { checks.push({ label, pass }); return pass; };
-  ok('WebGL context created', !!h.contextType);
-  ok('context is webgl2', h.contextType === 'webgl2');
-  ok(`>= ${cfg.minFrames} frames rendered (got ${h.frames})`, h.frames >= cfg.minFrames);
-  ok(`draw calls issued (got ${h.drawCalls})`, h.drawCalls > 0);
-  ok('no wasm abort/trap', !sawFatal);
-  ok('no WebGL context loss', !h.contextLost);
-  ok('did not time out booting', !timedOut);
-  if (strict) ok(`no page errors (got ${pageErrors})`, pageErrors === 0);
-
-  record('');
-  record('================ WebGL smoke result ================');
-  record(`renderer : ${h.glRenderer}`);
-  record(`gl version: ${h.glVersion}`);
-  record(`status    : ${status}`);
-  record(`frames=${h.frames} drawCalls=${h.drawCalls} contextLost=${h.contextLost} pageErrors=${pageErrors}`);
-  const swiftshader = /swiftshader/i.test(String(h.glRenderer || ''));
-  record(`software renderer (SwiftShader): ${swiftshader ? 'yes' : 'NO (check --use-angle=swiftshader)'}`);
-  if (pageErrors > 0 && !strict) {
-    record(`note: ${pageErrors} page error(s) seen (non-fatal; expected without a map fed in)`);
-  }
-  for (const c of checks) record(`  ${c.pass ? 'PASS' : 'FAIL'}  ${c.label}`);
-  record('====================================================');
-
-  await writeFile(join(cfg.outDir, 'output.log'), logLines.join('\n') + '\n');
-
-  const failed = checks.filter((c) => !c.pass);
-  if (failed.length) {
-    console.error(`\n${failed.length} check(s) failed.`);
-    process.exit(1);
-  }
-  console.log('\nAll checks passed.');
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main();
