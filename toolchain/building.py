@@ -84,19 +84,21 @@ class TargetSpec:
         if "/" in spec:
             spec, cmake_target = spec.split("/", 1)
         parts = spec.split(":")
-        if len(parts) < 3:
-            sys.exit(f"::error::Invalid target '{spec}': expected platform:arch:sysroot")
+        if len(parts) < 2:
+            sys.exit(f"::error::Invalid target '{spec}': expected platform:arch[:sysroot]")
         return TargetSpec(
             platform=parts[0],
             architecture=parts[1],
-            sysroot=parts[2],
+            sysroot=parts[2] if len(parts) > 2 else "",
             build_mode=parts[3] if len(parts) > 3 else "dbg",
             cmake_target=cmake_target,
         )
 
     @property
     def preset(self) -> str:
-        return f"{self.platform}-{self.architecture}-{self.sysroot}"
+        if self.sysroot:
+            return f"{self.platform}-{self.architecture}-{self.sysroot}"
+        return f"{self.platform}-{self.architecture}"
 
     @property
     def build_preset(self) -> str:
@@ -121,7 +123,7 @@ class TargetSpec:
 
     @property
     def is_downloadable(self) -> bool:
-        return any(x in self.architecture for x in ("linux", "powerpc", "mingw32"))
+        return any(x in self.architecture for x in ("-linux-", "powerpc", "mingw32"))
 
 
 # ---------------------------------------------------------------------------
@@ -843,73 +845,74 @@ def native_plan(
 
     if not toolchain_required:
         toolchain_ver = get_preset_value(base_dir, target.preset, "TOOLCHAIN_VERSION")
-        if not toolchain_ver:
+        if not toolchain_ver and target.is_downloadable:
             sys.exit(
                 "No TOOLCHAIN_VERSION found in the preset.\n"
                 "Add it to the cmake preset or set TOOLCHAIN_ROOT manually."
             )
 
-        if is_gamecube:
-            default_root = (
-                base_dir / "multi_build/compilers/gamecube-powerpc-eabi" / toolchain_ver
-            )
-        else:
-            default_root = (
-                base_dir
-                / "multi_build/compilers"
-                / f"{target.platform}-{target.architecture}"
-                / toolchain_ver
-            )
-
-        toolchain_root = Path(os.environ.get("TOOLCHAIN_ROOT", str(default_root)))
-        toolchain_sysroot = toolchain_root / toolchain_prefix / "sysroot"
-
-        env["TOOLCHAIN_ROOT"] = str(toolchain_root)
-        env["TOOLCHAIN_SYSROOT"] = str(toolchain_sysroot)
-        compilers_bin = base_dir / "multi_build/compilers/bin"
-        env["PATH"] = f"{compilers_bin}:{os.environ.get('PATH', '')}:{toolchain_root / 'bin'}"
-
-        if target.is_downloadable:
-            download_name = f"{target.platform}-{target.architecture}_{target.sysroot}"
+        if toolchain_ver:
             if is_gamecube:
-                download_name = "gamecube-powerpc-eabi"
-            build_json = load_build_json(base_dir)
-            gh_repo = build_json.get("toolchain", {}).get("git", {}).get("repo", "")
-            plan.extend(
-                toolchain_download_plan(
-                    base_dir=base_dir,
-                    toolchain_root=toolchain_root,
-                    toolchain_ver=toolchain_ver,
-                    download_name=download_name,
-                    gh_repo=gh_repo,
+                default_root = (
+                    base_dir / "multi_build/compilers/gamecube-powerpc-eabi" / toolchain_ver
                 )
-            )
+            else:
+                default_root = (
+                    base_dir
+                    / "multi_build/compilers"
+                    / f"{target.platform}-{target.architecture}"
+                    / toolchain_ver
+                )
 
-        if target.is_linux:
-            build_dir = base_dir / "multi_build" / target.preset
-            sysroot_cap = toolchain_sysroot
+            toolchain_root = Path(os.environ.get("TOOLCHAIN_ROOT", str(default_root)))
+            toolchain_sysroot = toolchain_root / toolchain_prefix / "sysroot"
 
-            def setup_symlinks(bd=build_dir, sr=sysroot_cap):
-                lib_dir = bd / "lib"
-                lib_dir.mkdir(parents=True, exist_ok=True)
-                for src in [
-                    sr / "lib/libstdc++.so.6",
-                    sr / "lib/libssp.so.0",
-                    sr / "usr/lib/libbacktrace.so.0",
-                ]:
-                    dst = lib_dir / src.name
-                    if dst.is_symlink() or dst.exists():
-                        dst.unlink()
-                    dst.symlink_to(src)
+            env["TOOLCHAIN_ROOT"] = str(toolchain_root)
+            env["TOOLCHAIN_SYSROOT"] = str(toolchain_sysroot)
+            compilers_bin = base_dir / "multi_build/compilers/bin"
+            env["PATH"] = f"{compilers_bin}:{os.environ.get('PATH', '')}:{toolchain_root / 'bin'}"
 
-            plan.add(PythonStep(
-                name="setup-stdlib-symlinks",
-                fn=setup_symlinks,
-                description=(
-                    f"Symlink libstdc++/libssp/libbacktrace from sysroot into "
-                    f"{build_dir}/lib/"
-                ),
-            ))
+            if target.is_downloadable:
+                download_name = f"{target.platform}-{target.architecture}_{target.sysroot}"
+                if is_gamecube:
+                    download_name = "gamecube-powerpc-eabi"
+                build_json = load_build_json(base_dir)
+                gh_repo = build_json.get("toolchain", {}).get("git", {}).get("repo", "")
+                plan.extend(
+                    toolchain_download_plan(
+                        base_dir=base_dir,
+                        toolchain_root=toolchain_root,
+                        toolchain_ver=toolchain_ver,
+                        download_name=download_name,
+                        gh_repo=gh_repo,
+                    )
+                )
+
+            if target.is_linux:
+                build_dir = base_dir / "multi_build" / target.preset
+                sysroot_cap = toolchain_sysroot
+
+                def setup_symlinks(bd=build_dir, sr=sysroot_cap):
+                    lib_dir = bd / "lib"
+                    lib_dir.mkdir(parents=True, exist_ok=True)
+                    for src in [
+                        sr / "lib/libstdc++.so.6",
+                        sr / "lib/libssp.so.0",
+                        sr / "usr/lib/libbacktrace.so.0",
+                    ]:
+                        dst = lib_dir / src.name
+                        if dst.is_symlink() or dst.exists():
+                            dst.unlink()
+                        dst.symlink_to(src)
+
+                plan.add(PythonStep(
+                    name="setup-stdlib-symlinks",
+                    fn=setup_symlinks,
+                    description=(
+                        f"Symlink libstdc++/libssp/libbacktrace from sysroot into "
+                        f"{build_dir}/lib/"
+                    ),
+                ))
 
     plan.extend(configure_and_build_plan(target, base_dir, env, cmake_args))
     return plan
@@ -1144,7 +1147,7 @@ def mingw_plan(
 # ---------------------------------------------------------------------------
 
 _NATIVE_PLATFORMS = frozenset(
-    {"desktop", "beaglebone", "generic", "native", "raspberry", "console"}
+    {"desktop", "beaglebone", "generic", "native", "raspberry", "console", "linux"}
 )
 
 
@@ -1237,24 +1240,123 @@ def _env_for_target(target: TargetSpec, host: HostInfo, base_dir: Path) -> dict[
 
         if not toolchain_required:
             toolchain_ver = get_preset_value(base_dir, target.preset, "TOOLCHAIN_VERSION")
-            if is_gamecube:
-                default_root = (
-                    base_dir / "multi_build/compilers/gamecube-powerpc-eabi" / toolchain_ver
-                )
-            else:
-                default_root = (
-                    base_dir
-                    / "multi_build/compilers"
-                    / f"{target.platform}-{target.architecture}"
-                    / toolchain_ver
-                )
-            toolchain_root = Path(os.environ.get("TOOLCHAIN_ROOT", str(default_root)))
-            toolchain_sysroot = toolchain_root / toolchain_prefix / "sysroot"
-            env["TOOLCHAIN_ROOT"] = str(toolchain_root)
-            env["TOOLCHAIN_SYSROOT"] = str(toolchain_sysroot)
-            env["PATH"] = f"{toolchain_root / 'bin'}:{env.get('PATH', '')}"
+            if toolchain_ver:
+                if is_gamecube:
+                    default_root = (
+                        base_dir / "multi_build/compilers/gamecube-powerpc-eabi" / toolchain_ver
+                    )
+                else:
+                    default_root = (
+                        base_dir
+                        / "multi_build/compilers"
+                        / f"{target.platform}-{target.architecture}"
+                        / toolchain_ver
+                    )
+                toolchain_root = Path(os.environ.get("TOOLCHAIN_ROOT", str(default_root)))
+                toolchain_sysroot = toolchain_root / toolchain_prefix / "sysroot"
+                env["TOOLCHAIN_ROOT"] = str(toolchain_root)
+                env["TOOLCHAIN_SYSROOT"] = str(toolchain_sysroot)
+                env["PATH"] = f"{toolchain_root / 'bin'}:{env.get('PATH', '')}"
 
     return env
+
+
+# ---------------------------------------------------------------------------
+# Run helper (native execution of built targets)
+# ---------------------------------------------------------------------------
+
+def _native_runnable(target: TargetSpec, host: HostInfo) -> tuple[bool, str]:
+    """Whether a target's binaries can execute directly on this host.
+
+    Returns (runnable, reason).  Cross-compiled binaries for the same OS and a
+    compatible architecture (e.g. buildroot x86_64 on an x86_64 Linux host)
+    run natively; foreign OS/arch combinations (mingw, arm-on-x86, …) do not.
+    """
+    if host.os == "linux":
+        if not target.is_linux:
+            return False, "target is not a Linux binary"
+        a = target.architecture
+        if host.arch == "x86_64":
+            ok = any(x in a for x in ("x86_64", "x64", "i686", "i386"))
+        elif host.arch == "aarch64":
+            ok = any(x in a for x in ("aarch64", "arm64", "arm"))
+        else:
+            ok = host.arch in a
+        if not ok:
+            return False, f"arch '{a}' is not runnable on host arch '{host.arch}'"
+        return True, ""
+    if host.os == "darwin":
+        if not target.is_macos:
+            return False, "target is not a macOS binary"
+        return True, ""
+    return False, f"unsupported host OS '{host.os}'"
+
+
+def _resolve_run_binary(bin_dir: Path, wanted: str | None) -> Path:
+    """Locate the executable to run inside *bin_dir*.
+
+    A specific binary may be requested via the /cmake_target suffix; otherwise
+    the single built executable is used, or the caller is asked to disambiguate.
+    """
+    if not bin_dir.is_dir():
+        sys.exit(
+            f"::error::No build output at {bin_dir}\n"
+            "Build the target first, e.g. `cb build <target>`."
+        )
+    execs = sorted(
+        f for f in bin_dir.iterdir() if f.is_file() and os.access(f, os.X_OK)
+    )
+    if wanted:
+        chosen = bin_dir / wanted
+        if not chosen.is_file():
+            avail = ", ".join(f.name for f in execs) or "(none)"
+            sys.exit(f"::error::No binary '{wanted}' in {bin_dir}. Available: {avail}")
+        return chosen
+    if not execs:
+        sys.exit(f"::error::No executables in {bin_dir}. Build the target first.")
+    if len(execs) > 1:
+        names = ", ".join(f.name for f in execs)
+        sys.exit(
+            f"::error::Multiple binaries in {bin_dir}: {names}\n"
+            "Specify one with `cb run <target>/<binary>`."
+        )
+    return execs[0]
+
+
+def cmd_run(
+    target: TargetSpec,
+    host: HostInfo,
+    base_dir: Path,
+    prog_args: list[str],
+    dry_run: bool,
+) -> None:
+    """Run a natively-supported built target, forwarding *prog_args* to it."""
+    runnable, why = _native_runnable(target, host)
+    if not runnable:
+        sys.exit(f"::error::Target {target.preset} is not natively runnable: {why}")
+
+    build_dir = base_dir / "multi_build" / target.preset
+    binary = _resolve_run_binary(build_dir / "bin", target.cmake_target)
+
+    env = {**os.environ}
+    lib_dir = build_dir / "lib"
+    ld_var = "DYLD_LIBRARY_PATH" if host.os == "darwin" else "LD_LIBRARY_PATH"
+    if lib_dir.is_dir():
+        prev = env.get(ld_var, "")
+        env[ld_var] = f"{lib_dir}:{prev}" if prev else str(lib_dir)
+
+    cmd = [str(binary), *prog_args]
+    if dry_run:
+        print(f"Would run (cwd={base_dir}):")
+        if lib_dir.is_dir():
+            print(f"  {ld_var}={env[ld_var]}")
+        print(f"  {' '.join(cmd)}")
+        return
+
+    # Run from the repo root so relative paths (assets, maps, dummy-plug
+    # configs) resolve the same way as in the documented invocations.
+    os.chdir(str(base_dir))
+    os.execvpe(str(binary), cmd, env)
 
 
 # ---------------------------------------------------------------------------
@@ -1373,9 +1475,12 @@ def _split_preset_name(name: str) -> tuple[str, str, str] | None:
     platform = name[:dash]
     rest = name[dash + 1:]
     m = _ARCH_RE.match(rest)
-    if not m:
-        return None
-    return platform, m.group(1), m.group(2)
+    if m:
+        return platform, m.group(1), m.group(2)
+    # Two-part preset: platform-arch with no sysroot (e.g. native-linux)
+    if re.match(r'^[a-z][a-z0-9_-]*$', rest):
+        return platform, rest, ""
+    return None
 
 
 def _list_presets(base_dir: Path) -> None:
@@ -1469,6 +1574,16 @@ def main() -> None:
     p.add_argument(
         "mode", nargs="?", default="rel", choices=["dbg", "rel"],
         help="Build mode: dbg or rel (default: rel)",
+    )
+
+    # run
+    p = sub.add_parser(
+        "run",
+        help="Run a natively-supported built target  platform:arch:sysroot[/binary]",
+    )
+    p.add_argument(
+        "target",
+        help="e.g. desktop:x86_64-buildroot-linux-gnu:multi/BlamGraphics",
     )
 
     # print-env
@@ -1574,6 +1689,10 @@ def main() -> None:
         plan.execute(dry_run=dry_run)
 
     # --- env / introspection commands ------------------------------------
+
+    elif cmd == "run":
+        target = TargetSpec.parse(args.target)
+        cmd_run(target, host, base_dir, cmake_extra_args, dry_run)
 
     elif cmd == "print-env":
         check_programs("cmake")
@@ -1701,6 +1820,7 @@ def main() -> None:
             "    windows-build       — Build a Windows target (MinGW)\n"
             "    console-build       — Build a console/embedded target\n"
             "    host-build          — Build host tools only\n"
+            "    run                 — Run a natively-supported built target\n"
             "\nAvailable targets:"
         )
         _list_presets(base_dir)
