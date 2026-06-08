@@ -191,6 +191,13 @@ struct MeshRenderer
             return material_mapping[idx];
         }
 
+        inline materials::transparent_data& transparent_of(size_t idx)
+        {
+            if(idx >= transparent_mapping.size())
+                Throw(std::out_of_range("transparent index out of range"));
+            return transparent_mapping[idx];
+        }
+
         inline size_t required_storage() const
         {
             u32 total = 0;
@@ -541,6 +548,12 @@ struct MeshRenderer
                 {"BoneMatrices"sv, 3},
                 m_resources.bone_matrix_buf->slice(0),
                 0,
+            },
+            gfx::buffer_definition_t{
+                typing::graphics::ShaderStage::Fragment,
+                {"TransparentProperties"sv, 4},
+                pass.transparent_buffer,
+                sizeof(materials::transparent_data),
             });
 
         std::vector<gfx::sampler_definition_t> samplers;
@@ -612,6 +625,12 @@ struct MeshRenderer
                 {"WorldProperties"sv, 2},
                 m_resources.world_store->slice(0),
                 0,
+            },
+            gfx::buffer_definition_t{
+                typing::graphics::ShaderStage::Fragment,
+                {"TransparentProperties"sv, 4},
+                pass.transparent_buffer,
+                sizeof(materials::transparent_data),
             });
 
         /* Step 2: Set up all the textures */
@@ -755,7 +774,10 @@ struct MeshRenderer
             update_materials(p, time);
             last_update = time;
             if(m_api->feature_info().program.buffer_binding)
+            {
                 m_resources.material_store->unmap();
+                m_resources.transparent_store->unmap();
+            }
         }
 
         RenderingParameters const* rendering_props;
@@ -780,6 +802,8 @@ struct MeshRenderer
             case Pass_SkyMultiply:
             case Pass_Multiply:
                 return {.multiply = true};
+            case Pass_Max:
+                return {.maximum = true};
             default:
                 return {};
             }
@@ -903,7 +927,7 @@ struct MeshRenderer
     {
     }
 
-    void generate_static_draws(Proxy& p, size_t& materials_ptr)
+    void generate_static_draws(Proxy& p, size_t& materials_ptr, size_t& transparent_ptr)
     {
         ProfContext _;
         /* First go through al lthe BSPs, will at the same time count the amount
@@ -942,13 +966,18 @@ struct MeshRenderer
         /* Allocate the material instances from the material pool */
         for(Pass& pass : m_bsp)
         {
-            auto material_size = align_for_gpu_padding(pass.required_storage());
+            auto material_size    = align_for_gpu_padding(pass.required_storage());
+            auto transparent_size = align_for_gpu_padding(pass.required_transparent_storage());
             pass.material_buffer =
                 m_resources.material_store->slice(materials_ptr, material_size);
             pass.material_mapping =
-                pass.material_buffer
-                    .template buffer_cast<materials::shader_data>();
-            materials_ptr += material_size;
+                pass.material_buffer.template buffer_cast<materials::shader_data>();
+            pass.transparent_buffer =
+                m_resources.transparent_store->slice(transparent_ptr, transparent_size);
+            pass.transparent_mapping =
+                pass.transparent_buffer.template buffer_cast<materials::transparent_data>();
+            materials_ptr    += material_size;
+            transparent_ptr  += transparent_size;
         }
 
         /* Write the static material information, animations are updated later
@@ -978,8 +1007,9 @@ struct MeshRenderer
         ModelCache<Version>* model_cache;
         p.subsystem(model_cache);
 
-        size_t materials_ptr = 0;
-        generate_static_draws(p, materials_ptr);
+        size_t materials_ptr   = 0;
+        size_t transparent_ptr = 0;
+        generate_static_draws(p, materials_ptr, transparent_ptr);
 
         for(Pass& pass : m_model)
             pass.clear();
@@ -1033,20 +1063,24 @@ struct MeshRenderer
         size_t matrix_ptr = 0;
         for(Pass& pass : m_model)
         {
-            auto material_size = align_for_gpu_padding(pass.required_storage());
-            auto matrix_size =
-                align_for_gpu_padding(pass.required_matrix_storage());
+            auto material_size    = align_for_gpu_padding(pass.required_storage());
+            auto matrix_size      = align_for_gpu_padding(pass.required_matrix_storage());
+            auto transparent_size = align_for_gpu_padding(pass.required_transparent_storage());
             pass.material_buffer =
                 m_resources.material_store->slice(materials_ptr, material_size);
             pass.matrix_buffer =
                 m_resources.model_matrix_store->slice(matrix_ptr, matrix_size);
             pass.material_mapping =
-                pass.material_buffer
-                    .template buffer_cast<materials::shader_data>();
+                pass.material_buffer.template buffer_cast<materials::shader_data>();
             pass.matrix_mapping =
                 pass.matrix_buffer.template buffer_cast<PerInstanceData>();
-            matrix_ptr += matrix_size;
-            materials_ptr += material_size;
+            pass.transparent_buffer =
+                m_resources.transparent_store->slice(transparent_ptr, transparent_size);
+            pass.transparent_mapping =
+                pass.transparent_buffer.template buffer_cast<materials::transparent_data>();
+            matrix_ptr       += matrix_size;
+            materials_ptr    += material_size;
+            transparent_ptr  += transparent_size;
         }
 
         // Reset per-frame bone_base so each model uploads once per frame
@@ -1178,6 +1212,10 @@ struct MeshRenderer
         materials::shader_data& material = pass.material_of(i);
         shader_cache.populate_material(material, ref.shader, Vecf2{1, 1});
         bitm_cache.assign_atlas_data(material.lightmap, ref.lightmap);
+        if(material.material.material == materials::id::sotr &&
+           i < pass.transparent_mapping.size())
+            shader_cache.populate_transparent_material(
+                pass.transparent_of(i), ref.shader);
     }
 
     std::optional<ShaderCache<halo_version>::material_context> model_context(
@@ -1207,6 +1245,10 @@ struct MeshRenderer
         materials::shader_data& material = pass.material_of(i);
         shader_cache.populate_material(
             material, sub.shader, model.header->uvscale, context);
+        if(material.material.material == materials::id::sotr &&
+           i < pass.transparent_mapping.size())
+            shader_cache.populate_transparent_material(
+                pass.transparent_of(i), sub.shader);
     }
 
     void update_animations(

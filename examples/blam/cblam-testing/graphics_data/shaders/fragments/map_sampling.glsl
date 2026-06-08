@@ -43,9 +43,24 @@ struct Material
     MaterialData material;
 };
 
-struct TransparentStages
+/* Mirrors materials::transparent_data::stage_t (48 bytes each) */
+struct TransparentStage
 {
-    uint stages[3 * 5 + 1 /* padding */];
+    uint  color_in;  /* 4×(5-bit input + 3-bit mapping) */
+    uint  alpha_in;  /* same, blam::shader::color_input enum  */
+    uint  outputs;   /* color_out[0..15] | alpha_out[16..31]  */
+    uint  flags;
+    vec4  color0;    /* constant_color0 (animated tint midpoint) */
+    vec4  color1;    /* constant_color1 (static tint) */
+};
+
+/* Mirrors materials::transparent_data (208 bytes) */
+struct TransparentData
+{
+    uint           num_stages;
+    uint           blend_mode; /* chicago::framebuffer_blending */
+    uint           pad0, pad1;
+    TransparentStage stages[4];
 };
 
 layout(binding = 1, std140) uniform MaterialProperties
@@ -53,10 +68,10 @@ layout(binding = 1, std140) uniform MaterialProperties
     Material instance[128];
 } mats;
 
-// layout(binding = 3, std140) buffer TransparentProperties
-// {
-//     TransparentStages instance[];
-// } transparent;
+layout(binding = 4, std140) uniform TransparentProperties
+{
+    TransparentData instance[128];
+} tr;
 
 vec4 get_map(in uint map_id, in int layer, in sampler2DArray sampler, in vec2 tex_coord, in int instance)
 {

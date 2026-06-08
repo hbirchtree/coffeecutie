@@ -813,9 +813,9 @@ ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)
     }
     case tag_class_t::sgla: {
         shader_glass const& shader_model = *extract_shader<shader_glass>(it);
-
-        out.color_bitm = get_bitm_idx(shader_model.diffuse.map.map);
-
+        out.sgla.diffuse         = get_bitm_idx(shader_model.diffuse.map.map);
+        out.sgla.reflection_cube = get_bitm_idx(shader_model.reflection.map);
+        out.sgla.bump            = get_bitm_idx(shader_model.reflection.bump_map.map);
         break;
     }
     case tag_class_t::swat: {
@@ -828,17 +828,14 @@ ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)
         break;
     }
     case tag_class_t::spla: {
-        auto const& shader_model = *extract_shader<shader_plasma>(it);
-
-        out.color_bitm = get_bitm_idx(shader_model.primary_noise.noise.map);
-
+        auto const& shader_model   = *extract_shader<shader_plasma>(it);
+        out.spla.primary_noise   = get_bitm_idx(shader_model.primary_noise.noise.map);
+        out.spla.secondary_noise = get_bitm_idx(shader_model.secondary_noise.noise.map);
         break;
     }
     case tag_class_t::smet: {
         auto const& shader_model = *extract_shader<shader_meter>(it);
-
-        out.color_bitm = get_bitm_idx(shader_model.map);
-
+        out.smet.map             = get_bitm_idx(shader_model.map);
         break;
     }
     case tag_class_t::sotr: {
@@ -1067,31 +1064,80 @@ void ShaderCache<V>::populate_material(
         break;
     }
     case tag_class_t::sgla: {
-        //            auto const* info =
-        //            shader.header->as<blam::shader::shader_glass>();
-        bitm_cache.assign_atlas_data(mat.maps[0], shader.color_bitm);
-        mat.maps[0].uv_scale = Vecf2(1);
+        auto const* info = shader.header->as<blam::shader::shader_glass>();
+        bitm_cache.assign_atlas_data(mat.maps[0], shader.sgla.diffuse);
+        mat.maps[0].uv_scale = Vecf2(info->diffuse.map.scale);
         mat.maps[0].bias     = 0;
-
+        if(shader.sgla.bump.valid())
+        {
+            bitm_cache.assign_atlas_data(mat.maps[1], shader.sgla.bump);
+            mat.maps[1].uv_scale = Vecf2(info->reflection.bump_map.scale);
+            mat.maps[1].bias     = 0;
+        }
+        if(shader.sgla.reflection_cube.valid())
+            mat.lightmap.reflection =
+                bitm_cache.get_atlas_layer(shader.sgla.reflection_cube);
+        mat.material.flags    = static_cast<u32>(info->flags);
+        mat.material.inputs[0] = Vecf4(info->background_tint.color, 1.f);
+        mat.material.inputs[1] = Vecf4(
+            info->reflection.perpendicular.tint_color,
+            info->reflection.perpendicular.brightness);
+        mat.material.inputs[2] = Vecf4(
+            info->reflection.parallel.tint_color,
+            info->reflection.parallel.brightness);
         mat.material.material = materials::id::sgla;
         break;
     }
     case tag_class_t::smet: {
-        mat.material.material = materials::id::smet;
+        auto const* info = shader.header->as<blam::shader::shader_meter>();
+        bitm_cache.assign_atlas_data(mat.maps[0], shader.smet.map);
+        mat.maps[0].uv_scale = Vecf2(1);
+        mat.maps[0].bias     = 0;
+        mat.material.flags   = static_cast<u32>(info->flags);
+        mat.material.inputs1 = Vecf2{1.f, info->colors.transparency};
+        mat.material.inputs[0] =
+            Vecf4(info->colors.gradient_min, info->colors.background_transparency);
+        mat.material.inputs[1] = Vecf4(info->colors.gradient_max, 1.f);
+        mat.material.inputs[2] = Vecf4(info->colors.background, 1.f);
+        mat.material.inputs[3] = Vecf4(info->colors.flash, 1.f);
+        mat.material.inputs[4] = Vecf4(info->colors.tint, 1.f);
+        mat.material.material  = materials::id::smet;
+        break;
+    }
+    case tag_class_t::spla: {
+        auto const* info = shader.header->as<blam::shader::shader_plasma>();
+        bitm_cache.assign_atlas_data(mat.maps[0], shader.spla.primary_noise);
+        mat.maps[0].uv_scale =
+            Vecf2(info->primary_noise.noise.scale);
+        mat.maps[0].bias = 0;
+        if(shader.spla.secondary_noise.valid())
+        {
+            bitm_cache.assign_atlas_data(mat.maps[1], shader.spla.secondary_noise);
+            mat.maps[1].uv_scale =
+                Vecf2(info->secondary_noise.noise.scale);
+            mat.maps[1].bias = 0;
+        }
+        mat.material.inputs1   = Vecf2{info->intensity.exponent, 0.f};
+        mat.material.inputs[0] = Vecf4(
+            info->color.perpendicular_tint, info->color.perpendicular_brightness);
+        mat.material.inputs[1] = Vecf4(
+            info->color.parellel_tint, info->color.parallel_brightness);
+        mat.material.inputs[2] = Vecf4(
+            info->primary_noise.anim_dir,
+            info->primary_noise.anim_period > 0.f
+                ? 1.f / info->primary_noise.anim_period
+                : 0.f);
+        mat.material.inputs[3] = Vecf4(
+            info->secondary_noise.anim_dir,
+            info->secondary_noise.anim_period > 0.f
+                ? 1.f / info->secondary_noise.anim_period
+                : 0.f);
+        mat.material.material = materials::id::spla;
         break;
     }
     case tag_class_t::sotr: {
-        shader_transparent const* info =
-            shader.header->as<shader_transparent>();
+        shader_transparent const* info = shader.header->as<shader_transparent>();
         auto maps = info->maps.data(magic).value();
-        //            auto stages = info->stages.data(magic).value();
-        //            auto layers = info->layers.data(magic).value();
-        //            cDebug(
-        //                "{}: {} maps, {} stages, {} layers",
-        //                shader.tag->to_name().to_string(magic),
-        //                maps.size(),
-        //                stages.size(),
-        //                layers.size());
 
         for(auto i : range<>(maps.size()))
         {

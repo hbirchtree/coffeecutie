@@ -441,11 +441,196 @@ vec4 shader_chicago_extended()
 
 #endif
 
+/* Input mapping (shader_transparent::mapping_t) — NV register-combiner
+ * input mappings. u = max(0,x) is the "unsigned" clamp the hardware applies. */
+vec3 sotr_cmap(vec3 v, uint m)
+{
+    vec3 u = max(v, 0.0);
+    if(m == 1u) return 1.0 - clamp(v, 0.0, 1.0); // one_minus_clamp (unsigned invert)
+    if(m == 2u) return 2.0 * u - 1.0;            // two (expand normal)
+    if(m == 3u) return 1.0 - 2.0 * u;            // one_minus_two (expand negate)
+    if(m == 4u) return u - 0.5;                  // clamp_minus_half (half bias)
+    if(m == 5u) return 0.5 - u;                  // half_minus_clamp (half bias negate)
+    if(m == 6u) return v;                        // passthrough (signed identity)
+    if(m == 7u) return -v;                       // negative (signed negate)
+    return u;                                    // clamp (unsigned identity)
+}
+float sotr_smap(float v, uint m)
+{
+    float u = max(v, 0.0);
+    if(m == 1u) return 1.0 - clamp(v, 0.0, 1.0);
+    if(m == 2u) return 2.0 * u - 1.0;
+    if(m == 3u) return 1.0 - 2.0 * u;
+    if(m == 4u) return u - 0.5;
+    if(m == 5u) return 0.5 - u;
+    if(m == 6u) return v;
+    if(m == 7u) return -v;
+    return u;
+}
+
+/* Apply output mapping (output_mapping_t) */
+vec3 sotr_omap(vec3 v, uint m)
+{
+    if(m == 1u) return v * 0.5;
+    if(m == 2u) return v * 2.0;
+    if(m == 3u) return v * 4.0;
+    if(m == 4u) return v - 0.5;
+    if(m == 5u) return v * 2.0 - 1.0;
+    return v;
+}
+float sotr_somap(float v, uint m)
+{
+    if(m == 1u) return v * 0.5;
+    if(m == 2u) return v * 2.0;
+    if(m == 3u) return v * 4.0;
+    if(m == 4u) return v - 0.5;
+    if(m == 5u) return v * 2.0 - 1.0;
+    return v;
+}
+
+/* Get color input (shader_transparent::input_t) as vec3 */
+vec3 sotr_cin(uint i, vec4 m0, vec4 m1, vec4 m2, vec4 m3,
+              vec4 sc0, vec4 sc1, vec4 c0, vec4 c1)
+{
+    if(i ==  1u) return vec3(1);
+    if(i ==  2u) return vec3(0.5);
+    if(i ==  3u) return vec3(-1);
+    if(i ==  4u) return vec3(-0.5);
+    if(i ==  5u) return m0.rgb;
+    if(i ==  6u) return m1.rgb;
+    if(i ==  7u) return m2.rgb;
+    if(i ==  8u) return m3.rgb;
+    if(i == 11u) return sc0.rgb;
+    if(i == 12u) return sc1.rgb;
+    if(i == 13u) return c0.rgb;   // constant_color0
+    if(i == 14u) return c1.rgb;   // constant_color1
+    if(i == 15u) return vec3(m0.a);
+    if(i == 16u) return vec3(m1.a);
+    if(i == 17u) return vec3(m2.a);
+    if(i == 18u) return vec3(m3.a);
+    if(i == 21u) return vec3(sc0.a);
+    if(i == 22u) return vec3(sc1.a);
+    if(i == 23u) return vec3(c0.a); // constant_alpha0
+    if(i == 24u) return vec3(c1.a); // constant_alpha1
+    return vec3(0); // zero (0) and unhandled vertex inputs
+}
+
+/* Get alpha input (blam::shader::color_input) */
+float sotr_ain(uint i, vec4 m0, vec4 m1, vec4 m2, vec4 m3,
+               float sa0, float sa1, float ca0, float ca1)
+{
+    if(i ==  1u) return 1.0;
+    if(i ==  2u) return 0.5;
+    if(i ==  3u) return -1.0;
+    if(i ==  4u) return -0.5;
+    if(i ==  5u) return m0.a;
+    if(i ==  6u) return m1.a;
+    if(i ==  7u) return m2.a;
+    if(i ==  8u) return m3.a;
+    if(i == 11u) return sa0;
+    if(i == 12u) return sa1;
+    if(i == 13u) return ca0;
+    if(i == 14u) return ca1;
+    if(i == 15u) return m0.b;
+    if(i == 16u) return m1.b;
+    if(i == 17u) return m2.b;
+    if(i == 18u) return m3.b;
+    if(i == 21u) return sa0;
+    if(i == 22u) return sa1;
+    if(i == 23u) return ca0;
+    if(i == 24u) return ca1;
+    return 0.0;
+}
+
 vec4 shader_transparent()
 {
-    vec4 color = shader_dummy();
-//    return vec4(color.rgb, color.a);
-    return color;
+    vec4 m0 = get_color(0u);
+    vec4 m1 = get_color(1u);
+    vec4 m2 = get_color(2u);
+    vec4 m3 = get_color(3u);
+
+    int num_stages = int(tr.instance[frag.instanceId].num_stages);
+    if(num_stages == 0)
+        return m0;
+
+    vec4 sc0    = vec4(0);
+    vec4 sc_alt = vec4(0);
+
+    for(int si = 0; si < num_stages && si < 4; si++)
+    {
+        TransparentStage s = tr.instance[frag.instanceId].stages[si];
+        uint cin  = s.color_in;
+        uint ain  = s.alpha_in;
+        uint outs = s.outputs;
+
+        /* Decode color inputs */
+        uint ca_i = cin & 0x1Fu,        ca_m = (cin >> 5)  & 7u;
+        uint cb_i = (cin >> 8)  & 0x1Fu, cb_m = (cin >> 13) & 7u;
+        uint cc_i = (cin >> 16) & 0x1Fu, cc_m = (cin >> 21) & 7u;
+        uint cd_i = (cin >> 24) & 0x1Fu, cd_m = (cin >> 29) & 7u;
+
+        /* Decode alpha inputs */
+        uint aa_i = ain & 0x1Fu,        aa_m = (ain >> 5)  & 7u;
+        uint ab_i = (ain >> 8)  & 0x1Fu, ab_m = (ain >> 13) & 7u;
+        uint ac_i = (ain >> 16) & 0x1Fu, ac_m = (ain >> 21) & 7u;
+        uint ad_i = (ain >> 24) & 0x1Fu, ad_m = (ain >> 29) & 7u;
+
+        /* Decode outputs */
+        uint c_ab_d  = outs & 0xFu,        c_ab_fn = (outs >> 4) & 1u;
+        uint c_cd_d  = (outs >> 5) & 0xFu,  c_cd_fn = (outs >> 9) & 1u;
+        uint c_sum_d = (outs >> 10) & 0xFu, c_om   = (outs >> 14) & 7u;
+        uint a_ab_d  = (outs >> 16) & 0xFu;
+        uint a_cd_d  = (outs >> 20) & 0xFu;
+        uint a_sum_d = (outs >> 24) & 0xFu, a_om   = (outs >> 28) & 7u;
+
+        vec4 c0 = s.color0;
+        vec4 c1 = s.color1;
+
+        /* Color: get + map inputs */
+        vec3 ca = sotr_cmap(sotr_cin(ca_i, m0, m1, m2, m3, sc0, sc_alt, c0, c1), ca_m);
+        vec3 cb = sotr_cmap(sotr_cin(cb_i, m0, m1, m2, m3, sc0, sc_alt, c0, c1), cb_m);
+        vec3 cc = sotr_cmap(sotr_cin(cc_i, m0, m1, m2, m3, sc0, sc_alt, c0, c1), cc_m);
+        vec3 cd = sotr_cmap(sotr_cin(cd_i, m0, m1, m2, m3, sc0, sc_alt, c0, c1), cd_m);
+
+        vec3 c_ab = c_ab_fn == 0u ? ca * cb : vec3(dot(ca, cb));
+        vec3 c_cd = c_cd_fn == 0u ? cc * cd : vec3(dot(cc, cd));
+
+        /* Route color outputs (1=sc0, 2=sc_alt) */
+        if(c_ab_d  == 1u) sc0.rgb = sotr_omap(c_ab, c_om);
+        else if(c_ab_d  == 2u) sc_alt.rgb = sotr_omap(c_ab, c_om);
+        if(c_cd_d  == 1u) sc0.rgb = sotr_omap(c_cd, c_om);
+        else if(c_cd_d  == 2u) sc_alt.rgb = sotr_omap(c_cd, c_om);
+        if(c_sum_d == 1u) sc0.rgb = sotr_omap(c_ab + c_cd, c_om);
+        else if(c_sum_d == 2u) sc_alt.rgb = sotr_omap(c_ab + c_cd, c_om);
+
+        /* Alpha: get + map inputs */
+        float aa = sotr_smap(sotr_ain(aa_i, m0, m1, m2, m3, sc0.a, sc_alt.a, c0.a, c1.a), aa_m);
+        float ab = sotr_smap(sotr_ain(ab_i, m0, m1, m2, m3, sc0.a, sc_alt.a, c0.a, c1.a), ab_m);
+        float ac = sotr_smap(sotr_ain(ac_i, m0, m1, m2, m3, sc0.a, sc_alt.a, c0.a, c1.a), ac_m);
+        float ad = sotr_smap(sotr_ain(ad_i, m0, m1, m2, m3, sc0.a, sc_alt.a, c0.a, c1.a), ad_m);
+
+        float a_ab = aa * ab;
+        float a_cd = ac * ad;
+
+        if(a_ab_d  == 1u) sc0.a = sotr_somap(a_ab, a_om);
+        else if(a_ab_d  == 2u) sc_alt.a = sotr_somap(a_ab, a_om);
+        if(a_cd_d  == 1u) sc0.a = sotr_somap(a_cd, a_om);
+        else if(a_cd_d  == 2u) sc_alt.a = sotr_somap(a_cd, a_om);
+        if(a_sum_d == 1u) sc0.a = sotr_somap(a_ab + a_cd, a_om);
+        else if(a_sum_d == 2u) sc_alt.a = sotr_somap(a_ab + a_cd, a_om);
+    }
+
+
+    /* blend_mode (chicago::framebuffer_blending):
+     * 0=alpha_blend 1=multiply 2=double_multiply 3=add 4=subtract
+     * 5=component_min 6=component_max 7=alpha_multiply_add
+     * The engine's additive blend is (SRC_ALPHA, ONE), but Halo's true `add`
+     * and component_max are alpha-independent. Force alpha=1 there so the
+     * (SRC_ALPHA, ONE) state becomes straight additive (ONE, ONE). */
+    uint bm = tr.instance[frag.instanceId].blend_mode;
+    if(bm == 3u || bm == 5u || bm == 6u)
+        sc0.a = 1.0;
+    return sc0;
 }
 
 const uint SOSO_FLAG_DETAIL_AFTER_REFLECTION      =   0x1;
@@ -488,9 +673,9 @@ vec4 shader_model()
         multi = vec4(0);
     float detail_factor = 1.0;
 #ifdef MULTIPURPOSE_XBOX
-    float specular_factor = multi.b;
+    float specular_factor = multi.r;
     float illum_factor = multi.g;
-    float color_change = multi.r;
+    float color_change = multi.b;
 #else
     float specular_factor = multi.b;
     float illum_factor = multi.g;
@@ -573,17 +758,74 @@ vec4 shader_model()
 
 vec4 shader_glass()
 {
-    return shader_dummy();
+    vec4 diffuse    = get_color(base_map_id);
+    int  flags      = mats.instance[frag.instanceId].material.flags;
+    bool alpha_test = (flags & 0x1) != 0;
+
+    vec3 bg_tint = mats.instance[frag.instanceId].material.input2.rgb;
+    vec4 perp    = mats.instance[frag.instanceId].material.input3; // tint.rgb + brightness.a
+    vec4 para    = mats.instance[frag.instanceId].material.input4;
+
+    vec3  view_world = normalize(camera_position - frag.position);
+    float NdotV      = clamp(dot(frag.normal, view_world), 0.0, 1.0);
+    float fresnel    = 1.0 - NdotV;
+
+    vec3 color = diffuse.rgb * bg_tint;
+
+#if USE_REFLECTIONS == 1
+    vec3  reflect_dir = reflect(-view_world, frag.normal);
+    vec3  refl        = get_cube_color(reflect_dir).rgb;
+    vec3  refl_tint   = mix(para.rgb, perp.rgb, fresnel);
+    float refl_str    = mix(para.a, perp.a, fresnel);
+    color             = mix(color, refl * refl_tint, refl_str);
+#endif
+
+    return vec4(color, alpha_test ? diffuse.a : 1.0);
 }
 
 vec4 shader_meter()
 {
-    return vec4(shader_dummy().rgb, 1.0);
+    vec4  mask      = get_color(base_map_id);
+    float value     = mats.instance[frag.instanceId].material.input1.x;
+    float transp    = mats.instance[frag.instanceId].material.input1.y;
+    vec3  gmin      = mats.instance[frag.instanceId].material.input2.rgb;
+    float bg_transp = mats.instance[frag.instanceId].material.input2.a;
+    vec3  gmax      = mats.instance[frag.instanceId].material.input3.rgb;
+    vec3  background = mats.instance[frag.instanceId].material.input4.rgb;
+    vec3  tint      = mats.instance[frag.instanceId].material.input5.rgb;
+
+    bool  filled   = mask.r <= value;
+    float t        = value > 0.0 ? mask.r / value : 0.0;
+    vec3  gradient = mix(gmin, gmax, t) * tint;
+    vec3  color    = filled ? gradient : background;
+    float alpha    = filled ? 1.0 - transp : 1.0 - bg_transp;
+    return vec4(color, alpha);
 }
 
 vec4 shader_plasma()
 {
-    return shader_dummy();
+    const uint secondary_map_id = 1u;
+    vec4  primary   = get_color(base_map_id);
+    vec4  secondary = get_color(secondary_map_id);
+
+    float intensity_exp = mats.instance[frag.instanceId].material.input1.x;
+    vec4  perp          = mats.instance[frag.instanceId].material.input2; // tint.rgb + brightness.a
+    vec4  para          = mats.instance[frag.instanceId].material.input3;
+    vec4  pdir          = mats.instance[frag.instanceId].material.input4; // anim_dir.xyz + inv_period
+    vec4  sdir          = mats.instance[frag.instanceId].material.input5;
+
+    vec3  view_world = normalize(camera_position - frag.position);
+    float NdotV      = clamp(dot(frag.normal, view_world), 0.0, 1.0);
+    float fresnel    = 1.0 - NdotV;
+
+    vec3  tint = mix(para.rgb, perp.rgb, fresnel);
+    float str  = mix(para.a, perp.a, fresnel);
+
+    float noise  = clamp(primary.r + secondary.r, 0.0, 1.0);
+    float plasma = pow(noise, max(intensity_exp, 0.01));
+    vec3  color  = tint * plasma * str;
+
+    return vec4(color, plasma);
 }
 
 vec4 shader_water()
@@ -676,6 +918,9 @@ void main()
     } else if(material_id == MATERIAL_SMET)
     {
         color = shader_meter();
+    } else if(material_id == MATERIAL_SPLA)
+    {
+        color = shader_plasma();
     } else if(material_id == MATERIAL_SOTR)
     {
         final_color = shader_transparent();

@@ -67,6 +67,7 @@ struct BlamBspWidget
                     ImGui::Text("Debug");
                     ImGui::Checkbox("Clear before draw", &rendering->debug_clear);
                     ImGui::Checkbox("Show debug markers", &rendering->debug_markers);
+                    ImGui::Checkbox("Render fog", &rendering->render_fog);
                     ImGui::Checkbox("Render reflections", &rendering->render_reflection);
                     ImGui::Checkbox("Only diffuse", &rendering->only_diffuse);
                     ImGui::Checkbox("Only normals", &rendering->only_normals);

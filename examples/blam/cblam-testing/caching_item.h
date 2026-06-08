@@ -616,28 +616,35 @@ struct ShaderItem
         std::array<generation_idx_t, 4> layers;
     };
 
+    struct smet_t
+    {
+        generation_idx_t map;
+    };
+
+    struct sgla_t
+    {
+        generation_idx_t diffuse;
+        generation_idx_t reflection_cube;
+        generation_idx_t bump;
+    };
+
+    struct spla_t
+    {
+        generation_idx_t primary_noise;
+        generation_idx_t secondary_noise;
+    };
+
     union
     {
-        generation_idx_t color_bitm;
-
         scex_t scex;
         schi_t schi;
         senv_t senv;
         soso_t soso;
         sotr_t sotr;
         swat_t swat;
-
-        struct
-        {
-        } smet;
-
-        struct
-        {
-        } sgla;
-
-        struct
-        {
-        } spla;
+        smet_t smet;
+        sgla_t sgla;
+        spla_t spla;
     };
 
     inline bool valid() const

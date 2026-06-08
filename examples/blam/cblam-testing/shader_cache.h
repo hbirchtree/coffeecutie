@@ -38,7 +38,7 @@ struct ShaderCache
     template<blam::tag_class_t Tag>
     generation_idx_t get_bitm_idx(blam::tagref_typed_t<Tag> const& bitm)
     {
-        if(!bitm.valid())
+        if(!bitm.valid() || bitm.tag_class != blam::tag_class_t::bitm)
             return generation_idx_t();
 
         return bitm_cache.predict(bitm, 0);
@@ -69,10 +69,12 @@ struct ShaderCache
         shader_transparent const* info =
             shader.header->as<shader_transparent>();
 
-        auto stages = info->stages.data(magic).value();
-        u32  i      = 0;
-        for(shader_transparent::stage_t const& stage : stages)
-            mat.stages[i++] = materials::transparent_data::from_blam(stage);
+        auto stages     = info->stages.data(magic).value();
+        mat.num_stages  = static_cast<u32>(std::min(stages.size(), size_t(4)));
+        mat.blend_mode  = static_cast<u32>(info->transparent.blend_function);
+        for(u32 i = 0; i < mat.num_stages; i++)
+            mat.stages[i] = materials::transparent_data::stage_t::from_blam(stages[i]);
+
     }
 
     // color_animation::anim has no source field in tag data; function is at

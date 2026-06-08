@@ -9,9 +9,11 @@
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/typing/vectors/camera.h>
 #include <peripherals/typing/vectors/vector_types.h>
+#include <peripherals/typing/vectors/glm_vector_types.h>
 
+#include "blam/volta/blam_versions.h"
 #include "graphics_api.h"
-#include "peripherals/typing/vectors/glm_vector_types.h"
+#include "selected_version.h"
 
 using namespace Coffee::StandardInput;
 
@@ -89,7 +91,7 @@ struct RenderingParameters : compo::SubsystemBase
     libc_types::u32 mipmap_bias{compile_info::platform::is_32bit ? 2 : 3};
 
     bool color_changing{true};
-    bool render_fog{true};
+    bool render_fog{!std::is_same_v<blam::xbox_version_t, halo_version>};
     bool render_lightmaps{true};
     bool render_model_bones{true};
     bool render_reflection{true};

@@ -309,6 +309,8 @@ void create_resources(compo::EntityContainer& e)
     resources.model_matrix_store->commit(memory_budget::matrix_buffer);
     resources.material_store->alloc();
     resources.material_store->commit(memory_budget::material_buffer);
+    resources.transparent_store->alloc();
+    resources.transparent_store->commit(memory_budget::transparent_buffer);
     resources.bone_matrix_buf->alloc();
     resources.bone_matrix_buf->commit(memory_budget::bone_buffer);
 

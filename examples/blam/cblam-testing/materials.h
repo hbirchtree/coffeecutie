@@ -82,94 +82,95 @@ static_assert(offsetof(shader_data, lightmap) == 160);
 static_assert(offsetof(shader_data, material) == 192);
 static_assert(sizeof(shader_data) == 384);
 
+/* Per-instance stage data for shader_transparent (sotr).
+ * Packed as GPU-native u32 fields so it maps directly to the GLSL SSBO.
+ * Layout mirrors TransparentData in map_sampling.glsl. */
 struct alignas(16) transparent_data
 {
-    using input_t       = blam::shader::color_input;
-    using output_t      = blam::shader::color_output;
-    using output_func_t = blam::shader::color_output_function;
-    using mapping_t     = blam::shader::shader_transparent::mapping_t;
-
-    PACKEDSTRUCT(stage_t)
+    struct alignas(16) stage_t
     {
-        /* 4 * 8 bits */
-        input_t   color_a_input : 5;
-        mapping_t color_a_mapping : 3;
-        input_t   color_b_input : 5;
-        mapping_t color_b_mapping : 3;
-        input_t   color_c_input : 5;
-        mapping_t color_c_mapping : 3;
-        input_t   color_d_input : 5;
-        mapping_t color_d_mapping : 3;
-        /* 4 * 8 bits */
-        input_t   alpha_a_input : 5;
-        mapping_t alpha_a_mapping : 3;
-        input_t   alpha_b_input : 5;
-        mapping_t alpha_b_mapping : 3;
-        input_t   alpha_c_input : 5;
-        mapping_t alpha_c_mapping : 3;
-        input_t   alpha_d_input : 5;
-        mapping_t alpha_d_mapping : 3;
-        /* 17 bits */
-        output_t      color_ab_output : 4;
-        output_func_t color_ab_out_func : 1;
-        output_t      color_cd_output : 4;
-        output_func_t color_cd_out_func : 1;
-        output_t      color_ab_cd_mux_sum : 4;
-        blam::shader::shader_transparent::output_mapping_t color_output_map : 3;
-        /* 15 bits */
-        output_t alpha_ab_output : 4;
-        output_t alpha_cd_output : 4;
-        output_t alpha_ab_cd_mux_sum : 4;
-        blam::shader::shader_transparent::output_mapping_t alpha_output_map : 3;
+        /* color_in:  4 × (5-bit input + 3-bit mapping) = 32 bits
+         *            uses shader_transparent::input_t enum */
+        u32 color_in;
+        /* alpha_in:  same packing using blam::shader::color_input enum */
+        u32 alpha_in;
+        /* outputs:   color_out bits [0..16] | alpha_out bits [16..31]
+         *   color: ab_dst[4] ab_fn[1] cd_dst[4] cd_fn[1] sum_dst[4] omap[3]
+         *   alpha: ab_dst[4] cd_dst[4] sum_dst[4] omap[3]            */
+        u32 outputs;
+        u32 flags;  /* stage_flags_t */
+        Vecf4 color0; /* constant_color0: animated tint (lower/upper midpoint) */
+        Vecf4 color1; /* constant_color1: static tint */
+
+        STATICINLINE stage_t from_blam(
+            blam::shader::shader_transparent::stage_t const& s)
+        {
+            auto pack_inputs = [](auto ai, auto am, auto bi, auto bm,
+                                  auto ci, auto cm, auto di, auto dm) -> u32
+            {
+                return (static_cast<u32>(ai) & 0x1Fu) << 0  |
+                       (static_cast<u32>(am) & 0x07u) << 5  |
+                       (static_cast<u32>(bi) & 0x1Fu) << 8  |
+                       (static_cast<u32>(bm) & 0x07u) << 13 |
+                       (static_cast<u32>(ci) & 0x1Fu) << 16 |
+                       (static_cast<u32>(cm) & 0x07u) << 21 |
+                       (static_cast<u32>(di) & 0x1Fu) << 24 |
+                       (static_cast<u32>(dm) & 0x07u) << 29;
+            };
+
+            u32 color_in = pack_inputs(
+                s.color.a_input, s.color.a_mapping,
+                s.color.b_input, s.color.b_mapping,
+                s.color.c_input, s.color.c_mapping,
+                s.color.d_input, s.color.d_mapping);
+
+            u32 alpha_in = pack_inputs(
+                s.alpha.a_input, s.alpha.a_mapping,
+                s.alpha.b_input, s.alpha.b_mapping,
+                s.alpha.c_input, s.alpha.c_mapping,
+                s.alpha.d_input, s.alpha.d_mapping);
+
+            u32 color_out =
+                (static_cast<u32>(s.color.ab_output)     & 0xFu) << 0  |
+                (static_cast<u32>(s.color.ab_out_func)    & 0x1u) << 4  |
+                (static_cast<u32>(s.color.cd_output)     & 0xFu) << 5  |
+                (static_cast<u32>(s.color.cd_out_func)    & 0x1u) << 9  |
+                (static_cast<u32>(s.color.ab_cd_mux_sum) & 0xFu) << 10 |
+                (static_cast<u32>(s.color.output_map)    & 0x7u) << 14;
+
+            u32 alpha_out =
+                (static_cast<u32>(s.alpha.ab_output)     & 0xFu) << 0 |
+                (static_cast<u32>(s.alpha.cd_output)     & 0xFu) << 4 |
+                (static_cast<u32>(s.alpha.ab_cd_mux_sum) & 0xFu) << 8 |
+                (static_cast<u32>(s.alpha.output_map)    & 0x7u) << 12;
+
+            /* A constant color of all-zero is "unset"; as a combiner
+             * multiplier that would nuke the stage to black. Treat it as
+             * white (identity) so e.g. holo curtains keep their texture. */
+            auto ident = [](Vecf4 c) -> Vecf4 {
+                return (c.x == 0.f && c.y == 0.f && c.z == 0.f && c.w == 0.f)
+                           ? Vecf4(1.f)
+                           : c;
+            };
+            return {
+                .color_in = color_in,
+                .alpha_in = alpha_in,
+                .outputs  = color_out | (alpha_out << 16),
+                .flags    = static_cast<u32>(s.flags),
+                .color0   = ident((s.color0_lower + s.color0_upper) * 0.5f),
+                .color1   = ident(s.color1),
+            };
+        }
     };
 
-    stage_t stages[5];
-    u32     padding;
-
-    STATICINLINE stage_t from_blam(
-        [[maybe_unused]] blam::shader::shader_transparent::stage_t const& stage)
-    {
-        return {
-            //            .color_a_input   =
-            //            static_cast<input_t>(stage.color.a_input),
-            //            .color_a_mapping = stage.color.a_mapping,
-            //            .color_b_input   =
-            //            static_cast<input_t>(stage.color.b_input),
-            //            .color_b_mapping = stage.color.b_mapping,
-            //            .color_c_input   =
-            //            static_cast<input_t>(stage.color.c_input),
-            //            .color_c_mapping = stage.color.c_mapping,
-            //            .color_d_input   =
-            //            static_cast<input_t>(stage.color.d_input),
-            //            .color_d_mapping = stage.color.d_mapping,
-
-            //            .alpha_a_input   =
-            //            static_cast<input_t>(stage.alpha.a_input),
-            //            .alpha_a_mapping = stage.alpha.a_mapping,
-            //            .alpha_b_input   =
-            //            static_cast<input_t>(stage.alpha.b_input),
-            //            .alpha_b_mapping = stage.alpha.b_mapping,
-            //            .alpha_c_input   =
-            //            static_cast<input_t>(stage.alpha.c_input),
-            //            .alpha_c_mapping = stage.alpha.c_mapping,
-            //            .alpha_d_input   =
-            //            static_cast<input_t>(stage.alpha.d_input),
-            //            .alpha_d_mapping = stage.alpha.d_mapping,
-
-            //            .color_ab_output     = stage.color.ab_output,
-            //            .color_ab_out_func   = stage.color.ab_out_func,
-            //            .color_cd_output     = stage.color.cd_output,
-            //            .color_cd_out_func   = stage.color.cd_out_func,
-            //            .color_ab_cd_mux_sum = stage.color.ab_cd_mux_sum,
-            //            .color_output_map    = stage.color.output_map,
-
-            //            .alpha_ab_output     = stage.alpha.ab_output,
-            //            .alpha_cd_output     = stage.alpha.cd_output,
-            //            .alpha_ab_cd_mux_sum = stage.alpha.ab_cd_mux_sum,
-            //            .alpha_output_map    = stage.alpha.output_map,
-        };
-    }
+    u32     num_stages;
+    u32     blend_mode; /* chicago::framebuffer_blending */
+    u32     padding[2];
+    stage_t stages[4];
 };
+
+static_assert(sizeof(transparent_data::stage_t) == 48);
+static_assert(sizeof(transparent_data) == 208);
 
 /* TODO: Fix this on MinGW */
 // static_assert(sizeof(transparent_data::stage_t) == 3 * sizeof(u32));

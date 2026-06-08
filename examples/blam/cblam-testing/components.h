@@ -36,6 +36,7 @@ enum Passes
     Pass_Additive,
     Pass_Multiply,
     Pass_Glass,
+    Pass_Max, // component_max blend (GL_MAX), e.g. stacked holograms
 
     Pass_Count,
 };
@@ -276,8 +277,28 @@ struct ShaderData
                 return sky_pass(Pass_Glass);
             }
         }
+        case tc::sotr: {
+            shader_transparent const* info = shader_data<shader_transparent>();
+            using fb                       = chicago::framebuffer_blending;
+            switch(info->transparent.blend_function)
+            {
+            case fb::multiply:
+            case fb::double_multiply:
+                return sky_pass(Pass_Multiply);
+            case fb::add:
+            case fb::alpha_multiply_add:
+            case fb::component_min:
+                /* min has no dedicated state; additive is the closest match. */
+                return sky_pass(Pass_Additive);
+            case fb::component_max:
+                /* true GL_MAX so stacked hologram layers stay bounded
+                 * (additive would sum overlaps to white). */
+                return sky_pass(Pass_Max);
+            default:
+                return sky_pass(Pass_Glass);
+            }
+        }
         case tc::swat:
-        case tc::sotr:
         case tc::sgla:
             return sky_pass(Pass_Glass);
         case tc::senv: {
