@@ -294,6 +294,12 @@
             "inherits": "base-linux"
         },
         {
+            "name": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx-reldeb",
+            "environment": {"BUILD_TYPE":"RelWithDebInfo"},
+            "configurePreset": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx",
+            "inherits": "base-linux"
+        },
+        {
             "name": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx-dbg",
             "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx",
@@ -302,6 +308,12 @@
         {
             "name": "desktop-aarch64-buildroot-linux-gnu-multi-rel",
             "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "desktop-aarch64-buildroot-linux-gnu-multi",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "desktop-aarch64-buildroot-linux-gnu-multi-reldeb",
+            "environment": {"BUILD_TYPE":"RelWithDebInfo"},
             "configurePreset": "desktop-aarch64-buildroot-linux-gnu-multi",
             "inherits": "base-linux"
         },
@@ -338,6 +350,12 @@
         {
             "name": "desktop-arm-buildroot-linux-gnueabihf-sdl2-rel",
             "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "desktop-arm-buildroot-linux-gnueabihf-sdl2",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "desktop-arm-buildroot-linux-gnueabihf-sdl2-reldeb",
+            "environment": {"BUILD_TYPE":"RelWithDebInfo"},
             "configurePreset": "desktop-arm-buildroot-linux-gnueabihf-sdl2",
             "inherits": "base-linux"
         },

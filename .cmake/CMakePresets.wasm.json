@@ -115,6 +115,12 @@
             "inherits": "base-linux"
         },
         {
+            "name": "web-wasm64-emscripten-webgl2-reldeb",
+            "environment": {"BUILD_TYPE":"RelWithDebInfo"},
+            "configurePreset": "web-wasm64-emscripten-webgl2",
+            "inherits": "base-linux"
+        },
+        {
             "name": "web-wasm64-emscripten-webgl2-rel",
             "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "web-wasm64-emscripten-webgl2",
