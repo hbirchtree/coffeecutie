@@ -1071,6 +1071,8 @@ def run_connectivity_check(config):
             status, actual_arch, version = check_docker(hostname)
         elif dev_type == 'web':
             status, actual_arch, version = check_web()
+            expected_arch = expected_arch.split('-')[0]
+            actual_arch = expected_arch
 
         return (name, hostname, expected_arch, status, actual_arch, version)
 
