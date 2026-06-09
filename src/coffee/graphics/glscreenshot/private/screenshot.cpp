@@ -42,6 +42,121 @@ comp_app::size_2d_t ScreenshotProvider::size() const
     return {tmp[2], tmp[3]};
 }
 
+ScreenshotProvider::dump_t ScreenshotProvider::read_pixels(
+    libc_types::u32 fbo, bool use_pbo, bool use_fbo)
+{
+    using namespace ::typing::vector_types;
+
+    auto                        size_ = size();
+    std::vector<libc_types::u8> data(size_.area() * 4);
+
+    Coffee::cDebug(
+        "Capturing {}x{} screenshot, alloc'ing {} bytes",
+        size_.w,
+        size_.h,
+        data.size());
+
+    // First, stash away the current framebuffer binding
+    i32 currentBinding = 0;
+    glw::get_integerv(
+#if GLEAM_MAX_VERSION >= 0x100 || GLEAM_MAX_VERSION_ES >= 0x300
+        use_pbo ? gl::group::get_prop::draw_framebuffer_binding :
+#endif
+                gl::group::get_prop::framebuffer_binding,
+        semantic::SpanOne(currentBinding));
+#if GLEAM_MAX_VERSION >= 0x100 || GLEAM_MAX_VERSION_ES >= 0x300
+    if(use_pbo)
+    {
+        glw::bind_framebuffer(
+            gl::group::framebuffer_target::draw_framebuffer, fbo);
+        glw::read_buffer(gl::group::read_buffer_mode::back);
+    } else
+#endif
+    {
+        glw::bind_framebuffer(
+            gl::group::framebuffer_target::framebuffer, fbo);
+    }
+
+    // Now set up the framebuffer copy
+    semantic::concepts::offset_span offset;
+#if GLEAM_MAX_VERSION >= 0x330 || GLEAM_MAX_VERSION_ES >= 0x300
+    constexpr auto pixel_pack_buffer = buffer_target_arb::pixel_pack_buffer;
+    if(use_pbo)
+    {
+        if(!m_pbo)
+        {
+            glw::gen_buffers(semantic::SpanOne(m_pbo));
+        }
+        glw::bind_buffer(pixel_pack_buffer, m_pbo);
+        glw::buffer_data(
+            pixel_pack_buffer,
+            semantic::concepts::null_span<>::of(data.size()),
+            gl::group::buffer_usage_arb::dynamic_copy);
+        // offset is already correctly initialized, no work to do
+    } else
+#endif
+    {
+        offset = semantic::concepts::offset_span::of(data.data());
+        // FBOs don't sync on swap, so flush pipeline
+        if(use_fbo)
+            glw::finish();
+    }
+    glw::read_pixels(
+        Veci2{0, 0},
+        size_,
+        pixel_format::rgba,
+        pixel_type::unsigned_byte,
+        offset);
+
+#if GLEAM_MAX_VERSION >= 0x330 || GLEAM_MAX_VERSION_ES >= 0x300
+    if(use_pbo)
+    {
+        m_pbo_fence = glw::fence_sync(
+            gl::group::sync_condition::sync_gpu_commands_complete,
+            gl::group::sync_behavior_flags::none);
+        glw::bind_buffer(pixel_pack_buffer, 0);
+    }
+#endif
+
+    // Aaaand restore state
+    if(!use_fbo)
+        glw::bind_framebuffer(
+#if GLEAM_MAX_VERSION >= 0x100 || GLEAM_MAX_VERSION_ES >= 0x300
+            use_pbo ? gl::group::framebuffer_target::draw_framebuffer :
+#endif
+                    gl::group::framebuffer_target::framebuffer,
+            currentBinding);
+
+    /* glReadPixels gives bottom-up rows; flip to top-down for image files.
+     * ARM32 systems have their framebuffer already in the correct
+     * orientation. */
+#if !defined(COFFEE_ARCH_ARM32)
+    {
+        auto stride = static_cast<libc_types::u32>(size_.w) * 4u;
+        for(libc_types::i32 y = 0; y < size_.h / 2; ++y)
+        {
+            auto* row_top = data.data() + y * stride;
+            auto* row_bot = data.data() + (size_.h - 1 - y) * stride;
+            std::swap_ranges(row_top, row_top + stride, row_bot);
+        }
+    }
+#endif
+
+    return dump_t{
+        .size   = size_,
+        .format = typing::pixels::pix_fmt::RGBA8,
+        .data   = std::move(data),
+    };
+}
+
+ScreenshotProvider::dump_t ScreenshotProvider::capture_sync()
+{
+    /* Dummy plug forces the non-PBO, non-FBO path (use_pbo=false), so this is
+     * a plain synchronous glReadPixels — safe to call directly on the GL
+     * thread without the runtime_queue round-trip that pixels() uses. */
+    return read_pixels(0, false, false);
+}
+
 std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
 {
     using namespace ::typing::vector_types;
@@ -72,106 +187,7 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
         return {};
 
     auto read_pixels = [this, use_pbo, use_fbo](libc_types::u32 fbo) -> dump_t {
-        auto                        size_ = size();
-        std::vector<libc_types::u8> data(size_.area() * 4);
-
-        Coffee::cDebug(
-            "Capturing {}x{} screenshot, alloc'ing {} bytes",
-            size_.w,
-            size_.h,
-            data.size());
-
-        // First, stash away the current framebuffer binding
-        i32 currentBinding = 0;
-        glw::get_integerv(
-#if GLEAM_MAX_VERSION >= 0x100 || GLEAM_MAX_VERSION_ES >= 0x300
-            use_pbo ? gl::group::get_prop::draw_framebuffer_binding :
-#endif
-                    gl::group::get_prop::framebuffer_binding,
-            semantic::SpanOne(currentBinding));
-#if GLEAM_MAX_VERSION >= 0x100 || GLEAM_MAX_VERSION_ES >= 0x300
-        if(use_pbo)
-        {
-            glw::bind_framebuffer(
-                gl::group::framebuffer_target::draw_framebuffer, fbo);
-            glw::read_buffer(gl::group::read_buffer_mode::back);
-        } else
-#endif
-        {
-            glw::bind_framebuffer(
-                gl::group::framebuffer_target::framebuffer, fbo);
-        }
-
-        // Now set up the framebuffer copy
-        semantic::concepts::offset_span offset;
-#if GLEAM_MAX_VERSION >= 0x330 || GLEAM_MAX_VERSION_ES >= 0x300
-        constexpr auto pixel_pack_buffer = buffer_target_arb::pixel_pack_buffer;
-        if(use_pbo)
-        {
-            if(!m_pbo)
-            {
-                glw::gen_buffers(semantic::SpanOne(m_pbo));
-            }
-            glw::bind_buffer(pixel_pack_buffer, m_pbo);
-            glw::buffer_data(
-                pixel_pack_buffer,
-                semantic::concepts::null_span<>::of(data.size()),
-                gl::group::buffer_usage_arb::dynamic_copy);
-            // offset is already correctly initialized, no work to do
-        } else
-#endif
-        {
-            offset = semantic::concepts::offset_span::of(data.data());
-            // FBOs don't sync on swap, so flush pipeline
-            if(use_fbo)
-                glw::finish();
-        }
-        glw::read_pixels(
-            Veci2{0, 0},
-            size_,
-            pixel_format::rgba,
-            pixel_type::unsigned_byte,
-            offset);
-
-#if GLEAM_MAX_VERSION >= 0x330 || GLEAM_MAX_VERSION_ES >= 0x300
-        if(use_pbo)
-        {
-            m_pbo_fence = glw::fence_sync(
-                gl::group::sync_condition::sync_gpu_commands_complete,
-                gl::group::sync_behavior_flags::none);
-            glw::bind_buffer(pixel_pack_buffer, 0);
-        }
-#endif
-
-        // Aaaand restore state
-        if(!use_fbo)
-            glw::bind_framebuffer(
-#if GLEAM_MAX_VERSION >= 0x100 || GLEAM_MAX_VERSION_ES >= 0x300
-                use_pbo ? gl::group::framebuffer_target::draw_framebuffer :
-#endif
-                        gl::group::framebuffer_target::framebuffer,
-                currentBinding);
-
-        /* glReadPixels gives bottom-up rows; flip to top-down for image files.
-         * ARM32 systems have their framebuffer already in the correct
-         * orientation. */
-#if !defined(COFFEE_ARCH_ARM32)
-        {
-            auto stride = static_cast<libc_types::u32>(size_.w) * 4u;
-            for(libc_types::i32 y = 0; y < size_.h / 2; ++y)
-            {
-                auto* row_top = data.data() + y * stride;
-                auto* row_bot = data.data() + (size_.h - 1 - y) * stride;
-                std::swap_ranges(row_top, row_top + stride, row_bot);
-            }
-        }
-#endif
-
-        return dump_t{
-            .size   = size_,
-            .format = typing::pixels::pix_fmt::RGBA8,
-            .data   = std::move(data),
-        };
+        return this->read_pixels(fbo, use_pbo, use_fbo);
     };
 #if GLEAM_MAX_VERSION >= 0x100 || GLEAM_MAX_VERSION_ES >= 0x300
     if(use_pbo)

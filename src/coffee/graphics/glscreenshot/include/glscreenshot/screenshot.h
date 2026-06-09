@@ -22,6 +22,10 @@ struct ScreenshotProvider
     comp_app::size_2d_t size() const;
     std::future<dump_t> pixels();
 
+    /* Synchronous framebuffer readback on the calling (GL) thread. Used by the
+     * dummy plug, which tears the app down before the async queues can flush. */
+    dump_t capture_sync();
+
     void set_worker(rq::runtime_queue* worker)
     {
         m_work_queue = worker;
@@ -46,6 +50,9 @@ struct ScreenshotProvider
     bool                                   m_capture_requested{false};
     std::promise<dump_t>                   m_dump_promise{};
     std::function<dump_t(libc_types::u32)> m_pending_capture{};
+
+private:
+    dump_t read_pixels(libc_types::u32 fbo, bool use_pbo, bool use_fbo);
 };
 
 } // namespace glscreenshot
