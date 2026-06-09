@@ -449,6 +449,7 @@ void insert_dummy_plug(
             auto& perf_monitor =
                 container.subsystem_cast<comp_app::PerformanceMonitor>();
             perf_monitor.m_screenshot_quality = dummy_plug.screenshot_quality;
+            perf_monitor.m_synchronous_screenshots = true;
             auto& dummy_bus = container.subsystem_cast<DummyEventBus>();
             for(auto const& event : config["events"])
             {

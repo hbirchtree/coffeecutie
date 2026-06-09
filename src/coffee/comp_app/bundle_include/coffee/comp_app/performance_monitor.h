@@ -41,6 +41,11 @@ struct PerformanceMonitor
 
     rq::runtime_queue* m_worker_queue{nullptr};
     int                m_screenshot_quality{30};
+    /* When set (e.g. by the dummy plug), screenshot encode + file write run
+     * inline on the calling thread instead of the worker queue. The dummy plug
+     * exits via quick_exit/window close right after its last screenshot, which
+     * would otherwise abandon the async worker before it flushes to disk. */
+    bool               m_synchronous_screenshots{false};
 };
 
 } // namespace comp_app

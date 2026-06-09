@@ -606,6 +606,14 @@ struct ScreenshotProvider
     virtual size_2d_t           size() const = 0;
     virtual std::future<dump_t> pixels()     = 0;
 
+    /* Synchronous framebuffer readback on the calling thread. Returns an empty
+     * dump_t if unsupported. Used when the async worker queue can't be relied
+     * on to flush (e.g. the dummy plug tears the app down immediately). */
+    virtual dump_t capture_sync()
+    {
+        return {};
+    }
+
     /* Signals to RHI that we want a capture FBO setup
      * For platforms where reading from the window framebuffer is broken */
     virtual bool captureRequested() = 0;

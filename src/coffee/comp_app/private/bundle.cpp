@@ -1036,15 +1036,9 @@ void PerformanceMonitor::capture_screenshot(
 
             screenshot->set_worker(m_worker_queue);
 
-            auto pixels = screenshot->pixels();
-
-            /* If we're still waiting for the previous one, don't proceed */
-            if(!pixels.valid())
-                break;
-
             cDebug("Capturing screenshot...");
 
-            /* If not, set up JPG encoding + export to file and profiling */
+            /* JPG encoding + export to file and profiling */
             auto encode = [screenshot_quality =
                                m_screenshot_quality](dump_t* dump) {
                 semantic::Bytes  encoded;
@@ -1080,6 +1074,26 @@ void PerformanceMonitor::capture_screenshot(
                     b64::encode<byte_t>(data->view),
                     timestamp);
             };
+
+            if(m_synchronous_screenshots)
+            {
+                dump_t dump = screenshot->capture_sync();
+                if(dump.data.empty())
+                    break;
+                auto encoded = encode(&dump);
+                if(!encoded.empty())
+                {
+                    export_file(&encoded);
+                    export_profile(&encoded);
+                }
+                break;
+            }
+
+            auto pixels = screenshot->pixels();
+
+            /* If we're still waiting for the previous one, don't proceed */
+            if(!pixels.valid())
+                break;
 
             auto encoder =
                 rq::dependent_task<dump_t, semantic::Bytes>::CreateProcessor(
