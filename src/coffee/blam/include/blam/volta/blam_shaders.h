@@ -780,7 +780,7 @@ struct alignas(4) shader_plasma : radiosity_properties /* aka spla */
         f32           exponent;
     } offset;
 
-    u32 padding_2[9];
+    u32 padding_2[8];
 
     struct
     {
@@ -791,7 +791,7 @@ struct alignas(4) shader_plasma : radiosity_properties /* aka spla */
         animation_src tint_src;
     } color;
 
-    u32 padding_3[2 + 3 * 4];
+    u32 padding_3[15];
 
     struct noise_map
     {
@@ -802,8 +802,18 @@ struct alignas(4) shader_plasma : radiosity_properties /* aka spla */
 
     noise_map primary_noise;
 
+    u32 padding_4[9];
+
     noise_map secondary_noise;
+
+    u32 padding_5[8];
 };
+
+static_assert(offsetof(shader_plasma, intensity) == 44);
+static_assert(offsetof(shader_plasma, color) == 96);
+static_assert(offsetof(shader_plasma, primary_noise) == 192);
+static_assert(offsetof(shader_plasma, secondary_noise) == 264);
+static_assert(sizeof(shader_plasma) == 332);
 
 enum class transparent_flags : u16
 {
