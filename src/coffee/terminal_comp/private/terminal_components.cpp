@@ -1,7 +1,6 @@
 #include "coffee/core/types/input/event_types.h"
 #include <coffee/core/types/input/keymap.h>
 #include <coffee/terminal_comp/terminal_components.h>
-#include <peripherals/libc/output_ops.h>
 #include <peripherals/libc/signals.h>
 
 #include <poll.h>
@@ -42,11 +41,15 @@ static void handle_signal(int sig)
 }
 } // namespace
 
-void TerminalInput::load(entity_container&, comp_app::app_error& ec)
+void TerminalInput::load(entity_container&, comp_app::app_error&)
 {
-    if(!libc::io::terminal::interactive())
+    // Gate on the fd we actually read+raw-mode (STDIN), not stdout. When stdin
+    // is not a tty (piped/redirected) skip gracefully without setting ec: a
+    // load error here is fatal (bundle Throws on any AppLoadableService load
+    // failure), which would abort the whole app when piping into head/tail.
+    if(!::isatty(STDIN_FILENO))
     {
-        ec = comp_app::AppError::SystemError;
+        m_active = false;
         return;
     }
 
@@ -56,7 +59,7 @@ void TerminalInput::load(entity_container&, comp_app::app_error& ec)
     {
         if(tcgetattr(STDIN_FILENO, &state.original) < 0)
         {
-            ec = comp_app::AppError::SystemError;
+            m_active = false;
             return;
         }
         state.saved = true;
@@ -73,9 +76,11 @@ void TerminalInput::load(entity_container&, comp_app::app_error& ec)
 
     if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) < 0)
     {
-        ec = comp_app::AppError::SystemError;
+        m_active = false;
         return;
     }
+
+    m_active = true;
 }
 
 void TerminalInput::unload(entity_container&, comp_app::app_error&)
@@ -85,6 +90,9 @@ void TerminalInput::unload(entity_container&, comp_app::app_error&)
 
 void TerminalInput::start_restricted(proxy_type& p, time_point const&)
 {
+    if(!m_active)
+        return;
+
     auto inputBus = p.service<comp_app::BasicEventBus<CIEvent>>();
 
     if(!inputBus)

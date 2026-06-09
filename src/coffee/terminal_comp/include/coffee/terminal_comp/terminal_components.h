@@ -29,6 +29,7 @@ struct TerminalInput
   private:
     struct termios                                          m_original_termios;
     std::queue<std::pair<libc_types::u16, libc_types::u32>> m_pressed;
+    bool                                                    m_active = false;
 };
 
 using Services = comp_app::subsystem_list<TerminalInput>;
