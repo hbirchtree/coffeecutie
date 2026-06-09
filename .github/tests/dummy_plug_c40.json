@@ -35,7 +35,9 @@
         {"time": 21000, "type":"camera", "position":[244, -655, 86], "rotation":[-30, 180]},
         {"time": 23000, "type":"screenshot","name":"c40_control_room"},
         {"time": 25000, "type":"camera", "position":[148, -260, 8], "rotation":[-30, -160]},
-        {"time": 27000, "type":"screenshot","name":"c40_bridge"}
+        {"time": 27000, "type":"screenshot","name":"c40_bridge"},
+        {"time": 28000, "type": "camera", "position" :[364.00583, -683.966, 74.35372], "rotation":[0.9640359, 0.23570174, -0.1192848, -0.02916]},
+        {"time": 29000, "type":"screenshot","name":"c40_sentinel"}
     ],
     "frame_delta": 500.0,
     "end_time": 40000
