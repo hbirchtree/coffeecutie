@@ -255,7 +255,12 @@ struct BitmapCache
         {
             gfx::texture_3d_t& texture = bucket.template texture_as<gfx::texture_3d_t>();
             auto img_data = img.image.mip->data(magic, mipmap);
-            cDebug("3D texture data: {}+{}", img_data.data(), img_data.size_bytes());
+            cDebug("3D texture data: {}x{}x{} {}+{}",
+                    img.image.mip->isize.x,
+                    img.image.mip->isize.y,
+                    img.image.mip->depth,
+                    static_cast<const void*>(img_data.data()),
+                    img_data.size_bytes());
         } else
 #endif
         {

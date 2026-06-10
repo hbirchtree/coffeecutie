@@ -4,7 +4,6 @@
 #include "components.h"
 #include "peripherals/constants.h"
 #include "shader_compiler.h"
-#include "touch_overlay.h"
 
 #include <coffee/comp_app/services.h>
 #include <coffee/core/types/input/event_types.h>

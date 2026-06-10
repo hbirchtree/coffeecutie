@@ -1,5 +1,7 @@
 #include "caching.h"
 
+#include <coffee/core/CProfiling>
+
 #include "map_marker.h"
 #include "materials.h"
 #include "selected_version.h"
@@ -7,7 +9,10 @@
 
 #include <algorithm>
 
+#include <magic_enum/magic_enum.hpp>
 #include <peripherals/stl/magic_enum.hpp>
+
+using Profiler = Coffee::Profiler;
 
 template<typename V>
 BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
@@ -1393,8 +1398,10 @@ void BitmapCache<V>::allocate_storage()
     }
 
     /* Commit the textures */
+    Profiler::PushContext("Committing textures to GPU memory");
     for(auto& bitm : m_cache)
         commit_bitmap<gfx::compat::texture_2da_t>(bitm.second);
+    Profiler::PopContext();
 
     for(auto& [_, pool] : fmt_count)
         for(auto [image_id, fmt] : pool.images)
