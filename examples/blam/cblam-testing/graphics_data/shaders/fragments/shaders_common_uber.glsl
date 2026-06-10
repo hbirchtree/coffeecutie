@@ -677,7 +677,7 @@ vec4 shader_model()
     float illum_factor = multi.g;
     float color_change = multi.b;
 #else
-    float specular_factor = multi.b;
+    float specular_factor = multi.r;
     float illum_factor = multi.g;
     float color_change = multi.a;
 #endif

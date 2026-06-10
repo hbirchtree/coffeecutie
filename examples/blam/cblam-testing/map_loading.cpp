@@ -202,7 +202,8 @@ static void load_resources(
                 cDebug("Keyboard seat assigned");
                 main_biped_id           = ref.id();
                 camera.keyboard.enabled = true;
-            } else if(num_controllers > allocated_controllers)
+            }
+            if(num_controllers > allocated_controllers)
             {
                 camera.controller.index = allocated_controllers;
                 ++allocated_controllers;

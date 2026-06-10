@@ -232,6 +232,15 @@ struct BSPItem
     Span<libc_types::byte_t const> pvs_data;
     u32                            pvs_row_stride{0};
 
+    /* Collision BSP tree for exact point→cluster lookup. The collision
+     * leaf index space is shared with the render leaves, whose cluster
+     * field maps into clusters. This is how the original engine resolves
+     * the camera cluster; the subcluster AABBs neither tile nor cover the
+     * cluster volume, so they are only a fallback. */
+    Span<blam::collision::bsp_3d const> tree_nodes;
+    Span<blam::collision::plane const>  tree_planes;
+    Span<blam::bsp::leaf const>         render_leaves;
+
     inline bool valid() const
     {
         return mesh;
@@ -275,16 +284,34 @@ struct BSPItem
         return visible;
     }
 
-    /* Compute inward-facing cone planes from eye through a portal polygon.
-     * Each plane passes through eye and one edge; normals point toward the
-     * interior of the view cone so that "inside" means visible through the
-     * portal.
-     *
-     * Only vertical edges (significant Z extent, Halo CE uses Z-up) contribute
-     * cone planes.  Horizontal top/bottom edges are skipped: when the camera is
-     * above the portal they produce backward-tilting planes that incorrectly
-     * block all forward visibility.  Left/right (vertical) edge planes are
-     * sufficient to prevent seeing around horizontal corners. */
+    /* Clip a polygon to the inside (dot(n,v)+d >= 0) of a plane,
+     * Sutherland–Hodgman style. */
+    static std::vector<Vecf3> clip_polygon(
+        std::vector<Vecf3> const& poly, Vecf4 const& plane)
+    {
+        std::vector<Vecf3> out;
+        int                n = static_cast<int>(poly.size());
+        out.reserve(poly.size() + 2);
+        for(int i = 0; i < n; i++)
+        {
+            Vecf3 const& a  = poly[i];
+            Vecf3 const& b  = poly[(i + 1) % n];
+            f32          da = glm::dot(Vecf3(plane), a) + plane.w;
+            f32          db = glm::dot(Vecf3(plane), b) + plane.w;
+            if(da >= 0.f)
+                out.push_back(a);
+            if((da > 0.f && db < 0.f) || (da < 0.f && db > 0.f))
+                out.push_back(a + (b - a) * (da / (da - db)));
+        }
+        return out;
+    }
+
+    /* Compute inward-facing cone planes from eye through every edge of a
+     * portal polygon. Each plane passes through eye and one edge; normals
+     * point toward the polygon centroid so that "inside" means visible
+     * through the portal. Returns an empty set when the eye is (nearly) in
+     * the portal plane — every cross product degenerates — which callers
+     * must treat as "no constraint can be derived", not "fully blocked". */
     static std::vector<Vecf4> portal_cone_planes(
         Vecf3 const& eye, std::vector<Vecf3> const& verts)
     {
@@ -302,22 +329,18 @@ struct BSPItem
             Vecf3 const& v0 = verts[i];
             Vecf3 const& v1 = verts[(i + 1) % n];
 
-            /* Skip edges that are predominantly horizontal — their cone planes
-             * degenerate when the camera is above the portal and create false
-             * occlusion.  Threshold: Z extent < 25 % of edge length. */
-            f32 edge_len = glm::length(v1 - v0);
-            if(edge_len < 1e-6f)
-                continue;
-            if(std::abs(v1.z - v0.z) < edge_len * 0.25f)
-                continue;
-
             Vecf3 normal = glm::cross(v0 - eye, v1 - eye);
             f32   len    = glm::length(normal);
             if(len < 1e-6f)
                 continue;
             normal /= len;
-            f32 d = -glm::dot(normal, eye);
-            if(glm::dot(normal, centroid) + d < 0.f)
+            f32 d    = -glm::dot(normal, eye);
+            f32 side = glm::dot(normal, centroid) + d;
+            /* Centroid on the plane → orientation is ambiguous (eye is in
+             * the polygon plane); skip rather than guess. */
+            if(std::abs(side) < 1e-6f)
+                continue;
+            if(side < 0.f)
             {
                 normal = -normal;
                 d      = -d;
@@ -327,119 +350,90 @@ struct BSPItem
         return result;
     }
 
-    static bool polygon_passes_planes(
-        std::vector<Vecf3> const& verts, std::vector<Vecf4> const& planes)
-    {
-        for(auto const& p : planes)
-        {
-            bool all_outside = true;
-            for(auto const& v : verts)
-            {
-                if(glm::dot(Vecf3(p), v) + p.w >= 0.f)
-                {
-                    all_outside = false;
-                    break;
-                }
-            }
-            if(all_outside)
-                return false;
-        }
-        return true;
-    }
-
-    /* Frustum-gated portal traversal with sequential portal clipping.
-     * Each frontier entry carries the accumulated cone planes from camera
-     * through every portal in its path, progressively narrowing the visible
-     * region to prevent "going around corners".
-     * frustum_start_depth=0: frustum test applied from the very first hop so
-     * that clusters behind the camera are never unconditionally added to the
-     * frontier.  The near-portal bypass (distance ≤ bound_radius) handles
-     * cluster-boundary straddle cases without a grace depth. */
-    struct BFSTrace
-    {
-        u32  depth;
-        u32  from_ci;
-        u32  to_ci;
-        u32  cone_planes_before; /* cone planes on entry to from_ci */
-        u32  cone_planes_added;  /* planes added by the portal from_ci→to_ci */
-        bool near;
-    };
-
+    /* Portal-flow visibility: walk the portal graph from the camera cluster,
+     * clipping each portal polygon against the view cone accumulated along
+     * the path (initially the frustum side planes, then rebuilt from the
+     * clipped polygon of each traversed portal). A cluster is visible iff
+     * some portal chain to it survives clipping, which prevents both seeing
+     * around corners and the "far-off clusters become visible" leaks.
+     * Clusters may be re-entered through different paths (different cones see
+     * different things), bounded per cluster so worst case stays cheap. */
     inline std::vector<bool> portal_visible_set(
-        u32                    from_idx,
-        Vecf3 const&           camera_pos,
-        Matf4 const&           mvp,
-        u32                    max_depth = std::numeric_limits<u32>::max(),
-        u32                    frustum_start_depth = 0,
-        std::vector<BFSTrace>* trace               = nullptr) const
+        u32          from_idx,
+        Vecf3 const& camera_pos,
+        Matf4 const& mvp,
+        u32          max_depth = 64) const
     {
-        Frustum frustum = Frustum::from_mvp(mvp);
-
         std::vector<bool> visible(clusters.size(), false);
         if(from_idx >= clusters.size())
             return visible;
         visible[from_idx] = true;
 
+        Frustum const frustum = Frustum::from_mvp(mvp);
+
+        /* Frustum side planes all pass through the eye, so clipping against
+         * them geometrically removes behind-camera portals as well — no
+         * special w<0 handling needed. Degenerate MVP (first frame) yields
+         * near-zero planes; treat as "no initial constraint". */
+        std::vector<Vecf4> root_cone;
+        for(auto const& p : frustum.planes)
+            if(glm::dot(Vecf3(p), Vecf3(p)) > 1e-10f)
+                root_cone.push_back(p);
+
         struct Entry
         {
             u32                ci;
-            std::vector<Vecf4> cone; /* accumulated portal cone planes */
+            u32                depth;
+            std::vector<Vecf4> cone;
         };
 
-        std::vector<Entry> frontier = {{from_idx, {}}};
+        std::vector<Entry>            stack = {{from_idx, 0, std::move(root_cone)}};
+        std::vector<libc_types::u8>   visits(clusters.size(), 0);
+        visits[from_idx]++;
 
-        for(u32 depth = 0; depth < max_depth && !frontier.empty(); depth++)
+        u32 budget = 16384; /* hard cap on portal clips per frame */
+
+        while(!stack.empty())
         {
-            bool               use_frustum = depth >= frustum_start_depth;
-            std::vector<Entry> next;
-            for(auto& entry : frontier)
+            Entry entry = std::move(stack.back());
+            stack.pop_back();
+            if(entry.depth >= max_depth)
+                continue;
+            for(auto const& portal : clusters[entry.ci].portals)
             {
-                for(auto const& portal : clusters[entry.ci].portals)
+                if(budget-- == 0)
+                    return visible;
+                i32 adj =
+                    (portal.data->front_cluster == static_cast<i16>(entry.ci))
+                        ? portal.data->back_cluster
+                        : portal.data->front_cluster;
+                u32 ai = static_cast<u32>(adj);
+                if(adj < 0 || ai >= clusters.size())
+                    continue;
+
+                std::vector<Vecf3> poly = portal.vertices;
+                for(auto const& plane : entry.cone)
                 {
-                    bool near = false;
-                    if(use_frustum)
-                    {
-                        /* Frustum test is unconditional — a portal must be at
-                         * least partially in view before we traverse it.
-                         * The cone test is skipped only when the camera is
-                         * inside the portal's bounding sphere (cluster-edge
-                         * straddle), where the cone would be degenerate. */
-                        if(!frustum.polygon_inside(portal.vertices))
-                            continue;
-                        near =
-                            glm::distance(camera_pos, portal.data->centroid) <=
-                            portal.data->bound_radius;
-                        if(!near &&
-                           !polygon_passes_planes(portal.vertices, entry.cone))
-                            continue;
-                    }
-                    i32 adj = (portal.data->front_cluster ==
-                               static_cast<i16>(entry.ci))
-                                  ? portal.data->back_cluster
-                                  : portal.data->front_cluster;
-                    u32 ai  = static_cast<u32>(adj);
-                    if(adj >= 0 && ai < clusters.size() && !visible[ai])
-                    {
-                        visible[ai] = true;
-                        auto new_planes =
-                            portal_cone_planes(camera_pos, portal.vertices);
-                        if(trace)
-                            trace->push_back({
-                                depth,
-                                entry.ci,
-                                ai,
-                                static_cast<u32>(entry.cone.size()),
-                                static_cast<u32>(new_planes.size()),
-                                near,
-                            });
-                        auto merged = entry.cone;
-                        merged.insert(
-                            merged.end(), new_planes.begin(), new_planes.end());
-                        next.push_back({ai, std::move(merged)});
-                    }
+                    poly = clip_polygon(poly, plane);
+                    if(poly.size() < 3)
+                        break;
                 }
+                if(poly.size() < 3)
+                    continue;
+
+                visible[ai] = true;
+                if(visits[ai] >= 4)
+                    continue;
+                visits[ai]++;
+
+                auto cone = portal_cone_planes(camera_pos, poly);
+                /* Eye in the portal plane (crossing a cluster boundary):
+                 * the cone is undefined, keep the parent cone instead of
+                 * blocking or opening up completely. */
+                if(cone.size() < 3)
+                    cone = entry.cone;
+                stack.push_back({ai, entry.depth + 1, std::move(cone)});
             }
-            frontier = std::move(next);
         }
         return visible;
     }
@@ -456,9 +450,63 @@ struct BSPItem
         return (row[to_idx / 8] >> (to_idx % 8)) & 1;
     }
 
+    /* Exact point→cluster lookup by walking the collision BSP tree down to a
+     * leaf, then mapping the leaf to a cluster via the render leaf array.
+     * Returns nullopt for solid/outside-the-map points and on malformed
+     * data. Children with the sign bit set are leaves (index = child &
+     * 0x7fffffff); -1 means solid space. */
+    inline std::optional<u32> find_cluster_tree(Vecf3 const& point) const
+    {
+        if(tree_nodes.empty() || tree_planes.empty() || render_leaves.empty())
+            return std::nullopt;
+        i32 node = 0;
+        for(size_t guard = 0; guard <= tree_nodes.size(); guard++)
+        {
+            if(node == -1)
+                return std::nullopt; /* solid space */
+            if(node < 0)
+            {
+                u32 leaf_idx = static_cast<u32>(node) & 0x7fffffffu;
+                if(leaf_idx >= render_leaves.size())
+                    return std::nullopt;
+                i16 cluster = render_leaves[leaf_idx].cluster;
+                if(cluster < 0 ||
+                   static_cast<u32>(cluster) >= clusters.size())
+                    return std::nullopt;
+                return static_cast<u32>(cluster);
+            }
+            if(static_cast<u32>(node) >= tree_nodes.size())
+                return std::nullopt;
+            auto const& n = tree_nodes[node];
+            if(n.plane < 0 ||
+               static_cast<u32>(n.plane) >= tree_planes.size())
+                return std::nullopt;
+            auto const& pl = tree_planes[n.plane];
+            node = glm::dot(pl.plane, point) >= pl.d ? n.front : n.back;
+        }
+        return std::nullopt;
+    }
+
     inline std::optional<std::pair<u32, u32>> find_cluster(
         Vecf3 const& point) const
     {
+        /* Prefer the exact BSP-tree lookup; subcluster AABBs overlap and do
+         * not cover the full cluster volume, so they are only a fallback
+         * (and provide the subcluster index for debug visualisation). */
+        if(auto ci = find_cluster_tree(point); ci.has_value())
+        {
+            auto const& subs = clusters[*ci].sub;
+            for(u32 si = 0; si < static_cast<u32>(subs.size()); si++)
+            {
+                auto [p1, p2] = subs[si].cluster->bounds.points();
+                Vecf3 lo = glm::min(p1, p2), hi = glm::max(p1, p2);
+                if(lo.x <= point.x && point.x <= hi.x && lo.y <= point.y &&
+                   point.y <= hi.y && lo.z <= point.z && point.z <= hi.z)
+                    return std::pair{*ci, si};
+            }
+            return std::pair{*ci, 0u};
+        }
+
         /* sorted_subclusters is sorted by volume ascending, so the first
          * hit is the smallest-volume (most specific) containing subcluster. */
         for(auto const& fs : sorted_subclusters)

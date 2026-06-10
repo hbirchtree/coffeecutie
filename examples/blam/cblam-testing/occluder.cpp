@@ -120,8 +120,10 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 current_bsp           = &bsp;
                 current_cluster       = cluster_;
                 current_bsp_id        = bsp_ref.bsp;
-                auto const& sub       = bsp.clusters.at(cluster_).sub.at(sub_);
-                portal_colors[sub.debug_color_idx] = Vecf3(0, 1, 0);
+                auto const& subs      = bsp.clusters.at(cluster_).sub;
+                if(sub_ < subs.size())
+                    portal_colors[subs.at(sub_).debug_color_idx] =
+                        Vecf3(0, 1, 0);
             }
         }
 
@@ -144,9 +146,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 pvs_cluster, camera_pos, camera_mvp);
         } else if(pvs_bsp)
         {
-            /* Camera outside all clusters (e.g. in the air): show everything in
-             * the last-known BSP section to prevent geometry disappearing. */
-            pvs_visible.assign(pvs_bsp->clusters.size(), true);
+            /* Camera outside all clusters (noclip outside the map shell):
+             * keep the last valid visible set. Snapping to all-visible here
+             * is what used to flash far-off geometry into view. */
         }
 
         rendering->current_bsp_cluster = pvs_cluster;
@@ -318,11 +320,11 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             model_total++;
             if(cull_bsp)
             {
-                if(auto mc =
-                       cull_bsp->find_cluster(to_bsp_space(model.position));
+                if(auto mc = cull_bsp->find_cluster_tree(
+                       to_bsp_space(model.position));
                    mc.has_value())
                 {
-                    bool pvs_ok   = cluster_ok(mc.value().first);
+                    bool pvs_ok   = cluster_ok(*mc);
                     bool dist_ok  = in_draw_distance(model);
                     model.visible = pvs_ok && dist_ok;
                     if(!pvs_ok)
@@ -354,9 +356,13 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             Model& model = ref.template get<Model>();
             if(cull_bsp)
             {
-                auto vis = cull_bsp->visible_from(
-                    camera_pos, to_bsp_space(model.position));
-                model.visible = vis.value_or(true) && in_draw_distance(model);
+                /* Use the portal-traversal set, same as static models; the
+                 * cluster_data PVS interpretation is unverified and was
+                 * letting far-away objects through. */
+                auto mc = cull_bsp->find_cluster_tree(
+                    to_bsp_space(model.position));
+                bool pvs_ok   = mc.has_value() ? cluster_ok(*mc) : true;
+                model.visible = pvs_ok && in_draw_distance(model);
             } else
                 model.visible = in_draw_distance(model);
         }
