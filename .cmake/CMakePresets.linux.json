@@ -195,6 +195,7 @@
                 "BUILD_GL_SOFTWARE_BCN": "ON",
                 "BUILD_GLES": "ON",
                 "BUILD_GLES_31": "ON",
+                "BUILD_OPENAL": "OFF",
                 "CMAKE_C_FLAGS": "-march=armv8.1-a",
                 "CMAKE_CXX_FLAGS": "-march=armv8.1-a",
                 "CMAKE_LINKER_FLAGS": "-fuse-ld=gold",
@@ -326,6 +327,12 @@
         {
             "name": "desktop-x86_64-buildroot-linux-gnu-multi-rel",
             "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "desktop-x86_64-buildroot-linux-gnu-multi",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "desktop-x86_64-buildroot-linux-gnu-multi-reldeb",
+            "environment": {"BUILD_TYPE":"RelWithDebInfo"},
             "configurePreset": "desktop-x86_64-buildroot-linux-gnu-multi",
             "inherits": "base-linux"
         },
