@@ -29,6 +29,33 @@ struct SysMemoryStats
     virtual libc_types::u64 resident() final;
 };
 
+/* GPU stats from Linux sysfs (devfreq). Works on any DRM driver that exposes a
+ * GPU devfreq node (freedreno/msm, panfrost, lima, ...), where GL counter
+ * extensions are typically unavailable. Reports raw clocks; usage is derived
+ * from devfreq frequency-state residency (trans_stat). */
+struct SysGPUStats
+    : interfaces::GPUStatProvider
+    , AppService<SysGPUStats, GPUStatProvider>
+    , AppLoadableService
+{
+    std::optional<libc_types::u32>              mem_resident() final;
+    std::optional<libc_types::u32>              mem_total() final;
+    std::optional<libc_types::u8>               usage() final;
+    std::map<std::string_view, libc_types::f32> stats_numeric() final;
+    std::map<std::string_view, stats_desc_t>    stats_description() final;
+
+  protected:
+    void load(entity_container& e, app_error& ec) final;
+
+  private:
+    std::string m_devfreq; // /sys/class/devfreq/<node>, empty if none found
+    /* trans_stat residency snapshot for delta-based utilization */
+    libc_types::u64 m_prev_total_ms{0};
+    libc_types::u64 m_prev_busy_ms{0};
+    libc_types::u8  m_usage{0};
+    std::map<std::string, libc_types::f32> m_numeric;
+};
+
 struct SysBattery
     : interfaces::BatteryProvider
     , AppService<SysBattery, BatteryProvider>

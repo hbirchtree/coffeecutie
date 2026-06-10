@@ -96,6 +96,15 @@
 #include <pvr/pvr_components.h>
 #endif
 
+#if defined(FEATURE_ENABLE_GLGPUStats_Dynamic) ||    \
+    defined(FEATURE_ENABLE_GLGPUStats_ESDynamic) ||  \
+    defined(FEATURE_ENABLE_GLGPUStats_ES2Dynamic) || \
+    defined(FEATURE_ENABLE_GLGPUStats_ES) ||         \
+    defined(FEATURE_ENABLE_GLGPUStats_ES2)
+#define USES_GLGPUSTATS 1
+#include <glgpustats/glgpustats.h>
+#endif
+
 #if defined(FEATURE_ENABLE_GLScreenshot_ES2Dynamic) || \
     defined(FEATURE_ENABLE_GLScreenshot_ESDynamic) ||  \
     defined(FEATURE_ENABLE_GLScreenshot_ES) ||         \
@@ -764,7 +773,8 @@ void addDefaults(
         /* TODO: Conditionally load based on availability */
         loader.registerAll<detail::subsystem_list<
             comp_app::SysMemoryStats,
-            comp_app::SysCPUClock>>(container, ec);
+            comp_app::SysCPUClock,
+            comp_app::SysGPUStats>>(container, ec);
         C_ERROR_CHECK(ec);
     }
 #if defined(FEATURE_ENABLE_GLScreenshot_ES2Dynamic) || \
@@ -793,6 +803,11 @@ void addDefaults(
 #endif
 #if defined(FEATURE_ENABLE_PVRComponents)
     loader.registerAll<detail::subsystem_list<pvr::PVRGPUStats>>(container, ec);
+    C_ERROR_CHECK(ec);
+#endif
+#if defined(USES_GLGPUSTATS)
+    loader.registerAll<detail::subsystem_list<glgpustats::GLGPUStatsProvider>>(
+        container, ec);
     C_ERROR_CHECK(ec);
 #endif
 #if defined(FEATURE_ENABLE_NVMLComponents)
@@ -883,7 +898,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
     auto mem      = p.service<MemoryStatProvider>();
     auto battery  = p.service<BatteryProvider>();
     auto network  = p.service<NetworkStatProvider>();
-    auto gpustats = p.service<GPUStatProvider>();
+    auto gpustats = p.services_with<interfaces::GPUStatProvider>();
 
     if(clock)
     {
@@ -977,20 +992,27 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
         network->reset_counters();
     }
 
-    if(gpustats)
+    /* Multiple GPUStatProviders can be active at once (e.g. a GL-extension
+     * provider plus the sysfs one); index per-provider so their shared metrics
+     * don't collide in the report. */
+    u32 gpu_idx = 0;
+    for(auto* provider : gpustats)
     {
-        if(auto resident = gpustats->mem_resident())
+        if(auto resident = provider->mem_resident())
             json::CaptureMetrics(
-                "GPU memory usage", MetricVariant::Value, *resident, timestamp);
-        if(auto total = gpustats->mem_total())
+                "GPU memory usage", MetricVariant::Value, *resident, timestamp,
+                gpu_idx);
+        if(auto total = provider->mem_total())
             json::CaptureMetrics(
-                "GPU memory total", MetricVariant::Value, *total, timestamp);
-        if(auto usage = gpustats->usage())
+                "GPU memory total", MetricVariant::Value, *total, timestamp,
+                gpu_idx);
+        if(auto usage = provider->usage())
             json::CaptureMetrics(
-                "GPU usage", MetricVariant::Value, *usage, timestamp);
-        for(auto const& stat : gpustats->stats_numeric())
+                "GPU usage", MetricVariant::Value, *usage, timestamp, gpu_idx);
+        for(auto const& stat : provider->stats_numeric())
             json::CaptureMetrics(
                 stat.first, MetricVariant::Value, stat.second, timestamp);
+        gpu_idx++;
     }
 }
 

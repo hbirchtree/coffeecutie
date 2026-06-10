@@ -189,7 +189,7 @@ struct ConstrainedProxy : ContainerProxy
     }
 
     template<class BaseType>
-    FORCEDINLINE int services_with()
+    FORCEDINLINE auto services_with()
     {
         return m_container.services_with<BaseType>();
     }

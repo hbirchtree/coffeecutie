@@ -77,6 +77,11 @@ if(BUILD_COMPONENT_APP)
       target_link_libraries(GraphicsBundle INTERFACE GLScreenshot_${GLIMPL})
     endif()
 
+    if(BUILD_GLGPUSTATS)
+      add_subdirectory(graphics/glgpustats)
+      target_link_libraries(GraphicsBundle INTERFACE GLGPUStats_${GLIMPL})
+    endif()
+
     if(BUILD_NVML)
         target_link_libraries(GraphicsBundle INTERFACE NVMLComponents)
     endif()
