@@ -1,3 +1,4 @@
+#include <coffee/graphics/apis/gleam/rhi_features.h>
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
 
 #include <numeric>
@@ -300,7 +301,7 @@ void compute_ubo_instance(
 }
 
 std::optional<error> evaluate_draw_state(
-    const api_limits& limits, const draw_command& command)
+    const api_limits& limits, const workarounds& workarounds, const draw_command& command)
 {
     auto const& call = command.call;
     auto const& data = command.data;
@@ -334,9 +335,14 @@ std::optional<error> evaluate_draw_state(
     if(call.instanced)
     {
         for(auto const& d : data)
-            if(d.instances.count > limits.draws.instance_count ||
-               d.instances.offset > limits.draws.instance_offset)
-                return error::draw_unsupported_call;
+        {
+            if(d.instances.count > limits.draws.instance_count)
+                if(!workarounds.draw.emulated_instance_id)
+                    return error::draw_unsupported_call;
+            if(d.instances.offset > limits.draws.instance_offset)
+                if(!workarounds.draw.emulated_base_instance)
+                    return error::draw_unsupported_call;
+        }
     }
 
     return std::nullopt;

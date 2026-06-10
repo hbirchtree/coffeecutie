@@ -1,6 +1,7 @@
 #pragma once
 
 #include <peripherals/error/posix.h>
+#include <peripherals/identify/compiler/debug_break.h>
 #include <peripherals/identify/compiler/function_inlining.h>
 #include <peripherals/identify/system.h>
 #include <peripherals/libc/signals.h>
@@ -286,12 +287,9 @@ inline const char* code_to_string(int exit_code)
 
 inline void breakpoint()
 {
-#if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
-    //    if(getenv("DEBUG_BREAK"))
-    std::raise(SIGINT);
-#elif defined(COFFEE_EMSCRIPTEN)
-    emscripten_debugger();
-#endif
+    /* Trap into an attached debugger only; no-op when none is present so a
+     * stray breakpoint cannot deliver a fatal/quit signal in headless runs. */
+    C_BREAK();
 
     /* TODO: Reimplement Windows breakpoints */
 }

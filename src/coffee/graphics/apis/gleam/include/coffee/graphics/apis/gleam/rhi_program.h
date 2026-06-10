@@ -169,7 +169,7 @@ struct program_t
 
     NO_DISCARD semantic::result<compile_log_t, compile_error_t> compile()
     {
-        Coffee::DProfContext __;
+        Coffee::DProfContext __(__PRETTY_FUNCTION__);
 
         m_buffer_locations.clear();
         m_uniform_locations.clear();
@@ -257,13 +257,20 @@ struct program_t
                     convert::to<group::shader_type>(stage_type),
                     {std::string_view(shader_data.data(), shader_data.size())});
 
-                auto log = detail::program_log(stage_info->m_handle);
+                if(!m_features.khr.parallel_shader_compile)
+                {
+                    auto log = detail::program_log(stage_info->m_handle);
 
-                if(stage_info->m_handle == 0)
-                    return stl_types::failure(compile_error_t{log});
+                    if(stage_info->m_handle == 0)
+                        return stl_types::failure(compile_error_t{log});
+                }
 
                 cmd::active_shader_program(m_handle, stage_info->m_handle);
             }
+
+            if(m_features.khr.parallel_shader_compile)
+                return stl_types::success(
+                    compile_log_t{"Waiting with KHR_parallel_shader_compile", 1});
 
             cmd::validate_program_pipeline(m_handle);
 
@@ -340,8 +347,10 @@ struct program_t
         if(m_error_state)
             return stl_types::failure(compile_error_t{});
         if(m_features.separable_programs)
+        {
+
             return stl_types::success(false);
-        else
+        } else
         {
             i32 status = 0;
             cmd::get_programiv(

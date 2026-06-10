@@ -11,7 +11,9 @@ namespace detail {
 std::string_view draw_error_to_string(error e);
 
 std::optional<error> evaluate_draw_state(
-    api_limits const& limits, draw_command const& command);
+    api_limits const& limits,
+    const workarounds& workarounds,
+    draw_command const& command);
 
 inline constexpr auto unsupported_drawcall()
 {
@@ -258,7 +260,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
     if constexpr(compile_info::debug_mode)
     {
         auto log = detail::program_log(program->m_handle);
-        if(auto error = detail::evaluate_draw_state(m_limits, command);
+        if(auto error = detail::evaluate_draw_state(m_limits, m_workarounds, command);
            error.has_value())
         {
             usage().draw.failed_draws++;

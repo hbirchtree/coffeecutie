@@ -611,7 +611,7 @@ inline bool apply_command_modifier(
     blend_state& view_info)
 {
     cmd::enable(group::enable_cap::blend);
-#if defined(GLEAM_MAX_VERSION) || GLEAM_MAX_VERSION_ES >= 0x300
+#if GLEAM_MAX_VERSION >= 0x140 || GLEAM_MAX_VERSION_ES >= 0x300
     if(view_info.maximum)
     {
         /* component_max: result = max(src, dst). Equation is global state,
@@ -652,7 +652,7 @@ inline void undo_command_modifier(
 {
     /* Restore default equation so a GL_MAX pass can't leak into later
      * blend users (UI, post-process). */
-#if defined(GLEAM_MAX_VERSION) || GLEAM_MAX_VERSION_ES >= 0x300
+#if GLEAM_MAX_VERSION >= 0x140 || GLEAM_MAX_VERSION_ES >= 0x300
     if(view_info.maximum)
         cmd::blend_equation(group::blend_equation_mode_ext::func_add);
 #endif
