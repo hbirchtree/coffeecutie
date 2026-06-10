@@ -107,7 +107,7 @@ struct RenderingParameters : compo::SubsystemBase
     bool render_ui{false};
     bool debug_clear{false}; // sets a different clear color for visibility
 
-    bool occluder_update{false}; /* TEMP: baseline, no culling */
+    bool occluder_update{true};
 
     bool debug_markers{
         compile_info::debug_mode && !compile_info::platform::is_mobile};

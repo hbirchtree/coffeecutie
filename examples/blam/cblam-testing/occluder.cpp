@@ -309,6 +309,43 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 return glm::distance(mod.position, camera_pos) < draw_dist;
             };
 
+        /* Cull a model against the camera's BSP section.
+         * - In a cluster → portal-traversal set + draw distance.
+         * - No cluster but inside this section's world bounds → origin is in
+         *   solid space (scenery planted into the ground); keep it, gated by
+         *   draw distance.
+         * - Outside the section's world bounds → belongs to another BSP
+         *   section, which is hidden wholesale, so hide its objects too.
+         *   These used to fall through to the distance check alone, which is
+         *   why far-away models never disappeared. */
+        enum class model_vis
+        {
+            visible,
+            pvs_culled,
+            dist_culled,
+        };
+        const auto classify_model =
+            [&](BSPItem const* bsp, Model const& model) -> model_vis {
+            auto pos = to_bsp_space(model.position);
+            if(auto mc = bsp->find_cluster(pos); mc.has_value())
+            {
+                if(!cluster_ok(mc->first))
+                    return model_vis::pvs_culled;
+                return in_draw_distance(model) ? model_vis::visible
+                                               : model_vis::dist_culled;
+            }
+            if(bsp->valid())
+            {
+                auto [p1, p2] = bsp->mesh->world_bounds.points();
+                Vecf3 lo = glm::min(p1, p2), hi = glm::max(p1, p2);
+                if(pos.x < lo.x || pos.x > hi.x || pos.y < lo.y ||
+                   pos.y > hi.y || pos.z < lo.z || pos.z > hi.z)
+                    return model_vis::pvs_culled;
+            }
+            return in_draw_distance(model) ? model_vis::visible
+                                           : model_vis::dist_culled;
+        };
+
         u32 model_visible = 0, model_pvs_culled = 0, model_dist_culled = 0,
             model_total = 0;
 
@@ -320,26 +357,20 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             model_total++;
             if(cull_bsp)
             {
-                if(auto mc = cull_bsp->find_cluster_tree(
-                       to_bsp_space(model.position));
-                   mc.has_value())
+                switch(classify_model(cull_bsp, model))
                 {
-                    bool pvs_ok   = cluster_ok(*mc);
-                    bool dist_ok  = in_draw_distance(model);
-                    model.visible = pvs_ok && dist_ok;
-                    if(!pvs_ok)
-                        model_pvs_culled++;
-                    else if(!dist_ok)
-                        model_dist_culled++;
-                    else
-                        model_visible++;
-                } else
-                {
-                    model.visible = in_draw_distance(model);
-                    if(model.visible)
-                        model_visible++;
-                    else
-                        model_dist_culled++;
+                case model_vis::visible:
+                    model.visible = true;
+                    model_visible++;
+                    break;
+                case model_vis::pvs_culled:
+                    model.visible = false;
+                    model_pvs_culled++;
+                    break;
+                case model_vis::dist_culled:
+                    model.visible = false;
+                    model_dist_culled++;
+                    break;
                 }
             } else
             {
@@ -355,15 +386,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             auto   ref   = p.template ref<Proxy>(ent);
             Model& model = ref.template get<Model>();
             if(cull_bsp)
-            {
-                /* Use the portal-traversal set, same as static models; the
-                 * cluster_data PVS interpretation is unverified and was
-                 * letting far-away objects through. */
-                auto mc = cull_bsp->find_cluster_tree(
-                    to_bsp_space(model.position));
-                bool pvs_ok   = mc.has_value() ? cluster_ok(*mc) : true;
-                model.visible = pvs_ok && in_draw_distance(model);
-            } else
+                model.visible =
+                    classify_model(cull_bsp, model) == model_vis::visible;
+            else
                 model.visible = in_draw_distance(model);
         }
 

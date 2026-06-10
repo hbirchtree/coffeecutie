@@ -306,61 +306,21 @@ struct BSPItem
         return out;
     }
 
-    /* Compute inward-facing cone planes from eye through every edge of a
-     * portal polygon. Each plane passes through eye and one edge; normals
-     * point toward the polygon centroid so that "inside" means visible
-     * through the portal. Returns an empty set when the eye is (nearly) in
-     * the portal plane — every cross product degenerates — which callers
-     * must treat as "no constraint can be derived", not "fully blocked". */
-    static std::vector<Vecf4> portal_cone_planes(
-        Vecf3 const& eye, std::vector<Vecf3> const& verts)
-    {
-        std::vector<Vecf4> result;
-        int                n = static_cast<int>(verts.size());
-        if(n < 3)
-            return result;
-        Vecf3 centroid(0.f);
-        for(auto const& v : verts)
-            centroid += v;
-        centroid /= static_cast<f32>(n);
-        result.reserve(n);
-        for(int i = 0; i < n; i++)
-        {
-            Vecf3 const& v0 = verts[i];
-            Vecf3 const& v1 = verts[(i + 1) % n];
-
-            Vecf3 normal = glm::cross(v0 - eye, v1 - eye);
-            f32   len    = glm::length(normal);
-            if(len < 1e-6f)
-                continue;
-            normal /= len;
-            f32 d    = -glm::dot(normal, eye);
-            f32 side = glm::dot(normal, centroid) + d;
-            /* Centroid on the plane → orientation is ambiguous (eye is in
-             * the polygon plane); skip rather than guess. */
-            if(std::abs(side) < 1e-6f)
-                continue;
-            if(side < 0.f)
-            {
-                normal = -normal;
-                d      = -d;
-            }
-            result.push_back(Vecf4(normal, d));
-        }
-        return result;
-    }
-
-    /* Portal-flow visibility: walk the portal graph from the camera cluster,
-     * clipping each portal polygon against the view cone accumulated along
-     * the path (initially the frustum side planes, then rebuilt from the
-     * clipped polygon of each traversed portal). A cluster is visible iff
-     * some portal chain to it survives clipping, which prevents both seeing
-     * around corners and the "far-off clusters become visible" leaks.
-     * Clusters may be re-entered through different paths (different cones see
-     * different things), bounded per cluster so worst case stays cheap. */
+    /* Portal-flow visibility with screen-space rectangles (the approach the
+     * original engine uses). Each traversal path carries an NDC rectangle —
+     * initially the full viewport — and a portal is only crossed where its
+     * polygon, clipped to that rectangle's view pyramid, still has area. The
+     * surviving polygon is projected and its NDC bounding box becomes the
+     * rectangle for the next cluster, monotonically shrinking along the path.
+     * Rectangles stay convex no matter the portal polygon shape, which
+     * matters because Halo cluster portals are frequently non-convex
+     * (20-30 vertices); cone planes built from such polygons over-cull.
+     * A cluster is re-entered only when a new path widens its accumulated
+     * rectangle, so the walk terminates without missing multi-path
+     * visibility. */
     inline std::vector<bool> portal_visible_set(
         u32          from_idx,
-        Vecf3 const& camera_pos,
+        Vecf3 const& /*camera_pos*/,
         Matf4 const& mvp,
         u32          max_depth = 64) const
     {
@@ -369,36 +329,59 @@ struct BSPItem
             return visible;
         visible[from_idx] = true;
 
-        Frustum const frustum = Frustum::from_mvp(mvp);
+        auto row = [&](int j) {
+            return Vecf4(mvp[0][j], mvp[1][j], mvp[2][j], mvp[3][j]);
+        };
+        Vecf4 const r0 = row(0), r1 = row(1), r3 = row(3);
 
-        /* Frustum side planes all pass through the eye, so clipping against
-         * them geometrically removes behind-camera portals as well — no
-         * special w<0 handling needed. Degenerate MVP (first frame) yields
-         * near-zero planes; treat as "no initial constraint". */
-        std::vector<Vecf4> root_cone;
-        for(auto const& p : frustum.planes)
-            if(glm::dot(Vecf3(p), Vecf3(p)) > 1e-10f)
-                root_cone.push_back(p);
+        /* Degenerate MVP (first frame, before the camera is initialised):
+         * no frustum information, fall back to plain reachability. */
+        if(glm::dot(Vecf3(r3), Vecf3(r3)) <= 1e-10f)
+            return portal_visible_set(from_idx, max_depth);
+
+        struct Rect
+        {
+            f32 x0, y0, x1, y1;
+        };
+
+        /* World-space planes through the eye bounding the view pyramid of an
+         * NDC rectangle: x_ndc ≥ x0 ⟺ (r0 - x0·r3)·v ≥ 0, etc. */
+        auto rect_planes = [&](Rect const& r) -> std::array<Vecf4, 4> {
+            return {{
+                r0 - r3 * r.x0,
+                r3 * r.x1 - r0,
+                r1 - r3 * r.y0,
+                r3 * r.y1 - r1,
+            }};
+        };
 
         struct Entry
         {
-            u32                ci;
-            u32                depth;
-            std::vector<Vecf4> cone;
+            u32  ci;
+            u32  depth;
+            Rect rect;
         };
 
-        std::vector<Entry>            stack = {{from_idx, 0, std::move(root_cone)}};
-        std::vector<libc_types::u8>   visits(clusters.size(), 0);
-        visits[from_idx]++;
+        /* Per-cluster accumulated rect, for skipping paths that cannot show
+         * anything new. */
+        constexpr Rect              empty_rect{1.f, 1.f, -1.f, -1.f};
+        std::vector<Rect>           acc(clusters.size(), empty_rect);
+        std::vector<libc_types::u8> visits(clusters.size(), 0);
 
-        u32 budget = 16384; /* hard cap on portal clips per frame */
+        acc[from_idx]    = Rect{-1.f, -1.f, 1.f, 1.f};
+        visits[from_idx] = 1;
+
+        std::vector<Entry> stack = {{from_idx, 0, acc[from_idx]}};
+
+        u32 budget = 4096; /* hard cap on portal crossings per frame */
 
         while(!stack.empty())
         {
-            Entry entry = std::move(stack.back());
+            Entry entry = stack.back();
             stack.pop_back();
             if(entry.depth >= max_depth)
                 continue;
+            auto const planes = rect_planes(entry.rect);
             for(auto const& portal : clusters[entry.ci].portals)
             {
                 if(budget-- == 0)
@@ -411,28 +394,58 @@ struct BSPItem
                 if(adj < 0 || ai >= clusters.size())
                     continue;
 
-                std::vector<Vecf3> poly = portal.vertices;
-                for(auto const& plane : entry.cone)
+                /* Clip the portal polygon to the rect's view pyramid, plus a
+                 * near plane slightly in front of the eye so the projection
+                 * below never divides by w ≤ 0. A portal the camera is about
+                 * to cross gets clipped at the eye and projects to roughly
+                 * the whole rect, which is the desired behaviour. */
+                std::vector<Vecf3> poly = clip_polygon(
+                    portal.vertices, Vecf4(Vecf3(r3), r3.w - 1e-3f));
+                for(auto const& plane : planes)
                 {
-                    poly = clip_polygon(poly, plane);
                     if(poly.size() < 3)
                         break;
+                    poly = clip_polygon(poly, plane);
                 }
                 if(poly.size() < 3)
                     continue;
 
                 visible[ai] = true;
-                if(visits[ai] >= 4)
+
+                Rect r = empty_rect;
+                for(auto const& v : poly)
+                {
+                    f32 w = glm::dot(Vecf3(r3), v) + r3.w;
+                    f32 x = (glm::dot(Vecf3(r0), v) + r0.w) / w;
+                    f32 y = (glm::dot(Vecf3(r1), v) + r1.w) / w;
+                    r.x0  = std::min(r.x0, x);
+                    r.y0  = std::min(r.y0, y);
+                    r.x1  = std::max(r.x1, x);
+                    r.y1  = std::max(r.y1, y);
+                }
+                /* Numerical safety: stay inside the parent rect. */
+                r.x0 = std::max(r.x0, entry.rect.x0);
+                r.y0 = std::max(r.y0, entry.rect.y0);
+                r.x1 = std::min(r.x1, entry.rect.x1);
+                r.y1 = std::min(r.y1, entry.rect.y1);
+                if(r.x0 >= r.x1 || r.y0 >= r.y1)
+                    continue;
+
+                /* Only walk on if this path widens what the cluster can
+                 * already show. */
+                Rect& a = acc[ai];
+                if(r.x0 >= a.x0 && r.y0 >= a.y0 && r.x1 <= a.x1 &&
+                   r.y1 <= a.y1)
+                    continue;
+                a.x0 = std::min(a.x0, r.x0);
+                a.y0 = std::min(a.y0, r.y0);
+                a.x1 = std::max(a.x1, r.x1);
+                a.y1 = std::max(a.y1, r.y1);
+                if(visits[ai] >= 8)
                     continue;
                 visits[ai]++;
 
-                auto cone = portal_cone_planes(camera_pos, poly);
-                /* Eye in the portal plane (crossing a cluster boundary):
-                 * the cone is undefined, keep the parent cone instead of
-                 * blocking or opening up completely. */
-                if(cone.size() < 3)
-                    cone = entry.cone;
-                stack.push_back({ai, entry.depth + 1, std::move(cone)});
+                stack.push_back({ai, entry.depth + 1, r});
             }
         }
         return visible;

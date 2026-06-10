@@ -227,6 +227,21 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         out.tree_nodes.size(),
         out.tree_planes.size(),
         out.render_leaves.size());
+    {
+        u32 total = 0, degenerate = 0;
+        for(auto const& cluster : out.clusters)
+            for(auto const& portal : cluster.portals)
+            {
+                total++;
+                if(portal.vertices.size() < 3)
+                    degenerate++;
+            }
+        cDebug(
+            "BSP portals: {} in cluster lists, {} global, {} with <3 vertices",
+            total,
+            portals.size(),
+            degenerate);
+    }
 
     /* TODO: Find link between indices in cluster and submeshes */
 
@@ -298,8 +313,14 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
      * leaf.cluster names the cluster; leaf.surface_reference_{index,count}
      * index into leaf_surfaces[]; leaf_surface.surface is the face index
      * into header.surfaces (same index space as material::surfaces.count). */
+    /* A face referenced from the leaves of more than one cluster straddles a
+     * cluster boundary (large terrain faces do this constantly); it must stay
+     * visible whenever ANY of those clusters is, so it gets no cluster at all
+     * rather than whichever cluster wrote last — that misassignment used to
+     * punch holes in the ground right next to the camera. */
     std::vector<u32> face_cluster(
         surfaces.size(), std::numeric_limits<u32>::max());
+    std::vector<bool> face_shared(surfaces.size(), false);
     for(auto const& leaf : leaves)
     {
         if(leaf.cluster < 0)
@@ -312,8 +333,12 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             if(ri >= leaf_surfaces.size())
                 break;
             u32 fi = leaf_surfaces[ri].surface;
-            if(fi < face_cluster.size())
-                face_cluster[fi] = cid;
+            if(fi >= face_cluster.size())
+                continue;
+            if(face_cluster[fi] != std::numeric_limits<u32>::max() &&
+               face_cluster[fi] != cid)
+                face_shared[fi] = true;
+            face_cluster[fi] = cid;
         }
     }
 
@@ -335,11 +360,29 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         {
             for(u32 fi : out.clusters[ci].sub[si].indices)
             {
-                if(fi < face_subcluster.size())
-                    face_subcluster[fi] = {ci, si};
+                if(fi >= face_subcluster.size())
+                    continue;
+                auto& key = face_subcluster[fi];
+                if(key.first == kInvalid)
+                    key = {ci, si};
+                else if(key.first != ci)
+                {
+                    /* Straddles clusters: cull by neither (see face_shared
+                     * above). */
+                    key = {kInvalid, kInvalid};
+                    if(fi < face_shared.size())
+                        face_shared[fi] = true;
+                } else if(key.second != si)
+                    /* Multiple subclusters of one cluster: cull by cluster
+                     * PVS only, not by a single subcluster AABB. */
+                    key.second = kInvalid;
             }
         }
     }
+
+    for(u32 fi = 0; fi < face_cluster.size(); fi++)
+        if(face_shared[fi])
+            face_cluster[fi] = std::numeric_limits<u32>::max();
 
     /* First, load up the vertices into the vertex buffer
      * We leave references to where they are in the vertex_ranges map
