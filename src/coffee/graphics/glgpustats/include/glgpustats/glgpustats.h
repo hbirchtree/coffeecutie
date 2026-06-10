@@ -79,6 +79,23 @@ struct GLGPUStatsProvider
     void ati_poll();
     bool m_ati_ok{false};
 
+    /* --- GL_ARB_pipeline_statistics_query --- */
+    void arb_setup();
+    void arb_poll(const compo::time_point& time);
+    bool arb_collect();
+
+    struct arb_counter_t
+    {
+        libc_types::u32 target;
+        libc_types::u32 query;
+        std::string     name;
+    };
+    std::vector<arb_counter_t> m_arb_counters;
+    bool                       m_arb_ok{false};
+    bool                       m_arb_active{false};
+    bool                       m_arb_pending{false};
+    compo::time_point          m_arb_next{};
+
     struct reading_t
     {
         libc_types::f32 value{0.f};

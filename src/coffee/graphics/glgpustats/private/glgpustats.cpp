@@ -3,6 +3,7 @@
 #include <coffee/core/debug/formatting.h>
 #include <glw/glw.h>
 #include <glw/extensions/AMD_performance_monitor.h>
+#include <glw/extensions/ARB_pipeline_statistics_query.h>
 #include <glw/extensions/ATI_meminfo.h>
 #include <glw/extensions/NVX_gpu_memory_info.h>
 #include <peripherals/semantic/chunk.h>
@@ -123,10 +124,20 @@ void GLGPUStatsProvider::ensure_init()
         m_amd_ok = !m_amd_counters.empty();
     }
 #endif
+#ifdef GL_ARB_pipeline_statistics_query
+    if(extensions.contains(gl::arb::pipeline_statistics_query::name))
+    {
+        arb_setup();
+        m_arb_ok = !m_arb_counters.empty();
+    }
+#endif
 
     if(m_amd_ok)
         m_strings["GPU stats: AMD_performance_monitor"] =
             std::to_string(m_amd_counters.size()) + " counters";
+    if(m_arb_ok)
+        m_strings["GPU stats: ARB_pipeline_statistics_query"] =
+            std::to_string(m_arb_counters.size()) + " counters";
     if(m_nvx_ok)
         m_strings["GPU stats: NVX_gpu_memory_info"] = "active";
     if(m_ati_ok)
@@ -134,9 +145,12 @@ void GLGPUStatsProvider::ensure_init()
 
     cDebug(
         "GLGPUStatsProvider: AMD_performance_monitor={} ({} counters), "
+        "ARB_pipeline_statistics_query={} ({} counters), "
         "NVX_gpu_memory_info={}, ATI_meminfo={}",
         m_amd_ok,
         m_amd_counters.size(),
+        m_arb_ok,
+        m_arb_counters.size(),
         m_nvx_ok,
         m_ati_ok);
 }
@@ -151,6 +165,8 @@ void GLGPUStatsProvider::start_frame(
         ati_poll();
     if(m_amd_ok)
         amd_poll(time);
+    if(m_arb_ok)
+        arb_poll(time);
 }
 
 /* ---- GL_NVX_gpu_memory_info ---------------------------------------------- */
@@ -221,6 +237,115 @@ void GLGPUStatsProvider::ati_poll()
         {pool_free_bytes(am::texture_free_memory), false};
     m_numeric["GPU renderbuffer free memory"] =
         {pool_free_bytes(am::renderbuffer_free_memory), false};
+#endif
+}
+
+/* ---- GL_ARB_pipeline_statistics_query ------------------------------------ */
+
+void GLGPUStatsProvider::arb_setup()
+{
+#ifdef GL_ARB_pipeline_statistics_query
+    namespace arb = gl::arb::pipeline_statistics_query::values;
+    struct
+    {
+        u32         target;
+        const char* name;
+    } targets[] = {
+        {arb::vertices_submitted, "Pipeline: Vertices submitted"},
+        {arb::primitives_submitted, "Pipeline: Primitives submitted"},
+        {arb::vertex_shader_invocations, "Pipeline: VS invocations"},
+        {arb::tess_control_shader_patches, "Pipeline: TCS patches"},
+        {arb::tess_evaluation_shader_invocations, "Pipeline: TES invocations"},
+        {arb::geometry_shader_invocations, "Pipeline: GS invocations"},
+        {arb::geometry_shader_primitives_emitted, "Pipeline: GS primitives"},
+        {arb::clipping_input_primitives, "Pipeline: Clipping input"},
+        {arb::clipping_output_primitives, "Pipeline: Clipping output"},
+        {arb::fragment_shader_invocations, "Pipeline: FS invocations"},
+        {arb::compute_shader_invocations, "Pipeline: CS invocations"},
+    };
+
+    for(auto const& t : targets)
+    {
+        u32 query{0};
+        glw::gen_queries(semantic::SpanOne(query), noerr);
+        if(query)
+            m_arb_counters.push_back({t.target, query, t.name});
+    }
+#endif
+}
+
+void GLGPUStatsProvider::arb_poll(const compo::time_point& time)
+{
+#ifdef GL_ARB_pipeline_statistics_query
+    if(m_arb_active)
+    {
+        for(auto const& counter : m_arb_counters)
+            glw::end_query(
+                static_cast<gl::group::query_target>(counter.target), noerr);
+        m_arb_active  = false;
+        m_arb_pending = true;
+    }
+
+    if(m_arb_pending && arb_collect())
+        m_arb_pending = false;
+
+    using namespace std::chrono_literals;
+    if(!m_arb_pending && time >= m_arb_next)
+    {
+        m_arb_next = time + 1s;
+        for(auto const& counter : m_arb_counters)
+            glw::begin_query(
+                static_cast<gl::group::query_target>(counter.target),
+                counter.query,
+                noerr);
+        m_arb_active = true;
+    }
+#else
+    (void)time;
+#endif
+}
+
+bool GLGPUStatsProvider::arb_collect()
+{
+#ifdef GL_ARB_pipeline_statistics_query
+    for(auto const& counter : m_arb_counters)
+    {
+        u32 available{0};
+        glw::get_query_objectuiv(
+            counter.query,
+            gl::group::query_object_parameter_name::query_result_available,
+            semantic::SpanOne(available),
+            noerr);
+        if(!available)
+            return false;
+    }
+
+    for(auto const& counter : m_arb_counters)
+    {
+        u64 result{0};
+        if constexpr(gl::core::enabled)
+        {
+            glw::get_query_objectui64v(
+                counter.query,
+                gl::group::query_object_parameter_name::query_result,
+                semantic::SpanOne(result),
+                noerr);
+        } else
+        {
+            u32 result_u32{0};
+            glw::get_query_objectuiv(
+                counter.query,
+                gl::group::query_object_parameter_name::query_result,
+                semantic::SpanOne(result_u32),
+                noerr);
+            result = result_u32;
+        }
+        m_numeric[counter.name] =
+            reading_t{.value = static_cast<f32>(result), .is_percentage = false};
+    }
+    return true;
+#else
+    return true;
 #endif
 }
 
