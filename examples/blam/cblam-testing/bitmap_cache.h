@@ -125,12 +125,30 @@ struct BitmapCache
 
 #if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION >= 0x320
         if(std::is_same_v<T, gfx::texture_cube_array_t>)
+        {
+            // TODO: Add fallback to single cube maps for GL ES 2.0
+            // Most likely a rhi::compat::texture_cube_array_t version
+            // Most models only use one cube map I believe
             bucket.surface = allocator->alloc_texture(
                 gfx::textures::cube_array, fmt, max_mipmap);
-        else
+        } else
 #endif
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+        if(std::is_same_v<T, gfx::texture_3d_t>)
+        {
+            // TODO: Find fallback on GL ES 2.0
+            // Problem here is that shader_plasma uses TWO 3D textures
+            // So shimming it to single-texture is not an option
+            // Special-case shader_plasma on GL ES 2.0?
+            bucket.surface = allocator->alloc_texture(
+                gfx::textures::d3, fmt, max_mipmap);
+        } else
+#endif
+        {
             bucket.surface = std::make_shared<gfx::compat::texture_2da_t>(
                 allocator, fmt, no_mipmap ? 1 : (max_mipmap - bucket.mip_bias));
+        }
+
         bucket.type    = type;
         bucket.sampler = bucket.surface->sampler();
 
@@ -230,6 +248,14 @@ struct BitmapCache
                 Veci3{0, 0, img.image.layer},
                 Veci3{size.x, size.y, 1},
                 mipmap - img.mipmaps.base);
+        } else
+#endif
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+        if(bucket.type == blam::bitm::type_t::tex_3d)
+        {
+            gfx::texture_3d_t& texture = bucket.template texture_as<gfx::texture_3d_t>();
+            auto img_data = img.image.mip->data(magic, mipmap);
+            cDebug("3D texture data: {}+{}", img_data.data(), img_data.size_bytes());
         } else
 #endif
         {

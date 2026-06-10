@@ -1485,6 +1485,18 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
 
         switch(im[0].type)
         {
+#if GLEAM_MAX_VERSION >= 0x301 || GLEAM_MAX_VERSION_ES >= 0x300
+        case blam::bitm::type_t::tex_3d: {
+            if(!allocator->feature_info().texture.texture_3d)
+                return {};
+            auto& bucket = get_bucket<gfx::texture_3d_t>(fmt, img.mip->type);
+            img.layer = bucket.ptr++;
+            cDebug("3D texture: {}/{}",
+                magic_enum::enum_name(fmt.pixfmt),
+                magic_enum::enum_name(fmt.cmpflg));
+            break;
+        }
+#endif
         case blam::bitm::type_t::tex_2d: {
             auto& bucket =
                 get_bucket<gfx::compat::texture_2da_t>(fmt, img.mip->type);

@@ -805,14 +805,19 @@ vec4 shader_meter()
 vec4 shader_plasma()
 {
     const uint secondary_map_id = 1u;
-    vec4  primary   = get_color(base_map_id);
-    vec4  secondary = get_color(secondary_map_id);
 
     float intensity_exp = mats.instance[frag.instanceId].material.input1.x;
     vec4  perp          = mats.instance[frag.instanceId].material.input2; // tint.rgb + brightness.a
     vec4  para          = mats.instance[frag.instanceId].material.input3;
     vec4  pdir          = mats.instance[frag.instanceId].material.input4; // anim_dir.xyz + inv_period
     vec4  sdir          = mats.instance[frag.instanceId].material.input5;
+
+    // Two noise maps scroll in opposite directions; their interference is
+    // the moving plasma pattern. anim_dir.xy * inv_period gives tiles/sec.
+    vec2  p_off = pdir.xy * pdir.w * time;
+    vec2  s_off = sdir.xy * sdir.w * time;
+    vec4  primary   = get_color_with_offset(base_map_id, p_off);
+    vec4  secondary = get_color_with_offset(secondary_map_id, s_off);
 
     vec3  view_world = normalize(camera_position - frag.position);
     float NdotV      = clamp(dot(frag.normal, view_world), 0.0, 1.0);
