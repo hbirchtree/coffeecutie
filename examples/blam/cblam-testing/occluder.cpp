@@ -104,23 +104,52 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         u32              current_cluster{0};
         generation_idx_t current_bsp_id{};
 
-        for(auto& ent : p.select(ObjectBsp))
+        /* Structure BSP switching: the active section changes only when the
+         * camera crosses a bsp-switch trigger volume whose source is the
+         * active section — flying into another section's space without
+         * crossing one keeps that section hidden, exactly like the original
+         * engine. Everything below (cluster lookup, PVS, culling) is
+         * restricted to the active section, so inactive sections cost
+         * nothing per frame. */
+        for(auto const& sw : bsp_cache->bsp_switches)
         {
-            auto          ref     = p.template ref<Proxy>(ent);
-            BspReference& bsp_ref = ref.template get<BspReference>();
+            if(sw.source != bsp_cache->active_section)
+                continue;
+            if(!sw.volume->contains(camera_pos))
+                continue;
+            cDebug(
+                "BSP switch: section {} → {} ('{}')",
+                sw.source,
+                sw.destination,
+                sw.volume->name.str());
+            bsp_cache->active_section = sw.destination;
+            break;
+        }
 
-            BSPItem const& bsp = bsp_cache->find(bsp_ref.bsp)->second;
-            for(auto const& cluster : bsp.clusters)
+        BSPItem const*   active_bsp{nullptr};
+        generation_idx_t active_bsp_id{};
+        for(auto& [id, item] : bsp_cache->m_cache)
+            if(item.valid() && item.section_idx == bsp_cache->active_section)
+            {
+                active_bsp    = &item;
+                active_bsp_id = {id, bsp_cache->generation};
+                break;
+            }
+
+        if(active_bsp)
+        {
+            for(auto const& cluster : active_bsp->clusters)
                 for(auto const& sub : cluster.sub)
                     portal_colors[sub.debug_color_idx] = Vecf3(1, 0, 0);
 
-            if(auto cluster = bsp.find_cluster(camera_pos); cluster.has_value())
+            if(auto cluster = active_bsp->find_cluster(camera_pos);
+               cluster.has_value())
             {
                 auto [cluster_, sub_] = cluster.value();
-                current_bsp           = &bsp;
+                current_bsp           = active_bsp;
                 current_cluster       = cluster_;
-                current_bsp_id        = bsp_ref.bsp;
-                auto const& subs      = bsp.clusters.at(cluster_).sub;
+                current_bsp_id        = active_bsp_id;
+                auto const& subs      = active_bsp->clusters.at(cluster_).sub;
                 if(sub_ < subs.size())
                     portal_colors[subs.at(sub_).debug_color_idx] =
                         Vecf3(0, 1, 0);
@@ -132,24 +161,30 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         /* When the camera enters a new cluster, recompute the portal-traversal
          * visible set. When between clusters, keep the last valid set so
          * culling doesn't snap to all-visible at cluster boundaries. */
-        bool cluster_changed = (current_bsp != nullptr) != last_found ||
+        bool section_changed = active_bsp != pvs_bsp;
+        bool cluster_changed = section_changed ||
+                               (current_bsp != nullptr) != last_found ||
                                current_cluster != last_cluster;
         last_found   = current_bsp != nullptr;
         last_cluster = current_cluster;
 
+        /* The active section is culled even while the camera is outside its
+         * clusters; other sections stay hidden wholesale. */
+        pvs_bsp    = active_bsp;
+        pvs_bsp_id = active_bsp_id;
+        if(section_changed)
+            pvs_visible.clear(); /* stale per-cluster bits of old section */
+
         if(current_bsp)
         {
-            pvs_bsp     = current_bsp;
             pvs_cluster = current_cluster;
-            pvs_bsp_id  = current_bsp_id;
             pvs_visible = pvs_bsp->portal_visible_set(
                 pvs_cluster, camera_pos, camera_mvp);
-        } else if(pvs_bsp)
-        {
-            /* Camera outside all clusters (noclip outside the map shell):
-             * keep the last valid visible set. Snapping to all-visible here
-             * is what used to flash far-off geometry into view. */
         }
+        /* else: camera outside the active section's clusters (noclip through
+         * rock) — keep the last valid set; empty set = all-visible within the
+         * active section. Snapping to all-visible across sections is what
+         * used to flash far-off geometry into view. */
 
         rendering->current_bsp_cluster = pvs_cluster;
 

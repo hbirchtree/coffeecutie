@@ -32,8 +32,9 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
     auto const& section = *section_.value();
 
     BSPItem out;
-    out.mesh = &section;
-    out.tag  = &(*index.find(bsp.tag));
+    out.mesh        = &section;
+    out.tag         = &(*index.find(bsp.tag));
+    out.section_idx = next_section_idx++;
 
     if(!out.tag->valid())
         return {};

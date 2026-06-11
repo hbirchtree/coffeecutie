@@ -195,6 +195,9 @@ struct BSPCache
         vert_ptr = 0, element_ptr = 0, light_ptr = 0;
         evict_all();
 
+        bsp_switches.clear();
+        active_section   = 0;
+        next_section_idx = 0;
         sky_palette.clear();
         if(auto scen_opt = map.tags->scenario(map.map, map.magic))
         {
@@ -223,6 +226,19 @@ struct BSPCache
     blam::tag_index_view<V>               index;
     blam::map_ptr                         magic;
     std::vector<blam::scn::skybox const*> sky_palette;
+
+    /* Structure BSP switching (scenario bsp_switch_triggers): crossing
+     * `volume` while `source` is the active section activates `destination`.
+     * Only the active section is culled/rendered. */
+    struct bsp_switch_t
+    {
+        blam::scn::trigger_volume const* volume;
+        libc_types::i16                  source;
+        libc_types::i16                  destination;
+    };
+    std::vector<bsp_switch_t> bsp_switches;
+    libc_types::i16           active_section{0};
+    libc_types::i16           next_section_idx{0}; /* predict_impl ordering */
 
     Span<byte_t>           vert_buffer;
     Span<byte_t>           light_buffer;

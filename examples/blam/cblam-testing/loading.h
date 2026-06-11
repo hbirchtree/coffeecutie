@@ -46,7 +46,8 @@ void load_scenario_bsp(
     auto trigger_vols = scenario->trigger_volumes.data(magic).value();
     for(blam::scn::trigger_volume const& trigger : trigger_vols)
     {
-        auto [origin, second] = trigger.box.points();
+        Vecf3 origin = trigger.position;
+        Vecf3 second = trigger.position + trigger.extents;
 
         auto           trig   = e.create_entity(trigger_obj);
         TriggerVolume& volume = trig.get<TriggerVolume>();
@@ -199,6 +200,29 @@ void load_scenario_bsp(
             Vecf3{0.5f, 1.f, 0});
     }
 
+    /* Structure BSP switching: collect the scenario's switch triggers so the
+     * occluder can track the active section, and start in the section the
+     * first player spawn belongs to. */
+    if(auto switches = scenario->bsp_switch_triggers.data(magic);
+       switches.has_value())
+    {
+        for(blam::scn::bsp_trigger const& sw : switches.value())
+        {
+            if(sw.trigger_volume < 0 ||
+               static_cast<size_t>(sw.trigger_volume) >= trigger_vols.size())
+                continue;
+            bsp_cache.bsp_switches.push_back({
+                .volume      = &trigger_vols[sw.trigger_volume],
+                .source      = sw.source,
+                .destination = sw.destination,
+            });
+            cDebug(
+                "BSP switch: {} → {} via volume '{}'",
+                sw.source,
+                sw.destination,
+                trigger_vols[sw.trigger_volume].name.str());
+        }
+    }
     std::vector<generation_idx_t> bsp_meshes;
     if(auto bsps = scenario->bsp_info.data(magic); bsps.has_value())
     {
@@ -208,6 +232,26 @@ void load_scenario_bsp(
             cDebug("- BSP info #{}", ++i);
             bsp_meshes.push_back(bsp_cache.predict(bsp));
         }
+    }
+
+    /* Initial active section: trust the first spawn's bsp_index unless its
+     * position resolves into a different section's BSP tree (b40's first
+     * spawn claims section 0 but sits in section 3). */
+    {
+        auto locations = scenario->player_start.locations.data(magic);
+        if(locations.has_value() && !locations.value().empty())
+        {
+            auto const& loc          = locations.value()[0];
+            bsp_cache.active_section = static_cast<libc_types::i16>(
+                loc.bsp_index);
+            for(auto& [id, item] : bsp_cache.m_cache)
+                if(item.find_cluster_tree(loc.pos).has_value())
+                {
+                    bsp_cache.active_section = item.section_idx;
+                    break;
+                }
+        }
+        cDebug("Initial BSP section: {}", bsp_cache.active_section);
     }
 
     gpu.bsp_buf->unmap();

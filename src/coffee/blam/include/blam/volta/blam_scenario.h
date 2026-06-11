@@ -458,10 +458,21 @@ struct device_group
     u32                unk[3];
 };
 
+/* "Structure BSP switch trigger volume": while `source` is the active
+ * structure BSP and the player enters `trigger_volume`, the engine makes
+ * `destination` the active BSP. Decoded from b40.map, where the referenced
+ * trigger volumes are named 'bsp <source>,<destination>' and entries come
+ * in bidirectional pairs. */
 struct bsp_trigger
 {
-    u32 unk[2];
+    i16 trigger_volume; /* index into scenario trigger_volumes */
+    i16 source;         /* index into scenario structure BSPs (bsp_info) */
+    i16 destination;    /* index into scenario structure BSPs (bsp_info) */
+    i16 unknown;        /* structured (paired like the volumes, -1 for
+                           script-only transitions) but undeciphered */
 };
+
+static_assert(sizeof(bsp_trigger) == 8);
 
 struct move_positions
 {
@@ -479,10 +490,28 @@ struct object_name
 
 struct trigger_volume
 {
-    u32          unk;
-    bl_string    name;
-    f32          unk2[9];
-    bounding_box box;
+    u32       unk;
+    bl_string name;
+    f32       unk2[9]; /* likely 3×Vecf3 orientation axes */
+    Vecf3     position;
+    Vecf3     extents; /* volume spans position .. position + extents
+                          (verified against b40 'null' and door volumes) */
+
+    inline bool contains(Vecf3 const& point) const
+    {
+        auto in = [](f32 v, f32 a, f32 b) {
+            if(a > b)
+            {
+                f32 t = a;
+                a     = b;
+                b     = t;
+            }
+            return v >= a && v <= b;
+        };
+        Vecf3 hi = position + extents;
+        return in(point.x, position.x, hi.x) &&
+               in(point.y, position.y, hi.y) && in(point.z, position.z, hi.z);
+    }
 };
 
 enum class actor_flags_t : u32

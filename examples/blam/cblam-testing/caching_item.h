@@ -218,8 +218,11 @@ struct BSPItem
 
     static_assert(sizeof(FlatSubcluster) == 32);
 
-    blam::bsp::header const*                                mesh{nullptr};
-    blam::tag_t const*                                      tag{nullptr};
+    blam::bsp::header const* mesh{nullptr};
+    blam::tag_t const*       tag{nullptr};
+    /* Index into the scenario's structure BSP list (bsp_info order); used to
+     * match against bsp_switch_trigger source/destination. */
+    libc_types::i16 section_idx{-1};
     std::vector<Group>                                      groups;
     std::vector<Cluster>                                    clusters;
     std::vector<FlatSubcluster>                             sorted_subclusters;
