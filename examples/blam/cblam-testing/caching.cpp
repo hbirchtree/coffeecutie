@@ -844,7 +844,7 @@ ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)
         break;
     }
     case tag_class_t::schi: {
-        auto const& shader_model = *extract_shader<shader_chicago<V>>(it);
+        auto const& shader_model = *extract_shader<shader_chicago<blam::pc_version_t>>(it);
 
         if(auto maps = shader_model.maps.data(magic); maps.has_value())
         {
@@ -865,7 +865,7 @@ ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)
     }
     case tag_class_t::scex: {
         auto const& shader_model =
-            *extract_shader<shader_chicago_extended<V>>(it);
+            *extract_shader<shader_chicago_extended<blam::pc_version_t>>(it);
 
         if(auto maps4 = shader_model.maps_4stage.data(magic); maps4.has_value())
         {
@@ -950,8 +950,8 @@ void ShaderCache<V>::populate_material(
     switch(shader.tag_class)
     {
     case tag_class_t::scex: {
-        shader_chicago_extended<V> const* info =
-            shader.header->as<blam::shader::shader_chicago_extended<V>>();
+        shader_chicago_extended<blam::pc_version_t> const* info =
+            shader.header->as<blam::shader::shader_chicago_extended<blam::pc_version_t>>();
 
         auto maps = info->maps_4stage.data(magic).value();
         for(auto i : range<>(4))
@@ -974,8 +974,8 @@ void ShaderCache<V>::populate_material(
         break;
     }
     case tag_class_t::schi: {
-        shader_chicago<V> const* info =
-            shader.header->as<blam::shader::shader_chicago<V>>();
+        shader_chicago<blam::pc_version_t> const* info =
+            shader.header->as<blam::shader::shader_chicago<blam::pc_version_t>>();
 
         auto maps = info->maps.data(magic).value();
         for(auto i : range<>(4))
@@ -1338,6 +1338,20 @@ void BitmapCache<V>::allocate_storage()
 
     std::map<bitm_format_hash, pool_size> fmt_count;
 
+    /* Effective mipmap bias per image: never shrink a texture below 64px on
+     * its smallest axis — full bias turns small-but-important textures (the
+     * 128px Basis planet) into unrecognizable mush. */
+    auto bias_of = [this](BitmapItem const& img) -> u32 {
+        u32  bias = params->mipmap_bias;
+        auto sz   = img.image.mip->isize;
+        i32  mind = std::min(sz.x, sz.y);
+        while(bias > 0 &&
+              ((mind >> bias) < 64 ||
+               img.image.mip->mipmaps <= static_cast<i16>(bias)))
+            bias--;
+        return bias;
+    };
+
     /* Find final pool sizes */
     for(auto& bitm : m_cache)
     {
@@ -1350,8 +1364,7 @@ void BitmapCache<V>::allocate_storage()
             fmt.cmpflg);
         auto& pool   = fmt_count[hash];
         auto  imsize = bitm.second.image.mip->isize;
-        if(bitm.second.image.mip->mipmaps > params->mipmap_bias)
-            imsize >>= params->mipmap_bias;
+        imsize >>= bias_of(bitm.second);
         //            auto&       surface =
         //            tex_buckets[bitm.second.image.bucket].surface;
 
@@ -1390,15 +1403,13 @@ void BitmapCache<V>::allocate_storage()
             BitmapItem* img    = &m_cache.find(id)->second;
             auto        imsize = img->image.mip->isize;
 
-            if(params->mipmap_bias > 0 &&
-               img->image.mip->mipmaps > params->mipmap_bias)
+            if(u32 bias = bias_of(*img); bias > 0)
             {
-                imsize >>= params->mipmap_bias;
-                img->mipmaps.base = params->mipmap_bias;
+                imsize >>= bias;
+                img->mipmaps.base = bias;
                 img->mipmaps.last =
-                    params->mipmap_bias +
-                    std::min<i32>(
-                        8, img->image.mip->mipmaps - params->mipmap_bias);
+                    bias +
+                    std::min<i32>(8, img->image.mip->mipmaps - bias);
             } else
             {
                 img->mipmaps.base = 0;

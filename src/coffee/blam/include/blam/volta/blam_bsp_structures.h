@@ -32,8 +32,10 @@ struct leaf
 
     flags_t flags;
     u16     reference_count;
-    u16     first_bsp_2d_reference;
+    u32     first_bsp_2d_reference;
 };
+
+static_assert(sizeof(leaf) == 8);
 
 struct bsp_2d_ref
 {
@@ -50,10 +52,10 @@ struct bsp_2d_node
 
 struct surface
 {
-    u16 plane;
-    u16 first_edge;
+    i32 plane; /* sign bit set = surface plane is the BSP plane flipped */
+    i32 first_edge;
 
-    enum flags_t : u16
+    enum flags_t : u8
     {
         none      = 0x0,
         two_sided = 0x1,
@@ -63,9 +65,11 @@ struct surface
     };
 
     flags_t flags;
-    u16     breakable_surface;
+    u8      breakable_surface;
     i16     material;
 };
+
+static_assert(sizeof(surface) == 12);
 
 struct edge
 {
@@ -80,8 +84,10 @@ struct edge
 struct vertex
 {
     Vecf3 point;
-    u16   first_edge;
+    i32   first_edge;
 };
+
+static_assert(sizeof(vertex) == 16);
 
 struct bsp
 {

@@ -247,7 +247,7 @@ struct ShaderData
             return sky_pass(alpha_test ? Pass_Alphatest : Pass_Opaque);
         }
         case tc::schi: {
-            shader_chicago<V> const* info = shader_data<shader_chicago<V>>();
+            shader_chicago<blam::pc_version_t> const* info = shader_data<shader_chicago<blam::pc_version_t>>();
             using fb                      = chicago::framebuffer_blending;
             switch(info->transparent.blend_function)
             {
@@ -262,8 +262,8 @@ struct ShaderData
             }
         }
         case tc::scex: {
-            shader_chicago_extended<V> const* info =
-                shader_data<shader_chicago_extended<V>>();
+            shader_chicago_extended<blam::pc_version_t> const* info =
+                shader_data<shader_chicago_extended<blam::pc_version_t>>();
             using fb = chicago::framebuffer_blending;
             switch(info->transparent.blend_function)
             {

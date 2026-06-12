@@ -351,8 +351,8 @@ struct ShaderCache
         switch(shader.tag_class)
         {
         case blam::tag_class_t::scex: {
-            shader_chicago_extended<V> const* info =
-                shader.header->as<blam::shader::shader_chicago_extended<V>>();
+            shader_chicago_extended<blam::pc_version_t> const* info =
+                shader.header->as<blam::shader::shader_chicago_extended<blam::pc_version_t>>();
             auto maps = info->maps_4stage.data(magic).value();
             populate_chicago_uv_anims(mat, maps, t);
             break;
@@ -386,8 +386,8 @@ struct ShaderCache
             break;
         }
         case blam::tag_class_t::schi: {
-            shader_chicago<V> const* info =
-                shader.header->as<shader_chicago<V>>();
+            shader_chicago<blam::pc_version_t> const* info =
+                shader.header->as<shader_chicago<blam::pc_version_t>>();
             auto maps = info->maps.data(magic).value();
             populate_chicago_uv_anims(mat, maps, t);
             break;

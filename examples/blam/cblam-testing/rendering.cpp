@@ -159,7 +159,9 @@ struct MeshRenderer
                 for(auto& d : bucket)
                     flat.push_back({sort_centers[ci++], d});
 
-            std::sort(
+            /* stable: parts at equal distance (e.g. all sky model parts,
+             * which share one transform) keep their creation order. */
+            std::stable_sort(
                 flat.begin(), flat.end(), [&](auto const& a, auto const& b) {
                     return glm::distance2(a.first, cam) >
                            glm::distance2(b.first, cam);

@@ -132,7 +132,9 @@ vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offse
     else if(source == TEX_RG8)
         return sample_map(map_id, tex_id, source_rg8, offset);
     else if(source == TEX_A8)
-        return vec4(0, 0, 0, sample_map(map_id, tex_id, source_r8, offset).r);
+        /* D3D A8 samples RGB as 1 (white), alpha from the texture — the
+         * cloud mask multiplies onto the cloud color this way. */
+        return vec4(1, 1, 1, sample_map(map_id, tex_id, source_r8, offset).r);
     else if(source == TEX_Y8)
         return vec4(vec3(sample_map(map_id, tex_id, source_r8, offset).r), 1);
     else if(source == TEX_AY8)
@@ -420,14 +422,21 @@ vec4 chicago_blend(vec4 c1, vec4 c2, vec4 c3, vec4 c4, uint flags)
 
 vec4 shader_chicago()
 {
+    /* schi supports up to 4 maps just like scex — the Xbox sky dome chains
+     * star detail + a blue gradient in maps 2+, which chicago_blend gates on
+     * their layer being assigned. */
     vec2 o1 = mats.instance[frag.instanceId].material.input1.xy;
     vec2 o2 = mats.instance[frag.instanceId].material.input2.xy;
+    vec2 o3 = mats.instance[frag.instanceId].material.input2.zw;
+    vec2 o4 = mats.instance[frag.instanceId].material.input3.xy;
 
     vec4 c1 = get_color_with_offset(0u, o1);
     vec4 c2 = get_color_with_offset(1u, o2);
+    vec4 c3 = get_color_with_offset(2u, o3);
+    vec4 c4 = get_color_with_offset(3u, o4);
 
     uint flags = uint(mats.instance[frag.instanceId].lightmap.meta1);
-    return chicago_blend(c1, c2, vec4(0.0), vec4(0.0), flags);
+    return chicago_blend(c1, c2, c3, c4, flags);
 }
 
 vec4 shader_chicago_extended()
