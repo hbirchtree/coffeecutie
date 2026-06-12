@@ -6,6 +6,9 @@
 #include "blam_tag_index.h"
 #include "blam_vertex.h"
 
+#include <algorithm>
+#include <optional>
+
 namespace blam {
 namespace collision {
 
@@ -89,6 +92,14 @@ struct vertex
 
 static_assert(sizeof(vertex) == 16);
 
+/* Result of a hitscan through the solid-leaf BSP */
+struct ray_hit
+{
+    f32   t; /* fraction along start→end */
+    Vecf3 normal;
+    i32   plane{-1};
+};
+
 struct bsp
 {
     reference<bsp_3d>      nodes_3d;
@@ -99,6 +110,119 @@ struct bsp
     reference<surface>     surfaces;
     reference<edge>        edges;
     reference<vertex>      vertices;
+
+    /* Walk the solid-leaf tree from the root down to the leaf containing
+     * point. Children with the sign bit set are leaves
+     * (index = child & 0x7fffffff); -1 means solid space. Returns nullopt
+     * for solid/outside-the-map points and on malformed data. */
+    inline std::optional<u32> find_leaf(
+        Vecf3 const& point, map_ptr const& magic) const
+    {
+        auto nodes_  = nodes_3d.data(magic);
+        auto planes_ = planes.data(magic);
+        if(nodes_.has_error() || planes_.has_error())
+            return std::nullopt;
+        auto node_span  = nodes_.value();
+        auto plane_span = planes_.value();
+        if(node_span.empty() || plane_span.empty())
+            return std::nullopt;
+        i32 node = 0;
+        for(size_t guard = 0; guard <= node_span.size(); guard++)
+        {
+            if(node == -1)
+                return std::nullopt; /* solid space */
+            if(node < 0)
+                return static_cast<u32>(node) & 0x7fffffffu;
+            if(static_cast<u32>(node) >= node_span.size())
+                return std::nullopt;
+            auto const& n = node_span[node];
+            if(n.plane < 0 ||
+               static_cast<u32>(n.plane) >= plane_span.size())
+                return std::nullopt;
+            auto const& pl = plane_span[n.plane];
+            node = glm::dot(pl.plane, point) >= pl.d ? n.front : n.back;
+        }
+        return std::nullopt;
+    }
+
+    /* Native hitscan (Quake-style recursive segment trace through the
+     * solid-leaf tree). Returns the first empty→solid boundary along
+     * start→end in ray order; leading solid space is skipped, since the
+     * sealed-world exterior is solid and rays may legally start there.
+     * Plane-level precision: gives hit point/normal/plane; surface +
+     * material resolution via the leaf's 2D BSPs is a later refinement. */
+    inline std::optional<ray_hit> raycast(
+        Vecf3 const& start, Vecf3 const& end, map_ptr const& magic) const
+    {
+        auto nodes_  = nodes_3d.data(magic);
+        auto planes_ = planes.data(magic);
+        if(nodes_.has_error() || planes_.has_error())
+            return std::nullopt;
+        auto node_span  = nodes_.value();
+        auto plane_span = planes_.value();
+        if(node_span.empty() || plane_span.empty())
+            return std::nullopt;
+        ray_hit hit{};
+        if(raycast_r(node_span, plane_span, 0, 0.f, 1.f, start, end, hit) ==
+           2)
+            return hit;
+        return std::nullopt;
+    }
+
+    /* Subsegment classification:
+     *   0 = no hit, contains empty space
+     *   1 = entirely solid
+     *   2 = hit recorded in out (first empty→solid crossing in ray order)
+     */
+    template<typename NodeSpan, typename PlaneSpan>
+    static int raycast_r(
+        NodeSpan const&  nodes,
+        PlaneSpan const& planes,
+        i32              node,
+        f32              t0,
+        f32              t1,
+        Vecf3 const&     p0,
+        Vecf3 const&     p1,
+        ray_hit&         out)
+    {
+        if(node == -1)
+            return 1; /* solid space */
+        if(node < 0)
+            return 0; /* empty leaf */
+        if(static_cast<u32>(node) >= nodes.size())
+            return 0;
+        auto const& n = nodes[node];
+        if(n.plane < 0 || static_cast<u32>(n.plane) >= planes.size())
+            return 0;
+        auto const& pl = planes[n.plane];
+        f32         d0 = glm::dot(pl.plane, p0) - pl.d;
+        f32         d1 = glm::dot(pl.plane, p1) - pl.d;
+        if(d0 >= 0.f && d1 >= 0.f)
+            return raycast_r(nodes, planes, n.front, t0, t1, p0, p1, out);
+        if(d0 < 0.f && d1 < 0.f)
+            return raycast_r(nodes, planes, n.back, t0, t1, p0, p1, out);
+        f32   frac   = std::clamp(d0 / (d0 - d1), 0.f, 1.f);
+        f32   tm     = t0 + (t1 - t0) * frac;
+        Vecf3 mid    = p0 + (p1 - p0) * frac;
+        i32   near_c = d0 >= 0.f ? n.front : n.back;
+        i32   far_c  = d0 >= 0.f ? n.back : n.front;
+        int   rn = raycast_r(nodes, planes, near_c, t0, tm, p0, mid, out);
+        if(rn == 2)
+            return 2;
+        int rf = raycast_r(nodes, planes, far_c, tm, t1, mid, p1, out);
+        if(rf == 2)
+            return 2;
+        if(rn == 0 && rf == 1)
+        {
+            /* near side passed through empty space, far side is solid
+             * right at the crossing → surface here */
+            out.t      = tm;
+            out.normal = d0 >= 0.f ? pl.plane : -pl.plane;
+            out.plane  = n.plane;
+            return 2;
+        }
+        return (rn == 1 && rf == 1) ? 1 : 0;
+    }
 };
 
 } // namespace collision
@@ -548,6 +672,44 @@ struct header
     inline reference<vert::face> all_indices() const
     {
         return surfaces;
+    }
+
+    /* Exact point→cluster lookup: walk the collision BSP down to a leaf,
+     * then map the leaf to a cluster via the render leaf array — the
+     * collision leaf index space maps 1:1 onto the render leaves, whose
+     * cluster field resolves to the visibility cluster. This is how the
+     * original engine resolves the camera cluster. Returns nullopt for
+     * solid/outside-the-map points. */
+    inline std::optional<u32> cluster_for_point(
+        Vecf3 const& point, map_ptr const& magic) const
+    {
+        auto coll = collision_header.data(magic, single_value);
+        if(coll.has_error())
+            return std::nullopt;
+        auto leaf_idx = coll.value()->find_leaf(point, magic);
+        if(!leaf_idx)
+            return std::nullopt;
+        auto leaves_ = leaves.data(magic);
+        if(leaves_.has_error())
+            return std::nullopt;
+        auto leaf_span = leaves_.value();
+        if(*leaf_idx >= leaf_span.size())
+            return std::nullopt;
+        i16 cluster = leaf_span[*leaf_idx].cluster;
+        if(cluster < 0)
+            return std::nullopt;
+        return static_cast<u32>(cluster);
+    }
+
+    /* Hitscan against the structure BSP's collision tree, see
+     * collision::bsp::raycast. */
+    inline std::optional<collision::ray_hit> raycast(
+        Vecf3 const& start, Vecf3 const& end, map_ptr const& magic) const
+    {
+        auto coll = collision_header.data(magic, single_value);
+        if(coll.has_error())
+            return std::nullopt;
+        return coll.value()->raycast(start, end, magic);
     }
 };
 

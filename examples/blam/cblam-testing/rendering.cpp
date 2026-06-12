@@ -800,8 +800,8 @@ struct MeshRenderer
 
             if(!bsp_state.has_value() || !mod_state.has_value())
                 return;
-            loading_state->loaded_shaders = bsp_state.value() && mod_state.value()
-                ? LoadingStatus::loaded
+            loading_state->loaded_shaders = bsp_state.value() && mod_state.value() 
+                ? LoadingStatus::loaded 
                 : LoadingStatus::in_progress;
             loading_state->check_all_loaded(true);
             if(loading_state->loading)
@@ -986,8 +986,8 @@ struct MeshRenderer
         /* Allocate the material instances from the material pool */
         for(Pass& pass : m_bsp)
         {
-            auto material_size    = align_for_gpu_padding(pass.required_storage());
             auto transparent_size = align_for_gpu_padding(pass.required_transparent_storage());
+            auto material_size    = align_for_gpu_padding(pass.required_storage());
             pass.material_buffer =
                 m_resources.material_store->slice(materials_ptr, material_size);
             pass.material_mapping =
@@ -996,8 +996,8 @@ struct MeshRenderer
                 m_resources.transparent_store->slice(transparent_ptr, transparent_size);
             pass.transparent_mapping =
                 pass.transparent_buffer.template buffer_cast<materials::transparent_data>();
-            materials_ptr    += material_size;
-            transparent_ptr  += transparent_size;
+            materials_ptr   += material_size;
+            transparent_ptr += transparent_size;
         }
 
         /* Write the static material information, animations are updated later

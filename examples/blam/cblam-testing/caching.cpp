@@ -34,6 +34,7 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
     BSPItem out;
     out.mesh        = &section;
     out.tag         = &(*index.find(bsp.tag));
+    out.bsp_magic   = bsp_magic;
     out.section_idx = next_section_idx++;
 
     if(!out.tag->valid())
@@ -207,33 +208,25 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         out.pvs_row_stride = actual_row;
     }
 
-    /* Collision BSP tree + render leaves for exact point→cluster lookup.
-     * Collision leaf indices map 1:1 onto the render leaf array, whose
-     * cluster field resolves to the visibility cluster. */
+    /* Collision surface mesh for the physics subsystem; tree queries
+     * (point→cluster, hitscan) go through section/bsp_magic on demand. */
     if(auto collision =
            section.collision_header.data(bsp_magic, blam::single_value);
        collision.has_value())
     {
         auto const& coll = *collision.value();
-        if(auto nodes = coll.nodes_3d.data(bsp_magic); nodes.has_value())
-            out.tree_nodes = nodes.value();
-        if(auto planes = coll.planes.data(bsp_magic); planes.has_value())
-            out.tree_planes = planes.value();
         if(auto surfaces = coll.surfaces.data(bsp_magic); surfaces.has_value())
             out.coll_surfaces = surfaces.value();
         if(auto edges = coll.edges.data(bsp_magic); edges.has_value())
             out.coll_edges = edges.value();
         if(auto verts = coll.vertices.data(bsp_magic); verts.has_value())
             out.coll_vertices = verts.value();
+        cDebug(
+            "BSP tree: {} nodes, {} planes, {} render leaves",
+            coll.nodes_3d.count,
+            coll.planes.count,
+            section.leaves.count);
     }
-    if(auto render_leaves = section.leaves.data(bsp_magic);
-       render_leaves.has_value())
-        out.render_leaves = render_leaves.value();
-    cDebug(
-        "BSP tree: {} nodes, {} planes, {} render leaves",
-        out.tree_nodes.size(),
-        out.tree_planes.size(),
-        out.render_leaves.size());
     {
         u32 total = 0, degenerate = 0;
         for(auto const& cluster : out.clusters)

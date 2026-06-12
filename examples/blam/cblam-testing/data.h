@@ -141,16 +141,17 @@ struct LoadingStatus : compo::SubsystemBase
     loading_t                      loaded_map{none};
     loading_t                      loaded_bitmaps{none};
     loading_t                      loaded_sounds{none};
+    loading_t                      loaded_shaders{none};
     bool                           init_started{false};
     std::promise<void>             finished{};
 
-    void check_all_loaded()
+    void check_all_loaded(bool quiet = false)
     {
         using namespace Coffee::Logging;
         bool            old_loading  = loading;
         libc_types::i16 old_progress = progress;
         if(loaded_map == loaded && loaded_bitmaps == loaded &&
-           loaded_sounds == loaded)
+           loaded_sounds == loaded && loaded_shaders == loaded)
         {
             if(loading == true)
                 finished.set_value();
@@ -158,12 +159,13 @@ struct LoadingStatus : compo::SubsystemBase
             progress = -1;
             app_info->setState(comp_app::interfaces::AppInfo::loaded);
         }
-        cDebug(
-            "Re-evaluating loading state: loading={} -> {} progress={} -> {}",
-            old_loading,
-            loading,
-            old_progress,
-            progress);
+        if(!quiet)
+            cDebug(
+                "Re-evaluating loading state: loading={} -> {} progress={} -> {}",
+                old_loading,
+                loading,
+                old_progress,
+                progress);
     }
 };
 
