@@ -33,6 +33,8 @@ using namespace semantic;
 using namespace semantic;
 using namespace libc_types::size_literals;
 
+namespace posix_proc = platform::common::posix::proc;
+
 std::string read_output(platform::common::posix::fd_t stream)
 {
     size_t numBytes = 0;
@@ -103,7 +105,7 @@ i32 crash_main(i32, cstring_w*)
 #endif
 
     cDebug("Spawning child");
-    auto spawnInfo = proc::spawn<const char*>({args.at(0), args, workingDir});
+    auto spawnInfo = posix_proc::spawn<const char*>({args.at(0), args, workingDir});
 
     if(auto e = fd::close(STDIN_FILENO))
         Throw(posix_runtime_error(*e));
@@ -156,11 +158,11 @@ i32 crash_main(i32, cstring_w*)
     cDebug("Waiting...");
     if(exitCode == -1)
     {
-        proc::wait_for(proc::wait_by::any, ec, 0, &exitCode);
+        posix_proc::wait_for(proc::wait_by::any, ec, 0, &exitCode);
         C_ERROR_CHECK(ec);
     }
 
-    cDebug("Child exited with: {0}", proc::code_to_string(exitCode));
+    cDebug("Child exited with: {0}", posix_proc::code_to_string(exitCode));
 
     if(exitCode == 0)
         return 0;
