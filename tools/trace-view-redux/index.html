@@ -77,6 +77,7 @@ body.win98 #toolbar { background: #c0c0c0; border-bottom: 2px solid #808080; gap
 body.win98 #toolbar button { background: #c0c0c0; color: #000; border: 1px solid; border-color: #fff #444 #444 #fff; box-shadow: inset 1px 1px #fff, inset -1px -1px #888; border-radius: 0; font-size: 11px; padding: 2px 6px; }
 body.win98 #toolbar button:hover { background: #c0c0c0; }
 body.win98 #toolbar button:active, body.win98 #toolbar button.active { border-color: #444 #fff #fff #444; box-shadow: inset 1px 1px #888; background: #c0c0c0; padding: 3px 5px 1px 7px; }
+body.win98 #search-input { background: #fff; color: #000; border: 2px solid; border-color: #888 #fff #fff #888; border-radius: 0; padding: 2px 4px; width: 150px; }
 body.win98 #info { color: #000; background: #c0c0c0; border: 1px solid; border-color: #888 #fff #fff #888; padding: 2px 6px; margin: 2px 0; }
 body.win98 #main-area { background: #008080; }
 body.win98 #details-inner, body.win98 #bottom-pane { background: #c0c0c0; color: #000; border-left: 2px solid #fff; border-top: 2px solid #fff; box-shadow: 1px 1px #000; }
@@ -99,6 +100,7 @@ body.win98 #tooltip strong { color: #000; }
   <button id="btn-fit">Fit</button>
   <button id="btn-reset-scroll">Top</button>
   <button id="btn-details">Details</button>
+  <input type="text" id="search-input" placeholder="Search events..." spellcheck="false">
   <span id="info">Drop a trace JSON file or click Open File &nbsp;·&nbsp; Scroll to pan vertically &nbsp;·&nbsp; Ctrl+Scroll to zoom &nbsp;·&nbsp; Drag to pan horizontally</span>
 </div>
 <div id="main-area">
@@ -207,6 +209,7 @@ const S = {
   sy:0,               // scroll y in px
   drag:false,dragX:0,dragVs:0,
   hover:null,selected:null,
+  search:'',
 };
 
 let cv, cx, raf=false;
@@ -436,6 +439,9 @@ function drawThread({track:t,h},y,W,tw,sc,t2x){
     cx.fillStyle=s.open?(isWin98?'#ff0000':'#4a3030'):bg;
     cx.fillRect(rx,ry,rw,SH-1);
     if(S.selected===s){ cx.strokeStyle=isWin98?'#000':'#fff'; cx.lineWidth=1.5; cx.strokeRect(rx,ry,rw,SH-1); }
+    if(S.search && s.name.toLowerCase().includes(S.search)){
+      cx.strokeStyle=isWin98?'#f0f':'#0ff'; cx.lineWidth=2; cx.strokeRect(rx,ry,rw,SH-1);
+    }
     if(pw>6){
       cx.fillStyle=s.open?(isWin98?'#fff':'#aaa'):textClr(bg);
       cx.font='11px ui-monospace,monospace';
@@ -482,6 +488,9 @@ function drawThread({track:t,h},y,W,tw,sc,t2x){
     cx.strokeStyle='#ffd700'; cx.lineWidth=1;
     cx.strokeRect(rx,ry,rw,SH-1);
     if(S.selected===ins){ cx.strokeStyle=isWin98?'#000':'#fff'; cx.lineWidth=1.5; cx.strokeRect(rx,ry,rw,SH-1); }
+    if(S.search && ins.name.toLowerCase().includes(S.search)){
+      cx.strokeStyle=isWin98?'#f0f':'#0ff'; cx.lineWidth=2; cx.strokeRect(rx,ry,rw,SH-1);
+    }
     if(rw>20){
       cx.fillStyle=textClr(bg);
       cx.font='11px ui-monospace,monospace'; cx.textBaseline='middle';
@@ -1127,6 +1136,12 @@ window.addEventListener('load',()=>{
   document.getElementById('btn-details-close').onclick=toggleDetails;
   document.getElementById('bp-close').onclick=()=>{S.selected=null;updateBottomPane();sched();};
 
+  const si = document.getElementById('search-input');
+  si.oninput = e => {
+    S.search = e.target.value.toLowerCase().trim();
+    sched();
+  };
+
   document.body.ondragover=e=>e.preventDefault();
   document.body.ondrop=e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)loadFile(f);};
 
@@ -1280,6 +1295,7 @@ window.addEventListener('load',()=>{
     else if(e.key==='ArrowUp'){ S.sy=Math.max(0,S.sy-60); sched(); }
     else if(e.key==='ArrowDown'){ S.sy+=60; clamp(); sched(); }
     else if(e.key==='f'||e.key==='F'||e.key==='Home'){ S.vs=S.minTs; S.ve=S.maxTs; clamp(); sched(); }
+    else if(e.key==='/' && document.activeElement !== si){ e.preventDefault(); si.focus(); }
   });
 
   window.addEventListener('resize',resize);
