@@ -24,6 +24,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
     bool           last_found{false};
     i16            last_sky_idx{-1};
     u32            frame_counter{0};
+    Vecf3          last_camera_pos{};
     BSPItem const* pvs_bsp{nullptr};
     u32            pvs_cluster{0};
     generation_idx_t
@@ -103,6 +104,28 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         BSPItem const*   current_bsp{nullptr};
         u32              current_cluster{0};
         generation_idx_t current_bsp_id{};
+
+        /* Teleports (dummy-plug camera events, debug warps) cross no trigger
+         * volume; on a large discontinuity re-resolve the section from the
+         * camera position. Continuous movement — including noclip through
+         * rock — keeps trigger-only semantics. */
+        f32 camera_jump = glm::distance(camera_pos, last_camera_pos);
+        last_camera_pos = camera_pos;
+        if(camera_jump > 5.f)
+        {
+            for(auto& [id, item] : bsp_cache->m_cache)
+                if(item.valid() &&
+                   item.find_cluster_tree(camera_pos).has_value())
+                {
+                    if(item.section_idx != bsp_cache->active_section)
+                        cDebug(
+                            "BSP teleport: section {} → {}",
+                            bsp_cache->active_section,
+                            item.section_idx);
+                    bsp_cache->active_section = item.section_idx;
+                    break;
+                }
+        }
 
         /* Structure BSP switching: the active section changes only when the
          * camera crosses a bsp-switch trigger volume whose source is the

@@ -271,7 +271,7 @@ void create_resources(compo::EntityContainer& e)
     const u32 per_frame_bufs =
         api.workarounds().bugs.adreno && !compile_info::platform::is_emscripten
             ? 3
-            : 1;
+            : 2;
 
     // For access in the vertex shader, UBOs are better
     resources.model_matrix_store = api.alloc_revolving_buffer(

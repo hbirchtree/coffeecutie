@@ -52,7 +52,7 @@ std::string find_gpu_devfreq()
         auto name = read_sysfs_line(entry.path() / "name");
         std::string node = name && !name->empty() ? *name
                                                   : entry.path().filename().string();
-        if(node.size() > 4 && node.compare(node.size() - 4, 4, ".gpu") == 0)
+        if(node.contains(".gpu"))
             return entry.path().string();
     }
     return {};

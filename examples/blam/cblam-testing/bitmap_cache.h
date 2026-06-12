@@ -398,9 +398,25 @@ struct BitmapCache
         case pix_fmt::RGB565:
             return 0x04000000;
         case pix_fmt::R8:
-            return 0x05000000;
+            /* Xbox luminance/alpha formats all upload as R8; the shader
+             * needs the semantic to reconstruct rgb/alpha (A8=000A,
+             * Y8=LLL1, AY8=LLLL). P8 (palettized bump) stays raw. */
+            switch(bitm.image.mip->format)
+            {
+            case blam::bitm::format_t::A8:
+                return 0x09000000;
+            case blam::bitm::format_t::Y8:
+                return 0x0A000000;
+            case blam::bitm::format_t::AY8:
+                return 0x0B000000;
+            default:
+                return 0x05000000;
+            }
         case pix_fmt::RG8:
-            return 0x06000000;
+            /* A8Y8 = luminance + alpha in r/g */
+            return bitm.image.mip->format == blam::bitm::format_t::A8Y8
+                       ? 0x0C000000
+                       : 0x06000000;
         case pix_fmt::RGBA4:
             return 0x07000000;
         case pix_fmt::RGBA8:

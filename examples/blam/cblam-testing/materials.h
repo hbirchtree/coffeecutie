@@ -94,13 +94,19 @@ struct alignas(16) transparent_data
         u32 color_in;
         /* alpha_in:  same packing using blam::shader::color_input enum */
         u32 alpha_in;
-        /* outputs:   color_out bits [0..16] | alpha_out bits [16..31]
+        /* outputs:   color_out bits [0..16] | alpha_out bits [17..31]
          *   color: ab_dst[4] ab_fn[1] cd_dst[4] cd_fn[1] sum_dst[4] omap[3]
-         *   alpha: ab_dst[4] cd_dst[4] sum_dst[4] omap[3]            */
+         *          = 17 bits, so alpha MUST start at bit 17 — packing it at
+         *          16 bleeds alpha ab_dst's LSB into the color output map
+         *   alpha: ab_dst[4] cd_dst[4] sum_dst[4] omap[3] = 15 bits */
         u32 outputs;
         u32 flags;  /* stage_flags_t */
-        Vecf4 color0; /* constant_color0: animated tint (lower/upper midpoint) */
-        Vecf4 color1; /* constant_color1: static tint */
+        Vecf4 color0;   /* constant_color0: animated tint (time-animated on
+                           CPU; = lower bound when a_out controls the anim) */
+        Vecf4 color0_up; /* constant_color0 upper bound, for the
+                            a_out_controls_color0_anim flag (0x4): the shader
+                            mixes color0..color0_up by the scratch alpha */
+        Vecf4 color1;   /* constant_color1: static tint */
 
         STATICINLINE stage_t from_blam(
             blam::shader::shader_transparent::stage_t const& s)
@@ -144,21 +150,33 @@ struct alignas(16) transparent_data
                 (static_cast<u32>(s.alpha.ab_cd_mux_sum) & 0xFu) << 8 |
                 (static_cast<u32>(s.alpha.output_map)    & 0x7u) << 12;
 
+            /* Tag colors are ARGB floats (alpha first) — reorder to RGBA.
+             * Verified against 'light dim blue' c1=(0,.55,.60,.84) → blue. */
+            auto argb = [](Vecf4 const& c) -> Vecf4 {
+                return Vecf4(c.y, c.z, c.w, c.x);
+            };
             /* A constant color of all-zero is "unset"; as a combiner
              * multiplier that would nuke the stage to black. Treat it as
              * white (identity) so e.g. holo curtains keep their texture. */
-            auto ident = [](Vecf4 c) -> Vecf4 {
+            auto ident = [&argb](Vecf4 c) -> Vecf4 {
                 return (c.x == 0.f && c.y == 0.f && c.z == 0.f && c.w == 0.f)
                            ? Vecf4(1.f)
-                           : c;
+                           : argb(c);
             };
+            bool a_out_anim =
+                (static_cast<u32>(s.flags) & 0x4u) != 0; /* per-pixel anim */
+            bool unset = s.color0_lower == Vecf4(0) && s.color0_upper == Vecf4(0);
             return {
-                .color_in = color_in,
-                .alpha_in = alpha_in,
-                .outputs  = color_out | (alpha_out << 16),
-                .flags    = static_cast<u32>(s.flags),
-                .color0   = ident((s.color0_lower + s.color0_upper) * 0.5f),
-                .color1   = ident(s.color1),
+                .color_in  = color_in,
+                .alpha_in  = alpha_in,
+                .outputs   = color_out | (alpha_out << 17),
+                .flags     = static_cast<u32>(s.flags),
+                .color0    = unset ? Vecf4(1)
+                             : a_out_anim
+                                 ? argb(s.color0_lower)
+                                 : argb((s.color0_lower + s.color0_upper) * 0.5f),
+                .color0_up = unset ? Vecf4(1) : argb(s.color0_upper),
+                .color1    = ident(s.color1),
             };
         }
     };
@@ -166,11 +184,13 @@ struct alignas(16) transparent_data
     u32     num_stages;
     u32     blend_mode; /* chicago::framebuffer_blending */
     u32     padding[2];
-    stage_t stages[4];
+    /* 7 stages: the NV2A runs up to 8 combiner stages and tags use them
+     * (generator shield = 7); truncating to 4 cut off the final compose. */
+    stage_t stages[7];
 };
 
-static_assert(sizeof(transparent_data::stage_t) == 48);
-static_assert(sizeof(transparent_data) == 208);
+static_assert(sizeof(transparent_data::stage_t) == 64);
+static_assert(sizeof(transparent_data) == 464);
 
 /* TODO: Fix this on MinGW */
 // static_assert(sizeof(transparent_data::stage_t) == 3 * sizeof(u32));

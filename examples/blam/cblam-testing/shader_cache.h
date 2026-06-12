@@ -1,5 +1,8 @@
 #pragma once
 
+#include <set>
+#include <tuple>
+
 #include "bitmap_cache.h"
 #include "caching_item.h"
 #include "data.h"
@@ -69,12 +72,138 @@ struct ShaderCache
         shader_transparent const* info =
             shader.header->as<shader_transparent>();
 
-        auto stages     = info->stages.data(magic).value();
-        mat.num_stages  = static_cast<u32>(std::min(stages.size(), size_t(4)));
+        auto stages_ = info->stages.data(magic);
+        if(stages_.has_error())
+        {
+            mat.num_stages = 0;
+            return;
+        }
+        auto stages     = stages_.value();
+        mat.num_stages  = static_cast<u32>(std::min(stages.size(), size_t(7)));
         mat.blend_mode  = static_cast<u32>(info->transparent.blend_function);
         for(u32 i = 0; i < mat.num_stages; i++)
             mat.stages[i] = materials::transparent_data::stage_t::from_blam(stages[i]);
+        /* constant_color0's RGB is GLOBAL: every stage's constant_color0
+         * input references stage 0's animated constant color (the shield's
+         * blue), while the ALPHA stays per-stage (each stage's own animated
+         * weight — the shield's stage 3 idles at 0, leaving v1 pure blue).
+         * constant_color1 is fully per-stage. */
+        for(u32 i = 1; i < mat.num_stages; i++)
+        {
+            mat.stages[i].color0 = Vecf4(
+                Vecf3(mat.stages[0].color0), mat.stages[i].color0.w);
+            mat.stages[i].color0_up = Vecf4(
+                Vecf3(mat.stages[0].color0_up), mat.stages[i].color0_up.w);
+        }
+    }
 
+    /* Periodic factor for a sotr stage's constant_color0 animation
+     * (color0_func/color0_period on the stage). Same waveforms as
+     * color_anim_factor. period==0 → no animation → keep the midpoint
+     * that from_blam wrote. */
+    f32 transparent_color0_factor(
+        blam::shader::shader_transparent::stage_t const& s, f32 const& time)
+    {
+        using namespace blam::shader;
+        switch(s.color0_func)
+        {
+        case animation_function::one:
+            return 1.f;
+        case animation_function::zero:
+            return 0.f;
+        case animation_function::jitter:
+            return random.frand();
+        default:
+            break;
+        }
+        if(s.color0_period == 0.f)
+            return 0.5f;
+        f32 phase = glm::fract(time / s.color0_period);
+        switch(s.color0_func)
+        {
+        case animation_function::slide:
+        case animation_function::slide_variable:
+            return 1.f - glm::abs(2.f * phase - 1.f);
+        case animation_function::cosine:
+        case animation_function::cosine_variable:
+            return glm::cos(phase * glm::two_pi<f32>()) * 0.5f + 0.5f;
+        default:
+            return 0.5f;
+        }
+    }
+
+    /* Per-frame: animate each stage's constant_color0 between its
+     * lower/upper bounds (the generator shield's shimmer lives here —
+     * a static midpoint saturates its alpha chain to a white blob). */
+    void update_transparent_animations(
+        materials::transparent_data& mat,
+        generation_idx_t const&      shader_id,
+        time_point const&            time)
+    {
+        using namespace blam::shader;
+
+        if(!shader_id.valid())
+            return;
+        auto shader_it = find(shader_id);
+        if(shader_it == end())
+            return;
+        ShaderItem const& shader = shader_it->second;
+        if(shader.tag_class != blam::tag_class_t::sotr || !shader.valid())
+            return;
+        shader_transparent const* info =
+            shader.header->as<shader_transparent>();
+        auto stages_ = info->stages.data(magic);
+        if(stages_.has_error())
+            return;
+        auto stages = stages_.value();
+
+        double t64 = std::chrono::duration_cast<stl_types::Chrono::seconds_f64>(
+                         time.time_since_epoch())
+                         .count();
+        f32 t = static_cast<f32>(std::fmod(t64, 3600.0));
+
+        /* constant_color0 is global, defined by stage 0 (see
+         * populate_transparent_material). */
+        if(mat.num_stages == 0 || stages.empty())
+            return;
+        auto const& s0 = stages[0];
+        auto        is_zero = [](Vecf4 const& c) {
+            return c.x == 0.f && c.y == 0.f && c.z == 0.f && c.w == 0.f;
+        };
+        /* All-zero bounds = unset constant; from_blam substituted identity
+         * white, keep it. */
+        if(is_zero(s0.color0_lower) && is_zero(s0.color0_upper))
+            return;
+        f32 f;
+        if(static_cast<u32>(s0.flags) & 0x4u)
+            /* a_out_controls_color0_anim: driven by the object's exported
+             * function (e.g. generator power), which we don't simulate.
+             * Stand-in: steady low value — the generator shield reads as
+             * violet there (blue constant blended slightly toward its red
+             * counterpart); higher values shift it pink. */
+            f = 0.15f;
+        else
+            f = transparent_color0_factor(s0, t);
+        Vecf4 c = glm::mix(s0.color0_lower, s0.color0_upper, f);
+        /* tag colors are ARGB → RGBA; RGB is global (stage 0), alpha is each
+         * stage's own animated weight. */
+        Vecf3 global_rgb(c.y, c.z, c.w);
+        if(static_cast<u32>(s0.flags) & 0x4u)
+            /* Part of the function stand-in: soften the constant toward
+             * white so fully-constant-lit areas (shield spots where both
+             * mask and scratch alpha drop out) read pale instead of
+             * fully saturated. */
+            global_rgb = glm::mix(global_rgb, Vecf3(1.f), 0.35f);
+        /* mat lives in the mapped GPU buffer and may not be populated yet
+         * on the first frame an instance appears (update runs before
+         * populate) — clamp instead of trusting num_stages. */
+        u32 n = std::min(mat.num_stages, 7u);
+        for(u32 i = 0; i < n && i < stages.size(); i++)
+        {
+            Vecf4 own = glm::mix(
+                stages[i].color0_lower, stages[i].color0_upper, f);
+            mat.stages[i].color0 = Vecf4(global_rgb, own.x);
+        }
     }
 
     // color_animation::anim has no source field in tag data; function is at
@@ -226,6 +355,34 @@ struct ShaderCache
                 shader.header->as<blam::shader::shader_chicago_extended<V>>();
             auto maps = info->maps_4stage.data(magic).value();
             populate_chicago_uv_anims(mat, maps, t);
+            break;
+        }
+        case blam::tag_class_t::sotr: {
+            /* Per-map UV scroll for the combiner: packed map0/1 into
+             * inputs[0], map2/3 into inputs[1] (input2/input3 in GLSL). */
+            shader_transparent const* info =
+                shader.header->as<shader_transparent>();
+            auto maps_ = info->maps.data(magic);
+            if(maps_.has_error())
+                break;
+            auto  maps = maps_.value();
+            Vecf4 uv01(0), uv23(0);
+            for(u32 i = 0; i < maps.size() && i < 4u; i++)
+            {
+                Vecf2  uv  = uv_animation(maps[i].animation, t);
+                Vecf4& dst = i < 2 ? uv01 : uv23;
+                if(i % 2 == 0)
+                {
+                    dst.x = uv.x;
+                    dst.y = uv.y;
+                } else
+                {
+                    dst.z = uv.x;
+                    dst.w = uv.y;
+                }
+            }
+            mat.material.inputs[0] = uv01;
+            mat.material.inputs[1] = uv23;
             break;
         }
         case blam::tag_class_t::schi: {

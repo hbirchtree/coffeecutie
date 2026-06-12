@@ -1178,6 +1178,10 @@ struct MeshRenderer
             auto instance_id = draw.instances.offset + track.model_id.instance;
             update_animations(
                 material_of(smodel, instance_id), smodel.shader, time);
+            if(static_cast<size_t>(instance_id) <
+               pass.transparent_mapping.size())
+                shader_cache.update_transparent_animations(
+                    pass.transparent_of(instance_id), smodel.shader, time);
         }
 
         for(auto& ent : p.select(ObjectBsp))
@@ -1191,6 +1195,12 @@ struct MeshRenderer
             i32 instance_offset = bsp.draw.data.front().instances.offset;
             update_animations(
                 material_of(bsp, instance_offset), bsp.shader, time);
+            Pass& pass = m_bsp[bsp.current_pass];
+            if(instance_offset >= 0 &&
+               static_cast<size_t>(instance_offset) <
+                   pass.transparent_mapping.size())
+                shader_cache.update_transparent_animations(
+                    pass.transparent_of(instance_offset), bsp.shader, time);
         }
     }
 

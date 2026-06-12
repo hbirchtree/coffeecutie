@@ -43,24 +43,26 @@ struct Material
     MaterialData material;
 };
 
-/* Mirrors materials::transparent_data::stage_t (48 bytes each) */
+/* Mirrors materials::transparent_data::stage_t (64 bytes each) */
 struct TransparentStage
 {
     uint  color_in;  /* 4×(5-bit input + 3-bit mapping) */
     uint  alpha_in;  /* same, blam::shader::color_input enum  */
-    uint  outputs;   /* color_out[0..15] | alpha_out[16..31]  */
+    uint  outputs;   /* color_out[0..16] | alpha_out[17..31]  */
     uint  flags;
-    vec4  color0;    /* constant_color0 (animated tint midpoint) */
+    vec4  color0;    /* constant_color0 (CPU-animated; lower bound when
+                        a_out_controls_color0_anim) */
+    vec4  color0_up; /* constant_color0 upper bound for per-pixel anim */
     vec4  color1;    /* constant_color1 (static tint) */
 };
 
-/* Mirrors materials::transparent_data (208 bytes) */
+/* Mirrors materials::transparent_data (464 bytes) */
 struct TransparentData
 {
     uint           num_stages;
     uint           blend_mode; /* chicago::framebuffer_blending */
     uint           pad0, pad1;
-    TransparentStage stages[4];
+    TransparentStage stages[7];
 };
 
 layout(binding = 1, std140) uniform MaterialProperties

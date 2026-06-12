@@ -1208,7 +1208,13 @@ void ShaderCache<V>::populate_material(
     }
     case tag_class_t::sotr: {
         shader_transparent const* info = shader.header->as<shader_transparent>();
-        auto maps = info->maps.data(magic).value();
+        auto maps_ = info->maps.data(magic);
+        if(maps_.has_error())
+        {
+            mat.material.material = materials::id::sotr;
+            break;
+        }
+        auto maps = maps_.value();
 
         for(auto i : range<>(maps.size()))
         {
