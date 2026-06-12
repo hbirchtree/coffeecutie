@@ -4,6 +4,7 @@
 #include "map_marker.h"
 #include "networking.h"
 #include "occluder.h"
+#include "physics.h"
 #include "rendering.h"
 #include "resource_creation.h"
 #include "script_component.h"
@@ -313,6 +314,7 @@ i32 blam_main()
             set_resource_labels(e);
             alloc_renderer(e);
             alloc_occluder(e);
+            alloc_physics(e);
             alloc_ui_system(e);
             alloc_scripting(e);
             alloc_networking(e);

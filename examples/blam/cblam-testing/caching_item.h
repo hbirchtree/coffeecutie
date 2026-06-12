@@ -244,6 +244,12 @@ struct BSPItem
     Span<blam::collision::plane const>  tree_planes;
     Span<blam::bsp::leaf const>         render_leaves;
 
+    /* Collision surface mesh (winged-edge), same collision BSP source;
+     * consumed by the physics subsystem for triangle soup generation. */
+    Span<blam::collision::surface const> coll_surfaces;
+    Span<blam::collision::edge const>    coll_edges;
+    Span<blam::collision::vertex const>  coll_vertices;
+
     inline bool valid() const
     {
         return mesh;
@@ -501,6 +507,82 @@ struct BSPItem
             node = glm::dot(pl.plane, point) >= pl.d ? n.front : n.back;
         }
         return std::nullopt;
+    }
+
+    /* Native hitscan against the collision BSP (Quake-style recursive
+     * segment trace through the solid-leaf tree). Returns the first
+     * empty→solid boundary along start→end. Plane-level precision: gives
+     * hit point/normal/plane; surface+material resolution via the leaf's
+     * 2D BSPs is a later refinement. */
+    struct ray_hit
+    {
+        f32   t; /* fraction along start→end */
+        Vecf3 normal;
+        i32   plane{-1};
+    };
+
+    inline std::optional<ray_hit> raycast(
+        Vecf3 const& start, Vecf3 const& end) const
+    {
+        if(tree_nodes.empty() || tree_planes.empty())
+            return std::nullopt;
+        ray_hit hit{};
+        if(raycast_r(0, 0.f, 1.f, start, end, hit) == 2)
+            return hit;
+        return std::nullopt;
+    }
+
+    /* Subsegment classification:
+     *   0 = no hit, contains empty space (leading solid is skipped — the
+     *       sealed-world exterior is solid, so rays may legally start there)
+     *   1 = entirely solid
+     *   2 = hit recorded in out (first empty→solid crossing in ray order)
+     */
+    inline int raycast_r(
+        i32          node,
+        f32          t0,
+        f32          t1,
+        Vecf3 const& p0,
+        Vecf3 const& p1,
+        ray_hit&     out) const
+    {
+        if(node == -1)
+            return 1; /* solid space */
+        if(node < 0)
+            return 0; /* empty leaf */
+        if(static_cast<u32>(node) >= tree_nodes.size())
+            return 0;
+        auto const& n = tree_nodes[node];
+        if(n.plane < 0 || static_cast<u32>(n.plane) >= tree_planes.size())
+            return 0;
+        auto const& pl = tree_planes[n.plane];
+        f32         d0 = glm::dot(pl.plane, p0) - pl.d;
+        f32         d1 = glm::dot(pl.plane, p1) - pl.d;
+        if(d0 >= 0.f && d1 >= 0.f)
+            return raycast_r(n.front, t0, t1, p0, p1, out);
+        if(d0 < 0.f && d1 < 0.f)
+            return raycast_r(n.back, t0, t1, p0, p1, out);
+        f32 frac = glm::clamp(d0 / (d0 - d1), 0.f, 1.f);
+        f32 tm   = t0 + (t1 - t0) * frac;
+        Vecf3 mid = p0 + (p1 - p0) * frac;
+        i32 near_c = d0 >= 0.f ? n.front : n.back;
+        i32 far_c  = d0 >= 0.f ? n.back : n.front;
+        int rn = raycast_r(near_c, t0, tm, p0, mid, out);
+        if(rn == 2)
+            return 2;
+        int rf = raycast_r(far_c, tm, t1, mid, p1, out);
+        if(rf == 2)
+            return 2;
+        if(rn == 0 && rf == 1)
+        {
+            /* near side passed through empty space, far side is solid
+             * right at the crossing → surface here */
+            out.t      = tm;
+            out.normal = d0 >= 0.f ? pl.plane : -pl.plane;
+            out.plane  = n.plane;
+            return 2;
+        }
+        return (rn == 1 && rf == 1) ? 1 : 0;
     }
 
     inline std::optional<std::pair<u32, u32>> find_cluster(

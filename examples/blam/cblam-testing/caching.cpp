@@ -219,6 +219,12 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             out.tree_nodes = nodes.value();
         if(auto planes = coll.planes.data(bsp_magic); planes.has_value())
             out.tree_planes = planes.value();
+        if(auto surfaces = coll.surfaces.data(bsp_magic); surfaces.has_value())
+            out.coll_surfaces = surfaces.value();
+        if(auto edges = coll.edges.data(bsp_magic); edges.has_value())
+            out.coll_edges = edges.value();
+        if(auto verts = coll.vertices.data(bsp_magic); verts.has_value())
+            out.coll_vertices = verts.value();
     }
     if(auto render_leaves = section.leaves.data(bsp_magic);
        render_leaves.has_value())

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "caching.h"
+#include <blam/volta/blam_collision.h>
 #include "components.h"
 #include "data.h"
 #include "map_marker.h"

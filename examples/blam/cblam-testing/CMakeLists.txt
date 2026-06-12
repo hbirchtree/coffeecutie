@@ -2,6 +2,10 @@ set(BLAM_HALO_VERSION "pc_version_t" CACHE STRING "")
 set(BLAMG_EMBEDDED_REPORT_URL "" CACHE STRING "")
 
 find_package(GameNetworkingSockets CONFIG)
+option(BUILD_PHYSICS "Enable Bullet physics support" ON)
+if(BUILD_PHYSICS)
+    find_package(Bullet CONFIG QUIET)
+endif()
 include(ResourcePackaging)
 
 set(BUNDLED_LIBS)
@@ -32,6 +36,7 @@ coffee_application(
         map_loading.cpp
         networking.cpp
         occluder.cpp
+        physics.cpp
         rendering.cpp
         resource_creation.cpp
         script_component.cpp
@@ -82,6 +87,11 @@ if(TARGET ImGui)
 endif()
 if(TARGET OAF)
     target_link_libraries(BlamGraphics PUBLIC OAF)
+endif()
+if(BUILD_PHYSICS AND BULLET_FOUND)
+    target_compile_definitions(BlamGraphics PRIVATE -DFEATURE_ENABLE_BULLET3=1)
+    target_link_libraries(BlamGraphics PRIVATE ${BULLET_LIBRARIES})
+    target_include_directories(BlamGraphics PRIVATE ${BULLET_INCLUDE_DIR})
 endif()
 
 # coffee_application(

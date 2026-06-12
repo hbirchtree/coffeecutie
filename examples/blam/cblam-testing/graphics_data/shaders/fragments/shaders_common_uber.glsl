@@ -732,7 +732,13 @@ vec4 shader_model()
     float illum_factor = multi.g;
     float color_change = multi.b;
 #else
-    float specular_factor = multi.r;
+    // TODO: Figure out which one is really specular
+    // Guerilla only lies, it says R is specular
+    // but some important models don't get shiny that way
+    // Some models have correct specular in R/B, others in A
+    // Master Chief has A as specular
+    // Old-style marines have specular in R or B
+    float specular_factor = multi.a;
     float illum_factor = multi.g;
     float color_change = multi.a;
 #endif

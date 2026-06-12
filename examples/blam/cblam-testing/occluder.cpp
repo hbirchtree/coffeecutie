@@ -61,8 +61,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             }
         }
 
-        auto to_bsp_space = [](Vecf3 const& p) -> Vecf3 { return p; };
-
         Span<Vecf3> portal_colors = resources->debug_line_colors->map<Vecf3>(0);
         Span<Vecf3> portal_pos    = resources->debug_lines->map<Vecf3>(
             sizeof(Vecf3) * 6, sizeof(Vecf3) * (18 + 16 * 7));
@@ -384,7 +382,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         };
         const auto classify_model =
             [&](BSPItem const* bsp, Model const& model) -> model_vis {
-            auto pos = to_bsp_space(model.position);
+            auto pos = model.position;
             if(auto mc = bsp->find_cluster(pos); mc.has_value())
             {
                 if(!cluster_ok(mc->first))
@@ -568,7 +566,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                             break;
                         auto   ref   = p.template ref<Proxy>(ent);
                         Model& model = ref.template get<Model>();
-                        auto   bsp_p = to_bsp_space(model.position);
+                        auto   bsp_p = model.position;
                         auto   mc    = current_bsp->find_cluster(bsp_p);
                         cDebug(
                             "  model[{}] scenario=({:.1f},{:.1f},{:.1f})"
