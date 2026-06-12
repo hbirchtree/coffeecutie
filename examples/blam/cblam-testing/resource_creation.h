@@ -12,7 +12,7 @@
 using namespace libc_types::size_literals;
 
 constexpr bool lowspec_hardware =
-    compile_info::platform::is_32bit && !compile_info::platform::is_emscripten;
+    compile_info::platform::is_32bit;
 
 struct legacy_memory_budget
 {

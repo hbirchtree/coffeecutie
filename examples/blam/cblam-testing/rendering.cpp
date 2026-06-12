@@ -790,6 +790,24 @@ struct MeshRenderer
         else
             m_resources.offscreen->clear(Vecf4(0, 0, 0, 1));
 
+        // Check if shaders are compiled
+        do {
+            LoadingStatus* loading_state;
+            p.subsystem(loading_state);
+
+            auto bsp_state = m_resources.bsp_pipeline->check_async_ready();
+            auto mod_state = m_resources.model_pipeline->check_async_ready();
+
+            if(!bsp_state.has_value() || !mod_state.has_value())
+                return;
+            loading_state->loaded_shaders = bsp_state.value() && mod_state.value()
+                ? LoadingStatus::loaded
+                : LoadingStatus::in_progress;
+            loading_state->check_all_loaded(true);
+            if(loading_state->loading)
+                return;
+        } while(false);
+
         /* to_f32 gives seconds-since-epoch (~1.7e9). At that magnitude
          * float32 precision is ~128 s, so adjacent frames are identical
          * and UV animations freeze. Wrap to a shorter cycle. */

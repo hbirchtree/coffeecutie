@@ -61,7 +61,8 @@ using MeshRendererManifest = compo::SubsystemManifest<
         BSPCache<V>,
         ShaderCache<V>,
         RenderingParameters,
-        ScreenClear>,
+        ScreenClear,
+        LoadingStatus>,
     type_list_t<comp_app::GraphicsFramebuffer>>;
 
 using LoadingScreenManifest = compo::SubsystemManifest<
