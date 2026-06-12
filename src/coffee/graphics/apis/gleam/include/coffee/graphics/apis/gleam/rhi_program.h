@@ -1,10 +1,14 @@
 #pragma once
 
+#include "glw/enums/ProgramPropertyARB.h"
+#include "glw/enums/ShaderParameterName.h"
+#include "peripherals/identify/compiler/unreachable.h"
 #include "rhi_debug.h"
 #include "rhi_features.h"
 #include "rhi_translate.h"
 #include "rhi_versioning.h"
 
+#include <future>
 #include <peripherals/error/result.h>
 
 #include <glw/extensions/KHR_parallel_shader_compile.h>
@@ -256,21 +260,11 @@ struct program_t
                 stage_info->m_handle    = cmd::create_shader_programv(
                     convert::to<group::shader_type>(stage_type),
                     {std::string_view(shader_data.data(), shader_data.size())});
-
-                if(!m_features.khr.parallel_shader_compile)
-                {
-                    auto log = detail::program_log(stage_info->m_handle);
-
-                    if(stage_info->m_handle == 0)
-                        return stl_types::failure(compile_error_t{log});
-                }
-
+                auto log = detail::program_log(stage_info->m_handle);
+                if(stage_info->m_handle == 0)
+                    return stl_types::failure(compile_error_t{log});
                 cmd::active_shader_program(m_handle, stage_info->m_handle);
             }
-
-            if(m_features.khr.parallel_shader_compile)
-                return stl_types::success(
-                    compile_log_t{"Waiting with KHR_parallel_shader_compile", 1});
 
             cmd::validate_program_pipeline(m_handle);
 
@@ -322,59 +316,103 @@ struct program_t
                        res.has_error())
                         return res.error();
                 } else
-                    m_async_waiting = true;
+                {
+                    // KHR_parallel_shader_compile stops at two points:
+                    // - shader compile
+                    // - link time
+                    // We need to avoid attach now and wait for shader compile to finish
+                    Coffee::Profiler::DeepProfile("Started async shader compile");
+                    continue;
+                }
 
                 cmd::attach_shader(m_handle, stage_info->m_handle);
             }
-
-            cmd::link_program(m_handle);
-
-            if(!m_features.khr.parallel_shader_compile)
+            if(m_features.khr.parallel_shader_compile)
             {
-                return validate_program();
-            } else
-                return stl_types::success(
-                    compile_log_t{
-                        "Waiting with KHR_parallel_shader_compile", 1});
+                m_async_state = async_compile_state::shaders_compiling;
+                m_async_waiting = true;
+                return compile_log_t{"Waiting for KHR_parallel_shader_compile", 1};
+            }
+            cmd::link_program(m_handle);
+            return validate_program();
         }
     }
 
     stl_types::result<bool, compile_error_t> check_async_ready()
     {
         if(!m_features.khr.parallel_shader_compile)
-            return stl_types::success(true);
+            return true;
 #if defined(GL_KHR_parallel_shader_compile)
         if(m_error_state)
             return stl_types::failure(compile_error_t{});
         if(m_features.separable_programs)
         {
-
-            return stl_types::success(false);
+            // There's no documentation on separable programs + pipelines
+            // It will always stall at CreateShaderProgram()
+            unreachable();
         } else
         {
-            i32 status = 0;
-            cmd::get_programiv(
-                m_handle,
-                gl::group::program_property_arb::completion_status_khr,
-                semantic::SpanOne(status));
-            if(status == GL_FALSE)
-                return stl_types::success(false);
-            std::string error_log;
-            if(auto res = validate_program(); res.has_value())
+            if(m_async_state == async_compile_state::none)
             {
-                m_async_waiting = false;
-                return stl_types::success(true);
-            } else
-                error_log = std::get<0>(res.error());
-            for(auto const& stage : m_stages)
-            {
-                auto [stage_type, stage_info] = stage;
-                if(auto res = validate_shader(stage_info.get());
-                   res.has_error())
-                    error_log += "\nShader log:" + std::get<0>(res.error());
+                unreachable();
             }
-            m_error_state = true;
-            return stl_types::failure(compile_error_t{error_log});
+            if(m_async_state == async_compile_state::shaders_compiling)
+            {
+                for(auto const& [stage, stage_info] : m_stages)
+                {
+                    i32 status{};
+                    cmd::get_shaderiv(
+                        stage_info->m_handle,
+                        group::shader_parameter_name::completion_status_khr,
+                        SpanOne(status));
+                    if(status == GL_FALSE)
+                        return false;
+                    if(auto res = validate_shader(stage_info.get());
+                       res.has_error())
+                    {
+                        Coffee::Profiler::DeepProfile("Async shader compile failed");
+                        m_error_state = true;
+                        return res.error();
+                    }
+                    Coffee::Profiler::DeepProfile("Async shader compile finished");
+                    cmd::attach_shader(m_handle, stage_info->m_handle);
+                }
+                Coffee::Profiler::DeepProfile("Async program link started");
+                cmd::link_program(m_handle);
+                m_async_state = async_compile_state::program_linking;
+            }
+            if(m_async_state == async_compile_state::program_linking)
+            {
+                i32 status = 0;
+                cmd::get_programiv(
+                    m_handle,
+                    gl::group::program_property_arb::completion_status_khr,
+                    semantic::SpanOne(status));
+                if(status == GL_FALSE)
+                    return false;
+                std::string error_log;
+                if(auto res = validate_program(); res.has_value())
+                {
+                    Coffee::Profiler::DeepProfile("Async program link finished");
+                    m_async_waiting = false;
+                    m_async_state = async_compile_state::linked;
+                    return true;
+                } else
+                    error_log = std::get<0>(res.error());
+                Coffee::Profiler::DeepProfile("Async program link failed");
+                for(auto const& stage : m_stages)
+                {
+                    auto [stage_type, stage_info] = stage;
+                    if(auto res = validate_shader(stage_info.get());
+                       res.has_error())
+                        error_log += "\nShader log:" + std::get<0>(res.error());
+                }
+                m_error_state = true;
+                return stl_types::failure(compile_error_t{error_log});
+            }
+            if(m_async_state == async_compile_state::linked)
+                return true;
+            unreachable();
         }
 #else
         return false;
@@ -387,6 +425,13 @@ struct program_t
     hnd                m_handle;
     bool               m_async_waiting{false};
     bool               m_error_state{false};
+    enum class async_compile_state
+    {
+        none,
+        shaders_compiling,
+        program_linking,
+        linked,
+    } m_async_state{async_compile_state::none};
 
     std::vector<std::pair<std::string_view, u32>> m_attribute_names;
     /*! Buffer location + queried size*/

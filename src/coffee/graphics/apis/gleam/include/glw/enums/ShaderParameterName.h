@@ -10,6 +10,9 @@ enum class shader_parameter_name : u32
 #ifdef GL_COMPILE_STATUS
     compile_status = GL_COMPILE_STATUS,
 #endif
+#ifdef GL_COMPLETION_STATUS_KHR
+    completion_status_khr = GL_COMPLETION_STATUS_KHR,
+#endif
 #ifdef GL_DELETE_STATUS
     delete_status = GL_DELETE_STATUS,
 #endif

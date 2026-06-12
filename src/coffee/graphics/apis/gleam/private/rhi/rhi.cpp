@@ -1237,6 +1237,14 @@ optional<error> api::load(load_options_t options)
     }
 #endif
 
+#if defined(GL_KHR_parallel_shader_compile)
+    if(!compile_info::platform::is_emscripten &&
+        m_features.program.khr.parallel_shader_compile)
+    {
+        gl::khr::parallel_shader_compile::max_shader_compiler_threads(0xFFFFFFFF);
+    }
+#endif
+
     return std::nullopt;
 }
 

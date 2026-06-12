@@ -2,9 +2,11 @@
 
 #ifdef GL_KHR_parallel_shader_compile
 #include "../enums/ProgramPropertyARB.h"
+#include "../enums/ShaderParameterName.h"
 
 namespace gl::khr::parallel_shader_compile {
 using gl::group::program_property_arb;
+using gl::group::shader_parameter_name;
 
 namespace values {
 constexpr u32 max_shader_compiler_threads = 0x91B0;

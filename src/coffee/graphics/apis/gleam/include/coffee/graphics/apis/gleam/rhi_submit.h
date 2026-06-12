@@ -116,6 +116,10 @@ inline optional<tuple<error, std::string_view>> api::submit(
             usage().draw.failed_draws++;
             return std::make_tuple(
                 error::async_shader_compile_failed, "program linking failed");
+        } else if(!res.value())
+        {
+            // True means it's done compiling, false means we're waiting
+            return std::nullopt;
         }
     }
 #endif
