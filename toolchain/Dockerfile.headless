@@ -1,0 +1,56 @@
+# Headless runtime image for BlamGraphics (and the other GLeam examples).
+#
+# It carries only the runtime libraries needed to create an EGL/OpenGL context
+# against a DRI render node (or the software rasteriser) — no compilers, no X
+# server. The binary and its build-tree libraries (libstdc++, libbacktrace …)
+# are bind-mounted in at run time by remote-run.py via LD_LIBRARY_PATH, so they
+# are deliberately NOT installed here.
+#
+# Build (default Ubuntu 24.04):
+#     docker build -f Dockerfile.headless -t coffeecutie-headless:24.04 .
+#
+# Build against Ubuntu 26.04:
+#     docker build -f Dockerfile.headless \
+#         --build-arg UBUNTU_VERSION=26.04 \
+#         -t coffeecutie-headless:26.04 .
+#
+# Then point a docker device in .targets.json at the tag, e.g.
+#     "image": "coffeecutie-headless:24.04"
+#
+# Run via:  ./remote-run.py <docker-device> BlamGraphics
+
+ARG UBUNTU_VERSION=24.04
+FROM ubuntu:${UBUNTU_VERSION}
+
+# Avoid interactive tzdata/keyboard prompts during apt.
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Runtime GL stack for headless rendering:
+#   libegl1          glvnd EGL loader (libEGL.so.1, the binary's NEEDED dep)
+#   libgles2         GLES entry points used by the GLeam GLES backend
+#   libegl-mesa0     Mesa EGL platform driver (surfaceless / GBM display)
+#   libgbm1          GBM — buffer management for the DRI render node path
+#   libgl1-mesa-dri  Mesa DRI drivers (iris/radeonsi/… + swrast software fallback)
+#   libglx-mesa0     GLX provider, pulled in by some EGL setups
+# Mesa pulls libdrm2/libglapi/libexpat1/etc. transitively.
+# libatomic1 is a NEEDED dep of the buildroot-compiled binary and is not in
+# the Ubuntu base image (libstdc++/libgcc come from the bind-mounted build lib/).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        libegl1 \
+        libgles2 \
+        libegl-mesa0 \
+        libgbm1 \
+        libgl1-mesa-dri \
+        libglx-mesa0 \
+        libatomic1 \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Headless EGL defaults. Render to a DRI device with no window/display.
+# remote-run.py passes the device env with `-e`, which overrides these, so a
+# device can switch to software rendering with LIBGL_ALWAYS_SOFTWARE=1.
+ENV EGL_PLATFORM=surfaceless \
+    LIBGL_ALWAYS_SOFTWARE=0
+
+# No ENTRYPOINT: remote-run.py supplies the bind-mounted binary path + args.
