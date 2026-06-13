@@ -36,6 +36,14 @@ function(RESOURCE_DIR_PACKAGE)
         message(ERROR "No source dir specified for RESOURCE_DIR_PACKAGE of ${RPKG_TARGET}")
     endif()
 
+    if(NOT "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "")
+        set(ARCH_ARG --arch ${CMAKE_SYSTEM_PROCESSOR})
+    endif()
+
+    if(ANDROID AND NOT "${ANDROID_NATIVE_API_LEVEL}" STREQUAL "")
+        set(API_ARG --api ${ANDROID_NATIVE_API_LEVEL})
+    endif()
+
     set(ARG_LIST
         #
         --path ${RPKG_SOURCE_DIR}
@@ -55,6 +63,10 @@ function(RESOURCE_DIR_PACKAGE)
         --program glslang=${GLSLANG_PROGRAM}
         #
         --target ${CMAKE_SYSTEM_NAME}
+        #
+        ${ARCH_ARG}
+        #
+        ${API_ARG}
         #
         --build-mode Release
         #

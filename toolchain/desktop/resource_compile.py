@@ -49,6 +49,18 @@ DEFAULT_TEX_VARIANTS = {
 DEFAULT_TEX_MATRIX = {
     'Android': [
         'astc', # Mobile only
+        'etc1', # For old PowerVR/Mali chips
+        'etc2',
+        'pvrtc1', # PowerVR only
+        'raw',
+    ],
+    'Android:armv7-a': [
+        'etc1', # For old PowerVR/Mali chips
+        'etc2',
+        'pvrtc1', # PowerVR only
+    ],
+    'Android:arm64': [
+        'astc', # Mobile only
         'bc1', # Only Tegra seems to support BCn
         'bc2', # ...
         'bc3', # ...
@@ -56,12 +68,10 @@ DEFAULT_TEX_MATRIX = {
         'bc5', # ...
         'bc6', # ...
         'bc7', # ... but it supports it GOOD!
-        'etc1', # For old PowerVR/Mali chips
         'etc2',
         'pvrtc1', # PowerVR only
-        'raw',
     ],
-    'Darwin': ['bc1', 'bc2', 'bc3', 'raw'], # booo
+    'Darwin': ['bc1', 'bc2', 'bc3', 'raw'],
     'Emscripten': [
         'astc',
         'bc1',
@@ -71,12 +81,33 @@ DEFAULT_TEX_MATRIX = {
         'etc2',
     ],
     'iOS': [
-
         'pvrtc1',
         'raw',
     ],
-    'Linux': [
+    'Linux:armv7l': [
         'astc', # For Mali
+        'etc1', # Last resort
+        'etc2', # Baseline OpenGL ES 3.0
+        'pvrtc1', # For PowerVR
+    ],
+    'Linux:armv8': [
+        'astc', # For Mali
+        'etc2', # Baseline OpenGL ES 3.0
+        'pvrtc1', # For PowerVR
+        'raw',
+    ],
+    'Linux:x86_64': [
+        'bc1',
+        'bc2',
+        'bc3',
+        'bc4',
+        'bc5',
+        'bc6',
+        'bc7',
+        'etc2', # ETC2 is supported, but not well
+        'raw',
+    ],
+    'Linux': [
         'bc1',
         'bc2',
         'bc3',
@@ -85,7 +116,6 @@ DEFAULT_TEX_MATRIX = {
         'bc6',
         'bc7',
         'etc2',
-        'pvrtc1', # For PowerVR
         'raw',
     ],
     'Windows': [
@@ -102,10 +132,17 @@ DEFAULT_TEX_MATRIX = {
 }
 
 DEFAULT_SHADER_MATRIX = {
-    'Android': ['spv', 'es:', 'core:460'], # core:460 for Shield
+    'Android:8': ['es:200'], # Android 2.2
+    'Android:18': ['es:200', 'es:300'], # Android 4.3
+    'Android:21': ['es:200', 'es:300', 'es:310'], # Android 5.0
+    'Android:24': ['es:200', 'es:300', 'es:310', 'es:320'], # Android 7.0
+    'Android:30': ['es:300', 'es:310', 'es:320', 'core:460'], # NVIDIA Shield runs Android 11
+    'Android:31': ['es:300', 'es:310', 'es:320'], # Android 12+ doesn't need to generate GL 4.6 shaders
     'Darwin': ['core:410'],
     'Emscripten': ['es:300'],
     'iOS': ['es:300'],
+    'Linux:armv7l': ['es:200', 'es:300'],
+    'Linux:armv8': ['es:'],
     # Linux, omitted because it supports all
     'Windows': ['spv', 'core:'],
 }
@@ -150,23 +187,68 @@ def run(program, *args):
         raise RunError(process_args, ret.stdout.decode(), ret.stderr.decode())
 
 
+def _get_best_match(matrix, target, arch, api):
+    # 1. Try target:arch:api (with API floor)
+    if arch != 'none' and api != 0:
+        best_api = -1
+        best_val = None
+        for key, val in matrix.items():
+            parts = key.split(':')
+            if len(parts) == 3 and parts[0] == target and parts[1] == arch and parts[2].isdigit():
+                k_api = int(parts[2])
+                if api >= k_api and k_api > best_api:
+                    best_api = k_api
+                    best_val = val
+        if best_val is not None:
+            return best_val
+
+    # 2. Try target:api (with API floor) - Higher priority than pure arch
+    if api != 0:
+        best_api = -1
+        best_val = None
+        for key, val in matrix.items():
+            parts = key.split(':')
+            if len(parts) == 2 and parts[0] == target and parts[1].isdigit():
+                k_api = int(parts[1])
+                if api >= k_api and k_api > best_api:
+                    best_api = k_api
+                    best_val = val
+        if best_val is not None:
+            return best_val
+
+    # 3. Try target:arch (exact)
+    if arch != 'none':
+        key = f'{target}:{arch}'
+        if key in matrix:
+            return matrix[key]
+
+    # 4. Try target (exact)
+    if target in matrix:
+        return matrix[target]
+
+    return None
+
+
 def compile_shaders(
         values: dict,
         cache_directory: str,
         root_directory: str,
         out_directory: str,
         target: str,
+        arch: str,
+        api: int,
         build_mode: str,
         extra_dependencies: list):
     files = values['files']
     variants = values['variants']
     assemblies = values['assemblies']
     opt_level = '--O0'
-    matrix = DEFAULT_SHADER_MATRIX
-    if 'matrix' in values:
-        matrix = values['matrix']
-    if target in matrix: # values['matrix']
-        allowed_variants = [ x for x in matrix[target] ]
+
+    allowed_variants = _get_best_match(values.get('matrix', {}), target, arch, api)
+    if allowed_variants is None:
+        allowed_variants = _get_best_match(DEFAULT_SHADER_MATRIX, target, arch, api)
+
+    if allowed_variants is not None:
         variants = [ x
             for x in values['variants'] if len([ v for v in allowed_variants if x.startswith(v) ]) > 0
         ]
@@ -237,13 +319,20 @@ def encode_textures(
         root_directory: str,
         out_directory: str,
         target: str,
+        arch: str,
+        api: int,
         build_mode: str,
         extra_dependencies: list):
-    variants = DEFAULT_TEX_VARIANTS # values['variants']
-    if 'matrix' in values and target in DEFAULT_TEX_MATRIX: # values['matrix']
+    variants = dict(DEFAULT_TEX_VARIANTS) # values['variants']
+
+    allowed_variants = _get_best_match(values.get('matrix', {}), target, arch, api)
+    if allowed_variants is None:
+        allowed_variants = _get_best_match(DEFAULT_TEX_MATRIX, target, arch, api)
+
+    if allowed_variants is not None:
         to_remove = []
         for v in variants:
-            if v not in DEFAULT_TEX_MATRIX[target]:
+            if v not in allowed_variants:
                 to_remove.append(v)
         for v in to_remove:
             del variants[v]
@@ -327,6 +416,8 @@ def copy_files(
         root_directory: str,
         out_directory: str,
         target: str,
+        arch: str,
+        api: int,
         build_mode: str,
         extra_dependencies: list):
     for file in values:
@@ -356,6 +447,8 @@ if __name__ == '__main__':
     parser.add_argument('--cache', dest='cache_dir', required=True)
     parser.add_argument('-P', '--program', dest='programs', action='append')
     parser.add_argument('-t', '--target', dest='target', required=True)
+    parser.add_argument('-a', '--arch', dest='arch', default='none')
+    parser.add_argument('-A', '--api', dest='api', type=int, default=0)
     parser.add_argument('-b', '--build-mode', dest='build_mode', required=True)
     parser.add_argument('-j', '--jobs', dest='jobs', type=int,
                         default=cpu_count() or 1,
@@ -386,6 +479,8 @@ if __name__ == '__main__':
                 root_directory=root_dir,
                 out_directory=args.output,
                 target=args.target,
+                arch=args.arch,
+                api=args.api,
                 build_mode=args.build_mode,
                 extra_dependencies=[resource_def])
 

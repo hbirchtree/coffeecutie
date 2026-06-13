@@ -49,11 +49,6 @@
                 "shaders/scenery.vert",
                 "shaders/scenery.frag"
             ]
-        },
-        "matrix": {
-            "Android": ["es:", "core:460"],
-            "Darwin": ["core:410"],
-            "Emscripten": ["es:300"]
         }
     },
     "textures": {
@@ -66,7 +61,7 @@
             },
             {
                 "source": "textures/meow.svg",
-                "formats": ["ra"],
+                "formats": ["ra", "rgb"],
                 "mipmap_range": [512, 512],
                 "punchthrough_color": "0xFF00FF"
             },
@@ -79,6 +74,7 @@
         ],
         "variants": {
             "astc": ["rgba"],
+            "etc1": ["rgb"],
             "etc2": ["rgba", "ra"],
             "bc7": ["rgba"],
             "bc5": ["rg", "ra"],
