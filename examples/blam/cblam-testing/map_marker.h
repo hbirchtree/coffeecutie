@@ -37,6 +37,38 @@ struct DebugMarkers : compo::SubsystemBase
             color);
     }
 
+    /* Runtime-sized variant of create_marker: writes a line strip of
+     * points.size() vertices. Used for collision-mesh surface loops whose
+     * vertex count is not known at compile time. */
+    DebugDraw create_loop(
+        semantic::Span<Vecf3 const> points, Vecf3 const& color)
+    {
+        u32 n = static_cast<u32>(points.size());
+        if(n == 0 || portal_ptr + n > portal_buffer.size() ||
+           portal_color_ptr >= portal_color_buffer.size())
+        {
+            cWarning("DebugMarkers: portal buffer full, dropping loop");
+            return {};
+        }
+        auto verts = portal_buffer.subspan(portal_ptr, n);
+        std::copy(points.begin(), points.end(), verts.begin());
+        portal_color_buffer[portal_color_ptr] = color;
+        DebugDraw draw                        = {
+                                   .data =
+                {
+                                           .arrays =
+                        {
+                                                   .count  = n,
+                                                   .offset = portal_ptr,
+                        },
+                },
+                                   .color_ptr = portal_color_ptr,
+        };
+        portal_ptr += n;
+        portal_color_ptr++;
+        return draw;
+    }
+
     template<size_t N>
     DebugDraw create_marker(
         std::array<Vecf3, N> const& points, Vecf3 const& color)
