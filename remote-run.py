@@ -95,6 +95,7 @@ Flags:
 """
 
 import argparse
+from collections import defaultdict
 import concurrent.futures
 import fnmatch
 import glob
@@ -960,7 +961,7 @@ def print_config_list(config):
 
 def check_ssh(hostname):
     if not hostname:
-        return False, None, None
+        return False, None, None, None
     try:
         # Query architecture, kernel version, and optionally distro info
         cmd = 'uname -m && uname -r && (lsb_release -ds 2>/dev/null || echo "")'
@@ -969,18 +970,43 @@ def check_ssh(hostname):
              '-o', 'StrictHostKeyChecking=accept-new', hostname, cmd],
             capture_output=True, text=True, timeout=10
         )
+        health_cmd = 'grep . /sys/class/hwmon/*/name /sys/class/hwmon/*/temp*_input'
+        health_res = subprocess.run(
+            ['ssh', '-o', 'ConnectTimeout=5', '-o', 'BatchMode=yes',
+             '-o', 'StrictHostKeyChecking=accept-new', hostname, health_cmd],
+            capture_output=True, text=True, timeout=10
+        )
         if res.returncode == 0:
             lines = res.stdout.strip().splitlines()
             arch = lines[0] if len(lines) > 0 else None
             kernel = lines[1] if len(lines) > 1 else None
             distro = lines[2] if len(lines) > 2 else ""
+            health = health_res.stdout.strip().splitlines()
+            health = [x[len('/sys/class/hwmon/'):] for x in health]
+            health_bucket = defaultdict(list)
+            for stat in health:
+                sensor, data = stat.split('/')
+                health_bucket[sensor].append(data)
+            health = {}
+            for sensor, data in health_bucket.items():
+                name = None
+                values = []
+                for prop in data:
+                    key, value = prop.split(':')
+                    if key == 'name':
+                        name = value
+                    else:
+                        values.append(value)
+                if len(values) == 0:
+                    continue
+                health[name] = values
             
             # Use distro description if available, otherwise kernel version
             version = distro if distro else kernel
-            return True, arch, version
-        return False, None, None
+            return True, arch, version, health if health else None
+        return False, None, None, None
     except (subprocess.TimeoutExpired, OSError):
-        return False, None, None
+        return False, None, None, None
 
 
 def check_adb(hostname):
@@ -1057,13 +1083,14 @@ def run_connectivity_check(config):
         hostname = device.get('hostname', '')
 
         if dev_type == 'android' and not hostname:
-            return (name, hostname, expected_arch, "no_hostname", None, None)
+            return (name, hostname, expected_arch, "no_hostname", None, None, None)
 
         status = False
         actual_arch = None
         version = None
+        health = None
         if dev_type == 'linux':
-            status, actual_arch, version = check_ssh(hostname)
+            status, actual_arch, version, health = check_ssh(hostname)
         elif dev_type == 'android':
             status, actual_arch, version = check_adb(hostname)
         elif dev_type == 'docker':
@@ -1074,7 +1101,7 @@ def run_connectivity_check(config):
             expected_arch = expected_arch.split('-')[0]
             actual_arch = expected_arch
 
-        return (name, hostname, expected_arch, status, actual_arch, version)
+        return (name, hostname, expected_arch, status, actual_arch, version, health)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_device = {executor.submit(check_device, name, dev): name for name, dev in devices.items()}
@@ -1087,9 +1114,10 @@ def run_connectivity_check(config):
     name_w = max((len(r[0]) for r in results), default=0)
     host_w = max((len(r[1] or '(no hostname)') for r in results), default=0)
     arch_w = 12 # Usually plenty for aarch64/x86_64
+    vers_w = 32
 
-    print(f"{' ':1}  {'NAME':<{name_w}}  {'HOSTNAME/IMAGE':<{host_w}}  {'REMOTE ARCH':<{arch_w}}  {'VERSION'}")
-    for name, host, expected, status, actual, version in results:
+    print(f"{' ':1}  {'NAME':<{name_w}}  {'HOSTNAME/IMAGE':<{host_w}}  {'REMOTE ARCH':<{arch_w}}  {'VERSION':<{vers_w}}  HEALTH")
+    for name, host, expected, status, actual, version, health in results:
         if status == "no_hostname":
             icon = "×"
         elif status == "image_missing":
@@ -1128,8 +1156,19 @@ def run_connectivity_check(config):
                 arch_str = f"{actual} (!= {expected})"
             
             ver_str = version or "?"
+        health_str = None
+        if health is None:
+            health_str = '-'
+        elif len(health) == 1:
+            health_str = f'thermal={float([v for _, v in health.items()][0][0]) / 1000}'
+        else:
+            health_str = ' '.join([
+                f'{k}={float(v[0]) / 1000}'
+                for k, v in health.items()
+                if 'cpu' in k or 'gpu' in k or 'soc' in k
+            ])
 
-        print(f"{icon:1}  {name:<{name_w}}  {(host or '(no hostname)'):<{host_w}}  {arch_str:<{arch_w}}  {ver_str}")
+        print(f"{icon:1}  {name:<{name_w}}  {(host or '(no hostname)'):<{host_w}}  {arch_str:<{arch_w}}  {ver_str:<{vers_w}}  {health_str}")
 
 
 def main():
