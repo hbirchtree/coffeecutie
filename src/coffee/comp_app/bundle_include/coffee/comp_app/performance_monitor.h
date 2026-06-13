@@ -23,7 +23,8 @@ struct PerformanceMonitor
         BatteryProvider,
         NetworkStatProvider,
         ScreenshotProvider,
-        GPUStatProvider>;
+        GPUStatProvider,
+        SensorStatProvider>;
     using proxy_type = detail::restricted::proxy_t<PerformanceMonitor>;
 
     time_point m_nextTime{};

@@ -1,5 +1,7 @@
+#include <coffee/comp_app/services.h>
 #include <coffee/comp_app/stat_providers.h>
 #include <coffee/comp_app/subsystems.h>
+#include <coffee/core/debug/formatting.h>
 
 #include <platforms/sysinfo.h>
 
@@ -8,6 +10,8 @@
 #include <fstream>
 #include <sstream>
 #endif
+
+using libc_types::f32;
 
 namespace comp_app {
 
@@ -68,8 +72,17 @@ std::optional<fs::path> find_gpu_thermal()
     for(auto const& entry : fs::directory_iterator(base, ec))
     {
         auto type = read_sysfs_line(entry.path() / "type");
-        if(type && type->find("gpu") != std::string::npos)
+        if(type && type->contains("gpu"))
             return entry.path() / "temp";
+    }
+    base = "/sys/class/hwmon";
+    if(!fs::is_directory(base, ec))
+        return std::nullopt;
+    for(auto const& entry : fs::directory_iterator(base, ec))
+    {
+        auto type = read_sysfs_line(entry.path() / "name");
+        if(type && type->contains("gpu"))
+            return entry.path() / "temp1_input";
     }
     return std::nullopt;
 }
@@ -265,12 +278,12 @@ void SysGPUStats::load(entity_container&, app_error&)
 #endif
 }
 
-std::optional<libc_types::u32> SysGPUStats::mem_resident()
+std::optional<libc_types::u64> SysGPUStats::mem_resident()
 {
     return std::nullopt;
 }
 
-std::optional<libc_types::u32> SysGPUStats::mem_total()
+std::optional<libc_types::u64> SysGPUStats::mem_total()
 {
     return std::nullopt;
 }
@@ -293,7 +306,8 @@ std::optional<libc_types::u8> SysGPUStats::usage()
 #endif
 }
 
-std::map<std::string_view, libc_types::f32> SysGPUStats::stats_numeric()
+std::multimap<std::string_view, interfaces::SensorStatProvider::reading_t>
+SysGPUStats::stats_numeric()
 {
     /* Do NOT clear m_numeric: the profiler keys metrics by string_view into
      * these keys and serializes them at export, so the backing strings must
@@ -303,15 +317,15 @@ std::map<std::string_view, libc_types::f32> SysGPUStats::stats_numeric()
         return {};
     fs::path base(m_devfreq);
     if(auto cur = read_sysfs_i64(base / "cur_freq"))
-        m_numeric["GPU clock current (Hz)"] = static_cast<libc_types::f32>(*cur);
+        m_numeric["GPU clock current (Hz)"] = *cur;
     if(auto max = read_sysfs_i64(base / "max_freq"))
-        m_numeric["GPU clock max (Hz)"] = static_cast<libc_types::f32>(*max);
+        m_numeric["GPU clock max (Hz)"] = *max;
     if(auto min = read_sysfs_i64(base / "min_freq"))
-        m_numeric["GPU clock min (Hz)"] = static_cast<libc_types::f32>(*min);
+        m_numeric["GPU clock min (Hz)"] = *min;
 #endif
-    std::map<std::string_view, libc_types::f32> out;
+    std::multimap<std::string_view, reading_t> out;
     for(auto const& stat : m_numeric)
-        out[stat.first] = stat.second;
+        out.insert({stat.first, {.value = stat.second}});
     return out;
 }
 
@@ -327,5 +341,72 @@ SysGPUStats::stats_description()
         };
     return out;
 }
+
+#if defined(COFFEE_LINUX)
+std::multimap<std::string_view, interfaces::SensorStatProvider::reading_t>
+SysHWMonStats::stats_numeric()
+{
+    std::multimap<std::string_view, reading_t> out;
+    libc_types::u32                            i{};
+    for(auto const& [sensor, paths] : m_stats)
+    {
+        for(auto const& path : paths)
+        {
+            if(path.contains("/temp"))
+                out.insert(
+                    {sensor,
+                     {
+                         .value = read_sysfs_i64(fs::path(path)).value_or(0)
+                                  / 1000,
+                         .index       = i++,
+                         .index_label = sensor,
+                     }});
+            break;
+        }
+    }
+    return out;
+}
+
+std::map<std::string_view, interfaces::SensorStatProvider::stats_desc_t> SysHWMonStats::stats_description()
+{
+    using platform::profiling::MetricVariant;
+    std::map<std::string_view, stats_desc_t> out;
+    for(auto const& stat : m_stats)
+        out[stat.first] = stats_desc_t{
+            .type = MetricVariant::Value,
+            .is_percentage = false,
+        };
+    return out;
+}
+
+void SysHWMonStats::load(entity_container&, app_error&)
+{
+    // Enumerate /sys/class/hwmon/* nodes
+    std::error_code ec;
+    fs::path        base{"/sys/class/hwmon"};
+    if(!fs::is_directory(base, ec))
+        return;
+    for(auto const& entry : fs::directory_iterator(base, ec))
+    {
+        auto name = read_sysfs_line(entry.path() / "name");
+        if(!name)
+            continue;
+        std::vector<std::string> sensor_nodes;
+        for(auto const& sensor : fs::directory_iterator(entry.path(), ec))
+        {
+            if(sensor.is_directory())
+                continue;
+            auto fname = sensor.path().string();
+            if(!fname.ends_with("_input"))
+                continue;
+            sensor_nodes.push_back(fname);
+        }
+        if(sensor_nodes.empty())
+            continue;
+        Coffee::Logging::cDebug("Enumerated hwmon sensor: {} => {}", name, sensor_nodes[0]);
+        m_stats[*name] = sensor_nodes;
+    }
+}
+#endif
 
 } // namespace comp_app

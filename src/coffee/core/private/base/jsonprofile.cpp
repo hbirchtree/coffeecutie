@@ -1,3 +1,4 @@
+#include "coffee/core/debug/formatting.h"
 #include <gsl/span>
 #include <platforms/profiling/jsonprofile.h>
 
@@ -311,7 +312,21 @@ extern void CaptureMetrics(
     profiler.write(BytesConst::ofContainer(out));
 }
 
-void CaptureMetrics(
+void CaptureMetrics_i64(
+    profiling::ThreadState&   tdata,
+    std::string_view          name,
+    MetricVariant             variant,
+    i64                       value,
+    std::chrono::microseconds ts,
+    u32                       index,
+    std::string_view          index_name)
+{ 
+    using stl_types::cast_pod;
+    CaptureMetrics(
+        tdata, name, variant, cast_pod(value), ts, index, index_name);
+}
+
+void CaptureMetrics_f32(
     profiling::ThreadState&   tdata,
     std::string_view          name,
     MetricVariant             variant,

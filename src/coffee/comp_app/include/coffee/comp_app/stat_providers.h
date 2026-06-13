@@ -1,5 +1,6 @@
 #pragma once
 
+#include "coffee/comp_app/app_error.h"
 #include "services.h"
 
 #include <chrono>
@@ -38,10 +39,10 @@ struct SysGPUStats
     , AppService<SysGPUStats, GPUStatProvider>
     , AppLoadableService
 {
-    std::optional<libc_types::u32>              mem_resident() final;
-    std::optional<libc_types::u32>              mem_total() final;
+    std::optional<libc_types::u64>              mem_resident() final;
+    std::optional<libc_types::u64>              mem_total() final;
     std::optional<libc_types::u8>               usage() final;
-    std::map<std::string_view, libc_types::f32> stats_numeric() final;
+    std::multimap<std::string_view, reading_t>  stats_numeric() final;
     std::map<std::string_view, stats_desc_t>    stats_description() final;
 
   protected:
@@ -53,8 +54,24 @@ struct SysGPUStats
     libc_types::u64 m_prev_total_ms{0};
     libc_types::u64 m_prev_busy_ms{0};
     libc_types::u8  m_usage{0};
-    std::map<std::string, libc_types::f32> m_numeric;
+    std::map<std::string, libc_types::i64> m_numeric;
 };
+
+#if defined(COFFEE_LINUX)
+struct SysHWMonStats
+    : interfaces::SensorStatProvider
+    , AppService<SysHWMonStats, SensorStatProvider>
+    , AppLoadableService
+{
+    std::multimap<std::string_view, reading_t> stats_numeric() final;
+    std::map<std::string_view, stats_desc_t>   stats_description() final;
+  protected:
+    void load(entity_container&, app_error&) final;
+
+  private:
+    std::map<std::string, std::vector<std::string>> m_stats;
+};
+#endif
 
 struct SysBattery
     : interfaces::BatteryProvider

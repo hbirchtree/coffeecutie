@@ -774,6 +774,9 @@ void addDefaults(
         loader.registerAll<detail::subsystem_list<
             comp_app::SysMemoryStats,
             comp_app::SysCPUClock,
+#if defined(COFFEE_LINUX)
+            comp_app::SysHWMonStats,
+#endif
             comp_app::SysGPUStats>>(container, ec);
         C_ERROR_CHECK(ec);
     }
@@ -899,6 +902,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
     auto battery  = p.service<BatteryProvider>();
     auto network  = p.service<NetworkStatProvider>();
     auto gpustats = p.services_with<interfaces::GPUStatProvider>();
+    auto sensors  = p.service<SensorStatProvider>();
 
     if(clock)
     {
@@ -1000,19 +1004,34 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
     {
         if(auto resident = provider->mem_resident())
             json::CaptureMetrics(
-                "GPU memory usage", MetricVariant::Value, *resident, timestamp,
-                gpu_idx);
+                "GPU memory", MetricVariant::Value, *resident, timestamp, gpu_idx, "Used");
         if(auto total = provider->mem_total())
             json::CaptureMetrics(
-                "GPU memory total", MetricVariant::Value, *total, timestamp,
-                gpu_idx);
+                "GPU memory", MetricVariant::Value, *total, timestamp, gpu_idx + 1, "Total");
         if(auto usage = provider->usage())
             json::CaptureMetrics(
                 "GPU usage", MetricVariant::Value, *usage, timestamp, gpu_idx);
-        for(auto const& stat : provider->stats_numeric())
+        for(auto const& [label, reading] : provider->stats_numeric())
             json::CaptureMetrics(
-                stat.first, MetricVariant::Value, stat.second, timestamp);
-        gpu_idx++;
+                label,
+                MetricVariant::Value,
+                reading.value,
+                timestamp,
+                reading.index,
+                reading.index_label);
+        gpu_idx += 2;
+    }
+
+    if(sensors)
+    {
+        for(auto const& [label, reading] : sensors->stats_numeric())
+            json::CaptureMetrics(
+                "HWMON",
+                MetricVariant::Value,
+                reading.value,
+                timestamp,
+                reading.index,
+                label);
     }
 }
 

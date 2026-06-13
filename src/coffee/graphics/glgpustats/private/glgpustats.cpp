@@ -16,7 +16,6 @@
 #include <set>
 
 using namespace Coffee::Logging;
-using libc_types::f32;
 using libc_types::i32;
 using libc_types::i64;
 using libc_types::u32;
@@ -189,14 +188,9 @@ void GLGPUStatsProvider::nvx_poll()
     i32 evicted   = query(nv::gpu_memory_info_evicted_memory);
 
     /* NVX reports kibibytes; convert to bytes to match the nvml provider. */
-    auto kib_to_bytes_f32 = [](i32 kib) -> f32 {
-        return static_cast<f32>(static_cast<u64>(kib < 0 ? 0 : kib) * 1024u);
-    };
-    auto kib_to_bytes_u32 = [](i64 kib) -> u32 {
-        u64 bytes = static_cast<u64>(kib < 0 ? 0 : kib) * 1024u;
-        return bytes > std::numeric_limits<u32>::max()
-                   ? std::numeric_limits<u32>::max()
-                   : static_cast<u32>(bytes);
+    auto kib_to_bytes_i64 = [](i64 kib) -> i64 {
+        i64 bytes = static_cast<i64>(kib < 0 ? 0 : kib) * 1024u;
+        return bytes;
     };
 
     /* Per spec, DEDICATED_VIDMEM is the physical VRAM size and
@@ -205,15 +199,19 @@ void GLGPUStatsProvider::nvx_poll()
      * nvml provider's total/used semantics. NVX is whole-GPU, not per-process. */
     i64 total_kib = dedicated > 0 ? dedicated : total;
     i64 used_kib  = total_kib > available ? total_kib - available : 0;
-    m_nvx_total_bytes    = kib_to_bytes_u32(total_kib);
-    m_nvx_resident_bytes = kib_to_bytes_u32(used_kib);
+    m_nvx_total_bytes    = kib_to_bytes_i64(total_kib);
+    m_nvx_resident_bytes = kib_to_bytes_i64(used_kib);
 
     /* Raw spec values only; no derived stats. */
-    m_numeric["GPU dedicated VRAM"]         = {kib_to_bytes_f32(dedicated), false};
-    m_numeric["GPU total available memory"] = {kib_to_bytes_f32(total), false};
-    m_numeric["GPU current free VRAM"]      = {kib_to_bytes_f32(available), false};
-    m_numeric["GPU eviction count"]         = {static_cast<f32>(evictions), false};
-    m_numeric["GPU evicted memory"]         = {kib_to_bytes_f32(evicted), false};
+    m_numeric.emplace(
+        "GPU memory (GL)", reading_t{kib_to_bytes_i64(dedicated), 0, "Total (dedicated)"});
+    m_numeric.emplace(
+        "GPU memory (GL)", reading_t{kib_to_bytes_i64(total), 1, "Total"});
+    m_numeric.emplace(
+        "GPU memory (GL)", reading_t{kib_to_bytes_i64(available), 2, "Current free"});
+    m_numeric.emplace(
+        "GPU memory (GL)", reading_t{kib_to_bytes_i64(evicted), 3, "Evicted memory"});
+    m_numeric.emplace("GPU eviction count", reading_t{static_cast<i64>(evictions), false});
 #endif
 }
 
@@ -226,17 +224,18 @@ void GLGPUStatsProvider::ati_poll()
     /* Each pname returns 4 ints in KiB: [0] total free in the pool, [1] largest
      * free block, [2] total aux free, [3] largest aux free. We report the raw
      * total-free per pool (free-only; ATI_meminfo exposes no totals). */
-    auto pool_free_bytes = [](u32 pname) -> f32 {
+    auto pool_free_bytes = [](u32 pname) -> i64 {
         std::array<i32, 4> v{};
         glw::get_integerv(static_cast<get_prop>(pname), semantic::Span<i32>(v), noerr);
-        return static_cast<f32>(static_cast<u64>(v[0] < 0 ? 0 : v[0]) * 1024u);
+        return v[0] < 0 ? 0 : (v[0] * 1024u);
     };
 
-    m_numeric["GPU VBO free memory"] = {pool_free_bytes(am::vbo_free_memory), false};
-    m_numeric["GPU texture free memory"] =
-        {pool_free_bytes(am::texture_free_memory), false};
-    m_numeric["GPU renderbuffer free memory"] =
-        {pool_free_bytes(am::renderbuffer_free_memory), false};
+    m_numeric.emplace(
+        "GPU VBO free memory", reading_t{pool_free_bytes(am::vbo_free_memory)});
+    m_numeric.emplace(
+        "GPU texture free memory", reading_t{pool_free_bytes(am::texture_free_memory)});
+    m_numeric.emplace(
+        "GPU renderbuffer free memory", reading_t{pool_free_bytes(am::renderbuffer_free_memory)});
 #endif
 }
 
@@ -340,8 +339,7 @@ bool GLGPUStatsProvider::arb_collect()
                 noerr);
             result = result_u32;
         }
-        m_numeric[counter.name] =
-            reading_t{.value = static_cast<f32>(result), .is_percentage = false};
+        m_numeric.emplace(counter.name, reading_t{.value = result});
     }
     return true;
 #else
@@ -480,7 +478,7 @@ bool GLGPUStatsProvider::amd_collect()
         if(!def)
             break; // unknown layout, can't advance safely
 
-        f32 value = 0.f;
+        i64 value = 0;
         switch(def->type)
         {
         case gl_counter_float:
@@ -498,18 +496,17 @@ bool GLGPUStatsProvider::amd_collect()
                 return true;
             u64 as_u64;
             std::memcpy(&as_u64, &result[i], sizeof(as_u64));
-            value = static_cast<f32>(as_u64);
+            value = static_cast<i64>(as_u64);
             i += 2;
             break;
         }
         case gl_counter_unsigned_int:
         default:
-            value = static_cast<f32>(result[i]);
+            value = static_cast<i64>(result[i]);
             i += 1;
             break;
         }
-        m_numeric[def->name] =
-            reading_t{.value = value, .is_percentage = def->is_percentage};
+        m_numeric.emplace(def->name, reading_t{.value = value});
     }
     return true;
 #else
@@ -528,14 +525,14 @@ GLGPUStatsProvider::amd_counter_t const* GLGPUStatsProvider::find_counter(
 
 /* ---- GPUStatProvider accessors ------------------------------------------- */
 
-std::optional<libc_types::u32> GLGPUStatsProvider::mem_resident()
+std::optional<libc_types::u64> GLGPUStatsProvider::mem_resident()
 {
     if(!m_nvx_ok)
         return std::nullopt;
     return m_nvx_resident_bytes;
 }
 
-std::optional<libc_types::u32> GLGPUStatsProvider::mem_total()
+std::optional<libc_types::u64> GLGPUStatsProvider::mem_total()
 {
     if(!m_nvx_ok)
         return std::nullopt;
@@ -548,11 +545,17 @@ std::optional<libc_types::u8> GLGPUStatsProvider::usage()
     return std::nullopt;
 }
 
-std::map<std::string_view, libc_types::f32> GLGPUStatsProvider::stats_numeric()
+std::multimap<
+    std::string_view,
+    comp_app::interfaces::SensorStatProvider::reading_t>
+GLGPUStatsProvider::stats_numeric()
 {
-    std::map<std::string_view, libc_types::f32> out;
+    std::multimap<
+        std::string_view,
+        comp_app::interfaces::SensorStatProvider::reading_t>
+        out;
     for(auto const& stat : m_numeric)
-        out[stat.first] = stat.second.value;
+        out.insert({stat.first, stat.second});
     return out;
 }
 
@@ -572,7 +575,6 @@ GLGPUStatsProvider::stats_description()
     for(auto const& stat : m_numeric)
         out[stat.first] = stats_desc_t{
             .type          = MetricVariant::Value,
-            .is_percentage = stat.second.is_percentage,
         };
     return out;
 }

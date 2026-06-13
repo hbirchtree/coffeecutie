@@ -31,11 +31,14 @@ struct GLGPUStatsProvider
     /* Reported in bytes (matching the nvml provider). NVX's native unit is
      * KiB; the u32 accessors clamp on >4 GiB GPUs, the f32 numeric stats do
      * not. */
-    std::optional<libc_types::u32>              mem_resident() final;
-    std::optional<libc_types::u32>              mem_total() final;
-    std::optional<libc_types::u8>               usage() final;
-    std::map<std::string_view, libc_types::f32> stats_numeric() final;
-    std::map<std::string_view, std::string>     stats_strings() final;
+    std::optional<libc_types::u64>              mem_resident() final;
+    std::optional<libc_types::u64>              mem_total() final;
+    std::optional<libc_types::u8> usage() final;
+    std::multimap<
+        std::string_view,
+        comp_app::interfaces::SensorStatProvider::reading_t>
+                                            stats_numeric() final;
+    std::map<std::string_view, std::string> stats_strings() final;
     std::map<std::string_view, stats_desc_t>    stats_description() final;
 
   private:
@@ -72,8 +75,8 @@ struct GLGPUStatsProvider
     /* --- GL_NVX_gpu_memory_info --- */
     void            nvx_poll();
     bool            m_nvx_ok{false};
-    libc_types::u32 m_nvx_total_bytes{0};
-    libc_types::u32 m_nvx_resident_bytes{0};
+    libc_types::u64 m_nvx_total_bytes{0};
+    libc_types::u64 m_nvx_resident_bytes{0};
 
     /* --- GL_ATI_meminfo --- */
     void ati_poll();
@@ -96,12 +99,7 @@ struct GLGPUStatsProvider
     bool                       m_arb_pending{false};
     compo::time_point          m_arb_next{};
 
-    struct reading_t
-    {
-        libc_types::f32 value{0.f};
-        bool            is_percentage{false};
-    };
-    std::map<std::string, reading_t>   m_numeric;  // AMD + NVX numeric readings
+    std::multimap<std::string, reading_t>   m_numeric;  // AMD + NVX numeric readings
     std::map<std::string, std::string> m_strings;  // backend description
 };
 

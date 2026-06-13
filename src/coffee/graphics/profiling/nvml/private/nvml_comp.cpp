@@ -3,8 +3,8 @@
 #include <coffee/comp_app/services.h>
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/core/debug/formatting.h>
-#include <magic_enum.hpp>
 #include <nvidia/gdk/nvml.h>
+#include <peripherals/stl/magic_enum.hpp>
 #include <platforms/profiling/jsonprofile.h>
 
 namespace nvml_comp {
@@ -14,7 +14,7 @@ struct NVMLGPUStats
     , comp_app::AppService<NVMLGPUStats, comp_app::GPUStatProvider>
     , comp_app::AppLoadableService
 {
-    std::optional<libc_types::u32> mem_resident() final
+    std::optional<libc_types::u64> mem_resident() final
     {
         unsigned int num_procs{0};
         if(nvmlDeviceGetGraphicsRunningProcesses(
@@ -35,7 +35,7 @@ struct NVMLGPUStats
         return it->usedGpuMemory;
     }
 
-    std::optional<libc_types::u32> mem_total() final
+    std::optional<libc_types::u64> mem_total() final
     {
         nvmlMemory_t mem;
         nvmlDeviceGetMemoryInfo(m_device, &mem);
@@ -64,7 +64,7 @@ struct NVMLGPUStats
         };
     }
 
-    std::map<std::string_view, libc_types::f32> stats_numeric() final
+    std::multimap<std::string_view, reading_t> stats_numeric() final
     {
         nvmlBAR1Memory_t bar1Mem;
         nvmlDeviceGetBAR1MemoryInfo(m_device, &bar1Mem);
@@ -92,20 +92,22 @@ struct NVMLGPUStats
         nvmlDeviceGetPowerManagementLimit(m_device, &power_limit);
         nvmlDeviceGetEnforcedPowerLimit(m_device, &power_enforced_limit);
         return {
-            {"GPU BAR1 usage", bar1Mem.bar1Used},
-            {"GPU BAR1 total", bar1Mem.bar1Total},
-            {"GPU memory bus usage", usage.memory},
-            {"GPU clock", graphics},
-            {"GPU SM clock", sm},
-            {"GPU memory clock", memory},
-            {"GPU PCIe RX", pcie_rx},
-            {"GPU PCIe TX", pcie_tx},
-            {"GPU temperature current", temp},
-            {"GPU temperature slowdown", temp_slowdown},
-            {"GPU temperature critical", temp_critical},
-            {"GPU power draw", power_usage},
-            {"GPU power limit enforced", power_enforced_limit},
-            {"GPU power limit max", power_limit},
+            {"GPU BAR1",
+             {static_cast<libc_types::i64>(bar1Mem.bar1Used), 0, "Usage"}},
+            {"GPU BAR1",
+             {static_cast<libc_types::i64>(bar1Mem.bar1Total), 1, "Total"}},
+            {"GPU memory bus usage", {usage.memory}},
+            {"GPU clock", {graphics, 0, "Graphics clock"}},
+            {"GPU clock", {sm, 1, "SM clock"}},
+            {"GPU clock", {memory, 2, "Memory clock"}},
+            {"GPU PCIe", {pcie_rx, 0, "RX"}},
+            {"GPU PCIe", {pcie_tx, 1, "TX"}},
+            {"GPU temperature", {temp, 0, "Current"}},
+            {"GPU temperature", {temp_slowdown, 1, "Slowdown"}},
+            {"GPU temperature", {temp_critical, 2, "Critical"}},
+            {"GPU power", {power_usage, 0, "Current draw"}},
+            {"GPU power", {power_enforced_limit, 1, "Limit (enforced)"}},
+            {"GPU power", {power_limit, 2, "Limit (max)"}},
         };
     }
 

@@ -25,12 +25,12 @@ void PVRGPUStats::start_frame(
     dump_stats(9);
 }
 
-std::optional<libc_types::u32> PVRGPUStats::mem_resident()
+std::optional<libc_types::u64> PVRGPUStats::mem_resident()
 {
     return std::nullopt;
 }
 
-std::optional<libc_types::u32> PVRGPUStats::mem_total()
+std::optional<libc_types::u64> PVRGPUStats::mem_total()
 {
     return std::nullopt;
 }
@@ -40,14 +40,22 @@ std::optional<libc_types::u8> PVRGPUStats::usage()
     return std::nullopt;
 }
 
-std::map<std::string_view, libc_types::f32> PVRGPUStats::stats_numeric()
+std::multimap<
+    std::string_view,
+    comp_app::interfaces::SensorStatProvider::reading_t>
+PVRGPUStats::stats_numeric()
 {
     using libc_types::u16;
     using namespace std::string_view_literals;
 
-    std::map<std::string_view, libc_types::f32> out;
+    std::multimap<
+        std::string_view,
+        comp_app::interfaces::SensorStatProvider::reading_t>
+        out;
     for(auto const& stat : m_cached_readings)
-        out[stat.first] = stat.second.value;
+        out.insert(
+            {stat.first,
+             {.value = static_cast<libc_types::i64>(stat.second.value)}});
     return out;
 }
 

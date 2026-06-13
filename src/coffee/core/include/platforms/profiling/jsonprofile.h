@@ -13,6 +13,7 @@ namespace profiling {
 
 using libc_types::f32;
 using libc_types::u32;
+using libc_types::i64;
 
 struct datapoint_t;
 struct ThreadState;
@@ -41,7 +42,16 @@ extern void CaptureMetrics(
     u32                       index      = 0,
     std::string_view          index_name = {});
 
-extern void CaptureMetrics(
+extern void CaptureMetrics_i64(
+    profiling::ThreadState&   tdata,
+    std::string_view          name,
+    MetricVariant             variant,
+    i64                       value,
+    std::chrono::microseconds ts,
+    u32                       index      = 0,
+    std::string_view          index_name = {});
+
+extern void CaptureMetrics_f32(
     profiling::ThreadState&   tdata,
     std::string_view          name,
     MetricVariant             variant,
@@ -67,7 +77,12 @@ FORCEDINLINE void CaptureMetrics(
     if(!thread_state)
         return;
 
-    CaptureMetrics(*thread_state, name, variant, value, ts, index, index_name);
+    if constexpr(std::is_floating_point_v<T>)
+        CaptureMetrics_f32(*thread_state, name, variant, value, ts, index, index_name);
+    else if constexpr(std::is_integral_v<T>)
+        CaptureMetrics_i64(*thread_state, name, variant, value, ts, index, index_name);
+    else
+        CaptureMetrics(*thread_state, name, variant, value, ts, index, index_name);
 }
 
 void CaptureTrace(

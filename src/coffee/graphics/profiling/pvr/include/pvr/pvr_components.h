@@ -16,12 +16,12 @@ struct PVRGPUStats
 {
     void start_frame(compo::ContainerProxy&, const compo::time_point& time);
 
-    std::optional<libc_types::u32>              mem_resident() final;
-    std::optional<libc_types::u32>              mem_total() final;
-    std::optional<libc_types::u8>               usage() final;
-    std::map<std::string_view, libc_types::f32> stats_numeric() final;
-    std::map<std::string_view, std::string>     stats_strings() final;
-    std::map<std::string_view, stats_desc_t>    stats_description() final;
+    std::optional<libc_types::u64>           mem_resident() final;
+    std::optional<libc_types::u64>           mem_total() final;
+    std::optional<libc_types::u8>            usage() final;
+    std::multimap<std::string_view, reading_t> stats_numeric() final;
+    std::map<std::string_view, std::string>    stats_strings() final;
+    std::map<std::string_view, stats_desc_t> stats_description() final;
 
   protected:
     void load(entity_container& e, comp_app::app_error& ec);

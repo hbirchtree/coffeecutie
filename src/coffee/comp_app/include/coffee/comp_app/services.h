@@ -549,17 +549,18 @@ struct MemoryStatProvider
     virtual libc_types::u64 resident() = 0;
 };
 
-struct GPUStatProvider
+struct SensorStatProvider
 {
-    /* Memory usage */
-    virtual std::optional<libc_types::u32> mem_resident() = 0;
-    virtual std::optional<libc_types::u32> mem_total()    = 0;
+    struct reading_t
+    {
+        libc_types::i64 value{};
+        libc_types::u32 index{};
+        std::string_view index_label{};
+    };
 
-    /* Processor usage */
-    virtual std::optional<libc_types::u8> usage() = 0;
-
-    /* Extensible, vendor-specific info */
-    virtual std::map<std::string_view, libc_types::f32> stats_numeric()
+    /* Extensible, vendor-specific info. multimap: a provider may report
+     * several readings under one metric name, disambiguated by reading_t.index */
+    virtual std::multimap<std::string_view, reading_t> stats_numeric()
     {
         return {};
     }
@@ -580,6 +581,16 @@ struct GPUStatProvider
     {
         return {};
     }
+};
+
+struct GPUStatProvider : SensorStatProvider
+{
+    /* Memory usage */
+    virtual std::optional<libc_types::u64> mem_resident() = 0;
+    virtual std::optional<libc_types::u64> mem_total()    = 0;
+
+    /* Processor usage */
+    virtual std::optional<libc_types::u8> usage() = 0;
 };
 
 struct BatteryProvider
@@ -810,6 +821,7 @@ using ControllerInput     = detail::tag_t<interfaces::ControllerInput>;
 using CPUClockProvider    = detail::tag_t<interfaces::CPUClockProvider>;
 using CPUTempProvider     = detail::tag_t<interfaces::CPUTempProvider>;
 using DisplayInfo         = detail::tag_t<interfaces::DisplayInfo>;
+using SensorStatProvider  = detail::tag_t<interfaces::SensorStatProvider>;
 using GPUTempProvider     = detail::tag_t<interfaces::GPUTempProvider>;
 using GPUStatProvider     = detail::tag_t<interfaces::GPUStatProvider>;
 using GraphicsBinding     = detail::tag_t<interfaces::GraphicsBinding>;
