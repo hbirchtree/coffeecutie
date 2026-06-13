@@ -1,6 +1,7 @@
 #include "physics.h"
 
 #include "caching.h"
+#include "coffee/core/CProfiling"
 #include "data.h"
 #include "selected_version.h"
 
@@ -29,8 +30,8 @@ using namespace std::chrono;
  */
 template<typename V>
 using PhysicsManifest = compo::SubsystemManifest<
-    empty_list_t,
-    type_list_t<BSPCache<V>>,
+    type_list_t<DebugDraw>,
+    type_list_t<BSPCache<V>, BlamResources, LoadingStatus>,
     empty_list_t>;
 
 template<typename V>
@@ -57,15 +58,30 @@ struct PhysicsSystem
     void start_restricted(Proxy& p, compo::time_point const&)
     {
         BSPCache<V>* bsp_cache;
+        LoadingStatus* loading;
         p.subsystem(bsp_cache);
+        p.subsystem(loading);
 
-        if(bsp_cache->active_section != m_built_section)
+        /* Rebuild on section change, but also retry while no world mesh
+         * exists yet — the BSP cache is populated asynchronously after the
+         * subsystem starts, and single-BSP maps never switch sections. */
+        bool needs_rebuild = bsp_cache->active_section != m_built_section;
+        if(!needs_rebuild && !m_world_body)
+            needs_rebuild = find_section_item(*bsp_cache) != nullptr;
+        if(needs_rebuild)
             rebuild_world(*bsp_cache);
+
+        // Don't simulate before we're completely done loading
+        if(loading->loading)
+            return;
 
         if(!m_world_body)
             return;
 
         m_world->stepSimulation(1.f / 60.f, 4);
+
+        if(m_probe_body)
+            update_probe_marker(p);
 
         if(m_probe_body && m_frame < 600 && (m_frame % 60) == 0)
         {
@@ -85,19 +101,79 @@ struct PhysicsSystem
     {
     }
 
-    void rebuild_world(BSPCache<V>& cache)
+    /* Wire box following the probe sphere, drawn through the existing
+     * debug line pass (RenderingParameters::debug_markers gates it).
+     * Vertex slot is statically reserved (physics_debug_point_ptr), the
+     * 16 line-strip points are rewritten every frame. */
+    void update_probe_marker(Proxy& p)
     {
-        m_built_section = cache.active_section;
+        BlamResources* resources;
+        p.subsystem(resources);
+        if(!resources->debug_lines)
+            return;
 
-        BSPItem const* item = nullptr;
+        if(!m_marker_spawned)
+        {
+            compo::EntityRecipe marker;
+            marker.components = {compo::type_hash_v<DebugDraw>()};
+            auto       ent    = p.create_entity(marker);
+            DebugDraw& draw   = ent.template get<DebugDraw>();
+            draw.data.arrays  = {
+                 .count  = 16,
+                 .offset = physics_debug_point_ptr,
+            };
+            draw.color_ptr = physics_debug_color_ptr;
+
+            Span<Vecf3> colors = resources->debug_line_colors->map<Vecf3>(0);
+            colors[physics_debug_color_ptr] = Vecf3{1.f, .5f, 0.f};
+            resources->debug_line_colors->unmap();
+            m_marker_spawned = true;
+        }
+
+        auto const& org = m_probe_body->getWorldTransform().getOrigin();
+        Vecf3       lo  = Vecf3{org.x(), org.y(), org.z()} - probe_radius;
+        Vecf3       hi  = Vecf3{org.x(), org.y(), org.z()} + probe_radius;
+
+        Span<Vecf3> pts = resources->debug_lines->map<Vecf3>(
+            sizeof(Vecf3) * physics_debug_point_ptr, sizeof(Vecf3) * 16);
+        std::array<Vecf3, 16> const box = {{
+            lo,
+            Vecf3(hi.x, lo.y, lo.z),
+            Vecf3(hi.x, hi.y, lo.z),
+            Vecf3(lo.x, hi.y, lo.z),
+            lo,
+            Vecf3(lo.x, lo.y, hi.z),
+            Vecf3(hi.x, lo.y, hi.z),
+            hi,
+            Vecf3(lo.x, hi.y, hi.z),
+            Vecf3(lo.x, lo.y, hi.z),
+            Vecf3(lo.x, hi.y, hi.z),
+            Vecf3(lo.x, hi.y, lo.z),
+            Vecf3(hi.x, hi.y, lo.z),
+            hi,
+            Vecf3(hi.x, lo.y, hi.z),
+            Vecf3(hi.x, lo.y, lo.z),
+        }};
+        std::copy(box.begin(), box.end(), pts.begin());
+        resources->debug_lines->unmap();
+    }
+
+    BSPItem const* find_section_item(BSPCache<V>& cache) const
+    {
         for(auto& [id, candidate] : cache.m_cache)
             if(candidate.valid() &&
                candidate.section_idx == cache.active_section &&
                !candidate.coll_surfaces.empty())
-            {
-                item = &candidate;
-                break;
-            }
+                return &candidate;
+        return nullptr;
+    }
+
+    void rebuild_world(BSPCache<V>& cache)
+    {
+        Coffee::ProfContext _("Physics::rebuild_world()");
+        m_built_section = cache.active_section;
+
+        BSPItem const* item = find_section_item(cache);
 
         /* Tear down previous static body */
         if(m_world_body)
@@ -117,6 +193,7 @@ struct PhysicsSystem
 
         if(!item)
         {
+            Coffee::Profiler::Profile("Physics::rebuild_world() no collision mesh");
             cDebug(
                 "physics: no collision mesh for section {}",
                 m_built_section);
@@ -134,7 +211,7 @@ struct PhysicsSystem
         mesh.m_triangleIndexStride = 3 * sizeof(i32);
         mesh.m_numVertices = static_cast<int>(item->coll_vertices.size());
         /* Zero-copy: vertex positions read in place from the mapped tag
-         * data; collision::vertex is {Vecf3 point; u16 first_edge} = 16 B */
+         * data; collision::vertex is {Vecf3 point; i32 first_edge} = 16 B */
         mesh.m_vertexBase = reinterpret_cast<unsigned char const*>(
             item->coll_vertices.data());
         mesh.m_vertexStride = sizeof(blam::collision::vertex);
@@ -152,6 +229,7 @@ struct PhysicsSystem
             0.f, nullptr, m_world_shape.get());
         info.m_startWorldTransform.setIdentity();
         m_world_body = std::make_unique<btRigidBody>(info);
+        m_world_body->setFriction(1.f);
         m_world->addRigidBody(m_world_body.get());
 
         cDebug(
@@ -174,6 +252,7 @@ struct PhysicsSystem
      * reverse_edge; collect vertices in winding order, then fan. */
     void triangulate(BSPItem const& item)
     {
+        Coffee::ProfContext _("Physics::triangulate()");
         auto const& surfaces = item.coll_surfaces;
         auto const& edges    = item.coll_edges;
 
@@ -296,7 +375,7 @@ struct PhysicsSystem
         auto [bmin, bmax] = item.mesh->world_bounds.points();
         Vecf3 center      = (bmin + bmax) * .5f;
 
-        m_probe_shape = std::make_unique<btSphereShape>(0.2f);
+        m_probe_shape = std::make_unique<btSphereShape>(probe_radius);
         btVector3 inertia;
         m_probe_shape->calculateLocalInertia(10.f, inertia);
         btRigidBody::btRigidBodyConstructionInfo info(
@@ -305,6 +384,11 @@ struct PhysicsSystem
         info.m_startWorldTransform.setOrigin(
             btVector3(center.x, center.y, bmax.z + .5f));
         m_probe_body = std::make_unique<btRigidBody>(info);
+        /* High friction + rolling friction so the sphere parks near its
+         * drop point instead of rolling downhill forever */
+        m_probe_body->setFriction(1.f);
+        m_probe_body->setRollingFriction(.3f);
+        m_probe_body->setSpinningFriction(.3f);
         m_world->addRigidBody(m_probe_body.get());
     }
 
@@ -325,8 +409,11 @@ struct PhysicsSystem
     std::vector<i32> m_triangles;
     std::vector<u32> m_tri_surface;
 
-    i16 m_built_section{-2};
-    u32 m_frame{0};
+    static constexpr f32 probe_radius = 0.2f;
+
+    i16  m_built_section{-2};
+    u32  m_frame{0};
+    bool m_marker_spawned{false};
 };
 
 void alloc_physics(compo::EntityContainer& container)

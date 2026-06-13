@@ -1,0 +1,32 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1920,
+            "height": 1920,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "comment": "Sky + planet views for skybox debugging",
+    "events": [
+        {"time": 1000, "type": "camera", "position" :[-82.42094, 33.423847, 3.1260164], "rotation":[-0.8105766, 0.15588982, 0.55434453, -0.1066117]},
+        {"time": 2000, "type":"screenshot","name":"b30_sky"},
+        {"time": 3000, "type": "camera", "position" :[-73.8031, 33.25083, 3.543388], "rotation":[-0.5724895, -0.07775907, 0.80878997, 0.109854676]},
+        {"time": 4500, "type":"screenshot","name":"b30_pelican"}
+    ],
+    "frame_delta": 200.0,
+    "end_time": 180000
+}

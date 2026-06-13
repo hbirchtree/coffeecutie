@@ -1,0 +1,36 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1920,
+            "height": 1920,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "comment": "Physics probe sphere marker: frame the section-0 drop zone (world bounds center), camera looks along -x",
+    "events": [
+        {"time": 9000, "type": "camera", "position" :[3.0, -0.2, 17.2], "rotation":[0, 0]},
+        {"time": 10000, "type":"screenshot","name":"probe_px"},
+        {"time": 11000, "type": "camera", "position" :[-3.0, -0.2, 17.2], "rotation":[0, 180]},
+        {"time": 12000, "type":"screenshot","name":"probe_nx"},
+        {"time": 13000, "type": "camera", "position" :[0.0, 2.8, 17.2], "rotation":[0, 90]},
+        {"time": 14000, "type":"screenshot","name":"probe_py"},
+        {"time": 15000, "type": "camera", "position" :[0.0, -3.2, 17.2], "rotation":[0, -90]},
+        {"time": 16000, "type":"screenshot","name":"probe_ny"}
+    ],
+    "frame_delta": 200.0,
+    "end_time": 200000
+}

@@ -17,8 +17,12 @@
 
 using namespace Coffee::StandardInput;
 
-constexpr libc_types::u32 reserved_debug_points = 24 + 16 * 7;
-constexpr libc_types::u32 reserved_debug_colors = 6 + 16;
+/* Physics probe marker: one 16-point wire box updated per frame */
+constexpr libc_types::u32 physics_debug_point_ptr = 24 + 16 * 7;
+constexpr libc_types::u32 physics_debug_color_ptr = 6 + 16;
+
+constexpr libc_types::u32 reserved_debug_points = physics_debug_point_ptr + 16;
+constexpr libc_types::u32 reserved_debug_colors = physics_debug_color_ptr + 1;
 
 using libc_types::f32;
 using libc_types::i32;
