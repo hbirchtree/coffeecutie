@@ -1329,6 +1329,7 @@ def cmd_run(
     base_dir: Path,
     prog_args: list[str],
     dry_run: bool,
+    use_gdb: bool = False,
 ) -> None:
     """Run a natively-supported built target, forwarding *prog_args* to it."""
     runnable, why = _native_runnable(target, host)
@@ -1346,6 +1347,9 @@ def cmd_run(
         env[ld_var] = f"{lib_dir}:{prev}" if prev else str(lib_dir)
 
     cmd = [str(binary), *prog_args]
+    if use_gdb:
+        cmd = ["gdb", "--args"] + cmd
+
     if dry_run:
         print(f"Would run (cwd={base_dir}):")
         if lib_dir.is_dir():
@@ -1356,7 +1360,10 @@ def cmd_run(
     # Run from the repo root so relative paths (assets, maps, dummy-plug
     # configs) resolve the same way as in the documented invocations.
     os.chdir(str(base_dir))
-    os.execvpe(str(binary), cmd, env)
+    if use_gdb:
+        os.execvpe("gdb", cmd, env)
+    else:
+        os.execvpe(str(binary), cmd, env)
 
 
 # ---------------------------------------------------------------------------
@@ -1585,6 +1592,10 @@ def main() -> None:
         "target",
         help="e.g. desktop:x86_64-buildroot-linux-gnu:multi/BlamGraphics",
     )
+    p.add_argument(
+        "--gdb", action="store_true",
+        help="Enable system GDB for the run"
+    )
 
     # print-env
     p = sub.add_parser("print-env", help="Print environment variables for a preset")
@@ -1692,7 +1703,7 @@ def main() -> None:
 
     elif cmd == "run":
         target = TargetSpec.parse(args.target)
-        cmd_run(target, host, base_dir, cmake_extra_args, dry_run)
+        cmd_run(target, host, base_dir, cmake_extra_args, dry_run, args.gdb)
 
     elif cmd == "print-env":
         check_programs("cmake")
