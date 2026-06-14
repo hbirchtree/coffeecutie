@@ -343,6 +343,11 @@ struct sampler_t
 #endif
     }
 
+    void rebind(std::shared_ptr<texture_t> texture)
+    {
+        m_source = texture;
+    }
+
     std::weak_ptr<texture_t>    m_source;
     features::textures          m_features;
     hnd                         m_handle;

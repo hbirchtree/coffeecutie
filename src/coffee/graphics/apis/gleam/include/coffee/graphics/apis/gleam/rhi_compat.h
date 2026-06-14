@@ -1,5 +1,8 @@
 #pragma once
 
+#include "glw/enums/TextureTarget.h"
+#include "peripherals/enum/helpers.h"
+#include "peripherals/typing/geometry/size.h"
 #include "rhi.h"
 #include "rhi_texture.h"
 #include "rhi_uniforms.h"
@@ -19,6 +22,7 @@ enum class texture_usage_hint_t
     no_hints          = 0x0,
     per_instance      = 0x1,
     per_base_instance = 0x2,
+    sparse_atlas      = 0x4,
 };
 C_FLAGS(texture_usage_hint_t, u32);
 
@@ -52,11 +56,20 @@ struct texture_2da_t : texture_array_base_t
             texture_array_base_t::alloc(size, create_storage);
             return;
         }
+        bool const sparse =
+            enum_helpers::feval(m_hints, texture_usage_hint_t::sparse_atlas);
         m_textures.reserve(size.d);
+        if(sparse)
+            m_page_allocated.assign(size.d, false);
         for(C_UNUSED(auto _) : stl_types::range<>(size.d))
         {
             m_textures.emplace_back(m_api->alloc_texture(
                 textures::d2, m_format, m_mipmaps, m_flags));
+            /* sparse_atlas: each layer is its own standalone texture sized
+             * to its bitmap; defer allocation to the first upload, which
+             * carries the base-mip dimensions. */
+            if(sparse)
+                continue;
             m_textures.back()->alloc(size, create_storage);
         }
     }
@@ -81,7 +94,22 @@ struct texture_2da_t : texture_array_base_t
             Throw(
                 std::out_of_range(
                     "compat::texture_2da_t: offset out of range"));
-
+        if(enum_helpers::feval(m_hints, texture_usage_hint_t::sparse_atlas))
+        {
+            /* Allocate the layer's texture exactly once, on its first
+             * upload (the base mip, which carries the full dimensions).
+             * Re-allocating per mip level would wipe earlier uploads and
+             * resize the texture to the smaller mip. */
+            u32 layer = static_cast<u32>(offset[2]);
+            if(layer >= m_page_allocated.size())
+                m_page_allocated.resize(layer + 1, false);
+            if(!m_page_allocated[layer])
+            {
+                m_textures.at(offset[2])->alloc(
+                    size_3d<u32>(size[0], size[1], 1), true);
+                m_page_allocated[layer] = true;
+            }
+        }
         m_textures.at(offset[2])->upload(
             data,
             typing::vector_types::Veci2{offset[0], offset[1]},
@@ -94,8 +122,15 @@ struct texture_2da_t : texture_array_base_t
         m_hints |= hint;
     }
 
+    std::shared_ptr<texture_2d_t> subtexture(u32 i)
+    {
+        return m_textures.at(i);
+    }
+
     texture_usage_hint_t m_hints{texture_usage_hint_t::no_hints};
     std::vector<std::shared_ptr<texture_2d_t>> m_textures;
+    /* sparse_atlas: per-layer lazy-allocation flags */
+    std::vector<bool> m_page_allocated;
 
   private:
     api* m_api;
