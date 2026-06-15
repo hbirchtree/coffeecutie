@@ -5,32 +5,31 @@
 
 /* Can be used for workarounds, if necessary */
 
-EM_JS(char*, platform_get_user_agent_internal, (), {
-    var lengthBytes = lengthBytesUTF8(navigator.userAgent) + 1;
-    var wasmString  = _malloc(lengthBytes);
-    stringToUTF8(navigator.userAgent, wasmString, lengthBytes + 1);
-    return wasmString;
-});
+EM_JS_DEPS(coffee_sysinfo_js_deps, "$stringToNewUTF8");
 
-EM_JS(char*, platform_get_navigator_platform_internal, (), {
-    var lengthBytes = lengthBytesUTF8(navigator.platform) + 1;
-    var wasmString  = _malloc(lengthBytes);
-    stringToUTF8(navigator.platform, wasmString, lengthBytes + 1);
-    return wasmString;
-});
+static char* platform_get_user_agent_internal()
+{
+    return reinterpret_cast<char*>(
+        EM_ASM_PTR({ return stringToNewUTF8(navigator.userAgent); }));
+}
 
-EM_JS(char*, platform_get_query_string, (), {
-    var lengthBytes = lengthBytesUTF8(window.location.search) + 1;
-    var wasmString  = _malloc(lengthBytes);
-    stringToUTF8(window.location.search, wasmString, lengthBytes + 1);
-    return wasmString;
-});
+static char* platform_get_navigator_platform_internal()
+{
+    return reinterpret_cast<char*>(
+        EM_ASM_PTR({ return stringToNewUTF8(navigator.platform); }));
+}
+
+static char* platform_get_query_string()
+{
+    return reinterpret_cast<char*>(
+        EM_ASM_PTR({ return stringToNewUTF8(window.location.search); }));
+}
 
 namespace emscripten::args {
 
 std::map<std::string, std::string> query_params()
 {
-#ifdef COFFEE_WASM32
+#ifdef COFFEE_WASM
     using namespace stl_types::str::split;
 
     std::string query_string(platform_get_query_string());
@@ -63,7 +62,7 @@ namespace platform::info::os::emscripten::detail {
 
 char* user_agent()
 {
-#ifdef COFFEE_WASM32
+#ifdef COFFEE_WASM
     return platform_get_user_agent_internal();
 #else
     return "Mozilla/5.0";
@@ -72,7 +71,7 @@ char* user_agent()
 
 char* platform()
 {
-#ifdef COFFEE_WASM32
+#ifdef COFFEE_WASM
     return platform_get_navigator_platform_internal();
 #else
     return "Linux x86_64";
@@ -81,7 +80,7 @@ char* platform()
 
 bool is_mobile()
 {
-#ifdef COFFEE_WASM32
+#ifdef COFFEE_WASM
     return EM_ASM_INT({
         return navigator.userAgentData && navigator.userAgentData.mobile ? 1
                                                                          : 0;
