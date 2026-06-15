@@ -26,12 +26,8 @@ void load_scenario_bsp(
         bsp_cache.element_buffer = gpu.bsp_index->map<blam::vert::face>(0);
         bsp_cache.light_buffer   = gpu.bsp_light_buf->map<byte_t>(0);
 
-        debug_markers.portal_buffer = gpu.debug_lines->map<Vecf3>(0);
-        debug_markers.portal_color_buffer =
-            gpu.debug_line_colors->map<Vecf3>(0);
-        debug_markers.portal_ptr       = reserved_debug_points;
-        debug_markers.portal_color_ptr = reserved_debug_colors;
-        bsp_cache.debug_markers        = &debug_markers;
+        debug_markers.map(reserved_debug_points, reserved_debug_colors);
+        bsp_cache.debug_markers = &debug_markers;
     }
 
     /* Start loading up vertex data */
@@ -258,8 +254,7 @@ void load_scenario_bsp(
     gpu.bsp_buf->unmap();
     gpu.bsp_index->unmap();
     gpu.bsp_light_buf->unmap();
-    gpu.debug_lines->unmap();
-    gpu.debug_line_colors->unmap();
+    debug_markers.unmap();
 
     EntityRecipe bsp_;
     bsp_.components = {
@@ -856,14 +851,12 @@ void load_collision_debug(EntityContainer& e, MapChangedEvent<Version>& data)
     auto                 magic = data.container.magic;
     blam::tag_index_view index(data.container);
 
-    auto&          model_cache = e.subsystem_cast<ModelCache<Version>>();
-    BlamResources& gpu         = e.subsystem_cast<BlamResources>();
-    DebugMarkers&  dm          = e.subsystem_cast<DebugMarkers>();
+    auto&         model_cache = e.subsystem_cast<ModelCache<Version>>();
+    DebugMarkers& dm          = e.subsystem_cast<DebugMarkers>();
 
     /* Continue the cursor from where load_scenario_bsp left it (do not
      * reset — that region holds the trigger/marker geometry). */
-    dm.portal_buffer       = gpu.debug_lines->map<Vecf3>(0);
-    dm.portal_color_buffer = gpu.debug_line_colors->map<Vecf3>(0);
+    dm.map();
 
     EntityRecipe coll_marker;
     coll_marker.tags       = ObjectGC;
@@ -985,8 +978,7 @@ void load_collision_debug(EntityContainer& e, MapChangedEvent<Version>& data)
             vehicle_count++;
     }
 
-    gpu.debug_lines->unmap();
-    gpu.debug_line_colors->unmap();
+    dm.unmap();
     cDebug(
         "load_collision_debug: {} vehicles, {} collision surfaces",
         vehicle_count,

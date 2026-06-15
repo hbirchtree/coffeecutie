@@ -98,52 +98,16 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         {
             auto indices  = sub.indices.data(bsp_magic).value();
             auto [p1, p2] = sub.bounds.points();
-            Vecf3 lo      = glm::min(p1, p2);
-            Vecf3 hi      = glm::max(p1, p2);
-            /* 16-vertex line_strip tracing all 12 edges of the AABB.
-             * Bottom face → front-left vertical → top face → remaining 3
-             * verticals. */
-            std::array<Vecf3, 16> vertices = {{
-                lo,
-                Vecf3(hi.x, lo.y, lo.z),
-                Vecf3(hi.x, hi.y, lo.z),
-                Vecf3(lo.x, hi.y, lo.z),
-                lo,
-                Vecf3(lo.x, lo.y, hi.z),
-                Vecf3(hi.x, lo.y, hi.z),
-                hi,
-                Vecf3(lo.x, hi.y, hi.z),
-                Vecf3(lo.x, lo.y, hi.z),
-                Vecf3(lo.x, hi.y, hi.z),
-                Vecf3(lo.x, hi.y, lo.z),
-                Vecf3(hi.x, hi.y, lo.z),
-                hi,
-                Vecf3(hi.x, lo.y, hi.z),
-                Vecf3(hi.x, lo.y, lo.z),
-            }};
-            std::copy(
-                vertices.begin(),
-                vertices.end(),
-                debug_markers->portal_buffer.begin() +
-                    debug_markers->portal_ptr);
-            debug_markers
-                ->portal_color_buffer[debug_markers->portal_color_ptr] =
-                Vecf3(0, 1, 0);
-            out.portals.push_back({
-                .arrays =
-                    {
-                        .count  = static_cast<u32>(16),
-                        .offset = static_cast<u32>(debug_markers->portal_ptr),
-                    },
-            });
+            /* 16-vertex wire box tracing all 12 edges of the subcluster AABB,
+             * appended through the shared debug-marker cursor. */
+            DebugDraw box = debug_markers->create_box(p1, p2, Vecf3(0, 1, 0));
+            out.portals.push_back(box.data);
             it.sub.push_back(
                 BSPItem::Subcluster{
                     .cluster         = &sub,
                     .indices         = indices,
-                    .debug_color_idx = debug_markers->portal_color_ptr,
+                    .debug_color_idx = box.color_ptr,
                 });
-            debug_markers->portal_ptr += 16;
-            debug_markers->portal_color_ptr++;
         }
     }
 

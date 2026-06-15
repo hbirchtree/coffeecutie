@@ -2,6 +2,7 @@
 
 #include "coffee/comp_app/subsystems.h"
 #include "components.h"
+#include "map_marker.h"
 #include "peripherals/constants.h"
 #include "shader_compiler.h"
 
@@ -466,31 +467,40 @@ void create_resources(compo::EntityContainer& e)
         {"node_weights", 6},
     });
 
-    resources.debug_lines = api.alloc_buffer(gfx::buffers::vertex, access);
-    resources.debug_lines->alloc();
-    resources.debug_lines->commit(memory_budget::debug_buffer / 2);
-    resources.debug_line_colors =
-        api.alloc_buffer(gfx::buffers::vertex, access);
-    resources.debug_line_colors->alloc();
-    resources.debug_line_colors->commit(memory_budget::debug_buffer / 2);
-
-    if constexpr(!compile_info::platform::is_android)
+    if(api.api_version() != std::make_tuple<u32, u32>(2, 0))
     {
-        auto pos = resources.debug_lines->map<Vecf3>(0);
-        auto col = resources.debug_line_colors->map<Vecf3>(0);
-        pos[0]   = Vecf3(0);
-        pos[1]   = Vecf3(10, 0, 0);
-        pos[2]   = Vecf3(0);
-        pos[3]   = Vecf3(0, 10, 0);
-        pos[4]   = Vecf3(0);
-        pos[5]   = Vecf3(0, 0, 10);
+        resources.debug_lines = api.alloc_buffer(gfx::buffers::vertex, access);
+        resources.debug_lines->alloc();
+        resources.debug_lines->commit(memory_budget::debug_buffer / 2);
+        resources.debug_line_colors =
+            api.alloc_buffer(gfx::buffers::vertex, access);
+        resources.debug_line_colors->alloc();
+        resources.debug_line_colors->commit(memory_budget::debug_buffer / 2);
+    }
+
+    /* Hand the debug-line buffers to DebugMarkers, the sole gateway for all
+     * CPU-side writes/maps to them. */
+    DebugMarkers& markers = e.subsystem_cast<DebugMarkers>();
+    markers.lines         = resources.debug_lines;
+    markers.colors        = resources.debug_line_colors;
+
+    if (!compile_info::platform::is_android && resources.debug_lines)
+    {
+        markers.map(0, 0);
+        auto& pos = markers.portal_buffer;
+        auto& col = markers.portal_color_buffer;
+        pos[0]    = Vecf3(0);
+        pos[1]    = Vecf3(10, 0, 0);
+        pos[2]    = Vecf3(0);
+        pos[3]    = Vecf3(0, 10, 0);
+        pos[4]    = Vecf3(0);
+        pos[5]    = Vecf3(0, 0, 10);
 
         col[0] = Vecf3(1, 0, 0);
         col[1] = Vecf3(0, 1, 0);
         col[2] = Vecf3(0, 0, 1);
 
-        resources.debug_lines->unmap();
-        resources.debug_line_colors->unmap();
+        markers.unmap();
 
         compo::EntityRecipe debug_draw;
         debug_draw.components = {
@@ -519,6 +529,7 @@ void create_resources(compo::EntityContainer& e)
         }
     }
 
+    if(resources.debug_lines)
     {
         struct debug_vertex
         {
@@ -865,8 +876,11 @@ void set_resource_labels(EntityContainer& e)
     debug.annotate(*resources.model_matrix_store, "model_matrices");
     debug.annotate(*resources.bone_matrix_buf, "bone_matrices");
 
-    debug.annotate(*resources.debug_attr, "debug_vao");
-    debug.annotate(*resources.debug_lines, "debug_vertices");
+    if(resources.debug_lines)
+    {
+        debug.annotate(*resources.debug_attr, "debug_vao");
+        debug.annotate(*resources.debug_lines, "debug_vertices");
+    }
 
     if(api.default_rendertarget() != resources.offscreen)
         debug.annotate(*resources.offscreen, "offscreen");

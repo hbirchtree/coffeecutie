@@ -3,6 +3,7 @@
 #include "caching.h"
 #include "coffee/core/CProfiling"
 #include "data.h"
+#include "map_marker.h"
 #include "selected_version.h"
 
 #include <coffee/core/debug/formatting.h>
@@ -31,7 +32,7 @@ using namespace std::chrono;
 template<typename V>
 using PhysicsManifest = compo::SubsystemManifest<
     type_list_t<DebugDraw>,
-    type_list_t<BSPCache<V>, BlamResources, LoadingStatus>,
+    type_list_t<BSPCache<V>, DebugMarkers, LoadingStatus>,
     empty_list_t>;
 
 template<typename V>
@@ -107,9 +108,9 @@ struct PhysicsSystem
      * 16 line-strip points are rewritten every frame. */
     void update_probe_marker(Proxy& p)
     {
-        BlamResources* resources;
-        p.subsystem(resources);
-        if(!resources->debug_lines)
+        DebugMarkers* markers;
+        p.subsystem(markers);
+        if(!markers->available())
             return;
 
         if(!m_marker_spawned)
@@ -122,11 +123,7 @@ struct PhysicsSystem
                  .count  = 16,
                  .offset = physics_debug_point_ptr,
             };
-            draw.color_ptr = physics_debug_color_ptr;
-
-            Span<Vecf3> colors = resources->debug_line_colors->map<Vecf3>(0);
-            colors[physics_debug_color_ptr] = Vecf3{1.f, .5f, 0.f};
-            resources->debug_line_colors->unmap();
+            draw.color_ptr   = physics_debug_color_ptr;
             m_marker_spawned = true;
         }
 
@@ -134,28 +131,14 @@ struct PhysicsSystem
         Vecf3       lo  = Vecf3{org.x(), org.y(), org.z()} - probe_radius;
         Vecf3       hi  = Vecf3{org.x(), org.y(), org.z()} + probe_radius;
 
-        Span<Vecf3> pts = resources->debug_lines->map<Vecf3>(
-            sizeof(Vecf3) * physics_debug_point_ptr, sizeof(Vecf3) * 16);
-        std::array<Vecf3, 16> const box = {{
-            lo,
-            Vecf3(hi.x, lo.y, lo.z),
-            Vecf3(hi.x, hi.y, lo.z),
-            Vecf3(lo.x, hi.y, lo.z),
-            lo,
-            Vecf3(lo.x, lo.y, hi.z),
-            Vecf3(hi.x, lo.y, hi.z),
-            hi,
-            Vecf3(lo.x, hi.y, hi.z),
-            Vecf3(lo.x, lo.y, hi.z),
-            Vecf3(lo.x, hi.y, hi.z),
-            Vecf3(lo.x, hi.y, lo.z),
-            Vecf3(hi.x, hi.y, lo.z),
-            hi,
-            Vecf3(hi.x, lo.y, hi.z),
-            Vecf3(hi.x, lo.y, lo.z),
-        }};
-        std::copy(box.begin(), box.end(), pts.begin());
-        resources->debug_lines->unmap();
+        auto const box = DebugMarkers::box_vertices(lo, hi);
+        markers->map();
+        markers->put_strip(
+            physics_debug_point_ptr,
+            physics_debug_color_ptr,
+            box,
+            Vecf3{1.f, .5f, 0.f});
+        markers->unmap();
     }
 
     BSPItem const* find_section_item(BSPCache<V>& cache) const

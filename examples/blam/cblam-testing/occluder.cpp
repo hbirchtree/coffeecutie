@@ -4,6 +4,7 @@
 
 #include "caching.h"
 #include "data.h"
+#include "map_marker.h"
 #include "selected_version.h"
 
 #include <coffee/core/debug/formatting.h>
@@ -11,7 +12,7 @@
 template<typename V>
 using OccluderManifest = compo::SubsystemManifest<
     type_list_t<BspReference, Model, PlayerCamera, PlayerInfo>,
-    type_list_t<BSPCache<V>, BlamResources, RenderingParameters>,
+    type_list_t<BSPCache<V>, BlamResources, RenderingParameters, DebugMarkers>,
     empty_list_t>;
 
 template<typename V>
@@ -40,12 +41,17 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         BSPCache<V>*         bsp_cache;
         BlamResources*       resources;
         RenderingParameters* rendering;
+        DebugMarkers*        markers;
         p.subsystem(bsp_cache);
         p.subsystem(resources);
         p.subsystem(rendering);
+        p.subsystem(markers);
 
         if(!rendering->occluder_update)
             return;
+
+        if(markers->available())
+            update_debug_viz(p);
 
         Vecf3 camera_pos{};
         Matf4 camera_mvp = glm::identity<Matf4>();
@@ -61,43 +67,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             }
         }
 
-        Span<Vecf3> portal_colors = resources->debug_line_colors->map<Vecf3>(0);
-        Span<Vecf3> portal_pos    = resources->debug_lines->map<Vecf3>(
-            sizeof(Vecf3) * 6, sizeof(Vecf3) * (18 + 16 * 7));
-
-        u32 player_i = 0;
-        for(auto& ent : p.template select<PlayerCamera>())
-        {
-            auto* cam  = p.template get<PlayerCamera>(ent.id);
-            auto* info = p.template get<PlayerInfo>(ent.id);
-            if(!cam || !info)
-                continue;
-            if(player_i >= 16)
-                break;
-
-            auto pos = cam->camera->position;
-
-            if(info->seat_idx == 0)
-                pos = Vecf3(0);
-
-            std::array<Vecf3, 7> points = {{
-                pos + Vecf3{-0.2f, 0, 0},
-                pos + Vecf3{-0.1f, 0, .1f},
-                pos + Vecf3{0.1f, 0, .1f},
-                pos + Vecf3{0.2f, 0, 0},
-                pos + Vecf3{0.1f, 0, -.1f},
-                pos + Vecf3{-0.1f, 0, -.1f},
-                pos + Vecf3{-0.2f, 0, 0},
-            }};
-
-            portal_colors[6 + player_i] = Vecf3{.5f, 0, 1.f};
-            std::copy(
-                points.begin(),
-                points.end(),
-                portal_pos.begin() + 18 + 7 * player_i++);
-        }
-
-        resources->debug_lines->unmap();
 
         BSPItem const*   current_bsp{nullptr};
         u32              current_cluster{0};
@@ -159,9 +128,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
         if(active_bsp)
         {
-            for(auto const& cluster : active_bsp->clusters)
-                for(auto const& sub : cluster.sub)
-                    portal_colors[sub.debug_color_idx] = Vecf3(1, 0, 0);
 
             if(auto cluster = active_bsp->find_cluster(camera_pos);
                cluster.has_value())
@@ -170,14 +136,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 current_bsp           = active_bsp;
                 current_cluster       = cluster_;
                 current_bsp_id        = active_bsp_id;
-                auto const& subs      = active_bsp->clusters.at(cluster_).sub;
-                if(sub_ < subs.size())
-                    portal_colors[subs.at(sub_).debug_color_idx] =
-                        Vecf3(0, 1, 0);
             }
         }
-
-        resources->debug_line_colors->unmap();
 
         /* When the camera enters a new cluster, recompute the portal-traversal
          * visible set. When between clusters, keep the last valid set so
@@ -656,6 +616,51 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 }
             }
         }
+    }
+
+    void update_debug_viz(Proxy& p)
+    {
+        DebugMarkers* markers{};
+        p.subsystem(markers);
+
+        markers->map();
+
+        u32 player_i = 0;
+        for(auto& ent : p.template select<PlayerCamera>())
+        {
+            auto* cam  = p.template get<PlayerCamera>(ent.id);
+            auto* info = p.template get<PlayerInfo>(ent.id);
+            if(!cam || !info)
+                continue;
+            if(player_i >= 16)
+                break;
+
+            auto pos = cam->camera->position;
+
+            if(info->seat_idx == 0)
+                pos = Vecf3(0);
+
+            std::array<Vecf3, 7> points = {{
+                pos + Vecf3{-0.2f, 0, 0},
+                pos + Vecf3{-0.1f, 0, .1f},
+                pos + Vecf3{0.1f, 0, .1f},
+                pos + Vecf3{0.2f, 0, 0},
+                pos + Vecf3{0.1f, 0, -.1f},
+                pos + Vecf3{-0.1f, 0, -.1f},
+                pos + Vecf3{-0.2f, 0, 0},
+            }};
+
+            /* Eye markers live in the slots reserved after the axes
+             * (vertex 24 + 7*i, colour 6 + i). */
+            markers->put_strip(
+                24 + 7 * player_i,
+                6 + player_i,
+                points,
+                Vecf3{.5f, 0, 1.f});
+            player_i++;
+        }
+
+        markers->unmap();
     }
 
     void end_restricted(Proxy&, time_point const&)

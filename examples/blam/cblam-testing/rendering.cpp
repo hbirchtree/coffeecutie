@@ -16,6 +16,7 @@
 #include "caching.h"
 #include "coffee/graphics/apis/gleam/rhi_texture.h"
 #include "data.h"
+#include "map_marker.h"
 #include "peripherals/concepts/graphics_api.h"
 #include "selected_version.h"
 
@@ -669,11 +670,14 @@ struct MeshRenderer
         if(m_api->workarounds().bugs.adreno)
             return;
 
+        DebugMarkers* markers;
+        e.subsystem(markers);
+        if(!markers->available())
+            return;
+
         std::vector<gfx::draw_command::data_t> groups;
         RenderingParameters*                   params;
         e.subsystem(params);
-
-        Span<Vecf3> colors = m_resources.debug_line_colors->map<Vecf3>(0);
 
         for(auto& ent : e.select(ObjectBsp))
         {
@@ -708,12 +712,7 @@ struct MeshRenderer
             DebugDraw const& draw = ref.template get<DebugDraw>();
             groups.push_back(draw.data);
             groups.back().instances.offset = draw.color_ptr;
-            // if(ent.tags & ObjectTriggerVolume)
-            //     colors[draw.color_ptr] =
-            //         draw.selected ? Vecf3{0, 1, 0} : Vecf3{1};
         }
-
-        m_resources.debug_line_colors->unmap();
 
         Matf4 debug_matrix =
             m_players.empty() ? glm::identity<Matf4>() : m_players[0].matrix;
@@ -911,8 +910,6 @@ struct MeshRenderer
             });
         }
 
-        // Sort transparent draws back-to-front before rendering.
-        // Safe to do here — update_materials already wrote all material slots.
         Vecf3 const& cam_pos =
             m_players.empty() ? Vecf3{0} : m_players[primary_player].position;
         for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
@@ -932,8 +929,6 @@ struct MeshRenderer
             render_bsp_pass(
                 p, primary_player, t, m_bsp[pass], blend, transparent_depth);
         }
-
-        //        render_bsp_pass(p, m_bsp[Pass_Wireframe]);
 
         render_debug_lines(p);
 
@@ -1016,10 +1011,6 @@ struct MeshRenderer
     void generate_draws(Proxy& p)
     {
         ProfContext _;
-        //        BitmapCache<Version>& bitm
-        //            = p.template subsystem<BitmapCache<Version>>();
-        //        ShaderCache<Version>& shaders
-        //            = p.template subsystem<ShaderCache<Version>>();
 
         RenderingParameters* rendering_params;
         p.subsystem(rendering_params);
