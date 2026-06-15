@@ -125,6 +125,30 @@ function instrument() {
   window.requestAnimationFrame = function (cb) {
     return origRAF.call(window, (t) => { h.frames++; return cb(t); });
   };
+
+  // Surface uncaught exceptions with their full stack. emscripten's generated
+  // HTML installs its own window.onerror that only logs a one-line message, and
+  // a C++ exception reaching JS often arrives as a bare value with no JS stack.
+  // addEventListener coexists with that onerror; route the richest detail we can
+  // get (Error.stack, or the emscripten exception message) through console.error
+  // so it lands in the captured output.log. getExceptionMessage is exported by
+  // emscripten when built with exception support.
+  const describe = (e) => {
+    if (!e) return '<no error object>';
+    try {
+      const M = window.Module;
+      if (typeof e === 'number' && M && typeof M.getExceptionMessage === 'function') {
+        return 'C++ exception: ' + M.getExceptionMessage(e).join(': ');
+      }
+    } catch (inner) { /* fall through to generic */ }
+    return e.stack || e.message || String(e);
+  };
+  window.addEventListener('error', (ev) => {
+    console.error('[uncaught error] ' + describe(ev.error !== undefined ? ev.error : ev.message));
+  });
+  window.addEventListener('unhandledrejection', (ev) => {
+    console.error('[unhandledrejection] ' + describe(ev.reason));
+  });
 }
 
 // Tier 2 hook: preload the dummy_plug config into MEMFS and point the app at it via
@@ -152,11 +176,55 @@ const FATAL_PATTERNS = [
   /memory access out of bounds/i, /\bOOM\b/, /maximum call stack/i,
 ];
 
+// Emscripten/wasm stack traces are extremely noisy: every frame is a full
+// `at <demangled C++ signature> (http://host:port/BlamGraphics.wasm:wasm-function[N]:0xADDR)`
+// line, the same trace is often logged several times in a row, and half the
+// frames are the logging machinery itself. prettyStack compresses them:
+//   - drops the localhost URL, keeps a short `wasm[N]` / `file:line` locator
+//   - removes the jsStackTrace/emscripten_log/Coffee::Logging plumbing frames
+//   - simplifies `std::__2::` spelling and trims overlong signatures
+//   - collapses a trace identical to the previous one to a single note
+let lastStackSig = null;
+const STACK_PLUMBING =
+  /\b(jsStackTrace|getCallstack|__emscripten_log_formatted|emscripten_log|Coffee::Logging::(?:detail::)?log)\b/;
+function prettyStack(text) {
+  if (typeof text !== 'string' || !/wasm-function|BlamGraphics\.(?:wasm|js)/.test(text)) {
+    return text;
+  }
+  const head = [];
+  const frames = [];
+  for (const raw of text.split('\n')) {
+    let line = raw
+      .replace(/https?:\/\/[^/]+\//g, '')
+      .replace(/BlamGraphics\.wasm:wasm-function\[(\d+)\]:0x[0-9a-f]+/g, 'wasm[$1]')
+      .replace(/std::__2::/g, 'std::')
+      .replace(/\[abi:[^\]]+\]/g, '')
+      .replace(/\s+/g, ' ')
+      .trimEnd();
+    if (/^\s*at\s/.test(raw)) {
+      if (STACK_PLUMBING.test(line)) continue; // drop logging plumbing frames
+      // Trim runaway template signatures while keeping the function name + locator.
+      const m = line.match(/^(at .*?)\s*\((wasm\[\d+\]|[^)]*)\)\s*$/);
+      if (m && m[1].length > 140) line = `${m[1].slice(0, 137)}…) (${m[2]})`;
+      frames.push('    ' + line.replace(/^at /, 'at '));
+    } else if (line) {
+      head.push(line);
+    }
+  }
+  if (!frames.length) return head.join('\n');
+  const sig = frames.join('|');
+  if (sig === lastStackSig) {
+    return [...head, '    <stack identical to previous>'].join('\n');
+  }
+  lastStackSig = sig;
+  return [...head, ...frames].join('\n');
+}
+
 const logLines = [];
 const record = (s, level = 'DEBG') => {
   const d = new Date();
   const ts = [d.getHours(), d.getMinutes(), d.getSeconds()].map(v => String(v).padStart(2, '0')).join(':');
-  const msg = `${level.padEnd(4)}:${ts}: ${s}`;
+  const msg = `${level.padEnd(4)}:${ts}: ${prettyStack(s)}`;
   logLines.push(msg);
   console.log(msg);
 };
