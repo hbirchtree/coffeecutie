@@ -241,8 +241,6 @@ std::optional<std::string> api::load(DeviceHandle&& device)
 
     while(has_extension("ALC_SOFT_HRTF") && device.enable_hrtf)
     {
-        get_proc("alcGetStringiSOFT", getStringiSOFT);
-
         ALCint num_hrtfs{};
         alcGetIntegerv(m_device, ALC_NUM_HRTF_SPECIFIERS_SOFT, 1, &num_hrtfs);
 
@@ -252,11 +250,20 @@ std::optional<std::string> api::load(DeviceHandle&& device)
             break;
         }
 
-        cDebug("OpenAL HRTFs detected:");
-        for(auto i : stl_types::range(num_hrtfs))
-            cDebug(
-                " - {}",
-                alcGetStringiSOFT(m_device, ALC_HRTF_SPECIFIER_SOFT, i));
+#if defined(COFFEE_WASM64)
+        /* TODO: Bug on Wasm64 gives mismatched function signature
+         * Maybe fixed in a later Emscripten version? */
+#else
+        get_proc("alcGetStringiSOFT", getStringiSOFT);
+        if(getStringiSOFT)
+        {
+            cDebug("OpenAL HRTFs detected:");
+            for(auto i : stl_types::range(num_hrtfs))
+                cDebug(
+                    " - {}",
+                    alcGetStringiSOFT(m_device, ALC_HRTF_SPECIFIER_SOFT, i));
+        }
+#endif
 
         attrs.push_back(ALC_HRTF_SOFT);
         attrs.push_back(ALC_TRUE);

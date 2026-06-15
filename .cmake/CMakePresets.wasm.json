@@ -45,7 +45,7 @@
                 "rhs": "Linux"
             },
             "cacheVariables": {
-                "BUILD_OPENAL": "OFF",
+                "BUILD_OPENAL": "ON",
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/emscripten-wasm64.toolchain.cmake",
                 "VCPKG_TARGET_TRIPLET": "wasm64-emscripten"
             }
