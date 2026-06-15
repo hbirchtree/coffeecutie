@@ -25,7 +25,6 @@
                 "BUILD_GLES_31": "ON",
                 "BUILD_GLES_32": "ON",
                 "BUILD_GL_SOFTWARE_BCN": "ON",
-                "BUILD_GL_SOFTWARE_PVRTC": "ON",
                 "BUILD_MEDIA": "OFF",
                 "BUILD_SDL2": "OFF",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
@@ -88,7 +87,6 @@
                 "BUILD_GLES": "OFF",
                 "BUILD_GLAD_GETPROC": "ON",
                 "BUILD_GL_SOFTWARE_BCN": "OFF",
-                "BUILD_GL_SOFTWARE_PVRTC": "OFF",
                 "CMAKE_C_FLAGS": "-mcpu=cortex-a57",
                 "CMAKE_CXX_FLAGS": "-mcpu=cortex-a57"
             },

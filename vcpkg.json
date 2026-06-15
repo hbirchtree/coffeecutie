@@ -61,7 +61,7 @@
                 "bcdec",
                 { "name": "imgui", "features": ["docking-experimental"]},
                 { "name": "ktx", "features": ["vulkan"], "platform": "!bare" },
-                { "name": "pvrtcdec", "platform": "android | emscripten | (linux & x64)" },
+                { "name": "pvrtcdec", "platform": "linux & x64" },
                 "vulkan-headers"
             ]
         },
