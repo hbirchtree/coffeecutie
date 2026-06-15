@@ -177,6 +177,25 @@ inline auto make_texture_list(Textures&&... defs)
 
 using texture_list = declreturntype(make_texture_list<>);
 
+struct instance_texture_t
+{
+    typing::graphics::ShaderStage stage;
+    uniform_key uniform;
+    std::shared_ptr<sampler_t> sampler;
+    std::vector<texture_t*> textures;
+};
+
+template<typename... InstanceTextures>
+requires (std::is_same_v<InstanceTextures, instance_texture_t> && ...)
+inline auto make_instance_textures(InstanceTextures&&... defs)
+{
+    std::vector<instance_texture_t> definitions;
+    (definitions.push_back(std::move(defs)), ...);
+    return definitions;
+}
+
+using instance_texture_list = declreturntype(make_instance_textures<>);
+
 struct draw_command
 {
     using vertex_type =

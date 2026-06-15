@@ -525,6 +525,7 @@ struct workarounds
         bool emulated_vertex_offset{false};
         bool force_vertex_attrib_names{false};
         bool advance_ubos_by_baseinstance{false};
+        bool slow_state_changes{false};
     } draw;
 
     struct

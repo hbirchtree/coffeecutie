@@ -91,6 +91,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
     auto        render_target = command.render_target.expired()
                                     ? default_rendertarget()
                                     : command.render_target.lock();
+    auto vao                  = command.vertices.lock();
 
     if(data.empty())
         return std::nullopt;
@@ -126,12 +127,26 @@ inline optional<tuple<error, std::string_view>> api::submit(
 
     [[maybe_unused]] auto _ = debug().scope();
 
-    render_target->internal_bind(
+    const bool change_render_target =
+        !m_workarounds.draw.slow_state_changes ||
+        render_target.get() != draw_cache.last_fb;
+    const bool change_program =
+        !m_workarounds.draw.slow_state_changes ||
+        program.get() != draw_cache.last_program;
+    const bool change_vao =
+        !m_workarounds.draw.slow_state_changes ||
+        vao.get() != draw_cache.last_vao;
+
+    if(change_render_target)
+    {
+        draw_cache.last_fb = render_target.get();
+        render_target->internal_bind(
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
-        group::framebuffer_target::draw_framebuffer);
+            group::framebuffer_target::draw_framebuffer);
 #else
-        group::framebuffer_target::framebuffer);
+            group::framebuffer_target::framebuffer);
 #endif
+    }
 
     const bool uses_baseinstance = stl_types::any_of(
         data, [](auto const& d) { return d.instances.offset > 0; });
@@ -155,7 +170,10 @@ inline optional<tuple<error, std::string_view>> api::submit(
     const bool uses_vertex_offset =
         call.indexed && stl_types::any_of(data, [](auto const& d) {
             return d.elements.vertex_offset > 0;
-        });
+        }) || draw_cache.vertex_offset_changed;
+    draw_cache.vertex_offset_changed =
+        uses_vertex_offset &&
+        m_workarounds.draw.slow_state_changes;
     if(m_api_type == api_type_t::es && uses_baseinstance &&
        !m_workarounds.draw.emulated_base_instance)
     {
@@ -187,8 +205,6 @@ inline optional<tuple<error, std::string_view>> api::submit(
         return std::make_tuple(error::no_program, "no program provided");
     }
 
-    auto vao = command.vertices.lock();
-
     if(!vao)
     {
         usage().draw.failed_draws++;
@@ -218,9 +234,11 @@ inline optional<tuple<error, std::string_view>> api::submit(
         cmd::bind_vertex_array(vao->m_handle);
     } else
 #endif
+    if(change_vao)
     {
         using buffer_target = group::buffer_target_arb;
 
+        draw_cache.last_vao = vao.get();
         for(auto const& attrib : vao->m_attribute_names)
             cmd::bind_attrib_location(
                 program->m_handle, attrib.second, attrib.first);
@@ -238,6 +256,8 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 vao->m_buffers.at(attrib.buffer.id).lock()->m_handle);
             detail::vertex_setup_attribute(attrib);
         }
+        /* Attribute pointers were just re-established at base offset 0. */
+        draw_cache.last_vertex_offset = 0;
 
         if(!vao->m_element_buffer.expired())
         {
@@ -247,8 +267,14 @@ inline optional<tuple<error, std::string_view>> api::submit(
         }
     }
 
-    cmd::use_program(program->m_handle);
+    if(change_program)
+    {
+        draw_cache.last_program = program.get();
+        cmd::use_program(program->m_handle);
+    }
 
+    // Don't repeat this work from earlier
+    if((change_program || change_vao) && !m_workarounds.draw.slow_state_changes)
     {
         u32 vertex_program =
             m_features.program.separable_programs
@@ -459,7 +485,14 @@ inline optional<tuple<error, std::string_view>> api::submit(
             d                           = apply_base_instance(d);
 
             m_usage.draw.draws += num_instances;
-            if(call.indexed && d.elements.vertex_offset > 0)
+            /* Re-establish the attrib pointers whenever this draw's base
+             * vertex differs from the one currently programmed — including
+             * a return to 0. Gating on `> 0` alone left a previous draw's
+             * offset applied, corrupting subsequent offset==0 draws once
+             * the per-submit VAO setup is skipped (state conservation). */
+            if(call.indexed &&
+               d.elements.vertex_offset != draw_cache.last_vertex_offset)
+            {
                 for(auto const& attrib : vao->m_attributes)
                 {
                     if(vao->m_buffers.at(attrib.buffer.id).expired())
@@ -473,6 +506,8 @@ inline optional<tuple<error, std::string_view>> api::submit(
                     detail::vertex_setup_attribute(
                         attrib, d.elements.vertex_offset * attrib.value.stride);
                 }
+                draw_cache.last_vertex_offset = d.elements.vertex_offset;
+            }
             for([[maybe_unused]] auto i : range<u32>(num_instances))
             {
                 [[maybe_unused]] auto _ =
@@ -496,15 +531,15 @@ inline optional<tuple<error, std::string_view>> api::submit(
         m_usage.draw.instances = m_usage.draw.draws;
     }
 
-    if(!m_features.vertex.vertex_arrays)
+    if(!m_features.vertex.vertex_arrays && !m_workarounds.draw.slow_state_changes)
         for(auto const& attrib : vao->m_attributes)
             cmd::disable_vertex_attrib_array(attrib.index);
 
-    if(element_buf)
+    if(element_buf && !m_workarounds.draw.slow_state_changes)
         cmd::bind_buffer(group::buffer_target_arb::element_array_buffer, 0);
 
 #if GLEAM_MAX_VERSION_ES != 0x200
-    if(m_features.vertex.vertex_arrays)
+    if(m_features.vertex.vertex_arrays && !m_workarounds.draw.slow_state_changes)
         cmd::bind_vertex_array(0);
 #endif
 

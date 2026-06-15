@@ -399,6 +399,15 @@ struct api
     std::unique_ptr<debug_api>         m_debug;
     context::api                       m_context_state;
 
+    struct draw_cache_t
+    {
+        rendertarget_t* last_fb;
+        program_t* last_program;
+        vertex_array_t* last_vao;
+        bool vertex_offset_changed{false};
+        u32 last_vertex_offset{0};
+    } draw_cache;
+
     rendertarget_currency m_rendertargetCurrency;
     features              m_features;
     api_limits            m_limits;

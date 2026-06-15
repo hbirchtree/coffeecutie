@@ -1150,6 +1150,7 @@ optional<error> api::load(load_options_t options)
                 SpanOne(shader_compiler_present));
             if(!shader_compiler_present)
                 return error::refuse_bad_es20_impl;
+            m_workarounds.draw.slow_state_changes = true;
         }
 
 #if GLEAM_MAX_VERSION_ES != 0x200

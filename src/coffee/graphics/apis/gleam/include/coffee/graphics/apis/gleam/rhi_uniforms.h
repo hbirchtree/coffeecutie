@@ -4,6 +4,7 @@
 #include <peripherals/stl/tuple_foreach.h>
 #include <peripherals/stl/tuple_slice.h>
 
+#include "glw/enums/TextureUnit.h"
 #include "rhi_draw_command.h"
 #include "rhi_features.h"
 #include "rhi_program.h"
@@ -365,8 +366,13 @@ inline bool apply_command_modifier(
             apply_texture_filtering_opts(
                 texture.m_type, sampler_hnd->m_min, sampler_hnd->m_mag);
         }
+        // If sampler binding is not available we can't really guess uniform location
         if(!features.sampler_binding)
-            apply_sampler_uniform(program, stage, locinfo, index);
+            apply_sampler_uniform(
+                program,
+                stage,
+                uniform_key{.name = locinfo.name},
+                index);
     }
     return true;
 }
@@ -449,6 +455,47 @@ inline bool apply_command_modifier_per_call(
     program_t const&, shader_bookkeeping_t&, texture_list&, u32, u32)
 {
     return true;
+}
+
+inline bool apply_command_modifier(
+    program_t&,
+    shader_bookkeeping_t& bookkeeping,
+    instance_texture_list&)
+{
+    return true;
+}
+
+inline bool apply_command_modifier_per_call(
+    program_t&             program,
+    shader_bookkeeping_t&  bookkeeping,
+    instance_texture_list& textures,
+    u32                    base_instance,
+    u32                    instance)
+{
+    // This codepath is meant for OpenGL ES 2.0
+    // Application to systems with functional sampler type is not included
+    for(auto const& def : textures)
+    {
+        auto  texture = def.textures.at(instance);
+        if(!texture)
+            continue;
+        auto const& sampler = *def.sampler;
+        cmd::active_texture(group::texture_unit::texture0 + def.uniform.location);
+        cmd::bind_texture(convert::to(texture->m_type), texture->m_handle);
+        apply_texture_filtering_opts(texture->m_type, sampler.m_min, sampler.m_mag);
+        apply_sampler_uniform(
+            program,
+            def.stage,
+            uniform_key{.name = def.uniform.name},
+            def.uniform.location);
+    }
+
+    return true;
+}
+
+inline void undo_command_modifier(
+    program_t const&, shader_bookkeeping_t&, instance_texture_list&&)
+{
 }
 
 inline bool apply_command_modifier(
