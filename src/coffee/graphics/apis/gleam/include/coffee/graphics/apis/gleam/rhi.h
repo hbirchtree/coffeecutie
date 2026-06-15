@@ -403,7 +403,7 @@ struct api
     {
         rendertarget_t* last_fb;
         program_t* last_program;
-        vertex_array_t* last_vao;
+        vertex_type* last_vao;
         bool vertex_offset_changed{false};
         u32 last_vertex_offset{0};
     } draw_cache;
