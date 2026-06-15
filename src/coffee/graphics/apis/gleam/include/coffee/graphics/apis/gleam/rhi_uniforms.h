@@ -562,15 +562,19 @@ inline bool apply_command_modifier(
                 cmd::depth_rangef(depth.range->x, depth.range->y);
 #endif
             }
-            cmd::depth_func(
-                depth.reversed ? group::depth_function::gequal
-                               : group::depth_function::less);
+            bool clip_avail = false;
 #if GLEAM_MAX_VERSION >= 0x450
-            if(depth.reversed && features.dsa)
+            clip_avail = features.dsa;
+            if(depth.reversed && clip_avail)
                 cmd::clip_control(
                     group::clip_control_origin::lower_left,
                     group::clip_control_depth::zero_to_one);
 #endif
+            cmd::depth_func(
+                !depth.reversed       ? group::depth_function::less
+                : clip_avail          ? group::depth_function::gequal
+                : depth.strict_greater ? group::depth_function::greater
+                                       : group::depth_function::gequal);
         }
     }
 
@@ -591,7 +595,11 @@ inline void undo_command_modifier(
     if(view_info.scissor.has_value())
         cmd::disable(group::enable_cap::scissor_test);
     if(view_info.depth.has_value())
+    {
         cmd::disable(group::enable_cap::depth_test);
+        if(view_info.depth->reversed)
+            cmd::depth_func(group::depth_function::less);
+    }
     if(view_info.view.has_value())
         cmd::viewport(
             Veci2{},

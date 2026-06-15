@@ -51,6 +51,8 @@ struct BlamResources : compo::SubsystemBase
 
     std::shared_ptr<gfx::program_t> bsp_pipeline;
     std::shared_ptr<gfx::program_t> model_pipeline;
+    std::shared_ptr<gfx::program_t> chicago_pipeline; /* ES2 schi/scex combiner */
+    std::shared_ptr<gfx::program_t> water_pipeline;    /* ES2 swat water */
     std::shared_ptr<gfx::program_t> wireframe_pipeline;
 
     std::shared_ptr<gfx::buffer_t>       model_buf;

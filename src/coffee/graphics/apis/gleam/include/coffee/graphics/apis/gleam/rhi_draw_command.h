@@ -25,6 +25,7 @@ struct depth_state
     using depth_range = std::optional<typing::vector_types::Vecd2>;
     depth_range range{};
     bool        reversed{false};
+    bool strict_greater{false};
 };
 
 struct depth_extended_state

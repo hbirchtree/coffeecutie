@@ -804,6 +804,43 @@ static void create_legacy_shaders(gfx::api& api, BlamResources& resources)
     {
         cWarning("Failed to compile BSP shader: {}", std::get<0>(res.error()));
     }
+
+    /* Diffuse-only scenery (mod2) program for the ES2 path; no skinning. */
+    resources.model_pipeline = api.alloc_program();
+    resources.model_pipeline->add(
+        gfx::program_t::stage_t::Vertex,
+        api.alloc_shader("shaders/scenery_legacy.vert"_rsc.data()));
+    resources.model_pipeline->add(
+        gfx::program_t::stage_t::Fragment,
+        api.alloc_shader("shaders/scenery_legacy.frag"_rsc.data()));
+    if(auto mres = resources.model_pipeline->compile(); mres.has_error())
+        cWarning(
+            "Failed to compile scenery shader: {}", std::get<0>(mres.error()));
+
+    /* Simplified schi/scex combiner for the ES2 path (sky dome, multi-map
+     * scenery). */
+    resources.chicago_pipeline = api.alloc_program();
+    resources.chicago_pipeline->add(
+        gfx::program_t::stage_t::Vertex,
+        api.alloc_shader("shaders/scenery_legacy.vert"_rsc.data()));
+    resources.chicago_pipeline->add(
+        gfx::program_t::stage_t::Fragment,
+        api.alloc_shader("shaders/scenery_legacy_chicago.frag"_rsc.data()));
+    if(auto cres = resources.chicago_pipeline->compile(); cres.has_error())
+        cWarning(
+            "Failed to compile chicago shader: {}", std::get<0>(cres.error()));
+
+    /* Simple swat water for the ES2 path (scrolling base + blue tint). */
+    resources.water_pipeline = api.alloc_program();
+    resources.water_pipeline->add(
+        gfx::program_t::stage_t::Vertex,
+        api.alloc_shader("shaders/map_legacy.vert"_rsc.data()));
+    resources.water_pipeline->add(
+        gfx::program_t::stage_t::Fragment,
+        api.alloc_shader("shaders/map_legacy_water.frag"_rsc.data()));
+    if(auto wres = resources.water_pipeline->compile(); wres.has_error())
+        cWarning(
+            "Failed to compile water shader: {}", std::get<0>(wres.error()));
 }
 
 void create_shaders(compo::EntityContainer& e)

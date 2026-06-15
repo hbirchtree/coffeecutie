@@ -88,6 +88,10 @@
     "copy": [
         "shaders/map_legacy.vert",
         "shaders/map_legacy.frag",
+        "shaders/scenery_legacy.vert",
+        "shaders/scenery_legacy.frag",
+        "shaders/scenery_legacy_chicago.frag",
+        "shaders/map_legacy_water.frag",
         "sounds/thefunny.ogg",
         "sounds/thefunny2.ogg",
         "names.txt"
