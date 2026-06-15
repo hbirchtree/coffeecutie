@@ -872,8 +872,9 @@ def run_web(device_name, device, preset_name, preset, extra_args, script_dir, bu
     def ev(s):
         return expand_vars(s, staged_bundle, os.path.join(build_root, target_dir), script_dir)
 
-    # Environment for the smoke test
+    # Environment for WebAssembly in Playwright
     params = preset.get("extras", {}).copy()
+    params.update(preset.get("web_extras", {}))
 
     for arg in extra_args:
         if '=' in arg:
