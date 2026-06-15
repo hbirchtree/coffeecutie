@@ -171,6 +171,10 @@ elseif(EMSCRIPTEN)
     -sMAIN_MODULE=2
     -msimd128
     -fwasm-exceptions
+    # Attach a captured stack trace to thrown C++ exceptions so an uncaught
+    # std:: exception reaching JS carries wasm frames (readable with -gsource-map),
+    # instead of arriving as a bare "std::out_of_range" with no origin.
+    -sEXCEPTION_STACK_TRACES=1
     # -flto
     -pthread
     -Wno-pthreads-mem-growth
