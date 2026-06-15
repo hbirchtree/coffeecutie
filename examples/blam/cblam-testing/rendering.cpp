@@ -441,7 +441,7 @@ struct MeshRenderer
         using typing::vector_types::Veci4;
 
         const auto depth = gfx::depth_state{
-            .range    = Vecd2{0.1, 1000.},
+            .range    = Vecd2{0.0, 1.0},
             .reversed = true,
         };
 
@@ -980,6 +980,9 @@ struct MeshRenderer
     void legacy_render(Proxy& p, f32 t)
     {
         using typing::vector_types::Vecd2;
+
+        RenderingParameters const* rendering_props;
+        p.subsystem(rendering_props);
         
         ProfContext _;
         /* Batch per lightmap PAGE, not per lightmap tag. One lightmap tag
@@ -1039,7 +1042,7 @@ struct MeshRenderer
             batch.data.push_back(bsp_ref.draw.data.front());
         }
 
-        ProfContext __("legacy_render: Drawing");
+        Coffee::Profiler::PushContext("legacy_render: Opaque BSP");
         for(auto const& [_, light_group] : batches)
         {
             Vecf2 base_map_scale{1, 1};
@@ -1093,6 +1096,7 @@ struct MeshRenderer
                 fragment_u,
                 samplers,
                 texture_lists,
+                gfx::cull_state{.front_face = true},
                 gfx::view_state{
                     .depth = gfx::depth_state{
                         .range    = Vecd2{0.0, 1.0},
@@ -1100,10 +1104,9 @@ struct MeshRenderer
                     },
                 });
         }
+        Coffee::Profiler::PopContext();
 
-        /* Water (swat) BSP surfaces — skipped by the senv batch above. Simple
-         * scrolling-base + blue-tint pass. Uses the default gequal depth so it
-         * layers over the coplanar seabed. */
+        Coffee::Profiler::PushContext("legacy_render: Water BSP");
         for(auto const& ent : p.select(ObjectBsp))
         {
             auto                ref     = p.template ref<Proxy>(ent);
@@ -1225,9 +1228,12 @@ struct MeshRenderer
                     },
                 });
         }
+        Coffee::Profiler::PopContext();
 
-        /* Scenery (mod2) — ES2 experiment: diffuse map only, no skinning,
-         * one draw per submodel with the object transform as a uniform. */
+        if(!rendering_props->render_scenery)
+            return;
+
+        Coffee::Profiler::PushContext("legacy_render: Scenery");
         Matf4 const& camera = m_players[0].matrix;
         for(auto const& ent : p.select(ObjectMod2))
         {
@@ -1310,6 +1316,7 @@ struct MeshRenderer
                     vtx_u,
                     frg_u,
                     samplers,
+                    gfx::cull_state{.front_face = true},
                     gfx::view_state{
                         .depth = gfx::depth_state{
                             .range          = Vecd2{0.0, 1.0},
@@ -1364,6 +1371,7 @@ struct MeshRenderer
                 vtx_u,
                 frg_u,
                 samplers,
+                gfx::cull_state{.front_face = true},
                 gfx::view_state{
                     .depth = gfx::depth_state{
                         .range          = Vecd2{0.0, 1.0},
@@ -1372,6 +1380,7 @@ struct MeshRenderer
                     },
                 });
         }
+        Coffee::Profiler::PopContext();
     }
 
     void end_restricted(Proxy& /*p*/, time_point const& /*time*/)
@@ -2263,8 +2272,10 @@ void main()
 void alloc_renderer(EntityContainer& container)
 {
     ProfContext _;
+    auto& api = container.subsystem_cast<gfx::system>();
+
     container.register_subsystem_inplace<MeshRenderer<halo_version>>(
-        &container.subsystem_cast<gfx::system>(),
+        &api,
         std::ref(container.subsystem_cast<BlamResources>()),
         std::ref(container.subsystem_cast<RenderingParameters>()),
         std::ref(container.subsystem_cast<ShaderCache<halo_version>>()),
@@ -2272,5 +2283,7 @@ void alloc_renderer(EntityContainer& container)
         std::ref(container.subsystem_cast<BSPCache<halo_version>>()));
 
     container.register_subsystem_inplace<ScreenClear>();
-    container.register_subsystem_inplace<LoadingScreen>();
+    // TODO: Find out why this fails on OpenGL ES 2.0 emulation
+    if(api.api_version() != std::make_tuple<u32, u32>(2, 0))
+        container.register_subsystem_inplace<LoadingScreen>();
 }

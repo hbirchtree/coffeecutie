@@ -135,6 +135,7 @@ void system::end_restricted(Proxy&, time_point const&)
 
 void system::activate_resize(Proxy& e)
 {
+    Coffee::DProfContext _;
     //        if constexpr(compile_info::platform::is_emscripten)
     //            return;
 

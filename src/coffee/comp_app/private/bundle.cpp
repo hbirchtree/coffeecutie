@@ -866,7 +866,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
     auto frametime = std::chrono::duration_cast<stl_types::Chrono::seconds_f32>(
         time - m_prevFrame);
 
-    if constexpr(!compile_info::release_mode)
+    if constexpr(compile_info::release_mode)
         return;
 
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)

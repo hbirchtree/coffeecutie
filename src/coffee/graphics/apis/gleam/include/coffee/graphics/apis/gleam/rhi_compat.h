@@ -124,6 +124,8 @@ struct texture_2da_t : texture_array_base_t
 
     std::shared_ptr<texture_2d_t> subtexture(u32 i)
     {
+        if(i >= m_textures.size())
+            return nullptr;
         return m_textures.at(i);
     }
 
