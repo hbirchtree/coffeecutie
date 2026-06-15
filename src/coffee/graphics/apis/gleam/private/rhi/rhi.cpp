@@ -1121,6 +1121,9 @@ optional<error> api::load(load_options_t options)
             if(renderer.starts_with("Adreno (TM) 3"))
                 m_workarounds.bugs.adreno_3xx = true;
             m_workarounds.bugs.adreno = true;
+            // freedreno for some reason on Arduino Q is extremely slow
+            m_workarounds.bugs.freedreno = vendor == "freedreno";
+            m_workarounds.draw.slow_state_changes = m_workarounds.bugs.freedreno;
             /* Qualcomm may say that the limit for UBOs is 64k, but they prefer
              * if it's 8k */
             m_limits.buffers.ubo_recommended_size = 8192;
