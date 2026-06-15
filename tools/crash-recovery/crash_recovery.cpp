@@ -119,7 +119,7 @@ i32 crash_main(i32, cstring_w*)
 
     int exitCode = -1;
 
-    while(!proc::is_exited(spawnInfo.child, &exitCode))
+    while(!posix_proc::is_exited(spawnInfo.child, &exitCode))
     {
         int ret = poll(handles.data(), handles.size(), 500);
 
