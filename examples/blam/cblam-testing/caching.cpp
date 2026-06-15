@@ -1379,9 +1379,18 @@ void BitmapCache<V>::allocate_storage()
                 img->mipmaps.last = img->image.mip->mipmaps;
             }
 
-            if(img->header->type == blam::bitm::bitmap_type_t::cube)
+            if(img->header->type == blam::bitm::bitmap_type_t::cube ||
+                !supports_tex3d)
             {
-                img->image.layer = layer++;
+                // Don't atlas cubemaps
+                // Don't atlas when we don't support 2D array textures:
+                // each bitmap becomes its own full-size layer texture, so
+                // the UV remap is identity (offset 0, scale 1). The
+                // post-commit /pool.max normalization is skipped for this
+                // path (see below).
+                img->image.layer  = layer++;
+                img->image.offset = {0.f, 0.f};
+                img->image.scale  = {1.f, 1.f};
                 continue;
             }
 
@@ -1449,16 +1458,20 @@ void BitmapCache<V>::allocate_storage()
         commit_bitmap<gfx::compat::texture_2da_t>(bitm.second);
     Profiler::PopContext();
 
-    for(auto& [_, pool] : fmt_count)
-        for(auto [image_id, fmt] : pool.images)
-        {
-            auto  image_it = m_cache.find(image_id);
-            auto* image    = &image_it->second;
-            image->image.offset[0] /= pool.max.x;
-            image->image.offset[1] /= pool.max.y;
-            image->image.scale[0] /= pool.max.x;
-            image->image.scale[1] /= pool.max.y;
-        }
+    /* Normalize atlas offset/scale into [0,1] UV space. Skipped when not
+     * atlasing (single texture per layer) — those already carry identity
+     * offset 0 / scale 1. */
+    if(supports_tex3d)
+        for(auto& [_, pool] : fmt_count)
+            for(auto [image_id, fmt] : pool.images)
+            {
+                auto  image_it = m_cache.find(image_id);
+                auto* image    = &image_it->second;
+                image->image.offset[0] /= pool.max.x;
+                image->image.offset[1] /= pool.max.y;
+                image->image.scale[0] /= pool.max.x;
+                image->image.scale[1] /= pool.max.y;
+            }
 }
 
 template void BitmapCache<halo_version>::allocate_storage();

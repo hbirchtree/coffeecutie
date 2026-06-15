@@ -5,6 +5,12 @@
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
 #include <coffee/graphics/apis/gleam/rhi_system.h>
 #include <coffee/graphics/apis/gleam/rhi_urls.h>
+#include <blam/volta/blam_shaders.h>
+#include <blam/volta/blam_tag_classes.h>
+#include <blam/volta/blam_tag_index.h>
+#include <coffee/graphics/apis/gleam/rhi_compat.h>
+#include <coffee/graphics/apis/gleam/rhi_draw_command.h>
+#include <coffee/graphics/apis/gleam/rhi_program.h>
 #include <coffee/image/ktx_load.h>
 #include <glw/texture_formats.h>
 #include <glw/texture_formats_desc.h>
@@ -14,9 +20,12 @@
 #include <peripherals/typing/enum/graphics/shader_stage.h>
 
 #include "caching.h"
+#include "caching_item.h"
 #include "coffee/graphics/apis/gleam/rhi_texture.h"
+#include "components.h"
 #include "data.h"
 #include "map_marker.h"
+#include "materials.h"
 #include "peripherals/concepts/graphics_api.h"
 #include "selected_version.h"
 
@@ -283,6 +292,11 @@ struct MeshRenderer
             pass.name = fmt::format(
                 "MOD::{}", magic_enum::enum_name(static_cast<Passes>(i++)));
         }
+    }
+
+    bool use_legacy_rendering() const
+    {
+        return m_api->api_version() == std::make_tuple<u32, u32>(2, 0);
     }
 
     BSPItem const* get_bsp(generation_idx_t bsp)
@@ -762,8 +776,11 @@ struct MeshRenderer
 
         // Performance is terrible on Emscripten when updating every frame
         // We need a more efficient way to update the buffer in that case
+        // Also we don't use this data when rendering using legacy codepath
+        // We create our own batching there based on different rules
         bool invalidated = true; //! compile_info::platform::is_emscripten;
-        if(time - last_update > std::chrono::seconds(10) || invalidated)
+        if((time - last_update > std::chrono::seconds(10) || invalidated) &&
+            !use_legacy_rendering())
         {
             f32 t = std::fmod(stl_types::Chrono::to_f32(time), 3600.f);
             {
@@ -795,7 +812,9 @@ struct MeshRenderer
             p.subsystem(loading_state);
 
             auto bsp_state = m_resources.bsp_pipeline->check_async_ready();
-            auto mod_state = m_resources.model_pipeline->check_async_ready();
+            auto mod_state = m_resources.model_pipeline
+                ? m_resources.model_pipeline->check_async_ready()
+                : stl_types::result<bool, gfx::program_t::compile_error_t>(true);
 
             if(!bsp_state.has_value() || !mod_state.has_value())
                 return;
@@ -811,6 +830,12 @@ struct MeshRenderer
          * float32 precision is ~128 s, so adjacent frames are identical
          * and UV animations freeze. Wrap to a shorter cycle. */
         f32 t = std::fmod(stl_types::Chrono::to_f32(time), 3600.f);
+
+        if(use_legacy_rendering())
+        {
+            legacy_render(p, t);
+            return;
+        }
 
         auto blend_for_pass = [](Passes pass) -> gfx::blend_state {
             switch(pass)
@@ -938,6 +963,145 @@ struct MeshRenderer
         m_resources.bone_matrix_buf->next();
     }
 
+    struct LegacyBatch
+    {
+        gfx::draw_command::call_spec_t         call;
+        std::vector<gfx::draw_command::data_t> data;
+        std::shared_ptr<gfx::texture_t>        lightmap;
+        std::shared_ptr<gfx::sampler_t>        lightmap_sampler;
+        std::vector<gfx::texture_t*>           base_map;
+        std::shared_ptr<gfx::sampler_t>        base_sampler;
+        std::vector<Vecf2>                     base_map_scale;
+        std::vector<gfx::texture_t*>           micro_map;
+        std::shared_ptr<gfx::sampler_t>        micro_sampler;
+        std::vector<Vecf2>                     micro_map_scale;
+    };
+
+    void legacy_render(Proxy& p, f32 t)
+    {
+        using typing::vector_types::Vecd2;
+        
+        ProfContext _;
+        /* Batch per lightmap PAGE, not per lightmap tag. One lightmap tag
+         * (section.lightmap_) holds many pages, one per lightmap_idx, each
+         * a distinct layer/subtexture. Keying by tag collapsed every page
+         * onto the last-seen subtexture, so the whole BSP sampled a single
+         * page (correct gradient where it happened to fit, garbage —
+         * orange checker — elsewhere). The lightmap generation id encodes
+         * the specific page. */
+        std::map<cache_id_t, LegacyBatch> batches;
+        for(auto const& ent : p.select(ObjectBsp))
+        {
+            auto                ref     = p.template ref<Proxy>(ent);
+            BspReference const& bsp_ref = ref.template get<BspReference>();
+            if(!bsp_ref.visible)
+                continue;
+            if(!bsp_ref.shader.valid() || !bsp_ref.lightmap.valid())
+                continue;
+            ShaderItem const& shader = shader_cache.find(bsp_ref.shader)->second;
+            if(shader.tag_class != blam::tag_class_t::senv)
+                continue;
+            BitmapItem const& lightm = bitm_cache.find(bsp_ref.lightmap)->second;
+            blam::shader::shader_env const* senv =
+                reinterpret_cast<blam::shader::shader_env const*>(shader.header);
+            LegacyBatch& batch = batches[bsp_ref.lightmap.i];
+            auto light_bucket = bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
+                    lightm.image.fmt);
+
+            auto setup_texture = [&](
+                generation_idx_t ref,
+                std::vector<gfx::texture_t*>& array,
+                std::shared_ptr<gfx::sampler_t>& sampler)
+            { 
+                if(!ref.valid())
+                {
+                    array.push_back(nullptr);
+                    return;
+                }
+                BitmapItem const& bitm = bitm_cache.find(ref)->second;
+                auto bucket = bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
+                        bitm.image.fmt);
+                array.push_back(bucket.template texture_as<gfx::compat::texture_2da_t>()
+                    .subtexture(bitm.image.layer).get());
+                sampler = bucket.sampler;
+            };
+            
+            // Texture setup
+            batch.lightmap = light_bucket.template texture_as<gfx::compat::texture_2da_t>()
+                .subtexture(lightm.image.layer);
+            batch.lightmap_sampler = light_bucket.sampler;
+            
+            setup_texture(shader.senv.base_bitm, batch.base_map, batch.base_sampler);
+            setup_texture(shader.senv.micro_bitm, batch.micro_map, batch.micro_sampler);
+
+            // Draw call setup
+            batch.call = bsp_ref.draw.call;
+            batch.data.push_back(bsp_ref.draw.data.front());
+        }
+
+        ProfContext __("legacy_render: Drawing");
+        for(auto const& [_, light_group] : batches)
+        {
+            Vecf2 base_map_scale{1, 1};
+            Vecf2 micro_map_scale{8, 8};
+            auto vertex_u = gfx::make_uniform_list(
+                typing::graphics::ShaderStage::Vertex,
+                gfx::uniform_pair{
+                    {"camera"sv},
+                    semantic::SpanOne<const Matf4>(m_players[0].matrix)
+                });
+            auto fragment_u = gfx::make_uniform_list(
+                typing::graphics::ShaderStage::Fragment,
+                gfx::uniform_pair{
+                    {"base_map_scale"sv},
+                    semantic::SpanOne<const Vecf2>(base_map_scale)
+                },
+                gfx::uniform_pair{
+                    {"micro_map_scale"sv},
+                    semantic::SpanOne<const Vecf2>(micro_map_scale)
+                });
+            light_group.lightmap_sampler->rebind(light_group.lightmap);
+            std::vector<gfx::sampler_definition_t> samplers;
+            samplers.push_back(gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"lightmap"sv, 0},
+                    light_group.lightmap_sampler
+                });
+            auto texture_lists = gfx::make_instance_textures(gfx::instance_texture_t{
+                    .stage = typing::graphics::ShaderStage::Fragment,
+                    .uniform = gfx::uniform_key{"base_map"sv, 1},
+                    .sampler = light_group.base_sampler,
+                    .textures = light_group.base_map,
+                },
+                gfx::instance_texture_t{
+                    .stage = typing::graphics::ShaderStage::Fragment,
+                    .uniform = gfx::uniform_key{"micro_map"sv, 2},
+                    .sampler = light_group.micro_sampler,
+                    .textures = light_group.micro_map,
+                });
+            m_api->submit({
+                    .program = m_resources.bsp_pipeline,
+                    .vertices = m_resources.bsp_attr,
+                    .render_target = m_resources.offscreen,
+                    .call = gfx::draw_command::call_spec_t{
+                        .indexed = true,
+                        .mode = gfx::drawing::primitive::triangle,
+                    },
+                    .data = light_group.data,
+                },
+                vertex_u,
+                fragment_u,
+                samplers,
+                texture_lists,
+                gfx::view_state{
+                    .depth = gfx::depth_state{
+                        .range    = Vecd2{0.1, 1000.},
+                        .reversed = true,
+                    },
+                });
+        }
+    }
+
     void end_restricted(Proxy& /*p*/, time_point const& /*time*/)
     {
     }
@@ -1021,6 +1185,9 @@ struct MeshRenderer
         size_t materials_ptr   = 0;
         size_t transparent_ptr = 0;
         generate_static_draws(p, materials_ptr, transparent_ptr);
+
+        if(use_legacy_rendering())
+            return;
 
         for(Pass& pass : m_model)
             pass.clear();

@@ -42,6 +42,7 @@ struct BitmapCache
         : allocator(allocator)
         , params(params)
     {
+        supports_tex3d = allocator->feature_info().texture.texture_3d;
     }
 
     inline void load_from(blam::map_container<V> const& map)
@@ -76,6 +77,7 @@ struct BitmapCache
     std::map<bitm_format_hash, TextureBucket> tex_buckets;
 
     u32 max_mipmap{3};
+    bool supports_tex3d{true};
 
     static inline bitm_format_hash create_hash(
         PixDesc const& fmt, blam::bitm::type_t type)
@@ -145,8 +147,10 @@ struct BitmapCache
         } else
 #endif
         {
-            bucket.surface = std::make_shared<gfx::compat::texture_2da_t>(
+            auto surface = std::make_shared<gfx::compat::texture_2da_t>(
                 allocator, fmt, no_mipmap ? 1 : (max_mipmap - bucket.mip_bias));
+            surface->set_usage_hint(gfx::compat::texture_usage_hint_t::sparse_atlas);
+            bucket.surface = std::move(surface);
         }
 
         bucket.type    = type;
