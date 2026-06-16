@@ -35,7 +35,6 @@ struct error_code
 
 } // namespace asio
 
-#include <coffee/asio/asio_data.h>
 #include <emscripten/fetch.h>
 #elif defined(USE_CURL)
 #include <future>
@@ -118,12 +117,6 @@ struct Resource
 #elif defined(USE_CURL)
     resource_context m_ctxt{};
     curl_request     m_handle{};
-#else
-    resource_context m_ctxt{};
-#if defined(ASIO_USE_SSL)
-    std::unique_ptr<net::tcp::ssl_socket> ssl;
-#endif
-    std::unique_ptr<net::tcp::raw_socket> normal;
 #endif
 
     http::request_t  m_request;

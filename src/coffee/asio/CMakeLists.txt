@@ -35,7 +35,6 @@ endif()
 coffee_library(
   TARGET ASIO
   SOURCES
-    private/asio_worker.cpp
     private/curl_context.cpp
     private/net_resource.cpp
     private/net_profiling.cpp

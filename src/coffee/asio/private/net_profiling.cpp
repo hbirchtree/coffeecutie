@@ -1,7 +1,6 @@
 #include "peripherals/constants.h"
 #include <coffee/net/net_profiling.h>
 
-#include <coffee/asio/asio_worker.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
 #include <coffee/core/profiler/profiling-export.h>
@@ -54,9 +53,6 @@ void ProfilingExport()
             profilerState->disable();
     }
 
-    // auto worker = ASIO::GenWorker();
-
-    // auto ctxt = worker ? worker->context : ASIO::InitService();
     auto ctxt = net::create_curl_context();
 
     Coffee::Resource profile("profile.json", RSCA::TempFile);
@@ -158,8 +154,6 @@ void ProfilingExport()
     {
         cWarning("Network export failed: {}", e.what());
     }
-
-    // worker->stop();
 }
 
 int RegisterProfilingAtExit()

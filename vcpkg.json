@@ -79,7 +79,6 @@
         "network": {
             "description": "Networking support",
             "dependencies": [
-                "asio",
                 { "name": "curl", "features": ["openssl","ssl"], "default-features": false, "platform": "!emscripten" },
                 { "name": "gamenetworkingsockets", "platform": "!emscripten & !(android & arm32)" }
             ]
