@@ -893,6 +893,10 @@ def run_web(device_name, device, preset_name, preset, extra_args, script_dir, bu
         "ARGS": param_str,
     }
 
+    dummy_plug_cfg = preset.get("env", {}).get("DUMMY_PLUG_CONFIG")
+    if dummy_plug_cfg:
+        merged_env["DUMMY_PLUG"] = ev(dummy_plug_cfg)
+
     setup_cmds = [
         ["mkdir", "-p", web_scratch],
         # Sync the base bundle into the scratch dir

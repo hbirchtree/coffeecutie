@@ -18,6 +18,11 @@
 #include <peripherals/posix/process.h>
 #endif
 
+#if defined(COFFEE_EMSCRIPTEN)
+#include <coffee/comp_app/bundle.h>
+#include <emscripten.h>
+#endif
+
 using Coffee::cDebug;
 using Coffee::Input::CIEvent;
 
@@ -543,5 +548,74 @@ void insert_dummy_plug(
                                    .value_or(audio_format_t::pcm);
     }
 }
+
+#if defined(COFFEE_EMSCRIPTEN)
+extern "C" EMSCRIPTEN_KEEPALIVE int coffee_app_loaded()
+{
+    auto& container = ::comp_app::createContainer();
+    auto* app_info  = container.service<comp_app::AppInfo>();
+    return (app_info &&
+            app_info->state() == comp_app::interfaces::AppInfo::loaded)
+               ? 1
+               : 0;
+}
+
+extern "C" EMSCRIPTEN_KEEPALIVE void coffee_dummy_plug_event(const char* json_str)
+{
+    if(!json_str)
+        return;
+
+    nlohmann::json event;
+    try
+    {
+        event = nlohmann::json::parse(json_str);
+    } catch(std::exception const& e)
+    {
+        cDebug("dummy plug live: invalid event JSON: {}", e.what());
+        return;
+    }
+
+    if(!event.is_object() || !event.contains("type"))
+        return;
+
+    auto&      container = ::comp_app::createContainer();
+    const auto type =
+        magic_enum::enum_cast<type_t>(event.value("type", std::string_view()))
+            .value_or(type_t::custom);
+    event["time"] = 0u;
+
+    switch(type)
+    {
+    case type_t::controller_axis:
+    case type_t::controller_button:
+    case type_t::controller_connect:
+    case type_t::key:
+    case type_t::mouse_button:
+    case type_t::mouse_move:
+    {
+        if(auto* input_bus =
+               container
+                   .service<comp_app::BasicEventBus<Coffee::Input::CIEvent>>())
+            queue_input_event(input_bus, type, event);
+        break;
+    }
+    case type_t::custom:
+    {
+        DummyEvent out{};
+        out.event = event.value("type", std::string{});
+        out.data  = event;
+        out.data.erase("type");
+        out.data.erase("time");
+        cDebug("dummy plug live: custom event {} => {}", out.event,
+               out.data.dump());
+        container.subsystem_cast<DummyEventBus>().process(out, nullptr);
+        break;
+    }
+    case type_t::screenshot:
+    case type_t::none:
+        break;
+    }
+}
+#endif
 
 } // namespace comp_app::dummy_plug

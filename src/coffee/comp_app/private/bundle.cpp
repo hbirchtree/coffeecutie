@@ -413,9 +413,13 @@ void configureDefaults(AppLoader& loader)
 #endif
 
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
-    auto& dummyPlug   = loader.config<dummy_plug::Config>();
-    dummyPlug.enabled = platform::env::var("DUMMY_PLUG_CONFIG").has_value();
-    if(dummyPlug.enabled)
+    auto& dummyPlug = loader.config<dummy_plug::Config>();
+    const bool dummy_has_config =
+        platform::env::var("DUMMY_PLUG_CONFIG").has_value();
+    const bool dummy_live = compile_info::platform::is_emscripten ||
+                            platform::env::var("DUMMY_PLUG_LIVE").has_value();
+    dummyPlug.enabled = dummy_has_config || dummy_live;
+    if(dummy_has_config)
     {
         if(dummyPlug.swrender != "none")
         {
@@ -877,6 +881,8 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
         const bool enabled = false;
     } dummy;
 #endif
+
+    // TODO: Something in here is very expensive on Freedreno driver
 
     if(frametime > 200ms && !dummy.enabled)
     {

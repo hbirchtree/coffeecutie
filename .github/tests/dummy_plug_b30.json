@@ -39,7 +39,9 @@
         {"time":13000, "type": "camera", "position" :[8.345126, -11.849968, -14.505378], "rotation":[-0.9495733, 0.1289765, 0.28318948, -0.03846506]},
         {"time":14000, "type":"screenshot","name":"b30_cartographer"},
         {"time":15000, "type": "camera", "position" :[-58.11081, 6.493973, 4.239501], "rotation":[-0.25236937, -0.02023266, 0.9643253, 0.07731121]},
-        {"time":16000, "type":"screenshot","name":"b30_covenant_shield"}
+        {"time":16000, "type":"screenshot","name":"b30_covenant_shield"},
+        {"time":17000, "type": "camera", "position" :[-1.5171281, -26.95685, 2.5377915], "rotation":[0.22229183, 0.08621828, -0.90543956, -0.3511866]},
+        {"time":18000, "type":"screenshot","name":"b30_transparent_senv"}
     ],
     "frame_delta": 200.0,
     "end_time": 50000

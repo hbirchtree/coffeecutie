@@ -151,21 +151,31 @@ function instrument() {
   });
 }
 
-// Tier 2 hook: preload the dummy_plug config into MEMFS and point the app at it via
-// ENV.DUMMY_PLUG_CONFIG, exactly like the desktop tests do with the env var. Inert until
-// the engine enables dummy_plug + screenshot capture on emscripten.
-function installDummyPlug(configText) {
-  const Module = (window.Module = window.Module || {});
-  Module.preRun = Module.preRun || [];
-  Module.preRun.push(function () {
+function installDummyPlugLive() {
+  window.__coffeeAppLoaded = function () {
+    const M = window.Module;
+    if (!M || typeof M.ccall !== 'function') return false;
     try {
-      Module.ENV = Module.ENV || {};
-      Module.ENV.DUMMY_PLUG_CONFIG = '/dummy_plug.json';
-      Module.FS.writeFile('/dummy_plug.json', configText);
-    } catch (e) {
-      console.error('dummy_plug preload failed:', e);
+      return M.ccall('coffee_app_loaded', 'number', [], []) === 1;
+    } catch {
+      return false;
     }
-  });
+  };
+  window.__coffeeDummyEvent = function (json) {
+    const M = window.Module;
+    if (!M || typeof M.ccall !== 'function') return false;
+    try {
+      M.ccall('coffee_dummy_plug_event', null, ['string'], [json]);
+    } catch (e) {
+      let msg = (e && (e.stack || e.message)) || String(e);
+      if (typeof e === 'number' && typeof M.getExceptionMessage === 'function') {
+        try { msg = 'C++ exception: ' + M.getExceptionMessage(e).join(': '); } catch { /* keep msg */ }
+      }
+      console.error('[dummy_plug inject] ' + msg);
+      throw e;
+    }
+    return true;
+  };
 }
 
 // Patterns that mean the wasm module itself trapped/died (hard failure). Page-level JS
@@ -273,10 +283,22 @@ async function main() {
     });
     const page = await context.newPage();
     await page.addInitScript(instrument);
+
+    let dummyEvents = [];
     if (cfg.dummyPlug && existsSync(cfg.dummyPlug)) {
-      const configText = await readFile(cfg.dummyPlug, 'utf8');
-      await page.addInitScript(installDummyPlug, configText);
-      record(`dummy_plug config staged: ${cfg.dummyPlug} (Tier 2 — engine support pending)`);
+      await page.addInitScript(installDummyPlugLive);
+      try {
+        const config = JSON.parse(await readFile(cfg.dummyPlug, 'utf8'));
+        if (Array.isArray(config.events)) {
+          dummyEvents = config.events
+            .filter((e) => e && e.type)
+            .map((e) => ({ time: Number(e.time) || 0, event: e }))
+            .sort((a, b) => a.time - b.time);
+        }
+        record(`dummy_plug live: ${dummyEvents.length} event(s) from ${cfg.dummyPlug}`);
+      } catch (e) {
+        record(`dummy_plug: failed to parse ${cfg.dummyPlug}: ${e.message}`, 'WARN');
+      }
     }
 
     page.on('console', (msg) => {
@@ -326,6 +348,35 @@ async function main() {
     } catch (e) {
       timedOut = true;
       record(`boot wait timed out: ${e.message}`, 'WARN');
+    }
+
+    if (!sawFatal && dummyEvents.length) {
+      try {
+        await page.waitForFunction(() => window.__coffeeAppLoaded && window.__coffeeAppLoaded(), {
+          timeout: cfg.bootTimeoutMs,
+          polling: 100,
+        });
+        record('dummy_plug live: app reported loaded — starting event stream');
+      } catch (e) {
+        record(`dummy_plug live: app did not report loaded (${e.message}); streaming anyway`, 'WARN');
+      }
+      const maxT = dummyEvents[dummyEvents.length - 1].time;
+      record(`dummy_plug live: streaming ${dummyEvents.length} event(s) over ${maxT}ms`);
+      for (const { time, event } of dummyEvents) {
+        setTimeout(() => {
+          page.evaluate(
+            (j) => (window.__coffeeDummyEvent ? window.__coffeeDummyEvent(j) : false),
+            JSON.stringify(event),
+          )
+            .then((ok) => { if (ok === false) record(`event skipped (runtime not ready): ${event.type}`, 'WARN'); })
+            .catch((e) => record(`event inject failed: ${e.message}`, 'WARN'));
+        }, time);
+      }
+      const needS = Math.ceil(maxT / 1000) + 2;
+      if (needS > cfg.runSeconds) {
+        record(`extending run to ${needS}s to cover events`);
+        cfg.runSeconds = needS;
+      }
     }
 
     // Run the render loop to accumulate frames and a stable image. Only a real

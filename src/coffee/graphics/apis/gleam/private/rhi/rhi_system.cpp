@@ -141,6 +141,7 @@ void system::activate_resize(Proxy& e)
 
     if(auto fb = e.service<comp_app::GraphicsFramebuffer>())
     {
+        // TODO: Find out why this is so expensive on Lima driver
         auto size = fb->size();
         if(size.w == 0)
             return;

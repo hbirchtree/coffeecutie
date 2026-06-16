@@ -175,6 +175,9 @@ elseif(EMSCRIPTEN)
     # std:: exception reaching JS carries wasm frames (readable with -gsource-map),
     # instead of arriving as a bare "std::out_of_range" with no origin.
     -sEXCEPTION_STACK_TRACES=1
+    # ccall/cwrap: let the host page drive the app, e.g. inject dummy-plug
+    # events through coffee_dummy_plug_event from JS.
+    -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
     # -flto
     -pthread
     -Wno-pthreads-mem-growth

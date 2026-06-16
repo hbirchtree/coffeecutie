@@ -51,6 +51,21 @@ i32 blam_main()
         else
             options.custom_help("[map file/dir] [OPTION...]");
         options.positional_help("map name or directory");
+        options.add_options("Graphics")
+            //
+            ("gfx-level",
+             "Override graphics API, eg. core:4:6, es:2:0",
+             cxxopts::value<std::string>())
+            //
+            ("gfx-emulate",
+             "Emulate certain device stereotype. Some limitations apply. "
+             "Does not emulate surface render types. "
+             "Will only include the compatible subset of extensions (foreign texture formats must be software-decoded). "
+             "Available device types:\n"
+             "PowerVR_SGX530\nMali400\nMaliG710\nAdreno540\nAdreno620\nWebGL_Mobile\nWebGL_Desktop",
+             cxxopts::value<std::string>())
+            //
+            ;
         options.add_options("Networking")
             //
             ("server",
@@ -120,16 +135,48 @@ i32 blam_main()
                 net::create_curl_context());
 
             auto& gfx        = e.register_subsystem_inplace<gfx::system>();
-            auto  load_error = gfx.load(
-                e
-                /*gfx::emulation::webgl::desktop()*/
-                // , gfx::emulation::qcom::adreno_320()
-                // gfx::emulation::arm::mali_g710()
-                // gfx::emulation::arm::mali_400mp()
-                // gfx::emulation::amd::rx560_pro()
-                // gfx::emulation::webgl::desktop()
-                // gfx::emulation::img::powervr_sgx530_bbb()
-            );
+            auto opts = [&arguments]() -> gleam::api::load_options_t
+            {
+                if(arguments.contains("gfx-emulate"))
+                {
+                    auto target = arguments["gfx-emulate"].as<std::string>();
+                    if(target == "PowerVR_SGX530")
+                        return gfx::emulation::img::powervr_sgx530_bbb();
+                    else if(target == "Mali400")
+                        return gfx::emulation::arm::mali_400mp();
+                    else if(target == "MaliG710")
+                        return gfx::emulation::arm::mali_g710();
+                    else if(target == "Adreno320")
+                        return gfx::emulation::qcom::adreno_320();
+                    else if(target == "Adreno540")
+                        return gfx::emulation::qcom::adreno_540();
+                    else if(target == "Adreno620")
+                        return gfx::emulation::qcom::adreno_620();
+                    else if(target == "WebGL_Mobile")
+                        return gfx::emulation::webgl::mobile();
+                    else if(target == "WebGL_Desktop")
+                        return gfx::emulation::webgl::desktop();
+                    else
+                        Throw(std::out_of_range("option given to --gfx-emulate no valid"));
+                }
+                if(arguments.contains("gfx-level"))
+                {
+                    auto level = arguments["gfx-level"].as<std::string>();
+                    auto split = level.find(":");
+                    auto profile = level.substr(0, split);
+                    auto ver_full = level.substr(split + 1);
+                    auto ver_split = ver_full.find(":");
+                    auto major = std::stoi(ver_full.substr(0, ver_split));
+                    auto minor = std::stoi(ver_full.substr(ver_split + 1));
+                    return gleam::api::load_options_t{
+                        // Shift version into 0xXY0 format
+                        .api_version = (major << 8) | (minor << 4),
+                        .api_type = profile == "es" ? gfx::api_type_t::es : gfx::api_type_t::core,
+                    };
+                }
+                return {};
+            }();
+            auto  load_error = gfx.load(e, opts);
 
             if(load_error)
             {

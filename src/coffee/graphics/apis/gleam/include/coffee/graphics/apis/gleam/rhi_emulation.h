@@ -171,6 +171,9 @@ inline auto mali_400mp()
         },
         // clang-format on
         .resolution = size_2d<u32>{1280, 720},
+        .device_info = std::make_tuple("ARM", "Mali-400 MP"),
+        .version_string      = "OpenGL ES 2.0",
+        .glsl_version_string = "OpenGL ES GLSL ES 1.00",
     };
 }
 

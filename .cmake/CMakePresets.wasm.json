@@ -16,7 +16,7 @@
             },
             "cacheVariables": {
                 "BUILD_NET": "ON",
-                "BUILD_COMP_DUMMY_PLUG": "OFF",
+                "BUILD_COMP_DUMMY_PLUG": "ON",
                 "BUILD_EMSCRIPTEN": "ON",
                 "BUILD_GL_SOFTWARE_BCN": "ON",
                 "BUILD_GLES": "ON",
