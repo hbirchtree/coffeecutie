@@ -97,9 +97,9 @@
             "inherits": ["vcpkg-base-linux-egl-es20"],
             "cacheVariables": {
                 "BUILD_GLSCREENSHOT": "ON",
+                "BUILD_IMGUI": "OFF",
                 "BUILD_OPENAL": "OFF",
                 "BUILD_PVRSCOPE": "ON",
-                "GENERATE_RWIMAGE": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "beaglebone;sgx;arm;arm32;linux"
             },
             "environment": {
@@ -218,7 +218,6 @@
             "inherits": ["vcpkg-base-linux-es20"],
             "cacheVariables": {
                 "BUILD_EGL": "OFF",
-                "BUILD_GLSCREENSHOT": "ON",
                 "BUILD_GL_SOFTWARE_BCN": "ON",
                 "BUILD_IMGUI": "OFF",
                 "BUILD_OPENAL": "OFF",
