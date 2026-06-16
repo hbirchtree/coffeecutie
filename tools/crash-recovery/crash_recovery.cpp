@@ -9,7 +9,7 @@
 #include <platforms/environment.h>
 #include <platforms/file.h>
 
-#if defined(FEATURE_ENABLE_ASIO)
+#if defined(FEATURE_ENABLE_Net)
 #include <coffee/net/http.h>
 #include <coffee/net/net_resource.h>
 #include <coffee/ssl/hmac.h>
