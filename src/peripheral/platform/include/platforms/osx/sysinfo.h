@@ -53,10 +53,10 @@ inline std::optional<std::string> name()
 
 inline std::optional<std::string> version()
 {
-#if TARGET_OS_OSX
+#if TARGET_OS_OSX || TARGET_OS_IOS
     return info::apple::sysctl_by_name<std::string>("kern.osproductversion");
 #else
-#error apple::version not defined
+    return "Unknown";
 #endif
 }
 

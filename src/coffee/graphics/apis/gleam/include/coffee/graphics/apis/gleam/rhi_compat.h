@@ -106,7 +106,11 @@ struct texture_2da_t : texture_array_base_t
             if(!m_page_allocated[layer])
             {
                 m_textures.at(offset[2])->alloc(
-                    size_3d<u32>(size[0], size[1], 1), true);
+                    size_3d<u32>{
+                        static_cast<u32>(size[0]),
+                        static_cast<u32>(size[1]),
+                        1u},
+                    true);
                 m_page_allocated[layer] = true;
             }
         }
