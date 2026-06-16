@@ -44,7 +44,9 @@ details[open]>.det-summary::before{transform:rotate(90deg)}
 .det-v{color:#ddd;font-size:11px;word-break:break-all;line-height:1.4}
 .det-v.num{color:#b5cea8}
 .det-v.bool{color:#569cd6}
-.det-subhead{padding:5px 10px 3px;margin-top:4px;font:bold 10px ui-monospace,monospace;color:#9cdcfe;text-transform:uppercase;letter-spacing:.08em;background:#252526;border-top:1px solid #3a3a3a;border-bottom:1px solid #2d2d2d}
+.det-subhead{padding:5px 10px 3px;margin-top:4px;font:bold 10px ui-monospace,monospace;color:#9cdcfe;text-transform:uppercase;letter-spacing:.08em;background:#252526;border-top:1px solid #3a3a3a;border-bottom:1px solid #2d2d2d;display:flex;align-items:center}
+.det-copy-btn{margin-left:auto;padding:2px 5px;background:#3c3c3c;color:#9cdcfe;border:1px solid #555;cursor:pointer;border-radius:3px;font:bold 9px ui-monospace,monospace;text-transform:uppercase;line-height:1}
+.det-copy-btn:hover{background:#4a4a4a;color:#fff}
 .det-block{padding:3px 10px 5px}
 .det-bk{color:#888;font-size:10px;margin-bottom:3px}
 .det-bv{padding-left:8px;border-left:2px solid #3a3a3a;margin-left:2px}
@@ -424,6 +426,7 @@ function buildMachineHTML(obj){
 // ── State / Data ──────────────────────────────────────────────────────────────
 let apiBase='';
 let reportSortDesc=true;
+let selectedGpu = null;
 const DATA={reports:[],devices:[],machines:[],gpus:[],gpuLimits:{},gpuExtensions:{}};
 
 // ── API ───────────────────────────────────────────────────────────────────────
@@ -727,6 +730,7 @@ function renderGPUs(){
       el.classList.toggle('selected',Number(el.dataset.id)===id));
     const g=DATA.gpus.find(x=>x.id===id);
     if(!g) return;
+    selectedGpu = g;
     const extra=g.machine&&g.machine.extra||{};
     let html=`<div class="detail-header">${esc(gpuLabel(g))} <span style="color:#888;font-size:10px;font-weight:normal">#${id}</span></div>`;
     // group extra keys by prefix
@@ -740,7 +744,11 @@ function renderGPUs(){
     }
     let rows='';
     for(const [prefix,ks] of [...groups.entries()].sort()){
-      rows+=`<div class="det-subhead">${esc(prefix)}</div>`;
+      let subheadExtra = '';
+      if(prefix === 'gl') {
+        subheadExtra = `<button class="det-copy-btn" onclick="copyGpuOptions()">Copy Options</button>`;
+      }
+      rows+=`<div class="det-subhead">${esc(prefix)}${subheadExtra}</div>`;
       for(const k of ks) rows+=makeExtraRow(prefix, k, extra[k]);
     }
     if(rows) html+=makeSection('GPU Info',rows);
@@ -892,6 +900,96 @@ function renderGPUExtensions(){
   detail.innerHTML=html;
   document.getElementById('ext-search').addEventListener('input',applyExtensionFilters);
   document.getElementById('ext-gpu-filter').addEventListener('change',applyExtensionFilters);
+}
+
+function copyGpuOptions() {
+  const extra = selectedGpu && selectedGpu.machine && selectedGpu.machine.extra || {};
+  const glVendor = extra['gl:vendor'] || '';
+  const glDevice = extra['gl:device'] || extra['gl:renderer'] || '';
+  const glVersion = extra['gl:versionString'] || extra['gl:version'] || '';
+  const glslVersion = extra['gl:shaderLanguage'] || '';
+  const glExtensions = extra['gl:extensions'] || '';
+  const glApi = extra['gl:api'] || '';
+
+  let apiType = 'api_type_t::core';
+  if (glApi.toLowerCase().includes('es') || glVersion.toLowerCase().includes('es')) {
+    apiType = 'api_type_t::es';
+  }
+
+  let apiVersion = '0x0';
+  const vMatch = glVersion.match(/(\d+)\.(\d+)/);
+  if (vMatch) {
+    apiVersion = '0x' + vMatch[1] + vMatch[2] + '0';
+  }
+
+  const parts = [
+    `.api_version = ${apiVersion},`,
+    `.api_type    = ${apiType},`
+  ];
+
+  if (glExtensions) {
+    const exts = (Array.isArray(glExtensions) ? glExtensions : glExtensions.split(/\s+/)).filter(Boolean).sort();
+    parts.push('// clang-format off');
+    parts.push('.api_extensions = std::set<std::string>{\n' +
+      exts.map(e => `    "${e}",`).join('\n') +
+      '\n},');
+    parts.push('// clang-format on');
+  }
+
+  if (extra['gl:limits']) {
+    try {
+      const l = typeof extra['gl:limits'] === 'string' ? JSON.parse(extra['gl:limits']) : extra['gl:limits'];
+      parts.push(`.limits = gleam::api_limits{
+    .buffers = {
+        .ssbo_size = ${l.buffers.ssbo_size},
+        .ubo_size = ${l.buffers.ubo_size},
+        .ssbo_vertex = ${l.buffers.ssbo_vertex},
+        .ssbo_fragment = ${l.buffers.ssbo_fragment},
+        .ssbo_compute = ${l.buffers.ssbo_compute},
+        .ubo_vertex = ${l.buffers.ubo_vertex},
+        .ubo_fragment = ${l.buffers.ubo_fragment},
+        .ubo_compute = ${l.buffers.ubo_compute},
+        .ubo_alignment = ${l.buffers.ubo_alignment},
+        .ssbo_alignment = ${l.buffers.ssbo_alignment},
+    },
+    .draws = {
+        .element_count = ${l.draws.element_count},
+        .element_index = ${l.draws.element_index},
+        .element_vertex_count = ${l.draws.element_vertex_count},
+        .instance_count = ${l.draws.instance_count},
+        .instance_offset = ${l.draws.instance_offset},
+    },
+    .shaders = {
+        .vertex_uniform_vectors = ${l.shaders.vertex_uniform_vectors},
+        .fragment_uniform_vectors = ${l.shaders.fragment_uniform_vectors},
+    },
+    .textures = {
+        .texture_units = ${l.textures.texture_units},
+        .d2_size = ${l.textures.d2_size},
+        .d3_size = ${l.textures.d3_size},
+        .d2_max_layers = ${l.textures.d2_max_layers},
+        .cube_size = ${l.textures.cube_size},
+    },
+},`);
+    } catch (e) {}
+  }
+
+  parts.push(`.device_info = std::make_tuple("${glVendor}", "${glDevice}"),`);
+  parts.push(`.version_string = "${glVersion}",`);
+  parts.push(`.glsl_version_string = "${glslVersion}",`);
+
+  const out = `gleam::api::load_options_t{\n` +
+    parts.map(p => p.split('\n').map(line => '        ' + line).join('\n')).join('\n') +
+    `\n    }`;
+
+  navigator.clipboard.writeText(out).then(() => {
+    const btn = document.querySelector('.det-copy-btn');
+    if(btn) {
+      const old = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = old, 1500);
+    }
+  });
 }
 
 function apiMatchesContext(api, ctx){
