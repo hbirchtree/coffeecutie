@@ -25,7 +25,7 @@
 #include <coffee/graphics/common/query/gpu_query.h>
 #endif
 
-#if defined(FEATURE_ENABLE_ASIO)
+#if defined(FEATURE_ENABLE_Net)
 #include <coffee/net/curl_network_stats.h>
 #include <coffee/net/net_resource.h>
 #endif
@@ -334,7 +334,7 @@ void SetupRendering(
 {
     [[maybe_unused]] auto mq = rq::runtime_queue::CreateNewQueue("Main");
 
-#if defined(FEATURE_ENABLE_ASIO)
+#if defined(FEATURE_ENABLE_Net)
     if(auto worker = rq::runtime_queue::CreateNewThreadQueue("Online Worker");
        worker.has_value())
     {
@@ -536,7 +536,7 @@ void SetupRendering(
         }
     }
 
-#if defined(FEATURE_ENABLE_ASIO)
+#if defined(FEATURE_ENABLE_Net)
     /* We download a spicy meme and paste it into the texture */
     if(net::Supported())
     {
@@ -751,7 +751,7 @@ void RendererCleanup(
 {
     Profiler::PushContext("Stopping workers");
 
-// #if defined(FEATURE_ENABLE_ASIO)
+// #if defined(FEATURE_ENABLE_Net)
 //     entities.subsystem_cast<ASIO::Subsystem>().stop();
 // #endif
 #if defined(FEATURE_ENABLE_DiscordLatte)

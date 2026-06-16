@@ -101,7 +101,7 @@ FORCEDINLINE bool Supported()
 #endif
 }
 
-#if defined(FEATURE_ENABLE_ASIO)
+#if defined(FEATURE_ENABLE_Net)
 
 using chunk_u8       = semantic::mem_chunk<libc_types::u8>;
 using const_chunk_u8 = semantic::mem_chunk<const libc_types::u8>;

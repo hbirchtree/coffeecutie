@@ -1,4 +1,4 @@
-option(BUILD_ASIO "Build with ASIO networking" ON)
+option(BUILD_NET "Build with networking" ON)
 option(BUILD_BLAM "Build Blam! data readers" ON)
 option(BUILD_MEDIA "Build with media decode/encode support" OFF)
 option(BUILD_OPENAL "Build with OpenAL-soft audio" ON)
@@ -145,8 +145,8 @@ endif()
 
 add_subdirectory(image)
 
-if(BUILD_ASIO)
-  add_subdirectory(asio)
+if(BUILD_NET)
+  add_subdirectory(net)
 endif()
 
 if(BUILD_BLAM)

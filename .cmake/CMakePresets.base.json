@@ -69,7 +69,7 @@
             "hidden": true,
             "binaryDir": "${sourceDir}/multi_build/${presetName}",
             "cacheVariables": {
-                "BUILD_ASIO": "ON",
+                "BUILD_NET": "ON",
                 "BUILD_ASSET_TOOLS": "ON",
                 "BUILD_BLAM": "OFF",
                 "BUILD_COMPONENT_APP": "OFF",

@@ -1,6 +1,6 @@
 set(LIBS)
 if(NOT EMSCRIPTEN)
-    option(BUILD_OPENSSL "Build ASIO with OpenSSL support" ON)
+    option(BUILD_OPENSSL "Build Net with OpenSSL support" ON)
     if(BUILD_OPENSSL AND MINGW)
       # Version used in MinGW is older, because newer versions
       # from vcpkg refuse to build on the MinGW toolchain used :(
@@ -33,7 +33,7 @@ if(NOT EMSCRIPTEN)
 endif()
 
 coffee_library(
-  TARGET ASIO
+  TARGET Net
   SOURCES
     private/curl_context.cpp
     private/net_resource.cpp
@@ -43,9 +43,9 @@ coffee_library(
 )
 
 if(NOT EMSCRIPTEN)
-    target_compile_definitions(ASIO PUBLIC -DUSE_CURL)
+    target_compile_definitions(Net PUBLIC -DUSE_CURL)
 else()
-    target_compile_definitions(ASIO PUBLIC -DUSE_EMSCRIPTEN_HTTP)
-    target_compile_options(ASIO PRIVATE -sFETCH)
-    target_link_options(ASIO PUBLIC -sFETCH)
+    target_compile_definitions(Net PUBLIC -DUSE_EMSCRIPTEN_HTTP)
+    target_compile_options(Net PRIVATE -sFETCH)
+    target_link_options(Net PUBLIC -sFETCH)
 endif()

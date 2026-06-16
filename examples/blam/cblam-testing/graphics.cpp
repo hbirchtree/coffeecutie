@@ -25,7 +25,7 @@
 #include <oaf/api_system.h>
 #endif
 
-#if defined(FEATURE_ENABLE_ASIO)
+#if defined(FEATURE_ENABLE_Net)
 #include <coffee/net/curl_network_stats.h>
 #include <coffee/net/net_profiling.h>
 #include <coffee/net/net_resource.h>
@@ -74,7 +74,7 @@ i32 blam_main()
     }
 
     rq::runtime_queue::CreateNewQueue("Blam Graphics!").assume_value();
-#if defined(FEATURE_ENABLE_ASIO)
+#if defined(FEATURE_ENABLE_Net)
     C_UNUSED(auto _ = Net::RegisterProfiling());
 #endif
 
@@ -393,7 +393,7 @@ i32 blam_main()
                 }
             }
 
-#if defined(COFFEE_EMSCRIPTEN) && defined(FEATURE_ENABLE_ASIO)
+#if defined(COFFEE_EMSCRIPTEN) && defined(FEATURE_ENABLE_Net)
             platform::env::set_var("COFFEE_REPORT_URL", EMBEDDED_REPORT_URL);
             Net::ProfilingExport();
 #endif

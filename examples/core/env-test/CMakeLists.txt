@@ -5,6 +5,6 @@ coffee_application(
   LIBRARIES Core
 )
 
-if(TARGET ASIO)
-  target_link_libraries(EnvTest PUBLIC ASIO)
+if(TARGET Net)
+  target_link_libraries(EnvTest PUBLIC Net)
 endif()

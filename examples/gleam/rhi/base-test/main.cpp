@@ -6,7 +6,7 @@
 #include <coffee/core/input/standard_input_handlers.h>
 #include <coffee/core/task_queue/task.h>
 
-#if defined(FEATURE_ENABLE_ASIO)
+#if defined(FEATURE_ENABLE_Net)
 #include <coffee/net/net_profiling.h>
 #endif
 
@@ -18,7 +18,7 @@ i32 coffee_main(i32, cstring_w*)
     using Display::Event;
     using Input::CIEvent;
 
-#if defined(FEATURE_ENABLE_ASIO)
+#if defined(FEATURE_ENABLE_Net)
     C_UNUSED(auto _ = Net::RegisterProfiling());
 #endif
 

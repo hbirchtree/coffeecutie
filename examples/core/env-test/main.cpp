@@ -16,7 +16,7 @@
 
 #include <coffee/core/CDebug>
 
-#if defined(FEATURE_ENABLE_ASIO)
+#if defined(FEATURE_ENABLE_Net)
 #include <coffee/net/net_profiling.h>
 #endif
 
@@ -26,7 +26,7 @@ using namespace platform::url::constructors;
 
 i32 coffee_main(i32, cstring_w*)
 {
-#if defined(FEATURE_ENABLE_ASIO)
+#if defined(FEATURE_ENABLE_Net)
     C_UNUSED(auto _) = Net::RegisterProfiling();
 #endif
 

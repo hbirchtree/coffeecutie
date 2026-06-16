@@ -70,8 +70,8 @@ target_compile_definitions(BlamGraphics
     -DEMBEDDED_REPORT_URL=\"${BLAMG_EMBEDDED_REPORT_URL}\"
 )
 
-if(TARGET ASIO)
-  target_link_libraries(BlamGraphics PUBLIC ASIO)
+if(TARGET Net)
+  target_link_libraries(BlamGraphics PUBLIC Net)
 endif()
 if(TARGET DiscordLatte)
     target_link_libraries(BlamGraphics PUBLIC DiscordLatte)

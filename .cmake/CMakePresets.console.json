@@ -15,7 +15,7 @@
                 "rhs": "Linux"
             },
             "cacheVariables": {
-                "BUILD_ASIO": "OFF",
+                "BUILD_NET": "OFF",
                 "BUILD_AUDIO": "OFF",
                 "BUILD_BLAM": "ON",
                 "BUILD_COMPRESS_ZLIB": "OFF",
