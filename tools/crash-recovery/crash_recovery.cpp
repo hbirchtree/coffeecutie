@@ -158,7 +158,7 @@ i32 crash_main(i32, cstring_w*)
     cDebug("Waiting...");
     if(exitCode == -1)
     {
-        posix_proc::wait_for(proc::wait_by::any, ec, 0, &exitCode);
+        posix_proc::wait_for(posix_proc::wait_by::any, ec, 0, &exitCode);
         C_ERROR_CHECK(ec);
     }
 
