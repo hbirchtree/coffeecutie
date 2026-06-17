@@ -215,10 +215,23 @@ macro(
         COMMAND ${CMAKE_COMMAND} -E make_directory
             ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.iconset
     )
+    # Rasterize the icon to ${ICON_BASENAME}.png (consumed by the sips steps
+    # below). Prefer Inkscape: qlmanage relies on QuickLook/the window server
+    # and crashes on headless CI runners. Fall back to qlmanage where Inkscape
+    # is unavailable (e.g. a developer machine with a GUI session).
+    find_program(INKSCAPE_PROGRAM inkscape)
+    if(INKSCAPE_PROGRAM)
+      set(ICON_RASTERIZE_COMMAND
+          ${INKSCAPE_PROGRAM} ${OSX_ICON}
+              --export-filename=${CMAKE_CURRENT_BINARY_DIR}/${ICON_BASENAME}.png
+              --export-width=1024 --export-height=1024)
+    else()
+      set(ICON_RASTERIZE_COMMAND qlmanage -t -s 1024 -o . ${OSX_ICON})
+    endif()
     add_custom_target(
       ${TARGET}.icns
       DEPENDS ${OSX_ICON} ${TARGET}.resources ${TARGET}.iconset
-      COMMAND qlmanage -t -s 1024 -o . ${OSX_ICON}
+      COMMAND ${ICON_RASTERIZE_COMMAND}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
     foreach(SCALE "1" "2")
