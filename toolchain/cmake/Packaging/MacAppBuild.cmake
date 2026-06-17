@@ -244,7 +244,7 @@ macro(
             set(OUT_NAME "icon_${SIZE}x${SIZE}${SCALE_STRING}.png")
             add_custom_command(
                 TARGET ${TARGET}.icns
-                PRE_BUILD
+                POST_BUILD
                 COMMAND
                     sips -z ${ICON_SIZE} ${ICON_SIZE}
                         "${ICON_BASENAME}.png"
@@ -255,7 +255,7 @@ macro(
     endforeach()
     add_custom_command(
         TARGET ${TARGET}.icns
-        PRE_BUILD
+        POST_BUILD
         COMMAND
             iconutil
                 -c icns
