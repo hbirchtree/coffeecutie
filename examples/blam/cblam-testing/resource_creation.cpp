@@ -553,8 +553,7 @@ void create_resources(compo::EntityContainer& e)
     }
 
     //    if constexpr(compile_info::platform::is_android)
-    if(api.api_version() != std::make_tuple(2u, 0u) &&
-       !api.workarounds().bugs.adreno)
+    if(api.api_version() != std::make_tuple(2u, 0u))
     {
         auto const& features = api.feature_info().rendertarget;
 

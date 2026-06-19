@@ -14,6 +14,8 @@ bool point_in(glm::vec2 const& pos, glm::mat2 const& box)
            pos.y < box[1].y;
 }
 
+constexpr f32 look_sensitivity = 2.f;
+
 } // namespace
 
 void TouchOverlay::start_restricted(Proxy& proxy, const time_point&)
@@ -73,6 +75,11 @@ void TouchOverlay::start_restricted(Proxy& proxy, const time_point&)
     };
     movement.box[1] = glm::vec2{controller_size(proxy), screen_height};
     movement.size   = {half_screen / 3.f, half_screen / 3.f};
+    look.box[0] = glm::vec2{
+        framebuffer->size().w / 2.f,
+        0,
+    };
+    look.box[1] = glm::vec2{framebuffer->size().w, screen_height};
 
     dpi = proxy.service<comp_app::DisplayInfo>()->dpi();
 
@@ -104,14 +111,14 @@ void TouchOverlay::end_restricted(Proxy& proxy, const time_point& time)
         if(!info || !cam || info->seat_idx != 0)
             continue;
         cam->camera_->move(
-            movement.control.y * delta_s, -movement.control.x * delta_s, 0);
+            movement.control.y * delta_s, movement.control.x * delta_s, 0);
         cam->camera_->rotate(
             -look.control.x * delta_s, look.control.y * delta_s);
         cam->camera_->rotate(
-            -look.instant_control.x * delta_s,
-            look.instant_control.y * delta_s);
+            -look.instant_control.x, look.instant_control.y);
         break;
     }
+    look.instant_control = {};
 }
 
 void TouchOverlay::draw_stick(Proxy& proxy, stick_definition_t const& stick)
@@ -188,11 +195,10 @@ void TouchOverlay::operator()(CIEvent& ev, CITouchMotionEvent* event)
         movement.control =
             event->end ? Vecf2{} : event->delta() * control_scale * dpi * 3.f;
         movement.visible = !event->end;
-        return;
     }
-    look.instant_control =
-        event->end ? Vecf2{}
-                   : event->frame_delta() * control_scale * 100.f * dpi;
+    if(!event->end && point_in(event->origin, look.box))
+        look.instant_control +=
+            event->frame_delta() * control_scale * look_sensitivity * dpi;
 }
 
 void TouchOverlay::operator()(CIEvent& ev, CITouchPinchEvent* event)

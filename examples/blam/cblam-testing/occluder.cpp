@@ -35,9 +35,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
     void start_restricted(Proxy& p, time_point const&)
     {
-        if constexpr(compile_info::platform::is_android)
-            return;
-
         BSPCache<V>*         bsp_cache;
         BlamResources*       resources;
         RenderingParameters* rendering;
