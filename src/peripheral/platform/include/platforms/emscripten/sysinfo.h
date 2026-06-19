@@ -61,6 +61,9 @@ namespace detail {
 
 extern char* user_agent();
 extern char* platform();
+extern char* ua_architecture();
+extern char* ua_model();
+extern char* ua_platform_version();
 extern bool  is_mobile();
 
 } // namespace detail
@@ -81,6 +84,14 @@ inline constexpr std::string_view kernel_version()
 inline std::string architecture()
 {
 #ifdef COFFEE_WASM
+    // Prefer Client Hints arch (e.g. "x86_64"); falls back when unresolved
+    if(auto arch = detail::ua_architecture())
+    {
+        std::string out = arch;
+        ::free(arch);
+        if(!out.empty())
+            return out;
+    }
     if(auto tmp = detail::platform())
     {
         std::string out = tmp;
@@ -134,10 +145,19 @@ inline std::optional<std::string> browser_name()
     return std::nullopt;
 }
 
-inline std::optional<std::string_view> version()
+inline std::optional<std::string> version()
 {
-    using namespace std::string_view_literals;
-    return ""sv;
+#ifdef COFFEE_WASM
+    // Client Hints platformVersion (e.g. "14.0.0"); empty until resolved
+    if(auto v = detail::ua_platform_version())
+    {
+        std::string out = v;
+        ::free(v);
+        if(!out.empty())
+            return out;
+    }
+#endif
+    return std::nullopt;
 }
 
 } // namespace platform::info::os::emscripten
@@ -147,11 +167,18 @@ namespace platform::info::device::emscripten {
 inline std::optional<std::pair<std::string, std::string>> device()
 {
 #ifdef COFFEE_WASM
+    std::string model;
+    if(auto m = os::emscripten::detail::ua_model())
+    {
+        model = m;
+        ::free(m);
+    }
     if(auto plat = os::emscripten::detail::platform())
     {
         std::string out = plat;
         ::free(plat);
-        return std::pair<std::string, std::string>{"<unknown>", out};
+        return std::pair<std::string, std::string>{
+            model.empty() ? "<unknown>" : model, out};
     }
 #endif
     return std::nullopt;

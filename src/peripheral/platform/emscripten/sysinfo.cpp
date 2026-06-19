@@ -19,6 +19,66 @@ static char* platform_get_navigator_platform_internal()
         EM_ASM_PTR({ return stringToNewUTF8(navigator.platform); }));
 }
 
+/* User-Agent Client Hints high-entropy values resolve via a Promise, while
+ * EM_ASM is synchronous. Kick off the request once at startup and cache the
+ * result on Module.uaHints; getters below read the cache and return empty
+ * until it resolves, letting callers fall back to userAgent parsing. */
+static void platform_init_ua_hints()
+{
+#ifdef COFFEE_WASM
+    EM_ASM({
+        Module.uaHints = {};
+        if(navigator.userAgentData)
+        {
+            navigator.userAgentData
+                .getHighEntropyValues([
+                    'architecture', 'bitness', 'model', 'platformVersion'])
+                .then(function(h) { Module.uaHints = h; })
+                .catch(function() {});
+        }
+    });
+#endif
+}
+
+namespace {
+struct ua_hints_initializer
+{
+    ua_hints_initializer()
+    {
+        platform_init_ua_hints();
+    }
+} ua_hints_initializer_instance;
+} // namespace
+
+static char* platform_get_ua_arch_internal()
+{
+    return reinterpret_cast<char*>(EM_ASM_PTR({
+        var h = Module.uaHints || {};
+        if(!h.architecture)
+            return stringToNewUTF8("");
+        var a = h.architecture;
+        if(h.bitness)
+            a += "_" + h.bitness;
+        return stringToNewUTF8(a);
+    }));
+}
+
+static char* platform_get_ua_model_internal()
+{
+    return reinterpret_cast<char*>(EM_ASM_PTR({
+        var h = Module.uaHints || {};
+        return stringToNewUTF8(h.model || "");
+    }));
+}
+
+static char* platform_get_ua_platform_version_internal()
+{
+    return reinterpret_cast<char*>(EM_ASM_PTR({
+        var h = Module.uaHints || {};
+        return stringToNewUTF8(h.platformVersion || "");
+    }));
+}
+
 static char* platform_get_query_string()
 {
     return reinterpret_cast<char*>(
@@ -75,6 +135,33 @@ char* platform()
     return platform_get_navigator_platform_internal();
 #else
     return "Linux x86_64";
+#endif
+}
+
+char* ua_architecture()
+{
+#ifdef COFFEE_WASM
+    return platform_get_ua_arch_internal();
+#else
+    return "";
+#endif
+}
+
+char* ua_model()
+{
+#ifdef COFFEE_WASM
+    return platform_get_ua_model_internal();
+#else
+    return "";
+#endif
+}
+
+char* ua_platform_version()
+{
+#ifdef COFFEE_WASM
+    return platform_get_ua_platform_version_internal();
+#else
+    return "";
 #endif
 }
 
