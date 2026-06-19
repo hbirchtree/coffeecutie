@@ -304,6 +304,12 @@ struct DefaultAppInfo
     state_t m_current_state{state_t::unloaded};
 };
 
+struct DefaultHIDPreferences
+    : interfaces::HIDPreferences
+    , AppService<DefaultHIDPreferences, HIDPreferences>
+{
+};
+
 void DefaultAppInfo::add(text_type key, text_type value)
 {
     Coffee::ExtraData::Add(key, value);
@@ -504,6 +510,7 @@ void addDefaults(
         BasicEventBus<Coffee::Input::CIEvent>,
         BasicEventBus<Coffee::Display::Event>,
         BasicEventBus<AppEvent>,
+        DefaultHIDPreferences,
         DefaultAppInfo>>(container, ec);
     container.register_subsystem_inplace<FileMapper>();
     container.register_subsystem_inplace<FileWatcher>();

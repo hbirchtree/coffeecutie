@@ -409,4 +409,23 @@ void SysHWMonStats::load(entity_container&, app_error&)
 }
 #endif
 
+namespace interfaces {
+
+HIDPreferences::preference_t HIDPreferences::current_preference() const
+{
+    if(auto detected = detected_input)
+        return *detected_input;
+    switch(platform::info::device::variant())
+    {
+    case platform::info::DeviceType::DeviceConsole:
+        return preference_t::controller;
+    case platform::info::DeviceType::DevicePhone:
+    case platform::info::DeviceType::DeviceTablet:
+        return preference_t::touch;
+    default:
+        return platform_preference();
+    }
+}
+
+}
 } // namespace comp_app

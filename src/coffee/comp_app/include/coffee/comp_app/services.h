@@ -13,6 +13,7 @@
 #include <platforms/profiling/jsonprofile.h>
 
 #include "app_error.h"
+#include "peripherals/constants.h"
 
 #include <fmt/format.h>
 
@@ -294,6 +295,37 @@ struct BasicEventBus : EventBus<EventType>
     {
         std::sort(m_handlers.begin(), m_handlers.end(), handler_sorter);
     }
+};
+
+struct HIDPreferences
+{
+    // Based on platform + input events, guess what the user wants to use
+    // On desktop, prefer mouse + keyboard
+    // On phone, initially guess touch before events are received
+    // Helps us hide touch controls when mouse + keyboard or controller are picked up
+    enum class preference_t
+    {
+        mouse_keyboard,
+        controller,
+        touch,
+    };
+
+    constexpr preference_t platform_preference() const
+    {
+        if constexpr(compile_info::platform::is_android ||
+                compile_info::platform::is_ios)
+            return preference_t::touch;
+        return preference_t::mouse_keyboard;
+    }
+
+    preference_t current_preference() const;
+
+    void setDetectedPreference(preference_t preference)
+    {
+        detected_input = preference;
+    }
+  private:
+    std::optional<preference_t> detected_input{};
 };
 
 struct MouseInput
@@ -816,6 +848,7 @@ struct AppLoadableService
 };
 
 using AppInfo             = detail::tag_t<interfaces::AppInfo>;
+using HIDPreferences      = detail::tag_t<interfaces::HIDPreferences>;
 using BatteryProvider     = detail::tag_t<interfaces::BatteryProvider>;
 using ControllerInput     = detail::tag_t<interfaces::ControllerInput>;
 using CPUClockProvider    = detail::tag_t<interfaces::CPUClockProvider>;
