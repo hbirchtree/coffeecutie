@@ -316,6 +316,9 @@ std::optional<error> evaluate_draw_state(
         if(stl_types::any_of(
                data, [](auto const& d) { return d.elements.count == 0; }))
             return error::draw_no_elements;
+        if(call.mode == drawing::primitive::triangle || call.mode == drawing::primitive::triangle_strip)
+            if(stl_types::any_of(data, [](auto const& d) { return d.elements.count < 3; }))
+            return error::draw_not_enough_vertices;
         for(auto const& d : data)
         {
             if(d.elements.count > limits.draws.element_count)
@@ -324,9 +327,11 @@ std::optional<error> evaluate_draw_state(
         }
     } else
     {
-        if(stl_types::any_of(
-               data, [](auto const& d) { return d.arrays.count == 0; }))
+        if(stl_types::any_of(data, [](auto const& d) { return d.arrays.count == 0; }))
             return error::draw_no_arrays;
+        if(call.mode == drawing::primitive::triangle || call.mode == drawing::primitive::triangle_strip)
+            if(stl_types::any_of(data, [](auto const& d) { return d.arrays.count < 3; }))
+            return error::draw_not_enough_vertices;
         for(auto const& d : data)
             if(d.arrays.count > 1024 * 1024 || d.arrays.offset > 1024 * 1024)
                 return error::draw_too_many_vertices;

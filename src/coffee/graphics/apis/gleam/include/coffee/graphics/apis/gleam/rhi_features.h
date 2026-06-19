@@ -28,6 +28,8 @@ enum class error
     draw_no_element_buffer,
     draw_no_elements,
     draw_no_arrays,
+    draw_not_enough_elements,
+    draw_not_enough_vertices,
     draw_too_many_elements,
     draw_too_many_vertices,
     draw_unsupported_call,
