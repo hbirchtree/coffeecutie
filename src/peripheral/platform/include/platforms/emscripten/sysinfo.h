@@ -105,6 +105,12 @@ inline std::string architecture()
 inline std::optional<std::string> name()
 {
 #ifdef COFFEE_WASM
+    if(auto platform = os::emscripten::detail::platform())
+    {
+        std::string out(platform);
+        ::free(platform);
+        return out;
+    }
     if(auto ua_ = os::emscripten::detail::user_agent())
     {
         std::string_view ua       = ua_;
@@ -178,7 +184,7 @@ inline std::optional<std::pair<std::string, std::string>> device()
         std::string out = plat;
         ::free(plat);
         return std::pair<std::string, std::string>{
-            model.empty() ? "<unknown>" : model, out};
+            out, model.empty() ? "<unknown>" : model};
     }
 #endif
     return std::nullopt;
