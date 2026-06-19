@@ -128,6 +128,7 @@ struct AndroidEventBus
     struct drag_data_t
     {
         typing::vector_types::Vecf2 origin;
+        typing::vector_types::Vecf2 previous;
     };
 
     std::map<libc_types::i32, drag_data_t> m_dragData;

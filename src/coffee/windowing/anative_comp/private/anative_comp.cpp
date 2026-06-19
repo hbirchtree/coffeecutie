@@ -397,6 +397,7 @@ void AndroidEventBus::handleMouseEvent(AInputEvent* event)
 bool AndroidEventBus::handleGamepadEvent(AInputEvent* event)
 {
     using namespace libc_types;
+    using namespace Coffee::Input;
 
     i32                  type     = AInputEvent_getType(event);
     [[maybe_unused]] i32 source   = AInputEvent_getSource(event);
@@ -411,6 +412,14 @@ bool AndroidEventBus::handleGamepadEvent(AInputEvent* event)
         it = controllers->m_mapping
                  .insert({deviceId, controllers->m_cache.size() - 1})
                  .first;
+        auto* ibus = m_container->service<comp_app::BasicEventBus<CIEvent>>();
+        CIEvent event;
+        event.type = CIEvent::ControllerConnect;
+        CIControllerConnectEvent connect;
+        connect.index = it->second;
+        connect.player_index = it->second;
+        connect.connected = true;
+        ibus->inject(event, &connect);
         cDebug(
             "Creating controller mapping: {}({}, {}) -> {}",
             it->first,
@@ -718,7 +727,8 @@ bool AndroidEventBus::handleTouchEvent(AInputEvent* event)
             m_dragData.emplace(
                 pointer_id,
                 drag_data_t{
-                    .origin = pos,
+                    .origin   = pos,
+                    .previous = pos,
                 });
             break;
         }
@@ -735,23 +745,25 @@ bool AndroidEventBus::handleTouchEvent(AInputEvent* event)
 
         if(state != NONE)
         {
-            out.type = CITouchMotionEvent::event_type;
             CITouchMotionEvent move{};
             for(auto i : stl_types::range(AMotionEvent_getPointerCount(event)))
             {
                 const auto id = AMotionEvent_getPointerId(event, i);
-                move.finger   = id;
-                move.origin   = m_dragData[id].origin;
-                move.previous = {
-                    AMotionEvent_getHistoricalX(event, i, 0),
-                    AMotionEvent_getHistoricalY(event, i, 0),
-                };
-                move.current = {
+                auto       it = m_dragData.find(id);
+                if(it == m_dragData.end())
+                    continue;
+                out.type = CITouchMotionEvent::event_type;
+                const Vecf2 current = {
                     AMotionEvent_getX(event, i),
                     AMotionEvent_getY(event, i),
                 };
-                move.end      = state == STOPPED;
-                move.pressure = AMotionEvent_getPressure(event, i);
+                move.finger = id;
+                move.origin = it->second.origin;
+                move.previous       = it->second.previous;
+                move.current        = current;
+                move.end            = state == STOPPED && id == pointer_id;
+                move.pressure       = AMotionEvent_getPressure(event, i);
+                it->second.previous = current;
                 m_inputBus->inject(out, &move);
             }
         }
@@ -802,7 +814,7 @@ void AndroidEventBus::handleInputEvent(AInputEvent* event)
     i32 type   = AInputEvent_getType(event);
     i32 source = AInputEvent_getSource(event);
 
-    if(source & AINPUT_SOURCE_GAMEPAD)
+    if(source & AINPUT_SOURCE_GAMEPAD || feval<i32>(source, AINPUT_SOURCE_JOYSTICK))
     {
         if(handleGamepadEvent(event))
             return;
