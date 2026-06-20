@@ -260,7 +260,7 @@ void ImGuiSystem::start_restricted(Proxy& p, time_point const& t)
     ImGuiIO& io = ImGui::GetIO();
 
     // Setup display size (every frame to accommodate for window resizing)
-    auto s = p.service<comp_app::Windowing>()->size();
+    auto s = p.service<comp_app::GraphicsFramebuffer>()->size();
 
     f32 uiScaling = 1.f;
 

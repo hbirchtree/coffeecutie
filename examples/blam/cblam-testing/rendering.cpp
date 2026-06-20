@@ -592,8 +592,8 @@ struct MeshRenderer
                 get_view_state(idx),
                 samplers,
                 std::forward<Args&&>(extra)...);
-            // if(res)
-            //     cFatal("submit error: {}", std::get<1>(*res));
+            if(res)
+                cFatal("submit error: {}", std::get<1>(*res));
         }
     }
 
@@ -674,8 +674,8 @@ struct MeshRenderer
                 },
                 samplers,
                 std::forward<Args&&>(extra)...);
-            // if(res)
-            //     cFatal("submit error: {}", std::get<1>(*res));
+            if(res)
+                cFatal("submit error: {}", std::get<1>(*res));
         }
     }
 

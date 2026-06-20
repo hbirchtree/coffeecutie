@@ -159,6 +159,10 @@ function(GEN_GLEAM_TARGET GLVERSION SUFFIX)
       -sMAX_WEBGL_VERSION=2
       -sFULL_ES3
     )
+    target_compile_definitions(
+      GLeamCommon_${SUFFIX} PUBLIC
+      -DGLEAM_USE_WEBGL
+    )
   elseif(BUILD_GL_ANGLE)
     find_library(ANGLE_LIB NAMES ANGLE.a libANGLE.a)
     find_library(GLESV2_ANGLE_LIB GLESv2_angle)

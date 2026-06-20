@@ -191,8 +191,8 @@ void ImGuiSystem::submit_draws(Proxy& e)
                     gfx::blend_state{});
                 if(ec)
                 {
-                    // auto [error, message] = ec.value();
-                    //                    Throw(undefined_behavior(message));
+                    auto [error, message] = ec.value();
+                    Coffee::cWarning("ImGui draw failed: {}", message);
                 }
             }
             data.shell_texture->m_handle.release();
@@ -376,33 +376,32 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
         [[maybe_unused]] auto __ =
             api.debug().scope(IM_API "Create font atlas");
 
-        // Build texture atlas
+        // Build texture atlas. Upload as RGBA8 rather than R8 + a RRRR texture
+        // swizzle: GL_TEXTURE_SWIZZLE_* does not exist in WebGL2 (ES 3.0), so
+        // the swizzle silently no-ops there and the font samples as (r,0,0,1),
+        // breaking every ImGui draw. RGBA32 needs no swizzle and works
+        // everywhere (it is ImGui's other standard atlas format).
         ImGuiIO&       io = ImGui::GetIO();
         unsigned char* pixels;
         int            width, height;
-        io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
+        io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
         using typing::pix_components;
         using typing::pixels::bit_fmt;
-        auto pixelDataSize = gl::tex::format_of(typing::pixels::pix_fmt::R8)
+        auto pixelDataSize = gl::tex::format_of(typing::pixels::pix_fmt::RGBA8)
                                  .data_size(Veci2{width, height});
 
         auto surface_size = size_2d<i32>{width, height}.convert<u32>();
 
         data.font_atlas = api.alloc_texture(
             gleam::textures::d2,
-            typing::pixels::PixDesc(typing::pixels::pix_fmt::R8),
+            typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8),
             1);
         data.font_atlas->alloc(size_3d<u32>{surface_size.w, surface_size.h, 1});
         data.font_atlas->upload(
             mem_chunk<byte_t const>::ofBytes(pixels, pixelDataSize).view,
             Veci2(0, 0),
             size_2d<i32>{width, height});
-        data.font_atlas->set_swizzle(
-            gfx::textures::swizzle_t::red,
-            gfx::textures::swizzle_t::red,
-            gfx::textures::swizzle_t::red,
-            gfx::textures::swizzle_t::red);
 
         data.font_sampler = data.font_atlas->sampler();
         data.font_sampler->alloc();

@@ -35,11 +35,7 @@ requires is_vert_compression<V>
 using normal_type = std::conditional_t<
     std::is_same_v<V, uncompressed>,
     Vecf3, /* Uncompressed is simple enough, even readable from a debugger */
-    typing::pixels::r11g11b10u /* I think when Guerilla says it's 11/11/10-bit,
-           it means they're unsigned int components. These are however not
-           supported by OpenGL, so we'll probably have to parse them on the CPU
-           before writing them to the GPU.
-         */
+    u32 /* 11/11/10 vector, unpacked in vertex shader */
     >;
 
 template<typename V>

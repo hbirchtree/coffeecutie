@@ -173,8 +173,6 @@ i32 crash_main(i32, cstring_w*)
         return 1;
     }
 
-    http::multipart::builder multipart("-----CrashRecovery");
-
     Url profileLocation, machineProfileLocation, stacktraceLocation;
 
     {
@@ -196,15 +194,19 @@ i32 crash_main(i32, cstring_w*)
         }
     }
 
+    net::Resource crashPush(
+        net::create_curl_context(),
+        net::MkUrl(platform::env::var("CRASH_API").value()));
+
     if(profileLocation.valid() && platform::file::exists(profileLocation))
     {
         cDebug("Located profile: {0}", *profileLocation);
         auto profileResource = Resource(profileLocation);
 
-        multipart.add(
+        crashPush.addMimePart(
             "profile",
             C_OCAST<BytesConst>(profileResource),
-            {{"Content-Type", "text/plain"}});
+            "text/plain");
     }
 
     if(machineProfileLocation.valid() &&
@@ -213,10 +215,10 @@ i32 crash_main(i32, cstring_w*)
         cDebug("Located machine profile: {0}", *machineProfileLocation);
         auto machineProfile = Resource(machineProfileLocation);
 
-        multipart.add(
+        crashPush.addMimePart(
             "machineProfile",
             C_OCAST<BytesConst>(machineProfile),
-            {{"Content-Type", "text/plain"}});
+            "text/plain");
     }
 
     if(stacktraceLocation.valid() && platform::file::exists(stacktraceLocation))
@@ -224,49 +226,37 @@ i32 crash_main(i32, cstring_w*)
         cDebug("Located crash stacktrace: {0}", *stacktraceLocation);
         auto stacktrace = Resource(stacktraceLocation);
 
-        multipart.add(
+        crashPush.addMimePart(
             "stacktrace",
             C_OCAST<BytesConst>(stacktrace),
-            {{"Content-Type", "text/plain"}});
+            "text/plain");
     }
 
     auto exitCodeStr = stl_types::cast_pod(exitCode);
-    multipart.add(
+    crashPush.addMimePart(
         "exitCode",
         BytesConst::ofString(exitCodeStr),
-        {{"Content-Type", "text/plain"}});
-    multipart.add(
+        "text/plain");
+    crashPush.addMimePart(
         "stdout",
         BytesConst::ofString(stdoutBuf),
-        {{"Content-Type", "text/plain"}});
-    multipart.add(
+        "text/plain");
+    crashPush.addMimePart(
         "stderr",
         BytesConst::ofString(stderrBuf),
-        {{"Content-Type", "text/plain"}});
+        "text/plain");
 
-    multipart.finalize();
-
-    cDebug(
-        "Payload: {0} bytes ({1} MB)",
-        multipart.m_data.size(),
-        multipart.m_data.size() / 1_MB);
-
-    net::Resource crashPush(
-        net::create_curl_context(),
-        net::MkUrl(platform::env::var("CRASH_API").value()));
-
-    crashPush.setHeaderField(
-        http::header_field::content_type, multipart.content_type());
+    cDebug("Pushing crash report via Curl MIME");
 
     crashPush.setHeaderField(
         "X-Coffee-Signature",
         "sha1=" +
             hex::encode(
                 net::hmac::digest(
-                    semantic::Span<char>(multipart.m_data),
+                    semantic::Span<char>(stderrBuf),
                     platform::env::var("COFFEE_HMAC_KEY").value_or("0000"))));
 
-    if(auto error = crashPush.push(http::method_t::post, multipart))
+    if(auto error = crashPush.push(http::method_t::post, BytesConst()))
     {
         auto responseData = crashPush.data().value();
         cWarning("Failed to push crash report: {0}", crashPush.responseCode());

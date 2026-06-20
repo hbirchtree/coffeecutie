@@ -3,6 +3,8 @@
 #include <bitset>
 #include <peripherals/semantic/enum/data_types.h>
 
+#include <glw/enums/VertexAttribIType.h>
+#include <peripherals/enum/helpers.h>
 #include "rhi_buffer.h"
 #include "rhi_debug.h"
 #include "rhi_features.h"
@@ -226,13 +228,27 @@ namespace detail {
 
 inline void vertex_setup_attribute(vertex_attribute const& attr, u32 offset = 0)
 {
-    cmd::vertex_attrib_pointer(
-        attr.index,
-        attr.value.count,
-        convert::to<group::vertex_attrib_pointer_type>(attr.value.type),
-        attr.value.flags & vertex_attribute::attribute_flags::normalized,
-        attr.value.stride,
-        offset_span::of(attr.buffer.offset + attr.value.offset + offset));
+#if  GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+    // TODO: Add a big fat warning that rendering won't be correct here
+    // Or add a shader post-process step that packs UINT/INT into floats
+    const bool packed =
+        enum_helpers::feval(attr.value.flags, vertex_attribute::attribute_flags::packed);
+    if(!packed && detail::vertex_is_int_type(attr.value.type))
+        cmd::vertex_attrib_i_pointer(
+            attr.index,
+            attr.value.count,
+            convert::to<group::vertex_attrib_int>(attr.value.type),
+            attr.value.stride,
+            offset_span::of(attr.buffer.offset + attr.value.offset + offset));
+    else
+#endif
+        cmd::vertex_attrib_pointer(
+            attr.index,
+            attr.value.count,
+            convert::to<group::vertex_attrib_pointer_type>(attr.value.type),
+            attr.value.flags & vertex_attribute::attribute_flags::normalized,
+            attr.value.stride,
+            offset_span::of(attr.buffer.offset + attr.value.offset + offset));
 }
 
 } // namespace detail

@@ -86,6 +86,7 @@ struct curl_request_data : std::enable_shared_from_this<curl_request_data>
     std::function<void()>          completion_handler{};
     std::function<void(int error)> error_handler{};
     bool                           active{false};
+    void*                          mime{nullptr};
 
     struct stats_t
     {

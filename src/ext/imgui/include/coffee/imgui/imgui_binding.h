@@ -53,6 +53,7 @@ using ImGuiManifest = SubsystemManifest<
     type_safety::type_list_t<
         comp_app::AppLoader,
         comp_app::DisplayInfo,
+        comp_app::GraphicsFramebuffer,
         comp_app::KeyboardInput,
         comp_app::MouseInput,
         comp_app::TouchInput,

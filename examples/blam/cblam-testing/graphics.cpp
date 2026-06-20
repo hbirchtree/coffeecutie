@@ -426,7 +426,7 @@ i32 blam_main()
                 if(map_filename.valid())
                     load.file = map_filename;
                 else
-                    load.file = MkUrl("bloodgulch.map", RSCA::AssetFile);
+                    load.file = MkUrl("ui.map", RSCA::AssetFile);
                 gbus.inject(event, &load);
 
                 if(arguments.count("listen"))

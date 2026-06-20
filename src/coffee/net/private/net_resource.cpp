@@ -372,6 +372,58 @@ size_t write_payload(void* data, size_t size, size_t nmemb, void* ptr)
     return num_bytes;
 }
 
+struct MimeBufferState
+{
+    const char* data{nullptr};
+    size_t size{0};
+    size_t offset{0};
+};
+
+size_t mime_read_callback(char* buffer, size_t size, size_t nitems, void* arg)
+{
+    auto* state = static_cast<MimeBufferState*>(arg);
+    size_t max_bytes = size * nitems;
+    size_t remaining = state->size - state->offset;
+    if(remaining == 0)
+        return 0; // EOF
+
+    size_t to_copy = std::min(max_bytes, remaining);
+    std::memcpy(buffer, state->data + state->offset, to_copy);
+    state->offset += to_copy;
+    return to_copy;
+}
+
+int mime_seek_callback(void* arg, curl_off_t offset, int origin)
+{
+    auto* state = static_cast<MimeBufferState*>(arg);
+    switch(origin)
+    {
+    case SEEK_SET:
+        state->offset = static_cast<size_t>(offset);
+        break;
+    case SEEK_CUR:
+        if(offset < 0 && static_cast<size_t>(-offset) > state->offset)
+            state->offset = 0;
+        else
+            state->offset += static_cast<size_t>(offset);
+        break;
+    case SEEK_END:
+        if(offset < 0 && static_cast<size_t>(-offset) > state->size)
+            state->offset = 0;
+        else
+            state->offset = state->size + static_cast<size_t>(offset);
+        break;
+    default:
+        return CURL_SEEKFUNC_CANTSEEK;
+    }
+    return CURL_SEEKFUNC_OK;
+}
+
+void mime_free_callback(void* arg)
+{
+    delete static_cast<MimeBufferState*>(arg);
+}
+
 } // namespace
 
 void Resource::preRequest(http::method_t method, const const_chunk_u8& data)
@@ -391,12 +443,19 @@ void Resource::preRequest(http::method_t method, const const_chunk_u8& data)
         break;
     case http::method_t::put:
     case http::method_t::post:
-        curl_easy_setopt(m_handle->handle, CURLOPT_POST, 1);
-        if(data.data)
+        if(m_handle->mime)
         {
-            curl_easy_setopt(m_handle->handle, CURLOPT_POSTFIELDS, data.data);
-            curl_easy_setopt(
-                m_handle->handle, CURLOPT_POSTFIELDSIZE_LARGE, data.size);
+            curl_easy_setopt(m_handle->handle, CURLOPT_MIMEPOST, m_handle->mime);
+        }
+        else
+        {
+            curl_easy_setopt(m_handle->handle, CURLOPT_POST, 1);
+            if(data.data)
+            {
+                curl_easy_setopt(m_handle->handle, CURLOPT_POSTFIELDS, data.data);
+                curl_easy_setopt(
+                    m_handle->handle, CURLOPT_POSTFIELDSIZE_LARGE, data.size);
+            }
         }
         break;
     case http::method_t::head:
@@ -540,6 +599,51 @@ void Resource::postRequest()
         stats.connect,
         stats.transfer,
         stats.total);
+}
+
+void Resource::addMimePart(
+    std::string const& name,
+    const_chunk_u8 const& data,
+    std::string const& mimeType,
+    std::string const& filename)
+{
+#if defined(USE_CURL)
+    if(!m_handle)
+        return;
+
+    if(!m_handle->mime)
+    {
+        m_handle->mime = curl_mime_init(m_handle->handle);
+    }
+
+    curl_mimepart* part = curl_mime_addpart(static_cast<curl_mime*>(m_handle->mime));
+    if(part)
+    {
+        curl_mime_name(part, name.c_str());
+
+        auto* state = new MimeBufferState();
+        state->data = reinterpret_cast<const char*>(data.data);
+        state->size = data.size;
+        state->offset = 0;
+
+        curl_mime_data_cb(
+            part,
+            data.size,
+            mime_read_callback,
+            mime_seek_callback,
+            mime_free_callback,
+            state);
+
+        if(!mimeType.empty())
+        {
+            curl_mime_type(part, mimeType.c_str());
+        }
+        if(!filename.empty())
+        {
+            curl_mime_filename(part, filename.c_str());
+        }
+    }
+#endif
 }
 
 std::future<void> Resource::pushAsync(

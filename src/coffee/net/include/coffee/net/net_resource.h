@@ -163,6 +163,16 @@ struct Resource
     void setHeaderField(http::header_field field, std::string const& value);
     void setHeaderField(std::string const& field, std::string const& value);
 
+    /*!
+     * Adds data as multipart/form-data.
+     * Does NOT make a copy!
+     */
+    void addMimePart(
+        std::string const& name,
+        const_chunk_u8 const& data,
+        std::string const& mimeType = "",
+        std::string const& filename = "");
+
     http::request_t&           request();
     std::optional<std::string> mimeType() const;
 

@@ -506,22 +506,23 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
     {
         out.texture.swizzle = false;
 
-        out.buffer.mapping                  = true; /* Emulated, but still */
-        out.buffer.pbo                      = true;
-        out.buffer.ubo                      = true;
-        out.draw.instancing                 = true;
-        out.rendertarget.clearbuffer        = true;
-        out.rendertarget.color_buffer_10bit = true;
-        out.rendertarget.readdraw_buffers   = true;
-        out.rendertarget.depth24            = true;
-        out.texture.internal_format_query   = true;
-        out.texture.max_level               = true;
-        out.texture.samplers                = true;
-        out.texture.texture_3d              = true;
-        out.texture.tex_layer_query         = true;
-        out.texture.tex.gl.etc2             = true;
-        out.vertex.attribute_binding        = true;
-        out.vertex.vertex_arrays            = true;
+        // Use version requirement so we can emulate GL ES 2.0
+        out.buffer.mapping                  = api_version >= 0x300; /* Emulated, but still */
+        out.buffer.pbo                      = api_version >= 0x300;
+        out.buffer.ubo                      = api_version >= 0x300;
+        out.draw.instancing                 = api_version >= 0x300;
+        out.rendertarget.clearbuffer        = api_version >= 0x300;
+        out.rendertarget.color_buffer_10bit = api_version >= 0x300;
+        out.rendertarget.readdraw_buffers   = api_version >= 0x300;
+        out.rendertarget.depth24            = api_version >= 0x300;
+        out.texture.internal_format_query   = api_version >= 0x300;
+        out.texture.max_level               = api_version >= 0x300;
+        out.texture.samplers                = api_version >= 0x300;
+        out.texture.texture_3d              = api_version >= 0x300;
+        out.texture.tex_layer_query         = api_version >= 0x300;
+        out.texture.tex.gl.etc2             = api_version >= 0x300;
+        out.vertex.attribute_binding        = api_version >= 0x300;
+        out.vertex.vertex_arrays            = api_version >= 0x300;
 
         // out.rendertarget.color_buffer_half_float = supports_extension(
         //     extensions, ext::color_buffer_half_float::name);

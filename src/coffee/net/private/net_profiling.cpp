@@ -85,10 +85,6 @@ void ProfilingExport()
                             C_OCAST<BytesConst>(profile).view,
                             env::var("COFFEE_HMAC_KEY").value_or("0000"))));
 
-        http::multipart::builder out("-----------NetProfile");
-
-        reportBinRsc.setHeaderField(
-            http::header_field::content_type, out.content_type());
         reportBinRsc.setHeaderField(
             http::header_field::accept,
             http::header::to_string::content_type(http::content_type::json));
@@ -99,27 +95,25 @@ void ProfilingExport()
         std::string target_chrome;
         Profiling::ExportChromeTracerData(target_chrome);
 
-        out.add(
+        reportBinRsc.addMimePart(
             "machineProfile",
             BytesConst::ofContainer(target_chrome),
-            {{"Content-Type", "text/plain"}});
+            "text/plain");
         if(FileExists(profile))
         {
-            out.add(
+            reportBinRsc.addMimePart(
                 "profile",
                 C_OCAST<BytesConst>(profile),
-                {{"Content-Type", "text/plain"}});
+                "text/plain");
         } else
         {
-            out.add(
+            reportBinRsc.addMimePart(
                 "profile",
                 BytesConst::ofContainer(target_chrome),
-                {{"Content-Type", "text/plain"}});
+                "text/plain");
         }
 
-        out.finalize();
-
-        reportBinRsc.push(out);
+        reportBinRsc.push(http::method_t::post, BytesConst());
 
         auto response_status = classify_status(reportBinRsc.responseCode());
         if(auto data = reportBinRsc.data();

@@ -146,6 +146,10 @@ curl_request_data::curl_request_data()
 curl_request_data::~curl_request_data()
 {
 #if defined(USE_CURL)
+    if(mime)
+    {
+        curl_mime_free(static_cast<curl_mime*>(mime));
+    }
     curl_easy_cleanup(handle);
 #endif
 }
