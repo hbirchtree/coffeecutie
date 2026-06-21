@@ -79,6 +79,12 @@
             "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "console-powerpc-eabi-cube",
             "inherits": "base-linux"
+        },
+        {
+            "name": "console-powerpc-eabi-cube-rel",
+            "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "console-powerpc-eabi-cube",
+            "inherits": "base-linux"
         }
     ]
 }
