@@ -8,7 +8,9 @@ mkdir -p ${DOLPHIN_DIR}/bin ${DOLPHIN_DIR}/config
 if [ ! -f ${DOLPHIN_DIR}/bin/dolphin-emu-nogui ]; then
     mkdir -p ${DOLPHIN_DIR}/build
     pushd ${DOLPHIN_DIR}/build
-    git clone --recurse-submodules https://github.com/dolphin-emu/dolphin.git ${DOLPHIN_DIR}/src
+    if [ ! -d ${DOLPHIN_DIR}/src ]; then
+        git clone --recurse-submodules https://github.com/dolphin-emu/dolphin.git ${DOLPHIN_DIR}/src
+    fi
     cmake ../src \
         -GNinja \
         \
@@ -23,7 +25,7 @@ if [ ! -f ${DOLPHIN_DIR}/bin/dolphin-emu-nogui ]; then
         -DENABLE_QT=OFF \
         -DENABLE_TESTS=OFF \
         -DENABLE_VTUNE=OFF \
-        -DENABLE_X11=ON
+        -DENABLE_X11=OFF
     ninja
     cp Binaries/dolphin-emu-nogui ../bin
 fi
