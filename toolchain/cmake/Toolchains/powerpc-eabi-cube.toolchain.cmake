@@ -18,10 +18,18 @@ include_directories(AFTER SYSTEM
 set(CMAKE_C_COMPILER "${TOOLCHAIN_ROOT}/bin/${TOOLCHAIN_TOOL}gcc")
 set(CMAKE_CXX_COMPILER "${TOOLCHAIN_ROOT}/bin/${TOOLCHAIN_TOOL}g++")
 
-set(CMAKE_C_FLAGS 
-    "-mogc -mcpu=750 -meabi -mhard-float -DHW_DOL -DBIGENDIAN -DGEKKO -D__GEKKO__ -D_HAVE_LONG_DOUBLE -D_LDBL_EQ_DBL"
+set(GAMECUBE_MACHINE_FLAGS
+    "-mogc -mcpu=750 -meabi -mhard-float -DHW_DOL -DBIGENDIAN -DGEKKO -D__GEKKO__ -D_HAVE_LONG_DOUBLE -D_LDBL_EQ_DBL")
+# gcc 14+ promotes these to hard errors by default; older C dependencies
+# (e.g. zstd's legacy decoders) still trip them, so demote back to warnings.
+set(CMAKE_C_FLAGS
+    "${GAMECUBE_MACHINE_FLAGS} -Wno-error=incompatible-pointer-types -Wno-error=implicit-function-declaration -Wno-error=int-conversion"
     CACHE STRING "")
-set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "")
+set(CMAKE_CXX_FLAGS "${GAMECUBE_MACHINE_FLAGS}" CACHE STRING "")
+# Assembly (.S) needs the same machine flags. -mregnames lets the assembler
+# accept register names (r3/sp/...) used by libogc's hand-written assembly;
+# _LANGUAGE_ASSEMBLY keeps the older asm.h register-alias path working too.
+set(CMAKE_ASM_FLAGS "${GAMECUBE_MACHINE_FLAGS} -mregnames -D_LANGUAGE_ASSEMBLY" CACHE STRING "")
 set(CMAKE_EXE_LINKER_FLAGS "-L${TOOLCHAIN_ROOT}/${TOOLCHAIN_PREFIX}/lib -lnosys -lsysbase -lm" CACHE STRING "")
 
 include(${CMAKE_CURRENT_LIST_DIR}/common/configure-paths.cmake)

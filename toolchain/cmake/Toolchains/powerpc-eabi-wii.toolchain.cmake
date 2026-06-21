@@ -8,6 +8,9 @@ add_definitions(-DGEKKO -D__GEKKO__ -D__GEKKO_RVL__)
 
 set(CMAKE_C_FLAGS "-mrvl -mcpu=750 -meabi -mhard-float" CACHE STRING "")
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "")
+# Assembly (.S) needs the machine flags, -mregnames (so the assembler accepts
+# register names in libogc's hand-written assembly) and _LANGUAGE_ASSEMBLY.
+set(CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS} -mregnames -D_LANGUAGE_ASSEMBLY" CACHE STRING "")
 
 include(${CMAKE_CURRENT_LIST_DIR}/common/toolchain-prefix.cmake)
 

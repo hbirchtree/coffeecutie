@@ -16,12 +16,15 @@
             },
             "cacheVariables": {
                 "BUILD_NET": "OFF",
-                "BUILD_AUDIO": "OFF",
-                "BUILD_BLAM": "ON",
+                "BUILD_OPENAL": "OFF",
+                "BUILD_BLAM": "OFF",
+                "BUILD_COMP_DUMMY_PLUG": "OFF",
                 "BUILD_COMPRESS_ZLIB": "OFF",
+                "BUILD_COMPRESS_ZSTD": "OFF",
                 "BUILD_GLEAM": "OFF",
-                "BUILD_GRAPHICS_COMMON": "OFF",
+                "BUILD_GRAPHICS_COMMON": "ON",
                 "BUILD_GX": "ON",
+                "BUILD_HEADFUL": "ON",
                 "BUILD_IMGUI": "OFF",
                 "BUILD_LIBOGC": "ON",
                 "BUILD_OPENGL": "OFF",
@@ -43,7 +46,7 @@
                 "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
                 "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/compilers/gamecube-$env{ARCHITECTURE}/$env{TOOLCHAIN_VERSION}",
                 "TOOLCHAIN_SYSROOT": "$env{TOOLCHAIN_ROOT}/$env{TOOLCHAIN_PREFIX}/sysroot",
-                "TOOLCHAIN_VERSION": "v2.2"
+                "TOOLCHAIN_VERSION": "v2.3-devkit"
             }
         },
         {

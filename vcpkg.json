@@ -15,11 +15,12 @@
         "ms-gsl",
         "nlohmann-json",
         { "name": "outcome", "platform": "(android & !arm64) & !emscripten & !(arm & linux) & !(x64 & linux) & !osx & !windows" },
+        { "name": "outcome", "platform": "bare" },
         "rapidjson",
         "stb",
         "utfcpp",
         { "name": "zlib-ng", "platform": "(linux & x64) | osx | windows" },
-        "zstd",
+        { "name": "zstd", "platform": "!bare" },
         { "name": "gctools", "platform": "gamecube | wii", "host": true },
         { "name": "libogc", "platform": "gamecube | wii" }
     ],
