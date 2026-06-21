@@ -2,6 +2,7 @@
 
 set -euo pipefail
 
+mkdir -p "$(dirname $0)/../../../multi_build/runtime/dolphin"
 DOLPHIN_DIR=$(realpath $(dirname $0)/../../../multi_build/runtime/dolphin)
 mkdir -p ${DOLPHIN_DIR}/bin ${DOLPHIN_DIR}/config
 
