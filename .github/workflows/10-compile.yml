@@ -181,7 +181,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - variant: console:powerpc-eabi:cube:rel
+        - variant: console:powerpc-eabi:cube:dbg
           artifact: console-powerpc-eabi-cube
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
