@@ -7,6 +7,7 @@ DOLPHIN_DIR=$(realpath $(dirname $0)/../../../multi_build/runtime/dolphin)
 mkdir -p ${DOLPHIN_DIR}/bin ${DOLPHIN_DIR}/config
 
 if [ ! -f ${DOLPHIN_DIR}/bin/dolphin-emu-nogui ]; then
+    echo "::group::Building Dolphin"
     mkdir -p ${DOLPHIN_DIR}/build
     pushd ${DOLPHIN_DIR}/build
     if [ ! -d ${DOLPHIN_DIR}/src ]; then
@@ -29,6 +30,7 @@ if [ ! -f ${DOLPHIN_DIR}/bin/dolphin-emu-nogui ]; then
         -DENABLE_X11=OFF
     ninja
     cp Binaries/dolphin-emu-nogui ../bin
+    echo "::endgroup::"
 fi
 pushd ${DOLPHIN_DIR}/config
 mkdir -p User/Config
@@ -36,4 +38,3 @@ echo "[Settings]
 UseFFV1 = False
 DumpCodec = utvideo
 " > User/Config/GFX.ini
-

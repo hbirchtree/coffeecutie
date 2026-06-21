@@ -431,7 +431,7 @@ jobs:
         mkdir /tmp/dolphin_run
         ln -s artifacts/GLeamBaseTest_RHI artifacts/GLeamBaseTest_RHI.elf
         source/.github/tests/dolphin/build.sh
-        source/.github/tests/dolphin/dolphin.sh artifacts/GLeamBaseTest_RHI
+        source/.github/tests/dolphin/dolphin.sh artifacts/GLeamBaseTest_RHI.elf
     - name: Uploading test artifacts
       uses: actions/upload-artifact@v7
       with:
