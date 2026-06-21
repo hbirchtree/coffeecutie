@@ -209,11 +209,16 @@ jobs:
         variant: ${{ matrix.variant }}
         artifact: ${{ matrix.artifact }}
         target: GLeamBaseTest_RHI
+    - uses: ./source/.github/actions/build-project
+      with:
+        variant: ${{ matrix.variant }}
+        artifact: ${{ matrix.artifact }}
+        target: EnvTest
     - name: Uploading artifacts
       uses: actions/upload-artifact@v7
       with:
         name: ${{matrix.artifact}}
-        path: source/multi_build/${{matrix.artifact}}/install/bin
+        path: source/multi_build/${{matrix.artifact}}/bin
         if-no-files-found: error
   macOS_HostTools:
     runs-on: macos-latest
@@ -390,6 +395,48 @@ jobs:
       with:
         name: dummy_plug_test_${{ matrix.variant }}_webgl2
         path: /tmp/blam_webgl
+        if-no-files-found: error
+  Test_gekko:
+    if: ${{ always() }}
+    name: "Software render test (Dolphin, SW render)"
+    needs: Gekko
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
+    strategy:
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        path: source
+    - name: Installing Dolphin dependencies
+      run: |
+        sudo apt update
+        sudo apt install build-essential ffmpeg xvfb mesa-utils libavcodec-dev libavformat-dev libavutil-dev libevdev-dev libegl1-mesa-dev libgl1-mesa-dev libncurses5-dev libswresample-dev libswscale-dev libtool libtool-bin libudev-dev cmake pkg-config
+    - name: Downloading console-powerpc-eabi-cube artifacts
+      uses: actions/download-artifact@v8
+      with:
+        name: console-powerpc-eabi-cube
+        path: artifacts/
+    - name: Run Dolphin software-render smoke test
+      env:
+        CI: "true"
+        DOLPHIN_RENDERER: "Software Renderer"
+        DUMP_FILE: "/tmp/dolphin_run/dump.mp4"
+      run: |
+        find artifacts/ -type f
+        mkdir /tmp/dolphin_run
+        ln -s artifacts/GLeamBaseTest_RHI artifacts/GLeamBaseTest_RHI.elf
+        source/.github/tests/dolphin/build.sh
+        source/.github/tests/dolphin/dolphin.sh artifacts/GLeamBaseTest_RHI
+    - name: Uploading test artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: dummy_plug_test_${{ matrix.variant }}_webgl2
+        path: /tmp/gl_dolphin
         if-no-files-found: error
   Test_x86_64_mesa_gather:
     if: ${{ always() }}
