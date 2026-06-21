@@ -209,11 +209,6 @@ jobs:
         variant: ${{ matrix.variant }}
         artifact: ${{ matrix.artifact }}
         target: GLeamBaseTest_RHI
-    - uses: ./source/.github/actions/build-project
-      with:
-        variant: ${{ matrix.variant }}
-        artifact: ${{ matrix.artifact }}
-        target: EnvTest
     - name: Uploading artifacts
       uses: actions/upload-artifact@v7
       with:
