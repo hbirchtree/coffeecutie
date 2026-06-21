@@ -26,6 +26,10 @@ struct load_options_t
     std::optional<api_type_t> api_type{};
 };
 
+namespace detail {
+void gexxo_draw(draw_command const& command);
+} // namespace detail
+
 struct api
 {
     using texture_type      = texture_t;
@@ -108,12 +112,11 @@ struct api
 
     /* --- Draw submission -------------------------------------------------- */
 
-    /* TODO(user): GX draw submission. Left as a stub; GX's immediate-mode
-     * pipeline differs too much from the GL command path to share code. */
     template<typename... UList>
     inline std::optional<std::tuple<error, std::string_view>> submit(
-        draw_command const& /*command*/, UList&&... /*uniforms*/)
+        draw_command const& command, UList&&... /*uniforms*/)
     {
+        detail::gexxo_draw(command);
         return std::nullopt;
     }
 

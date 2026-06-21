@@ -34,6 +34,7 @@ using libc_types::i32;
 using libc_types::u32;
 using libc_types::u64;
 
+using typing::vector_types::Matf4;
 using typing::vector_types::Vecf4;
 using typing::vector_types::Vecui2;
 
@@ -342,6 +343,7 @@ struct draw_command
     std::shared_ptr<query_t>        conditional_query;
     std::shared_ptr<vertex_array_t> vertices;
 
+    gsl::span<Matf4 const> instance_transforms{};
     int uniforms{};
     int buffers{};
     int samplers{};

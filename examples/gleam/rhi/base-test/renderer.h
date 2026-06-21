@@ -322,9 +322,9 @@ struct RendererState
         {
         }
 
-#if !defined(FEATURE_ENABLE_Gexxo)
         std::shared_ptr<rhi::api::vertex_type> vao;
         std::shared_ptr<rhi::buffer_t>         array;
+#if !defined(FEATURE_ENABLE_Gexxo)
         std::shared_ptr<rhi::program_t>        program;
         std::shared_ptr<rhi::sampler_t>        sampler;
 
@@ -544,7 +544,28 @@ void SetupRendering(
                 typing::Filtering::Linear, typing::Filtering::Linear);
         }
     }
-#endif // !FEATURE_ENABLE_Gexxo
+
+#else
+    {
+        ProfContext _("GX vertex upload");
+        auto        vao = d.g_data.vao = d.gfx.alloc_vertex_array();
+        auto        buf = d.g_data.array =
+            d.gfx.alloc_buffer(rhi::buffers::vertex, RSCA::ReadOnly);
+        vao->alloc();
+        vao->add({
+            .index = 0,
+            .value =
+                {
+                    .offset = 0,
+                    .stride = sizeof(Vecf2) + sizeof(Vecf2),
+                    .count  = 2,
+                },
+        });
+        buf->alloc();
+        buf->commit(gsl::span<f32 const>(vertexdata.data(), vertexdata.size()));
+        vao->set_buffer(rhi::buffers::vertex, buf, 0);
+    }
+#endif
 
 #if defined(FEATURE_ENABLE_Net)
     /* We download a spicy meme and paste it into the texture */
@@ -654,8 +675,9 @@ void SetupRendering(
     {
         auto& xf = *e.get<TransformPair>(entity.id);
 
-        xf.first.position = {0, 0, 5};
-        xf.first.scale    = Vecf3{2.5f};
+        xf.first.position   = {0, 0, 5};
+        xf.first.scale      = Vecf3{2.5f};
+        xf.first.rotation.w = 1.f;
 
         xf.mask.x = 2;
         xf.mask.y = 2;
@@ -708,6 +730,27 @@ void RendererLoop(
     {
         //        d.gfx.default_rendertarget()->discard();
         d.gfx.default_rendertarget()->clear(Vecf4{.5f, 0.f, .5f, 1.f}, 1.f, 0);
+
+#if defined(FEATURE_ENABLE_Gexxo)
+        auto&              cam = e.subsystem_cast<CameraContainer>();
+        std::vector<Matf4> modelviews;
+        for(auto& ent : e.select(FloorTag))
+            modelviews.push_back(
+                cam.transform * e.get<TransformPair>(ent.id)->second);
+        for(auto& ent : e.select(BaseItemTag))
+            modelviews.push_back(
+                cam.transform * e.get<TransformPair>(ent.id)->second);
+        d.gfx.submit(rhi::draw_command{
+            .call = {.instanced = true},
+            .data =
+                {
+                    .arrays    = {.count = 6},
+                    .instances = {.count = static_cast<u32>(modelviews.size())},
+                },
+            .vertices            = g.vao,
+            .instance_transforms = modelviews,
+        });
+#endif
 
 #if !defined(FEATURE_ENABLE_Gexxo)
         auto const& xf  = e.container_cast<matrix_tag>().m_matrices;
