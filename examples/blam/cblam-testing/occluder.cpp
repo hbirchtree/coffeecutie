@@ -405,7 +405,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 model.visible = in_draw_distance(model);
         }
 
-        if(cluster_changed || periodic)
+        if((cluster_changed || periodic) && false)
         {
             u32 total_clusters =
                 current_bsp ? static_cast<u32>(current_bsp->clusters.size())

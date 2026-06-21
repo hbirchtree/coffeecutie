@@ -3,6 +3,7 @@
 #include "caching.h"
 
 #include <blam/volta/blam_scenario.h>
+#include <chrono>
 
 using ERef = compo::EntityRef<compo::EntityContainer>;
 
@@ -442,6 +443,10 @@ struct NetworkInfo
         bool viewport : 1 {false};
         bool permissions : 1 {false};
     } changes;
+
+    f32 priority{0.f};
+    f32 relevance{0.f};
+    std::chrono::milliseconds update_period{300};
 };
 
 struct PlayerInfo

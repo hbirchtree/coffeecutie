@@ -35,6 +35,21 @@ struct Networking;
 
 namespace {
 
+const std::map<std::string_view, std::pair<Vecf3, Quatf>> birds_eye_positions = {
+    {"bloodgulch", {Vecf3{115.2, -153.9, 11.1}, Quatf{0.96461415, 0.16558254, 0.20222986, 0.034714244}}},
+};
+
+std::pair<Vecf3, Quatf> birds_eye_for_map(std::string_view map)
+{
+    auto it = birds_eye_positions.find(map);
+    if(it == birds_eye_positions.end())
+    {
+        cWarning("No birds-eye view for map {}", map);
+        return {};
+    }
+    return it->second;
+}
+
 Networking* network_instance;
 
 template<typename PtrType>
@@ -66,6 +81,7 @@ struct MessageBase
         CameraSync,
         EntitySpawn,
         PlayerSpawn,
+        ObjectSync,
 
         /* Debug */
         Screenshot,
@@ -323,7 +339,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_game_bus.inject(update, &data);
     }
 
-    void send_player_roster()
+    void send_player_roster(i32 player_idx = -1)
     {
         std::vector<PlayerSyncEntry> entries;
         for(auto const& local : m_local_player_info)
@@ -341,6 +357,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         for(auto const& [_, state] : m_connections)
         {
             if(!state.player_info)
+                continue;
+            if(player_idx != -1 && state.idx != player_idx)
                 continue;
             auto const& info = (*state.player_info);
             entries.push_back({
@@ -384,12 +402,22 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }));
     }
 
+    gsl::span<const blam::scn::player_starting_location> player_spawn_locs()
+    {
+        if(!m_map)
+            return {};
+        auto scenario = m_map->tags->scenario(m_map->map, m_map->magic);
+        auto spawns_ =
+            scenario.value()->player_start.locations.data(m_map->magic);
+        if(!spawns_.has_value())
+            return {};
+        auto spawns = spawns_.value();
+        return spawns;
+    }
+
     void player_init(compo::EntityContainer& e, PlayerInfo& player)
     {
         using namespace std::chrono_literals;
-
-        auto constexpr birds_eye_pos = Vecf3{-29, -7, -7};
-        auto constexpr birds_eye_rot = Quatf{1, 0, 0, 0};
 
         player.permissions.camera = false;
 
@@ -401,10 +429,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 continue;
             auto* cam = e.get<PlayerCamera>(entity.id);
             if(cam)
-            {
-                cam->camera->position = birds_eye_pos;
-                cam->camera->rotation = birds_eye_rot;
-            }
+                std::tie(cam->camera->position, cam->camera->rotation) =
+                    birds_eye_for_map(m_map->internal_name());
             auto* net = e.get<NetworkInfo>(entity.id);
             if(net)
             {
@@ -416,14 +442,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 
         auto spawn_loc =
             [this]() -> std::optional<blam::scn::player_starting_location> {
-            if(!m_map)
-                return std::nullopt;
-            auto scenario = m_map->tags->scenario(m_map->map, m_map->magic);
-            auto spawns_ =
-                scenario.value()->player_start.locations.data(m_map->magic);
-            if(!spawns_.has_value())
-                return std::nullopt;
-            auto spawns = spawns_.value();
+            auto spawns = player_spawn_locs();
             if(spawns.empty())
                 return std::nullopt;
             auto spawn_idx = m_local_random.rand<u32>(0, spawns.size());
@@ -447,8 +466,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     if(cam)
                     {
                         cam->camera->position = spawn.pos;
-                        cam->camera->rotation = glm::normalize(
-                            Quatf(Vecf3{0.f, spawn.rot, glm::pi<f32>() / 2.f}));
+                        cam->camera->rotation =
+                            glm::angleAxis(glm::pi<f32>() - spawn.rot, Vecf3{0.f, 1.f, 0.f});
                     }
                     info->permissions.camera = true;
                     auto* net                = e.get<NetworkInfo>(entity.id);
@@ -1228,6 +1247,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 Message<PlayerJoinConfirm>({
                     .player_idx = player_info.idx,
                 }));
+            send_player_roster(player_info.idx);
             update_player_counts();
             send_player_roster();
             break;
@@ -1305,14 +1325,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             for(auto& player : p.select<PlayerInfo>())
             {
                 auto* info = p.get<PlayerInfo>(player.id);
-                if(info && info->player_idx == 0 && !info->is_remote())
+                if(info && info->seat_idx == 0 && !info->is_remote())
                 {
                     info->player_idx = confirm.player_idx;
                     break;
                 }
             }
 
-            cDebug("Received join confirmation");
+            cDebug("Received join confirmation, player_id={}", confirm.player_idx);
             break;
         }
         case MessageBase::GameEvent: {
@@ -1335,6 +1355,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             break;
         }
         case MessageBase::PlayerSync: {
+            cDebug("Player roster received");
             auto  players   = payload.values<PlayerSyncEntry>();
             auto& net_state = p.subsystem<NetworkState>();
             auto  self_idx  = net_state.remote_player_idx.value_or(0xFFFF);
@@ -1399,6 +1420,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     info.player_idx       = player.player_idx;
                     info.loading_progress = player.loading_progress;
                     info.remote           = "remote";
+                    info.seat_idx         = 0xFFFF;
                     auto& netinfo         = ref.get<NetworkInfo>();
                     netinfo.connected     = player.connected == 0xFFFF;
                 }
