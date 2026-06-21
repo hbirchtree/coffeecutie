@@ -429,7 +429,7 @@ jobs:
       run: |
         find artifacts/ -type f
         mkdir /tmp/dolphin_run
-        ln -s artifacts/GLeamBaseTest_RHI artifacts/GLeamBaseTest_RHI.elf
+        ln -s GLeamBaseTest_RHI artifacts/GLeamBaseTest_RHI.elf
         source/.github/tests/dolphin/build.sh
         source/.github/tests/dolphin/dolphin.sh artifacts/GLeamBaseTest_RHI.elf
     - name: Uploading test artifacts
