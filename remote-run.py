@@ -57,7 +57,7 @@ Example .targets.json:
 
 Keys:
   devices[name].target     — platform:arch:sysroot (determines build dir under multi_build/)
-  devices[name].type       — "linux" (ssh, default), "android" (adb), or "docker"
+  devices[name].type       — "linux" (ssh, default), "android" (adb), "dolphin", or "docker"
   devices[name].hostname   — SSH host or ADB serial; omit for android to auto-pick via adb
   devices[name].scratchdir — working directory data is staged into (Linux ssh
                              and docker; docker defaults to <build_dir>/.docker_scratch)
@@ -939,6 +939,57 @@ def run_web(device_name, device, preset_name, preset, extra_args, script_dir, bu
         env=merged_env,
     )
 
+def run_dolphin(
+        device_name,
+        device,
+        preset_name,
+        preset,
+        extra_args,
+        script_dir,
+        build_root,
+        target_dir,
+        dry_run=False,
+        log_file=None,
+        collect_profile=None):
+    binary = preset['binary']
+    binary_path = find_linux_binary(build_root, target_dir, binary)
+    if not binary_path and not dry_run:
+        sys.exit(
+            f"Error: binary '{binary}' not found at multi_build/{target_dir}/bin/{binary}\n"
+            "Did you run the build first?"
+        )
+    if not binary_path:
+        binary_path = os.path.join(build_root, target_dir, 'bin', binary)
+
+    # Dolphin does not like when a binary does not have an extension
+    staged_binary = f'/tmp/{time.time()}.elf'
+    dump_file = f'dump_{time.time()}.mp4'
+    if collect_profile:
+        os.makedirs(collect_profile, exist_ok=True)
+        dump_file = f'{collect_profile}/{dump_file}'
+        if log_file is None:
+            log_file = f'{collect_profile}/output.log'
+    else:
+        dump_file = f'/tmp/{dump_file}'
+
+    cmd = ['bash', '-c', f'DUMP_FILE={dump_file} {script_dir}/.github/tests/dolphin/dolphin.sh {shlex.quote(staged_binary)}']
+
+    setup_cmds = [
+        ['ln', '-s', binary_path, staged_binary]
+    ]
+
+    if dry_run:
+        print_dry_run(setup_cmds + [cmd])
+        return
+
+    view_output(
+        cmd,
+        toptext_message(device, binary),
+        setup_cmds=setup_cmds,
+        log_file=log_file,
+    )
+    os.remove(staged_binary)
+
 
 def print_config_list(config):
     devices = config.get('devices', {})
@@ -1230,6 +1281,8 @@ def main():
         run_android(args.device, device, args.preset, preset, args.extra_args, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile)
     elif dev_type == 'web':
         run_web(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile)
+    elif dev_type == 'dolphin':
+        run_dolphin(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile)
     else:
         run_linux(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile)
 

@@ -66,6 +66,6 @@ ffmpeg \
     -i ${AUDIO_DUMP} \
     -c:v libx264 -b:v 4M \
     -c:a aac -b:a 128k \
-    ${DUMP_FILE}
+    "${DUMP_FILE}"
 rm -r ${DOLPHIN_DIR}/config/User/Dump/{Audio,Frames}
 echo "::endgroup::"
