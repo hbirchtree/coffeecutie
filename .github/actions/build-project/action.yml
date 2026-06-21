@@ -15,6 +15,10 @@ inputs:
     description: Additional CMake build args
     required: false
     default: ''
+  target:
+    description: CMake build target
+    required: false
+    default: 'install'
 runs:
   using: composite
   steps:
@@ -22,7 +26,7 @@ runs:
       id: buildProject
       continue-on-error: true
       shell: bash
-      run: source/cb build ${{ inputs.variant }}/install -- ${{ inputs.args }}
+      run: source/cb build ${{ inputs.variant }}/${{ inputs.target }} -- ${{ inputs.args }}
       env:
         BUILD_HOST_TOOLS: no
         EMBEDDED_REPORT_URL: ${{ inputs.embedded_report_url }}
