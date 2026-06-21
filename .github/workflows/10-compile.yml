@@ -197,7 +197,7 @@ jobs:
       run: |
         sudo rm /etc/apt/sources.list.d/microsoft-prod.list
         sudo apt-get update
-        sudo apt install build-essential inkscape nasm
+        sudo apt install build-essential inkscape nasm libgl1-mesa-dev
     - name: Host tools cache
       uses: actions/cache@v5
       with:
