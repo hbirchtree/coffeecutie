@@ -1,0 +1,8 @@
+#pragma once
+
+/* GameCube (GX) RHI backend, mirroring <coffee/graphics/apis/CGLeam>. */
+
+#include "gexxo/rhi.h"
+#include "gexxo/rhi_resources.h"
+
+#include <coffee/gexxo/gexxo_api.h>

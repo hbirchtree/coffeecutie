@@ -4,6 +4,7 @@
 #include <coffee/core/libc_types.h>
 #include <coffee/core/types/size.h>
 #include <peripherals/semantic/enum/rsca.h>
+#include <peripherals/stl/error_code.h>
 #include <peripherals/typing/enum/pixels/format.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
 #include <peripherals/typing/pixels/rgba.h>

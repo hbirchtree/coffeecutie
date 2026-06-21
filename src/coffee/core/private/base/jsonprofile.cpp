@@ -4,7 +4,9 @@
 
 #include <coffee/core/base_state.h>
 #include <coffee/core/coffee.h>
+#if !defined(COFFEE_GEKKO)
 #include <peripherals/stl/base64.h>
+#endif
 #include <peripherals/stl/string/hex.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string_ops.h>
@@ -340,6 +342,7 @@ void CaptureMetrics_f32(
         tdata, name, variant, cast_pod(value), ts, index, index_name);
 }
 
+#if !defined(COFFEE_GEKKO)
 void CaptureTrace(
     profiling::ThreadState&         tdata,
     std::string_view                function_name,
@@ -371,6 +374,7 @@ void CaptureTrace(
         data_);
     profiler.write(BytesConst::ofContainer(out));
 }
+#endif
 
 } // namespace json
 } // namespace profiling

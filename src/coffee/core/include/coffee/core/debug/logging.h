@@ -107,7 +107,7 @@ void log(
 template<typename Dummy = void>
 requires(
     (compile_info::platform::is_ios || compile_info::platform::is_linux ||
-     compile_info::platform::is_macos) &&
+     compile_info::platform::is_macos || compile_info::platform::is_gekko) &&
     !compile_info::platform::is_android &&
     !compile_info::platform::is_emscripten)
 //

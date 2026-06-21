@@ -4,14 +4,19 @@ coffee_library(
   TARGET ComponentApp
   SOURCES
     private/comp_app.cpp
-    private/file_mapper.cpp
-    private/file_watcher.cpp
     private/fps_counter.cpp
     private/subsystems.cpp
   LIBRARIES EntComp Core
   HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bundle_include>
 )
+
+if(NOT GAMECUBE)
+  target_sources(ComponentApp PRIVATE
+    private/file_mapper.cpp
+    private/file_watcher.cpp
+  )
+endif()
 
 #target_precompile_headers(
 #  ComponentApp PUBLIC $<$<COMPILE_LANGUAGE:CXX>:coffee/comp_app/subsystems.h>

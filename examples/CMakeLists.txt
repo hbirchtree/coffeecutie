@@ -4,7 +4,7 @@
 
 add_subdirectory(core/env-test)
 
-if(BUILD_GLEAM)
+if(BUILD_GLEAM OR BUILD_GX)
   add_subdirectory(gleam/rhi/base-test)
 endif()
 

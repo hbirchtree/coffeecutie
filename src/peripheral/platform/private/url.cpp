@@ -418,7 +418,7 @@ STATICINLINE std::string DereferencePath(std::string suffix, RSCA storageMask)
     switch(storageMask & RSCA::StorageMask)
     {
     default:
-        Throw(undefined_behavior("failed to resolve path"));
+        Throw(undefined_behavior("failed to resolve path: " + suffix));
     }
 
 #endif

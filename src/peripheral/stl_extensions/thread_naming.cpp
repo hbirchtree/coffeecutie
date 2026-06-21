@@ -72,7 +72,7 @@ STATICINLINE std::string_view LoadThreadName(ThreadId::Hash hs)
 namespace Threads {
 bool SetName(std::thread& t, std::string const& name)
 {
-    SaveThreadName(ThreadId(t.get_id()).hash(), name);
+    SaveThreadName(std::hash<std::thread::id>{}(t.get_id()), name);
 
 #if defined(COFFEE_APPLE)
     //    pthread_setname_np(name.c_str());
@@ -96,7 +96,7 @@ std::string_view GetName(std::thread& t)
     out.resize(out.find('\0', 0));
     return out;
 #else
-    return LoadThreadName(ThreadId(t.get_id()).hash());
+    return LoadThreadName(std::hash<std::thread::id>{}(t.get_id()));
 #endif
 }
 

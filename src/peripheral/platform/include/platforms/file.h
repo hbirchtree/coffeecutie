@@ -28,6 +28,9 @@
 #include "posix/fsio.h"
 #include "posix/mmio.h"
 #include "posix/rdwrio.h"
+#elif defined(COFFEE_GEKKO)
+#include "gekko/fsio.h"
+#include "gekko/mmio.h"
 #elif defined(COFFEE_WINDOWS)
 #error Win32 not implemented
 #else
@@ -108,6 +111,28 @@ using posix::truncate;
 using posix::list;
 
 using common::posix::error_message;
+#elif defined(COFFEE_GEKKO)
+#define PLATFORM_FILE_SUPPORTS_FS 1
+#define PLATFORM_FILE_SUPPORTS_LIST 1
+#define PLATFORM_FILE_SUPPORTS_MAPPING 1
+
+using libc::open_file;
+using libc::read;
+using libc::write;
+
+using gekko::map;
+using gekko::unmap;
+
+using gekko::create;
+using gekko::create_directory;
+using gekko::exists;
+using gekko::file_info;
+using gekko::list;
+using gekko::remove;
+using gekko::size;
+using gekko::truncate;
+
+using gekko::error_message;
 #else
 #define PLATFORM_FILE_SUPPORTS_FS 0
 #define PLATFORM_FILE_SUPPORTS_LIST 0
@@ -130,7 +155,7 @@ using map_handle  = declreturntype(map)::value_type;
 
 namespace platform::path {
 
-#if defined(USE_POSIX_API)
+#if defined(USE_POSIX_API) || defined(COFFEE_GEKKO)
 static constexpr auto path_separator = '/';
 #elif defined(COFFEE_WINDOWS)
 static constexpr auto path_separator = '\\';
@@ -157,6 +182,17 @@ using file::win32::path::executable;
 using file::posix::path::app_dir;
 using file::posix::path::executable;
 #endif
+#elif defined(COFFEE_GEKKO)
+#define PLATFORM_FILE_SUPPORTS_LINK 0
+
+using file::gekko::path::app_dir;
+using file::gekko::path::base;
+using file::gekko::path::canon;
+using file::gekko::path::change_dir;
+using file::gekko::path::current_dir;
+using file::gekko::path::dereference;
+using file::gekko::path::dir;
+using file::gekko::path::executable;
 #else
 #define PLATFORM_FILE_SUPPORTS_LINK 0
 #endif

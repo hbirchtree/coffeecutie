@@ -85,11 +85,13 @@ FORCEDINLINE void CaptureMetrics(
         CaptureMetrics(*thread_state, name, variant, value, ts, index, index_name);
 }
 
+#if !defined(COFFEE_GEKKO)
 void CaptureTrace(
     profiling::ThreadState&         tdata,
     std::string_view                function_name,
     std::vector<std::string> const& args,
     gsl::span<const char> const&    data = {});
+#endif
 
 } // namespace json
 

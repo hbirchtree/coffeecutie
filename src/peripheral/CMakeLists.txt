@@ -195,7 +195,8 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   find_package(Threads REQUIRED)
   target_link_libraries(PeripheralLib PUBLIC rt dl m Threads::Threads stdc++fs)
 elseif(GAMECUBE)
-  target_link_libraries(PeripheralLib PUBLIC ogc)
+  find_package(libogc CONFIG REQUIRED)
+  target_link_libraries(PeripheralLib PUBLIC libogc::libogc)
 endif()
 
 # ##############################################################################
@@ -208,22 +209,6 @@ coffee_library(
   SOURCES stl_extensions/thread_naming.cpp
 )
 
-#
-# Alternative thread implementations Used for platforms without
-# std::thread/std::mutex support Implemented here: - Gamecube/Wii LWP
-#
-if(GAMECUBE)
-  coffee_library(
-    TARGET GeckoThreads
-    LIBRARIES PeripheralLib
-    SOURCES stl_replacements/gekko/threads.cpp
-  )
-  target_link_libraries(PeripheralThreadNaming INTERFACE GeckoThreads)
-endif()
-
-#
-#
-#
 
 if((UNIX OR EMSCRIPTEN) AND NOT MINGW)
     target_compile_definitions(PeripheralLib PUBLIC -DCOFFEE_SUPPORTS_BREAKPOINT)

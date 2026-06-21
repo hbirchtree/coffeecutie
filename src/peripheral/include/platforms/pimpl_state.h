@@ -18,13 +18,13 @@ namespace detail {
 
 struct GlobalState
 {
-    stl_types::Mutex access;
+    std::mutex access;
     virtual ~GlobalState();
 };
 
 using global_state_ptr = std::shared_ptr<GlobalState>;
 
-using lock_state_fn = std::function<stl_types::UqLock(std::string_view)>;
+using lock_state_fn = std::function<std::unique_lock<std::mutex>(std::string_view)>;
 using swap_state_fn =
     std::function<global_state_ptr(std::string_view, global_state_ptr const&)>;
 using peek_state_fn = std::function<global_state_ptr const&(std::string_view)>;
@@ -41,12 +41,12 @@ struct state_pimpl
 
     using GlobalState = detail::GlobalState;
 
-    FORCEDINLINE stl_types::UqLock LockState(GlobalState& state)
+    FORCEDINLINE std::unique_lock<std::mutex> LockState(GlobalState& state)
     {
-        return stl_types::UqLock(state.access);
+        return std::unique_lock<std::mutex>(state.access);
     }
 
-    FORCEDINLINE stl_types::UqLock LockState(libc_types::cstring state)
+    FORCEDINLINE std::unique_lock<std::mutex> LockState(libc_types::cstring state)
     {
         return m_LockState(state);
     }

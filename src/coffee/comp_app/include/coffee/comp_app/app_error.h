@@ -1,6 +1,7 @@
 #pragma once
 
 #include <peripherals/libc/types.h>
+#include <peripherals/stl/error_code.h>
 #include <peripherals/stl/types.h>
 
 #define C_EXPECT_ZERO(v)                             \

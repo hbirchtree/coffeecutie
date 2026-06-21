@@ -21,11 +21,11 @@ namespace State {
 
 using GlobalState = platform::detail::GlobalState;
 
-extern stl_types::UqLock LockState(std::string_view key);
+extern std::unique_lock<std::mutex> LockState(std::string_view key);
 
-inline stl_types::UqLock LockState(GlobalState& state)
+inline std::unique_lock<std::mutex> LockState(GlobalState& state)
 {
-    return stl_types::UqLock(state.access);
+    return std::unique_lock<std::mutex>(state.access);
 }
 
 extern std::shared_ptr<GlobalState> SwapState(

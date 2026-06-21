@@ -3,8 +3,6 @@
 
 #include <coffee/comp_app/app_events.h>
 #include <coffee/comp_app/eventapp_wrapper.h>
-#include <coffee/comp_app/file_mapper.h>
-#include <coffee/comp_app/file_watcher.h>
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/comp_app/performance_monitor.h>
 #include <coffee/comp_app/stat_providers.h>
@@ -29,6 +27,12 @@
 #include <coffee/core/debug/formatting.h>
 #include <coffee/strings/format.h>
 #include <utility>
+
+#if !defined(COFFEE_GEKKO)
+// Not implementable on Gekko
+#include <coffee/comp_app/file_mapper.h>
+#include <coffee/comp_app/file_watcher.h>
+#endif
 
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
 #include <coffee/comp_app/dummy_plug.h>
@@ -516,8 +520,10 @@ void addDefaults(
         BasicEventBus<AppEvent>,
         DefaultHIDPreferences,
         DefaultAppInfo>>(container, ec);
+#if !defined(COFFEE_GEKKO)
     container.register_subsystem_inplace<FileMapper>();
     container.register_subsystem_inplace<FileWatcher>();
+#endif
 
 #if defined(FEATURE_ENABLE_ANativeComponent)
     loader.loadAll<subsystem_list<anative::AndroidEventBus>>(container, ec);
@@ -708,6 +714,7 @@ void addDefaults(
     !defined(FEATURE_ENABLE_GLKitComponent) &&    \
     !defined(FEATURE_ENABLE_ANativeComponent) &&  \
     !defined(FEATURE_ENABLE_DispManXComponent) && \
+    !defined(FEATURE_ENABLE_CogComponent) &&      \
     !defined(FEATURE_ENABLE_EGLComponent)
 #error No window manager
 #endif

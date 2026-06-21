@@ -229,7 +229,7 @@
 #define COFFEE_PLATFORM_OUTPUT_FORMAT
 #endif
 
-#if defined(COFFEE_EMSCRIPTEN)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_GEKKO)
 #define COFFEE_CUSTOM_STACKTRACE
 #endif
 

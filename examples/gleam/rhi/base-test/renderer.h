@@ -17,7 +17,13 @@
 #include <peripherals/typing/vectors/transform.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
+#if defined(FEATURE_ENABLE_Gexxo)
+#include <coffee/graphics/apis/CGexxo>
+namespace rhi = gexxo;
+#else
 #include <coffee/graphics/apis/CGLeam>
+namespace rhi = gleam;
+#endif
 
 #include <coffee/components/entity_selectors.h>
 
@@ -304,7 +310,7 @@ struct RendererState
     std::shared_ptr<Store::SaveApi> saving;
     rq::runtime_queue*              online_queue;
 
-    gleam::api gfx;
+    rhi::api gfx;
 
     struct RGraphicsData
     {
@@ -316,12 +322,14 @@ struct RendererState
         {
         }
 
-        std::shared_ptr<gleam::api::vertex_type> vao;
-        std::shared_ptr<gleam::buffer_t>         array;
-        std::shared_ptr<gleam::program_t>        program;
-        std::shared_ptr<gleam::sampler_t>        sampler;
+#if !defined(FEATURE_ENABLE_Gexxo)
+        std::shared_ptr<rhi::api::vertex_type> vao;
+        std::shared_ptr<rhi::buffer_t>         array;
+        std::shared_ptr<rhi::program_t>        program;
+        std::shared_ptr<rhi::sampler_t>        sampler;
 
-        std::shared_ptr<gleam::compat::texture_2da_t> tex;
+        std::shared_ptr<rhi::compat::texture_2da_t> tex;
+#endif
 
         Vecf4 clear_col = {.267f, .267f, .267f, 1.f};
     } g_data;
@@ -376,7 +384,7 @@ void SetupRendering(
         1.f,  1.f,  1.f, 1.f,
     }};
 
-    cVerbose(8, "Loading GLeam API");
+    cVerbose(8, "Loading graphics API");
     /*
      * Loading the GLeam API, chosen according to what is available at runtime
      */
@@ -423,6 +431,7 @@ void SetupRendering(
         d.gfx.default_rendertarget()->resize({0, 0, size.w, size.h}, 0);
     }
 
+#if !defined(FEATURE_ENABLE_Gexxo)
     /* Uploading vertex data and creating descriptors */
     {
         ProfContext _("Vertex data upload");
@@ -535,6 +544,7 @@ void SetupRendering(
                 typing::Filtering::Linear, typing::Filtering::Linear);
         }
     }
+#endif // !FEATURE_ENABLE_Gexxo
 
 #if defined(FEATURE_ENABLE_Net)
     /* We download a spicy meme and paste it into the texture */
@@ -613,14 +623,14 @@ void SetupRendering(
     }
 
     {
-        RuntimeState state = {};
-        d.saving           = Store::CreateDefaultSave();
-
-        d.saving->restore(semantic::Bytes::ofBytes(state));
         e.register_subsystem_inplace<TimeSystem>(
             TimeSystem::system_clock::now());
-
+#if !defined(COFFEE_GEKKO)
+        RuntimeState state = {};
+        d.saving           = Store::CreateDefaultSave();
+        d.saving->restore(semantic::Bytes::ofBytes(state));
         e.subsystem_cast<RuntimeStateSystem>().state = state;
+#endif
     }
 
     {
@@ -699,6 +709,7 @@ void RendererLoop(
         //        d.gfx.default_rendertarget()->discard();
         d.gfx.default_rendertarget()->clear(Vecf4{.5f, 0.f, .5f, 1.f}, 1.f, 0);
 
+#if !defined(FEATURE_ENABLE_Gexxo)
         auto const& xf  = e.container_cast<matrix_tag>().m_matrices;
         auto        err = d.gfx.submit(
             {
@@ -741,6 +752,7 @@ void RendererLoop(
             auto [code, msg] = *err;
             cDebug("Draw error: {0}: {1}", magic_enum::enum_name(code), msg);
         }
+#endif // !FEATURE_ENABLE_Gexxo
     }
 }
 
@@ -772,15 +784,19 @@ void RendererCleanup(
                           .count();
 
     state.camera = entities.subsystem_cast<CameraContainer>().camera_source;
+#if !defined(COFFEE_GEKKO)
     d.saving->save(semantic::Bytes::ofBytes(state));
+#endif
 
     Profiler::PopContext();
 
+#if !defined(FEATURE_ENABLE_Gexxo)
     semantic::concepts::graphics::util::dealloc_all(
         d.g_data.array,
         d.g_data.program,
         d.g_data.sampler,
         d.g_data.tex,
         d.g_data.vao);
+#endif
     d.g_data = {};
 }

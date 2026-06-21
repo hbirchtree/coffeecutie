@@ -5,6 +5,8 @@
 
 #include <platforms/base/device_variant.h>
 
+#include <map>
+
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID) || defined(COFFEE_APPLE)
 #define USE_POSIX_PLATFORM_INFO
 #include "posix/sysinfo.h"

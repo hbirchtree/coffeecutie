@@ -10,8 +10,13 @@
 #include <typeinfo>
 #include <utility>
 
+// Platforms without boost::stacktrace fall back to empty frames
+#if defined(COFFEE_WINDOWS) || defined(COFFEE_GEKKO)
+#define COFFEE_STACKTRACE_NO_BOOST
+#endif
+
 #if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID) || \
-    defined(COFFEE_BEAGLEBONE)
+    defined(COFFEE_BEAGLEBONE) || defined(COFFEE_GEKKO)
 // Nothing...
 #elif defined(COFFEE_APPLE) || defined(COFFEE_NO_LIB_BACKTRACE)
 #define BOOST_STACKTRACE_USE_LIBC_BACKTRACE_FUNCTION
@@ -19,7 +24,7 @@
 #define BOOST_STACKTRACE_USE_BACKTRACE
 #endif
 
-#if !defined(COFFEE_WINDOWS)
+#if !defined(COFFEE_STACKTRACE_NO_BOOST)
 #include <boost/stacktrace.hpp>
 #endif
 
@@ -47,7 +52,7 @@ namespace demangle {
 
 FORCEDINLINE auto name(std::string const& symbol)
 {
-#if defined(COFFEE_WINDOWS)
+#if defined(COFFEE_STACKTRACE_NO_BOOST)
     return std::string();
 #else
     boost::core::scoped_demangled_name demangler(symbol.c_str());
@@ -69,7 +74,7 @@ FORCEDINLINE auto type_name(T& e)
 
 } // namespace demangle
 
-#if !defined(COFFEE_WINDOWS)
+#if !defined(COFFEE_STACKTRACE_NO_BOOST)
 using stacktrace = boost::stacktrace::stacktrace;
 #else
 struct frame_t

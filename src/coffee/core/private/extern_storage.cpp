@@ -254,7 +254,7 @@ std::unique_lock<std::mutex> LockState(std::string_view key)
     if(ISTATE->pointer_storage.find(key) == ISTATE->pointer_storage.end())
         return std::unique_lock<std::mutex>();
 
-    return std::unique_lock(ISTATE->pointer_storage[key]->access);
+    return std::unique_lock<std::mutex>(ISTATE->pointer_storage[key]->access);
 }
 
 std::shared_ptr<GlobalState> SwapState(

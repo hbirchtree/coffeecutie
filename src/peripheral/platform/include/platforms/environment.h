@@ -8,6 +8,8 @@
 
 #ifdef USE_POSIX_API
 #include "posix/env.h"
+#elif defined(COFFEE_GEKKO)
+#include "gekko/env.h"
 #endif
 
 namespace platform::env {
@@ -16,6 +18,10 @@ namespace platform::env {
 using posix::home_dir;
 using posix::set_var;
 using posix::var;
+#elif defined(COFFEE_GEKKO)
+using gekko::home_dir;
+using gekko::set_var;
+using gekko::var;
 #endif
 
 } // namespace platform::env

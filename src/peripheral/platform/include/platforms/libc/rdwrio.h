@@ -6,6 +6,13 @@
 #include <platforms/base/rdwrio.h>
 #include <url/url.h>
 
+#if defined(COFFEE_GEKKO)
+// newlib only declares getdelim when __POSIX_VISIBLE >= 200809, which the
+// devkitPPC headers do not enable by default. The symbol exists in libc.
+#include <sys/types.h>
+extern "C" ssize_t getdelim(char**, size_t*, int, FILE*);
+#endif
+
 namespace platform::file::libc {
 using url::Url;
 

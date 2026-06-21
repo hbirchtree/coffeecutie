@@ -14,9 +14,14 @@ void FileWatcher::start_frame(compo::ContainerProxy&, const compo::time_point&)
     {
         auto expired = !info.deadline.has_value() ||
                        compo::clock::now() > info.deadline.value();
+#if !defined(COFFEE_GEKKO)
         auto exists = platform::file::exists(file);
         if(!exists.has_value() && needs_await && !expired)
             continue;
+#else
+        /* No filesystem watching on GameCube; resolve immediately. */
+        (void)expired;
+#endif
         info.promise.set_value(file);
         finished.push_back(file);
     }

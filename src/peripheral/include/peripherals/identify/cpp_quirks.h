@@ -1,11 +1,5 @@
 #pragma once
 
-/* Gekko needs its own std::thread implementation,
- *  as well as std::mutex and friends */
-#if defined(COFFEE_GEKKO)
-#define COFFEE_NO_THREADLIB
-#define COFFEE_NO_FUTURES
-#endif
 
 /* Some exception features don't work on Gekko */
 #if defined(COFFEE_GEKKO)

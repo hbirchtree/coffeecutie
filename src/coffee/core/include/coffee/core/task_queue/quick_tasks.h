@@ -128,7 +128,7 @@ FORCEDINLINE rq::runtime_task GenLerpTask(
     std::shared_ptr<LerpStore<PrimitiveType>> store,
     rq::detail::duration const&               time,
     rq::detail::duration const&       timeStep = std::chrono::milliseconds(10),
-    std::shared_ptr<stl_types::Mutex> lock     = nullptr)
+    std::shared_ptr<std::mutex>       lock     = nullptr)
 {
     /* Why are we here? */
     if(((store->source.size() != store->targets.size()) &&

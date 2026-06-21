@@ -6,12 +6,6 @@
 #include <thread>
 
 namespace stl_types {
-
-#if defined(COFFEE_NO_THREADLIB)
-namespace CurrentThread {
-extern libc_types::u32 get_id();
-}
-#endif
 namespace threads {
 
 using namespace ::libc_types;
@@ -19,20 +13,11 @@ using namespace ::libc_types;
 template<typename thread_t>
 struct ThreadId_t
 {
-#if defined(COFFEE_NO_THREADLIB)
-    using thread_id_t = libc_types::u32;
-#else
     using thread_id_t = typename thread_t::id;
-#endif
-    using Hash = libc_types::u64;
+    using Hash        = libc_types::u64;
 
     FORCEDINLINE ThreadId_t()
-        :
-#if defined(COFFEE_NO_THREADLIB)
-        m_id(CurrentThread::get_id())
-#else
-        m_id(std::this_thread::get_id())
-#endif
+        : m_id(std::this_thread::get_id())
     {
     }
 
@@ -54,11 +39,7 @@ struct ThreadId_t
 
     FORCEDINLINE Hash hash() const
     {
-#if defined(COFFEE_GEKKO)
-        return m_id;
-#else
         return std::hash<thread_id_t>()(m_id);
-#endif
     }
 
   private:

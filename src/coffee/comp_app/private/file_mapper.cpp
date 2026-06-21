@@ -4,6 +4,8 @@
 
 namespace comp_app {
 
+#if !defined(COFFEE_GEKKO)
+
 FileMapper::Resource::~Resource()
 {
     platform::file::unmap(std::move(m_mapping));
@@ -74,5 +76,7 @@ std::future<std::shared_ptr<FileMapper::Resource>> FileMapper::fetch(
         return fut;
     }
 }
+
+#endif
 
 } // namespace comp_app

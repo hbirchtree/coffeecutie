@@ -70,9 +70,13 @@ requires(Input == input_type::string && std::is_same_v<T, char>)
 //
 FORCEDINLINE void put(output_fd strm, libc_types::cstring output)
 {
+#if defined(COFFEE_GEKKO)
+    printf("%s", output);
+#else
     fputs(output, strm);
     if constexpr(Mode == flush_mode::instant)
         fflush(strm);
+#endif
 }
 
 template<flush_mode Mode, input_type Input, typename T = char>
@@ -80,9 +84,13 @@ requires(Input == input_type::character && std::is_same_v<T, char>)
 //
 FORCEDINLINE void put(output_fd strm, char output)
 {
+#if defined(COFFEE_GEKKO)
+    printf("%s", output);
+#else
     fputc(output, strm);
     if constexpr(Mode == flush_mode::instant)
         fflush(strm);
+#endif
 }
 
 namespace terminal {

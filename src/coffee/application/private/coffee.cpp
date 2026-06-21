@@ -38,8 +38,41 @@
 #include <peripherals/posix/process.h>
 #endif
 
-#if defined(COFFEE_GEKKO)
+#if defined(COFFEE_GEKKO) && __has_include(<coffee/gexxo/gexxo_api.h>)
 #include <coffee/gexxo/gexxo_api.h>
+#define COFFEE_HAS_GEXXO 1
+#elif defined(COFFEE_GEKKO)
+#include <gccore.h>
+#include <stdio.h>
+
+namespace {
+void gekko_console_init()
+{
+    static void*       xfb   = nullptr;
+    static GXRModeObj* rmode = nullptr;
+
+    VIDEO_Init();
+    rmode = VIDEO_GetPreferredMode(nullptr);
+    xfb   = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
+
+    console_init(
+        xfb, 20, 20, rmode->fbWidth, rmode->xfbHeight,
+        rmode->fbWidth * VI_DISPLAY_PIX_SZ);
+
+    VIDEO_Configure(rmode);
+    VIDEO_SetNextFramebuffer(xfb);
+    VIDEO_SetBlack(FALSE);
+    VIDEO_Flush();
+    VIDEO_WaitVSync();
+    if(rmode->viTVMode & VI_NON_INTERLACE)
+        VIDEO_WaitVSync();
+
+    // Unbuffered stdout, otherwise output is lost if the program aborts before
+    // the buffer flushes (manifests as a blank screen).
+    setvbuf(stdout, nullptr, _IONBF, 0);
+    setvbuf(stderr, nullptr, _IONBF, 0);
+}
+} // namespace
 #endif
 
 #if defined(COFFEE_WINDOWS)
@@ -97,15 +130,34 @@ int MainSetup(MainWithArgs mainfun, int argc, char** argv, u32 flags)
     InitCOMInterface();
 #elif defined(COFFEE_WINDOWS_UWP)
     InitCOMInterface();
-#elif defined(COFFEE_GEKKO)
+#elif defined(COFFEE_HAS_GEXXO)
     gexxo::initialize();
-    printf("- Gamecube video initialized\n");
+#elif defined(COFFEE_GEKKO)
+    gekko_console_init();
 #endif
 
-    int stat = Coffee::CoffeeMain(mainfun, argc, argv, flags);
-
 #if defined(COFFEE_GEKKO)
+    int stat = 0;
+    try
+    {
+        stat = Coffee::CoffeeMain(mainfun, argc, argv, flags);
+    } catch(std::exception const& e)
+    {
+        printf("FATAL: uncaught exception reached main: %s\n", e.what());
+    } catch(...)
+    {
+        printf("FATAL: uncaught non-std exception reached main\n");
+    }
+#else
+    int stat = Coffee::CoffeeMain(mainfun, argc, argv, flags);
+#endif
+
+#if defined(COFFEE_HAS_GEXXO)
     gexxo::infiniteLoop();
+#elif defined(COFFEE_GEKKO)
+    // Keep the framebuffer alive so output stays on screen.
+    while(true)
+        VIDEO_WaitVSync();
 #endif
 
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING
@@ -250,10 +302,14 @@ static void CoffeeInit_Internal(u32)
 void SetPlatformState()
 {
     /* Initialize state management in ::platform namespace */
+    if(!platform::state)
+        platform::state = std::make_unique<platform::detail::state_pimpl>();
+
     auto& platState = platform::state;
 
     platState->m_LockState =
-        static_cast<stl_types::UqLock (*)(std::string_view)>(State::LockState);
+        static_cast<std::unique_lock<std::mutex> (*)(std::string_view)>(
+            State::LockState);
     platState->SwapState = State::SwapState;
     platState->PeekState = State::PeekState;
 
@@ -354,7 +410,7 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 
     if constexpr(!compile_info::lowfat_mode)
     {
-#if !defined(COFFEE_CUSTOM_EXIT_HANDLING)
+#if !defined(COFFEE_CUSTOM_EXIT_HANDLING) && !defined(COFFEE_GEKKO)
         if((flags & DiscardArgumentHandler) == 0)
         {
             cxxopts::Options parser(
