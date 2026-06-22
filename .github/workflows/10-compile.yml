@@ -431,12 +431,12 @@ jobs:
         mkdir /tmp/dolphin_run
         ln -s GLeamBaseTest_RHI artifacts/GLeamBaseTest_RHI.elf
         source/.github/tests/dolphin/build.sh
-        source/.github/tests/dolphin/dolphin.sh artifacts/GLeamBaseTest_RHI.elf
+        source/.github/tests/dolphin/dolphin.sh artifacts/GLeamBaseTest_RHI.elf 2>&1 | tee /tmp/dolphin_run/output.log
     - name: Uploading test artifacts
       uses: actions/upload-artifact@v7
       with:
         name: dummy_plug_test_${{ matrix.variant }}_webgl2
-        path: /tmp/gl_dolphin
+        path: /tmp/dolphin_run
         if-no-files-found: error
   Test_x86_64_mesa_gather:
     if: ${{ always() }}
