@@ -1,0 +1,45 @@
+{
+    "comment": "Zip around Bloodgulch to test the occluder. Optimally we only show the area visible to the camera",
+    "graphics": {
+        "window": {
+            "width": 1920,
+            "height": 1080,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "events": [
+        {"time":    0, "type": "render_param", "occluder_update": true},
+        {"time": 2000, "type": "camera", "position" :[52.60738, -134.46175, 71.28643], "rotation":[-0.2548636, -0.20399962, -0.7379351, -0.5906611]},
+        {"time": 3000, "type": "screenshot", "name":"bloodgulch_unoccluded_baseline"},
+        {"time": 4000, "type": "camera", "position" :[119.17572, -184.69844, 8.273178], "rotation":[-0.9172554, -0.03211753, -0.39675942, -0.013892176]},
+        {"time": 5000, "type": "render_param", "occluder_update": false},
+        {"time": 6000, "type": "camera", "position" :[52.60738, -134.46175, 71.28643], "rotation":[-0.2548636, -0.20399962, -0.7379351, -0.5906611]},
+        {"time": 7000, "type": "screenshot", "name":"bloodgulch_overview"},
+        {"time": 8000, "type": "render_param", "occluder_update": true},
+        {"time": 9000, "type": "camera", "position" :[117.165565, -181.47652, 8.838238], "rotation":[-0.28946415, -0.014484593, 0.95588315, 0.047834095]},
+        {"time":10000, "type": "render_param", "occluder_update": false},
+        {"time":11000, "type": "camera", "position" :[52.60738, -134.46175, 71.28643], "rotation":[-0.2548636, -0.20399962, -0.7379351, -0.5906611]},
+        {"time":12000, "type": "screenshot", "name":"bloodgulch_turned_around"},
+        {"time":13000, "type": "render_param", "occluder_update": true},
+        {"time":14000, "type": "camera", "position" :[109.8353, -110.39677, 3.0261269], "rotation":[0.94851285, 0.11437109, 0.29324466, 0.03535868]},
+        {"time":15000, "type": "render_param", "occluder_update": false},
+        {"time":16000, "type": "camera", "position" :[52.60738, -134.46175, 71.28643], "rotation":[-0.2548636, -0.20399962, -0.7379351, -0.5906611]},
+        {"time":17000, "type": "screenshot", "name":"bloodgulch_cave"}
+    ],
+    "frame_delta": 200,
+    "end_time": 30000
+}

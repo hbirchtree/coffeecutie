@@ -188,6 +188,51 @@ void create_resources(compo::EntityContainer& e)
         dummy.addEventData({
                 .prio = 0,
                 .handler = [&e](comp_app::dummy_plug::DummyEvent& ev, const void*) {
+            if(ev.event == "render_param")
+            {
+                /* Generic toggle of the data.h debug/render knobs from a dummy
+                 * plug custom event. On desktop these are driven by the ImGui
+                 * widgets; headless/web builds have no ImGui interaction, so the
+                 * dummy plug drives them. Any key present in the event overrides
+                 * the matching field; absent keys keep their current value. */
+                auto const& d = ev.data;
+                auto set_val = [&d]<typename T>(std::string_view key, T& value)
+                {
+                    value = d.value(key, value);
+                };
+                auto& rp = e.subsystem_cast<RenderingParameters>();
+                set_val("mipmap_bias", rp.mipmap_bias);
+                set_val("color_changing", rp.color_changing);
+                set_val("render_fog", rp.render_fog);
+                set_val("render_lightmaps", rp.render_lightmaps);
+                set_val("render_model_bones", rp.render_model_bones);
+                set_val("render_reflection", rp.render_reflection);
+                set_val("render_scenery", rp.render_scenery);
+                set_val("only_normals", rp.only_normals);
+                set_val("only_normalmaps", rp.only_normalmaps);
+                set_val("only_lightmaps", rp.only_lightmaps);
+                set_val("only_reflections", rp.only_reflections);
+                set_val("only_multipurpose", rp.only_multipurpose);
+                set_val("only_multipurpose2", rp.only_multipurpose2);
+                set_val("only_diffuse", rp.only_diffuse);
+                set_val("render_ui", rp.render_ui);
+                set_val("debug_clear", rp.debug_clear);
+                set_val("occluder_update", rp.occluder_update);
+                set_val("debug_markers", rp.debug_markers);
+                set_val("debug_portals", rp.debug_portals);
+                set_val("debug_clusters", rp.debug_clusters);
+                set_val("debug_triggers", rp.debug_triggers);
+                set_val("tex_res", rp.tex_res);
+                set_val("draw_distance", rp.draw_distance);
+                set_val("current_bsp_cluster", rp.current_bsp_cluster);
+
+                auto& pp = e.subsystem_cast<PostProcessParameters>();
+                set_val("exposure", pp.exposure);
+                set_val("gamma", pp.gamma);
+                set_val("scale", pp.scale);
+                set_val("auto_expose", pp.auto_expose);
+                set_val("doom_mode", pp.doom_mode);
+            }
             if(ev.event == "camera")
             {
                 PlayerCamera* target{};

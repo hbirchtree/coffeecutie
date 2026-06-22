@@ -557,6 +557,10 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         if(vertex_data.empty())
             return;
 
+        constexpr size_t kUiInstanceSlots = 512;
+        if(instance_vertex_data.size() < kUiInstanceSlots)
+            instance_vertex_data.resize(kUiInstanceSlots);
+
         vertices->commit(Bytes::ofContainer(vertex_data).view);
         instance_vertices->commit(
             Bytes::ofContainer(instance_vertex_data).view);

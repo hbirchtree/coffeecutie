@@ -664,6 +664,13 @@ cxxopts::Options& GetBase(cxxopts::Options& parser)
         ("json", "Log output as JSON")
         //
         ;
+#if defined(COFFEE_EMSCRIPTEN)
+    parser.add_options("Dummy plug")
+        //
+        ("dummy_plug", "Enable the dummy plug (Emscripten test harness)")
+        //
+        ;
+#endif
 #if PERIPHERAL_PROFILER_ENABLED
     parser.add_options("Profiling")("deep-profile", "Enable deep profiling");
 #endif

@@ -4,6 +4,8 @@
 #include <peripherals/stl/tuple_foreach.h>
 #include <peripherals/stl/tuple_slice.h>
 
+#include <coffee/core/CDebug>
+
 #include "glw/enums/TextureUnit.h"
 #include "rhi_draw_command.h"
 #include "rhi_features.h"
@@ -255,6 +257,20 @@ inline bool apply_command_modifier(
          */
         if(slow_map_opt)
             offset = 0;
+
+        if constexpr(compile_info::debug_mode)
+        {
+            if(ubo_override_size > 0 && buffer_def.stride == 0
+               && size < ubo_override_size)
+                Coffee::cWarning(
+                    "Uniform block '{}' is declared as {} bytes by the shader, "
+                    "but only {} bytes are bound. Strict drivers (WebGL2/GLES3) "
+                    "will reject the draw with GL_INVALID_OPERATION. Commit/bind "
+                    "at least the block's full std140 size.",
+                    buffer_def.key.name,
+                    ubo_override_size,
+                    size);
+        }
 
         cmd::bind_buffer_range(
             convert::to<group::buffer_target_arb>(buffer.m_type),
