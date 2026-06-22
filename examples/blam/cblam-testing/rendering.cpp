@@ -802,7 +802,8 @@ struct MeshRenderer
         p.subsystem(rendering_props);
 
         if(rendering_props->debug_clear)
-            m_resources.offscreen->clear(Vecf4(0, 0.2f, 0.5f, 1));
+            m_resources.offscreen->clear(
+                Vecf4(rendering_props->clear_color, 1.f));
         else
             m_resources.offscreen->clear(Vecf4(0, 0, 0, 1));
 
@@ -1070,7 +1071,8 @@ struct MeshRenderer
                     {"lightmap"sv, 0},
                     light_group.lightmap_sampler
                 });
-            auto texture_lists = gfx::make_instance_textures(gfx::instance_texture_t{
+            auto texture_lists = gfx::make_instance_textures(
+                gfx::instance_texture_t{
                     .stage = typing::graphics::ShaderStage::Fragment,
                     .uniform = gfx::uniform_key{"base_map"sv, 1},
                     .sampler = light_group.base_sampler,
@@ -1233,6 +1235,9 @@ struct MeshRenderer
         if(!rendering_props->render_scenery)
             return;
 
+        ModelCache<Version>* model_cache;
+        p.subsystem(model_cache);
+
         Coffee::Profiler::PushContext("legacy_render: Scenery");
         Matf4 const& camera = m_players[0].matrix;
         for(auto const& ent : p.select(ObjectMod2))
@@ -1248,6 +1253,10 @@ struct MeshRenderer
             if(shader_it == shader_cache.end())
                 continue;
             ShaderItem const& shitem = shader_it->second;
+            auto model_it = model_cache->find(mod.model);
+            if(model_it == model_cache->end())
+                continue;
+            ModelItem<Version> const& mitem = model_it->second;
 
             auto vtx_u = gfx::make_uniform_list(
                 typing::graphics::ShaderStage::Vertex,
@@ -1343,7 +1352,7 @@ struct MeshRenderer
                     .subtexture(base.image.layer);
             base_tex.sampler->rebind(base_sub);
 
-            Vecf2 base_scale = base.image.scale;
+            Vecf2 base_scale = base.image.scale * mitem.header->uvscale;
             auto  frg_u      = gfx::make_uniform_list(
                 typing::graphics::ShaderStage::Fragment,
                 gfx::uniform_pair{

@@ -226,6 +226,15 @@ void create_resources(compo::EntityContainer& e)
                 set_val("draw_distance", rp.draw_distance);
                 set_val("current_bsp_cluster", rp.current_bsp_cluster);
 
+                if(auto it = d.find("clear_color");
+                   it != d.end() && it->is_array() && it->size() >= 3)
+                {
+                    rp.clear_color = Vecf3(
+                        (*it)[0].get<f32>(),
+                        (*it)[1].get<f32>(),
+                        (*it)[2].get<f32>());
+                }
+
                 auto& pp = e.subsystem_cast<PostProcessParameters>();
                 set_val("exposure", pp.exposure);
                 set_val("gamma", pp.gamma);

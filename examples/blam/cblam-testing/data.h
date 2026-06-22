@@ -112,6 +112,7 @@ struct RenderingParameters : compo::SubsystemBase
 
     bool render_ui{false};
     bool debug_clear{false}; // sets a different clear color for visibility
+    Vecf3 clear_color{0, 0.2f, 0.5f};
 
     bool occluder_update{true};
 
