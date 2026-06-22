@@ -16,6 +16,7 @@ if [ ! -f ${DOLPHIN_DIR}/bin/dolphin-emu-nogui ]; then
     cmake ../src \
         -GNinja \
         \
+        -DCMAKE_BUILD_TYPE=Release \
         -DENABLE_HEADLESS=ON \
         \
         -DENABLE_ALSA=OFF \
