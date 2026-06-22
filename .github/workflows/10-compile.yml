@@ -435,7 +435,7 @@ jobs:
     - name: Uploading test artifacts
       uses: actions/upload-artifact@v7
       with:
-        name: dummy_plug_test_${{ matrix.variant }}_webgl2
+        name: dummy_plug_test_gekko
         path: /tmp/dolphin_run
         if-no-files-found: error
   Test_x86_64_mesa_gather:
