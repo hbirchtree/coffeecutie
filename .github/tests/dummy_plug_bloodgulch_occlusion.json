@@ -22,23 +22,27 @@
         "format": "f32"
     },
     "events": [
-        {"time":    0, "type": "render_param", "occluder_update": true},
+        {"time":    0, "type": "render_param", "occluder_update": true, "debug_clear": true, "clear_color": [1.0, 0.0, 1.0]},
+        {"time": 1000, "type": "screenshot", "name":"bloodgulch_unoccluded_baseline_pov", "comment": "Most of the map should be visible, except the bottom-right part, which is not visible from the camera view"},
         {"time": 2000, "type": "camera", "position" :[52.60738, -134.46175, 71.28643], "rotation":[-0.2548636, -0.20399962, -0.7379351, -0.5906611]},
-        {"time": 3000, "type": "screenshot", "name":"bloodgulch_unoccluded_baseline"},
+        {"time": 3000, "type": "screenshot", "name":"bloodgulch_unoccluded_baseline", "comment": "Most of the map should be visible, except the bottom-right part, which is not visible from the camera view"},
         {"time": 4000, "type": "camera", "position" :[119.17572, -184.69844, 8.273178], "rotation":[-0.9172554, -0.03211753, -0.39675942, -0.013892176]},
         {"time": 5000, "type": "render_param", "occluder_update": false},
+        {"time": 5500, "type": "screenshot", "name":"bloodgulch_overview_pov", "comment": "Should show most of the map, except the upper-left corner which is occluded. The cave area in the top-center should be culled too."},
         {"time": 6000, "type": "camera", "position" :[52.60738, -134.46175, 71.28643], "rotation":[-0.2548636, -0.20399962, -0.7379351, -0.5906611]},
-        {"time": 7000, "type": "screenshot", "name":"bloodgulch_overview"},
+        {"time": 7000, "type": "screenshot", "name":"bloodgulch_overview", "comment": "Should show most of the map, except the upper-left corner which is occluded. The cave area in the top-center should be culled too."},
         {"time": 8000, "type": "render_param", "occluder_update": true},
         {"time": 9000, "type": "camera", "position" :[117.165565, -181.47652, 8.838238], "rotation":[-0.28946415, -0.014484593, 0.95588315, 0.047834095]},
         {"time":10000, "type": "render_param", "occluder_update": false},
+        {"time":10500, "type": "screenshot", "name":"bloodgulch_turned_around_pov", "comment": "Most of the map, except the right-most tip should be culled"},
         {"time":11000, "type": "camera", "position" :[52.60738, -134.46175, 71.28643], "rotation":[-0.2548636, -0.20399962, -0.7379351, -0.5906611]},
-        {"time":12000, "type": "screenshot", "name":"bloodgulch_turned_around"},
+        {"time":12000, "type": "screenshot", "name":"bloodgulch_turned_around", "comment": "Most of the map, except the right-most tip should be culled"},
         {"time":13000, "type": "render_param", "occluder_update": true},
         {"time":14000, "type": "camera", "position" :[109.8353, -110.39677, 3.0261269], "rotation":[0.94851285, 0.11437109, 0.29324466, 0.03535868]},
         {"time":15000, "type": "render_param", "occluder_update": false},
+        {"time":15500, "type": "screenshot", "name":"bloodgulch_cave_pov", "comment": "Most of the map except the top-center small part should be culled"},
         {"time":16000, "type": "camera", "position" :[52.60738, -134.46175, 71.28643], "rotation":[-0.2548636, -0.20399962, -0.7379351, -0.5906611]},
-        {"time":17000, "type": "screenshot", "name":"bloodgulch_cave"}
+        {"time":17000, "type": "screenshot", "name":"bloodgulch_cave", "comment": "Most of the map except the top-center small part should be culled"}
     ],
     "frame_delta": 200,
     "end_time": 30000
