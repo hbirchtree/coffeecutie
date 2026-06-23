@@ -12,6 +12,7 @@ struct FrameCounter : public compo::globals::ValueSubsystem<FrameTag>
 {
     time_point                next_print;
     std::optional<time_point> close_time;
+    libc_types::u64           total_frames{0};
 
   public:
     FrameCounter();

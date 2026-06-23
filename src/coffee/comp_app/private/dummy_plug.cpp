@@ -1,4 +1,5 @@
 #include "peripherals/libc/types.h"
+#include "types.h"
 #include <coffee/comp_app/dummy_plug.h>
 
 #include <coffee/comp_app/app_events.h>
@@ -413,6 +414,18 @@ void fork_dummy_plugs(
 #endif
 }
 
+namespace {
+struct FrameCounter : compo::SubsystemBase
+{
+    using type = FrameCounter;
+    virtual void start_frame(ContainerProxy&, time_point const&) final
+    {
+        frame_counter++;
+    }
+    libc_types::u64 frame_counter{0};
+};
+}
+
 void insert_dummy_plug(
     AppLoadableService::entity_container& container,
     dummy_plug::Config&                   dummy_plug)
@@ -517,14 +530,21 @@ void insert_dummy_plug(
             auto end_time =
                 std::chrono::milliseconds(config.value("end_time", 0u));
 
-            rq::runtime_queue::QueueShot(
-                rq::runtime_queue::GetCurrentQueue().value(),
-                end_time,
-                [&container]() {
-                    auto window = container.service<Windowing>();
-                    window->close();
-                })
-                .assume_value();
+            if(config.contains("end_time"))
+            {
+                auto& counter = container.register_subsystem_inplace<FrameCounter>();
+                rq::runtime_queue::QueueShot(
+                    rq::runtime_queue::GetCurrentQueue().value(),
+                    end_time,
+                    [&container, &counter]() {
+                        auto window = container.service<Windowing>();
+                        container.service<comp_app::AppInfo>()->add(
+                            "run:totalFrames",
+                            std::to_string(counter.frame_counter));
+                        window->close();
+                    })
+                    .assume_value();
+            }
             flag = true;
         };
 

@@ -254,7 +254,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
             cmd::bind_buffer(
                 buffer_target::array_buffer,
                 vao->m_buffers.at(attrib.buffer.id).lock()->m_handle);
-            detail::vertex_setup_attribute(attrib);
+            detail::vertex_setup_attribute(m_features.vertex, attrib);
         }
         /* Attribute pointers were just re-established at base offset 0. */
         draw_cache.last_vertex_offset = 0;
@@ -359,7 +359,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
     }
     if(m_workarounds.draw.emulated_vertex_offset && uses_vertex_offset)
     {
-        apply_vertex_offset = [&vao](u32 offset) {
+        apply_vertex_offset = [this, &vao](u32 offset) {
             for(auto const& attrib : vao->m_attributes)
             {
                 if(vao->m_buffers.at(attrib.buffer.id).expired())
@@ -371,7 +371,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
                     gl::group::buffer_target_arb::array_buffer,
                     vao->m_buffers.at(attrib.buffer.id).lock()->m_handle);
                 detail::vertex_setup_attribute(
-                    attrib, offset * attrib.value.stride);
+                    m_features.vertex, attrib, offset * attrib.value.stride);
             }
         };
     }
@@ -504,7 +504,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
                         group::buffer_target_arb::array_buffer,
                         vao->m_buffers.at(attrib.buffer.id).lock()->m_handle);
                     detail::vertex_setup_attribute(
-                        attrib, d.elements.vertex_offset * attrib.value.stride);
+                        m_features.vertex, attrib, d.elements.vertex_offset * attrib.value.stride);
                 }
                 draw_cache.last_vertex_offset = d.elements.vertex_offset;
             }

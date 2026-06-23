@@ -22,11 +22,17 @@
 #include <glw/extensions/ARB_shader_draw_parameters.h>
 #include <glw/extensions/EXT_color_buffer_float.h>
 #include <glw/extensions/EXT_color_buffer_half_float.h>
+#include <glw/extensions/EXT_draw_elements_base_vertex.h>
 #include <glw/extensions/EXT_discard_framebuffer.h>
+#include <glw/extensions/EXT_multi_draw_arrays.h>
 #include <glw/extensions/KHR_debug.h>
 #include <glw/extensions/KHR_parallel_shader_compile.h>
+#include <glw/extensions/NV_pixel_buffer_object.h>
 #include <glw/extensions/NV_shading_rate_image.h>
 #include <glw/extensions/OES_depth24.h>
+#include <glw/extensions/OES_draw_elements_base_vertex.h>
+#include <glw/extensions/OES_element_index_uint.h>
+#include <glw/extensions/OES_mapbuffer.h>
 #include <glw/extensions/OES_rgb8_rgba8.h>
 #include <glw/extensions/OES_vertex_array_object.h>
 
@@ -523,6 +529,7 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.texture.tex.gl.etc2             = api_version >= 0x300;
         out.vertex.attribute_binding        = api_version >= 0x300;
         out.vertex.vertex_arrays            = api_version >= 0x300;
+        out.vertex.vertex_attrib_i_pointer  = api_version >= 0x300;
 
         // out.rendertarget.color_buffer_half_float = supports_extension(
         //     extensions, ext::color_buffer_half_float::name);
@@ -544,23 +551,24 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
             api_version >= 0x300 ||
             supports_extension(extensions, oes::depth24::name);
 
-        out.buffer.mapping                = api_version >= 0x300;
-        out.buffer.pbo                    = api_version >= 0x300;
-        out.buffer.ubo                    = api_version >= 0x300;
-        out.draw.instancing               = api_version >= 0x300;
-        out.program.buffer_binding        = api_version >= 0x300;
-        out.rendertarget.clearbuffer      = api_version >= 0x300;
-        out.rendertarget.depth24_stencil8 = api_version >= 0x300;
-        out.rendertarget.readdraw_buffers = api_version >= 0x300;
-        out.texture.internal_format_query = api_version >= 0x300;
-        out.texture.max_level             = api_version >= 0x300;
-        out.texture.samplers              = api_version >= 0x300;
-        out.texture.swizzle               = api_version >= 0x300;
-        out.texture.texture_3d            = api_version >= 0x300;
-        out.texture.tex_layer_query       = api_version >= 0x300;
-        out.texture.tex.gl.etc2           = api_version >= 0x300;
-        out.vertex.attribute_binding      = api_version >= 0x300;
-        out.vertex.vertex_arrays          = api_version >= 0x300;
+        out.buffer.mapping                 = api_version >= 0x300;
+        out.buffer.pbo                     = api_version >= 0x300;
+        out.buffer.ubo                     = api_version >= 0x300;
+        out.draw.instancing                = api_version >= 0x300;
+        out.program.buffer_binding         = api_version >= 0x300;
+        out.rendertarget.clearbuffer       = api_version >= 0x300;
+        out.rendertarget.depth24_stencil8  = api_version >= 0x300;
+        out.rendertarget.readdraw_buffers  = api_version >= 0x300;
+        out.texture.internal_format_query  = api_version >= 0x300;
+        out.texture.max_level              = api_version >= 0x300;
+        out.texture.samplers               = api_version >= 0x300;
+        out.texture.swizzle                = api_version >= 0x300;
+        out.texture.texture_3d             = api_version >= 0x300;
+        out.texture.tex_layer_query        = api_version >= 0x300;
+        out.texture.tex.gl.etc2            = api_version >= 0x300;
+        out.vertex.attribute_binding       = api_version >= 0x300;
+        out.vertex.vertex_arrays           = api_version >= 0x300;
+        out.vertex.vertex_attrib_i_pointer = api_version >= 0x300;
 
         out.buffer.barrier                     = api_version >= 0x310;
         out.buffer.ssbo                        = api_version >= 0x310;
@@ -586,6 +594,14 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.buffer.oes.mapbuffer =
             supports_extension(extensions, oes::mapbuffer::name);
 #endif
+        out.buffer.nv.pbo =
+            supports_extension(extensions, nv::pixel_buffer_object::name);
+        out.draw.ext.draw_elements_base_vertex =
+            supports_extension(extensions, ext::draw_elements_base_vertex::name);
+        out.draw.ext.multi_draw_arrays =
+            supports_extension(extensions, ext::multi_draw_arrays::name);
+        out.draw.oes.draw_elements_base_vertex =
+            supports_extension(extensions, oes::draw_elements_base_vertex::name);
         out.query.disjoint_timer_query =
             supports_extension(extensions, ext::disjoint_timer_query::name);
         out.texture.oes.texture_3d =
@@ -1146,9 +1162,6 @@ optional<error> api::load(load_options_t options)
     {
         if(m_api_version == 0x200)
         {
-            //            if(!m_features.buffer.oes.mapbuffer
-            //               || !m_features.vertex.oes.vertex_arrays)
-            //                return error::refuse_bad_es20_impl;
             i32 shader_compiler_present{};
             cmd::get_integerv(
                 group::get_prop::shader_compiler,

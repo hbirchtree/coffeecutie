@@ -340,9 +340,28 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         const auto classify_model =
             [&](BSPItem const* bsp, Model const& model) -> model_vis {
             auto pos = model.position;
-            if(auto mc = bsp->find_cluster(pos); mc.has_value())
+            /* Resolve the model's cluster by the EXACT BSP-tree lookup. Scenery
+             * origins commonly sit on/under the ground, i.e. in a solid leaf, so
+             * the lookup at the origin misses; probe upward through the model
+             * body until it lands in open space. The exact tree is preferred
+             * over find_cluster()'s subcluster-AABB fallback, whose overlapping
+             * boxes can resolve to the wrong cluster and keep an object that is
+             * actually in an invisible one. Accurate assignment is what lets an
+             * object be culled with an invisible cluster instead of always
+             * drawn — important on legacy renderers where models are costly. */
+            std::optional<u32> cidx;
+            for(f32 up : {0.f, 2.f, 5.f, 10.f, 20.f})
+                if(auto ci = bsp->find_cluster_tree(pos + Vecf3{0.f, 0.f, up}))
+                {
+                    cidx = ci;
+                    break;
+                }
+            if(!cidx)
+                if(auto mc = bsp->find_cluster(pos))
+                    cidx = mc->first;
+            if(cidx)
             {
-                if(!cluster_ok(mc->first))
+                if(!cluster_ok(*cidx))
                     return model_vis::pvs_culled;
                 return in_draw_distance(model) ? model_vis::visible
                                                : model_vis::dist_culled;

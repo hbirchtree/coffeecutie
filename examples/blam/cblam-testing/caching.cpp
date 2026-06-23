@@ -140,37 +140,11 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             });
     }
 
-    /* Populate PVS bitset.
-     * The cluster data blob is stored immediately after the cluster array.
-     * cluster_data_size = n_clusters * ceil(n_clusters / 8) bytes (PVS only).
-     */
-    if(section.cluster_data_size > 0 && !bclusters.empty())
-    {
-        auto const* pvs_ptr = reinterpret_cast<libc_types::byte_t const*>(
-            bclusters.data() + bclusters.size());
-
-        u32 n            = static_cast<u32>(bclusters.size());
-        u32 expected_row = (n + 7u) / 8u;
-        u32 actual_row   = static_cast<u32>(section.cluster_data_size) / n;
-
-        std::string hex;
-        for(int i = 0; i < std::min(32, section.cluster_data_size); i++)
-            hex += fmt::format("{:02x} ", static_cast<u8>(pvs_ptr[i]));
-
-        cDebug(
-            "BSP PVS: {} clusters, cluster_data_size={}"
-            ", expected_row_stride={}, actual_row_stride={}\n"
-            "  pvs[0..31]: {}",
-            n,
-            section.cluster_data_size,
-            expected_row,
-            actual_row,
-            hex);
-
-        out.pvs_data = Span<libc_types::byte_t const>(
-            pvs_ptr, static_cast<u32>(section.cluster_data_size));
-        out.pvs_row_stride = actual_row;
-    }
+    /* NOTE: the `cluster_data` blob (cluster_data_size bytes after the cluster
+     * array) was previously read as a precomputed PVS bitset. Halo CE has no
+     * such PVS — visibility is portal-walked at runtime — and the bytes there
+     * are not a per-cluster bitmask (and the read location was out of bounds).
+     * Culling uses portal_visible_set; the blob is intentionally not decoded. */
 
     /* Collision surface mesh for the physics subsystem; tree queries
      * (point→cluster, hitscan) go through section/bsp_magic on demand. */
@@ -1504,23 +1478,6 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
     BitmapItem out;
     out.header = &bitm;
     out.tag    = bitm_tag;
-
-    // auto sequences = bitm.sequences.data(curr_magic).value();
-    // for(auto const& sequence : sequences)
-    // {
-    //     //            if(sequence.name.str().empty())
-    //     cDebug(
-    //         "Sequence: {0} : {1} bitmaps",
-    //         sequence.name.str(),
-    //         sequence.bitmap_count);
-    //     for(auto const& sprite : sequence.sprites.data(curr_magic).value())
-    //     {
-    //         cDebug(
-    //             " - Sprite {0}+{1}",
-    //             sequence.first_bitmap,
-    //             sprite.bitmap_index);
-    //     }
-    // }
 
     if(auto image_ = bitm.images.data(curr_magic); image_.has_value())
     {

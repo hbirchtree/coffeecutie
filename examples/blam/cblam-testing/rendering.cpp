@@ -1240,6 +1240,24 @@ struct MeshRenderer
 
         Coffee::Profiler::PushContext("legacy_render: Scenery");
         Matf4 const& camera = m_players[0].matrix;
+
+        /* Batch identical model instances (same shader + same part geometry):
+         * the per-instance world transforms go into a uniform array indexed by
+         * the emulated instance id (glw_InstanceID), collapsing a run of the
+         * same model to one program/texture bind instead of one set per object
+         * — a big saving on low-end GPUs. Capped at kModelBatch (== MODEL_BATCH
+         * in scenery_legacy.vert) to stay inside the ES2 vertex-uniform budget;
+         * longer runs split across submits below. */
+        constexpr u32 kModelBatch = 32;
+        struct ModelBatch
+        {
+            generation_idx_t          shader;
+            gfx::draw_command::data_t geom;
+            Vecf2                     base_scale{1, 1};
+            std::vector<Matf4>        transforms;
+        };
+        std::map<std::pair<cache_id_t, u64>, ModelBatch> soso_batches;
+
         for(auto const& ent : p.select(ObjectMod2))
         {
             auto            ref = p.template ref<Proxy>(ent);
@@ -1258,18 +1276,19 @@ struct MeshRenderer
                 continue;
             ModelItem<Version> const& mitem = model_it->second;
 
-            auto vtx_u = gfx::make_uniform_list(
-                typing::graphics::ShaderStage::Vertex,
-                gfx::uniform_pair{
-                    {"camera"sv, 1}, semantic::SpanOne<const Matf4>(camera)},
-                gfx::uniform_pair{
-                    {"model"sv, 2},
-                    semantic::SpanOne<const Matf4>(mod.transform)});
-
-            /* schi/scex (incl. the sky dome) — simplified multi-map combiner. */
+            /* schi/scex (incl. the sky dome) — simplified multi-map combiner.
+             * Distinct per-object map sets and few instances; drawn inline as a
+             * single-instance batch (models[0], glw_InstanceID==0). */
             if(shitem.tag_class == blam::tag_class_t::schi ||
                shitem.tag_class == blam::tag_class_t::scex)
             {
+                auto vtx_u = gfx::make_uniform_list(
+                    typing::graphics::ShaderStage::Vertex,
+                    gfx::uniform_pair{
+                        {"camera"sv, 1}, semantic::SpanOne<const Matf4>(camera)},
+                    gfx::uniform_pair{
+                        {"models"sv, 2},
+                        semantic::SpanOne<const Matf4>(mod.transform)});
                 auto const& maps = shitem.tag_class == blam::tag_class_t::schi
                                        ? shitem.schi.maps
                                        : shitem.scex.maps;
@@ -1328,23 +1347,62 @@ struct MeshRenderer
                     gfx::cull_state{.front_face = true},
                     gfx::view_state{
                         .depth = gfx::depth_state{
-                            .range          = Vecd2{0.0, 1.0},
+                            /* Collapse the sky to the far plane (range {0,0},
+                             * 0 == far under reversed-Z) and test GEQUAL
+                             * (strict_greater=false → GEQUAL on ES2) so the sky
+                             * fills only pixels nothing has drawn yet — depth
+                             * still at the far clear value — and never overdraws
+                             * terrain (depth d>0) or punches through it. */
+                            .range          = Vecd2{0.0, 0.0},
                             .reversed       = true,
-                            .strict_greater = true,
+                            .strict_greater = false,
                         },
-                    });
+                    },
+                    gfx::depth_extended_state{.depth_write = false});
                 continue;
             }
 
+            /* soso — standard single-diffuse scenery; accumulate identical
+             * instances into a batch keyed by shader + part geometry. */
             generation_idx_t base_bitm = shitem.soso.base_bitm;
             if(!base_bitm.valid())
                 continue;
             auto bitm_it = bitm_cache.find(base_bitm);
             if(bitm_it == bitm_cache.end())
                 continue;
+            if(sm.draw.data.empty())
+                continue;
+
+            auto const& geom = sm.draw.data.front();
+            auto&       batch =
+                soso_batches[{sm.shader.i, geom.elements.offset}];
+            if(batch.transforms.empty())
+            {
+                batch.shader               = sm.shader;
+                batch.geom                 = geom;
+                batch.geom.instances.count = 1;
+                batch.geom.instances.offset = 0;
+                batch.base_scale =
+                    bitm_it->second.image.scale * mitem.header->uvscale;
+            }
+            batch.transforms.push_back(mod.transform);
+        }
+
+        /* Emit one batched draw per identical group (splitting runs longer than
+         * the uniform-array cap). The program, base texture, sampler and frag
+         * uniform are bound once per group; only the transform array changes. */
+        for(auto const& [key, batch] : soso_batches)
+        {
+            auto shader_it = shader_cache.find(batch.shader);
+            if(shader_it == shader_cache.end())
+                continue;
+            generation_idx_t base_bitm = shader_it->second.soso.base_bitm;
+            auto             bitm_it   = bitm_cache.find(base_bitm);
+            if(bitm_it == bitm_cache.end())
+                continue;
 
             BitmapItem const& base = bitm_it->second;
-            auto base_tex =
+            auto              base_tex =
                 bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
                     base.image.fmt);
             auto base_sub =
@@ -1352,12 +1410,11 @@ struct MeshRenderer
                     .subtexture(base.image.layer);
             base_tex.sampler->rebind(base_sub);
 
-            Vecf2 base_scale = base.image.scale * mitem.header->uvscale;
-            auto  frg_u      = gfx::make_uniform_list(
+            auto frg_u = gfx::make_uniform_list(
                 typing::graphics::ShaderStage::Fragment,
                 gfx::uniform_pair{
                     {"base_map_scale"sv, 3},
-                    semantic::SpanOne<const Vecf2>(base_scale)});
+                    semantic::SpanOne<const Vecf2>(batch.base_scale)});
 
             std::vector<gfx::sampler_definition_t> samplers;
             samplers.push_back(gleam::sampler_definition_t{
@@ -1365,29 +1422,45 @@ struct MeshRenderer
                 {"diffuse"sv, 0},
                 base_tex.sampler});
 
-            m_api->submit(
-                {
-                    .program       = m_resources.model_pipeline,
-                    .vertices      = m_resources.model_attr,
-                    .render_target = m_resources.offscreen,
-                    .call =
-                        gfx::draw_command::call_spec_t{
-                            .indexed = true,
-                            .mode = gfx::drawing::primitive::triangle_strip,
-                        },
-                    .data = sm.draw.data,
-                },
-                vtx_u,
-                frg_u,
-                samplers,
-                gfx::cull_state{.front_face = true},
-                gfx::view_state{
-                    .depth = gfx::depth_state{
-                        .range          = Vecd2{0.0, 1.0},
-                        .reversed       = true,
-                        .strict_greater = true,
+            for(size_t off = 0; off < batch.transforms.size();
+                off += kModelBatch)
+            {
+                size_t n = std::min<size_t>(
+                    kModelBatch, batch.transforms.size() - off);
+                auto vtx_u = gfx::make_uniform_list(
+                    typing::graphics::ShaderStage::Vertex,
+                    gfx::uniform_pair{
+                        {"camera"sv, 1},
+                        semantic::SpanOne<const Matf4>(camera)},
+                    gfx::uniform_pair{
+                        {"models"sv, 2},
+                        semantic::Span<const Matf4>(
+                            batch.transforms.data() + off, n)});
+                std::vector<gfx::draw_command::data_t> data(n, batch.geom);
+                m_api->submit(
+                    {
+                        .program       = m_resources.model_pipeline,
+                        .vertices      = m_resources.model_attr,
+                        .render_target = m_resources.offscreen,
+                        .call =
+                            gfx::draw_command::call_spec_t{
+                                .indexed = true,
+                                .mode = gfx::drawing::primitive::triangle_strip,
+                            },
+                        .data = data,
                     },
-                });
+                    vtx_u,
+                    frg_u,
+                    samplers,
+                    gfx::cull_state{.front_face = true},
+                    gfx::view_state{
+                        .depth = gfx::depth_state{
+                            .range          = Vecd2{0.0, 1.0},
+                            .reversed       = true,
+                            .strict_greater = true,
+                        },
+                    });
+            }
         }
         Coffee::Profiler::PopContext();
     }

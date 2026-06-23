@@ -65,6 +65,10 @@ i32 blam_main()
              "PowerVR_SGX530\nMali400\nMaliG710\nAdreno540\nAdreno620\nWebGL_Mobile\nWebGL_Desktop",
              cxxopts::value<std::string>())
             //
+            ("gfx-tex-resolution",
+             "Range of 1-4 of texture quality, 4 is highest",
+             cxxopts::value<int>())
+            //
             ;
         options.add_options("Networking")
             //
@@ -133,6 +137,37 @@ i32 blam_main()
 
             e.register_subsystem_inplace<net::CurlNetStats>(
                 net::create_curl_context());
+            e.register_component_inplace<Model>();
+            e.register_component_inplace<SubModel>();
+            e.register_component_inplace<BspReference>();
+            e.register_component_inplace<ObjectSpawn>();
+            e.register_component_inplace<NetworkInfo>();
+            e.register_component_inplace<PlayerInfo>();
+            e.register_component_inplace<SoundEffects>();
+            e.register_component_inplace<MultiplayerSpawn>();
+            e.register_component_inplace<ShaderData>();
+            e.register_component_inplace<MeshTrackingData>();
+            e.register_component_inplace<DebugDraw>();
+            e.register_component_inplace<TriggerVolume>();
+            e.register_component_inplace<Light>();
+            e.register_component_inplace<DepthInfo>();
+            e.register_component_inplace<PlayerCamera>();
+
+            e.register_subsystem_inplace<comp_app::FrameTag>();
+            e.register_subsystem_inplace<GameEventBus>();
+            e.register_subsystem_inplace<BlamFiles<halo_version>>();
+            e.register_subsystem_inplace<LoadingStatus>();
+
+            alloc_occluder(e);
+            alloc_physics(e);
+            alloc_scripting(e);
+            setup_load_eventhandlers(e);
+
+            auto& params = e.register_subsystem_inplace<RenderingParameters>();
+            if(arguments.contains("gfx-tex-resolution"))
+                params.mipmap_bias = arguments["gfx-tex-resolution"].as<int>();
+            else
+                params.mipmap_bias = 0;
 
             auto& gfx        = e.register_subsystem_inplace<gfx::system>();
             auto opts = [&arguments]() -> gleam::api::load_options_t
@@ -216,27 +251,6 @@ i32 blam_main()
             snd.set_distance_model(oaf::api::exponential);
             snd.collect_info(*e.service<comp_app::AppInfo>());
 #endif
-
-            e.register_component_inplace<Model>();
-            e.register_component_inplace<SubModel>();
-            e.register_component_inplace<BspReference>();
-            e.register_component_inplace<ObjectSpawn>();
-            e.register_component_inplace<NetworkInfo>();
-            e.register_component_inplace<PlayerInfo>();
-            e.register_component_inplace<SoundEffects>();
-            e.register_component_inplace<MultiplayerSpawn>();
-            e.register_component_inplace<ShaderData>();
-            e.register_component_inplace<MeshTrackingData>();
-            e.register_component_inplace<DebugDraw>();
-            e.register_component_inplace<TriggerVolume>();
-            e.register_component_inplace<Light>();
-            e.register_component_inplace<DepthInfo>();
-            e.register_component_inplace<PlayerCamera>();
-
-            e.register_subsystem_inplace<comp_app::FrameTag>();
-            e.register_subsystem_inplace<GameEventBus>();
-            e.register_subsystem_inplace<BlamFiles<halo_version>>();
-
 #if defined(FEATURE_ENABLE_DiscordLatte)
             using namespace net::url_literals;
             auto& discord = e.register_subsystem_inplace<discord::Subsystem>(
@@ -304,11 +318,6 @@ i32 blam_main()
                 });
 #endif
 
-            install_imgui_widgets(e, [](Url const&) {});
-            auto& params = e.register_subsystem_inplace<RenderingParameters>();
-            params.mipmap_bias = 0;
-            e.register_subsystem_inplace<LoadingStatus>();
-
             auto& sound_cache =
                 e.register_subsystem_inplace<SoundCache<halo_version>>(
 #if defined(FEATURE_ENABLE_OAF)
@@ -356,16 +365,13 @@ i32 blam_main()
                 if(use_touch)
                     create_touch_overlay(e);
             }
+            install_imgui_widgets(e, [](Url const&) {});
             create_resources(e);
             create_shaders(e);
             set_resource_labels(e);
             alloc_renderer(e);
-            alloc_occluder(e);
-            alloc_physics(e);
             alloc_ui_system(e);
-            alloc_scripting(e);
             alloc_networking(e);
-            setup_load_eventhandlers(e);
 
             using namespace ::platform::url::constructors;
 

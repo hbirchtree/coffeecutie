@@ -53,13 +53,16 @@ struct features
 
         struct
         {
-            bool mapbuffer{false};
-        } oes;
-
-        struct
-        {
             bool invalidate{false};
         } arb;
+        struct
+        {
+            bool pbo{false};
+        } nv;
+        struct
+        {
+            bool mapbuffer{false};
+        } oes;
     };
 
     struct debugging
@@ -93,6 +96,15 @@ struct features
         {
             bool shader_draw_parameters{false};
         } arb;
+        struct
+        {
+            bool draw_elements_base_vertex{false};
+            bool multi_draw_arrays{false};
+        } ext;
+        struct
+        {
+            bool draw_elements_base_vertex{false};
+        } oes;
     };
 
     struct programs
@@ -250,6 +262,7 @@ struct features
         bool layout_binding{false};
         bool vertex_arrays{true};
         bool vertex_offset{true};
+        bool vertex_attrib_i_pointer{true};
 
         struct
         {
@@ -547,8 +560,11 @@ struct workarounds
         bool adreno_3xx{false}; /*!< Adreno 3xx drivers seemingly
                                  *   can't handle complex shaders */
         bool adreno{false};
-        bool freedreno{false};
-        bool powervr{false};
+        bool freedreno{false}; /*!< Currently only FD device tested
+                                *   is a FD702 which is GARBAGE-tier */
+        bool powervr{false}; /*!< Some IMG drivers seem to define
+                              *   extensions which don't exist, like
+                              *   the IMG UBO extension */
     } bugs;
 
     bool ignore_all_warnings{false};
@@ -573,7 +589,9 @@ struct workarounds
                 "}},"
                 "\"bugs\":{{"
                     "\"adreno_3xx\":{},"
-                    "\"adreno\":{}"
+                    "\"adreno\":{},"
+                    "\"freedreno\":{},"
+                    "\"powervr\":{}"
                 "}}"
             "}}",
             // clang-format on
@@ -586,7 +604,9 @@ struct workarounds
             buffer.slow_mapbuffer,
             buffer.disable_immutable_buffers,
             bugs.adreno_3xx,
-            bugs.adreno);
+            bugs.adreno,
+            bugs.freedreno,
+            bugs.powervr);
     }
 };
 

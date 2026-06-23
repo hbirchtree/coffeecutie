@@ -226,14 +226,18 @@ struct vertex_attribute
 
 namespace detail {
 
-inline void vertex_setup_attribute(vertex_attribute const& attr, u32 offset = 0)
+inline void vertex_setup_attribute(
+    features::vertices& features,
+    vertex_attribute const& attr,
+    u32 offset = 0)
 {
 #if  GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
     // TODO: Add a big fat warning that rendering won't be correct here
     // Or add a shader post-process step that packs UINT/INT into floats
     const bool packed =
         enum_helpers::feval(attr.value.flags, vertex_attribute::attribute_flags::packed);
-    if(!packed && detail::vertex_is_int_type(attr.value.type))
+    const bool is_int_type = detail::vertex_is_int_type(attr.value.type);
+    if(!packed && is_int_type && features.vertex_attrib_i_pointer)
         cmd::vertex_attrib_i_pointer(
             attr.index,
             attr.value.count,
@@ -470,7 +474,7 @@ struct vertex_array_t
                             attribute.buffer.offset + attribute.value.offset));
                 else
 #endif
-                    detail::vertex_setup_attribute(attribute);
+                    detail::vertex_setup_attribute(m_features, attribute);
             }
 
             m_buffers.insert({binding, buffer});

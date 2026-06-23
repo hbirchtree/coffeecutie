@@ -233,11 +233,6 @@ struct BSPItem
     std::vector<u32>                                        portal_color_ptrs;
     std::vector<blam::bsp::background_sound_palette const*> bg_sound_palette;
 
-    /* PVS (Potentially Visible Set) data: one bit per cluster per row,
-     * row i says which clusters are visible from cluster i */
-    Span<libc_types::byte_t const> pvs_data;
-    u32                            pvs_row_stride{0};
-
     /* Collision surface mesh (winged-edge) from the collision BSP;
      * consumed by the physics subsystem for triangle soup generation.
      * Point→cluster and hitscan queries resolve the collision tree on
@@ -456,18 +451,6 @@ struct BSPItem
         return visible;
     }
 
-    /* Returns true if cluster to_idx is visible from cluster from_idx
-     * according to the PVS. Falls back to true if no PVS is available. */
-    inline bool cluster_visible_from(u32 from_idx, u32 to_idx) const
-    {
-        if(pvs_data.empty() || pvs_row_stride == 0 || clusters.empty())
-            return true;
-        if(from_idx >= clusters.size() || to_idx >= clusters.size())
-            return true;
-        auto const* row = pvs_data.data() + from_idx * pvs_row_stride;
-        return (row[to_idx / 8] >> (to_idx % 8)) & 1;
-    }
-
     /* Exact point→cluster lookup, see blam::bsp::header::cluster_for_point.
      * Bounds the result against the decoded cluster list. */
     inline std::optional<u32> find_cluster_tree(Vecf3 const& point) const
@@ -524,19 +507,6 @@ struct BSPItem
         return std::nullopt;
     }
 
-    /* Returns nullopt when either position falls outside all clusters.
-     * Otherwise returns true if target is PVS-visible from observer. */
-    inline std::optional<bool> visible_from(
-        Vecf3 const& observer, Vecf3 const& target) const
-    {
-        auto from = find_cluster(observer);
-        if(!from)
-            return std::nullopt;
-        auto to = find_cluster(target);
-        if(!to)
-            return std::nullopt;
-        return cluster_visible_from(from->first, to->first);
-    }
 };
 
 template<typename V>
