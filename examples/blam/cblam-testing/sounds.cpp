@@ -41,6 +41,7 @@ struct sound_unit_t
         std::shared_ptr<oaf::source_t>             source;
     };
 
+    blam::tagref_t          source{};
     generation_idx_t        index{};
     std::vector<track_t>    tracks;
     LoopSoundEvent::usage_t usage{LoopSoundEvent::usage_t::general};
@@ -302,6 +303,7 @@ struct SoundSystem
                 });
         }
         return sound_unit_t{
+            .source = tagref,
             .index  = sound,
             .tracks = std::move(tracks),
             .usage  = usage,
@@ -356,6 +358,10 @@ struct SoundSystem
             auto it = active_sounds.find(ev.entity_id);
             if(it != active_sounds.end())
             {
+                if(trans.sound)
+                    if(it->second.source.tag_id == trans.sound->tag_id)
+                        return;
+
                 it->second.fade_rate  = -1.f / 2.f; /* 2-second fade out */
                 it->second.fading_out = true;
                 fading_sounds[next_fade_id++] = std::move(it->second);

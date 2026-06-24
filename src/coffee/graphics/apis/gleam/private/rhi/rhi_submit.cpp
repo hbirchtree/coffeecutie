@@ -3,6 +3,9 @@
 
 #include <numeric>
 
+#include <glw/extensions/EXT_draw_elements_base_vertex.h>
+#include <glw/extensions/OES_draw_elements_base_vertex.h>
+
 #include <peripherals/stl/magic_enum.hpp>
 
 namespace gleam::detail {
@@ -124,10 +127,11 @@ void multi_indirect_draw(
 #endif
 
 std::optional<std::tuple<error, std::string_view>> direct_draw(
-    const draw_command::call_spec_t& call,
-    const draw_command::data_t&      data,
+    draw_command::call_spec_t const& call,
+    draw_command::data_t const&      data,
     shader_bookkeeping_t&            bookkeeping,
-    const workarounds&               workarounds)
+    workarounds const&               workarounds,
+    features const&                  features)
 {
     [[maybe_unused]] const auto base_instance =
         data.instances.offset != 0 && !workarounds.draw.emulated_base_instance;
@@ -234,15 +238,47 @@ std::optional<std::tuple<error, std::string_view>> direct_draw(
 }
 
 std::optional<std::tuple<error, std::string_view>> legacy_draw(
-    const draw_command::call_spec_t& call, const draw_command::data_t& data)
+    draw_command::call_spec_t const& call,
+    draw_command::data_t const&      data,
+    features const&                  features)
 {
+    auto const& draw = features.draw;
+    const bool supports_base_vertex =
+        draw.ext.draw_elements_base_vertex ||
+        draw.oes.draw_elements_base_vertex;
     if(call.indexed)
     {
-        cmd::draw_elements(
-            convert::to(call.mode),
-            data.elements.count,
-            convert::to<group::draw_elements_type>(data.elements.type),
-            data.elements.offset);
+        if(data.elements.vertex_offset != 0 && supports_base_vertex)
+        {
+#if defined(GL_EXT_draw_elements_base_vertex)
+            if(draw.ext.draw_elements_base_vertex)
+                gl::ext::draw_elements_base_vertex::draw_elements_base_vertex(
+                    convert::to(call.mode),
+                    data.elements.count,
+                    convert::to<group::draw_elements_type>(data.elements.type),
+                    data.elements.offset,
+                    data.elements.vertex_offset);
+            else
+#endif
+#if defined(GL_OES_draw_elements_base_vertex)
+            if (draw.oes.draw_elements_base_vertex)
+                gl::oes::draw_elements_base_vertex::draw_elements_base_vertex(
+                    convert::to(call.mode),
+                    data.elements.count,
+                    convert::to<group::draw_elements_type>(data.elements.type),
+                    data.elements.offset,
+                    data.elements.vertex_offset);
+            else
+#endif
+                return std::make_tuple(
+                    error::draw_unsupported_call,
+                    "draw_elements_base_vertex indicated, but not compiled in");
+        } else
+            cmd::draw_elements(
+                convert::to(call.mode),
+                data.elements.count,
+                convert::to<group::draw_elements_type>(data.elements.type),
+                data.elements.offset);
     } else
     {
         cmd::draw_arrays(

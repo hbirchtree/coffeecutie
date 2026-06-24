@@ -30,13 +30,16 @@ void compute_ubo_instance(
     u32                   ubo_alignment);
 
 std::optional<std::tuple<error, std::string_view>> legacy_draw(
-    draw_command::call_spec_t const& call, draw_command::data_t const& data);
+    draw_command::call_spec_t const& call,
+    draw_command::data_t const&      data,
+    features const&                  features);
 
 std::optional<std::tuple<error, std::string_view>> direct_draw(
     draw_command::call_spec_t const& call,
     draw_command::data_t const&      data,
     shader_bookkeeping_t&            bookkeeping,
-    workarounds const&               workarounds);
+    workarounds const&               workarounds,
+    features const&                  features);
 
 size_t element_size(draw_command::data_t const& data);
 
@@ -115,6 +118,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
             [[maybe_unused]] auto error = std::get<0>(res.error());
             debug().message(error, group::debug_severity::high);
             usage().draw.failed_draws++;
+            usage().draw.failed_async_compiles++;
             return std::make_tuple(
                 error::async_shader_compile_failed, "program linking failed");
         } else if(!res.value())
@@ -122,6 +126,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
             // True means it's done compiling, false means we're waiting
             return std::nullopt;
         }
+        usage().draw.async_compiles++;
     }
 #endif
 
@@ -139,6 +144,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
 
     if(change_render_target)
     {
+        usage().draw.framebuffers_bound++;
         draw_cache.last_fb = render_target.get();
         render_target->internal_bind(
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
@@ -191,7 +197,9 @@ inline optional<tuple<error, std::string_view>> api::submit(
             "instancing not enabled in GL ES 2.0"sv);
     }
     if(m_api_type == api_type_t::es && m_api_version <= 0x300 &&
-       uses_vertex_offset && !m_workarounds.draw.emulated_vertex_offset)
+       uses_vertex_offset && !m_workarounds.draw.emulated_vertex_offset &&
+       !(m_features.draw.oes.draw_elements_base_vertex ||
+           m_features.draw.ext.draw_elements_base_vertex))
     {
         usage().draw.failed_draws++;
         return std::make_tuple(
@@ -215,6 +223,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
 #if GLEAM_MAX_VERSION_ES != 0x200
     if(m_features.vertex.layout_binding && !vao->m_forced_attribute_names)
     {
+        usage().draw.vaos_bound++;
         cmd::bind_vertex_array(vao->m_handle);
     } else if(m_features.vertex.vertex_arrays)
     {
@@ -269,6 +278,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
 
     if(change_program)
     {
+        usage().draw.programs_bound++;
         draw_cache.last_program = program.get();
         cmd::use_program(program->m_handle);
     }
@@ -421,6 +431,8 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 "varying element types prevents use of MultiDrawIndirect"sv);
     }
 
+    usage().draw.submits++;
+
     for(auto const& draw : data)
     {
         if(call.mode == drawing::primitive::triangle)
@@ -470,11 +482,14 @@ inline optional<tuple<error, std::string_view>> api::submit(
             apply_ubo_offset(d.instances.offset, d.instances.count);
             d = apply_base_instance(d);
             apply_vertex_offset(call.indexed ? d.elements.vertex_offset : 0);
-            detail::direct_draw(call, d, bookkeeping, m_workarounds);
+            detail::direct_draw(call, d, bookkeeping, m_workarounds, m_features);
         }
     } else
 #endif
     {
+        const bool supports_base_vertex =
+            m_features.draw.ext.draw_elements_base_vertex ||
+            m_features.draw.oes.draw_elements_base_vertex;
         using stl_types::range;
         for(auto d : data)
         {
@@ -490,8 +505,9 @@ inline optional<tuple<error, std::string_view>> api::submit(
              * a return to 0. Gating on `> 0` alone left a previous draw's
              * offset applied, corrupting subsequent offset==0 draws once
              * the per-submit VAO setup is skipped (state conservation). */
-            if(call.indexed &&
-               d.elements.vertex_offset != draw_cache.last_vertex_offset)
+            const bool update_vertex_offset =
+                d.elements.vertex_offset != draw_cache.last_vertex_offset;
+            if(call.indexed && update_vertex_offset && !supports_base_vertex)
             {
                 for(auto const& attrib : vao->m_attributes)
                 {
@@ -520,7 +536,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
                      d.instances.offset + bookkeeping.instanceId),
                  ...);
                 apply_instance_id();
-                detail::legacy_draw(call, d);
+                detail::legacy_draw(call, d, m_features);
                 /* We reset the sampler_idx between instances, to not run out
                  * when we exceed 16+ */
                 bookkeeping.sampler_idx = base_sampler_idx;

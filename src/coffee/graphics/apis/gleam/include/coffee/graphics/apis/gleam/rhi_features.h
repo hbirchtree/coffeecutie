@@ -617,6 +617,11 @@ struct usage
 {
     struct
     {
+        u32 submits{0};
+        u32 framebuffers_bound{0};
+        u32 programs_bound{0};
+        u32 vaos_bound{0};
+
         u32 draws{0};
         u32 instances{0};
 
@@ -625,6 +630,9 @@ struct usage
         u64 other_prims{0};
 
         u32 failed_draws{0};
+
+        u32 async_compiles{0};
+        u32 failed_async_compiles{0};
     } draw;
 
     struct

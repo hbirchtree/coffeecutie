@@ -81,17 +81,29 @@ void system::start_restricted(Proxy& e, time_point const& ts)
         gleam::usage const& usage = this->usage();
         cDebug(
             "gleam operations: "
-            "draws: {} draws, {} instances, {} failed draws, "
-            "{} triangles, {} triangle strips, {} other prims; "
-            "buffers: {} transfers, {} bytes transferred, "
+            "draws: "
+            "{} submits, {} draws, {} instances, {} failed draws, "
+            "{} triangles, {} triangle strips, {} other prims, "
+            "{} async compiles {} failed async compiles, "
+            "binds: {} render targets, {} programs, {} vaos; "
+            "buffers: "
+            "{} transfers, {} bytes transferred, "
             "{} mappings, {} bytes mapped; "
             "textures: {} allocations, {} uploads, {} bytes transferred; ",
+            usage.draw.submits,
             usage.draw.draws,
             usage.draw.instances,
             usage.draw.failed_draws,
             usage.draw.triangles,
             usage.draw.triangle_strips,
             usage.draw.other_prims,
+            // async compiles
+            usage.draw.async_compiles,
+            usage.draw.failed_async_compiles,
+            // binds
+            usage.draw.framebuffers_bound,
+            usage.draw.programs_bound,
+            usage.draw.vaos_bound,
             // buffer info
             usage.buffers.uploads,
             usage.buffers.upload_data,

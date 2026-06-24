@@ -1,6 +1,5 @@
 #pragma once
 
-#include <bitset>
 #include <peripherals/semantic/enum/data_types.h>
 
 #include <glw/enums/VertexAttribIType.h>

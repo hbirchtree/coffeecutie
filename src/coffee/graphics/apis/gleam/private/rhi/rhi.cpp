@@ -447,21 +447,21 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
 
     if(api_type == api_type_t::core)
     {
-        out.buffer.mapping                        = true;
-        out.buffer.pbo                            = true;
-        out.buffer.ubo                            = true;
-        out.draw.instancing                       = true;
-        out.draw.vertex_offset                    = true;
-        out.rendertarget.framebuffer_texture      = true;
-        out.texture.max_level                     = true;
-        out.texture.tex.gl.rgtc                   = true;
-        out.rendertarget.color_buffer_float       = true;
-        out.rendertarget.color_buffer_half_float  = true;
-        out.rendertarget.color_buffer_11f_11f_10f = true;
-        out.rendertarget.color_buffer_10bit       = true;
-        out.rendertarget.depth24_stencil8         = true;
-        out.rendertarget.depth24                  = true;
-        out.rendertarget.depth32f                 = true;
+        out.buffer.mapping                        = api_version >= 0x300;
+        out.buffer.pbo                            = api_version >= 0x210;
+        out.buffer.ubo                            = api_version >= 0x310;
+        out.draw.instancing                       = api_version >= 0x310;
+        out.draw.vertex_offset                    = api_version >= 0x320;
+        out.rendertarget.framebuffer_texture      = api_version >= 0x300;
+        out.texture.max_level                     = api_version >= 0x120;
+        out.texture.tex.gl.rgtc                   = api_version >= 0x300;
+        out.rendertarget.color_buffer_float       = api_version >= 0x300;
+        out.rendertarget.color_buffer_half_float  = api_version >= 0x300;
+        out.rendertarget.color_buffer_11f_11f_10f = api_version >= 0x300;
+        out.rendertarget.color_buffer_10bit       = api_version >= 0x300;
+        out.rendertarget.depth24_stencil8         = api_version >= 0x300;
+        out.rendertarget.depth24                  = api_version >= 0x300;
+        out.rendertarget.depth32f                 = api_version >= 0x300;
 
         out.texture.cube_array = api_version >= 0x400;
 
@@ -1122,7 +1122,9 @@ optional<error> api::load(load_options_t options)
         m_workarounds.draw.emulated_instance_id = false;
     //    if(m_features.draw.shader_base_instance)
     //        m_workarounds.draw.emulated_base_instance = false;
-    if(m_features.draw.vertex_offset)
+    if(m_features.draw.vertex_offset ||
+            m_features.draw.ext.draw_elements_base_vertex ||
+            m_features.draw.oes.draw_elements_base_vertex)
         m_workarounds.draw.emulated_vertex_offset = false;
     if(m_features.draw.shader_base_instance)
         m_workarounds.draw.emulated_base_instance = false;
@@ -1185,7 +1187,7 @@ optional<error> api::load(load_options_t options)
 
     if(m_api_type == api_type_t::core)
     {
-        if(m_api_version < 0x330)
+        if(m_api_version < 0x320)
             return error::refuse_version_too_low;
     }
     if(query_native_api() == api_type_t::core && m_api_type == api_type_t::es)
