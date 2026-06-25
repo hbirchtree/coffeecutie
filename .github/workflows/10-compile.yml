@@ -137,6 +137,10 @@ jobs:
           build: web-wasm32-emscripten-webgl2
           args: '-DBLAM_HALO_VERSION=xbox_version_t'
           artifact: web-wasm32-emscripten-webgl2-xbox
+        - variant: web:wasm32-emscripten:webgl2:rel
+          build: web-wasm32-emscripten-webgl2
+          args: '-DBLAM_HALO_VERSION=mcc_version_t'
+          artifact: web-wasm32-emscripten-webgl2-mcc
         - variant: web:wasm64-emscripten:webgl2:rel
           build: web-wasm64-emscripten-webgl2
           args: ''
@@ -491,11 +495,12 @@ jobs:
         path: artifacts/
     - name: Generating GitHub Pages archive
       run: |
-        mkdir -p _site/downloads/ _site/custom/
+        mkdir -p _site/downloads/ _site/custom/ _site/mcc/
         curl -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts -o _site/artifacts.json
         cp artifacts/web-wasm32-emscripten-webgl2/BlamGraphics.bundle/favicon.ico _site/
         cp -r artifacts/web-wasm32-emscripten-webgl2 _site/bin
         cp -r artifacts/web-wasm32-emscripten-webgl2-custom _site/custom/bin
+        cp -r artifacts/web-wasm32-emscripten-webgl2-mcc _site/mcc/bin
         for f in $(find artifacts/ -mindepth 1 -maxdepth 1); do pushd $f; [[ -f apps.tar ]] && (tar xvf apps.tar && rm apps.tar); tar Jcvf ../../_site/downloads/$(basename $f).tar.xz .; popd; done
     - name: Uploading GitHub Pages examples
       uses: actions/upload-pages-artifact@v4
