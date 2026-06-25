@@ -28,6 +28,7 @@ using libc_types::f32;
 using libc_types::i32;
 using libc_types::u32;
 using semantic::Span;
+struct BSPItem;
 using typing::vector_types::Matf4;
 using camera_t     = typing::vectors::scene::camera<f32>;
 using std_camera_t = StandardCamera<camera_t*, StandardCameraOpts*>;
@@ -190,6 +191,7 @@ struct GameEvent
         MapDataReady,
         MapAllLoaded,
         MapChanged,
+        ClusterChanged,
 
         ServerConnect,
         ServerConnected,
@@ -269,6 +271,14 @@ struct MapChangedEvent
 
     blam::map_container<V>&       container;
     blam::scn::scenario<V> const* scenario{nullptr};
+};
+
+struct ClusterChangedEvent
+{
+    static constexpr auto event_type = GameEvent::ClusterChanged;
+
+    BSPItem const* bsp{nullptr};
+    u32            cluster{std::numeric_limits<u32>::max()};
 };
 
 struct ServerConnectEvent

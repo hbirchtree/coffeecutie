@@ -303,6 +303,11 @@ class tag_index_view
         return tag.to_name().to_string(m_ptr);
     }
 
+    std::string_view name_of(tag_t const& tag) const
+    {
+        return tag.to_name().to_string(m_ptr);
+    }
+
     template<typename T, typename Key>
     requires(
         !std::is_same_v<T, bitm::header_t> && !std::is_same_v<T, sound::sound>)

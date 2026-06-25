@@ -330,6 +330,8 @@ static void load_resources(
     loading_status.loaded_map = LoadingStatus::loaded;
     loading_status.check_all_loaded();
 
+    // TODO: One day load loc.map on PC/Custom Edition
+
     if(files.container.map->version == blam::version_t::xbox)
     {
         load_bitmaps(e, files.container.magic.ptr_only());

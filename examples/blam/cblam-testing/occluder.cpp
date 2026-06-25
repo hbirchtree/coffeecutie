@@ -12,7 +12,12 @@
 template<typename V>
 using OccluderManifest = compo::SubsystemManifest<
     type_list_t<BspReference, Model, PlayerCamera, PlayerInfo>,
-    type_list_t<BSPCache<V>, BlamResources, RenderingParameters, DebugMarkers>,
+    type_list_t<
+        BSPCache<V>,
+        BlamResources,
+        RenderingParameters,
+        DebugMarkers,
+        GameEventBus>,
     empty_list_t>;
 
 template<typename V>
@@ -39,10 +44,12 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         BlamResources*       resources;
         RenderingParameters* rendering;
         DebugMarkers*        markers;
+        GameEventBus*        game_bus;
         p.subsystem(bsp_cache);
         p.subsystem(resources);
         p.subsystem(rendering);
         p.subsystem(markers);
+        p.subsystem(game_bus);
 
         if(!rendering->occluder_update)
             return;
@@ -168,30 +175,15 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
         if(cluster_changed)
         {
-            auto* sound_bus = bsp_cache->sound_bus;
-            if(sound_bus)
-            {
-                BackgroundSoundTransitionEvent
-                    trans; /* sound = nullptr by default */
-                if(current_bsp)
-                {
-                    i16 bg_idx = current_bsp->clusters.at(current_cluster)
-                                     .cluster->background_sound;
-                    if(bg_idx >= 0 &&
-                       static_cast<u32>(bg_idx) <
-                           current_bsp->bg_sound_palette.size() &&
-                       current_bsp->bg_sound_palette[bg_idx])
-                    {
-                        trans.sound = &static_cast<blam::tagref_t const&>(
-                            current_bsp->bg_sound_palette[bg_idx]->bg_sound);
-                    }
-                }
-                SoundEvent ev = {
-                    .type      = SoundEvent::background_sound_transition,
-                    .entity_id = 0,
-                };
-                sound_bus->process(ev, &trans);
-            }
+            /* Publish the cluster change neutrally; the sound system (and any
+             * other interested subsystem) resolves its own concerns from this.
+             * The occluder stays free of audio specifics. */
+            GameEvent           cev{GameEvent::ClusterChanged};
+            ClusterChangedEvent cc{
+                .bsp     = current_bsp,
+                .cluster = current_cluster,
+            };
+            game_bus->inject(cev, &cc);
 
             i16 sky_idx =
                 current_bsp

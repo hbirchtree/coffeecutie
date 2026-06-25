@@ -5,6 +5,7 @@
 
 #include <coffee/core/CProfiling>
 #include <coffee/core/files/cfiles.h>
+#include <gsl/span_ext>
 
 using Coffee::ProfContext;
 
@@ -32,6 +33,10 @@ constexpr u32 FRAME_UPDATE_LANE = 0;
 constexpr u32 EVENT_LANE        = 1;
 
 struct Networking;
+
+using typing::vector_types::Vecf3;
+using typing::vector_types::Vecf4;
+using typing::vector_types::Quatf;
 
 namespace {
 
@@ -82,6 +87,9 @@ struct MessageBase
         EntitySpawn,
         PlayerSpawn,
         ObjectSync,
+
+        /* Player replication */
+        PlayerSpawnProjectile,
 
         /* Debug */
         Screenshot,
@@ -170,6 +178,7 @@ struct UpdatePermission
     {
         Movement,
         Camera,
+        Action,
     } permission;
 
     u16 mode{0};
@@ -222,21 +231,36 @@ struct alignas(8) EntityTag
     u32            instance_id;
 };
 
+/* Server-side entity spawn, possibly as a response */
 struct alignas(8) EntitySpawn
 {
     static constexpr auto message_type = MessageBase::EntitySpawn;
 
+    static constexpr auto no_request = std::numeric_limits<u32>::max();
+
     EntityTag tag;
     i32       permutation{-1};
+    u32       response_id{no_request};
 };
 
 struct alignas(8) PlayerSpawn
 {
     static constexpr auto message_type = MessageBase::PlayerSpawn;
 
-    typing::vector_types::Vecf4 position;
-    u32                         target_player{0xFFFF}; // Targets local players
-    f32                         facing;
+    Vecf4 position;
+    u32   target_player{0xFFFF}; // Targets local players
+    f32   facing;
+};
+
+/*! Client-side request, server responds with EntitySpawn */
+struct alignas(8) PlayerSpawnProjectile
+{
+    static constexpr auto message_type = MessageBase::PlayerSpawnProjectile;
+
+    Vecf4     position{};
+    Quatf     direction{};
+    EntityTag tag{};
+    u32       request_id{EntitySpawn::no_request};
 };
 
 struct alignas(8) PlayerSyncEntry
@@ -921,6 +945,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     {
         if(m_connections.empty() || multi.empty())
             return;
+
+        // TODO: Add data size validation
 
         auto const payload_size =
             sizeof(MessageBase) + multi.size() * sizeof(T);

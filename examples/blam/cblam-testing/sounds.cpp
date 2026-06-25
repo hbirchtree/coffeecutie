@@ -1,14 +1,22 @@
 #include "sounds.h"
 
+#include "blam/volta/blam_tag_index.h"
 #include "blam/volta/blam_tag_ref.h"
+#include "caching_item.h"
 #include "components.h"
+#include "data.h"
 #include "data_cache.h"
 #include "peripherals/stl/range.h"
 #include "selected_version.h"
 #include "sound_cache.h"
 #include <algorithm>
+#include <magic_enum/magic_enum.hpp>
 
 #if defined(FEATURE_ENABLE_OAF)
+
+#if defined(FEATURE_ENABLE_ImGui)
+#include <imgui.h>
+#endif
 
 #include <deque>
 #include <oaf/api_system.h>
@@ -61,12 +69,20 @@ struct SoundSystem
     using Proxy    = compo::proxy_of<SoundManifest>;
 
     SoundSystem(
-        oaf::api& audio, SoundCache<Ver>& sound_cache, LoadingStatus* loading)
+        oaf::api&        audio,
+        SoundCache<Ver>& sound_cache,
+        LoadingStatus*   loading,
+        GameEventBus&    game_bus)
         : snd(audio)
         , sound_cache(sound_cache)
         , index(sound_cache.index)
         , loading(loading)
     {
+        this->priority = 2048;
+        game_bus.addEventFunction<ClusterChangedEvent>(
+            0, [this](GameEvent&, ClusterChangedEvent* e) {
+                on_cluster_changed(e->bsp, e->cluster);
+            });
     }
 
     oaf::api&                  snd;
@@ -77,6 +93,15 @@ struct SoundSystem
     std::map<u64, sound_unit_t> active_sounds;
     std::map<u64, sound_unit_t> fading_sounds;
     u64                         next_fade_id{0x8000000000000000ULL};
+
+    u32 stat_bg_total{0};   /* cluster changes seen                       */
+    u32 stat_bg_with_snd{0};/* ...of which resolved to a non-null sound   */
+    u32 stat_started{0};    /* sound_units actually inserted as active   */
+    u32 stat_replayed{0};   /* queued events replayed after load         */
+
+    BSPItem const* pending_bsp{nullptr};
+    u32            pending_cluster{std::numeric_limits<u32>::max()};
+    bool           has_pending_cluster{false};
 
     bool              first_frame{true};
     compo::time_point last_t{};
@@ -160,10 +185,10 @@ struct SoundSystem
                 pitch.permutations.at(meta.active.permutation);
 
             // TODO: If memory is tight, stream audio here instead of preloading
-            cDebug(
-                "Queueing sound={} perm=#{}",
-                tag->to_name().to_string(heap),
-                meta.active.permutation);
+            // cDebug(
+            //     "Queueing sound={} perm=#{}",
+            //     tag->to_name().to_string(heap),
+            //     meta.active.permutation);
             meta.source->queue(*current_buf.buffer);
             meta.source->template set_property<oaf::source_property::gain>(
                 props->gain_modifier * current_buf.permutation->gain *
@@ -222,6 +247,7 @@ struct SoundSystem
         if(!queued_events.empty() &&
            loading->loaded_sounds == LoadingStatus::loaded)
         {
+            stat_replayed += static_cast<u32>(queued_events.size());
             for(queued_event_t& event : queued_events)
             {
                 switch(event.event.type)
@@ -243,6 +269,10 @@ struct SoundSystem
             }
             queued_events.clear();
         }
+
+        if(has_pending_cluster &&
+           loading->loaded_sounds == LoadingStatus::loaded)
+            apply_pending_cluster();
 
         std::vector<u64> finished;
         for(auto& [id, sound] : active_sounds)
@@ -274,6 +304,102 @@ struct SoundSystem
         }
         for(auto id : fading_finished)
             fading_sounds.erase(id);
+
+#if defined(FEATURE_ENABLE_ImGui)
+        if(ImGui::Begin("Sound"))
+        {
+            if(ImGui::BeginTabBar("AudioTabs"))
+            {
+                if(ImGui::BeginTabItem("Tracks"))
+                {
+                    ImGui::Text(
+                        "active=%zu fading=%zu queued=%zu sounds_loaded=%d",
+                        active_sounds.size(),
+                        fading_sounds.size(),
+                        queued_events.size(),
+                        (int)(loading->loaded_sounds == LoadingStatus::loaded));
+                    ImGui::Text(
+                        "lifetime: bg_transitions=%u (with_sound=%u) "
+                        "started=%u replayed=%u",
+                        stat_bg_total,
+                        stat_bg_with_snd,
+                        stat_started,
+                        stat_replayed);
+                    ImGui::Separator();
+                    auto sound_row = [&](u64 entity, sound_unit_t const& sound,
+                                         ImVec4 color) {
+                        auto item_it = sound_cache.find(sound.index);
+                        auto name    = index.name_of(sound.source);
+                        ImGui::TextColored(color, "[sound/%04lu] %.*s",
+                            entity,
+                            static_cast<int>(name.size()),
+                            name.data());
+                        ImGui::Text("    [volume] %f", sound.volume);
+                        if(item_it == sound_cache.end())
+                        {
+                            ImGui::Text("    [not in cache]");
+                            return;
+                        }
+                        SoundItem const& item = item_it->second;
+                        u32 track_i{0};
+                        for(auto const& track : sound.tracks)
+                        {
+                            auto role = magic_enum::enum_name(track.active.role);
+                            std::string_view name{"[?]"};
+                            if(track_i < item.tracks.size())
+                            {
+                                auto const& track_ = item.tracks[track_i];
+                                auto sit = track_.sounds.find(track.active.role);
+                                if(sit != track_.sounds.end())
+                                {
+                                    auto const& [sound_tag, _, __] = sit->second;
+                                    if(sound_tag)
+                                        name = index.name_of(*sound_tag);
+                                }
+                            }
+                            ++track_i;
+                            ImGui::Text("    [track/%02u/%02u/%.*s] %.*s ",
+                                track.active.permutation,
+                                track.active.pitch,
+                                static_cast<int>(role.size()),
+                                role.data(),
+                                static_cast<int>(name.size()),
+                                name.data());
+                        }
+                        if(!item.detail_sounds.empty())
+                        {
+                            ImGui::Text("    [detail sounds]");
+                            for(auto const& dsound : item.detail_sounds)
+                            {
+                                for(auto const& [role, snd] : dsound.sounds)
+                                {
+                                    auto const& [sound_tag, _, __] = snd;
+                                    std::string_view name{"[?]"};
+                                    if(sound_tag)
+                                        name = index.name_of(*sound_tag);
+                                    auto role_name = magic_enum::enum_name(role);
+                                    ImGui::Text("      [detail/%.*s] %.*s",
+                                        static_cast<int>(role_name.size()),
+                                        role_name.data(),
+                                        static_cast<int>(name.size()),
+                                        name.data());
+                                }
+                            }
+                        }
+                    };
+                    for(auto const& [entity, sound] : active_sounds)
+                        sound_row(entity, sound, ImVec4(0, 1, 0, 1));
+                    for(auto const& [entity, sound] : fading_sounds)
+                        sound_row(entity, sound, ImVec4(0.7, 0.5, 0, 1));
+                    ImGui::EndTabItem();
+                }
+
+                ImGui::EndTabBar();
+            }
+
+        }
+        ImGui::End();
+#endif
     }
 
     void end_restricted(Proxy&, compo::time_point const&)
@@ -308,6 +434,71 @@ struct SoundSystem
             .tracks = std::move(tracks),
             .usage  = usage,
         };
+    }
+
+    static constexpr u64 background_entity = 0;
+
+    static blam::tagref_t const* resolve_bg_sound(
+        BSPItem const* bsp, u32 cluster)
+    {
+        if(!bsp || cluster >= bsp->clusters.size())
+            return nullptr;
+        i16 bg_idx = bsp->clusters[cluster].cluster->background_sound;
+        if(bg_idx >= 0
+           && static_cast<u32>(bg_idx) < bsp->bg_sound_palette.size()
+           && bsp->bg_sound_palette[bg_idx])
+            return &static_cast<blam::tagref_t const&>(
+                bsp->bg_sound_palette[bg_idx]->bg_sound);
+        return nullptr;
+    }
+
+    void transition_background(blam::tagref_t const* sound)
+    {
+        auto it = active_sounds.find(background_entity);
+        if(it != active_sounds.end())
+        {
+            if(sound && it->second.source.tag_id == sound->tag_id)
+                return;
+            // TODO: If the sound has an end part, play that instead
+            it->second.fade_rate          = -1.f / 2.f; /* 2s fade out */
+            it->second.fading_out         = true;
+            fading_sounds[next_fade_id++] = std::move(it->second);
+            active_sounds.erase(it);
+        }
+        if(sound)
+        {
+            auto unit = make_sound_unit(
+                *sound, LoopSoundEvent::usage_t::background_track);
+            unit.fade_rate = 1.f / 2.f;
+            unit.fading_in = true;
+            unit.volume    = 0.f;
+            if(unit.index.valid())
+            {
+                stat_started++;
+                active_sounds[background_entity] = std::move(unit);
+            }
+        }
+    }
+
+    void on_cluster_changed(BSPItem const* bsp, u32 cluster)
+    {
+        pending_bsp         = bsp;
+        pending_cluster     = cluster;
+        has_pending_cluster = true;
+        stat_bg_total++;
+        if(loading->loaded_sounds == LoadingStatus::loaded)
+            apply_pending_cluster();
+    }
+
+    void apply_pending_cluster()
+    {
+        if(!has_pending_cluster)
+            return;
+        has_pending_cluster = false;
+        auto* sound         = resolve_bg_sound(pending_bsp, pending_cluster);
+        if(sound)
+            stat_bg_with_snd++;
+        transition_background(sound);
     }
 
     virtual void process(SoundEvent& ev, libc_types::c_ptr data) final
@@ -354,30 +545,7 @@ struct SoundSystem
         {
             auto const& trans =
                 *reinterpret_cast<BackgroundSoundTransitionEvent const*>(data);
-
-            auto it = active_sounds.find(ev.entity_id);
-            if(it != active_sounds.end())
-            {
-                if(trans.sound)
-                    if(it->second.source.tag_id == trans.sound->tag_id)
-                        return;
-
-                it->second.fade_rate  = -1.f / 2.f; /* 2-second fade out */
-                it->second.fading_out = true;
-                fading_sounds[next_fade_id++] = std::move(it->second);
-                active_sounds.erase(it);
-            }
-
-            if(trans.sound)
-            {
-                auto unit = make_sound_unit(
-                    *trans.sound, LoopSoundEvent::usage_t::background_track);
-                unit.fade_rate = 1.f / 2.f;
-                unit.fading_in = true;
-                unit.volume    = 0.f;
-                if(unit.index.valid())
-                    active_sounds[ev.entity_id] = std::move(unit);
-            }
+            transition_background(trans.sound);
             return;
         }
 
@@ -412,7 +580,8 @@ void alloc_sound_system(compo::EntityContainer& e)
     auto& sound_sys = e.register_subsystem_inplace<SoundSystem<halo_version>>(
         std::ref(e.subsystem_cast<oaf::system>()),
         std::ref(e.subsystem_cast<SoundCache<halo_version>>()),
-        &e.subsystem_cast<LoadingStatus>());
+        &e.subsystem_cast<LoadingStatus>(),
+        std::ref(e.subsystem_cast<GameEventBus>()));
     e.register_subsystem_services<SoundSystem<halo_version>>(&sound_sys);
 #endif
 }
