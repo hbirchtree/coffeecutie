@@ -63,3 +63,8 @@ if(GAMECUBE AND BUILD_GX)
   target_link_libraries(CoreApplication PUBLIC Gexxo # For initializing video
   )
 endif()
+
+if(GAMECUBE OR WII)
+  find_package(libfat CONFIG REQUIRED)
+  target_link_libraries(CoreApplication PUBLIC libfat::libfat)
+endif()

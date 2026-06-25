@@ -75,6 +75,30 @@ void gekko_console_init()
 } // namespace
 #endif
 
+#if defined(COFFEE_GEKKO)
+#include <platforms/gekko/dvd.h>
+
+#include <fat.h>
+#include <sdcard/gcsd.h>
+#include <stdio.h>
+
+namespace {
+void gekko_mount_storage()
+{
+    if(platform::file::gekko::dvd::mount())
+    {
+        printf("- DVD mounted, assets at dvd:/\n");
+    } else
+        printf("- DVD mount failed (no disc?)\n");
+
+    if(fatMountSimple("sd", &__io_gcsda))
+        printf("- SD mounted read/write at sd:/\n");
+    else
+        printf("- SD not present (sd:/ unavailable)\n");
+}
+} // namespace
+#endif
+
 #if defined(COFFEE_WINDOWS)
 extern int InitCOMInterface();
 #endif
@@ -134,6 +158,10 @@ int MainSetup(MainWithArgs mainfun, int argc, char** argv, u32 flags)
     gexxo::initialize();
 #elif defined(COFFEE_GEKKO)
     gekko_console_init();
+#endif
+
+#if defined(COFFEE_GEKKO)
+    gekko_mount_storage();
 #endif
 
 #if defined(COFFEE_GEKKO)

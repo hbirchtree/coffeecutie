@@ -15,6 +15,9 @@
 #include <peripherals/typing/geometry/size.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
+#include <ogc/gx.h>
+#include <ogc/tpl.h>
+
 #include <memory>
 #include <optional>
 #include <set>
@@ -154,10 +157,31 @@ struct texture_t : std::enable_shared_from_this<texture_t>
         return {};
     }
 
+    inline bool upload(gsl::span<libc_types::u8 const>&& data)
+    {
+        m_tpl_data.insert(m_tpl_data.begin(), data.begin(), data.end());
+        if(TPL_OpenTPLFromMemory(
+               &m_tpl,
+               m_tpl_data.data(),
+               static_cast<libc_types::u32>(m_tpl_data.size()))
+           <= 0)
+            return false;
+        if(TPL_GetTexture(&m_tpl, 0, &m_obj) != 0)
+            return false;
+        m_loaded = true;
+        return true;
+    }
+
     textures::type          m_type;
     typing::pixels::PixDesc m_format;
     u32                     m_mipmaps{1};
     size_type               m_size{};
+
+    /* GX texture state (populated by load_tpl). */
+    std::vector<libc_types::u8> m_tpl_data;
+    TPLFile                     m_tpl{};
+    GXTexObj                    m_obj{};
+    bool                        m_loaded{false};
 };
 
 struct texture_2d_t : texture_t
@@ -342,6 +366,8 @@ struct draw_command
 
     std::shared_ptr<query_t>        conditional_query;
     std::shared_ptr<vertex_array_t> vertices;
+
+    std::shared_ptr<texture_t> texture;
 
     gsl::span<Matf4 const> instance_transforms{};
     int uniforms{};

@@ -9,6 +9,13 @@ find_program ( INKSCAPE_PROGRAM inkscape
 set(SHADER_COOKER_PROGRAM "${HOST_TOOLS_BINARY_DIR}/ShaderCooker" CACHE FILEPATH "")
 set(TEXTURE_COMPRESSOR_PROGRAM "${HOST_TOOLS_BINARY_DIR}/TextureCompressor" CACHE FILEPATH "")
 
+find_program(GXTEXCONV_PROGRAM gxtexconv
+  PATHS
+    "${_VCPKG_INSTALLED_DIR}/${VCPKG_HOST_TRIPLET}/bin"
+    "${_VCPKG_INSTALLED_DIR}/x64-linux/bin"
+    "${HOST_TOOLS_BINARY_DIR}"
+)
+
 function(RESOURCE_DIR_PACKAGE)
     set(SINGLE_OPTS
         TARGET
@@ -44,6 +51,10 @@ function(RESOURCE_DIR_PACKAGE)
         set(API_ARG --api ${ANDROID_NATIVE_API_LEVEL})
     endif()
 
+    if(GXTEXCONV_PROGRAM)
+        set(GXTEXCONV_ARG --program gxtexconv=${GXTEXCONV_PROGRAM})
+    endif()
+
     set(ARG_LIST
         #
         --path ${RPKG_SOURCE_DIR}
@@ -61,6 +72,8 @@ function(RESOURCE_DIR_PACKAGE)
         --program TextureCompressor=${TEXTURE_COMPRESSOR_PROGRAM}
         #
         --program glslang=${GLSLANG_PROGRAM}
+        #
+        ${GXTEXCONV_ARG}
         #
         --target ${CMAKE_SYSTEM_NAME}
         #

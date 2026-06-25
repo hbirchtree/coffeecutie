@@ -154,7 +154,8 @@ def needs_update(output: str, dependencies: list):
     if not exists(output):
         return True
     out_ts = getmtime(output)
-    return sum([ 1 if getmtime(dep) > out_ts else 0 for dep in dependencies ]) > 0
+    return sum([ 1 if (exists(dep) and getmtime(dep) > out_ts) else 0
+                 for dep in dependencies ]) > 0
 
 
 def shader_dependencies(shader_file: str, cache_directory: str):
@@ -323,6 +324,13 @@ def encode_textures(
         api: int,
         build_mode: str,
         extra_dependencies: list):
+    if 'gxtexconv' in PROGRAMS:
+        for entry in values['files']:
+            _process_gx_texture(
+                entry, cache_directory, root_directory, out_directory,
+                extra_dependencies + [PROGRAMS['gxtexconv']])
+        return
+
     variants = dict(DEFAULT_TEX_VARIANTS) # values['variants']
 
     allowed_variants = _get_best_match(values.get('matrix', {}), target, arch, api)
@@ -424,6 +432,81 @@ def copy_files(
         submit(copyfile, f'{root_directory}/{file}', f'{out_directory}/{file}')
 
 
+# devkitPro gxtexconv texture format names -> colfmt index (see `gxtexconv`
+# usage). CMPR is the GX block-compressed (S3TC/DXT1-like) 4bpp format.
+GX_TEX_FORMATS = {
+    'I4':     0,
+    'I8':     1,
+    'IA4':    2,
+    'IA8':    3,
+    'RGB565': 4,
+    'RGB5A3': 5,
+    'RGBA8':  6,
+    'CI4':    8,
+    'CI8':    9,
+    'CMPR':  14,
+}
+
+
+def _infer_gx_format(formats: list):
+    """Pick a GX texture format from a regular texture entry's channel list."""
+    chars = set(''.join(formats))
+    has_alpha = 'a' in chars
+    color = chars - {'a'}
+    if color == {'r'}:
+        return 'IA8' if has_alpha else 'I8'
+    # rgb / rg colour: RGB5A3 keeps alpha; otherwise compress with CMPR.
+    return 'RGB5A3' if has_alpha else 'CMPR'
+
+
+def _process_gx_texture(
+        entry: dict,
+        cache_directory: str,
+        root_directory: str,
+        out_directory: str,
+        extra_dependencies: list):
+    """Convert one regular texture entry to a GameCube/Wii .tpl via gxtexconv.
+    SVG sources are rasterized with Inkscape first (as on the desktop path)."""
+    source = entry['source']
+    fmt_name = (entry.get('gx_format') or _infer_gx_format(
+        entry.get('formats', ['rgba']))).upper()
+    fmt = GX_TEX_FORMATS.get(fmt_name)
+    if fmt is None:
+        raise RunError(
+            ['gxtexconv'], '',
+            f'unknown GX texture format "{fmt_name}" for {source}')
+
+    extension = source.split('.')[-1]
+    basename = '.'.join(source.split('.')[:-1])
+    src_file = f'{root_directory}/{source}'
+    out_file = f'{out_directory}/{basename}.tpl'
+    makedirs(dirname(out_file), exist_ok=True)
+
+    mipmap_range = entry.get('mipmap_range', [0, 0])
+    max_res = mipmap_range[0] if mipmap_range else 0
+    rendered = src_file
+    if extension == 'svg':
+        rendered = f'{cache_directory}/{basename}.png'
+        makedirs(dirname(rendered), exist_ok=True)
+
+    if not needs_update(out_file, [src_file] + extra_dependencies):
+        return
+
+    print(f'* GX texture {source} -> {basename}.tpl ({fmt_name})')
+
+    def _task():
+        if extension == 'svg':
+            run('Inkscape', src_file,
+                f'--export-filename={rendered}',
+                f'--export-width={max_res}')
+        args = ['-i', rendered, '-o', out_file, f'colfmt={fmt}']
+        if mipmap_range and mipmap_range[0] != mipmap_range[1]:
+            args.append('mipmap=yes')
+        run('gxtexconv', *args)
+
+    submit(_task)
+
+
 def process_resources(definition: dict, extra_dependencies: list, **kwargs):
     for key in definition:
         if key == 'shaders':
@@ -455,7 +538,7 @@ if __name__ == '__main__':
                         help='Max concurrent compiler processes')
     args = parser.parse_args()
     EXECUTOR = ThreadPoolExecutor(max_workers=max(1, args.jobs))
-    for program_pair in args.programs:
+    for program_pair in (args.programs or []):
         program, path = program_pair.split('=')
         PROGRAMS[program] = path
     target = args.target

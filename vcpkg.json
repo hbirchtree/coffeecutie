@@ -22,7 +22,8 @@
         { "name": "zlib-ng", "platform": "(linux & x64) | osx | windows" },
         { "name": "zstd", "platform": "!bare" },
         { "name": "gctools", "platform": "gamecube | wii", "host": true },
-        { "name": "libogc", "platform": "gamecube | wii" }
+        { "name": "libogc", "platform": "gamecube | wii" },
+        { "name": "libfat", "platform": "gamecube | wii" }
     ],
     "features": {
         "assimp": {

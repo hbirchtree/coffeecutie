@@ -183,6 +183,7 @@ void gexxo_draw(draw_command const& cmd)
 
     auto const& xforms        = cmd.instance_transforms;
     bool const  has_transform = !xforms.empty();
+    bool const  has_tex       = cmd.texture && cmd.texture->m_loaded;
 
     Mtx44 proj;
     if(has_transform)
@@ -209,19 +210,39 @@ void gexxo_draw(draw_command const& cmd)
         0,
         GX_DF_NONE,
         GX_AF_NONE);
-    GX_SetNumTexGens(0);
     GX_SetNumTevStages(1);
-    GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
-    GX_SetTevOrder(
-        GX_TEVSTAGE0, GX_TEXCOORDNULL, GX_TEXMAP_NULL, GX_COLOR0A0);
     GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
     GX_SetColorUpdate(GX_TRUE);
+
+    if(has_tex)
+    {
+        GX_LoadTexObj(&cmd.texture->m_obj, GX_TEXMAP0);
+        GX_SetNumTexGens(1);
+        GX_SetTexCoordGen(
+            GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
+        GX_SetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+        GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+        GX_SetBlendMode(
+            GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
+    } else
+    {
+        GX_SetNumTexGens(0);
+        GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
+        GX_SetTevOrder(
+            GX_TEVSTAGE0, GX_TEXCOORDNULL, GX_TEXMAP_NULL, GX_COLOR0A0);
+        GX_SetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
+    }
 
     GX_ClearVtxDesc();
     GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);
     GX_SetVtxDesc(GX_VA_CLR0, GX_DIRECT);
     GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
     GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+    if(has_tex)
+    {
+        GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+        GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+    }
 
     static const u8 palette[4][3] = {
         {0x40, 0xE0, 0x40}, /* green */
@@ -245,6 +266,10 @@ void gexxo_draw(draw_command const& cmd)
         }
 
         auto const& col = palette[inst % 4];
+        /* Textured draws modulate by white so the texture shows untinted. */
+        u8 const cr = has_tex ? 0xFF : col[0];
+        u8 const cg = has_tex ? 0xFF : col[1];
+        u8 const cb = has_tex ? 0xFF : col[2];
 
         GX_Begin(GX_TRIANGLES, GX_VTXFMT0, static_cast<u16>(count));
         for(u32 i = 0; i < count; i++)
@@ -252,7 +277,12 @@ void gexxo_draw(draw_command const& cmd)
             auto const* p = reinterpret_cast<f32 const*>(
                 buf->m_data.data() + base + i * stride);
             GX_Position3f32(p[0], p[1], 0.0f);
-            GX_Color4u8(col[0], col[1], col[2], 0xFF);
+            GX_Color4u8(cr, cg, cb, 0xFF);
+            if(has_tex)
+            {
+                auto const* uv = p + pos.value.count;
+                GX_TexCoord2f32(uv[0], uv[1]);
+            }
         }
         GX_End();
     }

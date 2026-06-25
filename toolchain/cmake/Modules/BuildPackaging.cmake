@@ -6,6 +6,7 @@ include(MacAppBuild)
 include(WindowsImageBuild)
 include(EmscriptenBuild)
 include(GamecubeBuild)
+include(ResourcePackaging)
 
 macro(SET_DEFAULT VAR_NAME)
   if(NOT DEFINED ${VAR_NAME})
@@ -224,6 +225,18 @@ StartupWMClass=${APP_TARGET}
     endif()
   elseif(GAMECUBE OR WII)
     gamecube_package(TARGET "${APP_TARGET}" SOURCES ${SOURCES_MOD})
+
+    set(_gc_res_idx 0)
+    foreach(RES_DIR ${APP_RESOURCES})
+      RESOURCE_DIR_PACKAGE(
+        TARGET ${APP_TARGET}_resources_${_gc_res_idx}
+        SOURCE_DIR ${RES_DIR}
+        OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/${APP_TARGET}_assets
+        CACHE_DIR ${CMAKE_CURRENT_BINARY_DIR}/${APP_TARGET}_asset_cache
+      )
+      add_dependencies(${APP_TARGET} ${APP_TARGET}_resources_${_gc_res_idx})
+      math(EXPR _gc_res_idx "${_gc_res_idx} + 1")
+    endforeach()
   else()
     add_executable(${APP_TARGET} ${SOURCES_MOD})
     install(TARGETS ${APP_TARGET}

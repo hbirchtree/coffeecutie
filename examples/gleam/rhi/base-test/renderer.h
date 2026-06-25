@@ -324,10 +324,11 @@ struct RendererState
 
         std::shared_ptr<rhi::api::vertex_type> vao;
         std::shared_ptr<rhi::buffer_t>         array;
-#if !defined(FEATURE_ENABLE_Gexxo)
-        std::shared_ptr<rhi::program_t>        program;
-        std::shared_ptr<rhi::sampler_t>        sampler;
-
+#if defined(FEATURE_ENABLE_Gexxo)
+        std::shared_ptr<rhi::texture_t>        tex;
+#else
+        std::shared_ptr<rhi::program_t>             program;
+        std::shared_ptr<rhi::sampler_t>             sampler;
         std::shared_ptr<rhi::compat::texture_2da_t> tex;
 #endif
 
@@ -565,6 +566,22 @@ void SetupRendering(
         buf->commit(gsl::span<f32 const>(vertexdata.data(), vertexdata.size()));
         vao->set_buffer(rhi::buffers::vertex, buf, 0);
     }
+    {
+        ProfContext _("GX texture load");
+        Resource    tpl_src("circle_red.tpl", RSCA::AssetFile);
+        auto        bytes = C_OCAST<semantic::BytesConst>(tpl_src);
+        if(bytes.size)
+        {
+            auto tex = d.g_data.tex = std::make_shared<rhi::texture_t>(
+                rhi::textures::type::d2, typing::pixels::PixDesc{}, 1);
+            if(!tex->upload(std::move(bytes)))
+            {
+                cDebug("circle_red.tpl: TPL decode failed");
+                d.g_data.tex.reset();
+            }
+        } else
+            cDebug("circle_red.tpl: not found at dvd:/");
+    }
 #endif
 
 #if defined(FEATURE_ENABLE_Net)
@@ -748,6 +765,7 @@ void RendererLoop(
                     .instances = {.count = static_cast<u32>(modelviews.size())},
                 },
             .vertices            = g.vao,
+            .texture             = g.tex,
             .instance_transforms = modelviews,
         });
 #endif

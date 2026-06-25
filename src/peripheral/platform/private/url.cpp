@@ -257,16 +257,11 @@ STATICINLINE SystemPaths& GetSystemPaths()
 
 #elif defined(COFFEE_GEKKO)
 
-    /* Corresponds to memory cards on GC */
-    paths.configDir = MkUrl("MEM0:/", RSCA::SystemFile);
-    // TODO: Should correspond to block storage on Wii
-
-    /* Corresponds to GC/Wii storage media */
-    paths.assetDir = MkUrl("GCM:/", RSCA::SystemFile);
-
-    /* Emulated as in-memory storage */
-    paths.tempDir  = MkUrl("TMP:/", RSCA::SystemFile);
-    paths.cacheDir = paths.tempDir;
+    /* DVD for read-only assets, SD for config/tmp */
+    paths.assetDir  = MkUrl("dvd:/", RSCA::SystemFile);
+    paths.configDir = MkUrl("sd:/", RSCA::SystemFile);
+    paths.tempDir   = MkUrl("sd:/", RSCA::SystemFile);
+    paths.cacheDir  = paths.tempDir;
 
 #else
 #error Unimplemented filesystem path handling, fix it!
@@ -364,7 +359,6 @@ STATICINLINE std::string DereferencePath(std::string suffix, RSCA storageMask)
     if(feval(storageMask & RSCA::SystemFile))
         return suffix;
 
-#if !defined(COFFEE_GEKKO)
     auto paths = GetSystemPaths();
 
     auto urlPart = Path{suffix};
@@ -407,21 +401,11 @@ STATICINLINE std::string DereferencePath(std::string suffix, RSCA storageMask)
 #endif
         break;
     }
-    default: {
-        /* In this case, we have no preference. Default to asset. */
-        return {};
-    }
-    }
-    tempStore.flags |= storageMask & RSCA::NoDereference;
-    return *tempStore;
-#else
-    switch(storageMask & RSCA::StorageMask)
-    {
     default:
         Throw(undefined_behavior("failed to resolve path: " + suffix));
     }
-
-#endif
+    tempStore.flags |= storageMask & RSCA::NoDereference;
+    return *tempStore;
 }
 
 std::string Url::DereferenceLocalPath() const

@@ -25,6 +25,11 @@ if ! command -v xvfb-run >/dev/null 2>&1; then
 fi
 
 echo "::group::Dolphin run"
+DEFAULT_ISO_ARG=()
+if [ -n "${DVD_DIR:-}" ]; then
+    DEFAULT_ISO_ARG=(-C "Dolphin.Core.DefaultISO=${DVD_DIR}")
+fi
+
 # Enable dumping A/V
 # Enable memcard on slot A
 # Enable USB Gecko on slot B
@@ -46,6 +51,8 @@ setsid xvfb-run -a -s "-screen 0 640x480x24" \
     -C Logger.Logs.EXI=True \
     -C Logger.Logs.PowerPC=True \
     -C Logger.Logs.OSREPORT_HLE=True \
+    -C Logger.Logs.OSREPORT=True \
+    "${DEFAULT_ISO_ARG[@]}" \
     "${@}" &
 DOLPHIN_PGID=$!
 trap 'kill -KILL -"${DOLPHIN_PGID}" 2>/dev/null || true' EXIT
