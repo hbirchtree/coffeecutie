@@ -172,17 +172,27 @@ struct SoundSystem
                 }
             }
 
-            auto const [tag, props, heap] =
-                track.sounds.find(meta.active.role)->second;
-            auto const& bufs = track.buffers.find(meta.active.role)->second;
+            auto sounds_it = track.sounds.find(meta.active.role);
+            auto bufs_it   = track.buffers.find(meta.active.role);
+            if(sounds_it == track.sounds.end() ||
+               bufs_it == track.buffers.end())
+                continue;
+            auto const [tag, props, heap] = sounds_it->second;
+            auto const& bufs              = bufs_it->second;
 
             // TODO: Figure out pitch variation
             // Just use natural for now
+            if(meta.active.pitch >= bufs.size())
+                continue;
             auto const& pitch = bufs.at(meta.active.pitch);
-            if(pitch.permutations.empty())
+            if(pitch.permutations.empty() ||
+               meta.active.permutation >= pitch.permutations.size())
                 continue;
             auto const& current_buf =
                 pitch.permutations.at(meta.active.permutation);
+
+            if(!meta.source || !current_buf.buffer)
+                continue;
 
             // TODO: If memory is tight, stream audio here instead of preloading
             // cDebug(

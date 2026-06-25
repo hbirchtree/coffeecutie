@@ -1,4 +1,5 @@
 #include "peripherals/libc/types.h"
+#include "platforms/file.h"
 #include "types.h"
 #include <coffee/comp_app/dummy_plug.h>
 
@@ -538,9 +539,15 @@ void insert_dummy_plug(
                     end_time,
                     [&container, &counter]() {
                         auto window = container.service<Windowing>();
-                        container.service<comp_app::AppInfo>()->add(
-                            "run:totalFrames",
-                            std::to_string(counter.frame_counter));
+                        auto* appInfo = container.service<comp_app::AppInfo>();
+                        appInfo->add("run:totalFrames", std::to_string(counter.frame_counter));
+                        appInfo->add(
+                            "run:dummyPlug",
+                            platform::url::constructors::MkUrl(
+                                    platform::env::var("DUMMY_PLUG_CONFIG").value())
+                                .path()
+                                .fileBasename()
+                                .internUrl);
                         window->close();
                     })
                     .assume_value();

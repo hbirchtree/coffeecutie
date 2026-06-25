@@ -88,11 +88,12 @@ enum class game_difficulty_t : u16
  */
 enum class version_t : i32
 {
-    xbox = 5, /*!< The 2001 version of Halo: Combat Evolved for Xbox*/
-    pc   = 7, /*!< The 2004 version of Halo: Combat Evolved for PC*/
-    mcc  = 13,
+    xbox  = 5, /*!< The 2001 version of Halo: Combat Evolved for Xbox*/
+    trial = 6, /*!< The 2004 Halo: Combat Evoled Trial for PC */
+    pc    = 7, /*!< The 2004 version of Halo: Combat Evolved for PC*/
+    mcc   = 13,
 
-    custom_edition = 609,
+    custom_edition = 609, /*!< 2004 Halo: Combat Evolved Custom Edition for PC*/
 };
 
 using bl_rgba_t = typing::pixels::rgba_t;

@@ -37,6 +37,8 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
     out.bsp_magic   = bsp_magic;
     out.section_idx = next_section_idx++;
 
+    u32 const mcc_vert_base = bsp.to_bsp(bsp_magic).xbox_vertices.offset;
+
     if(!out.tag->valid())
         return {};
 
@@ -334,7 +336,10 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         auto light_bitm =
             bitm_cache.predict(section.lightmap_, lightmap.lightmap_idx);
 
-        auto materials = lightmap.materials.data(bsp_magic).value();
+        auto materials_r = lightmap.materials.data(bsp_magic);
+        if(materials_r.has_error())
+            return {};
+        auto materials = materials_r.value();
         out.groups.emplace_back();
         auto& group = out.groups.back();
 
@@ -343,8 +348,30 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             auto shader    = shader_cache.predict(mat.shader);
             auto vertex_id = lightmap.lightmap_idx |
                              (static_cast<u64>(mat.shader.tag_id) << 32);
-            auto vertices       = mat.vertices().data(bsp_magic).value();
-            auto light_vertices = mat.light_verts().data(bsp_magic).value();
+
+            blam::reference<libc_types::byte_t, blam::xbox_t> vref{}, lref{};
+            blam::map_ptr vmag = bsp_magic;
+            if constexpr(std::is_same_v<V, blam::mcc_version_t>)
+            {
+                using lv    = blam::bsp::material::pc_light_vertex;
+                u32 vsz     = mat.pc.count * mat.vertex_size();
+                u32 vend    = mat.pc.padding2[0];
+                vref.count  = vsz;
+                vref.offset = mcc_vert_base + vend - vsz;
+                lref.count  = mat.pc.count * sizeof(lv);
+                lref.offset = mcc_vert_base + vend;
+                vmag        = vertex_magic;
+            } else
+            {
+                vref = mat.vertices();
+                lref = mat.light_verts();
+            }
+            auto vr = vref.data(vmag);
+            auto lr = lref.data(vmag);
+            if(!vr.has_value() || !lr.has_value())
+                continue;
+            auto vertices       = vr.value();
+            auto light_vertices = lr.value();
 
             vertex_ranges[vertex_id] = {vert_ptr, vertices.size()};
             index_ranges[vertex_id] = {mat.surfaces.count, mat.surfaces.offset};

@@ -52,6 +52,14 @@ struct mcc_version_t
     static constexpr auto version_v = version_t::mcc;
 };
 
+struct trial_version_t
+{
+    using bytecode_type      = hsc::bc::v2;
+    using bytecode_pointer_t = hsc::bytecode_pointer<bytecode_type>;
+
+    static constexpr auto version_v = version_t::mcc;
+};
+
 template<typename T>
 concept is_game_version = stl_types::
     is_any_of<T, xbox_version_t, pc_version_t, custom_version_t, mcc_version_t>;
