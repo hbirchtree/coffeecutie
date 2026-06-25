@@ -1015,6 +1015,34 @@ def print_config_list(config):
         print(f"  {name:<{name_w}}  {'  '.join(parts)}")
 
 
+def _linux_list_hwmon(cmd_prefix):
+    health_cmd = 'grep . /sys/class/hwmon/*/name /sys/class/hwmon/*/temp*_input'
+    health_res = subprocess.run(
+        [*cmd_prefix, health_cmd],
+        capture_output=True, text=True, timeout=10
+    )
+    health = health_res.stdout.strip().splitlines()
+    health = [x[len('/sys/class/hwmon/'):] for x in health]
+    health_bucket = defaultdict(list)
+    for stat in health:
+        sensor, data = stat.split('/')
+        health_bucket[sensor].append(data)
+    health = {}
+    for sensor, data in health_bucket.items():
+        name = None
+        values = []
+        for prop in data:
+            key, value = prop.split(':')
+            if key == 'name':
+                name = value
+            else:
+                values.append(value)
+        if len(values) == 0:
+            continue
+        health[name] = values
+    return health
+
+
 def check_ssh(hostname):
     if not hostname:
         return False, None, None, None
@@ -1026,40 +1054,18 @@ def check_ssh(hostname):
              '-o', 'StrictHostKeyChecking=accept-new', hostname, cmd],
             capture_output=True, text=True, timeout=10
         )
-        health_cmd = 'grep . /sys/class/hwmon/*/name /sys/class/hwmon/*/temp*_input'
-        health_res = subprocess.run(
-            ['ssh', '-o', 'ConnectTimeout=5', '-o', 'BatchMode=yes',
-             '-o', 'StrictHostKeyChecking=accept-new', hostname, health_cmd],
-            capture_output=True, text=True, timeout=10
-        )
         if res.returncode == 0:
             lines = res.stdout.strip().splitlines()
             arch = lines[0] if len(lines) > 0 else None
             kernel = lines[1] if len(lines) > 1 else None
             distro = lines[2] if len(lines) > 2 else ""
-            health = health_res.stdout.strip().splitlines()
-            health = [x[len('/sys/class/hwmon/'):] for x in health]
-            health_bucket = defaultdict(list)
-            for stat in health:
-                sensor, data = stat.split('/')
-                health_bucket[sensor].append(data)
-            health = {}
-            for sensor, data in health_bucket.items():
-                name = None
-                values = []
-                for prop in data:
-                    key, value = prop.split(':')
-                    if key == 'name':
-                        name = value
-                    else:
-                        values.append(value)
-                if len(values) == 0:
-                    continue
-                health[name] = values
+            health = _linux_list_hwmon(
+                ['ssh', '-o', 'ConnectTimeout=5', '-o', 'BatchMode=yes',
+                 '-o', 'StrictHostKeyChecking=accept-new', hostname])
             
             # Use distro description if available, otherwise kernel version
             version = distro if distro else kernel
-            return True, arch, version, health if health else None
+            return True, arch, version, health
         return False, None, None, None
     except (subprocess.TimeoutExpired, OSError):
         return False, None, None, None
@@ -1068,7 +1074,10 @@ def check_ssh(hostname):
 def check_adb(hostname):
     # If hostname is IP:PORT, try connect first
     if hostname and ':' in hostname:
-        subprocess.run(['adb', 'connect', hostname], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=2)
+        try:
+            subprocess.run(['adb', 'connect', hostname], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=2)
+        except (subprocess.TimeoutExpired, OSError):
+            return False, None, None, None
 
     cmd = ['adb']
     if hostname:
@@ -1083,10 +1092,11 @@ def check_adb(hostname):
             arch = lines[0] if len(lines) > 0 else None
             ver = lines[1] if len(lines) > 1 else "?"
             api = lines[2] if len(lines) > 2 else "?"
-            return True, arch, f"Android {ver} (API {api})"
-        return False, None, None
+            health = _linux_list_hwmon(['adb', '-s', hostname, 'shell'])
+            return True, arch, f"Android {ver} (API {api})", health
+        return False, None, None, None
     except (subprocess.TimeoutExpired, OSError):
-        return False, None, None
+        return False, None, None, None
 
 
 def check_docker(image=None):
@@ -1105,8 +1115,8 @@ def check_docker(image=None):
                 capture_output=True, text=True, timeout=2
             )
             if res.returncode != 0:
-                return "image_missing", None, server_ver
-            return True, res.stdout.strip(), server_ver
+                return "image_missing", None, f'Docker {server_ver}'
+            return True, res.stdout.strip(), f'Docker {server_ver}'
 
         return True, None, server_ver
     except (subprocess.TimeoutExpired, OSError):
@@ -1117,10 +1127,25 @@ def check_web():
     try:
         res = subprocess.run(['node', '--version'], capture_output=True, text=True, timeout=2)
         if res.returncode == 0:
-            return True, "x86_64", res.stdout.strip() # Web is local-headless, assume host arch
+            return True, "x86_64", f'Node {res.stdout.strip()}' # Web is local-headless, assume host arch
         return False, None, None
     except (subprocess.TimeoutExpired, OSError):
         return False, None, None
+
+
+def check_dolphin():
+    src_dir = os.path.dirname(__file__)
+    if not os.path.exists(f'{src_dir}/multi_build/runtime/dolphin/bin/dolphin-emu-nogui-'):
+        return 'not_built', None, None, 'Build with .github/tests/dolphin/build.sh'
+    try:
+        res = subprocess.run(
+            [f'{src_dir}/multi_build/runtime/dolphin/bin/dolphin-emu-nogui', '--version'],
+            capture_output=True,
+            text=True,
+            timeout=2)
+        return True, None, res.stdout.strip(), None
+    except (subprocess.TimeoutExpired, OSError):
+        return 'broken', None, None, 'Version check failed'
 
 
 def run_connectivity_check(config):
@@ -1148,12 +1173,16 @@ def run_connectivity_check(config):
         if dev_type == 'linux':
             status, actual_arch, version, health = check_ssh(hostname)
         elif dev_type == 'android':
-            status, actual_arch, version = check_adb(hostname)
+            status, actual_arch, version, health = check_adb(hostname)
         elif dev_type == 'docker':
             hostname = device.get('image', '')
             status, actual_arch, version = check_docker(hostname)
         elif dev_type == 'web':
             status, actual_arch, version = check_web()
+            expected_arch = expected_arch.split('-')[0]
+            actual_arch = expected_arch
+        elif dev_type == 'dolphin':
+            status, actual_arch, version, health = check_dolphin()
             expected_arch = expected_arch.split('-')[0]
             actual_arch = expected_arch
 
@@ -1174,9 +1203,9 @@ def run_connectivity_check(config):
 
     print(f"{' ':1}  {'NAME':<{name_w}}  {'HOSTNAME/IMAGE':<{host_w}}  {'REMOTE ARCH':<{arch_w}}  {'VERSION':<{vers_w}}  HEALTH")
     for name, host, expected, status, actual, version, health in results:
-        if status == "no_hostname":
+        if status == "no_hostname" or status == 'not_built':
             icon = "×"
-        elif status == "image_missing":
+        elif status == "image_missing" or status == 'broken':
             icon = "◑"
         elif status is True:
             icon = "●"
@@ -1215,6 +1244,8 @@ def run_connectivity_check(config):
         health_str = None
         if health is None:
             health_str = '-'
+        elif type(health) is str:
+            health_str = health
         elif len(health) == 1:
             health_str = f'thermal={float([v for _, v in health.items()][0][0]) / 1000}'
         else:
