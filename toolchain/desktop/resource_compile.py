@@ -432,20 +432,6 @@ def copy_files(
         submit(copyfile, f'{root_directory}/{file}', f'{out_directory}/{file}')
 
 
-# devkitPro gxtexconv texture format names -> colfmt index (see `gxtexconv`
-# usage). CMPR is the GX block-compressed (S3TC/DXT1-like) 4bpp format.
-GX_TEX_FORMATS = {
-    'I4':     0,
-    'I8':     1,
-    'IA4':    2,
-    'IA8':    3,
-    'RGB565': 4,
-    'RGB5A3': 5,
-    'RGBA8':  6,
-    'CI4':    8,
-    'CI8':    9,
-    'CMPR':  14,
-}
 
 
 def _infer_gx_format(formats: list):
@@ -465,6 +451,31 @@ def _process_gx_texture(
         root_directory: str,
         out_directory: str,
         extra_dependencies: list):
+    # devkitPro gxtexconv texture format names -> colfmt index (see `gxtexconv`
+    # usage). CMPR is the GX block-compressed (S3TC/DXT1-like) 4bpp format.
+    GX_TEX_FORMATS = {
+        'I4':     0,
+        'I8':     1,
+        'IA4':    2,
+        'IA8':    3,
+        'RGB565': 4,
+        'RGB5A3': 5,
+        'RGBA8':  6,
+        'CI4':    8,
+        'CI8':    9,
+        'CMPR':  14,
+    }
+    GX_TEX_LIMITS = {
+        'I4':     1024,
+        'I8':     1024,
+        'IA4':    1024,
+        'IA8':     512,
+        'RGB565':  512,
+        'RGB5A3':  512,
+        'CI4':    1024,
+        'CI8':     512,
+        'CMPR':   1024,
+    }
     """Convert one regular texture entry to a GameCube/Wii .tpl via gxtexconv.
     SVG sources are rasterized with Inkscape first (as on the desktop path)."""
     source = entry['source']
@@ -484,6 +495,9 @@ def _process_gx_texture(
 
     mipmap_range = entry.get('mipmap_range', [0, 0])
     max_res = mipmap_range[0] if mipmap_range else 0
+    fmt_limit = GX_TEX_LIMITS.get(fmt_name) or 0
+    if max_res > fmt_limit:
+        max_res = fmt_limit
     rendered = src_file
     if extension == 'svg':
         rendered = f'{cache_directory}/{basename}.png'
