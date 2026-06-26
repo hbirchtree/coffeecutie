@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Report Browser</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -119,6 +120,31 @@ body.win98 .limits-row { border-bottom: 1px solid #d0d0d0; }
 body.win98 .limits-k { color: #444; }
 body.win98 .limits-v { color: #000; }
 body.win98 #loading { background: rgba(192, 192, 192, 0.8); color: #000; font-weight: bold; }
+/* ── Mobile / narrow viewport ── */
+@media (max-width:720px){
+  #toolbar{flex-wrap:nowrap;gap:4px;padding:5px 8px}
+  #status{display:none}
+  #tabs{margin-left:0;flex:1;min-width:0;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
+  #tabs::-webkit-scrollbar{height:0}
+  .tab{flex:0 0 auto;white-space:nowrap}
+  /* Stack list above detail; selection lives in the detail pane below */
+  .tab-panel{flex-direction:column}
+  .list-pane{width:100%!important;flex:0 0 auto;max-height:45vh;border-bottom:1px solid #3a3a3a}
+  .resize-handle{display:none}
+  .detail-pane{flex:1 1 auto;-webkit-overflow-scrolling:touch;user-select:text}
+  .detail-header{word-break:break-word}
+  /* Extension bars: let the name flex instead of a fixed 300px column */
+  .ext-name{width:auto;flex:1 1 auto;min-width:0}
+  .ext-bar{max-width:35vw}
+  /* Tighten label/value grids so values aren't squeezed off-screen */
+  .det-row{grid-template-columns:108px 1fr}
+  .limits-row{grid-template-columns:130px 1fr}
+  .jkv{grid-template-columns:90px 1fr}
+  #ext-tip{max-width:88vw!important}
+}
+@media (max-width:720px) and (orientation:landscape){
+  .list-pane{max-height:60vh}
+}
 </style>
 </head>
 <body>
@@ -207,6 +233,7 @@ body.win98 #loading { background: rgba(192, 192, 192, 0.8); color: #000; font-we
   </div>
 </div>
 <div id="loading">Loading…</div>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
 <script>
 'use strict';
 if (new URLSearchParams(location.search).get('theme') === 'win98') document.body.classList.add('win98');
@@ -837,6 +864,7 @@ function renderEGLExtensions(){
   detail.innerHTML=html;
   document.getElementById('egl-ext-search').addEventListener('input',applyEGLExtensionFilters);
   document.getElementById('egl-device-filter').addEventListener('change',applyEGLExtensionFilters);
+  bindExtHover('detail-egl-extensions','egl');
 }
 
 function applyEGLExtensionFilters(){
@@ -900,6 +928,7 @@ function renderGPUExtensions(){
   detail.innerHTML=html;
   document.getElementById('ext-search').addEventListener('input',applyExtensionFilters);
   document.getElementById('ext-gpu-filter').addEventListener('change',applyExtensionFilters);
+  bindExtHover('detail-gpu-extensions','gl');
 }
 
 function copyGpuOptions() {
@@ -1027,6 +1056,112 @@ function applyExtensionFilters(){
   });
 }
 
+// ── Extension hover: list supporting GPUs/devices ─────────────────────────────
+function ensureExtTip(){
+  let tip=document.getElementById('ext-tip');
+  if(!tip){
+    tip=document.createElement('div');
+    tip.id='ext-tip';
+    tip.style.cssText='position:fixed;pointer-events:none;display:none;z-index:120;'+
+      'padding:7px 10px;border-radius:4px;font:11px ui-monospace,monospace;line-height:1.5;'+
+      'max-width:380px;max-height:60vh;overflow:hidden;word-break:break-all';
+    document.body.appendChild(tip);
+  }
+  if(document.body.classList.contains('win98')){
+    tip.style.background='#ffffe1'; tip.style.color='#000'; tip.style.border='1px solid #000';
+  } else {
+    tip.style.background='rgba(20,20,20,.96)'; tip.style.color='#ddd'; tip.style.border='1px solid #444';
+  }
+  return tip;
+}
+
+// kind: 'gl' (uses gl:extensions, partitioned by context) or 'egl' (egl:extensions)
+function extSupporters(name, kind, ctx){
+  const out=[];
+  for(const g of DATA.gpus){
+    const ex=g.machine?.extra||{};
+    const exts=kind==='egl'?ex['egl:extensions']:ex['gl:extensions'];
+    if(!Array.isArray(exts)||!exts.includes(name)) continue;
+    if(kind==='gl'&&ctx){ const api=ex['gl:api']; if(api&&!apiMatchesContext(api,ctx)) continue; }
+    out.push({label:gpuLabel(g),id:g.id,api:kind==='egl'?(ex['egl:vendor']||''):(ex['gl:api']||'')});
+  }
+  out.sort((a,b)=>a.label.localeCompare(b.label));
+  return out;
+}
+
+function bindExtHover(paneId, kind){
+  const pane=document.getElementById(paneId);
+  if(!pane||pane._extHoverBound) return;
+  pane._extHoverBound=true;
+  const place=(tip,e)=>{
+    const tw=tip.offsetWidth, th=tip.offsetHeight;
+    const flip=e.clientX+16+tw>window.innerWidth;
+    tip.style.left=(flip?Math.max(4,e.clientX-16-tw):e.clientX+16)+'px';
+    tip.style.top=Math.max(4,Math.min(e.clientY+14, window.innerHeight-th-8))+'px';
+  };
+  const show=(row,e)=>{
+    const name=row.dataset.name;
+    let ctx=null;
+    if(kind==='gl'){
+      let el=row.previousElementSibling;
+      while(el&&!el.classList.contains('ext-ctx-head')) el=el.previousElementSibling;
+      ctx=el?el.dataset.ctx:null;
+    }
+    const sup=extSupporters(name,kind,ctx);
+    const cap=40, shown=sup.slice(0,cap);
+    const rows=shown.map(s=>
+      `<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">`+
+      `${esc(s.label)} <span style="color:#888">#${s.id}${s.api?' · '+esc(s.api):''}</span></div>`
+    ).join('')+(sup.length>cap?`<div style="color:#888">+${sup.length-cap} more…</div>`:'');
+    const tip=ensureExtTip();
+    tip.innerHTML=
+      `<div style="color:#9cdcfe;font-weight:bold;margin-bottom:3px">${esc(name)}</div>`+
+      `<div style="color:#b5cea8;margin-bottom:4px">${sup.length} GPU${sup.length!==1?'s':''}/device${sup.length!==1?'s':''}</div>`+
+      (rows||'<div style="color:#888">—</div>');
+    tip.style.display='block';
+    place(tip,e);
+    pane._tipRow=row;
+  };
+  pane.addEventListener('mouseover',e=>{
+    const row=e.target.closest('.ext-bar-row');
+    if(!row||!pane.contains(row)) return;
+    show(row,e);
+  });
+  pane.addEventListener('mousemove',e=>{
+    const tip=document.getElementById('ext-tip');
+    if(tip&&tip.style.display==='block') place(tip,e);
+  });
+  pane.addEventListener('mouseout',e=>{
+    const row=e.target.closest('.ext-bar-row');
+    if(!row) return;
+    const to=e.relatedTarget;
+    if(to&&row.contains(to)) return;          // moving within same row
+    if(to&&to.closest&&to.closest('.ext-bar-row')) return; // entering another row → mouseover refreshes
+    const tip=document.getElementById('ext-tip');
+    if(tip) tip.style.display='none';
+  });
+  // Touch / tap: toggle the supporter list (no hover on touch devices)
+  pane.addEventListener('pointerup',e=>{
+    if(e.pointerType!=='touch'&&e.pointerType!=='pen') return; // mouse uses hover
+    if(e.target.closest('a')) return;         // let registry links work
+    const row=e.target.closest('.ext-bar-row');
+    if(!row) return;
+    const tip=document.getElementById('ext-tip');
+    if(tip&&tip.style.display==='block'&&pane._tipRow===row){ tip.style.display='none'; pane._tipRow=null; }
+    else show(row,e);
+  });
+  // Tap elsewhere dismisses (bound once globally)
+  if(!window._extDismissBound){
+    window._extDismissBound=true;
+    document.addEventListener('click',ev=>{
+      const tip=document.getElementById('ext-tip');
+      if(!tip||tip.style.display!=='block') return;
+      if(ev.target.closest('.ext-bar-row')) return;
+      tip.style.display='none';
+    });
+  }
+}
+
 function filterByAttrs(itemsSelector, filters){
   document.querySelectorAll(itemsSelector).forEach(el=>{
     el.style.display=filters.every(([val,attr])=>!val||(attr?el.dataset[attr]===val:el.dataset.title.includes(val)))?'':'none';
@@ -1075,11 +1210,7 @@ function filterListPane(itemsId, query){
 // ── GPU Limits Visualization ──────────────────────────────────────────────────
 const VIZ_UNLIMITED = 2147483647;
 const VIZ_CATS = ['buffers','draws','shaders','textures','all'];
-const VIZ_ROW_H = 26;
-const VIZ_LABEL_W = 230;
-const VIZ_PAD_T = 20;
-const VIZ_PAD_B = 8;
-const VIZ_PAD_R = 36;
+const VIZ_ROW_H = 24;
 let vizDrawAll = null;
 
 function vizStats(vals){
@@ -1101,9 +1232,19 @@ function fmtLimitVal(v){
 
 function renderGPULimitsViz(){
   const panel=document.getElementById('detail-gpu-viz');
+
+  // Dispose any previously created ECharts instances
+  if(window._vizCharts){ window._vizCharts.forEach(c=>{ try{c.dispose();}catch(e){} }); }
+  window._vizCharts=[];
+
   const gpuEntries=Object.entries(DATA.gpuLimits);
   if(!gpuEntries.length){
     panel.innerHTML='<div class="detail-empty">No GPU limits data</div>';
+    vizDrawAll=null;
+    return;
+  }
+  if(typeof echarts==='undefined'){
+    panel.innerHTML='<div class="detail-empty">ECharts library failed to load (offline?)</div>';
     vizDrawAll=null;
     return;
   }
@@ -1126,177 +1267,148 @@ function renderGPULimitsViz(){
     sections.push({cat,rows});
   }
 
-  // Build HTML
-  let html='';
-  for(const sec of sections){
-    const h=VIZ_PAD_T+sec.rows.length*VIZ_ROW_H+VIZ_PAD_B;
-    html+=`<div class="viz-section">
-      <div class="viz-cat-head">${esc(sec.cat)} <span style="font-weight:normal;color:#888">(${sec.rows.length} metrics · ${gpuEntries.length} GPU${gpuEntries.length!==1?'s':''})</span></div>
-      <canvas class="viz-canvas" data-cat="${esc(sec.cat)}" data-lh="${h}"></canvas>
-    </div>`;
-  }
-  panel.innerHTML=html;
-
-  const sectionMap=Object.fromEntries(sections.map(s=>[s.cat,s]));
-  const canvases=[...panel.querySelectorAll('.viz-canvas')];
-
-  function drawAll(){
-    const dpr=window.devicePixelRatio||1;
-    for(const cv of canvases){
-      const sec=sectionMap[cv.dataset.cat];
-      if(!sec) continue;
-      const W=cv.parentElement.clientWidth;
-      if(!W) continue;
-      const H=Number(cv.dataset.lh);
-      cv.width=Math.round(W*dpr);
-      cv.height=Math.round(H*dpr);
-      cv.style.width=W+'px';
-      cv.style.height=H+'px';
-      const ctx=cv.getContext('2d');
-      ctx.setTransform(dpr,0,0,dpr,0,0);
-      drawVizSection(ctx,W,H,sec);
-    }
-  }
-  vizDrawAll=drawAll;
-
-  // Tooltip
-  let tip=document.getElementById('viz-tip');
-  if(!tip){
-    tip=document.createElement('div');
-    tip.id='viz-tip';
-    tip.style.cssText='position:fixed;background:rgba(20,20,20,.95);color:#ddd;padding:6px 9px;border-radius:4px;font:11px ui-monospace,monospace;pointer-events:none;display:none;z-index:100;border:1px solid #444;line-height:1.6;max-width:380px;word-break:break-all';
-    document.body.appendChild(tip);
-  }
-  for(const cv of canvases){
-    cv.addEventListener('mousemove',e=>{
-      const sec=sectionMap[cv.dataset.cat];
-      if(!sec) return;
-      const rect=cv.getBoundingClientRect();
-      const mx=e.clientX-rect.left, my=e.clientY-rect.top;
-      const W=cv.clientWidth, plotW=W-VIZ_LABEL_W-VIZ_PAD_R;
-      const ri=Math.floor((my-VIZ_PAD_T)/VIZ_ROW_H);
-      if(ri<0||ri>=sec.rows.length){tip.style.display='none';return;}
-      const row=sec.rows[ri];
-      const maxV=row.bounded.length?Math.max(...row.bounded):0;
-      const toX=v=>(v>=VIZ_UNLIMITED||v===-1)?VIZ_LABEL_W+plotW+8:VIZ_LABEL_W+(maxV>0?(v/maxV)*plotW:0);
-      let closest=null,best=14;
-      for(const pt of row.pts){ const d=Math.abs(mx-toX(pt.value)); if(d<best){best=d;closest=pt;} }
-      if(closest){
-        tip.innerHTML=`<strong style="color:#fff">${esc(row.metric)}</strong><br><span style="color:#888;font-size:10px">${esc(closest.name)}</span><br><span style="color:#b5cea8">${fmtLimitVal(closest.value)}</span>`;
-        tip.style.display='block';
-        const tw=tip.offsetWidth;
-        const flipped=e.clientX+14+tw>window.innerWidth;
-        tip.style.left=(flipped?e.clientX-14-tw:e.clientX+14)+'px';
-        tip.style.top=(e.clientY-10)+'px';
-      } else { tip.style.display='none'; }
-    });
-    cv.addEventListener('mouseleave',()=>{tip.style.display='none';});
-  }
-
-  if(window._vizRO) window._vizRO.disconnect();
-  const ro=new ResizeObserver(drawAll);
-  for(const cv of canvases) ro.observe(cv.parentElement);
-  window._vizRO=ro;
-  drawAll();
-}
-
-function drawVizSection(ctx,W,H,sec){
-  const plotW=W-VIZ_LABEL_W-VIZ_PAD_R;
   const isWin98=document.body.classList.contains('win98');
-  const colors = isWin98 ? {
-    divider: '#888',
-    rowSep: '#d0d0d0',
-    label: '#000',
-    muted: '#444',
-    boxBg: 'rgba(0,0,128,0.1)',
-    boxStroke: '#000080',
-    median: '#0000ff',
-    whisker: '#444',
-    point: 'rgba(0,0,128,0.6)'
+  const C = isWin98 ? {
+    label:'#000', muted:'#555', boxBg:'rgba(0,0,128,0.12)', boxStroke:'#000080',
+    median:'#0000ff', point:'#000080', split:'#e0e0e0', tipBg:'#fff', tipText:'#000', tipBorder:'#888'
   } : {
-    divider: '#555',
-    rowSep: '#2d2d2d',
-    label: '#bbb',
-    muted: '#666',
-    boxBg: 'rgba(14,99,156,0.22)',
-    boxStroke: '#1177bb',
-    median: '#4fc3f7',
-    whisker: '#777',
-    point: 'rgba(79,195,247,0.65)'
+    label:'#bbb', muted:'#888', boxBg:'rgba(14,99,156,0.30)', boxStroke:'#1177bb',
+    median:'#7fd3ff', point:'#4fc3f7', split:'#2d2d2d', tipBg:'rgba(20,20,20,.95)', tipText:'#ddd', tipBorder:'#444'
   };
 
-  ctx.clearRect(0,0,W,H);
+  panel.innerHTML='';
 
-  // Vertical divider
-  ctx.strokeStyle=colors.divider; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(VIZ_LABEL_W,0); ctx.lineTo(VIZ_LABEL_W,H); ctx.stroke();
+  // Narrow viewports get a tighter label gutter so the plot keeps usable width.
+  const vizW=panel.clientWidth||window.innerWidth;
+  const VIZ_LEFT=vizW<560?112:232;
 
-  sec.rows.forEach((row,i)=>{
-    const y=VIZ_PAD_T+i*VIZ_ROW_H;
-    const cy=y+VIZ_ROW_H/2;
-    const maxV=row.bounded.length?Math.max(...row.bounded):0;
-    const toX=v=>(v>=VIZ_UNLIMITED||v===-1)?VIZ_LABEL_W+plotW+12:VIZ_LABEL_W+(maxV>0?(v/maxV)*plotW:2);
+  for(const sec of sections){
+    const wrap=document.createElement('div');
+    wrap.className='viz-section';
+    const head=document.createElement('div');
+    head.className='viz-cat-head';
+    head.innerHTML=`${esc(sec.cat)} <span style="font-weight:normal;color:#888">(${sec.rows.length} metrics · ${gpuEntries.length} GPU${gpuEntries.length!==1?'s':''})</span>`;
+    const chartDiv=document.createElement('div');
+    chartDiv.style.width='100%';
+    chartDiv.style.height=(sec.rows.length*VIZ_ROW_H+44)+'px';
+    wrap.appendChild(head);
+    wrap.appendChild(chartDiv);
+    panel.appendChild(wrap);
 
-    // Row separator
-    if(i>0){
-      ctx.strokeStyle=colors.rowSep; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(VIZ_LABEL_W,y); ctx.lineTo(W,y); ctx.stroke();
-    }
-
-    // Metric label
-    ctx.fillStyle=colors.label; ctx.font='10px ui-monospace,monospace';
-    ctx.textBaseline='middle'; ctx.textAlign='right';
-    ctx.fillText(row.metric,VIZ_LABEL_W-8,cy);
-
-    // All-zeros case
-    if(!maxV&&!row.pts.some(p=>p.value>=VIZ_UNLIMITED||p.value===-1)){
-      ctx.fillStyle=colors.muted; ctx.font='9px ui-monospace,monospace';
-      ctx.textAlign='left'; ctx.textBaseline='middle';
-      ctx.fillText('0',VIZ_LABEL_W+6,cy);
-      return;
-    }
-
-    // Max value label at right edge
-    if(maxV>0){
-      ctx.fillStyle=colors.muted; ctx.font='9px ui-monospace,monospace';
-      ctx.textAlign='right'; ctx.textBaseline='top';
-      ctx.fillText(fmtLimitVal(maxV),VIZ_LABEL_W+plotW,y+1);
-    }
-
-    // Box plot (2+ bounded values)
-    const {stats}=row;
-    if(stats&&row.bounded.length>=2){
-      const x1=toX(stats.q1), x2=toX(stats.q3), xm=toX(stats.med);
-      const xmin=toX(stats.min), xmx=toX(Math.min(stats.max,maxV));
-      const bh=9;
-
-      ctx.fillStyle=colors.boxBg;
-      ctx.fillRect(x1,cy-bh/2,Math.max(1,x2-x1),bh);
-      ctx.strokeStyle=colors.boxStroke; ctx.lineWidth=1;
-      ctx.strokeRect(x1,cy-bh/2,Math.max(1,x2-x1),bh);
-
-      ctx.strokeStyle=colors.median; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.moveTo(xm,cy-bh/2); ctx.lineTo(xm,cy+bh/2); ctx.stroke();
-
-      ctx.strokeStyle=colors.whisker; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(xmin,cy); ctx.lineTo(x1,cy); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(xmin,cy-3); ctx.lineTo(xmin,cy+3); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x2,cy); ctx.lineTo(xmx,cy); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(xmx,cy-3); ctx.lineTo(xmx,cy+3); ctx.stroke();
-    }
-
-    // Individual data points
-    for(const pt of row.pts){
-      if(pt.value>=VIZ_UNLIMITED||pt.value===-1){
-        ctx.fillStyle=colors.muted; ctx.font='bold 10px ui-monospace,monospace';
-        ctx.textAlign='left'; ctx.textBaseline='middle';
-        ctx.fillText('∞',VIZ_LABEL_W+plotW+4,cy);
-      } else {
-        ctx.fillStyle=colors.point;
-        ctx.beginPath(); ctx.arc(toX(pt.value),cy,3,0,Math.PI*2); ctx.fill();
+    // Each metric is normalized to its own max so wildly-different scales
+    // share a single plot, mirroring the original per-row layout.
+    const metrics=sec.rows.map(r=>r.metric);
+    const realStats=sec.rows.map(r=>r.stats);
+    // bellInfo[i]: normalized landmarks for a Gaussian centered on the median,
+    // with σ=(max-min)/6 so min/max sit ~±3σ at the tails.
+    const bellInfo=[], pointData=[], sentinelData=[], maxLabelData=[];
+    sec.rows.forEach((row,i)=>{
+      const maxV=row.bounded.length?Math.max(...row.bounded):0;
+      const norm=v=>maxV>0?Math.max(0,Math.min(1,v/maxV)):0;
+      const s=row.stats;
+      if(s&&row.bounded.length>=2){
+        const minN=norm(s.min), medN=norm(s.med), maxN=norm(Math.min(s.max,maxV));
+        bellInfo.push({has:true,minN,medN,maxN,sigmaN:Math.max(0.02,(maxN-minN)/6)});
+      } else bellInfo.push({has:false,medN:0});
+      for(const pt of row.pts){
+        if(pt.value>=VIZ_UNLIMITED||pt.value===-1){
+          sentinelData.push({value:[1.10,i],real:pt.value,gpu:pt.name,metric:row.metric});
+        } else {
+          pointData.push({value:[norm(pt.value),i],real:pt.value,gpu:pt.name,metric:row.metric});
+        }
       }
-    }
-  });
+      maxLabelData.push({value:[maxV>0?1.0:0.0,i],real:maxV,hasMax:maxV>0});
+    });
+    const bellData=bellInfo.map((b,i)=>({value:[b.medN,i]}));
+
+    const chart=echarts.init(chartDiv,null,{renderer:'canvas'});
+    chart.setOption({
+      animation:false,
+      grid:{left:VIZ_LEFT,right:18,top:8,bottom:10,containLabel:false},
+      tooltip:{
+        trigger:'item',confine:true,
+        backgroundColor:C.tipBg,borderColor:C.tipBorder,
+        textStyle:{color:C.tipText,fontFamily:'ui-monospace,monospace',fontSize:11},
+        formatter:function(p){
+          if(p.seriesName==='max') return '';
+          if(p.seriesName==='points'||p.seriesName==='inf'){
+            return `<strong>${esc(p.data.metric)}</strong><br>`+
+              `<span style="color:#888;font-size:10px">${esc(p.data.gpu)}</span><br>`+
+              `<span style="color:#b5cea8">${fmtLimitVal(p.data.real)}</span>`;
+          }
+          if(p.seriesName==='bell'){
+            const s=realStats[p.dataIndex];
+            if(!s) return '';
+            return `<strong>${esc(metrics[p.dataIndex])}</strong><br>`+
+              `<span style="color:#b5cea8">min ${fmtLimitVal(s.min)} · `+
+              `med ${fmtLimitVal(s.med)} · max ${fmtLimitVal(s.max)}</span>`+
+              `<br><span style="color:#888;font-size:10px">n=${s.n}</span>`;
+          }
+          return '';
+        }
+      },
+      xAxis:{type:'value',min:0,max:1.22,show:false},
+      yAxis:{
+        type:'category',data:metrics,inverse:true,
+        axisTick:{show:false},
+        axisLine:{lineStyle:{color:C.split}},
+        splitLine:{show:true,lineStyle:{color:C.split,type:'dashed'}},
+        axisLabel:{color:C.label,fontFamily:'ui-monospace,monospace',fontSize:vizW<560?9:10,
+          align:'right',margin:8,width:VIZ_LEFT-10,overflow:'truncate'}
+      },
+      series:[
+        {name:'bell',type:'custom',data:bellData,z:2,
+          renderItem:function(params,api){
+            const di=params.dataIndex, info=bellInfo[di];
+            if(!info||!info.has) return;
+            const cy=api.coord([0,di])[1];
+            const bandH=api.size([0,1])[1];
+            const amp=bandH*0.46, baseY=cy;
+            const xpx=xN=>api.coord([xN,di])[0];
+            const N=40, top=[];
+            for(let k=0;k<=N;k++){
+              const xN=k/N;
+              const g=Math.exp(-0.5*Math.pow((xN-info.medN)/info.sigmaN,2));
+              top.push([xpx(xN),baseY-g*amp]);
+            }
+            const x0=xpx(0), x1=xpx(1), xMed=xpx(info.medN), xMin=xpx(info.minN);
+            return {type:'group',children:[
+              {type:'polygon',shape:{points:top.concat([[x1,baseY],[x0,baseY]])},
+                style:{fill:C.boxBg}},
+              {type:'polyline',shape:{points:top},
+                style:{stroke:C.boxStroke,lineWidth:1.5,fill:'none'},silent:true},
+              {type:'line',shape:{x1:x0,y1:baseY,x2:x1,y2:baseY},
+                style:{stroke:C.muted,lineWidth:1},silent:true},
+              {type:'line',shape:{x1:xMed,y1:baseY,x2:xMed,y2:baseY-amp},
+                style:{stroke:C.median,lineWidth:2},silent:true},
+              {type:'line',shape:{x1:xMin,y1:baseY-5,x2:xMin,y2:baseY+5},
+                style:{stroke:C.boxStroke,lineWidth:1.5},silent:true},
+              {type:'line',shape:{x1:x1,y1:baseY-5,x2:x1,y2:baseY+5},
+                style:{stroke:C.boxStroke,lineWidth:1.5},silent:true}
+            ]};
+          }},
+        {name:'points',type:'scatter',data:pointData,symbolSize:7,z:3,
+          itemStyle:{color:C.point,opacity:0.8,borderColor:C.boxStroke,borderWidth:0.5}},
+        {name:'inf',type:'scatter',data:sentinelData,symbolSize:1,z:3,
+          label:{show:true,color:C.muted,fontWeight:'bold',fontSize:11,
+            formatter:p=>p.data.real===-1?'—':'∞'}},
+        {name:'max',type:'scatter',data:maxLabelData,symbolSize:1,z:1,silent:true,
+          label:{show:true,position:'right',color:C.muted,fontSize:9,
+            fontFamily:'ui-monospace,monospace',
+            formatter:p=>p.data.hasMax?fmtLimitVal(p.data.real):'0'}}
+      ]
+    });
+    window._vizCharts.push(chart);
+  }
+
+  // ECharts charts in a hidden tab init at 0px; resize when the tab is shown.
+  vizDrawAll=()=>window._vizCharts.forEach(c=>{ try{c.resize();}catch(e){} });
+
+  if(!window._vizResizeBound){
+    window.addEventListener('resize',()=>{ if(window._vizCharts) vizDrawAll&&vizDrawAll(); });
+    window._vizResizeBound=true;
+  }
+  vizDrawAll();
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
