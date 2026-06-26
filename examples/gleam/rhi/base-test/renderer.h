@@ -19,6 +19,7 @@
 
 #if defined(FEATURE_ENABLE_Gexxo)
 #include <coffee/graphics/apis/CGexxo>
+#include <platforms/gekko/paged_mmap.h>
 namespace rhi = gexxo;
 #else
 #include <coffee/graphics/apis/CGLeam>
@@ -567,20 +568,63 @@ void SetupRendering(
         vao->set_buffer(rhi::buffers::vertex, buf, 0);
     }
     {
-        ProfContext _("GX texture load");
-        Resource    tpl_src("circle_red.tpl", RSCA::AssetFile);
-        auto        bytes = C_OCAST<semantic::BytesConst>(tpl_src);
-        if(bytes.size)
+        /* Instrumentation: exercise the demand-paged mmap API, including two
+         * concurrent mappings. Reading a window byte faults pages in from
+         * ARAM/DVD; upload() copies the red TPL into a resident GX texture. */
+        ProfContext _("GX texture load (paged mmap)");
+        namespace vmem = platform::file::gekko::vmem;
+
+        cDebug(
+            "paged mmap: LRU eviction test {0}",
+            vmem::test::lru("circle_red.tpl") ? "PASS" : "FAIL");
+
+        auto red  = vmem::map("circle_red.tpl");
+        auto blue = vmem::map("circle_blue.tpl"); // second mapping, live at once
+        cDebug(
+            "paged mmap: red base={0} size={1}, blue base={2} size={3}",
+            static_cast<void*>(red.base),
+            red.size,
+            static_cast<void*>(blue.base),
+            blue.size);
+        if(red && blue)
         {
-            auto tex = d.g_data.tex = std::make_shared<rhi::texture_t>(
-                rhi::textures::type::d2, typing::pixels::PixDesc{}, 1);
-            if(!tex->upload(std::move(bytes)))
+            cDebug(
+                "paged mmap: both live -> red[0]={0} blue[0]={1}",
+                static_cast<int>(red.base[0]),
+                static_cast<int>(blue.base[0]));
+            // Does the hardware set the PTE Referenced bit on access? (clock-LRU)
+            cDebug(
+                "paged mmap: R-bit after access: red={0} blue={1}",
+                vmem::test::page_referenced(red.base),
+                vmem::test::page_referenced(blue.base));
+        }
+
+        if(red)
+        {
+            /* Pin red into contiguous resident memory and build the GX texture
+             * directly from it -- GX reads the pinned buffer's physical memory,
+             * no upload copy. blue stays demand-paged. red + the lock are kept
+             * for the texture's lifetime (the GXTexObj points into the buffer). */
+            auto lk = vmem::mlock(red.base, red.size);
+            cDebug(
+                "paged mmap: mlock red -> phys={0} size={1} (GX reads it direct)",
+                lk.phys,
+                lk.size);
+            if(lk)
             {
-                cDebug("circle_red.tpl: TPL decode failed");
-                d.g_data.tex.reset();
+                auto tex = d.g_data.tex = std::make_shared<rhi::texture_t>(
+                    rhi::textures::type::d2, typing::pixels::PixDesc{}, 1);
+                if(!tex->adopt_tpl(lk.ptr, red.size))
+                {
+                    cDebug("circle_red.tpl: TPL decode failed");
+                    d.g_data.tex.reset();
+                }
             }
         } else
-            cDebug("circle_red.tpl: not found at dvd:/");
+            cDebug("circle_red.tpl: not found on disc");
+
+        cDebug("paged mmap: {0} page faults total", vmem::fault_count());
+        vmem::unmap(blue); // red stays mapped+locked: GX reads the pinned buffer
     }
 #endif
 

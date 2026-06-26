@@ -85,6 +85,7 @@ void gekko_console_init()
 namespace {
 void gekko_mount_storage()
 {
+    setvbuf(stdout, nullptr, _IONBF, 0); // flush each line (debug visibility)
     if(platform::file::gekko::dvd::mount())
     {
         printf("- DVD mounted, assets at dvd:/\n");

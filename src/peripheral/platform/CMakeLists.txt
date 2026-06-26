@@ -189,4 +189,12 @@ if(GAMECUBE OR WII)
     PRIVATE # platforms/posix/environment.cpp platforms/posix/file.cpp
             # platforms/posix/stacktrace.cpp
   )
+
+  # Max files the demand-paged mmap window can map at once (paged_mmap.h).
+  set(GEKKO_MMAP_MAX_REGIONS "8"
+      CACHE STRING "Max concurrent gekko paged_mmap regions")
+  target_compile_definitions(
+    PeripheralPlatform
+    PUBLIC GEKKO_MMAP_MAX_REGIONS=${GEKKO_MMAP_MAX_REGIONS}
+  )
 endif()

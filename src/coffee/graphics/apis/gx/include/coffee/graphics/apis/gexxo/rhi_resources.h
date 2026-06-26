@@ -172,6 +172,22 @@ struct texture_t : std::enable_shared_from_this<texture_t>
         return true;
     }
 
+    /* Build the GX texture in place from a TPL that already lives in resident,
+     * GX-readable memory (e.g. a pinned vmem::mlock region) -- no copy. The
+     * GXTexObj points into `mem`, so the caller must keep it alive (and writable:
+     * TPL_OpenTPLFromMemory rewrites descriptor offsets in place) for the
+     * texture's lifetime. `mem` must be a cached address (GX virtual->physical
+     * relies on that), not a page-table window VA. */
+    inline bool adopt_tpl(libc_types::u8* mem, libc_types::u32 len)
+    {
+        if(TPL_OpenTPLFromMemory(&m_tpl, mem, len) <= 0)
+            return false;
+        if(TPL_GetTexture(&m_tpl, 0, &m_obj) != 0)
+            return false;
+        m_loaded = true;
+        return true;
+    }
+
     textures::type          m_type;
     typing::pixels::PixDesc m_format;
     u32                     m_mipmaps{1};

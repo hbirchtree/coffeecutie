@@ -55,10 +55,11 @@
         {
             "kind": "git",
             "repository": "https://github.com/hbirchtree/vcpkg-devkit",
-            "baseline": "871d703a517677472b10cfee1f05b9d564566222",
+            "baseline": "2ea2033b03c0d17c8200f50c26fb52d471841919",
             "packages": [
                 "gctools",
-                "libogc"
+                "libogc",
+                "libfat"
             ]
         }
     ]

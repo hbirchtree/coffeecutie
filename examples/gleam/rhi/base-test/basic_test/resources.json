@@ -1,0 +1,10 @@
+{
+    "textures": {
+        "files": [
+            { "source": "circle_red.png",   "formats": ["rgba"], "mipmap_range": [1024, 1024] },
+            { "source": "circle_blue.png",  "formats": ["rgba"], "mipmap_range": [1024, 1024] },
+            { "source": "circle_alpha.png", "formats": ["rgba"], "mipmap_range": [1024, 1024] },
+            { "source": "floor-tile.png",   "formats": ["rgb"],  "mipmap_range": [1024, 256] }
+        ]
+    }
+}
