@@ -1040,6 +1040,15 @@ def _linux_list_hwmon(cmd_prefix):
         if len(values) == 0:
             continue
         health[name] = values
+    if len(health) > 4 and 'cpuss0_thermal' in health:
+        remove_keys = set()
+        for key in health.keys():
+            if 'puss' in key:
+                continue
+            remove_keys.add(key)
+        for key in remove_keys:
+            health.pop(key)
+
     return health
 
 
@@ -1135,7 +1144,7 @@ def check_web():
 
 def check_dolphin():
     src_dir = os.path.dirname(__file__)
-    if not os.path.exists(f'{src_dir}/multi_build/runtime/dolphin/bin/dolphin-emu-nogui-'):
+    if not os.path.exists(f'{src_dir}/multi_build/runtime/dolphin/bin/dolphin-emu-nogui'):
         return 'not_built', None, None, 'Build with .github/tests/dolphin/build.sh'
     try:
         res = subprocess.run(
