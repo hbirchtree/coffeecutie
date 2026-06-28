@@ -188,6 +188,13 @@ if(GAMECUBE OR WII)
     PeripheralPlatform
     PRIVATE # platforms/posix/environment.cpp platforms/posix/file.cpp
             # platforms/posix/stacktrace.cpp
+      gekko/boot.cpp
+  )
+  find_package(libogc CONFIG REQUIRED)
+  target_link_libraries(
+    PeripheralPlatform
+    PRIVATE
+      libogc::gdbstub
   )
 
   # Max files the demand-paged mmap window can map at once (paged_mmap.h).

@@ -119,45 +119,49 @@ FORCEDINLINE result<std::vector<file_entry_t>, gekko_error> list(Url const& dir)
 FORCEDINLINE std::optional<gekko_error> create_directory(
     Url const& file, create_params_t const& params)
 {
-    auto resolved = *file;
-    if(params.recursive)
-    {
-        for(std::string::size_type i = resolved.find('/', 1);
-            i != std::string::npos;
-            i = resolved.find('/', i + 1))
-        {
-            auto part = resolved.substr(0, i);
-            if(::mkdir(part.c_str(), 0777) != 0 && errno != EEXIST)
-                return errno;
-        }
-    }
-    if(::mkdir(resolved.c_str(), 0777) != 0 && errno != EEXIST)
-        return errno;
     return std::nullopt;
+
+    // auto resolved = *file;
+    // if(params.recursive)
+    // {
+    //     for(std::string::size_type i = resolved.find('/', 1);
+    //         i != std::string::npos;
+    //         i = resolved.find('/', i + 1))
+    //     {
+    //         auto part = resolved.substr(0, i);
+    //         if(::mkdir(part.c_str(), 0777) != 0 && errno != EEXIST)
+    //             return errno;
+    //     }
+    // }
+    // if(::mkdir(resolved.c_str(), 0777) != 0 && errno != EEXIST)
+    //     return errno;
+    // return std::nullopt;
 }
 
 FORCEDINLINE std::optional<gekko_error> create(
     Url const& file, create_params_t const& params)
 {
-    if(params.mode == mode_t::directory)
-        return create_directory(file, params);
-    auto resolved = *file;
-    if(auto fd = ::fopen(resolved.c_str(), "ab"); fd)
-    {
-        ::fclose(fd);
-        return std::nullopt;
-    }
-    return errno;
+    return std::nullopt;
+    // if(params.mode == mode_t::directory)
+    //     return create_directory(file, params);
+    // auto resolved = *file;
+    // if(auto fd = ::fopen(resolved.c_str(), "ab"); fd)
+    // {
+    //     ::fclose(fd);
+    //     return std::nullopt;
+    // }
+    // return errno;
 }
 
 FORCEDINLINE std::optional<gekko_error> remove(Url const& file)
 {
-    auto resolved = *file;
-    if(::unlink(resolved.c_str()) == 0)
-        return std::nullopt;
-    if(::rmdir(resolved.c_str()) == 0)
-        return std::nullopt;
-    return errno;
+    return std::nullopt;
+    // auto resolved = *file;
+    // if(::unlink(resolved.c_str()) == 0)
+    //     return std::nullopt;
+    // if(::rmdir(resolved.c_str()) == 0)
+    //     return std::nullopt;
+    // return errno;
 }
 
 FORCEDINLINE std::optional<gekko_error> truncate(Url const&, libc_types::szptr)

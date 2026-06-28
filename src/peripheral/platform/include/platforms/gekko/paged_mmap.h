@@ -514,7 +514,7 @@ struct locked_region
  * pages 1:1 to it (existing window pointers stay valid and become contiguous +
  * non-evictable). The rest of the mapping stays demand-paged. Page-rounded.
  * Feed GX with `phys`; access via `ptr`. munlock to release. */
-inline locked_region mlock(void* addr, u32 len)
+inline locked_region pin(void* addr, u32 len)
 {
     u32 const start = reinterpret_cast<u32>(addr) & ~(detail::kPageSize - 1);
     u32 const end   = detail::align_up(reinterpret_cast<u32>(addr) + len);
@@ -545,7 +545,7 @@ inline locked_region mlock(void* addr, u32 len)
 
 /* Release a lock taken by mlock(): drop the 1:1 mapping (so the range re-pages
  * from its backing on next access) and free the contiguous buffer. */
-inline void munlock(void* addr)
+inline void unpin(void* addr)
 {
     u32 const start = reinterpret_cast<u32>(addr) & ~(detail::kPageSize - 1);
     for(u32 i = 0; i < detail::kMaxRegions; i++)

@@ -18,17 +18,9 @@ struct AppInfo;
 
 namespace gexxo {
 
-/* Namespace-scope (not nested in api) so its default member initializers are
- * usable as a default argument to api::load below. */
 struct load_options_t
 {
-    std::optional<u32>        api_version{};
-    std::optional<api_type_t> api_type{};
 };
-
-namespace detail {
-void gexxo_draw(draw_command const& command);
-} // namespace detail
 
 struct api
 {
@@ -80,6 +72,11 @@ struct api
         return std::make_shared<rendertarget_t>();
     }
 
+    inline auto alloc_program()
+    {
+        return std::make_shared<program_t>();
+    }
+
     inline auto default_rendertarget()
     {
         if(!m_framebuffer)
@@ -112,16 +109,14 @@ struct api
 
     /* --- Draw submission -------------------------------------------------- */
 
-    template<typename... UList>
+    template<typename... StateList>
     inline std::optional<std::tuple<error, std::string_view>> submit(
-        draw_command const& command, UList&&... /*uniforms*/)
-    {
-        detail::gexxo_draw(command);
-        return std::nullopt;
-    }
+        draw_command const& command, StateList&&... state_changes);
 
   private:
     std::shared_ptr<rendertarget_t> m_framebuffer;
 };
 
 } // namespace gexxo
+
+#include "rhi_draw.h"

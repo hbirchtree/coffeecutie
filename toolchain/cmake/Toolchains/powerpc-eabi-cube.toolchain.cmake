@@ -19,7 +19,8 @@ set(CMAKE_C_COMPILER "${TOOLCHAIN_ROOT}/bin/${TOOLCHAIN_TOOL}gcc")
 set(CMAKE_CXX_COMPILER "${TOOLCHAIN_ROOT}/bin/${TOOLCHAIN_TOOL}g++")
 
 set(GAMECUBE_MACHINE_FLAGS
-    "-mogc -mcpu=750 -meabi -mhard-float -DHW_DOL -DBIGENDIAN -DGEKKO -D__GEKKO__ -D_HAVE_LONG_DOUBLE -D_LDBL_EQ_DBL")
+  "-mogc -mcpu=750 -meabi -mhard-float -DHW_DOL -DBIGENDIAN -DGEKKO -D__GEKKO__ -D_HAVE_LONG_DOUBLE -D_LDBL_EQ_DBL"
+)
 # gcc 14+ promotes these to hard errors by default; older C dependencies
 # (e.g. zstd's legacy decoders) still trip them, so demote back to warnings.
 set(CMAKE_C_FLAGS

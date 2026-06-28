@@ -38,66 +38,25 @@
 #include <peripherals/posix/process.h>
 #endif
 
-#if defined(COFFEE_GEKKO) && __has_include(<coffee/gexxo/gexxo_api.h>)
-#include <coffee/gexxo/gexxo_api.h>
-#define COFFEE_HAS_GEXXO 1
-#elif defined(COFFEE_GEKKO)
-#include <gccore.h>
-#include <stdio.h>
-
-namespace {
-void gekko_console_init()
-{
-    static void*       xfb   = nullptr;
-    static GXRModeObj* rmode = nullptr;
-
-    VIDEO_Init();
-    rmode = VIDEO_GetPreferredMode(nullptr);
-    xfb   = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
-
-    console_init(
-        xfb, 20, 20, rmode->fbWidth, rmode->xfbHeight,
-        rmode->fbWidth * VI_DISPLAY_PIX_SZ);
-
-    VIDEO_Configure(rmode);
-    VIDEO_SetNextFramebuffer(xfb);
-    VIDEO_SetBlack(FALSE);
-    VIDEO_Flush();
-    VIDEO_WaitVSync();
-    if(rmode->viTVMode & VI_NON_INTERLACE)
-        VIDEO_WaitVSync();
-
-    // Unbuffered stdout, otherwise output is lost if the program aborts before
-    // the buffer flushes (manifests as a blank screen).
-    setvbuf(stdout, nullptr, _IONBF, 0);
-    setvbuf(stderr, nullptr, _IONBF, 0);
-}
-} // namespace
-#endif
-
 #if defined(COFFEE_GEKKO)
-#include <platforms/gekko/dvd.h>
-
-#include <fat.h>
-#include <sdcard/gcsd.h>
-#include <stdio.h>
-
-namespace {
-void gekko_mount_storage()
-{
-    setvbuf(stdout, nullptr, _IONBF, 0); // flush each line (debug visibility)
-    if(platform::file::gekko::dvd::mount())
-    {
-        printf("- DVD mounted, assets at dvd:/\n");
-    } else
-        printf("- DVD mount failed (no disc?)\n");
-
-    if(fatMountSimple("sd", &__io_gcsda))
-        printf("- SD mounted read/write at sd:/\n");
-    else
-        printf("- SD not present (sd:/ unavailable)\n");
+#if defined(COFFEE_HAS_GEXXO)
+#include <coffee/gexxo/gexxo_api.h>
+#define COFFEE_POST_MAIN_LOOP() \
+    gexxo::infiniteLoop();
+#else
+#define COFFEE_POST_MAIN_LOOP() \
+    gekko::console::infinite_loop();
+#endif
+namespace gekko::console {
+extern void init();
+extern void infinite_loop();
 }
-} // namespace
+namespace gekko {
+extern void mount_debugger();
+extern void mount_storage();
+}
+#else
+#define COFFEE_POST_MAIN_LOOP()
 #endif
 
 #if defined(COFFEE_WINDOWS)
@@ -145,24 +104,16 @@ int MainSetup(MainWithArgs mainfun, int argc, char** argv, u32 flags)
     cDebug("Entering MainSetup() at {0}", str::print::pointerify(MainSetup));
 #endif
 
-#if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP)
-    // #if MODE_RELEASE
-    //     ShowWindow(GetConsoleWindow(), SW_HIDE);
-    // #else
-    //     if(platform::Env::GetVar("VisualStudioVersion").size())
-    //         ShowWindow(GetConsoleWindow(), SW_HIDE);
-    // #endif
-    InitCOMInterface();
-#elif defined(COFFEE_WINDOWS_UWP)
+#if defined(COFFEE_WINDOWS)
     InitCOMInterface();
 #elif defined(COFFEE_HAS_GEXXO)
     gexxo::initialize();
 #elif defined(COFFEE_GEKKO)
-    gekko_console_init();
+    gekko::console::init();
 #endif
-
 #if defined(COFFEE_GEKKO)
-    gekko_mount_storage();
+    // gekko::mount_debugger();
+    gekko::mount_storage();
 #endif
 
 #if defined(COFFEE_GEKKO)
@@ -181,13 +132,7 @@ int MainSetup(MainWithArgs mainfun, int argc, char** argv, u32 flags)
     int stat = Coffee::CoffeeMain(mainfun, argc, argv, flags);
 #endif
 
-#if defined(COFFEE_HAS_GEXXO)
-    gexxo::infiniteLoop();
-#elif defined(COFFEE_GEKKO)
-    // Keep the framebuffer alive so output stays on screen.
-    while(true)
-        VIDEO_WaitVSync();
-#endif
+    COFFEE_POST_MAIN_LOOP();
 
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING
 #if PERIPHERAL_PROFILER_ENABLED
@@ -439,7 +384,7 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 
     if constexpr(!compile_info::lowfat_mode)
     {
-#if !defined(COFFEE_CUSTOM_EXIT_HANDLING) && !defined(COFFEE_GEKKO)
+#if !defined(COFFEE_CUSTOM_EXIT_HANDLING)
         if((flags & DiscardArgumentHandler) == 0)
         {
             cxxopts::Options parser(

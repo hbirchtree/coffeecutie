@@ -33,9 +33,3 @@ if [ ! -f ${DOLPHIN_DIR}/bin/dolphin-emu-nogui ]; then
     cp Binaries/dolphin-emu-nogui ../bin
     echo "::endgroup::"
 fi
-pushd ${DOLPHIN_DIR}/config
-mkdir -p User/Config
-echo "[Settings]
-UseFFV1 = False
-DumpCodec = utvideo
-" > User/Config/GFX.ini

@@ -1,25 +1,16 @@
 #pragma once
 
-/* GameCube (GX) implementation of the newer RHI resource types. These mirror
- * the surface of the gleam:: types and satisfy the same concepts from
- * <peripherals/concepts/graphics_api.h>, so GLeamBaseTest_RHI can typedef
- * between gleam:: and gexxo::.
- *
- * For the current milestone (clear screen to a color) only rendertarget_t::clear
- * does real GX work; the other resources are concept-satisfying skeletons that
- * the actual draw/upload paths will fill in later. program_t and api::submit are
- * intentionally absent / out of scope here. */
-
-#include <peripherals/concepts/graphics_api.h>
-#include <peripherals/semantic/enum/data_types.h>
-#include <peripherals/typing/geometry/size.h>
-#include <peripherals/typing/vectors/vector_types.h>
-
+#include <memory>
 #include <ogc/gx.h>
 #include <ogc/tpl.h>
-
-#include <memory>
 #include <optional>
+#include <peripherals/identify/compiler/unreachable.h>
+#include <peripherals/concepts/graphics_api.h>
+#include <peripherals/semantic/enum/data_types.h>
+#include <peripherals/stl/standard_exceptions.h>
+#include <peripherals/typing/geometry/size.h>
+#include <peripherals/typing/vectors/vector_types.h>
+#include <platforms/gekko/paged_mmap.h>
 #include <set>
 #include <string>
 #include <vector>
@@ -59,6 +50,7 @@ enum class api_type_t
 enum class error : u32
 {
     none = 0,
+    failed = 1, /* draw submission failed; see the log for the real cause */
 };
 
 using extensions_set = std::set<std::string>;
@@ -73,12 +65,12 @@ struct buffer_slice_t
     size_t    m_offset{0};
     size_t    m_size{0};
 
+
     inline u32       handle() const { return 0; }
     inline buffer_t* buffer() const { return m_buffer; }
-    inline buffer_slice_t slice(size_t offset, size_t size = 0) const
-    {
-        return {m_buffer, m_offset + offset, size};
-    }
+    template<typename T = libc_types::u8>
+    inline gsl::span<T> map(size_t offset = 0, size_t size = 0);
+    buffer_slice_t slice(size_t offset, size_t size = 0) const;
 };
 
 struct buffer_t : std::enable_shared_from_this<buffer_t>
@@ -100,9 +92,16 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
         m_data.assign(bytes, bytes + data.size_bytes());
     }
 
-    inline libc_types::u8* map(size_t offset, size_t /*size*/)
+    /* offset is in BYTES; size is the element COUNT of the returned span (0 =
+     * the rest of the buffer). */
+    template<typename T = libc_types::u8>
+    inline gsl::span<T> map(size_t offset = 0, size_t size = 0)
     {
-        return m_data.data() + offset;
+        if(size == 0)
+            size = m_data.size() - offset;
+        return gsl::span<T>(
+            reinterpret_cast<T*>(m_data.data() + offset),
+            size / sizeof(T));
     }
     inline void unmap(void* = nullptr) {}
     inline void setState(buffers::property, int) {}
@@ -112,6 +111,8 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
 
     inline buffer_slice_t slice(size_t offset, size_t size = 0)
     {
+        if(size == 0)
+            size = m_data.size() - offset;
         return {this, offset, size};
     }
 
@@ -120,11 +121,35 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
     semantic::RSCA              m_access;
 };
 
+template<typename T>
+inline gsl::span<T> buffer_slice_t::map(size_t offset, size_t size)
+{
+    if(!m_buffer)
+        return {};
+    if(size == 0)
+        size = m_size;
+    return gsl::span<T>(
+        m_buffer->m_data.data() + m_offset + offset,
+        size / sizeof(T));
+}
+
+inline buffer_slice_t buffer_slice_t::slice(size_t offset, size_t size) const
+{
+    if(!m_buffer)
+        return {};
+    if(size == 0)
+        size = m_buffer->m_data.size() - m_offset - offset;
+    if(size == 0)
+        Throw(std::out_of_range("gexxo::buffer_slice_t bounds invalid"));
+    return {m_buffer, m_offset + offset, size};
+}
+
 /* --- Textures + sampler --------------------------------------------------- */
 
 struct texture_t : std::enable_shared_from_this<texture_t>
 {
     using size_type = size_3d<u32>;
+    using filtering = typing::Filtering;
 
     texture_t(textures::type type, typing::pixels::PixDesc fmt, u32 mipmaps)
         : m_type(type)
@@ -157,6 +182,8 @@ struct texture_t : std::enable_shared_from_this<texture_t>
         return {};
     }
 
+    /*! Upload to managed buffer
+     */
     inline bool upload(gsl::span<libc_types::u8 const>&& data)
     {
         m_tpl_data.insert(m_tpl_data.begin(), data.begin(), data.end());
@@ -178,9 +205,13 @@ struct texture_t : std::enable_shared_from_this<texture_t>
      * TPL_OpenTPLFromMemory rewrites descriptor offsets in place) for the
      * texture's lifetime. `mem` must be a cached address (GX virtual->physical
      * relies on that), not a page-table window VA. */
-    inline bool adopt_tpl(libc_types::u8* mem, libc_types::u32 len)
+    inline bool upload_pinned(platform::file::gekko::vmem::mapping&& mem)
     {
-        if(TPL_OpenTPLFromMemory(&m_tpl, mem, len) <= 0)
+        m_mapped = std::move(mem);
+        auto& mem_ = *m_mapped;
+        m_locked = platform::file::gekko::vmem::pin(mem_.base, mem_.size);
+        auto& locked = *m_locked;
+        if(TPL_OpenTPLFromMemory(&m_tpl, locked.ptr, locked.size) <= 0)
             return false;
         if(TPL_GetTexture(&m_tpl, 0, &m_obj) != 0)
             return false;
@@ -193,11 +224,16 @@ struct texture_t : std::enable_shared_from_this<texture_t>
     u32                     m_mipmaps{1};
     size_type               m_size{};
 
+    std::optional<platform::file::gekko::vmem::mapping>       m_mapped{};
+    std::optional<platform::file::gekko::vmem::locked_region> m_locked{};
+
     /* GX texture state (populated by load_tpl). */
     std::vector<libc_types::u8> m_tpl_data;
     TPLFile                     m_tpl{};
     GXTexObj                    m_obj{};
     bool                        m_loaded{false};
+
+    filtering m_filter{filtering::Linear};
 };
 
 struct texture_2d_t : texture_t
@@ -263,6 +299,17 @@ struct vertex_attribute
 
     u32 index{0};
 
+    enum role_t
+    {
+        position,
+        texcoord0,
+        texmtx0 = texcoord0 + 8,
+        normal = texmtx0 + 8,
+        color0,
+        color1,
+        nbt,
+    } role{position};
+
     struct
     {
         u64              offset{0};
@@ -279,6 +326,82 @@ struct vertex_attribute
     } buffer{};
 };
 
+namespace detail {
+
+inline u8 role_to_attr(vertex_attribute const& attr)
+{
+    if(attr.role >= vertex_attribute::texcoord0 && attr.role < (vertex_attribute::texcoord0 + 8))
+        return GX_VA_TEX0 + (attr.role - vertex_attribute::texcoord0);
+    if(attr.role >= vertex_attribute::texmtx0 && attr.role < (vertex_attribute::texmtx0 + 8))
+        return GX_VA_TEX0MTXIDX + (attr.role - vertex_attribute::texmtx0);
+    switch(attr.role)
+    {
+    case vertex_attribute::position: return GX_VA_POS;
+    case vertex_attribute::normal: return GX_VA_NRM;
+    case vertex_attribute::color0: return GX_VA_CLR0;
+    case vertex_attribute::color1: return GX_VA_CLR1;
+    case vertex_attribute::nbt: return GX_VA_NBT;
+    }
+    unreachable();
+}
+
+inline u8 attr_to_type(vertex_attribute const& attr)
+{
+    switch(u8(attr.role))
+    {
+    case vertex_attribute::position:
+        return attr.value.count == 2 ? GX_POS_XY : GX_POS_XYZ;
+    case vertex_attribute::normal:
+        return GX_NRM_XYZ;
+    case vertex_attribute::color0:
+    case vertex_attribute::color1:
+        return attr.value.count == 3 ? GX_CLR_RGB : GX_CLR_RGBA;
+    case vertex_attribute::texcoord0:
+    case vertex_attribute::texcoord0 + 1:
+    case vertex_attribute::texcoord0 + 2:
+    case vertex_attribute::texcoord0 + 3:
+    case vertex_attribute::texcoord0 + 4:
+    case vertex_attribute::texcoord0 + 5:
+    case vertex_attribute::texcoord0 + 6:
+    case vertex_attribute::texcoord0 + 7:
+        return attr.value.count == 2 ? GX_TEX_ST : GX_TEX_S;
+    }
+    unreachable();
+}
+
+inline u32 attr_to_fmt(vertex_attribute const& attr)
+{
+    switch(attr.role)
+    {
+    case vertex_attribute::role_t::color0:
+    case vertex_attribute::role_t::color1:
+        switch(attr.value.type)
+        {
+        case semantic::type_t::u16:
+            return attr.value.count == 4 ? GX_RGBA4 : GX_RGB565;
+        case semantic::type_t::u32:
+            return GX_RGBA8;
+        default:
+            return attr.value.count == 3 ? GX_RGB8 : GX_RGBA8;
+        }
+        break;
+    default:
+        switch(attr.value.type)
+        {
+        case semantic::type_t::u8: return GX_U8;
+        case semantic::type_t::i8: return GX_S8;
+        case semantic::type_t::u16: return GX_U16;
+        case semantic::type_t::i16: return GX_S16;
+        case semantic::type_t::f32: return GX_F32;
+        default: Throw(unimplemented_path("vertex format not supported"));
+        }
+        break;
+    }
+    unreachable();
+}
+
+}
+
 struct vertex_array_t
 {
     using attribute_type = vertex_attribute;
@@ -289,6 +412,16 @@ struct vertex_array_t
     inline void add(attribute_type attribute)
     {
         m_attributes.push_back(attribute);
+        m_attr_desc[attribute.index] = {
+            .attr = detail::role_to_attr(attribute),
+            .type = GX_DIRECT, // not used
+        };
+        m_attr_fmt[attribute.index] = {
+            .vtxattr = detail::role_to_attr(attribute),
+            .comptype = detail::attr_to_type(attribute),
+            .compsize = detail::attr_to_fmt(attribute),
+            .frac = 0,
+        };
     }
 
     inline void set_buffer(
@@ -302,9 +435,12 @@ struct vertex_array_t
         m_element_buffer = std::move(buffer);
     }
 
-    std::vector<attribute_type>                       m_attributes;
-    std::vector<std::shared_ptr<buffer_t>>            m_vertex_buffers{8};
-    std::shared_ptr<buffer_t>                         m_element_buffer;
+    std::vector<attribute_type>              m_attributes;
+    std::map<u32, std::shared_ptr<buffer_t>> m_vertex_buffers{};
+    std::shared_ptr<buffer_t>                m_element_buffer;
+
+    std::array<GXVtxDesc, GX_MAX_VTXDESC_LISTSIZE>       m_attr_desc{};
+    std::array<GXVtxAttrFmt, GX_MAX_VTXATTRFMT_LISTSIZE> m_attr_fmt{};
 };
 
 /* --- Render target (the clear path) --------------------------------------- */
@@ -349,7 +485,131 @@ struct rendertarget_t
     f64       m_clear_depth{1.0};
 };
 
-/* --- Draw command (concept surface; submit is user-owned) ----------------- */
+/* --- Program definition --- */
+
+struct program_t
+{
+    inline void alloc() {}
+    inline void dealloc() {}
+
+    struct channel_t
+    {
+        enum output_t
+        {
+            color0      = GX_COLOR0,
+            color1      = GX_COLOR1,
+            alpha0      = GX_ALPHA0,
+            alpha1      = GX_ALPHA1,
+            color0a0    = GX_COLOR0A0,
+            color1a1    = GX_COLOR1A1,
+            color_zero  = GX_COLORZERO,
+            alpha_bump  = GX_ALPHA_BUMP,
+            alpha_bumpn = GX_ALPHA_BUMPN,
+            color_null  = GX_COLORNULL,
+        };
+        enum source_t
+        {
+            src_reg    = GX_SRC_REG,
+            src_vertex = GX_SRC_VTX,
+        };
+        enum diffuse_func_t
+        {
+            diffuse_none   = GX_DF_NONE,
+            diffuse_signed = GX_DF_SIGNED,
+            diffuse_clamp  = GX_DF_CLAMP,
+        };
+        enum attenuation_func_t
+        {
+            attenuate_specular  = GX_AF_SPEC,
+            attenuate_spotlight = GX_AF_SPOT,
+            attenuate_none      = GX_AF_NONE,
+        };
+        output_t   channel{color0a0};
+        bool       lighting{false}; // GX_ENABLE/GX_DISABLE
+        source_t   ambient_src{src_reg};
+        source_t   diffuse_src{src_reg};
+        u8         light_mask{0x0};
+
+        diffuse_func_t     diffuse_function{diffuse_none};
+        attenuation_func_t attenuation_function{attenuate_none};
+
+    };
+    std::vector<channel_t> channels;
+
+    /* One TEV stage: GX_SetTevOrder + GX_SetTevOp. */
+    struct stage_t
+    {
+        enum id_t
+        {
+            stage0 = GX_TEVSTAGE0, stage1, stage2, stage3,
+            stage4, stage5, stage6, stage7,
+            stage8, stage9, stage10, stage11,
+            stage12, stage13, stage14, stage15,
+        };
+        enum op_t
+        {
+            modulate = GX_MODULATE,
+            decal    = GX_DECAL,
+            blend    = GX_BLEND,
+            replace  = GX_REPLACE,
+            pass     = GX_PASSCLR,
+        };
+        enum texcoord_t
+        {
+            texcoord0 = GX_TEXCOORD0, texcoord1, texcoord2, texcoord3,
+            texcoord4, texcoord5, texcoord6, texcoord7,
+            texcoord_null = GX_TEXCOORDNULL,
+        };
+        enum texmap_t
+        {
+            texmap0 = GX_TEXMAP0, texmap1, texmap2, texmap3,
+            texmap4, texmap5, texmap6, texmap7,
+            texmap_null = GX_TEXMAP_NULL,
+        };
+
+        id_t                stage{stage0};
+        op_t                op{modulate};
+        texcoord_t          texcoord{texcoord_null};
+        texmap_t            texmap{texmap_null};
+        channel_t::output_t color{channel_t::color0a0}; // rasterised colour input
+    };
+    std::vector<stage_t> stages;
+};
+
+/* Binds a texture to a GX texture map and describes how its coordinates are
+ * generated. The generation source/type may vary per texture. */
+struct texture_binding_t
+{
+    // texmap/texcoord reuse the TEV stage enums (same GX slots).
+    using texmap_t   = program_t::stage_t::texmap_t;
+    using texcoord_t = program_t::stage_t::texcoord_t;
+
+    enum gen_type_t // GXTexGenType
+    {
+        mtx3x4 = GX_TG_MTX3x4,
+        mtx2x4 = GX_TG_MTX2x4,
+        bump0  = GX_TG_BUMP0,
+        srtg   = GX_TG_SRTG,
+    };
+    enum gen_src_t // GXTexGenSrc (the input -- varies per texture)
+    {
+        src_position = GX_TG_POS,
+        src_normal   = GX_TG_NRM,
+        src_color0   = GX_TG_COLOR0,
+        src_color1   = GX_TG_COLOR1,
+        src_tex0     = GX_TG_TEX0, src_tex1, src_tex2, src_tex3,
+        src_tex4, src_tex5, src_tex6, src_tex7,
+    };
+
+    std::shared_ptr<texture_t> texture;
+    texmap_t   texmap{program_t::stage_t::texmap0};
+    texcoord_t texcoord{program_t::stage_t::texcoord0};
+    gen_type_t gen_type{mtx2x4};
+    gen_src_t  gen_src{src_tex0};
+    u32        gen_mtx{GX_IDENTITY}; // texcoord matrix (raw GX matrix id)
+};
+
+/* --- Draw command --- */
 
 struct draw_command
 {
@@ -381,9 +641,10 @@ struct draw_command
     } data;
 
     std::shared_ptr<query_t>        conditional_query;
+    std::shared_ptr<program_t>      program;
     std::shared_ptr<vertex_array_t> vertices;
 
-    std::shared_ptr<texture_t> texture;
+    std::vector<texture_binding_t> textures;
 
     gsl::span<Matf4 const> instance_transforms{};
     int uniforms{};
@@ -391,16 +652,51 @@ struct draw_command
     int samplers{};
 };
 
+using typing::vector_types::Vecd2;
+using typing::vector_types::Veci4;
+
+struct cull_state
+{
+    bool front_face{true};
+};
+
+struct blend_state
+{
+    bool additive{false};
+    bool multiply{false};
+    bool maximum{false};
+};
+
+struct depth_state
+{
+    using depth_range = std::optional<Vecd2>;
+
+    depth_range range{};
+    bool        reversed{false};
+    bool        strict_greater{false};
+};
+
+struct view_state
+{
+    using rect = std::optional<Veci4>;
+
+    bool indexed{false};
+    rect view{};
+    rect scissor{};
+
+    depth_state depth;
+};
+
 /* --- Concept conformance checks ------------------------------------------- */
 
-static_assert(BufferSlice<buffer_slice_t>, "gexxo buffer_slice_t");
-static_assert(Buffer<buffer_t, buffer_slice_t>, "gexxo buffer_t");
-static_assert(Texture<texture_t>, "gexxo texture_t");
-static_assert(Sampler<sampler_t>, "gexxo sampler_t");
-static_assert(Query<query_t>, "gexxo query_t");
-static_assert(VertexArray<vertex_array_t, buffer_t>, "gexxo vertex_array_t");
+static_assert(BufferSlice<buffer_slice_t>, "gexxo::buffer_slice_t");
+static_assert(Buffer<buffer_t, buffer_slice_t>, "gexxo::buffer_t");
+static_assert(Texture<texture_t>, "gexxo::texture_t");
+static_assert(Sampler<sampler_t>, "gexxo::sampler_t");
+static_assert(Query<query_t>, "gexxo::query_t");
+static_assert(VertexArray<vertex_array_t, buffer_t>, "gexxo::vertex_array_t");
 static_assert(
-    RenderTarget<rendertarget_t, texture_t>, "gexxo rendertarget_t");
-static_assert(DrawCommand<draw_command>, "gexxo draw_command");
+    RenderTarget<rendertarget_t, texture_t>, "gexxo::rendertarget_t");
+static_assert(DrawCommand<draw_command>, "gexxo::draw_command");
 
 } // namespace gexxo

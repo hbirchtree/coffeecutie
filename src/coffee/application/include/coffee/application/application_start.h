@@ -11,14 +11,6 @@
 #include <coffee/core/task_queue/task.h>
 #endif
 
-#if (defined(COFFEE_ANDROID) && defined(COFFEE_USE_SDL2))
-#include <jni.h>
-#endif
-
-#if defined(COFFEE_SDL_MAIN)
-#define main SDL_main
-#endif
-
 namespace Coffee {
 
 COFFEE_APP_FUNC void SetPlatformState();
@@ -50,21 +42,6 @@ COFFEE_APP_FUNC int MainSetup(
         }                                                             \
                                                                       \
         return mainfun(argc, argv);                                   \
-    }
-
-#define COFFEE_APPLICATION_MAIN_CUSTOM_ARG(mainfun) \
-    COFFEE_APPLICATION_MAIN(mainfun)
-
-#define COFFEE_APPLICATION_MAIN_CUSTOM(mainfun, flags) \
-    COFFEE_APPLICATION_MAIN(mainfun)
-
-#elif defined(COFFEE_SDL_MAIN)
-
-// Wraps it with a custom name defined above
-#define COFFEE_APPLICATION_MAIN(mainfun)               \
-    extern "C" int main(int argv, char** argc)         \
-    {                                                  \
-        return Coffee::MainSetup(mainfun, argv, argc); \
     }
 
 #define COFFEE_APPLICATION_MAIN_CUSTOM_ARG(mainfun) \

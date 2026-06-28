@@ -33,6 +33,7 @@
                 "CMAKE_CXX_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-g++",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
                 "CMAKE_SYSTEM_NAME": "Baremetal",
+                "ELF2DOL": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/x64-linux/bin/elf2dol",
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/$env{TOOLCHAIN_PREFIX}-$env{VARIANT}.toolchain.cmake",
                 "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON",
                 "VCPKG_MANIFEST_FEATURES": "headful;image",

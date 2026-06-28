@@ -2,7 +2,8 @@
     "overlay-ports": [
         "./toolchain/vcpkg/ports/discord-rpc",
         "./toolchain/vcpkg/ports/gamenetworkingsockets",
-        "./toolchain/vcpkg/ports/stb"
+        "./toolchain/vcpkg/ports/stb",
+        "../vcpkg-devkit/ports/libogc"
     ],
     "overlay-triplets": [
         "./toolchain/vcpkg/triplets"

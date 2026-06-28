@@ -2,7 +2,9 @@
 
 #include <gccore.h>
 #include <malloc.h>
+#include <ogc/lwp_watchdog.h> // gettime / millisecs_to_ticks (GP-stall watchdog)
 
+#include <cstdio>
 #include <cstring>
 
 /* GameCube VI + GX bring-up. This is the low-level video plumbing the RHI api
@@ -115,7 +117,30 @@ void swapBuffers()
 
     if(g_context->gxReady)
     {
-        GX_DrawDone();
+        /* GP-stall watchdog: a malformed vertex stream (e.g. a vertex
+         * descriptor/format that disagrees with the emitted vertices) leaves the
+         * graphics processor waiting for FIFO bytes that never arrive. The
+         * blocking GX_DrawDone() would then hang forever with no notification.
+         * Wait for the command processor to drain with a deadline instead; on a
+         * stall, report it and abort the frame rather than freezing silently. */
+        GX_Flush();
+        u64 const deadline = gettime() + millisecs_to_ticks(2000);
+        u8        ov_hi, ov_lo, rd_idle, cmd_idle = 0, brkpt;
+        do
+        {
+            GX_GetGPStatus(&ov_hi, &ov_lo, &rd_idle, &cmd_idle, &brkpt);
+        } while(!(cmd_idle && rd_idle) && gettime() < deadline);
+
+        if(cmd_idle && rd_idle)
+            GX_DrawDone();
+        else
+        {
+            printf(
+                "gexxo: GP stall at swap -- FIFO not drained in 2s. Likely a "
+                "vertex descriptor/format that disagrees with the emitted "
+                "vertices. Aborting frame.\n");
+            GX_AbortFrame();
+        }
         GX_CopyDisp(g_context->framebuffer[g_context->currentFb], GX_TRUE);
     }
 

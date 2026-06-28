@@ -52,7 +52,6 @@ struct blend_state
 {
     bool additive{false};
     bool multiply{false};
-    bool maximum{false};
 };
 
 struct stencil_state

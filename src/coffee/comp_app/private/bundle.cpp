@@ -780,6 +780,7 @@ void addDefaults(
 
 #elif defined(FEATURE_ENABLE_CogComponent)
     loader.registerAll<cog::Services>(container, ec);
+    cVerbose(10, "COG components loaded, error={}", ec.message());
     C_ERROR_CHECK(ec);
 #else
 #error No graphics
@@ -839,6 +840,7 @@ void addDefaults(
     nvml_comp::try_load_nvml(container);
 #endif
 
+#if !defined(FEATURE_ENABLE_CogComponent)
     rq::runtime_queue::QueueImmediate(
         rq::runtime_queue::GetCurrentQueue().value(),
         std::chrono::seconds(0),
@@ -866,6 +868,7 @@ void addDefaults(
                         "window:size", fmt::format("{}x{}", size.w, size.h));
         })
         .assume_value();
+#endif
 }
 
 } // namespace comp_app

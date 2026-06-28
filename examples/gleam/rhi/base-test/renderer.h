@@ -1,3 +1,6 @@
+#include "coffee/graphics/apis/gexxo/rhi_resources.h"
+#include "peripherals/concepts/graphics_api.h"
+#include "peripherals/semantic/enum/data_types.h"
 #include <peripherals/stl/magic_enum.hpp>
 
 #include <coffee/components/components.h>
@@ -325,10 +328,11 @@ struct RendererState
 
         std::shared_ptr<rhi::api::vertex_type> vao;
         std::shared_ptr<rhi::buffer_t>         array;
+        std::shared_ptr<rhi::buffer_t>         elements;
+        std::shared_ptr<rhi::program_t>        program;
 #if defined(FEATURE_ENABLE_Gexxo)
         std::shared_ptr<rhi::texture_t>        tex;
 #else
-        std::shared_ptr<rhi::program_t>             program;
         std::shared_ptr<rhi::sampler_t>             sampler;
         std::shared_ptr<rhi::compat::texture_2da_t> tex;
 #endif
@@ -385,30 +389,17 @@ void SetupRendering(
 
         1.f,  1.f,  1.f, 1.f,
     }};
+    constexpr std::array<u16, 6> elemdata = {{
+        0, 1, 2, 3, 4, 5,
+    }};
 
     cVerbose(8, "Loading graphics API");
-    /*
-     * Loading the GLeam API, chosen according to what is available at runtime
-     */
     cDebug(
         "Queried version: {0}\n"
         "Extensions: {1}",
         d.gfx.query_native_version(),
         d.gfx.query_native_extensions());
-    auto err =
-        d.gfx.load(/*{
- .api_version    = 0x200,
- .api_type = gleam::api_type_t::es,
-//        .api_extensions = gleam::api::extensions_set{
-//            "GL_EXT_discard_framebuffer",
-//            "GL_OES_rgb8_rgba8",
-//            "GL_OES_vertex_array_object",
-//        },
- .api_workarounds = gleam::workarounds{
-     .draw = {
-         .emulated_instance_id = true,
-     },
-}}*/);
+    auto err = d.gfx.load();
     if(err.has_value())
     {
         cWarning(
@@ -520,13 +511,6 @@ void SetupRendering(
             std::make_shared<gleam::compat::texture_2da_t>(&d.gfx, fmt, 1);
         texture->set_usage_hint(
             gleam::compat::texture_usage_hint_t::per_instance);
-        //        if(d.gfx.api_version() == std::make_tuple(2u, 0u))
-        //            d.g_data.tex = d.gfx.alloc_texture(gleam::textures::d2,
-        //            fmt, 1);
-        //        else
-        //            d.g_data.tex
-        //                = d.gfx.alloc_texture(gleam::textures::d2_array, fmt,
-        //                1);
         texture->alloc(size_3d<u32>{1024, 1024, 4}, true);
         for(i32 i = 0; i < static_cast<i32>(textures.size()); i++)
         {
@@ -553,78 +537,68 @@ void SetupRendering(
         auto        vao = d.g_data.vao = d.gfx.alloc_vertex_array();
         auto        buf = d.g_data.array =
             d.gfx.alloc_buffer(rhi::buffers::vertex, RSCA::ReadOnly);
+        auto elem = d.g_data.elements =
+            d.gfx.alloc_buffer(rhi::buffers::element, RSCA::ReadOnly);
         vao->alloc();
         vao->add({
             .index = 0,
+            .role = rhi::vertex_attribute::position,
             .value =
                 {
                     .offset = 0,
-                    .stride = sizeof(Vecf2) + sizeof(Vecf2),
+                    .stride = sizeof(Vecf2) * 2,
                     .count  = 2,
                 },
         });
+        vao->add({
+            .index = 1,
+            .role = rhi::vertex_attribute::texcoord0,
+            .value =
+                {
+                    .offset = sizeof(Vecf2),
+                    .stride = sizeof(Vecf2) * 2,
+                    .count = 2,
+                },
+        });
+        elem->alloc();
+        elem->commit(gsl::span<u16 const>(elemdata.data(), elemdata.size()));
         buf->alloc();
         buf->commit(gsl::span<f32 const>(vertexdata.data(), vertexdata.size()));
         vao->set_buffer(rhi::buffers::vertex, buf, 0);
+        vao->set_buffer(rhi::buffers::element, elem);
     }
     {
-        /* Instrumentation: exercise the demand-paged mmap API, including two
-         * concurrent mappings. Reading a window byte faults pages in from
-         * ARAM/DVD; upload() copies the red TPL into a resident GX texture. */
+        auto prg = d.g_data.program = d.gfx.alloc_program();
+        prg->channels = {
+            rhi::program_t::channel_t{.channel = rhi::program_t::channel_t::color0, .lighting = false},
+            rhi::program_t::channel_t{.channel = rhi::program_t::channel_t::alpha0,},
+        };
+        prg->stages = {
+            rhi::program_t::stage_t{
+                .stage    = rhi::program_t::stage_t::stage0,
+                .op       = rhi::program_t::stage_t::modulate,
+                .texcoord = rhi::program_t::stage_t::texcoord0,
+                .texmap   = rhi::program_t::stage_t::texmap0,
+                .color    = rhi::program_t::channel_t::color0a0,
+            },
+        };
+    }
+    {
         ProfContext _("GX texture load (paged mmap)");
         namespace vmem = platform::file::gekko::vmem;
 
-        cDebug(
-            "paged mmap: LRU eviction test {0}",
-            vmem::test::lru("circle_red.tpl") ? "PASS" : "FAIL");
-
         auto red  = vmem::map("circle_red.tpl");
-        auto blue = vmem::map("circle_blue.tpl"); // second mapping, live at once
-        cDebug(
-            "paged mmap: red base={0} size={1}, blue base={2} size={3}",
-            static_cast<void*>(red.base),
-            red.size,
-            static_cast<void*>(blue.base),
-            blue.size);
-        if(red && blue)
-        {
-            cDebug(
-                "paged mmap: both live -> red[0]={0} blue[0]={1}",
-                static_cast<int>(red.base[0]),
-                static_cast<int>(blue.base[0]));
-            // Does the hardware set the PTE Referenced bit on access? (clock-LRU)
-            cDebug(
-                "paged mmap: R-bit after access: red={0} blue={1}",
-                vmem::test::page_referenced(red.base),
-                vmem::test::page_referenced(blue.base));
-        }
-
         if(red)
         {
-            /* Pin red into contiguous resident memory and build the GX texture
-             * directly from it -- GX reads the pinned buffer's physical memory,
-             * no upload copy. blue stays demand-paged. red + the lock are kept
-             * for the texture's lifetime (the GXTexObj points into the buffer). */
-            auto lk = vmem::mlock(red.base, red.size);
-            cDebug(
-                "paged mmap: mlock red -> phys={0} size={1} (GX reads it direct)",
-                lk.phys,
-                lk.size);
-            if(lk)
+            auto tex = d.g_data.tex = std::make_shared<rhi::texture_t>(
+                rhi::textures::type::d2, typing::pixels::PixDesc{}, 1);
+            if(!tex->upload_pinned(std::move(red)))
             {
-                auto tex = d.g_data.tex = std::make_shared<rhi::texture_t>(
-                    rhi::textures::type::d2, typing::pixels::PixDesc{}, 1);
-                if(!tex->adopt_tpl(lk.ptr, red.size))
-                {
-                    cDebug("circle_red.tpl: TPL decode failed");
-                    d.g_data.tex.reset();
-                }
+                cDebug("circle_red.tpl: TPL decode failed");
+                d.g_data.tex.reset();
             }
         } else
             cDebug("circle_red.tpl: not found on disc");
-
-        cDebug("paged mmap: {0} page faults total", vmem::fault_count());
-        vmem::unmap(blue); // red stays mapped+locked: GX reads the pinned buffer
     }
 #endif
 
@@ -802,16 +776,24 @@ void RendererLoop(
             modelviews.push_back(
                 cam.transform * e.get<TransformPair>(ent.id)->second);
         d.gfx.submit(rhi::draw_command{
-            .call = {.instanced = true},
+            .call = {.indexed = true, .instanced = true},
             .data =
                 {
+                    .elements =
+                        {
+                            .count = 6,
+                            .type  = semantic::type_t::u16,
+                        },
                     .arrays    = {.count = 6},
                     .instances = {.count = static_cast<u32>(modelviews.size())},
                 },
+            .program = d.g_data.program,
             .vertices            = g.vao,
-            .texture             = g.tex,
+            .textures            = {{.texture = g.tex}},
             .instance_transforms = modelviews,
-        });
+        },
+        rhi::cull_state{.front_face = true},
+        rhi::blend_state{.additive = true});
 #endif
 
 #if !defined(FEATURE_ENABLE_Gexxo)
