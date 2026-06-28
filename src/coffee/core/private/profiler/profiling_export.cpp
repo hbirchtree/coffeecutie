@@ -1,7 +1,8 @@
+#include "peripherals/constants.h"
+#include "peripherals/stl/standard_exceptions.h"
 #include <coffee/core/profiler/profiling-export.h>
 
 #include <coffee/core/CFiles>
-#include <coffee/core/CJSONParser>
 #include <coffee/core/CProfiling>
 #include <coffee/core/argument_handling.h>
 #include <coffee/core/coffee.h>
@@ -9,6 +10,7 @@
 #include <coffee/core/platform_data.h>
 #include <fmt_extensions/info.h>
 #include <fmt_extensions/url_types.h>
+#include <nlohmann/json_fwd.hpp>
 #include <peripherals/stl/range.h>
 #include <peripherals/stl/string/hex.h>
 #include <peripherals/stl/string/replace.h>
@@ -18,6 +20,8 @@
 #include <platforms/file.h>
 #include <platforms/sysinfo.h>
 #include <url/url.h>
+
+#include <nlohmann/json.hpp>
 
 #if defined(COFFEE_ANDROID)
 #include <coffee/android/android_main.h>
@@ -31,6 +35,8 @@
 #endif
 
 #include <coffee/core/CDebug>
+
+using json = nlohmann::json;
 
 #ifndef COFFEE_LOWFAT
 
@@ -56,277 +62,206 @@ static std::string AnonymizePath(Url const& p)
     return AnonymizePath(p.internUrl);
 }
 
-namespace CT_Stuff {
-
-STATICINLINE void PutArgs(json::ArrayBuilder& target)
-{
-    for(auto const& arg : GetInitArgs())
-        target.push_back(AnonymizePath(arg));
-}
-
-STATICINLINE void PutExtraData(json::ObjectBuilder& target)
-{
-    for(auto const& info : ExtraData::Get())
-        target.put(info.first, info.second);
-}
-
-STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
+STATICINLINE void PutRuntimeInfo(json& target)
 {
     using namespace stl_types;
     using libc_types::u32;
-
-    json::ObjectBuilder build(target.allocator());
-
-    build.put("version", compile_info::engine_version)
-        .put("compiler", compile_info::compiler::name)
-        .put(
-            "compilerVersion",
-            Strings::fmt(
-                "{0}.{1}.{2}",
-                compile_info::compiler::version.major,
-                compile_info::compiler::version.minor,
-                compile_info::compiler::version.rev))
-        .put("architecture", compile_info::architecture)
-        .put("target", compile_info::target)
-        .put("buildMode", compile_info::debug_mode ? "DEBUG" : "RELEASE");
-
+    json build;
+    build["version"] = compile_info::engine_version;
+    build["compiler"] = compile_info::compiler::name;
+    build["compilerVersion"] = Strings::fmt(
+        "{0}.{1}.{2}",
+        compile_info::compiler::version.major,
+        compile_info::compiler::version.minor,
+        compile_info::compiler::version.rev);
+    build["architecture"] = compile_info::architecture;
+    build["target"] = compile_info::target;
+    build["buildMode"] = compile_info::debug_mode ? "DEBUG" : "RELEASE";
     if constexpr(compile_info::platform::is_android)
     {
-        build.put("androidTarget", cast_pod(compile_info::android::api))
-            .put("androidNdk", cast_pod(compile_info::android::ndk_ver));
+        build["androidTarget"] = compile_info::android::api;
+        build["androidNdk"] = compile_info::android::ndk_ver;
     }
-
     if constexpr(compile_info::platform::is_windows)
     {
-        build
-            .put(
-                "windowsTarget",
-                stl_types::str::fmt::hexify(compile_info::windows::target))
-            .put(
-                "windowsWdk",
-                stl_types::str::fmt::hexify(compile_info::windows::wdk))
+        build["windowsTarget"] = fmt::format("{:x}", compile_info::windows::target);
+        build["windowsWdk"] = fmt::format("{:x}", compile_info::windows::wdk);
 #if defined(COFFEE_WINDOWS) && !defined(COFFEE_MINGW64) && \
     !defined(COFFEE_MINGW32)
-            .put("windowsServer", IsWindowsServer() ? true : false)
+        build["windowsServer"] = IsWindowsServer() ? true : false;
 #endif
-            ;
     }
-
     if constexpr(compile_info::platform::is_macos)
     {
-        build.put("macTarget", cast_pod(compile_info::apple::macos::target))
-            .put(
-                "macMinTarget",
-                cast_pod(compile_info::apple::macos::min_target));
+        build["macTarget"] = compile_info::apple::macos::target;
+        build["macMinTarget"] = compile_info::apple::macos::min_target;
     }
-
     if constexpr(compile_info::platform::is_ios)
     {
-        build.put("iosTarget", cast_pod(compile_info::apple::ios::target))
-            .put(
-                "iosMinTarget", cast_pod(compile_info::apple::ios::min_target));
+        build["iosTarget"] = compile_info::apple::ios::target;
+        build["iosMinTarget"] = compile_info::apple::ios::min_target;
     }
-
     if constexpr(compile_info::platform::is_linux)
     {
-        build.put("libcRuntime", compile_info::linux_::libc_runtime);
+        build["libcRuntime"] = compile_info::linux_::libc_runtime;
 
         if constexpr(compile_info::linux_::glibc::major != 0)
         {
-            build.put(
-                "libcVersion",
-                cast_pod(compile_info::linux_::glibc::major) + "." +
-                    cast_pod(compile_info::linux_::glibc::minor));
+            build["libcVersion"] = fmt::format(
+                "{}.{}",
+                compile_info::linux_::glibc::major,
+                compile_info::linux_::glibc::minor);
         } else if constexpr(compile_info::linux_::libcpp::version != 0)
         {
-            build.put(
-                "libcVersion", cast_pod(compile_info::linux_::libcpp::version));
+            build["libcVersion"] = compile_info::linux_::libcpp::version;
         }
     }
+    target["build"] = std::move(build);
 
-    target.put("build", build.eject());
-
-    auto cwd = path::current_dir();
-
-    json::ObjectBuilder runtime(target.allocator());
-
-    runtime.put("architecture", platform::info::os::architecture())
-        .put("kernel", platform::info::os::kernel())
-        .put("kernelVersion", platform::info::os::kernel_version())
-        .put("cwd", AnonymizePath(cwd.value()));
-
-    if(auto sysname = platform::info::os::name())
-        if(auto sysver = platform::info::os::version())
-        {
-            std::string system_string(sysname->begin(), sysname->end());
-            system_string.append(" ");
-            system_string.append(sysver->begin(), sysver->end());
-            runtime.put("system", system_string);
-        }
-
-    if constexpr(platform::info::os::has_libc_info)
-        runtime.put("libcVersion", platform::info::os::libc_version());
-
+    json runtime;
+    runtime["architecture"] = platform::info::os::architecture();
+    runtime["kernel"] = platform::info::os::kernel();
+    runtime["kernelVersion"] = platform::info::os::kernel_version();
+    if(auto cwd = path::current_dir())
+        runtime["cwd"] = AnonymizePath(cwd.value());
     if(auto distro = platform::info::os::name(); distro)
-        runtime.put("distro", *distro);
-    if(auto version = platform::info::os::version(); version)
-        runtime.put("distroVersion", *version);
-
+    {
+        runtime["distro"] = *distro;
+        if(auto version = platform::info::os::version(); version)
+        {
+            runtime["distroVersion"] = *version;
+            runtime["system"] = fmt::format("{} {}", *distro, *version);
+        }
+    }
+    if constexpr(platform::info::os::has_libc_info)
+        runtime["libcVersion"] = platform::info::os::libc_version();
 #if defined(COFFEE_WINDOWS)
     if(auto system = platform::info::os::wine_host_system())
     {
         auto [kernel, version] = system.value();
-        runtime.put("underlyingKernel", kernel);
-        runtime.put("underlyingKernelVersion", version);
+        runtime["underlyingKernel"] = kernel;
+        runtime["underlyingKernelVersion"] = version;
     }
 #endif
 #if defined(COFFEE_ANDROID)
-    runtime.put("androidLevel", cast_pod(android::app_info().sdk_version()));
-
-    std::vector<std::string> systemFeatures =
-        android::app_info().system_features();
-    std::string systemFeaturesString;
-    for(auto const& feature : systemFeatures)
+    if constexpr(compile_info::platform::is_android)
     {
-        systemFeaturesString.append(feature + " ");
+        runtime["androidLevel"] = android::app_info().sdk_version();
+
+        std::vector<std::string> systemFeatures =
+            android::app_info().system_features();
+        std::string systemFeaturesString;
+        for(auto const& feature : systemFeatures)
+        {
+            systemFeaturesString.append(feature + " ");
+        }
+        if(systemFeaturesString.back() == ' ')
+            systemFeaturesString.resize(systemFeaturesString.size() - 1);
+        runtime["androidFeatures"] = systemFeaturesString;
     }
-    if(systemFeaturesString.back() == ' ')
-        systemFeaturesString.resize(systemFeaturesString.size() - 1);
-    runtime.put("androidFeatures", systemFeaturesString);
 #endif
 #if defined(COFFEE_EMSCRIPTEN)
     if(auto browser = platform::info::os::emscripten::browser_name())
         runtime.put("browserAgent", *browser);
 #endif
-
     {
-        json::ArrayBuilder args(target.allocator());
-        PutArgs(args);
-
-        runtime.put("arguments", args.eject());
+        json args = nlohmann::json::array();
+        for(auto const& arg : GetInitArgs())
+            args.push_back(AnonymizePath(arg));
+        runtime["arguments"] = std::move(args);
     }
-
-    target.put("runtime", runtime.eject());
+    target["runtime"] = std::move(runtime);
 
     auto unknown_pair = std::pair{"<unknown>", "<unknown>"};
-
     {
-        json::ObjectBuilder device(target.allocator());
-
+        json device;
         auto deviceName =
             platform::info::device::device().value_or(unknown_pair);
         auto motherboard =
             platform::info::device::motherboard().value_or(unknown_pair);
         auto chassis = platform::info::device::chassis().value_or(unknown_pair);
 
-        device.put("name", deviceName.first + " " + deviceName.second)
-            .put("machineManufacturer", deviceName.first)
-            .put("machineModel", deviceName.second)
-            .put("type", platform::info::device::variant())
-            .put("platform", platform::info::os::variant())
-            .put("motherboard", motherboard.first + " " + motherboard.second)
-            .put("motherboardManufacturer", motherboard.first)
-            .put("motherboardModel", motherboard.second)
-            .put("chassis", chassis.first + " " + chassis.second);
+        device["name"] = fmt::format("{} {}", deviceName.first, deviceName.second);
+        device["machineManufacturer"] = deviceName.first;
+        device["machineModel"] = deviceName.second;
+        device["type"] = platform::info::device::variant();
+        device["platform"] = platform::info::os::variant();
+        device["motherboard"] = motherboard.first + " " + motherboard.second;
+        device["motherboardManufacturer"] = motherboard.first;
+        device["motherboardModel"] = motherboard.second;
+        device["chassis"] = fmt::format("{} {}", chassis.first, chassis.second);
 
-        target.put("device", device.eject());
+        target["device"] = std::move(device);
     }
-
     {
-        json::ObjectBuilder processor(target.allocator());
-        json::ArrayBuilder  freq(target.allocator());
-        json::ArrayBuilder  clusters(target.allocator());
-
+        json freq = nlohmann::json::array();
+        json clusters = nlohmann::json::array();
         for(auto i : stl_types::range<u32>(platform::info::proc::cpu_count()))
         {
-            json::ObjectBuilder model_info(target.allocator());
+            json model_info;
             auto frequency = platform::info::proc::frequency(false, i);
             freq.push_back(frequency / 1000000.f);
             if(auto model = platform::info::proc::model(i); model.has_value())
             {
-                model_info.put("id", i);
-                model_info.put("manufacturer", model.value().first);
-                model_info.put("model", model.value().second);
-                model_info.put("frequency", frequency);
-                model_info.put("cores", platform::info::proc::core_count(i));
-                model_info.put(
-                    "threads", platform::info::proc::thread_count(i));
+                model_info["id"] = i;
+                model_info["manufacturer"] = model.value().first;
+                model_info["model"] = model.value().second;
+                model_info["frequency"] = frequency;
+                model_info["cores"] = platform::info::proc::core_count(i);
+                model_info["threads"] = platform::info::proc::thread_count(i);
             }
             if(!model_info.empty())
-                clusters.push_back(model_info.eject());
+                clusters.push_back(std::move(model_info));
         }
-
         auto pinfo = platform::info::proc::model().value_or(unknown_pair);
-
-        processor
-            // Legacy CPU info
-            .put("frequencies", freq.eject())
-            .put("manufacturer", pinfo.first)
-            .put("model", pinfo.second)
-            .put("firmware", "")
-            // New CPU info
-            .put("clusters", clusters.eject())
-            .put("nodes", platform::info::proc::node_count())
-            .put("cpus", platform::info::proc::cpu_count())
-            .put("cores", platform::info::proc::core_count())
-            .put("threads", platform::info::proc::thread_count())
-            .put("hyperthreading", platform::info::proc::is_hyperthreaded());
-
-        target.put("processor", processor.eject());
+        json processor;
+        // Legacy CPU info, without clustered CPU support
+        processor["frequencies"] = std::move(freq);
+        processor["manufacturer"] = pinfo.first;
+        processor["model"] = pinfo.second;
+        processor["firmware"] = "";
+        // New CPU info
+        processor["clusters"] = std::move(clusters);
+        processor["nodes"] = platform::info::proc::node_count();
+        processor["cpus"] = platform::info::proc::cpu_count();
+        processor["cores"] = platform::info::proc::core_count();
+        processor["threads"] = platform::info::proc::thread_count();
+        processor["hyperthreading"] = platform::info::proc::is_hyperthreaded();
+        target["processor"] = std::move(processor);
     }
-
     {
-        json::ObjectBuilder memory(target.allocator());
-        json::ObjectBuilder virtmem(target.allocator());
-        //        runtime.put("virtual", virtmem.eject());
-        //        virtmem.put("total", SysInfo::SwapTotal());
-        //        virtmem.put("available", SysInfo::SwapAvailable());
-        memory.put("total", platform::info::memory::total());
+        json memory;
+        memory["total"] = platform::info::memory::total();
         if(auto resident = platform::info::memory::resident(); resident != 0)
-            memory.put("resident", resident);
-        target.put("memory", memory.eject());
+            memory["resident"] = resident;
+        target["memory"] = std::move(memory);
     }
 }
 
-} // namespace CT_Stuff
-
 void ExportChromeTracerData(std::string& target)
 {
-    using namespace CT_Stuff;
-
-    json::Document doc;
-    doc.SetObject();
-    json::ObjectBuilder root(doc.GetAllocator());
-
-    json::ObjectBuilder extraData(root.allocator());
-    PutExtraData(extraData);
-
-    json::ObjectBuilder application(root.allocator());
-
-    try
-    {
-        auto appd = GetCurrentApp();
-        application.put("name", appd.application_name)
-            .put("organization", appd.organization_name)
-            .put("version", appd.version_code);
-
-        root.put("application", application.eject())
-            .put("extra", extraData.eject());
-    } catch(undefined_behavior const&)
-    {
-        // Uhoh... Forget about that :)
-    }
-
-    PutRuntimeInfo(root);
-
-    auto rootDoc = root.eject();
-    for(auto it = rootDoc.MemberBegin(); it != rootDoc.MemberEnd(); ++it)
-        doc.AddMember(it->name, it->value, doc.GetAllocator());
-
-    json::ArrayBuilder emptyEvents(doc.GetAllocator());
-    doc.AddMember("traceEvents", emptyEvents.eject(), doc.GetAllocator());
-
-    target = json::Serialize(doc);
+    json profile;
+    profile["application"] = [] {
+        json application;
+        try {
+            auto appd = GetCurrentApp();
+            application["name"] = appd.application_name;
+            application["organization"] = appd.organization_name;
+            application["version"] = appd.version_code;
+        } catch(undefined_behavior const&)
+        {
+        }
+        return application;
+    }();
+    profile["extra"] = [] {
+        json extraData;
+        for(auto const& info : ExtraData::Get())
+            extraData[info.first] = info.second;
+        return extraData;
+    }();
+    PutRuntimeInfo(profile);
+    profile["traceEvents"] = nlohmann::json::array();
+    target = nlohmann::to_string(profile);
 }
 
 void ExportStringToFile(const std::string& data, const Url& outfile)
