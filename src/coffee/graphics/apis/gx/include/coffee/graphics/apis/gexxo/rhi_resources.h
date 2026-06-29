@@ -541,10 +541,22 @@ struct program_t
     {
         enum id_t
         {
-            stage0 = GX_TEVSTAGE0, stage1, stage2, stage3,
-            stage4, stage5, stage6, stage7,
-            stage8, stage9, stage10, stage11,
-            stage12, stage13, stage14, stage15,
+            stage0 = GX_TEVSTAGE0,
+            stage1,
+            stage2,
+            stage3,
+            stage4,
+            stage5,
+            stage6,
+            stage7,
+            stage8,
+            stage9,
+            stage10,
+            stage11,
+            stage12,
+            stage13,
+            stage14,
+            stage15,
         };
         enum op_t
         {
@@ -556,14 +568,26 @@ struct program_t
         };
         enum texcoord_t
         {
-            texcoord0 = GX_TEXCOORD0, texcoord1, texcoord2, texcoord3,
-            texcoord4, texcoord5, texcoord6, texcoord7,
+            texcoord0 = GX_TEXCOORD0,
+            texcoord1,
+            texcoord2,
+            texcoord3,
+            texcoord4,
+            texcoord5,
+            texcoord6,
+            texcoord7,
             texcoord_null = GX_TEXCOORDNULL,
         };
         enum texmap_t
         {
-            texmap0 = GX_TEXMAP0, texmap1, texmap2, texmap3,
-            texmap4, texmap5, texmap6, texmap7,
+            texmap0 = GX_TEXMAP0,
+            texmap1,
+            texmap2,
+            texmap3,
+            texmap4,
+            texmap5,
+            texmap6,
+            texmap7,
             texmap_null = GX_TEXMAP_NULL,
         };
 
