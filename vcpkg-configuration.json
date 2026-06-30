@@ -2,8 +2,7 @@
     "overlay-ports": [
         "./toolchain/vcpkg/ports/discord-rpc",
         "./toolchain/vcpkg/ports/gamenetworkingsockets",
-        "./toolchain/vcpkg/ports/stb",
-        "../vcpkg-devkit/ports/libogc"
+        "./toolchain/vcpkg/ports/stb"
     ],
     "overlay-triplets": [
         "./toolchain/vcpkg/triplets"
@@ -56,7 +55,7 @@
         {
             "kind": "git",
             "repository": "https://github.com/hbirchtree/vcpkg-devkit",
-            "baseline": "2ea2033b03c0d17c8200f50c26fb52d471841919",
+            "baseline": "dfdbd6e42dc72ce20e68b06b80e2e8d3013a537d",
             "packages": [
                 "gctools",
                 "libogc",

@@ -11,6 +11,7 @@
 #include <optional>
 #include <string>
 #include <tuple>
+#include <unordered_map>
 
 namespace comp_app::interfaces {
 struct AppInfo;
@@ -115,6 +116,11 @@ struct api
 
   private:
     std::shared_ptr<rendertarget_t> m_framebuffer;
+
+    /* Cache of recorded display lists, keyed by a hash of the (static) draw
+     * state. submit() records a list the first time it sees a given draw and
+     * replays it thereafter; see detail::hash_draw in rhi_draw.h. */
+    std::unordered_map<u64, display_list_t> m_display_lists;
 };
 
 } // namespace gexxo

@@ -1,5 +1,6 @@
 #include <blam/volta/blam_file_header.h>
 
+#include <blam/volta/blam_endian.h>
 #include <peripherals/error/result.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/semantic/chunk_ops.h>
@@ -15,7 +16,7 @@ stl_types::result<file_header_t const*, map_load_error> file_header_t::
 {
     file_header_t const* fh = C_RCAST<file_header_t const*>(data.data);
 
-    if(fh->version != version_t::pc)
+    if(from_le(fh->version) != version_t::pc)
         return map_load_error::incompatible_map_version_expected_pc;
 
     if(!stl_types::equal(header_head, fh->id) ||
@@ -30,7 +31,7 @@ stl_types::result<file_header_t const*, map_load_error> file_header_t::
 {
     file_header_t const* fh = C_RCAST<file_header_t const*>(data.data);
 
-    if(fh->version != version_t::custom_edition)
+    if(from_le(fh->version) != version_t::custom_edition)
         return map_load_error::incompatible_map_version_expected_custom_edition;
 
     if(!stl_types::equal(header_head, fh->id) ||
@@ -45,7 +46,7 @@ stl_types::result<file_header_t const*, map_load_error> file_header_t::
 {
     file_header_t const* fh = C_RCAST<file_header_t const*>(data.data);
 
-    if(fh->version != version_t::xbox)
+    if(from_le(fh->version) != version_t::xbox)
         return map_load_error::incompatible_map_version_expected_xbox;
 
     if(!stl_types::equal(header_head, fh->id) ||
@@ -60,7 +61,7 @@ stl_types::result<file_header_t const*, map_load_error> file_header_t::
 {
     file_header_t const* fh = C_RCAST<file_header_t const*>(data.data);
 
-    if(fh->version != version_t::mcc)
+    if(from_le(fh->version) != version_t::mcc)
         return map_load_error::incompatible_map_version_expected_mcc;
 
     if(!stl_types::equal(header_head, fh->id) ||

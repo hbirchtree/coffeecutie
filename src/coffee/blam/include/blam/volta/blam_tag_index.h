@@ -89,7 +89,10 @@ struct alignas(4) tag_t
         if(!valid())
             return "invalid tag"sv;
 
-        return reference<T>{1, offset}.data(magic, single_value);
+        // offset is a little-endian map field; the literal count is host order
+        // and must be encoded to little-endian so reference::data() (which
+        // applies from_le) reads it back correctly on big-endian hosts.
+        return reference<T>{to_le<u32>(1), offset}.data(magic, single_value);
     }
 
     /*!
@@ -170,14 +173,15 @@ struct alignas(4) tag_index_t : stl_types::non_copy
     inline map_ptr get_magic(file_header_t const* base, u32 file_size) const
     {
         byte_t const* base_ptr   = C_RCAST<byte_t const*>(base);
-        u32           index_size = base->version == version_t::xbox
+        u32           index_size = from_le(base->version) == version_t::xbox
                                        ? sizeof(tag_index_t) - sizeof(u32)
                                        : sizeof(tag_index_t);
 
-        u32 max_size = std::max(file_size, base->decomp_len);
+        u32 max_size = std::max(file_size, from_le(base->decomp_len));
         return map_ptr{
             {base_ptr, max_size},
-            tag_data_offset - (base->tag_index_offset + index_size)};
+            from_le(tag_data_offset) -
+                (from_le(base->tag_index_offset) + index_size)};
     }
 
     inline vertex_array vertex_base() const
@@ -188,7 +192,10 @@ struct alignas(4) tag_index_t : stl_types::non_copy
     inline index_array index_base() const
     {
         index_array base_reflexive = index_objects;
-        base_reflexive.offset += vertex_objects.offset;
+        // offsets are little-endian map fields; do the add in host order and
+        // re-encode so reference::data() un-swaps it correctly.
+        base_reflexive.offset = to_le(
+            from_le(index_objects.offset) + from_le(vertex_objects.offset));
         return base_reflexive;
     }
 
@@ -204,7 +211,7 @@ struct alignas(4) tag_index_t : stl_types::non_copy
      */
     inline tag_t const* tags(file_header_t const* header) const
     {
-        szptr offset = header->version == version_t::xbox
+        szptr offset = from_le(header->version) == version_t::xbox
                            ? sizeof(tag_index_t) - sizeof(u32)
                            : sizeof(tag_index_t);
 
@@ -250,7 +257,8 @@ struct alignas(4) tag_index_t : stl_types::non_copy
     STATICINLINE tag_index_t const& from_header(file_header_t const* base)
     {
         byte_t const* base_ptr = C_RCAST<byte_t const*>(base);
-        return *C_RCAST<tag_index_t const*>(&base_ptr[base->tag_index_offset]);
+        return *C_RCAST<tag_index_t const*>(
+            &base_ptr[from_le(base->tag_index_offset)]);
     }
 };
 

@@ -9,6 +9,8 @@
 #include <peripherals/libc/endian_ops.h>
 #endif
 
+#include "blam_endian.h"
+
 namespace blam {
 
 using namespace libc_types;
@@ -178,7 +180,11 @@ enum class tag_class_t : u32
 
 FORCEDINLINE bool tag_class_cmp(tag_class_t v1, tag_class_t v2)
 {
-    auto v1_i = libc::endian::to<libc::endian::u32_host>(C_CAST<u32>(v1));
+    // Tag classes are stored in the map as a little-endian FourCC, while the
+    // enum literals are the host-order value. from_le() normalises the
+    // map-read value to host order (no-op on little-endian hosts); the raw
+    // comparison covers literal-vs-literal use.
+    auto v1_i = from_le(C_CAST<u32>(v1));
     auto v2_i = C_CAST<u32>(v2);
 
     return v1_i == v2_i || v1 == v2;

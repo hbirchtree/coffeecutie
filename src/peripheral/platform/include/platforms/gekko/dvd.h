@@ -37,22 +37,38 @@ inline u32 be32(u8 const* p)
 }
 
 /* Read len bytes from absolute disc offset `abs` into dst. DVD hardware needs a
- * 32-byte aligned offset/buffer/length, so bounce through an aligned buffer
- * covering the rounded range and copy out the requested slice. */
+ * 32-byte aligned offset/buffer/length, so bounce through an aligned buffer and
+ * copy out the requested slice. The bounce is capped at 1 MiB per transfer: a
+ * whole-file read of a multi-MiB map must not allocate a second buffer as large
+ * as the file (that doubles peak memory and OOMs on the 24 MiB console, leaving
+ * the destination zero-filled). */
 inline bool read_at(void* dst, u32 len, u32 abs)
 {
-    u32 const start = abs & ~31u;
-    u32 const span  = ((abs + len + 31u) & ~31u) - start;
-    u8*       tmp   = static_cast<u8*>(memalign(32, span));
-    if(!tmp)
-        return false;
-    dvdcmdblk blk;
-    bool const ok =
-        DVD_ReadPrio(&blk, tmp, span, static_cast<s64>(start), 2) > 0;
-    if(ok)
-        memcpy(dst, tmp + (abs - start), len);
-    free(tmp);
-    return ok;
+    constexpr u32 chunk_max = 1u << 20; /* 1 MiB */
+    u8*           out       = static_cast<u8*>(dst);
+
+    for(u32 done = 0; done < len;)
+    {
+        u32 const want  = (len - done < chunk_max) ? (len - done) : chunk_max;
+        u32 const a     = abs + done;
+        u32 const start = a & ~31u;
+        u32 const span  = ((a + want + 31u) & ~31u) - start;
+
+        u8* tmp = static_cast<u8*>(memalign(32, span));
+        if(!tmp)
+            return false;
+        dvdcmdblk blk;
+        bool const ok =
+            DVD_ReadPrio(&blk, tmp, span, static_cast<s64>(start), 2) > 0;
+        if(ok)
+            memcpy(out + done, tmp + (a - start), want);
+        free(tmp);
+        if(!ok)
+            return false;
+
+        done += want;
+    }
+    return true;
 }
 
 struct file_entry

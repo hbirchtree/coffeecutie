@@ -5,6 +5,7 @@
 #include <type_traits>
 
 #include "blam_atlas_type.h"
+#include "blam_endian.h"
 #include "blam_magic_data.h"
 #include "blam_versions.h"
 
@@ -61,17 +62,23 @@ struct alignas(4) reference
         //        if(std::is_same_v<V, grbx_t> && padding != 0)
         //            return stl_types::failure("invalid reflexive_t"sv);
 
-        if(count == 0)
+        // count/offset are stored little-endian in the map; from_le() corrects
+        // them on big-endian hosts (no-op on little-endian).
+        u32 const host_count  = from_le(count);
+        u32 const host_offset = from_le(offset);
+
+        if(host_count == 0)
             return stl_types::success(span_type());
 
-        auto computed_offset = offset - magic.file_offset;
+        auto computed_offset = host_offset - magic.file_offset;
         if(computed_offset > magic.max_size)
             return stl_types::failure("reflexive pointer out of bounds"sv);
 
         span_type chunk =
             chunk_type::of(
-                C_RCAST<T const*>(magic.base_ptr + offset - magic.file_offset),
-                count)
+                C_RCAST<T const*>(
+                    magic.base_ptr + host_offset - magic.file_offset),
+                host_count)
                 .view;
         return stl_types::success(chunk);
     }
@@ -93,6 +100,13 @@ struct alignas(4) reference
     inline auto as() const
     {
         return reinterpret_cast<reference<T2, V> const*>(this);
+    }
+
+    /*! Element count in host byte order (the raw \c count field is stored
+     *  little-endian and must not be read directly on big-endian hosts). */
+    inline u32 size() const
+    {
+        return from_le(count);
     }
 };
 

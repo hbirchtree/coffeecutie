@@ -7,7 +7,10 @@
 
 #include <algorithm>
 #include <coffee/core/task_queue/task.h>
+#if __has_include(<corez/zlib.h>)
 #include <corez/zlib.h>
+#define BLAM_HAS_COMPRESSION 1
+#endif
 #include <functional>
 #include <iterator>
 #include <peripherals/semantic/chunk.h>
@@ -69,7 +72,7 @@ struct map_container
         if(!header)
             return map_load_error::not_a_map;
 
-        if(header->version != version_t::xbox)
+        if(from_le(header->version) != version_t::xbox)
         {
             progress("Reading tag index", 100);
             auto const* tags_index = &tag_index_t<Ver>::from_header(header);
@@ -82,6 +85,7 @@ struct map_container
             };
         }
 
+#if defined(BLAM_HAS_COMPRESSION)
         progress("Preparing map decompression", 10);
         semantic::mem_chunk<char> decompressed;
         using namespace libc_types::size_literals;
@@ -125,6 +129,9 @@ struct map_container
             .store        = decompressed,
             .decompressed = std::move(map_data),
         };
+#else
+        return map_load_error::decompression_error;
+#endif
     }
 
     file_header_t const*    map{nullptr};

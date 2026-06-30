@@ -227,8 +227,11 @@ struct part
         } else
         {
             auto cpy = base.vertex_base();
-            cpy.offset += vertex_ref_offset;
-            cpy.count = vert_count;
+            // offsets/counts are little-endian; do arithmetic in host order and
+            // re-encode so reference::data() un-swaps correctly.
+            cpy.offset =
+                to_le(from_le(cpy.offset) + from_le(vertex_ref_offset));
+            cpy.count = vert_count; // already little-endian
             return cpy;
         }
     }
@@ -246,9 +249,9 @@ struct part
             return indices;
         } else
         {
-            auto cpy = base.index_base();
-            cpy.offset += indices.offset;
-            cpy.count = indices.count + 2;
+            auto cpy   = base.index_base();
+            cpy.offset = to_le(from_le(cpy.offset) + from_le(indices.offset));
+            cpy.count  = to_le(from_le(indices.count) + 2);
             return cpy;
         }
     }
@@ -311,12 +314,12 @@ inline std::optional<model_data_t> header<V>::model_at(
         auto permutations = reg.permutations.data(magic).value();
         for(region_permutation const& per : permutations)
         {
-            auto perm_idx = per.meshindex_lod.at(4u - lod);
+            auto perm_idx = from_le(per.meshindex_lod.at(4u - lod));
             auto parts    = geometry[perm_idx].meshes(magic);
             for(part_wrap_header<V> const& part : parts)
             {
                 if(!stl_types::any_of(
-                       part.data.vertex_type,
+                       from_le(part.data.vertex_type),
                        vert::vertex_type_t::mod2_compressed_vertex,
                        vert::vertex_type_t::mod2_uncompressed_vertex))
                     continue;

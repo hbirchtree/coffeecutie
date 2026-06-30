@@ -135,12 +135,17 @@ struct bsp
                 return static_cast<u32>(node) & 0x7fffffffu;
             if(static_cast<u32>(node) >= node_span.size())
                 return std::nullopt;
-            auto const& n = node_span[node];
-            if(n.plane < 0 ||
-               static_cast<u32>(n.plane) >= plane_span.size())
+            auto const& n      = node_span[node];
+            i32 const   nplane = from_le(n.plane);
+            if(nplane < 0 ||
+               static_cast<u32>(nplane) >= plane_span.size())
                 return std::nullopt;
-            auto const& pl = plane_span[n.plane];
-            node = glm::dot(pl.plane, point) >= pl.d ? n.front : n.back;
+            auto const& pl = plane_span[nplane];
+            // collision node/plane fields are little-endian map data.
+            Vecf3 const pn{
+                from_le(pl.plane.x), from_le(pl.plane.y), from_le(pl.plane.z)};
+            node = glm::dot(pn, point) >= from_le(pl.d) ? from_le(n.front)
+                                                        : from_le(n.back);
         }
         return std::nullopt;
     }
@@ -251,7 +256,9 @@ struct section
      */
     inline reference<header, xbox_t> to_header() const
     {
-        return {1, {header_offset}};
+        // count is a host literal -> store little-endian; header_offset is a
+        // little-endian map field -> leave as-is (reference::data un-swaps it).
+        return {to_le<u32>(1), {header_offset}};
     }
 };
 
@@ -265,12 +272,16 @@ struct info
 
     inline map_ptr bsp_magic(map_ptr const& map_magic) const
     {
-        return {{map_magic.base_ptr, map_magic.max_size}, magic - offset};
+        // magic/offset are little-endian map fields; the resulting map_ptr is
+        // host order (consumed by reference::data which expects host).
+        return {
+            {map_magic.base_ptr, map_magic.max_size},
+            from_le(magic) - from_le(offset)};
     }
 
     inline section const& to_bsp(map_ptr const& magic) const
     {
-        return *C_RCAST<section const*>(magic.base_ptr + offset);
+        return *C_RCAST<section const*>(magic.base_ptr + from_le(offset));
     }
 
     inline std::optional<header const*> to_header(map_ptr const& magic) const
@@ -369,17 +380,21 @@ struct material
         //        base.offset += pc_vertex_data_offset;
         //        return base;
         /* the max is there because MCC is slightly different */
-        if(pc.type == vert::vertex_type_t::sbsp_uncompressed_vertex)
+        // pc.* are little-endian map fields; un-swap before arithmetic and
+        // re-encode the synthesised reference little-endian for reference::data.
+        auto const type  = from_le(pc.type);
+        auto const count = from_le(pc.count);
+        if(type == vert::vertex_type_t::sbsp_uncompressed_vertex)
             return {
-                .count  = static_cast<u32>(pc.count * sizeof(pc_vertex)),
-                .offset = std::max(
-                    pc.uncompressed_vertices.offset,
-                    pc.uncompressed_vertices.count),
+                .count  = to_le<u32>(static_cast<u32>(count * sizeof(pc_vertex))),
+                .offset = to_le(std::max(
+                    from_le(pc.uncompressed_vertices.offset),
+                    from_le(pc.uncompressed_vertices.count))),
             };
         else
             return {
-                .count  = static_cast<u32>(pc.count * sizeof(xbox_vertex)),
-                .offset = pc.compressed_vertices.offset,
+                .count = to_le<u32>(static_cast<u32>(count * sizeof(xbox_vertex))),
+                .offset = to_le(from_le(pc.compressed_vertices.offset)),
             };
     }
 
@@ -392,17 +407,23 @@ struct material
         //        /* Skip normal vertices to find light vertices */
         //        out.offset += sizeof(pc_vertex) * pc_vertices_data.count;
         //        return out;
-        auto out = vertices();
-        out.offset += out.count;
-        if(pc.type == vert::vertex_type_t::sbsp_uncompressed_vertex)
+        auto const verts = vertices();
+        auto const type  = from_le(pc.type);
+        auto const count = from_le(pc.count);
+        // light verts immediately follow the normal verts in memory; work in
+        // host order then re-encode little-endian.
+        u32 const light_offset = from_le(verts.offset) + from_le(verts.count);
+        if(type == vert::vertex_type_t::sbsp_uncompressed_vertex)
             return {
-                .count  = static_cast<u32>(pc.count * sizeof(pc_light_vertex)),
-                .offset = out.offset,
+                .count =
+                    to_le<u32>(static_cast<u32>(count * sizeof(pc_light_vertex))),
+                .offset = to_le(light_offset),
             };
         else
             return {
-                .count = static_cast<u32>(pc.count * sizeof(xbox_light_vertex)),
-                .offset = out.offset,
+                .count  = to_le<u32>(
+                    static_cast<u32>(count * sizeof(xbox_light_vertex))),
+                .offset = to_le(light_offset),
             };
     }
 
@@ -695,7 +716,7 @@ struct header
         auto leaf_span = leaves_.value();
         if(*leaf_idx >= leaf_span.size())
             return std::nullopt;
-        i16 cluster = leaf_span[*leaf_idx].cluster;
+        i16 cluster = from_le(leaf_span[*leaf_idx].cluster);
         if(cluster < 0)
             return std::nullopt;
         return static_cast<u32>(cluster);
@@ -727,10 +748,14 @@ inline reference<vert::face> material::indices(header const& head) const
     //        .count  = index_count(),
     //        .offset = index_offset() + head.surfaces.offset,
     //    };
+    // surfaces.offset/count are reused as (index count, byte offset into
+    // head.surfaces). count stays raw LE (reference::data un-swaps it); the
+    // computed offset is host-order arithmetic re-encoded little-endian.
     return {
         .count  = surfaces.offset,
-        .offset = static_cast<u32>(surfaces.count * sizeof(vert::face)) +
-                  head.surfaces.offset,
+        .offset = to_le(
+            static_cast<u32>(from_le(surfaces.count) * sizeof(vert::face)) +
+            from_le(head.surfaces.offset)),
     };
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <malloc.h>
 #include <memory>
 #include <ogc/gx.h>
 #include <ogc/tpl.h>
@@ -217,6 +218,23 @@ struct texture_t : std::enable_shared_from_this<texture_t>
             return false;
         m_loaded = true;
         return true;
+    }
+
+    /* Initialise the GX texture object directly from already-tiled texel data
+     * (e.g. a hand-tiled RGB565 lightmap), bypassing TPL. `tiled` must be
+     * 32-byte aligned, in the GX tiled layout for `gxfmt`, and kept alive +
+     * cache-flushed by the caller for the texture's lifetime. */
+    inline void init_raw(
+        void* tiled,
+        u16   w,
+        u16   h,
+        u8    gxfmt,
+        u8    wrap_s = GX_CLAMP,
+        u8    wrap_t = GX_CLAMP)
+    {
+        GX_InitTexObj(&m_obj, tiled, w, h, gxfmt, wrap_s, wrap_t, GX_FALSE);
+        GX_InitTexObjFilterMode(&m_obj, GX_LINEAR, GX_LINEAR);
+        m_loaded = true;
     }
 
     textures::type          m_type;
@@ -565,6 +583,13 @@ struct program_t
             blend    = GX_BLEND,
             replace  = GX_REPLACE,
             pass     = GX_PASSCLR,
+            /* Not a GX preset: multiply this stage's texture by the previous
+             * stage's output (cprev * texc), for multi-texture passes such as
+             * diffuse * lightmap. Configured via explicit TEV combiner inputs. */
+            modulate_prev = 0xFF,
+            /* As modulate_prev but with a 2x output scale -- Halo's
+             * double-biased-multiply detail blend (detail grey 0.5 = neutral). */
+            modulate_prev_2x = 0xFE,
         };
         enum texcoord_t
         {
@@ -674,6 +699,46 @@ struct draw_command
     int uniforms{};
     int buffers{};
     int samplers{};
+};
+
+/* A recorded GX display list: the GX_Begin..vertices..GX_End command stream for
+ * a draw whose geometry doesn't change frame-to-frame. Built lazily by submit()
+ * and keyed by a hash of the draw state, so repeated identical draws replay the
+ * cached FIFO via GX_CallDisplayList instead of re-feeding every vertex. The
+ * buffer is 32-byte aligned (GX requirement). Move-only RAII. */
+struct display_list_t
+{
+    void* buffer{nullptr};
+    u32   size{0}; /* bytes used (multiple of 32) */
+
+    display_list_t() = default;
+    display_list_t(void* b, u32 s) : buffer(b), size(s) {}
+    display_list_t(display_list_t&& o) noexcept
+        : buffer(o.buffer), size(o.size)
+    {
+        o.buffer = nullptr;
+        o.size   = 0;
+    }
+    display_list_t& operator=(display_list_t&& o) noexcept
+    {
+        if(this != &o)
+        {
+            if(buffer)
+                free(buffer);
+            buffer   = o.buffer;
+            size     = o.size;
+            o.buffer = nullptr;
+            o.size   = 0;
+        }
+        return *this;
+    }
+    display_list_t(display_list_t const&)            = delete;
+    display_list_t& operator=(display_list_t const&) = delete;
+    ~display_list_t()
+    {
+        if(buffer)
+            free(buffer);
+    }
 };
 
 using typing::vector_types::Vecd2;

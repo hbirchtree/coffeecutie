@@ -4,6 +4,7 @@
 #include "rhi_resources.h"
 
 #include <array>
+#include <ogc/cache.h>
 #include <ogc/gx.h>
 #include <optional>
 #include <peripherals/concepts/graphics_api.h>
@@ -20,6 +21,69 @@ inline void glm_to_mtx(Matf4 const& m, Mtx out)
         for(int c = 0; c < 4; c++)
             out[r][c] = g[c * 4 + r];
 }
+inline u32 type_size(semantic::type_t t)
+{
+    switch(t)
+    {
+    case semantic::type_t::u8:
+    case semantic::type_t::i8: return 1;
+    case semantic::type_t::u16:
+    case semantic::type_t::i16: return 2;
+    default: return 4; /* u32/i32/f32 */
+    }
+}
+
+/* Rough hash of the parts of a draw that determine the recorded GX command
+ * stream: the vertex array (its attribute layout + bound buffers, by identity),
+ * the element buffer, and the draw counts/offsets/mode. The per-instance matrix
+ * and render state are NOT included -- they are applied outside the list. Buffer
+ * identity (pointer + size) stands in for content: rebinding or resizing a
+ * buffer changes the key; mutating a buffer in place without changing its
+ * pointer would not (acceptable for the static geometry this caches). */
+inline u64 hash_draw(draw_command const& cmd)
+{
+    u64  h   = 1469598103934665603ull; /* FNV-1a */
+    auto mix = [&h](u64 v) { h = (h ^ v) * 1099511628211ull; };
+
+    mix(static_cast<u64>(reinterpret_cast<uintptr_t>(cmd.vertices.get())));
+    mix(cmd.call.indexed ? 1u : 0u);
+    mix(static_cast<u64>(cmd.call.mode));
+
+    if(cmd.call.indexed)
+    {
+        mix(cmd.data.elements.count);
+        mix(cmd.data.elements.offset);
+        mix(static_cast<u64>(cmd.data.elements.type));
+        if(auto const& eb = cmd.vertices->m_element_buffer; eb)
+        {
+            mix(reinterpret_cast<uintptr_t>(eb.get()));
+            mix(eb->size());
+        }
+    } else
+    {
+        mix(cmd.data.arrays.count);
+        mix(cmd.data.arrays.offset);
+    }
+
+    for(vertex_attribute const& a : cmd.vertices->m_attributes)
+    {
+        mix(static_cast<u64>(a.role));
+        mix(a.value.offset);
+        mix(a.value.stride);
+        mix(a.value.count);
+        mix(static_cast<u64>(a.value.type));
+        mix(a.buffer.id);
+        mix(a.buffer.offset);
+    }
+    for(auto const& [id, buf] : cmd.vertices->m_vertex_buffers)
+    {
+        mix(id);
+        mix(buf ? reinterpret_cast<uintptr_t>(buf.get()) : 0);
+        mix(buf ? buf->size() : 0);
+    }
+    return h;
+}
+
 inline u8 prim_to_gx(drawing::primitive prim)
 {
     switch(prim)
@@ -261,7 +325,24 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
     for(program_t::stage_t const& s : cmd.program->stages)
     {
         GX_SetTevOrder(s.stage, s.texcoord, s.texmap, s.color);
-        GX_SetTevOp(s.stage, s.op);
+        if(s.op == program_t::stage_t::modulate_prev ||
+           s.op == program_t::stage_t::modulate_prev_2x)
+        {
+            // out = (cprev * texc) [* 2 for the 2x variant] (multi-texture
+            // modulate, e.g. diffuse*lightmap, or detail double-biased-multiply)
+            u8 const scale = s.op == program_t::stage_t::modulate_prev_2x
+                                 ? GX_CS_SCALE_2
+                                 : GX_CS_SCALE_1;
+            GX_SetTevColorIn(
+                s.stage, GX_CC_ZERO, GX_CC_CPREV, GX_CC_TEXC, GX_CC_ZERO);
+            GX_SetTevColorOp(
+                s.stage, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, GX_TEVPREV);
+            GX_SetTevAlphaIn(
+                s.stage, GX_CA_ZERO, GX_CA_APREV, GX_CA_TEXA, GX_CA_ZERO);
+            GX_SetTevAlphaOp(
+                s.stage, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, GX_TEVPREV);
+        } else
+            GX_SetTevOp(s.stage, s.op);
     }
 
     // Default to alpha blending; a blend_state in the state changes overrides it.
@@ -301,6 +382,50 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
 
     (detail::apply_state(state_changes), ...);
 
+    /* Record the geometry (GX_Begin..vertices..GX_End) into a display list the
+     * first time we see this draw, then replay the cached FIFO every frame so
+     * only the matrix/material colour are re-issued per instance. The vertex
+     * descriptor/format/array set above stay outside the list (they are state,
+     * re-applied each submit). */
+    u64 const dl_key = detail::hash_draw(cmd);
+    auto      dl_it  = m_display_lists.find(dl_key);
+    if(dl_it == m_display_lists.end())
+    {
+        u32 per_vert = 0;
+        if(cmd.call.indexed)
+        {
+            u32 const idxsz =
+                cmd.data.elements.type == semantic::type_t::u16 ? 2u : 1u;
+            per_vert = static_cast<u32>(vao.m_attributes.size()) * idxsz;
+        } else
+            for(vertex_attribute const& a : vao.m_attributes)
+                per_vert += a.value.count * detail::type_size(a.value.type);
+
+        /* Vertex bytes + GX_Begin/GX_End overhead, padded to a 32-byte multiple
+         * (GX requires the list buffer aligned + a multiple of 32 in size). */
+        u32 cap = count * per_vert + 64;
+        cap     = (cap + 31u) & ~31u;
+
+        void* buf = memalign(32, cap);
+        if(!buf)
+            return std::make_tuple(
+                error::failed,
+                std::string_view{"display list alloc failed"});
+
+        GX_BeginDispList(buf, cap);
+        GX_Begin(detail::prim_to_gx(cmd.call.mode), GX_VTXFMT0, count);
+        if(cmd.call.indexed)
+            detail::iterate_indices(cmd.data, vao);
+        else
+            detail::iterate_arrays(cmd.data, vao);
+        GX_End();
+        u32 const used = GX_EndDispList();
+        DCFlushRange(buf, used); /* make the recorded list visible to the GP */
+
+        dl_it = m_display_lists.emplace(dl_key, display_list_t{buf, used}).first;
+    }
+    display_list_t const& dl = dl_it->second;
+
     static const u8 palette[4][3] = {
         {0x40, 0xE0, 0x40}, /* green */
         {0xE0, 0x40, 0x40}, /* red   */
@@ -319,27 +444,13 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
             GX_LoadPosMtxImm(mv, GX_PNMTX0);
         }
 
-        auto const& col = palette[inst % 4];
-        /* Textured draws modulate by white so the texture shows untinted. */
-        u8 const cr = col[0];
-        u8 const cg = col[1];
-        u8 const cb = col[2];
-        GXColor const matcol = {cr, cg, cb, 0xFF};
+        /* Per-instance material colour (used when a channel sources GX_SRC_REG;
+         * ignored when it sources the vertex colour). Kept outside the list. */
+        auto const&   col    = palette[inst % 4];
+        GXColor const matcol = {col[0], col[1], col[2], 0xFF};
         GX_SetChanMatColor(GX_COLOR0A0, matcol);
 
-        GX_Begin(
-            detail::prim_to_gx(cmd.call.mode),
-            GX_VTXFMT0,
-            cmd.call.indexed
-                ? cmd.data.elements.count
-                : cmd.data.arrays.count);
-        
-        if(cmd.call.indexed)
-            detail::iterate_indices(cmd.data, vao);
-        else
-            detail::iterate_arrays(cmd.data, vao);
-
-        GX_End();
+        GX_CallDispList(dl.buffer, dl.size);
     }
     (detail::undo_state(state_changes), ...);
     return std::nullopt;

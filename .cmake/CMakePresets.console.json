@@ -17,7 +17,7 @@
             "cacheVariables": {
                 "BUILD_NET": "OFF",
                 "BUILD_OPENAL": "OFF",
-                "BUILD_BLAM": "OFF",
+                "BUILD_BLAM": "ON",
                 "BUILD_COMP_DUMMY_PLUG": "OFF",
                 "BUILD_COMPRESS_ZLIB": "OFF",
                 "BUILD_COMPRESS_ZSTD": "OFF",
