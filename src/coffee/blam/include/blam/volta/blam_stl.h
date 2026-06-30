@@ -60,6 +60,10 @@ struct map_container
         Ver                                          ver,
         std::function<void(std::string_view, i16)>&& progress = null_progress)
     {
+        if constexpr(std::is_same_v<Ver, trial_version_t>)
+            return from_bytes_trial(map, std::move(progress));
+        else
+        {
         if(map.size < sizeof(file_header_t))
             return map_load_error::map_file_too_small;
 
@@ -132,6 +136,51 @@ struct map_container
 #else
         return map_load_error::decompression_error;
 #endif
+        } // else (non-trial)
+    }
+
+    STATICINLINE result_type from_bytes_trial(
+        semantic::BytesConst const&                  map,
+        std::function<void(std::string_view, i16)>&& progress)
+    {
+        if(map.size < sizeof(file_header_trial_t))
+            return map_load_error::map_file_too_small;
+
+        progress("Reading map header", 0);
+        auto const* trial = reinterpret_cast<file_header_trial_t const*>(
+            map.data);
+        if(!trial->valid())
+            return map_load_error::incompatible_map_version_expected_trial;
+
+        file_header_t normalized = trial->to_retail();
+
+        progress("Assembling Trial map", 25);
+        auto header_chunk =
+            semantic::mem_chunk<char>::withSize(sizeof(file_header_t));
+        normalized.copy_to(header_chunk.as<file_header_t>()[0]);
+        auto map_data = std::move(header_chunk.allocation);
+        map_data.reserve(map.size);
+
+        auto tail = *map.at(
+            sizeof(file_header_trial_t),
+            map.size - sizeof(file_header_trial_t));
+        auto const* tail_begin = reinterpret_cast<char const*>(tail.view.data());
+        map_data.insert(
+            map_data.end(), tail_begin, tail_begin + tail.view.size());
+
+        auto store = semantic::mem_chunk<char>::ofContainer(map_data);
+        file_header_t const* header = &store.as<file_header_t>()[0];
+
+        progress("Reading tag index", 50);
+        auto const* tags_index = &tag_index_t<Ver>::from_header(header);
+        progress("Complete!", -1);
+        return map_container{
+            .map          = header,
+            .tags         = tags_index,
+            .magic        = tags_index->get_magic(header, map.size),
+            .store        = store,
+            .decompressed = std::move(map_data),
+        };
     }
 
     file_header_t const*    map{nullptr};

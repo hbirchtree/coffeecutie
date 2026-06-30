@@ -71,4 +71,10 @@ stl_types::result<file_header_t const*, map_load_error> file_header_t::
     return fh;
 }
 
+stl_types::result<file_header_t const*, map_load_error>
+file_header_t::from_data(semantic::BytesConst const& /*data*/, trial_version_t)
+{
+    return map_load_error::incompatible_map_version_expected_trial;
+}
+
 } // namespace blam

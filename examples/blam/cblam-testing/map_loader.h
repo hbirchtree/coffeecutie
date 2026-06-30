@@ -514,8 +514,31 @@ struct BlamMapBrowser
 
         m_file = map;
         m_map  = std::make_unique<Coffee::Resource>(m_file);
-        if(auto info = blam::file_header_t::from_data(*m_map, halo_version_v);
-           info.has_error())
+
+        if constexpr(std::is_same_v<halo_version, blam::trial_version_t>)
+        {
+            /* Trial/Demo headers are scrambled; translate to the retail layout
+             * for display (kept in m_info_storage, the browser shows one map at
+             * a time). */
+            semantic::BytesConst data = *m_map;
+            if(data.size < sizeof(blam::file_header_trial_t))
+                m_error = blam::map_load_error::map_file_too_small;
+            else if(auto const* trial =
+                        reinterpret_cast<blam::file_header_trial_t const*>(
+                            data.data);
+                    !trial->valid())
+                m_error =
+                    blam::map_load_error::incompatible_map_version_expected_trial;
+            else
+            {
+                reinterpret_cast<blam::file_header_trial_t const*>(data.data)
+                    ->to_retail()
+                    .copy_to(m_info_storage);
+                m_info = &m_info_storage;
+            }
+        } else if(auto info =
+                      blam::file_header_t::from_data(*m_map, halo_version_v);
+                  info.has_error())
             m_error = info.error();
         else
             m_info = info.value();
@@ -541,6 +564,7 @@ struct BlamMapBrowser
     platform::url::Url                             m_file;
     std::unique_ptr<Coffee::Resource>              m_map;
     blam::file_header_t const*                     m_info{nullptr};
+    blam::file_header_t m_info_storage{}; /* normalized header for Trial maps */
     std::optional<blam::map_load_error>            m_error;
     std::vector<Url>                               m_maps;
     std::string                                    remote_address;
