@@ -162,7 +162,7 @@ STATICINLINE void PutRuntimeInfo(json& target)
 #endif
 #if defined(COFFEE_EMSCRIPTEN)
     if(auto browser = platform::info::os::emscripten::browser_name())
-        runtime.put("browserAgent", *browser);
+        runtime["browserAgent"] = *browser;
 #endif
     {
         json args = nlohmann::json::array();
