@@ -21,7 +21,7 @@
 #include <platforms/sysinfo.h>
 #include <url/url.h>
 
-#include <nlohmann/json.hpp>
+#include <peripherals/stl/json.h>
 
 #if defined(COFFEE_ANDROID)
 #include <coffee/android/android_main.h>
