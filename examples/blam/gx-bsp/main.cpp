@@ -35,6 +35,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #if defined(FEATURE_ENABLE_Gexxo)
+#include <coffee/graphics/apis/gexxo/native_format.h>
 #include <coffee/graphics/apis/gexxo/rhi_resources.h>
 #include <coffee/gexxo/gexxo_api.h>
 #include <coffee/graphics/apis/CGexxo>
@@ -60,7 +61,7 @@ using version_t      = blam::pc_version_t;
 using pc_vertex_t    = blam::vert::vertex<blam::vert::uncompressed>;
 using light_vertex_t = blam::vert::light_vertex<blam::vert::uncompressed>;
 
-static constexpr char const* MAP_NAME = "c10.map";
+static constexpr char const* MAP_NAME = "bloodgulch.map";
 
 #define LOG(...)                     \
     do                               \
@@ -627,6 +628,36 @@ static int extract_bsp()
 u32                       g_lm_bytes  = 0;
 u32                       g_dxt_bytes = 0;
 static std::vector<void*> g_tiled_bufs;
+
+// Cap total texture memory so a big map (e.g. b30) degrades to fewer textures
+// instead of OOMing; the rest fall back to lightmap/untextured.
+static u32 constexpr kTexBudget = 9u * 1024 * 1024;
+static u32           g_tex_used = 0;
+
+// Drop the top N mip levels of offline-transcoded (native) textures at upload:
+// GX then samples from a lower-resolution base, saving texture memory (the base
+// level is ~3/4 of a mip chain). 0 = full res.
+static u32 constexpr g_mip_skip = 1;
+
+// GX tiled byte size of one mip level at w x h for a GX_TF_* format (mirrors
+// the transcoder's mtx::tiled_size, keyed on the GX format constant).
+static u32 gx_level_bytes(u8 gxfmt, u16 w, u16 h)
+{
+    auto up = [](u16 v, u16 a) -> u16 {
+        return static_cast<u16>((v + (a - 1)) & ~(a - 1));
+    };
+    switch(gxfmt)
+    {
+    case GX_TF_CMPR:
+        return static_cast<u32>(up(w, 8)) * up(h, 8) / 2;
+    case GX_TF_RGB565:
+    case GX_TF_IA8:
+        return static_cast<u32>(up(w, 4)) * up(h, 4) * 2;
+    case GX_TF_I8:
+        return static_cast<u32>(up(w, 8)) * up(h, 4);
+    }
+    return 0;
+}
 static std::map<blam::bitm::image_t const*, std::shared_ptr<gexxo::texture_t>>
     g_diffuse_cache;
 
@@ -725,6 +756,58 @@ static std::shared_ptr<gexxo::texture_t> load_texture(
     i16 const  h   = from_le(img.isize.y);
     if(w <= 0 || h <= 0)
         return nullptr;
+
+    // Offline-transcoded (map-transcode tool): pixel data is already in a GX
+    // tiled layout -> upload directly, no decode/re-tile.
+    if(gexxo::native::is_native(fmt))
+    {
+        u8 gxfmt;
+        switch(gexxo::native::code_of(fmt))
+        {
+        case gexxo::native::format::cmpr:   gxfmt = GX_TF_CMPR;   break;
+        case gexxo::native::format::rgb565: gxfmt = GX_TF_RGB565; break;
+        case gexxo::native::format::i8:     gxfmt = GX_TF_I8;     break;
+        case gexxo::native::format::ia8:    gxfmt = GX_TF_IA8;    break;
+        default: return nullptr;
+        }
+        u32 const total = from_le(img.size);
+        if(!total)
+            return nullptr;
+        // img.mipmaps = GX maxlod; pixel data holds levels 0..maxlod packed
+        // consecutively. Skip the top g_mip_skip levels (keep >= 1) so GX's base
+        // is a lower-res mip: advance past their tiled bytes + halve the dims.
+        u32 const maxlod = from_le(img.mipmaps);
+        u32 const skip   = std::min<u32>(g_mip_skip, maxlod);
+        u16       bw = w, bh = h;
+        u32       off = 0;
+        for(u32 k = 0; k < skip; k++)
+        {
+            off += gx_level_bytes(gxfmt, bw, bh);
+            bw = static_cast<u16>(bw > 1 ? bw >> 1 : 1);
+            bh = static_cast<u16>(bh > 1 ? bh >> 1 : 1);
+        }
+        u32 const tbytes = (off <= total) ? (total - off) : 0;
+        if(!tbytes || g_tex_used + tbytes > kTexBudget)
+            return nullptr;
+        std::vector<libc_types::u8> pixels;
+        if(!read_bitmap_pixels(img, magic, pixels) || pixels.size() < total)
+            return nullptr;
+        void* tiled = memalign(32, (tbytes + 31) & ~31u);
+        if(!tiled)
+            return nullptr;
+        g_tex_used += tbytes;
+        (gxfmt == GX_TF_RGB565 ? g_lm_bytes : g_dxt_bytes) += tbytes;
+        std::memcpy(tiled, pixels.data() + off, tbytes);
+        DCFlushRange(tiled, tbytes);
+        g_tiled_bufs.push_back(tiled);
+        auto tex = std::make_shared<gexxo::texture_t>(
+            gexxo::textures::type::d2, typing::pixels::PixDesc{}, 1);
+        tex->init_raw(
+            tiled, bw, bh, gxfmt, wrap, wrap,
+            static_cast<u8>(maxlod - skip));
+        return tex;
+    }
+
     bool const is_bcn =
         fmt == blam::bitm::format_t::BC1 || fmt == blam::bitm::format_t::BC2 ||
         fmt == blam::bitm::format_t::BC3;
@@ -744,10 +827,6 @@ static std::shared_ptr<gexxo::texture_t> load_texture(
                                : (static_cast<u32>(tw) * th / 2);
     u8 const   gxfmt  = is_565 ? GX_TF_RGB565 : GX_TF_CMPR;
 
-    // Cap total texture memory so a big map (e.g. b30) degrades to fewer
-    // textures instead of OOMing; the rest fall back to lightmap/untextured.
-    static u32 constexpr kTexBudget = 9u * 1024 * 1024;
-    static u32           g_tex_used = 0;
     if(g_tex_used + tbytes > kTexBudget)
         return nullptr;
     void* tiled = memalign(32, (tbytes + 31) & ~31u);

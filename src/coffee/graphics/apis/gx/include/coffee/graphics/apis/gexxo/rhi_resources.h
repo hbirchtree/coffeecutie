@@ -230,10 +230,21 @@ struct texture_t : std::enable_shared_from_this<texture_t>
         u16   h,
         u8    gxfmt,
         u8    wrap_s = GX_CLAMP,
-        u8    wrap_t = GX_CLAMP)
+        u8    wrap_t = GX_CLAMP,
+        u8    maxlod = 0)
     {
-        GX_InitTexObj(&m_obj, tiled, w, h, gxfmt, wrap_s, wrap_t, GX_FALSE);
-        GX_InitTexObjFilterMode(&m_obj, GX_LINEAR, GX_LINEAR);
+        bool const mip = maxlod > 0;
+        GX_InitTexObj(
+            &m_obj, tiled, w, h, gxfmt, wrap_s, wrap_t,
+            mip ? GX_TRUE : GX_FALSE);
+        if(mip)
+            // tiled buffer holds levels 0..maxlod packed consecutively.
+            GX_InitTexObjLOD(
+                &m_obj, GX_LIN_MIP_LIN, GX_LINEAR, 0.0f,
+                static_cast<float>(maxlod), 0.0f, GX_FALSE, GX_FALSE,
+                GX_ANISO_1);
+        else
+            GX_InitTexObjFilterMode(&m_obj, GX_LINEAR, GX_LINEAR);
         m_loaded = true;
     }
 

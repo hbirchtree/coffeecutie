@@ -31,6 +31,13 @@ enum class format_t : u16
     BC2    = 0x0F, /*!< BC2/DXT2/3*/
     BC3    = 0x10, /*!< BC3/DXT5*/
     P8     = 0x11, /*!< LLL01 (See A8)*/
+
+    /* High byte 0xFF reserves a range of `format` values for auxiliary formats
+     * defined outside the Blam engine. A value in this range is not one of the
+     * engine formats above; the low byte selects among the auxiliary formats,
+     * whose meaning is owned by the consuming platform/RHI. The engine only
+     * needs to know such values are not its own. */
+    platform_specific = 0xFF00,
 };
 
 /*!

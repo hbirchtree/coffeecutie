@@ -16,3 +16,4 @@ endif()
 if(BUILD_BLAM AND BUILD_GX)
   add_subdirectory(blam/gx-bsp)
 endif()
+

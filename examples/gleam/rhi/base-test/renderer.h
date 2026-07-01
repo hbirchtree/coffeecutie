@@ -1,6 +1,3 @@
-#include "coffee/graphics/apis/gexxo/rhi_resources.h"
-#include "peripherals/concepts/graphics_api.h"
-#include "peripherals/semantic/enum/data_types.h"
 #include <peripherals/stl/magic_enum.hpp>
 
 #include <coffee/components/components.h>

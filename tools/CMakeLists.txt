@@ -12,3 +12,6 @@ if(${CMAKE_SYSTEM} STREQUAL Linux
   add_subdirectory(crash-recovery)
 endif()
 
+if(BUILD_BLAM AND BUILD_ASSET_TOOLS)
+  add_subdirectory(blam/map-transcoder)
+endif()
