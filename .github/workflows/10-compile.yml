@@ -437,7 +437,6 @@ jobs:
       run: |
         find artifacts/ -type f
         mkdir /tmp/dolphin_run
-        ln -s BlamBSP_GX artifacts/BlamBSP_GX.elf
         source/.github/tests/dolphin/build.sh
         source/.github/tests/dolphin/dolphin.sh artifacts/BlamBSP_GX.elf 2>&1 | tee /tmp/dolphin_run/output.log
     - name: Uploading test artifacts
