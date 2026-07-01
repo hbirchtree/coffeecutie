@@ -1029,27 +1029,30 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
     /* Multiple GPUStatProviders can be active at once (e.g. a GL-extension
      * provider plus the sysfs one); index per-provider so their shared metrics
      * don't collide in the report. */
-    u32 gpu_idx = 0;
-    for(auto* provider : gpustats)
     {
-        if(auto resident = provider->mem_resident())
-            json::CaptureMetrics(
-                "GPU memory", MetricVariant::Value, *resident, timestamp, gpu_idx, "Used");
-        if(auto total = provider->mem_total())
-            json::CaptureMetrics(
-                "GPU memory", MetricVariant::Value, *total, timestamp, gpu_idx + 1, "Total");
-        if(auto usage = provider->usage())
-            json::CaptureMetrics(
-                "GPU usage", MetricVariant::Value, *usage, timestamp, gpu_idx);
-        for(auto const& [label, reading] : provider->stats_numeric())
-            json::CaptureMetrics(
-                label,
-                MetricVariant::Value,
-                reading.value,
-                timestamp,
-                reading.index,
-                reading.index_label);
-        gpu_idx += 2;
+        // Coffee::DProfContext _("GPU data");
+        u32 gpu_idx = 0;
+        for(auto* provider : gpustats)
+        {
+            if(auto resident = provider->mem_resident())
+                json::CaptureMetrics(
+                    "GPU memory", MetricVariant::Value, *resident, timestamp, gpu_idx, "Used");
+            if(auto total = provider->mem_total())
+                json::CaptureMetrics(
+                    "GPU memory", MetricVariant::Value, *total, timestamp, gpu_idx + 1, "Total");
+            if(auto usage = provider->usage())
+                json::CaptureMetrics(
+                    "GPU usage", MetricVariant::Value, *usage, timestamp, gpu_idx);
+            for(auto const& [label, reading] : provider->stats_numeric())
+                json::CaptureMetrics(
+                    label,
+                    MetricVariant::Value,
+                    reading.value,
+                    timestamp,
+                    reading.index,
+                    reading.index_label);
+            gpu_idx += 2;
+        }
     }
 
     if(sensors)
