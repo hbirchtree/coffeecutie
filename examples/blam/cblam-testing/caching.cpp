@@ -1074,7 +1074,7 @@ void ShaderCache<V>::populate_material(
 
         bitm_cache.assign_atlas_data(mat.maps[1], shader.swat.bump);
         mat.maps[1].uv_scale = base_map_scale * info->ripple.scale;
-        mat.maps[1].bias     = 2.f;
+        mat.maps[1].bias     = 10.f; // Higher bias makes the water look better
 
         mat.material.material = materials::id::swat;
         mat.material.flags    = static_cast<u32>(info->flags);
