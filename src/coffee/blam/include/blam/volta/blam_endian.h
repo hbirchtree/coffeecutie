@@ -6,14 +6,15 @@
 #include <type_traits>
 
 namespace blam {
+namespace detail {
 
-template<typename T>
-constexpr T from_le(T value) noexcept
+template<typename T, std::endian Target>
+constexpr T byteswap(T value) noexcept
 {
-    static_assert(std::is_trivially_copyable_v<T>, "from_le needs a POD value");
+    static_assert(std::is_trivially_copyable_v<T>, "blam::byteswap: needs POD value");
 
 #if defined(__cpp_lib_bit_cast)
-    if constexpr(std::endian::native == std::endian::little || sizeof(T) == 1)
+    if constexpr(std::endian::native == Target || sizeof(T) == 1)
         return value;
     else if constexpr(sizeof(T) == 2)
     {
@@ -43,7 +44,7 @@ constexpr T from_le(T value) noexcept
     }
     else
     {
-        static_assert(sizeof(T) == 0, "from_le: unsupported value size");
+        static_assert(sizeof(T) == 0, "blam::byteswap: unsupported value size");
         return value;
     }
 #else
@@ -51,10 +52,30 @@ constexpr T from_le(T value) noexcept
 #endif
 }
 
+}
+
+template<typename T>
+constexpr T from_be(T value) noexcept
+{
+    return detail::byteswap<T, std::endian::big>(value);
+}
+
+template<typename T>
+constexpr T to_be(T value) noexcept
+{
+    return detail::byteswap<T, std::endian::big>(value);
+}
+
+template<typename T>
+constexpr T from_le(T value) noexcept
+{
+    return detail::byteswap<T, std::endian::little>(value);
+}
+
 template<typename T>
 constexpr T to_le(T value) noexcept
 {
-    return from_le(value);
+    return detail::byteswap<T, std::endian::little>(value);
 }
 
 } // namespace blam
