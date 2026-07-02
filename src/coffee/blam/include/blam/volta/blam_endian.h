@@ -7,21 +7,6 @@
 
 namespace blam {
 
-/*!
- * \brief Convert a value stored little-endian (as in every Halo map file) to
- * host byte order.
- *
- * Halo maps are little-endian (the games shipped on x86/ARM). On a big-endian
- * host -- e.g. the GameCube/Wii Gekko/Broadway PowerPC -- every multi-byte
- * field read straight out of the mapped image is byte-swapped and must be
- * corrected before use. On a little-endian host this is the identity and
- * compiles away entirely, so it is free to sprinkle on the map read paths.
- *
- * Byte swapping is its own inverse, so the same routine encodes a host value
- * back to little-endian; see \ref to_le for the intent-revealing alias used
- * when building a reference whose fields will later be read back through
- * \ref from_le.
- */
 template<typename T>
 constexpr T from_le(T value) noexcept
 {
@@ -66,12 +51,6 @@ constexpr T from_le(T value) noexcept
 #endif
 }
 
-/*!
- * \brief Encode a host value to little-endian storage. Identical to \ref
- * from_le (the swap is involutive); the separate name documents that the
- * result is meant to be stored into a little-endian field and read back
- * through \ref from_le later.
- */
 template<typename T>
 constexpr T to_le(T value) noexcept
 {
