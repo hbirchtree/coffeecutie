@@ -12,6 +12,10 @@ if(BUILD_BLAM AND BUILD_GLEAM)
   add_subdirectory(blam/cblam-testing)
 endif()
 
+if(BUILD_BLAM)
+  add_subdirectory(blam/dimeter-info)
+endif()
+
 # Trimmed BSP+lightmap viewer for the GX backend (no gleam/GLSL).
 if(BUILD_BLAM AND BUILD_GX)
   add_subdirectory(blam/gx-bsp)

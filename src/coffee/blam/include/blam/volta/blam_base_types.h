@@ -91,6 +91,7 @@ enum class version_t : i32
     xbox  = 5, /*!< The 2001 version of Halo: Combat Evolved for Xbox*/
     trial = 6, /*!< The 2004 Halo: Combat Evoled Trial for PC */
     pc    = 7, /*!< The 2004 version of Halo: Combat Evolved for PC*/
+    halo2 = 8, /*!< Halo 2 for Xbox (2004) and Windows Vista (2007)*/
     mcc   = 13,
 
     custom_edition = 609, /*!< 2004 Halo: Combat Evolved Custom Edition for PC*/

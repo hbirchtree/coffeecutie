@@ -30,7 +30,15 @@ enum class format_t : u16
     BC1    = 0x0E, /*!< BC1/DXT1 */
     BC2    = 0x0F, /*!< BC2/DXT2/3*/
     BC3    = 0x10, /*!< BC3/DXT5*/
-    P8     = 0x11, /*!< LLL01 (See A8)*/
+    P8     = 0x11, /*!< LLL01 (See A8), Halo 2 calls this P8-bump */
+
+    /* Halo 2 additions; same numbering scheme, shared with blam::dimeter */
+    P8_flat = 0x12,
+    ARGBF32 = 0x13,
+    RGBF32  = 0x14,
+    RGBF16  = 0x15,
+    V8U8    = 0x16, /*!< Signed RG8, used for bump maps */
+    G8B8    = 0x17,
 
     /* High byte 0xFF reserves a range of `format` values for auxiliary formats
      * defined outside the Blam engine. A value in this range is not one of the
