@@ -30,14 +30,16 @@
         {
             "kind": "git",
             "repository": "https://github.com/hbirchtree/vcpkg-graphics",
-            "baseline": "a9c4e4fd601547c82e8cba0bcc89951f70cb417d",
+            "baseline": "e112e381e36e49f28bdd9d5d39d7138867067752",
             "packages": [
                 "bc7enc",
                 "bcdec",
                 "etc2comp",
                 "ktx",
+                "libwma",
                 "nvidia-gdk",
                 "pvrscope",
+                "pvrtc",
                 "pvrtcdec",
                 "shaderc",
                 "spirv-tools"
