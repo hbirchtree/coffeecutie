@@ -71,7 +71,7 @@
             "cacheVariables": {
                 "BUILD_NET": "ON",
                 "BUILD_ASSET_TOOLS": "ON",
-                "BUILD_BLAM": "OFF",
+                "BUILD_BLAM": "ON",
                 "BUILD_COMPONENT_APP": "OFF",
                 "BUILD_EXAMPLES": "OFF",
                 "BUILD_HEADFUL": "OFF",

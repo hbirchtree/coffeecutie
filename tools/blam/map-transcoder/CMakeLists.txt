@@ -7,5 +7,11 @@ coffee_application(
 
 # Reads the GX-native auxiliary format codes (native_format.h) as header-only;
 # no link against the GX backend (this is a host tool, no libogc).
+find_package(BCDec REQUIRED)
 target_include_directories(MapTranscode PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/coffee/graphics/apis/gx/include)
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../../src/coffee/graphics/apis/gx/include
+  ${BCDec_INCLUDE_DIR}
+)
+
+find_package(unofficial-pvrtc CONFIG REQUIRED)
+target_link_libraries(MapTranscode PRIVATE unofficial::pvrtc::pvrtc)

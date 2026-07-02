@@ -36,7 +36,8 @@
             "description": "Audio output support",
             "dependencies": [
                 { "name": "openal-soft", "platform": "linux | osx | windows | android" },
-                { "name": "libvorbis" }
+                { "name": "libvorbis" },
+                { "name": "libwma", "platform": "linux | osx | windows | android" }
             ]
         },
         "blam": { "description": "Blam! data support" },
@@ -101,10 +102,12 @@
             "description": "Asset packing utilities",
             "dependencies": [
                 { "name": "bc7enc", "platform": "(linux & x64) | osx | windows" },
+                "bcdec",
                 { "name": "etc2comp", "platform": "(linux & x64) | osx | windows" },
                 { "name": "glslang", "platform": "(linux & x64) | osx | windows", "features": ["tools"] },
                 { "name": "ktx", "platform": "(linux & (x64 | arm64)) | osx | windows", "features": ["basisu", "vulkan", "write"] },
                 { "name": "libsquish", "platform": "(linux & x64) | osx | windows" },
+                { "name": "pvrtc", "platform": "linux & x64" },
                 { "name": "shaderc", "platform": "(linux & x64) | osx | windows" },
                 { "name": "spirv-cross", "platform": "(linux & x64) | osx | windows" },
                 "vulkan-headers"
