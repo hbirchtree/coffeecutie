@@ -57,6 +57,14 @@ struct BspReference
 
     u32 cluster_idx{std::numeric_limits<u32>::max()};
     u32 subcluster_idx{std::numeric_limits<u32>::max()};
+    /* All clusters owning this chunk's faces (boundary-straddling chunks have
+     * several); the occluder hides the chunk when none is PVS-visible.
+     * Empty = no cluster info, never PVS-culled. */
+    std::vector<u16> clusters{};
+    /* Chunk AABB (BSP space) for frustum culling; valid when has_bounds. */
+    Vecf3 bmin{};
+    Vecf3 bmax{};
+    bool  has_bounds{false};
 
     gfx::draw_command draw;
     bool              visible{true};

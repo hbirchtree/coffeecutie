@@ -173,6 +173,61 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
         rendering->current_bsp_cluster = pvs_cluster;
 
+        /* Diagnostic (BLAM_OCCLUDER_PROBE=1): raycast a grid of view
+         * directions and report each hit surface's cluster and whether the
+         * portal walk marked it visible. FALSE rows are either portal-walk
+         * under-reach or face→cluster mis-assignment. */
+        if(::getenv("BLAM_OCCLUDER_PROBE") && current_bsp &&
+           (frame_counter % 60) == 0)
+        {
+            Matf4 inv = glm::inverse(camera_mvp);
+            auto  unproject = [&inv](f32 x, f32 y, f32 z) {
+                Vecf4 p = inv * Vecf4{x, y, z, 1.f};
+                return Vecf3(p) / p.w;
+            };
+            cDebug(
+                "Occluder probe: camera cluster {} at ({:.1f},{:.1f},{:.1f})",
+                pvs_cluster,
+                camera_pos.x,
+                camera_pos.y,
+                camera_pos.z);
+            for(f32 ny = -0.8f; ny <= 0.81f; ny += 0.1f)
+                for(f32 nx = -0.9f; nx <= 0.91f; nx += 0.1f)
+                {
+                    /* Reversed-Z with infinite far plane: z=0 is at infinity,
+                     * so unproject a mid-depth point and shoot from the eye. */
+                    Vecf3 origin = camera_pos;
+                    Vecf3 dir =
+                        glm::normalize(unproject(nx, ny, 0.5f) - camera_pos);
+                    auto hit =
+                        current_bsp->raycast(origin, origin + dir * 500.f);
+                    if(!hit)
+                        continue;
+                    Vecf3 hp = origin + dir * (500.f * hit->t);
+                    std::optional<u32> hc;
+                    for(f32 back : {0.1f, 0.5f, 1.f, 2.f})
+                        if((hc = current_bsp->find_cluster_tree(
+                                hp - dir * back)))
+                            break;
+                    if(!hc)
+                        continue;
+                    bool vis = *hc < pvs_visible.size() ? bool(pvs_visible[*hc])
+                                                        : true;
+                    if(!vis)
+                        cDebug(
+                            "  probe ndc=({:+.1f},{:+.1f}) t={:.3f}"
+                            " hit=({:.1f},{:.1f},{:.1f}) cluster={} vis={}",
+                            nx,
+                            ny,
+                            hit->t,
+                            hp.x,
+                            hp.y,
+                            hp.z,
+                            *hc,
+                            vis);
+                }
+        }
+
         if(cluster_changed)
         {
             /* Publish the cluster change neutrally; the sound system (and any
@@ -257,10 +312,13 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         u32 bsp_visible = 0, bsp_total = 0, bsp_no_cluster = 0;
 
         /* Cull BSP meshes: two-pass.
-         * Pass 1 – cluster PVS (portal-cone traversal).
-         * Pass 2 – subcluster AABB frustum test (when subcluster_idx is valid).
-         * Meshes without subcluster assignment skip pass 2 and rely on PVS
-         * alone. */
+         * Pass 1 – cluster PVS (portal traversal): a chunk is PVS-visible when
+         *   ANY of its owner clusters is — boundary-straddling chunks carry
+         *   their full owner set, so they hide with their neighborhood instead
+         *   of staying visible forever (the "checkerboard").
+         * Pass 2 – frustum test against the chunk's own AABB (computed from
+         *   its vertices at load; tighter than the subcluster AABB and present
+         *   on every chunk). */
         if(cull_bsp)
         {
             for(auto& ent : p.select(ObjectBsp))
@@ -271,33 +329,23 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 bsp_total++;
                 if(bsp_ref.bsp == pvs_bsp_id)
                 {
-                    /* Same BSP section as camera: apply portal + AABB culling.
-                     */
-                    if(bsp_ref.cluster_idx != std::numeric_limits<u32>::max())
+                    bool pvs_ok = true;
+                    if(!bsp_ref.clusters.empty())
                     {
-                        bool pvs_ok = cluster_ok(bsp_ref.cluster_idx);
-                        if(pvs_ok &&
-                           bsp_ref.subcluster_idx !=
-                               std::numeric_limits<u32>::max() &&
-                           bsp_ref.cluster_idx < cull_bsp->clusters.size() &&
-                           bsp_ref.subcluster_idx <
-                               cull_bsp->clusters[bsp_ref.cluster_idx]
-                                   .sub.size())
-                        {
-                            auto const& sub =
-                                cull_bsp->clusters[bsp_ref.cluster_idx]
-                                    .sub[bsp_ref.subcluster_idx];
-                            auto [bmin, bmax] = sub.cluster->bounds.points();
-                            bsp_ref.visible = frustum.aabb_visible(bmin, bmax);
-                        } else
-                        {
-                            bsp_ref.visible = pvs_ok;
-                        }
+                        pvs_ok = false;
+                        for(u16 ci : bsp_ref.clusters)
+                            if(cluster_ok(ci))
+                            {
+                                pvs_ok = true;
+                                break;
+                            }
                     } else
-                    {
-                        bsp_ref.visible = true;
                         bsp_no_cluster++;
-                    }
+
+                    bsp_ref.visible =
+                        pvs_ok && (!bsp_ref.has_bounds ||
+                                   frustum.aabb_visible(
+                                       bsp_ref.bmin, bsp_ref.bmax));
                 } else
                 {
                     /* Different BSP section: hide entirely. */
@@ -327,11 +375,21 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         {
             visible,
             pvs_culled,
+            frustum_culled,
             dist_culled,
         };
+        /* Conservative bounding radius for frustum-culling models; mod2
+         * headers carry no decoded bounding sphere, and the largest placed
+         * objects (trees, vehicles) stay within ~5 world units of their
+         * origin. */
+        constexpr f32 model_radius = 5.f;
         const auto classify_model =
             [&](BSPItem const* bsp, Model const& model) -> model_vis {
             auto pos = model.position;
+            /* Cheapest test first: outside the view frustum hides the model
+             * regardless of cluster, and skips the BSP-tree walks below. */
+            if(!frustum.sphere_visible(pos, model_radius))
+                return model_vis::frustum_culled;
             /* Resolve the model's cluster by the EXACT BSP-tree lookup. Scenery
              * origins commonly sit on/under the ground, i.e. in a solid leaf, so
              * the lookup at the origin misses; probe upward through the model
@@ -370,8 +428,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                                            : model_vis::dist_culled;
         };
 
-        u32 model_visible = 0, model_pvs_culled = 0, model_dist_culled = 0,
-            model_total = 0;
+        u32 model_visible = 0, model_pvs_culled = 0, model_frustum_culled = 0,
+            model_dist_culled = 0, model_total = 0;
 
         for(auto& ent : p.select(PositioningStatic))
         {
@@ -390,6 +448,10 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 case model_vis::pvs_culled:
                     model.visible = false;
                     model_pvs_culled++;
+                    break;
+                case model_vis::frustum_culled:
+                    model.visible = false;
+                    model_frustum_culled++;
                     break;
                 case model_vis::dist_culled:
                     model.visible = false;
@@ -427,7 +489,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                     "Occluder [frame {}]: cluster {}/{}"
                     " bsp=({:.1f},{:.1f},{:.1f})"
                     " | BSP {}/{} visible ({} no-cluster)"
-                    " | models {}/{} visible ({} PVS-culled, {} dist-culled)",
+                    " | models {}/{} visible ({} PVS-culled, {} frustum-culled,"
+                    " {} dist-culled)",
                     frame_counter,
                     current_cluster,
                     total_clusters,
@@ -440,6 +503,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                     model_visible,
                     model_total,
                     model_pvs_culled,
+                    model_frustum_culled,
                     model_dist_culled);
 
                 /* Print current cluster's subcluster bounds */

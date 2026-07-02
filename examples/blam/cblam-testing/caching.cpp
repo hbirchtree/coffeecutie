@@ -255,12 +255,20 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
      * into header.surfaces (same index space as material::surfaces.count). */
     /* A face referenced from the leaves of more than one cluster straddles a
      * cluster boundary (large terrain faces do this constantly); it must stay
-     * visible whenever ANY of those clusters is, so it gets no cluster at all
-     * rather than whichever cluster wrote last — that misassignment used to
-     * punch holes in the ground right next to the camera. */
-    std::vector<u32> face_cluster(
-        surfaces.size(), std::numeric_limits<u32>::max());
-    std::vector<bool> face_shared(surfaces.size(), false);
+     * visible whenever ANY of those clusters is. Keep the full owner set per
+     * face — assigning whichever cluster wrote last used to punch holes in
+     * the ground next to the camera, and dropping the assignment entirely
+     * left an always-visible checkerboard of terrain chunks when everything
+     * around them was occluded. */
+    std::vector<std::vector<u16>> face_clusters(surfaces.size());
+    const auto add_face_cluster = [&face_clusters](u32 fi, u32 cid) {
+        if(fi >= face_clusters.size())
+            return;
+        auto& owners = face_clusters[fi];
+        u16   cid16  = static_cast<u16>(cid);
+        if(std::find(owners.begin(), owners.end(), cid16) == owners.end())
+            owners.push_back(cid16);
+    };
     for(auto const& leaf : leaves)
     {
         if(leaf.cluster < 0)
@@ -272,13 +280,7 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         {
             if(ri >= leaf_surfaces.size())
                 break;
-            u32 fi = leaf_surfaces[ri].surface;
-            if(fi >= face_cluster.size())
-                continue;
-            if(face_cluster[fi] != std::numeric_limits<u32>::max() &&
-               face_cluster[fi] != cid)
-                face_shared[fi] = true;
-            face_cluster[fi] = cid;
+            add_face_cluster(leaf_surfaces[ri].surface, cid);
         }
     }
 
@@ -303,16 +305,14 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
                 if(fi >= face_subcluster.size())
                     continue;
                 auto& key = face_subcluster[fi];
+                add_face_cluster(fi, ci);
                 if(key.first == kInvalid)
                     key = {ci, si};
                 else if(key.first != ci)
-                {
-                    /* Straddles clusters: cull by neither (see face_shared
-                     * above). */
+                    /* Straddles clusters: the owner set (face_clusters) does
+                     * the culling; no single subcluster AABB applies. */
                     key = {kInvalid, kInvalid};
-                    if(fi < face_shared.size())
-                        face_shared[fi] = true;
-                } else if(key.second != si)
+                else if(key.second != si)
                     /* Multiple subclusters of one cluster: cull by cluster
                      * PVS only, not by a single subcluster AABB. */
                     key.second = kInvalid;
@@ -320,9 +320,8 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         }
     }
 
-    for(u32 fi = 0; fi < face_cluster.size(); fi++)
-        if(face_shared[fi])
-            face_cluster[fi] = std::numeric_limits<u32>::max();
+    for(auto& owners : face_clusters)
+        std::sort(owners.begin(), owners.end());
 
     /* First, load up the vertices into the vertex buffer
      * We leave references to where they are in the vertex_ranges map
@@ -386,42 +385,61 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
                 light_vertices.end(),
                 light_buffer.begin() + light_ptr);
 
-            /* Split material faces into per-subcluster sub-meshes.
-             * face_subcluster gives (cluster, subcluster) from the spatial
-             * index; fall back to (cluster, max) from the leaf hierarchy for
-             * faces not covered by any subcluster.
-             * Faces with no assignment at all keep both indices == max and
-             * are always visible (cluster_ok falls back to true). */
+            /* Split material faces into sub-meshes by (owner cluster set ×
+             * subcluster). Single-owner faces keep their subcluster split as
+             * before; boundary-straddling faces group by their full owner set
+             * so the occluder can hide them when no owner is visible.
+             * Faces with no owner at all (empty set) are always visible. */
             auto faces     = mat.indices(section).data(bsp_magic).value();
             u32  mat_start = mat.surfaces.count;
             u32  mat_end   = mat_start + mat.surfaces.offset;
             u32  vert_base = vert_ptr / mat.vertex_size();
+            u32  vert_size = mat.vertex_size();
 
-            std::map<SubclusterKey, std::vector<u32>> sub_faces;
+            using ChunkKey = std::pair<std::vector<u16>, u32>;
+            std::map<ChunkKey, std::vector<u32>> sub_faces;
             for(u32 fi = mat_start; fi < mat_end; fi++)
             {
-                SubclusterKey key;
-                if(fi < face_subcluster.size() &&
-                   face_subcluster[fi].first != kInvalid)
-                {
-                    key = face_subcluster[fi];
-                } else
-                {
-                    u32 cid = (fi < face_cluster.size()) ? face_cluster[fi]
-                                                         : kInvalid;
-                    key     = {cid, kInvalid};
-                }
-                sub_faces[key].push_back(fi);
+                std::vector<u16> owners =
+                    fi < face_clusters.size() ? face_clusters[fi]
+                                              : std::vector<u16>{};
+                u32 sid = kInvalid;
+                if(owners.size() == 1 && fi < face_subcluster.size() &&
+                   face_subcluster[fi].first == owners.front())
+                    sid = face_subcluster[fi].second;
+                sub_faces[{std::move(owners), sid}].push_back(fi);
             }
 
             for(auto const& [key, face_idxs] : sub_faces)
             {
-                auto [cid, sid] = key;
-                u32 sub_start   = element_ptr;
+                auto const& [owners, sid] = key;
+                u32 cid =
+                    owners.size() == 1 ? static_cast<u32>(owners.front())
+                                       : kInvalid;
+                u32 sub_start = element_ptr;
+                /* Chunk AABB from the chunk's own vertices; both vertex
+                 * layouts (compressed/uncompressed) start with Vecf3
+                 * position. */
+                Vecf3 bmin{std::numeric_limits<f32>::max()};
+                Vecf3 bmax{std::numeric_limits<f32>::lowest()};
+                bool  has_bounds = false;
                 for(u32 fi : face_idxs)
                 {
-                    element_buffer[element_ptr] = faces[fi - mat_start];
+                    auto const& face            = faces[fi - mat_start];
+                    element_buffer[element_ptr] = face;
                     element_ptr++;
+                    for(u32 k = 0; k < 3; k++)
+                    {
+                        size_t voff = static_cast<size_t>(face[k]) * vert_size;
+                        if(voff + sizeof(Vecf3) > vertices.size_bytes())
+                            continue;
+                        Vecf3 pos{};
+                        std::memcpy(
+                            &pos, vertices.data() + voff, sizeof(Vecf3));
+                        bmin       = glm::min(bmin, pos);
+                        bmax       = glm::max(bmax, pos);
+                        has_bounds = true;
+                    }
                 }
 
                 group.meshes.emplace_back();
@@ -444,6 +462,10 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
                 mesh.light_bitm     = light_bitm;
                 mesh.cluster_idx    = cid;
                 mesh.subcluster_idx = sid;
+                mesh.clusters       = owners;
+                mesh.bmin           = bmin;
+                mesh.bmax           = bmax;
+                mesh.has_bounds     = has_bounds;
             }
 
             vert_ptr += vertices.size_bytes();
@@ -452,16 +474,19 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
     }
 
     {
-        u32 assigned = 0, unassigned = 0;
+        u32 single = 0, multi = 0, unassigned = 0;
         for(auto const& grp : out.groups)
             for(auto const& m : grp.meshes)
-                (m.cluster_idx == std::numeric_limits<u32>::max() ? unassigned
-                                                                  : assigned)++;
+                (m.clusters.empty()  ? unassigned
+                 : m.clusters.size() == 1 ? single
+                                          : multi)++;
         cDebug(
-            "BSP mesh cluster assignment: {}/{} assigned, {} unassigned",
-            assigned,
-            assigned + unassigned,
-            unassigned);
+            "BSP mesh cluster assignment: {} single-cluster, {} multi-cluster,"
+            " {} unassigned of {}",
+            single,
+            multi,
+            unassigned,
+            single + multi + unassigned);
     }
 
     return out;

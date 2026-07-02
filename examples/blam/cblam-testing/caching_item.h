@@ -108,6 +108,22 @@ struct Frustum
         return true;
     }
 
+    /* Returns false if the sphere (center c, radius r, world space) is
+     * entirely behind the camera or entirely outside any of the four side
+     * planes. Side planes are normalised at construction; cam_plane is not,
+     * so it is normalised here for the radius offset to be in world units. */
+    bool sphere_visible(Vecf3 const& c, f32 r) const
+    {
+        f32 cam_len = glm::length(Vecf3(cam_plane));
+        if(cam_len > 1e-5f &&
+           (glm::dot(Vecf3(cam_plane), c) + cam_plane.w) / cam_len <= -r)
+            return false;
+        for(auto const& p : planes)
+            if(glm::dot(Vecf3(p), c) + p.w < -r)
+                return false;
+        return true;
+    }
+
     /* Returns false if the polygon is entirely outside any single plane.
      * Vertices behind the camera (clip_w ≤ 0) are treated as "inside" all
      * planes because Gribb-Hartmann gives inverted results for them.
@@ -178,6 +194,16 @@ struct BSPItem
         generation_idx_t            shader;
         u32 cluster_idx{std::numeric_limits<u32>::max()};
         u32 subcluster_idx{std::numeric_limits<u32>::max()};
+        /* All clusters whose leaves reference this chunk's faces. Chunks made
+         * of boundary-straddling faces carry every owner cluster (instead of
+         * being unconditionally visible), so they can be culled when none of
+         * their owners is in the PVS. Empty = no cluster info, never culled. */
+        std::vector<u16> clusters{};
+        /* Chunk AABB in BSP space, computed from the chunk's own vertices —
+         * tighter than the subcluster AABB and available for every chunk. */
+        Vecf3 bmin{};
+        Vecf3 bmax{};
+        bool  has_bounds{false};
     };
 
     struct Group
@@ -362,16 +388,22 @@ struct BSPItem
             Rect rect;
         };
 
-        /* Per-cluster accumulated rect, for skipping paths that cannot show
-         * anything new. */
-        constexpr Rect              empty_rect{1.f, 1.f, -1.f, -1.f};
-        std::vector<Rect>           acc(clusters.size(), empty_rect);
-        std::vector<libc_types::u8> visits(clusters.size(), 0);
+        /* Per-cluster list of rects the cluster was already entered with. A
+         * new path is skipped only when its rect is contained in a SINGLE
+         * previous entry rect — collapsing the entries into one accumulated
+         * bounding box (the previous approach) over-covers: a narrow middle
+         * path can sit inside the bbox of two disjoint side paths without
+         * either having actually covered it, and the portals only visible
+         * through that middle strip are then never crossed (seen as far-away
+         * clusters missing from the visible set). */
+        constexpr Rect empty_rect{1.f, 1.f, -1.f, -1.f};
+        constexpr u32  max_entries = 8;
+        std::vector<std::vector<Rect>> entered(clusters.size());
 
-        acc[from_idx]    = Rect{-1.f, -1.f, 1.f, 1.f};
-        visits[from_idx] = 1;
+        Rect const full_rect{-1.f, -1.f, 1.f, 1.f};
+        entered[from_idx].push_back(full_rect);
 
-        std::vector<Entry> stack = {{from_idx, 0, acc[from_idx]}};
+        std::vector<Entry> stack = {{from_idx, 0, full_rect}};
 
         u32 budget = 4096; /* hard cap on portal crossings per frame */
 
@@ -431,19 +463,20 @@ struct BSPItem
                 if(r.x0 >= r.x1 || r.y0 >= r.y1)
                     continue;
 
-                /* Only walk on if this path widens what the cluster can
-                 * already show. */
-                Rect& a = acc[ai];
-                if(r.x0 >= a.x0 && r.y0 >= a.y0 && r.x1 <= a.x1 &&
-                   r.y1 <= a.y1)
+                /* Only walk on if no single previous entry into this cluster
+                 * already covered this rect. */
+                auto& prev = entered[ai];
+                bool  covered = false;
+                for(Rect const& e : prev)
+                    if(r.x0 >= e.x0 && r.y0 >= e.y0 && r.x1 <= e.x1 &&
+                       r.y1 <= e.y1)
+                    {
+                        covered = true;
+                        break;
+                    }
+                if(covered || prev.size() >= max_entries)
                     continue;
-                a.x0 = std::min(a.x0, r.x0);
-                a.y0 = std::min(a.y0, r.y0);
-                a.x1 = std::max(a.x1, r.x1);
-                a.y1 = std::max(a.y1, r.y1);
-                if(visits[ai] >= 8)
-                    continue;
-                visits[ai]++;
+                prev.push_back(r);
 
                 stack.push_back({ai, entry.depth + 1, r});
             }

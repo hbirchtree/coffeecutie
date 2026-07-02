@@ -278,6 +278,10 @@ void load_scenario_bsp(
                 bsp_ref.bsp            = mesh_id;
                 bsp_ref.cluster_idx    = mesh.cluster_idx;
                 bsp_ref.subcluster_idx = mesh.subcluster_idx;
+                bsp_ref.clusters       = mesh.clusters;
+                bsp_ref.bmin           = mesh.bmin;
+                bsp_ref.bmax           = mesh.bmax;
+                bsp_ref.has_bounds     = mesh.has_bounds;
                 bsp_ref.visible        = true;
                 bsp_ref.sort_center =
                     mesh.mesh ? mesh.mesh->centroid : Vecf3{0};
