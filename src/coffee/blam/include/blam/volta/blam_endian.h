@@ -27,6 +27,7 @@ constexpr T from_le(T value) noexcept
 {
     static_assert(std::is_trivially_copyable_v<T>, "from_le needs a POD value");
 
+#if defined(__cpp_lib_bit_cast)
     if constexpr(std::endian::native == std::endian::little || sizeof(T) == 1)
         return value;
     else if constexpr(sizeof(T) == 2)
@@ -60,6 +61,9 @@ constexpr T from_le(T value) noexcept
         static_assert(sizeof(T) == 0, "from_le: unsupported value size");
         return value;
     }
+#else
+    return value;
+#endif
 }
 
 /*!
