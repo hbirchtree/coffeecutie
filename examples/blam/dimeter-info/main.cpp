@@ -6,6 +6,7 @@
 #include <blam/dimeter/h2_bitm.h>
 #include <blam/dimeter/h2_map.h>
 #include <blam/dimeter/h2_sound.h>
+#include <blam/volta/blam_swizzle.h>
 
 #include <cstring>
 #include <filesystem>
@@ -70,14 +71,25 @@ void append(std::vector<char>& out, T const& value)
 
 struct dds_info
 {
-    u32  fourcc; /* 0 = uncompressed */
-    u32  block_bytes;
-    u32  bpp;
+    u32 fourcc{0}; /* 0 = uncompressed, described by the mask fields */
+    u32 block_bytes{0};
+    u32 bpp{0};
+    u32 pf_flags{0}; /* DDS pixel format flags for the uncompressed case */
+    u32 mask_r{0};
+    u32 mask_g{0};
+    u32 mask_b{0};
+    u32 mask_a{0};
 };
 
 std::optional<dds_info> dds_format(blam::bitm::format_t fmt)
 {
     using blam::bitm::format_t;
+    constexpr u32 RGB  = 0x40;
+    constexpr u32 RGBA = 0x41;
+    constexpr u32 LUM  = 0x20000; /* DDPF_LUMINANCE */
+    constexpr u32 LUMA = 0x20001;
+    constexpr u32 A    = 0x2;     /* DDPF_ALPHA */
+    constexpr u32 BUMP = 0x80000; /* DDPF_BUMPDUDV, signed channels */
     switch(fmt)
     {
     case format_t::BC1:
@@ -87,9 +99,62 @@ std::optional<dds_info> dds_format(blam::bitm::format_t fmt)
     case format_t::BC3:
         return dds_info{.fourcc = 0x35545844 /*DXT5*/, .block_bytes = 16};
     case format_t::ARGB8:
+        return dds_info{
+            .bpp      = 32,
+            .pf_flags = RGBA,
+            .mask_r   = 0x00FF0000,
+            .mask_g   = 0x0000FF00,
+            .mask_b   = 0x000000FF,
+            .mask_a   = 0xFF000000};
     case format_t::XRGB8:
-        return dds_info{.fourcc = 0, .bpp = 32};
+        return dds_info{
+            .bpp      = 32,
+            .pf_flags = RGB,
+            .mask_r   = 0x00FF0000,
+            .mask_g   = 0x0000FF00,
+            .mask_b   = 0x000000FF};
+    case format_t::R5G6B5:
+        return dds_info{
+            .bpp      = 16,
+            .pf_flags = RGB,
+            .mask_r   = 0xF800,
+            .mask_g   = 0x07E0,
+            .mask_b   = 0x001F};
+    case format_t::A1RGB5:
+        return dds_info{
+            .bpp      = 16,
+            .pf_flags = RGBA,
+            .mask_r   = 0x7C00,
+            .mask_g   = 0x03E0,
+            .mask_b   = 0x001F,
+            .mask_a   = 0x8000};
+    case format_t::ARGB4:
+        return dds_info{
+            .bpp      = 16,
+            .pf_flags = RGBA,
+            .mask_r   = 0x0F00,
+            .mask_g   = 0x00F0,
+            .mask_b   = 0x000F,
+            .mask_a   = 0xF000};
+    case format_t::A8Y8:
+        return dds_info{
+            .bpp      = 16,
+            .pf_flags = LUMA,
+            .mask_r   = 0x00FF,
+            .mask_a   = 0xFF00};
+    case format_t::Y8:
+    case format_t::AY8:
+        return dds_info{.bpp = 8, .pf_flags = LUM, .mask_r = 0xFF};
+    case format_t::A8:
+        return dds_info{.bpp = 8, .pf_flags = A, .mask_a = 0xFF};
+    case format_t::V8U8:
+        return dds_info{
+            .bpp      = 16,
+            .pf_flags = BUMP,
+            .mask_r   = 0x00FF,
+            .mask_g   = 0xFF00};
     default:
+        /* P8/P8_flat need palette handling, float formats are rare */
         return std::nullopt;
     }
 }
@@ -102,9 +167,14 @@ u32 base_level_size(dds_info const& info, u32 width, u32 height)
     return width * height * (info.bpp / 8);
 }
 
-/* Minimal single-level DDS wrapper, enough for image viewers/texconv */
+/* Minimal base-level DDS wrapper (optionally 6-face cube map), enough for
+ * image viewers/texconv */
 std::vector<char> make_dds(
-    dds_info const& info, u32 width, u32 height, Span<const u8> pixels)
+    dds_info const& info,
+    u32             width,
+    u32             height,
+    Span<const u8>  pixels,
+    bool            cube_map = false)
 {
     std::vector<char> out;
     out.reserve(128 + pixels.size());
@@ -113,7 +183,7 @@ std::vector<char> make_dds(
     append<u32>(out, 0x1007);     /* CAPS|HEIGHT|WIDTH|PIXELFORMAT */
     append<u32>(out, height);
     append<u32>(out, width);
-    append<u32>(out, static_cast<u32>(pixels.size()));
+    append<u32>(out, static_cast<u32>(pixels.size()) / (cube_map ? 6 : 1));
     /* depth, mipmap count, reserved[11] */
     for(int i = 0; i < 13; i++)
         append<u32>(out, 0);
@@ -126,16 +196,18 @@ std::vector<char> make_dds(
             append<u32>(out, 0);
     } else
     {
-        append<u32>(out, 0x41); /* RGB|ALPHAPIXELS */
+        append<u32>(out, info.pf_flags);
         append<u32>(out, 0);
         append<u32>(out, info.bpp);
-        append<u32>(out, 0x00FF0000);
-        append<u32>(out, 0x0000FF00);
-        append<u32>(out, 0x000000FF);
-        append<u32>(out, 0xFF000000);
+        append<u32>(out, info.mask_r);
+        append<u32>(out, info.mask_g);
+        append<u32>(out, info.mask_b);
+        append<u32>(out, info.mask_a);
     }
-    append<u32>(out, 0x1000); /* CAPS_TEXTURE */
-    for(int i = 0; i < 4; i++)
+    /* CAPS_TEXTURE, plus COMPLEX + all cube faces for cube maps */
+    append<u32>(out, cube_map ? 0x1008 : 0x1000);
+    append<u32>(out, cube_map ? 0xFE00 : 0);
+    for(int i = 0; i < 3; i++)
         append<u32>(out, 0);
     out.insert(out.end(), pixels.begin(), pixels.end());
     return out;
@@ -156,7 +228,7 @@ u32 extract_bitmaps(
 
     for(auto const& tag : map.tags())
     {
-        if(extracted >= limit)
+        if(limit && extracted >= limit)
             break;
         if(!tag.valid() || !tag.matches("bitm"))
             continue;
@@ -167,43 +239,94 @@ u32 extract_bitmaps(
         if(images.has_error() || images.value().empty())
             continue;
 
-        h2::bitm::image_t const& img = images.value()[0];
-        if(from_le(img.type) != blam::bitm::type_t::tex_2d)
-            continue;
-        auto fmt = dds_format(from_le(img.format));
-        if(!fmt)
-            continue;
-
-        u32 width  = static_cast<u32>(from_le(img.width));
-        u32 height = static_cast<u32>(from_le(img.height));
-        u32 base   = base_level_size(*fmt, width, height);
-
-        /* LOD1 is the highest-detail chain; fall back down the LODs until
-         * one is present in the files we have */
-        for(int lod = 0; lod < 3; lod++)
+        auto image_span = images.value();
+        for(size_t img_idx = 0; img_idx < image_span.size(); img_idx++)
         {
-            u32 lod_size = from_le(img.lod_size[lod]);
-            if(lod_size < base)
+            if(limit && extracted >= limit)
+                break;
+            h2::bitm::image_t const& img = image_span[img_idx];
+
+            auto type = from_le(img.type);
+            bool cube = type == blam::bitm::type_t::tex_cube;
+            if(type != blam::bitm::type_t::tex_2d && !cube)
+                continue; /* 3D textures not handled */
+            auto fmt = dds_format(from_le(img.format));
+            if(!fmt)
                 continue;
-            auto raw = pool.resolve(img.lod_offset[lod], base);
-            if(!raw)
-                continue;
-            auto pixels = Span<const u8>(
-                reinterpret_cast<u8 const*>(raw->data()), base);
-            auto path = outdir + "/" + sanitize(map.tag_name(tag)) + ".dds";
-            if(write_file(path, make_dds(*fmt, width, height, pixels)))
+
+            u32 width  = static_cast<u32>(from_le(img.width));
+            u32 height = static_cast<u32>(from_le(img.height));
+            u32 base   = base_level_size(*fmt, width, height);
+            u32 faces  = cube ? 6 : 1;
+
+            /* LOD1 is the highest-detail chain; fall back down the LODs
+             * until one is present in the files we have */
+            for(int lod = 0; lod < 3; lod++)
             {
-                cBasicPrint(
-                    "  bitm {0}x{1} lod{2} (format {3}, {4} bytes) -> {5}",
-                    width,
-                    height,
-                    lod + 1,
-                    static_cast<u16>(from_le(img.format)),
-                    base,
-                    path);
-                extracted++;
+                u32 lod_size = from_le(img.lod_size[lod]);
+                if(lod_size < base * faces)
+                    continue;
+                auto raw = pool.resolve(img.lod_offset[lod], lod_size);
+                if(!raw)
+                    continue;
+                auto const* raw_bytes =
+                    reinterpret_cast<u8 const*>(raw->data());
+
+                /* Cube maps store each face's full mip chain back to back;
+                 * pull the base level from the start of each face slice */
+                u32 face_stride = cube ? lod_size / 6 : lod_size;
+                if(cube && face_stride < base)
+                    break;
+
+                std::vector<u8> pixels(static_cast<size_t>(base) * faces);
+                for(u32 face = 0; face < faces; face++)
+                {
+                    auto const* src = raw_bytes + face * face_stride;
+                    auto*       dst = pixels.data() + face * base;
+                    /* NV2A stores uncompressed textures Morton-swizzled;
+                     * DXT is always linear */
+                    if(!fmt->fourcc && img.swizzled())
+                    {
+                        if(!blam::swizzle::deswizzle_bytes(
+                               Span<const u8>(src, base),
+                               Span<u8>(dst, base),
+                               width,
+                               height,
+                               fmt->bpp / 8))
+                            std::memcpy(dst, src, base);
+                    } else
+                        std::memcpy(dst, src, base);
+                }
+
+                auto path = outdir + "/" + sanitize(map.tag_name(tag)) +
+                            (image_span.size() > 1
+                                 ? "_img" + std::to_string(img_idx)
+                                 : "") +
+                            ".dds";
+                if(write_file(
+                       path,
+                       make_dds(
+                           *fmt,
+                           width,
+                           height,
+                           Span<const u8>(pixels.data(), pixels.size()),
+                           cube)))
+                {
+                    cBasicPrint(
+                        "  bitm {0}x{1}{2} lod{3} (format {4}, {5} bytes{6}) "
+                        "-> {7}",
+                        width,
+                        height,
+                        cube ? " cube" : "",
+                        lod + 1,
+                        static_cast<u16>(from_le(img.format)),
+                        base * faces,
+                        img.swizzled() && !fmt->fourcc ? ", deswizzled" : "",
+                        path);
+                    extracted++;
+                }
+                break;
             }
-            break;
         }
     }
     return extracted;
@@ -276,8 +399,9 @@ u32 extract_sounds(
     }
 
     /* Separate quotas so WMA sounds show up even though they cluster late in
-     * the tag table */
-    u32 extracted = 0, adpcm_left = limit, wma_left = limit;
+     * the tag table; limit 0 = everything */
+    u32 quota     = limit ? limit : std::numeric_limits<u32>::max();
+    u32 extracted = 0, adpcm_left = quota, wma_left = quota;
     for(auto const& tag : map.tags())
     {
         if(adpcm_left == 0 && wma_left == 0)
@@ -304,47 +428,61 @@ u32 extract_sounds(
             continue;
         auto const& range = pitch_ranges.value()[range_idx];
 
-        auto perm_idx = from_le(range.first_permutation);
-        if(from_le(range.permutation_count) < 1 || perm_idx < 0 ||
-           static_cast<size_t>(perm_idx) >= permutations.value().size())
-            continue;
-        auto const& perm = permutations.value()[perm_idx];
-
-        std::vector<char> payload;
-        payload.reserve(perm.sample_size());
-        i16 first = from_le(perm.first_chunk);
-        i16 count = from_le(perm.chunk_count);
-        for(i16 c = first; c < first + count; c++)
+        /* Every permutation is a distinct take/variation of the sound */
+        i16  first_perm = from_le(range.first_permutation);
+        i16  perm_count = from_le(range.permutation_count);
+        bool wrote_any  = false;
+        for(i16 p = 0; p < perm_count; p++)
         {
-            if(c < 0 || static_cast<size_t>(c) >= chunks.value().size())
+            auto perm_idx = static_cast<size_t>(first_perm) + p;
+            if(first_perm < 0 || perm_idx >= permutations.value().size())
                 break;
-            auto const& chunk = chunks.value()[c];
-            auto        raw   = pool.resolve(chunk.offset, chunk.size());
-            if(!raw)
-                break;
-            payload.insert(payload.end(), raw->begin(), raw->end());
+            auto const& perm = permutations.value()[perm_idx];
+
+            std::vector<char> payload;
+            payload.reserve(perm.sample_size());
+            i16 first = from_le(perm.first_chunk);
+            i16 count = from_le(perm.chunk_count);
+            for(i16 c = first; c < first + count; c++)
+            {
+                if(c < 0 || static_cast<size_t>(c) >= chunks.value().size())
+                    break;
+                auto const& chunk = chunks.value()[c];
+                auto        raw   = pool.resolve(chunk.offset, chunk.size());
+                if(!raw)
+                    break;
+                payload.insert(payload.end(), raw->begin(), raw->end());
+            }
+            if(payload.empty() || payload.size() != perm.sample_size())
+                continue;
+
+            auto path =
+                outdir + "/" + sanitize(map.tag_name(tag)) +
+                (perm_count > 1 ? "_perm" + std::to_string(p) : "") +
+                (adpcm ? ".wav" : ".wma");
+            auto rate = h2::snd::to_hertz(sound->sample_rate);
+            if(write_file(
+                   path,
+                   adpcm ? make_xadpcm_wav(rate, channels, payload)
+                         : payload))
+            {
+                cBasicPrint(
+                    "  snd! {0} Hz {1}ch {2} perm {3}/{4} ({5} bytes, {6} "
+                    "chunks) -> {7}",
+                    rate,
+                    channels,
+                    adpcm ? "xbox_adpcm" : "wma",
+                    p + 1,
+                    perm_count,
+                    payload.size(),
+                    count,
+                    path);
+                extracted++;
+                wrote_any = true;
+            }
         }
-        if(payload.empty() || payload.size() != perm.sample_size())
-            continue;
-
-        auto path = outdir + "/" + sanitize(map.tag_name(tag)) +
-                    (adpcm ? ".wav" : ".wma");
-        auto rate = h2::snd::to_hertz(sound->sample_rate);
-        if(write_file(
-               path, adpcm ? make_xadpcm_wav(rate, channels, payload)
-                           : payload))
-        {
-            cBasicPrint(
-                "  snd! {0} Hz {1}ch {2} ({3} bytes, {4} chunks) -> {5}",
-                rate,
-                channels,
-                adpcm ? "xbox_adpcm" : "wma",
-                payload.size(),
-                count,
-                path);
-            extracted++;
+        if(wrote_any && (adpcm ? adpcm_left : wma_left) > 0)
             (adpcm ? adpcm_left : wma_left)--;
-        }
     }
     return extracted;
 }
@@ -420,7 +558,8 @@ int run_map(
     blam::dimeter::map_container<V> const& map,
     BytesConst const&                    map_data,
     std::string const&                   map_dir,
-    std::string const&                   extract_dir)
+    std::string const&                   extract_dir,
+    u32                                  limit)
 {
     print_map(map);
     if(extract_dir.empty())
@@ -456,9 +595,9 @@ int run_map(
     std::filesystem::create_directories(extract_dir, mkdir_ec);
 
     cBasicPrint("Extracting bitmaps:");
-    u32 bitmaps = extract_bitmaps(map, pool, extract_dir, 10);
+    u32 bitmaps = extract_bitmaps(map, pool, extract_dir, limit);
     cBasicPrint("Extracting sounds:");
-    u32 sounds = extract_sounds(map, pool, extract_dir, 10);
+    u32 sounds = extract_sounds(map, pool, extract_dir, limit);
     cBasicPrint("Extracted {0} bitmaps, {1} sounds", bitmaps, sounds);
     return 0;
 }
@@ -472,11 +611,16 @@ i32 coffee_main(i32 argc, cstring_w* argv)
 
     if(argc < 2)
     {
-        cBasicPrint("usage: {0} <map file> [extract dir]", argv[0]);
+        cBasicPrint(
+            "usage: {0} <map file> [extract dir] [limit]\n"
+            "  limit: per-category cap on extracted assets, 0 = everything "
+            "(default 10)",
+            argv[0]);
         return 1;
     }
 
     std::string extract_dir = argc > 2 ? argv[2] : "";
+    u32         limit = argc > 3 ? static_cast<u32>(std::atoi(argv[3])) : 10;
 
     std::string map_path(argv[1]);
     auto        slash   = map_path.find_last_of('/');
@@ -497,7 +641,7 @@ i32 coffee_main(i32 argc, cstring_w* argv)
        map.has_value())
     {
         cBasicPrint("-- Halo 2 Xbox cache file --");
-        return run_map(map.value(), map_data, map_dir, extract_dir);
+        return run_map(map.value(), map_data, map_dir, extract_dir, limit);
     }
 
     if(auto map = map_container<blam::dimeter::vista_version_t>::from_bytes(
@@ -505,7 +649,7 @@ i32 coffee_main(i32 argc, cstring_w* argv)
        map.has_value())
     {
         cBasicPrint("-- Halo 2 Vista cache file --");
-        return run_map(map.value(), map_data, map_dir, extract_dir);
+        return run_map(map.value(), map_data, map_dir, extract_dir, limit);
     } else
     {
         cBasicPrint(
