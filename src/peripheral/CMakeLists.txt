@@ -178,6 +178,7 @@ elseif(EMSCRIPTEN)
     # ccall/cwrap: let the host page drive the app, e.g. inject dummy-plug
     # events through coffee_dummy_plug_event from JS.
     -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
+    -sEXPORTED_FUNCTIONS=_main,_malloc,_free
     # -flto
     -pthread
     -Wno-pthreads-mem-growth

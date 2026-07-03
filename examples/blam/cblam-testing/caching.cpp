@@ -396,7 +396,18 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             u32  vert_base = vert_ptr / mat.vertex_size();
             u32  vert_size = mat.vertex_size();
 
-            using ChunkKey = std::pair<std::vector<u16>, u32>;
+            struct ChunkKey
+            {
+                std::vector<u16> owners;
+                u32              subcluster;
+
+                bool operator<(ChunkKey const& other) const
+                {
+                    if(owners != other.owners)
+                        return owners < other.owners;
+                    return subcluster < other.subcluster;
+                }
+            };
             std::map<ChunkKey, std::vector<u32>> sub_faces;
             for(u32 fi = mat_start; fi < mat_end; fi++)
             {
@@ -407,7 +418,7 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
                 if(owners.size() == 1 && fi < face_subcluster.size() &&
                    face_subcluster[fi].first == owners.front())
                     sid = face_subcluster[fi].second;
-                sub_faces[{std::move(owners), sid}].push_back(fi);
+                sub_faces[ChunkKey{std::move(owners), sid}].push_back(fi);
             }
 
             for(auto const& [key, face_idxs] : sub_faces)
