@@ -2,6 +2,8 @@
 
 #include "h2_structures.h"
 
+#include <peripherals/identify/compiler/struct_packing.h>
+
 namespace blam::dimeter::snd {
 
 enum class sample_rate_t : u8
@@ -105,7 +107,10 @@ struct alignas(2) pitch_range_t
 
 static_assert(sizeof(pitch_range_t) == 0xC);
 
-struct alignas(2) permutation_t
+/* Packed: the wire layout has no padding anyway, but alignas(2) would be an
+ * illegal alignment reduction (u32 member -> natural 4) that clang on
+ * Android/wasm rejects; packing also keeps 2-aligned blocks safe to read */
+PACKEDSTRUCT(permutation_t
 {
     i16 import_name_index;
     i16 encoded_skip_fraction;
@@ -120,7 +125,7 @@ struct alignas(2) permutation_t
     {
         return from_le(sample_size_raw);
     }
-};
+});
 
 static_assert(sizeof(permutation_t) == 0x10);
 
