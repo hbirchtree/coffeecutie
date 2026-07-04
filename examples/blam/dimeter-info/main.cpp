@@ -4,10 +4,12 @@
 #include <coffee/core/coffee.h>
 
 #include <blam/dimeter/h2_bitm.h>
+#include <blam/dimeter/h2_geometry.h>
 #include <blam/dimeter/h2_map.h>
 #include <blam/dimeter/h2_sound.h>
 #include <blam/volta/blam_swizzle.h>
 
+#include <cstdio>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -487,6 +489,634 @@ u32 extract_sounds(
     return extracted;
 }
 
+/* --- mesh extraction --------------------------------------------------- */
+
+/* Growing OBJ document; v/vt indices are global, so sections can be
+ * appended as named groups */
+struct obj_writer
+{
+    std::string body;
+    u32         vertex_base{1};
+
+    void mtllib(std::string const& name)
+    {
+        body += "mtllib " + name + "\n";
+    }
+
+    void group(std::string const& name)
+    {
+        body += "o " + name + "\n";
+    }
+
+    void usemtl(std::string const& name)
+    {
+        body += "usemtl " + name + "\n";
+    }
+
+    void vertex(f32 x, f32 y, f32 z)
+    {
+        char line[96];
+        std::snprintf(line, sizeof(line), "v %g %g %g\n", x, y, z);
+        body += line;
+    }
+
+    void texcoord(f32 u, f32 v)
+    {
+        char line[64];
+        std::snprintf(line, sizeof(line), "vt %g %g\n", u, 1.f - v);
+        body += line;
+    }
+
+    void triangle(u32 a, u32 b, u32 c)
+    {
+        char line[96];
+        std::snprintf(
+            line,
+            sizeof(line),
+            "f %u/%u %u/%u %u/%u\n",
+            vertex_base + a,
+            vertex_base + a,
+            vertex_base + b,
+            vertex_base + b,
+            vertex_base + c,
+            vertex_base + c);
+        body += line;
+    }
+
+    void end_group(u32 vertex_count)
+    {
+        vertex_base += vertex_count;
+    }
+
+    bool write(std::string const& path) const
+    {
+        std::ofstream out(path, std::ios::binary);
+        out << "# extracted by DimeterInfo\n" << body;
+        return out.good();
+    }
+};
+
+/* --- materials --------------------------------------------------------- */
+
+/* Extracts a bitmap tag's first image as DDS for MTL references; returns
+ * the written filename */
+template<typename V>
+std::optional<std::string> write_material_dds(
+    blam::dimeter::map_container<V> const& map,
+    blam::dimeter::raw_pool const&         pool,
+    std::string const&                     outdir,
+    blam::dimeter::tag_t const&            bitm_tag)
+{
+    namespace h2 = blam::dimeter;
+    using blam::from_le;
+
+    auto const* bitm =
+        bitm_tag.template data<h2::bitm::header_t>(map.magic());
+    if(!bitm)
+        return std::nullopt;
+    auto images = bitm->images.data(map.magic());
+    if(images.has_error() || images.value().empty())
+        return std::nullopt;
+    h2::bitm::image_t const& img = images.value()[0];
+    if(from_le(img.type) != blam::bitm::type_t::tex_2d)
+        return std::nullopt;
+    auto fmt = dds_format(from_le(img.format));
+    if(!fmt)
+        return std::nullopt;
+
+    u32 width  = static_cast<u32>(from_le(img.width));
+    u32 height = static_cast<u32>(from_le(img.height));
+    u32 base   = base_level_size(*fmt, width, height);
+
+    for(int lod = 0; lod < 3; lod++)
+    {
+        if(from_le(img.lod_size[lod]) < base)
+            continue;
+        auto raw = pool.resolve(img.lod_offset[lod], base);
+        if(!raw)
+            continue;
+        auto const* src = reinterpret_cast<u8 const*>(raw->data());
+        std::vector<u8> pixels(base);
+        if(!fmt->fourcc && img.swizzled())
+        {
+            if(!blam::swizzle::deswizzle_bytes(
+                   Span<const u8>(src, base),
+                   Span<u8>(pixels.data(), base),
+                   width,
+                   height,
+                   fmt->bpp / 8))
+                std::memcpy(pixels.data(), src, base);
+        } else
+            std::memcpy(pixels.data(), src, base);
+
+        auto filename = sanitize(map.tag_name(bitm_tag)) + ".dds";
+        if(write_file(
+               outdir + "/" + filename,
+               make_dds(
+                   *fmt,
+                   width,
+                   height,
+                   Span<const u8>(pixels.data(), pixels.size()))))
+            return filename;
+        break;
+    }
+    return std::nullopt;
+}
+
+/* Resolves shad tags to MTL entries (diffuse map + uv tiling), extracting
+ * the referenced bitmaps on first use */
+struct material_db
+{
+    std::string                mtl;
+    std::map<u16, std::string> by_tag; /* shad tag index -> mtl name */
+
+    template<typename V>
+    std::string resolve(
+        blam::dimeter::map_container<V> const& map,
+        blam::dimeter::raw_pool const&         pool,
+        std::string const&                     outdir,
+        blam::dimeter::datum_index             shad_id)
+    {
+        namespace h2 = blam::dimeter;
+        using blam::from_le;
+
+        auto const* shad_tag = map.tag_at(shad_id);
+        if(!shad_tag)
+            return "";
+        if(auto it = by_tag.find(shad_id.index()); it != by_tag.end())
+            return it->second;
+
+        auto name = sanitize(map.tag_name(*shad_tag));
+        by_tag.emplace(shad_id.index(), name);
+        mtl += "newmtl " + name + "\nKd 0.8 0.8 0.8\n";
+
+        auto const* shad =
+            shad_tag->template data<h2::geo::shad_header_t>(map.magic());
+        if(shad)
+        {
+            /* Base map from the runtime properties (the postprocess bitmap
+             * slots start with bump/detail maps); uv scale from the
+             * postprocess tiling entry whose bitmap slot matches it */
+            h2::tag_t const* bitm_tag = nullptr;
+            u32              diffuse_datum = 0;
+            f32              scale_u = 1.f, scale_v = 1.f;
+            auto rt = shad->runtime_properties.data(map.magic());
+            if(!rt.has_error() && !rt.value().empty())
+            {
+                bitm_tag = map.tag_at(rt.value()[0].diffuse.tag_id);
+                diffuse_datum =
+                    blam::from_le(rt.value()[0].diffuse.tag_id.raw);
+            }
+            auto props = shad->properties.data(map.magic());
+            if(!props.has_error() && !props.value().empty())
+            {
+                auto const& p       = props.value()[0];
+                auto        bitmaps = p.bitmaps.data(map.magic());
+                auto        tiling  = p.tiling.data(map.magic());
+                if(!bitmaps.has_error() && !tiling.has_error())
+                    for(size_t s = 0; s < bitmaps.value().size(); s++)
+                        if(from_le(bitmaps.value()[s].bitmap.raw) ==
+                               diffuse_datum &&
+                           s < tiling.value().size())
+                        {
+                            scale_u = from_le(tiling.value()[s].x);
+                            scale_v = from_le(tiling.value()[s].y);
+                            break;
+                        }
+            }
+            if(bitm_tag && bitm_tag->matches("bitm"))
+                if(auto dds =
+                       write_material_dds(map, pool, outdir, *bitm_tag))
+                {
+                    char line[512];
+                    std::snprintf(
+                        line,
+                        sizeof(line),
+                        "map_Kd -s %g %g 1 %s\n",
+                        scale_u != 0.f ? scale_u : 1.f,
+                        scale_v != 0.f ? scale_v : 1.f,
+                        dds->c_str());
+                    mtl += line;
+                }
+        }
+        mtl += "\n";
+        return name;
+    }
+};
+
+/* --- section geometry --------------------------------------------------- */
+
+struct section_streams
+{
+    blam::dimeter::geo::resource_t const* index{nullptr};
+    blam::dimeter::geo::resource_t const* position{nullptr};
+    blam::dimeter::geo::resource_t const* texcoord{nullptr};
+    blam::dimeter::geo::resource_t const* submeshes{nullptr};
+};
+
+section_streams find_streams(
+    semantic::Span<blam::dimeter::geo::resource_t const> resources)
+{
+    section_streams out;
+    if(!resources.empty())
+        out.submeshes = &resources[0];
+    for(auto const& r : resources)
+    {
+        if(r.type0() == 32 && !out.index)
+            out.index = &r;
+        else if(r.type0() == 56 && r.type1() == 0 && !out.position)
+            out.position = &r;
+        else if(r.type0() == 56 && r.type1() == 1 && !out.texcoord)
+            out.texcoord = &r;
+    }
+    return out;
+}
+
+/* Convert a strip or list index range to plain triangles, dropping
+ * degenerates */
+void emit_triangles(obj_writer& obj, Span<const u16> indices, bool strip)
+{
+    if(!strip)
+    {
+        for(size_t i = 0; i + 2 < indices.size(); i += 3)
+            obj.triangle(indices[i], indices[i + 1], indices[i + 2]);
+        return;
+    }
+    for(size_t i = 2; i < indices.size(); i++)
+    {
+        u16 a = indices[i - 2], b = indices[i - 1], c = indices[i];
+        if(a == b || b == c || a == c)
+            continue;
+        if(i % 2)
+            obj.triangle(b, a, c);
+        else
+            obj.triangle(a, b, c);
+    }
+}
+
+/* Shared blob walk for both BSP (f32 verts) and model (i16-normalized
+ * verts) sections; bounds != nullptr selects the model decode, instance
+ * != nullptr places the section in world space */
+template<typename Section>
+bool append_section(
+    obj_writer&                            obj,
+    blam::dimeter::raw_pool const&         pool,
+    blam::dimeter::magic_ptr const&        magic,
+    Section const&                         section,
+    std::string const&                     name,
+    blam::dimeter::geo::model_bounds_t const* bounds,
+    blam::dimeter::geo::bsp_instance_t const* instance = nullptr,
+    std::vector<std::string> const*           materials = nullptr)
+{
+    namespace geo = blam::dimeter::geo;
+    using blam::from_le;
+
+    u16 vertex_count = section.vertex_count();
+    i32 data_size    = section.data_size();
+    if(!vertex_count || data_size <= 0)
+        return false;
+
+    auto block = pool.resolve(section.data, static_cast<u32>(data_size));
+    if(!block)
+        return false;
+    auto resources = section.resources.data(magic);
+    if(resources.has_error())
+        return false;
+
+    auto streams = find_streams(resources.value());
+    if(!streams.index || !streams.position)
+        return false;
+
+    i32 base = section.base_address();
+    u16 index_count = geo::block_index_count(*block);
+
+    auto in_block = [&](i32 offset, i32 size) {
+        return offset >= 0 && size >= 0 &&
+               static_cast<i64>(base) + offset + size <=
+                   static_cast<i64>(block->size());
+    };
+    if(!index_count ||
+       !in_block(streams.index->offset(), index_count * 2) ||
+       !in_block(streams.position->offset(), streams.position->size()))
+        return false;
+
+    auto const* bytes = reinterpret_cast<u8 const*>(block->data());
+
+    obj.group(name);
+
+    /* Instance transform: 4x3 row-major, rows 0-2 = scaled basis vectors,
+     * row 3 = translation; uniform scale applies to the vertex first */
+    f32 inst_scale = 1.f;
+    f32 m[12]      = {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0};
+    if(instance)
+    {
+        inst_scale = blam::from_le(instance->scale);
+        for(int i = 0; i < 12; i++)
+            m[i] = blam::from_le(instance->transform[i]);
+    }
+    auto place = [&](f32 x, f32 y, f32 z) {
+        x *= inst_scale;
+        y *= inst_scale;
+        z *= inst_scale;
+        obj.vertex(
+            x * m[0] + y * m[3] + z * m[6] + m[9],
+            x * m[1] + y * m[4] + z * m[7] + m[10],
+            x * m[2] + y * m[5] + z * m[8] + m[11]);
+    };
+
+    u32 stride = streams.position->size() / vertex_count;
+    bool has_uv = streams.texcoord &&
+                  in_block(streams.texcoord->offset(), streams.texcoord->size());
+    for(u32 v = 0; v < vertex_count; v++)
+    {
+        auto const* p = bytes + base + streams.position->offset() + v * stride;
+        if(bounds)
+        {
+            i16 q[3];
+            std::memcpy(q, p, 6);
+            auto expand = [](i16 value, f32 min, f32 max) {
+                f32 n = (static_cast<f32>(value) + 32768.f) / 65535.f;
+                return min + n * (max - min);
+            };
+            place(
+                expand(from_le(q[0]), from_le(bounds->x_min), from_le(bounds->x_max)),
+                expand(from_le(q[1]), from_le(bounds->y_min), from_le(bounds->y_max)),
+                expand(from_le(q[2]), from_le(bounds->z_min), from_le(bounds->z_max)));
+        } else
+        {
+            f32 pos[3];
+            std::memcpy(pos, p, 12);
+            place(from_le(pos[0]), from_le(pos[1]), from_le(pos[2]));
+        }
+    }
+    for(u32 v = 0; v < vertex_count; v++)
+    {
+        if(!has_uv)
+        {
+            obj.texcoord(0.f, 0.f);
+            continue;
+        }
+        auto const* p = bytes + base + streams.texcoord->offset() +
+                        v * (bounds ? 4 : 8);
+        if(bounds)
+        {
+            i16 q[2];
+            std::memcpy(q, p, 4);
+            auto expand = [](i16 value, f32 min, f32 max) {
+                f32 n = (static_cast<f32>(value) + 32768.f) / 65535.f;
+                return min + n * (max - min);
+            };
+            obj.texcoord(
+                expand(from_le(q[0]), from_le(bounds->u_min), from_le(bounds->u_max)),
+                expand(from_le(q[1]), from_le(bounds->v_min), from_le(bounds->v_max)));
+        } else
+        {
+            f32 uv[2];
+            std::memcpy(uv, p, 8);
+            obj.texcoord(from_le(uv[0]), from_le(uv[1]));
+        }
+    }
+
+    std::vector<u16> indices(index_count);
+    std::memcpy(
+        indices.data(), bytes + base + streams.index->offset(), index_count * 2);
+    for(auto& idx : indices)
+        idx = from_le(idx);
+    auto index_span = Span<const u16>(indices.data(), indices.size());
+    /* Strip vs list is a per-section property */
+    bool strip =
+        static_cast<u32>(section.face_count()) * 3 != index_count;
+
+    /* Per-submesh draw ranges carry the shader index; emit one usemtl per
+     * range when a material table is available */
+    bool split = false;
+    if(materials && streams.submeshes &&
+       in_block(streams.submeshes->offset(), streams.submeshes->size()))
+    {
+        auto const* subs = reinterpret_cast<geo::submesh_t const*>(
+            bytes + base + streams.submeshes->offset());
+        size_t sub_count = streams.submeshes->size() / sizeof(geo::submesh_t);
+        for(size_t s = 0; s < sub_count; s++)
+        {
+            u32 start = subs[s].index_start();
+            u32 len   = subs[s].index_length();
+            i16 shader = subs[s].shader_index();
+            if(start + len > index_count || !len)
+                continue;
+            if(shader >= 0 &&
+               static_cast<size_t>(shader) < materials->size() &&
+               !(*materials)[shader].empty())
+                obj.usemtl((*materials)[shader]);
+            emit_triangles(obj, index_span.subspan(start, len), strip);
+            split = true;
+        }
+    }
+    if(!split)
+        emit_triangles(obj, index_span, strip);
+
+    obj.end_group(vertex_count);
+    return true;
+}
+
+template<typename V>
+u32 extract_bsp_meshes(
+    blam::dimeter::map_container<V> const& map,
+    blam::dimeter::raw_pool const&         pool,
+    std::string const&                     outdir)
+{
+    namespace h2  = blam::dimeter;
+    namespace geo = h2::geo;
+    using blam::from_le;
+
+    /* BSP tag meta lives in its own region with its own virtual base;
+     * the region list comes from the scenario */
+    auto const* scnr_tag = map.scenario();
+    if(!scnr_tag)
+        return 0;
+    auto const* scnr =
+        scnr_tag->template data<geo::scnr_bsps_t>(map.magic());
+    if(!scnr)
+        return 0;
+    auto bsp_refs = scnr->structure_bsps.data(map.magic());
+    if(bsp_refs.has_error())
+        return 0;
+
+    u32 extracted = 0;
+    for(auto const& ref : bsp_refs.value())
+    {
+        u32 region = ref.meta_address();
+        if(region + 16 + sizeof(geo::bsp_header_t) > map.data.size())
+            continue;
+
+        h2::magic_ptr bsp_magic{
+            .base        = map.data.data(),
+            .max_size    = static_cast<u32>(map.data.size()),
+            .meta_offset = region,
+            .mask        = ref.magic(),
+        };
+        auto const* bsp = reinterpret_cast<geo::bsp_header_t const*>(
+            map.data.data() + region + 16);
+
+        auto const* bsp_tag = map.tag_at(ref.bsp.tag_id);
+        auto        name    = bsp_tag ? std::string(map.tag_name(*bsp_tag))
+                                      : "bsp_" + std::to_string(extracted);
+
+        /* Materials: one MTL entry per shader table slot, extracting the
+         * diffuse bitmaps alongside */
+        material_db              db;
+        std::vector<std::string> materials;
+        auto shader_refs = bsp->shaders.data(bsp_magic);
+        if(!shader_refs.has_error())
+            for(auto const& sref : shader_refs.value())
+                materials.push_back(
+                    db.resolve(map, pool, outdir, sref.shader.tag_id));
+
+        obj_writer obj;
+        obj.mtllib(sanitize(name) + ".mtl");
+        u32 sections = 0;
+
+        auto clusters = bsp->clusters.data(bsp_magic);
+        if(!clusters.has_error())
+            for(size_t i = 0; i < clusters.value().size(); i++)
+                sections += append_section(
+                    obj,
+                    pool,
+                    bsp_magic,
+                    clusters.value()[i],
+                    "cluster_" + std::to_string(i),
+                    nullptr,
+                    nullptr,
+                    &materials);
+
+        /* Instanced geometry: place each instance of its section in world
+         * space; sections never referenced still get dumped at identity */
+        auto geom      = bsp->sections.data(bsp_magic);
+        auto instances = bsp->instances.data(bsp_magic);
+        std::vector<bool> instanced;
+        if(!geom.has_error())
+            instanced.assign(geom.value().size(), false);
+        if(!geom.has_error() && !instances.has_error())
+        {
+            for(size_t i = 0; i < instances.value().size(); i++)
+            {
+                auto const& inst = instances.value()[i];
+                auto        sidx = inst.section_index();
+                if(sidx < 0 ||
+                   static_cast<size_t>(sidx) >= geom.value().size())
+                    continue;
+                instanced[sidx] = true;
+                auto iname = std::string(map.string(inst.name));
+                if(iname.empty())
+                    iname = "instance_" + std::to_string(i);
+                sections += append_section(
+                    obj,
+                    pool,
+                    bsp_magic,
+                    geom.value()[sidx],
+                    "instance_" + sanitize(iname),
+                    nullptr,
+                    &inst,
+                    &materials);
+            }
+        }
+        if(!geom.has_error())
+            for(size_t i = 0; i < geom.value().size(); i++)
+                if(!instanced[i])
+                    sections += append_section(
+                        obj,
+                        pool,
+                        bsp_magic,
+                        geom.value()[i],
+                        "orphan_section_" + std::to_string(i),
+                        nullptr,
+                        nullptr,
+                        &materials);
+
+        auto path = outdir + "/" + sanitize(name) + ".obj";
+        if(sections && obj.write(path))
+        {
+            std::ofstream mtl_out(
+                outdir + "/" + sanitize(name) + ".mtl", std::ios::binary);
+            mtl_out << db.mtl;
+            cBasicPrint(
+                "  sbsp {0} sections ({1} bytes) -> {2}",
+                sections,
+                obj.body.size(),
+                path);
+            extracted++;
+        }
+    }
+    return extracted;
+}
+
+template<typename V>
+u32 extract_model_meshes(
+    blam::dimeter::map_container<V> const& map,
+    blam::dimeter::raw_pool const&         pool,
+    std::string const&                     outdir,
+    u32                                    limit)
+{
+    namespace geo = blam::dimeter::geo;
+
+    auto magic     = map.magic();
+    u32  extracted = 0;
+    for(auto const& tag : map.tags())
+    {
+        if(limit && extracted >= limit)
+            break;
+        if(!tag.valid() || !tag.matches("mode"))
+            continue;
+        auto const* model = tag.template data<geo::model_header_t>(magic);
+        if(!model)
+            continue;
+        auto bounds = model->bounds.data(magic);
+        if(bounds.has_error() || bounds.value().empty())
+            continue;
+
+        auto sections = model->sections.data(magic);
+        if(sections.has_error() || sections.value().empty())
+            continue;
+
+        material_db              db;
+        std::vector<std::string> materials;
+        auto shader_refs = model->shaders.data(magic);
+        if(!shader_refs.has_error())
+            for(auto const& sref : shader_refs.value())
+                materials.push_back(
+                    db.resolve(map, pool, outdir, sref.shader.tag_id));
+
+        auto name = sanitize(map.tag_name(tag));
+        obj_writer obj;
+        obj.mtllib(name + ".mtl");
+        u32 written = 0;
+        for(size_t i = 0; i < sections.value().size(); i++)
+            written += append_section(
+                obj,
+                pool,
+                magic,
+                sections.value()[i],
+                "section_" + std::to_string(i),
+                &bounds.value()[0],
+                nullptr,
+                &materials);
+
+        auto path = outdir + "/" + name + ".obj";
+        if(written && obj.write(path))
+        {
+            std::ofstream mtl_out(
+                outdir + "/" + name + ".mtl", std::ios::binary);
+            mtl_out << db.mtl;
+            cBasicPrint(
+                "  mode {0} sections ({1} bytes) -> {2}",
+                written,
+                obj.body.size(),
+                path);
+            extracted++;
+        }
+    }
+    return extracted;
+}
+
 /* --- info dump -------------------------------------------------------- */
 
 template<typename V>
@@ -598,7 +1228,16 @@ int run_map(
     u32 bitmaps = extract_bitmaps(map, pool, extract_dir, limit);
     cBasicPrint("Extracting sounds:");
     u32 sounds = extract_sounds(map, pool, extract_dir, limit);
-    cBasicPrint("Extracted {0} bitmaps, {1} sounds", bitmaps, sounds);
+    cBasicPrint("Extracting BSP meshes:");
+    u32 bsps = extract_bsp_meshes(map, pool, extract_dir);
+    cBasicPrint("Extracting model meshes:");
+    u32 models = extract_model_meshes(map, pool, extract_dir, limit);
+    cBasicPrint(
+        "Extracted {0} bitmaps, {1} sounds, {2} BSPs, {3} models",
+        bitmaps,
+        sounds,
+        bsps,
+        models);
     return 0;
 }
 
