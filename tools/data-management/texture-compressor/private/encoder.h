@@ -26,6 +26,16 @@ std::optional<ktxTexture1*> encode(
 
 } // namespace compressor::etc2
 
+namespace compressor::etc1 {
+
+using format_t = Etc::Image::Format;
+
+std::optional<ktxTexture1*> encode(
+    compressor::rgbaf_image_t const& img,
+    settings_t&&                     settings = {});
+
+} // namespace compressor::etc2
+
 namespace compressor::bcn {
 
 std::optional<ktxTexture1*> encode(

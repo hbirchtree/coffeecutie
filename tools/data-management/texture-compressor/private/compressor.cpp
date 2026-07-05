@@ -83,6 +83,54 @@ enum class quality_mode
     release_mode,
 };
 
+bool etc1_compress(
+    platform::url::Path const& base_dir,
+    std::string const&         file,
+    std::vector<u32> const&    resolutions,
+    typing::pix_components     format,
+    std::string const&         channels,
+    quality_mode               quality)
+{
+    compressor::rgbaf_image_t imagef;
+    {
+        Coffee::stb::stb_error img_err;
+        if(!compressor::LoadData(
+               &imagef,
+               Coffee::Resource(MkSysUrl(file)),
+               img_err,
+               typing::pix_components::RGBA))
+        {
+            cBasicPrint("Failed to decode image to rgba32f");
+            return false;
+        }
+    }
+
+    if(format != typing::pix_components::RGBA)
+    {
+        auto remapped = compressor::map_channels(imagef, channels);
+        if(!remapped.has_value())
+            return false;
+        imagef = std::move(remapped.value());
+    }
+
+    auto out_fmt = compressor::etc2::format_t::RGB8;
+
+    auto res = compressor::etc1::encode(
+        imagef,
+        compressor::settings_t{
+            .quality = quality == quality_mode::release_mode ? 1.f : 0.1f,
+            .mipmaps = static_cast<uint32_t>(resolutions.size()),
+        });
+
+    if(!res)
+    {
+        cBasicPrint("Failed to encode image {0}", file);
+        return false;
+    }
+    return save_ktx_to_file(
+        create_output_name(base_dir, file, 0, "etc1"), *res);
+}
+
 bool etc2_compress(
     platform::url::Path const& base_dir,
     std::string const&         file,
@@ -422,7 +470,18 @@ i32 cooker_main(i32 argc, char** argv)
                               ? typing::pix_components::RG
                               : typing::pix_components::R;
 
-            if(codec == "etc2")
+            if(codec == "etc1")
+            {
+                if(!etc1_compress(
+                       base_dir,
+                       file,
+                       resolutions,
+                       pixcmp,
+                       format,
+                       release_quality))
+                    return 1;
+            } else if(codec == "etc2")
+            {
                 if(!etc2_compress(
                        base_dir,
                        file,
@@ -431,29 +490,33 @@ i32 cooker_main(i32 argc, char** argv)
                        format,
                        release_quality))
                     return 1;
-                else if(codec.starts_with("bc"))
-                    if(!bcn_compress(
-                           base_dir,
-                           file,
-                           resolutions,
-                           codec,
-                           pixcmp,
-                           format,
-                           release_quality))
-                        return 1;
-                    else if(codec == "png")
-                        if(!png_compress(
-                               base_dir,
-                               file,
-                               resolutions,
-                               pixcmp,
-                               format,
-                               release_quality))
-                            return 1;
-                        else if(codec == "raw")
-                            if(!raw_include(
-                                   base_dir, file, resolutions, pixcmp, format))
-                                return 1;
+            } else if(codec.starts_with("bc"))
+            {
+                if(!bcn_compress(
+                       base_dir,
+                       file,
+                       resolutions,
+                       codec,
+                       pixcmp,
+                       format,
+                       release_quality))
+                    return 1;
+            } else if(codec == "png")
+            {
+                if(!png_compress(
+                       base_dir,
+                       file,
+                       resolutions,
+                       pixcmp,
+                       format,
+                       release_quality))
+                    return 1;
+            } else if(codec == "raw")
+            {
+                if(!raw_include(
+                       base_dir, file, resolutions, pixcmp, format))
+                    return 1;
+            }
         }
 
         image_cache.clear();

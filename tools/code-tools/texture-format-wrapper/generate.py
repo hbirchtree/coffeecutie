@@ -44,10 +44,15 @@ def compressed_block_size(format: str):
         if etc2_128_filter.findall(format):
             return 128
         return 64
-    if 'PVRTC2' in format:
-        return 32 if '2BPP' in format else 128
     if 'PVRTC' in format:
-        return 64 if '2BPP' in format else 128
+        # PVRTC (v1 and v2) blocks are always 64 bits regardless of bpp mode:
+        # 2BPP widens the block to 8x4=32px at 2bpp (64 bits total), 4BPP uses
+        # 4x4=16px at 4bpp (also 64 bits total) -- bpp mode changes the pixel
+        # footprint, not the block's byte size. (Previously returned 128 for
+        # 4bpp -- double the real size, matching neither the format's own
+        # name nor any other codec's bpp-consistent sizing in this function --
+        # and 32 for PVRTC2 2bpp, half the real size.)
+        return 64
     if 'ASTC' in format:
         return 128
     raise ValueError(f'failed to compute block size for {format}')
@@ -62,13 +67,22 @@ def is_floating_point(value_type: str):
 
 
 def extract_compressed_components(format: str):
+    # PVRTC has RGB (no-alpha) variants whose GL token happens to end in
+    # _EXT (the sRGB ones) or _IMG; neither "ALPHA" nor "RGBA" appears in
+    # their name, unlike every other PVRTC token. The blanket "_EXT -> rgba"
+    # rule below would otherwise misclassify them as 4-component/rgba.
+    if 'PVRTC' in format and 'ALPHA' not in format and 'RGBA' not in format:
+        return 3, 'rgb'
+
     if format[-4:] in ['_EXT']:
         return 4, 'rgba'
 
     if rgba_filter.findall(format):
         return 4, 'rgba'
-    if format[3:] in rgbx_formats:
+    elif format[3:] in rgbx_formats:
         return 4, 'rgbx'
+    elif '_SRGB_ALPHA' in format or '_SRGB8_ALPHA8' in format:
+        return 4, 'rgba'
     elif rgb_filter.findall(format) or 'R11F_G11F_B10F' in format:
         return 3, 'rgb'
     elif rg_filter.findall(format):
@@ -290,7 +304,8 @@ if __name__ == '__main__':
         for struct in generate_structs(all_types):
             formats.write(f'{struct}\n')
     with open('vk_formats.inl', 'w+') as vk_formats:
-        for enum in set([x["vkFormat"] for x in all_types]):
+        fmts = sorted(list(set([x["vkFormat"] for x in all_types])))
+        for enum in fmts:
             if enum.endswith('_EXT'):
                 continue
             vk_formats.write(f'{format_as_enum(enum)} = {enum},\n')

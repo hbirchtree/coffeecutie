@@ -1,6 +1,7 @@
 #pragma once
 
 #include <peripherals/enum/helpers.h>
+#include <stdexcept>
 
 #include "texture_formats.h"
 
@@ -88,7 +89,7 @@ inline texture_format_t const& format_of(PixDesc const& desc)
         }
         break;
 #endif
-#if defined(GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG)
+#if defined(GL_IMG_texture_compression_pvrtc)
     case P::PVRTC:
         return format_of(
             feval(desc.cmpflg, C::PVRTC_BPP2)

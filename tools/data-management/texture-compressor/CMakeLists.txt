@@ -7,16 +7,20 @@ find_package(magic_enum CONFIG REQUIRED)
 
 coffee_library(
   TARGET TextureCompression
-  SOURCES private/decoder.cpp private/encoder.cpp
-  LIBRARIES Image
-            PeripheralPlatform
-            GraphicsDefines
-            Etc2Comp::EtcLib
-            bc7enc::bc7enc
-            KTX::ktx
-            Threads::Threads
-            zstd::libzstd_static
-            magic_enum::magic_enum
+  SOURCES 
+    private/decoder.cpp
+    private/encoder.cpp
+    private/encoder_es.cpp
+  LIBRARIES
+    bc7enc::bc7enc
+    Etc2Comp::EtcLib
+    GraphicsDefines
+    Image
+    KTX::ktx
+    magic_enum::magic_enum
+    PeripheralPlatform
+    Threads::Threads
+    zstd::libzstd_static
 )
 
 coffee_application(

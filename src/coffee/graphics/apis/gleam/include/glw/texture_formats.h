@@ -49,8 +49,9 @@ inline constexpr texture_format_t const& format_of(format_t fmt)
     for(auto const& def : texture_formats_view())
         if(def.type == fmt)
             return def;
-    Throw(std::out_of_range(
-        "format not found: " + std::to_string(static_cast<u32>(fmt))));
+    Throw(
+        std::out_of_range(
+            "format not found: " + std::to_string(static_cast<u32>(fmt))));
 }
 
 inline constexpr texture_format_t const& format_of(vk_format_t fmt)
@@ -58,8 +59,9 @@ inline constexpr texture_format_t const& format_of(vk_format_t fmt)
     for(auto const& def : texture_formats_view())
         if(def.vk_type == fmt)
             return def;
-    Throw(std::out_of_range(
-        "format not found" + std::to_string(static_cast<u32>(fmt))));
+    Throw(
+        std::out_of_range(
+            "format not found" + std::to_string(static_cast<u32>(fmt))));
 }
 
 using typing::pixels::PixDesc;

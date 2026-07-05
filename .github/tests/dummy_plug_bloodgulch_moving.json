@@ -1,0 +1,15 @@
+{
+    "comment": "On bloodgulch, moves the camera to the cave for cluster testing",
+    "events": [
+        {"time": 1000, "type": "camera", "position" :[119.427414, -183.3026, 7.780891], "rotation":[0.9190232, 0.050596938, 0.39035165, 0.021490876]}, 
+        {"time": 1500, "type":"screenshot","name":"bloodgulch_full"},
+        {"time": 2000, "type":"key", "key": "CK_w", "duration": 15000},
+        {"time":30000, "type": "camera", "position" :[24.141705, -99.5787, 2.5930493], "rotation":[0.4785751, -0.009572582, 0.8778188, -0.017559493]},
+        {"time":30500, "type":"screenshot","name":"bloodgulch_blue"},
+        {"time":31000, "type":"key", "key": "CK_w", "duration": 15000},
+        {"time":60000, "type": "camera", "position" :[97.09337, -115.36578, 4.5909534], "rotation":[-0.4433541, 0.033313803, -0.8932093, 0.06711751]},
+        {"time":60500, "type":"screenshot","name":"bloodgulch_cave"},
+        {"time":61000, "type":"key", "key": "CK_w", "duration": 15000}
+    ],
+    "end_time": 90000
+}
