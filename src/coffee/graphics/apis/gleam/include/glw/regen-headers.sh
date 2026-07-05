@@ -10,5 +10,6 @@ cd $(dirname $0)
 $CLANG_FORMAT --version
 
 $ROOT_DIR/tools/code-tools/opengl-wrapper/gl_parse.py
+$ROOT_DIR/tools/code-tools/texture-format-wrapper/generate.py
 
 $CLANG_FORMAT -i -style=file *.h versions/*.h enums/*.h extensions/*.h

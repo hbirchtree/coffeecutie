@@ -2,6 +2,7 @@
 
 #include "blam_magic_data.h"
 #include "blam_reference.h"
+#include "blam_bitm.h"
 
 namespace blam {
 
@@ -91,5 +92,24 @@ struct atlas_view
         return from_data(data.data());
     }
 };
+
+
+stl_types::result<std::pair<const bitm::header_t*, map_ptr>, error_msg>
+tag_t::image(const map_ptr& magic, const atlas_view& source) const
+{
+    /* CE changes! */
+    if(storage == tag_storage_t::external)
+    {
+        return std::make_pair(
+            source.header->get_block<bitm::header_t>(offset)
+                .data(source.magic)
+                .value()
+                .data(),
+            source.header->block_magic(source.magic, offset));
+    } else
+    {
+        return std::make_pair(data<bitm::header_t>(magic).value(), magic);
+    }
+}
 
 } // namespace blam

@@ -190,8 +190,10 @@ enum class comp_flags : u16
     BC7  = 0x40, /* 8-bit RGBA, aka BPTC, 128 bits */
 
     /* BPP specification, meant for PVRTC */
-    bpp_2 = 0x2,
-    bpp_4 = 0x4,
+    PVRTC_BPP2 = 0x2,
+    PVRTC_BPP4 = 0x4,
+    PVRTC_RGB  = 0x8,
+    PVRTC_RGBA = 0x10,
 
     Undefined = CompressionNone,
 };

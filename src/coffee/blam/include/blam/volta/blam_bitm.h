@@ -9,6 +9,12 @@
 #include <peripherals/typing/enum/pixels/format.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
 
+#if defined(GLEAM_USE_CORE) || defined(GLEAM_USE_ES) || defined(GLEAM_DUMMY)
+#include <glw/texture_formats.h>
+#include <glw/texture_formats_desc.h>
+#include <peripherals/stl/range.h>
+#endif
+
 namespace blam::bitm {
 
 using typing::pix_components;
@@ -40,12 +46,25 @@ enum class format_t : u16
     V8U8    = 0x16, /*!< Signed RG8, used for bump maps */
     G8B8    = 0x17,
 
-    /* High byte 0xFF reserves a range of `format` values for auxiliary formats
-     * defined outside the Blam engine. A value in this range is not one of the
-     * engine formats above; the low byte selects among the auxiliary formats,
-     * whose meaning is owned by the consuming platform/RHI. The engine only
-     * needs to know such values are not its own. */
-    platform_specific = 0xFF00,
+    /* Range in which platforms-specific transcoded formats live
+     * Used for weaker platforms where we want to transcode for better perf
+     */
+    PLATFORM_SPECIFIC_MASK = 0xFF00,
+
+    /* For GX, does not collide with the OpenGL ones */
+    BC1_GX_TILED    = 0x100, /*!< GX's tiled DXT1 */
+    RGB565_GX_TILED = 0x200, /*!< RGB565 tiled for GX */
+    I8_GX_TILED     = 0x300, /*!< I8 tiled for GX */
+    IA8_GX_TILED    = 0x400, /*!< IA8 tiled for GX*/
+
+    /* For OpenGL ES targets */
+    PVRTCV1_RGBA = 0x100, /*!< PVRTCv1 RGBA format */
+    PVRTCV1_RGB  = 0x200, /*!< PVRTCv1 RGBA format */
+    ETC1_RGB     = 0x300, /*!< ETC1 RGB format */
+    ETC2_RGB     = 0x400, /*!< ETC2 RGB8 format */
+    ETC2_RGBA    = 0x500, /*!< ETC2 RGBA8 format */
+
+    /* Desktop GL usually fulfills all the formats, so no need */
 };
 
 /*!
@@ -226,13 +245,71 @@ struct image_t
         return enum_helpers::feval(flags & flags_t::shared);
     }
 
-    std::tuple<bit_fmt, pix_components> to_fmt() const;
+    typing::pixels::PixDesc to_fmt() const;
 
-    pix_fmt to_pixfmt() const;
+    inline Span<const u8> data(map_ptr const& magic, u16 mipmap = 0) const
+    {
+#if defined(GLEAM_USE_CORE) || defined(GLEAM_USE_ES) || defined(GLEAM_DUMMY)
+        using namespace typing::pixels::properties;
 
-    std::tuple<pix_fmt, typing::pixels::comp_flags> to_compressed_fmt() const;
+        if(mipmap != 0 && mipmap >= mipmaps)
+            Throw(undefined_behavior("mipmap out of range"));
 
-    Span<const u8> data(map_ptr const& magic, u16 mipmap = 0) const;
+        auto mipsize = isize;
+        mipsize.x >>= mipmap;
+        mipsize.y >>= mipmap;
+
+        if(!compressed())
+        {
+            auto const& format = gl::tex::format_of(to_fmt());
+
+            u32 size       = format.data_size(mipsize);
+            u32 mip_offset = 0;
+
+            for(auto i : stl_types::range<>(mipmap))
+            {
+                auto imsize = isize;
+                imsize.x >>= i;
+                imsize.y >>= i;
+                mip_offset += format.data_size(imsize);
+            }
+
+            if(type == type_t::tex_cube)
+                size *= 6;
+            else if(type == type_t::tex_3d)
+                size *= depth;
+
+            return reference<u8>{.count = size, .offset = offset + mip_offset}
+                .data(magic)
+                .value();
+        } else
+        {
+            auto fmt = to_fmt();
+
+            u32 size = gl::tex::format_of(fmt.c).data_size(mipsize);
+
+            u32 mip_offset = 0;
+            for(auto i : stl_types::Range<>(mipmap))
+            {
+                auto off_size = isize;
+                off_size.x >>= i;
+                off_size.y >>= i;
+                mip_offset += gl::tex::format_of(fmt.c).data_size(off_size);
+            }
+
+            if(type == type_t::tex_cube)
+                size *= 6;
+            else if(type == type_t::tex_3d)
+                size *= depth;
+
+            return reference<u8>{.count = size, .offset = offset + mip_offset}
+                .data(magic)
+                .value();
+        }
+#else
+#error No impl for blam::bitm::image_t::data
+#endif
+    }
 };
 
 } // namespace blam::bitm

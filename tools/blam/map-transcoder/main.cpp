@@ -83,7 +83,7 @@ i32 coffee_main(i32, cstring_w*)
         options.add_options("Target")
             //
             ("target",
-             "Target device, determines default texture formats; Gekko, PowerVR",
+             "Target device, determines default texture formats; Gekko, PowerVR, ES2, ES3",
              cxxopts::value<std::string>()->default_value("Gekko"))
             //
             ;
@@ -125,19 +125,31 @@ i32 coffee_main(i32, cstring_w*)
                     "\n"
                     " Target types:\n"
                     "\n"
-                    " PowerVR:\n"
-                    " * Targets PowerVR SGX 5-series GPUs running OpenGL ES 2.0\n"
-                    " * Keeps most formats that are compatible with baseline OpenGL ES 2.0\n"
-                    " * Transcodes BC1, RGB565 to PVRTCv1 RGB\n"
-                    " * Transcodes BC2, BC3, RGBA8, XRGB8 to PVRTCv1 RGBA\n"
-                    "\n"
                     " Gekko:\n"
                     " * Targets Gekko's Flipper GPU with the GX API\n"
                     " * Tiles BC1 to CMPR format\n"
                     " * Transcodes RGB565 lightmaps to CMPR\n"
                     " * Tiles A8, AY8, Y8, A8Y8, RGB565 in equivalent format\n"
                     " * Downgrades BC2/BC3 to CMPR\n"
-                    " * Compresses RGB565 as CMPR\n");
+                    " * Compresses RGB565 as CMPR\n"
+                    "\n"
+                    " PowerVR:\n"
+                    " * Targets PowerVR SGX 5-series GPUs running OpenGL ES 2.0\n"
+                    " * Keeps most formats that are compatible with baseline OpenGL ES 2.0\n"
+                    " * Transcodes BC1, RGB565 to PVRTCv1 RGB\n"
+                    " * Transcodes BC2, BC3, RGBA8, XRGB8 to PVRTCv1 RGBA\n"
+                    "\n"
+                    " ES2:\n"
+                    " * Targets OpenGL ES 2.0 systems (non-PowerVR)\n"
+                    " * Keeps most formats that are compatible with baseline OpenGL ES 2.0\n"
+                    " * Transcodes BC1 to ETC1\n"
+                    " * Transcodes BC2, BC3 to RGB5A1\n"
+                    "\n"
+                    " ES3:\n"
+                    " * Targets OpenGL ES 3.0 systems\n"
+                    " * Keeps most formats that are compatible with baseline OpenGL ES 3.0\n"
+                    " * Transcodes BC1 to ETC2 RGB\n"
+                    " * Transcodes BC2, BC3 to ETC2 RGBA\n");
             }
             return 0;
         }
@@ -286,7 +298,10 @@ i32 coffee_main(i32, cstring_w*)
             auto foff_of = [&](void const* p) -> size_t {
                 return reinterpret_cast<u8 const*>(p) - base;
             };
-            patch_u16(out_map, foff_of(&img.format), result->format);
+            patch_u16(
+                out_map,
+                foff_of(&img.format),
+                static_cast<u16>(result->format));
             patch_u32(
                 out_map,
                 foff_of(&img.size),

@@ -7,10 +7,9 @@
  * These mirror the runtime re-tilers in examples/blam/gx-bsp/main.cpp
  * (tile_rgb565, dxt_to_cmpr) but run on the host so the console never decodes. */
 
-#include "peripherals/identify/compiler/unreachable.h"
-#include "peripherals/stl/range.h"
+#include <peripherals/identify/compiler/unreachable.h>
+#include <peripherals/stl/range.h>
 #include <blam/volta/blam_bitm.h>
-#include <coffee/graphics/apis/gexxo/native_format.h>
 
 #include <pvrtc/Common.h>
 #include <pvrtc/Encode.h>
@@ -165,9 +164,9 @@ inline u32 src_level_bytes(format_t src, u16 w, u16 h)
  * format-marker scheme; the caller just writes whatever value comes back. */
 struct transcode_result
 {
-    u16             format; // patched into image_t::format verbatim
-    u16             maxlod; // patched into image_t::mipmaps verbatim (0 if n/a)
-    std::vector<u8> data;
+    blam::bitm::format_t format; // patched into image_t::format verbatim
+    u16                  maxlod; // patched into image_t::mipmaps verbatim (0 if n/a)
+    std::vector<u8>      data;
 };
 
 using kernel_fn = std::function<std::optional<transcode_result>(
@@ -179,7 +178,6 @@ using kernel_fn = std::function<std::optional<transcode_result>(
     u16                  src_mip_count)>;
 
 namespace gekko {
-using gx_format = gexxo::native::format;
 
 /* --- GX tile geometry (block dimensions, bits/texel) ---------------------- */
 
@@ -189,40 +187,40 @@ inline u16 align_up(u16 v, u16 a)
 }
 
 /* Padded byte size of a GX-native image at w x h. */
-inline u32 tiled_size(gx_format t, u16 w, u16 h)
+inline u32 tiled_size(blam::bitm::format_t t, u16 w, u16 h)
 {
     switch(t)
     {
-    case gx_format::cmpr: // 8x8 tile of 4x4 blocks, 4bpp
+    case blam::bitm::format_t::BC1_GX_TILED: // 8x8 tile of 4x4 blocks, 4bpp
         return static_cast<u32>(align_up(w, 8)) * align_up(h, 8) / 2;
-    case gx_format::rgb565: // 4x4 tile, 16bpp
-    case gx_format::ia8:    // 4x4 tile, 16bpp
+    case blam::bitm::format_t::RGB565_GX_TILED: // 4x4 tile, 16bpp
+    case blam::bitm::format_t::IA8_GX_TILED:    // 4x4 tile, 16bpp
         return static_cast<u32>(align_up(w, 4)) * align_up(h, 4) * 2;
-    case gx_format::i8: // 8x4 tile, 8bpp
+    case blam::bitm::format_t::I8_GX_TILED: // 8x4 tile, 8bpp
         return static_cast<u32>(align_up(w, 8)) * align_up(h, 4);
     }
     return 0;
 }
 
 /* GX-native target for a Halo source format, or nullopt if unsupported. */
-inline std::optional<gx_format> target_for(format_t src)
+inline std::optional<blam::bitm::format_t> target_for(format_t src)
 {
     switch(src)
     {
     case format_t::BC1:
     case format_t::BC2:
     case format_t::BC3:
-        return gx_format::cmpr;
+        return blam::bitm::format_t::BC1_GX_TILED;
     case format_t::R5G6B5:
     case format_t::XRGB8:
-        return gx_format::rgb565;
+        return blam::bitm::format_t::RGB565_GX_TILED;
     case format_t::Y8:
     case format_t::A8:
     case format_t::AY8:
     case format_t::P8:
-        return gx_format::i8;
+        return blam::bitm::format_t::I8_GX_TILED;
     case format_t::A8Y8:
-        return gx_format::ia8;
+        return blam::bitm::format_t::IA8_GX_TILED;
     default:
         return std::nullopt;
     }
@@ -425,7 +423,7 @@ inline void rgba_to_cmpr(gsl::span<u8 const> rgba, gsl::span<u8>& dst, u16 w, u1
  * input or an unsupported (src, tgt) pair. */
 inline bool transcode_level(
     format_t src,
-    gx_format tgt,
+    blam::bitm::format_t tgt,
     gsl::span<u8 const> px,
     u32 px_size,
     u16 w,
@@ -435,7 +433,7 @@ inline bool transcode_level(
     if(px_size < src_level_bytes(src, w, h))
         return false;
 
-    if(tgt == gx_format::cmpr)
+    if(tgt == blam::bitm::format_t::BC1_GX_TILED)
     {
         switch(src)
         {
@@ -543,7 +541,7 @@ inline bool transcode_mipped(
     u16              src_mip_count,
     bool             rgb565_to_cmpr,
     std::vector<u8>& dst,
-    gx_format&       out,
+    blam::bitm::format_t&       out,
     u32&             out_levels)
 {
     auto target = target_for(src);
@@ -554,7 +552,7 @@ inline bool transcode_mipped(
     // vs 16bpp) instead of the native RGB565 path.
     if(rgb565_to_cmpr &&
        (src == format_t::R5G6B5 || src == format_t::XRGB8))
-        out = gx_format::cmpr;
+        out = blam::bitm::format_t::BC1_GX_TILED;
     out_levels = 0;
     dst.clear();
 
@@ -609,9 +607,9 @@ inline mtx::kernel_fn make_kernel(std::optional<std::string> const& lightmap_for
                u16                  h,
                u16                  src_mip_count)
                -> std::optional<mtx::transcode_result> {
-        std::vector<u8> tiled;
-        gx_format       out_fmt;
-        u32             levels = 0;
+        std::vector<u8>      tiled;
+        blam::bitm::format_t out_fmt;
+        u32                  levels = 0;
         if(!transcode_mipped(
                src_fmt,
                src_px,
@@ -625,7 +623,7 @@ inline mtx::kernel_fn make_kernel(std::optional<std::string> const& lightmap_for
                levels))
             return std::nullopt;
         return mtx::transcode_result{
-            static_cast<u16>(gexxo::native::to_blam(out_fmt)),
+            out_fmt,
             static_cast<u16>(levels > 0 ? levels - 1 : 0),
             std::move(tiled)};
     };
@@ -866,30 +864,24 @@ inline mtx::kernel_fn make_kernel()
                u16                  h,
                u16                  src_mip_count)
                -> std::optional<mtx::transcode_result> {
-        std::vector<u8> tiled;
-        u16       out_fmt = [&src_fmt] {
+        std::vector<u8>      tiled;
+        blam::bitm::format_t out_fmt = [&src_fmt] {
             switch(src_fmt)
             {
             case format_t::BC1:
             case format_t::R5G6B5:
-                return 0x1;
+                return blam::bitm::format_t::PVRTCV1_RGB;
             case format_t::ARGB8:
             case format_t::BC2:
             case format_t::BC3:
             case format_t::XRGB8:
-                return 0x2;
-            // These are widely supported on GL ES 2.0+
-            case format_t::A1RGB5:
-            case format_t::ARGB4:
-            case format_t::A8Y8:
-            case format_t::A8:
-            case format_t::AY8:
+                return blam::bitm::format_t::PVRTCV1_RGBA;
             default:
-                return 0x0;
+                return src_fmt;
             }
         }();
         u32             levels = 0;
-        if(out_fmt == 0x0)
+        if(out_fmt == src_fmt)
             return std::nullopt;
 
         levels            = src_mip_count < 1 ? 1 : src_mip_count;
@@ -911,15 +903,17 @@ inline mtx::kernel_fn make_kernel()
             // Decode just this level's slice (not the whole image -- every
             // level after the base one otherwise reads the wrong bytes at
             // the wrong length). decode_uncompressed_rgba already sizes its
-            // output correctly and is reused as-is (BC1/BC2/BC3 aren't
-            // decoded yet -- it returns empty for those; TODO wire a BCn
-            // decoder in here once one exists).
+            // output correctly and is reused as-is
             auto const rgba = decode_uncompressed_rgba(
                 src_fmt, src_px.subspan(src_off, ssz), wl, hl);
             if(rgba.empty())
                 break; // this source format isn't decodable yet
 
-            auto out_data = encode_pvrtc_rect(rgba, wl, hl, out_fmt == 0x2);
+            auto out_data = encode_pvrtc_rect(
+                rgba,
+                wl,
+                hl,
+                out_fmt == blam::bitm::format_t::PVRTCV1_RGBA);
             tiled.insert(tiled.end(), out_data.begin(), out_data.end());
 
             out_levels++;

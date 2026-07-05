@@ -100,7 +100,7 @@ struct alignas(4) tag_t
      *  internal, and this function simplifies that part.
      * The storage is indicated by the storage flag
      */
-    result<std::pair<bitm::header_t const*, map_ptr>, error_msg> image(
+    inline result<std::pair<bitm::header_t const*, map_ptr>, error_msg> image(
         map_ptr const& magic, atlas_view const& source) const;
 
     inline string_ref to_name() const

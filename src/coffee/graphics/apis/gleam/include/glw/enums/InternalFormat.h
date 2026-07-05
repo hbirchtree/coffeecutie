@@ -8,10 +8,10 @@ namespace gl::group {
 enum class internal_format : u32
 {
 #ifdef GL_3DC_XY_AMD
-    3dc_xy_amd = GL_3DC_XY_AMD,
+    _3dc_xy_amd = GL_3DC_XY_AMD,
 #endif
 #ifdef GL_3DC_X_AMD
-    3dc_x_amd = GL_3DC_X_AMD,
+    _3dc_x_amd = GL_3DC_X_AMD,
 #endif
 #ifdef GL_ALPHA12
     alpha12 = GL_ALPHA12,

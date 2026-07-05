@@ -9,6 +9,6 @@ target_include_directories(
          $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../../binding/include>
 )
 target_compile_definitions(
-  GraphicsDefines PUBLIC -DGLEAM_USE_CORE -DGLEAM_MAX_VERSION=0x460
-                         -DGLEAM_MAX_VERSION_ES=0
+    GraphicsDefines PUBLIC -DGLEAM_USE_ES -DGLEAM_MAX_VERSION=0x0
+                         -DGLEAM_MAX_VERSION_ES=0x320
 )

@@ -162,12 +162,14 @@ static std::vector<char> software_decode_pvrtc_etc1(
     semantic::Span<const char>&& data,
     size_3d<i32> const&          size)
 {
+    using typing::pixels::comp_flags;
+    using enum_helpers::feval;
     std::vector<char> out;
     out.resize(size.w * size.h * 4);
     if(fmt.pixfmt == pix_fmt::PVRTC)
         pvr::PVRTDecompressPVRTC(
             data.data(),
-            fmt.cmpflg == typing::pixels::comp_flags::bpp_2 ? 1 : 0,
+            feval(fmt.cmpflg, comp_flags::PVRTC_BPP2) ? 1 : 0,
             size.w,
             size.h,
             reinterpret_cast<uint8_t*>(out.data()));

@@ -179,6 +179,28 @@ std::array<compressed_format_t<T>, 27> compressed_formats(
         {P::RGBA8, {f::rgba8_oes, b::unsigned_byte, p::rgba}, features.tex.oes.rgba8},
         {P::RGB8,  {f::rgb8_oes,  b::unsigned_byte, p::rgb},  features.tex.oes.rgba8},
 #endif
+#if defined(GL_IMG_texture_compression_pvrtc)
+        {
+            CF(P::PVRTC, M::PVRTC_BPP2 | M::PVRTC_RGB),
+            {f::compressed_rgb_pvrtc_2bppv1_img, b::unsigned_byte, p::rgb},
+            features.tex.img.pvrtc,
+        },
+        {
+            CF(P::PVRTC, M::PVRTC_BPP2 | M::PVRTC_RGBA),
+            {f::compressed_rgba_pvrtc_2bppv1_img, b::unsigned_byte, p::rgba},
+            features.tex.img.pvrtc,
+        },
+        {
+            CF(P::PVRTC, M::PVRTC_BPP4 | M::PVRTC_RGB),
+            {f::compressed_rgb_pvrtc_4bppv1_img, b::unsigned_byte, p::rgb},
+            features.tex.img.pvrtc,
+        },
+        {
+            CF(P::PVRTC, M::PVRTC_BPP4 | M::PVRTC_RGBA),
+            {f::compressed_rgba_pvrtc_4bppv1_img, b::unsigned_byte, p::rgba},
+            features.tex.img.pvrtc,
+        },
+#endif
         // clang-format on
     }};
     return compressed_formats;

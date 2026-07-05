@@ -1554,18 +1554,7 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
         img.mip   = &image;
         img.layer = 0;
 
-        PixDesc fmt;
-        if(image.compressed())
-        {
-            std::tie(fmt.pixfmt, fmt.cmpflg) = image.to_compressed_fmt();
-
-            fmt.comp = convert::to<pix_components>(fmt.c);
-        } else
-        {
-            fmt.pixfmt                   = image.to_pixfmt();
-            std::tie(fmt.bfmt, fmt.comp) = image.to_fmt();
-        }
-
+        PixDesc fmt = image.to_fmt();
         img.bucket = create_hash(fmt, img.mip->type);
         img.fmt    = fmt;
 

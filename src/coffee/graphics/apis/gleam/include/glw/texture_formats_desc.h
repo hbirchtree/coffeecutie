@@ -1,5 +1,7 @@
 #pragma once
 
+#include <peripherals/enum/helpers.h>
+
 #include "texture_formats.h"
 
 // #define MAGIC_ENUM_RANGE_MIN 0x8000
@@ -12,6 +14,7 @@ using typing::pixels::PixDesc;
 
 inline texture_format_t const& format_of(PixDesc const& desc)
 {
+    using enum_helpers::feval;
     using C = typing::pixels::comp_flags;
     using P = typing::pixels::pix_fmt;
     using F = typing::pixels::pix_flags;
@@ -88,14 +91,13 @@ inline texture_format_t const& format_of(PixDesc const& desc)
 #if defined(GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG)
     case P::PVRTC:
         return format_of(
-            desc.cmpflg == C::bpp_2
-                ? desc.pixflg == F::RGB
+            feval(desc.cmpflg, C::PVRTC_BPP2)
+                ? feval(desc.cmpflg, C::PVRTC_RGB)
                       ? format_t::compressed_rgb_pvrtc_2bppv1_img
                       : format_t::compressed_rgba_pvrtc_2bppv1_img
-            : desc.pixflg == F::RGB
+            : feval(desc.cmpflg, C::PVRTC_RGB)
                 ? format_t::compressed_rgb_pvrtc_4bppv1_img
                 : format_t::compressed_rgba_pvrtc_4bppv1_img);
-        break;
 #endif
 #if defined(GL_R16)
     /* For some reason, ES does not have these 16-bit formats */
