@@ -126,7 +126,7 @@ inline void capture_gl_trace_data(
 #if C_HAS_INCLUDE(<GLES3/gl3ext.h>)
 #include <GLES3/gl3ext.h>
 #elif C_HAS_INCLUDE(<GLES2/gl2ext.h>)
-#include <GLES2/gl2ext.h>
+// #include <GLES2/gl2ext.h>
 #endif // C_HAS_INCLUDE(<GLES3/gl3ext.h>)
 
 #else // defined(GLEAM_USE_LINKED)
