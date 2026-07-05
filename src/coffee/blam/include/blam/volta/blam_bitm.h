@@ -307,6 +307,53 @@ struct image_t
                 .data(magic)
                 .value();
         }
+#elif defined(COFFEE_GEKKO)
+        auto bytes_per_mip = [this](u16 mip) -> u32 {
+            auto w = (u32)((isize.x >> mip) < 1 ? 1 : (isize.x >> mip));
+            auto h = (u32)((isize.y >> mip) < 1 ? 1 : (isize.y >> mip));
+            switch(format) {
+            case format_t::BC1:
+            case format_t::BC1_GX_TILED:
+                return ((w + 3u) / 4u) * ((h + 3u) / 4u) * 8u;
+            case format_t::BC2:
+            case format_t::BC3:
+                return ((w + 3u) / 4u) * ((h + 3u) / 4u) * 16u;
+            case format_t::A8:
+            case format_t::Y8:
+            case format_t::AY8:
+            case format_t::I8_GX_TILED:
+                return w * h;
+            case format_t::A8Y8:
+            case format_t::R5G6B5:
+            case format_t::A1RGB5:
+            case format_t::ARGB4:
+            case format_t::RGB565_GX_TILED:
+            case format_t::IA8_GX_TILED:
+                return w * h * 2u;
+            case format_t::ARGB8:
+            case format_t::XRGB8:
+                return w * h * 4u;
+            default:
+                return 0u;
+            }
+        };
+
+        if(mipmap != 0 && mipmap >= mipmaps)
+            Throw(undefined_behavior("mipmap out of range"));
+
+        u32 mip_offset = 0;
+        for(u16 i = 0; i < mipmap; i++)
+            mip_offset += bytes_per_mip(i);
+
+        u32 sz = bytes_per_mip(mipmap);
+        if(type == type_t::tex_cube)
+            sz *= 6;
+        else if(type == type_t::tex_3d)
+            sz *= (u32)(depth > 0 ? depth : 1);
+
+        return reference<u8>{.count = sz, .offset = offset + mip_offset}
+            .data(magic)
+            .value();
 #else
 #error No impl for blam::bitm::image_t::data
 #endif

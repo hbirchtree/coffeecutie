@@ -391,7 +391,7 @@ static_assert(offsetof(scnr_bsps_t, structure_bsps) == 528);
 
 /*! Draw range within a section, one per shader ("part" in the section
  * data); streamed as resource (0,72) */
-struct alignas(2) part_t
+struct alignas(4) part_t
 {
     i16 type_raw; /*!< 0 not drawn, 1 shadow only, 2 opaque shadow-casting,
                        3 opaque non-shadowing, 4 transparent, 5 lightmap */
