@@ -15,6 +15,8 @@
 #include <pvrtc/Encode.h>
 #include <pvrtc/Morton.h>
 
+#include <Etc/Etc.h>
+
 #include <algorithm>
 #include <cstring>
 #include <functional>
@@ -149,6 +151,56 @@ inline u32 src_level_bytes(format_t src, u16 w, u16 h)
     default:
         return 0;
     }
+}
+
+/* Shared per-mip-level walk: decode each of the source's own mip levels to
+ * RGBA8 (decode_uncompressed_rgba handles both the raw-unpack and BC1/2/3-via-
+ * bcdec cases; returns empty for anything else) and hand each one to
+ * `encode_level(rgba, wl, hl) -> vector<u8>`, appending its bytes to `tiled`
+ * in order. Mirrors how the Gekko/PowerVR kernels walk mips; factored out
+ * here since the ES2/ES3 targets both need exactly this shape and only the
+ * per-level encode step differs between them. */
+template<typename EncodeLevel>
+inline bool walk_mips(
+    format_t         src_fmt,
+    gsl::span<u8 const> src_px,
+    u32              src_size,
+    u16              w,
+    u16              h,
+    u16              src_mip_count,
+    EncodeLevel&&    encode_level,
+    std::vector<u8>& tiled,
+    u32&             out_levels)
+{
+    u16 const levels = src_mip_count < 1 ? 1 : src_mip_count;
+    u32       src_off = 0;
+    out_levels = 0;
+    for(u16 k = 0; k < levels; k++)
+    {
+        u16 const wl  = static_cast<u16>(w >> k ? w >> k : 1);
+        u16 const hl  = static_cast<u16>(h >> k ? h >> k : 1);
+        u32 const ssz = src_level_bytes(src_fmt, wl, hl);
+        if(ssz == 0 || src_off + ssz > src_size)
+            break; // ran out of source data
+        auto const rgba = decode_uncompressed_rgba(
+            src_fmt, src_px.subspan(src_off, ssz), wl, hl);
+        if(rgba.empty())
+            break; // this source format isn't decodable
+
+        auto const out_data = encode_level(rgba, wl, hl);
+        // Same in-place invariant every other kernel relies on: the whole
+        // encoded chain must fit in the source image's original byte slot.
+        // Necessary here specifically because RGB5A1 (16bpp raw) is larger
+        // than its BC2/BC3 (8bpp compressed) source -- without this check
+        // that case writes past the slot into whatever data follows it.
+        if(tiled.size() + out_data.size() > src_size)
+            break;
+        tiled.insert(tiled.end(), out_data.begin(), out_data.end());
+
+        out_levels++;
+        src_off += ssz;
+    }
+    return out_levels > 0;
 }
 
 /* --- transcode kernel interface --------------------------------------------
@@ -805,49 +857,6 @@ inline std::vector<u8> encode_pvrtc(gsl::span<u8 const> rgba, u16 size, bool has
     return encode_pvrtc_rect(rgba, size, size, has_alpha);
 }
 
-/* No PowerVR-consuming runtime exists yet (unlike Gekko, nothing reads a
- * "this bitmap is already PVRTC" marker back out of a patched map), so this
- * target is diagnostic-only: real-encode eligible images via the port and
- * report what the size would be, without producing patchable output. Doesn't
- * fit `kernel_fn` (there's no format code / bytes to write back) -- kept as
- * its own small interface instead of forcing a shape that doesn't apply. */
-struct probe_stats
-{
-    u32 encoded{0}, skipped_shape{0}, skipped_fmt{0};
-    u32 src_bytes{0}, pvrtc_bytes{0};
-};
-
-inline void probe(
-    format_t             src_fmt,
-    gsl::span<u8 const>  src_px,
-    u32                  src_size,
-    u16                  w,
-    u16                  h,
-    probe_stats&         pv)
-{
-    // Each dimension must independently be power-of-two, >= 4px (one block).
-    // Real PVRTC handles rectangular POT via twiddle_uv's tiled addressing;
-    // width == height is not required.
-    if(w < 4 || h < 4 || !mtx::is_pow2(w) || !mtx::is_pow2(h))
-    {
-        pv.skipped_shape++;
-        return;
-    }
-    auto const rgba = mtx::decode_uncompressed_rgba(src_fmt, src_px, w, h);
-    if(rgba.empty())
-    {
-        pv.skipped_fmt++;
-        return;
-    }
-    // decode_uncompressed_rgba only unpacks R5G6B5/XRGB8/ARGB8 -- ARGB8 is the
-    // only one of those with real alpha.
-    bool const has_alpha = src_fmt == format_t::ARGB8;
-    auto const enc       = encode_pvrtc_rect(rgba, w, h, has_alpha);
-    pv.encoded++;
-    pv.src_bytes += src_size;
-    pv.pvrtc_bytes += static_cast<u32>(enc.size());
-}
-
 /*!
  * PVRTC supports RGB + RGBA (punchthrough alpha)
  * This covers most use-cases except the R/RG formats.
@@ -929,5 +938,193 @@ inline mtx::kernel_fn make_kernel()
 }
 
 } // namespace powervr
+
+/* Shared ETC1/ETC2 + RGB5A1 encoding for the ES2/ES3 targets. */
+namespace etc {
+
+/* Encode via etc2comp. etc2comp wants float RGBA (0..1 per channel); output
+ * is `new[]`-allocated and NOT freed by etc2comp itself -- Image::~Image has
+ * its `delete[] m_paucEncodingBits` commented out in EtcImage.cpp, i.e.
+ * ownership deliberately transfers to the caller, so we copy out and
+ * delete[] it here. Output is already block-padded (etc2comp pads internally
+ * to 4x4 blocks), so its reported byte count is used as-is. */
+inline std::vector<u8> encode(
+    gsl::span<u8 const> rgba, u16 w, u16 h, Etc::Image::Format fmt)
+{
+    std::vector<float> src(static_cast<size_t>(w) * h * 4);
+    for(size_t i = 0; i < src.size(); i++)
+        src[i] = rgba[i] / 255.0f;
+
+    unsigned char* bits    = nullptr;
+    unsigned int   bytes   = 0, ext_w = 0, ext_h = 0;
+    int            time_ms = 0;
+    Etc::Encode(
+        src.data(),
+        w,
+        h,
+        fmt,
+        Etc::ErrorMetric::RGBA,
+        ETCCOMP_DEFAULT_EFFORT_LEVEL,
+        1,
+        1,
+        &bits,
+        &bytes,
+        &ext_w,
+        &ext_h,
+        &time_ms);
+    std::vector<u8> out(bits, bits + bytes);
+    delete[] bits;
+    return out;
+}
+
+/* Split-alpha ETC1 (blam_bitm.h format_t::ETC1_RGBA): for RGBA content on
+ * ETC1-only hardware (e.g. Mali-400MP/ARM Utgard -- ES2.0-only, no ETC2,
+ * PVRTC, or S3TC). RGB channels go into one ETC1 block stream; alpha is
+ * replicated across R/G/B into a second image and ALSO encoded as ETC1
+ * (sampled as luminance and combined with the first texture in the shader).
+ * Two 4bpp streams back-to-back = 8bpp total, matching BC2/BC3's own
+ * footprint exactly, so -- unlike raw RGB5A1 (16bpp, 2x too big) -- this
+ * fits the in-place byte slot. No consuming runtime for this yet: it needs
+ * two texture units per material and shader-side combining, same situation
+ * PVRTC was in before its runtime existed. */
+inline std::vector<u8> encode_split_alpha(gsl::span<u8 const> rgba, u16 w, u16 h)
+{
+    std::vector<u8> alpha_rgba(rgba.size());
+    for(size_t i = 0; i < static_cast<size_t>(w) * h; i++)
+    {
+        u8 const a            = rgba[i * 4 + 3];
+        alpha_rgba[i * 4 + 0] = a;
+        alpha_rgba[i * 4 + 1] = a;
+        alpha_rgba[i * 4 + 2] = a;
+        alpha_rgba[i * 4 + 3] = 255;
+    }
+    auto rgb_bits   = encode(rgba, w, h, Etc::Image::Format::ETC1);
+    auto alpha_bits = encode(alpha_rgba, w, h, Etc::Image::Format::ETC1);
+
+    std::vector<u8> out;
+    out.reserve(rgb_bits.size() + alpha_bits.size());
+    out.insert(out.end(), rgb_bits.begin(), rgb_bits.end());
+    out.insert(out.end(), alpha_bits.begin(), alpha_bits.end());
+    return out;
+}
+
+} // namespace etc
+
+/* Targets OpenGL ES 2.0 (non-PowerVR, e.g. Mali-400MP): BC1 -> ETC1,
+ * BC2/BC3 -> split-alpha ETC1 (see etc::encode_split_alpha -- baseline ES2
+ * core has no mandatory single-texture compressed-with-alpha format, and
+ * raw RGB5A1 is 2x too big to fit in place). Every other source format is
+ * already ES2-baseline-compatible and is left untouched (nullopt). */
+namespace es2 {
+
+inline mtx::kernel_fn make_kernel()
+{
+    return [](
+               format_t             src_fmt,
+               gsl::span<u8 const>  src_px,
+               u32                  src_size,
+               u16                  w,
+               u16                  h,
+               u16                  src_mip_count)
+               -> std::optional<mtx::transcode_result> {
+        blam::bitm::format_t out_fmt;
+        switch(src_fmt)
+        {
+        case format_t::BC1:
+            out_fmt = blam::bitm::format_t::ETC1_RGB;
+            break;
+        case format_t::BC2:
+        case format_t::BC3:
+            out_fmt = blam::bitm::format_t::ETC1_RGBA;
+            break;
+        default:
+            return std::nullopt; // already ES2-compatible, leave as-is
+        }
+        bool const split_alpha = out_fmt == blam::bitm::format_t::ETC1_RGBA;
+
+        std::vector<u8> tiled;
+        u32             out_levels = 0;
+        if(!walk_mips(
+               src_fmt,
+               src_px,
+               src_size,
+               w,
+               h,
+               src_mip_count,
+               [&](gsl::span<u8 const> rgba, u16 wl, u16 hl) {
+                   return split_alpha
+                              ? etc::encode_split_alpha(rgba, wl, hl)
+                              : etc::encode(
+                                    rgba, wl, hl, Etc::Image::Format::ETC1);
+               },
+               tiled,
+               out_levels))
+            return std::nullopt;
+
+        return mtx::transcode_result{
+            out_fmt,
+            static_cast<u16>(out_levels > 0 ? out_levels - 1 : 0),
+            std::move(tiled)};
+    };
+}
+
+} // namespace es2
+
+/* Targets OpenGL ES 3.0: BC1 -> ETC2 RGB, BC2/BC3 -> ETC2 RGBA (both core in
+ * ES3.0). Every other source format is already ES3-baseline-compatible and
+ * is left untouched (nullopt). */
+namespace es3 {
+
+inline mtx::kernel_fn make_kernel()
+{
+    return [](
+               format_t             src_fmt,
+               gsl::span<u8 const>  src_px,
+               u32                  src_size,
+               u16                  w,
+               u16                  h,
+               u16                  src_mip_count)
+               -> std::optional<mtx::transcode_result> {
+        blam::bitm::format_t out_fmt;
+        Etc::Image::Format   etc_fmt;
+        switch(src_fmt)
+        {
+        case format_t::BC1:
+            out_fmt = blam::bitm::format_t::ETC2_RGB;
+            etc_fmt = Etc::Image::Format::RGB8;
+            break;
+        case format_t::BC2:
+        case format_t::BC3:
+            out_fmt = blam::bitm::format_t::ETC2_RGBA;
+            etc_fmt = Etc::Image::Format::RGBA8;
+            break;
+        default:
+            return std::nullopt; // already ES3-compatible, leave as-is
+        }
+
+        std::vector<u8> tiled;
+        u32             out_levels = 0;
+        if(!walk_mips(
+               src_fmt,
+               src_px,
+               src_size,
+               w,
+               h,
+               src_mip_count,
+               [&](gsl::span<u8 const> rgba, u16 wl, u16 hl) {
+                   return etc::encode(rgba, wl, hl, etc_fmt);
+               },
+               tiled,
+               out_levels))
+            return std::nullopt;
+
+        return mtx::transcode_result{
+            out_fmt,
+            static_cast<u16>(out_levels > 0 ? out_levels - 1 : 0),
+            std::move(tiled)};
+    };
+}
+
+} // namespace es3
 
 } // namespace mtx

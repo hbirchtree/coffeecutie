@@ -106,7 +106,7 @@ std::optional<ktxTexture1*> encode(
         {
             auto error_msg = magic_enum::enum_name(error);
             printf(
-                "Failed setting mipmap image %u: %.*s\n",
+                "ETC2: Failed setting mipmap image %u: %.*s\n",
                 i - 1,
                 static_cast<int>(error_msg.size()),
                 error_msg.data());
@@ -181,7 +181,7 @@ std::optional<ktxTexture1*> encode(
     {
         auto error_msg = magic_enum::enum_name(error);
         printf(
-            "Failed to create KTX: %.*s\n",
+            "BCn: Failed to create KTX: %.*s\n",
             static_cast<int>(error_msg.size()),
             error_msg.data());
         return std::nullopt;
@@ -228,7 +228,7 @@ std::optional<ktxTexture1*> encode(
             printf(
                 "%s\n",
                 fmt::format(
-                    "cannot map {} to {} for BC4",
+                    "BC4: cannot map {} to {}",
                     magic_enum::enum_name(channels),
                     magic_enum::enum_name(typing::pix_components::R))
                     .c_str());
@@ -245,7 +245,7 @@ std::optional<ktxTexture1*> encode(
             printf(
                 "%s\n",
                 fmt::format(
-                    "cannot map {} to {} for BC5",
+                    "BC5: cannot map {} to {}",
                     magic_enum::enum_name(channels),
                     magic_enum::enum_name(typing::pix_components::RG))
                     .c_str());
@@ -260,12 +260,11 @@ std::optional<ktxTexture1*> encode(
     case comp_flags::BC7: {
         bc7enc_compress_block_init();
 
-        block_size    = 16;
         block_storage = 16;
-        scratch.resize(16 * 16 * 4); // 8-bit RGBA 16x16 blocks
+        scratch.resize(4 * 4 * 4); // 8-bit RGBA 4x4 blocks
         encoder = [&scratch, &block_params, stride](void* dest, const u8* src) {
-            for(u32 i = 0; i < 16; ++i)
-                memcpy(&scratch[16 * 4 * i], &src[stride * i], 16 * 4);
+            for(u32 i = 0; i < 4; ++i)
+                memcpy(&scratch[4 * 4 * i], &src[stride * i], 4 * 4);
             bc7enc_compress_block(dest, scratch.data(), &block_params);
         };
         break;
@@ -296,7 +295,7 @@ std::optional<ktxTexture1*> encode(
         ktxTexture(texture), 0, 0, 0, output.data(), output.size());
     if(error != ktx_error_code_e::KTX_SUCCESS)
     {
-        printf("Failed setting mipmap image %u\n", 0);
+        printf("BCn: Failed setting mipmap image %u\n", 0);
         return std::nullopt;
     }
 

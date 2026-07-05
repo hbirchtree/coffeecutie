@@ -8,7 +8,7 @@
 namespace compressor::etc1 {
 
 std::optional<ktxTexture1*> encode(
-    const rgbaf_image_t& img, format_t format, settings_t&& settings)
+    const rgbaf_image_t& img, settings_t&& settings)
 {
     std::vector<Etc::RawImage> images;
     images.resize(settings.mipmaps);
@@ -19,7 +19,7 @@ std::optional<ktxTexture1*> encode(
         img.data,
         img.size.w,
         img.size.h,
-        format,
+        format_t::ETC1,
         Etc::ErrorMetric::RGBA,
         settings.quality,
         1,
@@ -29,7 +29,7 @@ std::optional<ktxTexture1*> encode(
         images.data(),
         &encoding_time);
 
-    printf("Encoded image to ETC2 in %i ms\n", encoding_time);
+    printf("Encoded image to ETC1 in %i ms\n", encoding_time);
 
     ktxTextureCreateInfo info = {
         .glInternalformat = GL_ETC1_RGB8_OES,
@@ -55,7 +55,7 @@ std::optional<ktxTexture1*> encode(
     {
         auto error_msg = magic_enum::enum_name(error);
         printf(
-            "Failed to create KTX: %.*s\n",
+            "ETC1: Failed to create KTX: %.*s\n",
             static_cast<int>(error_msg.size()),
             error_msg.data());
         return std::nullopt;
@@ -69,7 +69,7 @@ std::optional<ktxTexture1*> encode(
         if(expected_size != given_size)
         {
             printf(
-                "Mismatched ETC2 encoding size: needed %i, got %i\n",
+                "Mismatched ETC1 encoding size: needed %i, got %i\n",
                 static_cast<int>(expected_size),
                 static_cast<int>(given_size));
             return std::nullopt;
@@ -85,7 +85,7 @@ std::optional<ktxTexture1*> encode(
         {
             auto error_msg = magic_enum::enum_name(error);
             printf(
-                "Failed setting mipmap image %u: %.*s\n",
+                "ETC1: Failed setting mipmap image %u: %.*s\n",
                 i - 1,
                 static_cast<int>(error_msg.size()),
                 error_msg.data());

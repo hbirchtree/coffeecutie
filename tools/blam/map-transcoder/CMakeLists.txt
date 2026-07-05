@@ -17,3 +17,6 @@ target_include_directories(MapTranscode PRIVATE
 )
 find_package(unofficial-pvrtc CONFIG REQUIRED)
 target_link_libraries(MapTranscode PRIVATE unofficial::pvrtc::pvrtc)
+
+find_package(Etc2Comp CONFIG REQUIRED)
+target_link_libraries(MapTranscode PRIVATE Etc2Comp::EtcLib)

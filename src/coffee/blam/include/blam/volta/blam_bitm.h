@@ -61,8 +61,9 @@ enum class format_t : u16
     PVRTCV1_RGBA = 0x100, /*!< PVRTCv1 RGBA format */
     PVRTCV1_RGB  = 0x200, /*!< PVRTCv1 RGBA format */
     ETC1_RGB     = 0x300, /*!< ETC1 RGB format */
-    ETC2_RGB     = 0x400, /*!< ETC2 RGB8 format */
-    ETC2_RGBA    = 0x500, /*!< ETC2 RGBA8 format */
+    ETC1_RGBA    = 0x400, /*!< ETC1 RGB + ETC1 RGB to produce RGBA */
+    ETC2_RGB     = 0x500, /*!< ETC2 RGB8 format */
+    ETC2_RGBA    = 0x600, /*!< ETC2 RGBA8 format */
 
     /* Desktop GL usually fulfills all the formats, so no need */
 };

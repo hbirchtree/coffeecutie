@@ -146,10 +146,11 @@ i32 coffee_main(i32, cstring_w*)
                     " * Transcodes BC2, BC3, RGBA8, XRGB8 to ATC RGBA\n"
                     "\n"
                     " ES2:\n"
-                    " * Targets OpenGL ES 2.0 systems (non-PowerVR)\n"
+                    " * Targets OpenGL ES 2.0 systems (non-PowerVR, e.g. Mali-400MP)\n"
                     " * Keeps most formats that are compatible with baseline OpenGL ES 2.0\n"
                     " * Transcodes BC1 to ETC1\n"
-                    " * Transcodes BC2, BC3 to RGB5A1\n"
+                    " * Transcodes BC2, BC3 to split-alpha ETC1 (RGB ETC1 + alpha-as-luminance ETC1,\n"
+                    "   combined in shader; needs special handling, matches BC2/BC3 footprint)\n"
                     "\n"
                     " ES3:\n"
                     " * Targets OpenGL ES 3.0 systems\n"
@@ -219,6 +220,10 @@ i32 coffee_main(i32, cstring_w*)
         kernel = mtx::gekko::make_kernel(lightmap_format);
     else if(target == "PowerVR")
         kernel = mtx::powervr::make_kernel();
+    else if(target == "ES2")
+        kernel = mtx::es2::make_kernel();
+    else if(target == "ES3")
+        kernel = mtx::es3::make_kernel();
     else
     {
         cWarning("No target defined, no transcode kernel");
