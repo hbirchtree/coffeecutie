@@ -27,8 +27,12 @@ inline texture_format_t const& format_of(PixDesc const& desc)
 #if defined(GL_COMPRESSED_RGB_S3TC_DXT1_EXT)
         case C::BC1:
             return format_of(format_t::compressed_rgb_s3tc_dxt1_ext);
+#endif
+#if defined(GL_COMPRESSED_RGBA_S3TC_DXT3_EXT)
         case C::BC2:
             return format_of(format_t::compressed_rgba_s3tc_dxt3_ext);
+#endif
+#if defined(GL_COMPRESSED_RGBA_S3TC_DXT5_EXT)
         case C::BC3:
             return format_of(format_t::compressed_rgba_s3tc_dxt5_ext);
 #endif

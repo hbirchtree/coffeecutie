@@ -8,13 +8,13 @@ namespace gl::group {
 enum class list_name_type : u32
 {
 #ifdef GL_2_BYTES
-    2_bytes = GL_2_BYTES,
+    n2_bytes = GL_2_BYTES,
 #endif
 #ifdef GL_3_BYTES
-    3_bytes = GL_3_BYTES,
+    n3_bytes = GL_3_BYTES,
 #endif
 #ifdef GL_4_BYTES
-    4_bytes = GL_4_BYTES,
+    n4_bytes = GL_4_BYTES,
 #endif
 #ifdef GL_BYTE
     byte_ = GL_BYTE,

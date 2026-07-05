@@ -754,12 +754,6 @@ enum class {snake_name} : u32 {{'''
             overflow_values.append(e)
     [ unique_values.remove(x) for x in overflow_values ]
 
-    for i, x in enumerate(unique_values):
-        if not re.match(ILLEGAL_START, x):
-            continue
-        x = f'n{x}'
-        unique_values[i] = x
-
     if len(unique_values) == 0:
         return
 
@@ -767,6 +761,8 @@ enum class {snake_name} : u32 {{'''
         snake_value = snakeify_underscores(value)
         if snake_value.startswith(snake_name):
             snake_value = snake_value[len(snake_name)+1:]
+        if re.match(ILLEGAL_START, snake_value):
+            snake_value = f'n{snake_value}'
         if snake_value in DENIED_NAMES:
             snake_value = f'{snake_value}_'
         yield f'''#ifdef {value}

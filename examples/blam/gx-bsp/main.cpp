@@ -35,7 +35,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #if defined(FEATURE_ENABLE_Gexxo)
-#include <coffee/graphics/apis/gexxo/native_format.h>
 #include <coffee/graphics/apis/gexxo/rhi_resources.h>
 #include <coffee/gexxo/gexxo_api.h>
 #include <coffee/graphics/apis/CGexxo>
