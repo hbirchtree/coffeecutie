@@ -745,6 +745,13 @@ static bool read_bitmap_pixels(
     return true;
 }
 
+static bool is_gx_native(blam::bitm::format_t fmt)
+{
+    return (static_cast<u16>(fmt)
+            & static_cast<u16>(blam::bitm::format_t::PLATFORM_SPECIFIC_MASK))
+           != 0;
+}
+
 /* Decode a bitmap image (RGB565 or DXT1) into a GX texture. wrap = GX_CLAMP for
  * [0,1] lightmaps, GX_REPEAT for tiling diffuse maps. */
 static std::shared_ptr<gexxo::texture_t> load_texture(
@@ -758,15 +765,15 @@ static std::shared_ptr<gexxo::texture_t> load_texture(
 
     // Offline-transcoded (map-transcode tool): pixel data is already in a GX
     // tiled layout -> upload directly, no decode/re-tile.
-    if(gexxo::native::is_native(fmt))
+    if(is_gx_native(fmt))
     {
         u8 gxfmt;
-        switch(gexxo::native::code_of(fmt))
+        switch(fmt)
         {
-        case gexxo::native::format::cmpr:   gxfmt = GX_TF_CMPR;   break;
-        case gexxo::native::format::rgb565: gxfmt = GX_TF_RGB565; break;
-        case gexxo::native::format::i8:     gxfmt = GX_TF_I8;     break;
-        case gexxo::native::format::ia8:    gxfmt = GX_TF_IA8;    break;
+        case blam::bitm::format_t::BC1_GX_TILED:    gxfmt = GX_TF_CMPR;   break;
+        case blam::bitm::format_t::RGB565_GX_TILED:  gxfmt = GX_TF_RGB565; break;
+        case blam::bitm::format_t::I8_GX_TILED:      gxfmt = GX_TF_I8;     break;
+        case blam::bitm::format_t::IA8_GX_TILED:     gxfmt = GX_TF_IA8;    break;
         default: return nullptr;
         }
         u32 const total = from_le(img.size);
