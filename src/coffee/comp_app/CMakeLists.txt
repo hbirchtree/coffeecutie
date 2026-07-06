@@ -11,7 +11,7 @@ coffee_library(
               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bundle_include>
 )
 
-if(NOT GAMECUBE)
+if(NOT GAMECUBE AND NOT WII)
   target_sources(ComponentApp PRIVATE
     private/file_mapper.cpp
     private/file_watcher.cpp

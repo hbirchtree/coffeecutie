@@ -5,7 +5,7 @@
     ],
     "configurePresets": [
         {
-            "name": "vcpkg-base-wiicube",
+            "name": "vcpkg-base-rvlcube",
             "inherits": ["vcpkg-base"],
             "hidden": true,
             "generator": "Ninja",
@@ -53,7 +53,7 @@
         {
             "name": "console-powerpc-eabi-cube",
             "displayName": "Gamecube",
-            "inherits": ["vcpkg-base-wiicube"],
+            "inherits": ["vcpkg-base-rvlcube"],
             "cacheVariables": {
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "bare;powerpc;gamecube;cube"
             },
@@ -62,15 +62,14 @@
             }
         },
         {
-            "name": "console-powerpc-eabi-wii",
-
+            "name": "console-powerpc-eabi-rvl",
             "displayName": "Wii",
-            "inherits": ["vcpkg-base-wiicube"],
+            "inherits": ["vcpkg-base-rvlcube"],
             "cacheVariables": {
-                "VCPKG_DEP_INFO_OVERRIDE_VARS": "bare;powerpc;wii"
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "bare;powerpc;wii;rvl"
             },
             "environment": {
-                "VARIANT": "wii"
+                "VARIANT": "rvl"
             }
         }
     ],
@@ -85,6 +84,18 @@
             "name": "console-powerpc-eabi-cube-rel",
             "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "console-powerpc-eabi-cube",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "console-powerpc-eabi-rvl-dbg",
+            "environment": {"BUILD_TYPE":"Debug"},
+            "configurePreset": "console-powerpc-eabi-rvl",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "console-powerpc-eabi-rvl-rel",
+            "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "console-powerpc-eabi-rvl",
             "inherits": "base-linux"
         }
     ]

@@ -4,8 +4,8 @@ set(VCPKG_LIBRARY_LINKAGE static)
 
 set(VCPKG_CMAKE_SYSTEM_NAME Baremetal)
 
-set(VCPKG_DEP_INFO_OVERRIDE_VARS bare;gamecube)
+set(VCPKG_DEP_INFO_OVERRIDE_VARS bare;wii)
 set(TOOLCHAIN_PREFIX powerpc-eabi)
 set(VCPKG_OVERLAY_PORTS ${CMAKE_CURRENT_LIST_DIR}/../ports)
-set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/../../cmake/Toolchains/powerpc-eabi-cube.toolchain.cmake)
+set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/../../cmake/Toolchains/powerpc-eabi-rvl.toolchain.cmake)
 

@@ -113,6 +113,12 @@
 #endif
 
 #if defined(GEKKO) || defined(__GEKKO__)
+#if defined(HW_RVL)
+#define C_SYSTEM_STRING "Nintendo Wii"
+#define COFFEE_GEKKO
+#define COFFEE_REVOLUTION
+#else
 #define C_SYSTEM_STRING "Nintendo Gamecube"
 #define COFFEE_GEKKO
+#endif
 #endif

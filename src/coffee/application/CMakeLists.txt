@@ -59,12 +59,15 @@ elseif(APPLE AND IOS)
   endif()
 endif()
 
-if(GAMECUBE AND BUILD_GX)
-  target_link_libraries(CoreApplication PUBLIC Gexxo # For initializing video
-  )
+if((GAMECUBE OR WII) AND BUILD_GX)
 endif()
 
 if(GAMECUBE OR WII)
+  if(BUILD_GX)
+    target_link_libraries(CoreApplication PUBLIC 
+      Gexxo # For initializing video
+    )
+  endif()
   find_package(libfat CONFIG REQUIRED)
   target_link_libraries(CoreApplication PUBLIC libfat::libfat)
 endif()
