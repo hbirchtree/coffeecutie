@@ -6,6 +6,7 @@
         { "name": "boost-outcome", "platform": "(android & arm64) | (arm & linux) | (x64 & linux) | osx | windows" },
         { "name": "boost-stacktrace", "platform": "!bare & !emscripten & !android & !windows" },
         { "name": "boost-stacktrace", "platform": "android", "default-features": false },
+        { "name": "bzip2", "platform": "!bare" },
         { "name": "cppcodec", "platform": "!bare" },
         "cxxopts",
         "fmt",

@@ -21,3 +21,8 @@ if(BUILD_BLAM AND BUILD_GX)
   add_subdirectory(blam/gx-bsp)
 endif()
 
+# RS2 cache terrain parser (Linux only — uses fork/exec bzip2)
+if(UNIX AND NOT APPLE AND NOT ANDROID AND NOT EMSCRIPTEN)
+  add_subdirectory(rs/terrain)
+endif()
+
