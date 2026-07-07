@@ -119,6 +119,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
             debug().message(error, group::debug_severity::high);
             usage().draw.failed_draws++;
             usage().draw.failed_async_compiles++;
+            Coffee::cWarning("Program link error:\n{}", std::get<0>(res.error()));
             return std::make_tuple(
                 error::async_shader_compile_failed, "program linking failed");
         } else if(!res.value())

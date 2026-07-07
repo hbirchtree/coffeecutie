@@ -35,26 +35,34 @@ using rs2::i32;
 using rs2::Mesh;
 using rs2::u32;
 
-// Append src into dst, offsetting indices.
-static void append_mesh(Mesh& dst, const Mesh& src)
+// rs2::Mesh indices are u16 (each mesh ≤ 65536 vertices); exports merge
+// many meshes, so they flatten into u32 triangles first.
+struct FlatGeometry
+{
+    std::vector<rs2::Vertex>        vertices;
+    std::vector<std::array<u32, 3>> tris;
+    std::vector<i32>                tri_texture; // -1 = flat colour
+};
+
+static void append_mesh(FlatGeometry& dst, const Mesh& src)
 {
     u32 base = u32(dst.vertices.size());
     dst.vertices.insert(
         dst.vertices.end(), src.vertices.begin(), src.vertices.end());
-    dst.indices.reserve(dst.indices.size() + src.indices.size());
-    for(u32 i : src.indices)
-        dst.indices.push_back(base + i);
+    dst.tris.reserve(dst.tris.size() + src.indices.size() / 3);
+    for(size_t i = 0; i + 2 < src.indices.size(); i += 3)
+        dst.tris.push_back(
+            {base + src.indices[i], base + src.indices[i + 1],
+             base + src.indices[i + 2]});
     dst.tri_texture.insert(
         dst.tri_texture.end(), src.tri_texture.begin(),
         src.tri_texture.end());
-    dst.tri_overlay.insert(
-        dst.tri_overlay.end(), src.tri_overlay.begin(),
-        src.tri_overlay.end());
 }
 
 // ─────────────────────────────────────────────────────────── PLY output ──
 
-static void write_ply(const std::string& path, const Mesh& mesh, int plane_idx)
+static void write_ply(
+    const std::string& path, const FlatGeometry& mesh, int plane_idx)
 {
     std::ofstream f(path);
     if(!f) throw std::runtime_error("cannot write: " + path);
@@ -69,7 +77,7 @@ static void write_ply(const std::string& path, const Mesh& mesh, int plane_idx)
          "property uchar red\n"
          "property uchar green\n"
          "property uchar blue\n"
-         "element face " << mesh.indices.size() / 3 << "\n"
+         "element face " << mesh.tris.size() << "\n"
          "property list uchar int vertex_indices\n"
          "end_header\n";
 
@@ -77,9 +85,8 @@ static void write_ply(const std::string& path, const Mesh& mesh, int plane_idx)
         f << v.x << ' ' << v.y << ' ' << v.z << ' '
           << int(v.r) << ' ' << int(v.g) << ' ' << int(v.b) << '\n';
 
-    for(size_t i = 0; i + 2 < mesh.indices.size(); i += 3)
-        f << "3 " << mesh.indices[i] << ' ' << mesh.indices[i + 1] << ' '
-          << mesh.indices[i + 2] << '\n';
+    for(const auto& t : mesh.tris)
+        f << "3 " << t[0] << ' ' << t[1] << ' ' << t[2] << '\n';
 }
 
 // ──────────────────────────────────────────────────── OBJ + MTL output ──
@@ -88,7 +95,9 @@ static void write_ply(const std::string& path, const Mesh& mesh, int plane_idx)
 // become one material per texture id, with the texture exported as a PNG
 // next to the OBJ (textures/<id>.png) and real per-corner UVs.
 static void write_obj(
-    const std::string& obj_path, const Mesh& mesh, rs2::RegionLoader& loader)
+    const std::string&  obj_path,
+    const FlatGeometry& mesh,
+    rs2::RegionLoader&  loader)
 {
     std::string mtl_path = obj_path.substr(0, obj_path.rfind('.')) + ".mtl";
     std::string dir      = obj_path.rfind('/') == std::string::npos
@@ -102,11 +111,11 @@ static void write_obj(
     constexpr u32 tex_key = 0x1000000;
 
     std::map<u32, std::vector<size_t>> by_material; // key → triangle index
-    for(size_t t = 0; t * 3 + 2 < mesh.indices.size(); ++t)
+    for(size_t t = 0; t < mesh.tris.size(); ++t)
     {
         i32 tex = t < mesh.tri_texture.size() ? mesh.tri_texture[t] : -1;
         u32 key = tex >= 0 ? tex_key + u32(tex)
-                           : pack(mesh.vertices[mesh.indices[t * 3]]);
+                           : pack(mesh.vertices[mesh.tris[t][0]]);
         by_material[key].push_back(t);
     }
 
@@ -182,9 +191,9 @@ static void write_obj(
             of << "usemtl " << name << "\n";
             for(size_t t : tris) // OBJ is 1-indexed
             {
-                u32 a = mesh.indices[t * 3] + 1;
-                u32 b = mesh.indices[t * 3 + 1] + 1;
-                u32 c = mesh.indices[t * 3 + 2] + 1;
+                u32 a = mesh.tris[t][0] + 1;
+                u32 b = mesh.tris[t][1] + 1;
+                u32 c = mesh.tris[t][2] + 1;
                 of << "f " << a << '/' << a << ' ' << b << '/' << b << ' '
                    << c << '/' << c << "\n";
             }
@@ -193,7 +202,7 @@ static void write_obj(
 
     fprintf(stderr, "Wrote %s + %s (%zu verts, %zu faces, %zu materials)\n",
         obj_path.c_str(), mtl_path.c_str(), mesh.vertices.size(),
-        mesh.indices.size() / 3, by_material.size());
+        mesh.tris.size(), by_material.size());
 }
 
 // ────────────────────────────────────────────────────────────────── main ──
@@ -295,7 +304,7 @@ int coffee_main(int, char**)
         return 0;
     }
 
-    Mesh terrain, locs;
+    FlatGeometry terrain, locs;
 
     if(all_regions)
     {
@@ -307,7 +316,8 @@ int coffee_main(int, char**)
                 continue;
             append_mesh(terrain, geo->terrain);
             if(!buildings_path.empty())
-                append_mesh(locs, geo->locs);
+                for(const auto& chunk : geo->locs)
+                    append_mesh(locs, chunk);
             if(++n % 100 == 0)
                 fprintf(stderr, "  %zu/%zu regions\n", n,
                     loader.regions().size());
@@ -322,8 +332,9 @@ int coffee_main(int, char**)
             fprintf(stderr, "Region (%d,%d) not found in map_index\n", rx, ry);
             return 1;
         }
-        terrain = std::move(geo->terrain);
-        locs    = std::move(geo->locs);
+        append_mesh(terrain, geo->terrain);
+        for(const auto& chunk : geo->locs)
+            append_mesh(locs, chunk);
     }
 
     // terrain: OBJ (with textures + UVs) when the extension says so,
@@ -334,7 +345,7 @@ int coffee_main(int, char**)
     {
         write_ply(output, terrain, plane_idx);
         fprintf(stderr, "Wrote %s (%zu verts, %zu faces)\n", output.c_str(),
-            terrain.vertices.size(), terrain.indices.size() / 3);
+            terrain.vertices.size(), terrain.tris.size());
     }
 
     if(!buildings_path.empty())

@@ -1,4 +1,5 @@
 #include "blam_files.h"
+#include "cursed.h"
 #include "data.h"
 #include "map_loading.h"
 #include "map_marker.h"
@@ -372,6 +373,7 @@ i32 blam_main()
             alloc_renderer(e);
             alloc_ui_system(e);
             alloc_networking(e);
+            cursed::setup_cursed_loaders(e);
 
             using namespace ::platform::url::constructors;
 

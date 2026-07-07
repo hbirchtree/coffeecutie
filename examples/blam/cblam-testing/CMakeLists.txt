@@ -1,5 +1,6 @@
 set(BLAM_HALO_VERSION "pc_version_t" CACHE STRING "")
 set(BLAMG_EMBEDDED_REPORT_URL "" CACHE STRING "")
+set(BLAM_CURSED OFF CACHE STRING "Cursed experiments")
 
 find_package(GameNetworkingSockets CONFIG)
 option(BUILD_PHYSICS "Enable Bullet physics support" ON)
@@ -100,3 +101,13 @@ endif()
 #   SOURCES scripting.cpp
 #   LIBRARIES Blam Core
 # )
+
+if(BLAM_CURSED)
+    find_package(BZip2 REQUIRED)
+    target_sources(BlamGraphics PRIVATE
+      cursed.cpp
+    )
+    target_link_libraries(BlamGraphics PRIVATE
+      BZip2::BZip2
+    )
+endif()

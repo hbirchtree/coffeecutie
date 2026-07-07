@@ -227,7 +227,45 @@ struct Underlay
     int         texture{-1};
     bool        is_overlay{false}; // op 3 (rev ≤ 377): entry is an overlay
     std::string name;              // op 6: "water", "lava", "road", …
+    // HSL decomposition for underlay blending (client FloorType.setHsl):
+    // hue is pre-weighted by hue_mult so grey tiles don't drag the hue.
+    int hue{0}, sat{0}, light{0}, hue_mult{1};
 };
+
+// client FloorType.setHsl: decompose RGB for the blend accumulators
+inline void underlay_set_hsl(Underlay& u)
+{
+    double r = u.r / 256.0, g = u.g / 256.0, b = u.b / 256.0;
+    double mn = std::min({r, g, b}), mx = std::max({r, g, b});
+    double hue = 0.0, sat = 0.0, light = (mx + mn) / 2.0;
+    if(mx != mn)
+    {
+        sat = light < 0.5 ? (mx - mn) / (mx + mn)
+                          : (mx - mn) / (2.0 - mx - mn);
+        if(mx == r)
+            hue = (g - b) / (mx - mn);
+        else if(mx == g)
+            hue = 2.0 + (b - r) / (mx - mn);
+        else
+            hue = 4.0 + (r - g) / (mx - mn);
+    }
+    hue /= 6.0;
+    u.sat   = std::min(255, std::max(0, int(sat * 256.0)));
+    u.light = std::min(255, std::max(0, int(light * 256.0)));
+    u.hue_mult =
+        std::max(1, int(512.0 * (sat * (light > 0.5 ? 1.0 - light : light))));
+    u.hue = int(u.hue_mult * hue);
+}
+
+// client ColorUtil.packHsl: 8-bit HSL components → u16 palette index
+inline u16 pack_hsl(int hue, int saturation, int lightness)
+{
+    if(lightness > 179) saturation /= 2;
+    if(lightness > 192) saturation /= 2;
+    if(lightness > 217) saturation /= 2;
+    if(lightness > 243) saturation /= 2;
+    return u16(((saturation / 32) << 7) + ((hue / 4) << 10) + lightness / 2);
+}
 
 // Texture ids the dat-era client scrolls every frame (water droplets, lava)
 constexpr int ANIMATED_TEXTURES[] = {17, 24};
@@ -269,6 +307,8 @@ inline std::vector<Underlay> parse_flo_dat(const std::vector<u8>& data)
                 pos += 3;
         }
     }
+    for(auto& u : ul)
+        underlay_set_hsl(u);
     return ul;
 }
 
