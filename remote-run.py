@@ -101,6 +101,7 @@ import fnmatch
 import glob
 import json
 import os
+import re
 import shlex
 import shutil
 import signal
@@ -1157,6 +1158,425 @@ def check_dolphin():
         return 'broken', None, None, 'Version check failed'
 
 
+def _run_remote(cmd_prefix, shell_cmd, timeout=40):
+    """Run a single shell command on the remote (cmd_prefix is the ssh/adb
+    invocation prefix). Returns (returncode, stdout, stderr)."""
+    try:
+        res = subprocess.run(
+            [*cmd_prefix, shell_cmd], capture_output=True, text=True, timeout=timeout)
+        return res.returncode, res.stdout, res.stderr
+    except (subprocess.TimeoutExpired, OSError) as e:
+        return 1, '', str(e)
+
+
+def _split_markers(out):
+    """Split output produced with `echo "@@name"` headers into a dict of
+    name -> list[line]."""
+    sections = {}
+    cur = None
+    for line in out.splitlines():
+        if line.startswith('@@'):
+            cur = line[2:].strip()
+            sections[cur] = []
+        elif cur is not None:
+            sections[cur].append(line)
+    return sections
+
+
+def _parse_os_release(lines):
+    """Parse KEY=VALUE lines from /etc/os-release into a dict (quotes stripped)."""
+    data = {}
+    for line in lines:
+        if '=' not in line or line.strip().startswith('#'):
+            continue
+        key, _, value = line.partition('=')
+        data[key.strip()] = value.strip().strip('"').strip("'")
+    return data
+
+
+def _collect_hwmon(cmd_prefix):
+    """Enumerate every hwmon temperature sensor on the remote.
+    Returns {chip_dir: {'name': str, 'temps': {tempN: {'label':, 'value':}}}}."""
+    grep = ('grep -H . /sys/class/hwmon/*/name '
+            '/sys/class/hwmon/*/temp*_input '
+            '/sys/class/hwmon/*/temp*_label 2>/dev/null')
+    _, out, _ = _run_remote(cmd_prefix, grep)
+    prefix = '/sys/class/hwmon/'
+    chips = {}
+    for line in out.strip().splitlines():
+        if not line.startswith(prefix) or ':' not in line:
+            continue
+        path, _, value = line.partition(':')
+        chip, _, prop = path[len(prefix):].partition('/')
+        entry = chips.setdefault(chip, {'name': chip, 'temps': {}})
+        if prop == 'name':
+            entry['name'] = value
+        elif prop.endswith('_input'):
+            entry['temps'].setdefault(prop[:-len('_input')], {})['value'] = value
+        elif prop.endswith('_label'):
+            entry['temps'].setdefault(prop[:-len('_label')], {})['label'] = value
+    return chips
+
+
+def _print_hwmon(chips):
+    rows = []
+    for chip in sorted(chips):
+        info = chips[chip]
+        for key in sorted(info['temps'], key=lambda k: (len(k), k)):
+            temp = info['temps'][key]
+            if 'value' not in temp:
+                continue
+            try:
+                celsius = f"{float(temp['value']) / 1000:.1f} °C"
+            except ValueError:
+                celsius = temp['value']
+            rows.append((info['name'], chip, temp.get('label', key), celsius))
+    if not rows:
+        print("  (no hwmon temperature sensors found)")
+        return
+    name_w = max(len(r[0]) for r in rows)
+    chip_w = max(len(r[1]) for r in rows)
+    label_w = max(len(r[2]) for r in rows)
+    for name, chip, label, celsius in rows:
+        print(f"  {name:<{name_w}}  {chip:<{chip_w}}  {label:<{label_w}}  {celsius:>9}")
+
+
+# PCI vendor id -> friendly name for DRI device listing.
+_PCI_VENDORS = {
+    '8086': 'Intel', '10de': 'NVIDIA', '1002': 'AMD', '1022': 'AMD',
+    '1af4': 'virtio', '1234': 'QEMU', '15ad': 'VMware', '1b36': 'QEMU',
+}
+
+
+def _clean_lspci(desc):
+    """Reduce an `lspci -D -nn` description to just the device model name.
+    'VGA compatible controller [0300]: Intel Corporation ... [UHD Graphics 620]
+    [8086:3ea0] (rev 02)' -> 'Intel Corporation ... [UHD Graphics 620]'."""
+    desc = re.sub(r'^[^:]*:\s*', '', desc)                       # drop class prefix
+    desc = re.sub(r'\s*\[[0-9A-Fa-f]{4}:[0-9A-Fa-f]{4}\].*$', '', desc)  # drop id/rev tail
+    return desc.strip()
+
+
+def _print_dri_linux(sec):
+    """Print DRI render/card nodes from /dev/dri with their kernel driver and a
+    resolved GPU model name. Model comes from lspci (by PCI slot) when present,
+    else the device-tree OF_COMPATIBLE_0 (SoC GPUs), else vendor:device id.
+    dri lines: 'node|driver|PCI_ID=..|SLOT=0000:00:02.0|OF_COMPATIBLE_0=..'."""
+    lspci = {}
+    for line in sec.get('lspci', []):
+        line = line.strip()
+        if not line:
+            continue
+        slot, _, desc = line.partition(' ')
+        lspci[slot] = desc.strip()
+
+    rows = []
+    for line in sec.get('dri', []):
+        parts = line.split('|')
+        if not parts or not parts[0].strip():
+            continue
+        node = parts[0].strip()
+        driver = (parts[1].strip() if len(parts) > 1 else '') or '?'
+        rest = ' '.join(parts[2:])
+
+        model = None
+        slot = re.search(r'SLOT=(\S+)', rest)
+        if slot and slot.group(1) in lspci:
+            model = _clean_lspci(lspci[slot.group(1)])
+        if not model:
+            of = re.search(r'OF_COMPATIBLE_0=(\S+)', rest)
+            if of:
+                model = of.group(1)
+        if not model:
+            pci = re.search(r'PCI_ID=([0-9A-Fa-f]{4}):([0-9A-Fa-f]{4})', rest)
+            if pci:
+                vid, did = pci.group(1).lower(), pci.group(2).lower()
+                model = f"{_PCI_VENDORS.get(vid, vid)}:{did}"
+        rows.append((node, driver, model or '-'))
+
+    if not rows:
+        print("  (no /dev/dri devices found)")
+        return
+    node_w = max(len(r[0]) for r in rows)
+    drv_w = max(len(r[1]) for r in rows)
+    for node, driver, model in rows:
+        print(f"  {node:<{node_w}}  {driver:<{drv_w}}  {model}")
+
+
+def _print_display_linux(sec):
+    """Print framebuffer sizes (/sys/class/graphics/fb*) and DRM connector
+    native modes (/sys/class/drm/*/modes) from marker sections."""
+    rows = []
+    for line in sec.get('fb', []):
+        parts = line.split('|')
+        if len(parts) != 3:
+            continue
+        dev, name, size = parts
+        size = size.strip().replace(',', 'x')
+        if not size:
+            continue
+        label = f"Framebuffer {dev}" + (f" ({name.strip()})" if name.strip() else "")
+        rows.append((label, size))
+
+    # DRM: first (preferred) mode per connector, connected ones only.
+    prefix = '/sys/class/drm/'
+    seen = set()
+    for line in sec.get('drm', []):
+        if not line.startswith(prefix) or '/modes:' not in line:
+            continue
+        path, _, mode = line.partition(':')
+        conn = path[len(prefix):].split('/modes')[0]
+        if conn in seen or not mode.strip():
+            continue
+        seen.add(conn)
+        rows.append((f"Connector {conn}", mode.strip()))
+
+    if not rows:
+        print("  (no framebuffer or DRM connector found)")
+        return
+    label_w = max(len(r[0]) for r in rows)
+    for label, size in rows:
+        print(f"  {label:<{label_w}}  {size}")
+
+
+# Shell that emits every marker section consumed by _checkup_linux_sections.
+# Runs on any POSIX sh (ssh host, or `docker run ... image sh -c`).
+_LINUX_INFO_CMD = (
+    'echo "@@kernel"; uname -r; '
+    'echo "@@arch"; uname -m; '
+    'echo "@@os"; cat /etc/os-release 2>/dev/null; '
+    'echo "@@socmodel"; cat /proc/device-tree/model 2>/dev/null | tr -d "\\0"; echo; '
+    'echo "@@soc"; cat /proc/device-tree/compatible 2>/dev/null | tr "\\0" " "; echo; '
+    'echo "@@fb"; for f in /sys/class/graphics/fb*; do '
+    '[ -e "$f/virtual_size" ] || continue; '
+    'echo "$(basename "$f")|$(cat "$f/name" 2>/dev/null)|$(cat "$f/virtual_size" 2>/dev/null)"; done; '
+    'echo "@@drm"; grep -H . /sys/class/drm/*/modes 2>/dev/null || true; '
+    'echo "@@dri"; for b in /dev/dri/card* /dev/dri/renderD*; do '
+    '[ -e "$b" ] || continue; n=$(basename "$b"); u=/sys/class/drm/$n/device/uevent; '
+    'echo "$n|$(basename "$(readlink /sys/class/drm/$n/device/driver 2>/dev/null)" 2>/dev/null)'
+    '|$(grep -h PCI_ID $u 2>/dev/null)|SLOT=$(basename "$(readlink /sys/class/drm/$n/device 2>/dev/null)")'
+    '|$(grep -h OF_COMPATIBLE_0 $u 2>/dev/null)"; done; '
+    'echo "@@lspci"; lspci -D -nn 2>/dev/null || true; '
+    'echo "@@apt"; '
+    'if command -v apt-get >/dev/null 2>&1; then '
+    'apt-get --just-print upgrade 2>/dev/null | grep "^Inst" || true; '
+    'else echo "@@noapt"; fi'
+)
+
+
+def _checkup_linux_sections(cmd_prefix, unreachable):
+    """Run the Linux info command via cmd_prefix (ssh host / docker run prefix)
+    and print the System/Display/DRI/apt/temperature sections."""
+    rc, out, err = _run_remote(cmd_prefix, _LINUX_INFO_CMD)
+    if rc != 0 and not out:
+        print(f"Error: {unreachable}")
+        if err.strip():
+            print("  " + err.strip())
+        return
+    sec = _split_markers(out)
+    os_rel = _parse_os_release(sec.get('os', []))
+
+    kernel = '\n'.join(sec.get('kernel', [])).strip() or '(unknown)'
+    arch = '\n'.join(sec.get('arch', [])).strip() or '(unknown)'
+    distro = os_rel.get('PRETTY_NAME') or os_rel.get('NAME') or '(unknown)'
+    version = os_rel.get('VERSION_ID') or os_rel.get('VERSION') or '(unknown)'
+
+    soc_model = '\n'.join(sec.get('socmodel', [])).strip()
+    soc_compat = '\n'.join(sec.get('soc', [])).strip()
+
+    print("System")
+    print(f"  Distro:   {distro}")
+    print(f"  Version:  {version}")
+    print(f"  Kernel:   {kernel}")
+    print(f"  Arch:     {arch}")
+    if soc_model or soc_compat:
+        if soc_model and soc_compat:
+            print(f"  SoC:      {soc_model}  [{soc_compat}]")
+        else:
+            print(f"  SoC:      {soc_model or soc_compat}")
+
+    print()
+    print("Display")
+    _print_display_linux(sec)
+
+    print()
+    print("Rendering devices (DRI)")
+    _print_dri_linux(sec)
+
+    print()
+    print("Pending apt updates")
+    if 'noapt' in sec:
+        print("  (apt-get not available on this device)")
+    else:
+        inst = [l for l in sec.get('apt', []) if l.startswith('Inst')]
+        if not inst:
+            print("  (system up to date)")
+        else:
+            print(f"  {len(inst)} package(s) can be updated")
+
+    print()
+    print("Temperature sensors (hwmon)")
+    _print_hwmon(_collect_hwmon(cmd_prefix))
+
+
+def _checkup_linux(hostname):
+    cmd_prefix = ['ssh', '-o', 'ConnectTimeout=5', '-o', 'BatchMode=yes',
+                  '-o', 'StrictHostKeyChecking=accept-new', hostname]
+    _checkup_linux_sections(cmd_prefix, f"could not reach {hostname} over ssh")
+
+
+def _checkup_docker(device_name, device):
+    image = device.get('image')
+    if not image:
+        sys.exit(f"Error: docker device '{device_name}' is missing required 'image'")
+
+    dri = device.get('dri_device', '/dev/dri')
+    dri_list = dri if isinstance(dri, list) else [dri]
+    groups = sorted(
+        {str(g) for g in device.get('groups', [])} |
+        {str(g) for g in _dri_gids(dri_list)})
+    user = device.get('user', f'{os.getuid()}:{os.getgid()}') \
+        if 'user' in device else f'{os.getuid()}:{os.getgid()}'
+
+    print("Docker config")
+    print(f"  Image:    {image}")
+    if device.get('memory'):
+        print(f"  Memory:   {device['memory']}")
+    if device.get('cpus'):
+        print(f"  CPUs:     {device['cpus']}")
+    if user:
+        print(f"  User:     {user}")
+    if groups:
+        print(f"  Groups:   {' '.join(groups)}")
+    print("  DRI devices:")
+    for d in dri_list:
+        exists = "present" if os.path.exists(d) else "MISSING on host"
+        print(f"    {d}  ({exists})")
+    mounts = device.get('mounts', [])
+    if mounts:
+        print("  Mounts:")
+        for m in mounts:
+            ro = " (ro)" if m.get('readonly') else ""
+            print(f"    {m['local']} -> {m.get('remote', m['local'])}{ro}")
+
+    # Build a `docker run` prefix that mirrors run_docker's device/group access,
+    # then reuse the Linux section printer inside the container. /sys is mounted
+    # in containers, so hwmon/DRM sysfs and the passed /dev/dri nodes are all
+    # visible and reflect what the app actually sees at runtime.
+    docker_prefix = ['docker', 'run', '--rm']
+    if device.get('memory'):
+        docker_prefix += ['--memory', str(device['memory'])]
+    if device.get('cpus'):
+        docker_prefix += ['--cpus', str(device['cpus'])]
+    for d in dri_list:
+        if os.path.exists(d):
+            docker_prefix += ['--device', d]
+    for g in groups:
+        docker_prefix += ['--group-add', g]
+    if user:
+        docker_prefix += ['--user', str(user)]
+    docker_prefix += [image, 'sh', '-c']
+
+    print()
+    _checkup_linux_sections(
+        docker_prefix, f"could not run container from image '{image}'")
+
+
+def _checkup_android(hostname):
+    if hostname and ':' in hostname:
+        try:
+            subprocess.run(['adb', 'connect', hostname],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+        except (subprocess.TimeoutExpired, OSError):
+            pass
+    cmd_prefix = ['adb', '-s', hostname, 'shell']
+    info_cmd = (
+        'echo "@@kernel"; uname -r; '
+        'echo "@@arch"; getprop ro.product.cpu.abi; '
+        'echo "@@rel"; getprop ro.build.version.release; '
+        'echo "@@sdk"; getprop ro.build.version.sdk; '
+        'echo "@@model"; getprop ro.product.model; '
+        'echo "@@patch"; getprop ro.build.version.security_patch; '
+        'echo "@@wmsize"; wm size 2>/dev/null; '
+        'echo "@@wmdensity"; wm density 2>/dev/null; '
+        'echo "@@egl"; getprop ro.hardware.egl; '
+        'echo "@@vulkan"; getprop ro.hardware.vulkan; '
+        'echo "@@gles"; dumpsys SurfaceFlinger 2>/dev/null | grep -i "GLES:"; '
+        'echo "@@gpunodes"; ls -d /dev/dri/* /dev/kgsl-3d0 /dev/mali* 2>/dev/null'
+    )
+    rc, out, err = _run_remote(cmd_prefix, info_cmd)
+    if rc != 0 and not out:
+        print(f"Error: could not reach {hostname} over adb")
+        if err.strip():
+            print("  " + err.strip())
+        return
+    sec = _split_markers(out)
+
+    def one(name):
+        return '\n'.join(sec.get(name, [])).strip() or '(unknown)'
+
+    print("System")
+    print(f"  Distro:   Android {one('rel')} (API {one('sdk')})")
+    print(f"  Model:    {one('model')}")
+    print(f"  Patch:    {one('patch')}")
+    print(f"  Kernel:   {one('kernel')}")
+    print(f"  Arch:     {one('arch')}")
+
+    print()
+    print("Display")
+    disp = sec.get('wmsize', []) + sec.get('wmdensity', [])
+    disp = [l.strip() for l in disp if l.strip()]
+    if disp:
+        for line in disp:
+            print(f"  {line}")
+    else:
+        print("  (unavailable)")
+
+    print()
+    print("GPU / rendering devices")
+    gles = ' '.join(l.strip() for l in sec.get('gles', []) if l.strip())
+    gles = re.sub(r'^GLES:\s*', '', gles)
+    nodes = [l.strip() for l in sec.get('gpunodes', []) if l.strip()]
+    print(f"  EGL HAL:    {one('egl')}")
+    print(f"  Vulkan HAL: {one('vulkan')}")
+    print(f"  Renderer:   {gles or '(unavailable)'}")
+    print(f"  Nodes:      {' '.join(nodes) if nodes else '(none)'}")
+
+    print()
+    print("Pending apt updates")
+    print("  N/A (Android has no apt)")
+
+    print()
+    print("Temperature sensors (hwmon)")
+    _print_hwmon(_collect_hwmon(cmd_prefix))
+
+
+def run_checkup(config, device_name):
+    devices = config.get('devices', {})
+    if device_name not in devices:
+        available = ', '.join(devices.keys())
+        sys.exit(f"Error: unknown device '{device_name}'\nAvailable devices: {available}")
+
+    device = devices[device_name]
+    target = device.get('target', '')
+    dev_type = device.get('type') or ('android' if target.startswith('android:') else 'linux')
+    hostname = device.get('hostname', '')
+
+    print(f"Checkup: {device_name}  [{dev_type}]  {target or '(no target)'}")
+    print("=" * 64)
+
+    if dev_type == 'linux':
+        if not hostname:
+            sys.exit(f"Error: device '{device_name}' has no hostname")
+        _checkup_linux(hostname)
+    elif dev_type == 'android':
+        _checkup_android(hostname or pick_adb_device())
+    elif dev_type == 'docker':
+        _checkup_docker(device_name, device)
+    else:
+        sys.exit(f"Error: --checkup only supports linux, android, and docker devices, not '{dev_type}'")
+
+
 def run_connectivity_check(config):
     devices = config.get('devices', {})
     if not devices:
@@ -1273,6 +1693,10 @@ def main():
     )
     parser.add_argument('--list', action='store_true', help='List available devices and presets')
     parser.add_argument('--connectivity-check', action='store_true', help='Check reachability of all configured devices')
+    parser.add_argument('--checkup', metavar='DEVICE', default=None,
+                        help='Collect info from one linux/android/docker device: '
+                             'system specs, display, DRI/GPU devices, temperature '
+                             'sensors, and pending apt updates')
     parser.add_argument('--dry-run', action='store_true', help='Print commands that would be executed without running them')
     parser.add_argument('--log', metavar='FILE', default=None,
                         help='Write all received output (setup + program) to FILE')
@@ -1292,6 +1716,10 @@ def main():
 
     if args.connectivity_check:
         run_connectivity_check(config)
+        sys.exit(0)
+
+    if args.checkup:
+        run_checkup(config, args.checkup)
         sys.exit(0)
 
     devices = config.get('devices', {})

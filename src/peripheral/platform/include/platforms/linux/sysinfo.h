@@ -49,6 +49,34 @@ inline stl_types::result<std::string, file::posix::posix_error> read_sysfs(
     }
 }
 
+/* Reads a device-tree property (/proc/device-tree/...) as a list of strings.
+ * DT string-list properties (e.g. `compatible`) are NUL-separated and carry no
+ * trailing newline, so read_sysfs (which stops at '\n') is unsuitable here. */
+inline std::vector<std::string> read_dt_strings(url::Path const& file)
+{
+    using namespace platform::file::posix;
+    std::vector<std::string> out;
+    if(auto fd = open_file(file.url()); fd.has_error())
+        return out;
+    else if(auto content = file::posix::read(fd.value()); content.has_error())
+        return out;
+    else
+    {
+        auto&       data = content.value();
+        std::string raw(data.begin(), data.end());
+        for(std::size_t start = 0; start < raw.size();)
+        {
+            auto nul = raw.find('\0', start);
+            if(nul == std::string::npos)
+                nul = raw.size();
+            if(nul > start)
+                out.push_back(raw.substr(start, nul - start));
+            start = nul + 1;
+        }
+        return out;
+    }
+}
+
 inline auto read_cpu(u32 id, url::Path const& path)
 {
     const auto cpu_id = "cpu" + std::to_string(id);
@@ -568,6 +596,16 @@ inline std::optional<std::pair<std::string, std::string>> device()
         return false;
     });
 
+    /* SoC boards without DMI and without a cpuinfo "Model" line still expose a
+     * human-readable board name in the device-tree root `model` property,
+     * e.g. "Pine64 RockPro64" or "Raspberry Pi 4 Model B". */
+    if(product.empty())
+    {
+        if(auto model = detail::read_dt_strings("/proc/device-tree/model"_sys);
+           !model.empty())
+            product = model.front();
+    }
+
     if(product.starts_with("Raspberry"))
         vendor = "Raspberry Pi";
 
@@ -605,6 +643,29 @@ inline std::optional<std::pair<std::string, std::string>> motherboard()
         }
         return false;
     });
+
+    /* Device-tree platforms (ARM/RISC-V SoCs) have no DMI, and modern arm64
+     * kernels no longer emit the /proc/cpuinfo "Hardware" line, so both sources
+     * above come up empty. Fall back to the device-tree root `compatible` list:
+     * entries run most-specific (board) first to most-generic (SoC) last, each
+     * formatted "vendor,part" — e.g. ["pine64,rockpro64", "rockchip,rk3399"].
+     * The last entry is the SoC. */
+    if(model.empty())
+    {
+        if(auto compat =
+               detail::read_dt_strings("/proc/device-tree/compatible"_sys);
+           !compat.empty())
+        {
+            auto const& soc   = compat.back();
+            auto        comma = soc.find(',');
+            if(comma != std::string::npos)
+            {
+                vendor = soc.substr(0, comma);
+                model  = soc.substr(comma + 1);
+            } else
+                model = soc;
+        }
+    }
 
     if(model.empty())
         return std::nullopt;
