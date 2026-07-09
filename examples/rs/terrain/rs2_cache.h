@@ -688,6 +688,7 @@ struct RsModel
     std::vector<std::array<int,3>> verts;  // x, y (negative = up), z
     std::vector<std::array<int,3>> faces;  // vertex indices
     std::vector<u32>               colors; // per-face HSL or FACE_TEXTURED|id
+    std::vector<u8>                alphas; // per-face: 0 = opaque (client)
     // texture mapping: per textured face, the P/M/N triangle defining
     // texture space. tex_coord[i] indexes tex_pmn, or -1 = the face's own
     // vertices are P/M/N (identity mapping).
@@ -745,7 +746,7 @@ inline RsModel parse_model(const std::vector<u8>& raw)
     off += has_fskins ? nf : 0;
     size_t off_texflag = off; off += uses_tex ? nf : 0;
     off += has_vskins ? nv : 0;
-    off += has_alpha ? nf : 0;
+    size_t off_falpha  = off; off += has_alpha ? nf : 0;
     size_t off_fidx    = off; off += fi_len;
     size_t off_fcolor  = off; off += size_t(nf) * 2;
     size_t off_texmap  = off; off += size_t(ntex) * 6; // texture P/M/N triples
@@ -810,6 +811,12 @@ inline RsModel parse_model(const std::vector<u8>& raw)
                 m.faces[i] = {a, b, c};
         }
     }
+
+    // ── Face alphas (0 = opaque, larger = more transparent) ──
+    m.alphas.assign(nf, 0);
+    if(has_alpha)
+        for(int i = 0; i < nf; ++i)
+            m.alphas[i] = d[off_falpha + i];
 
     // ── Texture P/M/N triangles ──
     m.tex_pmn.resize(ntex);
@@ -1295,6 +1302,8 @@ inline bool build_loc_model(
             out.faces.push_back({base + fc[0], base + fc[1], base + fc[2]});
         out.colors.insert(
             out.colors.end(), part->colors.begin(), part->colors.end());
+        out.alphas.insert(
+            out.alphas.end(), part->alphas.begin(), part->alphas.end());
         for(const auto& t : part->tex_pmn)
             out.tex_pmn.push_back({base + t[0], base + t[1], base + t[2]});
         for(i32 tc : part->tex_coord)

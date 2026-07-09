@@ -110,4 +110,7 @@ if(BLAM_CURSED)
     target_link_libraries(BlamGraphics PRIVATE
       BZip2::BZip2
     )
+    target_compile_definitions(BlamGraphics PRIVATE
+      -DBLAM_CURSED_ENABLED
+    )
 endif()

@@ -21,6 +21,7 @@
 
 #include "caching.h"
 #include "caching_item.h"
+#include "coffee/graphics/apis/gleam/rhi_debug.h"
 #include "coffee/graphics/apis/gleam/rhi_texture.h"
 #include "components.h"
 #include "data.h"
@@ -724,6 +725,8 @@ struct MeshRenderer
                 continue;
             auto             ref  = e.template ref<Proxy>(ent);
             DebugDraw const& draw = ref.template get<DebugDraw>();
+            if(draw.data.arrays.count == 0)
+                continue;
             groups.push_back(draw.data);
             groups.back().instances.offset = draw.color_ptr;
         }

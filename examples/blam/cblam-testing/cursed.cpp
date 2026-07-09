@@ -17,10 +17,18 @@
 #include "../../rs/terrain/rs2_geometry.h"
 #include <coffee/core/task_queue/task.h>
 #include "data.h"
+#include "entity_container.h"
 #include "peripherals/concepts/graphics_api.h"
 #include "peripherals/semantic/chunk.h"
 #include "peripherals/semantic/enum/data_types.h"
 #include "peripherals/typing/enum/graphics/shader_stage.h"
+#include "physics.h"
+#include "types.h"
+
+#if defined(FEATURE_ENABLE_BULLET3)
+#include <BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h>
+#include <BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h>
+#endif
 
 #include <imgui.h>
 
@@ -43,8 +51,14 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
     using Proxy = compo::proxy_of<RS2CacheLoaderManifest>;
     using type = RS2CacheLoader;
 
-    RS2CacheLoader(gfx::api& api, std::string const& cache_path)
+    RS2CacheLoader(
+        gfx::api& api,
+        PhysicsBus& physics,
+        compo::EntityRef<compo::EntityContainer> const& entity,
+        std::string const& cache_path)
         : api(api)
+        , physics(physics)
+        , world_entity(entity)
         , loader(cache_path)
     {
         this->priority = 3080;
@@ -71,7 +85,7 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
             .value = {
                 .offset = sizeof(f32) * 3,
                 .stride = sizeof(rs2::Vertex),
-                .count = 3,
+                .count = 4,
                 .type = semantic::type_t::u8,
                 .flags = gfx::vertex_attribute::attribute_flags::packed |
                     gfx::vertex_attribute::attribute_flags::normalized,
@@ -114,6 +128,21 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
                 [this](std::shared_ptr<RegionData> data) {
                     integrate_region(std::move(data));
                 }));
+#if defined(FEATURE_ENABLE_BULLET3)
+        // Worker built a ready collision shape; hand it to the physics
+        // system on the main thread if the region is still wanted.
+        on_physics_built = rq::runtime_queue::BindToQueue(
+            std::function<void(std::shared_ptr<PhysicsRegion>)>(
+                [this](std::shared_ptr<PhysicsRegion> region) {
+                    if(!in_ring(region->coord, wanted_center))
+                        return; // moved on while building — drop it
+                    u64 k = region_key(region->coord.x, region->coord.y);
+                    physics_bodies.insert(k);
+                    Physics::Event event{
+                        .type = Physics::Event::BodyCreationPrebuilt};
+                    this->physics.process(event, region->body.get());
+                }));
+#endif
 
         region_program = api.alloc_program();
         {
@@ -121,9 +150,9 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
 precision highp float;
 in vec3 position;
 in vec2 texcoord;
-in vec3 color;
+in vec4 color;
 
-out vec3 f_color;
+out vec4 f_color;
 out vec3 f_world_pos;
 out vec2 f_texcoord;
 flat out int f_instanceID;
@@ -143,12 +172,12 @@ void main()
             auto frag_src = std::string(R"(#version 300 es
 precision highp float;
 
-in vec3 f_color;
+in vec4 f_color;
 in vec3 f_world_pos;
 in vec2 f_texcoord;
 flat in int f_instanceID;
 
-uniform int f_texture_ids[128];
+uniform int f_texture_ids[256];
 uniform sampler2DArray f_textures;
 
 out vec4 out_color;
@@ -159,7 +188,7 @@ void main()
     float lightness = 0.3 + 0.25 * abs(dot(normal, sun));
     if(f_texture_ids[f_instanceID] < 0)
     {
-        out_color = vec4(f_color * lightness, 1.0);
+        out_color = vec4(f_color.rgb * lightness, f_color.a);
     } else
     {
         vec4 color = texture(
@@ -190,6 +219,16 @@ void main()
         // terrain + loc chunks) → one draw per material per region
         std::vector<rs2::Mesh> meshes;
     };
+
+#if defined(FEATURE_ENABLE_BULLET3)
+    // A collision shape built on the worker thread (BVH build included),
+    // ready for the physics system to adopt on the main thread.
+    struct PhysicsRegion
+    {
+        Veci2 coord{};
+        std::shared_ptr<Physics::BodyCreationPrebuilt> body;
+    };
+#endif
 
     // First-fit range allocator with coalescing free — buffers become a
     // pool of per-region slots so a new region only writes its own range.
@@ -286,6 +325,23 @@ void main()
             else
                 ++it;
 
+#if defined(FEATURE_ENABLE_BULLET3)
+        // evict physics bodies of regions leaving the ring
+        for(auto it = physics_bodies.begin(); it != physics_bodies.end();)
+        {
+            Veci2 coord{i32(*it >> 32), i32(u32(*it))};
+            if(!in_ring(coord, wanted_center))
+            {
+                Physics::Event       event{.type = Physics::Event::BodyRemoval};
+                Physics::BodyRemoval removal{.entity_id = *it};
+                physics.process(event, &removal);
+                it = physics_bodies.erase(it);
+            }
+            else
+                ++it;
+        }
+#endif
+
         for(i32 x = rx - 1; x <= rx + 1; ++x)
             for(i32 y = ry - 1; y <= ry + 1; ++y)
             {
@@ -315,6 +371,68 @@ void main()
                         data->coord = {x, y};
                         data->meshes = rs2::repack_by_material(parts);
                         on_built(std::move(data));
+
+#if defined(FEATURE_ENABLE_BULLET3)
+                        // Collision set: collidable triangles only, chunked
+                        // for u16, scaled into engine space. The BVH build
+                        // (the expensive part) happens HERE on the worker;
+                        // the main thread only wraps it in a rigid body.
+                        auto physics_data = std::make_shared<RegionData>();
+                        physics_data->coord = {x, y};
+                        physics_data->meshes = rs2::repack_by_material<size_t>(
+                            parts,
+                            rs2::sorting_method::by_u16_chunk,
+                            rs2::filter_method::collidable_only);
+                        for(auto& mesh : physics_data->meshes)
+                        {
+                            for(auto& vert : mesh.vertices)
+                            {
+                                vert.x /= world_scale;
+                                vert.y /= world_scale;
+                                vert.z /= world_scale;
+                            }
+                        }
+
+                        u32 phys_tris = 0;
+                        for(auto const& mesh : physics_data->meshes)
+                            phys_tris += mesh.indices.size() / 3;
+                        if(phys_tris > 0)
+                        {
+                            auto body = std::make_shared<
+                                Physics::BodyCreationPrebuilt>();
+                            body->entity_id = region_key(x, y);
+                            body->mesh_iface =
+                                std::make_unique<btTriangleIndexVertexArray>();
+                            for(auto const& mesh : physics_data->meshes)
+                            {
+                                btIndexedMesh part;
+                                part.m_numTriangles = mesh.indices.size() / 3;
+                                part.m_triangleIndexBase =
+                                    reinterpret_cast<const unsigned char*>(
+                                        mesh.indices.data());
+                                part.m_triangleIndexStride = sizeof(u16) * 3;
+                                part.m_numVertices = mesh.vertices.size();
+                                part.m_vertexBase =
+                                    reinterpret_cast<const unsigned char*>(
+                                        mesh.vertices.data());
+                                part.m_vertexStride = sizeof(rs2::Vertex);
+                                part.m_vertexType   = PHY_FLOAT;
+                                part.m_indexType    = PHY_SHORT;
+                                body->mesh_iface->addIndexedMesh(
+                                    part, PHY_SHORT);
+                            }
+                            body->shape =
+                                std::make_unique<btBvhTriangleMeshShape>(
+                                    body->mesh_iface.get(), true);
+                            // spans above point into these meshes
+                            body->keep_alive = physics_data;
+
+                            auto payload    = std::make_shared<PhysicsRegion>();
+                            payload->coord  = {x, y};
+                            payload->body   = std::move(body);
+                            on_physics_built(std::move(payload));
+                        }
+#endif
                     });
                 if(queued.has_error())
                     pending.erase(k);
@@ -489,7 +607,7 @@ void main()
                 {"f_texture_ids"},
                 semantic::Span<const i32>(
                     region_draw_textures.data(),
-                    std::min<size_t>(region_draw_textures.size(), 128)),
+                    std::min<size_t>(region_draw_textures.size(), 256)),
             });
         auto frag_sampler = gfx::make_sampler_list(
             gfx::sampler_definition_t{
@@ -530,7 +648,12 @@ void main()
                     camera->camera->position = probe_pos / world_scale;
                 }
             } else if(ImGui::Button("Spawn in Gielinor"))
-                camera->camera->position = Vecf3{412, 412, 1};
+                camera->camera->position = Vecf3{412000, 412000, 1000} / world_scale;
+            if(ImGui::Button("Spawn physics probe"))
+            {
+                Physics::Event event{.type = Physics::Event::ProbeHere};
+                physics.process(event, nullptr);
+            }
         }
         ImGui::End();
 
@@ -561,6 +684,8 @@ void main()
     virtual void end_restricted(Proxy&, time_point const& t) final {}
 
     gfx::api& api;
+    PhysicsBus& physics;
+    compo::EntityRef<compo::EntityContainer> world_entity;
     
     std::shared_ptr<gfx::vertex_array_t>        region_vao;
     std::vector<gfx::draw_command::data_t>      region_draws;
@@ -580,6 +705,11 @@ void main()
     rs2::RegionLoader loader;
     rq::runtime_queue* worker{};
     std::function<void(std::shared_ptr<RegionData>)> on_built;
+#if defined(FEATURE_ENABLE_BULLET3)
+    std::function<void(std::shared_ptr<PhysicsRegion>)> on_physics_built;
+    // region keys with a live physics body (entity_id = region_key)
+    std::set<u64> physics_bodies;
+#endif
 
     RangeAllocator vertex_alloc{vertex_capacity};
     RangeAllocator element_alloc{element_capacity};
@@ -597,9 +727,21 @@ void main()
 void setup_cursed_loaders(compo::EntityContainer& e)
 {
     if(auto cache = platform::env::var("RS2_CACHE"))
+    {
+        auto& physics_bus = e.subsystem_cast<PhysicsBus>();
+        compo::EntityRecipe recipe = {
+            .components = {
+                compo::type_hash_v<PhysicsData>(),
+                compo::type_hash_v<DebugDraw>(),
+            },
+        };
+        auto world_entity = e.create_entity(recipe);
         e.register_subsystem_inplace<RS2CacheLoader>(
             std::ref(e.subsystem_cast<gfx::system>()),
+            std::ref(physics_bus),
+            world_entity,
             cache.value());
+    }
 }
 
 }

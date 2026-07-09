@@ -6,6 +6,13 @@
 #include "map_marker.h"
 #include "selected_version.h"
 
+#include <BulletCollision/CollisionDispatch/btCollisionObject.h>
+#include <BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h>
+#include <BulletCollision/CollisionShapes/btConcaveShape.h>
+#include <BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h>
+#include <BulletDynamics/Dynamics/btRigidBody.h>
+#include <LinearMath/btTransform.h>
+#include <LinearMath/btVector3.h>
 #include <coffee/core/debug/formatting.h>
 
 #if defined(FEATURE_ENABLE_BULLET3)
@@ -76,7 +83,11 @@ struct PhysicsSystem
         if(loading->loading)
             return;
 
-        if(!m_world_body)
+        // Simulate when there is anything in the world: the Halo BSP body,
+        // streamed RS2 region bodies, or the debug probe. Gating solely on
+        // m_world_body froze RS2-only sessions (no Halo map) — no step and
+        // no probe/debug marker update.
+        if(!m_world_body && m_bodies.empty() && !m_probe_body)
             return;
 
         m_world->stepSimulation(1.f / 60.f, 4);
@@ -95,6 +106,43 @@ struct PhysicsSystem
                 org.z(),
                 m_probe_body->isActive() ? "" : " [settled]");
         }
+
+        do
+        {
+            DebugMarkers* markers;
+            p.subsystem(markers);
+            if(!markers->available())
+                break;
+            markers->map();
+            for(auto& [entity, body] : m_bodies)
+            {
+                DebugDraw* debug = p.template get<DebugDraw>(entity);
+                if(!debug)
+                {
+                    cWarning("No DebugDraw for rigid body ({})", entity);
+                    continue;
+                }
+                btRigidBody* rigid_body = body.world_body.get();
+                btVector3 min, max;
+                rigid_body->getAabb(min, max);
+                auto const box = DebugMarkers::box_vertices(
+                    {min.x(), min.y(), min.z()},
+                    {max.x(), max.y(), max.z()}
+                );
+                debug->data.arrays = {
+                    .count = 16,
+                    .offset = physics_debug_point_ptr + 16,
+                };
+                debug->color_ptr = physics_debug_color_ptr + 1;
+                markers->put_strip(
+                    physics_debug_point_ptr + 16,
+                    physics_debug_color_ptr + 1,
+                    box,
+                    Vecf3{1.f, .5f, 0.f});
+            }
+            markers->unmap();
+        } while(false);
+
         m_frame++;
     }
 
@@ -230,6 +278,61 @@ struct PhysicsSystem
         m_frame = 0;
     }
 
+    template<typename IType, Physics::Event::type_t Type>
+    auto create_body(Physics::BodyCreation<IType, Type> const& body_create)
+    {
+        cDebug("create_body({})", body_create.entity_id);
+        entity_body& entity_body = m_bodies[body_create.entity_id];
+
+        if(entity_body.world_body)
+        {
+            m_world->removeRigidBody(entity_body.world_body.get());
+            entity_body.world_body.reset();
+            entity_body.world_shape.reset();
+            entity_body.mesh_iface.reset();
+        }
+
+        btIndexedMesh mesh;
+        mesh.m_numTriangles = body_create.indices.size() / 3;
+        mesh.m_triangleIndexStride = sizeof(IType) * 3;
+        mesh.m_indexType = []()
+        {
+            if constexpr(std::is_same_v<IType, u16>)
+                return PHY_SHORT;
+            if constexpr(std::is_same_v<IType, u32>)
+                return PHY_INTEGER;
+        }();
+        mesh.m_numVertices = body_create.vertices.size_bytes() / body_create.vertex_stride;
+        mesh.m_vertexStride = body_create.vertex_stride;
+        mesh.m_vertexType = [&body_create]()
+        {
+            switch(body_create.vertex_type)
+            {
+            default:
+                return PHY_FLOAT;
+            }
+        }();
+
+        mesh.m_vertexBase = reinterpret_cast<unsigned char const*>(
+            body_create.vertices.data());
+        mesh.m_triangleIndexBase = reinterpret_cast<unsigned char const*>(
+            body_create.indices.data());
+
+        entity_body.mesh_iface = std::make_unique<btTriangleIndexVertexArray>();
+        entity_body.mesh_iface->addIndexedMesh(mesh, mesh.m_indexType);
+        entity_body.world_shape = std::make_unique<btBvhTriangleMeshShape>(
+            entity_body.mesh_iface.get(),
+            true);
+        btRigidBody::btRigidBodyConstructionInfo info{
+            0.f,
+            nullptr,
+            entity_body.world_shape.get(),
+        };
+        entity_body.world_body = std::make_unique<btRigidBody>(info);
+        entity_body.world_body->setFriction(1.f);
+        m_world->addRigidBody(entity_body.world_body.get());
+    }
+
     /* Winged-edge polygon walk: starting at first_edge, follow
      * forward_edge while this surface is on the edge's left, otherwise
      * reverse_edge; collect vertices in winding order, then fan. */
@@ -357,22 +460,51 @@ struct PhysicsSystem
     {
         auto [bmin, bmax] = item.mesh->world_bounds.points();
         Vecf3 center      = (bmin + bmax) * .5f;
+        spawn_probe_at(Vecf3{center.x, center.y, bmax.z + .5f});
+    }
 
-        m_probe_shape = std::make_unique<btSphereShape>(probe_radius);
+    /* Create the debug probe sphere at an absolute position — used both by
+     * the Halo BSP path (drop from section bounds) and RS2-only sessions,
+     * which have no BSPItem to derive a spawn point from. */
+    void spawn_probe_at(Vecf3 const& pos)
+    {
+        if(m_probe_body)
+        {
+            m_world->removeRigidBody(m_probe_body.get());
+            m_probe_body.reset();
+        }
+        if(!m_probe_shape)
+            m_probe_shape = std::make_unique<btSphereShape>(probe_radius);
         btVector3 inertia;
         m_probe_shape->calculateLocalInertia(10.f, inertia);
         btRigidBody::btRigidBodyConstructionInfo info(
             10.f, nullptr, m_probe_shape.get(), inertia);
         info.m_startWorldTransform.setIdentity();
         info.m_startWorldTransform.setOrigin(
-            btVector3(center.x, center.y, bmax.z + .5f));
+            btVector3(pos.x, pos.y, pos.z));
         m_probe_body = std::make_unique<btRigidBody>(info);
-        /* High friction + rolling friction so the sphere parks near its
-         * drop point instead of rolling downhill forever */
+        m_probe_body->setActivationState(DISABLE_DEACTIVATION);
         m_probe_body->setFriction(1.f);
         m_probe_body->setRollingFriction(.3f);
         m_probe_body->setSpinningFriction(.3f);
         m_world->addRigidBody(m_probe_body.get());
+    }
+
+    void move_probe(Vecf3 const& pos)
+    {
+        // Spawn on first request (RS2-only sessions never call spawn_probe)
+        if(!m_probe_body)
+        {
+            cDebug("Spawning physics probe at {}, {}, {}", pos.x, pos.y, pos.z);
+            spawn_probe_at(pos);
+            return;
+        }
+        cDebug("Moving physics probe to {}, {}, {}", pos.x, pos.y, pos.z);
+        btTransform transform;
+        transform.setOrigin(btVector3(pos.x, pos.y, pos.z));
+        m_probe_body->setWorldTransform(transform);
+        m_probe_body->setLinearVelocity(btVector3(0, 0, 0));
+        m_probe_body->activate(true);
     }
 
     std::unique_ptr<btDefaultCollisionConfiguration>     m_config;
@@ -386,6 +518,58 @@ struct PhysicsSystem
     std::unique_ptr<btRigidBody>                m_world_body;
     std::unique_ptr<btSphereShape>              m_probe_shape;
     std::unique_ptr<btRigidBody>                m_probe_body;
+
+    struct entity_body
+    {
+        std::unique_ptr<btTriangleIndexVertexArray> mesh_iface;
+        std::unique_ptr<btBvhTriangleMeshShape>     world_shape;
+        std::unique_ptr<btRigidBody>                world_body;
+        std::shared_ptr<void>                       keep_alive;
+    };
+    std::map<u64, entity_body> m_bodies;
+
+    /* Sleeping bodies are not woken when the static mesh under them is
+     * swapped — a resting probe would freeze mid-air over new terrain.
+     * Wake everything after any static-world change. */
+    void wake_dynamic_bodies()
+    {
+        auto& bodies = m_world->getNonStaticRigidBodies();
+        for(int i = 0; i < bodies.size(); ++i)
+            bodies[i]->activate(true);
+    }
+
+    /* Adopt a shape built on a worker thread (see BodyCreationPrebuilt) —
+     * main-thread cost is one rigid-body alloc + broadphase insert. */
+    void adopt_body(Physics::BodyCreationPrebuilt&& body_create)
+    {
+        remove_body(body_create.entity_id);
+
+        entity_body& body = m_bodies[body_create.entity_id];
+        body.mesh_iface   = std::move(body_create.mesh_iface);
+        body.world_shape  = std::move(body_create.shape);
+        body.keep_alive   = std::move(body_create.keep_alive);
+
+        btRigidBody::btRigidBodyConstructionInfo info{
+            0.f,
+            nullptr,
+            body.world_shape.get(),
+        };
+        body.world_body = std::make_unique<btRigidBody>(info);
+        body.world_body->setFriction(1.f);
+        m_world->addRigidBody(body.world_body.get());
+        wake_dynamic_bodies();
+    }
+
+    void remove_body(u64 entity_id)
+    {
+        auto it = m_bodies.find(entity_id);
+        if(it == m_bodies.end())
+            return;
+        if(it->second.world_body)
+            m_world->removeRigidBody(it->second.world_body.get());
+        m_bodies.erase(it);
+        wake_dynamic_bodies();
+    }
 
     /* Index buffer for the world shape + triangle → collision surface
      * mapping (material lookup on hit) */
@@ -402,7 +586,36 @@ struct PhysicsSystem
 void alloc_physics(compo::EntityContainer& container)
 {
     ProfContext _;
-    container.register_subsystem_inplace<PhysicsSystem<halo_version>>();
+    auto& phys_bus = container.register_subsystem_inplace<PhysicsBus>();
+    auto& physics = container.register_subsystem_inplace<PhysicsSystem<halo_version>>();
+    phys_bus.addEventFunction<Physics::BodyCreationU16>(
+        0, [&physics](Physics::Event&, Physics::BodyCreationU16* body_create)
+        {
+            physics.create_body(*body_create);
+        });
+    phys_bus.addEventFunction<Physics::BodyCreationPrebuilt>(
+        0,
+        [&physics](Physics::Event&, Physics::BodyCreationPrebuilt* body)
+        {
+            physics.adopt_body(std::move(*body));
+        });
+    phys_bus.addEventFunction<Physics::BodyRemoval>(
+        0, [&physics](Physics::Event&, Physics::BodyRemoval* removal)
+        {
+            physics.remove_body(removal->entity_id);
+        });
+    phys_bus.addEventFunction<Physics::ProbeHere>(
+        0, [&container, &physics](Physics::Event&, Physics::ProbeHere*) {
+            for(auto const& e : container.select<PlayerCamera>())
+            {
+                auto* info = container.get<PlayerInfo>(e.id);
+                if(info->seat_idx != 0)
+                    continue;
+                auto* camera = container.get<PlayerCamera>(e.id);
+                physics.move_probe(camera->camera->position);
+                break;
+            }
+        });
 }
 
 #else
@@ -411,6 +624,7 @@ void alloc_physics(compo::EntityContainer& container)
 
 void alloc_physics(compo::EntityContainer&)
 {
+    container.register_subsystem_inplace<PhysicsBus>();
     Coffee::cDebug("physics: built without Bullet support, subsystem disabled");
 }
 

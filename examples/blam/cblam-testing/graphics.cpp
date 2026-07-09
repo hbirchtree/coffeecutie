@@ -1,4 +1,5 @@
 #include "blam_files.h"
+#include "components.h"
 #include "cursed.h"
 #include "data.h"
 #include "map_loading.h"
@@ -143,6 +144,7 @@ i32 blam_main()
             e.register_component_inplace<BspReference>();
             e.register_component_inplace<ObjectSpawn>();
             e.register_component_inplace<NetworkInfo>();
+            e.register_component_inplace<PhysicsData>();
             e.register_component_inplace<PlayerInfo>();
             e.register_component_inplace<SoundEffects>();
             e.register_component_inplace<MultiplayerSpawn>();
@@ -373,7 +375,9 @@ i32 blam_main()
             alloc_renderer(e);
             alloc_ui_system(e);
             alloc_networking(e);
+#if defined(BLAM_CURSED_ENABLED)
             cursed::setup_cursed_loaders(e);
+#endif
 
             using namespace ::platform::url::constructors;
 

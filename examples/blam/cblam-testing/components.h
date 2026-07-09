@@ -430,6 +430,7 @@ struct PhysicsData
     using value_type = PhysicsData;
     using type       = compo::alloc::VectorContainer<PhysicsData>;
 
+    u64 physics_id{0};
     Vecf3 velocity;
     Vecf3 acceleration;
 

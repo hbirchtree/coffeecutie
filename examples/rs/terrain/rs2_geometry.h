@@ -13,9 +13,11 @@
  */
 #pragma once
 
+#include "peripherals/stl/decl_member_function.h"
 #include "rs2_cache.h"
 
 #include <cctype>
+#include <functional>
 #include <map>
 #include <memory>
 
@@ -25,10 +27,12 @@ struct Vertex
 {
     float x, y, z;
     u8 r, g, b; // baked flat colour (texture average for textured faces)
+    u8 a = 255; // opacity (255 = opaque); from per-face model alphas
     float u = 0.f, v = 0.f;
 };
 
 static_assert(offsetof(Vertex, r) == 12, "Padding of rs2::Vertex not proper");
+static_assert(offsetof(Vertex, a) == 15, "Padding of rs2::Vertex not proper");
 static_assert(offsetof(Vertex, u) == 16, "Padding of rs2::Vertex not proper");
 static_assert(sizeof(Vertex) == 24, "Padding of rs2::Vertex not proper");
 
@@ -37,16 +41,80 @@ static_assert(sizeof(Vertex) == 24, "Padding of rs2::Vertex not proper");
 // so indices are u16 end to end.
 constexpr u32 MESH_MAX_VERTICES = 65536;
 
+// Coarse triangle classification, derived at build time from the placement
+// shape and the loc definition's actions.
+enum class TriClass : u8
+{
+    terrain = 0,
+    scenery = 1,
+    wall    = 2, // placement shapes 0-3 + 9 (diagonal)
+    door    = 3, // def has an Open/Close action
+    link    = 4, // def has a Climb/Enter action (see find_links)
+};
+
+// Semantic floor classes, derived from flo.dat entry NAMES at load time.
+// The overlay ids themselves are cache data (b356: 1 = "cliff", 6 =
+// "water", 19 = "lava") and differ between builds, so they cannot be a
+// fixed enum — map tri_overlay through RegionLoader::floor_class().
+enum class FloorClass : u8
+{
+    none = 0,  // underlay / model geometry (tri_overlay == 0)
+    water,     // "water", "gungywater", "water_fountain", …
+    lava,
+    invisible, // the magenta hidden marker entries
+    other,     // roads, wooden floors, bricks, …
+};
+
 struct Mesh
 {
     std::vector<Vertex> vertices; // ≤ MESH_MAX_VERTICES
     std::vector<u16>    indices;  // triangle list
     std::vector<i32>    tri_texture; // per triangle: texture id, -1 = flat
     // per triangle: flo.dat overlay id (1-indexed) that produced it, 0 =
-    // underlay/model geometry. Underlay names ("water", "lava", …) let a
-    // renderer pick shaders per material class.
+    // underlay/model geometry. RAW cache id — classify through
+    // RegionLoader::floor_class(), or read the name via underlays().
     std::vector<i32>    tri_overlay;
+    // per triangle: loc def id that produced it (-1 = terrain) — lookup via
+    // RegionLoader::loc_defs() gives name/actions (the client's right-click
+    // data); matches MapLink::loc_id for teleport locs.
+    std::vector<i32>      tri_loc;
+    std::vector<TriClass> tri_class; // TriClass
 };
+
+// bitmask of traversal directions a loc's actions imply: 1 = up, 2 = down.
+// Shared by find_links and the triangle classifier.
+inline int loc_link_mask(LocDef const& def)
+{
+    int mask = 0;
+    for(auto const& action : def.actions)
+    {
+        std::string a;
+        for(char c : action)
+            a += char(std::tolower((unsigned char)c));
+        if(a == "climb-up" || a == "go-up" || a == "walk-up")
+            mask |= 1;
+        else if(
+            a == "climb-down" || a == "go-down" || a == "walk-down" ||
+            a == "enter" || a == "crawl-through" || a == "crawl-into")
+            mask |= 2;
+        else if(a == "climb")
+            mask |= 3;
+    }
+    return mask;
+}
+
+inline bool loc_is_door(LocDef const& def)
+{
+    for(auto const& action : def.actions)
+    {
+        std::string a;
+        for(char c : action)
+            a += char(std::tolower((unsigned char)c));
+        if(a == "open" || a == "close")
+            return true;
+    }
+    return false;
+}
 
 // Deduplication key over a vertex's full contents (positions are
 // integer-derived; UVs quantised to 1/4096).
@@ -55,32 +123,82 @@ inline uint64_t vertex_dedupe_key(Vertex const& v)
     using u64 = uint64_t;
     u64 k = (u64(u32(i32(v.x))) << 32) ^ (u64(u32(i32(v.y))) << 8) ^
             u64(u32(i32(v.z))) ^ (u64(v.r) << 56) ^ (u64(v.g) << 48) ^
-            (u64(v.b) << 40);
+            (u64(v.b) << 40) ^ (u64(v.a) << 33);
     k ^= u64(u32(i32(v.u * 4096.f))) << 24 ^ u64(u32(i32(v.v * 4096.f)));
     return k;
 }
 
+namespace sorting_method {
+
+inline auto by_material(Mesh const& source, size_t index)
+{
+    return std::make_pair<i32, bool>(
+        index < source.tri_texture.size() ? source.tri_texture[index] : -1,
+        source.vertices[source.indices[index * 3]].a < 255
+    );
+}
+
+inline size_t by_u16_chunk(Mesh const& /*source*/, size_t index)
+{
+    return size_t(index / 65'500);
+}
+
+}
+
+namespace filter_method {
+
+inline bool always_true(Mesh const& /*source*/, size_t /*index*/)
+{
+    return true;
+}
+
+inline bool collidable_only(Mesh const& source, size_t index)
+{
+    // For physics, filter out doors and links, since we want to pass through those
+    // Also ignore scenery for now to not overload Bullet
+    switch(source.tri_class[index])
+    {
+    case TriClass::door:
+    case TriClass::link:
+    case TriClass::scenery:
+        return false;
+    default:
+        return true;
+    }
+}
+
+}
+
 // Regroup any number of meshes into one mesh per material (texture id,
 // -1 = flat colour) so a renderer draws one batch per material instead of
-// one per (mesh × material). Output meshes are single-material
-// (tri_texture uniform), vertex-deduplicated, and split at
-// MESH_MAX_VERTICES like everything else; tri_overlay is carried through.
+// one per (mesh × material). Transparent triangles (vertex opacity < 255)
+// go into separate buckets so they can be drawn after opaque geometry.
+// Output meshes are single-material (tri_texture uniform),
+// vertex-deduplicated, and split at MESH_MAX_VERTICES like everything
+// else; tri_overlay/tri_loc/tri_class are carried through.
+template<typename Key = declreturntype(sorting_method::by_material)>
 inline std::vector<Mesh> repack_by_material(
-    std::vector<Mesh const*> const& meshes)
+    std::vector<Mesh const*> const& meshes,
+    std::function<Key(Mesh const&, size_t)>&& sorter = sorting_method::by_material,
+    std::function<bool(Mesh const&, size_t)>&& filter = filter_method::always_true)
 {
     struct Bucket
     {
         Mesh                              mesh;
         std::unordered_map<uint64_t, u32> dedupe;
     };
-    std::map<i32, std::vector<Bucket>> buckets;
+    std::map<Key, std::vector<Bucket>> buckets;
 
     for(Mesh const* src : meshes)
         for(size_t t = 0; t * 3 + 2 < src->indices.size(); ++t)
         {
+            if(!filter(*src, t))
+                continue;
             i32 mat =
                 t < src->tri_texture.size() ? src->tri_texture[t] : -1;
-            auto& list = buckets[mat];
+            bool transparent =
+                src->vertices[src->indices[t * 3]].a < 255;
+            auto& list = buckets[sorter(*src, t)];
             if(list.empty() ||
                list.back().mesh.vertices.size() + 3 > MESH_MAX_VERTICES)
                 list.emplace_back();
@@ -98,10 +216,15 @@ inline std::vector<Mesh> repack_by_material(
             b.mesh.tri_texture.push_back(mat);
             b.mesh.tri_overlay.push_back(
                 t < src->tri_overlay.size() ? src->tri_overlay[t] : 0);
+            b.mesh.tri_loc.push_back(
+                t < src->tri_loc.size() ? src->tri_loc[t] : -1);
+            b.mesh.tri_class.push_back(
+                t < src->tri_class.size() ? src->tri_class[t]
+                                          : TriClass::terrain);
         }
 
     std::vector<Mesh> out;
-    for(auto& [mat, list] : buckets)
+    for(auto& [key, list] : buckets)
         for(auto& b : list)
             out.push_back(std::move(b.mesh));
     return out;
@@ -247,6 +370,22 @@ class RegionLoader
             throw std::runtime_error("flo.dat not found in archive 2");
         m_underlays = parse_flo_dat(*flo);
 
+        m_floor_classes.reserve(m_underlays.size());
+        for(const auto& u : m_underlays)
+        {
+            std::string n;
+            for(char c : u.name)
+                n += char(std::tolower((unsigned char)c));
+            FloorClass cls = FloorClass::other;
+            if(n.find("water") != std::string::npos)
+                cls = FloorClass::water;
+            else if(n.find("lava") != std::string::npos)
+                cls = FloorClass::lava;
+            else if(n.find("invisible") != std::string::npos)
+                cls = FloorClass::invisible;
+            m_floor_classes.push_back(cls);
+        }
+
         auto loc_dat = jag_extract(arch2, "loc.dat");
         auto loc_idx = jag_extract(arch2, "loc.idx");
         if(loc_dat && loc_idx)
@@ -326,6 +465,15 @@ class RegionLoader
 
     const std::vector<Underlay>& underlays() const { return m_underlays; }
     const std::vector<LocDef>&   loc_defs() const { return m_loc_defs; }
+
+    // Semantic class of a tri_overlay value (raw flo.dat id) — the ids
+    // differ between cache builds, the names don't.
+    FloorClass floor_class(i32 overlay_id) const
+    {
+        if(overlay_id <= 0 || overlay_id > (i32)m_floor_classes.size())
+            return FloorClass::none;
+        return m_floor_classes[overlay_id - 1];
+    }
 
     // Loc placements of one region (all planes).
     std::vector<Placement> placements(const RegionRef& ref)
@@ -439,7 +587,7 @@ class RegionLoader
             k ^= u64(u32(i32(u * 4096.f))) << 24 ^ u64(u32(i32(v * 4096.f)));
             auto [it, fresh] = vert_index.emplace(k, u32(mesh.vertices.size()));
             if(fresh)
-                mesh.vertices.push_back({x, y, z, c.r, c.g, c.b, u, v});
+                mesh.vertices.push_back({x, y, z, c.r, c.g, c.b, 255, u, v});
             return u16(it->second);
         };
 
@@ -591,6 +739,8 @@ class RegionLoader
                 }
                 mesh.tri_texture.push_back(textured ? ov.texture : -1);
                 mesh.tri_overlay.push_back(is_overlay ? tile.overlay_id : 0);
+                mesh.tri_loc.push_back(-1);
+                mesh.tri_class.push_back(TriClass::terrain);
             }
         };
 
@@ -630,16 +780,16 @@ class RegionLoader
         // dedupe on (position, colour, uv); positions are integer-derived.
         // Indices are chunk-local, so the map resets per chunk.
         std::unordered_map<u64, u32> vert_index;
-        auto add_vertex = [&](float x, float y, float z, Color c, float u,
-                              float v) -> u16 {
+        auto add_vertex = [&](float x, float y, float z, Color c, u8 a,
+                              float u, float v) -> u16 {
             u64 k = (u64(u32(i32(x))) << 32) ^ (u64(u32(i32(y))) << 8) ^
                     u64(u32(i32(z))) ^ (u64(c.r) << 56) ^ (u64(c.g) << 48) ^
-                    (u64(c.b) << 40);
+                    (u64(c.b) << 40) ^ (u64(a) << 33);
             k ^= u64(u32(i32(u * 4096.f))) << 24 ^ u64(u32(i32(v * 4096.f)));
             auto [it, fresh] =
                 vert_index.emplace(k, u32(mesh->vertices.size()));
             if(fresh)
-                mesh->vertices.push_back({x, y, z, c.r, c.g, c.b, u, v});
+                mesh->vertices.push_back({x, y, z, c.r, c.g, c.b, a, u, v});
             return u16(it->second);
         };
 
@@ -665,6 +815,16 @@ class RegionLoader
                    def, pl.type, pl.rotation, [&](int id) { return model(id); },
                    mdl))
                 continue;
+
+            // classification for every triangle of this placement;
+            // priority: link > door > wall > scenery
+            auto tri_class = TriClass::scenery;
+            if(loc_link_mask(def) != 0)
+                tri_class = TriClass::link;
+            else if(loc_is_door(def))
+                tri_class = TriClass::door;
+            else if(pl.type <= 3 || pl.type == 9)
+                tri_class = TriClass::wall;
 
             // start a new chunk when this model could overflow u16 indices
             // (conservative bound: 3 unique vertices per face)
@@ -728,6 +888,9 @@ class RegionLoader
                     continue;
                 u32 raw = fi < mdl.colors.size() ? mdl.colors[fi] : 0;
                 int tex = raw & FACE_TEXTURED ? int(raw & 0xFFFF) : -1;
+                // client alpha: 0 = opaque, larger = more transparent
+                u8 opacity = u8(
+                    255 - (fi < mdl.alphas.size() ? mdl.alphas[fi] : 0));
 
                 float us[3] = {}, vs[3] = {};
                 if(tex >= 0)
@@ -754,10 +917,13 @@ class RegionLoader
                         def.contoured_ground ? ground_at(wx, wy) : gz;
                     // model: x=east, y=vertical (negative=up), z=north
                     mesh->indices.push_back(add_vertex(
-                        wx, wy, base - float(v[1]), col, us[k], vs[k]));
+                        wx, wy, base - float(v[1]), col, opacity, us[k],
+                        vs[k]));
                 }
                 mesh->tri_texture.push_back(tex);
                 mesh->tri_overlay.push_back(0);
+                mesh->tri_loc.push_back(pl.loc_id);
+                mesh->tri_class.push_back(tri_class);
             }
         }
         if(chunks.back().indices.empty())
@@ -785,18 +951,6 @@ class RegionLoader
                 return down; // cave entrances
             return none;
         };
-        auto def_dir = [&](const LocDef& def) -> int { // bitmask: 1=up 2=down
-            int m = 0;
-            for(const auto& a : def.actions)
-            {
-                Dir d = classify(a);
-                if(d == up) m |= 1;
-                if(d == down) m |= 2;
-                if(d == both) m |= 3;
-            }
-            return m;
-        };
-
         // collect every placement of a link-capable loc, spatially bucketed
         struct LinkLoc
         {
@@ -814,7 +968,7 @@ class RegionLoader
             {
                 if(pl.loc_id < 0 || pl.loc_id >= (int)m_loc_defs.size())
                     continue;
-                int dir = def_dir(m_loc_defs[pl.loc_id]);
+                int dir = loc_link_mask(m_loc_defs[pl.loc_id]);
                 if(dir == 0)
                     continue;
                 grid[bucket(pl.world_x, pl.world_y)].push_back(
@@ -938,6 +1092,7 @@ class RegionLoader
 
     std::string                                        m_cache_dir;
     std::vector<Underlay>                              m_underlays;
+    std::vector<FloorClass>                            m_floor_classes;
     std::vector<LocDef>                                m_loc_defs;
     std::vector<RegionRef>                             m_regions;
     MapBounds                                          m_bounds;
