@@ -185,10 +185,13 @@ struct listener_t
     {
         glm::mat<3, 2, f32> prop;
 
-        Vecf3 forward = Vecf3{rotation[0][2], rotation[1][2], rotation[2][2]};
-        prop[0]       = forward;
+        // Row 2 is the view-space +Z row; the camera looks down -Z, so
+        // negate it to get the actual look/"at" direction (see the matching
+        // extraction + comment in standard_input_handlers.h's tick()).
+        Vecf3 forward = -Vecf3{rotation[0][2], rotation[1][2], rotation[2][2]};
         Vecf3 right   = Vecf3{rotation[0][0], rotation[1][0], rotation[2][0]};
-        prop[1]       = glm::cross(forward, right);
+        prop[0]       = forward;
+        prop[1]       = glm::cross(right, forward);
         alListenerfv(enum_to_al(Prop), &prop[0][0]);
         detail::check_error("alListenerfv");
     }

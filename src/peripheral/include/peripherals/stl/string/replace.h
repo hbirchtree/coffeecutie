@@ -10,34 +10,17 @@ namespace detail {
 template<typename CharType>
 FORCEDINLINE std::basic_string<CharType> str_impl(
     std::basic_string_view<CharType> const& target,
-    std::basic_string_view<CharType> const& /*query*/,
-    std::basic_string_view<CharType> const& /*replacement*/)
+    std::basic_string_view<CharType> const& query,
+    std::basic_string_view<CharType> const& replacement)
 {
-    //    if(query.size() == 0)
-    //        return std::basic_string<CharType>(target.begin(), target.end());
-
-    //    std::basic_string<CharType> out(target.begin(), target.end());
-    //    for(size_t pos = 0;; pos += replacement.size())
-    //    {
-    //        pos = out.find(query, pos);
-    //        if(pos == decltype(out)::npos || pos >= out.size())
-    //            break;
-    //        out.erase(pos, query.size());
-    //        out.insert(out.begin() + pos, replacement.begin(),
-    //        replacement.end()); out.replace();
-    //    }
     std::basic_string<CharType> out(target.begin(), target.end());
-    // TODO: FIX
-    //    if(query.empty())
-    //        return out;
-    //    for(size_t pos = 0;; pos += replacement.size())
-    //    {
-    //        pos = out.find(query, pos);
-    //        if(pos == decltype(out)::npos)
-    //            break;
-    //        out.replace(pos, query.size(), replacement.data(),
-    //        replacement.size());
-    //    }
+    if(query.empty())
+        return out;
+
+    for(size_t pos = 0; (pos = out.find(query, pos)) != decltype(out)::npos;
+        pos += replacement.size())
+        out.replace(pos, query.size(), replacement.data(), replacement.size());
+
     return out;
 }
 
@@ -65,17 +48,5 @@ FORCEDINLINE std::basic_string<CharType> str(
         detail::as_view<CharType>(query),
         detail::as_view<CharType>(replace));
 }
-
-// template<typename CharType>
-// FORCEDINLINE std::basic_string<CharType> str(
-//     std::basic_string<CharType> const& target,
-//     std::basic_string<CharType> const& query,
-//     std::basic_string<CharType> const& replace)
-//{
-//     return str_impl<CharType>(
-//         target,
-//         std::basic_string_view<CharType>(query.begin(), query.end()),
-//         std::basic_string_view<CharType>(replace.begin(), replace.end()));
-// }
 
 } // namespace stl_types::str::replace

@@ -636,8 +636,8 @@ std::optional<error_code> Resource::push(
             [this] { postRequest(); },
             [this](int error) {
                 cWarning(
-                    NETRSC_TAG "HTTP request failed({}): {}",
-                    m_request.host,
+                    NETRSC_TAG "HTTP request \"{}\": {}",
+                    m_resource.internUrl,
                     curl_easy_strerror(static_cast<CURLcode>(error)));
                 postRequest();
             });
