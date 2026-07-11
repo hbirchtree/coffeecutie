@@ -48,6 +48,13 @@ struct modern_memory_budget
                                         matrix_buffer + material_buffer;
 };
 
+struct shader_pair_t
+{
+    std::string_view                 vertex_file;
+    std::string_view                 fragment_file;
+    std::shared_ptr<gfx::program_t>& shader;
+};
+
 using memory_budget = std::
     conditional_t<lowspec_hardware, legacy_memory_budget, modern_memory_budget>;
 
@@ -57,3 +64,6 @@ void set_resource_labels(compo::EntityContainer& e);
 void create_camera(
     compo::EntityContainer&                                          e,
     const semantic::Span<const blam::scn::player_starting_location>& spawns);
+void create_program(
+    gfx::api& api,
+    shader_pair_t&& shader_info);

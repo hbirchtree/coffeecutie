@@ -131,6 +131,10 @@ struct CIKeyEvent : BaseEvent<CIEvent::Keyboard>
     {
         return (mod & PressedModifier) && !(mod & RepeatedModifier);
     }
+    bool repeated() const
+    {
+        return !(mod & RepeatedModifier);
+    }
     bool released() const
     {
         return !(mod & PressedModifier);

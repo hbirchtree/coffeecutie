@@ -13,3 +13,6 @@ target_include_directories(RSTerrainParser PRIVATE
 )
 # JAG archive bodies are headerless bzip2 streams
 target_link_libraries(RSTerrainParser PRIVATE BZip2::BZip2)
+# SHA-256 for the cache content signature (rs2_geometry.h)
+find_library(HASH_LIBRARY_LIB hash-library)
+target_link_libraries(RSTerrainParser PRIVATE ${HASH_LIBRARY_LIB})

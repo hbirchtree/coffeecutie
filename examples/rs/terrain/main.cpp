@@ -28,6 +28,7 @@
 #include <cxxopts.hpp>
 
 #include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <map>
 
@@ -276,6 +277,8 @@ int coffee_main(int, char**)
     fprintf(stderr, "  %zu underlays, %zu loc definitions, %zu regions\n",
         loader.underlays().size(), loader.loc_defs().size(),
         loader.regions().size());
+    fprintf(stderr, "  cache signature: %s\n",
+        loader.cache_signature().c_str());
 
     if(arguments.count("links"))
     {
@@ -332,9 +335,26 @@ int coffee_main(int, char**)
             fprintf(stderr, "Region (%d,%d) not found in map_index\n", rx, ry);
             return 1;
         }
-        append_mesh(terrain, geo->terrain);
-        for(const auto& chunk : geo->locs)
-            append_mesh(locs, chunk);
+        if(std::getenv("RS2_REPACK_TEST"))
+        {
+            // exercise the renderer path: repack all meshes by material
+            // (as cursed.cpp's worker does) and export the result instead —
+            // diffing this against the direct path isolates repack bugs
+            std::vector<rs2::Mesh const*> parts;
+            parts.push_back(&geo->terrain);
+            for(const auto& chunk : geo->locs)
+                parts.push_back(&chunk);
+            auto repacked = rs2::repack_by_material(parts);
+            fprintf(stderr, "repack test: %zu meshes\n", repacked.size());
+            for(const auto& m : repacked)
+                append_mesh(locs, m);
+        }
+        else
+        {
+            append_mesh(terrain, geo->terrain);
+            for(const auto& chunk : geo->locs)
+                append_mesh(locs, chunk);
+        }
     }
 
     // terrain: OBJ (with textures + UVs) when the extension says so,

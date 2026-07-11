@@ -506,6 +506,20 @@ struct PlayerCamera
         bool enabled{false};
     } keyboard;
 
+    struct
+    {
+        bool freecam{false};
+        bool physics{false};
+    } mode;
+
+    struct
+    {
+        Vecf2 movement_plane; /*!< Physics impulse movement
+                               * forward = normalized to ground level */
+        Vecf3 movement;       /*!< Freecam instant movement
+                               * forward = camera forward */
+    } inputs;
+
     Matf4 matrix{};
     Matf4 rotation{};
 

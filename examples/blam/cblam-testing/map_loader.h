@@ -122,6 +122,7 @@ struct BlamMapBrowser
                             info->seat_idx,
                             info->name.c_str());
                         ImGui::NextColumn();
+                        ImGui::Checkbox("Physics", &camera->mode.physics);
                         ImGui::Checkbox("Keyboard", &camera->keyboard.enabled);
                         ImGui::NextColumn();
                         int controller = camera->controller.index.value_or(-1);

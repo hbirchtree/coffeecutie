@@ -23,6 +23,7 @@
 #include "peripherals/semantic/enum/data_types.h"
 #include "peripherals/typing/enum/graphics/shader_stage.h"
 #include "physics.h"
+#include "resource_creation.h"
 #include "types.h"
 
 #if defined(FEATURE_ENABLE_BULLET3)
@@ -42,7 +43,10 @@ using RS2CacheLoaderManifest = compo::SubsystemManifest<
         PlayerCamera,
         PlayerInfo
     >,
-    compo::type_list_t<BlamResources>,
+    compo::type_list_t<
+        BlamResources,
+        GameEventBus
+    >,
     compo::empty_list_t
 >;
 
@@ -146,69 +150,19 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
 
         region_program = api.alloc_program();
         {
-            auto vert_src = std::string(R"(#version 300 es
-precision highp float;
-in vec3 position;
-in vec2 texcoord;
-in vec4 color;
-
-out vec4 f_color;
-out vec3 f_world_pos;
-out vec2 f_texcoord;
-flat out int f_instanceID;
-
-uniform int glw_BaseInstance;
-uniform float world_scale;
-uniform mat4 camera;
-void main()
-{
-    f_color = color;
-    f_world_pos = position / world_scale;
-    f_texcoord = texcoord;
-    f_instanceID = glw_BaseInstance;
-    gl_Position = camera * vec4(position / world_scale, 1.0);
-}
-)");
-            auto frag_src = std::string(R"(#version 300 es
-precision highp float;
-
-in vec4 f_color;
-in vec3 f_world_pos;
-in vec2 f_texcoord;
-flat in int f_instanceID;
-
-uniform int f_texture_ids[256];
-uniform sampler2DArray f_textures;
-
-out vec4 out_color;
-void main()
-{
-    vec3 normal = normalize(cross(dFdx(f_world_pos), dFdy(f_world_pos)));
-    vec3 sun = normalize(vec3(-0.35, -0.35, 20.87));
-    float lightness = 0.3 + 0.25 * abs(dot(normal, sun));
-    if(f_texture_ids[f_instanceID] < 0)
-    {
-        out_color = vec4(f_color.rgb * lightness, f_color.a);
-    } else
-    {
-        vec4 color = texture(
-            f_textures,
-            vec3(f_texcoord, float(f_texture_ids[f_instanceID]))
-        );
-        if(color.a < 0.5)
-            discard;
-        out_color = color * lightness;
-    }
-}
-)");
-            auto vert_shader = api.alloc_shader(std::string_view(vert_src));
-            auto frag_shader = api.alloc_shader(std::string_view(frag_src));
-            region_program->add(gfx::program_t::stage_t::Vertex, vert_shader);
-            region_program->add(gfx::program_t::stage_t::Fragment, frag_shader);
-            if(auto compile = region_program->compile(); compile.has_error())
-                cWarning("Failed to compile cursed program: {}", compile.error());
-            else
-                cDebug("Cursed program state: {}", compile.value());
+            create_program(api, shader_pair_t{
+                .vertex_file = "rs2",
+                .fragment_file = "rs2",
+                .shader = region_program,
+            });
+            // auto vert_shader = api.alloc_shader(std::string_view());
+            // auto frag_shader = api.alloc_shader(std::string_view());
+            // region_program->add(gfx::program_t::stage_t::Vertex, vert_shader);
+            // region_program->add(gfx::program_t::stage_t::Fragment, frag_shader);
+            // if(auto compile = region_program->compile(); compile.has_error())
+            //     cWarning("Failed to compile cursed program: {}", compile.error());
+            // else
+            //     cDebug("Cursed program state: {}", compile.value());
         }
     }
 
@@ -484,12 +438,22 @@ void main()
         };
 
         // upload ONLY this region's ranges — resident regions untouched.
-        // Meshes arrive one-per-material from the worker's repack; each
-        // becomes exactly one draw, with its texture id recorded alongside
-        // (-1 = flat vertex colour).
-        auto verts    = vertex_buf->map<rs2::Vertex>(0);
-        auto elements = element_buf->map<u16>(0);
-        u32  vptr = region.vrange.offset, eptr = region.erange.offset;
+        // Map JUST this region's byte ranges: a whole-buffer map/unmap is
+        // not guaranteed to preserve unwritten contents (write-oriented
+        // maps may hand back scratch memory), which progressively
+        // corrupted previously-uploaded regions — geometry vanished as
+        // later regions integrated. We fully overwrite the mapped ranges,
+        // so scratch semantics are safe here.
+        auto verts = vertex_buf->map<rs2::Vertex>(
+            size_t(region.vrange.offset) * sizeof(rs2::Vertex),
+            size_t(region.vrange.size) * sizeof(rs2::Vertex));
+        auto elements = element_buf->map<u16>(
+            size_t(region.erange.offset) * sizeof(u16),
+            size_t(region.erange.size) * sizeof(u16));
+        // vptr/eptr are GLOBAL buffer positions (for the draw records);
+        // the mapped spans are range-local, so copies index from 0.
+        u32 vptr = region.vrange.offset, eptr = region.erange.offset;
+        u32 vloc = 0, eloc = 0;
         for(auto const& mesh : region.data->meshes)
         {
             if(mesh.indices.empty())
@@ -506,12 +470,14 @@ void main()
                 mesh.tri_texture.empty() ? -1 : mesh.tri_texture.front());
             std::copy(
                 mesh.vertices.begin(), mesh.vertices.end(),
-                verts.begin() + vptr);
+                verts.begin() + vloc);
             std::copy(
                 mesh.indices.begin(), mesh.indices.end(),
-                elements.begin() + eptr);
+                elements.begin() + eloc);
             vptr += mesh.vertices.size();
             eptr += mesh.indices.size();
+            vloc += mesh.vertices.size();
+            eloc += mesh.indices.size();
         }
         for(auto tex : region.draw_textures)
         {
@@ -531,6 +497,35 @@ void main()
         element_buf->unmap();
 
         resident.emplace(k, std::move(region));
+
+        // A/B probe: re-upload EVERY resident region after integrating.
+        // If the world stops vanishing with this on, buffer contents do
+        // not survive map/unmap cycles and slot-writes are invalid.
+        if(std::getenv("RS2_REWRITE_ALL"))
+        {
+            auto va = vertex_buf->map<rs2::Vertex>(0);
+            auto ea = element_buf->map<u16>(0);
+            for(auto const& [rk, rr] : resident)
+            {
+                u32 vp = rr.vrange.offset, ep = rr.erange.offset;
+                for(auto const& mesh : rr.data->meshes)
+                {
+                    if(mesh.indices.empty())
+                        continue;
+                    std::copy(
+                        mesh.vertices.begin(), mesh.vertices.end(),
+                        va.begin() + vp);
+                    std::copy(
+                        mesh.indices.begin(), mesh.indices.end(),
+                        ea.begin() + ep);
+                    vp += mesh.vertices.size();
+                    ep += mesh.indices.size();
+                }
+            }
+            vertex_buf->unmap();
+            element_buf->unmap();
+        }
+
         refresh_draws();
     }
 
@@ -619,7 +614,7 @@ void main()
         auto current_region = Veci2{last_region.x, last_region.y};
         if(ImGui::Begin("Cursed Control"))
         {
-            ImGui::InputFloat("World scale", &world_scale);
+            // ImGui::InputFloat("World scale", &world_scale);
             ImGui::SliderInt2("Region coords", &current_region.x, 0, 100);
             {
                 auto const& pos = camera->camera->position;
@@ -645,10 +640,50 @@ void main()
                     probe_pos.x, probe_pos.y, probe_pos.z);
                 if(ImGui::Button("Warp to probe"))
                 {
-                    camera->camera->position = probe_pos / world_scale;
+                    GameEvent ev{GameEvent::PlayerTeleport};
+                    PlayerTeleportEvent teleport{
+                        .seat_idx = 0,
+                        .position = probe_pos / world_scale,
+                    };
+                    p.subsystem<GameEventBus>().process(ev, &teleport);
                 }
-            } else if(ImGui::Button("Spawn in Gielinor"))
-                camera->camera->position = Vecf3{412000, 412000, 1000} / world_scale;
+            }
+            if(ImGui::Button("Lumbridge teleport"))
+            {
+                GameEvent ev{GameEvent::PlayerTeleport};
+                PlayerTeleportEvent teleport{
+                    .seat_idx = 0,
+                    .position = Vecf3{412000, 412000, 1000} / world_scale,
+                };
+                p.subsystem<GameEventBus>().process(ev, &teleport);
+            }
+            if(ImGui::Button("Varrock teleport"))
+            {
+                GameEvent ev{GameEvent::PlayerTeleport};
+                PlayerTeleportEvent teleport{
+                    .seat_idx = 0,
+                    .position = Vecf3{411320, 438290, 1000} / world_scale,
+                };
+                p.subsystem<GameEventBus>().process(ev, &teleport);
+            }
+            if(ImGui::Button("Falador teleport"))
+            {
+                GameEvent ev{GameEvent::PlayerTeleport};
+                PlayerTeleportEvent teleport{
+                    .seat_idx = 0,
+                    .position = Vecf3{379550, 432380, 1000} / world_scale,
+                };
+                p.subsystem<GameEventBus>().process(ev, &teleport);
+            }
+            if(ImGui::Button("Ardougne teleport"))
+            {
+                GameEvent ev{GameEvent::PlayerTeleport};
+                PlayerTeleportEvent teleport{
+                    .seat_idx = 0,
+                    .position = Vecf3{340500, 423000, 1000} / world_scale,
+                };
+                p.subsystem<GameEventBus>().process(ev, &teleport);
+            }
             if(ImGui::Button("Spawn physics probe"))
             {
                 Physics::Event event{.type = Physics::Event::ProbeHere};
@@ -718,7 +753,7 @@ void main()
     std::set<u64>                 pending;
     Veci2                         wanted_center{};
 
-    f32 world_scale{1000.f};
+    const f32 world_scale{200.f};
 
     // sentinel: first frame always triggers a request
     Veci2 last_region{INT32_MIN, INT32_MIN};

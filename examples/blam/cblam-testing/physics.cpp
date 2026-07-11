@@ -2,18 +2,24 @@
 
 #include "caching.h"
 #include "coffee/core/CProfiling"
+#include "components.h"
 #include "data.h"
 #include "map_marker.h"
+#include "peripherals/stl/math.h"
 #include "selected_version.h"
 
 #include <BulletCollision/CollisionDispatch/btCollisionObject.h>
 #include <BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h>
+#include <BulletCollision/CollisionShapes/btCapsuleShape.h>
+#include <BulletCollision/CollisionShapes/btCollisionShape.h>
 #include <BulletCollision/CollisionShapes/btConcaveShape.h>
 #include <BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h>
 #include <BulletDynamics/Dynamics/btRigidBody.h>
+#include <LinearMath/btQuaternion.h>
 #include <LinearMath/btTransform.h>
 #include <LinearMath/btVector3.h>
 #include <coffee/core/debug/formatting.h>
+#include <magic_enum/magic_enum.hpp>
 
 #if defined(FEATURE_ENABLE_BULLET3)
 
@@ -38,7 +44,7 @@ using namespace std::chrono;
  */
 template<typename V>
 using PhysicsManifest = compo::SubsystemManifest<
-    type_list_t<DebugDraw>,
+    type_list_t<DebugDraw, PhysicsData, PlayerCamera>,
     type_list_t<BSPCache<V>, DebugMarkers, LoadingStatus>,
     empty_list_t>;
 
@@ -61,6 +67,11 @@ struct PhysicsSystem
             m_solver.get(),
             m_config.get());
         m_world->setGravity(btVector3(0, 0, -9.81f));
+        m_world_basis.setIdentity();
+        m_world_basis.setRotation(btQuaternion(
+            btVector3(1, 0, 0),
+            stl_types::math::pi / 2)
+        );
     }
 
     void start_restricted(Proxy& p, compo::time_point const&)
@@ -118,10 +129,7 @@ struct PhysicsSystem
             {
                 DebugDraw* debug = p.template get<DebugDraw>(entity);
                 if(!debug)
-                {
-                    cWarning("No DebugDraw for rigid body ({})", entity);
                     continue;
-                }
                 btRigidBody* rigid_body = body.world_body.get();
                 btVector3 min, max;
                 rigid_body->getAabb(min, max);
@@ -142,6 +150,24 @@ struct PhysicsSystem
             }
             markers->unmap();
         } while(false);
+
+        for(auto const& player_ : p.template select<PlayerCamera>())
+        {
+            auto player = p.ref(player_);
+            PlayerCamera& camera = player.template get<PlayerCamera>();
+            if(!camera.mode.physics)
+                continue;
+            auto phys_it = m_bodies.find(player.id());
+            if(phys_it == m_bodies.end())
+                continue;
+            entity_body& phys = (*phys_it).second;
+            btVector3& origin = phys.world_body->getWorldTransform().getOrigin();
+            camera.camera->position = {
+                origin.x(),
+                origin.y(),
+                origin.z() + 0.2f,
+            };
+        }
 
         m_frame++;
     }
@@ -324,13 +350,185 @@ struct PhysicsSystem
             entity_body.mesh_iface.get(),
             true);
         btRigidBody::btRigidBodyConstructionInfo info{
-            0.f,
+            body_create.mass,
             nullptr,
             entity_body.world_shape.get(),
         };
         entity_body.world_body = std::make_unique<btRigidBody>(info);
         entity_body.world_body->setFriction(1.f);
         m_world->addRigidBody(entity_body.world_body.get());
+    }
+
+    /* Create body with pre-defined shape
+     */
+    auto create_body(Physics::BodyCreationShape const& body_create)
+    {
+        cDebug("Spawning {} shape at {}",
+            magic_enum::enum_name(body_create.shape),
+            body_create.position);
+        entity_body& entity_body = m_bodies[body_create.entity_id];
+
+        /* Same teardown as the mesh path above: the previous body must
+         * leave the world before its unique_ptr is overwritten, otherwise
+         * the broadphase keeps a dangling pointer and the next
+         * stepSimulation() crashes. */
+        if(entity_body.world_body)
+        {
+            m_world->removeRigidBody(entity_body.world_body.get());
+            entity_body.world_body.reset();
+            entity_body.world_shape.reset();
+            entity_body.mesh_iface.reset();
+        }
+
+        switch(body_create.shape)
+        {
+        case Physics::BodyCreationShape::Capsule:
+        {
+            auto capsule = std::make_unique<btCapsuleShape>(
+                body_create.scale.x, 
+                body_create.scale.z);
+            entity_body.world_shape = std::move(capsule);
+            break;
+        }
+        case Physics::BodyCreationShape::Sphere:
+        {
+            entity_body.world_shape =
+                std::make_unique<btSphereShape>(body_create.scale.x);
+            break;
+        }
+        case Physics::BodyCreationShape::Box:
+        {
+            entity_body.world_shape = std::make_unique<btBoxShape>(btVector3(
+                body_create.scale.x,
+                body_create.scale.y,
+                body_create.scale.z));
+            break;
+        }
+        }
+        if(!entity_body.world_shape)
+        {
+            cWarning(
+                "BodyCreationShape: unhandled shape {}, refusing to create "
+                "a body with a null collision shape",
+                magic_enum::enum_name(body_create.shape));
+            return;
+        }
+        btVector3 local_inertia(0, 0, 0);
+        if(body_create.mass > 0.f)
+            entity_body.world_shape->calculateLocalInertia(
+                body_create.mass, local_inertia);
+
+        btRigidBody::btRigidBodyConstructionInfo info{
+            body_create.mass,
+            nullptr,
+            entity_body.world_shape.get(),
+            local_inertia,
+        };
+        entity_body.world_body = std::make_unique<btRigidBody>(info);
+        entity_body.world_body->setFriction(1.f);
+        if(body_create.lock.rotation)
+            entity_body.world_body->setAngularFactor(btVector3(0, 0, 0));
+        btTransform transform = m_world_basis;
+        transform.setOrigin(btVector3(
+            body_create.position.x,
+            body_create.position.y,
+            body_create.position.z));
+        entity_body.world_body->setWorldTransform(transform);
+        m_world->addRigidBody(entity_body.world_body.get());
+    }
+
+    /* Sleeping bodies are not woken when the static mesh under them is
+     * swapped — a resting probe would freeze mid-air over new terrain.
+     * Wake everything after any static-world change. */
+    void wake_dynamic_bodies()
+    {
+        auto& bodies = m_world->getNonStaticRigidBodies();
+        for(int i = 0; i < bodies.size(); ++i)
+            bodies[i]->activate(true);
+    }
+
+    /* Adopt a shape built on a worker thread (see BodyCreationPrebuilt) —
+     * main-thread cost is one rigid-body alloc + broadphase insert. */
+    void adopt_body(Physics::BodyCreationPrebuilt&& body_create)
+    {
+        remove_body(body_create.entity_id);
+
+        entity_body& body = m_bodies[body_create.entity_id];
+        body.mesh_iface   = std::move(body_create.mesh_iface);
+        body.world_shape  = std::move(body_create.shape);
+        body.keep_alive   = std::move(body_create.keep_alive);
+
+        btRigidBody::btRigidBodyConstructionInfo info{
+            0.f,
+            nullptr,
+            body.world_shape.get(),
+        };
+        body.world_body = std::make_unique<btRigidBody>(info);
+        body.world_body->setFriction(1.f);
+        m_world->addRigidBody(body.world_body.get());
+        wake_dynamic_bodies();
+    }
+
+    void remove_body(u64 entity_id)
+    {
+        auto it = m_bodies.find(entity_id);
+        if(it == m_bodies.end())
+            return;
+        if(it->second.world_body)
+            m_world->removeRigidBody(it->second.world_body.get());
+        m_bodies.erase(it);
+        wake_dynamic_bodies();
+    }
+
+    void add_impulse(Physics::Impulse const& impulse)
+    {
+        auto body_it = m_bodies.find(impulse.entity_id);
+        if(body_it == m_bodies.end())
+            return;
+        cDebug("Applying impulse of {} to {}", impulse.impulse, impulse.entity_id);
+        entity_body& body = (*body_it).second;
+        body.world_body->activate(true);
+        body.world_body->applyCentralImpulse(btVector3(
+            impulse.impulse.x,
+            impulse.impulse.y,
+            impulse.impulse.z
+        ));
+    }
+
+    void set_linear_velocity(Physics::Velocity const& velocity)
+    {
+        auto body_it = m_bodies.find(velocity.entity_id);
+        if(body_it == m_bodies.end())
+            return;
+        cDebug("Applying velocity of {} to {}", velocity.velocity, velocity.entity_id);
+        entity_body& body = (*body_it).second;
+        body.world_body->activate(true);
+        body.world_body->setLinearVelocity(btVector3(
+            velocity.velocity.x,
+            velocity.velocity.y,
+            velocity.velocity.z
+        ));
+    }
+
+    void translate(Physics::Translate const& translation)
+    {
+        cDebug("Applying translation of {} to {}",
+            translation.position,
+            translation.entity_id);
+        auto body_it = m_bodies.find(translation.entity_id);
+        if(body_it == m_bodies.end())
+            return;
+        entity_body& body = (*body_it).second;
+        body.world_body->activate(true);
+        btTransform transform = m_world_basis;
+        transform.setOrigin(btVector3(
+            translation.position.x,
+            translation.position.y,
+            translation.position.z
+        ));
+        if(!translation.preserve_momentum)
+            body.world_body->setLinearVelocity(btVector3());
+        body.world_body->setWorldTransform(transform);
     }
 
     /* Winged-edge polygon walk: starting at first_edge, follow
@@ -487,24 +685,26 @@ struct PhysicsSystem
         m_probe_body->setFriction(1.f);
         m_probe_body->setRollingFriction(.3f);
         m_probe_body->setSpinningFriction(.3f);
+        /* Continuous collision: the RS2 world is scaled down (world_scale)
+         * so terrain tiles are tiny and the triangle mesh is infinitely
+         * thin, while gravity stays at Halo scale — the sphere accelerates
+         * fast enough to tunnel through the surface between substeps. Swept-
+         * sphere CCD sweeps the motion each step so it can't pass through. */
+        m_probe_body->setCcdMotionThreshold(probe_radius * .5f);
+        m_probe_body->setCcdSweptSphereRadius(probe_radius * .8f);
         m_world->addRigidBody(m_probe_body.get());
     }
 
     void move_probe(Vecf3 const& pos)
     {
-        // Spawn on first request (RS2-only sessions never call spawn_probe)
-        if(!m_probe_body)
-        {
-            cDebug("Spawning physics probe at {}, {}, {}", pos.x, pos.y, pos.z);
-            spawn_probe_at(pos);
-            return;
-        }
-        cDebug("Moving physics probe to {}, {}, {}", pos.x, pos.y, pos.z);
-        btTransform transform;
-        transform.setOrigin(btVector3(pos.x, pos.y, pos.z));
-        m_probe_body->setWorldTransform(transform);
-        m_probe_body->setLinearVelocity(btVector3(0, 0, 0));
-        m_probe_body->activate(true);
+        // Recreate the body from scratch rather than teleporting it. A
+        // setWorldTransform() teleport leaves the CCD interpolation
+        // transform at the old position, so the next step sweeps the probe
+        // across the whole map (old→new) and it tunnels / ends up in a bad
+        // state — collision then silently fails. The fresh-spawn path is
+        // known-good, so reuse it.
+        cDebug("(Re)spawning physics probe at {}, {}, {}", pos.x, pos.y, pos.z);
+        spawn_probe_at(pos);
     }
 
     std::unique_ptr<btDefaultCollisionConfiguration>     m_config;
@@ -512,6 +712,8 @@ struct PhysicsSystem
     std::unique_ptr<btDbvtBroadphase>                    m_broadphase;
     std::unique_ptr<btSequentialImpulseConstraintSolver> m_solver;
     std::unique_ptr<btDiscreteDynamicsWorld>             m_world;
+
+    btTransform m_world_basis;
 
     std::unique_ptr<btTriangleIndexVertexArray> m_mesh_iface;
     std::unique_ptr<btBvhTriangleMeshShape>     m_world_shape;
@@ -522,54 +724,12 @@ struct PhysicsSystem
     struct entity_body
     {
         std::unique_ptr<btTriangleIndexVertexArray> mesh_iface;
-        std::unique_ptr<btBvhTriangleMeshShape>     world_shape;
+        std::unique_ptr<btCollisionShape>           world_shape;
         std::unique_ptr<btRigidBody>                world_body;
         std::shared_ptr<void>                       keep_alive;
     };
     std::map<u64, entity_body> m_bodies;
 
-    /* Sleeping bodies are not woken when the static mesh under them is
-     * swapped — a resting probe would freeze mid-air over new terrain.
-     * Wake everything after any static-world change. */
-    void wake_dynamic_bodies()
-    {
-        auto& bodies = m_world->getNonStaticRigidBodies();
-        for(int i = 0; i < bodies.size(); ++i)
-            bodies[i]->activate(true);
-    }
-
-    /* Adopt a shape built on a worker thread (see BodyCreationPrebuilt) —
-     * main-thread cost is one rigid-body alloc + broadphase insert. */
-    void adopt_body(Physics::BodyCreationPrebuilt&& body_create)
-    {
-        remove_body(body_create.entity_id);
-
-        entity_body& body = m_bodies[body_create.entity_id];
-        body.mesh_iface   = std::move(body_create.mesh_iface);
-        body.world_shape  = std::move(body_create.shape);
-        body.keep_alive   = std::move(body_create.keep_alive);
-
-        btRigidBody::btRigidBodyConstructionInfo info{
-            0.f,
-            nullptr,
-            body.world_shape.get(),
-        };
-        body.world_body = std::make_unique<btRigidBody>(info);
-        body.world_body->setFriction(1.f);
-        m_world->addRigidBody(body.world_body.get());
-        wake_dynamic_bodies();
-    }
-
-    void remove_body(u64 entity_id)
-    {
-        auto it = m_bodies.find(entity_id);
-        if(it == m_bodies.end())
-            return;
-        if(it->second.world_body)
-            m_world->removeRigidBody(it->second.world_body.get());
-        m_bodies.erase(it);
-        wake_dynamic_bodies();
-    }
 
     /* Index buffer for the world shape + triangle → collision surface
      * mapping (material lookup on hit) */
@@ -599,10 +759,31 @@ void alloc_physics(compo::EntityContainer& container)
         {
             physics.adopt_body(std::move(*body));
         });
+    phys_bus.addEventFunction<Physics::BodyCreationShape>(
+        0,
+        [&physics](Physics::Event&, Physics::BodyCreationShape* body)
+        {
+            physics.create_body(*body);
+        });
     phys_bus.addEventFunction<Physics::BodyRemoval>(
         0, [&physics](Physics::Event&, Physics::BodyRemoval* removal)
         {
             physics.remove_body(removal->entity_id);
+        });
+    phys_bus.addEventFunction<Physics::Impulse>(
+        0, [&physics](Physics::Event&, Physics::Impulse* impulse)
+        {
+            physics.add_impulse(*impulse);
+        });
+    phys_bus.addEventFunction<Physics::Velocity>(
+        0, [&physics](Physics::Event&, Physics::Velocity* velocity)
+        {
+            physics.set_linear_velocity(*velocity);
+        });
+    phys_bus.addEventFunction<Physics::Translate>(
+        0, [&physics](Physics::Event&, Physics::Translate* translation)
+        {
+            physics.translate(*translation);
         });
     phys_bus.addEventFunction<Physics::ProbeHere>(
         0, [&container, &physics](Physics::Event&, Physics::ProbeHere*) {

@@ -10,6 +10,8 @@
             "shaders/map_senv_base.frag",
             "shaders/map_uber.frag",
             "shaders/map_uber_lite.frag",
+            "shaders/rs2.vert",
+            "shaders/rs2.frag",
             "shaders/scenery_lite.vert",
             "shaders/scenery.vert",
             "shaders/scenery_xbox_lite.vert",

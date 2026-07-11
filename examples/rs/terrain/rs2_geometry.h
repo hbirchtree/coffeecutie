@@ -16,6 +16,8 @@
 #include "peripherals/stl/decl_member_function.h"
 #include "rs2_cache.h"
 
+#include <hash-library/sha256.h>
+
 #include <cctype>
 #include <functional>
 #include <map>
@@ -50,6 +52,7 @@ enum class TriClass : u8
     wall    = 2, // placement shapes 0-3 + 9 (diagonal)
     door    = 3, // def has an Open/Close action
     link    = 4, // def has a Climb/Enter action (see find_links)
+    roof    = 5, // placement shape 12-21
 };
 
 // Semantic floor classes, derived from flo.dat entry NAMES at load time.
@@ -116,17 +119,51 @@ inline bool loc_is_door(LocDef const& def)
     return false;
 }
 
-// Deduplication key over a vertex's full contents (positions are
-// integer-derived; UVs quantised to 1/4096).
-inline uint64_t vertex_dedupe_key(Vertex const& v)
+// Lossless deduplication key over a vertex's full contents (positions are
+// integer-derived; UVs quantised to 1/4096). Used as an unordered_map key
+// with real equality — a hash is only the bucket, so distinct vertices are
+// never welded (a lossy 64-bit hash-as-key silently merged different
+// vertices, collapsing wall-end triangles when many share a material).
+struct VertexKey
 {
-    using u64 = uint64_t;
-    u64 k = (u64(u32(i32(v.x))) << 32) ^ (u64(u32(i32(v.y))) << 8) ^
-            u64(u32(i32(v.z))) ^ (u64(v.r) << 56) ^ (u64(v.g) << 48) ^
-            (u64(v.b) << 40) ^ (u64(v.a) << 33);
-    k ^= u64(u32(i32(v.u * 4096.f))) << 24 ^ u64(u32(i32(v.v * 4096.f)));
-    return k;
+    i32 x, y, z, u, v;
+    u32 rgba;
+    bool operator==(VertexKey const& o) const
+    {
+        return x == o.x && y == o.y && z == o.z && u == o.u && v == o.v &&
+               rgba == o.rgba;
+    }
+};
+
+struct VertexKeyHash
+{
+    size_t operator()(VertexKey const& k) const
+    {
+        uint64_t h    = 1469598103934665603ull; // FNV-1a
+        auto     mix  = [&](uint64_t x) { h = (h ^ x) * 1099511628211ull; };
+        mix(u32(k.x));
+        mix(u32(k.y));
+        mix(u32(k.z));
+        mix(u32(k.u));
+        mix(u32(k.v));
+        mix(k.rgba);
+        return size_t(h);
+    }
+};
+
+inline VertexKey vertex_key(Vertex const& v)
+{
+    return VertexKey{
+        i32(v.x),
+        i32(v.y),
+        i32(v.z),
+        i32(v.u * 4096.f),
+        i32(v.v * 4096.f),
+        u32(v.r) << 24 | u32(v.g) << 16 | u32(v.b) << 8 | v.a};
 }
+
+template<typename T>
+using VertexMap = std::unordered_map<VertexKey, T, VertexKeyHash>;
 
 namespace sorting_method {
 
@@ -159,7 +196,6 @@ inline bool collidable_only(Mesh const& source, size_t index)
     switch(source.tri_class[index])
     {
     case TriClass::door:
-    case TriClass::link:
     case TriClass::scenery:
         return false;
     default:
@@ -184,8 +220,8 @@ inline std::vector<Mesh> repack_by_material(
 {
     struct Bucket
     {
-        Mesh                              mesh;
-        std::unordered_map<uint64_t, u32> dedupe;
+        Mesh           mesh;
+        VertexMap<u32> dedupe;
     };
     std::map<Key, std::vector<Bucket>> buckets;
 
@@ -208,7 +244,7 @@ inline std::vector<Mesh> repack_by_material(
             {
                 Vertex const& v = src->vertices[src->indices[t * 3 + k]];
                 auto [it, fresh] = b.dedupe.emplace(
-                    vertex_dedupe_key(v), u32(b.mesh.vertices.size()));
+                    vertex_key(v), u32(b.mesh.vertices.size()));
                 if(fresh)
                     b.mesh.vertices.push_back(v);
                 b.mesh.indices.push_back(u16(it->second));
@@ -365,6 +401,16 @@ class RegionLoader
     {
         auto arch2 = jag_load_archive(read_file(m_cache_dir + "/0/2.dat"));
 
+        // Content fingerprint for network handshakes: SHA-256 over the
+        // decompressed config archive (flo/loc/obj…) and versionlist
+        // archive. The versionlist holds every asset's CRC (models, maps,
+        // anims, midis), so this one hash changes iff any content that
+        // affects derived geometry changes — peers with matching signatures
+        // are guaranteed identical worlds. Not a cache "version number"
+        // (none exists in the bytes); a build-unique identity token.
+        SHA256 sig;
+        sig.add(arch2.data(), arch2.size());
+
         auto flo = jag_extract(arch2, "flo.dat");
         if(!flo)
             throw std::runtime_error("flo.dat not found in archive 2");
@@ -392,7 +438,10 @@ class RegionLoader
             m_loc_defs = parse_loc_defs(*loc_dat, *loc_idx);
 
         auto arch5 = jag_load_archive(read_file(m_cache_dir + "/0/5.dat"));
-        auto mi    = jag_extract(arch5, "map_index");
+        sig.add(arch5.data(), arch5.size());
+        m_signature = sig.getHash();
+
+        auto mi = jag_extract(arch5, "map_index");
         if(!mi)
             throw std::runtime_error("map_index not found in archive 5");
         m_regions = parse_map_index(*mi);
@@ -465,6 +514,11 @@ class RegionLoader
 
     const std::vector<Underlay>& underlays() const { return m_underlays; }
     const std::vector<LocDef>&   loc_defs() const { return m_loc_defs; }
+
+    // SHA-256 hex of the cache's config + versionlist archives — a
+    // build-unique identity token. Exchange it at connect time; peers must
+    // match or their streamed geometry would diverge.
+    const std::string& cache_signature() const { return m_signature; }
 
     // Semantic class of a tri_overlay value (raw flo.dat id) — the ids
     // differ between cache builds, the names don't.
@@ -578,16 +632,14 @@ class RegionLoader
     Mesh build_terrain_mesh(int rx, int ry, int plane)
     {
         Mesh mesh;
-        std::unordered_map<u64, u32> vert_index;
+        VertexMap<u32> vert_index;
         auto add_vertex = [&](float x, float y, float z, Color c, float u,
                               float v) -> u16 {
-            u64 k = (u64(u32(i32(x))) << 32) ^ (u64(u32(i32(y))) << 8) ^
-                    u64(u32(i32(z))) ^ (u64(c.r) << 56) ^ (u64(c.g) << 48) ^
-                    (u64(c.b) << 40);
-            k ^= u64(u32(i32(u * 4096.f))) << 24 ^ u64(u32(i32(v * 4096.f)));
-            auto [it, fresh] = vert_index.emplace(k, u32(mesh.vertices.size()));
+            Vertex vert{x, y, z, c.r, c.g, c.b, 255, u, v};
+            auto [it, fresh] =
+                vert_index.emplace(vertex_key(vert), u32(mesh.vertices.size()));
             if(fresh)
-                mesh.vertices.push_back({x, y, z, c.r, c.g, c.b, 255, u, v});
+                mesh.vertices.push_back(vert);
             return u16(it->second);
         };
 
@@ -779,17 +831,14 @@ class RegionLoader
         Mesh*             mesh = &chunks.back();
         // dedupe on (position, colour, uv); positions are integer-derived.
         // Indices are chunk-local, so the map resets per chunk.
-        std::unordered_map<u64, u32> vert_index;
+        VertexMap<u32> vert_index;
         auto add_vertex = [&](float x, float y, float z, Color c, u8 a,
                               float u, float v) -> u16 {
-            u64 k = (u64(u32(i32(x))) << 32) ^ (u64(u32(i32(y))) << 8) ^
-                    u64(u32(i32(z))) ^ (u64(c.r) << 56) ^ (u64(c.g) << 48) ^
-                    (u64(c.b) << 40) ^ (u64(a) << 33);
-            k ^= u64(u32(i32(u * 4096.f))) << 24 ^ u64(u32(i32(v * 4096.f)));
-            auto [it, fresh] =
-                vert_index.emplace(k, u32(mesh->vertices.size()));
+            Vertex vert{x, y, z, c.r, c.g, c.b, a, u, v};
+            auto [it, fresh] = vert_index.emplace(
+                vertex_key(vert), u32(mesh->vertices.size()));
             if(fresh)
-                mesh->vertices.push_back({x, y, z, c.r, c.g, c.b, a, u, v});
+                mesh->vertices.push_back(vert);
             return u16(it->second);
         };
 
@@ -811,9 +860,18 @@ class RegionLoader
             const LocDef& def = m_loc_defs[pl.loc_id];
 
             RsModel mdl;
-            if(!build_loc_model(
-                   def, pl.type, pl.rotation, [&](int id) { return model(id); },
-                   mdl))
+            bool    ok = build_loc_model(
+                def, pl.type, pl.rotation, [&](int id) { return model(id); },
+                mdl);
+            if(std::getenv("RS2_LOC_DEBUG") && (pl.type <= 3 || pl.type == 9) &&
+               plane == 0)
+                fprintf(stderr,
+                    "WALL loc=%d shape=%d rot=%d world=(%d,%d) size=%dx%d "
+                    "types=%zu %s\n",
+                    pl.loc_id, pl.type, pl.rotation, pl.world_x, pl.world_y,
+                    def.size_x, def.size_y, def.types.size(),
+                    ok ? "OK" : "FAIL");
+            if(!ok)
                 continue;
 
             // classification for every triangle of this placement;
@@ -825,6 +883,8 @@ class RegionLoader
                 tri_class = TriClass::door;
             else if(pl.type <= 3 || pl.type == 9)
                 tri_class = TriClass::wall;
+            else if(pl.type >= 12 || pl.type <= 21)
+                tri_class = TriClass::roof;
 
             // start a new chunk when this model could overflow u16 indices
             // (conservative bound: 3 unique vertices per face)
@@ -1091,6 +1151,7 @@ class RegionLoader
     }
 
     std::string                                        m_cache_dir;
+    std::string                                        m_signature;
     std::vector<Underlay>                              m_underlays;
     std::vector<FloorClass>                            m_floor_classes;
     std::vector<LocDef>                                m_loc_defs;

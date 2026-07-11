@@ -20,6 +20,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <cstdio>
 #include <fstream>
 #include <optional>
@@ -43,7 +44,12 @@ inline std::vector<u8> read_file(const std::string& path)
     std::ifstream f(path, std::ios::binary | std::ios::ate);
     if(!f)
         throw std::runtime_error("cannot open: " + path);
+    // A directory opens without failing on Linux, but tellg() then returns
+    // a garbage size — guard so a bad path throws instead of attempting a
+    // multi-exabyte allocation.
     auto size = f.tellg();
+    if(size < 0 || size > std::streamoff(1) << 31)
+        throw std::runtime_error("bad file size: " + path);
     f.seekg(0);
     std::vector<u8> buf(size);
     f.read(reinterpret_cast<char*>(buf.data()), size);

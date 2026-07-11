@@ -3,14 +3,20 @@
 #include "blam/volta/blam_tag_index.h"
 #include "blam/volta/blam_tag_ref.h"
 #include "caching_item.h"
+#include "coffee/net/curl_context.h"
 #include "components.h"
 #include "data.h"
 #include "data_cache.h"
+#include "oaf/api.h"
+#include "oaf/wav/wav_decode.h"
 #include "peripherals/stl/range.h"
 #include "selected_version.h"
 #include "sound_cache.h"
 #include <algorithm>
 #include <magic_enum/magic_enum.hpp>
+
+#include <coffee/net/net_resource.h>
+#include <peripherals/stl/string/url_encode.h>
 
 #if defined(FEATURE_ENABLE_OAF)
 
@@ -93,6 +99,15 @@ struct SoundSystem
     std::map<u64, sound_unit_t> active_sounds;
     std::map<u64, sound_unit_t> fading_sounds;
     u64                         next_fade_id{0x8000000000000000ULL};
+
+    std::vector<std::shared_ptr<oaf::buffer_t>> buffers;
+    std::vector<std::shared_ptr<oaf::source_t>> sources;
+    struct voice_synth_t
+    {
+        char voice[10] = {"KR"};
+        char backend[10] = {"melo"};
+        char phrase[128] = {"Pee pee poo poo"};
+    } voice;
 
     u32 stat_bg_total{0};   /* cluster changes seen                       */
     u32 stat_bg_with_snd{0};/* ...of which resolved to a non-null sound   */
@@ -401,6 +416,43 @@ struct SoundSystem
                         sound_row(entity, sound, ImVec4(0, 1, 0, 1));
                     for(auto const& [entity, sound] : fading_sounds)
                         sound_row(entity, sound, ImVec4(0.7, 0.5, 0, 1));
+                    ImGui::EndTabItem();
+                }
+                if(ImGui::BeginTabItem("Testing"))
+                {
+                    ImGui::InputText("Voice", voice.voice, sizeof(voice.voice));
+                    ImGui::InputText("Backend", voice.backend, sizeof(voice.backend));
+                    ImGui::InputText("Phrase", voice.phrase, sizeof(voice.phrase));
+                    if(ImGui::Button("Play voice"))
+                    {
+                        auto src = net::MkUrl(
+                            fmt::format("http://10.0.0.17:9006/{}"
+                                        "/v1/audio/speech"
+                                        "?input={}&voice={}",
+                                voice.backend,
+                                stl_types::str::url_encode::encode(voice.phrase),
+                                voice.voice));
+                        net::Resource sound(net::create_curl_context(), src);
+
+                        if(!sound.fetch().has_value() && sound.data().has_value())
+                        {
+                            buffers.push_back(snd.alloc_buffer());
+                            sources.push_back(snd.alloc_source());
+                            auto& buf = *buffers.back();
+                            auto& src = *sources.back();
+
+                            oaf::decode::wav::decoder wav_dec;
+                            wav_dec.decode(
+                                sound.data().value(),
+                                std::nullopt,
+                                std::nullopt,
+                                buf);
+                            src.queue(buf);
+                        } else
+                        {
+                            cWarning("Got no audio data");
+                        }
+                    }
                     ImGui::EndTabItem();
                 }
 

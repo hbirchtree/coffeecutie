@@ -104,11 +104,15 @@ endif()
 
 if(BLAM_CURSED)
     find_package(BZip2 REQUIRED)
+    # hash-library: SHA-256 for the RS2 cache content signature
+    # (rs2_geometry.h); PeripheralPlatform only links it on Windows.
+    find_library(HASH_LIBRARY_LIB hash-library)
     target_sources(BlamGraphics PRIVATE
       cursed.cpp
     )
     target_link_libraries(BlamGraphics PRIVATE
       BZip2::BZip2
+      ${HASH_LIBRARY_LIB}
     )
     target_compile_definitions(BlamGraphics PRIVATE
       -DBLAM_CURSED_ENABLED

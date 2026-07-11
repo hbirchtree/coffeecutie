@@ -4,13 +4,7 @@
 #include <coffee/core/files/cfiles.h>
 
 #include "graphics_api.h"
-
-struct shader_pair_t
-{
-    std::string_view                 vertex_file;
-    std::string_view                 fragment_file;
-    std::shared_ptr<gfx::program_t>& shader;
-};
+#include "resource_creation.h"
 
 template<size_t N>
 static void create_shaders(

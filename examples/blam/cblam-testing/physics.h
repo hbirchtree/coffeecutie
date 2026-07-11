@@ -18,9 +18,16 @@ struct Event
         None,
         BodyCreationU32, /*!< Request creating a physics body */
         BodyCreationU16, /*!< Request creating a physics body */
+        BodyCreationShape, /*!< Request physics body based on standard shape */
         BodyCreationPrebuilt, /*!< Adopt a shape built off-thread */
         BodyRemoval, /*!< Remove a body created by any BodyCreation* */
+
+        Impulse, /*!< Apply impulse to a body */
+        Velocity, /*!< Apply linear velocity to body, for bipeds */
+        Translate, /*!< Apply translation to body, for teleport */
+        
         Overlap, /*!< Collision event between two bodies */
+        
         ProbeHere, /*!< Put debug probe at camera position, for testing */
     } type{};
 };
@@ -35,6 +42,9 @@ struct BodyCreation
     gsl::span<const char> vertices{};
     u32                   vertex_stride{12};
     semantic::type_t      vertex_type{semantic::type_t::f32};
+
+    Vecf3 position{};
+    f32   mass{0.f};
 
     bool static_body{true};
 };
@@ -58,10 +68,53 @@ struct BodyCreationPrebuilt
 };
 #endif
 
+struct BodyCreationShape
+{
+    static constexpr auto event_type = Event::BodyCreationShape;
+    u64 entity_id{0};
+    Vecf3 scale{1, 1, 1};
+    Vecf3 position{};
+    f32   mass{0.f}; /*!< 0 = static/immovable (Bullet convention); >0 makes
+                       * the body dynamic and simulated. */
+    enum shape_t
+    {
+        Capsule,
+        Sphere,
+        Box,
+    } shape{Capsule};
+    struct
+    {
+        bool rotation{false};
+    } lock;
+};
+
 struct BodyRemoval
 {
     static constexpr auto event_type = Event::BodyRemoval;
     u64                   entity_id{0};
+};
+
+struct Impulse
+{
+    static constexpr auto event_type = Event::Impulse;
+    u64                   entity_id{0};
+    Vecf3                 impulse{}; /*!< Force + direction */
+};
+
+struct Velocity
+{
+    static constexpr auto event_type = Event::Velocity;
+    u64                   entity_id{0};
+    Vecf3                 velocity{}; /*!< Force + direction */
+};
+
+struct Translate
+{
+    static constexpr auto event_type = Event::Translate;
+    u64                   entity_id{0};
+    Vecf3                 position{}; /*!< Force + direction */
+    bool                  preserve_momentum{false};
+
 };
 
 struct Overlap

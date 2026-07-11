@@ -83,8 +83,8 @@ struct PostProcessParameters : compo::SubsystemBase
 {
     using type = PostProcessParameters;
 
-    f32  exposure{1.5f};
-    f32  gamma{1.6f};
+    f32  exposure{2.6f};
+    f32  gamma{1.f};
     f32  scale{1.f};
     bool auto_expose{true};
 
@@ -193,6 +193,8 @@ struct GameEvent
         MapChanged,
         ClusterChanged,
 
+        PlayerTeleport,
+
         ServerConnect,
         ServerConnected,
         ServerCameraControl,
@@ -279,6 +281,15 @@ struct ClusterChangedEvent
 
     BSPItem const* bsp{nullptr};
     u32            cluster{std::numeric_limits<u32>::max()};
+};
+
+struct PlayerTeleportEvent
+{
+    static constexpr auto event_type = GameEvent::PlayerTeleport;
+
+    libc_types::u64 entity_id{0};
+    libc_types::u32 seat_idx{0};
+    Vecf3           position{};
 };
 
 struct ServerConnectEvent

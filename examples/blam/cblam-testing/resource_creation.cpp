@@ -1,9 +1,13 @@
 #include "resource_creation.h"
 
 #include "coffee/comp_app/subsystems.h"
+#include "coffee/core/types/input/keymap_latin1.h"
+#include "coffee/graphics/apis/gleam/rhi.h"
 #include "components.h"
+#include "data.h"
 #include "map_marker.h"
 #include "peripherals/constants.h"
+#include "physics.h"
 #include "shader_compiler.h"
 
 #include <coffee/comp_app/services.h>
@@ -11,6 +15,7 @@
 #include <coffee/core/input/eventhandlers.h>
 #include <glm/ext/quaternion_trigonometric.hpp>
 #include <glm/geometric.hpp>
+#include <stdexcept>
 
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
 #include <coffee/comp_app/dummy_plug.h>
@@ -91,6 +96,85 @@ void create_resources(compo::EntityContainer& e)
                 cWarning("No camera selected");
                 return nullptr;
             }));
+        eventhandler->addEventFunction<CIKeyEvent>(
+            1024, [&e](CIEvent&, CIKeyEvent* key) {
+                switch(key->key)
+                {
+                case CK_w:
+                case CK_a:
+                case CK_s:
+                case CK_d:
+                case CK_Space:
+                    break;
+                default:
+                    return;
+                }
+                // Apply impulse-based movement
+                auto& physics = e.subsystem_cast<PhysicsBus>();
+                for(auto& player_ : e.select<PlayerCamera>())
+                {
+                    auto player = e.ref(player_);
+                    auto& cam = player.get<PlayerCamera>();
+                    if(!cam.mode.physics || !cam.keyboard.enabled)
+                        continue;
+                    Physics::Event ev{Physics::Event::Velocity};
+                    auto src = [&cam, key] {
+                        // TODO: Make forward vector planar with ground, same with right
+                        switch(key->key)
+                        {
+                        case CK_w:
+                            return cam.camera_->cached.forward;
+                        case CK_s:
+                            return -cam.camera_->cached.forward;
+                        case CK_a:
+                            return -cam.camera_->cached.right;
+                        case CK_d:
+                            return cam.camera_->cached.right;
+                        case CK_Space:
+                            return Vecf3{0, 0, 1};
+                        default:
+                            return Vecf3{};
+                        }
+                    }();
+                    cDebug("Velocity: {}", src);
+                    Physics::Velocity velocity{
+                        .entity_id = player.id(),
+                        .velocity  = src * 2.f,
+                    };
+                    physics.process(ev, &velocity);
+                }
+            });
+        auto& gbus = e.subsystem_cast<GameEventBus>();
+        auto& pbus = e.subsystem_cast<PhysicsBus>();
+        gbus.addEventFunction<PlayerTeleportEvent>(
+            1024, [&e, &pbus](GameEvent&, PlayerTeleportEvent* teleport) {
+                cDebug("Teleport event: seat={} entity={} position={}",
+                    teleport->seat_idx,
+                    teleport->entity_id,
+                    teleport->position);
+                auto player = [&e, teleport] {
+                    if(teleport->entity_id != 0)
+                        return e.ref(teleport->entity_id);
+                    for(auto const& player : e.select<PlayerInfo>())
+                    {
+                        if(e.get<PlayerInfo>(player.id)->seat_idx != teleport->seat_idx)
+                            continue;
+                        return e.ref(player.id);
+                    }
+                    Throw(std::out_of_range("tried to teleport player, but no target"));
+                }();
+                auto& cam = player.get<PlayerCamera>();
+                if(cam.mode.physics)
+                {
+                    Physics::Event ev{Physics::Event::Translate};
+                    Physics::Translate translate{
+                        .entity_id = player.id(),
+                        .position = teleport->position,
+                    };
+                    pbus.process(ev, &translate);
+                } else
+                    cam.camera->position = teleport->position;
+            });
         eventhandler->addEventFunction<CIControllerConnectEvent>(
             1024, [&e](CIEvent& ev, CIControllerConnectEvent* connect) {
                 auto* controllers = e.service<comp_app::ControllerInput>();
@@ -984,6 +1068,7 @@ void create_camera(
     for(auto& _ : e.select<PlayerCamera>())
         if(auto* info = e.get<PlayerInfo>(_.id); info && !info->is_remote())
             ++count;
+    auto& physics_bus         = e.subsystem_cast<PhysicsBus>();
     for(auto& entity : e.select<PlayerCamera>())
     {
         auto* cam  = e.get<PlayerCamera>(entity.id);
@@ -1007,6 +1092,25 @@ void create_camera(
         cam->camera_opts->world_basis = bsp_basis_inv;
         cam->camera->rotation =
             glm::angleAxis(glm::pi<f32>() - location.rot, Vecf3{0.f, 1.f, 0.f});
+        Physics::Event event{Physics::Event::BodyCreationShape};
+        Physics::BodyCreationShape create{
+            .entity_id = entity.id,
+            .scale = {0.1, 0, 0.5},
+            .position = location.pos + Vecf3{0, 0, 0.6},
+            .mass = 1,
+            .shape = Physics::BodyCreationShape::Capsule,
+            .lock = {
+                .rotation = true,
+            },
+        };
+        physics_bus.process(event, &create);
     }
     update_camera_aspect(e);
+}
+
+void create_program(
+    gfx::api& api,
+    shader_pair_t&& shader_info)
+{
+    create_shaders<1>(api, {{std::move(shader_info)}});
 }

@@ -175,6 +175,8 @@ static void load_resources(
                 compo::type_hash_v<NetworkInfo>(),
                 compo::type_hash_v<PlayerCamera>(),
                 compo::type_hash_v<SoundEffects>(),
+                compo::type_hash_v<PhysicsData>(),
+                compo::type_hash_v<DebugDraw>(),
             },
         .tags = PlayerBiped,
     };

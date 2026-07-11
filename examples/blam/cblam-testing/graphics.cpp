@@ -517,9 +517,18 @@ i32 blam_main()
                     snd.listener()
                         .set_property<oaf::listener_property::position>(
                             cam->camera->position);
+                    // cam->camera_->cached.{right,up,forward} are already
+                    // world/BSP-space and correctly signed (see tick() in
+                    // standard_input_handlers.h). set_property<orientation>
+                    // expects row0/row2 of its input to be (right, -forward)
+                    // in that same convention, so build a matrix with those
+                    // as rows instead of feeding it the raw, un-remapped
+                    // view-space quaternion.
+                    auto const& cached = cam->camera_->cached;
                     snd.listener()
                         .set_property<oaf::listener_property::orientation>(
-                            glm::mat3_cast(cam->camera->rotation));
+                            glm::transpose(Matf3{
+                                cached.right, cached.up, -cached.forward}));
                     break;
                 }
             }
