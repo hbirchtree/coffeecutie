@@ -486,6 +486,48 @@ i32 blam_main()
                             controllers->state(*cam->controller.index),
                             t);
                     }
+
+                    /* Physics-mode movement: read held keys from the
+                     * camera's key register every frame instead of reacting
+                     * to key events, which stutter at the OS repeat rate.
+                     * The physics system only ever sees a Velocity event. */
+                    if(cam->mode.physics && cam->keyboard.enabled)
+                    {
+                        /* Project onto the ground plane so looking down
+                         * doesn't drive the capsule into the floor */
+                        auto planar = [](Vecf3 v) {
+                            v.z      = 0.f;
+                            f32 len2 = glm::dot(v, v);
+                            return len2 > 1e-8f ? v / std::sqrt(len2)
+                                                : Vecf3{};
+                        };
+                        auto const& wrap = *cam->camera_;
+                        Vecf3       dir{};
+                        if(wrap.has_key(Input::CK_w))
+                            dir += planar(wrap.cached.forward);
+                        if(wrap.has_key(Input::CK_s))
+                            dir -= planar(wrap.cached.forward);
+                        if(wrap.has_key(Input::CK_d))
+                            dir += planar(wrap.cached.right);
+                        if(wrap.has_key(Input::CK_a))
+                            dir -= planar(wrap.cached.right);
+                        if(f32 len2 = glm::dot(dir, dir); len2 > 1e-8f)
+                            dir /= std::sqrt(len2);
+
+                        constexpr f32 move_speed = 2.f;
+                        constexpr f32 jump_speed = 3.5f;
+
+                        Physics::Event    ev{Physics::Event::Velocity};
+                        Physics::Velocity velocity{
+                            .entity_id  = entity.id,
+                            .velocity   = dir * move_speed,
+                            .preserve_z = true,
+                            .jump       = wrap.has_key(Input::CK_Space)
+                                              ? jump_speed
+                                              : 0.f,
+                        };
+                        e.subsystem_cast<PhysicsBus>().process(ev, &velocity);
+                    }
                 }
 
                 cam->camera->zVals = {100.f, 0.001f};

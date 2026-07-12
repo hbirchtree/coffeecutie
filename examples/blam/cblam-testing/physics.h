@@ -106,6 +106,12 @@ struct Velocity
     static constexpr auto event_type = Event::Velocity;
     u64                   entity_id{0};
     Vecf3                 velocity{}; /*!< Force + direction */
+    bool preserve_z{false}; /*!< Keep the body's current Z velocity so
+                             * gravity/falling integrates normally;
+                             * velocity.z is ignored */
+    f32  jump{0.f}; /*!< If non-zero, set Z velocity to this value — but only
+                     * when the body is vertically at rest (grounded-ish).
+                     * Applied on top of preserve_z. */
 };
 
 struct Translate

@@ -363,9 +363,12 @@ struct PhysicsSystem
      */
     auto create_body(Physics::BodyCreationShape const& body_create)
     {
-        cDebug("Spawning {} shape at {}",
+        cDebug("Spawning {} shape at {} for entity {} (had_body={})",
             magic_enum::enum_name(body_create.shape),
-            body_create.position);
+            body_create.position,
+            body_create.entity_id,
+            m_bodies.contains(body_create.entity_id) &&
+                m_bodies[body_create.entity_id].world_body != nullptr);
         entity_body& entity_body = m_bodies[body_create.entity_id];
 
         /* Same teardown as the mesh path above: the previous body must
@@ -425,15 +428,33 @@ struct PhysicsSystem
             local_inertia,
         };
         entity_body.world_body = std::make_unique<btRigidBody>(info);
-        entity_body.world_body->setFriction(1.f);
         if(body_create.lock.rotation)
+        {
+            /* Upright biped: friction against the triangle soup makes the
+             * capsule catch on surface seams and slopes when driven
+             * horizontally. Its velocity is authored per-frame anyway, so
+             * drop friction entirely — stopping is done by writing zero
+             * horizontal velocity, not by friction. */
+            entity_body.world_body->setFriction(0.f);
             entity_body.world_body->setAngularFactor(btVector3(0, 0, 0));
+        } else
+            entity_body.world_body->setFriction(1.f);
         btTransform transform = m_world_basis;
         transform.setOrigin(btVector3(
             body_create.position.x,
             body_create.position.y,
             body_create.position.z));
         entity_body.world_body->setWorldTransform(transform);
+        for(int i = 0; i < m_world->getNumCollisionObjects(); ++i)
+            if(m_world->getCollisionObjectArray()[i] ==
+               entity_body.world_body.get())
+                cWarning(
+                    "create_body(shape): fresh body {:p} for entity {} "
+                    "ALREADY in world at index {} ({} objects total)",
+                    (void*)entity_body.world_body.get(),
+                    body_create.entity_id,
+                    i,
+                    m_world->getNumCollisionObjects());
         m_world->addRigidBody(entity_body.world_body.get());
     }
 
@@ -500,14 +521,17 @@ struct PhysicsSystem
         auto body_it = m_bodies.find(velocity.entity_id);
         if(body_it == m_bodies.end())
             return;
-        cDebug("Applying velocity of {} to {}", velocity.velocity, velocity.entity_id);
         entity_body& body = (*body_it).second;
-        body.world_body->activate(true);
-        body.world_body->setLinearVelocity(btVector3(
-            velocity.velocity.x,
-            velocity.velocity.y,
-            velocity.velocity.z
-        ));
+        /* No cDebug here: biped movement sends this every frame */
+        btVector3 vel(
+            velocity.velocity.x, velocity.velocity.y, velocity.velocity.z);
+        if(velocity.preserve_z)
+            vel.setZ(body.world_body->getLinearVelocity().z());
+        if(velocity.jump != 0.f &&
+           std::abs(body.world_body->getLinearVelocity().z()) < 0.1f)
+            vel.setZ(velocity.jump);
+        body.world_body->activate(true); /* sleeping bodies ignore velocity */
+        body.world_body->setLinearVelocity(vel);
     }
 
     void translate(Physics::Translate const& translation)
