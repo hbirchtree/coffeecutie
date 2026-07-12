@@ -859,10 +859,48 @@ class RegionLoader
                 continue;
             const LocDef& def = m_loc_defs[pl.loc_id];
 
+            // Wall corners (type 2) are TWO wall pieces forming an L: the
+            // client (SceneBuilder WALL_CORNER) draws the model twice —
+            // mirrored at `rotation` (passed as rotation+4) and normal at
+            // (rotation+1)&3. Rendering only one leg loses the final
+            // segment of every wall run that ends in a corner.
             RsModel mdl;
-            bool    ok = build_loc_model(
-                def, pl.type, pl.rotation, [&](int id) { return model(id); },
-                mdl);
+            bool    ok;
+            if(pl.type == 2)
+            {
+                RsModel leg2;
+                ok = build_loc_model(
+                        def, pl.type, pl.rotation + 4,
+                        [&](int id) { return model(id); }, mdl) &&
+                     build_loc_model(
+                        def, pl.type, (pl.rotation + 1) & 3,
+                        [&](int id) { return model(id); }, leg2);
+                if(ok)
+                {
+                    int base     = (int)mdl.verts.size();
+                    int tex_base = (int)mdl.tex_pmn.size();
+                    mdl.verts.insert(
+                        mdl.verts.end(), leg2.verts.begin(), leg2.verts.end());
+                    for(const auto& fc : leg2.faces)
+                        mdl.faces.push_back(
+                            {base + fc[0], base + fc[1], base + fc[2]});
+                    mdl.colors.insert(
+                        mdl.colors.end(), leg2.colors.begin(),
+                        leg2.colors.end());
+                    mdl.alphas.insert(
+                        mdl.alphas.end(), leg2.alphas.begin(),
+                        leg2.alphas.end());
+                    for(const auto& t : leg2.tex_pmn)
+                        mdl.tex_pmn.push_back(
+                            {base + t[0], base + t[1], base + t[2]});
+                    for(i32 tc : leg2.tex_coord)
+                        mdl.tex_coord.push_back(tc < 0 ? -1 : tc + tex_base);
+                }
+            }
+            else
+                ok = build_loc_model(
+                    def, pl.type, pl.rotation,
+                    [&](int id) { return model(id); }, mdl);
             if(std::getenv("RS2_LOC_DEBUG") && (pl.type <= 3 || pl.type == 9) &&
                plane == 0)
                 fprintf(stderr,

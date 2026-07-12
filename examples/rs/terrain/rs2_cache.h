@@ -1316,7 +1316,11 @@ inline bool build_loc_model(
             out.tex_coord.push_back(tc < 0 ? -1 : tc + tex_base);
     }
 
-    if(def.is_rotated) // mirror: negate z, reverse winding
+    // Wall corners (shape 2) pass rotation+4 for their first leg, which the
+    // client renders MIRRORED (LocModelLoader.getLocModelData: isMirrored =
+    // isRotated || (WALL_CORNER && rotation > 3)).
+    if(def.is_rotated ||
+       (shape == 2 && rotation > 3)) // mirror: negate z, reverse winding
     {
         for(auto& v : out.verts)
             v[2] = -v[2];

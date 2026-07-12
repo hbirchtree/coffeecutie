@@ -363,12 +363,9 @@ struct PhysicsSystem
      */
     auto create_body(Physics::BodyCreationShape const& body_create)
     {
-        cDebug("Spawning {} shape at {} for entity {} (had_body={})",
+        cDebug("Spawning {} shape at {}",
             magic_enum::enum_name(body_create.shape),
-            body_create.position,
-            body_create.entity_id,
-            m_bodies.contains(body_create.entity_id) &&
-                m_bodies[body_create.entity_id].world_body != nullptr);
+            body_create.position);
         entity_body& entity_body = m_bodies[body_create.entity_id];
 
         /* Same teardown as the mesh path above: the previous body must
@@ -445,16 +442,6 @@ struct PhysicsSystem
             body_create.position.y,
             body_create.position.z));
         entity_body.world_body->setWorldTransform(transform);
-        for(int i = 0; i < m_world->getNumCollisionObjects(); ++i)
-            if(m_world->getCollisionObjectArray()[i] ==
-               entity_body.world_body.get())
-                cWarning(
-                    "create_body(shape): fresh body {:p} for entity {} "
-                    "ALREADY in world at index {} ({} objects total)",
-                    (void*)entity_body.world_body.get(),
-                    body_create.entity_id,
-                    i,
-                    m_world->getNumCollisionObjects());
         m_world->addRigidBody(entity_body.world_body.get());
     }
 
