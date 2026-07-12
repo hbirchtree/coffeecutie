@@ -8,6 +8,11 @@
 #include "peripherals/stl/math.h"
 #include "selected_version.h"
 
+#include <coffee/core/debug/formatting.h>
+#include <magic_enum/magic_enum.hpp>
+
+#if defined(FEATURE_ENABLE_BULLET3)
+
 #include <BulletCollision/CollisionDispatch/btCollisionObject.h>
 #include <BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h>
 #include <BulletCollision/CollisionShapes/btCapsuleShape.h>
@@ -15,15 +20,10 @@
 #include <BulletCollision/CollisionShapes/btConcaveShape.h>
 #include <BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h>
 #include <BulletDynamics/Dynamics/btRigidBody.h>
+#include <btBulletDynamicsCommon.h>
 #include <LinearMath/btQuaternion.h>
 #include <LinearMath/btTransform.h>
 #include <LinearMath/btVector3.h>
-#include <coffee/core/debug/formatting.h>
-#include <magic_enum/magic_enum.hpp>
-
-#if defined(FEATURE_ENABLE_BULLET3)
-
-#include <btBulletDynamicsCommon.h>
 
 #include <chrono>
 #include <limits>
