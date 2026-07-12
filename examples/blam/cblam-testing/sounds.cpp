@@ -7,8 +7,6 @@
 #include "components.h"
 #include "data.h"
 #include "data_cache.h"
-#include "oaf/api.h"
-#include "oaf/wav/wav_decode.h"
 #include "peripherals/stl/range.h"
 #include "selected_version.h"
 #include "sound_cache.h"
@@ -27,6 +25,7 @@
 #include <deque>
 #include <oaf/api_system.h>
 #include <oaf/ogg/ogg_decode.h>
+#include <oaf/wav/wav_decode.h>
 #include <peripherals/stl/enumerate.h>
 
 #if defined(OAF_IMA_DECODER_ENABLED)
