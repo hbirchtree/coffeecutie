@@ -146,6 +146,53 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
                         .type = Physics::Event::BodyCreationPrebuilt};
                     this->physics.process(event, region->body.get());
                 }));
+
+        // Map links become sensor boxes (their footprint AABB) that follow
+        // the resident ring; find_links() scans every region's placements,
+        // so it runs once on the worker before any region build.
+        on_links = rq::runtime_queue::BindToQueue(
+            std::function<void(std::shared_ptr<std::vector<rs2::MapLink>>)>(
+                [this](std::shared_ptr<std::vector<rs2::MapLink>> found) {
+                    links = std::move(*found);
+                    cDebug("RS2: {} map links", links.size());
+                    sync_link_bodies();
+                }));
+        rq::runtime_queue::QueueImmediate(
+            worker, rq::detail::duration(), [this] {
+                on_links(std::make_shared<std::vector<rs2::MapLink>>(
+                    loader.find_links()));
+            });
+
+        // Touching a link's sensor box: resolve and log it (teleporting is
+        // a game decision, e.g. on interact). Fires every frame while
+        // overlapping, so edge-detect on the link id.
+        physics.addEventFunction<Physics::Overlap>(
+            0, [this](Physics::Event&, Physics::Overlap* overlap) {
+                u64 id = overlap->entity_id_1 & link_body_bit
+                             ? overlap->entity_id_1
+                         : overlap->entity_id_2 & link_body_bit
+                             ? overlap->entity_id_2
+                             : 0;
+                if(!id || id == last_overlap_link)
+                    return;
+                size_t idx = size_t(id & ~link_body_bit);
+                if(idx >= links.size())
+                    return;
+                last_overlap_link = id;
+                auto const& l = links[idx];
+                cDebug(
+                    "RS2: link overlap: {} '{}' [{}] ({},{},{}) -> "
+                    "({},{},{})",
+                    l.name,
+                    l.action,
+                    rs2::to_string(l.kind),
+                    l.from_x,
+                    l.from_y,
+                    l.from_plane,
+                    l.to_x,
+                    l.to_y,
+                    l.to_plane);
+            });
 #endif
 
         region_program = api.alloc_program();
@@ -294,6 +341,8 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
             else
                 ++it;
         }
+
+        sync_link_bodies();
 #endif
 
         for(i32 x = rx - 1; x <= rx + 1; ++x)
@@ -395,6 +444,59 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
         if(dirty)
             refresh_draws();
     }
+
+#if defined(FEATURE_ENABLE_BULLET3)
+    // Main thread: keep one static sensor box per map link whose from-tile
+    // lies in the resident ring — created/removed as the ring moves, same
+    // lifecycle as the region collision meshes. The box is the link's
+    // footprint AABB scaled into engine space.
+    void sync_link_bodies()
+    {
+        for(size_t i = 0; i < links.size(); ++i)
+        {
+            auto const& l = links[i];
+            Veci2 coord{l.from_x / rs2::REGION_SIZE,
+                        l.from_y / rs2::REGION_SIZE};
+            u64  id   = link_body_bit | u64(i);
+            bool want = in_ring(coord, wanted_center);
+            bool have = link_bodies.contains(id);
+            if(want == have)
+                continue;
+            if(want)
+            {
+                Vecf3 half{
+                    (l.aabb_max[0] - l.aabb_min[0]) / (2.f * world_scale),
+                    (l.aabb_max[1] - l.aabb_min[1]) / (2.f * world_scale),
+                    (l.aabb_max[2] - l.aabb_min[2]) / (2.f * world_scale)};
+                Vecf3 center{
+                    (l.aabb_min[0] + l.aabb_max[0]) / (2.f * world_scale),
+                    (l.aabb_min[1] + l.aabb_max[1]) / (2.f * world_scale),
+                    (l.aabb_min[2] + l.aabb_max[2]) / (2.f * world_scale)};
+                Physics::Event event{
+                    .type = Physics::Event::BodyCreationShape};
+                Physics::BodyCreationShape create{
+                    .entity_id = id,
+                    // bodies get m_world_basis (+90° about X) applied, so
+                    // local y/z half-extents swap to stay world-aligned
+                    .scale     = {half.x, half.z, half.y},
+                    .position  = center,
+                    .mass      = 0,
+                    .shape     = Physics::BodyCreationShape::Box,
+                    .sensor    = true,
+                };
+                physics.process(event, &create);
+                link_bodies.insert(id);
+            }
+            else
+            {
+                Physics::Event       event{.type = Physics::Event::BodyRemoval};
+                Physics::BodyRemoval removal{.entity_id = id};
+                physics.process(event, &removal);
+                link_bodies.erase(id);
+            }
+        }
+    }
+#endif
 
     // Main (GPU) thread, via on_built: adopt a finished region if it is
     // still wanted, upload it into its own slots, refresh the draw list.
@@ -744,6 +846,15 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
     std::function<void(std::shared_ptr<PhysicsRegion>)> on_physics_built;
     // region keys with a live physics body (entity_id = region_key)
     std::set<u64> physics_bodies;
+
+    // map links (built once on the worker) + their live sensor boxes.
+    // Link body entity ids = link_body_bit | index into `links`; region
+    // keys never reach that bit (region_key tops out around bit 38).
+    static constexpr u64 link_body_bit = 1ull << 62;
+    std::function<void(std::shared_ptr<std::vector<rs2::MapLink>>)> on_links;
+    std::vector<rs2::MapLink> links;
+    std::set<u64>             link_bodies;
+    u64                       last_overlap_link{0};
 #endif
 
     RangeAllocator vertex_alloc{vertex_capacity};

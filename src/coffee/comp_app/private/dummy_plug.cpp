@@ -12,6 +12,8 @@
 #include <coffee/core/types/input/keymap.h>
 #include <peripherals/stl/enumerate.h>
 
+#include <algorithm>
+
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 0xFFF
 #include <peripherals/stl/magic_enum.hpp>
@@ -48,23 +50,63 @@ enum class type_t
 
 namespace {
 
+/* Polled controller state, mirroring what a platform layer (SDL2) would
+ * hold. Registered as the comp_app::ControllerInput service before the
+ * windowing services load, so it takes the service slot and consumers
+ * polling ControllerInput::state() see synthetic state. Injecting
+ * synthetic *events* alone doesn't work: per-frame movement samples the
+ * polled state, never the event stream. */
+struct DummyControllerInput
+    : comp_app::interfaces::ControllerInput
+    , comp_app::AppService<DummyControllerInput, comp_app::ControllerInput>
+{
+    using type = DummyControllerInput;
+
+    virtual libc_types::u32 count() const final
+    {
+        return static_cast<libc_types::u32>(m_state.size());
+    }
+    virtual controller_map state(libc_types::u32 idx) const final
+    {
+        return idx < m_state.size() ? m_state[idx] : controller_map{};
+    }
+    virtual comp_app::text_type_t name(libc_types::u32 idx) const final
+    {
+        return "Dummy Controller " + std::to_string(idx);
+    }
+
+    controller_map& ensure(libc_types::u32 idx)
+    {
+        if(m_state.size() <= idx)
+            m_state.resize(idx + 1);
+        return m_state[idx];
+    }
+
+    std::vector<controller_map> m_state;
+};
+
 void queue_input_event(
     comp_app::BasicEventBus<Coffee::Input::CIEvent>* bus,
+    DummyControllerInput*                            controllers,
     type_t                                           type,
     nlohmann::json const&                            event)
 {
     using Coffee::Input::CIControllerAtomicEvent;
-    using Coffee::Input::CIControllerAtomicUpdateEvent;
+    using Coffee::Input::CIControllerConnectEvent;
     using Coffee::Input::CIKeyEvent;
     using Coffee::Input::CIMouseButtonEvent;
     using Coffee::Input::CIMouseMoveEvent;
+    using libc_types::i16;
     using libc_types::u8;
 
     CIEvent    ievent;
     const auto start_time = std::chrono::milliseconds(event.value("time", 0u));
+    /* QueueImmediate rather than QueueShot: both honor the scheduled time,
+     * but QueueShot drops tasks whose deadline has already passed — a slow
+     * frame (or "time": 0) would silently swallow synthetic input */
     const auto emit_future_event =
         [bus]<typename T>(compo::duration delay, CIEvent event, T data) {
-            rq::runtime_queue::QueueShot(
+            rq::runtime_queue::QueueImmediate(
                 rq::runtime_queue::GetCurrentQueue().value(),
                 delay,
                 [bus, event, data]() mutable {
@@ -75,6 +117,15 @@ void queue_input_event(
                 })
                 .value();
         };
+    /* State mutations ride the same queue as the synthetic events so both
+     * views (polled state, event stream) stay in sync frame-wise */
+    const auto mutate_future = [](compo::duration delay, auto&& fn) {
+        rq::runtime_queue::QueueImmediate(
+            rq::runtime_queue::GetCurrentQueue().value(),
+            delay,
+            std::forward<decltype(fn)>(fn))
+            .value();
+    };
 
     using namespace Coffee::Input;
     switch(type)
@@ -83,7 +134,39 @@ void queue_input_event(
         const auto axis = magic_enum::enum_cast<CIControllerAxisMapping>(
                               "CK_AXIS_" + event.value("axis", std::string()))
                               .value_or(CK_AXIS_BASE);
-        ievent.type = CIEvent::ControllerUpdate;
+        const auto controller = event.value("index", 0u);
+        const auto axis_idx   = static_cast<u8>(axis - CK_AXIS_BASE);
+        const auto value      = static_cast<i16>(
+            std::clamp(event.value("value", 0.f), -1.f, 1.f) * 32767.f);
+
+        ievent.type = CIEvent::Controller;
+        CIControllerAtomicEvent atomic = {
+            .value        = value,
+            .index        = axis_idx,
+            .controller   = static_cast<u8>(controller),
+            .button_state = false,
+            .axis         = true,
+        };
+        emit_future_event(start_time, ievent, atomic);
+        if(controllers)
+            mutate_future(start_time, [controllers, controller, axis_idx, value] {
+                controllers->ensure(controller).axes.d[axis_idx] = value;
+            });
+
+        /* Optional duration: stick springs back to neutral afterwards */
+        if(event.contains("duration"))
+        {
+            const auto release_time =
+                start_time +
+                std::chrono::milliseconds(event.value("duration", 0u));
+            atomic.value = 0;
+            emit_future_event(release_time, ievent, atomic);
+            if(controllers)
+                mutate_future(
+                    release_time, [controllers, controller, axis_idx] {
+                        controllers->ensure(controller).axes.d[axis_idx] = 0;
+                    });
+        }
         break;
     }
     case type_t::controller_button: {
@@ -91,24 +174,51 @@ void queue_input_event(
             magic_enum::enum_cast<CIControllerButtonMapping>(
                 "CK_BUTTON_" + event.value("button", std::string()))
                 .value_or(CK_BUTTON_BASE);
-        ievent.type                        = CIEvent::ControllerUpdate;
-        CIControllerAtomicEvent controller = {
-            .index        = static_cast<u8>(button - CK_BUTTON_BASE),
-            .controller   = static_cast<u8>(event.value("index", 0u)),
+        const auto controller = event.value("index", 0u);
+        const auto bit        = static_cast<u8>(button - CK_BUTTON_BASE);
+        const auto release_time =
+            start_time + std::chrono::milliseconds(event.value("duration", 0u));
+
+        /* CIControllerAtomicEvent is BaseEvent<CIEvent::Controller>;
+         * this previously went out as ControllerUpdate, which readers
+         * decode as a connect/disconnect payload */
+        ievent.type                        = CIEvent::Controller;
+        CIControllerAtomicEvent controller_ev = {
+            .index        = bit,
+            .controller   = static_cast<u8>(controller),
             .button_state = true,
             .axis         = false,
         };
-        emit_future_event(start_time, ievent, controller);
-        controller.button_state = false;
-        emit_future_event(start_time, ievent, controller);
+        emit_future_event(start_time, ievent, controller_ev);
+        controller_ev.button_state = false;
+        emit_future_event(release_time, ievent, controller_ev);
+        if(controllers)
+        {
+            mutate_future(start_time, [controllers, controller, bit] {
+                controllers->ensure(controller).buttons.d |= (1u << bit);
+            });
+            mutate_future(release_time, [controllers, controller, bit] {
+                controllers->ensure(controller).buttons.d &=
+                    ~static_cast<libc_types::u16>(1u << bit);
+            });
+        }
         break;
     }
     case type_t::controller_connect: {
-        ievent.type = CIEvent::ControllerUpdate;
-        CIControllerAtomicUpdateEvent controller;
-        controller.connected  = true;
-        controller.controller = event.value("index", 0u);
-        emit_future_event(start_time, ievent, controller);
+        const auto controller = event.value("index", 0u);
+        /* Seat assignment listens for ControllerConnect (what the SDL2
+         * layer emits), not the atomic update event */
+        ievent.type = CIEvent::ControllerConnect;
+        CIControllerConnectEvent connect = {
+            .index        = static_cast<libc_types::u16>(controller),
+            .player_index = static_cast<i16>(controller),
+            .connected    = true,
+        };
+        emit_future_event(start_time, ievent, connect);
+        if(controllers)
+            mutate_future(start_time, [controllers, controller] {
+                controllers->ensure(controller);
+            });
         break;
     }
     case type_t::key: {
@@ -441,11 +551,19 @@ void insert_dummy_plug(
         container.service<comp_app::BasicEventBus<Coffee::Display::Event>>();
     auto* app_bus = container.service<comp_app::BasicEventBus<AppEvent>>();
 
+    /* Take the ControllerInput service slot before the windowing layer
+     * registers its own (AppLoader's service_register skips occupied
+     * slots), so controller state polled by the app is synthetic. */
+    auto& dummy_controllers =
+        DummyControllerInput::register_service<DummyControllerInput>(
+            container);
+
     if(config.contains("events"))
     {
         auto emit_events = [&dummy_plug,
                             &config,
                             input_bus,
+                            &dummy_controllers,
                             &container,
                             flag = false]() mutable {
             auto* app_info = container.service<comp_app::AppInfo>();
@@ -486,7 +604,8 @@ void insert_dummy_plug(
                 case type_t::key:
                 case type_t::mouse_button:
                 case type_t::mouse_move:
-                    queue_input_event(input_bus, type, event);
+                    queue_input_event(
+                        input_bus, &dummy_controllers, type, event);
                     break;
                 case type_t::screenshot: {
                     auto start_time =
@@ -623,7 +742,12 @@ extern "C" EMSCRIPTEN_KEEPALIVE void coffee_dummy_plug_event(const char* json_st
         if(auto* input_bus =
                container
                    .service<comp_app::BasicEventBus<Coffee::Input::CIEvent>>())
-            queue_input_event(input_bus, type, event);
+            queue_input_event(
+                input_bus,
+                C_DCAST<DummyControllerInput>(
+                    container.service<comp_app::ControllerInput>()),
+                type,
+                event);
         break;
     }
     case type_t::custom:

@@ -474,6 +474,12 @@ i32 blam_main()
 
                 if(info->permissions.camera)
                 {
+                    /* In physics mode the body owns the position: let
+                     * tick()/controller_camera_update() rotate the view and
+                     * refresh cached vectors, but drop their freecam
+                     * fly-movement so it doesn't fight the physics follow. */
+                    auto const freecam_pos = cam->camera->position;
+
                     if(cam->keyboard.enabled)
                         cam->camera_->tick(t);
                     if(controllers && cam->controller.index.has_value())
@@ -487,11 +493,14 @@ i32 blam_main()
                             t);
                     }
 
-                    /* Physics-mode movement: read held keys from the
-                     * camera's key register every frame instead of reacting
-                     * to key events, which stutter at the OS repeat rate.
+                    if(cam->mode.physics)
+                        cam->camera->position = freecam_pos;
+
+                    /* Physics-mode movement: sample held keys and stick
+                     * state every frame instead of reacting to input
+                     * events, which stutter at the OS key-repeat rate.
                      * The physics system only ever sees a Velocity event. */
-                    if(cam->mode.physics && cam->keyboard.enabled)
+                    if(cam->mode.physics)
                     {
                         /* Project onto the ground plane so looking down
                          * doesn't drive the capsule into the floor */
@@ -503,15 +512,41 @@ i32 blam_main()
                         };
                         auto const& wrap = *cam->camera_;
                         Vecf3       dir{};
-                        if(wrap.has_key(Input::CK_w))
-                            dir += planar(wrap.cached.forward);
-                        if(wrap.has_key(Input::CK_s))
-                            dir -= planar(wrap.cached.forward);
-                        if(wrap.has_key(Input::CK_d))
-                            dir += planar(wrap.cached.right);
-                        if(wrap.has_key(Input::CK_a))
-                            dir -= planar(wrap.cached.right);
-                        if(f32 len2 = glm::dot(dir, dir); len2 > 1e-8f)
+                        bool        jump{false};
+
+                        if(cam->keyboard.enabled)
+                        {
+                            if(wrap.has_key(Input::CK_w))
+                                dir += planar(wrap.cached.forward);
+                            if(wrap.has_key(Input::CK_s))
+                                dir -= planar(wrap.cached.forward);
+                            if(wrap.has_key(Input::CK_d))
+                                dir += planar(wrap.cached.right);
+                            if(wrap.has_key(Input::CK_a))
+                                dir -= planar(wrap.cached.right);
+                            jump = wrap.has_key(Input::CK_Space);
+                        }
+                        if(controllers && cam->controller.index.has_value())
+                        {
+                            auto state =
+                                controllers->state(*cam->controller.index);
+                            /* Analog: stick deflection scales speed */
+                            auto axis = [deadzone =
+                                             cam->controller.opts.deadzone](
+                                            i16 raw) {
+                                return std::abs(raw) < deadzone
+                                           ? 0.f
+                                           : convert_i16_f(raw);
+                            };
+                            dir += planar(wrap.cached.forward) *
+                                   -axis(state.axes.e.l_y);
+                            dir += planar(wrap.cached.right) *
+                                   axis(state.axes.e.l_x);
+                            jump = jump || state.buttons.e.a;
+                        }
+                        /* Clamp instead of normalize: keyboard diagonals
+                         * cap at 1, partial stick deflection stays analog */
+                        if(f32 len2 = glm::dot(dir, dir); len2 > 1.f)
                             dir /= std::sqrt(len2);
 
                         constexpr f32 move_speed = 2.f;
@@ -522,9 +557,7 @@ i32 blam_main()
                             .entity_id  = entity.id,
                             .velocity   = dir * move_speed,
                             .preserve_z = true,
-                            .jump       = wrap.has_key(Input::CK_Space)
-                                              ? jump_speed
-                                              : 0.f,
+                            .jump       = jump ? jump_speed : 0.f,
                         };
                         e.subsystem_cast<PhysicsBus>().process(ev, &velocity);
                     }

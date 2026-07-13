@@ -106,7 +106,13 @@ std::map<std::string, std::string> query_params()
         auto param = *it;
         auto split = param.find('=');
         if(split == std::string::npos)
+        {
+            /* Valueless flag (?foo&bar=1): present with empty value, so
+             * contains()-style checks (e.g. "dummy_plug") see it */
+            if(!param.empty())
+                out[std::string(param)] = {};
             continue;
+        }
         out[std::string(param.substr(0, split))] =
             std::string(param.substr(split + 1));
     }

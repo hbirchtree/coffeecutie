@@ -314,7 +314,14 @@ struct MapLink
     // that build_locs_mesh emitted at (from_x, from_y, from_plane)
     int              shape = 10, rotation = 0;
     std::vector<int> model_ids;
+    // world-space footprint box of the placement (mesh units: 128/tile,
+    // height×8, z up): def size (swapped on odd rotation) in x/y, z from
+    // the footprint's ground height up a nominal LINK_AABB_HEIGHT — meant
+    // for overlap-trigger volumes, not exact model bounds
+    float aabb_min[3]{}, aabb_max[3]{};
 };
+
+constexpr float LINK_AABB_HEIGHT = 256.f; // 2 tiles
 
 inline const char* to_string(MapLink::Kind k)
 {
@@ -921,7 +928,7 @@ class RegionLoader
                 tri_class = TriClass::door;
             else if(pl.type <= 3 || pl.type == 9)
                 tri_class = TriClass::wall;
-            else if(pl.type >= 12 || pl.type <= 21)
+            else if(pl.type >= 12 && pl.type <= 21)
                 tri_class = TriClass::roof;
 
             // start a new chunk when this model could overflow u16 indices
@@ -1122,6 +1129,27 @@ class RegionLoader
             link.rotation = l.pl.rotation;
             if(const std::vector<int>* ids = loc_model_ids(def, l.pl.type))
                 link.model_ids = *ids;
+
+            // footprint trigger box at the placement (same math as
+            // build_locs_meshes: sizes swap on odd rotation, ground from
+            // the footprint corners)
+            int size_x = def.size_x, size_y = def.size_y;
+            if(l.pl.rotation & 1)
+                std::swap(size_x, size_y);
+            int ground = height_at(l.pl.world_x, l.pl.world_y, l.pl.plane);
+            for(int cy = 0; cy <= size_y; ++cy)
+                for(int cx = 0; cx <= size_x; ++cx)
+                    ground = std::min(
+                        ground,
+                        height_at(
+                            l.pl.world_x + cx, l.pl.world_y + cy,
+                            l.pl.plane));
+            link.aabb_min[0] = float(l.pl.world_x) * 128.f;
+            link.aabb_min[1] = float(l.pl.world_y) * 128.f;
+            link.aabb_min[2] = float(ground) * 8.f;
+            link.aabb_max[0] = float(l.pl.world_x + size_x) * 128.f;
+            link.aabb_max[1] = float(l.pl.world_y + size_y) * 128.f;
+            link.aabb_max[2] = float(ground) * 8.f + LINK_AABB_HEIGHT;
             links.push_back(std::move(link));
         };
 

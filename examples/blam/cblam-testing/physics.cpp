@@ -103,6 +103,37 @@ struct PhysicsSystem
 
         m_world->stepSimulation(1.f / 60.f, 4);
 
+        /* Sensor overlaps (trigger volumes): narrowphase still generates
+         * contact manifolds for CF_NO_CONTACT_RESPONSE bodies, the solver
+         * just skips them — report any touching pair involving a sensor.
+         * Entity ids ride on btCollisionObject::userPointer; bodies
+         * without one (world mesh, probe) are ignored. */
+        if(m_bus)
+        {
+            auto* dispatcher = m_world->getDispatcher();
+            for(int i = 0; i < dispatcher->getNumManifolds(); ++i)
+            {
+                btPersistentManifold* manifold =
+                    dispatcher->getManifoldByIndexInternal(i);
+                if(manifold->getNumContacts() == 0)
+                    continue;
+                btCollisionObject const* a = manifold->getBody0();
+                btCollisionObject const* b = manifold->getBody1();
+                if(((a->getCollisionFlags() | b->getCollisionFlags()) &
+                       btCollisionObject::CF_NO_CONTACT_RESPONSE) == 0)
+                    continue;
+                u64 id_a =
+                    u64(reinterpret_cast<uintptr_t>(a->getUserPointer()));
+                u64 id_b =
+                    u64(reinterpret_cast<uintptr_t>(b->getUserPointer()));
+                if(!id_a || !id_b)
+                    continue;
+                Physics::Event   event{Physics::Event::Overlap};
+                Physics::Overlap overlap{id_a, id_b};
+                m_bus->process(event, &overlap);
+            }
+        }
+
         if(m_probe_body)
             update_probe_marker(p);
 
@@ -356,6 +387,8 @@ struct PhysicsSystem
         };
         entity_body.world_body = std::make_unique<btRigidBody>(info);
         entity_body.world_body->setFriction(1.f);
+        entity_body.world_body->setUserPointer(reinterpret_cast<void*>(
+            static_cast<uintptr_t>(body_create.entity_id)));
         m_world->addRigidBody(entity_body.world_body.get());
     }
 
@@ -442,6 +475,12 @@ struct PhysicsSystem
             body_create.position.y,
             body_create.position.z));
         entity_body.world_body->setWorldTransform(transform);
+        entity_body.world_body->setUserPointer(reinterpret_cast<void*>(
+            static_cast<uintptr_t>(body_create.entity_id)));
+        if(body_create.sensor)
+            entity_body.world_body->setCollisionFlags(
+                entity_body.world_body->getCollisionFlags() |
+                btCollisionObject::CF_NO_CONTACT_RESPONSE);
         m_world->addRigidBody(entity_body.world_body.get());
     }
 
@@ -473,6 +512,8 @@ struct PhysicsSystem
         };
         body.world_body = std::make_unique<btRigidBody>(info);
         body.world_body->setFriction(1.f);
+        body.world_body->setUserPointer(reinterpret_cast<void*>(
+            static_cast<uintptr_t>(body_create.entity_id)));
         m_world->addRigidBody(body.world_body.get());
         wake_dynamic_bodies();
     }
@@ -741,6 +782,9 @@ struct PhysicsSystem
     };
     std::map<u64, entity_body> m_bodies;
 
+    /* Event bus for outgoing events (Overlap); wired by alloc_physics */
+    PhysicsBus* m_bus{};
+
 
     /* Index buffer for the world shape + triangle → collision surface
      * mapping (material lookup on hit) */
@@ -759,6 +803,7 @@ void alloc_physics(compo::EntityContainer& container)
     ProfContext _;
     auto& phys_bus = container.register_subsystem_inplace<PhysicsBus>();
     auto& physics = container.register_subsystem_inplace<PhysicsSystem<halo_version>>();
+    physics.m_bus = &phys_bus;
     phys_bus.addEventFunction<Physics::BodyCreationU16>(
         0, [&physics](Physics::Event&, Physics::BodyCreationU16* body_create)
         {
@@ -814,8 +859,10 @@ void alloc_physics(compo::EntityContainer& container)
 
 #include <coffee/core/debug/formatting.h>
 
-void alloc_physics(compo::EntityContainer&)
+void alloc_physics(compo::EntityContainer& container)
 {
+    /* The bus stays available so senders (camera movement, teleport, map
+     * loading) compile and run unchanged; events just have no consumer. */
     container.register_subsystem_inplace<PhysicsBus>();
     Coffee::cDebug("physics: built without Bullet support, subsystem disabled");
 }

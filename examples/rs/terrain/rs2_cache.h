@@ -1264,6 +1264,11 @@ inline std::vector<int> model_vertex_lights(const RsModel& m)
 // Model id list a def uses for a placement shape type, or nullptr.
 inline const std::vector<int>* loc_model_ids(const LocDef& def, int shape)
 {
+    // NORMAL_DIAGONAL (11) uses the NORMAL (10) model list — the client
+    // (SceneBuilder) requests type NORMAL with rotation+4 and rotates the
+    // model an extra 45° instead of having a separate list
+    if(shape == 11)
+        shape = 10;
     if(def.types.empty())
     {
         // opcode-5 def: single list, NORMAL (10) shape only
@@ -1363,6 +1368,17 @@ inline bool build_loc_model(
             v[0] += def.offset_x;
             v[1] += def.offset_h;
             v[2] += def.offset_y;
+        }
+
+    // NORMAL_DIAGONAL (shape 11): extra 45° yaw, applied last like the
+    // client (LocModelLoader.getModel: modelData.rotate(256); SINE[256] =
+    // COSINE[256] = 46340 in the 65536-scaled table)
+    if(shape == 11)
+        for(auto& v : out.verts)
+        {
+            int t = (46340 * v[2] + 46340 * v[0]) >> 16;
+            v[2]  = (46340 * v[2] - 46340 * v[0]) >> 16;
+            v[0]  = t;
         }
 
     out.valid = true;

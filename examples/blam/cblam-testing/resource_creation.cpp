@@ -150,8 +150,12 @@ void create_resources(compo::EntityContainer& e)
                     auto* cam = e.get<PlayerCamera>(player.id);
                     if(connect->connected)
                     {
-                        // Assign controller to first available seat
-                        if(cam->is_active())
+                        /* Assign controller to the first seat without one; a
+                         * keyboard-only seat can take a controller too (usual
+                         * local setup, and the dummy plug's synthetic
+                         * controller must be able to join seat 0, which
+                         * always has the keyboard) */
+                        if(cam->controller.index.has_value())
                             continue;
                         cDebug(
                             "Assigning controller {} to player {} (seat {})",
@@ -323,6 +327,9 @@ void create_resources(compo::EntityContainer& e)
                             rot[2].get<float>(),
                             rot[3].get<float>()));
                 }
+                /* Headless equivalent of the ImGui "Physics" checkbox */
+                target->mode.physics =
+                    ev.data.value("physics", target->mode.physics);
             }
         }});
     }

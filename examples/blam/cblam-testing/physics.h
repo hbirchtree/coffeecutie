@@ -82,6 +82,10 @@ struct BodyCreationShape
         Sphere,
         Box,
     } shape{Capsule};
+    /*!< Overlap sensor: detected but never collided with
+     * (CF_NO_CONTACT_RESPONSE); pairs touching a sensor emit
+     * Physics::Overlap events. For trigger volumes (map links). */
+    bool sensor{false};
     struct
     {
         bool rotation{false};

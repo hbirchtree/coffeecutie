@@ -299,7 +299,12 @@ int coffee_main(int, char**)
               << ",\"rotation\":" << l.rotation << ",\"models\":[";
             for(size_t i = 0; i < l.model_ids.size(); ++i)
                 f << (i ? "," : "") << l.model_ids[i];
-            f << "]}\n";
+            // values are integral (tile*128 / height*8); print exact
+            f << "],\"aabb\":[[" << (long long)l.aabb_min[0] << ','
+              << (long long)l.aabb_min[1] << ',' << (long long)l.aabb_min[2]
+              << "],[" << (long long)l.aabb_max[0] << ','
+              << (long long)l.aabb_max[1] << ',' << (long long)l.aabb_max[2]
+              << "]]}\n";
             paired += l.paired;
         }
         fprintf(stderr, "Wrote %s (%zu links, %zu paired)\n", path.c_str(),
@@ -339,12 +344,34 @@ int coffee_main(int, char**)
         {
             // exercise the renderer path: repack all meshes by material
             // (as cursed.cpp's worker does) and export the result instead —
-            // diffing this against the direct path isolates repack bugs
+            // diffing this against the direct path isolates repack bugs.
+            // RS2_REPACK_ALL_PLANES matches cursed.cpp exactly: all four
+            // planes pooled into a single repack.
+            std::vector<rs2::RegionGeometry> planes;
+            if(std::getenv("RS2_REPACK_ALL_PLANES"))
+            {
+                for(int plane = 0; plane < 4; ++plane)
+                    if(auto region = loader.load(rx, ry, plane))
+                        planes.push_back(std::move(region.value()));
+            } else
+                planes.push_back(std::move(geo.value()));
             std::vector<rs2::Mesh const*> parts;
-            parts.push_back(&geo->terrain);
-            for(const auto& chunk : geo->locs)
-                parts.push_back(&chunk);
-            auto repacked = rs2::repack_by_material(parts);
+            for(const auto& plane : planes)
+            {
+                parts.push_back(&plane.terrain);
+                for(const auto& chunk : plane.locs)
+                    parts.push_back(&chunk);
+            }
+            // RS2_REPACK_COLLIDABLE mirrors the engine's physics set
+            // (by_u16_chunk + collidable_only) instead of the render set
+            std::vector<rs2::Mesh> repacked;
+            if(std::getenv("RS2_REPACK_COLLIDABLE"))
+                repacked = rs2::repack_by_material<size_t>(
+                    parts,
+                    rs2::sorting_method::by_u16_chunk,
+                    rs2::filter_method::collidable_only);
+            else
+                repacked = rs2::repack_by_material(parts);
             fprintf(stderr, "repack test: %zu meshes\n", repacked.size());
             for(const auto& m : repacked)
                 append_mesh(locs, m);
