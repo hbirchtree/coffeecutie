@@ -871,8 +871,8 @@ void load_collision_debug(EntityContainer& e, MapChangedEvent<Version>& data)
     /* Collect Model entity ids first: create_entity below mutates the
      * entity registry and would invalidate a live select<Model> query. */
     std::vector<u64> model_ids;
-    for(auto& ent : e.select<Model>())
-        model_ids.push_back(ent.id);
+    for(auto ent : e.select<Model>())
+        model_ids.push_back(ent.id());
 
     for(u64 id : model_ids)
     {

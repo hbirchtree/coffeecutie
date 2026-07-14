@@ -694,12 +694,11 @@ struct MeshRenderer
         RenderingParameters*                   params;
         e.subsystem(params);
 
-        for(auto& ent : e.select(ObjectBsp))
+        for(auto ent : e.template select<BspReference>())
         {
             if(!params->debug_portals && !params->debug_clusters)
                 break;
-            auto           ref  = e.template ref<Proxy>(ent);
-            BspReference&  bsp_ = ref.template get<BspReference>();
+            BspReference&  bsp_ = ent.template get<BspReference>();
             BSPItem const* bsp  = get_bsp(bsp_.bsp);
 
             if(params->debug_portals)
@@ -717,14 +716,13 @@ struct MeshRenderer
                 }
             }
         }
-        for(auto& ent : e.template select<DebugDraw>())
+        for(auto ent : e.template select<DebugDraw>())
         {
             if(!params->debug_markers)
                 continue;
-            if(!params->debug_triggers && ent.tags & ObjectTriggerVolume)
+            if(!params->debug_triggers && ent.tags() & ObjectTriggerVolume)
                 continue;
-            auto             ref  = e.template ref<Proxy>(ent);
-            DebugDraw const& draw = ref.template get<DebugDraw>();
+            DebugDraw const& draw = ent.template get<DebugDraw>();
             if(draw.data.arrays.count == 0)
                 continue;
             groups.push_back(draw.data);
@@ -758,16 +756,15 @@ struct MeshRenderer
 
         /* Collect active local players sorted by seat_idx */
         m_players.clear();
-        for(auto& entity : p.template select<PlayerCamera>())
+        for(auto const entity : p.template select<PlayerCamera, PlayerInfo>())
         {
-            auto* cam  = p.template get<PlayerCamera>(entity.id);
-            auto* info = p.template get<PlayerInfo>(entity.id);
-            if(!info || info->is_remote() || !cam->is_active())
+            auto const& [cam, info]  = entity.components();
+            if(info.is_remote() || !cam.is_active())
                 continue;
             m_players.push_back({
-                .seat_idx = info->seat_idx,
-                .matrix   = cam->matrix,
-                .position = cam->camera->position,
+                .seat_idx = info.seat_idx,
+                .matrix   = cam.matrix,
+                .position = cam.camera->position,
             });
         }
         std::sort(
@@ -997,10 +994,9 @@ struct MeshRenderer
          * orange checker — elsewhere). The lightmap generation id encodes
          * the specific page. */
         std::map<cache_id_t, LegacyBatch> batches;
-        for(auto const& ent : p.select(ObjectBsp))
+        for(auto const& ent : p.template select<BspReference>())
         {
-            auto                ref     = p.template ref<Proxy>(ent);
-            BspReference const& bsp_ref = ref.template get<BspReference>();
+            BspReference const& bsp_ref = ent.template get<BspReference>();
             if(!bsp_ref.visible)
                 continue;
             if(!bsp_ref.shader.valid() || !bsp_ref.lightmap.valid())
@@ -1112,9 +1108,8 @@ struct MeshRenderer
         Coffee::Profiler::PopContext();
 
         Coffee::Profiler::PushContext("legacy_render: Water BSP");
-        for(auto const& ent : p.select(ObjectBsp))
+        for(auto const& ref : p.template select<BspReference>())
         {
-            auto                ref     = p.template ref<Proxy>(ent);
             BspReference const& bsp_ref = ref.template get<BspReference>();
             /* Don't apply the occluder's per-surface visibility here: large
              * water planes get assigned to a cluster the occluder culls even
@@ -1261,10 +1256,12 @@ struct MeshRenderer
         };
         std::map<std::pair<cache_id_t, u64>, ModelBatch> soso_batches;
 
-        for(auto const& ent : p.select(ObjectMod2))
+        /* Model lives on the parent entity, SubModel on its children —
+         * they are never on the same entity, so Model cannot be part of
+         * the fused select here */
+        for(auto ent : p.template select<SubModel>())
         {
-            auto            ref = p.template ref<Proxy>(ent);
-            SubModel const& sm  = ref.template get<SubModel>();
+            SubModel const& sm = ent.template get<SubModel>();
             Model const&    mod =
                 p.template ref<Proxy>(sm.parent).template get<Model>();
             if(!mod.visible || !sm.shader.valid())
@@ -1481,9 +1478,9 @@ struct MeshRenderer
         for(Pass& pass : m_bsp)
             pass.clear();
 
-        for(auto& ent : p.select(ObjectBsp))
+        for(auto ent : p.select(ObjectBsp))
         {
-            auto          ref = p.template ref<Proxy>(ent);
+            auto          ref = p.template ref<Proxy>(ent.id());
             BspReference& bsp = ref.template get<BspReference>();
 
             if(!bsp.visible)
@@ -1527,9 +1524,9 @@ struct MeshRenderer
 
         /* Write the static material information, animations are updated later
          */
-        for(auto& ent : p.select(ObjectBsp))
+        for(auto ent : p.select(ObjectBsp))
         {
-            auto          ref = p.template ref<Proxy>(ent);
+            auto          ref = p.template ref<Proxy>(ent.id());
             BspReference& bsp = ref.template get<BspReference>();
 
             if(!bsp.visible)
@@ -1558,16 +1555,16 @@ struct MeshRenderer
         for(Pass& pass : m_model)
             pass.clear();
 
-        for(compo::Entity const& ent : p.select(ObjectMod2))
+        /* Model lives on the parent entity — resolve it through
+         * SubModel::parent, it is never on the submodel entity itself */
+        for(auto ent : p.template select<SubModel, MeshTrackingData>())
         {
-            auto              ref    = p.template ref<Proxy>(ent);
-            SubModel&         model  = ref.template get<SubModel>();
-            MeshTrackingData& track  = ref.template get<MeshTrackingData>();
-            auto              parent = p.template ref<Proxy>(model.parent);
-            Model&            mod    = parent.template get<Model>();
+            auto&& [model, track] = ent.components();
+            auto   parent = p.template ref<Proxy>(model.parent);
+            Model& mod    = parent.template get<Model>();
 
             if(!mod.visible || (!rendering_params->render_scenery &&
-                                (ent.tags & ObjectSkybox) == 0))
+                                (ent.tags() & ObjectSkybox) == 0))
             {
                 track.model_id = {};
                 continue;
@@ -1633,12 +1630,12 @@ struct MeshRenderer
         std::vector<Matf4> bone_upload;
         size_t             bone_write_ptr = 0;
 
-        for(auto& ent : p.select(ObjectMod2))
+        for(auto ent : p.select(ObjectMod2))
         {
             if(!rendering_params->render_scenery &&
-               (ent.tags & ObjectSkybox) == 0)
+               (ent.tags() & ObjectSkybox) == 0)
                 continue;
-            auto            ref    = p.template ref<Proxy>(ent);
+            auto            ref    = p.template ref<Proxy>(ent.id());
             SubModel const& smodel = ref.template get<SubModel>();
             Model const&    model =
                 p.template ref<Proxy>(smodel.parent).template get<Model>();
@@ -1706,12 +1703,12 @@ struct MeshRenderer
         ModelCache<Version>* model_cache;
         p.subsystem(model_cache);
 
-        for(auto& ent : p.select(ObjectMod2))
+        for(auto ent : p.select(ObjectMod2))
         {
             if(!rendering_params->render_scenery &&
-               (ent.tags & ObjectSkybox) == 0)
+               (ent.tags() & ObjectSkybox) == 0)
                 continue;
-            auto              ref    = p.template ref<Proxy>(ent);
+            auto              ref    = p.template ref<Proxy>(ent.id());
             SubModel&         smodel = ref.template get<SubModel>();
             MeshTrackingData& track  = ref.template get<MeshTrackingData>();
             Pass&             pass   = m_model[smodel.current_pass];
@@ -1728,9 +1725,9 @@ struct MeshRenderer
                     pass.transparent_of(instance_id), smodel.shader, time);
         }
 
-        for(auto& ent : p.select(ObjectBsp))
+        for(auto ent : p.select(ObjectBsp))
         {
-            auto          ref = p.template ref<Proxy>(ent);
+            auto          ref = p.template ref<Proxy>(ent.id());
             BspReference& bsp = ref.template get<BspReference>();
 
             if(!bsp.visible)

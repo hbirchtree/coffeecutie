@@ -96,12 +96,10 @@ FORCEDINLINE quick_container<spliterator<CharType>> str(
 
     if(it == str_type::npos)
         return quick_container<spliterator<CharType>>(
-            []() { return spliterator<CharType>(); },
-            []() { return spliterator<CharType>(); });
+            spliterator<CharType>(), spliterator<CharType>());
 
     return quick_container<spliterator<CharType>>(
-        [source, sep]() { return spliterator<CharType>(source, sep); },
-        []() { return spliterator<CharType>(); });
+        spliterator<CharType>(source, sep), spliterator<CharType>());
 }
 
 } // namespace stl_types::str::split

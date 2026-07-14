@@ -16,6 +16,7 @@ struct EntityVisitor : EntityVisitorBase
     using VisitorFlags = compo::VisitorFlags;
     using time_point   = compo::time_point;
     using Entity       = compo::Entity;
+    using EntityRef    = compo::EntityRef<EntityContainer>;
     using VisitorType  = EntityVisitor<CompList, SubsysList>;
     using Proxy        = ConstrainedProxy<CompList, SubsysList>;
 
@@ -28,7 +29,7 @@ struct EntityVisitor : EntityVisitorBase
     virtual bool dispatch(
         EntityContainer& container, time_point const& current);
 
-    virtual bool visit(Proxy&, Entity const&, time_point const&)
+    virtual bool visit(Proxy&, EntityRef const&, time_point const&)
     {
         return false;
     }
@@ -48,7 +49,7 @@ inline bool EntityVisitor<CompList, SubsysList>::dispatch(
 
     for(auto const& entity : proxy.select(tags))
     {
-        proxy.current_entity = entity.id;
+        proxy.current_entity = entity.id();
         this->visit(proxy, entity, current);
     }
 

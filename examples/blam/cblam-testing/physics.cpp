@@ -184,7 +184,7 @@ struct PhysicsSystem
 
         for(auto const& player_ : p.template select<PlayerCamera>())
         {
-            auto player = p.ref(player_);
+            auto player = player_;
             PlayerCamera& camera = player.template get<PlayerCamera>();
             if(!camera.mode.physics)
                 continue;
@@ -845,10 +845,10 @@ void alloc_physics(compo::EntityContainer& container)
         0, [&container, &physics](Physics::Event&, Physics::ProbeHere*) {
             for(auto const& e : container.select<PlayerCamera>())
             {
-                auto* info = container.get<PlayerInfo>(e.id);
+                auto* info = container.get<PlayerInfo>(e.id());
                 if(info->seat_idx != 0)
                     continue;
-                auto* camera = container.get<PlayerCamera>(e.id);
+                auto* camera = container.get<PlayerCamera>(e.id());
                 physics.move_probe(camera->camera->position);
                 break;
             }

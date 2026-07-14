@@ -30,16 +30,16 @@ using namespace Coffee::resource_literals;
 void update_camera_aspect(compo::EntityContainer& e)
 {
     u32 count{0};
-    for(auto& _ : e.select<PlayerCamera>())
-        if(auto* info = e.get<PlayerInfo>(_.id); info && !info->is_remote())
+    for(auto _ : e.select<PlayerCamera>())
+        if(auto* info = e.get<PlayerInfo>(_.id()); info && !info->is_remote())
         {
-            if(auto* cam = e.get<PlayerCamera>(_.id); cam->is_active())
+            if(auto* cam = e.get<PlayerCamera>(_.id()); cam->is_active())
                 ++count;
         }
     auto* window = e.service<comp_app::Windowing>();
     for(const auto& player : e.select<PlayerCamera>())
     {
-        auto* cam = e.get<PlayerCamera>(player.id);
+        auto* cam = e.get<PlayerCamera>(player.id());
         if(count != 2)
             cam->camera->aspect = window->size().aspect();
         else
@@ -72,10 +72,10 @@ void create_resources(compo::EntityContainer& e)
 
         eventhandler->addEventHandler(
             1024, std_camera_t::KeyboardInput([&e] -> std_camera_t* {
-                for(auto& entity : e.select<PlayerCamera>())
+                for(auto entity : e.select<PlayerCamera>())
                 {
-                    auto* cam  = e.get<PlayerCamera>(entity.id);
-                    auto* info = e.get<PlayerInfo>(entity.id);
+                    auto* cam  = e.get<PlayerCamera>(entity.id());
+                    auto* info = e.get<PlayerInfo>(entity.id());
                     if(cam->keyboard.enabled && info &&
                        info->permissions.camera)
                         return cam->camera_.get();
@@ -85,10 +85,10 @@ void create_resources(compo::EntityContainer& e)
             }));
         eventhandler->addEventHandler(
             1024, std_camera_t::MouseInput([&e] -> std_camera_t* {
-                for(auto& entity : e.select<PlayerCamera>())
+                for(auto entity : e.select<PlayerCamera>())
                 {
-                    auto* cam  = e.get<PlayerCamera>(entity.id);
-                    auto* info = e.get<PlayerInfo>(entity.id);
+                    auto* cam  = e.get<PlayerCamera>(entity.id());
+                    auto* info = e.get<PlayerInfo>(entity.id());
                     if(cam->keyboard.enabled && info &&
                        info->permissions.camera)
                         return cam->camera_.get();
@@ -113,9 +113,9 @@ void create_resources(compo::EntityContainer& e)
                         return e.ref(teleport->entity_id);
                     for(auto const& player : e.select<PlayerInfo>())
                     {
-                        if(e.get<PlayerInfo>(player.id)->seat_idx != teleport->seat_idx)
+                        if(e.get<PlayerInfo>(player.id())->seat_idx != teleport->seat_idx)
                             continue;
-                        return e.ref(player.id);
+                        return e.ref(player.id());
                     }
                     Throw(std::out_of_range("tried to teleport player, but no target"));
                 }();
@@ -141,13 +141,13 @@ void create_resources(compo::EntityContainer& e)
                     connect->connected ? "" : "dis",
                     name,
                     connect->player_index);
-                for(auto& player : e.select<PlayerCamera>())
+                for(auto player : e.select<PlayerCamera>())
                 {
-                    auto* info = e.get<PlayerInfo>(player.id);
+                    auto* info = e.get<PlayerInfo>(player.id());
                     // Don't assign it to remote seat
                     if(info->is_remote())
                         continue;
-                    auto* cam = e.get<PlayerCamera>(player.id);
+                    auto* cam = e.get<PlayerCamera>(player.id());
                     if(connect->connected)
                     {
                         /* Assign controller to the first seat without one; a
@@ -189,10 +189,10 @@ void create_resources(compo::EntityContainer& e)
                     return;
                 for(auto const& cam_ : e.select<PlayerCamera>())
                 {
-                    auto const* info = e.get<PlayerInfo>(cam_.id);
+                    auto const* info = e.get<PlayerInfo>(cam_.id());
                     if(info->seat_idx != 0)
                         continue;
-                    auto const* cam = e.get<PlayerCamera>(cam_.id);
+                    auto const* cam = e.get<PlayerCamera>(cam_.id());
                     cDebug(R"({{"time": 0, "type": "camera", "position" :[{}, {}, {}], "rotation":[{}, {}, {}, {}]}})",
                         cam->camera->position.x,
                         cam->camera->position.y,
@@ -291,8 +291,8 @@ void create_resources(compo::EntityContainer& e)
                 PlayerCamera* target{};
                 for(auto const& en : e.select<PlayerCamera>())
                 {
-                    auto* cam = e.get<PlayerCamera>(en.id);
-                    auto const* info = e.get<PlayerInfo>(en.id);
+                    auto* cam = e.get<PlayerCamera>(en.id());
+                    auto const* info = e.get<PlayerInfo>(en.id());
                     if(info->seat_idx != 0)
                         continue;
                     target = cam;
@@ -1028,14 +1028,14 @@ void create_camera(
     semantic::Span<const blam::scn::player_starting_location> const& spawns)
 {
     u32 count{0};
-    for(auto& _ : e.select<PlayerCamera>())
-        if(auto* info = e.get<PlayerInfo>(_.id); info && !info->is_remote())
+    for(auto _ : e.select<PlayerCamera>())
+        if(auto* info = e.get<PlayerInfo>(_.id()); info && !info->is_remote())
             ++count;
     auto& physics_bus         = e.subsystem_cast<PhysicsBus>();
-    for(auto& entity : e.select<PlayerCamera>())
+    for(auto entity : e.select<PlayerCamera>())
     {
-        auto* cam  = e.get<PlayerCamera>(entity.id);
-        auto* info = e.get<PlayerInfo>(entity.id);
+        auto* cam  = e.get<PlayerCamera>(entity.id());
+        auto* info = e.get<PlayerInfo>(entity.id());
         if(!cam || !info)
             continue;
         cam->controller.opts.sens.move = {.1f, .1f};
@@ -1057,7 +1057,7 @@ void create_camera(
             glm::angleAxis(glm::pi<f32>() - location.rot, Vecf3{0.f, 1.f, 0.f});
         Physics::Event event{Physics::Event::BodyCreationShape};
         Physics::BodyCreationShape create{
-            .entity_id = entity.id,
+            .entity_id = entity.id(),
             .scale = {0.1, 0, 0.5},
             .position = location.pos + Vecf3{0, 0, 0.6},
             .mass = 1,

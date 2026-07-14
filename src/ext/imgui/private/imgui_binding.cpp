@@ -304,8 +304,8 @@ void ImGuiSystem::start_restricted(Proxy& p, time_point const& t)
 
     auto delta = duration_cast<duration>(t - m_previousTime);
 
-    for(auto& widget : p.select<ImGuiWidget>())
-        p.get<ImGuiWidget>(widget.id)->func(get_container(p), t, delta);
+    for(auto widget : p.select<ImGuiWidget>())
+        p.get<ImGuiWidget>(widget.id())->func(get_container(p), t, delta);
 
     m_previousTime = t;
 

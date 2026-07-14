@@ -35,6 +35,12 @@ struct EntityRef;
 template<typename ContainerType, typename ComponentType>
 struct ComponentRef;
 
+template<typename... Components>
+struct ComponentEntityRef;
+
+template<typename... Components>
+struct component_query;
+
 template<typename Service>
 struct ServiceRef;
 
@@ -125,15 +131,21 @@ struct EntityContainer : stl_types::non_copy
 
     struct entity_query
     {
-        using value_type       = Entity;
+        using value_type       = EntityRef<EntityContainer>;
         using size_type        = szptr;
         using entity_predicate = std::function<bool(Entity const&)>;
 
+        /* Tag mode: the mask is tested inline in operator++, no
+         * type-erased predicate call per entity */
         entity_query(EntityContainer& c, u64 tags)
-            : pred([=](Entity const& e) { return (e.tags & tags) == tags; })
-            , m_container(&c)
+            : m_container(&c)
+            , m_tags(tags)
+            , m_tag_mode(true)
         {
-            initialize_iterator();
+            it = std::find_if(
+                m_container->entities.begin(),
+                m_container->entities.end(),
+                [tags](Entity const& e) { return (e.tags & tags) == tags; });
         }
 
         entity_query(EntityContainer& c, entity_predicate&& predicate)
@@ -141,14 +153,6 @@ struct EntityContainer : stl_types::non_copy
             , m_container(&c)
         {
             initialize_iterator();
-        }
-
-        template<typename ComponentType>
-        STATICINLINE entity_query from_container(
-            EntityContainer& c, ComponentContainer<ComponentType> const& comp)
-        {
-            return entity_query(
-                c, [&](Entity const& e) { return comp.contains_entity(e.id); });
         }
 
         entity_query(EntityContainer& c)
@@ -159,7 +163,14 @@ struct EntityContainer : stl_types::non_copy
 
         entity_query& operator++()
         {
-            it = std::find_if(++it, m_container->entities.end(), pred);
+            if(m_tag_mode)
+            {
+                auto end = m_container->entities.end();
+                ++it;
+                while(it != end && (it->tags & m_tags) != m_tags)
+                    ++it;
+            } else
+                it = std::find_if(++it, m_container->entities.end(), pred);
             return *this;
         }
 
@@ -168,21 +179,9 @@ struct EntityContainer : stl_types::non_copy
             return it == other.it;
         }
 
-        Entity& operator*() const
-        {
-            if(it == m_container->entities.end())
-                Throw(std::out_of_range("bad iterator"));
-
-            return *it;
-        }
-
-        Entity* operator->() const
-        {
-            if(it == m_container->entities.end())
-                Throw(std::out_of_range("bad iterator"));
-
-            return &(*it);
-        }
+        /* Returns a lightweight EntityRef into the container; defined
+         * out-of-line in entity_reference.h where EntityRef is complete */
+        EntityRef<EntityContainer> operator*() const;
 
       private:
         void initialize_iterator()
@@ -196,6 +195,8 @@ struct EntityContainer : stl_types::non_copy
         entity_predicate const        pred;
         EntityContainer* const        m_container;
         std::vector<Entity>::iterator it;
+        u64                           m_tags{0};
+        bool                          m_tag_mode{false};
     };
 
     /*
@@ -311,31 +312,37 @@ struct EntityContainer : stl_types::non_copy
     quick_container<entity_query> select(u64 tags)
     {
         return quick_container<entity_query>(
-            [this, tags]() { return entity_query(*this, tags); },
-            [this]() { return entity_query(*this); });
+            entity_query(*this, tags), entity_query(*this));
     }
 
-    template<is_component_tag ComponentType>
-    quick_container<entity_query> select()
+    /*!
+     * \brief Iterate entities carrying all of the given components.
+     *
+     * Walks the first component's dense id list and filters on the rest
+     * with O(1) sparse-set membership tests, so put the rarest component
+     * first. The yielded ComponentEntityRef carries direct payload
+     * pointers for every listed component: ref.get<T>() for a listed T is
+     * a plain dereference, no per-entity lookup.
+     */
+    template<is_component_tag... Components>
+    requires(sizeof...(Components) >= 1)
+    quick_container<component_query<Components...>> select()
     {
-        return quick_container<entity_query>(
-            [this]() {
-                return entity_query::from_container(
-                    *this, container<ComponentType>());
-            },
-            [this]() { return entity_query(*this); });
+        return quick_container<component_query<Components...>>(
+            component_query<Components...>(*this, false),
+            component_query<Components...>(*this, true));
     }
 
     template<is_matcher Matcher>
     quick_container<entity_query> match()
     {
         return quick_container<entity_query>(
-            [this]() {
-                return entity_query(*this, [this](Entity const& e) {
+            entity_query(
+                *this,
+                [this](Entity const& e) {
                     return Matcher::match(*this, e.id);
-                });
-            },
-            [this]() { return entity_query(*this); });
+                }),
+            entity_query(*this));
     }
 
     ComponentContainerBase& container(size_t type_id)

@@ -15,3 +15,8 @@ endif()
 if(BUILD_BLAM AND BUILD_ASSET_TOOLS)
   add_subdirectory(blam/map-transcoder)
 endif()
+
+option(BUILD_BENCHMARKS "Build micro benchmark tools" OFF)
+if(BUILD_BENCHMARKS)
+  add_subdirectory(compo-bench)
+endif()

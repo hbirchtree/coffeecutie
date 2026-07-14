@@ -212,7 +212,7 @@ class TransformVisitor
 
     virtual bool visit(
         Proxy& c,
-        const Components::Entity&,
+        EntityRef const&,
         const Components::time_point&) override
     {
         using typing::vectors::scene::GenTransform;
@@ -255,7 +255,7 @@ class FloorVisitor
 
     virtual bool visit(
         Proxy& c,
-        const Components::Entity&,
+        EntityRef const&,
         const Components::time_point&) override
     {
         auto& xf = c.get<TransformPair>();
@@ -287,7 +287,7 @@ class BaseItemVisitor
 
     virtual bool visit(
         Proxy& c,
-        const Components::Entity&,
+        EntityRef const&,
         const Components::time_point&) override
     {
         auto& xf   = c.get<TransformPair>();

@@ -93,10 +93,10 @@ struct BlamBspWidget
                         "Update occlusion", &rendering->occluder_update);
                     if(ImGui::BeginListBox("Clusters"))
                     {
-                        for(auto& bsp : bsps)
+                        for(auto bsp : bsps)
                         {
                             auto* bsp_ref =
-                                e.template get<BspReference>(bsp.id);
+                                e.template get<BspReference>(bsp.id());
                             // auto& bsp_ = bsp_cache->predict(bsp_ref->bsp);
                             auto name = fmt::format(
                                 "{} cluster={}",
@@ -112,9 +112,9 @@ struct BlamBspWidget
                 {
                     ImGui::Checkbox(
                         "Show trigger volumes", &rendering->debug_triggers);
-                    for(Entity& trigger : triggers)
+                    for(auto trigger : triggers)
                     {
-                        auto t = e.template ref<Proxy>(trigger);
+                        auto t = e.template ref<Proxy>(trigger.id());
 
                         DebugDraw&     draw = t.template get<DebugDraw>();
                         TriggerVolume& trig = t.template get<TriggerVolume>();
@@ -135,10 +135,10 @@ struct BlamBspWidget
                     /* Find primary (seat_idx==0) PlayerCamera */
                     PlayerCamera* primary_cam = nullptr;
                     u32           num_cameras = 0;
-                    for(auto& ent : e.template select<PlayerCamera>())
+                    for(auto ent : e.template select<PlayerCamera>())
                     {
-                        auto* info = e.template get<PlayerInfo>(ent.id);
-                        auto* cam  = e.template get<PlayerCamera>(ent.id);
+                        auto* info = e.template get<PlayerInfo>(ent.id());
+                        auto* cam  = e.template get<PlayerCamera>(ent.id());
                         if(!info || !cam)
                             continue;
                         ++num_cameras;

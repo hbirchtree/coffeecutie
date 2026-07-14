@@ -465,10 +465,10 @@ i32 blam_main()
 
             auto controllers = e.service<comp_app::ControllerInput>();
 
-            for(auto& entity : e.select<PlayerCamera>())
+            for(auto entity : e.select<PlayerCamera>())
             {
-                auto* cam  = e.get<PlayerCamera>(entity.id);
-                auto* info = e.get<PlayerInfo>(entity.id);
+                auto* cam  = e.get<PlayerCamera>(entity.id());
+                auto* info = e.get<PlayerInfo>(entity.id());
                 if(!cam || !info)
                     continue;
 
@@ -554,7 +554,7 @@ i32 blam_main()
 
                         Physics::Event    ev{Physics::Event::Velocity};
                         Physics::Velocity velocity{
-                            .entity_id  = entity.id,
+                            .entity_id  = entity.id(),
                             .velocity   = dir * move_speed,
                             .preserve_z = true,
                             .jump       = jump ? jump_speed : 0.f,
@@ -582,10 +582,10 @@ i32 blam_main()
             }
 
 #if defined(FEATURE_ENABLE_OAF)
-            for(auto& entity : e.select<PlayerCamera>())
+            for(auto entity : e.select<PlayerCamera>())
             {
-                auto* cam  = e.get<PlayerCamera>(entity.id);
-                auto* info = e.get<PlayerInfo>(entity.id);
+                auto* cam  = e.get<PlayerCamera>(entity.id());
+                auto* info = e.get<PlayerInfo>(entity.id());
                 if(cam && info && info->seat_idx == 0)
                 {
                     auto& snd = e.subsystem_cast<oaf::system>();

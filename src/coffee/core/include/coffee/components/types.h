@@ -80,6 +80,18 @@ struct ComponentContainerBase : stl_types::non_copy
     virtual void unregister_entity(u64 id)     = 0;
     virtual void prealloc(szptr count)         = 0;
     virtual bool contains_entity(u64 id) const = 0;
+
+    /*!
+     * \brief Dense list of entity ids holding this component, if the
+     * storage maintains one. Lets queries iterate only the entities that
+     * actually have the component instead of scanning + testing all
+     * entities. Optional: containers without dense storage return null
+     * and queries fall back to the scan.
+     */
+    virtual std::vector<u64> const* dense_ids() const
+    {
+        return nullptr;
+    }
 };
 
 struct EntityVisitorBase : stl_types::non_copy

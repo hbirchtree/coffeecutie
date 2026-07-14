@@ -916,6 +916,16 @@ class RegionLoader
                     pl.loc_id, pl.type, pl.rotation, pl.world_x, pl.world_y,
                     def.size_x, def.size_y, def.types.size(),
                     ok ? "OK" : "FAIL");
+            // RS2_LOC_DEBUG_ID=<loc id>: trace every placement of one loc
+            // (any type/plane) through the model build
+            if(char const* dbg_id = std::getenv("RS2_LOC_DEBUG_ID");
+               dbg_id && atoi(dbg_id) == pl.loc_id)
+                fprintf(stderr,
+                    "LOC %d '%s' shape=%d rot=%d plane=%d world=(%d,%d) "
+                    "tris=%zu %s\n",
+                    pl.loc_id, def.name.c_str(), pl.type, pl.rotation,
+                    pl.plane, pl.world_x, pl.world_y, mdl.faces.size(),
+                    ok ? "OK" : "FAIL");
             if(!ok)
                 continue;
 

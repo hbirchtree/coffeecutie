@@ -23,10 +23,10 @@ struct ContainerProxy : stl_types::non_copy
         return m_container.select(tags);
     }
 
-    template<is_component_tag ComponentType>
-    FORCEDINLINE quick_container<EntityContainer::entity_query> select()
+    template<is_component_tag... Components>
+    FORCEDINLINE quick_container<component_query<Components...>> select()
     {
-        return m_container.select<ComponentType>();
+        return m_container.select<Components...>();
     }
 
     template<typename Matcher>
@@ -111,11 +111,11 @@ struct ConstrainedProxy : ContainerProxy
         return m_container.select(tags);
     }
 
-    template<is_component_tag ComponentType>
-    requires type_in_list_v<ComponentType, ComponentList>
-    FORCEDINLINE quick_container<EntityContainer::entity_query> select()
+    template<is_component_tag... Components>
+    requires(type_in_list_v<Components, ComponentList> && ...)
+    FORCEDINLINE quick_container<component_query<Components...>> select()
     {
-        return ContainerProxy::select<ComponentType>();
+        return ContainerProxy::select<Components...>();
     }
 
     template<is_component_tag ComponentType>

@@ -218,9 +218,9 @@ static void load_resources(
             loading_status.finished.get_future(),
             [&e](void*) {
                 cDebug("Load finish signalled!");
-                for(auto& player : e.select<PlayerInfo>())
+                for(auto player : e.select<PlayerInfo>())
                 {
-                    auto* player_info = e.get<PlayerInfo>(player.id);
+                    auto* player_info = e.get<PlayerInfo>(player.id());
                     if(!player_info->is_remote())
                     {
                         player_info->loading_progress = 100;

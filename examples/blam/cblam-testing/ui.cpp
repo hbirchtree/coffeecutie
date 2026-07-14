@@ -168,9 +168,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
     auto& create_element(compo::EntityContainer& e, generation_idx_t id)
     {
-        for(auto& el : e.select<UIElement>())
+        for(auto el : e.select<UIElement>())
         {
-            auto  ref        = e.ref(el);
+            auto  ref        = el;
             auto& ui_element = ref.get<UIElement>();
             if(ui_element.element == id)
                 return ui_element;
@@ -499,7 +499,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         {
             for(auto const& widget : e.select<UIElement>())
             {
-                auto          ref     = e.ref<Proxy>(widget);
+                auto          ref     = e.ref<Proxy>(widget.id());
                 auto&         element = ref.get<UIElement>();
                 widget_data_t root_data{
                     .vertex_data   = vertex_data,
@@ -818,9 +818,9 @@ void load_ui_items(
     }
 
     u32 player_count = 0;
-    for(auto& ent : e.select<PlayerCamera>())
+    for(auto ent : e.select<PlayerCamera>())
     {
-        auto* cam = e.get<PlayerCamera>(ent.id);
+        auto* cam = e.get<PlayerCamera>(ent.id());
         if(cam && cam->is_active())
             ++player_count;
     }

@@ -59,10 +59,10 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
         Vecf3 camera_pos{};
         Matf4 camera_mvp = glm::identity<Matf4>();
-        for(auto& ent : p.template select<PlayerCamera>())
+        for(auto ent : p.template select<PlayerCamera>())
         {
-            auto* info = p.template get<PlayerInfo>(ent.id);
-            auto* cam  = p.template get<PlayerCamera>(ent.id);
+            auto* info = p.template get<PlayerInfo>(ent.id());
+            auto* cam  = p.template get<PlayerCamera>(ent.id());
             if(info && cam && info->seat_idx == 0)
             {
                 camera_pos = cam->camera->position;
@@ -321,9 +321,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
          *   on every chunk). */
         if(cull_bsp)
         {
-            for(auto& ent : p.select(ObjectBsp))
+            for(auto ent : p.select(ObjectBsp))
             {
-                auto          ref     = p.template ref<Proxy>(ent);
+                auto          ref     = p.template ref<Proxy>(ent.id());
                 BspReference& bsp_ref = ref.template get<BspReference>();
 
                 bsp_total++;
@@ -431,9 +431,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         u32 model_visible = 0, model_pvs_culled = 0, model_frustum_culled = 0,
             model_dist_culled = 0, model_total = 0;
 
-        for(auto& ent : p.select(PositioningStatic))
+        for(auto ent : p.select(PositioningStatic))
         {
-            auto   ref   = p.template ref<Proxy>(ent);
+            auto   ref   = p.template ref<Proxy>(ent.id());
             Model& model = ref.template get<Model>();
 
             model_total++;
@@ -467,9 +467,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                     model_dist_culled++;
             }
         }
-        for(auto& ent : p.select(PositioningDynamic))
+        for(auto ent : p.select(PositioningDynamic))
         {
-            auto   ref   = p.template ref<Proxy>(ent);
+            auto   ref   = p.template ref<Proxy>(ent.id());
             Model& model = ref.template get<Model>();
             if(cull_bsp)
                 model.visible =
@@ -592,11 +592,11 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 /* Sample first 5 model and BSP centroid positions */
                 {
                     u32 sample = 0;
-                    for(auto& ent : p.select(PositioningStatic))
+                    for(auto ent : p.select(PositioningStatic))
                     {
                         if(sample++ >= 5)
                             break;
-                        auto   ref   = p.template ref<Proxy>(ent);
+                        auto   ref   = p.template ref<Proxy>(ent.id());
                         Model& model = ref.template get<Model>();
                         auto   bsp_p = model.position;
                         auto   mc    = current_bsp->find_cluster(bsp_p);
@@ -617,11 +617,11 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 }
                 {
                     u32 sample = 0;
-                    for(auto& ent : p.select(ObjectBsp))
+                    for(auto ent : p.select(ObjectBsp))
                     {
                         if(sample++ >= 5)
                             break;
-                        auto          ref = p.template ref<Proxy>(ent);
+                        auto          ref = p.template ref<Proxy>(ent.id());
                         BspReference& bsp_ref =
                             ref.template get<BspReference>();
                         bool has_cluster = bsp_ref.cluster_idx !=
@@ -646,9 +646,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
                 /* Print BSP world bounds + first cluster bounds so we can
                  * see the coordinate space the BSP lives in */
-                for(auto& ent : p.select(ObjectBsp))
+                for(auto ent : p.select(ObjectBsp))
                 {
-                    auto           ref     = p.template ref<Proxy>(ent);
+                    auto           ref     = p.template ref<Proxy>(ent.id());
                     BspReference&  bsp_ref = ref.template get<BspReference>();
                     BSPItem const& bsp = bsp_cache->find(bsp_ref.bsp)->second;
                     if(!bsp.valid())
@@ -698,10 +698,10 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         markers->map();
 
         u32 player_i = 0;
-        for(auto& ent : p.template select<PlayerCamera>())
+        for(auto ent : p.template select<PlayerCamera>())
         {
-            auto* cam  = p.template get<PlayerCamera>(ent.id);
-            auto* info = p.template get<PlayerInfo>(ent.id);
+            auto* cam  = p.template get<PlayerCamera>(ent.id());
+            auto* info = p.template get<PlayerInfo>(ent.id());
             if(!cam || !info)
                 continue;
             if(player_i >= 16)

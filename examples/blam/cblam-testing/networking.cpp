@@ -368,7 +368,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         std::vector<PlayerSyncEntry> entries;
         for(auto const& local : m_local_player_info)
         {
-            if(!local)
+            if(!local.exists())
                 continue;
             auto const& info = (*local);
             entries.push_back({
@@ -380,7 +380,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
         for(auto const& [_, state] : m_connections)
         {
-            if(!state.player_info)
+            if(!state.player_info.exists())
                 continue;
             if(player_idx != -1 && state.idx != player_idx)
                 continue;
@@ -446,16 +446,16 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         player.permissions.camera = false;
 
         /* Write birds-eye position to PlayerCamera + mark dirty */
-        for(auto& entity : e.select<PlayerInfo>())
+        for(auto entity : e.select<PlayerInfo>())
         {
-            auto* info = e.get<PlayerInfo>(entity.id);
+            auto* info = e.get<PlayerInfo>(entity.id());
             if(info != &player)
                 continue;
-            auto* cam = e.get<PlayerCamera>(entity.id);
+            auto* cam = e.get<PlayerCamera>(entity.id());
             if(cam)
                 std::tie(cam->camera->position, cam->camera->rotation) =
                     birds_eye_for_map(m_map->internal_name());
-            auto* net = e.get<NetworkInfo>(entity.id);
+            auto* net = e.get<NetworkInfo>(entity.id());
             if(net)
             {
                 net->changes.viewport    = true;
@@ -481,12 +481,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             rq::runtime_queue::GetCurrentQueue().value(),
             5s,
             [this, &e, pidx, spawn = *spawn_loc]() {
-                for(auto& entity : e.select<PlayerInfo>())
+                for(auto entity : e.select<PlayerInfo>())
                 {
-                    auto* info = e.get<PlayerInfo>(entity.id);
+                    auto* info = e.get<PlayerInfo>(entity.id());
                     if(!info || info->player_idx != pidx)
                         continue;
-                    auto* cam = e.get<PlayerCamera>(entity.id);
+                    auto* cam = e.get<PlayerCamera>(entity.id());
                     if(cam)
                     {
                         cam->camera->position = spawn.pos;
@@ -494,7 +494,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                             glm::angleAxis(glm::pi<f32>() - spawn.rot, Vecf3{0.f, 1.f, 0.f});
                     }
                     info->permissions.camera = true;
-                    auto* net                = e.get<NetworkInfo>(entity.id);
+                    auto* net                = e.get<NetworkInfo>(entity.id());
                     if(net)
                     {
                         net->changes.viewport    = true;
@@ -595,7 +595,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 for(auto& [_, state] : m_connections)
                 {
                     state.loading_progress = 0;
-                    if(state.player_info)
+                    if(state.player_info.exists())
                         (*state.player_info).loading_progress = 0;
                 }
             });
@@ -861,7 +861,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             cDebug(
                 "Problem detected with connection to {}",
                 client_name(info->m_hConn));
-            if(auto& player = m_connections[info->m_hConn].biped)
+            if(auto& player = m_connections[info->m_hConn].biped; player.exists())
             {
                 player.get<NetworkInfo>().connected = false;
                 send_player_roster();
@@ -1015,9 +1015,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         {
             if(m_local_player_info.empty())
             {
-                for(auto& player : p.select<PlayerInfo>())
+                for(auto player : p.select<PlayerInfo>())
                 {
-                    auto  ref      = p.ref(player);
+                    auto  ref      = player;
                     auto  info_ref = ref.ref<PlayerInfo>();
                     auto& info     = (*info_ref);
                     if(info.player_idx == 0)
@@ -1039,7 +1039,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 auto const& payload =
                     *reinterpret_cast<MessageBase const*>(message->GetData());
                 auto& pinfo = m_connections[message->m_conn].player_info;
-                if(pinfo)
+                if(pinfo.exists())
                     shared_receive_payload(p, *pinfo, payload);
                 server_receive_payload(p, message->m_conn, payload);
                 message->Release();
@@ -1050,7 +1050,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 m_needs_local_init = false;
                 for(auto& pi : m_local_player_info)
                 {
-                    if(pi)
+                    if(pi.exists())
                         player_init(p.underlying(), *pi);
                 }
             }
@@ -1075,22 +1075,22 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 PlayerCamera* old_seat0_cam = nullptr;
                 PlayerCamera* target_cam    = nullptr;
                 u64           old_seat0_id = 0, target_id = 0;
-                for(auto& entity : p.select<PlayerInfo>())
+                for(auto entity : p.select<PlayerInfo>())
                 {
-                    auto* info = p.get<PlayerInfo>(entity.id);
+                    auto* info = p.get<PlayerInfo>(entity.id());
                     if(!info)
                         continue;
                     if(info->seat_idx == 0)
                     {
                         old_seat0     = info;
-                        old_seat0_cam = p.get<PlayerCamera>(entity.id);
-                        old_seat0_id  = entity.id;
+                        old_seat0_cam = p.get<PlayerCamera>(entity.id());
+                        old_seat0_id  = entity.id();
                     }
                     if(info->player_idx == target_pidx)
                     {
                         target     = info;
-                        target_cam = p.get<PlayerCamera>(entity.id);
-                        target_id  = entity.id;
+                        target_cam = p.get<PlayerCamera>(entity.id());
+                        target_id  = entity.id();
                     }
                 }
                 if(old_seat0 && target && old_seat0 != target)
@@ -1104,11 +1104,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }
 
             /* Sync dirty player components to network */
-            for(auto& entity : p.select<PlayerInfo>())
+            for(auto entity : p.select<PlayerInfo>())
             {
-                auto* info = p.get<PlayerInfo>(entity.id);
-                auto* net  = p.get<NetworkInfo>(entity.id);
-                auto* cam  = p.get<PlayerCamera>(entity.id);
+                auto* info = p.get<PlayerInfo>(entity.id());
+                auto* net  = p.get<NetworkInfo>(entity.id());
+                auto* cam  = p.get<PlayerCamera>(entity.id());
                 if(!info || !net || !cam)
                     continue;
 
@@ -1149,11 +1149,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
         if(m_connection)
         {
-            if(!m_client_player)
+            if(!m_client_player.exists())
             {
-                for(auto& player : p.select<PlayerInfo>())
+                for(auto player : p.select<PlayerInfo>())
                 {
-                    auto  ref   = p.ref(player);
+                    auto  ref   = player;
                     auto& pinfo = ref.get<PlayerInfo>();
                     if(pinfo.is_remote() || pinfo.seat_idx != 0)
                         continue;
@@ -1172,7 +1172,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     break;
                 auto const& payload =
                     *reinterpret_cast<MessageBase const*>(message->GetData());
-                if(m_client_player)
+                if(m_client_player.exists())
                     shared_receive_payload(
                         p, m_client_player.get<PlayerInfo>(), payload);
                 client_receive_payload(p, payload);
@@ -1185,14 +1185,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     void server_close_peer_connection(
         HSteamNetConnection connection, int code, bool linger)
     {
-        if(auto& player = m_connections[connection].biped)
+        if(auto& player = m_connections[connection].biped; player.exists())
             player.get<NetworkInfo>().connected = false;
         cDebug(
             "peer={} disconnected ({})", connection, client_name(connection));
         if(auto it = m_connections.find(connection); it != m_connections.end())
         {
             auto& player = it->second.player_info;
-            if(player)
+            if(player.exists())
             {
                 player.m_ref->remove_entity_if(
                     [&player](compo::Entity const& e) {
@@ -1214,14 +1214,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto const& sync = payload.value<CameraSync>();
             for(auto const& pi : p.select<PlayerInfo>())
             {
-                auto* player_info = p.get<PlayerInfo>(pi.id);
+                auto* player_info = p.get<PlayerInfo>(pi.id());
                 bool  match =
                     (sync.target_player == CameraSync::self_id)
                          ? (player_info == &self)
                          : (player_info->player_idx == sync.target_player);
                 if(!match)
                     continue;
-                auto* cam = p.get<PlayerCamera>(pi.id);
+                auto* cam = p.get<PlayerCamera>(pi.id());
                 if(cam)
                 {
                     cam->camera->position = Vecf3(sync.position);
@@ -1285,11 +1285,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 m_connections[connection].idx,
                 event.progress);
             m_connections[connection].loading_progress = event.progress;
-            if(auto& pi = m_connections[connection].player_info; pi)
+            if(auto& pi = m_connections[connection].player_info; pi.exists())
                 (*pi).loading_progress = event.progress;
             if(event.progress != 100)
                 break;
-            if(player_info.player_info)
+            if(player_info.player_info.exists())
                 player_init(p.underlying(), *player_info.player_info);
             break;
         }
@@ -1348,9 +1348,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             net_state.remote_player_idx = confirm.player_idx;
 
             // Map local player 0 to server-assigned index
-            for(auto& player : p.select<PlayerInfo>())
+            for(auto player : p.select<PlayerInfo>())
             {
-                auto* info = p.get<PlayerInfo>(player.id);
+                auto* info = p.get<PlayerInfo>(player.id());
                 if(info && info->seat_idx == 0 && !info->is_remote())
                 {
                     info->player_idx = confirm.player_idx;
@@ -1402,11 +1402,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 
             // Collect existing player indices in ECS
             std::map<u32, u64> existing; // player_idx -> entity id
-            for(auto& entity : p.select<PlayerInfo>())
+            for(auto entity : p.select<PlayerInfo>())
             {
-                auto* info = p.get<PlayerInfo>(entity.id);
+                auto* info = p.get<PlayerInfo>(entity.id());
                 if(info)
-                    existing[info->player_idx] = entity.id;
+                    existing[info->player_idx] = entity.id();
             }
 
             for(auto const& player : players)
@@ -1455,9 +1455,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
         case MessageBase::UpdatePermission: {
             auto const& perm = payload.value<UpdatePermission>();
-            for(auto& entity : p.select<PlayerInfo>())
+            for(auto entity : p.select<PlayerInfo>())
             {
-                auto* info = p.get<PlayerInfo>(entity.id);
+                auto* info = p.get<PlayerInfo>(entity.id());
                 if(!info || info->player_idx != perm.player_idx)
                     continue;
                 switch(perm.permission)
@@ -1555,7 +1555,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 u32 PlayerRoster::player_count()
 {
     u32 count = 0;
-    for(auto& _ : m_container.select<PlayerInfo>())
+    for(auto _ : m_container.select<PlayerInfo>())
         ++count;
     return count;
 }
@@ -1564,9 +1564,9 @@ std::vector<NetworkState::RosterEntry> PlayerRoster::roster(
     std::optional<u32> self_idx)
 {
     std::vector<NetworkState::RosterEntry> entries;
-    for(auto& player : m_container.select<PlayerInfo>())
+    for(auto player : m_container.select<PlayerInfo>())
     {
-        auto* info = m_container.get<PlayerInfo>(player.id);
+        auto* info = m_container.get<PlayerInfo>(player.id());
         if(!info)
             continue;
         entries.push_back(

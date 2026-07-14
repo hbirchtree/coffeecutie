@@ -104,10 +104,10 @@ void TouchOverlay::end_restricted(Proxy& proxy, const time_point& time)
     auto delta_s = stl_types::Chrono::to_f32(delta);
 
     /* Find seat_idx==0 PlayerCamera */
-    for(auto& entity : proxy.select<PlayerCamera>())
+    for(auto entity : proxy.select<PlayerCamera>())
     {
-        auto* info = proxy.get<PlayerInfo>(entity.id);
-        auto* cam  = proxy.get<PlayerCamera>(entity.id);
+        auto* info = proxy.get<PlayerInfo>(entity.id());
+        auto* cam  = proxy.get<PlayerCamera>(entity.id());
         if(!info || !cam || info->seat_idx != 0)
             continue;
         cam->camera_->move(

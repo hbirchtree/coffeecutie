@@ -678,12 +678,12 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
     virtual void start_restricted(Proxy& p, time_point const& t) final 
     {
         PlayerCamera* camera{};
-        for(auto const& e : p.select<PlayerCamera>())
+        for(auto e : p.select<PlayerCamera, PlayerInfo>())
         {
-            PlayerInfo* info = p.get<PlayerInfo>(e.id);
-            if(info->seat_idx != 0)
+            auto const& [cam, info] = e.components();
+            if(info.seat_idx != 0)
                 continue;
-            camera = p.get<PlayerCamera>(e.id);
+            camera = &cam;
             break;
         }
 

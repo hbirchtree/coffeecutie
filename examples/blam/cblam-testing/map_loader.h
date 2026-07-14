@@ -113,9 +113,9 @@ struct BlamMapBrowser
                     {
                         if(!controllers)
                             continue;
-                        auto* info = e.get<PlayerInfo>(player.id);
+                        auto* info = e.get<PlayerInfo>(player.id());
                         ImGui::PushID(info->player_idx);
-                        auto* camera = e.get<PlayerCamera>(player.id);
+                        auto* camera = e.get<PlayerCamera>(player.id());
                         ImGui::Text(
                             "[i=%02i, seat=%02i] %s",
                             info->player_idx,
@@ -263,9 +263,9 @@ struct BlamMapBrowser
                             /* Swap seat 0 back to player_idx 0 */
                             PlayerInfo* old_seat0 = nullptr;
                             PlayerInfo* original  = nullptr;
-                            for(auto& pe : e.select<PlayerInfo>())
+                            for(auto pe : e.select<PlayerInfo>())
                             {
-                                auto* pi = e.get<PlayerInfo>(pe.id);
+                                auto* pi = e.get<PlayerInfo>(pe.id());
                                 if(pi && pi->seat_idx == 0)
                                     old_seat0 = pi;
                                 if(pi && pi->player_idx == 0)
@@ -276,10 +276,10 @@ struct BlamMapBrowser
                                 std::swap(
                                     old_seat0->seat_idx, original->seat_idx);
                                 /* Move keyboard.enabled */
-                                for(auto& pe : e.select<PlayerCamera>())
+                                for(auto pe : e.select<PlayerCamera>())
                                 {
-                                    auto* cam = e.get<PlayerCamera>(pe.id);
-                                    auto* pi  = e.get<PlayerInfo>(pe.id);
+                                    auto* cam = e.get<PlayerCamera>(pe.id());
+                                    auto* pi  = e.get<PlayerInfo>(pe.id());
                                     if(cam && pi)
                                         cam->keyboard.enabled =
                                             (pi->seat_idx == 0);
@@ -290,8 +290,8 @@ struct BlamMapBrowser
                     }
                     for(auto const& player : e.select<PlayerInfo>())
                     {
-                        auto const& pinfo = *e.get<PlayerInfo>(player.id);
-                        auto const& net_i = *e.get<NetworkInfo>(player.id);
+                        auto const& pinfo = *e.get<PlayerInfo>(player.id());
+                        auto const& net_i = *e.get<NetworkInfo>(player.id());
                         if(!net_i.connected && !pinfo.remote.empty())
                             ImGui::TextColored(
                                 ImVec4(0.7, 0.7, 0.7, 1.0),
@@ -319,9 +319,9 @@ struct BlamMapBrowser
                              * gets target's seat */
                             PlayerInfo* old_seat0   = nullptr;
                             u32         target_pidx = pinfo.player_idx;
-                            for(auto& pe : e.select<PlayerInfo>())
+                            for(auto pe : e.select<PlayerInfo>())
                             {
-                                auto* pi = e.get<PlayerInfo>(pe.id);
+                                auto* pi = e.get<PlayerInfo>(pe.id());
                                 if(pi && pi->seat_idx == 0)
                                 {
                                     old_seat0 = pi;
@@ -330,9 +330,9 @@ struct BlamMapBrowser
                             }
                             /* pinfo is const here, find mutable */
                             PlayerInfo* target = nullptr;
-                            for(auto& pe : e.select<PlayerInfo>())
+                            for(auto pe : e.select<PlayerInfo>())
                             {
-                                auto* pi = e.get<PlayerInfo>(pe.id);
+                                auto* pi = e.get<PlayerInfo>(pe.id());
                                 if(pi && pi->player_idx == target_pidx)
                                 {
                                     target = pi;
@@ -343,10 +343,10 @@ struct BlamMapBrowser
                             {
                                 std::swap(
                                     old_seat0->seat_idx, target->seat_idx);
-                                for(auto& pe : e.select<PlayerCamera>())
+                                for(auto pe : e.select<PlayerCamera>())
                                 {
-                                    auto* cam = e.get<PlayerCamera>(pe.id);
-                                    auto* pi  = e.get<PlayerInfo>(pe.id);
+                                    auto* cam = e.get<PlayerCamera>(pe.id());
+                                    auto* pi  = e.get<PlayerInfo>(pe.id());
                                     if(cam && pi)
                                         cam->keyboard.enabled =
                                             (pi->seat_idx == 0);
@@ -364,19 +364,19 @@ struct BlamMapBrowser
                     if(ImGui::BeginListBox("##entities"))
                     {
                         u32 entity_idx = 0;
-                        for(auto& entity : e.select(0))
+                        for(auto entity : e.select(0))
                         {
                             char label[64];
                             snprintf(
                                 label,
                                 sizeof(label),
                                 "E %llu [0x%llX]##%u",
-                                static_cast<unsigned long long>(entity.id),
-                                static_cast<unsigned long long>(entity.tags),
+                                static_cast<unsigned long long>(entity.id()),
+                                static_cast<unsigned long long>(entity.tags()),
                                 entity_idx);
                             if(ImGui::Selectable(
-                                   label, m_selected_entity == entity.id))
-                                m_selected_entity = entity.id;
+                                   label, m_selected_entity == entity.id()))
+                                m_selected_entity = entity.id();
                             entity_idx++;
                         }
                         ImGui::EndListBox();
