@@ -23,9 +23,16 @@ struct DebugMarkers : compo::SubsystemBase
     u32         portal_color_ptr{0};
 
     /* True once the debug-line buffers exist (false on GL ES 2.0 / mobile). */
+    /* Wired to RenderingParameters::debug_markers at registration; gating
+     * available() here turns off every per-frame marker writer at once —
+     * mapping the buffers stalls on GPU sync, so no writer should touch
+     * them while markers aren't drawn. One-time creators (load-time axes,
+     * boxes) call map() directly and are not affected. */
+    bool const* enabled{nullptr};
+
     bool available() const
     {
-        return static_cast<bool>(lines);
+        return static_cast<bool>(lines) && (!enabled || *enabled);
     }
 
     /* Map both buffers for CPU writes and reset the append cursor. */

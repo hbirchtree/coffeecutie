@@ -331,6 +331,36 @@ void create_resources(compo::EntityContainer& e)
                 target->mode.physics =
                     ev.data.value("physics", target->mode.physics);
             }
+            if(ev.event == "dump_players")
+            {
+                nlohmann::json roster = nlohmann::json::array();
+                for(auto entity : e.select<PlayerInfo>())
+                {
+                    auto const* info = e.get<PlayerInfo>(entity.id());
+                    if(!info)
+                        continue;
+                    auto const* net = e.get<NetworkInfo>(entity.id());
+                    auto const* cam = e.get<PlayerCamera>(entity.id());
+                    roster.push_back({
+                        {"player_idx", info->player_idx},
+                        {"seat_idx", info->seat_idx},
+                        {"name", info->name},
+                        {"remote", info->is_remote()},
+                        {"loading_progress", info->loading_progress},
+                        {"connected", net ? net->connected : false},
+                        {"position",
+                         cam ? nlohmann::json{
+                                   cam->camera->position.x,
+                                   cam->camera->position.y,
+                                   cam->camera->position.z}
+                             : nlohmann::json(nullptr)},
+                    });
+                }
+                cDebug(
+                    "PLAYERDUMP tag={} {}",
+                    ev.data.value("tag", std::string{}),
+                    roster.dump());
+            }
         }});
     }
 #endif
@@ -365,17 +395,7 @@ void create_resources(compo::EntityContainer& e)
     resources.model_index->alloc();
     resources.model_index->commit(memory_budget::mesh_elements);
 
-    /* On Adreno's native OpenGL ES driver we need 3 buffers to make things work
-     * smoothly
-     * Other GPU drivers seems to understand the pattern of map-use-discard
-     * correctly, so we don't need multiple :)
-     */
-    const u32 per_frame_bufs =
-        api.workarounds().bugs.adreno && !compile_info::platform::is_emscripten
-            ? 3
-            : compile_info::platform::is_emscripten
-                ? 1
-                : 2;
+    const u32 per_frame_bufs = compile_info::platform::is_emscripten ? 1 : 3;
 
     // For access in the vertex shader, UBOs are better
     resources.model_matrix_store = api.alloc_revolving_buffer(

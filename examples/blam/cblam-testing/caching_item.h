@@ -311,13 +311,15 @@ struct BSPItem
     }
 
     /* Clip a polygon to the inside (dot(n,v)+d >= 0) of a plane,
-     * Sutherland–Hodgman style. */
-    static std::vector<Vecf3> clip_polygon(
-        std::vector<Vecf3> const& poly, Vecf4 const& plane)
+     * Sutherland–Hodgman style, into a caller-provided buffer so the
+     * per-frame portal walk never allocates. */
+    static void clip_polygon(
+        std::vector<Vecf3> const& poly,
+        Vecf4 const&              plane,
+        std::vector<Vecf3>&       out)
     {
-        std::vector<Vecf3> out;
-        int                n = static_cast<int>(poly.size());
-        out.reserve(poly.size() + 2);
+        out.clear();
+        int n = static_cast<int>(poly.size());
         for(int i = 0; i < n; i++)
         {
             Vecf3 const& a  = poly[i];
@@ -329,8 +331,45 @@ struct BSPItem
             if((da > 0.f && db < 0.f) || (da < 0.f && db > 0.f))
                 out.push_back(a + (b - a) * (da / (da - db)));
         }
-        return out;
     }
+
+    /* Screen-space rectangle in NDC */
+    struct portal_rect
+    {
+        f32 x0, y0, x1, y1;
+    };
+
+    /* Reusable buffers for portal_visible_set: the walk clips polygons per
+     * portal crossing (up to 5 planes each) and tracks per-cluster entry
+     * rects — with per-call vectors that was ~10-20k allocations per frame
+     * on slow allocators (measured as multi-ms p95 spikes on Cortex-A8).
+     * Own one of these per caller and hand it in every frame. */
+    struct portal_scratch
+    {
+        struct entry_t
+        {
+            u32         ci;
+            u32         depth;
+            portal_rect rect;
+        };
+
+        std::vector<bool>                     visible;
+        std::vector<std::vector<portal_rect>> entered;
+        std::vector<entry_t>                  stack;
+        std::vector<Vecf3>                    poly_a;
+        std::vector<Vecf3>                    poly_b;
+
+        void reset(size_t num_clusters)
+        {
+            visible.assign(num_clusters, false);
+            /* keep inner vectors' capacity, just empty them */
+            if(entered.size() < num_clusters)
+                entered.resize(num_clusters);
+            for(auto& e : entered)
+                e.clear();
+            stack.clear();
+        }
+    };
 
     /* Portal-flow visibility with screen-space rectangles (the approach the
      * original engine uses). Each traversal path carries an NDC rectangle —
@@ -344,13 +383,17 @@ struct BSPItem
      * A cluster is re-entered only when a new path widens its accumulated
      * rectangle, so the walk terminates without missing multi-path
      * visibility. */
-    inline std::vector<bool> portal_visible_set(
+    inline std::vector<bool> const& portal_visible_set(
         u32          from_idx,
         Vecf3 const& /*camera_pos*/,
         Matf4 const& mvp,
+        portal_scratch& scratch,
         u32          max_depth = 64) const
     {
-        std::vector<bool> visible(clusters.size(), false);
+        using Rect = portal_rect;
+
+        scratch.reset(clusters.size());
+        std::vector<bool>& visible = scratch.visible;
         if(from_idx >= clusters.size())
             return visible;
         visible[from_idx] = true;
@@ -363,12 +406,7 @@ struct BSPItem
         /* Degenerate MVP (first frame, before the camera is initialised):
          * no frustum information, fall back to plain reachability. */
         if(glm::dot(Vecf3(r3), Vecf3(r3)) <= 1e-10f)
-            return portal_visible_set(from_idx, max_depth);
-
-        struct Rect
-        {
-            f32 x0, y0, x1, y1;
-        };
+            return visible = portal_visible_set(from_idx, max_depth), visible;
 
         /* World-space planes through the eye bounding the view pyramid of an
          * NDC rectangle: x_ndc ≥ x0 ⟺ (r0 - x0·r3)·v ≥ 0, etc. */
@@ -381,13 +419,6 @@ struct BSPItem
             }};
         };
 
-        struct Entry
-        {
-            u32  ci;
-            u32  depth;
-            Rect rect;
-        };
-
         /* Per-cluster list of rects the cluster was already entered with. A
          * new path is skipped only when its rect is contained in a SINGLE
          * previous entry rect — collapsing the entries into one accumulated
@@ -398,18 +429,19 @@ struct BSPItem
          * clusters missing from the visible set). */
         constexpr Rect empty_rect{1.f, 1.f, -1.f, -1.f};
         constexpr u32  max_entries = 8;
-        std::vector<std::vector<Rect>> entered(clusters.size());
+        auto&          entered     = scratch.entered;
 
         Rect const full_rect{-1.f, -1.f, 1.f, 1.f};
         entered[from_idx].push_back(full_rect);
 
-        std::vector<Entry> stack = {{from_idx, 0, full_rect}};
+        auto& stack = scratch.stack;
+        stack.push_back({from_idx, 0, full_rect});
 
         u32 budget = 4096; /* hard cap on portal crossings per frame */
 
         while(!stack.empty())
         {
-            Entry entry = stack.back();
+            auto entry = stack.back();
             stack.pop_back();
             if(entry.depth >= max_depth)
                 continue;
@@ -430,15 +462,20 @@ struct BSPItem
                  * near plane slightly in front of the eye so the projection
                  * below never divides by w ≤ 0. A portal the camera is about
                  * to cross gets clipped at the eye and projects to roughly
-                 * the whole rect, which is the desired behaviour. */
-                std::vector<Vecf3> poly = clip_polygon(
-                    portal.vertices, Vecf4(Vecf3(r3), r3.w - 1e-3f));
+                 * the whole rect, which is the desired behaviour. Ping-pongs
+                 * between two scratch buffers, no allocation steady-state. */
+                auto* in  = &scratch.poly_a;
+                auto* out = &scratch.poly_b;
+                clip_polygon(
+                    portal.vertices, Vecf4(Vecf3(r3), r3.w - 1e-3f), *in);
                 for(auto const& plane : planes)
                 {
-                    if(poly.size() < 3)
+                    if(in->size() < 3)
                         break;
-                    poly = clip_polygon(poly, plane);
+                    clip_polygon(*in, plane, *out);
+                    std::swap(in, out);
                 }
+                auto const& poly = *in;
                 if(poly.size() < 3)
                     continue;
 

@@ -1478,10 +1478,9 @@ struct MeshRenderer
         for(Pass& pass : m_bsp)
             pass.clear();
 
-        for(auto ent : p.select(ObjectBsp))
+        for(auto ent : p.template select<BspReference>())
         {
-            auto          ref = p.template ref<Proxy>(ent.id());
-            BspReference& bsp = ref.template get<BspReference>();
+            BspReference& bsp = ent.template get<BspReference>();
 
             if(!bsp.visible)
                 continue;
@@ -1524,10 +1523,9 @@ struct MeshRenderer
 
         /* Write the static material information, animations are updated later
          */
-        for(auto ent : p.select(ObjectBsp))
+        for(auto ent : p.template select<BspReference>())
         {
-            auto          ref = p.template ref<Proxy>(ent.id());
-            BspReference& bsp = ref.template get<BspReference>();
+            BspReference& bsp = ent.template get<BspReference>();
 
             if(!bsp.visible)
                 continue;

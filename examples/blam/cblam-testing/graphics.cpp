@@ -340,7 +340,8 @@ i32 blam_main()
                         std::ref(bitm_cache));
                 e.register_subsystem_inplace<ModelCache<halo_version>>(
                     std::ref(bitm_cache), std::ref(shader_cache), &gfx);
-                e.register_subsystem_inplace<DebugMarkers>();
+                e.register_subsystem_inplace<DebugMarkers>().enabled =
+                    &e.subsystem_cast<RenderingParameters>().debug_markers;
                 e.register_subsystem_inplace<BSPCache<halo_version>>(
                     std::ref(bitm_cache),
                     std::ref(shader_cache),

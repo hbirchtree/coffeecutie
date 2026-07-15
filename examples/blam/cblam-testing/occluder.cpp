@@ -7,6 +7,7 @@
 #include "map_marker.h"
 #include "selected_version.h"
 
+#include <coffee/core/CProfiling>
 #include <coffee/core/debug/formatting.h>
 
 template<typename V>
@@ -35,8 +36,11 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
     u32            pvs_cluster{0};
     generation_idx_t
         pvs_bsp_id{}; /* which BSP section the camera is currently in */
-    std::vector<bool> pvs_visible{}; /* portal-traversal visible set, recomputed
-                                        every frame */
+    std::vector<bool> pvs_visible{}; /* portal-traversal visible set,
+                                        recomputed on view change */
+    Matf4 last_pvs_mvp{};            /* view the set was computed for */
+    BSPItem::portal_scratch
+        portal_scratch{}; /* reused walk buffers, see caching_item.h */
 
     void start_restricted(Proxy& p, time_point const&)
     {
@@ -54,8 +58,19 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         if(!rendering->occluder_update)
             return;
 
+        Coffee::ProfContext _("Occluder::frame");
+
+        /* available() is gated on RenderingParameters::debug_markers:
+         * mapping the marker buffer stalls on GPU sync every frame, which
+         * is pure loss when the markers aren't even drawn (release/mobile
+         * default). This was ~99% of occluder frame time. */
         if(markers->available())
+        {
+            Coffee::ProfContext __("Occluder::debug_viz");
             update_debug_viz(p);
+        }
+
+        Coffee::Profiler::PushContext("Occluder::pre_section");
 
         Vecf3 camera_pos{};
         Matf4 camera_mvp = glm::identity<Matf4>();
@@ -120,6 +135,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             break;
         }
 
+        Coffee::Profiler::PopContext(); /* Occluder::pre_section */
+
+        Coffee::Profiler::PushContext("Occluder::section_resolve");
         BSPItem const*   active_bsp{nullptr};
         generation_idx_t active_bsp_id{};
         for(auto& [id, item] : bsp_cache->m_cache)
@@ -160,12 +178,22 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         if(section_changed)
             pvs_visible.clear(); /* stale per-cluster bits of old section */
 
-        if(current_bsp)
+        Coffee::Profiler::PopContext(); /* Occluder::section_resolve */
+
+        /* The visible set depends on the full view (portal screen rects),
+         * so it must follow camera motion — but an identical MVP and
+         * cluster yields an identical set, so idle frames skip the walk. */
+        bool view_changed =
+            cluster_changed || camera_mvp != last_pvs_mvp;
+        if(current_bsp && view_changed)
         {
+            Coffee::ProfContext __("Occluder::portal_visible_set");
+            pvs_cluster  = current_cluster;
+            pvs_visible  = pvs_bsp->portal_visible_set(
+                pvs_cluster, camera_pos, camera_mvp, portal_scratch);
+            last_pvs_mvp = camera_mvp;
+        } else if(current_bsp)
             pvs_cluster = current_cluster;
-            pvs_visible = pvs_bsp->portal_visible_set(
-                pvs_cluster, camera_pos, camera_mvp);
-        }
         /* else: camera outside the active section's clusters (noclip through
          * rock) — keep the last valid set; empty set = all-visible within the
          * active section. Snapping to all-visible across sections is what
@@ -321,10 +349,15 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
          *   on every chunk). */
         if(cull_bsp)
         {
-            for(auto ent : p.select(ObjectBsp))
+            Coffee::ProfContext __("Occluder::bsp_cull");
+            /* Fused select: dense walk over the BspReference container with
+             * the payload prefetched — BspReference and the ObjectBsp tag
+             * are 1:1 (same recipe), so this visits the same set as
+             * select(ObjectBsp) without the tag scan and per-entity
+             * container lookups. */
+            for(auto ent : p.template select<BspReference>())
             {
-                auto          ref     = p.template ref<Proxy>(ent.id());
-                BspReference& bsp_ref = ref.template get<BspReference>();
+                BspReference& bsp_ref = ent.template get<BspReference>();
 
                 bsp_total++;
                 if(bsp_ref.bsp == pvs_bsp_id)
@@ -431,6 +464,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         u32 model_visible = 0, model_pvs_culled = 0, model_frustum_culled = 0,
             model_dist_culled = 0, model_total = 0;
 
+        Coffee::Profiler::PushContext("Occluder::model_cull_static");
         for(auto ent : p.select(PositioningStatic))
         {
             auto   ref   = p.template ref<Proxy>(ent.id());
@@ -467,6 +501,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                     model_dist_culled++;
             }
         }
+        Coffee::Profiler::PopContext(); /* Occluder::model_cull_static */
+
+        Coffee::Profiler::PushContext("Occluder::model_cull_dynamic");
         for(auto ent : p.select(PositioningDynamic))
         {
             auto   ref   = p.template ref<Proxy>(ent.id());
@@ -477,6 +514,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             else
                 model.visible = in_draw_distance(model);
         }
+        Coffee::Profiler::PopContext(); /* Occluder::model_cull_dynamic */
 
         if((cluster_changed || periodic) && false)
         {

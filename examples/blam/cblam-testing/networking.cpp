@@ -1015,16 +1015,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         {
             if(m_local_player_info.empty())
             {
-                for(auto player : p.select<PlayerInfo>())
+                for(auto player : p.select<PlayerInfo, PlayerCamera>())
                 {
-                    auto  ref      = player;
-                    auto  info_ref = ref.ref<PlayerInfo>();
-                    auto& info     = (*info_ref);
-                    if(info.player_idx == 0)
-                        info.name = m_host_name;
-                    else
-                        info.name = get_random_name();
-                    m_local_player_info.push_back(info_ref);
+                    auto [info, cam] = player.components();
+                    if(info.is_remote() || !cam.is_active())
+                        continue;
+
+                    info.name = (info.seat_idx == 0) ? m_host_name
+                                                     : get_random_name();
+                    m_local_player_info.push_back(player.ref<PlayerInfo>());
                 }
             }
 

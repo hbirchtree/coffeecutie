@@ -367,6 +367,78 @@ def _is_ci() -> bool:
     return os.environ.get("CI", "").lower() in ("true", "1")
 
 
+def _cgroup_memory_limit() -> int | None:
+    """Effective cgroup memory limit in bytes, or None if unlimited.
+
+    Handles cgroup v2 (memory.max/memory.high) and v1
+    (memory.limit_in_bytes). Values at or above total system RAM are
+    treated as unlimited.
+    """
+    def read_limit(path: Path) -> int | None:
+        try:
+            text = path.read_text().strip()
+        except OSError:
+            return None
+        if text == "max":
+            return None
+        try:
+            return int(text)
+        except ValueError:
+            return None
+
+    limits = [
+        lim
+        for lim in (
+            read_limit(Path("/sys/fs/cgroup/memory.max")),
+            read_limit(Path("/sys/fs/cgroup/memory.high")),
+            read_limit(Path("/sys/fs/cgroup/memory/memory.limit_in_bytes")),
+        )
+        if lim is not None
+    ]
+    if not limits:
+        return None
+    limit = min(limits)
+
+    try:
+        total = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
+        if limit >= total:
+            return None
+    except (ValueError, OSError):
+        pass
+    return limit
+
+
+def _cgroup_cpu_limit() -> int:
+    """Effective CPU count, honouring cgroup CPU quota if one is set."""
+    cpus = os.cpu_count() or 1
+    try:
+        quota_s, period_s = (
+            Path("/sys/fs/cgroup/cpu.max").read_text().split()
+        )
+        if quota_s != "max":
+            cpus = min(cpus, max(1, int(quota_s) // int(period_s)))
+    except (OSError, ValueError):
+        pass
+    return cpus
+
+
+def _container_build_limits() -> tuple[int, int] | None:
+    """(compile_jobs, link_jobs) derived from cgroup limits, or None.
+
+    Heavy template TUs peak around 2 GB and links around 6 GB, so
+    parallelism is capped at limit/2GB compiles and limit/6GB links to
+    keep the build inside the container's memory budget.
+    """
+    limit = _cgroup_memory_limit()
+    if limit is None:
+        return None
+    mem_gb = limit / (1 << 30)
+    cpus = _cgroup_cpu_limit()
+    compile_jobs = max(1, min(cpus, int(mem_gb / 2)))
+    link_jobs = max(1, min(compile_jobs, int(mem_gb / 6)))
+    return compile_jobs, link_jobs
+
+
 def _fmt_bytes(n: int) -> str:
     v = float(n)
     for unit in ("B", "KB", "MB", "GB"):
@@ -554,6 +626,10 @@ def host_tools_plan(host: HostInfo, base_dir: Path) -> BuildPlan:
     vcpkg_root = resolve_vcpkg_root()
     host_env = {"NINJA": ninja, "VCPKG_ROOT": vcpkg_root}
 
+    limits = _container_build_limits()
+    if limits and "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
+        host_env["CMAKE_BUILD_PARALLEL_LEVEL"] = str(limits[0])
+
     plan.add(Step(
         name="host-tools-configure",
         cmd=["cmake", "--preset", f"host-{host.triplet}"],
@@ -723,6 +799,28 @@ def configure_and_build_plan(
     cmake_args = cmake_args or []
     plan = BuildPlan(f"configure-and-build — {target.preset}")
 
+    # Inside a memory-limited cgroup (docker etc.) ninja's default of
+    # nproc+2 jobs easily overshoots the limit and gets the container
+    # OOM-killed. Derive job counts from the limit instead, unless the
+    # user already chose their own pools or parallelism.
+    build_env = {"BUILD_TYPE": target.cmake_build_type}
+    limits = _container_build_limits()
+    if limits and not any("CMAKE_JOB_POOL" in a for a in cmake_args):
+        compile_jobs, link_jobs = limits
+        cmake_args = cmake_args + [
+            f"-DCMAKE_JOB_POOLS=compile_pool={compile_jobs};link_pool={link_jobs}",
+            "-DCMAKE_JOB_POOL_COMPILE=compile_pool",
+            "-DCMAKE_JOB_POOL_LINK=link_pool",
+        ]
+        if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
+            build_env["CMAKE_BUILD_PARALLEL_LEVEL"] = str(compile_jobs)
+        if "VCPKG_MAX_CONCURRENCY" not in os.environ:
+            env = {**env, "VCPKG_MAX_CONCURRENCY": str(compile_jobs)}
+        print(
+            f":: cgroup memory limit detected — capping build at "
+            f"{compile_jobs} compile / {link_jobs} link jobs"
+        )
+
     if _is_ci():
         plan.add(PythonStep(
             name="pre-configure-space",
@@ -787,7 +885,7 @@ def configure_and_build_plan(
     plan.add(Step(
         name="build",
         cmd=build_cmd,
-        env={"BUILD_TYPE": target.cmake_build_type},
+        env=build_env,
         cwd=base_dir,
         description=f"CMake build — preset {target.build_preset}",
     ))
