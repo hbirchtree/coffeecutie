@@ -15,11 +15,9 @@
         "gles": [],
         "screenshot_quality": 60
     },
-    "comment": "Client side of the client/server replication harness. Connection itself is driven by the process's --server CLI arg (see run_client_server_test.sh), not by this config. Snapshots at the same wall-clock offsets as the server config so the two logs line up for diffing.",
+    "comment": "Client side of the client/server replication harness. Connection itself is driven by the process's --server CLI arg (see run_client_server_test.sh), not by this config. dump_state writes state.json into this process's TMPDIR; the harness diffs it against the server's copy after both processes exit.",
     "events": [
-        {"time": 3000, "type": "dump_players", "tag": "client_t1"},
-        {"time": 6000, "type": "dump_players", "tag": "client_t2"},
-        {"time": 9000, "type": "dump_players", "tag": "client_t3"}
+        {"time": 9000, "type": "dump_state"}
     ],
     "end_time": 11000
 }

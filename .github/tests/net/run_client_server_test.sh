@@ -5,13 +5,15 @@
 # --listen (server), one with --server (client), pointed at each other over
 # loopback via the engine's existing CLI args (graphics.cpp / networking.cpp)
 # — this script does not add any new connection plumbing. Each instance gets
-# its own TMPDIR (already-overridable per url.cpp) so their profile.json /
-# screenshot / report output don't collide, and its own dummy_plug config
-# that snapshots the PlayerInfo roster a few times via the "dump_players"
-# custom event (resource_creation.cpp). compare_roster.py then diffs the
-# two logs' snapshots for replication bugs (missing/duplicate players, name
-# mismatches, stale "remote"/"connected" flags) — this is how issues like
-# players not syncing between server and client show up.
+# its own TMPDIR (already-overridable per url.cpp — with it set, RSCA::TempFile
+# resolves to exactly that directory, no app-name subdir) so their profile.json /
+# screenshot / state.json output don't collide, and its own dummy_plug config
+# that fires the "dump_state" custom event (resource_creation.cpp) near the
+# end, writing that process's view of the world to <its TMPDIR>/state.json.
+# compare_state.py then diffs the two files for replication bugs
+# (missing/duplicate players, name mismatches, stale "remote"/"connected"
+# flags) — this is how issues like players not syncing between server and
+# client show up.
 #
 # Usage:
 #   run_client_server_test.sh [OUT_DIR]
@@ -38,10 +40,14 @@ PORT="${PORT:-27105}"
 BOOT_TIMEOUT="${BOOT_TIMEOUT:-30}"
 RUN_TIMEOUT="${RUN_TIMEOUT:-40}"
 
-mkdir -p "$OUT_DIR/server_tmp" "$OUT_DIR/client_tmp"
+SERVER_TMP="$OUT_DIR/server_tmp"
+CLIENT_TMP="$OUT_DIR/client_tmp"
+mkdir -p "$SERVER_TMP" "$CLIENT_TMP"
 SERVER_LOG="$OUT_DIR/server.log"
 CLIENT_LOG="$OUT_DIR/client.log"
-rm -f "$SERVER_LOG" "$CLIENT_LOG"
+SERVER_STATE="$SERVER_TMP/state.json"
+CLIENT_STATE="$CLIENT_TMP/state.json"
+rm -f "$SERVER_LOG" "$CLIENT_LOG" "$SERVER_STATE" "$CLIENT_STATE"
 
 echo "Out dir : $OUT_DIR"
 echo "Target  : $TARGET"
@@ -59,7 +65,7 @@ fi
 BASE_RUN_ARGS=(run "$TARGET" -- "$RESOURCE_DIR" "$MAP")
 
 echo "Starting server..."
-TMPDIR="$OUT_DIR/server_tmp" \
+TMPDIR="$SERVER_TMP" \
 DUMMY_PLUG_CONFIG="$HERE/dummy_plug_net_server.json" \
 COFFEE_DISABLE_PROFILER=1 \
 timeout "${RUN_TIMEOUT}s" ./cb "${BASE_RUN_ARGS[@]}" --listen "127.0.0.1:$PORT" \
@@ -90,7 +96,7 @@ fi
 echo "Server is listening."
 
 echo "Starting client..."
-TMPDIR="$OUT_DIR/client_tmp" \
+TMPDIR="$CLIENT_TMP" \
 DUMMY_PLUG_CONFIG="$HERE/dummy_plug_net_client.json" \
 COFFEE_DISABLE_PROFILER=1 \
 timeout "${RUN_TIMEOUT}s" ./cb "${BASE_RUN_ARGS[@]}" --server "127.0.0.1:$PORT" \
@@ -109,14 +115,25 @@ if [ "$SERVER_EXIT" = "124" ] || [ "$CLIENT_EXIT" = "124" ]; then
 fi
 
 echo
-echo "::group::server.log (PLAYERDUMP + connection lines)"
-grep -E "PLAYERDUMP|Started server|Connection info|Player joined|Controller|Error" "$SERVER_LOG" || true
+echo "::group::server.log (connection + state-dump lines)"
+grep -E "State dumped|Started server|Connection info|Player joined|Controller|Error" "$SERVER_LOG" || true
 echo "::endgroup::"
-echo "::group::client.log (PLAYERDUMP + connection lines)"
-grep -E "PLAYERDUMP|join confirmation|roster received|Error" "$CLIENT_LOG" || true
+echo "::group::client.log (connection + state-dump lines)"
+grep -E "State dumped|join confirmation|roster received|Error" "$CLIENT_LOG" || true
 echo "::endgroup::"
 
+if [ ! -s "$SERVER_STATE" ]; then
+    echo "FAIL: $SERVER_STATE was never written (dump_state didn't fire before the process exited?)"
+    exit 1
+fi
+if [ ! -s "$CLIENT_STATE" ]; then
+    echo "FAIL: $CLIENT_STATE was never written (dump_state didn't fire before the process exited?)"
+    exit 1
+fi
+
 echo
-echo "=== Roster comparison ==="
-python3 "$HERE/compare_roster.py" "$SERVER_LOG" "$CLIENT_LOG"
+echo "=== State comparison ==="
+echo "server: $SERVER_STATE"
+echo "client: $CLIENT_STATE"
+python3 "$HERE/compare_state.py" "$SERVER_STATE" "$CLIENT_STATE"
 exit $?
