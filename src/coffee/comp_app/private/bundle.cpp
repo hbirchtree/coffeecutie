@@ -84,10 +84,6 @@
 #include <coffee/dispmanx/dispmanx_comp.h>
 #endif
 
-#if defined(FEATURE_ENABLE_OSMesaComponent)
-#include <coffee/osmesa/osmesa_comp.h>
-#endif
-
 #if defined(FEATURE_ENABLE_TerminalComponents)
 #include <coffee/terminal_comp/terminal_components.h>
 #endif
@@ -501,7 +497,6 @@ void addDefaults(
         Windower_EGL,     // EGL-based platforms, eg. NullWS on BeagleBone
         Windower_X11,     // Simplified X11 client, aimed at Maemo
         Windower_COG,     // GameCube/DevkitPro
-        Windower_OSMesa,  // Special OSMesa windowing (deprecated)
         Windower_DispManX,
     } selected_windowing{Windower_Default};
 
@@ -588,18 +583,6 @@ void addDefaults(
 
     /* Selection of window/event manager */
     cVerbose(10, "Loading windowing library");
-#if defined(FEATURE_ENABLE_OSMesaComponent)
-    if(dummyPlug.enabled && dummyPlug.swrender == "mesa")
-    {
-        loader.registerAll<type_safety::type_list_t<
-            comp_app::PtrNativeWindowInfoService,
-            osmesa::Windowing>>(container, ec);
-        C_ERROR_CHECK(ec);
-        appInfo.add("window:library", "OSMesa");
-        selected_windowing = Windower_OSMesa;
-        cVerbose(10, "Selecting surfaceless OSMesa backend");
-    } else
-#endif
 #if defined(FEATURE_ENABLE_EGLComponent) && \
     defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
         if(dummyPlug.enabled
@@ -731,13 +714,6 @@ void addDefaults(
     appInfo.add("graphics:library", "OpenGL");
 
 /* Selection of (E)GL context */
-#if defined(FEATURE_ENABLE_OSMesaComponent)
-    if(dummyPlug.enabled && dummyPlug.swrender == "mesa")
-    {
-        loader.registerAll<osmesa::Services>(container, ec);
-        appInfo.add("gl:context", "OSMesa");
-    } else
-#endif
 #if defined(FEATURE_ENABLE_EGLComponent) && \
     defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
         if(dummyPlug.enabled

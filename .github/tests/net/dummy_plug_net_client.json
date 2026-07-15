@@ -1,0 +1,25 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "comment": "Client side of the client/server replication harness. Connection itself is driven by the process's --server CLI arg (see run_client_server_test.sh), not by this config. Snapshots at the same wall-clock offsets as the server config so the two logs line up for diffing.",
+    "events": [
+        {"time": 3000, "type": "dump_players", "tag": "client_t1"},
+        {"time": 6000, "type": "dump_players", "tag": "client_t2"},
+        {"time": 9000, "type": "dump_players", "tag": "client_t3"}
+    ],
+    "end_time": 11000
+}
