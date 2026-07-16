@@ -11,6 +11,7 @@
 #include "shader_compiler.h"
 
 #include <coffee/comp_app/services.h>
+#include <coffee/core/files/cfiles.h>
 #include <coffee/core/types/input/event_types.h>
 #include <coffee/core/input/eventhandlers.h>
 #include <glm/ext/quaternion_trigonometric.hpp>
@@ -331,35 +332,60 @@ void create_resources(compo::EntityContainer& e)
                 target->mode.physics =
                     ev.data.value("physics", target->mode.physics);
             }
-            if(ev.event == "dump_players")
+            if(ev.event == "dump_state")
             {
-                nlohmann::json roster = nlohmann::json::array();
-                for(auto entity : e.select<PlayerInfo>())
+                /* Generic per-process state dump for integration testing
+                 * (currently just the player roster; add more top-level
+                 * keys here as other subsystems need the same treatment —
+                 * that's why this writes one shared state.json rather
+                 * than a roster-only file). One file per process, in its
+                 * own TMPDIR (the client/server harness —
+                 * .github/tests/net/ — points TMPDIR at a distinct dir
+                 * per side precisely so this doesn't collide).
+                 * Overwritten every time this event fires, so the final
+                 * write holds end-of-test state; the harness diffs the
+                 * two files directly once both processes have exited. */
+                nlohmann::json state;
+
+                nlohmann::json& players = state["players"];
+                players                 = nlohmann::json::array();
+                for(auto const& entity : e.select<PlayerInfo, NetworkInfo, PlayerCamera>())
                 {
-                    auto const* info = e.get<PlayerInfo>(entity.id());
-                    if(!info)
-                        continue;
-                    auto const* net = e.get<NetworkInfo>(entity.id());
-                    auto const* cam = e.get<PlayerCamera>(entity.id());
-                    roster.push_back({
-                        {"player_idx", info->player_idx},
-                        {"seat_idx", info->seat_idx},
-                        {"name", info->name},
-                        {"remote", info->is_remote()},
-                        {"loading_progress", info->loading_progress},
-                        {"connected", net ? net->connected : false},
-                        {"position",
-                         cam ? nlohmann::json{
-                                   cam->camera->position.x,
-                                   cam->camera->position.y,
-                                   cam->camera->position.z}
-                             : nlohmann::json(nullptr)},
+                    auto [info, net, cam] = entity.components();
+                    players.push_back({
+                        {"player_idx", info.player_idx},
+                        {"seat_idx", info.seat_idx},
+                        {"name", info.name},
+                        {"remote", info.is_remote()},
+                        {"loading_progress", info.loading_progress},
+                        {"connected", net.connected},
+                        {"position", nlohmann::json{
+                            cam.camera->position.x,
+                            cam.camera->position.y,
+                            cam.camera->position.z,
+                        }},
                     });
                 }
+
+                /* state_json is a named local, not a temporary passed
+                 * straight into ofString(): BytesConst::ofString's
+                 * by-value std::string overload copies its argument into
+                 * a function-local parameter and returns a span pointing
+                 * into it, which is already destroyed by the time the
+                 * caller gets the span back. Resource's BytesConst
+                 * assignment borrows rather than copies (see cfiles.h),
+                 * so the buffer must genuinely outlive it — hence a named
+                 * string_view over a local that's still alive at
+                 * FileCommit(). */
+                std::string state_json = state.dump(2);
+                auto        file       = Resource("state.json"_tmpfile);
+                file = semantic::BytesConst::ofString(
+                    std::string_view(state_json));
+                Coffee::FileCommit(
+                    file, RSCA::NewFile | RSCA::Discard | RSCA::WriteOnly);
                 cDebug(
-                    "PLAYERDUMP tag={} {}",
-                    ev.data.value("tag", std::string{}),
-                    roster.dump());
+                    "State dumped to state.json ({} player(s))",
+                    players.size());
             }
         }});
     }
@@ -604,6 +630,10 @@ void create_resources(compo::EntityContainer& e)
     DebugMarkers& markers = e.subsystem_cast<DebugMarkers>();
     markers.lines         = resources.debug_lines;
     markers.colors        = resources.debug_line_colors;
+    if(resources.debug_lines)
+        markers.set_capacity(
+            static_cast<u32>((memory_budget::debug_buffer / 2) / sizeof(Vecf3)),
+            static_cast<u32>((memory_budget::debug_buffer / 2) / sizeof(Vecf3)));
 
     if (!compile_info::platform::is_android && resources.debug_lines)
     {
@@ -627,7 +657,14 @@ void create_resources(compo::EntityContainer& e)
         debug_draw.components = {
             compo::type_hash_v<DebugDraw>(),
         };
-        for(auto i : range<u32>(6))
+        /* 3 axis lines (X/Y/Z), 2 verts each — matches debug_axes_verts/
+         * debug_axes_colors in data.h and the 6 verts/3 colours written
+         * just above. Physics bodies and occluder eye markers used to be
+         * pre-created here too, capped at a compile-time count (16); they
+         * now allocate their own slots lazily via
+         * DebugMarkers::acquire_strip(), so any number of them fit, up to
+         * the buffer's real capacity. */
+        for(auto i : range<u32>(3))
         {
             auto  x_    = e.create_entity(debug_draw);
             auto& x     = x_.get<DebugDraw>();
@@ -639,14 +676,6 @@ void create_resources(compo::EntityContainer& e)
                              .offset = 2 * i,
                     },
             };
-        }
-
-        for(auto i : range<u32>(16))
-        {
-            auto  eyes     = e.create_entity(debug_draw);
-            auto& draw     = eyes.get<DebugDraw>();
-            draw.color_ptr = 6 + i;
-            draw.data      = {.arrays = {.count = 7, .offset = 24 + 7 * i}};
         }
     }
 

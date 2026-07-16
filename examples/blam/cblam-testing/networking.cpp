@@ -1,4 +1,5 @@
 #include "networking.h"
+#include "blam/volta/blam_base_types.h"
 #include "blam/volta/blam_scenario.h"
 #include "peripherals/typing/vectors/glm_vector_types.h"
 #include "types.h"
@@ -96,6 +97,9 @@ struct MessageBase
 
         /* Roster */
         PlayerSync,
+
+        /* Extension data */
+        NegotiateExtension,
     } type{None};
 
     u32 request{};
@@ -274,6 +278,28 @@ struct alignas(8) PlayerSyncEntry
 };
 
 static_assert(sizeof(PlayerSyncEntry) == 48);
+
+struct alignas(8) NegotiateExtension
+{
+    static constexpr auto message_type = MessageBase::NegotiateExtension;
+
+    blam::bl_string_var<65> hash; /*!< Hash of extension data
+                                   * Ensures we'll be in sync */
+    enum extension_type_t
+    {
+        None = 0,
+        RS2  = 1,
+    } type;
+
+    union
+    {
+        struct
+        {
+            /* dunno what to stuff here yet */
+        } rs2;
+        u64 raw[10];
+    } data;
+};
 
 /*
  * Some ground rules for networking:

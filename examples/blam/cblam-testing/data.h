@@ -17,12 +17,14 @@
 
 using namespace Coffee::StandardInput;
 
-/* Physics probe marker: one 16-point wire box updated per frame */
-constexpr libc_types::u32 physics_debug_point_ptr = 24 + 16 * 7;
-constexpr libc_types::u32 physics_debug_color_ptr = 6 + 16;
-
-constexpr libc_types::u32 reserved_debug_points = physics_debug_point_ptr + 16;
-constexpr libc_types::u32 reserved_debug_colors = physics_debug_color_ptr + 1;
+/* The only genuinely fixed reservation in the debug-line buffers: three
+ * 2-vertex axis lines, drawn once at load (resource_creation.cpp) and
+ * never resized. Everything else — physics body boxes, occluder eye
+ * markers, map-load geometry — is allocated dynamically at runtime
+ * (DebugMarkers::acquire_strip / create_marker / create_loop), bounded
+ * only by the buffers' real capacity instead of hand-picked offsets. */
+constexpr libc_types::u32 debug_axes_verts  = 6;
+constexpr libc_types::u32 debug_axes_colors = 3;
 
 using libc_types::f32;
 using libc_types::i32;

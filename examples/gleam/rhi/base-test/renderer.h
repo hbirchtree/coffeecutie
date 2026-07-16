@@ -1,3 +1,4 @@
+#include "allocators.h"
 #include <peripherals/stl/magic_enum.hpp>
 
 #include <coffee/components/components.h>
@@ -81,40 +82,12 @@ struct TransformPair
 static constexpr u32 FloorTag    = 0x1;
 static constexpr u32 BaseItemTag = 0x2;
 
-struct MatrixContainer;
-using matrix_tag = compo::value_tag<MatrixContainer, std::pair<Matf4*, Matf4*>>;
-
-struct MatrixContainer : compo::alloc::VectorBaseContainer<matrix_tag>
+struct Matrix
 {
-    std::vector<Matf4> m_matrices;
+    using value_type = Matrix;
+    using type = compo::alloc::VectorContainer<Matrix>;
 
-    virtual void register_entity(u64 id)
-    {
-        compo::alloc::VectorBaseContainer<matrix_tag>::register_entity(id);
-
-        m_matrices.push_back({});
-        m_matrices.push_back({});
-
-        *this->m_data.rbegin() = {
-            &m_matrices.at(m_matrices.size() - 1),
-            &m_matrices.at(m_matrices.size() - 2)};
-    }
-
-    virtual value_type* get(u64 id)
-    {
-        auto it = m_mapping.find(id);
-
-        if(it == m_mapping.end())
-            return nullptr;
-
-        auto& out = m_data.at((*it).second);
-
-        out = {
-            &m_matrices.at((*it).second * 2),
-            &m_matrices.at((*it).second * 2 + 1)};
-
-        return &out;
-    }
+    Matf4 m1, m2;
 };
 
 class CameraContainer : public compo::SubsystemBase
@@ -202,7 +175,7 @@ struct RuntimeStateSystem : Components::SubsystemBase
 
 class TransformVisitor
     : public Components::EntityVisitor<
-          Components::TypeList<TransformPair, matrix_tag>,
+          Components::TypeList<TransformPair, Matrix>,
           Components::TypeList<CameraContainer>>
 {
   public:
@@ -227,13 +200,13 @@ class TransformVisitor
         auto output_matrix = camera.projection *
                              GenTransform<f32>(camera_source) * object_matrix;
 
-        auto& mats = c.get<matrix_tag>();
+        auto& mats = c.get<Matrix>();
 
-        *mats.first = output_matrix;
+        mats.m1 = output_matrix;
 
         camera_source.position.x += camera.eye_distance * 2;
 
-        *mats.second = camera.projection * GenTransform<f32>(camera_source) *
+        mats.m2 = camera.projection * GenTransform<f32>(camera_source) *
                        object_matrix;
 
         camera_source.position.x -= camera.eye_distance;
@@ -664,7 +637,7 @@ void SetupRendering(
         using Components::VisitorFlags;
 
         e.register_component_inplace<TransformPair>();
-        e.register_component_inplace<matrix_tag>();
+        e.register_component_inplace<Matrix>();
 
         e.register_system(std::make_unique<TransformVisitor>());
         e.register_system(std::make_unique<FloorVisitor>());
@@ -692,7 +665,7 @@ void SetupRendering(
 
         floor_object.components = {
             typeid(TransformPair).hash_code(),
-            typeid(matrix_tag).hash_code(),
+            typeid(Matrix).hash_code(),
         };
         base_object = floor_object;
 
@@ -703,9 +676,9 @@ void SetupRendering(
         e.create_entity(floor_object);
     }
 
-    for(auto& entity : e.select(FloorTag))
+    for(auto entity : e.select(FloorTag))
     {
-        auto& xf = *e.get<TransformPair>(entity.id);
+        auto& xf = *e.get<TransformPair>(entity.id());
 
         xf.first.position   = {0, 0, 5};
         xf.first.scale      = Vecf3{2.5f};
@@ -715,9 +688,9 @@ void SetupRendering(
         xf.mask.y = 2;
     }
 
-    for(auto& entity : e.select(BaseItemTag))
+    for(auto entity : e.select(BaseItemTag))
     {
-        auto& xf = *e.get<TransformPair>(entity.id);
+        auto& xf = *e.get<TransformPair>(entity.id());
 
         xf.first.position = {0, 0, 5};
         xf.first.scale    = Vecf3{1.5f};
@@ -794,7 +767,7 @@ void RendererLoop(
 #endif
 
 #if !defined(FEATURE_ENABLE_Gexxo)
-        auto const& xf  = e.container_cast<matrix_tag>().m_matrices;
+        auto const& xf  = e.container_cast<Matrix>().m_data;
         auto        err = d.gfx.submit(
             {
                        .program  = g.program,

@@ -15,9 +15,12 @@
         "gles": [],
         "screenshot_quality": 60
     },
-    "comment": "Server side of the client/server replication harness. Connection itself is driven by the process's --listen CLI arg (see run_client_server_test.sh), not by this config. dump_state writes state.json into this process's TMPDIR; the harness diffs it against the client's copy after both processes exit.",
+    "comment": "Server side of the client/server replication harness. Connection itself is driven by the process's --listen CLI arg (see run_client_server_test.sh), not by this config. dump_state writes state.json into this process's TMPDIR; the harness diffs it against the client's copy after both processes exit. debug_markers + physics mode are enabled so the screenshot actually shows something to eyeball (player eye markers, physics AABBs) instead of a bare view of the map.",
     "events": [
-        {"time": 9000, "type": "dump_state"}
+        {"time": 1000, "type": "render_param", "debug_markers": true},
+        {"time": 1500, "type": "camera", "physics": true},
+        {"time": 9000, "type": "dump_state"},
+        {"time": 9500, "type": "screenshot", "name": "server_view"}
     ],
     "end_time": 11000
 }

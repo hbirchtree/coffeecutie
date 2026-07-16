@@ -2,6 +2,9 @@
 
 #include "components.h"
 
+#include <map>
+#include <vector>
+
 /* Single owner of the debug-line vertex/colour buffers and every CPU-side
  * write to them. Components never touch BlamResources::debug_lines or
  * ::debug_line_colors directly — they bind the buffers once, then map(),
@@ -21,6 +24,110 @@ struct DebugMarkers : compo::SubsystemBase
     Span<Vecf3> portal_color_buffer;
     u32         portal_ptr{0};
     u32         portal_color_ptr{0};
+
+    /*!
+     * \brief Reserve a persistent slot for one line strip (vert_count
+     * vertices + one colour), held until release_strip(). Unlike
+     * portal_ptr above — an append-only cursor for one-shot, load-time
+     * geometry (BSP portal loops, trigger-volume boxes) — a strip slot
+     * belongs to its caller for as long as they want it, and is
+     * rewritten in place every frame via put_strip(). Each distinct
+     * visualization instance (one physics body, one player's eye marker,
+     * ...) gets its own slot instead of every instance sharing a single
+     * hardcoded offset — that sharing was the actual bug: with a fixed
+     * per-subsystem slot, only the last consumer to write in a given
+     * frame was visible, and the slot count was a compile-time ceiling
+     * unrelated to the buffer's real size.
+     */
+    struct strip_slot_t
+    {
+        u32 vert_offset{0};
+        u32 vert_count{0};
+        u32 color_idx{0};
+
+        bool valid() const
+        {
+            return vert_count != 0;
+        }
+    };
+
+    /* Total capacity of the underlying buffers, in Vecf3 elements — known
+     * from allocation time (resource_creation.cpp via set_capacity()),
+     * independent of whether the buffers are currently mapped. The
+     * persistent-strip allocator below grows DOWN from this capacity
+     * while the one-shot append cursor (portal_ptr) grows UP from just
+     * past the fixed axes prefix, so both share the whole buffer instead
+     * of a hand-picked prefix, and each fails gracefully (denies the
+     * request, callers already handle that) only once they'd actually
+     * meet. */
+    u32 vert_capacity{0};
+    u32 color_capacity{0};
+
+    void set_capacity(u32 verts, u32 colors)
+    {
+        vert_capacity       = verts;
+        color_capacity      = colors;
+        m_strip_vert_floor  = verts;
+        m_strip_color_floor = colors;
+    }
+
+    strip_slot_t acquire_strip(u32 vert_count)
+    {
+        if(vert_count == 0)
+            return {};
+
+        auto& free_verts  = m_free_strip_verts[vert_count];
+        bool  reuse_verts = !free_verts.empty();
+        bool  reuse_color = !m_free_strip_colors.empty();
+
+        if(!reuse_verts && vert_count > (m_strip_vert_floor - portal_ptr))
+        {
+            cWarning(
+                "DebugMarkers: strip buffer full, denying slot for {} verts",
+                vert_count);
+            return {};
+        }
+        if(!reuse_color && m_strip_color_floor <= portal_color_ptr)
+        {
+            cWarning("DebugMarkers: strip colour buffer full, denying slot");
+            return {};
+        }
+
+        u32 vert_offset;
+        if(reuse_verts)
+        {
+            vert_offset = free_verts.back();
+            free_verts.pop_back();
+        } else
+        {
+            m_strip_vert_floor -= vert_count;
+            vert_offset = m_strip_vert_floor;
+        }
+
+        u32 color_idx;
+        if(reuse_color)
+        {
+            color_idx = m_free_strip_colors.back();
+            m_free_strip_colors.pop_back();
+        } else
+        {
+            m_strip_color_floor -= 1;
+            color_idx = m_strip_color_floor;
+        }
+
+        return strip_slot_t{vert_offset, vert_count, color_idx};
+    }
+
+    /* Returns a slot to the free list for reuse — call when the owning
+     * body/player goes away, otherwise repeated join/leave (netcode
+     * testing, physics bodies rebuilding) permanently eats buffer space. */
+    void release_strip(strip_slot_t const& slot)
+    {
+        if(!slot.valid())
+            return;
+        m_free_strip_verts[slot.vert_count].push_back(slot.vert_offset);
+        m_free_strip_colors.push_back(slot.color_idx);
+    }
 
     /* True once the debug-line buffers exist (false on GL ES 2.0 / mobile). */
     /* Wired to RenderingParameters::debug_markers at registration; gating
@@ -102,8 +209,10 @@ struct DebugMarkers : compo::SubsystemBase
         if(portal_buffer.empty())
             return {};
         u32 n = static_cast<u32>(points.size());
-        if(n == 0 || portal_ptr + n > portal_buffer.size() ||
-           portal_color_ptr >= portal_color_buffer.size())
+        /* Bounded by the strip floor, not raw buffer size: the top of the
+         * buffer belongs to acquire_strip()'s persistent slots. */
+        if(n == 0 || portal_ptr + n > m_strip_vert_floor ||
+           portal_color_ptr >= m_strip_color_floor)
         {
             cWarning("DebugMarkers: portal buffer full, dropping loop");
             return {};
@@ -133,8 +242,10 @@ struct DebugMarkers : compo::SubsystemBase
     {
         if(portal_buffer.empty())
             return {};
-        if(portal_ptr + N > portal_buffer.size() ||
-           portal_color_ptr >= portal_color_buffer.size())
+        /* Bounded by the strip floor, not raw buffer size: the top of the
+         * buffer belongs to acquire_strip()'s persistent slots. */
+        if(portal_ptr + N > m_strip_vert_floor ||
+           portal_color_ptr >= m_strip_color_floor)
         {
             cWarning("DebugMarkers: portal buffer full, dropping marker");
             return {};
@@ -158,10 +269,11 @@ struct DebugMarkers : compo::SubsystemBase
         return draw;
     }
 
-    /* Overwrite a previously-reserved fixed slot in place — does not move the
-     * append cursor. Buffers must be mapped. Used for per-frame markers
-     * (physics probe box, occluder eye markers) whose vertex/colour slots are
-     * statically reserved and rewritten every frame. */
+    /* Overwrite a slot reserved via acquire_strip() (or, historically, a
+     * fixed offset) in place — does not move the append cursor. Buffers
+     * must be mapped. Used for per-frame markers (physics bodies, occluder
+     * eye markers) whose vertex/colour slots persist across frames and are
+     * rewritten every frame rather than re-appended. */
     void put_strip(
         u32                         vert_offset,
         u32                         color_idx,
@@ -176,4 +288,10 @@ struct DebugMarkers : compo::SubsystemBase
             verts.begin(), verts.end(), portal_buffer.begin() + vert_offset);
         portal_color_buffer[color_idx] = color;
     }
+
+  private:
+    u32 m_strip_vert_floor{0};
+    u32 m_strip_color_floor{0};
+    std::map<u32, std::vector<u32>> m_free_strip_verts;
+    std::vector<u32>                m_free_strip_colors;
 };

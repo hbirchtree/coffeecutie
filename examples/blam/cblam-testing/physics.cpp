@@ -155,12 +155,24 @@ struct PhysicsSystem
             p.subsystem(markers);
             if(!markers->available())
                 break;
+            m_markers = markers;
             markers->map();
             for(auto& [entity, body] : m_bodies)
             {
                 DebugDraw* debug = p.template get<DebugDraw>(entity);
                 if(!debug)
                     continue;
+                if(!body.debug_slot.valid())
+                {
+                    body.debug_slot = markers->acquire_strip(16);
+                    if(!body.debug_slot.valid())
+                        continue;
+                    debug->data.arrays = {
+                        .count  = body.debug_slot.vert_count,
+                        .offset = body.debug_slot.vert_offset,
+                    };
+                    debug->color_ptr = body.debug_slot.color_idx;
+                }
                 btRigidBody* rigid_body = body.world_body.get();
                 btVector3 min, max;
                 rigid_body->getAabb(min, max);
@@ -168,14 +180,9 @@ struct PhysicsSystem
                     {min.x(), min.y(), min.z()},
                     {max.x(), max.y(), max.z()}
                 );
-                debug->data.arrays = {
-                    .count = 16,
-                    .offset = physics_debug_point_ptr + 16,
-                };
-                debug->color_ptr = physics_debug_color_ptr + 1;
                 markers->put_strip(
-                    physics_debug_point_ptr + 16,
-                    physics_debug_color_ptr + 1,
+                    body.debug_slot.vert_offset,
+                    body.debug_slot.color_idx,
                     box,
                     Vecf3{1.f, .5f, 0.f});
             }
@@ -209,26 +216,30 @@ struct PhysicsSystem
 
     /* Wire box following the probe sphere, drawn through the existing
      * debug line pass (RenderingParameters::debug_markers gates it).
-     * Vertex slot is statically reserved (physics_debug_point_ptr), the
-     * 16 line-strip points are rewritten every frame. */
+     * Vertex slot is reserved once (acquire_strip), the 16 line-strip
+     * points are rewritten every frame. */
     void update_probe_marker(Proxy& p)
     {
         DebugMarkers* markers;
         p.subsystem(markers);
         if(!markers->available())
             return;
+        m_markers = markers;
 
         if(!m_marker_spawned)
         {
+            m_probe_slot = markers->acquire_strip(16);
+            if(!m_probe_slot.valid())
+                return;
             compo::EntityRecipe marker;
             marker.components = {compo::type_hash_v<DebugDraw>()};
             auto       ent    = p.create_entity(marker);
             DebugDraw& draw   = ent.template get<DebugDraw>();
             draw.data.arrays  = {
-                 .count  = 16,
-                 .offset = physics_debug_point_ptr,
+                 .count  = m_probe_slot.vert_count,
+                 .offset = m_probe_slot.vert_offset,
             };
-            draw.color_ptr   = physics_debug_color_ptr;
+            draw.color_ptr   = m_probe_slot.color_idx;
             m_marker_spawned = true;
         }
 
@@ -239,8 +250,8 @@ struct PhysicsSystem
         auto const box = DebugMarkers::box_vertices(lo, hi);
         markers->map();
         markers->put_strip(
-            physics_debug_point_ptr,
-            physics_debug_color_ptr,
+            m_probe_slot.vert_offset,
+            m_probe_slot.color_idx,
             box,
             Vecf3{1.f, .5f, 0.f});
         markers->unmap();
@@ -525,6 +536,10 @@ struct PhysicsSystem
             return;
         if(it->second.world_body)
             m_world->removeRigidBody(it->second.world_body.get());
+        /* Give the debug-marker slot back so repeated join/leave (netcode
+         * testing) or body rebuilds don't permanently eat buffer space. */
+        if(m_markers)
+            m_markers->release_strip(it->second.debug_slot);
         m_bodies.erase(it);
         wake_dynamic_bodies();
     }
@@ -779,8 +794,13 @@ struct PhysicsSystem
         std::unique_ptr<btCollisionShape>           world_shape;
         std::unique_ptr<btRigidBody>                world_body;
         std::shared_ptr<void>                       keep_alive;
+        /* Lazily reserved on first debug draw, released in remove_body() */
+        DebugMarkers::strip_slot_t debug_slot{};
     };
     std::map<u64, entity_body> m_bodies;
+
+    DebugMarkers*              m_markers{nullptr};
+    DebugMarkers::strip_slot_t m_probe_slot{};
 
     /* Event bus for outgoing events (Overlap); wired by alloc_physics */
     PhysicsBus* m_bus{};

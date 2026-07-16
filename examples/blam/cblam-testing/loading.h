@@ -26,7 +26,7 @@ void load_scenario_bsp(
         bsp_cache.element_buffer = gpu.bsp_index->map<blam::vert::face>(0);
         bsp_cache.light_buffer   = gpu.bsp_light_buf->map<byte_t>(0);
 
-        debug_markers.map(reserved_debug_points, reserved_debug_colors);
+        debug_markers.map(debug_axes_verts, debug_axes_colors);
         bsp_cache.debug_markers = &debug_markers;
     }
 

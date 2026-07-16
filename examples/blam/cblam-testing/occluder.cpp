@@ -12,7 +12,7 @@
 
 template<typename V>
 using OccluderManifest = compo::SubsystemManifest<
-    type_list_t<BspReference, Model, PlayerCamera, PlayerInfo>,
+    type_list_t<BspReference, Model, PlayerCamera, PlayerInfo, DebugDraw>,
     type_list_t<
         BSPCache<V>,
         BlamResources,
@@ -41,6 +41,13 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
     Matf4 last_pvs_mvp{};            /* view the set was computed for */
     BSPItem::portal_scratch
         portal_scratch{}; /* reused walk buffers, see caching_item.h */
+
+    struct eye_marker_t
+    {
+        u64                         entity{0};
+        DebugMarkers::strip_slot_t  slot{};
+    };
+    std::vector<eye_marker_t> eye_pool;
 
     void start_restricted(Proxy& p, time_point const&)
     {
@@ -742,8 +749,28 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             auto* info = p.template get<PlayerInfo>(ent.id());
             if(!cam || !info)
                 continue;
-            if(player_i >= 16)
-                break;
+
+            /* Grow the pool on demand instead of capping at a compile-time
+             * 16 — bounded only by acquire_strip()'s buffer capacity. */
+            if(player_i >= eye_pool.size())
+            {
+                auto slot = markers->acquire_strip(7);
+                if(!slot.valid())
+                    break; /* buffer exhausted; stop drawing further eyes */
+
+                compo::EntityRecipe marker;
+                marker.components = {compo::type_hash_v<DebugDraw>()};
+                auto       marker_ent = p.create_entity(marker);
+                DebugDraw& draw       = marker_ent.template get<DebugDraw>();
+                draw.data.arrays      = {
+                         .count  = slot.vert_count,
+                         .offset = slot.vert_offset,
+                };
+                draw.color_ptr = slot.color_idx;
+
+                eye_pool.push_back({marker_ent.id(), slot});
+            }
+            auto const& eye = eye_pool[player_i];
 
             auto pos = cam->camera->position;
 
@@ -760,15 +787,19 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 pos + Vecf3{-0.2f, 0, 0},
             }};
 
-            /* Eye markers live in the slots reserved after the axes
-             * (vertex 24 + 7*i, colour 6 + i). */
+            if(auto* draw = p.template get<DebugDraw>(eye.entity))
+                draw->data.arrays.count = eye.slot.vert_count;
             markers->put_strip(
-                24 + 7 * player_i,
-                6 + player_i,
+                eye.slot.vert_offset,
+                eye.slot.color_idx,
                 points,
                 Vecf3{.5f, 0, 1.f});
             player_i++;
         }
+
+        for(; player_i < eye_pool.size(); ++player_i)
+            if(auto* draw = p.template get<DebugDraw>(eye_pool[player_i].entity))
+                draw->data.arrays.count = 0;
 
         markers->unmap();
     }
