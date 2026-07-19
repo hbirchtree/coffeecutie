@@ -27,8 +27,14 @@ struct Event
         Translate, /*!< Apply translation to body, for teleport */
         
         Overlap, /*!< Collision event between two bodies */
-        
+
         ProbeHere, /*!< Put debug probe at camera position, for testing */
+
+        Reset, /*!< Tear down all bodies + the world mesh ahead of a map
+                * change. Mesh-based bodies reference their source
+                * geometry zero-copy (the world BVH reads straight out of
+                * the mapped map file), so everything must be out of the
+                * simulation before the old map's memory goes away. */
     } type{};
 };
 
@@ -136,6 +142,11 @@ struct Overlap
 struct ProbeHere
 {
     static constexpr auto event_type = Event::ProbeHere;
+};
+
+struct Reset
+{
+    static constexpr auto event_type = Event::Reset;
 };
 
 }

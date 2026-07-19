@@ -19,6 +19,7 @@
 #include <hash-library/sha256.h>
 
 #include <cctype>
+#include <filesystem>
 #include <functional>
 #include <map>
 #include <memory>
@@ -53,6 +54,7 @@ enum class TriClass : u8
     door    = 3, // def has an Open/Close action
     link    = 4, // def has a Climb/Enter action (see find_links)
     roof    = 5, // placement shape 12-21
+    clip    = 6, // invisible collision skirts (blocked-tile boundaries)
 };
 
 // Semantic floor classes, derived from flo.dat entry NAMES at load time.
@@ -203,6 +205,13 @@ inline bool collidable_only(Mesh const& source, size_t index)
     }
 }
 
+// Everything except the invisible collision skirts — the render set when
+// clip meshes are in the same part list as the visible geometry.
+inline bool renderable(Mesh const& source, size_t index)
+{
+    return source.tri_class[index] != TriClass::clip;
+}
+
 }
 
 // Regroup any number of meshes into one mesh per material (texture id,
@@ -273,6 +282,10 @@ struct RegionGeometry
     // loc geometry, split into ≤ MESH_MAX_VERTICES chunks at placement
     // granularity (models are never split across chunks)
     std::vector<Mesh> locs;
+    // invisible collision skirts along blocked-tile boundaries (cliff
+    // faces, water edges) — every triangle TriClass::clip; keep out of the
+    // render set (filter_method::renderable), feed to physics
+    Mesh clip;
 };
 
 // Inclusive region-coordinate extent of the map, with world-unit
@@ -406,7 +419,21 @@ class RegionLoader
     explicit RegionLoader(std::string cache_dir) :
         m_cache_dir(std::move(cache_dir))
     {
-        auto arch2 = jag_load_archive(read_file(m_cache_dir + "/0/2.dat"));
+        // Two on-disk layouts: classic dumps use numbered index dirs
+        // (0/2.dat = config archive, 4/ = map squares, 1/ = models); beta
+        // (~build 225) dumps use named archives ("config", "models",
+        // "textures") plus a maps/ dir with m{x}_{y} / l{x}_{y} files.
+        std::vector<u8> config_raw;
+        try
+        {
+            config_raw = read_file(m_cache_dir + "/0/2.dat");
+        }
+        catch(const std::exception&)
+        {
+            config_raw = read_file(m_cache_dir + "/config");
+            m_beta     = true;
+        }
+        auto arch2 = jag_load_archive(config_raw);
 
         // Content fingerprint for network handshakes: SHA-256 over the
         // decompressed config archive (flo/loc/obj…) and versionlist
@@ -444,14 +471,50 @@ class RegionLoader
         if(loc_dat && loc_idx)
             m_loc_defs = parse_loc_defs(*loc_dat, *loc_idx);
 
-        auto arch5 = jag_load_archive(read_file(m_cache_dir + "/0/5.dat"));
-        sig.add(arch5.data(), arch5.size());
-        m_signature = sig.getHash();
+        if(!m_beta)
+        {
+            auto arch5 = jag_load_archive(read_file(m_cache_dir + "/0/5.dat"));
+            sig.add(arch5.data(), arch5.size());
+            m_signature = sig.getHash();
 
-        auto mi = jag_extract(arch5, "map_index");
-        if(!mi)
-            throw std::runtime_error("map_index not found in archive 5");
-        m_regions = parse_map_index(*mi);
+            auto mi = jag_extract(arch5, "map_index");
+            if(!mi)
+                throw std::runtime_error("map_index not found in archive 5");
+            m_regions = parse_map_index(*mi);
+        }
+        else
+        {
+            // No versionlist archive pre-~234: the region list comes from
+            // the maps/ directory itself, and the models archive stands in
+            // for the versionlist in the content signature (it covers all
+            // geometry-relevant assets alongside the config archive).
+            auto models_arch =
+                jag_load_archive(read_file(m_cache_dir + "/models"));
+            sig.add(models_arch.data(), models_arch.size());
+            m_signature = sig.getHash();
+            if(!m_ob_models.load(models_arch))
+                throw std::runtime_error("cannot parse ob_ model archive");
+
+            // Some beta dumps (e.g. build 194) have no map data at all —
+            // configs and models still load, the region list stays empty.
+            if(std::filesystem::is_directory(m_cache_dir + "/maps"))
+                for(const auto& entry : std::filesystem::directory_iterator(
+                        m_cache_dir + "/maps"))
+                {
+                    int x, y;
+                    if(sscanf(
+                           entry.path().filename().c_str(), "m%d_%d", &x,
+                           &y) == 2 &&
+                       x >= 0 && x < 256 && y >= 0 && y < 256)
+                        m_regions.push_back({u8(x), u8(y), 0, 0, 0});
+                }
+            std::sort(
+                m_regions.begin(), m_regions.end(),
+                [](const RegionRef& a, const RegionRef& b) {
+                    return std::pair{a.region_x, a.region_y} <
+                           std::pair{b.region_x, b.region_y};
+                });
+        }
         for(const auto& r : m_regions)
         {
             m_region_lookup[key(r.region_x, r.region_y)] = &r;
@@ -495,6 +558,7 @@ class RegionLoader
         geo.plane    = plane;
         geo.terrain  = build_terrain_mesh(rx, ry, plane);
         geo.locs     = build_locs_meshes(*ref, plane);
+        geo.clip     = build_clip_mesh(rx, ry, plane);
         return geo;
     }
 
@@ -541,8 +605,7 @@ class RegionLoader
     {
         try
         {
-            auto raw = gzip_file(
-                m_cache_dir + "/4/" + std::to_string(ref.map_file_id) + ".dat");
+            auto raw = map_square(ref, true);
             return parse_map_locs(raw, ref.region_x, ref.region_y);
         }
         catch(const std::exception&)
@@ -574,11 +637,16 @@ class RegionLoader
         RsModel parsed;
         try
         {
-            auto raw = read_file(
-                m_cache_dir + "/1/" + std::to_string(id) + ".dat");
-            if(raw.size() >= 2 && raw[0] == 0x1F && raw[1] == 0x8B)
-                raw = gzip_decompress(raw.data(), raw.size());
-            parsed = parse_model(raw);
+            if(m_beta)
+                parsed = m_ob_models.decode(id);
+            else
+            {
+                auto raw = read_file(
+                    m_cache_dir + "/1/" + std::to_string(id) + ".dat");
+                if(raw.size() >= 2 && raw[0] == 0x1F && raw[1] == 0x8B)
+                    raw = gzip_decompress(raw.data(), raw.size());
+                parsed = parse_model(raw);
+            }
         }
         catch(const std::exception&) {}
         auto [ins, ok] = m_models.emplace(id, std::move(parsed));
@@ -859,9 +927,6 @@ class RegionLoader
                 --eff_plane;
             if(eff_plane != plane)
                 continue;
-            // Skip floor decorations (type 22) — flat ground-cover patches.
-            if(pl.type == 22)
-                continue;
             if(pl.loc_id < 0 || pl.loc_id >= (int)m_loc_defs.size())
                 continue;
             const LocDef& def = m_loc_defs[pl.loc_id];
@@ -973,6 +1038,8 @@ class RegionLoader
                              height_at(ex, ey, pl.plane)) *
                        8.f / 4.f;
 
+            float lift = pl.type == 22 ? 2.f : 0.f;
+
             // client model lighting on the final transformed model,
             // quantised to 8-step buckets to keep material counts sane
             std::vector<int> lights = model_vertex_lights(mdl);
@@ -1029,7 +1096,8 @@ class RegionLoader
                     float wx = ox + float(v[0]);
                     float wy = oy + float(v[2]);
                     float base =
-                        def.contoured_ground ? ground_at(wx, wy) : gz;
+                        (def.contoured_ground ? ground_at(wx, wy) : gz) +
+                        lift;
                     // model: x=east, y=vertical (negative=up), z=north
                     mesh->indices.push_back(add_vertex(
                         wx, wy, base - float(v[1]), col, opacity, us[k],
@@ -1044,6 +1112,91 @@ class RegionLoader
         if(chunks.back().indices.empty())
             chunks.pop_back();
         return chunks;
+    }
+
+    // ── collision skirts ────────────────────────────────────────────
+
+    // Invisible collision-only geometry: vertical quads along the boundary
+    // between blocked tiles (terrain settings bit 1 — cliff faces, water)
+    // and walkable ones, so triangle-mesh physics stops bipeds where the
+    // game's tile flags do (steep "impassable" hills are ordinary walkable
+    // slopes to a physics engine). Never rendered; consumed by the physics
+    // repack (every triangle TriClass::clip, both windings so collision
+    // works from either side).
+    Mesh build_clip_mesh(int rx, int ry, int plane)
+    {
+        Mesh mesh;
+
+        // blocked state of a tile: 1 = blocked, 0 = walkable,
+        // -1 = no map data (world edge — emit nothing against those)
+        auto blocked = [&](int wx, int wy) -> int {
+            // bridge decks (plane-1 data walked at ground level) use the
+            // deck's flags, not the water underneath
+            if(plane == 0 && is_bridge(wx, wy))
+            {
+                const Tile* deck = tile_at(wx, wy, 1);
+                return deck ? (deck->settings & 1) : -1;
+            }
+            const Tile* t = tile_at(wx, wy, plane);
+            return t ? (t->settings & 1) : -1;
+        };
+
+        auto quad = [&](float x0, float y0, float x1, float y1, float zb,
+                        float zt) {
+            auto add = [&](float x, float y, float z) -> u16 {
+                mesh.vertices.push_back(
+                    Vertex{x, y, z, 0, 0, 0, 255, 0.f, 0.f});
+                return u16(mesh.vertices.size() - 1);
+            };
+            u16 a = add(x0, y0, zb), b = add(x1, y1, zb);
+            u16 c = add(x1, y1, zt), d = add(x0, y0, zt);
+            const u16 idx[] = {a, b, c, a, c, d, a, c, b, a, d, c};
+            mesh.indices.insert(
+                mesh.indices.end(), std::begin(idx), std::end(idx));
+            for(int i = 0; i < 4; ++i)
+            {
+                mesh.tri_texture.push_back(-1);
+                mesh.tri_overlay.push_back(0);
+                mesh.tri_loc.push_back(-1);
+                mesh.tri_class.push_back(TriClass::clip);
+            }
+        };
+
+        // neighbour delta + the two tile corners forming the shared edge
+        struct Edge
+        {
+            int dx, dy, cx0, cy0, cx1, cy1;
+        };
+        static constexpr Edge edges[] = {
+            {-1, 0, 0, 0, 0, 1}, // west
+            {1, 0, 1, 0, 1, 1},  // east
+            {0, -1, 0, 0, 1, 0}, // south
+            {0, 1, 0, 1, 1, 1},  // north
+        };
+
+        for(int x = 0; x < REGION_SIZE; ++x)
+            for(int y = 0; y < REGION_SIZE; ++y)
+            {
+                int wx = rx * REGION_SIZE + x, wy = ry * REGION_SIZE + y;
+                if(blocked(wx, wy) != 1)
+                    continue;
+                for(const Edge& e : edges)
+                {
+                    if(blocked(wx + e.dx, wy + e.dy) != 0)
+                        continue; // skirt only blocked → walkable boundaries
+                    int h0 = height_at(wx + e.cx0, wy + e.cy0, plane) * 8;
+                    int h1 = height_at(wx + e.cx1, wy + e.cy1, plane) * 8;
+                    // sunk below the terrain to close seams, and one storey
+                    // (240 units) above the highest corner so a biped can
+                    // neither step nor hop over
+                    quad(
+                        float(wx + e.cx0) * 128.f, float(wy + e.cy0) * 128.f,
+                        float(wx + e.cx1) * 128.f, float(wy + e.cy1) * 128.f,
+                        float(std::min(h0, h1)) - 16.f,
+                        float(std::max(h0, h1)) + 240.f);
+                }
+            }
+        return mesh;
     }
 
     // ── map links (stairs, ladders, cave entrances) ─────────────────
@@ -1195,10 +1348,20 @@ class RegionLoader
 
     static u32 key(int rx, int ry) { return u32(rx) << 16 | u32(ry); }
 
-    std::vector<u8> gzip_file(const std::string& path)
+    // Decompressed map square (terrain, or the loc placements when locs).
+    // Classic layout: numeric file ids from map_index under 4/; beta layout:
+    // maps/m{x}_{y} (terrain) and maps/l{x}_{y} (locs).
+    std::vector<u8> map_square(const RegionRef& ref, bool locs)
     {
-        auto raw = read_file(path);
-        return gzip_decompress(raw.data(), raw.size());
+        std::string path =
+            m_beta ? m_cache_dir + "/maps/" + (locs ? "l" : "m") +
+                         std::to_string(ref.region_x) + "_" +
+                         std::to_string(ref.region_y)
+                   : m_cache_dir + "/4/" +
+                         std::to_string(
+                             locs ? ref.map_file_id : ref.land_file_id) +
+                         ".dat";
+        return mapsquare_decompress(read_file(path));
     }
 
     // Parsed terrain planes of a region; nullptr when the region has no
@@ -1215,9 +1378,7 @@ class RegionLoader
         {
             try
             {
-                auto raw = gzip_file(
-                    m_cache_dir + "/4/" +
-                    std::to_string(ref->land_file_id) + ".dat");
+                auto raw = map_square(*ref, false);
                 planes = std::make_unique<Planes>(parse_terrain(raw, rx, ry));
             }
             catch(const std::exception&) {} // missing/corrupt = no data
@@ -1227,6 +1388,8 @@ class RegionLoader
     }
 
     std::string                                        m_cache_dir;
+    bool                                               m_beta = false;
+    ObModelArchive                                     m_ob_models;
     std::string                                        m_signature;
     std::vector<Underlay>                              m_underlays;
     std::vector<FloorClass>                            m_floor_classes;

@@ -31,6 +31,8 @@ struct NetworkState : compo::SubsystemBase
 
     std::optional<libc_types::u32> remote_player_idx;
 
+    std::optional<std::string> local_player_name;
+
     struct RosterEntry
     {
         std::string     name;

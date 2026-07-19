@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+#include <future>
 #include <limits>
 
 #include <blam/volta/blam_stl.h>
@@ -147,7 +149,7 @@ struct LoadingStatus : compo::SubsystemBase
     comp_app::interfaces::AppInfo* app_info{};
     std::string                    status;
     libc_types::i16                progress;
-    bool                           loading{false};
+    std::atomic<bool> loading{false};
     loading_t                      loaded_map{none};
     loading_t                      loaded_bitmaps{none};
     loading_t                      loaded_sounds{none};
@@ -163,9 +165,9 @@ struct LoadingStatus : compo::SubsystemBase
         if(loaded_map == loaded && loaded_bitmaps == loaded &&
            loaded_sounds == loaded && loaded_shaders == loaded)
         {
-            if(loading == true)
+            bool was_loading = true;
+            if(loading.compare_exchange_strong(was_loading, false))
                 finished.set_value();
-            loading  = false;
             progress = -1;
             app_info->setState(comp_app::interfaces::AppInfo::loaded);
         }

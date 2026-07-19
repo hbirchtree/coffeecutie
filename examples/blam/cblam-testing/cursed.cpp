@@ -368,11 +368,15 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
                             parts.push_back(&plane.terrain);
                             for(auto const& chunk : plane.locs)
                                 parts.push_back(&chunk);
+                            parts.push_back(&plane.clip);
                         }
 
                         auto data   = std::make_shared<RegionData>();
                         data->coord = {x, y};
-                        data->meshes = rs2::repack_by_material(parts);
+                        data->meshes = rs2::repack_by_material<std::pair<rs2::i32, bool>>(
+                            parts,
+                            rs2::sorting_method::by_material,
+                            rs2::filter_method::renderable);
                         on_built(std::move(data));
 
 #if defined(FEATURE_ENABLE_BULLET3)

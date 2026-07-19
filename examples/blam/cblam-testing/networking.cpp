@@ -14,6 +14,7 @@ using Coffee::ProfContext;
 
 #include "components.h"
 #include "data.h"
+#include "journal.h"
 #include "selected_version.h"
 
 #include <GameNetworkingSockets/steam/isteamnetworkingsockets.h>
@@ -674,6 +675,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             0,
             [this](GameEvent&, MapLoadFinishedEvent<halo_version>* finished) {
                 m_map = finished->container;
+                if(!m_socket)
+                    return;
+                for(auto& [connection, state] : m_connections)
+                {
+                    if(state.invited)
+                        continue;
+                    send_single(connection, generate_game_join());
+                    state.invited          = true;
+                    state.loading_progress = 0;
+                    state.last_seen        = std::nullopt;
+                }
             });
         m_game_bus.addEventData({
             0,
@@ -873,11 +885,19 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 "Connection to peer={} established ({})",
                 info->m_hConn,
                 client_name(info->m_hConn));
-            /* If the server doesn't have an active map, don't send the game
-             * invite yet */
+            journal(
+                "net_peer_connected",
+                {{"peer", client_name(info->m_hConn)},
+                 {"player_idx", m_connections[info->m_hConn].idx},
+                 {"map_ready", m_map != nullptr}});
+            /* If the server doesn't have an active map, don't send the
+             * game invite yet — MapLoadFinishedEvent below catches this
+             * connection up once m_map is set, so this isn't a permanent
+             * miss. */
             if(!m_map)
                 break;
             send_single(info->m_hConn, generate_game_join());
+            m_connections[info->m_hConn].invited          = true;
             m_connections[info->m_hConn].loading_progress = 0;
             m_connections[info->m_hConn].last_seen        = std::nullopt;
             break;
@@ -922,6 +942,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_net_state.client_state   = NetworkState::ClientState::Connected;
             m_net_state.remote_address = remote_name();
             cDebug("Connection to server/peer established ({})", remote_name());
+            journal("net_connected", {{"server", remote_name()}});
             m_connection_last_seen = std::nullopt;
             break;
         }
@@ -935,6 +956,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         case k_ESteamNetworkingConnectionState_Dead: {
             m_net_state.client_state = NetworkState::ClientState::Disconnecting;
             cDebug("Disonnected from server/peer ({})", remote_name());
+            journal("net_disconnected", {{"server", remote_name()}});
             m_impl->CloseConnection(
                 info->m_hConn,
                 0,
@@ -1271,27 +1293,35 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         case MessageBase::PlayerJoin: {
             auto const& player_join = payload.value<PlayerJoin>();
             cDebug("Player joined: {}", player_join.player_name.str());
-            auto ref = p.create_entity(
-                compo::EntityRecipe{
-                    {
-                        compo::type_hash_v<PlayerInfo>(),
-                        compo::type_hash_v<NetworkInfo>(),
-                        compo::type_hash_v<PlayerCamera>(),
-                        compo::type_hash_v<SoundEffects>(),
-                    },
-                    PlayerBiped,
-                });
-            player_info.player_info = ref.ref<PlayerInfo>();
-            player_info.biped       = ref;
+            journal(
+                "net_player_join",
+                {{"name", player_join.player_name.str()},
+                 {"player_idx", player_info.idx},
+                 {"rejoin", player_info.player_info.exists()}});
+            if(!player_info.player_info.exists())
+            {
+                auto ref = p.create_entity(
+                    compo::EntityRecipe{
+                        {
+                            compo::type_hash_v<PlayerInfo>(),
+                            compo::type_hash_v<NetworkInfo>(),
+                            compo::type_hash_v<PlayerCamera>(),
+                            compo::type_hash_v<SoundEffects>(),
+                        },
+                        PlayerBiped,
+                    });
+                player_info.player_info = ref.ref<PlayerInfo>();
+                player_info.biped       = ref;
 
-            auto& net_info     = ref.get<NetworkInfo>();
-            net_info.connected = true;
+                auto& net_info     = ref.get<NetworkInfo>();
+                net_info.connected = true;
 
-            auto& info = (*player_info.player_info);
-            info.name  = player_join.player_name.str();
+                auto& info = (*player_info.player_info);
+                info.remote     = client_name(connection);
+                info.player_idx = player_info.idx;
+            }
 
-            info.remote     = client_name(connection);
-            info.player_idx = player_info.idx;
+            (*player_info.player_info).name = player_join.player_name.str();
 
             send_single(
                 connection,
@@ -1350,6 +1380,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 "Loading map {} as requested by server({})",
                 data.map_name.str(),
                 remote_name());
+            journal(
+                "net_game_join",
+                {{"map", data.map_name.str()},
+                 {"server", remote_name()},
+                 {"seed", join.seed}});
             m_game_bus.inject(ev, &data);
             ev.type = GameEvent::ServerConnected;
             ServerConnectedEvent connect{
@@ -1357,8 +1392,20 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .seed   = join.seed,
             };
             m_game_bus.inject(ev, &data);
-            std::string player_name = get_random_name();
+            auto& net_state = p.subsystem<NetworkState>();
+            if(!net_state.local_player_name)
+                net_state.local_player_name = get_random_name();
+            std::string player_name = *net_state.local_player_name;
             // TODO: Create global storage for player name + save to disk?
+            for(auto player : p.select<PlayerInfo>())
+            {
+                auto* info = p.get<PlayerInfo>(player.id());
+                if(info && info->seat_idx == 0 && !info->is_remote())
+                {
+                    info->name = player_name;
+                    break;
+                }
+            }
             send_single(
                 m_connection,
                 Message<PlayerJoin>({
@@ -1384,6 +1431,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }
 
             cDebug("Received join confirmation, player_id={}", confirm.player_idx);
+            journal("net_join_confirm", {{"player_idx", confirm.player_idx}});
             break;
         }
         case MessageBase::GameEvent: {
@@ -1406,10 +1454,33 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             break;
         }
         case MessageBase::PlayerSync: {
-            cDebug("Player roster received");
             auto  players   = payload.values<PlayerSyncEntry>();
             auto& net_state = p.subsystem<NetworkState>();
             auto  self_idx  = net_state.remote_player_idx.value_or(0xFFFF);
+            u32 existing_before = 0;
+            for(auto _ : p.select<PlayerInfo>())
+                ++existing_before;
+            cDebug(
+                "Player roster received: {} entries, self_idx={}, "
+                "{} local PlayerInfo entities exist so far",
+                players.size(),
+                self_idx,
+                existing_before);
+            {
+                nlohmann::json entries = nlohmann::json::array();
+                for(auto const& player : players)
+                    entries.push_back({
+                        {"player_idx", player.player_idx},
+                        {"name", player.name.str()},
+                        {"loading_progress", player.loading_progress},
+                        {"connected", player.connected == 0xFFFF},
+                    });
+                journal(
+                    "net_roster",
+                    {{"self_idx", self_idx},
+                     {"existing_before", existing_before},
+                     {"entries", std::move(entries)}});
+            }
 
             // Build set of server-known player indices
             std::set<u32> server_indices;
@@ -1464,7 +1535,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                                 compo::type_hash_v<PlayerCamera>(),
                                 compo::type_hash_v<SoundEffects>(),
                             },
-                            ObjectGC | PlayerBiped,
+                            PlayerBiped,
                         });
                     auto& info            = ref.get<PlayerInfo>();
                     info.name             = std::string(player.name.str());
@@ -1536,6 +1607,18 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return out;
     }
 
+    /* Local test/debug journal (journal.h); wired by alloc_networking,
+     * no-op when journaling is disabled. Message-level events (joins,
+     * rosters, connection changes) are invisible to the GameEventBus
+     * catch-all recorder, so they're recorded here at the handler sites. */
+    Journal* m_journal{nullptr};
+
+    void journal(std::string_view type, nlohmann::json data = {})
+    {
+        if(m_journal)
+            m_journal->record(type, std::move(data));
+    }
+
     GameEventBus&                     m_game_bus;
     NetworkState&                     m_net_state;
     ISteamNetworkingSockets*          m_impl{nullptr};
@@ -1556,6 +1639,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         u32                               idx{0};
         u32                               loading_progress{};
         std::optional<time_point>         last_seen{};
+        bool invited{false};
     };
 
     std::map<HSteamNetConnection, connection_state_t>      m_connections{};
@@ -1612,8 +1696,9 @@ void alloc_networking(compo::EntityContainer& e)
     e.register_subsystem_inplace<NetworkState>();
     e.register_subsystem_inplace<PlayerRoster>(std::ref(e));
 #if defined(USE_NETWORKING)
-    e.register_subsystem_inplace<Networking>(
+    auto& networking = e.register_subsystem_inplace<Networking>(
         std::ref(e.subsystem_cast<GameEventBus>()),
         std::ref(e.subsystem_cast<NetworkState>()));
+    networking.m_journal = &e.subsystem_cast<Journal>();
 #endif
 }

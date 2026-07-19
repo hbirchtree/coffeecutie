@@ -2,6 +2,7 @@
 #include "components.h"
 #include "cursed.h"
 #include "data.h"
+#include "journal.h"
 #include "map_loading.h"
 #include "map_marker.h"
 #include "networking.h"
@@ -157,7 +158,33 @@ i32 blam_main()
             e.register_component_inplace<PlayerCamera>();
 
             e.register_subsystem_inplace<comp_app::FrameTag>();
-            e.register_subsystem_inplace<GameEventBus>();
+            auto& game_bus = e.register_subsystem_inplace<GameEventBus>();
+            auto& journal  = e.register_subsystem_inplace<Journal>();
+            if(journal.enabled())
+            {
+                auto type_stack =
+                    std::make_shared<std::vector<GameEvent::EventType>>();
+                game_bus.addEventData(
+                    {0, [type_stack](GameEvent& ev, const void*) {
+                         type_stack->push_back(ev.type);
+                     }});
+                game_bus.addEventData(
+                    {9999, [&journal, type_stack](GameEvent& ev, const void*) {
+                         auto original = type_stack->back();
+                         type_stack->pop_back();
+                         nlohmann::json data{
+                             {"event", magic_enum::enum_name(original)}};
+                         if(ev.type != original)
+                         {
+                             if(ev.type == GameEvent::None)
+                                 data["cancelled"] = true;
+                             else
+                                 data["became"] =
+                                     magic_enum::enum_name(ev.type);
+                         }
+                         journal.record("game_event", std::move(data));
+                     }});
+            }
             e.register_subsystem_inplace<BlamFiles<halo_version>>();
             e.register_subsystem_inplace<LoadingStatus>();
 
@@ -416,11 +443,12 @@ i32 blam_main()
 
             auto& gbus = e.subsystem_cast<GameEventBus>();
 
+            e.subsystem_cast<BlamFiles<halo_version>>().map_directory =
+                map_dir;
+
             if(arguments.count("server"))
             {
                 /* When we're a client, skip trying to load a map on startup */
-                e.subsystem_cast<BlamFiles<halo_version>>().map_directory =
-                    map_dir;
                 GameEvent              event{GameEvent::MapRequestListing};
                 MapRequestListingEvent request{};
                 gbus.inject(event, &request);

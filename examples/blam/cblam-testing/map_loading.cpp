@@ -6,6 +6,7 @@
 #include "data.h"
 #include "loading.h"
 #include "networking.h"
+#include "physics.h"
 #include "resource_creation.h"
 #include "selected_version.h"
 #include "shader_cache.h"
@@ -182,7 +183,11 @@ static void load_resources(
     };
     u32 num_pinfo = 0;
     for(auto const& pinfo : e.select<PlayerInfo>())
-        ++num_pinfo;
+    {
+        auto const* info = e.get<PlayerInfo>(pinfo.id());
+        if(info && !info->is_remote())
+            ++num_pinfo;
+    }
     // if(player_model.valid())
     //     recipe.components.push_back(compo::type_hash_v<Model>());
     u64 main_biped_id{0};
@@ -205,6 +210,12 @@ static void load_resources(
                 cDebug("Keyboard seat assigned");
                 main_biped_id           = ref.id();
                 camera.keyboard.enabled = true;
+                if(auto assigned =
+                       e.subsystem_cast<NetworkState>().remote_player_idx)
+                    info.player_idx = *assigned;
+                if(auto const& name =
+                       e.subsystem_cast<NetworkState>().local_player_name)
+                    info.name = *name;
             }
             if(num_controllers > allocated_controllers)
             {
@@ -396,7 +407,6 @@ static MapListingEvent list_maps(
 static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
 {
     LoadingStatus& loading = e.subsystem_cast<LoadingStatus>();
-    loading.loading        = true;
 
     /* clear entities, evict cache entries */
     e.remove_entity_if([&e](compo::Entity const& en) {
@@ -414,11 +424,25 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     auto listing = list_maps(e, load);
 
     if(!load.file)
+    {
+        cWarning(
+            "open_map: no valid file for this load (origin={}), aborting "
+            "silently otherwise",
+            magic_enum::enum_name(load.origin));
         return;
+    }
 
     ProfContext _;
 
+    loading.loading = true;
+
     using result_type = blam::map_container<halo_version>::result_type;
+
+    {
+        Physics::Event reset_ev{Physics::Event::Reset};
+        Physics::Reset reset{};
+        e.subsystem_cast<PhysicsBus>().process(reset_ev, &reset);
+    }
 
     auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
 
@@ -435,6 +459,13 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     auto& file_mapper   = e.subsystem_cast<comp_app::FileMapper>();
     using AsyncResource = comp_app::FileMapper::Resource;
 
+    u32 const this_generation =
+        ++e.subsystem_cast<BlamFiles<halo_version>>().load_generation;
+    auto load_is_stale = [&e, this_generation]() {
+        return e.subsystem_cast<BlamFiles<halo_version>>().load_generation !=
+               this_generation;
+    };
+
     std::function<void(std::string_view, i16)> progress_cb =
         rq::runtime_queue::BindToQueue(
             std::function<void(std::string_view, i16)>(
@@ -449,7 +480,9 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
 
     auto store_map_file = rq::runtime_queue::BindToQueue(
         std::function<void(std::shared_ptr<AsyncResource>)>(
-            [&e](std::shared_ptr<AsyncResource> resource) {
+            [&e, load_is_stale](std::shared_ptr<AsyncResource> resource) {
+                if(load_is_stale())
+                    return;
                 e.subsystem_cast<BlamFiles<halo_version>>().map_file =
                     std::move(resource);
             }));
@@ -475,11 +508,16 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
                     return stl_types::success(std::move(map.value()));
                 });
 
-    auto map_load_fun = [&e](
+    auto map_load_fun = [&e, load_is_stale](
                             result_type                    map,
                             std::shared_ptr<AsyncResource> bitmap_data) -> int {
         ProfContext _("Notifying systems of new map");
 
+        if(load_is_stale())
+        {
+            cWarning("Discarding superseded map load");
+            return -1;
+        }
         if(map.has_error())
         {
             cWarning(
@@ -516,8 +554,9 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
         if(sounds_file.valid())
             rq::runtime_queue::Queue(
                 rq::CreateMultiTask<void>(
-                    [&e](int, std::shared_ptr<AsyncResource> data) mutable {
-                        if(!data)
+                    [&e, load_is_stale](
+                        int, std::shared_ptr<AsyncResource> data) mutable {
+                        if(!data || load_is_stale())
                         {
                             rq::runtime_queue::CancelTask(
                                 rq::runtime_queue::GetSelfId().assume_value());

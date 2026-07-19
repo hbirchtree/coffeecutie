@@ -169,6 +169,19 @@ inline std::vector<u8> gzip_decompress(const u8* data, size_t len)
     return out;
 }
 
+inline std::vector<u8> mapsquare_decompress(const std::vector<u8>& raw)
+{
+    if(raw.size() >= 2 && raw[0] == 0x1f && raw[1] == 0x8b)
+        return gzip_decompress(raw.data(), raw.size());
+    if(raw.size() < 5)
+        throw std::runtime_error("map square file too short");
+    u32  decomp = read_u32_be(raw.data());
+    auto out    = bzip2_decompress(raw.data() + 4, raw.size() - 4);
+    if(out.size() != decomp)
+        throw std::runtime_error("map square size mismatch");
+    return out;
+}
+
 // ──────────────────────────────────────────────────────── JAG archive ──
 
 inline u32 jag_hash(const std::string& name)
@@ -714,6 +727,132 @@ inline int read_smart2(const u8* d, size_t& pos)
     return v;
 }
 
+// Per-section source pointers for the shared model decode core. The classic
+// single-file format packs all sections into one buffer at different offsets;
+// the beta (~build 225) multi-stream format keeps one shared stream per
+// section across all models. Both reduce to "a pointer per section".
+struct ModelSrc
+{
+    int nv = 0, nf = 0, ntex = 0;
+    const u8* vflags  = nullptr; // nv flag bytes selecting delta streams
+    const u8* vx      = nullptr; // per-axis vertex delta streams (smart2)
+    const u8* vy      = nullptr;
+    const u8* vz      = nullptr;
+    const u8* ctypes  = nullptr; // nf face compression types
+    const u8* fidx    = nullptr; // face index delta stream (smart2)
+    const u8* fcolor  = nullptr; // nf u16 colors
+    const u8* texflag = nullptr; // per-face texture/info flags (optional)
+    const u8* falpha  = nullptr; // per-face alphas (optional)
+    const u8* texmap  = nullptr; // ntex P/M/N u16 triples
+};
+
+inline RsModel decode_model(const ModelSrc& s)
+{
+    RsModel m;
+    if(s.nv <= 0 || s.nf <= 0) return m;
+
+    // ── Vertices: per-axis delta streams selected by flag bits ──
+    m.verts.resize(s.nv);
+    {
+        size_t pf = 0, px = 0, py = 0, pz = 0;
+        int x = 0, y = 0, z = 0;
+        for(int i = 0; i < s.nv; ++i)
+        {
+            int flags = s.vflags[pf++];
+            if(flags & 1) x += read_smart2(s.vx, px);
+            if(flags & 2) y += read_smart2(s.vy, py);
+            if(flags & 4) z += read_smart2(s.vz, pz);
+            m.verts[i] = {x, y, z};
+        }
+    }
+
+    // ── Face indices: compression type array + signed delta stream.
+    // All deltas accumulate against the LAST decoded index (lastIndex),
+    // not against the per-corner values.
+    m.faces.resize(s.nf);
+    {
+        size_t pt = 0, pi = 0;
+        int a = 0, b = 0, c = 0, last = 0;
+        for(int i = 0; i < s.nf; ++i)
+        {
+            int type = s.ctypes[pt++];
+            switch(type)
+            {
+            case 1:
+                a = read_smart2(s.fidx, pi) + last;
+                b = read_smart2(s.fidx, pi) + a;
+                c = read_smart2(s.fidx, pi) + b;
+                last = c;
+                break;
+            case 2:
+                b = c;
+                c = read_smart2(s.fidx, pi) + last;
+                last = c;
+                break;
+            case 3:
+                a = c;
+                c = read_smart2(s.fidx, pi) + last;
+                last = c;
+                break;
+            case 4:
+                std::swap(a, b);
+                c = read_smart2(s.fidx, pi) + last;
+                last = c;
+                break;
+            }
+            if(a >= 0 && b >= 0 && c >= 0 && a < s.nv && b < s.nv && c < s.nv)
+                m.faces[i] = {a, b, c};
+        }
+    }
+
+    // ── Face alphas (0 = opaque, larger = more transparent) ──
+    m.alphas.assign(s.nf, 0);
+    if(s.falpha)
+        for(int i = 0; i < s.nf; ++i)
+            m.alphas[i] = s.falpha[i];
+
+    // ── Texture P/M/N triangles ──
+    m.tex_pmn.resize(s.ntex);
+    for(int i = 0; i < s.ntex; ++i)
+        m.tex_pmn[i] = {
+            (int)read_u16_be(s.texmap + i * 6),
+            (int)read_u16_be(s.texmap + i * 6 + 2),
+            (int)read_u16_be(s.texmap + i * 6 + 4)};
+
+    // ── Face colors (u16 HSL). When the per-face flag stream is present:
+    // bit 1 = texture-mapped face, in which case the colour field holds the
+    // texture id and bits 2+ index the texture triangle.
+    m.colors.resize(s.nf);
+    m.tex_coord.assign(s.nf, -1);
+    {
+        size_t pc = 0, ptf = 0;
+        for(int i = 0; i < s.nf; ++i)
+        {
+            u32 col = read_u16_be(s.fcolor + pc); pc += 2;
+            if(s.texflag)
+            {
+                int flag = s.texflag[ptf++];
+                if(flag & 2)
+                {
+                    col |= FACE_TEXTURED;
+                    int tc = flag >> 2;
+                    // decodeOld: a mapping equal to the face's own vertices
+                    // is the identity — drop it
+                    if(tc >= 0 && tc < s.ntex &&
+                       !(m.faces[i][0] == m.tex_pmn[tc][0] &&
+                         m.faces[i][1] == m.tex_pmn[tc][1] &&
+                         m.faces[i][2] == m.tex_pmn[tc][2]))
+                        m.tex_coord[i] = tc;
+                }
+            }
+            m.colors[i] = col;
+        }
+    }
+
+    m.valid = true;
+    return m;
+}
+
 // Classic RS2 model format ("old" format, no version trailer), ported from
 // OSRS-World-Map ModelData.decodeOld. 18-byte footer:
 //   u16 vertexCount, u16 faceCount, u8 texturedFaceCount, u8 usesTextures,
@@ -726,8 +865,7 @@ inline int read_smart2(const u8* d, size_t& pos)
 //   face colors [nf*2], texture mapping [ntex*6], x [xLen], y [yLen], z [zLen]
 inline RsModel parse_model(const std::vector<u8>& raw)
 {
-    RsModel m;
-    if(raw.size() < 18) return m;
+    if(raw.size() < 18) return {};
 
     const u8* f    = raw.data() + raw.size() - 18;
     int nv         = read_u16_be(f);
@@ -743,7 +881,7 @@ inline RsModel parse_model(const std::vector<u8>& raw)
     int z_len      = read_u16_be(f + 14);
     int fi_len     = read_u16_be(f + 16);
 
-    if(nv <= 0 || nf <= 0) return m;
+    if(nv <= 0 || nf <= 0) return {};
 
     size_t off         = 0;
     size_t off_vflags  = off; off += nv;
@@ -760,113 +898,170 @@ inline RsModel parse_model(const std::vector<u8>& raw)
     size_t off_vy      = off; off += y_len;
     size_t off_vz      = off; off += z_len;
 
-    if(off > raw.size() - 18) return m;
+    if(off > raw.size() - 18) return {};
 
     const u8* d = raw.data();
-
-    // ── Vertices: per-axis delta streams selected by flag bits ──
-    m.verts.resize(nv);
-    {
-        size_t pf = off_vflags, px = off_vx, py = off_vy, pz = off_vz;
-        int x = 0, y = 0, z = 0;
-        for(int i = 0; i < nv; ++i)
-        {
-            int flags = d[pf++];
-            if(flags & 1) x += read_smart2(d, px);
-            if(flags & 2) y += read_smart2(d, py);
-            if(flags & 4) z += read_smart2(d, pz);
-            m.verts[i] = {x, y, z};
-        }
-    }
-
-    // ── Face indices: compression type array + signed delta stream.
-    // All deltas accumulate against the LAST decoded index (lastIndex),
-    // not against the per-corner values.
-    m.faces.resize(nf);
-    {
-        size_t pt = off_ctypes, pi = off_fidx;
-        int a = 0, b = 0, c = 0, last = 0;
-        for(int i = 0; i < nf; ++i)
-        {
-            int type = d[pt++];
-            switch(type)
-            {
-            case 1:
-                a = read_smart2(d, pi) + last;
-                b = read_smart2(d, pi) + a;
-                c = read_smart2(d, pi) + b;
-                last = c;
-                break;
-            case 2:
-                b = c;
-                c = read_smart2(d, pi) + last;
-                last = c;
-                break;
-            case 3:
-                a = c;
-                c = read_smart2(d, pi) + last;
-                last = c;
-                break;
-            case 4:
-                std::swap(a, b);
-                c = read_smart2(d, pi) + last;
-                last = c;
-                break;
-            }
-            if(a >= 0 && b >= 0 && c >= 0 && a < nv && b < nv && c < nv)
-                m.faces[i] = {a, b, c};
-        }
-    }
-
-    // ── Face alphas (0 = opaque, larger = more transparent) ──
-    m.alphas.assign(nf, 0);
-    if(has_alpha)
-        for(int i = 0; i < nf; ++i)
-            m.alphas[i] = d[off_falpha + i];
-
-    // ── Texture P/M/N triangles ──
-    m.tex_pmn.resize(ntex);
-    {
-        size_t p = off_texmap;
-        for(int i = 0; i < ntex; ++i, p += 6)
-            m.tex_pmn[i] = {
-                (int)read_u16_be(d + p), (int)read_u16_be(d + p + 2),
-                (int)read_u16_be(d + p + 4)};
-    }
-
-    // ── Face colors (u16 HSL). If the model uses textures, a per-face flag
-    // byte follows: bit 1 = texture-mapped face, in which case the colour
-    // field holds the texture id and bits 2+ index the texture triangle.
-    m.colors.resize(nf);
-    m.tex_coord.assign(nf, -1);
-    {
-        size_t pc = off_fcolor, ptf = off_texflag;
-        for(int i = 0; i < nf; ++i)
-        {
-            u32 col = read_u16_be(d + pc); pc += 2;
-            if(uses_tex)
-            {
-                int flag = d[ptf++];
-                if(flag & 2)
-                {
-                    col |= FACE_TEXTURED;
-                    int tc = flag >> 2;
-                    // decodeOld: a mapping equal to the face's own vertices
-                    // is the identity — drop it
-                    if(tc >= 0 && tc < ntex &&
-                       !(m.faces[i][0] == m.tex_pmn[tc][0] &&
-                         m.faces[i][1] == m.tex_pmn[tc][1] &&
-                         m.faces[i][2] == m.tex_pmn[tc][2]))
-                        m.tex_coord[i] = tc;
-                }
-            }
-            m.colors[i] = col;
-        }
-    }
-
-    m.valid = true;
-    return m;
+    return decode_model({
+        .nv      = nv,
+        .nf      = nf,
+        .ntex    = ntex,
+        .vflags  = d + off_vflags,
+        .vx      = d + off_vx,
+        .vy      = d + off_vy,
+        .vz      = d + off_vz,
+        .ctypes  = d + off_ctypes,
+        .fidx    = d + off_fidx,
+        .fcolor  = d + off_fcolor,
+        .texflag = uses_tex ? d + off_texflag : nullptr,
+        .falpha  = has_alpha ? d + off_falpha : nullptr,
+        .texmap  = d + off_texmap,
+    });
 }
+
+// Beta (~build 225) model storage: all models live in the "models" JAG
+// archive as shared per-section streams (ob_head.dat, ob_face1-5.dat,
+// ob_point1-5.dat, ob_vertex1-2.dat, ob_axis.dat) instead of one file per
+// model. ob_head holds per-model counts + presence flags; per-model section
+// offsets are reconstructed by walking every model's variable-length streams
+// once, exactly like the client (RS2-225 Model.java decode()).
+// Stream roles: point1 = vertex flags, point2-4 = x/y/z deltas, point5 =
+// vertex labels; vertex1 = face index deltas, vertex2 = face types; face1 =
+// colors, face2 = info/texture flags, face3 = priorities, face4 = alphas,
+// face5 = face skins; axis = texture P/M/N triples. Labels/priorities/skins
+// are animation/render-order data — fixed-size per model, so skipping them
+// needs no offset tracking and they aren't loaded at all.
+struct ObModelArchive
+{
+    struct Meta
+    {
+        int    nv = 0, nf = 0, ntex = 0;
+        size_t vflags = 0, vx = 0, vy = 0, vz = 0;
+        size_t ctypes = 0, fidx = 0;
+        size_t fcolor = 0, texmap = 0;
+        i32    info = -1, alpha = -1; // -1 = section absent for this model
+    };
+
+    std::vector<u8> point1, point2, point3, point4;
+    std::vector<u8> vertex1, vertex2;
+    std::vector<u8> face1, face2, face4, axis;
+    std::unordered_map<int, Meta> models;
+    bool loaded = false;
+
+    // archive = decompressed "models" JAG archive body
+    bool load(const std::vector<u8>& archive)
+    {
+        auto need = [&](const char* name, std::vector<u8>& out) {
+            auto data = jag_extract(archive, name);
+            if(data)
+                out = std::move(*data);
+            return bool(data);
+        };
+        std::vector<u8> head;
+        if(!need("ob_head.dat", head) || !need("ob_point1.dat", point1) ||
+           !need("ob_point2.dat", point2) || !need("ob_point3.dat", point3) ||
+           !need("ob_point4.dat", point4) ||
+           !need("ob_vertex1.dat", vertex1) ||
+           !need("ob_vertex2.dat", vertex2) || !need("ob_face1.dat", face1) ||
+           !need("ob_face2.dat", face2) || !need("ob_face4.dat", face4) ||
+           !need("ob_axis.dat", axis))
+            return false;
+        if(head.size() < 2)
+            return false;
+
+        int    count = read_u16_be(head.data());
+        size_t hp    = 2;
+        size_t p1 = 0, p2 = 0, p3 = 0, p4 = 0, v1 = 0, v2 = 0;
+        size_t col = 0, info = 0, alpha = 0, tex = 0;
+        for(int n = 0; n < count; ++n)
+        {
+            if(hp + 12 > head.size())
+                return false;
+            int  id = read_u16_be(&head[hp]);
+            Meta m;
+            m.nv           = read_u16_be(&head[hp + 2]);
+            m.nf           = read_u16_be(&head[hp + 4]);
+            m.ntex         = head[hp + 6];
+            int has_info   = head[hp + 7];
+            int has_alpha  = head[hp + 9];
+            hp += 12; // + priority [8], face skins [10], vertex labels [11]
+
+            m.vflags = p1;
+            m.vx     = p2;
+            m.vy     = p3;
+            m.vz     = p4;
+            m.fidx   = v1;
+            m.ctypes = v2;
+            m.fcolor = col;
+            m.texmap = tex * 6;
+            if(has_info == 1)
+            {
+                m.info = i32(info);
+                info += m.nf;
+            }
+            if(has_alpha == 1)
+            {
+                m.alpha = i32(alpha);
+                alpha += m.nf;
+            }
+
+            // walk the variable-length streams to find the next model's
+            // offsets (delta payload sizes depend on the values)
+            for(int i = 0; i < m.nv; ++i)
+            {
+                if(p1 >= point1.size())
+                    return false;
+                int flags = point1[p1++];
+                if(flags & 1) read_smart2(point2.data(), p2);
+                if(flags & 2) read_smart2(point3.data(), p3);
+                if(flags & 4) read_smart2(point4.data(), p4);
+            }
+            for(int i = 0; i < m.nf; ++i)
+            {
+                if(v2 >= vertex2.size())
+                    return false;
+                if(vertex2[v2++] == 1)
+                {
+                    read_smart2(vertex1.data(), v1);
+                    read_smart2(vertex1.data(), v1);
+                }
+                read_smart2(vertex1.data(), v1);
+            }
+            col += size_t(m.nf) * 2;
+            tex += m.ntex;
+            if(p2 > point2.size() || p3 > point3.size() ||
+               p4 > point4.size() || v1 > vertex1.size() ||
+               col > face1.size() || tex * 6 > axis.size())
+                return false;
+
+            models.emplace(id, m);
+        }
+        loaded = true;
+        return true;
+    }
+
+    RsModel decode(int id) const
+    {
+        auto it = models.find(id);
+        if(it == models.end())
+            return {};
+        const Meta& m = it->second;
+        return decode_model({
+            .nv      = m.nv,
+            .nf      = m.nf,
+            .ntex    = m.ntex,
+            .vflags  = point1.data() + m.vflags,
+            .vx      = point2.data() + m.vx,
+            .vy      = point3.data() + m.vy,
+            .vz      = point4.data() + m.vz,
+            .ctypes  = vertex2.data() + m.ctypes,
+            .fidx    = vertex1.data() + m.fidx,
+            .fcolor  = face1.data() + m.fcolor,
+            .texflag = m.info >= 0 ? face2.data() + m.info : nullptr,
+            .falpha  = m.alpha >= 0 ? face4.data() + m.alpha : nullptr,
+            .texmap  = axis.data() + m.texmap,
+        });
+    }
+};
 
 // Per-corner UVs of face fi (must be textured). PMN triangle projection,
 // ported from OSRS-World-Map TextureMapper.computeTextureCoords (render
@@ -1124,9 +1319,18 @@ struct TextureColors
         loaded = true;
         try
         {
-            auto raw = read_file(cache_dir + "/0/6.dat");
-            body     = jag_load_archive(raw);
-            index    = jag_extract(body, "index.dat");
+            std::vector<u8> raw;
+            try
+            {
+                raw = read_file(cache_dir + "/0/6.dat");
+            }
+            catch(const std::exception&)
+            {
+                // beta (~225) layout: named "textures" archive
+                raw = read_file(cache_dir + "/textures");
+            }
+            body  = jag_load_archive(raw);
+            index = jag_extract(body, "index.dat");
         }
         catch(const std::exception& e)
         {
@@ -1269,6 +1473,11 @@ inline const std::vector<int>* loc_model_ids(const LocDef& def, int shape)
     // model an extra 45° instead of having a separate list
     if(shape == 11)
         shape = 10;
+    // Wall-decor variants (5-8: offset/diagonal placements) all use the
+    // straight WALLDECOR (4) model list; the client only varies position
+    // and rotation, never the model list
+    if(shape >= 5 && shape <= 8)
+        shape = 4;
     if(def.types.empty())
     {
         // opcode-5 def: single list, NORMAL (10) shape only

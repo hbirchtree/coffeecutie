@@ -81,6 +81,9 @@ struct PhysicsSystem
         p.subsystem(bsp_cache);
         p.subsystem(loading);
 
+        if(loading->loading)
+            return;
+
         /* Rebuild on section change, but also retry while no world mesh
          * exists yet — the BSP cache is populated asynchronously after the
          * subsystem starts, and single-BSP maps never switch sections. */
@@ -89,10 +92,6 @@ struct PhysicsSystem
             needs_rebuild = find_section_item(*bsp_cache) != nullptr;
         if(needs_rebuild)
             rebuild_world(*bsp_cache);
-
-        // Don't simulate before we're completely done loading
-        if(loading->loading)
-            return;
 
         // Simulate when there is anything in the world: the Halo BSP body,
         // streamed RS2 region bodies, or the debug probe. Gating solely on
@@ -544,6 +543,34 @@ struct PhysicsSystem
         wake_dynamic_bodies();
     }
 
+    void reset_world()
+    {
+        cDebug("physics: resetting world for map change");
+        if(m_world_body)
+        {
+            m_world->removeRigidBody(m_world_body.get());
+            m_world_body.reset();
+        }
+        if(m_probe_body)
+        {
+            m_world->removeRigidBody(m_probe_body.get());
+            m_probe_body.reset();
+        }
+        m_world_shape.reset();
+        m_mesh_iface.reset();
+        m_triangles.clear();
+        m_tri_surface.clear();
+        for(auto& [entity, body] : m_bodies)
+        {
+            if(body.world_body)
+                m_world->removeRigidBody(body.world_body.get());
+            if(m_markers)
+                m_markers->release_strip(body.debug_slot);
+        }
+        m_bodies.clear();
+        m_built_section = -2;
+    }
+
     void add_impulse(Physics::Impulse const& impulse)
     {
         auto body_it = m_bodies.find(impulse.entity_id);
@@ -845,6 +872,11 @@ void alloc_physics(compo::EntityContainer& container)
         0, [&physics](Physics::Event&, Physics::BodyRemoval* removal)
         {
             physics.remove_body(removal->entity_id);
+        });
+    phys_bus.addEventFunction<Physics::Reset>(
+        0, [&physics](Physics::Event&, Physics::Reset*)
+        {
+            physics.reset_world();
         });
     phys_bus.addEventFunction<Physics::Impulse>(
         0, [&physics](Physics::Event&, Physics::Impulse* impulse)

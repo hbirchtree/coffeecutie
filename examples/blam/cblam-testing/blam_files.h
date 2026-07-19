@@ -19,4 +19,5 @@ struct BlamFiles : compo::SubsystemBase
 
     /* Stash this here, so others can reference it */
     blam::map_container<V> container;
+    libc_types::u32 load_generation{0};
 };

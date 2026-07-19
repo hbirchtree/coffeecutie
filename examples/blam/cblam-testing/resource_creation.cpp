@@ -5,6 +5,7 @@
 #include "coffee/graphics/apis/gleam/rhi.h"
 #include "components.h"
 #include "data.h"
+#include "journal.h"
 #include "map_marker.h"
 #include "peripherals/constants.h"
 #include "physics.h"
@@ -17,6 +18,7 @@
 #include <glm/ext/quaternion_trigonometric.hpp>
 #include <glm/geometric.hpp>
 #include <stdexcept>
+#include <url/url.h>
 
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
 #include <coffee/comp_app/dummy_plug.h>
@@ -73,26 +75,22 @@ void create_resources(compo::EntityContainer& e)
 
         eventhandler->addEventHandler(
             1024, std_camera_t::KeyboardInput([&e] -> std_camera_t* {
-                for(auto entity : e.select<PlayerCamera>())
+                for(auto entity : e.select<PlayerCamera, PlayerInfo>())
                 {
-                    auto* cam  = e.get<PlayerCamera>(entity.id());
-                    auto* info = e.get<PlayerInfo>(entity.id());
-                    if(cam->keyboard.enabled && info &&
-                       info->permissions.camera)
-                        return cam->camera_.get();
+                    auto [cam, info] = entity.components();
+                    if(cam.keyboard.enabled && info.permissions.camera)
+                        return cam.camera_.get();
                 }
                 cWarning("No camera selected");
                 return nullptr;
             }));
         eventhandler->addEventHandler(
             1024, std_camera_t::MouseInput([&e] -> std_camera_t* {
-                for(auto entity : e.select<PlayerCamera>())
+                for(auto entity : e.select<PlayerCamera, PlayerInfo>())
                 {
-                    auto* cam  = e.get<PlayerCamera>(entity.id());
-                    auto* info = e.get<PlayerInfo>(entity.id());
-                    if(cam->keyboard.enabled && info &&
-                       info->permissions.camera)
-                        return cam->camera_.get();
+                    auto [cam, info] = entity.components();
+                    if(cam.keyboard.enabled && info.permissions.camera)
+                        return cam.camera_.get();
                 }
                 cWarning("No camera selected");
                 return nullptr;
@@ -233,6 +231,8 @@ void create_resources(compo::EntityContainer& e)
         dummy.addEventData({
                 .prio = 0,
                 .handler = [&e](comp_app::dummy_plug::DummyEvent& ev, const void*) {
+            e.subsystem_cast<Journal>().record(
+                "dummy_event", {{"event", ev.event}, {"data", ev.data}});
             if(ev.event == "render_param")
             {
                 /* Generic toggle of the data.h debug/render knobs from a dummy
@@ -386,6 +386,62 @@ void create_resources(compo::EntityContainer& e)
                 cDebug(
                     "State dumped to state.json ({} player(s))",
                     players.size());
+                e.subsystem_cast<Journal>().record("state_dump", state);
+            }
+            if(ev.event == "switch_map")
+            {
+                using namespace ::platform::url::constructors;
+                using platform::url::Url;
+                std::string path = ev.data.value("map", std::string{});
+                if(path.empty())
+                {
+                    cWarning("switch_map event missing \"map\" path");
+                    return;
+                }
+                GameEventBus& gbus = e.subsystem_cast<GameEventBus>();
+                if(path.find('/') == std::string::npos)
+                {
+                    auto name = path;
+                    if(auto dot = name.rfind(".map"); dot != std::string::npos)
+                        name.resize(dot);
+                    GameEvent          event{GameEvent::MapLoadByName};
+                    MapLoadByNameEvent load{
+                        .origin   = MapLoadEvent::Local,
+                        .map_name = *blam::bl_string::from(name),
+                    };
+                    gbus.process(event, &load);
+                    return;
+                }
+                Url map_filename = MkUrl(path, RSCA::SystemFile);
+                Url map_dir =
+                    map_filename.path().dirname().url(map_filename.flags);
+
+                GameEvent     event{GameEvent::MapLoadStart};
+                MapLoadEvent  load{
+                     .directory = map_dir,
+                     .file      = map_filename,
+                };
+                gbus.process(event, &load);
+            }
+            if(ev.event == "net_listen" || ev.event == "net_connect")
+            {
+                std::string address =
+                    ev.data.value("address", std::string{"127.0.0.1:27015"});
+                GameEventBus& gbus = e.subsystem_cast<GameEventBus>();
+                GameEvent          event{GameEvent::ServerConnect};
+                ServerConnectEvent connect{
+                    .type   = ev.event == "net_listen"
+                                  ? ServerConnectEvent::Listen
+                                  : ServerConnectEvent::Server,
+                    .remote = address,
+                };
+                gbus.process(event, &connect);
+                if(ev.event == "net_connect")
+                {
+                    GameEvent              listing{GameEvent::MapRequestListing};
+                    MapRequestListingEvent request{};
+                    gbus.process(listing, &request);
+                }
             }
         }});
     }

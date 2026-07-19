@@ -361,9 +361,11 @@ int coffee_main(int, char**)
                 parts.push_back(&plane.terrain);
                 for(const auto& chunk : plane.locs)
                     parts.push_back(&chunk);
+                parts.push_back(&plane.clip);
             }
             // RS2_REPACK_COLLIDABLE mirrors the engine's physics set
-            // (by_u16_chunk + collidable_only) instead of the render set
+            // (by_u16_chunk + collidable_only) instead of the render set,
+            // which excludes the invisible clip skirts like cursed.cpp
             std::vector<rs2::Mesh> repacked;
             if(std::getenv("RS2_REPACK_COLLIDABLE"))
                 repacked = rs2::repack_by_material<size_t>(
@@ -371,7 +373,10 @@ int coffee_main(int, char**)
                     rs2::sorting_method::by_u16_chunk,
                     rs2::filter_method::collidable_only);
             else
-                repacked = rs2::repack_by_material(parts);
+                repacked = rs2::repack_by_material<std::pair<rs2::i32, bool>>(
+                    parts,
+                    rs2::sorting_method::by_material,
+                    rs2::filter_method::renderable);
             fprintf(stderr, "repack test: %zu meshes\n", repacked.size());
             for(const auto& m : repacked)
                 append_mesh(locs, m);
