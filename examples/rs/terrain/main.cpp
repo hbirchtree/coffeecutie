@@ -17,7 +17,7 @@
  * Reference (BSD): https://github.com/RuneChamps/OSRS-World-Map
  */
 
-#include "rs2_geometry.h"
+#include "cache_detect.h"
 
 #include "coffee/application/application_start.h"
 #include <coffee/core/CApplication>
@@ -95,10 +95,11 @@ static void write_ply(
 // Flat faces become one material per distinct baked colour; textured faces
 // become one material per texture id, with the texture exported as a PNG
 // next to the OBJ (textures/<id>.png) and real per-corner UVs.
+template<typename Loader>
 static void write_obj(
     const std::string&  obj_path,
     const FlatGeometry& mesh,
-    rs2::RegionLoader&  loader)
+    Loader&             loader)
 {
     std::string mtl_path = obj_path.substr(0, obj_path.rfind('.')) + ".mtl";
     std::string dir      = obj_path.rfind('/') == std::string::npos
@@ -273,10 +274,12 @@ int coffee_main(int, char**)
             : std::string{};
 
     fprintf(stderr, "Loading config archives...\n");
-    rs2::RegionLoader loader(cache_dir);
-    fprintf(stderr, "  %zu underlays, %zu loc definitions, %zu regions\n",
-        loader.underlays().size(), loader.loc_defs().size(),
-        loader.regions().size());
+    rs::AnyLoader loader(cache_dir);
+    fprintf(stderr, "  cache kind: %s\n", rs::to_string(loader.kind()));
+    if(auto* r2 = loader.rs2_loader())
+        fprintf(stderr, "  %zu underlays, %zu loc definitions\n",
+            r2->underlays().size(), r2->loc_defs().size());
+    fprintf(stderr, "  %zu regions\n", loader.regions().size());
     fprintf(stderr, "  cache signature: %s\n",
         loader.cache_signature().c_str());
 

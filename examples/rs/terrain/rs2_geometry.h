@@ -1038,6 +1038,11 @@ class RegionLoader
                              height_at(ex, ey, pl.plane)) *
                        8.f / 4.f;
 
+            // Ground decor (type 22: gnome walkway decks, bridge planks,
+            // trapdoors, mud patches) sits exactly at floor height — the
+            // client draws it after the floor in painter's order; a
+            // z-buffered renderer needs a tiny lift or flat decor z-fights
+            // the terrain underneath.
             float lift = pl.type == 22 ? 2.f : 0.f;
 
             // client model lighting on the final transformed model,

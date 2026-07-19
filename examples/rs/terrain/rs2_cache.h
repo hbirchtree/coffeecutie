@@ -169,6 +169,11 @@ inline std::vector<u8> gzip_decompress(const u8* data, size_t len)
     return out;
 }
 
+// ─────────────────────────────────────────────── map square container ──
+
+// Classic caches (≥ ~234) store map squares as plain gzip files; the beta
+// (~build 225) container is a u32 BE decompressed length followed by a
+// headerless bzip2 stream. Distinguished by the gzip magic.
 inline std::vector<u8> mapsquare_decompress(const std::vector<u8>& raw)
 {
     if(raw.size() >= 2 && raw[0] == 0x1f && raw[1] == 0x8b)
