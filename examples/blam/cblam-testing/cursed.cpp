@@ -14,7 +14,7 @@
 #include "coffee/graphics/apis/gleam/rhi_texture.h"
 #include "coffee/graphics/apis/gleam/rhi_vertex.h"
 #include "components.h"
-#include "../../rs/terrain/rs2_geometry.h"
+#include "../../rs/terrain/cache_detect.h"
 #include <coffee/core/task_queue/task.h>
 #include "data.h"
 #include "entity_container.h"
@@ -843,7 +843,7 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
     static constexpr u32 element_capacity = 32 * 1024 * 1024 / sizeof(u16);
 
     // `loader` is only touched from the worker queue after construction
-    rs2::RegionLoader loader;
+    rs::AnyLoader loader;
     rq::runtime_queue* worker{};
     std::function<void(std::shared_ptr<RegionData>)> on_built;
 #if defined(FEATURE_ENABLE_BULLET3)
