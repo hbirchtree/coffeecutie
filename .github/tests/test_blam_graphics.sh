@@ -97,6 +97,7 @@ echo "===================================="
 echo "::group::Downloading test assets"
 mkdir -p maps/pc/
 wget -q -O maps/pc/beavercreek.map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/beavercreek.map
+wget -q -O maps/pc/bloodgulch.map  --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bloodgulch.map
 wget -q -O maps/pc/bitmaps.map     --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bitmaps.map
 wget -q -O maps/pc/sounds.map      --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/sounds.map
 echo "::endgroup::"
@@ -108,13 +109,19 @@ mkdir -p "/tmp/Blam Graphics"
 # Find assets directory
 ASSETS_DIR=$(find $BUILDDIR -name assets -type d | head -n 1)
 
+# BOOT_MAP: which downloaded map to launch with (default beavercreek, the
+# original single-process smoke-test map). The networking scenario boots
+# bloodgulch and switches to beavercreek mid-session via its dummy plug
+# config.
+BOOT_MAP=${BOOT_MAP:-beavercreek.map}
+
 if [ -n "$SYS_LD" ] && [ -f "$BINARY" ]; then
     echo "-- Running binary directly with sysroot loader"
-    LD_LIBRARY_PATH=$PWD/sysroot/lib $SYS_LD --library-path $PWD/sysroot/lib $BINARY $ASSETS_DIR $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
+    LD_LIBRARY_PATH=$PWD/sysroot/lib $SYS_LD --library-path $PWD/sysroot/lib $BINARY $ASSETS_DIR $PWD/maps/pc/$BOOT_MAP 2>&1 | tee "/tmp/Blam Graphics/output.log"
     echo "Return code: $?"
 elif [ -d "$APPDIR" ]; then
     echo "-- Running via AppRun"
-    $APPDIR/AppRun $PWD/maps/pc/beavercreek.map 2>&1 | tee "/tmp/Blam Graphics/output.log"
+    $APPDIR/AppRun $PWD/maps/pc/$BOOT_MAP 2>&1 | tee "/tmp/Blam Graphics/output.log"
     echo "Return code: $?"
 else
     echo "ERROR: Could not find a way to run the application"

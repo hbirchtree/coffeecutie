@@ -1,0 +1,34 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "comment": "Server side of the multiplayer movement + map-switch scenario. Connection is driven by the process's --listen CLI arg (see run_client_server_test.sh). Walks the host around bloodgulch on a synthetic gamepad, then injects a switch_map event (resource_creation.cpp) which fires MapLoadStart on the GameEventBus; the MapLoadFinishedEvent handler in networking.cpp then re-sends GameJoin to the already-connected client so it follows onto the new map. Walks a bit more post-switch to confirm input/camera survived the reload, then dumps state.",
+    "events": [
+        {"time": 1000, "type": "render_param", "debug_markers": true},
+        {"time": 1200, "type": "controller_connect", "index": 0},
+        {"time": 1500, "type": "camera", "physics": true},
+        {"time": 2000, "type": "controller_axis", "axis": "LEFT_Y", "value": -1.0, "duration": 3000},
+        {"time": 5500, "type": "screenshot", "name": "server_pre_switch"},
+        {"time": 6000, "type": "switch_map", "map": "beavercreek"},
+        {"time": 14000, "type": "screenshot", "name": "server_post_switch"},
+        {"time": 14500, "type": "controller_axis", "axis": "RIGHT_X", "value": 0.5, "duration": 1000},
+        {"time": 15000, "type": "controller_axis", "axis": "LEFT_Y", "value": -1.0, "duration": 2000},
+        {"time": 17500, "type": "screenshot", "name": "server_post_switch_moved"},
+        {"time": 18000, "type": "dump_state"},
+        {"time": 18500, "type": "screenshot", "name": "server_final"}
+    ],
+    "end_time": 20000
+}

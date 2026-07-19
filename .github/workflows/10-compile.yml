@@ -321,6 +321,15 @@ jobs:
           dummy_plug: dummy_plug_es_30.json
         - variant: es_32
           dummy_plug: dummy_plug_es_32.json
+        # Multiplayer: this one config makes the process a server
+        # (net_listen) and fork+execs a client child seeded with the
+        # client scenario config (dummy plug "spawn" support) — server and
+        # client run in the same job, journals compared afterwards. Boots
+        # bloodgulch, switches to beavercreek mid-session.
+        - variant: net_multiplayer
+          dummy_plug: net/dummy_plug_net_host_scenario.json
+          boot_map: bloodgulch.map
+          journal_check: 'true'
     steps:
     - uses: actions/checkout@v6
       with:
@@ -341,7 +350,19 @@ jobs:
         chmod +x source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi/packaged/*/*
     - name: Run dummy plug tests
       run: |
-        DUMMY_PLUG=${{ matrix.dummy_plug }} xvfb-run --auto-servernum source/.github/tests/test_blam_graphics.sh
+        DUMMY_PLUG=${{ matrix.dummy_plug }} BOOT_MAP=${{ matrix.boot_map }} xvfb-run --auto-servernum source/.github/tests/test_blam_graphics.sh
+    - name: Verify multiplayer journals
+      if: matrix.journal_check == 'true'
+      run: |
+        SERVER_JOURNAL="/tmp/Blam Graphics/journal.jsonl"
+        CLIENT_JOURNAL="/tmp/Blam Graphics/client0/journal.jsonl"
+        if python3 source/.github/tests/net/compare_journals.py "$SERVER_JOURNAL" "$CLIENT_JOURNAL"; then
+          exit 0
+        fi
+        echo "::group::merged journal timeline"
+        python3 source/.github/tests/net/compare_journals.py --timeline "$SERVER_JOURNAL" "$CLIENT_JOURNAL" || true
+        echo "::endgroup::"
+        exit 1
     - name: Convert audio samples to .wav
       run: |
         ffmpeg -f f32le -ar 48k -ac 2 -i "/tmp/Blam Graphics/rendered_audio" -c:a copy "/tmp/Blam Graphics/rendered_audio.wav"

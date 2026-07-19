@@ -760,7 +760,26 @@ void runtime_queue::execute_tasks()
         /* In this case we will let it run */
         m_current_task_id = task.index;
         Profiler::DeepPushContext(RQ_API "Running task");
-        task.task.task();
+        /* A task throwing (e.g. a double-satisfied promise somewhere in
+         * its dependency chain) must not propagate past here: the only
+         * other catch for this is around the whole worker thread's
+         * lifetime (see the queue thread body), which would silently and
+         * permanently kill this queue's thread on the first offending
+         * task, leaving every task queued after it — including anything
+         * still to come, like a later map load — never run again. */
+        try
+        {
+            task.task.task();
+        } catch(std::exception const& e)
+        {
+            Coffee::cWarning(
+                RQ_API "Task {0} (interval={1}us) threw, skipping it: {2}",
+                task.index,
+                std::chrono::duration_cast<std::chrono::microseconds>(
+                    task.task.interval)
+                    .count(),
+                e.what());
+        }
         Profiler::DeepPopContext();
         m_current_task_id = 0;
 
@@ -796,7 +815,16 @@ void runtime_queue::execute_tasks()
 
         m_current_task_id = task.index;
         Profiler::DeepPushContext(RQ_API "Running dependent task");
-        task.task->execute();
+        try
+        {
+            task.task->execute();
+        } catch(std::exception const& e)
+        {
+            Coffee::cWarning(
+                RQ_API "Dependent task {0} threw, skipping it: {1}",
+                task.index,
+                e.what());
+        }
         Profiler::DeepPopContext();
         m_current_task_id = 0;
 

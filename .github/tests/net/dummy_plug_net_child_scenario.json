@@ -1,0 +1,34 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "comment": "Client child for the self-contained (spawn-based) multiplayer scenario, launched by dummy_plug_net_host_scenario.json. Boots standalone (loads the CLI map locally), then joins the server via the net_connect event once its own load is done — event times are relative to app-loaded, so this lands well after the host's net_listen and inside GNS's connect-retry window even when both processes load concurrently. The join's GameJoin triggers a reload of the server's map (Remote origin), exercising the same path as a mid-session map switch. Then: gamepad movement, ride through the server-triggered switch to beavercreek, more movement, dump_state.",
+    "events": [
+        {"time": 500, "type": "net_connect", "address": "127.0.0.1:27105"},
+        {"time": 1000, "type": "render_param", "debug_markers": true},
+        {"time": 1200, "type": "controller_connect", "index": 0},
+        {"time": 2500, "type": "camera", "physics": true},
+        {"time": 3000, "type": "controller_axis", "axis": "LEFT_Y", "value": -1.0, "duration": 3000},
+        {"time": 6500, "type": "screenshot", "name": "client_pre_switch"},
+        {"time": 14000, "type": "screenshot", "name": "client_post_switch"},
+        {"time": 14500, "type": "controller_axis", "axis": "RIGHT_X", "value": 0.5, "duration": 1000},
+        {"time": 15000, "type": "controller_axis", "axis": "LEFT_Y", "value": -1.0, "duration": 2000},
+        {"time": 17500, "type": "screenshot", "name": "client_post_switch_moved"},
+        {"time": 18000, "type": "dump_state"},
+        {"time": 18500, "type": "screenshot", "name": "client_final"}
+    ],
+    "end_time": 20000
+}

@@ -22,7 +22,7 @@ struct Subsystem : compo::SubsystemBase
         m_delegate        = std::make_shared<DiscordDelegate>();
         m_delegate->ready = [this](PlayerInfo&& info) {
             m_playerInfo = std::move(info);
-            m_startAwaiter.set_value(true);
+            signal_start(true);
             m_started = true;
         };
     }
@@ -54,7 +54,7 @@ struct Subsystem : compo::SubsystemBase
                         return;
                     if(std::chrono::system_clock::now() > m_startDeadline)
                     {
-                        m_startAwaiter.set_value(false);
+                        signal_start(false);
                         rq::runtime_queue::Block(
                             rq::runtime_queue::GetSelfId().value());
                     }
@@ -141,6 +141,14 @@ struct Subsystem : compo::SubsystemBase
     }
 
   private:
+    void signal_start(bool value)
+    {
+        if(m_startSignalled)
+            return;
+        m_startSignalled = true;
+        m_startAwaiter.set_value(value);
+    }
+
     std::shared_ptr<DiscordDelegate>           m_delegate;
     std::shared_ptr<platform::online::Service> m_service;
     rq::runtime_queue*                         m_discordQueue{nullptr};
@@ -148,6 +156,7 @@ struct Subsystem : compo::SubsystemBase
     libc_types::u64                            m_taskId{0};
     DiscordOptions                             m_options;
     std::promise<bool>                         m_startAwaiter;
+    bool                                       m_startSignalled{false};
     std::chrono::system_clock::time_point      m_startDeadline{};
     bool                                       m_started{false};
 

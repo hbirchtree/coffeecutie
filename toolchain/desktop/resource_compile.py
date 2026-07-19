@@ -5,13 +5,22 @@ import subprocess
 from argparse import ArgumentParser
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from glob import glob
-from os import makedirs, cpu_count
+from os import makedirs, cpu_count, environ
 from os.path import dirname, getmtime, exists
 from shutil import copyfile, which
 from hashlib import sha256
 
 
 PROGRAMS = {}
+
+# Per-file progress output is noise in normal builds; opt in with VERBOSE=1.
+VERBOSE = environ.get('VERBOSE', '') not in ('', '0')
+
+
+def log(*args, **kwargs):
+    if VERBOSE:
+        print(*args, **kwargs)
+
 
 # Thread pool for dispatching external compiler processes concurrently.
 # Set in __main__ once job count is known.
@@ -169,11 +178,12 @@ def shader_dependencies(shader_file: str, cache_directory: str):
             return deps
         return []
 
-    subprocess.call([
-        glslang,
-        '--depfile', dep_file,
-        '-G100',
-        shader_file])
+    dep_run = subprocess.run(
+        [glslang, '--depfile', dep_file, '-G100', shader_file],
+        capture_output=True,
+        text=True)
+    if dep_run.returncode != 0:
+        print(dep_run.stdout, dep_run.stderr)
 
     return get_deps()
 
@@ -270,7 +280,7 @@ def compile_shaders(
             file_dependencies = shader_dependencies(in_file, cache_directory)
             if not needs_update(out_file, [in_file] + extra_dependencies + file_dependencies):
                 continue
-            print(f' * Emitting {file} as {profile} {version}')
+            log(f' * Emitting {file} as {profile} {version}')
             submit(
                 run,
                 'ShaderCooker',
@@ -296,7 +306,7 @@ def compile_shaders(
             in_files = in_files + shader_dependencies(in_file, cache_directory)
         if not needs_update(out_file, in_files):
             continue
-        print(f' * Emitting shader assembly {assembly}.spv <- {shaders}')
+        log(f' * Emitting shader assembly {assembly}.spv <- {shaders}')
         extra_args = []
         if values['strip_assemblies']:
             extra_args.append('--strip-debug')
@@ -383,7 +393,7 @@ def encode_textures(
         else:
             if len(res) > 0:
                 return
-        print(f'* Processing file {source} -> {codecs}')
+        log(f'* Processing file {source} -> {codecs}')
         compress_mode = 'fast' if 'Deb' in build_mode else 'release'
 
         # SVG render must precede compression, so keep both in one task.
@@ -506,7 +516,7 @@ def _process_gx_texture(
     if not needs_update(out_file, [src_file] + extra_dependencies):
         return
 
-    print(f'* GX texture {source} -> {basename}.tpl ({fmt_name})')
+    log(f'* GX texture {source} -> {basename}.tpl ({fmt_name})')
 
     def _task():
         if extension == 'svg':

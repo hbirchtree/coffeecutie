@@ -1,0 +1,30 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1280,
+            "height": 720,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "comment": "Splitscreen via synthetic controllers: pad 0 joins seat 0 (keyboard seat), pad 1 joins seat 1 and activates splitscreen. Each pad then moves independently: seat 0 walks forward on left stick, seat 1 turns on right stick. Verifies DummyControllerInput multi-controller state + per-seat polling.",
+    "events": [
+        {"time": 0, "type": "controller_connect", "index": 0},
+        {"time": 8000, "type": "screenshot", "name": "split_single"},
+        {"time": 8500, "type": "controller_connect", "index": 1},
+        {"time": 9500, "type": "screenshot", "name": "split_dual"},
+        {"time": 10000, "type": "controller_axis", "index": 0, "axis": "LEFT_Y", "value": -1.0, "duration": 4000},
+        {"time": 10000, "type": "controller_axis", "index": 1, "axis": "RIGHT_X", "value": 0.6, "duration": 3000},
+        {"time": 15000, "type": "screenshot", "name": "split_moved"},
+        {"time": 16500, "type": "screenshot", "name": "split_end"}
+    ],
+    "end_time": 18000
+}

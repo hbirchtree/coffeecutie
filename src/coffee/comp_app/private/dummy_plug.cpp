@@ -22,6 +22,18 @@
 #include <peripherals/posix/process.h>
 #endif
 
+#if defined(__linux__)
+#include <climits>
+#include <coffee/core/argument_handling.h>
+#include <cstdlib>
+#include <fcntl.h>
+#include <peripherals/posix/process.h>
+#include <sys/prctl.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#endif
+
 #if defined(COFFEE_EMSCRIPTEN)
 #include <coffee/comp_app/bundle.h>
 #include <emscripten.h>
@@ -254,6 +266,207 @@ void queue_input_event(
     }
 }
 
+#if defined(__linux__)
+/* Multi-process test orchestration: a "spawn" array in the dummy plug
+ * config forks+execs this same binary N times, each child seeded with its
+ * own dummy plug config (and optionally extra argv, e.g. --server) — so a
+ * client/server scenario is one `cb run` with no wrapper script managing
+ * processes. fork+exec (not bare fork): by this point the process may
+ * already have threads and initialized library state; exec gives each
+ * child a clean slate, and the child's own config drives it from there.
+ *
+ * Entry schema: {"config": "path.json"  (required),
+ *                "id":     "client0"    (child TMPDIR name; default spawnN),
+ *                "args":   ["--server", "..."]  (appended to argv)}
+ * Top-level "spawn_grace_ms" (default 30000): how long the parent waits at
+ * exit for children before SIGKILLing them.
+ *
+ * The parent reaps children at exit and turns any child failure (nonzero
+ * exit, signal death, or having to be killed) into its own nonzero exit
+ * code, so CI needs no extra bookkeeping. */
+struct spawned_child_t
+{
+    pid_t       pid;
+    std::string id;
+};
+std::vector<spawned_child_t> spawned_children;
+libc_types::u32              spawn_grace_ms = 30000;
+
+void reap_spawned_children()
+{
+    using namespace std::chrono;
+    /* Logging infrastructure may be torn down during exit — stderr only */
+    auto deadline = steady_clock::now() + milliseconds(spawn_grace_ms);
+    bool failed   = false;
+    auto pending  = spawned_children;
+    while(!pending.empty() && steady_clock::now() < deadline)
+    {
+        for(auto it = pending.begin(); it != pending.end();)
+        {
+            int   status = 0;
+            pid_t r      = ::waitpid(it->pid, &status, WNOHANG);
+            if(r == it->pid)
+            {
+                int code = WIFEXITED(status) ? WEXITSTATUS(status)
+                           : WIFSIGNALED(status)
+                               ? 128 + WTERMSIG(status)
+                               : -1;
+                fprintf(
+                    stderr,
+                    "dummy plug spawn: child %s (pid %d) exited with %d\n",
+                    it->id.c_str(),
+                    it->pid,
+                    code);
+                failed = failed || code != 0;
+                it     = pending.erase(it);
+            } else if(r < 0)
+            {
+                /* Already reaped elsewhere or gone */
+                it = pending.erase(it);
+            } else
+                ++it;
+        }
+        if(!pending.empty())
+            ::usleep(200 * 1000);
+    }
+    for(auto const& child : pending)
+    {
+        fprintf(
+            stderr,
+            "dummy plug spawn: child %s (pid %d) still running after grace "
+            "period, killing\n",
+            child.id.c_str(),
+            child.pid);
+        ::kill(child.pid, SIGKILL);
+        ::waitpid(child.pid, nullptr, 0);
+        failed = true;
+    }
+    if(failed)
+        ::_exit(1);
+}
+
+void spawn_dummy_plug_children(nlohmann::json const& config)
+{
+    using platform::url::constructors::MkUrl;
+    using semantic::RSCA;
+
+    /* Children never spawn their own children: a child config that (by
+     * mistake or reuse) also contains "spawn" would otherwise fork-bomb */
+    if(platform::env::var("COFFEE_DUMMY_PLUG_SPAWNED").has_value())
+    {
+        cDebug("dummy plug spawn: already a spawned child, ignoring \"spawn\"");
+        return;
+    }
+
+    spawn_grace_ms = config.value("spawn_grace_ms", 30000u);
+
+    auto const& args_in = Coffee::GetInitArgs();
+
+    /* When this process was started through an explicit dynamic loader
+     * (`ld-linux.so [--library-path ...] <binary> <args>` — how CI runs
+     * downloaded artifacts against a sysroot), /proc/self/exe is the
+     * LOADER, not this program. Re-exec'ing it then needs the program
+     * path as its first real argument: the loader ignores argv[0] and
+     * loads argv[1] — without this shift it tried to load our first CLI
+     * argument (the assets directory) as an ELF. Detected by comparing
+     * /proc/self/exe against realpath(argv[0]); the loader picks up
+     * library paths from the inherited LD_LIBRARY_PATH. */
+    bool via_loader = false;
+    {
+        char    self_buf[PATH_MAX];
+        ssize_t n = ::readlink("/proc/self/exe", self_buf, sizeof(self_buf) - 1);
+        if(n > 0)
+        {
+            self_buf[n] = '\0';
+            char argv0_buf[PATH_MAX];
+            if(!args_in.empty() && args_in[0] &&
+               ::realpath(args_in[0], argv0_buf))
+                via_loader = std::string_view(self_buf) != argv0_buf;
+            else
+                via_loader =
+                    std::string_view(self_buf).find("ld-") !=
+                    std::string_view::npos;
+        }
+    }
+
+    libc_types::u32 index = 0;
+    for(auto const& entry : config["spawn"])
+    {
+        const auto cfg_path = entry.value("config", std::string{});
+        if(cfg_path.empty())
+        {
+            Coffee::Logging::cFatal(
+                "dummy plug spawn: entry without \"config\", skipping");
+            continue;
+        }
+        const auto id = entry.value("id", fmt::format("spawn{}", index));
+        ++index;
+
+        /* Child gets its own TMPDIR under the parent's temp dir so
+         * state.json/screenshots/logs don't collide */
+        const auto child_tmp = *MkUrl(id, RSCA::TempFile);
+        ::mkdir(child_tmp.c_str(), 0755);
+        const auto child_log = child_tmp + "/log.txt";
+
+        std::vector<std::string> args;
+        if(via_loader)
+            /* argv[0] for the loader itself (cosmetic); the program
+             * (args_in[0]) then lands in argv[1] where the loader
+             * expects it */
+            args.push_back("dynamic-loader");
+        for(auto const* arg : args_in)
+            if(arg)
+                args.push_back(arg);
+        if(entry.contains("args"))
+            for(auto const& extra : entry["args"])
+                args.push_back(extra.get<std::string>());
+
+        pid_t child = ::fork();
+        if(child < 0)
+        {
+            Coffee::Logging::cFatal("dummy plug spawn: fork failed");
+            continue;
+        }
+        if(child == 0)
+        {
+            /* Child: die with the parent, redirect output to the child's
+             * log file, point the dummy plug at the child config, exec a
+             * fresh copy of ourselves */
+            ::prctl(PR_SET_PDEATHSIG, SIGKILL);
+            int log_fd = ::open(
+                child_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            if(log_fd >= 0)
+            {
+                ::dup2(log_fd, STDOUT_FILENO);
+                ::dup2(log_fd, STDERR_FILENO);
+                ::close(log_fd);
+            }
+            ::setenv("DUMMY_PLUG_CONFIG", cfg_path.c_str(), 1);
+            ::setenv("TMPDIR", child_tmp.c_str(), 1);
+            ::setenv("COFFEE_DUMMY_PLUG_SPAWNED", "1", 1);
+
+            std::vector<const char*> argv;
+            for(auto const& arg : args)
+                argv.push_back(arg.c_str());
+            argv.push_back(nullptr);
+            ::execv("/proc/self/exe", const_cast<char* const*>(argv.data()));
+            /* exec failed */
+            ::_exit(127);
+        }
+
+        cDebug(
+            "dummy plug spawn: child {} (pid {}) config={} tmp={}",
+            id,
+            child,
+            cfg_path,
+            child_tmp);
+        if(spawned_children.empty())
+            std::atexit(reap_spawned_children);
+        spawned_children.push_back({child, id});
+    }
+}
+#endif
+
 } // namespace
 
 void fork_dummy_plugs(
@@ -294,6 +507,11 @@ void fork_dummy_plugs(
                 return 0u;
             return config["events"].size();
         }());
+
+#if defined(__linux__)
+    if(config.contains("spawn") && config["spawn"].is_array())
+        spawn_dummy_plug_children(config);
+#endif
 
     if(config.contains("frame_delta"))
     {

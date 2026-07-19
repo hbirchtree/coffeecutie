@@ -1,0 +1,41 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "comment": "Self-contained multiplayer scenario: no wrapper script. This process becomes the server (net_listen event), and the dummy plug spawn support (dummy_plug.cpp) fork+execs one client child seeded with the client scenario config plus --server argv. Child gets its own TMPDIR (<parent tmp>/client0) for its state.json/screenshots/log.txt; the parent reaps it at exit and fails if the child failed. Scenario itself matches dummy_plug_net_{server,client}_scenario.json: gamepad movement on bloodgulch, server-triggered switch to beavercreek, more movement, dump_state on both sides.",
+    "spawn": [
+        {
+            "config": ".github/tests/net/dummy_plug_net_child_scenario.json",
+            "id": "client0"
+        }
+    ],
+    "events": [
+        {"time": 500, "type": "net_listen", "address": "127.0.0.1:27105"},
+        {"time": 1000, "type": "render_param", "debug_markers": true},
+        {"time": 1200, "type": "controller_connect", "index": 0},
+        {"time": 1500, "type": "camera", "physics": true},
+        {"time": 2000, "type": "controller_axis", "axis": "LEFT_Y", "value": -1.0, "duration": 3000},
+        {"time": 5500, "type": "screenshot", "name": "server_pre_switch"},
+        {"time": 6000, "type": "switch_map", "map": "beavercreek"},
+        {"time": 14000, "type": "screenshot", "name": "server_post_switch"},
+        {"time": 14500, "type": "controller_axis", "axis": "RIGHT_X", "value": 0.5, "duration": 1000},
+        {"time": 15000, "type": "controller_axis", "axis": "LEFT_Y", "value": -1.0, "duration": 2000},
+        {"time": 17500, "type": "screenshot", "name": "server_post_switch_moved"},
+        {"time": 18000, "type": "dump_state"},
+        {"time": 18500, "type": "screenshot", "name": "server_final"}
+    ],
+    "end_time": 22000
+}

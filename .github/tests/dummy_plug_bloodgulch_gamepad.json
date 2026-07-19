@@ -1,0 +1,32 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1280,
+            "height": 720,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "comment": "Physics movement driven by a synthetic gamepad on bloodgulch: connect pad, enable physics mode on seat 0, walk forward on left stick, turn with right stick, jump with A. Verifies DummyControllerInput state override end-to-end.",
+    "events": [
+        {"time": 0, "type": "controller_connect", "index": 0},
+        {"time": 8000, "type": "camera", "physics": true},
+        {"time": 8500, "type": "screenshot", "name": "gamepad_start"},
+        {"time": 9000, "type": "controller_axis", "axis": "LEFT_Y", "value": -1.0, "duration": 6000},
+        {"time": 15500, "type": "screenshot", "name": "gamepad_forward"},
+        {"time": 16000, "type": "controller_axis", "axis": "RIGHT_X", "value": 0.5, "duration": 1500},
+        {"time": 17800, "type": "screenshot", "name": "gamepad_turned"},
+        {"time": 18000, "type": "controller_button", "button": "A", "duration": 200},
+        {"time": 18300, "type": "screenshot", "name": "gamepad_jump"},
+        {"time": 19500, "type": "screenshot", "name": "gamepad_end"}
+    ],
+    "end_time": 21000
+}

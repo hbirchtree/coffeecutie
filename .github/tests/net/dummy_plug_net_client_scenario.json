@@ -1,0 +1,33 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "comment": "Client side of the multiplayer movement + map-switch scenario. Connection is driven by the process's --server CLI arg (see run_client_server_test.sh). Walks the local player around on a synthetic gamepad while the server (independently) does the same, then just keeps playing through the server-triggered map switch — the client never injects switch_map itself; it only ever follows a fresh GameJoin. Walks a bit more post-switch to confirm input/camera survived the reload, then dumps state.",
+    "events": [
+        {"time": 1000, "type": "render_param", "debug_markers": true},
+        {"time": 1200, "type": "controller_connect", "index": 0},
+        {"time": 1500, "type": "camera", "physics": true},
+        {"time": 2000, "type": "controller_axis", "axis": "LEFT_Y", "value": -1.0, "duration": 3000},
+        {"time": 5500, "type": "screenshot", "name": "client_pre_switch"},
+        {"time": 14000, "type": "screenshot", "name": "client_post_switch"},
+        {"time": 14500, "type": "controller_axis", "axis": "RIGHT_X", "value": 0.5, "duration": 1000},
+        {"time": 15000, "type": "controller_axis", "axis": "LEFT_Y", "value": -1.0, "duration": 2000},
+        {"time": 17500, "type": "screenshot", "name": "client_post_switch_moved"},
+        {"time": 18000, "type": "dump_state"},
+        {"time": 18500, "type": "screenshot", "name": "client_final"}
+    ],
+    "end_time": 20000
+}

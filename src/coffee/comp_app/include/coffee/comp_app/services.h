@@ -293,7 +293,7 @@ struct BasicEventBus : EventBus<EventType>
 
     void sort_handlers()
     {
-        std::sort(m_handlers.begin(), m_handlers.end(), handler_sorter);
+        std::stable_sort(m_handlers.begin(), m_handlers.end(), handler_sorter);
     }
 };
 
