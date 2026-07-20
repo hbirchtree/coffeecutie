@@ -1,5 +1,6 @@
 {
     "overlay-ports": [
+        "./toolchain/vcpkg/ports/datachannel-wasm",
         "./toolchain/vcpkg/ports/discord-rpc",
         "./toolchain/vcpkg/ports/gamenetworkingsockets",
         "./toolchain/vcpkg/ports/stb"

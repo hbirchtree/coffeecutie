@@ -3,6 +3,11 @@ set(BLAMG_EMBEDDED_REPORT_URL "" CACHE STRING "")
 set(BLAM_CURSED OFF CACHE STRING "Cursed experiments")
 
 find_package(GameNetworkingSockets CONFIG)
+if(EMSCRIPTEN)
+    find_package(datachannel-wasm CONFIG)
+else()
+    find_package(LibDataChannel CONFIG QUIET)
+endif()
 option(BUILD_PHYSICS "Enable Bullet physics support" ON)
 if(BUILD_PHYSICS)
     find_package(Bullet CONFIG QUIET)
@@ -45,6 +50,7 @@ coffee_application(
         sounds.cpp
         touch_overlay.cpp
         ui.cpp
+        webrtc_signaling.cpp
         widgets.cpp
   LIBRARIES Blam Core Image GLeamRHI ComponentBundleSetup
   BUNDLE_LIBRARIES ${BUNDLED_LIBS}
@@ -82,6 +88,24 @@ if(GameNetworkingSockets_FOUND)
         GameNetworkingSockets::GameNetworkingSockets_s
     )
     target_compile_definitions(BlamGraphics PUBLIC -DUSE_NETWORKING=1)
+    if(EMSCRIPTEN)
+        target_link_libraries(BlamGraphics PUBLIC
+            OpenSSL::SSL
+            OpenSSL::Crypto
+        )
+    endif()
+endif()
+if(GameNetworkingSockets_FOUND AND (LibDataChannel_FOUND OR EMSCRIPTEN))
+    if(EMSCRIPTEN)
+        target_link_libraries(BlamGraphics PUBLIC
+            datachannel-wasm::datachannel-wasm
+        )
+    else()
+        target_link_libraries(BlamGraphics PUBLIC
+            LibDataChannel::LibDataChannel
+        )
+    endif()
+    target_compile_definitions(BlamGraphics PUBLIC -DUSE_WEBRTC_TRANSPORT=1)
 endif()
 if(TARGET ImGui)
     target_link_libraries(BlamGraphics PUBLIC ImGui)

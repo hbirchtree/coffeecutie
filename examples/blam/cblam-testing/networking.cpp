@@ -16,14 +16,22 @@ using Coffee::ProfContext;
 #include "data.h"
 #include "journal.h"
 #include "selected_version.h"
+#include "webrtc_signaling.h"
 
 #include <GameNetworkingSockets/steam/isteamnetworkingsockets.h>
 #include <GameNetworkingSockets/steam/isteamnetworkingutils.h>
 #include <GameNetworkingSockets/steam/steamnetworkingsockets.h>
 #include <coffee/components/restricted_subsystem.h>
+#include <peripherals/identify/system.h>
 
 #include <fmt_extensions/format.h>
 #include <fmt_extensions/url_types.h>
+
+#if defined(USE_WEBRTC_TRANSPORT) && defined(COFFEE_WASM)
+// Private APIs required for Wasm impl to work
+extern "C" void SteamNetworkingSockets_SetManualPollMode(bool bFlag);
+extern "C" void SteamNetworkingSockets_Poll(int msMaxWaitTime);
+#endif
 
 using NetworkingManifest = compo::SubsystemManifest<
     type_list_t<PlayerInfo, NetworkInfo, PlayerCamera>,
@@ -350,6 +358,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     using type  = Networking;
     using Proxy = compo::proxy_of<NetworkingManifest>;
 
+    bool is_server() const
+    {
+        if(m_socket && m_socket != k_HSteamListenSocket_Invalid)
+            return true;
+#if defined(USE_WEBRTC_TRANSPORT)
+        if(m_webrtcServer)
+            return true;
+#endif
+        return false;
+    }
+
     template<typename T>
     bool forward_game_event(GameEvent& event, const void* data)
     {
@@ -359,7 +378,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             .event = event,
             .data  = *static_cast<T const*>(data),
         });
-        if(m_socket)
+        if(is_server())
             send_all(std::move(message));
         else
             send_single(m_connection, std::move(message));
@@ -426,10 +445,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 
     bool players_ready() const
     {
-        if(m_socket && !m_map)
+        if(is_server() && !m_map)
             return false;
         if(m_connections.empty())
-            return m_socket && m_map;
+            return is_server() && m_map;
         for(auto const& [_, state] : m_connections)
         {
             if(state.loading_progress < 100)
@@ -588,6 +607,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_impl  = SteamNetworkingSockets();
         m_utils = SteamNetworkingUtils();
 
+#if defined(USE_WEBRTC_TRANSPORT) && defined(COFFEE_WASM)
+        // On Wasm, we need to ensure we run network code on the main thread
+        // This is a constraint related to browser WebRTC impl
+        SteamNetworkingSockets_SetManualPollMode(true);
+#endif
+
         m_game_bus.addEventFunction<ServerConnectEvent>(
             0, [this](GameEvent&, ServerConnectEvent* connect) {
                 cDebug("Connection requested to server: {}", connect->remote);
@@ -596,6 +621,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 else if(connect->type == ServerConnectEvent::Server)
                     connect_server(connect->remote);
                 else
+#if defined(USE_WEBRTC_TRANSPORT)
+                    if(connect->remote.starts_with("ws://") ||
+                       connect->remote.starts_with("wss://"))
+                    create_server_webrtc(connect->remote);
+                else
+#endif
                     create_server(connect->remote);
             });
         m_game_bus.addEventFunction<MapListingEvent>(
@@ -605,7 +636,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_game_bus.addEventFunction<MapLoadEvent>(
             0, [this](GameEvent&, MapLoadEvent* load) {
                 /* Only use this callback if we're the server */
-                if(!load->file || !m_socket)
+                if(!load->file || !is_server())
                     return;
                 auto map_name = (*load->file).path().fileBasename().removeExt();
                 send_all(
@@ -628,7 +659,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             });
         m_game_bus.addEventFunction<ServerCameraControl>(
             0, [this](GameEvent&, ServerCameraControl* cam) {
-                if(!m_socket)
+                if(!is_server())
                     return;
                 cDebug("Setting camera to {}", cam->target_player);
                 m_pending_focus =
@@ -639,7 +670,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                  /* Each function will check the type of the event,
                   * only the matching one will send
                   */
-                 if(m_socket)
+                 if(is_server())
                  {
                      cDebug(
                          "Distributing {} event",
@@ -662,7 +693,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
              }});
         m_game_bus.addEventFunction<MapDataLoadEvent>(
             0, [this](GameEvent&, MapDataLoadEvent*) {
-                if(!m_socket)
+                if(!is_server())
                 {
                     send_single(
                         m_connection,
@@ -675,7 +706,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             0,
             [this](GameEvent&, MapLoadFinishedEvent<halo_version>* finished) {
                 m_map = finished->container;
-                if(!m_socket)
+                if(!is_server())
                     return;
                 for(auto& [connection, state] : m_connections)
                 {
@@ -692,9 +723,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             [this](GameEvent& ev, const void*) {
                 if(ev.type != GameEvent::MapAllLoaded)
                     return;
-                if(m_socket)
+                if(is_server())
                     m_needs_local_init = true;
-                if(!m_socket)
+                if(!is_server())
                 {
                     send_single(
                         m_connection,
@@ -710,6 +741,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             [](ESteamNetworkingSocketsDebugOutputType, const char* message) {
                 cDebug("Networking: {}", message);
             });
+
+#if defined(USE_WEBRTC_TRANSPORT)
+        m_utils->SetGlobalConfigValuePtr(
+            k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged,
+            function_to_void<SteamNetConnectionStatusChangedCallback_t>(
+                [](SteamNetConnectionStatusChangedCallback_t* info) {
+                    network_instance->connection_status_change(info);
+                }));
+#endif
     }
 
     std::vector<SteamNetworkingConfigValue_t> create_callbacks()
@@ -758,6 +798,18 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             return;
         }
 
+#if defined(USE_WEBRTC_TRANSPORT)
+        /* A ws://.../wss://... remote is a webrtc-gateway (see
+         * tools/webrtc-gateway, examples/blam/cblam-testing/WEBRTC_TRANSPORT.md)
+         * rather than a directly-dialable UDP server -- route through the
+         * DataChannel bootstrap instead of ConnectByIPAddress below. */
+        if(remote.starts_with("ws://") || remote.starts_with("wss://"))
+        {
+            connect_server_webrtc(remote);
+            return;
+        }
+#endif
+
         m_utils->SetGlobalConfigValueString(
             k_ESteamNetworkingConfig_P2P_STUN_ServerList,
             "stun.l.google.com:19302");
@@ -795,6 +847,65 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             remote_name());
         m_net_state.client_state = NetworkState::ClientState::Establishing;
     }
+
+#if defined(USE_WEBRTC_TRANSPORT)
+    void connect_server_webrtc(std::string const& gatewayUrl)
+    {
+        if(m_webrtcBootstrap)
+        {
+            cWarning("WebRTC gateway connection already in progress");
+            return;
+        }
+        cDebug("Bootstrapping WebRTC DataChannel via gateway {}", gatewayUrl);
+        m_webrtcBootstrap = new webrtc_signaling::GatewayConnectBootstrap(gatewayUrl);
+        m_webrtcBootstrap->Start();
+        m_net_state.client_state = NetworkState::ClientState::Establishing;
+    }
+
+    /* Polls the async gateway bootstrap kicked off by connect_server_webrtc
+     * (SDP/ICE + the WebSocket round trip take real wall-clock time, so
+     * this can't be done synchronously inline there -- see
+     * webrtc_signaling.h). Called once per tick from start_restricted,
+     * regardless of m_socket/m_connection state, since neither is set up
+     * yet during bootstrap. */
+    void poll_webrtc_bootstrap()
+    {
+        if(!m_webrtcBootstrap)
+            return;
+        if(m_webrtcBootstrap->Failed())
+        {
+            cWarning("WebRTC gateway bootstrap failed");
+            m_webrtcBootstrap->Release(); // deletes itself
+            m_webrtcBootstrap             = nullptr;
+            m_net_state.client_state = NetworkState::ClientState::Error;
+            return;
+        }
+        if(!m_webrtcBootstrap->Ready())
+            return;
+
+        auto pc     = m_webrtcBootstrap->TakePeerConnection();
+        auto dc     = m_webrtcBootstrap->TakeDataChannel();
+        auto config = create_callbacks();
+        /* GNS takes ownership of m_webrtcBootstrap (as the connection's
+         * ISteamNetworkingConnectionSignaling) from this call onward --
+         * calls Release() on it itself, on success or failure alike (same
+         * contract ConnectP2PCustomSignaling's pSignaling has, since this
+         * mirrors it -- see the port's add-webrtc-datachannel-transport.patch). */
+        auto* bootstrap   = m_webrtcBootstrap;
+        m_webrtcBootstrap = nullptr;
+        m_connection      = m_impl->ConnectP2PWebRTCDataChannel(
+            bootstrap, nullptr, 0, pc, dc, config.size(), config.data());
+        if(m_connection == k_HSteamNetConnection_Invalid)
+        {
+            cWarning("Failed to establish P2P WebRTC DataChannel connection");
+            m_net_state.client_state = NetworkState::ClientState::Error;
+            return;
+        }
+        configure_weights(m_connection);
+        m_connections[m_connection] = {};
+        cDebug("WebRTC gateway connection established, connection={}", m_connection);
+    }
+#endif
 
     void create_server(std::string const& local)
     {
@@ -835,6 +946,58 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_net_state.server_state = NetworkState::ServerState::Error;
     }
 
+#if defined(USE_WEBRTC_TRANSPORT)
+    /* local is <serverSignalGatewayUrl>[#<dataChannelGatewayUrl>]. Two
+     * URLs, not one: the persistent /server-signal registration (GNS
+     * rendezvous relay) and each accepted connection's own per-connection
+     * /signal dial (its actual DataChannel transport bootstrap) don't
+     * have to be the same gateway process -- for native-to-native testing
+     * they usually AREN'T (see WEBRTC_TRANSPORT.md's "-relay-udp-port"
+     * note: two gateway processes, each bridging to the other's relay
+     * socket, so a client's and this server's DataChannels can actually
+     * reach each other). No '#' falls back to reusing the same URL for
+     * both, which is only correct if that one gateway bridges its own
+     * /signal connections together -- not implemented today, so that
+     * fallback is really just "single-gateway browser-client production
+     * topology," not a native-to-native test config. */
+    void create_server_webrtc(std::string const& local)
+    {
+        if(m_socket || m_webrtcServer)
+        {
+            cWarning("Server already started");
+            return;
+        }
+
+        std::string serverSignalUrl = local;
+        std::string dataChannelUrl  = local;
+        if(auto hash = local.find('#'); hash != std::string::npos)
+        {
+            serverSignalUrl = local.substr(0, hash);
+            dataChannelUrl  = local.substr(hash + 1);
+        }
+
+        cDebug(
+            "Starting WebRTC gateway server: server-signal={} data-channel-gateway={}",
+            serverSignalUrl,
+            dataChannelUrl);
+        m_webrtcServer = std::make_unique<webrtc_signaling::GatewayServerRegistration>(
+            serverSignalUrl, dataChannelUrl, m_impl);
+        m_webrtcServer->Start();
+        // Same poll group create_server uses -- independent of any listen
+        // socket (connections get attached to it individually via
+        // SetConnectionPollGroup, see server_connection_status_changed's
+        // Connecting case below), so it works identically here despite
+        // there being no CreateListenSocketIP/P2P call in this path at all.
+        m_poll_group = m_impl->CreatePollGroup();
+        m_host_name  = get_random_name();
+        // TODO: local_address isn't meaningful for a gateway-relayed
+        // server the way it is for a real bound UDP socket (local_name()
+        // reads GetListenSocketAddress, which m_socket doesn't have here)
+        // -- leave unset until there's a sensible thing to show.
+        m_net_state.server_state = NetworkState::ServerState::Listening;
+    }
+#endif
+
     void connection_status_change(
         SteamNetConnectionStatusChangedCallback_t* info)
     {
@@ -844,7 +1007,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             magic_enum::enum_name(info->m_eOldState),
             magic_enum::enum_name(info->m_info.m_eState));
 
-        if(m_socket && m_socket != k_HSteamListenSocket_Invalid)
+        bool isServer = m_socket && m_socket != k_HSteamListenSocket_Invalid;
+#if defined(USE_WEBRTC_TRANSPORT)
+        isServer = isServer || (bool)m_webrtcServer;
+#endif
+        if(isServer)
             server_connection_status_changed(info);
         if(m_connection && m_connection != k_HSteamNetConnection_Invalid)
             client_connection_status_changed(info);
@@ -856,6 +1023,26 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         switch(info->m_info.m_eState)
         {
         case k_ESteamNetworkingConnectionState_Connecting: {
+#if defined(USE_WEBRTC_TRANSPORT)
+            if(m_webrtcServer)
+            {
+                if(!m_impl->SetConnectionPollGroup(info->m_hConn, m_poll_group))
+                {
+                    cWarning("Failed to set connection poll group");
+                    break;
+                }
+                if(m_connections.size() >= 3)
+                {
+                    m_impl->CloseConnection(info->m_hConn, 10, nullptr, false);
+                    break;
+                }
+                configure_weights(info->m_hConn);
+                m_connections[info->m_hConn] = connection_state_t{
+                    .idx = m_next_remote_idx++,
+                };
+                break;
+            }
+#endif
             if(m_impl->AcceptConnection(info->m_hConn) != k_EResultOK)
             {
                 cWarning(
@@ -1059,7 +1246,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 
     void start_restricted(Proxy& p, time_point const& t)
     {
-        if(m_socket)
+#if defined(USE_WEBRTC_TRANSPORT)
+        poll_webrtc_bootstrap();
+        if(m_webrtcServer)
+            m_webrtcServer->PollPendingAccepts();
+#endif
+        if(is_server())
         {
             if(m_local_player_info.empty())
             {
@@ -1226,6 +1418,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 message->Release();
             }
         }
+#if defined(USE_WEBRTC_TRANSPORT) && defined(COFFEE_WASM)
+        SteamNetworkingSockets_Poll(0);
+#endif
         m_impl->RunCallbacks();
     }
 
@@ -1629,6 +1824,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     HSteamNetConnection               m_connection{};
     std::optional<time_point>         m_connection_last_seen{};
     compo::EntityRef<EntityContainer> m_client_player{};
+#if defined(USE_WEBRTC_TRANSPORT)
+    webrtc_signaling::GatewayConnectBootstrap* m_webrtcBootstrap{nullptr};
+    std::unique_ptr<webrtc_signaling::GatewayServerRegistration> m_webrtcServer;
+#endif
 
     struct connection_state_t
     {

@@ -9,17 +9,40 @@
 // hardcoded destination, no multi-tenancy, no poke/registry API yet. Just
 // proves the relay mechanic end-to-end.
 //
+// The relay socket's local port is ephemeral by default, matching a plain
+// "browser <-> gateway <-> native UDP server" deployment, where nothing
+// ever needs to dial *into* it. -relay-udp-port pins it to a fixed port
+// instead, for the case where the "destination" is itself another
+// gateway's relay socket (two WebRTC-only peers bridged through a pair of
+// gateways — e.g. this project's own native-to-native transport testing,
+// see WEBRTC_TRANSPORT.md's Phase 2 section) — that only works if each
+// side has a fixed, known port for the other to dial.
+//
 // Signaling is a minimal non-trickle-ICE WebSocket protocol: the client
 // posts a complete offer (after its own ICE gathering finishes), the
 // gateway answers once its own (ICE-lite) gathering finishes. No separate
 // candidate messages in this phase.
+//
+// The gateway also relays GameNetworkingSockets' own rendezvous signaling
+// (the ConnectRequest/ConnectOK handshake GNS always does through its
+// ISteamNetworkingConnectionSignaling, independent of transport state —
+// see WEBRTC_TRANSPORT.md's "GNS-level signaling" section). It never
+// parses that payload, just as it never parses relayed UDP payloads: a
+// single game server registers once over /server-signal, each browser
+// client's /signal connection is assigned an opaque session ID (returned
+// alongside the SDP answer), and "gns-rendezvous" messages tagged with
+// that ID are routed client<->server by ID alone.
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -28,7 +51,14 @@ import (
 
 type signalMessage struct {
 	Type string `json:"type"`
-	SDP  string `json:"sdp"`
+	SDP  string `json:"sdp,omitempty"`
+
+	// SessionID identifies a /signal client for gns-rendezvous routing.
+	// Gateway-assigned, returned to the client on its "answer" message.
+	SessionID string `json:"sessionId,omitempty"`
+	// Data is an opaque (base64, by convention on the C++ side) blob for
+	// "gns-rendezvous" messages — the gateway never inspects it.
+	Data string `json:"data,omitempty"`
 }
 
 var upgrader = websocket.Upgrader{
@@ -36,10 +66,52 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
+// clientSession is a registered /signal connection, keyed by session ID
+// so a server's gns-rendezvous reply can be routed back to the right
+// browser client without the gateway understanding GNS's protocol.
+type clientSession struct {
+	conn *websocket.Conn
+	// gorilla/websocket connections support one concurrent writer; the
+	// initial answer and later server->client relay writes can race
+	// without this.
+	writeMu sync.Mutex
+}
+
+var (
+	sessionsMu sync.RWMutex
+	sessions   = make(map[string]*clientSession)
+)
+
+// serverConnection is the single game server registered over
+// /server-signal. Phase-minimal: one destination, no auth, no
+// multi-server routing — a pulled-forward slice of the full Phase 6
+// registry, not that registry itself.
+type serverConnection struct {
+	conn    *websocket.Conn
+	writeMu sync.Mutex
+}
+
+var (
+	serverConnMu sync.RWMutex
+	activeServer *serverConnection
+)
+
+func newSessionID() string {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		// OS CSPRNG failure is not expected in practice; fall back to
+		// something still unique enough for a dev-scale single-process
+		// gateway rather than refusing the connection outright.
+		return fmt.Sprintf("%x", time.Now().UnixNano())
+	}
+	return hex.EncodeToString(b)
+}
+
 func main() {
 	listenAddr := flag.String("listen", ":8088", "HTTP/WebSocket signaling listen address")
 	dest := flag.String("dest", "127.0.0.1:9999", "hardcoded UDP destination to relay DataChannel payloads to")
 	iceUDPPort := flag.Int("ice-udp-port", 0, "fixed local UDP port for the gateway's own ICE-lite candidate (0 = ephemeral)")
+	relayUDPPort := flag.Int("relay-udp-port", 0, "fixed local UDP port for the DataChannel<->UDP relay socket (0 = ephemeral; set this when -dest points at another gateway's relay socket, so it has a fixed port to dial back to)")
 	flag.Parse()
 
 	destAddr, err := net.ResolveUDPAddr("udp", *dest)
@@ -48,8 +120,9 @@ func main() {
 	}
 
 	http.HandleFunc("/signal", func(w http.ResponseWriter, r *http.Request) {
-		handleSignal(w, r, destAddr, *iceUDPPort)
+		handleSignal(w, r, destAddr, *iceUDPPort, *relayUDPPort)
 	})
+	http.HandleFunc("/server-signal", handleServerSignal)
 
 	log.Printf("webrtc-gateway listening on %s, relaying to %s", *listenAddr, destAddr)
 	if err := http.ListenAndServe(*listenAddr, nil); err != nil {
@@ -57,13 +130,24 @@ func main() {
 	}
 }
 
-func handleSignal(w http.ResponseWriter, r *http.Request, dest *net.UDPAddr, iceUDPPort int) {
+func handleSignal(w http.ResponseWriter, r *http.Request, dest *net.UDPAddr, iceUDPPort int, relayUDPPort int) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("websocket upgrade failed: %v", err)
 		return
 	}
 	defer conn.Close()
+
+	sessionID := newSessionID()
+	session := &clientSession{conn: conn}
+	sessionsMu.Lock()
+	sessions[sessionID] = session
+	sessionsMu.Unlock()
+	defer func() {
+		sessionsMu.Lock()
+		delete(sessions, sessionID)
+		sessionsMu.Unlock()
+	}()
 
 	var msg signalMessage
 	if err := conn.ReadJSON(&msg); err != nil {
@@ -98,7 +182,18 @@ func handleSignal(w http.ResponseWriter, r *http.Request, dest *net.UDPAddr, ice
 		// isn't registered yet, so the first message(s) were silently
 		// dropped. UDP dial is a local, non-blocking operation (no
 		// network round trip), so doing it here too costs nothing.
-		sock, err := net.DialUDP("udp", nil, dest)
+		//
+		// laddr is nil (ephemeral) unless -relay-udp-port pinned it. A
+		// fixed local port only makes sense for one relay at a time (a
+		// second concurrent /signal connection would fail to bind the
+		// same port) — fine given this gateway is already single-tenant
+		// (see the package doc comment); would need per-session ports
+		// from a real Phase 6 registry to lift that.
+		var laddr *net.UDPAddr
+		if relayUDPPort != 0 {
+			laddr = &net.UDPAddr{Port: relayUDPPort}
+		}
+		sock, err := net.DialUDP("udp", laddr, dest)
 		if err != nil {
 			log.Printf("failed to dial UDP dest %s: %v", dest, err)
 			return
@@ -139,22 +234,117 @@ func handleSignal(w http.ResponseWriter, r *http.Request, dest *net.UDPAddr, ice
 	}
 	<-gatherComplete
 
-	if err := conn.WriteJSON(signalMessage{
-		Type: "answer",
-		SDP:  pc.LocalDescription().SDP,
-	}); err != nil {
+	session.writeMu.Lock()
+	err = conn.WriteJSON(signalMessage{
+		Type:      "answer",
+		SDP:       pc.LocalDescription().SDP,
+		SessionID: sessionID,
+	})
+	session.writeMu.Unlock()
+	if err != nil {
 		log.Printf("failed to send answer: %v", err)
 		return
 	}
 
-	// Signaling's job is done once the answer is sent (non-trickle ICE,
-	// no further messages expected in this phase) — but keep the
-	// WebSocket open as a simple liveness signal for the connection;
-	// closing it doesn't tear down the PeerConnection/DataChannel, only
-	// ends this handler once the relay itself finishes.
-	select {
-	case <-relayDone:
-	case <-connClosed(conn):
+	// SDP/ICE exchange is done (non-trickle ICE, no candidate messages in
+	// this phase), but the WebSocket stays open and keeps being read:
+	// GNS's own rendezvous signaling (ConnectRequest/ConnectOK, etc.)
+	// still needs to flow over it, tagged with this session's ID, for as
+	// long as the DataChannel relay is alive. Force this loop to end once
+	// the relay does, since nothing more needs relaying past that point.
+	go func() {
+		<-relayDone
+		conn.Close()
+	}()
+	for {
+		var m signalMessage
+		if err := conn.ReadJSON(&m); err != nil {
+			return
+		}
+		switch m.Type {
+		case "gns-rendezvous":
+			relayRendezvousToServer(sessionID, m.Data)
+		default:
+			log.Printf("session %s: unexpected signal message type %q", sessionID, m.Type)
+		}
+	}
+}
+
+// handleServerSignal is the game server's counterpart to /signal: a long-
+// lived WebSocket the native server process registers once, at startup,
+// used to carry GNS rendezvous signaling for every client session the
+// gateway is bridging. Phase-minimal — one server, no auth, no
+// re-registration/failover handling — a slice of Phase 6's registry
+// pulled forward only as far as this signaling relay needs it.
+func handleServerSignal(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Printf("websocket upgrade failed: %v", err)
+		return
+	}
+	defer conn.Close()
+
+	serverConnMu.Lock()
+	if activeServer != nil {
+		serverConnMu.Unlock()
+		log.Printf("rejecting /server-signal: a server is already registered")
+		conn.WriteJSON(signalMessage{Type: "error", Data: "server already registered"})
+		return
+	}
+	server := &serverConnection{conn: conn}
+	activeServer = server
+	serverConnMu.Unlock()
+	log.Printf("server registered for GNS rendezvous signaling")
+
+	defer func() {
+		serverConnMu.Lock()
+		if activeServer == server {
+			activeServer = nil
+		}
+		serverConnMu.Unlock()
+		log.Printf("server signaling connection closed")
+	}()
+
+	for {
+		var m signalMessage
+		if err := conn.ReadJSON(&m); err != nil {
+			return
+		}
+		if m.Type != "gns-rendezvous" {
+			log.Printf("server signal: unexpected message type %q", m.Type)
+			continue
+		}
+		relayRendezvousToClient(m.SessionID, m.Data)
+	}
+}
+
+func relayRendezvousToServer(sessionID, data string) {
+	serverConnMu.RLock()
+	server := activeServer
+	serverConnMu.RUnlock()
+	if server == nil {
+		log.Printf("dropping gns-rendezvous from session %s: no server registered", sessionID)
+		return
+	}
+	server.writeMu.Lock()
+	defer server.writeMu.Unlock()
+	if err := server.conn.WriteJSON(signalMessage{Type: "gns-rendezvous", SessionID: sessionID, Data: data}); err != nil {
+		log.Printf("failed to relay rendezvous to server: %v", err)
+	}
+}
+
+func relayRendezvousToClient(sessionID, data string) {
+	sessionsMu.RLock()
+	session, ok := sessions[sessionID]
+	sessionsMu.RUnlock()
+	if !ok {
+		log.Printf("dropping gns-rendezvous for unknown session %s", sessionID)
+		return
+	}
+	session.writeMu.Lock()
+	defer session.writeMu.Unlock()
+	if err := session.conn.WriteJSON(signalMessage{Type: "gns-rendezvous", SessionID: sessionID, Data: data}); err != nil {
+		log.Printf("failed to relay rendezvous to client %s: %v", sessionID, err)
 	}
 }
 
@@ -213,17 +403,4 @@ func runRelay(dc *webrtc.DataChannel, sock *net.UDPConn, done chan<- struct{}) {
 			return
 		}
 	}
-}
-
-func connClosed(conn *websocket.Conn) <-chan struct{} {
-	ch := make(chan struct{})
-	go func() {
-		defer close(ch)
-		for {
-			if _, _, err := conn.NextReader(); err != nil {
-				return
-			}
-		}
-	}()
-	return ch
 }

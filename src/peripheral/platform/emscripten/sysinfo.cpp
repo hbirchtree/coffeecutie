@@ -85,6 +85,47 @@ static char* platform_get_query_string()
         EM_ASM_PTR({ return stringToNewUTF8(window.location.search); }));
 }
 
+namespace {
+
+/* window.location.search returns the query string exactly as it appears
+ * in the URL (browsers never decode it for you, unlike URLSearchParams) --
+ * so a value built with encodeURIComponent() (eg. a "ws://host:port" server
+ * URL, which needs ':' and '/' escaped to safely ride inside a query
+ * value) arrives here still percent-encoded. Decode both keys and values
+ * so callers get the same string they'd get from URLSearchParams. */
+std::string percent_decode(std::string_view in)
+{
+    std::string out;
+    out.reserve(in.size());
+    for(size_t i = 0; i < in.size(); ++i)
+    {
+        if(in[i] == '%' && i + 2 < in.size())
+        {
+            auto hex_val = [](char c) -> int {
+                if(c >= '0' && c <= '9')
+                    return c - '0';
+                if(c >= 'a' && c <= 'f')
+                    return c - 'a' + 10;
+                if(c >= 'A' && c <= 'F')
+                    return c - 'A' + 10;
+                return -1;
+            };
+            int hi = hex_val(in[i + 1]);
+            int lo = hex_val(in[i + 2]);
+            if(hi >= 0 && lo >= 0)
+            {
+                out.push_back(static_cast<char>((hi << 4) | lo));
+                i += 2;
+                continue;
+            }
+        }
+        out.push_back(in[i]);
+    }
+    return out;
+}
+
+} // namespace
+
 namespace emscripten::args {
 
 std::map<std::string, std::string> query_params()
@@ -110,11 +151,11 @@ std::map<std::string, std::string> query_params()
             /* Valueless flag (?foo&bar=1): present with empty value, so
              * contains()-style checks (e.g. "dummy_plug") see it */
             if(!param.empty())
-                out[std::string(param)] = {};
+                out[percent_decode(param)] = {};
             continue;
         }
-        out[std::string(param.substr(0, split))] =
-            std::string(param.substr(split + 1));
+        out[percent_decode(param.substr(0, split))] =
+            percent_decode(param.substr(split + 1));
     }
     return out;
 #else

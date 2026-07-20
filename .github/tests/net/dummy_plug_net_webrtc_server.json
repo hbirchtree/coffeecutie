@@ -1,0 +1,26 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "comment": "Server side of the WebRTC-transport client/server harness (run_webrtc_client_server_test.sh). Connection itself is driven by the process's --listen CLI arg (ws://.../#ws://.../, see create_server_webrtc in networking.cpp), not by this config. Later dump_state/end_time than the plain-UDP scenario (dummy_plug_net_server.json): the WebRTC path has real handshake latency to absorb before the connection completes -- two WebSocket round trips, SDP offer/answer, ICE-lite negotiation, then GNS's own rendezvous handshake on top of that -- not just a UDP connect.",
+    "events": [
+        {"time": 1000, "type": "render_param", "debug_markers": true},
+        {"time": 1500, "type": "camera", "physics": true},
+        {"time": 20000, "type": "dump_state"},
+        {"time": 20500, "type": "screenshot", "name": "server_view"}
+    ],
+    "end_time": 22000
+}

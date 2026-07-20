@@ -1,7 +1,7 @@
 {
   "name": "gamenetworkingsockets",
   "version": "1.4.1",
-  "port-version": 12,
+  "port-version": 21,
   "description": "GameNetworkingSockets is a basic transport layer for games.",
   "homepage": "https://github.com/ValveSoftware/GameNetworkingSockets",
   "license": "BSD-3-Clause",
@@ -20,9 +20,10 @@
   ],
   "features": {
     "webrtc-datachannel": {
-      "description": "Build CConnectionTransportP2PWebRTC, a P2P transport backed by an already-open libdatachannel DataChannel (see examples/blam/cblam-testing/WEBRTC_TRANSPORT.md in the coffeecutie repo). NAT traversal/SDP/ICE happen entirely outside GNS via application-level signaling; this does not use GNS's own ICE machinery.",
+      "description": "Build CConnectionTransportP2PWebRTC, a P2P transport backed by an already-open DataChannel -- libdatachannel natively, datachannel-wasm on emscripten (same C++ API shape; see examples/blam/cblam-testing/WEBRTC_TRANSPORT.md in the coffeecutie repo). NAT traversal/SDP/ICE happen entirely outside GNS via application-level signaling; this does not use GNS's own ICE machinery.",
       "dependencies": [
-        "libdatachannel"
+        { "name": "libdatachannel", "platform": "!emscripten" },
+        { "name": "datachannel-wasm", "platform": "emscripten" }
       ]
     }
   }

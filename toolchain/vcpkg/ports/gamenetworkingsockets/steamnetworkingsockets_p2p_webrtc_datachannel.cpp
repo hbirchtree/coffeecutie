@@ -51,7 +51,19 @@ void CConnectionTransportP2PWebRTC::TransportFreeResources()
 {
 	if ( m_pDataChannel )
 	{
+#ifndef __EMSCRIPTEN__
+		// datachannel-wasm's DataChannel has no resetCallbacks() at all
+		// (libdatachannel does) -- safe to just skip it there, not merely
+		// a workaround: the coffeecutie wasm build runs GNS in
+		// SetManualPollMode(true) specifically so this transport is only
+		// ever touched from the single browser main thread (see
+		// examples/blam/cblam-testing/WEBRTC_TRANSPORT.md's Phase 3
+		// threading note), so there is no *other* thread that could still
+		// be mid-callback (with a soon-to-be-dangling `this`) when this
+		// runs, unlike the native multi-threaded case resetCallbacks()
+		// guards against.
 		m_pDataChannel->resetCallbacks();
+#endif
 		m_pDataChannel->close();
 		m_pDataChannel.reset();
 	}
@@ -68,6 +80,22 @@ bool CConnectionTransportP2PWebRTC::BCanSendEndToEndData() const
 bool CConnectionTransportP2PWebRTC::SendDataPacket( SteamNetworkingMicroseconds usecNow )
 {
 	SendPacketContext_t ctx( usecNow, "data" );
+	// SendPacketContext_t::m_cbMaxEncryptedPayload has no default member
+	// initializer and nothing else sets it for a bare (non-templated)
+	// context like this one -- the UDP transport only ever constructs the
+	// templated SendPacketContext<CMsgSteamSockets_UDP_Stats>, whose
+	// Populate()/SlamFlagsAndCalcSize() computes it as
+	// (MTU - header reserve - stats msg size) before SNP_SendPacket ever
+	// runs. Left unset here, SNP_SendPacket's packer
+	// (m_cbMaxPlaintextPayload = max(0, ctx.m_cbMaxEncryptedPayload -
+	// encryption overhead), steamnetworkingsockets_snp.cpp) read
+	// uninitialized stack garbage for how much room it had -- a real,
+	// confirmed bug: caused GNS to believe it had a bogus (frequently ~0)
+	// send budget, so ordinary application messages never actually made it
+	// out despite the connection reporting Connected (see
+	// WEBRTC_TRANSPORT.md). Fixed to mirror the UDP calculation with our
+	// own (much smaller) header reserve.
+	ctx.m_cbMaxEncryptedPayload = Connection().m_cbMTUPacketSize - (int)k_cbWireSeqNumHeader;
 	return m_connection.SNP_SendPacket( this, ctx );
 }
 
@@ -99,6 +127,34 @@ void CConnectionTransportP2PWebRTC::OnDataChannelMessage( const void *pData, siz
 {
 	if ( cbData < k_cbWireSeqNumHeader )
 		return; // malformed -- too short to even hold the seqnum
+
+	// Called on libdatachannel's own internal thread, NOT any GNS-owned
+	// thread -- DecryptDataChunk/ProcessPlainTextDataChunk touch shared
+	// connection state and require SteamNetworkingGlobalLock (process-wide)
+	// plus a per-connection ConnectionScopeLock to already be held by the
+	// caller; neither was taken here originally. Confirmed against Valve's
+	// own precedent for this exact situation (a third-party WebRTC library
+	// delivering data asynchronously from its own thread):
+	// CConnectionTransportP2PICE_WebRTC::OnData in
+	// steamnetworkingsockets_p2p_webrtc.cpp (STEAMNETWORKINGSOCKETS_ENABLE_WEBRTC,
+	// Valve's Google-webrtc.org-backed ICE transport -- a different feature
+	// from this one, but the closest real analogue) takes exactly these two
+	// locks before touching the connection. Missing them caused a real,
+	// reproducible full-process hang the first time this transport was
+	// actually run end-to-end (not an assert -- a silent deadlock; see
+	// examples/blam/cblam-testing/WEBRTC_TRANSPORT.md), consistent with
+	// this thread and GNS's own service thread racing on unsynchronized
+	// connection state.
+	//
+	// Simpler than ICE's version: no queue-if-contended fallback, because
+	// this transport has no writable-state-changed/route-changed concept
+	// to interleave with data delivery the way multi-candidate ICE does
+	// (BCanSendEndToEndData() already covers the only connectivity state
+	// that matters here) -- block-acquiring both locks is sufficient and
+	// safe: this callback runs on a dedicated per-PeerConnection thread,
+	// not one shared with unrelated connections' I/O.
+	SteamNetworkingGlobalLock lock( "CConnectionTransportP2PWebRTC::OnDataChannelMessage" );
+	ConnectionScopeLock connectionLock( m_connection, "CConnectionTransportP2PWebRTC::OnDataChannelMessage" );
 
 	const uint8 *p = (const uint8 *)pData;
 	uint16 nWireSeqNum = uint16( p[0] ) | ( uint16( p[1] ) << 8 );
@@ -133,6 +189,22 @@ void CConnectionTransportP2PWebRTC::SendEndToEndStatsMsg( EStatsReplyRequest eRe
 	// still flow, just as their own ordinary SNP-layer messages rather than
 	// piggybacked on a data chunk's header. Revisit if that's measurably
 	// worse than the UDP transport's piggybacking once this is running.
+	//
+	// This used to be a complete no-op -- a real, confirmed bug: GNS calls
+	// this specifically because it has a stats/keepalive send need that
+	// isn't getting satisfied by ordinary data sends (or there's no data to
+	// piggyback on), and an empty body meant that need could NEVER be
+	// satisfied, ever -- observed as "Stats sending didn't clear stats
+	// need to send reason E2EKeepAlive!" repeating forever in the log (see
+	// WEBRTC_TRANSPORT.md). eRequest itself isn't threaded through (no
+	// protobuf stats message to carry its urgency, unlike UDP's
+	// CMsgSteamSockets_UDP_Stats) -- just giving GNS's SNP layer a send
+	// opportunity, the same one SendDataPacket gives it, is what lets it
+	// recognize the need is satisfied.
+	(void)eRequest;
+	SendPacketContext_t ctx( usecNow, pszReason );
+	ctx.m_cbMaxEncryptedPayload = Connection().m_cbMTUPacketSize - (int)k_cbWireSeqNumHeader;
+	m_connection.SNP_SendPacket( this, ctx );
 }
 
 void CConnectionTransportP2PWebRTC::TransportPopulateConnectionInfo( SteamNetConnectionInfo_t &info ) const

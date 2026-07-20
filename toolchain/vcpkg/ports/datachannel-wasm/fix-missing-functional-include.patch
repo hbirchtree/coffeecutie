@@ -1,0 +1,11 @@
+diff --git a/wasm/include/rtc/global.hpp b/wasm/include/rtc/global.hpp
+--- a/wasm/include/rtc/global.hpp
++++ b/wasm/include/rtc/global.hpp
+@@ -25,6 +25,7 @@
+ 
+ #include "common.hpp"
+ 
++#include <functional>
+ #include <future>
+ #include <iostream>
+ 

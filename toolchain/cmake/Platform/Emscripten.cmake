@@ -20,6 +20,26 @@ set(CMAKE_SYSTEM_VERSION 1)
 set(CMAKE_CROSSCOMPILING TRUE)
 set_property(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
 
+# This file is chainloaded via VCPKG_CHAINLOAD_TOOLCHAIN_FILE (see
+# toolchain/vcpkg/triplets/wasm32-emscripten.cmake), which replaces
+# vcpkg's own built-in per-platform toolchain scripts (scripts/toolchains/
+# linux.cmake etc) entirely -- including the part of those scripts that
+# reads the VCPKG_C_FLAGS/VCPKG_CXX_FLAGS cache variables
+# vcpkg_cmake_configure() always passes as -D flags and folds them into
+# CMAKE_C_FLAGS_INIT/CMAKE_CXX_FLAGS_INIT. Without this, anything a
+# triplet sets via VCPKG_C_FLAGS/VCPKG_CXX_FLAGS is silently a no-op for
+# this triplet specifically -- found the hard way (a
+# set(VCPKG_CXX_FLAGS "-pthread") triplet addition compiled nothing
+# differently; the actual protobuf/etc. compile commands never gained the
+# flag at all). Re-adds the same behavior vcpkg's own toolchains provide,
+# so triplet-level compiler flags actually take effect here too.
+if(DEFINED VCPKG_C_FLAGS)
+    string(APPEND CMAKE_C_FLAGS_INIT " ${VCPKG_C_FLAGS} ")
+endif()
+if(DEFINED VCPKG_CXX_FLAGS)
+    string(APPEND CMAKE_CXX_FLAGS_INIT " ${VCPKG_CXX_FLAGS} ")
+endif()
+
 # Advertise Emscripten as a 32-bit platform (as opposed to
 # CMAKE_SYSTEM_PROCESSOR=x86_64 for 64-bit platform), since some projects (e.g.
 # OpenCV) use this to detect bitness.

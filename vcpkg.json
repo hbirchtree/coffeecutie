@@ -84,7 +84,9 @@
             "description": "Networking support",
             "dependencies": [
                 { "name": "curl", "features": ["openssl","ssl"], "default-features": false, "platform": "!emscripten" },
-                { "name": "gamenetworkingsockets", "platform": "!emscripten & !(android & arm32)" }
+                { "name": "gamenetworkingsockets", "platform": "!emscripten & !(android & arm32)" },
+                { "name": "gamenetworkingsockets", "features": ["webrtc-datachannel"], "platform": "!emscripten & !android" },
+                { "name": "gamenetworkingsockets", "features": ["webrtc-datachannel"], "platform": "emscripten" }
             ]
         },
         "openssl": {

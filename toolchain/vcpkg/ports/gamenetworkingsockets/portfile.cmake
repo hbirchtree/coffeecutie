@@ -35,10 +35,29 @@ vcpkg_check_features(
         webrtc-datachannel ENABLE_WEBRTC_DATACHANNEL
 )
 
+# GNS's own native ICE client (ENABLE_ICE, default ON upstream) does its
+# own separate NAT-traversal/candidate-gathering over raw UDP sockets --
+# redundant work on Emscripten specifically, where there's no raw socket
+# API to begin with and the browser's own WebRTC stack already did NAT
+# traversal before CConnectionTransportP2PWebRTC ever gets constructed
+# (see examples/blam/cblam-testing/WEBRTC_TRANSPORT.md). Confirmed via an
+# actual run, not just reasoned about: CConnectionTransportP2PICE_Valve::Init
+# was firing on every connection attempt regardless, gathering reflexive/
+# relay candidates against an empty STUN/TURN server list (guaranteed to
+# find nothing), and GNS's own instrumentation flagged the resulting lock
+# hold time as a "Performance warning" in the log. Off only for Emscripten:
+# native builds may still want real GNS P2P/ICE for non-gateway use cases,
+# so leave upstream's own default alone there.
+set(EXTRA_OPTIONS)
+if(VCPKG_TARGET_IS_EMSCRIPTEN)
+    list(APPEND EXTRA_OPTIONS -DENABLE_ICE=OFF)
+endif()
+
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
+        ${EXTRA_OPTIONS}
         -DBUILD_SHARED_LIB=OFF
         -DBUILD_TESTS=OFF
         -DBUILD_EXAMPLES=OFF

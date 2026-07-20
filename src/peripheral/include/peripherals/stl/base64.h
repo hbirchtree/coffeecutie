@@ -3,7 +3,9 @@
 #include <peripherals/identify/compiler/function_inlining.h>
 
 #include <peripherals/semantic/chunk.h>
+#include <cstdint>
 #include <string>
+#include <vector>
 
 #if __has_include(<cppcodec/base64_default_rfc4648.hpp>)
 #include <cppcodec/base64_default_rfc4648.hpp>
@@ -21,6 +23,16 @@ FORCEDINLINE std::string encode(semantic::Span<T> const& data_)
 #if defined(COFFEE_HAS_CPPCODEC)
     return base64::encode(
         reinterpret_cast<const char*>(data_.data()), data_.size_bytes());
+#else
+    (void)data_;
+    return {};
+#endif
+}
+
+FORCEDINLINE std::vector<uint8_t> decode(std::string const& data_)
+{
+#if defined(COFFEE_HAS_CPPCODEC)
+    return base64::decode(data_);
 #else
     (void)data_;
     return {};

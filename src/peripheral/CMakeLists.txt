@@ -134,35 +134,66 @@ elseif(APPLE)
     )
   endif()
 
-  target_link_libraries(
-    PeripheralLib PUBLIC "-framework AudioToolbox" "-framework CoreAudio"
-                         "-framework CoreFoundation" "-framework Foundation" m
+  target_link_libraries(PeripheralLib PUBLIC 
+    "-framework AudioToolbox"
+    "-framework CoreAudio"
+    "-framework CoreFoundation"
+    "-framework Foundation"
+    m
   )
 elseif(EMSCRIPTEN)
   if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    target_compile_options(PeripheralLib PUBLIC -gsource-map -fwasm-exceptions)
-    target_link_options(
-      PeripheralLib PUBLIC -gsource-map -sASSERTIONS=1 -fwasm-exceptions #-sDEMANGLE_SUPPORT=1
+    target_compile_options(PeripheralLib PUBLIC
+      -gsource-map
+      -fwasm-exceptions
+    )
+    target_link_options(PeripheralLib PUBLIC
+      -gsource-map
+      -sASSERTIONS=1
+      -fwasm-exceptions
+      #-sDEMANGLE_SUPPORT=1
     )
   elseif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
-    target_compile_options(
-      PeripheralLib PUBLIC -gsource-map -O1 # -sDEMANGLE_SUPPORT=1
+    target_compile_options(PeripheralLib PUBLIC
+      -gsource-map
+      -O1
+      # -sDEMANGLE_SUPPORT=1
     )
-    target_link_options(
-      PeripheralLib PUBLIC -gsource-map -O1 -sASSERTIONS=1 #-sDEMANGLE_SUPPORT=1
+    target_link_options(PeripheralLib PUBLIC
+      -gsource-map
+      -O1
+      -sASSERTIONS=1
+      #-sDEMANGLE_SUPPORT=1
     )
   else()
-    target_compile_options(PeripheralLib PUBLIC -O3)
-    target_link_options(PeripheralLib PUBLIC -O3)
+    target_compile_options(PeripheralLib PUBLIC
+      -O3
+    )
+    target_link_options(PeripheralLib PUBLIC
+      -O3
+    )
   endif()
+  # NOTE: PROXY_TO_PTHREAD cannot be used,
+  # would break GameNetworkingSockets WebRTC impl
   target_compile_options(
     PeripheralLib
     PUBLIC
+    # Says that we're the main, executable module
+    # Performs dead code elimination
+    # For shared Wasm blobs we need SIDE_MODULE which skips DCE
     -sMAIN_MODULE=2
+    # Enables Wasm SIMD
+    # Better than the prior "enable SSE to get SIMD"
+    # https://emscripten.org/docs/porting/simd.html
     -msimd128
+    # Wraps C++ exceptions to Wasm exceptions
+    # Carries some code weight
     -fwasm-exceptions
+    # We really need this
     -pthread
     # -flto
+    # Includes Boost headers through Emscripten
+    # Native Boost from vcpkg thinks we're x86
     -sUSE_BOOST_HEADERS=1
   )
   target_link_options(
@@ -172,12 +203,18 @@ elseif(EMSCRIPTEN)
     -msimd128
     -fwasm-exceptions
     # Attach a captured stack trace to thrown C++ exceptions so an uncaught
-    # std:: exception reaching JS carries wasm frames (readable with -gsource-map),
+    # std::exception reaching JS carries wasm frames (readable with -gsource-map),
     # instead of arriving as a bare "std::out_of_range" with no origin.
     -sEXCEPTION_STACK_TRACES=1
     # ccall/cwrap: let the host page drive the app, e.g. inject dummy-plug
-    # events through coffee_dummy_plug_event from JS.
-    -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
+    # events through coffee_dummy_plug_event from JS. HEAPU32/HEAPU8: newer
+    # Emscripten no longer auto-exports the HEAP* typed-array views onto
+    # Module, so datachannel-wasm's own JS glue (wasm/js/webrtc.js,
+    # websocket.js -- see examples/blam/cblam-testing/WEBRTC_TRANSPORT.md's
+    # Phase 3 section) aborts the instant it constructs a PeerConnection
+    # ("'HEAPU32' was not exported"), found by actually running the wasm
+    # client in a browser for the first time.
+    -sEXPORTED_RUNTIME_METHODS=ccall,cwrap,HEAPU32,HEAPU8
     -sEXPORTED_FUNCTIONS=_main,_malloc,_free
     # -flto
     -pthread

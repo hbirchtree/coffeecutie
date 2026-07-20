@@ -1,0 +1,26 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "comment": "Server side of the wasm-client-vs-native-server harness (.github/tests/web/run_webrtc_web_client_test.sh). Same --listen-driven connection as dummy_plug_net_webrtc_server.json, but with a much longer end_time: that config's peer is a second *native* process (fast cold start), while this one's peer is a headless-Chromium wasm client -- cold Emscripten+WebGL boot plus SwiftShader warm-up plus the WebRTC handshake all have to fit inside this window before the server self-closes, or the run fails on a timeout instead of a real assertion. end_time sized to match the CI job's own BOOT_TIMEOUT_MS+CONNECT_TIMEOUT_MS margin (60s+90s=150s, see .github/workflows/10-compile.yml's Test_webrtc_wasm_client) so a slow CI runner doesn't have the server close out from under a client that's still mid-boot.",
+    "events": [
+        {"time": 1000, "type": "render_param", "debug_markers": true},
+        {"time": 1500, "type": "camera", "physics": true},
+        {"time": 135000, "type": "dump_state"},
+        {"time": 135500, "type": "screenshot", "name": "server_view"}
+    ],
+    "end_time": 140000
+}

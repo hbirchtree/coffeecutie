@@ -223,6 +223,43 @@ jobs:
         name: ${{matrix.artifact}}
         path: source/multi_build/${{matrix.artifact}}/bin
         if-no-files-found: error
+  WebRTCGateway:
+    # Standalone Go build, independent of the cb/vcpkg toolchain entirely --
+    # tools/webrtc-gateway (see examples/blam/cblam-testing/WEBRTC_TRANSPORT.md)
+    # is a separate process, not linked into BlamGraphics. Built once here,
+    # cached and uploaded as an artifact, so Test_webrtc_wasm_client doesn't
+    # pay for a Go module download + compile on every run.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - goarch: amd64
+          artifact: webrtc-gateway-linux-amd64
+        - goarch: arm64
+          artifact: webrtc-gateway-linux-arm64
+    name: "webrtc-gateway (linux/${{ matrix.goarch }})"
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        path: source
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: source/tools/webrtc-gateway/go.mod
+        cache-dependency-path: source/tools/webrtc-gateway/go.sum
+    - name: Build gateway
+      working-directory: source/tools/webrtc-gateway
+      env:
+        CGO_ENABLED: '0'
+        GOOS: linux
+        GOARCH: ${{ matrix.goarch }}
+      run: go build -o gateway .
+    - name: Uploading artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ matrix.artifact }}
+        path: source/tools/webrtc-gateway/gateway
+        if-no-files-found: error
   macOS_HostTools:
     runs-on: macos-latest
     needs: Release
@@ -420,6 +457,111 @@ jobs:
         name: dummy_plug_test_${{ matrix.variant }}_webgl2
         path: /tmp/blam_webgl
         if-no-files-found: error
+  Test_webrtc_wasm_client:
+    # Exercises the actual target scenario for the WebRTC DataChannel
+    # transport (examples/blam/cblam-testing/WEBRTC_TRANSPORT.md): a wasm
+    # BlamGraphics client, headless in Chromium, connecting through two
+    # webrtc-gateway processes to a native BlamGraphics server. Unlike
+    # Test_wasm_swiftshader this isn't a rendering test -- it's a
+    # network-handshake test, verified via console-log markers (join
+    # confirmation + roster sync), since comp_app::dummy_plug/Journal
+    # doesn't exist on the wasm side (see .github/tests/web/README.md).
+    if: ${{ always() }}
+    name: "WebRTC test: wasm client through gateway to native server"
+    needs:
+    - Linux
+    - WebAssembly
+    - WebRTCGateway
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        path: source
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - name: Downloading desktop-x86_64-buildroot-linux-gnu-multi artifacts (server)
+      uses: actions/download-artifact@v8
+      with:
+        name: desktop-x86_64-buildroot-linux-gnu-multi
+        path: server_artifacts/
+    - name: Downloading web-wasm32-emscripten-webgl2 artifacts (client)
+      uses: actions/download-artifact@v8
+      with:
+        name: web-wasm32-emscripten-webgl2
+        path: client_artifacts/
+    - name: Downloading webrtc-gateway-linux-amd64 artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: webrtc-gateway-linux-amd64
+        path: gateway_artifacts/
+    - name: Acquire the sysroot for the desktop x86_64 platform
+      run: |
+        # Same sysroot tarball .github/tests/test_blam_graphics.sh uses --
+        # the server binary is cross-compiled against buildroot's own
+        # glibc, which the ubuntu-latest runner's own loader can't run
+        # directly.
+        mkdir -p sysroot/lib full-sysroot
+        (cd full-sysroot && gh release -R hbirchtree/coffeecutie-automation-tools download v2.2 -p desktop_x86_64-buildroot-linux-gnu_*_target.tar.xz && tar xf *.tar.xz && rm *.tar.xz)
+        find "$PWD/full-sysroot/usr/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
+        find "$PWD/full-sysroot/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
+    - name: Locating server binary and assets
+      id: server
+      run: |
+        BINARY=$(find server_artifacts -name BlamGraphics -type f | head -n 1)
+        ASSETS_DIR=$(find server_artifacts -name assets -type d | head -n 1)
+        SYS_LD=$(find "$PWD/full-sysroot" -name "ld-linux-x86-64.so.2" | head -n 1)
+        chmod +x "$BINARY"
+        echo "binary=$PWD/$BINARY" >> "$GITHUB_OUTPUT"
+        echo "assets=$PWD/$ASSETS_DIR" >> "$GITHUB_OUTPUT"
+        echo "ld=$SYS_LD" >> "$GITHUB_OUTPUT"
+    - name: Locating wasm client bundle
+      id: bundle
+      run: |
+        BUNDLE=$(find client_artifacts -type d -name BlamGraphics.bundle | head -n 1)
+        echo "dir=$PWD/$BUNDLE" >> "$GITHUB_OUTPUT"
+    - name: Downloading test assets
+      run: |
+        mkdir -p maps/pc/
+        wget -q -O maps/pc/bloodgulch.map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bloodgulch.map
+        wget -q -O maps/pc/bitmaps.map    --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bitmaps.map
+        wget -q -O maps/pc/sounds.map     --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/sounds.map
+    - name: Installing gateway binary
+      run: |
+        mkdir -p source/tools/webrtc-gateway
+        cp gateway_artifacts/gateway source/tools/webrtc-gateway/gateway
+        chmod +x source/tools/webrtc-gateway/gateway
+    - name: Run WebRTC wasm-client test
+      env:
+        LIBGL_ALWAYS_SOFTWARE: "1"
+        GALLIUM_DRIVER: llvmpipe
+        EGL_PLATFORM: surfaceless
+        SERVER_BINARY: ${{ steps.server.outputs.binary }}
+        SERVER_LD: ${{ steps.server.outputs.ld }}
+        SERVER_LIB_PATH: ${{ github.workspace }}/sysroot/lib
+        RESOURCE_DIR: ${{ steps.server.outputs.assets }}/
+        MAP: ${{ github.workspace }}/maps/pc/bloodgulch.map
+        CI: "true"
+        # More headroom than the script's own local-dev defaults: a shared
+        # CI runner's cold SwiftShader + headless Chromium boot can run
+        # slower than a dev machine.
+        RUN_TIMEOUT: "150"
+        BOOT_TIMEOUT_MS: "60000"
+        CONNECT_TIMEOUT_MS: "90000"
+      run: |
+        source/.github/tests/web/run_webrtc_web_client_test.sh "${{ steps.bundle.outputs.dir }}" /tmp/webrtc_wasm_client_test
+    - name: Uploading test artifacts
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: dummy_plug_test_webrtc_wasm_client
+        path: /tmp/webrtc_wasm_client_test
+        if-no-files-found: error
   Test_gekko:
     if: ${{ always() }}
     name: "Software render test (Dolphin, SW render)"
@@ -472,6 +614,7 @@ jobs:
     needs:
     - Test_x86_64_mesa
     - Test_wasm_swiftshader
+    - Test_webrtc_wasm_client
     runs-on: ubuntu-latest
     permissions:
       actions: read

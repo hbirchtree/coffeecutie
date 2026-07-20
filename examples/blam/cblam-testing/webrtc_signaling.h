@@ -1,0 +1,240 @@
+#pragma once
+
+#if defined(USE_NETWORKING) && defined(USE_WEBRTC_TRANSPORT)
+
+#include <GameNetworkingSockets/steam/isteamnetworkingsockets.h>
+#include <GameNetworkingSockets/steam/steamnetworkingcustomsignaling.h>
+
+#include <rtc/rtc.hpp>
+
+#include <memory>
+#include <mutex>
+#include <string>
+#include <vector>
+
+namespace webrtc_signaling {
+
+/*!
+ * Bootstraps a DataChannel against a webrtc-gateway (tools/webrtc-gateway)
+ * "/signal" endpoint (SDP offer/answer, non-trickle ICE), then serves as
+ * the ISteamNetworkingConnectionSignaling for the resulting GNS P2P
+ * connection's own rendezvous handshake -- multiplexed as
+ * "gns-rendezvous" messages over the same WebSocket once the SDP exchange
+ * completes (see WEBRTC_TRANSPORT.md's "GNS-level signaling" section for
+ * why both are needed, and the concrete wire protocol).
+ *
+ * Async by necessity: SDP/ICE gathering and the WebSocket round trip both
+ * take real wall-clock time, so this can't just block the calling thread.
+ * Construct, call Start(), then poll Ready()/Failed() once per frame
+ * until one becomes true -- mirrors this codebase's existing poll-driven
+ * Networking::start_restricted loop; there's no promise/future or
+ * coroutine machinery elsewhere in this codebase to hook into instead.
+ * Once Ready(), pass `this` to
+ * ISteamNetworkingSockets::ConnectP2PWebRTCDataChannel along with
+ * TakePeerConnection()/TakeDataChannel() -- GNS takes ownership of `this`
+ * from that call onward (calls Release() when it's done with it, per the
+ * ISteamNetworkingConnectionSignaling contract), so don't call
+ * Start()/poll this object again afterward.
+ */
+class GatewayConnectBootstrap final : public ISteamNetworkingConnectionSignaling
+{
+public:
+    explicit GatewayConnectBootstrap(std::string gatewayUrl);
+    ~GatewayConnectBootstrap();
+
+    void Start();
+
+    bool Ready() const;
+    bool Failed() const;
+
+    /*! Valid only once Ready(); each may only be taken once. */
+    std::shared_ptr<rtc::PeerConnection> TakePeerConnection();
+    std::shared_ptr<rtc::DataChannel>    TakeDataChannel();
+
+    /* ISteamNetworkingConnectionSignaling */
+    bool SendSignal(
+        HSteamNetConnection             hConn,
+        const SteamNetConnectionInfo_t& info,
+        const void*                     pMsg,
+        int                              cbMsg) override;
+    void Release() override;
+
+private:
+    void onWebSocketOpen();
+    void onWebSocketMessage(std::string const& text);
+    void sendJSON(std::string const& json);
+    /*! Sends the offer once both ICE gathering and the WebSocket are
+     * ready -- order isn't fixed: libdatachannel (native) only starts
+     * gathering once setLocalDescription() is called from
+     * onWebSocketOpen(), so gathering always finishes after the socket is
+     * open; datachannel-wasm has no setLocalDescription() at all --
+     * gathering starts implicitly as soon as createDataChannel() runs in
+     * Start(), often finishing *before* the socket even opens. Checking
+     * both flags here instead of relying on a fixed order handles either
+     * platform identically. */
+    void maybeSendOffer();
+
+    std::string                          m_gatewayUrl;
+    std::shared_ptr<rtc::WebSocket>      m_ws;
+    std::shared_ptr<rtc::PeerConnection> m_pc;
+    std::shared_ptr<rtc::DataChannel>    m_dc;
+
+    /* Guards the fields below -- SendSignal() (called by GNS's own
+     * networking thread, any time, per the interface contract) and the
+     * libdatachannel callbacks (their own internal thread) both touch
+     * these concurrently with Ready()/Failed() polling from the main
+     * thread. */
+    mutable std::mutex m_mutex;
+    std::string         m_sessionId;
+    bool                m_haveSessionId{false};
+    bool                m_dataChannelOpen{false};
+    bool                m_failed{false};
+    bool                m_peerConnectionTaken{false};
+    bool                m_dataChannelTaken{false};
+    bool                m_gatheringComplete{false};
+    bool                m_wsOpen{false};
+    bool                m_offerSent{false};
+    std::string         m_pendingOfferSdp;
+};
+
+class GatewayServerRegistration;
+
+/*!
+ * Accept-side counterpart to GatewayConnectBootstrap, for one incoming P2P
+ * connection. Unlike the connect side, GNS rendezvous for this connection
+ * does NOT flow over this object's own WebSocket -- it goes over the
+ * owning GatewayServerRegistration's persistent "/server-signal"
+ * connection instead, tagged with the session ID that same rendezvous
+ * arrived under from gateway A. This object's own WebSocket dials a
+ * (possibly different) gateway's "/signal" purely to bootstrap this
+ * connection's own DataChannel (the actual data-plane transport) -- see
+ * WEBRTC_TRANSPORT.md's "-relay-udp-port" note for why a second gateway
+ * is needed to bridge two native WebRTC peers' DataChannels together.
+ *
+ * Returned from GatewayServerRegistration::OnConnectRequest, so GNS owns
+ * it from construction onward (Release() -> delete this, same contract as
+ * GatewayConnectBootstrap) -- never delete it yourself.
+ */
+class GatewayAcceptSignaling final : public ISteamNetworkingConnectionSignaling
+{
+public:
+    GatewayAcceptSignaling(
+        GatewayServerRegistration* owner,
+        std::string                sessionId,
+        std::string                dataChannelGatewayUrl,
+        HSteamNetConnection        hConn);
+    ~GatewayAcceptSignaling();
+
+    void Start();
+
+    bool                Ready() const;
+    bool                Failed() const;
+    HSteamNetConnection Connection() const { return m_hConn; }
+
+    /*! Valid only once Ready(); each may only be taken once. */
+    std::shared_ptr<rtc::PeerConnection> TakePeerConnection();
+    std::shared_ptr<rtc::DataChannel>    TakeDataChannel();
+
+    /* ISteamNetworkingConnectionSignaling */
+    bool SendSignal(
+        HSteamNetConnection             hConn,
+        const SteamNetConnectionInfo_t& info,
+        const void*                     pMsg,
+        int                              cbMsg) override;
+    void Release() override;
+
+private:
+    void onWebSocketMessage(std::string const& text);
+    /*! See GatewayConnectBootstrap::maybeSendOffer's comment -- same
+     * platform-ordering divergence applies here. */
+    void maybeSendOffer();
+
+    GatewayServerRegistration* m_owner;
+    std::string                m_sessionId;
+    std::string                m_gatewayUrl;
+    HSteamNetConnection         m_hConn;
+
+    std::shared_ptr<rtc::WebSocket>      m_ws;
+    std::shared_ptr<rtc::PeerConnection> m_pc;
+    std::shared_ptr<rtc::DataChannel>    m_dc;
+
+    mutable std::mutex m_mutex;
+    bool                m_dataChannelOpen{false};
+    bool                m_failed{false};
+    bool                m_peerConnectionTaken{false};
+    bool                m_dataChannelTaken{false};
+    bool                m_gatheringComplete{false};
+    bool                m_wsOpen{false};
+    bool                m_offerSent{false};
+    std::string         m_pendingOfferSdp;
+};
+
+/*!
+ * Server-role signaling: owns the persistent "/server-signal" WebSocket
+ * registration (see tools/webrtc-gateway) and implements
+ * ISteamNetworkingSignalingRecvContext, so incoming GNS P2P connect
+ * requests (routed by the gateway from any client's "/signal" session)
+ * land here. Construct once at server startup, call Start(), then call
+ * PollPendingAccepts() once per tick (mirrors GatewayConnectBootstrap's
+ * poll-driven design): it finalizes any accepted connection whose own
+ * per-connection DataChannel bootstrap (GatewayAcceptSignaling above) has
+ * finished, calling AcceptP2PWebRTCDataChannel then AcceptConnection --
+ * deferred, not done synchronously in OnConnectRequest, since that
+ * DataChannel bootstrap takes real wall-clock time (see
+ * ISteamNetworkingSignalingRecvContext::OnConnectRequest's own doc
+ * comment: returning a signaling object leaves the connection in
+ * "connecting" state rather than auto-accepting, precisely so this kind
+ * of deferred accept is possible).
+ *
+ * Owned outright by Networking (unlike the two signaling classes above,
+ * which GNS owns) -- construct as e.g. a member unique_ptr.
+ */
+class GatewayServerRegistration final : public ISteamNetworkingSignalingRecvContext
+{
+public:
+    GatewayServerRegistration(
+        std::string              serverSignalGatewayUrl,
+        std::string              dataChannelGatewayUrl,
+        ISteamNetworkingSockets* sockets);
+    ~GatewayServerRegistration();
+
+    void Start();
+    void PollPendingAccepts();
+
+    /* ISteamNetworkingSignalingRecvContext */
+    ISteamNetworkingConnectionSignaling* OnConnectRequest(
+        HSteamNetConnection            hConn,
+        const SteamNetworkingIdentity& identityPeer,
+        int                             nLocalVirtualPort) override;
+    void SendRejectionSignal(
+        const SteamNetworkingIdentity& identityPeer,
+        const void*                    pMsg,
+        int                             cbMsg) override;
+
+    /*! Used by GatewayAcceptSignaling; not for other callers. */
+    bool SendOverServerSignal(std::string const& sessionId, std::string const& data);
+    void RemovePendingAccept(GatewayAcceptSignaling* accept);
+
+private:
+    void onWebSocketMessage(std::string const& text);
+
+    std::string              m_serverSignalUrl;
+    std::string              m_dataChannelGatewayUrl;
+    ISteamNetworkingSockets* m_sockets;
+    std::shared_ptr<rtc::WebSocket> m_ws;
+
+    std::mutex m_mutex;
+    /* Set just before each ReceivedP2PCustomSignal call, consumed by
+     * OnConnectRequest if that call triggers one synchronously (it always
+     * does in practice -- GNS has no other opportunity to ask for a
+     * signaling object). Scoped to a single call, not a session->object
+     * map: GNS itself handles routing an incoming rendezvous message to
+     * an EXISTING connection's signaling object once one exists; this is
+     * only needed for the "brand new connection" case. */
+    std::string                          m_pendingSessionId;
+    std::vector<GatewayAcceptSignaling*> m_pendingAccepts;
+};
+
+} // namespace webrtc_signaling
+
+#endif

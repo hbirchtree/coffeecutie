@@ -147,3 +147,83 @@ diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp b/
  	#elif defined( FREEBSD ) || defined( __FreeBSD__ )
  		return "freebsd";
  	#else
+
+Same "assumes real POSIX kernel facilities" issue as the socket-polling
+backend above, but discovered at runtime rather than compile time (see
+examples/blam/cblam-testing/WEBRTC_TRANSPORT.md's Phase 3 "first real
+browser run" section): BSteamNetworkingSocketsLowLevelAddRef()
+unconditionally opens a socketpair() as a self-pipe to wake the
+background service thread. Emscripten's libc has no socketpair()
+implementation at all -- confirmed at runtime ("warning: unsupported
+syscall: __syscall_socketpair"), not just missing a header -- so
+GameNetworkingSockets_Init() itself failed outright on every wasm run,
+before a single connection was ever attempted. Fixed with a new
+IsEmscripten() branch alongside the existing Playstation one ("no
+additional setup needed here"): no wake-thread socket is needed at all,
+since this project always calls
+SteamNetworkingSockets_SetManualPollMode(true) immediately after Init()
+on Emscripten (Networking::Networking(), networking.cpp) specifically so
+the background service thread never runs there.
+
+That still leaves a narrow window: AddRef() unconditionally tries to
+start the service thread *before* the caller's SetManualPollMode(true)
+call gets a chance to run (they're two separate statements). Emscripten
+pthreads are real Web Workers -- creating one is asynchronous, and
+tearing it back down (StopServiceThread()'s join()) blocks the calling
+thread until the worker actually starts and exits, which is fatal when
+the caller is the browser's real main thread (this project never uses
+-sPROXY_TO_PTHREAD, see src/peripheral/platform/CMakeLists.txt). Guarded
+both places a service thread can be spun up (AddRef's initial start, and
+SetManualPollMode's restart-on-toggle-off branch) with !IsEmscripten()
+so it can never happen at all, rather than relying on the two statements
+always running back-to-back with no yield point in between.
+
+diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
+--- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
++++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
+@@ -3287,6 +3287,15 @@
+ 			}
+ 		#elif IsPlaystation()
+ 			// No additional setup needed here
++		#elif IsEmscripten()
++			// No additional setup needed here either: Emscripten's libc has
++			// no socketpair() (confirmed at runtime -- "unsupported syscall:
++			// __syscall_socketpair", not just a compile-time gap), and this
++			// project never lets the background service thread run on
++			// Emscripten in the first place (see the IsEmscripten() guard
++			// on thread creation below), so nothing ever needs a wake-thread
++			// signal here. WakeServiceThread()/WakeSteamDatagramThread()
++			// already no-op when s_hSockWakeThreadWrite is INVALID_SOCKET.
+ 		#else
+ 		{
+ 			Assert( s_hSockWakeThreadRead == INVALID_SOCKET );
+@@ -3348,8 +3357,18 @@
+ 
+ 	s_nLowLevelSupportRefCount.fetch_add(1, std::memory_order_acq_rel);
+ 
+-	// Make sure the thread is running, if it should be
+-	if ( !s_bManualPollMode && !s_pServiceThread )
++	// Make sure the thread is running, if it should be. Never on Emscripten:
++	// creating a pthread there spins up a real Web Worker asynchronously,
++	// and stopping it again (StopServiceThread()'s join()) blocks the
++	// calling thread until that worker starts up and exits -- fatal if the
++	// caller is the browser's real main thread, which for this project it
++	// always is (see src/peripheral/platform/CMakeLists.txt's
++	// PROXY_TO_PTHREAD lockout note). This project always drives GNS via
++	// SetManualPollMode(true) on Emscripten (see Networking::Networking(),
++	// examples/blam/cblam-testing/networking.cpp) immediately after this
++	// call returns, but that's a separate, later statement -- without this
++	// guard the thread would still be momentarily created here first.
++	if ( !s_bManualPollMode && !s_pServiceThread && !IsEmscripten() )
+ 		s_pServiceThread = new std::thread( SteamNetworkingThreadProc );
+ 
+ 	// Install an axexit handler, so that if static destruction is triggered without
+@@ -3725,7 +3744,7 @@
+ 	}
+ 	else
+ 	{
+-		if ( s_nLowLevelSupportRefCount.load(std::memory_order_acquire) > 0 && !s_bManualPollMode )
++		if ( s_nLowLevelSupportRefCount.load(std::memory_order_acquire) > 0 && !s_bManualPollMode && !IsEmscripten() )
+ 		{
+ 			// Start up the thread
+ 			SpewMsg( "Service thread is not running, and manual poll mode was turned off, starting service thread.\n" );
