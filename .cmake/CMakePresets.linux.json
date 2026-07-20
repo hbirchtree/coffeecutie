@@ -261,8 +261,8 @@
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
-                "CMAKE_C_FLAGS": "-march=native",
-                "CMAKE_CXX_FLAGS": "-march=native",
+                "CMAKE_C_FLAGS": "-march=x86-64-v2",
+                "CMAKE_CXX_FLAGS": "-march=x86-64-v2",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}"
             },
             "environment": {
@@ -282,8 +282,8 @@
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
-                "CMAKE_C_FLAGS": "-march=native",
-                "CMAKE_CXX_FLAGS": "-march=native",
+                "CMAKE_C_FLAGS": "-march=armv8-a",
+                "CMAKE_CXX_FLAGS": "-march=armv8-a",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}"
             },
             "environment": {

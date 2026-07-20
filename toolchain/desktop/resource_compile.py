@@ -29,11 +29,12 @@ FUTURES = []
 
 
 class RunError(Exception):
-    def __init__(self, cmd, stdout, stderr):
+    def __init__(self, cmd, stdout, stderr, returncode=None):
         super().__init__(' '.join(cmd))
         self.cmd = cmd
         self.stdout = stdout
         self.stderr = stderr
+        self.returncode = returncode
 
 
 def submit(fn, *args, **kwargs):
@@ -195,7 +196,9 @@ def run(program, *args):
     if ret.returncode != 0:
         # Raise instead of exit() so the failure propagates out of the
         # worker thread and is reported when futures are drained.
-        raise RunError(process_args, ret.stdout.decode(), ret.stderr.decode())
+        raise RunError(
+            process_args, ret.stdout.decode(), ret.stderr.decode(),
+            ret.returncode)
 
 
 def _get_best_match(matrix, target, arch, api):
@@ -598,6 +601,20 @@ if __name__ == '__main__':
             future.result()
         except RunError as e:
             print(' '.join(e.cmd))
+            # A negative returncode means the process was killed by a
+            # signal (Python/subprocess convention: -N for signal N), e.g.
+            # -4 (SIGILL) from a CPU-target mismatch -- stdout/stderr are
+            # typically empty in that case since the process never got to
+            # write anything, which otherwise looks just like a silent,
+            # unexplained failure. Surface it explicitly instead of
+            # printing an empty "ERROR:\n\n\n".
+            if e.returncode is not None and e.returncode < 0:
+                import signal
+                try:
+                    sig_name = signal.Signals(-e.returncode).name
+                except ValueError:
+                    sig_name = f'signal {-e.returncode}'
+                print(f'ERROR: killed by {sig_name} (returncode={e.returncode})')
             print(f'ERROR:\n{e.stdout}\n{e.stderr}')
             failed = True
     EXECUTOR.shutdown()
