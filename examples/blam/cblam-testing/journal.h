@@ -5,7 +5,7 @@
 #include <string_view>
 
 #include <coffee/components/components.h>
-#include <nlohmann/json.hpp>
+#include <peripherals/stl/json.h>
 #include <platforms/environment.h>
 #include <url/url.h>
 
