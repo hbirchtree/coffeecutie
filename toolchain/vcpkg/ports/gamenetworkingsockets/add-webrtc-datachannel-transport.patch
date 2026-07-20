@@ -1,0 +1,316 @@
+Wires the new CConnectionTransportP2PWebRTC (see
+steamnetworkingsockets_p2p_webrtc_datachannel.h/.cpp, injected as new
+source by portfile.cmake, not a patch on existing files) into
+CSteamNetworkConnectionP2P, gated on a new STEAMNETWORKINGSOCKETS_ENABLE_WEBRTC_DATACHANNEL
+define (separate from Valve's own STEAMNETWORKINGSOCKETS_ENABLE_WEBRTC,
+which is their ICE-backend-via-Google's-webrtc.org mechanism -- confirmed
+by reading steamnetworkingsockets_p2p_webrtc.h before writing any of this;
+that's a different thing, not reused or touched here).
+
+Three files:
+- steamnetworkingsockets_p2p.h: new member CConnectionTransportP2PWebRTC
+  *m_pTransportWebRTCDataChannel and AttachWebRTCDataChannelTransport()
+  declaration, mirroring the ICE/SDR transport members' shape.
+- steamnetworkingsockets_p2p.cpp: AttachWebRTCDataChannelTransport()
+  implementation (mirrors BInitSDRTransport() -- construct, push onto
+  m_vecAvailableTransports), a DestroyTransport() cleanup line, and a new
+  ConnectP2PWebRTCDataChannel() entry point mirroring
+  ConnectP2PCustomSignaling()/InternalConnectP2P()'s shape but with the
+  transport attached between construction and BInitConnect() -- required
+  because BInitConnect() checks "is m_vecAvailableTransports empty" and
+  fails immediately if so, and InternalConnectP2P's construct-then-
+  immediately-BInitConnect sequence has no gap to attach into. v1
+  simplification: no symmetric-connect duplicate-connection matching
+  (unlike InternalConnectP2P) -- add later if this transport needs it.
+- csteamnetworkingsockets.h: ConnectP2PWebRTCDataChannel()'s declaration.
+  Deliberately a plain member function, not virtual/override on
+  ISteamNetworkingSockets -- keeps this addition off the public ABI
+  surface for v1; the coffeecutie application code that calls it includes
+  GNS's internal headers directly rather than going through the public
+  interface, a deliberate scope-bounding simplification for a first
+  working version, not a permanent design commitment.
+
+No patch needed for P2PInternalAcceptConnection() (the remote-accept
+counterpart to BInitConnect()): AttachWebRTCDataChannelTransport() just
+needs to be called before the application calls AcceptConnection() on the
+pending incoming connection, which is already entirely under the
+application's control -- P2PInternalAcceptConnection()'s own "any
+transports available" check passes for free once that's done, no GNS-side
+change required.
+
+diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.h b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.h
+--- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.h	2026-07-20 11:42:43.436266880 +0000
++++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.h	2026-07-20 12:01:18.327091223 +0000
+@@ -12,6 +12,20 @@
+ 	#include <steamdatagram_messages_sdr.pb.h>
+ #endif
+ 
++// Global scope, not nested in SteamNetworkingSocketsLib below -- matches
++// where the real rtc::PeerConnection/DataChannel live (libdatachannel is
++// not aware of this codebase's namespace at all). Only a forward
++// declaration is needed here: AttachWebRTCDataChannelTransport() below
++// takes these by shared_ptr, which doesn't need a complete type for a
++// declaration. Full definitions come from <rtc/rtc.hpp>, included only by
++// steamnetworkingsockets_p2p_webrtc_datachannel.h/.cpp (which actually
++// call methods on them) and by application code driving the transport --
++// not needed or wanted here.
++#ifdef STEAMNETWORKINGSOCKETS_ENABLE_WEBRTC_DATACHANNEL
++	#include <memory>
++	namespace rtc { class PeerConnection; class DataChannel; }
++#endif
++
+ class CMsgSteamDatagramConnectRequest;
+ 
+ namespace SteamNetworkingSocketsLib {
+@@ -194,6 +208,23 @@
+ 	ScheduledMethodThinkerLockable<CConnectionTransportP2PBase> m_scheduleP2PTransportThink;
+ };
+ 
++// Forward declaration only (a pointer member below is all that's needed) --
++// same pattern this file already uses for CConnectionTransportP2PICE
++// (also just forward-declared here; its full definition lives in
++// steamnetworkingsockets_p2p_ice.h, included directly by whichever .cpp
++// files actually construct one). Tried #include-ing the full header here
++// instead first: steamnetworkingsockets_p2p_webrtc_datachannel.h itself
++// #includes this file (it needs CConnectionTransport/CConnectionTransportP2PBase
++// as complete types), so whichever of the two files a translation unit
++// happens to include first, the *other* one's self-include arrives while
++// this file is already mid-parse and silently no-ops on the include guard
++// -- order-dependent breakage, only some .cpp files affected, found by the
++// compiler failing on some files and not others rather than by reasoning
++// about it upfront.
++#ifdef STEAMNETWORKINGSOCKETS_ENABLE_WEBRTC_DATACHANNEL
++	class CConnectionTransportP2PWebRTC;
++#endif
++
+ /// A peer-to-peer connection that can use different types of underlying transport
+ class CSteamNetworkConnectionP2P : public CSteamNetworkConnectionBase
+ {
+@@ -401,6 +432,25 @@
+ 		inline int GetICEFailureCode() const { return k_nICECloseCode_Local_NotCompiled; }
+ 	#endif
+ 
++	// WebRTC DataChannel transport (added for coffeecutie -- see
++	// steamnetworkingsockets_p2p_webrtc_datachannel.h). Unlike ICE/SDR,
++	// there is no CheckInitXxx() here: this transport isn't something GNS
++	// decides to create on its own. NAT traversal, SDP/ICE negotiation, and
++	// opening the DataChannel all happen entirely outside GNS, driven by
++	// application-level signaling -- by the time the application can call
++	// AttachWebRTCDataChannelTransport(), it already has a PeerConnection
++	// and DataChannel object (possibly not open yet; the transport itself
++	// tracks live isOpen() state, see P2PTransportUpdateRouteMetrics()).
++	// Must be called before BInitConnect()/AcceptConnection() so
++	// m_vecAvailableTransports isn't empty when those check it.
++	#ifdef STEAMNETWORKINGSOCKETS_ENABLE_WEBRTC_DATACHANNEL
++		CConnectionTransportP2PWebRTC *m_pTransportWebRTCDataChannel = nullptr;
++
++		void AttachWebRTCDataChannelTransport(
++			std::shared_ptr<rtc::PeerConnection> pPeerConnection,
++			std::shared_ptr<rtc::DataChannel> pDataChannel );
++	#endif
++
+ 	/// Sometimes it's nice to have all existing options in a list.
+ 	/// This list might be empty!  If we are in a special situation where
+ 	/// the current transport is not really a "P2P" transport
+diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.cpp b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.cpp
+--- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.cpp	2026-07-20 11:42:43.440936248 +0000
++++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.cpp	2026-07-20 12:02:00.777143772 +0000
+@@ -17,6 +17,10 @@
+ 	#include "steamnetworkingsockets_p2p_ice.h"
+ #endif
+ 
++#ifdef STEAMNETWORKINGSOCKETS_ENABLE_WEBRTC_DATACHANNEL
++	#include "steamnetworkingsockets_p2p_webrtc_datachannel.h"
++#endif
++
+ #ifdef STEAMNETWORKINGSOCKETS_ENABLE_STEAMNETWORKINGMESSAGES
+ 	#include "csteamnetworkingmessages.h"
+ #endif
+@@ -623,6 +627,24 @@
+ 	return true;
+ }
+ 
++#ifdef STEAMNETWORKINGSOCKETS_ENABLE_WEBRTC_DATACHANNEL
++void CSteamNetworkConnectionP2P::AttachWebRTCDataChannelTransport(
++	std::shared_ptr<rtc::PeerConnection> pPeerConnection,
++	std::shared_ptr<rtc::DataChannel> pDataChannel
++)
++{
++	// Must be called before BInitConnect()/AcceptConnection() -- both check
++	// m_vecAvailableTransports for "do we have anything to try at all" and
++	// fail immediately if it's empty at that point (see BInitConnect and
++	// P2PInternalAcceptConnection). Unlike CheckInitICE()/BInitSDRTransport(),
++	// this isn't something GNS decides to call on its own -- see
++	// steamnetworkingsockets_p2p_webrtc_datachannel.h for why.
++	Assert( !m_pTransportWebRTCDataChannel );
++	m_pTransportWebRTCDataChannel = new CConnectionTransportP2PWebRTC( *this, std::move( pPeerConnection ), std::move( pDataChannel ) );
++	m_vecAvailableTransports.push_back( m_pTransportWebRTCDataChannel );
++}
++#endif
++
+ void CSteamNetworkConnectionP2P::FreeResources()
+ {
+ 	AssertLocksHeldByCurrentThread();
+@@ -661,6 +683,12 @@
+ 		Assert( len( m_vecAvailableTransports ) == i );
+ 	}
+ 
++	#ifdef STEAMNETWORKINGSOCKETS_ENABLE_WEBRTC_DATACHANNEL
++		// Destroyed by the generic loop above (it's in m_vecAvailableTransports);
++		// just clear our own pointer to it so nothing dangles.
++		m_pTransportWebRTCDataChannel = nullptr;
++	#endif
++
+ 	#ifdef STEAMNETWORKINGSOCKETS_ENABLE_SDR
+ 		Assert( m_pTransportP2PSDR == nullptr ); // Should have been nuked above
+ 
+@@ -2707,6 +2735,47 @@
+ 	return k_HSteamNetConnection_Invalid;
+ }
+ 
++#ifdef STEAMNETWORKINGSOCKETS_ENABLE_WEBRTC_DATACHANNEL
++HSteamNetConnection CSteamNetworkingSockets::ConnectP2PWebRTCDataChannel(
++	ISteamNetworkingConnectionSignaling *pSignaling,
++	const SteamNetworkingIdentity *pPeerIdentity,
++	int nRemoteVirtualPort,
++	std::shared_ptr<rtc::PeerConnection> pPeerConnection,
++	std::shared_ptr<rtc::DataChannel> pDataChannel,
++	int nOptions, const SteamNetworkingConfigValue_t *pOptions
++)
++{
++	if ( !pSignaling || !pDataChannel )
++		return k_HSteamNetConnection_Invalid;
++
++	SteamNetworkingGlobalLock scopeLock( "ConnectP2PWebRTCDataChannel" );
++	ConnectionScopeLock connectionLock;
++
++	// Mirrors InternalConnectP2P's shape (construct, then BInitConnect),
++	// with the transport attached in between -- see the declaration
++	// comment in csteamnetworkingsockets.h for why this can't just reuse
++	// InternalConnectP2P/ConnectP2PCustomSignaling directly, and for the
++	// v1 simplification (no symmetric-connect matching) this implies.
++	CSteamNetworkConnectionP2P *pConn = new CSteamNetworkConnectionP2P( this, connectionLock );
++	if ( !pConn )
++	{
++		pSignaling->Release();
++		return k_HSteamNetConnection_Invalid;
++	}
++
++	pConn->AttachWebRTCDataChannelTransport( std::move( pPeerConnection ), std::move( pDataChannel ) );
++
++	SteamDatagramErrMsg errMsg;
++	CSteamNetworkConnectionP2P *pMatchingConnection = nullptr;
++	if ( pConn->BInitConnect( pSignaling, pPeerIdentity, nRemoteVirtualPort, nOptions, pOptions, &pMatchingConnection, errMsg ) )
++		return pConn->m_hConnectionSelf;
++
++	SpewError( "Cannot create P2P WebRTC DataChannel connection.  %s", errMsg );
++	pConn->ConnectionQueueDestroy();
++	return k_HSteamNetConnection_Invalid;
++}
++#endif
++
+ CSteamNetworkConnectionBase *CSteamNetworkingSockets::InternalConnectP2P(
+ 	ISteamNetworkingConnectionSignaling *pSignaling,
+ 	const SteamNetworkingIdentity *pPeerIdentity,
+diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h
+--- a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h	2026-07-20 11:47:39.595409066 +0000
++++ b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h	2026-07-20 11:48:26.974978472 +0000
+@@ -9,6 +9,11 @@
+ #include <steam/isteamnetworkingsockets.h>
+ #include <steam/isteamnetworkingutils.h>
+ 
++#ifdef STEAMNETWORKINGSOCKETS_ENABLE_WEBRTC_DATACHANNEL
++	#include <memory>
++	namespace rtc { class PeerConnection; class DataChannel; }
++#endif
++
+ #if defined( STEAMNETWORKINGSOCKETS_STEAMCLIENT ) || defined( STEAMNETWORKINGSOCKETS_STREAMINGCLIENT )
+ 	#include "../../common/steam/iclientnetworkingsockets.h"
+ 	#include "../../common/steam/iclientnetworkingutils.h"
+@@ -109,6 +114,27 @@
+ 	virtual int ReceiveMessagesOnPollGroup( HSteamNetPollGroup hPollGroup, SteamNetworkingMessage_t **ppOutMessages, int nMaxMessages ) override; 
+ 	virtual HSteamNetConnection ConnectP2PCustomSignaling( ISteamNetworkingConnectionSignaling *pSignaling, const SteamNetworkingIdentity *pPeerIdentity, int nVirtualPort, int nOptions, const SteamNetworkingConfigValue_t *pOptions ) override;
+ 	virtual bool ReceivedP2PCustomSignal( const void *pMsg, int cbMsg, ISteamNetworkingSignalingRecvContext *pContext ) override;
++
++	// Added for coffeecutie -- not part of the public ISteamNetworkingSockets
++	// ABI (deliberately, to keep this addition's scope bounded; see
++	// steamnetworkingsockets_p2p_webrtc_datachannel.h), so plain member, not
++	// virtual/override. Caller already has a PeerConnection/DataChannel from
++	// its own out-of-band signaling (SDP/ICE happen entirely outside GNS) --
++	// this mirrors ConnectP2PCustomSignaling/InternalConnectP2P's shape but
++	// attaches the transport before BInitConnect() runs its "do we have any
++	// transport at all" check, which InternalConnectP2P's construct-then-
++	// immediately-BInitConnect sequence has no gap for. v1 simplification:
++	// no symmetric-connect duplicate-connection matching (unlike
++	// InternalConnectP2P) -- add if this transport ever needs it.
++	#ifdef STEAMNETWORKINGSOCKETS_ENABLE_WEBRTC_DATACHANNEL
++		HSteamNetConnection ConnectP2PWebRTCDataChannel(
++			ISteamNetworkingConnectionSignaling *pSignaling,
++			const SteamNetworkingIdentity *pPeerIdentity,
++			int nRemoteVirtualPort,
++			std::shared_ptr<rtc::PeerConnection> pPeerConnection,
++			std::shared_ptr<rtc::DataChannel> pDataChannel,
++			int nOptions, const SteamNetworkingConfigValue_t *pOptions );
++	#endif
+ 	virtual int GetP2P_Transport_ICE_Enable( const SteamNetworkingIdentity &identityRemote, int *pOutUserFlags );
+ 
+ 	virtual bool GetCertificateRequest( int *pcbBlob, void *pBlob, SteamNetworkingErrMsg &errMsg ) override;
+
+CMake wiring: new ENABLE_WEBRTC_DATACHANNEL option (top-level
+CMakeLists.txt), source-list + compile-definition + libdatachannel
+link (src/CMakeLists.txt). New source files themselves
+(steamnetworkingsockets_p2p_webrtc_datachannel.h/.cpp) are injected
+by portfile.cmake, not part of this patch.
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	2026-07-20 11:51:16.945353925 +0000
++++ b/CMakeLists.txt	2026-07-20 11:51:26.802100804 +0000
+@@ -50,6 +50,12 @@
+ option(LTO "Enable Link-Time Optimization" OFF)
+ option(ENABLE_ICE "Enable support for NAT-punched P2P connections using ICE protocol.  Build native ICE client" ON)
+ option(USE_STEAMWEBRTC "Build Google's WebRTC library to get ICE support for P2P" OFF)
++# Added for coffeecutie: see steamnetworkingsockets_p2p_webrtc_datachannel.h.
++# Independent of ENABLE_ICE/USE_STEAMWEBRTC above -- this transport doesn't
++# use GNS's own ICE machinery at all (NAT traversal happens entirely
++# outside GNS, via the application's own signaling), so it has no
++# dependency on either.
++option(ENABLE_WEBRTC_DATACHANNEL "Build coffeecutie's WebRTC DataChannel P2P transport (libdatachannel-backed)" OFF)
+ option(Protobuf_USE_STATIC_LIBS "Link with protobuf statically" OFF)
+ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+ 	option(MSVC_CRT_STATIC "Link the MSVC CRT statically" OFF)
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+--- a/src/CMakeLists.txt	2026-07-20 11:51:16.950649237 +0000
++++ b/src/CMakeLists.txt	2026-07-20 11:51:55.035398640 +0000
+@@ -44,6 +44,17 @@
+ 	"steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.cpp"
+ )
+ 
++# Added for coffeecutie. Conditionally listed (not always-listed-but-
++# internally-guarded like steamnetworkingsockets_p2p_ice.cpp is for
++# ENABLE_ICE) so that <rtc/rtc.hpp> only has to be resolvable at all when
++# this feature is actually on -- consumers who don't enable it shouldn't
++# need libdatachannel installed just to compile this port.
++if(ENABLE_WEBRTC_DATACHANNEL)
++	list(APPEND GNS_CLIENTLIB_SRCS
++		"steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p_webrtc_datachannel.cpp"
++	)
++endif()
++
+ set(GNS_CRYPTO_SRCS
+ 	"common/crypto.cpp"
+ 	"common/crypto_textencode.cpp"
+@@ -262,6 +273,14 @@
+ 			)
+ 	endif()
+ 
++	# Enable coffeecutie's WebRTC DataChannel P2P transport? Independent of
++	# ENABLE_ICE/USE_STEAMWEBRTC above -- see the option() comment.
++	if(ENABLE_WEBRTC_DATACHANNEL)
++		target_compile_definitions(${GNS_TARGET} PRIVATE STEAMNETWORKINGSOCKETS_ENABLE_WEBRTC_DATACHANNEL )
++		find_package(LibDataChannel CONFIG REQUIRED)
++		target_link_libraries(${GNS_TARGET} PUBLIC LibDataChannel::LibDataChannel)
++	endif()
++
+ 	## Needs CMake 3.8, then we could get rid of the workaround below it.
+ 	#target_compile_features(${GNS_TARGET} PUBLIC c_std_99 cxx_std_11)
+ 	if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")

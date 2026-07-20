@@ -1,7 +1,7 @@
 {
   "name": "gamenetworkingsockets",
   "version": "1.4.1",
-  "port-version": 4,
+  "port-version": 12,
   "description": "GameNetworkingSockets is a basic transport layer for games.",
   "homepage": "https://github.com/ValveSoftware/GameNetworkingSockets",
   "license": "BSD-3-Clause",
@@ -17,5 +17,13 @@
       "name": "vcpkg-cmake-config",
       "host": true
     }
-  ]
+  ],
+  "features": {
+    "webrtc-datachannel": {
+      "description": "Build CConnectionTransportP2PWebRTC, a P2P transport backed by an already-open libdatachannel DataChannel (see examples/blam/cblam-testing/WEBRTC_TRANSPORT.md in the coffeecutie repo). NAT traversal/SDP/ICE happen entirely outside GNS via application-level signaling; this does not use GNS's own ICE machinery.",
+      "dependencies": [
+        "libdatachannel"
+      ]
+    }
+  }
 }

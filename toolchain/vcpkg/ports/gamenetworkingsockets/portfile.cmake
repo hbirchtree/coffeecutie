@@ -10,13 +10,35 @@ vcpkg_from_github(
         skip-openssl-version-check.patch
         fix-mingw-compat.patch
         fix-openssl-dependency.patch
+        fix-emscripten-support.patch
+        add-webrtc-datachannel-transport.patch
 )
 
 set(CRYPTO_BACKEND OpenSSL)
 
+# New source for the "webrtc-datachannel" feature (see
+# add-webrtc-datachannel-transport.patch and
+# examples/blam/cblam-testing/WEBRTC_TRANSPORT.md) -- genuinely new files,
+# not a patch on existing ones, so injected the same way libwma's overlay
+# port injects its own replacement sources: file(COPY ...) into the
+# extracted tree at the same layout the patch's CMakeLists.txt changes
+# expect (src/steamnetworkingsockets/clientlib/).
+file(COPY
+    "${CMAKE_CURRENT_LIST_DIR}/steamnetworkingsockets_p2p_webrtc_datachannel.h"
+    "${CMAKE_CURRENT_LIST_DIR}/steamnetworkingsockets_p2p_webrtc_datachannel.cpp"
+    DESTINATION "${SOURCE_PATH}/src/steamnetworkingsockets/clientlib"
+)
+
+vcpkg_check_features(
+    OUT_FEATURE_OPTIONS FEATURE_OPTIONS
+    FEATURES
+        webrtc-datachannel ENABLE_WEBRTC_DATACHANNEL
+)
+
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
+        ${FEATURE_OPTIONS}
         -DBUILD_SHARED_LIB=OFF
         -DBUILD_TESTS=OFF
         -DBUILD_EXAMPLES=OFF

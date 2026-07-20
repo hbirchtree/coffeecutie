@@ -1,0 +1,149 @@
+Same pattern as fix-android-support.patch's CMAKE_SYSTEM_NAME gates, extended
+for Emscripten -- but NOT aliased to LINUX (see below for why that was
+tried first and reverted). GNS's own platform detection has a hard
+message(FATAL_ERROR "Could not identify your target operating system")
+fallthrough in both CMakeLists.txt and src/CMakeLists.txt whenever
+CMAKE_SYSTEM_NAME isn't one of Linux/Android/Darwin/FreeBSD/Windows --
+Emscripten sets CMAKE_SYSTEM_NAME to "Emscripten", matching none of them,
+so configure failed before a single line of C++ was even compiled
+(confirmed via an isolated wasm32 build spike -- see
+examples/blam/cblam-testing/WEBRTC_TRANSPORT.md). Gets its own empty
+elseif branch in both files, just to avoid the fallthrough.
+
+Also patched here: TARGET_ARCH_FLAGS unconditionally adds -msse2 whenever
+CMAKE_SYSTEM_PROCESSOR matches an x86 pattern -- under the wasm32-emscripten
+triplet, CMAKE_SYSTEM_PROCESSOR still reports the host arch (x86_64), not a
+wasm-specific value (a cross-compile toolchain-detection quirk, not GNS's
+doing), so GNS believed it should target native x86 SSE2 and passed -msse2
+to em++, which errors unless paired with -msimd128/-mrelaxed-simd. Excluded
+via CMAKE_SYSTEM_NAME MATCHES Emscripten -- wasm32 has no native SSE2 to
+target in the first place, so the flag should never apply here regardless.
+
+First attempt at the CMAKE_SYSTEM_NAME gates aliased Emscripten to LINUX
+(same macro Android gets), since GNS's own platform macros
+(src/public/minbase/minbase_identify.h) don't have a general "unsupported
+but keep going" fallback either. That broke worse than it fixed:
+IsLinux()-gated code assumes real kernel facilities Emscripten's libc
+doesn't have -- sys/ptrace.h (src/tier0/dbg.cpp, debugger-session
+detection) and epoll (src/public/tier0/platform_sockets.h, the socket
+polling backend) both don't exist under Emscripten, and both are gated on
+IsLinux(), not on anything more specific. Given Emscripten's own identity
+doesn't need to reuse Linux's for correctness -- IsPosix() alone is enough
+for GNS's socket/threading code -- minbase_identify.h gets a real
+IsEmscripten() of its own instead:
+  - dbg.cpp: same false-return stub Android already has for
+    Plat_IsInDebugSession(), since Emscripten has no debugger-session
+    concept either. The ptrace.h #include itself is already gated on
+    IsLinux(), so once Emscripten stops claiming that, it's skipped for
+    free.
+  - platform_sockets.h: routed to the same USE_POLL fallback __APPLE__
+    already uses instead of USE_EPOLL -- confirmed USE_POLL has a full
+    alternate implementation throughout steamnetworkingsockets_lowlevel.cpp
+    before relying on it, not just a stub.
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	2026-07-20 11:23:05.773405364 +0000
++++ b/CMakeLists.txt	2026-07-20 11:23:22.550817996 +0000
+@@ -134,7 +134,7 @@
+ endif()
+ 
+ # We always need at least sse2 on x86
+-if(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*|i686.*|i386.*|x86.*")
++if(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*|i686.*|i386.*|x86.*" AND NOT CMAKE_SYSTEM_NAME MATCHES Emscripten)
+        set(TARGET_ARCH_FLAGS "-msse2")
+ endif()
+ 
+@@ -148,6 +148,12 @@
+ 
+     if(CMAKE_SYSTEM_NAME MATCHES Linux OR CMAKE_SYSTEM_NAME MATCHES Android)
+ 		target_compile_definitions(${TGT} PUBLIC LINUX)
++	elseif(CMAKE_SYSTEM_NAME MATCHES Emscripten)
++		# Deliberately NOT aliased to LINUX: minbase_identify.h gives
++		# Emscripten its own IsEmscripten()/IsPosix() identity instead,
++		# since IsLinux()-gated code (epoll, /proc/self/status ptrace
++		# detection) assumes real kernel facilities Emscripten's libc
++		# doesn't provide.
+ 	elseif(CMAKE_SYSTEM_NAME MATCHES Darwin)
+ 		target_compile_definitions(${TGT} PUBLIC OSX)
+ 	elseif(CMAKE_SYSTEM_NAME MATCHES FreeBSD)
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+--- a/src/CMakeLists.txt	2026-07-20 11:23:05.781427888 +0000
++++ b/src/CMakeLists.txt	2026-07-20 11:23:32.286323119 +0000
+@@ -294,6 +294,8 @@
+ 		#if(USE_STEAMWEBRTC AND NOT STEAMWEBRTC_USE_STATIC_LIBS)
+ 		#	target_link_libraries(${GNS_TARGET} PRIVATE dl)
+ 		#endif()
++	elseif(CMAKE_SYSTEM_NAME MATCHES Emscripten)
++		# No dl linking needed or available.
+ 	elseif(CMAKE_SYSTEM_NAME MATCHES Darwin)
+ 		#if(USE_STEAMWEBRTC AND NOT STEAMWEBRTC_USE_STATIC_LIBS)
+ 		#	target_link_libraries(${GNS_TARGET} PRIVATE dl)
+diff --git a/src/public/minbase/minbase_identify.h b/src/public/minbase/minbase_identify.h
+--- a/src/public/minbase/minbase_identify.h	2026-07-20 11:23:05.787960415 +0000
++++ b/src/public/minbase/minbase_identify.h	2026-07-20 11:23:46.237046645 +0000
+@@ -144,6 +144,13 @@
+ #elif defined( __ANDROID__ ) || defined( ANDROID )
+ 	#define IsAndroid() true
+ 	#define IsPosix() true
++#elif defined( __EMSCRIPTEN__ )
++	// Deliberately its own identity, not aliased to IsLinux(): Emscripten's
++	// libc emulates enough POSIX for GNS's socket/threading code, but has
++	// no epoll, no /proc, no ptrace -- code gated on IsLinux() assumes
++	// real kernel facilities that don't exist here.
++	#define IsEmscripten() true
++	#define IsPosix() true
+ #elif defined(__APPLE__)
+ 	#include <TargetConditionals.h>
+ 	#if defined( TARGET_OS_MAC )
+@@ -178,6 +185,9 @@
+ #ifndef IsAndroid
+ 	#define IsAndroid() false
+ #endif
++#ifndef IsEmscripten
++	#define IsEmscripten() false
++#endif
+ #ifndef IsConsole
+ 	#define IsConsole() false
+ #endif
+diff --git a/src/tier0/dbg.cpp b/src/tier0/dbg.cpp
+--- a/src/tier0/dbg.cpp	2026-07-20 11:23:05.793908488 +0000
++++ b/src/tier0/dbg.cpp	2026-07-20 11:23:53.114403197 +0000
+@@ -90,6 +90,8 @@
+ 	return false;
+ #elif IsAndroid()
+     return false;
++#elif IsEmscripten()
++	return false;
+ #else
+ 	#error "HALP"
+ #endif
+diff --git a/src/public/tier0/platform_sockets.h b/src/public/tier0/platform_sockets.h
+--- a/src/public/tier0/platform_sockets.h	2026-07-20 11:23:05.800741748 +0000
++++ b/src/public/tier0/platform_sockets.h	2026-07-20 11:24:00.706796723 +0000
+@@ -104,7 +104,7 @@
+ 		return errno;
+ 	}
+ 
+-	#ifdef __APPLE__
++	#if defined(__APPLE__) || defined(__EMSCRIPTEN__)
+ 		#define USE_POLL
+ 	#else
+ 		#define USE_EPOLL
+
+Additionally: csteamnetworkingsockets.cpp's platform-name string
+function has the same IsXxx() #elif chain shape with the same
+#error "Unknown platform" fallthrough -- same fix, give Emscripten
+its own branch rather than erroring.
+
+diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp
+--- a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp	2026-07-20 11:26:12.117970231 +0000
++++ b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp	2026-07-20 11:26:19.537976377 +0000
+@@ -2409,6 +2409,8 @@
+ 		return "windows";
+ 	#elif IsLinux()
+ 		return "linux";
++	#elif IsEmscripten()
++		return "emscripten";
+ 	#elif defined( FREEBSD ) || defined( __FreeBSD__ )
+ 		return "freebsd";
+ 	#else

@@ -1,0 +1,13 @@
+{
+  "name": "webrtc-gateway-phase1-test",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Playwright driver proving webrtc-gateway relays a DataChannel payload to a UDP echo server and back (WEBRTC_TRANSPORT.md Phase 1 verification).",
+  "scripts": {
+    "test": "node run_phase1_test.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}

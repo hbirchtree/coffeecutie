@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>webrtc-gateway Phase 1 test page</title></head>
+<body>
+<pre id="log"></pre>
+<script>
+// Plain-browser (no wasm, no GNS) round-trip test for webrtc-gateway.
+// Opens a DataChannel through the gateway to the UDP echo server
+// (testing/udp_echo.py) and confirms payloads survive the round trip.
+// Driven by Playwright (see run_phase1_test.mjs); results are exposed on
+// window.__testResult for the driver to read, and mirrored to the visible
+// log element for manual use.
+
+const log = (msg) => {
+    document.getElementById('log').textContent += msg + '\n';
+    console.log(msg);
+};
+
+window.__testResult = { status: 'pending' };
+
+async function run(gatewayUrl, message) {
+    const pc = new RTCPeerConnection({ iceServers: [] });
+    const dc = pc.createDataChannel('test', { ordered: false, maxRetransmits: 0 });
+
+    pc.oniceconnectionstatechange = () => log('ice state: ' + pc.iceConnectionState);
+    pc.onconnectionstatechange = () => log('connection state: ' + pc.connectionState);
+
+    // Send/receive as binary throughout, not text: real GNS traffic
+    // (the eventual payload once GNS is layered on top of this) is
+    // binary, and Pion's Go-side Send([]byte) always emits a binary
+    // DataChannel frame regardless of how the request arrived — so
+    // testing with text here would just be testing a framing case the
+    // real usage never hits.
+    const payload = new TextEncoder().encode(message);
+    dc.binaryType = 'arraybuffer';
+
+    const echoReceived = new Promise((resolve, reject) => {
+        dc.onopen = () => {
+            log('data channel open, sending: ' + message);
+            dc.send(payload);
+        };
+        dc.onmessage = (ev) => {
+            const text = new TextDecoder().decode(ev.data);
+            log('received: ' + text);
+            resolve(text);
+        };
+        dc.onerror = (ev) => reject(new Error('data channel error: ' + ev));
+        setTimeout(() => reject(new Error('timed out waiting for echo')), 15000);
+    });
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    // Non-trickle: wait for this side's own ICE gathering to finish before
+    // sending the offer, matching the gateway's simple signaling protocol.
+    await new Promise((resolve) => {
+        if (pc.iceGatheringState === 'complete') { resolve(); return; }
+        pc.onicegatheringstatechange = () => {
+            if (pc.iceGatheringState === 'complete') resolve();
+        };
+    });
+
+    const ws = new WebSocket(gatewayUrl);
+    const answerReceived = new Promise((resolve, reject) => {
+        ws.onmessage = (ev) => {
+            const msg = JSON.parse(ev.data);
+            if (msg.type !== 'answer') { reject(new Error('unexpected signal: ' + ev.data)); return; }
+            resolve(msg.sdp);
+        };
+        ws.onerror = (ev) => reject(new Error('websocket error'));
+    });
+    await new Promise((resolve, reject) => {
+        ws.onopen = resolve;
+        ws.onerror = () => reject(new Error('websocket failed to open'));
+    });
+
+    ws.send(JSON.stringify({ type: 'offer', sdp: pc.localDescription.sdp }));
+    const answerSdp = await answerReceived;
+    await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
+    log('remote description (answer) set');
+
+    return await echoReceived;
+}
+
+// Entry point: run(gatewayUrl, message) is called from outside by the
+// Playwright driver via page.evaluate(); this file doesn't self-invoke so
+// the driver controls timing and can read window.__testResult afterward.
+window.__runGatewayTest = async (gatewayUrl, message) => {
+    try {
+        const echoed = await run(gatewayUrl, message);
+        window.__testResult = { status: 'ok', echoed };
+    } catch (e) {
+        window.__testResult = { status: 'error', message: e.message };
+        log('ERROR: ' + e.message);
+    }
+    return window.__testResult;
+};
+</script>
+</body>
+</html>
