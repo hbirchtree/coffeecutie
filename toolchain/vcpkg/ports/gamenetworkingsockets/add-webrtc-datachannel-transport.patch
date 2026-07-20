@@ -481,6 +481,36 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
  	elseif(CMAKE_SYSTEM_NAME MATCHES Darwin)
  		target_compile_definitions(${TGT} PUBLIC OSX)
  	elseif(CMAKE_SYSTEM_NAME MATCHES FreeBSD)
+@@ -199,6 +216,29 @@
+ 	set_target_properties(${TGT} PROPERTIES
+ 		CXX_STANDARD 11
+ 	)
++	# Added for coffeecutie: the webrtc-datachannel feature adds a TU
++	# (steamnetworkingsockets_p2p_webrtc_datachannel.cpp) that #includes
++	# <rtc/rtc.hpp> -- libdatachannel's own public headers unconditionally
++	# require CXX_STANDARD 17 (confirmed in its own CMakeLists.txt:
++	# std::optional/std::variant/std::byte/CTAD std::lock_guard, none
++	# available under a strict C++11 compile). This "just worked" on
++	# Linux/Emscripten anyway: protobuf's own CMake package requests
++	# cxx_std_17 via target_compile_features, and CMake's compile-feature
++	# propagation picks the MAX of a target's own CXX_STANDARD and its
++	# linked dependencies' requested features, silently overriding the 11
++	# above. That's a fragile, implicit rescue, not a real fix for what
++	# this feature actually needs -- it broke on macOS/AppleClang (found
++	# via an actual CI run: "no member named 'nullopt' in namespace
++	# 'std'; did you mean simply 'nullopt'?", plus std::variant/std::byte/
++	# std::apply/CTAD std::lock_guard all failing the same way), where the
++	# propagation apparently doesn't kick in and the explicit 11 above
++	# wins outright. Bump explicitly instead of depending on being
++	# rescued by some unrelated dependency's feature request.
++	if(ENABLE_WEBRTC_DATACHANNEL)
++		set_target_properties(${TGT} PROPERTIES
++			CXX_STANDARD 17
++		)
++	endif()
+ endfunction()
+ 
+ if(BUILD_EXAMPLES)
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
