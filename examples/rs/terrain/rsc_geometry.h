@@ -36,6 +36,18 @@ using rs2::Vertex;
 
 constexpr int REGION_SIZE = rs2::REGION_SIZE; // 64-tile virtual regions
 
+// RSC's axes point west/south where RS2's point east/north, and the raw
+// numeric ranges are unrelated — so RSC content would sit in a void at any
+// RS2 coordinate. The loader therefore exposes RS2-style coordinates:
+// rotate the raw grid 180° and translate so RSC Lumbridge lands on RS2
+// Lumbridge's tile (3222, 3218). Engine-side navigation ("go to
+// Lumbridge") then works with either cache; only Lumbridge aligns exactly
+// (the RS2 world is a larger-scale redraw), everything else lands nearby.
+// RSC Lumbridge = client (122, 650) = raw tile (2450, 2450); corners map
+// engine e ↔ raw ANCHOR+1-e, tiles engine e ↔ raw ANCHOR-e.
+constexpr int ANCHOR_X = 3222 + 2450;
+constexpr int ANCHOR_Y = 3218 + 2450;
+
 class RegionLoader
 {
   public:
@@ -155,11 +167,14 @@ class RegionLoader
             int p = int(k >> 16), sx = int((k >> 8) & 0xff), sy = int(k & 0xff);
             if(p != 0)
                 continue;
-            int wx0 = sx * SECTOR_SIZE, wy0 = sy * SECTOR_SIZE;
-            for(int rx = wx0 / REGION_SIZE;
-                rx <= (wx0 + SECTOR_SIZE - 1) / REGION_SIZE; ++rx)
-                for(int ry = wy0 / REGION_SIZE;
-                    ry <= (wy0 + SECTOR_SIZE - 1) / REGION_SIZE; ++ry)
+            // engine-space extent of this sector (axes rotated 180°)
+            int ex0 = ANCHOR_X - (sx * SECTOR_SIZE + SECTOR_SIZE - 1);
+            int ex1 = ANCHOR_X - sx * SECTOR_SIZE;
+            int ey0 = ANCHOR_Y - (sy * SECTOR_SIZE + SECTOR_SIZE - 1);
+            int ey1 = ANCHOR_Y - sy * SECTOR_SIZE;
+            for(int rx = ex0 / REGION_SIZE; rx <= ex1 / REGION_SIZE; ++rx)
+                for(int ry = ey0 / REGION_SIZE; ry <= ey1 / REGION_SIZE;
+                    ++ry)
                     region_keys.insert(u32(rx) << 16 | u32(ry));
         }
         for(u32 k : region_keys)
@@ -204,9 +219,25 @@ class RegionLoader
         geo.region_x = rx;
         geo.region_y = ry;
         geo.plane    = plane;
-        geo.terrain  = build_terrain_mesh(rx, ry, plane);
-        geo.locs     = build_walls_and_objects(rx, ry, plane);
-        geo.clip     = build_clip_mesh(rx, ry, plane);
+        // raw-space window covering this engine region (180° rotation)
+        int wx0 = ANCHOR_X - (rx * REGION_SIZE + REGION_SIZE - 1);
+        int wy0 = ANCHOR_Y - (ry * REGION_SIZE + REGION_SIZE - 1);
+        geo.terrain  = build_terrain_mesh(wx0, wy0, plane);
+        geo.locs     = build_walls_and_objects(wx0, wy0, plane);
+        geo.clip     = build_clip_mesh(wx0, wy0, plane);
+        // raw → engine coordinates; two axis mirrors = 180° rotation, so
+        // triangle winding is preserved
+        auto transform = [](Mesh& m) {
+            for(auto& v : m.vertices)
+            {
+                v.x = float(ANCHOR_X + 1) * 128.f - v.x;
+                v.y = float(ANCHOR_Y + 1) * 128.f - v.y;
+            }
+        };
+        transform(geo.terrain);
+        for(auto& m : geo.locs)
+            transform(m);
+        transform(geo.clip);
         return geo;
     }
 
@@ -390,7 +421,7 @@ class RegionLoader
 
     // ── meshes ───────────────────────────────────────────────────────
 
-    Mesh build_terrain_mesh(int rx, int ry, int plane)
+    Mesh build_terrain_mesh(int wx0, int wy0, int plane)
     {
         Mesh mesh;
         rs2::VertexMap<u32> dedupe;
@@ -406,7 +437,7 @@ class RegionLoader
         for(int x = 0; x < REGION_SIZE; ++x)
             for(int y = 0; y < REGION_SIZE; ++y)
             {
-                int wtx = rx * REGION_SIZE + x, wty = ry * REGION_SIZE + y;
+                int wtx = wx0 + x, wty = wy0 + y;
                 TileInfo t = tile_info(wtx, wty, plane);
                 if(!t.present || !t.draw)
                     continue;
@@ -460,7 +491,7 @@ class RegionLoader
         return ins->second.valid ? &ins->second : nullptr;
     }
 
-    std::vector<Mesh> build_walls_and_objects(int rx, int ry, int plane)
+    std::vector<Mesh> build_walls_and_objects(int wx0, int wy0, int plane)
     {
         std::vector<Mesh> chunks(1);
         Mesh*             mesh = &chunks.back();
@@ -524,7 +555,7 @@ class RegionLoader
         for(int x = 0; x < REGION_SIZE; ++x)
             for(int y = 0; y < REGION_SIZE; ++y)
             {
-                int wtx = rx * REGION_SIZE + x, wty = ry * REGION_SIZE + y;
+                int wtx = wx0 + x, wty = wy0 + y;
                 int          local;
                 const Sector* s = sector_at(plane, wtx, wty, local);
                 if(!s)
@@ -637,7 +668,7 @@ class RegionLoader
     // full-block decoration) — the same physics contract as RS2's
     // build_clip_mesh; blocking walls need none because their quads are
     // already physical TriClass::wall geometry.
-    Mesh build_clip_mesh(int rx, int ry, int plane)
+    Mesh build_clip_mesh(int wx0, int wy0, int plane)
     {
         Mesh mesh;
         auto blocked = [&](int wtx, int wty) -> int {
@@ -687,7 +718,7 @@ class RegionLoader
         for(int x = 0; x < REGION_SIZE; ++x)
             for(int y = 0; y < REGION_SIZE; ++y)
             {
-                int wtx = rx * REGION_SIZE + x, wty = ry * REGION_SIZE + y;
+                int wtx = wx0 + x, wty = wy0 + y;
                 if(blocked(wtx, wty) != 1)
                     continue;
                 for(const Edge& e : edges)
