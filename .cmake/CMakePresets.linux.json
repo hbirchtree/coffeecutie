@@ -30,7 +30,7 @@
             },
             "environment": {
                 "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
-                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools",
+                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux-native/tools",
                 "MKSQUASH_PROGRAM": "/usr/bin/mksquashfs",
                 "NINJA": "$penv{NINJA}",
                 "PATH": "$penv{PATH}:$env{TOOLCHAIN_ROOT}/bin",
@@ -154,7 +154,7 @@
             },
             "environment": {
                 "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
-                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools",
+                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux-native/tools",
                 "MKSQUASH_PROGRAM": "/usr/bin/mksquashfs",
                 "NINJA": "$penv{NINJA}",
                 "TOOLCHAIN_REQUIRED": "1",
@@ -261,7 +261,8 @@
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
-                "CMAKE_MAKE_PROGRAM": "$env{NINJA}"
+                "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
+                "VCPKG_TARGET_TRIPLET": "x64-linux-native"
             },
             "environment": {
                 "NINJA": "$penv{NINJA}"

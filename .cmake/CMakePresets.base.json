@@ -30,7 +30,7 @@
             "binaryDir": "${sourceDir}/multi_build/${presetName}",
             "environment": {
                 "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
-                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools"
+                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux-native/tools"
             }
         },
         {
