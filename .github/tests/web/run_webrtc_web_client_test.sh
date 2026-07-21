@@ -42,16 +42,16 @@
 #                 .github/tests/test_blam_graphics.sh already does for the
 #                 single-process software-render smoke test. Unset by
 #                 default -- local dev keeps using `./cb run`.
-#   SERVER_LD     path to a specific dynamic linker/loader (ld-linux...) to
-#                 invoke SERVER_BINARY through, e.g. the one bundled in a
-#                 downloaded cross-toolchain sysroot tarball (buildroot's
-#                 glibc may not match the CI runner's own). Only used when
-#                 SERVER_BINARY is set. If unset, SERVER_BINARY runs as an
-#                 ordinary executable (relying on the runner's own loader).
-#   SERVER_LIB_PATH  colon-separated library search path for SERVER_BINARY
-#                 (passed to SERVER_LD's --library-path if set, otherwise
-#                 exported as LD_LIBRARY_PATH). Only used when SERVER_BINARY
-#                 is set.
+#   SERVER_LIB_PATH  colon-separated library search path for SERVER_BINARY,
+#                 exported as LD_LIBRARY_PATH (scoped to just the server
+#                 process, see the comment at its use site below). Only
+#                 used when SERVER_BINARY is set. SERVER_BINARY runs with
+#                 the CI runner's own loader/libc -- buildroot cross
+#                 toolchains deliberately target an older glibc baseline
+#                 for forward compatibility with newer glibc, so this is
+#                 only needed for the handful of non-libc runtime .so's
+#                 the release artifact itself doesn't bundle
+#                 (libstdc++.so.6/libssp.so.0/libbacktrace.so.0).
 #   GATEWAY_A_HTTP_PORT / GATEWAY_B_HTTP_PORT   gateway WebSocket signaling ports (default: 8098 / 8099)
 #   GATEWAY_A_RELAY_PORT / GATEWAY_B_RELAY_PORT fixed UDP relay ports bridging the two gateways (default: 19501 / 19502)
 #   BOOT_TIMEOUT  seconds to wait for gateways / server registration (default: 30)
@@ -212,22 +212,21 @@ DATACHANNEL_GATEWAY_URL="ws://127.0.0.1:$GATEWAY_B_HTTP_PORT"
 CLIENT_URL="ws://127.0.0.1:$GATEWAY_A_HTTP_PORT"
 
 if [ -n "${SERVER_BINARY:-}" ]; then
-    if [ -n "${SERVER_LD:-}" ]; then
-        SERVER_CMD=("$SERVER_LD" --library-path "${SERVER_LIB_PATH:-}" "$SERVER_BINARY")
-    else
-        SERVER_CMD=("$SERVER_BINARY")
-    fi
-    SERVER_CMD+=("$RESOURCE_DIR" "$MAP" --listen "${SERVER_SIGNAL_URL}#${DATACHANNEL_GATEWAY_URL}")
+    SERVER_CMD=("$SERVER_BINARY" "$RESOURCE_DIR" "$MAP" --listen "${SERVER_SIGNAL_URL}#${DATACHANNEL_GATEWAY_URL}")
 else
     SERVER_CMD=(./cb run "$TARGET" -- "$RESOURCE_DIR" "$MAP" --listen "${SERVER_SIGNAL_URL}#${DATACHANNEL_GATEWAY_URL}")
+fi
+
+SERVER_ENV_CMD=()
+if [ -n "${SERVER_LIB_PATH:-}" ]; then
+    SERVER_ENV_CMD=(env "LD_LIBRARY_PATH=$SERVER_LIB_PATH")
 fi
 
 echo "Starting native server (--listen $SERVER_SIGNAL_URL#$DATACHANNEL_GATEWAY_URL)..."
 TMPDIR="$SERVER_TMP" \
 DUMMY_PLUG_CONFIG="$SERVER_DUMMY_PLUG_CONFIG" \
 COFFEE_DISABLE_PROFILER=1 \
-LD_LIBRARY_PATH="${SERVER_LIB_PATH:-}" \
-timeout "${RUN_TIMEOUT}s" "${SERVER_CMD[@]}" \
+timeout "${RUN_TIMEOUT}s" "${SERVER_ENV_CMD[@]}" "${SERVER_CMD[@]}" \
     > "$SERVER_LOG" 2>&1 &
 SERVER_PID=$!
 

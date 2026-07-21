@@ -503,9 +503,6 @@ jobs:
     - name: Acquire the sysroot for the desktop x86_64 platform
       run: |
         # Same sysroot tarball .github/tests/test_blam_graphics.sh uses --
-        # the server binary is cross-compiled against buildroot's own
-        # glibc, which the ubuntu-latest runner's own loader can't run
-        # directly.
         mkdir -p sysroot/lib full-sysroot
         (cd full-sysroot && gh release -R hbirchtree/coffeecutie-automation-tools download v2.2 -p desktop_x86_64-buildroot-linux-gnu_*_target.tar.xz && tar xf *.tar.xz && rm *.tar.xz)
         find "$PWD/full-sysroot/usr/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
@@ -515,11 +512,9 @@ jobs:
       run: |
         BINARY=$(find server_artifacts -name BlamGraphics -type f | head -n 1)
         ASSETS_DIR=$(find server_artifacts -name assets -type d | head -n 1)
-        SYS_LD=$(find "$PWD/full-sysroot" -name "ld-linux-x86-64.so.2" | head -n 1)
         chmod +x "$BINARY"
         echo "binary=$PWD/$BINARY" >> "$GITHUB_OUTPUT"
         echo "assets=$PWD/$ASSETS_DIR" >> "$GITHUB_OUTPUT"
-        echo "ld=$SYS_LD" >> "$GITHUB_OUTPUT"
     - name: Locating wasm client bundle
       id: bundle
       run: |
@@ -542,7 +537,6 @@ jobs:
         GALLIUM_DRIVER: llvmpipe
         EGL_PLATFORM: surfaceless
         SERVER_BINARY: ${{ steps.server.outputs.binary }}
-        SERVER_LD: ${{ steps.server.outputs.ld }}
         SERVER_LIB_PATH: ${{ github.workspace }}/sysroot/lib
         RESOURCE_DIR: ${{ steps.server.outputs.assets }}/
         MAP: ${{ github.workspace }}/maps/pc/bloodgulch.map
