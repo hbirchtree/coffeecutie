@@ -227,3 +227,38 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowleve
  		{
  			// Start up the thread
  			SpewMsg( "Service thread is not running, and manual poll mode was turned off, starting service thread.\n" );
+
+wasm64 (Emscripten's MEMORY64 target) specifically, found via an actual
+wasm64-emscripten CI build (native wasm32 already worked -- this is
+wasm64-only): "typedef redefinition with different types ('long' vs
+'long long')" in minbase_types.h, plus knock-on "constructor cannot be
+redeclared" errors in steamclientpublic.h wherever it overloads on
+int64/int64_t as distinct types.
+
+Root cause: minbase_types.h's own int64_t typedef branches on
+`COMPILER_GCC && PLATFORM_64BITS && ...`, assuming traditional Linux
+LP64 semantics (`long` is 64-bit and IS the system's int64_t) --
+correct for real GCC/Linux, wrong for Emscripten. Two things conspire:
+Emscripten's clang defines __GNUC__ (for GCC-macro compatibility), so
+minbase_identify.h's own COMPILER_GCC detection (`defined(__GCC__) ||
+defined(__GNUC__)`) already treats it as COMPILER_GCC; and wasm64
+genuinely sets PLATFORM_64BITS (real 64-bit pointers under MEMORY64).
+So this branch fires for wasm64, defining int64_t as `long int` --- but
+Emscripten's own <stdint.h> uses `long long` for int64_t regardless of
+pointer width, causing a direct typedef conflict the instant anything
+includes both. Excluded the same way the rest of this patch treats
+Emscripten as its own platform identity rather than piggybacking on
+Linux/GCC assumptions it doesn't actually share.
+
+diff --git a/src/public/minbase/minbase_types.h b/src/public/minbase/minbase_types.h
+--- a/src/public/minbase/minbase_types.h
++++ b/src/public/minbase/minbase_types.h
+@@ -75,7 +75,7 @@
+ // NOTE: int64_t must match the compiler stdint.h definition
+ // and so may not match the Steam int64.  Mixing the two is
+ // error-prone so always use the Steam non-_t types in Steam code.
+-#if defined(COMPILER_GCC) && defined(PLATFORM_64BITS) && !defined(__MINGW32__) && !IsOSX() && !(defined(IOS) || defined(TVOS))
++#if defined(COMPILER_GCC) && defined(PLATFORM_64BITS) && !defined(__MINGW32__) && !IsOSX() && !(defined(IOS) || defined(TVOS)) && !IsEmscripten()
+ #define INT64_DIFFERENT_FROM_INT64_T 1
+ typedef long int int64_t;
+ typedef unsigned long int uint64_t;
