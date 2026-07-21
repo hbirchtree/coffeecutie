@@ -512,9 +512,13 @@ jobs:
       run: |
         BINARY=$(find server_artifacts -name BlamGraphics -type f | head -n 1)
         ASSETS_DIR=$(find server_artifacts -name assets -type d | head -n 1)
+        DRI_PATH=$(find "$PWD/full-sysroot" -name dri -type d | head -n 1)
+        SYS_LD=$(find "$PWD/full-sysroot" -name "ld-linux-x86-64.so.2" | head -n 1)
         chmod +x "$BINARY"
         echo "binary=$PWD/$BINARY" >> "$GITHUB_OUTPUT"
         echo "assets=$PWD/$ASSETS_DIR" >> "$GITHUB_OUTPUT"
+        echo "dri_path=$DRI_PATH" >> "$GITHUB_OUTPUT"
+        echo "ld=$SYS_LD" >> "$GITHUB_OUTPUT"
     - name: Locating wasm client bundle
       id: bundle
       run: |
@@ -535,8 +539,12 @@ jobs:
       env:
         LIBGL_ALWAYS_SOFTWARE: "1"
         GALLIUM_DRIVER: llvmpipe
+        LIBGL_DRIVERS_PATH: ${{ steps.server.outputs.dri_path }}
+        MESA_LOADER_DRIVER_PATH: ${{ steps.server.outputs.dri_path }}
+        LIBGL_DRI3_DISABLE: "1"
         EGL_PLATFORM: surfaceless
         SERVER_BINARY: ${{ steps.server.outputs.binary }}
+        SERVER_LD: ${{ steps.server.outputs.ld }}
         SERVER_LIB_PATH: ${{ github.workspace }}/sysroot/lib
         RESOURCE_DIR: ${{ steps.server.outputs.assets }}/
         MAP: ${{ github.workspace }}/maps/pc/bloodgulch.map
