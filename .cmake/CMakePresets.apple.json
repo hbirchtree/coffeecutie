@@ -51,8 +51,6 @@
                 "rhs": "Darwin"
             },
             "cacheVariables": {
-                "CMAKE_C_FLAGS": "-march=x86-64-v2",
-                "CMAKE_CXX_FLAGS": "-march=x86-64-v2"
             },
             "environment": {
                 "NINJA": "$penv{NINJA}"
@@ -69,8 +67,6 @@
                 "rhs": "Darwin"
             },
             "cacheVariables": {
-                "CMAKE_C_FLAGS": "-march=armv8-a",
-                "CMAKE_CXX_FLAGS": "-march=armv8-a",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}"
             },
             "environment": {

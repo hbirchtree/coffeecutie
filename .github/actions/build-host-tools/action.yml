@@ -15,7 +15,7 @@ runs:
       uses: actions/cache@v5
       with:
         path: ${{ inputs.cache_path }}
-        key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools','source/toolchain/building.py','source/vcpkg.json','source/vcpkg-configuration.json','source/.cmake/CMakePresets.linux.json','source/.cmake/CMakePresets.apply.json') }}
+        key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools','source/toolchain/building.py','source/vcpkg.json','source/vcpkg-configuration.json','source/.cmake/CMakePresets.linux.json','source/.cmake/CMakePresets.apple.json') }}
     - name: Building host tools
       shell: bash
       run: source/cb host-build ${{ inputs.build_args }}
