@@ -564,3 +564,18 @@ enum ObjectTags : u64
     SubObjectMask   = 0x00FFFFF,
     PositioningMask = 0xF000000,
 };
+
+namespace shared_recipes {
+static const auto player_recipe = compo::EntityRecipe{
+    .components =
+        {
+            compo::type_hash_v<PlayerInfo>(),
+            compo::type_hash_v<NetworkInfo>(),
+            compo::type_hash_v<PlayerCamera>(),
+            compo::type_hash_v<SoundEffects>(),
+            compo::type_hash_v<PhysicsData>(),
+            compo::type_hash_v<DebugDraw>(),
+        },
+    .tags = PlayerBiped,
+};
+}

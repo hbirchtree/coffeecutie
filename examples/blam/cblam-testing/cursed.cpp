@@ -358,7 +358,7 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
                         // planes, then regroup into one mesh per material
                         // so the GPU thread gets batch-ready geometry.
                         std::vector<rs2::RegionGeometry> planes;
-                        for(auto plane : stl_types::range<>(4))
+                        for(auto plane : stl_types::range<>(loader.kind() != rs::CacheKind::rsc ? 4 : 1))
                             if(auto region = loader.load(x, y, plane))
                                 planes.push_back(std::move(region.value()));
 

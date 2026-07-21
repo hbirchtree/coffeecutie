@@ -75,22 +75,28 @@ void create_resources(compo::EntityContainer& e)
 
         eventhandler->addEventHandler(
             1024, std_camera_t::KeyboardInput([&e] -> std_camera_t* {
-                for(auto entity : e.select<PlayerCamera, PlayerInfo>())
+                for(auto entity : e.select<PlayerCamera, PlayerInfo, NetworkInfo>())
                 {
-                    auto [cam, info] = entity.components();
+                    auto [cam, info, net] = entity.components();
                     if(cam.keyboard.enabled && info.permissions.camera)
+                    {
+                        net.changes.viewport = net.changes.transform = true;
                         return cam.camera_.get();
+                    }
                 }
                 cWarning("No camera selected");
                 return nullptr;
             }));
         eventhandler->addEventHandler(
             1024, std_camera_t::MouseInput([&e] -> std_camera_t* {
-                for(auto entity : e.select<PlayerCamera, PlayerInfo>())
+                for(auto entity : e.select<PlayerCamera, PlayerInfo, NetworkInfo>())
                 {
-                    auto [cam, info] = entity.components();
+                    auto [cam, info, net] = entity.components();
                     if(cam.keyboard.enabled && info.permissions.camera)
+                    {
+                        net.changes.viewport = true;
                         return cam.camera_.get();
+                    }
                 }
                 cWarning("No camera selected");
                 return nullptr;
@@ -119,6 +125,7 @@ void create_resources(compo::EntityContainer& e)
                     Throw(std::out_of_range("tried to teleport player, but no target"));
                 }();
                 auto& cam = player.get<PlayerCamera>();
+                auto& net = player.get<NetworkInfo>();
                 if(cam.mode.physics)
                 {
                     Physics::Event ev{Physics::Event::Translate};
@@ -128,7 +135,10 @@ void create_resources(compo::EntityContainer& e)
                     };
                     pbus.process(ev, &translate);
                 } else
+                {
                     cam.camera->position = teleport->position;
+                    net.changes.viewport = net.changes.transform = true;
+                }
             });
         eventhandler->addEventFunction<CIControllerConnectEvent>(
             1024, [&e](CIEvent& ev, CIControllerConnectEvent* connect) {
@@ -140,13 +150,12 @@ void create_resources(compo::EntityContainer& e)
                     connect->connected ? "" : "dis",
                     name,
                     connect->player_index);
-                for(auto player : e.select<PlayerCamera>())
+                for(auto player : e.select<PlayerCamera, PlayerInfo, NetworkInfo>())
                 {
-                    auto* info = e.get<PlayerInfo>(player.id());
+                    auto [cam, info, net] = player.components();
                     // Don't assign it to remote seat
-                    if(info->is_remote())
+                    if(info.is_remote())
                         continue;
-                    auto* cam = e.get<PlayerCamera>(player.id());
                     if(connect->connected)
                     {
                         /* Assign controller to the first seat without one; a
@@ -154,26 +163,26 @@ void create_resources(compo::EntityContainer& e)
                          * local setup, and the dummy plug's synthetic
                          * controller must be able to join seat 0, which
                          * always has the keyboard) */
-                        if(cam->controller.index.has_value())
+                        if(cam.controller.index.has_value())
                             continue;
                         cDebug(
                             "Assigning controller {} to player {} (seat {})",
                             connect->player_index,
-                            info->player_idx,
-                            info->seat_idx);
-                        cam->controller.index = connect->player_index;
+                            info.player_idx,
+                            info.seat_idx);
+                        cam.controller.index = connect->player_index;
                         break;
                     } else if(
-                        cam->controller.index.value_or(0xFF) ==
+                        cam.controller.index.value_or(0xFF) ==
                         connect->player_index)
                     {
                         cDebug(
                             "Unassigning controller {} from player {} (seat "
                             "{})",
                             connect->player_index,
-                            info->player_idx,
-                            info->seat_idx);
-                        cam->controller.index = std::nullopt;
+                            info.player_idx,
+                            info.seat_idx);
+                        cam.controller.index = std::nullopt;
                         break;
                     }
                 }
@@ -186,20 +195,19 @@ void create_resources(compo::EntityContainer& e)
                     return;
                 if(!key->pressed())
                     return;
-                for(auto const& cam_ : e.select<PlayerCamera>())
+                for(auto const cam_ : e.select<PlayerCamera, PlayerInfo>())
                 {
-                    auto const* info = e.get<PlayerInfo>(cam_.id());
-                    if(info->seat_idx != 0)
+                    auto const [cam, info] = cam_.components();
+                    if(info.seat_idx != 0)
                         continue;
-                    auto const* cam = e.get<PlayerCamera>(cam_.id());
                     cDebug(R"({{"time": 0, "type": "camera", "position" :[{}, {}, {}], "rotation":[{}, {}, {}, {}]}})",
-                        cam->camera->position.x,
-                        cam->camera->position.y,
-                        cam->camera->position.z,
-                        cam->camera->rotation.w,
-                        cam->camera->rotation.x,
-                        cam->camera->rotation.y,
-                        cam->camera->rotation.z);
+                        cam.camera->position.x,
+                        cam.camera->position.y,
+                        cam.camera->position.z,
+                        cam.camera->rotation.w,
+                        cam.camera->rotation.x,
+                        cam.camera->rotation.y,
+                        cam.camera->rotation.z);
                 }
             });
 #endif

@@ -1314,21 +1314,19 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 PlayerCamera* old_seat0_cam = nullptr;
                 PlayerCamera* target_cam    = nullptr;
                 u64           old_seat0_id = 0, target_id = 0;
-                for(auto entity : p.select<PlayerInfo>())
+                for(auto entity : p.select<PlayerInfo, PlayerCamera>())
                 {
-                    auto* info = p.get<PlayerInfo>(entity.id());
-                    if(!info)
-                        continue;
-                    if(info->seat_idx == 0)
+                    auto [info, cam] = entity.components();
+                    if(info.seat_idx == 0)
                     {
-                        old_seat0     = info;
-                        old_seat0_cam = p.get<PlayerCamera>(entity.id());
+                        old_seat0     = &info;
+                        old_seat0_cam = &cam;
                         old_seat0_id  = entity.id();
                     }
-                    if(info->player_idx == target_pidx)
+                    if(info.player_idx == target_pidx)
                     {
-                        target     = info;
-                        target_cam = p.get<PlayerCamera>(entity.id());
+                        target     = &info;
+                        target_cam = &cam;
                         target_id  = entity.id();
                     }
                 }
@@ -1343,46 +1341,38 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }
 
             /* Sync dirty player components to network */
-            for(auto entity : p.select<PlayerInfo>())
+            for(auto entity : p.select<PlayerInfo, PlayerCamera, NetworkInfo>())
             {
-                auto* info = p.get<PlayerInfo>(entity.id());
-                auto* net  = p.get<NetworkInfo>(entity.id());
-                auto* cam  = p.get<PlayerCamera>(entity.id());
-                if(!info || !net || !cam)
-                    continue;
-
-                if(net->changes.permissions && info->is_remote())
+                auto [info, cam, net] = entity.components();
+                // Server-enforced viewport/transform permissions
+                if(net.changes.permissions && info.is_remote())
                 {
                     for(auto& [conn, state] : m_connections)
                     {
-                        if(state.idx != info->player_idx)
+                        if(state.idx != info.player_idx)
                             continue;
                         send_permission(
                             conn,
-                            info->player_idx,
+                            info.player_idx,
                             UpdatePermission::Camera,
-                            info->permissions.camera ? 1 : 0);
+                            info.permissions.camera ? 1 : 0);
                         break;
                     }
-                    net->changes.permissions = false;
+                    net.changes.permissions = false;
                 }
 
-                if(net->changes.viewport && info->is_remote())
+                // Server-pushed transform/viewport
+                // Used for eg. birds-eye-view while locking viewport
+                // TODO: At some point replace broadcast with check for whether it's relevant for the player
+                if(net.changes.viewport)
                 {
-                    for(auto& [conn, state] : m_connections)
-                    {
-                        if(state.idx != info->player_idx)
-                            continue;
-                        send_single(
-                            conn,
-                            Message<CameraSync>({
-                                .position = Vecf4(cam->camera->position, 0),
-                                .rotation = cam->camera->rotation,
-                                .target_player = info->player_idx,
-                            }));
-                        break;
-                    }
-                    net->changes.viewport = false;
+                    send_all(
+                        Message<CameraSync>({
+                            .position      = Vecf4(cam.camera->position, 0),
+                            .rotation      = cam.camera->rotation,
+                            .target_player = info.player_idx,
+                        }));
+                    net.changes.viewport = net.changes.transform = false;
                 }
             }
         }
@@ -1392,12 +1382,29 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             {
                 for(auto player : p.select<PlayerInfo>())
                 {
-                    auto  ref   = player;
-                    auto& pinfo = ref.get<PlayerInfo>();
+                    auto& pinfo = player.get<PlayerInfo>();
                     if(pinfo.is_remote() || pinfo.seat_idx != 0)
                         continue;
-                    m_client_player = ref;
+                    m_client_player = player;
                     break;
+                }
+            }
+
+            // Need to guard here during loading
+            if(m_client_player.exists())
+            {
+                // Push our camera updates to server on change
+                auto& net = m_client_player.get<NetworkInfo>();
+                if(net.changes.viewport || net.changes.transform)
+                {
+                    auto& camera = m_client_player.get<PlayerCamera>();
+                    auto& info = m_client_player.get<PlayerInfo>();
+                    send_single(m_connection, Message<CameraSync>({
+                        .position      = Vecf4{camera.camera->position, 0},
+                        .rotation      = camera.camera->rotation,
+                        .target_player = info.player_idx,
+                    }));
+                    net.changes.viewport = net.changes.transform = false;
                 }
             }
 
@@ -1454,21 +1461,20 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         {
         case MessageBase::CameraSync: {
             auto const& sync = payload.value<CameraSync>();
-            for(auto const& pi : p.select<PlayerInfo>())
+            for(auto const& pi : p.select<PlayerInfo, PlayerCamera>())
             {
-                auto* player_info = p.get<PlayerInfo>(pi.id());
+                auto [player_info, cam] = pi.components();
                 bool  match =
                     (sync.target_player == CameraSync::self_id)
-                         ? (player_info == &self)
-                         : (player_info->player_idx == sync.target_player);
+                         ? (&player_info == &self)
+                         : (player_info.player_idx == sync.target_player);
                 if(!match)
                     continue;
-                auto* cam = p.get<PlayerCamera>(pi.id());
-                if(cam)
-                {
-                    cam->camera->position = Vecf3(sync.position);
-                    cam->camera->rotation = sync.rotation;
-                }
+                cDebug("Syncing change from player={}", sync.target_player);
+                cam.camera->position = Vecf3(sync.position);
+                cam.camera->rotation = sync.rotation;
+                // TODO: With a fresh viewport, we should compute relevance of entities
+                // Distance, visibility in frustum and projectile type
                 break;
             }
             break;
@@ -1495,16 +1501,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                  {"rejoin", player_info.player_info.exists()}});
             if(!player_info.player_info.exists())
             {
-                auto ref = p.create_entity(
-                    compo::EntityRecipe{
-                        {
-                            compo::type_hash_v<PlayerInfo>(),
-                            compo::type_hash_v<NetworkInfo>(),
-                            compo::type_hash_v<PlayerCamera>(),
-                            compo::type_hash_v<SoundEffects>(),
-                        },
-                        PlayerBiped,
-                    });
+                auto ref = p.create_entity(shared_recipes::player_recipe);
                 player_info.player_info = ref.ref<PlayerInfo>();
                 player_info.biped       = ref;
 
@@ -1722,16 +1719,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 } else if(!is_self)
                 {
                     // Create entity for remote player
-                    auto ref = p.create_entity(
-                        compo::EntityRecipe{
-                            {
-                                compo::type_hash_v<PlayerInfo>(),
-                                compo::type_hash_v<NetworkInfo>(),
-                                compo::type_hash_v<PlayerCamera>(),
-                                compo::type_hash_v<SoundEffects>(),
-                            },
-                            PlayerBiped,
-                        });
+                    auto ref = p.create_entity(shared_recipes::player_recipe);
                     auto& info            = ref.get<PlayerInfo>();
                     info.name             = std::string(player.name.str());
                     info.player_idx       = player.player_idx;
@@ -1748,16 +1736,16 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto const& perm = payload.value<UpdatePermission>();
             for(auto entity : p.select<PlayerInfo>())
             {
-                auto* info = p.get<PlayerInfo>(entity.id());
-                if(!info || info->player_idx != perm.player_idx)
+                auto& info = entity.get<PlayerInfo>();
+                if(info.player_idx != perm.player_idx)
                     continue;
                 switch(perm.permission)
                 {
                 case UpdatePermission::Camera:
-                    info->permissions.camera = perm.mode != 0;
+                    info.permissions.camera = perm.mode != 0;
                     break;
                 case UpdatePermission::Movement:
-                    info->permissions.move = perm.mode != 0;
+                    info.permissions.move = perm.mode != 0;
                     break;
                 }
                 break;

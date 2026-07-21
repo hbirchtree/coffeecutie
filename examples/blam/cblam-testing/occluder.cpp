@@ -81,14 +81,13 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
         Vecf3 camera_pos{};
         Matf4 camera_mvp = glm::identity<Matf4>();
-        for(auto ent : p.template select<PlayerCamera>())
+        for(auto ent : p.template select<PlayerCamera, PlayerInfo>())
         {
-            auto* info = p.template get<PlayerInfo>(ent.id());
-            auto* cam  = p.template get<PlayerCamera>(ent.id());
-            if(info && cam && info->seat_idx == 0)
+            auto [cam, info] = ent.components();
+            if(info.seat_idx == 0)
             {
-                camera_pos = cam->camera->position;
-                camera_mvp = cam->matrix;
+                camera_pos = cam.camera->position;
+                camera_mvp = cam.matrix;
                 break;
             }
         }
@@ -743,13 +742,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         markers->map();
 
         u32 player_i = 0;
-        for(auto ent : p.template select<PlayerCamera>())
+        for(auto ent : p.template select<PlayerCamera, PlayerInfo>())
         {
-            auto* cam  = p.template get<PlayerCamera>(ent.id());
-            auto* info = p.template get<PlayerInfo>(ent.id());
-            if(!cam || !info)
-                continue;
-
+            auto [cam, info] = ent.components();
             /* Grow the pool on demand instead of capping at a compile-time
              * 16 — bounded only by acquire_strip()'s buffer capacity. */
             if(player_i >= eye_pool.size())
@@ -772,10 +767,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             }
             auto const& eye = eye_pool[player_i];
 
-            auto pos = cam->camera->position;
-
-            if(info->seat_idx == 0)
-                pos = Vecf3(0);
+            auto pos = cam.camera->position;
 
             std::array<Vecf3, 7> points = {{
                 pos + Vecf3{-0.2f, 0, 0},

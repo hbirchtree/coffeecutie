@@ -169,18 +169,7 @@ static void load_resources(
     //     player_model = models.predict(
     //         mod2_tag.front(), blam::mod2::mod2_lod::lod_high_ext);
     // }
-    auto recipe = compo::EntityRecipe{
-        .components =
-            {
-                compo::type_hash_v<PlayerInfo>(),
-                compo::type_hash_v<NetworkInfo>(),
-                compo::type_hash_v<PlayerCamera>(),
-                compo::type_hash_v<SoundEffects>(),
-                compo::type_hash_v<PhysicsData>(),
-                compo::type_hash_v<DebugDraw>(),
-            },
-        .tags = PlayerBiped,
-    };
+    auto recipe = shared_recipes::player_recipe;
     u32 num_pinfo = 0;
     for(auto const& pinfo : e.select<PlayerInfo>())
     {
