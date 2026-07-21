@@ -9,8 +9,7 @@ set(ELF2DOL
 # apploader; the DirectoryBlob sys/+files/ output below skips that by booting the DOL as
 # an executable instead). Built once and shared by every GAMECUBE_PACKAGE target.
 # GameCube-only: Wii discs shift every disc offset right by 2 bits, which this doesn't
-# implement (see the NOT WII guard around .gcm generation below).
-if(NOT WII AND NOT TARGET gc_apploader)
+if(GAMECUBE AND NOT WII AND NOT TARGET gc_apploader)
   add_executable(gc_apploader
     "${CMAKE_SOURCE_DIR}/toolchain/desktop/gc_apploader/apploader.c"
   )
