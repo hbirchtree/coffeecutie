@@ -9,6 +9,8 @@ set(ELF2DOL
 # apploader; the DirectoryBlob sys/+files/ output below skips that by booting the DOL as
 # an executable instead). Built once and shared by every GAMECUBE_PACKAGE target.
 # GameCube-only: Wii discs shift every disc offset right by 2 bits, which this doesn't
+# implement (see the NOT WII guard around .gcm generation below). GAMECUBE is required
+# too -- this file is include()'d unconditionally for every platform, GameCube or not.
 if(GAMECUBE AND NOT WII AND NOT TARGET gc_apploader)
   add_executable(gc_apploader
     "${CMAKE_SOURCE_DIR}/toolchain/desktop/gc_apploader/apploader.c"
@@ -16,7 +18,7 @@ if(GAMECUBE AND NOT WII AND NOT TARGET gc_apploader)
   target_compile_options(gc_apploader PRIVATE -ffreestanding -fno-builtin -Os)
   target_link_options(gc_apploader PRIVATE
     -nostdlib -nostartfiles -static
-    -Wl,-T,"${CMAKE_SOURCE_DIR}/toolchain/desktop/gc_apploader/link.ld"
+    -Wl,-T,${CMAKE_SOURCE_DIR}/toolchain/desktop/gc_apploader/link.ld
   )
   # -nostdlib drops gcc's usual implicit libgcc link too; the PPC EABI codegen for this
   # file's register-heavy prologues/epilogues (_restgpr_23_x etc.) needs it back.

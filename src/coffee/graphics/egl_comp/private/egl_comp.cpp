@@ -568,14 +568,19 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
     while(!m_context)
     {
         /* Try to downgrade the GL version */
+        bool can_downgrade = true;
         if(config.profile == comp_app::GLConfig::Core)
         {
             if(config.version.major == 4 && config.version.minor == 0)
             {
                 config.version.major = 3;
                 config.version.minor = 3;
-            } else if(config.version.major == 4 && config.version.minor >= 1)
+            } else if(
+                (config.version.major == 4 || config.version.major == 3) &&
+                config.version.minor >= 1)
                 config.version.minor--;
+            else
+                can_downgrade = false;
         } else
         {
             if(config.version.major == 3 && config.version.minor == 0)
@@ -583,7 +588,11 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
                 config.version.major = 2;
             } else if(config.version.major == 3 && config.version.minor >= 1)
                 config.version.minor--;
+            else
+                can_downgrade = false;
         }
+        if(!can_downgrade)
+            break;
         attribs   = create_context_attribs(config, handle, extensions);
         configPtr = reinterpret_cast<EGLint const*>(attribs.data());
         m_context =
