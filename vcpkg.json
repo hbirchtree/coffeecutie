@@ -127,5 +127,12 @@
         "network",
         "openssl",
         "physics"
+    ],
+    "overrides": [
+        {
+            "name": "libogg",
+            "version": "1.3.6",
+            "port-version": 1
+        }
     ]
 }
