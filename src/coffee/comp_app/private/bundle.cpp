@@ -141,7 +141,7 @@ constexpr bool enable_screenshots = !compile_info::platform::is_emscripten;
         auto& glConf = loader.config<GLConfig>();
         cDebug(
             "comp_app::GLConfig: version={0}:{1}.{2} ({3}) fmt={4} depth={5}",
-            glConf.profile == GLConfig::Profile::Core ? "core" : "es",
+            (glConf.profile & GLConfig::Profile::Core) ? "core" : "es",
             glConf.version.major,
             glConf.version.minor,
             glConf.versionIsFixed ? "fixed" : "dynamic",

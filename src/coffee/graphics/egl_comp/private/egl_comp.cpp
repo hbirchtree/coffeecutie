@@ -1,5 +1,7 @@
 #include <coffee/egl/egl_comp.h>
 
+#include <algorithm>
+
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/core/CProfiling>
@@ -345,12 +347,18 @@ static stl_types::result<EGLConfig, std::string> eglTryConfig(
     EGLint    numConfig = 0;
     eglChooseConfig(display, configPtr, &outConfig, 1, &numConfig);
 
+    auto find_attrib = [&](EGLint key) {
+        return std::find_if(
+            surfaceConfig.begin(),
+            surfaceConfig.end(),
+            [key](auto const& kv) { return kv.first == key; });
+    };
+
     while(numConfig == 0)
     {
         /* If we fail to find a config, try trimming down the color buffer
          * preferences, but make sure we have a depth buffer */
-        auto optional_config   = surfaceConfig.begin() + 5;
-        optional_config->first = EGL_NONE;
+        find_attrib(EGL_RED_SIZE)->first = EGL_NONE;
 
         eglChooseConfig(display, configPtr, &outConfig, 1, &numConfig);
 
@@ -358,9 +366,8 @@ static stl_types::result<EGLConfig, std::string> eglTryConfig(
             break;
 
         /* Trim down depth buffer if possible, if 32-bit was selected, try
-         * 24-bit, if 24-bit was selected, try 16-bit */
-        auto depth_config    = surfaceConfig.begin() + 4;
-        depth_config->second = depth.depth == 32 ? 24 : 16;
+         * 24-bit, if 24-bit was selected, try 16-bit. */
+        find_attrib(EGL_DEPTH_SIZE)->second = depth.depth == 32 ? 24 : 16;
         eglChooseConfig(display, configPtr, &outConfig, 1, &numConfig);
         break;
     }
@@ -388,6 +395,11 @@ static attrib_list create_context_attribs(
     {
         attribs.push_back({EGL_CONTEXT_MAJOR_VERSION, config.version.major});
         attribs.push_back({EGL_CONTEXT_MINOR_VERSION, config.version.minor});
+
+        if(config.profile & comp_app::GLConfig::Core)
+            attribs.push_back(
+                {EGL_CONTEXT_OPENGL_PROFILE_MASK,
+                 EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT});
 
         attribs.push_back(
             {EGL_CONTEXT_OPENGL_DEBUG,
@@ -569,7 +581,7 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
     {
         /* Try to downgrade the GL version */
         bool can_downgrade = true;
-        if(config.profile == comp_app::GLConfig::Core)
+        if(config.profile & comp_app::GLConfig::Core)
         {
             if(config.version.major == 4 && config.version.minor == 0)
             {
