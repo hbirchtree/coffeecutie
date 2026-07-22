@@ -22,6 +22,7 @@
             "id": "client0"
         }
     ],
+    "spawn_grace_ms": 180000,
     "events": [
         {"time": 500, "type": "net_listen", "address": "127.0.0.1:27105"},
         {"time": 1000, "type": "render_param", "debug_markers": true},

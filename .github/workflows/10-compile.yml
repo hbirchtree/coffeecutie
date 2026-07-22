@@ -401,10 +401,14 @@ jobs:
         echo "::endgroup::"
         exit 1
     - name: Convert audio samples to .wav
+      if: ${{ always() }}
       run: |
-        ffmpeg -f f32le -ar 48k -ac 2 -i "/tmp/Blam Graphics/rendered_audio" -c:a copy "/tmp/Blam Graphics/rendered_audio.wav"
-        rm "/tmp/Blam Graphics/rendered_audio"
+        if [ -f "/tmp/Blam Graphics/rendered_audio" ]; then
+          ffmpeg -f f32le -ar 48k -ac 2 -i "/tmp/Blam Graphics/rendered_audio" -c:a copy "/tmp/Blam Graphics/rendered_audio.wav"
+          rm "/tmp/Blam Graphics/rendered_audio"
+        fi
     - name: Uploading test artifacts
+      if: ${{ always() }}
       uses: actions/upload-artifact@v7
       with:
         name: dummy_plug_test_${{ matrix.variant }}
@@ -500,6 +504,10 @@ jobs:
       with:
         name: webrtc-gateway-linux-amd64
         path: gateway_artifacts/
+    - name: Installing Mesa/EGL dependencies
+      run: |
+        sudo apt update
+        sudo apt install mesa-utils
     - name: Acquire the sysroot for the desktop x86_64 platform
       run: |
         # Same sysroot tarball .github/tests/test_blam_graphics.sh uses --
