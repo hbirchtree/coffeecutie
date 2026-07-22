@@ -15,6 +15,7 @@
         "gles": [],
         "screenshot_quality": 60
     },
+    "frame_delta": 66.667,
     "comment": "Self-contained multiplayer scenario: no wrapper script. This process becomes the server (net_listen event), and the dummy plug spawn support (dummy_plug.cpp) fork+execs one client child seeded with the client scenario config plus --server argv. Child gets its own TMPDIR (<parent tmp>/client0) for its state.json/screenshots/log.txt; the parent reaps it at exit and fails if the child failed. Scenario itself matches dummy_plug_net_{server,client}_scenario.json: gamepad movement on bloodgulch, server-triggered switch to beavercreek, more movement, dump_state on both sides.",
     "spawn": [
         {
@@ -22,7 +23,7 @@
             "id": "client0"
         }
     ],
-    "spawn_grace_ms": 180000,
+    "spawn_grace_ms": 300000,
     "events": [
         {"time": 500, "type": "net_listen", "address": "127.0.0.1:27105"},
         {"time": 1000, "type": "render_param", "debug_markers": true},

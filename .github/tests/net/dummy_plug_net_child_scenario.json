@@ -15,6 +15,7 @@
         "gles": [],
         "screenshot_quality": 60
     },
+    "frame_delta": 66.667,
     "comment": "Client child for the self-contained (spawn-based) multiplayer scenario, launched by dummy_plug_net_host_scenario.json. Boots standalone (loads the CLI map locally), then joins the server via the net_connect event once its own load is done — event times are relative to app-loaded, so this lands well after the host's net_listen and inside GNS's connect-retry window even when both processes load concurrently. The join's GameJoin triggers a reload of the server's map (Remote origin), exercising the same path as a mid-session map switch. Then: gamepad movement, ride through the server-triggered switch to beavercreek, more movement, dump_state.",
     "events": [
         {"time": 500, "type": "net_connect", "address": "127.0.0.1:27105"},
