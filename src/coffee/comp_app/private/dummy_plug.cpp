@@ -60,6 +60,20 @@ enum class type_t
     custom,
 };
 
+#if defined(__linux__)
+/* File-scope (not anonymous-namespace-local) so insert_dummy_plug's
+ * emit_events, further down in this file and outside the anonymous
+ * namespace below, can see which children this process spawned -- used
+ * to lock-step startup (wait for each child's "ready" marker before
+ * this process schedules its own scripted events). */
+struct spawned_child_t
+{
+    pid_t       pid;
+    std::string id;
+};
+std::vector<spawned_child_t> spawned_children;
+#endif
+
 namespace {
 
 /* Polled controller state, mirroring what a platform layer (SDL2) would
@@ -284,13 +298,7 @@ void queue_input_event(
  * The parent reaps children at exit and turns any child failure (nonzero
  * exit, signal death, or having to be killed) into its own nonzero exit
  * code, so CI needs no extra bookkeeping. */
-struct spawned_child_t
-{
-    pid_t       pid;
-    std::string id;
-};
-std::vector<spawned_child_t> spawned_children;
-libc_types::u32              spawn_grace_ms = 30000;
+libc_types::u32 spawn_grace_ms = 30000;
 
 void reap_spawned_children()
 {
@@ -783,13 +791,47 @@ void insert_dummy_plug(
                             input_bus,
                             &dummy_controllers,
                             &container,
-                            flag = false]() mutable {
+                            flag         = false,
+                            ready_marked = false]() mutable {
+            using namespace Coffee::resource_literals;
             auto* app_info = container.service<comp_app::AppInfo>();
             if(app_info->state() != comp_app::interfaces::AppInfo::loaded)
             {
                 cDebug("Waiting for application to load");
                 return;
             }
+
+            /* Lock-step startup: mark this process ready (for any parent
+             * that spawned it to see), then wait for our own spawned
+             * children (if any) to do the same before scheduling our own
+             * scripted events. Without this, a parent whose own load is
+             * fast can run its whole scenario and exit while a child
+             * still stuck loading (e.g. sound decode under CI's CPU
+             * contention) never gets far enough to fire anything. */
+            if(!ready_marked)
+            {
+                auto marker = Coffee::Resource("ready"_tmpfile);
+                marker      = semantic::BytesConst::ofString(
+                    std::string_view("1"));
+                Coffee::FileCommit(
+                    marker,
+                    semantic::RSCA::NewFile | semantic::RSCA::Discard |
+                        semantic::RSCA::WriteOnly);
+                ready_marked = true;
+            }
+#if defined(__linux__)
+            for(auto const& child : spawned_children)
+            {
+                if(!Coffee::FileExists(Coffee::Resource(
+                       child.id + "/ready", semantic::RSCA::TempFile)))
+                {
+                    cDebug(
+                        "Waiting for spawned child \"{}\" to finish loading",
+                        child.id);
+                    return;
+                }
+            }
+#endif
 
             if(flag)
                 return;
