@@ -749,6 +749,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 [](SteamNetConnectionStatusChangedCallback_t* info) {
                     network_instance->connection_status_change(info);
                 }));
+        m_utils->SetGlobalConfigValueInt32(
+            k_ESteamNetworkingConfig_TimeoutInitial, 60000);
 #endif
     }
 
@@ -1026,14 +1028,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 #if defined(USE_WEBRTC_TRANSPORT)
             if(m_webrtcServer)
             {
-                if(m_impl->AcceptConnection(info->m_hConn) != k_EResultOK)
-                {
-                    cWarning(
-                        "Failed to accept incoming connection ({})",
-                        client_name(info->m_hConn));
-                    m_impl->CloseConnection(info->m_hConn, 0, nullptr, false);
-                    break;
-                }
                 if(!m_impl->SetConnectionPollGroup(info->m_hConn, m_poll_group))
                 {
                     cWarning("Failed to set connection poll group");

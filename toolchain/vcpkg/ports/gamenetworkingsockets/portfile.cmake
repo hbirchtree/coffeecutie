@@ -46,8 +46,13 @@ vcpkg_check_features(
 # relay candidates against an empty STUN/TURN server list (guaranteed to
 # find nothing), and GNS's own instrumentation flagged the resulting lock
 # hold time as a "Performance warning" in the log. Off only for Emscripten:
-# native builds may still want real GNS P2P/ICE for non-gateway use cases,
-# so leave upstream's own default alone there.
+# an ICE-enabled native server coexists fine with an ICE-disabled client --
+# ICEFailed() (steamnetworkingsockets_p2p_ice.cpp) just logs and drops the
+# ICE transport for that one connection, non-fatally, so the mismatch
+# alone isn't a reason to disable ICE server-side too. (Tried that --
+# only swapped "ice_enabled" errors for "no available transports" once
+# ICE could no longer mask the real gap: the custom transport not being
+# attached to the accept-side connection in time.)
 set(EXTRA_OPTIONS)
 if(VCPKG_TARGET_IS_EMSCRIPTEN)
     list(APPEND EXTRA_OPTIONS -DENABLE_ICE=OFF)
