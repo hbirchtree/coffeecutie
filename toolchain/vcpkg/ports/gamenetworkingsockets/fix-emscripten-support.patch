@@ -181,7 +181,30 @@ always running back-to-back with no yield point in between.
 diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
 --- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
 +++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
-@@ -3287,6 +3287,15 @@
+@@ -2041,7 +2041,21 @@
+ 			#if defined( WAKE_THREAD_USING_EVENT )
+ 				ADD_POLL_FD( s_hEventWakeThread );
+ 			#elif defined( WAKE_THREAD_USING_SOCKET_PAIR )
+-				ADD_POLL_FD( s_hSockWakeThreadRead );
++				// Emscripten leaves this INVALID_SOCKET (see IsEmscripten()
++				// below -- no socketpair() there), so ADD_POLL_FD's assert
++				// would fire every call. poll() ignores negative fds, so
++				// reserve the slot with one instead of asserting.
++				if ( s_hSockWakeThreadRead != INVALID_SOCKET )
++				{
++					ADD_POLL_FD( s_hSockWakeThreadRead );
++				}
++				else
++				{
++					pollfd &p = *s_vecPollFDs.AddToTailGetPtr();
++					p.fd = -1;
++					p.events = 0;
++					p.revents = POLLEVENT_INVALID;
++				}
+ 			#else
+ 				#error "How will we cancel this poll?"
+ 			#endif
+@@ -3287,6 +3301,15 @@
  			}
  		#elif IsPlaystation()
  			// No additional setup needed here
@@ -197,7 +220,7 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowleve
  		#else
  		{
  			Assert( s_hSockWakeThreadRead == INVALID_SOCKET );
-@@ -3348,8 +3357,18 @@
+@@ -3348,8 +3371,18 @@
  
  	s_nLowLevelSupportRefCount.fetch_add(1, std::memory_order_acq_rel);
  
@@ -218,7 +241,7 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowleve
  		s_pServiceThread = new std::thread( SteamNetworkingThreadProc );
  
  	// Install an axexit handler, so that if static destruction is triggered without
-@@ -3725,7 +3744,7 @@
+@@ -3725,7 +3758,7 @@
  	}
  	else
  	{
@@ -227,6 +250,12 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowleve
  		{
  			// Start up the thread
  			SpewMsg( "Service thread is not running, and manual poll mode was turned off, starting service thread.\n" );
+
+PollRawUDPSockets (steamnetworkingsockets_lowlevel.cpp) asserts
+s_hSockWakeThreadRead != INVALID_SOCKET when building its poll list --
+fires every call on Emscripten, since the Init-time IsEmscripten()
+branch above intentionally leaves it invalid. poll() ignores negative
+fds, so the fix just reserves the slot with one instead of asserting.
 
 wasm64 (Emscripten's MEMORY64 target) specifically, found via an actual
 wasm64-emscripten CI build (native wasm32 already worked -- this is
