@@ -583,6 +583,115 @@ jobs:
         name: dummy_plug_test_webrtc_wasm_client
         path: /tmp/webrtc_wasm_client_test
         if-no-files-found: error
+  Test_webrtc_nat_punch:
+    # Same wasm-client/gateway/native-server scenario as
+    # Test_webrtc_wasm_client's fleet variant, but the server runs inside
+    # a docker container behind a real MASQUERADE NAT with an
+    # internal-only network (.github/tests/net/nat-punch/) -- proving the
+    # Phase 6 punch-through actually opens conntrack mappings, which
+    # host-loopback runs cannot (see run_webrtc_nat_punch_test.sh's
+    # header). Extra pass criterion: the gateway must see punches from
+    # the router's masqueraded address, never the server's private one.
+    if: ${{ always() }}
+    name: "WebRTC test: NAT punch-through (containerized server)"
+    needs:
+    - Linux
+    - WebAssembly
+    - WebRTCGateway
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        path: source
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - name: Downloading desktop-x86_64-buildroot-linux-gnu-multi artifacts (server)
+      uses: actions/download-artifact@v8
+      with:
+        name: desktop-x86_64-buildroot-linux-gnu-multi
+        path: server_artifacts/
+    - name: Downloading web-wasm32-emscripten-webgl2 artifacts (client)
+      uses: actions/download-artifact@v8
+      with:
+        name: web-wasm32-emscripten-webgl2
+        path: client_artifacts/
+    - name: Downloading webrtc-gateway-linux-amd64 artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: webrtc-gateway-linux-amd64
+        path: gateway_artifacts/
+    - name: Acquire the sysroot for the desktop x86_64 platform
+      run: |
+        # Same sysroot tarball the other server-running test jobs use;
+        # the server binary runs against it INSIDE the container (bare
+        # alpine image + bind-mounted workspace), so no Mesa apt
+        # packages are needed on the host here.
+        mkdir -p sysroot/lib full-sysroot
+        (cd full-sysroot && gh release -R hbirchtree/coffeecutie-automation-tools download v2.2 -p desktop_x86_64-buildroot-linux-gnu_*_target.tar.xz && tar xf *.tar.xz && rm *.tar.xz)
+        find "$PWD/full-sysroot/usr/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
+        find "$PWD/full-sysroot/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
+    - name: Locating server binary and assets
+      id: server
+      run: |
+        BINARY=$(find server_artifacts -name BlamGraphics -type f | head -n 1)
+        ASSETS_DIR=$(find server_artifacts -name assets -type d | head -n 1)
+        DRI_PATH=$(find "$PWD/full-sysroot" -name dri -type d | head -n 1)
+        SYS_LD=$(find "$PWD/full-sysroot" -name "ld-linux-x86-64.so.2" | head -n 1)
+        chmod +x "$BINARY"
+        echo "binary=$PWD/$BINARY" >> "$GITHUB_OUTPUT"
+        echo "assets=$PWD/$ASSETS_DIR" >> "$GITHUB_OUTPUT"
+        echo "dri_path=$DRI_PATH" >> "$GITHUB_OUTPUT"
+        echo "ld=$SYS_LD" >> "$GITHUB_OUTPUT"
+    - name: Locating wasm client bundle
+      id: bundle
+      run: |
+        BUNDLE=$(find client_artifacts -type d -name BlamGraphics.bundle | head -n 1)
+        echo "dir=$PWD/$BUNDLE" >> "$GITHUB_OUTPUT"
+    - name: Downloading test assets
+      run: |
+        mkdir -p maps/pc/
+        wget -q -O maps/pc/bloodgulch.map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bloodgulch.map
+        wget -q -O maps/pc/bitmaps.map    --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bitmaps.map
+        wget -q -O maps/pc/sounds.map     --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/sounds.map
+    - name: Installing gateway binary
+      run: |
+        mkdir -p source/tools/webrtc-gateway
+        cp gateway_artifacts/gateway source/tools/webrtc-gateway/gateway
+        chmod +x source/tools/webrtc-gateway/gateway
+    - name: Run WebRTC NAT punch-through test
+      env:
+        LIBGL_ALWAYS_SOFTWARE: "1"
+        GALLIUM_DRIVER: llvmpipe
+        LIBGL_DRIVERS_PATH: ${{ steps.server.outputs.dri_path }}
+        MESA_LOADER_DRIVER_PATH: ${{ steps.server.outputs.dri_path }}
+        LIBGL_DRI3_DISABLE: "1"
+        EGL_PLATFORM: surfaceless
+        SERVER_BINARY: ${{ steps.server.outputs.binary }}
+        SERVER_LD: ${{ steps.server.outputs.ld }}
+        SERVER_LIB_PATH: ${{ github.workspace }}/sysroot/lib
+        RESOURCE_DIR: ${{ steps.server.outputs.assets }}/
+        MAP: ${{ github.workspace }}/maps/pc/bloodgulch.map
+        MOUNT_ROOT: ${{ github.workspace }}
+        CI: "true"
+        RUN_TIMEOUT: "150"
+        BOOT_TIMEOUT: "90"
+        BOOT_TIMEOUT_MS: "60000"
+        CONNECT_TIMEOUT_MS: "90000"
+      run: |
+        source/.github/tests/net/run_webrtc_nat_punch_test.sh "${{ steps.bundle.outputs.dir }}" /tmp/webrtc_nat_punch_test
+    - name: Uploading test artifacts
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: dummy_plug_test_webrtc_nat_punch
+        path: /tmp/webrtc_nat_punch_test
+        if-no-files-found: error
   Test_gekko:
     if: ${{ always() }}
     name: "Software render test (Dolphin, SW render)"

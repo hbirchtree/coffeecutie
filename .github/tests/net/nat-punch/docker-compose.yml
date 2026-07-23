@@ -1,0 +1,68 @@
+# NAT punch-through test topology -- see ../run_webrtc_nat_punch_test.sh
+# for orchestration and the full rationale.
+#
+# Only the game server lives in here, behind a real MASQUERADE NAT; the
+# gateway and the browser client run on the HOST, matching the actual
+# deployment shape (public gateway, NAT'd home server). Linux conntrack
+# MASQUERADE is endpoint-restricted (symmetric-ish) NAT -- the strictest
+# case the punch design claims to survive -- so this proves the punches
+# genuinely open mappings, which the loopback fleet test cannot.
+#
+#   server (natpriv, internal-only) --> natrouter (MASQUERADE) --> host
+#     - natpriv is internal: true -- the server has NO path to the host
+#       except through the router, and nothing can dial in to it.
+#     - the server's default route is repointed at the router by its own
+#       entrypoint (hence cap NET_ADMIN on both containers).
+#     - "gateway-host" resolves to the host (host-gateway), where the
+#       webrtc-gateway listens; every punch the server sends arrives at
+#       the gateway from the ROUTER's masqueraded address, never from
+#       172.28.100.3 -- the test asserts exactly that.
+#
+# All variability (binary paths, env, timeouts) lives in run_server.sh,
+# generated into ${OUT_DIR} by the test script -- this file stays static.
+services:
+  natrouter:
+    image: alpine:3.20
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      net.ipv4.ip_forward: 1
+    networks:
+      natpriv:
+        ipv4_address: 172.28.100.2
+      natpub: {}
+    # iptables isn't in the base image; this container sits on natpub and
+    # has internet, so installing at startup is fine for a test harness.
+    command: >-
+      sh -c "apk add --no-cache iptables >/dev/null
+      && iptables -t nat -A POSTROUTING -s 172.28.100.0/24 -j MASQUERADE
+      && echo ROUTER-READY
+      && sleep infinity"
+  server:
+    # Base image only provides a shell + busybox ip; the game binary runs
+    # against its own bind-mounted sysroot (loader included, see
+    # run_server.sh), so the image's libc is irrelevant.
+    image: ${SERVER_IMAGE:-alpine:3.20}
+    cap_add:
+      - NET_ADMIN
+    depends_on:
+      - natrouter
+    networks:
+      natpriv:
+        ipv4_address: 172.28.100.3
+    extra_hosts:
+      - "gateway-host:host-gateway"
+    volumes:
+      - ${MOUNT_ROOT}:${MOUNT_ROOT}:ro
+      - ${MAP_DIR}:${MAP_DIR}:ro
+      - ${OUT_DIR}:${OUT_DIR}
+    command: >-
+      sh -c "ip route replace default via 172.28.100.2
+      && exec sh ${OUT_DIR}/run_server.sh"
+networks:
+  natpriv:
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.28.100.0/24
+  natpub: {}
