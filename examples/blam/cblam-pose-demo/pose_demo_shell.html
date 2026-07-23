@@ -1,0 +1,302 @@
+<!--
+  Shell for BlamPoseDemo's wasm build — based on
+  toolchain/desktop/emscripten/template.html, with webcam capture +
+  MediaPipe Pose + Kalidokit added to drive the pose_apply dummy-plug
+  bridge (src/coffee/comp_app/private/dummy_plug.cpp:969) every frame.
+
+  Requires the page to be loaded as BlamPoseDemo.html?dummy_plug — that
+  query param is what bundle.cpp:425 checks to enable the DummyEventBus at
+  all; without it coffee_dummy_plug_event has nothing to route to.
+
+  Vendored libraries (MIT/Apache-2.0, see vendor/*/LICENSE if present):
+    vendor/pose/pose.js         — @mediapipe/pose (Apache-2.0)
+    vendor/kalidokit/kalidokit.umd.js — kalidokit (MIT)
+-->
+<!doctype html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Blam Pose Demo</title>
+  <style>
+    html { height: 100%; }
+    body { height: 100%; width: 100%; margin: 0; background: #333; color: white; font-family: sans-serif; overflow: hidden; }
+    .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
+    canvas.emscripten { border: 0px none; background-color: black; }
+    #webcam_panel {
+      position: fixed; top: 8px; right: 8px; width: 160px; z-index: 10;
+      border: 1px solid #555; background: #000;
+    }
+    #webcam_feed, #webcam_overlay { width: 160px; height: 120px; display: block; }
+    #webcam_overlay { position: absolute; top: 0; left: 0; }
+    #pose_status { position: fixed; top: 8px; left: 8px; z-index: 10; font-size: 12px; }
+    #animations > button {
+
+    }
+  </style>
+  <script src="coi-serviceworker.min.js"></script>
+  <script>
+      window.blamPlayAnimation = (anim) => {
+          window.BlamModule.ccall('coffee_dummy_plug_event', null, ['string'], [JSON.stringify({type:'play_animation',name: anim})]);
+      };
+      window.blamLoopAnimation = (anim) => {
+          window.BlamModule.ccall('coffee_dummy_plug_event', null, ['string'], [JSON.stringify({type:'loop_animation',name: anim})]);
+      };
+  </script>
+</head>
+<body>
+  <div id="pose_status">waiting for webcam…</div>
+  <div id="animations" style="position: fixed; top: 40%; display: flex; flex-direction: column;">
+      <button onclick="window.blamLoopAnimation('stand pistol idle')">🧍‍♂️</button>
+      <button onclick="window.blamLoopAnimation('crouch unarmed idle')">🪑</button>
+      <button onclick="window.blamLoopAnimation('alert unarmed move-front')">🚶</button>
+      <button onclick="window.blamPlayAnimation('s-kill front gut')">⚰️</button>
+      <button onclick="window.blamPlayAnimation('h-kill left head')">⚰️</button>
+      <button onclick="window.blamPlayAnimation('stand push')">🧻</button>
+      <button onclick="window.blamPlayAnimation('stand pistol pp melee')">👊</button>
+      <button onclick="window.blamPlayAnimation('stand look')">🔍</button>
+  </div>
+
+  <!-- Hidden source feed; MediaPipe Pose reads frames from this element. -->
+  <video id="webcam_feed" autoplay playsinline muted style="display:none;"></video>
+  <div id="webcam_panel" style="display:none;">
+    <canvas id="webcam_overlay" width="160" height="120"></canvas>
+  </div>
+
+  <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" style="cursor: default;"></canvas>
+
+  <script type="text/javascript">
+    var BlamModuleConfig = {
+      preRun: [],
+      postRun: [],
+      print: function(text) {
+        if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+        console.log(text);
+      },
+      printErr: function(text) {
+        if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+        console.error(text);
+      },
+      canvas: (function() {
+        var canvas = document.getElementById('canvas');
+        canvas.addEventListener('webglcontextlost', function(e) {
+          alert('WebGL context lost. You will need to reload the page.');
+          e.preventDefault();
+        }, false);
+        return canvas;
+      })(),
+      setStatus: function(text) { console.log('[status]', text); },
+      totalDependencies: 0,
+      monitorRunDependencies: function(left) {
+        this.totalDependencies = Math.max(this.totalDependencies, left);
+      },
+    };
+    window.onerror = function() {
+      console.log('[status] Exception thrown, see JavaScript console');
+    };
+    const canvas = document.querySelector('#canvas');
+    const resizeCanvas = () => {
+      canvas.height = window.innerHeight;
+      canvas.width = window.innerWidth;
+    };
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+  </script>
+
+  {{{ SCRIPT }}}
+
+  <script type="text/javascript">
+    window.blamModuleReady = new Promise((resolve) => {
+      const poll = () => {
+        if (typeof createBlamPoseDemo === 'function') {
+          resolve(createBlamPoseDemo(BlamModuleConfig));
+        } else {
+          setTimeout(poll, 50);
+        }
+      };
+      poll();
+    }).then((instance) => { window.BlamModule = instance; return instance; });
+  </script>
+
+  <script src="vendor/pose/pose.js"></script>
+  <script src="vendor/kalidokit/kalidokit.umd.js"></script>
+  <script type="text/javascript">
+    const poseStatus = document.getElementById('pose_status');
+
+    /* three.js's Quaternion.setFromEuler for order 'XYZ' — Kalidokit's
+     * Pose.solve() returns each bone as an {x,y,z} Euler in that order
+     * (Vector's default rotationOrder, kalidokit.umd.js). apply_pose
+     * (pose_apply.cpp) expects [x,y,z,w] quaternions. */
+    function eulerXYZToQuat(x, y, z) {
+      const c1 = Math.cos(x / 2), c2 = Math.cos(y / 2), c3 = Math.cos(z / 2);
+      const s1 = Math.sin(x / 2), s2 = Math.sin(y / 2), s3 = Math.sin(z / 2);
+      return [
+        s1 * c2 * c3 + c1 * s2 * s3,
+        c1 * s2 * c3 - s1 * c2 * s3,
+        c1 * c2 * s3 + s1 * s2 * c3,
+        c1 * c2 * c3 - s1 * s2 * s3,
+      ];
+    }
+
+    /* Arms not retargeted (pose_retarget.h has no entry). Head is sent
+     * but also has no table entry — data flows through, unapplied. */
+    const RETARGETED_BONES = [
+      'Spine', 'Head',
+    ];
+
+    async function waitForAppLoaded() {
+      await window.blamModuleReady;
+      return new Promise((resolve) => {
+        const poll = () => {
+          let loaded = 0;
+          try { loaded = window.BlamModule.ccall('coffee_app_loaded', 'number', [], []); }
+          catch(e) { /* shouldn't happen post-ready, but don't wedge main() if it does */ }
+          if (loaded === 1) resolve();
+          else setTimeout(poll, 200);
+        };
+        poll();
+      });
+    }
+
+    let poseFrameCount = 0;
+    function sendPose(kalidokitPose) {
+      const bones = [];
+      for (const name of RETARGETED_BONES) {
+        const euler = kalidokitPose[name];
+        if (!euler) continue;
+        bones.push({ name, rotation: eulerXYZToQuat(euler.x, euler.y, euler.z) });
+      }
+      if (bones.length === 0) return;
+      const payload = { type: 'pose_apply', bones };
+      // if (poseFrameCount++ % 30 === 0) console.log('[pose_demo] sending', JSON.stringify(payload));
+      if (kalidokitPose.Spine && poseFrameCount % 10 === 0) {
+        const s = kalidokitPose.Spine;
+        const toDeg = (r) => (r * 180 / Math.PI).toFixed(1);
+        // console.log('[pose_demo] Spine raw (deg): x=' + toDeg(s.x) + ' y=' + toDeg(s.y) + ' z=' + toDeg(s.z));
+      }
+      window.BlamModule.ccall('coffee_dummy_plug_event', null, ['string'], [JSON.stringify(payload)]);
+    }
+
+    function setPoseStatus(text) {
+      poseStatus.textContent = text;
+      // console.log('[pose_demo] ' + text);
+    }
+
+    /* Independent of the webcam/pose pipeline — mic capture doesn't need
+     * MediaPipe or app-loaded state beyond ccall being callable. RMS over
+     * the time-domain waveform, sent on its own timer rather than tied to
+     * the pose frame loop. analyser is never connected to
+     * audioCtx.destination, so this doesn't route mic audio to speakers. */
+    async function setupMicrophone() {
+      await window.blamModuleReady;
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      source.connect(analyser);
+
+      const data = new Uint8Array(analyser.fftSize);
+      let micFrameCount = 0;
+      setInterval(() => {
+        analyser.getByteTimeDomainData(data);
+        let sumSq = 0;
+        for (let i = 0; i < data.length; i++) {
+          const v = (data[i] - 128) / 128;
+          sumSq += v * v;
+        }
+        const volume = Math.sqrt(sumSq / data.length);
+        if (micFrameCount++ % 30 === 0) console.log('[pose_demo] mic volume: ' + volume.toFixed(4));
+        window.BlamModule.ccall(
+          'coffee_dummy_plug_event', null, ['string'],
+          [JSON.stringify({ type: 'mic_volume', volume })],
+        );
+      }, 33);
+
+      console.log('[pose_demo] microphone capture started');
+    }
+
+    async function main() {
+      console.log('[pose_demo] main() started');
+      if (!location.search.includes('dummy_plug')) {
+        setPoseStatus('Load this page as ?dummy_plug in the URL — the pose bridge is disabled without it.');
+        return;
+      }
+
+      setPoseStatus('waiting for app to finish loading…');
+      await waitForAppLoaded();
+      setPoseStatus('app loaded, requesting webcam…');
+
+      const video = document.getElementById('webcam_feed');
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false });
+      setPoseStatus('webcam stream acquired, waiting for metadata…');
+      video.srcObject = stream;
+      await new Promise((resolve) => { video.onloadedmetadata = resolve; });
+      await video.play().catch((e) => console.error('[pose_demo] video.play() rejected: ' + e.message));
+      console.log(
+        `[pose_demo] video ${video.videoWidth}x${video.videoHeight} readyState=${video.readyState} paused=${video.paused}`,
+      );
+      setPoseStatus('video metadata ready, loading MediaPipe Pose…');
+
+      const pose = new Pose({ locateFile: (file) => `vendor/pose/${file}` });
+      pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+      });
+      let resultsSeen = 0;
+      pose.onResults((results) => {
+        if (resultsSeen++ === 0) console.log('[pose_demo] first onResults callback fired');
+        if (!results.poseWorldLandmarks || !results.poseLandmarks) {
+          if (resultsSeen <= 3) console.log('[pose_demo] onResults: no landmarks this frame');
+          return;
+        }
+        const solved = Kalidokit.Pose.solve(results.poseWorldLandmarks, results.poseLandmarks, {
+          runtime: 'mediapipe',
+          video,
+        });
+        /* Head roll: ear-line (7,8) relative to shoulder-line (11,12) to
+         * cancel shared body twist. rollPitchYaw returns angle/PI, not
+         * radians. */
+        if (solved && results.poseWorldLandmarks[7] && results.poseWorldLandmarks[8] &&
+            results.poseWorldLandmarks[11] && results.poseWorldLandmarks[12]) {
+          const earRoll = Kalidokit.Vector.rollPitchYaw(
+            results.poseWorldLandmarks[7], results.poseWorldLandmarks[8],
+          ).x;
+          const shoulderRoll = Kalidokit.Vector.rollPitchYaw(
+            results.poseWorldLandmarks[11], results.poseWorldLandmarks[12],
+          ).x;
+          const roll = (earRoll - shoulderRoll) * Math.PI;
+          solved.Head = { x: 0, y: roll, z: 0 };
+          if (poseFrameCount % 10 === 0) {
+            // console.log('[pose_demo] Head roll raw (deg): ' + (roll * 180 / Math.PI).toFixed(1));
+          }
+        }
+        if (solved) sendPose(solved);
+      });
+
+      setPoseStatus('tracking');
+      let sendFrameCount = 0;
+      const frameLoop = async () => {
+        try {
+          await pose.send({ image: video });
+          if (sendFrameCount++ === 0) console.log('[pose_demo] first pose.send() resolved');
+        } catch (e) {
+          console.error('[pose_demo] pose.send() threw: ' + (e.stack || e.message || e));
+        }
+        requestAnimationFrame(frameLoop);
+      };
+      requestAnimationFrame(frameLoop);
+    }
+
+    main().catch((err) => {
+      console.error(err);
+      poseStatus.textContent = 'error: ' + err.message;
+    });
+    setupMicrophone().catch((err) => {
+      console.error('[pose_demo] microphone setup failed: ' + (err.stack || err.message || err));
+    });
+  </script>
+</body>
+</html>

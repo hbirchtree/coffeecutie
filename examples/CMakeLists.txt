@@ -10,6 +10,7 @@ endif()
 
 if(BUILD_BLAM AND BUILD_GLEAM)
   add_subdirectory(blam/cblam-testing)
+  add_subdirectory(blam/cblam-pose-demo)
 endif()
 
 if(BUILD_BLAM)
