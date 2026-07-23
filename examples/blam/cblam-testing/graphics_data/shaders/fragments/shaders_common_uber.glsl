@@ -749,6 +749,8 @@ vec4 shader_model()
         return vec4(multi.rgb, 1);
     if((render_flags & RENDER_FLAG_ONLY_MULTIPURPOSE2) != 0)
         return vec4(multi.a, color.a, 0, 1);
+    if((render_flags & RENDER_FLAG_ONLY_NORMALS) != 0)
+        return vec4(frag.normal, 1);
 
     // TODO: Include animation on illum_factor
 
