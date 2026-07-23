@@ -222,7 +222,19 @@ bool loop_container(detail::EntityContainer& container)
     if(window->notifiedClose())
         return false;
     if(!loop_main_queue)
-        if(auto queue = rq::runtime_queue::GetCurrentQueue(); queue.has_value())
+    {
+        static bool warned_once = false;
+        auto        queue       = rq::runtime_queue::GetCurrentQueue();
+        if(!warned_once)
+        {
+            warned_once = true;
+            Coffee::Logging::cWarning(
+                "TEMPDEBUG: loop_container first tick: thread={} "
+                "GetCurrentQueue={}",
+                rq::detail::current_thread_id(),
+                queue.has_value() ? "ok" : "FAILED");
+        }
+        if(queue.has_value())
         {
             using namespace std::chrono_literals;
 
@@ -242,6 +254,7 @@ bool loop_container(detail::EntityContainer& container)
                     }
                 });
         }
+    }
 
     container.exec();
     if(loop_main_queue)

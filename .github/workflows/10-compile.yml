@@ -367,6 +367,7 @@ jobs:
           dummy_plug: net/dummy_plug_net_host_scenario.json
           boot_map: bloodgulch.map
           journal_check: 'true'
+          skip_audio: 'true'
     steps:
     - uses: actions/checkout@v6
       with:
@@ -401,18 +402,28 @@ jobs:
         echo "::endgroup::"
         exit 1
     - name: Convert audio samples to .wav
-      if: ${{ always() }}
+      if: ${{ always() && matrix.skip_audio != 'true' }}
       run: |
         if [ -f "/tmp/Blam Graphics/rendered_audio" ]; then
           ffmpeg -f f32le -ar 48k -ac 2 -i "/tmp/Blam Graphics/rendered_audio" -c:a copy "/tmp/Blam Graphics/rendered_audio.wav"
           rm "/tmp/Blam Graphics/rendered_audio"
         fi
     - name: Uploading test artifacts
-      if: ${{ always() }}
+      if: ${{ always() && matrix.skip_audio != 'true' }}
       uses: actions/upload-artifact@v7
       with:
         name: dummy_plug_test_${{ matrix.variant }}
         path: "/tmp/Blam Graphics"
+        if-no-files-found: error
+    - name: Uploading test artifacts (no audio)
+      if: ${{ always() && matrix.skip_audio == 'true' }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: dummy_plug_test_${{ matrix.variant }}
+        path: |
+          /tmp/Blam Graphics
+          !/tmp/Blam Graphics/**/rendered_audio
+          !/tmp/Blam Graphics/**/rendered_audio.wav
         if-no-files-found: error
   Test_wasm_swiftshader:
     if: ${{ always() }}
