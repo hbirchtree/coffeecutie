@@ -39,7 +39,8 @@ namespace webrtc_signaling {
 class GatewayConnectBootstrap final : public ISteamNetworkingConnectionSignaling
 {
 public:
-    explicit GatewayConnectBootstrap(std::string gatewayUrl);
+    explicit GatewayConnectBootstrap(
+        std::string gatewayUrl, std::string serverId = "");
     ~GatewayConnectBootstrap();
 
     void Start();
@@ -75,6 +76,7 @@ private:
     void maybeSendOffer();
 
     std::string                          m_gatewayUrl;
+    std::string                          m_serverId;
     std::shared_ptr<rtc::WebSocket>      m_ws;
     std::shared_ptr<rtc::PeerConnection> m_pc;
     std::shared_ptr<rtc::DataChannel>    m_dc;

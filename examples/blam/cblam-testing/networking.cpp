@@ -14,6 +14,7 @@ using Coffee::ProfContext;
 
 #include "components.h"
 #include "data.h"
+#include "gateway_fleet_registration.h"
 #include "journal.h"
 #include "selected_version.h"
 #include "webrtc_signaling.h"
@@ -627,7 +628,22 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     create_server_webrtc(connect->remote);
                 else
 #endif
+                {
                     create_server(connect->remote);
+#if defined(USE_WEBRTC_TRANSPORT)
+                    if(!connect->gateway_register_url.empty() &&
+                       m_socket != k_HSteamListenSocket_Invalid)
+                    {
+                        m_fleetRegistration =
+                            std::make_unique<webrtc_signaling::GatewayFleetRegistration>(
+                                connect->gateway_register_url,
+                                connect->gateway_server_id,
+                                m_impl,
+                                m_socket);
+                        m_fleetRegistration->Start();
+                    }
+#endif
+                }
             });
         m_game_bus.addEventFunction<MapListingEvent>(
             0, [this](GameEvent&, MapListingEvent* listing) {
@@ -858,8 +874,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             cWarning("WebRTC gateway connection already in progress");
             return;
         }
+        std::string baseUrl  = gatewayUrl;
+        std::string serverId;
+        if(auto hash = gatewayUrl.find('#'); hash != std::string::npos)
+        {
+            baseUrl  = gatewayUrl.substr(0, hash);
+            serverId = gatewayUrl.substr(hash + 1);
+        }
         cDebug("Bootstrapping WebRTC DataChannel via gateway {}", gatewayUrl);
-        m_webrtcBootstrap = new webrtc_signaling::GatewayConnectBootstrap(gatewayUrl);
+        m_webrtcDirectMode = !serverId.empty();
+        m_webrtcBootstrap =
+            new webrtc_signaling::GatewayConnectBootstrap(baseUrl, serverId);
         m_webrtcBootstrap->Start();
         m_net_state.client_state = NetworkState::ClientState::Establishing;
     }
@@ -888,18 +913,26 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         auto pc     = m_webrtcBootstrap->TakePeerConnection();
         auto dc     = m_webrtcBootstrap->TakeDataChannel();
         auto config = create_callbacks();
-        /* GNS takes ownership of m_webrtcBootstrap (as the connection's
-         * ISteamNetworkingConnectionSignaling) from this call onward --
-         * calls Release() on it itself, on success or failure alike (same
-         * contract ConnectP2PCustomSignaling's pSignaling has, since this
-         * mirrors it -- see the port's add-webrtc-datachannel-transport.patch). */
-        auto* bootstrap   = m_webrtcBootstrap;
-        m_webrtcBootstrap = nullptr;
-        m_connection      = m_impl->ConnectP2PWebRTCDataChannel(
-            bootstrap, nullptr, 0, pc, dc, config.size(), config.data());
+
+        if(m_webrtcDirectMode)
+        {
+            m_webrtcDirectKeepAlive = m_webrtcBootstrap;
+            m_webrtcBootstrap       = nullptr;
+            SteamNetworkingIPAddr placeholder;
+            placeholder.Clear();
+            placeholder.SetIPv4(0x7f000001 /* 127.0.0.1 */, 1);
+            m_connection = m_impl->ConnectUDPWebRTCDataChannel(
+                placeholder, pc, dc, config.size(), config.data());
+        } else
+        {
+            auto* bootstrap   = m_webrtcBootstrap;
+            m_webrtcBootstrap = nullptr;
+            m_connection      = m_impl->ConnectP2PWebRTCDataChannel(
+                bootstrap, nullptr, 0, pc, dc, config.size(), config.data());
+        }
         if(m_connection == k_HSteamNetConnection_Invalid)
         {
-            cWarning("Failed to establish P2P WebRTC DataChannel connection");
+            cWarning("Failed to establish WebRTC DataChannel connection");
             m_net_state.client_state = NetworkState::ClientState::Error;
             return;
         }
@@ -1252,6 +1285,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         poll_webrtc_bootstrap();
         if(m_webrtcServer)
             m_webrtcServer->PollPendingAccepts();
+        if(m_fleetRegistration)
+            m_fleetRegistration->Poll();
 #endif
         if(is_server())
         {
@@ -1816,7 +1851,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     compo::EntityRef<EntityContainer> m_client_player{};
 #if defined(USE_WEBRTC_TRANSPORT)
     webrtc_signaling::GatewayConnectBootstrap* m_webrtcBootstrap{nullptr};
+    webrtc_signaling::GatewayConnectBootstrap* m_webrtcDirectKeepAlive{nullptr};
+    bool m_webrtcDirectMode{false};
     std::unique_ptr<webrtc_signaling::GatewayServerRegistration> m_webrtcServer;
+    std::unique_ptr<webrtc_signaling::GatewayFleetRegistration> m_fleetRegistration;
 #endif
 
     struct connection_state_t

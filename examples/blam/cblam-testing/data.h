@@ -308,6 +308,13 @@ struct ServerConnectEvent
     } type{Server};
 
     std::string remote;
+
+    /* Only used with type == Listen: if set, additionally register this
+     * server with a webrtc-gateway fleet registry so browser clients can
+     * reach it (see gateway_fleet_registration.h). Empty = don't
+     * register. */
+    std::string gateway_register_url;
+    std::string gateway_server_id;
 };
 
 struct ServerConnectedEvent

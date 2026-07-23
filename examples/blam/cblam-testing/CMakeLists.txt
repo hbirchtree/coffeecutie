@@ -38,6 +38,7 @@ coffee_application(
   TITLE "Blam Graphics"
   SOURCES
         caching.cpp
+        gateway_fleet_registration.cpp
         graphics.cpp
         map_loading.cpp
         networking.cpp

@@ -100,7 +100,7 @@ const FATAL_PATTERNS = [
 // running -- that was the actual bug this session spent the most time
 // on); PASS requires the full round trip, ending in roster sync.
 const MARKERS = [
-  { label: 'P2P WebRTC transport connected', re: /P2P WebRTC vport \d+\]\s*connected/ },
+  { label: 'WebRTC transport connected', re: /P2P WebRTC vport \d+\]\s*connected|-> k_ESteamNetworkingConnectionState_Connected\b/ },
   { label: 'GameJoin received (map load)', re: /Loading map .* as requested by server/ },
   { label: 'PlayerJoin sent, join confirmation received', re: /Received join confirmation, player_id=\d+/ },
   { label: 'Player roster received', re: /Player roster received:/ },

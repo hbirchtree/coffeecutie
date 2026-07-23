@@ -12,6 +12,8 @@ vcpkg_from_github(
         fix-openssl-dependency.patch
         fix-emscripten-support.patch
         add-webrtc-datachannel-transport.patch
+        add-listen-socket-raw-send.patch
+        add-udp-datachannel-connect.patch
 )
 
 set(CRYPTO_BACKEND OpenSSL)

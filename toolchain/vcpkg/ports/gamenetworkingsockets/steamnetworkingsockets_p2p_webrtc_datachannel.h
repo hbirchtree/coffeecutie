@@ -82,4 +82,22 @@ private:
 	void OnDataChannelClosed();
 };
 
+// Added for coffeecutie's Phase 6 direct-UDP-over-DataChannel connect (a
+// different mode from the P2P transport above, despite sharing this file
+// -- kept here because it's the one port-owned injected source pair, so
+// no CMakeLists/portfile changes are needed to add code): implementation
+// behind ISteamNetworkingSockets::ConnectUDPWebRTCDataChannel. Creates a
+// CSteamNetworkConnectionUDP whose IBoundUDPSocket is backed by the given
+// DataChannel (see the .cpp), so the ORDINARY direct-UDP handshake and
+// data protocol run over it unchanged against a plain CreateListenSocketIP
+// server on the far side of a webrtc-gateway. Caller must hold the global
+// lock (the API wrapper in csteamnetworkingsockets.cpp does).
+class CSteamNetworkingSockets;
+extern HSteamNetConnection ConnectUDPWebRTCDataChannelInternal(
+	CSteamNetworkingSockets *pInterface,
+	const SteamNetworkingIPAddr &addressRemote,
+	std::shared_ptr<rtc::PeerConnection> pPeerConnection,
+	std::shared_ptr<rtc::DataChannel> pDataChannel,
+	int nOptions, const SteamNetworkingConfigValue_t *pOptions );
+
 } // namespace SteamNetworkingSocketsLib

@@ -85,6 +85,15 @@ i32 blam_main()
             //
             ("master-server",
              "Master server to query for servers",
+             cxxopts::value<std::string>())
+            //
+            ("gateway-register",
+             "webrtc-gateway /server-signal URL to register this --listen "
+             "server with, so browser clients can be routed to it",
+             cxxopts::value<std::string>())
+            //
+            ("gateway-server-id",
+             "Server ID to register under with --gateway-register",
              cxxopts::value<std::string>());
         if constexpr(!compile_info::supports_command_line)
             options.add_options("Game")(
@@ -477,6 +486,15 @@ i32 blam_main()
                         .type   = ServerConnectEvent::Listen,
                         .remote = arguments["listen"].as<std::string>(),
                     };
+                    if(arguments.count("gateway-register"))
+                    {
+                        connect.gateway_register_url =
+                            arguments["gateway-register"].as<std::string>();
+                        connect.gateway_server_id =
+                            arguments.count("gateway-server-id")
+                                ? arguments["gateway-server-id"].as<std::string>()
+                                : std::string("default");
+                    }
                     gbus.inject(event, &connect);
                 }
             }

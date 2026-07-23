@@ -17,8 +17,10 @@ using namespace Coffee::Logging;
 
 namespace webrtc_signaling {
 
-GatewayConnectBootstrap::GatewayConnectBootstrap(std::string gatewayUrl)
+GatewayConnectBootstrap::GatewayConnectBootstrap(
+    std::string gatewayUrl, std::string serverId)
     : m_gatewayUrl(std::move(gatewayUrl))
+    , m_serverId(std::move(serverId))
 {
 }
 
@@ -100,7 +102,9 @@ void GatewayConnectBootstrap::Start()
         m_failed = true;
     });
 
-    m_ws->open(m_gatewayUrl + "/signal");
+    m_ws->open(
+        m_gatewayUrl + "/signal" +
+        (m_serverId.empty() ? "" : "?server=" + m_serverId));
 }
 
 void GatewayConnectBootstrap::onWebSocketOpen()

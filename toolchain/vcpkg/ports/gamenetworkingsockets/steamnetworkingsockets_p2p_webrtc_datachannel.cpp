@@ -3,6 +3,9 @@
 
 #include "steamnetworkingsockets_p2p_webrtc_datachannel.h"
 
+#include "csteamnetworkingsockets.h"
+#include "steamnetworkingsockets_udp.h"
+
 #include <rtc/rtc.hpp>
 
 namespace SteamNetworkingSocketsLib {
@@ -210,6 +213,179 @@ void CConnectionTransportP2PWebRTC::SendEndToEndStatsMsg( EStatsReplyRequest eRe
 void CConnectionTransportP2PWebRTC::TransportPopulateConnectionInfo( SteamNetConnectionInfo_t &info ) const
 {
 	CConnectionTransport::TransportPopulateConnectionInfo( info );
+}
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Direct-UDP-over-DataChannel connect (Phase 6 -- see header comment on
+// ConnectUDPWebRTCDataChannelInternal for how this differs from the P2P
+// transport above)
+//
+/////////////////////////////////////////////////////////////////////////////
+
+namespace {
+
+// The DataChannel-backed stand-in for a real connected UDP socket. GNS's
+// ordinary UDP transport (CConnectionTransportUDP) only ever touches its
+// socket through IBoundUDPSocket/IRawUDPSocket, so backing those with a
+// DataChannel makes the whole existing handshake/data protocol run over
+// it unmodified.
+//
+// Lifetime/threading: callbacks arrive on libdatachannel's own thread
+// (or the browser main thread on wasm), so they take the global lock
+// before feeding the transport -- the same contract the real service
+// thread gives PacketReceived (which takes the connection lock itself).
+// Shared State (not raw `this`) is captured by the callbacks so a
+// Close() racing an in-flight callback can never leave it a dangling
+// pointer: the callback re-checks m_bClosed under the global lock, and
+// Close() flips it under that same lock before deleting the sockets.
+struct DataChannelSocketState
+{
+	std::shared_ptr<rtc::PeerConnection> m_pPeerConnection;
+	std::shared_ptr<rtc::DataChannel> m_pDataChannel;
+	CRecvPacketCallback m_callback;
+	netadr_t m_adrRemote;
+	IRawUDPSocket *m_pRawSock = nullptr;
+	bool m_bClosed = false;
+};
+
+class CRawSocketWebRTCDataChannel final : public IRawUDPSocket
+{
+public:
+	CRawSocketWebRTCDataChannel( std::shared_ptr<DataChannelSocketState> pState )
+	: m_pState( std::move( pState ) )
+	{
+		m_boundAddr.Clear();
+		m_pState->m_pRawSock = this;
+
+		std::shared_ptr<DataChannelSocketState> pStateRef = m_pState;
+		m_pState->m_pDataChannel->onMessage(
+			[pStateRef]( rtc::binary data ) {
+				SteamNetworkingGlobalLock lock( "CRawSocketWebRTCDataChannel::onMessage" );
+				if ( pStateRef->m_bClosed )
+					return;
+				RecvPktInfo_t info;
+				info.m_pPkt = data.data();
+				info.m_cbPkt = (int)data.size();
+				info.m_usecNow = SteamNetworkingSockets_GetLocalTimestamp();
+				info.m_adrFrom = pStateRef->m_adrRemote;
+				info.m_pSock = pStateRef->m_pRawSock;
+				pStateRef->m_callback( info );
+			},
+			[]( std::string ) {
+				// Text frames are never sent by either side; ignore.
+			}
+		);
+	}
+
+	virtual bool BSendRawPacketGather( int nChunks, const iovec *pChunks, const netadr_t &adrTo ) const override
+	{
+		(void)adrTo; // 1:1 channel; the gateway already knows where this goes
+		if ( m_pState->m_bClosed || !m_pState->m_pDataChannel->isOpen() )
+			return false;
+
+		size_t cbTotal = 0;
+		for ( int i = 0 ; i < nChunks ; ++i )
+			cbTotal += pChunks[i].iov_len;
+		std::vector<std::byte> pkt( cbTotal );
+		size_t off = 0;
+		for ( int i = 0 ; i < nChunks ; ++i )
+		{
+			memcpy( pkt.data() + off, pChunks[i].iov_base, pChunks[i].iov_len );
+			off += pChunks[i].iov_len;
+		}
+		return m_pState->m_pDataChannel->send( pkt.data(), pkt.size() );
+	}
+
+	virtual void Close() override
+	{
+		// Global lock is held by the GNS caller (TransportFreeResources).
+		m_pState->m_bClosed = true;
+		m_pState->m_pRawSock = nullptr;
+#ifndef __EMSCRIPTEN__
+		// See CConnectionTransportP2PWebRTC::TransportFreeResources for
+		// why this is native-only (datachannel-wasm has no
+		// resetCallbacks, and wasm is single-threaded anyway).
+		m_pState->m_pDataChannel->resetCallbacks();
+#endif
+		m_pState->m_pDataChannel->close();
+		delete this;
+	}
+
+private:
+	virtual ~CRawSocketWebRTCDataChannel() {}
+	std::shared_ptr<DataChannelSocketState> m_pState;
+};
+
+class CBoundSocketWebRTCDataChannel final : public IBoundUDPSocket
+{
+public:
+	CBoundSocketWebRTCDataChannel( CRawSocketWebRTCDataChannel *pRawSock, const netadr_t &adr )
+	: IBoundUDPSocket( pRawSock, adr ) {}
+
+	virtual void Close() override
+	{
+		m_pRawSock->Close();
+		m_pRawSock = nullptr;
+		delete this;
+	}
+};
+
+struct CreateDataChannelSocketContext
+{
+	std::shared_ptr<rtc::PeerConnection> m_pPeerConnection;
+	std::shared_ptr<rtc::DataChannel> m_pDataChannel;
+	netadr_t m_adrRemote;
+};
+
+IBoundUDPSocket *CreateDataChannelBoundSocket( CRecvPacketCallback callback, void *pContext )
+{
+	auto *ctx = static_cast<CreateDataChannelSocketContext *>( pContext );
+	auto pState = std::make_shared<DataChannelSocketState>();
+	pState->m_pPeerConnection = std::move( ctx->m_pPeerConnection );
+	pState->m_pDataChannel = std::move( ctx->m_pDataChannel );
+	pState->m_callback = callback;
+	pState->m_adrRemote = ctx->m_adrRemote;
+	auto *pRawSock = new CRawSocketWebRTCDataChannel( std::move( pState ) );
+	return new CBoundSocketWebRTCDataChannel( pRawSock, ctx->m_adrRemote );
+}
+
+} // anonymous namespace
+
+HSteamNetConnection ConnectUDPWebRTCDataChannelInternal(
+	CSteamNetworkingSockets *pInterface,
+	const SteamNetworkingIPAddr &addressRemote,
+	std::shared_ptr<rtc::PeerConnection> pPeerConnection,
+	std::shared_ptr<rtc::DataChannel> pDataChannel,
+	int nOptions, const SteamNetworkingConfigValue_t *pOptions )
+{
+	if ( !pDataChannel )
+	{
+		SpewError( "ConnectUDPWebRTCDataChannel: null DataChannel" );
+		return k_HSteamNetConnection_Invalid;
+	}
+
+	// Mirrors ConnectByIPAddress's creation shape (global lock already
+	// held by our API wrapper, matching its scopeLock).
+	ConnectionScopeLock connectionLock;
+	CSteamNetworkConnectionUDP *pConn = new CSteamNetworkConnectionUDP( pInterface, connectionLock );
+	if ( !pConn )
+		return k_HSteamNetConnection_Invalid;
+
+	CreateDataChannelSocketContext ctx;
+	ctx.m_pPeerConnection = std::move( pPeerConnection );
+	ctx.m_pDataChannel = std::move( pDataChannel );
+	SteamNetworkingIPAddrToNetAdr( ctx.m_adrRemote, addressRemote );
+
+	SteamDatagramErrMsg errMsg;
+	if ( !pConn->BInitConnectBoundSocket( CreateDataChannelBoundSocket, &ctx, nOptions, pOptions, errMsg ) )
+	{
+		SpewError( "Cannot create UDP-over-DataChannel connection.  %s", errMsg );
+		pConn->ConnectionQueueDestroy();
+		return k_HSteamNetConnection_Invalid;
+	}
+
+	return pConn->m_hConnectionSelf;
 }
 
 void CConnectionTransportP2PWebRTC::P2PTransportUpdateRouteMetrics( SteamNetworkingMicroseconds usecNow )
