@@ -28,6 +28,8 @@ function(COFFEE_APPLICATION)
       # Defines entire package name
       PACKAGE_NAME
       ICON_ASSET
+      # Emscripten only: override the default --shell-file
+      SHELL
   )
   set(multiOpts
       # Application permissions, translated per platform
@@ -122,6 +124,7 @@ function(COFFEE_APPLICATION)
       SOURCES ${SOURCES_MOD}
       RESOURCES ${APP_RESOURCES}
       ICON ${ICON_ASSET}
+      SHELL ${APP_SHELL}
       BUNDLE_MODULES ${APP_BUNDLE_LIBRARIES}
     )
   elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")

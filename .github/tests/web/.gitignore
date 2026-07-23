@@ -1,1 +1,4 @@
 node_modules/
+# Generated from the committed *.mp4 fake-video source at test-run time —
+# raw YUV4MPEG, ~9x the source size, never worth committing.
+*.y4m

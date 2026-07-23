@@ -13,6 +13,8 @@
 #include <peripherals/stl/enumerate.h>
 
 #include <algorithm>
+#include <chrono>
+#include <optional>
 
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 0xFFF
@@ -40,6 +42,7 @@
 #endif
 
 using Coffee::cDebug;
+using Coffee::cWarning;
 using Coffee::Input::CIEvent;
 
 namespace comp_app::dummy_plug {
@@ -791,8 +794,10 @@ void insert_dummy_plug(
                             input_bus,
                             &dummy_controllers,
                             &container,
-                            flag         = false,
-                            ready_marked = false]() mutable {
+                            flag                = false,
+                            ready_marked        = false,
+                            children_wait_start = std::optional<
+                                std::chrono::steady_clock::time_point>{}]() mutable {
             using namespace Coffee::resource_literals;
             auto* app_info = container.service<comp_app::AppInfo>();
             if(app_info->state() != comp_app::interfaces::AppInfo::loaded)
@@ -820,15 +825,43 @@ void insert_dummy_plug(
                 ready_marked = true;
             }
 #if defined(__linux__)
-            for(auto const& child : spawned_children)
+            if(!spawned_children.empty())
             {
-                if(!Coffee::FileExists(Coffee::Resource(
-                       child.id + "/ready", semantic::RSCA::TempFile)))
+                using namespace std::chrono;
+                if(!children_wait_start)
+                    children_wait_start = steady_clock::now();
+                auto elapsed = steady_clock::now() - *children_wait_start;
+                auto timeout = milliseconds(
+                    config.value("child_ready_timeout_ms", 300000u));
+
+                for(auto const& child : spawned_children)
                 {
-                    cDebug(
-                        "Waiting for spawned child \"{}\" to finish loading",
-                        child.id);
-                    return;
+                    if(Coffee::FileExists(Coffee::Resource(
+                           child.id + "/ready", semantic::RSCA::TempFile)))
+                        continue;
+
+                    if(elapsed < timeout)
+                    {
+                        cDebug(
+                            "Waiting for spawned child \"{}\" to finish "
+                            "loading",
+                            child.id);
+                        return;
+                    }
+                    /* Give up waiting on this child rather than hang
+                     * forever: end_time (below) is only ever scheduled
+                     * once this function gets past this gate, so with no
+                     * timeout a child that never becomes ready -- stuck,
+                     * crashed without writing its marker, or just too
+                     * slow -- left the parent with no self-termination
+                     * path at all. Found via an actual CI run: server
+                     * healthy at 15 FPS, stuck on this wait until GitHub's
+                     * own 6-hour job cap killed it. */
+                    cWarning(
+                        "Spawned child \"{}\" did not finish loading "
+                        "within {}ms -- proceeding without it",
+                        child.id,
+                        timeout.count());
                 }
             }
 #endif
@@ -1017,8 +1050,8 @@ extern "C" EMSCRIPTEN_KEEPALIVE void coffee_dummy_plug_event(const char* json_st
         out.data  = event;
         out.data.erase("type");
         out.data.erase("time");
-        cDebug("dummy plug live: custom event {} => {}", out.event,
-               out.data.dump());
+        // cDebug("dummy plug live: custom event {} => {}", out.event,
+        //        out.data.dump());
         container.subsystem_cast<DummyEventBus>().process(out, nullptr);
         break;
     }

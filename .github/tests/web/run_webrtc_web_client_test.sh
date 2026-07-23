@@ -103,6 +103,15 @@ OUT_DIR="$(realpath "$OUT_DIR")"
 TARGET="${TARGET:-desktop:x86_64-buildroot-linux-gnu:multi/BlamGraphics}"
 RESOURCE_DIR="${RESOURCE_DIR:-multi_build/desktop-x86_64-buildroot-linux-gnu-multi/examples/blam/cblam-testing/assets/}"
 MAP="${MAP:-/mnt/blam/pc/bloodgulch.map}"
+
+# webrtc_client_smoke.mjs's static server only serves BUNDLE_DIR itself
+# (see its own containment check) -- the wasm client requests map files
+# by plain relative path (e.g. "./bloodgulch.map"), so symlink whatever
+# .map files sit alongside $MAP into the bundle dir rather than teaching
+# the server to special-case a second directory.
+for mapfile in "$(dirname "$MAP")"/*.map; do
+    [ -f "$mapfile" ] && ln -sf "$mapfile" "$BUNDLE_DIR/$(basename "$mapfile")"
+done
 GATEWAY_A_HTTP_PORT="${GATEWAY_A_HTTP_PORT:-8098}"
 GATEWAY_B_HTTP_PORT="${GATEWAY_B_HTTP_PORT:-8099}"
 GATEWAY_A_RELAY_PORT="${GATEWAY_A_RELAY_PORT:-19501}"
