@@ -327,8 +327,8 @@ class RegionLoader
             return info;
         info.present = true;
         info.colour  = terrain_palette(s->colour[local]);
-        if(plane == 1 || plane == 2)
-            info.draw = false; // storeys only have decorated floors
+        if(plane != 0)
+            info.draw = false;
 
         int deco = s->decoration[local];
         if(deco > 0 && deco <= int(m_data.tiles.size()))
