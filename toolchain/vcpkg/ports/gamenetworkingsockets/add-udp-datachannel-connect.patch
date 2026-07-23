@@ -170,3 +170,25 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.cpp
  bool CConnectionTransportUDP::BCanSendEndToEndConnectRequest() const
  {
  	return m_pSocket != nullptr;
+diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
+--- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
++++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
+@@ -877,8 +877,16 @@
+ 	}
+ }
+ 
+-inline IRawUDPSocket::IRawUDPSocket() {}
+-inline IRawUDPSocket::~IRawUDPSocket() {}
++// Not "inline" (changed for coffeecutie): these are declared (not
++// defined) in steamnetworkingsockets_lowlevel.h, so an inline definition
++// here only links while every IRawUDPSocket subclass lives in this same
++// translation unit. The coffeecutie DataChannel-backed socket
++// (steamnetworkingsockets_p2p_webrtc_datachannel.cpp) subclasses it from
++// another TU -- Apple clang emits no out-of-line symbol for the inline
++// version (GCC happens to), giving darwin-only undefined-symbol link
++// failures.
++IRawUDPSocket::IRawUDPSocket() {}
++IRawUDPSocket::~IRawUDPSocket() {}
+ 
+ 
+ // Perform gather-based send, on platform that doesn't have sendmsg
