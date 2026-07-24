@@ -70,6 +70,11 @@ type signalMessage struct {
 	Dest      string `json:"dest,omitempty"`
 	Nonce     string `json:"nonce,omitempty"`
 	RelayPort int    `json:"relayPort,omitempty"`
+	// PunchPort is sent in the "register-pending" reply: the UDP port the
+	// registering server must punch its return-routability probe at. Told
+	// explicitly rather than guessed from the WS URL, since behind a TLS
+	// reverse proxy or docker port mapping the URL's port has nothing to
+	// do with the gateway's actual UDP port.
 	PunchPort int `json:"punchPort,omitempty"`
 }
 
@@ -94,9 +99,21 @@ type clientSession struct {
 	serverID string
 }
 
+type PortPool struct {
+	mu sync.RWMutex
+	minPort int
+	maxPort int
+	usedPorts map[int]struct{}
+}
+
 var (
 	sessionsMu sync.RWMutex
 	sessions   = make(map[string]*clientSession)
+	relayPortPool = PortPool{
+		minPort: 0,
+		maxPort: 0,
+		usedPorts: make(map[int]struct{}),
+	}
 )
 
 type registeredServer struct {
@@ -125,6 +142,9 @@ var (
 	registrationTTL   time.Duration
 	challengeTimeout  time.Duration
 	relayPunchTimeout time.Duration
+	// punchPortToAdvertise is what "register-pending" tells servers to
+	// punch at -- the challenge socket's bound port unless
+	// -advertise-punch-port overrides it (docker port mappings etc.).
 	punchPortToAdvertise int
 )
 
@@ -147,11 +167,36 @@ func newSessionID() string {
 	return hex.EncodeToString(b)
 }
 
+func newPortFromPool(portPool *PortPool) *int {
+	portPool.mu.Lock()
+	defer portPool.mu.Unlock()
+	if portPool.minPort == 0 {
+		p := 0
+		return &p
+	}
+	for p := portPool.minPort; p <= portPool.maxPort; p++ {
+		_, exists := portPool.usedPorts[p]
+		if !exists {
+			portPool.usedPorts[p] = struct{}{}
+			return &p
+		}
+	}
+	return nil
+}
+
+func freePortFromPool(port int, portPool *PortPool) {
+	portPool.mu.Lock()
+	defer portPool.mu.Unlock()
+	delete(portPool.usedPorts, port)
+}
+
 func main() {
 	listenAddr := flag.String("listen", ":8088", "HTTP/WebSocket signaling listen address")
 	dest := flag.String("dest", "", "legacy: hardcoded UDP destination, seeded into the registry as an always-active \"default\" entry (no challenge). Leave unset for a pure fleet-registry deployment.")
 	iceUDPPortMin := flag.Int("ice-udp-port-min", 0, "low end of the local UDP port range for ICE candidates (0 = fully ephemeral). Set both -min/-max to a small range for hosting behind a firewall that only opens a fixed set of ports -- avoids the single-port-mux throughput/isolation cost of forcing every connection onto one exact port.")
 	iceUDPPortMax := flag.Int("ice-udp-port-max", 0, "high end of the local UDP port range for ICE candidates (0 = fully ephemeral)")
+	relayPortMin := flag.Int("relay-port-min", 0, "low end of the local UDP port range for DataChannel<->UDP relay sockets (0 = fully ephemeral)")
+	relayPortMax := flag.Int("relay-port-max", 0, "high end of the local UDP port range for DataChannel<->UDP relay sockets (0 = fully ephemeral)")
 	relayUDPPort := flag.Int("relay-udp-port", 0, "fixed local UDP port for the DataChannel<->UDP relay socket (0 = ephemeral; set this when -dest points at another gateway's relay socket, so it has a fixed port to dial back to)")
 	registrationTTLFlag := flag.Duration("registration-ttl", 30*time.Second, "how long a fleet registration stays active without a heartbeat")
 	challengeTimeoutFlag := flag.Duration("challenge-timeout", 5*time.Second, "how long a fleet registration waits for its return-routability punch before being dropped")
@@ -169,6 +214,12 @@ func main() {
 	}
 	if *iceUDPPortMin != 0 && *iceUDPPortMin > *iceUDPPortMax {
 		log.Fatalf("-ice-udp-port-min (%d) must be <= -ice-udp-port-max (%d)", *iceUDPPortMin, *iceUDPPortMax)
+	}
+	if (*relayPortMin == 0) != (*relayPortMax == 0) {
+		log.Fatalf("-relay-port-min and -relay-port-max must be set together")
+	}
+	if *relayPortMin != 0 && *relayPortMin > *relayPortMax {
+		log.Fatalf("-relay-port-min (%d) must be <= -relay-port-max (%d)", *relayPortMin, *relayPortMax)
 	}
 
 	if *dest != "" {
@@ -204,6 +255,9 @@ func main() {
 	}
 	log.Printf("registration challenge socket on udp :%d (advertising punch port %d)",
 		probeSock.LocalAddr().(*net.UDPAddr).Port, punchPortToAdvertise)
+
+	relayPortPool.minPort = *relayPortMin
+	relayPortPool.maxPort = *relayPortMax
 
 	go sweepExpiredRegistrations()
 	go challengeListener()
@@ -341,12 +395,18 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 			return
 		}
 
-		sock, err := net.ListenUDP("udp", &net.UDPAddr{})
-		if err != nil {
-			log.Printf("failed to open relay socket: %v", err)
+		relayPort := newPortFromPool(&relayPortPool)
+		if relayPort == nil {
+			log.Printf("failed to allocate relay port for incoming datachannel")
 			return
 		}
-		relayPort := sock.LocalAddr().(*net.UDPAddr).Port
+		var laddr *net.UDPAddr = &net.UDPAddr{Port: *relayPort}
+		sock, err := net.ListenUDP("udp", laddr)
+		if err != nil {
+			log.Printf("failed to open relay socket: %v", err)
+			freePortFromPool(*relayPort, &relayPortPool)
+			return
+		}
 
 		var resolvedDest atomic.Pointer[net.UDPAddr]
 		dc.OnMessage(func(msg webrtc.DataChannelMessage) {
@@ -363,6 +423,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 			sock.Close()
 			srv.writeMu.Lock()
 			srv.conn.WriteJSON(signalMessage{Type: "client-relay-closed", SessionID: sessionID})
+			freePortFromPool(*relayPort, &relayPortPool)
 			srv.writeMu.Unlock()
 		})
 
@@ -370,11 +431,12 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		sendErr := srv.conn.WriteJSON(signalMessage{
 			Type:      "client-relay",
 			SessionID: sessionID,
-			RelayPort: relayPort,
+			RelayPort: *relayPort,
 		})
 		srv.writeMu.Unlock()
 		if sendErr != nil {
 			log.Printf("failed to send client-relay to server: %v", sendErr)
+			freePortFromPool(*relayPort, &relayPortPool)
 			sock.Close()
 			return
 		}
