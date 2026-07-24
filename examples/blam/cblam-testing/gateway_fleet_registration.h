@@ -99,12 +99,8 @@ private:
      * instead of a half-working registration. */
 #if !defined(COFFEE_WASM) && !defined(_WIN32)
     int         m_challengeSock{-1};
-    sockaddr_in m_gatewayAddr{}; /* resolved once in Start(); port is the
-                                  * registration-punch target (same
-                                  * number as -listen's HTTP port, see
-                                  * .cpp) -- per-client relay punches below
-                                  * reuse the IP with the client's own
-                                  * relay port instead. */
+    sockaddr_in m_gatewayAddr{}; /* IP resolved once in Start() from the
+                                  * register URL's host */
 
     /*! Per browser client currently relaying to this server, keyed by
      * the gateway-assigned session ID (see "client-relay" in
@@ -130,6 +126,9 @@ private:
     mutable std::mutex                    m_mutex;
     bool                                   m_wsOpen{false};
     bool                                   m_active{false};
+    /* True once register-pending delivered the punch port; no punches go
+     * out before that. */
+    bool                                   m_havePunchTarget{false};
     std::chrono::steady_clock::time_point m_lastHeartbeat{};
     std::chrono::steady_clock::time_point m_lastRegistrationPunch{};
 };

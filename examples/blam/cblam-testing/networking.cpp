@@ -625,8 +625,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 #if defined(USE_WEBRTC_TRANSPORT)
                     if(connect->remote.starts_with("ws://") ||
                        connect->remote.starts_with("wss://"))
+                {
                     create_server_webrtc(connect->remote);
-                else
+                } else
 #endif
                 {
                     create_server(connect->remote);
@@ -634,6 +635,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     if(!connect->gateway_register_url.empty() &&
                        m_socket != k_HSteamListenSocket_Invalid)
                     {
+                        cDebug("Starting gateway fleet registration");
                         m_fleetRegistration =
                             std::make_unique<webrtc_signaling::GatewayFleetRegistration>(
                                 connect->gateway_register_url,
@@ -817,10 +819,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
 
 #if defined(USE_WEBRTC_TRANSPORT)
-        /* A ws://.../wss://... remote is a webrtc-gateway (see
-         * tools/webrtc-gateway, examples/blam/cblam-testing/WEBRTC_TRANSPORT.md)
-         * rather than a directly-dialable UDP server -- route through the
-         * DataChannel bootstrap instead of ConnectByIPAddress below. */
+        /* Takes a value of the form:
+         * <ws/wss>://<ip:port>%23<serverId>
+         * In a URL it should look like server=ws://127.0.0.1:XXXX%23test
+         * In order to avoid having the serverId interpreted as a fragment*/
         if(remote.starts_with("ws://") || remote.starts_with("wss://"))
         {
             connect_server_webrtc(remote);
@@ -880,9 +882,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         {
             baseUrl  = gatewayUrl.substr(0, hash);
             serverId = gatewayUrl.substr(hash + 1);
+        } else
+        {
+            cWarning("Failed to split gateway URL: {}", gatewayUrl);
         }
         cDebug("Bootstrapping WebRTC DataChannel via gateway {}", gatewayUrl);
         m_webrtcDirectMode = !serverId.empty();
+        if(m_webrtcDirectMode)
+            cDebug("Assuming WebRTC direct mode because no serverID was provided");
         m_webrtcBootstrap =
             new webrtc_signaling::GatewayConnectBootstrap(baseUrl, serverId);
         m_webrtcBootstrap->Start();

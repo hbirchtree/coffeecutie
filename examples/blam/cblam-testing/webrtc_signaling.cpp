@@ -148,6 +148,7 @@ void GatewayConnectBootstrap::maybeSendOffer()
 
 void GatewayConnectBootstrap::onWebSocketMessage(std::string const& text)
 {
+    cDebug("Gateway message: {}", text);
     nlohmann::json msg;
     try
     {

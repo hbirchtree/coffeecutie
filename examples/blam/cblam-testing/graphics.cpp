@@ -83,10 +83,6 @@ i32 blam_main()
              "Interface to start a server on",
              cxxopts::value<std::string>())
             //
-            ("master-server",
-             "Master server to query for servers",
-             cxxopts::value<std::string>())
-            //
             ("gateway-register",
              "webrtc-gateway /server-signal URL to register this --listen "
              "server with, so browser clients can be routed to it",

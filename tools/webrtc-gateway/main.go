@@ -70,6 +70,7 @@ type signalMessage struct {
 	Dest      string `json:"dest,omitempty"`
 	Nonce     string `json:"nonce,omitempty"`
 	RelayPort int    `json:"relayPort,omitempty"`
+	PunchPort int `json:"punchPort,omitempty"`
 }
 
 const registerPunchPrefix = "COFFEE-REG-PUNCH:"
@@ -124,6 +125,7 @@ var (
 	registrationTTL   time.Duration
 	challengeTimeout  time.Duration
 	relayPunchTimeout time.Duration
+	punchPortToAdvertise int
 )
 
 func mustAtoi(s string) int {
@@ -154,6 +156,8 @@ func main() {
 	registrationTTLFlag := flag.Duration("registration-ttl", 30*time.Second, "how long a fleet registration stays active without a heartbeat")
 	challengeTimeoutFlag := flag.Duration("challenge-timeout", 5*time.Second, "how long a fleet registration waits for its return-routability punch before being dropped")
 	relayPunchTimeoutFlag := flag.Duration("relay-punch-timeout", 5*time.Second, "how long a new per-client relay socket waits for the registered server's NAT punch before giving up on that client")
+	challengeUDPPort := flag.Int("challenge-udp-port", 0, "UDP port to bind the registration challenge socket on (0 = same port number as -listen)")
+	advertisePunchPort := flag.Int("advertise-punch-port", 0, "punch port to tell registering servers (register-pending's punchPort) when the externally reachable UDP port differs from the bound one, e.g. behind a docker port mapping (0 = advertise the bound port)")
 	flag.Parse()
 
 	registrationTTL = *registrationTTLFlag
@@ -181,15 +185,25 @@ func main() {
 		log.Printf("legacy -dest %s seeded as always-active registry entry \"default\"", destAddr)
 	}
 
-	_, listenPortStr, err := net.SplitHostPort(*listenAddr)
-	if err != nil {
-		log.Fatalf("bad -listen %q: %v", *listenAddr, err)
+	bindPunchPort := *challengeUDPPort
+	if bindPunchPort == 0 {
+		_, listenPortStr, err := net.SplitHostPort(*listenAddr)
+		if err != nil {
+			log.Fatalf("bad -listen %q: %v", *listenAddr, err)
+		}
+		bindPunchPort = mustAtoi(listenPortStr)
 	}
-	probeSock, err := net.ListenUDP("udp", &net.UDPAddr{Port: mustAtoi(listenPortStr)})
+	probeSock, err := net.ListenUDP("udp", &net.UDPAddr{Port: bindPunchPort})
 	if err != nil {
 		log.Fatalf("failed to open challenge probe socket: %v", err)
 	}
 	challengeSock = probeSock
+	punchPortToAdvertise = *advertisePunchPort
+	if punchPortToAdvertise == 0 {
+		punchPortToAdvertise = probeSock.LocalAddr().(*net.UDPAddr).Port
+	}
+	log.Printf("registration challenge socket on udp :%d (advertising punch port %d)",
+		probeSock.LocalAddr().(*net.UDPAddr).Port, punchPortToAdvertise)
 
 	go sweepExpiredRegistrations()
 	go challengeListener()
@@ -497,6 +511,16 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			myID, myEntry = id, entry
+			// Tell the server where to send its return-routability punch
+			// -- explicitly, never guessed from URLs (see PunchPort's
+			// field comment).
+			myEntry.writeMu.Lock()
+			err = conn.WriteJSON(signalMessage{Type: "register-pending", PunchPort: punchPortToAdvertise})
+			myEntry.writeMu.Unlock()
+			if err != nil {
+				log.Printf("failed to send register-pending to %q: %v", myID, err)
+				return
+			}
 		case "heartbeat":
 			if myEntry == nil {
 				log.Printf("server signal: heartbeat before a successful register")

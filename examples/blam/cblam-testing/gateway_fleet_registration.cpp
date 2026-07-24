@@ -41,21 +41,21 @@ const std::string kRegisterPunchPrefix = "COFFEE-REG-PUNCH:";
 const std::string kRelayPunchPayload   = "COFFEE-NAT-PUNCH";
 
 #if !defined(COFFEE_WASM) && !defined(_WIN32)
-/* "ws://host:port" or "wss://host:port" -> host, port. No default-port
- * handling -- every URL this class is ever given already carries one
- * explicitly (see graphics.cpp's --gateway-register). */
-bool parseWsHostPort(std::string const& url, std::string& host, std::string& port)
+/* "ws(s)://host[:port][/path]" -> host. Only the host matters here: the
+ * UDP punch PORT is told to us by the gateway (register-pending's
+ * punchPort) rather than guessed from this URL, which behind a TLS
+ * reverse proxy or docker port mapping bears no relation to the
+ * gateway's actual UDP port. */
+bool parseWsHost(std::string const& url, std::string& host)
 {
     auto schemeEnd = url.find("://");
     auto rest      = schemeEnd == std::string::npos ? url : url.substr(schemeEnd + 3);
     if(auto slash = rest.find('/'); slash != std::string::npos)
         rest = rest.substr(0, slash);
-    auto colon = rest.rfind(':');
-    if(colon == std::string::npos)
-        return false;
-    host = rest.substr(0, colon);
-    port = rest.substr(colon + 1);
-    return !host.empty() && !port.empty();
+    if(auto colon = rest.rfind(':'); colon != std::string::npos)
+        rest = rest.substr(0, colon);
+    host = rest;
+    return !host.empty();
 }
 
 bool resolveUDPAddr(std::string const& host, std::string const& port, sockaddr_in& out)
@@ -135,13 +135,15 @@ void GatewayFleetRegistration::Start()
     int flags = ::fcntl(m_challengeSock, F_GETFL, 0);
     ::fcntl(m_challengeSock, F_SETFL, flags | O_NONBLOCK);
 
-    std::string gatewayHost, gatewayPort;
-    if(!parseWsHostPort(m_registerUrl, gatewayHost, gatewayPort) ||
-       !resolveUDPAddr(gatewayHost, gatewayPort, m_gatewayAddr))
+    /* Host only -- the punch port arrives later via register-pending, so
+     * m_gatewayAddr's port stays 0 until then (m_havePunchTarget). */
+    std::string gatewayHost;
+    if(!parseWsHost(m_registerUrl, gatewayHost) ||
+       !resolveUDPAddr(gatewayHost, "0", m_gatewayAddr))
     {
         cWarning(
             "webrtc_signaling: gateway_fleet_registration: failed to "
-            "resolve gateway host/port from {}",
+            "resolve gateway host from {}",
             m_registerUrl);
         ::close(m_challengeSock);
         m_challengeSock = -1;
@@ -176,6 +178,7 @@ void GatewayFleetRegistration::Start()
 
 void GatewayFleetRegistration::onWebSocketOpen()
 {
+    cDebug("Gateway WebSocket opened");
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         m_wsOpen        = true;
@@ -186,6 +189,7 @@ void GatewayFleetRegistration::onWebSocketOpen()
 
 void GatewayFleetRegistration::onWebSocketMessage(std::string const& text)
 {
+    cDebug("GatewayFleetRegistration::onWebSocketMessage: {}", text);
     nlohmann::json msg;
     try
     {
@@ -208,6 +212,22 @@ void GatewayFleetRegistration::onWebSocketMessage(std::string const& text)
             msg.value("data", std::string()));
         std::lock_guard<std::mutex> lock(m_mutex);
         m_active = false;
+    } else if(type == "register-pending")
+    {
+#if !defined(COFFEE_WASM) && !defined(_WIN32)
+        int punchPort = msg.value("punchPort", 0);
+        if(punchPort <= 0 || punchPort > 65535)
+        {
+            cWarning(
+                "webrtc_signaling: gateway_fleet_registration: "
+                "register-pending with bad punchPort {}",
+                punchPort);
+            return;
+        }
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_gatewayAddr.sin_port = htons(static_cast<uint16_t>(punchPort));
+        m_havePunchTarget      = true;
+#endif
     } else if(type == "client-relay")
     {
 #if !defined(COFFEE_WASM) && !defined(_WIN32)
@@ -259,14 +279,23 @@ void GatewayFleetRegistration::sendRegistrationPunch()
 #if !defined(COFFEE_WASM) && !defined(_WIN32)
     if(m_challengeSock < 0)
         return;
+    /* m_gatewayAddr's port is filled in by register-pending on the WS
+     * callback thread -- copy under the same lock. */
+    sockaddr_in target{};
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if(!m_havePunchTarget)
+            return;
+        target = m_gatewayAddr;
+    }
     std::string payload = kRegisterPunchPrefix + m_serverId;
     ::sendto(
         m_challengeSock,
         payload.data(),
         payload.size(),
         0,
-        reinterpret_cast<sockaddr const*>(&m_gatewayAddr),
-        sizeof(m_gatewayAddr));
+        reinterpret_cast<sockaddr const*>(&target),
+        sizeof(target));
 #endif
 }
 
@@ -316,7 +345,11 @@ void GatewayFleetRegistration::pollChallengeSocket()
 #if !defined(COFFEE_WASM) && !defined(_WIN32)
 void GatewayFleetRegistration::sendRelayPunch(int relayPort)
 {
-    sockaddr_in target      = m_gatewayAddr;
+    sockaddr_in target{};
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        target = m_gatewayAddr;
+    }
     target.sin_port         = htons(static_cast<uint16_t>(relayPort));
     SteamNetworkingIPAddr addr = toSteamAddr(target);
     m_sockets->SendRawPacketOnListenSocket(
