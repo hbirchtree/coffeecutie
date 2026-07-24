@@ -203,6 +203,7 @@ struct GameEvent
         ServerConnected,
         ServerCameraControl,
         ServerDisconnect,
+        ServerJoinInfo,
         ServerStateUpdate,
         ServerPlayerStateUpdate,
     };
@@ -346,6 +347,14 @@ struct ServerDisconnectEvent
     static constexpr auto event_type = GameEvent::ServerDisconnect;
 };
 
+struct ServerJoinInfo
+{
+    static constexpr auto event_type = GameEvent::ServerJoinInfo;
+
+    blam::bl_string_var<128> server_id; /*!< ID part of URL passed to gateway */
+    blam::bl_string_var<64>  secret;    /*!< Secret for connect, if needed */
+};
+
 struct ServerStateUpdate
 {
     static constexpr auto event_type = GameEvent::ServerStateUpdate;
@@ -356,6 +365,7 @@ struct ServerStateUpdate
         ServerName,
         PlayerCount,
         PlayerMaxCount,
+        ServerJoinable,
     } type{None};
 
     union

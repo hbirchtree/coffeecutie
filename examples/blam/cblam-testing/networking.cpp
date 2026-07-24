@@ -1545,6 +1545,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }
         }
         m_connections.erase(connection);
+        update_player_counts();
         send_player_roster();
         m_impl->CloseConnection(connection, code, nullptr, linger);
     }
