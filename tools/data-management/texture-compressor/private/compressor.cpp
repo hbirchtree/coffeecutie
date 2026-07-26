@@ -513,8 +513,7 @@ i32 cooker_main(i32 argc, char** argv)
                     return 1;
             } else if(codec == "raw")
             {
-                if(!raw_include(
-                       base_dir, file, resolutions, pixcmp, format))
+                if(!raw_include(base_dir, file, resolutions, pixcmp, format))
                     return 1;
             }
         }

@@ -73,10 +73,10 @@ type signalMessage struct {
 	// "gns-rendezvous" messages — the gateway never inspects it.
 	Data string `json:"data,omitempty"`
 
-	ServerID  string `json:"serverId,omitempty"`
-	Dest      string `json:"dest,omitempty"`
-	Nonce     string `json:"nonce,omitempty"`
-	RelayPort int    `json:"relayPort,omitempty"`
+	ServerID   string `json:"serverId,omitempty"`
+	Dest       string `json:"dest,omitempty"`
+	Nonce      string `json:"nonce,omitempty"`
+	RelayPort  int    `json:"relayPort,omitempty"`
 	RelayNonce string `json:"relayNonce,omitempty"`
 	// PunchPort is sent in the "register-pending" reply: the UDP port the
 	// registering server must punch its return-routability probe at. Told
@@ -136,16 +136,16 @@ type clientSession struct {
 }
 
 type PortPool struct {
-	mu sync.RWMutex
-	minPort int
-	maxPort int
+	mu        sync.RWMutex
+	minPort   int
+	maxPort   int
 	usedPorts map[int]struct{}
 }
 
 type serverMetadata struct {
 	playerCountCurrent int
-	playerCountMax int
-	timeLeft int
+	playerCountMax     int
+	timeLeft           int
 	// gametype string
 }
 
@@ -207,8 +207,8 @@ var workingSet serverWorkingSet = serverWorkingSet{
 		sessions: make(map[string]*clientSession),
 	},
 	relayPortPool: PortPool{
-		minPort: 0,
-		maxPort: 0,
+		minPort:   0,
+		maxPort:   0,
 		usedPorts: make(map[int]struct{}),
 	},
 }
@@ -333,13 +333,13 @@ func main() {
 	adminHost, adminPort, err := net.SplitHostPort(*adminAddr)
 	go startAdminInterface(
 		adminInterfaceOpts{
-			host: adminHost,
-			port: adminPort,
+			host:       adminHost,
+			port:       adminPort,
 			privateKey: *adminPrivateKey,
 		},
 		adminInterfaceModel{
 			workingSet: &workingSet,
-			settings: &settings,
+			settings:   &settings,
 		},
 	)
 
@@ -667,8 +667,8 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	var (
-		myID    string
-		myEntry *registeredServer
+		myID          string
+		myEntry       *registeredServer
 		legacyAdopted bool
 	)
 
@@ -921,7 +921,7 @@ func relayRendezvousToServer(serverID, sessionID, data string) {
 func relayRendezvousToClient(sessionID, data string) {
 	workingSet.clients.RLock()
 	session, ok := workingSet.clients.sessions[sessionID]
-    workingSet.clients.RUnlock()
+	workingSet.clients.RUnlock()
 	if !ok {
 		log.Printf("dropping gns-rendezvous for unknown session %s", sessionID)
 		return

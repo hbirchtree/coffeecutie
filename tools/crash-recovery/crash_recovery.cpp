@@ -105,7 +105,8 @@ i32 crash_main(i32, cstring_w*)
 #endif
 
     cDebug("Spawning child");
-    auto spawnInfo = posix_proc::spawn<const char*>({args.at(0), args, workingDir});
+    auto spawnInfo =
+        posix_proc::spawn<const char*>({args.at(0), args, workingDir});
 
     if(auto e = fd::close(STDIN_FILENO))
         Throw(posix_runtime_error(*e));
@@ -204,9 +205,7 @@ i32 crash_main(i32, cstring_w*)
         auto profileResource = Resource(profileLocation);
 
         crashPush.addMimePart(
-            "profile",
-            C_OCAST<BytesConst>(profileResource),
-            "text/plain");
+            "profile", C_OCAST<BytesConst>(profileResource), "text/plain");
     }
 
     if(machineProfileLocation.valid() &&
@@ -227,24 +226,16 @@ i32 crash_main(i32, cstring_w*)
         auto stacktrace = Resource(stacktraceLocation);
 
         crashPush.addMimePart(
-            "stacktrace",
-            C_OCAST<BytesConst>(stacktrace),
-            "text/plain");
+            "stacktrace", C_OCAST<BytesConst>(stacktrace), "text/plain");
     }
 
     auto exitCodeStr = stl_types::cast_pod(exitCode);
     crashPush.addMimePart(
-        "exitCode",
-        BytesConst::ofString(exitCodeStr),
-        "text/plain");
+        "exitCode", BytesConst::ofString(exitCodeStr), "text/plain");
     crashPush.addMimePart(
-        "stdout",
-        BytesConst::ofString(stdoutBuf),
-        "text/plain");
+        "stdout", BytesConst::ofString(stdoutBuf), "text/plain");
     crashPush.addMimePart(
-        "stderr",
-        BytesConst::ofString(stderrBuf),
-        "text/plain");
+        "stderr", BytesConst::ofString(stderrBuf), "text/plain");
 
     cDebug("Pushing crash report via Curl MIME");
 

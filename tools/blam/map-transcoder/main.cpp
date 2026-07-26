@@ -62,6 +62,7 @@ static void patch_u16(std::vector<u8>& buf, size_t off, u16 v)
 {
     std::memcpy(buf.data() + off, &v, sizeof(v)); // host LE == map LE
 }
+
 static void patch_u32(std::vector<u8>& buf, size_t off, u32 v)
 {
     std::memcpy(buf.data() + off, &v, sizeof(v));
@@ -75,15 +76,15 @@ i32 coffee_main(i32, cstring_w*)
     cxxopts::ParseResult arguments;
     {
         cxxopts::Options options(
-            "MapTranscoder",
-            "A Blam! map bitmap transcoder");
+            "MapTranscoder", "A Blam! map bitmap transcoder");
         Coffee::BaseArgParser::GetBase(options);
         options.custom_help("[input map.map] [input bitmaps.map] [OPTION...]");
 
         options.add_options("Target")
             //
             ("target",
-             "Target device, determines default texture formats; Gekko, PowerVR, ES2, ES3",
+             "Target device, determines default texture formats; Gekko, "
+             "PowerVR, ES2, ES3",
              cxxopts::value<std::string>()->default_value("Gekko"))
             //
             ;
@@ -134,27 +135,35 @@ i32 coffee_main(i32, cstring_w*)
                     " * Compresses RGB565 as CMPR\n"
                     "\n"
                     " PowerVR:\n"
-                    " * Targets PowerVR SGX 5-series GPUs running OpenGL ES 2.0\n"
-                    " * Keeps most formats that are compatible with baseline OpenGL ES 2.0\n"
+                    " * Targets PowerVR SGX 5-series GPUs running OpenGL ES "
+                    "2.0\n"
+                    " * Keeps most formats that are compatible with baseline "
+                    "OpenGL ES 2.0\n"
                     " * Transcodes BC1, RGB565 to PVRTCv1 RGB\n"
                     " * Transcodes BC2, BC3, RGBA8, XRGB8 to PVRTCv1 RGBA\n"
                     "\n"
                     " Adreno2xx (unimplemented):\n"
                     " * Targets Adreno 2xx GPUs running OpenGL ES 2.0\n"
-                    " * Keeps most formats that are compatible with baseline OpenGL ES 2.0\n"
+                    " * Keeps most formats that are compatible with baseline "
+                    "OpenGL ES 2.0\n"
                     " * Transcodes BC1, RGB565 to ETC1\n"
                     " * Transcodes BC2, BC3, RGBA8, XRGB8 to ATC RGBA\n"
                     "\n"
                     " ES2:\n"
-                    " * Targets OpenGL ES 2.0 systems (non-PowerVR, e.g. Mali-400MP)\n"
-                    " * Keeps most formats that are compatible with baseline OpenGL ES 2.0\n"
+                    " * Targets OpenGL ES 2.0 systems (non-PowerVR, e.g. "
+                    "Mali-400MP)\n"
+                    " * Keeps most formats that are compatible with baseline "
+                    "OpenGL ES 2.0\n"
                     " * Transcodes BC1 to ETC1\n"
-                    " * Transcodes BC2, BC3 to split-alpha ETC1 (RGB ETC1 + alpha-as-luminance ETC1,\n"
-                    "   combined in shader; needs special handling, matches BC2/BC3 footprint)\n"
+                    " * Transcodes BC2, BC3 to split-alpha ETC1 (RGB ETC1 + "
+                    "alpha-as-luminance ETC1,\n"
+                    "   combined in shader; needs special handling, matches "
+                    "BC2/BC3 footprint)\n"
                     "\n"
                     " ES3:\n"
                     " * Targets OpenGL ES 3.0 systems\n"
-                    " * Keeps most formats that are compatible with baseline OpenGL ES 3.0\n"
+                    " * Keeps most formats that are compatible with baseline "
+                    "OpenGL ES 3.0\n"
                     " * Transcodes BC1 to ETC2 RGB\n"
                     " * Transcodes BC2, BC3 to ETC2 RGBA\n");
             }
@@ -202,7 +211,8 @@ i32 coffee_main(i32, cstring_w*)
         [](std::string_view, libc_types::i16) {});
     if(parsed.has_error())
     {
-        cWarning("map parse failed err={0}", magic_enum::enum_name(parsed.error()));
+        cWarning(
+            "map parse failed err={0}", magic_enum::enum_name(parsed.error()));
         return 4;
     }
     auto const& c = parsed.value();
@@ -272,9 +282,9 @@ i32 coffee_main(i32, cstring_w*)
                 dst_off  = off;
             } else
             {
-                auto pix = blam::reference<u8>{
-                    .count = img.size, .offset = img.offset}
-                               .data(c.magic);
+                auto pix =
+                    blam::reference<u8>{.count = img.size, .offset = img.offset}
+                        .data(c.magic);
                 if(pix.has_error())
                 {
                     st.skipped_read++;
@@ -300,7 +310,8 @@ i32 coffee_main(i32, cstring_w*)
                 continue;
             }
 
-            std::memcpy(dst_base + dst_off, result->data.data(), result->data.size());
+            std::memcpy(
+                dst_base + dst_off, result->data.data(), result->data.size());
 
             // Patch the image_t in the output map: new format + size +
             // mip levels, verbatim from the kernel. Member-address

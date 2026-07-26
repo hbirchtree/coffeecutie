@@ -13,8 +13,8 @@
  * what entity_query's own predicate needs.
  */
 
-#include <coffee/core/CApplication>
 #include <coffee/components/components.h>
+#include <coffee/core/CApplication>
 #include <coffee/core/CDebug>
 
 #include <chrono>
@@ -33,9 +33,9 @@ using libc_types::u64;
  */
 namespace alloc_meter {
 
-static thread_local u64  g_allocs  = 0;
-static thread_local u64  g_bytes   = 0;
-static thread_local bool g_armed   = false;
+static thread_local u64  g_allocs = 0;
+static thread_local u64  g_bytes  = 0;
+static thread_local bool g_armed  = false;
 
 struct window
 {
@@ -277,10 +277,9 @@ i32 bench_main(i32, cstring_w*)
         "sizeof: entity_query={0}, quick_container={1} (new), "
         "legacy_quick_container={2} (old, + possible heap per function)",
         sizeof(compo::EntityContainer::entity_query),
-        sizeof(stl_types::quick_container<
-               compo::EntityContainer::entity_query>),
-        sizeof(legacy_quick_container<
-               compo::EntityContainer::entity_query>));
+        sizeof(
+            stl_types::quick_container<compo::EntityContainer::entity_query>),
+        sizeof(legacy_quick_container<compo::EntityContainer::entity_query>));
 
     bench("select<Position>            (all)", [&container]() -> u64 {
         u64 n = 0;

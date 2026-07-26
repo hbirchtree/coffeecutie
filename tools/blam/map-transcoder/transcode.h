@@ -5,11 +5,12 @@
  * ready to upload with no runtime decode. Multi-byte GX texels are big-endian.
  *
  * These mirror the runtime re-tilers in examples/blam/gx-bsp/main.cpp
- * (tile_rgb565, dxt_to_cmpr) but run on the host so the console never decodes. */
+ * (tile_rgb565, dxt_to_cmpr) but run on the host so the console never decodes.
+ */
 
+#include <blam/volta/blam_bitm.h>
 #include <peripherals/identify/compiler/unreachable.h>
 #include <peripherals/stl/range.h>
-#include <blam/volta/blam_bitm.h>
 
 #include <pvrtc/Common.h>
 #include <pvrtc/Encode.h>
@@ -30,10 +31,10 @@
 
 namespace mtx {
 
+using blam::bitm::format_t;
 using libc_types::u16;
 using libc_types::u32;
 using libc_types::u8;
-using blam::bitm::format_t;
 
 inline bool is_pow2(u16 v)
 {
@@ -42,7 +43,7 @@ inline bool is_pow2(u16 v)
 
 inline void decode_565_rgba(gsl::span<u16 const> px, std::vector<u8>& rgba)
 {
-    for(size_t i = 0; i<px.size(); i++)
+    for(size_t i = 0; i < px.size(); i++)
     {
         u16 const v = px[i];
         int       r = (v >> 11) & 31, g = (v >> 5) & 63, b = v & 31;
@@ -66,7 +67,8 @@ inline std::vector<u8> decode_uncompressed_rgba(
         // decode_565_rgba's unguarded write loop run off the end of `rgba`.
         rgba.resize(w * h * 4);
         decode_565_rgba(
-            gsl::span<u16 const>(reinterpret_cast<u16 const*>(px.data()), w * h),
+            gsl::span<u16 const>(
+                reinterpret_cast<u16 const*>(px.data()), w * h),
             rgba);
         break;
     case format_t::XRGB8: // bytes R,G,B,X -> force alpha opaque
@@ -84,22 +86,21 @@ inline std::vector<u8> decode_uncompressed_rgba(
         break;
     case format_t::BC1:
     case format_t::BC2:
-    case format_t::BC3:
-    {
-        u32 blk_size{};
+    case format_t::BC3: {
+        u32                  blk_size{};
         decltype(bcdec_bc1)* transform{};
         switch(src)
         {
         case format_t::BC1:
-            blk_size = BCDEC_BC1_BLOCK_SIZE;
+            blk_size  = BCDEC_BC1_BLOCK_SIZE;
             transform = bcdec_bc1;
             break;
         case format_t::BC2:
-            blk_size = BCDEC_BC2_BLOCK_SIZE;
+            blk_size  = BCDEC_BC2_BLOCK_SIZE;
             transform = bcdec_bc2;
             break;
         case format_t::BC3:
-            blk_size = BCDEC_BC3_BLOCK_SIZE;
+            blk_size  = BCDEC_BC3_BLOCK_SIZE;
             transform = bcdec_bc3;
             break;
         default:
@@ -162,19 +163,19 @@ inline u32 src_level_bytes(format_t src, u16 w, u16 h)
  * per-level encode step differs between them. */
 template<typename EncodeLevel>
 inline bool walk_mips(
-    format_t         src_fmt,
+    format_t            src_fmt,
     gsl::span<u8 const> src_px,
-    u32              src_size,
-    u16              w,
-    u16              h,
-    u16              src_mip_count,
-    EncodeLevel&&    encode_level,
-    std::vector<u8>& tiled,
-    u32&             out_levels)
+    u32                 src_size,
+    u16                 w,
+    u16                 h,
+    u16                 src_mip_count,
+    EncodeLevel&&       encode_level,
+    std::vector<u8>&    tiled,
+    u32&                out_levels)
 {
-    u16 const levels = src_mip_count < 1 ? 1 : src_mip_count;
+    u16 const levels  = src_mip_count < 1 ? 1 : src_mip_count;
     u32       src_off = 0;
-    out_levels = 0;
+    out_levels        = 0;
     for(u16 k = 0; k < levels; k++)
     {
         u16 const wl  = static_cast<u16>(w >> k ? w >> k : 1);
@@ -217,17 +218,17 @@ inline bool walk_mips(
 struct transcode_result
 {
     blam::bitm::format_t format; // patched into image_t::format verbatim
-    u16                  maxlod; // patched into image_t::mipmaps verbatim (0 if n/a)
-    std::vector<u8>      data;
+    u16             maxlod; // patched into image_t::mipmaps verbatim (0 if n/a)
+    std::vector<u8> data;
 };
 
 using kernel_fn = std::function<std::optional<transcode_result>(
-    format_t             src_fmt,
-    gsl::span<u8 const>  src_px,
-    u32                  src_size,
-    u16                  w,
-    u16                  h,
-    u16                  src_mip_count)>;
+    format_t            src_fmt,
+    gsl::span<u8 const> src_px,
+    u32                 src_size,
+    u16                 w,
+    u16                 h,
+    u16                 src_mip_count)>;
 
 namespace gekko {
 
@@ -281,7 +282,8 @@ inline std::optional<blam::bitm::format_t> target_for(format_t src)
 /* --- tilers --------------------------------------------------------------- */
 
 /* Linear RGB565 -> GX 4x4 tiles. swap byte-swaps each texel to big-endian. */
-inline void tile_rgb565(gsl::span<u16 const> src, gsl::span<u16> dst, u16 w, u16 h, bool swap)
+inline void tile_rgb565(
+    gsl::span<u16 const> src, gsl::span<u16> dst, u16 w, u16 h, bool swap)
 {
     u32 o = 0;
     for(u16 ty = 0; ty < h; ty += 4)
@@ -305,12 +307,13 @@ inline void tile_i8(gsl::span<u8 const> src, gsl::span<u8>& dst, u16 w, u16 h)
                 for(u16 rx = 0; rx < 8; rx++)
                 {
                     u16 const x = tx + rx, y = ty + ry;
-                    dst[o++]    = (x < w && y < h) ? src[y * w + x] : 0;
+                    dst[o++] = (x < w && y < h) ? src[y * w + x] : 0;
                 }
 }
 
 /* Linear intensity+alpha (source byte order [I,A]) -> GX_TF_IA8 4x4 tiles.
- * GX reads the 16-bit texel big-endian as (I<<8)|A, so store [I,A] per texel. */
+ * GX reads the 16-bit texel big-endian as (I<<8)|A, so store [I,A] per texel.
+ */
 inline void tile_ia8(gsl::span<u8 const> src, gsl::span<u8>& dst, u16 w, u16 h)
 {
     u32 o = 0;
@@ -319,7 +322,7 @@ inline void tile_ia8(gsl::span<u8 const> src, gsl::span<u8>& dst, u16 w, u16 h)
             for(u16 ry = 0; ry < 4; ry++)
                 for(u16 rx = 0; rx < 4; rx++)
                 {
-                    u16 const x = tx + rx, y = ty + ry;
+                    u16 const  x = tx + rx, y = ty + ry;
                     bool const in = (x < w && y < h);
                     dst[o++]      = in ? src[(y * w + x) * 2 + 0] : 0; // I
                     dst[o++]      = in ? src[(y * w + x) * 2 + 1] : 0; // A
@@ -332,14 +335,14 @@ inline void tile_ia8(gsl::span<u8 const> src, gsl::span<u8>& dst, u16 w, u16 h)
  * BC2/BC3: block 16, colour@8 (alpha dropped). Mirrors gx-bsp dxt_to_cmpr. */
 inline void dxt_to_cmpr(
     gsl::span<u8 const> src,
-    gsl::span<u8>& dst,
-    u16 w,
-    u16 h,
-    u32 block_size,
-    u32 color_off)
+    gsl::span<u8>&      dst,
+    u16                 w,
+    u16                 h,
+    u32                 block_size,
+    u32                 color_off)
 {
     u32 const bw = (w + 3) / 4, bh = (h + 3) / 4;
-    u32       o  = 0;
+    u32       o   = 0;
     auto      rev = [](u8 v) -> u8 {
         return ((v & 0x03) << 6) | ((v & 0x0C) << 2) | ((v & 0x30) >> 2) |
                ((v & 0xC0) >> 6);
@@ -353,7 +356,9 @@ inline void dxt_to_cmpr(
                     u8        b[8] = {0};
                     if(bx < bw && by < bh)
                         std::memcpy(
-                            b, &src[(by * bw + bx) * block_size + color_off], 8);
+                            b,
+                            &src[(by * bw + bx) * block_size + color_off],
+                            8);
                     dst[o++] = b[1];
                     dst[o++] = b[0];
                     dst[o++] = b[3];
@@ -365,16 +370,19 @@ inline void dxt_to_cmpr(
                 }
 }
 
-/* --- BC1 encode (for uncompressed sources targeting CMPR, e.g. lightmaps) --- */
+/* --- BC1 encode (for uncompressed sources targeting CMPR, e.g. lightmaps) ---
+ */
 
 /* Minimal BC1/DXT1 block encoder: per 4x4 block use the per-channel min/max as
- * the two 565 endpoints (opaque 4-colour mode), assign each texel the nearest of
- * the 4 ramp colours. Adequate for smooth low-frequency data (lightmaps).
- * `rgba` = tightly packed w*h*4 (RGBA8); emits 8-byte blocks in linear order. */
-inline void encode_bc1(gsl::span<u8 const> rgba, std::vector<u8>& blocks, u16 w, u16 h)
+ * the two 565 endpoints (opaque 4-colour mode), assign each texel the nearest
+ * of the 4 ramp colours. Adequate for smooth low-frequency data (lightmaps).
+ * `rgba` = tightly packed w*h*4 (RGBA8); emits 8-byte blocks in linear order.
+ */
+inline void encode_bc1(
+    gsl::span<u8 const> rgba, std::vector<u8>& blocks, u16 w, u16 h)
 {
     u32 const bw = (w + 3u) / 4u, bh = (h + 3u) / 4u;
-    auto to565 = [](int r, int g, int b) -> u16 {
+    auto      to565 = [](int r, int g, int b) -> u16 {
         return static_cast<u16>(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
     };
     auto exp565 = [](u16 c, int& r, int& g, int& b) {
@@ -423,16 +431,16 @@ inline void encode_bc1(gsl::span<u8 const> rgba, std::vector<u8>& blocks, u16 w,
                 if(px < w && py < h)
                 {
                     u32 const i = (py * w + px) * 4;
-                    r = rgba[i];
-                    g = rgba[i + 1];
-                    b = rgba[i + 2];
+                    r           = rgba[i];
+                    g           = rgba[i + 1];
+                    b           = rgba[i + 2];
                 }
                 int best = 0, bd = 1 << 30;
                 for(int c = 0; c < 4; c++)
                 {
                     int const dr = r - pal[c][0], dg = g - pal[c][1],
                               db = b - pal[c][2];
-                    int const d = dr * dr + dg * dg + db * db;
+                    int const d  = dr * dr + dg * dg + db * db;
                     if(d < bd)
                     {
                         bd   = d;
@@ -454,18 +462,13 @@ inline void encode_bc1(gsl::span<u8 const> rgba, std::vector<u8>& blocks, u16 w,
 }
 
 /* Encode an RGBA8 image straight to GX_TF_CMPR (BC1 encode + GX re-tile). */
-inline void rgba_to_cmpr(gsl::span<u8 const> rgba, gsl::span<u8>& dst, u16 w, u16 h)
+inline void rgba_to_cmpr(
+    gsl::span<u8 const> rgba, gsl::span<u8>& dst, u16 w, u16 h)
 {
-    u32 const nblocks = ((w + 3u) / 4u) * ((h + 3u) / 4u);
+    u32 const       nblocks = ((w + 3u) / 4u) * ((h + 3u) / 4u);
     std::vector<u8> bc1(static_cast<size_t>(nblocks) * 8);
     encode_bc1(rgba, bc1, w, h);
-    dxt_to_cmpr(
-        gsl::span<u8 const>(bc1.data(), bc1.size()),
-        dst, 
-        w, 
-        h, 
-        8, 
-        0);
+    dxt_to_cmpr(gsl::span<u8 const>(bc1.data(), bc1.size()), dst, w, h, 8, 0);
 }
 
 /* --- dispatch ------------------------------------------------------------- */
@@ -474,13 +477,13 @@ inline void rgba_to_cmpr(gsl::span<u8 const> rgba, gsl::span<u8>& dst, u16 w, u1
  * caller-sized `dst` (tiled_size(tgt, w, h) bytes). Returns false on short
  * input or an unsupported (src, tgt) pair. */
 inline bool transcode_level(
-    format_t src,
+    format_t             src,
     blam::bitm::format_t tgt,
-    gsl::span<u8 const> px,
-    u32 px_size,
-    u16 w,
-    u16 h,
-    gsl::span<u8> dst)
+    gsl::span<u8 const>  px,
+    u32                  px_size,
+    u16                  w,
+    u16                  h,
+    gsl::span<u8>        dst)
 {
     if(px_size < src_level_bytes(src, w, h))
         return false;
@@ -496,8 +499,7 @@ inline bool transcode_level(
         case format_t::BC3:
             dxt_to_cmpr(px, dst, w, h, 16, 8);
             return true;
-        case format_t::R5G6B5:
-        {
+        case format_t::R5G6B5: {
             // Encode 565 -> BC1 -> CMPR (e.g. lightmaps at 4bpp vs 16bpp).
             // Element count is w*h texels, not w*h*sizeof(u16) bytes -- see
             // decode_uncompressed_rgba's R5G6B5 case for why that matters.
@@ -509,8 +511,7 @@ inline bool transcode_level(
             rgba_to_cmpr(rgba, dst, w, h);
             return true;
         }
-        case format_t::XRGB8:
-        {
+        case format_t::XRGB8: {
             std::vector<u8> rgba(static_cast<size_t>(w) * h * 4);
             for(size_t i = 0; i < static_cast<size_t>(w) * h; i++)
             {
@@ -544,15 +545,14 @@ inline bool transcode_level(
             h,
             true);
         return true;
-    case format_t::XRGB8:
-    {
+    case format_t::XRGB8: {
         // Downconvert RGBX8 (bytes R,G,B,X) -> linear 565, then tile+swap.
         std::vector<u16> tmp(static_cast<size_t>(w) * h);
         for(size_t i = 0; i < tmp.size(); i++)
         {
             u8 const r = px[i * 4 + 0], g = px[i * 4 + 1], b = px[i * 4 + 2];
-            tmp[i] = static_cast<u16>(
-                ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
+            tmp[i] =
+                static_cast<u16>(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
         }
         // See the R5G6B5 case above: dst sized from dst.size(), not w*h.
         tile_rgb565(
@@ -585,16 +585,16 @@ inline bool transcode_level(
  * `out_levels` reports how many were emitted (maxlod = out_levels - 1). Returns
  * false if the base level is unsupported or doesn't fit. */
 inline bool transcode_mipped(
-    format_t         src,
-    gsl::span<u8 const>        px,
-    u32              px_size,
-    u16              base_w,
-    u16              base_h,
-    u16              src_mip_count,
-    bool             rgb565_to_cmpr,
-    std::vector<u8>& dst,
-    blam::bitm::format_t&       out,
-    u32&             out_levels)
+    format_t              src,
+    gsl::span<u8 const>   px,
+    u32                   px_size,
+    u16                   base_w,
+    u16                   base_h,
+    u16                   src_mip_count,
+    bool                  rgb565_to_cmpr,
+    std::vector<u8>&      dst,
+    blam::bitm::format_t& out,
+    u32&                  out_levels)
 {
     auto target = target_for(src);
     if(!target)
@@ -602,13 +602,12 @@ inline bool transcode_mipped(
     out = *target;
     // Optionally compress uncompressed colour (e.g. lightmaps) to CMPR (4bpp
     // vs 16bpp) instead of the native RGB565 path.
-    if(rgb565_to_cmpr &&
-       (src == format_t::R5G6B5 || src == format_t::XRGB8))
+    if(rgb565_to_cmpr && (src == format_t::R5G6B5 || src == format_t::XRGB8))
         out = blam::bitm::format_t::BC1_GX_TILED;
     out_levels = 0;
     dst.clear();
 
-    u16 const levels = src_mip_count < 1 ? 1 : src_mip_count;
+    u16 const levels  = src_mip_count < 1 ? 1 : src_mip_count;
     u32       src_off = 0;
     for(u16 k = 0; k < levels; k++)
     {
@@ -624,10 +623,12 @@ inline bool transcode_mipped(
         size_t const at = dst.size();
         dst.resize(at + gsz, 0);
         if(!transcode_level(
-               src, out,
+               src,
+               out,
                px.subspan(src_off, ssz),
                ssz,
-               wl, hl,
+               wl,
+               hl,
                gsl::span<u8>(dst.data() + at, dst.size() - at)))
         {
             dst.resize(at);
@@ -646,19 +647,19 @@ inline bool transcode_mipped(
  * transcode_mipped's rgb565_to_cmpr). `lightmap_format` is the raw
  * --lightmap-format value (unset/empty = native); interpreting it is Gekko's
  * own business -- other targets can give the same flag a different meaning. */
-inline mtx::kernel_fn make_kernel(std::optional<std::string> const& lightmap_format)
+inline mtx::kernel_fn make_kernel(
+    std::optional<std::string> const& lightmap_format)
 {
     bool const lightmap_cmpr =
         lightmap_format &&
         (*lightmap_format == "cmpr" || *lightmap_format == "compressed");
     return [lightmap_cmpr](
-               format_t             src_fmt,
-               gsl::span<u8 const>  src_px,
-               u32                  src_size,
-               u16                  w,
-               u16                  h,
-               u16                  src_mip_count)
-               -> std::optional<mtx::transcode_result> {
+               format_t            src_fmt,
+               gsl::span<u8 const> src_px,
+               u32                 src_size,
+               u16                 w,
+               u16                 h,
+               u16 src_mip_count) -> std::optional<mtx::transcode_result> {
         std::vector<u8>      tiled;
         blam::bitm::format_t out_fmt;
         u32                  levels = 0;
@@ -699,10 +700,10 @@ namespace powervr {
  * Imagination PVRTDecompress code) expects. ysize/xsize are BLOCK counts. */
 inline u32 twiddle_uv(u32 ysize, u32 xsize, u32 ypos, u32 xpos)
 {
-    u32 const min_dim  = ysize < xsize ? ysize : xsize;
-    u32       max_val  = ysize < xsize ? xpos : ypos;
-    u32       src_bit   = 1, dst_bit = 1, twiddled = 0;
-    int       shift     = 0;
+    u32 const min_dim = ysize < xsize ? ysize : xsize;
+    u32       max_val = ysize < xsize ? xpos : ypos;
+    u32       src_bit = 1, dst_bit = 1, twiddled = 0;
+    int       shift = 0;
     while(src_bit < min_dim)
     {
         if(ypos & src_bit)
@@ -739,7 +740,7 @@ inline std::vector<u8> encode_pvrtc_rect(
         return {};
     u32 const bmask_x = bw - 1, bmask_y = bh - 1;
 
-    std::vector<u8> color(rgba.begin(), rgba.end());
+    std::vector<u8>            color(rgba.begin(), rgba.end());
     std::vector<PVRTC::Packet> result(static_cast<size_t>(bw) * bh);
 
     Rgba32 min_color, max_color;
@@ -771,16 +772,16 @@ inline std::vector<u8> encode_pvrtc_rect(
 
             for(int py = 0; py < 4; py++)
             {
-                int const  y_off = (py < 2) ? -1 : 0;
-                u32 const  y0    = (y + static_cast<u32>(y_off + bh)) & bmask_y;
-                u32 const  y1    = (y0 + 1) & bmask_y;
+                int const y_off = (py < 2) ? -1 : 0;
+                u32 const y0    = (y + static_cast<u32>(y_off + bh)) & bmask_y;
+                u32 const y1    = (y0 + 1) & bmask_y;
 
                 for(int px = 0; px < 4; px++)
                 {
                     auto const factor = factors[factor_index];
                     int const  x_off  = (px < 2) ? -1 : 0;
-                    u32 const  x0 = (x + static_cast<u32>(x_off + bw)) & bmask_x;
-                    u32 const  x1 = (x0 + 1) & bmask_x;
+                    u32 const x0 = (x + static_cast<u32>(x_off + bw)) & bmask_x;
+                    u32 const x1 = (x0 + 1) & bmask_x;
 
                     auto const& p0 = result[twiddle_uv(bh, bw, y0, x0)];
                     auto const& p1 = result[twiddle_uv(bh, bw, y0, x1)];
@@ -793,41 +794,45 @@ inline std::vector<u8> encode_pvrtc_rect(
                     int projection, length_squared;
                     if(has_alpha)
                     {
-                        auto const ca = p0.get_color_alpha_color_rgba() * factor[0] +
-                                        p1.get_color_alpha_color_rgba() * factor[1] +
-                                        p2.get_color_alpha_color_rgba() * factor[2] +
-                                        p3.get_color_alpha_color_rgba() * factor[3];
-                        auto const cb = p0.get_color_blue_color_rgba() * factor[0] +
-                                        p1.get_color_blue_color_rgba() * factor[1] +
-                                        p2.get_color_blue_color_rgba() * factor[2] +
-                                        p3.get_color_blue_color_rgba() * factor[3];
+                        auto const ca =
+                            p0.get_color_alpha_color_rgba() * factor[0] +
+                            p1.get_color_alpha_color_rgba() * factor[1] +
+                            p2.get_color_alpha_color_rgba() * factor[2] +
+                            p3.get_color_alpha_color_rgba() * factor[3];
+                        auto const cb =
+                            p0.get_color_blue_color_rgba() * factor[0] +
+                            p1.get_color_blue_color_rgba() * factor[1] +
+                            p2.get_color_blue_color_rgba() * factor[2] +
+                            p3.get_color_blue_color_rgba() * factor[3];
                         auto const d = cb - ca;
                         auto const p = ColorRGBA(
                             color[pixel_index] << 4,
                             color[pixel_index + 1] << 4,
                             color[pixel_index + 2] << 4,
                             color[pixel_index + 3] << 4);
-                        auto const v = p - ca;
-                        projection      = (v % d) << 4;
-                        length_squared  = d % d;
+                        auto const v   = p - ca;
+                        projection     = (v % d) << 4;
+                        length_squared = d % d;
                     } else
                     {
-                        auto const ca = p0.get_color_alpha_color_rgb() * factor[0] +
-                                        p1.get_color_alpha_color_rgb() * factor[1] +
-                                        p2.get_color_alpha_color_rgb() * factor[2] +
-                                        p3.get_color_alpha_color_rgb() * factor[3];
-                        auto const cb = p0.get_color_blue_color_rgb() * factor[0] +
-                                        p1.get_color_blue_color_rgb() * factor[1] +
-                                        p2.get_color_blue_color_rgb() * factor[2] +
-                                        p3.get_color_blue_color_rgb() * factor[3];
+                        auto const ca =
+                            p0.get_color_alpha_color_rgb() * factor[0] +
+                            p1.get_color_alpha_color_rgb() * factor[1] +
+                            p2.get_color_alpha_color_rgb() * factor[2] +
+                            p3.get_color_alpha_color_rgb() * factor[3];
+                        auto const cb =
+                            p0.get_color_blue_color_rgb() * factor[0] +
+                            p1.get_color_blue_color_rgb() * factor[1] +
+                            p2.get_color_blue_color_rgb() * factor[2] +
+                            p3.get_color_blue_color_rgb() * factor[3];
                         auto const d = cb - ca;
                         auto const p = ColorRGB(
                             color[pixel_index] << 4,
                             color[pixel_index + 1] << 4,
                             color[pixel_index + 2] << 4);
-                        auto const v = p - ca;
-                        projection      = (v % d) << 4;
-                        length_squared  = d % d;
+                        auto const v   = p - ca;
+                        projection     = (v % d) << 4;
+                        length_squared = d % d;
                     }
 
                     if(projection > 3 * length_squared)
@@ -852,7 +857,8 @@ inline std::vector<u8> encode_pvrtc_rect(
 /* Square convenience wrapper (bit-identical to encode_pvrtc_rect(rgba, size,
  * size, ...), verified: twiddle_uv degenerates to the port's own Morton code
  * when w==h). */
-inline std::vector<u8> encode_pvrtc(gsl::span<u8 const> rgba, u16 size, bool has_alpha)
+inline std::vector<u8> encode_pvrtc(
+    gsl::span<u8 const> rgba, u16 size, bool has_alpha)
 {
     return encode_pvrtc_rect(rgba, size, size, has_alpha);
 }
@@ -865,14 +871,12 @@ inline std::vector<u8> encode_pvrtc(gsl::span<u8 const> rgba, u16 size, bool has
  */
 inline mtx::kernel_fn make_kernel()
 {
-    return [](
-               format_t             src_fmt,
-               gsl::span<u8 const>  src_px,
-               u32                  src_size,
-               u16                  w,
-               u16                  h,
-               u16                  src_mip_count)
-               -> std::optional<mtx::transcode_result> {
+    return [](format_t            src_fmt,
+              gsl::span<u8 const> src_px,
+              u32                 src_size,
+              u16                 w,
+              u16                 h,
+              u16 src_mip_count) -> std::optional<mtx::transcode_result> {
         std::vector<u8>      tiled;
         blam::bitm::format_t out_fmt = [&src_fmt] {
             switch(src_fmt)
@@ -889,13 +893,13 @@ inline mtx::kernel_fn make_kernel()
                 return src_fmt;
             }
         }();
-        u32             levels = 0;
+        u32 levels = 0;
         if(out_fmt == src_fmt)
             return std::nullopt;
 
-        levels            = src_mip_count < 1 ? 1 : src_mip_count;
-        u32       src_off = 0;
-        u16    out_levels = 0;
+        levels         = src_mip_count < 1 ? 1 : src_mip_count;
+        u32 src_off    = 0;
+        u16 out_levels = 0;
         for(u16 k = 0; k < levels; k++)
         {
             u16 const wl = static_cast<u16>(w >> k ? w >> k : 1);
@@ -919,10 +923,7 @@ inline mtx::kernel_fn make_kernel()
                 break; // this source format isn't decodable yet
 
             auto out_data = encode_pvrtc_rect(
-                rgba,
-                wl,
-                hl,
-                out_fmt == blam::bitm::format_t::PVRTCV1_RGBA);
+                rgba, wl, hl, out_fmt == blam::bitm::format_t::PVRTCV1_RGBA);
             tiled.insert(tiled.end(), out_data.begin(), out_data.end());
 
             out_levels++;
@@ -955,8 +956,8 @@ inline std::vector<u8> encode(
     for(size_t i = 0; i < src.size(); i++)
         src[i] = rgba[i] / 255.0f;
 
-    unsigned char* bits    = nullptr;
-    unsigned int   bytes   = 0, ext_w = 0, ext_h = 0;
+    unsigned char* bits  = nullptr;
+    unsigned int   bytes = 0, ext_w = 0, ext_h = 0;
     int            time_ms = 0;
     Etc::Encode(
         src.data(),
@@ -987,7 +988,8 @@ inline std::vector<u8> encode(
  * fits the in-place byte slot. No consuming runtime for this yet: it needs
  * two texture units per material and shader-side combining, same situation
  * PVRTC was in before its runtime existed. */
-inline std::vector<u8> encode_split_alpha(gsl::span<u8 const> rgba, u16 w, u16 h)
+inline std::vector<u8> encode_split_alpha(
+    gsl::span<u8 const> rgba, u16 w, u16 h)
 {
     std::vector<u8> alpha_rgba(rgba.size());
     for(size_t i = 0; i < static_cast<size_t>(w) * h; i++)
@@ -1019,14 +1021,12 @@ namespace es2 {
 
 inline mtx::kernel_fn make_kernel()
 {
-    return [](
-               format_t             src_fmt,
-               gsl::span<u8 const>  src_px,
-               u32                  src_size,
-               u16                  w,
-               u16                  h,
-               u16                  src_mip_count)
-               -> std::optional<mtx::transcode_result> {
+    return [](format_t            src_fmt,
+              gsl::span<u8 const> src_px,
+              u32                 src_size,
+              u16                 w,
+              u16                 h,
+              u16 src_mip_count) -> std::optional<mtx::transcode_result> {
         blam::bitm::format_t out_fmt;
         switch(src_fmt)
         {
@@ -1077,14 +1077,12 @@ namespace es3 {
 
 inline mtx::kernel_fn make_kernel()
 {
-    return [](
-               format_t             src_fmt,
-               gsl::span<u8 const>  src_px,
-               u32                  src_size,
-               u16                  w,
-               u16                  h,
-               u16                  src_mip_count)
-               -> std::optional<mtx::transcode_result> {
+    return [](format_t            src_fmt,
+              gsl::span<u8 const> src_px,
+              u32                 src_size,
+              u16                 w,
+              u16                 h,
+              u16 src_mip_count) -> std::optional<mtx::transcode_result> {
         blam::bitm::format_t out_fmt;
         Etc::Image::Format   etc_fmt;
         switch(src_fmt)

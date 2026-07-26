@@ -35,14 +35,14 @@ import (
 )
 
 type adminInterfaceOpts struct {
-	host string
-	port string
+	host       string
+	port       string
 	privateKey string
 }
 
 type adminInterfaceModel struct {
 	workingSet *serverWorkingSet
-	settings *serverSettings
+	settings   *serverSettings
 }
 
 func startAdminInterface(opts adminInterfaceOpts, model adminInterfaceModel) {
@@ -54,7 +54,7 @@ func startAdminInterface(opts adminInterfaceOpts, model adminInterfaceModel) {
 type app struct {
 	*ssh.Server
 	progs []*tea.Program
-	data *adminInterfaceModel
+	data  *adminInterfaceModel
 }
 
 // send dispatches a message to all running programs.
@@ -132,7 +132,7 @@ func serverListItems(ws *serverWorkingSet) []list.Item {
 			addr = fmt.Sprintf("%s:%d", server.dest.IP.String(), server.dest.Port)
 		}
 		items = append(items, serverItem{
-			id: id,
+			id:   id,
 			addr: addr,
 		})
 	}
@@ -258,12 +258,12 @@ type (
 )
 
 type styles struct {
-	title             lipgloss.Style
-	server            lipgloss.Style
-	selectedServer    lipgloss.Style
-	centerRightPane   lipgloss.Style
-	help              lipgloss.Style
-	quitText          lipgloss.Style
+	title           lipgloss.Style
+	server          lipgloss.Style
+	selectedServer  lipgloss.Style
+	centerRightPane lipgloss.Style
+	help            lipgloss.Style
+	quitText        lipgloss.Style
 }
 
 var containerStyle = lipgloss.NewStyle().BorderStyle(lipgloss.DoubleBorder()).BorderForeground(lipgloss.White)
@@ -277,11 +277,11 @@ const currentInfoRowCount = 4
 
 type model struct {
 	*app
-	id              string
-	err             error
-	styles          *styles
-	serverList      list.Model
-	serverSettings  table.Model
+	id             string
+	err            error
+	styles         *styles
+	serverList     list.Model
+	serverSettings table.Model
 
 	currentServerId string
 	currentInfo     table.Model
@@ -293,7 +293,7 @@ type model struct {
 }
 
 type serverItem struct {
-	id string
+	id   string
 	addr string
 }
 
@@ -325,12 +325,12 @@ func (d serverItemDelegate) Render(w io.Writer, m list.Model, index int, listIte
 }
 
 func initialModel() model {
-	styles := styles {
-		title: lipgloss.NewStyle().MarginLeft(2),
-		server: lipgloss.NewStyle().PaddingLeft(4),
-		selectedServer: lipgloss.NewStyle().PaddingLeft(3).Foreground(lipgloss.Green),
+	styles := styles{
+		title:           lipgloss.NewStyle().MarginLeft(2),
+		server:          lipgloss.NewStyle().PaddingLeft(4),
+		selectedServer:  lipgloss.NewStyle().PaddingLeft(3).Foreground(lipgloss.Green),
 		centerRightPane: lipgloss.NewStyle(),
-	};
+	}
 	serverList := list.New(
 		[]list.Item{serverItem{id: "default"}},
 		serverItemDelegate{styles: &styles},
@@ -374,16 +374,16 @@ func initialModel() model {
 	currentSpinner.Style = lipgloss.NewStyle().Foreground(lipgloss.White)
 
 	return model{
-		err: nil,
-		styles: &styles,
-		serverList: serverList,
+		err:            nil,
+		styles:         &styles,
+		serverList:     serverList,
 		serverSettings: serverSettings,
 
 		currentServerId: "",
-		currentInfo: currentInfo,
-		currentClients: currentClients,
-		currentTime: currentTime,
-		currentSpinner: currentSpinner,
+		currentInfo:     currentInfo,
+		currentClients:  currentClients,
+		currentTime:     currentTime,
+		currentSpinner:  currentSpinner,
 	}
 }
 
@@ -398,10 +398,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.serverList.SetHeight(msg.Height - 2 - 1 - (1 + len(m.serverSettings.Rows())))
 		m.serverSettings.SetWidth(msg.Width / 3)
 		m.serverSettings.SetHeight(1 + len(m.serverSettings.Rows()))
-		m.currentTime.SetWidth((msg.Width / 3) * 2 - 10)
-		m.currentInfo.SetWidth((msg.Width / 3) * 2 - 1)
+		m.currentTime.SetWidth((msg.Width/3)*2 - 10)
+		m.currentInfo.SetWidth((msg.Width/3)*2 - 1)
 		m.currentInfo.SetHeight(1 + currentInfoRowCount)
-		m.currentClients.SetWidth((msg.Width / 3) * 2 -1)
+		m.currentClients.SetWidth((msg.Width/3)*2 - 1)
 		m.currentClients.SetHeight(msg.Height - m.currentInfo.Height() - 5)
 		m.rightPaneHeight = msg.Height - 2
 		m.styles.centerRightPane = lipgloss.NewStyle().
@@ -474,8 +474,8 @@ func (m model) View() tea.View {
 	var rightPane string
 	if m.currentServerId != "" {
 		top := lipgloss.JoinVertical(
-			lipgloss.Left, 
-			m.currentInfo.View(), 
+			lipgloss.Left,
+			m.currentInfo.View(),
 			m.currentClients.View(),
 		)
 		status := "  " + m.currentSpinner.View() + m.currentTime.ViewAs(0.7)
@@ -493,8 +493,7 @@ func (m model) View() tea.View {
 		content = append(content, statusLines...)
 
 		rightPane = containerStyle.Render(strings.Join(content, "\n"))
-	} else
-	{
+	} else {
 		rightPane = containerStyle.Render(m.styles.centerRightPane.Render("Select a server to inspect it"))
 	}
 
