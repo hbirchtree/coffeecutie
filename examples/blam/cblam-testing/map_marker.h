@@ -290,8 +290,8 @@ struct DebugMarkers : compo::SubsystemBase
     }
 
   private:
-    u32 m_strip_vert_floor{0};
-    u32 m_strip_color_floor{0};
+    u32                             m_strip_vert_floor{0};
+    u32                             m_strip_color_floor{0};
     std::map<u32, std::vector<u32>> m_free_strip_verts;
     std::vector<u32>                m_free_strip_colors;
 };

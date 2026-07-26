@@ -71,7 +71,7 @@ void GatewayConnectBootstrap::Start()
             }
             {
                 std::lock_guard<std::mutex> lock(m_mutex);
-                m_pendingOfferSdp  = std::string(*desc);
+                m_pendingOfferSdp   = std::string(*desc);
                 m_gatheringComplete = true;
             }
             maybeSendOffer();
@@ -90,8 +90,9 @@ void GatewayConnectBootstrap::Start()
     m_ws->onMessage([this](rtc::message_variant data) {
         if(!std::holds_alternative<std::string>(data))
         {
-            cWarning("webrtc_signaling: ignoring unexpected binary signal "
-                      "message");
+            cWarning(
+                "webrtc_signaling: ignoring unexpected binary signal "
+                "message");
             return;
         }
         onWebSocketMessage(std::get<std::string>(data));
@@ -155,7 +156,8 @@ void GatewayConnectBootstrap::onWebSocketMessage(std::string const& text)
         msg = nlohmann::json::parse(text);
     } catch(nlohmann::json::parse_error const& e)
     {
-        cWarning("webrtc_signaling: failed to parse signal message: {}", e.what());
+        cWarning(
+            "webrtc_signaling: failed to parse signal message: {}", e.what());
         return;
     }
 
@@ -173,7 +175,7 @@ void GatewayConnectBootstrap::onWebSocketMessage(std::string const& text)
         }
         m_pc->setRemoteDescription(rtc::Description(sdp, "answer"));
         std::lock_guard<std::mutex> lock(m_mutex);
-        m_sessionId    = std::move(sessionId);
+        m_sessionId     = std::move(sessionId);
         m_haveSessionId = true;
     } else if(type == "gns-rendezvous")
     {
@@ -222,10 +224,12 @@ bool GatewayConnectBootstrap::Failed() const
     return m_failed;
 }
 
-std::shared_ptr<rtc::PeerConnection> GatewayConnectBootstrap::TakePeerConnection()
+std::shared_ptr<rtc::PeerConnection> GatewayConnectBootstrap::
+    TakePeerConnection()
 {
     if(m_peerConnectionTaken)
-        cWarning("webrtc_signaling: TakePeerConnection() called more than once");
+        cWarning(
+            "webrtc_signaling: TakePeerConnection() called more than once");
     m_peerConnectionTaken = true;
     return m_pc;
 }
@@ -258,8 +262,8 @@ bool GatewayConnectBootstrap::SendSignal(
         return false;
     }
 
-    auto data = b64::encode<const char>(semantic::Span<const char>(
-        reinterpret_cast<const char*>(pMsg), cbMsg));
+    auto data = b64::encode<const char>(
+        semantic::Span<const char>(reinterpret_cast<const char*>(pMsg), cbMsg));
 
     nlohmann::json rendezvous{
         {"type", "gns-rendezvous"},
@@ -339,7 +343,7 @@ void GatewayAcceptSignaling::Start()
             }
             {
                 std::lock_guard<std::mutex> lock(m_mutex);
-                m_pendingOfferSdp  = std::string(*desc);
+                m_pendingOfferSdp   = std::string(*desc);
                 m_gatheringComplete = true;
             }
             maybeSendOffer();
@@ -369,14 +373,16 @@ void GatewayAcceptSignaling::Start()
     m_ws->onMessage([this](rtc::message_variant data) {
         if(!std::holds_alternative<std::string>(data))
         {
-            cWarning("webrtc_signaling (accept): ignoring unexpected "
-                      "binary transport message");
+            cWarning(
+                "webrtc_signaling (accept): ignoring unexpected "
+                "binary transport message");
             return;
         }
         onWebSocketMessage(std::get<std::string>(data));
     });
     m_ws->onError([this](std::string error) {
-        cWarning("webrtc_signaling (accept): transport websocket error: {}", error);
+        cWarning(
+            "webrtc_signaling (accept): transport websocket error: {}", error);
         std::lock_guard<std::mutex> lock(m_mutex);
         m_failed = true;
     });
@@ -461,10 +467,13 @@ bool GatewayAcceptSignaling::Failed() const
     return m_failed;
 }
 
-std::shared_ptr<rtc::PeerConnection> GatewayAcceptSignaling::TakePeerConnection()
+std::shared_ptr<rtc::PeerConnection> GatewayAcceptSignaling::
+    TakePeerConnection()
 {
     if(m_peerConnectionTaken)
-        cWarning("webrtc_signaling (accept): TakePeerConnection() called more than once");
+        cWarning(
+            "webrtc_signaling (accept): TakePeerConnection() called more than "
+            "once");
     m_peerConnectionTaken = true;
     return m_pc;
 }
@@ -472,7 +481,9 @@ std::shared_ptr<rtc::PeerConnection> GatewayAcceptSignaling::TakePeerConnection(
 std::shared_ptr<rtc::DataChannel> GatewayAcceptSignaling::TakeDataChannel()
 {
     if(m_dataChannelTaken)
-        cWarning("webrtc_signaling (accept): TakeDataChannel() called more than once");
+        cWarning(
+            "webrtc_signaling (accept): TakeDataChannel() called more than "
+            "once");
     m_dataChannelTaken = true;
     return m_dc;
 }
@@ -483,8 +494,8 @@ bool GatewayAcceptSignaling::SendSignal(
     const void* pMsg,
     int         cbMsg)
 {
-    auto data = b64::encode<const char>(semantic::Span<const char>(
-        reinterpret_cast<const char*>(pMsg), cbMsg));
+    auto data = b64::encode<const char>(
+        semantic::Span<const char>(reinterpret_cast<const char*>(pMsg), cbMsg));
     return m_owner->SendOverServerSignal(m_sessionId, data);
 }
 
@@ -517,13 +528,15 @@ GatewayServerRegistration::~GatewayServerRegistration()
 void GatewayServerRegistration::Start()
 {
     m_ws = std::make_shared<rtc::WebSocket>();
-    m_ws->onOpen(
-        [] { cDebug("webrtc_signaling: registered with gateway /server-signal"); });
+    m_ws->onOpen([] {
+        cDebug("webrtc_signaling: registered with gateway /server-signal");
+    });
     m_ws->onMessage([this](rtc::message_variant data) {
         if(!std::holds_alternative<std::string>(data))
         {
-            cWarning("webrtc_signaling: ignoring unexpected binary "
-                      "server-signal message");
+            cWarning(
+                "webrtc_signaling: ignoring unexpected binary "
+                "server-signal message");
             return;
         }
         onWebSocketMessage(std::get<std::string>(data));
@@ -555,7 +568,9 @@ void GatewayServerRegistration::onWebSocketMessage(std::string const& text)
         auto raw       = b64::decode(msg.value("data", std::string()));
         if(sessionId.empty() || raw.empty())
         {
-            cWarning("webrtc_signaling: malformed gns-rendezvous from server-signal");
+            cWarning(
+                "webrtc_signaling: malformed gns-rendezvous from "
+                "server-signal");
             return;
         }
         /* Consumed by OnConnectRequest below if this rendezvous message
@@ -576,12 +591,14 @@ void GatewayServerRegistration::onWebSocketMessage(std::string const& text)
             msg.value("data", std::string()));
     } else
     {
-        cWarning("webrtc_signaling: unexpected server-signal message type {}", type);
+        cWarning(
+            "webrtc_signaling: unexpected server-signal message type {}", type);
     }
 }
 
-ISteamNetworkingConnectionSignaling* GatewayServerRegistration::OnConnectRequest(
-    HSteamNetConnection hConn, const SteamNetworkingIdentity&, int)
+ISteamNetworkingConnectionSignaling* GatewayServerRegistration::
+    OnConnectRequest(
+        HSteamNetConnection hConn, const SteamNetworkingIdentity&, int)
 {
     std::string sessionId;
     {
@@ -594,7 +611,8 @@ ISteamNetworkingConnectionSignaling* GatewayServerRegistration::OnConnectRequest
          * the interface's own doc comment, returning nullptr here is the
          * SAFE default anyway -- silently ignoring an unroutable request
          * rather than actively rejecting it. */
-        cWarning("webrtc_signaling: OnConnectRequest with no pending session ID");
+        cWarning(
+            "webrtc_signaling: OnConnectRequest with no pending session ID");
         return nullptr;
     }
 
@@ -629,10 +647,12 @@ bool GatewayServerRegistration::SendOverServerSignal(
     return m_ws->send(rendezvous.dump());
 }
 
-void GatewayServerRegistration::RemovePendingAccept(GatewayAcceptSignaling* accept)
+void GatewayServerRegistration::RemovePendingAccept(
+    GatewayAcceptSignaling* accept)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
-    auto it = std::find(m_pendingAccepts.begin(), m_pendingAccepts.end(), accept);
+    auto                        it =
+        std::find(m_pendingAccepts.begin(), m_pendingAccepts.end(), accept);
     if(it != m_pendingAccepts.end())
         m_pendingAccepts.erase(it);
 }
@@ -651,7 +671,8 @@ void GatewayServerRegistration::PollPendingAccepts()
                     "webrtc_signaling: accept-side DataChannel bootstrap "
                     "failed for connection {}",
                     accept->Connection());
-                m_sockets->CloseConnection(accept->Connection(), 0, nullptr, false);
+                m_sockets->CloseConnection(
+                    accept->Connection(), 0, nullptr, false);
                 it = m_pendingAccepts.erase(it);
                 continue;
             }
@@ -672,13 +693,18 @@ void GatewayServerRegistration::PollPendingAccepts()
         auto dc        = accept->TakeDataChannel();
         if(!m_sockets->AcceptP2PWebRTCDataChannel(hConn, pc, dc))
         {
-            cWarning("webrtc_signaling: AcceptP2PWebRTCDataChannel failed for connection {}", hConn);
+            cWarning(
+                "webrtc_signaling: AcceptP2PWebRTCDataChannel failed for "
+                "connection {}",
+                hConn);
             m_sockets->CloseConnection(hConn, 0, nullptr, false);
             continue;
         }
         if(m_sockets->AcceptConnection(hConn) != k_EResultOK)
         {
-            cWarning("webrtc_signaling: AcceptConnection failed for connection {}", hConn);
+            cWarning(
+                "webrtc_signaling: AcceptConnection failed for connection {}",
+                hConn);
             m_sockets->CloseConnection(hConn, 0, nullptr, false);
             continue;
         }
@@ -692,7 +718,7 @@ void GatewayServerRegistration::NotifyGNSConnected(HSteamNetConnection hConn)
     std::string sessionId;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        auto it = m_sessionIdByConnection.find(hConn);
+        auto                        it = m_sessionIdByConnection.find(hConn);
         if(it == m_sessionIdByConnection.end())
             return; // Not a connection accepted through this registration.
         sessionId = it->second;
@@ -704,7 +730,9 @@ void GatewayServerRegistration::NotifyGNSConnected(HSteamNetConnection hConn)
         {"sessionId", sessionId},
     };
     if(!m_ws->send(msg.dump()))
-        cWarning("webrtc_signaling: failed to send gns-connected for session {}", sessionId);
+        cWarning(
+            "webrtc_signaling: failed to send gns-connected for session {}",
+            sessionId);
 }
 
 void GatewayServerRegistration::ForgetConnection(HSteamNetConnection hConn)

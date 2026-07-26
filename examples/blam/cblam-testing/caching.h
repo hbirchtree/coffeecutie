@@ -190,8 +190,8 @@ struct BSPCache
 
     inline void load_from(blam::map_container<V> const& map)
     {
-        index    = blam::tag_index_view(map);
-        magic    = map.magic;
+        index        = blam::tag_index_view(map);
+        magic        = map.magic;
         vertex_magic = V::version_v == blam::version_t::xbox
                            ? map.magic
                            : map.tags->vertex_magic(magic);
@@ -240,6 +240,7 @@ struct BSPCache
         libc_types::i16                  source;
         libc_types::i16                  destination;
     };
+
     std::vector<bsp_switch_t> bsp_switches;
     libc_types::i16           active_section{0};
     libc_types::i16           next_section_idx{0}; /* predict_impl ordering */

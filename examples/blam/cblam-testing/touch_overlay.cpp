@@ -75,7 +75,7 @@ void TouchOverlay::start_restricted(Proxy& proxy, const time_point&)
     };
     movement.box[1] = glm::vec2{controller_size(proxy), screen_height};
     movement.size   = {half_screen / 3.f, half_screen / 3.f};
-    look.box[0] = glm::vec2{
+    look.box[0]     = glm::vec2{
         framebuffer->size().w / 2.f,
         0,
     };
@@ -114,8 +114,7 @@ void TouchOverlay::end_restricted(Proxy& proxy, const time_point& time)
             movement.control.y * delta_s, movement.control.x * delta_s, 0);
         cam->camera_->rotate(
             -look.control.x * delta_s, look.control.y * delta_s);
-        cam->camera_->rotate(
-            -look.instant_control.x, look.instant_control.y);
+        cam->camera_->rotate(-look.instant_control.x, look.instant_control.y);
         break;
     }
     look.instant_control = {};

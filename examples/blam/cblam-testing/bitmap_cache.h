@@ -76,7 +76,7 @@ struct BitmapCache
 
     std::map<bitm_format_hash, TextureBucket> tex_buckets;
 
-    u32 max_mipmap{3};
+    u32  max_mipmap{3};
     bool supports_tex3d{true};
 
     static inline bitm_format_hash create_hash(
@@ -136,20 +136,21 @@ struct BitmapCache
         } else
 #endif
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
-        if(std::is_same_v<T, gfx::texture_3d_t>)
+            if(std::is_same_v<T, gfx::texture_3d_t>)
         {
             // TODO: Find fallback on GL ES 2.0
             // Problem here is that shader_plasma uses TWO 3D textures
             // So shimming it to single-texture is not an option
             // Special-case shader_plasma on GL ES 2.0?
-            bucket.surface = allocator->alloc_texture(
-                gfx::textures::d3, fmt, max_mipmap);
+            bucket.surface =
+                allocator->alloc_texture(gfx::textures::d3, fmt, max_mipmap);
         } else
 #endif
         {
             auto surface = std::make_shared<gfx::compat::texture_2da_t>(
                 allocator, fmt, no_mipmap ? 1 : (max_mipmap - bucket.mip_bias));
-            surface->set_usage_hint(gfx::compat::texture_usage_hint_t::sparse_atlas);
+            surface->set_usage_hint(
+                gfx::compat::texture_usage_hint_t::sparse_atlas);
             bucket.surface = std::move(surface);
         }
 
@@ -213,10 +214,10 @@ struct BitmapCache
                  static_cast<u16>(blam::bitm::flags_t::swizzled)) &&
                 size.x > 0 && size.y > 0;
             const u32 bpp =
-                swizzled ? static_cast<u32>(
-                               face_size /
-                               (static_cast<size_t>(size.x) * size.y))
-                         : 0u;
+                swizzled
+                    ? static_cast<u32>(
+                          face_size / (static_cast<size_t>(size.x) * size.y))
+                    : 0u;
             std::array<std::vector<u8>, 6> linear_faces;
             auto face = [&](u32 src, u32 slot) -> semantic::Span<const u8> {
                 semantic::Span<const u8> raw =
@@ -255,16 +256,18 @@ struct BitmapCache
         } else
 #endif
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
-        if(bucket.type == blam::bitm::type_t::tex_3d)
+            if(bucket.type == blam::bitm::type_t::tex_3d)
         {
-            gfx::texture_3d_t& texture = bucket.template texture_as<gfx::texture_3d_t>();
+            gfx::texture_3d_t& texture =
+                bucket.template texture_as<gfx::texture_3d_t>();
             auto img_data = img.image.mip->data(magic, mipmap);
-            cDebug("3D texture data: {}x{}x{} {}+{}",
-                    img.image.mip->isize.x,
-                    img.image.mip->isize.y,
-                    img.image.mip->depth,
-                    static_cast<const void*>(img_data.data()),
-                    img_data.size_bytes());
+            cDebug(
+                "3D texture data: {}x{}x{} {}+{}",
+                img.image.mip->isize.x,
+                img.image.mip->isize.y,
+                img.image.mip->depth,
+                static_cast<const void*>(img_data.data()),
+                img_data.size_bytes());
         } else
 #endif
         {
@@ -291,8 +294,8 @@ struct BitmapCache
                        static_cast<u32>(size.x),
                        static_cast<u32>(size.y),
                        bpp))
-                    mip_data = semantic::Span<const u8>(
-                        linear.data(), linear.size());
+                    mip_data =
+                        semantic::Span<const u8>(linear.data(), linear.size());
             }
 
             texture.upload(

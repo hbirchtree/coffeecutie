@@ -140,10 +140,7 @@ std::optional<dds_info> dds_format(blam::bitm::format_t fmt)
             .mask_a   = 0xF000};
     case format_t::A8Y8:
         return dds_info{
-            .bpp      = 16,
-            .pf_flags = LUMA,
-            .mask_r   = 0x00FF,
-            .mask_a   = 0xFF00};
+            .bpp = 16, .pf_flags = LUMA, .mask_r = 0x00FF, .mask_a = 0xFF00};
     case format_t::Y8:
     case format_t::AY8:
         return dds_info{.bpp = 8, .pf_flags = LUM, .mask_r = 0xFF};
@@ -151,10 +148,7 @@ std::optional<dds_info> dds_format(blam::bitm::format_t fmt)
         return dds_info{.bpp = 8, .pf_flags = A, .mask_a = 0xFF};
     case format_t::V8U8:
         return dds_info{
-            .bpp      = 16,
-            .pf_flags = BUMP,
-            .mask_r   = 0x00FF,
-            .mask_g   = 0xFF00};
+            .bpp = 16, .pf_flags = BUMP, .mask_r = 0x00FF, .mask_g = 0xFF00};
     default:
         /* P8/P8_flat need palette handling, float formats are rare */
         return std::nullopt;
@@ -182,7 +176,7 @@ std::vector<char> make_dds(
     out.reserve(128 + pixels.size());
     append<u32>(out, 0x20534444); /* 'DDS ' */
     append<u32>(out, 124);
-    append<u32>(out, 0x1007);     /* CAPS|HEIGHT|WIDTH|PIXELFORMAT */
+    append<u32>(out, 0x1007); /* CAPS|HEIGHT|WIDTH|PIXELFORMAT */
     append<u32>(out, height);
     append<u32>(out, width);
     append<u32>(out, static_cast<u32>(pixels.size()) / (cube_map ? 6 : 1));
@@ -219,8 +213,8 @@ template<typename V>
 u32 extract_bitmaps(
     blam::dimeter::map_container<V> const& map,
     blam::dimeter::raw_pool const&         pool,
-    std::string const&                   outdir,
-    u32                                  limit)
+    std::string const&                     outdir,
+    u32                                    limit)
 {
     namespace h2 = blam::dimeter;
     using blam::from_le;
@@ -300,11 +294,11 @@ u32 extract_bitmaps(
                         std::memcpy(dst, src, base);
                 }
 
-                auto path = outdir + "/" + sanitize(map.tag_name(tag)) +
-                            (image_span.size() > 1
-                                 ? "_img" + std::to_string(img_idx)
-                                 : "") +
-                            ".dds";
+                auto path =
+                    outdir + "/" + sanitize(map.tag_name(tag)) +
+                    (image_span.size() > 1 ? "_img" + std::to_string(img_idx)
+                                           : "") +
+                    ".dds";
                 if(write_file(
                        path,
                        make_dds(
@@ -341,7 +335,7 @@ u32 extract_bitmaps(
 std::vector<char> make_xadpcm_wav(
     u32 sample_rate, u16 channels, std::vector<char> const& payload)
 {
-    constexpr u16 block_align_per_channel = 36;
+    constexpr u16     block_align_per_channel = 36;
     std::vector<char> out;
     out.reserve(payload.size() + 60);
     append<u32>(out, 0x46464952); /* RIFF */
@@ -355,9 +349,9 @@ std::vector<char> make_xadpcm_wav(
     /* 64 samples per 36-byte block per channel */
     append<u32>(out, sample_rate * channels * block_align_per_channel / 64);
     append<u16>(out, block_align_per_channel * channels);
-    append<u16>(out, 4);  /* bits per sample */
-    append<u16>(out, 2);  /* cbSize */
-    append<u16>(out, 64); /* samples per block */
+    append<u16>(out, 4);          /* bits per sample */
+    append<u16>(out, 2);          /* cbSize */
+    append<u16>(out, 64);         /* samples per block */
     append<u32>(out, 0x61746164); /* data */
     append<u32>(out, static_cast<u32>(payload.size()));
     out.insert(out.end(), payload.begin(), payload.end());
@@ -368,8 +362,8 @@ template<typename V>
 u32 extract_sounds(
     blam::dimeter::map_container<V> const& map,
     blam::dimeter::raw_pool const&         pool,
-    std::string const&                   outdir,
-    u32                                  limit)
+    std::string const&                     outdir,
+    u32                                    limit)
 {
     namespace h2 = blam::dimeter;
     using blam::from_le;
@@ -458,15 +452,13 @@ u32 extract_sounds(
             if(payload.empty() || payload.size() != perm.sample_size())
                 continue;
 
-            auto path =
-                outdir + "/" + sanitize(map.tag_name(tag)) +
-                (perm_count > 1 ? "_perm" + std::to_string(p) : "") +
-                (adpcm ? ".wav" : ".wma");
+            auto path = outdir + "/" + sanitize(map.tag_name(tag)) +
+                        (perm_count > 1 ? "_perm" + std::to_string(p) : "") +
+                        (adpcm ? ".wav" : ".wma");
             auto rate = h2::snd::to_hertz(sound->sample_rate);
             if(write_file(
                    path,
-                   adpcm ? make_xadpcm_wav(rate, channels, payload)
-                         : payload))
+                   adpcm ? make_xadpcm_wav(rate, channels, payload) : payload))
             {
                 cBasicPrint(
                     "  snd! {0} Hz {1}ch {2} perm {3}/{4} ({5} bytes, {6} "
@@ -570,8 +562,7 @@ std::optional<std::string> write_material_dds(
     namespace h2 = blam::dimeter;
     using blam::from_le;
 
-    auto const* bitm =
-        bitm_tag.template data<h2::bitm::header_t>(map.magic());
+    auto const* bitm = bitm_tag.template data<h2::bitm::header_t>(map.magic());
     if(!bitm)
         return std::nullopt;
     auto images = bitm->images.data(map.magic());
@@ -595,7 +586,7 @@ std::optional<std::string> write_material_dds(
         auto raw = pool.resolve(img.lod_offset[lod], base);
         if(!raw)
             continue;
-        auto const* src = reinterpret_cast<u8 const*>(raw->data());
+        auto const*     src = reinterpret_cast<u8 const*>(raw->data());
         std::vector<u8> pixels(base);
         if(!fmt->fourcc && img.swizzled())
         {
@@ -657,15 +648,14 @@ struct material_db
             /* Base map from the runtime properties (the postprocess bitmap
              * slots start with bump/detail maps); uv scale from the
              * postprocess tiling entry whose bitmap slot matches it */
-            h2::tag_t const* bitm_tag = nullptr;
+            h2::tag_t const* bitm_tag      = nullptr;
             u32              diffuse_datum = 0;
             f32              scale_u = 1.f, scale_v = 1.f;
-            auto rt = shad->runtime_properties.data(map.magic());
+            auto             rt = shad->runtime_properties.data(map.magic());
             if(!rt.has_error() && !rt.value().empty())
             {
-                bitm_tag = map.tag_at(rt.value()[0].diffuse.tag_id);
-                diffuse_datum =
-                    blam::from_le(rt.value()[0].diffuse.tag_id.raw);
+                bitm_tag      = map.tag_at(rt.value()[0].diffuse.tag_id);
+                diffuse_datum = blam::from_le(rt.value()[0].diffuse.tag_id.raw);
             }
             auto props = shad->properties.data(map.magic());
             if(!props.has_error() && !props.value().empty())
@@ -685,8 +675,7 @@ struct material_db
                         }
             }
             if(bitm_tag && bitm_tag->matches("bitm"))
-                if(auto dds =
-                       write_material_dds(map, pool, outdir, *bitm_tag))
+                if(auto dds = write_material_dds(map, pool, outdir, *bitm_tag))
                 {
                     char line[512];
                     std::snprintf(
@@ -759,13 +748,13 @@ void emit_triangles(obj_writer& obj, Span<const u16> indices, bool strip)
  * != nullptr places the section in world space */
 template<typename Section>
 bool append_section(
-    obj_writer&                            obj,
-    blam::dimeter::raw_pool const&         pool,
-    blam::dimeter::magic_ptr const&        magic,
-    Section const&                         section,
-    std::string const&                     name,
+    obj_writer&                               obj,
+    blam::dimeter::raw_pool const&            pool,
+    blam::dimeter::magic_ptr const&           magic,
+    Section const&                            section,
+    std::string const&                        name,
     blam::dimeter::geo::model_bounds_t const* bounds,
-    blam::dimeter::geo::bsp_instance_t const* instance = nullptr,
+    blam::dimeter::geo::bsp_instance_t const* instance  = nullptr,
     std::vector<std::string> const*           materials = nullptr)
 {
     namespace geo = blam::dimeter::geo;
@@ -787,7 +776,7 @@ bool append_section(
     if(!streams.index || !streams.position)
         return false;
 
-    i32 base = section.base_address();
+    i32 base        = section.base_address();
     u16 index_count = geo::block_index_count(*block);
 
     auto in_block = [&](i32 offset, i32 size) {
@@ -795,8 +784,7 @@ bool append_section(
                static_cast<i64>(base) + offset + size <=
                    static_cast<i64>(block->size());
     };
-    if(!index_count ||
-       !in_block(streams.index->offset(), index_count * 2) ||
+    if(!index_count || !in_block(streams.index->offset(), index_count * 2) ||
        !in_block(streams.position->offset(), streams.position->size()))
         return false;
 
@@ -824,9 +812,10 @@ bool append_section(
             x * m[2] + y * m[5] + z * m[8] + m[11]);
     };
 
-    u32 stride = streams.position->size() / vertex_count;
-    bool has_uv = streams.texcoord &&
-                  in_block(streams.texcoord->offset(), streams.texcoord->size());
+    u32  stride = streams.position->size() / vertex_count;
+    bool has_uv =
+        streams.texcoord &&
+        in_block(streams.texcoord->offset(), streams.texcoord->size());
     for(u32 v = 0; v < vertex_count; v++)
     {
         auto const* p = bytes + base + streams.position->offset() + v * stride;
@@ -839,9 +828,18 @@ bool append_section(
                 return min + n * (max - min);
             };
             place(
-                expand(from_le(q[0]), from_le(bounds->x_min), from_le(bounds->x_max)),
-                expand(from_le(q[1]), from_le(bounds->y_min), from_le(bounds->y_max)),
-                expand(from_le(q[2]), from_le(bounds->z_min), from_le(bounds->z_max)));
+                expand(
+                    from_le(q[0]),
+                    from_le(bounds->x_min),
+                    from_le(bounds->x_max)),
+                expand(
+                    from_le(q[1]),
+                    from_le(bounds->y_min),
+                    from_le(bounds->y_max)),
+                expand(
+                    from_le(q[2]),
+                    from_le(bounds->z_min),
+                    from_le(bounds->z_max)));
         } else
         {
             f32 pos[3];
@@ -856,8 +854,8 @@ bool append_section(
             obj.texcoord(0.f, 0.f);
             continue;
         }
-        auto const* p = bytes + base + streams.texcoord->offset() +
-                        v * (bounds ? 4 : 8);
+        auto const* p =
+            bytes + base + streams.texcoord->offset() + v * (bounds ? 4 : 8);
         if(bounds)
         {
             i16 q[2];
@@ -867,8 +865,14 @@ bool append_section(
                 return min + n * (max - min);
             };
             obj.texcoord(
-                expand(from_le(q[0]), from_le(bounds->u_min), from_le(bounds->u_max)),
-                expand(from_le(q[1]), from_le(bounds->v_min), from_le(bounds->v_max)));
+                expand(
+                    from_le(q[0]),
+                    from_le(bounds->u_min),
+                    from_le(bounds->u_max)),
+                expand(
+                    from_le(q[1]),
+                    from_le(bounds->v_min),
+                    from_le(bounds->v_max)));
         } else
         {
             f32 uv[2];
@@ -879,13 +883,14 @@ bool append_section(
 
     std::vector<u16> indices(index_count);
     std::memcpy(
-        indices.data(), bytes + base + streams.index->offset(), index_count * 2);
+        indices.data(),
+        bytes + base + streams.index->offset(),
+        index_count * 2);
     for(auto& idx : indices)
         idx = from_le(idx);
     auto index_span = Span<const u16>(indices.data(), indices.size());
     /* Strip vs list is a per-section property */
-    bool strip =
-        static_cast<u32>(section.face_count()) * 3 != index_count;
+    bool strip = static_cast<u32>(section.face_count()) * 3 != index_count;
 
     /* Per-submesh draw ranges carry the shader index; emit one usemtl per
      * range when a material table is available */
@@ -898,13 +903,12 @@ bool append_section(
         size_t sub_count = streams.submeshes->size() / sizeof(geo::submesh_t);
         for(size_t s = 0; s < sub_count; s++)
         {
-            u32 start = subs[s].index_start();
-            u32 len   = subs[s].index_length();
+            u32 start  = subs[s].index_start();
+            u32 len    = subs[s].index_length();
             i16 shader = subs[s].shader_index();
             if(start + len > index_count || !len)
                 continue;
-            if(shader >= 0 &&
-               static_cast<size_t>(shader) < materials->size() &&
+            if(shader >= 0 && static_cast<size_t>(shader) < materials->size() &&
                !(*materials)[shader].empty())
                 obj.usemtl((*materials)[shader]);
             emit_triangles(obj, index_span.subspan(start, len), strip);
@@ -933,8 +937,7 @@ u32 extract_bsp_meshes(
     auto const* scnr_tag = map.scenario();
     if(!scnr_tag)
         return 0;
-    auto const* scnr =
-        scnr_tag->template data<geo::scnr_bsps_t>(map.magic());
+    auto const* scnr = scnr_tag->template data<geo::scnr_bsps_t>(map.magic());
     if(!scnr)
         return 0;
     auto bsp_refs = scnr->structure_bsps.data(map.magic());
@@ -965,7 +968,7 @@ u32 extract_bsp_meshes(
          * diffuse bitmaps alongside */
         material_db              db;
         std::vector<std::string> materials;
-        auto shader_refs = bsp->shaders.data(bsp_magic);
+        auto                     shader_refs = bsp->shaders.data(bsp_magic);
         if(!shader_refs.has_error())
             for(auto const& sref : shader_refs.value())
                 materials.push_back(
@@ -990,8 +993,8 @@ u32 extract_bsp_meshes(
 
         /* Instanced geometry: place each instance of its section in world
          * space; sections never referenced still get dumped at identity */
-        auto geom      = bsp->sections.data(bsp_magic);
-        auto instances = bsp->instances.data(bsp_magic);
+        auto              geom      = bsp->sections.data(bsp_magic);
+        auto              instances = bsp->instances.data(bsp_magic);
         std::vector<bool> instanced;
         if(!geom.has_error())
             instanced.assign(geom.value().size(), false);
@@ -1001,11 +1004,10 @@ u32 extract_bsp_meshes(
             {
                 auto const& inst = instances.value()[i];
                 auto        sidx = inst.section_index();
-                if(sidx < 0 ||
-                   static_cast<size_t>(sidx) >= geom.value().size())
+                if(sidx < 0 || static_cast<size_t>(sidx) >= geom.value().size())
                     continue;
                 instanced[sidx] = true;
-                auto iname = std::string(map.string(inst.name));
+                auto iname      = std::string(map.string(inst.name));
                 if(iname.empty())
                     iname = "instance_" + std::to_string(i);
                 sections += append_section(
@@ -1079,13 +1081,13 @@ u32 extract_model_meshes(
 
         material_db              db;
         std::vector<std::string> materials;
-        auto shader_refs = model->shaders.data(magic);
+        auto                     shader_refs = model->shaders.data(magic);
         if(!shader_refs.has_error())
             for(auto const& sref : shader_refs.value())
                 materials.push_back(
                     db.resolve(map, pool, outdir, sref.shader.tag_id));
 
-        auto name = sanitize(map.tag_name(tag));
+        auto       name = sanitize(map.tag_name(tag));
         obj_writer obj;
         obj.mtllib(name + ".mtl");
         u32 written = 0;
@@ -1171,12 +1173,14 @@ int print_map(blam::dimeter::map_container<V> const& map)
 
     cBasicPrint("Tag classes ({0} null/padding tags skipped):", null_tags);
     for(auto const& [name, stat] : class_counts)
-        cBasicPrint("  {0}: {1} tags, {2} bytes", name, stat.first, stat.second);
+        cBasicPrint(
+            "  {0}: {1} tags, {2} bytes", name, stat.first, stat.second);
 
     cBasicPrint("String id samples:");
     u32 string_count = blam::from_le(header->string_count);
     for(u32 i : {1u, 2u, string_count / 2, string_count - 1})
-        cBasicPrint("  [{0}] = {1}", i, map.string(blam::dimeter::string_id{i}));
+        cBasicPrint(
+            "  [{0}] = {1}", i, map.string(blam::dimeter::string_id{i}));
 
     return 0;
 }
@@ -1186,10 +1190,10 @@ int print_map(blam::dimeter::map_container<V> const& map)
 template<typename V>
 int run_map(
     blam::dimeter::map_container<V> const& map,
-    BytesConst const&                    map_data,
-    std::string const&                   map_dir,
-    std::string const&                   extract_dir,
-    u32                                  limit)
+    BytesConst const&                      map_data,
+    std::string const&                     map_dir,
+    std::string const&                     extract_dir,
+    u32                                    limit)
 {
     print_map(map);
     if(extract_dir.empty())
@@ -1202,7 +1206,7 @@ int run_map(
     h2::raw_pool pool;
     pool.files[static_cast<u8>(h2::raw_file_t::local)] =
         Span<const byte_t>(map_data.data, map_data.size);
-    std::vector<std::unique_ptr<Resource>> side_files;
+    std::vector<std::unique_ptr<Resource>>           side_files;
     constexpr std::pair<h2::raw_file_t, const char*> side_names[3] = {
         {h2::raw_file_t::mainmenu, "mainmenu.map"},
         {h2::raw_file_t::shared, "shared.map"},
@@ -1210,7 +1214,7 @@ int run_map(
     };
     for(auto const& [slot, name] : side_names)
     {
-        auto res = std::make_unique<Resource>(MkSysUrl(map_dir + "/" + name));
+        auto res   = std::make_unique<Resource>(MkSysUrl(map_dir + "/" + name));
         auto bytes = C_OCAST<BytesConst>(*res);
         if(bytes.data && bytes.size)
         {

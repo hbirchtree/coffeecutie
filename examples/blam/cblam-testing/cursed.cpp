@@ -4,6 +4,7 @@
 #include <coffee/components/restricted_subsystem.h>
 #include <coffee/components/subsystem.h>
 
+#include "../../rs/terrain/cache_detect.h"
 #include "coffee/graphics/apis/gleam/rhi.h"
 #include "coffee/graphics/apis/gleam/rhi_buffer.h"
 #include "coffee/graphics/apis/gleam/rhi_compat.h"
@@ -14,8 +15,6 @@
 #include "coffee/graphics/apis/gleam/rhi_texture.h"
 #include "coffee/graphics/apis/gleam/rhi_vertex.h"
 #include "components.h"
-#include "../../rs/terrain/cache_detect.h"
-#include <coffee/core/task_queue/task.h>
 #include "data.h"
 #include "entity_container.h"
 #include "peripherals/concepts/graphics_api.h"
@@ -25,6 +24,7 @@
 #include "physics.h"
 #include "resource_creation.h"
 #include "types.h"
+#include <coffee/core/task_queue/task.h>
 
 #if defined(FEATURE_ENABLE_BULLET3)
 #include <BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h>
@@ -39,62 +39,63 @@
 namespace cursed {
 
 using RS2CacheLoaderManifest = compo::SubsystemManifest<
-    compo::type_list_t<
-        PlayerCamera,
-        PlayerInfo
-    >,
-    compo::type_list_t<
-        BlamResources,
-        GameEventBus
-    >,
-    compo::empty_list_t
->;
+    compo::type_list_t<PlayerCamera, PlayerInfo>,
+    compo::type_list_t<BlamResources, GameEventBus>,
+    compo::empty_list_t>;
 
-struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2CacheLoaderManifest>
+struct RS2CacheLoader
+    : public compo::RestrictedSubsystem<RS2CacheLoader, RS2CacheLoaderManifest>
 {
     using Proxy = compo::proxy_of<RS2CacheLoaderManifest>;
-    using type = RS2CacheLoader;
+    using type  = RS2CacheLoader;
 
     RS2CacheLoader(
-        gfx::api& api,
-        PhysicsBus& physics,
+        gfx::api&                                       api,
+        PhysicsBus&                                     physics,
         compo::EntityRef<compo::EntityContainer> const& entity,
-        std::string const& cache_path)
+        std::string const&                              cache_path)
         : api(api)
         , physics(physics)
         , world_entity(entity)
         , loader(cache_path)
     {
         this->priority = 3080;
-        region_vao = api.alloc_vertex_array();
+        region_vao     = api.alloc_vertex_array();
         region_vao->alloc();
-        region_vao->add(gfx::vertex_attribute{
-            .index = 0,
-            .value = {
-                .offset = 0,
-                .stride = sizeof(rs2::Vertex),
-                .count = 3,
-            },
-        });
-        region_vao->add(gfx::vertex_attribute{
-            .index = 1,
-            .value = {
-                .offset = sizeof(f32) * 3 + sizeof(u8) * 4,
-                .stride = sizeof(rs2::Vertex),
-                .count = 2,
-            },
-        });
-        region_vao->add(gfx::vertex_attribute{
-            .index = 2,
-            .value = {
-                .offset = sizeof(f32) * 3,
-                .stride = sizeof(rs2::Vertex),
-                .count = 4,
-                .type = semantic::type_t::u8,
-                .flags = gfx::vertex_attribute::attribute_flags::packed |
-                    gfx::vertex_attribute::attribute_flags::normalized,
-            },
-        });
+        region_vao->add(
+            gfx::vertex_attribute{
+                .index = 0,
+                .value =
+                    {
+                        .offset = 0,
+                        .stride = sizeof(rs2::Vertex),
+                        .count  = 3,
+                    },
+            });
+        region_vao->add(
+            gfx::vertex_attribute{
+                .index = 1,
+                .value =
+                    {
+                        .offset = sizeof(f32) * 3 + sizeof(u8) * 4,
+                        .stride = sizeof(rs2::Vertex),
+                        .count  = 2,
+                    },
+            });
+        region_vao->add(
+            gfx::vertex_attribute{
+                .index = 2,
+                .value =
+                    {
+                        .offset = sizeof(f32) * 3,
+                        .stride = sizeof(rs2::Vertex),
+                        .count  = 4,
+                        .type   = semantic::type_t::u8,
+                        .flags =
+                            gfx::vertex_attribute::attribute_flags::packed |
+                            gfx::vertex_attribute::attribute_flags::normalized,
+                    },
+            });
         region_vao->set_attribute_names({
             {"position", 0},
             {"texcoord", 1},
@@ -159,8 +160,9 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
                 }));
         rq::runtime_queue::QueueImmediate(
             worker, rq::detail::duration(), [this] {
-                on_links(std::make_shared<std::vector<rs2::MapLink>>(
-                    loader.find_links()));
+                on_links(
+                    std::make_shared<std::vector<rs2::MapLink>>(
+                        loader.find_links()));
             });
 
         // Touching a link's sensor box: resolve and log it (teleporting is
@@ -179,7 +181,7 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
                 if(idx >= links.size())
                     return;
                 last_overlap_link = id;
-                auto const& l = links[idx];
+                auto const& l     = links[idx];
                 cDebug(
                     "RS2: link overlap: {} '{}' [{}] ({},{},{}) -> "
                     "({},{},{})",
@@ -197,17 +199,22 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
 
         region_program = api.alloc_program();
         {
-            create_program(api, shader_pair_t{
-                .vertex_file = "rs2",
-                .fragment_file = "rs2",
-                .shader = region_program,
-            });
+            create_program(
+                api,
+                shader_pair_t{
+                    .vertex_file   = "rs2",
+                    .fragment_file = "rs2",
+                    .shader        = region_program,
+                });
             // auto vert_shader = api.alloc_shader(std::string_view());
             // auto frag_shader = api.alloc_shader(std::string_view());
-            // region_program->add(gfx::program_t::stage_t::Vertex, vert_shader);
-            // region_program->add(gfx::program_t::stage_t::Fragment, frag_shader);
-            // if(auto compile = region_program->compile(); compile.has_error())
-            //     cWarning("Failed to compile cursed program: {}", compile.error());
+            // region_program->add(gfx::program_t::stage_t::Vertex,
+            // vert_shader);
+            // region_program->add(gfx::program_t::stage_t::Fragment,
+            // frag_shader); if(auto compile = region_program->compile();
+            // compile.has_error())
+            //     cWarning("Failed to compile cursed program: {}",
+            //     compile.error());
             // else
             //     cDebug("Cursed program state: {}", compile.value());
         }
@@ -226,7 +233,7 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
     // ready for the physics system to adopt on the main thread.
     struct PhysicsRegion
     {
-        Veci2 coord{};
+        Veci2                                          coord{};
         std::shared_ptr<Physics::BodyCreationPrebuilt> body;
     };
 #endif
@@ -240,7 +247,8 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
 
     struct RangeAllocator
     {
-        explicit RangeAllocator(u32 capacity) : free_list{{0, capacity}}
+        explicit RangeAllocator(u32 capacity)
+            : free_list{{0, capacity}}
         {
         }
 
@@ -263,12 +271,13 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
         {
             // insert sorted by offset, merge with neighbours
             auto it = std::lower_bound(
-                free_list.begin(), free_list.end(), r.offset,
+                free_list.begin(),
+                free_list.end(),
+                r.offset,
                 [](Range const& a, u32 off) { return a.offset < off; });
             it = free_list.insert(it, r);
             if(auto next = it + 1;
-               next != free_list.end() &&
-               it->offset + it->size == next->offset)
+               next != free_list.end() && it->offset + it->size == next->offset)
             {
                 it->size += next->size;
                 free_list.erase(next);
@@ -289,8 +298,8 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
 
     struct ResidentRegion
     {
-        std::shared_ptr<RegionData> data;
-        Range                       vrange{}, erange{};
+        std::shared_ptr<RegionData>            data;
+        Range                                  vrange{}, erange{};
         std::vector<gfx::draw_command::data_t> draws;
         std::vector<i32> draw_textures; // per draw: texture id, -1 = flat
     };
@@ -322,8 +331,7 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
                 element_alloc.free(it->second.erange);
                 it    = resident.erase(it);
                 dirty = true;
-            }
-            else
+            } else
                 ++it;
 
 #if defined(FEATURE_ENABLE_BULLET3)
@@ -337,8 +345,7 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
                 Physics::BodyRemoval removal{.entity_id = *it};
                 physics.process(event, &removal);
                 it = physics_bodies.erase(it);
-            }
-            else
+            } else
                 ++it;
         }
 
@@ -358,7 +365,8 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
                         // planes, then regroup into one mesh per material
                         // so the GPU thread gets batch-ready geometry.
                         std::vector<rs2::RegionGeometry> planes;
-                        for(auto plane : stl_types::range<>(loader.kind() != rs::CacheKind::rsc ? 4 : 3))
+                        for(auto plane : stl_types::range<>(
+                                loader.kind() != rs::CacheKind::rsc ? 4 : 3))
                             if(auto region = loader.load(x, y, plane))
                                 planes.push_back(std::move(region.value()));
 
@@ -373,10 +381,11 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
 
                         auto data   = std::make_shared<RegionData>();
                         data->coord = {x, y};
-                        data->meshes = rs2::repack_by_material<std::pair<rs2::i32, bool>>(
-                            parts,
-                            rs2::sorting_method::by_material,
-                            rs2::filter_method::renderable);
+                        data->meshes =
+                            rs2::repack_by_material<std::pair<rs2::i32, bool>>(
+                                parts,
+                                rs2::sorting_method::by_material,
+                                rs2::filter_method::renderable);
                         on_built(std::move(data));
 
 #if defined(FEATURE_ENABLE_BULLET3)
@@ -384,8 +393,8 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
                         // for u16, scaled into engine space. The BVH build
                         // (the expensive part) happens HERE on the worker;
                         // the main thread only wraps it in a rigid body.
-                        auto physics_data = std::make_shared<RegionData>();
-                        physics_data->coord = {x, y};
+                        auto physics_data    = std::make_shared<RegionData>();
+                        physics_data->coord  = {x, y};
                         physics_data->meshes = rs2::repack_by_material<size_t>(
                             parts,
                             rs2::sorting_method::by_u16_chunk,
@@ -434,9 +443,9 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
                             // spans above point into these meshes
                             body->keep_alive = physics_data;
 
-                            auto payload    = std::make_shared<PhysicsRegion>();
-                            payload->coord  = {x, y};
-                            payload->body   = std::move(body);
+                            auto payload   = std::make_shared<PhysicsRegion>();
+                            payload->coord = {x, y};
+                            payload->body  = std::move(body);
                             on_physics_built(std::move(payload));
                         }
 #endif
@@ -459,8 +468,8 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
         for(size_t i = 0; i < links.size(); ++i)
         {
             auto const& l = links[i];
-            Veci2 coord{l.from_x / rs2::REGION_SIZE,
-                        l.from_y / rs2::REGION_SIZE};
+            Veci2       coord{
+                l.from_x / rs2::REGION_SIZE, l.from_y / rs2::REGION_SIZE};
             u64  id   = link_body_bit | u64(i);
             bool want = in_ring(coord, wanted_center);
             bool have = link_bodies.contains(id);
@@ -476,22 +485,20 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
                     (l.aabb_min[0] + l.aabb_max[0]) / (2.f * world_scale),
                     (l.aabb_min[1] + l.aabb_max[1]) / (2.f * world_scale),
                     (l.aabb_min[2] + l.aabb_max[2]) / (2.f * world_scale)};
-                Physics::Event event{
-                    .type = Physics::Event::BodyCreationShape};
+                Physics::Event event{.type = Physics::Event::BodyCreationShape};
                 Physics::BodyCreationShape create{
                     .entity_id = id,
                     // bodies get m_world_basis (+90° about X) applied, so
                     // local y/z half-extents swap to stay world-aligned
-                    .scale     = {half.x, half.z, half.y},
-                    .position  = center,
-                    .mass      = 0,
-                    .shape     = Physics::BodyCreationShape::Box,
-                    .sensor    = true,
+                    .scale    = {half.x, half.z, half.y},
+                    .position = center,
+                    .mass     = 0,
+                    .shape    = Physics::BodyCreationShape::Box,
+                    .sensor   = true,
                 };
                 physics.process(event, &create);
                 link_bodies.insert(id);
-            }
-            else
+            } else
             {
                 Physics::Event       event{.type = Physics::Event::BodyRemoval};
                 Physics::BodyRemoval removal{.entity_id = id};
@@ -531,9 +538,13 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
                 vertex_alloc.free({*voff, vcount});
             if(eoff)
                 element_alloc.free({*eoff, ecount});
-            cWarning("RS2: out of buffer space for region {},{} "
-                     "({} verts, {} indices)",
-                data->coord.x, data->coord.y, vcount, ecount);
+            cWarning(
+                "RS2: out of buffer space for region {},{} "
+                "({} verts, {} indices)",
+                data->coord.x,
+                data->coord.y,
+                vcount,
+                ecount);
             return;
         }
 
@@ -565,20 +576,23 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
             if(mesh.indices.empty())
                 continue;
             region.draws.push_back({
-                .elements = {
-                    .count  = static_cast<u32>(mesh.indices.size()),
-                    .offset = eptr * sizeof(u16),
-                    .vertex_offset = vptr,
-                    .type   = semantic::type_t::u16,
-                },
+                .elements =
+                    {
+                        .count         = static_cast<u32>(mesh.indices.size()),
+                        .offset        = eptr * sizeof(u16),
+                        .vertex_offset = vptr,
+                        .type          = semantic::type_t::u16,
+                    },
             });
             region.draw_textures.push_back(
                 mesh.tri_texture.empty() ? -1 : mesh.tri_texture.front());
             std::copy(
-                mesh.vertices.begin(), mesh.vertices.end(),
+                mesh.vertices.begin(),
+                mesh.vertices.end(),
                 verts.begin() + vloc);
             std::copy(
-                mesh.indices.begin(), mesh.indices.end(),
+                mesh.indices.begin(),
+                mesh.indices.end(),
                 elements.begin() + eloc);
             vptr += mesh.vertices.size();
             eptr += mesh.indices.size();
@@ -596,8 +610,7 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
             region_tex->upload(
                 tex_data.rgba,
                 Veci3{0, 0, tex},
-                size_3d<i32>{tex_data.width, tex_data.height, 1}
-            );
+                size_3d<i32>{tex_data.width, tex_data.height, 1});
         }
         vertex_buf->unmap();
         element_buf->unmap();
@@ -619,10 +632,12 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
                     if(mesh.indices.empty())
                         continue;
                     std::copy(
-                        mesh.vertices.begin(), mesh.vertices.end(),
+                        mesh.vertices.begin(),
+                        mesh.vertices.end(),
                         va.begin() + vp);
                     std::copy(
-                        mesh.indices.begin(), mesh.indices.end(),
+                        mesh.indices.begin(),
+                        mesh.indices.end(),
                         ea.begin() + ep);
                     vp += mesh.vertices.size();
                     ep += mesh.indices.size();
@@ -644,23 +659,26 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
         for(auto const& [k, region] : resident)
         {
             region_draws.insert(
-                region_draws.end(), region.draws.begin(),
-                region.draws.end());
+                region_draws.end(), region.draws.begin(), region.draws.end());
 
             region_draw_textures.insert(
-                region_draw_textures.end(), region.draw_textures.begin(),
+                region_draw_textures.end(),
+                region.draw_textures.begin(),
                 region.draw_textures.end());
         }
         u32 instance_offset = 0;
         for(auto& draw : region_draws)
         {
             draw.instances = {
-                .count = 1,
+                .count  = 1,
                 .offset = instance_offset++,
             };
         }
-        cDebug("RS2: {} resident regions ({} pending), {} draws",
-            resident.size(), pending.size(), region_draws.size());
+        cDebug(
+            "RS2: {} resident regions ({} pending), {} draws",
+            resident.size(),
+            pending.size(),
+            region_draws.size());
     }
 
     Vecf2 to_rs2(Vecf2 world_pos)
@@ -679,7 +697,7 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
             i32(std::floor(rs_space.y / 8192.f)));
     }
 
-    virtual void start_restricted(Proxy& p, time_point const& t) final 
+    virtual void start_restricted(Proxy& p, time_point const& t) final
     {
         PlayerCamera* camera{};
         for(auto e : p.select<PlayerCamera, PlayerInfo>())
@@ -697,11 +715,9 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
         auto vert_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair<Matf4 const>{
-                {"camera"}, semantic::SpanOne<const Matf4>(camera->matrix)
-            },
+                {"camera"}, semantic::SpanOne<const Matf4>(camera->matrix)},
             gfx::uniform_pair<const f32>{
-                {"world_scale"}, semantic::SpanOne(world_scale)
-            });
+                {"world_scale"}, semantic::SpanOne(world_scale)});
         auto frag_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Fragment,
             gfx::uniform_pair<const i32>{
@@ -724,29 +740,33 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
             ImGui::SliderInt2("Region coords", &current_region.x, 0, 100);
             {
                 auto const& pos = camera->camera->position;
-                ImGui::Text("World position: (%f, %f, %f)", pos.x, pos.y, pos.z);
+                ImGui::Text(
+                    "World position: (%f, %f, %f)", pos.x, pos.y, pos.z);
             }
             {
                 auto pos = camera->camera->position * world_scale;
-                ImGui::Text("Runescape space: (%f, %f, %f)", pos.x, pos.y, pos.z);
+                ImGui::Text(
+                    "Runescape space: (%f, %f, %f)", pos.x, pos.y, pos.z);
             }
-            ImGui::Text("Resident regions: %zu (%zu pending)",
-                resident.size(), pending.size());
+            ImGui::Text(
+                "Resident regions: %zu (%zu pending)",
+                resident.size(),
+                pending.size());
             if(!resident.empty() &&
                !resident.begin()->second.data->meshes.empty() &&
-               !resident.begin()
-                    ->second.data->meshes[0]
-                    .vertices.empty())
+               !resident.begin()->second.data->meshes[0].vertices.empty())
             {
-                auto const& v = resident.begin()
-                                    ->second.data->meshes[0]
-                                    .vertices[0];
+                auto const& v =
+                    resident.begin()->second.data->meshes[0].vertices[0];
                 Vecf3 probe_pos = {v.x, v.y, v.z};
-                ImGui::Text("Probe position: (%f, %f, %f)",
-                    probe_pos.x, probe_pos.y, probe_pos.z);
+                ImGui::Text(
+                    "Probe position: (%f, %f, %f)",
+                    probe_pos.x,
+                    probe_pos.y,
+                    probe_pos.z);
                 if(ImGui::Button("Warp to probe"))
                 {
-                    GameEvent ev{GameEvent::PlayerTeleport};
+                    GameEvent           ev{GameEvent::PlayerTeleport};
                     PlayerTeleportEvent teleport{
                         .seat_idx = 0,
                         .position = probe_pos / world_scale,
@@ -756,7 +776,7 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
             }
             if(ImGui::Button("Lumbridge teleport"))
             {
-                GameEvent ev{GameEvent::PlayerTeleport};
+                GameEvent           ev{GameEvent::PlayerTeleport};
                 PlayerTeleportEvent teleport{
                     .seat_idx = 0,
                     .position = Vecf3{412000, 412000, 1000} / world_scale,
@@ -765,7 +785,7 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
             }
             if(ImGui::Button("Varrock teleport"))
             {
-                GameEvent ev{GameEvent::PlayerTeleport};
+                GameEvent           ev{GameEvent::PlayerTeleport};
                 PlayerTeleportEvent teleport{
                     .seat_idx = 0,
                     .position = Vecf3{411320, 438290, 1000} / world_scale,
@@ -774,7 +794,7 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
             }
             if(ImGui::Button("Falador teleport"))
             {
-                GameEvent ev{GameEvent::PlayerTeleport};
+                GameEvent           ev{GameEvent::PlayerTeleport};
                 PlayerTeleportEvent teleport{
                     .seat_idx = 0,
                     .position = Vecf3{379550, 432380, 1000} / world_scale,
@@ -783,7 +803,7 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
             }
             if(ImGui::Button("Ardougne teleport"))
             {
-                GameEvent ev{GameEvent::PlayerTeleport};
+                GameEvent           ev{GameEvent::PlayerTeleport};
                 PlayerTeleportEvent teleport{
                     .seat_idx = 0,
                     .position = Vecf3{340500, 423000, 1000} / world_scale,
@@ -805,10 +825,12 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
             last_region = current_region;
         }
 
-        auto res = api.submit({
-                .program = region_program,
+        auto res = api.submit(
+            {
+                .program  = region_program,
                 .vertices = region_vao,
-                .render_target = p.template subsystem<BlamResources>().offscreen,
+                .render_target =
+                    p.template subsystem<BlamResources>().offscreen,
                 .call = {.indexed = true, .instanced = true},
                 .data = region_draws,
             },
@@ -822,14 +844,16 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
             cWarning("RS2: Failed to draw: {}", std::get<1>(*res));
     }
 
-    virtual void end_restricted(Proxy&, time_point const& t) final {}
+    virtual void end_restricted(Proxy&, time_point const& t) final
+    {
+    }
 
-    gfx::api& api;
-    PhysicsBus& physics;
+    gfx::api&                                api;
+    PhysicsBus&                              physics;
     compo::EntityRef<compo::EntityContainer> world_entity;
-    
-    std::shared_ptr<gfx::vertex_array_t>        region_vao;
-    std::vector<gfx::draw_command::data_t>      region_draws;
+
+    std::shared_ptr<gfx::vertex_array_t>   region_vao;
+    std::vector<gfx::draw_command::data_t> region_draws;
     // parallel to region_draws: texture id per draw, -1 = flat colour
     std::vector<i32>                            region_draw_textures;
     std::shared_ptr<gfx::buffer_t>              vertex_buf;
@@ -843,8 +867,8 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
     static constexpr u32 element_capacity = 32 * 1024 * 1024 / sizeof(u16);
 
     // `loader` is only touched from the worker queue after construction
-    rs::AnyLoader loader;
-    rq::runtime_queue* worker{};
+    rs::AnyLoader                                    loader;
+    rq::runtime_queue*                               worker{};
     std::function<void(std::shared_ptr<RegionData>)> on_built;
 #if defined(FEATURE_ENABLE_BULLET3)
     std::function<void(std::shared_ptr<PhysicsRegion>)> on_physics_built;
@@ -856,9 +880,9 @@ struct RS2CacheLoader : public compo::RestrictedSubsystem<RS2CacheLoader, RS2Cac
     // keys never reach that bit (region_key tops out around bit 38).
     static constexpr u64 link_body_bit = 1ull << 62;
     std::function<void(std::shared_ptr<std::vector<rs2::MapLink>>)> on_links;
-    std::vector<rs2::MapLink> links;
-    std::set<u64>             link_bodies;
-    u64                       last_overlap_link{0};
+    std::vector<rs2::MapLink>                                       links;
+    std::set<u64>                                                   link_bodies;
+    u64 last_overlap_link{0};
 #endif
 
     RangeAllocator vertex_alloc{vertex_capacity};
@@ -878,12 +902,13 @@ void setup_cursed_loaders(compo::EntityContainer& e)
 {
     if(auto cache = platform::env::var("RS2_CACHE"))
     {
-        auto& physics_bus = e.subsystem_cast<PhysicsBus>();
-        compo::EntityRecipe recipe = {
-            .components = {
-                compo::type_hash_v<PhysicsData>(),
-                compo::type_hash_v<DebugDraw>(),
-            },
+        auto&               physics_bus = e.subsystem_cast<PhysicsBus>();
+        compo::EntityRecipe recipe      = {
+                 .components =
+                {
+                    compo::type_hash_v<PhysicsData>(),
+                    compo::type_hash_v<DebugDraw>(),
+                },
         };
         auto world_entity = e.create_entity(recipe);
         e.register_subsystem_inplace<RS2CacheLoader>(
@@ -894,4 +919,4 @@ void setup_cursed_loaders(compo::EntityContainer& e)
     }
 }
 
-}
+} // namespace cursed

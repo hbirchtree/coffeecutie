@@ -528,8 +528,8 @@ struct BlamMapBrowser
                         reinterpret_cast<blam::file_header_trial_t const*>(
                             data.data);
                     !trial->valid())
-                m_error =
-                    blam::map_load_error::incompatible_map_version_expected_trial;
+                m_error = blam::map_load_error::
+                    incompatible_map_version_expected_trial;
             else
             {
                 reinterpret_cast<blam::file_header_trial_t const*>(data.data)
@@ -566,8 +566,8 @@ struct BlamMapBrowser
     std::unique_ptr<Coffee::Resource>              m_map;
     blam::file_header_t const*                     m_info{nullptr};
     blam::file_header_t m_info_storage{}; /* normalized header for Trial maps */
-    std::optional<blam::map_load_error>            m_error;
-    std::vector<Url>                               m_maps;
-    std::string                                    remote_address;
-    u64                                            m_selected_entity{0};
+    std::optional<blam::map_load_error> m_error;
+    std::vector<Url>                    m_maps;
+    std::string                         remote_address;
+    u64                                 m_selected_entity{0};
 };

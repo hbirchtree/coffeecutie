@@ -7,8 +7,8 @@
 #include "physics.h"
 #include "pose_apply.h"
 #include "pose_demo_spawn.h"
-#include "resource_creation.h"
 #include "rendering.h"
+#include "resource_creation.h"
 #include "selected_version.h"
 #include "sounds.h"
 #include "ui_caching.h"
@@ -53,9 +53,13 @@ i32 pose_demo_main()
                 //
                 ("weapon", "Weapon to spawn", cxxopts::value<std::string>())
                 //
-                ("marker", "Marker to attach weapon to", cxxopts::value<std::string>())
+                ("marker",
+                 "Marker to attach weapon to",
+                 cxxopts::value<std::string>())
                 //
-                ("start_anim", "Animation to start with", cxxopts::value<std::string>())
+                ("start_anim",
+                 "Animation to start with",
+                 cxxopts::value<std::string>())
                 //
                 ("height", "Starting height", cxxopts::value<float>())
                 //
@@ -115,30 +119,30 @@ i32 pose_demo_main()
             e.register_subsystem_inplace<LoadingStatus>();
 
             e.register_subsystem_inplace<PhysicsBus>();
-            auto& net_state          = e.register_subsystem_inplace<NetworkState>();
-            net_state.client_state   = NetworkState::ClientState::None;
-            net_state.server_state   = NetworkState::ServerState::None;
+            auto& net_state = e.register_subsystem_inplace<NetworkState>();
+            net_state.client_state = NetworkState::ClientState::None;
+            net_state.server_state = NetworkState::ServerState::None;
 
             auto& params = e.register_subsystem_inplace<RenderingParameters>();
-            params.clear_color = Vecf3(0, 1, 0);
-            params.debug_clear = true;
+            params.clear_color   = Vecf3(0, 1, 0);
+            params.debug_clear   = true;
             params.debug_markers = false;
-            params.mipmap_bias = 0;
+            params.mipmap_bias   = 0;
 
-            auto& gfx = e.register_subsystem_inplace<gfx::system>();
+            auto& gfx  = e.register_subsystem_inplace<gfx::system>();
             auto  opts = [&arguments]() -> gleam::api::load_options_t {
                 if(arguments.contains("gfx-level"))
                 {
-                    auto level    = arguments["gfx-level"].as<std::string>();
-                    auto split    = level.find(":");
-                    auto profile  = level.substr(0, split);
-                    auto ver_full = level.substr(split + 1);
+                    auto level     = arguments["gfx-level"].as<std::string>();
+                    auto split     = level.find(":");
+                    auto profile   = level.substr(0, split);
+                    auto ver_full  = level.substr(split + 1);
                     auto ver_split = ver_full.find(":");
-                    auto major = std::stoi(ver_full.substr(0, ver_split));
-                    auto minor = std::stoi(ver_full.substr(ver_split + 1));
+                    auto major     = std::stoi(ver_full.substr(0, ver_split));
+                    auto minor     = std::stoi(ver_full.substr(ver_split + 1));
                     return gleam::api::load_options_t{
-                        .api_version = (major << 8) | (minor << 4),
-                        .api_type    = profile == "es" ? gfx::api_type_t::es
+                         .api_version = (major << 8) | (minor << 4),
+                         .api_type    = profile == "es" ? gfx::api_type_t::es
                                                         : gfx::api_type_t::core,
                     };
                 }
@@ -196,23 +200,26 @@ i32 pose_demo_main()
             alloc_renderer(e);
 
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
-            auto& dummyConfig =
-                e.subsystem_cast<comp_app::AppLoader>()
-                    .config<comp_app::dummy_plug::Config>();
+            auto& dummyConfig = e.subsystem_cast<comp_app::AppLoader>()
+                                    .config<comp_app::dummy_plug::Config>();
             if(dummyConfig.enabled)
             {
-                auto& dummy = e.subsystem_cast<comp_app::dummy_plug::DummyEventBus>();
+                auto& dummy =
+                    e.subsystem_cast<comp_app::dummy_plug::DummyEventBus>();
                 dummy.addEventData({
                     .prio = 0,
                     .handler =
-                        [&e](comp_app::dummy_plug::DummyEvent& ev, const void*) {
+                        [&e](
+                            comp_app::dummy_plug::DummyEvent& ev, const void*) {
                             if(ev.event != "pose_apply")
                                 return;
                             if(!ev.data.contains("bones"))
                                 return;
                             if(!g_pose_demo_biped_model.valid())
                             {
-                                cWarning("pose_demo: pose_apply received before biped spawned");
+                                cWarning(
+                                    "pose_demo: pose_apply received before "
+                                    "biped spawned");
                                 return;
                             }
                             apply_pose(
@@ -239,23 +246,28 @@ i32 pose_demo_main()
                 dummy.addEventData({
                     .prio = 0,
                     .handler =
-                        [&e](comp_app::dummy_plug::DummyEvent& ev, const void*) {
+                        [&e](
+                            comp_app::dummy_plug::DummyEvent& ev, const void*) {
                             if(ev.event != "play_animation" &&
                                ev.event != "loop_animation")
                                 return;
                             if(!g_pose_demo_biped_model.valid())
                                 return;
-                            std::string name = ev.data.value("name", std::string{});
-                            auto&       item =
-                                e.subsystem_cast<ModelCache<halo_version>>().get(
-                                    g_pose_demo_biped_model);
+                            std::string name =
+                                ev.data.value("name", std::string{});
+                            auto& item =
+                                e.subsystem_cast<ModelCache<halo_version>>()
+                                    .get(g_pose_demo_biped_model);
                             auto idx = find_animation_by_name(
                                 item.antr_hdr,
-                                e.subsystem_cast<ModelCache<halo_version>>().magic,
+                                e.subsystem_cast<ModelCache<halo_version>>()
+                                    .magic,
                                 name);
                             if(!idx)
                             {
-                                cWarning("pose_demo: animation '{}' not found", name);
+                                cWarning(
+                                    "pose_demo: animation '{}' not found",
+                                    name);
                                 return;
                             }
                             if(ev.event == "play_animation")
@@ -265,7 +277,7 @@ i32 pose_demo_main()
                                     std::chrono::steady_clock::now();
                             } else
                             {
-                                g_pose_demo_loop_anim_idx   = idx;
+                                g_pose_demo_loop_anim_idx    = idx;
                                 g_pose_demo_oneshot_anim_idx = std::nullopt;
                             }
                         },
@@ -282,15 +294,15 @@ i32 pose_demo_main()
                            ? arguments.unmatched().at(
                                  compile_info::implicit_resource_dir ? 0 : 1)
                            : "bloodgulch.map")
-                    : arguments.count("map") ? arguments["map"].as<std::string>()
-                                             : "bloodgulch.map",
+                : arguments.count("map") ? arguments["map"].as<std::string>()
+                                         : "bloodgulch.map",
                 compile_info::supports_command_line ? RSCA::SystemFile
-                                                     : RSCA::AssetFile);
+                                                    : RSCA::AssetFile);
             Url bitmap_filename =
                 (map_filename.path().dirname() / "bitmaps.map")
                     .url(map_filename.flags);
 
-            using result_type   = blam::map_container<halo_version>::result_type;
+            using result_type = blam::map_container<halo_version>::result_type;
             using AsyncResource = comp_app::FileMapper::Resource;
 
             struct MapReadResult
@@ -302,26 +314,28 @@ i32 pose_demo_main()
             auto& file_mapper = e.subsystem_cast<comp_app::FileMapper>();
             auto& resources   = e.subsystem_cast<BlamResources>();
 
-            auto map_read_task = rq::dependent_task<
-                std::shared_ptr<AsyncResource>,
-                MapReadResult>::CreateProcessor(
-                file_mapper.fetch(map_filename),
-                [](std::shared_ptr<AsyncResource>* data) mutable
-                    -> MapReadResult {
-                    if(!data || !(*data))
-                        return MapReadResult{
-                            blam::map_load_error::map_file_too_small,
-                            nullptr};
-                    auto map = blam::map_container<halo_version>::from_bytes(
-                        **data, halo_version_v);
-                    return MapReadResult{std::move(map), *data};
-                });
+            auto map_read_task = rq::
+                dependent_task<std::shared_ptr<AsyncResource>, MapReadResult>::
+                    CreateProcessor(
+                        file_mapper.fetch(map_filename),
+                        [](std::shared_ptr<AsyncResource>* data) mutable
+                            -> MapReadResult {
+                            if(!data || !(*data))
+                                return MapReadResult{
+                                    blam::map_load_error::map_file_too_small,
+                                    nullptr};
+                            auto map =
+                                blam::map_container<halo_version>::from_bytes(
+                                    **data, halo_version_v);
+                            return MapReadResult{std::move(map), *data};
+                        });
 
             auto bitmap_fetch = file_mapper.fetch(bitmap_filename).share();
 
             auto map_load_task = rq::CreateMultiTask<int>(
-                [&e](MapReadResult                  map_result,
-                     std::shared_ptr<AsyncResource> bitmap_data) -> int {
+                [&e](
+                    MapReadResult                  map_result,
+                    std::shared_ptr<AsyncResource> bitmap_data) -> int {
                     result_type& map = map_result.map;
                     if(map.has_error())
                     {
@@ -331,7 +345,7 @@ i32 pose_demo_main()
                         return -1;
                     }
 
-                    auto& files       = e.subsystem_cast<BlamFiles<halo_version>>();
+                    auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
                     files.container   = std::move(map.value());
                     files.map_file    = map_result.resource;
                     files.bitmap_file = bitmap_data;
@@ -347,7 +361,8 @@ i32 pose_demo_main()
                     e.subsystem_cast<SoundCache<halo_version>>().load_from(
                         files.container);
 
-                    auto& bitmaps = e.subsystem_cast<BitmapCache<halo_version>>();
+                    auto& bitmaps =
+                        e.subsystem_cast<BitmapCache<halo_version>>();
                     if(bitmap_data)
                     {
                         auto bitm_magic = blam::map_ptr(
@@ -355,14 +370,15 @@ i32 pose_demo_main()
                         bitmaps.load_bitmaps_from(bitm_magic);
                     } else
                         cWarning(
-                            "pose_demo: could not fetch bitmaps.map alongside the map file");
+                            "pose_demo: could not fetch bitmaps.map alongside "
+                            "the map file");
 
                     {
                         auto& gpu = e.subsystem_cast<BlamResources>();
                         auto& model_cache =
                             e.subsystem_cast<ModelCache<halo_version>>();
-                        auto vert  = gpu.model_buf->map(0);
-                        auto index = gpu.model_index->map(0);
+                        auto vert                  = gpu.model_buf->map(0);
+                        auto index                 = gpu.model_index->map(0);
                         model_cache.vert_buffer    = Bytes::ofContainer(vert);
                         model_cache.element_buffer = Bytes::ofContainer(index);
                     }
@@ -378,7 +394,7 @@ i32 pose_demo_main()
 
                     bitmaps.allocate_storage();
 
-                    auto& loading_status = e.subsystem_cast<LoadingStatus>();
+                    auto& loading_status    = e.subsystem_cast<LoadingStatus>();
                     loading_status.app_info = e.service<comp_app::AppInfo>();
                     loading_status.loaded_map     = LoadingStatus::loaded;
                     loading_status.loaded_bitmaps = LoadingStatus::loaded;
@@ -395,7 +411,9 @@ i32 pose_demo_main()
                 resources.background_worker, std::move(map_read_task))
                 .assume_value();
         },
-        [](EntityContainer& e, BlamData<halo_version>&, time_point const&,
+        [](EntityContainer& e,
+           BlamData<halo_version>&,
+           time_point const&,
            duration const&) {
             for(auto entity : e.select<PlayerCamera>())
             {
@@ -424,19 +442,22 @@ i32 pose_demo_main()
                 auto* pistol_model = e.get<Model>(g_pose_demo_pistol_entity);
                 if(biped_model && pistol_model)
                 {
-                    auto& model_cache = e.subsystem_cast<ModelCache<halo_version>>();
-                    auto& biped_item  = model_cache.get(g_pose_demo_biped_model);
-                    if(g_pose_demo_hand_node_idx < biped_item.bone_matrices.size() &&
+                    auto& model_cache =
+                        e.subsystem_cast<ModelCache<halo_version>>();
+                    auto& biped_item = model_cache.get(g_pose_demo_biped_model);
+                    if(g_pose_demo_hand_node_idx <
+                           biped_item.bone_matrices.size() &&
                        g_pose_demo_hand_node_idx < biped_item.inv_bind.size())
                     {
                         Matf4 bind_world_hand = glm::inverse(
                             biped_item.inv_bind[g_pose_demo_hand_node_idx]);
                         Matf4 world_hand =
-                            biped_item.bone_matrices[g_pose_demo_hand_node_idx] *
+                            biped_item
+                                .bone_matrices[g_pose_demo_hand_node_idx] *
                             bind_world_hand;
                         pistol_model->transform = biped_model->transform *
-                                                   world_hand *
-                                                   g_pose_demo_hand_marker_local;
+                                                  world_hand *
+                                                  g_pose_demo_hand_marker_local;
                     }
                 }
             }

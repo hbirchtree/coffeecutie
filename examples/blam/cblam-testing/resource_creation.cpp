@@ -13,8 +13,8 @@
 
 #include <coffee/comp_app/services.h>
 #include <coffee/core/files/cfiles.h>
-#include <coffee/core/types/input/event_types.h>
 #include <coffee/core/input/eventhandlers.h>
+#include <coffee/core/types/input/event_types.h>
 #include <glm/ext/quaternion_trigonometric.hpp>
 #include <glm/geometric.hpp>
 #include <stdexcept>
@@ -75,7 +75,8 @@ void create_resources(compo::EntityContainer& e)
 
         eventhandler->addEventHandler(
             1024, std_camera_t::KeyboardInput([&e] -> std_camera_t* {
-                for(auto entity : e.select<PlayerCamera, PlayerInfo, NetworkInfo>())
+                for(auto entity :
+                    e.select<PlayerCamera, PlayerInfo, NetworkInfo>())
                 {
                     auto [cam, info, net] = entity.components();
                     if(cam.keyboard.enabled && info.permissions.camera)
@@ -89,7 +90,8 @@ void create_resources(compo::EntityContainer& e)
             }));
         eventhandler->addEventHandler(
             1024, std_camera_t::MouseInput([&e] -> std_camera_t* {
-                for(auto entity : e.select<PlayerCamera, PlayerInfo, NetworkInfo>())
+                for(auto entity :
+                    e.select<PlayerCamera, PlayerInfo, NetworkInfo>())
                 {
                     auto [cam, info, net] = entity.components();
                     if(cam.keyboard.enabled && info.permissions.camera)
@@ -109,7 +111,8 @@ void create_resources(compo::EntityContainer& e)
         auto& pbus = e.subsystem_cast<PhysicsBus>();
         gbus.addEventFunction<PlayerTeleportEvent>(
             1024, [&e, &pbus](GameEvent&, PlayerTeleportEvent* teleport) {
-                cDebug("Teleport event: seat={} entity={} position={}",
+                cDebug(
+                    "Teleport event: seat={} entity={} position={}",
                     teleport->seat_idx,
                     teleport->entity_id,
                     teleport->position);
@@ -118,20 +121,23 @@ void create_resources(compo::EntityContainer& e)
                         return e.ref(teleport->entity_id);
                     for(auto const& player : e.select<PlayerInfo>())
                     {
-                        if(e.get<PlayerInfo>(player.id())->seat_idx != teleport->seat_idx)
+                        if(e.get<PlayerInfo>(player.id())->seat_idx !=
+                           teleport->seat_idx)
                             continue;
                         return e.ref(player.id());
                     }
-                    Throw(std::out_of_range("tried to teleport player, but no target"));
+                    Throw(
+                        std::out_of_range(
+                            "tried to teleport player, but no target"));
                 }();
                 auto& cam = player.get<PlayerCamera>();
                 auto& net = player.get<NetworkInfo>();
                 if(cam.mode.physics)
                 {
-                    Physics::Event ev{Physics::Event::Translate};
+                    Physics::Event     ev{Physics::Event::Translate};
                     Physics::Translate translate{
                         .entity_id = player.id(),
-                        .position = teleport->position,
+                        .position  = teleport->position,
                     };
                     pbus.process(ev, &translate);
                 } else
@@ -150,7 +156,8 @@ void create_resources(compo::EntityContainer& e)
                     connect->connected ? "" : "dis",
                     name,
                     connect->player_index);
-                for(auto player : e.select<PlayerCamera, PlayerInfo, NetworkInfo>())
+                for(auto player :
+                    e.select<PlayerCamera, PlayerInfo, NetworkInfo>())
                 {
                     auto [cam, info, net] = player.components();
                     // Don't assign it to remote seat
@@ -189,27 +196,28 @@ void create_resources(compo::EntityContainer& e)
                 update_camera_aspect(e);
             });
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
-        eventhandler->addEventFunction<CIKeyEvent>(
-            1024, [&e](CIEvent&, CIKeyEvent* key) {
-                if(key->key != Input::CK_F9)
-                    return;
-                if(!key->pressed())
-                    return;
-                for(auto const cam_ : e.select<PlayerCamera, PlayerInfo>())
-                {
-                    auto const [cam, info] = cam_.components();
-                    if(info.seat_idx != 0)
-                        continue;
-                    cDebug(R"({{"time": 0, "type": "camera", "position" :[{}, {}, {}], "rotation":[{}, {}, {}, {}]}})",
-                        cam.camera->position.x,
-                        cam.camera->position.y,
-                        cam.camera->position.z,
-                        cam.camera->rotation.w,
-                        cam.camera->rotation.x,
-                        cam.camera->rotation.y,
-                        cam.camera->rotation.z);
-                }
-            });
+        eventhandler->addEventFunction<
+            CIKeyEvent>(1024, [&e](CIEvent&, CIKeyEvent* key) {
+            if(key->key != Input::CK_F9)
+                return;
+            if(!key->pressed())
+                return;
+            for(auto const cam_ : e.select<PlayerCamera, PlayerInfo>())
+            {
+                auto const [cam, info] = cam_.components();
+                if(info.seat_idx != 0)
+                    continue;
+                cDebug(
+                    R"({{"time": 0, "type": "camera", "position" :[{}, {}, {}], "rotation":[{}, {}, {}, {}]}})",
+                    cam.camera->position.x,
+                    cam.camera->position.y,
+                    cam.camera->position.z,
+                    cam.camera->rotation.w,
+                    cam.camera->rotation.x,
+                    cam.camera->rotation.y,
+                    cam.camera->rotation.z);
+            }
+        });
 #endif
 
         auto eventhandler_w = e.service<comp_app::BasicEventBus<Event>>();
@@ -232,226 +240,234 @@ void create_resources(compo::EntityContainer& e)
     }
 
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
-    auto& dummyConfig = e.subsystem_cast<comp_app::AppLoader>().config<comp_app::dummy_plug::Config>();
+    auto& dummyConfig = e.subsystem_cast<comp_app::AppLoader>()
+                            .config<comp_app::dummy_plug::Config>();
     if(dummyConfig.enabled)
     {
         auto& dummy = e.subsystem_cast<comp_app::dummy_plug::DummyEventBus>();
-        dummy.addEventData({
-                .prio = 0,
-                .handler = [&e](comp_app::dummy_plug::DummyEvent& ev, const void*) {
-            e.subsystem_cast<Journal>().record(
-                "dummy_event", {{"event", ev.event}, {"data", ev.data}});
-            if(ev.event == "render_param")
-            {
-                /* Generic toggle of the data.h debug/render knobs from a dummy
-                 * plug custom event. On desktop these are driven by the ImGui
-                 * widgets; headless/web builds have no ImGui interaction, so the
-                 * dummy plug drives them. Any key present in the event overrides
-                 * the matching field; absent keys keep their current value. */
-                auto const& d = ev.data;
-                auto set_val = [&d]<typename T>(std::string_view key, T& value)
-                {
-                    value = d.value(key, value);
-                };
-                auto& rp = e.subsystem_cast<RenderingParameters>();
-                set_val("mipmap_bias", rp.mipmap_bias);
-                set_val("color_changing", rp.color_changing);
-                set_val("render_fog", rp.render_fog);
-                set_val("render_lightmaps", rp.render_lightmaps);
-                set_val("render_model_bones", rp.render_model_bones);
-                set_val("render_reflection", rp.render_reflection);
-                set_val("render_scenery", rp.render_scenery);
-                set_val("only_normals", rp.only_normals);
-                set_val("only_normalmaps", rp.only_normalmaps);
-                set_val("only_lightmaps", rp.only_lightmaps);
-                set_val("only_reflections", rp.only_reflections);
-                set_val("only_multipurpose", rp.only_multipurpose);
-                set_val("only_multipurpose2", rp.only_multipurpose2);
-                set_val("only_diffuse", rp.only_diffuse);
-                set_val("render_ui", rp.render_ui);
-                set_val("debug_clear", rp.debug_clear);
-                set_val("occluder_update", rp.occluder_update);
-                set_val("debug_markers", rp.debug_markers);
-                set_val("debug_portals", rp.debug_portals);
-                set_val("debug_clusters", rp.debug_clusters);
-                set_val("debug_triggers", rp.debug_triggers);
-                set_val("tex_res", rp.tex_res);
-                set_val("draw_distance", rp.draw_distance);
-                set_val("current_bsp_cluster", rp.current_bsp_cluster);
+        dummy.addEventData(
+            {.prio    = 0,
+             .handler = [&e](
+                            comp_app::dummy_plug::DummyEvent& ev, const void*) {
+                 e.subsystem_cast<Journal>().record(
+                     "dummy_event", {{"event", ev.event}, {"data", ev.data}});
+                 if(ev.event == "render_param")
+                 {
+                     /* Generic toggle of the data.h debug/render knobs from a
+                      * dummy plug custom event. On desktop these are driven by
+                      * the ImGui widgets; headless/web builds have no ImGui
+                      * interaction, so the dummy plug drives them. Any key
+                      * present in the event overrides the matching field;
+                      * absent keys keep their current value. */
+                     auto const& d = ev.data;
+                     auto        set_val =
+                         [&d]<typename T>(std::string_view key, T& value) {
+                             value = d.value(key, value);
+                         };
+                     auto& rp = e.subsystem_cast<RenderingParameters>();
+                     set_val("mipmap_bias", rp.mipmap_bias);
+                     set_val("color_changing", rp.color_changing);
+                     set_val("render_fog", rp.render_fog);
+                     set_val("render_lightmaps", rp.render_lightmaps);
+                     set_val("render_model_bones", rp.render_model_bones);
+                     set_val("render_reflection", rp.render_reflection);
+                     set_val("render_scenery", rp.render_scenery);
+                     set_val("only_normals", rp.only_normals);
+                     set_val("only_normalmaps", rp.only_normalmaps);
+                     set_val("only_lightmaps", rp.only_lightmaps);
+                     set_val("only_reflections", rp.only_reflections);
+                     set_val("only_multipurpose", rp.only_multipurpose);
+                     set_val("only_multipurpose2", rp.only_multipurpose2);
+                     set_val("only_diffuse", rp.only_diffuse);
+                     set_val("render_ui", rp.render_ui);
+                     set_val("debug_clear", rp.debug_clear);
+                     set_val("occluder_update", rp.occluder_update);
+                     set_val("debug_markers", rp.debug_markers);
+                     set_val("debug_portals", rp.debug_portals);
+                     set_val("debug_clusters", rp.debug_clusters);
+                     set_val("debug_triggers", rp.debug_triggers);
+                     set_val("tex_res", rp.tex_res);
+                     set_val("draw_distance", rp.draw_distance);
+                     set_val("current_bsp_cluster", rp.current_bsp_cluster);
 
-                if(auto it = d.find("clear_color");
-                   it != d.end() && it->is_array() && it->size() >= 3)
-                {
-                    rp.clear_color = Vecf3(
-                        (*it)[0].get<f32>(),
-                        (*it)[1].get<f32>(),
-                        (*it)[2].get<f32>());
-                }
+                     if(auto it = d.find("clear_color");
+                        it != d.end() && it->is_array() && it->size() >= 3)
+                     {
+                         rp.clear_color = Vecf3(
+                             (*it)[0].get<f32>(),
+                             (*it)[1].get<f32>(),
+                             (*it)[2].get<f32>());
+                     }
 
-                auto& pp = e.subsystem_cast<PostProcessParameters>();
-                set_val("exposure", pp.exposure);
-                set_val("gamma", pp.gamma);
-                set_val("scale", pp.scale);
-                set_val("auto_expose", pp.auto_expose);
-                set_val("doom_mode", pp.doom_mode);
-            }
-            if(ev.event == "camera")
-            {
-                PlayerCamera* target{};
-                for(auto const& en : e.select<PlayerCamera>())
-                {
-                    auto* cam = e.get<PlayerCamera>(en.id());
-                    auto const* info = e.get<PlayerInfo>(en.id());
-                    if(info->seat_idx != 0)
-                        continue;
-                    target = cam;
-                }
-                if(!target)
-                {
-                    cWarning("Could not assign dummy event to camera");
-                    return;
-                }
-                if(ev.data.contains("position"))
-                {
-                    auto pos = ev.data["position"];
-                    target->camera->position = Vecf3{
-                        pos[0].get<float>(),
-                        pos[1].get<float>(),
-                        pos[2].get<float>()
-                    };
-                }
-                if(ev.data.contains("rotation"))
-                {
-                    auto rot = ev.data["rotation"];
-                    f32 deg_to_rad = glm::pi<f32>() / 180.f;
-                    if(rot.size() == 2)
-                        target->camera->rotation = glm::normalize(
-                            glm::angleAxis(rot[0].get<float>() * deg_to_rad, Vecf3{-1.f, 0.f,0.f}) *
-                            glm::angleAxis(rot[1].get<float>() * deg_to_rad, Vecf3{ 0.f,-1.f,0.f})
-                        );
-                    else
-                        target->camera->rotation = glm::normalize(Quatf(
-                            rot[0].get<float>(),
-                            rot[1].get<float>(),
-                            rot[2].get<float>(),
-                            rot[3].get<float>()));
-                }
-                /* Headless equivalent of the ImGui "Physics" checkbox */
-                target->mode.physics =
-                    ev.data.value("physics", target->mode.physics);
-            }
-            if(ev.event == "dump_state")
-            {
-                /* Generic per-process state dump for integration testing
-                 * (currently just the player roster; add more top-level
-                 * keys here as other subsystems need the same treatment —
-                 * that's why this writes one shared state.json rather
-                 * than a roster-only file). One file per process, in its
-                 * own TMPDIR (the client/server harness —
-                 * .github/tests/net/ — points TMPDIR at a distinct dir
-                 * per side precisely so this doesn't collide).
-                 * Overwritten every time this event fires, so the final
-                 * write holds end-of-test state; the harness diffs the
-                 * two files directly once both processes have exited. */
-                nlohmann::json state;
+                     auto& pp = e.subsystem_cast<PostProcessParameters>();
+                     set_val("exposure", pp.exposure);
+                     set_val("gamma", pp.gamma);
+                     set_val("scale", pp.scale);
+                     set_val("auto_expose", pp.auto_expose);
+                     set_val("doom_mode", pp.doom_mode);
+                 }
+                 if(ev.event == "camera")
+                 {
+                     PlayerCamera* target{};
+                     for(auto const& en : e.select<PlayerCamera>())
+                     {
+                         auto*       cam  = e.get<PlayerCamera>(en.id());
+                         auto const* info = e.get<PlayerInfo>(en.id());
+                         if(info->seat_idx != 0)
+                             continue;
+                         target = cam;
+                     }
+                     if(!target)
+                     {
+                         cWarning("Could not assign dummy event to camera");
+                         return;
+                     }
+                     if(ev.data.contains("position"))
+                     {
+                         auto pos                 = ev.data["position"];
+                         target->camera->position = Vecf3{
+                             pos[0].get<float>(),
+                             pos[1].get<float>(),
+                             pos[2].get<float>()};
+                     }
+                     if(ev.data.contains("rotation"))
+                     {
+                         auto rot        = ev.data["rotation"];
+                         f32  deg_to_rad = glm::pi<f32>() / 180.f;
+                         if(rot.size() == 2)
+                             target->camera->rotation = glm::normalize(
+                                 glm::angleAxis(
+                                     rot[0].get<float>() * deg_to_rad,
+                                     Vecf3{-1.f, 0.f, 0.f}) *
+                                 glm::angleAxis(
+                                     rot[1].get<float>() * deg_to_rad,
+                                     Vecf3{0.f, -1.f, 0.f}));
+                         else
+                             target->camera->rotation = glm::normalize(Quatf(
+                                 rot[0].get<float>(),
+                                 rot[1].get<float>(),
+                                 rot[2].get<float>(),
+                                 rot[3].get<float>()));
+                     }
+                     /* Headless equivalent of the ImGui "Physics" checkbox */
+                     target->mode.physics =
+                         ev.data.value("physics", target->mode.physics);
+                 }
+                 if(ev.event == "dump_state")
+                 {
+                     /* Generic per-process state dump for integration testing
+                      * (currently just the player roster; add more top-level
+                      * keys here as other subsystems need the same treatment —
+                      * that's why this writes one shared state.json rather
+                      * than a roster-only file). One file per process, in its
+                      * own TMPDIR (the client/server harness —
+                      * .github/tests/net/ — points TMPDIR at a distinct dir
+                      * per side precisely so this doesn't collide).
+                      * Overwritten every time this event fires, so the final
+                      * write holds end-of-test state; the harness diffs the
+                      * two files directly once both processes have exited. */
+                     nlohmann::json state;
 
-                nlohmann::json& players = state["players"];
-                players                 = nlohmann::json::array();
-                for(auto const& entity : e.select<PlayerInfo, NetworkInfo, PlayerCamera>())
-                {
-                    auto [info, net, cam] = entity.components();
-                    players.push_back({
-                        {"player_idx", info.player_idx},
-                        {"seat_idx", info.seat_idx},
-                        {"name", info.name},
-                        {"remote", info.is_remote()},
-                        {"loading_progress", info.loading_progress},
-                        {"connected", net.connected},
-                        {"position", nlohmann::json{
-                            cam.camera->position.x,
-                            cam.camera->position.y,
-                            cam.camera->position.z,
-                        }},
-                    });
-                }
+                     nlohmann::json& players = state["players"];
+                     players                 = nlohmann::json::array();
+                     for(auto const& entity :
+                         e.select<PlayerInfo, NetworkInfo, PlayerCamera>())
+                     {
+                         auto [info, net, cam] = entity.components();
+                         players.push_back({
+                             {"player_idx", info.player_idx},
+                             {"seat_idx", info.seat_idx},
+                             {"name", info.name},
+                             {"remote", info.is_remote()},
+                             {"loading_progress", info.loading_progress},
+                             {"connected", net.connected},
+                             {"position",
+                              nlohmann::json{
+                                  cam.camera->position.x,
+                                  cam.camera->position.y,
+                                  cam.camera->position.z,
+                              }},
+                         });
+                     }
 
-                /* state_json is a named local, not a temporary passed
-                 * straight into ofString(): BytesConst::ofString's
-                 * by-value std::string overload copies its argument into
-                 * a function-local parameter and returns a span pointing
-                 * into it, which is already destroyed by the time the
-                 * caller gets the span back. Resource's BytesConst
-                 * assignment borrows rather than copies (see cfiles.h),
-                 * so the buffer must genuinely outlive it — hence a named
-                 * string_view over a local that's still alive at
-                 * FileCommit(). */
-                std::string state_json = state.dump(2);
-                auto        file       = Resource("state.json"_tmpfile);
-                file = semantic::BytesConst::ofString(
-                    std::string_view(state_json));
-                Coffee::FileCommit(
-                    file, RSCA::NewFile | RSCA::Discard | RSCA::WriteOnly);
-                cDebug(
-                    "State dumped to state.json ({} player(s))",
-                    players.size());
-                e.subsystem_cast<Journal>().record("state_dump", state);
-            }
-            if(ev.event == "switch_map")
-            {
-                using namespace ::platform::url::constructors;
-                using platform::url::Url;
-                std::string path = ev.data.value("map", std::string{});
-                if(path.empty())
-                {
-                    cWarning("switch_map event missing \"map\" path");
-                    return;
-                }
-                GameEventBus& gbus = e.subsystem_cast<GameEventBus>();
-                if(path.find('/') == std::string::npos)
-                {
-                    auto name = path;
-                    if(auto dot = name.rfind(".map"); dot != std::string::npos)
-                        name.resize(dot);
-                    GameEvent          event{GameEvent::MapLoadByName};
-                    MapLoadByNameEvent load{
-                        .origin   = MapLoadEvent::Local,
-                        .map_name = *blam::bl_string::from(name),
-                    };
-                    gbus.process(event, &load);
-                    return;
-                }
-                Url map_filename = MkUrl(path, RSCA::SystemFile);
-                Url map_dir =
-                    map_filename.path().dirname().url(map_filename.flags);
+                     /* state_json is a named local, not a temporary passed
+                      * straight into ofString(): BytesConst::ofString's
+                      * by-value std::string overload copies its argument into
+                      * a function-local parameter and returns a span pointing
+                      * into it, which is already destroyed by the time the
+                      * caller gets the span back. Resource's BytesConst
+                      * assignment borrows rather than copies (see cfiles.h),
+                      * so the buffer must genuinely outlive it — hence a named
+                      * string_view over a local that's still alive at
+                      * FileCommit(). */
+                     std::string state_json = state.dump(2);
+                     auto        file       = Resource("state.json"_tmpfile);
+                     file                   = semantic::BytesConst::ofString(
+                         std::string_view(state_json));
+                     Coffee::FileCommit(
+                         file, RSCA::NewFile | RSCA::Discard | RSCA::WriteOnly);
+                     cDebug(
+                         "State dumped to state.json ({} player(s))",
+                         players.size());
+                     e.subsystem_cast<Journal>().record("state_dump", state);
+                 }
+                 if(ev.event == "switch_map")
+                 {
+                     using namespace ::platform::url::constructors;
+                     using platform::url::Url;
+                     std::string path = ev.data.value("map", std::string{});
+                     if(path.empty())
+                     {
+                         cWarning("switch_map event missing \"map\" path");
+                         return;
+                     }
+                     GameEventBus& gbus = e.subsystem_cast<GameEventBus>();
+                     if(path.find('/') == std::string::npos)
+                     {
+                         auto name = path;
+                         if(auto dot = name.rfind(".map");
+                            dot != std::string::npos)
+                             name.resize(dot);
+                         GameEvent          event{GameEvent::MapLoadByName};
+                         MapLoadByNameEvent load{
+                             .origin   = MapLoadEvent::Local,
+                             .map_name = *blam::bl_string::from(name),
+                         };
+                         gbus.process(event, &load);
+                         return;
+                     }
+                     Url map_filename = MkUrl(path, RSCA::SystemFile);
+                     Url map_dir =
+                         map_filename.path().dirname().url(map_filename.flags);
 
-                GameEvent     event{GameEvent::MapLoadStart};
-                MapLoadEvent  load{
-                     .directory = map_dir,
-                     .file      = map_filename,
-                };
-                gbus.process(event, &load);
-            }
-            if(ev.event == "net_listen" || ev.event == "net_connect")
-            {
-                std::string address =
-                    ev.data.value("address", std::string{"127.0.0.1:27015"});
-                GameEventBus& gbus = e.subsystem_cast<GameEventBus>();
-                GameEvent          event{GameEvent::ServerConnect};
-                ServerConnectEvent connect{
-                    .type   = ev.event == "net_listen"
-                                  ? ServerConnectEvent::Listen
-                                  : ServerConnectEvent::Server,
-                    .remote = address,
-                };
-                gbus.process(event, &connect);
-                if(ev.event == "net_connect")
-                {
-                    GameEvent              listing{GameEvent::MapRequestListing};
-                    MapRequestListingEvent request{};
-                    gbus.process(listing, &request);
-                }
-            }
-        }});
+                     GameEvent    event{GameEvent::MapLoadStart};
+                     MapLoadEvent load{
+                         .directory = map_dir,
+                         .file      = map_filename,
+                     };
+                     gbus.process(event, &load);
+                 }
+                 if(ev.event == "net_listen" || ev.event == "net_connect")
+                 {
+                     std::string address = ev.data.value(
+                         "address", std::string{"127.0.0.1:27015"});
+                     GameEventBus&      gbus = e.subsystem_cast<GameEventBus>();
+                     GameEvent          event{GameEvent::ServerConnect};
+                     ServerConnectEvent connect{
+                         .type   = ev.event == "net_listen"
+                                       ? ServerConnectEvent::Listen
+                                       : ServerConnectEvent::Server,
+                         .remote = address,
+                     };
+                     gbus.process(event, &connect);
+                     if(ev.event == "net_connect")
+                     {
+                         GameEvent listing{GameEvent::MapRequestListing};
+                         MapRequestListingEvent request{};
+                         gbus.process(listing, &request);
+                     }
+                 }
+             }});
     }
 #endif
 
@@ -697,9 +713,10 @@ void create_resources(compo::EntityContainer& e)
     if(resources.debug_lines)
         markers.set_capacity(
             static_cast<u32>((memory_budget::debug_buffer / 2) / sizeof(Vecf3)),
-            static_cast<u32>((memory_budget::debug_buffer / 2) / sizeof(Vecf3)));
+            static_cast<u32>(
+                (memory_budget::debug_buffer / 2) / sizeof(Vecf3)));
 
-    if (!compile_info::platform::is_android && resources.debug_lines)
+    if(!compile_info::platform::is_android && resources.debug_lines)
     {
         markers.map(0, 0);
         auto& pos = markers.portal_buffer;
@@ -886,13 +903,16 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
     const auto map_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
                                 ? "map_xbox"sv
                                 : "map"sv;
-    const auto scenery_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
-        ? (compile_info::platform::is_emscripten ? "scenery_xbox_lite"sv : "scenery_xbox"sv)
-        : (compile_info::platform::is_emscripten ? "scenery_lite"sv : "scenery"sv);
+    const auto scenery_vertex =
+        std::is_same_v<halo_version, blam::xbox_version_t>
+            ? (compile_info::platform::is_emscripten ? "scenery_xbox_lite"sv
+                                                     : "scenery_xbox"sv)
+            : (compile_info::platform::is_emscripten ? "scenery_lite"sv
+                                                     : "scenery"sv);
     /* Xbox multipurpose maps are ARGB; use the matching fragment variant. */
-    const auto scenery_frag =
-        std::is_same_v<halo_version, blam::xbox_version_t> ? "scenery_uber_xbox"sv
-                                                           : "scenery_uber"sv;
+    const auto scenery_frag = std::is_same_v<halo_version, blam::xbox_version_t>
+                                  ? "scenery_uber_xbox"sv
+                                  : "scenery_uber"sv;
 
     std::array<shader_pair_t, 4> shaders = {{
         {
@@ -928,9 +948,12 @@ static void create_uber_lite_shaders(gfx::api& api, BlamResources& resources)
     const auto map_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
                                 ? "map_xbox"sv
                                 : "map"sv;
-    const auto scenery_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
-        ? (compile_info::platform::is_emscripten ? "scenery_xbox_lite"sv : "scenery_xbox"sv)
-        : (compile_info::platform::is_emscripten ? "scenery_lite"sv : "scenery"sv);
+    const auto scenery_vertex =
+        std::is_same_v<halo_version, blam::xbox_version_t>
+            ? (compile_info::platform::is_emscripten ? "scenery_xbox_lite"sv
+                                                     : "scenery_xbox"sv)
+            : (compile_info::platform::is_emscripten ? "scenery_lite"sv
+                                                     : "scenery"sv);
 
     std::array<shader_pair_t, 4> shaders = {{
         {
@@ -966,9 +989,12 @@ static void create_standard_shaders(gfx::api& api, BlamResources& resources)
     const auto map_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
                                 ? "map_xbox"sv
                                 : "map"sv;
-    const auto scenery_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
-        ? (compile_info::platform::is_emscripten ? "scenery_xbox_lite"sv : "scenery_xbox"sv)
-        : (compile_info::platform::is_emscripten ? "scenery_lite"sv : "scenery"sv);
+    const auto scenery_vertex =
+        std::is_same_v<halo_version, blam::xbox_version_t>
+            ? (compile_info::platform::is_emscripten ? "scenery_xbox_lite"sv
+                                                     : "scenery_xbox"sv)
+            : (compile_info::platform::is_emscripten ? "scenery_lite"sv
+                                                     : "scenery"sv);
 
     std::array<shader_pair_t, 4> shaders = {{
         {
@@ -1144,7 +1170,7 @@ void create_camera(
     for(auto _ : e.select<PlayerCamera>())
         if(auto* info = e.get<PlayerInfo>(_.id()); info && !info->is_remote())
             ++count;
-    auto& physics_bus         = e.subsystem_cast<PhysicsBus>();
+    auto& physics_bus = e.subsystem_cast<PhysicsBus>();
     for(auto entity : e.select<PlayerCamera>())
     {
         auto* cam  = e.get<PlayerCamera>(entity.id());
@@ -1168,25 +1194,24 @@ void create_camera(
         cam->camera_opts->world_basis = bsp_basis_inv;
         cam->camera->rotation =
             glm::angleAxis(glm::pi<f32>() - location.rot, Vecf3{0.f, 1.f, 0.f});
-        Physics::Event event{Physics::Event::BodyCreationShape};
+        Physics::Event             event{Physics::Event::BodyCreationShape};
         Physics::BodyCreationShape create{
             .entity_id = entity.id(),
-            .scale = {0.1, 0, 0.5},
-            .position = location.pos + Vecf3{0, 0, 0.6},
-            .mass = 1,
-            .shape = Physics::BodyCreationShape::Capsule,
-            .lock = {
-                .rotation = true,
-            },
+            .scale     = {0.1, 0, 0.5},
+            .position  = location.pos + Vecf3{0, 0, 0.6},
+            .mass      = 1,
+            .shape     = Physics::BodyCreationShape::Capsule,
+            .lock =
+                {
+                    .rotation = true,
+                },
         };
         physics_bus.process(event, &create);
     }
     update_camera_aspect(e);
 }
 
-void create_program(
-    gfx::api& api,
-    shader_pair_t&& shader_info)
+void create_program(gfx::api& api, shader_pair_t&& shader_info)
 {
     create_shaders<1>(api, {{std::move(shader_info)}});
 }

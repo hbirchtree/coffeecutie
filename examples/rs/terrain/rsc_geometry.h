@@ -19,8 +19,8 @@
  */
 #pragma once
 
-#include "rsc_cache.h"
 #include "rs2_geometry.h"
+#include "rsc_cache.h"
 
 #include <hash-library/sha256.h>
 
@@ -92,7 +92,7 @@ class RegionLoader
                    find_archive_with(files.candidates, probe, ".dat"))
             {
                 m_textures_archive = *body;
-                m_texture_index = rs2::jag_extract(*body, "index.dat");
+                m_texture_index    = rs2::jag_extract(*body, "index.dat");
             }
         }
 
@@ -104,8 +104,14 @@ class RegionLoader
                 {
                     char base[16];
                     snprintf(
-                        base, sizeof(base), "m%d%d%d%d%d", p, x / 10, x % 10,
-                        y / 10, y % 10);
+                        base,
+                        sizeof(base),
+                        "m%d%d%d%d%d",
+                        p,
+                        x / 10,
+                        x % 10,
+                        y / 10,
+                        y % 10);
                     u32 k = key3(p, x, y);
                     m_hei_hash[rs2::jag_hash(std::string(base) + ".hei")] = k;
                     m_dat_hash[rs2::jag_hash(std::string(base) + ".dat")] = k;
@@ -144,8 +150,9 @@ class RegionLoader
                 try
                 {
                     parse_hei(d, m_sectors[it->second]);
+                } catch(const std::exception&)
+                {
                 }
-                catch(const std::exception&) {}
             });
         for(const auto& body : files.maps)
             for_entries(body, [&](u32 h, const std::vector<u8>& d) {
@@ -156,8 +163,9 @@ class RegionLoader
                     else if(auto it2 = m_loc_hash.find(h);
                             it2 != m_loc_hash.end())
                         parse_sector_loc(d, m_sectors[it2->second]);
+                } catch(const std::exception&)
+                {
                 }
-                catch(const std::exception&) {}
             });
 
         // virtual 64-tile regions covering every populated plane-0 sector
@@ -173,8 +181,7 @@ class RegionLoader
             int ey0 = ANCHOR_Y - (sy * SECTOR_SIZE + SECTOR_SIZE - 1);
             int ey1 = ANCHOR_Y - sy * SECTOR_SIZE;
             for(int rx = ex0 / REGION_SIZE; rx <= ex1 / REGION_SIZE; ++rx)
-                for(int ry = ey0 / REGION_SIZE; ry <= ey1 / REGION_SIZE;
-                    ++ry)
+                for(int ry = ey0 / REGION_SIZE; ry <= ey1 / REGION_SIZE; ++ry)
                     region_keys.insert(u32(rx) << 16 | u32(ry));
         }
         for(u32 k : region_keys)
@@ -200,10 +207,25 @@ class RegionLoader
         }
     }
 
-    const std::vector<RegionRef>& regions() const { return m_regions; }
-    const rs2::MapBounds& bounds() const { return m_bounds; }
-    const rs2::MapBounds& surface_bounds() const { return m_bounds; }
-    const std::string& cache_signature() const { return m_signature; }
+    const std::vector<RegionRef>& regions() const
+    {
+        return m_regions;
+    }
+
+    const rs2::MapBounds& bounds() const
+    {
+        return m_bounds;
+    }
+
+    const rs2::MapBounds& surface_bounds() const
+    {
+        return m_bounds;
+    }
+
+    const std::string& cache_signature() const
+    {
+        return m_signature;
+    }
 
     const RegionRef* find_region(int rx, int ry) const
     {
@@ -220,11 +242,11 @@ class RegionLoader
         geo.region_y = ry;
         geo.plane    = plane;
         // raw-space window covering this engine region (180° rotation)
-        int wx0 = ANCHOR_X - (rx * REGION_SIZE + REGION_SIZE - 1);
-        int wy0 = ANCHOR_Y - (ry * REGION_SIZE + REGION_SIZE - 1);
-        geo.terrain  = build_terrain_mesh(wx0, wy0, plane);
-        geo.locs     = build_walls_and_objects(wx0, wy0, plane);
-        geo.clip     = build_clip_mesh(wx0, wy0, plane);
+        int wx0     = ANCHOR_X - (rx * REGION_SIZE + REGION_SIZE - 1);
+        int wy0     = ANCHOR_Y - (ry * REGION_SIZE + REGION_SIZE - 1);
+        geo.terrain = build_terrain_mesh(wx0, wy0, plane);
+        geo.locs    = build_walls_and_objects(wx0, wy0, plane);
+        geo.clip    = build_clip_mesh(wx0, wy0, plane);
         // raw → engine coordinates; two axis mirrors = 180° rotation, so
         // triangle winding is preserved
         auto transform = [](Mesh& m) {
@@ -263,8 +285,8 @@ class RegionLoader
 
     std::optional<rs2::SpriteRgba> texture_sprite(int id)
     {
-        if(m_textures_archive.empty() || !m_texture_index ||
-           id < 0 || id >= int(m_data.texture_names.size()))
+        if(m_textures_archive.empty() || !m_texture_index || id < 0 ||
+           id >= int(m_data.texture_names.size()))
             return std::nullopt;
         auto sprite = rs2::jag_extract(
             m_textures_archive, m_data.texture_names[id] + ".dat");
@@ -275,7 +297,10 @@ class RegionLoader
         return load_named_sprite(*sprite);
     }
 
-    std::vector<rs2::MapLink> find_links() { return {}; }
+    std::vector<rs2::MapLink> find_links()
+    {
+        return {};
+    }
 
   private:
     static u32 key3(int p, int sx, int sy)
@@ -287,12 +312,12 @@ class RegionLoader
     {
         if(wtx < 0 || wty < 0)
             return nullptr;
-        int sx = wtx / SECTOR_SIZE, sy = wty / SECTOR_SIZE;
+        int  sx = wtx / SECTOR_SIZE, sy = wty / SECTOR_SIZE;
         auto it = m_sectors.find(key3(plane, sx, sy));
         if(it == m_sectors.end())
             return nullptr;
-        local = (wtx - sx * SECTOR_SIZE) * SECTOR_SIZE +
-                (wty - sy * SECTOR_SIZE);
+        local =
+            (wtx - sx * SECTOR_SIZE) * SECTOR_SIZE + (wty - sy * SECTOR_SIZE);
         return &it->second;
     }
 
@@ -300,10 +325,10 @@ class RegionLoader
     // (192 units — the standard wallObjectHeight) per plane above ground.
     float height_at(int wtx, int wty, int plane) const
     {
-        int          local;
-        int          hplane = plane == 3 ? 3 : 0; // storeys share the heightmap
-        const Sector* s     = sector_at(hplane, wtx, wty, local);
-        float        base   = s ? float(s->height[local]) * 3.f : 0.f;
+        int local;
+        int hplane         = plane == 3 ? 3 : 0; // storeys share the heightmap
+        const Sector* s    = sector_at(hplane, wtx, wty, local);
+        float         base = s ? float(s->height[local]) * 3.f : 0.f;
         if(plane == 1 || plane == 2)
             base += 192.f * float(plane);
         return base;
@@ -313,15 +338,15 @@ class RegionLoader
     {
         bool       present = false;
         rs2::Color colour{0, 0, 0};
-        bool       draw = true;
+        bool       draw       = true;
         int        decoration = 0; // tile def id (1-indexed), 0 = none
-        bool       blocked = false;
+        bool       blocked    = false;
     };
 
     TileInfo tile_info(int wtx, int wty, int plane)
     {
-        TileInfo info;
-        int      local;
+        TileInfo      info;
+        int           local;
         const Sector* s = sector_at(plane, wtx, wty, local);
         if(!s)
             return info;
@@ -334,10 +359,10 @@ class RegionLoader
         if(deco > 0 && deco <= int(m_data.tiles.size()))
         {
             const GameData::TileDef& def = m_data.tiles[deco - 1];
-            info.decoration = deco;
-            info.draw       = true;
-            info.colour     = fill_colour(def.fill);
-            info.blocked    = def.blocking || def.type == 2;
+            info.decoration              = deco;
+            info.draw                    = true;
+            info.colour                  = fill_colour(def.fill);
+            info.blocked                 = def.blocking || def.type == 2;
         }
         return info;
     }
@@ -386,7 +411,7 @@ class RegionLoader
         size_t      ioff = read_u16_be(sprite.data());
         if(ioff + 5 > idx.size())
             return std::nullopt;
-        int pal_size = idx[ioff + 4];
+        int                            pal_size = idx[ioff + 4];
         std::vector<std::array<u8, 4>> palette(
             std::max(pal_size, 1), {0, 0, 0, 0});
         size_t p = ioff + 5;
@@ -398,9 +423,9 @@ class RegionLoader
         }
         if(p + 7 > idx.size())
             return std::nullopt;
-        int sw   = read_u16_be(idx.data() + p + 2);
-        int sh   = read_u16_be(idx.data() + p + 4);
-        int type = idx[p + 6];
+        int    sw    = read_u16_be(idx.data() + p + 2);
+        int    sh    = read_u16_be(idx.data() + p + 4);
+        int    type  = idx[p + 6];
         size_t count = size_t(sw) * sh;
         if(sprite.size() < 2 + count || sw <= 0 || sh <= 0)
             return std::nullopt;
@@ -411,9 +436,9 @@ class RegionLoader
         const u8* px = sprite.data() + 2;
         for(size_t i = 0; i < count; ++i)
         {
-            size_t dst = type == 1 ? (i % sh) * sw + i / sh : i;
-            int    pi  = px[i];
-            const auto& c = palette[pi < pal_size ? pi : 0];
+            size_t      dst = type == 1 ? (i % sh) * sw + i / sh : i;
+            int         pi  = px[i];
+            const auto& c   = palette[pi < pal_size ? pi : 0];
             std::copy(c.begin(), c.end(), out.rgba.begin() + dst * 4);
         }
         return out;
@@ -423,7 +448,7 @@ class RegionLoader
 
     Mesh build_terrain_mesh(int wx0, int wy0, int plane)
     {
-        Mesh mesh;
+        Mesh                mesh;
         rs2::VertexMap<u32> dedupe;
         auto add = [&](float x, float y, float z, rs2::Color c) -> u16 {
             Vertex v{x, y, z, c.r, c.g, c.b, 255, 0.f, 0.f};
@@ -437,7 +462,7 @@ class RegionLoader
         for(int x = 0; x < REGION_SIZE; ++x)
             for(int y = 0; y < REGION_SIZE; ++y)
             {
-                int wtx = wx0 + x, wty = wy0 + y;
+                int      wtx = wx0 + x, wty = wy0 + y;
                 TileInfo t = tile_info(wtx, wty, plane);
                 if(!t.present || !t.draw)
                     continue;
@@ -458,10 +483,10 @@ class RegionLoader
                 rs2::Color c = lit(t.colour, (h10 - h00) + (h11 - h01));
 
                 float x0 = float(wtx) * 128.f, y0 = float(wty) * 128.f;
-                u16 a = add(x0, y0, h00, c);
-                u16 b = add(x0 + 128.f, y0, h10, c);
-                u16 d = add(x0 + 128.f, y0 + 128.f, h11, c);
-                u16 e = add(x0, y0 + 128.f, h01, c);
+                u16   a = add(x0, y0, h00, c);
+                u16   b = add(x0 + 128.f, y0, h10, c);
+                u16   d = add(x0 + 128.f, y0 + 128.f, h11, c);
+                u16   e = add(x0, y0 + 128.f, h01, c);
                 // client splits (x,y+1)(x,y)(x+1,y) + (x+1,y)(x+1,y+1)(x,y+1)
                 const u16 idx[] = {e, a, b, b, d, e};
                 mesh.indices.insert(
@@ -484,8 +509,7 @@ class RegionLoader
             return it->second.valid ? &it->second : nullptr;
         Ob3Model parsed;
         if(!m_models_archive.empty())
-            if(auto raw =
-                   rs2::jag_extract(m_models_archive, name + ".ob3"))
+            if(auto raw = rs2::jag_extract(m_models_archive, name + ".ob3"))
                 parsed = parse_ob3(*raw);
         auto [ins, ok] = m_model_cache.emplace(name, std::move(parsed));
         return ins->second.valid ? &ins->second : nullptr;
@@ -493,10 +517,10 @@ class RegionLoader
 
     std::vector<Mesh> build_walls_and_objects(int wx0, int wy0, int plane)
     {
-        std::vector<Mesh> chunks(1);
-        Mesh*             mesh = &chunks.back();
+        std::vector<Mesh>   chunks(1);
+        Mesh*               mesh = &chunks.back();
         rs2::VertexMap<u32> dedupe;
-        auto ensure_room = [&](size_t incoming) {
+        auto                ensure_room = [&](size_t incoming) {
             if(!mesh->vertices.empty() &&
                mesh->vertices.size() + incoming > rs2::MESH_MAX_VERTICES)
             {
@@ -514,49 +538,50 @@ class RegionLoader
             return u16(it->second);
         };
 
-        auto wall_quad = [&](int id, int x0, int y0, int x1, int y1,
-                             int plane_) {
-            if(id <= 0 || id > int(m_data.walls.size()))
-                return;
-            const GameData::WallDef& def = m_data.walls[id - 1];
-            if(def.invisible != 0)
-                return;
-            rs2::Color c = fill_colour(
-                def.fill_front == COLOUR_TRANSPARENT ? def.fill_back
-                                                     : def.fill_front);
-            TriClass cls = TriClass::scenery; // non-blocking = decorative
-            std::string cmd = def.command1;
-            for(char& ch : cmd) ch = char(std::tolower((unsigned char)ch));
-            if(cmd == "open" || cmd == "close")
-                cls = TriClass::door;
-            else if(def.blocking)
-                cls = TriClass::wall;
+        auto wall_quad =
+            [&](int id, int x0, int y0, int x1, int y1, int plane_) {
+                if(id <= 0 || id > int(m_data.walls.size()))
+                    return;
+                const GameData::WallDef& def = m_data.walls[id - 1];
+                if(def.invisible != 0)
+                    return;
+                rs2::Color c = fill_colour(
+                    def.fill_front == COLOUR_TRANSPARENT ? def.fill_back
+                                                         : def.fill_front);
+                TriClass cls = TriClass::scenery; // non-blocking = decorative
+                std::string cmd = def.command1;
+                for(char& ch : cmd)
+                    ch = char(std::tolower((unsigned char)ch));
+                if(cmd == "open" || cmd == "close")
+                    cls = TriClass::door;
+                else if(def.blocking)
+                    cls = TriClass::wall;
 
-            float za = height_at(x0, y0, plane_);
-            float zb = height_at(x1, y1, plane_);
-            float h  = float(def.height);
-            ensure_room(8);
-            u16 a = add(float(x0) * 128.f, float(y0) * 128.f, za, c);
-            u16 b = add(float(x1) * 128.f, float(y1) * 128.f, zb, c);
-            u16 ct = add(float(x1) * 128.f, float(y1) * 128.f, zb + h, c);
-            u16 d = add(float(x0) * 128.f, float(y0) * 128.f, za + h, c);
-            const u16 idx[] = {a, b, ct, a, ct, d, a, ct, b, a, d, ct};
-            mesh->indices.insert(
-                mesh->indices.end(), std::begin(idx), std::end(idx));
-            for(int i = 0; i < 4; ++i)
-            {
-                mesh->tri_texture.push_back(-1);
-                mesh->tri_overlay.push_back(0);
-                mesh->tri_loc.push_back(id - 1);
-                mesh->tri_class.push_back(cls);
-            }
-        };
+                float za = height_at(x0, y0, plane_);
+                float zb = height_at(x1, y1, plane_);
+                float h  = float(def.height);
+                ensure_room(8);
+                u16 a  = add(float(x0) * 128.f, float(y0) * 128.f, za, c);
+                u16 b  = add(float(x1) * 128.f, float(y1) * 128.f, zb, c);
+                u16 ct = add(float(x1) * 128.f, float(y1) * 128.f, zb + h, c);
+                u16 d  = add(float(x0) * 128.f, float(y0) * 128.f, za + h, c);
+                const u16 idx[] = {a, b, ct, a, ct, d, a, ct, b, a, d, ct};
+                mesh->indices.insert(
+                    mesh->indices.end(), std::begin(idx), std::end(idx));
+                for(int i = 0; i < 4; ++i)
+                {
+                    mesh->tri_texture.push_back(-1);
+                    mesh->tri_overlay.push_back(0);
+                    mesh->tri_loc.push_back(id - 1);
+                    mesh->tri_class.push_back(cls);
+                }
+            };
 
         for(int x = 0; x < REGION_SIZE; ++x)
             for(int y = 0; y < REGION_SIZE; ++y)
             {
-                int wtx = wx0 + x, wty = wy0 + y;
-                int          local;
+                int           wtx = wx0 + x, wty = wy0 + y;
+                int           local;
                 const Sector* s = sector_at(plane, wtx, wty, local);
                 if(!s)
                     continue;
@@ -567,12 +592,17 @@ class RegionLoader
                 if(diag > 0 && diag < 12000)
                     wall_quad(diag, wtx, wty, wtx + 1, wty + 1, plane);
                 else if(diag > 12000 && diag < 24000)
-                    wall_quad(
-                        diag - 12000, wtx + 1, wty, wtx, wty + 1, plane);
+                    wall_quad(diag - 12000, wtx + 1, wty, wtx, wty + 1, plane);
                 else if(diag > 48000)
                     place_object(
-                        diag - 48001, wtx, wty, s->direction[local], plane,
-                        chunks, mesh, dedupe);
+                        diag - 48001,
+                        wtx,
+                        wty,
+                        s->direction[local],
+                        plane,
+                        chunks,
+                        mesh,
+                        dedupe);
             }
 
         if(chunks.back().indices.empty())
@@ -581,14 +611,19 @@ class RegionLoader
     }
 
     void place_object(
-        int obj_id, int wtx, int wty, int dir, int plane,
-        std::vector<Mesh>& chunks, Mesh*& mesh,
+        int                  obj_id,
+        int                  wtx,
+        int                  wty,
+        int                  dir,
+        int                  plane,
+        std::vector<Mesh>&   chunks,
+        Mesh*&               mesh,
         rs2::VertexMap<u32>& dedupe)
     {
         if(obj_id < 0 || obj_id >= int(m_data.objects.size()))
             return;
         const GameData::ObjectDef& def = m_data.objects[obj_id];
-        const Ob3Model* mdl = model(def.model);
+        const Ob3Model*            mdl = model(def.model);
         if(!mdl)
             return;
 
@@ -640,13 +675,15 @@ class RegionLoader
 
             auto emit = [&](int i0, int i1, int i2) {
                 auto tv = [&](int i) {
-                    const auto& v = mdl->verts[face[i]];
-                    float mx = float(v[0]), mz = float(v[2]);
-                    float rxv = mx * ca + mz * sa;
-                    float rzv = mz * ca - mx * sa;
+                    const auto& v  = mdl->verts[face[i]];
+                    float       mx = float(v[0]), mz = float(v[2]);
+                    float       rxv = mx * ca + mz * sa;
+                    float       rzv = mz * ca - mx * sa;
                     return add(
-                        ox + rxv, oy + rzv,
-                        gz - float(v[1]) + float(def.elevation), c);
+                        ox + rxv,
+                        oy + rzv,
+                        gz - float(v[1]) + float(def.elevation),
+                        c);
                 };
                 u16 a = tv(i0), b = tv(i1), cc = tv(i2);
                 mesh->indices.insert(mesh->indices.end(), {a, b, cc});
@@ -672,7 +709,7 @@ class RegionLoader
     {
         Mesh mesh;
         auto blocked = [&](int wtx, int wty) -> int {
-            int          local;
+            int           local;
             const Sector* s = sector_at(plane, wtx, wty, local);
             if(!s)
                 return -1;
@@ -685,30 +722,32 @@ class RegionLoader
             }
             return 0;
         };
-        auto quad = [&](float x0, float y0, float x1, float y1, float zb,
-                        float zt) {
-            auto add = [&](float x, float y, float z) -> u16 {
-                mesh.vertices.push_back(
-                    Vertex{x, y, z, 0, 0, 0, 255, 0.f, 0.f});
-                return u16(mesh.vertices.size() - 1);
+        auto quad =
+            [&](float x0, float y0, float x1, float y1, float zb, float zt) {
+                auto add = [&](float x, float y, float z) -> u16 {
+                    mesh.vertices.push_back(
+                        Vertex{x, y, z, 0, 0, 0, 255, 0.f, 0.f});
+                    return u16(mesh.vertices.size() - 1);
+                };
+                u16       a = add(x0, y0, zb), b = add(x1, y1, zb);
+                u16       c = add(x1, y1, zt), d = add(x0, y0, zt);
+                const u16 idx[] = {a, b, c, a, c, d, a, c, b, a, d, c};
+                mesh.indices.insert(
+                    mesh.indices.end(), std::begin(idx), std::end(idx));
+                for(int i = 0; i < 4; ++i)
+                {
+                    mesh.tri_texture.push_back(-1);
+                    mesh.tri_overlay.push_back(0);
+                    mesh.tri_loc.push_back(-1);
+                    mesh.tri_class.push_back(TriClass::clip);
+                }
             };
-            u16 a = add(x0, y0, zb), b = add(x1, y1, zb);
-            u16 c = add(x1, y1, zt), d = add(x0, y0, zt);
-            const u16 idx[] = {a, b, c, a, c, d, a, c, b, a, d, c};
-            mesh.indices.insert(
-                mesh.indices.end(), std::begin(idx), std::end(idx));
-            for(int i = 0; i < 4; ++i)
-            {
-                mesh.tri_texture.push_back(-1);
-                mesh.tri_overlay.push_back(0);
-                mesh.tri_loc.push_back(-1);
-                mesh.tri_class.push_back(TriClass::clip);
-            }
-        };
+
         struct Edge
         {
             int dx, dy, cx0, cy0, cx1, cy1;
         };
+
         static constexpr Edge edges[] = {
             {-1, 0, 0, 0, 0, 1},
             {1, 0, 1, 0, 1, 1},
@@ -732,25 +771,26 @@ class RegionLoader
                         float(wty + e.cy0) * 128.f,
                         float(wtx + e.cx1) * 128.f,
                         float(wty + e.cy1) * 128.f,
-                        std::min(h0, h1) - 16.f, std::max(h0, h1) + 240.f);
+                        std::min(h0, h1) - 16.f,
+                        std::max(h0, h1) + 240.f);
                 }
             }
         return mesh;
     }
 
-    GameData        m_data;
-    std::vector<u8> m_models_archive;
-    std::vector<u8> m_textures_archive;
+    GameData                       m_data;
+    std::vector<u8>                m_models_archive;
+    std::vector<u8>                m_textures_archive;
     std::optional<std::vector<u8>> m_texture_index;
-    std::string     m_signature;
+    std::string                    m_signature;
 
     std::unordered_map<u32, u32>    m_hei_hash, m_dat_hash, m_loc_hash;
     std::unordered_map<u32, Sector> m_sectors;
     std::vector<RegionRef>          m_regions;
     rs2::MapBounds                  m_bounds;
-    std::unordered_map<u32, const RegionRef*>   m_region_lookup;
-    std::unordered_map<std::string, Ob3Model>   m_model_cache;
-    std::unordered_map<int, rs2::Color>         m_texture_colours;
+    std::unordered_map<u32, const RegionRef*> m_region_lookup;
+    std::unordered_map<std::string, Ob3Model> m_model_cache;
+    std::unordered_map<int, rs2::Color>       m_texture_colours;
 };
 
 } // namespace rsc

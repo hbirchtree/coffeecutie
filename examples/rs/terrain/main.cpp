@@ -23,8 +23,8 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/coffee.h>
 
-#include <coffee/core/argument_handling.h>
 #include "coffee/core/coffee_args.h"
+#include <coffee/core/argument_handling.h>
 #include <cxxopts.hpp>
 
 #include <cstdio>
@@ -53,11 +53,11 @@ static void append_mesh(FlatGeometry& dst, const Mesh& src)
     dst.tris.reserve(dst.tris.size() + src.indices.size() / 3);
     for(size_t i = 0; i + 2 < src.indices.size(); i += 3)
         dst.tris.push_back(
-            {base + src.indices[i], base + src.indices[i + 1],
+            {base + src.indices[i],
+             base + src.indices[i + 1],
              base + src.indices[i + 2]});
     dst.tri_texture.insert(
-        dst.tri_texture.end(), src.tri_texture.begin(),
-        src.tri_texture.end());
+        dst.tri_texture.end(), src.tri_texture.begin(), src.tri_texture.end());
 }
 
 // ─────────────────────────────────────────────────────────── PLY output ──
@@ -66,25 +66,32 @@ static void write_ply(
     const std::string& path, const FlatGeometry& mesh, int plane_idx)
 {
     std::ofstream f(path);
-    if(!f) throw std::runtime_error("cannot write: " + path);
+    if(!f)
+        throw std::runtime_error("cannot write: " + path);
 
     f << "ply\n"
          "format ascii 1.0\n"
-         "comment RS2 terrain plane " << plane_idx << " (X=east Y=north Z=height)\n"
-         "element vertex " << mesh.vertices.size() << "\n"
+         "comment RS2 terrain plane "
+      << plane_idx
+      << " (X=east Y=north Z=height)\n"
+         "element vertex "
+      << mesh.vertices.size()
+      << "\n"
          "property float x\n"
          "property float y\n"
          "property float z\n"
          "property uchar red\n"
          "property uchar green\n"
          "property uchar blue\n"
-         "element face " << mesh.tris.size() << "\n"
+         "element face "
+      << mesh.tris.size()
+      << "\n"
          "property list uchar int vertex_indices\n"
          "end_header\n";
 
     for(const auto& v : mesh.vertices)
-        f << v.x << ' ' << v.y << ' ' << v.z << ' '
-          << int(v.r) << ' ' << int(v.g) << ' ' << int(v.b) << '\n';
+        f << v.x << ' ' << v.y << ' ' << v.z << ' ' << int(v.r) << ' '
+          << int(v.g) << ' ' << int(v.b) << '\n';
 
     for(const auto& t : mesh.tris)
         f << "3 " << t[0] << ' ' << t[1] << ' ' << t[2] << '\n';
@@ -97,9 +104,7 @@ static void write_ply(
 // next to the OBJ (textures/<id>.png) and real per-corner UVs.
 template<typename Loader>
 static void write_obj(
-    const std::string&  obj_path,
-    const FlatGeometry& mesh,
-    Loader&             loader)
+    const std::string& obj_path, const FlatGeometry& mesh, Loader& loader)
 {
     std::string mtl_path = obj_path.substr(0, obj_path.rfind('.')) + ".mtl";
     std::string dir      = obj_path.rfind('/') == std::string::npos
@@ -123,7 +128,7 @@ static void write_obj(
 
     // ── export textures + MTL ──
     {
-        bool made_dir = false;
+        bool          made_dir = false;
         std::ofstream mf(mtl_path);
         for(const auto& [key, tris] : by_material)
         {
@@ -150,13 +155,11 @@ static void write_obj(
                     char png[64];
                     snprintf(png, sizeof(png), "textures/%d.png", id);
                     rs2::write_png_rgba(
-                        dir + png, sprite->width, sprite->height,
-                        sprite->rgba);
+                        dir + png, sprite->width, sprite->height, sprite->rgba);
                     mf << "map_Kd " << png << "\nmap_d " << png << "\n";
                 }
                 mf << "\n";
-            }
-            else
+            } else
             {
                 snprintf(name, sizeof(name), "c%06X", key);
                 mf << "newmtl " << name << "\n"
@@ -176,9 +179,8 @@ static void write_obj(
         // v with the common vertex-colour extension (x y z r g b) — the
         // baked lit colours; widely supported (Blender, MeshLab)
         for(const auto& v : mesh.vertices)
-            of << "v " << v.x << ' ' << v.y << ' ' << v.z << ' '
-               << v.r / 255.f << ' ' << v.g / 255.f << ' ' << v.b / 255.f
-               << "\n";
+            of << "v " << v.x << ' ' << v.y << ' ' << v.z << ' ' << v.r / 255.f
+               << ' ' << v.g / 255.f << ' ' << v.b / 255.f << "\n";
         // one vt per vertex, so f can always use v/vt with the same index
         for(const auto& v : mesh.vertices)
             of << "vt " << v.u << ' ' << 1.f - v.v << "\n";
@@ -196,15 +198,20 @@ static void write_obj(
                 u32 a = mesh.tris[t][0] + 1;
                 u32 b = mesh.tris[t][1] + 1;
                 u32 c = mesh.tris[t][2] + 1;
-                of << "f " << a << '/' << a << ' ' << b << '/' << b << ' '
-                   << c << '/' << c << "\n";
+                of << "f " << a << '/' << a << ' ' << b << '/' << b << ' ' << c
+                   << '/' << c << "\n";
             }
         }
     }
 
-    fprintf(stderr, "Wrote %s + %s (%zu verts, %zu faces, %zu materials)\n",
-        obj_path.c_str(), mtl_path.c_str(), mesh.vertices.size(),
-        mesh.tris.size(), by_material.size());
+    fprintf(
+        stderr,
+        "Wrote %s + %s (%zu verts, %zu faces, %zu materials)\n",
+        obj_path.c_str(),
+        mtl_path.c_str(),
+        mesh.vertices.size(),
+        mesh.tris.size(),
+        by_material.size());
 }
 
 // ────────────────────────────────────────────────────────────────── main ──
@@ -217,38 +224,34 @@ int coffee_main(int, char**)
         Coffee::BaseArgParser::GetBase(options);
         options.custom_help("[OPTION...]");
 
-        options.add_options("Cache")
-            ("cache",
-             "Cache directory containing index dirs 0/ and 4/",
-             cxxopts::value<std::string>())
-            ;
+        options.add_options("Cache")(
+            "cache",
+            "Cache directory containing index dirs 0/ and 4/",
+            cxxopts::value<std::string>());
 
-        options.add_options("Region")
-            ("region-x",
-             "Region X coordinate (default 50 = Lumbridge)",
-             cxxopts::value<int>()->default_value("50"))
-            ("region-y",
-             "Region Y coordinate (default 50 = Lumbridge)",
-             cxxopts::value<int>()->default_value("50"))
-            ("all",
-             "Dump all regions in map_index (skips --region-x/y)")
-            ("plane",
-             "Terrain plane: 0=overworld, 1-3=upper floors",
-             cxxopts::value<int>()->default_value("0"))
-            ;
+        options.add_options("Region")(
+            "region-x",
+            "Region X coordinate (default 50 = Lumbridge)",
+            cxxopts::value<int>()->default_value("50"))(
+            "region-y",
+            "Region Y coordinate (default 50 = Lumbridge)",
+            cxxopts::value<int>()->default_value("50"))(
+            "all", "Dump all regions in map_index (skips --region-x/y)")(
+            "plane",
+            "Terrain plane: 0=overworld, 1-3=upper floors",
+            cxxopts::value<int>()->default_value("0"));
 
-        options.add_options("Output")
-            ("output",
-             "Terrain output path (.ply vertex colours, .obj textured)",
-             cxxopts::value<std::string>()->default_value("terrain.ply"))
-            ("buildings",
-             "OBJ output path for buildings/objects (omit to skip)",
-             cxxopts::value<std::string>())
-            ("links",
-             "Write derived map links (stairs/ladders/caves) as JSON lines "
-             "and exit",
-             cxxopts::value<std::string>())
-            ;
+        options.add_options("Output")(
+            "output",
+            "Terrain output path (.ply vertex colours, .obj textured)",
+            cxxopts::value<std::string>()->default_value("terrain.ply"))(
+            "buildings",
+            "OBJ output path for buildings/objects (omit to skip)",
+            cxxopts::value<std::string>())(
+            "links",
+            "Write derived map links (stairs/ladders/caves) as JSON lines "
+            "and exit",
+            cxxopts::value<std::string>());
 
         auto& args = Coffee::GetInitArgs();
         arguments  = options.parse(args.size(), args.data());
@@ -262,44 +265,47 @@ int coffee_main(int, char**)
         }
     }
 
-    std::string cache_dir   = arguments["cache"].as<std::string>();
-    int         rx          = arguments["region-x"].as<int>();
-    int         ry          = arguments["region-y"].as<int>();
-    int         plane_idx   = arguments["plane"].as<int>();
-    bool        all_regions = arguments.count("all") > 0;
-    std::string output      = arguments["output"].as<std::string>();
-    std::string buildings_path =
-        arguments.count("buildings")
-            ? arguments["buildings"].as<std::string>()
-            : std::string{};
+    std::string cache_dir      = arguments["cache"].as<std::string>();
+    int         rx             = arguments["region-x"].as<int>();
+    int         ry             = arguments["region-y"].as<int>();
+    int         plane_idx      = arguments["plane"].as<int>();
+    bool        all_regions    = arguments.count("all") > 0;
+    std::string output         = arguments["output"].as<std::string>();
+    std::string buildings_path = arguments.count("buildings")
+                                     ? arguments["buildings"].as<std::string>()
+                                     : std::string{};
 
     fprintf(stderr, "Loading config archives...\n");
     rs::AnyLoader loader(cache_dir);
     fprintf(stderr, "  cache kind: %s\n", rs::to_string(loader.kind()));
     if(auto* r2 = loader.rs2_loader())
-        fprintf(stderr, "  %zu underlays, %zu loc definitions\n",
-            r2->underlays().size(), r2->loc_defs().size());
+        fprintf(
+            stderr,
+            "  %zu underlays, %zu loc definitions\n",
+            r2->underlays().size(),
+            r2->loc_defs().size());
     fprintf(stderr, "  %zu regions\n", loader.regions().size());
-    fprintf(stderr, "  cache signature: %s\n",
-        loader.cache_signature().c_str());
+    fprintf(
+        stderr, "  cache signature: %s\n", loader.cache_signature().c_str());
 
     if(arguments.count("links"))
     {
-        auto links = loader.find_links();
-        std::string path = arguments["links"].as<std::string>();
+        auto          links = loader.find_links();
+        std::string   path  = arguments["links"].as<std::string>();
         std::ofstream f(path);
         if(!f)
             throw std::runtime_error("cannot write: " + path);
         size_t paired = 0;
         for(const auto& l : links)
         {
-            f << "{\"kind\":\"" << rs2::to_string(l.kind) << "\",\"loc\":"
-              << l.loc_id << ",\"name\":\"" << l.name << "\",\"action\":\""
-              << l.action << "\",\"from\":[" << l.from_x << ',' << l.from_y
-              << ',' << l.from_plane << "],\"to\":[" << l.to_x << ','
-              << l.to_y << ',' << l.to_plane << "],\"paired\":"
-              << (l.paired ? "true" : "false") << ",\"shape\":" << l.shape
-              << ",\"rotation\":" << l.rotation << ",\"models\":[";
+            f << "{\"kind\":\"" << rs2::to_string(l.kind)
+              << "\",\"loc\":" << l.loc_id << ",\"name\":\"" << l.name
+              << "\",\"action\":\"" << l.action << "\",\"from\":[" << l.from_x
+              << ',' << l.from_y << ',' << l.from_plane << "],\"to\":["
+              << l.to_x << ',' << l.to_y << ',' << l.to_plane
+              << "],\"paired\":" << (l.paired ? "true" : "false")
+              << ",\"shape\":" << l.shape << ",\"rotation\":" << l.rotation
+              << ",\"models\":[";
             for(size_t i = 0; i < l.model_ids.size(); ++i)
                 f << (i ? "," : "") << l.model_ids[i];
             // values are integral (tile*128 / height*8); print exact
@@ -310,8 +316,12 @@ int coffee_main(int, char**)
               << "]]}\n";
             paired += l.paired;
         }
-        fprintf(stderr, "Wrote %s (%zu links, %zu paired)\n", path.c_str(),
-            links.size(), paired);
+        fprintf(
+            stderr,
+            "Wrote %s (%zu links, %zu paired)\n",
+            path.c_str(),
+            links.size(),
+            paired);
         return 0;
     }
 
@@ -330,12 +340,11 @@ int coffee_main(int, char**)
                 for(const auto& chunk : geo->locs)
                     append_mesh(locs, chunk);
             if(++n % 100 == 0)
-                fprintf(stderr, "  %zu/%zu regions\n", n,
-                    loader.regions().size());
+                fprintf(
+                    stderr, "  %zu/%zu regions\n", n, loader.regions().size());
         }
         fprintf(stderr, "  %zu regions loaded\n", n);
-    }
-    else
+    } else
     {
         auto geo = loader.load(rx, ry, plane_idx);
         if(!geo)
@@ -383,8 +392,7 @@ int coffee_main(int, char**)
             fprintf(stderr, "repack test: %zu meshes\n", repacked.size());
             for(const auto& m : repacked)
                 append_mesh(locs, m);
-        }
-        else
+        } else
         {
             append_mesh(terrain, geo->terrain);
             for(const auto& chunk : geo->locs)
@@ -399,8 +407,12 @@ int coffee_main(int, char**)
     else
     {
         write_ply(output, terrain, plane_idx);
-        fprintf(stderr, "Wrote %s (%zu verts, %zu faces)\n", output.c_str(),
-            terrain.vertices.size(), terrain.tris.size());
+        fprintf(
+            stderr,
+            "Wrote %s (%zu verts, %zu faces)\n",
+            output.c_str(),
+            terrain.vertices.size(),
+            terrain.tris.size());
     }
 
     if(!buildings_path.empty())

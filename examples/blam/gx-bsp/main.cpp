@@ -1,13 +1,14 @@
 /* Trimmed BlamGraphics alternative for the GameCube (gexxo): load a PC Halo map
- * (demand-paged), walk its BSP geometry, and draw it diffuse * lightmap with the
- * GX fixed-function pipeline.
+ * (demand-paged), walk its BSP geometry, and draw it diffuse * lightmap with
+ * the GX fixed-function pipeline.
  *
  * Per BSP `lightmap` struct = one page (geometry sharing a lightmap bitmap).
  * Each material in a page = a submesh with its own diffuse texture (from the
  * shader's base map). Vertices carry both the diffuse UV (pc_vertex.texcoord)
  * and the lightmap UV (light_vertex.texcoord). Lightmaps are RGB565, diffuse
  * maps are DXT1 -> both decoded into GX tiled formats. Two TEV stages multiply
- * diffuse by lightmap. Everything is byte-swapped to host (big-endian) order. */
+ * diffuse by lightmap. Everything is byte-swapped to host (big-endian) order.
+ */
 
 #include <coffee/core/CApplication>
 #include <coffee/core/CDebug>
@@ -35,9 +36,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #if defined(FEATURE_ENABLE_Gexxo)
-#include <coffee/graphics/apis/gexxo/rhi_resources.h>
 #include <coffee/gexxo/gexxo_api.h>
 #include <coffee/graphics/apis/CGexxo>
+#include <coffee/graphics/apis/gexxo/rhi_resources.h>
 #include <malloc.h>
 #include <ogc/cache.h>
 #include <ogc/gx.h>
@@ -95,13 +96,14 @@ struct submesh_t
 #endif
 };
 
-/* One lightmap page: geometry + its lightmap bitmap + per-material submeshes. */
+/* One lightmap page: geometry + its lightmap bitmap + per-material submeshes.
+ */
 struct page_t
 {
-    std::vector<gx_vertex>  verts;
-    std::vector<u16>        indices;
-    std::vector<submesh_t>  submeshes;
-    i16                     lm_idx{-1};
+    std::vector<gx_vertex> verts;
+    std::vector<u16>       indices;
+    std::vector<submesh_t> submeshes;
+    i16                    lm_idx{-1};
 
 #if defined(FEATURE_ENABLE_Gexxo)
     std::shared_ptr<gexxo::vertex_array_t> vao;
@@ -117,6 +119,7 @@ struct scn_vertex
     f32 pos[3];
     f32 uv[2];
 };
+
 struct scn_part
 {
     std::vector<scn_vertex>    verts;
@@ -128,12 +131,14 @@ struct scn_part
     std::shared_ptr<gexxo::texture_t>      diffuse;
 #endif
 };
+
 struct scenery_model
 {
     std::vector<scn_part> parts;
     Vecf3                 center{}; // local-space bounding sphere (for culling)
     f32                   radius{0};
 };
+
 struct scenery_inst
 {
     u32   model_id;
@@ -141,6 +146,7 @@ struct scenery_inst
     Vecf3 center{}; // world-space bounding sphere
     f32   radius{0};
 };
+
 static std::map<u32, scenery_model> g_models;  // by mod2 tag id
 static std::vector<scenery_inst>    g_scenery; // placed instances
 
@@ -164,6 +170,7 @@ struct page_bitmap
     blam::bitm::image_t const* image{nullptr};
     blam::map_ptr              pix_magic;
 };
+
 static std::vector<page_bitmap> g_page_bitmaps;
 static blam::map_ptr            g_internal_magic;
 
@@ -232,16 +239,18 @@ static shader_info resolve_shader(
         auto sh = st.data<blam::shader::shader_env>(c.magic);
         if(sh.has_error())
             return out;
-        out.diffuse      = first_image(c, resolve_bitm(c, sh.value()->diffuse.base));
-        out.detail       = first_image(c, resolve_bitm(c, sh.value()->diffuse.primary.map));
+        out.diffuse = first_image(c, resolve_bitm(c, sh.value()->diffuse.base));
+        out.detail =
+            first_image(c, resolve_bitm(c, sh.value()->diffuse.primary.map));
         out.detail_scale = from_le(sh.value()->diffuse.primary.scale);
     } else if(st.matches(blam::tag_class_t::shader_model))
     {
         auto sh = st.data<blam::shader::shader_model>(c.magic);
         if(sh.has_error())
             return out;
-        out.diffuse      = first_image(c, resolve_bitm(c, sh.value()->maps.base));
-        out.detail       = first_image(c, resolve_bitm(c, sh.value()->maps.detail.map));
+        out.diffuse = first_image(c, resolve_bitm(c, sh.value()->maps.base));
+        out.detail =
+            first_image(c, resolve_bitm(c, sh.value()->maps.detail.map));
         out.detail_scale = from_le(sh.value()->maps.detail.scale);
     }
     if(out.detail_scale == 0.f)
@@ -258,11 +267,13 @@ struct coll_node
 {
     i32 plane, back, front;
 };
+
 struct coll_plane
 {
     Vecf3 n;
     f32   d;
 };
+
 static std::vector<coll_node>  g_coll_nodes;
 static std::vector<coll_plane> g_coll_planes;
 static std::vector<i16>        g_leaf_cluster;
@@ -313,7 +324,7 @@ static std::optional<u32> cluster_at(Vecf3 const& pt)
         if(n.plane < 0 || static_cast<u32>(n.plane) >= g_coll_planes.size())
             return std::nullopt;
         coll_plane const& pl = g_coll_planes[n.plane];
-        node = glm::dot(pl.n, pt) >= pl.d ? n.front : n.back;
+        node                 = glm::dot(pl.n, pt) >= pl.d ? n.front : n.back;
     }
     return std::nullopt;
 }
@@ -545,10 +556,10 @@ static int extract_bsp()
        !locs.has_error() && !locs.value().empty())
     {
         auto const& l = locs.value()[0];
-        g_spawn_pos  = {from_le(l.pos.x), from_le(l.pos.y), from_le(l.pos.z)};
-        g_spawn_rot  = from_le(l.rot);
-        g_spawn_bsp  = from_le(l.bsp_index);
-        g_have_spawn = true;
+        g_spawn_pos   = {from_le(l.pos.x), from_le(l.pos.y), from_le(l.pos.z)};
+        g_spawn_rot   = from_le(l.rot);
+        g_spawn_bsp   = from_le(l.bsp_index);
+        g_have_spawn  = true;
         LOG("spawn at %d,%d,%d rot=%d",
             (int)g_spawn_pos.x,
             (int)g_spawn_pos.y,
@@ -571,8 +582,8 @@ static int extract_bsp()
     {
         if(bsp_idx++ != static_cast<u32>(g_spawn_bsp))
             continue;
-        auto const bm    = bi.bsp_magic(container.magic);
-        auto       hdr_r = bi.to_bsp(bm).to_header().data(bm, blam::single_value);
+        auto const bm = bi.bsp_magic(container.magic);
+        auto hdr_r    = bi.to_bsp(bm).to_header().data(bm, blam::single_value);
         if(hdr_r.has_error())
             continue;
         auto const* hdr = hdr_r.value();
@@ -622,7 +633,8 @@ static int extract_bsp()
 }
 
 #if defined(FEATURE_ENABLE_Gexxo)
-/* --- texture decode (kept-alive tiled buffers + diffuse dedup) ------------- */
+/* --- texture decode (kept-alive tiled buffers + diffuse dedup) -------------
+ */
 
 u32                       g_lm_bytes  = 0;
 u32                       g_dxt_bytes = 0;
@@ -631,7 +643,7 @@ static std::vector<void*> g_tiled_bufs;
 // Cap total texture memory so a big map (e.g. b30) degrades to fewer textures
 // instead of OOMing; the rest fall back to lightmap/untextured.
 static u32 constexpr kTexBudget = 9u * 1024 * 1024;
-static u32           g_tex_used = 0;
+static u32 g_tex_used           = 0;
 
 // Drop the top N mip levels of offline-transcoded (native) textures at upload:
 // GX then samples from a lower-resolution base, saving texture memory (the base
@@ -657,6 +669,7 @@ static u32 gx_level_bytes(u8 gxfmt, u16 w, u16 h)
     }
     return 0;
 }
+
 static std::map<blam::bitm::image_t const*, std::shared_ptr<gexxo::texture_t>>
     g_diffuse_cache;
 
@@ -677,7 +690,6 @@ static void tile_rgb565(u16 const* src, u16* dst, u16 w, u16 h, bool swap)
                 }
 }
 
-
 /* Re-tile a linear S3TC image's DXT1 colour block into GX_TF_CMPR (same 0.5
  * B/px size, 4x smaller than expanding to RGB565): 4x4 blocks grouped into 8x8
  * tiles (TL,TR,BL,BR), 16-bit endpoints byte-swapped to big-endian, 2-bit index
@@ -687,7 +699,7 @@ static void dxt_to_cmpr(
     u8 const* src, u8* dst, u16 w, u16 h, u32 block_size, u32 color_off)
 {
     u32 const bw = (w + 3) / 4, bh = (h + 3) / 4;
-    u32       o  = 0;
+    u32       o   = 0;
     auto      rev = [](u8 v) -> u8 {
         return ((v & 0x03) << 6) | ((v & 0x0C) << 2) | ((v & 0x30) >> 2) |
                ((v & 0xC0) >> 6);
@@ -701,7 +713,9 @@ static void dxt_to_cmpr(
                     u8        b[8] = {0};
                     if(bx < bw && by < bh)
                         std::memcpy(
-                            b, src + (by * bw + bx) * block_size + color_off, 8);
+                            b,
+                            src + (by * bw + bx) * block_size + color_off,
+                            8);
                     dst[o++] = b[1]; // endpoint0 -> BE
                     dst[o++] = b[0];
                     dst[o++] = b[3]; // endpoint1 -> BE
@@ -736,9 +750,9 @@ static bool read_bitmap_pixels(
             out.data(), size, bmap_off + from_le(img.offset));
     }
 #endif
-    auto pix = blam::reference<libc_types::u8>{
-        .count = img.size, .offset = img.offset}
-                   .data(internal_magic);
+    auto pix =
+        blam::reference<libc_types::u8>{.count = img.size, .offset = img.offset}
+            .data(internal_magic);
     if(pix.has_error())
         return false;
     std::copy(pix.value().begin(), pix.value().end(), out.begin());
@@ -747,15 +761,17 @@ static bool read_bitmap_pixels(
 
 static bool is_gx_native(blam::bitm::format_t fmt)
 {
-    return (static_cast<u16>(fmt)
-            & static_cast<u16>(blam::bitm::format_t::PLATFORM_SPECIFIC_MASK))
-           != 0;
+    return (static_cast<u16>(fmt) &
+            static_cast<u16>(blam::bitm::format_t::PLATFORM_SPECIFIC_MASK)) !=
+           0;
 }
 
 /* Decode a bitmap image (RGB565 or DXT1) into a GX texture. wrap = GX_CLAMP for
  * [0,1] lightmaps, GX_REPEAT for tiling diffuse maps. */
 static std::shared_ptr<gexxo::texture_t> load_texture(
-    blam::bitm::image_t const& img, blam::map_ptr const& magic, u8 wrap = GX_CLAMP)
+    blam::bitm::image_t const& img,
+    blam::map_ptr const&       magic,
+    u8                         wrap = GX_CLAMP)
 {
     auto const fmt = from_le(img.format);
     i16 const  w   = from_le(img.isize.x);
@@ -770,18 +786,28 @@ static std::shared_ptr<gexxo::texture_t> load_texture(
         u8 gxfmt;
         switch(fmt)
         {
-        case blam::bitm::format_t::BC1_GX_TILED:    gxfmt = GX_TF_CMPR;   break;
-        case blam::bitm::format_t::RGB565_GX_TILED:  gxfmt = GX_TF_RGB565; break;
-        case blam::bitm::format_t::I8_GX_TILED:      gxfmt = GX_TF_I8;     break;
-        case blam::bitm::format_t::IA8_GX_TILED:     gxfmt = GX_TF_IA8;    break;
-        default: return nullptr;
+        case blam::bitm::format_t::BC1_GX_TILED:
+            gxfmt = GX_TF_CMPR;
+            break;
+        case blam::bitm::format_t::RGB565_GX_TILED:
+            gxfmt = GX_TF_RGB565;
+            break;
+        case blam::bitm::format_t::I8_GX_TILED:
+            gxfmt = GX_TF_I8;
+            break;
+        case blam::bitm::format_t::IA8_GX_TILED:
+            gxfmt = GX_TF_IA8;
+            break;
+        default:
+            return nullptr;
         }
         u32 const total = from_le(img.size);
         if(!total)
             return nullptr;
         // img.mipmaps = GX maxlod; pixel data holds levels 0..maxlod packed
-        // consecutively. Skip the top g_mip_skip levels (keep >= 1) so GX's base
-        // is a lower-res mip: advance past their tiled bytes + halve the dims.
+        // consecutively. Skip the top g_mip_skip levels (keep >= 1) so GX's
+        // base is a lower-res mip: advance past their tiled bytes + halve the
+        // dims.
         u32 const maxlod = from_le(img.mipmaps);
         u32 const skip   = std::min<u32>(g_mip_skip, maxlod);
         u16       bw = w, bh = h;
@@ -809,14 +835,13 @@ static std::shared_ptr<gexxo::texture_t> load_texture(
         auto tex = std::make_shared<gexxo::texture_t>(
             gexxo::textures::type::d2, typing::pixels::PixDesc{}, 1);
         tex->init_raw(
-            tiled, bw, bh, gxfmt, wrap, wrap,
-            static_cast<u8>(maxlod - skip));
+            tiled, bw, bh, gxfmt, wrap, wrap, static_cast<u8>(maxlod - skip));
         return tex;
     }
 
-    bool const is_bcn =
-        fmt == blam::bitm::format_t::BC1 || fmt == blam::bitm::format_t::BC2 ||
-        fmt == blam::bitm::format_t::BC3;
+    bool const is_bcn = fmt == blam::bitm::format_t::BC1 ||
+                        fmt == blam::bitm::format_t::BC2 ||
+                        fmt == blam::bitm::format_t::BC3;
     if(fmt != blam::bitm::format_t::R5G6B5 && !is_bcn)
         return nullptr; // uncompressed/palettised not handled yet
 
@@ -824,8 +849,9 @@ static std::shared_ptr<gexxo::texture_t> load_texture(
     if(!read_bitmap_pixels(img, magic, pixels))
         return nullptr;
 
-    // Lightmaps (RGB565 source) tile 4x4 -> GX_TF_RGB565 (2 B/px); diffuse/detail
-    // (DXT source) re-tile -> GX_TF_CMPR (0.5 B/px, 4x smaller than expanding).
+    // Lightmaps (RGB565 source) tile 4x4 -> GX_TF_RGB565 (2 B/px);
+    // diffuse/detail (DXT source) re-tile -> GX_TF_CMPR (0.5 B/px, 4x smaller
+    // than expanding).
     bool const is_565 = fmt == blam::bitm::format_t::R5G6B5;
     u16 const  tw     = is_565 ? ((w + 3) & ~3) : ((w + 7) & ~7);
     u16 const  th     = is_565 ? ((h + 3) & ~3) : ((h + 7) & ~7);
@@ -884,7 +910,7 @@ static std::shared_ptr<gexxo::texture_t> load_diffuse(
     auto it = g_diffuse_cache.find(img);
     if(it != g_diffuse_cache.end())
         return it->second;
-    auto tex            = load_texture(*img, g_internal_magic, GX_REPEAT);
+    auto tex             = load_texture(*img, g_internal_magic, GX_REPEAT);
     g_diffuse_cache[img] = tex;
     return tex;
 }
@@ -896,11 +922,13 @@ static f32   g_cam_yaw   = 0.f; // around +Z
 static f32   g_cam_pitch = 0.f; // up/down
 
 /* View-frustum culling: 6 planes from the view-projection matrix (normalized),
- * sphere-vs-frustum test. Matches the gexxo-fixed 90deg/4:3/0.1-100 projection. */
+ * sphere-vs-frustum test. Matches the gexxo-fixed 90deg/4:3/0.1-100 projection.
+ */
 struct frustum_t
 {
     Vecf4 planes[6];
 };
+
 static frustum_t make_frustum(Matf4 const& m)
 {
     auto row = [&](int i) { return Vecf4(m[0][i], m[1][i], m[2][i], m[3][i]); };
@@ -915,6 +943,7 @@ static frustum_t make_frustum(Matf4 const& m)
         p /= glm::length(Vecf3(p));
     return f;
 }
+
 static bool sphere_visible(frustum_t const& f, Vecf3 const& c, f32 r)
 {
     for(auto const& p : f.planes)
@@ -922,6 +951,7 @@ static bool sphere_visible(frustum_t const& f, Vecf3 const& c, f32 r)
             return false;
     return true;
 }
+
 static Matf4 const g_proj =
     glm::perspective(glm::radians(90.f), 4.f / 3.f, 0.1f, 100.f);
 
@@ -929,7 +959,9 @@ static Vecf3 cam_forward()
 {
     f32 const cp = std::cos(g_cam_pitch);
     return Vecf3{
-        std::cos(g_cam_yaw) * cp, std::sin(g_cam_yaw) * cp, std::sin(g_cam_pitch)};
+        std::cos(g_cam_yaw) * cp,
+        std::sin(g_cam_yaw) * cp,
+        std::sin(g_cam_pitch)};
 }
 
 /* Update the fly-cam from the controller: left stick = move/strafe, C-stick =
@@ -960,9 +992,8 @@ static void update_camera(f32 dt)
     f32 const boost = 1.f + (PAD_TriggerR(0) / 255.f) * 4.f;
     f32 const speed = 8.f * dt * boost; // world units/sec
 
-    Vecf3 const fwd = cam_forward();
-    Vecf3 const right =
-        glm::normalize(glm::cross(fwd, Vecf3{0.f, 0.f, 1.f}));
+    Vecf3 const fwd   = cam_forward();
+    Vecf3 const right = glm::normalize(glm::cross(fwd, Vecf3{0.f, 0.f, 1.f}));
     g_cam_pos += fwd * (ly * speed) + right * (lx * speed);
     if(btn & PAD_BUTTON_A)
         g_cam_pos.z += speed;
@@ -1004,10 +1035,11 @@ i32 coffee_main(i32, cstring_w*)
 #if defined(FEATURE_ENABLE_Gexxo)
     gexxo::api gfx;
     gfx.load({});
-    auto rt = gfx.default_rendertarget();
+    auto rt       = gfx.default_rendertarget();
     auto free_mem = [] {
-        return static_cast<u32>(reinterpret_cast<uintptr_t>(SYS_GetArena1Hi()) -
-                                reinterpret_cast<uintptr_t>(SYS_GetArena1Lo()));
+        return static_cast<u32>(
+            reinterpret_cast<uintptr_t>(SYS_GetArena1Hi()) -
+            reinterpret_cast<uintptr_t>(SYS_GetArena1Lo()));
     };
     LOG("mem free at start: %u KiB", free_mem() / 1024);
 #endif
@@ -1026,8 +1058,12 @@ i32 coffee_main(i32, cstring_w*)
 
 #if defined(FEATURE_ENABLE_Gexxo)
     static Vecf4 const fail_colors[] = {
-        {0.f, 0.7f, 0.f, 1.f}, {0.7f, 0.f, 0.7f, 1.f}, {0.7f, 0.f, 0.f, 1.f},
-        {0.9f, 0.5f, 0.f, 1.f}, {0.8f, 0.8f, 0.f, 1.f}, {0.f, 0.f, 0.8f, 1.f},
+        {0.f, 0.7f, 0.f, 1.f},
+        {0.7f, 0.f, 0.7f, 1.f},
+        {0.7f, 0.f, 0.f, 1.f},
+        {0.9f, 0.5f, 0.f, 1.f},
+        {0.8f, 0.8f, 0.f, 1.f},
+        {0.f, 0.f, 0.8f, 1.f},
         {1.f, 1.f, 1.f, 1.f},
     };
     if(stage != 0)
@@ -1045,102 +1081,113 @@ i32 coffee_main(i32, cstring_w*)
     u32 scn_parts     = 0;
     try
     {
-    for(u32 pi = 0; pi < g_pages.size(); pi++)
-    {
-        auto& page = g_pages[pi];
-        if(page.verts.empty() || page.indices.empty())
-            continue;
-        page.vao = gfx.alloc_vertex_array();
-        page.vbo = gfx.alloc_buffer(gexxo::buffers::vertex, RSCA::ReadOnly);
-        page.ebo = gfx.alloc_buffer(gexxo::buffers::element, RSCA::ReadOnly);
-        page.vao->alloc();
-        page.vbo->alloc();
-        page.ebo->alloc();
-        page.vbo->commit(
-            gsl::span<gx_vertex const>(page.verts.data(), page.verts.size()));
-        page.ebo->commit(
-            gsl::span<u16 const>(page.indices.data(), page.indices.size()));
-        page.vao->add({
-            .index = 0,
-            .role  = gexxo::vertex_attribute::position,
-            .value = {.offset = 0, .stride = sizeof(gx_vertex), .count = 3},
-        });
-        page.vao->add({
-            .index = 1,
-            .role  = gexxo::vertex_attribute::texcoord0, // diffuse UV
-            .value = {.offset = offsetof(gx_vertex, duv),
-                      .stride = sizeof(gx_vertex),
-                      .count  = 2},
-        });
-        page.vao->add({
-            .index = 2,
-            .role  = static_cast<gexxo::vertex_attribute::role_t>(
-                gexxo::vertex_attribute::texcoord0 + 1), // lightmap UV
-            .value = {.offset = offsetof(gx_vertex, luv),
-                      .stride = sizeof(gx_vertex),
-                      .count  = 2},
-        });
-        page.vao->add({
-            .index = 3,
-            .role  = static_cast<gexxo::vertex_attribute::role_t>(
-                gexxo::vertex_attribute::texcoord0 + 2), // detail UV
-            .value = {.offset = offsetof(gx_vertex, detuv),
-                      .stride = sizeof(gx_vertex),
-                      .count  = 2},
-        });
-        page.vao->set_buffer(gexxo::buffers::vertex, page.vbo, 0);
-        page.vao->set_buffer(gexxo::buffers::element, page.ebo);
-
-        page.lightmap = g_page_bitmaps[pi].image
-                            ? load_texture(
-                                  *g_page_bitmaps[pi].image,
-                                  g_page_bitmaps[pi].pix_magic)
-                            : nullptr;
-        for(auto& sm : page.submeshes)
+        for(u32 pi = 0; pi < g_pages.size(); pi++)
         {
-            sm.diffuse = load_diffuse(sm.diffuse_img);
-            sm.detail  = load_diffuse(sm.detail_img);
-            if(sm.diffuse)
-                diffuse_count++;
-        }
-    }
-    LOG("gpu: %u submeshes with diffuse, %u unique diffuse tex",
-        diffuse_count,
-        static_cast<unsigned>(g_diffuse_cache.size()));
-
-    // Scenery model parts -> GPU (position + diffuse UV; strip indices).
-    for(auto& [id, model] : g_models)
-        for(auto& part : model.parts)
-        {
-            if(part.verts.empty() || part.indices.size() < 3)
+            auto& page = g_pages[pi];
+            if(page.verts.empty() || page.indices.empty())
                 continue;
-            part.vao = gfx.alloc_vertex_array();
-            part.vbo = gfx.alloc_buffer(gexxo::buffers::vertex, RSCA::ReadOnly);
-            part.ebo = gfx.alloc_buffer(gexxo::buffers::element, RSCA::ReadOnly);
-            part.vao->alloc();
-            part.vbo->alloc();
-            part.ebo->alloc();
-            part.vbo->commit(gsl::span<scn_vertex const>(
-                part.verts.data(), part.verts.size()));
-            part.ebo->commit(
-                gsl::span<u16 const>(part.indices.data(), part.indices.size()));
-            part.vao->add({
+            page.vao = gfx.alloc_vertex_array();
+            page.vbo = gfx.alloc_buffer(gexxo::buffers::vertex, RSCA::ReadOnly);
+            page.ebo =
+                gfx.alloc_buffer(gexxo::buffers::element, RSCA::ReadOnly);
+            page.vao->alloc();
+            page.vbo->alloc();
+            page.ebo->alloc();
+            page.vbo->commit(
+                gsl::span<gx_vertex const>(
+                    page.verts.data(), page.verts.size()));
+            page.ebo->commit(
+                gsl::span<u16 const>(page.indices.data(), page.indices.size()));
+            page.vao->add({
                 .index = 0,
                 .role  = gexxo::vertex_attribute::position,
-                .value = {.offset = 0, .stride = sizeof(scn_vertex), .count = 3},
+                .value = {.offset = 0, .stride = sizeof(gx_vertex), .count = 3},
             });
-            part.vao->add({
+            page.vao->add({
                 .index = 1,
-                .role  = gexxo::vertex_attribute::texcoord0,
-                .value = {.offset = offsetof(scn_vertex, uv),
-                          .stride = sizeof(scn_vertex),
-                          .count  = 2},
+                .role  = gexxo::vertex_attribute::texcoord0, // diffuse UV
+                .value =
+                    {.offset = offsetof(gx_vertex, duv),
+                     .stride = sizeof(gx_vertex),
+                     .count  = 2},
             });
-            part.vao->set_buffer(gexxo::buffers::vertex, part.vbo, 0);
-            part.vao->set_buffer(gexxo::buffers::element, part.ebo);
-            part.diffuse = load_diffuse(part.diffuse_img);
-            scn_parts++;
+            page.vao->add({
+                .index = 2,
+                .role  = static_cast<gexxo::vertex_attribute::role_t>(
+                    gexxo::vertex_attribute::texcoord0 + 1), // lightmap UV
+                .value =
+                    {.offset = offsetof(gx_vertex, luv),
+                     .stride = sizeof(gx_vertex),
+                     .count  = 2},
+            });
+            page.vao->add({
+                .index = 3,
+                .role  = static_cast<gexxo::vertex_attribute::role_t>(
+                    gexxo::vertex_attribute::texcoord0 + 2), // detail UV
+                .value =
+                    {.offset = offsetof(gx_vertex, detuv),
+                     .stride = sizeof(gx_vertex),
+                     .count  = 2},
+            });
+            page.vao->set_buffer(gexxo::buffers::vertex, page.vbo, 0);
+            page.vao->set_buffer(gexxo::buffers::element, page.ebo);
+
+            page.lightmap = g_page_bitmaps[pi].image
+                                ? load_texture(
+                                      *g_page_bitmaps[pi].image,
+                                      g_page_bitmaps[pi].pix_magic)
+                                : nullptr;
+            for(auto& sm : page.submeshes)
+            {
+                sm.diffuse = load_diffuse(sm.diffuse_img);
+                sm.detail  = load_diffuse(sm.detail_img);
+                if(sm.diffuse)
+                    diffuse_count++;
+            }
         }
+        LOG("gpu: %u submeshes with diffuse, %u unique diffuse tex",
+            diffuse_count,
+            static_cast<unsigned>(g_diffuse_cache.size()));
+
+        // Scenery model parts -> GPU (position + diffuse UV; strip indices).
+        for(auto& [id, model] : g_models)
+            for(auto& part : model.parts)
+            {
+                if(part.verts.empty() || part.indices.size() < 3)
+                    continue;
+                part.vao = gfx.alloc_vertex_array();
+                part.vbo =
+                    gfx.alloc_buffer(gexxo::buffers::vertex, RSCA::ReadOnly);
+                part.ebo =
+                    gfx.alloc_buffer(gexxo::buffers::element, RSCA::ReadOnly);
+                part.vao->alloc();
+                part.vbo->alloc();
+                part.ebo->alloc();
+                part.vbo->commit(
+                    gsl::span<scn_vertex const>(
+                        part.verts.data(), part.verts.size()));
+                part.ebo->commit(
+                    gsl::span<u16 const>(
+                        part.indices.data(), part.indices.size()));
+                part.vao->add({
+                    .index = 0,
+                    .role  = gexxo::vertex_attribute::position,
+                    .value =
+                        {.offset = 0, .stride = sizeof(scn_vertex), .count = 3},
+                });
+                part.vao->add({
+                    .index = 1,
+                    .role  = gexxo::vertex_attribute::texcoord0,
+                    .value =
+                        {.offset = offsetof(scn_vertex, uv),
+                         .stride = sizeof(scn_vertex),
+                         .count  = 2},
+                });
+                part.vao->set_buffer(gexxo::buffers::vertex, part.vbo, 0);
+                part.vao->set_buffer(gexxo::buffers::element, part.ebo);
+                part.diffuse = load_diffuse(part.diffuse_img);
+                scn_parts++;
+            }
     } catch(std::bad_alloc const&)
     {
         // Out of MEM1: render whatever resources were built (the rest stay
@@ -1166,58 +1213,64 @@ i32 coffee_main(i32, cstring_w*)
     using stage_t   = gexxo::program_t::stage_t;
     using channel_t = gexxo::program_t::channel_t;
 
-    // diffuse * lightmap: stage0 = diffuse (tex0@tc0), stage1 = *lightmap (tex1@tc1)
+    // diffuse * lightmap: stage0 = diffuse (tex0@tc0), stage1 = *lightmap
+    // (tex1@tc1)
     auto prog_diff_lm      = gfx.alloc_program();
     prog_diff_lm->channels = {channel_t{.channel = channel_t::color0a0}};
     prog_diff_lm->stages   = {
-        stage_t{.stage    = stage_t::stage0,
-                  .op       = stage_t::replace,
-                  .texcoord = stage_t::texcoord0,
-                  .texmap   = stage_t::texmap0},
-        stage_t{.stage    = stage_t::stage1,
-                  .op       = stage_t::modulate_prev,
-                  .texcoord = stage_t::texcoord1,
-                  .texmap   = stage_t::texmap1},
+        stage_t{
+              .stage    = stage_t::stage0,
+              .op       = stage_t::replace,
+              .texcoord = stage_t::texcoord0,
+              .texmap   = stage_t::texmap0},
+        stage_t{
+              .stage    = stage_t::stage1,
+              .op       = stage_t::modulate_prev,
+              .texcoord = stage_t::texcoord1,
+              .texmap   = stage_t::texmap1},
     };
     // diffuse * detail(2x) * lightmap (senv with a detail map)
     auto prog_diff_det_lm      = gfx.alloc_program();
     prog_diff_det_lm->channels = {channel_t{.channel = channel_t::color0a0}};
     prog_diff_det_lm->stages   = {
-        stage_t{.stage    = stage_t::stage0,
-                  .op       = stage_t::replace,
-                  .texcoord = stage_t::texcoord0,
-                  .texmap   = stage_t::texmap0},
-        stage_t{.stage    = stage_t::stage1,
-                  .op       = stage_t::modulate_prev_2x,
-                  .texcoord = stage_t::texcoord2,
-                  .texmap   = stage_t::texmap2},
-        stage_t{.stage    = stage_t::stage2,
-                  .op       = stage_t::modulate_prev,
-                  .texcoord = stage_t::texcoord1,
-                  .texmap   = stage_t::texmap1},
+        stage_t{
+              .stage    = stage_t::stage0,
+              .op       = stage_t::replace,
+              .texcoord = stage_t::texcoord0,
+              .texmap   = stage_t::texmap0},
+        stage_t{
+              .stage    = stage_t::stage1,
+              .op       = stage_t::modulate_prev_2x,
+              .texcoord = stage_t::texcoord2,
+              .texmap   = stage_t::texmap2},
+        stage_t{
+              .stage    = stage_t::stage2,
+              .op       = stage_t::modulate_prev,
+              .texcoord = stage_t::texcoord1,
+              .texmap   = stage_t::texmap1},
     };
     // diffuse only (page has no lightmap)
     auto prog_diff      = gfx.alloc_program();
     prog_diff->channels = {channel_t{.channel = channel_t::color0a0}};
     prog_diff->stages   = {stage_t{
-        .stage    = stage_t::stage0,
-        .op       = stage_t::replace,
-        .texcoord = stage_t::texcoord0,
-        .texmap   = stage_t::texmap0}};
+          .stage    = stage_t::stage0,
+          .op       = stage_t::replace,
+          .texcoord = stage_t::texcoord0,
+          .texmap   = stage_t::texmap0}};
     // flat material colour (untextured scenery parts) -> per-instance palette.
     auto prog_flat      = gfx.alloc_program();
     prog_flat->channels = {channel_t{.channel = channel_t::color0a0}};
-    prog_flat->stages   = {stage_t{
-        .stage = stage_t::stage0, .op = stage_t::pass}};
+    prog_flat->stages   = {
+        stage_t{.stage = stage_t::stage0, .op = stage_t::pass}};
     // lightmap only (material has no diffuse): with one tex-gen only texcoord0
     // is generated, so output the lightmap UV (vertex TEX1) into texcoord0.
     auto prog_lm      = gfx.alloc_program();
     prog_lm->channels = {channel_t{.channel = channel_t::color0a0}};
     prog_lm->stages   = {stage_t{
-        .stage    = stage_t::stage0,
-        .op       = stage_t::replace,
-        .texcoord = stage_t::texcoord0,
-        .texmap   = stage_t::texmap0}};
+          .stage    = stage_t::stage0,
+          .op       = stage_t::replace,
+          .texcoord = stage_t::texcoord0,
+          .texmap   = stage_t::texmap0}};
 
     using bind_t = gexxo::texture_binding_t;
 
@@ -1257,16 +1310,18 @@ i32 coffee_main(i32, cstring_w*)
                 }
                 drawn++;
                 gexxo::draw_command cmd{
-                    .call = {.indexed   = true,
-                             .instanced = true,
-                             .mode      = gexxo::drawing::primitive::triangle},
+                    .call =
+                        {.indexed   = true,
+                         .instanced = true,
+                         .mode      = gexxo::drawing::primitive::triangle},
                     .data =
                         {
-                            .elements = {.count  = sm.index_count,
-                                         .offset = sm.index_offset,
-                                         .type   = semantic::type_t::u16},
-                            .arrays = {.count =
-                                           static_cast<u32>(page.verts.size())},
+                            .elements =
+                                {.count  = sm.index_count,
+                                 .offset = sm.index_offset,
+                                 .type   = semantic::type_t::u16},
+                            .arrays =
+                                {.count = static_cast<u32>(page.verts.size())},
                             .instances = {.count = 1},
                         },
                     .vertices            = page.vao,
@@ -1276,31 +1331,36 @@ i32 coffee_main(i32, cstring_w*)
                 {
                     cmd.program  = prog_diff_det_lm;
                     cmd.textures = {
-                        bind_t{.texture  = sm.diffuse,
-                               .texmap   = stage_t::texmap0,
-                               .texcoord = stage_t::texcoord0,
-                               .gen_src  = bind_t::src_tex0},
-                        bind_t{.texture  = sm.detail,
-                               .texmap   = stage_t::texmap2,
-                               .texcoord = stage_t::texcoord2,
-                               .gen_src  = bind_t::src_tex2},
-                        bind_t{.texture  = page.lightmap,
-                               .texmap   = stage_t::texmap1,
-                               .texcoord = stage_t::texcoord1,
-                               .gen_src  = bind_t::src_tex1},
+                        bind_t{
+                            .texture  = sm.diffuse,
+                            .texmap   = stage_t::texmap0,
+                            .texcoord = stage_t::texcoord0,
+                            .gen_src  = bind_t::src_tex0},
+                        bind_t{
+                            .texture  = sm.detail,
+                            .texmap   = stage_t::texmap2,
+                            .texcoord = stage_t::texcoord2,
+                            .gen_src  = bind_t::src_tex2},
+                        bind_t{
+                            .texture  = page.lightmap,
+                            .texmap   = stage_t::texmap1,
+                            .texcoord = stage_t::texcoord1,
+                            .gen_src  = bind_t::src_tex1},
                     };
                 } else if(sm.diffuse && page.lightmap)
                 {
                     cmd.program  = prog_diff_lm;
                     cmd.textures = {
-                        bind_t{.texture  = sm.diffuse,
-                               .texmap   = stage_t::texmap0,
-                               .texcoord = stage_t::texcoord0,
-                               .gen_src  = bind_t::src_tex0},
-                        bind_t{.texture  = page.lightmap,
-                               .texmap   = stage_t::texmap1,
-                               .texcoord = stage_t::texcoord1,
-                               .gen_src  = bind_t::src_tex1},
+                        bind_t{
+                            .texture  = sm.diffuse,
+                            .texmap   = stage_t::texmap0,
+                            .texcoord = stage_t::texcoord0,
+                            .gen_src  = bind_t::src_tex0},
+                        bind_t{
+                            .texture  = page.lightmap,
+                            .texmap   = stage_t::texmap1,
+                            .texcoord = stage_t::texcoord1,
+                            .gen_src  = bind_t::src_tex1},
                     };
                 } else if(sm.diffuse)
                 {
@@ -1309,11 +1369,11 @@ i32 coffee_main(i32, cstring_w*)
                 } else if(page.lightmap)
                 {
                     cmd.program  = prog_lm;
-                    cmd.textures = {
-                        bind_t{.texture  = page.lightmap,
-                               .texmap   = stage_t::texmap0,
-                               .texcoord = stage_t::texcoord0,
-                               .gen_src  = bind_t::src_tex1}};
+                    cmd.textures = {bind_t{
+                        .texture  = page.lightmap,
+                        .texmap   = stage_t::texmap0,
+                        .texcoord = stage_t::texcoord0,
+                        .gen_src  = bind_t::src_tex1}};
                 } else
                     continue;
                 gfx.submit(cmd, gexxo::cull_state{.front_face = false});
@@ -1339,16 +1399,17 @@ i32 coffee_main(i32, cstring_w*)
                 if(!part.vao || !part.vao->m_element_buffer)
                     continue;
                 gexxo::draw_command cmd{
-                    .call = {.indexed   = true,
-                             .instanced = true,
-                             .mode = gexxo::drawing::primitive::triangle_strip},
+                    .call =
+                        {.indexed   = true,
+                         .instanced = true,
+                         .mode = gexxo::drawing::primitive::triangle_strip},
                     .data =
                         {
-                            .elements = {.count = static_cast<u32>(
-                                             part.indices.size()),
-                                         .type = semantic::type_t::u16},
-                            .arrays = {.count =
-                                           static_cast<u32>(part.verts.size())},
+                            .elements =
+                                {.count = static_cast<u32>(part.indices.size()),
+                                 .type  = semantic::type_t::u16},
+                            .arrays =
+                                {.count = static_cast<u32>(part.verts.size())},
                             .instances = {.count = 1},
                         },
                     .program             = part.diffuse ? prog_diff : prog_flat,

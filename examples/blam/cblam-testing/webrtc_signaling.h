@@ -39,7 +39,7 @@ namespace webrtc_signaling {
  */
 class GatewayConnectBootstrap final : public ISteamNetworkingConnectionSignaling
 {
-public:
+  public:
     explicit GatewayConnectBootstrap(
         std::string gatewayUrl, std::string serverId = "");
     ~GatewayConnectBootstrap();
@@ -58,10 +58,10 @@ public:
         HSteamNetConnection             hConn,
         const SteamNetConnectionInfo_t& info,
         const void*                     pMsg,
-        int                              cbMsg) override;
+        int                             cbMsg) override;
     void Release() override;
 
-private:
+  private:
     void onWebSocketOpen();
     void onWebSocketMessage(std::string const& text);
     void sendJSON(std::string const& json);
@@ -88,16 +88,16 @@ private:
      * these concurrently with Ready()/Failed() polling from the main
      * thread. */
     mutable std::mutex m_mutex;
-    std::string         m_sessionId;
-    bool                m_haveSessionId{false};
-    bool                m_dataChannelOpen{false};
-    bool                m_failed{false};
-    bool                m_peerConnectionTaken{false};
-    bool                m_dataChannelTaken{false};
-    bool                m_gatheringComplete{false};
-    bool                m_wsOpen{false};
-    bool                m_offerSent{false};
-    std::string         m_pendingOfferSdp;
+    std::string        m_sessionId;
+    bool               m_haveSessionId{false};
+    bool               m_dataChannelOpen{false};
+    bool               m_failed{false};
+    bool               m_peerConnectionTaken{false};
+    bool               m_dataChannelTaken{false};
+    bool               m_gatheringComplete{false};
+    bool               m_wsOpen{false};
+    bool               m_offerSent{false};
+    std::string        m_pendingOfferSdp;
 };
 
 class GatewayServerRegistration;
@@ -120,7 +120,7 @@ class GatewayServerRegistration;
  */
 class GatewayAcceptSignaling final : public ISteamNetworkingConnectionSignaling
 {
-public:
+  public:
     GatewayAcceptSignaling(
         GatewayServerRegistration* owner,
         std::string                sessionId,
@@ -130,10 +130,18 @@ public:
 
     void Start();
 
-    bool                Ready() const;
-    bool                Failed() const;
-    HSteamNetConnection Connection() const { return m_hConn; }
-    std::string const&  SessionId() const { return m_sessionId; }
+    bool Ready() const;
+    bool Failed() const;
+
+    HSteamNetConnection Connection() const
+    {
+        return m_hConn;
+    }
+
+    std::string const& SessionId() const
+    {
+        return m_sessionId;
+    }
 
     /*! Valid only once Ready(); each may only be taken once. */
     std::shared_ptr<rtc::PeerConnection> TakePeerConnection();
@@ -144,10 +152,10 @@ public:
         HSteamNetConnection             hConn,
         const SteamNetConnectionInfo_t& info,
         const void*                     pMsg,
-        int                              cbMsg) override;
+        int                             cbMsg) override;
     void Release() override;
 
-private:
+  private:
     void onWebSocketMessage(std::string const& text);
     /*! See GatewayConnectBootstrap::maybeSendOffer's comment -- same
      * platform-ordering divergence applies here. */
@@ -156,21 +164,21 @@ private:
     GatewayServerRegistration* m_owner;
     std::string                m_sessionId;
     std::string                m_gatewayUrl;
-    HSteamNetConnection         m_hConn;
+    HSteamNetConnection        m_hConn;
 
     std::shared_ptr<rtc::WebSocket>      m_ws;
     std::shared_ptr<rtc::PeerConnection> m_pc;
     std::shared_ptr<rtc::DataChannel>    m_dc;
 
     mutable std::mutex m_mutex;
-    bool                m_dataChannelOpen{false};
-    bool                m_failed{false};
-    bool                m_peerConnectionTaken{false};
-    bool                m_dataChannelTaken{false};
-    bool                m_gatheringComplete{false};
-    bool                m_wsOpen{false};
-    bool                m_offerSent{false};
-    std::string         m_pendingOfferSdp;
+    bool               m_dataChannelOpen{false};
+    bool               m_failed{false};
+    bool               m_peerConnectionTaken{false};
+    bool               m_dataChannelTaken{false};
+    bool               m_gatheringComplete{false};
+    bool               m_wsOpen{false};
+    bool               m_offerSent{false};
+    std::string        m_pendingOfferSdp;
 };
 
 /*!
@@ -193,9 +201,10 @@ private:
  * Owned outright by Networking (unlike the two signaling classes above,
  * which GNS owns) -- construct as e.g. a member unique_ptr.
  */
-class GatewayServerRegistration final : public ISteamNetworkingSignalingRecvContext
+class GatewayServerRegistration final
+    : public ISteamNetworkingSignalingRecvContext
 {
-public:
+  public:
     GatewayServerRegistration(
         std::string              serverSignalGatewayUrl,
         std::string              dataChannelGatewayUrl,
@@ -209,25 +218,26 @@ public:
     ISteamNetworkingConnectionSignaling* OnConnectRequest(
         HSteamNetConnection            hConn,
         const SteamNetworkingIdentity& identityPeer,
-        int                             nLocalVirtualPort) override;
+        int                            nLocalVirtualPort) override;
     void SendRejectionSignal(
         const SteamNetworkingIdentity& identityPeer,
         const void*                    pMsg,
-        int                             cbMsg) override;
+        int                            cbMsg) override;
 
     /*! Used by GatewayAcceptSignaling; not for other callers. */
-    bool SendOverServerSignal(std::string const& sessionId, std::string const& data);
+    bool SendOverServerSignal(
+        std::string const& sessionId, std::string const& data);
     void RemovePendingAccept(GatewayAcceptSignaling* accept);
 
     void NotifyGNSConnected(HSteamNetConnection hConn);
     void ForgetConnection(HSteamNetConnection hConn);
 
-private:
+  private:
     void onWebSocketMessage(std::string const& text);
 
-    std::string              m_serverSignalUrl;
-    std::string              m_dataChannelGatewayUrl;
-    ISteamNetworkingSockets* m_sockets;
+    std::string                     m_serverSignalUrl;
+    std::string                     m_dataChannelGatewayUrl;
+    ISteamNetworkingSockets*        m_sockets;
     std::shared_ptr<rtc::WebSocket> m_ws;
 
     std::mutex m_mutex;
@@ -240,7 +250,8 @@ private:
      * only needed for the "brand new connection" case. */
     std::string                          m_pendingSessionId;
     std::vector<GatewayAcceptSignaling*> m_pendingAccepts;
-    std::unordered_map<HSteamNetConnection, std::string> m_sessionIdByConnection;
+    std::unordered_map<HSteamNetConnection, std::string>
+        m_sessionIdByConnection;
 };
 
 } // namespace webrtc_signaling

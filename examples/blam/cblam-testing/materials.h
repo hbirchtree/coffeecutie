@@ -99,24 +99,29 @@ struct alignas(16) transparent_data
          *          = 17 bits, so alpha MUST start at bit 17 — packing it at
          *          16 bleeds alpha ab_dst's LSB into the color output map
          *   alpha: ab_dst[4] cd_dst[4] sum_dst[4] omap[3] = 15 bits */
-        u32 outputs;
-        u32 flags;  /* stage_flags_t */
-        Vecf4 color0;   /* constant_color0: animated tint (time-animated on
-                           CPU; = lower bound when a_out controls the anim) */
+        u32   outputs;
+        u32   flags;     /* stage_flags_t */
+        Vecf4 color0;    /* constant_color0: animated tint (time-animated on
+                            CPU; = lower bound when a_out controls the anim) */
         Vecf4 color0_up; /* constant_color0 upper bound, for the
                             a_out_controls_color0_anim flag (0x4): the shader
                             mixes color0..color0_up by the scratch alpha */
-        Vecf4 color1;   /* constant_color1: static tint */
+        Vecf4 color1;    /* constant_color1: static tint */
 
-        STATICINLINE stage_t from_blam(
-            blam::shader::shader_transparent::stage_t const& s)
+        STATICINLINE stage_t
+        from_blam(blam::shader::shader_transparent::stage_t const& s)
         {
-            auto pack_inputs = [](auto ai, auto am, auto bi, auto bm,
-                                  auto ci, auto cm, auto di, auto dm) -> u32
-            {
-                return (static_cast<u32>(ai) & 0x1Fu) << 0  |
-                       (static_cast<u32>(am) & 0x07u) << 5  |
-                       (static_cast<u32>(bi) & 0x1Fu) << 8  |
+            auto pack_inputs = [](auto ai,
+                                  auto am,
+                                  auto bi,
+                                  auto bm,
+                                  auto ci,
+                                  auto cm,
+                                  auto di,
+                                  auto dm) -> u32 {
+                return (static_cast<u32>(ai) & 0x1Fu) << 0 |
+                       (static_cast<u32>(am) & 0x07u) << 5 |
+                       (static_cast<u32>(bi) & 0x1Fu) << 8 |
                        (static_cast<u32>(bm) & 0x07u) << 13 |
                        (static_cast<u32>(ci) & 0x1Fu) << 16 |
                        (static_cast<u32>(cm) & 0x07u) << 21 |
@@ -125,30 +130,38 @@ struct alignas(16) transparent_data
             };
 
             u32 color_in = pack_inputs(
-                s.color.a_input, s.color.a_mapping,
-                s.color.b_input, s.color.b_mapping,
-                s.color.c_input, s.color.c_mapping,
-                s.color.d_input, s.color.d_mapping);
+                s.color.a_input,
+                s.color.a_mapping,
+                s.color.b_input,
+                s.color.b_mapping,
+                s.color.c_input,
+                s.color.c_mapping,
+                s.color.d_input,
+                s.color.d_mapping);
 
             u32 alpha_in = pack_inputs(
-                s.alpha.a_input, s.alpha.a_mapping,
-                s.alpha.b_input, s.alpha.b_mapping,
-                s.alpha.c_input, s.alpha.c_mapping,
-                s.alpha.d_input, s.alpha.d_mapping);
+                s.alpha.a_input,
+                s.alpha.a_mapping,
+                s.alpha.b_input,
+                s.alpha.b_mapping,
+                s.alpha.c_input,
+                s.alpha.c_mapping,
+                s.alpha.d_input,
+                s.alpha.d_mapping);
 
             u32 color_out =
-                (static_cast<u32>(s.color.ab_output)     & 0xFu) << 0  |
-                (static_cast<u32>(s.color.ab_out_func)    & 0x1u) << 4  |
-                (static_cast<u32>(s.color.cd_output)     & 0xFu) << 5  |
-                (static_cast<u32>(s.color.cd_out_func)    & 0x1u) << 9  |
+                (static_cast<u32>(s.color.ab_output) & 0xFu) << 0 |
+                (static_cast<u32>(s.color.ab_out_func) & 0x1u) << 4 |
+                (static_cast<u32>(s.color.cd_output) & 0xFu) << 5 |
+                (static_cast<u32>(s.color.cd_out_func) & 0x1u) << 9 |
                 (static_cast<u32>(s.color.ab_cd_mux_sum) & 0xFu) << 10 |
-                (static_cast<u32>(s.color.output_map)    & 0x7u) << 14;
+                (static_cast<u32>(s.color.output_map) & 0x7u) << 14;
 
-            u32 alpha_out =
-                (static_cast<u32>(s.alpha.ab_output)     & 0xFu) << 0 |
-                (static_cast<u32>(s.alpha.cd_output)     & 0xFu) << 4 |
-                (static_cast<u32>(s.alpha.ab_cd_mux_sum) & 0xFu) << 8 |
-                (static_cast<u32>(s.alpha.output_map)    & 0x7u) << 12;
+            u32 alpha_out = (static_cast<u32>(s.alpha.ab_output) & 0xFu) << 0 |
+                            (static_cast<u32>(s.alpha.cd_output) & 0xFu) << 4 |
+                            (static_cast<u32>(s.alpha.ab_cd_mux_sum) & 0xFu)
+                                << 8 |
+                            (static_cast<u32>(s.alpha.output_map) & 0x7u) << 12;
 
             /* Tag colors are ARGB floats (alpha first) — reorder to RGBA.
              * Verified against 'light dim blue' c1=(0,.55,.60,.84) → blue. */
@@ -165,7 +178,8 @@ struct alignas(16) transparent_data
             };
             bool a_out_anim =
                 (static_cast<u32>(s.flags) & 0x4u) != 0; /* per-pixel anim */
-            bool unset = s.color0_lower == Vecf4(0) && s.color0_upper == Vecf4(0);
+            bool unset =
+                s.color0_lower == Vecf4(0) && s.color0_upper == Vecf4(0);
             return {
                 .color_in  = color_in,
                 .alpha_in  = alpha_in,
@@ -181,9 +195,9 @@ struct alignas(16) transparent_data
         }
     };
 
-    u32     num_stages;
-    u32     blend_mode; /* chicago::framebuffer_blending */
-    u32     padding[2];
+    u32 num_stages;
+    u32 blend_mode; /* chicago::framebuffer_blending */
+    u32 padding[2];
     /* 7 stages: the NV2A runs up to 8 combiner stages and tags use them
      * (generator shield = 7); truncating to 4 cut off the final compose. */
     stage_t stages[7];

@@ -61,10 +61,10 @@ namespace webrtc_signaling {
  */
 class GatewayFleetRegistration
 {
-public:
+  public:
     GatewayFleetRegistration(
-        std::string registerUrl,
-        std::string serverId,
+        std::string              registerUrl,
+        std::string              serverId,
         ISteamNetworkingSockets* sockets,
         HSteamListenSocket       listenSocket);
     ~GatewayFleetRegistration();
@@ -76,7 +76,7 @@ public:
      * gateway is actively routing browsers to this server. */
     bool Active() const;
 
-private:
+  private:
     void onWebSocketOpen();
     void onWebSocketMessage(std::string const& text);
     void sendRegister();
@@ -111,25 +111,28 @@ private:
      * the map itself. */
     struct ClientRelay
     {
-        int                                    relayPort{0};
+        int                                   relayPort{0};
         std::chrono::steady_clock::time_point lastPunch{};
     };
-    std::mutex                                     m_relaysMutex;
+
+    std::mutex                                   m_relaysMutex;
     std::unordered_map<std::string, ClientRelay> m_relays;
 
     void onClientRelay(
-        std::string const& sessionId, int relayPort, std::string const& relayNonceHex);
+        std::string const& sessionId,
+        int                relayPort,
+        std::string const& relayNonceHex);
     void onClientRelayClosed(std::string const& sessionId);
     void pollRelayKeepalives();
     void sendRelayPunch(int relayPort, std::string const& payload);
 #endif
 
-    mutable std::mutex                    m_mutex;
-    bool                                   m_wsOpen{false};
-    bool                                   m_active{false};
+    mutable std::mutex m_mutex;
+    bool               m_wsOpen{false};
+    bool               m_active{false};
     /* True once register-pending delivered the punch port; no punches go
      * out before that. */
-    bool                                   m_havePunchTarget{false};
+    bool                                  m_havePunchTarget{false};
     std::chrono::steady_clock::time_point m_lastHeartbeat{};
     std::chrono::steady_clock::time_point m_lastRegistrationPunch{};
 };

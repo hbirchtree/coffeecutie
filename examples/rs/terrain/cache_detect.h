@@ -36,11 +36,16 @@ inline const char* to_string(CacheKind k)
 {
     switch(k)
     {
-    case CacheKind::rs2: return "rs2";
-    case CacheKind::rs2_beta: return "rs2-beta";
-    case CacheKind::rsc: return "rsc";
-    case CacheKind::js5: return "js5 (unsupported)";
-    default: return "unknown";
+    case CacheKind::rs2:
+        return "rs2";
+    case CacheKind::rs2_beta:
+        return "rs2-beta";
+    case CacheKind::rsc:
+        return "rsc";
+    case CacheKind::js5:
+        return "js5 (unsupported)";
+    default:
+        return "unknown";
     }
 }
 
@@ -59,14 +64,14 @@ inline CacheKind detect_cache(const std::string& dir)
     {
         try
         {
-            auto body =
-                rs2::jag_load_archive(rs2::read_file(dir + "/config"));
+            auto body = rs2::jag_load_archive(rs2::read_file(dir + "/config"));
             if(rs2::jag_extract(body, "loc.dat"))
                 return CacheKind::rs2_beta;
             if(rs2::jag_extract(body, "string.dat"))
                 return CacheKind::rsc;
+        } catch(const std::exception&)
+        {
         }
-        catch(const std::exception&) {}
     }
 
     // scrambled filenames: probe every file for a JAG archive holding
@@ -78,14 +83,15 @@ inline CacheKind detect_cache(const std::string& dir)
             continue;
         try
         {
-            auto body = rs2::jag_load_archive(
-                rs2::read_file(entry.path().string()));
+            auto body =
+                rs2::jag_load_archive(rs2::read_file(entry.path().string()));
             if(rs2::jag_extract(body, "string.dat"))
                 return CacheKind::rsc;
             if(rs2::jag_extract(body, "loc.dat"))
                 return CacheKind::rs2_beta;
+        } catch(const std::exception&)
+        {
         }
-        catch(const std::exception&) {}
     }
     return CacheKind::unknown;
 }
@@ -95,7 +101,8 @@ inline CacheKind detect_cache(const std::string& dir)
 class AnyLoader
 {
   public:
-    explicit AnyLoader(const std::string& dir) : m_kind(detect_cache(dir))
+    explicit AnyLoader(const std::string& dir)
+        : m_kind(detect_cache(dir))
     {
         switch(m_kind)
         {
@@ -107,15 +114,16 @@ class AnyLoader
             m_impl.emplace<rsc::RegionLoader>(dir);
             break;
         case CacheKind::js5:
-            throw std::runtime_error(
-                "js5 caches (2006+) are not supported");
+            throw std::runtime_error("js5 caches (2006+) are not supported");
         default:
-            throw std::runtime_error(
-                "unrecognized cache layout: " + dir);
+            throw std::runtime_error("unrecognized cache layout: " + dir);
         }
     }
 
-    CacheKind kind() const { return m_kind; }
+    CacheKind kind() const
+    {
+        return m_kind;
+    }
 
   private:
     // defined before use: deduced-return-type members must be seen before
@@ -127,6 +135,7 @@ class AnyLoader
             return f(*a);
         return f(*std::get_if<rsc::RegionLoader>(&m_impl));
     }
+
     template<typename F>
     decltype(auto) visit(F&& f) const
     {
@@ -140,38 +149,47 @@ class AnyLoader
     {
         return visit([&](auto& l) { return l.load(rx, ry, plane); });
     }
+
     const std::vector<rs2::RegionRef>& regions() const
     {
         return visit([](auto& l) -> auto& { return l.regions(); });
     }
+
     const rs2::MapBounds& bounds() const
     {
         return visit([](auto& l) -> auto& { return l.bounds(); });
     }
+
     const rs2::MapBounds& surface_bounds() const
     {
         return visit([](auto& l) -> auto& { return l.surface_bounds(); });
     }
+
     const rs2::RegionRef* find_region(int rx, int ry) const
     {
         return visit([&](auto& l) { return l.find_region(rx, ry); });
     }
+
     const std::string& cache_signature() const
     {
         return visit([](auto& l) -> auto& { return l.cache_signature(); });
     }
+
     rs2::FloorClass floor_class(rs2::i32 overlay_id) const
     {
         return visit([&](auto& l) { return l.floor_class(overlay_id); });
     }
+
     rs2::Color face_color(rs2::u32 col)
     {
         return visit([&](auto& l) { return l.face_color(col); });
     }
+
     std::optional<rs2::SpriteRgba> texture_sprite(int id)
     {
         return visit([&](auto& l) { return l.texture_sprite(id); });
     }
+
     std::vector<rs2::MapLink> find_links()
     {
         return visit([](auto& l) { return l.find_links(); });
@@ -182,13 +200,14 @@ class AnyLoader
     {
         return std::get_if<rs2::RegionLoader>(&m_impl);
     }
+
     rsc::RegionLoader* rsc_loader()
     {
         return std::get_if<rsc::RegionLoader>(&m_impl);
     }
 
   private:
-    CacheKind m_kind;
+    CacheKind                                                          m_kind;
     std::variant<std::monostate, rs2::RegionLoader, rsc::RegionLoader> m_impl;
 };
 

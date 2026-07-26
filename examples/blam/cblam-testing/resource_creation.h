@@ -11,16 +11,15 @@
 
 using namespace libc_types::size_literals;
 
-constexpr bool lowspec_hardware =
-    compile_info::platform::is_32bit;
+constexpr bool lowspec_hardware = compile_info::platform::is_32bit;
 
 struct legacy_memory_budget
 {
-    static constexpr auto bsp_buffer      = 10_MB;
-    static constexpr auto bsp_elements    = 2_MB;
-    static constexpr auto mesh_buffer     = 5_MB;
-    static constexpr auto mesh_elements   = 5_MB;
-    static constexpr auto matrix_buffer   = 5_MB;
+    static constexpr auto bsp_buffer         = 10_MB;
+    static constexpr auto bsp_elements       = 2_MB;
+    static constexpr auto mesh_buffer        = 5_MB;
+    static constexpr auto mesh_elements      = 5_MB;
+    static constexpr auto matrix_buffer      = 5_MB;
     static constexpr auto material_buffer    = 5_MB;
     static constexpr auto transparent_buffer = 5_MB;
     static constexpr auto bone_buffer        = 1_MB;
@@ -33,11 +32,11 @@ struct legacy_memory_budget
 
 struct modern_memory_budget
 {
-    static constexpr auto bsp_buffer      = 48_MB;
-    static constexpr auto bsp_elements    = 16_MB;
-    static constexpr auto mesh_buffer     = 48_MB;
-    static constexpr auto mesh_elements   = 16_MB;
-    static constexpr auto matrix_buffer   = 8_MB;
+    static constexpr auto bsp_buffer         = 48_MB;
+    static constexpr auto bsp_elements       = 16_MB;
+    static constexpr auto mesh_buffer        = 48_MB;
+    static constexpr auto mesh_elements      = 16_MB;
+    static constexpr auto matrix_buffer      = 8_MB;
     static constexpr auto material_buffer    = 16_MB;
     static constexpr auto transparent_buffer = 16_MB;
     static constexpr auto bone_buffer        = 4_MB;
@@ -64,6 +63,4 @@ void set_resource_labels(compo::EntityContainer& e);
 void create_camera(
     compo::EntityContainer&                                          e,
     const semantic::Span<const blam::scn::player_starting_location>& spawns);
-void create_program(
-    gfx::api& api,
-    shader_pair_t&& shader_info);
+void create_program(gfx::api& api, shader_pair_t&& shader_info);

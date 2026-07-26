@@ -57,10 +57,14 @@ inline rs2::Color terrain_palette(int i)
     int j = i & 63;
     switch(i >> 6)
     {
-    case 0: return {u8(255 - j * 4), u8(255 - int(j * 1.75)), u8(255 - j * 4)};
-    case 1: return {u8(j * 3), 144, 0};
-    case 2: return {u8(192 - int(j * 1.5)), u8(144 - int(j * 1.5)), 0};
-    default: return {u8(96 - int(j * 1.5)), u8(48 + int(j * 1.5)), 0};
+    case 0:
+        return {u8(255 - j * 4), u8(255 - int(j * 1.75)), u8(255 - j * 4)};
+    case 1:
+        return {u8(j * 3), 144, 0};
+    case 2:
+        return {u8(192 - int(j * 1.5)), u8(144 - int(j * 1.5)), 0};
+    default:
+        return {u8(96 - int(j * 1.5)), u8(48 + int(j * 1.5)), 0};
     }
 }
 
@@ -93,23 +97,25 @@ struct GameData
     struct ObjectDef
     {
         std::string name, command1;
-        std::string model;    // model archive entry is "<model>.ob3"
-        int width = 1, height = 1; // footprint in tiles
-        int type = 0;              // 1/2 = blocks movement
-        int elevation = 0;
+        std::string model; // model archive entry is "<model>.ob3"
+        int         width = 1, height = 1; // footprint in tiles
+        int         type      = 0;         // 1/2 = blocks movement
+        int         elevation = 0;
     };
+
     struct WallDef
     {
         std::string name, command1;
-        int  height = 0;         // game units
-        i32  fill_front = 0, fill_back = 0;
-        bool blocking  = false; // "adjacent" byte != 0
-        int  invisible = 0;     // != 0 → not drawn (5 = interactive tag)
+        int         height     = 0; // game units
+        i32         fill_front = 0, fill_back = 0;
+        bool        blocking  = false; // "adjacent" byte != 0
+        int         invisible = 0;     // != 0 → not drawn (5 = interactive tag)
     };
+
     struct TileDef
     {
-        i32  fill = 0;     // decoration colour/texture (fill convention)
-        int  type = 0;     // 2 = water/liquid (blocked), 4 = hole/floor
+        i32  fill     = 0; // decoration colour/texture (fill convention)
+        int  type     = 0; // 2 = water/liquid (blocked), 4 = hole/floor
         bool blocking = false;
     };
 
@@ -122,7 +128,7 @@ struct GameData
     bool load(const std::vector<u8>& str_data, const std::vector<u8>& int_data)
     {
         size_t so = 0, io = 0;
-        auto gstr = [&]() -> std::string {
+        auto   gstr = [&]() -> std::string {
             std::string s;
             while(so < str_data.size() && str_data[so] != 0)
                 s += char(str_data[so++]);
@@ -152,80 +158,122 @@ struct GameData
 
         // items
         int items = gs();
-        for(int i = 0; i < items * 3; ++i) gstr(); // name, description, command
+        for(int i = 0; i < items * 3; ++i)
+            gstr(); // name, description, command
         ensure(size_t(items) * 16);
-        for(int i = 0; i < items; ++i) gs();       // picture
-        for(int i = 0; i < items; ++i) gi();       // base price
-        for(int i = 0; i < items * 2; ++i) gb();   // stackable, unused
-        for(int i = 0; i < items; ++i) gs();       // wearable
-        for(int i = 0; i < items; ++i) gi();       // mask
-        for(int i = 0; i < items * 2; ++i) gb();   // special, members
+        for(int i = 0; i < items; ++i)
+            gs(); // picture
+        for(int i = 0; i < items; ++i)
+            gi(); // base price
+        for(int i = 0; i < items * 2; ++i)
+            gb(); // stackable, unused
+        for(int i = 0; i < items; ++i)
+            gs(); // wearable
+        for(int i = 0; i < items; ++i)
+            gi(); // mask
+        for(int i = 0; i < items * 2; ++i)
+            gb(); // special, members
 
         // npcs
         int npcs = gs();
-        for(int i = 0; i < npcs * 2; ++i) gstr();  // name, description
+        for(int i = 0; i < npcs * 2; ++i)
+            gstr(); // name, description
         ensure(size_t(npcs) * 40);
-        for(int i = 0; i < npcs * 5; ++i) gb();    // attack..attackable
-        for(int i = 0; i < npcs * 12; ++i) gb();   // sprites
-        for(int i = 0; i < npcs * 4; ++i) gi();    // colours
-        for(int i = 0; i < npcs * 2; ++i) gs();    // width, height
-        for(int i = 0; i < npcs * 3; ++i) gb();    // walk/combat model, anim
-        for(int i = 0; i < npcs; ++i) gstr();      // command
+        for(int i = 0; i < npcs * 5; ++i)
+            gb(); // attack..attackable
+        for(int i = 0; i < npcs * 12; ++i)
+            gb(); // sprites
+        for(int i = 0; i < npcs * 4; ++i)
+            gi(); // colours
+        for(int i = 0; i < npcs * 2; ++i)
+            gs(); // width, height
+        for(int i = 0; i < npcs * 3; ++i)
+            gb(); // walk/combat model, anim
+        for(int i = 0; i < npcs; ++i)
+            gstr(); // command
 
         // textures
         int texs = gs();
-        for(int i = 0; i < texs; ++i) texture_names.push_back(gstr());
-        for(int i = 0; i < texs; ++i) gstr();      // subtype names
+        for(int i = 0; i < texs; ++i)
+            texture_names.push_back(gstr());
+        for(int i = 0; i < texs; ++i)
+            gstr(); // subtype names
 
         // animations
         int anims = gs();
-        for(int i = 0; i < anims; ++i) gstr();
+        for(int i = 0; i < anims; ++i)
+            gstr();
         ensure(size_t(anims) * 8);
-        for(int i = 0; i < anims; ++i) gi();       // character colour
-        for(int i = 0; i < anims * 4; ++i) gb();   // gender, hasA, hasF, number
+        for(int i = 0; i < anims; ++i)
+            gi(); // character colour
+        for(int i = 0; i < anims * 4; ++i)
+            gb(); // gender, hasA, hasF, number
 
         // objects (scenery)
         int objs = gs();
         objects.resize(objs);
-        for(int i = 0; i < objs; ++i) objects[i].name = gstr();
-        for(int i = 0; i < objs; ++i) gstr();      // description
-        for(int i = 0; i < objs; ++i) objects[i].command1 = gstr();
-        for(int i = 0; i < objs; ++i) gstr();      // command2
-        for(int i = 0; i < objs; ++i) objects[i].model = gstr();
+        for(int i = 0; i < objs; ++i)
+            objects[i].name = gstr();
+        for(int i = 0; i < objs; ++i)
+            gstr(); // description
+        for(int i = 0; i < objs; ++i)
+            objects[i].command1 = gstr();
+        for(int i = 0; i < objs; ++i)
+            gstr(); // command2
+        for(int i = 0; i < objs; ++i)
+            objects[i].model = gstr();
         ensure(size_t(objs) * 4);
-        for(int i = 0; i < objs; ++i) objects[i].width = gb();
-        for(int i = 0; i < objs; ++i) objects[i].height = gb();
-        for(int i = 0; i < objs; ++i) objects[i].type = gb();
-        for(int i = 0; i < objs; ++i) objects[i].elevation = gb();
+        for(int i = 0; i < objs; ++i)
+            objects[i].width = gb();
+        for(int i = 0; i < objs; ++i)
+            objects[i].height = gb();
+        for(int i = 0; i < objs; ++i)
+            objects[i].type = gb();
+        for(int i = 0; i < objs; ++i)
+            objects[i].elevation = gb();
 
         // wall objects
         int nwalls = gs();
         walls.resize(nwalls);
-        for(int i = 0; i < nwalls; ++i) walls[i].name = gstr();
-        for(int i = 0; i < nwalls; ++i) gstr();    // description
-        for(int i = 0; i < nwalls; ++i) walls[i].command1 = gstr();
-        for(int i = 0; i < nwalls; ++i) gstr();    // command2
+        for(int i = 0; i < nwalls; ++i)
+            walls[i].name = gstr();
+        for(int i = 0; i < nwalls; ++i)
+            gstr(); // description
+        for(int i = 0; i < nwalls; ++i)
+            walls[i].command1 = gstr();
+        for(int i = 0; i < nwalls; ++i)
+            gstr(); // command2
         ensure(size_t(nwalls) * 12);
-        for(int i = 0; i < nwalls; ++i) walls[i].height = gs();
-        for(int i = 0; i < nwalls; ++i) walls[i].fill_front = gi();
-        for(int i = 0; i < nwalls; ++i) walls[i].fill_back = gi();
-        for(int i = 0; i < nwalls; ++i) walls[i].blocking = gb() != 0;
-        for(int i = 0; i < nwalls; ++i) walls[i].invisible = gb();
+        for(int i = 0; i < nwalls; ++i)
+            walls[i].height = gs();
+        for(int i = 0; i < nwalls; ++i)
+            walls[i].fill_front = gi();
+        for(int i = 0; i < nwalls; ++i)
+            walls[i].fill_back = gi();
+        for(int i = 0; i < nwalls; ++i)
+            walls[i].blocking = gb() != 0;
+        for(int i = 0; i < nwalls; ++i)
+            walls[i].invisible = gb();
 
         // roofs
         int roofs = gs();
         ensure(size_t(roofs) * 2);
         roof_height.resize(roofs);
-        for(int i = 0; i < roofs; ++i) roof_height[i] = gb();
-        for(int i = 0; i < roofs; ++i) gb();       // num vertices
+        for(int i = 0; i < roofs; ++i)
+            roof_height[i] = gb();
+        for(int i = 0; i < roofs; ++i)
+            gb(); // num vertices
 
         // tiles (floor decoration defs)
         int ntiles = gs();
         ensure(size_t(ntiles) * 6);
         tiles.resize(ntiles);
-        for(int i = 0; i < ntiles; ++i) tiles[i].fill = gi();
-        for(int i = 0; i < ntiles; ++i) tiles[i].type = gb();
-        for(int i = 0; i < ntiles; ++i) tiles[i].blocking = gb() != 0;
+        for(int i = 0; i < ntiles; ++i)
+            tiles[i].fill = gi();
+        for(int i = 0; i < ntiles; ++i)
+            tiles[i].type = gb();
+        for(int i = 0; i < ntiles; ++i)
+            tiles[i].blocking = gb() != 0;
 
         // spells + prayers follow; not needed. Sanity: counts must be sane
         // and the cursor must not have overrun.
@@ -239,14 +287,15 @@ struct GameData
 struct Sector
 {
     // Per-tile, index = tx * 48 + ty (client layout)
-    std::array<u8, SECTOR_TILES>  height{};     // game units (raw * 3 later)
-    std::array<u8, SECTOR_TILES>  colour{};     // terrain palette index
-    std::array<u8, SECTOR_TILES>  wall_ns{};    // wall id + 1 along (x,y)-(x,y+1)
-    std::array<u8, SECTOR_TILES>  wall_ew{};    // wall id + 1 along (x,y)-(x+1,y)
-    std::array<i32, SECTOR_TILES> wall_diag{};  // id+1; +12000 mirrored; +48000 object
-    std::array<u8, SECTOR_TILES>  roof{};       // roof id + 1
-    std::array<u8, SECTOR_TILES>  decoration{}; // tile def id + 1
-    std::array<u8, SECTOR_TILES>  direction{};  // object/decor direction
+    std::array<u8, SECTOR_TILES> height{};  // game units (raw * 3 later)
+    std::array<u8, SECTOR_TILES> colour{};  // terrain palette index
+    std::array<u8, SECTOR_TILES> wall_ns{}; // wall id + 1 along (x,y)-(x,y+1)
+    std::array<u8, SECTOR_TILES> wall_ew{}; // wall id + 1 along (x,y)-(x+1,y)
+    std::array<i32, SECTOR_TILES>
+        wall_diag{};                     // id+1; +12000 mirrored; +48000 object
+    std::array<u8, SECTOR_TILES> roof{}; // roof id + 1
+    std::array<u8, SECTOR_TILES> decoration{}; // tile def id + 1
+    std::array<u8, SECTOR_TILES> direction{};  // object/decor direction
 };
 
 // .hei: two byte-RLE streams (heights then colours: val < 128 literal, else
@@ -265,8 +314,7 @@ inline size_t rle_2304(const std::vector<u8>& d, size_t off, u8* out)
         {
             out[t++] = u8(v);
             last     = v;
-        }
-        else
+        } else
             for(int i = 0; i < v - 128 && t < SECTOR_TILES; ++i)
                 out[t++] = u8(last);
     }
@@ -301,9 +349,12 @@ inline void parse_sector_dat(const std::vector<u8>& d, Sector& s)
     size_t off = 0;
     if(d.size() < size_t(SECTOR_TILES) * 4)
         throw std::runtime_error("RSC sector .dat too short");
-    for(int t = 0; t < SECTOR_TILES; ++t) s.wall_ns[t] = d[off++];
-    for(int t = 0; t < SECTOR_TILES; ++t) s.wall_ew[t] = d[off++];
-    for(int t = 0; t < SECTOR_TILES; ++t) s.wall_diag[t] = d[off++];
+    for(int t = 0; t < SECTOR_TILES; ++t)
+        s.wall_ns[t] = d[off++];
+    for(int t = 0; t < SECTOR_TILES; ++t)
+        s.wall_ew[t] = d[off++];
+    for(int t = 0; t < SECTOR_TILES; ++t)
+        s.wall_diag[t] = d[off++];
     for(int t = 0; t < SECTOR_TILES; ++t)
     {
         int v = d[off++];
@@ -351,10 +402,10 @@ inline void parse_sector_loc(const std::vector<u8>& d, Sector& s)
 // 32767 in a fill slot means transparent.
 struct Ob3Model
 {
-    std::vector<std::array<i16, 3>> verts;    // x, y (negative = up), z
-    std::vector<std::vector<int>>   faces;    // N-gon vertex indices
+    std::vector<std::array<i16, 3>> verts; // x, y (negative = up), z
+    std::vector<std::vector<int>>   faces; // N-gon vertex indices
     std::vector<i32>                fill_front, fill_back;
-    bool valid = false;
+    bool                            valid = false;
 };
 
 inline Ob3Model parse_ob3(const std::vector<u8>& d)
@@ -374,27 +425,30 @@ inline Ob3Model parse_ob3(const std::vector<u8>& d)
         return v;
     };
     int nv = gs(), nf = gs();
-    if(nv <= 0 || nf <= 0 ||
-       d.size() < 4 + size_t(nv) * 6 + size_t(nf) * 6)
+    if(nv <= 0 || nf <= 0 || d.size() < 4 + size_t(nv) * 6 + size_t(nf) * 6)
         return m;
 
     m.verts.resize(nv);
-    for(int i = 0; i < nv; ++i) m.verts[i][0] = gss();
-    for(int i = 0; i < nv; ++i) m.verts[i][1] = gss();
-    for(int i = 0; i < nv; ++i) m.verts[i][2] = gss();
+    for(int i = 0; i < nv; ++i)
+        m.verts[i][0] = gss();
+    for(int i = 0; i < nv; ++i)
+        m.verts[i][1] = gss();
+    for(int i = 0; i < nv; ++i)
+        m.verts[i][2] = gss();
 
     std::vector<int> counts(nf);
-    for(int i = 0; i < nf; ++i) counts[i] = d[off++];
+    for(int i = 0; i < nf; ++i)
+        counts[i] = d[off++];
     m.fill_front.resize(nf);
     m.fill_back.resize(nf);
     for(int i = 0; i < nf; ++i)
     {
-        i32 v = gss();
+        i32 v           = gss();
         m.fill_front[i] = v == 32767 ? COLOUR_TRANSPARENT : v;
     }
     for(int i = 0; i < nf; ++i)
     {
-        i32 v = gss();
+        i32 v          = gss();
         m.fill_back[i] = v == 32767 ? COLOUR_TRANSPARENT : v;
     }
     off += nf; // intensity flags (lighting) — unused here
@@ -407,12 +461,13 @@ inline Ob3Model parse_ob3(const std::vector<u8>& d)
         {
             if(nv < 256)
             {
-                if(off >= d.size()) return m;
+                if(off >= d.size())
+                    return m;
                 m.faces[i][j] = d[off++];
-            }
-            else
+            } else
             {
-                if(off + 2 > d.size()) return m;
+                if(off + 2 > d.size())
+                    return m;
                 m.faces[i][j] = gs();
             }
         }
@@ -426,17 +481,18 @@ inline Ob3Model parse_ob3(const std::vector<u8>& d)
 inline CacheFiles identify_cache(const std::string& dir)
 {
     CacheFiles out;
-    u32 h_string  = rs2::jag_hash("string.dat");
-    u32 h_index   = rs2::jag_hash("index.dat");
-    u32 h_compass = rs2::jag_hash("compass.dat");
+    u32        h_string  = rs2::jag_hash("string.dat");
+    u32        h_index   = rs2::jag_hash("index.dat");
+    u32        h_compass = rs2::jag_hash("compass.dat");
 
     struct Probed
     {
         std::vector<u8> body;
-        bool has_string = false, has_index = false, has_compass = false;
-        int  hei = 0, dat = 0;
+        bool   has_string = false, has_index = false, has_compass = false;
+        int    hei = 0, dat = 0;
         size_t entries = 0;
     };
+
     std::vector<Probed> pool;
 
     // sector-name hashes for classification
@@ -447,8 +503,14 @@ inline CacheFiles identify_cache(const std::string& dir)
             {
                 char base[16];
                 snprintf(
-                    base, sizeof(base), "m%d%d%d%d%d", p, x / 10, x % 10,
-                    y / 10, y % 10);
+                    base,
+                    sizeof(base),
+                    "m%d%d%d%d%d",
+                    p,
+                    x / 10,
+                    x % 10,
+                    y / 10,
+                    y % 10);
                 sector_hash[rs2::jag_hash(std::string(base) + ".hei")] = 'h';
                 sector_hash[rs2::jag_hash(std::string(base) + ".dat")] = 'd';
             }
@@ -461,8 +523,7 @@ inline CacheFiles identify_cache(const std::string& dir)
         try
         {
             raw = rs2::read_file(entry.path().string());
-        }
-        catch(const std::exception&)
+        } catch(const std::exception&)
         {
             continue;
         }
@@ -472,8 +533,7 @@ inline CacheFiles identify_cache(const std::string& dir)
         try
         {
             p.body = rs2::jag_load_archive(raw);
-        }
-        catch(const std::exception&)
+        } catch(const std::exception&)
         {
             continue; // not a JAG archive (crc, json metadata, …)
         }
@@ -486,9 +546,12 @@ inline CacheFiles identify_cache(const std::string& dir)
         for(u16 i = 0; i < num; ++i)
         {
             u32 h = rs2::read_u32_be(p.body.data() + 2 + size_t(i) * 10);
-            if(h == h_string) p.has_string = true;
-            if(h == h_index) p.has_index = true;
-            if(h == h_compass) p.has_compass = true;
+            if(h == h_string)
+                p.has_string = true;
+            if(h == h_index)
+                p.has_index = true;
+            if(h == h_compass)
+                p.has_compass = true;
             auto it = sector_hash.find(h);
             if(it != sector_hash.end())
                 (it->second == 'h' ? p.hei : p.dat)++;

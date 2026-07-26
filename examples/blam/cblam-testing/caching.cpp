@@ -146,7 +146,8 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
      * array) was previously read as a precomputed PVS bitset. Halo CE has no
      * such PVS — visibility is portal-walked at runtime — and the bytes there
      * are not a per-cluster bitmask (and the read location was out of bounds).
-     * Culling uses portal_visible_set; the blob is intentionally not decoded. */
+     * Culling uses portal_visible_set; the blob is intentionally not decoded.
+     */
 
     /* Collision surface mesh for the physics subsystem; tree queries
      * (point→cluster, hitscan) go through section/bsp_magic on demand. */
@@ -349,7 +350,7 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
                              (static_cast<u64>(mat.shader.tag_id) << 32);
 
             blam::reference<libc_types::byte_t, blam::xbox_t> vref{}, lref{};
-            blam::map_ptr vmag = bsp_magic;
+            blam::map_ptr                                     vmag = bsp_magic;
             if constexpr(std::is_same_v<V, blam::mcc_version_t>)
             {
                 using lv    = blam::bsp::material::pc_light_vertex;
@@ -408,13 +409,14 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
                     return subcluster < other.subcluster;
                 }
             };
+
             std::map<ChunkKey, std::vector<u32>> sub_faces;
             for(u32 fi = mat_start; fi < mat_end; fi++)
             {
-                std::vector<u16> owners =
-                    fi < face_clusters.size() ? face_clusters[fi]
+                std::vector<u16> owners = fi < face_clusters.size()
+                                              ? face_clusters[fi]
                                               : std::vector<u16>{};
-                u32 sid = kInvalid;
+                u32              sid    = kInvalid;
                 if(owners.size() == 1 && fi < face_subcluster.size() &&
                    face_subcluster[fi].first == owners.front())
                     sid = face_subcluster[fi].second;
@@ -424,9 +426,8 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             for(auto const& [key, face_idxs] : sub_faces)
             {
                 auto const& [owners, sid] = key;
-                u32 cid =
-                    owners.size() == 1 ? static_cast<u32>(owners.front())
-                                       : kInvalid;
+                u32 cid = owners.size() == 1 ? static_cast<u32>(owners.front())
+                                             : kInvalid;
                 u32 sub_start = element_ptr;
                 /* Chunk AABB from the chunk's own vertices; both vertex
                  * layouts (compressed/uncompressed) start with Vecf3
@@ -488,7 +489,7 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         u32 single = 0, multi = 0, unassigned = 0;
         for(auto const& grp : out.groups)
             for(auto const& m : grp.meshes)
-                (m.clusters.empty()  ? unassigned
+                (m.clusters.empty()       ? unassigned
                  : m.clusters.size() == 1 ? single
                                           : multi)++;
         cDebug(
@@ -639,16 +640,17 @@ ModelItem<V> ModelCache<V>::predict_impl(
             auto const& b = bones[i];
             /* Halo bone rotations are stored as the conjugate (inverse) of the
              * rotation GLM's forward kinematics expects, so conjugate them. */
-            Quatf br    = glm::conjugate(b.rotation);
-            Matf4 local = glm::translate(Matf4(1), b.translation) *
-                          glm::mat4_cast(br);
+            Quatf br = glm::conjugate(b.rotation);
+            Matf4 local =
+                glm::translate(Matf4(1), b.translation) * glm::mat4_cast(br);
             if(b.parent != blam::mod2::bone::invalid_bone && b.parent < i)
                 world_bind[i] = world_bind[b.parent] * local;
             else
                 world_bind[i] = local;
 
             /* inv_bind = inverse of world bind transform.
-             * world_bind * inv(world_bind) = I, so bind-pose bone_matrices are identity. */
+             * world_bind * inv(world_bind) = I, so bind-pose bone_matrices are
+             * identity. */
             out.inv_bind[i]      = glm::inverse(world_bind[i]);
             out.bone_matrices[i] = Matf4(1);
         }
@@ -681,7 +683,8 @@ void ModelCache<V>::apply_animation(
     if(anim_idx >= static_cast<u32>(anims.size()))
         return;
 
-    /* In PC cache files, antr::nodes is stripped — use mod2 bone parent chain */
+    /* In PC cache files, antr::nodes is stripped — use mod2 bone parent chain
+     */
     if(!item.header)
         return;
     auto bones_opt = item.header->bones.data(magic);
@@ -711,8 +714,9 @@ void ModelCache<V>::apply_animation(
      * frame_data (at the current frame), non-animated from default_data.
      * frame_info (root motion) is a SEPARATE block, not in frame_data.
      * Scale is a single float we don't use, but its bytes must be skipped. */
-    size_t d = 0;                                            /* default cursor */
-    size_t f = static_cast<size_t>(frame_idx) * anim.frame_size; /* frame cursor */
+    size_t d = 0; /* default cursor */
+    size_t f =
+        static_cast<size_t>(frame_idx) * anim.frame_size; /* frame cursor */
 
     auto read_quat = [](semantic::Span<const byte_t> buf, size_t off) {
         return reinterpret_cast<blam::antr::compressed_quat_t const*>(
@@ -729,21 +733,25 @@ void ModelCache<V>::apply_animation(
         /* rotation */
         if(anim.has_rotation(i))
         {
-            if(f + 8 <= frame_bytes.size()) rotations[i] = read_quat(frame_bytes, f);
+            if(f + 8 <= frame_bytes.size())
+                rotations[i] = read_quat(frame_bytes, f);
             f += 8;
         } else
         {
-            if(d + 8 <= default_bytes.size()) rotations[i] = read_quat(default_bytes, d);
+            if(d + 8 <= default_bytes.size())
+                rotations[i] = read_quat(default_bytes, d);
             d += 8;
         }
         /* translation */
         if(anim.has_translation(i))
         {
-            if(f + 12 <= frame_bytes.size()) translations[i] = read_vec3(frame_bytes, f);
+            if(f + 12 <= frame_bytes.size())
+                translations[i] = read_vec3(frame_bytes, f);
             f += 12;
         } else
         {
-            if(d + 12 <= default_bytes.size()) translations[i] = read_vec3(default_bytes, d);
+            if(d + 12 <= default_bytes.size())
+                translations[i] = read_vec3(default_bytes, d);
             d += 12;
         }
         /* scale (single float, skipped) */
@@ -757,7 +765,8 @@ void ModelCache<V>::apply_animation(
     for(u32 i = 0; i < n; i++)
         rotations[i] = glm::conjugate(rotations[i]);
 
-    /* Build world transforms using mod2 bone parent chain (DFS order: parent<i) */
+    /* Build world transforms using mod2 bone parent chain (DFS order: parent<i)
+     */
     std::vector<Matf4> world(n);
     for(u32 i = 0; i < n; i++)
     {
@@ -782,13 +791,15 @@ void ModelCache<V>::tick_animations(f32 time_s)
 {
     for(auto& [raw_id, item] : this->m_cache)
     {
-        if(!item.antr_hdr || item.anim_frame_count == 0 || item.inv_bind.empty())
+        if(!item.antr_hdr || item.anim_frame_count == 0 ||
+           item.inv_bind.empty())
             continue;
         u32 frame = static_cast<u32>(time_s * 30.f) % item.anim_frame_count;
         generation_idx_t gen_id = {raw_id, this->generation};
         apply_animation(gen_id, item.antr_hdr, item.anim_idx, frame);
     }
 }
+
 template void ModelCache<halo_version>::tick_animations(f32);
 
 template<typename V>
@@ -844,7 +855,8 @@ ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)
         break;
     }
     case tag_class_t::schi: {
-        auto const& shader_model = *extract_shader<shader_chicago<blam::pc_version_t>>(it);
+        auto const& shader_model =
+            *extract_shader<shader_chicago<blam::pc_version_t>>(it);
 
         if(auto maps = shader_model.maps.data(magic); maps.has_value())
         {
@@ -886,7 +898,7 @@ ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)
         shader_glass const& shader_model = *extract_shader<shader_glass>(it);
         out.sgla.diffuse         = get_bitm_idx(shader_model.diffuse.map.map);
         out.sgla.reflection_cube = get_bitm_idx(shader_model.reflection.map);
-        out.sgla.bump            = get_bitm_idx(shader_model.reflection.bump_map.map);
+        out.sgla.bump = get_bitm_idx(shader_model.reflection.bump_map.map);
         break;
     }
     case tag_class_t::swat: {
@@ -899,9 +911,11 @@ ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)
         break;
     }
     case tag_class_t::spla: {
-        auto const& shader_model   = *extract_shader<shader_plasma>(it);
-        out.spla.primary_noise   = get_bitm_idx(shader_model.primary_noise.noise.map);
-        out.spla.secondary_noise = get_bitm_idx(shader_model.secondary_noise.noise.map);
+        auto const& shader_model = *extract_shader<shader_plasma>(it);
+        out.spla.primary_noise =
+            get_bitm_idx(shader_model.primary_noise.noise.map);
+        out.spla.secondary_noise =
+            get_bitm_idx(shader_model.secondary_noise.noise.map);
         break;
     }
     case tag_class_t::smet: {
@@ -951,7 +965,8 @@ void ShaderCache<V>::populate_material(
     {
     case tag_class_t::scex: {
         shader_chicago_extended<blam::pc_version_t> const* info =
-            shader.header->as<blam::shader::shader_chicago_extended<blam::pc_version_t>>();
+            shader.header->as<
+                blam::shader::shader_chicago_extended<blam::pc_version_t>>();
 
         auto maps = info->maps_4stage.data(magic).value();
         for(auto i : range<>(4))
@@ -975,7 +990,8 @@ void ShaderCache<V>::populate_material(
     }
     case tag_class_t::schi: {
         shader_chicago<blam::pc_version_t> const* info =
-            shader.header->as<blam::shader::shader_chicago<blam::pc_version_t>>();
+            shader.header
+                ->as<blam::shader::shader_chicago<blam::pc_version_t>>();
 
         auto maps = info->maps.data(magic).value();
         for(auto i : range<>(4))
@@ -1148,7 +1164,7 @@ void ShaderCache<V>::populate_material(
         if(shader.sgla.reflection_cube.valid())
             mat.lightmap.reflection =
                 bitm_cache.get_atlas_layer(shader.sgla.reflection_cube);
-        mat.material.flags    = static_cast<u32>(info->flags);
+        mat.material.flags     = static_cast<u32>(info->flags);
         mat.material.inputs[0] = Vecf4(info->background_tint.color, 1.f);
         mat.material.inputs[1] = Vecf4(
             info->reflection.perpendicular.tint_color,
@@ -1162,12 +1178,12 @@ void ShaderCache<V>::populate_material(
     case tag_class_t::smet: {
         auto const* info = shader.header->as<blam::shader::shader_meter>();
         bitm_cache.assign_atlas_data(mat.maps[0], shader.smet.map);
-        mat.maps[0].uv_scale = Vecf2(1);
-        mat.maps[0].bias     = 0;
-        mat.material.flags   = static_cast<u32>(info->flags);
-        mat.material.inputs1 = Vecf2{1.f, info->colors.transparency};
-        mat.material.inputs[0] =
-            Vecf4(info->colors.gradient_min, info->colors.background_transparency);
+        mat.maps[0].uv_scale   = Vecf2(1);
+        mat.maps[0].bias       = 0;
+        mat.material.flags     = static_cast<u32>(info->flags);
+        mat.material.inputs1   = Vecf2{1.f, info->colors.transparency};
+        mat.material.inputs[0] = Vecf4(
+            info->colors.gradient_min, info->colors.background_transparency);
         mat.material.inputs[1] = Vecf4(info->colors.gradient_max, 1.f);
         mat.material.inputs[2] = Vecf4(info->colors.background, 1.f);
         mat.material.inputs[3] = Vecf4(info->colors.flash, 1.f);
@@ -1178,21 +1194,21 @@ void ShaderCache<V>::populate_material(
     case tag_class_t::spla: {
         auto const* info = shader.header->as<blam::shader::shader_plasma>();
         bitm_cache.assign_atlas_data(mat.maps[0], shader.spla.primary_noise);
-        mat.maps[0].uv_scale =
-            Vecf2(info->primary_noise.noise.scale);
-        mat.maps[0].bias = 0;
+        mat.maps[0].uv_scale = Vecf2(info->primary_noise.noise.scale);
+        mat.maps[0].bias     = 0;
         if(shader.spla.secondary_noise.valid())
         {
-            bitm_cache.assign_atlas_data(mat.maps[1], shader.spla.secondary_noise);
-            mat.maps[1].uv_scale =
-                Vecf2(info->secondary_noise.noise.scale);
-            mat.maps[1].bias = 0;
+            bitm_cache.assign_atlas_data(
+                mat.maps[1], shader.spla.secondary_noise);
+            mat.maps[1].uv_scale = Vecf2(info->secondary_noise.noise.scale);
+            mat.maps[1].bias     = 0;
         }
         mat.material.inputs1   = Vecf2{info->intensity.exponent, 0.f};
         mat.material.inputs[0] = Vecf4(
-            info->color.perpendicular_tint, info->color.perpendicular_brightness);
-        mat.material.inputs[1] = Vecf4(
-            info->color.parellel_tint, info->color.parallel_brightness);
+            info->color.perpendicular_tint,
+            info->color.perpendicular_brightness);
+        mat.material.inputs[1] =
+            Vecf4(info->color.parellel_tint, info->color.parallel_brightness);
         mat.material.inputs[2] = Vecf4(
             info->primary_noise.anim_dir,
             info->primary_noise.anim_period > 0.f
@@ -1207,7 +1223,8 @@ void ShaderCache<V>::populate_material(
         break;
     }
     case tag_class_t::sotr: {
-        shader_transparent const* info = shader.header->as<shader_transparent>();
+        shader_transparent const* info =
+            shader.header->as<shader_transparent>();
         auto maps_ = info->maps.data(magic);
         if(maps_.has_error())
         {
@@ -1229,22 +1246,38 @@ void ShaderCache<V>::populate_material(
     case tag_class_t::soso: {
         shader_model const* info =
             shader.header->as<blam::shader::shader_model>();
-        using flags_t = blam::shader::shader_model::model_flags;
+        using flags_t       = blam::shader::shader_model::model_flags;
         using detail_func_t = blam::shader::shader_model::detail_function_t;
         using detail_mask_t = blam::shader::shader_model::detail_mask_t;
 
         mat.material.flags =
             (feval(info->flags & flags_t::detail_after_reflection) ? 0x1 : 0) |
             (info->maps.detail.function == detail_func_t::multiply ? 0x2 : 0) |
-            (info->maps.detail.function == detail_func_t::double_biased_add ? 0x4 : 0) |
-            (info->maps.detail.mask == detail_mask_t::reflection_mask ? 0x8 : 0) |
-            (info->maps.detail.mask == detail_mask_t::reflection_mask_inverse ? 0x10 : 0) |
-            (info->maps.detail.mask == detail_mask_t::change_color_mask ? 0x20 : 0) |
-            (info->maps.detail.mask == detail_mask_t::change_color_mask_inverse ? 0x40 : 0) |
-            (info->maps.detail.mask == detail_mask_t::self_illum_mask ? 0x80 : 0) |
-            (info->maps.detail.mask == detail_mask_t::self_illum_mask_inverse ? 0x100 : 0) |
-            (info->maps.detail.mask == detail_mask_t::multipurpose_map_alpha ? 0x200 : 0) |
-            (info->maps.detail.mask == detail_mask_t::multipurpose_map_alpha_inverse ? 0x400 : 0);
+            (info->maps.detail.function == detail_func_t::double_biased_add
+                 ? 0x4
+                 : 0) |
+            (info->maps.detail.mask == detail_mask_t::reflection_mask ? 0x8
+                                                                      : 0) |
+            (info->maps.detail.mask == detail_mask_t::reflection_mask_inverse
+                 ? 0x10
+                 : 0) |
+            (info->maps.detail.mask == detail_mask_t::change_color_mask ? 0x20
+                                                                        : 0) |
+            (info->maps.detail.mask == detail_mask_t::change_color_mask_inverse
+                 ? 0x40
+                 : 0) |
+            (info->maps.detail.mask == detail_mask_t::self_illum_mask ? 0x80
+                                                                      : 0) |
+            (info->maps.detail.mask == detail_mask_t::self_illum_mask_inverse
+                 ? 0x100
+                 : 0) |
+            (info->maps.detail.mask == detail_mask_t::multipurpose_map_alpha
+                 ? 0x200
+                 : 0) |
+            (info->maps.detail.mask ==
+                     detail_mask_t::multipurpose_map_alpha_inverse
+                 ? 0x400
+                 : 0);
 
         auto* soso_base =
             bitm_cache.assign_atlas_data(mat.maps[0], shader.soso.base_bitm);
@@ -1345,9 +1378,8 @@ void BitmapCache<V>::allocate_storage()
         u32  bias = params->mipmap_bias;
         auto sz   = img.image.mip->isize;
         i32  mind = std::min(sz.x, sz.y);
-        while(bias > 0 &&
-              ((mind >> bias) < 64 ||
-               img.image.mip->mipmaps <= static_cast<i16>(bias)))
+        while(bias > 0 && ((mind >> bias) < 64 ||
+                           img.image.mip->mipmaps <= static_cast<i16>(bias)))
             bias--;
         return bias;
     };
@@ -1408,8 +1440,7 @@ void BitmapCache<V>::allocate_storage()
                 imsize >>= bias;
                 img->mipmaps.base = bias;
                 img->mipmaps.last =
-                    bias +
-                    std::min<i32>(8, img->image.mip->mipmaps - bias);
+                    bias + std::min<i32>(8, img->image.mip->mipmaps - bias);
             } else
             {
                 img->mipmaps.base = 0;
@@ -1417,7 +1448,7 @@ void BitmapCache<V>::allocate_storage()
             }
 
             if(img->header->type == blam::bitm::bitmap_type_t::cube ||
-                !supports_tex3d)
+               !supports_tex3d)
             {
                 // Don't atlas cubemaps
                 // Don't atlas when we don't support 2D array textures:
@@ -1555,8 +1586,8 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
         img.layer = 0;
 
         PixDesc fmt = image.to_fmt();
-        img.bucket = create_hash(fmt, img.mip->type);
-        img.fmt    = fmt;
+        img.bucket  = create_hash(fmt, img.mip->type);
+        img.fmt     = fmt;
 
         switch(im[0].type)
         {
@@ -1565,8 +1596,9 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
             if(!allocator->feature_info().texture.texture_3d)
                 return {};
             auto& bucket = get_bucket<gfx::texture_3d_t>(fmt, img.mip->type);
-            img.layer = bucket.ptr++;
-            cDebug("3D texture: {}/{}",
+            img.layer    = bucket.ptr++;
+            cDebug(
+                "3D texture: {}/{}",
                 magic_enum::enum_name(fmt.pixfmt),
                 magic_enum::enum_name(fmt.cmpflg));
             break;

@@ -1,10 +1,10 @@
 #pragma once
 
 #include "caching.h"
-#include <blam/volta/blam_collision.h>
 #include "components.h"
 #include "data.h"
 #include "map_marker.h"
+#include <blam/volta/blam_collision.h>
 
 template<typename Version>
 void load_scenario_bsp(
@@ -238,9 +238,9 @@ void load_scenario_bsp(
         auto locations = scenario->player_start.locations.data(magic);
         if(locations.has_value() && !locations.value().empty())
         {
-            auto const& loc          = locations.value()[0];
-            bsp_cache.active_section = static_cast<libc_types::i16>(
-                loc.bsp_index);
+            auto const& loc = locations.value()[0];
+            bsp_cache.active_section =
+                static_cast<libc_types::i16>(loc.bsp_index);
             for(auto& [id, item] : bsp_cache.m_cache)
                 if(item.find_cluster_tree(loc.pos).has_value())
                 {
@@ -386,22 +386,23 @@ void load_objects(
                 if(antr_it != index.end())
                 {
                     auto antr_data =
-                        (*antr_it)
-                            .template data<blam::antr::header>(magic);
+                        (*antr_it).template data<blam::antr::header>(magic);
                     if(antr_data.has_value())
                     {
                         auto const* antr_hdr = &antr_data.value()[0];
                         u32         anim_idx = 0;
                         /* Find idle: scan unit weapons for "stand * idle*" with
-                         * frame data; fall back to weapons[0] idle if none found.
-                         * weapons[0] may be a vehicle-driver slot for some bipeds. */
+                         * frame data; fall back to weapons[0] idle if none
+                         * found. weapons[0] may be a vehicle-driver slot for
+                         * some bipeds. */
                         auto all_anims_opt = antr_hdr->animations.data(magic);
                         if(auto units_opt = antr_hdr->units.data(magic);
-                           units_opt.has_value() && !units_opt.value().empty() &&
+                           units_opt.has_value() &&
+                           !units_opt.value().empty() &&
                            all_anims_opt.has_value())
                         {
-                            auto all_anims  = all_anims_opt.value();
-                            u32  fallback   = 0;
+                            auto all_anims      = all_anims_opt.value();
+                            u32  fallback       = 0;
                             bool found_fallback = false;
                             bool found_stand    = false;
                             for(auto const& unit : units_opt.value())
@@ -419,19 +420,24 @@ void load_objects(
                                            blam::antr::unit_weapon::idle)
                                         continue;
                                     i16 idx =
-                                        ai_opt.value()[blam::antr::unit_weapon::idle]
+                                        ai_opt
+                                            .value()
+                                                [blam::antr::unit_weapon::idle]
                                             .animation;
                                     if(idx < 0 ||
-                                       static_cast<u32>(idx) >= static_cast<u32>(all_anims.size()))
+                                       static_cast<u32>(idx) >=
+                                           static_cast<u32>(all_anims.size()))
                                         continue;
                                     if(!found_fallback)
                                     {
-                                        fallback        = static_cast<u32>(idx);
-                                        found_fallback  = true;
+                                        fallback       = static_cast<u32>(idx);
+                                        found_fallback = true;
                                     }
                                     auto nm = all_anims[idx].name.str();
-                                    if(nm.find("stand") != std::string_view::npos &&
-                                       nm.find("idle") != std::string_view::npos &&
+                                    if(nm.find("stand") !=
+                                           std::string_view::npos &&
+                                       nm.find("idle") !=
+                                           std::string_view::npos &&
                                        all_anims[idx].frame_size > 0)
                                     {
                                         anim_idx    = static_cast<u32>(idx);
@@ -449,16 +455,17 @@ void load_objects(
                            anim_idx < static_cast<u32>(ai_opt.value().size()))
                         {
                             auto const& selected = ai_opt.value()[anim_idx];
-                            anim_frame_count = static_cast<u32>(selected.frame_count);
+                            anim_frame_count =
+                                static_cast<u32>(selected.frame_count);
                         }
 
                         for(auto const& mid : mesh_data.models)
                         {
                             model_cache.apply_animation(
                                 mid, antr_hdr, anim_idx, 0);
-                            auto& mitem           = model_cache.get(mid);
-                            mitem.antr_hdr        = antr_hdr;
-                            mitem.anim_idx        = anim_idx;
+                            auto& mitem            = model_cache.get(mid);
+                            mitem.antr_hdr         = antr_hdr;
+                            mitem.anim_idx         = anim_idx;
                             mitem.anim_frame_count = anim_frame_count;
                         }
                     }
@@ -893,15 +900,14 @@ void load_collision_debug(EntityContainer& e, MapChangedEvent<Version>& data)
         auto coll_it = index.find(coll_ref);
         if(coll_it == index.end())
             continue;
-        auto coll_data =
-            (*coll_it).template data<blam::coll::header>(magic);
+        auto coll_data = (*coll_it).template data<blam::coll::header>(magic);
         if(coll_data.has_error())
             continue;
         auto const* coll = coll_data.value();
 
         /* Bind-pose bone transforms (coll nodes mirror the mod2 skeleton
          * by name, not necessarily by index). */
-        ModelItem<Version>& mitem = model_cache.get(model->model);
+        ModelItem<Version>&          mitem = model_cache.get(model->model);
         Span<blam::mod2::bone const> bones{};
         if(mitem.header)
             if(auto b = mitem.header->bones.data(magic); b.has_value())
@@ -915,8 +921,7 @@ void load_collision_debug(EntityContainer& e, MapChangedEvent<Version>& data)
         for(auto const& node : nodes_opt.value())
         {
             Matf4 world_bind(1);
-            for(u32 i = 0; i < bones.size() && i < mitem.inv_bind.size();
-                i++)
+            for(u32 i = 0; i < bones.size() && i < mitem.inv_bind.size(); i++)
                 if(bones[i].name.str() == node.name.str())
                 {
                     world_bind = glm::inverse(mitem.inv_bind[i]);
@@ -962,8 +967,8 @@ void load_collision_debug(EntityContainer& e, MapChangedEvent<Version>& data)
                             ed = edge.reverse_edge;
                         }
                         if(vi < verts.size())
-                            loop.push_back(Vecf3(
-                                world * Vecf4(verts[vi].point, 1.f)));
+                            loop.push_back(
+                                Vecf3(world * Vecf4(verts[vi].point, 1.f)));
                     } while(ed != first && ++guard < 32);
 
                     if(loop.size() >= 2)

@@ -29,8 +29,8 @@ namespace rs2 {
 struct Vertex
 {
     float x, y, z;
-    u8 r, g, b; // baked flat colour (texture average for textured faces)
-    u8 a = 255; // opacity (255 = opaque); from per-face model alphas
+    u8    r, g, b; // baked flat colour (texture average for textured faces)
+    u8    a = 255; // opacity (255 = opaque); from per-face model alphas
     float u = 0.f, v = 0.f;
 };
 
@@ -63,8 +63,8 @@ enum class TriClass : u8
 // fixed enum — map tri_overlay through RegionLoader::floor_class().
 enum class FloorClass : u8
 {
-    none = 0,  // underlay / model geometry (tri_overlay == 0)
-    water,     // "water", "gungywater", "water_fountain", …
+    none = 0, // underlay / model geometry (tri_overlay == 0)
+    water,    // "water", "gungywater", "water_fountain", …
     lava,
     invisible, // the magenta hidden marker entries
     other,     // roads, wooden floors, bricks, …
@@ -72,13 +72,13 @@ enum class FloorClass : u8
 
 struct Mesh
 {
-    std::vector<Vertex> vertices; // ≤ MESH_MAX_VERTICES
-    std::vector<u16>    indices;  // triangle list
+    std::vector<Vertex> vertices;    // ≤ MESH_MAX_VERTICES
+    std::vector<u16>    indices;     // triangle list
     std::vector<i32>    tri_texture; // per triangle: texture id, -1 = flat
     // per triangle: flo.dat overlay id (1-indexed) that produced it, 0 =
     // underlay/model geometry. RAW cache id — classify through
     // RegionLoader::floor_class(), or read the name via underlays().
-    std::vector<i32>    tri_overlay;
+    std::vector<i32> tri_overlay;
     // per triangle: loc def id that produced it (-1 = terrain) — lookup via
     // RegionLoader::loc_defs() gives name/actions (the client's right-click
     // data); matches MapLink::loc_id for teleport locs.
@@ -130,6 +130,7 @@ struct VertexKey
 {
     i32 x, y, z, u, v;
     u32 rgba;
+
     bool operator==(VertexKey const& o) const
     {
         return x == o.x && y == o.y && z == o.z && u == o.u && v == o.v &&
@@ -141,8 +142,8 @@ struct VertexKeyHash
 {
     size_t operator()(VertexKey const& k) const
     {
-        uint64_t h    = 1469598103934665603ull; // FNV-1a
-        auto     mix  = [&](uint64_t x) { h = (h ^ x) * 1099511628211ull; };
+        uint64_t h   = 1469598103934665603ull; // FNV-1a
+        auto     mix = [&](uint64_t x) { h = (h ^ x) * 1099511628211ull; };
         mix(u32(k.x));
         mix(u32(k.y));
         mix(u32(k.z));
@@ -173,8 +174,7 @@ inline auto by_material(Mesh const& source, size_t index)
 {
     return std::make_pair<i32, bool>(
         index < source.tri_texture.size() ? source.tri_texture[index] : -1,
-        source.vertices[source.indices[index * 3]].a < 255
-    );
+        source.vertices[source.indices[index * 3]].a < 255);
 }
 
 inline size_t by_u16_chunk(Mesh const& /*source*/, size_t index)
@@ -182,7 +182,7 @@ inline size_t by_u16_chunk(Mesh const& /*source*/, size_t index)
     return size_t(index / 65'500);
 }
 
-}
+} // namespace sorting_method
 
 namespace filter_method {
 
@@ -193,8 +193,8 @@ inline bool always_true(Mesh const& /*source*/, size_t /*index*/)
 
 inline bool collidable_only(Mesh const& source, size_t index)
 {
-    // For physics, filter out doors and links, since we want to pass through those
-    // Also ignore scenery for now to not overload Bullet
+    // For physics, filter out doors and links, since we want to pass through
+    // those Also ignore scenery for now to not overload Bullet
     switch(source.tri_class[index])
     {
     case TriClass::door:
@@ -212,7 +212,7 @@ inline bool renderable(Mesh const& source, size_t index)
     return source.tri_class[index] != TriClass::clip;
 }
 
-}
+} // namespace filter_method
 
 // Regroup any number of meshes into one mesh per material (texture id,
 // -1 = flat colour) so a renderer draws one batch per material instead of
@@ -223,15 +223,18 @@ inline bool renderable(Mesh const& source, size_t index)
 // else; tri_overlay/tri_loc/tri_class are carried through.
 template<typename Key = declreturntype(sorting_method::by_material)>
 inline std::vector<Mesh> repack_by_material(
-    std::vector<Mesh const*> const& meshes,
-    std::function<Key(Mesh const&, size_t)>&& sorter = sorting_method::by_material,
-    std::function<bool(Mesh const&, size_t)>&& filter = filter_method::always_true)
+    std::vector<Mesh const*> const&           meshes,
+    std::function<Key(Mesh const&, size_t)>&& sorter =
+        sorting_method::by_material,
+    std::function<bool(Mesh const&, size_t)>&& filter =
+        filter_method::always_true)
 {
     struct Bucket
     {
         Mesh           mesh;
         VertexMap<u32> dedupe;
     };
+
     std::map<Key, std::vector<Bucket>> buckets;
 
     for(Mesh const* src : meshes)
@@ -239,11 +242,9 @@ inline std::vector<Mesh> repack_by_material(
         {
             if(!filter(*src, t))
                 continue;
-            i32 mat =
-                t < src->tri_texture.size() ? src->tri_texture[t] : -1;
-            bool transparent =
-                src->vertices[src->indices[t * 3]].a < 255;
-            auto& list = buckets[sorter(*src, t)];
+            i32   mat = t < src->tri_texture.size() ? src->tri_texture[t] : -1;
+            bool  transparent = src->vertices[src->indices[t * 3]].a < 255;
+            auto& list        = buckets[sorter(*src, t)];
             if(list.empty() ||
                list.back().mesh.vertices.size() + 3 > MESH_MAX_VERTICES)
                 list.emplace_back();
@@ -251,7 +252,7 @@ inline std::vector<Mesh> repack_by_material(
 
             for(int k = 0; k < 3; ++k)
             {
-                Vertex const& v = src->vertices[src->indices[t * 3 + k]];
+                Vertex const& v  = src->vertices[src->indices[t * 3 + k]];
                 auto [it, fresh] = b.dedupe.emplace(
                     vertex_key(v), u32(b.mesh.vertices.size()));
                 if(fresh)
@@ -295,12 +296,21 @@ struct MapBounds
     int min_region_x = 0, min_region_y = 0;
     int max_region_x = -1, max_region_y = -1; // empty when max < min
 
-    float min_x() const { return float(min_region_x) * REGION_SIZE * 128.f; }
-    float min_y() const { return float(min_region_y) * REGION_SIZE * 128.f; }
+    float min_x() const
+    {
+        return float(min_region_x) * REGION_SIZE * 128.f;
+    }
+
+    float min_y() const
+    {
+        return float(min_region_y) * REGION_SIZE * 128.f;
+    }
+
     float max_x() const
     {
         return float(max_region_x + 1) * REGION_SIZE * 128.f;
     }
+
     float max_y() const
     {
         return float(max_region_y + 1) * REGION_SIZE * 128.f;
@@ -315,7 +325,13 @@ struct MapBounds
 // near the destination, which makes the link near-certain.
 struct MapLink
 {
-    enum class Kind { plane_up, plane_down, dungeon_down, dungeon_up };
+    enum class Kind
+    {
+        plane_up,
+        plane_down,
+        dungeon_down,
+        dungeon_up
+    };
     Kind        kind;
     int         loc_id;
     std::string name, action;
@@ -340,10 +356,14 @@ inline const char* to_string(MapLink::Kind k)
 {
     switch(k)
     {
-    case MapLink::Kind::plane_up: return "plane_up";
-    case MapLink::Kind::plane_down: return "plane_down";
-    case MapLink::Kind::dungeon_down: return "dungeon_down";
-    default: return "dungeon_up";
+    case MapLink::Kind::plane_up:
+        return "plane_up";
+    case MapLink::Kind::plane_down:
+        return "plane_down";
+    case MapLink::Kind::dungeon_down:
+        return "dungeon_down";
+    default:
+        return "dungeon_up";
     }
 }
 
@@ -394,30 +414,30 @@ struct TileShapeVertex
 };
 
 inline const TileShapeVertex k_tile_shape_vertex_pos[17] = {
-    {0, 0, 0, 0},      // 0 (unused)
-    {0, 0, 0, 0},      // 1  SW
-    {64, 0, 1, 0},     // 2  S edge mid
-    {128, 0, 1, 1},    // 3  SE
-    {128, 64, 2, 1},   // 4  E edge mid
-    {128, 128, 2, 2},  // 5  NE
-    {64, 128, 3, 2},   // 6  N edge mid
-    {0, 128, 3, 3},    // 7  NW
-    {0, 64, 3, 0},     // 8  W edge mid
-    {64, 32, 1, 0},    // 9  inset S mid
-    {96, 64, 2, 1},    // 10 inset E mid
-    {64, 96, 3, 2},    // 11 inset N mid
-    {32, 64, 3, 0},    // 12 inset W mid
-    {32, 32, 0, 0},    // 13 inset SW
-    {96, 32, 1, 1},    // 14 inset SE
-    {96, 96, 2, 2},    // 15 inset NE
-    {32, 96, 3, 3},    // 16 inset NW
+    {0, 0, 0, 0},     // 0 (unused)
+    {0, 0, 0, 0},     // 1  SW
+    {64, 0, 1, 0},    // 2  S edge mid
+    {128, 0, 1, 1},   // 3  SE
+    {128, 64, 2, 1},  // 4  E edge mid
+    {128, 128, 2, 2}, // 5  NE
+    {64, 128, 3, 2},  // 6  N edge mid
+    {0, 128, 3, 3},   // 7  NW
+    {0, 64, 3, 0},    // 8  W edge mid
+    {64, 32, 1, 0},   // 9  inset S mid
+    {96, 64, 2, 1},   // 10 inset E mid
+    {64, 96, 3, 2},   // 11 inset N mid
+    {32, 64, 3, 0},   // 12 inset W mid
+    {32, 32, 0, 0},   // 13 inset SW
+    {96, 32, 1, 1},   // 14 inset SE
+    {96, 96, 2, 2},   // 15 inset NE
+    {32, 96, 3, 3},   // 16 inset NW
 };
 
 class RegionLoader
 {
   public:
-    explicit RegionLoader(std::string cache_dir) :
-        m_cache_dir(std::move(cache_dir))
+    explicit RegionLoader(std::string cache_dir)
+        : m_cache_dir(std::move(cache_dir))
     {
         // Two on-disk layouts: classic dumps use numbered index dirs
         // (0/2.dat = config archive, 4/ = map squares, 1/ = models); beta
@@ -427,8 +447,7 @@ class RegionLoader
         try
         {
             config_raw = read_file(m_cache_dir + "/0/2.dat");
-        }
-        catch(const std::exception&)
+        } catch(const std::exception&)
         {
             config_raw = read_file(m_cache_dir + "/config");
             m_beta     = true;
@@ -481,8 +500,7 @@ class RegionLoader
             if(!mi)
                 throw std::runtime_error("map_index not found in archive 5");
             m_regions = parse_map_index(*mi);
-        }
-        else
+        } else
         {
             // No versionlist archive pre-~234: the region list comes from
             // the maps/ directory itself, and the models archive stands in
@@ -498,18 +516,19 @@ class RegionLoader
             // Some beta dumps (e.g. build 194) have no map data at all —
             // configs and models still load, the region list stays empty.
             if(std::filesystem::is_directory(m_cache_dir + "/maps"))
-                for(const auto& entry : std::filesystem::directory_iterator(
-                        m_cache_dir + "/maps"))
+                for(const auto& entry :
+                    std::filesystem::directory_iterator(m_cache_dir + "/maps"))
                 {
                     int x, y;
                     if(sscanf(
-                           entry.path().filename().c_str(), "m%d_%d", &x,
-                           &y) == 2 &&
+                           entry.path().filename().c_str(), "m%d_%d", &x, &y) ==
+                           2 &&
                        x >= 0 && x < 256 && y >= 0 && y < 256)
                         m_regions.push_back({u8(x), u8(y), 0, 0, 0});
                 }
             std::sort(
-                m_regions.begin(), m_regions.end(),
+                m_regions.begin(),
+                m_regions.end(),
                 [](const RegionRef& a, const RegionRef& b) {
                     return std::pair{a.region_x, a.region_y} <
                            std::pair{b.region_x, b.region_y};
@@ -518,7 +537,7 @@ class RegionLoader
         for(const auto& r : m_regions)
         {
             m_region_lookup[key(r.region_x, r.region_y)] = &r;
-            auto grow = [&](MapBounds& b) {
+            auto grow                                    = [&](MapBounds& b) {
                 if(b.max_region_x < b.min_region_x)
                     b = {r.region_x, r.region_y, r.region_x, r.region_y};
                 b.min_region_x = std::min<int>(b.min_region_x, r.region_x);
@@ -533,12 +552,22 @@ class RegionLoader
         }
     }
 
-    const std::vector<RegionRef>& regions() const { return m_regions; }
+    const std::vector<RegionRef>& regions() const
+    {
+        return m_regions;
+    }
 
     // Extent of every region in the map index / of the surface world only
     // (underground regions sit at region_y + 100).
-    const MapBounds& bounds() const { return m_bounds; }
-    const MapBounds& surface_bounds() const { return m_surface_bounds; }
+    const MapBounds& bounds() const
+    {
+        return m_bounds;
+    }
+
+    const MapBounds& surface_bounds() const
+    {
+        return m_surface_bounds;
+    }
 
     const RegionRef* find_region(int rx, int ry) const
     {
@@ -583,13 +612,23 @@ class RegionLoader
         return nullptr;
     }
 
-    const std::vector<Underlay>& underlays() const { return m_underlays; }
-    const std::vector<LocDef>&   loc_defs() const { return m_loc_defs; }
+    const std::vector<Underlay>& underlays() const
+    {
+        return m_underlays;
+    }
+
+    const std::vector<LocDef>& loc_defs() const
+    {
+        return m_loc_defs;
+    }
 
     // SHA-256 hex of the cache's config + versionlist archives — a
     // build-unique identity token. Exchange it at connect time; peers must
     // match or their streamed geometry would diverge.
-    const std::string& cache_signature() const { return m_signature; }
+    const std::string& cache_signature() const
+    {
+        return m_signature;
+    }
 
     // Semantic class of a tri_overlay value (raw flo.dat id) — the ids
     // differ between cache builds, the names don't.
@@ -607,8 +646,7 @@ class RegionLoader
         {
             auto raw = map_square(ref, true);
             return parse_map_locs(raw, ref.region_x, ref.region_y);
-        }
-        catch(const std::exception&)
+        } catch(const std::exception&)
         {
             return {}; // missing map file = ocean region
         }
@@ -647,8 +685,9 @@ class RegionLoader
                     raw = gzip_decompress(raw.data(), raw.size());
                 parsed = parse_model(raw);
             }
+        } catch(const std::exception&)
+        {
         }
-        catch(const std::exception&) {}
         auto [ins, ok] = m_models.emplace(id, std::move(parsed));
         return ins->second.valid ? &ins->second : nullptr;
     }
@@ -657,7 +696,7 @@ class RegionLoader
     {
         Color color;        // flat colour (texture average when textured)
         int   texture = -1; // texture id for real texturing
-        bool  hidden = false;
+        bool  hidden  = false;
     };
 
     // Display info of an overlay floor (flo.dat id, 1-indexed);
@@ -672,8 +711,7 @@ class RegionLoader
         {
             info.texture = o.texture;
             info.color   = m_textures.get(m_cache_dir, o.texture);
-        }
-        else if(o.r == 255 && o.g == 0 && o.b == 255)
+        } else if(o.r == 255 && o.g == 0 && o.b == 255)
             info.hidden = true;
         else
             info.color = Color{o.r, o.g, o.b};
@@ -706,10 +744,10 @@ class RegionLoader
     // decks (plane-1 data) are folded into the plane-0 mesh.
     Mesh build_terrain_mesh(int rx, int ry, int plane)
     {
-        Mesh mesh;
+        Mesh           mesh;
         VertexMap<u32> vert_index;
-        auto add_vertex = [&](float x, float y, float z, Color c, float u,
-                              float v) -> u16 {
+        auto           add_vertex =
+            [&](float x, float y, float z, Color c, float u, float v) -> u16 {
             Vertex vert{x, y, z, c.r, c.g, c.b, 255, u, v};
             auto [it, fresh] =
                 vert_index.emplace(vertex_key(vert), u32(mesh.vertices.size()));
@@ -755,12 +793,12 @@ class RegionLoader
         // heights are negative-up game units; ours are positive-up tile
         // units, hence the -8 scale.
         auto corner_light = [&](int wx, int wy, int pl) -> int {
-            int dxc = -8 * (height_at(wx + 1, wy, pl) -
-                            height_at(wx - 1, wy, pl));
-            int dyc = -8 * (height_at(wx, wy + 1, pl) -
-                            height_at(wx, wy - 1, pl));
-            int len = int(std::sqrt(
-                double(dxc) * dxc + double(dyc) * dyc + 65536.0));
+            int dxc =
+                -8 * (height_at(wx + 1, wy, pl) - height_at(wx - 1, wy, pl));
+            int dyc =
+                -8 * (height_at(wx, wy + 1, pl) - height_at(wx, wy - 1, pl));
+            int len =
+                int(std::sqrt(double(dxc) * dxc + double(dyc) * dyc + 65536.0));
             int nx = (dxc << 8) / len;
             int ny = 65536 / len;
             int nz = (dyc << 8) / len;
@@ -786,7 +824,8 @@ class RegionLoader
             if(!t)
                 t = tile_at(
                     std::min(wx, (rx + 1) * REGION_SIZE - 1),
-                    std::min(wy, (ry + 1) * REGION_SIZE - 1), pl);
+                    std::min(wy, (ry + 1) * REGION_SIZE - 1),
+                    pl);
             Color base = t ? underlay_color(t->underlay_id, m_underlays)
                            : Color{128, 128, 128};
             return scale_color(base, light);
@@ -797,9 +836,9 @@ class RegionLoader
             // corners: 0=SW 1=SE 2=NE 3=NW
             const int cdx[4] = {0, 1, 1, 0};
             const int cdy[4] = {0, 0, 1, 1};
-            float hs[4];
-            Color cs[4];
-            int   ls[4];
+            float     hs[4];
+            Color     cs[4];
+            int       ls[4];
             for(int k = 0; k < 4; ++k)
             {
                 hs[k] = float(height_at(wx + cdx[k], wy + cdy[k], pl)) * 8.f;
@@ -818,8 +857,12 @@ class RegionLoader
 
             // template vertices: rotate the code, then place. Overlay
             // colour is lit per vertex too (client adjustOverlayLight).
-            struct TV { float x, y, z; Color under, over; };
-            TV tvs[8];
+            struct TV
+            {
+                float x, y, z;
+                Color under, over;
+            };
+            TV          tvs[8];
             const auto& codes = k_tile_shape_vertices[tpl];
             for(size_t i = 0; i < codes.size(); ++i)
             {
@@ -831,15 +874,16 @@ class RegionLoader
                 else if(code > 12)
                     code = ((code - 13 - rot) & 3) + 13;
 
-                const TileShapeVertex& vp = k_tile_shape_vertex_pos[code];
-                int light = (ls[vp.ca] + ls[vp.cb]) / 2;
-                tvs[i] = {
+                const TileShapeVertex& vp    = k_tile_shape_vertex_pos[code];
+                int                    light = (ls[vp.ca] + ls[vp.cb]) / 2;
+                tvs[i]                       = {
                     float(wx) * 128.f + float(vp.px),
                     float(wy) * 128.f + float(vp.py),
                     (hs[vp.ca] + hs[vp.cb]) * 0.5f,
-                    Color{u8((cs[vp.ca].r + cs[vp.cb].r) / 2),
-                          u8((cs[vp.ca].g + cs[vp.cb].g) / 2),
-                          u8((cs[vp.ca].b + cs[vp.cb].b) / 2)},
+                    Color{
+                        u8((cs[vp.ca].r + cs[vp.cb].r) / 2),
+                        u8((cs[vp.ca].g + cs[vp.cb].g) / 2),
+                        u8((cs[vp.ca].b + cs[vp.cb].b) / 2)},
                     scale_color(ov.color, light)};
             }
 
@@ -861,8 +905,12 @@ class RegionLoader
                     float u  = textured ? tv.x / 128.f : 0.f;
                     float vv = textured ? tv.y / 128.f : 0.f;
                     mesh.indices.push_back(add_vertex(
-                        tv.x, tv.y, tv.z, is_overlay ? tv.over : tv.under,
-                        u, vv));
+                        tv.x,
+                        tv.y,
+                        tv.z,
+                        is_overlay ? tv.over : tv.under,
+                        u,
+                        vv));
                 }
                 mesh.tri_texture.push_back(textured ? ov.texture : -1);
                 mesh.tri_overlay.push_back(is_overlay ? tile.overlay_id : 0);
@@ -874,8 +922,8 @@ class RegionLoader
         for(int ty = 0; ty < REGION_SIZE; ++ty)
             for(int tx = 0; tx < REGION_SIZE; ++tx)
             {
-                int wx = rx * REGION_SIZE + tx;
-                int wy = ry * REGION_SIZE + ty;
+                int         wx   = rx * REGION_SIZE + tx;
+                int         wy   = ry * REGION_SIZE + ty;
                 const Tile* tile = tile_at(wx, wy, plane);
                 if(!tile)
                     continue;
@@ -884,8 +932,7 @@ class RegionLoader
                 if(plane == 1 && bridge)
                     continue; // deck already drawn as part of plane 0
                 // upper planes: only tiles that actually have a floor
-                if(plane > 0 && tile->underlay_id == 0 &&
-                   tile->overlay_id == 0)
+                if(plane > 0 && tile->underlay_id == 0 && tile->overlay_id == 0)
                     continue;
 
                 emit_tile(*tile, wx, wy, plane);
@@ -907,8 +954,9 @@ class RegionLoader
         // dedupe on (position, colour, uv); positions are integer-derived.
         // Indices are chunk-local, so the map resets per chunk.
         VertexMap<u32> vert_index;
-        auto add_vertex = [&](float x, float y, float z, Color c, u8 a,
-                              float u, float v) -> u16 {
+        auto           add_vertex =
+            [&](float x, float y, float z, Color c, u8 a, float u, float v)
+            -> u16 {
             Vertex vert{x, y, z, c.r, c.g, c.b, a, u, v};
             auto [it, fresh] = vert_index.emplace(
                 vertex_key(vert), u32(mesh->vertices.size()));
@@ -942,11 +990,17 @@ class RegionLoader
             {
                 RsModel leg2;
                 ok = build_loc_model(
-                        def, pl.type, pl.rotation + 4,
-                        [&](int id) { return model(id); }, mdl) &&
+                         def,
+                         pl.type,
+                         pl.rotation + 4,
+                         [&](int id) { return model(id); },
+                         mdl) &&
                      build_loc_model(
-                        def, pl.type, (pl.rotation + 1) & 3,
-                        [&](int id) { return model(id); }, leg2);
+                         def,
+                         pl.type,
+                         (pl.rotation + 1) & 3,
+                         [&](int id) { return model(id); },
+                         leg2);
                 if(ok)
                 {
                     int base     = (int)mdl.verts.size();
@@ -957,10 +1011,12 @@ class RegionLoader
                         mdl.faces.push_back(
                             {base + fc[0], base + fc[1], base + fc[2]});
                     mdl.colors.insert(
-                        mdl.colors.end(), leg2.colors.begin(),
+                        mdl.colors.end(),
+                        leg2.colors.begin(),
                         leg2.colors.end());
                     mdl.alphas.insert(
-                        mdl.alphas.end(), leg2.alphas.begin(),
+                        mdl.alphas.end(),
+                        leg2.alphas.begin(),
                         leg2.alphas.end());
                     for(const auto& t : leg2.tex_pmn)
                         mdl.tex_pmn.push_back(
@@ -968,28 +1024,44 @@ class RegionLoader
                     for(i32 tc : leg2.tex_coord)
                         mdl.tex_coord.push_back(tc < 0 ? -1 : tc + tex_base);
                 }
-            }
-            else
+            } else
                 ok = build_loc_model(
-                    def, pl.type, pl.rotation,
-                    [&](int id) { return model(id); }, mdl);
+                    def,
+                    pl.type,
+                    pl.rotation,
+                    [&](int id) { return model(id); },
+                    mdl);
             if(std::getenv("RS2_LOC_DEBUG") && (pl.type <= 3 || pl.type == 9) &&
                plane == 0)
-                fprintf(stderr,
+                fprintf(
+                    stderr,
                     "WALL loc=%d shape=%d rot=%d world=(%d,%d) size=%dx%d "
                     "types=%zu %s\n",
-                    pl.loc_id, pl.type, pl.rotation, pl.world_x, pl.world_y,
-                    def.size_x, def.size_y, def.types.size(),
+                    pl.loc_id,
+                    pl.type,
+                    pl.rotation,
+                    pl.world_x,
+                    pl.world_y,
+                    def.size_x,
+                    def.size_y,
+                    def.types.size(),
                     ok ? "OK" : "FAIL");
             // RS2_LOC_DEBUG_ID=<loc id>: trace every placement of one loc
             // (any type/plane) through the model build
             if(char const* dbg_id = std::getenv("RS2_LOC_DEBUG_ID");
                dbg_id && atoi(dbg_id) == pl.loc_id)
-                fprintf(stderr,
+                fprintf(
+                    stderr,
                     "LOC %d '%s' shape=%d rot=%d plane=%d world=(%d,%d) "
                     "tris=%zu %s\n",
-                    pl.loc_id, def.name.c_str(), pl.type, pl.rotation,
-                    pl.plane, pl.world_x, pl.world_y, mdl.faces.size(),
+                    pl.loc_id,
+                    def.name.c_str(),
+                    pl.type,
+                    pl.rotation,
+                    pl.plane,
+                    pl.world_x,
+                    pl.world_y,
+                    mdl.faces.size(),
                     ok ? "OK" : "FAIL");
             if(!ok)
                 continue;
@@ -1009,8 +1081,7 @@ class RegionLoader
             // start a new chunk when this model could overflow u16 indices
             // (conservative bound: 3 unique vertices per face)
             if(!mesh->vertices.empty() &&
-               mesh->vertices.size() + mdl.faces.size() * 3 >
-                   MESH_MAX_VERTICES)
+               mesh->vertices.size() + mdl.faces.size() * 3 > MESH_MAX_VERTICES)
             {
                 chunks.emplace_back();
                 mesh = &chunks.back();
@@ -1028,15 +1099,15 @@ class RegionLoader
 
             // Ground height: average of the footprint's centre corners
             // (client centerHeight computation).
-            int sx = pl.world_x + (size_x >> 1);
-            int ex = pl.world_x + ((size_x + 1) >> 1);
-            int sy = pl.world_y + (size_y >> 1);
-            int ey = pl.world_y + ((size_y + 1) >> 1);
-            float gz = float(height_at(sx, sy, pl.plane) +
-                             height_at(ex, sy, pl.plane) +
-                             height_at(sx, ey, pl.plane) +
-                             height_at(ex, ey, pl.plane)) *
-                       8.f / 4.f;
+            int   sx = pl.world_x + (size_x >> 1);
+            int   ex = pl.world_x + ((size_x + 1) >> 1);
+            int   sy = pl.world_y + (size_y >> 1);
+            int   ey = pl.world_y + ((size_y + 1) >> 1);
+            float gz =
+                float(
+                    height_at(sx, sy, pl.plane) + height_at(ex, sy, pl.plane) +
+                    height_at(sx, ey, pl.plane) + height_at(ex, ey, pl.plane)) *
+                8.f / 4.f;
 
             // Ground decor (type 22: gnome walkway decks, bridge planks,
             // trapdoors, mud patches) sits exactly at floor height — the
@@ -1055,10 +1126,10 @@ class RegionLoader
             // follows the bilinearly interpolated heightmap at its own
             // world position, so adjacent models connect seamlessly
             auto ground_at = [&](float wxf, float wyf) -> float {
-                int   gx = int(std::floor(wxf / 128.f));
-                int   gy = int(std::floor(wyf / 128.f));
-                float fx = wxf / 128.f - float(gx);
-                float fy = wyf / 128.f - float(gy);
+                int   gx  = int(std::floor(wxf / 128.f));
+                int   gy  = int(std::floor(wyf / 128.f));
+                float fx  = wxf / 128.f - float(gx);
+                float fy  = wyf / 128.f - float(gy);
                 float h00 = float(height_at(gx, gy, pl.plane));
                 float h10 = float(height_at(gx + 1, gy, pl.plane));
                 float h01 = float(height_at(gx, gy + 1, pl.plane));
@@ -1076,8 +1147,8 @@ class RegionLoader
                 u32 raw = fi < mdl.colors.size() ? mdl.colors[fi] : 0;
                 int tex = raw & FACE_TEXTURED ? int(raw & 0xFFFF) : -1;
                 // client alpha: 0 = opaque, larger = more transparent
-                u8 opacity = u8(
-                    255 - (fi < mdl.alphas.size() ? mdl.alphas[fi] : 0));
+                u8 opacity =
+                    u8(255 - (fi < mdl.alphas.size() ? mdl.alphas[fi] : 0));
 
                 float us[3] = {}, vs[3] = {};
                 if(tex >= 0)
@@ -1091,21 +1162,25 @@ class RegionLoader
                     Color       col;
                     if(tex >= 0)
                         // client multiplies texels by the face lightness
-                        col = Color{u8(avg.r * light >> 7),
-                                    u8(avg.g * light >> 7),
-                                    u8(avg.b * light >> 7)};
+                        col = Color{
+                            u8(avg.r * light >> 7),
+                            u8(avg.g * light >> 7),
+                            u8(avg.b * light >> 7)};
                     else
-                        col = hsl_to_rgb(
-                            adjust_hsl_lightness(u16(raw), light));
+                        col = hsl_to_rgb(adjust_hsl_lightness(u16(raw), light));
 
                     float wx = ox + float(v[0]);
                     float wy = oy + float(v[2]);
                     float base =
-                        (def.contoured_ground ? ground_at(wx, wy) : gz) +
-                        lift;
+                        (def.contoured_ground ? ground_at(wx, wy) : gz) + lift;
                     // model: x=east, y=vertical (negative=up), z=north
                     mesh->indices.push_back(add_vertex(
-                        wx, wy, base - float(v[1]), col, opacity, us[k],
+                        wx,
+                        wy,
+                        base - float(v[1]),
+                        col,
+                        opacity,
+                        us[k],
                         vs[k]));
                 }
                 mesh->tri_texture.push_back(tex);
@@ -1146,32 +1221,33 @@ class RegionLoader
             return t ? (t->settings & 1) : -1;
         };
 
-        auto quad = [&](float x0, float y0, float x1, float y1, float zb,
-                        float zt) {
-            auto add = [&](float x, float y, float z) -> u16 {
-                mesh.vertices.push_back(
-                    Vertex{x, y, z, 0, 0, 0, 255, 0.f, 0.f});
-                return u16(mesh.vertices.size() - 1);
+        auto quad =
+            [&](float x0, float y0, float x1, float y1, float zb, float zt) {
+                auto add = [&](float x, float y, float z) -> u16 {
+                    mesh.vertices.push_back(
+                        Vertex{x, y, z, 0, 0, 0, 255, 0.f, 0.f});
+                    return u16(mesh.vertices.size() - 1);
+                };
+                u16       a = add(x0, y0, zb), b = add(x1, y1, zb);
+                u16       c = add(x1, y1, zt), d = add(x0, y0, zt);
+                const u16 idx[] = {a, b, c, a, c, d, a, c, b, a, d, c};
+                mesh.indices.insert(
+                    mesh.indices.end(), std::begin(idx), std::end(idx));
+                for(int i = 0; i < 4; ++i)
+                {
+                    mesh.tri_texture.push_back(-1);
+                    mesh.tri_overlay.push_back(0);
+                    mesh.tri_loc.push_back(-1);
+                    mesh.tri_class.push_back(TriClass::clip);
+                }
             };
-            u16 a = add(x0, y0, zb), b = add(x1, y1, zb);
-            u16 c = add(x1, y1, zt), d = add(x0, y0, zt);
-            const u16 idx[] = {a, b, c, a, c, d, a, c, b, a, d, c};
-            mesh.indices.insert(
-                mesh.indices.end(), std::begin(idx), std::end(idx));
-            for(int i = 0; i < 4; ++i)
-            {
-                mesh.tri_texture.push_back(-1);
-                mesh.tri_overlay.push_back(0);
-                mesh.tri_loc.push_back(-1);
-                mesh.tri_class.push_back(TriClass::clip);
-            }
-        };
 
         // neighbour delta + the two tile corners forming the shared edge
         struct Edge
         {
             int dx, dy, cx0, cy0, cx1, cy1;
         };
+
         static constexpr Edge edges[] = {
             {-1, 0, 0, 0, 0, 1}, // west
             {1, 0, 1, 0, 1, 1},  // east
@@ -1195,8 +1271,10 @@ class RegionLoader
                     // (240 units) above the highest corner so a biped can
                     // neither step nor hop over
                     quad(
-                        float(wx + e.cx0) * 128.f, float(wy + e.cy0) * 128.f,
-                        float(wx + e.cx1) * 128.f, float(wy + e.cy1) * 128.f,
+                        float(wx + e.cx0) * 128.f,
+                        float(wy + e.cy0) * 128.f,
+                        float(wx + e.cx1) * 128.f,
+                        float(wy + e.cy1) * 128.f,
                         float(std::min(h0, h1)) - 16.f,
                         float(std::max(h0, h1)) + 240.f);
                 }
@@ -1210,29 +1288,42 @@ class RegionLoader
     {
         // action classification (case-insensitive)
         auto lower = [](std::string s) {
-            for(char& c : s) c = char(std::tolower((unsigned char)c));
+            for(char& c : s)
+                c = char(std::tolower((unsigned char)c));
             return s;
         };
-        enum Dir { none, up, down, both };
+
+        enum Dir
+        {
+            none,
+            up,
+            down,
+            both
+        };
+
         auto classify = [&](const std::string& action) -> Dir {
             std::string a = lower(action);
-            if(a == "climb-up" || a == "go-up" || a == "walk-up") return up;
+            if(a == "climb-up" || a == "go-up" || a == "walk-up")
+                return up;
             if(a == "climb-down" || a == "go-down" || a == "walk-down")
                 return down;
-            if(a == "climb") return both;
+            if(a == "climb")
+                return both;
             if(a == "enter" || a == "crawl-through" || a == "crawl-into")
                 return down; // cave entrances
             return none;
         };
+
         // collect every placement of a link-capable loc, spatially bucketed
         struct LinkLoc
         {
             Placement pl;
             int       dir; // bitmask
         };
-        std::vector<LinkLoc>                       locs;
-        std::unordered_map<u64, std::vector<u32>>  grid; // bucket → indices
-        auto bucket = [](int x, int y) {
+
+        std::vector<LinkLoc>                      locs;
+        std::unordered_map<u64, std::vector<u32>> grid; // bucket → indices
+        auto                                      bucket = [](int x, int y) {
             return u64(u32(x >> 4)) << 32 | u32(y >> 4);
         };
 
@@ -1252,8 +1343,7 @@ class RegionLoader
         // is there a loc with direction bit `want` near (x, y, plane)?
         auto near = [&](int x, int y, int plane, int want, int radius) {
             for(int by = (y - radius) >> 4; by <= (y + radius) >> 4; ++by)
-                for(int bx = (x - radius) >> 4; bx <= (x + radius) >> 4;
-                    ++bx)
+                for(int bx = (x - radius) >> 4; bx <= (x + radius) >> 4; ++bx)
                 {
                     auto it = grid.find(u64(u32(bx)) << 32 | u32(by));
                     if(it == grid.end())
@@ -1274,13 +1364,17 @@ class RegionLoader
         constexpr int radius         = 10;
 
         std::vector<MapLink> links;
-        auto emit = [&](const LinkLoc& l, MapLink::Kind kind, int tx, int ty,
-                        int tp, int want_reverse) {
+        auto                 emit = [&](const LinkLoc& l,
+                        MapLink::Kind  kind,
+                        int            tx,
+                        int            ty,
+                        int            tp,
+                        int            want_reverse) {
             const LocDef& def = m_loc_defs[l.pl.loc_id];
             std::string   action;
             for(const auto& a : def.actions)
             {
-                Dir d = classify(a);
+                Dir  d     = classify(a);
                 bool is_up = kind == MapLink::Kind::plane_up ||
                              kind == MapLink::Kind::dungeon_up;
                 if(d == both || (is_up ? d == up : d == down))
@@ -1290,8 +1384,16 @@ class RegionLoader
                 }
             }
             MapLink link{
-                kind, l.pl.loc_id, def.name, action, l.pl.world_x,
-                l.pl.world_y, l.pl.plane, tx, ty, tp,
+                kind,
+                l.pl.loc_id,
+                def.name,
+                action,
+                l.pl.world_x,
+                l.pl.world_y,
+                l.pl.plane,
+                tx,
+                ty,
+                tp,
                 near(tx, ty, tp, want_reverse, radius)};
             link.shape    = l.pl.type;
             link.rotation = l.pl.rotation;
@@ -1310,8 +1412,7 @@ class RegionLoader
                     ground = std::min(
                         ground,
                         height_at(
-                            l.pl.world_x + cx, l.pl.world_y + cy,
-                            l.pl.plane));
+                            l.pl.world_x + cx, l.pl.world_y + cy, l.pl.plane));
             link.aabb_min[0] = float(l.pl.world_x) * 128.f;
             link.aabb_min[1] = float(l.pl.world_y) * 128.f;
             link.aabb_min[2] = float(ground) * 8.f;
@@ -1323,14 +1424,19 @@ class RegionLoader
 
         for(const auto& l : locs)
         {
-            int x = l.pl.world_x, y = l.pl.world_y, p = l.pl.plane;
+            int  x = l.pl.world_x, y = l.pl.world_y, p = l.pl.plane;
             bool underground = y >= dungeon_offset;
 
             if(l.dir & 1) // up
             {
                 if(underground && p == 0)
-                    emit(l, MapLink::Kind::dungeon_up, x, y - dungeon_offset,
-                         0, 2);
+                    emit(
+                        l,
+                        MapLink::Kind::dungeon_up,
+                        x,
+                        y - dungeon_offset,
+                        0,
+                        2);
                 else if(p < NUM_PLANES - 1)
                     emit(l, MapLink::Kind::plane_up, x, y, p + 1, 2);
             }
@@ -1338,11 +1444,17 @@ class RegionLoader
             {
                 if(p > 0)
                     emit(l, MapLink::Kind::plane_down, x, y, p - 1, 1);
-                else if(!underground &&
-                        find_region(x / REGION_SIZE,
-                                    (y + dungeon_offset) / REGION_SIZE))
-                    emit(l, MapLink::Kind::dungeon_down, x,
-                         y + dungeon_offset, 0, 1);
+                else if(
+                    !underground &&
+                    find_region(
+                        x / REGION_SIZE, (y + dungeon_offset) / REGION_SIZE))
+                    emit(
+                        l,
+                        MapLink::Kind::dungeon_down,
+                        x,
+                        y + dungeon_offset,
+                        0,
+                        1);
             }
         }
         return links;
@@ -1351,7 +1463,10 @@ class RegionLoader
   private:
     using u64 = uint64_t;
 
-    static u32 key(int rx, int ry) { return u32(rx) << 16 | u32(ry); }
+    static u32 key(int rx, int ry)
+    {
+        return u32(rx) << 16 | u32(ry);
+    }
 
     // Decompressed map square (terrain, or the loc placements when locs).
     // Classic layout: numeric file ids from map_index under 4/; beta layout:
@@ -1373,7 +1488,7 @@ class RegionLoader
     // map data. Cached (including negative results).
     const Planes* region_planes(int rx, int ry)
     {
-        u32 k   = key(rx, ry);
+        u32  k  = key(rx, ry);
         auto it = m_planes.find(k);
         if(it != m_planes.end())
             return it->second ? it->second.get() : nullptr;
@@ -1384,29 +1499,30 @@ class RegionLoader
             try
             {
                 auto raw = map_square(*ref, false);
-                planes = std::make_unique<Planes>(parse_terrain(raw, rx, ry));
-            }
-            catch(const std::exception&) {} // missing/corrupt = no data
+                planes   = std::make_unique<Planes>(parse_terrain(raw, rx, ry));
+            } catch(const std::exception&)
+            {
+            } // missing/corrupt = no data
         }
         auto [ins, ok] = m_planes.emplace(k, std::move(planes));
         return ins->second ? ins->second.get() : nullptr;
     }
 
-    std::string                                        m_cache_dir;
-    bool                                               m_beta = false;
-    ObModelArchive                                     m_ob_models;
-    std::string                                        m_signature;
-    std::vector<Underlay>                              m_underlays;
-    std::vector<FloorClass>                            m_floor_classes;
-    std::vector<LocDef>                                m_loc_defs;
-    std::vector<RegionRef>                             m_regions;
-    MapBounds                                          m_bounds;
-    MapBounds                                          m_surface_bounds;
-    std::unordered_map<u32, const RegionRef*>          m_region_lookup;
-    std::unordered_map<u32, std::unique_ptr<Planes>>   m_planes;
-    std::unordered_map<int, RsModel>                   m_models;
-    std::unordered_map<u32, Color>                     m_color_cache;
-    TextureColors                                      m_textures;
+    std::string                                      m_cache_dir;
+    bool                                             m_beta = false;
+    ObModelArchive                                   m_ob_models;
+    std::string                                      m_signature;
+    std::vector<Underlay>                            m_underlays;
+    std::vector<FloorClass>                          m_floor_classes;
+    std::vector<LocDef>                              m_loc_defs;
+    std::vector<RegionRef>                           m_regions;
+    MapBounds                                        m_bounds;
+    MapBounds                                        m_surface_bounds;
+    std::unordered_map<u32, const RegionRef*>        m_region_lookup;
+    std::unordered_map<u32, std::unique_ptr<Planes>> m_planes;
+    std::unordered_map<int, RsModel>                 m_models;
+    std::unordered_map<u32, Color>                   m_color_cache;
+    TextureColors                                    m_textures;
 };
 
 } // namespace rs2

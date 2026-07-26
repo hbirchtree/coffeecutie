@@ -169,8 +169,8 @@ static void load_resources(
     //     player_model = models.predict(
     //         mod2_tag.front(), blam::mod2::mod2_lod::lod_high_ext);
     // }
-    auto recipe = shared_recipes::player_recipe;
-    u32 num_pinfo = 0;
+    auto recipe    = shared_recipes::player_recipe;
+    u32  num_pinfo = 0;
     for(auto const& pinfo : e.select<PlayerInfo>())
     {
         auto const* info = e.get<PlayerInfo>(pinfo.id());

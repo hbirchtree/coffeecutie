@@ -24,7 +24,7 @@ bool             g_pose_demo_pistol_attached{false};
 f32 g_pose_demo_mic_volume{0.f};
 
 static void spawn_attached_weapon(
-    compo::EntityContainer&           e,
+    compo::EntityContainer&            e,
     blam::map_container<halo_version>& container,
     std::string_view                   tag_name,
     generation_idx_t&                  out_model_id,
@@ -61,8 +61,8 @@ static void spawn_attached_weapon(
         return;
     }
 
-    ModelAssembly mesh_data =
-        model_cache.predict_regions(instance_obj[0].model, blam::mod2::lod_high_ext);
+    ModelAssembly mesh_data = model_cache.predict_regions(
+        instance_obj[0].model, blam::mod2::lod_high_ext);
     if(mesh_data.models.empty() || !mesh_data.models.at(0).valid())
     {
         cWarning("pose_demo: predict_regions failed for '{}'", tag_name);
@@ -139,7 +139,9 @@ static void spawn_attached_weapon(
 
     cDebug(
         "pose_demo: spawned '{}' ({} parts created, {} skipped)",
-        tag_name, parts_created, parts_skipped);
+        tag_name,
+        parts_created,
+        parts_skipped);
 }
 
 void spawn_static_biped(
@@ -147,8 +149,8 @@ void spawn_static_biped(
 {
     using namespace compo;
 
-    auto                  magic = container.magic;
-    blam::tag_index_view  index(container);
+    auto                 magic = container.magic;
+    blam::tag_index_view index(container);
 
 #if defined(COFFEE_EMSCRIPTEN)
     auto biped = emscripten::args::query_params()["biped"];
@@ -164,8 +166,8 @@ void spawn_static_biped(
     if(start_anim.empty())
         start_anim = "stand pistol idle";
 #else
-    auto biped = "characters\\cyborg_mp\\cyborg_mp";
-    auto weapon = "weapons\\pistol\\pistol";
+    auto biped      = "characters\\cyborg_mp\\cyborg_mp";
+    auto weapon     = "weapons\\pistol\\pistol";
     auto attachment = "left hand";
     auto start_anim = "stand pistol idle";
 #endif
@@ -202,7 +204,8 @@ void spawn_static_biped(
                 if(auto bones_opt = mod2_hdr->bones.data(magic);
                    bones_opt.has_value())
                 {
-                    cDebug("pose_demo: {} bone dump ({} bones)",
+                    cDebug(
+                        "pose_demo: {} bone dump ({} bones)",
                         biped,
                         bones_opt.value().size());
                     u32 idx = 0;
@@ -224,7 +227,11 @@ void spawn_static_biped(
                         cDebug(
                             "pose_demo: bind-local rotation '{}': "
                             "w={:.6f} x={:.6f} y={:.6f} z={:.6f}",
-                            bone.name.str(), q.w, q.x, q.y, q.z);
+                            bone.name.str(),
+                            q.w,
+                            q.x,
+                            q.y,
+                            q.z);
                     }
                 }
 
@@ -234,7 +241,10 @@ void spawn_static_biped(
                     u32 r_idx = 0;
                     for(auto const& region : regions_opt.value())
                     {
-                        cDebug("pose_demo: region [{}] '{}'", r_idx, region.name.str());
+                        cDebug(
+                            "pose_demo: region [{}] '{}'",
+                            r_idx,
+                            region.name.str());
                         if(auto perms_opt = region.permutations.data(magic);
                            perms_opt.has_value())
                         {
@@ -242,7 +252,8 @@ void spawn_static_biped(
                             for(auto const& perm : perms_opt.value())
                                 cDebug(
                                     "pose_demo:   permutation [{}] '{}'",
-                                    p_idx++, perm.name.str());
+                                    p_idx++,
+                                    perm.name.str());
                         }
                         ++r_idx;
                     }
@@ -260,12 +271,15 @@ void spawn_static_biped(
                             for(auto const& inst : inst_opt.value())
                             {
                                 cDebug(
-                                    "pose_demo:   instance region={} permutation={} "
+                                    "pose_demo:   instance region={} "
+                                    "permutation={} "
                                     "node={} pos=({:.4f},{:.4f},{:.4f})",
                                     static_cast<i32>(inst.region_idx),
                                     static_cast<i32>(inst.permutation_idx),
                                     static_cast<i32>(inst.node_idx),
-                                    inst.position.x, inst.position.y, inst.position.z);
+                                    inst.position.x,
+                                    inst.position.y,
+                                    inst.position.z);
 
                                 if(marker.name.str() == attachment &&
                                    !found_hand_marker)
@@ -273,11 +287,15 @@ void spawn_static_biped(
                                     g_pose_demo_hand_node_idx =
                                         static_cast<u16>(inst.node_idx);
                                     Quatf marker_rot(
-                                        inst.rotation.w, inst.rotation.x,
-                                        inst.rotation.y, inst.rotation.z);
+                                        inst.rotation.w,
+                                        inst.rotation.x,
+                                        inst.rotation.y,
+                                        inst.rotation.z);
                                     g_pose_demo_hand_marker_local =
-                                        glm::translate(Matf4(1), inst.position) *
-                                        glm::mat4_cast(glm::conjugate(marker_rot));
+                                        glm::translate(
+                                            Matf4(1), inst.position) *
+                                        glm::mat4_cast(
+                                            glm::conjugate(marker_rot));
                                     found_hand_marker = true;
                                 }
                             }
@@ -298,8 +316,8 @@ void spawn_static_biped(
         return;
     }
 
-    ModelAssembly mesh_data =
-        model_cache.predict_regions(instance_obj[0].model, blam::mod2::lod_high_ext);
+    ModelAssembly mesh_data = model_cache.predict_regions(
+        instance_obj[0].model, blam::mod2::lod_high_ext);
     if(mesh_data.models.empty() || !mesh_data.models.at(0).valid())
     {
         cWarning("pose_demo: predict_regions failed for cyborg_mp");
@@ -318,11 +336,10 @@ void spawn_static_biped(
             auto antr_it = index.find(anim_graph);
             if(antr_it != index.end())
             {
-                auto antr_data =
-                    (*antr_it).data<blam::antr::header>(magic);
+                auto antr_data = (*antr_it).data<blam::antr::header>(magic);
                 if(antr_data.has_value())
                 {
-                    auto const* antr_hdr = &antr_data.value()[0];
+                    auto const*        antr_hdr = &antr_data.value()[0];
                     std::optional<u32> anim_idx;
                     auto all_anims_opt = antr_hdr->animations.data(magic);
                     if(all_anims_opt.has_value())
@@ -348,7 +365,8 @@ void spawn_static_biped(
                     }
                     for(auto const& mid : mesh_data.models)
                     {
-                        model_cache.apply_animation(mid, antr_hdr, anim_idx.value_or(0), 0);
+                        model_cache.apply_animation(
+                            mid, antr_hdr, anim_idx.value_or(0), 0);
                         auto& mitem            = model_cache.get(mid);
                         mitem.antr_hdr         = antr_hdr;
                         mitem.anim_idx         = anim_idx.value_or(0);
@@ -405,7 +423,9 @@ void spawn_static_biped(
     for(auto const& model_ : mesh_data.models)
     {
         ModelItem<halo_version>& modelit = model_cache.get(model_);
-        cDebug("pose_demo: model region has {} sub-parts", modelit.mesh.sub.size());
+        cDebug(
+            "pose_demo: model region has {} sub-parts",
+            modelit.mesh.sub.size());
         for(auto const& sub : modelit.mesh.sub)
         {
             if(!sub.shader.valid())
@@ -431,7 +451,8 @@ void spawn_static_biped(
     }
 
     cDebug(
-        "pose_demo: spawned '{}' biped at {} ({} parts created, {} skipped, model.visible={})",
+        "pose_demo: spawned '{}' biped at {} ({} parts created, {} skipped, "
+        "model.visible={})",
         biped,
         s_synth_spawn.pos,
         parts_created,
@@ -441,12 +462,18 @@ void spawn_static_biped(
     if(found_hand_marker)
     {
         spawn_attached_weapon(
-            e, container, weapon, g_pose_demo_pistol_model,
+            e,
+            container,
+            weapon,
+            g_pose_demo_pistol_model,
             g_pose_demo_pistol_entity);
         g_pose_demo_pistol_attached = g_pose_demo_pistol_model.valid();
     } else
     {
-        cWarning("pose_demo: '{}' marker not found, skipping '{}' attach", attachment, weapon);
+        cWarning(
+            "pose_demo: '{}' marker not found, skipping '{}' attach",
+            attachment,
+            weapon);
     }
 }
 
@@ -454,8 +481,8 @@ void setup_fixed_camera(compo::EntityContainer& e)
 {
     using namespace compo;
 
-    auto  ref  = e.create_entity(shared_recipes::player_recipe);
-    auto& info = ref.get<PlayerInfo>();
+    auto  ref       = e.create_entity(shared_recipes::player_recipe);
+    auto& info      = ref.get<PlayerInfo>();
     info.player_idx = 0;
     info.seat_idx   = 0;
 
@@ -465,21 +492,24 @@ void setup_fixed_camera(compo::EntityContainer& e)
         height = std::stof(h);
 #endif
 
-    auto& cam            = ref.get<PlayerCamera>();
-    cam.keyboard.enabled = true;
-    cam.camera->position = Vecf3(.4f, -0.03f, height);
-    cam.camera->aspect   = 1.6f;
+    auto& cam               = ref.get<PlayerCamera>();
+    cam.keyboard.enabled    = true;
+    cam.camera->position    = Vecf3(.4f, -0.03f, height);
+    cam.camera->aspect      = 1.6f;
     cam.camera->fieldOfView = 70.f;
 
-    cDebug("pose_demo: fixed camera at {} looking toward origin", cam.camera->position);
+    cDebug(
+        "pose_demo: fixed camera at {} looking toward origin",
+        cam.camera->position);
 
     auto& gpu = e.subsystem_cast<BlamResources>();
     {
-        Span<materials::world_data> world = gpu.world_store->map<materials::world_data>(0);
+        Span<materials::world_data> world =
+            gpu.world_store->map<materials::world_data>(0);
         world[0].lighting[0].light_direction = Vecf4{1, 0, 1, 10.f};
-        world[0].lighting[0].light_color = Vecf4{1, 1, 1, 1};
-        world[0].fog.indoor_color = Vecf4{1, 1, 1, 100};
-        world[0].fog.distances = Vecf4{100, 1000, 100, 1000};
+        world[0].lighting[0].light_color     = Vecf4{1, 1, 1, 1};
+        world[0].fog.indoor_color            = Vecf4{1, 1, 1, 100};
+        world[0].fog.distances               = Vecf4{100, 1000, 100, 1000};
     }
     gpu.world_store->unmap();
 }

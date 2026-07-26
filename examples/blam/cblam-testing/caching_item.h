@@ -251,7 +251,7 @@ struct BSPItem
     blam::map_ptr bsp_magic{};
     /* Index into the scenario's structure BSP list (bsp_info order); used to
      * match against bsp_switch_trigger source/destination. */
-    libc_types::i16 section_idx{-1};
+    libc_types::i16                                         section_idx{-1};
     std::vector<Group>                                      groups;
     std::vector<Cluster>                                    clusters;
     std::vector<FlatSubcluster>                             sorted_subclusters;
@@ -384,11 +384,11 @@ struct BSPItem
      * rectangle, so the walk terminates without missing multi-path
      * visibility. */
     inline std::vector<bool> const& portal_visible_set(
-        u32          from_idx,
+        u32 from_idx,
         Vecf3 const& /*camera_pos*/,
-        Matf4 const& mvp,
+        Matf4 const&    mvp,
         portal_scratch& scratch,
-        u32          max_depth = 64) const
+        u32             max_depth = 64) const
     {
         using Rect = portal_rect;
 
@@ -502,7 +502,7 @@ struct BSPItem
 
                 /* Only walk on if no single previous entry into this cluster
                  * already covered this rect. */
-                auto& prev = entered[ai];
+                auto& prev    = entered[ai];
                 bool  covered = false;
                 for(Rect const& e : prev)
                     if(r.x0 >= e.x0 && r.y0 >= e.y0 && r.x1 <= e.x1 &&
@@ -576,7 +576,6 @@ struct BSPItem
         }
         return std::nullopt;
     }
-
 };
 
 template<typename V>
@@ -599,12 +598,15 @@ struct ModelItem
     blam::tag_t const*           tag{nullptr};
     LOD                          mesh;
 
-    std::vector<Matf4>        bone_matrices; /* per-bone skinning matrices (world_anim * inv_bind) */
-    std::vector<Matf4>        inv_bind;      /* inverse bind-world matrices, built from mod2 bone axes */
-    i32                       bone_base{-1};
-    blam::antr::header const* antr_hdr{nullptr};   /* non-null → animate this model each frame */
-    u32                       anim_idx{0};          /* animation index within antr_hdr */
-    u32                       anim_frame_count{0};  /* frame_count for anim_idx */
+    std::vector<Matf4>
+        bone_matrices; /* per-bone skinning matrices (world_anim * inv_bind) */
+    std::vector<Matf4>
+        inv_bind; /* inverse bind-world matrices, built from mod2 bone axes */
+    i32 bone_base{-1};
+    blam::antr::header const* antr_hdr{
+        nullptr};            /* non-null → animate this model each frame */
+    u32 anim_idx{0};         /* animation index within antr_hdr */
+    u32 anim_frame_count{0}; /* frame_count for anim_idx */
 
     inline bool valid() const
     {

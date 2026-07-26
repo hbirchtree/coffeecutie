@@ -75,7 +75,8 @@ std::string hexDecode(std::string const& in)
 bool parseWsHost(std::string const& url, std::string& host)
 {
     auto schemeEnd = url.find("://");
-    auto rest      = schemeEnd == std::string::npos ? url : url.substr(schemeEnd + 3);
+    auto rest =
+        schemeEnd == std::string::npos ? url : url.substr(schemeEnd + 3);
     if(auto slash = rest.find('/'); slash != std::string::npos)
         rest = rest.substr(0, slash);
     if(auto colon = rest.rfind(':'); colon != std::string::npos)
@@ -84,13 +85,15 @@ bool parseWsHost(std::string const& url, std::string& host)
     return !host.empty();
 }
 
-bool resolveUDPAddr(std::string const& host, std::string const& port, sockaddr_in& out)
+bool resolveUDPAddr(
+    std::string const& host, std::string const& port, sockaddr_in& out)
 {
-    addrinfo  hints{};
+    addrinfo hints{};
     hints.ai_family   = AF_INET;
     hints.ai_socktype = SOCK_DGRAM;
-    addrinfo* result   = nullptr;
-    if(::getaddrinfo(host.c_str(), port.c_str(), &hints, &result) != 0 || !result)
+    addrinfo* result  = nullptr;
+    if(::getaddrinfo(host.c_str(), port.c_str(), &hints, &result) != 0 ||
+       !result)
         return false;
     out = *reinterpret_cast<sockaddr_in*>(result->ai_addr);
     ::freeaddrinfo(result);
@@ -147,7 +150,9 @@ void GatewayFleetRegistration::Start()
     addr.sin_family      = AF_INET;
     addr.sin_addr.s_addr = INADDR_ANY;
     addr.sin_port        = 0;
-    if(::bind(m_challengeSock, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0)
+    if(::bind(
+           m_challengeSock, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) !=
+       0)
     {
         cWarning(
             "webrtc_signaling: gateway_fleet_registration: failed to bind "
@@ -350,7 +355,7 @@ void GatewayFleetRegistration::pollChallengeSocket()
     if(n <= 0)
         return;
 
-    auto            nonce = hex::encode(std::string(buf, static_cast<size_t>(n)));
+    auto nonce = hex::encode(std::string(buf, static_cast<size_t>(n)));
     nlohmann::json response{
         {"type", "challenge-response"},
         {"serverId", m_serverId},
@@ -372,21 +377,24 @@ void GatewayFleetRegistration::pollChallengeSocket()
 }
 
 #if !defined(COFFEE_WASM) && !defined(_WIN32)
-void GatewayFleetRegistration::sendRelayPunch(int relayPort, std::string const& payload)
+void GatewayFleetRegistration::sendRelayPunch(
+    int relayPort, std::string const& payload)
 {
     sockaddr_in target{};
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         target = m_gatewayAddr;
     }
-    target.sin_port         = htons(static_cast<uint16_t>(relayPort));
+    target.sin_port            = htons(static_cast<uint16_t>(relayPort));
     SteamNetworkingIPAddr addr = toSteamAddr(target);
     m_sockets->SendRawPacketOnListenSocket(
         m_listenSocket, payload.data(), static_cast<int>(payload.size()), addr);
 }
 
 void GatewayFleetRegistration::onClientRelay(
-    std::string const& sessionId, int relayPort, std::string const& relayNonceHex)
+    std::string const& sessionId,
+    int                relayPort,
+    std::string const& relayNonceHex)
 {
     if(sessionId.empty() || relayPort <= 0 || relayPort > 65535)
     {
@@ -400,7 +408,8 @@ void GatewayFleetRegistration::onClientRelay(
 
     {
         std::lock_guard<std::mutex> lock(m_relaysMutex);
-        m_relays[sessionId] = ClientRelay{relayPort, std::chrono::steady_clock::now()};
+        m_relays[sessionId] =
+            ClientRelay{relayPort, std::chrono::steady_clock::now()};
     }
     std::string nonce = hexDecode(relayNonceHex);
     sendRelayPunch(relayPort, nonce.empty() ? kRelayPunchPayload : nonce);
@@ -467,7 +476,7 @@ void GatewayFleetRegistration::Poll()
     bool dueForHeartbeat;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        auto now        = std::chrono::steady_clock::now();
+        auto                        now = std::chrono::steady_clock::now();
         dueForHeartbeat = now - m_lastHeartbeat >= kHeartbeatInterval;
         if(dueForHeartbeat)
             m_lastHeartbeat = now;

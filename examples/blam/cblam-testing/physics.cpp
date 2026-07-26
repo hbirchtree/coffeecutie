@@ -20,10 +20,10 @@
 #include <BulletCollision/CollisionShapes/btConcaveShape.h>
 #include <BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h>
 #include <BulletDynamics/Dynamics/btRigidBody.h>
-#include <btBulletDynamicsCommon.h>
 #include <LinearMath/btQuaternion.h>
 #include <LinearMath/btTransform.h>
 #include <LinearMath/btVector3.h>
+#include <btBulletDynamicsCommon.h>
 
 #include <chrono>
 #include <limits>
@@ -60,23 +60,21 @@ struct PhysicsSystem
         m_config     = std::make_unique<btDefaultCollisionConfiguration>();
         m_dispatcher = std::make_unique<btCollisionDispatcher>(m_config.get());
         m_broadphase = std::make_unique<btDbvtBroadphase>();
-        m_solver = std::make_unique<btSequentialImpulseConstraintSolver>();
-        m_world  = std::make_unique<btDiscreteDynamicsWorld>(
+        m_solver     = std::make_unique<btSequentialImpulseConstraintSolver>();
+        m_world      = std::make_unique<btDiscreteDynamicsWorld>(
             m_dispatcher.get(),
             m_broadphase.get(),
             m_solver.get(),
             m_config.get());
         m_world->setGravity(btVector3(0, 0, -9.81f));
         m_world_basis.setIdentity();
-        m_world_basis.setRotation(btQuaternion(
-            btVector3(1, 0, 0),
-            stl_types::math::pi / 2)
-        );
+        m_world_basis.setRotation(
+            btQuaternion(btVector3(1, 0, 0), stl_types::math::pi / 2));
     }
 
     void start_restricted(Proxy& p, compo::time_point const&)
     {
-        BSPCache<V>* bsp_cache;
+        BSPCache<V>*   bsp_cache;
         LoadingStatus* loading;
         p.subsystem(bsp_cache);
         p.subsystem(loading);
@@ -119,7 +117,7 @@ struct PhysicsSystem
                 btCollisionObject const* a = manifold->getBody0();
                 btCollisionObject const* b = manifold->getBody1();
                 if(((a->getCollisionFlags() | b->getCollisionFlags()) &
-                       btCollisionObject::CF_NO_CONTACT_RESPONSE) == 0)
+                    btCollisionObject::CF_NO_CONTACT_RESPONSE) == 0)
                     continue;
                 u64 id_a =
                     u64(reinterpret_cast<uintptr_t>(a->getUserPointer()));
@@ -138,8 +136,7 @@ struct PhysicsSystem
 
         if(m_probe_body && m_frame < 600 && (m_frame % 60) == 0)
         {
-            auto const& org =
-                m_probe_body->getWorldTransform().getOrigin();
+            auto const& org = m_probe_body->getWorldTransform().getOrigin();
             cDebug(
                 "physics: probe sphere at ({:.2f}, {:.2f}, {:.2f}){}",
                 org.x(),
@@ -173,12 +170,10 @@ struct PhysicsSystem
                     debug->color_ptr = body.debug_slot.color_idx;
                 }
                 btRigidBody* rigid_body = body.world_body.get();
-                btVector3 min, max;
+                btVector3    min, max;
                 rigid_body->getAabb(min, max);
                 auto const box = DebugMarkers::box_vertices(
-                    {min.x(), min.y(), min.z()},
-                    {max.x(), max.y(), max.z()}
-                );
+                    {min.x(), min.y(), min.z()}, {max.x(), max.y(), max.z()});
                 markers->put_strip(
                     body.debug_slot.vert_offset,
                     body.debug_slot.color_idx,
@@ -190,7 +185,7 @@ struct PhysicsSystem
 
         for(auto const& player_ : p.template select<PlayerCamera>())
         {
-            auto player = player_;
+            auto          player = player_;
             PlayerCamera& camera = player.template get<PlayerCamera>();
             if(!camera.mode.physics)
                 continue;
@@ -198,7 +193,8 @@ struct PhysicsSystem
             if(phys_it == m_bodies.end())
                 continue;
             entity_body& phys = (*phys_it).second;
-            btVector3& origin = phys.world_body->getWorldTransform().getOrigin();
+            btVector3&   origin =
+                phys.world_body->getWorldTransform().getOrigin();
             camera.camera->position = {
                 origin.x(),
                 origin.y(),
@@ -291,10 +287,10 @@ struct PhysicsSystem
 
         if(!item)
         {
-            Coffee::Profiler::Profile("Physics::rebuild_world() no collision mesh");
+            Coffee::Profiler::Profile(
+                "Physics::rebuild_world() no collision mesh");
             cDebug(
-                "physics: no collision mesh for section {}",
-                m_built_section);
+                "physics: no collision mesh for section {}", m_built_section);
             return;
         }
 
@@ -303,22 +299,22 @@ struct PhysicsSystem
         auto t1 = steady_clock::now();
 
         btIndexedMesh mesh;
-        mesh.m_numTriangles        = static_cast<int>(m_triangles.size() / 3);
-        mesh.m_triangleIndexBase   = reinterpret_cast<unsigned char const*>(
-            m_triangles.data());
+        mesh.m_numTriangles = static_cast<int>(m_triangles.size() / 3);
+        mesh.m_triangleIndexBase =
+            reinterpret_cast<unsigned char const*>(m_triangles.data());
         mesh.m_triangleIndexStride = 3 * sizeof(i32);
         mesh.m_numVertices = static_cast<int>(item->coll_vertices.size());
         /* Zero-copy: vertex positions read in place from the mapped tag
          * data; collision::vertex is {Vecf3 point; i32 first_edge} = 16 B */
-        mesh.m_vertexBase = reinterpret_cast<unsigned char const*>(
-            item->coll_vertices.data());
+        mesh.m_vertexBase =
+            reinterpret_cast<unsigned char const*>(item->coll_vertices.data());
         mesh.m_vertexStride = sizeof(blam::collision::vertex);
         mesh.m_vertexType   = PHY_FLOAT;
 
         m_mesh_iface = std::make_unique<btTriangleIndexVertexArray>();
         m_mesh_iface->addIndexedMesh(mesh, PHY_INTEGER);
 
-        auto t2 = steady_clock::now();
+        auto t2       = steady_clock::now();
         m_world_shape = std::make_unique<btBvhTriangleMeshShape>(
             m_mesh_iface.get(), true /* compress BVH */);
         auto t3 = steady_clock::now();
@@ -360,19 +356,18 @@ struct PhysicsSystem
         }
 
         btIndexedMesh mesh;
-        mesh.m_numTriangles = body_create.indices.size() / 3;
+        mesh.m_numTriangles        = body_create.indices.size() / 3;
         mesh.m_triangleIndexStride = sizeof(IType) * 3;
-        mesh.m_indexType = []()
-        {
+        mesh.m_indexType           = []() {
             if constexpr(std::is_same_v<IType, u16>)
                 return PHY_SHORT;
             if constexpr(std::is_same_v<IType, u32>)
                 return PHY_INTEGER;
         }();
-        mesh.m_numVertices = body_create.vertices.size_bytes() / body_create.vertex_stride;
+        mesh.m_numVertices =
+            body_create.vertices.size_bytes() / body_create.vertex_stride;
         mesh.m_vertexStride = body_create.vertex_stride;
-        mesh.m_vertexType = [&body_create]()
-        {
+        mesh.m_vertexType   = [&body_create]() {
             switch(body_create.vertex_type)
             {
             default:
@@ -380,16 +375,15 @@ struct PhysicsSystem
             }
         }();
 
-        mesh.m_vertexBase = reinterpret_cast<unsigned char const*>(
-            body_create.vertices.data());
-        mesh.m_triangleIndexBase = reinterpret_cast<unsigned char const*>(
-            body_create.indices.data());
+        mesh.m_vertexBase =
+            reinterpret_cast<unsigned char const*>(body_create.vertices.data());
+        mesh.m_triangleIndexBase =
+            reinterpret_cast<unsigned char const*>(body_create.indices.data());
 
         entity_body.mesh_iface = std::make_unique<btTriangleIndexVertexArray>();
         entity_body.mesh_iface->addIndexedMesh(mesh, mesh.m_indexType);
         entity_body.world_shape = std::make_unique<btBvhTriangleMeshShape>(
-            entity_body.mesh_iface.get(),
-            true);
+            entity_body.mesh_iface.get(), true);
         btRigidBody::btRigidBodyConstructionInfo info{
             body_create.mass,
             nullptr,
@@ -397,8 +391,9 @@ struct PhysicsSystem
         };
         entity_body.world_body = std::make_unique<btRigidBody>(info);
         entity_body.world_body->setFriction(1.f);
-        entity_body.world_body->setUserPointer(reinterpret_cast<void*>(
-            static_cast<uintptr_t>(body_create.entity_id)));
+        entity_body.world_body->setUserPointer(
+            reinterpret_cast<void*>(
+                static_cast<uintptr_t>(body_create.entity_id)));
         m_world->addRigidBody(entity_body.world_body.get());
     }
 
@@ -406,7 +401,8 @@ struct PhysicsSystem
      */
     auto create_body(Physics::BodyCreationShape const& body_create)
     {
-        cDebug("Spawning {} shape at {}",
+        cDebug(
+            "Spawning {} shape at {}",
             magic_enum::enum_name(body_create.shape),
             body_create.position);
         entity_body& entity_body = m_bodies[body_create.entity_id];
@@ -425,26 +421,20 @@ struct PhysicsSystem
 
         switch(body_create.shape)
         {
-        case Physics::BodyCreationShape::Capsule:
-        {
+        case Physics::BodyCreationShape::Capsule: {
             auto capsule = std::make_unique<btCapsuleShape>(
-                body_create.scale.x, 
-                body_create.scale.z);
+                body_create.scale.x, body_create.scale.z);
             entity_body.world_shape = std::move(capsule);
             break;
         }
-        case Physics::BodyCreationShape::Sphere:
-        {
+        case Physics::BodyCreationShape::Sphere: {
             entity_body.world_shape =
                 std::make_unique<btSphereShape>(body_create.scale.x);
             break;
         }
-        case Physics::BodyCreationShape::Box:
-        {
+        case Physics::BodyCreationShape::Box: {
             entity_body.world_shape = std::make_unique<btBoxShape>(btVector3(
-                body_create.scale.x,
-                body_create.scale.y,
-                body_create.scale.z));
+                body_create.scale.x, body_create.scale.y, body_create.scale.z));
             break;
         }
         }
@@ -485,8 +475,9 @@ struct PhysicsSystem
             body_create.position.y,
             body_create.position.z));
         entity_body.world_body->setWorldTransform(transform);
-        entity_body.world_body->setUserPointer(reinterpret_cast<void*>(
-            static_cast<uintptr_t>(body_create.entity_id)));
+        entity_body.world_body->setUserPointer(
+            reinterpret_cast<void*>(
+                static_cast<uintptr_t>(body_create.entity_id)));
         if(body_create.sensor)
             entity_body.world_body->setCollisionFlags(
                 entity_body.world_body->getCollisionFlags() |
@@ -522,8 +513,9 @@ struct PhysicsSystem
         };
         body.world_body = std::make_unique<btRigidBody>(info);
         body.world_body->setFriction(1.f);
-        body.world_body->setUserPointer(reinterpret_cast<void*>(
-            static_cast<uintptr_t>(body_create.entity_id)));
+        body.world_body->setUserPointer(
+            reinterpret_cast<void*>(
+                static_cast<uintptr_t>(body_create.entity_id)));
         m_world->addRigidBody(body.world_body.get());
         wake_dynamic_bodies();
     }
@@ -576,14 +568,12 @@ struct PhysicsSystem
         auto body_it = m_bodies.find(impulse.entity_id);
         if(body_it == m_bodies.end())
             return;
-        cDebug("Applying impulse of {} to {}", impulse.impulse, impulse.entity_id);
+        cDebug(
+            "Applying impulse of {} to {}", impulse.impulse, impulse.entity_id);
         entity_body& body = (*body_it).second;
         body.world_body->activate(true);
-        body.world_body->applyCentralImpulse(btVector3(
-            impulse.impulse.x,
-            impulse.impulse.y,
-            impulse.impulse.z
-        ));
+        body.world_body->applyCentralImpulse(
+            btVector3(impulse.impulse.x, impulse.impulse.y, impulse.impulse.z));
     }
 
     void set_linear_velocity(Physics::Velocity const& velocity)
@@ -606,7 +596,8 @@ struct PhysicsSystem
 
     void translate(Physics::Translate const& translation)
     {
-        cDebug("Applying translation of {} to {}",
+        cDebug(
+            "Applying translation of {} to {}",
             translation.position,
             translation.entity_id);
         auto body_it = m_bodies.find(translation.entity_id);
@@ -618,8 +609,7 @@ struct PhysicsSystem
         transform.setOrigin(btVector3(
             translation.position.x,
             translation.position.y,
-            translation.position.z
-        ));
+            translation.position.z));
         if(!translation.preserve_momentum)
             body.world_body->setLinearVelocity(btVector3());
         body.world_body->setWorldTransform(transform);
@@ -631,8 +621,8 @@ struct PhysicsSystem
     void triangulate(BSPItem const& item)
     {
         Coffee::ProfContext _("Physics::triangulate()");
-        auto const& surfaces = item.coll_surfaces;
-        auto const& edges    = item.coll_edges;
+        auto const&         surfaces = item.coll_surfaces;
+        auto const&         edges    = item.coll_edges;
 
         std::vector<i32> polygon;
         for(u32 si = 0; si < surfaces.size(); si++)
@@ -680,7 +670,7 @@ struct PhysicsSystem
 
         u32 bullet_hits = 0, native_hits = 0, matched = 0, unmatched = 0;
         steady_clock::duration bullet_time{}, native_time{};
-        f32 max_dev = 0.f;
+        f32                    max_dev = 0.f;
 
         for(u32 gy = 0; gy < grid; gy++)
             for(u32 gx = 0; gx < grid; gx++)
@@ -772,8 +762,7 @@ struct PhysicsSystem
         btRigidBody::btRigidBodyConstructionInfo info(
             10.f, nullptr, m_probe_shape.get(), inertia);
         info.m_startWorldTransform.setIdentity();
-        info.m_startWorldTransform.setOrigin(
-            btVector3(pos.x, pos.y, pos.z));
+        info.m_startWorldTransform.setOrigin(btVector3(pos.x, pos.y, pos.z));
         m_probe_body = std::make_unique<btRigidBody>(info);
         m_probe_body->setActivationState(DISABLE_DEACTIVATION);
         m_probe_body->setFriction(1.f);
@@ -824,6 +813,7 @@ struct PhysicsSystem
         /* Lazily reserved on first debug draw, released in remove_body() */
         DebugMarkers::strip_slot_t debug_slot{};
     };
+
     std::map<u64, entity_body> m_bodies;
 
     DebugMarkers*              m_markers{nullptr};
@@ -831,7 +821,6 @@ struct PhysicsSystem
 
     /* Event bus for outgoing events (Overlap); wired by alloc_physics */
     PhysicsBus* m_bus{};
-
 
     /* Index buffer for the world shape + triangle → collision surface
      * mapping (material lookup on hit) */
@@ -848,49 +837,40 @@ struct PhysicsSystem
 void alloc_physics(compo::EntityContainer& container)
 {
     ProfContext _;
-    auto& phys_bus = container.register_subsystem_inplace<PhysicsBus>();
-    auto& physics = container.register_subsystem_inplace<PhysicsSystem<halo_version>>();
+    auto&       phys_bus = container.register_subsystem_inplace<PhysicsBus>();
+    auto&       physics =
+        container.register_subsystem_inplace<PhysicsSystem<halo_version>>();
     physics.m_bus = &phys_bus;
     phys_bus.addEventFunction<Physics::BodyCreationU16>(
-        0, [&physics](Physics::Event&, Physics::BodyCreationU16* body_create)
-        {
+        0, [&physics](Physics::Event&, Physics::BodyCreationU16* body_create) {
             physics.create_body(*body_create);
         });
     phys_bus.addEventFunction<Physics::BodyCreationPrebuilt>(
-        0,
-        [&physics](Physics::Event&, Physics::BodyCreationPrebuilt* body)
-        {
+        0, [&physics](Physics::Event&, Physics::BodyCreationPrebuilt* body) {
             physics.adopt_body(std::move(*body));
         });
     phys_bus.addEventFunction<Physics::BodyCreationShape>(
-        0,
-        [&physics](Physics::Event&, Physics::BodyCreationShape* body)
-        {
+        0, [&physics](Physics::Event&, Physics::BodyCreationShape* body) {
             physics.create_body(*body);
         });
     phys_bus.addEventFunction<Physics::BodyRemoval>(
-        0, [&physics](Physics::Event&, Physics::BodyRemoval* removal)
-        {
+        0, [&physics](Physics::Event&, Physics::BodyRemoval* removal) {
             physics.remove_body(removal->entity_id);
         });
     phys_bus.addEventFunction<Physics::Reset>(
-        0, [&physics](Physics::Event&, Physics::Reset*)
-        {
+        0, [&physics](Physics::Event&, Physics::Reset*) {
             physics.reset_world();
         });
     phys_bus.addEventFunction<Physics::Impulse>(
-        0, [&physics](Physics::Event&, Physics::Impulse* impulse)
-        {
+        0, [&physics](Physics::Event&, Physics::Impulse* impulse) {
             physics.add_impulse(*impulse);
         });
     phys_bus.addEventFunction<Physics::Velocity>(
-        0, [&physics](Physics::Event&, Physics::Velocity* velocity)
-        {
+        0, [&physics](Physics::Event&, Physics::Velocity* velocity) {
             physics.set_linear_velocity(*velocity);
         });
     phys_bus.addEventFunction<Physics::Translate>(
-        0, [&physics](Physics::Event&, Physics::Translate* translation)
-        {
+        0, [&physics](Physics::Event&, Physics::Translate* translation) {
             physics.translate(*translation);
         });
     phys_bus.addEventFunction<Physics::ProbeHere>(

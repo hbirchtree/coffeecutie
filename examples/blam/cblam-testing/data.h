@@ -10,8 +10,8 @@
 #include <peripherals/identify/compiler/unreachable.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/typing/vectors/camera.h>
-#include <peripherals/typing/vectors/vector_types.h>
 #include <peripherals/typing/vectors/glm_vector_types.h>
+#include <peripherals/typing/vectors/vector_types.h>
 
 #include "blam/volta/blam_versions.h"
 #include "graphics_api.h"
@@ -56,8 +56,9 @@ struct BlamResources : compo::SubsystemBase
 
     std::shared_ptr<gfx::program_t> bsp_pipeline;
     std::shared_ptr<gfx::program_t> model_pipeline;
-    std::shared_ptr<gfx::program_t> chicago_pipeline; /* ES2 schi/scex combiner */
-    std::shared_ptr<gfx::program_t> water_pipeline;    /* ES2 swat water */
+    std::shared_ptr<gfx::program_t>
+        chicago_pipeline;                           /* ES2 schi/scex combiner */
+    std::shared_ptr<gfx::program_t> water_pipeline; /* ES2 swat water */
     std::shared_ptr<gfx::program_t> wireframe_pipeline;
 
     std::shared_ptr<gfx::buffer_t>       model_buf;
@@ -115,8 +116,8 @@ struct RenderingParameters : compo::SubsystemBase
     bool only_multipurpose2{false};
     bool only_diffuse{false};
 
-    bool render_ui{false};
-    bool debug_clear{false}; // sets a different clear color for visibility
+    bool  render_ui{false};
+    bool  debug_clear{false}; // sets a different clear color for visibility
     Vecf3 clear_color{0, 0.2f, 0.5f};
 
     bool occluder_update{true};
@@ -126,7 +127,6 @@ struct RenderingParameters : compo::SubsystemBase
     bool debug_portals{false};
     bool debug_clusters{false};
     bool debug_triggers{false};
-
 
     f32 tex_res{0.f};
     f32 draw_distance{500.f};
@@ -149,7 +149,7 @@ struct LoadingStatus : compo::SubsystemBase
     comp_app::interfaces::AppInfo* app_info{};
     std::string                    status;
     libc_types::i16                progress;
-    std::atomic<bool> loading{false};
+    std::atomic<bool>              loading{false};
     loading_t                      loaded_map{none};
     loading_t                      loaded_bitmaps{none};
     loading_t                      loaded_sounds{none};
@@ -173,7 +173,8 @@ struct LoadingStatus : compo::SubsystemBase
         }
         if(!quiet)
             cDebug(
-                "Re-evaluating loading state: loading={} -> {} progress={} -> {}",
+                "Re-evaluating loading state: loading={} -> {} progress={} -> "
+                "{}",
                 old_loading,
                 loading,
                 old_progress,

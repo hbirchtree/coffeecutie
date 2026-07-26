@@ -31,11 +31,15 @@ struct BoneRetargetEntry
 inline constexpr BoneRetargetEntry kRetargetTable[] = {
     /* Single aggregate torso rotation -> upper spine segment (parents
      * clavicles/neck). Midline, no mirroring. */
-    {"Spine", "bip01 spine1", Quatf(1, 0, 0, 0), false,
+    {"Spine",
+     "bip01 spine1",
+     Quatf(1, 0, 0, 0),
+     false,
      BoneRetargetEntry::basis_t::spine},
 };
 
-inline BoneRetargetEntry const* find_retarget_entry(std::string_view source_name)
+inline BoneRetargetEntry const* find_retarget_entry(
+    std::string_view source_name)
 {
     for(auto const& entry : kRetargetTable)
         if(entry.source_name == source_name)

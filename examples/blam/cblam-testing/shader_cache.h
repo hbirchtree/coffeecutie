@@ -78,11 +78,12 @@ struct ShaderCache
             mat.num_stages = 0;
             return;
         }
-        auto stages     = stages_.value();
-        mat.num_stages  = static_cast<u32>(std::min(stages.size(), size_t(7)));
-        mat.blend_mode  = static_cast<u32>(info->transparent.blend_function);
+        auto stages    = stages_.value();
+        mat.num_stages = static_cast<u32>(std::min(stages.size(), size_t(7)));
+        mat.blend_mode = static_cast<u32>(info->transparent.blend_function);
         for(u32 i = 0; i < mat.num_stages; i++)
-            mat.stages[i] = materials::transparent_data::stage_t::from_blam(stages[i]);
+            mat.stages[i] =
+                materials::transparent_data::stage_t::from_blam(stages[i]);
         /* constant_color0's RGB is GLOBAL: every stage's constant_color0
          * input references stage 0's animated constant color (the shield's
          * blue), while the ALPHA stays per-stage (each stage's own animated
@@ -90,8 +91,8 @@ struct ShaderCache
          * constant_color1 is fully per-stage. */
         for(u32 i = 1; i < mat.num_stages; i++)
         {
-            mat.stages[i].color0 = Vecf4(
-                Vecf3(mat.stages[0].color0), mat.stages[i].color0.w);
+            mat.stages[i].color0 =
+                Vecf4(Vecf3(mat.stages[0].color0), mat.stages[i].color0.w);
             mat.stages[i].color0_up = Vecf4(
                 Vecf3(mat.stages[0].color0_up), mat.stages[i].color0_up.w);
         }
@@ -166,7 +167,7 @@ struct ShaderCache
          * populate_transparent_material). */
         if(mat.num_stages == 0 || stages.empty())
             return;
-        auto const& s0 = stages[0];
+        auto const& s0      = stages[0];
         auto        is_zero = [](Vecf4 const& c) {
             return c.x == 0.f && c.y == 0.f && c.z == 0.f && c.w == 0.f;
         };
@@ -200,8 +201,8 @@ struct ShaderCache
         u32 n = std::min(mat.num_stages, 7u);
         for(u32 i = 0; i < n && i < stages.size(); i++)
         {
-            Vecf4 own = glm::mix(
-                stages[i].color0_lower, stages[i].color0_upper, f);
+            Vecf4 own =
+                glm::mix(stages[i].color0_lower, stages[i].color0_upper, f);
             mat.stages[i].color0 = Vecf4(global_rgb, own.x);
         }
     }
@@ -352,7 +353,8 @@ struct ShaderCache
         {
         case blam::tag_class_t::scex: {
             shader_chicago_extended<blam::pc_version_t> const* info =
-                shader.header->as<blam::shader::shader_chicago_extended<blam::pc_version_t>>();
+                shader.header->as<blam::shader::shader_chicago_extended<
+                    blam::pc_version_t>>();
             auto maps = info->maps_4stage.data(magic).value();
             populate_chicago_uv_anims(mat, maps, t);
             break;

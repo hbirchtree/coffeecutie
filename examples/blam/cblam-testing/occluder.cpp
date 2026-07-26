@@ -44,9 +44,10 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
     struct eye_marker_t
     {
-        u64                         entity{0};
-        DebugMarkers::strip_slot_t  slot{};
+        u64                        entity{0};
+        DebugMarkers::strip_slot_t slot{};
     };
+
     std::vector<eye_marker_t> eye_pool;
 
     void start_restricted(Proxy& p, time_point const&)
@@ -91,7 +92,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 break;
             }
         }
-
 
         BSPItem const*   current_bsp{nullptr};
         u32              current_cluster{0};
@@ -156,7 +156,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
         if(active_bsp)
         {
-
             if(auto cluster = active_bsp->find_cluster(camera_pos);
                cluster.has_value())
             {
@@ -189,13 +188,12 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         /* The visible set depends on the full view (portal screen rects),
          * so it must follow camera motion — but an identical MVP and
          * cluster yields an identical set, so idle frames skip the walk. */
-        bool view_changed =
-            cluster_changed || camera_mvp != last_pvs_mvp;
+        bool view_changed = cluster_changed || camera_mvp != last_pvs_mvp;
         if(current_bsp && view_changed)
         {
             Coffee::ProfContext __("Occluder::portal_visible_set");
-            pvs_cluster  = current_cluster;
-            pvs_visible  = pvs_bsp->portal_visible_set(
+            pvs_cluster = current_cluster;
+            pvs_visible = pvs_bsp->portal_visible_set(
                 pvs_cluster, camera_pos, camera_mvp, portal_scratch);
             last_pvs_mvp = camera_mvp;
         } else if(current_bsp)
@@ -214,7 +212,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         if(::getenv("BLAM_OCCLUDER_PROBE") && current_bsp &&
            (frame_counter % 60) == 0)
         {
-            Matf4 inv = glm::inverse(camera_mvp);
+            Matf4 inv       = glm::inverse(camera_mvp);
             auto  unproject = [&inv](f32 x, f32 y, f32 z) {
                 Vecf4 p = inv * Vecf4{x, y, z, 1.f};
                 return Vecf3(p) / p.w;
@@ -237,7 +235,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                         current_bsp->raycast(origin, origin + dir * 500.f);
                     if(!hit)
                         continue;
-                    Vecf3 hp = origin + dir * (500.f * hit->t);
+                    Vecf3              hp = origin + dir * (500.f * hit->t);
                     std::optional<u32> hc;
                     for(f32 back : {0.1f, 0.5f, 1.f, 2.f})
                         if((hc = current_bsp->find_cluster_tree(
@@ -382,9 +380,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                         bsp_no_cluster++;
 
                     bsp_ref.visible =
-                        pvs_ok && (!bsp_ref.has_bounds ||
-                                   frustum.aabb_visible(
-                                       bsp_ref.bmin, bsp_ref.bmax));
+                        pvs_ok &&
+                        (!bsp_ref.has_bounds ||
+                         frustum.aabb_visible(bsp_ref.bmin, bsp_ref.bmax));
                 } else
                 {
                     /* Different BSP section: hide entirely. */
@@ -421,23 +419,24 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
          * headers carry no decoded bounding sphere, and the largest placed
          * objects (trees, vehicles) stay within ~5 world units of their
          * origin. */
-        constexpr f32 model_radius = 5.f;
-        const auto classify_model =
-            [&](BSPItem const* bsp, Model const& model) -> model_vis {
+        constexpr f32 model_radius   = 5.f;
+        const auto    classify_model = [&](BSPItem const* bsp,
+                                        Model const&   model) -> model_vis {
             auto pos = model.position;
             /* Cheapest test first: outside the view frustum hides the model
              * regardless of cluster, and skips the BSP-tree walks below. */
             if(!frustum.sphere_visible(pos, model_radius))
                 return model_vis::frustum_culled;
             /* Resolve the model's cluster by the EXACT BSP-tree lookup. Scenery
-             * origins commonly sit on/under the ground, i.e. in a solid leaf, so
-             * the lookup at the origin misses; probe upward through the model
-             * body until it lands in open space. The exact tree is preferred
-             * over find_cluster()'s subcluster-AABB fallback, whose overlapping
-             * boxes can resolve to the wrong cluster and keep an object that is
-             * actually in an invisible one. Accurate assignment is what lets an
-             * object be culled with an invisible cluster instead of always
-             * drawn — important on legacy renderers where models are costly. */
+             * origins commonly sit on/under the ground, i.e. in a solid leaf,
+             * so the lookup at the origin misses; probe upward through the
+             * model body until it lands in open space. The exact tree is
+             * preferred over find_cluster()'s subcluster-AABB fallback, whose
+             * overlapping boxes can resolve to the wrong cluster and keep an
+             * object that is actually in an invisible one. Accurate assignment
+             * is what lets an object be culled with an invisible cluster
+             * instead of always drawn — important on legacy renderers where
+             * models are costly. */
             std::optional<u32> cidx;
             for(f32 up : {0.f, 2.f, 5.f, 10.f, 20.f})
                 if(auto ci = bsp->find_cluster_tree(pos + Vecf3{0.f, 0.f, up}))
@@ -453,7 +452,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 if(!cluster_ok(*cidx))
                     return model_vis::pvs_culled;
                 return in_draw_distance(model) ? model_vis::visible
-                                               : model_vis::dist_culled;
+                                                  : model_vis::dist_culled;
             }
             if(bsp->valid())
             {
@@ -464,7 +463,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                     return model_vis::pvs_culled;
             }
             return in_draw_distance(model) ? model_vis::visible
-                                           : model_vis::dist_culled;
+                                              : model_vis::dist_culled;
         };
 
         u32 model_visible = 0, model_pvs_culled = 0, model_frustum_culled = 0,
@@ -754,7 +753,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                     break; /* buffer exhausted; stop drawing further eyes */
 
                 compo::EntityRecipe marker;
-                marker.components = {compo::type_hash_v<DebugDraw>()};
+                marker.components     = {compo::type_hash_v<DebugDraw>()};
                 auto       marker_ent = p.create_entity(marker);
                 DebugDraw& draw       = marker_ent.template get<DebugDraw>();
                 draw.data.arrays      = {
@@ -790,7 +789,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         }
 
         for(; player_i < eye_pool.size(); ++player_i)
-            if(auto* draw = p.template get<DebugDraw>(eye_pool[player_i].entity))
+            if(auto* draw =
+                   p.template get<DebugDraw>(eye_pool[player_i].entity))
                 draw->data.arrays.count = 0;
 
         markers->unmap();

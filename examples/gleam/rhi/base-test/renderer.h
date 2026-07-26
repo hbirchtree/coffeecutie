@@ -85,7 +85,7 @@ static constexpr u32 BaseItemTag = 0x2;
 struct Matrix
 {
     using value_type = Matrix;
-    using type = compo::alloc::VectorContainer<Matrix>;
+    using type       = compo::alloc::VectorContainer<Matrix>;
 
     Matf4 m1, m2;
 };
@@ -184,9 +184,7 @@ class TransformVisitor
     }
 
     virtual bool visit(
-        Proxy& c,
-        EntityRef const&,
-        const Components::time_point&) override
+        Proxy& c, EntityRef const&, const Components::time_point&) override
     {
         using typing::vectors::scene::GenTransform;
 
@@ -207,7 +205,7 @@ class TransformVisitor
         camera_source.position.x += camera.eye_distance * 2;
 
         mats.m2 = camera.projection * GenTransform<f32>(camera_source) *
-                       object_matrix;
+                  object_matrix;
 
         camera_source.position.x -= camera.eye_distance;
 
@@ -227,9 +225,7 @@ class FloorVisitor
     }
 
     virtual bool visit(
-        Proxy& c,
-        EntityRef const&,
-        const Components::time_point&) override
+        Proxy& c, EntityRef const&, const Components::time_point&) override
     {
         auto& xf = c.get<TransformPair>();
 
@@ -259,9 +255,7 @@ class BaseItemVisitor
     }
 
     virtual bool visit(
-        Proxy& c,
-        EntityRef const&,
-        const Components::time_point&) override
+        Proxy& c, EntityRef const&, const Components::time_point&) override
     {
         auto& xf   = c.get<TransformPair>();
         auto  time = c.subsystem<TimeSystem>().get_time();
@@ -301,7 +295,7 @@ struct RendererState
         std::shared_ptr<rhi::buffer_t>         elements;
         std::shared_ptr<rhi::program_t>        program;
 #if defined(FEATURE_ENABLE_Gexxo)
-        std::shared_ptr<rhi::texture_t>        tex;
+        std::shared_ptr<rhi::texture_t> tex;
 #else
         std::shared_ptr<rhi::sampler_t>             sampler;
         std::shared_ptr<rhi::compat::texture_2da_t> tex;
@@ -359,8 +353,13 @@ void SetupRendering(
 
         1.f,  1.f,  1.f, 1.f,
     }};
-    constexpr std::array<u16, 6> elemdata = {{
-        0, 1, 2, 3, 4, 5,
+    constexpr std::array<u16, 6>  elemdata   = {{
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
     }};
 
     cVerbose(8, "Loading graphics API");
@@ -505,14 +504,14 @@ void SetupRendering(
     {
         ProfContext _("GX vertex upload");
         auto        vao = d.g_data.vao = d.gfx.alloc_vertex_array();
-        auto        buf = d.g_data.array =
+        auto        buf                = d.g_data.array =
             d.gfx.alloc_buffer(rhi::buffers::vertex, RSCA::ReadOnly);
         auto elem = d.g_data.elements =
             d.gfx.alloc_buffer(rhi::buffers::element, RSCA::ReadOnly);
         vao->alloc();
         vao->add({
             .index = 0,
-            .role = rhi::vertex_attribute::position,
+            .role  = rhi::vertex_attribute::position,
             .value =
                 {
                     .offset = 0,
@@ -522,12 +521,12 @@ void SetupRendering(
         });
         vao->add({
             .index = 1,
-            .role = rhi::vertex_attribute::texcoord0,
+            .role  = rhi::vertex_attribute::texcoord0,
             .value =
                 {
                     .offset = sizeof(Vecf2),
                     .stride = sizeof(Vecf2) * 2,
-                    .count = 2,
+                    .count  = 2,
                 },
         });
         elem->alloc();
@@ -539,9 +538,13 @@ void SetupRendering(
     }
     {
         auto prg = d.g_data.program = d.gfx.alloc_program();
-        prg->channels = {
-            rhi::program_t::channel_t{.channel = rhi::program_t::channel_t::color0, .lighting = false},
-            rhi::program_t::channel_t{.channel = rhi::program_t::channel_t::alpha0,},
+        prg->channels               = {
+            rhi::program_t::channel_t{
+                              .channel  = rhi::program_t::channel_t::color0,
+                              .lighting = false},
+            rhi::program_t::channel_t{
+                              .channel = rhi::program_t::channel_t::alpha0,
+            },
         };
         prg->stages = {
             rhi::program_t::stage_t{
@@ -557,7 +560,7 @@ void SetupRendering(
         ProfContext _("GX texture load (paged mmap)");
         namespace vmem = platform::file::gekko::vmem;
 
-        auto red  = vmem::map("circle_red.tpl");
+        auto red = vmem::map("circle_red.tpl");
         if(red)
         {
             auto tex = d.g_data.tex = std::make_shared<rhi::texture_t>(
@@ -745,25 +748,27 @@ void RendererLoop(
         for(auto& ent : e.select(BaseItemTag))
             modelviews.push_back(
                 cam.transform * e.get<TransformPair>(ent.id)->second);
-        d.gfx.submit(rhi::draw_command{
-            .call = {.indexed = true, .instanced = true},
-            .data =
-                {
-                    .elements =
-                        {
-                            .count = 6,
-                            .type  = semantic::type_t::u16,
-                        },
-                    .arrays    = {.count = 6},
-                    .instances = {.count = static_cast<u32>(modelviews.size())},
-                },
-            .program = d.g_data.program,
-            .vertices            = g.vao,
-            .textures            = {{.texture = g.tex}},
-            .instance_transforms = modelviews,
-        },
-        rhi::cull_state{.front_face = true},
-        rhi::blend_state{.additive = true});
+        d.gfx.submit(
+            rhi::draw_command{
+                .call = {.indexed = true, .instanced = true},
+                .data =
+                    {
+                        .elements =
+                            {
+                                .count = 6,
+                                .type  = semantic::type_t::u16,
+                            },
+                        .arrays = {.count = 6},
+                        .instances =
+                            {.count = static_cast<u32>(modelviews.size())},
+                    },
+                .program             = d.g_data.program,
+                .vertices            = g.vao,
+                .textures            = {{.texture = g.tex}},
+                .instance_transforms = modelviews,
+            },
+            rhi::cull_state{.front_face = true},
+            rhi::blend_state{.additive = true});
 #endif
 
 #if !defined(FEATURE_ENABLE_Gexxo)

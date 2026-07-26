@@ -256,8 +256,9 @@ struct ShaderData
             return sky_pass(alpha_test ? Pass_Alphatest : Pass_Opaque);
         }
         case tc::schi: {
-            shader_chicago<blam::pc_version_t> const* info = shader_data<shader_chicago<blam::pc_version_t>>();
-            using fb                      = chicago::framebuffer_blending;
+            shader_chicago<blam::pc_version_t> const* info =
+                shader_data<shader_chicago<blam::pc_version_t>>();
+            using fb = chicago::framebuffer_blending;
             switch(info->transparent.blend_function)
             {
             case fb::multiply:
@@ -430,7 +431,7 @@ struct PhysicsData
     using value_type = PhysicsData;
     using type       = compo::alloc::VectorContainer<PhysicsData>;
 
-    u64 physics_id{0};
+    u64   physics_id{0};
     Vecf3 velocity;
     Vecf3 acceleration;
 
@@ -453,8 +454,8 @@ struct NetworkInfo
         bool permissions : 1 {false};
     } changes;
 
-    f32 priority{0.f};
-    f32 relevance{0.f};
+    f32                       priority{0.f};
+    f32                       relevance{0.f};
     std::chrono::milliseconds update_period{300};
 };
 

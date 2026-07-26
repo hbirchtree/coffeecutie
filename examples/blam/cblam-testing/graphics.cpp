@@ -63,9 +63,11 @@ i32 blam_main()
             ("gfx-emulate",
              "Emulate certain device stereotype. Some limitations apply. "
              "Does not emulate surface render types. "
-             "Will only include the compatible subset of extensions (foreign texture formats must be software-decoded). "
+             "Will only include the compatible subset of extensions (foreign "
+             "texture formats must be software-decoded). "
              "Available device types:\n"
-             "PowerVR_SGX530\nMali400\nMaliG710\nAdreno540\nAdreno620\nWebGL_Mobile\nWebGL_Desktop",
+             "PowerVR_SGX530\nMali400\nMaliG710\nAdreno540\nAdreno620\nWebGL_"
+             "Mobile\nWebGL_Desktop",
              cxxopts::value<std::string>())
             //
             ("gfx-tex-resolution",
@@ -117,7 +119,7 @@ i32 blam_main()
         window.flags = comp_app::window_flags_t::resizable;
     // auto& touch = loader.config<comp_app::TouchConfig>();
     // touch.options |= comp_app::TouchConfig::TouchToMouse;
-    auto& controller = loader.config<comp_app::ControllerConfig>();
+    auto& controller   = loader.config<comp_app::ControllerConfig>();
     controller.options = comp_app::ControllerConfig::BackgroundInput;
 
 #if defined(SELECT_API_OPENGL)
@@ -204,9 +206,8 @@ i32 blam_main()
             else
                 params.mipmap_bias = 0;
 
-            auto& gfx        = e.register_subsystem_inplace<gfx::system>();
-            auto opts = [&arguments]() -> gleam::api::load_options_t
-            {
+            auto& gfx  = e.register_subsystem_inplace<gfx::system>();
+            auto  opts = [&arguments]() -> gleam::api::load_options_t {
                 if(arguments.contains("gfx-emulate"))
                 {
                     auto target = arguments["gfx-emulate"].as<std::string>();
@@ -227,26 +228,29 @@ i32 blam_main()
                     else if(target == "WebGL_Desktop")
                         return gfx::emulation::webgl::desktop();
                     else
-                        Throw(std::out_of_range("option given to --gfx-emulate no valid"));
+                        Throw(
+                            std::out_of_range(
+                                "option given to --gfx-emulate no valid"));
                 }
                 if(arguments.contains("gfx-level"))
                 {
-                    auto level = arguments["gfx-level"].as<std::string>();
-                    auto split = level.find(":");
-                    auto profile = level.substr(0, split);
-                    auto ver_full = level.substr(split + 1);
+                    auto level     = arguments["gfx-level"].as<std::string>();
+                    auto split     = level.find(":");
+                    auto profile   = level.substr(0, split);
+                    auto ver_full  = level.substr(split + 1);
                     auto ver_split = ver_full.find(":");
-                    auto major = std::stoi(ver_full.substr(0, ver_split));
-                    auto minor = std::stoi(ver_full.substr(ver_split + 1));
+                    auto major     = std::stoi(ver_full.substr(0, ver_split));
+                    auto minor     = std::stoi(ver_full.substr(ver_split + 1));
                     return gleam::api::load_options_t{
                         // Shift version into 0xXY0 format
-                        .api_version = (major << 8) | (minor << 4),
-                        .api_type = profile == "es" ? gfx::api_type_t::es : gfx::api_type_t::core,
+                         .api_version = (major << 8) | (minor << 4),
+                         .api_type    = profile == "es" ? gfx::api_type_t::es
+                                                        : gfx::api_type_t::core,
                     };
                 }
                 return {};
             }();
-            auto  load_error = gfx.load(e, opts);
+            auto load_error = gfx.load(e, opts);
 
             if(load_error)
             {
@@ -347,15 +351,13 @@ i32 blam_main()
                             0, std::move(handler));
                     e.subsystem_cast<GameEventBus>()
                         .addEventFunction<ServerJoinInfo>(
-                            0,
-                            [&discord](GameEvent&, ServerJoinInfo* join)
-                        {
-                            // set join info
-                            platform::online::PartyDescUpdate data;
-                            data.partyId     = join->server_id.str();
-                            data.join.secret = join->secret.str();
-                            discord.presence().update(std::move(data));
-                        });
+                            0, [&discord](GameEvent&, ServerJoinInfo* join) {
+                                // set join info
+                                platform::online::PartyDescUpdate data;
+                                data.partyId     = join->server_id.str();
+                                data.join.secret = join->secret.str();
+                                discord.presence().update(std::move(data));
+                            });
                     return false;
                 },
                 []() {
@@ -459,8 +461,7 @@ i32 blam_main()
 
             auto& gbus = e.subsystem_cast<GameEventBus>();
 
-            e.subsystem_cast<BlamFiles<halo_version>>().map_directory =
-                map_dir;
+            e.subsystem_cast<BlamFiles<halo_version>>().map_directory = map_dir;
 
             if(arguments.count("server"))
             {
@@ -499,7 +500,8 @@ i32 blam_main()
                             arguments["gateway-register"].as<std::string>();
                         connect.gateway_server_id =
                             arguments.count("gateway-server-id")
-                                ? arguments["gateway-server-id"].as<std::string>()
+                                ? arguments["gateway-server-id"]
+                                      .as<std::string>()
                                 : std::string("default");
                     }
                     gbus.inject(event, &connect);
@@ -561,8 +563,7 @@ i32 blam_main()
                         auto planar = [](Vecf3 v) {
                             v.z      = 0.f;
                             f32 len2 = glm::dot(v, v);
-                            return len2 > 1e-8f ? v / std::sqrt(len2)
-                                                : Vecf3{};
+                            return len2 > 1e-8f ? v / std::sqrt(len2) : Vecf3{};
                         };
                         auto const& wrap = *cam->camera_;
                         Vecf3       dir{};
@@ -585,13 +586,13 @@ i32 blam_main()
                             auto state =
                                 controllers->state(*cam->controller.index);
                             /* Analog: stick deflection scales speed */
-                            auto axis = [deadzone =
-                                             cam->controller.opts.deadzone](
-                                            i16 raw) {
-                                return std::abs(raw) < deadzone
-                                           ? 0.f
-                                           : convert_i16_f(raw);
-                            };
+                            auto axis =
+                                [deadzone =
+                                     cam->controller.opts.deadzone](i16 raw) {
+                                    return std::abs(raw) < deadzone
+                                               ? 0.f
+                                               : convert_i16_f(raw);
+                                };
                             dir += planar(wrap.cached.forward) *
                                    -axis(state.axes.e.l_y);
                             dir += planar(wrap.cached.right) *
@@ -656,8 +657,9 @@ i32 blam_main()
                     auto const& cached = cam->camera_->cached;
                     snd.listener()
                         .set_property<oaf::listener_property::orientation>(
-                            glm::transpose(Matf3{
-                                cached.right, cached.up, -cached.forward}));
+                            glm::transpose(
+                                Matf3{
+                                    cached.right, cached.up, -cached.forward}));
                     break;
                 }
             }

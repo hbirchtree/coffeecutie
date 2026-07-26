@@ -101,17 +101,18 @@ struct SoundSystem
 
     std::vector<std::shared_ptr<oaf::buffer_t>> buffers;
     std::vector<std::shared_ptr<oaf::source_t>> sources;
+
     struct voice_synth_t
     {
-        char voice[10] = {"KR"};
+        char voice[10]   = {"KR"};
         char backend[10] = {"melo"};
         char phrase[128] = {"Pee pee poo poo"};
     } voice;
 
-    u32 stat_bg_total{0};   /* cluster changes seen                       */
-    u32 stat_bg_with_snd{0};/* ...of which resolved to a non-null sound   */
-    u32 stat_started{0};    /* sound_units actually inserted as active   */
-    u32 stat_replayed{0};   /* queued events replayed after load         */
+    u32 stat_bg_total{0};    /* cluster changes seen                       */
+    u32 stat_bg_with_snd{0}; /* ...of which resolved to a non-null sound   */
+    u32 stat_started{0};     /* sound_units actually inserted as active   */
+    u32 stat_replayed{0};    /* queued events replayed after load         */
 
     BSPItem const* pending_bsp{nullptr};
     u32            pending_cluster{std::numeric_limits<u32>::max()};
@@ -350,11 +351,14 @@ struct SoundSystem
                         stat_started,
                         stat_replayed);
                     ImGui::Separator();
-                    auto sound_row = [&](u64 entity, sound_unit_t const& sound,
-                                         ImVec4 color) {
+                    auto sound_row = [&](u64                 entity,
+                                         sound_unit_t const& sound,
+                                         ImVec4              color) {
                         auto item_it = sound_cache.find(sound.index);
                         auto name    = index.name_of(sound.source);
-                        ImGui::TextColored(color, "[sound/%04lu] %.*s",
+                        ImGui::TextColored(
+                            color,
+                            "[sound/%04lu] %.*s",
                             entity,
                             static_cast<int>(name.size()),
                             name.data());
@@ -365,24 +369,28 @@ struct SoundSystem
                             return;
                         }
                         SoundItem const& item = item_it->second;
-                        u32 track_i{0};
+                        u32              track_i{0};
                         for(auto const& track : sound.tracks)
                         {
-                            auto role = magic_enum::enum_name(track.active.role);
+                            auto role =
+                                magic_enum::enum_name(track.active.role);
                             std::string_view name{"[?]"};
                             if(track_i < item.tracks.size())
                             {
                                 auto const& track_ = item.tracks[track_i];
-                                auto sit = track_.sounds.find(track.active.role);
+                                auto        sit =
+                                    track_.sounds.find(track.active.role);
                                 if(sit != track_.sounds.end())
                                 {
-                                    auto const& [sound_tag, _, __] = sit->second;
+                                    auto const& [sound_tag, _, __] =
+                                        sit->second;
                                     if(sound_tag)
                                         name = index.name_of(*sound_tag);
                                 }
                             }
                             ++track_i;
-                            ImGui::Text("    [track/%02u/%02u/%.*s] %.*s ",
+                            ImGui::Text(
+                                "    [track/%02u/%02u/%.*s] %.*s ",
                                 track.active.permutation,
                                 track.active.pitch,
                                 static_cast<int>(role.size()),
@@ -401,8 +409,10 @@ struct SoundSystem
                                     std::string_view name{"[?]"};
                                     if(sound_tag)
                                         name = index.name_of(*sound_tag);
-                                    auto role_name = magic_enum::enum_name(role);
-                                    ImGui::Text("      [detail/%.*s] %.*s",
+                                    auto role_name =
+                                        magic_enum::enum_name(role);
+                                    ImGui::Text(
+                                        "      [detail/%.*s] %.*s",
                                         static_cast<int>(role_name.size()),
                                         role_name.data(),
                                         static_cast<int>(name.size()),
@@ -420,20 +430,25 @@ struct SoundSystem
                 if(ImGui::BeginTabItem("Testing"))
                 {
                     ImGui::InputText("Voice", voice.voice, sizeof(voice.voice));
-                    ImGui::InputText("Backend", voice.backend, sizeof(voice.backend));
-                    ImGui::InputText("Phrase", voice.phrase, sizeof(voice.phrase));
+                    ImGui::InputText(
+                        "Backend", voice.backend, sizeof(voice.backend));
+                    ImGui::InputText(
+                        "Phrase", voice.phrase, sizeof(voice.phrase));
                     if(ImGui::Button("Play voice"))
                     {
                         auto src = net::MkUrl(
-                            fmt::format("http://10.0.0.17:9006/{}"
-                                        "/v1/audio/speech"
-                                        "?input={}&voice={}",
+                            fmt::format(
+                                "http://10.0.0.17:9006/{}"
+                                "/v1/audio/speech"
+                                "?input={}&voice={}",
                                 voice.backend,
-                                stl_types::str::url_encode::encode(voice.phrase),
+                                stl_types::str::url_encode::encode(
+                                    voice.phrase),
                                 voice.voice));
                         net::Resource sound(net::create_curl_context(), src);
 
-                        if(!sound.fetch().has_value() && sound.data().has_value())
+                        if(!sound.fetch().has_value() &&
+                           sound.data().has_value())
                         {
                             buffers.push_back(snd.alloc_buffer());
                             sources.push_back(snd.alloc_source());
@@ -457,7 +472,6 @@ struct SoundSystem
 
                 ImGui::EndTabBar();
             }
-
         }
         ImGui::End();
 #endif
@@ -505,9 +519,9 @@ struct SoundSystem
         if(!bsp || cluster >= bsp->clusters.size())
             return nullptr;
         i16 bg_idx = bsp->clusters[cluster].cluster->background_sound;
-        if(bg_idx >= 0
-           && static_cast<u32>(bg_idx) < bsp->bg_sound_palette.size()
-           && bsp->bg_sound_palette[bg_idx])
+        if(bg_idx >= 0 &&
+           static_cast<u32>(bg_idx) < bsp->bg_sound_palette.size() &&
+           bsp->bg_sound_palette[bg_idx])
             return &static_cast<blam::tagref_t const&>(
                 bsp->bg_sound_palette[bg_idx]->bg_sound);
         return nullptr;

@@ -1,16 +1,16 @@
 #include "rendering.h"
 
 #include <blam/volta/blam_bitm.h>
-#include <coffee/core/CProfiling>
-#include <coffee/graphics/apis/gleam/rhi_submit.h>
-#include <coffee/graphics/apis/gleam/rhi_system.h>
-#include <coffee/graphics/apis/gleam/rhi_urls.h>
 #include <blam/volta/blam_shaders.h>
 #include <blam/volta/blam_tag_classes.h>
 #include <blam/volta/blam_tag_index.h>
+#include <coffee/core/CProfiling>
 #include <coffee/graphics/apis/gleam/rhi_compat.h>
 #include <coffee/graphics/apis/gleam/rhi_draw_command.h>
 #include <coffee/graphics/apis/gleam/rhi_program.h>
+#include <coffee/graphics/apis/gleam/rhi_submit.h>
+#include <coffee/graphics/apis/gleam/rhi_system.h>
+#include <coffee/graphics/apis/gleam/rhi_urls.h>
 #include <coffee/image/ktx_load.h>
 #include <glw/texture_formats.h>
 #include <glw/texture_formats_desc.h>
@@ -245,7 +245,7 @@ struct MeshRenderer
     gfx::api*            m_api;
     BlamResources&       m_resources;
     RenderingParameters& m_render_params;
-    int m_render_flags{0x0};
+    int                  m_render_flags{0x0};
 
     ShaderCache<Version>& shader_cache;
     BitmapCache<Version>& bitm_cache;
@@ -492,18 +492,17 @@ struct MeshRenderer
 
     gfx::uniform_pair<const int> get_renderflag_uniform()
     {
-        m_render_flags =
-            (m_render_params.render_fog ? 0x1 : 0) |
-            (m_render_params.render_lightmaps ? 0x2 : 0) |
-            (m_render_params.render_reflection ? 0x4 : 0) |
-            (m_render_params.render_model_bones ? 0x8 : 0) |
-            (m_render_params.only_normals ? 0x10 : 0) |
-            (m_render_params.only_normalmaps ? 0x20 : 0) |
-            (m_render_params.only_lightmaps ? 0x40 : 0) |
-            (m_render_params.only_reflections ? 0x80 : 0) |
-            (m_render_params.only_multipurpose ? 0x100 : 0) |
-            (m_render_params.only_multipurpose2 ? 0x200 : 0) |
-            (m_render_params.only_diffuse ? 0x400 : 0);
+        m_render_flags = (m_render_params.render_fog ? 0x1 : 0) |
+                         (m_render_params.render_lightmaps ? 0x2 : 0) |
+                         (m_render_params.render_reflection ? 0x4 : 0) |
+                         (m_render_params.render_model_bones ? 0x8 : 0) |
+                         (m_render_params.only_normals ? 0x10 : 0) |
+                         (m_render_params.only_normalmaps ? 0x20 : 0) |
+                         (m_render_params.only_lightmaps ? 0x40 : 0) |
+                         (m_render_params.only_reflections ? 0x80 : 0) |
+                         (m_render_params.only_multipurpose ? 0x100 : 0) |
+                         (m_render_params.only_multipurpose2 ? 0x200 : 0) |
+                         (m_render_params.only_diffuse ? 0x400 : 0);
         return gfx::uniform_pair{
             {"render_flags"sv, 31},
             semantic::SpanOne<const int>(m_render_flags),
@@ -528,8 +527,7 @@ struct MeshRenderer
         auto vertex_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair{
-                {"camera"sv, 1},
-                semantic::SpanOne<const Matf4>(player.matrix)},
+                {"camera"sv, 1}, semantic::SpanOne<const Matf4>(player.matrix)},
             get_renderflag_uniform());
         auto fragment_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Fragment,
@@ -758,7 +756,7 @@ struct MeshRenderer
         m_players.clear();
         for(auto const entity : p.template select<PlayerCamera, PlayerInfo>())
         {
-            auto const& [cam, info]  = entity.components();
+            auto const& [cam, info] = entity.components();
             if(info.is_remote() || !cam.is_active())
                 continue;
             m_players.push_back({
@@ -780,7 +778,7 @@ struct MeshRenderer
         // We create our own batching there based on different rules
         bool invalidated = true; //! compile_info::platform::is_emscripten;
         if((time - last_update > std::chrono::seconds(10) || invalidated) &&
-            !use_legacy_rendering())
+           !use_legacy_rendering())
         {
             f32 t = std::fmod(stl_types::Chrono::to_f32(time), 3600.f);
             {
@@ -808,20 +806,24 @@ struct MeshRenderer
             m_resources.offscreen->clear(Vecf4(0, 0, 0, 1));
 
         // Check if shaders are compiled
-        do {
+        do
+        {
             LoadingStatus* loading_state;
             p.subsystem(loading_state);
 
             auto bsp_state = m_resources.bsp_pipeline->check_async_ready();
-            auto mod_state = m_resources.model_pipeline
-                ? m_resources.model_pipeline->check_async_ready()
-                : stl_types::result<bool, gfx::program_t::compile_error_t>(true);
+            auto mod_state =
+                m_resources.model_pipeline
+                    ? m_resources.model_pipeline->check_async_ready()
+                    : stl_types::result<bool, gfx::program_t::compile_error_t>(
+                          true);
 
             if(!bsp_state.has_value() || !mod_state.has_value())
                 return;
-            loading_state->loaded_shaders = bsp_state.value() && mod_state.value() 
-                ? LoadingStatus::loaded 
-                : LoadingStatus::in_progress;
+            loading_state->loaded_shaders =
+                bsp_state.value() && mod_state.value()
+                    ? LoadingStatus::loaded
+                    : LoadingStatus::in_progress;
             loading_state->check_all_loaded(true);
             if(loading_state->loading)
                 return;
@@ -984,7 +986,7 @@ struct MeshRenderer
 
         RenderingParameters const* rendering_props;
         p.subsystem(rendering_props);
-        
+
         ProfContext _;
         /* Batch per lightmap PAGE, not per lightmap tag. One lightmap tag
          * (section.lightmap_) holds many pages, one per lightmap_idx, each
@@ -1001,41 +1003,49 @@ struct MeshRenderer
                 continue;
             if(!bsp_ref.shader.valid() || !bsp_ref.lightmap.valid())
                 continue;
-            ShaderItem const& shader = shader_cache.find(bsp_ref.shader)->second;
+            ShaderItem const& shader =
+                shader_cache.find(bsp_ref.shader)->second;
             if(shader.tag_class != blam::tag_class_t::senv)
                 continue;
-            BitmapItem const& lightm = bitm_cache.find(bsp_ref.lightmap)->second;
+            BitmapItem const& lightm =
+                bitm_cache.find(bsp_ref.lightmap)->second;
             blam::shader::shader_env const* senv =
-                reinterpret_cast<blam::shader::shader_env const*>(shader.header);
+                reinterpret_cast<blam::shader::shader_env const*>(
+                    shader.header);
             LegacyBatch& batch = batches[bsp_ref.lightmap.i];
-            auto light_bucket = bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
+            auto         light_bucket =
+                bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
                     lightm.image.fmt);
 
-            auto setup_texture = [&](
-                generation_idx_t ref,
-                std::vector<gfx::texture_t*>& array,
-                std::shared_ptr<gfx::sampler_t>& sampler)
-            { 
+            auto setup_texture = [&](generation_idx_t                 ref,
+                                     std::vector<gfx::texture_t*>&    array,
+                                     std::shared_ptr<gfx::sampler_t>& sampler) {
                 if(!ref.valid())
                 {
                     array.push_back(nullptr);
                     return;
                 }
                 BitmapItem const& bitm = bitm_cache.find(ref)->second;
-                auto bucket = bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
+                auto              bucket =
+                    bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
                         bitm.image.fmt);
-                array.push_back(bucket.template texture_as<gfx::compat::texture_2da_t>()
-                    .subtexture(bitm.image.layer).get());
+                array.push_back(
+                    bucket.template texture_as<gfx::compat::texture_2da_t>()
+                        .subtexture(bitm.image.layer)
+                        .get());
                 sampler = bucket.sampler;
             };
-            
+
             // Texture setup
-            batch.lightmap = light_bucket.template texture_as<gfx::compat::texture_2da_t>()
-                .subtexture(lightm.image.layer);
+            batch.lightmap =
+                light_bucket.template texture_as<gfx::compat::texture_2da_t>()
+                    .subtexture(lightm.image.layer);
             batch.lightmap_sampler = light_bucket.sampler;
-            
-            setup_texture(shader.senv.base_bitm, batch.base_map, batch.base_sampler);
-            setup_texture(shader.senv.micro_bitm, batch.micro_map, batch.micro_sampler);
+
+            setup_texture(
+                shader.senv.base_bitm, batch.base_map, batch.base_sampler);
+            setup_texture(
+                shader.senv.micro_bitm, batch.micro_map, batch.micro_sampler);
 
             // Draw call setup
             batch.call = bsp_ref.draw.call;
@@ -1047,50 +1057,49 @@ struct MeshRenderer
         {
             Vecf2 base_map_scale{1, 1};
             Vecf2 micro_map_scale{8, 8};
-            auto vertex_u = gfx::make_uniform_list(
+            auto  vertex_u = gfx::make_uniform_list(
                 typing::graphics::ShaderStage::Vertex,
                 gfx::uniform_pair{
-                    {"camera"sv},
-                    semantic::SpanOne<const Matf4>(m_players[0].matrix)
-                });
+                     {"camera"sv},
+                    semantic::SpanOne<const Matf4>(m_players[0].matrix)});
             auto fragment_u = gfx::make_uniform_list(
                 typing::graphics::ShaderStage::Fragment,
                 gfx::uniform_pair{
                     {"base_map_scale"sv},
-                    semantic::SpanOne<const Vecf2>(base_map_scale)
-                },
+                    semantic::SpanOne<const Vecf2>(base_map_scale)},
                 gfx::uniform_pair{
                     {"micro_map_scale"sv},
-                    semantic::SpanOne<const Vecf2>(micro_map_scale)
-                });
+                    semantic::SpanOne<const Vecf2>(micro_map_scale)});
             light_group.lightmap_sampler->rebind(light_group.lightmap);
             std::vector<gfx::sampler_definition_t> samplers;
-            samplers.push_back(gleam::sampler_definition_t{
+            samplers.push_back(
+                gleam::sampler_definition_t{
                     typing::graphics::ShaderStage::Fragment,
                     {"lightmap"sv, 0},
-                    light_group.lightmap_sampler
-                });
+                    light_group.lightmap_sampler});
             auto texture_lists = gfx::make_instance_textures(
                 gfx::instance_texture_t{
-                    .stage = typing::graphics::ShaderStage::Fragment,
-                    .uniform = gfx::uniform_key{"base_map"sv, 1},
-                    .sampler = light_group.base_sampler,
+                    .stage    = typing::graphics::ShaderStage::Fragment,
+                    .uniform  = gfx::uniform_key{"base_map"sv, 1},
+                    .sampler  = light_group.base_sampler,
                     .textures = light_group.base_map,
                 },
                 gfx::instance_texture_t{
-                    .stage = typing::graphics::ShaderStage::Fragment,
-                    .uniform = gfx::uniform_key{"micro_map"sv, 2},
-                    .sampler = light_group.micro_sampler,
+                    .stage    = typing::graphics::ShaderStage::Fragment,
+                    .uniform  = gfx::uniform_key{"micro_map"sv, 2},
+                    .sampler  = light_group.micro_sampler,
                     .textures = light_group.micro_map,
                 });
-            m_api->submit({
-                    .program = m_resources.bsp_pipeline,
-                    .vertices = m_resources.bsp_attr,
+            m_api->submit(
+                {
+                    .program       = m_resources.bsp_pipeline,
+                    .vertices      = m_resources.bsp_attr,
                     .render_target = m_resources.offscreen,
-                    .call = gfx::draw_command::call_spec_t{
-                        .indexed = true,
-                        .mode = gfx::drawing::primitive::triangle,
-                    },
+                    .call =
+                        gfx::draw_command::call_spec_t{
+                            .indexed = true,
+                            .mode    = gfx::drawing::primitive::triangle,
+                        },
                     .data = light_group.data,
                 },
                 vertex_u,
@@ -1099,10 +1108,11 @@ struct MeshRenderer
                 texture_lists,
                 gfx::cull_state{.front_face = true},
                 gfx::view_state{
-                    .depth = gfx::depth_state{
-                        .range    = Vecd2{0.0, 1.0},
-                        .reversed = true,
-                    },
+                    .depth =
+                        gfx::depth_state{
+                            .range    = Vecd2{0.0, 1.0},
+                            .reversed = true,
+                        },
                 });
         }
         Coffee::Profiler::PopContext();
@@ -1130,7 +1140,7 @@ struct MeshRenderer
             if(b_it == bitm_cache.end())
                 continue;
             BitmapItem const& b = b_it->second;
-            auto base_tex =
+            auto              base_tex =
                 bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
                     b.image.fmt);
             base_tex.sampler->rebind(
@@ -1138,10 +1148,11 @@ struct MeshRenderer
                     .subtexture(b.image.layer));
 
             std::vector<gfx::sampler_definition_t> samplers;
-            samplers.push_back(gleam::sampler_definition_t{
-                typing::graphics::ShaderStage::Fragment,
-                {"base"sv, 0},
-                base_tex.sampler});
+            samplers.push_back(
+                gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"base"sv, 0},
+                    base_tex.sampler});
 
             /* Ripple layer (swat bump/ripple map) */
             i32 has_ripple = 0;
@@ -1150,15 +1161,18 @@ struct MeshRenderer
                 if(auto r_it = bitm_cache.find(rid); r_it != bitm_cache.end())
                 {
                     BitmapItem const& rb = r_it->second;
-                    auto rtex = bitm_cache.template get_bucket<
-                        gfx::compat::texture_2da_t>(rb.image.fmt);
+                    auto              rtex =
+                        bitm_cache
+                            .template get_bucket<gfx::compat::texture_2da_t>(
+                                rb.image.fmt);
                     rtex.sampler->rebind(
                         rtex.template texture_as<gfx::compat::texture_2da_t>()
                             .subtexture(rb.image.layer));
-                    samplers.push_back(gleam::sampler_definition_t{
-                        typing::graphics::ShaderStage::Fragment,
-                        {"ripple"sv, 1},
-                        rtex.sampler});
+                    samplers.push_back(
+                        gleam::sampler_definition_t{
+                            typing::graphics::ShaderStage::Fragment,
+                            {"ripple"sv, 1},
+                            rtex.sampler});
                     has_ripple = 1;
                 }
             }
@@ -1172,15 +1186,18 @@ struct MeshRenderer
                    l_it != bitm_cache.end())
                 {
                     BitmapItem const& lm = l_it->second;
-                    auto ltex = bitm_cache.template get_bucket<
-                        gfx::compat::texture_2da_t>(lm.image.fmt);
+                    auto              ltex =
+                        bitm_cache
+                            .template get_bucket<gfx::compat::texture_2da_t>(
+                                lm.image.fmt);
                     ltex.sampler->rebind(
                         ltex.template texture_as<gfx::compat::texture_2da_t>()
                             .subtexture(lm.image.layer));
-                    samplers.push_back(gleam::sampler_definition_t{
-                        typing::graphics::ShaderStage::Fragment,
-                        {"lightmap"sv, 2},
-                        ltex.sampler});
+                    samplers.push_back(
+                        gleam::sampler_definition_t{
+                            typing::graphics::ShaderStage::Fragment,
+                            {"lightmap"sv, 2},
+                            ltex.sampler});
                     light_scale  = lm.image.scale;
                     light_offset = lm.image.offset;
                     has_light    = 1;
@@ -1222,10 +1239,11 @@ struct MeshRenderer
                 samplers,
                 gfx::blend_state{}, /* standard src-alpha transparency */
                 gfx::view_state{
-                    .depth = gfx::depth_state{
-                        .range    = Vecd2{0.0, 1.0},
-                        .reversed = true,
-                    },
+                    .depth =
+                        gfx::depth_state{
+                            .range    = Vecd2{0.0, 1.0},
+                            .reversed = true,
+                        },
                 });
         }
         Coffee::Profiler::PopContext();
@@ -1247,6 +1265,7 @@ struct MeshRenderer
          * in scenery_legacy.vert) to stay inside the ES2 vertex-uniform budget;
          * longer runs split across submits below. */
         constexpr u32 kModelBatch = 32;
+
         struct ModelBatch
         {
             generation_idx_t          shader;
@@ -1254,6 +1273,7 @@ struct MeshRenderer
             Vecf2                     base_scale{1, 1};
             std::vector<Matf4>        transforms;
         };
+
         std::map<std::pair<cache_id_t, u64>, ModelBatch> soso_batches;
 
         /* Model lives on the parent entity, SubModel on its children —
@@ -1270,8 +1290,8 @@ struct MeshRenderer
             auto shader_it = shader_cache.find(sm.shader);
             if(shader_it == shader_cache.end())
                 continue;
-            ShaderItem const& shitem = shader_it->second;
-            auto model_it = model_cache->find(mod.model);
+            ShaderItem const& shitem   = shader_it->second;
+            auto              model_it = model_cache->find(mod.model);
             if(model_it == model_cache->end())
                 continue;
             ModelItem<Version> const& mitem = model_it->second;
@@ -1285,7 +1305,8 @@ struct MeshRenderer
                 auto vtx_u = gfx::make_uniform_list(
                     typing::graphics::ShaderStage::Vertex,
                     gfx::uniform_pair{
-                        {"camera"sv, 1}, semantic::SpanOne<const Matf4>(camera)},
+                        {"camera"sv, 1},
+                        semantic::SpanOne<const Matf4>(camera)},
                     gfx::uniform_pair{
                         {"models"sv, 2},
                         semantic::SpanOne<const Matf4>(mod.transform)});
@@ -1305,16 +1326,19 @@ struct MeshRenderer
                     if(it == bitm_cache.end())
                         break;
                     BitmapItem const& b = it->second;
-                    auto bkt = bitm_cache.template get_bucket<
-                        gfx::compat::texture_2da_t>(b.image.fmt);
+                    auto              bkt =
+                        bitm_cache
+                            .template get_bucket<gfx::compat::texture_2da_t>(
+                                b.image.fmt);
                     auto sub =
                         bkt.template texture_as<gfx::compat::texture_2da_t>()
                             .subtexture(b.image.layer);
                     bkt.sampler->rebind(sub);
-                    samplers.push_back(gleam::sampler_definition_t{
-                        typing::graphics::ShaderStage::Fragment,
-                        {map_names[i], i},
-                        bkt.sampler});
+                    samplers.push_back(
+                        gleam::sampler_definition_t{
+                            typing::graphics::ShaderStage::Fragment,
+                            {map_names[i], i},
+                            bkt.sampler});
                     if(i == 0)
                         scale0 = b.image.scale;
                     count++;
@@ -1346,17 +1370,19 @@ struct MeshRenderer
                     samplers,
                     gfx::cull_state{.front_face = true},
                     gfx::view_state{
-                        .depth = gfx::depth_state{
-                            /* Collapse the sky to the far plane (range {0,0},
-                             * 0 == far under reversed-Z) and test GEQUAL
-                             * (strict_greater=false → GEQUAL on ES2) so the sky
-                             * fills only pixels nothing has drawn yet — depth
-                             * still at the far clear value — and never overdraws
-                             * terrain (depth d>0) or punches through it. */
-                            .range          = Vecd2{0.0, 0.0},
-                            .reversed       = true,
-                            .strict_greater = false,
-                        },
+                        .depth =
+                            gfx::depth_state{
+                                /* Collapse the sky to the far plane (range
+                                 * {0,0}, 0 == far under reversed-Z) and test
+                                 * GEQUAL (strict_greater=false → GEQUAL on ES2)
+                                 * so the sky fills only pixels nothing has
+                                 * drawn yet — depth still at the far clear
+                                 * value — and never overdraws terrain (depth
+                                 * d>0) or punches through it. */
+                                .range          = Vecd2{0.0, 0.0},
+                                .reversed       = true,
+                                .strict_greater = false,
+                            },
                     },
                     gfx::depth_extended_state{.depth_write = false});
                 continue;
@@ -1374,13 +1400,12 @@ struct MeshRenderer
                 continue;
 
             auto const& geom = sm.draw.data.front();
-            auto&       batch =
-                soso_batches[{sm.shader.i, geom.elements.offset}];
+            auto& batch = soso_batches[{sm.shader.i, geom.elements.offset}];
             if(batch.transforms.empty())
             {
-                batch.shader               = sm.shader;
-                batch.geom                 = geom;
-                batch.geom.instances.count = 1;
+                batch.shader                = sm.shader;
+                batch.geom                  = geom;
+                batch.geom.instances.count  = 1;
                 batch.geom.instances.offset = 0;
                 batch.base_scale =
                     bitm_it->second.image.scale * mitem.header->uvscale;
@@ -1390,7 +1415,8 @@ struct MeshRenderer
 
         /* Emit one batched draw per identical group (splitting runs longer than
          * the uniform-array cap). The program, base texture, sampler and frag
-         * uniform are bound once per group; only the transform array changes. */
+         * uniform are bound once per group; only the transform array changes.
+         */
         for(auto const& [key, batch] : soso_batches)
         {
             auto shader_it = shader_cache.find(batch.shader);
@@ -1417,10 +1443,11 @@ struct MeshRenderer
                     semantic::SpanOne<const Vecf2>(batch.base_scale)});
 
             std::vector<gfx::sampler_definition_t> samplers;
-            samplers.push_back(gleam::sampler_definition_t{
-                typing::graphics::ShaderStage::Fragment,
-                {"diffuse"sv, 0},
-                base_tex.sampler});
+            samplers.push_back(
+                gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"diffuse"sv, 0},
+                    base_tex.sampler});
 
             for(size_t off = 0; off < batch.transforms.size();
                 off += kModelBatch)
@@ -1454,11 +1481,12 @@ struct MeshRenderer
                     samplers,
                     gfx::cull_state{.front_face = true},
                     gfx::view_state{
-                        .depth = gfx::depth_state{
-                            .range          = Vecd2{0.0, 1.0},
-                            .reversed       = true,
-                            .strict_greater = true,
-                        },
+                        .depth =
+                            gfx::depth_state{
+                                .range          = Vecd2{0.0, 1.0},
+                                .reversed       = true,
+                                .strict_greater = true,
+                            },
                     });
             }
         }
@@ -1469,7 +1497,8 @@ struct MeshRenderer
     {
     }
 
-    void generate_static_draws(Proxy& p, size_t& materials_ptr, size_t& transparent_ptr)
+    void generate_static_draws(
+        Proxy& p, size_t& materials_ptr, size_t& transparent_ptr)
     {
         ProfContext _;
         /* First go through al lthe BSPs, will at the same time count the amount
@@ -1507,17 +1536,20 @@ struct MeshRenderer
         /* Allocate the material instances from the material pool */
         for(Pass& pass : m_bsp)
         {
-            auto transparent_size = align_for_gpu_padding(pass.required_transparent_storage());
-            auto material_size    = align_for_gpu_padding(pass.required_storage());
+            auto transparent_size =
+                align_for_gpu_padding(pass.required_transparent_storage());
+            auto material_size = align_for_gpu_padding(pass.required_storage());
             pass.material_buffer =
                 m_resources.material_store->slice(materials_ptr, material_size);
             pass.material_mapping =
-                pass.material_buffer.template buffer_cast<materials::shader_data>();
-            pass.transparent_buffer =
-                m_resources.transparent_store->slice(transparent_ptr, transparent_size);
+                pass.material_buffer
+                    .template buffer_cast<materials::shader_data>();
+            pass.transparent_buffer = m_resources.transparent_store->slice(
+                transparent_ptr, transparent_size);
             pass.transparent_mapping =
-                pass.transparent_buffer.template buffer_cast<materials::transparent_data>();
-            materials_ptr   += material_size;
+                pass.transparent_buffer
+                    .template buffer_cast<materials::transparent_data>();
+            materials_ptr += material_size;
             transparent_ptr += transparent_size;
         }
 
@@ -1558,8 +1590,8 @@ struct MeshRenderer
         for(auto ent : p.template select<SubModel, MeshTrackingData>())
         {
             auto&& [model, track] = ent.components();
-            auto   parent = p.template ref<Proxy>(model.parent);
-            Model& mod    = parent.template get<Model>();
+            auto   parent         = p.template ref<Proxy>(model.parent);
+            Model& mod            = parent.template get<Model>();
 
             if(!mod.visible || (!rendering_params->render_scenery &&
                                 (ent.tags() & ObjectSkybox) == 0))
@@ -1602,24 +1634,28 @@ struct MeshRenderer
         size_t matrix_ptr = 0;
         for(Pass& pass : m_model)
         {
-            auto material_size    = align_for_gpu_padding(pass.required_storage());
-            auto matrix_size      = align_for_gpu_padding(pass.required_matrix_storage());
-            auto transparent_size = align_for_gpu_padding(pass.required_transparent_storage());
+            auto material_size = align_for_gpu_padding(pass.required_storage());
+            auto matrix_size =
+                align_for_gpu_padding(pass.required_matrix_storage());
+            auto transparent_size =
+                align_for_gpu_padding(pass.required_transparent_storage());
             pass.material_buffer =
                 m_resources.material_store->slice(materials_ptr, material_size);
             pass.matrix_buffer =
                 m_resources.model_matrix_store->slice(matrix_ptr, matrix_size);
             pass.material_mapping =
-                pass.material_buffer.template buffer_cast<materials::shader_data>();
+                pass.material_buffer
+                    .template buffer_cast<materials::shader_data>();
             pass.matrix_mapping =
                 pass.matrix_buffer.template buffer_cast<PerInstanceData>();
-            pass.transparent_buffer =
-                m_resources.transparent_store->slice(transparent_ptr, transparent_size);
+            pass.transparent_buffer = m_resources.transparent_store->slice(
+                transparent_ptr, transparent_size);
             pass.transparent_mapping =
-                pass.transparent_buffer.template buffer_cast<materials::transparent_data>();
-            matrix_ptr       += matrix_size;
-            materials_ptr    += material_size;
-            transparent_ptr  += transparent_size;
+                pass.transparent_buffer
+                    .template buffer_cast<materials::transparent_data>();
+            matrix_ptr += matrix_size;
+            materials_ptr += material_size;
+            transparent_ptr += transparent_size;
         }
 
         // Reset per-frame bone_base so each model uploads once per frame
@@ -1735,9 +1771,8 @@ struct MeshRenderer
             update_animations(
                 material_of(bsp, instance_offset), bsp.shader, time);
             Pass& pass = m_bsp[bsp.current_pass];
-            if(instance_offset >= 0 &&
-               static_cast<size_t>(instance_offset) <
-                   pass.transparent_mapping.size())
+            if(instance_offset >= 0 && static_cast<size_t>(instance_offset) <
+                                           pass.transparent_mapping.size())
                 shader_cache.update_transparent_animations(
                     pass.transparent_of(instance_offset), bsp.shader, time);
         }
@@ -2352,7 +2387,7 @@ void main()
 void alloc_renderer(EntityContainer& container)
 {
     ProfContext _;
-    auto& api = container.subsystem_cast<gfx::system>();
+    auto&       api = container.subsystem_cast<gfx::system>();
 
     container.register_subsystem_inplace<MeshRenderer<halo_version>>(
         &api,

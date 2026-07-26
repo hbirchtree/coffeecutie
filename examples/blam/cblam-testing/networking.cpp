@@ -45,65 +45,79 @@ constexpr u32 EVENT_LANE        = 1;
 
 struct Networking;
 
+using typing::vector_types::Quatf;
 using typing::vector_types::Vecf3;
 using typing::vector_types::Vecf4;
-using typing::vector_types::Quatf;
 
 namespace {
 
-const std::map<std::string_view, std::pair<Vecf3, Quatf>> birds_eye_positions = {
+const std::map<std::string_view, std::pair<Vecf3, Quatf>> birds_eye_positions =
     {
-        "bloodgulch",
-        {Vecf3{115.2, -153.9, 11.1},Quatf{0.96461415, 0.16558254, 0.20222986, 0.034714244}},
-    },
-    {
-        "beavercreek",
-        {Vecf3{31.6, 19.2, 7.6}, Quatf{-0.9406504, -0.19067901, 0.27514988, 0.055775657}},
-    },
-    {
-        "boardingaction",
-        {Vecf3{10.1, -23.9, 9.2}, Quatf{0.6651756, 0.23904572, 0.6657061, 0.2392364}},
-    },
-    {
-        "carousel",
-        {Vecf3{-9.4, -10.6, 2.1}, Quatf{0.4567158, 0.12149616, 0.85165745, 0.22655913}},
-    },
-    {
-        "chillout",
-        {Vecf3{3.5, 12.5, 3.7}, Quatf{0.7763298, 0.11336352, -0.6135422, -0.0895921}},
-    },
-    {
-        "damnation",
-        {Vecf3{-11.3, 6.9, 5.6}, Quatf{0.251857, 0.07929034, -0.9199958, -0.28963608}},
-    },
-    {
-        "hangemhigh",
-        {Vecf3{31.7, 13.8, 5.8}, Quatf{0.80502903, 0.30301514, -0.4773166, -0.17966329}},
-    },
-    {
-        "longest",
-        {Vecf3{-15.9, -15.4, 3.0}, Quatf{0.06419813, 0.005146916, 0.99473226, 0.07974843}},
-    },
-    {
-        "prisoner",
-        {Vecf3{7.4, -1.8, 6.9}, Quatf{-0.921312, -0.27995527, -0.25817588, -0.07845091}},
-    },
-    {
-        "putput",
-        {Vecf3{34.4, -27.0, 2.5}, Quatf{0.9714654, 0.2070596, -0.113136195, -0.024113834}},
-    },
-    {
-        "ratrace",
-        {Vecf3{22.0, -24.6, -2.0}, Quatf{0.9687177, 0.13157721, 0.20849791, 0.028319463}},
-    },
-    {
-        "sidewinder",
-        {Vecf3{2.6, 57.1, 2.6}, Quatf{0.67849064, 0.09561429, -0.72123384, -0.101637624}},
-    },
-    {
-        "wizard",
-        {Vecf3{9.6, 9.2, -0.1}, Quatf{0.91114575, 0.08682016, -0.40101838, -0.03821188}},
-    },
+        {
+            "bloodgulch",
+            {Vecf3{115.2, -153.9, 11.1},
+             Quatf{0.96461415, 0.16558254, 0.20222986, 0.034714244}},
+        },
+        {
+            "beavercreek",
+            {Vecf3{31.6, 19.2, 7.6},
+             Quatf{-0.9406504, -0.19067901, 0.27514988, 0.055775657}},
+        },
+        {
+            "boardingaction",
+            {Vecf3{10.1, -23.9, 9.2},
+             Quatf{0.6651756, 0.23904572, 0.6657061, 0.2392364}},
+        },
+        {
+            "carousel",
+            {Vecf3{-9.4, -10.6, 2.1},
+             Quatf{0.4567158, 0.12149616, 0.85165745, 0.22655913}},
+        },
+        {
+            "chillout",
+            {Vecf3{3.5, 12.5, 3.7},
+             Quatf{0.7763298, 0.11336352, -0.6135422, -0.0895921}},
+        },
+        {
+            "damnation",
+            {Vecf3{-11.3, 6.9, 5.6},
+             Quatf{0.251857, 0.07929034, -0.9199958, -0.28963608}},
+        },
+        {
+            "hangemhigh",
+            {Vecf3{31.7, 13.8, 5.8},
+             Quatf{0.80502903, 0.30301514, -0.4773166, -0.17966329}},
+        },
+        {
+            "longest",
+            {Vecf3{-15.9, -15.4, 3.0},
+             Quatf{0.06419813, 0.005146916, 0.99473226, 0.07974843}},
+        },
+        {
+            "prisoner",
+            {Vecf3{7.4, -1.8, 6.9},
+             Quatf{-0.921312, -0.27995527, -0.25817588, -0.07845091}},
+        },
+        {
+            "putput",
+            {Vecf3{34.4, -27.0, 2.5},
+             Quatf{0.9714654, 0.2070596, -0.113136195, -0.024113834}},
+        },
+        {
+            "ratrace",
+            {Vecf3{22.0, -24.6, -2.0},
+             Quatf{0.9687177, 0.13157721, 0.20849791, 0.028319463}},
+        },
+        {
+            "sidewinder",
+            {Vecf3{2.6, 57.1, 2.6},
+             Quatf{0.67849064, 0.09561429, -0.72123384, -0.101637624}},
+        },
+        {
+            "wizard",
+            {Vecf3{9.6, 9.2, -0.1},
+             Quatf{0.91114575, 0.08682016, -0.40101838, -0.03821188}},
+        },
 };
 
 std::pair<Vecf3, Quatf> birds_eye_for_map(std::string_view map)
@@ -346,6 +360,7 @@ struct alignas(8) NegotiateExtension
 
     blam::bl_string_var<65> hash; /*!< Hash of extension data
                                    * Ensures we'll be in sync */
+
     enum extension_type_t
     {
         None = 0,
@@ -358,6 +373,7 @@ struct alignas(8) NegotiateExtension
         {
             /* dunno what to stuff here yet */
         } rs2;
+
         u64 raw[10];
     } data;
 };
@@ -589,8 +605,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     if(cam)
                     {
                         cam->camera->position = spawn.pos;
-                        cam->camera->rotation =
-                            glm::angleAxis(glm::pi<f32>() - spawn.rot, Vecf3{0.f, 1.f, 0.f});
+                        cam->camera->rotation = glm::angleAxis(
+                            glm::pi<f32>() - spawn.rot, Vecf3{0.f, 1.f, 0.f});
                     }
                     info->permissions.camera = true;
                     auto* net                = e.get<NetworkInfo>(entity.id());
@@ -688,12 +704,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                        m_socket != k_HSteamListenSocket_Invalid)
                     {
                         cDebug("Starting gateway fleet registration");
-                        m_fleetRegistration =
-                            std::make_unique<webrtc_signaling::GatewayFleetRegistration>(
-                                connect->gateway_register_url,
-                                connect->gateway_server_id,
-                                m_impl,
-                                m_socket);
+                        m_fleetRegistration = std::make_unique<
+                            webrtc_signaling::GatewayFleetRegistration>(
+                            connect->gateway_register_url,
+                            connect->gateway_server_id,
+                            m_impl,
+                            m_socket);
                         m_fleetRegistration->Start();
                     }
 #endif
@@ -928,7 +944,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             cWarning("WebRTC gateway connection already in progress");
             return;
         }
-        std::string baseUrl  = gatewayUrl;
+        std::string baseUrl = gatewayUrl;
         std::string serverId;
         if(auto hash = gatewayUrl.find('#'); hash != std::string::npos)
         {
@@ -941,7 +957,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         cDebug("Bootstrapping WebRTC DataChannel via gateway {}", gatewayUrl);
         m_webrtcDirectMode = !serverId.empty();
         if(m_webrtcDirectMode)
-            cDebug("Assuming WebRTC direct mode because no serverID was provided");
+            cDebug(
+                "Assuming WebRTC direct mode because no serverID was provided");
         m_webrtcBootstrap =
             new webrtc_signaling::GatewayConnectBootstrap(baseUrl, serverId);
         m_webrtcBootstrap->Start();
@@ -962,7 +979,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         {
             cWarning("WebRTC gateway bootstrap failed");
             m_webrtcBootstrap->Release(); // deletes itself
-            m_webrtcBootstrap             = nullptr;
+            m_webrtcBootstrap        = nullptr;
             m_net_state.client_state = NetworkState::ClientState::Error;
             return;
         }
@@ -997,7 +1014,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
         configure_weights(m_connection);
         m_connections[m_connection] = {};
-        cDebug("WebRTC gateway connection established, connection={}", m_connection);
+        cDebug(
+            "WebRTC gateway connection established, connection={}",
+            m_connection);
     }
 #endif
 
@@ -1071,11 +1090,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
 
         cDebug(
-            "Starting WebRTC gateway server: server-signal={} data-channel-gateway={}",
+            "Starting WebRTC gateway server: server-signal={} "
+            "data-channel-gateway={}",
             serverSignalUrl,
             dataChannelUrl);
-        m_webrtcServer = std::make_unique<webrtc_signaling::GatewayServerRegistration>(
-            serverSignalUrl, dataChannelUrl, m_impl);
+        m_webrtcServer =
+            std::make_unique<webrtc_signaling::GatewayServerRegistration>(
+                serverSignalUrl, dataChannelUrl, m_impl);
         m_webrtcServer->Start();
         // Same poll group create_server uses -- independent of any listen
         // socket (connections get attached to it individually via
@@ -1192,7 +1213,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             cDebug(
                 "Problem detected with connection to {}",
                 client_name(info->m_hConn));
-            if(auto& player = m_connections[info->m_hConn].biped; player.exists())
+            if(auto& player = m_connections[info->m_hConn].biped;
+               player.exists())
             {
                 player.get<NetworkInfo>().connected = false;
                 send_player_roster();
@@ -1361,8 +1383,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     if(info.is_remote() || !cam.is_active())
                         continue;
 
-                    info.name = (info.seat_idx == 0) ? m_host_name
-                                                     : get_random_name();
+                    info.name =
+                        (info.seat_idx == 0) ? m_host_name : get_random_name();
                     m_local_player_info.push_back(player.ref<PlayerInfo>());
                 }
             }
@@ -1463,7 +1485,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 
                 // Server-pushed transform/viewport
                 // Used for eg. birds-eye-view while locking viewport
-                // TODO: At some point replace broadcast with check for whether it's relevant for the player
+                // TODO: At some point replace broadcast with check for whether
+                // it's relevant for the player
                 if(net.changes.viewport)
                 {
                     send_all(
@@ -1498,12 +1521,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 if(net.changes.viewport || net.changes.transform)
                 {
                     auto& camera = m_client_player.get<PlayerCamera>();
-                    auto& info = m_client_player.get<PlayerInfo>();
-                    send_single(m_connection, Message<CameraSync>({
-                        .position      = Vecf4{camera.camera->position, 0},
-                        .rotation      = camera.camera->rotation,
-                        .target_player = info.player_idx,
-                    }));
+                    auto& info   = m_client_player.get<PlayerInfo>();
+                    send_single(
+                        m_connection,
+                        Message<CameraSync>({
+                            .position      = Vecf4{camera.camera->position, 0},
+                            .rotation      = camera.camera->rotation,
+                            .target_player = info.player_idx,
+                        }));
                     net.changes.viewport = net.changes.transform = false;
                 }
             }
@@ -1569,17 +1594,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             for(auto const& pi : p.select<PlayerInfo, PlayerCamera>())
             {
                 auto [player_info, cam] = pi.components();
-                bool  match =
+                bool match =
                     (sync.target_player == CameraSync::self_id)
-                         ? (&player_info == &self)
-                         : (player_info.player_idx == sync.target_player);
+                        ? (&player_info == &self)
+                        : (player_info.player_idx == sync.target_player);
                 if(!match)
                     continue;
                 cDebug("Syncing change from player={}", sync.target_player);
                 cam.camera->position = Vecf3(sync.position);
                 cam.camera->rotation = sync.rotation;
-                // TODO: With a fresh viewport, we should compute relevance of entities
-                // Distance, visibility in frustum and projectile type
+                // TODO: With a fresh viewport, we should compute relevance of
+                // entities Distance, visibility in frustum and projectile type
                 break;
             }
             break;
@@ -1613,7 +1638,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 auto& net_info     = ref.get<NetworkInfo>();
                 net_info.connected = true;
 
-                auto& info = (*player_info.player_info);
+                auto& info      = (*player_info.player_info);
                 info.remote     = client_name(connection);
                 info.player_idx = player_info.idx;
             }
@@ -1727,7 +1752,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 }
             }
 
-            cDebug("Received join confirmation, player_id={}", confirm.player_idx);
+            cDebug(
+                "Received join confirmation, player_id={}", confirm.player_idx);
             journal("net_join_confirm", {{"player_idx", confirm.player_idx}});
             break;
         }
@@ -1754,7 +1780,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto  players   = payload.values<PlayerSyncEntry>();
             auto& net_state = p.subsystem<NetworkState>();
             auto  self_idx  = net_state.remote_player_idx.value_or(0xFFFF);
-            u32 existing_before = 0;
+            u32   existing_before = 0;
             for(auto _ : p.select<PlayerInfo>())
                 ++existing_before;
             cDebug(
@@ -1824,9 +1850,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 } else if(!is_self)
                 {
                     // Create entity for remote player
-                    auto ref = p.create_entity(shared_recipes::player_recipe);
-                    auto& info            = ref.get<PlayerInfo>();
-                    info.name             = std::string(player.name.str());
+                    auto  ref  = p.create_entity(shared_recipes::player_recipe);
+                    auto& info = ref.get<PlayerInfo>();
+                    info.name  = std::string(player.name.str());
                     info.player_idx       = player.player_idx;
                     info.loading_progress = player.loading_progress;
                     info.remote           = "remote";
@@ -1920,9 +1946,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 #if defined(USE_WEBRTC_TRANSPORT)
     webrtc_signaling::GatewayConnectBootstrap* m_webrtcBootstrap{nullptr};
     webrtc_signaling::GatewayConnectBootstrap* m_webrtcDirectKeepAlive{nullptr};
-    bool m_webrtcDirectMode{false};
+    bool                                       m_webrtcDirectMode{false};
     std::unique_ptr<webrtc_signaling::GatewayServerRegistration> m_webrtcServer;
-    std::unique_ptr<webrtc_signaling::GatewayFleetRegistration> m_fleetRegistration;
+    std::unique_ptr<webrtc_signaling::GatewayFleetRegistration>
+        m_fleetRegistration;
 #endif
 
     struct connection_state_t
@@ -1934,7 +1961,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         u32                               idx{0};
         u32                               loading_progress{};
         std::optional<time_point>         last_seen{};
-        bool invited{false};
+        bool                              invited{false};
     };
 
     std::map<HSteamNetConnection, connection_state_t>      m_connections{};
