@@ -127,10 +127,13 @@ func serverListItems(ws *serverWorkingSet) []list.Item {
 	items := make([]list.Item, 0)
 	ws.servers.RLock()
 	for id, server := range ws.servers.registry {
-		addr := "<none>"
-		if server.dest != nil {
-			addr = fmt.Sprintf("%s:%d", server.dest.IP.String(), server.dest.Port)
+		server.mu.Lock()
+		// Only known once a client's relay punch has arrived.
+		addr := "<no client yet>"
+		if server.gameAddr != nil {
+			addr = server.gameAddr.String()
 		}
+		server.mu.Unlock()
 		items = append(items, serverItem{
 			id:   id,
 			addr: addr,
@@ -174,16 +177,20 @@ func currentServerRows(ws *serverWorkingSet, id string, spinnerFrame string) (in
 		return nil, nil, false
 	}
 
-	destStr := "<none>"
-	if server.dest != nil {
-		destStr = fmt.Sprintf("%s:%d", server.dest.IP, server.dest.Port)
+	server.mu.Lock()
+	// Game address is per-client under symmetric NAT -- this is the last
+	// one learned, and is unknown until some client's relay punch lands.
+	gameAddrStr := "<no client yet>"
+	if server.gameAddr != nil {
+		gameAddrStr = server.gameAddr.String()
 	}
 	info = []table.Row{
-		{"Server address", destStr},
-		{"Active", fmt.Sprintf("%t", server.active)},
+		{"Game address", gameAddrStr},
 		{"Challenge address", server.challengeAddr.String()},
+		{"Active", fmt.Sprintf("%t", server.active)},
 		{"Expiry", server.expiresAt.String()},
 	}
+	server.mu.Unlock()
 
 	clients = make([]table.Row, 0)
 	ws.clients.RLock()

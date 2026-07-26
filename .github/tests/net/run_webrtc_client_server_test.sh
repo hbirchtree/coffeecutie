@@ -2,21 +2,21 @@
 # WebRTC-transport client/server replication integration test.
 #
 # Same coverage as run_client_server_test.sh (two BlamGraphics instances,
-# journal comparison via compare_journals.py) but routes the connection
-# through two webrtc-gateway (tools/webrtc-gateway) processes instead of a
-# direct UDP dial -- exercising the CConnectionTransportP2PWebRTC path end
-# to end (see examples/blam/cblam-testing/WEBRTC_TRANSPORT.md). Both ends
-# are native WebRTC/DataChannel peers (confirmed necessary: GNS's P2P
-# custom-signaling accept path can't interoperate with a plain UDP listen
-# socket, see the doc's "GNS-level signaling" section) -- gateway A hosts
-# the client's DataChannel + /server-signal (GNS rendezvous relay),
-# gateway B hosts the server's own per-connection DataChannel. The two
-# gateways bridge those independently-negotiated DataChannels together via
-# -relay-udp-port, each pointing -dest at the other's fixed relay port.
+# journal comparison via compare_journals.py) but routes the client's
+# connection through a webrtc-gateway (tools/webrtc-gateway) instead of a
+# direct UDP dial (see examples/blam/cblam-testing/WEBRTC_TRANSPORT.md).
+#
+# One gateway, one topology: the server binds an ordinary GNS UDP listen
+# socket and registers it with the gateway's fleet registry
+# (--gateway-register/--gateway-server-id); the client bootstraps a
+# DataChannel to the gateway and runs GNS's ordinary direct-UDP protocol
+# over it (--server ws://...#<serverId>). The gateway relays
+# DataChannel <-> UDP, reaching the server through the NAT mapping the
+# server's own relay punch opened.
 #
 # Topology:
-#   client --ws(/signal)--> gateway A <--UDP(relay-udp-port)--> gateway B <--ws(/signal)-- server (per-connection)
-#                            gateway A <--ws(/server-signal)-- server (persistent, GNS rendezvous only)
+#   client --ws(/signal?server=<id>)--> gateway --UDP--> server (--listen)
+#                                       gateway <--ws(/server-signal)-- server (register, heartbeat, punches)
 #
 # Usage:
 #   run_webrtc_client_server_test.sh [OUT_DIR]
@@ -25,9 +25,10 @@
 #   TARGET        cb build/run target        (default: desktop:x86_64-buildroot-linux-gnu:multi/BlamGraphics)
 #   RESOURCE_DIR  asset dir passed to both    (default: multi_build/desktop-x86_64-buildroot-linux-gnu-multi/examples/blam/cblam-testing/assets/)
 #   MAP           map file passed to both     (default: /mnt/blam/pc/bloodgulch.map)
-#   GATEWAY_A_HTTP_PORT / GATEWAY_B_HTTP_PORT   gateway WebSocket signaling ports (default: 8098 / 8099)
-#   GATEWAY_A_RELAY_PORT / GATEWAY_B_RELAY_PORT fixed UDP relay ports bridging the two gateways (default: 19501 / 19502)
-#   BOOT_TIMEOUT  seconds to wait for each boot signal (gateways, server /server-signal registration) (default: 30)
+#   GATEWAY_HTTP_PORT  gateway WebSocket signaling port (default: 8098)
+#   SERVER_UDP_PORT    real GNS UDP listen port the server binds (default: 19601)
+#   SERVER_ID          fleet registry serverId to register/connect under (default: test)
+#   BOOT_TIMEOUT  seconds to wait for each boot signal (gateway, server registration) (default: 30)
 #   RUN_TIMEOUT   hard cap per BlamGraphics process, via `timeout` (default: 60)
 #   BUILD         set to 1 to build BlamGraphics using `./cb build` first
 #   BUILD_GATEWAY set to 1 to `go build` the gateway first (default: 0, same
@@ -45,165 +46,90 @@ set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 SRCDIR="$(cd "$HERE/../../.." && pwd)"
 GATEWAY_DIR="$SRCDIR/tools/webrtc-gateway"
+# shellcheck source=.github/tests/net/webrtc_test_lib.sh
+. "$HERE/webrtc_test_lib.sh"
 cd "$SRCDIR"
 
 OUT_DIR="${1:-/tmp/webrtc_net_test}"
 TARGET="${TARGET:-desktop:x86_64-buildroot-linux-gnu:multi/BlamGraphics}"
 RESOURCE_DIR="${RESOURCE_DIR:-multi_build/desktop-x86_64-buildroot-linux-gnu-multi/examples/blam/cblam-testing/assets/}"
 MAP="${MAP:-/mnt/blam/pc/bloodgulch.map}"
-GATEWAY_A_HTTP_PORT="${GATEWAY_A_HTTP_PORT:-8098}"
-GATEWAY_B_HTTP_PORT="${GATEWAY_B_HTTP_PORT:-8099}"
-GATEWAY_A_RELAY_PORT="${GATEWAY_A_RELAY_PORT:-19501}"
-GATEWAY_B_RELAY_PORT="${GATEWAY_B_RELAY_PORT:-19502}"
+GATEWAY_HTTP_PORT="${GATEWAY_HTTP_PORT:-8098}"
+SERVER_UDP_PORT="${SERVER_UDP_PORT:-19601}"
+SERVER_ID="${SERVER_ID:-test}"
 BOOT_TIMEOUT="${BOOT_TIMEOUT:-30}"
 RUN_TIMEOUT="${RUN_TIMEOUT:-60}"
 
 SERVER_DUMMY_PLUG_CONFIG="${SERVER_DUMMY_PLUG_CONFIG:-$HERE/dummy_plug_net_webrtc_server.json}"
 CLIENT_DUMMY_PLUG_CONFIG="${CLIENT_DUMMY_PLUG_CONFIG:-$HERE/dummy_plug_net_webrtc_client.json}"
 
-GO="${GO:-go}"
-if ! command -v "$GO" >/dev/null 2>&1; then
-    if [ -x "$HOME/local/go/bin/go" ]; then
-        GO="$HOME/local/go/bin/go"
-    fi
-fi
-
 GATEWAY_BIN="$GATEWAY_DIR/gateway"
-BUILD_GATEWAY="${BUILD_GATEWAY:-0}"
 
 SERVER_TMP="$OUT_DIR/server_tmp"
 CLIENT_TMP="$OUT_DIR/client_tmp"
 mkdir -p "$SERVER_TMP" "$CLIENT_TMP"
 SERVER_LOG="$OUT_DIR/server.log"
 CLIENT_LOG="$OUT_DIR/client.log"
-GATEWAY_A_LOG="$OUT_DIR/gateway_a.log"
-GATEWAY_B_LOG="$OUT_DIR/gateway_b.log"
+GATEWAY_LOG="$OUT_DIR/gateway.log"
 SERVER_JOURNAL="$SERVER_TMP/journal.jsonl"
 CLIENT_JOURNAL="$CLIENT_TMP/journal.jsonl"
-rm -f "$SERVER_LOG" "$CLIENT_LOG" "$GATEWAY_A_LOG" "$GATEWAY_B_LOG" "$SERVER_JOURNAL" "$CLIENT_JOURNAL"
+rm -f "$SERVER_LOG" "$CLIENT_LOG" "$GATEWAY_LOG" "$SERVER_JOURNAL" "$CLIENT_JOURNAL"
 
 echo "Out dir  : $OUT_DIR"
 echo "Target   : $TARGET"
-echo "Gateway A: :$GATEWAY_A_HTTP_PORT (relay :$GATEWAY_A_RELAY_PORT)"
-echo "Gateway B: :$GATEWAY_B_HTTP_PORT (relay :$GATEWAY_B_RELAY_PORT)"
+echo "Gateway  : :$GATEWAY_HTTP_PORT"
+echo "Server   : udp 127.0.0.1:$SERVER_UDP_PORT, serverId=$SERVER_ID"
 
-if [ "$BUILD_GATEWAY" != "0" ]; then
-    echo "::group::Building webrtc-gateway"
-    if ! command -v "$GO" >/dev/null 2>&1 && [ ! -x "$GO" ]; then
-        echo "FAIL: no go toolchain found (set GO=/path/to/go)"
-        exit 2
-    fi
-    (cd "$GATEWAY_DIR" && "$GO" build -o gateway .) || {
-        echo "FAIL: gateway build failed"
-        exit 2
-    }
-    echo "::endgroup::"
-fi
+webrtc_build_gateway "$GATEWAY_DIR" "$(webrtc_find_go)" || exit 2
 
 if [ "${BUILD:-0}" != "0" ]; then
     echo "::group::Building $TARGET"
     BUILD_HOST_TOOLS=0 COFFEE_DISABLE_PROFILER=1 ./cb build "$TARGET" || {
         echo "FAIL: build failed"
+        echo "::endgroup::"
         exit 2
     }
     echo "::endgroup::"
 fi
 
-GWA_PID=""
-GWB_PID=""
-SERVER_PID=""
 CLIENT_PID=""
 cleanup() {
-    for pid in "$CLIENT_PID" "$SERVER_PID" "$GWA_PID" "$GWB_PID"; do
+    for pid in "$CLIENT_PID" "${WEBRTC_SERVER_PID:-}" "${WEBRTC_GW_PID:-}"; do
         [ -n "$pid" ] && kill "$pid" 2>/dev/null
     done
 }
 trap cleanup EXIT
 
-# Wait for a TCP port to accept connections (gateway HTTP/WebSocket
-# listeners) -- more reliable than grepping the "listening on" log line,
-# which main.go prints just before ListenAndServe, not necessarily after
-# the socket is actually bound.
-wait_for_port() {
-    local port="$1" timeout="$2" pid="$3" label="$4"
-    for _ in $(seq 1 "$timeout"); do
-        if (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null; then
-            exec 3>&- 3<&-
-            return 0
-        fi
-        if ! kill -0 "$pid" 2>/dev/null; then
-            echo "FAIL: $label exited before its port opened"
-            return 1
-        fi
-        sleep 1
-    done
-    echo "FAIL: $label did not open its port within ${timeout}s"
-    return 1
-}
-
-echo "Starting gateway A..."
-"$GATEWAY_BIN" -listen ":$GATEWAY_A_HTTP_PORT" \
-    -dest "127.0.0.1:$GATEWAY_B_RELAY_PORT" -relay-udp-port "$GATEWAY_A_RELAY_PORT" \
-    > "$GATEWAY_A_LOG" 2>&1 &
-GWA_PID=$!
-
-echo "Starting gateway B..."
-"$GATEWAY_BIN" -listen ":$GATEWAY_B_HTTP_PORT" \
-    -dest "127.0.0.1:$GATEWAY_A_RELAY_PORT" -relay-udp-port "$GATEWAY_B_RELAY_PORT" \
-    > "$GATEWAY_B_LOG" 2>&1 &
-GWB_PID=$!
-
-wait_for_port "$GATEWAY_A_HTTP_PORT" "$BOOT_TIMEOUT" "$GWA_PID" "gateway A" || { tail -n 40 "$GATEWAY_A_LOG"; exit 1; }
-wait_for_port "$GATEWAY_B_HTTP_PORT" "$BOOT_TIMEOUT" "$GWB_PID" "gateway B" || { tail -n 40 "$GATEWAY_B_LOG"; exit 1; }
-echo "Both gateways are listening."
+webrtc_start_gateway "$GATEWAY_BIN" "$GATEWAY_HTTP_PORT" "$GATEWAY_LOG" "$BOOT_TIMEOUT" || exit 1
 
 BASE_RUN_ARGS=(run "$TARGET" -- "$RESOURCE_DIR" "$MAP")
-SERVER_SIGNAL_URL="ws://127.0.0.1:$GATEWAY_A_HTTP_PORT"
-DATACHANNEL_GATEWAY_URL="ws://127.0.0.1:$GATEWAY_B_HTTP_PORT"
-CLIENT_URL="ws://127.0.0.1:$GATEWAY_A_HTTP_PORT"
+GATEWAY_URL="ws://127.0.0.1:$GATEWAY_HTTP_PORT"
 
-echo "Starting server (--listen $SERVER_SIGNAL_URL#$DATACHANNEL_GATEWAY_URL)..."
-TMPDIR="$SERVER_TMP" \
-DUMMY_PLUG_CONFIG="$SERVER_DUMMY_PLUG_CONFIG" \
-COFFEE_DISABLE_PROFILER=1 \
-timeout "${RUN_TIMEOUT}s" ./cb "${BASE_RUN_ARGS[@]}" --listen "${SERVER_SIGNAL_URL}#${DATACHANNEL_GATEWAY_URL}" \
-    > "$SERVER_LOG" 2>&1 &
-SERVER_PID=$!
+echo "Starting server (--listen 127.0.0.1:$SERVER_UDP_PORT --gateway-register $GATEWAY_URL --gateway-server-id $SERVER_ID)..."
+webrtc_server_command "$TARGET" \
+    "$RESOURCE_DIR" "$MAP" \
+    --listen "127.0.0.1:$SERVER_UDP_PORT" \
+    --gateway-register "$GATEWAY_URL" \
+    --gateway-server-id "$SERVER_ID"
+webrtc_start_server "$SERVER_LOG" "$SERVER_TMP" "$SERVER_DUMMY_PLUG_CONFIG" "$RUN_TIMEOUT"
 
-echo "Waiting for server to register with gateway A's /server-signal (up to ${BOOT_TIMEOUT}s)..."
-booted=0
-for _ in $(seq 1 "$BOOT_TIMEOUT"); do
-    if grep -q "registered with gateway /server-signal" "$SERVER_LOG" 2>/dev/null; then
-        booted=1
-        break
-    fi
-    if ! kill -0 "$SERVER_PID" 2>/dev/null; then
-        echo "FAIL: server process exited before registering with the gateway"
-        echo "--- server.log tail ---"
-        tail -n 40 "$SERVER_LOG"
-        exit 1
-    fi
-    sleep 1
-done
-if [ "$booted" != "1" ]; then
-    echo "FAIL: server did not register within ${BOOT_TIMEOUT}s"
-    tail -n 40 "$SERVER_LOG"
+webrtc_wait_for_registration "$SERVER_LOG" "$SERVER_ID" "$BOOT_TIMEOUT" "$WEBRTC_SERVER_PID" || {
+    webrtc_dump "gateway.log" "$GATEWAY_LOG"
     exit 1
-fi
-echo "Server is registered."
+}
 
-echo "Starting client (--server $CLIENT_URL)..."
+echo "Starting client (--server $GATEWAY_URL#$SERVER_ID)..."
 TMPDIR="$CLIENT_TMP" \
 DUMMY_PLUG_CONFIG="$CLIENT_DUMMY_PLUG_CONFIG" \
 COFFEE_DISABLE_PROFILER=1 \
-timeout "${RUN_TIMEOUT}s" ./cb "${BASE_RUN_ARGS[@]}" --server "$CLIENT_URL" \
+timeout "${RUN_TIMEOUT}s" ./cb "${BASE_RUN_ARGS[@]}" --server "${GATEWAY_URL}#${SERVER_ID}" \
     > "$CLIENT_LOG" 2>&1 &
 CLIENT_PID=$!
 
 echo "Waiting for both processes to finish (dummy_plug end_time closes them)..."
 wait "$CLIENT_PID"
 CLIENT_EXIT=$?
-wait "$SERVER_PID"
+wait "$WEBRTC_SERVER_PID"
 SERVER_EXIT=$?
 
 echo "server exit=$SERVER_EXIT  client exit=$CLIENT_EXIT"
@@ -212,14 +138,9 @@ if [ "$SERVER_EXIT" = "124" ] || [ "$CLIENT_EXIT" = "124" ]; then
 fi
 
 echo
-echo "::group::gateway_a.log"
-cat "$GATEWAY_A_LOG" || true
-echo "::endgroup::"
-echo "::group::gateway_b.log"
-cat "$GATEWAY_B_LOG" || true
-echo "::endgroup::"
+webrtc_dump "gateway.log" "$GATEWAY_LOG"
 echo "::group::server.log (connection + state-dump lines)"
-grep -E "State dumped|registered with gateway|WebRTC gateway|Connection info|Player joined|Controller|Error|error" "$SERVER_LOG" || true
+grep -E "State dumped|registration active|gateway_fleet_registration|Connection info|Player joined|Controller|Error|error" "$SERVER_LOG" || true
 echo "::endgroup::"
 echo "::group::client.log (connection + state-dump lines)"
 grep -E "State dumped|join confirmation|roster received|WebRTC|Error|error" "$CLIENT_LOG" || true
@@ -238,8 +159,10 @@ echo
 echo "=== Journal comparison ==="
 echo "server: $SERVER_JOURNAL"
 echo "client: $CLIENT_JOURNAL"
+echo "::group::compare_journals.py"
 python3 "$HERE/compare_journals.py" "$SERVER_JOURNAL" "$CLIENT_JOURNAL"
 RESULT=$?
+echo "::endgroup::"
 if [ "$RESULT" != "0" ]; then
     echo
     echo "::group::merged journal timeline"

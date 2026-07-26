@@ -475,8 +475,9 @@ jobs:
   Test_webrtc_wasm_client:
     # Exercises the actual target scenario for the WebRTC DataChannel
     # transport (examples/blam/cblam-testing/WEBRTC_TRANSPORT.md): a wasm
-    # BlamGraphics client, headless in Chromium, connecting through two
-    # webrtc-gateway processes to a native BlamGraphics server. Unlike
+    # BlamGraphics client, headless in Chromium, connecting through one
+    # webrtc-gateway to a fleet-registered native BlamGraphics server
+    # (the same single-gateway topology as production). Unlike
     # Test_wasm_swiftshader this isn't a rendering test -- it's a
     # network-handshake test, verified via console-log markers (join
     # confirmation + roster sync), since comp_app::dummy_plug/Journal
@@ -584,26 +585,25 @@ jobs:
         path: /tmp/webrtc_wasm_client_test
         if-no-files-found: error
   Test_webrtc_nat_punch:
-    # Same wasm-client/gateway/native-server scenario as
-    # Test_webrtc_wasm_client's fleet variant, but the server runs inside
-    # a docker container behind a real MASQUERADE NAT with an
-    # internal-only network (.github/tests/net/nat-punch/) -- proving the
-    # Phase 6 punch-through actually opens conntrack mappings, which
-    # host-loopback runs cannot (see run_webrtc_nat_punch_test.sh's
-    # header). Extra pass criterion: the gateway must see punches from
-    # the router's masqueraded address, never the server's private one.
+    # Same wasm-client/native-server scenario as Test_webrtc_wasm_client,
+    # but against a real gateway deployed on the internet (the
+    # WEBRTC_GATEWAY_SERVER secret) instead of one on loopback: the runner
+    # sits behind NAT with no port forwarding, so registration and relay
+    # can only work if the server's own UDP punches opened the mappings.
+    # Skipped when the secret isn't available (forks, PRs from forks).
+    # Replaces an earlier docker MASQUERADE topology that never passed.
     if: ${{ always() }}
-    name: "WebRTC test: NAT punch-through (containerized server)"
+    name: "WebRTC test: NAT punch-through (remote gateway)"
     needs:
     - Linux
     - WebAssembly
-    - WebRTCGateway
     runs-on: ubuntu-latest
     permissions:
       actions: read
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
+      GATEWAY_URL: ${{ secrets.WEBRTC_GATEWAY_SERVER }}
     steps:
     - uses: actions/checkout@v6
       with:
@@ -621,17 +621,10 @@ jobs:
       with:
         name: web-wasm32-emscripten-webgl2
         path: client_artifacts/
-    - name: Downloading webrtc-gateway-linux-amd64 artifact
-      uses: actions/download-artifact@v8
-      with:
-        name: webrtc-gateway-linux-amd64
-        path: gateway_artifacts/
     - name: Acquire the sysroot for the desktop x86_64 platform
       run: |
-        # Same sysroot tarball the other server-running test jobs use;
-        # the server binary runs against it INSIDE the container (bare
-        # alpine image + bind-mounted workspace), so no Mesa apt
-        # packages are needed on the host here.
+        # Same sysroot tarball the other server-running test jobs use --
+        # the server binary and its whole Mesa/EGL stack come from it.
         mkdir -p sysroot/lib full-sysroot
         (cd full-sysroot && gh release -R hbirchtree/coffeecutie-automation-tools download v2.2 -p desktop_x86_64-buildroot-linux-gnu_*_target.tar.xz && tar xf *.tar.xz && rm *.tar.xz)
         find "$PWD/full-sysroot/usr/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
@@ -659,12 +652,11 @@ jobs:
         wget -q -O maps/pc/bloodgulch.map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bloodgulch.map
         wget -q -O maps/pc/bitmaps.map    --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bitmaps.map
         wget -q -O maps/pc/sounds.map     --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/sounds.map
-    - name: Installing gateway binary
-      run: |
-        mkdir -p source/tools/webrtc-gateway
-        cp gateway_artifacts/gateway source/tools/webrtc-gateway/gateway
-        chmod +x source/tools/webrtc-gateway/gateway
     - name: Run WebRTC NAT punch-through test
+      # No secret (fork PRs) means no gateway to test against -- skip
+      # rather than fail; the loopback path is still covered by
+      # Test_webrtc_wasm_client.
+      if: ${{ env.GATEWAY_URL != '' }}
       env:
         LIBGL_ALWAYS_SOFTWARE: "1"
         GALLIUM_DRIVER: llvmpipe
@@ -677,7 +669,6 @@ jobs:
         SERVER_LIB_PATH: ${{ github.workspace }}/sysroot/lib
         RESOURCE_DIR: ${{ steps.server.outputs.assets }}/
         MAP: ${{ github.workspace }}/maps/pc/bloodgulch.map
-        MOUNT_ROOT: ${{ github.workspace }}
         CI: "true"
         RUN_TIMEOUT: "150"
         BOOT_TIMEOUT: "90"
@@ -686,7 +677,7 @@ jobs:
       run: |
         source/.github/tests/net/run_webrtc_nat_punch_test.sh "${{ steps.bundle.outputs.dir }}" /tmp/webrtc_nat_punch_test
     - name: Uploading test artifacts
-      if: always()
+      if: ${{ always() && env.GATEWAY_URL != '' }}
       uses: actions/upload-artifact@v7
       with:
         name: dummy_plug_test_webrtc_nat_punch
