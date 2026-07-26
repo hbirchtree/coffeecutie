@@ -128,15 +128,21 @@ func serverListItems(ws *serverWorkingSet) []list.Item {
 	ws.servers.RLock()
 	for id, server := range ws.servers.registry {
 		server.mu.Lock()
-		// Only known once a client's relay punch has arrived.
-		addr := "<no client yet>"
-		if server.gameAddr != nil {
-			addr = server.gameAddr.String()
+		// A webrtc-hosted server has no address of its own -- it is
+		// reachable only down its own /server-signal connection.
+		addr := "<datachannel>"
+		if server.transport != transportWebRTC {
+			// Only known once a client's relay punch has arrived.
+			addr = "<no client yet>"
+			if server.gameAddr != nil {
+				addr = server.gameAddr.String()
+			}
 		}
 		server.mu.Unlock()
 		items = append(items, serverItem{
-			id:   id,
-			addr: addr,
+			id:        id,
+			addr:      addr,
+			transport: server.transport,
 		})
 	}
 	ws.servers.RUnlock()
@@ -178,17 +184,32 @@ func currentServerRows(ws *serverWorkingSet, id string, spinnerFrame string) (in
 	}
 
 	server.mu.Lock()
-	// Game address is per-client under symmetric NAT -- this is the last
-	// one learned, and is unknown until some client's relay punch lands.
-	gameAddrStr := "<no client yet>"
-	if server.gameAddr != nil {
-		gameAddrStr = server.gameAddr.String()
-	}
-	info = []table.Row{
-		{"Game address", gameAddrStr},
-		{"Challenge address", server.challengeAddr.String()},
-		{"Active", fmt.Sprintf("%t", server.active)},
-		{"Expiry", server.expiresAt.String()},
+	webrtcHosted := server.transport == transportWebRTC
+	if webrtcHosted {
+		// No UDP leg exists for these: the gateway bridges the client's
+		// DataChannel to one this server opens per session, so there is
+		// no address, no punch and no challenge to report.
+		info = []table.Row{
+			{"Transport", "webrtc (datachannel bridge)"},
+			{"Game address", "<none -- bridged>"},
+			{"Active", fmt.Sprintf("%t", server.active)},
+			{"Expiry", server.expiresAt.String()},
+		}
+	} else {
+		// Game address is per-client under symmetric NAT -- this is the
+		// last one learned, and is unknown until some client's relay
+		// punch lands.
+		gameAddrStr := "<no client yet>"
+		if server.gameAddr != nil {
+			gameAddrStr = server.gameAddr.String()
+		}
+		info = []table.Row{
+			{"Transport", "udp (relay + NAT punch)"},
+			{"Game address", gameAddrStr},
+			{"Challenge address", server.challengeAddr.String()},
+			{"Active", fmt.Sprintf("%t", server.active)},
+			{"Expiry", server.expiresAt.String()},
+		}
 	}
 	server.mu.Unlock()
 
@@ -205,8 +226,11 @@ func currentServerRows(ws *serverWorkingSet, id string, spinnerFrame string) (in
 		peerRemoteAddr := client.peerRemoteAddr
 		client.mu.Unlock()
 
+		// A bridged session never has a UDP peer address to show.
 		serverAddrStr := "<pending punch>"
-		if serverAddr != nil {
+		if webrtcHosted {
+			serverAddrStr = "<datachannel bridge>"
+		} else if serverAddr != nil {
 			serverAddrStr = serverAddr.String()
 		}
 		peerLocalStr := "<pending ICE>"
@@ -300,8 +324,9 @@ type model struct {
 }
 
 type serverItem struct {
-	id   string
-	addr string
+	id        string
+	addr      string
+	transport string
 }
 
 func (i serverItem) FilterValue() string { return "" }
@@ -319,7 +344,7 @@ func (d serverItemDelegate) Render(w io.Writer, m list.Model, index int, listIte
 		return
 	}
 
-	str := fmt.Sprintf("%s (%s)", i.id, i.addr)
+	str := fmt.Sprintf("%s [%s] (%s)", i.id, i.transport, i.addr)
 
 	fn := d.styles.server.Render
 	if index == m.Index() {

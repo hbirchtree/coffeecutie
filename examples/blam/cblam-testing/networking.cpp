@@ -694,7 +694,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     if(connect->remote.starts_with("ws://") ||
                        connect->remote.starts_with("wss://"))
                 {
-                    create_server_webrtc(connect->remote);
+                    create_server_webrtc(
+                        connect->remote, connect->gateway_server_id);
                 } else
 #endif
                 {
@@ -955,10 +956,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             cWarning("Failed to split gateway URL: {}", gatewayUrl);
         }
         cDebug("Bootstrapping WebRTC DataChannel via gateway {}", gatewayUrl);
-        m_webrtcDirectMode = !serverId.empty();
-        if(m_webrtcDirectMode)
-            cDebug(
-                "Assuming WebRTC direct mode because no serverID was provided");
+        m_utils->SetGlobalConfigValueInt32(
+            k_ESteamNetworkingConfig_LogLevel_P2PRendezvous,
+            k_ESteamNetworkingSocketsDebugOutputType_Verbose);
         m_webrtcBootstrap =
             new webrtc_signaling::GatewayConnectBootstrap(baseUrl, serverId);
         m_webrtcBootstrap->Start();
@@ -990,6 +990,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         auto dc     = m_webrtcBootstrap->TakeDataChannel();
         auto config = create_callbacks();
 
+        m_webrtcDirectMode = m_webrtcBootstrap->ServerTransport() != "webrtc";
+        cDebug(
+            "WebRTC server transport={}, using {} mode",
+            m_webrtcBootstrap->ServerTransport(),
+            m_webrtcDirectMode ? "direct-UDP" : "P2P rendezvous");
+
         if(m_webrtcDirectMode)
         {
             m_webrtcDirectKeepAlive = m_webrtcBootstrap;
@@ -1001,6 +1007,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 placeholder, pc, dc, config.size(), config.data());
         } else
         {
+            m_utils->SetGlobalConfigValueString(
+                k_ESteamNetworkingConfig_P2P_STUN_ServerList,
+                "stun.l.google.com:19302");
+            config.emplace_back();
+            config.back().SetInt32(
+                k_ESteamNetworkingConfig_P2P_Transport_ICE_Enable,
+                k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_All);
             auto* bootstrap   = m_webrtcBootstrap;
             m_webrtcBootstrap = nullptr;
             m_connection      = m_impl->ConnectP2PWebRTCDataChannel(
@@ -1060,20 +1073,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     }
 
 #if defined(USE_WEBRTC_TRANSPORT)
-    /* local is <serverSignalGatewayUrl>[#<dataChannelGatewayUrl>]. Two
-     * URLs, not one: the persistent /server-signal registration (GNS
-     * rendezvous relay) and each accepted connection's own per-connection
-     * /signal dial (its actual DataChannel transport bootstrap) don't
-     * have to be the same gateway process -- for native-to-native testing
-     * they usually AREN'T (see WEBRTC_TRANSPORT.md's "-relay-udp-port"
-     * note: two gateway processes, each bridging to the other's relay
-     * socket, so a client's and this server's DataChannels can actually
-     * reach each other). No '#' falls back to reusing the same URL for
-     * both, which is only correct if that one gateway bridges its own
-     * /signal connections together -- not implemented today, so that
-     * fallback is really just "single-gateway browser-client production
-     * topology," not a native-to-native test config. */
-    void create_server_webrtc(std::string const& local)
+    /* A WebRTC-hosted server: no UDP listen socket at all, every client
+     * arrives as a DataChannel the gateway bridges to one this side opens
+     * for that session. local is <gatewayUrl>[#<serverId>], mirroring the
+     * client's --server ws://gw#id; serverId also comes from
+     * --gateway-server-id, which wins if both are given. */
+    void create_server_webrtc(
+        std::string const& local, std::string const& explicitServerId)
     {
         if(m_socket || m_webrtcServer)
         {
@@ -1081,22 +1087,42 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             return;
         }
 
-        std::string serverSignalUrl = local;
-        std::string dataChannelUrl  = local;
+        std::string gatewayUrl = local;
+        std::string serverId   = explicitServerId;
         if(auto hash = local.find('#'); hash != std::string::npos)
         {
-            serverSignalUrl = local.substr(0, hash);
-            dataChannelUrl  = local.substr(hash + 1);
+            gatewayUrl = local.substr(0, hash);
+            if(serverId.empty())
+                serverId = local.substr(hash + 1);
+        }
+        if(serverId.empty())
+        {
+            cWarning(
+                "WebRTC-hosted server needs a server ID: pass "
+                "--listen {}#<id> or --gateway-server-id <id>",
+                gatewayUrl);
+            return;
         }
 
         cDebug(
-            "Starting WebRTC gateway server: server-signal={} "
-            "data-channel-gateway={}",
-            serverSignalUrl,
-            dataChannelUrl);
+            "Starting WebRTC-hosted server: gateway={} serverId={}",
+            gatewayUrl,
+            serverId);
+        /* Both ends have to offer ICE candidates for a direct UDP route to
+         * exist at all; the client sets the same pair (see
+         * connect_server_webrtc). When a native peer connects, that route
+         * beats the relayed DataChannel and GNS switches to it, at which
+         * point the relay is retired (pollDirectRouteTakeover). A browser
+         * peer has no ICE of its own, so it just stays on the bridge. */
+        m_utils->SetGlobalConfigValueString(
+            k_ESteamNetworkingConfig_P2P_STUN_ServerList,
+            "stun.l.google.com:19302");
+        m_utils->SetGlobalConfigValueInt32(
+            k_ESteamNetworkingConfig_P2P_Transport_ICE_Enable,
+            k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_All);
         m_webrtcServer =
             std::make_unique<webrtc_signaling::GatewayServerRegistration>(
-                serverSignalUrl, dataChannelUrl, m_impl);
+                gatewayUrl, serverId, m_impl);
         m_webrtcServer->Start();
         // Same poll group create_server uses -- independent of any listen
         // socket (connections get attached to it individually via

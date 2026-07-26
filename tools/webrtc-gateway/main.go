@@ -74,7 +74,12 @@ type signalMessage struct {
 	// "gns-rendezvous" messages — the gateway never inspects it.
 	Data string `json:"data,omitempty"`
 
-	ServerID   string `json:"serverId,omitempty"`
+	ServerID string `json:"serverId,omitempty"`
+	// Transport is "udp" (a real GNS listen socket behind a NAT punch) or
+	// "webrtc" (the server is itself a DataChannel peer). Sent by the
+	// server on "register", and reported back to each client on "answer"
+	// so it knows which GNS connect mode to use.
+	Transport  string `json:"transport,omitempty"`
 	Nonce      string `json:"nonce,omitempty"`
 	RelayPort  int    `json:"relayPort,omitempty"`
 	RelayNonce string `json:"relayNonce,omitempty"`
@@ -91,6 +96,17 @@ type signalMessage struct {
 }
 
 const registerPunchPrefix = "COFFEE-REG-PUNCH:"
+
+const (
+	// transportUDP: the server owns a real UDP socket; the gateway relays
+	// DataChannel <-> UDP and reaches it through a punched mapping.
+	transportUDP = "udp"
+	// transportWebRTC: the server is a WebRTC peer itself (browser host,
+	// or anywhere UDP is unusable). The gateway bridges the client's
+	// DataChannel straight to a second DataChannel the server opens for
+	// that session -- no UDP, no punch, no relay port.
+	transportWebRTC = "webrtc"
+)
 
 var relayPunchMarker = []byte("COFFEE-NAT-PUNCH")
 
@@ -133,6 +149,46 @@ type clientSession struct {
 	// retired the relay in favor of GNS's own direct P2P connection.
 	// Surfaced in the admin panel's Protocol column.
 	protocol string
+
+	// hostDC is the other half of a DataChannel<->DataChannel bridge: the
+	// channel a transportWebRTC server opened for THIS session (see
+	// handleHostSignal). Nil for transportUDP servers, and until the host
+	// dials in. hostClose tears that side down.
+	hostDC    *webrtc.DataChannel
+	hostClose func()
+
+	// Bridged message counts, for the admin panel and teardown logging.
+	clientToHost atomic.Uint64
+	hostToClient atomic.Uint64
+}
+
+// peerOf returns the far side of a DataChannel bridge for one direction.
+func (s *clientSession) peerOf(from *webrtc.DataChannel) *webrtc.DataChannel {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if from == s.hostDC {
+		return s.dataChannel
+	}
+	return s.hostDC
+}
+
+// bridgeSend forwards one DataChannel message to the paired channel.
+// Dropping while the far side isn't open yet is deliberate and safe: it
+// mirrors the UDP relay dropping traffic before the server's punch lands,
+// and GNS re-sends its handshake until it gets through.
+func bridgeSend(to *webrtc.DataChannel, data []byte) {
+	if to == nil {
+		log.Printf("datachannel bridge: dropping %d bytes, no peer channel yet", len(data))
+		return
+	}
+	if to.ReadyState() != webrtc.DataChannelStateOpen {
+		log.Printf("datachannel bridge: dropping %d bytes, peer channel is %s",
+			len(data), to.ReadyState())
+		return
+	}
+	if err := to.Send(data); err != nil {
+		log.Printf("datachannel bridge send failed: %v", err)
+	}
 }
 
 type PortPool struct {
@@ -152,6 +208,9 @@ type serverMetadata struct {
 type registeredServer struct {
 	conn    *websocket.Conn
 	writeMu sync.Mutex
+
+	// transportUDP or transportWebRTC; fixed at registration.
+	transport string
 
 	mu           sync.Mutex
 	active       bool
@@ -366,6 +425,13 @@ func sweepExpiredRegistrations() {
 }
 
 func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPPortMax int) {
+	// A transportWebRTC server dials the same endpoint to supply the far
+	// half of one session's DataChannel bridge (see handleHostSignal).
+	if r.URL.Query().Get("role") == "host" {
+		handleHostSignal(w, r, r.URL.Query().Get("session"), iceUDPPortMin, iceUDPPortMax)
+		return
+	}
+
 	serverID := r.URL.Query().Get("server")
 	if serverID == "" {
 		log.Printf("rejecting /signal: missing ?server=<id>")
@@ -381,6 +447,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 	srv.mu.Lock()
 	active := srv.active
 	srv.mu.Unlock()
+	transport := srv.transport
 	if !active {
 		log.Printf("rejecting /signal: server %q not active (challenge pending/failed)", serverID)
 		return
@@ -455,6 +522,29 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		// attached — Pion doesn't buffer messages for a callback that
 		// isn't registered yet, so the first message(s) were silently
 		// dropped.
+
+		if transport == transportWebRTC {
+			// No UDP anywhere in this path: the server dials
+			// /signal?role=host&session=<id> with its own DataChannel for
+			// this session, and the two get spliced together.
+			log.Printf("session %s: awaiting host datachannel (webrtc-hosted server %q)", sessionID, serverID)
+			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
+				session.clientToHost.Add(1)
+				bridgeSend(session.peerOf(dc), msg.Data)
+			})
+			var closeOnce sync.Once
+			dc.OnClose(func() {
+				log.Printf("data channel %q closed", dc.Label())
+				session.mu.Lock()
+				hostClose := session.hostClose
+				session.mu.Unlock()
+				if hostClose != nil {
+					hostClose()
+				}
+				closeOnce.Do(func() { close(relayDone) })
+			})
+			return
+		}
 
 		// Pooled port when -relay-port-min/-max bound the range, else 0 =
 		// let the kernel pick. freePort is idempotent: several teardown
@@ -557,7 +647,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 					srv.mu.Lock()
 					srv.gameAddr = addr
 					srv.mu.Unlock()
-					go runRelayUnconnected(dc, sock, addr, relayDone)
+					go runRelayUnconnected(dc, sock, addr, relayNonce, relayDone)
 					return
 				}
 			}()
@@ -590,6 +680,10 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		Type:      "answer",
 		SDP:       pc.LocalDescription().SDP,
 		SessionID: sessionID,
+		// Which GNS connect mode this client should use: ordinary
+		// direct-UDP-over-DataChannel for a UDP server, P2P rendezvous
+		// for a WebRTC-hosted one.
+		Transport: transport,
 	})
 	session.writeMu.Unlock()
 	if err != nil {
@@ -633,6 +727,161 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 	}
 }
 
+// handleHostSignal serves the server half of a DataChannel<->DataChannel
+// bridge. A transportWebRTC server has no UDP socket to relay to, so once
+// GNS's rendezvous tells it a client wants in, it dials this endpoint --
+// /signal?role=host&session=<id> -- and offers a DataChannel of its own
+// for that one session. The gateway answers it exactly like a client's,
+// then splices the two channels together and copies messages across.
+//
+// The session ID is the capability here: it is 16 bytes of CSPRNG output
+// known only to the gateway, that client, and the server it was routed
+// to, and a session accepts exactly one host.
+func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, iceUDPPortMin, iceUDPPortMax int) {
+	if sessionID == "" {
+		log.Printf("rejecting host /signal: missing ?session=<id>")
+		return
+	}
+	workingSet.clients.RLock()
+	session, ok := workingSet.clients.sessions[sessionID]
+	workingSet.clients.RUnlock()
+	if !ok {
+		log.Printf("rejecting host /signal: unknown session %s", sessionID)
+		return
+	}
+
+	workingSet.servers.RLock()
+	srv, srvOK := workingSet.servers.registry[session.serverID]
+	workingSet.servers.RUnlock()
+	if !srvOK || srv.transport != transportWebRTC {
+		log.Printf("rejecting host /signal for session %s: server %q is not webrtc-hosted",
+			sessionID, session.serverID)
+		return
+	}
+
+	session.mu.Lock()
+	taken := session.hostDC != nil || session.hostClose != nil
+	session.mu.Unlock()
+	if taken {
+		log.Printf("rejecting host /signal: session %s already has a host", sessionID)
+		return
+	}
+
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Printf("host websocket upgrade failed: %v", err)
+		return
+	}
+	defer conn.Close()
+
+	var msg signalMessage
+	if err := conn.ReadJSON(&msg); err != nil {
+		log.Printf("host signal read failed: %v", err)
+		return
+	}
+	if msg.Type != "offer" {
+		log.Printf("host signal: expected offer, got %q", msg.Type)
+		return
+	}
+
+	pc, err := newPeerConnection(iceUDPPortMin, iceUDPPortMax)
+	if err != nil {
+		log.Printf("failed to create host peer connection: %v", err)
+		return
+	}
+	defer pc.Close()
+
+	hostDone := make(chan struct{})
+	var hostCloseOnce sync.Once
+	closeHost := func() {
+		hostCloseOnce.Do(func() { close(hostDone) })
+	}
+	session.mu.Lock()
+	session.hostClose = closeHost
+	session.mu.Unlock()
+	defer func() {
+		session.mu.Lock()
+		session.hostDC = nil
+		session.hostClose = nil
+		session.mu.Unlock()
+	}()
+
+	var hostDCOpen atomic.Bool
+	pc.OnDataChannel(func(dc *webrtc.DataChannel) {
+		log.Printf("session %s: host data channel %q open request", sessionID, dc.Label())
+		hostDCOpen.Store(true)
+		session.mu.Lock()
+		session.hostDC = dc
+		session.mu.Unlock()
+		// Registered synchronously, for the same reason the client side
+		// does it here rather than in OnOpen: Pion drops messages that
+		// arrive before a handler exists.
+		dc.OnMessage(func(m webrtc.DataChannelMessage) {
+			session.hostToClient.Add(1)
+			bridgeSend(session.peerOf(dc), m.Data)
+		})
+		dc.OnClose(func() {
+			log.Printf("session %s: host data channel closed", sessionID)
+			hostDCOpen.Store(false)
+			closeHost()
+		})
+		dc.OnOpen(func() {
+			log.Printf("session %s: datachannel bridge established", sessionID)
+		})
+	})
+
+	if err := pc.SetRemoteDescription(webrtc.SessionDescription{
+		Type: webrtc.SDPTypeOffer,
+		SDP:  msg.SDP,
+	}); err != nil {
+		log.Printf("host SetRemoteDescription failed: %v", err)
+		return
+	}
+	answer, err := pc.CreateAnswer(nil)
+	if err != nil {
+		log.Printf("host CreateAnswer failed: %v", err)
+		return
+	}
+	gatherComplete := webrtc.GatheringCompletePromise(pc)
+	if err := pc.SetLocalDescription(answer); err != nil {
+		log.Printf("host SetLocalDescription failed: %v", err)
+		return
+	}
+	<-gatherComplete
+
+	if err := conn.WriteJSON(signalMessage{
+		Type:      "answer",
+		SDP:       pc.LocalDescription().SDP,
+		SessionID: sessionID,
+	}); err != nil {
+		log.Printf("failed to send host answer: %v", err)
+		return
+	}
+
+	// Nothing else flows over this socket -- the server's gns-rendezvous
+	// goes over /server-signal, not here -- so the server is free to drop
+	// it as soon as the SDP exchange is done, and does. The bridge's
+	// lifetime is the DataChannel's, NOT this socket's; only treat the
+	// socket closing as a teardown if no DataChannel ever arrived, which
+	// is the "host gave up mid-handshake" case.
+	go func() {
+		for {
+			var m signalMessage
+			if err := conn.ReadJSON(&m); err != nil {
+				if !hostDCOpen.Load() {
+					log.Printf("session %s: host signaling closed before its datachannel opened", sessionID)
+					closeHost()
+				}
+				return
+			}
+			log.Printf("session %s: unexpected host signal message %q", sessionID, m.Type)
+		}
+	}()
+	<-hostDone
+	log.Printf("session %s: host side torn down (bridged %d client->host, %d host->client messages)",
+		sessionID, session.clientToHost.Load(), session.hostToClient.Load())
+}
+
 func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -672,11 +921,17 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			myID, myEntry = id, entry
-			// Tell the server where to send its return-routability punch
+			reply := signalMessage{Type: "register-pending", PunchPort: settings.punchPortToAdvertise}
+			if entry.transport == transportWebRTC {
+				// Nothing to punch -- it is routable the moment it
+				// registers (see beginRegistration).
+				reply = signalMessage{Type: "register-active", Transport: transportWebRTC}
+			}
+			// Tell a UDP server where to send its return-routability punch
 			// -- explicitly, never guessed from URLs (see PunchPort's
 			// field comment).
 			myEntry.writeMu.Lock()
-			err = conn.WriteJSON(signalMessage{Type: "register-pending", PunchPort: settings.punchPortToAdvertise})
+			err = conn.WriteJSON(reply)
 			myEntry.writeMu.Unlock()
 			if err != nil {
 				log.Printf("failed to send register-pending to %q: %v", myID, err)
@@ -715,6 +970,13 @@ func beginRegistration(conn *websocket.Conn, m signalMessage) (string, *register
 	if m.ServerID == "" {
 		return "", nil, fmt.Errorf("register: missing serverId")
 	}
+	transport := m.Transport
+	if transport == "" {
+		transport = transportUDP
+	}
+	if transport != transportUDP && transport != transportWebRTC {
+		return "", nil, fmt.Errorf("register: unknown transport %q", transport)
+	}
 
 	nonce := make([]byte, 16)
 	if _, err := rand.Read(nonce); err != nil {
@@ -723,9 +985,21 @@ func beginRegistration(conn *websocket.Conn, m signalMessage) (string, *register
 
 	entry := &registeredServer{
 		conn:         conn,
+		transport:    transport,
 		active:       false,
 		pendingNonce: nonce,
 		expiresAt:    time.Now().Add(settings.challengeTimeout),
+	}
+	// A WebRTC-hosted server has no UDP presence to prove: the gateway
+	// only ever reaches it back down this same WebSocket, and the
+	// DataChannel it dials in with is itself ICE/DTLS-authenticated. The
+	// return-routability challenge would be checking an address that is
+	// never used, so it is skipped -- first-registered-wins below is the
+	// whole squatting story for these.
+	if transport == transportWebRTC {
+		entry.active = true
+		entry.pendingNonce = nil
+		entry.expiresAt = time.Now().Add(settings.registrationTTL)
 	}
 
 	workingSet.servers.Lock()
@@ -735,6 +1009,11 @@ func beginRegistration(conn *websocket.Conn, m signalMessage) (string, *register
 	}
 	workingSet.servers.registry[m.ServerID] = entry
 	workingSet.servers.Unlock()
+
+	if transport == transportWebRTC {
+		log.Printf("server %q registration active (webrtc-hosted, no UDP challenge)", m.ServerID)
+		return m.ServerID, entry, nil
+	}
 
 	log.Printf("register %q: waiting for return-routability punch", m.ServerID)
 
@@ -908,6 +1187,9 @@ func relayGNSConnected(sessionID string) {
 		log.Printf("dropping gns-connected for unknown session %s", sessionID)
 		return
 	}
+	// Senders only signal this once GNS has switched to a transport that
+	// ISN'T the relayed DataChannel (see GatewayServerRegistration's
+	// PollPendingAccepts), so the relay really is redundant by now.
 	closeSessionRelay(session)
 }
 
@@ -944,7 +1226,14 @@ func newPeerConnection(udpPortMin, udpPortMax int) (*webrtc.PeerConnection, erro
 // fragmentation/reassembly belongs in this relay. The socket is
 // unconnected: dest is the punch-learned server address, and anything
 // from another source is dropped.
-func runRelayUnconnected(dc *webrtc.DataChannel, sock *net.UDPConn, dest *net.UDPAddr, done chan<- struct{}) {
+//
+// punchNonce is this session's relay nonce: the server keeps re-punching
+// with it for the whole connection (NAT keepalive), so it keeps arriving
+// on this socket long after the relay started and must never be
+// forwarded as game data. Dropping it also stops a stale keepalive from
+// an earlier session bleeding into this one when a pooled relay port is
+// recycled.
+func runRelayUnconnected(dc *webrtc.DataChannel, sock *net.UDPConn, dest *net.UDPAddr, punchNonce []byte, done chan<- struct{}) {
 	defer close(done)
 
 	buf := make([]byte, 65535)
@@ -965,7 +1254,8 @@ func runRelayUnconnected(dc *webrtc.DataChannel, sock *net.UDPConn, dest *net.UD
 		if !addr.IP.Equal(dest.IP) || addr.Port != dest.Port {
 			continue // stray packet, not from the learned peer
 		}
-		if n == len(relayPunchMarker) && bytes.Equal(buf[:n], relayPunchMarker) {
+		if bytes.Equal(buf[:n], punchNonce) ||
+			(n == len(relayPunchMarker) && bytes.Equal(buf[:n], relayPunchMarker)) {
 			continue // NAT keepalive punch, not game data
 		}
 		if err := dc.Send(buf[:n]); err != nil {

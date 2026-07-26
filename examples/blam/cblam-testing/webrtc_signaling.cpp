@@ -166,6 +166,7 @@ void GatewayConnectBootstrap::onWebSocketMessage(std::string const& text)
     {
         auto sdp       = msg.value("sdp", std::string());
         auto sessionId = msg.value("sessionId", std::string());
+        auto transport = msg.value("transport", std::string("udp"));
         if(sdp.empty() || sessionId.empty())
         {
             cWarning("webrtc_signaling: malformed answer message");
@@ -175,8 +176,9 @@ void GatewayConnectBootstrap::onWebSocketMessage(std::string const& text)
         }
         m_pc->setRemoteDescription(rtc::Description(sdp, "answer"));
         std::lock_guard<std::mutex> lock(m_mutex);
-        m_sessionId     = std::move(sessionId);
-        m_haveSessionId = true;
+        m_sessionId       = std::move(sessionId);
+        m_serverTransport = std::move(transport);
+        m_haveSessionId   = true;
     } else if(type == "gns-rendezvous")
     {
         auto data = msg.value("data", std::string());
@@ -204,6 +206,12 @@ void GatewayConnectBootstrap::onWebSocketMessage(std::string const& text)
     {
         cWarning("webrtc_signaling: unexpected signal message type {}", type);
     }
+}
+
+std::string GatewayConnectBootstrap::ServerTransport() const
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_serverTransport;
 }
 
 void GatewayConnectBootstrap::sendJSON(std::string const& json)
@@ -386,7 +394,7 @@ void GatewayAcceptSignaling::Start()
         std::lock_guard<std::mutex> lock(m_mutex);
         m_failed = true;
     });
-    m_ws->open(m_gatewayUrl + "/signal");
+    m_ws->open(m_gatewayUrl + "/signal?role=host&session=" + m_sessionId);
 }
 
 void GatewayAcceptSignaling::maybeSendOffer()
@@ -510,11 +518,11 @@ void GatewayAcceptSignaling::Release()
 /* ==================== GatewayServerRegistration ==================== */
 
 GatewayServerRegistration::GatewayServerRegistration(
-    std::string              serverSignalGatewayUrl,
-    std::string              dataChannelGatewayUrl,
+    std::string              gatewayUrl,
+    std::string              serverId,
     ISteamNetworkingSockets* sockets)
-    : m_serverSignalUrl(std::move(serverSignalGatewayUrl))
-    , m_dataChannelGatewayUrl(std::move(dataChannelGatewayUrl))
+    : m_gatewayUrl(std::move(gatewayUrl))
+    , m_serverId(std::move(serverId))
     , m_sockets(sockets)
 {
 }
@@ -528,8 +536,9 @@ GatewayServerRegistration::~GatewayServerRegistration()
 void GatewayServerRegistration::Start()
 {
     m_ws = std::make_shared<rtc::WebSocket>();
-    m_ws->onOpen([] {
-        cDebug("webrtc_signaling: registered with gateway /server-signal");
+    m_ws->onOpen([this] {
+        cDebug("webrtc_signaling: connected to gateway /server-signal");
+        sendRegister();
     });
     m_ws->onMessage([this](rtc::message_variant data) {
         if(!std::holds_alternative<std::string>(data))
@@ -544,7 +553,32 @@ void GatewayServerRegistration::Start()
     m_ws->onError([](std::string error) {
         cWarning("webrtc_signaling: server-signal websocket error: {}", error);
     });
-    m_ws->open(m_serverSignalUrl + "/server-signal");
+    m_ws->open(m_gatewayUrl + "/server-signal");
+}
+
+void GatewayServerRegistration::sendRegister()
+{
+    nlohmann::json register_msg{
+        {"type", "register"},
+        {"serverId", m_serverId},
+        {"transport", "webrtc"},
+    };
+    if(!m_ws->send(register_msg.dump()))
+        cWarning("webrtc_signaling: failed to send register");
+}
+
+void GatewayServerRegistration::sendHeartbeat()
+{
+    nlohmann::json heartbeat{{"type", "heartbeat"}};
+    if(!m_ws->send(heartbeat.dump()))
+        cWarning("webrtc_signaling: failed to send heartbeat");
+}
+
+bool GatewayServerRegistration::Active() const
+{
+    std::lock_guard<std::mutex> lock(
+        const_cast<GatewayServerRegistration*>(this)->m_mutex);
+    return m_active;
 }
 
 void GatewayServerRegistration::onWebSocketMessage(std::string const& text)
@@ -584,6 +618,16 @@ void GatewayServerRegistration::onWebSocketMessage(std::string const& text)
         }
         m_sockets->ReceivedP2PCustomSignal(
             raw.data(), static_cast<int>(raw.size()), this);
+    } else if(type == "register-active")
+    {
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_active = true;
+        }
+        cDebug(
+            "webrtc_signaling: registration active for serverId={} "
+            "(webrtc-hosted)",
+            m_serverId);
     } else if(type == "error")
     {
         cWarning(
@@ -616,8 +660,8 @@ ISteamNetworkingConnectionSignaling* GatewayServerRegistration::
         return nullptr;
     }
 
-    auto* accept = new GatewayAcceptSignaling(
-        this, sessionId, m_dataChannelGatewayUrl, hConn);
+    auto* accept =
+        new GatewayAcceptSignaling(this, sessionId, m_gatewayUrl, hConn);
     accept->Start();
     {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -659,6 +703,19 @@ void GatewayServerRegistration::RemovePendingAccept(
 
 void GatewayServerRegistration::PollPendingAccepts()
 {
+    constexpr std::chrono::seconds kHeartbeatInterval{10};
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        auto                        now = std::chrono::steady_clock::now();
+        if(m_active && now - m_lastHeartbeat >= kHeartbeatInterval)
+        {
+            m_lastHeartbeat = now;
+            sendHeartbeat();
+        }
+    }
+
+    pollDirectRouteTakeover();
+
     std::vector<GatewayAcceptSignaling*> ready;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -715,30 +772,76 @@ void GatewayServerRegistration::PollPendingAccepts()
 
 void GatewayServerRegistration::NotifyGNSConnected(HSteamNetConnection hConn)
 {
-    std::string sessionId;
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if(m_sessionIdByConnection.count(hConn) == 0)
+        return; // Not a connection accepted through this registration.
+    m_directRouteTicks.emplace(hConn, 0);
+}
+
+/* GNS keeps competing transports per P2P connection and switches to the
+ * best one; the relayed DataChannel deliberately scores below any usable
+ * direct UDP route, so between two native peers ICE takes over shortly
+ * after connecting. That is exactly when the gateway's relay stops being
+ * needed -- and the only time it is safe to say so, since for a browser
+ * peer the relay never stops being the transport.
+ *
+ * GNS has no public "which transport is selected" accessor, but it names
+ * the connection after it ("[#123 P2P WebRTC vport 0]" vs "... P2P ICE
+ * ..."), which is what m_szConnectionDescription carries. */
+void GatewayServerRegistration::pollDirectRouteTakeover()
+{
+    std::vector<std::string> retiredSessions;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        auto                        it = m_sessionIdByConnection.find(hConn);
-        if(it == m_sessionIdByConnection.end())
-            return; // Not a connection accepted through this registration.
-        sessionId = it->second;
+        for(auto& [hConn, ticks] : m_directRouteTicks)
+        {
+            if(m_relayRetired.count(hConn))
+                continue;
+            SteamNetConnectionInfo_t info{};
+            if(!m_sockets->GetConnectionInfo(hConn, &info))
+                continue;
+            std::string_view description(info.m_szConnectionDescription);
+            bool             onRelay =
+                description.find("WebRTC") != std::string_view::npos;
+            if(info.m_eState != k_ESteamNetworkingConnectionState_Connected ||
+               onRelay)
+            {
+                ticks = 0;
+                continue;
+            }
+            if(++ticks < 2)
+                continue; // description is briefly transport-less mid-switch
+            m_relayRetired.insert(hConn);
+            auto it = m_sessionIdByConnection.find(hConn);
+            if(it != m_sessionIdByConnection.end())
+                retiredSessions.push_back(it->second);
+        }
     }
-    if(!m_ws)
-        return;
-    nlohmann::json msg{
-        {"type", "gns-connected"},
-        {"sessionId", sessionId},
-    };
-    if(!m_ws->send(msg.dump()))
-        cWarning(
-            "webrtc_signaling: failed to send gns-connected for session {}",
+    for(auto const& sessionId : retiredSessions)
+    {
+        cDebug(
+            "webrtc_signaling: session {} moved to a direct route, retiring "
+            "the gateway relay",
             sessionId);
+        if(!m_ws)
+            return;
+        nlohmann::json msg{
+            {"type", "gns-connected"},
+            {"sessionId", sessionId},
+        };
+        if(!m_ws->send(msg.dump()))
+            cWarning(
+                "webrtc_signaling: failed to send gns-connected for session {}",
+                sessionId);
+    }
 }
 
 void GatewayServerRegistration::ForgetConnection(HSteamNetConnection hConn)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     m_sessionIdByConnection.erase(hConn);
+    m_directRouteTicks.erase(hConn);
+    m_relayRetired.erase(hConn);
 }
 
 } // namespace webrtc_signaling

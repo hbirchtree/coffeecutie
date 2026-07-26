@@ -25,6 +25,15 @@
 #   TARGET        cb build/run target        (default: desktop:x86_64-buildroot-linux-gnu:multi/BlamGraphics)
 #   RESOURCE_DIR  asset dir passed to both    (default: multi_build/desktop-x86_64-buildroot-linux-gnu-multi/examples/blam/cblam-testing/assets/)
 #   MAP           map file passed to both     (default: /mnt/blam/pc/bloodgulch.map)
+#   SERVER_TRANSPORT   how the server is reachable (default: udp)
+#                        udp    -- real GNS listen socket, gateway relays
+#                                  DataChannel <-> UDP through a NAT punch
+#                        webrtc -- WebRTC-hosted server: no UDP socket at
+#                                  all, the gateway bridges the client's
+#                                  DataChannel to one the server opens per
+#                                  session. The client picks its GNS mode
+#                                  from what the gateway reports, so its
+#                                  command line is identical either way.
 #   GATEWAY_HTTP_PORT  gateway WebSocket signaling port (default: 8098)
 #   SERVER_UDP_PORT    real GNS UDP listen port the server binds (default: 19601)
 #   SERVER_ID          fleet registry serverId to register/connect under (default: test)
@@ -57,6 +66,11 @@ MAP="${MAP:-/mnt/blam/pc/bloodgulch.map}"
 GATEWAY_HTTP_PORT="${GATEWAY_HTTP_PORT:-8098}"
 SERVER_UDP_PORT="${SERVER_UDP_PORT:-19601}"
 SERVER_ID="${SERVER_ID:-test}"
+SERVER_TRANSPORT="${SERVER_TRANSPORT:-udp}"
+if [ "$SERVER_TRANSPORT" != "udp" ] && [ "$SERVER_TRANSPORT" != "webrtc" ]; then
+    echo "ERROR: SERVER_TRANSPORT must be udp or webrtc, got '$SERVER_TRANSPORT'" >&2
+    exit 2
+fi
 BOOT_TIMEOUT="${BOOT_TIMEOUT:-30}"
 RUN_TIMEOUT="${RUN_TIMEOUT:-60}"
 
@@ -78,7 +92,11 @@ rm -f "$SERVER_LOG" "$CLIENT_LOG" "$GATEWAY_LOG" "$SERVER_JOURNAL" "$CLIENT_JOUR
 echo "Out dir  : $OUT_DIR"
 echo "Target   : $TARGET"
 echo "Gateway  : :$GATEWAY_HTTP_PORT"
-echo "Server   : udp 127.0.0.1:$SERVER_UDP_PORT, serverId=$SERVER_ID"
+if [ "$SERVER_TRANSPORT" = "webrtc" ]; then
+    echo "Server   : webrtc-hosted (no UDP socket), serverId=$SERVER_ID"
+else
+    echo "Server   : udp 127.0.0.1:$SERVER_UDP_PORT, serverId=$SERVER_ID"
+fi
 
 webrtc_build_gateway "$GATEWAY_DIR" "$(webrtc_find_go)" || exit 2
 
@@ -105,12 +123,22 @@ webrtc_start_gateway "$GATEWAY_BIN" "$GATEWAY_HTTP_PORT" "$GATEWAY_LOG" "$BOOT_T
 BASE_RUN_ARGS=(run "$TARGET" -- "$RESOURCE_DIR" "$MAP")
 GATEWAY_URL="ws://127.0.0.1:$GATEWAY_HTTP_PORT"
 
-echo "Starting server (--listen 127.0.0.1:$SERVER_UDP_PORT --gateway-register $GATEWAY_URL --gateway-server-id $SERVER_ID)..."
-webrtc_server_command "$TARGET" \
-    "$RESOURCE_DIR" "$MAP" \
-    --listen "127.0.0.1:$SERVER_UDP_PORT" \
-    --gateway-register "$GATEWAY_URL" \
-    --gateway-server-id "$SERVER_ID"
+if [ "$SERVER_TRANSPORT" = "webrtc" ]; then
+    # A ws:// --listen makes the server WebRTC-hosted: it registers over
+    # /server-signal and serves each client a DataChannel of its own,
+    # which the gateway bridges. No listen socket, so nothing to punch.
+    echo "Starting server (--listen $GATEWAY_URL#$SERVER_ID, webrtc-hosted)..."
+    webrtc_server_command "$TARGET" \
+        "$RESOURCE_DIR" "$MAP" \
+        --listen "${GATEWAY_URL}#${SERVER_ID}"
+else
+    echo "Starting server (--listen 127.0.0.1:$SERVER_UDP_PORT --gateway-register $GATEWAY_URL --gateway-server-id $SERVER_ID)..."
+    webrtc_server_command "$TARGET" \
+        "$RESOURCE_DIR" "$MAP" \
+        --listen "127.0.0.1:$SERVER_UDP_PORT" \
+        --gateway-register "$GATEWAY_URL" \
+        --gateway-server-id "$SERVER_ID"
+fi
 webrtc_start_server "$SERVER_LOG" "$SERVER_TMP" "$SERVER_DUMMY_PLUG_CONFIG" "$RUN_TIMEOUT"
 
 webrtc_wait_for_registration "$SERVER_LOG" "$SERVER_ID" "$BOOT_TIMEOUT" "$WEBRTC_SERVER_PID" || {

@@ -7,10 +7,12 @@
 
 #include <rtc/rtc.hpp>
 
+#include <chrono>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace webrtc_signaling {
@@ -48,6 +50,8 @@ class GatewayConnectBootstrap final : public ISteamNetworkingConnectionSignaling
 
     bool Ready() const;
     bool Failed() const;
+
+    std::string ServerTransport() const;
 
     /*! Valid only once Ready(); each may only be taken once. */
     std::shared_ptr<rtc::PeerConnection> TakePeerConnection();
@@ -98,6 +102,7 @@ class GatewayConnectBootstrap final : public ISteamNetworkingConnectionSignaling
     bool               m_wsOpen{false};
     bool               m_offerSent{false};
     std::string        m_pendingOfferSdp;
+    std::string        m_serverTransport;
 };
 
 class GatewayServerRegistration;
@@ -206,13 +211,18 @@ class GatewayServerRegistration final
 {
   public:
     GatewayServerRegistration(
-        std::string              serverSignalGatewayUrl,
-        std::string              dataChannelGatewayUrl,
+        std::string              gatewayUrl,
+        std::string              serverId,
         ISteamNetworkingSockets* sockets);
     ~GatewayServerRegistration();
 
     void Start();
+    /*! Also sends the registration heartbeat, so call it once per tick for
+     * as long as the registration should stay alive. */
     void PollPendingAccepts();
+
+    /*! True once the gateway has confirmed the registration. */
+    bool Active() const;
 
     /* ISteamNetworkingSignalingRecvContext */
     ISteamNetworkingConnectionSignaling* OnConnectRequest(
@@ -229,18 +239,25 @@ class GatewayServerRegistration final
         std::string const& sessionId, std::string const& data);
     void RemovePendingAccept(GatewayAcceptSignaling* accept);
 
+    /*! Marks a connection as established, which starts watching it for a
+     * direct-route takeover (see PollPendingAccepts). */
     void NotifyGNSConnected(HSteamNetConnection hConn);
     void ForgetConnection(HSteamNetConnection hConn);
 
   private:
     void onWebSocketMessage(std::string const& text);
+    void sendRegister();
+    void sendHeartbeat();
+    void pollDirectRouteTakeover();
 
-    std::string                     m_serverSignalUrl;
-    std::string                     m_dataChannelGatewayUrl;
+    std::string                     m_gatewayUrl;
+    std::string                     m_serverId;
     ISteamNetworkingSockets*        m_sockets;
     std::shared_ptr<rtc::WebSocket> m_ws;
 
     std::mutex m_mutex;
+    bool       m_active{false};
+    std::chrono::steady_clock::time_point m_lastHeartbeat{};
     /* Set just before each ReceivedP2PCustomSignal call, consumed by
      * OnConnectRequest if that call triggers one synchronously (it always
      * does in practice -- GNS has no other opportunity to ask for a
@@ -252,6 +269,8 @@ class GatewayServerRegistration final
     std::vector<GatewayAcceptSignaling*> m_pendingAccepts;
     std::unordered_map<HSteamNetConnection, std::string>
         m_sessionIdByConnection;
+    std::unordered_map<HSteamNetConnection, int> m_directRouteTicks;
+    std::unordered_set<HSteamNetConnection>      m_relayRetired;
 };
 
 } // namespace webrtc_signaling

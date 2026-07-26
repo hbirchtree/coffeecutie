@@ -396,18 +396,26 @@ void CConnectionTransportP2PWebRTC::P2PTransportUpdateRouteMetrics( SteamNetwork
 		return;
 	}
 
-	// Unlike ICE (which scores multiple candidate pairs against each other
-	// and needs real ping data before it can be trusted), this transport's
-	// NAT traversal and connectivity were already fully established by the
-	// browser's WebRTC stack before this object was even constructed (see
-	// file header comment) -- there's nothing else to compare against, so
-	// report the best possible score unconditionally rather than waiting
-	// on m_pingEndToEnd to accumulate samples. Revisit if this transport
-	// ever needs to compete against a simultaneously-available SDR route.
+	// Unlike ICE (which scores candidate pairs against each other and needs
+	// real ping data before it can be trusted), this transport's NAT
+	// traversal and connectivity were already established by the WebRTC
+	// stack before this object existed (see file header comment) -- there
+	// is nothing to measure, so the score is a constant rather than a ping.
+	//
+	// That constant is a deliberate handicap: every byte here is relayed
+	// through the gateway, so a direct UDP route is better whenever one
+	// exists, and between two native peers one usually does. ICE scores
+	// routes in milliseconds of ping (CConnectionTransportP2PICE::
+	// P2PTransportUpdateRouteMetrics), so a penalty above any usable ping
+	// loses to every real UDP route -- while staying well below
+	// k_nRoutePenaltyNeedToConfirmConnectivity (10000), so this transport
+	// is still selected, and stays selected, when it is the only one that
+	// works: browser clients, or any network where UDP is blocked.
+	constexpr int k_nRelayedTransportPenalty = 2000;
 	m_routeMetrics.m_nScoreCurrent = 0;
 	m_routeMetrics.m_nScoreMin = 0;
 	m_routeMetrics.m_nScoreMax = 0;
-	m_routeMetrics.m_nTotalPenalty = 0;
+	m_routeMetrics.m_nTotalPenalty = k_nRelayedTransportPenalty;
 	m_routeMetrics.m_nBucketsValid = 1;
 	m_bNeedToConfirmEndToEndConnectivity = false;
 }

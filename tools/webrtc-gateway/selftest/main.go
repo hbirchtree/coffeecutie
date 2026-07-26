@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -35,6 +36,7 @@ type signalMessage struct {
 	SessionID  string `json:"sessionId,omitempty"`
 	Data       string `json:"data,omitempty"`
 	ServerID   string `json:"serverId,omitempty"`
+	Transport  string `json:"transport,omitempty"`
 	Nonce      string `json:"nonce,omitempty"`
 	RelayPort  int    `json:"relayPort,omitempty"`
 	RelayNonce string `json:"relayNonce,omitempty"`
@@ -53,6 +55,7 @@ func main() {
 	httpPort := flag.Int("port", 8399, "gateway HTTP/WS port (also its challenge UDP port)")
 	relayMin := flag.Int("relay-port-min", 19700, "gateway -relay-port-min")
 	relayMax := flag.Int("relay-port-max", 19710, "gateway -relay-port-max")
+	transport := flag.String("transport", "udp", "server transport to exercise: udp (relay + NAT punch) or webrtc (DataChannel<->DataChannel bridge)")
 	rounds := flag.Int("rounds", 1, "sequential client sessions to run (>1 with a one-port pool proves relay ports are released)")
 	timeout := flag.Duration("timeout", 30*time.Second, "overall deadline")
 	flag.Parse()
@@ -82,11 +85,14 @@ func main() {
 	gameSock := mustListenUDP()
 	defer gameSock.Close()
 
-	go runFleetServer(ctx, *httpPort, gameSock)
+	if *transport != "udp" && *transport != "webrtc" {
+		fatal("-transport must be udp or webrtc, got %q", *transport)
+	}
+	go runFleetServer(ctx, *httpPort, gameSock, *transport)
 
 	for round := 1; round <= *rounds; round++ {
 		received := make(chan string, 1)
-		go runClient(ctx, *httpPort, received)
+		go runClient(ctx, *httpPort, received, *transport)
 		select {
 		case got := <-received:
 			if got != strings.ToUpper(payload) {
@@ -98,13 +104,13 @@ func main() {
 			fatal("round %d timed out before the payload made the round trip", round)
 		}
 	}
-	log.Printf("PASS: %d round(s)", *rounds)
+	log.Printf("PASS: %d round(s) over the %s server transport", *rounds, *transport)
 }
 
 // runFleetServer plays the registered game server: registers, proves
 // return-routability by punching the challenge socket, then punches each
 // client's relay port and echoes relayed datagrams back uppercased.
-func runFleetServer(ctx context.Context, httpPort int, gameSock *net.UDPConn) {
+func runFleetServer(ctx context.Context, httpPort int, gameSock *net.UDPConn, transport string) {
 	url := fmt.Sprintf("ws://127.0.0.1:%d/server-signal", httpPort)
 	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
@@ -112,7 +118,11 @@ func runFleetServer(ctx context.Context, httpPort int, gameSock *net.UDPConn) {
 	}
 	defer conn.Close()
 
-	if err := conn.WriteJSON(signalMessage{Type: "register", ServerID: serverID}); err != nil {
+	if err := conn.WriteJSON(signalMessage{
+		Type:      "register",
+		ServerID:  serverID,
+		Transport: transport,
+	}); err != nil {
 		fatal("server: register: %v", err)
 	}
 
@@ -130,6 +140,15 @@ func runFleetServer(ctx context.Context, httpPort int, gameSock *net.UDPConn) {
 			return
 		}
 		switch m.Type {
+		case "register-active":
+			// webrtc-hosted: routable immediately, nothing to punch.
+			log.Printf("server: registration active (%s transport)", transport)
+		case "gns-rendezvous":
+			// The real server would feed this to GNS, which asks it to
+			// accept a connection; either way it is the trigger to supply
+			// this session's host-side DataChannel.
+			log.Printf("server: rendezvous for session %s, dialing host role", m.SessionID)
+			go runWebRTCHost(ctx, httpPort, m.SessionID)
 		case "register-pending":
 			nonce := doChallenge(challengeSock, m.PunchPort)
 			if err := conn.WriteJSON(signalMessage{
@@ -209,9 +228,74 @@ func echoRelayed(sock *net.UDPConn) {
 	}
 }
 
+// runWebRTCHost plays a WebRTC-hosted server's per-session half: dial
+// /signal?role=host&session=<id>, offer a DataChannel, and echo the
+// payload back uppercased once the gateway bridges it to the client's.
+func runWebRTCHost(ctx context.Context, httpPort int, sessionID string) {
+	url := fmt.Sprintf("ws://127.0.0.1:%d/signal?role=host&session=%s", httpPort, sessionID)
+	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
+	if err != nil {
+		fatal("host: dial %s: %v", url, err)
+	}
+	defer conn.Close()
+
+	pc, err := webrtc.NewPeerConnection(webrtc.Configuration{})
+	if err != nil {
+		fatal("host: new peer connection: %v", err)
+	}
+	defer pc.Close()
+
+	ordered, retransmits := false, uint16(0)
+	dc, err := pc.CreateDataChannel("gns", &webrtc.DataChannelInit{
+		Ordered:        &ordered,
+		MaxRetransmits: &retransmits,
+	})
+	if err != nil {
+		fatal("host: create data channel: %v", err)
+	}
+	dc.OnMessage(func(msg webrtc.DataChannelMessage) {
+		got := string(msg.Data)
+		if got != payload {
+			return
+		}
+		log.Printf("host: got %q over the bridge, echoing back", got)
+		if err := dc.SendText(strings.ToUpper(got)); err != nil {
+			log.Printf("host: echo failed: %v", err)
+		}
+	})
+
+	offer, err := pc.CreateOffer(nil)
+	if err != nil {
+		fatal("host: create offer: %v", err)
+	}
+	gatherComplete := webrtc.GatheringCompletePromise(pc)
+	if err := pc.SetLocalDescription(offer); err != nil {
+		fatal("host: set local description: %v", err)
+	}
+	<-gatherComplete
+
+	if err := conn.WriteJSON(signalMessage{Type: "offer", SDP: pc.LocalDescription().SDP}); err != nil {
+		fatal("host: send offer: %v", err)
+	}
+	var answer signalMessage
+	if err := conn.ReadJSON(&answer); err != nil {
+		fatal("host: read answer: %v", err)
+	}
+	if answer.Type != "answer" {
+		fatal("host: expected answer, got %q", answer.Type)
+	}
+	if err := pc.SetRemoteDescription(webrtc.SessionDescription{
+		Type: webrtc.SDPTypeAnswer,
+		SDP:  answer.SDP,
+	}); err != nil {
+		fatal("host: set remote description: %v", err)
+	}
+	<-ctx.Done()
+}
+
 // runClient plays the browser: offer/answer over /signal?server=<id>,
 // then send the payload down the DataChannel and report what comes back.
-func runClient(ctx context.Context, httpPort int, received chan<- string) {
+func runClient(ctx context.Context, httpPort int, received chan<- string, transport string) {
 	url := fmt.Sprintf("ws://127.0.0.1:%d/signal?server=%s", httpPort, serverID)
 	var conn *websocket.Conn
 	// The registration has to go active before /signal will accept us.
@@ -244,6 +328,22 @@ func runClient(ctx context.Context, httpPort int, received chan<- string) {
 	}
 	dc.OnOpen(func() {
 		log.Printf("client: data channel open, sending %q", payload)
+		if transport == "webrtc" {
+			// Stand-in for GNS's ConnectRequest: what tells a
+			// WebRTC-hosted server that this session needs a host-side
+			// DataChannel. Sent over the signaling socket, relayed by the
+			// gateway verbatim.
+			sessionMu.Lock()
+			sid := clientSessionID
+			sessionMu.Unlock()
+			if err := wsWriteJSON(conn, signalMessage{
+				Type:      "gns-rendezvous",
+				SessionID: sid,
+				Data:      "selftest-connect-request",
+			}); err != nil {
+				fatal("client: send rendezvous: %v", err)
+			}
+		}
 		for ctx.Err() == nil {
 			if err := dc.SendText(payload); err != nil {
 				return
@@ -282,6 +382,13 @@ func runClient(ctx context.Context, httpPort int, received chan<- string) {
 	if answer.Type != "answer" {
 		fatal("client: expected answer, got %q", answer.Type)
 	}
+	if answer.Transport != transport {
+		fatal("client: gateway reported server transport %q, expected %q",
+			answer.Transport, transport)
+	}
+	sessionMu.Lock()
+	clientSessionID = answer.SessionID
+	sessionMu.Unlock()
 	if err := pc.SetRemoteDescription(webrtc.SessionDescription{
 		Type: webrtc.SDPTypeAnswer,
 		SDP:  answer.SDP,
@@ -303,6 +410,20 @@ func runClient(ctx context.Context, httpPort int, received chan<- string) {
 	case <-done:
 	case <-ctx.Done():
 	}
+}
+
+// The client's signaling socket is written from both its own flow and
+// the DataChannel's OnOpen callback; gorilla allows one writer at a time.
+var (
+	sessionMu       sync.Mutex
+	clientSessionID string
+	wsWriteMu       sync.Mutex
+)
+
+func wsWriteJSON(conn *websocket.Conn, m signalMessage) error {
+	wsWriteMu.Lock()
+	defer wsWriteMu.Unlock()
+	return conn.WriteJSON(m)
 }
 
 func mustListenUDP() *net.UDPConn {
