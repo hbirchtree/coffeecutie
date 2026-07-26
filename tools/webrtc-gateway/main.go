@@ -33,6 +33,13 @@
 // ID (returned alongside the SDP answer) and targets one registered
 // server via "?server=<id>", and "gns-rendezvous" messages tagged with
 // that session ID are routed client<->server by ID alone.
+//
+// Either side may follow up with a "gns-connected" message (same session
+// ID) once GNS's own rendezvous handshake lands a direct P2P connection
+// between client and server: the WebRTC relay was only standing in until
+// that happened, so the gateway retires it (DataChannel close, relay
+// socket/port freed, signaling websocket closed) rather than keep
+// relaying traffic GNS no longer needs it for.
 package main
 
 import (
@@ -95,8 +102,32 @@ type clientSession struct {
 	// gorilla/websocket connections support one concurrent writer; the
 	// initial answer and later server->client relay writes can race
 	// without this.
-	writeMu sync.Mutex
-	serverID string
+	writeMu   sync.Mutex
+	serverID  string
+	relayPort int
+
+	mu sync.Mutex
+	// serverAddr is the resolved UDP address this session's relay socket
+	// is talking to. Nil until the server's NAT punch arrives.
+	serverAddr *net.UDPAddr
+	// peerLocalPort/peerRemoteAddr are the selected ICE candidate pair
+	// for the browser<->gateway WebRTC leg itself -- distinct from both
+	// serverAddr (gateway<->game-server UDP leg) and conn.RemoteAddr()
+	// (the signaling websocket's TCP address, not the media path). Zero
+	// value / nil until ICE has connected and picked a pair.
+	peerLocalPort  int
+	peerRemoteAddr *net.UDPAddr
+	// dataChannel is the relay DataChannel, set once OnDataChannel fires.
+	// Closing it tears down the relay (see each branch's OnClose) -- this
+	// is how a "gns-connected" signal (see closeSessionRelay) retires a
+	// session once GNS's own direct P2P connection has made the relay
+	// redundant.
+	dataChannel *webrtc.DataChannel
+	// protocol is "webrtc" (the default -- traffic still flows through
+	// the relayed DataChannel) or "udp" once closeSessionRelay has
+	// retired the relay in favor of GNS's own direct P2P connection.
+	// Surfaced in the admin panel's Protocol column.
+	protocol string
 }
 
 type PortPool struct {
@@ -105,16 +136,6 @@ type PortPool struct {
 	maxPort int
 	usedPorts map[int]struct{}
 }
-
-var (
-	sessionsMu sync.RWMutex
-	sessions   = make(map[string]*clientSession)
-	relayPortPool = PortPool{
-		minPort: 0,
-		maxPort: 0,
-		usedPorts: make(map[int]struct{}),
-	}
-)
 
 type registeredServer struct {
 	conn    *websocket.Conn
@@ -131,14 +152,7 @@ type registeredServer struct {
 	challengeAddr *net.UDPAddr
 }
 
-var (
-	registryMu sync.RWMutex
-	registry   = make(map[string]*registeredServer)
-)
-
-var challengeSock *net.UDPConn
-
-var (
+type serverSettings struct {
 	registrationTTL   time.Duration
 	challengeTimeout  time.Duration
 	relayPunchTimeout time.Duration
@@ -146,7 +160,45 @@ var (
 	// punch at -- the challenge socket's bound port unless
 	// -advertise-punch-port overrides it (docker port mappings etc.).
 	punchPortToAdvertise int
-)
+
+	websocketAddr   net.Addr
+	challengeAddr   net.Addr
+	datachannelAddr net.Addr
+}
+
+type serverRegistry struct {
+	sync.RWMutex
+	registry map[string]*registeredServer
+}
+
+type clientSessionRegistry struct {
+	sync.RWMutex
+	sessions map[string]*clientSession
+}
+
+type serverWorkingSet struct {
+	servers       serverRegistry
+	clients       clientSessionRegistry
+	relayPortPool PortPool
+}
+
+var challengeSock *net.UDPConn
+
+var settings serverSettings = serverSettings{}
+
+var workingSet serverWorkingSet = serverWorkingSet{
+	servers: serverRegistry{
+		registry: make(map[string]*registeredServer),
+	},
+	clients: clientSessionRegistry{
+		sessions: make(map[string]*clientSession),
+	},
+	relayPortPool: PortPool{
+		minPort: 0,
+		maxPort: 0,
+		usedPorts: make(map[int]struct{}),
+	},
+}
 
 func mustAtoi(s string) int {
 	n, err := strconv.Atoi(s)
@@ -203,11 +255,14 @@ func main() {
 	relayPunchTimeoutFlag := flag.Duration("relay-punch-timeout", 5*time.Second, "how long a new per-client relay socket waits for the registered server's NAT punch before giving up on that client")
 	challengeUDPPort := flag.Int("challenge-udp-port", 0, "UDP port to bind the registration challenge socket on (0 = same port number as -listen)")
 	advertisePunchPort := flag.Int("advertise-punch-port", 0, "punch port to tell registering servers (register-pending's punchPort) when the externally reachable UDP port differs from the bound one, e.g. behind a docker port mapping (0 = advertise the bound port)")
+
+	adminAddr := flag.String("admin-port", ":2222", "SSH port for admin interface")
+	adminPrivateKey := flag.String("admin-private-key", "id_ed25519", "Private key to use as host key for admin server")
 	flag.Parse()
 
-	registrationTTL = *registrationTTLFlag
-	challengeTimeout = *challengeTimeoutFlag
-	relayPunchTimeout = *relayPunchTimeoutFlag
+	settings.registrationTTL = *registrationTTLFlag
+	settings.challengeTimeout = *challengeTimeoutFlag
+	settings.relayPunchTimeout = *relayPunchTimeoutFlag
 
 	if (*iceUDPPortMin == 0) != (*iceUDPPortMax == 0) {
 		log.Fatalf("-ice-udp-port-min and -ice-udp-port-max must be set together")
@@ -227,7 +282,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("bad -dest %q: %v", *dest, err)
 		}
-		registry["default"] = &registeredServer{
+		workingSet.servers.registry["default"] = &registeredServer{
 			legacy:    true,
 			dest:      destAddr,
 			active:    true,
@@ -248,19 +303,32 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to open challenge probe socket: %v", err)
 	}
+	settings.challengeAddr = probeSock.LocalAddr()
 	challengeSock = probeSock
-	punchPortToAdvertise = *advertisePunchPort
-	if punchPortToAdvertise == 0 {
-		punchPortToAdvertise = probeSock.LocalAddr().(*net.UDPAddr).Port
+	settings.punchPortToAdvertise = *advertisePunchPort
+	if settings.punchPortToAdvertise == 0 {
+		settings.punchPortToAdvertise = probeSock.LocalAddr().(*net.UDPAddr).Port
 	}
 	log.Printf("registration challenge socket on udp :%d (advertising punch port %d)",
-		probeSock.LocalAddr().(*net.UDPAddr).Port, punchPortToAdvertise)
+		probeSock.LocalAddr().(*net.UDPAddr).Port, settings.punchPortToAdvertise)
 
-	relayPortPool.minPort = *relayPortMin
-	relayPortPool.maxPort = *relayPortMax
+	workingSet.relayPortPool.minPort = *relayPortMin
+	workingSet.relayPortPool.maxPort = *relayPortMax
 
 	go sweepExpiredRegistrations()
 	go challengeListener()
+	adminHost, adminPort, err := net.SplitHostPort(*adminAddr)
+	go startAdminInterface(
+		adminInterfaceOpts{
+			host: adminHost,
+			port: adminPort,
+			privateKey: *adminPrivateKey,
+		},
+		adminInterfaceModel{
+			workingSet: &workingSet,
+			settings: &settings,
+		},
+	)
 
 	http.HandleFunc("/signal", func(w http.ResponseWriter, r *http.Request) {
 		handleSignal(w, r, *iceUDPPortMin, *iceUDPPortMax, relayUDPPort)
@@ -279,18 +347,18 @@ func sweepExpiredRegistrations() {
 	for range ticker.C {
 		now := time.Now()
 		var expired []*registeredServer
-		registryMu.Lock()
-		for id, srv := range registry {
+		workingSet.servers.Lock()
+		for id, srv := range workingSet.servers.registry {
 			srv.mu.Lock()
 			stale := srv.active && now.After(srv.expiresAt)
 			srv.mu.Unlock()
 			if stale {
 				expired = append(expired, srv)
-				delete(registry, id)
+				delete(workingSet.servers.registry, id)
 				log.Printf("registry entry %q expired (no heartbeat within TTL)", id)
 			}
 		}
-		registryMu.Unlock()
+		workingSet.servers.Unlock()
 		for _, srv := range expired {
 			srv.conn.Close()
 		}
@@ -302,9 +370,9 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 	if serverID == "" {
 		serverID = "default"
 	}
-	registryMu.RLock()
-	srv, ok := registry[serverID]
-	registryMu.RUnlock()
+	workingSet.servers.RLock()
+	srv, ok := workingSet.servers.registry[serverID]
+	workingSet.servers.RUnlock()
 	if !ok {
 		log.Printf("rejecting /signal: unknown server %q", serverID)
 		return
@@ -326,14 +394,14 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 	defer conn.Close()
 
 	sessionID := newSessionID()
-	session := &clientSession{conn: conn, serverID: serverID}
-	sessionsMu.Lock()
-	sessions[sessionID] = session
-	sessionsMu.Unlock()
+	session := &clientSession{conn: conn, serverID: serverID, protocol: "WebRTC"}
+	workingSet.clients.Lock()
+	workingSet.clients.sessions[sessionID] = session
+	workingSet.clients.Unlock()
 	defer func() {
-		sessionsMu.Lock()
-		delete(sessions, sessionID)
-		sessionsMu.Unlock()
+		workingSet.clients.Lock()
+		delete(workingSet.clients.sessions, sessionID)
+		workingSet.clients.Unlock()
 	}()
 
 	var msg signalMessage
@@ -355,11 +423,30 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 
 	pc.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
 		log.Printf("peer connection state: %s", s)
+		if s != webrtc.PeerConnectionStateConnected {
+			return
+		}
+		pair, err := pc.SCTP().Transport().ICETransport().GetSelectedCandidatePair()
+		if err != nil || pair == nil {
+			log.Printf("failed to read selected ICE candidate pair for session %s: %v", sessionID, err)
+			return
+		}
+		session.mu.Lock()
+		session.peerLocalPort = int(pair.Local.Port)
+		session.peerRemoteAddr = &net.UDPAddr{
+			IP:   net.ParseIP(pair.Remote.Address),
+			Port: int(pair.Remote.Port),
+		}
+		session.mu.Unlock()
 	})
 
 	relayDone := make(chan struct{})
 	pc.OnDataChannel(func(dc *webrtc.DataChannel) {
 		log.Printf("data channel %q open request (id=%v)", dc.Label(), dc.ID())
+
+		session.mu.Lock()
+		session.dataChannel = dc
+		session.mu.Unlock()
 
 		// dc.OnMessage must be registered synchronously here, not inside
 		// the OnOpen callback (let alone a goroutine spawned from it):
@@ -395,7 +482,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 			return
 		}
 
-		relayPort := newPortFromPool(&relayPortPool)
+		relayPort := newPortFromPool(&workingSet.relayPortPool)
 		if relayPort == nil {
 			log.Printf("failed to allocate relay port for incoming datachannel")
 			return
@@ -404,9 +491,13 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		sock, err := net.ListenUDP("udp", laddr)
 		if err != nil {
 			log.Printf("failed to open relay socket: %v", err)
-			freePortFromPool(*relayPort, &relayPortPool)
+			freePortFromPool(*relayPort, &workingSet.relayPortPool)
 			return
 		}
+		if *relayPort == 0 {
+			relayPort = &sock.LocalAddr().(*net.UDPAddr).Port
+		}
+		session.relayPort = *relayPort
 
 		var resolvedDest atomic.Pointer[net.UDPAddr]
 		dc.OnMessage(func(msg webrtc.DataChannelMessage) {
@@ -423,7 +514,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 			sock.Close()
 			srv.writeMu.Lock()
 			srv.conn.WriteJSON(signalMessage{Type: "client-relay-closed", SessionID: sessionID})
-			freePortFromPool(*relayPort, &relayPortPool)
+			freePortFromPool(*relayPort, &workingSet.relayPortPool)
 			srv.writeMu.Unlock()
 		})
 
@@ -436,27 +527,30 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		srv.writeMu.Unlock()
 		if sendErr != nil {
 			log.Printf("failed to send client-relay to server: %v", sendErr)
-			freePortFromPool(*relayPort, &relayPortPool)
+			freePortFromPool(*relayPort, &workingSet.relayPortPool)
 			sock.Close()
 			return
 		}
 
 		dc.OnOpen(func() {
 			go func() {
-				sock.SetReadDeadline(time.Now().Add(relayPunchTimeout))
+				sock.SetReadDeadline(time.Now().Add(settings.relayPunchTimeout))
 				buf := make([]byte, 64)
 				_, addr, err := sock.ReadFromUDP(buf)
 				sock.SetReadDeadline(time.Time{})
 				if err != nil {
 					log.Printf(
 						"no punch received from server for session %s within %s, closing: %v",
-						sessionID, relayPunchTimeout, err)
+						sessionID, settings.relayPunchTimeout, err)
 					sock.Close()
 					close(relayDone)
 					return
 				}
 				log.Printf("punch received from %s for session %s, relaying to it", addr, sessionID)
 				resolvedDest.Store(addr)
+				session.mu.Lock()
+				session.serverAddr = addr
+				session.mu.Unlock()
 				go runRelayUnconnected(dc, sock, addr, relayDone)
 			}()
 		})
@@ -500,10 +594,19 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 	// GNS's own rendezvous signaling (ConnectRequest/ConnectOK, etc.)
 	// still needs to flow over it, tagged with this session's ID, for as
 	// long as the DataChannel relay is alive. Force this loop to end once
-	// the relay does, since nothing more needs relaying past that point.
+	// the relay does -- unless it ended because closeSessionRelay retired
+	// it in favor of GNS's own direct P2P connection (session.protocol ==
+	// "udp"), in which case the session and its signaling socket stay up:
+	// nothing more needs relaying, but the admin panel still wants to
+	// show this session (now tagged "udp") until it actually disconnects.
 	go func() {
 		<-relayDone
-		conn.Close()
+		session.mu.Lock()
+		retiredForDirectP2P := session.protocol == "UDP"
+		session.mu.Unlock()
+		if !retiredForDirectP2P {
+			conn.Close()
+		}
 	}()
 	for {
 		var m signalMessage
@@ -513,6 +616,9 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		switch m.Type {
 		case "gns-rendezvous":
 			relayRendezvousToServer(serverID, sessionID, m.Data)
+		case "gns-connected":
+			log.Printf("session %s: GNS reports direct connection, retiring relay", sessionID)
+			closeSessionRelay(session)
 		default:
 			log.Printf("session %s: unexpected signal message type %q", sessionID, m.Type)
 		}
@@ -533,12 +639,12 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 		legacyAdopted bool
 	)
 
-	registryMu.Lock()
-	if def, ok := registry["default"]; ok && def.conn == nil {
+	workingSet.servers.Lock()
+	if def, ok := workingSet.servers.registry["default"]; ok && def.conn == nil {
 		def.conn = conn
 		myID, myEntry, legacyAdopted = "default", def, true
 	}
-	registryMu.Unlock()
+	workingSet.servers.Unlock()
 	if legacyAdopted {
 		log.Printf("server signaling connection adopted by legacy \"default\" entry")
 	}
@@ -547,15 +653,15 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 		if myEntry == nil {
 			return
 		}
-		registryMu.Lock()
+		workingSet.servers.Lock()
 		if legacyAdopted {
 			if myEntry.conn == conn {
 				myEntry.conn = nil
 			}
-		} else if registry[myID] == myEntry {
-			delete(registry, myID)
+		} else if workingSet.servers.registry[myID] == myEntry {
+			delete(workingSet.servers.registry, myID)
 		}
-		registryMu.Unlock()
+		workingSet.servers.Unlock()
 		log.Printf("server %q signaling connection closed", myID)
 	}()
 
@@ -572,12 +678,28 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 				conn.WriteJSON(signalMessage{Type: "error", Data: err.Error()})
 				return
 			}
+			if legacyAdopted {
+				// This connection provisionally claimed the legacy
+				// "default" entry before we knew it was about to send a
+				// real registration. Undo that claim -- otherwise the
+				// disconnect cleanup below still thinks myEntry is
+				// "default" and, instead of deleting the real entry from
+				// the registry, just nils its conn, leaving a stale
+				// active entry for sweepExpiredRegistrations to later
+				// Close() a nil conn on.
+				workingSet.servers.Lock()
+				if def, ok := workingSet.servers.registry["default"]; ok && def.conn == conn {
+					def.conn = nil
+				}
+				workingSet.servers.Unlock()
+				legacyAdopted = false
+			}
 			myID, myEntry = id, entry
 			// Tell the server where to send its return-routability punch
 			// -- explicitly, never guessed from URLs (see PunchPort's
 			// field comment).
 			myEntry.writeMu.Lock()
-			err = conn.WriteJSON(signalMessage{Type: "register-pending", PunchPort: punchPortToAdvertise})
+			err = conn.WriteJSON(signalMessage{Type: "register-pending", PunchPort: settings.punchPortToAdvertise})
 			myEntry.writeMu.Unlock()
 			if err != nil {
 				log.Printf("failed to send register-pending to %q: %v", myID, err)
@@ -590,7 +712,7 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 			}
 			myEntry.mu.Lock()
 			if myEntry.active {
-				myEntry.expiresAt = time.Now().Add(registrationTTL)
+				myEntry.expiresAt = time.Now().Add(settings.registrationTTL)
 			}
 			myEntry.mu.Unlock()
 		case "challenge-response":
@@ -601,6 +723,9 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 			completeChallenge(myID, myEntry, m.Nonce)
 		case "gns-rendezvous":
 			relayRendezvousToClient(m.SessionID, m.Data)
+		case "gns-connected":
+			log.Printf("server signal: GNS reports direct connection for session %s, retiring relay", m.SessionID)
+			relayGNSConnected(m.SessionID)
 		default:
 			log.Printf("server signal: unexpected message type %q", m.Type)
 		}
@@ -621,32 +746,32 @@ func beginRegistration(conn *websocket.Conn, m signalMessage) (string, *register
 		conn:         conn,
 		active:       false,
 		pendingNonce: nonce,
-		expiresAt:    time.Now().Add(challengeTimeout),
+		expiresAt:    time.Now().Add(settings.challengeTimeout),
 	}
 
-	registryMu.Lock()
-	if existing, ok := registry[m.ServerID]; ok && existing.conn != conn {
-		registryMu.Unlock()
+	workingSet.servers.Lock()
+	if existing, ok := workingSet.servers.registry[m.ServerID]; ok && existing.conn != conn {
+		workingSet.servers.Unlock()
 		return "", nil, fmt.Errorf("serverId %q already registered by another connection", m.ServerID)
 	}
-	registry[m.ServerID] = entry
-	registryMu.Unlock()
+	workingSet.servers.registry[m.ServerID] = entry
+	workingSet.servers.Unlock()
 
 	log.Printf("register %q: waiting for return-routability punch", m.ServerID)
 
 	go func(id string, srv *registeredServer) {
-		time.Sleep(challengeTimeout)
+		time.Sleep(settings.challengeTimeout)
 		srv.mu.Lock()
 		expired := !srv.active
 		srv.mu.Unlock()
 		if !expired {
 			return
 		}
-		registryMu.Lock()
-		if registry[id] == srv {
-			delete(registry, id)
+		workingSet.servers.Lock()
+		if workingSet.servers.registry[id] == srv {
+			delete(workingSet.servers.registry, id)
 		}
-		registryMu.Unlock()
+		workingSet.servers.Unlock()
 		log.Printf("register %q: no punch/challenge received in time, dropping registration", id)
 	}(m.ServerID, entry)
 
@@ -667,9 +792,9 @@ func challengeListener() {
 		}
 		id := strings.TrimPrefix(msg, registerPunchPrefix)
 
-		registryMu.RLock()
-		srv, ok := registry[id]
-		registryMu.RUnlock()
+		workingSet.servers.RLock()
+		srv, ok := workingSet.servers.registry[id]
+		workingSet.servers.RUnlock()
 		if !ok {
 			continue
 		}
@@ -707,13 +832,13 @@ func completeChallenge(id string, srv *registeredServer, nonceHex string) {
 	}
 	srv.active = true
 	srv.pendingNonce = nil
-	srv.expiresAt = time.Now().Add(registrationTTL)
+	srv.expiresAt = time.Now().Add(settings.registrationTTL)
 	log.Printf("server %q registration active (challenge passed)", id)
 }
 
 func relayRendezvousToServer(serverID, sessionID, data string) {
-	registryMu.RLock()
-	srv, ok := registry[serverID]
+	workingSet.servers.RLock()
+	srv, ok := workingSet.servers.registry[serverID]
 	var conn *websocket.Conn
 	if ok {
 		// conn can be nil (legacy "default" entry with no /server-signal
@@ -721,7 +846,7 @@ func relayRendezvousToServer(serverID, sessionID, data string) {
 		// under the same lock that mutates it.
 		conn = srv.conn
 	}
-	registryMu.RUnlock()
+	workingSet.servers.RUnlock()
 	if !ok {
 		log.Printf("dropping gns-rendezvous from session %s: server %q no longer registered", sessionID, serverID)
 		return
@@ -738,9 +863,9 @@ func relayRendezvousToServer(serverID, sessionID, data string) {
 }
 
 func relayRendezvousToClient(sessionID, data string) {
-	sessionsMu.RLock()
-	session, ok := sessions[sessionID]
-	sessionsMu.RUnlock()
+	workingSet.clients.RLock()
+	session, ok := workingSet.clients.sessions[sessionID]
+    workingSet.clients.RUnlock()
 	if !ok {
 		log.Printf("dropping gns-rendezvous for unknown session %s", sessionID)
 		return
@@ -750,6 +875,42 @@ func relayRendezvousToClient(sessionID, data string) {
 	if err := session.conn.WriteJSON(signalMessage{Type: "gns-rendezvous", SessionID: sessionID, Data: data}); err != nil {
 		log.Printf("failed to relay rendezvous to client %s: %v", sessionID, err)
 	}
+}
+
+// closeSessionRelay tears down a session's WebRTC relay because GNS's own
+// rendezvous handshake (relayed opaquely above) has completed a direct
+// P2P connection between client and server, making the relay redundant.
+// Closing the DataChannel cascades through each branch's existing
+// OnClose (socket close, port release, server notification). The
+// session itself (and its signaling websocket) stays registered --
+// tagged protocol "udp" -- so the admin panel keeps showing it rather
+// than the session just vanishing (see handleSignal's relayDone
+// goroutine, which checks this flag before closing the socket).
+func closeSessionRelay(session *clientSession) {
+	session.mu.Lock()
+	dc := session.dataChannel
+	session.protocol = "UDP"
+	session.mu.Unlock()
+	if dc == nil {
+		return
+	}
+	if err := dc.Close(); err != nil {
+		log.Printf("failed to close relay data channel: %v", err)
+	}
+}
+
+// relayGNSConnected looks up a session by ID for closeSessionRelay, for
+// callers (the server's /server-signal connection) that don't already
+// have the session in scope the way handleSignal's own read loop does.
+func relayGNSConnected(sessionID string) {
+	workingSet.clients.RLock()
+	session, ok := workingSet.clients.sessions[sessionID]
+	workingSet.clients.RUnlock()
+	if !ok {
+		log.Printf("dropping gns-connected for unknown session %s", sessionID)
+		return
+	}
+	closeSessionRelay(session)
 }
 
 // newPeerConnection builds an ICE-lite PeerConnection: the gateway has a
