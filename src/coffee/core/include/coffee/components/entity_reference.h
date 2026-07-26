@@ -104,7 +104,7 @@ struct EntityRef
 /* Out-of-line: needs the full EntityRef definition, which
  * entity_container.h only forward-declares */
 FORCEDINLINE EntityRef<EntityContainer> EntityContainer::entity_query::
-    operator*() const
+operator*() const
 {
     if(it == m_container->entities.end())
         Throw(std::out_of_range("bad iterator"));
@@ -137,12 +137,11 @@ template<typename... Components>
 struct ComponentEntityRef : EntityRef<EntityContainer>
 {
     template<typename U>
-    static constexpr bool is_selected =
-        (std::is_same_v<U, Components> || ...);
+    static constexpr bool is_selected = (std::is_same_v<U, Components> || ...);
 
     ComponentEntityRef(
-        u64                                 id,
-        EntityContainer*                    container,
+        u64              id,
+        EntityContainer* container,
         typename Components::value_type*... payload)
         : EntityRef<EntityContainer>(id, container)
         , m_payload(payload...)
@@ -153,8 +152,7 @@ struct ComponentEntityRef : EntityRef<EntityContainer>
     typename U::value_type& get()
     {
         if constexpr(is_selected<U>)
-            return *std::get<detail::pack_index<U, Components...>()>(
-                m_payload);
+            return *std::get<detail::pack_index<U, Components...>()>(m_payload);
         else
             return EntityRef<EntityContainer>::template get<U>();
     }
@@ -163,8 +161,7 @@ struct ComponentEntityRef : EntityRef<EntityContainer>
     typename U::value_type const& get() const
     {
         if constexpr(is_selected<U>)
-            return *std::get<detail::pack_index<U, Components...>()>(
-                m_payload);
+            return *std::get<detail::pack_index<U, Components...>()>(m_payload);
         else
             return EntityRef<EntityContainer>::template get<U>();
     }

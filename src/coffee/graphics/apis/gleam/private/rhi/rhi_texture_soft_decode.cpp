@@ -162,8 +162,8 @@ static std::vector<char> software_decode_pvrtc_etc1(
     semantic::Span<const char>&& data,
     size_3d<i32> const&          size)
 {
-    using typing::pixels::comp_flags;
     using enum_helpers::feval;
+    using typing::pixels::comp_flags;
     std::vector<char> out;
     out.resize(size.w * size.h * 4);
     if(fmt.pixfmt == pix_fmt::PVRTC)

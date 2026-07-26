@@ -73,8 +73,7 @@ ScreenshotProvider::dump_t ScreenshotProvider::read_pixels(
     } else
 #endif
     {
-        glw::bind_framebuffer(
-            gl::group::framebuffer_target::framebuffer, fbo);
+        glw::bind_framebuffer(gl::group::framebuffer_target::framebuffer, fbo);
     }
 
     // Now set up the framebuffer copy

@@ -31,15 +31,15 @@ struct GLGPUStatsProvider
     /* Reported in bytes (matching the nvml provider). NVX's native unit is
      * KiB; the u32 accessors clamp on >4 GiB GPUs, the f32 numeric stats do
      * not. */
-    std::optional<libc_types::u64>              mem_resident() final;
-    std::optional<libc_types::u64>              mem_total() final;
-    std::optional<libc_types::u8> usage() final;
+    std::optional<libc_types::u64> mem_resident() final;
+    std::optional<libc_types::u64> mem_total() final;
+    std::optional<libc_types::u8>  usage() final;
     std::multimap<
         std::string_view,
         comp_app::interfaces::SensorStatProvider::reading_t>
-                                            stats_numeric() final;
-    std::map<std::string_view, std::string> stats_strings() final;
-    std::map<std::string_view, stats_desc_t>    stats_description() final;
+                                             stats_numeric() final;
+    std::map<std::string_view, std::string>  stats_strings() final;
+    std::map<std::string_view, stats_desc_t> stats_description() final;
 
   private:
     /* GL is unavailable at load() time (no context yet), so extension probing
@@ -49,17 +49,17 @@ struct GLGPUStatsProvider
     bool m_init{false};
 
     /* --- GL_AMD_performance_monitor --- */
-    void amd_setup();                              // enumerate + select counters
-    void amd_poll(const compo::time_point& time);  // drive begin/end/read window
-    bool amd_collect();                            // non-blocking result read
+    void amd_setup();                             // enumerate + select counters
+    void amd_poll(const compo::time_point& time); // drive begin/end/read window
+    bool amd_collect();                           // non-blocking result read
 
     struct amd_counter_t
     {
         libc_types::u32 group;
         libc_types::u32 counter;
-        libc_types::u32 type;          // GL counter type enum
+        libc_types::u32 type; // GL counter type enum
         bool            is_percentage;
-        std::string     name;          // "<group> / <counter>"
+        std::string     name; // "<group> / <counter>"
     };
 
     amd_counter_t const* find_counter(
@@ -68,8 +68,8 @@ struct GLGPUStatsProvider
     std::vector<amd_counter_t> m_amd_counters;
     libc_types::u32            m_amd_monitor{0};
     bool                       m_amd_ok{false};
-    bool                       m_amd_active{false};   // begin issued, not ended
-    bool                       m_amd_pending{false};  // ended, result not read
+    bool                       m_amd_active{false};  // begin issued, not ended
+    bool                       m_amd_pending{false}; // ended, result not read
     compo::time_point          m_amd_next{};
 
     /* --- GL_NVX_gpu_memory_info --- */
@@ -93,14 +93,16 @@ struct GLGPUStatsProvider
         libc_types::u32 query;
         std::string     name;
     };
+
     std::vector<arb_counter_t> m_arb_counters;
     bool                       m_arb_ok{false};
     bool                       m_arb_active{false};
     bool                       m_arb_pending{false};
     compo::time_point          m_arb_next{};
 
-    std::multimap<std::string, reading_t>   m_numeric;  // AMD + NVX numeric readings
-    std::map<std::string, std::string> m_strings;  // backend description
+    std::multimap<std::string, reading_t>
+                                       m_numeric; // AMD + NVX numeric readings
+    std::map<std::string, std::string> m_strings; // backend description
 };
 
 } // namespace glgpustats

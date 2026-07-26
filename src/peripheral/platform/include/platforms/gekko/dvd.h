@@ -57,7 +57,7 @@ inline bool read_at(void* dst, u32 len, u32 abs)
         u8* tmp = static_cast<u8*>(memalign(32, span));
         if(!tmp)
             return false;
-        dvdcmdblk blk;
+        dvdcmdblk  blk;
         bool const ok =
             DVD_ReadPrio(&blk, tmp, span, static_cast<s64>(start), 2) > 0;
         if(ok)
@@ -139,8 +139,8 @@ inline bool parse_fst()
         if(e[0] != 0) // 0 = file, 1 = directory
             continue;
         u32 const noff = (u32(e[1]) << 16) | (u32(e[2]) << 8) | u32(e[3]);
-        g_files.push_back({std::string(strings + noff), be32(e + 4),
-                           be32(e + 8)});
+        g_files.push_back(
+            {std::string(strings + noff), be32(e + 4), be32(e + 8)});
     }
     free(fst);
     return true;
@@ -198,7 +198,7 @@ inline off_t dvd_seek_r(struct _reent* r, void* fd, off_t pos, int dir)
     off_t const base = dir == SEEK_SET   ? 0
                        : dir == SEEK_CUR ? static_cast<off_t>(f->pos)
                                          : static_cast<off_t>(f->size);
-    off_t const np = base + pos;
+    off_t const np   = base + pos;
     if(np < 0)
     {
         r->_errno = EINVAL;
@@ -258,10 +258,9 @@ inline bool mount()
     u8* h = static_cast<u8*>(memalign(32, 0x40));
     if(!h)
         return false;
-    dvdcmdblk blk;
-    bool const present =
-        DVD_ReadPrio(&blk, h, 0x40, 0, 2) > 0
-        && detail::be32(h + 0x1c) == 0xC2339F3D;
+    dvdcmdblk  blk;
+    bool const present = DVD_ReadPrio(&blk, h, 0x40, 0, 2) > 0 &&
+                         detail::be32(h + 0x1c) == 0xC2339F3D;
     free(h);
     if(!present || !detail::parse_fst())
         return false;

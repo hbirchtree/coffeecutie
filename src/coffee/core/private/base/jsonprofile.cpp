@@ -322,7 +322,7 @@ void CaptureMetrics_i64(
     std::chrono::microseconds ts,
     u32                       index,
     std::string_view          index_name)
-{ 
+{
     using stl_types::cast_pod;
     CaptureMetrics(
         tdata, name, variant, cast_pod(value), ts, index, index_name);

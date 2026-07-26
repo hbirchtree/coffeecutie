@@ -435,7 +435,8 @@ void configureDefaults(AppLoader& loader)
     auto& dummyPlug = loader.config<dummy_plug::Config>();
 #if defined(COFFEE_EMSCRIPTEN)
     const bool dummy_has_config = false;
-    const bool dummy_live = emscripten::args::query_params().contains("dummy_plug");
+    const bool dummy_live =
+        emscripten::args::query_params().contains("dummy_plug");
 #else
     const bool dummy_has_config =
         platform::env::var("DUMMY_PLUG_CONFIG").has_value();
@@ -588,9 +589,8 @@ void addDefaults(
         auto& container = createContainer();
         dummy_plug::insert_dummy_plug(container, dummyPlug);
         app_error ec;
-        loader.loadAll<subsystem_list<
-            dummy_plug::DummyEventBus
-        >>(container, ec);
+        loader.loadAll<subsystem_list<dummy_plug::DummyEventBus>>(
+            container, ec);
     }
 #endif
 
@@ -598,9 +598,8 @@ void addDefaults(
     cVerbose(10, "Loading windowing library");
 #if defined(FEATURE_ENABLE_EGLComponent) && \
     defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
-        if(dummyPlug.enabled
-           && (dummyPlug.swrender == "llvmpipe"
-               || dummyPlug.swrender == "surfaceless"))
+    if(dummyPlug.enabled && (dummyPlug.swrender == "llvmpipe" ||
+                             dummyPlug.swrender == "surfaceless"))
     {
         loader.registerAll<egl::SurfacelessServices>(container, ec);
         C_ERROR_CHECK(ec);
@@ -729,9 +728,8 @@ void addDefaults(
 /* Selection of (E)GL context */
 #if defined(FEATURE_ENABLE_EGLComponent) && \
     defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
-        if(dummyPlug.enabled
-           && (dummyPlug.swrender == "llvmpipe"
-               || dummyPlug.swrender == "surfaceless"))
+    if(dummyPlug.enabled && (dummyPlug.swrender == "llvmpipe" ||
+                             dummyPlug.swrender == "surfaceless"))
     {
         appInfo.add("gl:context", "EGL (" + dummyPlug.swrender + ")");
     } else
@@ -1025,13 +1023,27 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
         {
             if(auto resident = provider->mem_resident())
                 json::CaptureMetrics(
-                    "GPU memory", MetricVariant::Value, *resident, timestamp, gpu_idx, "Used");
+                    "GPU memory",
+                    MetricVariant::Value,
+                    *resident,
+                    timestamp,
+                    gpu_idx,
+                    "Used");
             if(auto total = provider->mem_total())
                 json::CaptureMetrics(
-                    "GPU memory", MetricVariant::Value, *total, timestamp, gpu_idx + 1, "Total");
+                    "GPU memory",
+                    MetricVariant::Value,
+                    *total,
+                    timestamp,
+                    gpu_idx + 1,
+                    "Total");
             if(auto usage = provider->usage())
                 json::CaptureMetrics(
-                    "GPU usage", MetricVariant::Value, *usage, timestamp, gpu_idx);
+                    "GPU usage",
+                    MetricVariant::Value,
+                    *usage,
+                    timestamp,
+                    gpu_idx);
             for(auto const& [label, reading] : provider->stats_numeric())
                 json::CaptureMetrics(
                     label,

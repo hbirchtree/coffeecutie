@@ -30,7 +30,7 @@ struct Config : comp_app::Config<Config>
 /* Free-form dummy events we can insert and interpret per-application */
 struct DummyEvent
 {
-    std::string event;
+    std::string    event;
     nlohmann::json data;
 };
 

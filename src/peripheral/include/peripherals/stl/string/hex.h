@@ -58,7 +58,8 @@ FORCEDINLINE std::basic_string<CharType> hexdump(
     for(size_t i = 0; i < data.size; i++)
     {
         out.append("00");
-        sprintf(&out[out.size() - 2], "%02x", static_cast<unsigned char>(data[i]));
+        sprintf(
+            &out[out.size() - 2], "%02x", static_cast<unsigned char>(data[i]));
         if(newline_freq == 0 || (i + 1) % newline_freq != 0)
         {
             if(spacing)

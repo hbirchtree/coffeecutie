@@ -21,8 +21,8 @@ struct Context
     libc_types::u32      currentFb = 0;
     std::array<void*, 2> framebuffer{{nullptr, nullptr}};
     GXRModeObj*          rmode   = nullptr;
-    void*               gxFifo  = nullptr;
-    bool                gxReady = false;
+    void*                gxFifo  = nullptr;
+    bool                 gxReady = false;
 };
 
 Context* g_context = nullptr;
@@ -93,8 +93,7 @@ void gxInitialize()
     auto xfbHeight = GX_SetDispCopyYScale(yscale);
     GX_SetDispCopySrc(0, 0, rmode->fbWidth, rmode->efbHeight);
     GX_SetDispCopyDst(rmode->fbWidth, xfbHeight);
-    GX_SetCopyFilter(
-        rmode->aa, rmode->sample_pattern, GX_TRUE, rmode->vfilter);
+    GX_SetCopyFilter(rmode->aa, rmode->sample_pattern, GX_TRUE, rmode->vfilter);
     GX_SetFieldMode(
         rmode->field_rendering,
         (rmode->viHeight == rmode->xfbHeight * 2) ? GX_ENABLE : GX_DISABLE);
@@ -118,11 +117,12 @@ void swapBuffers()
     if(g_context->gxReady)
     {
         /* GP-stall watchdog: a malformed vertex stream (e.g. a vertex
-         * descriptor/format that disagrees with the emitted vertices) leaves the
-         * graphics processor waiting for FIFO bytes that never arrive. The
+         * descriptor/format that disagrees with the emitted vertices) leaves
+         * the graphics processor waiting for FIFO bytes that never arrive. The
          * blocking GX_DrawDone() would then hang forever with no notification.
          * Wait for the command processor to drain with a deadline instead; on a
-         * stall, report it and abort the frame rather than freezing silently. */
+         * stall, report it and abort the frame rather than freezing silently.
+         */
         GX_Flush();
         u64 const deadline = gettime() + millisecs_to_ticks(2000);
         u8        ov_hi, ov_lo, rd_idle, cmd_idle = 0, brkpt;

@@ -74,8 +74,8 @@ struct alignas(4) image_t
     i8         lod_adjust;
     u8         cache_usage;
 
-    raw_ref pixels;         /*!< Unused on the maps inspected so far */
-    raw_ref lod_offset[3];  /*!< LOD1 = highest detail */
+    raw_ref pixels;        /*!< Unused on the maps inspected so far */
+    raw_ref lod_offset[3]; /*!< LOD1 = highest detail */
     u32     unknown_0[3];
     u32     lod_size[3];
     u32     unknown_1[3];

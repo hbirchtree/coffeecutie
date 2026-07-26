@@ -10,7 +10,7 @@ struct Windowing
 {
     virtual comp_app::size_2d_t      size() const final;
     virtual comp_app::window_flags_t state() const final;
-    virtual void setState(comp_app::window_flags_t) final;
+    virtual void                     setState(comp_app::window_flags_t) final;
 };
 
 struct GraphicsFramebuffer
@@ -21,7 +21,7 @@ struct GraphicsFramebuffer
     virtual void                swapBuffers(comp_app::app_error& ec) final;
 
     virtual void end_frame(
-        comp_app::detail::ContainerProxy&  c,
+        comp_app::detail::ContainerProxy&   c,
         comp_app::detail::time_point const& t) final;
 };
 

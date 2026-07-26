@@ -32,9 +32,9 @@ struct mem_mapping_t
 
 struct mapping_params_t
 {
-    RSCA               access{RSCA::ReadOnly};
-    libc_types::szptr  offset{0};
-    libc_types::szptr  size{0};
+    RSCA              access{RSCA::ReadOnly};
+    libc_types::szptr offset{0};
+    libc_types::szptr size{0};
 };
 
 FORCEDINLINE result<mem_mapping_t, gekko_error> map(

@@ -83,16 +83,17 @@ struct alignas(4) file_header_t
  *
  * According to SnowyMouse:
  * Bungie deliberately scrambled the field layout for the Trial release so it
- * doesn't resemble the retail header (offsets cross-referenced against Invader's
- * CacheFileDemoHeader, which calls this version "Demo"). Same 2048-byte size,
- * but every field sits at a different, mostly unaligned offset — hence the
- * packing. In-file the head/foot literals are "Ehed"/"Gfot" (vs retail
- * "head"/"foot"), byte-reversed in memory to "dehE"/"tofG".
+ * doesn't resemble the retail header (offsets cross-referenced against
+ * Invader's CacheFileDemoHeader, which calls this version "Demo"). Same
+ * 2048-byte size, but every field sits at a different, mostly unaligned offset
+ * — hence the packing. In-file the head/foot literals are "Ehed"/"Gfot" (vs
+ * retail "head"/"foot"), byte-reversed in memory to "dehE"/"tofG".
  *
  * The rest of the loader only understands the retail layout, so this is
  * translated up-front via to_retail().
  */
 #pragma pack(push, 1)
+
 struct file_header_trial_t
 {
     u8        pad_0[0x002];
@@ -114,9 +115,9 @@ struct file_header_trial_t
 
     inline bool valid() const
     {
-        return version == version_t::trial
-               && id == bl_header{'d', 'e', 'h', 'E'}
-               && footer == bl_footer{'t', 'o', 'f', 'G'};
+        return version == version_t::trial &&
+               id == bl_header{'d', 'e', 'h', 'E'} &&
+               footer == bl_footer{'t', 'o', 'f', 'G'};
     }
 
     /*!
@@ -140,6 +141,7 @@ struct file_header_trial_t
         return out;
     }
 };
+
 #pragma pack(pop)
 
 static_assert(offsetof(file_header_trial_t, map_type) == 0x002);

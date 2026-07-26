@@ -96,15 +96,15 @@ struct api
     static extensions_set       query_native_extensions();
     static api_type_t           query_native_api();
 
-    std::string_view                    api_name();
-    api_type_t                          api_type();
-    std::tuple<u32, u32>                api_version();
-    std::string                         shaderlang_name();
-    api_type_t                          shaderlang_type();
-    std::tuple<u32, u32>                shaderlang_version();
+    std::string_view                     api_name();
+    api_type_t                           api_type();
+    std::tuple<u32, u32>                 api_version();
+    std::string                          shaderlang_name();
+    api_type_t                           shaderlang_type();
+    std::tuple<u32, u32>                 shaderlang_version();
     std::tuple<std::string, std::string> device();
-    std::optional<std::string>          device_driver();
-    extensions_set                      extensions();
+    std::optional<std::string>           device_driver();
+    extensions_set                       extensions();
 
     void collect_info(comp_app::interfaces::AppInfo& appInfo);
 

@@ -41,20 +41,19 @@
 #if defined(COFFEE_GEKKO)
 #if defined(COFFEE_HAS_GEXXO)
 #include <coffee/gexxo/gexxo_api.h>
-#define COFFEE_POST_MAIN_LOOP() \
-    gexxo::infiniteLoop();
+#define COFFEE_POST_MAIN_LOOP() gexxo::infiniteLoop();
 #else
-#define COFFEE_POST_MAIN_LOOP() \
-    gekko::console::infinite_loop();
+#define COFFEE_POST_MAIN_LOOP() gekko::console::infinite_loop();
 #endif
 namespace gekko::console {
 extern void init();
 extern void infinite_loop();
-}
+} // namespace gekko::console
+
 namespace gekko {
 extern void mount_debugger();
 extern void mount_storage();
-}
+} // namespace gekko
 #else
 #define COFFEE_POST_MAIN_LOOP()
 #endif

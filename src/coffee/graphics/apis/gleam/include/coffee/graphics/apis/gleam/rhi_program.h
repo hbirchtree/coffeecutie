@@ -320,8 +320,10 @@ struct program_t
                     // KHR_parallel_shader_compile stops at two points:
                     // - shader compile
                     // - link time
-                    // We need to avoid attach now and wait for shader compile to finish
-                    Coffee::Profiler::DeepProfile("Started async shader compile");
+                    // We need to avoid attach now and wait for shader compile
+                    // to finish
+                    Coffee::Profiler::DeepProfile(
+                        "Started async shader compile");
                     continue;
                 }
 
@@ -329,9 +331,10 @@ struct program_t
             }
             if(m_features.khr.parallel_shader_compile)
             {
-                m_async_state = async_compile_state::shaders_compiling;
+                m_async_state   = async_compile_state::shaders_compiling;
                 m_async_waiting = true;
-                return compile_log_t{"Waiting for KHR_parallel_shader_compile", 1};
+                return compile_log_t{
+                    "Waiting for KHR_parallel_shader_compile", 1};
             }
             cmd::link_program(m_handle);
             return validate_program();
@@ -370,11 +373,13 @@ struct program_t
                     if(auto res = validate_shader(stage_info.get());
                        res.has_error())
                     {
-                        Coffee::Profiler::DeepProfile("Async shader compile failed");
+                        Coffee::Profiler::DeepProfile(
+                            "Async shader compile failed");
                         m_error_state = true;
                         return res.error();
                     }
-                    Coffee::Profiler::DeepProfile("Async shader compile finished");
+                    Coffee::Profiler::DeepProfile(
+                        "Async shader compile finished");
                     cmd::attach_shader(m_handle, stage_info->m_handle);
                 }
                 Coffee::Profiler::DeepProfile("Async program link started");
@@ -393,9 +398,10 @@ struct program_t
                 std::string error_log;
                 if(auto res = validate_program(); res.has_value())
                 {
-                    Coffee::Profiler::DeepProfile("Async program link finished");
+                    Coffee::Profiler::DeepProfile(
+                        "Async program link finished");
                     m_async_waiting = false;
-                    m_async_state = async_compile_state::linked;
+                    m_async_state   = async_compile_state::linked;
                     return true;
                 } else
                     error_log = std::get<0>(res.error());

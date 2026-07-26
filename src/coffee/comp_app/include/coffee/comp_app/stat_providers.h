@@ -39,11 +39,11 @@ struct SysGPUStats
     , AppService<SysGPUStats, GPUStatProvider>
     , AppLoadableService
 {
-    std::optional<libc_types::u64>              mem_resident() final;
-    std::optional<libc_types::u64>              mem_total() final;
-    std::optional<libc_types::u8>               usage() final;
-    std::multimap<std::string_view, reading_t>  stats_numeric() final;
-    std::map<std::string_view, stats_desc_t>    stats_description() final;
+    std::optional<libc_types::u64>             mem_resident() final;
+    std::optional<libc_types::u64>             mem_total() final;
+    std::optional<libc_types::u8>              usage() final;
+    std::multimap<std::string_view, reading_t> stats_numeric() final;
+    std::map<std::string_view, stats_desc_t>   stats_description() final;
 
   protected:
     void load(entity_container& e, app_error& ec) final;
@@ -51,9 +51,9 @@ struct SysGPUStats
   private:
     std::string m_devfreq; // /sys/class/devfreq/<node>, empty if none found
     /* trans_stat residency snapshot for delta-based utilization */
-    libc_types::u64 m_prev_total_ms{0};
-    libc_types::u64 m_prev_busy_ms{0};
-    libc_types::u8  m_usage{0};
+    libc_types::u64                        m_prev_total_ms{0};
+    libc_types::u64                        m_prev_busy_ms{0};
+    libc_types::u8                         m_usage{0};
     std::map<std::string, libc_types::i64> m_numeric;
 };
 
@@ -65,6 +65,7 @@ struct SysHWMonStats
 {
     std::multimap<std::string_view, reading_t> stats_numeric() final;
     std::map<std::string_view, stats_desc_t>   stats_description() final;
+
   protected:
     void load(entity_container&, app_error&) final;
 

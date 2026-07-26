@@ -311,7 +311,8 @@ struct image_t
         auto bytes_per_mip = [this](u16 mip) -> u32 {
             auto w = (u32)((isize.x >> mip) < 1 ? 1 : (isize.x >> mip));
             auto h = (u32)((isize.y >> mip) < 1 ? 1 : (isize.y >> mip));
-            switch(format) {
+            switch(format)
+            {
             case format_t::BC1:
             case format_t::BC1_GX_TILED:
                 return ((w + 3u) / 4u) * ((h + 3u) / 4u) * 8u;

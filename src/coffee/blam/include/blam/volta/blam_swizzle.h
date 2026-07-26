@@ -40,8 +40,8 @@ inline void generate_masks(
     u32 width, u32 height, u32 depth, u32& mask_x, u32& mask_y, u32& mask_z)
 {
     mask_x = mask_y = mask_z = 0;
-    u32  bit      = 1;
-    u32  mask_bit = 1;
+    u32  bit                 = 1;
+    u32  mask_bit            = 1;
     bool done;
     do
     {
@@ -70,7 +70,8 @@ inline void generate_masks(
 
 } // namespace detail
 
-/* Flat swizzled pixel index for texel (x, y, z) given precomputed axis masks. */
+/* Flat swizzled pixel index for texel (x, y, z) given precomputed axis masks.
+ */
 inline u32 swizzled_offset(
     u32 x, u32 y, u32 z, u32 mask_x, u32 mask_y, u32 mask_z)
 {
@@ -102,8 +103,7 @@ inline bool deswizzle(
         for(u32 y = 0; y < height; y++)
             for(u32 x = 0; x < width; x++)
             {
-                u32 src_idx =
-                    swizzled_offset(x, y, z, mask_x, mask_y, mask_z);
+                u32 src_idx = swizzled_offset(x, y, z, mask_x, mask_y, mask_z);
                 size_t dst_idx =
                     (static_cast<size_t>(z) * height + y) * width + x;
                 dst[dst_idx] = src[src_idx];

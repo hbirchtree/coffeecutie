@@ -99,19 +99,19 @@ enum class classification_t : i16
 /*! render_model (mode) section, elem in the tag's sections block */
 struct alignas(4) model_section_t
 {
-    classification_t classification;
-    u16              unknown_0;
-    u16              vertex_count_raw;
-    u16              face_count_raw;
-    u8               unknown_1[12];
-    u8               nodes_per_vertex;
-    u8               unknown_2[35];
-    raw_ref          data;
-    i32              data_size_raw;
-    i32              unknown_3;
-    i32              header_size_raw;
+    classification_t      classification;
+    u16                   unknown_0;
+    u16                   vertex_count_raw;
+    u16                   face_count_raw;
+    u8                    unknown_1[12];
+    u8                    nodes_per_vertex;
+    u8                    unknown_2[35];
+    raw_ref               data;
+    i32                   data_size_raw;
+    i32                   unknown_3;
+    i32                   header_size_raw;
     tag_block<resource_t> resources;
-    u8               unknown_4[12];
+    u8                    unknown_4[12];
 
     inline u16 vertex_count() const
     {
@@ -157,8 +157,8 @@ static_assert(sizeof(model_bounds_t) == 56);
 
 struct alignas(4) model_region_t
 {
-    string_id name;
-    u32       unknown_0;
+    string_id     name;
+    u32           unknown_0;
     tag_block<u8> permutations; /* elem 16: name sid, 6× lod section idx */
 };
 
@@ -207,11 +207,11 @@ struct alignas(4) vec4_t
  * for base maps slot/tile 0 is the usual arrangement. */
 struct alignas(4) shader_properties_t
 {
-    datum_index shader_template;
+    datum_index             shader_template;
     tag_block<shader_map_t> bitmaps;
-    u8 unknown_0[8];
-    tag_block<vec4_t> tiling; /* 0x14; xy = uv scale */
-    u8 unknown_1[96];
+    u8                      unknown_0[8];
+    tag_block<vec4_t>       tiling; /* 0x14; xy = uv scale */
+    u8                      unknown_1[96];
 };
 
 static_assert(offsetof(shader_properties_t, tiling) == 0x14);
@@ -221,10 +221,10 @@ static_assert(sizeof(shader_properties_t) == 124);
  * stripped; runtime properties + postprocess survive) */
 struct alignas(4) shad_header_t
 {
-    tag_reference shader_template;
-    string_id     material_name;
+    tag_reference                      shader_template;
+    string_id                          material_name;
     tag_block<shad_runtime_property_t> runtime_properties;
-    u32           flags;
+    u32                                flags;
     tag_block<u8> parameters; /* empty in shipped Xbox caches */
     tag_block<shader_properties_t> properties; /* 0x20 */
 };
@@ -235,14 +235,14 @@ static_assert(offsetof(shad_header_t, properties) == 0x20);
 /*! render_model (mode) tag body prefix; only the geometry-relevant blocks */
 struct alignas(4) model_header_t
 {
-    string_id name;
-    u32       flags;
-    u8        unknown_0[12];
-    tag_block<model_bounds_t>   bounds;   /* 0x14 */
-    tag_block<model_region_t>   regions;  /* 0x1C */
-    tag_block<model_section_t>  sections; /* 0x24 */
-    u8 unknown_1[52];
-    tag_block<shader_ref_t>     shaders;  /* 0x60 */
+    string_id                  name;
+    u32                        flags;
+    u8                         unknown_0[12];
+    tag_block<model_bounds_t>  bounds;   /* 0x14 */
+    tag_block<model_region_t>  regions;  /* 0x1C */
+    tag_block<model_section_t> sections; /* 0x24 */
+    u8                         unknown_1[52];
+    tag_block<shader_ref_t>    shaders; /* 0x60 */
 };
 
 static_assert(offsetof(model_header_t, bounds) == 0x14);
@@ -253,15 +253,15 @@ static_assert(offsetof(model_header_t, shaders) == 96);
  * 176 bytes, bsp section elem 200; both start identically) */
 struct alignas(4) bsp_section_common_t
 {
-    u16 vertex_count_raw;
-    u16 face_count_raw;
-    u8  unknown_0[20];
-    tag_block<u8> bounds;
-    u8  unknown_1[8];
-    raw_ref data;
-    i32 data_size_raw;
-    i32 header_size_raw;
-    i32 unknown_2;
+    u16                   vertex_count_raw;
+    u16                   face_count_raw;
+    u8                    unknown_0[20];
+    tag_block<u8>         bounds;
+    u8                    unknown_1[8];
+    raw_ref               data;
+    i32                   data_size_raw;
+    i32                   header_size_raw;
+    i32                   unknown_2;
     tag_block<resource_t> resources;
 
     inline u16 vertex_count() const
@@ -335,15 +335,15 @@ static_assert(sizeof(bsp_instance_t) == 88);
 /*! sbsp tag body, geometry-relevant fields only (Xbox offsets) */
 struct alignas(4) bsp_header_t
 {
-    u8 unknown_0[52];
-    f32 x_min, x_max;
-    f32 y_min, y_max;
-    f32 z_min, z_max;
-    u8 unknown_1[80];
-    tag_block<bsp_cluster_t> clusters; /* 156 */
-    tag_block<shader_ref_t>  shaders;  /* 164 */
-    u8 unknown_2[140];
-    tag_block<bsp_geometry_section_t> sections; /* 312 */
+    u8                                unknown_0[52];
+    f32                               x_min, x_max;
+    f32                               y_min, y_max;
+    f32                               z_min, z_max;
+    u8                                unknown_1[80];
+    tag_block<bsp_cluster_t>          clusters; /* 156 */
+    tag_block<shader_ref_t>           shaders;  /* 164 */
+    u8                                unknown_2[140];
+    tag_block<bsp_geometry_section_t> sections;  /* 312 */
     tag_block<bsp_instance_t>         instances; /* 320 */
 };
 
@@ -360,7 +360,7 @@ struct alignas(4) structure_bsp_ref_t
 {
     u32           meta_address_raw; /*!< File offset of the BSP region */
     i32           size_raw;
-    u32           magic_raw;        /*!< Virtual address of the region */
+    u32           magic_raw; /*!< Virtual address of the region */
     u32           unknown_0;
     tag_reference bsp;
     u8            unknown_1[44];
@@ -383,7 +383,7 @@ static_assert(sizeof(structure_bsp_ref_t) == 68);
  * offset 528 (Xbox) */
 struct alignas(4) scnr_bsps_t
 {
-    u8 unknown_0[528];
+    u8                             unknown_0[528];
     tag_block<structure_bsp_ref_t> structure_bsps;
 };
 

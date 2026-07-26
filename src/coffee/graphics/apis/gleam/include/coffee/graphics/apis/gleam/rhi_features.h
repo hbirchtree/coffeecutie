@@ -55,10 +55,12 @@ struct features
         {
             bool invalidate{false};
         } arb;
+
         struct
         {
             bool pbo{false};
         } nv;
+
         struct
         {
             bool mapbuffer{false};
@@ -96,11 +98,13 @@ struct features
         {
             bool shader_draw_parameters{false};
         } arb;
+
         struct
         {
             bool draw_elements_base_vertex{false};
             bool multi_draw_arrays{false};
         } ext;
+
         struct
         {
             bool draw_elements_base_vertex{false};
@@ -562,9 +566,9 @@ struct workarounds
         bool adreno{false};
         bool freedreno{false}; /*!< Currently only FD device tested
                                 *   is a FD702 which is GARBAGE-tier */
-        bool powervr{false}; /*!< Some IMG drivers seem to define
-                              *   extensions which don't exist, like
-                              *   the IMG UBO extension */
+        bool powervr{false};   /*!< Some IMG drivers seem to define
+                                *   extensions which don't exist, like
+                                *   the IMG UBO extension */
     } bugs;
 
     bool ignore_all_warnings{false};

@@ -23,8 +23,8 @@ inline libc_types::u8 to_u8(f32 v)
 
 void apply_copy_clear(Vecf4 const& color, f64 depth)
 {
-    GXColor c = {to_u8(color[0]), to_u8(color[1]), to_u8(color[2]),
-                 to_u8(color[3])};
+    GXColor c = {
+        to_u8(color[0]), to_u8(color[1]), to_u8(color[2]), to_u8(color[3])};
     if(depth < 0.0)
         depth = 0.0;
     if(depth > 1.0)

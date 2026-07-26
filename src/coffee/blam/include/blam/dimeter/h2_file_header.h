@@ -17,16 +17,16 @@ using bl_path = bl_string_var<256>;
  */
 struct alignas(4) file_header_xbox_t
 {
-    bl_header    id;             /*!< 'head' */
-    version_t    version;        /*!< Always version_t::halo2 (8) */
+    bl_header    id;      /*!< 'head' */
+    version_t    version; /*!< Always version_t::halo2 (8) */
     u32          file_size;
     u32          unknown_0;
     u32          meta_offset;    /*!< File offset of the tag index */
     u32          tag_table_size; /*!< Size of the tag index stream */
     u32          tag_data_size;
     u32          meta_size;
-    bl_path      source_file;    /*!< Build machine path, usually empty */
-    bl_string    build;          /*!< e.g. "02.09.27.09809" */
+    bl_path      source_file; /*!< Build machine path, usually empty */
+    bl_string    build;       /*!< e.g. "02.09.27.09809" */
     cache_type_t map_type;
     u32          crc;
     u32          unknown_1[3];

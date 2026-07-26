@@ -64,77 +64,77 @@ struct map_container
             return from_bytes_trial(map, std::move(progress));
         else
         {
-        if(map.size < sizeof(file_header_t))
-            return map_load_error::map_file_too_small;
+            if(map.size < sizeof(file_header_t))
+                return map_load_error::map_file_too_small;
 
-        progress("Reading map header", 0);
+            progress("Reading map header", 0);
 
-        auto header_res = file_header_t::from_data(map, ver);
-        if(header_res.has_error())
-            return header_res.error();
-        file_header_t const* header = header_res.value();
-        if(!header)
-            return map_load_error::not_a_map;
+            auto header_res = file_header_t::from_data(map, ver);
+            if(header_res.has_error())
+                return header_res.error();
+            file_header_t const* header = header_res.value();
+            if(!header)
+                return map_load_error::not_a_map;
 
-        if(from_le(header->version) != version_t::xbox)
-        {
-            progress("Reading tag index", 100);
-            auto const* tags_index = &tag_index_t<Ver>::from_header(header);
-            progress("Complete!", -1);
-            return map_container{
-                .map   = header,
-                .tags  = tags_index,
-                .magic = tags_index->get_magic(header, map.size),
-                .store = map,
-            };
-        }
+            if(from_le(header->version) != version_t::xbox)
+            {
+                progress("Reading tag index", 100);
+                auto const* tags_index = &tag_index_t<Ver>::from_header(header);
+                progress("Complete!", -1);
+                return map_container{
+                    .map   = header,
+                    .tags  = tags_index,
+                    .magic = tags_index->get_magic(header, map.size),
+                    .store = map,
+                };
+            }
 
 #if defined(BLAM_HAS_COMPRESSION)
-        progress("Preparing map decompression", 10);
-        semantic::mem_chunk<char> decompressed;
-        using namespace libc_types::size_literals;
-        using zlib = ::zlib::codec;
+            progress("Preparing map decompression", 10);
+            semantic::mem_chunk<char> decompressed;
+            using namespace libc_types::size_literals;
+            using zlib = ::zlib::codec;
 
-        auto compressed_segment = *map.at(
-            sizeof(file_header_t),
-            (map.size - sizeof(file_header_t) - header->trailing_space));
+            auto compressed_segment = *map.at(
+                sizeof(file_header_t),
+                (map.size - sizeof(file_header_t) - header->trailing_space));
 
-        progress("Copying file header to memory", 15);
-        /* Time to decompress! */
-        decompressed =
-            semantic::mem_chunk<char>::withSize(sizeof(file_header_t));
-        header->copy_to(decompressed.as<file_header_t>()[0]);
-        auto map_data = std::move(decompressed.allocation);
-        map_data.reserve(header->decomp_len);
+            progress("Copying file header to memory", 15);
+            /* Time to decompress! */
+            decompressed =
+                semantic::mem_chunk<char>::withSize(sizeof(file_header_t));
+            header->copy_to(decompressed.as<file_header_t>()[0]);
+            auto map_data = std::move(decompressed.allocation);
+            map_data.reserve(header->decomp_len);
 
-        progress("Decompressing map data", 25);
-        auto err = zlib::decompress(
-            compressed_segment.view,
-            map_data,
-            zlib::options_t{.chunk_size = 10_MB});
-        if(err)
-            return map_load_error::decompression_error;
-        decompressed = semantic::mem_chunk<char>::ofContainer(map_data);
-        auto rehdr   = file_header_t::from_data(decompressed, ver);
-        if(rehdr.has_error())
-            return rehdr.error();
-        header = rehdr.value();
+            progress("Decompressing map data", 25);
+            auto err = zlib::decompress(
+                compressed_segment.view,
+                map_data,
+                zlib::options_t{.chunk_size = 10_MB});
+            if(err)
+                return map_load_error::decompression_error;
+            decompressed = semantic::mem_chunk<char>::ofContainer(map_data);
+            auto rehdr   = file_header_t::from_data(decompressed, ver);
+            if(rehdr.has_error())
+                return rehdr.error();
+            header = rehdr.value();
 
-        if(!header)
-            return map_load_error::not_a_map;
+            if(!header)
+                return map_load_error::not_a_map;
 
-        progress("Reading tag index", 50);
-        auto const* tags_index = &tag_index_t<Ver>::from_header(header);
+            progress("Reading tag index", 50);
+            auto const* tags_index = &tag_index_t<Ver>::from_header(header);
 
-        return map_container{
-            .map          = header,
-            .tags         = tags_index,
-            .magic        = tags_index->get_magic(header, map.size),
-            .store        = decompressed,
-            .decompressed = std::move(map_data),
-        };
+            return map_container{
+                .map          = header,
+                .tags         = tags_index,
+                .magic        = tags_index->get_magic(header, map.size),
+                .store        = decompressed,
+                .decompressed = std::move(map_data),
+            };
 #else
-        return map_load_error::decompression_error;
+            return map_load_error::decompression_error;
 #endif
         } // else (non-trial)
     }
@@ -147,8 +147,8 @@ struct map_container
             return map_load_error::map_file_too_small;
 
         progress("Reading map header", 0);
-        auto const* trial = reinterpret_cast<file_header_trial_t const*>(
-            map.data);
+        auto const* trial =
+            reinterpret_cast<file_header_trial_t const*>(map.data);
         if(!trial->valid())
             return map_load_error::incompatible_map_version_expected_trial;
 
@@ -164,7 +164,8 @@ struct map_container
         auto tail = *map.at(
             sizeof(file_header_trial_t),
             map.size - sizeof(file_header_trial_t));
-        auto const* tail_begin = reinterpret_cast<char const*>(tail.view.data());
+        auto const* tail_begin =
+            reinterpret_cast<char const*>(tail.view.data());
         map_data.insert(
             map_data.end(), tail_begin, tail_begin + tail.view.size());
 

@@ -13,7 +13,7 @@ void init()
 {
     static void*       xfb   = nullptr;
     static GXRModeObj* rmode = nullptr;
-    
+
     printf("Booting console\n");
 
     VIDEO_Init();
@@ -21,7 +21,11 @@ void init()
     xfb   = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
 
     console_init(
-        xfb, 20, 20, rmode->fbWidth, rmode->xfbHeight,
+        xfb,
+        20,
+        20,
+        rmode->fbWidth,
+        rmode->xfbHeight,
         rmode->fbWidth * VI_DISPLAY_PIX_SZ);
 
     VIDEO_Configure(rmode);
@@ -43,7 +47,7 @@ void infinite_loop()
     while(true)
         VIDEO_WaitVSync();
 }
-}
+} // namespace gekko::console
 
 namespace gekko {
 void mount_debugger()
@@ -67,4 +71,4 @@ void mount_storage()
     else
         printf("- SD not present (sd:/ unavailable)\n");
 }
-}
+} // namespace gekko

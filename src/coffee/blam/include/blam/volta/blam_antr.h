@@ -72,6 +72,7 @@ struct screen_bounds
     u32 down_pitch_frame_count;
     u32 up_pitch_frame_count;
 };
+
 static_assert(sizeof(screen_bounds) == 32);
 
 struct node_t
@@ -81,16 +82,19 @@ struct node_t
     i16       first_child;
     i16       parent;
     i16       padding1;
+
     enum node_joint_flags_t : u16
     {
         ball_socket = 0x1,
         hinge       = 0x2,
         no_movement = 0x4,
     } joint_flags;
-    Vecf3     base_vector;
-    f32       vector_range;
-    u32       padding2;
+
+    Vecf3 base_vector;
+    f32   vector_range;
+    u32   padding2;
 };
+
 static_assert(sizeof(node_t) == 64);
 
 /* Per-node compressed quaternion (4×i16, range [-1,1] mapped to i16) */
@@ -111,6 +115,7 @@ static_assert(sizeof(compressed_quat_t) == 8);
 struct object
 {
     animation_ref animation;
+
     enum function_t : u16
     {
         A_out,
@@ -118,34 +123,39 @@ struct object
         C_out,
         D_out,
     } function;
+
     enum function_controls_t : u16
     {
         frame,
         scale,
     };
+
     u32 padding[4];
 };
+
 static_assert(sizeof(object) == 20);
 
 struct ik_point
 {
     bl_string marker; // the marker on the object being attached
-    bl_string attach_to_marker; // the marker name on the object being attached to
+    bl_string
+        attach_to_marker; // the marker name on the object being attached to
 };
+
 static_assert(sizeof(ik_point) == 64);
 
 enum class weapon_animation_idx_t
 {
-        reload_1,
-        reload_2,
-        chamber_1,
-        chamber_2,
-        fire_1,
-        fire_2,
-        charged_1,
-        charged_2,
-        melee,
-        overheat,
+    reload_1,
+    reload_2,
+    chamber_1,
+    chamber_2,
+    fire_1,
+    fire_2,
+    charged_1,
+    charged_2,
+    melee,
+    overheat,
 };
 
 struct weapon_type
@@ -162,7 +172,7 @@ struct unit_weapon
 
     /* aiming screen bounds */
     screen_bounds aiming_bounds;
-    u32 padding[6];
+    u32           padding[6];
 
     enum animation_idx_t
     {
@@ -219,10 +229,12 @@ struct unit_weapon
         lean_melee,
         zapping,
     };
-    reference<animation_ref>   animations;
-    reference<ik_point>    ik_points;
-    reference<weapon_type> weapon_types;
+
+    reference<animation_ref> animations;
+    reference<ik_point>      ik_points;
+    reference<weapon_type>   weapon_types;
 };
+
 static_assert(sizeof(unit_weapon) == 188);
 
 struct unit
@@ -266,16 +278,19 @@ struct unit
         closing,
         hovering,
     };
+
     reference<animation_ref> animations;
     reference<ik_point>      ik_points;
     reference<unit_weapon>   weapons;
 };
+
 static_assert(sizeof(unit) == 100);
 
 struct weapon
 {
     reference<animation_ref> animations; // indexed by weapon_animation_idx_t
 };
+
 static_assert(sizeof(weapon) == 12);
 
 struct suspension_animation
@@ -285,12 +300,14 @@ struct suspension_animation
     f32           full_extension_ground_depth;
     f32           full_compression_ground_depth;
 };
+
 static_assert(sizeof(suspension_animation) == 12);
 
 struct vehicle
 {
-    screen_bounds                   steering_bounds;
-    u32 padding[15];
+    screen_bounds steering_bounds;
+    u32           padding[15];
+
     enum animation_idx_t
     {
         steering,
@@ -302,9 +319,11 @@ struct vehicle
         occupied,
         unoccupied,
     };
+
     reference<animation_ref>        animations;
     reference<suspension_animation> suspension_animations;
 };
+
 static_assert(sizeof(vehicle) == 116);
 
 struct device
@@ -314,13 +333,16 @@ struct device
         position,
         power,
     };
+
     reference<animation_ref> animations;
 };
+
 static_assert(sizeof(device) == 12);
 
 struct first_person_weapon
 {
     u32 padding[4];
+
     enum animation_idx_t
     {
         idle,
@@ -349,18 +371,21 @@ struct first_person_weapon
         enter,
         exit_empty,
         exit_full,
-        o_h_exit, // no idea what o-h-exit means
+        o_h_exit,    // no idea what o-h-exit means
         o_h_s_enter, // no idea what o-h-s-enter, "oh holy shit"?
     };
+
     reference<animation_ref> animations;
 };
+
 static_assert(sizeof(first_person_weapon) == 28);
 
 struct sound_reference
 {
     tagref_typed_t<tag_class_t::snd> sound;
-    u32 padding;
+    u32                              padding;
 };
+
 static_assert(sizeof(sound_reference) == 20);
 
 struct animation
@@ -426,6 +451,7 @@ struct animation
                static_cast<u16>(anim_flags::compressed_data);
     }
 };
+
 static_assert(sizeof(animation) == 180);
 static_assert(offsetof(animation, frame_info) == 72);
 static_assert(offsetof(animation, node_trans_flags) == 92);
@@ -456,6 +482,7 @@ struct header
     reference<node_t>              nodes;
     reference<animation>           animations;
 };
+
 static_assert(sizeof(header) == 128);
 static_assert(offsetof(header, nodes) == 104);
 static_assert(offsetof(header, animations) == 116);

@@ -53,9 +53,9 @@ std::string find_gpu_devfreq()
         return {};
     for(auto const& entry : fs::directory_iterator(base, ec))
     {
-        auto name = read_sysfs_line(entry.path() / "name");
-        std::string node = name && !name->empty() ? *name
-                                                  : entry.path().filename().string();
+        auto        name = read_sysfs_line(entry.path() / "name");
+        std::string node =
+            name && !name->empty() ? *name : entry.path().filename().string();
         if(node.contains(".gpu"))
             return entry.path().string();
     }
@@ -356,8 +356,8 @@ SysHWMonStats::stats_numeric()
                 out.insert(
                     {sensor,
                      {
-                         .value = read_sysfs_i64(fs::path(path)).value_or(0)
-                                  / 1000,
+                         .value =
+                             read_sysfs_i64(fs::path(path)).value_or(0) / 1000,
                          .index       = i++,
                          .index_label = sensor,
                      }});
@@ -367,13 +367,14 @@ SysHWMonStats::stats_numeric()
     return out;
 }
 
-std::map<std::string_view, interfaces::SensorStatProvider::stats_desc_t> SysHWMonStats::stats_description()
+std::map<std::string_view, interfaces::SensorStatProvider::stats_desc_t>
+SysHWMonStats::stats_description()
 {
     using platform::profiling::MetricVariant;
     std::map<std::string_view, stats_desc_t> out;
     for(auto const& stat : m_stats)
         out[stat.first] = stats_desc_t{
-            .type = MetricVariant::Value,
+            .type          = MetricVariant::Value,
             .is_percentage = false,
         };
     return out;
@@ -403,7 +404,8 @@ void SysHWMonStats::load(entity_container&, app_error&)
         }
         if(sensor_nodes.empty())
             continue;
-        Coffee::Logging::cDebug("Enumerated hwmon sensor: {} => {}", name, sensor_nodes[0]);
+        Coffee::Logging::cDebug(
+            "Enumerated hwmon sensor: {} => {}", name, sensor_nodes[0]);
         m_stats[*name] = sensor_nodes;
     }
 }
@@ -427,5 +429,5 @@ HIDPreferences::preference_t HIDPreferences::current_preference() const
     }
 }
 
-}
+} // namespace interfaces
 } // namespace comp_app

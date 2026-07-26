@@ -5,8 +5,7 @@
 
 namespace blam::bitm {
 
-typing::pixels::PixDesc image_t::to_fmt()
-    const
+typing::pixels::PixDesc image_t::to_fmt() const
 {
     using typing::pixels::CompFmt;
     using typing::pixels::PixDesc;
@@ -23,7 +22,8 @@ typing::pixels::PixDesc image_t::to_fmt()
     case format_t::R5G6B5:
         return PixDesc(pix_fmt::RGB565, bit_fmt::u16_565, pix_components::RGB);
     case format_t::A1RGB5:
-        return PixDesc(pix_fmt::RGB5A1, bit_fmt::u16_1555, pix_components::RGBA);
+        return PixDesc(
+            pix_fmt::RGB5A1, bit_fmt::u16_1555, pix_components::RGBA);
     case format_t::ARGB4:
         return PixDesc(pix_fmt::RGBA4, bit_fmt::u16_4444, pix_components::RGBA);
 
@@ -46,9 +46,11 @@ typing::pixels::PixDesc image_t::to_fmt()
     case format_t::ETC2_RGBA:
         return CompFmt(pix_fmt::ETC2, typing::pixels::pix_flags::RGBA);
     case format_t::PVRTCV1_RGB:
-        return CompFmt(pix_fmt::PVRTC, comp_flags::PVRTC_BPP4 | comp_flags::PVRTC_RGB);
+        return CompFmt(
+            pix_fmt::PVRTC, comp_flags::PVRTC_BPP4 | comp_flags::PVRTC_RGB);
     case format_t::PVRTCV1_RGBA:
-        return CompFmt(pix_fmt::PVRTC, comp_flags::PVRTC_BPP4 | comp_flags::PVRTC_RGBA);
+        return CompFmt(
+            pix_fmt::PVRTC, comp_flags::PVRTC_BPP4 | comp_flags::PVRTC_RGBA);
 
     default:
         return {bit_fmt::undefined, pix_components::None};
@@ -56,4 +58,3 @@ typing::pixels::PixDesc image_t::to_fmt()
 }
 
 } // namespace blam::bitm
-

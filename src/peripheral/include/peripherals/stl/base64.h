@@ -2,8 +2,8 @@
 
 #include <peripherals/identify/compiler/function_inlining.h>
 
-#include <peripherals/semantic/chunk.h>
 #include <cstdint>
+#include <peripherals/semantic/chunk.h>
 #include <string>
 #include <vector>
 

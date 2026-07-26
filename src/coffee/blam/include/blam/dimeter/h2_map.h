@@ -20,10 +20,9 @@ struct raw_pool
     {
         if(!ref.valid())
             return std::nullopt;
-        auto const& file = files[static_cast<u8>(ref.file())];
+        auto const& file   = files[static_cast<u8>(ref.file())];
         u32         offset = ref.offset();
-        if(file.empty() || offset > file.size() ||
-           size > file.size() - offset)
+        if(file.empty() || offset > file.size() || size > file.size() - offset)
             return std::nullopt;
         return file.subspan(offset, size);
     }
@@ -60,16 +59,15 @@ struct map_container
         if(map.size < sizeof(header_type))
             return map_load_error::map_file_too_small;
 
-        auto const* header
-            = reinterpret_cast<header_type const*>(map.data);
+        auto const* header = reinterpret_cast<header_type const*>(map.data);
         if(!header->valid())
             return map_load_error::not_a_map;
 
         u32 meta_offset = from_le(header->meta_offset);
         if(meta_offset > map.size - sizeof(tag_index_t))
             return map_load_error::not_a_map;
-        auto const* index
-            = reinterpret_cast<tag_index_t const*>(map.data + meta_offset);
+        auto const* index =
+            reinterpret_cast<tag_index_t const*>(map.data + meta_offset);
         /* Vista maps ship compressed; the header survives but the index magic
          * won't be found in that case */
         if(!index->valid())
@@ -78,8 +76,8 @@ struct map_container
         /* Same version value either way, so tell the layouts apart by the
          * group table pointer: a virtual address on Xbox, a small
          * header-relative offset on Vista */
-        u32 group_ptr = from_le(index->group_table_pointer);
-        bool is_vista = group_ptr < from_le(header->meta_size);
+        u32  group_ptr = from_le(index->group_table_pointer);
+        bool is_vista  = group_ptr < from_le(header->meta_size);
         if(is_vista != std::is_same_v<V, vista_version_t>)
             return map_load_error::incompatible_map_version_expected_halo2;
 
@@ -92,11 +90,10 @@ struct map_container
         if constexpr(std::is_same_v<V, xbox_version_t>)
         {
             out.index_mask = group_ptr - sizeof(tag_index_t);
-            auto tags = out.tags();
+            auto tags      = out.tags();
             if(tags.empty())
                 return map_load_error::not_a_map;
-            out.meta_mask
-                = tags[0].pointer() - from_le(header->tag_table_size);
+            out.meta_mask = tags[0].pointer() - from_le(header->tag_table_size);
         } else
         {
             out.index_mask = 0;
@@ -235,8 +232,8 @@ struct map_container
             return {};
         if(buffer_offset > map_size || buffer_size > map_size - buffer_offset)
             return {};
-        auto const* offsets
-            = reinterpret_cast<u32 const*>(data.data() + index_offset);
+        auto const* offsets =
+            reinterpret_cast<u32 const*>(data.data() + index_offset);
         u32 string_offset = from_le(offsets[position]);
         if(string_offset >= buffer_size)
             return {};

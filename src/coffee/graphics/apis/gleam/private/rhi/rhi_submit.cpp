@@ -242,10 +242,9 @@ std::optional<std::tuple<error, std::string_view>> legacy_draw(
     draw_command::data_t const&      data,
     features const&                  features)
 {
-    auto const& draw = features.draw;
-    const bool supports_base_vertex =
-        draw.ext.draw_elements_base_vertex ||
-        draw.oes.draw_elements_base_vertex;
+    auto const& draw                 = features.draw;
+    const bool  supports_base_vertex = draw.ext.draw_elements_base_vertex ||
+                                      draw.oes.draw_elements_base_vertex;
     if(call.indexed)
     {
         if(data.elements.vertex_offset != 0 && supports_base_vertex)
@@ -261,7 +260,7 @@ std::optional<std::tuple<error, std::string_view>> legacy_draw(
             else
 #endif
 #if defined(GL_OES_draw_elements_base_vertex)
-            if (draw.oes.draw_elements_base_vertex)
+                if(draw.oes.draw_elements_base_vertex)
                 gl::oes::draw_elements_base_vertex::draw_elements_base_vertex(
                     convert::to(call.mode),
                     data.elements.count,
@@ -337,7 +336,9 @@ void compute_ubo_instance(
 }
 
 std::optional<error> evaluate_draw_state(
-    const api_limits& limits, const workarounds& workarounds, const draw_command& command)
+    const api_limits&   limits,
+    const workarounds&  workarounds,
+    const draw_command& command)
 {
     auto const& call = command.call;
     auto const& data = command.data;
@@ -353,9 +354,10 @@ std::optional<error> evaluate_draw_state(
                data, [](auto const& d) { return d.elements.count == 0; }))
             return error::draw_no_elements;
         // TODO: Fix this check
-        // if(call.mode == drawing::primitive::triangle || call.mode == drawing::primitive::triangle_strip)
-        //     if(stl_types::any_of(data, [](auto const& d) { return d.elements.count < 3; }))
-        //     return error::draw_not_enough_vertices;
+        // if(call.mode == drawing::primitive::triangle || call.mode ==
+        // drawing::primitive::triangle_strip)
+        //     if(stl_types::any_of(data, [](auto const& d) { return
+        //     d.elements.count < 3; })) return error::draw_not_enough_vertices;
         for(auto const& d : data)
         {
             if(d.elements.count > limits.draws.element_count)
@@ -364,12 +366,14 @@ std::optional<error> evaluate_draw_state(
         }
     } else
     {
-        if(stl_types::any_of(data, [](auto const& d) { return d.arrays.count == 0; }))
+        if(stl_types::any_of(
+               data, [](auto const& d) { return d.arrays.count == 0; }))
             return error::draw_no_arrays;
         // TODO: Fix this check
-        // if(call.mode == drawing::primitive::triangle || call.mode == drawing::primitive::triangle_strip)
-        //     if(stl_types::any_of(data, [](auto const& d) { return d.arrays.count < 3; }))
-        //     return error::draw_not_enough_vertices;
+        // if(call.mode == drawing::primitive::triangle || call.mode ==
+        // drawing::primitive::triangle_strip)
+        //     if(stl_types::any_of(data, [](auto const& d) { return
+        //     d.arrays.count < 3; })) return error::draw_not_enough_vertices;
         for(auto const& d : data)
             if(d.arrays.count > 1024 * 1024 || d.arrays.offset > 1024 * 1024)
                 return error::draw_too_many_vertices;

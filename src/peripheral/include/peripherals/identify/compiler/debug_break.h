@@ -39,7 +39,7 @@ FORCEDINLINE bool C_DEBUGGER_ATTACHED()
     ::close(fd);
     if(num <= 0)
         return false;
-    buf[num]          = '\0';
+    buf[num]           = '\0';
     const char* tracer = ::strstr(buf, "TracerPid:");
     if(!tracer)
         return false;
@@ -49,10 +49,10 @@ FORCEDINLINE bool C_DEBUGGER_ATTACHED()
     /* A non-zero TracerPid means a debugger/tracer is attached. */
     return *tracer != '0';
 #elif defined(COFFEE_APPLE)
-    int                mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, ::getpid()};
-    struct kinfo_proc  info;
-    size_t             size = sizeof(info);
-    info.kp_proc.p_flag     = 0;
+    int               mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, ::getpid()};
+    struct kinfo_proc info;
+    size_t            size = sizeof(info);
+    info.kp_proc.p_flag    = 0;
     if(::sysctl(mib, 4, &info, &size, nullptr, 0) != 0)
         return false;
     return (info.kp_proc.p_flag & P_TRACED) != 0;

@@ -137,8 +137,7 @@ struct bsp
                 return std::nullopt;
             auto const& n      = node_span[node];
             i32 const   nplane = from_le(n.plane);
-            if(nplane < 0 ||
-               static_cast<u32>(nplane) >= plane_span.size())
+            if(nplane < 0 || static_cast<u32>(nplane) >= plane_span.size())
                 return std::nullopt;
             auto const& pl = plane_span[nplane];
             // collision node/plane fields are little-endian map data.
@@ -168,8 +167,7 @@ struct bsp
         if(node_span.empty() || plane_span.empty())
             return std::nullopt;
         ray_hit hit{};
-        if(raycast_r(node_span, plane_span, 0, 0.f, 1.f, start, end, hit) ==
-           2)
+        if(raycast_r(node_span, plane_span, 0, 0.f, 1.f, start, end, hit) == 2)
             return hit;
         return std::nullopt;
     }
@@ -211,7 +209,7 @@ struct bsp
         Vecf3 mid    = p0 + (p1 - p0) * frac;
         i32   near_c = d0 >= 0.f ? n.front : n.back;
         i32   far_c  = d0 >= 0.f ? n.back : n.front;
-        int   rn = raycast_r(nodes, planes, near_c, t0, tm, p0, mid, out);
+        int   rn     = raycast_r(nodes, planes, near_c, t0, tm, p0, mid, out);
         if(rn == 2)
             return 2;
         int rf = raycast_r(nodes, planes, far_c, tm, t1, mid, p1, out);
@@ -381,19 +379,23 @@ struct material
         //        return base;
         /* the max is there because MCC is slightly different */
         // pc.* are little-endian map fields; un-swap before arithmetic and
-        // re-encode the synthesised reference little-endian for reference::data.
+        // re-encode the synthesised reference little-endian for
+        // reference::data.
         auto const type  = from_le(pc.type);
         auto const count = from_le(pc.count);
         if(type == vert::vertex_type_t::sbsp_uncompressed_vertex)
             return {
-                .count  = to_le<u32>(static_cast<u32>(count * sizeof(pc_vertex))),
-                .offset = to_le(std::max(
-                    from_le(pc.uncompressed_vertices.offset),
-                    from_le(pc.uncompressed_vertices.count))),
+                .count =
+                    to_le<u32>(static_cast<u32>(count * sizeof(pc_vertex))),
+                .offset = to_le(
+                    std::max(
+                        from_le(pc.uncompressed_vertices.offset),
+                        from_le(pc.uncompressed_vertices.count))),
             };
         else
             return {
-                .count = to_le<u32>(static_cast<u32>(count * sizeof(xbox_vertex))),
+                .count =
+                    to_le<u32>(static_cast<u32>(count * sizeof(xbox_vertex))),
                 .offset = to_le(from_le(pc.compressed_vertices.offset)),
             };
     }
@@ -415,13 +417,13 @@ struct material
         u32 const light_offset = from_le(verts.offset) + from_le(verts.count);
         if(type == vert::vertex_type_t::sbsp_uncompressed_vertex)
             return {
-                .count =
-                    to_le<u32>(static_cast<u32>(count * sizeof(pc_light_vertex))),
+                .count = to_le<u32>(
+                    static_cast<u32>(count * sizeof(pc_light_vertex))),
                 .offset = to_le(light_offset),
             };
         else
             return {
-                .count  = to_le<u32>(
+                .count = to_le<u32>(
                     static_cast<u32>(count * sizeof(xbox_light_vertex))),
                 .offset = to_le(light_offset),
             };

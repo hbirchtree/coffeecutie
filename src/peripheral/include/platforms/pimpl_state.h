@@ -24,7 +24,8 @@ struct GlobalState
 
 using global_state_ptr = std::shared_ptr<GlobalState>;
 
-using lock_state_fn = std::function<std::unique_lock<std::mutex>(std::string_view)>;
+using lock_state_fn =
+    std::function<std::unique_lock<std::mutex>(std::string_view)>;
 using swap_state_fn =
     std::function<global_state_ptr(std::string_view, global_state_ptr const&)>;
 using peek_state_fn = std::function<global_state_ptr const&(std::string_view)>;
@@ -46,7 +47,8 @@ struct state_pimpl
         return std::unique_lock<std::mutex>(state.access);
     }
 
-    FORCEDINLINE std::unique_lock<std::mutex> LockState(libc_types::cstring state)
+    FORCEDINLINE std::unique_lock<std::mutex> LockState(
+        libc_types::cstring state)
     {
         return m_LockState(state);
     }

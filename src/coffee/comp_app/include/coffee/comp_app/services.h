@@ -302,7 +302,8 @@ struct HIDPreferences
     // Based on platform + input events, guess what the user wants to use
     // On desktop, prefer mouse + keyboard
     // On phone, initially guess touch before events are received
-    // Helps us hide touch controls when mouse + keyboard or controller are picked up
+    // Helps us hide touch controls when mouse + keyboard or controller are
+    // picked up
     enum class preference_t
     {
         mouse_keyboard,
@@ -312,8 +313,9 @@ struct HIDPreferences
 
     constexpr preference_t platform_preference() const
     {
-        if constexpr(compile_info::platform::is_android ||
-                compile_info::platform::is_ios)
+        if constexpr(
+            compile_info::platform::is_android ||
+            compile_info::platform::is_ios)
             return preference_t::touch;
         return preference_t::mouse_keyboard;
     }
@@ -324,6 +326,7 @@ struct HIDPreferences
     {
         detected_input = preference;
     }
+
   private:
     std::optional<preference_t> detected_input{};
 };
@@ -585,13 +588,14 @@ struct SensorStatProvider
 {
     struct reading_t
     {
-        libc_types::i64 value{};
-        libc_types::u32 index{};
+        libc_types::i64  value{};
+        libc_types::u32  index{};
         std::string_view index_label{};
     };
 
     /* Extensible, vendor-specific info. multimap: a provider may report
-     * several readings under one metric name, disambiguated by reading_t.index */
+     * several readings under one metric name, disambiguated by reading_t.index
+     */
     virtual std::multimap<std::string_view, reading_t> stats_numeric()
     {
         return {};

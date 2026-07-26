@@ -74,6 +74,7 @@ struct spawned_child_t
     pid_t       pid;
     std::string id;
 };
+
 std::vector<spawned_child_t> spawned_children;
 #endif
 
@@ -95,10 +96,12 @@ struct DummyControllerInput
     {
         return static_cast<libc_types::u32>(m_state.size());
     }
+
     virtual controller_map state(libc_types::u32 idx) const final
     {
         return idx < m_state.size() ? m_state[idx] : controller_map{};
     }
+
     virtual comp_app::text_type_t name(libc_types::u32 idx) const final
     {
         return "Dummy Controller " + std::to_string(idx);
@@ -168,7 +171,7 @@ void queue_input_event(
         const auto value      = static_cast<i16>(
             std::clamp(event.value("value", 0.f), -1.f, 1.f) * 32767.f);
 
-        ievent.type = CIEvent::Controller;
+        ievent.type                    = CIEvent::Controller;
         CIControllerAtomicEvent atomic = {
             .value        = value,
             .index        = axis_idx,
@@ -178,9 +181,10 @@ void queue_input_event(
         };
         emit_future_event(start_time, ievent, atomic);
         if(controllers)
-            mutate_future(start_time, [controllers, controller, axis_idx, value] {
-                controllers->ensure(controller).axes.d[axis_idx] = value;
-            });
+            mutate_future(
+                start_time, [controllers, controller, axis_idx, value] {
+                    controllers->ensure(controller).axes.d[axis_idx] = value;
+                });
 
         /* Optional duration: stick springs back to neutral afterwards */
         if(event.contains("duration"))
@@ -211,7 +215,7 @@ void queue_input_event(
         /* CIControllerAtomicEvent is BaseEvent<CIEvent::Controller>;
          * this previously went out as ControllerUpdate, which readers
          * decode as a connect/disconnect payload */
-        ievent.type                        = CIEvent::Controller;
+        ievent.type                           = CIEvent::Controller;
         CIControllerAtomicEvent controller_ev = {
             .index        = bit,
             .controller   = static_cast<u8>(controller),
@@ -237,7 +241,7 @@ void queue_input_event(
         const auto controller = event.value("index", 0u);
         /* Seat assignment listens for ControllerConnect (what the SDL2
          * layer emits), not the atomic update event */
-        ievent.type = CIEvent::ControllerConnect;
+        ievent.type                      = CIEvent::ControllerConnect;
         CIControllerConnectEvent connect = {
             .index        = static_cast<libc_types::u16>(controller),
             .player_index = static_cast<i16>(controller),
@@ -318,10 +322,9 @@ void reap_spawned_children()
             pid_t r      = ::waitpid(it->pid, &status, WNOHANG);
             if(r == it->pid)
             {
-                int code = WIFEXITED(status) ? WEXITSTATUS(status)
-                           : WIFSIGNALED(status)
-                               ? 128 + WTERMSIG(status)
-                               : -1;
+                int code = WIFEXITED(status)     ? WEXITSTATUS(status)
+                           : WIFSIGNALED(status) ? 128 + WTERMSIG(status)
+                                                 : -1;
                 fprintf(
                     stderr,
                     "dummy plug spawn: child %s (pid %d) exited with %d\n",
@@ -385,7 +388,8 @@ void spawn_dummy_plug_children(nlohmann::json const& config)
     bool via_loader = false;
     {
         char    self_buf[PATH_MAX];
-        ssize_t n = ::readlink("/proc/self/exe", self_buf, sizeof(self_buf) - 1);
+        ssize_t n =
+            ::readlink("/proc/self/exe", self_buf, sizeof(self_buf) - 1);
         if(n > 0)
         {
             self_buf[n] = '\0';
@@ -394,9 +398,8 @@ void spawn_dummy_plug_children(nlohmann::json const& config)
                ::realpath(args_in[0], argv0_buf))
                 via_loader = std::string_view(self_buf) != argv0_buf;
             else
-                via_loader =
-                    std::string_view(self_buf).find("ld-") !=
-                    std::string_view::npos;
+                via_loader = std::string_view(self_buf).find("ld-") !=
+                             std::string_view::npos;
         }
     }
 
@@ -444,8 +447,8 @@ void spawn_dummy_plug_children(nlohmann::json const& config)
              * log file, point the dummy plug at the child config, exec a
              * fresh copy of ourselves */
             ::prctl(PR_SET_PDEATHSIG, SIGKILL);
-            int log_fd = ::open(
-                child_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            int log_fd =
+                ::open(child_log.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
             if(log_fd >= 0)
             {
                 ::dup2(log_fd, STDOUT_FILENO);
@@ -578,8 +581,8 @@ void fork_dummy_plugs(
         dummy_plug.graphics_config["major"]   = 3u;
         dummy_plug.graphics_config["minor"]   = 2u;
     } else if(
-        dummy_plug.swrender == "llvmpipe"
-        || dummy_plug.swrender == "surfaceless")
+        dummy_plug.swrender == "llvmpipe" ||
+        dummy_plug.swrender == "surfaceless")
     {
         /* Both select the EGL surfaceless backend. "surfaceless" runs on
          * whatever device Mesa picks (the hardware GPU by default); "llvmpipe"
@@ -653,8 +656,8 @@ void fork_dummy_plugs(
             glConfig.depthFmt =
                 version.depth == 32 ? pix_fmt::Depth32 : pix_fmt::Depth16;
         } else if(
-            dummy_plug.swrender == "llvmpipe"
-            || dummy_plug.swrender == "surfaceless")
+            dummy_plug.swrender == "llvmpipe" ||
+            dummy_plug.swrender == "surfaceless")
         {
             glConfig.profile       = version.profile;
             glConfig.version.major = version.major;
@@ -758,13 +761,15 @@ namespace {
 struct FrameCounter : compo::SubsystemBase
 {
     using type = FrameCounter;
+
     virtual void start_frame(ContainerProxy&, time_point const&) final
     {
         frame_counter++;
     }
+
     libc_types::u64 frame_counter{0};
 };
-}
+} // namespace
 
 void insert_dummy_plug(
     AppLoadableService::entity_container& container,
@@ -784,8 +789,7 @@ void insert_dummy_plug(
      * registers its own (AppLoader's service_register skips occupied
      * slots), so controller state polled by the app is synthetic. */
     auto& dummy_controllers =
-        DummyControllerInput::register_service<DummyControllerInput>(
-            container);
+        DummyControllerInput::register_service<DummyControllerInput>(container);
 
     if(config.contains("events"))
     {
@@ -794,10 +798,11 @@ void insert_dummy_plug(
                             input_bus,
                             &dummy_controllers,
                             &container,
-                            flag                = false,
-                            ready_marked        = false,
-                            children_wait_start = std::optional<
-                                std::chrono::steady_clock::time_point>{}]() mutable {
+                            flag         = false,
+                            ready_marked = false,
+                            children_wait_start =
+                                std::optional<std::chrono::steady_clock::
+                                                  time_point>{}]() mutable {
             using namespace Coffee::resource_literals;
             auto* app_info = container.service<comp_app::AppInfo>();
             if(app_info->state() != comp_app::interfaces::AppInfo::loaded)
@@ -816,8 +821,7 @@ void insert_dummy_plug(
             if(!ready_marked)
             {
                 auto marker = Coffee::Resource("ready"_tmpfile);
-                marker      = semantic::BytesConst::ofString(
-                    std::string_view("1"));
+                marker = semantic::BytesConst::ofString(std::string_view("1"));
                 Coffee::FileCommit(
                     marker,
                     semantic::RSCA::NewFile | semantic::RSCA::Discard |
@@ -836,8 +840,9 @@ void insert_dummy_plug(
 
                 for(auto const& child : spawned_children)
                 {
-                    if(Coffee::FileExists(Coffee::Resource(
-                           child.id + "/ready", semantic::RSCA::TempFile)))
+                    if(Coffee::FileExists(
+                           Coffee::Resource(
+                               child.id + "/ready", semantic::RSCA::TempFile)))
                         continue;
 
                     if(elapsed < timeout)
@@ -917,11 +922,10 @@ void insert_dummy_plug(
                         .assume_value();
                     break;
                 }
-                case type_t::custom:
-                {
+                case type_t::custom: {
                     DummyEvent out{};
                     out.event = event.value("type", std::string{});
-                    out.data = event;
+                    out.data  = event;
                     out.data.erase("type");
                     out.data.erase("time");
                     auto start_time =
@@ -930,9 +934,13 @@ void insert_dummy_plug(
                         rq::runtime_queue::GetCurrentQueue().value(),
                         start_time,
                         [&dummy_bus, out]() mutable {
-                            cDebug("Injecting custom dummy event: {} => {}", out.event, out.data.dump(2));
+                            cDebug(
+                                "Injecting custom dummy event: {} => {}",
+                                out.event,
+                                out.data.dump(2));
                             dummy_bus.process(out, nullptr);
-                        }).assume_value();
+                        })
+                        .assume_value();
                     break;
                 }
                 case type_t::none:
@@ -945,18 +953,21 @@ void insert_dummy_plug(
 
             if(config.contains("end_time"))
             {
-                auto& counter = container.register_subsystem_inplace<FrameCounter>();
+                auto& counter =
+                    container.register_subsystem_inplace<FrameCounter>();
                 rq::runtime_queue::QueueShot(
                     rq::runtime_queue::GetCurrentQueue().value(),
                     end_time,
                     [&container, &counter]() {
-                        auto window = container.service<Windowing>();
+                        auto  window  = container.service<Windowing>();
                         auto* appInfo = container.service<comp_app::AppInfo>();
-                        appInfo->add("run:totalFrames", std::to_string(counter.frame_counter));
+                        appInfo->add(
+                            "run:totalFrames",
+                            std::to_string(counter.frame_counter));
                         appInfo->add(
                             "run:dummyPlug",
                             platform::url::constructors::MkUrl(
-                                    platform::env::var("DUMMY_PLUG_CONFIG").value())
+                                platform::env::var("DUMMY_PLUG_CONFIG").value())
                                 .path()
                                 .fileBasename()
                                 .internUrl);
@@ -999,7 +1010,8 @@ extern "C" EMSCRIPTEN_KEEPALIVE int coffee_app_loaded()
                : 0;
 }
 
-extern "C" EMSCRIPTEN_KEEPALIVE void coffee_dummy_plug_event(const char* json_str)
+extern "C" EMSCRIPTEN_KEEPALIVE void coffee_dummy_plug_event(
+    const char* json_str)
 {
     if(!json_str)
         return;
@@ -1030,8 +1042,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void coffee_dummy_plug_event(const char* json_st
     case type_t::controller_connect:
     case type_t::key:
     case type_t::mouse_button:
-    case type_t::mouse_move:
-    {
+    case type_t::mouse_move: {
         if(auto* input_bus =
                container
                    .service<comp_app::BasicEventBus<Coffee::Input::CIEvent>>())
@@ -1043,8 +1054,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void coffee_dummy_plug_event(const char* json_st
                 event);
         break;
     }
-    case type_t::custom:
-    {
+    case type_t::custom: {
         DummyEvent out{};
         out.event = event.value("type", std::string{});
         out.data  = event;

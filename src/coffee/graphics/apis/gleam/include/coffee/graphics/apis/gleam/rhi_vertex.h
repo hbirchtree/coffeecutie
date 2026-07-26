@@ -2,13 +2,13 @@
 
 #include <peripherals/semantic/enum/data_types.h>
 
-#include <glw/enums/VertexAttribIType.h>
-#include <peripherals/enum/helpers.h>
 #include "rhi_buffer.h"
 #include "rhi_debug.h"
 #include "rhi_features.h"
 #include "rhi_translate.h"
 #include "rhi_versioning.h"
+#include <glw/enums/VertexAttribIType.h>
+#include <peripherals/enum/helpers.h>
 
 #if defined(GL_OES_vertex_array_object)
 #include <glw/extensions/OES_vertex_array_object.h>
@@ -226,15 +226,13 @@ struct vertex_attribute
 namespace detail {
 
 inline void vertex_setup_attribute(
-    features::vertices& features,
-    vertex_attribute const& attr,
-    u32 offset = 0)
+    features::vertices& features, vertex_attribute const& attr, u32 offset = 0)
 {
-#if  GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
     // TODO: Add a big fat warning that rendering won't be correct here
     // Or add a shader post-process step that packs UINT/INT into floats
-    const bool packed =
-        enum_helpers::feval(attr.value.flags, vertex_attribute::attribute_flags::packed);
+    const bool packed = enum_helpers::feval(
+        attr.value.flags, vertex_attribute::attribute_flags::packed);
     const bool is_int_type = detail::vertex_is_int_type(attr.value.type);
     if(!packed && is_int_type && features.vertex_attrib_i_pointer)
         cmd::vertex_attrib_i_pointer(

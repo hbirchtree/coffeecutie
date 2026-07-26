@@ -15,8 +15,9 @@ static char* platform_get_user_agent_internal()
 
 static char* platform_get_navigator_platform_internal()
 {
-    return reinterpret_cast<char*>(
-        EM_ASM_PTR({ return stringToNewUTF8(Module.uaHints.platform || navigator.platform); }));
+    return reinterpret_cast<char*>(EM_ASM_PTR({
+        return stringToNewUTF8(Module.uaHints.platform || navigator.platform);
+    }));
 }
 
 /* User-Agent Client Hints high-entropy values resolve via a Promise, while
@@ -31,10 +32,10 @@ static void platform_init_ua_hints()
         if(navigator.userAgentData)
         {
             navigator.userAgentData
-                .getHighEntropyValues([
-                    'architecture', 'model', 'platformVersion', 'platform'])
+                .getHighEntropyValues(
+                    [ 'architecture', 'model', 'platformVersion', 'platform' ])
                 .then(function(h) { Module.uaHints = h; })
-                .catch(function() {});
+                .catch(function(){});
         }
     });
 #endif

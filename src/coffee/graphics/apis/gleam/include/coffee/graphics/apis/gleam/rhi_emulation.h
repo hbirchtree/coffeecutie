@@ -171,8 +171,8 @@ inline auto mali_400mp()
             "GL_OES_texture_npot",
         },
         // clang-format on
-        .resolution = size_2d<u32>{1280, 720},
-        .device_info = std::make_tuple("ARM", "Mali-400 MP"),
+        .resolution          = size_2d<u32>{1280, 720},
+        .device_info         = std::make_tuple("ARM", "Mali-400 MP"),
         .version_string      = "OpenGL ES 2.0",
         .glsl_version_string = "OpenGL ES GLSL ES 1.00",
     };
@@ -261,41 +261,46 @@ inline auto mesa_mali400mp()
             "GL_OES_vertex_half_float",
         },
         // clang-format on
-        .limits = gleam::api_limits{
-            .buffers = {
-                .ssbo_size = 0,
-                .ubo_size = 0,
-                .ssbo_vertex = 0,
-                .ssbo_fragment = 0,
-                .ssbo_compute = 0,
-                .ubo_vertex = 0,
-                .ubo_fragment = 0,
-                .ubo_compute = 0,
-                .ubo_alignment = 0,
-                .ssbo_alignment = 0,
+        .limits =
+            gleam::api_limits{
+                .buffers =
+                    {
+                        .ssbo_size      = 0,
+                        .ubo_size       = 0,
+                        .ssbo_vertex    = 0,
+                        .ssbo_fragment  = 0,
+                        .ssbo_compute   = 0,
+                        .ubo_vertex     = 0,
+                        .ubo_fragment   = 0,
+                        .ubo_compute    = 0,
+                        .ubo_alignment  = 0,
+                        .ssbo_alignment = 0,
+                    },
+                .draws =
+                    {
+                        .element_count        = 2147483647,
+                        .element_index        = 2147483647,
+                        .element_vertex_count = 2147483647,
+                        .instance_count       = 0,
+                        .instance_offset      = 0,
+                    },
+                .shaders =
+                    {
+                        .vertex_uniform_vectors   = 296,
+                        .fragment_uniform_vectors = 2048,
+                    },
+                .textures =
+                    {
+                        .texture_units = 112,
+                        .d2_size       = 4096,
+                        .d3_size       = 0,
+                        .d2_max_layers = 0,
+                        .cube_size     = 4096,
+                    },
             },
-            .draws = {
-                .element_count = 2147483647,
-                .element_index = 2147483647,
-                .element_vertex_count = 2147483647,
-                .instance_count = 0,
-                .instance_offset = 0,
-            },
-            .shaders = {
-                .vertex_uniform_vectors = 296,
-                .fragment_uniform_vectors = 2048,
-            },
-            .textures = {
-                .texture_units = 112,
-                .d2_size = 4096,
-                .d3_size = 0,
-                .d2_max_layers = 0,
-                .cube_size = 4096,
-            },
-        },
-        .resolution = size_2d<u32>{1280, 720},
-        .device_info = std::make_tuple("Mesa", "Mali400"),
-        .version_string = "OpenGL ES 2.0 Mesa 26.0.3-1ubuntu1",
+        .resolution          = size_2d<u32>{1280, 720},
+        .device_info         = std::make_tuple("Mesa", "Mali400"),
+        .version_string      = "OpenGL ES 2.0 Mesa 26.0.3-1ubuntu1",
         .glsl_version_string = "OpenGL ES GLSL ES 1.0.16",
     };
 }
@@ -1043,41 +1048,46 @@ inline auto adreno_702()
             "GL_OES_vertex_half_float",
         },
         // clang-format on
-        .limits = gleam::api_limits{
-            .buffers = {
-                .ssbo_size = 2147483647,
-                .ubo_size = 65536,
-                .ssbo_vertex = 16,
-                .ssbo_fragment = 16,
-                .ssbo_compute = 16,
-                .ubo_vertex = 15,
-                .ubo_fragment = 15,
-                .ubo_compute = 15,
-                .ubo_alignment = 64,
-                .ssbo_alignment = 64,
+        .limits =
+            gleam::api_limits{
+                .buffers =
+                    {
+                        .ssbo_size      = 2147483647,
+                        .ubo_size       = 65536,
+                        .ssbo_vertex    = 16,
+                        .ssbo_fragment  = 16,
+                        .ssbo_compute   = 16,
+                        .ubo_vertex     = 15,
+                        .ubo_fragment   = 15,
+                        .ubo_compute    = 15,
+                        .ubo_alignment  = 64,
+                        .ssbo_alignment = 64,
+                    },
+                .draws =
+                    {
+                        .element_count        = 2147483647,
+                        .element_index        = 2147483647,
+                        .element_vertex_count = 2147483647,
+                        .instance_count       = 2147483647,
+                        .instance_offset      = 2147483647,
+                    },
+                .shaders =
+                    {
+                        .vertex_uniform_vectors   = 4096,
+                        .fragment_uniform_vectors = 4096,
+                    },
+                .textures =
+                    {
+                        .texture_units = 48,
+                        .d2_size       = 16384,
+                        .d3_size       = 2048,
+                        .d2_max_layers = 2048,
+                        .cube_size     = 16384,
+                    },
             },
-            .draws = {
-                .element_count = 2147483647,
-                .element_index = 2147483647,
-                .element_vertex_count = 2147483647,
-                .instance_count = 2147483647,
-                .instance_offset = 2147483647,
-            },
-            .shaders = {
-                .vertex_uniform_vectors = 4096,
-                .fragment_uniform_vectors = 4096,
-            },
-            .textures = {
-                .texture_units = 48,
-                .d2_size = 16384,
-                .d3_size = 2048,
-                .d2_max_layers = 2048,
-                .cube_size = 16384,
-            },
-        },
-        .resolution = size_2d<u32>{1280, 720},
-        .device_info = std::make_tuple("freedreno", "FD702"),
-        .version_string = "OpenGL ES 3.1 Mesa 25.2.6-1~bpo13+1",
+        .resolution          = size_2d<u32>{1280, 720},
+        .device_info         = std::make_tuple("freedreno", "FD702"),
+        .version_string      = "OpenGL ES 3.1 Mesa 25.2.6-1~bpo13+1",
         .glsl_version_string = "OpenGL ES GLSL ES 3.10",
     };
 }
@@ -1290,45 +1300,50 @@ inline auto videocore_iv()
             "GL_OES_vertex_half_float",
         },
         // clang-format on
-        .limits = gleam::api_limits{
-            .buffers = {
-                .ssbo_size = 0,
-                .ubo_size = 0,
-                .ssbo_vertex = 0,
-                .ssbo_fragment = 0,
-                .ssbo_compute = 0,
-                .ubo_vertex = 0,
-                .ubo_fragment = 0,
-                .ubo_compute = 0,
-                .ubo_alignment = 0,
-                .ssbo_alignment = 0,
+        .limits =
+            gleam::api_limits{
+                .buffers =
+                    {
+                        .ssbo_size      = 0,
+                        .ubo_size       = 0,
+                        .ssbo_vertex    = 0,
+                        .ssbo_fragment  = 0,
+                        .ssbo_compute   = 0,
+                        .ubo_vertex     = 0,
+                        .ubo_fragment   = 0,
+                        .ubo_compute    = 0,
+                        .ubo_alignment  = 0,
+                        .ssbo_alignment = 0,
+                    },
+                .draws =
+                    {
+                        .element_count        = 65536,
+                        .element_index        = 65536,
+                        .element_vertex_count = 65536,
+                        .instance_count       = 1,
+                        .instance_offset      = 0,
+                    },
+                .shaders =
+                    {
+                        .vertex_uniform_vectors   = 64,
+                        .fragment_uniform_vectors = 64,
+                    },
+                .textures =
+                    {
+                        .texture_units = 8,
+                        .d2_size       = 2048,
+                        .d3_size       = 0,
+                        .d2_max_layers = 0,
+                        .cube_size     = 2048,
+                    },
             },
-            .draws = {
-                .element_count = 65536,
-                .element_index = 65536,
-                .element_vertex_count = 65536,
-                .instance_count = 1,
-                .instance_offset = 0,
-            },
-            .shaders = {
-                .vertex_uniform_vectors = 64,
-                .fragment_uniform_vectors = 64,
-            },
-            .textures = {
-                .texture_units = 8,
-                .d2_size = 2048,
-                .d3_size = 0,
-                .d2_max_layers = 0,
-                .cube_size = 2048,
-            },
-        },
-        .resolution = size_2d<u32>{1920, 1080},
-        .device_info = std::make_tuple("Broadcom", "VC4 V3D 2.1"),
-        .version_string = "OpenGL ES 2.0 Mesa 25.0.7-2+rpt4",
+        .resolution          = size_2d<u32>{1920, 1080},
+        .device_info         = std::make_tuple("Broadcom", "VC4 V3D 2.1"),
+        .version_string      = "OpenGL ES 2.0 Mesa 25.0.7-2+rpt4",
         .glsl_version_string = "OpenGL ES GLSL ES 1.0.16",
     };
 }
 
-}
+} // namespace broadcom
 
 } // namespace gleam::emulation

@@ -349,9 +349,9 @@ static stl_types::result<EGLConfig, std::string> eglTryConfig(
 
     auto find_attrib = [&](EGLint key) {
         return std::find_if(
-            surfaceConfig.begin(),
-            surfaceConfig.end(),
-            [key](auto const& kv) { return kv.first == key; });
+            surfaceConfig.begin(), surfaceConfig.end(), [key](auto const& kv) {
+                return kv.first == key;
+            });
     };
 
     while(numConfig == 0)

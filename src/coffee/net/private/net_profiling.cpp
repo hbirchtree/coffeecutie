@@ -102,9 +102,7 @@ void ProfilingExport()
         if(FileExists(profile))
         {
             reportBinRsc.addMimePart(
-                "profile",
-                C_OCAST<BytesConst>(profile),
-                "text/plain");
+                "profile", C_OCAST<BytesConst>(profile), "text/plain");
         } else
         {
             reportBinRsc.addMimePart(

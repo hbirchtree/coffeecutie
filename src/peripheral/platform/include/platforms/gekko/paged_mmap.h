@@ -33,23 +33,23 @@ namespace platform::file::gekko::vmem {
 
 namespace detail {
 
-constexpr u32 kHtabSize   = 0x10000;     // 64KB page table = 1024 PTEGs * 64B
+constexpr u32 kHtabSize   = 0x10000; // 64KB page table = 1024 PTEGs * 64B
 constexpr u32 kPageSize   = 0x1000;
-constexpr u32 kWindowBase = 0x90000000;  // segment 9: free on GC, no BAT
-constexpr u32 kWindowSpan = 0x10000000;  // 256MB (one segment)
+constexpr u32 kWindowBase = 0x90000000; // segment 9: free on GC, no BAT
+constexpr u32 kWindowSpan = 0x10000000; // 256MB (one segment)
 constexpr u32 kWindowVsid = 9;
-constexpr u32 kPoolPages  = 64;          // 256KB shared frame pool
+constexpr u32 kPoolPages  = 64; // 256KB shared frame pool
 
-// Max files mapped concurrently. Set via CMake (GEKKO_MMAP_MAX_REGIONS); a fixed
-// array so the DSI handler can scan it without allocating.
+// Max files mapped concurrently. Set via CMake (GEKKO_MMAP_MAX_REGIONS); a
+// fixed array so the DSI handler can scan it without allocating.
 #ifndef GEKKO_MMAP_MAX_REGIONS
 #define GEKKO_MMAP_MAX_REGIONS 8
 #endif
 constexpr u32 kMaxRegions = GEKKO_MMAP_MAX_REGIONS;
 
 // GameCube ARAM is 16MB; skip the bottom 64KB. AR_StartDMA/AR_GetDMAStatus are
-// register pokes that work without AR_Init (whose size probe hangs waiting on the
-// DSP, which the app never starts).
+// register pokes that work without AR_Init (whose size probe hangs waiting on
+// the DSP, which the app never starts).
 constexpr u32 kAramSize = 0x1000000;
 constexpr u32 kAramBase = 0x10000;
 
@@ -62,8 +62,8 @@ struct pte_t
 struct region_t
 {
     bool active   = false;
-    bool dvd      = false;   // true: DVD/ARAM-backed; false: in-RAM alias
-    u32  base     = 0;       // window VA assigned to this region
+    bool dvd      = false; // true: DVD/ARAM-backed; false: in-RAM alias
+    u32  base     = 0;     // window VA assigned to this region
     u32  size     = 0;
     u8*  ram      = nullptr; // in-RAM backing
     u32  disc_off = 0;       // DVD-backed: file's disc byte offset
@@ -76,9 +76,9 @@ inline u32             g_htab_phys  = 0;
 inline PPCExcptPanicFn g_prev_panic = nullptr;
 inline bool            g_init       = false;
 
-/* First-fit range allocator with coalescing free, for VA + ARAM. Few regions, so
- * a small fixed hole list is plenty. off 0 is reserved to mean "out of space"
- * (both pools start at a nonzero base). */
+/* First-fit range allocator with coalescing free, for VA + ARAM. Few regions,
+ * so a small fixed hole list is plenty. off 0 is reserved to mean "out of
+ * space" (both pools start at a nonzero base). */
 struct range_alloc
 {
     struct hole
@@ -86,6 +86,7 @@ struct range_alloc
         u32 off;
         u32 size;
     };
+
     hole h[2 * kMaxRegions];
     u32  n = 0;
 
@@ -122,7 +123,7 @@ struct range_alloc
         for(u32 i = 1; i < n; i++) // insertion sort by off
         {
             hole k = h[i];
-            u32   j = i;
+            u32  j = i;
             while(j > 0 && h[j - 1].off > k.off)
             {
                 h[j] = h[j - 1];
@@ -168,7 +169,8 @@ inline u32 virt_to_phys(void const* v)
 inline void set_sr(u32 seg, u32 value)
 {
     u32 ea = seg << 28;
-    __asm__ __volatile__("mtsrin %0,%1; isync" ::"r"(value), "r"(ea) : "memory");
+    __asm__ __volatile__("mtsrin %0,%1; isync" ::"r"(value), "r"(ea)
+                         : "memory");
 }
 
 inline void tlbie(u32 ea)
@@ -215,22 +217,24 @@ inline void unmap_pte(pte_t* pte, u32 va)
 }
 
 /* Polled DVD read through the Drive Interface regs (uncached 0xCC006000). No
- * interrupts -> safe in the DSI handler. offset/len/dst must be 32-byte aligned. */
+ * interrupts -> safe in the DSI handler. offset/len/dst must be 32-byte
+ * aligned. */
 inline void di_read(u32 dst_phys, u32 len, u32 disc_off)
 {
     auto* DI = reinterpret_cast<volatile u32*>(0xCC006000);
-    DI[0]    = DI[0];        // ack pending DI interrupt flags
-    DI[2]    = 0xA8000000;   // DICMDBUF0: read
-    DI[3]    = disc_off >> 2; // DICMDBUF1: offset (4-byte units)
-    DI[4]    = len;          // DICMDBUF2: length
+    DI[0]    = DI[0];                 // ack pending DI interrupt flags
+    DI[2]    = 0xA8000000;            // DICMDBUF0: read
+    DI[3]    = disc_off >> 2;         // DICMDBUF1: offset (4-byte units)
+    DI[4]    = len;                   // DICMDBUF2: length
     DI[5]    = dst_phys & 0x1FFFFFFF; // DIMAR
-    DI[6]    = len;          // DILENGTH
-    DI[7]    = 3;            // DICR: TSTART | DMA (read)
+    DI[6]    = len;                   // DILENGTH
+    DI[7]    = 3;                     // DICR: TSTART | DMA (read)
     while(DI[7] & 1)
         ;
 }
 
-constexpr u32 kPteRef = 0x00000100; // PTE.lo Referenced bit (set by HW on access)
+constexpr u32 kPteRef =
+    0x00000100; // PTE.lo Referenced bit (set by HW on access)
 
 /* Pick a frame: a fresh one, then a freed one, else evict by clock /
  * second-chance (approximate LRU using the hardware-set PTE Referenced bit). */
@@ -242,8 +246,8 @@ inline u32 alloc_frame()
         if(g_frame_va[i] == 0)
             return i;
 
-    // At most two sweeps: the first clears R on recently-used frames, the second
-    // is guaranteed to find one with R clear.
+    // At most two sweeps: the first clears R on recently-used frames, the
+    // second is guaranteed to find one with R clear.
     for(u32 scan = 0; scan < 2 * kPoolPages; scan++)
     {
         u32 const idx = g_evict_next;
@@ -253,7 +257,8 @@ inline u32 alloc_frame()
         {
             pte->lo &= ~kPteRef; // give a second chance
             DCFlushRange(pte, sizeof(pte_t));
-            tlbie(g_frame_va[idx]); // force a re-walk so the next access re-sets R
+            tlbie(g_frame_va[idx]); // force a re-walk so the next access
+                                    // re-sets R
             continue;
         }
         unmap_pte(pte, g_frame_va[idx]);
@@ -433,7 +438,10 @@ struct mapping
     u8* base = nullptr;
     u32 size = 0;
 
-    explicit operator bool() const { return base != nullptr; }
+    explicit operator bool() const
+    {
+        return base != nullptr;
+    }
 };
 
 /* Map a DVD file by name into the paged window. The file is staged into ARAM if
@@ -461,11 +469,12 @@ inline mapping map(char const* name)
         if(detail::stage_to_aram(e->off, e->size, aoff))
             aram = true;
         else
-            detail::g_aram.free(aoff, rounded); // staging failed -> give it back
+            detail::g_aram.free(
+                aoff, rounded); // staging failed -> give it back
     }
 
-    detail::g_regions[slot] =
-        {true, true, base, e->size, nullptr, e->off, aram, aoff};
+    detail::g_regions[slot] = {
+        true, true, base, e->size, nullptr, e->off, aram, aoff};
     return {reinterpret_cast<u8*>(static_cast<uintptr_t>(base)), e->size};
 }
 
@@ -499,14 +508,17 @@ inline u32 fault_count()
 /* A pinned, physically-contiguous view of a window sub-range, for GX/DMA. */
 struct locked_region
 {
-    u8* ptr  = nullptr; // contiguous cached CPU pointer (use for CPU + as a
-                        // TPL/GX source: GX's virtual->physical works on this,
-                        // unlike the window VA). The original window addresses
-                        // also stay valid (now 1:1-backed).
-    u32 phys = 0;       // physical base for GX/DMA
-    u32 size = 0;       // page-rounded length
+    u8* ptr = nullptr; // contiguous cached CPU pointer (use for CPU + as a
+                       // TPL/GX source: GX's virtual->physical works on this,
+                       // unlike the window VA). The original window addresses
+                       // also stay valid (now 1:1-backed).
+    u32 phys = 0;      // physical base for GX/DMA
+    u32 size = 0;      // page-rounded length
 
-    explicit operator bool() const { return ptr != nullptr; }
+    explicit operator bool() const
+    {
+        return ptr != nullptr;
+    }
 };
 
 /* Pin only the sub-range [addr, addr+len) that GX/DMA needs: fault it in, copy
@@ -523,16 +535,16 @@ inline locked_region pin(void* addr, u32 len)
     int const slot = detail::find_free_lock();
     if(slot < 0)
         return {};
-    // Page-aligned: the 1:1 remap maps whole pages, so buf must start on a page.
+    // Page-aligned: the 1:1 remap maps whole pages, so buf must start on a
+    // page.
     u8* buf = static_cast<u8*>(memalign(detail::kPageSize, n));
     if(!buf)
         return {};
 
-    // Read the range through the window (faults pages in) into the contiguous buf.
+    // Read the range through the window (faults pages in) into the contiguous
+    // buf.
     memcpy(
-        buf,
-        reinterpret_cast<void const*>(static_cast<uintptr_t>(start)),
-        n);
+        buf, reinterpret_cast<void const*>(static_cast<uintptr_t>(start)), n);
     // Drop the scattered pool frames, then remap the window 1:1 onto buf.
     detail::free_region_frames(start, n);
     for(u32 i = 0; i < n; i += detail::kPageSize)
@@ -579,8 +591,8 @@ inline int page_referenced(void* va)
 
 /* Behavioural LRU check: fill the pool, then access a wave of new pages while
  * re-touching page 0 ("hot") each round. Clock-LRU keeps page 0 (R freshly set)
- * and evicts the cold pages; plain FIFO would evict page 0 (oldest-loaded). Pass
- * = hot page still resident AND a cold page evicted. */
+ * and evicts the cold pages; plain FIFO would evict page 0 (oldest-loaded).
+ * Pass = hot page still resident AND a cold page evicted. */
 inline bool lru(char const* name)
 {
     auto m = gekko::vmem::map(name);
@@ -598,15 +610,15 @@ inline bool lru(char const* name)
 
     for(u32 i = 0; i < N; i++) // fill the pool (page 0 = hot)
         rd(i);
-    for(u32 i = 0; i < N; i++) // wave of new pages, re-touching page 0 each round
+    for(u32 i = 0; i < N;
+        i++) // wave of new pages, re-touching page 0 each round
     {
         rd(0);
         rd(N + i);
     }
 
     bool const hot_resident = page_referenced(m.base) != -1;
-    bool const cold_evicted =
-        page_referenced(m.base + detail::kPageSize) == -1;
+    bool const cold_evicted = page_referenced(m.base + detail::kPageSize) == -1;
     gekko::vmem::unmap(m);
     return hot_resident && cold_evicted;
 }
@@ -634,8 +646,8 @@ inline bool ram(u32* fault_count_out = nullptr)
         src[i] = static_cast<u8>(i * 7 + 3);
     DCFlushRange(src, N);
 
-    auto m  = map_ram(src, N);
-    auto* w = reinterpret_cast<volatile u8*>(m.base);
+    auto  m  = map_ram(src, N);
+    auto* w  = reinterpret_cast<volatile u8*>(m.base);
     bool  ok = m && !g_failed;
     for(u32 i = 0; ok && i < N; i += 0x111)
         if(w[i] != static_cast<u8>(i * 7 + 3))

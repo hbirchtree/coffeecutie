@@ -12,8 +12,8 @@ namespace platform {
 namespace profiling {
 
 using libc_types::f32;
-using libc_types::u32;
 using libc_types::i64;
+using libc_types::u32;
 
 struct datapoint_t;
 struct ThreadState;
@@ -78,11 +78,14 @@ FORCEDINLINE void CaptureMetrics(
         return;
 
     if constexpr(std::is_floating_point_v<T>)
-        CaptureMetrics_f32(*thread_state, name, variant, value, ts, index, index_name);
+        CaptureMetrics_f32(
+            *thread_state, name, variant, value, ts, index, index_name);
     else if constexpr(std::is_integral_v<T>)
-        CaptureMetrics_i64(*thread_state, name, variant, value, ts, index, index_name);
+        CaptureMetrics_i64(
+            *thread_state, name, variant, value, ts, index, index_name);
     else
-        CaptureMetrics(*thread_state, name, variant, value, ts, index, index_name);
+        CaptureMetrics(
+            *thread_state, name, variant, value, ts, index, index_name);
 }
 
 #if !defined(COFFEE_GEKKO)

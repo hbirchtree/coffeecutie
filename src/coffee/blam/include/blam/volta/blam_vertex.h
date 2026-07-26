@@ -35,7 +35,7 @@ requires is_vert_compression<V>
 using normal_type = std::conditional_t<
     std::is_same_v<V, uncompressed>,
     Vecf3, /* Uncompressed is simple enough, even readable from a debugger */
-    u32 /* 11/11/10 vector, unpacked in vertex shader */
+    u32    /* 11/11/10 vector, unpacked in vertex shader */
     >;
 
 template<typename V>

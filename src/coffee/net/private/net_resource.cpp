@@ -375,13 +375,13 @@ size_t write_payload(void* data, size_t size, size_t nmemb, void* ptr)
 struct MimeBufferState
 {
     const char* data{nullptr};
-    size_t size{0};
-    size_t offset{0};
+    size_t      size{0};
+    size_t      offset{0};
 };
 
 size_t mime_read_callback(char* buffer, size_t size, size_t nitems, void* arg)
 {
-    auto* state = static_cast<MimeBufferState*>(arg);
+    auto*  state     = static_cast<MimeBufferState*>(arg);
     size_t max_bytes = size * nitems;
     size_t remaining = state->size - state->offset;
     if(remaining == 0)
@@ -445,14 +445,15 @@ void Resource::preRequest(http::method_t method, const const_chunk_u8& data)
     case http::method_t::post:
         if(m_handle->mime)
         {
-            curl_easy_setopt(m_handle->handle, CURLOPT_MIMEPOST, m_handle->mime);
-        }
-        else
+            curl_easy_setopt(
+                m_handle->handle, CURLOPT_MIMEPOST, m_handle->mime);
+        } else
         {
             curl_easy_setopt(m_handle->handle, CURLOPT_POST, 1);
             if(data.data)
             {
-                curl_easy_setopt(m_handle->handle, CURLOPT_POSTFIELDS, data.data);
+                curl_easy_setopt(
+                    m_handle->handle, CURLOPT_POSTFIELDS, data.data);
                 curl_easy_setopt(
                     m_handle->handle, CURLOPT_POSTFIELDSIZE_LARGE, data.size);
             }
@@ -650,10 +651,10 @@ std::optional<error_code> Resource::push(
 #endif
 
 void Resource::addMimePart(
-    std::string const& name,
+    std::string const&    name,
     const_chunk_u8 const& data,
-    std::string const& mimeType,
-    std::string const& filename)
+    std::string const&    mimeType,
+    std::string const&    filename)
 {
 #if defined(USE_CURL)
     if(!m_handle)
@@ -664,14 +665,15 @@ void Resource::addMimePart(
         m_handle->mime = curl_mime_init(m_handle->handle);
     }
 
-    curl_mimepart* part = curl_mime_addpart(static_cast<curl_mime*>(m_handle->mime));
+    curl_mimepart* part =
+        curl_mime_addpart(static_cast<curl_mime*>(m_handle->mime));
     if(part)
     {
         curl_mime_name(part, name.c_str());
 
-        auto* state = new MimeBufferState();
-        state->data = reinterpret_cast<const char*>(data.data);
-        state->size = data.size;
+        auto* state   = new MimeBufferState();
+        state->data   = reinterpret_cast<const char*>(data.data);
+        state->size   = data.size;
         state->offset = 0;
 
         curl_mime_data_cb(

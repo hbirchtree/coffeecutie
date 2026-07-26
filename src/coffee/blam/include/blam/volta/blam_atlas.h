@@ -1,8 +1,8 @@
 #pragma once
 
+#include "blam_bitm.h"
 #include "blam_magic_data.h"
 #include "blam_reference.h"
-#include "blam_bitm.h"
 
 namespace blam {
 
@@ -93,9 +93,8 @@ struct atlas_view
     }
 };
 
-
-stl_types::result<std::pair<const bitm::header_t*, map_ptr>, error_msg>
-tag_t::image(const map_ptr& magic, const atlas_view& source) const
+stl_types::result<std::pair<const bitm::header_t*, map_ptr>, error_msg> tag_t::
+    image(const map_ptr& magic, const atlas_view& source) const
 {
     /* CE changes! */
     if(storage == tag_storage_t::external)

@@ -412,13 +412,13 @@ bool AndroidEventBus::handleGamepadEvent(AInputEvent* event)
         it = controllers->m_mapping
                  .insert({deviceId, controllers->m_cache.size() - 1})
                  .first;
-        auto* ibus = m_container->service<comp_app::BasicEventBus<CIEvent>>();
+        auto*   ibus = m_container->service<comp_app::BasicEventBus<CIEvent>>();
         CIEvent event;
         event.type = CIEvent::ControllerConnect;
         CIControllerConnectEvent connect;
-        connect.index = it->second;
+        connect.index        = it->second;
         connect.player_index = it->second;
-        connect.connected = true;
+        connect.connected    = true;
         ibus->inject(event, &connect);
         cDebug(
             "Creating controller mapping: {}({}, {}) -> {}",
@@ -752,13 +752,13 @@ bool AndroidEventBus::handleTouchEvent(AInputEvent* event)
                 auto       it = m_dragData.find(id);
                 if(it == m_dragData.end())
                     continue;
-                out.type = CITouchMotionEvent::event_type;
+                out.type            = CITouchMotionEvent::event_type;
                 const Vecf2 current = {
                     AMotionEvent_getX(event, i),
                     AMotionEvent_getY(event, i),
                 };
-                move.finger = id;
-                move.origin = it->second.origin;
+                move.finger         = id;
+                move.origin         = it->second.origin;
                 move.previous       = it->second.previous;
                 move.current        = current;
                 move.end            = state == STOPPED && id == pointer_id;
@@ -814,7 +814,8 @@ void AndroidEventBus::handleInputEvent(AInputEvent* event)
     i32 type   = AInputEvent_getType(event);
     i32 source = AInputEvent_getSource(event);
 
-    if(source & AINPUT_SOURCE_GAMEPAD || feval<i32>(source, AINPUT_SOURCE_JOYSTICK))
+    if(source & AINPUT_SOURCE_GAMEPAD ||
+       feval<i32>(source, AINPUT_SOURCE_JOYSTICK))
     {
         if(handleGamepadEvent(event))
             return;

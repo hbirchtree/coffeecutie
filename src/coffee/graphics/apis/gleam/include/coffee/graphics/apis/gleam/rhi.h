@@ -402,10 +402,10 @@ struct api
     struct draw_cache_t
     {
         rendertarget_t* last_fb;
-        program_t* last_program;
-        vertex_type* last_vao;
-        bool vertex_offset_changed{false};
-        u32 last_vertex_offset{0};
+        program_t*      last_program;
+        vertex_type*    last_vao;
+        bool            vertex_offset_changed{false};
+        u32             last_vertex_offset{0};
     } draw_cache;
 
     rendertarget_currency m_rendertargetCurrency;

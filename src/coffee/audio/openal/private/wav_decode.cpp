@@ -170,16 +170,17 @@ bool decoder::decode(
         out_fmt.format = Format::format_t::f32;
         break;
     case fmt_chunk_t::audio_format_t::ima_adpcm:
-    case fmt_chunk_t::audio_format_t::adpcm:
-    {
+    case fmt_chunk_t::audio_format_t::adpcm: {
         // The driver (AL_EXT_IMA4 / AL_SOFT_MSADPCM) decodes these formats
         // itself; we just hand the raw blocks through. Still need
         // wSamplesPerBlock so we can tell it the block alignment and so
         // duration/seek math below is correct.
         u16 samples_per_block_16{};
         if(fmt_size < fmt_samples_per_block_offset + sizeof(u16) ||
-           !read(data, fmt_offset + fmt_samples_per_block_offset,
-                 samples_per_block_16))
+           !read(
+               data,
+               fmt_offset + fmt_samples_per_block_offset,
+               samples_per_block_16))
         {
             cDebug("WAV: adpcm fmt chunk missing wSamplesPerBlock");
             return false;
@@ -202,8 +203,8 @@ bool decoder::decode(
 
     using namespace std::chrono_literals;
 
-    auto total_samples = (data_size / fmt->bytes_per_block) *
-                          u64(samples_per_block);
+    auto total_samples =
+        (data_size / fmt->bytes_per_block) * u64(samples_per_block);
     auto audio_duration = std::chrono::milliseconds(
         (u64(total_samples) * 1000) / fmt->sample_rate);
 

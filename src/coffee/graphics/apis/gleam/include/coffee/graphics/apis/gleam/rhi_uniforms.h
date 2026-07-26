@@ -260,12 +260,14 @@ inline bool apply_command_modifier(
 
         if constexpr(compile_info::debug_mode)
         {
-            if(ubo_override_size > 0 && buffer_def.stride == 0
-               && size < ubo_override_size)
+            if(ubo_override_size > 0 && buffer_def.stride == 0 &&
+               size < ubo_override_size)
                 Coffee::cWarning(
                     "Uniform block '{}' is declared as {} bytes by the shader, "
-                    "but only {} bytes are bound. Strict drivers (WebGL2/GLES3) "
-                    "will reject the draw with GL_INVALID_OPERATION. Commit/bind "
+                    "but only {} bytes are bound. Strict drivers "
+                    "(WebGL2/GLES3) "
+                    "will reject the draw with GL_INVALID_OPERATION. "
+                    "Commit/bind "
                     "at least the block's full std140 size.",
                     buffer_def.key.name,
                     ubo_override_size,
@@ -382,13 +384,11 @@ inline bool apply_command_modifier(
             apply_texture_filtering_opts(
                 texture.m_type, sampler_hnd->m_min, sampler_hnd->m_mag);
         }
-        // If sampler binding is not available we can't really guess uniform location
+        // If sampler binding is not available we can't really guess uniform
+        // location
         if(!features.sampler_binding)
             apply_sampler_uniform(
-                program,
-                stage,
-                uniform_key{.name = locinfo.name},
-                index);
+                program, stage, uniform_key{.name = locinfo.name}, index);
     }
     return true;
 }
@@ -474,9 +474,7 @@ inline bool apply_command_modifier_per_call(
 }
 
 inline bool apply_command_modifier(
-    program_t&,
-    shader_bookkeeping_t& bookkeeping,
-    instance_texture_list&)
+    program_t&, shader_bookkeeping_t& bookkeeping, instance_texture_list&)
 {
     return true;
 }
@@ -492,13 +490,15 @@ inline bool apply_command_modifier_per_call(
     // Application to systems with functional sampler type is not included
     for(auto const& def : textures)
     {
-        auto  texture = def.textures.at(instance);
+        auto texture = def.textures.at(instance);
         if(!texture)
             continue;
         auto const& sampler = *def.sampler;
-        cmd::active_texture(group::texture_unit::texture0 + def.uniform.location);
+        cmd::active_texture(
+            group::texture_unit::texture0 + def.uniform.location);
         cmd::bind_texture(convert::to(texture->m_type), texture->m_handle);
-        apply_texture_filtering_opts(texture->m_type, sampler.m_min, sampler.m_mag);
+        apply_texture_filtering_opts(
+            texture->m_type, sampler.m_min, sampler.m_mag);
         apply_sampler_uniform(
             program,
             def.stage,
@@ -587,8 +587,8 @@ inline bool apply_command_modifier(
                     group::clip_control_depth::zero_to_one);
 #endif
             cmd::depth_func(
-                !depth.reversed       ? group::depth_function::less
-                : clip_avail          ? group::depth_function::gequal
+                !depth.reversed        ? group::depth_function::less
+                : clip_avail           ? group::depth_function::gequal
                 : depth.strict_greater ? group::depth_function::greater
                                        : group::depth_function::gequal);
         }

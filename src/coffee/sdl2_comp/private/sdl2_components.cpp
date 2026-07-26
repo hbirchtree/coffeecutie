@@ -537,9 +537,7 @@ void GLContext::setupAttributes(entity_container& c)
 struct try_create_context
 {
     try_create_context(
-        SDL_Window*                 window,
-        SDL_GLContext*              context,
-        comp_app::GLConfig& config)
+        SDL_Window* window, SDL_GLContext* context, comp_app::GLConfig& config)
         : window(window)
         , context(context)
         , config(config)
@@ -565,8 +563,8 @@ struct try_create_context
         }
     }
 
-    SDL_Window*                 window;
-    SDL_GLContext*              context;
+    SDL_Window*         window;
+    SDL_GLContext*      context;
     comp_app::GLConfig& config;
 };
 

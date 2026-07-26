@@ -390,7 +390,7 @@ detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
     runtime_queue* queue = nullptr;
     {
         std::shared_lock _(context->global_lock);
-        auto q_it = context->queues.find(targetThread);
+        auto             q_it = context->queues.find(targetThread);
         if(q_it == context->queues.end())
             return RQE::InvalidQueue;
         queue = &q_it->second;

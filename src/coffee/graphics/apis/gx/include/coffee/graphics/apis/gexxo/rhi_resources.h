@@ -5,8 +5,8 @@
 #include <ogc/gx.h>
 #include <ogc/tpl.h>
 #include <optional>
-#include <peripherals/identify/compiler/unreachable.h>
 #include <peripherals/concepts/graphics_api.h>
+#include <peripherals/identify/compiler/unreachable.h>
 #include <peripherals/semantic/enum/data_types.h>
 #include <peripherals/stl/standard_exceptions.h>
 #include <peripherals/typing/geometry/size.h>
@@ -50,7 +50,7 @@ enum class api_type_t
 
 enum class error : u32
 {
-    none = 0,
+    none   = 0,
     failed = 1, /* draw submission failed; see the log for the real cause */
 };
 
@@ -66,12 +66,19 @@ struct buffer_slice_t
     size_t    m_offset{0};
     size_t    m_size{0};
 
+    inline u32 handle() const
+    {
+        return 0;
+    }
 
-    inline u32       handle() const { return 0; }
-    inline buffer_t* buffer() const { return m_buffer; }
+    inline buffer_t* buffer() const
+    {
+        return m_buffer;
+    }
+
     template<typename T = libc_types::u8>
     inline gsl::span<T> map(size_t offset = 0, size_t size = 0);
-    buffer_slice_t slice(size_t offset, size_t size = 0) const;
+    buffer_slice_t      slice(size_t offset, size_t size = 0) const;
 };
 
 struct buffer_t : std::enable_shared_from_this<buffer_t>
@@ -82,10 +89,20 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
     {
     }
 
-    inline void alloc() {}
-    inline void dealloc() { m_data.clear(); }
+    inline void alloc()
+    {
+    }
 
-    inline void commit(size_t size) { m_data.resize(size); }
+    inline void dealloc()
+    {
+        m_data.clear();
+    }
+
+    inline void commit(size_t size)
+    {
+        m_data.resize(size);
+    }
+
     template<typename T>
     inline void commit(gsl::span<T> data)
     {
@@ -101,14 +118,26 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
         if(size == 0)
             size = m_data.size() - offset;
         return gsl::span<T>(
-            reinterpret_cast<T*>(m_data.data() + offset),
-            size / sizeof(T));
+            reinterpret_cast<T*>(m_data.data() + offset), size / sizeof(T));
     }
-    inline void unmap(void* = nullptr) {}
-    inline void setState(buffers::property, int) {}
 
-    inline size_t size() const { return m_data.size(); }
-    inline u32    handle() const { return 0; }
+    inline void unmap(void* = nullptr)
+    {
+    }
+
+    inline void setState(buffers::property, int)
+    {
+    }
+
+    inline size_t size() const
+    {
+        return m_data.size();
+    }
+
+    inline u32 handle() const
+    {
+        return 0;
+    }
 
     inline buffer_slice_t slice(size_t offset, size_t size = 0)
     {
@@ -130,8 +159,7 @@ inline gsl::span<T> buffer_slice_t::map(size_t offset, size_t size)
     if(size == 0)
         size = m_size;
     return gsl::span<T>(
-        m_buffer->m_data.data() + m_offset + offset,
-        size / sizeof(T));
+        m_buffer->m_data.data() + m_offset + offset, size / sizeof(T));
 }
 
 inline buffer_slice_t buffer_slice_t::slice(size_t offset, size_t size) const
@@ -158,13 +186,17 @@ struct texture_t : std::enable_shared_from_this<texture_t>
         , m_mipmaps(mipmaps)
     {
     }
+
     virtual ~texture_t() = default;
 
     virtual void alloc(size_type const& size, bool /*create_storage*/ = true)
     {
         m_size = size;
     }
-    inline void dealloc() {}
+
+    inline void dealloc()
+    {
+    }
 
     template<typename T>
     inline void upload(
@@ -175,7 +207,10 @@ struct texture_t : std::enable_shared_from_this<texture_t>
     {
     }
 
-    inline size_type size() const { return m_size; }
+    inline size_type size() const
+    {
+        return m_size;
+    }
 
     template<typename T>
     inline std::shared_ptr<texture_t> view(T, textures::view_params)
@@ -191,8 +226,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
         if(TPL_OpenTPLFromMemory(
                &m_tpl,
                m_tpl_data.data(),
-               static_cast<libc_types::u32>(m_tpl_data.size()))
-           <= 0)
+               static_cast<libc_types::u32>(m_tpl_data.size())) <= 0)
             return false;
         if(TPL_GetTexture(&m_tpl, 0, &m_obj) != 0)
             return false;
@@ -202,15 +236,15 @@ struct texture_t : std::enable_shared_from_this<texture_t>
 
     /* Build the GX texture in place from a TPL that already lives in resident,
      * GX-readable memory (e.g. a pinned vmem::mlock region) -- no copy. The
-     * GXTexObj points into `mem`, so the caller must keep it alive (and writable:
-     * TPL_OpenTPLFromMemory rewrites descriptor offsets in place) for the
-     * texture's lifetime. `mem` must be a cached address (GX virtual->physical
-     * relies on that), not a page-table window VA. */
+     * GXTexObj points into `mem`, so the caller must keep it alive (and
+     * writable: TPL_OpenTPLFromMemory rewrites descriptor offsets in place) for
+     * the texture's lifetime. `mem` must be a cached address (GX
+     * virtual->physical relies on that), not a page-table window VA. */
     inline bool upload_pinned(platform::file::gekko::vmem::mapping&& mem)
     {
-        m_mapped = std::move(mem);
-        auto& mem_ = *m_mapped;
-        m_locked = platform::file::gekko::vmem::pin(mem_.base, mem_.size);
+        m_mapped     = std::move(mem);
+        auto& mem_   = *m_mapped;
+        m_locked     = platform::file::gekko::vmem::pin(mem_.base, mem_.size);
         auto& locked = *m_locked;
         if(TPL_OpenTPLFromMemory(&m_tpl, locked.ptr, locked.size) <= 0)
             return false;
@@ -235,13 +269,25 @@ struct texture_t : std::enable_shared_from_this<texture_t>
     {
         bool const mip = maxlod > 0;
         GX_InitTexObj(
-            &m_obj, tiled, w, h, gxfmt, wrap_s, wrap_t,
+            &m_obj,
+            tiled,
+            w,
+            h,
+            gxfmt,
+            wrap_s,
+            wrap_t,
             mip ? GX_TRUE : GX_FALSE);
         if(mip)
             // tiled buffer holds levels 0..maxlod packed consecutively.
             GX_InitTexObjLOD(
-                &m_obj, GX_LIN_MIP_LIN, GX_LINEAR, 0.0f,
-                static_cast<float>(maxlod), 0.0f, GX_FALSE, GX_FALSE,
+                &m_obj,
+                GX_LIN_MIP_LIN,
+                GX_LINEAR,
+                0.0f,
+                static_cast<float>(maxlod),
+                0.0f,
+                GX_FALSE,
+                GX_FALSE,
                 GX_ANISO_1);
         else
             GX_InitTexObjFilterMode(&m_obj, GX_LINEAR, GX_LINEAR);
@@ -269,14 +315,17 @@ struct texture_2d_t : texture_t
 {
     using texture_t::texture_t;
 };
+
 struct texture_2da_t : texture_t
 {
     using texture_t::texture_t;
 };
+
 struct texture_3d_t : texture_t
 {
     using texture_t::texture_t;
 };
+
 struct texture_cube_array_t : texture_t
 {
     using texture_t::texture_t;
@@ -289,18 +338,37 @@ struct sampler_t
     {
     }
 
-    inline void alloc() {}
-    inline void dealloc() {}
-
-    inline void set(textures::sample_properties, f32) {}
-    inline void set(textures::sample_properties, i32, typing::WrapPolicy) {}
-    inline void set(textures::sample_properties, textures::compare_mode) {}
-    inline void set(
-        textures::sample_properties, textures::filter_distance, typing::Filtering)
+    inline void alloc()
     {
     }
 
-    inline u32 handle() const { return 0; }
+    inline void dealloc()
+    {
+    }
+
+    inline void set(textures::sample_properties, f32)
+    {
+    }
+
+    inline void set(textures::sample_properties, i32, typing::WrapPolicy)
+    {
+    }
+
+    inline void set(textures::sample_properties, textures::compare_mode)
+    {
+    }
+
+    inline void set(
+        textures::sample_properties,
+        textures::filter_distance,
+        typing::Filtering)
+    {
+    }
+
+    inline u32 handle() const
+    {
+        return 0;
+    }
 
     std::shared_ptr<texture_t> m_source;
 };
@@ -309,15 +377,31 @@ struct sampler_t
 
 struct query_t
 {
-    query_t(queries::type type = queries::type::fragments) : m_type(type) {}
+    query_t(queries::type type = queries::type::fragments)
+        : m_type(type)
+    {
+    }
 
-    inline void start() {}
-    inline void stop() {}
-    inline void resultSync() {}
-    inline u64  result() { return 0; }
+    inline void start()
+    {
+    }
+
+    inline void stop()
+    {
+    }
+
+    inline void resultSync()
+    {
+    }
+
+    inline u64 result()
+    {
+        return 0;
+    }
 
     queries::type m_type;
 };
+
 using null_query_t = query_t;
 
 /* --- Vertex array --------------------------------------------------------- */
@@ -333,7 +417,7 @@ struct vertex_attribute
         position,
         texcoord0,
         texmtx0 = texcoord0 + 8,
-        normal = texmtx0 + 8,
+        normal  = texmtx0 + 8,
         color0,
         color1,
         nbt,
@@ -359,17 +443,24 @@ namespace detail {
 
 inline u8 role_to_attr(vertex_attribute const& attr)
 {
-    if(attr.role >= vertex_attribute::texcoord0 && attr.role < (vertex_attribute::texcoord0 + 8))
+    if(attr.role >= vertex_attribute::texcoord0 &&
+       attr.role < (vertex_attribute::texcoord0 + 8))
         return GX_VA_TEX0 + (attr.role - vertex_attribute::texcoord0);
-    if(attr.role >= vertex_attribute::texmtx0 && attr.role < (vertex_attribute::texmtx0 + 8))
+    if(attr.role >= vertex_attribute::texmtx0 &&
+       attr.role < (vertex_attribute::texmtx0 + 8))
         return GX_VA_TEX0MTXIDX + (attr.role - vertex_attribute::texmtx0);
     switch(attr.role)
     {
-    case vertex_attribute::position: return GX_VA_POS;
-    case vertex_attribute::normal: return GX_VA_NRM;
-    case vertex_attribute::color0: return GX_VA_CLR0;
-    case vertex_attribute::color1: return GX_VA_CLR1;
-    case vertex_attribute::nbt: return GX_VA_NBT;
+    case vertex_attribute::position:
+        return GX_VA_POS;
+    case vertex_attribute::normal:
+        return GX_VA_NRM;
+    case vertex_attribute::color0:
+        return GX_VA_CLR0;
+    case vertex_attribute::color1:
+        return GX_VA_CLR1;
+    case vertex_attribute::nbt:
+        return GX_VA_NBT;
     }
     unreachable();
 }
@@ -417,26 +508,37 @@ inline u32 attr_to_fmt(vertex_attribute const& attr)
     default:
         switch(attr.value.type)
         {
-        case semantic::type_t::u8: return GX_U8;
-        case semantic::type_t::i8: return GX_S8;
-        case semantic::type_t::u16: return GX_U16;
-        case semantic::type_t::i16: return GX_S16;
-        case semantic::type_t::f32: return GX_F32;
-        default: Throw(unimplemented_path("vertex format not supported"));
+        case semantic::type_t::u8:
+            return GX_U8;
+        case semantic::type_t::i8:
+            return GX_S8;
+        case semantic::type_t::u16:
+            return GX_U16;
+        case semantic::type_t::i16:
+            return GX_S16;
+        case semantic::type_t::f32:
+            return GX_F32;
+        default:
+            Throw(unimplemented_path("vertex format not supported"));
         }
         break;
     }
     unreachable();
 }
 
-}
+} // namespace detail
 
 struct vertex_array_t
 {
     using attribute_type = vertex_attribute;
 
-    inline void alloc() {}
-    inline void dealloc() {}
+    inline void alloc()
+    {
+    }
+
+    inline void dealloc()
+    {
+    }
 
     inline void add(attribute_type attribute)
     {
@@ -446,10 +548,10 @@ struct vertex_array_t
             .type = GX_DIRECT, // not used
         };
         m_attr_fmt[attribute.index] = {
-            .vtxattr = detail::role_to_attr(attribute),
+            .vtxattr  = detail::role_to_attr(attribute),
             .comptype = detail::attr_to_type(attribute),
             .compsize = detail::attr_to_fmt(attribute),
-            .frac = 0,
+            .frac     = 0,
         };
     }
 
@@ -458,6 +560,7 @@ struct vertex_array_t
     {
         m_vertex_buffers[binding] = std::move(buffer);
     }
+
     inline void set_buffer(
         buffers::type_element, std::shared_ptr<buffer_t> buffer)
     {
@@ -476,8 +579,13 @@ struct vertex_array_t
 
 struct rendertarget_t
 {
-    inline void alloc() {}
-    inline void dealloc() {}
+    inline void alloc()
+    {
+    }
+
+    inline void dealloc()
+    {
+    }
 
     inline void attach(
         render_targets::attachment,
@@ -500,8 +608,8 @@ struct rendertarget_t
     {
     }
 
-    void          resize(rect<i32> const& size, u32 = 0);
-    size_2d<i32>  size();
+    void         resize(rect<i32> const& size, u32 = 0);
+    size_2d<i32> size();
 
     /* Real GX work: stages the EFB copy-clear color (painted at swap time). */
     void clear(Vecf4 const& color, u32 i = 0);
@@ -518,8 +626,13 @@ struct rendertarget_t
 
 struct program_t
 {
-    inline void alloc() {}
-    inline void dealloc() {}
+    inline void alloc()
+    {
+    }
+
+    inline void dealloc()
+    {
+    }
 
     struct channel_t
     {
@@ -536,33 +649,37 @@ struct program_t
             alpha_bumpn = GX_ALPHA_BUMPN,
             color_null  = GX_COLORNULL,
         };
+
         enum source_t
         {
             src_reg    = GX_SRC_REG,
             src_vertex = GX_SRC_VTX,
         };
+
         enum diffuse_func_t
         {
             diffuse_none   = GX_DF_NONE,
             diffuse_signed = GX_DF_SIGNED,
             diffuse_clamp  = GX_DF_CLAMP,
         };
+
         enum attenuation_func_t
         {
             attenuate_specular  = GX_AF_SPEC,
             attenuate_spotlight = GX_AF_SPOT,
             attenuate_none      = GX_AF_NONE,
         };
-        output_t   channel{color0a0};
-        bool       lighting{false}; // GX_ENABLE/GX_DISABLE
-        source_t   ambient_src{src_reg};
-        source_t   diffuse_src{src_reg};
-        u8         light_mask{0x0};
+
+        output_t channel{color0a0};
+        bool     lighting{false}; // GX_ENABLE/GX_DISABLE
+        source_t ambient_src{src_reg};
+        source_t diffuse_src{src_reg};
+        u8       light_mask{0x0};
 
         diffuse_func_t     diffuse_function{diffuse_none};
         attenuation_func_t attenuation_function{attenuate_none};
-
     };
+
     std::vector<channel_t> channels;
 
     /* One TEV stage: GX_SetTevOrder + GX_SetTevOp. */
@@ -587,6 +704,7 @@ struct program_t
             stage14,
             stage15,
         };
+
         enum op_t
         {
             modulate = GX_MODULATE,
@@ -596,12 +714,15 @@ struct program_t
             pass     = GX_PASSCLR,
             /* Not a GX preset: multiply this stage's texture by the previous
              * stage's output (cprev * texc), for multi-texture passes such as
-             * diffuse * lightmap. Configured via explicit TEV combiner inputs. */
+             * diffuse * lightmap. Configured via explicit TEV combiner inputs.
+             */
             modulate_prev = 0xFF,
             /* As modulate_prev but with a 2x output scale -- Halo's
-             * double-biased-multiply detail blend (detail grey 0.5 = neutral). */
+             * double-biased-multiply detail blend (detail grey 0.5 = neutral).
+             */
             modulate_prev_2x = 0xFE,
         };
+
         enum texcoord_t
         {
             texcoord0 = GX_TEXCOORD0,
@@ -614,6 +735,7 @@ struct program_t
             texcoord7,
             texcoord_null = GX_TEXCOORDNULL,
         };
+
         enum texmap_t
         {
             texmap0 = GX_TEXMAP0,
@@ -631,8 +753,10 @@ struct program_t
         op_t                op{modulate};
         texcoord_t          texcoord{texcoord_null};
         texmap_t            texmap{texmap_null};
-        channel_t::output_t color{channel_t::color0a0}; // rasterised colour input
+        channel_t::output_t color{
+            channel_t::color0a0}; // rasterised colour input
     };
+
     std::vector<stage_t> stages;
 };
 
@@ -651,22 +775,29 @@ struct texture_binding_t
         bump0  = GX_TG_BUMP0,
         srtg   = GX_TG_SRTG,
     };
+
     enum gen_src_t // GXTexGenSrc (the input -- varies per texture)
     {
         src_position = GX_TG_POS,
         src_normal   = GX_TG_NRM,
         src_color0   = GX_TG_COLOR0,
         src_color1   = GX_TG_COLOR1,
-        src_tex0     = GX_TG_TEX0, src_tex1, src_tex2, src_tex3,
-        src_tex4, src_tex5, src_tex6, src_tex7,
+        src_tex0     = GX_TG_TEX0,
+        src_tex1,
+        src_tex2,
+        src_tex3,
+        src_tex4,
+        src_tex5,
+        src_tex6,
+        src_tex7,
     };
 
     std::shared_ptr<texture_t> texture;
-    texmap_t   texmap{program_t::stage_t::texmap0};
-    texcoord_t texcoord{program_t::stage_t::texcoord0};
-    gen_type_t gen_type{mtx2x4};
-    gen_src_t  gen_src{src_tex0};
-    u32        gen_mtx{GX_IDENTITY}; // texcoord matrix (raw GX matrix id)
+    texmap_t                   texmap{program_t::stage_t::texmap0};
+    texcoord_t                 texcoord{program_t::stage_t::texcoord0};
+    gen_type_t                 gen_type{mtx2x4};
+    gen_src_t                  gen_src{src_tex0};
+    u32 gen_mtx{GX_IDENTITY}; // texcoord matrix (raw GX matrix id)
 };
 
 /* --- Draw command --- */
@@ -675,8 +806,8 @@ struct draw_command
 {
     struct call_t
     {
-        bool              indexed{false};
-        bool              instanced{false};
+        bool               indexed{false};
+        bool               instanced{false};
         drawing::primitive mode{drawing::primitive::triangle};
     } call;
 
@@ -688,11 +819,13 @@ struct draw_command
             u32              offset{0};
             semantic::type_t type{semantic::type_t::u16};
         } elements;
+
         struct
         {
             u32 count{0};
             u32 offset{0};
         } arrays;
+
         struct
         {
             u32 count{0};
@@ -707,9 +840,9 @@ struct draw_command
     std::vector<texture_binding_t> textures;
 
     gsl::span<Matf4 const> instance_transforms{};
-    int uniforms{};
-    int buffers{};
-    int samplers{};
+    int                    uniforms{};
+    int                    buffers{};
+    int                    samplers{};
 };
 
 /* A recorded GX display list: the GX_Begin..vertices..GX_End command stream for
@@ -723,13 +856,21 @@ struct display_list_t
     u32   size{0}; /* bytes used (multiple of 32) */
 
     display_list_t() = default;
-    display_list_t(void* b, u32 s) : buffer(b), size(s) {}
+
+    display_list_t(void* b, u32 s)
+        : buffer(b)
+        , size(s)
+    {
+    }
+
     display_list_t(display_list_t&& o) noexcept
-        : buffer(o.buffer), size(o.size)
+        : buffer(o.buffer)
+        , size(o.size)
     {
         o.buffer = nullptr;
         o.size   = 0;
     }
+
     display_list_t& operator=(display_list_t&& o) noexcept
     {
         if(this != &o)
@@ -743,8 +884,10 @@ struct display_list_t
         }
         return *this;
     }
+
     display_list_t(display_list_t const&)            = delete;
     display_list_t& operator=(display_list_t const&) = delete;
+
     ~display_list_t()
     {
         if(buffer)
@@ -795,8 +938,7 @@ static_assert(Texture<texture_t>, "gexxo::texture_t");
 static_assert(Sampler<sampler_t>, "gexxo::sampler_t");
 static_assert(Query<query_t>, "gexxo::query_t");
 static_assert(VertexArray<vertex_array_t, buffer_t>, "gexxo::vertex_array_t");
-static_assert(
-    RenderTarget<rendertarget_t, texture_t>, "gexxo::rendertarget_t");
+static_assert(RenderTarget<rendertarget_t, texture_t>, "gexxo::rendertarget_t");
 static_assert(DrawCommand<draw_command>, "gexxo::draw_command");
 
 } // namespace gexxo

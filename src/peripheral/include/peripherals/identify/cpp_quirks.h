@@ -1,6 +1,5 @@
 #pragma once
 
-
 /* Some exception features don't work on Gekko */
 #if defined(COFFEE_GEKKO)
 #define COFFEE_NO_EXCEPTION_QUIET

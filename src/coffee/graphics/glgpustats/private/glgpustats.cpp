@@ -1,11 +1,11 @@
 #include <glgpustats/glgpustats.h>
 
 #include <coffee/core/debug/formatting.h>
-#include <glw/glw.h>
 #include <glw/extensions/AMD_performance_monitor.h>
 #include <glw/extensions/ARB_pipeline_statistics_query.h>
 #include <glw/extensions/ATI_meminfo.h>
 #include <glw/extensions/NVX_gpu_memory_info.h>
+#include <glw/glw.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/range.h>
 #include <peripherals/stl/string/split.h>
@@ -53,7 +53,8 @@ std::set<std::string> gl_extensions()
 #if GLEAM_MAX_VERSION >= 0x300
     if constexpr(gl::core::enabled)
     {
-        /* Core profiles reject glGetString(GL_EXTENSIONS); enumerate by index. */
+        /* Core profiles reject glGetString(GL_EXTENSIONS); enumerate by index.
+         */
         i32 count{0};
         glw::get_integerv(get_prop::num_extensions, semantic::SpanOne(count));
         for(auto i : stl_types::range<i32>(count))
@@ -74,7 +75,8 @@ namespace pv = gl::amd::performance_monitor::values;
 std::string amd_group_name(u32 group)
 {
     i32 length{0};
-    pm::get_perf_monitor_group_string(group, length, semantic::Span<char>(), noerr);
+    pm::get_perf_monitor_group_string(
+        group, length, semantic::Span<char>(), noerr);
     if(length <= 0)
         return std::to_string(group);
     std::string out(static_cast<size_t>(length), '\0');
@@ -93,8 +95,11 @@ std::string amd_counter_name(u32 group, u32 counter)
         return std::to_string(counter);
     std::string out(static_cast<size_t>(length), '\0');
     pm::get_perf_monitor_counter_string(
-        group, counter, length,
-        semantic::Span<char>(out.data(), out.size()), noerr);
+        group,
+        counter,
+        length,
+        semantic::Span<char>(out.data(), out.size()),
+        noerr);
     out.resize(static_cast<size_t>(length));
     return out;
 }
@@ -196,26 +201,32 @@ void GLGPUStatsProvider::nvx_poll()
     /* Per spec, DEDICATED_VIDMEM is the physical VRAM size and
      * CURRENT_AVAILABLE_VIDMEM is the currently-unused (free) portion of it, so
      * total VRAM = dedicated and used = dedicated - free. This matches the
-     * nvml provider's total/used semantics. NVX is whole-GPU, not per-process. */
-    i64 total_kib = dedicated > 0 ? dedicated : total;
-    i64 used_kib  = total_kib > available ? total_kib - available : 0;
+     * nvml provider's total/used semantics. NVX is whole-GPU, not per-process.
+     */
+    i64 total_kib        = dedicated > 0 ? dedicated : total;
+    i64 used_kib         = total_kib > available ? total_kib - available : 0;
     m_nvx_total_bytes    = kib_to_bytes_i64(total_kib);
     m_nvx_resident_bytes = kib_to_bytes_i64(used_kib);
 
     /* Raw spec values only; no derived stats. */
     m_numeric.emplace(
-        "GPU memory (GL)", reading_t{kib_to_bytes_i64(dedicated), 0, "Total (dedicated)"});
+        "GPU memory (GL)",
+        reading_t{kib_to_bytes_i64(dedicated), 0, "Total (dedicated)"});
     m_numeric.emplace(
         "GPU memory (GL)", reading_t{kib_to_bytes_i64(total), 1, "Total"});
     m_numeric.emplace(
-        "GPU memory (GL)", reading_t{kib_to_bytes_i64(available), 2, "Current free"});
+        "GPU memory (GL)",
+        reading_t{kib_to_bytes_i64(available), 2, "Current free"});
     m_numeric.emplace(
-        "GPU memory (GL)", reading_t{kib_to_bytes_i64(evicted), 3, "Evicted memory"});
-    m_numeric.emplace("GPU eviction count", reading_t{static_cast<i64>(evictions), false});
+        "GPU memory (GL)",
+        reading_t{kib_to_bytes_i64(evicted), 3, "Evicted memory"});
+    m_numeric.emplace(
+        "GPU eviction count", reading_t{static_cast<i64>(evictions), false});
 #endif
 }
 
-/* ---- GL_ATI_meminfo ------------------------------------------------------- */
+/* ---- GL_ATI_meminfo -------------------------------------------------------
+ */
 
 void GLGPUStatsProvider::ati_poll()
 {
@@ -226,16 +237,19 @@ void GLGPUStatsProvider::ati_poll()
      * total-free per pool (free-only; ATI_meminfo exposes no totals). */
     auto pool_free_bytes = [](u32 pname) -> i64 {
         std::array<i32, 4> v{};
-        glw::get_integerv(static_cast<get_prop>(pname), semantic::Span<i32>(v), noerr);
+        glw::get_integerv(
+            static_cast<get_prop>(pname), semantic::Span<i32>(v), noerr);
         return v[0] < 0 ? 0 : (v[0] * 1024u);
     };
 
     m_numeric.emplace(
         "GPU VBO free memory", reading_t{pool_free_bytes(am::vbo_free_memory)});
     m_numeric.emplace(
-        "GPU texture free memory", reading_t{pool_free_bytes(am::texture_free_memory)});
+        "GPU texture free memory",
+        reading_t{pool_free_bytes(am::texture_free_memory)});
     m_numeric.emplace(
-        "GPU renderbuffer free memory", reading_t{pool_free_bytes(am::renderbuffer_free_memory)});
+        "GPU renderbuffer free memory",
+        reading_t{pool_free_bytes(am::renderbuffer_free_memory)});
 #endif
 }
 
@@ -245,6 +259,7 @@ void GLGPUStatsProvider::arb_setup()
 {
 #ifdef GL_ARB_pipeline_statistics_query
     namespace arb = gl::arb::pipeline_statistics_query::values;
+
     struct
     {
         u32         target;
@@ -376,8 +391,11 @@ void GLGPUStatsProvider::amd_setup()
             continue;
         std::vector<u32> counters(static_cast<size_t>(num_counters));
         pm::get_perf_monitor_counters(
-            group, num_counters, max_active,
-            semantic::Span<u32>(counters.data(), counters.size()), noerr);
+            group,
+            num_counters,
+            max_active,
+            semantic::Span<u32>(counters.data(), counters.size()),
+            noerr);
         counters.resize(static_cast<size_t>(num_counters));
 
         /* A group only allows max_active counters enabled simultaneously. */
@@ -393,20 +411,29 @@ void GLGPUStatsProvider::amd_setup()
             u32 counter = counters[i];
             u32 type{0};
             pm::get_perf_monitor_counter_info(
-                group, counter, pv::counter_type, semantic::SpanOne(type), noerr);
-            m_amd_counters.push_back(amd_counter_t{
-                .group         = group,
-                .counter       = counter,
-                .type          = type,
-                .is_percentage = type == pv::percentage,
-                .name = group_name + " / " + amd_counter_name(group, counter),
-            });
+                group,
+                counter,
+                pv::counter_type,
+                semantic::SpanOne(type),
+                noerr);
+            m_amd_counters.push_back(
+                amd_counter_t{
+                    .group         = group,
+                    .counter       = counter,
+                    .type          = type,
+                    .is_percentage = type == pv::percentage,
+                    .name =
+                        group_name + " / " + amd_counter_name(group, counter),
+                });
             selected.push_back(counter);
         }
         if(!selected.empty())
             pm::select_perf_monitor_counters(
-                m_amd_monitor, true, group,
-                semantic::Span<u32>(selected.data(), selected.size()), noerr);
+                m_amd_monitor,
+                true,
+                group,
+                semantic::Span<u32>(selected.data(), selected.size()),
+                noerr);
     }
 #endif
 }
@@ -444,22 +471,34 @@ bool GLGPUStatsProvider::amd_collect()
     i32 written{0};
     u32 available{0};
     pm::get_perf_monitor_counter_data(
-        m_amd_monitor, pv::perfmon_result_available, sizeof(u32),
-        semantic::SpanOne(available), written, noerr);
+        m_amd_monitor,
+        pv::perfmon_result_available,
+        sizeof(u32),
+        semantic::SpanOne(available),
+        written,
+        noerr);
     if(!available)
         return false;
 
     u32 result_bytes{0};
     pm::get_perf_monitor_counter_data(
-        m_amd_monitor, pv::perfmon_result_size, sizeof(u32),
-        semantic::SpanOne(result_bytes), written, noerr);
+        m_amd_monitor,
+        pv::perfmon_result_size,
+        sizeof(u32),
+        semantic::SpanOne(result_bytes),
+        written,
+        noerr);
     if(result_bytes < sizeof(u32) * 3)
         return true; // finished, nothing usable
 
     std::vector<u32> result(result_bytes / sizeof(u32));
     pm::get_perf_monitor_counter_data(
-        m_amd_monitor, pv::perfmon_result, static_cast<i32>(result_bytes),
-        semantic::Span<u32>(result.data(), result.size()), written, noerr);
+        m_amd_monitor,
+        pv::perfmon_result,
+        static_cast<i32>(result_bytes),
+        semantic::Span<u32>(result.data(), result.size()),
+        written,
+        noerr);
 
     size_t words = written > 0 ? static_cast<size_t>(written) / sizeof(u32)
                                : result.size();
@@ -482,16 +521,14 @@ bool GLGPUStatsProvider::amd_collect()
         switch(def->type)
         {
         case gl_counter_float:
-        case pv::percentage:
-        {
+        case pv::percentage: {
             float as_float;
             std::memcpy(&as_float, &result[i], sizeof(as_float));
             value = as_float;
             i += 1;
             break;
         }
-        case pv::unsigned_int64:
-        {
+        case pv::unsigned_int64: {
             if(i + 1 >= words)
                 return true;
             u64 as_u64;
@@ -574,7 +611,7 @@ GLGPUStatsProvider::stats_description()
     std::map<std::string_view, stats_desc_t> out;
     for(auto const& stat : m_numeric)
         out[stat.first] = stats_desc_t{
-            .type          = MetricVariant::Value,
+            .type = MetricVariant::Value,
         };
     return out;
 }

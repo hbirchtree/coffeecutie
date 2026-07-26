@@ -22,8 +22,8 @@
 #include <glw/extensions/ARB_shader_draw_parameters.h>
 #include <glw/extensions/EXT_color_buffer_float.h>
 #include <glw/extensions/EXT_color_buffer_half_float.h>
-#include <glw/extensions/EXT_draw_elements_base_vertex.h>
 #include <glw/extensions/EXT_discard_framebuffer.h>
+#include <glw/extensions/EXT_draw_elements_base_vertex.h>
 #include <glw/extensions/EXT_multi_draw_arrays.h>
 #include <glw/extensions/KHR_debug.h>
 #include <glw/extensions/KHR_parallel_shader_compile.h>
@@ -513,10 +513,10 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.texture.swizzle = false;
 
         // Use version requirement so we can emulate GL ES 2.0
-        out.buffer.mapping                  = api_version >= 0x300; /* Emulated, but still */
-        out.buffer.pbo                      = api_version >= 0x300;
-        out.buffer.ubo                      = api_version >= 0x300;
-        out.draw.instancing                 = api_version >= 0x300;
+        out.buffer.mapping  = api_version >= 0x300; /* Emulated, but still */
+        out.buffer.pbo      = api_version >= 0x300;
+        out.buffer.ubo      = api_version >= 0x300;
+        out.draw.instancing = api_version >= 0x300;
         out.rendertarget.clearbuffer        = api_version >= 0x300;
         out.rendertarget.color_buffer_10bit = api_version >= 0x300;
         out.rendertarget.readdraw_buffers   = api_version >= 0x300;
@@ -596,12 +596,12 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
 #endif
         out.buffer.nv.pbo =
             supports_extension(extensions, nv::pixel_buffer_object::name);
-        out.draw.ext.draw_elements_base_vertex =
-            supports_extension(extensions, ext::draw_elements_base_vertex::name);
+        out.draw.ext.draw_elements_base_vertex = supports_extension(
+            extensions, ext::draw_elements_base_vertex::name);
         out.draw.ext.multi_draw_arrays =
             supports_extension(extensions, ext::multi_draw_arrays::name);
-        out.draw.oes.draw_elements_base_vertex =
-            supports_extension(extensions, oes::draw_elements_base_vertex::name);
+        out.draw.oes.draw_elements_base_vertex = supports_extension(
+            extensions, oes::draw_elements_base_vertex::name);
         out.query.disjoint_timer_query =
             supports_extension(extensions, ext::disjoint_timer_query::name);
         out.texture.oes.texture_3d =
@@ -1123,8 +1123,8 @@ optional<error> api::load(load_options_t options)
     //    if(m_features.draw.shader_base_instance)
     //        m_workarounds.draw.emulated_base_instance = false;
     if(m_features.draw.vertex_offset ||
-            m_features.draw.ext.draw_elements_base_vertex ||
-            m_features.draw.oes.draw_elements_base_vertex)
+       m_features.draw.ext.draw_elements_base_vertex ||
+       m_features.draw.oes.draw_elements_base_vertex)
         m_workarounds.draw.emulated_vertex_offset = false;
     if(m_features.draw.shader_base_instance)
         m_workarounds.draw.emulated_base_instance = false;
@@ -1140,10 +1140,11 @@ optional<error> api::load(load_options_t options)
             if(renderer.starts_with("Adreno (TM) 3"))
                 m_workarounds.bugs.adreno_3xx = true;
             m_workarounds.bugs.adreno = true;
-            m_features.draw.indirect = false;
+            m_features.draw.indirect  = false;
             // freedreno for some reason on Arduino Q is extremely slow
             m_workarounds.bugs.freedreno = vendor == "freedreno";
-            m_workarounds.draw.slow_state_changes = m_workarounds.bugs.freedreno;
+            m_workarounds.draw.slow_state_changes =
+                m_workarounds.bugs.freedreno;
             /* Qualcomm may say that the limit for UBOs is 64k, but they prefer
              * if it's 8k */
             m_limits.buffers.ubo_recommended_size = 8192;
@@ -1260,9 +1261,10 @@ optional<error> api::load(load_options_t options)
 
 #if defined(GL_KHR_parallel_shader_compile)
     if(!compile_info::platform::is_emscripten &&
-        m_features.program.khr.parallel_shader_compile)
+       m_features.program.khr.parallel_shader_compile)
     {
-        gl::khr::parallel_shader_compile::max_shader_compiler_threads(0xFFFFFFFF);
+        gl::khr::parallel_shader_compile::max_shader_compiler_threads(
+            0xFFFFFFFF);
     }
 #endif
 

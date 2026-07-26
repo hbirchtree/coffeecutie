@@ -21,24 +21,28 @@ inline void glm_to_mtx(Matf4 const& m, Mtx out)
         for(int c = 0; c < 4; c++)
             out[r][c] = g[c * 4 + r];
 }
+
 inline u32 type_size(semantic::type_t t)
 {
     switch(t)
     {
     case semantic::type_t::u8:
-    case semantic::type_t::i8: return 1;
+    case semantic::type_t::i8:
+        return 1;
     case semantic::type_t::u16:
-    case semantic::type_t::i16: return 2;
-    default: return 4; /* u32/i32/f32 */
+    case semantic::type_t::i16:
+        return 2;
+    default:
+        return 4; /* u32/i32/f32 */
     }
 }
 
 /* Rough hash of the parts of a draw that determine the recorded GX command
  * stream: the vertex array (its attribute layout + bound buffers, by identity),
  * the element buffer, and the draw counts/offsets/mode. The per-instance matrix
- * and render state are NOT included -- they are applied outside the list. Buffer
- * identity (pointer + size) stands in for content: rebinding or resizing a
- * buffer changes the key; mutating a buffer in place without changing its
+ * and render state are NOT included -- they are applied outside the list.
+ * Buffer identity (pointer + size) stands in for content: rebinding or resizing
+ * a buffer changes the key; mutating a buffer in place without changing its
  * pointer would not (acceptable for the static geometry this caches). */
 inline u64 hash_draw(draw_command const& cmd)
 {
@@ -88,21 +92,27 @@ inline u8 prim_to_gx(drawing::primitive prim)
 {
     switch(prim)
     {
-    case drawing::primitive::point: return GX_POINTS;
+    case drawing::primitive::point:
+        return GX_POINTS;
 
-    case drawing::primitive::line: return GX_LINES;
-    case drawing::primitive::line_strip: return GX_LINESTRIP;
+    case drawing::primitive::line:
+        return GX_LINES;
+    case drawing::primitive::line_strip:
+        return GX_LINESTRIP;
 
-    case drawing::primitive::triangle_fan: return GX_TRIANGLEFAN;
-    case drawing::primitive::triangle_strip: return GX_TRIANGLESTRIP;
-    case drawing::primitive::triangle: return GX_TRIANGLES;
-    default: Throw(std::out_of_range("invalid primitive mode for GX"));
+    case drawing::primitive::triangle_fan:
+        return GX_TRIANGLEFAN;
+    case drawing::primitive::triangle_strip:
+        return GX_TRIANGLESTRIP;
+    case drawing::primitive::triangle:
+        return GX_TRIANGLES;
+    default:
+        Throw(std::out_of_range("invalid primitive mode for GX"));
     }
 }
 
 inline void iterate_indices(
-    draw_command::data_t const& data,
-    vertex_array_t const& array)
+    draw_command::data_t const& data, vertex_array_t const& array)
 {
     if(!array.m_element_buffer)
         Throw(std::out_of_range("indexed draw: no element buffer bound"));
@@ -115,10 +125,10 @@ inline void iterate_indices(
         for(u16 idx : indices)
             for(vertex_attribute const& attr : array.m_attributes)
                 ::wgPipe->U16 = idx;
-    } else {
+    } else
+    {
         gsl::span<u8> indices = array.m_element_buffer->map<u8>(
-            data.elements.offset,
-            data.elements.count);
+            data.elements.offset, data.elements.count);
         for(u8 idx : indices)
             for(vertex_attribute const& attr : array.m_attributes)
                 ::wgPipe->U8 = idx;
@@ -126,8 +136,7 @@ inline void iterate_indices(
 }
 
 inline void iterate_arrays(
-    draw_command::data_t const& data,
-    vertex_array_t const& array)
+    draw_command::data_t const& data, vertex_array_t const& array)
 {
     using type_t = semantic::type_t;
 
@@ -137,20 +146,21 @@ inline void iterate_arrays(
         buffers[idx] = buf->map<libc_types::u8 const>().data();
     }
     auto vtx_write = [&buffers]<typename T, typename WG>(
-        vertex_attribute const& attr, size_t vtxoffset, WG& out)
-    {
+                         vertex_attribute const& attr,
+                         size_t                  vtxoffset,
+                         WG&                     out) {
         auto ptr = reinterpret_cast<T const*>(
-            buffers[attr.buffer.id] +
-            attr.buffer.offset +
-            attr.value.offset +
+            buffers[attr.buffer.id] + attr.buffer.offset + attr.value.offset +
             // Vertex striding happens here
             vtxoffset * attr.value.stride);
-        // Each store to the write-gather pipe (wgPipe) pushes one component into
-        // the GP FIFO, in the attribute's configured component count.
+        // Each store to the write-gather pipe (wgPipe) pushes one component
+        // into the GP FIFO, in the attribute's configured component count.
         for(size_t i = 0; i < attr.value.count; i++)
             out = ptr[i];
     };
-    for(size_t i = data.arrays.offset; i<data.arrays.offset + data.arrays.count; i++)
+    for(size_t i = data.arrays.offset;
+        i < data.arrays.offset + data.arrays.count;
+        i++)
     {
         for(vertex_attribute const& attr : array.m_attributes)
         {
@@ -160,42 +170,34 @@ inline void iterate_arrays(
             case vertex_attribute::color1:
                 switch(attr.value.type)
                 {
-                case semantic::type_t::f32:
-                {
-                    f32 const* ptr = reinterpret_cast<f32 const*>(buffers[attr.buffer.id] +
-                        attr.buffer.offset +
-                        attr.value.offset +
-                        i * attr.value.stride);
+                case semantic::type_t::f32: {
+                    f32 const* ptr = reinterpret_cast<f32 const*>(
+                        buffers[attr.buffer.id] + attr.buffer.offset +
+                        attr.value.offset + i * attr.value.stride);
                     // f32 color is not really supported
-                    for(size_t i=0; i<attr.value.count; i++)
+                    for(size_t i = 0; i < attr.value.count; i++)
                         ::wgPipe->U8 = u8(ptr[i] * 255.f);
                     break;
                 }
-                case semantic::type_t::u8:
-                {
+                case semantic::type_t::u8: {
                     u8 const* ptr = buffers[attr.buffer.id] +
-                        attr.buffer.offset +
-                        attr.value.offset +
-                        i * attr.value.stride;
-                    for(size_t i=0; i<attr.value.count; i++)
+                                    attr.buffer.offset + attr.value.offset +
+                                    i * attr.value.stride;
+                    for(size_t i = 0; i < attr.value.count; i++)
                         ::wgPipe->U8 = ptr[i];
                     break;
                 }
-                case semantic::type_t::u16:
-                {
-                    u16 const* ptr = reinterpret_cast<u16 const*>(buffers[attr.buffer.id] +
-                        attr.buffer.offset +
-                        attr.value.offset +
-                        i * attr.value.stride);
+                case semantic::type_t::u16: {
+                    u16 const* ptr = reinterpret_cast<u16 const*>(
+                        buffers[attr.buffer.id] + attr.buffer.offset +
+                        attr.value.offset + i * attr.value.stride);
                     ::wgPipe->U16 = ptr[0];
                     break;
                 }
-                case semantic::type_t::u32:
-                {
-                    u32 const* ptr = reinterpret_cast<u32 const*>(buffers[attr.buffer.id] +
-                        attr.buffer.offset +
-                        attr.value.offset +
-                        i * attr.value.stride);
+                case semantic::type_t::u32: {
+                    u32 const* ptr = reinterpret_cast<u32 const*>(
+                        buffers[attr.buffer.id] + attr.buffer.offset +
+                        attr.value.offset + i * attr.value.stride);
                     ::wgPipe->U32 = ptr[0];
                     break;
                 }
@@ -207,19 +209,24 @@ inline void iterate_arrays(
                 switch(attr.value.type)
                 {
                 case type_t::u8:
-                    vtx_write.template operator()<libc_types::u8>(attr, i, ::wgPipe->U8);
+                    vtx_write.template operator()<libc_types::u8>(
+                        attr, i, ::wgPipe->U8);
                     break;
                 case type_t::i8:
-                    vtx_write.template operator()<libc_types::i8>(attr, i, ::wgPipe->S8);
+                    vtx_write.template operator()<libc_types::i8>(
+                        attr, i, ::wgPipe->S8);
                     break;
                 case type_t::u16:
-                    vtx_write.template operator()<libc_types::u16>(attr, i, ::wgPipe->U16);
+                    vtx_write.template operator()<libc_types::u16>(
+                        attr, i, ::wgPipe->U16);
                     break;
                 case type_t::i16:
-                    vtx_write.template operator()<libc_types::i16>(attr, i, ::wgPipe->S16);
+                    vtx_write.template operator()<libc_types::i16>(
+                        attr, i, ::wgPipe->S16);
                     break;
                 case type_t::f32:
-                    vtx_write.template operator()<libc_types::f32>(attr, i, ::wgPipe->F32);
+                    vtx_write.template operator()<libc_types::f32>(
+                        attr, i, ::wgPipe->F32);
                     break;
                 default:
                     break;
@@ -233,6 +240,7 @@ inline void apply_state(cull_state const& state)
 {
     GX_SetCullMode(state.front_face ? GX_CULL_FRONT : GX_CULL_BACK);
 }
+
 inline void apply_state(blend_state const& state)
 {
     if(state.additive)
@@ -240,8 +248,10 @@ inline void apply_state(blend_state const& state)
     else if(state.multiply)
         GX_SetBlendMode(GX_BM_BLEND, GX_BL_DSTCLR, GX_BL_INVSRCALPHA, GX_NONE);
     else
-        GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_NONE);
+        GX_SetBlendMode(
+            GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_NONE);
 }
+
 inline void apply_state(view_state const& state)
 {
     // GX_SetViewport(
@@ -258,18 +268,20 @@ inline void undo_state(cull_state const& state)
 {
     GX_SetCullMode(GX_CULL_BACK);
 }
+
 inline void undo_state(view_state const& state)
 {
 }
+
 inline void undo_state(blend_state const& state)
 {
     GX_SetBlendMode(GX_BM_NONE, GX_NONE, GX_NONE, GX_NONE);
 }
-}
+} // namespace detail
 
 template<typename... StateList>
 inline std::optional<std::tuple<error, std::string_view>> api::submit(
-        draw_command const& cmd, StateList&&... state_changes)
+    draw_command const& cmd, StateList&&... state_changes)
 {
     if(!cmd.vertices || cmd.vertices->m_attributes.empty())
         return std::nullopt;
@@ -306,7 +318,8 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
         GX_SetChanCtrl(
             channel.channel,
             channel.lighting ? GX_ENABLE : GX_DISABLE,
-            channel.ambient_src, channel.diffuse_src,
+            channel.ambient_src,
+            channel.diffuse_src,
             channel.light_mask,
             channel.diffuse_function,
             channel.attenuation_function);
@@ -329,7 +342,8 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
            s.op == program_t::stage_t::modulate_prev_2x)
         {
             // out = (cprev * texc) [* 2 for the 2x variant] (multi-texture
-            // modulate, e.g. diffuse*lightmap, or detail double-biased-multiply)
+            // modulate, e.g. diffuse*lightmap, or detail
+            // double-biased-multiply)
             u8 const scale = s.op == program_t::stage_t::modulate_prev_2x
                                  ? GX_CS_SCALE_2
                                  : GX_CS_SCALE_1;
@@ -345,22 +359,26 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
             GX_SetTevOp(s.stage, s.op);
     }
 
-    // Default to alpha blending; a blend_state in the state changes overrides it.
-    GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
+    // Default to alpha blending; a blend_state in the state changes overrides
+    // it.
+    GX_SetBlendMode(
+        GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
 
     /* Describe + format ONLY the configured attributes. Iterating the full
      * m_attr_desc/m_attr_fmt arrays would emit zero-filled entries (attr 0 =
-     * GX_VA_PNMTXIDX) and GX_SetVtxAttrFmtv would run past the unterminated list,
-     * making the GP expect vertex bytes the draw never emits -> FIFO stall. */
+     * GX_VA_PNMTXIDX) and GX_SetVtxAttrFmtv would run past the unterminated
+     * list, making the GP expect vertex bytes the draw never emits -> FIFO
+     * stall. */
     GX_ClearVtxDesc();
     for(vertex_attribute const& attr : vao.m_attributes)
     {
         u8 const gxattr = detail::role_to_attr(attr);
-        GX_SetVtxDesc(gxattr, cmd.call.indexed
-            ? (cmd.data.elements.type == semantic::type_t::u16
-                ? GX_INDEX16
-                : GX_INDEX8)
-            : GX_DIRECT);
+        GX_SetVtxDesc(
+            gxattr,
+            cmd.call.indexed
+                ? (cmd.data.elements.type == semantic::type_t::u16 ? GX_INDEX16
+                                                                   : GX_INDEX8)
+                : GX_DIRECT);
         GX_SetVtxAttrFmt(
             GX_VTXFMT0,
             gxattr,
@@ -371,11 +389,14 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
         {
             auto buffer = vao.m_vertex_buffers.find(attr.buffer.id);
             if(buffer == vao.m_vertex_buffers.end() || !buffer->second)
-                Throw(std::out_of_range("indexed draw: vertex buffer not bound"));
+                Throw(
+                    std::out_of_range("indexed draw: vertex buffer not bound"));
             // The array base must point at THIS attribute's first element, i.e.
-            // include its in-vertex offset; the GP then reads base + index*stride.
-            auto slice = buffer->second->slice(
-                attr.buffer.offset + attr.value.offset).map();
+            // include its in-vertex offset; the GP then reads base +
+            // index*stride.
+            auto slice =
+                buffer->second->slice(attr.buffer.offset + attr.value.offset)
+                    .map();
             GX_SetArray(gxattr, slice.data(), attr.value.stride);
         }
     }
@@ -409,8 +430,7 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
         void* buf = memalign(32, cap);
         if(!buf)
             return std::make_tuple(
-                error::failed,
-                std::string_view{"display list alloc failed"});
+                error::failed, std::string_view{"display list alloc failed"});
 
         GX_BeginDispList(buf, cap);
         GX_Begin(detail::prim_to_gx(cmd.call.mode), GX_VTXFMT0, count);
@@ -422,7 +442,8 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
         u32 const used = GX_EndDispList();
         DCFlushRange(buf, used); /* make the recorded list visible to the GP */
 
-        dl_it = m_display_lists.emplace(dl_key, display_list_t{buf, used}).first;
+        dl_it =
+            m_display_lists.emplace(dl_key, display_list_t{buf, used}).first;
     }
     display_list_t const& dl = dl_it->second;
 
@@ -440,7 +461,8 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
         if(has_transform)
         {
             Mtx mv;
-            detail::glm_to_mtx(xforms[inst], mv); /* xforms are modelview already */
+            detail::glm_to_mtx(
+                xforms[inst], mv); /* xforms are modelview already */
             GX_LoadPosMtxImm(mv, GX_PNMTX0);
         }
 
@@ -456,4 +478,4 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
     return std::nullopt;
 }
 
-}
+} // namespace gexxo

@@ -46,7 +46,7 @@ struct PerformanceMonitor
      * inline on the calling thread instead of the worker queue. The dummy plug
      * exits via quick_exit/window close right after its last screenshot, which
      * would otherwise abandon the async worker before it flushes to disk. */
-    bool               m_synchronous_screenshots{false};
+    bool m_synchronous_screenshots{false};
 };
 
 } // namespace comp_app

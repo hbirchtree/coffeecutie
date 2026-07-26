@@ -11,8 +11,8 @@ namespace detail {
 std::string_view draw_error_to_string(error e);
 
 std::optional<error> evaluate_draw_state(
-    api_limits const& limits,
-    const workarounds& workarounds,
+    api_limits const&   limits,
+    const workarounds&  workarounds,
     draw_command const& command);
 
 inline constexpr auto unsupported_drawcall()
@@ -94,7 +94,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
     auto        render_target = command.render_target.expired()
                                     ? default_rendertarget()
                                     : command.render_target.lock();
-    auto vao                  = command.vertices.lock();
+    auto        vao           = command.vertices.lock();
 
     if(data.empty())
         return std::nullopt;
@@ -119,7 +119,8 @@ inline optional<tuple<error, std::string_view>> api::submit(
             debug().message(error, group::debug_severity::high);
             usage().draw.failed_draws++;
             usage().draw.failed_async_compiles++;
-            Coffee::cWarning("Program link error:\n{}", std::get<0>(res.error()));
+            Coffee::cWarning(
+                "Program link error:\n{}", std::get<0>(res.error()));
             return std::make_tuple(
                 error::async_shader_compile_failed, "program linking failed");
         } else if(!res.value())
@@ -133,15 +134,12 @@ inline optional<tuple<error, std::string_view>> api::submit(
 
     [[maybe_unused]] auto _ = debug().scope();
 
-    const bool change_render_target =
-        !m_workarounds.draw.slow_state_changes ||
-        render_target.get() != draw_cache.last_fb;
-    const bool change_program =
-        !m_workarounds.draw.slow_state_changes ||
-        program.get() != draw_cache.last_program;
-    const bool change_vao =
-        !m_workarounds.draw.slow_state_changes ||
-        vao.get() != draw_cache.last_vao;
+    const bool change_render_target = !m_workarounds.draw.slow_state_changes ||
+                                      render_target.get() != draw_cache.last_fb;
+    const bool change_program = !m_workarounds.draw.slow_state_changes ||
+                                program.get() != draw_cache.last_program;
+    const bool change_vao = !m_workarounds.draw.slow_state_changes ||
+                            vao.get() != draw_cache.last_vao;
 
     if(change_render_target)
     {
@@ -175,12 +173,13 @@ inline optional<tuple<error, std::string_view>> api::submit(
         return result;
     }() && m_workarounds.draw.advance_ubos_by_baseinstance;
     const bool uses_vertex_offset =
-        call.indexed && stl_types::any_of(data, [](auto const& d) {
-            return d.elements.vertex_offset > 0;
-        }) || draw_cache.vertex_offset_changed;
+        call.indexed &&
+            stl_types::any_of(
+                data,
+                [](auto const& d) { return d.elements.vertex_offset > 0; }) ||
+        draw_cache.vertex_offset_changed;
     draw_cache.vertex_offset_changed =
-        uses_vertex_offset &&
-        m_workarounds.draw.slow_state_changes;
+        uses_vertex_offset && m_workarounds.draw.slow_state_changes;
     if(m_api_type == api_type_t::es && uses_baseinstance &&
        !m_workarounds.draw.emulated_base_instance)
     {
@@ -200,7 +199,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
     if(m_api_type == api_type_t::es && m_api_version <= 0x300 &&
        uses_vertex_offset && !m_workarounds.draw.emulated_vertex_offset &&
        !(m_features.draw.oes.draw_elements_base_vertex ||
-           m_features.draw.ext.draw_elements_base_vertex))
+         m_features.draw.ext.draw_elements_base_vertex))
     {
         usage().draw.failed_draws++;
         return std::make_tuple(
@@ -244,7 +243,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
         cmd::bind_vertex_array(vao->m_handle);
     } else
 #endif
-    if(change_vao)
+        if(change_vao)
     {
         using buffer_target = group::buffer_target_arb;
 
@@ -301,7 +300,8 @@ inline optional<tuple<error, std::string_view>> api::submit(
     if constexpr(compile_info::debug_mode)
     {
         auto log = detail::program_log(program->m_handle);
-        if(auto error = detail::evaluate_draw_state(m_limits, m_workarounds, command);
+        if(auto error =
+               detail::evaluate_draw_state(m_limits, m_workarounds, command);
            error.has_value())
         {
             usage().draw.failed_draws++;
@@ -483,7 +483,8 @@ inline optional<tuple<error, std::string_view>> api::submit(
             apply_ubo_offset(d.instances.offset, d.instances.count);
             d = apply_base_instance(d);
             apply_vertex_offset(call.indexed ? d.elements.vertex_offset : 0);
-            detail::direct_draw(call, d, bookkeeping, m_workarounds, m_features);
+            detail::direct_draw(
+                call, d, bookkeeping, m_workarounds, m_features);
         }
     } else
 #endif
@@ -521,7 +522,9 @@ inline optional<tuple<error, std::string_view>> api::submit(
                         group::buffer_target_arb::array_buffer,
                         vao->m_buffers.at(attrib.buffer.id).lock()->m_handle);
                     detail::vertex_setup_attribute(
-                        m_features.vertex, attrib, d.elements.vertex_offset * attrib.value.stride);
+                        m_features.vertex,
+                        attrib,
+                        d.elements.vertex_offset * attrib.value.stride);
                 }
                 draw_cache.last_vertex_offset = d.elements.vertex_offset;
             }
@@ -548,7 +551,8 @@ inline optional<tuple<error, std::string_view>> api::submit(
         m_usage.draw.instances = m_usage.draw.draws;
     }
 
-    if(!m_features.vertex.vertex_arrays && !m_workarounds.draw.slow_state_changes)
+    if(!m_features.vertex.vertex_arrays &&
+       !m_workarounds.draw.slow_state_changes)
         for(auto const& attrib : vao->m_attributes)
             cmd::disable_vertex_attrib_array(attrib.index);
 
@@ -556,7 +560,8 @@ inline optional<tuple<error, std::string_view>> api::submit(
         cmd::bind_buffer(group::buffer_target_arb::element_array_buffer, 0);
 
 #if GLEAM_MAX_VERSION_ES != 0x200
-    if(m_features.vertex.vertex_arrays && !m_workarounds.draw.slow_state_changes)
+    if(m_features.vertex.vertex_arrays &&
+       !m_workarounds.draw.slow_state_changes)
         cmd::bind_vertex_array(0);
 #endif
 
