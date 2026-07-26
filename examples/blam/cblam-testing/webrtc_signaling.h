@@ -10,6 +10,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace webrtc_signaling {
@@ -132,6 +133,7 @@ public:
     bool                Ready() const;
     bool                Failed() const;
     HSteamNetConnection Connection() const { return m_hConn; }
+    std::string const&  SessionId() const { return m_sessionId; }
 
     /*! Valid only once Ready(); each may only be taken once. */
     std::shared_ptr<rtc::PeerConnection> TakePeerConnection();
@@ -217,6 +219,9 @@ public:
     bool SendOverServerSignal(std::string const& sessionId, std::string const& data);
     void RemovePendingAccept(GatewayAcceptSignaling* accept);
 
+    void NotifyGNSConnected(HSteamNetConnection hConn);
+    void ForgetConnection(HSteamNetConnection hConn);
+
 private:
     void onWebSocketMessage(std::string const& text);
 
@@ -235,6 +240,7 @@ private:
      * only needed for the "brand new connection" case. */
     std::string                          m_pendingSessionId;
     std::vector<GatewayAcceptSignaling*> m_pendingAccepts;
+    std::unordered_map<HSteamNetConnection, std::string> m_sessionIdByConnection;
 };
 
 } // namespace webrtc_signaling

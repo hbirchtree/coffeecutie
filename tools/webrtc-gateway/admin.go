@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -110,16 +111,7 @@ func (a *app) ProgramHandler(s ssh.Session) *tea.Program {
 	model.app = a
 	model.id = s.User()
 
-	settings := model.app.data.settings
-	model.serverSettings.SetRows([]table.Row{
-		{"Registration TTL", settings.registrationTTL.String()},
-		{"Challenge timeout", settings.challengeTimeout.String()},
-		{"Relay punch timeout", settings.relayPunchTimeout.String()},
-		{"Punch port", fmt.Sprintf("%d", settings.punchPortToAdvertise)},
-		// {"WebSocket address", settings.websocketAddr.String()},
-		// {"DataChannel address", settings.datachannelAddr.String()},
-		{"Challenge address", settings.challengeAddr.String()},
-	})
+	model.serverSettings.SetRows(serverConfigItems(model.app.data))
 	model.serverList.SetItems(serverListItems(model.app.data.workingSet))
 
 	p := tea.NewProgram(model, bubbletea.MakeOptions(s)...)
@@ -128,20 +120,53 @@ func (a *app) ProgramHandler(s ssh.Session) *tea.Program {
 	return p
 }
 
-// serverListItems snapshots the registry into list items for serverList.
+// serverListItems snapshots the registry into list items for serverList,
+// sorted by ID -- map iteration order is randomized, and this is rebuilt
+// every tick, so without sorting the list would reshuffle each refresh.
 func serverListItems(ws *serverWorkingSet) []list.Item {
 	items := make([]list.Item, 0)
 	ws.servers.RLock()
-	for id := range ws.servers.registry {
-		items = append(items, serverItem{id: id, addr: "0.0.0.0:-1"})
+	for id, server := range ws.servers.registry {
+		addr := "<none>"
+		if server.dest != nil {
+			addr = fmt.Sprintf("%s:%d", server.dest.IP.String(), server.dest.Port)
+		}
+		items = append(items, serverItem{
+			id: id,
+			addr: addr,
+		})
 	}
 	ws.servers.RUnlock()
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].(serverItem).id < items[j].(serverItem).id
+	})
 	return items
+}
+
+func serverConfigItems(model *adminInterfaceModel) []table.Row {
+	settings := model.settings
+	model.workingSet.relayPortPool.mu.RLock()
+	relayPortsUsed := len(model.workingSet.relayPortPool.usedPorts)
+	relayPortsTotal := model.workingSet.relayPortPool.maxPort - model.workingSet.relayPortPool.minPort
+	model.workingSet.relayPortPool.mu.RUnlock()
+	return []table.Row{
+		{"Registration TTL", settings.registrationTTL.String()},
+		{"Challenge timeout", settings.challengeTimeout.String()},
+		{"Relay punch timeout", settings.relayPunchTimeout.String()},
+		{"Punch port", fmt.Sprintf("%d", settings.punchPortToAdvertise)},
+		// {"WebSocket address", settings.websocketAddr.String()},
+		// {"DataChannel address", settings.datachannelAddr.String()},
+		{"Challenge address", settings.challengeAddr.String()},
+		{"Relay ports", fmt.Sprintf("%d/%d", relayPortsUsed, relayPortsTotal)},
+	}
 }
 
 // currentServerRows snapshots one registry entry's info/client rows for the
 // detail panel. ok is false if the server no longer exists (e.g. expired).
-func currentServerRows(ws *serverWorkingSet, id string) (info []table.Row, clients []table.Row, ok bool) {
+// spinnerFrame is the current frame of the shared spinner, stamped into a
+// client row's leading status column while that session is still
+// establishing (punch/ICE not resolved yet) and left blank once settled.
+func currentServerRows(ws *serverWorkingSet, id string, spinnerFrame string) (info []table.Row, clients []table.Row, ok bool) {
 	ws.servers.RLock()
 	server, exists := ws.servers.registry[id]
 	ws.servers.RUnlock()
@@ -186,7 +211,17 @@ func currentServerRows(ws *serverWorkingSet, id string) (info []table.Row, clien
 			peerRemoteStr = peerRemoteAddr.String()
 		}
 
+		// Still establishing (punch or ICE unresolved) unless it's
+		// already been retired to direct UDP, which is a settled state
+		// regardless of these gateway-side fields' now-stale values.
+		pending := protocol != "udp" && (serverAddr == nil || peerRemoteAddr == nil)
+		statusStr := ""
+		if pending {
+			statusStr = spinnerFrame
+		}
+
 		clients = append(clients, table.Row{
+			statusStr,
 			protocol,
 			peerRemoteStr,
 			peerLocalStr,
@@ -201,7 +236,10 @@ func currentServerRows(ws *serverWorkingSet, id string) (info []table.Row, clien
 
 // refreshTickInterval is how often the admin TUI re-polls shared state for
 // changes made by other goroutines (registrations, heartbeats, expiry).
-const refreshTickInterval = time.Second
+// Matches spinner.Dot's own FPS (see initialModel) so the per-client
+// pending-status spinner in currentClients animates smoothly instead of
+// stepping once a second.
+var refreshTickInterval = spinner.Dot.FPS
 
 type tickMsg time.Time
 
@@ -318,6 +356,7 @@ func initialModel() model {
 	)
 	currentClients := table.New(
 		table.WithColumns([]table.Column{
+			{Title: "", Width: 3},
 			{Title: "Protocol", Width: 8},
 			{Title: "ICE peer address", Width: 24},
 			{Title: "ICE local port", Width: 16},
@@ -396,7 +435,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyEnter, tea.KeyRight:
 			i, ok := m.serverList.SelectedItem().(serverItem)
 			if ok {
-				info, clients, exists := currentServerRows(m.app.data.workingSet, i.id)
+				info, clients, exists := currentServerRows(m.app.data.workingSet, i.id, m.currentSpinner.View())
 				if exists {
 					m.currentServerId = i.id
 					m.currentInfo.SetRows(info)
@@ -409,8 +448,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tickMsg:
 		m.serverList.SetItems(serverListItems(m.app.data.workingSet))
+		m.serverSettings.SetRows(serverConfigItems(m.app.data))
 		if m.currentServerId != "" {
-			if info, clients, exists := currentServerRows(m.app.data.workingSet, m.currentServerId); exists {
+			if info, clients, exists := currentServerRows(m.app.data.workingSet, m.currentServerId, m.currentSpinner.View()); exists {
 				m.currentInfo.SetRows(info)
 				m.currentClients.SetRows(clients)
 			} else {
@@ -433,7 +473,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() tea.View {
 	var rightPane string
 	if m.currentServerId != "" {
-		top := lipgloss.JoinVertical(lipgloss.Left, m.currentInfo.View(), m.currentClients.View())
+		top := lipgloss.JoinVertical(
+			lipgloss.Left, 
+			m.currentInfo.View(), 
+			m.currentClients.View(),
+		)
 		status := "  " + m.currentSpinner.View() + m.currentTime.ViewAs(0.7)
 
 		topLines := strings.Split(top, "\n")

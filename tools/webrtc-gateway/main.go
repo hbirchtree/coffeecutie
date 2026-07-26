@@ -83,6 +83,10 @@ type signalMessage struct {
 	// reverse proxy or docker port mapping the URL's port has nothing to
 	// do with the gateway's actual UDP port.
 	PunchPort int `json:"punchPort,omitempty"`
+	// Metadata payload from server
+	// Contains player count, game type, player count etc.
+	// We can use this later to create a server browser
+	Metadata map[string]string `json:"metadata,omitempty"`
 }
 
 const registerPunchPrefix = "COFFEE-REG-PUNCH:"
@@ -137,6 +141,13 @@ type PortPool struct {
 	usedPorts map[int]struct{}
 }
 
+type serverMetadata struct {
+	playerCountCurrent int
+	playerCountMax int
+	timeLeft int
+	// gametype string
+}
+
 type registeredServer struct {
 	conn    *websocket.Conn
 	writeMu sync.Mutex
@@ -150,6 +161,7 @@ type registeredServer struct {
 	expiresAt     time.Time
 	pendingNonce  []byte
 	challengeAddr *net.UDPAddr
+	metadata      *serverMetadata
 }
 
 type serverSettings struct {
@@ -721,6 +733,8 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			completeChallenge(myID, myEntry, m.Nonce)
+		case "metadata":
+			stashServerMetadata(myID, myEntry, m.Metadata)
 		case "gns-rendezvous":
 			relayRendezvousToClient(m.SessionID, m.Data)
 		case "gns-connected":
@@ -834,6 +848,27 @@ func completeChallenge(id string, srv *registeredServer, nonceHex string) {
 	srv.pendingNonce = nil
 	srv.expiresAt = time.Now().Add(settings.registrationTTL)
 	log.Printf("server %q registration active (challenge passed)", id)
+}
+
+func mapToInt(data map[string]string, key string) int {
+	value, ok := data[key]
+	if !ok {
+		return 0
+	}
+	parsed, err := strconv.Atoi(value)
+	if err != nil {
+		return 0
+	}
+	return parsed
+}
+
+func stashServerMetadata(id string, srv *registeredServer, metadata map[string]string) {
+	log.Printf("server metadata received from %s", id)
+	var parsedMeta = serverMetadata{}
+	parsedMeta.playerCountCurrent = mapToInt(metadata, "playerCount")
+	parsedMeta.playerCountMax = mapToInt(metadata, "playerCountMax")
+	parsedMeta.timeLeft = mapToInt(metadata, "timeLeft")
+	srv.metadata = &parsedMeta
 }
 
 func relayRendezvousToServer(serverID, sessionID, data string) {

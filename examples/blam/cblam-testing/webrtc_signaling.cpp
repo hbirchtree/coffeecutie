@@ -666,9 +666,10 @@ void GatewayServerRegistration::PollPendingAccepts()
     }
     for(auto* accept : ready)
     {
-        auto hConn = accept->Connection();
-        auto pc    = accept->TakePeerConnection();
-        auto dc    = accept->TakeDataChannel();
+        auto hConn     = accept->Connection();
+        auto sessionId = accept->SessionId();
+        auto pc        = accept->TakePeerConnection();
+        auto dc        = accept->TakeDataChannel();
         if(!m_sockets->AcceptP2PWebRTCDataChannel(hConn, pc, dc))
         {
             cWarning("webrtc_signaling: AcceptP2PWebRTCDataChannel failed for connection {}", hConn);
@@ -679,8 +680,37 @@ void GatewayServerRegistration::PollPendingAccepts()
         {
             cWarning("webrtc_signaling: AcceptConnection failed for connection {}", hConn);
             m_sockets->CloseConnection(hConn, 0, nullptr, false);
+            continue;
         }
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_sessionIdByConnection[hConn] = std::move(sessionId);
     }
+}
+
+void GatewayServerRegistration::NotifyGNSConnected(HSteamNetConnection hConn)
+{
+    std::string sessionId;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        auto it = m_sessionIdByConnection.find(hConn);
+        if(it == m_sessionIdByConnection.end())
+            return; // Not a connection accepted through this registration.
+        sessionId = it->second;
+    }
+    if(!m_ws)
+        return;
+    nlohmann::json msg{
+        {"type", "gns-connected"},
+        {"sessionId", sessionId},
+    };
+    if(!m_ws->send(msg.dump()))
+        cWarning("webrtc_signaling: failed to send gns-connected for session {}", sessionId);
+}
+
+void GatewayServerRegistration::ForgetConnection(HSteamNetConnection hConn)
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_sessionIdByConnection.erase(hConn);
 }
 
 } // namespace webrtc_signaling

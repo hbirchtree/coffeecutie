@@ -381,6 +381,7 @@ bool is_client_network_event(GameEvent const& event)
     case GameEvent::ServerCameraControl:
     case GameEvent::ServerPlayerStateUpdate:
     case GameEvent::ServerStateUpdate:
+    case GameEvent::ServerJoinInfo:
         return true;
     default:
         return false;
@@ -1170,6 +1171,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 {{"peer", client_name(info->m_hConn)},
                  {"player_idx", m_connections[info->m_hConn].idx},
                  {"map_ready", m_map != nullptr}});
+#if defined(USE_WEBRTC_TRANSPORT)
+            if(m_webrtcServer)
+                m_webrtcServer->NotifyGNSConnected(info->m_hConn);
+#endif
             /* If the server doesn't have an active map, don't send the
              * game invite yet — MapLoadFinishedEvent below catches this
              * connection up once m_map is set, so this isn't a permanent
@@ -1545,6 +1550,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }
         }
         m_connections.erase(connection);
+#if defined(USE_WEBRTC_TRANSPORT)
+        if(m_webrtcServer)
+            m_webrtcServer->ForgetConnection(connection);
+#endif
         update_player_counts();
         send_player_roster();
         m_impl->CloseConnection(connection, code, nullptr, linger);
