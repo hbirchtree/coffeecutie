@@ -117,10 +117,11 @@ private:
     std::mutex                                     m_relaysMutex;
     std::unordered_map<std::string, ClientRelay> m_relays;
 
-    void onClientRelay(std::string const& sessionId, int relayPort);
+    void onClientRelay(
+        std::string const& sessionId, int relayPort, std::string const& relayNonceHex);
     void onClientRelayClosed(std::string const& sessionId);
     void pollRelayKeepalives();
-    void sendRelayPunch(int relayPort);
+    void sendRelayPunch(int relayPort, std::string const& payload);
 #endif
 
     mutable std::mutex                    m_mutex;

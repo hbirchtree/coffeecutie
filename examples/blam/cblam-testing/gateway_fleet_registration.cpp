@@ -40,6 +40,32 @@ constexpr std::chrono::seconds kRelayPunchInterval{2};
 const std::string kRegisterPunchPrefix = "COFFEE-REG-PUNCH:";
 const std::string kRelayPunchPayload   = "COFFEE-NAT-PUNCH";
 
+std::string hexDecode(std::string const& in)
+{
+    if(in.size() % 2 != 0)
+        return {};
+    auto nibble = [](char c) -> int {
+        if(c >= '0' && c <= '9')
+            return c - '0';
+        if(c >= 'a' && c <= 'f')
+            return c - 'a' + 10;
+        if(c >= 'A' && c <= 'F')
+            return c - 'A' + 10;
+        return -1;
+    };
+    std::string out;
+    out.reserve(in.size() / 2);
+    for(size_t i = 0; i < in.size(); i += 2)
+    {
+        int hi = nibble(in[i]);
+        int lo = nibble(in[i + 1]);
+        if(hi < 0 || lo < 0)
+            return {};
+        out.push_back(static_cast<char>((hi << 4) | lo));
+    }
+    return out;
+}
+
 #if !defined(COFFEE_WASM) && !defined(_WIN32)
 /* "ws(s)://host[:port][/path]" -> host. Only the host matters here: the
  * UDP punch PORT is told to us by the gateway (register-pending's
@@ -231,7 +257,10 @@ void GatewayFleetRegistration::onWebSocketMessage(std::string const& text)
     } else if(type == "client-relay")
     {
 #if !defined(COFFEE_WASM) && !defined(_WIN32)
-        onClientRelay(msg.value("sessionId", std::string()), msg.value("relayPort", 0));
+        onClientRelay(
+            msg.value("sessionId", std::string()),
+            msg.value("relayPort", 0),
+            msg.value("relayNonce", std::string()));
 #endif
     } else if(type == "client-relay-closed")
     {
@@ -343,7 +372,7 @@ void GatewayFleetRegistration::pollChallengeSocket()
 }
 
 #if !defined(COFFEE_WASM) && !defined(_WIN32)
-void GatewayFleetRegistration::sendRelayPunch(int relayPort)
+void GatewayFleetRegistration::sendRelayPunch(int relayPort, std::string const& payload)
 {
     sockaddr_in target{};
     {
@@ -353,10 +382,11 @@ void GatewayFleetRegistration::sendRelayPunch(int relayPort)
     target.sin_port         = htons(static_cast<uint16_t>(relayPort));
     SteamNetworkingIPAddr addr = toSteamAddr(target);
     m_sockets->SendRawPacketOnListenSocket(
-        m_listenSocket, kRelayPunchPayload.data(), static_cast<int>(kRelayPunchPayload.size()), addr);
+        m_listenSocket, payload.data(), static_cast<int>(payload.size()), addr);
 }
 
-void GatewayFleetRegistration::onClientRelay(std::string const& sessionId, int relayPort)
+void GatewayFleetRegistration::onClientRelay(
+    std::string const& sessionId, int relayPort, std::string const& relayNonceHex)
 {
     if(sessionId.empty() || relayPort <= 0 || relayPort > 65535)
     {
@@ -372,7 +402,8 @@ void GatewayFleetRegistration::onClientRelay(std::string const& sessionId, int r
         std::lock_guard<std::mutex> lock(m_relaysMutex);
         m_relays[sessionId] = ClientRelay{relayPort, std::chrono::steady_clock::now()};
     }
-    sendRelayPunch(relayPort);
+    std::string nonce = hexDecode(relayNonceHex);
+    sendRelayPunch(relayPort, nonce.empty() ? kRelayPunchPayload : nonce);
     cDebug(
         "webrtc_signaling: gateway_fleet_registration: relay punch started "
         "for session {} -> gateway relay port {}",
@@ -406,7 +437,7 @@ void GatewayFleetRegistration::pollRelayKeepalives()
         }
     }
     for(int relayPort : due)
-        sendRelayPunch(relayPort);
+        sendRelayPunch(relayPort, kRelayPunchPayload);
 }
 #endif
 

@@ -77,6 +77,7 @@ type signalMessage struct {
 	Dest      string `json:"dest,omitempty"`
 	Nonce     string `json:"nonce,omitempty"`
 	RelayPort int    `json:"relayPort,omitempty"`
+	RelayNonce string `json:"relayNonce,omitempty"`
 	// PunchPort is sent in the "register-pending" reply: the UDP port the
 	// registering server must punch its return-routability probe at. Told
 	// explicitly rather than guessed from the WS URL, since behind a TLS
@@ -511,6 +512,14 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		}
 		session.relayPort = *relayPort
 
+		relayNonce := make([]byte, 16)
+		if _, err := rand.Read(relayNonce); err != nil {
+			log.Printf("failed to generate relay punch nonce: %v", err)
+			freePortFromPool(*relayPort, &workingSet.relayPortPool)
+			sock.Close()
+			return
+		}
+
 		var resolvedDest atomic.Pointer[net.UDPAddr]
 		dc.OnMessage(func(msg webrtc.DataChannelMessage) {
 			d := resolvedDest.Load()
@@ -532,9 +541,10 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 
 		srv.writeMu.Lock()
 		sendErr := srv.conn.WriteJSON(signalMessage{
-			Type:      "client-relay",
-			SessionID: sessionID,
-			RelayPort: *relayPort,
+			Type:       "client-relay",
+			SessionID:  sessionID,
+			RelayPort:  *relayPort,
+			RelayNonce: hex.EncodeToString(relayNonce),
 		})
 		srv.writeMu.Unlock()
 		if sendErr != nil {
@@ -546,24 +556,35 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 
 		dc.OnOpen(func() {
 			go func() {
-				sock.SetReadDeadline(time.Now().Add(settings.relayPunchTimeout))
+				deadline := time.Now().Add(settings.relayPunchTimeout)
 				buf := make([]byte, 64)
-				_, addr, err := sock.ReadFromUDP(buf)
-				sock.SetReadDeadline(time.Time{})
-				if err != nil {
-					log.Printf(
-						"no punch received from server for session %s within %s, closing: %v",
-						sessionID, settings.relayPunchTimeout, err)
-					sock.Close()
-					close(relayDone)
+				for {
+					sock.SetReadDeadline(deadline)
+					n, addr, err := sock.ReadFromUDP(buf)
+					if err != nil {
+						log.Printf(
+							"no authentic punch received from server for session %s within %s, closing: %v",
+							sessionID, settings.relayPunchTimeout, err)
+						sock.Close()
+						close(relayDone)
+						return
+					}
+					// Only trust a punch carrying this session's exact
+					// nonce -- otherwise whichever UDP packet reaches this
+					// ephemeral port first (from anyone who guesses it)
+					// would get adopted as "the server."
+					if !bytes.Equal(buf[:n], relayNonce) {
+						continue
+					}
+					sock.SetReadDeadline(time.Time{})
+					log.Printf("authentic punch received from %s for session %s, relaying to it", addr, sessionID)
+					resolvedDest.Store(addr)
+					session.mu.Lock()
+					session.serverAddr = addr
+					session.mu.Unlock()
+					go runRelayUnconnected(dc, sock, addr, relayDone)
 					return
 				}
-				log.Printf("punch received from %s for session %s, relaying to it", addr, sessionID)
-				resolvedDest.Store(addr)
-				session.mu.Lock()
-				session.serverAddr = addr
-				session.mu.Unlock()
-				go runRelayUnconnected(dc, sock, addr, relayDone)
 			}()
 		})
 	})
