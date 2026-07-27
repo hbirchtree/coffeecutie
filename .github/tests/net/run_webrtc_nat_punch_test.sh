@@ -5,18 +5,9 @@
 # Same client/server roles as the loopback wasm-client test (fleet
 # registration, wasm browser client via /signal?server=<id>,
 # direct-UDP-over-DataChannel -- see
-# examples/blam/cblam-testing/WEBRTC_TRANSPORT.md's Phase 6 section), on
-# the same shared harness. The one difference is the one that matters:
-# nothing here is on loopback. The gateway is a separate deployment out on
-# the internet (URL from the WEBRTC_GATEWAY_SERVER secret) and the native
+# The gateway is a separate deployment out on the internet and the native
 # server runs on this machine behind whatever NAT the runner sits behind,
 # with no port forwarding.
-#
-# That is the whole point: the gateway has no route to this server, so a
-# registration can only go active if the server's own UDP punch opened a
-# mapping and the challenge nonce came back through it, and a client can
-# only exchange traffic if the per-client relay punch did the same. A
-# loopback run proves neither.
 #
 # Pass criteria:
 #   - the server's registration reaches active against the remote gateway
@@ -138,13 +129,6 @@ if grep -q "relay punch started for session" "$SERVER_LOG" 2>/dev/null; then
     grep "relay punch started for session" "$SERVER_LOG" | sed 's/^/  /'
 else
     echo "FAIL: server never punched a per-client relay port (no client-relay from the gateway?)"
-    echo "  The gateway only asks for a relay punch once the browser's DataChannel"
-    echo "  opens, so this usually means ICE never completed between the browser and"
-    echo "  the gateway -- check the answer SDP in the client log above. If its"
-    echo "  candidates are private addresses (172.x/10.x/CGNAT), the gateway is"
-    echo "  behind NAT or docker and needs -public-ip (plus its -ice-udp-port-min/-max"
-    echo "  range published); ICE-lite gathers host candidates only and cannot"
-    echo "  discover its own public address."
     NAT_OK=0
 fi
 
