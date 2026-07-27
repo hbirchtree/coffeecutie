@@ -35,6 +35,11 @@
 // server via "?server=<id>", and "gns-rendezvous" messages tagged with
 // that session ID are routed client<->server by ID alone.
 //
+// With -journal-db set, every lifecycle step above (registration,
+// challenge, session, ICE, DataChannel, relay punch, teardown) is also
+// written to a SQLite file, tagged with the tracking IDs from the logs,
+// and searchable from the admin interface's Search tab. See journal.go.
+//
 // Either side may follow up with a "gns-connected" message (same session
 // ID) once GNS's own rendezvous handshake lands a direct P2P connection
 // between client and server: the WebRTC relay was only standing in until
@@ -88,7 +93,7 @@ type signalMessage struct {
 	// explicitly rather than guessed from the WS URL, since behind a TLS
 	// reverse proxy or docker port mapping the URL's port has nothing to
 	// do with the gateway's actual UDP port.
-	PunchPort int `json:"punchPort,omitempty"`
+	PunchPort        int    `json:"punchPort,omitempty"`
 	TrackingID       string `json:"trackingId,omitempty"`
 	ServerTrackingID string `json:"serverTrackingId,omitempty"`
 	// Metadata payload from server
@@ -125,9 +130,9 @@ type clientSession struct {
 	// gorilla/websocket connections support one concurrent writer; the
 	// initial answer and later server->client relay writes can race
 	// without this.
-	writeMu   sync.Mutex
-	serverID  string
-	relayPort int
+	writeMu          sync.Mutex
+	serverID         string
+	relayPort        int
 	trackingID       string
 	serverTrackingID string
 
@@ -252,7 +257,7 @@ type serverSettings struct {
 	// punch at -- the challenge socket's bound port unless
 	// -advertise-punch-port overrides it (docker port mappings etc.).
 	punchPortToAdvertise int
-	publicIP string
+	publicIP             string
 
 	websocketAddr   net.Addr
 	challengeAddr   net.Addr
@@ -276,6 +281,10 @@ type serverWorkingSet struct {
 }
 
 var challengeSock *net.UDPConn
+
+// journal is nil unless -journal-db is set; every Journal method is
+// nil-safe, so the call sites don't branch on it.
+var journal *Journal
 
 var settings serverSettings = serverSettings{}
 
@@ -363,6 +372,9 @@ func main() {
 	publicIP := flag.String("public-ip", "", "public IP to advertise in ICE candidates (SetNAT1To1IPs). REQUIRED when the gateway runs behind NAT or in a container: ICE-lite gathers host candidates only, so without this it advertises its own private/docker addresses and no outside browser can reach it. Pair with -ice-udp-port-min/-max and publish that range.")
 	advertisePunchPort := flag.Int("advertise-punch-port", 0, "punch port to tell registering servers (register-pending's punchPort) when the externally reachable UDP port differs from the bound one, e.g. behind a docker port mapping (0 = advertise the bound port)")
 
+	journalDB := flag.String("journal-db", "", "SQLite file to journal server registrations and client sessions to, searchable from the admin interface's Search tab (empty = no journaling)")
+	journalRetention := flag.Duration("journal-retention", 30*24*time.Hour, "how long journal rows are kept (0 = forever)")
+
 	adminAddr := flag.String("admin-port", ":2222", "SSH port for admin interface")
 	adminPrivateKey := flag.String("admin-private-key", "id_ed25519", "Private key to use as host key for admin server")
 	flag.Parse()
@@ -412,6 +424,19 @@ func main() {
 	log.Printf("registration challenge socket on udp :%d (advertising punch port %d)",
 		probeSock.LocalAddr().(*net.UDPAddr).Port, settings.punchPortToAdvertise)
 
+	if *journalDB != "" {
+		j, err := openJournal(*journalDB, *journalRetention)
+		if err != nil {
+			// Non-fatal: the journal is an observability aid, and losing
+			// it must not take a working relay down with it.
+			log.Printf("WARNING: failed to open journal %q, continuing without it: %v", *journalDB, err)
+		} else {
+			journal = j
+			defer journal.Close()
+			log.Printf("journaling connections to %s (retention %s)", *journalDB, *journalRetention)
+		}
+	}
+
 	workingSet.relayPortPool.minPort = *relayPortMin
 	workingSet.relayPortPool.maxPort = *relayPortMax
 
@@ -427,6 +452,7 @@ func main() {
 		adminInterfaceModel{
 			workingSet: &workingSet,
 			settings:   &settings,
+			journal:    journal,
 		},
 	)
 
@@ -456,6 +482,7 @@ func sweepExpiredRegistrations() {
 				expired = append(expired, srv)
 				delete(workingSet.servers.registry, id)
 				log.Printf("%s registry entry %q expired (no heartbeat within TTL)", srv.tag(), id)
+				journalServerEvent(srv, id, "register-expired", "timeout", "no heartbeat within TTL")
 			}
 		}
 		workingSet.servers.Unlock()
@@ -511,6 +538,12 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 	}
 	log.Printf("[%s/%s] client session opened for server %q from %s",
 		session.serverTrackingID, session.trackingID, serverID, signalOrigin(r))
+	journal.Record(journalEvent{
+		scope: "client", event: "session-open", outcome: "ok",
+		serverID: serverID, serverTrackingID: session.serverTrackingID,
+		clientTrackingID: session.trackingID,
+		origin:           signalOrigin(r), transport: transport,
+	})
 	workingSet.clients.Lock()
 	workingSet.clients.sessions[sessionID] = session
 	workingSet.clients.Unlock()
@@ -518,6 +551,10 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		workingSet.clients.Lock()
 		delete(workingSet.clients.sessions, sessionID)
 		workingSet.clients.Unlock()
+		session.mu.Lock()
+		protocol := session.protocol
+		session.mu.Unlock()
+		journalClientEvent(session, "session-close", "closed", "last protocol "+protocol)
 	}()
 
 	var msg signalMessage
@@ -533,20 +570,38 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 	pc, err := newPeerConnection(iceUDPPortMin, iceUDPPortMax)
 	if err != nil {
 		log.Printf("%s failed to create peer connection: %v", session.tag(), err)
+		journalClientEvent(session, "peer-connection", "error", err.Error())
 		return
 	}
 	defer pc.Close()
 
 	pc.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
 		log.Printf("%s peer connection state: %s", session.tag(), s)
+		// failed/closed are the states worth an outcome of their own: a
+		// journal search for a connection that never worked should land
+		// on the row that says so.
+		outcome := "pending"
+		switch s {
+		case webrtc.PeerConnectionStateConnected:
+			outcome = "ok"
+		case webrtc.PeerConnectionStateFailed, webrtc.PeerConnectionStateDisconnected:
+			outcome = "error"
+		case webrtc.PeerConnectionStateClosed:
+			outcome = "closed"
+		}
+		journalClientEvent(session, "peer-state", outcome, s.String())
 		if s != webrtc.PeerConnectionStateConnected {
 			return
 		}
 		pair, err := pc.SCTP().Transport().ICETransport().GetSelectedCandidatePair()
 		if err != nil || pair == nil {
 			log.Printf("%s failed to read selected ICE candidate pair: %v", session.tag(), err)
+			journalClientEvent(session, "ice-pair", "error", fmt.Sprintf("%v", err))
 			return
 		}
+		journalClientEvent(session, "ice-pair", "ok",
+			fmt.Sprintf("local :%d <- remote %s:%d",
+				pair.Local.Port, pair.Remote.Address, pair.Remote.Port))
 		session.mu.Lock()
 		session.peerLocalPort = int(pair.Local.Port)
 		session.peerRemoteAddr = &net.UDPAddr{
@@ -559,6 +614,13 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 	relayDone := make(chan struct{})
 	pc.OnDataChannel(func(dc *webrtc.DataChannel) {
 		log.Printf("%s data channel %q open request (id=%v)", session.tag(), dc.Label(), dc.ID())
+		// dc.ID() is a *uint16 and is nil until the channel is negotiated.
+		dcID := "unassigned"
+		if id := dc.ID(); id != nil {
+			dcID = fmt.Sprintf("%d", *id)
+		}
+		journalClientEvent(session, "datachannel-request", "pending",
+			fmt.Sprintf("label %q id %s", dc.Label(), dcID))
 
 		session.mu.Lock()
 		session.dataChannel = dc
@@ -577,6 +639,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 			// /signal?role=host&session=<id> with its own DataChannel for
 			// this session, and the two get spliced together.
 			log.Printf("[%s/%s] awaiting host datachannel (webrtc-hosted server %q)", session.serverTrackingID, session.trackingID, serverID)
+			journalClientEvent(session, "await-host-datachannel", "pending", "webrtc-hosted server")
 			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
 				session.clientToHost.Add(1)
 				bridgeSend(session.tag(), session.peerOf(dc), msg.Data)
@@ -584,6 +647,9 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 			var closeOnce sync.Once
 			dc.OnClose(func() {
 				log.Printf("%s data channel %q closed", session.tag(), dc.Label())
+				journalClientEvent(session, "datachannel-close", "closed",
+					fmt.Sprintf("bridged %d client->host, %d host->client",
+						session.clientToHost.Load(), session.hostToClient.Load()))
 				session.mu.Lock()
 				hostClose := session.hostClose
 				session.mu.Unlock()
@@ -602,6 +668,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		pooledPort := newPortFromPool(&workingSet.relayPortPool)
 		if pooledPort == nil {
 			log.Printf("[%s/%s] relay port pool exhausted, refusing session", session.serverTrackingID, session.trackingID)
+			journalClientEvent(session, "relay-socket", "error", "relay port pool exhausted")
 			return
 		}
 		var releasePort sync.Once
@@ -614,6 +681,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		sock, err := net.ListenUDP("udp", &net.UDPAddr{Port: *pooledPort})
 		if err != nil {
 			log.Printf("%s failed to open relay socket: %v", session.tag(), err)
+			journalClientEvent(session, "relay-socket", "error", err.Error())
 			freePort()
 			return
 		}
@@ -642,6 +710,8 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		})
 		dc.OnClose(func() {
 			log.Printf("%s data channel %q closed", session.tag(), dc.Label())
+			journalClientEvent(session, "datachannel-close", "closed",
+				fmt.Sprintf("relay port %d", relayPort))
 			sock.Close()
 			srv.writeMu.Lock()
 			srv.conn.WriteJSON(signalMessage{
@@ -664,12 +734,15 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		srv.writeMu.Unlock()
 		if sendErr != nil {
 			log.Printf("%s failed to send client-relay to server: %v", session.tag(), sendErr)
+			journalClientEvent(session, "client-relay", "error", sendErr.Error())
 			freePort()
 			sock.Close()
 			return
 		}
 
 		dc.OnOpen(func() {
+			journalClientEvent(session, "datachannel-open", "ok",
+				fmt.Sprintf("relay port %d, awaiting server punch", relayPort))
 			go func() {
 				deadline := time.Now().Add(settings.relayPunchTimeout)
 				buf := make([]byte, 64)
@@ -680,6 +753,8 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 						log.Printf(
 							"[%s/%s] no authentic punch received from server within %s, closing: %v",
 							session.serverTrackingID, session.trackingID, settings.relayPunchTimeout, err)
+						journalClientEvent(session, "relay-punch", "timeout",
+							"no authentic punch within "+settings.relayPunchTimeout.String())
 						sock.Close()
 						freePort()
 						close(relayDone)
@@ -694,6 +769,8 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 					}
 					sock.SetReadDeadline(time.Time{})
 					log.Printf("[%s/%s] authentic punch received from %s, relaying to it", session.serverTrackingID, session.trackingID, addr)
+					journalClientEvent(session, "relay-punch", "ok",
+						fmt.Sprintf("punch from %s -> relay port %d", addr, relayPort))
 					resolvedDest.Store(addr)
 					session.mu.Lock()
 					session.serverAddr = addr
@@ -776,6 +853,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 			relayRendezvousToServer(serverID, sessionID, m.Data)
 		case "gns-connected":
 			log.Printf("[%s/%s] GNS reports direct connection, retiring relay", session.serverTrackingID, session.trackingID)
+			journalClientEvent(session, "relay-retired", "ok", "GNS reports a direct connection")
 			closeSessionRelay(session)
 		default:
 			log.Printf("%s unexpected signal message type %q", session.tag(), m.Type)
@@ -820,8 +898,10 @@ func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, 
 	session.mu.Unlock()
 	if taken {
 		log.Printf("%s rejecting host /signal: session already has a host", session.tag())
+		journalHostEvent(session, "host-attach", "rejected", "session already has a host")
 		return
 	}
+	journalHostEvent(session, "host-attach", "pending", "from "+signalOrigin(r))
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -843,6 +923,7 @@ func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, 
 	pc, err := newPeerConnection(iceUDPPortMin, iceUDPPortMax)
 	if err != nil {
 		log.Printf("%s failed to create host peer connection: %v", session.tag(), err)
+		journalHostEvent(session, "peer-connection", "error", err.Error())
 		return
 	}
 	defer pc.Close()
@@ -863,9 +944,14 @@ func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, 
 	}()
 
 	var hostDCOpen atomic.Bool
+	// hostDCOpen goes false again on close, so it can't tell "never
+	// arrived" from "arrived and finished" -- which is the difference
+	// between a failed attach and an ordinary teardown.
+	var hostDCEverOpened atomic.Bool
 	pc.OnDataChannel(func(dc *webrtc.DataChannel) {
 		log.Printf("%s host data channel %q open request", session.tag(), dc.Label())
 		hostDCOpen.Store(true)
+		hostDCEverOpened.Store(true)
 		session.mu.Lock()
 		session.hostDC = dc
 		session.mu.Unlock()
@@ -878,11 +964,13 @@ func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, 
 		})
 		dc.OnClose(func() {
 			log.Printf("%s host data channel closed", session.tag())
+			journalHostEvent(session, "datachannel-close", "closed", "")
 			hostDCOpen.Store(false)
 			closeHost()
 		})
 		dc.OnOpen(func() {
 			log.Printf("[%s/%s] datachannel bridge established", session.serverTrackingID, session.trackingID)
+			journalHostEvent(session, "bridge-established", "ok", "datachannel bridge established")
 		})
 	})
 
@@ -925,7 +1013,10 @@ func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, 
 			var m signalMessage
 			if err := conn.ReadJSON(&m); err != nil {
 				if !hostDCOpen.Load() {
-					log.Printf("%s host signaling closed before its datachannel opened", session.tag())
+					if !hostDCEverOpened.Load() {
+						log.Printf("%s host signaling closed before its datachannel opened", session.tag())
+						journalHostEvent(session, "host-attach", "error", "signaling closed before the datachannel opened")
+					}
 					closeHost()
 				}
 				return
@@ -936,6 +1027,9 @@ func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, 
 	<-hostDone
 	log.Printf("%s host side torn down (bridged %d client->host, %d host->client messages)",
 		session.tag(), session.clientToHost.Load(), session.hostToClient.Load())
+	journalHostEvent(session, "host-close", "closed",
+		fmt.Sprintf("bridged %d client->host, %d host->client",
+			session.clientToHost.Load(), session.hostToClient.Load()))
 }
 
 func handleServerSignal(w http.ResponseWriter, r *http.Request) {
@@ -961,6 +1055,7 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 		}
 		workingSet.servers.Unlock()
 		log.Printf("%s server %q signaling connection closed", myEntry.tag(), myID)
+		journalServerEvent(myEntry, myID, "signaling-closed", "closed", "")
 	}()
 
 	for {
@@ -973,6 +1068,9 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 			id, entry, err := beginRegistration(conn, m, signalOrigin(r))
 			if err != nil {
 				log.Printf("rejecting registration for %q: %v", m.ServerID, err)
+				// No entry exists yet, so this row has no tracking ID to
+				// attribute -- searchable by serverID only.
+				journalServerEvent(nil, m.ServerID, "register", "rejected", err.Error())
 				conn.WriteJSON(signalMessage{Type: "error", Data: err.Error()})
 				return
 			}
@@ -1078,11 +1176,23 @@ func beginRegistration(conn *websocket.Conn, m signalMessage, origin string) (st
 	if transport == transportWebRTC {
 		log.Printf("[%s] server %q registration active from %s (webrtc-hosted, no UDP challenge)",
 			entry.trackingID, m.ServerID, origin)
+		journal.Record(journalEvent{
+			scope: "server", event: "register", outcome: "ok",
+			serverID: m.ServerID, serverTrackingID: entry.trackingID,
+			origin: origin, transport: entry.transport,
+			detail: "webrtc-hosted, no UDP challenge",
+		})
 		return m.ServerID, entry, nil
 	}
 
 	log.Printf("[%s] register %q from %s: waiting for return-routability punch",
 		entry.trackingID, m.ServerID, origin)
+	journal.Record(journalEvent{
+		scope: "server", event: "register", outcome: "pending",
+		serverID: m.ServerID, serverTrackingID: entry.trackingID,
+		origin: origin, transport: entry.transport,
+		detail: "awaiting return-routability punch",
+	})
 
 	go func(id string, srv *registeredServer) {
 		time.Sleep(settings.challengeTimeout)
@@ -1098,6 +1208,8 @@ func beginRegistration(conn *websocket.Conn, m signalMessage, origin string) (st
 		}
 		workingSet.servers.Unlock()
 		log.Printf("%s register %q: no punch/challenge received in time, dropping registration", srv.tag(), id)
+		journalServerEvent(srv, id, "register", "timeout",
+			"no punch/challenge within "+settings.challengeTimeout.String())
 	}(m.ServerID, entry)
 
 	return m.ServerID, entry, nil
@@ -1133,8 +1245,10 @@ func challengeListener() {
 			continue
 		}
 
+		journalServerEvent(srv, id, "registration-punch", "ok", "punch from "+addr.String())
 		if _, err := challengeSock.WriteToUDP(nonce, addr); err != nil {
 			log.Printf("%s register %q: failed to reply to punch from %s: %v", srv.tag(), id, addr, err)
+			journalServerEvent(srv, id, "registration-punch", "error", err.Error())
 		}
 	}
 }
@@ -1143,6 +1257,7 @@ func completeChallenge(id string, srv *registeredServer, nonceHex string) {
 	nonce, err := hex.DecodeString(nonceHex)
 	if err != nil {
 		log.Printf("%s challenge-response for %q: bad hex nonce: %v", srv.tag(), id, err)
+		journalServerEvent(srv, id, "challenge-response", "error", "bad hex nonce: "+err.Error())
 		return
 	}
 	srv.mu.Lock()
@@ -1153,12 +1268,18 @@ func completeChallenge(id string, srv *registeredServer, nonceHex string) {
 	if subtle.ConstantTimeCompare(nonce, srv.pendingNonce) != 1 {
 		log.Printf("%s challenge-response for %q: nonce mismatch (got %d bytes %x, want %d bytes %x)",
 			srv.tag(), id, len(nonce), nonce, len(srv.pendingNonce), srv.pendingNonce)
+		journalServerEvent(srv, id, "challenge-response", "error", "nonce mismatch")
 		return
 	}
 	srv.active = true
 	srv.pendingNonce = nil
 	srv.expiresAt = time.Now().Add(settings.registrationTTL)
 	log.Printf("%s server %q registration active (challenge passed)", srv.tag(), id)
+	challengeAddr := ""
+	if srv.challengeAddr != nil {
+		challengeAddr = "challenge passed from " + srv.challengeAddr.String()
+	}
+	journalServerEvent(srv, id, "register-active", "ok", challengeAddr)
 }
 
 func mapToInt(data map[string]string, key string) int {

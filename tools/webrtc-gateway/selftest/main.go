@@ -57,28 +57,50 @@ func main() {
 	relayMax := flag.Int("relay-port-max", 19710, "gateway -relay-port-max")
 	transport := flag.String("transport", "udp", "server transport to exercise: udp (relay + NAT punch) or webrtc (DataChannel<->DataChannel bridge)")
 	rounds := flag.Int("rounds", 1, "sequential client sessions to run (>1 with a one-port pool proves relay ports are released)")
+	journalDB := flag.String("journal-db", "", "pass -journal-db to the gateway, so a run leaves a journal to inspect (empty = no journaling)")
 	timeout := flag.Duration("timeout", 30*time.Second, "overall deadline")
 	flag.Parse()
 
 	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
 	defer cancel()
 
-	gw := exec.CommandContext(ctx, *gatewayBin,
+	gwArgs := []string{
 		"-listen", fmt.Sprintf(":%d", *httpPort),
 		"-relay-port-min", fmt.Sprintf("%d", *relayMin),
 		"-relay-port-max", fmt.Sprintf("%d", *relayMax),
 		// The admin SSH listener would collide across repeat runs and
 		// isn't under test here.
 		"-admin-port", ":0",
-	)
+	}
+	if *journalDB != "" {
+		gwArgs = append(gwArgs, "-journal-db", *journalDB)
+	}
+	gw := exec.CommandContext(ctx, *gatewayBin, gwArgs...)
 	gw.Stdout, gw.Stderr = os.Stdout, os.Stderr
 	if err := gw.Start(); err != nil {
 		fatal("failed to start gateway: %v", err)
 	}
-	defer func() {
-		_ = gw.Process.Kill()
-		_ = gw.Wait()
-	}()
+	// Interrupt rather than kill, and give it a moment: the gateway
+	// flushes its journal on the way out, and SIGKILL would drop whatever
+	// the run just recorded.
+	stopGateway = func() {
+		if gw.Process == nil {
+			return
+		}
+		_ = gw.Process.Signal(os.Interrupt)
+		exited := make(chan struct{})
+		go func() {
+			_ = gw.Wait()
+			close(exited)
+		}()
+		select {
+		case <-exited:
+		case <-time.After(3 * time.Second):
+			_ = gw.Process.Kill()
+			<-exited
+		}
+	}
+	defer stopGateway()
 
 	waitForPort(*httpPort, 10*time.Second)
 
@@ -461,7 +483,13 @@ func waitForPort(port int, timeout time.Duration) {
 	fatal("gateway never opened port %d", port)
 }
 
+// stopGateway shuts the gateway child down; set by main once it is
+// started. os.Exit skips defers, so fatal() has to do it explicitly or
+// the child outlives this process and holds its ports.
+var stopGateway = func() {}
+
 func fatal(format string, args ...any) {
 	log.Printf("FAIL: "+format, args...)
+	stopGateway()
 	os.Exit(1)
 }

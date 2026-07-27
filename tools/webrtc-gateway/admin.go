@@ -43,6 +43,9 @@ type adminInterfaceOpts struct {
 type adminInterfaceModel struct {
 	workingSet *serverWorkingSet
 	settings   *serverSettings
+	// journal is nil when -journal-db was not set; the Search tab says so
+	// rather than showing an empty result set that looks like "no hits".
+	journal *Journal
 }
 
 func startAdminInterface(opts adminInterfaceOpts, model adminInterfaceModel) {
@@ -103,6 +106,10 @@ func (a *app) Start(opts adminInterfaceOpts) {
 	if err := a.Shutdown(ctx); err != nil {
 		log.Error("Could not stop server", "error", err)
 	}
+	// This signal handler is the process's real shutdown path -- the
+	// os.Exit below skips main's deferred Close -- so the journal has to
+	// be drained here or a SIGTERM loses whatever is still queued.
+	journal.Close()
 	os.Exit(0)
 }
 
@@ -110,6 +117,7 @@ func (a *app) ProgramHandler(s ssh.Session) *tea.Program {
 	model := initialModel()
 	model.app = a
 	model.id = s.User()
+	model.search = newSearchTab(a.data.journal)
 
 	model.serverSettings.SetRows(serverConfigItems(model.app.data))
 	model.serverList.SetItems(serverListItems(model.app.data.workingSet))
@@ -168,7 +176,21 @@ func serverConfigItems(model *adminInterfaceModel) []table.Row {
 		// {"DataChannel address", settings.datachannelAddr.String()},
 		{"Challenge address", settings.challengeAddr.String()},
 		{"Relay ports", fmt.Sprintf("%d/%d", relayPortsUsed, relayPortsTotal)},
+		{"Journal", journalStatus(model.journal)},
 	}
+}
+
+// journalStatus reports journaling state for the settings pane. Dropped
+// events are surfaced because a persistently rising count means the
+// Search tab's history has holes in it.
+func journalStatus(j *Journal) string {
+	if j == nil {
+		return "disabled"
+	}
+	if dropped := j.Dropped(); dropped > 0 {
+		return fmt.Sprintf("on (%d dropped)", dropped)
+	}
+	return "on"
 }
 
 const (
@@ -320,6 +342,15 @@ var containerStyle = lipgloss.NewStyle().BorderStyle(lipgloss.DoubleBorder()).Bo
 // the live row count would permanently pin the viewport height to zero.
 const currentInfoRowCount = 4
 
+// Tabs, in display order.
+const (
+	tabLive = iota
+	tabSearch
+	tabCount
+)
+
+var tabTitles = [tabCount]string{"Live", "Search"}
+
 type model struct {
 	*app
 	id             string
@@ -334,6 +365,11 @@ type model struct {
 	currentSpinner  spinner.Model
 	currentTime     progress.Model
 
+	activeTab int
+	search    searchTab
+
+	width           int
+	height          int
 	rightPaneHeight int
 }
 
@@ -442,6 +478,12 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		m.width, m.height = msg.Width, msg.Height
+		m.search.setSize(msg.Width-2, msg.Height-tabBarHeight)
+		// Everything below sizes the live tab, which now starts under the
+		// tab bar -- take its rows out once, here, rather than from each
+		// of the panes it feeds.
+		msg.Height -= tabBarHeight
 		m.serverList.SetWidth(msg.Width / 3)
 		m.serverList.SetHeight(msg.Height - 2 - 1 - (1 + len(m.serverSettings.Rows())))
 		m.serverSettings.SetWidth(msg.Width / 3)
@@ -464,7 +506,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.Key().Code {
 			case 'c':
 				return m, tea.Quit
+			// Ctrl combos, not bare keys or tab: the Search tab has text
+			// fields, and switching tabs has to keep working mid-typing.
+			case 'n':
+				m.activeTab = (m.activeTab + 1) % tabCount
+				return m, nil
+			case 'p':
+				m.activeTab = (m.activeTab + tabCount - 1) % tabCount
+				return m, nil
 			}
+		}
+		if m.activeTab == tabSearch {
+			var searchCmd tea.Cmd
+			m.search, searchCmd = m.search.Update(msg)
+			return m, searchCmd
 		}
 		switch msg.Key().Code {
 		case 'q':
@@ -518,7 +573,34 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(spinnerCmd, listCmd)
 }
 
+// tabBarHeight is how many rows renderTabBar occupies (the titles plus
+// its trailing blank line); pane sizing subtracts it.
+const tabBarHeight = 2
+
+func (m model) renderTabBar() string {
+	active := lipgloss.NewStyle().Foreground(lipgloss.Green).Bold(true)
+	inactive := lipgloss.NewStyle().Faint(true)
+
+	titles := make([]string, 0, tabCount)
+	for i, title := range tabTitles {
+		label := fmt.Sprintf(" %d %s ", i+1, title)
+		if i == m.activeTab {
+			titles = append(titles, active.Render("["+label+"]"))
+		} else {
+			titles = append(titles, inactive.Render(" "+label+" "))
+		}
+	}
+	return lipgloss.JoinHorizontal(lipgloss.Top, titles...) +
+		lipgloss.NewStyle().Faint(true).Render("   ctrl+n/ctrl+p: switch tab") + "\n"
+}
+
 func (m model) View() tea.View {
+	if m.activeTab == tabSearch {
+		v := tea.NewView(m.renderTabBar() + containerStyle.Render(m.search.View()))
+		v.AltScreen = true
+		return v
+	}
+
 	var rightPane string
 	if m.currentServerId != "" {
 		top := lipgloss.JoinVertical(
@@ -546,7 +628,7 @@ func (m model) View() tea.View {
 	}
 
 	v := tea.NewView(
-		lipgloss.JoinHorizontal(
+		m.renderTabBar() + lipgloss.JoinHorizontal(
 			lipgloss.Top,
 			containerStyle.Render(
 				fmt.Sprintf("%s\n\n%s",
