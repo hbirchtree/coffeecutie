@@ -18,6 +18,10 @@ valid result). Interfaces that are down are skipped, which
 GetAdaptersAddresses effectively does on Windows. Link-local 169.254.x.x
 is deliberately NOT filtered here -- GatherInterfaces() already drops it.
 
+Android below API 24 keeps the upstream stub: bionic only declares
+getifaddrs()/freeifaddrs() from API 24 onwards, and this project still
+builds an API 19 target.
+
 diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
 --- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
 +++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
@@ -26,7 +30,7 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowleve
  	#include <sched.h>
  	#include <sys/types.h>
 +	// Added for coffeecutie's POSIX GetLocalAddresses() below.
-+	#if defined( __linux__ ) || defined( __APPLE__ ) || defined( __FreeBSD__ ) || defined( __OpenBSD__ ) || defined( __NetBSD__ )
++	#if ( defined( __linux__ ) && !( defined( __ANDROID__ ) && __ANDROID_API__ < 24 ) ) || defined( __APPLE__ ) || defined( __FreeBSD__ ) || defined( __OpenBSD__ ) || defined( __NetBSD__ )
 +		#include <ifaddrs.h>
 +		#include <net/if.h>
 +		#include <netinet/in.h>
@@ -40,7 +44,7 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowleve
      free( pAddrInfo );
  	return true;
  }
-+#elif defined( __linux__ ) || defined( __APPLE__ ) || defined( __FreeBSD__ ) || defined( __OpenBSD__ ) || defined( __NetBSD__ )
++#elif ( defined( __linux__ ) && !( defined( __ANDROID__ ) && __ANDROID_API__ < 24 ) ) || defined( __APPLE__ ) || defined( __FreeBSD__ ) || defined( __OpenBSD__ ) || defined( __NetBSD__ )
 +
 +// Added for coffeecutie -- upstream implements this for Windows only, and
 +// the ICE client is dead in the water without it: GatherInterfaces() bails
