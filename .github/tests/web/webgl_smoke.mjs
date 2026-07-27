@@ -7,7 +7,7 @@
 // boots, creates a WebGL2 context and drives its render loop without aborting.
 //
 // It writes a canvas screenshot (<name>.jpg) and a console log (output.log) into OUT_DIR,
-// laid out so .github/tests/test_page.py can fold the result into the same HTML report
+// laid out so the report generator can fold the result into the same HTML report
 // used by the desktop software-render tests.
 //
 // Tier 2 (scripted scenes via dummy_plug) is stubbed: see installDummyPlug() below. The

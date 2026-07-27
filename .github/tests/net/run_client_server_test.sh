@@ -10,7 +10,7 @@
 # screenshot output don't collide. Each process appends its test journal
 # (journal.h: game events, net_* lifecycle, dummy events, state_dump roster
 # snapshots from the "dump_state" custom event) to <its TMPDIR>/journal.jsonl.
-# compare_journals.py then diffs the final state_dump of the two journals
+# The journal comparison then diffs the final state_dump of the two
 # for replication bugs (missing/duplicate players, name mismatches, stale
 # "remote"/"connected" flags) — this is how issues like players not syncing
 # between server and client show up. On failure the merged event timeline

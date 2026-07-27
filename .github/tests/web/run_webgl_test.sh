@@ -10,7 +10,7 @@
 #   OUT_DIR   where to write <name>.jpg + output.log.
 #             Default: /tmp/webgl_test/<bundle-variant>
 #
-# Env passthrough (see webgl_smoke.mjs): RUN_SECONDS, MIN_FRAMES, BOOT_TIMEOUT_MS,
+# Env passthrough to the smoke driver: RUN_SECONDS, MIN_FRAMES, BOOT_TIMEOUT_MS,
 #   SCREENSHOT_NAME, SCREENSHOT_QUALITY, DUMMY_PLUG.
 
 set -euo pipefail

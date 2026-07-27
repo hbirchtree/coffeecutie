@@ -13,12 +13,7 @@ of interest here:
 Usage:
   compare_journals.py <journal.jsonl> <journal.jsonl> [more...]
       Compares the LAST state_dump of every journal pairwise against the
-      first journal (treated as the server/authority). Roster checks are
-      the same as compare_state.py: per-side duplicates, then — restricted
-      to player_idx values marked remote by at least one side (local
-      splitscreen placeholder seats never cross the wire and coincide by
-      construction) — missing entries, name mismatches, remote flags not
-      opposite, remote-but-not-connected.
+      first journal (treated as the server/authority).
 
   compare_journals.py --timeline <journal.jsonl> [more...]
       Prints all journals merged into one timeline (prefixed by journal

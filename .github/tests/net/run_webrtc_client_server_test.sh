@@ -1,10 +1,10 @@
 #!/bin/bash
 # WebRTC-transport client/server replication integration test.
 #
-# Same coverage as run_client_server_test.sh (two BlamGraphics instances,
-# journal comparison via compare_journals.py) but routes the client's
-# connection through a webrtc-gateway (tools/webrtc-gateway) instead of a
-# direct UDP dial (see examples/blam/cblam-testing/WEBRTC_TRANSPORT.md).
+# Same coverage as the plain-UDP client/server test (two BlamGraphics
+# instances, journal comparison) but routes the client's connection
+# through a webrtc-gateway (tools/webrtc-gateway) instead of a direct UDP
+# dial (see examples/blam/cblam-testing/WEBRTC_TRANSPORT.md).
 #
 # One gateway, one topology: the server binds an ordinary GNS UDP listen
 # socket and registers it with the gateway's fleet registry
@@ -187,7 +187,7 @@ echo
 echo "=== Journal comparison ==="
 echo "server: $SERVER_JOURNAL"
 echo "client: $CLIENT_JOURNAL"
-echo "::group::compare_journals.py"
+echo "::group::journal comparison"
 python3 "$HERE/compare_journals.py" "$SERVER_JOURNAL" "$CLIENT_JOURNAL"
 RESULT=$?
 echo "::endgroup::"

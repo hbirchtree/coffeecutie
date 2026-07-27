@@ -15,7 +15,7 @@
         "gles": [],
         "screenshot_quality": 60
     },
-    "comment": "Server side of the multiplayer movement + map-switch scenario. Connection is driven by the process's --listen CLI arg (see run_client_server_test.sh). Walks the host around bloodgulch on a synthetic gamepad, then injects a switch_map event (resource_creation.cpp) which fires MapLoadStart on the GameEventBus; the MapLoadFinishedEvent handler in networking.cpp then re-sends GameJoin to the already-connected client so it follows onto the new map. Walks a bit more post-switch to confirm input/camera survived the reload, then dumps state.",
+    "comment": "Server side of the multiplayer movement + map-switch scenario. Connection is driven by the process's --listen CLI arg (see the harness script that launches it). Walks the host around bloodgulch on a synthetic gamepad, then injects a switch_map event (resource_creation.cpp) which fires MapLoadStart on the GameEventBus; the MapLoadFinishedEvent handler in networking.cpp then re-sends GameJoin to the already-connected client so it follows onto the new map. Walks a bit more post-switch to confirm input/camera survived the reload, then dumps state.",
     "events": [
         {"time": 1000, "type": "render_param", "debug_markers": true},
         {"time": 1200, "type": "controller_connect", "index": 0},

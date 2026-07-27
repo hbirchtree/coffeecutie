@@ -2,15 +2,15 @@
 # NAT punch-through integration test against a real, internet-hosted
 # webrtc-gateway.
 #
-# Same client/server roles as .github/tests/web/run_webrtc_web_client_test.sh
-# (fleet registration, wasm browser client via /signal?server=<id>,
-# direct-UDP-over-DataChannel -- see that script and
-# examples/blam/cblam-testing/WEBRTC_TRANSPORT.md's Phase 6 section), and
-# the same shared harness (webrtc_test_lib.sh). The one difference is the
-# one that matters: nothing here is on loopback. The gateway is a separate
-# deployment out on the internet (URL from the WEBRTC_GATEWAY_SERVER
-# secret) and the native server runs on this machine behind whatever NAT
-# the runner sits behind, with no port forwarding.
+# Same client/server roles as the loopback wasm-client test (fleet
+# registration, wasm browser client via /signal?server=<id>,
+# direct-UDP-over-DataChannel -- see
+# examples/blam/cblam-testing/WEBRTC_TRANSPORT.md's Phase 6 section), on
+# the same shared harness. The one difference is the one that matters:
+# nothing here is on loopback. The gateway is a separate deployment out on
+# the internet (URL from the WEBRTC_GATEWAY_SERVER secret) and the native
+# server runs on this machine behind whatever NAT the runner sits behind,
+# with no port forwarding.
 #
 # That is the whole point: the gateway has no route to this server, so a
 # registration can only go active if the server's own UDP punch opened a
@@ -18,16 +18,11 @@
 # only exchange traffic if the per-client relay punch did the same. A
 # loopback run proves neither.
 #
-# Replaces an earlier docker-compose topology (alpine MASQUERADE router +
-# internal network) that never passed in CI -- a real remote gateway is
-# both simpler and a stricter test.
-#
 # Pass criteria:
 #   - the server's registration reaches active against the remote gateway
 #     (return-routability across the NAT, both directions)
 #   - the server logs a per-client relay punch for the browser's session
 #   - the browser completes the four connect/join/roster-sync markers
-#     (webrtc_client_smoke.mjs)
 #
 # Topology:
 #   client(wasm,browser,here) --wss--> gateway(internet) --UDP--> [NAT] --> server(here)
@@ -37,8 +32,7 @@
 #   run_webrtc_nat_punch_test.sh [BUNDLE_DIR] [OUT_DIR]
 #
 # Env overrides (plus the shared SERVER_BINARY/SERVER_LD/SERVER_LIB_PATH
-# and BOOT_TIMEOUT_MS/CONNECT_TIMEOUT_MS documented in webrtc_test_lib.sh
-# and run_webrtc_web_client_test.sh):
+# and BOOT_TIMEOUT_MS/CONNECT_TIMEOUT_MS the harness documents):
 #   The gateway itself must be reachable for WebRTC, not just for signaling:
 #   run it with -public-ip <its public address> and publish the
 #   -ice-udp-port-min/-max range. It is ICE-lite, so it advertises only the

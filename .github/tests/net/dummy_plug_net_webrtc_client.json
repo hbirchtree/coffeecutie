@@ -15,7 +15,7 @@
         "gles": [],
         "screenshot_quality": 60
     },
-    "comment": "Client side of the WebRTC-transport client/server harness (run_webrtc_client_server_test.sh). Connection itself is driven by the process's --server CLI arg (ws://..., see connect_server_webrtc in networking.cpp), not by this config. Later dump_state/end_time than the plain-UDP scenario (dummy_plug_net_client.json) -- see dummy_plug_net_webrtc_server.json's comment for why.",
+    "comment": "Client side of the WebRTC-transport client/server harness (native<->native, WebRTC transport). Connection itself is driven by the process's --server CLI arg (ws://..., see connect_server_webrtc in networking.cpp), not by this config. Later dump_state/end_time than the plain-UDP scenario (the plain-UDP client config) -- see the server-side config's comment for why.",
     "events": [
         {"time": 1000, "type": "render_param", "debug_markers": true},
         {"time": 1500, "type": "camera", "physics": true},

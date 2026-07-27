@@ -5,26 +5,19 @@
 // at a webrtc-gateway (tools/webrtc-gateway) via a ?server=ws://... URL
 // query param (see examples/blam/cblam-testing/WEBRTC_TRANSPORT.md's
 // Phase 3 section), and verifies the connection actually completes end to
-// end against a native GNS server on the other side of the gateway --
-// the wasm-client / gateway / native-server scenario this whole effort
-// has been aimed at.
+// end against the GNS server on the other side of the gateway.
 //
-// Unlike webgl_smoke.mjs, this does NOT check rendering (WebGL context,
-// frames, draw calls) -- it only cares whether the network handshake
-// completes. It also can't use dummy_plug/Journal for verification the
-// way the native-to-native test (.github/tests/net/run_webrtc_client_server_test.sh)
-// does: comp_app::dummy_plug is compiled out entirely on emscripten (see
-// .github/tests/web/README.md's "Tier 2" section) -- there's no
-// dump_state/state.json on this side. Verification here is
-// console-log-marker-based instead: Networking's own cDebug() calls
-// (unconditional, not gated behind dummy_plug/journal) already print the
-// same lines this session used to manually verify the native test by
-// hand -- "Player joined", "Received join confirmation", "roster
-// received" -- so scan the captured browser console output for those.
+// This does NOT check rendering (WebGL context, frames, draw calls) --
+// only whether the network handshake completes. It also can't use
+// dummy_plug/Journal for verification the way the native tests do:
+// comp_app::dummy_plug is compiled out entirely on emscripten, so there
+// is no dump_state/state.json on this side. Verification is
+// console-log-marker-based instead -- Networking's own cDebug() calls are
+// unconditional, so scan the captured browser console for them.
 //
-// Orchestration (gateways + native server) lives in the sibling shell
-// script run_webrtc_web_client_test.sh, which starts this after the
-// server is registered and passes BUNDLE_DIR/SERVER_URL via env.
+// Orchestration (gateway + server) lives in the sibling shell script,
+// which starts this once the server is registered and passes
+// BUNDLE_DIR/SERVER_URL (plus HOST_URL for wasm<->wasm) via env.
 
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
@@ -43,6 +36,19 @@ const cfg = {
   // wall-clock time -- see WEBRTC_TRANSPORT.md).
   connectTimeoutMs: Number(process.env.CONNECT_TIMEOUT_MS || 60000),
   viewport: { width: 640, height: 480 },
+
+  // Setting HOST_URL makes this a wasm<->wasm run: a second browser page
+  // is booted first as a WebRTC-hosted server (--listen ws://gw#id, see
+  // networking.cpp's create_server_webrtc) and the client is pointed at
+  // it. Both halves are then DataChannel peers of the gateway, which
+  // bridges them (transportWebRTC) -- no UDP anywhere in the path. Unset
+  // means the original single-page run against a native server.
+  hostUrl: process.env.HOST_URL || '',
+  // Filename, extension included: graphics.cpp passes --map to MkUrl as-is.
+  hostMap: process.env.HOST_MAP || 'bloodgulch.map',
+  // The host has to boot AND get its registration accepted before the
+  // client may dial it; a cold wasm boot on a CI runner is the slow part.
+  hostReadyTimeoutMs: Number(process.env.HOST_READY_TIMEOUT_MS || 120000),
 };
 
 const MIME = {
@@ -56,9 +62,8 @@ const MIME = {
   '.css': 'text/css; charset=utf-8',
 };
 
-// Same COOP/COEP-header static server as webgl_smoke.mjs -- needed for
-// SharedArrayBuffer/threaded wasm (this build always uses -pthread, see
-// WEBRTC_TRANSPORT.md's Phase 3 threading note), independent of WebRTC.
+// COOP/COEP headers are required for SharedArrayBuffer/threaded wasm
+// (this build always uses -pthread), independent of WebRTC.
 function startServer(rootDir) {
   const root = normalize(rootDir);
   const server = createServer(async (req, res) => {
@@ -93,17 +98,28 @@ const FATAL_PATTERNS = [
   /memory access out of bounds/i, /\bOOM\b/, /maximum call stack/i,
 ];
 
-// Markers this test actually cares about, in the order the connect flow
-// produces them -- see networking.cpp's cDebug() calls at each step.
-// Matching any one of the "connected" markers isn't enough on its own
-// (GNS can reach Connected without the server-side dispatch fix ever
-// running -- that was the actual bug this session spent the most time
-// on); PASS requires the full round trip, ending in roster sync.
+// Markers this test cares about, in the order the connect flow produces
+// them. A "connected" marker alone is not enough: GNS can reach Connected
+// while the server-side dispatch is broken, so PASS requires the full
+// round trip, ending in roster sync.
 const MARKERS = [
   { label: 'WebRTC transport connected', re: /P2P WebRTC vport \d+\]\s*connected|-> k_ESteamNetworkingConnectionState_Connected\b/ },
   { label: 'GameJoin received (map load)', re: /Loading map .* as requested by server/ },
   { label: 'PlayerJoin sent, join confirmation received', re: /Received join confirmation, player_id=\d+/ },
   { label: 'Player roster received', re: /Player roster received:/ },
+];
+
+// Host-side markers, wasm<->wasm runs only. The first two gate the client
+// (nothing may dial a server that has not been accepted by the gateway);
+// 'accepted a client' is checked at the end, and is what separates a real
+// wasm host from a page that merely registered and then did nothing.
+const HOST_READY_MARKERS = [
+  { label: 'host started (WebRTC-hosted server)', re: /Starting WebRTC-hosted server: gateway=/ },
+  { label: 'host registration active', re: /registration active for serverId=/ },
+];
+const HOST_MARKERS = [
+  ...HOST_READY_MARKERS,
+  { label: 'host accepted a client', re: /Player joined:/ },
 ];
 
 const logLines = [];
@@ -114,6 +130,54 @@ const record = (s, level = 'DEBG') => {
   logLines.push(msg);
   console.log(msg);
 };
+
+const waitFor = async (predicate, timeoutMs) => {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (predicate()) return true;
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return predicate();
+};
+
+// Boots one BlamGraphics page and wires its console into the shared log,
+// tagged with the role so a wasm<->wasm run's two pages stay readable.
+// Returns the marker set it fills in, plus its own fatal/timeout state --
+// both roles are scanned identically, only their marker lists differ.
+async function launchRole(browser, { url, role, markers }) {
+  const state = { found: new Set(), sawFatal: false, timedOut: false };
+
+  const scan = (text) => {
+    if (FATAL_PATTERNS.some((re) => re.test(text))) state.sawFatal = true;
+    for (const m of markers) {
+      if (!state.found.has(m.label) && m.re.test(text)) {
+        state.found.add(m.label);
+        record(`[${role}] marker hit: ${m.label}`);
+      }
+    }
+  };
+
+  const page = await browser.newPage({ viewport: cfg.viewport });
+  page.on('console', (msg) => {
+    const text = msg.text();
+    record(`[${role}] ${text}`, msg.type() === 'error' ? 'ERR' : msg.type() === 'warning' ? 'WARN' : 'DEBG');
+    scan(text);
+  });
+  page.on('pageerror', (err) => {
+    const msg = err.stack || err.message || String(err);
+    record(`[${role}] ${msg}`, 'ERR');
+    scan(msg);
+  });
+  page.on('crash', () => { record(`[${role}] page crashed`, 'ERR'); state.sawFatal = true; });
+
+  try {
+    await page.goto(url, { waitUntil: 'load', timeout: cfg.bootTimeoutMs });
+  } catch (e) {
+    state.timedOut = true;
+    record(`[${role}] page load timed out: ${e.message}`, 'WARN');
+  }
+  return state;
+}
 
 async function main() {
   let browser, server;
@@ -155,64 +219,63 @@ async function main() {
       ],
     });
 
-    let sawFatal = false;
-    const scanFatal = (text) => {
-      if (FATAL_PATTERNS.some((re) => re.test(text))) sawFatal = true;
-    };
+    // wasm<->wasm: the host page has to be registered and accepted by the
+    // gateway before the client dials it, or the client's /signal gets
+    // rejected outright with "unknown server".
+    let host;
+    if (cfg.hostUrl) {
+      // --map, not a positional: the query-param shim only produces
+      // "--key value" pairs, which is why graphics.cpp declares a map
+      // option on platforms without a real command line.
+      const hostPageUrl = `http://127.0.0.1:${port}/${cfg.page}`
+        + `?listen=${encodeURIComponent(cfg.hostUrl)}&map=${encodeURIComponent(cfg.hostMap)}`;
+      record(`Booting wasm host page at ${hostPageUrl}`);
+      host = await launchRole(browser, { url: hostPageUrl, role: 'host', markers: HOST_MARKERS });
 
-    const foundMarkers = new Set();
-    const scanMarkers = (text) => {
-      for (const m of MARKERS) {
-        if (!foundMarkers.has(m.label) && m.re.test(text)) {
-          foundMarkers.add(m.label);
-          record(`marker hit: ${m.label}`);
-        }
+      const hostReady = await waitFor(
+        () => HOST_READY_MARKERS.every((m) => host.found.has(m.label)) || host.sawFatal,
+        cfg.hostReadyTimeoutMs);
+      if (!hostReady || host.sawFatal || host.timedOut) {
+        throw new Error('wasm host never reached an active registration'
+          + ` (fatal=${host.sawFatal} timedOut=${host.timedOut})`);
       }
-    };
-
-    const page = await browser.newPage({ viewport: cfg.viewport });
-    page.on('console', (msg) => {
-      const text = msg.text();
-      record(text, msg.type() === 'error' ? 'ERR' : msg.type() === 'warning' ? 'WARN' : 'DEBG');
-      scanFatal(text);
-      scanMarkers(text);
-    });
-    page.on('pageerror', (err) => {
-      const msg = err.stack || err.message || String(err);
-      record(msg, 'ERR');
-      scanFatal(msg);
-    });
-    page.on('crash', () => { record('page crashed', 'ERR'); sawFatal = true; });
-
-    let timedOut = false;
-    try {
-      await page.goto(url, { waitUntil: 'load', timeout: cfg.bootTimeoutMs });
-    } catch (e) {
-      timedOut = true;
-      record(`page load timed out: ${e.message}`, 'WARN');
+      record('wasm host is registered and active; starting the client.');
     }
 
-    if (!timedOut && !sawFatal) {
+    const client = await launchRole(browser, { url, role: 'client', markers: MARKERS });
+
+    if (!client.timedOut && !client.sawFatal) {
       record(`Waiting up to ${cfg.connectTimeoutMs}ms for the full connect+roster-sync sequence...`);
-      const deadline = Date.now() + cfg.connectTimeoutMs;
-      while (Date.now() < deadline && foundMarkers.size < MARKERS.length && !sawFatal) {
-        await new Promise((r) => setTimeout(r, 250));
-      }
+      await waitFor(
+        () => (client.found.size === MARKERS.length
+               && (!host || host.found.size === HOST_MARKERS.length))
+              || client.sawFatal || (host && host.sawFatal),
+        cfg.connectTimeoutMs);
     }
 
     await browser.close().catch(() => {});
     browser = undefined;
 
+    const sawFatal = client.sawFatal || (host ? host.sawFatal : false);
+    const timedOut = client.timedOut || (host ? host.timedOut : false);
+
     record('');
     record('================ WebRTC client smoke result ================');
+    if (host) {
+      for (const m of HOST_MARKERS) {
+        record(`  ${host.found.has(m.label) ? 'PASS' : 'FAIL'}  [host]   ${m.label}`);
+      }
+    }
     for (const m of MARKERS) {
-      record(`  ${foundMarkers.has(m.label) ? 'PASS' : 'FAIL'}  ${m.label}`);
+      record(`  ${client.found.has(m.label) ? 'PASS' : 'FAIL'}  [client] ${m.label}`);
     }
     record(`no wasm abort/trap: ${!sawFatal}`);
     record(`did not time out booting: ${!timedOut}`);
     record('===============================================================');
 
-    const ok = !timedOut && !sawFatal && foundMarkers.size === MARKERS.length;
+    const ok = !timedOut && !sawFatal
+      && client.found.size === MARKERS.length
+      && (!host || host.found.size === HOST_MARKERS.length);
     if (!ok) {
       record('FAILED.', 'ERR');
       process.exitCode = 1;

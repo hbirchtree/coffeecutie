@@ -584,6 +584,81 @@ jobs:
         name: dummy_plug_test_webrtc_wasm_client
         path: /tmp/webrtc_wasm_client_test
         if-no-files-found: error
+  Test_webrtc_wasm_pair:
+    # Wasm on BOTH sides: one browser page hosts (registering with
+    # transport=webrtc), the other connects, and the gateway bridges their
+    # two DataChannels -- no UDP in the path at all. Test_webrtc_wasm_client
+    # covers the DataChannel<->UDP relay; this covers the
+    # DataChannel<->DataChannel bridge (handleHostSignal) with a real
+    # browser at each end, which nothing else does. Same script, same
+    # markers, SERVER_ROLE=wasm -- so there is no native server, no
+    # sysroot and no Mesa/EGL setup to do here.
+    if: ${{ always() }}
+    name: "WebRTC test: wasm client to wasm server through gateway"
+    needs:
+    - WebAssembly
+    - WebRTCGateway
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        path: source
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - name: Downloading web-wasm32-emscripten-webgl2 artifacts (both roles)
+      uses: actions/download-artifact@v8
+      with:
+        name: web-wasm32-emscripten-webgl2
+        path: client_artifacts/
+    - name: Downloading webrtc-gateway-linux-amd64 artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: webrtc-gateway-linux-amd64
+        path: gateway_artifacts/
+    - name: Locating wasm bundle
+      id: bundle
+      run: |
+        BUNDLE=$(find client_artifacts -type d -name BlamGraphics.bundle | head -n 1)
+        echo "dir=$PWD/$BUNDLE" >> "$GITHUB_OUTPUT"
+    - name: Downloading test assets
+      run: |
+        mkdir -p maps/pc/
+        wget -q -O maps/pc/bloodgulch.map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bloodgulch.map
+        wget -q -O maps/pc/bitmaps.map    --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bitmaps.map
+        wget -q -O maps/pc/sounds.map     --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/sounds.map
+    - name: Installing gateway binary
+      run: |
+        mkdir -p source/tools/webrtc-gateway
+        cp gateway_artifacts/gateway source/tools/webrtc-gateway/gateway
+        chmod +x source/tools/webrtc-gateway/gateway
+    - name: Run WebRTC wasm-to-wasm test
+      env:
+        SERVER_ROLE: wasm
+        MAP: ${{ github.workspace }}/maps/pc/bloodgulch.map
+        CI: "true"
+        # Two cold wasm boots in one browser, not one: both the per-page
+        # boot budget and the host-ready wait are raised accordingly.
+        BOOT_TIMEOUT_MS: "60000"
+        CONNECT_TIMEOUT_MS: "90000"
+        HOST_READY_TIMEOUT_MS: "180000"
+        # A different gateway port from Test_webrtc_wasm_client's, so the
+        # two jobs stay independent even on a shared runner.
+        GATEWAY_HTTP_PORT: "8099"
+      run: |
+        source/.github/tests/web/run_webrtc_web_client_test.sh "${{ steps.bundle.outputs.dir }}" /tmp/webrtc_wasm_pair_test
+    - name: Uploading test artifacts
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: dummy_plug_test_webrtc_wasm_pair
+        path: /tmp/webrtc_wasm_pair_test
+        if-no-files-found: error
   Test_webrtc_nat_punch:
     # Same wasm-client/native-server scenario as Test_webrtc_wasm_client,
     # but against a real gateway deployed on the internet (the
@@ -740,6 +815,7 @@ jobs:
     - Test_x86_64_mesa
     - Test_wasm_swiftshader
     - Test_webrtc_wasm_client
+    - Test_webrtc_wasm_pair
     runs-on: ubuntu-latest
     permissions:
       actions: read

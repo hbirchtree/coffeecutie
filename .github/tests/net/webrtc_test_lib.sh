@@ -3,11 +3,10 @@
 #
 #   . "$(dirname "$0")/webrtc_test_lib.sh"
 #
-# The three tests that use it (native<->native, wasm client, NAT
-# punch-through against a remote gateway) all drive the same topology --
-# one gateway, one fleet-registered native server, one client -- and
-# differ only in where the gateway lives and what plays the client. Only
-# those differences belong in the individual scripts.
+# Its callers all drive the same topology -- one gateway, one
+# fleet-registered server, one client -- and differ only in where the
+# gateway lives and what plays each role. Only those differences belong in
+# the individual scripts.
 #
 # Functions set these globals rather than echoing (arrays don't survive
 # command substitution): WEBRTC_GW_PID, WEBRTC_SERVER_PID,
@@ -27,10 +26,10 @@ webrtc_find_bundle() {
     realpath "$bundle"
 }
 
-# webrtc_client_smoke.mjs's static server only serves the bundle dir, and
-# the wasm client asks for maps by bare relative path -- so every .map
-# next to $1 gets symlinked in rather than teaching the server about a
-# second directory.
+# The browser tests' static server only serves the bundle dir, and the
+# wasm build asks for maps by bare relative path -- so every .map next to
+# $1 gets symlinked in rather than teaching the server about a second
+# directory.
 webrtc_link_maps() {
     local map="$1" bundle="$2" mapfile
     for mapfile in "$(dirname "$map")"/*.map; do
@@ -142,8 +141,8 @@ webrtc_start_gateway() {
 # Builds the server invocation into WEBRTC_SERVER_CMD/WEBRTC_SERVER_ENV.
 # SERVER_BINARY runs a prebuilt binary directly (CI has no local build
 # tree for `cb run`), optionally through SERVER_LD -- a specific
-# loader/sysroot, which .github/tests/test_blam_graphics.sh established as
-# the only reliable way to get a working headless Mesa/EGL stack in CI.
+# loader/sysroot, which is the only reliable way to get a working headless
+# Mesa/EGL stack in CI.
 webrtc_server_command() {
     local target="$1"
     shift

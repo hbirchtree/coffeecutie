@@ -1,0 +1,17 @@
+{
+    "comment": "Enables the Halo shell UI (UIRenderer pause menu) and holds a bloodgulch view so the UI overlay is captured. The 'render_param' custom event drives RenderingParameters::render_ui, which on desktop is toggled via the ImGui checkbox.",
+    "graphics": {
+        "window": {
+            "width": 1280,
+            "height": 720
+        }
+    },
+    "events": [
+        {"time": 800, "type": "camera", "position": [119.427414, -183.3026, 7.780891], "rotation": [0.9190232, 0.050596938, 0.39035165, 0.021490876]},
+        {"time": 1200, "type": "render_param", "render_ui": true},
+        {"time": 2000, "type": "mouse_move", "x": 640, "y": 360},
+        {"time": 2500, "type": "screenshot", "name": "ui_test"}
+    ],
+    "frame_delta": 33.333,
+    "end_time": 10000
+}
