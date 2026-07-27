@@ -1007,6 +1007,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 placeholder, pc, dc, config.size(), config.data());
         } else
         {
+#if !defined(COFFEE_WASM)
             m_utils->SetGlobalConfigValueString(
                 k_ESteamNetworkingConfig_P2P_STUN_ServerList,
                 "stun.l.google.com:19302");
@@ -1014,6 +1015,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             config.back().SetInt32(
                 k_ESteamNetworkingConfig_P2P_Transport_ICE_Enable,
                 k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_All);
+#endif
             auto* bootstrap   = m_webrtcBootstrap;
             m_webrtcBootstrap = nullptr;
             m_connection      = m_impl->ConnectP2PWebRTCDataChannel(
@@ -1114,12 +1116,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
          * beats the relayed DataChannel and GNS switches to it, at which
          * point the relay is retired (pollDirectRouteTakeover). A browser
          * peer has no ICE of its own, so it just stays on the bridge. */
+#if !defined(COFFEE_WASM)
         m_utils->SetGlobalConfigValueString(
             k_ESteamNetworkingConfig_P2P_STUN_ServerList,
             "stun.l.google.com:19302");
         m_utils->SetGlobalConfigValueInt32(
             k_ESteamNetworkingConfig_P2P_Transport_ICE_Enable,
             k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_All);
+#endif
         m_webrtcServer =
             std::make_unique<webrtc_signaling::GatewayServerRegistration>(
                 gatewayUrl, serverId, m_impl);
