@@ -734,8 +734,6 @@ void GatewayServerRegistration::RemovePendingAccept(
 
 void GatewayServerRegistration::PollPendingAccepts()
 {
-    hang_watchdog::tick();
-
     constexpr std::chrono::seconds kHeartbeatInterval{10};
     bool sendBeat = false;
     {
