@@ -119,6 +119,50 @@ webrtc_find_go() {
     echo "$go"
 }
 
+# Opt-in engine build, gated on BUILD like the gateway's is on
+# BUILD_GATEWAY. Returns 2 on failure so callers can exit straight through.
+webrtc_build_target() {
+    local target="$1"
+    [ "${BUILD:-0}" = "0" ] && return 0
+    echo "::group::Building $target"
+    BUILD_HOST_TOOLS=0 COFFEE_DISABLE_PROFILER=1 ./cb build "$target" || {
+        echo "FAIL: build failed"
+        echo "::endgroup::"
+        return 2
+    }
+    echo "::endgroup::"
+    return 0
+}
+
+# Creates the per-run directory layout every test uses and exports the
+# paths as globals: WEBRTC_SERVER_TMP/WEBRTC_CLIENT_TMP (each process needs
+# its own TMPDIR -- the journal and state dump land there),
+# WEBRTC_SERVER_LOG/WEBRTC_CLIENT_LOG/WEBRTC_GATEWAY_LOG and the two
+# journal paths. Stale logs are removed so a re-run can't be read as fresh.
+webrtc_prepare_out_dir() {
+    local out_dir="$1"
+    WEBRTC_SERVER_TMP="$out_dir/server_tmp"
+    WEBRTC_CLIENT_TMP="$out_dir/client_tmp"
+    mkdir -p "$WEBRTC_SERVER_TMP" "$WEBRTC_CLIENT_TMP"
+    WEBRTC_SERVER_LOG="$out_dir/server.log"
+    WEBRTC_CLIENT_LOG="$out_dir/client.log"
+    WEBRTC_GATEWAY_LOG="$out_dir/gateway.log"
+    WEBRTC_SERVER_JOURNAL="$WEBRTC_SERVER_TMP/journal.jsonl"
+    WEBRTC_CLIENT_JOURNAL="$WEBRTC_CLIENT_TMP/journal.jsonl"
+    rm -f "$WEBRTC_SERVER_LOG" "$WEBRTC_CLIENT_LOG" "$WEBRTC_GATEWAY_LOG" \
+          "$WEBRTC_SERVER_JOURNAL" "$WEBRTC_CLIENT_JOURNAL"
+    return 0
+}
+
+# Kills every PID this harness may have started. Callers trap it on EXIT.
+webrtc_cleanup_pids() {
+    local pid
+    for pid in "${WEBRTC_CLIENT_PID:-}" "${WEBRTC_SERVER_PID:-}" "${WEBRTC_GW_PID:-}"; do
+        [ -n "$pid" ] && kill "$pid" 2>/dev/null
+    done
+    return 0
+}
+
 # Starts a local gateway and waits for its port. Sets WEBRTC_GW_PID.
 webrtc_start_gateway() {
     local bin="$1" port="$2" log="$3" timeout="${4:-30}"
@@ -175,6 +219,67 @@ webrtc_start_server() {
     return 0
 }
 
+# The native-client counterpart: same launcher, its own TMPDIR (journal and
+# state dump land there) and its own connect args. Sets WEBRTC_CLIENT_PID.
+webrtc_start_native_client() {
+    local target="$1" resource_dir="$2" map="$3" log="$4" tmpdir="$5"
+    local dummy_plug_config="$6" run_timeout="$7"
+    shift 7
+    # set -u is on in the callers, and the server command may not have been
+    # built yet in a client-only run.
+    local saved_cmd=("${WEBRTC_SERVER_CMD[@]:-}")
+    webrtc_server_command "$target" "$resource_dir" "$map" "$@"
+    TMPDIR="$tmpdir" \
+    DUMMY_PLUG_CONFIG="$dummy_plug_config" \
+    COFFEE_DISABLE_PROFILER=1 \
+    timeout "${run_timeout}s" "${WEBRTC_SERVER_ENV[@]}" "${WEBRTC_SERVER_CMD[@]}" \
+        > "$log" 2>&1 &
+    WEBRTC_CLIENT_PID=$!
+    # The server's own invocation is still needed by nothing after this
+    # point, but restoring it keeps the global honest for later callers.
+    WEBRTC_SERVER_CMD=("${saved_cmd[@]}")
+    return 0
+}
+
+# Greps one log for the lines worth seeing, inside a collapsed group.
+webrtc_dump_matching() {
+    local label="$1" file="$2" pattern="$3"
+    echo "::group::$label"
+    grep -E "$pattern" "$file" 2>/dev/null || true
+    echo "::endgroup::"
+    return 0
+}
+
+# Both native tests end the same way: fail if either journal is missing,
+# diff them, and on a mismatch print the merged timeline. Returns the
+# comparison's exit code.
+webrtc_compare_journals() {
+    local server_journal="$1" client_journal="$2" compare_script="$3"
+    local journal
+    for journal in "$server_journal" "$client_journal"; do
+        if [ ! -s "$journal" ]; then
+            echo "FAIL: $journal was never written (journal disabled, or the process died at startup?)"
+            return 1
+        fi
+    done
+
+    echo
+    echo "=== Journal comparison ==="
+    echo "server: $server_journal"
+    echo "client: $client_journal"
+    echo "::group::journal comparison"
+    python3 "$compare_script" "$server_journal" "$client_journal"
+    local result=$?
+    echo "::endgroup::"
+    if [ "$result" != "0" ]; then
+        echo
+        echo "::group::merged journal timeline"
+        python3 "$compare_script" --timeline "$server_journal" "$client_journal" || true
+        echo "::endgroup::"
+    fi
+    return $result
+}
+
 # Waits for the fleet registration's return-routability challenge to pass.
 # This is the one boot signal worth gating on: it means the gateway has
 # accepted the server AND can reach it.
@@ -200,15 +305,21 @@ webrtc_wait_for_registration() {
 }
 
 # Drives the headless-Chromium wasm client. Returns its exit code: 0 means
-# all four connect/join/roster-sync markers were seen.
+# all connect/join/roster-sync markers were seen. Its output goes to a file
+# (path in WEBRTC_CLIENT_LOG) rather than the terminal: every browser
+# console line would otherwise stream past ungrouped, and callers dump it
+# collapsed on failure anyway.
 webrtc_run_wasm_client() {
     local bundle="$1" out_dir="$2" url="$3" smoke="$4"
+    mkdir -p "$out_dir"
+    WEBRTC_CLIENT_LOG="$out_dir/console.log"
+    echo "Browser console -> $WEBRTC_CLIENT_LOG"
     BUNDLE_DIR="$bundle" \
     OUT_DIR="$out_dir" \
     SERVER_URL="$url" \
     BOOT_TIMEOUT_MS="${BOOT_TIMEOUT_MS:-45000}" \
     CONNECT_TIMEOUT_MS="${CONNECT_TIMEOUT_MS:-60000}" \
-    node "$smoke"
+    node "$smoke" > "$WEBRTC_CLIENT_LOG" 2>&1
 }
 
 # The server-side log lines worth surfacing in CI, collapsed.

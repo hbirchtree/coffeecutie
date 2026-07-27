@@ -79,15 +79,7 @@ CLIENT_DUMMY_PLUG_CONFIG="${CLIENT_DUMMY_PLUG_CONFIG:-$HERE/dummy_plug_net_webrt
 
 GATEWAY_BIN="$GATEWAY_DIR/gateway"
 
-SERVER_TMP="$OUT_DIR/server_tmp"
-CLIENT_TMP="$OUT_DIR/client_tmp"
-mkdir -p "$SERVER_TMP" "$CLIENT_TMP"
-SERVER_LOG="$OUT_DIR/server.log"
-CLIENT_LOG="$OUT_DIR/client.log"
-GATEWAY_LOG="$OUT_DIR/gateway.log"
-SERVER_JOURNAL="$SERVER_TMP/journal.jsonl"
-CLIENT_JOURNAL="$CLIENT_TMP/journal.jsonl"
-rm -f "$SERVER_LOG" "$CLIENT_LOG" "$GATEWAY_LOG" "$SERVER_JOURNAL" "$CLIENT_JOURNAL"
+webrtc_prepare_out_dir "$OUT_DIR"
 
 echo "Out dir  : $OUT_DIR"
 echo "Target   : $TARGET"
@@ -99,28 +91,12 @@ else
 fi
 
 webrtc_build_gateway "$GATEWAY_DIR" "$(webrtc_find_go)" || exit 2
+webrtc_build_target "$TARGET" || exit 2
 
-if [ "${BUILD:-0}" != "0" ]; then
-    echo "::group::Building $TARGET"
-    BUILD_HOST_TOOLS=0 COFFEE_DISABLE_PROFILER=1 ./cb build "$TARGET" || {
-        echo "FAIL: build failed"
-        echo "::endgroup::"
-        exit 2
-    }
-    echo "::endgroup::"
-fi
+trap webrtc_cleanup_pids EXIT
 
-CLIENT_PID=""
-cleanup() {
-    for pid in "$CLIENT_PID" "${WEBRTC_SERVER_PID:-}" "${WEBRTC_GW_PID:-}"; do
-        [ -n "$pid" ] && kill "$pid" 2>/dev/null
-    done
-}
-trap cleanup EXIT
+webrtc_start_gateway "$GATEWAY_BIN" "$GATEWAY_HTTP_PORT" "$WEBRTC_GATEWAY_LOG" "$BOOT_TIMEOUT" || exit 1
 
-webrtc_start_gateway "$GATEWAY_BIN" "$GATEWAY_HTTP_PORT" "$GATEWAY_LOG" "$BOOT_TIMEOUT" || exit 1
-
-BASE_RUN_ARGS=(run "$TARGET" -- "$RESOURCE_DIR" "$MAP")
 GATEWAY_URL="ws://127.0.0.1:$GATEWAY_HTTP_PORT"
 
 if [ "$SERVER_TRANSPORT" = "webrtc" ]; then
@@ -139,23 +115,20 @@ else
         --gateway-register "$GATEWAY_URL" \
         --gateway-server-id "$SERVER_ID"
 fi
-webrtc_start_server "$SERVER_LOG" "$SERVER_TMP" "$SERVER_DUMMY_PLUG_CONFIG" "$RUN_TIMEOUT"
+webrtc_start_server "$WEBRTC_SERVER_LOG" "$WEBRTC_SERVER_TMP" "$SERVER_DUMMY_PLUG_CONFIG" "$RUN_TIMEOUT"
 
-webrtc_wait_for_registration "$SERVER_LOG" "$SERVER_ID" "$BOOT_TIMEOUT" "$WEBRTC_SERVER_PID" || {
-    webrtc_dump "gateway.log" "$GATEWAY_LOG"
+webrtc_wait_for_registration "$WEBRTC_SERVER_LOG" "$SERVER_ID" "$BOOT_TIMEOUT" "$WEBRTC_SERVER_PID" || {
+    webrtc_dump "gateway.log" "$WEBRTC_GATEWAY_LOG"
     exit 1
 }
 
 echo "Starting client (--server $GATEWAY_URL#$SERVER_ID)..."
-TMPDIR="$CLIENT_TMP" \
-DUMMY_PLUG_CONFIG="$CLIENT_DUMMY_PLUG_CONFIG" \
-COFFEE_DISABLE_PROFILER=1 \
-timeout "${RUN_TIMEOUT}s" ./cb "${BASE_RUN_ARGS[@]}" --server "${GATEWAY_URL}#${SERVER_ID}" \
-    > "$CLIENT_LOG" 2>&1 &
-CLIENT_PID=$!
+webrtc_start_native_client "$TARGET" "$RESOURCE_DIR" "$MAP" \
+    "$WEBRTC_CLIENT_LOG" "$WEBRTC_CLIENT_TMP" "$CLIENT_DUMMY_PLUG_CONFIG" "$RUN_TIMEOUT" \
+    --server "${GATEWAY_URL}#${SERVER_ID}"
 
 echo "Waiting for both processes to finish (dummy_plug end_time closes them)..."
-wait "$CLIENT_PID"
+wait "$WEBRTC_CLIENT_PID"
 CLIENT_EXIT=$?
 wait "$WEBRTC_SERVER_PID"
 SERVER_EXIT=$?
@@ -165,36 +138,18 @@ if [ "$SERVER_EXIT" = "124" ] || [ "$CLIENT_EXIT" = "124" ]; then
     echo "FAIL: a process hit the ${RUN_TIMEOUT}s timeout (hung -- likely connection never established)"
 fi
 
-echo
-webrtc_dump "gateway.log" "$GATEWAY_LOG"
-echo "::group::server.log (connection + state-dump lines)"
-grep -E "State dumped|registration active|gateway_fleet_registration|Connection info|Player joined|Controller|Error|error" "$SERVER_LOG" || true
-echo "::endgroup::"
-echo "::group::client.log (connection + state-dump lines)"
-grep -E "State dumped|join confirmation|roster received|WebRTC|Error|error" "$CLIENT_LOG" || true
-echo "::endgroup::"
-
-if [ ! -s "$SERVER_JOURNAL" ]; then
-    echo "FAIL: $SERVER_JOURNAL was never written (journal disabled, or the process died at startup?)"
-    exit 1
-fi
-if [ ! -s "$CLIENT_JOURNAL" ]; then
-    echo "FAIL: $CLIENT_JOURNAL was never written (journal disabled, or the process died at startup?)"
-    exit 1
-fi
-
-echo
-echo "=== Journal comparison ==="
-echo "server: $SERVER_JOURNAL"
-echo "client: $CLIENT_JOURNAL"
-echo "::group::journal comparison"
-python3 "$HERE/compare_journals.py" "$SERVER_JOURNAL" "$CLIENT_JOURNAL"
+webrtc_compare_journals "$WEBRTC_SERVER_JOURNAL" "$WEBRTC_CLIENT_JOURNAL" "$HERE/compare_journals.py"
 RESULT=$?
-echo "::endgroup::"
-if [ "$RESULT" != "0" ]; then
+
+# Process logs are echoed only when something went wrong; they are in
+# OUT_DIR either way, which CI uploads as an artifact.
+if [ "$RESULT" != "0" ] || [ "$SERVER_EXIT" != "0" ] || [ "$CLIENT_EXIT" != "0" ]; then
     echo
-    echo "::group::merged journal timeline"
-    python3 "$HERE/compare_journals.py" --timeline "$SERVER_JOURNAL" "$CLIENT_JOURNAL" || true
-    echo "::endgroup::"
+    webrtc_dump "gateway.log" "$WEBRTC_GATEWAY_LOG"
+    webrtc_dump_matching "server.log (connection + state-dump lines)" "$WEBRTC_SERVER_LOG" \
+        "State dumped|registration active|gateway_fleet_registration|Connection info|Player joined|Controller|Error|error"
+    webrtc_dump_matching "client.log (connection + state-dump lines)" "$WEBRTC_CLIENT_LOG" \
+        "State dumped|join confirmation|roster received|WebRTC|Error|error"
 fi
+[ "$RESULT" = "0" ] && echo "PASS  (logs in $OUT_DIR)"
 exit $RESULT

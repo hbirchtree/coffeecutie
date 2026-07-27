@@ -114,22 +114,31 @@ webrtc_run_wasm_client "$BUNDLE_DIR" "$OUT_DIR/client" \
     "${GATEWAY_URL}#${SERVER_ID}" "$HERE/../web/webrtc_client_smoke.mjs"
 CLIENT_EXIT=$?
 
-echo
-webrtc_dump_server_lines "$SERVER_LOG"
-webrtc_dump "client (browser console) output.log" "$OUT_DIR/client/output.log"
-
 # The NAT-specific assertion, from our side of the NAT: the gateway asked
 # us to punch a per-client relay port, and we did. (The gateway's own
 # "authentic punch received from <addr>" line lives on the remote host and
 # isn't readable from here -- but the client markers below can't pass
 # without it having arrived.)
+#
+# Match only the stable prefix: what follows it is session identification
+# whose formatting has already changed once (session ID -> tracking IDs),
+# which silently turned this assertion into a guaranteed failure.
+NAT_PUNCH_MARKER="relay punch started for"
 NAT_OK=1
-if grep -q "relay punch started for session" "$SERVER_LOG" 2>/dev/null; then
+if grep -q "$NAT_PUNCH_MARKER" "$SERVER_LOG" 2>/dev/null; then
     echo "NAT check OK: per-client relay punch(es) sent:"
-    grep "relay punch started for session" "$SERVER_LOG" | sed 's/^/  /'
+    grep "$NAT_PUNCH_MARKER" "$SERVER_LOG" | sed 's/^/  /'
 else
     echo "FAIL: server never punched a per-client relay port (no client-relay from the gateway?)"
     NAT_OK=0
+fi
+
+# Logs are echoed only on failure; they are in OUT_DIR either way, which
+# CI uploads as an artifact.
+if [ "$CLIENT_EXIT" != "0" ] || [ "$NAT_OK" != "1" ]; then
+    echo
+    webrtc_dump_server_lines "$SERVER_LOG"
+    webrtc_dump "client (browser console)" "$WEBRTC_CLIENT_LOG"
 fi
 
 if [ "$CLIENT_EXIT" != "0" ]; then
@@ -139,4 +148,4 @@ fi
 if [ "$NAT_OK" != "1" ]; then
     exit 1
 fi
-echo "PASS"
+echo "PASS  (logs in $OUT_DIR)"

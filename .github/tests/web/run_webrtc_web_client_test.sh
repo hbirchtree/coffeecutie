@@ -204,19 +204,22 @@ if [ "$SERVER_EXIT" = "124" ]; then
     echo "FAIL: server hit the ${RUN_TIMEOUT}s timeout"
 fi
 
-echo
-webrtc_dump "gateway.log" "$GATEWAY_LOG"
-[ "$SERVER_ROLE" = "wasm" ] || webrtc_dump_server_lines "$SERVER_LOG"
-# In wasm mode both roles' console output is in this one file, tagged
-# [host]/[client] by the Playwright driver.
-webrtc_dump "client (browser console) output.log" "$OUT_DIR/client/output.log"
+# Logs are only echoed on failure -- they all live in OUT_DIR either way,
+# which CI uploads as an artifact. In wasm mode both roles' console output
+# is in the one client log, tagged [host]/[client].
+if [ "$CLIENT_EXIT" != "0" ] || [ "$SERVER_EXIT" = "124" ]; then
+    echo
+    webrtc_dump "gateway.log" "$GATEWAY_LOG"
+    [ "$SERVER_ROLE" = "wasm" ] || webrtc_dump_server_lines "$SERVER_LOG"
+    webrtc_dump "client (browser console)" "$WEBRTC_CLIENT_LOG"
+fi
 
 if [ "$CLIENT_EXIT" != "0" ]; then
-    echo "FAIL: wasm client did not complete the connect/join/roster-sync sequence (see client output.log above)"
+    echo "FAIL: wasm client did not complete the connect/join/roster-sync sequence"
     exit 1
 fi
 if [ "$SERVER_EXIT" = "124" ]; then
     exit 1
 fi
-echo "PASS"
+echo "PASS  (logs in $OUT_DIR)"
 exit 0

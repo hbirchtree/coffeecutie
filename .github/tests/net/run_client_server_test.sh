@@ -46,6 +46,8 @@
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 SRCDIR="$(cd "$HERE/../../.." && pwd)"
+# shellcheck source=.github/tests/net/webrtc_test_lib.sh
+. "$HERE/webrtc_test_lib.sh"
 cd "$SRCDIR"
 
 OUT_DIR="${1:-/tmp/net_test}"
@@ -87,57 +89,37 @@ PYEOF
     fi
 fi
 
-SERVER_TMP="$OUT_DIR/server_tmp"
-CLIENT_TMP="$OUT_DIR/client_tmp"
-mkdir -p "$SERVER_TMP" "$CLIENT_TMP"
-SERVER_LOG="$OUT_DIR/server.log"
-CLIENT_LOG="$OUT_DIR/client.log"
-SERVER_JOURNAL="$SERVER_TMP/journal.jsonl"
-CLIENT_JOURNAL="$CLIENT_TMP/journal.jsonl"
-rm -f "$SERVER_LOG" "$CLIENT_LOG" "$SERVER_JOURNAL" "$CLIENT_JOURNAL"
+webrtc_prepare_out_dir "$OUT_DIR"
 
 echo "Out dir : $OUT_DIR"
 echo "Target  : $TARGET"
 echo "Port    : $PORT"
 
-if [ "${BUILD:-0}" != "0" ]; then
-    echo "::group::Building $TARGET"
-    BUILD_HOST_TOOLS=0 COFFEE_DISABLE_PROFILER=1 ./cb build "$TARGET" || {
-        echo "FAIL: build failed"
-        exit 2
-    }
-    echo "::endgroup::"
-fi
+webrtc_build_target "$TARGET" || exit 2
 
-BASE_RUN_ARGS=(run "$TARGET" -- "$RESOURCE_DIR" "$MAP")
+trap webrtc_cleanup_pids EXIT
 
 echo "Starting server..."
-TMPDIR="$SERVER_TMP" \
-DUMMY_PLUG_CONFIG="$SERVER_DUMMY_PLUG_CONFIG" \
-COFFEE_DISABLE_PROFILER=1 \
-timeout "${RUN_TIMEOUT}s" ./cb "${BASE_RUN_ARGS[@]}" --listen "127.0.0.1:$PORT" \
-    > "$SERVER_LOG" 2>&1 &
-SERVER_PID=$!
+webrtc_server_command "$TARGET" "$RESOURCE_DIR" "$MAP" --listen "127.0.0.1:$PORT"
+webrtc_start_server "$WEBRTC_SERVER_LOG" "$WEBRTC_SERVER_TMP" "$SERVER_DUMMY_PLUG_CONFIG" "$RUN_TIMEOUT"
 
 echo "Waiting for server to start listening (up to ${BOOT_TIMEOUT}s)..."
 booted=0
 for _ in $(seq 1 "$BOOT_TIMEOUT"); do
-    if grep -q "Started server on" "$SERVER_LOG" 2>/dev/null; then
+    if grep -q "Started server on" "$WEBRTC_SERVER_LOG" 2>/dev/null; then
         booted=1
         break
     fi
-    if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+    if ! kill -0 "$WEBRTC_SERVER_PID" 2>/dev/null; then
         echo "FAIL: server process exited before it started listening"
-        echo "--- server.log tail ---"
-        tail -n 40 "$SERVER_LOG"
+        webrtc_dump "server.log (tail)" "$WEBRTC_SERVER_LOG" 40
         exit 1
     fi
     sleep 1
 done
 if [ "$booted" != "1" ]; then
     echo "FAIL: server did not report listening within ${BOOT_TIMEOUT}s"
-    kill "$SERVER_PID" 2>/dev/null
-    tail -n 40 "$SERVER_LOG"
+    webrtc_dump "server.log (tail)" "$WEBRTC_SERVER_LOG" 40
     exit 1
 fi
 echo "Server is listening."
@@ -148,17 +130,14 @@ if [ "$CLIENT_DELAY" -gt 0 ]; then
 fi
 
 echo "Starting client..."
-TMPDIR="$CLIENT_TMP" \
-DUMMY_PLUG_CONFIG="$CLIENT_DUMMY_PLUG_CONFIG" \
-COFFEE_DISABLE_PROFILER=1 \
-timeout "${RUN_TIMEOUT}s" ./cb "${BASE_RUN_ARGS[@]}" --server "127.0.0.1:$PORT" \
-    > "$CLIENT_LOG" 2>&1 &
-CLIENT_PID=$!
+webrtc_start_native_client "$TARGET" "$RESOURCE_DIR" "$MAP" \
+    "$WEBRTC_CLIENT_LOG" "$WEBRTC_CLIENT_TMP" "$CLIENT_DUMMY_PLUG_CONFIG" "$RUN_TIMEOUT" \
+    --server "127.0.0.1:$PORT"
 
 echo "Waiting for both processes to finish (dummy_plug end_time closes them)..."
-wait "$CLIENT_PID"
+wait "$WEBRTC_CLIENT_PID"
 CLIENT_EXIT=$?
-wait "$SERVER_PID"
+wait "$WEBRTC_SERVER_PID"
 SERVER_EXIT=$?
 
 echo "server exit=$SERVER_EXIT  client exit=$CLIENT_EXIT"
@@ -166,33 +145,17 @@ if [ "$SERVER_EXIT" = "124" ] || [ "$CLIENT_EXIT" = "124" ]; then
     echo "FAIL: a process hit the ${RUN_TIMEOUT}s timeout (hung — likely connection never established)"
 fi
 
-echo
-echo "::group::server.log (connection + state-dump lines)"
-grep -E "State dumped|Started server|Connection info|Player joined|Controller|Error" "$SERVER_LOG" || true
-echo "::endgroup::"
-echo "::group::client.log (connection + state-dump lines)"
-grep -E "State dumped|join confirmation|roster received|Error" "$CLIENT_LOG" || true
-echo "::endgroup::"
-
-if [ ! -s "$SERVER_JOURNAL" ]; then
-    echo "FAIL: $SERVER_JOURNAL was never written (journal disabled, or the process died at startup?)"
-    exit 1
-fi
-if [ ! -s "$CLIENT_JOURNAL" ]; then
-    echo "FAIL: $CLIENT_JOURNAL was never written (journal disabled, or the process died at startup?)"
-    exit 1
-fi
-
-echo
-echo "=== Journal comparison ==="
-echo "server: $SERVER_JOURNAL"
-echo "client: $CLIENT_JOURNAL"
-python3 "$HERE/compare_journals.py" "$SERVER_JOURNAL" "$CLIENT_JOURNAL"
+webrtc_compare_journals "$WEBRTC_SERVER_JOURNAL" "$WEBRTC_CLIENT_JOURNAL" "$HERE/compare_journals.py"
 RESULT=$?
-if [ "$RESULT" != "0" ]; then
+
+# Process logs are echoed only when something went wrong; they are in
+# OUT_DIR either way, which CI uploads as an artifact.
+if [ "$RESULT" != "0" ] || [ "$SERVER_EXIT" != "0" ] || [ "$CLIENT_EXIT" != "0" ]; then
     echo
-    echo "::group::merged journal timeline"
-    python3 "$HERE/compare_journals.py" --timeline "$SERVER_JOURNAL" "$CLIENT_JOURNAL" || true
-    echo "::endgroup::"
+    webrtc_dump_matching "server.log (connection + state-dump lines)" "$WEBRTC_SERVER_LOG" \
+        "State dumped|Started server|Connection info|Player joined|Controller|Error"
+    webrtc_dump_matching "client.log (connection + state-dump lines)" "$WEBRTC_CLIENT_LOG" \
+        "State dumped|join confirmation|roster received|Error"
 fi
+[ "$RESULT" = "0" ] && echo "PASS  (logs in $OUT_DIR)"
 exit $RESULT
