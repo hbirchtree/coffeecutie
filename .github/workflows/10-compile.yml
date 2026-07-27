@@ -621,6 +621,10 @@ jobs:
       with:
         name: web-wasm32-emscripten-webgl2
         path: client_artifacts/
+    - name: Installing Mesa/EGL dependencies
+      run: |
+        sudo apt update
+        sudo apt install mesa-utils
     - name: Acquire the sysroot for the desktop x86_64 platform
       run: |
         # Same sysroot tarball the other server-running test jobs use --
