@@ -54,6 +54,16 @@ public:
 	);
 	virtual ~CConnectionTransportP2PWebRTC();
 
+	// Registers the DataChannel callbacks.  Deliberately NOT done in the
+	// constructor: the constructor runs while the caller holds the global
+	// lock, and libdatachannel delivers any already-buffered messages
+	// synchronously, on the calling thread, the moment a message handler
+	// is installed -- straight into OnDataChannelMessage, which takes the
+	// global lock again and self-deadlocks.  Call this once the lock has
+	// been released.  Messages that arrive in between are buffered by
+	// libdatachannel and delivered here as soon as it is called.
+	void BindDataChannelCallbacks();
+
 	inline CSteamNetworkConnectionP2P &Connection() const
 	{
 		return *assert_cast<CSteamNetworkConnectionP2P *>( &m_connection );

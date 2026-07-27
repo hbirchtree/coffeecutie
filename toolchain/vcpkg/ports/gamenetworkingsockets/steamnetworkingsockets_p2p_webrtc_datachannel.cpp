@@ -33,6 +33,15 @@ CConnectionTransportP2PWebRTC::CConnectionTransportP2PWebRTC(
 	Assert( m_pDataChannel );
 	Assert( m_pDataChannel->isOpen() );
 
+	// Callbacks are bound separately, after the caller drops the global
+	// lock -- see BindDataChannelCallbacks()'s comment.
+}
+
+void CConnectionTransportP2PWebRTC::BindDataChannelCallbacks()
+{
+	if ( !m_pDataChannel )
+		return;
+
 	m_pDataChannel->onMessage(
 		[this]( rtc::binary data ) {
 			OnDataChannelMessage( data.data(), data.size() );
@@ -404,14 +413,21 @@ void CConnectionTransportP2PWebRTC::P2PTransportUpdateRouteMetrics( SteamNetwork
 	//
 	// That constant is a deliberate handicap: every byte here is relayed
 	// through the gateway, so a direct UDP route is better whenever one
-	// exists, and between two native peers one usually does. ICE scores
-	// routes in milliseconds of ping (CConnectionTransportP2PICE::
-	// P2PTransportUpdateRouteMetrics), so a penalty above any usable ping
-	// loses to every real UDP route -- while staying well below
-	// k_nRoutePenaltyNeedToConfirmConnectivity (10000), so this transport
-	// is still selected, and stays selected, when it is the only one that
-	// works: browser clients, or any network where UDP is blocked.
-	constexpr int k_nRelayedTransportPenalty = 2000;
+	// exists, and between two native peers one usually does.
+	//
+	// It has to clear k_nRoutePenaltyNeedToConfirmConnectivity (10000).
+	// GNS adds that penalty to a route it has not yet confirmed
+	// end-to-end, and ICE cannot confirm without being selected and
+	// carrying traffic -- so a handicap below 10000 leaves ICE stuck at
+	// ~10000+ping, permanently losing to this transport, which is exactly
+	// what was observed: both peers negotiated a working ICE candidate
+	// pair and GNS still never switched. Sitting above it means GNS tries
+	// the direct route as soon as one exists; if it turns out not to
+	// work, ICE's metrics go invalid and selection comes straight back
+	// here. When no UDP route exists at all (browser clients, UDP-blocked
+	// networks) this transport is the only valid one and wins regardless
+	// of the number.
+	constexpr int k_nRelayedTransportPenalty = 12000;
 	m_routeMetrics.m_nScoreCurrent = 0;
 	m_routeMetrics.m_nScoreMin = 0;
 	m_routeMetrics.m_nScoreMax = 0;

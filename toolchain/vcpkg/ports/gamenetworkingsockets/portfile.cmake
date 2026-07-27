@@ -13,6 +13,10 @@ vcpkg_from_github(
         fix-emscripten-support.patch
         add-webrtc-datachannel-transport.patch
         add-listen-socket-raw-send.patch
+        add-posix-local-addresses.patch
+        fix-stun-send-failure-loop.patch
+        fix-ice-foundation-vector-corruption.patch
+        fix-ice-peer-candidate-wakeup.patch
         add-udp-datachannel-connect.patch
 )
 

@@ -862,12 +862,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             return;
         }
 
-        m_utils->SetGlobalConfigValueString(
-            k_ESteamNetworkingConfig_P2P_STUN_ServerList,
-            "stun.l.google.com:19302");
         m_utils->SetGlobalConfigValueInt32(
             k_ESteamNetworkingConfig_P2P_Transport_ICE_Enable,
             k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_All);
+        m_utils->SetGlobalConfigValueString(
+            k_ESteamNetworkingConfig_P2P_STUN_ServerList,
+            "stun.l.google.com:19302");
         m_utils->SetGlobalConfigValueInt32(
             k_ESteamNetworkingConfig_LogLevel_P2PRendezvous,
             k_ESteamNetworkingSocketsDebugOutputType_Verbose);

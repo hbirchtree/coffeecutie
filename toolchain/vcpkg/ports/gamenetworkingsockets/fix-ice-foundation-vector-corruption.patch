@@ -1,0 +1,71 @@
+Fix heap corruption in the ICE candidate-pair scheduler
+(CSteamNetworkingICESession::Think_TestPeerConnectivity).
+
+The function collects candidate "foundations" in a
+CUtlVector< std::string >. CUtlVector grows through CUtlMemory, which
+reallocs its storage and relocates elements bytewise -- fine for POD, not
+for std::string: libstdc++'s small-string optimization stores a pointer to
+the string's OWN internal buffer, so a bytewise move leaves that pointer
+aimed at the freed old address. Destroying the vector then frees a stale
+pointer and glibc aborts the process:
+
+    munmap_chunk(): invalid pointer
+    SIGABRT
+      CUtlVector<std::string>::RemoveAll() -> ~basic_string -> free
+      CSteamNetworkingICESession::Think_TestPeerConnectivity()
+      CSteamNetworkingICESession::Think()
+      IThinker::Thinker_ProcessThinkers()          [GNS service thread]
+
+Not previously reachable on Linux: this code only runs once ICE has real
+candidate pairs, and GetLocalAddresses() -- implemented for Windows only
+upstream -- meant no candidates were ever gathered (see
+add-posix-local-addresses.patch). Fixing that enumeration exposed this.
+
+Swapped for a std::vector<std::string>, which relocates elements by moving
+them properly. Same behaviour otherwise: HasElement -> std::find.
+
+diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_stun.cpp b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_stun.cpp
+--- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_stun.cpp
++++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_stun.cpp
+@@ -5,6 +5,9 @@
+ // https://datatracker.ietf.org/doc/html/rfc8489
+ 
+ #include "steamnetworkingsockets_stun.h"
++
++#include <algorithm>
++#include <vector>
+ #ifdef STEAMNETWORKINGSOCKETS_ENABLE_ICE
+ 
+ #include "csteamnetworkingsockets.h"
+@@ -1877,19 +1880,27 @@
+ 
+     if ( pPairToCheck == nullptr )
+     {
+-        CUtlVector< std::string > vecFoundationsUsed;
++        // std::vector, NOT CUtlVector: CUtlVector grows through
++        // CUtlMemory, which reallocs and memmoves its elements.  A
++        // libstdc++ std::string in the small-string optimization holds a
++        // pointer to its OWN internal buffer, so moving it bytewise leaves
++        // that pointer aimed at the old address; destroying the vector
++        // then frees a stale pointer and glibc aborts the process with
++        // "munmap_chunk(): invalid pointer".  Reproduced reliably here as
++        // soon as ICE had real candidate pairs to iterate.
++        std::vector< std::string > vecFoundationsUsed;
+         for ( ICECandidatePair *pCandidatePair : m_vecCandidatePairs )
+         {
+             if ( pCandidatePair->m_nState == kICECandidatePairState_InProgress )
+             {
+-                vecFoundationsUsed.AddToTail( pCandidatePair->m_remoteCandidate.m_sFoundation );
++                vecFoundationsUsed.push_back( pCandidatePair->m_remoteCandidate.m_sFoundation );
+                 continue;
+             }
+             if ( pCandidatePair->m_nState != kICECandidatePairState_Frozen )
+                 continue;
+-            if ( vecFoundationsUsed.HasElement( pCandidatePair->m_remoteCandidate.m_sFoundation ) )
++            if ( std::find( vecFoundationsUsed.begin(), vecFoundationsUsed.end(), pCandidatePair->m_remoteCandidate.m_sFoundation ) != vecFoundationsUsed.end() )
+                 continue;
+-            vecFoundationsUsed.AddToTail( pCandidatePair->m_remoteCandidate.m_sFoundation );
++            vecFoundationsUsed.push_back( pCandidatePair->m_remoteCandidate.m_sFoundation );
+             pCandidatePair->m_nState = kICECandidatePairState_Waiting;
+             if ( pPairToCheck == nullptr )
+                 pPairToCheck = pCandidatePair;

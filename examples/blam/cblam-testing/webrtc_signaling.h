@@ -7,6 +7,7 @@
 
 #include <rtc/rtc.hpp>
 
+#include <atomic>
 #include <chrono>
 #include <memory>
 #include <mutex>
@@ -135,6 +136,13 @@ class GatewayAcceptSignaling final : public ISteamNetworkingConnectionSignaling
 
     void Start();
 
+    /*! False until Start() has run -- see GatewayServerRegistration::
+     * PollPendingAccepts, which starts accepts on the tick thread. */
+    bool Started() const
+    {
+        return m_started;
+    }
+
     bool Ready() const;
     bool Failed() const;
 
@@ -184,6 +192,7 @@ class GatewayAcceptSignaling final : public ISteamNetworkingConnectionSignaling
     bool               m_wsOpen{false};
     bool               m_offerSent{false};
     std::string        m_pendingOfferSdp;
+    std::atomic<bool>  m_started{false};
 };
 
 /*!
@@ -248,6 +257,8 @@ class GatewayServerRegistration final
     void onWebSocketMessage(std::string const& text);
     void sendRegister();
     void sendHeartbeat();
+    void flushOutgoingSignals();
+    void drainIncomingSignals();
     void pollDirectRouteTakeover();
 
     std::string                     m_gatewayUrl;
@@ -271,6 +282,8 @@ class GatewayServerRegistration final
         m_sessionIdByConnection;
     std::unordered_map<HSteamNetConnection, int> m_directRouteTicks;
     std::unordered_set<HSteamNetConnection>      m_relayRetired;
+    std::vector<std::pair<std::string, std::string>> m_incoming;
+    std::vector<std::string> m_outgoing;
 };
 
 } // namespace webrtc_signaling

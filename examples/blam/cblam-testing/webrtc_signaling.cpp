@@ -308,6 +308,7 @@ GatewayAcceptSignaling::~GatewayAcceptSignaling()
 
 void GatewayAcceptSignaling::Start()
 {
+    m_started = true;
     rtc::Configuration config;
     config.iceServers.emplace_back("stun:stun.l.google.com:19302");
     m_pc = std::make_shared<rtc::PeerConnection>(config);
@@ -607,17 +608,11 @@ void GatewayServerRegistration::onWebSocketMessage(std::string const& text)
                 "server-signal");
             return;
         }
-        /* Consumed by OnConnectRequest below if this rendezvous message
-         * turns out to be a brand-new connection request -- see the
-         * member's own doc comment for why a single scratch field is
-         * enough (GNS itself routes to an existing connection's own
-         * signaling object without needing OnConnectRequest at all). */
-        {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            m_pendingSessionId = std::move(sessionId);
-        }
-        m_sockets->ReceivedP2PCustomSignal(
-            raw.data(), static_cast<int>(raw.size()), this);
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_incoming.emplace_back(
+            std::move(sessionId),
+            std::string(
+                reinterpret_cast<char const*>(raw.data()), raw.size()));
     } else if(type == "register-active")
     {
         {
@@ -662,7 +657,6 @@ ISteamNetworkingConnectionSignaling* GatewayServerRegistration::
 
     auto* accept =
         new GatewayAcceptSignaling(this, sessionId, m_gatewayUrl, hConn);
-    accept->Start();
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         m_pendingAccepts.push_back(accept);
@@ -688,7 +682,44 @@ bool GatewayServerRegistration::SendOverServerSignal(
         {"sessionId", sessionId},
         {"data", data},
     };
-    return m_ws->send(rendezvous.dump());
+    /* Queued, not sent: see m_outgoing's comment. */
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_outgoing.push_back(rendezvous.dump());
+    return true;
+}
+
+/* Feeds queued rendezvous into GNS from the tick thread. */
+void GatewayServerRegistration::drainIncomingSignals()
+{
+    std::vector<std::pair<std::string, std::string>> incoming;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        incoming.swap(m_incoming);
+    }
+    for(auto& [sessionId, raw] : incoming)
+    {
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_pendingSessionId = sessionId;
+        }
+        m_sockets->ReceivedP2PCustomSignal(
+            raw.data(), static_cast<int>(raw.size()), this);
+    }
+}
+
+void GatewayServerRegistration::flushOutgoingSignals()
+{
+    std::vector<std::string> outgoing;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        outgoing.swap(m_outgoing);
+    }
+    for(auto const& payload : outgoing)
+    {
+        if(!m_ws || !m_ws->send(payload))
+            cWarning(
+                "webrtc_signaling: failed to send queued rendezvous message");
+    }
 }
 
 void GatewayServerRegistration::RemovePendingAccept(
@@ -703,44 +734,65 @@ void GatewayServerRegistration::RemovePendingAccept(
 
 void GatewayServerRegistration::PollPendingAccepts()
 {
+    hang_watchdog::tick();
+
     constexpr std::chrono::seconds kHeartbeatInterval{10};
+    bool sendBeat = false;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         auto                        now = std::chrono::steady_clock::now();
         if(m_active && now - m_lastHeartbeat >= kHeartbeatInterval)
         {
             m_lastHeartbeat = now;
-            sendHeartbeat();
+            sendBeat        = true;
         }
     }
+    if(sendBeat)
+        sendHeartbeat();
 
     pollDirectRouteTakeover();
+    flushOutgoingSignals();
 
-    std::vector<GatewayAcceptSignaling*> ready;
+    drainIncomingSignals();
+
+    std::vector<GatewayAcceptSignaling*> pending;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        for(auto it = m_pendingAccepts.begin(); it != m_pendingAccepts.end();)
+        pending = m_pendingAccepts;
+    }
+
+    std::vector<GatewayAcceptSignaling*> ready, failed;
+    for(auto* accept : pending)
+    {
+        if(!accept->Started())
         {
-            auto* accept = *it;
-            if(accept->Failed())
-            {
-                cWarning(
-                    "webrtc_signaling: accept-side DataChannel bootstrap "
-                    "failed for connection {}",
-                    accept->Connection());
-                m_sockets->CloseConnection(
-                    accept->Connection(), 0, nullptr, false);
-                it = m_pendingAccepts.erase(it);
-                continue;
-            }
-            if(accept->Ready())
-            {
-                ready.push_back(accept);
-                it = m_pendingAccepts.erase(it);
-                continue;
-            }
-            ++it;
+            /* First tick after OnConnectRequest handed us this one --
+             * safe to touch libdatachannel from here. */
+            accept->Start();
+            continue;
         }
+        if(accept->Failed())
+            failed.push_back(accept);
+        else if(accept->Ready())
+            ready.push_back(accept);
+    }
+    if(!ready.empty() || !failed.empty())
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        std::erase_if(m_pendingAccepts, [&](GatewayAcceptSignaling* accept) {
+            return std::find(ready.begin(), ready.end(), accept) !=
+                       ready.end() ||
+                   std::find(failed.begin(), failed.end(), accept) !=
+                       failed.end();
+        });
+    }
+    for(auto* accept : failed)
+    {
+        cWarning(
+            "webrtc_signaling: accept-side DataChannel bootstrap failed for "
+            "connection {}",
+            accept->Connection());
+        m_sockets->CloseConnection(accept->Connection(), 0, nullptr, false);
     }
     for(auto* accept : ready)
     {
@@ -790,49 +842,62 @@ void GatewayServerRegistration::NotifyGNSConnected(HSteamNetConnection hConn)
  * ..."), which is what m_szConnectionDescription carries. */
 void GatewayServerRegistration::pollDirectRouteTakeover()
 {
-    std::vector<std::string> retiredSessions;
+    std::vector<std::pair<HSteamNetConnection, std::string>> watched;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        for(auto& [hConn, ticks] : m_directRouteTicks)
+        for(auto const& [hConn, ticks] : m_directRouteTicks)
         {
             if(m_relayRetired.count(hConn))
                 continue;
-            SteamNetConnectionInfo_t info{};
-            if(!m_sockets->GetConnectionInfo(hConn, &info))
-                continue;
-            std::string_view description(info.m_szConnectionDescription);
-            bool             onRelay =
-                description.find("WebRTC") != std::string_view::npos;
-            if(info.m_eState != k_ESteamNetworkingConnectionState_Connected ||
-               onRelay)
-            {
-                ticks = 0;
-                continue;
-            }
-            if(++ticks < 2)
-                continue; // description is briefly transport-less mid-switch
-            m_relayRetired.insert(hConn);
             auto it = m_sessionIdByConnection.find(hConn);
-            if(it != m_sessionIdByConnection.end())
-                retiredSessions.push_back(it->second);
+            if(it == m_sessionIdByConnection.end())
+                continue;
+            watched.emplace_back(hConn, it->second);
         }
     }
+    if(watched.empty())
+        return;
+
+    std::vector<std::string> retiredSessions;
+    for(auto const& [hConn, sessionId] : watched)
+    {
+        SteamNetConnectionInfo_t info{};
+        if(!m_sockets->GetConnectionInfo(hConn, &info))
+            continue;
+        std::string_view description(info.m_szConnectionDescription);
+        bool             onRelay =
+            description.find("WebRTC") != std::string_view::npos;
+
+        std::lock_guard<std::mutex> lock(m_mutex);
+        auto                        tick = m_directRouteTicks.find(hConn);
+        if(tick == m_directRouteTicks.end() || m_relayRetired.count(hConn))
+            continue;
+        if(info.m_eState != k_ESteamNetworkingConnectionState_Connected ||
+           onRelay)
+        {
+            tick->second = 0;
+            continue;
+        }
+        if(++tick->second < 2)
+            continue; // description is briefly transport-less mid-switch
+        m_relayRetired.insert(hConn);
+        retiredSessions.push_back(sessionId);
+    }
+
     for(auto const& sessionId : retiredSessions)
     {
         cDebug(
             "webrtc_signaling: session {} moved to a direct route, retiring "
             "the gateway relay",
             sessionId);
-        if(!m_ws)
-            return;
         nlohmann::json msg{
             {"type", "gns-connected"},
             {"sessionId", sessionId},
         };
-        if(!m_ws->send(msg.dump()))
-            cWarning(
-                "webrtc_signaling: failed to send gns-connected for session {}",
-                sessionId);
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_outgoing.push_back(msg.dump());
+        }
     }
 }
 

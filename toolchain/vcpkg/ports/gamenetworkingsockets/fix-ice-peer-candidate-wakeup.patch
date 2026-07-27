@@ -1,0 +1,59 @@
+Wake the ICE session when a signalled peer candidate updates one we
+already knew (fixes ICE never being usable on the controlled agent).
+
+CSteamNetworkingICESession::AddPeerCandidate() returned early when the
+candidate address was already present, skipping the state promotion and
+SetNextThinkTimeASAP() the "new candidate" path performs.
+
+That early-return path is hit routinely, not just on a duplicate signal.
+The controlled agent learns the peer's addresses first as peer-reflexive
+candidates, synthesized from the controlling agent's inbound connectivity
+checks; the signalled candidates for those same addresses arrive after.
+So the session stayed in kICESessionState_Idle, Think_TestPeerConnectivity()
+was never reached (Think() only calls it in
+kICESessionState_TestingPeerConnectivity), no connectivity check was ever
+sent, no pair was ever nominated, and GetSelectedSocket() stayed null.
+
+Downstream of that: CConnectionTransportP2PICE_Valve::BCanSendEndToEndData()
+returns false forever, so the ICE transport can neither confirm end-to-end
+connectivity nor be selected -- and ThinkSelectTransport() explicitly
+refuses to activate a transport whose connectivity is unconfirmed. The
+connection stays on whatever fallback transport it has, permanently.
+Observed with a gateway-relayed DataChannel as the fallback: both peers
+negotiated a working candidate pair at the STUN level, the controlling
+side had a usable route with a 1ms ping, and the direct route was still
+never used. Whether it reproduced depended on whether signaling or the
+first inbound check arrived first, which made it look intermittent.
+
+diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_stun.cpp b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_stun.cpp
+--- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_stun.cpp
++++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_stun.cpp
+@@ -1223,6 +1223,28 @@
+         {
+             (ICECandidate&)c = candidate;
+             c.m_sFoundation = pszFoundation;
++
++            // Fall through to the same wake-up the "new candidate" path
++            // does below, instead of returning here.  We reach this branch
++            // routinely, not just on a duplicate signal: the controlled
++            // agent sees the peer's addresses FIRST as peer-reflexive
++            // candidates, synthesized from the controlling agent's inbound
++            // connectivity checks, and only afterwards receives the same
++            // addresses over signaling.  Returning early then left the
++            // session in Idle -- it never advanced to
++            // TestingPeerConnectivity, so it never ran a single
++            // connectivity check of its own, never nominated a pair, and
++            // GetSelectedSocket() stayed null forever.  The transport
++            // therefore reported BCanSendEndToEndData() == false, could
++            // neither confirm end-to-end connectivity nor be selected, and
++            // the connection stayed on its fallback transport for good.
++            // Whether it happened at all depended on whether signaling or
++            // the first STUN check arrived first, which is why it looked
++            // intermittent.
++            m_bCandidatePairsNeedUpdate = true;
++            if ( m_sessionState == kICESessionState_Idle || m_sessionState == kICESessionState_GatheringCandidates )
++                m_sessionState = kICESessionState_TestingPeerConnectivity;
++            SetNextThinkTimeASAP();
+             return;
+         }
+     }
