@@ -1,8 +1,6 @@
 {
     "overlay-ports": [
-        "./toolchain/vcpkg/ports/datachannel-wasm",
         "./toolchain/vcpkg/ports/discord-rpc",
-        "./toolchain/vcpkg/ports/gamenetworkingsockets",
         "./toolchain/vcpkg/ports/stb"
     ],
     "overlay-triplets": [
@@ -63,6 +61,15 @@
                 "gctools",
                 "libogc",
                 "libfat"
+            ]
+        },
+        {
+            "kind": "git",
+            "repository": "https://github.com/hbirchtree/vcpkg-ports",
+            "baseline": "303c80fa3a48429b892b4b2d3cb316dc9f44602a",
+            "packages": [
+                "datachannel-wasm",
+                "gamenetworkingsockets"
             ]
         }
     ]

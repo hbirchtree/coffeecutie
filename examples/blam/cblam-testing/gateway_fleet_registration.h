@@ -25,39 +25,8 @@ namespace webrtc_signaling {
  * "/signal?server=<id>" without the gateway being locked to one -dest at
  * startup.
  *
- * The usual real target is behind NAT with no port forwarding, so the
- * gateway can never reach a declared address by blindly sending to it --
- * both the registration challenge and the per-client relay work by
- * having THIS side punch first: send a small UDP probe to the gateway,
- * let it observe the real source address, and treat its reply as arriving
- * over a mapping that's now open. See WEBRTC_TRANSPORT.md's Phase 6
- * section for the full protocol.
- *
  * Per-client relay punches go out directly from the real GNS listen
- * socket (ISteamNetworkingSockets::SendRawPacketOnListenSocket, a small
- * coffeecutie-added GNS API -- see
- * toolchain/vcpkg/ports/gamenetworkingsockets/add-listen-socket-raw-send.patch)
- * rather than a separate local socket: since that's the exact port/mapping
- * real relayed traffic needs to land on anyway, GNS receives it directly
- * and demuxes each client the same way it already demuxes any normal UDP
- * peer, by source address -- no local forwarder/loopback hop needed at
- * all. The registration challenge can't use this same trick: its nonce
- * reply has to reach app code, not get silently dropped by GNS's own
- * protocol parser as unrecognized noise, so it keeps its own small
- * dedicated raw socket (below).
- *
- * Unrelated to GatewayServerRegistration above: that class bootstraps a
- * per-connection DataChannel for GNS rendezvous signaling (topology "two
- * gateways bridging two WebRTC-only peers"); this class targets a real
- * native UDP GNS listen socket (topology "browser <-> gateway <-> native
- * UDP server") and carries no DataChannel/rendezvous traffic at all --
- * construct both side by side when a server should be reachable both
- * ways.
- *
- * Poll-driven like the rest of this file's classes: construct, call
- * Start(), then call Poll() once per tick for as long as the
- * registration should stay alive (handles the registration punch,
- * heartbeats, and every active per-client relay keepalive internally).
+ * socket (ISteamNetworkingSockets::SendRawPacketOnListenSocket
  */
 class GatewayFleetRegistration
 {
