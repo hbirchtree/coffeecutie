@@ -67,22 +67,22 @@ if [ -d "$BUILDDIR/install" ]; then
 fi
 
 echo "===================================="
-echo "========= Artifact structure ======="
+echo "::group::Artifact structure"
 ls -R $BUILDDIR
-echo "===================================="
+echo "::endgroup::"
 
 # Find the actual binary
 BINARY=$(find $BUILDDIR -name BlamGraphics -type f | head -n 1)
 
 if [ -f "$BINARY" ]; then
     echo "===================================="
-    echo "========= Library linkage =========="
+    echo "::group::Library linkage"
     if [ -n "$SYS_LD" ]; then
         $SYS_LD --library-path $PWD/sysroot/lib --list $BINARY
     else
         ldd $BINARY
     fi
-    echo "===================================="
+    echo "::endgroup::"
 fi
 
 APPDIR=$BUILDDIR/packaged/linux-appdir/blam_graphics.AppDir
@@ -102,7 +102,6 @@ wget -q -O maps/pc/bitmaps.map     --header="Authorization: $MAP_ACCESS_TOKEN" h
 wget -q -O maps/pc/sounds.map      --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/sounds.map
 echo "::endgroup::"
 echo "===================================="
-echo "===================================="
 
 mkdir -p "/tmp/Blam Graphics"
 
@@ -116,13 +115,15 @@ ASSETS_DIR=$(find $BUILDDIR -name assets -type d | head -n 1)
 BOOT_MAP=${BOOT_MAP:-beavercreek.map}
 
 if [ -n "$SYS_LD" ] && [ -f "$BINARY" ]; then
-    echo "-- Running binary directly with sysroot loader"
+    echo "::group::Running binary directly with sysroot loader"
     LD_LIBRARY_PATH=$PWD/sysroot/lib $SYS_LD --library-path $PWD/sysroot/lib $BINARY $ASSETS_DIR $PWD/maps/pc/$BOOT_MAP 2>&1 | tee "/tmp/Blam Graphics/output.log"
     echo "Return code: $?"
+    echo "::endgroup::"
 elif [ -d "$APPDIR" ]; then
-    echo "-- Running via AppRun"
+    echo "::group::Running via AppRun"
     $APPDIR/AppRun $PWD/maps/pc/$BOOT_MAP 2>&1 | tee "/tmp/Blam Graphics/output.log"
     echo "Return code: $?"
+    echo "::endgroup::"
 else
     echo "ERROR: Could not find a way to run the application"
     exit 1
