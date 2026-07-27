@@ -309,6 +309,13 @@ func newTrackingID(prefix string) string {
 	return prefix + "-" + strings.ToUpper(hex.EncodeToString(b))
 }
 
+func signalOrigin(r *http.Request) string {
+	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
+		return r.RemoteAddr + " (forwarded for " + fwd + ")"
+	}
+	return r.RemoteAddr
+}
+
 func newSessionID() string {
 	b := make([]byte, 16)
 	if _, err := rand.Read(b); err != nil {
@@ -502,8 +509,8 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		trackingID:       newTrackingID("C"),
 		serverTrackingID: srv.trackingID,
 	}
-	log.Printf("[%s/%s] client session opened for server %q",
-		session.serverTrackingID, session.trackingID, serverID)
+	log.Printf("[%s/%s] client session opened for server %q from %s",
+		session.serverTrackingID, session.trackingID, serverID, signalOrigin(r))
 	workingSet.clients.Lock()
 	workingSet.clients.sessions[sessionID] = session
 	workingSet.clients.Unlock()
@@ -963,7 +970,7 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 		}
 		switch m.Type {
 		case "register":
-			id, entry, err := beginRegistration(conn, m)
+			id, entry, err := beginRegistration(conn, m, signalOrigin(r))
 			if err != nil {
 				log.Printf("rejecting registration for %q: %v", m.ServerID, err)
 				conn.WriteJSON(signalMessage{Type: "error", Data: err.Error()})
@@ -1023,7 +1030,7 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func beginRegistration(conn *websocket.Conn, m signalMessage) (string, *registeredServer, error) {
+func beginRegistration(conn *websocket.Conn, m signalMessage, origin string) (string, *registeredServer, error) {
 	if m.ServerID == "" {
 		return "", nil, fmt.Errorf("register: missing serverId")
 	}
@@ -1069,12 +1076,13 @@ func beginRegistration(conn *websocket.Conn, m signalMessage) (string, *register
 	workingSet.servers.Unlock()
 
 	if transport == transportWebRTC {
-		log.Printf("[%s] server %q registration active (webrtc-hosted, no UDP challenge)",
-			entry.trackingID, m.ServerID)
+		log.Printf("[%s] server %q registration active from %s (webrtc-hosted, no UDP challenge)",
+			entry.trackingID, m.ServerID, origin)
 		return m.ServerID, entry, nil
 	}
 
-	log.Printf("[%s] register %q: waiting for return-routability punch", entry.trackingID, m.ServerID)
+	log.Printf("[%s] register %q from %s: waiting for return-routability punch",
+		entry.trackingID, m.ServerID, origin)
 
 	go func(id string, srv *registeredServer) {
 		time.Sleep(settings.challengeTimeout)
