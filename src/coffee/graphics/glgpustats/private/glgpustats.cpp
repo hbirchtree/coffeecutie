@@ -1,19 +1,18 @@
 #include <glgpustats/glgpustats.h>
 
+#include <array>
 #include <coffee/core/debug/formatting.h>
-#include <glw/extensions/AMD_performance_monitor.h>
-#include <glw/extensions/ARB_pipeline_statistics_query.h>
-#include <glw/extensions/ATI_meminfo.h>
-#include <glw/extensions/NVX_gpu_memory_info.h>
 #include <glw/glw.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/range.h>
 #include <peripherals/stl/string/split.h>
-
-#include <array>
-#include <cstring>
-#include <limits>
 #include <set>
+
+#include <glw/extensions/AMD_performance_monitor.h>
+#include <glw/extensions/ARB_pipeline_statistics_query.h>
+#include <glw/extensions/ATI_meminfo.h>
+#include <glw/extensions/NVX_gpu_memory_info.h>
+
 
 using namespace Coffee::Logging;
 using libc_types::i32;
