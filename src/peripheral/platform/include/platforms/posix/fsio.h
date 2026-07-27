@@ -50,7 +50,6 @@ FORCEDINLINE result<file_info_t, posix_error> file_info(Url const& file)
             return failure(info.error());
     } else
     {
-        fprintf(stdout, "fstat(%s) != 0\n", file.internUrl.c_str());
         return failure(fd.error());
     }
 }
