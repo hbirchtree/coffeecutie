@@ -118,10 +118,13 @@ class GatewayFleetRegistration
     std::mutex                                   m_relaysMutex;
     std::unordered_map<std::string, ClientRelay> m_relays;
 
+    std::string m_trackingId;
+
     void onClientRelay(
         std::string const& sessionId,
         int                relayPort,
-        std::string const& relayNonceHex);
+        std::string const& relayNonceHex,
+        std::string const& trackingId);
     void onClientRelayClosed(std::string const& sessionId);
     void pollRelayKeepalives();
     void sendRelayPunch(int relayPort, std::string const& payload);

@@ -107,6 +107,11 @@ func main() {
 	log.Printf("PASS: %d round(s) over the %s server transport", *rounds, *transport)
 }
 
+var (
+	punchMu    sync.Mutex
+	punchStops = map[string]context.CancelFunc{}
+)
+
 // runFleetServer plays the registered game server: registers, proves
 // return-routability by punching the challenge socket, then punches each
 // client's relay port and echoes relayed datagrams back uppercased.
@@ -164,9 +169,19 @@ func runFleetServer(ctx context.Context, httpPort int, gameSock *net.UDPConn, tr
 				fatal("server: bad relayNonce %q: %v", m.RelayNonce, err)
 			}
 			log.Printf("server: punching relay port %d for session %s", m.RelayPort, m.SessionID)
-			go punchRelay(ctx, gameSock, m.RelayPort, nonce)
+			punchCtx, stopPunch := context.WithCancel(ctx)
+			punchMu.Lock()
+			punchStops[m.SessionID] = stopPunch
+			punchMu.Unlock()
+			go punchRelay(punchCtx, gameSock, m.RelayPort, nonce)
 		case "client-relay-closed":
 			log.Printf("server: relay closed for session %s", m.SessionID)
+			punchMu.Lock()
+			if stop, ok := punchStops[m.SessionID]; ok {
+				stop()
+				delete(punchStops, m.SessionID)
+			}
+			punchMu.Unlock()
 		case "error":
 			fatal("server: gateway rejected us: %s", m.Data)
 		}

@@ -268,6 +268,7 @@ class GatewayServerRegistration final
 
     std::mutex m_mutex;
     bool       m_active{false};
+    std::string m_trackingId;
     std::chrono::steady_clock::time_point m_lastHeartbeat{};
     /* Set just before each ReceivedP2PCustomSignal call, consumed by
      * OnConnectRequest if that call triggers one synchronously (it always

@@ -615,14 +615,17 @@ void GatewayServerRegistration::onWebSocketMessage(std::string const& text)
                 reinterpret_cast<char const*>(raw.data()), raw.size()));
     } else if(type == "register-active")
     {
+        auto trackingId = msg.value("serverTrackingId", std::string());
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            m_active = true;
+            m_active     = true;
+            m_trackingId = trackingId;
         }
         cDebug(
-            "webrtc_signaling: registration active for serverId={} "
+            "webrtc_signaling: registration active for serverId={} [{}] "
             "(webrtc-hosted)",
-            m_serverId);
+            m_serverId,
+            trackingId.empty() ? "no tracking id" : trackingId);
     } else if(type == "error")
     {
         cWarning(

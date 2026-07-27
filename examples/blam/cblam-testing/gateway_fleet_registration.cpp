@@ -258,6 +258,7 @@ void GatewayFleetRegistration::onWebSocketMessage(std::string const& text)
         std::lock_guard<std::mutex> lock(m_mutex);
         m_gatewayAddr.sin_port = htons(static_cast<uint16_t>(punchPort));
         m_havePunchTarget      = true;
+        m_trackingId = msg.value("serverTrackingId", std::string());
 #endif
     } else if(type == "client-relay")
     {
@@ -265,7 +266,8 @@ void GatewayFleetRegistration::onWebSocketMessage(std::string const& text)
         onClientRelay(
             msg.value("sessionId", std::string()),
             msg.value("relayPort", 0),
-            msg.value("relayNonce", std::string()));
+            msg.value("relayNonce", std::string()),
+            msg.value("trackingId", std::string()));
 #endif
     } else if(type == "client-relay-closed")
     {
@@ -368,8 +370,9 @@ void GatewayFleetRegistration::pollChallengeSocket()
          * available without extending the wire protocol further. */
         cDebug(
             "webrtc_signaling: gateway_fleet_registration: registration "
-            "active for serverId={} (challenge passed)",
-            m_serverId);
+            "active for serverId={} [{}] (challenge passed)",
+            m_serverId,
+            m_trackingId.empty() ? "no tracking id" : m_trackingId);
         std::lock_guard<std::mutex> lock(m_mutex);
         m_active = true;
     }
@@ -394,7 +397,8 @@ void GatewayFleetRegistration::sendRelayPunch(
 void GatewayFleetRegistration::onClientRelay(
     std::string const& sessionId,
     int                relayPort,
-    std::string const& relayNonceHex)
+    std::string const& relayNonceHex,
+    std::string const& trackingId)
 {
     if(sessionId.empty() || relayPort <= 0 || relayPort > 65535)
     {
@@ -415,8 +419,9 @@ void GatewayFleetRegistration::onClientRelay(
     sendRelayPunch(relayPort, nonce.empty() ? kRelayPunchPayload : nonce);
     cDebug(
         "webrtc_signaling: gateway_fleet_registration: relay punch started "
-        "for session {} -> gateway relay port {}",
-        sessionId,
+        "for [{}/{}] -> gateway relay port {}",
+        m_trackingId.empty() ? "?" : m_trackingId,
+        trackingId.empty() ? "?" : trackingId,
         relayPort);
 }
 

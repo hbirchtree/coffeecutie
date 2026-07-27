@@ -140,9 +140,10 @@ func serverListItems(ws *serverWorkingSet) []list.Item {
 		}
 		server.mu.Unlock()
 		items = append(items, serverItem{
-			id:        id,
-			addr:      addr,
-			transport: server.transport,
+			id:         id,
+			addr:       addr,
+			transport:  server.transport,
+			trackingID: server.trackingID,
 		})
 	}
 	ws.servers.RUnlock()
@@ -170,6 +171,12 @@ func serverConfigItems(model *adminInterfaceModel) []table.Row {
 	}
 }
 
+const (
+	clientColumnStatus = iota
+	clientColumnTrackingID
+	clientColumnProtocol
+)
+
 // currentServerRows snapshots one registry entry's info/client rows for the
 // detail panel. ok is false if the server no longer exists (e.g. expired).
 // spinnerFrame is the current frame of the shared spinner, stamped into a
@@ -190,6 +197,7 @@ func currentServerRows(ws *serverWorkingSet, id string, spinnerFrame string) (in
 		// DataChannel to one this server opens per session, so there is
 		// no address, no punch and no challenge to report.
 		info = []table.Row{
+			{"Tracking ID", server.trackingID},
 			{"Transport", "webrtc (datachannel bridge)"},
 			{"Game address", "<none -- bridged>"},
 			{"Active", fmt.Sprintf("%t", server.active)},
@@ -204,6 +212,7 @@ func currentServerRows(ws *serverWorkingSet, id string, spinnerFrame string) (in
 			gameAddrStr = server.gameAddr.String()
 		}
 		info = []table.Row{
+			{"Tracking ID", server.trackingID},
 			{"Transport", "udp (relay + NAT punch)"},
 			{"Game address", gameAddrStr},
 			{"Challenge address", server.challengeAddr.String()},
@@ -253,6 +262,7 @@ func currentServerRows(ws *serverWorkingSet, id string, spinnerFrame string) (in
 
 		clients = append(clients, table.Row{
 			statusStr,
+			client.trackingID,
 			protocol,
 			peerRemoteStr,
 			peerLocalStr,
@@ -261,6 +271,10 @@ func currentServerRows(ws *serverWorkingSet, id string, spinnerFrame string) (in
 		})
 	}
 	ws.clients.RUnlock()
+
+	sort.Slice(clients, func(i, j int) bool {
+		return clients[i][clientColumnTrackingID] < clients[j][clientColumnTrackingID]
+	})
 
 	return info, clients, true
 }
@@ -324,9 +338,10 @@ type model struct {
 }
 
 type serverItem struct {
-	id        string
-	addr      string
-	transport string
+	id         string
+	addr       string
+	transport  string
+	trackingID string
 }
 
 func (i serverItem) FilterValue() string { return "" }
@@ -344,7 +359,7 @@ func (d serverItemDelegate) Render(w io.Writer, m list.Model, index int, listIte
 		return
 	}
 
-	str := fmt.Sprintf("%s [%s] (%s)", i.id, i.transport, i.addr)
+	str := fmt.Sprintf("%s %s [%s] (%s)", i.trackingID, i.id, i.transport, i.addr)
 
 	fn := d.styles.server.Render
 	if index == m.Index() {
@@ -389,6 +404,7 @@ func initialModel() model {
 	currentClients := table.New(
 		table.WithColumns([]table.Column{
 			{Title: "", Width: 3},
+			{Title: "Client", Width: 10},
 			{Title: "Protocol", Width: 8},
 			{Title: "ICE peer address", Width: 24},
 			{Title: "ICE local port", Width: 16},

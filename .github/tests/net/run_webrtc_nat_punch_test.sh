@@ -39,6 +39,12 @@
 # Env overrides (plus the shared SERVER_BINARY/SERVER_LD/SERVER_LIB_PATH
 # and BOOT_TIMEOUT_MS/CONNECT_TIMEOUT_MS documented in webrtc_test_lib.sh
 # and run_webrtc_web_client_test.sh):
+#   The gateway itself must be reachable for WebRTC, not just for signaling:
+#   run it with -public-ip <its public address> and publish the
+#   -ice-udp-port-min/-max range. It is ICE-lite, so it advertises only the
+#   host candidates it gathers -- behind NAT or docker those are private
+#   addresses no browser can reach, and ICE fails after signaling succeeds.
+#
 #   GATEWAY_URL    REQUIRED -- ws(s):// base URL of the remote gateway
 #                  (CI passes the WEBRTC_GATEWAY_SERVER secret). Never
 #                  echoed by this script; note the server's own log does
@@ -138,6 +144,13 @@ if grep -q "relay punch started for session" "$SERVER_LOG" 2>/dev/null; then
     grep "relay punch started for session" "$SERVER_LOG" | sed 's/^/  /'
 else
     echo "FAIL: server never punched a per-client relay port (no client-relay from the gateway?)"
+    echo "  The gateway only asks for a relay punch once the browser's DataChannel"
+    echo "  opens, so this usually means ICE never completed between the browser and"
+    echo "  the gateway -- check the answer SDP in the client log above. If its"
+    echo "  candidates are private addresses (172.x/10.x/CGNAT), the gateway is"
+    echo "  behind NAT or docker and needs -public-ip (plus its -ice-udp-port-min/-max"
+    echo "  range published); ICE-lite gathers host candidates only and cannot"
+    echo "  discover its own public address."
     NAT_OK=0
 fi
 

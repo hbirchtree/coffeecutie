@@ -89,6 +89,8 @@ type signalMessage struct {
 	// reverse proxy or docker port mapping the URL's port has nothing to
 	// do with the gateway's actual UDP port.
 	PunchPort int `json:"punchPort,omitempty"`
+	TrackingID       string `json:"trackingId,omitempty"`
+	ServerTrackingID string `json:"serverTrackingId,omitempty"`
 	// Metadata payload from server
 	// Contains player count, game type, player count etc.
 	// We can use this later to create a server browser
@@ -126,6 +128,8 @@ type clientSession struct {
 	writeMu   sync.Mutex
 	serverID  string
 	relayPort int
+	trackingID       string
+	serverTrackingID string
 
 	mu sync.Mutex
 	// serverAddr is the resolved UDP address this session's relay socket
@@ -162,6 +166,17 @@ type clientSession struct {
 	hostToClient atomic.Uint64
 }
 
+func (s *registeredServer) tag() string {
+	if s == nil {
+		return "[S-?]"
+	}
+	return "[" + s.trackingID + "]"
+}
+
+func (s *clientSession) tag() string {
+	return "[" + s.serverTrackingID + "/" + s.trackingID + "]"
+}
+
 // peerOf returns the far side of a DataChannel bridge for one direction.
 func (s *clientSession) peerOf(from *webrtc.DataChannel) *webrtc.DataChannel {
 	s.mu.Lock()
@@ -176,18 +191,18 @@ func (s *clientSession) peerOf(from *webrtc.DataChannel) *webrtc.DataChannel {
 // Dropping while the far side isn't open yet is deliberate and safe: it
 // mirrors the UDP relay dropping traffic before the server's punch lands,
 // and GNS re-sends its handshake until it gets through.
-func bridgeSend(to *webrtc.DataChannel, data []byte) {
+func bridgeSend(tag string, to *webrtc.DataChannel, data []byte) {
 	if to == nil {
-		log.Printf("datachannel bridge: dropping %d bytes, no peer channel yet", len(data))
+		log.Printf("%s datachannel bridge: dropping %d bytes, no peer channel yet", tag, len(data))
 		return
 	}
 	if to.ReadyState() != webrtc.DataChannelStateOpen {
-		log.Printf("datachannel bridge: dropping %d bytes, peer channel is %s",
-			len(data), to.ReadyState())
+		log.Printf("%s datachannel bridge: dropping %d bytes, peer channel is %s",
+			tag, len(data), to.ReadyState())
 		return
 	}
 	if err := to.Send(data); err != nil {
-		log.Printf("datachannel bridge send failed: %v", err)
+		log.Printf("%s datachannel bridge send failed: %v", tag, err)
 	}
 }
 
@@ -212,6 +227,8 @@ type registeredServer struct {
 	// transportUDP or transportWebRTC; fixed at registration.
 	transport string
 
+	trackingID string
+
 	mu           sync.Mutex
 	active       bool
 	expiresAt    time.Time
@@ -235,6 +252,7 @@ type serverSettings struct {
 	// punch at -- the challenge socket's bound port unless
 	// -advertise-punch-port overrides it (docker port mappings etc.).
 	punchPortToAdvertise int
+	publicIP string
 
 	websocketAddr   net.Addr
 	challengeAddr   net.Addr
@@ -283,6 +301,14 @@ func mustAtoi(s string) int {
 	return n
 }
 
+func newTrackingID(prefix string) string {
+	b := make([]byte, 3)
+	if _, err := rand.Read(b); err != nil {
+		return prefix + "-" + fmt.Sprintf("%06x", time.Now().UnixNano()&0xffffff)
+	}
+	return prefix + "-" + strings.ToUpper(hex.EncodeToString(b))
+}
+
 func newSessionID() string {
 	b := make([]byte, 16)
 	if _, err := rand.Read(b); err != nil {
@@ -327,6 +353,7 @@ func main() {
 	challengeTimeoutFlag := flag.Duration("challenge-timeout", 5*time.Second, "how long a fleet registration waits for its return-routability punch before being dropped")
 	relayPunchTimeoutFlag := flag.Duration("relay-punch-timeout", 5*time.Second, "how long a new per-client relay socket waits for the registered server's NAT punch before giving up on that client")
 	challengeUDPPort := flag.Int("challenge-udp-port", 0, "UDP port to bind the registration challenge socket on (0 = same port number as -listen)")
+	publicIP := flag.String("public-ip", "", "public IP to advertise in ICE candidates (SetNAT1To1IPs). REQUIRED when the gateway runs behind NAT or in a container: ICE-lite gathers host candidates only, so without this it advertises its own private/docker addresses and no outside browser can reach it. Pair with -ice-udp-port-min/-max and publish that range.")
 	advertisePunchPort := flag.Int("advertise-punch-port", 0, "punch port to tell registering servers (register-pending's punchPort) when the externally reachable UDP port differs from the bound one, e.g. behind a docker port mapping (0 = advertise the bound port)")
 
 	adminAddr := flag.String("admin-port", ":2222", "SSH port for admin interface")
@@ -364,6 +391,13 @@ func main() {
 	}
 	settings.challengeAddr = probeSock.LocalAddr()
 	challengeSock = probeSock
+	settings.publicIP = *publicIP
+	if settings.publicIP == "" {
+		log.Printf("WARNING: -public-ip not set; ICE candidates will advertise this host's own addresses only. " +
+			"Browsers outside this machine's network will fail to connect.")
+	} else {
+		log.Printf("advertising %s in ICE candidates", settings.publicIP)
+	}
 	settings.punchPortToAdvertise = *advertisePunchPort
 	if settings.punchPortToAdvertise == 0 {
 		settings.punchPortToAdvertise = probeSock.LocalAddr().(*net.UDPAddr).Port
@@ -414,7 +448,7 @@ func sweepExpiredRegistrations() {
 			if stale {
 				expired = append(expired, srv)
 				delete(workingSet.servers.registry, id)
-				log.Printf("registry entry %q expired (no heartbeat within TTL)", id)
+				log.Printf("%s registry entry %q expired (no heartbeat within TTL)", srv.tag(), id)
 			}
 		}
 		workingSet.servers.Unlock()
@@ -449,7 +483,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 	srv.mu.Unlock()
 	transport := srv.transport
 	if !active {
-		log.Printf("rejecting /signal: server %q not active (challenge pending/failed)", serverID)
+		log.Printf("%s rejecting /signal: server %q not active (challenge pending/failed)", srv.tag(), serverID)
 		return
 	}
 
@@ -461,7 +495,15 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 	defer conn.Close()
 
 	sessionID := newSessionID()
-	session := &clientSession{conn: conn, serverID: serverID, protocol: "WebRTC"}
+	session := &clientSession{
+		conn:             conn,
+		serverID:         serverID,
+		protocol:         "WebRTC",
+		trackingID:       newTrackingID("C"),
+		serverTrackingID: srv.trackingID,
+	}
+	log.Printf("[%s/%s] client session opened for server %q",
+		session.serverTrackingID, session.trackingID, serverID)
 	workingSet.clients.Lock()
 	workingSet.clients.sessions[sessionID] = session
 	workingSet.clients.Unlock()
@@ -473,29 +515,29 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 
 	var msg signalMessage
 	if err := conn.ReadJSON(&msg); err != nil {
-		log.Printf("signal read failed: %v", err)
+		log.Printf("%s signal read failed: %v", session.tag(), err)
 		return
 	}
 	if msg.Type != "offer" {
-		log.Printf("expected offer, got %q", msg.Type)
+		log.Printf("%s expected offer, got %q", session.tag(), msg.Type)
 		return
 	}
 
 	pc, err := newPeerConnection(iceUDPPortMin, iceUDPPortMax)
 	if err != nil {
-		log.Printf("failed to create peer connection: %v", err)
+		log.Printf("%s failed to create peer connection: %v", session.tag(), err)
 		return
 	}
 	defer pc.Close()
 
 	pc.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
-		log.Printf("peer connection state: %s", s)
+		log.Printf("%s peer connection state: %s", session.tag(), s)
 		if s != webrtc.PeerConnectionStateConnected {
 			return
 		}
 		pair, err := pc.SCTP().Transport().ICETransport().GetSelectedCandidatePair()
 		if err != nil || pair == nil {
-			log.Printf("failed to read selected ICE candidate pair for session %s: %v", sessionID, err)
+			log.Printf("%s failed to read selected ICE candidate pair: %v", session.tag(), err)
 			return
 		}
 		session.mu.Lock()
@@ -509,7 +551,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 
 	relayDone := make(chan struct{})
 	pc.OnDataChannel(func(dc *webrtc.DataChannel) {
-		log.Printf("data channel %q open request (id=%v)", dc.Label(), dc.ID())
+		log.Printf("%s data channel %q open request (id=%v)", session.tag(), dc.Label(), dc.ID())
 
 		session.mu.Lock()
 		session.dataChannel = dc
@@ -527,14 +569,14 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 			// No UDP anywhere in this path: the server dials
 			// /signal?role=host&session=<id> with its own DataChannel for
 			// this session, and the two get spliced together.
-			log.Printf("session %s: awaiting host datachannel (webrtc-hosted server %q)", sessionID, serverID)
+			log.Printf("[%s/%s] awaiting host datachannel (webrtc-hosted server %q)", session.serverTrackingID, session.trackingID, serverID)
 			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
 				session.clientToHost.Add(1)
-				bridgeSend(session.peerOf(dc), msg.Data)
+				bridgeSend(session.tag(), session.peerOf(dc), msg.Data)
 			})
 			var closeOnce sync.Once
 			dc.OnClose(func() {
-				log.Printf("data channel %q closed", dc.Label())
+				log.Printf("%s data channel %q closed", session.tag(), dc.Label())
 				session.mu.Lock()
 				hostClose := session.hostClose
 				session.mu.Unlock()
@@ -552,7 +594,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		// release could hand a still-live port to another session.
 		pooledPort := newPortFromPool(&workingSet.relayPortPool)
 		if pooledPort == nil {
-			log.Printf("relay port pool exhausted, refusing session %s", sessionID)
+			log.Printf("[%s/%s] relay port pool exhausted, refusing session", session.serverTrackingID, session.trackingID)
 			return
 		}
 		var releasePort sync.Once
@@ -564,7 +606,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 
 		sock, err := net.ListenUDP("udp", &net.UDPAddr{Port: *pooledPort})
 		if err != nil {
-			log.Printf("failed to open relay socket: %v", err)
+			log.Printf("%s failed to open relay socket: %v", session.tag(), err)
 			freePort()
 			return
 		}
@@ -575,7 +617,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 
 		relayNonce := make([]byte, 16)
 		if _, err := rand.Read(relayNonce); err != nil {
-			log.Printf("failed to generate relay punch nonce: %v", err)
+			log.Printf("%s failed to generate relay punch nonce: %v", session.tag(), err)
 			freePort()
 			sock.Close()
 			return
@@ -588,14 +630,18 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 				return
 			}
 			if _, err := sock.WriteToUDP(msg.Data, d); err != nil {
-				log.Printf("udp write failed: %v", err)
+				log.Printf("%s udp write failed: %v", session.tag(), err)
 			}
 		})
 		dc.OnClose(func() {
-			log.Printf("data channel %q closed", dc.Label())
+			log.Printf("%s data channel %q closed", session.tag(), dc.Label())
 			sock.Close()
 			srv.writeMu.Lock()
-			srv.conn.WriteJSON(signalMessage{Type: "client-relay-closed", SessionID: sessionID})
+			srv.conn.WriteJSON(signalMessage{
+				Type:       "client-relay-closed",
+				SessionID:  sessionID,
+				TrackingID: session.trackingID,
+			})
 			srv.writeMu.Unlock()
 			freePort()
 		})
@@ -604,12 +650,13 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		sendErr := srv.conn.WriteJSON(signalMessage{
 			Type:       "client-relay",
 			SessionID:  sessionID,
+			TrackingID: session.trackingID,
 			RelayPort:  relayPort,
 			RelayNonce: hex.EncodeToString(relayNonce),
 		})
 		srv.writeMu.Unlock()
 		if sendErr != nil {
-			log.Printf("failed to send client-relay to server: %v", sendErr)
+			log.Printf("%s failed to send client-relay to server: %v", session.tag(), sendErr)
 			freePort()
 			sock.Close()
 			return
@@ -624,8 +671,8 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 					n, addr, err := sock.ReadFromUDP(buf)
 					if err != nil {
 						log.Printf(
-							"no authentic punch received from server for session %s within %s, closing: %v",
-							sessionID, settings.relayPunchTimeout, err)
+							"[%s/%s] no authentic punch received from server within %s, closing: %v",
+							session.serverTrackingID, session.trackingID, settings.relayPunchTimeout, err)
 						sock.Close()
 						freePort()
 						close(relayDone)
@@ -639,7 +686,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 						continue
 					}
 					sock.SetReadDeadline(time.Time{})
-					log.Printf("authentic punch received from %s for session %s, relaying to it", addr, sessionID)
+					log.Printf("[%s/%s] authentic punch received from %s, relaying to it", session.serverTrackingID, session.trackingID, addr)
 					resolvedDest.Store(addr)
 					session.mu.Lock()
 					session.serverAddr = addr
@@ -647,7 +694,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 					srv.mu.Lock()
 					srv.gameAddr = addr
 					srv.mu.Unlock()
-					go runRelayUnconnected(dc, sock, addr, relayNonce, relayDone)
+					go runRelayUnconnected(session.tag(), dc, sock, addr, relayNonce, relayDone)
 					return
 				}
 			}()
@@ -658,28 +705,30 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		Type: webrtc.SDPTypeOffer,
 		SDP:  msg.SDP,
 	}); err != nil {
-		log.Printf("SetRemoteDescription failed: %v", err)
+		log.Printf("%s SetRemoteDescription failed: %v", session.tag(), err)
 		return
 	}
 
 	answer, err := pc.CreateAnswer(nil)
 	if err != nil {
-		log.Printf("CreateAnswer failed: %v", err)
+		log.Printf("%s CreateAnswer failed: %v", session.tag(), err)
 		return
 	}
 
 	gatherComplete := webrtc.GatheringCompletePromise(pc)
 	if err := pc.SetLocalDescription(answer); err != nil {
-		log.Printf("SetLocalDescription failed: %v", err)
+		log.Printf("%s SetLocalDescription failed: %v", session.tag(), err)
 		return
 	}
 	<-gatherComplete
 
 	session.writeMu.Lock()
 	err = conn.WriteJSON(signalMessage{
-		Type:      "answer",
-		SDP:       pc.LocalDescription().SDP,
-		SessionID: sessionID,
+		Type:             "answer",
+		SDP:              pc.LocalDescription().SDP,
+		SessionID:        sessionID,
+		TrackingID:       session.trackingID,
+		ServerTrackingID: session.serverTrackingID,
 		// Which GNS connect mode this client should use: ordinary
 		// direct-UDP-over-DataChannel for a UDP server, P2P rendezvous
 		// for a WebRTC-hosted one.
@@ -687,7 +736,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 	})
 	session.writeMu.Unlock()
 	if err != nil {
-		log.Printf("failed to send answer: %v", err)
+		log.Printf("%s failed to send answer: %v", session.tag(), err)
 		return
 	}
 
@@ -719,10 +768,10 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		case "gns-rendezvous":
 			relayRendezvousToServer(serverID, sessionID, m.Data)
 		case "gns-connected":
-			log.Printf("session %s: GNS reports direct connection, retiring relay", sessionID)
+			log.Printf("[%s/%s] GNS reports direct connection, retiring relay", session.serverTrackingID, session.trackingID)
 			closeSessionRelay(session)
 		default:
-			log.Printf("session %s: unexpected signal message type %q", sessionID, m.Type)
+			log.Printf("%s unexpected signal message type %q", session.tag(), m.Type)
 		}
 	}
 }
@@ -754,8 +803,8 @@ func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, 
 	srv, srvOK := workingSet.servers.registry[session.serverID]
 	workingSet.servers.RUnlock()
 	if !srvOK || srv.transport != transportWebRTC {
-		log.Printf("rejecting host /signal for session %s: server %q is not webrtc-hosted",
-			sessionID, session.serverID)
+		log.Printf("%s rejecting host /signal: server %q is not webrtc-hosted",
+			session.tag(), session.serverID)
 		return
 	}
 
@@ -763,30 +812,30 @@ func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, 
 	taken := session.hostDC != nil || session.hostClose != nil
 	session.mu.Unlock()
 	if taken {
-		log.Printf("rejecting host /signal: session %s already has a host", sessionID)
+		log.Printf("%s rejecting host /signal: session already has a host", session.tag())
 		return
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("host websocket upgrade failed: %v", err)
+		log.Printf("%s host websocket upgrade failed: %v", session.tag(), err)
 		return
 	}
 	defer conn.Close()
 
 	var msg signalMessage
 	if err := conn.ReadJSON(&msg); err != nil {
-		log.Printf("host signal read failed: %v", err)
+		log.Printf("%s host signal read failed: %v", session.tag(), err)
 		return
 	}
 	if msg.Type != "offer" {
-		log.Printf("host signal: expected offer, got %q", msg.Type)
+		log.Printf("%s host signal: expected offer, got %q", session.tag(), msg.Type)
 		return
 	}
 
 	pc, err := newPeerConnection(iceUDPPortMin, iceUDPPortMax)
 	if err != nil {
-		log.Printf("failed to create host peer connection: %v", err)
+		log.Printf("%s failed to create host peer connection: %v", session.tag(), err)
 		return
 	}
 	defer pc.Close()
@@ -808,7 +857,7 @@ func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, 
 
 	var hostDCOpen atomic.Bool
 	pc.OnDataChannel(func(dc *webrtc.DataChannel) {
-		log.Printf("session %s: host data channel %q open request", sessionID, dc.Label())
+		log.Printf("%s host data channel %q open request", session.tag(), dc.Label())
 		hostDCOpen.Store(true)
 		session.mu.Lock()
 		session.hostDC = dc
@@ -818,15 +867,15 @@ func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, 
 		// arrive before a handler exists.
 		dc.OnMessage(func(m webrtc.DataChannelMessage) {
 			session.hostToClient.Add(1)
-			bridgeSend(session.peerOf(dc), m.Data)
+			bridgeSend(session.tag(), session.peerOf(dc), m.Data)
 		})
 		dc.OnClose(func() {
-			log.Printf("session %s: host data channel closed", sessionID)
+			log.Printf("%s host data channel closed", session.tag())
 			hostDCOpen.Store(false)
 			closeHost()
 		})
 		dc.OnOpen(func() {
-			log.Printf("session %s: datachannel bridge established", sessionID)
+			log.Printf("[%s/%s] datachannel bridge established", session.serverTrackingID, session.trackingID)
 		})
 	})
 
@@ -834,17 +883,17 @@ func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, 
 		Type: webrtc.SDPTypeOffer,
 		SDP:  msg.SDP,
 	}); err != nil {
-		log.Printf("host SetRemoteDescription failed: %v", err)
+		log.Printf("%s host SetRemoteDescription failed: %v", session.tag(), err)
 		return
 	}
 	answer, err := pc.CreateAnswer(nil)
 	if err != nil {
-		log.Printf("host CreateAnswer failed: %v", err)
+		log.Printf("%s host CreateAnswer failed: %v", session.tag(), err)
 		return
 	}
 	gatherComplete := webrtc.GatheringCompletePromise(pc)
 	if err := pc.SetLocalDescription(answer); err != nil {
-		log.Printf("host SetLocalDescription failed: %v", err)
+		log.Printf("%s host SetLocalDescription failed: %v", session.tag(), err)
 		return
 	}
 	<-gatherComplete
@@ -854,7 +903,7 @@ func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, 
 		SDP:       pc.LocalDescription().SDP,
 		SessionID: sessionID,
 	}); err != nil {
-		log.Printf("failed to send host answer: %v", err)
+		log.Printf("%s failed to send host answer: %v", session.tag(), err)
 		return
 	}
 
@@ -869,17 +918,17 @@ func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, 
 			var m signalMessage
 			if err := conn.ReadJSON(&m); err != nil {
 				if !hostDCOpen.Load() {
-					log.Printf("session %s: host signaling closed before its datachannel opened", sessionID)
+					log.Printf("%s host signaling closed before its datachannel opened", session.tag())
 					closeHost()
 				}
 				return
 			}
-			log.Printf("session %s: unexpected host signal message %q", sessionID, m.Type)
+			log.Printf("%s unexpected host signal message %q", session.tag(), m.Type)
 		}
 	}()
 	<-hostDone
-	log.Printf("session %s: host side torn down (bridged %d client->host, %d host->client messages)",
-		sessionID, session.clientToHost.Load(), session.hostToClient.Load())
+	log.Printf("%s host side torn down (bridged %d client->host, %d host->client messages)",
+		session.tag(), session.clientToHost.Load(), session.hostToClient.Load())
 }
 
 func handleServerSignal(w http.ResponseWriter, r *http.Request) {
@@ -904,7 +953,7 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 			delete(workingSet.servers.registry, myID)
 		}
 		workingSet.servers.Unlock()
-		log.Printf("server %q signaling connection closed", myID)
+		log.Printf("%s server %q signaling connection closed", myEntry.tag(), myID)
 	}()
 
 	for {
@@ -921,11 +970,19 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			myID, myEntry = id, entry
-			reply := signalMessage{Type: "register-pending", PunchPort: settings.punchPortToAdvertise}
+			reply := signalMessage{
+				Type:             "register-pending",
+				PunchPort:        settings.punchPortToAdvertise,
+				ServerTrackingID: entry.trackingID,
+			}
 			if entry.transport == transportWebRTC {
 				// Nothing to punch -- it is routable the moment it
 				// registers (see beginRegistration).
-				reply = signalMessage{Type: "register-active", Transport: transportWebRTC}
+				reply = signalMessage{
+					Type:             "register-active",
+					Transport:        transportWebRTC,
+					ServerTrackingID: entry.trackingID,
+				}
 			}
 			// Tell a UDP server where to send its return-routability punch
 			// -- explicitly, never guessed from URLs (see PunchPort's
@@ -934,7 +991,7 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 			err = conn.WriteJSON(reply)
 			myEntry.writeMu.Unlock()
 			if err != nil {
-				log.Printf("failed to send register-pending to %q: %v", myID, err)
+				log.Printf("%s failed to send register-pending to %q: %v", myEntry.tag(), myID, err)
 				return
 			}
 		case "heartbeat":
@@ -986,6 +1043,7 @@ func beginRegistration(conn *websocket.Conn, m signalMessage) (string, *register
 	entry := &registeredServer{
 		conn:         conn,
 		transport:    transport,
+		trackingID:   newTrackingID("S"),
 		active:       false,
 		pendingNonce: nonce,
 		expiresAt:    time.Now().Add(settings.challengeTimeout),
@@ -1011,11 +1069,12 @@ func beginRegistration(conn *websocket.Conn, m signalMessage) (string, *register
 	workingSet.servers.Unlock()
 
 	if transport == transportWebRTC {
-		log.Printf("server %q registration active (webrtc-hosted, no UDP challenge)", m.ServerID)
+		log.Printf("[%s] server %q registration active (webrtc-hosted, no UDP challenge)",
+			entry.trackingID, m.ServerID)
 		return m.ServerID, entry, nil
 	}
 
-	log.Printf("register %q: waiting for return-routability punch", m.ServerID)
+	log.Printf("[%s] register %q: waiting for return-routability punch", entry.trackingID, m.ServerID)
 
 	go func(id string, srv *registeredServer) {
 		time.Sleep(settings.challengeTimeout)
@@ -1030,7 +1089,7 @@ func beginRegistration(conn *websocket.Conn, m signalMessage) (string, *register
 			delete(workingSet.servers.registry, id)
 		}
 		workingSet.servers.Unlock()
-		log.Printf("register %q: no punch/challenge received in time, dropping registration", id)
+		log.Printf("%s register %q: no punch/challenge received in time, dropping registration", srv.tag(), id)
 	}(m.ServerID, entry)
 
 	return m.ServerID, entry, nil
@@ -1067,7 +1126,7 @@ func challengeListener() {
 		}
 
 		if _, err := challengeSock.WriteToUDP(nonce, addr); err != nil {
-			log.Printf("register %q: failed to reply to punch from %s: %v", id, addr, err)
+			log.Printf("%s register %q: failed to reply to punch from %s: %v", srv.tag(), id, addr, err)
 		}
 	}
 }
@@ -1075,7 +1134,7 @@ func challengeListener() {
 func completeChallenge(id string, srv *registeredServer, nonceHex string) {
 	nonce, err := hex.DecodeString(nonceHex)
 	if err != nil {
-		log.Printf("challenge-response for %q: bad hex nonce: %v", id, err)
+		log.Printf("%s challenge-response for %q: bad hex nonce: %v", srv.tag(), id, err)
 		return
 	}
 	srv.mu.Lock()
@@ -1084,14 +1143,14 @@ func completeChallenge(id string, srv *registeredServer, nonceHex string) {
 		return
 	}
 	if subtle.ConstantTimeCompare(nonce, srv.pendingNonce) != 1 {
-		log.Printf("challenge-response for %q: nonce mismatch (got %d bytes %x, want %d bytes %x)",
-			id, len(nonce), nonce, len(srv.pendingNonce), srv.pendingNonce)
+		log.Printf("%s challenge-response for %q: nonce mismatch (got %d bytes %x, want %d bytes %x)",
+			srv.tag(), id, len(nonce), nonce, len(srv.pendingNonce), srv.pendingNonce)
 		return
 	}
 	srv.active = true
 	srv.pendingNonce = nil
 	srv.expiresAt = time.Now().Add(settings.registrationTTL)
-	log.Printf("server %q registration active (challenge passed)", id)
+	log.Printf("%s server %q registration active (challenge passed)", srv.tag(), id)
 }
 
 func mapToInt(data map[string]string, key string) int {
@@ -1107,7 +1166,7 @@ func mapToInt(data map[string]string, key string) int {
 }
 
 func stashServerMetadata(id string, srv *registeredServer, metadata map[string]string) {
-	log.Printf("server metadata received from %s", id)
+	log.Printf("%s server metadata received from %s", srv.tag(), id)
 	var parsedMeta = serverMetadata{}
 	parsedMeta.playerCountCurrent = mapToInt(metadata, "playerCount")
 	parsedMeta.playerCountMax = mapToInt(metadata, "playerCountMax")
@@ -1129,13 +1188,13 @@ func relayRendezvousToServer(serverID, sessionID, data string) {
 		return
 	}
 	if conn == nil {
-		log.Printf("dropping gns-rendezvous from session %s: server %q has no signaling connection", sessionID, serverID)
+		log.Printf("%s dropping gns-rendezvous: server %q has no signaling connection", srv.tag(), serverID)
 		return
 	}
 	srv.writeMu.Lock()
 	defer srv.writeMu.Unlock()
 	if err := conn.WriteJSON(signalMessage{Type: "gns-rendezvous", SessionID: sessionID, Data: data}); err != nil {
-		log.Printf("failed to relay rendezvous to server %q: %v", serverID, err)
+		log.Printf("%s failed to relay rendezvous to server %q: %v", srv.tag(), serverID, err)
 	}
 }
 
@@ -1203,6 +1262,9 @@ func newPeerConnection(udpPortMin, udpPortMax int) (*webrtc.PeerConnection, erro
 	settingEngine := webrtc.SettingEngine{}
 	settingEngine.SetLite(true)
 	settingEngine.SetNetworkTypes([]webrtc.NetworkType{webrtc.NetworkTypeUDP4})
+	if settings.publicIP != "" {
+		settingEngine.SetNAT1To1IPs([]string{settings.publicIP}, webrtc.ICECandidateTypeHost)
+	}
 	if udpPortMin != 0 {
 		if err := settingEngine.SetEphemeralUDPPortRange(uint16(udpPortMin), uint16(udpPortMax)); err != nil {
 			return nil, err
@@ -1233,7 +1295,7 @@ func newPeerConnection(udpPortMin, udpPortMax int) (*webrtc.PeerConnection, erro
 // forwarded as game data. Dropping it also stops a stale keepalive from
 // an earlier session bleeding into this one when a pooled relay port is
 // recycled.
-func runRelayUnconnected(dc *webrtc.DataChannel, sock *net.UDPConn, dest *net.UDPAddr, punchNonce []byte, done chan<- struct{}) {
+func runRelayUnconnected(tag string, dc *webrtc.DataChannel, sock *net.UDPConn, dest *net.UDPAddr, punchNonce []byte, done chan<- struct{}) {
 	defer close(done)
 
 	buf := make([]byte, 65535)
@@ -1243,12 +1305,12 @@ func runRelayUnconnected(dc *webrtc.DataChannel, sock *net.UDPConn, dest *net.UD
 		if err != nil {
 			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 				if dc.ReadyState() != webrtc.DataChannelStateOpen {
-					log.Printf("data channel no longer open, ending relay")
+					log.Printf("%s data channel no longer open, ending relay", tag)
 					return
 				}
 				continue
 			}
-			log.Printf("udp read failed, ending relay: %v", err)
+			log.Printf("%s udp read failed, ending relay: %v", tag, err)
 			return
 		}
 		if !addr.IP.Equal(dest.IP) || addr.Port != dest.Port {
@@ -1259,7 +1321,7 @@ func runRelayUnconnected(dc *webrtc.DataChannel, sock *net.UDPConn, dest *net.UD
 			continue // NAT keepalive punch, not game data
 		}
 		if err := dc.Send(buf[:n]); err != nil {
-			log.Printf("data channel send failed: %v", err)
+			log.Printf("%s data channel send failed: %v", tag, err)
 			return
 		}
 	}
