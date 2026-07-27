@@ -1,8 +1,11 @@
+vcpkg's OpenSSL port exposes OpenSSL::applink rather than OpenSSL::Crypto
+for the checks and link step used here.
+
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 69912cf..5a1534e 100644
+index dde136b..6365a37 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -110,13 +110,13 @@ if (USE_CRYPTO STREQUAL "OpenSSL")
+@@ -104,13 +104,13 @@ if (USE_CRYPTO STREQUAL "OpenSSL")
  	# functionality.
  	cmake_push_check_state()
  		set(CMAKE_REQUIRED_INCLUDES ${OPENSSL_INCLUDE_DIR})
@@ -19,10 +22,10 @@ index 69912cf..5a1534e 100644
  			list(APPEND CMAKE_REQUIRED_LIBRARIES ws2_32 crypt32)
  		endif()
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index e9f36cb..f81bfa2 100644
+index ceca7fc..7d05082 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -180,7 +180,7 @@ endfunction()
+@@ -204,7 +204,7 @@ endfunction()
  function(gns_set_target_crypto_properties TGT)
  	if(USE_CRYPTO STREQUAL "OpenSSL" OR USE_CRYPTO25519 STREQUAL "OpenSSL")
  		target_link_libraries(${TGT} PUBLIC

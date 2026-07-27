@@ -98,9 +98,10 @@ accept side as soon as the peer was already sending (whole process stopped
 ticking); the connect side had the same latent bug.
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 91ce12d..ecf91c5 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -50,6 +50,12 @@
+@@ -49,6 +49,12 @@ option(BUILD_TOOLS "Build cert management tool" OFF)
  option(LTO "Enable Link-Time Optimization" OFF)
  option(ENABLE_ICE "Enable support for NAT-punched P2P connections using ICE protocol.  Build native ICE client" ON)
  option(USE_STEAMWEBRTC "Build Google's WebRTC library to get ICE support for P2P" OFF)
@@ -111,9 +112,9 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
 +# dependency on either.
 +option(ENABLE_WEBRTC_DATACHANNEL "Build coffeecutie's WebRTC DataChannel P2P transport (libdatachannel-backed)" OFF)
  option(Protobuf_USE_STATIC_LIBS "Link with protobuf statically" OFF)
- if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
- 	option(MSVC_CRT_STATIC "Link the MSVC CRT statically" OFF)
-@@ -154,6 +160,17 @@
+ 
+ #
+@@ -148,6 +154,17 @@ function(set_target_common_gns_properties TGT)
  		# since IsLinux()-gated code (epoll, /proc/self/status ptrace
  		# detection) assumes real kernel facilities Emscripten's libc
  		# doesn't provide.
@@ -131,7 +132,7 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
  	elseif(CMAKE_SYSTEM_NAME MATCHES Darwin)
  		target_compile_definitions(${TGT} PUBLIC OSX)
  	elseif(CMAKE_SYSTEM_NAME MATCHES FreeBSD)
-@@ -199,6 +216,29 @@
+@@ -195,6 +212,29 @@ function(set_target_common_gns_properties TGT)
  	set_target_properties(${TGT} PROPERTIES
  		CXX_STANDARD 11
  	)
@@ -161,8 +162,8 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
  endfunction()
  
  if(BUILD_EXAMPLES)
-
 diff --git a/include/steam/isteamnetworkingsockets.h b/include/steam/isteamnetworkingsockets.h
+index 5478262..42a3c51 100644
 --- a/include/steam/isteamnetworkingsockets.h
 +++ b/include/steam/isteamnetworkingsockets.h
 @@ -6,6 +6,7 @@
@@ -173,7 +174,7 @@ diff --git a/include/steam/isteamnetworkingsockets.h b/include/steam/isteamnetwo
  
  struct SteamNetAuthenticationStatus_t;
  struct SteamNetworkingFakeIPResult_t;
-@@ -13,6 +14,22 @@
+@@ -13,6 +14,22 @@ class ISteamNetworkingConnectionSignaling;
  class ISteamNetworkingSignalingRecvContext;
  class ISteamNetworkingFakeUDPPort;
  
@@ -196,7 +197,7 @@ diff --git a/include/steam/isteamnetworkingsockets.h b/include/steam/isteamnetwo
  //-----------------------------------------------------------------------------
  /// Lower level networking API.
  ///
-@@ -730,6 +747,30 @@
+@@ -755,6 +772,30 @@ public:
  	/// setting the options "immediately" after creation.
  	virtual HSteamNetConnection ConnectP2PCustomSignaling( ISteamNetworkingConnectionSignaling *pSignaling, const SteamNetworkingIdentity *pPeerIdentity, int nRemoteVirtualPort, int nOptions, const SteamNetworkingConfigValue_t *pOptions ) = 0;
  
@@ -227,11 +228,11 @@ diff --git a/include/steam/isteamnetworkingsockets.h b/include/steam/isteamnetwo
  	/// Called when custom signaling has received a message.  When your
  	/// signaling channel receives a message, it should save off whatever
  	/// routing information was in the envelope into the context object,
-
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 4d3158a..81df689 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -44,6 +44,17 @@
+@@ -62,6 +62,17 @@ set(GNS_CLIENTLIB_SRCS
  	"steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.cpp"
  )
  
@@ -249,20 +250,20 @@ diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
  set(GNS_CRYPTO_SRCS
  	"common/crypto.cpp"
  	"common/crypto_textencode.cpp"
-@@ -262,6 +273,27 @@
- 			)
+@@ -269,6 +280,27 @@ macro(set_clientlib_target_properties GNS_TARGET)
+ 		target_compile_definitions(${GNS_TARGET} PRIVATE STEAMNETWORKINGSOCKETS_ENABLE_ICE )
  	endif()
  
 +	# Enable coffeecutie's WebRTC DataChannel P2P transport? Independent of
 +	# ENABLE_ICE/USE_STEAMWEBRTC above -- see the option() comment. Native
 +	# builds link libdatachannel; Emscripten links datachannel-wasm instead
-+	# (same C++ API shape, a JS-glue-backed wrapper around the browser's
-+	# own WebRTC implementation rather than a real C++ WebRTC stack -- see
-+	# examples/blam/cblam-testing/WEBRTC_TRANSPORT.md). Both provide a
-+	# CMake package named for their own target, so this is the only branch
-+	# needed -- the coffeecutie source using this transport
++	# (same C++ API shape, a JS-glue-backed wrapper around the browser's own
++	# WebRTC implementation rather than a real C++ WebRTC stack -- see
++	# examples/blam/cblam-testing/WEBRTC_TRANSPORT.md). Both provide a CMake
++	# package named for their own target, so this is the only branch needed
++	# -- the coffeecutie source using this transport
 +	# (steamnetworkingsockets_p2p_webrtc_datachannel.cpp) is unaware which
-+	# one it's linked against.
++	# one it is linked against.
 +	if(ENABLE_WEBRTC_DATACHANNEL)
 +		target_compile_definitions(${GNS_TARGET} PRIVATE STEAMNETWORKINGSOCKETS_ENABLE_WEBRTC_DATACHANNEL )
 +		if(EMSCRIPTEN)
@@ -274,11 +275,11 @@ diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
 +		endif()
 +	endif()
 +
- 	## Needs CMake 3.8, then we could get rid of the workaround below it.
- 	#target_compile_features(${GNS_TARGET} PUBLIC c_std_99 cxx_std_11)
- 	if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-
+ 	# Enable WebRTC as ICE client?
+ 	if(USE_STEAMWEBRTC)
+ 		if(NOT ENABLE_ICE)
 diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp
+index 0497a0b..4307bf3 100644
 --- a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp
 +++ b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp
 @@ -19,6 +19,14 @@
@@ -296,7 +297,7 @@ diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp b/
  // Needed for the platform checks below
  #if defined(__APPLE__)
  	#include "AvailabilityMacros.h"
-@@ -1136,6 +1144,51 @@
+@@ -1181,6 +1189,51 @@ EResult CSteamNetworkingSockets::AcceptConnection( HSteamNetConnection hConn )
  	return pConn->APIAcceptConnection();
  }
  
@@ -348,11 +349,11 @@ diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp b/
  bool CSteamNetworkingSockets::CloseConnection( HSteamNetConnection hConn, int nReason, const char *pszDebug, bool bEnableLinger )
  {
  	SteamNetworkingGlobalLock scopeLock( "CloseConnection" ); // Take global lock, we are going to change connection state and/or destroy objects
-
 diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h
+index 62c2307..9b66967 100644
 --- a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h
 +++ b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h
-@@ -109,6 +109,40 @@
+@@ -109,6 +109,40 @@ public:
  	virtual int ReceiveMessagesOnPollGroup( HSteamNetPollGroup hPollGroup, SteamNetworkingMessage_t **ppOutMessages, int nMaxMessages ) override; 
  	virtual HSteamNetConnection ConnectP2PCustomSignaling( ISteamNetworkingConnectionSignaling *pSignaling, const SteamNetworkingIdentity *pPeerIdentity, int nVirtualPort, int nOptions, const SteamNetworkingConfigValue_t *pOptions ) override;
  	virtual bool ReceivedP2PCustomSignal( const void *pMsg, int cbMsg, ISteamNetworkingSignalingRecvContext *pContext ) override;
@@ -393,8 +394,8 @@ diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h b/sr
  	virtual int GetP2P_Transport_ICE_Enable( const SteamNetworkingIdentity &identityRemote, int *pOutUserFlags );
  
  	virtual bool GetCertificateRequest( int *pcbBlob, void *pBlob, SteamNetworkingErrMsg &errMsg ) override;
-
 diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.cpp b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.cpp
+index a109cdd..5218558 100644
 --- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.cpp
 +++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.cpp
 @@ -17,6 +17,10 @@
@@ -408,7 +409,7 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.cpp
  #ifdef STEAMNETWORKINGSOCKETS_ENABLE_STEAMNETWORKINGMESSAGES
  	#include "csteamnetworkingmessages.h"
  #endif
-@@ -623,6 +627,25 @@
+@@ -623,6 +627,25 @@ bool CSteamNetworkConnectionP2P::BInitSDRTransport( SteamNetworkingErrMsg &errMs
  	return true;
  }
  
@@ -434,7 +435,7 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.cpp
  void CSteamNetworkConnectionP2P::FreeResources()
  {
  	AssertLocksHeldByCurrentThread();
-@@ -661,6 +684,12 @@
+@@ -661,6 +684,12 @@ void CSteamNetworkConnectionP2P::DestroyTransport()
  		Assert( len( m_vecAvailableTransports ) == i );
  	}
  
@@ -447,7 +448,7 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.cpp
  	#ifdef STEAMNETWORKINGSOCKETS_ENABLE_SDR
  		Assert( m_pTransportP2PSDR == nullptr ); // Should have been nuked above
  
-@@ -2707,6 +2736,76 @@
+@@ -2707,6 +2736,76 @@ HSteamNetConnection CSteamNetworkingSockets::ConnectP2PCustomSignaling( ISteamNe
  	return k_HSteamNetConnection_Invalid;
  }
  
@@ -524,12 +525,12 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.cpp
  CSteamNetworkConnectionBase *CSteamNetworkingSockets::InternalConnectP2P(
  	ISteamNetworkingConnectionSignaling *pSignaling,
  	const SteamNetworkingIdentity *pPeerIdentity,
-
 diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.h b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.h
+index 6b9a320..b3812b8 100644
 --- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.h
 +++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.h
-@@ -12,6 +12,15 @@
- 	#include <steamdatagram_messages_sdr.pb.h>
+@@ -14,6 +14,15 @@
+ 	#include <tier0/memdbg_restore.h>
  #endif
  
 +// rtc::PeerConnection/DataChannel are forward-declared unconditionally by
@@ -544,7 +545,7 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.h b
  class CMsgSteamDatagramConnectRequest;
  
  namespace SteamNetworkingSocketsLib {
-@@ -194,6 +203,23 @@
+@@ -196,6 +205,23 @@ protected:
  	ScheduledMethodThinkerLockable<CConnectionTransportP2PBase> m_scheduleP2PTransportThink;
  };
  
@@ -568,7 +569,7 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_p2p.h b
  /// A peer-to-peer connection that can use different types of underlying transport
  class CSteamNetworkConnectionP2P : public CSteamNetworkConnectionBase
  {
-@@ -401,6 +427,27 @@
+@@ -403,6 +429,27 @@ public:
  		inline int GetICEFailureCode() const { return k_nICECloseCode_Local_NotCompiled; }
  	#endif
  

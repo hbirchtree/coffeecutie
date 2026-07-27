@@ -1,7 +1,10 @@
+
+
 diff --git a/include/steam/isteamnetworkingsockets.h b/include/steam/isteamnetworkingsockets.h
---- a/include/steam/isteamnetworkingsockets.h	2026-07-23 12:09:15.933851478 +0000
-+++ b/include/steam/isteamnetworkingsockets.h	2026-07-23 12:09:24.103802617 +0000
-@@ -194,6 +194,18 @@
+index 42a3c51..a829a48 100644
+--- a/include/steam/isteamnetworkingsockets.h
++++ b/include/steam/isteamnetworkingsockets.h
+@@ -211,6 +211,18 @@ public:
  	/// socket are closed ungracefully.
  	virtual bool CloseListenSocket( HSteamListenSocket hSocket ) = 0;
  
@@ -20,25 +23,11 @@ diff --git a/include/steam/isteamnetworkingsockets.h b/include/steam/isteamnetwo
  	/// Set connection user data.  the data is returned in the following places
  	/// - You can query it using GetConnectionUserData.
  	/// - The SteamNetworkingmessage_t structure.
-diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h
---- a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h	2026-07-23 12:09:15.940387828 +0000
-+++ b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h	2026-07-23 12:09:29.351069227 +0000
-@@ -87,6 +87,11 @@
- 	virtual EResult AcceptConnection( HSteamNetConnection hConn ) override;
- 	virtual bool CloseConnection( HSteamNetConnection hConn, int nReason, const char *pszDebug, bool bEnableLinger ) override;
- 	virtual bool CloseListenSocket( HSteamListenSocket hSocket ) override;
-+	// Added for coffeecutie -- see the declaration comment in
-+	// isteamnetworkingsockets.h. Implemented in csteamnetworkingsockets.cpp,
-+	// same file as CloseListenSocket, whose shape (lock, GetListenSocketByHandle,
-+	// null check, delegate) this copies exactly.
-+	virtual bool SendRawPacketOnListenSocket( HSteamListenSocket hSocket, const void *pPkt, int cbPkt, const SteamNetworkingIPAddr &adrTo ) override;
- 	virtual bool SetConnectionUserData( HSteamNetConnection hPeer, int64 nUserData ) override;
- 	virtual int64 GetConnectionUserData( HSteamNetConnection hPeer ) override;
- 	virtual void SetConnectionName( HSteamNetConnection hPeer, const char *pszName ) override;
 diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp
---- a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp	2026-07-23 12:09:15.947106617 +0000
-+++ b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp	2026-07-23 12:09:38.026510006 +0000
-@@ -1162,6 +1162,25 @@
+index 4307bf3..52f58b8 100644
+--- a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp
++++ b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp
+@@ -1260,6 +1260,25 @@ bool CSteamNetworkingSockets::CloseListenSocket( HSteamListenSocket hSocket )
  	return true;
  }
  
@@ -64,10 +53,27 @@ diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp b/
  bool CSteamNetworkingSockets::SetConnectionUserData( HSteamNetConnection hPeer, int64 nUserData )
  {
  	//SteamNetworkingGlobalLock scopeLock( "SetConnectionUserData" ); // NO, not necessary!
+diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h
+index 9b66967..fa3d173 100644
+--- a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h
++++ b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h
+@@ -87,6 +87,11 @@ public:
+ 	virtual EResult AcceptConnection( HSteamNetConnection hConn ) override;
+ 	virtual bool CloseConnection( HSteamNetConnection hConn, int nReason, const char *pszDebug, bool bEnableLinger ) override;
+ 	virtual bool CloseListenSocket( HSteamListenSocket hSocket ) override;
++	// Added for coffeecutie -- see the declaration comment in
++	// isteamnetworkingsockets.h. Implemented in csteamnetworkingsockets.cpp,
++	// same file as CloseListenSocket, whose shape (lock, GetListenSocketByHandle,
++	// null check, delegate) this copies exactly.
++	virtual bool SendRawPacketOnListenSocket( HSteamListenSocket hSocket, const void *pPkt, int cbPkt, const SteamNetworkingIPAddr &adrTo ) override;
+ 	virtual bool SetConnectionUserData( HSteamNetConnection hPeer, int64 nUserData ) override;
+ 	virtual int64 GetConnectionUserData( HSteamNetConnection hPeer ) override;
+ 	virtual void SetConnectionName( HSteamNetConnection hPeer, const char *pszName ) override;
 diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_connections.h b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_connections.h
---- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_connections.h	2026-07-23 12:09:15.955388590 +0000
-+++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_connections.h	2026-07-23 12:09:52.439242246 +0000
-@@ -40,6 +40,7 @@
+index 5ce6b59..bd0da32 100644
+--- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_connections.h
++++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_connections.h
+@@ -40,6 +40,7 @@ class CSteamNetworkingSockets;
  class CSteamNetworkingMessages;
  class CSteamNetworkConnectionBase;
  class CSteamNetworkConnectionP2P;
@@ -75,7 +81,7 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_connect
  class CSharedSocket;
  class CConnectionTransport;
  struct SNPPacketSerializeHelper;
-@@ -293,6 +294,12 @@
+@@ -297,6 +298,12 @@ public:
  
  	virtual bool APIGetAddress( SteamNetworkingIPAddr *pAddress );
  
@@ -89,11 +95,12 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_connect
  	CUtlHashMap<RemoteConnectionKey_t, CSteamNetworkConnectionBase *, std::equal_to<RemoteConnectionKey_t>, RemoteConnectionKey_t::Hash > m_mapChildConnections;
  
 diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.h b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.h
---- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.h	2026-07-23 12:09:15.962712838 +0000
-+++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.h	2026-07-23 12:10:01.190686843 +0000
-@@ -85,6 +85,18 @@
- 	/// Setup
- 	bool BInit( const SteamNetworkingIPAddr &localAddr, int nOptions, const SteamNetworkingConfigValue_t *pOptions, SteamDatagramErrMsg &errMsg );
+index 0776436..5eb0634 100644
+--- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.h
++++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.h
+@@ -92,6 +92,18 @@ public:
+ 
+ 	CSharedSocket *GetSharedSocket() { return m_pSock; };
  
 +	/// Added for coffeecutie: expose the raw send primitive CSharedSocket
 +	/// already has (IRawUDPSocket::BSendRawPacket), for NAT hole-punch

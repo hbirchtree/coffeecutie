@@ -1363,7 +1363,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         messages.back()->m_pfnFreeData = [](SteamNetworkingMessage_t* msg) {
             delete static_cast<char*>(msg->m_pData);
         };
-        m_impl->SendMessages(messages.size(), messages.data(), nullptr);
+        /* bDeleteFailedMessages: added in GNS 1.6.0; true keeps the
+         * previous behaviour here. */
+        m_impl->SendMessages(
+            messages.size(), messages.data(), nullptr, /*bDeleteFailedMessages*/ true);
     }
 
     template<typename T>

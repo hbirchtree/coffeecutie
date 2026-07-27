@@ -287,9 +287,21 @@ public:
 		);
 	}
 
-	virtual bool BSendRawPacketGather( int nChunks, const iovec *pChunks, const netadr_t &adrTo ) const override
+	// Added to IRawUDPSocket in GNS 1.6.0. The callback lives in the shared
+	// state the DataChannel's onMessage handler reads, so re-pointing it
+	// here is all that is needed; the handler itself stays as it is.
+	virtual void SetCallbackRecvPacket( CRecvPacketCallback callback ) override
+	{
+		m_pState->m_callback = callback;
+	}
+
+	// ecn: added to IRawUDPSocket's interface in GNS 1.6.0 (explicit
+	// congestion notification). A DataChannel has no IP header to carry
+	// it, so it is accepted and ignored.
+	virtual bool BSendRawPacketGather( int nChunks, const iovec *pChunks, const netadr_t &adrTo, int ecn = -1 ) const override
 	{
 		(void)adrTo; // 1:1 channel; the gateway already knows where this goes
+		(void)ecn;   // no IP header here to carry it
 		if ( m_pState->m_bClosed || !m_pState->m_pDataChannel->isOpen() )
 			return false;
 

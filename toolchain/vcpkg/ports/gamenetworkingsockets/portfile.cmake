@@ -1,22 +1,18 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO ValveSoftware/GameNetworkingSockets
-    REF 505c697d0abef5da2ff3be35aa4ea3687597c3e9 # v1.4.1
-    SHA512 3e4b4da138f2b356169e6504aa899c9eca4fba5b5fcaed2a0ae8a2f5828976dd00af9f3262c75bd6d820300da87ebe32da152fecddc278a651f3b33eb59142df
+    REF 2cb93a06350bb065db53abdb0d87cf297e0bfd34 # v1.6.0
+    SHA512 c2deaa3aab42cd840dd13560ca4da40faa375ab846ea15af38d55eb7acc48cfe8cbdbe0c76b9c3484d26f9e1163e36ac1eb73a317e5c19cefe60d0b861d19e06
     HEAD_REF master
     PATCHES
-        fix-depend-protobuf.patch
         fix-android-support.patch
         skip-openssl-version-check.patch
         fix-mingw-compat.patch
         fix-openssl-dependency.patch
         fix-emscripten-support.patch
+        fix-stun-keepalive-retry-loop.patch
         add-webrtc-datachannel-transport.patch
         add-listen-socket-raw-send.patch
-        add-posix-local-addresses.patch
-        fix-stun-send-failure-loop.patch
-        fix-ice-foundation-vector-corruption.patch
-        fix-ice-peer-candidate-wakeup.patch
         add-udp-datachannel-connect.patch
 )
 

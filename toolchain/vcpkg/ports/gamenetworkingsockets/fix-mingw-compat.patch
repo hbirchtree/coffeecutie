@@ -1,8 +1,13 @@
+MinGW cross-compile fixes: link iphlpapi in lowercase (the MinGW import
+library is libiphlpapi.a, and cross-compiling from a case-sensitive
+filesystem does not find "Iphlpapi"), and use IP_UNICAST_IF's numeric
+value, which MinGW's headers do not define.
+
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 393eb7e..42dd5e8 100644
+index bffce54..ceca7fc 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -300,7 +300,7 @@ macro(set_clientlib_target_properties GNS_TARGET)
+@@ -343,7 +343,7 @@ macro(set_clientlib_target_properties GNS_TARGET)
  				set_target_properties(${GNS_TARGET} PROPERTIES LINK_FLAGS "/LTCG /SUBSYSTEM:WINDOWS")
  			endif()
  		endif()
@@ -11,11 +16,11 @@ index 393eb7e..42dd5e8 100644
  		if(USE_CRYPTO STREQUAL "BCrypt")
  			target_link_libraries(${GNS_TARGET} PUBLIC bcrypt)
  		endif()
-diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
-index 6a4697e..b624ed7 100644
---- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
-+++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
-@@ -1643,7 +1643,7 @@ static SOCKET OpenUDPSocketBoundToSockAddr( const void *pSockaddr, size_t len, S
+diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_socketthread.cpp b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_socketthread.cpp
+index d7dd408..7dbcd20 100644
+--- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_socketthread.cpp
++++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_socketthread.cpp
+@@ -1461,7 +1461,7 @@ static SOCKET OpenUDPSocketBoundToSockAddr( const void *pSockaddr, size_t len, S
  				// WARNING: interface index should be in network byte order for IPPROTO_IP
  				const DWORD value = htonl(nBindInterface);
  				const int length = sizeof(value);

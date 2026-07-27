@@ -42,9 +42,10 @@ IsEmscripten() of its own instead:
     before relying on it, not just a stub.
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
---- a/CMakeLists.txt	2026-07-20 11:23:05.773405364 +0000
-+++ b/CMakeLists.txt	2026-07-20 11:23:22.550817996 +0000
-@@ -134,7 +134,7 @@
+index 6365a37..91ce12d 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -128,7 +128,7 @@ if(USE_CRYPTO STREQUAL "libsodium")
  endif()
  
  # We always need at least sse2 on x86
@@ -53,7 +54,7 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
         set(TARGET_ARCH_FLAGS "-msse2")
  endif()
  
-@@ -148,6 +148,12 @@
+@@ -142,6 +142,12 @@ function(set_target_common_gns_properties TGT)
  
      if(CMAKE_SYSTEM_NAME MATCHES Linux OR CMAKE_SYSTEM_NAME MATCHES Android)
  		target_compile_definitions(${TGT} PUBLIC LINUX)
@@ -67,9 +68,10 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
  		target_compile_definitions(${TGT} PUBLIC OSX)
  	elseif(CMAKE_SYSTEM_NAME MATCHES FreeBSD)
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
---- a/src/CMakeLists.txt	2026-07-20 11:23:05.781427888 +0000
-+++ b/src/CMakeLists.txt	2026-07-20 11:23:32.286323119 +0000
-@@ -294,6 +294,8 @@
+index 7d05082..4d3158a 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -325,6 +325,8 @@ macro(set_clientlib_target_properties GNS_TARGET)
  		#if(USE_STEAMWEBRTC AND NOT STEAMWEBRTC_USE_STATIC_LIBS)
  		#	target_link_libraries(${GNS_TARGET} PRIVATE dl)
  		#endif()
@@ -79,9 +81,10 @@ diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
  		#if(USE_STEAMWEBRTC AND NOT STEAMWEBRTC_USE_STATIC_LIBS)
  		#	target_link_libraries(${GNS_TARGET} PRIVATE dl)
 diff --git a/src/public/minbase/minbase_identify.h b/src/public/minbase/minbase_identify.h
---- a/src/public/minbase/minbase_identify.h	2026-07-20 11:23:05.787960415 +0000
-+++ b/src/public/minbase/minbase_identify.h	2026-07-20 11:23:46.237046645 +0000
-@@ -144,6 +144,13 @@
+index aeeda46..800cb49 100644
+--- a/src/public/minbase/minbase_identify.h
++++ b/src/public/minbase/minbase_identify.h
+@@ -161,6 +161,13 @@
  #elif defined( __ANDROID__ ) || defined( ANDROID )
  	#define IsAndroid() true
  	#define IsPosix() true
@@ -94,8 +97,8 @@ diff --git a/src/public/minbase/minbase_identify.h b/src/public/minbase/minbase_
 +	#define IsPosix() true
  #elif defined(__APPLE__)
  	#include <TargetConditionals.h>
- 	#if defined( TARGET_OS_MAC )
-@@ -178,6 +185,9 @@
+ 	// https://stackoverflow.com/questions/12132933/preprocessor-macro-for-os-x-targets
+@@ -200,6 +207,9 @@
  #ifndef IsAndroid
  	#define IsAndroid() false
  #endif
@@ -105,83 +108,53 @@ diff --git a/src/public/minbase/minbase_identify.h b/src/public/minbase/minbase_
  #ifndef IsConsole
  	#define IsConsole() false
  #endif
-diff --git a/src/tier0/dbg.cpp b/src/tier0/dbg.cpp
---- a/src/tier0/dbg.cpp	2026-07-20 11:23:05.793908488 +0000
-+++ b/src/tier0/dbg.cpp	2026-07-20 11:23:53.114403197 +0000
-@@ -90,6 +90,8 @@
- 	return false;
- #elif IsAndroid()
-     return false;
-+#elif IsEmscripten()
-+	return false;
- #else
- 	#error "HALP"
- #endif
+diff --git a/src/public/minbase/minbase_types.h b/src/public/minbase/minbase_types.h
+index 27c9dc7..df350e4 100644
+--- a/src/public/minbase/minbase_types.h
++++ b/src/public/minbase/minbase_types.h
+@@ -75,7 +75,7 @@ typedef uint32 uint32_t;
+ // NOTE: int64_t must match the compiler stdint.h definition
+ // and so may not match the Steam int64.  Mixing the two is
+ // error-prone so always use the Steam non-_t types in Steam code.
+-#if defined(COMPILER_GCC) && defined(PLATFORM_64BITS) && !defined(__MINGW32__) && !IsOSX() && !IsIOS() && !IsTVOS() && !IsOpenBSD()
++#if defined(COMPILER_GCC) && defined(PLATFORM_64BITS) && !defined(__MINGW32__) && !IsOSX() && !IsIOS() && !IsTVOS() && !IsOpenBSD() && !IsEmscripten()
+ #define INT64_DIFFERENT_FROM_INT64_T 1
+ typedef long int int64_t;
+ typedef unsigned long int uint64_t;
 diff --git a/src/public/tier0/platform_sockets.h b/src/public/tier0/platform_sockets.h
---- a/src/public/tier0/platform_sockets.h	2026-07-20 11:23:05.800741748 +0000
-+++ b/src/public/tier0/platform_sockets.h	2026-07-20 11:24:00.706796723 +0000
-@@ -104,7 +104,7 @@
- 		return errno;
- 	}
- 
--	#ifdef __APPLE__
-+	#if defined(__APPLE__) || defined(__EMSCRIPTEN__)
- 		#define USE_POLL
+index 917bf17..f911a52 100644
+--- a/src/public/tier0/platform_sockets.h
++++ b/src/public/tier0/platform_sockets.h
+@@ -153,6 +153,11 @@ typedef char SteamNetworkingErrMsg[ 1024 ];
+ 		// Does this work?  If somebody who uses OpenBSD
+ 		// wants to test, I would appreciate it!
+ 		#define PlatformSupportsRecvTOS() false
++	#elif defined(__EMSCRIPTEN__)
++
++		// Emscripten's libc has no epoll; poll() is emulated and works.
++		#define USE_POLL
++		#define PlatformSupportsRecvTOS() false
  	#else
  		#define USE_EPOLL
-
-Additionally: csteamnetworkingsockets.cpp's platform-name string
-function has the same IsXxx() #elif chain shape with the same
-#error "Unknown platform" fallthrough -- same fix, give Emscripten
-its own branch rather than erroring.
-
+ 		#include <sys/epoll.h>
 diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp
---- a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp	2026-07-20 11:26:12.117970231 +0000
-+++ b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp	2026-07-20 11:26:19.537976377 +0000
-@@ -2409,6 +2409,8 @@
+index 02918d2..0497a0b 100644
+--- a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp
++++ b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp
+@@ -2476,6 +2476,8 @@ const char *CSteamNetworkingUtils::GetPlatformString()
  		return "windows";
  	#elif IsLinux()
  		return "linux";
 +	#elif IsEmscripten()
 +		return "emscripten";
- 	#elif defined( FREEBSD ) || defined( __FreeBSD__ )
+ 	#elif IsFreeBSD()
  		return "freebsd";
- 	#else
-
-Same "assumes real POSIX kernel facilities" issue as the socket-polling
-backend above, but discovered at runtime rather than compile time (see
-examples/blam/cblam-testing/WEBRTC_TRANSPORT.md's Phase 3 "first real
-browser run" section): BSteamNetworkingSocketsLowLevelAddRef()
-unconditionally opens a socketpair() as a self-pipe to wake the
-background service thread. Emscripten's libc has no socketpair()
-implementation at all -- confirmed at runtime ("warning: unsupported
-syscall: __syscall_socketpair"), not just missing a header -- so
-GameNetworkingSockets_Init() itself failed outright on every wasm run,
-before a single connection was ever attempted. Fixed with a new
-IsEmscripten() branch alongside the existing Playstation one ("no
-additional setup needed here"): no wake-thread socket is needed at all,
-since this project always calls
-SteamNetworkingSockets_SetManualPollMode(true) immediately after Init()
-on Emscripten (Networking::Networking(), networking.cpp) specifically so
-the background service thread never runs there.
-
-That still leaves a narrow window: AddRef() unconditionally tries to
-start the service thread *before* the caller's SetManualPollMode(true)
-call gets a chance to run (they're two separate statements). Emscripten
-pthreads are real Web Workers -- creating one is asynchronous, and
-tearing it back down (StopServiceThread()'s join()) blocks the calling
-thread until the worker actually starts and exits, which is fatal when
-the caller is the browser's real main thread (this project never uses
--sPROXY_TO_PTHREAD, see src/peripheral/platform/CMakeLists.txt). Guarded
-both places a service thread can be spun up (AddRef's initial start, and
-SetManualPollMode's restart-on-toggle-off branch) with !IsEmscripten()
-so it can never happen at all, rather than relying on the two statements
-always running back-to-back with no yield point in between.
-
-diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
---- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
-+++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
-@@ -2041,7 +2041,21 @@
+ 	#elif IsOpenBSD()
+diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_socketthread.cpp b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_socketthread.cpp
+index 7dbcd20..30631cd 100644
+--- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_socketthread.cpp
++++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_socketthread.cpp
+@@ -2634,7 +2634,21 @@ static bool PollRawUDPSockets( int nMaxTimeoutMS, bool bManualPoll )
  			#if defined( WAKE_THREAD_USING_EVENT )
  				ADD_POLL_FD( s_hEventWakeThread );
  			#elif defined( WAKE_THREAD_USING_SOCKET_PAIR )
@@ -204,7 +177,7 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowleve
  			#else
  				#error "How will we cancel this poll?"
  			#endif
-@@ -3287,6 +3301,15 @@
+@@ -3762,6 +3776,15 @@ bool BSteamNetworkingSocketsLowLevelAddRef( SteamNetworkingErrMsg &errMsg )
  			}
  		#elif IsPlaystation()
  			// No additional setup needed here
@@ -220,7 +193,7 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowleve
  		#else
  		{
  			Assert( s_hSockWakeThreadRead == INVALID_SOCKET );
-@@ -3348,8 +3371,18 @@
+@@ -3823,8 +3846,18 @@ bool BSteamNetworkingSocketsLowLevelAddRef( SteamNetworkingErrMsg &errMsg )
  
  	s_nLowLevelSupportRefCount.fetch_add(1, std::memory_order_acq_rel);
  
@@ -241,7 +214,7 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowleve
  		s_pServiceThread = new std::thread( SteamNetworkingThreadProc );
  
  	// Install an axexit handler, so that if static destruction is triggered without
-@@ -3725,7 +3758,7 @@
+@@ -4303,7 +4336,7 @@ STEAMNETWORKINGSOCKETS_INTERFACE void SteamNetworkingSockets_SetManualPollMode(
  	}
  	else
  	{
@@ -250,44 +223,16 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowleve
  		{
  			// Start up the thread
  			SpewMsg( "Service thread is not running, and manual poll mode was turned off, starting service thread.\n" );
-
-PollRawUDPSockets (steamnetworkingsockets_lowlevel.cpp) asserts
-s_hSockWakeThreadRead != INVALID_SOCKET when building its poll list --
-fires every call on Emscripten, since the Init-time IsEmscripten()
-branch above intentionally leaves it invalid. poll() ignores negative
-fds, so the fix just reserves the slot with one instead of asserting.
-
-wasm64 (Emscripten's MEMORY64 target) specifically, found via an actual
-wasm64-emscripten CI build (native wasm32 already worked -- this is
-wasm64-only): "typedef redefinition with different types ('long' vs
-'long long')" in minbase_types.h, plus knock-on "constructor cannot be
-redeclared" errors in steamclientpublic.h wherever it overloads on
-int64/int64_t as distinct types.
-
-Root cause: minbase_types.h's own int64_t typedef branches on
-`COMPILER_GCC && PLATFORM_64BITS && ...`, assuming traditional Linux
-LP64 semantics (`long` is 64-bit and IS the system's int64_t) --
-correct for real GCC/Linux, wrong for Emscripten. Two things conspire:
-Emscripten's clang defines __GNUC__ (for GCC-macro compatibility), so
-minbase_identify.h's own COMPILER_GCC detection (`defined(__GCC__) ||
-defined(__GNUC__)`) already treats it as COMPILER_GCC; and wasm64
-genuinely sets PLATFORM_64BITS (real 64-bit pointers under MEMORY64).
-So this branch fires for wasm64, defining int64_t as `long int` --- but
-Emscripten's own <stdint.h> uses `long long` for int64_t regardless of
-pointer width, causing a direct typedef conflict the instant anything
-includes both. Excluded the same way the rest of this patch treats
-Emscripten as its own platform identity rather than piggybacking on
-Linux/GCC assumptions it doesn't actually share.
-
-diff --git a/src/public/minbase/minbase_types.h b/src/public/minbase/minbase_types.h
---- a/src/public/minbase/minbase_types.h
-+++ b/src/public/minbase/minbase_types.h
-@@ -75,7 +75,7 @@
- // NOTE: int64_t must match the compiler stdint.h definition
- // and so may not match the Steam int64.  Mixing the two is
- // error-prone so always use the Steam non-_t types in Steam code.
--#if defined(COMPILER_GCC) && defined(PLATFORM_64BITS) && !defined(__MINGW32__) && !IsOSX() && !(defined(IOS) || defined(TVOS))
-+#if defined(COMPILER_GCC) && defined(PLATFORM_64BITS) && !defined(__MINGW32__) && !IsOSX() && !(defined(IOS) || defined(TVOS)) && !IsEmscripten()
- #define INT64_DIFFERENT_FROM_INT64_T 1
- typedef long int int64_t;
- typedef unsigned long int uint64_t;
+diff --git a/src/tier0/dbg.cpp b/src/tier0/dbg.cpp
+index 56d9abe..c78085d 100644
+--- a/src/tier0/dbg.cpp
++++ b/src/tier0/dbg.cpp
+@@ -123,6 +123,8 @@ bool Plat_IsInDebugSession()
+ 	return false;
+ #elif IsAndroid()
+     return false;
++#elif IsEmscripten()
++	return false;
+ #else
+ 	#error "HALP"
+ #endif

@@ -1,7 +1,10 @@
+
+
 diff --git a/include/steam/isteamnetworkingsockets.h b/include/steam/isteamnetworkingsockets.h
+index a829a48..bbe4ea2 100644
 --- a/include/steam/isteamnetworkingsockets.h
 +++ b/include/steam/isteamnetworkingsockets.h
-@@ -783,6 +783,20 @@
+@@ -808,6 +808,20 @@ public:
  	/// compiled with the feature that implements it.
  	virtual bool AcceptP2PWebRTCDataChannel( HSteamNetConnection hConn, std::shared_ptr<rtc::PeerConnection> pPeerConnection, std::shared_ptr<rtc::DataChannel> pDataChannel ) = 0;
  
@@ -22,26 +25,8 @@ diff --git a/include/steam/isteamnetworkingsockets.h b/include/steam/isteamnetwo
  	/// Called when custom signaling has received a message.  When your
  	/// signaling channel receives a message, it should save off whatever
  	/// routing information was in the envelope into the context object,
-diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h
---- a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h
-+++ b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h
-@@ -148,6 +148,15 @@
- 		HSteamNetConnection hConn,
- 		std::shared_ptr<rtc::PeerConnection> pPeerConnection,
- 		std::shared_ptr<rtc::DataChannel> pDataChannel ) override;
-+
-+	// Added for coffeecutie -- see the declaration comment in
-+	// isteamnetworkingsockets.h. Feature-gated body delegates to
-+	// ConnectUDPWebRTCDataChannelInternal (steamnetworkingsockets_p2p_webrtc_datachannel.h).
-+	virtual HSteamNetConnection ConnectUDPWebRTCDataChannel(
-+		const SteamNetworkingIPAddr &addressRemote,
-+		std::shared_ptr<rtc::PeerConnection> pPeerConnection,
-+		std::shared_ptr<rtc::DataChannel> pDataChannel,
-+		int nOptions, const SteamNetworkingConfigValue_t *pOptions ) override;
- 	virtual int GetP2P_Transport_ICE_Enable( const SteamNetworkingIdentity &identityRemote, int *pOutUserFlags );
- 
- 	virtual bool GetCertificateRequest( int *pcbBlob, void *pBlob, SteamNetworkingErrMsg &errMsg ) override;
 diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp
+index 52f58b8..0c483d0 100644
 --- a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp
 +++ b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp
 @@ -25,6 +25,7 @@
@@ -52,7 +37,7 @@ diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp b/
  #endif
  
  // Needed for the platform checks below
-@@ -1178,6 +1179,25 @@
+@@ -1234,6 +1235,25 @@ bool CSteamNetworkingSockets::AcceptP2PWebRTCDataChannel(
  #endif
  }
  
@@ -78,102 +63,31 @@ diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.cpp b/
  bool CSteamNetworkingSockets::CloseConnection( HSteamNetConnection hConn, int nReason, const char *pszDebug, bool bEnableLinger )
  {
  	SteamNetworkingGlobalLock scopeLock( "CloseConnection" ); // Take global lock, we are going to change connection state and/or destroy objects
-diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.h b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.h
---- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.h
-+++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.h
-@@ -184,6 +184,12 @@
- 	bool BConnect( const netadr_t &netadrRemote, SteamDatagramErrMsg &errMsg );
- 	bool BAccept( CSharedSocket *pSharedSock, const netadr_t &netadrRemote, SteamDatagramErrMsg &errMsg );
+diff --git a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h
+index fa3d173..1123745 100644
+--- a/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h
++++ b/src/steamnetworkingsockets/clientlib/csteamnetworkingsockets.h
+@@ -148,6 +148,15 @@ public:
+ 		HSteamNetConnection hConn,
+ 		std::shared_ptr<rtc::PeerConnection> pPeerConnection,
+ 		std::shared_ptr<rtc::DataChannel> pDataChannel ) override;
++
++	// Added for coffeecutie -- see the declaration comment in
++	// isteamnetworkingsockets.h. Feature-gated body delegates to
++	// ConnectUDPWebRTCDataChannelInternal (steamnetworkingsockets_p2p_webrtc_datachannel.h).
++	virtual HSteamNetConnection ConnectUDPWebRTCDataChannel(
++		const SteamNetworkingIPAddr &addressRemote,
++		std::shared_ptr<rtc::PeerConnection> pPeerConnection,
++		std::shared_ptr<rtc::DataChannel> pDataChannel,
++		int nOptions, const SteamNetworkingConfigValue_t *pOptions ) override;
+ 	virtual int GetP2P_Transport_ICE_Enable( const SteamNetworkingIdentity &identityRemote, int *pOutUserFlags );
  
-+	/// Added for coffeecutie: the packet callback a caller-supplied
-+	/// IBoundUDPSocket must invoke to feed this transport -- what BConnect
-+	/// wires up internally, exposed for BInitConnectBoundSocket's
-+	/// bring-your-own-socket path (PacketReceived itself is protected).
-+	CRecvPacketCallback RecvCallback() { return CRecvPacketCallback( PacketReceived, this ); }
-+
- 	void SendConnectOK( SteamNetworkingMicroseconds usecNow );
- 
- 	static bool CreateLoopbackPair( CConnectionTransportUDP *pTransport[2] );
-@@ -222,6 +228,17 @@
- 	/// Initiate a connection
- 	bool BInitConnect( const SteamNetworkingIPAddr &addressRemote, int nOptions, const SteamNetworkingConfigValue_t *pOptions, SteamDatagramErrMsg &errMsg );
- 
-+	/// Added for coffeecutie: like BInitConnect, but instead of opening a
-+	/// real UDP socket bound to addressRemote, the caller supplies the
-+	/// IBoundUDPSocket via a factory (invoked with the transport's recv
-+	/// callback, which the factory's socket must feed -- with the global
-+	/// lock held, matching the service thread's contract for real
-+	/// sockets). Everything else -- the ordinary direct-UDP
-+	/// challenge/connect handshake and data protocol -- runs unchanged
-+	/// against that socket. See ConnectUDPWebRTCDataChannel.
-+	typedef IBoundUDPSocket *(*FnCreateBoundSocket)( CRecvPacketCallback callback, void *pContext );
-+	bool BInitConnectBoundSocket( FnCreateBoundSocket fnCreateSocket, void *pContext, int nOptions, const SteamNetworkingConfigValue_t *pOptions, SteamDatagramErrMsg &errMsg );
-+
- 	/// Accept a connection that has passed the handshake phase
- 	bool BBeginAccept(
- 		CSteamNetworkListenSocketDirectUDP *pParent,
-diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.cpp b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.cpp
---- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.cpp
-+++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.cpp
-@@ -1176,6 +1176,54 @@
- 	return BConnectionState_Connecting( usecNow, errMsg );
- }
- 
-+// Added for coffeecutie -- see the declaration comment in
-+// steamnetworkingsockets_udp.h. Mirrors BInitConnect above except the
-+// socket comes from the caller's factory instead of
-+// OpenUDPSocketBoundToHost.
-+bool CSteamNetworkConnectionUDP::BInitConnectBoundSocket( FnCreateBoundSocket fnCreateSocket, void *pContext, int nOptions, const SteamNetworkingConfigValue_t *pOptions, SteamDatagramErrMsg &errMsg )
-+{
-+	AssertMsg( !m_pTransport, "Trying to connect when we already have a socket?" );
-+	Assert( !m_pParentListenSocket );
-+	Assert( !m_bConnectionInitiatedRemotely );
-+
-+	Assert( m_identityRemote.IsInvalid() );
-+	m_identityRemote.Clear();
-+
-+	if ( m_identityLocal.IsInvalid() )
-+	{
-+		m_identityLocal = m_pSteamNetworkingSocketsInterface->InternalGetIdentity();
-+		if ( m_identityLocal.IsInvalid())
-+		{
-+			if ( m_connectionConfig.m_IP_AllowWithoutAuth.Get() == 0 )
-+			{
-+				V_strcpy_safe( errMsg, "Unable to determine local identity, and auth required.  Not logged in?" );
-+				return false;
-+			}
-+			m_identityLocal.SetLocalHost();
-+		}
-+	}
-+
-+	CConnectionTransportUDP *pTransport = new CConnectionTransportUDP( *this );
-+	IBoundUDPSocket *pSock = fnCreateSocket( pTransport->RecvCallback(), pContext );
-+	if ( !pSock )
-+	{
-+		V_strcpy_safe( errMsg, "Caller-supplied socket factory failed" );
-+		pTransport->TransportDestroySelfNow();
-+		return false;
-+	}
-+	pTransport->m_pSocket = pSock;
-+	m_pTransport = pTransport;
-+
-+	SteamNetworkingMicroseconds usecNow = SteamNetworkingSockets_GetLocalTimestamp();
-+	if ( !CSteamNetworkConnectionBase::BInitConnection( usecNow, nOptions, pOptions, errMsg ) )
-+	{
-+		DestroyTransport();
-+		return false;
-+	}
-+
-+	return BConnectionState_Connecting( usecNow, errMsg );
-+}
-+
- bool CConnectionTransportUDP::BCanSendEndToEndConnectRequest() const
- {
- 	return m_pSocket != nullptr;
-diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
---- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
-+++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
-@@ -877,8 +877,16 @@
+ 	virtual bool GetCertificateRequest( int *pcbBlob, void *pBlob, SteamNetworkingErrMsg &errMsg ) override;
+diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_socketthread.cpp b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_socketthread.cpp
+index 30631cd..ae3db37 100644
+--- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_socketthread.cpp
++++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_socketthread.cpp
+@@ -346,8 +346,16 @@ static void UpdateFakeRateLimitTokenBuckets( SteamNetworkingMicroseconds usecNow
  	}
  }
  
@@ -192,3 +106,92 @@ diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowleve
  
  
  // Perform gather-based send, on platform that doesn't have sendmsg
+diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.cpp b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.cpp
+index f1fe78b..1b6818a 100644
+--- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.cpp
++++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.cpp
+@@ -1229,6 +1229,51 @@ bool CSteamNetworkConnectionUDP::BInitConnect( const SteamNetworkingIPAddr &addr
+ 	return BConnectionState_Connecting( usecNow, errMsg );
+ }
+ 
++// Added for coffeecutie -- see the declaration comment in
++// steamnetworkingsockets_udp.h. Mirrors BInitConnect above, except the
++// bound socket comes from the caller's factory instead of
++// OpenUDPSocketBoundToHost, so the ordinary UDP protocol can run over a
++// transport GNS knows nothing about (a WebRTC DataChannel).
++bool CSteamNetworkConnectionUDP::BInitConnectBoundSocket( FnCreateBoundSocket fnCreateSocket, void *pContext, int nOptions, const SteamNetworkingConfigValue_t *pOptions, SteamDatagramErrMsg &errMsg )
++{
++	AssertMsg( !m_pTransport, "Trying to connect when we already have a socket?" );
++
++	// We're initiating a connection, not being accepted on a listen socket
++	Assert( !m_pParentListenSocket );
++	Assert( !m_bConnectionInitiatedRemotely );
++
++	Assert( m_identityRemote.IsInvalid() );
++	m_identityRemote.Clear();
++
++	// The remote address is a placeholder for this transport (the far end is
++	// wherever the DataChannel goes), so authenticate as if it were local:
++	// the anti-spoofing that matters here is connection-ID based.
++	if ( !BSetLocalIdentityAndCheckForAuthOverride( true, nOptions, pOptions, errMsg ) )
++		return false;
++
++	CConnectionTransportUDP *pTransport = new CConnectionTransportUDP( *this );
++	IBoundUDPSocket *pSocket = (*fnCreateSocket)( pTransport->RecvCallback(), pContext );
++	if ( pSocket == nullptr )
++	{
++		V_strcpy_safe( errMsg, "Caller failed to create a bound socket" );
++		pTransport->TransportDestroySelfNow();
++		return false;
++	}
++	pTransport->m_pSocket = pSocket;
++	m_pTransport = pTransport;
++
++	// Let base class do some common initialization
++	SteamNetworkingMicroseconds usecNow = SteamNetworkingSockets_GetLocalTimestamp();
++	if ( !CSteamNetworkConnectionBase::BInitConnection( usecNow, nOptions, pOptions, errMsg ) )
++	{
++		DestroyTransport();
++		return false;
++	}
++
++	// Start the connection state machine
++	return BConnectionState_Connecting( usecNow, errMsg );
++}
++
+ bool CConnectionTransportUDP::BCanSendEndToEndConnectRequest() const
+ {
+ 	return m_pSocket != nullptr;
+diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.h b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.h
+index 5eb0634..43f5609 100644
+--- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.h
++++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_udp.h
+@@ -191,6 +191,12 @@ public:
+ 	bool BConnect( const netadr_t &netadrRemote, SteamDatagramErrMsg &errMsg );
+ 	bool BAccept( CSharedSocket *pSharedSock, const netadr_t &netadrRemote, SteamDatagramErrMsg &errMsg );
+ 
++	/// Added for coffeecutie: the packet callback a caller-supplied
++	/// IBoundUDPSocket must invoke to feed this transport -- what BConnect
++	/// wires up internally, exposed for BInitConnectBoundSocket's
++	/// bring-your-own-socket path (PacketReceived itself is protected).
++	CRecvPacketCallback RecvCallback() { return CRecvPacketCallback( PacketReceived, this ); }
++
+ 	void SendConnectOK( SteamNetworkingMicroseconds usecNow );
+ 
+ 	static bool CreateLoopbackPair( CConnectionTransportUDP *pTransport[2] );
+@@ -229,6 +235,15 @@ public:
+ 	/// Initiate a connection
+ 	bool BInitConnect( const SteamNetworkingIPAddr &addressRemote, int nOptions, const SteamNetworkingConfigValue_t *pOptions, SteamDatagramErrMsg &errMsg );
+ 
++	/// Added for coffeecutie: BInitConnect, minus OpenUDPSocketBoundToHost.
++	/// The caller supplies the bound socket through a factory, which is
++	/// handed the transport's own receive callback -- used by the
++	/// DataChannel-backed socket in
++	/// steamnetworkingsockets_p2p_webrtc_datachannel.cpp, so the ordinary
++	/// UDP protocol can run over a WebRTC DataChannel unchanged.
++	typedef IBoundUDPSocket *(*FnCreateBoundSocket)( CRecvPacketCallback callback, void *pContext );
++	bool BInitConnectBoundSocket( FnCreateBoundSocket fnCreateSocket, void *pContext, int nOptions, const SteamNetworkingConfigValue_t *pOptions, SteamDatagramErrMsg &errMsg );
++
+ 	/// Accept a connection that has passed the handshake phase
+ 	bool BBeginAccept(
+ 		CSteamNetworkListenSocketDirectUDP *pParent,
