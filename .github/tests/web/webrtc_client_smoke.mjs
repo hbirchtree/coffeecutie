@@ -144,8 +144,38 @@ const waitFor = async (predicate, timeoutMs) => {
 // tagged with the role so a wasm<->wasm run's two pages stay readable.
 // Returns the marker set it fills in, plus its own fatal/timeout state --
 // both roles are scanned identically, only their marker lists differ.
-async function launchRole(browser, { url, role, markers }) {
+const CHROMIUM_ARGS = [
+  '--use-gl=angle',
+  '--use-angle=swiftshader',
+  '--enable-unsafe-swiftshader',
+  '--ignore-gpu-blocklist',
+  '--enable-webgl',
+  '--disable-dev-shm-usage',
+  // Headless Chrome defaults to a UDP-mux-only/mDNS-obfuscated ICE policy
+  // in some configs; force real host candidates so loopback ICE against
+  // the gateway negotiates instead of gathering unusable mdns candidates.
+  '--force-webrtc-ip-handling-policy=default',
+  // Everything in this engine is driven from the frame loop, signaling
+  // included, so a throttled page stops heartbeating and stops answering
+  // the gateway. These keep a non-foreground page running at full rate.
+  '--disable-background-timer-throttling',
+  '--disable-backgrounding-occluded-windows',
+  '--disable-renderer-backgrounding',
+];
+
+const browsers = [];
+const closeBrowsers = async () => {
+  await Promise.all(browsers.splice(0).map((b) => b.close().catch(() => {})));
+};
+
+// One browser per role. Two pages in ONE browser means one of them is a
+// background tab, and Chrome pins those to 1fps -- which on CI stalled the
+// host's signaling for minutes and expired its registration. Separate
+// browsers give each page its own foreground tab.
+async function launchRole({ url, role, markers }) {
   const state = { found: new Set(), sawFatal: false, timedOut: false };
+  const browser = await chromium.launch({ headless: true, args: CHROMIUM_ARGS });
+  browsers.push(browser);
 
   const scan = (text) => {
     if (FATAL_PATTERNS.some((re) => re.test(text))) state.sawFatal = true;
@@ -180,7 +210,7 @@ async function launchRole(browser, { url, role, markers }) {
 }
 
 async function main() {
-  let browser, server;
+  let server;
   try {
     if (!cfg.bundleDir || !existsSync(join(cfg.bundleDir, cfg.page))) {
       throw new Error(`bundle page not found: ${join(cfg.bundleDir || '<unset>', cfg.page)}`);
@@ -200,24 +230,6 @@ async function main() {
     const url = `http://127.0.0.1:${port}/${cfg.page}?server=${encodeURIComponent(cfg.serverUrl)}`;
     record(`Serving ${cfg.bundleDir} at ${url}`);
 
-    browser = await chromium.launch({
-      headless: true,
-      args: [
-        '--use-gl=angle',
-        '--use-angle=swiftshader',
-        '--enable-unsafe-swiftshader',
-        '--ignore-gpu-blocklist',
-        '--enable-webgl',
-        '--disable-dev-shm-usage',
-        // Headless Chrome defaults to a UDP-mux-only/mDNS-obfuscated ICE
-        // policy in some configs; force real host candidates so loopback
-        // ICE against the gateway actually negotiates instead of only
-        // gathering unusable mdns candidates (see
-        // tools/webrtc-gateway/testing/run_phase1_test.mjs, the earlier
-        // Phase 1 validation of this same flag).
-        '--force-webrtc-ip-handling-policy=default',
-      ],
-    });
 
     // wasm<->wasm: the host page has to be registered and accepted by the
     // gateway before the client dials it, or the client's /signal gets
@@ -230,7 +242,7 @@ async function main() {
       const hostPageUrl = `http://127.0.0.1:${port}/${cfg.page}`
         + `?listen=${encodeURIComponent(cfg.hostUrl)}&map=${encodeURIComponent(cfg.hostMap)}`;
       record(`Booting wasm host page at ${hostPageUrl}`);
-      host = await launchRole(browser, { url: hostPageUrl, role: 'host', markers: HOST_MARKERS });
+      host = await launchRole({ url: hostPageUrl, role: 'host', markers: HOST_MARKERS });
 
       const hostReady = await waitFor(
         () => HOST_READY_MARKERS.every((m) => host.found.has(m.label)) || host.sawFatal,
@@ -242,7 +254,7 @@ async function main() {
       record('wasm host is registered and active; starting the client.');
     }
 
-    const client = await launchRole(browser, { url, role: 'client', markers: MARKERS });
+    const client = await launchRole({ url, role: 'client', markers: MARKERS });
 
     if (!client.timedOut && !client.sawFatal) {
       record(`Waiting up to ${cfg.connectTimeoutMs}ms for the full connect+roster-sync sequence...`);
@@ -253,8 +265,7 @@ async function main() {
         cfg.connectTimeoutMs);
     }
 
-    await browser.close().catch(() => {});
-    browser = undefined;
+    await closeBrowsers();
 
     const sawFatal = client.sawFatal || (host ? host.sawFatal : false);
     const timedOut = client.timedOut || (host ? host.timedOut : false);
@@ -286,7 +297,7 @@ async function main() {
     record(e.stack || e.message || String(e), 'ERR');
     process.exitCode = 1;
   } finally {
-    if (browser) await browser.close().catch(() => {});
+    await closeBrowsers();
     if (server) server.close();
     try {
       await writeFile(join(cfg.outDir, 'output.log'), logLines.join('\n') + '\n');

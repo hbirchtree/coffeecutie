@@ -62,7 +62,10 @@
 #   HOST_READY_TIMEOUT_MS  how long to wait for the wasm host to register
 #                 before starting the client (default: 120000 -- two cold
 #                 wasm boots on a CI runner, not one)
-#   GATEWAY_EXTRA_ARGS  extra flags for the gateway process, e.g.
+#   GATEWAY_URL   ws(s):// base URL of an already-running gateway. Set it to
+#                 skip starting a local one entirely (external deployment,
+#                 or to keep the gateway's CPU off this machine).
+#   GATEWAY_EXTRA_ARGS  extra flags for the LOCAL gateway process, e.g.
 #                 "-registration-ttl 180s". SERVER_ROLE=wasm needs a TTL well
 #                 above the default 30s: the host page sends its heartbeats
 #                 from the frame loop, and two software-rendered wasm pages on
@@ -126,7 +129,6 @@ rm -f "$SERVER_LOG" "$GATEWAY_LOG" "$SERVER_JOURNAL"
 
 echo "Bundle   : $BUNDLE_DIR"
 echo "Out dir  : $OUT_DIR"
-echo "Gateway  : :$GATEWAY_HTTP_PORT"
 if [ "$SERVER_ROLE" = "wasm" ]; then
     echo "Server   : wasm host page (datachannel bridge), serverId=$SERVER_ID"
 else
@@ -134,7 +136,20 @@ else
     echo "Server   : udp 127.0.0.1:$SERVER_UDP_PORT, serverId=$SERVER_ID"
 fi
 
-webrtc_build_gateway "$GATEWAY_DIR" "$(webrtc_find_go)" || exit 2
+# An external gateway (GATEWAY_URL) replaces the local one entirely: no
+# build, no process, no gateway.log to dump. Useful for reproducing
+# against a real deployment, and for taking the gateway's own CPU off a
+# small runner.
+if [ -n "${GATEWAY_URL:-}" ]; then
+    USE_LOCAL_GATEWAY=0
+    echo "Gateway  : external (from GATEWAY_URL)"
+else
+    USE_LOCAL_GATEWAY=1
+    GATEWAY_URL="ws://127.0.0.1:$GATEWAY_HTTP_PORT"
+    echo "Gateway  : local :$GATEWAY_HTTP_PORT"
+fi
+
+[ "$USE_LOCAL_GATEWAY" = "1" ] && { webrtc_build_gateway "$GATEWAY_DIR" "$(webrtc_find_go)" || exit 2; }
 
 if [ "${BUILD:-0}" != "0" ] && [ "$SERVER_ROLE" != "wasm" ]; then
     echo "::group::Building $TARGET"
@@ -155,12 +170,12 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Word-split on purpose: GATEWAY_EXTRA_ARGS carries whole flags.
-# shellcheck disable=SC2086
-webrtc_start_gateway "$GATEWAY_BIN" "$GATEWAY_HTTP_PORT" "$GATEWAY_LOG" "$BOOT_TIMEOUT" \
-    $GATEWAY_EXTRA_ARGS || exit 1
-
-GATEWAY_URL="ws://127.0.0.1:$GATEWAY_HTTP_PORT"
+if [ "$USE_LOCAL_GATEWAY" = "1" ]; then
+    # Word-split on purpose: GATEWAY_EXTRA_ARGS carries whole flags.
+    # shellcheck disable=SC2086
+    webrtc_start_gateway "$GATEWAY_BIN" "$GATEWAY_HTTP_PORT" "$GATEWAY_LOG" "$BOOT_TIMEOUT" \
+        $GATEWAY_EXTRA_ARGS || exit 1
+fi
 
 if [ "$SERVER_ROLE" = "wasm" ]; then
     # The host is just another page for the Playwright driver to boot:
@@ -185,7 +200,7 @@ else
     webrtc_start_server "$SERVER_LOG" "$SERVER_TMP" "$SERVER_DUMMY_PLUG_CONFIG" "$RUN_TIMEOUT"
 
     webrtc_wait_for_registration "$SERVER_LOG" "$SERVER_ID" "$BOOT_TIMEOUT" "$WEBRTC_SERVER_PID" || {
-        webrtc_dump "gateway.log" "$GATEWAY_LOG"
+        [ "$USE_LOCAL_GATEWAY" = "1" ] && webrtc_dump "gateway.log" "$GATEWAY_LOG"
         exit 1
     }
 fi
@@ -219,7 +234,7 @@ fi
 # is in the one client log, tagged [host]/[client].
 if [ "$CLIENT_EXIT" != "0" ] || [ "$SERVER_EXIT" = "124" ]; then
     echo
-    webrtc_dump "gateway.log" "$GATEWAY_LOG"
+    [ "$USE_LOCAL_GATEWAY" = "1" ] && webrtc_dump "gateway.log" "$GATEWAY_LOG"
     [ "$SERVER_ROLE" = "wasm" ] || webrtc_dump_server_lines "$SERVER_LOG"
     webrtc_dump "client (browser console)" "$WEBRTC_CLIENT_LOG"
 fi
