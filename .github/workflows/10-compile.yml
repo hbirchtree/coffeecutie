@@ -642,11 +642,17 @@ jobs:
         SERVER_ROLE: wasm
         MAP: ${{ github.workspace }}/maps/pc/bloodgulch.map
         CI: "true"
-        # Two cold wasm boots in one browser, not one: both the per-page
-        # boot budget and the host-ready wait are raised accordingly.
-        BOOT_TIMEOUT_MS: "60000"
-        CONNECT_TIMEOUT_MS: "90000"
+        # Two software-rendered wasm pages share one small runner, so both
+        # pages tick slowly: measured 64s from the client's connect request
+        # to the gateway's SDP answer alone, with frame-loop gaps up to 36s.
+        BOOT_TIMEOUT_MS: "90000"
+        CONNECT_TIMEOUT_MS: "240000"
         HOST_READY_TIMEOUT_MS: "180000"
+        # The host's heartbeats ride its frame loop, so those same stalls
+        # exceed the gateway's 30s default TTL -- the registration was being
+        # swept while the client was still connecting, leaving nothing to
+        # attach the host side of the bridge to.
+        GATEWAY_EXTRA_ARGS: "-registration-ttl 180s"
         # A different gateway port from Test_webrtc_wasm_client's, so the
         # two jobs stay independent even on a shared runner.
         GATEWAY_HTTP_PORT: "8099"

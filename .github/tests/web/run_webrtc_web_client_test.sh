@@ -62,6 +62,12 @@
 #   HOST_READY_TIMEOUT_MS  how long to wait for the wasm host to register
 #                 before starting the client (default: 120000 -- two cold
 #                 wasm boots on a CI runner, not one)
+#   GATEWAY_EXTRA_ARGS  extra flags for the gateway process, e.g.
+#                 "-registration-ttl 180s". SERVER_ROLE=wasm needs a TTL well
+#                 above the default 30s: the host page sends its heartbeats
+#                 from the frame loop, and two software-rendered wasm pages on
+#                 a small CI runner starve each other for long enough that the
+#                 registration would otherwise be swept mid-connect.
 #   GATEWAY_HTTP_PORT  gateway WebSocket signaling port (default: 8098)
 #   SERVER_UDP_PORT    real GNS UDP listen port the server binds (default: 19601)
 #   SERVER_ID          fleet registry serverId to register/connect under (default: test)
@@ -103,6 +109,7 @@ SERVER_ID="${SERVER_ID:-test}"
 # no UDP is involved anywhere -- everything below that only concerns the
 # native server is skipped in that mode.
 SERVER_ROLE="${SERVER_ROLE:-native}"
+GATEWAY_EXTRA_ARGS="${GATEWAY_EXTRA_ARGS:-}"
 BOOT_TIMEOUT="${BOOT_TIMEOUT:-30}"
 RUN_TIMEOUT="${RUN_TIMEOUT:-150}"
 SERVER_DUMMY_PLUG_CONFIG="${SERVER_DUMMY_PLUG_CONFIG:-$NET_TEST_DIR/dummy_plug_net_webrtc_server_for_web_client.json}"
@@ -148,7 +155,10 @@ cleanup() {
 }
 trap cleanup EXIT
 
-webrtc_start_gateway "$GATEWAY_BIN" "$GATEWAY_HTTP_PORT" "$GATEWAY_LOG" "$BOOT_TIMEOUT" || exit 1
+# Word-split on purpose: GATEWAY_EXTRA_ARGS carries whole flags.
+# shellcheck disable=SC2086
+webrtc_start_gateway "$GATEWAY_BIN" "$GATEWAY_HTTP_PORT" "$GATEWAY_LOG" "$BOOT_TIMEOUT" \
+    $GATEWAY_EXTRA_ARGS || exit 1
 
 GATEWAY_URL="ws://127.0.0.1:$GATEWAY_HTTP_PORT"
 
