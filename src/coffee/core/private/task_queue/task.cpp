@@ -579,49 +579,54 @@ std::optional<RuntimeQueueError> runtime_queue::AwaitTask(
     if(!queueRef)
         return RuntimeQueueError::InvalidQueue;
 
-    if(auto res = GetTask(queueRef->m_tasks, taskId); res.has_error())
-        return res.error();
-    else
+    /* Everything below runs under one lock. The previous version took a
+     * raw pointer into m_tasks without holding it and then slept on
+     * task->time — but execute_tasks() moves and erases that vector, so by
+     * then the pointer was dangling and the deadline was read out of freed
+     * memory. That is what made this never return. */
+    std::unique_lock lock(queueRef->m_tasks_lock);
+
+    auto find_task = [&queueRef, taskId] {
+        return std::find_if(
+            queueRef->m_tasks.begin(),
+            queueRef->m_tasks.end(),
+            [taskId](task_data_t const& task) { return task.index == taskId; });
+    };
+
+    auto it = find_task();
+
+    /* Finished tasks are erased, so "absent" is ambiguous between done and
+     * never-issued — without retaining them. Ids come from a monotonic
+     * counter that never resets or reuses, so anything absent at or below
+     * the high-water mark has simply completed. */
+    if(it == queueRef->m_tasks.end())
     {
-        auto [task, idx] = res.value();
-
-        /* We cannot reliably await periodic tasks */
-        if(enum_helpers::feval(task->flags, task_flags::periodic))
-            return RQE::IncompatibleTaskAwait;
-
-        /* Do not await a past event */
-        if(!enum_helpers::feval(task->flags, task_flags::immediate) &&
-           clock_now() > task->time)
-        {
-            return RQE::ExpiredTaskDeadline;
-        }
-
-        DProfContext _(RQ_API "Awaiting task...");
-        stl_types::CurrentThread::sleep_until(task->time);
-
-        {
-            DProfContext _(RQ_API "Busy-waiting task");
-
-            /* I know this is bad, but we must await the task */
-            auto taskAlive = [&queueRef, taskId] {
-                std::unique_lock _(queueRef->m_tasks_lock);
-                auto             it = std::find_if(
-                    queueRef->m_tasks.begin(),
-                    queueRef->m_tasks.end(),
-                    [taskId](auto const& task) {
-                        return task.index == taskId;
-                    });
-                if(it == queueRef->m_tasks.end())
-                    return false;
-                return it->alive;
-            };
-            while(taskAlive())
-                /* TODO: Implement waiting on the next time the queue has
-                 * finished a loop */
-                stl_types::CurrentThread::yield();
-        }
-        return std::nullopt;
+        if(taskId <= queueRef->m_task_index)
+            return std::nullopt;
+        return RQE::InvalidTaskId;
     }
+
+    /* We cannot reliably await periodic tasks */
+    if(enum_helpers::feval(it->task.flags, task_flags::periodic))
+        return RQE::IncompatibleTaskAwait;
+
+    /* Do not await a past event */
+    if(!enum_helpers::feval(it->task.flags, task_flags::immediate) &&
+       clock_now() > it->task.time)
+        return RQE::ExpiredTaskDeadline;
+
+    DProfContext _(RQ_API "Awaiting task completion");
+
+    /* Waits rather than spinning: the old loop re-took m_tasks_lock every
+     * iteration, the same lock execute_tasks() holds for a whole pass, so
+     * the waiter starved the worker. wait() releases it. No sleep_until
+     * either — the predicate covers a future deadline on its own. */
+    queueRef->m_task_done.wait(lock, [&find_task, &queueRef] {
+        auto found = find_task();
+        return found == queueRef->m_tasks.end() || !found->alive;
+    });
+
+    return std::nullopt;
 }
 
 detail::result<bool, RuntimeQueueError> runtime_queue::IsRunning(
@@ -851,6 +856,10 @@ void runtime_queue::execute_tasks()
             });
         m_tasks.erase(trimmed_tasks, m_tasks.end());
     }
+
+    /* One signal per pass, not per task: AwaitTask re-checks its own task on
+     * wake, so nothing here needs to know who is waiting. */
+    m_task_done.notify_all();
 }
 
 detail::duration runtime_queue::time_till_next() const

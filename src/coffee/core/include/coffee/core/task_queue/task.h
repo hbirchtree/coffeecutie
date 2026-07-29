@@ -697,6 +697,15 @@ class runtime_queue
 
     detail::time_point   m_next_wakeup{};
     std::recursive_mutex m_tasks_lock;
+    /*!
+     * \brief Signalled once per execute_tasks() pass, for AwaitTask.
+     *
+     * One per queue rather than one per task: awaiting is rare and tasks are
+     * not, so a condvar per task would cost every queue submission. Awaiters
+     * re-check their own task on each wake instead. condition_variable_any
+     * because m_tasks_lock is recursive.
+     */
+    std::condition_variable_any m_task_done;
 
   private:
     template<typename... Args>
