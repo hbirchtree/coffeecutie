@@ -7,10 +7,16 @@
 #include "components.h"
 #include "data.h"
 #include "data_cache.h"
+#include "peripherals/concepts/sound_api.h"
 #include "peripherals/stl/range.h"
+#include "peripherals/stl/type_list.h"
+#include "proxy.h"
 #include "selected_version.h"
 #include "sound_cache.h"
+#include "subsystem.h"
+#include "types.h"
 #include <algorithm>
+#include <glm/matrix.hpp>
 #include <magic_enum/magic_enum.hpp>
 
 #include <coffee/net/net_resource.h>
@@ -35,7 +41,11 @@
 using Coffee::Logging::cDebug;
 
 using SoundManifest = compo::SubsystemManifest<
-    type_list_t<SoundEffects>,
+    type_list_t<
+        PlayerCamera,
+        PlayerInfo,
+        SoundEffects
+    >,
     type_list_t<LoadingStatus, SoundPreferences>,
     empty_list_t>;
 
@@ -330,151 +340,18 @@ struct SoundSystem
         for(auto id : fading_finished)
             fading_sounds.erase(id);
 
-#if defined(FEATURE_ENABLE_ImGui)
-        if(ImGui::Begin("Sound"))
+        for(auto const player : p.select<PlayerInfo, PlayerCamera>())
         {
-            if(ImGui::BeginTabBar("AudioTabs"))
-            {
-                if(ImGui::BeginTabItem("Tracks"))
-                {
-                    ImGui::Text(
-                        "active=%zu fading=%zu queued=%zu sounds_loaded=%d",
-                        active_sounds.size(),
-                        fading_sounds.size(),
-                        queued_events.size(),
-                        (int)(loading->loaded_sounds == LoadingStatus::loaded));
-                    ImGui::Text(
-                        "lifetime: bg_transitions=%u (with_sound=%u) "
-                        "started=%u replayed=%u",
-                        stat_bg_total,
-                        stat_bg_with_snd,
-                        stat_started,
-                        stat_replayed);
-                    ImGui::Separator();
-                    auto sound_row = [&](u64                 entity,
-                                         sound_unit_t const& sound,
-                                         ImVec4              color) {
-                        auto item_it = sound_cache.find(sound.index);
-                        auto name    = index.name_of(sound.source);
-                        ImGui::TextColored(
-                            color,
-                            "[sound/%04lu] %.*s",
-                            entity,
-                            static_cast<int>(name.size()),
-                            name.data());
-                        ImGui::Text("    [volume] %f", sound.volume);
-                        if(item_it == sound_cache.end())
-                        {
-                            ImGui::Text("    [not in cache]");
-                            return;
-                        }
-                        SoundItem const& item = item_it->second;
-                        u32              track_i{0};
-                        for(auto const& track : sound.tracks)
-                        {
-                            auto role =
-                                magic_enum::enum_name(track.active.role);
-                            std::string_view name{"[?]"};
-                            if(track_i < item.tracks.size())
-                            {
-                                auto const& track_ = item.tracks[track_i];
-                                auto        sit =
-                                    track_.sounds.find(track.active.role);
-                                if(sit != track_.sounds.end())
-                                {
-                                    auto const& [sound_tag, _, __] =
-                                        sit->second;
-                                    if(sound_tag)
-                                        name = index.name_of(*sound_tag);
-                                }
-                            }
-                            ++track_i;
-                            ImGui::Text(
-                                "    [track/%02u/%02u/%.*s] %.*s ",
-                                track.active.permutation,
-                                track.active.pitch,
-                                static_cast<int>(role.size()),
-                                role.data(),
-                                static_cast<int>(name.size()),
-                                name.data());
-                        }
-                        if(!item.detail_sounds.empty())
-                        {
-                            ImGui::Text("    [detail sounds]");
-                            for(auto const& dsound : item.detail_sounds)
-                            {
-                                for(auto const& [role, snd] : dsound.sounds)
-                                {
-                                    auto const& [sound_tag, _, __] = snd;
-                                    std::string_view name{"[?]"};
-                                    if(sound_tag)
-                                        name = index.name_of(*sound_tag);
-                                    auto role_name =
-                                        magic_enum::enum_name(role);
-                                    ImGui::Text(
-                                        "      [detail/%.*s] %.*s",
-                                        static_cast<int>(role_name.size()),
-                                        role_name.data(),
-                                        static_cast<int>(name.size()),
-                                        name.data());
-                                }
-                            }
-                        }
-                    };
-                    for(auto const& [entity, sound] : active_sounds)
-                        sound_row(entity, sound, ImVec4(0, 1, 0, 1));
-                    for(auto const& [entity, sound] : fading_sounds)
-                        sound_row(entity, sound, ImVec4(0.7, 0.5, 0, 1));
-                    ImGui::EndTabItem();
-                }
-                if(ImGui::BeginTabItem("Testing"))
-                {
-                    ImGui::InputText("Voice", voice.voice, sizeof(voice.voice));
-                    ImGui::InputText(
-                        "Backend", voice.backend, sizeof(voice.backend));
-                    ImGui::InputText(
-                        "Phrase", voice.phrase, sizeof(voice.phrase));
-                    if(ImGui::Button("Play voice"))
-                    {
-                        auto src = net::MkUrl(
-                            fmt::format(
-                                "http://10.0.0.17:9006/{}"
-                                "/v1/audio/speech"
-                                "?input={}&voice={}",
-                                voice.backend,
-                                stl_types::str::url_encode::encode(
-                                    voice.phrase),
-                                voice.voice));
-                        net::Resource sound(net::create_curl_context(), src);
-
-                        if(!sound.fetch().has_value() &&
-                           sound.data().has_value())
-                        {
-                            buffers.push_back(snd.alloc_buffer());
-                            sources.push_back(snd.alloc_source());
-                            auto& buf = *buffers.back();
-                            auto& src = *sources.back();
-
-                            oaf::decode::wav::decoder wav_dec;
-                            wav_dec.decode(
-                                sound.data().value(),
-                                std::nullopt,
-                                std::nullopt,
-                                buf);
-                            src.queue(buf);
-                        } else
-                        {
-                            cWarning("Got no audio data");
-                        }
-                    }
-                    ImGui::EndTabItem();
-                }
-
-                ImGui::EndTabBar();
-            }
+            auto const [info, cam] = player.components();
+            if(info.seat_idx != 0)
+                continue;
+            auto const& cached = cam.camera_.cached;
+            auto& listener = snd.listener();
+            listener.set_property<oaf::listener_property::position>(
+                cam.camera.position);
+            listener.set_property<oaf::listener_property::orientation>(
+                glm::transpose(glm::mat3(cached.right, cached.up, -cached.forward)));
         }
-        ImGui::End();
-#endif
     }
 
     void end_restricted(Proxy&, compo::time_point const&)
@@ -645,18 +522,204 @@ struct SoundSystem
     }
 };
 
+#if defined(FEATURE_ENABLE_ImGui)
+
+using SoundUIManifest = compo::SubsystemManifest<
+    empty_list_t,
+    type_list_t<
+        LoadingStatus,
+        SoundSystem<halo_version>,
+        SoundCache<halo_version>
+    >,
+    empty_list_t>;
+
+struct SoundUISystem
+    : compo::RestrictedSubsystem<SoundUISystem, SoundUIManifest>
+{
+    using type = SoundUISystem;
+    using Proxy = compo::proxy_of<SoundUIManifest>;
+
+    SoundUISystem()
+    { 
+        this->priority = 2048;
+    }
+
+    void start_restricted(Proxy& p, compo::time_point const& t)
+    {
+#if defined(FEATURE_ENABLE_ImGui)
+        auto& sound_cache = p.subsystem<SoundCache<halo_version>>();
+        auto& snd = p.subsystem<SoundSystem<halo_version>>();
+        auto& loading = p.subsystem<LoadingStatus>();
+        if(ImGui::Begin("Sound"))
+        {
+            if(ImGui::BeginTabBar("AudioTabs"))
+            {
+                if(ImGui::BeginTabItem("Tracks"))
+                {
+                    ImGui::Text(
+                        "active=%zu fading=%zu queued=%zu sounds_loaded=%d",
+                        snd.active_sounds.size(),
+                        snd.fading_sounds.size(),
+                        snd.queued_events.size(),
+                        (int)(loading.loaded_sounds == LoadingStatus::loaded));
+                    ImGui::Text(
+                        "lifetime: bg_transitions=%u (with_sound=%u) "
+                        "started=%u replayed=%u",
+                        snd.stat_bg_total,
+                        snd.stat_bg_with_snd,
+                        snd.stat_started,
+                        snd.stat_replayed);
+                    ImGui::Separator();
+                    auto sound_row = [&](u64                 entity,
+                                         sound_unit_t const& sound,
+                                         ImVec4              color) {
+                        auto item_it = sound_cache.find(sound.index);
+                        auto name    = snd.index.name_of(sound.source);
+                        ImGui::TextColored(
+                            color,
+                            "[sound/%04lu] %.*s",
+                            entity,
+                            static_cast<int>(name.size()),
+                            name.data());
+                        ImGui::Text("    [volume] %f", sound.volume);
+                        if(item_it == sound_cache.end())
+                        {
+                            ImGui::Text("    [not in cache]");
+                            return;
+                        }
+                        SoundItem const& item = item_it->second;
+                        u32              track_i{0};
+                        for(auto const& track : sound.tracks)
+                        {
+                            auto role =
+                                magic_enum::enum_name(track.active.role);
+                            std::string_view name{"[?]"};
+                            if(track_i < item.tracks.size())
+                            {
+                                auto const& track_ = item.tracks[track_i];
+                                auto        sit =
+                                    track_.sounds.find(track.active.role);
+                                if(sit != track_.sounds.end())
+                                {
+                                    auto const& [sound_tag, _, __] =
+                                        sit->second;
+                                    if(sound_tag)
+                                        name = snd.index.name_of(*sound_tag);
+                                }
+                            }
+                            ++track_i;
+                            ImGui::Text(
+                                "    [track/%02u/%02u/%.*s] %.*s ",
+                                track.active.permutation,
+                                track.active.pitch,
+                                static_cast<int>(role.size()),
+                                role.data(),
+                                static_cast<int>(name.size()),
+                                name.data());
+                        }
+                        if(!item.detail_sounds.empty())
+                        {
+                            ImGui::Text("    [detail sounds]");
+                            for(auto const& dsound : item.detail_sounds)
+                            {
+                                for(auto const& [role, sound] : dsound.sounds)
+                                {
+                                    auto const& [sound_tag, _, __] = sound;
+                                    std::string_view name{"[?]"};
+                                    if(sound_tag)
+                                        name = snd.index.name_of(*sound_tag);
+                                    auto role_name =
+                                        magic_enum::enum_name(role);
+                                    ImGui::Text(
+                                        "      [detail/%.*s] %.*s",
+                                        static_cast<int>(role_name.size()),
+                                        role_name.data(),
+                                        static_cast<int>(name.size()),
+                                        name.data());
+                                }
+                            }
+                        }
+                    };
+                    for(auto const& [entity, sound] : snd.active_sounds)
+                        sound_row(entity, sound, ImVec4(0, 1, 0, 1));
+                    for(auto const& [entity, sound] : snd.fading_sounds)
+                        sound_row(entity, sound, ImVec4(0.7, 0.5, 0, 1));
+                    ImGui::EndTabItem();
+                }
+                if(ImGui::BeginTabItem("Testing"))
+                {
+                    auto& voice = snd.voice;
+                    auto& buffers = snd.buffers;
+                    auto& sources = snd.sources;
+
+                    ImGui::InputText("Voice", voice.voice, sizeof(voice.voice));
+                    ImGui::InputText(
+                        "Backend", voice.backend, sizeof(voice.backend));
+                    ImGui::InputText(
+                        "Phrase", voice.phrase, sizeof(voice.phrase));
+                    if(ImGui::Button("Play voice"))
+                    {
+                        auto src = net::MkUrl(
+                            fmt::format(
+                                "http://10.0.0.17:9006/{}"
+                                "/v1/audio/speech"
+                                "?input={}&voice={}",
+                                voice.backend,
+                                stl_types::str::url_encode::encode(
+                                    voice.phrase),
+                                voice.voice));
+                        net::Resource sound(net::create_curl_context(), src);
+
+                        if(!sound.fetch().has_value() &&
+                           sound.data().has_value())
+                        {
+                            buffers.push_back(snd.snd.alloc_buffer());
+                            sources.push_back(snd.snd.alloc_source());
+                            auto& buf = *buffers.back();
+                            auto& src = *sources.back();
+
+                            oaf::decode::wav::decoder wav_dec;
+                            wav_dec.decode(
+                                sound.data().value(),
+                                std::nullopt,
+                                std::nullopt,
+                                buf);
+                            src.queue(buf);
+                        } else
+                        {
+                            cWarning("Got no audio data");
+                        }
+                    }
+                    ImGui::EndTabItem();
+                }
+
+                ImGui::EndTabBar();
+            }
+        }
+        ImGui::End();
+#endif
+    }
+
+    void end_restricted(Proxy&, time_point const& t) {}
+};
+
+#endif
+
 #endif
 
 void alloc_sound_system(compo::EntityContainer& e)
 {
+    e.register_subsystem_inplace<SoundPreferences>();
 #if defined(FEATURE_ENABLE_OAF)
     ProfContext _;
-    e.register_subsystem_inplace<SoundPreferences>();
     auto& sound_sys = e.register_subsystem_inplace<SoundSystem<halo_version>>(
         std::ref(e.subsystem_cast<oaf::system>()),
         std::ref(e.subsystem_cast<SoundCache<halo_version>>()),
         &e.subsystem_cast<LoadingStatus>(),
         std::ref(e.subsystem_cast<GameEventBus>()));
     e.register_subsystem_services<SoundSystem<halo_version>>(&sound_sys);
+#if defined(FEATURE_ENABLE_ImGui)
+    e.register_subsystem_inplace<SoundUISystem>();
+#endif
 #endif
 }
