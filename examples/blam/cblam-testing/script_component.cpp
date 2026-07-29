@@ -43,6 +43,8 @@ struct BlamScript
 
     static constexpr u32 max_log_lines = 1024;
 
+    bool main_thread_only() const override { return true; }
+
     template<typename T>
     static std::string enum_to_string(T v)
     {

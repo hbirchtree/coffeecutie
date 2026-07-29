@@ -283,8 +283,6 @@ struct DrawListBuilder
                 m_pipelined = true;
             }
 
-
-
         for(auto& set : m_bsp_sets)
         {
             u32 i = 0;
@@ -854,7 +852,6 @@ struct MeshRenderer
     using type  = MeshRenderer;
     using Proxy = compo::proxy_of<MeshRendererManifest<Version>>;
 
-
     time_point last_update{};
 
     struct cached_player_t
@@ -912,6 +909,8 @@ struct MeshRenderer
     {
         this->priority = 3072;
     }
+
+    bool main_thread_only() const override { return true; }
 
     bool use_legacy_rendering() const
     {
@@ -1306,6 +1305,8 @@ struct MeshRenderer
         if(!markers->available())
             return;
 
+        ProfContext _;
+
         std::vector<gfx::draw_command::data_t> groups;
         RenderingParameters*                   params;
         e.subsystem(params);
@@ -1443,10 +1444,6 @@ struct MeshRenderer
          * and UV animations freeze. Wrap to a shorter cycle. */
         f32 t = std::fmod(stl_types::Chrono::to_f32(time), 3600.f);
 
-        /* Ahead of the legacy branch: the skybox sets up world fog/lighting
-         * and the skybox submodel entities, which legacy_render draws too.
-         * Behind it, the queue was pushed by every cluster change and never
-         * drained, growing for the session on ES2. */
         if(!m_pending_changes.empty())
         {
             for(auto const& change : m_pending_changes)
@@ -1587,6 +1584,8 @@ struct MeshRenderer
         }
 
         render_debug_lines(p);
+
+        gfx::cmd::finish();
     }
 
     struct LegacyBatch

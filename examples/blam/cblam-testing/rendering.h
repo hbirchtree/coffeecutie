@@ -23,6 +23,8 @@ struct ScreenClear
         priority = 1536;
     }
 
+    bool main_thread_only() const override { return true; }
+
     void start_restricted(Proxy& e, time_point const&);
 
     void end_restricted(Proxy& e, time_point const&);

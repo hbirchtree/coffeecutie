@@ -51,6 +51,8 @@ struct BlamMapBrowser
         remote_address.resize(64);
     }
 
+    bool main_thread_only() const override { return true; }
+
     void start_restricted(Proxy& e, time_point const&)
     {
         if(ImGui::Begin("Game"))

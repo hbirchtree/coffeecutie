@@ -54,6 +54,11 @@ i32 blam_main()
         else
             options.custom_help("[map file/dir] [OPTION...]");
         options.positional_help("map name or directory");
+        options.add_options("Audio")
+            //
+            ("no-sound", "Start volume set to 0 (audio still computed)")
+            //
+            ;
         options.add_options("Graphics")
             //
             ("gfx-level",
@@ -124,7 +129,7 @@ i32 blam_main()
 
 #if defined(SELECT_API_OPENGL)
     auto& glConfig        = loader.config<comp_app::GLConfig>();
-    glConfig.swapInterval = 1;
+    glConfig.swapInterval = 0;
     if constexpr(compile_info::debug_mode || true)
     {
         glConfig.profile |= comp_app::GLConfig::Debug;
@@ -378,6 +383,11 @@ i32 blam_main()
 #endif
                 );
             alloc_sound_system(e);
+
+            {
+                auto& sound_pref = e.subsystem_cast<SoundPreferences>();
+                sound_pref.master_volume = arguments.count("no-sound") > 0 ? 0.f : 1.f;
+            }
 
             {
                 auto& bitm_cache =
@@ -660,29 +670,6 @@ i32 blam_main()
                 cam.matrix[2][2] = 0.f;
                 cam.matrix       = cam.matrix * view_matrix;
                 cam.rotation     = glm::mat3_cast(cam.camera.rotation);
-
-#if defined(FEATURE_ENABLE_OAF)
-                if(info.seat_idx == 0)
-                {
-                    auto& snd = e.subsystem_cast<oaf::system>();
-                    snd.listener()
-                        .set_property<oaf::listener_property::position>(
-                            cam.camera.position);
-                    // cam.camera_->cached.{right,up,forward} are already
-                    // world/BSP-space and correctly signed (see tick() in
-                    // standard_input_handlers.h). set_property<orientation>
-                    // expects row0/row2 of its input to be (right, -forward)
-                    // in that same convention, so build a matrix with those
-                    // as rows instead of feeding it the raw, un-remapped
-                    // view-space quaternion.
-                    auto const& cached = cam.camera_.cached;
-                    snd.listener()
-                        .set_property<oaf::listener_property::orientation>(
-                            glm::transpose(
-                                Matf3{
-                                    cached.right, cached.up, -cached.forward}));
-                }
-#endif
             }
         },
         [](EntityContainer&, BlamData<halo_version>&, time_point const&) {
