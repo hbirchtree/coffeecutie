@@ -532,6 +532,11 @@ void fork_dummy_plugs(
         dummy_plug.frame_delta = std::chrono::microseconds(
             static_cast<libc_types::u32>(
                 config.value("frame_delta", 0.0) * 1000));
+        container.set_epoch_offset(
+            std::chrono::duration_cast<compo::clock::duration>(
+                std::chrono::duration<double>(
+                    config.value("epoch", 3600.0))));
+
         /* Replace the original timestamp provider, so we can step the frames
          * consistently. As long as everything is based on ECS-provided
          * time_points, it should be deterministic. */
@@ -540,8 +545,13 @@ void fork_dummy_plugs(
              &dummy_plug]() {
                 return epoch + dummy_plug.frame_delta * dummy_plug.frame_index;
             });
-        container.add_frame_end_callback(
-            [&dummy_plug]() { dummy_plug.frame_index++; });
+        container.add_frame_end_callback([&dummy_plug, &container]() {
+            auto* app_info = container.service<comp_app::AppInfo>();
+            if(app_info &&
+               app_info->state() != comp_app::interfaces::AppInfo::loaded)
+                return;
+            dummy_plug.frame_index++;
+        });
         rq::runtime_queue::OverrideClock(
             [epoch = rq::detail::time_point() + container.epoch_offset(),
              &dummy_plug]() {

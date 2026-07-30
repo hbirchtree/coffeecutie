@@ -517,6 +517,14 @@ struct EntityContainer : stl_types::non_copy
         return time_offset;
     }
 
+    /*!
+     * \brief Move the epoch timestamps are measured from.
+     */
+    void set_epoch_offset(clock::duration offset)
+    {
+        time_offset = offset;
+    }
+
     clock::time_point relative_timestamp() const
     {
         auto current_time = time_stamp_source();
