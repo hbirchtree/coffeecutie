@@ -1,16 +1,22 @@
-#include "coffee/comp_app/services.h"
-#include "coffee/graphics/apis/gleam/rhi_versioning.h"
-#include "glw/enums/FramebufferTarget.h"
-#include "glw/enums/GetPName.h"
-#include "glw/enums/RenderbufferTarget.h"
-#include "peripherals/constants.h"
-#include "peripherals/semantic/chunk.h"
-#include "peripherals/typing/enum/pixels/format_transform.h"
-#include "peripherals/typing/geometry/size.h"
+#include "peripherals/concepts/graphics_api.h"
+#include <chrono>
 #include <coffee/graphics/apis/gleam/rhi_system.h>
 
 #include <coffee/comp_app/gl_config.h>
+#include <coffee/comp_app/services.h>
 #include <coffee/comp_app/subsystems.h>
+#include <coffee/components/types.h>
+#include <coffee/graphics/apis/gleam/rhi_versioning.h>
+#include <glw/enums/FramebufferTarget.h>
+#include <glw/enums/GetPName.h>
+#include <glw/enums/RenderbufferTarget.h>
+#include <peripherals/constants.h>
+#include <peripherals/semantic/chunk.h>
+#include <peripherals/typing/enum/pixels/format_transform.h>
+#include <peripherals/typing/geometry/size.h>
+#include <platforms/profiling.h>
+
+#include <coffee/graphics/apis/gleam/rhi_query.h>
 
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
 #include <coffee/comp_app/dummy_plug.h>
@@ -118,6 +124,18 @@ void system::start_restricted(Proxy& e, time_point const& ts)
         m_next_stats = ts + 5s;
     }
     this->usage() = {};
+
+    std::vector<std::string> finished_timers;
+    for(auto& [name, timer] : m_tracked_timings)
+    {
+        if(auto time = timer.timer->result())
+        {
+            finalize_timer(std::move(timer));
+            finished_timers.push_back(name);
+        }
+    }
+    for(auto const& timer : finished_timers)
+        m_tracked_timings.erase(timer);
 }
 
 void system::end_restricted(Proxy&, time_point const&)
@@ -214,4 +232,70 @@ void system::load(entity_container& e, comp_app::app_error&)
             default_rendertarget()->resize({0, 0, new_size.w, new_size.h});
         });
 }
+
+void system::track_timer(std::shared_ptr<query_t>&& timer, std::string const& name)
+{
+    if(m_tracked_timings.contains(name))
+        return;
+    auto& tracker = m_tracked_timings[name];
+    tracker = {
+        .timer = std::move(timer),
+        .name = name,
+        .start_time = compo::clock::now(),
+    };
+}
+
+bool system::is_timer_pending(std::string const& name)
+{
+    return m_tracked_timings.contains(name);
+}
+
+void system::finalize_timer(system::timing_t&& timer)
+{
+    using namespace platform::profiling;
+
+    auto props = RuntimeProperties::get_properties();
+    auto start = timer.start_time.time_since_epoch();
+    props.push(*props.context, datapoint_t{
+        .tid = 0x8005,
+        .name = timer.name,
+        .component = COFFEE_COMPONENT_NAME,
+        .thread_name = "GPU",
+        .ts = start,
+        .flags = {
+            .type = datapoint_t::push,
+        },
+    });
+    props.push(*props.context, datapoint_t{
+        .tid = 0x8005,
+        .name = timer.name,
+        .component = COFFEE_COMPONENT_NAME,
+        .thread_name = "GPU",
+        .ts = start + std::chrono::nanoseconds(timer.timer->resultSync()),
+        .flags = {
+            .type = datapoint_t::pop,
+        },
+    });
+    timer.timer->dealloc();
+}
+
+system::gpu_timer_t::gpu_timer_t(gleam::system* system, std::string const& name)
+{
+    if(system->is_timer_pending(name))
+        return;
+    m_system = system;
+    m_timer = system->alloc_query(queries::time);
+    m_name = name;
+    m_timer->alloc();
+    m_timer->start();
+}
+
+system::gpu_timer_t::~gpu_timer_t()
+{
+    if(!m_timer || !m_system)
+        return;
+    m_timer->stop();
+    m_system->track_timer(std::move(m_timer), m_name);
+}
+
 } // namespace gleam

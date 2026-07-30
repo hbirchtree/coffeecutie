@@ -38,33 +38,16 @@ struct datapoint_t
         async           = 0x2,
     };
 
-    datapoint_t(
-        type_t type, std::string_view name, PClock::duration duration = {})
-        : tid(std::hash<std::thread::id>()(std::this_thread::get_id()))
-        , name(name.begin(), name.end())
-        , component(COFFEE_COMPONENT_NAME)
-        , ts(PClock::now().time_since_epoch())
-        , flags{
-              .type  = type,
-              .attrs = none_attr,
-          }
-    {
-    }
+    u64              tid{std::hash<std::thread::id>()(std::this_thread::get_id())};
+    std::string      name{};
+    std::string_view component{COFFEE_COMPONENT_NAME};
+    std::string      thread_name{};
+    duration_t       ts{PClock::now().time_since_epoch()};
+    duration_t       dur{};
 
-    u64              tid;
-    std::string      name;
-    std::string_view component;
-    std::string      thread_name;
-    duration_t       ts;
-    duration_t       dur;
-
-    struct
-    {
-        type_t type : 3;
-        attr_t attrs : 2;
-        u16    _extra : 11;
-        u16    _extra2;
-        u32    _extra3;
+    struct {
+        type_t type{type_t::profile};
+        attr_t attrs{attr_t::none_attr};
     } flags;
 };
 
@@ -239,7 +222,12 @@ struct profile_wrapper
         if(!props.context)
             return;
         props.push_stack(name);
-        props.push(*props.context, datapoint_t(datapoint_t::push, name));
+        props.push(*props.context, datapoint_t{
+            .name = std::string(name.begin(), name.end()),
+            .flags = {
+                .type = datapoint_t::push,
+            },
+        });
     }
 
     STATICINLINE void pop()
@@ -251,7 +239,12 @@ struct profile_wrapper
         auto name  = props.pop_stack();
         if(name.empty())
             return;
-        props.push(*props.context, datapoint_t(datapoint_t::pop, name));
+        props.push(*props.context, datapoint_t{
+            .name = std::string(name.begin(), name.end()),
+            .flags = {
+                .type = datapoint_t::pop,
+            },
+        });
     }
 
     STATICINLINE void profile(std::string_view name)
@@ -260,7 +253,12 @@ struct profile_wrapper
             return;
 
         auto props = RuntimeProperties::get_properties();
-        props.push(*props.context, datapoint_t(datapoint_t::profile, name));
+        props.push(*props.context, datapoint_t{
+            .name = std::string(name.begin(), name.end()),
+            .flags = {
+                .type = datapoint_t::profile,
+            },
+        });
     }
 };
 
@@ -379,55 +377,6 @@ struct DeepProfilerContext
     {
         SimpleProfilerImpl::DeepPopContext();
     }
-};
-
-template<typename QueryType>
-struct GpuProfilerContext
-{
-    FORCEDINLINE GpuProfilerContext(
-        std::shared_ptr<QueryType> query,
-        std::string_view name = stl_types::source_location().function_name(),
-        u64              gpu_thread = 0x8085)
-        : m_thread(gpu_thread)
-        , m_name(name)
-        , m_query(query)
-    {
-        if constexpr(!compile_info::profiler::gpu::enabled)
-            return;
-
-        m_start = PClock::now();
-        m_query->begin();
-        push_event(m_name);
-    }
-
-    FORCEDINLINE ~GpuProfilerContext()
-    {
-        if constexpr(!compile_info::profiler::gpu::enabled)
-            return;
-
-        DeepProfilerContext _("GpuProfilerContext::Query stall");
-
-        m_query->end();
-        push_event(m_name, m_query->result());
-    }
-
-    FORCEDINLINE void push_event(
-        cstring name, PClock::time_point::rep offset = 0)
-    {
-        auto props = RuntimeProperties::get_properties();
-
-        datapoint_t event(offset ? datapoint_t::pop : datapoint_t::push, name);
-        event.ts =
-            (m_start + std::chrono::nanoseconds(offset)).time_since_epoch();
-        event.tid = m_thread;
-
-        props.push(*props.context, event);
-    }
-
-    u64                        m_thread;
-    std::string_view           m_name;
-    PClock::time_point         m_start;
-    std::shared_ptr<QueryType> m_query;
 };
 
 } // namespace profiling

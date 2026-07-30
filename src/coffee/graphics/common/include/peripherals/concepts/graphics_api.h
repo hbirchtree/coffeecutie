@@ -234,6 +234,13 @@ enum class type
     timestamp,
 };
 
+enum class state
+{
+    clear,
+    pending,
+    retrieved,
+};
+
 template<type v>
 struct query_type
 {

@@ -65,6 +65,7 @@ void ImGuiSystem::submit_draws(Proxy& e)
     using namespace std::string_view_literals;
 
     gleam::system& api = e.subsystem<gleam::system>();
+    auto render_timer = api.gpu_timer(IM_API "Full");
 
     auto& data      = *m_gfx_data;
     auto  draw_data = ImGui::GetDrawData();

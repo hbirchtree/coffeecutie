@@ -4,11 +4,13 @@
 #include <coffee/components/subsystem.h>
 #include <coffee/core/debug/formatting.h>
 
+#include "coffee/graphics/apis/gleam/rhi_query.h"
 #include "coffee/graphics/apis/gleam/rhi_rendertarget.h"
 #include "coffee/graphics/apis/gleam/rhi_texture.h"
 #include "coffee/graphics/apis/gleam/rhi_versioning.h"
 #include "rhi.h"
 #include "rhi_context.h"
+#include "types.h"
 
 #include <coffee/core/types/display/event.h>
 
@@ -56,6 +58,27 @@ class system
 
     void end_restricted(Proxy&, time_point const&);
 
+    /*!
+     * Take start()/stop()'d TIME_ELAPSED query and see it to completion
+     */
+    void track_timer(std::shared_ptr<query_t>&& timer, std::string const& name);
+    bool is_timer_pending(std::string const& name);
+
+    struct gpu_timer_t
+    {
+        gpu_timer_t(system* system, std::string const& name);
+        ~gpu_timer_t();
+
+        system* m_system{nullptr};
+        std::shared_ptr<query_t> m_timer;
+        std::string m_name;
+    };
+
+    gpu_timer_t gpu_timer(std::string const& name)
+    {
+        return gpu_timer_t(this, name);
+    }
+
     gleam::context::api& context_checker;
     std::optional<bool>  context_notifies;
 
@@ -71,11 +94,21 @@ class system
     comp_app::size_2d_t m_last_size;
     time_point          m_next_stats{};
 
+    struct timing_t
+    {
+        std::shared_ptr<query_t> timer;
+        std::string              name;
+        compo::time_point        start_time;
+    };
+
+    void finalize_timer(timing_t&& timer);
+
     // Capture FBO for GL ES 2.0 platforms
     // Because ReadPixels doesn't work well
     comp_app::interfaces::ScreenshotProvider* m_screenshot_provider{};
     std::shared_ptr<rendertarget_t>           m_capture_fbo{};
     std::shared_ptr<texture_t>                m_color_capture{};
+    std::map<std::string, timing_t>           m_tracked_timings;
     hnd                                       m_depth_capture{};
     bool                                      m_capture_fbo_active{false};
     bool                                      m_capture_requested{false};

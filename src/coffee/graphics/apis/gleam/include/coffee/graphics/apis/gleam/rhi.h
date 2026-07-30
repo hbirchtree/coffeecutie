@@ -220,13 +220,11 @@ struct api
             return std::make_shared<null_query_t>(m_features.query, T::value);
 #endif
         }
-#if 0
         if constexpr(T::value == queries::type::time)
             return std::make_shared<query_t>(m_features.query, T::value);
         if constexpr(T::value == queries::type::timestamp)
             return std::make_shared<timestamp_query>(m_features.query, T::value);
-#endif
-        return nullptr;
+        return std::shared_ptr<query_t>();
     }
 
     template<class Dummy = void>

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "peripherals/concepts/graphics_api.h"
 #include "rhi_features.h"
 #include "rhi_translate.h"
 #include "rhi_versioning.h"
@@ -76,6 +77,7 @@ struct query_t
 
     inline void start()
     {
+        m_state = queries::state::pending;
         cmd::begin_query(convert::to(m_type), m_handle);
     }
 
@@ -84,17 +86,18 @@ struct query_t
         cmd::end_query(convert::to(m_type));
     }
 
-    inline i64 resultSync() const
+    inline i64 resultSync()
     {
         u32 result = 0;
         cmd::get_query_objectuiv(
             m_handle,
             group::query_object_parameter_name::query_result,
             SpanOne(result));
+        m_state = queries::state::retrieved;
         return result;
     }
 
-    inline std::optional<i64> result() const
+    inline std::optional<i64> result()
     {
         u32 available = 0;
         cmd::get_query_objectuiv(
@@ -106,10 +109,16 @@ struct query_t
         return resultSync();
     }
 
+    inline queries::state state() const
+    {
+        return m_state;
+    }
+
   private:
     features::queries m_features;
     hnd               m_handle;
     queries::type     m_type;
+    queries::state    m_state{queries::state::clear};
 };
 #endif
 
