@@ -39,5 +39,5 @@ void main()
     frag.tangent = unpack_uvec3(tangent);
     frag.binormal = unpack_uvec3(binormal);
     frag.normal = unpack_uvec3(normal);
-    frag.position = position * -1;
+    frag.position = position;
 }

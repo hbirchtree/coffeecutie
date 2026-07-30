@@ -101,7 +101,7 @@ struct RenderingParameters : compo::SubsystemBase
     libc_types::u32 mipmap_bias{compile_info::platform::is_32bit ? 2 : 3};
 
     bool color_changing{true};
-    bool render_fog{!std::is_same_v<blam::xbox_version_t, halo_version>};
+    bool render_fog{true};
     bool render_lightmaps{true};
     bool render_model_bones{true};
     bool render_reflection{true};
