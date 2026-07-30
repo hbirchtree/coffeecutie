@@ -246,7 +246,9 @@ struct part
     {
         if constexpr(std::is_same_v<V, xbox_version_t>)
         {
-            return indices;
+            auto cpy  = indices;
+            cpy.count = to_le(from_le(indices.count) + 2);
+            return cpy;
         } else
         {
             auto cpy   = base.index_base();

@@ -248,6 +248,101 @@ struct image_t
 
     typing::pixels::PixDesc to_fmt() const;
 
+    /*!
+     * \brief Bytes one face/layer occupies at a single mip level.
+     */
+    inline u32 layer_mip_bytes(u16 mip) const
+    {
+        auto mipsize = isize;
+        mipsize.x >>= mip;
+        mipsize.y >>= mip;
+#if defined(GLEAM_USE_CORE) || defined(GLEAM_USE_ES) || defined(GLEAM_DUMMY)
+        if(!compressed())
+            return gl::tex::format_of(to_fmt()).data_size(mipsize);
+        return gl::tex::format_of(to_fmt().c).data_size(mipsize);
+#else
+        auto w = (u32)(mipsize.x < 1 ? 1 : mipsize.x);
+        auto h = (u32)(mipsize.y < 1 ? 1 : mipsize.y);
+        switch(format)
+        {
+        case format_t::BC1:
+        case format_t::BC1_GX_TILED:
+            return ((w + 3u) / 4u) * ((h + 3u) / 4u) * 8u;
+        case format_t::BC2:
+        case format_t::BC3:
+            return ((w + 3u) / 4u) * ((h + 3u) / 4u) * 16u;
+        case format_t::A8:
+        case format_t::Y8:
+        case format_t::AY8:
+        case format_t::I8_GX_TILED:
+            return w * h;
+        case format_t::A8Y8:
+        case format_t::R5G6B5:
+        case format_t::A1RGB5:
+        case format_t::ARGB4:
+        case format_t::RGB565_GX_TILED:
+        case format_t::IA8_GX_TILED:
+            return w * h * 2u;
+        case format_t::ARGB8:
+        case format_t::XRGB8:
+            return w * h * 4u;
+        default:
+            return 0u;
+        }
+#endif
+    }
+
+    /*!
+     * \brief Bytes one face's whole mip chain occupies.
+     */
+    inline u32 layer_chain_bytes() const
+    {
+        u32 out = 0;
+        for(u16 i = 0; i < (mipmaps ? mipmaps : 1); i++)
+            out += layer_mip_bytes(i);
+        return out;
+    }
+
+    /*!
+     * \brief Data for one cubemap face at one mip level.
+     * \param face Cube face in API order (+X, -X, +Y, -Y, +Z, -Z).
+     * \param mipmap
+     */
+    template<typename V>
+    inline Span<const u8> cube_face(
+        map_ptr const& magic, u32 face, u16 mipmap = 0) const
+    {
+        if(mipmap != 0 && mipmap >= mipmaps)
+            Throw(undefined_behavior("mipmap out of range"));
+        if(face >= 6)
+            Throw(undefined_behavior("cube face out of range"));
+
+        u32 const level = layer_mip_bytes(mipmap);
+        u32       start = 0;
+
+        if constexpr(std::is_same_v<V, xbox_version_t>)
+        {
+            u32 const stride = (layer_chain_bytes() + 127u) & ~127u;
+            u32       within = 0;
+            for(u16 i = 0; i < mipmap; i++)
+                within += layer_mip_bytes(i);
+            start = face * stride + within;
+        } else
+        {
+            /* Swapping 1 and 2 is its own inverse, so this reads the same
+             * either direction. */
+            constexpr u32 stored[6] = {0, 2, 1, 3, 4, 5};
+            u32 preceding           = 0;
+            for(u16 i = 0; i < mipmap; i++)
+                preceding += layer_mip_bytes(i) * 6u;
+            start = preceding + stored[face] * level;
+        }
+
+        return reference<u8>{.count = level, .offset = offset + start}
+            .data(magic)
+            .value();
+    }
+
     inline Span<const u8> data(map_ptr const& magic, u16 mipmap = 0) const
     {
 #if defined(GLEAM_USE_CORE) || defined(GLEAM_USE_ES) || defined(GLEAM_DUMMY)
@@ -264,7 +359,13 @@ struct image_t
         {
             auto const& format = gl::tex::format_of(to_fmt());
 
-            u32 size       = format.data_size(mipsize);
+            u32 size = format.data_size(mipsize);
+
+            /* Every layer of a level is stored before the next level starts,
+             * so skipping a level means skipping all of its layers. */
+            u32 const layers = type == type_t::tex_cube  ? 6u
+                               : type == type_t::tex_3d  ? depth
+                                                         : 1u;
             u32 mip_offset = 0;
 
             for(auto i : stl_types::range<>(mipmap))
@@ -272,13 +373,10 @@ struct image_t
                 auto imsize = isize;
                 imsize.x >>= i;
                 imsize.y >>= i;
-                mip_offset += format.data_size(imsize);
+                mip_offset += format.data_size(imsize) * layers;
             }
 
-            if(type == type_t::tex_cube)
-                size *= 6;
-            else if(type == type_t::tex_3d)
-                size *= depth;
+            size *= layers;
 
             return reference<u8>{.count = size, .offset = offset + mip_offset}
                 .data(magic)
@@ -289,19 +387,20 @@ struct image_t
 
             u32 size = gl::tex::format_of(fmt.c).data_size(mipsize);
 
+            u32 const layers = type == type_t::tex_cube  ? 6u
+                               : type == type_t::tex_3d  ? depth
+                                                         : 1u;
             u32 mip_offset = 0;
             for(auto i : stl_types::Range<>(mipmap))
             {
                 auto off_size = isize;
                 off_size.x >>= i;
                 off_size.y >>= i;
-                mip_offset += gl::tex::format_of(fmt.c).data_size(off_size);
+                mip_offset +=
+                    gl::tex::format_of(fmt.c).data_size(off_size) * layers;
             }
 
-            if(type == type_t::tex_cube)
-                size *= 6;
-            else if(type == type_t::tex_3d)
-                size *= depth;
+            size *= layers;
 
             return reference<u8>{.count = size, .offset = offset + mip_offset}
                 .data(magic)
@@ -342,15 +441,15 @@ struct image_t
         if(mipmap != 0 && mipmap >= mipmaps)
             Throw(undefined_behavior("mipmap out of range"));
 
+        u32 const layers = type == type_t::tex_cube ? 6u
+                           : type == type_t::tex_3d
+                               ? (u32)(depth > 0 ? depth : 1)
+                               : 1u;
         u32 mip_offset = 0;
         for(u16 i = 0; i < mipmap; i++)
-            mip_offset += bytes_per_mip(i);
+            mip_offset += bytes_per_mip(i) * layers;
 
-        u32 sz = bytes_per_mip(mipmap);
-        if(type == type_t::tex_cube)
-            sz *= 6;
-        else if(type == type_t::tex_3d)
-            sz *= (u32)(depth > 0 ? depth : 1);
+        u32 sz = bytes_per_mip(mipmap) * layers;
 
         return reference<u8>{.count = sz, .offset = offset + mip_offset}
             .data(magic)
