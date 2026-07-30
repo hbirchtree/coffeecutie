@@ -729,16 +729,17 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
             std::array<Vecf3, 7> points = {{
                 Vecf3{},
-                Vecf3{} + Vecf3{-.1f, .1f, -.1f},
-                Vecf3{} + Vecf3{-.1f, -.1f, -.1f},
+                Vecf3{-.1f, .1f, -.1f},
+                Vecf3{.1f, .1f, -.1f},
                 Vecf3{},
-                Vecf3{} + Vecf3{-.1f, .1f, .1f},
-                Vecf3{} + Vecf3{-.1f, -.1f, .1f},
+                Vecf3{-.1f, -.1f, -.1f},
+                Vecf3{.1f, -.1f, -.1f},
                 Vecf3{},
             }};
 
-            auto rotate = [&cam](Vecf3 const& vert) -> Vecf3 {
-                return cam.rotation * Vecf4(vert, 1.f);
+            Matf4 const to_world = glm::transpose(cam.rotation);
+            auto rotate = [&to_world](Vecf3 const& vert) -> Vecf3 {
+                return Vecf3(to_world * Vecf4(vert, 1.f));
             };
 
             auto const& pos = cam.camera.position;

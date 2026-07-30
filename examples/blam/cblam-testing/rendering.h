@@ -1,11 +1,14 @@
 #pragma once
 
-#include <coffee/image/ktx_load.h>
-
 #include "blam_files.h"
 #include "caching.h"
 #include "components.h"
 #include "data.h"
+
+#include <coffee/components/subsystem.h>
+#include <coffee/graphics/apis/gleam/rhi_system.h>
+#include <coffee/image/ktx_load.h>
+#include <peripherals/stl/type_list.h>
 
 using ScreenClearManifest = compo::SubsystemManifest<
     empty_list_t,
@@ -73,7 +76,8 @@ using MeshRendererManifest = compo::SubsystemManifest<
         RenderingParameters,
         ScreenClear,
         LoadingStatus,
-        DebugMarkers>,
+        DebugMarkers,
+        gfx::system>,
     type_list_t<comp_app::GraphicsFramebuffer>>;
 
 using LoadingScreenManifest = compo::SubsystemManifest<

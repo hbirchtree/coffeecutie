@@ -669,7 +669,7 @@ i32 blam_main()
                 cam.matrix       = GenPerspective(cam.camera);
                 cam.matrix[2][2] = 0.f;
                 cam.matrix       = cam.matrix * view_matrix;
-                cam.rotation     = glm::mat3_cast(cam.camera.rotation);
+                cam.rotation = glm::mat4_cast(cam.camera.rotation) * bsp_basis;
             }
         },
         [](EntityContainer&, BlamData<halo_version>&, time_point const&) {

@@ -26,6 +26,7 @@
 #include "caching.h"
 #include "caching_item.h"
 #include "coffee/graphics/apis/gleam/rhi_debug.h"
+#include "coffee/graphics/apis/gleam/rhi_query.h"
 #include "coffee/graphics/apis/gleam/rhi_texture.h"
 #include "components.h"
 #include "data.h"
@@ -1468,6 +1469,9 @@ struct MeshRenderer
             return;
         }
 
+        gfx::system& system = p.template subsystem<gfx::system>();
+        auto render_timer = system.gpu_timer("MeshRenderer full pass");
+
         auto blend_for_pass = [](Passes pass) -> gfx::blend_state {
             switch(pass)
             {
@@ -1584,8 +1588,6 @@ struct MeshRenderer
         }
 
         render_debug_lines(p);
-
-        gfx::cmd::finish();
     }
 
     struct LegacyBatch
@@ -2259,7 +2261,8 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
     auto& resources   = e.subsystem<BlamResources>();
     auto& postprocess = e.subsystem<PostProcessParameters>();
 
-    auto _ = api.debug().scope();
+    auto _ = api.debug().scope("ScreenClear::end_restricted");
+    auto render_timer = api.gpu_timer("ScreenClear Full screen render");
 
     if(!quad_program)
         load_resources(api, e.subsystem<BlamResources>());
