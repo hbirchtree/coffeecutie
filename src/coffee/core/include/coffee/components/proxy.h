@@ -119,7 +119,7 @@ struct ConstrainedProxy : private ContainerProxy
 
     self_type clone()
     {
-        return self_type(this->unconstrained_container());
+        return self_type(this->m_container);
     }
 
     FORCEDINLINE quick_container<proxy_entity_query<self_type>> select(u64 tags)
