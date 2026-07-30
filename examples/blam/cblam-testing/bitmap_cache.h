@@ -203,8 +203,7 @@ struct BitmapCache
         {
             gfx::texture_cube_array_t& texture =
                 bucket.template texture_as<gfx::texture_cube_array_t>();
-            auto img_data  = img.image.mip->data(magic, mipmap);
-            auto face_size = img_data.size_bytes() / 6;
+            auto face_size = img.image.mip->layer_mip_bytes(mipmap);
 
             /* Xbox swizzles each cube face like a 2D texture; deswizzle per
              * face into a linear buffer (compressed faces are never swizzled
@@ -219,34 +218,34 @@ struct BitmapCache
                           face_size / (static_cast<size_t>(size.x) * size.y))
                     : 0u;
             std::array<std::vector<u8>, 6> linear_faces;
-            auto face = [&](u32 src, u32 slot) -> semantic::Span<const u8> {
+            auto face = [&](u32 idx) -> semantic::Span<const u8> {
                 semantic::Span<const u8> raw =
-                    img_data.subspan(face_size * src, face_size);
+                    img.image.mip->template cube_face<V>(magic, idx, mipmap);
                 if(swizzled && bpp != 0)
                 {
-                    linear_faces[slot].resize(face_size);
+                    linear_faces[idx].resize(face_size);
                     if(blam::swizzle::deswizzle_bytes(
                            semantic::Span<const u8>(
                                raw.data(), raw.size_bytes()),
                            semantic::Span<u8>(
-                               linear_faces[slot].data(),
-                               linear_faces[slot].size()),
+                               linear_faces[idx].data(),
+                               linear_faces[idx].size()),
                            static_cast<u32>(size.x),
                            static_cast<u32>(size.y),
                            bpp))
                         return semantic::Span<const u8>(
-                            linear_faces[slot].data(),
-                            linear_faces[slot].size());
+                            linear_faces[idx].data(),
+                            linear_faces[idx].size());
                 }
                 return raw;
             };
             std::array<semantic::Span<const u8>, 6> faces = {{
-                face(0, 0),
-                face(2, 1),
-                face(1, 2),
-                face(3, 3),
-                face(4, 4),
-                face(5, 5),
+                face(0),
+                face(1),
+                face(2),
+                face(3),
+                face(4),
+                face(5),
             }};
             texture.upload(
                 faces,
