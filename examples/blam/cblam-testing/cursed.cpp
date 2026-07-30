@@ -163,7 +163,7 @@ struct RS2CacheLoader
                 on_links(
                     std::make_shared<std::vector<rs2::MapLink>>(
                         loader.find_links()));
-            });
+            }).assume_value();
 
         // Touching a link's sensor box: resolve and log it (teleporting is
         // a game decision, e.g. on interact). Fires every frame while
