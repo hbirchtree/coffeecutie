@@ -544,6 +544,8 @@ struct SoundUISystem
         this->priority = 2048;
     }
 
+    bool main_thread_only() const override { return true; }
+
     void start_restricted(Proxy& p, compo::time_point const& t)
     {
 #if defined(FEATURE_ENABLE_ImGui)

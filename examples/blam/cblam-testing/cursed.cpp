@@ -697,6 +697,8 @@ struct RS2CacheLoader
             i32(std::floor(rs_space.y / 8192.f)));
     }
 
+    bool main_thread_only() const override { return true; }
+
     virtual void start_restricted(Proxy& p, time_point const& t) final
     {
         PlayerCamera* camera{};
