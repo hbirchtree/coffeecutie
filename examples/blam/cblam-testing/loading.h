@@ -717,9 +717,9 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
             f32   yaw   = light.radiosity.direction.x;
             f32   pitch = light.radiosity.direction.y;
             Vecf3 rotation{
+                std::cos(pitch) * std::cos(yaw),
                 std::cos(pitch) * std::sin(yaw),
                 std::sin(pitch),
-                std::cos(pitch) * std::cos(yaw),
             };
             world_data[0].lighting[0].light_direction = Vecf4{
                 rotation,
