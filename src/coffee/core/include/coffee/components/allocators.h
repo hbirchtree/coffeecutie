@@ -151,6 +151,7 @@ struct BufferedContainer : VectorBaseContainer<ComponentType, AllocationType>
     /* base::m_data is buffer 0; the remainder live here */
     std::array<vector_type, Frames - 1> m_extra;
     size_t                              m_read{0};
+    bool m_seeded{false};
 
     vector_type& buffer(size_t index)
     {
@@ -204,6 +205,12 @@ struct BufferedContainer : VectorBaseContainer<ComponentType, AllocationType>
 
     virtual void advance_frame() override
     {
+        if(!m_seeded)
+        {
+            for(auto& extra : m_extra)
+                extra = this->m_data;
+            m_seeded = true;
+        }
         m_read = frame_index(1);
         /* the buffer about to be written holds frame N-1; carry the current
          * values into it so partial writers do not resurrect stale data */
