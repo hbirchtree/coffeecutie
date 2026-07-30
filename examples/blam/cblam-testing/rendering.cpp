@@ -1316,7 +1316,7 @@ struct MeshRenderer
         {
             if(!params->debug_portals && !params->debug_clusters)
                 break;
-            BspReference&  bsp_ = ent.template get<BspReference>();
+            BspReference const& bsp_ = ent.template get<BspReference>();
             BSPItem const* bsp  = get_bsp(bsp_.bsp);
 
             if(params->debug_portals)

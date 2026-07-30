@@ -57,11 +57,11 @@ struct DrawListBuilder;
 template<typename V>
 using MeshRendererManifest = compo::SubsystemManifest<
     type_list_t<
-        BspReference,
-        SubModel,
-        DrawState,
+        const BspReference,
+        const SubModel,
+        const DrawState,
         Model,
-        MeshTrackingData,
+        const MeshTrackingData,
         DebugDraw,
         const PlayerCamera,
         const PlayerInfo,
