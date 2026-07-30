@@ -40,9 +40,13 @@
         {"time":14000, "type":"screenshot","name":"b30_cartographer"},
         {"time":15000, "type": "camera", "position" :[-58.11081, 6.493973, 4.239501], "rotation":[-0.25236937, -0.02023266, 0.9643253, 0.07731121]},
         {"time":16000, "type":"screenshot","name":"b30_covenant_shield"},
-        {"time":17000, "type": "camera", "position" :[-1.5171281, -26.95685, 2.5377915], "rotation":[0.22229183, 0.08621828, -0.90543956, -0.3511866]},
-        {"time":18000, "type":"screenshot","name":"b30_transparent_senv"}
+        {"time":17000, "type": "camera", "position" :[-54.05096, 9.427397, 4.941797], "rotation":[-0.4384959, -0.11664942, 0.86117995, 0.22909248]},
+        {"time":18000, "type":"screenshot","name":"b30_covenant_shield_broken_1"},
+        {"time":18500, "type":"screenshot","name":"b30_covenant_shield_broken_2"},
+        {"time":19000, "type":"screenshot","name":"b30_covenant_shield_broken_3"},
+        {"time":20000, "type": "camera", "position" :[-1.5171281, -26.95685, 2.5377915], "rotation":[0.22229183, 0.08621828, -0.90543956, -0.3511866]},
+        {"time":21000, "type":"screenshot","name":"b30_transparent_senv"}
     ],
     "frame_delta": 200.0,
-    "end_time": 50000
+    "end_time": 30000
 }
