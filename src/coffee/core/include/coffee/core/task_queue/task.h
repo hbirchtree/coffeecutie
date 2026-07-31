@@ -701,7 +701,7 @@ class runtime_queue
   private:
     template<typename... Args>
     STATICINLINE std::function<void(Args...)> BindToQueue_Impl(
-        std::function<void(Args...)> const& func, bool await)
+        std::function<void(Args...)> func, bool await)
     {
         using namespace std::chrono_literals;
 
