@@ -31,6 +31,11 @@ class system
   public:
     using type = system;
 
+    virtual bool main_thread_only() const override
+    {
+        return true;
+    }
+
     system()
         : context_checker{context_robustness()}
     {
