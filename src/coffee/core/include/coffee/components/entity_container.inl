@@ -2,6 +2,7 @@
 
 #include <coffee/components/entity_container.h>
 #include <coffee/components/entity_reference.h>
+#include <coffee/components/scheduling.h>
 #include <coffee/components/service_query.h>
 #include <coffee/components/visitor.h>
 #include <coffee/core/CProfiling>
@@ -65,6 +66,9 @@ FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
     for(auto const& bucket : buckets)
     {
         /* TODO: Handle visitors with exclusive access */
+        if(bucket.second.empty())
+            continue;
+
         if(bucket.second.size() < 2)
         {
             auto node_idx = bucket.second.at(0);
@@ -156,10 +160,59 @@ FORCEDINLINE bool subsystem_sort(
 
 } // namespace detail
 
+FORCEDINLINE std::string EntityContainer::schedule_report()
+{
+    std::vector<SubsystemBase*> sorted;
+    sorted.reserve(subsystems.size());
+    std::transform(
+        std::cbegin(subsystems),
+        std::cend(subsystems),
+        std::back_inserter(sorted),
+        detail::pointer_extract);
+    std::sort(sorted.begin(), sorted.end(), detail::subsystem_sort);
+
+    /* Batches index into this, so it must be complete before batching */
+    std::vector<sched::node> nodes;
+    nodes.reserve(sorted.size());
+
+    for(auto* subsys : sorted)
+    {
+        type_hash self = 0;
+        for(auto const& entry : subsystems)
+            if(entry.second.get() == subsys)
+            {
+                self = entry.first;
+                break;
+            }
+
+        nodes.push_back(
+            {subsys,
+             sched::access_of(self, *subsys),
+             ENT_TYPE_NAME(*subsys),
+             subsys->frame_time_ns});
+    }
+
+    sched::propagate_main_thread(nodes);
+
+    return sched::format_batches(nodes, sched::build_batches(nodes));
+}
+
 FORCEDINLINE
 void EntityContainer::exec()
 {
     constexpr auto wrap_exceptions = compile_info::debug_mode && false;
+
+    auto const measure_frames =
+        sched::report_frame() || (debug_flags & Verbose_Schedule);
+
+    if(auto target = sched::report_frame();
+       measure_frames && ++frames_elapsed == std::max<u64>(target, 1))
+    {
+        log(libc::io::io_handles::err,
+            "Coffee::Components",
+            "frame schedule:\n" + schedule_report(),
+            semantic::debug::Severity::Information);
+    }
 
     /* This timestamp is relative to the starting time, so that it becomes
      * useful for different operations that only need to keep track of time in
@@ -207,7 +260,15 @@ void EntityContainer::exec()
                 &subsys,
                 std::ref(proxy),
                 time_now);
-        else
+        else if(measure_frames)
+        {
+            auto begin = clock::now();
+            subsys.start_frame(proxy, time_now);
+            subsys.frame_time_ns += static_cast<u64>(
+                std::chrono::duration_cast<std::chrono::nanoseconds>(
+                    clock::now() - begin)
+                    .count());
+        } else
             subsys.start_frame(proxy, time_now);
     }
 
@@ -248,7 +309,15 @@ void EntityContainer::exec()
                 std::ref(subsys),
                 std::ref(proxy),
                 time_now);
-        else
+        else if(measure_frames)
+        {
+            auto begin = clock::now();
+            subsys.end_frame(proxy, time_now);
+            subsys.frame_time_ns += static_cast<u64>(
+                std::chrono::duration_cast<std::chrono::nanoseconds>(
+                    clock::now() - begin)
+                    .count());
+        } else
             subsys.end_frame(proxy, time_now);
     }
 

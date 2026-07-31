@@ -106,6 +106,7 @@ coffee_library(
   LIBRARIES CoreCommon CoreProfiling
   SOURCES
     private/components/allocators.cpp
+    private/components/scheduling.cpp
   HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/components>
     HEADER_BASE coffee
@@ -127,6 +128,10 @@ if(BUILD_TESTS)
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/unit_tests>
       HEADER_BASE
       coffee/core
+  )
+
+  coffee_add_test(
+    Core "entity-components" "tests/components.cpp" "EntComp"
   )
 endif()
 

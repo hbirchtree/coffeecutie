@@ -229,7 +229,7 @@ struct SubsystemBase
      * express. Accumulated across frames, never reset.
      */
     access::runtime_flags runtime_access;
-
+    u64 frame_time_ns{0};
     u32 priority;
 
   protected:

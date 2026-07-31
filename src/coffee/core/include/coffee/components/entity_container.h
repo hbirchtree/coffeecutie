@@ -119,6 +119,7 @@ struct EntityContainer : stl_types::non_copy
     {
         Verbose_Subsystems = 0x1,
         Verbose_Visitors   = 0x2,
+        Verbose_Schedule   = 0x4,
     };
 
     friend struct Entity;
@@ -538,6 +539,8 @@ struct EntityContainer : stl_types::non_copy
 
     visitor_graph create_task_graph();
 
+    std::string schedule_report();
+
   private:
     u64                 entity_counter; /*!< For enumerating entities */
     std::vector<Entity> entities;
@@ -553,6 +556,7 @@ struct EntityContainer : stl_types::non_copy
     };
     clock::duration                    time_offset;
     std::vector<std::function<void()>> frame_end_callbacks;
+    u64                                frames_elapsed{0};
 
   public:
     u32 debug_flags;
