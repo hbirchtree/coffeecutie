@@ -69,6 +69,11 @@ struct ImGuiSystem
     using type  = ImGuiSystem;
     using Proxy = compo::proxy_of<ImGuiManifest>;
 
+    virtual bool main_thread_only() const override
+    {
+        return true;
+    }
+
     virtual const ImGuiSystem& get() const final
     {
         return *this;
