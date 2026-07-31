@@ -117,6 +117,11 @@ struct ConstrainedProxy : private ContainerProxy
     {
     }
 
+    self_type clone()
+    {
+        return self_type(this->unconstrained_container());
+    }
+
     FORCEDINLINE quick_container<proxy_entity_query<self_type>> select(u64 tags)
     {
         return wrap_query(m_container.select(tags));
