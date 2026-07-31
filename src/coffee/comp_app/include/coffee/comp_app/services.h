@@ -765,14 +765,14 @@ struct AppService : detail::SubsystemBase
     }
 
     virtual void start_frame(
-        detail::ContainerProxy& c, detail::time_point const& t)
+        detail::ContainerProxy& c, detail::time_point const& t) override
     {
         detail::restricted::start_frame(
             C_OCAST<exposed_type&>(*this), c.underlying(), t);
     }
 
     virtual void end_frame(
-        detail::ContainerProxy& c, detail::time_point const& t)
+        detail::ContainerProxy& c, detail::time_point const& t) override
     {
         detail::restricted::end_frame(
             C_OCAST<exposed_type&>(*this), c.underlying(), t);
@@ -781,6 +781,30 @@ struct AppService : detail::SubsystemBase
     virtual std::string_view subsystem_name() const final
     {
         return typeid(ExposedType).name();
+    }
+
+    virtual std::vector<compo::access::entry> const& declared_components()
+        const override
+    {
+        static const auto set =
+            compo::access::collect<typename ExposedType::components>();
+        return set;
+    }
+
+    virtual std::vector<compo::access::entry> const& declared_subsystems()
+        const override
+    {
+        static const auto set =
+            compo::access::collect<typename ExposedType::subsystems>();
+        return set;
+    }
+
+    virtual std::vector<compo::access::entry> const& declared_services()
+        const override
+    {
+        static const auto set = compo::access::collect<
+            detail::restricted::readable_services_of<ExposedType>>();
+        return set;
     }
 
     template<typename InternalType, typename... Args>
