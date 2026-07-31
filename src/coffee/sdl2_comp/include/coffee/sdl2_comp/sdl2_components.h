@@ -26,6 +26,11 @@ struct Context
         priority = 512;
     }
 
+    virtual bool main_thread_only() const override
+    {
+        return true;
+    }
+
     virtual void load(entity_container& c, comp_app::app_error&) final;
     virtual void unload(entity_container& c, comp_app::app_error&) final;
     void         end_restricted(proxy_type& p, time_point const&);
@@ -39,7 +44,7 @@ struct Windowing
     , comp_app::AppLoadableService
 {
     using readable_services = comp_app::detail::subsystem_list<
-        comp_app::EventBus<Coffee::Display::Event>>;
+        comp_app::BasicEventBus<Coffee::Display::Event>>;
     using proxy_type = comp_app::detail::restricted::proxy_t<Windowing>;
 
     Windowing()
@@ -165,8 +170,8 @@ struct ControllerInput
     , comp_app::AppService<ControllerInput, comp_app::ControllerInput>
     , comp_app::AppLoadableService
 {
-    using readable_services =
-        comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
+    using readable_services = comp_app::subsystem_list<
+        comp_app::BasicEventBus<Coffee::Input::CIEvent>>;
     using proxy_type = comp_app::detail::restricted::proxy_t<ControllerInput>;
 
     ControllerInput()
@@ -197,8 +202,8 @@ struct KeyboardInput
     : comp_app::interfaces::BasicKeyboardInput
     , comp_app::AppService<KeyboardInput, comp_app::KeyboardInput>
 {
-    using readable_services =
-        comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
+    using readable_services = comp_app::subsystem_list<
+        comp_app::BasicEventBus<Coffee::Input::CIEvent>>;
     using proxy_type = comp_app::detail::restricted::proxy_t<KeyboardInput>;
 
     KeyboardInput()
@@ -217,8 +222,8 @@ struct MouseInput
     , comp_app::AppService<MouseInput, comp_app::MouseInput>
     , comp_app::AppLoadableService
 {
-    using readable_services =
-        comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
+    using readable_services = comp_app::subsystem_list<
+        comp_app::BasicEventBus<Coffee::Input::CIEvent>>;
     using proxy_type = comp_app::detail::restricted::proxy_t<MouseInput>;
 
     MouseInput()

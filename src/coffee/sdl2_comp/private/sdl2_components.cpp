@@ -260,7 +260,7 @@ void Windowing::start_restricted(proxy_type& p, time_point const&)
     using namespace Coffee::Display;
 
     auto displayBus =
-        get_container(p).service<comp_app::BasicEventBus<Event>>();
+        p.service<comp_app::BasicEventBus<Event>>();
     if(!displayBus)
         Throw(implementation_error("display bus not available!"));
     Event displayEv;
@@ -729,7 +729,7 @@ void ControllerInput::start_restricted(proxy_type& p, time_point const&)
     using namespace Coffee::Input;
 
     auto inputBus =
-        get_container(p).service<comp_app::BasicEventBus<CIEvent>>();
+        p.service<comp_app::BasicEventBus<CIEvent>>();
     CIEvent inputEv;
 
     SDL_Event event;
@@ -946,7 +946,7 @@ void KeyboardInput::start_restricted(proxy_type& p, time_point const&)
     SDL_Event event;
 
     auto inputBus =
-        get_container(p).service<comp_app::BasicEventBus<CIEvent>>();
+        p.service<comp_app::BasicEventBus<CIEvent>>();
 
     while(SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_KEYDOWN, SDL_KEYUP))
     {
