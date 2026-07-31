@@ -2,6 +2,7 @@
 
 #include "blam_atlas.h"
 #include "blam_sound.h"
+#include "blam_scenario.h"
 #include "blam_structures.h"
 #include "blam_tag_index.h"
 
@@ -205,6 +206,11 @@ struct map_container
     inline std::string_view get_name(T const* ref) const
     {
         return ref->to_name().to_string(magic);
+    }
+
+    inline std::optional<scn::scenario<Ver> const*> scenario() const
+    {
+        return tags->scenario(map, magic);
     }
 };
 
