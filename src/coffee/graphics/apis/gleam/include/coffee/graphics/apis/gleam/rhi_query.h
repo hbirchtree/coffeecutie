@@ -120,6 +120,23 @@ struct query_t
     queries::type     m_type;
     queries::state    m_state{queries::state::clear};
 };
+#else
+struct query_t
+{
+    query_t(features::queries&, queries::type)
+    {
+    }
+
+    // clang-format off
+    inline void alloc() {}
+    inline void dealloc() {}
+    inline void start() {}
+    inline void stop() {}
+    inline i64 resultSync() const { return 0; }
+    inline std::optional<i64> result() const { return std::nullopt; }
+    inline queries::state state() const { return queries::state::clear; }
+    // clang-format on
+};
 #endif
 
 #if GLEAM_MAX_VERSION >= 0x300 || defined(GL_EXT_disjoint_timer_query)
@@ -182,12 +199,31 @@ struct timestamp_query
     features::queries m_features;
     hnd               m_handle;
 };
+#else
+struct timestamp_query
+{
+    timestamp_query(features::queries&, queries::type)
+    {
+    }
+
+    // clang-format off
+    inline void alloc() {}
+    inline void dealloc() {}
+    inline u64 sample() { return 0; }
+    // clang-format on
+};
 #endif
 
 struct null_query_t
 {
+    null_query_t() = default;
+    null_query_t(features::queries&, queries::type)
+    {
+    }
+
     // clang-format off
     inline void alloc() {}
+    inline void dealloc() {}
     inline void start() {}
     inline void stop() {}
     inline i64 resultSync() const { return 0; }
