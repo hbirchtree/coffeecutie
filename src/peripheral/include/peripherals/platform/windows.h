@@ -4,10 +4,9 @@
 #include <peripherals/semantic/handle.h>
 #include <string>
 
-#undef NOMINMAX
+#ifndef NOMINMAX
 #define NOMINMAX
-
-#undef DELETE
+#endif
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN 1
@@ -18,6 +17,8 @@
 #include <processthreadsapi.h>
 #include <windows.h>
 
+#undef DELETE
+#undef DrawState
 #undef ERROR
 
 namespace platform {
