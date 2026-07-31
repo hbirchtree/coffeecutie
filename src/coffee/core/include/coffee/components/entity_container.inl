@@ -257,6 +257,7 @@ void EntityContainer::exec()
         if(callback)
             callback();
     }
+    advance_frame();
 }
 
 FORCEDINLINE EntityContainer::visitor_graph EntityContainer::create_task_graph()

@@ -35,11 +35,14 @@ struct EntityRef;
 template<typename ContainerType, typename ComponentType>
 struct ComponentRef;
 
-template<typename... Components>
+template<typename AccessList, typename... Components>
 struct ComponentEntityRef;
 
-template<typename... Components>
+template<typename AccessList, typename... Components>
 struct component_query;
+
+template<typename ProxyType>
+struct proxy_entity_query;
 
 template<typename Service>
 struct ServiceRef;
@@ -326,11 +329,19 @@ struct EntityContainer : stl_types::non_copy
      */
     template<is_component_tag... Components>
     requires(sizeof...(Components) >= 1)
-    quick_container<component_query<Components...>> select()
+    quick_container<component_query<void, Components...>> select()
     {
-        return quick_container<component_query<Components...>>(
-            component_query<Components...>(*this, false),
-            component_query<Components...>(*this, true));
+        return select_restricted<void, Components...>();
+    }
+
+    template<typename AccessList, is_component_tag... Components>
+    requires(sizeof...(Components) >= 1)
+    quick_container<component_query<AccessList, Components...>>
+    select_restricted()
+    {
+        return quick_container<component_query<AccessList, Components...>>(
+            component_query<AccessList, Components...>(*this, false),
+            component_query<AccessList, Components...>(*this, true));
     }
 
     template<is_matcher Matcher>
@@ -363,14 +374,14 @@ struct EntityContainer : stl_types::non_copy
         auto it = components.find(type_id);
 
         if(it == components.end())
-            Throw(undefined_behavior("component not found"));
+            ThrowNotFound<ComponentType>("component not found: ");
 
         auto ptr = C_DCAST<typename ComponentType::type>(it->second.get());
 
         if(ptr)
             return *ptr;
         else
-            Throw(undefined_behavior("component not found"));
+            ThrowNotFound<ComponentType>("component not found: ");
     }
 
     template<is_component_tag ComponentType>
@@ -396,14 +407,14 @@ struct EntityContainer : stl_types::non_copy
         auto it = subsystems.find(type_id);
 
         if(it == subsystems.end())
-            Throw(undefined_behavior("subsystem not found"));
+            ThrowNotFound<SubsystemType>("subsystem not found: ");
 
         auto ptr = C_DCAST<typename SubsystemType::type>(it->second.get());
 
         if(ptr)
             return *ptr;
         else
-            Throw(undefined_behavior("subsystem not found"));
+            ThrowNotFound<SubsystemType>("subsystem not found: ");
     }
 
     template<is_tag_type TagType>
@@ -414,7 +425,7 @@ struct EntityContainer : stl_types::non_copy
         auto it = subsystems.find(type_id);
 
         if(it == subsystems.end())
-            Throw(undefined_behavior("subsystem not found"));
+            ThrowNotFound<TagType>("subsystem not found: ");
 
         return *it->second;
     }
@@ -447,6 +458,18 @@ struct EntityContainer : stl_types::non_copy
     typename ComponentType::value_type* get(u64 id)
     {
         return container<ComponentType>().get(id);
+    }
+
+    template<is_component_tag ComponentType>
+    typename ComponentType::value_type* get_at(u64 id, size_t offset)
+    {
+        return container<ComponentType>().get_at(id, offset);
+    }
+
+    void advance_frame()
+    {
+        for(auto& component : components)
+            component.second->advance_frame();
     }
 
     EntityRef<EntityContainer> ref(Entity const& entity);

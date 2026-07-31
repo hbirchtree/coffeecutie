@@ -1,5 +1,6 @@
 #pragma once
 
+#include "access.h"
 #include "allocators.h"
 #include "entity_container.h"
 #include "entity_reference.h"

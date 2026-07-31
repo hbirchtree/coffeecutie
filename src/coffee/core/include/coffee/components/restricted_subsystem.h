@@ -34,6 +34,22 @@ using proxy_t = ConstrainedProxy<
     typename T::readable_services>;
 
 template<class T>
+struct readable_services_of_s
+{
+    using type = type_safety::empty_list_t;
+};
+
+template<class T>
+requires requires { typename T::readable_services; }
+struct readable_services_of_s<T>
+{
+    using type = typename T::readable_services;
+};
+
+template<class T>
+using readable_services_of = typename readable_services_of_s<T>::type;
+
+template<class T>
 requires(!is_start_restricted_subsystem<T>)
 void start_frame(T&, EntityContainer&, time_point const&)
 {
@@ -43,7 +59,8 @@ template<class T>
 requires is_start_restricted_subsystem<T>
 void start_frame(T& subsys, EntityContainer& container, time_point const& t)
 {
-    auto proxy = proxy_t<T>(container);
+    access::scope_guard _(subsys.runtime_access);
+    auto                proxy = proxy_t<T>(container);
     subsys.start_restricted(proxy, t);
 }
 
@@ -57,7 +74,8 @@ template<class T>
 requires is_end_restricted_subsystem<T>
 void end_frame(T& subsys, EntityContainer& container, time_point const& t)
 {
-    auto proxy = proxy_t<T>(container);
+    access::scope_guard _(subsys.runtime_access);
+    auto                proxy = proxy_t<T>(container);
     subsys.end_restricted(proxy, t);
 }
 

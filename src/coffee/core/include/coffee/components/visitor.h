@@ -16,9 +16,9 @@ struct EntityVisitor : EntityVisitorBase
     using VisitorFlags = compo::VisitorFlags;
     using time_point   = compo::time_point;
     using Entity       = compo::Entity;
-    using EntityRef    = compo::EntityRef<EntityContainer>;
     using VisitorType  = EntityVisitor<CompList, SubsysList>;
     using Proxy        = ConstrainedProxy<CompList, SubsysList>;
+    using EntityRef = compo::EntityRef<Proxy>;
 
     EntityVisitor(u32 tag = 0, VisitorFlags flags = VisitorFlags::None)
         : EntityVisitorBase(

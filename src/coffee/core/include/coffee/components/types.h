@@ -7,11 +7,9 @@
 #include <peripherals/stl/type_list.h>
 #include <peripherals/stl/types.h>
 
-#define ENTCOMP_CREATE_TAG(name)      \
-    struct name                       \
-    {                                 \
-        using type = libc_types::u32; \
-    };
+#include "access.h"
+#include "peripherals/stl/standard_exceptions.h"
+#include "platforms/stacktrace.h"
 
 namespace compo {
 
@@ -24,8 +22,6 @@ using libc_types::u64;
 using clock      = std::chrono::high_resolution_clock;
 using duration   = std::chrono::microseconds;
 using time_point = std::chrono::time_point<clock>;
-
-using type_hash = declreturntype(std::type_info::hash_code);
 
 struct EntityContainer;
 struct ContainerProxy;
@@ -80,6 +76,15 @@ struct ComponentContainerBase : stl_types::non_copy
     virtual void unregister_entity(u64 id)     = 0;
     virtual void prealloc(szptr count)         = 0;
     virtual bool contains_entity(u64 id) const = 0;
+
+    virtual size_t frame_count() const
+    {
+        return 1;
+    }
+
+    virtual void advance_frame()
+    {
+    }
 
     /*!
      * \brief Dense list of entity ids holding this component, if the
@@ -159,9 +164,12 @@ struct ComponentContainer : ComponentContainerBase
 
     virtual value_type* get(u64 id) = 0;
 
-    virtual value_type const* get(u64 id) const final
+    /*!
+     * \brief Payload `offset` frames ahead of the current one.
+     */
+    virtual value_type* get_at(u64 id, size_t /*offset*/)
     {
-        return C_CCAST<ComponentContainer<ComponentType>*>(this)->get(id);
+        return get(id);
     }
 };
 
@@ -195,6 +203,32 @@ struct SubsystemBase
     {
         return "Subsystem";
     }
+
+    virtual std::vector<access::entry> const& declared_components() const
+    {
+        return access::nothing();
+    }
+
+    virtual std::vector<access::entry> const& declared_subsystems() const
+    {
+        return access::nothing();
+    }
+
+    virtual std::vector<access::entry> const& declared_services() const
+    {
+        return access::nothing();
+    }
+
+    virtual bool main_thread_only() const
+    {
+        return false;
+    }
+
+    /*!
+     * \brief Access taken during frame hooks that the manifest cannot
+     * express. Accumulated across frames, never reset.
+     */
+    access::runtime_flags runtime_access;
 
     u32 priority;
 
@@ -241,5 +275,13 @@ struct ValueSubsystem : Subsystem<T>
 };
 
 } // namespace globals
+
+template<typename T>
+[[noreturn]] inline void ThrowNotFound(std::string_view prefix)
+{
+    auto type_name = platform::stacktrace::demangle::type_name<T>();
+    type_name.insert(type_name.begin(), prefix.begin(), prefix.end());
+    Throw(undefined_behavior(type_name));
+}
 
 } // namespace compo
