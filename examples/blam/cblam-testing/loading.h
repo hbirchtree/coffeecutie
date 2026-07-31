@@ -275,7 +275,8 @@ void load_scenario_bsp(
 
                 bsp_ref.sort_center =
                     mesh.mesh ? mesh.mesh->centroid : Vecf3{0};
-                bsp_ref.draw.data.push_back(mesh.draw);
+                DrawState& bsp_draw = mesh_ent.get<DrawState>();
+                bsp_draw.draw.data.push_back(mesh.draw);
 
                 ShaderData&       shader_   = mesh_ent.get<ShaderData>();
                 ShaderItem const& shader_it = shader_cache.get(mesh.shader);
@@ -287,7 +288,7 @@ void load_scenario_bsp(
                 //                mesh_ent.get<DepthInfo>(); depth.position =
                 //                bsp.
 
-                bsp_ref.current_pass = shader_.get_render_pass(shader_cache);
+                bsp_draw.current_pass = shader_.get_render_pass(shader_cache);
             }
         // break;
     }
@@ -484,14 +485,15 @@ void load_objects(
                 model.parts.push_back(submod);
                 SubModel& submod_ = submod.get<SubModel>();
 
-                submod_.parent = parent_.id();
-                submod_.initialize<Version>(model_, sub);
+                submod_.parent      = parent_.id();
+                DrawState& sub_draw = submod.get<DrawState>();
+                submod_.initialize<Version>(model_, sub, sub_draw);
 
                 ShaderData&       shader_   = submod.get<ShaderData>();
                 ShaderItem const& shader_it = shader_cache.get(sub.shader);
                 shader_.initialize(shader_it, submod_);
 
-                submod_.current_pass = shader_.get_render_pass(shader_cache);
+                sub_draw.current_pass = shader_.get_render_pass(shader_cache);
             }
         }
     }
@@ -579,16 +581,17 @@ void load_multiplayer_equipment(
                             continue;
                         auto submod = e.create_entity(submodel);
                         model_.parts.push_back(submod);
-                        SubModel& submod_ = submod.get<SubModel>();
-                        submod_.parent    = set.id();
-                        submod_.initialize<Version>(model, sub);
+                        SubModel& submod_   = submod.get<SubModel>();
+                        submod_.parent      = set.id();
+                        DrawState& sub_draw = submod.get<DrawState>();
+                        submod_.initialize<Version>(model, sub, sub_draw);
 
                         ShaderData&       shader_ = submod.get<ShaderData>();
                         ShaderItem const& shader_it =
                             shader_cache.get(sub.shader);
                         shader_.initialize(shader_it, submod_);
 
-                        submod_.current_pass =
+                        sub_draw.current_pass =
                             shader_.get_render_pass(shader_cache);
                     }
                 }
@@ -777,15 +780,16 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
 
                 auto submod = e.create_entity(skybox_model);
                 skybox_mod.parts.push_back(submod);
-                SubModel& submodel = submod.get<SubModel>();
-                submodel.parent    = skybox_ent.id();
-                submodel.initialize<Version>(part_id, region);
+                SubModel& submodel  = submod.get<SubModel>();
+                submodel.parent     = skybox_ent.id();
+                DrawState& sub_draw = submod.get<DrawState>();
+                submodel.initialize<Version>(part_id, region, sub_draw);
 
                 ShaderData&       shader_   = submod.get<ShaderData>();
                 ShaderItem const& shader_it = shader_cache.get(region.shader);
                 shader_.initialize(shader_it, submodel);
 
-                submodel.current_pass =
+                sub_draw.current_pass =
                     shader_.get_render_pass(shader_cache, true);
             }
         }

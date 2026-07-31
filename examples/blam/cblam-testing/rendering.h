@@ -47,10 +47,14 @@ struct ScreenClear
 };
 
 template<typename V>
+struct DrawListBuilder;
+
+template<typename V>
 using MeshRendererManifest = compo::SubsystemManifest<
     type_list_t<
         BspReference,
         SubModel,
+        DrawState,
         Model,
         MeshTrackingData,
         DebugDraw,
@@ -58,6 +62,7 @@ using MeshRendererManifest = compo::SubsystemManifest<
         const PlayerInfo,
         const Visibility>,
     type_list_t<
+        const DrawListBuilder<V>,
         BlamFiles<V>,
         BitmapCache<V>,
         ModelCache<V>,

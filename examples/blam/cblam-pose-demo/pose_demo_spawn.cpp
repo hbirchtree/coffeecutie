@@ -87,6 +87,7 @@ static void spawn_attached_weapon(
     EntityRecipe submodel_recipe;
     submodel_recipe.components = {
         type_hash_v<SubModel>(),
+        type_hash_v<DrawState>(),
         type_hash_v<ShaderData>(),
         type_hash_v<MeshTrackingData>(),
     };
@@ -128,13 +129,14 @@ static void spawn_attached_weapon(
             SubModel& submod_ = submod.get<SubModel>();
 
             submod_.parent = parent_.id();
-            submod_.initialize<halo_version>(model_, sub);
+            DrawState& submod__draw = submod.get<DrawState>();
+            submod_.initialize<halo_version>(model_, sub, submod__draw);
 
             ShaderData&       shader_   = submod.get<ShaderData>();
             ShaderItem const& shader_it = shader_cache.get(sub.shader);
             shader_.initialize(shader_it, submod_);
 
-            submod_.current_pass = shader_.get_render_pass(shader_cache);
+            submod__draw.current_pass = shader_.get_render_pass(shader_cache);
         }
     }
 
@@ -398,6 +400,7 @@ void spawn_static_biped(
     EntityRecipe submodel_recipe;
     submodel_recipe.components = {
         type_hash_v<SubModel>(),
+        type_hash_v<DrawState>(),
         type_hash_v<ShaderData>(),
         type_hash_v<MeshTrackingData>(),
     };
@@ -442,13 +445,14 @@ void spawn_static_biped(
             SubModel& submod_ = submod.get<SubModel>();
 
             submod_.parent = parent_.id();
-            submod_.initialize<halo_version>(model_, sub);
+            DrawState& submod__draw = submod.get<DrawState>();
+            submod_.initialize<halo_version>(model_, sub, submod__draw);
 
             ShaderData&       shader_   = submod.get<ShaderData>();
             ShaderItem const& shader_it = shader_cache.get(sub.shader);
             shader_.initialize(shader_it, submod_);
 
-            submod_.current_pass = shader_.get_render_pass(shader_cache);
+            submod__draw.current_pass = shader_.get_render_pass(shader_cache);
         }
     }
 

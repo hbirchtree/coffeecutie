@@ -118,6 +118,7 @@ struct RenderingParameters : compo::SubsystemBase
     bool  debug_clear{false}; // sets a different clear color for visibility
     Vecf3 clear_color{0, 0.2f, 0.5f};
 
+    bool structural_change_pending{false};
     bool occluder_update{true};
 
     bool debug_markers{

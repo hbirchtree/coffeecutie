@@ -51,6 +51,16 @@ struct Visibility
     bool visible{true};
 };
 
+/*! Per-frame draw bookkeeping, kept apart from the geometry it draws */
+struct DrawState
+{
+    using value_type = DrawState;
+    using type = compo::alloc::VectorContainer<value_type>;
+
+    Passes            current_pass{Pass_Opaque};
+    gfx::draw_command draw;
+};
+
 struct BspReference
 {
     using value_type = BspReference;
@@ -60,8 +70,6 @@ struct BspReference
     generation_idx_t shader;
     generation_idx_t lightmap;
 
-    u32    draw_idx;
-    Passes current_pass;
     Vecf3  sort_center{};
 
     u32 cluster_idx{std::numeric_limits<u32>::max()};
@@ -74,8 +82,6 @@ struct BspReference
     Vecf3 bmin{};
     Vecf3 bmax{};
     bool  has_bounds{false};
-
-    gfx::draw_command draw;
 };
 
 struct model_tracker_t
@@ -107,23 +113,18 @@ struct SubModel
     generation_idx_t shader;
     generation_idx_t model;
 
-    /* Data used at runtime */
-    u32    draw_idx;
-    Passes current_pass;
-
-    gfx::draw_command draw;
-
     template<typename V>
     void initialize(
         generation_idx_t                       model_idx,
-        typename ModelItem<V>::SubModel const& model_)
+        typename ModelItem<V>::SubModel const& model_,
+        DrawState&                             state)
     {
-        draw.call = {
+        state.draw.call = {
             .indexed   = true,
             .instanced = true,
             .mode      = gfx::drawing::primitive::triangle_strip,
         };
-        draw.data = {
+        state.draw.data = {
             model_.draw,
         };
         model  = model_idx;
@@ -614,6 +615,7 @@ static const auto skybox_submodel = compo::EntityRecipe{
     .components =
         {
             compo::type_hash_v<SubModel>(),
+            compo::type_hash_v<DrawState>(),
             compo::type_hash_v<ShaderData>(),
             compo::type_hash_v<MeshTrackingData>(),
         },
@@ -624,6 +626,7 @@ static const auto bsp = compo::EntityRecipe{
     .components =
         {
             compo::type_hash_v<BspReference>(),
+            compo::type_hash_v<DrawState>(),
             compo::type_hash_v<DepthInfo>(),
             compo::type_hash_v<ShaderData>(),
             compo::type_hash_v<Visibility>(),
@@ -661,6 +664,7 @@ static const auto submodel = compo::EntityRecipe{
             compo::type_hash_v<MeshTrackingData>(),
             compo::type_hash_v<ShaderData>(),
             compo::type_hash_v<SubModel>(),
+            compo::type_hash_v<DrawState>(),
         },
     .tags = ObjectMod2 | ObjectGC,
 };

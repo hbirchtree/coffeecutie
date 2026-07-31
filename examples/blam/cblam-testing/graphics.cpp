@@ -150,6 +150,7 @@ i32 blam_main()
             e.register_component_inplace<Model>();
             e.register_component_inplace<SubModel>();
             e.register_component_inplace<BspReference>();
+            e.register_component_inplace<DrawState>();
             e.register_component_inplace<Visibility>();
             e.register_component_inplace<ObjectSpawn>();
             e.register_component_inplace<NetworkInfo>();

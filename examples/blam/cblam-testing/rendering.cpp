@@ -1,3 +1,6 @@
+#include <condition_variable>
+#include <mutex>
+
 #include "rendering.h"
 
 #include <blam/volta/blam_bitm.h>
@@ -72,83 +75,56 @@ struct alignas(16) PerInstanceData
 
 static_assert(sizeof(PerInstanceData) == 80);
 
-template<typename Version>
-struct MeshRenderer
-    : compo::RestrictedSubsystem<
-          MeshRenderer<Version>,
-          MeshRendererManifest<Version>>
+using draw_data_t = gfx::draw_command::data_t;
+
+struct Pass
 {
-    using type        = MeshRenderer;
-    using Proxy       = compo::proxy_of<MeshRendererManifest<Version>>;
-    using draw_data_t = gfx::draw_command::data_t;
-
-    struct Pass
+    Pass()
     {
-        Pass()
-        {
+        draws.emplace_back();
+    }
+
+    gfx::draw_command                     command;
+    std::vector<std::vector<draw_data_t>> draws;
+
+    gfx::buffer_slice_t               material_buffer;
+    gfx::buffer_slice_t               transparent_buffer;
+    gfx::buffer_slice_t               matrix_buffer;
+    Span<materials::shader_data>      material_mapping;
+    Span<materials::transparent_data> transparent_mapping;
+    Span<PerInstanceData>             matrix_mapping;
+
+    std::string name;
+
+    // Flat world-space centers parallel to draws (across all buckets).
+    // Only populated for transparent passes; used for depth sorting.
+    std::vector<Vecf3> sort_centers;
+
+    model_tracker_t insert_draw(draw_data_t const& draw)
+    {
+        size_t num_draws = 0;
+        for(auto const& draw : draws.back())
+            num_draws += draw.instances.count;
+
+        if(num_draws >= 128 || (num_draws + draw.instances.count) > 128)
             draws.emplace_back();
-        }
 
-        gfx::draw_command                     command;
-        std::vector<std::vector<draw_data_t>> draws;
-
-        gfx::buffer_slice_t               material_buffer;
-        gfx::buffer_slice_t               transparent_buffer;
-        gfx::buffer_slice_t               matrix_buffer;
-        Span<materials::shader_data>      material_mapping;
-        Span<materials::transparent_data> transparent_mapping;
-        Span<PerInstanceData>             matrix_mapping;
-
-        std::string name;
-
-        // Flat world-space centers parallel to draws (across all buckets).
-        // Only populated for transparent passes; used for depth sorting.
-        std::vector<Vecf3> sort_centers;
-
-        model_tracker_t insert_draw(draw_data_t const& draw)
+        auto& bucket_ = draws.back();
+        auto  it      = std::find_if(
+            bucket_.begin(), bucket_.end(), [&draw](draw_data_t const& d) {
+                return d.elements.offset == draw.elements.offset;
+            });
+        if(it != bucket_.end())
         {
-            size_t num_draws = 0;
-            for(auto const& draw : draws.back())
-                num_draws += draw.instances.count;
-
-            if(num_draws >= 128 || (num_draws + draw.instances.count) > 128)
-                draws.emplace_back();
-
-            auto& bucket_ = draws.back();
-            auto  it      = std::find_if(
-                bucket_.begin(), bucket_.end(), [&draw](draw_data_t const& d) {
-                    return d.elements.offset == draw.elements.offset;
-                });
-            if(it != bucket_.end())
-            {
-                return model_tracker_t{
-                    .bucket   = static_cast<u16>(draws.size() - 1),
-                    .draw     = static_cast<u16>(it - bucket_.begin()),
-                    .instance = static_cast<u16>(it->instances.count++),
-                    .enabled  = true,
-                };
-            } else
-            {
-                bucket_.push_back(draw);
-                return model_tracker_t{
-                    .bucket   = static_cast<u16>(draws.size() - 1),
-                    .draw     = static_cast<u16>(bucket_.size() - 1),
-                    .instance = 0,
-                    .enabled  = true,
-                };
-            }
-        }
-
-        // Transparent passes: one draw per item (no instancing), records
-        // center.
-        model_tracker_t insert_sortable(draw_data_t draw, Vecf3 const& center)
+            return model_tracker_t{
+                .bucket   = static_cast<u16>(draws.size() - 1),
+                .draw     = static_cast<u16>(it - bucket_.begin()),
+                .instance = static_cast<u16>(it->instances.count++),
+                .enabled  = true,
+            };
+        } else
         {
-            draw.instances.count = 1;
-            if(draws.back().size() >= 128)
-                draws.emplace_back();
-            auto& bucket_ = draws.back();
             bucket_.push_back(draw);
-            sort_centers.push_back(center);
             return model_tracker_t{
                 .bucket   = static_cast<u16>(draws.size() - 1),
                 .draw     = static_cast<u16>(bucket_.size() - 1),
@@ -156,83 +132,728 @@ struct MeshRenderer
                 .enabled  = true,
             };
         }
+    }
 
-        // Sort transparent draws back-to-front by distance from cam.
-        // Call after update_materials (material slots unchanged by reorder).
-        void sort_by_depth(Vecf3 const& cam)
-        {
-            if(sort_centers.empty())
-                return;
-
-            std::vector<std::pair<Vecf3, draw_data_t>> flat;
-            flat.reserve(sort_centers.size());
-            size_t ci = 0;
-            for(auto& bucket : draws)
-                for(auto& d : bucket)
-                    flat.push_back({sort_centers[ci++], d});
-
-            /* stable: parts at equal distance (e.g. all sky model parts,
-             * which share one transform) keep their creation order. */
-            std::stable_sort(
-                flat.begin(), flat.end(), [&](auto const& a, auto const& b) {
-                    return glm::distance2(a.first, cam) >
-                           glm::distance2(b.first, cam);
-                });
-
-            draws.clear();
+    // Transparent passes: one draw per item (no instancing), records
+    // center.
+    model_tracker_t insert_sortable(draw_data_t draw, Vecf3 const& center)
+    {
+        draw.instances.count = 1;
+        if(draws.back().size() >= 128)
             draws.emplace_back();
-            sort_centers.clear();
-            for(auto& [c, d] : flat)
+        auto& bucket_ = draws.back();
+        bucket_.push_back(draw);
+        sort_centers.push_back(center);
+        return model_tracker_t{
+            .bucket   = static_cast<u16>(draws.size() - 1),
+            .draw     = static_cast<u16>(bucket_.size() - 1),
+            .instance = 0,
+            .enabled  = true,
+        };
+    }
+
+    // Sort transparent draws back-to-front by distance from cam.
+    // Call after update_materials (material slots unchanged by reorder).
+    void sort_by_depth(Vecf3 const& cam)
+    {
+        if(sort_centers.empty())
+            return;
+
+        std::vector<std::pair<Vecf3, draw_data_t>> flat;
+        flat.reserve(sort_centers.size());
+        size_t ci = 0;
+        for(auto& bucket : draws)
+            for(auto& d : bucket)
+                flat.push_back({sort_centers[ci++], d});
+
+        /* stable: parts at equal distance (e.g. all sky model parts,
+         * which share one transform) keep their creation order. */
+        std::stable_sort(
+            flat.begin(), flat.end(), [&](auto const& a, auto const& b) {
+                return glm::distance2(a.first, cam) >
+                       glm::distance2(b.first, cam);
+            });
+
+        draws.clear();
+        draws.emplace_back();
+        sort_centers.clear();
+        for(auto& [c, d] : flat)
+        {
+            if(draws.back().size() >= 128)
+                draws.emplace_back();
+            draws.back().push_back(d);
+            sort_centers.push_back(c);
+        }
+    }
+
+    inline void clear()
+    {
+        draws.clear();
+        draws.emplace_back();
+        sort_centers.clear();
+    }
+
+    inline materials::shader_data& material_of(size_t idx)
+    {
+        if(idx >= material_mapping.size())
+            Throw(std::out_of_range("material index out of range"));
+        return material_mapping[idx];
+    }
+
+    inline materials::transparent_data& transparent_of(size_t idx)
+    {
+        if(idx >= transparent_mapping.size())
+            Throw(std::out_of_range("transparent index out of range"));
+        return transparent_mapping[idx];
+    }
+
+    inline size_t required_storage() const
+    {
+        u32 total = 0;
+        for(auto const& bucket : draws)
+            for(auto const& draw : bucket)
+                total += draw.instances.count;
+        return total * sizeof(materials::shader_data);
+    }
+
+    inline size_t required_matrix_storage() const
+    {
+        return (required_storage() / sizeof(materials::shader_data)) *
+               sizeof(PerInstanceData);
+    }
+
+    inline size_t required_transparent_storage() const
+    {
+        return (required_storage() / sizeof(materials::shader_data)) *
+               sizeof(materials::transparent_data);
+    }
+};
+
+/*!
+ * Builds the per-frame draw lists and fills the material/matrix buffers
+ */
+template<typename V>
+using DrawListBuilderManifest = compo::SubsystemManifest<
+    type_list_t<
+        DrawState,
+        MeshTrackingData,
+        const BspReference,
+        const SubModel,
+        const Model,
+        const Visibility,
+        const PlayerCamera,
+        const PlayerInfo>,
+    type_list_t<
+        BitmapCache<V>,
+        ModelCache<V>,
+        ShaderCache<V>,
+        RenderingParameters,
+        LoadingStatus>,
+    empty_list_t>;
+
+template<typename Version>
+struct DrawListBuilder
+    : compo::RestrictedSubsystem<
+          DrawListBuilder<Version>,
+          DrawListBuilderManifest<Version>>
+{
+    using type  = DrawListBuilder<Version>;
+    using Proxy = compo::proxy_of<DrawListBuilderManifest<Version>>;
+
+    DrawListBuilder(
+        gfx::api*             api,
+        BlamResources&        resources,
+        RenderingParameters&  render,
+        ShaderCache<Version>& shader_cache,
+        BitmapCache<Version>& bitm_cache)
+        : m_api(api)
+        , m_resources(resources)
+        , m_render_params(render)
+        , shader_cache(shader_cache)
+        , bitm_cache(bitm_cache)
+    {
+        /* Ahead of MeshRenderer (3072): produces what it submits */
+        this->priority = 3071;
+
+        if(std::thread::hardware_concurrency() > 1)
+            if(auto q = rq::runtime_queue::CreateNewThreadQueue("DrawBuilder");
+               q.has_value())
             {
-                if(draws.back().size() >= 128)
-                    draws.emplace_back();
-                draws.back().push_back(d);
-                sort_centers.push_back(c);
+                m_worker = q.value();
+                m_pipelined = true;
+            }
+
+
+
+        for(auto& set : m_bsp_sets)
+        {
+            u32 i = 0;
+            for(auto& pass : set)
+            {
+                pass.command.program = resources.bsp_pipeline;
+                pass.name            = fmt::format(
+                    "BSP::{}", magic_enum::enum_name(static_cast<Passes>(i++)));
             }
         }
-
-        inline void clear()
+        for(auto& set : m_model_sets)
         {
-            draws.clear();
-            draws.emplace_back();
-            sort_centers.clear();
+            u32 i = 0;
+            for(auto& pass : set)
+            {
+                pass.command.program = resources.model_pipeline;
+                pass.name            = fmt::format(
+                    "MOD::{}", magic_enum::enum_name(static_cast<Passes>(i++)));
+            }
+        }
+    }
+
+    void finish_build()
+    {
+        if(m_build_running)
+        {
+            std::unique_lock lock(m_build_mutex);
+            m_build_cv.wait(lock, [this] { return !m_build_running; });
+        }
+        if(m_mapped)
+        {
+            m_resources.material_store->unmap();
+            m_resources.transparent_store->unmap();
+            m_mapped = false;
+        }
+    }
+
+    void start_restricted(Proxy& p, compo::time_point const& time)
+    {
+        ProfContext _;
+
+        /* Legacy builds their batches from different rules in the renderer */
+        if(use_legacy_rendering())
+            return;
+
+        finish_build();
+
+        RenderingParameters* render_params;
+        p.subsystem(render_params);
+        bool const pipelined =
+            m_pipelined && !render_params->structural_change_pending;
+
+        if(pipelined)
+            std::swap(m_build, m_submit);
+        else
+            m_submit = m_build;
+
+        m_resources.model_matrix_store->next();
+        m_resources.transparent_store->next();
+        m_resources.material_store->next();
+        m_resources.bone_matrix_buf->next();
+
+        // Performance is terrible on Emscripten when updating every frame
+        // We need a more efficient way to update the buffer in that case
+        bool invalidated = true; //! compile_info::platform::is_emscripten;
+        if(time - last_update <= std::chrono::seconds(10) && !invalidated)
+            return;
+
+        if(m_api->feature_info().program.buffer_binding)
+        {
+            m_resources.material_store->template map_all<std::byte>();
+            m_resources.transparent_store->template map_all<std::byte>();
+            m_resources.model_matrix_store->template map_all<std::byte>();
+            m_mapped = true;
         }
 
-        inline materials::shader_data& material_of(size_t idx)
+        f32 t = std::fmod(stl_types::Chrono::to_f32(time), 3600.f);
         {
-            if(idx >= material_mapping.size())
-                Throw(std::out_of_range("material index out of range"));
-            return material_mapping[idx];
+            ModelCache<Version>* model_cache;
+            p.subsystem(model_cache);
+            model_cache->tick_animations(t);
         }
 
-        inline materials::transparent_data& transparent_of(size_t idx)
+        generate_draws(p);
+
+        Vecf3 sort_cam{0};
+        for(auto ent : p.template select<PlayerCamera, PlayerInfo>())
         {
-            if(idx >= transparent_mapping.size())
-                Throw(std::out_of_range("transparent index out of range"));
-            return transparent_mapping[idx];
+            auto const& [cam, info] = ent.components();
+            if(info.seat_idx != 0)
+                continue;
+            sort_cam = cam.camera.position;
+            break;
         }
 
-        inline size_t required_storage() const
+        m_proxy.emplace(p.clone());
+        auto build_rest = [this, time, sort_cam]() {
+            update_materials(*m_proxy, time);
+            for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
+            {
+                model_build()[static_cast<Passes>(pi)].sort_by_depth(sort_cam);
+                bsp_build()[static_cast<Passes>(pi)].sort_by_depth(sort_cam);
+            }
+        };
+        auto signal_done = [this] {
+            {
+                std::lock_guard lock(m_build_mutex);
+                m_build_running = false;
+            }
+            m_build_cv.notify_all();
+        };
+
+        last_update = time;
+
+        if(pipelined)
         {
-            u32 total = 0;
-            for(auto const& bucket : draws)
-                for(auto const& draw : bucket)
-                    total += draw.instances.count;
-            return total * sizeof(materials::shader_data);
+            m_build_running = true;
+            auto queued     = rq::runtime_queue::QueueImmediate(
+                m_worker,
+                std::chrono::milliseconds(0),
+                [build_rest, signal_done] {
+                    build_rest();
+                    signal_done();
+                });
+            if(queued.has_value())
+                return;
+            m_build_running = false;
         }
 
-        inline size_t required_matrix_storage() const
+        build_rest();
+        finish_build();
+    }
+
+    compo::time_point last_update{};
+
+    void end_restricted(Proxy&, compo::time_point const&)
+    {
+    }
+
+    size_t align_for_gpu_padding(size_t size) const
+    {
+        u32 padding = m_api->limits().buffers.ubo_alignment;
+        if((size % padding) == 0)
+            return size;
+        u32 mask           = padding - 1;
+        u32 unaligned_size = size & mask;
+        u32 added_padding  = padding - unaligned_size;
+        return size + added_padding;
+    }
+
+    bool use_legacy_rendering() const
+    {
+        return m_api->api_version() == std::make_tuple<u32, u32>(2, 0);
+    }
+
+    gfx::api*             m_api;
+    BlamResources&        m_resources;
+    RenderingParameters&  m_render_params;
+    ShaderCache<Version>& shader_cache;
+    BitmapCache<Version>& bitm_cache;
+
+    /* Two sets: one being built for the next frame, one the renderer is
+     * submitting from. The GPU storage behind the spans already rotates
+     * (revolving_buffer_t, per_frame_bufs=3), so each set naturally lands on
+     * a different buffer. */
+    std::array<std::array<Pass, Pass_Count>, 2> m_bsp_sets;
+    std::array<std::array<Pass, Pass_Count>, 2> m_model_sets;
+    u32                                         m_build{0};
+    u32                                         m_submit{1};
+
+    /* The set the builder writes; the renderer must never see it. */
+    std::array<Pass, Pass_Count>& bsp_build()
+    {
+        return m_bsp_sets[m_build];
+    }
+    std::array<Pass, Pass_Count>& model_build()
+    {
+        return m_model_sets[m_build];
+    }
+
+    /* The completed set from the previous frame, for the renderer. */
+    std::array<Pass, Pass_Count> const& bsp_submit() const
+    {
+        return m_bsp_sets[m_submit];
+    }
+    std::array<Pass, Pass_Count> const& model_submit() const
+    {
+        return m_model_sets[m_submit];
+    }
+
+    rq::runtime_queue* m_worker{nullptr};
+    std::mutex              m_build_mutex;
+    std::condition_variable m_build_cv;
+    bool                    m_build_running{false};
+    bool m_pipelined{false};
+    std::optional<Proxy> m_proxy;
+    bool m_mapped{false};
+
+
+
+    void generate_static_draws(
+        Proxy& p, size_t& materials_ptr, size_t& transparent_ptr)
+    {
+        ProfContext _;
+        std::map<Passes, i32> instance_offsets;
+        for(Pass& pass : bsp_build())
+            pass.clear();
+
+        for(auto ent :
+            p.template select<BspReference, DrawState, Visibility>())
         {
-            return (required_storage() / sizeof(materials::shader_data)) *
-                   sizeof(PerInstanceData);
+            auto&& [bsp, bsp_draw, vis] = ent.components();
+
+            if(!vis.visible)
+                continue;
+
+            Pass& wf              = bsp_build()[bsp_draw.current_pass];
+            i32&  instance_offset = instance_offsets[bsp_draw.current_pass];
+            wf.command.vertices   = m_resources.bsp_attr;
+            wf.command.call       = {
+                      .indexed   = true,
+                      .instanced = true,
+                      .mode      = gfx::drawing::primitive::triangle,
+            };
+            bsp_draw.draw.data.front().instances.offset = instance_offset;
+            instance_offset += bsp_draw.draw.data.front().instances.count;
+            if(bsp_draw.current_pass > Pass_LastOpaque)
+                wf.insert_sortable(
+                    bsp_draw.draw.data.front(), bsp.sort_center);
+            else
+                wf.draws[0].push_back(bsp_draw.draw.data.front());
         }
 
-        inline size_t required_transparent_storage() const
+        if(!m_api->feature_info().program.buffer_binding)
+            return;
+
+        /* Allocate the material instances from the material pool */
+        for(Pass& pass : bsp_build())
         {
-            return (required_storage() / sizeof(materials::shader_data)) *
-                   sizeof(materials::transparent_data);
+            auto transparent_size =
+                align_for_gpu_padding(pass.required_transparent_storage());
+            auto material_size = align_for_gpu_padding(pass.required_storage());
+            pass.material_buffer =
+                m_resources.material_store->slice(materials_ptr, material_size);
+            pass.material_mapping =
+                pass.material_buffer
+                    .template buffer_cast<materials::shader_data>();
+            pass.transparent_buffer = m_resources.transparent_store->slice(
+                transparent_ptr, transparent_size);
+            pass.transparent_mapping =
+                pass.transparent_buffer
+                    .template buffer_cast<materials::transparent_data>();
+            materials_ptr += material_size;
+            transparent_ptr += transparent_size;
         }
-    };
+
+        for(auto ent :
+            p.template select<BspReference, DrawState, Visibility>())
+        {
+            auto&& [bsp, bsp_draw, vis] = ent.components();
+
+            if(!vis.visible)
+                continue;
+            populate_bsp_material(
+                bsp,
+                bsp_draw.current_pass,
+                bsp_draw.draw.data.front().instances.offset);
+        }
+    }
+
+    void generate_draws(Proxy& p)
+    {
+        ProfContext _;
+
+        RenderingParameters* rendering_params;
+        p.subsystem(rendering_params);
+
+        ModelCache<Version>* model_cache;
+        p.subsystem(model_cache);
+
+        size_t materials_ptr   = 0;
+        size_t transparent_ptr = 0;
+        generate_static_draws(p, materials_ptr, transparent_ptr);
+
+        if(use_legacy_rendering())
+            return;
+
+        for(Pass& pass : model_build())
+            pass.clear();
+
+        /* Model lives on the parent entity — resolve it through
+         * SubModel::parent, it is never on the submodel entity itself */
+        for(auto ent :
+            p.template select<SubModel, DrawState, MeshTrackingData>())
+        {
+            auto&& [model, model_draw, track] = ent.components();
+            auto   parent = p.template ref<Proxy>(model.parent);
+            Model const& mod    = parent.template get<Model>();
+
+            if(!parent.template get<Visibility>().visible ||
+               (!rendering_params->render_scenery &&
+                (ent.tags() & ObjectSkybox) == 0))
+            {
+                track.model_id = {};
+                continue;
+            }
+
+            Pass& wf            = model_build()[model_draw.current_pass];
+            wf.command.vertices = m_resources.model_attr;
+            wf.command.call     = {
+                    .indexed   = true,
+                    .instanced = true,
+                    .mode      = gfx::drawing::primitive::triangle_strip,
+            };
+            if(model_draw.current_pass > Pass_LastOpaque)
+            {
+                Vecf3 center = Vecf3(mod.transform[3]);
+                track.model_id =
+                    wf.insert_sortable(model_draw.draw.data.front(), center);
+            } else
+                track.model_id = wf.insert_draw(model_draw.draw.data.front());
+        }
+        Coffee::Profiler::PopContext();
+
+        for(Pass& pass : model_build())
+        {
+            i32 instance_offset = 0;
+            for(auto& bucket : pass.draws)
+                for(draw_data_t& draw : bucket)
+                {
+                    draw.instances.offset = instance_offset;
+                    instance_offset += draw.instances.count;
+                }
+        }
+
+        if(!m_api->feature_info().program.buffer_binding)
+            return;
+
+        size_t matrix_ptr = 0;
+        for(Pass& pass : model_build())
+        {
+            auto material_size = align_for_gpu_padding(pass.required_storage());
+            auto matrix_size =
+                align_for_gpu_padding(pass.required_matrix_storage());
+            auto transparent_size =
+                align_for_gpu_padding(pass.required_transparent_storage());
+            pass.material_buffer =
+                m_resources.material_store->slice(materials_ptr, material_size);
+            pass.matrix_buffer =
+                m_resources.model_matrix_store->slice(matrix_ptr, matrix_size);
+            pass.material_mapping =
+                pass.material_buffer
+                    .template buffer_cast<materials::shader_data>();
+            pass.matrix_mapping =
+                pass.matrix_buffer.template buffer_cast<PerInstanceData>();
+            pass.transparent_buffer = m_resources.transparent_store->slice(
+                transparent_ptr, transparent_size);
+            pass.transparent_mapping =
+                pass.transparent_buffer
+                    .template buffer_cast<materials::transparent_data>();
+            matrix_ptr += matrix_size;
+            materials_ptr += material_size;
+            transparent_ptr += transparent_size;
+        }
+
+        // Reset per-frame bone_base so each model uploads once per frame
+        for(auto& [id, item] : model_cache->m_cache)
+            item.bone_base = -1;
+        std::vector<Matf4> bone_upload;
+        size_t             bone_write_ptr = 0;
+
+        for(auto ent : p.select(ObjectMod2))
+        {
+            if(!rendering_params->render_scenery &&
+               (ent.tags() & ObjectSkybox) == 0)
+                continue;
+            auto            ref     = p.template ref<Proxy>(ent.id());
+            SubModel const& smodel  = ref.template get<SubModel>();
+            DrawState const& sm_draw = ref.template get<DrawState>();
+            Model const&    model =
+                p.template ref<Proxy>(smodel.parent).template get<Model>();
+            MeshTrackingData const& track =
+                ref.template get<MeshTrackingData>();
+
+            if(!track.model_id.enabled)
+                continue;
+
+            Pass&              pass = model_build()[sm_draw.current_pass];
+            draw_data_t const& draw =
+                pass.draws[track.model_id.bucket].at(track.model_id.draw);
+            auto instance_id = draw.instances.offset + track.model_id.instance;
+
+            ModelItem<Version>& cache_item =
+                model_cache->find(model.model)->second;
+            if(!cache_item.bone_matrices.empty() && cache_item.bone_base < 0)
+            {
+                cache_item.bone_base = static_cast<i32>(bone_write_ptr);
+                bone_write_ptr += cache_item.bone_matrices.size();
+                bone_upload.insert(
+                    bone_upload.end(),
+                    cache_item.bone_matrices.begin(),
+                    cache_item.bone_matrices.end());
+            }
+
+            auto& pid     = pass.matrix_mapping[instance_id];
+            pid.transform = model.transform;
+            pid.bone_base = cache_item.bone_base;
+            populate_mod2_material(
+                smodel,
+                sm_draw.current_pass,
+                cache_item,
+                model_context(model.origin_object),
+                instance_id);
+        }
+
+        if(!bone_upload.empty())
+            m_resources.bone_matrix_buf->update(
+                0, Span<const Matf4>(bone_upload));
+
+        m_resources.model_matrix_store->unmap();
+    }
+
+    void update_materials(Proxy& p, time_point const& time)
+    {
+        if(!m_api->feature_info().program.buffer_binding)
+            return;
+
+        for(Pass& pass : bsp_build())
+        {
+            pass.material_mapping =
+                pass.material_buffer
+                    .template buffer_cast<materials::shader_data>();
+        }
+        for(Pass& pass : model_build())
+        {
+            pass.material_mapping =
+                pass.material_buffer
+                    .template buffer_cast<materials::shader_data>();
+        }
+
+        RenderingParameters* rendering_params;
+        p.subsystem(rendering_params);
+
+        ModelCache<Version>* model_cache;
+        p.subsystem(model_cache);
+
+        for(auto ent : p.select(ObjectMod2))
+        {
+            if(!rendering_params->render_scenery &&
+               (ent.tags() & ObjectSkybox) == 0)
+                continue;
+            auto              ref    = p.template ref<Proxy>(ent.id());
+            SubModel const&   smodel = ref.template get<SubModel>();
+            DrawState&        sm_draw = ref.template get<DrawState>();
+            MeshTrackingData& track  = ref.template get<MeshTrackingData>();
+            Pass&             pass   = model_build()[sm_draw.current_pass];
+            auto&             bucket = pass.draws[track.model_id.bucket];
+            if(bucket.empty())
+                continue;
+            draw_data_t const& draw = bucket.at(track.model_id.draw);
+            auto instance_id = draw.instances.offset + track.model_id.instance;
+            update_animations(
+                model_material_of(sm_draw.current_pass, instance_id),
+                smodel.shader,
+                time);
+            if(static_cast<size_t>(instance_id) <
+               pass.transparent_mapping.size())
+                shader_cache.update_transparent_animations(
+                    pass.transparent_of(instance_id), smodel.shader, time);
+        }
+
+        for(auto ent : p.select(ObjectBsp))
+        {
+            auto          ref = p.template ref<Proxy>(ent.id());
+            BspReference const& bsp = ref.template get<BspReference>();
+            DrawState&    bsp_draw = ref.template get<DrawState>();
+
+            if(!ref.template get<Visibility>().visible)
+                continue;
+
+            i32 instance_offset = bsp_draw.draw.data.front().instances.offset;
+            update_animations(
+                bsp_material_of(bsp_draw.current_pass, instance_offset),
+                bsp.shader,
+                time);
+            Pass& pass = bsp_build()[bsp_draw.current_pass];
+            if(instance_offset >= 0 && static_cast<size_t>(instance_offset) <
+                                           pass.transparent_mapping.size())
+                shader_cache.update_transparent_animations(
+                    pass.transparent_of(instance_offset), bsp.shader, time);
+        }
+    }
+
+    materials::shader_data& model_material_of(Passes which, size_t i)
+    {
+        return model_build()[which].material_of(i);
+    }
+
+    materials::shader_data& bsp_material_of(Passes which, size_t i)
+    {
+        return bsp_build()[which].material_of(i);
+    }
+
+    void populate_bsp_material(
+        BspReference const& ref, Passes which, size_t i = 0)
+    {
+        Pass&                   pass     = bsp_build()[which];
+        materials::shader_data& material = pass.material_of(i);
+        shader_cache.populate_material(material, ref.shader, Vecf2{1, 1});
+        bitm_cache.assign_atlas_data(material.lightmap, ref.lightmap);
+        if(material.material.material == materials::id::sotr &&
+           i < pass.transparent_mapping.size())
+            shader_cache.populate_transparent_material(
+                pass.transparent_of(i), ref.shader);
+    }
+
+    std::optional<ShaderCache<halo_version>::material_context> model_context(
+        blam::tag_t const* tag)
+    {
+        if(!m_render_params.color_changing)
+            return std::nullopt;
+        switch(tag->tag_class())
+        {
+        case blam::tag_class_t::bipd:
+        case blam::tag_class_t::vehi:
+        case blam::tag_class_t::scen:
+            return tag->template data<blam::scn::unit>(shader_cache.magic)
+                .value();
+        default:
+            return std::nullopt;
+        }
+    }
+
+    void populate_mod2_material(
+        SubModel const&                                            sub,
+        Passes                                                     which,
+        ModelItem<Version> const&                                  model,
+        std::optional<ShaderCache<halo_version>::material_context> context,
+        size_t                                                     i = 0)
+    {
+        Pass&                   pass     = model_build()[which];
+        materials::shader_data& material = pass.material_of(i);
+        shader_cache.populate_material(
+            material, sub.shader, model.header->uvscale, context);
+        if(material.material.material == materials::id::sotr &&
+           i < pass.transparent_mapping.size())
+            shader_cache.populate_transparent_material(
+                pass.transparent_of(i), sub.shader);
+    }
+
+    void update_animations(
+        materials::shader_data& material,
+        generation_idx_t const& shader,
+        time_point const&       time)
+    {
+        shader_cache.update_uv_animations(material, shader, time);
+    }
+};
+
+
+template<typename Version>
+struct MeshRenderer
+    : compo::RestrictedSubsystem<
+          MeshRenderer<Version>,
+          MeshRendererManifest<Version>>
+{
+    using type  = MeshRenderer;
+    using Proxy = compo::proxy_of<MeshRendererManifest<Version>>;
+
 
     time_point last_update{};
 
@@ -253,9 +874,6 @@ struct MeshRenderer
     BSPCache<Version>&    bsp_cache;
 
     std::vector<cached_player_t> m_players;
-
-    std::array<Pass, Pass_Count> m_bsp;
-    std::array<Pass, Pass_Count> m_model;
 
     const bool supports_splitscreen = !compile_info::platform::is_emscripten;
 
@@ -293,23 +911,6 @@ struct MeshRenderer
         , bsp_cache(bsp_cache)
     {
         this->priority = 3072;
-
-        u32 i = 0;
-        for(auto& pass : m_bsp)
-        {
-            pass.command.program = resources.bsp_pipeline;
-
-            pass.name = fmt::format(
-                "BSP::{}", magic_enum::enum_name(static_cast<Passes>(i++)));
-        }
-        i = 0;
-        for(auto& pass : m_model)
-        {
-            pass.command.program = resources.model_pipeline;
-
-            pass.name = fmt::format(
-                "MOD::{}", magic_enum::enum_name(static_cast<Passes>(i++)));
-        }
     }
 
     bool use_legacy_rendering() const
@@ -803,25 +1404,6 @@ struct MeshRenderer
         // We need a more efficient way to update the buffer in that case
         // Also we don't use this data when rendering using legacy codepath
         // We create our own batching there based on different rules
-        bool invalidated = true; //! compile_info::platform::is_emscripten;
-        if((time - last_update > std::chrono::seconds(10) || invalidated) &&
-           !use_legacy_rendering())
-        {
-            f32 t = std::fmod(stl_types::Chrono::to_f32(time), 3600.f);
-            {
-                ModelCache<Version>* model_cache;
-                p.subsystem(model_cache);
-                model_cache->tick_animations(t);
-            }
-            generate_draws(p);
-            update_materials(p, time);
-            last_update = time;
-            if(m_api->feature_info().program.buffer_binding)
-            {
-                m_resources.material_store->unmap();
-                m_resources.transparent_store->unmap();
-            }
-        }
 
         RenderingParameters const* rendering_props;
         p.subsystem(rendering_props);
@@ -861,12 +1443,10 @@ struct MeshRenderer
          * and UV animations freeze. Wrap to a shorter cycle. */
         f32 t = std::fmod(stl_types::Chrono::to_f32(time), 3600.f);
 
-        if(use_legacy_rendering())
-        {
-            legacy_render(p, t);
-            return;
-        }
-
+        /* Ahead of the legacy branch: the skybox sets up world fog/lighting
+         * and the skybox submodel entities, which legacy_render draws too.
+         * Behind it, the queue was pushed by every cluster change and never
+         * drained, growing for the session on ES2. */
         if(!m_pending_changes.empty())
         {
             for(auto const& change : m_pending_changes)
@@ -881,6 +1461,14 @@ struct MeshRenderer
                 }
             }
             m_pending_changes.clear();
+            p.template subsystem<RenderingParameters>()
+                .structural_change_pending = false;
+        }
+
+        if(use_legacy_rendering())
+        {
+            legacy_render(p, t);
+            return;
         }
 
         auto blend_for_pass = [](Passes pass) -> gfx::blend_state {
@@ -902,6 +1490,10 @@ struct MeshRenderer
         /* Primary player is always the first one (seat_idx == 0) */
         u32 primary_player = 0;
 
+        /* Read-only view of what the builder produced this frame */
+        auto const& builder =
+            p.template subsystem<DrawListBuilder<Version>>();
+
         // Sky passes — drawn first so opaque geometry overwrites them
         // naturally. No depth write; depth test passes everywhere (empty
         // buffer).
@@ -912,7 +1504,7 @@ struct MeshRenderer
                 auto pass  = static_cast<Passes>(pi);
                 auto blend = blend_for_pass(pass);
                 render_pass(
-                    p, primary_player, t, m_model[pass], blend, sky_depth);
+                    p, primary_player, t, builder.model_submit()[pass], blend, sky_depth);
             }
         }
 
@@ -927,8 +1519,8 @@ struct MeshRenderer
             auto pass = static_cast<Passes>(pi);
             for(auto i : stl_types::range<u32>(m_players.size()))
             {
-                render_bsp_pass(p, i, t, m_bsp[pass], opaque_stencil);
-                render_pass(p, i, t, m_model[pass], opaque_stencil);
+                render_bsp_pass(p, i, t, builder.bsp_submit()[pass], opaque_stencil);
+                render_pass(p, i, t, builder.model_submit()[pass], opaque_stencil);
             }
         }
 
@@ -981,13 +1573,6 @@ struct MeshRenderer
             });
         }
 
-        Vecf3 const& cam_pos =
-            m_players.empty() ? Vecf3{0} : m_players[primary_player].position;
-        for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
-        {
-            m_model[static_cast<Passes>(pi)].sort_by_depth(cam_pos);
-            m_bsp[static_cast<Passes>(pi)].sort_by_depth(cam_pos);
-        }
 
         // Transparent world geometry — primary player, no depth write.
         gfx::depth_extended_state transparent_depth{.depth_write = false};
@@ -996,17 +1581,12 @@ struct MeshRenderer
             auto pass  = static_cast<Passes>(pi);
             auto blend = blend_for_pass(pass);
             render_pass(
-                p, primary_player, t, m_model[pass], blend, transparent_depth);
+                p, primary_player, t, builder.model_submit()[pass], blend, transparent_depth);
             render_bsp_pass(
-                p, primary_player, t, m_bsp[pass], blend, transparent_depth);
+                p, primary_player, t, builder.bsp_submit()[pass], blend, transparent_depth);
         }
 
         render_debug_lines(p);
-
-        m_resources.model_matrix_store->next();
-        m_resources.transparent_store->next();
-        m_resources.material_store->next();
-        m_resources.bone_matrix_buf->next();
     }
 
     struct LegacyBatch
@@ -1031,17 +1611,11 @@ struct MeshRenderer
         p.subsystem(rendering_props);
 
         ProfContext _;
-        /* Batch per lightmap PAGE, not per lightmap tag. One lightmap tag
-         * (section.lightmap_) holds many pages, one per lightmap_idx, each
-         * a distinct layer/subtexture. Keying by tag collapsed every page
-         * onto the last-seen subtexture, so the whole BSP sampled a single
-         * page (correct gradient where it happened to fit, garbage —
-         * orange checker — elsewhere). The lightmap generation id encodes
-         * the specific page. */
         std::map<cache_id_t, LegacyBatch> batches;
-        for(auto const& ent : p.template select<BspReference, Visibility>())
+        for(auto const& ent :
+            p.template select<BspReference, DrawState, Visibility>())
         {
-            auto const& [bsp_ref, vis] = ent.components();
+            auto const& [bsp_ref, bsp_draw, vis] = ent.components();
             if(!vis.visible)
                 continue;
             if(!bsp_ref.shader.valid() || !bsp_ref.lightmap.valid())
@@ -1091,8 +1665,8 @@ struct MeshRenderer
                 shader.senv.micro_bitm, batch.micro_map, batch.micro_sampler);
 
             // Draw call setup
-            batch.call = bsp_ref.draw.call;
-            batch.data.push_back(bsp_ref.draw.data.front());
+            batch.call = bsp_draw.draw.call;
+            batch.data.push_back(bsp_draw.draw.data.front());
         }
 
         Coffee::Profiler::PushContext("legacy_render: Opaque BSP");
@@ -1133,6 +1707,7 @@ struct MeshRenderer
                     .sampler  = light_group.micro_sampler,
                     .textures = light_group.micro_map,
                 });
+            ProfContext __("Draw submission");
             m_api->submit(
                 {
                     .program       = m_resources.bsp_pipeline,
@@ -1161,14 +1736,9 @@ struct MeshRenderer
         Coffee::Profiler::PopContext();
 
         Coffee::Profiler::PushContext("legacy_render: Water BSP");
-        for(auto const& ref : p.template select<BspReference>())
+        for(auto const& ref : p.template select<BspReference, DrawState>())
         {
-            BspReference const& bsp_ref = ref.template get<BspReference>();
-            /* Don't apply the occluder's per-surface visibility here: large
-             * water planes get assigned to a cluster the occluder culls even
-             * when the surface is on screen (the seabed under them stays
-             * visible). swat is only a handful of surfaces, and the GPU still
-             * frustum-culls, so just draw them all. */
+            auto const& [bsp_ref, bsp_draw] = ref.components();
             if(!bsp_ref.shader.valid())
                 continue;
             auto sh_it = shader_cache.find(bsp_ref.shader);
@@ -1275,7 +1845,7 @@ struct MeshRenderer
                             .indexed = true,
                             .mode    = gfx::drawing::primitive::triangle,
                         },
-                    .data = bsp_ref.draw.data,
+                    .data = bsp_draw.draw.data,
                 },
                 vtx_u,
                 frg_u,
@@ -1300,14 +1870,7 @@ struct MeshRenderer
         Coffee::Profiler::PushContext("legacy_render: Scenery");
         Matf4 const& camera = m_players[0].matrix;
 
-        /* Batch identical model instances (same shader + same part geometry):
-         * the per-instance world transforms go into a uniform array indexed by
-         * the emulated instance id (glw_InstanceID), collapsing a run of the
-         * same model to one program/texture bind instead of one set per object
-         * — a big saving on low-end GPUs. Capped at kModelBatch (== MODEL_BATCH
-         * in scenery_legacy.vert) to stay inside the ES2 vertex-uniform budget;
-         * longer runs split across submits below. */
-        constexpr u32 kModelBatch = 32;
+        constexpr u32 model_batch_size = 32;
 
         struct ModelBatch
         {
@@ -1322,9 +1885,9 @@ struct MeshRenderer
         /* Model lives on the parent entity, SubModel on its children —
          * they are never on the same entity, so Model cannot be part of
          * the fused select here */
-        for(auto ent : p.template select<SubModel>())
+        for(auto ent : p.template select<SubModel, DrawState>())
         {
-            SubModel const& sm     = ent.template get<SubModel>();
+            auto const& [sm, sm_draw] = ent.components();
             auto            parent = p.template ref<Proxy>(sm.parent);
             Model const&    mod    = parent.template get<Model>();
             if(!parent.template get<Visibility>().visible || !sm.shader.valid())
@@ -1406,7 +1969,7 @@ struct MeshRenderer
                                 .indexed = true,
                                 .mode = gfx::drawing::primitive::triangle_strip,
                             },
-                        .data = sm.draw.data,
+                        .data = sm_draw.draw.data,
                     },
                     vtx_u,
                     frg_u,
@@ -1415,13 +1978,6 @@ struct MeshRenderer
                     gfx::view_state{
                         .depth =
                             gfx::depth_state{
-                                /* Collapse the sky to the far plane (range
-                                 * {0,0}, 0 == far under reversed-Z) and test
-                                 * GEQUAL (strict_greater=false → GEQUAL on ES2)
-                                 * so the sky fills only pixels nothing has
-                                 * drawn yet — depth still at the far clear
-                                 * value — and never overdraws terrain (depth
-                                 * d>0) or punches through it. */
                                 .range          = Vecd2{0.0, 0.0},
                                 .reversed       = true,
                                 .strict_greater = false,
@@ -1439,10 +1995,10 @@ struct MeshRenderer
             auto bitm_it = bitm_cache.find(base_bitm);
             if(bitm_it == bitm_cache.end())
                 continue;
-            if(sm.draw.data.empty())
+            if(sm_draw.draw.data.empty())
                 continue;
 
-            auto const& geom = sm.draw.data.front();
+            auto const& geom = sm_draw.draw.data.front();
             auto& batch = soso_batches[{sm.shader.i, geom.elements.offset}];
             if(batch.transforms.empty())
             {
@@ -1493,10 +2049,10 @@ struct MeshRenderer
                     base_tex.sampler});
 
             for(size_t off = 0; off < batch.transforms.size();
-                off += kModelBatch)
+                off += model_batch_size)
             {
                 size_t n = std::min<size_t>(
-                    kModelBatch, batch.transforms.size() - off);
+                    model_batch_size, batch.transforms.size() - off);
                 auto vtx_u = gfx::make_uniform_list(
                     typing::graphics::ShaderStage::Vertex,
                     gfx::uniform_pair{
@@ -1540,352 +2096,6 @@ struct MeshRenderer
     {
     }
 
-    void generate_static_draws(
-        Proxy& p, size_t& materials_ptr, size_t& transparent_ptr)
-    {
-        ProfContext _;
-        /* First go through al lthe BSPs, will at the same time count the amount
-         * of material instances we need for the BSP passes */
-        std::map<Passes, i32> instance_offsets;
-        for(Pass& pass : m_bsp)
-            pass.clear();
-
-        for(auto ent : p.template select<BspReference, Visibility>())
-        {
-            auto&& [bsp, vis] = ent.components();
-
-            if(!vis.visible)
-                continue;
-
-            Pass& wf              = m_bsp[bsp.current_pass];
-            i32&  instance_offset = instance_offsets[bsp.current_pass];
-            wf.command.vertices   = m_resources.bsp_attr;
-            wf.command.call       = {
-                      .indexed   = true,
-                      .instanced = true,
-                      .mode      = gfx::drawing::primitive::triangle,
-            };
-            bsp.draw.data.front().instances.offset = instance_offset;
-            instance_offset += bsp.draw.data.front().instances.count;
-            if(bsp.current_pass > Pass_LastOpaque)
-                wf.insert_sortable(bsp.draw.data.front(), bsp.sort_center);
-            else
-                wf.draws[0].push_back(bsp.draw.data.front());
-        }
-
-        if(!m_api->feature_info().program.buffer_binding)
-            return;
-
-        /* Allocate the material instances from the material pool */
-        for(Pass& pass : m_bsp)
-        {
-            auto transparent_size =
-                align_for_gpu_padding(pass.required_transparent_storage());
-            auto material_size = align_for_gpu_padding(pass.required_storage());
-            pass.material_buffer =
-                m_resources.material_store->slice(materials_ptr, material_size);
-            pass.material_mapping =
-                pass.material_buffer
-                    .template buffer_cast<materials::shader_data>();
-            pass.transparent_buffer = m_resources.transparent_store->slice(
-                transparent_ptr, transparent_size);
-            pass.transparent_mapping =
-                pass.transparent_buffer
-                    .template buffer_cast<materials::transparent_data>();
-            materials_ptr += material_size;
-            transparent_ptr += transparent_size;
-        }
-
-        /* Write the static material information, animations are updated later
-         */
-        for(auto ent : p.template select<BspReference, Visibility>())
-        {
-            auto&& [bsp, vis] = ent.components();
-
-            if(!vis.visible)
-                continue;
-            populate_bsp_material(bsp, bsp.draw.data.front().instances.offset);
-        }
-    }
-
-    void generate_draws(Proxy& p)
-    {
-        ProfContext _;
-
-        RenderingParameters* rendering_params;
-        p.subsystem(rendering_params);
-
-        ModelCache<Version>* model_cache;
-        p.subsystem(model_cache);
-
-        size_t materials_ptr   = 0;
-        size_t transparent_ptr = 0;
-        generate_static_draws(p, materials_ptr, transparent_ptr);
-
-        if(use_legacy_rendering())
-            return;
-
-        for(Pass& pass : m_model)
-            pass.clear();
-
-        /* Model lives on the parent entity — resolve it through
-         * SubModel::parent, it is never on the submodel entity itself */
-        for(auto ent : p.template select<SubModel, MeshTrackingData>())
-        {
-            auto&& [model, track] = ent.components();
-            auto   parent         = p.template ref<Proxy>(model.parent);
-            Model& mod            = parent.template get<Model>();
-
-            if(!parent.template get<Visibility>().visible ||
-               (!rendering_params->render_scenery &&
-                (ent.tags() & ObjectSkybox) == 0))
-            {
-                track.model_id = {};
-                continue;
-            }
-
-            Pass& wf            = m_model[model.current_pass];
-            wf.command.vertices = m_resources.model_attr;
-            wf.command.call     = {
-                    .indexed   = true,
-                    .instanced = true,
-                    .mode      = gfx::drawing::primitive::triangle_strip,
-            };
-            if(model.current_pass > Pass_LastOpaque)
-            {
-                Vecf3 center = Vecf3(mod.transform[3]);
-                track.model_id =
-                    wf.insert_sortable(model.draw.data.front(), center);
-            } else
-                track.model_id = wf.insert_draw(model.draw.data.front());
-        }
-        Coffee::Profiler::PopContext();
-
-        for(Pass& pass : m_model)
-        {
-            i32 instance_offset = 0;
-            for(auto& bucket : pass.draws)
-                for(draw_data_t& draw : bucket)
-                {
-                    draw.instances.offset = instance_offset;
-                    instance_offset += draw.instances.count;
-                }
-        }
-
-        if(!m_api->feature_info().program.buffer_binding)
-            return;
-
-        size_t matrix_ptr = 0;
-        for(Pass& pass : m_model)
-        {
-            auto material_size = align_for_gpu_padding(pass.required_storage());
-            auto matrix_size =
-                align_for_gpu_padding(pass.required_matrix_storage());
-            auto transparent_size =
-                align_for_gpu_padding(pass.required_transparent_storage());
-            pass.material_buffer =
-                m_resources.material_store->slice(materials_ptr, material_size);
-            pass.matrix_buffer =
-                m_resources.model_matrix_store->slice(matrix_ptr, matrix_size);
-            pass.material_mapping =
-                pass.material_buffer
-                    .template buffer_cast<materials::shader_data>();
-            pass.matrix_mapping =
-                pass.matrix_buffer.template buffer_cast<PerInstanceData>();
-            pass.transparent_buffer = m_resources.transparent_store->slice(
-                transparent_ptr, transparent_size);
-            pass.transparent_mapping =
-                pass.transparent_buffer
-                    .template buffer_cast<materials::transparent_data>();
-            matrix_ptr += matrix_size;
-            materials_ptr += material_size;
-            transparent_ptr += transparent_size;
-        }
-
-        // Reset per-frame bone_base so each model uploads once per frame
-        for(auto& [id, item] : model_cache->m_cache)
-            item.bone_base = -1;
-        std::vector<Matf4> bone_upload;
-        size_t             bone_write_ptr = 0;
-
-        for(auto ent : p.select(ObjectMod2))
-        {
-            if(!rendering_params->render_scenery &&
-               (ent.tags() & ObjectSkybox) == 0)
-                continue;
-            auto            ref    = p.template ref<Proxy>(ent.id());
-            SubModel const& smodel = ref.template get<SubModel>();
-            Model const&    model =
-                p.template ref<Proxy>(smodel.parent).template get<Model>();
-            MeshTrackingData const& track =
-                ref.template get<MeshTrackingData>();
-
-            if(!track.model_id.enabled)
-                continue;
-
-            Pass&              pass = m_model[smodel.current_pass];
-            draw_data_t const& draw =
-                pass.draws[track.model_id.bucket].at(track.model_id.draw);
-            auto instance_id = draw.instances.offset + track.model_id.instance;
-
-            ModelItem<Version>& cache_item =
-                model_cache->find(model.model)->second;
-            if(!cache_item.bone_matrices.empty() && cache_item.bone_base < 0)
-            {
-                cache_item.bone_base = static_cast<i32>(bone_write_ptr);
-                bone_write_ptr += cache_item.bone_matrices.size();
-                bone_upload.insert(
-                    bone_upload.end(),
-                    cache_item.bone_matrices.begin(),
-                    cache_item.bone_matrices.end());
-            }
-
-            auto& pid     = pass.matrix_mapping[instance_id];
-            pid.transform = model.transform;
-            pid.bone_base = cache_item.bone_base;
-            populate_mod2_material(
-                smodel,
-                cache_item,
-                model_context(model.origin_object),
-                instance_id);
-        }
-
-        if(!bone_upload.empty())
-            m_resources.bone_matrix_buf->update(
-                0, Span<const Matf4>(bone_upload));
-
-        m_resources.model_matrix_store->unmap();
-    }
-
-    void update_materials(Proxy& p, time_point const& time)
-    {
-        if(!m_api->feature_info().program.buffer_binding)
-            return;
-
-        for(Pass& pass : m_bsp)
-        {
-            pass.material_mapping =
-                pass.material_buffer
-                    .template buffer_cast<materials::shader_data>();
-        }
-        for(Pass& pass : m_model)
-        {
-            pass.material_mapping =
-                pass.material_buffer
-                    .template buffer_cast<materials::shader_data>();
-        }
-
-        RenderingParameters* rendering_params;
-        p.subsystem(rendering_params);
-
-        ModelCache<Version>* model_cache;
-        p.subsystem(model_cache);
-
-        for(auto ent : p.select(ObjectMod2))
-        {
-            if(!rendering_params->render_scenery &&
-               (ent.tags() & ObjectSkybox) == 0)
-                continue;
-            auto              ref    = p.template ref<Proxy>(ent.id());
-            SubModel&         smodel = ref.template get<SubModel>();
-            MeshTrackingData& track  = ref.template get<MeshTrackingData>();
-            Pass&             pass   = m_model[smodel.current_pass];
-            auto&             bucket = pass.draws[track.model_id.bucket];
-            if(bucket.empty())
-                continue;
-            draw_data_t const& draw = bucket.at(track.model_id.draw);
-            auto instance_id = draw.instances.offset + track.model_id.instance;
-            update_animations(
-                material_of(smodel, instance_id), smodel.shader, time);
-            if(static_cast<size_t>(instance_id) <
-               pass.transparent_mapping.size())
-                shader_cache.update_transparent_animations(
-                    pass.transparent_of(instance_id), smodel.shader, time);
-        }
-
-        for(auto ent : p.select(ObjectBsp))
-        {
-            auto          ref = p.template ref<Proxy>(ent.id());
-            BspReference& bsp = ref.template get<BspReference>();
-
-            if(!ref.template get<Visibility>().visible)
-                continue;
-
-            i32 instance_offset = bsp.draw.data.front().instances.offset;
-            update_animations(
-                material_of(bsp, instance_offset), bsp.shader, time);
-            Pass& pass = m_bsp[bsp.current_pass];
-            if(instance_offset >= 0 && static_cast<size_t>(instance_offset) <
-                                           pass.transparent_mapping.size())
-                shader_cache.update_transparent_animations(
-                    pass.transparent_of(instance_offset), bsp.shader, time);
-        }
-    }
-
-    materials::shader_data& material_of(SubModel& sub, size_t i)
-    {
-        Pass& pass = m_model[sub.current_pass];
-        return pass.material_of(i);
-    }
-
-    materials::shader_data& material_of(BspReference& bsp, size_t i)
-    {
-        Pass& pass = m_bsp[bsp.current_pass];
-        return pass.material_of(i);
-    }
-
-    void populate_bsp_material(BspReference& ref, size_t i = 0)
-    {
-        Pass&                   pass     = m_bsp[ref.current_pass];
-        materials::shader_data& material = pass.material_of(i);
-        shader_cache.populate_material(material, ref.shader, Vecf2{1, 1});
-        bitm_cache.assign_atlas_data(material.lightmap, ref.lightmap);
-        if(material.material.material == materials::id::sotr &&
-           i < pass.transparent_mapping.size())
-            shader_cache.populate_transparent_material(
-                pass.transparent_of(i), ref.shader);
-    }
-
-    std::optional<ShaderCache<halo_version>::material_context> model_context(
-        blam::tag_t const* tag)
-    {
-        if(!m_render_params.color_changing)
-            return std::nullopt;
-        switch(tag->tag_class())
-        {
-        case blam::tag_class_t::bipd:
-        case blam::tag_class_t::vehi:
-        case blam::tag_class_t::scen:
-            return tag->template data<blam::scn::unit>(shader_cache.magic)
-                .value();
-        default:
-            return std::nullopt;
-        }
-    }
-
-    void populate_mod2_material(
-        SubModel const&                                            sub,
-        ModelItem<Version> const&                                  model,
-        std::optional<ShaderCache<halo_version>::material_context> context,
-        size_t                                                     i = 0)
-    {
-        Pass&                   pass     = m_model[sub.current_pass];
-        materials::shader_data& material = pass.material_of(i);
-        shader_cache.populate_material(
-            material, sub.shader, model.header->uvscale, context);
-        if(material.material.material == materials::id::sotr &&
-           i < pass.transparent_mapping.size())
-            shader_cache.populate_transparent_material(
-                pass.transparent_of(i), sub.shader);
-    }
-
-    void update_animations(
-        materials::shader_data& material,
-        generation_idx_t const& shader,
-        time_point const&       time)
-    {
-        shader_cache.update_uv_animations(material, shader, time);
-    }
 
     void update_skybox(Proxy& p, i16 new_skybox)
     {
@@ -2019,15 +2229,16 @@ struct MeshRenderer
 
                     auto submod = p.create_entity(shared_recipes::skybox_submodel);
                     skybox_mod.parts.push_back(submod);
-                    SubModel& submodel = submod.template get<SubModel>();
-                    submodel.parent    = skybox_item.id();
-                    submodel.initialize<Version>(part_id, region);
+                    SubModel& submodel  = submod.template get<SubModel>();
+                    submodel.parent     = skybox_item.id();
+                    DrawState& sub_draw = submod.template get<DrawState>();
+                    submodel.initialize<Version>(part_id, region, sub_draw);
 
                     ShaderData&       shader_   = submod.template get<ShaderData>();
                     ShaderItem const& shader_it = shader_cache.get(region.shader);
                     shader_.initialize(shader_it, submodel);
 
-                    submodel.current_pass =
+                    sub_draw.current_pass =
                         shader_.get_render_pass(shader_cache, true);
                 }
             }
@@ -2580,6 +2791,13 @@ void alloc_renderer(EntityContainer& container)
     ProfContext _;
     auto&       api = container.subsystem_cast<gfx::system>();
 
+    auto& builder =
+        container.register_subsystem_inplace<DrawListBuilder<halo_version>>(
+            &api,
+            std::ref(container.subsystem_cast<BlamResources>()),
+            std::ref(container.subsystem_cast<RenderingParameters>()),
+            std::ref(container.subsystem_cast<ShaderCache<halo_version>>()),
+            std::ref(container.subsystem_cast<BitmapCache<halo_version>>()));
     auto& renderer = container.register_subsystem_inplace<MeshRenderer<halo_version>>(
         &api,
         std::ref(container.subsystem_cast<BlamResources>()),
@@ -2597,10 +2815,12 @@ void alloc_renderer(EntityContainer& container)
     game_bus.addEventFunction<ClusterChangedEvent>(
         0,
         std::function<void(GameEvent&, ClusterChangedEvent*)>(
-            [renderer = &renderer](
+            [renderer = &renderer,
+             params   = &container.subsystem_cast<RenderingParameters>()](
                 GameEvent&, ClusterChangedEvent* cluster) {
                 if(!cluster->bsp)
                     return;
+                params->structural_change_pending = true;
                 renderer->m_pending_changes.push_back({
                     .type = MeshRenderer<halo_version>::pending_change_t::skybox,
                     .skybox_id = cluster->bsp->clusters.at(cluster->cluster)
