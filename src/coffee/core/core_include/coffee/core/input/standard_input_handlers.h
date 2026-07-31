@@ -82,7 +82,6 @@ struct StandardCameraOpts
                                    world/position space */
 };
 
-template<typename CameraPtr, typename CameraOptsPtr>
 /*!
  * \brief Camera movement dependent on a fixed update cycle
  * \param c
@@ -90,26 +89,27 @@ template<typename CameraPtr, typename CameraOptsPtr>
  * \return true when Camera reference is updated
  */
 struct StandardCamera
-    : std::enable_shared_from_this<StandardCamera<CameraPtr, CameraOptsPtr>>
 {
+    using Reg = std::map<u16, u16>;
+
     struct KeyboardInput
     {
         using event_type = CIKeyEvent;
 
-        KeyboardInput(std::function<StandardCamera*()>&& cam)
-            : m_camera(std::move(cam))
+        KeyboardInput(std::function<Reg*()>&& reg)
+            : m_reg(std::move(reg))
         {
         }
 
         void operator()(CIEvent const& e, CIKeyEvent const* ev)
         {
-            auto* camera = m_camera();
-            if(!camera)
+            auto* reg = m_reg();
+            if(!reg)
                 return;
-            StandardKeyRegister<Reg, CIEvent::Keyboard>(camera->m_reg, e, ev);
+            StandardKeyRegister<Reg, CIEvent::Keyboard>(*reg, e, ev);
         }
 
-        std::function<StandardCamera*()> m_camera;
+        std::function<Reg*()> m_reg;
     };
 
     struct MouseInput
@@ -117,10 +117,10 @@ struct StandardCamera
         using event_type = CIMouseMoveEvent;
 
         MouseInput(
-            std::function<StandardCamera*()>&& cam,
-            u32 button = CIMouseButtonEvent::LeftButton)
+            std::function<Vecf2*()>&& look,
+            u32                       button = CIMouseButtonEvent::LeftButton)
             : m_button(button)
-            , m_camera(std::move(cam))
+            , m_look(std::move(look))
         {
         }
 
@@ -128,43 +128,36 @@ struct StandardCamera
         {
             if(ev->btn != m_button)
                 return;
-            auto* camera = m_camera();
-            if(!camera)
+            auto* look = m_look();
+            if(!look)
                 return;
-            auto yaw   = 0.01f * ev->delta.y;
-            auto pitch = 0.01f * ev->delta.x;
-            camera->rotate(-pitch, -yaw);
+            look->x += -0.01f * ev->delta.x;
+            look->y += -0.01f * ev->delta.y;
         }
 
-        u32                              m_button;
-        std::function<StandardCamera*()> m_camera;
+        u32                      m_button;
+        std::function<Vecf2*()>  m_look;
     };
 
-    using Reg = std::map<u16, u16>;
-
-    StandardCamera(CameraPtr cam, CameraOptsPtr opts)
-        : m_opts(opts)
-        , m_camera(cam)
+    static inline bool has_key(Reg const& reg, u16 key)
     {
+        auto it = reg.find(key);
+
+        return it != reg.end() && (it->second & 0x1);
     }
 
-    inline bool has_key(u16 key) const
+    template<typename Camera>
+    inline void move(Camera& camera, f32 forward, f32 right, f32 up, f32 accel = 5.f)
     {
-        auto it = m_reg.find(key);
-
-        return it != m_reg.end() && (it->second & 0x1);
+        camera.position += forward * cached.forward * movement_speed * accel;
+        camera.position += right * cached.right * movement_speed * accel;
+        camera.position += up * cached.up * movement_speed * accel;
     }
 
-    inline void move(f32 forward, f32 right, f32 up, f32 accel = 5.f)
+    template<typename Camera>
+    inline void rotate(Camera& camera, f32 pitch, f32 yaw)
     {
-        m_camera->position += forward * cached.forward * movement_speed * accel;
-        m_camera->position += right * cached.right * movement_speed * accel;
-        m_camera->position += up * cached.up * movement_speed * accel;
-    }
-
-    inline void rotate(f32 pitch, f32 yaw)
-    {
-        auto& q = m_camera->rotation;
+        auto& q = camera.rotation;
         /* Pitch (look up/down): pre-multiply around view-space +X = {1,0,0}.
          * cached.right is a BSP-space vector and is NOT the same 3D vector as
          * view +X, so using it only accidentally produces correct pitch at the
@@ -179,61 +172,57 @@ struct StandardCamera
         q = glm::normalize(q * glm::angleAxis(-pitch, Vecf3{0.f, 1.f, 0.f}));
     }
 
-    void tick(std::chrono::system_clock::duration const& t)
+    /*!
+     * \brief Recompute the movement basis from the camera's orientation.
+     */
+    template<typename Camera>
+    void refresh_basis(Camera const& camera, StandardCameraOpts const& opts)
     {
-        using namespace typing::vectors;
+        auto& rotation = cached.rotation = glm::mat3_cast(camera.rotation);
 
-        auto& rotation = cached.rotation = glm::mat3_cast(m_camera->rotation);
+        glm::mat3 Rt   = glm::transpose(rotation);
+        cached.right   = opts.world_basis * Vecf3(Rt[0]);
+        cached.up      = opts.world_basis * Vecf3(Rt[1]);
+        cached.forward = opts.world_basis * -Vecf3(Rt[2]);
+    }
 
-        /* Movement directions in world/position space.
-         * Row_i(V_rot) = Row_i(R_vertex * bsp_basis) = world_basis *
-         * Row_i(R_vertex). Extract rows via transpose; col 2 of the transposed
-         * matrix is negated because OpenGL's -Z is the forward direction. */
-        glm::mat3 Rt     = glm::transpose(rotation);
-        cached.right     = m_opts->world_basis * Vecf3(Rt[0]);
-        cached.up        = m_opts->world_basis * Vecf3(Rt[1]);
-        cached.forward   = m_opts->world_basis * -Vecf3(Rt[2]);
-        f32 acceleration = m_opts->accel.base;
+    /*!
+     * \brief Held keys as camera-relative axis scalars, plus the speed
+     * modifier they select.
+     */
+    static void sample_keys(
+        Reg const&                                 reg,
+        StandardCameraOpts const&                  opts,
+        Vecf3&                                     movement,
+        f32&                                       accel,
+        std::chrono::system_clock::duration const& t)
+    {
+        f32 acceleration = opts.accel.base;
 
-        if(has_key(CK_LShift))
-            acceleration = m_opts->accel.alt;
-        if(has_key(CK_LCtrl))
-            acceleration = m_opts->accel.fast;
+        if(has_key(reg, CK_LShift))
+            acceleration = opts.accel.alt;
+        if(has_key(reg, CK_LCtrl))
+            acceleration = opts.accel.fast;
 
-        acceleration *= stl_types::Chrono::to_f32(t);
+        accel = acceleration * stl_types::Chrono::to_f32(t);
 
-        for(auto const& [key, mod] : m_reg)
+        for(auto const& [key, mod] : reg)
         {
             if((mod & 0x1) == 0)
                 continue;
             switch(key)
             {
-            case CK_w:
-                move(1, 0, 0, acceleration);
-                break;
-            case CK_s:
-                move(-1, 0, 0, acceleration);
-                break;
-            case CK_a:
-                move(0, -1, 0, acceleration);
-                break;
-            case CK_d:
-                move(0, 1, 0, acceleration);
-                break;
-            case CK_q:
-                move(0, 0, 1, acceleration);
-                break;
-            case CK_e:
-                move(0, 0, -1, acceleration);
-                break;
+            case CK_w: movement.x += 1.f; break;
+            case CK_s: movement.x -= 1.f; break;
+            case CK_a: movement.y -= 1.f; break;
+            case CK_d: movement.y += 1.f; break;
+            case CK_q: movement.z += 1.f; break;
+            case CK_e: movement.z -= 1.f; break;
             }
         }
     }
 
-    CameraOptsPtr m_opts;
-    CameraPtr     m_camera;
-    Reg           m_reg;
-    f32           movement_speed{0.4f};
+    f32 movement_speed{0.4f};
 
     struct
     {
@@ -283,9 +272,13 @@ struct ControllerOpts
     }
 };
 
-template<typename CameraPtr>
-void controller_camera_update(
-    CameraPtr                                  camera,
+/*!
+ * \brief Sample controller sticks into per-frame input state.
+ */
+inline void controller_sample_input(
+    Vecf2&                                     look,
+    Vecf3&                                     movement,
+    f32&                                       accel,
     ControllerOpts const&                      opt,
     CIControllerState const&                   state,
     std::chrono::system_clock::duration const& t)
@@ -298,12 +291,39 @@ void controller_camera_update(
 
     const auto acceleration =
         1.f + convert_i16_f(state.axes.e.t_l) * opt.curve * to_f32(t);
-    camera->move(
+
+    movement.x += filter(state.axes.e.l_y, opt.sens.move.y) * -1.f;
+    movement.y += filter(state.axes.e.l_x, opt.sens.move.x);
+    accel = std::max(accel, acceleration);
+
+    look.x += filter(state.axes.e.r_x, opt.sens.look.x) * to_f32(t) * -1.f;
+    look.y += filter(state.axes.e.r_y, opt.sens.look.y) * to_f32(t) * -1.f;
+}
+
+template<typename Camera>
+void controller_camera_update(
+    StandardCamera&                            camera_,
+    Camera&                                    camera,
+    ControllerOpts const&                      opt,
+    CIControllerState const&                   state,
+    std::chrono::system_clock::duration const& t)
+{
+    using stl_types::Chrono::to_f32;
+
+    const auto filter = [](i16 raw, f32 sens) {
+        return convert_i16_f(raw) * sens;
+    };
+
+    const auto acceleration =
+        1.f + convert_i16_f(state.axes.e.t_l) * opt.curve * to_f32(t);
+    camera_.move(
+        camera,
         filter(state.axes.e.l_y, opt.sens.move.y) * -1.f,
         filter(state.axes.e.l_x, opt.sens.move.x) * 1.f,
         0.f,
         acceleration);
-    camera->rotate(
+    camera_.rotate(
+        camera,
         filter(state.axes.e.r_x, opt.sens.look.x) * to_f32(t) * -1.f,
         filter(state.axes.e.r_y, opt.sens.look.y) * to_f32(t) * -1.f);
 }
