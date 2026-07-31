@@ -2,6 +2,8 @@
 
 #include "caching.h"
 
+#include <coffee/core/input/standard_input_handlers.h>
+#include <peripherals/concepts/graphics_api.h> 
 #include <blam/volta/blam_scenario.h>
 #include <chrono>
 
@@ -42,6 +44,13 @@ enum Passes
     Pass_Count,
 };
 
+struct Visibility
+{
+    using value_type = Visibility;
+    using type = compo::alloc::BufferedContainer<value_type, 2>;
+    bool visible{true};
+};
+
 struct BspReference
 {
     using value_type = BspReference;
@@ -67,7 +76,6 @@ struct BspReference
     bool  has_bounds{false};
 
     gfx::draw_command draw;
-    bool              visible{true};
 };
 
 struct model_tracker_t
@@ -157,8 +165,6 @@ struct Model
 
     blam::tag_t const* tag{nullptr};
     blam::tag_t const* origin_object{nullptr};
-
-    bool visible{true};
 
     template<typename T>
     void initialize(T const* spawn)
@@ -482,19 +488,33 @@ struct PlayerInfo
     }
 };
 
+struct PlayerInput
+{
+    using value_type = PlayerInput;
+    using type       = compo::alloc::VectorContainer<value_type>;
+
+    StandardCamera::Reg keys;         /*!< held keys, from KeyboardInput */
+    Vecf2               look_delta{}; /*!< accumulated look; zeroed once applied */
+    Vecf3 movement{};
+    f32   accel{1.f};           /*!< speed modifier chosen by the source */
+    bool  jump{false};
+
+    std::optional<Vecf3> position; /*!< teleport target */
+    std::optional<Quatf> rotation; /*!< absolute orientation */
+
+    // TODO: Add more inputs later
+};
+
 struct PlayerCamera
 {
     using value_type = PlayerCamera;
     using type       = compo::alloc::VectorContainer<value_type>;
 
     using camera_t         = typing::vectors::scene::camera<f32>;
-    using camera_wrapper_t = StandardCamera<camera_t*, StandardCameraOpts*>;
 
-    std::unique_ptr<StandardCameraOpts> camera_opts =
-        std::make_unique<StandardCameraOpts>();
-    std::unique_ptr<camera_t>         camera = std::make_unique<camera_t>();
-    std::shared_ptr<camera_wrapper_t> camera_ =
-        std::make_shared<camera_wrapper_t>(camera.get(), camera_opts.get());
+    StandardCameraOpts camera_opts{};
+    StandardCamera     camera_{};
+    camera_t           camera{};
 
     struct
     {
@@ -573,10 +593,84 @@ static const auto player_recipe = compo::EntityRecipe{
             compo::type_hash_v<PlayerInfo>(),
             compo::type_hash_v<NetworkInfo>(),
             compo::type_hash_v<PlayerCamera>(),
+            compo::type_hash_v<PlayerInput>(),
             compo::type_hash_v<SoundEffects>(),
             compo::type_hash_v<PhysicsData>(),
             compo::type_hash_v<DebugDraw>(),
         },
     .tags = PlayerBiped,
 };
+
+static const auto skybox_model = compo::EntityRecipe{
+    .components =
+        {
+            compo::type_hash_v<Model>(),
+            compo::type_hash_v<Visibility>(),
+        },
+    .tags = ObjectSkybox | ObjectGC,
+};
+
+static const auto skybox_submodel = compo::EntityRecipe{
+    .components =
+        {
+            compo::type_hash_v<SubModel>(),
+            compo::type_hash_v<ShaderData>(),
+            compo::type_hash_v<MeshTrackingData>(),
+        },
+    .tags = ObjectSkybox | ObjectMod2 | ObjectGC,
+};
+
+static const auto bsp = compo::EntityRecipe{
+    .components =
+        {
+            compo::type_hash_v<BspReference>(),
+            compo::type_hash_v<DepthInfo>(),
+            compo::type_hash_v<ShaderData>(),
+            compo::type_hash_v<Visibility>(),
+        },
+    .tags = ObjectBsp | ObjectGC,
+};
+
+static const auto model = compo::EntityRecipe{
+    .components =
+        {
+            compo::type_hash_v<DepthInfo>(),
+            compo::type_hash_v<Model>(),
+            compo::type_hash_v<NetworkInfo>(),
+            compo::type_hash_v<ObjectSpawn>(),
+            compo::type_hash_v<Visibility>(),
+        },
+    .tags = ObjectGC,
+};
+
+static const auto multiplayer_spawn = compo::EntityRecipe{
+    .components =
+        {
+            compo::type_hash_v<DepthInfo>(),
+            compo::type_hash_v<Model>(),
+            compo::type_hash_v<MultiplayerSpawn>(),
+            compo::type_hash_v<NetworkInfo>(),
+            compo::type_hash_v<Visibility>(),
+        },
+    .tags = ObjectGC,
+};
+
+static const auto submodel = compo::EntityRecipe{
+    .components =
+        {
+            compo::type_hash_v<MeshTrackingData>(),
+            compo::type_hash_v<ShaderData>(),
+            compo::type_hash_v<SubModel>(),
+        },
+    .tags = ObjectMod2 | ObjectGC,
+};
+
+static const auto gc_marker = compo::EntityRecipe{
+    .components =
+        {
+            compo::type_hash_v<DebugDraw>(),
+        },
+    .tags = ObjectGC,
+};
+
 }

@@ -12,7 +12,13 @@
 
 template<typename V>
 using OccluderManifest = compo::SubsystemManifest<
-    type_list_t<BspReference, Model, PlayerCamera, PlayerInfo, DebugDraw>,
+    type_list_t<
+        Visibility,
+        DebugDraw,
+        const BspReference,
+        const Model,
+        const PlayerCamera,
+        const PlayerInfo>,
     type_list_t<
         BSPCache<V>,
         BlamResources,
@@ -87,7 +93,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             auto [cam, info] = ent.components();
             if(info.seat_idx == 0)
             {
-                camera_pos = cam.camera->position;
+                camera_pos = cam.camera.position;
                 camera_mvp = cam.matrix;
                 break;
             }
@@ -276,55 +282,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 current_bsp
                     ? current_bsp->clusters.at(current_cluster).cluster->sky
                     : -1;
-            if(sky_idx != last_sky_idx)
-            {
-                last_sky_idx = sky_idx;
-                if(sky_idx >= 0 &&
-                   static_cast<u32>(sky_idx) < bsp_cache->sky_palette.size() &&
-                   bsp_cache->sky_palette[sky_idx])
-                {
-                    auto const& sky = *bsp_cache->sky_palette[sky_idx];
-                    auto        world_data =
-                        resources->world_store->map<materials::world_data>(0);
-                    world_data[0].fog.indoor_color =
-                        Vecf4(sky.indoor_fog.color, sky.indoor_fog.density);
-                    world_data[0].fog.indoor_ambient = Vecf4(
-                        sky.indoor_ambient.color, sky.indoor_ambient.power);
-                    world_data[0].fog.outdoor_color =
-                        Vecf4(sky.outdoor_fog.color, sky.outdoor_fog.density);
-                    world_data[0].fog.outdoor_ambient = Vecf4(
-                        sky.outdoor_ambient.color, sky.outdoor_ambient.power);
-                    world_data[0].fog.distances = Vecf4(
-                        sky.indoor_fog.start_distance,
-                        sky.indoor_fog.opaque_distance,
-                        sky.outdoor_fog.start_distance,
-                        sky.outdoor_fog.opaque_distance);
-                    if(sky.outdoor_fog.opaque_distance < 1)
-                        world_data[0].fog.distances.w = 1000.f;
-                    if(auto lights = sky.lights.data(bsp_cache->magic))
-                        for(auto const& light : lights.value())
-                        {
-                            Vecf3 dir =
-                                glm::mat3_cast(
-                                    glm::quat(
-                                        Vecf3{
-                                            0,
-                                            light.radiosity.direction.x,
-                                            0}) *
-                                    glm::quat(
-                                        Vecf3{
-                                            0,
-                                            0,
-                                            light.radiosity.direction.y})) *
-                                Vecf3{0, 0, 1};
-                            world_data[0].lighting[0].light_direction =
-                                Vecf4{dir, light.radiosity.test_distance};
-                            world_data[0].lighting[0].light_color = Vecf4{
-                                light.radiosity.color, light.radiosity.power};
-                        }
-                    resources->world_store->unmap();
-                }
-            }
         }
 
         BSPItem const* cull_bsp = pvs_bsp;
@@ -359,9 +316,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
              * are 1:1 (same recipe), so this visits the same set as
              * select(ObjectBsp) without the tag scan and per-entity
              * container lookups. */
-            for(auto ent : p.template select<BspReference>())
+            for(auto ent : p.template select<BspReference, Visibility>())
             {
-                BspReference& bsp_ref = ent.template get<BspReference>();
+                auto [bsp_ref, vis] = ent.components();
 
                 bsp_total++;
                 if(bsp_ref.bsp == pvs_bsp_id)
@@ -379,16 +336,16 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                     } else
                         bsp_no_cluster++;
 
-                    bsp_ref.visible =
+                    vis.visible =
                         pvs_ok &&
                         (!bsp_ref.has_bounds ||
                          frustum.aabb_visible(bsp_ref.bmin, bsp_ref.bmax));
                 } else
                 {
                     /* Different BSP section: hide entirely. */
-                    bsp_ref.visible = false;
+                    vis.visible = false;
                 }
-                if(bsp_ref.visible)
+                if(vis.visible)
                     bsp_visible++;
             }
         }
@@ -472,8 +429,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         Coffee::Profiler::PushContext("Occluder::model_cull_static");
         for(auto ent : p.select(PositioningStatic))
         {
-            auto   ref   = p.template ref<Proxy>(ent.id());
-            Model& model = ref.template get<Model>();
+            auto         ref   = p.template ref<Proxy>(ent.id());
+            Model const& model = ref.template get<Model>();
+            Visibility&  vis   = ref.template get<Visibility>();
 
             model_total++;
             if(cull_bsp)
@@ -481,26 +439,26 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 switch(classify_model(cull_bsp, model))
                 {
                 case model_vis::visible:
-                    model.visible = true;
+                    vis.visible = true;
                     model_visible++;
                     break;
                 case model_vis::pvs_culled:
-                    model.visible = false;
+                    vis.visible = false;
                     model_pvs_culled++;
                     break;
                 case model_vis::frustum_culled:
-                    model.visible = false;
+                    vis.visible = false;
                     model_frustum_culled++;
                     break;
                 case model_vis::dist_culled:
-                    model.visible = false;
+                    vis.visible = false;
                     model_dist_culled++;
                     break;
                 }
             } else
             {
-                model.visible = in_draw_distance(model);
-                if(model.visible)
+                vis.visible = in_draw_distance(model);
+                if(vis.visible)
                     model_visible++;
                 else
                     model_dist_culled++;
@@ -511,13 +469,14 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         Coffee::Profiler::PushContext("Occluder::model_cull_dynamic");
         for(auto ent : p.select(PositioningDynamic))
         {
-            auto   ref   = p.template ref<Proxy>(ent.id());
-            Model& model = ref.template get<Model>();
+            auto         ref   = p.template ref<Proxy>(ent.id());
+            Model const& model = ref.template get<Model>();
+            Visibility&  vis   = ref.template get<Visibility>();
             if(cull_bsp)
-                model.visible =
+                vis.visible =
                     classify_model(cull_bsp, model) == model_vis::visible;
             else
-                model.visible = in_draw_distance(model);
+                vis.visible = in_draw_distance(model);
         }
         Coffee::Profiler::PopContext(); /* Occluder::model_cull_dynamic */
 
@@ -639,9 +598,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                     {
                         if(sample++ >= 5)
                             break;
-                        auto   ref   = p.template ref<Proxy>(ent.id());
-                        Model& model = ref.template get<Model>();
-                        auto   bsp_p = model.position;
+                        auto         ref   = p.template ref<Proxy>(ent.id());
+                        Model const& model = ref.template get<Model>();
+                        auto         bsp_p = model.position;
                         auto   mc    = current_bsp->find_cluster(bsp_p);
                         cDebug(
                             "  model[{}] scenario=({:.1f},{:.1f},{:.1f})"
@@ -655,7 +614,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                             bsp_p.z,
                             mc.has_value() ? std::to_string(mc.value().first)
                                            : std::string("none"),
-                            model.visible);
+                            ref.template get<Visibility>().visible);
                     }
                 }
                 {
@@ -664,8 +623,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                     {
                         if(sample++ >= 5)
                             break;
-                        auto          ref = p.template ref<Proxy>(ent.id());
-                        BspReference& bsp_ref =
+                        auto                ref = p.template ref<Proxy>(ent.id());
+                        BspReference const& bsp_ref =
                             ref.template get<BspReference>();
                         bool has_cluster = bsp_ref.cluster_idx !=
                                            std::numeric_limits<u32>::max();
@@ -674,7 +633,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                             sample - 1,
                             has_cluster ? std::to_string(bsp_ref.cluster_idx)
                                         : std::string("none"),
-                            bsp_ref.visible);
+                            ref.template get<Visibility>().visible);
                     }
                 }
             } else
@@ -691,8 +650,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                  * see the coordinate space the BSP lives in */
                 for(auto ent : p.select(ObjectBsp))
                 {
-                    auto           ref     = p.template ref<Proxy>(ent.id());
-                    BspReference&  bsp_ref = ref.template get<BspReference>();
+                    auto ref = p.template ref<Proxy>(ent.id());
+                    BspReference const& bsp_ref =
+                        ref.template get<BspReference>();
                     BSPItem const& bsp = bsp_cache->find(bsp_ref.bsp)->second;
                     if(!bsp.valid())
                         break;
@@ -766,17 +726,24 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             }
             auto const& eye = eye_pool[player_i];
 
-            auto pos = cam.camera->position;
 
             std::array<Vecf3, 7> points = {{
-                pos + Vecf3{-0.2f, 0, 0},
-                pos + Vecf3{-0.1f, 0, .1f},
-                pos + Vecf3{0.1f, 0, .1f},
-                pos + Vecf3{0.2f, 0, 0},
-                pos + Vecf3{0.1f, 0, -.1f},
-                pos + Vecf3{-0.1f, 0, -.1f},
-                pos + Vecf3{-0.2f, 0, 0},
+                Vecf3{},
+                Vecf3{} + Vecf3{-.1f, .1f, -.1f},
+                Vecf3{} + Vecf3{-.1f, -.1f, -.1f},
+                Vecf3{},
+                Vecf3{} + Vecf3{-.1f, .1f, .1f},
+                Vecf3{} + Vecf3{-.1f, -.1f, .1f},
+                Vecf3{},
             }};
+
+            auto rotate = [&cam](Vecf3 const& vert) -> Vecf3 {
+                return cam.rotation * Vecf4(vert, 1.f);
+            };
+
+            auto const& pos = cam.camera.position;
+            for(auto& p : points)
+                p = rotate(p) + pos;
 
             if(auto* draw = p.template get<DebugDraw>(eye.entity))
                 draw->data.arrays.count = eye.slot.vert_count;

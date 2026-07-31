@@ -2,16 +2,16 @@
 
 #include "components.h"
 
+#include <array>
 #include <map>
 #include <vector>
 
 /* Single owner of the debug-line vertex/colour buffers and every CPU-side
  * write to them. Components never touch BlamResources::debug_lines or
- * ::debug_line_colors directly — they bind the buffers once, then map(),
- * append via create_* / overwrite fixed slots via put_strip, and unmap()
- * through here. This keeps the map/unmap lifetime and the append cursor in
- * one place instead of spread across loading, occluder, physics and
- * rendering. */
+ * ::debug_line_colors directly — they append via create_* / overwrite fixed
+ * slots via put_strip through here, which keeps the append cursor in one
+ * place instead of spread across loading, occluder, physics and rendering.
+ */
 struct DebugMarkers : compo::SubsystemBase
 {
     using type = DebugMarkers;
@@ -20,6 +20,7 @@ struct DebugMarkers : compo::SubsystemBase
     std::shared_ptr<gfx::buffer_t> lines;
     std::shared_ptr<gfx::buffer_t> colors;
 
+    static constexpr u32 frames_in_flight = 3;
     Span<Vecf3> portal_buffer;
     Span<Vecf3> portal_color_buffer;
     u32         portal_ptr{0};
@@ -65,10 +66,26 @@ struct DebugMarkers : compo::SubsystemBase
 
     void set_capacity(u32 verts, u32 colors)
     {
-        vert_capacity       = verts;
-        color_capacity      = colors;
-        m_strip_vert_floor  = verts;
-        m_strip_color_floor = colors;
+        vert_capacity       = verts / frames_in_flight;
+        color_capacity      = colors / frames_in_flight;
+        m_strip_vert_floor  = vert_capacity;
+        m_strip_color_floor = color_capacity;
+
+        m_vert_store.assign(vert_capacity, Vecf3{});
+        m_color_store.assign(color_capacity, Vecf3{});
+        portal_buffer       = Span<Vecf3>(m_vert_store);
+        portal_color_buffer = Span<Vecf3>(m_color_store);
+    }
+
+    /* Offsets the draw must add to every vertex/colour index this frame */
+    u32 vert_region_base() const
+    {
+        return m_region * vert_capacity;
+    }
+
+    u32 color_region_base() const
+    {
+        return m_region * color_capacity;
     }
 
     strip_slot_t acquire_strip(u32 vert_count)
@@ -142,31 +159,67 @@ struct DebugMarkers : compo::SubsystemBase
         return static_cast<bool>(lines) && (!enabled || *enabled);
     }
 
-    /* Map both buffers for CPU writes and reset the append cursor. */
+    /* Open a write scope and reset the append cursor. */
     void map(u32 vertex_cursor, u32 color_cursor)
     {
         map();
         portal_ptr       = vertex_cursor;
         portal_color_ptr = color_cursor;
+        m_static_version++;
     }
 
-    /* Map both buffers without disturbing the cursor (continue appending). */
     void map()
     {
-        if(!lines)
-            return;
-        portal_buffer       = lines->map<Vecf3>(0);
-        portal_color_buffer = colors->map<Vecf3>(0);
+        m_writable = true;
     }
 
     void unmap()
     {
-        if(!lines)
+        m_writable = false;
+    }
+
+    void commit()
+    {
+        if(!lines || !available())
             return;
-        lines->unmap();
-        colors->unmap();
-        portal_buffer       = {};
-        portal_color_buffer = {};
+
+        /* Rotate first: the region written last frame is the one the GPU is
+         * reading now. */
+        m_region = (m_region + 1) % frames_in_flight;
+        auto send = [](std::shared_ptr<gfx::buffer_t> const& buffer,
+                       std::vector<Vecf3> const&             store,
+                       u32                                   base,
+                       u32                                   offset,
+                       u32                                   count) {
+            if(count == 0)
+                return;
+            buffer->update(
+                (base + offset) * sizeof(Vecf3),
+                semantic::Span<Vecf3 const>(store.data() + offset, count));
+        };
+        if(m_region_version[m_region] != m_static_version)
+        {
+            send(lines, m_vert_store, vert_region_base(), 0, portal_ptr);
+            send(
+                colors,
+                m_color_store,
+                color_region_base(),
+                0,
+                portal_color_ptr);
+            m_region_version[m_region] = m_static_version;
+        }
+        send(
+            lines,
+            m_vert_store,
+            vert_region_base(),
+            m_strip_vert_floor,
+            vert_capacity - m_strip_vert_floor);
+        send(
+            colors,
+            m_color_store,
+            color_region_base(),
+            m_strip_color_floor,
+            color_capacity - m_strip_color_floor);
     }
 
     /* 16-vertex wire box: a line_strip tracing all 12 edges of the AABB
@@ -206,7 +259,7 @@ struct DebugMarkers : compo::SubsystemBase
     DebugDraw create_loop(
         semantic::Span<Vecf3 const> points, Vecf3 const& color)
     {
-        if(portal_buffer.empty())
+        if(!m_writable || portal_buffer.empty())
             return {};
         u32 n = static_cast<u32>(points.size());
         /* Bounded by the strip floor, not raw buffer size: the top of the
@@ -233,6 +286,7 @@ struct DebugMarkers : compo::SubsystemBase
         };
         portal_ptr += n;
         portal_color_ptr++;
+        m_static_version++;
         return draw;
     }
 
@@ -240,7 +294,7 @@ struct DebugMarkers : compo::SubsystemBase
     DebugDraw create_marker(
         std::array<Vecf3, N> const& points, Vecf3 const& color)
     {
-        if(portal_buffer.empty())
+        if(!m_writable || portal_buffer.empty())
             return {};
         /* Bounded by the strip floor, not raw buffer size: the top of the
          * buffer belongs to acquire_strip()'s persistent slots. */
@@ -266,6 +320,7 @@ struct DebugMarkers : compo::SubsystemBase
         };
         portal_ptr += static_cast<u32>(N);
         portal_color_ptr++;
+        m_static_version++;
         return draw;
     }
 
@@ -280,7 +335,7 @@ struct DebugMarkers : compo::SubsystemBase
         semantic::Span<Vecf3 const> verts,
         Vecf3 const&                color)
     {
-        if(portal_buffer.empty() ||
+        if(!m_writable || portal_buffer.empty() ||
            vert_offset + verts.size() > portal_buffer.size() ||
            color_idx >= portal_color_buffer.size())
             return;
@@ -290,6 +345,13 @@ struct DebugMarkers : compo::SubsystemBase
     }
 
   private:
+    std::vector<Vecf3>                m_vert_store;
+    std::vector<Vecf3>                m_color_store;
+    bool                              m_writable{false};
+    u32                               m_region{0};
+    u64                               m_static_version{1};
+    std::array<u64, frames_in_flight> m_region_version{};
+
     u32                             m_strip_vert_floor{0};
     u32                             m_strip_color_floor{0};
     std::map<u32, std::vector<u32>> m_free_strip_verts;

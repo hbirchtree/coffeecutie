@@ -55,11 +55,7 @@ void load_scenario_bsp(
         volume.trigger_volume = &trigger;
     }
 
-    EntityRecipe map_marker;
-    map_marker.components = {
-        type_hash_v<DebugDraw>(),
-    };
-    map_marker.tags = ObjectGC;
+    EntityRecipe map_marker = shared_recipes::gc_marker;
 
     auto player_profiles = scenario->player_start.profiles.data(magic).value();
     for(blam::scn::player_starting_profile const& profile : player_profiles)
@@ -256,13 +252,7 @@ void load_scenario_bsp(
     gpu.bsp_light_buf->unmap();
     debug_markers.unmap();
 
-    EntityRecipe bsp_;
-    bsp_.components = {
-        type_hash_v<BspReference>(),
-        type_hash_v<ShaderData>(),
-        type_hash_v<DepthInfo>(),
-    };
-    bsp_.tags = ObjectBsp | ObjectGC;
+    EntityRecipe bsp_ = shared_recipes::bsp;
 
     for(auto const& mesh_id : bsp_meshes)
     {
@@ -282,7 +272,7 @@ void load_scenario_bsp(
                 bsp_ref.bmin           = mesh.bmin;
                 bsp_ref.bmax           = mesh.bmax;
                 bsp_ref.has_bounds     = mesh.has_bounds;
-                bsp_ref.visible        = true;
+
                 bsp_ref.sort_center =
                     mesh.mesh ? mesh.mesh->centroid : Vecf3{0};
                 bsp_ref.draw.data.push_back(mesh.draw);
@@ -316,22 +306,11 @@ void load_objects(
 
     using namespace compo;
 
-    EntityRecipe parent;
-    parent.components = {
-        type_hash_v<Model>(),
-        type_hash_v<NetworkInfo>(),
-        type_hash_v<ObjectSpawn>(),
-        type_hash_v<DepthInfo>(),
-    };
-    parent.tags = tags | ObjectGC;
+    EntityRecipe parent = shared_recipes::model;
+    parent.tags = parent.tags | tags;
 
-    EntityRecipe submodel;
-    submodel.components = {
-        type_hash_v<SubModel>(),
-        type_hash_v<ShaderData>(),
-        type_hash_v<MeshTrackingData>(),
-    };
-    submodel.tags = (tags & SubObjectMask) | ObjectMod2 | ObjectGC;
+    EntityRecipe submodel = shared_recipes::submodel;
+    submodel.tags = submodel.tags | (tags & SubObjectMask);
 
     auto& model_cache  = e.subsystem_cast<ModelCache<Version>>();
     auto& shader_cache = e.subsystem_cast<ShaderCache<Version>>();
@@ -535,21 +514,11 @@ void load_multiplayer_equipment(
     auto& model_cache  = e.subsystem_cast<ModelCache<Version>>();
     auto& shader_cache = e.subsystem_cast<ShaderCache<Version>>();
 
-    EntityRecipe equip;
-    equip.components = {
-        type_hash_v<Model>(),
-        type_hash_v<NetworkInfo>(),
-        type_hash_v<MultiplayerSpawn>(),
-    };
-    equip.tags = tags | ObjectGC;
+    EntityRecipe equip = shared_recipes::multiplayer_spawn;
+    equip.tags = equip.tags | tags;
 
-    EntityRecipe submodel;
-    submodel.components = {
-        type_hash_v<SubModel>(),
-        type_hash_v<ShaderData>(),
-        type_hash_v<MeshTrackingData>(),
-    };
-    submodel.tags = (tags & SubObjectMask) | ObjectMod2 | ObjectGC;
+    EntityRecipe submodel = shared_recipes::submodel;
+    submodel.tags = submodel.tags | (tags & SubObjectMask);
 
     u32 instance_id = 0;
     for(blam::scn::multiplayer_equipment const& equipment_ref :
@@ -719,19 +688,8 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
 
     using namespace compo;
 
-    EntityRecipe skybox_base;
-    skybox_base.tags       = ObjectSkybox | ObjectGC;
-    skybox_base.components = {
-        type_hash_v<Model>(),
-        type_hash_v<Light>(),
-    };
-    EntityRecipe skybox_model;
-    skybox_model.tags       = ObjectSkybox | ObjectMod2 | ObjectGC;
-    skybox_model.components = {
-        type_hash_v<SubModel>(),
-        type_hash_v<ShaderData>(),
-        type_hash_v<MeshTrackingData>(),
-    };
+    EntityRecipe skybox_base = shared_recipes::skybox_model;
+    EntityRecipe skybox_model = shared_recipes::skybox_submodel;
 
     auto   skybox_ent = e.create_entity(skybox_base);
     Model& skybox_mod = skybox_ent.get<Model>();

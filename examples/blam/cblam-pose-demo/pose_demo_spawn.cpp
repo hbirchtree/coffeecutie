@@ -77,6 +77,7 @@ static void spawn_attached_weapon(
     EntityRecipe parent_recipe;
     parent_recipe.components = {
         type_hash_v<Model>(),
+        type_hash_v<Visibility>(),
         type_hash_v<NetworkInfo>(),
         type_hash_v<ObjectSpawn>(),
         type_hash_v<DepthInfo>(),
@@ -387,6 +388,7 @@ void spawn_static_biped(
     EntityRecipe parent_recipe;
     parent_recipe.components = {
         type_hash_v<Model>(),
+        type_hash_v<Visibility>(),
         type_hash_v<NetworkInfo>(),
         type_hash_v<ObjectSpawn>(),
         type_hash_v<DepthInfo>(),
@@ -452,12 +454,12 @@ void spawn_static_biped(
 
     cDebug(
         "pose_demo: spawned '{}' biped at {} ({} parts created, {} skipped, "
-        "model.visible={})",
+        "visible={})",
         biped,
         s_synth_spawn.pos,
         parts_created,
         parts_skipped,
-        model.visible);
+        parent_.get<Visibility>().visible);
 
     if(found_hand_marker)
     {
@@ -494,13 +496,13 @@ void setup_fixed_camera(compo::EntityContainer& e)
 
     auto& cam               = ref.get<PlayerCamera>();
     cam.keyboard.enabled    = true;
-    cam.camera->position    = Vecf3(.4f, -0.03f, height);
-    cam.camera->aspect      = 1.6f;
-    cam.camera->fieldOfView = 70.f;
+    cam.camera.position    = Vecf3(.4f, -0.03f, height);
+    cam.camera.aspect      = 1.6f;
+    cam.camera.fieldOfView = 70.f;
 
     cDebug(
         "pose_demo: fixed camera at {} looking toward origin",
-        cam.camera->position);
+        cam.camera.position);
 
     auto& gpu = e.subsystem_cast<BlamResources>();
     {

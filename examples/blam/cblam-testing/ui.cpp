@@ -31,7 +31,8 @@ using UIRendererManifest = compo::SubsystemManifest<
     type_list_t<
         comp_app::DisplayInfo,
         comp_app::GraphicsFramebuffer,
-        comp_app::MouseInput>>;
+        comp_app::MouseInput,
+        comp_app::BasicEventBus<Coffee::Input::CIEvent>>>;
 
 struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 {
@@ -465,8 +466,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             using Coffee::Input::CIControllerAtomicEvent;
             using Coffee::Input::CIEvent;
             using Coffee::Input::CIMouseMoveEvent;
-            if(auto* bus =
-                   e.underlying().service<comp_app::BasicEventBus<CIEvent>>())
+            if(auto* bus = e.service<comp_app::BasicEventBus<CIEvent>>())
             {
                 bus->addEventFunction<CIMouseMoveEvent>(
                     1024, [this](CIEvent&, CIMouseMoveEvent* mv) {

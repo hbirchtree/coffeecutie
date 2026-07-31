@@ -1,6 +1,7 @@
 #include "resource_creation.h"
 
 #include "coffee/comp_app/subsystems.h"
+#include "coffee/core/input/standard_input_handlers.h"
 #include "coffee/core/types/input/keymap_latin1.h"
 #include "coffee/graphics/apis/gleam/rhi.h"
 #include "components.h"
@@ -33,23 +34,23 @@ using namespace Coffee::resource_literals;
 void update_camera_aspect(compo::EntityContainer& e)
 {
     u32 count{0};
-    for(auto _ : e.select<PlayerCamera>())
-        if(auto* info = e.get<PlayerInfo>(_.id()); info && !info->is_remote())
-        {
-            if(auto* cam = e.get<PlayerCamera>(_.id()); cam->is_active())
-                ++count;
-        }
+    for(auto player : e.select<PlayerCamera, PlayerInfo>())
+    {
+        auto [cam, info] = player.components();
+        if(!info.is_remote() && cam.is_active())
+            ++count;
+    }
     auto* window = e.service<comp_app::Windowing>();
     for(const auto& player : e.select<PlayerCamera>())
     {
-        auto* cam = e.get<PlayerCamera>(player.id());
+        auto& cam = player.get<PlayerCamera>();
         if(count != 2)
-            cam->camera->aspect = window->size().aspect();
+            cam.camera.aspect = window->size().aspect();
         else
         {
             auto size           = window->size();
-            cam->camera->aspect = static_cast<f32>(size.w) / (size.h / 2.f);
-            cDebug("Assigning aspect ratio {}", cam->camera->aspect);
+            cam.camera.aspect = static_cast<f32>(size.w) / (size.h / 2.f);
+            cDebug("Assigning aspect ratio {}", cam.camera.aspect);
         }
     }
 }
@@ -74,30 +75,36 @@ void create_resources(compo::EntityContainer& e)
                 }));
 
         eventhandler->addEventHandler(
-            1024, std_camera_t::KeyboardInput([&e] -> std_camera_t* {
-                for(auto entity :
-                    e.select<PlayerCamera, PlayerInfo, NetworkInfo>())
+            1024, StandardCamera::KeyboardInput([&e] -> StandardCamera::Reg* {
+                for(auto entity : e.select<
+                        PlayerCamera,
+                        PlayerInput,
+                        PlayerInfo,
+                        NetworkInfo>())
                 {
-                    auto [cam, info, net] = entity.components();
+                    auto [cam, input, info, net] = entity.components();
                     if(cam.keyboard.enabled && info.permissions.camera)
                     {
                         net.changes.viewport = net.changes.transform = true;
-                        return cam.camera_.get();
+                        return &input.keys;
                     }
                 }
                 cWarning("No camera selected");
                 return nullptr;
             }));
         eventhandler->addEventHandler(
-            1024, std_camera_t::MouseInput([&e] -> std_camera_t* {
-                for(auto entity :
-                    e.select<PlayerCamera, PlayerInfo, NetworkInfo>())
+            1024, StandardCamera::MouseInput([&e] -> Vecf2* {
+                for(auto entity : e.select<
+                        PlayerCamera,
+                        PlayerInput,
+                        PlayerInfo,
+                        NetworkInfo>())
                 {
-                    auto [cam, info, net] = entity.components();
+                    auto [cam, input, info, net] = entity.components();
                     if(cam.keyboard.enabled && info.permissions.camera)
                     {
                         net.changes.viewport = true;
-                        return cam.camera_.get();
+                        return &input.look_delta;
                     }
                 }
                 cWarning("No camera selected");
@@ -121,8 +128,7 @@ void create_resources(compo::EntityContainer& e)
                         return e.ref(teleport->entity_id);
                     for(auto const& player : e.select<PlayerInfo>())
                     {
-                        if(e.get<PlayerInfo>(player.id())->seat_idx !=
-                           teleport->seat_idx)
+                        if(player.get<PlayerInfo>().seat_idx != teleport->seat_idx)
                             continue;
                         return e.ref(player.id());
                     }
@@ -142,7 +148,7 @@ void create_resources(compo::EntityContainer& e)
                     pbus.process(ev, &translate);
                 } else
                 {
-                    cam.camera->position = teleport->position;
+                    player.get<PlayerInput>().position = teleport->position;
                     net.changes.viewport = net.changes.transform = true;
                 }
             });
@@ -209,13 +215,13 @@ void create_resources(compo::EntityContainer& e)
                     continue;
                 cDebug(
                     R"({{"time": 0, "type": "camera", "position" :[{}, {}, {}], "rotation":[{}, {}, {}, {}]}})",
-                    cam.camera->position.x,
-                    cam.camera->position.y,
-                    cam.camera->position.z,
-                    cam.camera->rotation.w,
-                    cam.camera->rotation.x,
-                    cam.camera->rotation.y,
-                    cam.camera->rotation.z);
+                    cam.camera.position.x,
+                    cam.camera.position.y,
+                    cam.camera.position.z,
+                    cam.camera.rotation.w,
+                    cam.camera.rotation.x,
+                    cam.camera.rotation.y,
+                    cam.camera.rotation.z);
             }
         });
 #endif
@@ -309,13 +315,12 @@ void create_resources(compo::EntityContainer& e)
                  if(ev.event == "camera")
                  {
                      PlayerCamera* target{};
-                     for(auto const& en : e.select<PlayerCamera>())
+                     for(auto const& en : e.select<PlayerCamera, PlayerInfo>())
                      {
-                         auto*       cam  = e.get<PlayerCamera>(en.id());
-                         auto const* info = e.get<PlayerInfo>(en.id());
-                         if(info->seat_idx != 0)
+                        auto [cam, info] = en.components();
+                         if(info.seat_idx != 0)
                              continue;
-                         target = cam;
+                         target = &cam;
                      }
                      if(!target)
                      {
@@ -325,7 +330,7 @@ void create_resources(compo::EntityContainer& e)
                      if(ev.data.contains("position"))
                      {
                          auto pos                 = ev.data["position"];
-                         target->camera->position = Vecf3{
+                         target->camera.position = Vecf3{
                              pos[0].get<float>(),
                              pos[1].get<float>(),
                              pos[2].get<float>()};
@@ -335,7 +340,7 @@ void create_resources(compo::EntityContainer& e)
                          auto rot        = ev.data["rotation"];
                          f32  deg_to_rad = glm::pi<f32>() / 180.f;
                          if(rot.size() == 2)
-                             target->camera->rotation = glm::normalize(
+                             target->camera.rotation = glm::normalize(
                                  glm::angleAxis(
                                      rot[0].get<float>() * deg_to_rad,
                                      Vecf3{-1.f, 0.f, 0.f}) *
@@ -343,7 +348,7 @@ void create_resources(compo::EntityContainer& e)
                                      rot[1].get<float>() * deg_to_rad,
                                      Vecf3{0.f, -1.f, 0.f}));
                          else
-                             target->camera->rotation = glm::normalize(Quatf(
+                             target->camera.rotation = glm::normalize(Quatf(
                                  rot[0].get<float>(),
                                  rot[1].get<float>(),
                                  rot[2].get<float>(),
@@ -383,9 +388,9 @@ void create_resources(compo::EntityContainer& e)
                              {"connected", net.connected},
                              {"position",
                               nlohmann::json{
-                                  cam.camera->position.x,
-                                  cam.camera->position.y,
-                                  cam.camera->position.z,
+                                  cam.camera.position.x,
+                                  cam.camera.position.y,
+                                  cam.camera.position.z,
                               }},
                          });
                      }
@@ -1171,28 +1176,25 @@ void create_camera(
         if(auto* info = e.get<PlayerInfo>(_.id()); info && !info->is_remote())
             ++count;
     auto& physics_bus = e.subsystem_cast<PhysicsBus>();
-    for(auto entity : e.select<PlayerCamera>())
+    for(auto entity : e.select<PlayerCamera, PlayerInfo>())
     {
-        auto* cam  = e.get<PlayerCamera>(entity.id());
-        auto* info = e.get<PlayerInfo>(entity.id());
-        if(!cam || !info)
-            continue;
-        cam->controller.opts.sens.move = {.1f, .1f};
-        cam->camera_opts->accel.alt    = 50.f;
+        auto [cam, info]  = entity.components();
+        cam.controller.opts.sens.move = {.1f, .1f};
+        cam.camera_opts.accel.alt    = 50.f;
 
         if(spawns.empty())
             continue;
         auto& location =
-            info->seat_idx < spawns.size() ? spawns[info->seat_idx] : spawns[0];
-        cam->camera->position = location.pos;
+            info.seat_idx < spawns.size() ? spawns[info.seat_idx] : spawns[0];
+        cam.camera.position = location.pos;
         /* R_vertex = R_bsp * bsp_basis^T.
          * Ensures R_vertex * bsp_basis == R_bsp in the view matrix, so
          * rendering is correct while controller direction vectors are in
          * vertex space and can be added directly to the vertex-space position.
          */
         static const glm::mat3 bsp_basis_inv{{0, 1, 0}, {0, 0, 1}, {1, 0, 0}};
-        cam->camera_opts->world_basis = bsp_basis_inv;
-        cam->camera->rotation =
+        cam.camera_opts.world_basis = bsp_basis_inv;
+        cam.camera.rotation =
             glm::angleAxis(glm::pi<f32>() - location.rot, Vecf3{0.f, 1.f, 0.f});
         Physics::Event             event{Physics::Event::BodyCreationShape};
         Physics::BodyCreationShape create{

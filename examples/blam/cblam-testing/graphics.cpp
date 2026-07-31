@@ -150,6 +150,7 @@ i32 blam_main()
             e.register_component_inplace<Model>();
             e.register_component_inplace<SubModel>();
             e.register_component_inplace<BspReference>();
+            e.register_component_inplace<Visibility>();
             e.register_component_inplace<ObjectSpawn>();
             e.register_component_inplace<NetworkInfo>();
             e.register_component_inplace<PhysicsData>();
@@ -163,6 +164,7 @@ i32 blam_main()
             e.register_component_inplace<Light>();
             e.register_component_inplace<DepthInfo>();
             e.register_component_inplace<PlayerCamera>();
+            e.register_component_inplace<PlayerInput>();
 
             e.register_subsystem_inplace<comp_app::FrameTag>();
             auto& game_bus = e.register_subsystem_inplace<GameEventBus>();
@@ -521,42 +523,78 @@ i32 blam_main()
 
             auto controllers = e.service<comp_app::ControllerInput>();
 
-            for(auto entity : e.select<PlayerCamera>())
+            for(auto entity : e.select<PlayerCamera, PlayerInput, PlayerInfo, NetworkInfo>())
             {
-                auto* cam  = e.get<PlayerCamera>(entity.id());
-                auto* info = e.get<PlayerInfo>(entity.id());
-                if(!cam || !info)
-                    continue;
-
-                if(info->permissions.camera)
+                auto [cam, input, info, net] = entity.components();
+                if(info.permissions.camera)
                 {
-                    /* In physics mode the body owns the position: let
-                     * tick()/controller_camera_update() rotate the view and
-                     * refresh cached vectors, but drop their freecam
-                     * fly-movement so it doesn't fight the physics follow. */
-                    auto const freecam_pos = cam->camera->position;
-
-                    if(cam->keyboard.enabled)
-                        cam->camera_->tick(t);
-                    if(controllers && cam->controller.index.has_value())
-                    {
-                        cam->camera_->tick(t);
-                        auto state = controllers->state(*cam->controller.index);
-                        controller_camera_update(
-                            cam->camera_,
-                            cam->controller.opts,
-                            controllers->state(*cam->controller.index),
+                    if(controllers && cam.controller.index.has_value())
+                        controller_sample_input(
+                            input.look_delta,
+                            input.movement,
+                            input.accel,
+                            cam.controller.opts,
+                            controllers->state(*cam.controller.index),
                             t);
+
+                    if(input.rotation)
+                    {
+                        cam.camera.rotation = *std::exchange(
+                            input.rotation, std::nullopt);
+                        net.changes.viewport = true;
+                    }
+                    if(input.position)
+                    {
+                        cam.camera.position = *std::exchange(
+                            input.position, std::nullopt);
+                        net.changes.transform = net.changes.viewport = true;
                     }
 
-                    if(cam->mode.physics)
-                        cam->camera->position = freecam_pos;
+                    if(input.look_delta != Vecf2{})
+                    {
+                        cam.camera_.rotate(
+                            cam.camera, input.look_delta.x, input.look_delta.y);
+                        input.look_delta = {};
+                    }
+
+                    /* In physics mode the body owns the position: let
+                     * tick() rotates the view and
+                     * refresh cached vectors, but drop their freecam
+                     * fly-movement so it doesn't fight the physics follow. */
+                    auto const freecam_pos = cam.camera.position;
+
+                    cam.camera_.refresh_basis(cam.camera, cam.camera_opts);
+
+                    if(cam.keyboard.enabled)
+                        StandardCamera::sample_keys(
+                            input.keys,
+                            cam.camera_opts,
+                            input.movement,
+                            input.accel,
+                            t);
+
+                    if(!cam.mode.physics && input.movement != Vecf3{})
+                    {
+                        cam.camera_.move(
+                            cam.camera,
+                            input.movement.x,
+                            input.movement.y,
+                            input.movement.z,
+                            input.accel);
+                        net.changes.transform = net.changes.viewport = true;
+                    }
+
+                    if(cam.mode.physics)
+                    {
+                        cam.camera.position = freecam_pos;
+                        net.changes.transform = net.changes.viewport = true;
+                    }
 
                     /* Physics-mode movement: sample held keys and stick
                      * state every frame instead of reacting to input
                      * events, which stutter at the OS key-repeat rate.
                      * The physics system only ever sees a Velocity event. */
-                    if(cam->mode.physics)
+                    if(cam.mode.physics)
                     {
                         /* Project onto the ground plane so looking down
                          * doesn't drive the capsule into the floor */
@@ -565,40 +603,21 @@ i32 blam_main()
                             f32 len2 = glm::dot(v, v);
                             return len2 > 1e-8f ? v / std::sqrt(len2) : Vecf3{};
                         };
-                        auto const& wrap = *cam->camera_;
-                        Vecf3       dir{};
-                        bool        jump{false};
+                        auto const& wrap = cam.camera_;
 
-                        if(cam->keyboard.enabled)
-                        {
-                            if(wrap.has_key(Input::CK_w))
-                                dir += planar(wrap.cached.forward);
-                            if(wrap.has_key(Input::CK_s))
-                                dir -= planar(wrap.cached.forward);
-                            if(wrap.has_key(Input::CK_d))
-                                dir += planar(wrap.cached.right);
-                            if(wrap.has_key(Input::CK_a))
-                                dir -= planar(wrap.cached.right);
-                            jump = wrap.has_key(Input::CK_Space);
-                        }
-                        if(controllers && cam->controller.index.has_value())
-                        {
-                            auto state =
-                                controllers->state(*cam->controller.index);
-                            /* Analog: stick deflection scales speed */
-                            auto axis =
-                                [deadzone =
-                                     cam->controller.opts.deadzone](i16 raw) {
-                                    return std::abs(raw) < deadzone
-                                               ? 0.f
-                                               : convert_i16_f(raw);
-                                };
-                            dir += planar(wrap.cached.forward) *
-                                   -axis(state.axes.e.l_y);
-                            dir += planar(wrap.cached.right) *
-                                   axis(state.axes.e.l_x);
-                            jump = jump || state.buttons.e.a;
-                        }
+                        Vecf3 dir = planar(wrap.cached.forward) *
+                                        input.movement.x +
+                                    planar(wrap.cached.right) *
+                                        input.movement.y;
+                        bool  jump = input.jump;
+
+                        if(cam.keyboard.enabled)
+                            jump = jump || StandardCamera::has_key(
+                                               input.keys, Input::CK_Space);
+                        if(controllers && cam.controller.index.has_value())
+                            jump = jump ||
+                                   controllers->state(*cam.controller.index)
+                                       .buttons.e.a;
                         /* Clamp instead of normalize: keyboard diagonals
                          * cap at 1, partial stick deflection stays analog */
                         if(f32 len2 = glm::dot(dir, dir); len2 > 1.f)
@@ -616,54 +635,54 @@ i32 blam_main()
                         };
                         e.subsystem_cast<PhysicsBus>().process(ev, &velocity);
                     }
+
+                    /* Consumed: sampled fresh every frame from held keys and
+                     * stick state, never carried over */
+                    input.movement = {};
+                    input.accel    = 1.f;
+                    input.jump     = false;
                 }
 
-                cam->camera->zVals = {100.f, 0.001f};
+                cam.camera.zVals = {100.f, 0.001f};
 
                 /* Fold the vertex→BSP permutation into the rotation so that
-                 * cam->camera->position can be stored in plain vertex space.
+                 * cam.camera.position can be stored in plain vertex space.
                  * Equivalent to: R * T(-bsp_pos) * bsp_basis. */
                 static const Matf4 bsp_basis{
                     {0, 0, 1, 0}, {1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 0, 1}};
 
                 Matf4 view_matrix = glm::translate(
-                    glm::mat4_cast(cam->camera->rotation) * bsp_basis,
-                    -cam->camera->position);
+                    glm::mat4_cast(cam.camera.rotation) * bsp_basis,
+                    -cam.camera.position);
 
-                cam->matrix       = GenPerspective(*cam->camera);
-                cam->matrix[2][2] = 0.f;
-                cam->matrix       = cam->matrix * view_matrix;
-                cam->rotation     = glm::mat3_cast(cam->camera->rotation);
-            }
+                cam.matrix       = GenPerspective(cam.camera);
+                cam.matrix[2][2] = 0.f;
+                cam.matrix       = cam.matrix * view_matrix;
+                cam.rotation     = glm::mat3_cast(cam.camera.rotation);
 
 #if defined(FEATURE_ENABLE_OAF)
-            for(auto entity : e.select<PlayerCamera>())
-            {
-                auto* cam  = e.get<PlayerCamera>(entity.id());
-                auto* info = e.get<PlayerInfo>(entity.id());
-                if(cam && info && info->seat_idx == 0)
+                if(info.seat_idx == 0)
                 {
                     auto& snd = e.subsystem_cast<oaf::system>();
                     snd.listener()
                         .set_property<oaf::listener_property::position>(
-                            cam->camera->position);
-                    // cam->camera_->cached.{right,up,forward} are already
+                            cam.camera.position);
+                    // cam.camera_->cached.{right,up,forward} are already
                     // world/BSP-space and correctly signed (see tick() in
                     // standard_input_handlers.h). set_property<orientation>
                     // expects row0/row2 of its input to be (right, -forward)
                     // in that same convention, so build a matrix with those
                     // as rows instead of feeding it the raw, un-remapped
                     // view-space quaternion.
-                    auto const& cached = cam->camera_->cached;
+                    auto const& cached = cam.camera_.cached;
                     snd.listener()
                         .set_property<oaf::listener_property::orientation>(
                             glm::transpose(
                                 Matf3{
                                     cached.right, cached.up, -cached.forward}));
-                    break;
                 }
-            }
 #endif
+            }
         },
         [](EntityContainer&, BlamData<halo_version>&, time_point const&) {
 

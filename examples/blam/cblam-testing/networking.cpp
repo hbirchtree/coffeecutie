@@ -561,17 +561,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         player.permissions.camera = false;
 
         /* Write birds-eye position to PlayerCamera + mark dirty */
-        for(auto entity : e.select<PlayerInfo>())
+        for(auto entity : e.select<PlayerInfo, PlayerCamera>())
         {
-            auto* info = e.get<PlayerInfo>(entity.id());
-            if(info != &player)
+            auto [info, cam] = entity.components();
+            if(&info != &player)
                 continue;
-            auto* cam = e.get<PlayerCamera>(entity.id());
-            if(cam)
-                std::tie(cam->camera->position, cam->camera->rotation) =
-                    birds_eye_for_map(m_map->internal_name());
-            auto* net = e.get<NetworkInfo>(entity.id());
-            if(net)
+            std::tie(cam.camera.position, cam.camera.rotation) =
+                birds_eye_for_map(m_map->internal_name());
+            if(auto* net = e.get<NetworkInfo>(entity.id()))
             {
                 net->changes.viewport    = true;
                 net->changes.permissions = true;
@@ -596,21 +593,16 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             rq::runtime_queue::GetCurrentQueue().value(),
             5s,
             [this, &e, pidx, spawn = *spawn_loc]() {
-                for(auto entity : e.select<PlayerInfo>())
+                for(auto player : e.select<PlayerInfo, PlayerCamera>())
                 {
-                    auto* info = e.get<PlayerInfo>(entity.id());
-                    if(!info || info->player_idx != pidx)
+                    auto [info, cam] = player.components();
+                    if(info.player_idx != pidx)
                         continue;
-                    auto* cam = e.get<PlayerCamera>(entity.id());
-                    if(cam)
-                    {
-                        cam->camera->position = spawn.pos;
-                        cam->camera->rotation = glm::angleAxis(
-                            glm::pi<f32>() - spawn.rot, Vecf3{0.f, 1.f, 0.f});
-                    }
-                    info->permissions.camera = true;
-                    auto* net                = e.get<NetworkInfo>(entity.id());
-                    if(net)
+                    cam.camera.position = spawn.pos;
+                    cam.camera.rotation = glm::angleAxis(
+                        glm::pi<f32>() - spawn.rot, Vecf3{0.f, 1.f, 0.f});
+                    info.permissions.camera = true;
+                    if(auto* net = e.get<NetworkInfo>(player.id()))
                     {
                         net->changes.viewport    = true;
                         net->changes.permissions = true;
@@ -1445,7 +1437,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 for(auto& pi : m_local_player_info)
                 {
                     if(pi.exists())
-                        player_init(p.underlying(), *pi);
+                        player_init(p.unconstrained_container(), *pi);
                 }
             }
 
@@ -1524,8 +1516,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 {
                     send_all(
                         Message<CameraSync>({
-                            .position      = Vecf4(cam.camera->position, 0),
-                            .rotation      = cam.camera->rotation,
+                            .position      = Vecf4(cam.camera.position, 0),
+                            .rotation      = cam.camera.rotation,
                             .target_player = info.player_idx,
                         }));
                     net.changes.viewport = net.changes.transform = false;
@@ -1558,8 +1550,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     send_single(
                         m_connection,
                         Message<CameraSync>({
-                            .position      = Vecf4{camera.camera->position, 0},
-                            .rotation      = camera.camera->rotation,
+                            .position      = Vecf4{camera.camera.position, 0},
+                            .rotation      = camera.camera.rotation,
                             .target_player = info.player_idx,
                         }));
                     net.changes.viewport = net.changes.transform = false;
@@ -1634,8 +1626,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 if(!match)
                     continue;
                 cDebug("Syncing change from player={}", sync.target_player);
-                cam.camera->position = Vecf3(sync.position);
-                cam.camera->rotation = sync.rotation;
+                cam.camera.position = Vecf3(sync.position);
+                cam.camera.rotation = sync.rotation;
                 // TODO: With a fresh viewport, we should compute relevance of
                 // entities Distance, visibility in frustum and projectile type
                 break;
@@ -1700,7 +1692,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             if(event.progress != 100)
                 break;
             if(player_info.player_info.exists())
-                player_init(p.underlying(), *player_info.player_info);
+                player_init(p.unconstrained_container(), *player_info.player_info);
             break;
         }
         case MessageBase::GameEvent: {

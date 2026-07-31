@@ -19,6 +19,7 @@
 #include <peripherals/stl/tuple_hash.h>
 #include <peripherals/typing/enum/graphics/shader_stage.h>
 
+#include "blam_files.h"
 #include "caching.h"
 #include "caching_item.h"
 #include "coffee/graphics/apis/gleam/rhi_debug.h"
@@ -260,6 +261,22 @@ struct MeshRenderer
 
     std::shared_ptr<gfx::texture_2d_t> meow_tex;
     std::shared_ptr<gfx::sampler_t>    meow_sampler;
+
+    struct pending_change_t
+    {
+        enum change_t
+        {
+            skybox,
+        } type;
+        union
+        {
+            i16 skybox_id;
+        };
+    };
+
+    std::vector<pending_change_t> m_pending_changes;
+
+    i16 current_skybox{-1};
 
     MeshRenderer(
         gfx::api*             api,
@@ -727,6 +744,16 @@ struct MeshRenderer
             groups.back().instances.offset = draw.color_ptr;
         }
 
+        markers->commit();
+
+        u32 const vert_base  = markers->vert_region_base();
+        u32 const color_base = markers->color_region_base();
+        for(auto& group : groups)
+        {
+            group.arrays.offset += vert_base;
+            group.instances.offset += color_base;
+        }
+
         Matf4 debug_matrix =
             m_players.empty() ? glm::identity<Matf4>() : m_players[0].matrix;
         m_api->submit(
@@ -762,7 +789,7 @@ struct MeshRenderer
             m_players.push_back({
                 .seat_idx = info.seat_idx,
                 .matrix   = cam.matrix,
-                .position = cam.camera->position,
+                .position = cam.camera.position,
             });
         }
         std::sort(
@@ -838,6 +865,22 @@ struct MeshRenderer
         {
             legacy_render(p, t);
             return;
+        }
+
+        if(!m_pending_changes.empty())
+        {
+            for(auto const& change : m_pending_changes)
+            {
+                switch(change.type)
+                {
+                case pending_change_t::skybox:
+                    update_skybox(p, change.skybox_id);
+                    break;
+                default:
+                    break;
+                }
+            }
+            m_pending_changes.clear();
         }
 
         auto blend_for_pass = [](Passes pass) -> gfx::blend_state {
@@ -996,10 +1039,10 @@ struct MeshRenderer
          * orange checker — elsewhere). The lightmap generation id encodes
          * the specific page. */
         std::map<cache_id_t, LegacyBatch> batches;
-        for(auto const& ent : p.template select<BspReference>())
+        for(auto const& ent : p.template select<BspReference, Visibility>())
         {
-            BspReference const& bsp_ref = ent.template get<BspReference>();
-            if(!bsp_ref.visible)
+            auto const& [bsp_ref, vis] = ent.components();
+            if(!vis.visible)
                 continue;
             if(!bsp_ref.shader.valid() || !bsp_ref.lightmap.valid())
                 continue;
@@ -1281,10 +1324,10 @@ struct MeshRenderer
          * the fused select here */
         for(auto ent : p.template select<SubModel>())
         {
-            SubModel const& sm = ent.template get<SubModel>();
-            Model const&    mod =
-                p.template ref<Proxy>(sm.parent).template get<Model>();
-            if(!mod.visible || !sm.shader.valid())
+            SubModel const& sm     = ent.template get<SubModel>();
+            auto            parent = p.template ref<Proxy>(sm.parent);
+            Model const&    mod    = parent.template get<Model>();
+            if(!parent.template get<Visibility>().visible || !sm.shader.valid())
                 continue;
 
             auto shader_it = shader_cache.find(sm.shader);
@@ -1507,11 +1550,11 @@ struct MeshRenderer
         for(Pass& pass : m_bsp)
             pass.clear();
 
-        for(auto ent : p.template select<BspReference>())
+        for(auto ent : p.template select<BspReference, Visibility>())
         {
-            BspReference& bsp = ent.template get<BspReference>();
+            auto&& [bsp, vis] = ent.components();
 
-            if(!bsp.visible)
+            if(!vis.visible)
                 continue;
 
             Pass& wf              = m_bsp[bsp.current_pass];
@@ -1555,11 +1598,11 @@ struct MeshRenderer
 
         /* Write the static material information, animations are updated later
          */
-        for(auto ent : p.template select<BspReference>())
+        for(auto ent : p.template select<BspReference, Visibility>())
         {
-            BspReference& bsp = ent.template get<BspReference>();
+            auto&& [bsp, vis] = ent.components();
 
-            if(!bsp.visible)
+            if(!vis.visible)
                 continue;
             populate_bsp_material(bsp, bsp.draw.data.front().instances.offset);
         }
@@ -1593,8 +1636,9 @@ struct MeshRenderer
             auto   parent         = p.template ref<Proxy>(model.parent);
             Model& mod            = parent.template get<Model>();
 
-            if(!mod.visible || (!rendering_params->render_scenery &&
-                                (ent.tags() & ObjectSkybox) == 0))
+            if(!parent.template get<Visibility>().visible ||
+               (!rendering_params->render_scenery &&
+                (ent.tags() & ObjectSkybox) == 0))
             {
                 track.model_id = {};
                 continue;
@@ -1764,7 +1808,7 @@ struct MeshRenderer
             auto          ref = p.template ref<Proxy>(ent.id());
             BspReference& bsp = ref.template get<BspReference>();
 
-            if(!bsp.visible)
+            if(!ref.template get<Visibility>().visible)
                 continue;
 
             i32 instance_offset = bsp.draw.data.front().instances.offset;
@@ -1841,6 +1885,153 @@ struct MeshRenderer
         time_point const&       time)
     {
         shader_cache.update_uv_animations(material, shader, time);
+    }
+
+    void update_skybox(Proxy& p, i16 new_skybox)
+    {
+        if(new_skybox == current_skybox)
+            return;
+
+        compo::EntityRef<Proxy> skybox_item;
+        for(auto skybox : p.select(ObjectSkybox))
+        {
+            if(!p.template get<Model>(skybox.id()))
+                continue;
+            skybox_item = skybox;
+        }
+
+        if(!skybox_item.exists())
+            return;
+
+        Model& skybox_mod = skybox_item.template get<Model>();
+
+        auto& data = p.template subsystem<BlamFiles<halo_version>>();
+        auto& model_cache = p.template subsystem<ModelCache<halo_version>>();
+
+        auto const* scenario = data.container.scenario().value_or(nullptr);
+
+        if(!scenario)
+            return;
+
+        auto const& magic = data.container.magic;
+        blam::tag_index_view index(data.container);
+
+        current_skybox = new_skybox;
+
+        auto skyboxes = scenario->info.skyboxes.data(magic).value();
+        if(new_skybox != -1 && new_skybox < skyboxes.size())
+        {
+            auto const& skybox = skyboxes[new_skybox];
+            auto                     skybox_tag = *index.tag_of(skybox);
+            blam::scn::skybox const& skybox_ =
+                skybox_tag->template data<blam::scn::skybox>(magic).value()[0];
+
+            Span<const blam::scn::skybox::light> lights =
+                skybox_.lights.data(magic).value();
+
+            Span<materials::world_data> world_data =
+                m_resources.world_store->map<materials::world_data>(0);
+            if(world_data.empty())
+            {
+                m_resources.world_store->unmap();
+                cWarning("Skybox update without a mapped world buffer");
+                return;
+            }
+
+            for([[maybe_unused]] auto const& light : lights)
+            {
+                f32   yaw   = light.radiosity.direction.x;
+                f32   pitch = light.radiosity.direction.y;
+                Vecf3 rotation{
+                    std::cos(pitch) * std::sin(yaw),
+                    std::sin(pitch),
+                    std::cos(pitch) * std::cos(yaw),
+                };
+                world_data[0].lighting[0].light_direction = Vecf4{
+                    rotation,
+                    light.radiosity.test_distance,
+                };
+                world_data[0].lighting[0].light_color = Vecf4{
+                    light.radiosity.color,
+                    light.radiosity.power,
+                };
+                // TODO: Find out how objects are identified as being
+                // interior or exterior in the world
+            }
+
+            world_data[0].fog.indoor_color =
+                Vecf4(skybox_.indoor_fog.color, skybox_.indoor_fog.density);
+            world_data[0].fog.indoor_ambient =
+                Vecf4(skybox_.indoor_ambient.color, skybox_.indoor_ambient.power);
+            world_data[0].fog.outdoor_color =
+                Vecf4(skybox_.outdoor_fog.color, skybox_.outdoor_fog.density);
+            world_data[0].fog.outdoor_ambient =
+                Vecf4(skybox_.outdoor_ambient.color, skybox_.outdoor_ambient.power);
+
+            world_data[0].fog.distances = Vecf4(
+                skybox_.indoor_fog.start_distance,
+                skybox_.indoor_fog.opaque_distance,
+                skybox_.outdoor_fog.start_distance,
+                skybox_.outdoor_fog.opaque_distance);
+
+            if(skybox_.outdoor_fog.opaque_distance < 1)
+                world_data[0].fog.distances.w = 1000.f;
+
+            m_resources.world_store->unmap();
+
+            if(skybox_.model.valid())
+                skybox_mod.tag = *index.tag_of(skybox_.model);
+            skybox_mod.origin_object = skybox_tag;
+            skybox_mod.transform     = glm::identity<Matf4>();
+
+            if(!skybox_mod.parts.empty())
+            {
+                std::set<u64> stale;
+                for(auto const& part : skybox_mod.parts)
+                    stale.insert(part.id());
+                p.remove_entity_if([&stale](compo::Entity const& e) {
+                    return stale.contains(e.id);
+                });
+                skybox_mod.parts.clear();
+            }
+
+            ModelAssembly assem = model_cache.predict_regions(
+                skybox_.model, blam::mod2::mod2_lod::lod_high_ext);
+
+            if(assem.models.empty())
+            {
+                cDebug("Invalid skybox");
+                return;
+            }
+
+            skybox_mod.model = assem.models.at(0);
+
+            for(auto const& part_id : assem.models)
+            {
+                ModelItem<Version>& part = model_cache.get(part_id);
+                skybox_mod.model         = part_id;
+
+                for(typename ModelItem<Version>::SubModel const& region :
+                    part.mesh.sub)
+                {
+                    if(!region.shader.valid())
+                        continue;
+
+                    auto submod = p.create_entity(shared_recipes::skybox_submodel);
+                    skybox_mod.parts.push_back(submod);
+                    SubModel& submodel = submod.template get<SubModel>();
+                    submodel.parent    = skybox_item.id();
+                    submodel.initialize<Version>(part_id, region);
+
+                    ShaderData&       shader_   = submod.template get<ShaderData>();
+                    ShaderItem const& shader_it = shader_cache.get(region.shader);
+                    shader_.initialize(shader_it, submodel);
+
+                    submodel.current_pass =
+                        shader_.get_render_pass(shader_cache, true);
+                }
+            }
+        }
     }
 };
 
@@ -2389,7 +2580,7 @@ void alloc_renderer(EntityContainer& container)
     ProfContext _;
     auto&       api = container.subsystem_cast<gfx::system>();
 
-    container.register_subsystem_inplace<MeshRenderer<halo_version>>(
+    auto& renderer = container.register_subsystem_inplace<MeshRenderer<halo_version>>(
         &api,
         std::ref(container.subsystem_cast<BlamResources>()),
         std::ref(container.subsystem_cast<RenderingParameters>()),
@@ -2401,4 +2592,19 @@ void alloc_renderer(EntityContainer& container)
     // TODO: Find out why this fails on OpenGL ES 2.0 emulation
     if(api.api_version() != std::make_tuple<u32, u32>(2, 0))
         container.register_subsystem_inplace<LoadingScreen>();
+
+    auto& game_bus = container.subsystem_cast<GameEventBus>();
+    game_bus.addEventFunction<ClusterChangedEvent>(
+        0,
+        std::function<void(GameEvent&, ClusterChangedEvent*)>(
+            [renderer = &renderer](
+                GameEvent&, ClusterChangedEvent* cluster) {
+                if(!cluster->bsp)
+                    return;
+                renderer->m_pending_changes.push_back({
+                    .type = MeshRenderer<halo_version>::pending_change_t::skybox,
+                    .skybox_id = cluster->bsp->clusters.at(cluster->cluster)
+                                     .cluster->sky,
+                });
+            }));
 }

@@ -2,6 +2,7 @@
 
 #include <coffee/image/ktx_load.h>
 
+#include "blam_files.h"
 #include "caching.h"
 #include "components.h"
 #include "data.h"
@@ -53,9 +54,11 @@ using MeshRendererManifest = compo::SubsystemManifest<
         Model,
         MeshTrackingData,
         DebugDraw,
-        PlayerCamera,
-        PlayerInfo>,
+        const PlayerCamera,
+        const PlayerInfo,
+        const Visibility>,
     type_list_t<
+        BlamFiles<V>,
         BitmapCache<V>,
         ModelCache<V>,
         BSPCache<V>,

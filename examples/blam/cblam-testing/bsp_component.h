@@ -16,6 +16,7 @@ template<typename V>
 using BlamBspWidgetManifest = compo::SubsystemManifest<
     type_list_t<
         BspReference,
+        Visibility,
         ShaderData,
         SubModel,
         TriggerVolume,
@@ -113,7 +114,9 @@ struct BlamBspWidget
                                 "{} cluster={}",
                                 stl_types::str::fmt::pointerify(bsp_ref),
                                 bsp_ref->cluster_idx);
-                            ImGui::Checkbox(name.c_str(), &bsp_ref->visible);
+                            ImGui::Checkbox(
+                                name.c_str(),
+                                &e.template get<Visibility>(bsp.id())->visible);
                         }
                         ImGui::EndListBox();
                     }
@@ -146,15 +149,12 @@ struct BlamBspWidget
                     /* Find primary (seat_idx==0) PlayerCamera */
                     PlayerCamera* primary_cam = nullptr;
                     u32           num_cameras = 0;
-                    for(auto ent : e.template select<PlayerCamera>())
+                    for(auto ent : e.template select<PlayerCamera, PlayerInfo>())
                     {
-                        auto* info = e.template get<PlayerInfo>(ent.id());
-                        auto* cam  = e.template get<PlayerCamera>(ent.id());
-                        if(!info || !cam)
-                            continue;
+                        auto [cam, info] = ent.components();
                         ++num_cameras;
-                        if(info->seat_idx == m_selected_camera)
-                            primary_cam = cam;
+                        if(info.seat_idx == m_selected_camera)
+                            primary_cam = &cam;
                     }
 
                     ImGui::Text("Camera properties");
@@ -179,10 +179,10 @@ struct BlamBspWidget
                     {
                         ImGui::Text(
                             "vec3(%f, %f, %f)",
-                            primary_cam->camera->position[0],
-                            primary_cam->camera->position[1],
-                            primary_cam->camera->position[2]);
-                        ImGui::Text("Aspect: %f", primary_cam->camera->aspect);
+                            primary_cam->camera.position[0],
+                            primary_cam->camera.position[1],
+                            primary_cam->camera.position[2]);
+                        ImGui::Text("Aspect: %f", primary_cam->camera.aspect);
                         ImGui::SliderFloat(
                             "Draw distance",
                             &rendering->draw_distance,
@@ -190,7 +190,7 @@ struct BlamBspWidget
                             5000.f);
                         ImGui::SliderFloat(
                             "FOV",
-                            &primary_cam->camera->fieldOfView,
+                            &primary_cam->camera.fieldOfView,
                             10.f,
                             120.f);
                     }
@@ -213,7 +213,7 @@ struct BlamBspWidget
                         resources->offscreen_size.y);
                     if(ImGui::Button("Reload shaders from disk"))
                     {
-                        create_shaders(e.underlying());
+                        create_shaders(e.unconstrained_container());
                     }
                     ImGui::Columns();
                     ImGui::EndTabItem();

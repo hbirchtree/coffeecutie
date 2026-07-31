@@ -739,12 +739,12 @@ struct RS2CacheLoader
             // ImGui::InputFloat("World scale", &world_scale);
             ImGui::SliderInt2("Region coords", &current_region.x, 0, 100);
             {
-                auto const& pos = camera->camera->position;
+                auto const& pos = camera->camera.position;
                 ImGui::Text(
                     "World position: (%f, %f, %f)", pos.x, pos.y, pos.z);
             }
             {
-                auto pos = camera->camera->position * world_scale;
+                auto pos = camera->camera.position * world_scale;
                 ImGui::Text(
                     "Runescape space: (%f, %f, %f)", pos.x, pos.y, pos.z);
             }
@@ -818,7 +818,7 @@ struct RS2CacheLoader
         }
         ImGui::End();
 
-        current_region = to_rs2_region(camera->camera->position);
+        current_region = to_rs2_region(camera->camera.position);
         if(current_region != last_region)
         {
             request_surrounding(current_region.x, current_region.y);

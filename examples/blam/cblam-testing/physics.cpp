@@ -45,7 +45,7 @@ using namespace std::chrono;
 template<typename V>
 using PhysicsManifest = compo::SubsystemManifest<
     type_list_t<DebugDraw, PhysicsData, PlayerCamera>,
-    type_list_t<BSPCache<V>, DebugMarkers, LoadingStatus>,
+    type_list_t<const BSPCache<V>, DebugMarkers, const LoadingStatus>,
     empty_list_t>;
 
 template<typename V>
@@ -74,8 +74,8 @@ struct PhysicsSystem
 
     void start_restricted(Proxy& p, compo::time_point const&)
     {
-        BSPCache<V>*   bsp_cache;
-        LoadingStatus* loading;
+        BSPCache<V> const*   bsp_cache;
+        LoadingStatus const* loading;
         p.subsystem(bsp_cache);
         p.subsystem(loading);
 
@@ -195,7 +195,7 @@ struct PhysicsSystem
             entity_body& phys = (*phys_it).second;
             btVector3&   origin =
                 phys.world_body->getWorldTransform().getOrigin();
-            camera.camera->position = {
+            camera.camera.position = {
                 origin.x(),
                 origin.y(),
                 origin.z() + 0.2f,
@@ -252,7 +252,7 @@ struct PhysicsSystem
         markers->unmap();
     }
 
-    BSPItem const* find_section_item(BSPCache<V>& cache) const
+    BSPItem const* find_section_item(BSPCache<V> const& cache) const
     {
         for(auto& [id, candidate] : cache.m_cache)
             if(candidate.valid() &&
@@ -262,7 +262,7 @@ struct PhysicsSystem
         return nullptr;
     }
 
-    void rebuild_world(BSPCache<V>& cache)
+    void rebuild_world(BSPCache<V> const& cache)
     {
         Coffee::ProfContext _("Physics::rebuild_world()");
         m_built_section = cache.active_section;
@@ -881,7 +881,7 @@ void alloc_physics(compo::EntityContainer& container)
                 if(info->seat_idx != 0)
                     continue;
                 auto* camera = container.get<PlayerCamera>(e.id());
-                physics.move_probe(camera->camera->position);
+                physics.move_probe(camera->camera.position);
                 break;
             }
         });

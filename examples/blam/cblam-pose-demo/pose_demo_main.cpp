@@ -111,6 +111,8 @@ i32 pose_demo_main()
             e.register_component_inplace<Light>();
             e.register_component_inplace<DepthInfo>();
             e.register_component_inplace<PlayerCamera>();
+            e.register_component_inplace<PlayerInput>();
+            e.register_component_inplace<Visibility>();
 
             e.register_subsystem_inplace<comp_app::FrameTag>();
             e.register_subsystem_inplace<GameEventBus>();

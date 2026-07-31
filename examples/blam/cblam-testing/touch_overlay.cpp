@@ -110,11 +110,19 @@ void TouchOverlay::end_restricted(Proxy& proxy, const time_point& time)
         auto* cam  = proxy.get<PlayerCamera>(entity.id());
         if(!info || !cam || info->seat_idx != 0)
             continue;
-        cam->camera_->move(
-            movement.control.y * delta_s, movement.control.x * delta_s, 0);
-        cam->camera_->rotate(
-            -look.control.x * delta_s, look.control.y * delta_s);
-        cam->camera_->rotate(-look.instant_control.x, look.instant_control.y);
+        cam->camera_.move(
+            cam->camera,
+            movement.control.y * delta_s,
+            movement.control.x * delta_s,
+            0);
+        cam->camera_.rotate(
+            cam->camera,
+            -look.control.x * delta_s,
+            look.control.y * delta_s);
+        cam->camera_.rotate(
+            cam->camera,
+            -look.instant_control.x,
+            look.instant_control.y);
         break;
     }
     look.instant_control = {};

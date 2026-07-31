@@ -109,32 +109,31 @@ struct BlamMapBrowser
                 {
                     auto controllers = e.service<comp_app::ControllerInput>();
                     ImGui::Columns(3);
-                    for(auto const& player : e.select<PlayerInfo>())
+                    for(auto const& player : e.select<PlayerCamera, PlayerInfo>())
                     {
                         if(!controllers)
                             continue;
-                        auto* info = e.get<PlayerInfo>(player.id());
-                        ImGui::PushID(info->player_idx);
-                        auto* camera = e.get<PlayerCamera>(player.id());
+                        auto [camera, info] = player.components();
+                        ImGui::PushID(info.player_idx);
                         ImGui::Text(
                             "[i=%02i, seat=%02i] %s",
-                            info->player_idx,
-                            info->seat_idx,
-                            info->name.c_str());
+                            info.player_idx,
+                            info.seat_idx,
+                            info.name.c_str());
                         ImGui::NextColumn();
-                        ImGui::Checkbox("Physics", &camera->mode.physics);
-                        ImGui::Checkbox("Keyboard", &camera->keyboard.enabled);
+                        ImGui::Checkbox("Physics", &camera.mode.physics);
+                        ImGui::Checkbox("Keyboard", &camera.keyboard.enabled);
                         ImGui::NextColumn();
-                        int controller = camera->controller.index.value_or(-1);
+                        int controller = camera.controller.index.value_or(-1);
                         ImGui::SliderInt(
                             "Controller: #%02i",
                             &controller,
                             -1,
                             controllers->count() - 1);
                         if(controller == -1)
-                            camera->controller.index.reset();
+                            camera.controller.index.reset();
                         else
-                            camera->controller.index = controller;
+                            camera.controller.index = controller;
                         ImGui::NextColumn();
                         ImGui::PopID();
                     }
@@ -343,13 +342,10 @@ struct BlamMapBrowser
                             {
                                 std::swap(
                                     old_seat0->seat_idx, target->seat_idx);
-                                for(auto pe : e.select<PlayerCamera>())
+                                for(auto pe : e.select<PlayerCamera, PlayerInfo>())
                                 {
-                                    auto* cam = e.get<PlayerCamera>(pe.id());
-                                    auto* pi  = e.get<PlayerInfo>(pe.id());
-                                    if(cam && pi)
-                                        cam->keyboard.enabled =
-                                            (pi->seat_idx == 0);
+                                    auto [cam, pi] = pe.components();
+                                    cam.keyboard.enabled = pi.seat_idx == 0;
                                 }
                             }
                         }
@@ -360,7 +356,7 @@ struct BlamMapBrowser
                 }
                 if(ImGui::BeginTabItem("Entities"))
                 {
-                    auto& ec = e.underlying();
+                    auto& ec = e.unconstrained_container();
                     if(ImGui::BeginListBox("##entities"))
                     {
                         u32 entity_idx = 0;
@@ -465,7 +461,7 @@ struct BlamMapBrowser
                                 pcam->controller.index.value_or(0xFF));
                             ImGui::DragFloat3(
                                 "  position",
-                                &pcam->camera->position.x,
+                                &pcam->camera.position.x,
                                 2.f,
                                 -1000.f,
                                 1000.f);

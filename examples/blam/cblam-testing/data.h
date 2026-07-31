@@ -34,8 +34,6 @@ using libc_types::u32;
 using semantic::Span;
 struct BSPItem;
 using typing::vector_types::Matf4;
-using camera_t     = typing::vectors::scene::camera<f32>;
-using std_camera_t = StandardCamera<camera_t*, StandardCameraOpts*>;
 
 template<typename Version>
 struct BlamData
