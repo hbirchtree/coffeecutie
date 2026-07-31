@@ -279,8 +279,21 @@ void system::finalize_timer(system::timing_t&& timer)
     timer.timer->dealloc();
 }
 
+static bool timers_available(gleam::system* system)
+{
+    if(system->feature_info().query.disjoint_timer_query)
+        return true;
+    auto const type = system->api_type();
+    if(type == api_type_t::es || type == api_type_t::webgl)
+        return false;
+    auto [major, minor] = system->api_version();
+    return major > 3 || (major == 3 && minor >= 3);
+}
+
 system::gpu_timer_t::gpu_timer_t(gleam::system* system, std::string const& name)
 {
+    if(!timers_available(system))
+        return;
     if(system->is_timer_pending(name))
         return;
     m_system = system;
