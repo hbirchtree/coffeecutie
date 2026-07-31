@@ -55,6 +55,7 @@
       <button onclick="window.blamPlayAnimation('stand push')">🧻</button>
       <button onclick="window.blamPlayAnimation('stand pistol pp melee')">👊</button>
       <button onclick="window.blamPlayAnimation('stand look')">🔍</button>
+      <button onclick="window.calibratePose()" title="Reset facing: zero out current pose as new neutral">🎯</button>
   </div>
 
   <!-- Hidden source feed; MediaPipe Pose reads frames from this element. -->
@@ -158,13 +159,31 @@
       });
     }
 
+    let calibrationOffsets = {};
+    let calibrateRequested = false;
+    window.calibratePose = () => { calibrateRequested = true; };
+
     let poseFrameCount = 0;
     function sendPose(kalidokitPose) {
+      if (calibrateRequested) {
+        calibrationOffsets = {};
+        for (const name of RETARGETED_BONES) {
+          const euler = kalidokitPose[name];
+          if (euler) calibrationOffsets[name] = { x: euler.x, y: euler.y, z: euler.z };
+        }
+        calibrateRequested = false;
+        setPoseStatus('calibrated facing');
+        setTimeout(() => setPoseStatus('tracking'), 1000);
+      }
       const bones = [];
       for (const name of RETARGETED_BONES) {
         const euler = kalidokitPose[name];
         if (!euler) continue;
-        bones.push({ name, rotation: eulerXYZToQuat(euler.x, euler.y, euler.z) });
+        const off = calibrationOffsets[name];
+        const x = off ? euler.x - off.x : euler.x;
+        const y = off ? euler.y - off.y : euler.y;
+        const z = off ? euler.z - off.z : euler.z;
+        bones.push({ name, rotation: eulerXYZToQuat(x, y, z) });
       }
       if (bones.length === 0) return;
       const payload = { type: 'pose_apply', bones };

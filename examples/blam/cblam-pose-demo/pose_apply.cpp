@@ -242,28 +242,16 @@ void apply_pose(
         }
 
         {
-            struct SmoothingState
-            {
-                std::vector<Quatf>
-                    history; /* oldest first, capped at kWindow */
-            };
+            /* Exponential moving average via slerp: q = slerp(prev, q_src, alpha).
+             */
+            static std::unordered_map<BoneRetargetEntry const*, Quatf>
+                        smoothed_state;
+            constexpr f32 kAlpha = 0.35f;
 
-            static std::unordered_map<BoneRetargetEntry const*, SmoothingState>
-                             smoothing_states;
-            constexpr size_t kWindow = 3;
-
-            auto& state = smoothing_states[entry];
-            if(!state.history.empty() &&
-               glm::dot(q_src, state.history.back()) < 0.f)
-                q_src = -q_src;
-            state.history.push_back(q_src);
-            if(state.history.size() > kWindow)
-                state.history.erase(state.history.begin());
-
-            Quatf sum(0.f, 0.f, 0.f, 0.f);
-            for(auto const& q : state.history)
-                sum += q;
-            q_src = glm::normalize(sum);
+            auto [it, inserted] = smoothed_state.try_emplace(entry, q_src);
+            if(!inserted)
+                it->second = glm::slerp(it->second, q_src, kAlpha);
+            q_src = it->second;
         }
 
         Quatf const& delta = entry->rest_delta;

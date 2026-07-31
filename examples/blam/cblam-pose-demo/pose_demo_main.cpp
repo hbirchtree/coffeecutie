@@ -417,23 +417,20 @@ i32 pose_demo_main()
            duration const&) {
             for(auto entity : e.select<PlayerCamera>())
             {
-                auto* cam = e.get<PlayerCamera>(entity.id());
-                if(!cam)
-                    continue;
-
-                cam->camera->zVals = {100.f, 0.001f};
+                auto& cam = entity.get<PlayerCamera>();
+                cam.camera.zVals = {100.f, 0.001f};
 
                 static const Matf4 bsp_basis{
                     {0, 0, 1, 0}, {1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 0, 1}};
 
                 Matf4 view_matrix = glm::translate(
-                    glm::mat4_cast(cam->camera->rotation) * bsp_basis,
-                    -cam->camera->position);
+                    glm::mat4_cast(cam.camera.rotation) * bsp_basis,
+                    -cam.camera.position);
 
-                cam->matrix       = GenPerspective(*cam->camera);
-                cam->matrix[2][2] = 0.f;
-                cam->matrix       = cam->matrix * view_matrix;
-                cam->rotation     = glm::mat3_cast(cam->camera->rotation);
+                cam.matrix       = GenPerspective(cam.camera);
+                cam.matrix[2][2] = 0.f;
+                cam.matrix       = cam.matrix * view_matrix;
+                cam.rotation     = glm::mat3_cast(cam.camera.rotation);
             }
 
             if(g_pose_demo_pistol_attached)
