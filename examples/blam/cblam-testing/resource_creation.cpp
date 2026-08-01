@@ -1,9 +1,5 @@
 #include "resource_creation.h"
 
-#include "coffee/comp_app/subsystems.h"
-#include "coffee/core/input/standard_input_handlers.h"
-#include "coffee/core/types/input/keymap_latin1.h"
-#include "coffee/graphics/apis/gleam/rhi.h"
 #include "components.h"
 #include "data.h"
 #include "journal.h"
@@ -13,11 +9,16 @@
 #include "shader_compiler.h"
 
 #include <coffee/comp_app/services.h>
+#include <coffee/comp_app/subsystems.h>
+#include <coffee/core/input/standard_input_handlers.h>
+#include <coffee/core/types/input/keymap_latin1.h>
 #include <coffee/core/files/cfiles.h>
 #include <coffee/core/input/eventhandlers.h>
 #include <coffee/core/types/input/event_types.h>
+#include <coffee/graphics/apis/gleam/rhi.h>
 #include <glm/ext/quaternion_trigonometric.hpp>
 #include <glm/geometric.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <stdexcept>
 #include <url/url.h>
 
@@ -119,10 +120,11 @@ void create_resources(compo::EntityContainer& e)
         gbus.addEventFunction<PlayerTeleportEvent>(
             1024, [&e, &pbus](GameEvent&, PlayerTeleportEvent* teleport) {
                 cDebug(
-                    "Teleport event: seat={} entity={} position={}",
+                    "Teleport event: seat={} entity={} position={} rotation={}",
                     teleport->seat_idx,
                     teleport->entity_id,
-                    teleport->position);
+                    teleport->position,
+                    teleport->rotation);
                 auto player = [&e, teleport] {
                     if(teleport->entity_id != 0)
                         return e.ref(teleport->entity_id);
@@ -148,7 +150,9 @@ void create_resources(compo::EntityContainer& e)
                     pbus.process(ev, &translate);
                 } else
                 {
-                    player.get<PlayerInput>().position = teleport->position;
+                    auto& input = player.get<PlayerInput>();
+                    input.position = teleport->position;
+                    input.rotation = teleport->rotation;
                     net.changes.viewport = net.changes.transform = true;
                 }
             });

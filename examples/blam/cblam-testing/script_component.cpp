@@ -1,12 +1,23 @@
 #include "script_component.h"
+#include "blam/volta/hsc/blam_bytecode_opcodes.h"
+#include "blam/volta/hsc/bytecode_common_v12.h"
+#include "caching_item.h"
+#include "components.h"
+#include "map_loader.h"
+#include "peripherals/semantic/enum/rsca.h"
+#include "peripherals/typing/vectors/glm_vector_types.h"
+#include "url/url.h"
 
 #include <blam/volta/blam_scenario.h>
 #include <blam/volta/blam_stl.h>
 #include <blam/volta/hsc/blam_bytecode.h>
 #include <blam/volta/hsc/bytecode_eval.h>
 
+#include <chrono>
 #include <coffee/core/debug/formatting.h>
+#include <cstdio>
 #include <peripherals/stl/type_list.h>
+#include <unistd.h>
 
 #if defined(FEATURE_ENABLE_ImGui)
 #include <coffee/imgui/imgui_binding.h>
@@ -25,8 +36,16 @@ using Coffee::cDebug;
 using namespace std::chrono_literals;
 
 #if defined(FEATURE_ENABLE_ImGui)
-using BlamScriptManifest =
-    compo::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
+using BlamScriptManifest = compo::SubsystemManifest<
+    type_list_t<
+        const PlayerCamera,
+        const PlayerInfo
+    >,
+    type_list_t<
+        GameEventBus
+    >,
+    empty_list_t
+>;
 
 template<typename Ver>
 struct BlamScript
@@ -46,9 +65,18 @@ struct BlamScript
     bool main_thread_only() const override { return true; }
 
     template<typename T>
+    requires (!blam::hsc::is_bytecode_variant<T>)
     static std::string enum_to_string(T v)
     {
-        auto val = magic_enum::enum_name(v);
+        auto val = blam::hsc::to_string(v);
+        return std::string(val.begin(), val.end());
+    }
+
+    template<typename T>
+    requires (blam::hsc::is_bytecode_variant<T>)
+    static std::string enum_to_string(T v)
+    {
+        auto val = blam::hsc::bc::to_string(v);
         return std::string(val.begin(), val.end());
     }
 
@@ -186,7 +214,7 @@ struct BlamScript
         m_script.init_globals(m_env.globals, m_strings, {hnd});
     }
 
-    void start_restricted(Proxy& p, time_point const&)
+    void start_restricted(Proxy& p, time_point const& t)
     {
         using namespace blam::hsc;
         using namespace std::chrono_literals;
@@ -206,9 +234,23 @@ struct BlamScript
             }
         }
         ImGui::End();
+
+        auto time_passed = t - m_last_script_run;
+        if(m_running && time_passed >= 33ms)
+        {
+            m_last_script_run = t;
+            m_script.execute_timestep(
+                33ms,
+                {
+                    .cmd =
+                        [this, &p](auto& ptr, const auto& curr) {
+                            return script_func_handler(p, ptr, curr);
+                        },
+                });
+        }
     }
 
-    void render_tabs(Proxy& /*p*/)
+    void render_tabs(Proxy& p)
     {
         if(ImGui::BeginTabItem("Console"))
         {
@@ -227,14 +269,14 @@ struct BlamScript
             if(ImGui::Button("Start/Stop"))
                 m_running = !m_running;
             ImGui::SameLine();
-            if(ImGui::Button("Step") || m_running)
+            if(ImGui::Button("Step"))
             {
                 m_script.execute_timestep(
                     15ms,
                     {
                         .cmd =
-                            [this](auto& ptr, const auto& curr) {
-                                return script_func_handler(ptr, curr);
+                            [this, &p](auto& ptr, const auto& curr) {
+                                return script_func_handler(p, ptr, curr);
                             },
                     });
             }
@@ -359,11 +401,15 @@ struct BlamScript
     }
 
     auto script_func_handler(
+        Proxy&                                 p,
         typename script_types::bytecode_ptr&   ptr,
         typename script_types::layout_t const& curr)
     {
         using op = typename script_types::opcode_t;
+        // using op = blam::hsc::bc::v1;
         using t  = blam::hsc::type_t;
+
+        GameEventBus& game_bus = p.subsystem<GameEventBus>();
 
         switch(curr.opcode)
         {
@@ -401,6 +447,34 @@ struct BlamScript
 
             break;
         }
+        case op::camera_set: {
+            auto camera_points = m_scenario->cutscene.camera_points.data(m_magic).value();
+            auto interp_ticks  = ptr.param(t::short_);
+            auto camera_idx    = ptr.param(t::cutscene_camera_pnt, 1);
+            auto [pos, rotation] = camera_points[camera_idx.long_].to_camera(
+                typing::vector_types::Matf3(
+                    Vecf3{ 0,-1, 0},
+                    Vecf3{-1, 0, 0},
+                    Vecf3{ 0, 0,-1}
+                ));
+            cDebug("Selecting camera point #{} (total={}) : name={} pos={} rot={} fov={} ticks={}",
+                camera_idx.long_,
+                camera_points.size(),
+                camera_points[camera_idx.long_].name.str(),
+                pos,
+                camera_points[camera_idx.long_].rotation,
+                camera_points[camera_idx.long_].fov,
+                interp_ticks.long_);
+            GameEvent event{.type = GameEvent::PlayerCameraLerp};
+            PlayerCameraLerpEvent lerp{
+                .seat_idx = 0x0,
+                .position = pos,
+                .rotation = rotation,
+                .duration = std::chrono::milliseconds(interp_ticks.long_ * 30),
+            };
+            game_bus.process(event, &lerp);
+            break;
+        }
         default:
             break;
         }
@@ -436,6 +510,7 @@ struct BlamScript
 
     std::vector<std::string> m_log;
     bool                     m_running{false};
+    time_point               m_last_script_run{};
 };
 #endif
 

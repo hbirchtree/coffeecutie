@@ -551,6 +551,21 @@ struct PlayerCamera
     }
 };
 
+struct CameraLerp
+{
+    using value_type = CameraLerp;
+    using type = compo::alloc::VectorContainer<CameraLerp>;
+
+    struct lerp_t
+    {
+        Vecf3                     p1, p2; /*!< units/s to move   */
+        Quatf                     r1, r2;  /*!< target rotation, blended with slerp */
+        std::chrono::milliseconds remaining_time;
+        std::chrono::milliseconds total_time;
+    };
+    std::vector<lerp_t> lerps;
+};
+
 struct SoundEffects
 {
     using value_type = SoundEffects;
@@ -594,6 +609,7 @@ static const auto player_recipe = compo::EntityRecipe{
             compo::type_hash_v<PlayerInfo>(),
             compo::type_hash_v<NetworkInfo>(),
             compo::type_hash_v<PlayerCamera>(),
+            compo::type_hash_v<CameraLerp>(),
             compo::type_hash_v<PlayerInput>(),
             compo::type_hash_v<SoundEffects>(),
             compo::type_hash_v<PhysicsData>(),

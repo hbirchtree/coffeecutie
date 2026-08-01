@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <future>
 #include <limits>
 
@@ -198,6 +199,7 @@ struct GameEvent
         ClusterChanged,
 
         PlayerTeleport,
+        PlayerCameraLerp,
 
         ServerConnect,
         ServerConnected,
@@ -292,9 +294,20 @@ struct PlayerTeleportEvent
 {
     static constexpr auto event_type = GameEvent::PlayerTeleport;
 
-    libc_types::u64 entity_id{0};
-    libc_types::u32 seat_idx{0};
-    Vecf3           position{};
+    libc_types::u64      entity_id{0};
+    libc_types::u32      seat_idx{0};
+    Vecf3                position{};
+    std::optional<Quatf> rotation{};
+};
+
+struct PlayerCameraLerpEvent
+{
+    static constexpr auto event_type = GameEvent::PlayerCameraLerp;
+
+    libc_types::u32           seat_idx{0};
+    Vecf3                     position{};
+    std::optional<Quatf>      rotation{};
+    std::chrono::milliseconds duration{};
 };
 
 struct ServerConnectEvent

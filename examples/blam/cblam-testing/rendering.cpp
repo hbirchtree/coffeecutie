@@ -1,7 +1,13 @@
-#include <condition_variable>
-#include <mutex>
-
 #include "rendering.h"
+
+#include "blam_files.h"
+#include "caching.h"
+#include "caching_item.h"
+#include "components.h"
+#include "data.h"
+#include "map_marker.h"
+#include "materials.h"
+#include "selected_version.h"
 
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_shaders.h>
@@ -9,31 +15,25 @@
 #include <blam/volta/blam_tag_index.h>
 #include <coffee/core/CProfiling>
 #include <coffee/graphics/apis/gleam/rhi_compat.h>
+#include <coffee/graphics/apis/gleam/rhi_debug.h>
 #include <coffee/graphics/apis/gleam/rhi_draw_command.h>
 #include <coffee/graphics/apis/gleam/rhi_program.h>
+#include <coffee/graphics/apis/gleam/rhi_query.h>
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
 #include <coffee/graphics/apis/gleam/rhi_system.h>
+#include <coffee/graphics/apis/gleam/rhi_texture.h>
 #include <coffee/graphics/apis/gleam/rhi_urls.h>
 #include <coffee/image/ktx_load.h>
+#include <condition_variable>
 #include <glw/texture_formats.h>
 #include <glw/texture_formats_desc.h>
+#include <magic_enum/magic_enum.hpp>
+#include <mutex>
+#include <peripherals/concepts/graphics_api.h>
 #include <peripherals/constants.h>
 #include <peripherals/stl/iterator_slice.h>
 #include <peripherals/stl/tuple_hash.h>
 #include <peripherals/typing/enum/graphics/shader_stage.h>
-
-#include "blam_files.h"
-#include "caching.h"
-#include "caching_item.h"
-#include "coffee/graphics/apis/gleam/rhi_debug.h"
-#include "coffee/graphics/apis/gleam/rhi_query.h"
-#include "coffee/graphics/apis/gleam/rhi_texture.h"
-#include "components.h"
-#include "data.h"
-#include "map_marker.h"
-#include "materials.h"
-#include "peripherals/concepts/graphics_api.h"
-#include "selected_version.h"
 
 using namespace libc_types::size_literals;
 using namespace std::string_view_literals;

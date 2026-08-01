@@ -1,4 +1,7 @@
 #include "networking.h"
+
+#include <magic_enum/magic_enum.hpp>
+
 #include "blam/volta/blam_base_types.h"
 #include "blam/volta/blam_scenario.h"
 #include "peripherals/typing/vectors/glm_vector_types.h"

@@ -13,6 +13,7 @@
 #include <coffee/core/files/cfiles.h>
 #include <coffee/imgui/imgui_binding.h>
 #include <imgui.h>
+#include <magic_enum/magic_enum.hpp>
 #include <peripherals/stl/type_list.h>
 #include <url/url.h>
 

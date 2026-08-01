@@ -1,4 +1,5 @@
 #include "blam_files.h"
+#include "camera_control.h"
 #include "components.h"
 #include "cursed.h"
 #include "data.h"
@@ -171,6 +172,7 @@ i32 blam_main()
             e.register_component_inplace<DepthInfo>();
             e.register_component_inplace<PlayerCamera>();
             e.register_component_inplace<PlayerInput>();
+            e.register_component_inplace<CameraLerp>();
 
             e.register_subsystem_inplace<comp_app::FrameTag>();
             auto& game_bus = e.register_subsystem_inplace<GameEventBus>();
@@ -207,6 +209,7 @@ i32 blam_main()
             alloc_physics(e);
             alloc_scripting(e);
             setup_load_eventhandlers(e);
+            alloc_camera_control(e);
 
             auto& params = e.register_subsystem_inplace<RenderingParameters>();
             if(arguments.contains("gfx-tex-resolution"))
