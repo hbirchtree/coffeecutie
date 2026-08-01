@@ -254,6 +254,9 @@ void system::finalize_timer(system::timing_t&& timer)
 {
     using namespace platform::profiling;
 
+    if constexpr(!compile_info::profiler::enabled)
+        return;
+
     auto props = RuntimeProperties::get_properties();
     auto start = timer.start_time.time_since_epoch();
     props.push(*props.context, datapoint_t{
