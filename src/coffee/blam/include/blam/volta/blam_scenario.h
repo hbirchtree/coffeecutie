@@ -569,6 +569,20 @@ enum class actor_type_t : u32
     mounted_weapon,
 };
 
+enum class danger_trigger_t : u16
+{
+    never,
+    visible,
+    shooting,
+    shooting_near_us,
+    damaging_us,
+    unused_1,
+    unused_2,
+    unused_3,
+    unused_4,
+    unused_5,
+};
+
 C_FLAGS(actor_flags_t, u32)
 
 struct actor
@@ -610,37 +624,77 @@ struct actor
     {
         bl_rotate_2 maximum_aim_deviation;
         bl_rotate_2 maximum_looking_deviation;
-        f32 noncombat_look_delta_L;
-        f32 noncombat_look_delta_R;
-        f32 combat_look_delta_L;
-        f32 combat_look_delta_R;
+        f32         noncombat_look_delta_L;
+        f32         noncombat_look_delta_R;
+        f32         combat_look_delta_L;
+        f32         combat_look_delta_R;
         bl_rotate_2 idle_aiming_range;
         bl_rotate_2 idle_looking_range;
-        Vecf2 event_look_time_modifier;
-        Vecf2 noncombat_idle_facing;
-        Vecf2 noncombat_idle_aiming;
-        Vecf2 noncombat_idle_looking;
-        Vecf2 guard_idle_facing;
-        Vecf2 guard_idle_aiming;
-        Vecf2 guard_idle_looking;
-        Vecf2 combat_idle_facing;
-        Vecf2 combat_idle_aiming;
-        Vecf2 combat_idle_looking;
-        tagref_t do_not_use_1;
-        tagref_t do_not_use_2;
+        Vecf2       event_look_time_modifier;
+        Vecf2       noncombat_idle_facing;
+        Vecf2       noncombat_idle_aiming;
+        Vecf2       noncombat_idle_looking;
+        Vecf2       guard_idle_facing;
+        Vecf2       guard_idle_aiming;
+        Vecf2       guard_idle_looking;
+        Vecf2       combat_idle_facing;
+        Vecf2       combat_idle_aiming;
+        Vecf2       combat_idle_looking;
+        tagref_t    do_not_use_1;
+        tagref_t    do_not_use_2;
     } looking;
 
     struct unopposable_t
     {
+        danger_trigger_t unreachable_danger_trigger;
+        danger_trigger_t vehicle_danger_trigger;
+        danger_trigger_t player_danger_trigger;
+        Vecf2            danger_trigger_time;
+        f32              friends_killed_trigger;
+        f32              friends_retreating_trigger;
+        Vecf2            retreat_time;
     } unopposable;
 
     struct panic_t
     {
+        Vecf2        cowering_time;
+        f32          friend_killed_panic_change;
+        actor_type_t leader_type;
+        f32          leader_killed_panic_change;
+        f32          panic_damage_threshold;
+        f32          surprise_distance;
     } panic;
 
     struct defensive_t
     {
     } defensive;
+
+    struct pursuit_t
+    {
+        Vecf2 uncover_delay_time;
+        Vecf2 target_search_time;
+        Vecf2 pursuit_position_time;
+        f32   num_positions_coord;
+        f32   num_positions_normal;
+    } pursuit;
+
+    struct berserk_t
+    {
+    } berserk;
+
+    struct firing_positions_t
+    {
+        Vecf2 guard_position_time;
+        Vecf2 combat_position_time;
+        f32 old_position_avoid_dist;
+        f32 friend_avoid_dist;
+    } firing_positions;
+
+    struct communication_t
+    {
+        Vecf2 noncombat_idle_speech_time;
+        Vecf2 combat_idle_speech_time;
+    } communication;
 };
 
 enum class actor_variant_flags_t : u32
