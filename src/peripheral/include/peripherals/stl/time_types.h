@@ -55,6 +55,9 @@ inline libc_types::f32 to_f32(std::chrono::duration<Rep, Ratio> const& dur)
 }
 
 } // namespace Chrono
+namespace chrono {
+using namespace stl_types::Chrono;
+}
 
 using Timestamp = libc_types::u64;
 

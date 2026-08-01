@@ -47,20 +47,25 @@ inline std::string to_string(T const& arg)
 template<typename... T>
 inline void capture_gl_trace(std::string_view func, T... args)
 {
+    auto thread_state = platform::state->GetProfilerTStore();
+    if(!thread_state)
+        return;
     std::vector<std::string> args_;
     (args_.push_back(to_string(args)), ...);
-    platform::profiling::json::CaptureTrace(
-        *platform::state->GetProfilerTStore(), func, args_);
+    platform::profiling::json::CaptureTrace(*thread_state, func, args_);
 }
 
 template<typename DataT, typename... T>
 inline void capture_gl_trace_data(
     std::string_view func, gsl::span<DataT> const& data, T... args)
 {
+    auto thread_state = platform::state->GetProfilerTStore();
+    if(!thread_state)
+        return;
     std::vector<std::string> args_;
     (args_.push_back(to_string(args)), ...);
     platform::profiling::json::CaptureTrace(
-        *platform::state->GetProfilerTStore(),
+        *thread_state,
         func,
         args_,
         gsl::span<const char>(
