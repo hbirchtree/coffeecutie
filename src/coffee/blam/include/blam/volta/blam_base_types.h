@@ -1,5 +1,6 @@
 #pragma once
 
+#include "peripherals/typing/vectors/glm_vector_types.h"
 #include <peripherals/error/result.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/semantic/chunk.h>
@@ -34,7 +35,7 @@ static_assert(sizeof(bl_size_t) == 4, "bl_size_t must be 4 bytes");
 using bl_point_t = typing::vectors::tvector<i16, 2>;
 static_assert(sizeof(bl_point_t) == 4, "bl_point_t must be 4 bytes");
 
-using bl_rect = typing::geometry::rect<i16>;
+using bl_rect = typing::vector_types::tvec4<i16>;
 
 /*!
  * \brief The blam_bounding_box struct
@@ -56,6 +57,19 @@ struct bounding_box
     {
         return {{x_min, y_min, z_min}, {x_max, y_max, z_max}};
     }
+};
+
+struct bl_rotate_2
+{
+    f32 yaw;
+    f32 pitch;
+};
+
+struct bl_rotate_3
+{
+    f32 yaw;
+    f32 pitch;
+    f32 roll;
 };
 
 static_assert(sizeof(bounding_box) == 24, "bounding_box must be 24 bytes");

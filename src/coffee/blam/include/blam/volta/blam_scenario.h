@@ -2,16 +2,19 @@
 
 #include "blam/volta/blam_tag_classes.h"
 #include "blam/volta/blam_tag_ref.h"
+#include "blam/volta/hsc/bytecode_common_v12.h"
 #include "blam_base_types.h"
 #include "blam_bsp_structures.h"
 #include "blam_file_header.h"
 #include "blam_magic_data.h"
 #include "blam_mod2.h"
 #include "blam_reference.h"
+#include "blam_sound.h"
 #include "blam_tag_index.h"
 #include "blam_vertex.h"
 #include "hsc/blam_bytecode.h"
 
+#include <cstddef>
 #include <peripherals/stl/range.h>
 
 namespace blam::scn {
@@ -356,28 +359,6 @@ struct player_starting_location
 
 static_assert(sizeof(player_starting_location) == 52);
 
-struct profile_placement
-{
-    bl_string name;
-    f32       health;
-    f32       shields;
-    bl_tag    primarytag;
-    i32       primaryrawfilename;
-    byte_t    zero1[4];
-    i32       primaryidentifier;
-    i16       primaryclip;
-    i16       primarytotal;
-    bl_tag    secondarytag;
-    i32       secondaryfilename;
-    byte_t    zero2[4];
-    i32       secondaryidentifier;
-    i16       secondaryclip;
-    i16       secondarytotal;
-    i16       fraggrencount;
-    i16       plasmagrencount;
-    byte_t    zero3[20];
-};
-
 struct multiplayer_flag
 {
     Vecf3  pos;
@@ -486,6 +467,12 @@ struct object_name
 {
     bl_string name;
     u32       unknown;
+};
+
+struct editor_comment
+{
+    Vecf3 position;
+    bl_string comment;
 };
 
 struct trigger_volume
@@ -609,10 +596,38 @@ struct actor
 
     struct movement_t
     {
+        f32 dive_into_cover_change;
+        f32 emerge_from_cover_chance;
+        f32 dive_from_grenade_chance;
+        f32 pathfinding_radius;
+        f32 glass_ignorance_chance;
+        f32 stationary_movement_dist;
+        f32 free_flying_sidestep;
+        f32 begin_moving_angle;
     } movement;
 
     struct looking_t
     {
+        bl_rotate_2 maximum_aim_deviation;
+        bl_rotate_2 maximum_looking_deviation;
+        f32 noncombat_look_delta_L;
+        f32 noncombat_look_delta_R;
+        f32 combat_look_delta_L;
+        f32 combat_look_delta_R;
+        bl_rotate_2 idle_aiming_range;
+        bl_rotate_2 idle_looking_range;
+        Vecf2 event_look_time_modifier;
+        Vecf2 noncombat_idle_facing;
+        Vecf2 noncombat_idle_aiming;
+        Vecf2 noncombat_idle_looking;
+        Vecf2 guard_idle_facing;
+        Vecf2 guard_idle_aiming;
+        Vecf2 guard_idle_looking;
+        Vecf2 combat_idle_facing;
+        Vecf2 combat_idle_aiming;
+        Vecf2 combat_idle_looking;
+        tagref_t do_not_use_1;
+        tagref_t do_not_use_2;
     } looking;
 
     struct unopposable_t
@@ -735,24 +750,25 @@ enum class state_t : i16
 struct animation_ref
 {
     bl_string name;
-    i16       unk1;
-    i16       unk2;
-    u32       unk[14];
+    tagref_typed_t<tag_class_t::antr> animation_graph;
+    u32       unk[3];
 };
+
+static_assert(sizeof(animation_ref) == 60);
 
 struct script_ref
 {
-    bl_string name;
-    u32       unk[15];
+    bl_string_var<40> name;
 };
+
+static_assert(sizeof(script_ref) == 40);
 
 struct recording_ref
 {
-    u32        unk1[6];
-    bl_tag     tag;
-    string_ref name;
-    u32        unk[2];
+    bl_string_var<40> script_name;
 };
+
+static_assert(sizeof(recording_ref) == 40);
 
 struct platoon
 {
@@ -835,13 +851,192 @@ static_assert(sizeof(squad_spawn) == 28);
 
 struct encounter
 {
-    bl_string_var<16>          text;
-    u32                        unk[28];
+    bl_string_var<16>          name;
+    enum flags_t : u16
+    {
+        none                       = 0x0,
+        not_initially_created      = 0x1,
+        respawn_enabled            = 0x2,
+        initially_blind            = 0x4,
+        initially_deaf             = 0x8,
+        initially_braindead        = 0x10,
+        _3d_firing_positions       = 0x20,
+        manual_bsp_index_specified = 0x40,
+    } flags;
+    enum team_index_t : u16
+    {
+        default_by_unit,
+        player,
+        human,
+        covenant,
+        flood,
+        sentinel,
+        unused_6,
+        unused_7,
+        unused_8,
+        unused_9,
+    } team_index;
+    enum search_behavior_t : u16
+    {
+        search_normal,
+        search_never,
+        search_tenacious,
+    } search_behavior;
+    i16 manual_bsp_index;
+    Vecf2 respawn_delay;
+    u32                        unk[24];
     reference<squad>           squads;
     reference<platoon>         platoons;
     reference<firing_position> firing_positions;
     reference<squad_spawn>     start_locations;
 };
+
+static_assert(sizeof(encounter) == 176);
+
+struct command_list_command
+{
+    enum atom_type_t : u16
+    {
+        pause,
+        go_to,
+        goto_and_face,
+        move_in_direction,
+        look,
+        animation_mode,
+        crouch,
+        shoot,
+        grenade,
+        vehicle,
+        running_jump,
+        targeted_jump,
+        script_,
+        animate,
+        recording_,
+        action,
+        vocalize,
+        targeting,
+        initiative,
+        wait,
+        loop,
+        die,
+        move_immediate,
+        look_random,
+        look_player,
+        look_object,
+        set_radius,
+        teleport,
+    } atom_type;
+    u16 atom_modifier;
+    u16 param1;
+    u16 param2;
+    i16 point_1;     // pointing to points list
+    i16 point_2;     // pointing to points list
+    i16 animation;   // pointing to ai animation ref list
+    i16 script;      // pointing to ai script ref list
+    i16 recording;   // pointing to ai recording ref list
+    i16 command;     // pointing into commands list
+    i16 object_name; // points to object name list
+};
+
+struct command_list_point
+{
+    Vecf3 position;
+};
+
+struct command_list
+{
+    bl_string name;
+    enum flags_t : u16
+    {
+        none                = 0x0,
+        allow_initiative    = 0x1,
+        allow_targeting     = 0x2,
+        disable_looking     = 0x4,
+        disable_comms       = 0x8,
+        disable_fall_damage = 0x10,
+        manual_bsp_index_    = 0x20,
+    } flags;
+    i16                             manual_bsp_index;
+    reference<command_list_command> commands;
+    reference<command_list_point>   points;
+};
+
+struct conversation_participant
+{
+    enum flags_t : u16
+    {
+        none           = 0x0,
+        is_optional    = 0x1,
+        has_alternate  = 0x2,
+        is_alternative = 0x4,
+    } flags;
+    enum selection_type_t : u16
+    {
+        friendly_actor,
+        disembodied,
+        in_players_vehicle,
+        not_in_a_vehicle,
+        prefer_sergeant,
+        any_actor,
+        radio_unit,
+        radio_sergeant,
+    } selection_type;
+    actor_type_t actor_type;
+    i16          use_this_object; // references object_names list
+    i16          set_new_name;    // references object_names list
+    u32 padding[10];
+    bl_string    encounter_name;
+};
+
+static_assert(sizeof(conversation_participant) == 84);
+
+struct conversation_line
+{
+    enum flags_t : u16
+    {
+        addressee_looking_at_speaker     = 0x1,
+        everyone_look_at_speaker         = 0x2,
+        everyone_look_at_addressee       = 0x4,
+        wait_after_until_told_to_advance = 0x8,
+        wait_until_speaker_nearby        = 0x10,
+        wait_until_everyone_nearby       = 0x20,
+    } flags;
+    i16                              participant;
+    i16                              addressee;
+    i16                              addressee_participant;
+    f32                              line_delay_time;
+    tagref_typed_t<tag_class_t::snd> variants[6];
+
+    u32 padding[4];
+};
+
+static_assert(sizeof(conversation_line) == 124);
+
+struct conversation
+{
+    bl_string name;
+    enum conversation_flags_t : u16
+    {
+        none                     = 0x0,
+        stop_if_death            = 0x1,
+        stop_if_damaged          = 0x2,
+        stop_if_visible_enemy    = 0x4,
+        stop_if_alerted_to_enemy = 0x8,
+        player_must_be_visible   = 0x10,
+        stop_other_actions       = 0x20,
+        keep_trying_to_play      = 0x40,
+        player_must_be_looking   = 0x80,
+    } flags;
+    f32                                 trigger_distance;
+    f32                                 run_to_player_dist;
+    u32 padding_[9];
+    reference<conversation_participant> participants;
+    reference<conversation_line>        lines;
+
+    u32 padding[3];
+};
+
+static_assert(sizeof(conversation) == 116);
 
 } // namespace ai
 
@@ -870,10 +1065,12 @@ struct decal
 
 struct decal_ref
 {
-    bl_tag     tag;
-    string_ref name;
-    u32        reserved;
-    u32        TagId;
+    tagref_typed_t<tag_class_t::deca> reference;
+};
+
+struct detail_object_collection_ref
+{
+    tagref_typed_t<tag_class_t::dobc> reference;
 };
 
 struct shader_index
@@ -993,21 +1190,24 @@ struct light_fixture
 
 struct cutscene_flag
 {
-    u32       huh;
+    u32       garbage;
     bl_string name;
     Vecf3     position;
     Vecf2     facing;
     u32       padding[9];
 };
 
+static_assert(sizeof(cutscene_flag) == 92);
+
 struct cutscene_camera_position
 {
-    bl_string name;
-    Vecf3     position;
-    Vecf3     rotation;
-    f32       fov;
+    u32               padding; // no idea why there's garbage here
+    bl_string_var<36> name;
+    Vecf3             position;
+    Vecf3             rotation; // components in radians, editor shows degrees!
+    f32               fov; // same as above
 
-    // u32 padding[11];
+    u32 padding_[9];
 
     inline std::pair<Vecf3, Quatf> to_camera(
         typing::vector_types::Matf3 const& basis) const
@@ -1023,7 +1223,30 @@ struct cutscene_camera_position
     }
 };
 
-// static_assert(sizeof(cutscene_camera_position) == 104);
+static_assert(sizeof(cutscene_camera_position) == 104);
+
+struct cutscene_title
+{
+    u32               garbage;
+    bl_string_var<36> name;
+    bl_rect           text_bounds;
+    i16               string_index;
+    enum justification_t
+    {
+        left,
+        right,
+        center,
+    } justification;
+    bl_rgba_t text_color;
+    bl_rgba_t shadow_color;
+    u32       fade_time;
+    u32       up_time;
+    u32       fade_out_time;
+
+    u32 padding_[5];
+};
+
+static_assert(sizeof(cutscene_title) == 96);
 
 /*!
  * \brief A Blam! scenario descriptor
@@ -1070,10 +1293,10 @@ struct scenario
 
     struct editor_t /* 256-byte block */
     {
-        i32               scenario_size;
-        u32               unknown_2;
-        reference<byte_t> comments;
-        u32               padding2[59];
+        i32                       scenario_size;
+        u32                       unknown_2;
+        reference<editor_comment> comments;
+        u32                       padding2[59];
     } editor;
 
     struct objects_t /* 324-byte block, object spawns */
@@ -1108,22 +1331,21 @@ struct scenario
         reference<multiplayer_equipment> equipment;
     } netgame;
 
-    reference<starting_equip> starting_equipment;
-
-    reference<bsp_trigger> bsp_switch_triggers;
-    reflex_group<decal>    decals;
-    reference<scn_chunk>   detail_object_collection;
-    u32                    padding4[21];
+    reference<starting_equip>               starting_equipment;
+    reference<bsp_trigger>                  bsp_switch_triggers;
+    reflex_group<decal>                     decals;
+    reference<detail_object_collection_ref> detail_object_collection;
+    u32                                     padding4[21];
 
     struct ai_info_t /* 340-byte block */
     {
         reference<actor_variant_ref> actor_palette;
         reference<ai::encounter>     encounters;
-        reference<scn_chunk>         command_lists;
-        reference<scn_chunk>         animation_references;
-        reference<scn_chunk>         script_references;
-        reference<scn_chunk>         recording_references;
-        reference<scn_chunk>         conversations;
+        reference<ai::command_list>  command_lists;
+        reference<ai::animation_ref> animation_references;
+        reference<ai::script_ref>    script_references;
+        reference<ai::recording_ref> recording_references;
+        reference<ai::conversation>  conversations;
     } ai;
 
     struct script_t
@@ -1146,7 +1368,7 @@ struct scenario
     {
         reference<cutscene_flag>            flags;
         reference<cutscene_camera_position> camera_points;
-        reference<scn_chunk>                titles;
+        reference<cutscene_title>           titles;
     } cutscene;
 
     reference<scn_chunk> unknown7;
@@ -1200,6 +1422,12 @@ struct scenario
 
 static_assert(sizeof(scenario<xbox_version_t>) == 1456);
 static_assert(sizeof(scenario<pc_version_t>) == 1456);
+
+// Add these checks so that, if something is moved or removed
+// We have some reference points to find out where
+static_assert(offsetof(scenario<pc_version_t>, objects) == 516);
+static_assert(offsetof(scenario<pc_version_t>, ai) == 1056);
+static_assert(offsetof(scenario<pc_version_t>, cutscene) == 1252);
 
 template<typename V>
 requires is_game_version<V>
