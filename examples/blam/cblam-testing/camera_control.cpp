@@ -7,6 +7,7 @@
 #include <chrono>
 #include <glm/common.hpp>
 #include <glm/ext/quaternion_common.hpp>
+#include <glm/gtx/spline.hpp>
 #include <peripherals/stl/time_types.h>
 
 using namespace std::chrono_literals;
