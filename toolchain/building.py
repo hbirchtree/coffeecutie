@@ -1446,7 +1446,11 @@ def cmd_run(
 
     cmd = [str(binary), *prog_args]
     if use_gdb:
-        cmd = ["gdb", "--args"] + cmd
+        cmd = [
+            "gdb",
+            "--eval-command=set debuginfod enabled off",
+            "--args"
+        ] + cmd
 
     if dry_run:
         print(f"Would run (cwd={base_dir}):")
