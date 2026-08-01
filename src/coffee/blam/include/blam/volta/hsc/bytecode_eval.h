@@ -1,6 +1,8 @@
 #pragma once
 
 #include "blam_bytecode.h"
+#include <chrono>
+#include <ratio>
 
 namespace blam::hsc {
 
@@ -30,6 +32,9 @@ inline typename bytecode_pointer<BC>::result_t bytecode_pointer<BC>::evaluate(
             out.set(op.template get<u8>());
             break;
         default:
+            // For non-POD types, stuff all of it in there
+            // These can be scripting references and etc.
+            out.set(op.template get<i32>());
             out.set_ptr(op.to_ptr());
             break;
         }
@@ -198,10 +203,12 @@ inline typename bytecode_pointer<BC>::result_t bytecode_pointer<BC>::evaluate(
                 context.set_script_state(
                     script->data_ptr,
                     script_status::sleeping,
-                    {sleep_condition::timer,
-                     terminator,
-                     std::chrono::seconds(time),
-                     0});
+                    {
+                        sleep_condition::timer,
+                        terminator,
+                        std::chrono::milliseconds(time * 30),
+                        0,
+                    });
             else
                 out_ = result_t::sleep_timeout(time);
 
@@ -264,9 +271,9 @@ inline typename bytecode_pointer<BC>::result_t bytecode_pointer<BC>::evaluate(
                !(is_number(left.ret_type) && is_number(right.ret_type)))
             {
                 std::string mismatch;
-                mismatch.append(magic_enum::enum_name(left.ret_type));
+                mismatch.append(to_string(left.ret_type));
                 mismatch.append(" != ");
-                mismatch.append(magic_enum::enum_name(right.ret_type));
+                mismatch.append(to_string(right.ret_type));
                 Throw(script_error(
                     "mismatching types for comparison: " + mismatch));
             }

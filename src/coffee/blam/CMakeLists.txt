@@ -1,7 +1,10 @@
 # blam_bitm.cpp converts bitmaps to GL texture formats (glw) and CoreZ/Image are
 # for compression + PNG/JPG -- none needed on bare consoles, where we only parse
 # uncompressed PC maps + read raw (e.g. RGB565) pixels. Drop them there.
-set(BLAM_SOURCES private/volta/blam_map.cpp)
+set(BLAM_SOURCES
+  private/volta/blam_map.cpp
+  private/volta/blam_bytecode.cpp
+)
 set(BLAM_LIBS Core) # result/semantic/task_queue (got via Image transitively before)
 if(NOT (GAMECUBE OR WII))
   list(APPEND BLAM_SOURCES private/volta/blam_bitm.cpp)

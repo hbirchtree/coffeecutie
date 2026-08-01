@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <deque>
 
 #include "bytecode_common_v12.h"
@@ -12,7 +13,7 @@
 
 namespace blam::hsc {
 
-constexpr bool bypass_conditions = true;
+constexpr bool bypass_conditions = false;
 
 inline bool is_number(type_t t)
 {
@@ -243,15 +244,6 @@ inline opcode_iterator<BC>::opcode_iterator(
 {
 }
 
-template<typename T>
-inline std::string to_string(T val)
-{
-    auto out = magic_enum::enum_name(val);
-    if(!out.size())
-        return "[invalid(" + std::to_string(C_CAST<i16>(val)) + ")]";
-    return std::string(out) + "(" + std::to_string(C_CAST<i16>(val)) + ")";
-}
-
 template<typename BC>
 struct bytecode_pointer;
 
@@ -270,6 +262,8 @@ enum class sleep_condition
     expression_timer,
 };
 
+std::string_view to_string(sleep_condition cond);
+
 enum class script_status
 {
     running,  /*!< Continuous or startup script */
@@ -278,6 +272,8 @@ enum class script_status
     dormant,  /*!< Scripts put to sleep forever */
     finished, /*!< Startup scripts end up here */
 };
+
+std::string_view to_string(script_status stat);
 
 struct global_value
 {
@@ -383,6 +379,7 @@ struct script_context
         std::vector<u16>                     value_ptr;
         std::deque<u32>                      param_counts;
         wait_condition                       condition;
+        
 
         inline bool is_ready() const
         {
@@ -532,7 +529,7 @@ struct bytecode_pointer
                 eval::sleeping,
                 {sleep_condition::timer,
                  terminator,
-                 std::chrono::seconds(time),
+                 std::chrono::milliseconds(time * 30),
                  0}};
         }
 
@@ -681,8 +678,8 @@ struct bytecode_pointer
 
         if(!match_type(type, out->ret_type))
         {
-            auto type1 = magic_enum::enum_name(type);
-            auto type2 = magic_enum::enum_name(out->ret_type);
+            auto type1 = to_string(type);
+            auto type2 = to_string(out->ret_type);
 
             auto type1_ = std::string(type1.begin(), type1.end());
             auto type2_ = std::string(type2.begin(), type2.end());
@@ -797,13 +794,13 @@ struct bytecode_pointer
 
         if(num == unknown_opcode_signature)
         {
-            auto        opname      = magic_enum::enum_name(op.opcode);
-            auto        ret_type    = magic_enum::enum_name(op.ret_type);
+            auto        opname      = bc::to_string(op.opcode);
+            auto        ret_type    = to_string(op.ret_type);
             std::string param_types = {};
             for(auto it = value_stack.end() - param_i; it != value_stack.end();
                 ++it)
             {
-                param_types.append(magic_enum::enum_name(it->ret_type));
+                param_types.append(to_string(it->ret_type));
                 param_types.append(" ");
             }
             std::string signature;
@@ -1077,7 +1074,8 @@ struct bytecode_pointer
     }
 
     inline void execute_state(
-        script_state_t& state, opcode_handlers const& handler)
+        script_state_t& state,
+        opcode_handlers const& handler)
     {
         if(state.is_inactive())
             return;
@@ -1188,86 +1186,86 @@ struct disassembler_t
 
 } // namespace blam::hsc
 
-namespace Coffee {
-namespace Strings {
-
-template<
-    typename BC,
-    typename std::enable_if<
-        std::is_same<BC, blam::hsc::bc::v1>::value ||
-        std::is_same<BC, blam::hsc::bc::v2>::value>::type* = nullptr>
-inline std::string to_string(BC opc)
-{
-    return blam::hsc::to_string(opc);
-}
-
-inline std::string to_string(blam::hsc::type_t type)
-{
-    return blam::hsc::to_string(type);
-}
-
-inline std::string to_string(blam::hsc::script_eval_result type)
-{
-    return blam::hsc::to_string(type);
-}
-
-inline std::string to_string(blam::hsc::expression_t exp)
-{
-    return blam::hsc::to_string(exp);
-}
-
-inline std::string to_string(blam::hsc::script_type_t script_type)
-{
-    return blam::hsc::to_string(script_type);
-}
-
-inline std::string to_string(blam::hsc::script_status stat)
-{
-    return blam::hsc::to_string(stat);
-}
-
-template<typename BC>
-inline std::string to_string(blam::hsc::opcode_layout<BC> const& op)
-{
-    using namespace blam::hsc;
-    std::string out = {};
-
-    if(!stl_types::any_of(
-           op.exp_type,
-           expression_t::expression,
-           expression_t::global_ref,
-           expression_t::group,
-           expression_t::param_ref,
-           expression_t::script_ref))
-        return "(invalid)";
-
-    if(op.exp_type == expression_t::global_ref)
-        out = "global@" + std::to_string(op.data_ptr);
-    else if(op.exp_type == expression_t::group)
-        out = to_string(op.opcode);
-    else
-        switch(op.param_type)
-        {
-        case type_t::bool_:
-            out = op.to_bool() ? "true" : "false";
-            break;
-        case type_t::real_:
-            out = std::to_string(op.to_real());
-            break;
-        case type_t::short_:
-            out = std::to_string(op.to_u16());
-            break;
-        case type_t::long_:
-            out = std::to_string(op.to_u32());
-            break;
-        default:
-            out = std::to_string(op.template get<i32>()) + "/" +
-                  std::to_string(op.to_ptr());
-            break;
-        }
-
-    return "[" + blam::hsc::to_string(op.ret_type) + ":" + out + "]";
-}
-
-} // namespace Strings
-} // namespace Coffee
+// namespace Coffee {
+// namespace Strings {
+// 
+// template<
+//     typename BC,
+//     typename std::enable_if<
+//         std::is_same<BC, blam::hsc::bc::v1>::value ||
+//         std::is_same<BC, blam::hsc::bc::v2>::value>::type* = nullptr>
+// inline std::string to_string(BC opc)
+// {
+//     return blam::hsc::bc::to_string(opc);
+// }
+// 
+// inline std::string to_string(blam::hsc::type_t type)
+// {
+//     return blam::hsc::to_string(type);
+// }
+// 
+// inline std::string to_string(blam::hsc::script_eval_result type)
+// {
+//     return blam::hsc::to_string(type);
+// }
+// 
+// inline std::string to_string(blam::hsc::expression_t exp)
+// {
+//     return blam::hsc::to_string(exp);
+// }
+// 
+// inline std::string to_string(blam::hsc::script_type_t script_type)
+// {
+//     return blam::hsc::to_string(script_type);
+// }
+// 
+// inline std::string to_string(blam::hsc::script_status stat)
+// {
+//     return blam::hsc::to_string(stat);
+// }
+// 
+// template<typename BC>
+// inline std::string to_string(blam::hsc::opcode_layout<BC> const& op)
+// {
+//     using namespace blam::hsc;
+//     std::string out = {};
+// 
+//     if(!stl_types::any_of(
+//            op.exp_type,
+//            expression_t::expression,
+//            expression_t::global_ref,
+//            expression_t::group,
+//            expression_t::param_ref,
+//            expression_t::script_ref))
+//         return "(invalid)";
+// 
+//     if(op.exp_type == expression_t::global_ref)
+//         out = "global@" + std::to_string(op.data_ptr);
+//     else if(op.exp_type == expression_t::group)
+//         out = to_string(op.opcode);
+//     else
+//         switch(op.param_type)
+//         {
+//         case type_t::bool_:
+//             out = op.to_bool() ? "true" : "false";
+//             break;
+//         case type_t::real_:
+//             out = std::to_string(op.to_real());
+//             break;
+//         case type_t::short_:
+//             out = std::to_string(op.to_u16());
+//             break;
+//         case type_t::long_:
+//             out = std::to_string(op.to_u32());
+//             break;
+//         default:
+//             out = std::to_string(op.template get<i32>()) + "/" +
+//                   std::to_string(op.to_ptr());
+//             break;
+//         }
+// 
+//     return "[" + blam::hsc::to_string(op.ret_type) + ":" + out + "]";
+// }
+// 
+// } // namespace Strings
+// } // namespace Coffee

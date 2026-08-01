@@ -1,10 +1,13 @@
 #pragma once
 
 #include <peripherals/libc/types.h>
+#include <string_view>
 
 namespace blam::hsc::bc {
 
 /* Xbox maps, a30 and b30 on PC */
+// TODO: There's some inconsistency in the opcodes above 250 somewhere
+// Opcodes are mostly matched, but some are different, so we get things wrong when interpreting
 enum class v1 : libc_types::i16
 {
     sentinel = -13622,
@@ -645,5 +648,7 @@ enum class v1 : libc_types::i16
 
     max_opcode = 550,
 };
+
+std::string_view to_string(v1 opcode);
 
 } // namespace blam::hsc::bc

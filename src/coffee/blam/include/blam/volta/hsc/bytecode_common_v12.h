@@ -7,10 +7,6 @@
 
 #include <peripherals/stl/time_types.h>
 
-#define MAGIC_ENUM_RANGE_MIN -10
-#define MAGIC_ENUM_RANGE_MAX 550
-#include <peripherals/stl/magic_enum.hpp>
-
 namespace blam::hsc {
 
 struct script_error : undefined_behavior
@@ -40,7 +36,6 @@ enum class script_type_t : u16
     continuous, /*!< Script that runs at every tick */
     static_,    /*!< Script that may be called like a function */
     stub,       /*!< Unknown? */
-
 };
 
 enum class node_flags_t : u16
@@ -439,5 +434,13 @@ struct opcode_layout
             other, [](auto op1, auto op2) { return op1 / op2; });
     }
 };
+
+std::string to_string(opcode_layout<bc::v1> const& op);
+std::string to_string(opcode_layout<bc::v2> const& op);
+
+std::string_view to_string(expression_t expr);
+std::string_view to_string(function_group_t group);
+std::string_view to_string(script_type_t type);
+std::string_view to_string(type_t type);
 
 } // namespace blam::hsc

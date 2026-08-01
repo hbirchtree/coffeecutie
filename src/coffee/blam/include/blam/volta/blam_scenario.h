@@ -1006,7 +1006,24 @@ struct cutscene_camera_position
     Vecf3     position;
     Vecf3     rotation;
     f32       fov;
+
+    // u32 padding[11];
+
+    inline std::pair<Vecf3, Quatf> to_camera(
+        typing::vector_types::Matf3 const& basis) const
+    {
+        return {
+            position,
+            glm::normalize(
+                glm::angleAxis(rotation.y, basis[1]) *
+                glm::angleAxis(
+                    rotation.x + glm::pi<f32>(), basis[0]) *
+                glm::angleAxis(rotation.z, basis[2])),
+        };
+    }
 };
+
+// static_assert(sizeof(cutscene_camera_position) == 104);
 
 /*!
  * \brief A Blam! scenario descriptor

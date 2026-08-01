@@ -1,6 +1,7 @@
 #pragma once
 
 #include <peripherals/libc/types.h>
+#include <string_view>
 
 namespace blam::hsc::bc {
 
@@ -643,5 +644,7 @@ enum class v2 : libc_types::i16
 
     max_opcode = 550,
 };
+
+std::string_view to_string(v2 opcode);
 
 } // namespace blam::hsc::bc

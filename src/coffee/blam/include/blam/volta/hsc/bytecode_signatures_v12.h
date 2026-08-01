@@ -243,8 +243,10 @@ inline typename Getter::return_type opcode_signature(
 
         /* Camera controls */
     case o::camera_set:
-        return Getter::template get<
-            sig_t<t::void_, t::cutscene_camera_pnt, t::short_>>();
+        return Getter::template get<sig_t<
+            t::void_,
+            t::cutscene_camera_pnt,
+            t::short_>>();
     case o::camera_set_relative:
         return Getter::template get<sig_t<
             t::void_,
@@ -256,7 +258,10 @@ inline typename Getter::return_type opcode_signature(
     case o::camera_set_first_person:
         return Getter::template get<sig_t<t::void_, t::unit_name>>();
     case o::camera_control:
-        return Getter::template get<sig_t<t::void_, t::bool_>>();
+        return Getter::template get<sig_t<
+            t::void_,
+            t::bool_,
+            t::cutscene_camera_pnt>>();
 
         /* Cinematic controls */
     case o::cinematic_set_near_clip_distance:
@@ -614,7 +619,7 @@ inline typename Getter::return_type opcode_signature(
         break;
     }
 
-    auto op_name = magic_enum::enum_name(op.opcode);
+    auto op_name = to_string(op.opcode);
     Throw(missing_signature(std::string(op_name.begin(), op_name.end())));
 }
 
