@@ -1,0 +1,24 @@
+name: vcpkg dependency freshness
+'on':
+  schedule:
+  - cron: "0 6 * * 1"
+  workflow_dispatch: {}
+  push:
+    branches:
+    - master
+    - testing
+    paths:
+    - vcpkg.json
+    - vcpkg-configuration.json
+    - .github/workflows/40-vcpkg-versions.yml
+    - .github/scripts/check_vcpkg_versions.py
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - name: Compare pinned vcpkg ports against upstream
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: python3 .github/scripts/check_vcpkg_versions.py
