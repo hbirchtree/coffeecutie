@@ -15,6 +15,7 @@ endif()
 
 if(BUILD_BLAM)
   add_subdirectory(blam/dimeter-info)
+  add_subdirectory(blam/script-dumper)
 endif()
 
 # Trimmed BSP+lightmap viewer for the GX backend (no gleam/GLSL).
