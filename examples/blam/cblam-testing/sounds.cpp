@@ -347,9 +347,9 @@ struct SoundSystem
                 continue;
             auto const& cached = cam.camera_.cached;
             auto& listener = snd.listener();
-            listener.set_property<oaf::listener_property::position>(
+            listener.template set_property<oaf::listener_property::position>(
                 cam.camera.position);
-            listener.set_property<oaf::listener_property::orientation>(
+            listener.template set_property<oaf::listener_property::orientation>(
                 glm::transpose(glm::mat3(cached.right, cached.up, -cached.forward)));
         }
     }
