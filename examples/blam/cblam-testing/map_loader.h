@@ -3,9 +3,6 @@
 #include "coffee/comp_app/services.h"
 #include "components.h"
 #include "data.h"
-#if defined(FEATURE_ENABLE_DiscordLatte)
-#include "discord/discord_system.h"
-#endif
 #include "networking.h"
 #include "selected_version.h"
 
@@ -18,6 +15,10 @@
 #include <url/url.h>
 
 #include <memory>
+
+#if defined(FEATURE_ENABLE_DiscordLatte)
+#include <discord/discord_system.h>
+#endif
 
 using platform::url::Url;
 using type_safety::empty_list_t;

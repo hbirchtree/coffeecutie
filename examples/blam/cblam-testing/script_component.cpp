@@ -1,30 +1,28 @@
 #include "script_component.h"
-#include "blam/volta/hsc/blam_bytecode_opcodes.h"
-#include "blam/volta/hsc/bytecode_common_v12.h"
+
 #include "caching_item.h"
 #include "components.h"
-#include "map_loader.h"
-#include "peripherals/semantic/enum/rsca.h"
-#include "peripherals/typing/vectors/glm_vector_types.h"
-#include "url/url.h"
+#include "data.h"
+#include "selected_version.h"
 
 #include <blam/volta/blam_scenario.h>
 #include <blam/volta/blam_stl.h>
 #include <blam/volta/hsc/blam_bytecode.h>
+#include <blam/volta/hsc/blam_bytecode_opcodes.h>
+#include <blam/volta/hsc/bytecode_common_v12.h>
 #include <blam/volta/hsc/bytecode_eval.h>
 
 #include <chrono>
 #include <coffee/core/debug/formatting.h>
 #include <cstdio>
 #include <peripherals/stl/type_list.h>
+#include <peripherals/typing/vectors/glm_vector_types.h>
 #include <unistd.h>
 
 #if defined(FEATURE_ENABLE_ImGui)
 #include <coffee/imgui/imgui_binding.h>
 #endif
 
-#include "data.h"
-#include "selected_version.h"
 
 using libc_types::f32;
 using libc_types::u32;
