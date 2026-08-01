@@ -3,6 +3,7 @@
 #include "convert.h"
 #include "pad.h"
 
+#include <fmt/format.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/semantic/chunk.h>
 
@@ -16,10 +17,7 @@ FORCEDINLINE std::basic_string<CharType> hexify(libc_types::u64 s)
 
     long long unsigned int ss = s;
 
-    std::basic_string<CharType> str;
-    str.resize(static_cast<size_t>(snprintf(nullptr, 0, "%llx", ss)) + 1);
-    snprintf(&str[0], str.size() + 1, "%llx", ss);
-    str.resize(str.size() - 1);
+    std::basic_string<CharType> str = ::fmt::format("{:016x}", s);
     stl_types::str::trim::left_zero(str);
     return str;
 }
@@ -57,9 +55,7 @@ FORCEDINLINE std::basic_string<CharType> hexdump(
 
     for(size_t i = 0; i < data.size; i++)
     {
-        out.append("00");
-        sprintf(
-            &out[out.size() - 2], "%02x", static_cast<unsigned char>(data[i]));
+        out.append(::fmt::format("{:02x}", data[i]));
         if(newline_freq == 0 || (i + 1) % newline_freq != 0)
         {
             if(spacing)
