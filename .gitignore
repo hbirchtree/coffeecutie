@@ -71,6 +71,7 @@ gamecontrollerdb.txt*
 # From tools
 *.pyc
 __pycache__
+compile_commands.json
 
 # From VCPKG
 /vcpkg_installed/
