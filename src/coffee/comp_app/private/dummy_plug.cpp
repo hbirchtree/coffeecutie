@@ -1,6 +1,7 @@
 #include "peripherals/libc/types.h"
 #include "platforms/file.h"
 #include "types.h"
+#include "url/url.h"
 #include <coffee/comp_app/dummy_plug.h>
 
 #include <coffee/comp_app/app_events.h>
@@ -372,6 +373,10 @@ void spawn_dummy_plug_children(nlohmann::json const& config)
         return;
     }
 
+    auto base_dir = platform::path::dir(
+        MkUrl(
+            platform::env::var("DUMMY_PLUG_CONFIG").value())).value().path();
+
     spawn_grace_ms = config.value("spawn_grace_ms", 30000u);
 
     auto const& args_in = Coffee::GetInitArgs();
@@ -406,7 +411,7 @@ void spawn_dummy_plug_children(nlohmann::json const& config)
     libc_types::u32 index = 0;
     for(auto const& entry : config["spawn"])
     {
-        const auto cfg_path = entry.value("config", std::string{});
+        const auto cfg_path = (base_dir / entry.value("config", std::string{})).internUrl;
         if(cfg_path.empty())
         {
             Coffee::Logging::cFatal(
@@ -495,11 +500,16 @@ void fork_dummy_plugs(
         platform::env::var("DUMMY_PLUG_CONFIG").value());
     auto config_content = Coffee::Resource(config_file);
     if(!Coffee::FileMap(config_content))
-        return;
+    {
+        Coffee::Logging::cFatal("Dummy plug config file not found: {}",
+            config_file.internUrl);
+        std::exit(1);
+    }
 
     if(config_content.data().empty())
     {
         Coffee::Logging::cFatal("Dummy plug config file is empty");
+        std::exit(1);
     }
 
     dummy_plug.config  = nlohmann::json::parse(config_content.data());
@@ -508,6 +518,7 @@ void fork_dummy_plugs(
     if(config.empty())
     {
         Coffee::Logging::cFatal("Dummy plug config contains nothing");
+        std::exit(1);
     }
 
     cDebug(
@@ -856,13 +867,7 @@ void insert_dummy_plug(
                         continue;
 
                     if(elapsed < timeout)
-                    {
-                        cDebug(
-                            "Waiting for spawned child \"{}\" to finish "
-                            "loading",
-                            child.id);
                         return;
-                    }
                     /* Give up waiting on this child rather than hang
                      * forever: end_time (below) is only ever scheduled
                      * once this function gets past this gate, so with no

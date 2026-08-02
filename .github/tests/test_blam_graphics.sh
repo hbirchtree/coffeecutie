@@ -103,10 +103,13 @@ wget -q -O maps/pc/sounds.map      --header="Authorization: $MAP_ACCESS_TOKEN" h
 echo "::endgroup::"
 echo "===================================="
 
-mkdir -p "/tmp/Blam Graphics"
-
 # Find assets directory
 ASSETS_DIR=$(find $BUILDDIR -name assets -type d | head -n 1)
+
+# Create a temp dir for this test
+# So we know what's new on reruns
+export TMPDIR=$TESTDIR/tmp
+mkdir -p $TMPDIR
 
 # BOOT_MAP: which downloaded map to launch with (default beavercreek, the
 # original single-process smoke-test map). The networking scenario boots
@@ -114,14 +117,27 @@ ASSETS_DIR=$(find $BUILDDIR -name assets -type d | head -n 1)
 # config.
 BOOT_MAP=${BOOT_MAP:-beavercreek.map}
 
+if [[ $BOOT_MAP != /* ]]; then
+    BOOT_MAP=$TESTDIR/maps/pc/$BOOT_MAP
+fi
+
+echo "::group::Runtime environment"
+env
+echo "Directory: $TESTDIR"
+echo "Binary:    $BINARY"
+echo "::endgroup::"
+
+# Turn off profiler; it fills the disk with this kind of test
+export COFFEE_DISABLE_PROFILER=1
+
 if [ -n "$SYS_LD" ] && [ -f "$BINARY" ]; then
     echo "::group::Running binary directly with sysroot loader"
-    LD_LIBRARY_PATH=$PWD/sysroot/lib $SYS_LD --library-path $PWD/sysroot/lib $BINARY $ASSETS_DIR $PWD/maps/pc/$BOOT_MAP 2>&1 | tee "/tmp/Blam Graphics/output.log"
+    LD_LIBRARY_PATH=$PWD/sysroot/lib $SYS_LD --library-path $PWD/sysroot/lib $BINARY $ASSETS_DIR $BOOT_MAP 2>&1 | tee "$TESTDIR/output.log"
     echo "Return code: $?"
     echo "::endgroup::"
 elif [ -d "$APPDIR" ]; then
     echo "::group::Running via AppRun"
-    $APPDIR/AppRun $PWD/maps/pc/$BOOT_MAP 2>&1 | tee "/tmp/Blam Graphics/output.log"
+    $APPDIR/AppRun $BOOT_MAP 2>&1 | tee "$TESTDIR/output.log"
     echo "Return code: $?"
     echo "::endgroup::"
 else
