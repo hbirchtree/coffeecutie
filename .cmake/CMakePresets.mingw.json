@@ -31,7 +31,7 @@
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "x64;mingw;windows",
                 "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON",
                 "VCPKG_MANIFEST_FEATURES": "audio;blam;gleam;headful;network;openssl",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports-mingw/protobuf;${sourceDir}/toolchain/vcpkg/ports-mingw/openssl;${sourceDir}/toolchain/vcpkg/ports-mingw/hash-library",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports-mingw/openssl;${sourceDir}/toolchain/vcpkg/ports-mingw/hash-library",
                 "VCPKG_TARGET_TRIPLET": "x64-mingw-posix-static",
                 "WINDOWS_EXTRA_LIBRARIES": "$env{TOOLCHAIN_ROOT}/$env{ARCHITECTURE}/bin/libwinpthread-1.dll;$env{TOOLCHAIN_ROOT}/$env{ARCHITECTURE}/lib/libgcc_s_seh-1.dll;$env{TOOLCHAIN_ROOT}/$env{ARCHITECTURE}/lib/libstdc++-6.dll"
             },

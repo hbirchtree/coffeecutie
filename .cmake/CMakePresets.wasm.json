@@ -25,7 +25,6 @@
                 "EMSCRIPTEN_ROOT_PATH": "$env{EMSDK}/upstream/emscripten",
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "$env{EMSCRIPTEN}/cmake/Modules/Platform/Emscripten.cmake",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "emscripten;wasm",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/fmt",
                 "VCPKG_TARGET_TRIPLET": "wasm32-emscripten"
             },
             "environment": {

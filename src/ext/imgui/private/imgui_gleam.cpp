@@ -144,7 +144,7 @@ void ImGuiSystem::submit_draws(Proxy& e)
             {
                 ImTextureID ptr;
                 u32         hnd;
-            } tex_handle = {.ptr = cmd.TextureId};
+            } tex_handle = {.ptr = cmd.TexRef.GetTexID()};
 
             data.shell_texture->m_handle = tex_handle.hnd;
             if(cmd.UserCallback)

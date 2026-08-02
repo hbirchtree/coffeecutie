@@ -312,7 +312,7 @@ jobs:
     - name: Installing Inkscape + other stuff
       run: |
         brew install --cask inkscape
-        brew install automake autoconf libtool
+        brew install automake autoconf autoconf-archive libtool
         # git cmake ninja pkg-config wget
     - name: Host tools cache
       uses: actions/cache@v5

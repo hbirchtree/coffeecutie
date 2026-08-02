@@ -742,12 +742,12 @@ void RendererLoop(
 #if defined(FEATURE_ENABLE_Gexxo)
         auto&              cam = e.subsystem_cast<CameraContainer>();
         std::vector<Matf4> modelviews;
-        for(auto& ent : e.select(FloorTag))
+        for(auto ent : e.select(FloorTag))
             modelviews.push_back(
-                cam.transform * e.get<TransformPair>(ent.id)->second);
-        for(auto& ent : e.select(BaseItemTag))
+                cam.transform * ent.get<TransformPair>().second);
+        for(auto ent : e.select(BaseItemTag))
             modelviews.push_back(
-                cam.transform * e.get<TransformPair>(ent.id)->second);
+                cam.transform * ent.get<TransformPair>().second);
         d.gfx.submit(
             rhi::draw_command{
                 .call = {.indexed = true, .instanced = true},
