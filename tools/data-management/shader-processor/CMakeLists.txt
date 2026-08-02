@@ -33,7 +33,6 @@ coffee_library(
             # glslang::OGLCompiler
             glslang::glslang
             glslang::SPIRV
-            glslang::SPVRemapper
             SPIRV-Headers::SPIRV-Headers
             SPIRV-Tools-link
             Threads::Threads
