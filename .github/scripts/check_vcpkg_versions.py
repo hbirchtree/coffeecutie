@@ -28,8 +28,10 @@ GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 MAX_COMMIT_PAGES = 10  # 100 commits/page -> looks back up to 1000 commits per port
 API_ROOT = "https://api.github.com"
 RAW_ROOT = "https://raw.githubusercontent.com"
-OSV_QUERYBATCH_URL = "https://api.osv.dev/v1/querybatch"
+OSV_API_ROOT = "https://api.osv.dev/v1"
+OSV_QUERYBATCH_URL = f"{OSV_API_ROOT}/querybatch"
 OSV_BATCH_SIZE = 100
+OSV_MAX_SHOWN_PER_ROW = 5
 
 
 def http_get(url: str, headers: dict | None = None, retries: int = 3) -> tuple[int, bytes]:
@@ -74,19 +76,24 @@ def raw_file(owner: str, repo: str, ref: str, path: str) -> str | None:
     return body.decode("utf-8", errors="replace")
 
 
-def osv_lookup(name_versions: list[tuple[str, str]]) -> dict[str, list[str]]:
+def osv_lookup(items: list[tuple[int, str, str]]) -> dict[int, list[tuple[str, str]]]:
     """
     Best-effort, flag-only OSV.dev lookup: queries by package name + version
     with no ecosystem specified, so results may include unrelated projects
     that happen to share a name (e.g. "outcome", "status-code"). This is not
     a verified affected-version match — it's a pointer to go check manually.
+
+    `items` is (key, name, version) so callers can query the same package
+    name at multiple versions (e.g. a registry pin and a local overlay pin)
+    without one result silently overwriting the other. Returns, per key, a
+    list of (vuln_id, modified_date) sorted most-recent first.
     """
-    hits: dict[str, list[str]] = {}
-    items = [(n, v) for n, v in name_versions if v]
+    hits: dict[int, list[tuple[str, str]]] = {}
+    items = [(k, n, v) for k, n, v in items if v]
     for i in range(0, len(items), OSV_BATCH_SIZE):
         batch = items[i : i + OSV_BATCH_SIZE]
         body = json.dumps(
-            {"queries": [{"version": v, "package": {"name": n}} for n, v in batch]}
+            {"queries": [{"version": v, "package": {"name": n}} for _, n, v in batch]}
         ).encode("utf-8")
         req = urllib.request.Request(
             OSV_QUERYBATCH_URL,
@@ -99,11 +106,47 @@ def osv_lookup(name_versions: list[tuple[str, str]]) -> dict[str, list[str]]:
                 results = json.loads(resp.read())["results"]
         except (urllib.error.URLError, urllib.error.HTTPError, KeyError, json.JSONDecodeError):
             continue
-        for (name, _), result in zip(batch, results):
-            vuln_ids = [v["id"] for v in result.get("vulns", [])]
-            if vuln_ids:
-                hits[name] = vuln_ids
+        for (key, _, _), result in zip(batch, results):
+            entries = [(v["id"], v.get("modified", "")) for v in result.get("vulns", [])]
+            if entries:
+                entries.sort(key=lambda e: e[1], reverse=True)
+                hits[key] = entries
     return hits
+
+
+def osv_vuln_affected_note(vuln_id: str, name: str) -> tuple[str, str]:
+    """
+    Fetches one vuln's full record and returns (short_date, affected_note).
+    Only called for the handful of IDs actually displayed, since the full
+    record (unlike the batch query) carries the affected-version ranges.
+    """
+    status, body = http_get(f"{OSV_API_ROOT}/vulns/{vuln_id}")
+    if status != 200:
+        return "", ""
+    try:
+        data = json.loads(body)
+    except json.JSONDecodeError:
+        return "", ""
+
+    published = (data.get("published") or data.get("modified") or "")[:10]
+
+    blocks = [
+        a for a in data.get("affected", []) if a.get("package", {}).get("name", "").lower() == name.lower()
+    ] or data.get("affected", [])
+    for block in blocks:
+        for rng in block.get("ranges", []):
+            events = rng.get("events", [])
+            fixed = next((e["fixed"] for e in events if "fixed" in e), None)
+            introduced = next((e["introduced"] for e in events if "introduced" in e), None)
+            if fixed:
+                lead = f"{introduced}–" if introduced and introduced != "0" else "<"
+                return published, f"{lead}{fixed}"
+            if introduced:
+                return published, f">={introduced}"
+        versions = block.get("versions")
+        if versions:
+            return published, f"{len(versions)} version(s) incl. {versions[0]}"
+    return published, ""
 
 
 def owner_repo_from_url(repo_url: str) -> tuple[str, str]:
@@ -338,48 +381,58 @@ def main() -> int:
     rows = []
     skipped = []
 
+    # A name can resolve to BOTH a registry pin and a local overlay pin at
+    # once — when it does, emit a row for each, so it's visible what version
+    # the registry baseline would give if the overlay weren't wired in.
     for name in sorted(dep_names):
-        is_local = name in local_overlays
         reg = resolve_registry(name, registries)
-
-        if is_local:
-            pinned = read_local_port_version(local_overlays[name])
-            if pinned is None:
-                skipped.append((name, "local overlay port: could not parse version"))
-                continue
-            if reg is None:
-                skipped.append((name, "local overlay port, no matching upstream registry"))
-                continue
-            latest = fetch_port_version(reg, name, default_branch(reg))
-            behind = commits_behind(reg, name)
-            source = "local overlay (patched)"
-        else:
-            if reg is None:
-                skipped.append((name, "no matching registry"))
-                continue
-            pinned = overrides.get(name) or fetch_port_version(reg, name, reg.baseline)
-            latest = fetch_port_version(reg, name, default_branch(reg))
-            behind = commits_behind(reg, name)
-            source = "override" if name in overrides else "registry"
-
-        if pinned is None or latest is None:
-            skipped.append((name, f"could not read port from {reg.label}"))
+        if reg is None:
+            skipped.append((name, "no matching registry"))
             continue
 
-        status = "up to date" if str(pinned) == str(latest) else "OUTDATED"
+        latest = fetch_port_version(reg, name, default_branch(reg))
+        if latest is None:
+            skipped.append((name, f"could not read latest port version from {reg.label}"))
+            continue
+        behind = commits_behind(reg, name)
         note = "" if name in declared_names or name in overrides else "not a direct dependency"
-        rows.append(
-            {
-                "name": name,
-                "registry": reg.label,
-                "pinned": str(pinned),
-                "latest": str(latest),
-                "behind": behind,
-                "status": status,
-                "source": source,
-                "note": note,
-            }
-        )
+
+        reg_pinned = overrides.get(name) or fetch_port_version(reg, name, reg.baseline)
+        if reg_pinned is None:
+            skipped.append((name, f"could not read pinned port from {reg.label}"))
+        else:
+            status = "up to date" if str(reg_pinned) == str(latest) else "OUTDATED"
+            rows.append(
+                {
+                    "name": name,
+                    "registry": reg.label,
+                    "pinned": str(reg_pinned),
+                    "latest": str(latest),
+                    "behind": behind,
+                    "status": status,
+                    "source": "override" if name in overrides else "registry",
+                    "note": note,
+                }
+            )
+
+        if name in local_overlays:
+            local_pinned = read_local_port_version(local_overlays[name])
+            if local_pinned is None:
+                skipped.append((name, "local overlay port: could not parse version"))
+                continue
+            status = "up to date" if str(local_pinned) == str(latest) else "OUTDATED"
+            rows.append(
+                {
+                    "name": name,
+                    "registry": reg.label,
+                    "pinned": str(local_pinned),
+                    "latest": str(latest),
+                    "behind": behind,
+                    "status": status,
+                    "source": "local overlay (patched)",
+                    "note": note,
+                }
+            )
 
     rows.sort(key=lambda r: (r["status"] != "OUTDATED", r["name"]))
     main_rows = [r for r in rows if r["source"] != "local overlay (patched)"]
@@ -425,7 +478,9 @@ def main() -> int:
                 f"{r['behind']} | {marker} {r['status']} | {r['note']} |"
             )
 
-    osv_hits = osv_lookup([(r["name"], r["pinned"].split("#")[0]) for r in rows])
+    osv_hits = osv_lookup(
+        [(i, r["name"], r["pinned"].split("#")[0]) for i, r in enumerate(rows)]
+    )
     if osv_hits:
         lines.append("")
         lines.append("## Possible known vulnerabilities (unverified)")
@@ -436,17 +491,35 @@ def main() -> int:
             "unrelated project sharing the name, or may not even apply to this exact fork/build. "
             "Treat as a prompt to go check manually, not as a confirmed CVE."
         )
+        lines.append(
+            "Sorted most-recently-modified first. \"Affected\" is read off the first matching "
+            "range in the advisory and may belong to a different ecosystem/fork than ours."
+        )
         lines.append("")
-        lines.append("| Package | Pinned version queried | Possible advisories |")
-        lines.append("|---|---|---|")
-        for name in sorted(osv_hits):
-            pinned = next(r["pinned"] for r in rows if r["name"] == name)
-            links = ", ".join(
-                f"[{vid}](https://osv.dev/vulnerability/{vid})" for vid in osv_hits[name][:5]
-            )
-            if len(osv_hits[name]) > 5:
-                links += f", +{len(osv_hits[name]) - 5} more"
-            lines.append(f"| {name} | `{pinned}` | {links} |")
+        lines.append("| Package | Source | Version queried | Advisory | Published | Affected |")
+        lines.append("|---|---|---|---|---|---|")
+        hit_rows = sorted(
+            ((rows[i], entries) for i, entries in osv_hits.items()),
+            key=lambda pair: (pair[0]["name"], pair[0]["source"]),
+        )
+        detail_cache: dict[str, tuple[str, str]] = {}
+        for r, entries in hit_rows:
+            # entries already sorted most-recent-first by osv_lookup
+            shown = entries[:OSV_MAX_SHOWN_PER_ROW]
+            for vid, _modified in shown:
+                if vid not in detail_cache:
+                    detail_cache[vid] = osv_vuln_affected_note(vid, r["name"])
+                published, note = detail_cache[vid]
+                affected = f"`{note}`" if note else "?"
+                lines.append(
+                    f"| {r['name']} | {r['source']} | `{r['pinned']}` | "
+                    f"[{vid}](https://osv.dev/vulnerability/{vid}) | {published} | {affected} |"
+                )
+            if len(entries) > OSV_MAX_SHOWN_PER_ROW:
+                lines.append(
+                    f"| {r['name']} | {r['source']} | `{r['pinned']}` | "
+                    f"+{len(entries) - OSV_MAX_SHOWN_PER_ROW} more (see osv.dev) | | |"
+                )
 
     if skipped:
         lines.append("")
