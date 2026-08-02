@@ -43,7 +43,7 @@ STATICINLINE void begin_video_capture(
     u32 video_capture_slot, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BeginVideoCaptureNV)
     }
@@ -70,7 +70,7 @@ STATICINLINE void bind_video_capture_stream_buffer(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BindVideoCaptureStreamBufferNV)
     }
@@ -105,7 +105,7 @@ STATICINLINE void bind_video_capture_stream_texture(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BindVideoCaptureStreamTextureNV)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -137,7 +137,7 @@ STATICINLINE void end_video_capture(
     u32 video_capture_slot, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EndVideoCaptureNV)
     }
@@ -169,7 +169,7 @@ STATICINLINE void get_video_capture_streamdv(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetVideoCaptureStreamdvNV)
     }
@@ -211,7 +211,7 @@ STATICINLINE void get_video_capture_streamfv(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetVideoCaptureStreamfvNV)
     }
@@ -253,7 +253,7 @@ STATICINLINE void get_video_capture_streamiv(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetVideoCaptureStreamivNV)
     }
@@ -293,7 +293,7 @@ STATICINLINE void get_video_captureiv(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetVideoCaptureivNV)
     }
@@ -336,7 +336,7 @@ STATICINLINE GLenum video_capture(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VideoCaptureNV)
     }
@@ -384,7 +384,7 @@ STATICINLINE void video_capture_stream_parameter(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VideoCaptureStreamParameterdvNV)
     }
@@ -428,7 +428,7 @@ STATICINLINE void video_capture_stream_parameter(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VideoCaptureStreamParameterfvNV)
     }
@@ -472,7 +472,7 @@ STATICINLINE void video_capture_stream_parameter(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VideoCaptureStreamParameterivNV)
     }

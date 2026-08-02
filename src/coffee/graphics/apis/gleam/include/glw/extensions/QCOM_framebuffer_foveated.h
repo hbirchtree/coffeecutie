@@ -27,7 +27,7 @@ STATICINLINE void framebuffer_foveation_config(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FramebufferFoveationConfigQCOM)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -78,7 +78,7 @@ STATICINLINE void framebuffer_foveation_parameter(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FramebufferFoveationParametersQCOM)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \

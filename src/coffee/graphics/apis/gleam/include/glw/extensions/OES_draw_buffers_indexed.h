@@ -39,7 +39,7 @@ STATICINLINE void blend_equation_separatei(
     error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BlendEquationSeparateiOES)
     }
@@ -63,7 +63,7 @@ STATICINLINE void blend_equationi(
     error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BlendEquationiOES)
     }
@@ -92,7 +92,7 @@ STATICINLINE void blend_func_separatei(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BlendFuncSeparateiOES)
     }
@@ -123,7 +123,7 @@ STATICINLINE void blend_funci(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BlendFunciOES)
     }
@@ -152,7 +152,7 @@ STATICINLINE void color_maski(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ColorMaskiOES)
     }
@@ -175,7 +175,7 @@ STATICINLINE void disablei(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DisableiOES)
     }
@@ -198,7 +198,7 @@ STATICINLINE void enablei(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EnableiOES)
     }
@@ -221,7 +221,7 @@ STATICINLINE GLboolean is_enabledi(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsEnablediOES)
     }

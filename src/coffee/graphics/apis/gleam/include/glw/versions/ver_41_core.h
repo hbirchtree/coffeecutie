@@ -10,7 +10,7 @@ STATICINLINE void clear_depthf(
     f32 d, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClearDepthf)
     }
@@ -33,7 +33,7 @@ STATICINLINE void depth_rangef(
     f32 n, f32 f, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DepthRangef)
     }
@@ -66,7 +66,7 @@ STATICINLINE void get_shader_precision_format(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetShaderPrecisionFormat)
     }
@@ -98,7 +98,7 @@ STATICINLINE void release_shader_compiler(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ReleaseShaderCompiler)
     }
@@ -133,7 +133,7 @@ STATICINLINE void shader_binary(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ShaderBinary)
     }
@@ -177,7 +177,7 @@ STATICINLINE void get_program_binary(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetProgramBinary)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -223,7 +223,7 @@ STATICINLINE void program_binary(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramBinary)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -265,7 +265,7 @@ STATICINLINE void program_parameter(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramParameteri)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -293,7 +293,7 @@ STATICINLINE void active_shader_program(
     u32 pipeline, u32 program, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ActiveShaderProgram)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -325,7 +325,7 @@ STATICINLINE void bind_program_pipeline(
     u32 pipeline, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BindProgramPipeline)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -356,7 +356,7 @@ STATICINLINE GLuint create_shader_programv(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CreateShaderProgramv)
     }
@@ -387,7 +387,7 @@ STATICINLINE void delete_program_pipelines(
     span_const_u32 const& pipelines, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeleteProgramPipelines)
     }
@@ -421,7 +421,7 @@ STATICINLINE void gen_program_pipelines(
     span_u32 pipelines, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GenProgramPipelines)
     }
@@ -459,7 +459,7 @@ STATICINLINE void get_program_pipeline_info_log(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetProgramPipelineInfoLog)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -501,7 +501,7 @@ STATICINLINE void get_program_pipelineiv(
     error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetProgramPipelineiv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -536,7 +536,7 @@ STATICINLINE GLboolean
 is_program_pipeline(u32 pipeline, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsProgramPipeline)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -569,7 +569,7 @@ STATICINLINE void program_uniform(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform1d)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -606,7 +606,7 @@ STATICINLINE void program_uniform(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform1dv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -647,7 +647,7 @@ STATICINLINE void program_uniform(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform1f)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -684,7 +684,7 @@ STATICINLINE void program_uniform(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform1fv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -725,7 +725,7 @@ STATICINLINE void program_uniform(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform1i)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -762,7 +762,7 @@ STATICINLINE void program_uniform(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform1iv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -803,7 +803,7 @@ STATICINLINE void program_uniform(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform1ui)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -840,7 +840,7 @@ STATICINLINE void program_uniform(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform1uiv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -884,7 +884,7 @@ STATICINLINE void program_uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform2d)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -920,7 +920,7 @@ STATICINLINE void program_uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform2dv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -964,7 +964,7 @@ STATICINLINE void program_uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform2f)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1000,7 +1000,7 @@ STATICINLINE void program_uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform2fv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1044,7 +1044,7 @@ STATICINLINE void program_uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform2i)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1080,7 +1080,7 @@ STATICINLINE void program_uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform2iv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1124,7 +1124,7 @@ STATICINLINE void program_uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform2ui)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1160,7 +1160,7 @@ STATICINLINE void program_uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform2uiv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1205,7 +1205,7 @@ STATICINLINE void program_uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform3d)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1241,7 +1241,7 @@ STATICINLINE void program_uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform3dv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1286,7 +1286,7 @@ STATICINLINE void program_uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform3f)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1322,7 +1322,7 @@ STATICINLINE void program_uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform3fv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1367,7 +1367,7 @@ STATICINLINE void program_uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform3i)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1403,7 +1403,7 @@ STATICINLINE void program_uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform3iv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1448,7 +1448,7 @@ STATICINLINE void program_uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform3ui)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1484,7 +1484,7 @@ STATICINLINE void program_uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform3uiv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1530,7 +1530,7 @@ STATICINLINE void program_uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform4d)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1566,7 +1566,7 @@ STATICINLINE void program_uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform4dv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1612,7 +1612,7 @@ STATICINLINE void program_uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform4f)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1648,7 +1648,7 @@ STATICINLINE void program_uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform4fv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1694,7 +1694,7 @@ STATICINLINE void program_uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform4i)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1730,7 +1730,7 @@ STATICINLINE void program_uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform4iv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1776,7 +1776,7 @@ STATICINLINE void program_uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform4ui)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1812,7 +1812,7 @@ STATICINLINE void program_uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniform4uiv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1859,7 +1859,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2dv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1908,7 +1908,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2fv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -1957,7 +1957,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x3dv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2006,7 +2006,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x3fv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2055,7 +2055,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x4dv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2104,7 +2104,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x4fv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2153,7 +2153,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3dv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2202,7 +2202,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3fv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2251,7 +2251,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x2dv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2300,7 +2300,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x2fv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2349,7 +2349,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x4dv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2398,7 +2398,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x4fv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2447,7 +2447,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4dv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2496,7 +2496,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4fv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2545,7 +2545,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x2dv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2594,7 +2594,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x2fv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2643,7 +2643,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x3dv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2692,7 +2692,7 @@ STATICINLINE void program_uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x3fv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2735,7 +2735,7 @@ STATICINLINE void use_program_stages(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UseProgramStages)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2767,7 +2767,7 @@ STATICINLINE void validate_program_pipeline(
     u32 pipeline, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ValidateProgramPipeline)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2803,7 +2803,7 @@ STATICINLINE void get_vertex_attrib_ldv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetVertexAttribLdv)
     }
@@ -2834,7 +2834,7 @@ STATICINLINE void vertex_attrib_l1d(
     u32 index, f64 x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribL1d)
     }
@@ -2863,7 +2863,7 @@ STATICINLINE void vertex_attrib_l1dv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribL1dv)
     }
@@ -2893,7 +2893,7 @@ STATICINLINE void vertex_attrib_l2d(
     u32 index, vec_2_f64 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribL2d)
     }
@@ -2921,7 +2921,7 @@ STATICINLINE void vertex_attrib_l2dv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribL2dv)
     }
@@ -2952,7 +2952,7 @@ STATICINLINE void vertex_attrib_l3d(
     u32 index, vec_3_f64 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribL3d)
     }
@@ -2980,7 +2980,7 @@ STATICINLINE void vertex_attrib_l3dv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribL3dv)
     }
@@ -3012,7 +3012,7 @@ STATICINLINE void vertex_attrib_l4d(
     u32 index, vec_4_f64 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribL4d)
     }
@@ -3040,7 +3040,7 @@ STATICINLINE void vertex_attrib_l4dv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribL4dv)
     }
@@ -3076,7 +3076,7 @@ STATICINLINE void vertex_attrib_l_pointer(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribLPointer)
     }
@@ -3121,7 +3121,7 @@ STATICINLINE void depth_range_arrayv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DepthRangeArrayv)
     }
@@ -3153,7 +3153,7 @@ STATICINLINE void depth_range_indexed(
     u32 index, f64 n, f64 f, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DepthRangeIndexed)
     }
@@ -3184,7 +3184,7 @@ STATICINLINE void get_doublei_v(
     error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetDoublei_v)
     }
@@ -3223,7 +3223,7 @@ STATICINLINE void get_floati_v(
     error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetFloati_v)
     }
@@ -3262,7 +3262,7 @@ STATICINLINE void scissor_arrayv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ScissorArrayv)
     }
@@ -3302,7 +3302,7 @@ STATICINLINE void scissor_indexed(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ScissorIndexed)
     }
@@ -3331,7 +3331,7 @@ STATICINLINE void scissor_indexedv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ScissorIndexedv)
     }
@@ -3367,7 +3367,7 @@ STATICINLINE void viewport_arrayv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ViewportArrayv)
     }
@@ -3406,7 +3406,7 @@ STATICINLINE void viewport_indexedf(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ViewportIndexedf)
     }
@@ -3435,7 +3435,7 @@ STATICINLINE void viewport_indexedfv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ViewportIndexedfv)
     }

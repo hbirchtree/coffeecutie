@@ -29,7 +29,7 @@ STATICINLINE void buffer_attach_memory(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BufferAttachMemoryNV)
     }
@@ -63,7 +63,7 @@ STATICINLINE void get_memory_object_detached_resourcesuiv(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetMemoryObjectDetachedResourcesuivNV)
     }
@@ -97,7 +97,7 @@ STATICINLINE void reset_memory_object_parameter(
     u32 memory, GLenum pname, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ResetMemoryObjectParameterNV)
     }
@@ -122,7 +122,7 @@ STATICINLINE void tex_attach_memory(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexAttachMemoryNV)
     }
@@ -147,7 +147,7 @@ STATICINLINE void named_buffer_attach_memory(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(NamedBufferAttachMemoryNV)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -177,7 +177,7 @@ STATICINLINE void texture_attach_memory(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TextureAttachMemoryNV)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \

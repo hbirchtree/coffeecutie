@@ -29,7 +29,7 @@ STATICINLINE GLuint64 get_image_handle(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetImageHandleARB)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -56,7 +56,7 @@ STATICINLINE GLuint64
 get_texture_handle(u32 texture, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetTextureHandleARB)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -83,7 +83,7 @@ STATICINLINE GLuint64 get_texture_sampler_handle(
     u32 texture, u32 sampler, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetTextureSamplerHandleARB)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -125,7 +125,7 @@ STATICINLINE void get_vertex_attrib_lui64v(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetVertexAttribLui64vARB)
     }
@@ -154,7 +154,7 @@ STATICINLINE GLboolean
 is_image_handle_resident(u64 handle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsImageHandleResidentARB)
     }
@@ -175,7 +175,7 @@ STATICINLINE GLboolean is_texture_handle_resident(
     u64 handle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsTextureHandleResidentARB)
     }
@@ -196,7 +196,7 @@ STATICINLINE void make_image_handle_non_resident(
     u64 handle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MakeImageHandleNonResidentARB)
     }
@@ -217,7 +217,7 @@ STATICINLINE void make_image_handle_resident(
     u64 handle, GLenum access, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MakeImageHandleResidentARB)
     }
@@ -237,7 +237,7 @@ STATICINLINE void make_texture_handle_non_resident(
     u64 handle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MakeTextureHandleNonResidentARB)
     }
@@ -257,7 +257,7 @@ STATICINLINE void make_texture_handle_resident(
     u64 handle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MakeTextureHandleResidentARB)
     }
@@ -282,7 +282,7 @@ STATICINLINE void program_uniform_handle(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformHandleui64ARB)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -319,7 +319,7 @@ STATICINLINE void program_uniform_handle(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramUniformHandleui64vARB)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -355,7 +355,7 @@ STATICINLINE void uniform_handle(
     i32 location, u64 value, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UniformHandleui64ARB)
     }
@@ -385,7 +385,7 @@ STATICINLINE void uniform_handle(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UniformHandleui64vARB)
     }
@@ -414,7 +414,7 @@ STATICINLINE void vertex_attrib_l1ui64(
     u32 index, GLuint64EXT x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribL1ui64ARB)
     }
@@ -443,7 +443,7 @@ STATICINLINE void vertex_attrib_l1ui64v(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribL1ui64vARB)
     }

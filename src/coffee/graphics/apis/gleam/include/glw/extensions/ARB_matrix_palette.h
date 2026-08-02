@@ -24,7 +24,7 @@ STATICINLINE void current_palette_matrix(
     i32 index, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CurrentPaletteMatrixARB)
     }
@@ -53,7 +53,7 @@ STATICINLINE void matrix_index_pointer(
     error_check                          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixIndexPointerARB)
     }
@@ -92,7 +92,7 @@ STATICINLINE void matrix_indexubv(
     span_const_u8 const& indices, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixIndexubvARB)
     }
@@ -126,7 +126,7 @@ STATICINLINE void matrix_indexuiv(
     span_const_u32 const& indices, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixIndexuivARB)
     }
@@ -160,7 +160,7 @@ STATICINLINE void matrix_indexusv(
     span_const_u16 const& indices, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixIndexusvARB)
     }

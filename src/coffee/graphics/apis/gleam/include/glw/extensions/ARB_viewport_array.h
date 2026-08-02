@@ -34,7 +34,7 @@ STATICINLINE void depth_range_arrayv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DepthRangeArrayv)
     }
@@ -64,7 +64,7 @@ STATICINLINE void depth_range_indexed(
     u32 index, f64 n, f64 f, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DepthRangeIndexed)
     }
@@ -94,7 +94,7 @@ STATICINLINE void get_doublei_v(
     error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetDoublei_v)
     }
@@ -132,7 +132,7 @@ STATICINLINE void get_floati_v(
     error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetFloati_v)
     }
@@ -171,7 +171,7 @@ STATICINLINE void scissor_arrayv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ScissorArrayv)
     }
@@ -209,7 +209,7 @@ STATICINLINE void scissor_indexed(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ScissorIndexed)
     }
@@ -238,7 +238,7 @@ STATICINLINE void scissor_indexedv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ScissorIndexedv)
     }
@@ -274,7 +274,7 @@ STATICINLINE void viewport_arrayv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ViewportArrayv)
     }
@@ -312,7 +312,7 @@ STATICINLINE void viewport_indexedf(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ViewportIndexedf)
     }
@@ -341,7 +341,7 @@ STATICINLINE void viewport_indexedfv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ViewportIndexedfv)
     }
@@ -377,7 +377,7 @@ STATICINLINE void depth_range_arraydv_nv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DepthRangeArraydvNV)
     }
@@ -407,7 +407,7 @@ STATICINLINE void depth_range_indexedd_nv(
     u32 index, f64 n, f64 f, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DepthRangeIndexeddNV)
     }

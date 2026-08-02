@@ -28,7 +28,7 @@ STATICINLINE void coverage_modulation(
     GLenum components, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CoverageModulationNV)
     }
@@ -55,7 +55,7 @@ STATICINLINE void coverage_modulation_table(
     span_const_f32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CoverageModulationTableNV)
     }
@@ -86,7 +86,7 @@ STATICINLINE void get_coverage_modulation_table(
     i32 bufSize, span_f32 v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetCoverageModulationTableNV)
     }
@@ -113,7 +113,7 @@ STATICINLINE void raster_samples_ext(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(RasterSamplesEXT)
     }

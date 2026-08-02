@@ -29,7 +29,7 @@ STATICINLINE void bind_frag_data_location(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BindFragDataLocationEXT)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -61,7 +61,7 @@ STATICINLINE void bind_frag_data_location_indexed(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BindFragDataLocationIndexedEXT)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -90,7 +90,7 @@ STATICINLINE GLint get_frag_data_index(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetFragDataIndexEXT)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -121,7 +121,7 @@ STATICINLINE GLint get_program_resource_location_index(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetProgramResourceLocationIndexEXT)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \

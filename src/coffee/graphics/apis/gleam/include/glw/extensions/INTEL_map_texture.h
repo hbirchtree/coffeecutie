@@ -29,7 +29,7 @@ STATICINLINE void* map_texture_2d(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MapTexture2DINTEL)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -55,7 +55,7 @@ STATICINLINE void sync_texture(
     u32 texture, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SyncTextureINTEL)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -81,7 +81,7 @@ STATICINLINE void unmap_texture_2d(
     u32 texture, i32 level, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UnmapTexture2DINTEL)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \

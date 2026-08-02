@@ -78,7 +78,7 @@ STATICINLINE void blend_color(
     vec_4_f32 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BlendColor)
     }
@@ -99,7 +99,7 @@ STATICINLINE void blend_equation(
     error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BlendEquation)
     }

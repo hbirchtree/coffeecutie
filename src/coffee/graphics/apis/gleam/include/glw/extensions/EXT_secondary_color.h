@@ -25,7 +25,7 @@ STATICINLINE void secondary_color3b(
     vec_3_i8 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3bEXT)
     }
@@ -51,7 +51,7 @@ STATICINLINE void secondary_color3bv(
     span_const_i8 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3bvEXT)
     }
@@ -79,7 +79,7 @@ STATICINLINE void secondary_color3d(
     vec_3_f64 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3dEXT)
     }
@@ -103,7 +103,7 @@ STATICINLINE void secondary_color3dv(
     span_const_vec_3_f64 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3dvEXT)
     }
@@ -130,7 +130,7 @@ STATICINLINE void secondary_color3f(
     vec_3_f32 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3fEXT)
     }
@@ -154,7 +154,7 @@ STATICINLINE void secondary_color3fv(
     span_const_vec_3_f32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3fvEXT)
     }
@@ -181,7 +181,7 @@ STATICINLINE void secondary_color3i(
     vec_3_i32 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3iEXT)
     }
@@ -205,7 +205,7 @@ STATICINLINE void secondary_color3iv(
     span_const_vec_3_i32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3ivEXT)
     }
@@ -232,7 +232,7 @@ STATICINLINE void secondary_color3s(
     vec_3_i16 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3sEXT)
     }
@@ -256,7 +256,7 @@ STATICINLINE void secondary_color3sv(
     span_const_vec_3_i16 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3svEXT)
     }
@@ -283,7 +283,7 @@ STATICINLINE void secondary_color3ub(
     vec_3_u8 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3ubEXT)
     }
@@ -309,7 +309,7 @@ STATICINLINE void secondary_color3ubv(
     span_const_u8 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3ubvEXT)
     }
@@ -337,7 +337,7 @@ STATICINLINE void secondary_color3ui(
     vec_3_u32 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3uiEXT)
     }
@@ -361,7 +361,7 @@ STATICINLINE void secondary_color3uiv(
     span_const_vec_3_u32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3uivEXT)
     }
@@ -388,7 +388,7 @@ STATICINLINE void secondary_color3us(
     vec_3_u16 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3usEXT)
     }
@@ -412,7 +412,7 @@ STATICINLINE void secondary_color3usv(
     span_const_vec_3_u16 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3usvEXT)
     }
@@ -444,7 +444,7 @@ STATICINLINE void secondary_color_pointer(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColorPointerEXT)
     }

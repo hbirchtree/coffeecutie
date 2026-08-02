@@ -25,7 +25,7 @@ STATICINLINE void buffer_page_commitment_mem(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BufferPageCommitmentMemNV)
     }
@@ -75,7 +75,7 @@ STATICINLINE void tex_page_commitment_mem(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexPageCommitmentMemNV)
     }
@@ -127,7 +127,7 @@ STATICINLINE void named_buffer_page_commitment_mem(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(NamedBufferPageCommitmentMemNV)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -182,7 +182,7 @@ STATICINLINE void texture_page_commitment_mem(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexturePageCommitmentMemNV)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \

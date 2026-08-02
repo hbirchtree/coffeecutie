@@ -41,7 +41,7 @@ STATICINLINE void get_histogram(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetHistogramEXT)
     }
@@ -83,7 +83,7 @@ STATICINLINE void get_histogram_parameter(
     error_check                             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetHistogramParameterfvEXT)
     }
@@ -121,7 +121,7 @@ STATICINLINE void get_histogram_parameter(
     error_check                             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetHistogramParameterivEXT)
     }
@@ -160,7 +160,7 @@ STATICINLINE void get_minmax(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetMinmaxEXT)
     }
@@ -202,7 +202,7 @@ STATICINLINE void get_minmax_parameter(
     error_check                          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetMinmaxParameterfvEXT)
     }
@@ -240,7 +240,7 @@ STATICINLINE void get_minmax_parameter(
     error_check                          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetMinmaxParameterivEXT)
     }
@@ -275,7 +275,7 @@ STATICINLINE void histogram(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(HistogramEXT)
     }
@@ -304,7 +304,7 @@ STATICINLINE void minmax(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MinmaxEXT)
     }
@@ -326,7 +326,7 @@ STATICINLINE void reset_histogram(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ResetHistogramEXT)
     }
@@ -346,7 +346,7 @@ STATICINLINE void reset_minmax(
     group::minmax_target_ext target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ResetMinmaxEXT)
     }

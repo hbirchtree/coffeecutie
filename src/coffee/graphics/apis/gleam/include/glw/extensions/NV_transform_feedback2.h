@@ -21,7 +21,7 @@ STATICINLINE void bind_transform_feedback(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BindTransformFeedbackNV)
     }
@@ -48,7 +48,7 @@ STATICINLINE void delete_transform_feedbacks(
     span_const_u32 const& ids, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeleteTransformFeedbacksNV)
     }
@@ -76,7 +76,7 @@ STATICINLINE void draw_transform_feedback(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawTransformFeedbackNV)
     }
@@ -102,7 +102,7 @@ STATICINLINE void gen_transform_feedbacks(
     span_u32 ids, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GenTransformFeedbacksNV)
     }
@@ -126,7 +126,7 @@ STATICINLINE GLboolean
 is_transform_feedback(u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsTransformFeedbackNV)
     }
@@ -147,7 +147,7 @@ STATICINLINE void pause_transform_feedback(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PauseTransformFeedbackNV)
     }
@@ -167,7 +167,7 @@ STATICINLINE void resume_transform_feedback(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ResumeTransformFeedbackNV)
     }

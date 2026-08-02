@@ -23,7 +23,7 @@ STATICINLINE void multi_draw_arrays_indirect_bindless(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiDrawArraysIndirectBindlessNV)
     }
@@ -65,7 +65,7 @@ STATICINLINE void multi_draw_elements_indirect_bindless(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiDrawElementsIndirectBindlessNV)
     }

@@ -62,7 +62,7 @@ STATICINLINE void get_uniformdv(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetUniformdv)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -96,7 +96,7 @@ STATICINLINE void uniform(
     i32 location, f64 x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform1d)
     }
@@ -126,7 +126,7 @@ STATICINLINE void uniform(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform1dv)
     }
@@ -159,7 +159,7 @@ STATICINLINE void uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform2d)
     }
@@ -187,7 +187,7 @@ STATICINLINE void uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform2dv)
     }
@@ -221,7 +221,7 @@ STATICINLINE void uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform3d)
     }
@@ -249,7 +249,7 @@ STATICINLINE void uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform3dv)
     }
@@ -284,7 +284,7 @@ STATICINLINE void uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform4d)
     }
@@ -312,7 +312,7 @@ STATICINLINE void uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform4dv)
     }
@@ -349,7 +349,7 @@ STATICINLINE void uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UniformMatrix2dv)
     }
@@ -388,7 +388,7 @@ STATICINLINE void uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UniformMatrix2x3dv)
     }
@@ -427,7 +427,7 @@ STATICINLINE void uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UniformMatrix2x4dv)
     }
@@ -466,7 +466,7 @@ STATICINLINE void uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UniformMatrix3dv)
     }
@@ -505,7 +505,7 @@ STATICINLINE void uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UniformMatrix3x2dv)
     }
@@ -544,7 +544,7 @@ STATICINLINE void uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UniformMatrix3x4dv)
     }
@@ -583,7 +583,7 @@ STATICINLINE void uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UniformMatrix4dv)
     }
@@ -622,7 +622,7 @@ STATICINLINE void uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UniformMatrix4x2dv)
     }
@@ -661,7 +661,7 @@ STATICINLINE void uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UniformMatrix4x3dv)
     }

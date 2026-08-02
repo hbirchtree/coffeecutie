@@ -21,7 +21,7 @@ STATICINLINE void begin_perf_monitor(
     u32 monitor, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BeginPerfMonitorAMD)
     }
@@ -47,7 +47,7 @@ STATICINLINE void delete_perf_monitors(
     span_u32 monitors, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeletePerfMonitorsAMD)
     }
@@ -72,7 +72,7 @@ STATICINLINE void end_perf_monitor(
     u32 monitor, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EndPerfMonitorAMD)
     }
@@ -98,7 +98,7 @@ STATICINLINE void gen_perf_monitors(
     span_u32 monitors, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GenPerfMonitorsAMD)
     }
@@ -137,7 +137,7 @@ STATICINLINE void get_perf_monitor_counter_data(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPerfMonitorCounterDataAMD)
     }
@@ -178,7 +178,7 @@ STATICINLINE void get_perf_monitor_counter_info(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPerfMonitorCounterInfoAMD)
     }
@@ -222,7 +222,7 @@ STATICINLINE void get_perf_monitor_counter_string(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPerfMonitorCounterStringAMD)
     }
@@ -263,7 +263,7 @@ STATICINLINE void get_perf_monitor_counters(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPerfMonitorCountersAMD)
     }
@@ -306,7 +306,7 @@ STATICINLINE void get_perf_monitor_group_string(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPerfMonitorGroupStringAMD)
     }
@@ -340,7 +340,7 @@ STATICINLINE void get_perf_monitor_groups(
     i32& numGroups, span_u32 groups, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPerfMonitorGroupsAMD)
     }
@@ -380,7 +380,7 @@ STATICINLINE void select_perf_monitor_counters(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SelectPerfMonitorCountersAMD)
     }

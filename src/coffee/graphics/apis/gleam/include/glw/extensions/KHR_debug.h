@@ -114,7 +114,7 @@ STATICINLINE void debug_message_callback(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DebugMessageCallback)
     }
@@ -160,7 +160,7 @@ STATICINLINE void debug_message_control(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DebugMessageControl)
     }
@@ -206,7 +206,7 @@ STATICINLINE void debug_message_insert(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DebugMessageInsert)
     }
@@ -280,7 +280,7 @@ STATICINLINE GLuint get_debug_message_log(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetDebugMessageLog)
     }
@@ -340,7 +340,7 @@ STATICINLINE void get_object_label(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetObjectLabel)
     }
@@ -385,7 +385,7 @@ STATICINLINE void get_object_ptr_label(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetObjectPtrLabel)
     }
@@ -422,7 +422,7 @@ STATICINLINE void get_pointerv(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPointerv)
     }
@@ -457,7 +457,7 @@ STATICINLINE void object_label(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ObjectLabel)
     }
@@ -486,7 +486,7 @@ STATICINLINE void object_ptr_label(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ObjectPtrLabel)
     }
@@ -515,7 +515,7 @@ STATICINLINE void object_ptr_label(
 STATICINLINE void pop_debug_group(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PopDebugGroup)
     }
@@ -544,7 +544,7 @@ STATICINLINE void push_debug_group(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PushDebugGroup)
     }
@@ -571,7 +571,7 @@ STATICINLINE void debug_message_callback(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DebugMessageCallbackKHR)
     }
@@ -618,7 +618,7 @@ STATICINLINE void debug_message_control(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DebugMessageControlKHR)
     }
@@ -665,7 +665,7 @@ STATICINLINE void debug_message_insert(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DebugMessageInsertKHR)
     }
@@ -739,7 +739,7 @@ STATICINLINE GLuint get_debug_message_log(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetDebugMessageLogKHR)
     }
@@ -799,7 +799,7 @@ STATICINLINE void get_object_label(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetObjectLabelKHR)
     }
@@ -839,7 +839,7 @@ STATICINLINE void get_object_ptr_label(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetObjectPtrLabelKHR)
     }
@@ -874,7 +874,7 @@ STATICINLINE void get_pointerv(
     GLenum pname, span_void params, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPointervKHR)
     }
@@ -909,7 +909,7 @@ STATICINLINE void object_label(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ObjectLabelKHR)
     }
@@ -939,7 +939,7 @@ STATICINLINE void object_ptr_label(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ObjectPtrLabelKHR)
     }
@@ -968,7 +968,7 @@ STATICINLINE void object_ptr_label(
 STATICINLINE void pop_debug_group(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PopDebugGroupKHR)
     }
@@ -997,7 +997,7 @@ STATICINLINE void push_debug_group(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PushDebugGroupKHR)
     }

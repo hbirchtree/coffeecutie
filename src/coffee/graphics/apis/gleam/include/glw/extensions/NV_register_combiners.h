@@ -73,7 +73,7 @@ STATICINLINE void combiner_input(
     error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CombinerInputNV)
     }
@@ -125,7 +125,7 @@ STATICINLINE void combiner_output(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CombinerOutputNV)
     }
@@ -169,7 +169,7 @@ STATICINLINE void combiner_parameter(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CombinerParameterfNV)
     }
@@ -198,7 +198,7 @@ STATICINLINE void combiner_parameter(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CombinerParameterfvNV)
     }
@@ -228,7 +228,7 @@ STATICINLINE void combiner_parameter(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CombinerParameteriNV)
     }
@@ -257,7 +257,7 @@ STATICINLINE void combiner_parameter(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CombinerParameterivNV)
     }
@@ -291,7 +291,7 @@ STATICINLINE void final_combiner_input(
     error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FinalCombinerInputNV)
     }
@@ -330,7 +330,7 @@ STATICINLINE void get_combiner_input_parameter(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetCombinerInputParameterfvNV)
     }
@@ -376,7 +376,7 @@ STATICINLINE void get_combiner_input_parameter(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetCombinerInputParameterivNV)
     }
@@ -420,7 +420,7 @@ STATICINLINE void get_combiner_output_parameter(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetCombinerOutputParameterfvNV)
     }
@@ -462,7 +462,7 @@ STATICINLINE void get_combiner_output_parameter(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetCombinerOutputParameterivNV)
     }
@@ -502,7 +502,7 @@ STATICINLINE void get_final_combiner_input_parameter(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetFinalCombinerInputParameterfvNV)
     }
@@ -540,7 +540,7 @@ STATICINLINE void get_final_combiner_input_parameter(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetFinalCombinerInputParameterivNV)
     }

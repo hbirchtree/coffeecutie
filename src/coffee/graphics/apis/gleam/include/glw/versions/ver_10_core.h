@@ -13,7 +13,7 @@ STATICINLINE void blend_func(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BlendFunc)
     }
@@ -35,7 +35,7 @@ STATICINLINE void clear(
     group::clear_buffer_mask mask, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Clear)
     }
@@ -62,7 +62,7 @@ STATICINLINE void clear_color(
     vec_4_f32 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClearColor)
     }
@@ -84,7 +84,7 @@ STATICINLINE void clear_depth(
     f64 depth, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClearDepth)
     }
@@ -106,7 +106,7 @@ STATICINLINE void clear_stencil(
     i32 s, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClearStencil)
     }
@@ -133,7 +133,7 @@ STATICINLINE void color_mask(
     vec_4_bool const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ColorMask)
     }
@@ -155,7 +155,7 @@ STATICINLINE void cull_face(
     group::triangle_face mode, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CullFace)
     }
@@ -177,7 +177,7 @@ STATICINLINE void depth_func(
     group::depth_function func, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DepthFunc)
     }
@@ -199,7 +199,7 @@ STATICINLINE void depth_mask(
     bool flag, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DepthMask)
     }
@@ -222,7 +222,7 @@ STATICINLINE void depth_range(
     f64 n, f64 f, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DepthRange)
     }
@@ -244,7 +244,7 @@ STATICINLINE void disable(
     group::enable_cap cap, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Disable)
     }
@@ -266,7 +266,7 @@ STATICINLINE void draw_buffer(
     group::draw_buffer_mode buf, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawBuffer)
     }
@@ -288,7 +288,7 @@ STATICINLINE void enable(
     group::enable_cap cap, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Enable)
     }
@@ -309,7 +309,7 @@ requires(MinimumVersion<Current, Version<1, 0>>)
 STATICINLINE void finish(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Finish)
     }
@@ -330,7 +330,7 @@ requires(MinimumVersion<Current, Version<1, 0>>)
 STATICINLINE void flush(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Flush)
     }
@@ -353,7 +353,7 @@ STATICINLINE void front_face(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FrontFace)
     }
@@ -382,7 +382,7 @@ STATICINLINE void get_booleanv(
     error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetBooleanv)
     }
@@ -417,7 +417,7 @@ STATICINLINE void get_doublev(
     error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetDoublev)
     }
@@ -445,7 +445,7 @@ STATICINLINE group::error_code get_error(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetError)
     }
@@ -475,7 +475,7 @@ STATICINLINE void get_floatv(
     error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetFloatv)
     }
@@ -510,7 +510,7 @@ STATICINLINE void get_integerv(
     error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetIntegerv)
     }
@@ -538,7 +538,7 @@ STATICINLINE std::string get_string(
     group::string_name name, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetString)
     }
@@ -570,7 +570,7 @@ STATICINLINE void get_tex_image(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetTexImage)
     }
@@ -615,7 +615,7 @@ STATICINLINE void get_tex_level_parameter(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetTexLevelParameterfv)
     }
@@ -658,7 +658,7 @@ STATICINLINE void get_tex_level_parameter(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetTexLevelParameteriv)
     }
@@ -699,7 +699,7 @@ STATICINLINE void get_tex_parameter(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetTexParameterfv)
     }
@@ -738,7 +738,7 @@ STATICINLINE void get_tex_parameter(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetTexParameteriv)
     }
@@ -771,7 +771,7 @@ STATICINLINE void hint(
     error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Hint)
     }
@@ -793,7 +793,7 @@ STATICINLINE GLboolean
 is_enabled(group::enable_cap cap, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsEnabled)
     }
@@ -816,7 +816,7 @@ STATICINLINE void line_width(
     f32 width, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(LineWidth)
     }
@@ -838,7 +838,7 @@ STATICINLINE void logic_op(
     group::logic_op opcode, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(LogicOp)
     }
@@ -863,7 +863,7 @@ STATICINLINE void pixel_storef(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PixelStoref)
     }
@@ -888,7 +888,7 @@ STATICINLINE void pixel_storei(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PixelStorei)
     }
@@ -910,7 +910,7 @@ STATICINLINE void point_size(
     f32 size, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PointSize)
     }
@@ -935,7 +935,7 @@ STATICINLINE void polygon_mode(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PolygonMode)
     }
@@ -957,7 +957,7 @@ STATICINLINE void read_buffer(
     group::read_buffer_mode src, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ReadBuffer)
     }
@@ -993,7 +993,7 @@ STATICINLINE void read_pixels(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ReadPixels)
     }
@@ -1036,7 +1036,7 @@ STATICINLINE void scissor(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Scissor)
     }
@@ -1063,7 +1063,7 @@ STATICINLINE void stencil_func(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(StencilFunc)
     }
@@ -1085,7 +1085,7 @@ STATICINLINE void stencil_mask(
     u32 mask, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(StencilMask)
     }
@@ -1112,7 +1112,7 @@ STATICINLINE void stencil_op(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(StencilOp)
     }
@@ -1153,7 +1153,7 @@ STATICINLINE void tex_image_1d(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexImage1D)
     }
@@ -1211,7 +1211,7 @@ STATICINLINE void tex_image_2d(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexImage2D)
     }
@@ -1257,7 +1257,7 @@ STATICINLINE void tex_parameter(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexParameterf)
     }
@@ -1289,7 +1289,7 @@ STATICINLINE void tex_parameter(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexParameterfv)
     }
@@ -1325,7 +1325,7 @@ STATICINLINE void tex_parameter(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexParameteri)
     }
@@ -1357,7 +1357,7 @@ STATICINLINE void tex_parameter(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexParameteriv)
     }
@@ -1395,7 +1395,7 @@ STATICINLINE void viewport(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Viewport)
     }

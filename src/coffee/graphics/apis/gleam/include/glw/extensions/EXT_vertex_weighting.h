@@ -39,7 +39,7 @@ STATICINLINE void vertex_weight_pointer(
     error_check                           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexWeightPointerEXT)
     }
@@ -71,7 +71,7 @@ STATICINLINE void vertex_weightf(
     f32 weight, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexWeightfEXT)
     }
@@ -97,7 +97,7 @@ STATICINLINE void vertex_weightfv(
     span_const_f32 const& weight, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexWeightfvEXT)
     }

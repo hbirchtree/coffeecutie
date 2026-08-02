@@ -32,7 +32,7 @@ STATICINLINE void get_program_env_parameter_iiv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetProgramEnvParameterIivNV)
     }
@@ -70,7 +70,7 @@ STATICINLINE void get_program_env_parameter_iuiv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetProgramEnvParameterIuivNV)
     }
@@ -108,7 +108,7 @@ STATICINLINE void get_program_local_parameter_iiv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetProgramLocalParameterIivNV)
     }
@@ -146,7 +146,7 @@ STATICINLINE void get_program_local_parameter_iuiv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetProgramLocalParameterIuivNV)
     }
@@ -184,7 +184,7 @@ STATICINLINE void program_env_parameter_i4i(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramEnvParameterI4iNV)
     }
@@ -214,7 +214,7 @@ STATICINLINE void program_env_parameter_i4iv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramEnvParameterI4ivNV)
     }
@@ -252,7 +252,7 @@ STATICINLINE void program_env_parameter_i4ui(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramEnvParameterI4uiNV)
     }
@@ -282,7 +282,7 @@ STATICINLINE void program_env_parameter_i4uiv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramEnvParameterI4uivNV)
     }
@@ -320,7 +320,7 @@ STATICINLINE void program_env_parameters_i4iv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramEnvParametersI4ivNV)
     }
@@ -359,7 +359,7 @@ STATICINLINE void program_env_parameters_i4uiv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramEnvParametersI4uivNV)
     }
@@ -398,7 +398,7 @@ STATICINLINE void program_local_parameter_i4i(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramLocalParameterI4iNV)
     }
@@ -428,7 +428,7 @@ STATICINLINE void program_local_parameter_i4iv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramLocalParameterI4ivNV)
     }
@@ -466,7 +466,7 @@ STATICINLINE void program_local_parameter_i4ui(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramLocalParameterI4uiNV)
     }
@@ -496,7 +496,7 @@ STATICINLINE void program_local_parameter_i4uiv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramLocalParameterI4uivNV)
     }
@@ -534,7 +534,7 @@ STATICINLINE void program_local_parameters_i4iv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramLocalParametersI4ivNV)
     }
@@ -573,7 +573,7 @@ STATICINLINE void program_local_parameters_i4uiv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramLocalParametersI4uivNV)
     }

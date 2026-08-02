@@ -22,7 +22,7 @@ STATICINLINE void draw_arrays_instanced(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawArraysInstancedEXT)
     }
@@ -52,7 +52,7 @@ STATICINLINE void draw_elements_instanced(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawElementsInstancedEXT)
     }
@@ -79,7 +79,7 @@ STATICINLINE void vertex_attrib_divisor(
     u32 index, u32 divisor, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribDivisorEXT)
     }

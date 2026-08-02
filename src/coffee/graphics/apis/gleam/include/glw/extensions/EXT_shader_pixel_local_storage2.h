@@ -28,7 +28,7 @@ STATICINLINE void clear_pixel_local_storageui(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClearPixelLocalStorageuiEXT)
     }
@@ -57,7 +57,7 @@ STATICINLINE void framebuffer_pixel_local_storage_size(
     u32 target, i32 size, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FramebufferPixelLocalStorageSizeEXT)
     }
@@ -77,7 +77,7 @@ STATICINLINE GLsizei get_framebuffer_pixel_local_storage_size(
     u32 target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetFramebufferPixelLocalStorageSizeEXT)
     }

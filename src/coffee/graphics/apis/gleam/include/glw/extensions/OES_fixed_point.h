@@ -18,7 +18,7 @@ STATICINLINE void alpha_funcx(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(AlphaFuncxOES)
     }
@@ -43,7 +43,7 @@ STATICINLINE void clear_colorx(
     vec_4_GLfixed const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClearColorxOES)
     }
@@ -63,7 +63,7 @@ STATICINLINE void clear_depthx(
     GLfixed depth, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClearDepthxOES)
     }
@@ -92,7 +92,7 @@ STATICINLINE void clip_planex(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClipPlanexOES)
     }
@@ -125,7 +125,7 @@ STATICINLINE void color4x(
     vec_4_GLfixed const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Color4xOES)
     }
@@ -146,7 +146,7 @@ STATICINLINE void depth_rangex(
     GLfixed n, GLfixed f, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DepthRangexOES)
     }
@@ -169,7 +169,7 @@ STATICINLINE void fogx(
     error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FogxOES)
     }
@@ -198,7 +198,7 @@ STATICINLINE void fogxv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FogxvOES)
     }
@@ -236,7 +236,7 @@ STATICINLINE void frustumx(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FrustumxOES)
     }
@@ -265,7 +265,7 @@ STATICINLINE void get_clip_planex(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetClipPlanexOES)
     }
@@ -301,7 +301,7 @@ STATICINLINE void get_fixedv(
     error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetFixedvOES)
     }
@@ -338,7 +338,7 @@ STATICINLINE void get_tex_envxv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetTexEnvxvOES)
     }
@@ -377,7 +377,7 @@ STATICINLINE void get_tex_parameterxv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetTexParameterxvOES)
     }
@@ -408,7 +408,7 @@ STATICINLINE void light_modelx(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(LightModelxOES)
     }
@@ -437,7 +437,7 @@ STATICINLINE void light_modelxv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(LightModelxvOES)
     }
@@ -469,7 +469,7 @@ STATICINLINE void lightx(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(LightxOES)
     }
@@ -500,7 +500,7 @@ STATICINLINE void lightxv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(LightxvOES)
     }
@@ -529,7 +529,7 @@ STATICINLINE void line_widthx(
     GLfixed width, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(LineWidthxOES)
     }
@@ -555,7 +555,7 @@ STATICINLINE void load_matrixx(
     span_const_GLfixed const& m, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(LoadMatrixxOES)
     }
@@ -584,7 +584,7 @@ STATICINLINE void materialx(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MaterialxOES)
     }
@@ -616,7 +616,7 @@ STATICINLINE void materialxv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MaterialxvOES)
     }
@@ -651,7 +651,7 @@ STATICINLINE void mult_matrixx(
     span_const_GLfixed const& m, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultMatrixxOES)
     }
@@ -684,7 +684,7 @@ STATICINLINE void multi_tex_coord4x(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord4xOES)
     }
@@ -709,7 +709,7 @@ STATICINLINE void normal3x(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Normal3xOES)
     }
@@ -740,7 +740,7 @@ STATICINLINE void orthox(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(OrthoxOES)
     }
@@ -769,7 +769,7 @@ STATICINLINE void point_parameterxv(
     error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PointParameterxvOES)
     }
@@ -796,7 +796,7 @@ STATICINLINE void point_sizex(
     GLfixed size, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PointSizexOES)
     }
@@ -817,7 +817,7 @@ STATICINLINE void polygon_offsetx(
     GLfixed factor, GLfixed units, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PolygonOffsetxOES)
     }
@@ -844,7 +844,7 @@ STATICINLINE void rotatex(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(RotatexOES)
     }
@@ -868,7 +868,7 @@ STATICINLINE void scalex(
     vec_3_GLfixed const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ScalexOES)
     }
@@ -893,7 +893,7 @@ STATICINLINE void tex_envx(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexEnvxOES)
     }
@@ -925,7 +925,7 @@ STATICINLINE void tex_envxv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexEnvxvOES)
     }
@@ -959,7 +959,7 @@ STATICINLINE void tex_parameterx(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexParameterxOES)
     }
@@ -991,7 +991,7 @@ STATICINLINE void tex_parameterxv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexParameterxvOES)
     }
@@ -1024,7 +1024,7 @@ STATICINLINE void translatex(
     vec_3_GLfixed const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TranslatexOES)
     }
@@ -1056,7 +1056,7 @@ STATICINLINE void get_lightxv(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetLightxvOES)
     }
@@ -1097,7 +1097,7 @@ STATICINLINE void get_materialxv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetMaterialxvOES)
     }
@@ -1130,7 +1130,7 @@ STATICINLINE void point_parameterx(
     error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PointParameterxOES)
     }
@@ -1153,7 +1153,7 @@ STATICINLINE void sample_coveragex(
     GLclampx value, bool invert, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SampleCoveragexOES)
     }
@@ -1176,7 +1176,7 @@ STATICINLINE void accumx(
     GLenum op, GLfixed value, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(AccumxOES)
     }
@@ -1216,7 +1216,7 @@ STATICINLINE void bitmapx(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BitmapxOES)
     }
@@ -1259,7 +1259,7 @@ STATICINLINE void blend_colorx(
     vec_4_GLfixed const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BlendColorxOES)
     }
@@ -1286,7 +1286,7 @@ STATICINLINE void clear_accumx(
     vec_4_GLfixed const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClearAccumxOES)
     }
@@ -1312,7 +1312,7 @@ STATICINLINE void color3x(
     vec_3_GLfixed const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Color3xOES)
     }
@@ -1341,7 +1341,7 @@ STATICINLINE void color3xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Color3xvOES)
     }
@@ -1376,7 +1376,7 @@ STATICINLINE void color4xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Color4xvOES)
     }
@@ -1409,7 +1409,7 @@ STATICINLINE void convolution_parameterx(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ConvolutionParameterxOES)
     }
@@ -1443,7 +1443,7 @@ STATICINLINE void convolution_parameterxv(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ConvolutionParameterxvOES)
     }
@@ -1474,7 +1474,7 @@ STATICINLINE void eval_coord1x(
     GLfixed u, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EvalCoord1xOES)
     }
@@ -1503,7 +1503,7 @@ STATICINLINE void eval_coord1xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EvalCoord1xvOES)
     }
@@ -1531,7 +1531,7 @@ STATICINLINE void eval_coord2x(
     GLfixed u, GLfixed v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EvalCoord2xOES)
     }
@@ -1560,7 +1560,7 @@ STATICINLINE void eval_coord2xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EvalCoord2xvOES)
     }
@@ -1597,7 +1597,7 @@ STATICINLINE void feedback_bufferx(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FeedbackBufferxOES)
     }
@@ -1638,7 +1638,7 @@ STATICINLINE void get_convolution_parameterxv(
     error_check  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetConvolutionParameterxvOES)
     }
@@ -1679,7 +1679,7 @@ STATICINLINE void get_histogram_parameterxv(
     error_check                             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetHistogramParameterxvOES)
     }
@@ -1720,7 +1720,7 @@ STATICINLINE void get_lightx(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetLightxOES)
     }
@@ -1761,7 +1761,7 @@ STATICINLINE void get_mapxv(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetMapxvOES)
     }
@@ -1795,7 +1795,7 @@ STATICINLINE void get_materialx(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetMaterialxOES)
     }
@@ -1828,7 +1828,7 @@ STATICINLINE void get_pixel_mapxv(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPixelMapxv)
     }
@@ -1868,7 +1868,7 @@ STATICINLINE void get_tex_genxv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetTexGenxvOES)
     }
@@ -1911,7 +1911,7 @@ STATICINLINE void get_tex_level_parameterxv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetTexLevelParameterxvOES)
     }
@@ -1943,7 +1943,7 @@ STATICINLINE void indexx(
     GLfixed component, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IndexxOES)
     }
@@ -1972,7 +1972,7 @@ STATICINLINE void indexxv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IndexxvOES)
     }
@@ -2006,7 +2006,7 @@ STATICINLINE void load_transpose_matrixx(
     span_const_GLfixed const& m, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(LoadTransposeMatrixxOES)
     }
@@ -2043,7 +2043,7 @@ STATICINLINE void map1x(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Map1xOES)
     }
@@ -2084,7 +2084,7 @@ STATICINLINE void map2x(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Map2xOES)
     }
@@ -2129,7 +2129,7 @@ STATICINLINE void map_grid1x(
     i32 n, GLfixed u1, GLfixed u2, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MapGrid1xOES)
     }
@@ -2160,7 +2160,7 @@ STATICINLINE void map_grid2x(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MapGrid2xOES)
     }
@@ -2188,7 +2188,7 @@ STATICINLINE void mult_transpose_matrixx(
     span_const_GLfixed const& m, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultTransposeMatrixxOES)
     }
@@ -2217,7 +2217,7 @@ STATICINLINE void multi_tex_coord1x(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord1xOES)
     }
@@ -2248,7 +2248,7 @@ STATICINLINE void multi_tex_coord1xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord1xvOES)
     }
@@ -2282,7 +2282,7 @@ STATICINLINE void multi_tex_coord2x(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord2xOES)
     }
@@ -2313,7 +2313,7 @@ STATICINLINE void multi_tex_coord2xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord2xvOES)
     }
@@ -2349,7 +2349,7 @@ STATICINLINE void multi_tex_coord3x(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord3xOES)
     }
@@ -2380,7 +2380,7 @@ STATICINLINE void multi_tex_coord3xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord3xvOES)
     }
@@ -2418,7 +2418,7 @@ STATICINLINE void multi_tex_coord4xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord4xvOES)
     }
@@ -2454,7 +2454,7 @@ STATICINLINE void normal3xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Normal3xvOES)
     }
@@ -2481,7 +2481,7 @@ STATICINLINE void pass_throughx(
     GLfixed token, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PassThroughxOES)
     }
@@ -2513,7 +2513,7 @@ STATICINLINE void pixel_mapx(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PixelMapx)
     }
@@ -2546,7 +2546,7 @@ STATICINLINE void pixel_storex(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PixelStorex)
     }
@@ -2571,7 +2571,7 @@ STATICINLINE void pixel_transferx(
     error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PixelTransferxOES)
     }
@@ -2596,7 +2596,7 @@ STATICINLINE void pixel_zoomx(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PixelZoomxOES)
     }
@@ -2632,7 +2632,7 @@ STATICINLINE void prioritize_texturesx(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PrioritizeTexturesxOES)
     }
@@ -2669,7 +2669,7 @@ STATICINLINE void raster_pos2x(
     vec_2_GLfixed const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(RasterPos2xOES)
     }
@@ -2698,7 +2698,7 @@ STATICINLINE void raster_pos2xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(RasterPos2xvOES)
     }
@@ -2729,7 +2729,7 @@ STATICINLINE void raster_pos3x(
     vec_3_GLfixed const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(RasterPos3xOES)
     }
@@ -2758,7 +2758,7 @@ STATICINLINE void raster_pos3xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(RasterPos3xvOES)
     }
@@ -2790,7 +2790,7 @@ STATICINLINE void raster_pos4x(
     vec_4_GLfixed const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(RasterPos4xOES)
     }
@@ -2819,7 +2819,7 @@ STATICINLINE void raster_pos4xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(RasterPos4xvOES)
     }
@@ -2853,7 +2853,7 @@ STATICINLINE void rectx(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(RectxOES)
     }
@@ -2884,7 +2884,7 @@ STATICINLINE void rectxv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(RectxvOES)
     }
@@ -2913,7 +2913,7 @@ STATICINLINE void tex_coord1x(
     GLfixed s, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord1xOES)
     }
@@ -2942,7 +2942,7 @@ STATICINLINE void tex_coord1xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord1xvOES)
     }
@@ -2970,7 +2970,7 @@ STATICINLINE void tex_coord2x(
     GLfixed s, GLfixed t, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord2xOES)
     }
@@ -2999,7 +2999,7 @@ STATICINLINE void tex_coord2xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord2xvOES)
     }
@@ -3028,7 +3028,7 @@ STATICINLINE void tex_coord3x(
     GLfixed s, GLfixed t, GLfixed r, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord3xOES)
     }
@@ -3057,7 +3057,7 @@ STATICINLINE void tex_coord3xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord3xvOES)
     }
@@ -3091,7 +3091,7 @@ STATICINLINE void tex_coord4x(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord4xOES)
     }
@@ -3120,7 +3120,7 @@ STATICINLINE void tex_coord4xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord4xvOES)
     }
@@ -3152,7 +3152,7 @@ STATICINLINE void tex_genx(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexGenxOES)
     }
@@ -3185,7 +3185,7 @@ STATICINLINE void tex_genxv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexGenxvOES)
     }
@@ -3216,7 +3216,7 @@ STATICINLINE void vertex2x(
     GLfixed x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex2xOES)
     }
@@ -3245,7 +3245,7 @@ STATICINLINE void vertex2xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex2xvOES)
     }
@@ -3275,7 +3275,7 @@ STATICINLINE void vertex3x(
     vec_2_GLfixed const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex3xOES)
     }
@@ -3304,7 +3304,7 @@ STATICINLINE void vertex3xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex3xvOES)
     }
@@ -3335,7 +3335,7 @@ STATICINLINE void vertex4x(
     vec_3_GLfixed const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex4xOES)
     }
@@ -3364,7 +3364,7 @@ STATICINLINE void vertex4xv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex4xvOES)
     }

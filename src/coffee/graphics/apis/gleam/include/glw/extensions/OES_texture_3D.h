@@ -42,7 +42,7 @@ STATICINLINE void compressed_tex_image_3d(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CompressedTexImage3DOES)
     }
@@ -100,7 +100,7 @@ STATICINLINE void compressed_tex_sub_image_3d(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CompressedTexSubImage3DOES)
     }
@@ -157,7 +157,7 @@ STATICINLINE void copy_tex_sub_image_3d(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CopyTexSubImage3DOES)
     }
@@ -197,7 +197,7 @@ STATICINLINE void framebuffer_texture_3d(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FramebufferTexture3DOES)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -254,7 +254,7 @@ STATICINLINE void tex_image_3d(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexImage3DOES)
     }
@@ -315,7 +315,7 @@ STATICINLINE void tex_sub_image_3d(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexSubImage3DOES)
     }

@@ -22,7 +22,7 @@ STATICINLINE void begin_query(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BeginQueryEXT)
     }
@@ -49,7 +49,7 @@ STATICINLINE void delete_queries(
     span_const_u32 const& ids, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeleteQueriesEXT)
     }
@@ -74,7 +74,7 @@ STATICINLINE void end_query(
     group::query_target target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EndQueryEXT)
     }
@@ -100,7 +100,7 @@ STATICINLINE void gen_queries(
     span_u32 ids, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GenQueriesEXT)
     }
@@ -134,7 +134,7 @@ STATICINLINE void get_query_objectuiv(
     error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetQueryObjectuivEXT)
     }
@@ -172,7 +172,7 @@ STATICINLINE void get_queryiv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetQueryivEXT)
     }
@@ -200,7 +200,7 @@ STATICINLINE GLboolean
 is_query(u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsQueryEXT)
     }

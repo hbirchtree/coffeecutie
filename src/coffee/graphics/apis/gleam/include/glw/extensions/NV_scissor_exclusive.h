@@ -27,7 +27,7 @@ STATICINLINE void scissor_exclusive_arrayv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ScissorExclusiveArrayvNV)
     }
@@ -63,7 +63,7 @@ STATICINLINE void scissor_exclusive(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ScissorExclusiveNV)
     }

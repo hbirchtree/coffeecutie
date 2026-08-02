@@ -26,7 +26,7 @@ STATICINLINE void color_pointerv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ColorPointervINTEL)
     }
@@ -61,7 +61,7 @@ STATICINLINE void normal_pointerv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(NormalPointervINTEL)
     }
@@ -96,7 +96,7 @@ STATICINLINE void tex_coord_pointerv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoordPointervINTEL)
     }
@@ -133,7 +133,7 @@ STATICINLINE void vertex_pointerv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexPointervINTEL)
     }

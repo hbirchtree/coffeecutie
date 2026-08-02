@@ -34,7 +34,7 @@ STATICINLINE void color_table(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ColorTableEXT)
     }
@@ -77,7 +77,7 @@ STATICINLINE void get_color_table(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetColorTableEXT)
     }
@@ -117,7 +117,7 @@ STATICINLINE void get_color_table_parameter(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetColorTableParameterfvEXT)
     }
@@ -155,7 +155,7 @@ STATICINLINE void get_color_table_parameter(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetColorTableParameterivEXT)
     }

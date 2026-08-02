@@ -24,7 +24,7 @@ STATICINLINE void program_env_parameters4fv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramEnvParameters4fvEXT)
     }
@@ -63,7 +63,7 @@ STATICINLINE void program_local_parameters4fv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramLocalParameters4fvEXT)
     }

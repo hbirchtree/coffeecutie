@@ -30,7 +30,7 @@ STATICINLINE void primitive_bounding_box(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PrimitiveBoundingBoxEXT)
     }

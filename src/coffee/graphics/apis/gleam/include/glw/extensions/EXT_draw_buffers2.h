@@ -23,7 +23,7 @@ STATICINLINE void color_mask_indexed(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ColorMaskIndexedEXT)
     }
@@ -46,7 +46,7 @@ STATICINLINE void disable_indexed(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DisableIndexedEXT)
     }
@@ -69,7 +69,7 @@ STATICINLINE void enable_indexed(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EnableIndexedEXT)
     }
@@ -100,7 +100,7 @@ STATICINLINE void get_boolean_indexedv(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetBooleanIndexedvEXT)
     }
@@ -138,7 +138,7 @@ STATICINLINE void get_integer_indexedv(
     error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetIntegerIndexedvEXT)
     }
@@ -169,7 +169,7 @@ STATICINLINE GLboolean is_enabled_indexed(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsEnabledIndexedEXT)
     }

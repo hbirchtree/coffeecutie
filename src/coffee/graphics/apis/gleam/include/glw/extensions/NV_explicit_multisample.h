@@ -34,7 +34,7 @@ STATICINLINE void get_multisamplefv(
     error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetMultisamplefvNV)
     }
@@ -62,7 +62,7 @@ STATICINLINE void sample_mask_indexed(
     u32 index, GLbitfield mask, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SampleMaskIndexedNV)
     }
@@ -85,7 +85,7 @@ STATICINLINE void tex_renderbuffer(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexRenderbufferNV)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \

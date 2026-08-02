@@ -35,7 +35,7 @@ STATICINLINE void buffer_storage_mem(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BufferStorageMemEXT)
     }
@@ -61,7 +61,7 @@ STATICINLINE void create_memory_objects(
     i32 n, span_u32 memoryObjects, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CreateMemoryObjectsEXT)
     }
@@ -97,7 +97,7 @@ STATICINLINE void delete_memory_objects(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeleteMemoryObjectsEXT)
     }
@@ -135,7 +135,7 @@ STATICINLINE void get_memory_object_parameter(
     error_check                         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetMemoryObjectParameterivEXT)
     }
@@ -171,7 +171,7 @@ STATICINLINE void get_unsigned_bytev(
     error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetUnsignedBytevEXT)
     }
@@ -207,7 +207,7 @@ STATICINLINE void get_unsigned_bytei_v(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetUnsignedBytei_vEXT)
     }
@@ -235,7 +235,7 @@ STATICINLINE GLboolean
 is_memory_object(u32 memoryObject, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsMemoryObjectEXT)
     }
@@ -267,7 +267,7 @@ STATICINLINE void memory_object_parameter(
     error_check                         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MemoryObjectParameterivEXT)
     }
@@ -310,7 +310,7 @@ STATICINLINE void tex_storage_mem_2d(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexStorageMem2DEXT)
     }
@@ -360,7 +360,7 @@ STATICINLINE void tex_storage_mem_2d_multisample(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexStorageMem2DMultisampleEXT)
     }
@@ -411,7 +411,7 @@ STATICINLINE void tex_storage_mem_3d(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexStorageMem3DEXT)
     }
@@ -463,7 +463,7 @@ STATICINLINE void tex_storage_mem_3d_multisample(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexStorageMem3DMultisampleEXT)
     }
@@ -507,7 +507,7 @@ STATICINLINE void named_buffer_storage_mem(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(NamedBufferStorageMemEXT)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -546,7 +546,7 @@ STATICINLINE void texture_storage_mem_2d(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TextureStorageMem2DEXT)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -601,7 +601,7 @@ STATICINLINE void texture_storage_mem_2d_multisample(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TextureStorageMem2DMultisampleEXT)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -657,7 +657,7 @@ STATICINLINE void texture_storage_mem_3d(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TextureStorageMem3DEXT)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -714,7 +714,7 @@ STATICINLINE void texture_storage_mem_3d_multisample(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TextureStorageMem3DMultisampleEXT)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -768,7 +768,7 @@ STATICINLINE void tex_storage_mem_1d(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexStorageMem1DEXT)
     }
@@ -814,7 +814,7 @@ STATICINLINE void texture_storage_mem_1d(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TextureStorageMem1DEXT)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \

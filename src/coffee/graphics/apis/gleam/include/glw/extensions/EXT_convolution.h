@@ -43,7 +43,7 @@ STATICINLINE void convolution_filter_1d(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ConvolutionFilter1DEXT)
     }
@@ -91,7 +91,7 @@ STATICINLINE void convolution_filter_2d(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ConvolutionFilter2DEXT)
     }
@@ -131,7 +131,7 @@ STATICINLINE void convolution_parameter(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ConvolutionParameterfEXT)
     }
@@ -163,7 +163,7 @@ STATICINLINE void convolution_parameter(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ConvolutionParameterfvEXT)
     }
@@ -197,7 +197,7 @@ STATICINLINE void convolution_parameter(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ConvolutionParameteriEXT)
     }
@@ -229,7 +229,7 @@ STATICINLINE void convolution_parameter(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ConvolutionParameterivEXT)
     }
@@ -268,7 +268,7 @@ STATICINLINE void copy_convolution_filter_1d(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CopyConvolutionFilter1DEXT)
     }
@@ -306,7 +306,7 @@ STATICINLINE void copy_convolution_filter_2d(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CopyConvolutionFilter2DEXT)
     }
@@ -342,7 +342,7 @@ STATICINLINE void get_convolution_filter(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetConvolutionFilterEXT)
     }
@@ -382,7 +382,7 @@ STATICINLINE void get_convolution_parameter(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetConvolutionParameterfvEXT)
     }
@@ -420,7 +420,7 @@ STATICINLINE void get_convolution_parameter(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetConvolutionParameterivEXT)
     }
@@ -461,7 +461,7 @@ STATICINLINE void get_separable_filter(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetSeparableFilterEXT)
     }
@@ -512,7 +512,7 @@ STATICINLINE void separable_filter_2d(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SeparableFilter2DEXT)
     }

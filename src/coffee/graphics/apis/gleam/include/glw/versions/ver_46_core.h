@@ -22,7 +22,7 @@ STATICINLINE void specialize_shader(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SpecializeShader)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -76,7 +76,7 @@ STATICINLINE void multi_draw_arrays_indirect_count(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiDrawArraysIndirectCount)
     }
@@ -121,7 +121,7 @@ STATICINLINE void multi_draw_elements_indirect_count(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiDrawElementsIndirectCount)
     }
@@ -161,7 +161,7 @@ STATICINLINE void polygon_offset_clamp(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PolygonOffsetClamp)
     }

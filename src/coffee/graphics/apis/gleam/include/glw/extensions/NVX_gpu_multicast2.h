@@ -48,7 +48,7 @@ STATICINLINE GLuint async_copy_buffer_sub_data(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(AsyncCopyBufferSubDataNVX)
     }
@@ -163,7 +163,7 @@ STATICINLINE GLuint async_copy_image_sub_data(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(AsyncCopyImageSubDataNVX)
     }
@@ -258,7 +258,7 @@ STATICINLINE void multicast_scissor_arrayv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MulticastScissorArrayvNVX)
     }
@@ -301,7 +301,7 @@ STATICINLINE void multicast_viewport_arrayv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MulticastViewportArrayvNVX)
     }
@@ -338,7 +338,7 @@ STATICINLINE void multicast_viewport_position_w_scale(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MulticastViewportPositionWScaleNVX)
     }
@@ -359,7 +359,7 @@ STATICINLINE void upload_gpu_mask(
     GLbitfield mask, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UploadGpuMaskNVX)
     }

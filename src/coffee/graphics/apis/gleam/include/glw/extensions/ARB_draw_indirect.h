@@ -26,7 +26,7 @@ STATICINLINE void draw_arrays_indirect(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawArraysIndirect)
     }
@@ -52,7 +52,7 @@ STATICINLINE void draw_elements_indirect(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawElementsIndirect)
     }

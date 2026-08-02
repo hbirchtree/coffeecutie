@@ -108,7 +108,7 @@ STATICINLINE void copy_path(
     u32 resultPath, u32 srcPath, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CopyPathNV)
     }
@@ -147,7 +147,7 @@ STATICINLINE void cover_fill_path_instanced(
     error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CoverFillPathInstancedNV)
     }
@@ -190,7 +190,7 @@ STATICINLINE void cover_fill_path(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CoverFillPathNV)
     }
@@ -229,7 +229,7 @@ STATICINLINE void cover_stroke_path_instanced(
     error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CoverStrokePathInstancedNV)
     }
@@ -272,7 +272,7 @@ STATICINLINE void cover_stroke_path(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CoverStrokePathNV)
     }
@@ -293,7 +293,7 @@ STATICINLINE void delete_paths(
     u32 path, i32 range, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeletePathsNV)
     }
@@ -313,7 +313,7 @@ STATICINLINE GLuint
 gen_paths(i32 range, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GenPathsNV)
     }
@@ -340,7 +340,7 @@ STATICINLINE void get_path_commands(
     u32 path, span_u8 commands, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPathCommandsNV)
     }
@@ -373,7 +373,7 @@ STATICINLINE void get_path_coords(
     u32 path, span_f32 coords, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPathCoordsNV)
     }
@@ -405,7 +405,7 @@ STATICINLINE void get_path_dash_array(
     u32 path, span_f32 dashArray, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPathDashArrayNV)
     }
@@ -437,7 +437,7 @@ STATICINLINE GLfloat get_path_length(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPathLengthNV)
     }
@@ -472,7 +472,7 @@ STATICINLINE void get_path_metric_range(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPathMetricRangeNV)
     }
@@ -523,7 +523,7 @@ STATICINLINE void get_path_metrics(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPathMetricsNV)
     }
@@ -570,7 +570,7 @@ STATICINLINE void get_path_parameter(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPathParameterfvNV)
     }
@@ -608,7 +608,7 @@ STATICINLINE void get_path_parameter(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPathParameterivNV)
     }
@@ -659,7 +659,7 @@ STATICINLINE void get_path_spacing(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPathSpacingNV)
     }
@@ -710,7 +710,7 @@ STATICINLINE void interpolate_paths(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(InterpolatePathsNV)
     }
@@ -730,7 +730,7 @@ STATICINLINE GLboolean
 is_path(u32 path, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsPathNV)
     }
@@ -759,7 +759,7 @@ STATICINLINE GLboolean is_point_in_fill_path(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsPointInFillPathNV)
     }
@@ -784,7 +784,7 @@ STATICINLINE GLboolean is_point_in_stroke_path(
     u32 path, vec_2_f32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsPointInStrokePathNV)
     }
@@ -822,7 +822,7 @@ STATICINLINE void path_commands(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathCommandsNV)
     }
@@ -867,7 +867,7 @@ STATICINLINE void path_coords(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathCoordsNV)
     }
@@ -897,7 +897,7 @@ STATICINLINE void path_cover_depth_func(
     group::depth_function func, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathCoverDepthFuncNV)
     }
@@ -927,7 +927,7 @@ STATICINLINE void path_dash_array(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathDashArrayNV)
     }
@@ -975,7 +975,7 @@ STATICINLINE void path_glyph_range(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathGlyphRangeNV)
     }
@@ -1038,7 +1038,7 @@ STATICINLINE void path_glyphs(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathGlyphsNV)
     }
@@ -1090,7 +1090,7 @@ STATICINLINE void path_parameter(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathParameterfNV)
     }
@@ -1121,7 +1121,7 @@ STATICINLINE void path_parameter(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathParameterfvNV)
     }
@@ -1155,7 +1155,7 @@ STATICINLINE void path_parameter(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathParameteriNV)
     }
@@ -1186,7 +1186,7 @@ STATICINLINE void path_parameter(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathParameterivNV)
     }
@@ -1215,7 +1215,7 @@ STATICINLINE void path_stencil_depth_offset(
     f32 factor, f32 units, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathStencilDepthOffsetNV)
     }
@@ -1240,7 +1240,7 @@ STATICINLINE void path_stencil_func(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathStencilFuncNV)
     }
@@ -1268,7 +1268,7 @@ STATICINLINE void path_string(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathStringNV)
     }
@@ -1321,7 +1321,7 @@ STATICINLINE void path_sub_commands(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathSubCommandsNV)
     }
@@ -1372,7 +1372,7 @@ STATICINLINE void path_sub_coords(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathSubCoordsNV)
     }
@@ -1420,7 +1420,7 @@ STATICINLINE GLboolean point_along_path(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PointAlongPathNV)
     }
@@ -1478,7 +1478,7 @@ STATICINLINE void stencil_fill_path_instanced(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(StencilFillPathInstancedNV)
     }
@@ -1525,7 +1525,7 @@ STATICINLINE void stencil_fill_path(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(StencilFillPathNV)
     }
@@ -1566,7 +1566,7 @@ STATICINLINE void stencil_stroke_path_instanced(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(StencilStrokePathInstancedNV)
     }
@@ -1613,7 +1613,7 @@ STATICINLINE void stencil_stroke_path(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(StencilStrokePathNV)
     }
@@ -1646,7 +1646,7 @@ STATICINLINE void transform_path(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TransformPathNV)
     }
@@ -1695,7 +1695,7 @@ STATICINLINE void weight_paths(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WeightPathsNV)
     }
@@ -1734,7 +1734,7 @@ STATICINLINE void matrix_load3x2f(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixLoad3x2fNV)
     }
@@ -1765,7 +1765,7 @@ STATICINLINE void matrix_load3x3f(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixLoad3x3fNV)
     }
@@ -1796,7 +1796,7 @@ STATICINLINE void matrix_load_transpose3x3f(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixLoadTranspose3x3fNV)
     }
@@ -1828,7 +1828,7 @@ STATICINLINE void matrix_mult3x2f(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixMult3x2fNV)
     }
@@ -1859,7 +1859,7 @@ STATICINLINE void matrix_mult3x3f(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixMult3x3fNV)
     }
@@ -1890,7 +1890,7 @@ STATICINLINE void matrix_mult_transpose3x3f(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixMultTranspose3x3fNV)
     }
@@ -1932,7 +1932,7 @@ STATICINLINE GLenum path_glyph_index_range(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathGlyphIndexRangeNV)
     }
@@ -1995,7 +1995,7 @@ STATICINLINE void stencil_then_cover_fill_path_instanced(
     error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(StencilThenCoverFillPathInstancedNV)
     }
@@ -2046,7 +2046,7 @@ STATICINLINE void stencil_then_cover_fill_path(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(StencilThenCoverFillPathNV)
     }
@@ -2094,7 +2094,7 @@ STATICINLINE void stencil_then_cover_stroke_path_instanced(
     error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(StencilThenCoverStrokePathInstancedNV)
     }
@@ -2146,7 +2146,7 @@ STATICINLINE void stencil_then_cover_stroke_path(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(StencilThenCoverStrokePathNV)
     }
@@ -2192,7 +2192,7 @@ STATICINLINE void get_program_resourcefv(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetProgramResourcefvNV)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2252,7 +2252,7 @@ STATICINLINE GLenum path_glyph_index_array(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathGlyphIndexArrayNV)
     }
@@ -2312,7 +2312,7 @@ STATICINLINE GLenum path_memory_glyph_index_array(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PathMemoryGlyphIndexArrayNV)
     }
@@ -2370,7 +2370,7 @@ STATICINLINE void program_path_fragment_input_gen(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramPathFragmentInputGenNV)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -2421,7 +2421,7 @@ STATICINLINE void matrix_frustum_ext(
     error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixFrustumEXT)
     }
@@ -2443,7 +2443,7 @@ STATICINLINE void matrix_load_identity_ext(
     group::matrix_mode mode, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixLoadIdentityEXT)
     }
@@ -2472,7 +2472,7 @@ STATICINLINE void matrix_load_transposed_ext(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixLoadTransposedEXT)
     }
@@ -2507,7 +2507,7 @@ STATICINLINE void matrix_load_transposef_ext(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixLoadTransposefEXT)
     }
@@ -2542,7 +2542,7 @@ STATICINLINE void matrix_loadd_ext(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixLoaddEXT)
     }
@@ -2577,7 +2577,7 @@ STATICINLINE void matrix_loadf_ext(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixLoadfEXT)
     }
@@ -2612,7 +2612,7 @@ STATICINLINE void matrix_mult_transposed_ext(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixMultTransposedEXT)
     }
@@ -2647,7 +2647,7 @@ STATICINLINE void matrix_mult_transposef_ext(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixMultTransposefEXT)
     }
@@ -2682,7 +2682,7 @@ STATICINLINE void matrix_multd_ext(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixMultdEXT)
     }
@@ -2717,7 +2717,7 @@ STATICINLINE void matrix_multf_ext(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixMultfEXT)
     }
@@ -2756,7 +2756,7 @@ STATICINLINE void matrix_ortho_ext(
     error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixOrthoEXT)
     }
@@ -2778,7 +2778,7 @@ STATICINLINE void matrix_pop_ext(
     group::matrix_mode mode, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixPopEXT)
     }
@@ -2798,7 +2798,7 @@ STATICINLINE void matrix_push_ext(
     group::matrix_mode mode, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixPushEXT)
     }
@@ -2827,7 +2827,7 @@ STATICINLINE void matrix_rotated_ext(
     error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixRotatedEXT)
     }
@@ -2856,7 +2856,7 @@ STATICINLINE void matrix_rotatef_ext(
     error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixRotatefEXT)
     }
@@ -2883,7 +2883,7 @@ STATICINLINE void matrix_scaled_ext(
     error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixScaledEXT)
     }
@@ -2910,7 +2910,7 @@ STATICINLINE void matrix_scalef_ext(
     error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixScalefEXT)
     }
@@ -2937,7 +2937,7 @@ STATICINLINE void matrix_translated_ext(
     error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixTranslatedEXT)
     }
@@ -2964,7 +2964,7 @@ STATICINLINE void matrix_translatef_ext(
     error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MatrixTranslatefEXT)
     }

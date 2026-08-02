@@ -35,7 +35,7 @@ STATICINLINE void attach_object(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(AttachObjectARB)
     }
@@ -55,7 +55,7 @@ STATICINLINE void compile_shader(
     GLhandleARB shaderObj, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CompileShaderARB)
     }
@@ -75,7 +75,7 @@ STATICINLINE GLhandleARB
 create_program_object(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CreateProgramObjectARB)
     }
@@ -96,7 +96,7 @@ STATICINLINE GLhandleARB create_shader_object(
     group::shader_type shaderType, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CreateShaderObjectARB)
     }
@@ -117,7 +117,7 @@ STATICINLINE void delete_object(
     GLhandleARB obj, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeleteObjectARB)
     }
@@ -140,7 +140,7 @@ STATICINLINE void detach_object(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DetachObjectARB)
     }
@@ -178,7 +178,7 @@ STATICINLINE void get_active_uniform(
     error_check    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetActiveUniformARB)
     }
@@ -225,7 +225,7 @@ STATICINLINE void get_attached_objects(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetAttachedObjectsARB)
     }
@@ -253,7 +253,7 @@ STATICINLINE GLhandleARB get_handle(
     group::container_type pname, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetHandleARB)
     }
@@ -286,7 +286,7 @@ STATICINLINE void get_info_log(
     error_check    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetInfoLogARB)
     }
@@ -326,7 +326,7 @@ STATICINLINE void get_object_parameter(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetObjectParameterfvARB)
     }
@@ -364,7 +364,7 @@ STATICINLINE void get_object_parameter(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetObjectParameterivARB)
     }
@@ -404,7 +404,7 @@ STATICINLINE void get_shader_source(
     error_check    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetShaderSourceARB)
     }
@@ -442,7 +442,7 @@ STATICINLINE GLint get_uniform_location(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetUniformLocationARB)
     }
@@ -480,7 +480,7 @@ STATICINLINE void get_uniformfv(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetUniformfvARB)
     }
@@ -518,7 +518,7 @@ STATICINLINE void get_uniformiv(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetUniformivARB)
     }
@@ -546,7 +546,7 @@ STATICINLINE void link_program(
     GLhandleARB programObj, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(LinkProgramARB)
     }
@@ -582,7 +582,7 @@ STATICINLINE void shader_source(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ShaderSourceARB)
     }
@@ -615,7 +615,7 @@ STATICINLINE void uniform(
     i32 location, f32 v0, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform1fARB)
     }
@@ -645,7 +645,7 @@ STATICINLINE void uniform(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform1fvARB)
     }
@@ -671,7 +671,7 @@ STATICINLINE void uniform(
     i32 location, i32 v0, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform1iARB)
     }
@@ -701,7 +701,7 @@ STATICINLINE void uniform(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform1ivARB)
     }
@@ -732,7 +732,7 @@ STATICINLINE void uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform2fARB)
     }
@@ -760,7 +760,7 @@ STATICINLINE void uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform2fvARB)
     }
@@ -791,7 +791,7 @@ STATICINLINE void uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform2iARB)
     }
@@ -819,7 +819,7 @@ STATICINLINE void uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform2ivARB)
     }
@@ -851,7 +851,7 @@ STATICINLINE void uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform3fARB)
     }
@@ -879,7 +879,7 @@ STATICINLINE void uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform3fvARB)
     }
@@ -911,7 +911,7 @@ STATICINLINE void uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform3iARB)
     }
@@ -939,7 +939,7 @@ STATICINLINE void uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform3ivARB)
     }
@@ -972,7 +972,7 @@ STATICINLINE void uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform4fARB)
     }
@@ -1000,7 +1000,7 @@ STATICINLINE void uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform4fvARB)
     }
@@ -1033,7 +1033,7 @@ STATICINLINE void uniform(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform4iARB)
     }
@@ -1061,7 +1061,7 @@ STATICINLINE void uniform(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Uniform4ivARB)
     }
@@ -1096,7 +1096,7 @@ STATICINLINE void uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UniformMatrix2fvARB)
     }
@@ -1135,7 +1135,7 @@ STATICINLINE void uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UniformMatrix3fvARB)
     }
@@ -1174,7 +1174,7 @@ STATICINLINE void uniform(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UniformMatrix4fvARB)
     }
@@ -1203,7 +1203,7 @@ STATICINLINE void use_program_object(
     GLhandleARB programObj, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UseProgramObjectARB)
     }
@@ -1223,7 +1223,7 @@ STATICINLINE void validate_program(
     GLhandleARB programObj, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ValidateProgramARB)
     }

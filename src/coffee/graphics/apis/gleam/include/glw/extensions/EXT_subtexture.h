@@ -29,7 +29,7 @@ STATICINLINE void tex_sub_image_1d(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexSubImage1DEXT)
     }
@@ -84,7 +84,7 @@ STATICINLINE void tex_sub_image_2d(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexSubImage2DEXT)
     }

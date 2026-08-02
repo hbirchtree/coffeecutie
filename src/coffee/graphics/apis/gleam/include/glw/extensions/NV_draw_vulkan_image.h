@@ -35,7 +35,7 @@ STATICINLINE void draw_vk_image(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawVkImageNV)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -61,7 +61,7 @@ STATICINLINE GLVULKANPROCNV get_vk_proc_addr(
     std::string_view const& name, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetVkProcAddrNV)
     }
@@ -82,7 +82,7 @@ STATICINLINE void wait_vk_semaphore(
     u64 vkSemaphore, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WaitVkSemaphoreNV)
     }
@@ -102,7 +102,7 @@ STATICINLINE void signal_vk_semaphore(
     u64 vkSemaphore, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SignalVkSemaphoreNV)
     }
@@ -122,7 +122,7 @@ STATICINLINE void signal_vk_fence(
     u64 vkFence, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SignalVkFenceNV)
     }

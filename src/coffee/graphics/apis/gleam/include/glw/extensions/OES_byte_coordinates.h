@@ -39,7 +39,7 @@ STATICINLINE void multi_tex_coord1b(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord1bOES)
     }
@@ -70,7 +70,7 @@ STATICINLINE void multi_tex_coord1bv(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord1bvOES)
     }
@@ -104,7 +104,7 @@ STATICINLINE void multi_tex_coord2b(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord2bOES)
     }
@@ -135,7 +135,7 @@ STATICINLINE void multi_tex_coord2bv(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord2bvOES)
     }
@@ -171,7 +171,7 @@ STATICINLINE void multi_tex_coord3b(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord3bOES)
     }
@@ -202,7 +202,7 @@ STATICINLINE void multi_tex_coord3bv(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord3bvOES)
     }
@@ -240,7 +240,7 @@ STATICINLINE void multi_tex_coord4b(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord4bOES)
     }
@@ -271,7 +271,7 @@ STATICINLINE void multi_tex_coord4bv(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord4bvOES)
     }
@@ -299,7 +299,7 @@ STATICINLINE void multi_tex_coord4bv(
 STATICINLINE void tex_coord1b(i8 s, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord1bOES)
     }
@@ -327,7 +327,7 @@ STATICINLINE void tex_coord1bv(
     span_const_i8 const& coords, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord1bvOES)
     }
@@ -355,7 +355,7 @@ STATICINLINE void tex_coord2b(
     i8 s, i8 t, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord2bOES)
     }
@@ -383,7 +383,7 @@ STATICINLINE void tex_coord2bv(
     span_const_i8 const& coords, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord2bvOES)
     }
@@ -412,7 +412,7 @@ STATICINLINE void tex_coord3b(
     i8 s, i8 t, i8 r, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord3bOES)
     }
@@ -440,7 +440,7 @@ STATICINLINE void tex_coord3bv(
     span_const_i8 const& coords, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord3bvOES)
     }
@@ -470,7 +470,7 @@ STATICINLINE void tex_coord4b(
     i8 s, i8 t, i8 r, i8 q, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord4bOES)
     }
@@ -498,7 +498,7 @@ STATICINLINE void tex_coord4bv(
     span_const_i8 const& coords, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord4bvOES)
     }
@@ -528,7 +528,7 @@ STATICINLINE void vertex2b(
     vec_2_i8 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex2bOES)
     }
@@ -556,7 +556,7 @@ STATICINLINE void vertex2bv(
     span_const_i8 const& coords, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex2bvOES)
     }
@@ -587,7 +587,7 @@ STATICINLINE void vertex3b(
     vec_3_i8 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex3bOES)
     }
@@ -615,7 +615,7 @@ STATICINLINE void vertex3bv(
     span_const_i8 const& coords, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex3bvOES)
     }
@@ -647,7 +647,7 @@ STATICINLINE void vertex4b(
     vec_4_i8 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex4bOES)
     }
@@ -675,7 +675,7 @@ STATICINLINE void vertex4bv(
     span_const_i8 const& coords, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex4bvOES)
     }

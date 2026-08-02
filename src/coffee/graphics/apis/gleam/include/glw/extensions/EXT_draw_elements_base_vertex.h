@@ -23,7 +23,7 @@ STATICINLINE void draw_elements_base_vertex(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawElementsBaseVertexEXT)
     }
@@ -60,7 +60,7 @@ STATICINLINE void draw_elements_instanced_base_vertex(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawElementsInstancedBaseVertexEXT)
     }
@@ -108,7 +108,7 @@ STATICINLINE void draw_range_elements_base_vertex(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawRangeElementsBaseVertexEXT)
     }
@@ -162,7 +162,7 @@ STATICINLINE void multi_draw_elements_base_vertex(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiDrawElementsBaseVertexEXT)
     }

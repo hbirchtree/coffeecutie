@@ -28,7 +28,7 @@ STATICINLINE void client_wait_semaphoreui64(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClientWaitSemaphoreui64NVX)
     }
@@ -62,7 +62,7 @@ STATICINLINE GLuint
 create_progress_fence(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CreateProgressFenceNVX)
     }
@@ -99,7 +99,7 @@ STATICINLINE void signal_semaphoreui64(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SignalSemaphoreui64NVX)
     }
@@ -151,7 +151,7 @@ STATICINLINE void wait_semaphoreui64(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WaitSemaphoreui64NVX)
     }

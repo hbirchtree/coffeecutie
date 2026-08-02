@@ -17,7 +17,7 @@ STATICINLINE void blend_equation_indexed(
     error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BlendEquationIndexedAMD)
     }
@@ -42,7 +42,7 @@ STATICINLINE void blend_equation_separate_indexed(
     error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BlendEquationSeparateIndexedAMD)
     }
@@ -65,7 +65,7 @@ STATICINLINE void blend_func_indexed(
     u32 buf, GLenum src, GLenum dst, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BlendFuncIndexedAMD)
     }
@@ -94,7 +94,7 @@ STATICINLINE void blend_func_separate_indexed(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BlendFuncSeparateIndexedAMD)
     }

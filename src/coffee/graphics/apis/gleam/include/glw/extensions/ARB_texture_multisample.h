@@ -43,7 +43,7 @@ STATICINLINE void get_multisamplefv(
     error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetMultisamplefv)
     }
@@ -71,7 +71,7 @@ STATICINLINE void sample_maski(
     u32 maskNumber, GLbitfield mask, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SampleMaski)
     }
@@ -103,7 +103,7 @@ STATICINLINE void tex_image_2d_multisample(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexImage2DMultisample)
     }
@@ -148,7 +148,7 @@ STATICINLINE void tex_image_3d_multisample(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexImage3DMultisample)
     }

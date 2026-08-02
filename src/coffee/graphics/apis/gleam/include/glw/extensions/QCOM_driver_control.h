@@ -14,7 +14,7 @@ STATICINLINE void disable_driver_control(
     u32 driverControl, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DisableDriverControlQCOM)
     }
@@ -34,7 +34,7 @@ STATICINLINE void enable_driver_control(
     u32 driverControl, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EnableDriverControlQCOM)
     }
@@ -70,7 +70,7 @@ STATICINLINE void get_driver_control_string(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetDriverControlStringQCOM)
     }
@@ -115,7 +115,7 @@ STATICINLINE void get_driver_controls(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetDriverControlsQCOM)
     }

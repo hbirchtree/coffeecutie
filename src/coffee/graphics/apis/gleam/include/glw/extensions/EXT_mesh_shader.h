@@ -64,7 +64,7 @@ STATICINLINE void draw_mesh_tasks(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawMeshTasksEXT)
     }
@@ -85,7 +85,7 @@ STATICINLINE void draw_mesh_tasks_indirect(
     GLintptr indirect, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawMeshTasksIndirectEXT)
     }
@@ -110,7 +110,7 @@ STATICINLINE void multi_draw_mesh_tasks_indirect(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiDrawMeshTasksIndirectEXT)
     }
@@ -138,7 +138,7 @@ STATICINLINE void multi_draw_mesh_tasks_indirect_count(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiDrawMeshTasksIndirectCountEXT)
     }

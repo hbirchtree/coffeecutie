@@ -21,7 +21,7 @@ STATICINLINE void begin_query_indexed(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BeginQueryIndexed)
     }
@@ -46,7 +46,7 @@ STATICINLINE void draw_transform_feedback_stream(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawTransformFeedbackStream)
     }
@@ -69,7 +69,7 @@ STATICINLINE void end_query_indexed(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EndQueryIndexed)
     }
@@ -101,7 +101,7 @@ STATICINLINE void get_query_indexediv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetQueryIndexediv)
     }

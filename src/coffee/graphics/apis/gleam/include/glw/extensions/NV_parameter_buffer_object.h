@@ -33,7 +33,7 @@ STATICINLINE void program_buffer_parameters_iiv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramBufferParametersIivNV)
     }
@@ -79,7 +79,7 @@ STATICINLINE void program_buffer_parameters_iuiv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramBufferParametersIuivNV)
     }
@@ -125,7 +125,7 @@ STATICINLINE void program_buffer_parameter(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramBufferParametersfvNV)
     }

@@ -22,7 +22,7 @@ STATICINLINE void shading_rate(
     group::shading_rate_qcom rate, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ShadingRateQCOM)
     }

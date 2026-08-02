@@ -88,7 +88,7 @@ STATICINLINE void bind_attrib_location(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BindAttribLocationARB)
     }
@@ -117,7 +117,7 @@ STATICINLINE void disable_vertex_attrib_array(
     u32 index, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DisableVertexAttribArrayARB)
     }
@@ -137,7 +137,7 @@ STATICINLINE void enable_vertex_attrib_array(
     u32 index, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EnableVertexAttribArrayARB)
     }
@@ -175,7 +175,7 @@ STATICINLINE void get_active_attrib(
     error_check    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetActiveAttribARB)
     }
@@ -219,7 +219,7 @@ STATICINLINE GLint get_attrib_location(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetAttribLocationARB)
     }
@@ -254,7 +254,7 @@ STATICINLINE void get_vertex_attrib_pointerv(
     error_check                               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetVertexAttribPointervARB)
     }
@@ -292,7 +292,7 @@ STATICINLINE void get_vertex_attribdv(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetVertexAttribdvARB)
     }
@@ -330,7 +330,7 @@ STATICINLINE void get_vertex_attribfv(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetVertexAttribfvARB)
     }
@@ -368,7 +368,7 @@ STATICINLINE void get_vertex_attribiv(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetVertexAttribivARB)
     }
@@ -397,7 +397,7 @@ STATICINLINE void vertex_attrib1d(
     u32 index, f64 x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib1dARB)
     }
@@ -426,7 +426,7 @@ STATICINLINE void vertex_attrib1dv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib1dvARB)
     }
@@ -451,7 +451,7 @@ STATICINLINE void vertex_attrib1f(
     u32 index, f32 x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib1fARB)
     }
@@ -480,7 +480,7 @@ STATICINLINE void vertex_attrib1fv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib1fvARB)
     }
@@ -505,7 +505,7 @@ STATICINLINE void vertex_attrib1s(
     u32 index, i16 x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib1sARB)
     }
@@ -534,7 +534,7 @@ STATICINLINE void vertex_attrib1sv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib1svARB)
     }
@@ -562,7 +562,7 @@ STATICINLINE void vertex_attrib2d(
     u32 index, vec_2_f64 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib2dARB)
     }
@@ -589,7 +589,7 @@ STATICINLINE void vertex_attrib2dv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib2dvARB)
     }
@@ -617,7 +617,7 @@ STATICINLINE void vertex_attrib2f(
     u32 index, vec_2_f32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib2fARB)
     }
@@ -644,7 +644,7 @@ STATICINLINE void vertex_attrib2fv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib2fvARB)
     }
@@ -672,7 +672,7 @@ STATICINLINE void vertex_attrib2s(
     u32 index, vec_2_i16 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib2sARB)
     }
@@ -699,7 +699,7 @@ STATICINLINE void vertex_attrib2sv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib2svARB)
     }
@@ -728,7 +728,7 @@ STATICINLINE void vertex_attrib3d(
     u32 index, vec_3_f64 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib3dARB)
     }
@@ -755,7 +755,7 @@ STATICINLINE void vertex_attrib3dv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib3dvARB)
     }
@@ -784,7 +784,7 @@ STATICINLINE void vertex_attrib3f(
     u32 index, vec_3_f32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib3fARB)
     }
@@ -811,7 +811,7 @@ STATICINLINE void vertex_attrib3fv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib3fvARB)
     }
@@ -840,7 +840,7 @@ STATICINLINE void vertex_attrib3s(
     u32 index, vec_3_i16 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib3sARB)
     }
@@ -867,7 +867,7 @@ STATICINLINE void vertex_attrib3sv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib3svARB)
     }
@@ -900,7 +900,7 @@ STATICINLINE void vertex_attrib4_nbv(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4NbvARB)
     }
@@ -934,7 +934,7 @@ STATICINLINE void vertex_attrib4_niv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4NivARB)
     }
@@ -968,7 +968,7 @@ STATICINLINE void vertex_attrib4_nsv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4NsvARB)
     }
@@ -999,7 +999,7 @@ STATICINLINE void vertex_attrib4_nub(
     u32 index, vec_4_u8 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4NubARB)
     }
@@ -1028,7 +1028,7 @@ STATICINLINE void vertex_attrib4_nubv(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4NubvARB)
     }
@@ -1062,7 +1062,7 @@ STATICINLINE void vertex_attrib4_nuiv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4NuivARB)
     }
@@ -1096,7 +1096,7 @@ STATICINLINE void vertex_attrib4_nusv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4NusvARB)
     }
@@ -1131,7 +1131,7 @@ STATICINLINE void vertex_attrib4bv(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4bvARB)
     }
@@ -1162,7 +1162,7 @@ STATICINLINE void vertex_attrib4d(
     u32 index, vec_4_f64 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4dARB)
     }
@@ -1189,7 +1189,7 @@ STATICINLINE void vertex_attrib4dv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4dvARB)
     }
@@ -1219,7 +1219,7 @@ STATICINLINE void vertex_attrib4f(
     u32 index, vec_4_f32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4fARB)
     }
@@ -1246,7 +1246,7 @@ STATICINLINE void vertex_attrib4fv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4fvARB)
     }
@@ -1277,7 +1277,7 @@ STATICINLINE void vertex_attrib4iv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4ivARB)
     }
@@ -1307,7 +1307,7 @@ STATICINLINE void vertex_attrib4s(
     u32 index, vec_4_i16 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4sARB)
     }
@@ -1334,7 +1334,7 @@ STATICINLINE void vertex_attrib4sv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4svARB)
     }
@@ -1367,7 +1367,7 @@ STATICINLINE void vertex_attrib4ubv(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4ubvARB)
     }
@@ -1399,7 +1399,7 @@ STATICINLINE void vertex_attrib4uiv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4uivARB)
     }
@@ -1430,7 +1430,7 @@ STATICINLINE void vertex_attrib4usv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4usvARB)
     }
@@ -1467,7 +1467,7 @@ STATICINLINE void vertex_attrib_pointer(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribPointerARB)
     }

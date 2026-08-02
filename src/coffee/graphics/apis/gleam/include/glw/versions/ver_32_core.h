@@ -19,7 +19,7 @@ STATICINLINE void draw_elements_base_vertex(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawElementsBaseVertex)
     }
@@ -59,7 +59,7 @@ STATICINLINE void draw_elements_instanced_base_vertex(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawElementsInstancedBaseVertex)
     }
@@ -108,7 +108,7 @@ STATICINLINE void draw_range_elements_base_vertex(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawRangeElementsBaseVertex)
     }
@@ -162,7 +162,7 @@ STATICINLINE void multi_draw_elements_base_vertex(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiDrawElementsBaseVertex)
     }
@@ -202,7 +202,7 @@ STATICINLINE void provoking_vertex(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProvokingVertex)
     }
@@ -229,7 +229,7 @@ STATICINLINE group::sync_status client_wait_sync(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClientWaitSync)
     }
@@ -252,7 +252,7 @@ STATICINLINE void delete_sync(
     GLsync sync, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeleteSync)
     }
@@ -277,7 +277,7 @@ STATICINLINE GLsync fence_sync(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FenceSync)
     }
@@ -308,7 +308,7 @@ STATICINLINE void get_integer64v(
     error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetInteger64v)
     }
@@ -348,7 +348,7 @@ STATICINLINE void get_synciv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetSynciv)
     }
@@ -381,7 +381,7 @@ STATICINLINE GLboolean
 is_sync(GLsync sync, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsSync)
     }
@@ -409,7 +409,7 @@ STATICINLINE void wait_sync(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WaitSync)
     }
@@ -438,7 +438,7 @@ STATICINLINE void framebuffer_texture(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FramebufferTexture)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -478,7 +478,7 @@ STATICINLINE void get_buffer_parameteri64v(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetBufferParameteri64v)
     }
@@ -517,7 +517,7 @@ STATICINLINE void get_integer64i_v(
     error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetInteger64i_v)
     }
@@ -556,7 +556,7 @@ STATICINLINE void get_multisamplefv(
     error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetMultisamplefv)
     }
@@ -586,7 +586,7 @@ STATICINLINE void sample_maski(
     u32 maskNumber, GLbitfield mask, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SampleMaski)
     }
@@ -620,7 +620,7 @@ STATICINLINE void tex_image_2d_multisample(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexImage2DMultisample)
     }
@@ -667,7 +667,7 @@ STATICINLINE void tex_image_3d_multisample(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexImage3DMultisample)
     }

@@ -23,7 +23,7 @@ STATICINLINE void clear_depthd(
     f64 depth, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClearDepthdNV)
     }
@@ -44,7 +44,7 @@ STATICINLINE void depth_boundsd(
     f64 zmin, f64 zmax, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DepthBoundsdNV)
     }
@@ -65,7 +65,7 @@ STATICINLINE void depth_ranged(
     f64 zNear, f64 zFar, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DepthRangedNV)
     }

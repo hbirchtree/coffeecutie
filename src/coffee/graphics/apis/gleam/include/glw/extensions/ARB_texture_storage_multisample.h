@@ -26,7 +26,7 @@ STATICINLINE void tex_storage_2d_multisample(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexStorage2DMultisample)
     }
@@ -71,7 +71,7 @@ STATICINLINE void tex_storage_3d_multisample(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexStorage3DMultisample)
     }

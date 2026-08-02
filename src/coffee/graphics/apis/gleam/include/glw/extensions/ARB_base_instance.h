@@ -23,7 +23,7 @@ STATICINLINE void draw_arrays_instanced_base_instance(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawArraysInstancedBaseInstance)
     }
@@ -61,7 +61,7 @@ STATICINLINE void draw_elements_instanced_base_instance(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawElementsInstancedBaseInstance)
     }
@@ -107,7 +107,7 @@ STATICINLINE void draw_elements_instanced_base_vertex_base_instance(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawElementsInstancedBaseVertexBaseInstance)
     }

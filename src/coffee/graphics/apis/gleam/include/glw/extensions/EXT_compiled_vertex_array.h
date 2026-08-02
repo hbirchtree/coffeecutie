@@ -17,7 +17,7 @@ STATICINLINE void lock_arrays(
     i32 first, i32 count, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(LockArraysEXT)
     }
@@ -36,7 +36,7 @@ STATICINLINE void lock_arrays(
 STATICINLINE void unlock_arrays(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(UnlockArraysEXT)
     }

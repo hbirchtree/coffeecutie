@@ -34,7 +34,7 @@ STATICINLINE void framebuffer_sample_positionsfv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FramebufferSamplePositionsfvAMD)
     }
@@ -81,7 +81,7 @@ STATICINLINE void get_framebuffer_parameter(
     error_check                                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetFramebufferParameterfvAMD)
     }
@@ -131,7 +131,7 @@ STATICINLINE void get_named_framebuffer_parameter(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetNamedFramebufferParameterfvAMD)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -183,7 +183,7 @@ STATICINLINE void named_framebuffer_sample_positionsfv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(NamedFramebufferSamplePositionsfvAMD)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \

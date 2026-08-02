@@ -14,7 +14,7 @@ STATICINLINE void begin_conditional_render(
     u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BeginConditionalRenderNVX)
     }
@@ -34,7 +34,7 @@ STATICINLINE void end_conditional_render(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EndConditionalRenderNVX)
     }

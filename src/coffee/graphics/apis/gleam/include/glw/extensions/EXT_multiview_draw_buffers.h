@@ -35,7 +35,7 @@ STATICINLINE void draw_buffers_indexed(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawBuffersIndexedEXT)
     }
@@ -77,7 +77,7 @@ STATICINLINE void get_integeri_v(
     error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetIntegeri_vEXT)
     }
@@ -108,7 +108,7 @@ STATICINLINE void read_buffer_indexed(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ReadBufferIndexedEXT)
     }

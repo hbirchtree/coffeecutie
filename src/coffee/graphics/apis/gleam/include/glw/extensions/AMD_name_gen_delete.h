@@ -29,7 +29,7 @@ STATICINLINE void delete_names(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeleteNamesAMD)
     }
@@ -65,7 +65,7 @@ STATICINLINE void gen_names(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GenNamesAMD)
     }
@@ -93,7 +93,7 @@ STATICINLINE GLboolean
 is_name(GLenum identifier, u32 name, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsNameAMD)
     }

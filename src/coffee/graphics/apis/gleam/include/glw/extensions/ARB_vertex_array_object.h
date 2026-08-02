@@ -18,7 +18,7 @@ STATICINLINE void bind_vertex_array(
     u32 array, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BindVertexArray)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -50,7 +50,7 @@ STATICINLINE void delete_vertex_arrays(
     span_const_u32 const& arrays, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeleteVertexArrays)
     }
@@ -82,7 +82,7 @@ STATICINLINE void gen_vertex_arrays(
     span_u32 arrays, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GenVertexArrays)
     }
@@ -107,7 +107,7 @@ STATICINLINE GLboolean
 is_vertex_array(u32 array, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsVertexArray)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \

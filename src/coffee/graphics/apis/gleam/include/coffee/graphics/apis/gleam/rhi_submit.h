@@ -299,7 +299,6 @@ inline optional<tuple<error, std::string_view>> api::submit(
      * implementation will *definitely* fail on */
     if constexpr(compile_info::debug_mode)
     {
-        auto log = detail::program_log(program->m_handle);
         if(auto error =
                detail::evaluate_draw_state(m_limits, m_workarounds, command);
            error.has_value())

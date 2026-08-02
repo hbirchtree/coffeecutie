@@ -21,7 +21,7 @@ constexpr u32 render_gpu_mask                        = 0x9558;
 STATICINLINE void multicast_barrier(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MulticastBarrierNV)
     }
@@ -64,7 +64,7 @@ STATICINLINE void multicast_blit_framebuffer(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MulticastBlitFramebufferNV)
     }
@@ -120,7 +120,7 @@ STATICINLINE void multicast_buffer_sub_data(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MulticastBufferSubDataNV)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -170,7 +170,7 @@ STATICINLINE void multicast_copy_buffer_sub_data(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MulticastCopyBufferSubDataNV)
     }
@@ -238,7 +238,7 @@ STATICINLINE void multicast_copy_image_sub_data(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MulticastCopyImageSubDataNV)
     }
@@ -308,7 +308,7 @@ STATICINLINE void multicast_framebuffer_sample_locationsfv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MulticastFramebufferSampleLocationsfvNV)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -358,7 +358,7 @@ STATICINLINE void multicast_get_query_objecti64v(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MulticastGetQueryObjecti64vNV)
     }
@@ -400,7 +400,7 @@ STATICINLINE void multicast_get_query_objectiv(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MulticastGetQueryObjectivNV)
     }
@@ -442,7 +442,7 @@ STATICINLINE void multicast_get_query_objectui64v(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MulticastGetQueryObjectui64vNV)
     }
@@ -484,7 +484,7 @@ STATICINLINE void multicast_get_query_objectuiv(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MulticastGetQueryObjectuivNV)
     }
@@ -517,7 +517,7 @@ STATICINLINE void multicast_wait_sync(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MulticastWaitSyncNV)
     }
@@ -537,7 +537,7 @@ STATICINLINE void render_gpu_mask(
     GLbitfield mask, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(RenderGpuMaskNV)
     }

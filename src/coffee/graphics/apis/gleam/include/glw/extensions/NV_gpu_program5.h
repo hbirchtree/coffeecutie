@@ -32,7 +32,7 @@ STATICINLINE void get_program_subroutine_parameter(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetProgramSubroutineParameteruivNV)
     }
@@ -70,7 +70,7 @@ STATICINLINE void program_subroutine_parameters(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramSubroutineParametersuivNV)
     }

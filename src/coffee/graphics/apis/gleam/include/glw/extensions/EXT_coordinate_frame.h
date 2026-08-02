@@ -30,7 +30,7 @@ STATICINLINE void binormal3b(
     i8 bx, i8 by, i8 bz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Binormal3bEXT)
     }
@@ -56,7 +56,7 @@ STATICINLINE void binormal3bv(
     span_const_i8 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Binormal3bvEXT)
     }
@@ -82,7 +82,7 @@ STATICINLINE void binormal3d(
     f64 bx, f64 by, f64 bz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Binormal3dEXT)
     }
@@ -106,7 +106,7 @@ STATICINLINE void binormal3dv(
     span_const_vec_3_f64 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Binormal3dvEXT)
     }
@@ -131,7 +131,7 @@ STATICINLINE void binormal3f(
     f32 bx, f32 by, f32 bz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Binormal3fEXT)
     }
@@ -155,7 +155,7 @@ STATICINLINE void binormal3fv(
     span_const_vec_3_f32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Binormal3fvEXT)
     }
@@ -180,7 +180,7 @@ STATICINLINE void binormal3i(
     i32 bx, i32 by, i32 bz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Binormal3iEXT)
     }
@@ -204,7 +204,7 @@ STATICINLINE void binormal3iv(
     span_const_vec_3_i32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Binormal3ivEXT)
     }
@@ -229,7 +229,7 @@ STATICINLINE void binormal3s(
     i16 bx, i16 by, i16 bz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Binormal3sEXT)
     }
@@ -253,7 +253,7 @@ STATICINLINE void binormal3sv(
     span_const_vec_3_i16 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Binormal3svEXT)
     }
@@ -283,7 +283,7 @@ STATICINLINE void binormal_pointer(
     error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BinormalPointerEXT)
     }
@@ -315,7 +315,7 @@ STATICINLINE void tangent3b(
     i8 tx, i8 ty, i8 tz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Tangent3bEXT)
     }
@@ -341,7 +341,7 @@ STATICINLINE void tangent3bv(
     span_const_i8 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Tangent3bvEXT)
     }
@@ -367,7 +367,7 @@ STATICINLINE void tangent3d(
     f64 tx, f64 ty, f64 tz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Tangent3dEXT)
     }
@@ -391,7 +391,7 @@ STATICINLINE void tangent3dv(
     span_const_vec_3_f64 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Tangent3dvEXT)
     }
@@ -416,7 +416,7 @@ STATICINLINE void tangent3f(
     f32 tx, f32 ty, f32 tz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Tangent3fEXT)
     }
@@ -440,7 +440,7 @@ STATICINLINE void tangent3fv(
     span_const_vec_3_f32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Tangent3fvEXT)
     }
@@ -465,7 +465,7 @@ STATICINLINE void tangent3i(
     i32 tx, i32 ty, i32 tz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Tangent3iEXT)
     }
@@ -489,7 +489,7 @@ STATICINLINE void tangent3iv(
     span_const_vec_3_i32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Tangent3ivEXT)
     }
@@ -514,7 +514,7 @@ STATICINLINE void tangent3s(
     i16 tx, i16 ty, i16 tz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Tangent3sEXT)
     }
@@ -538,7 +538,7 @@ STATICINLINE void tangent3sv(
     span_const_vec_3_i16 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Tangent3svEXT)
     }
@@ -568,7 +568,7 @@ STATICINLINE void tangent_pointer(
     error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TangentPointerEXT)
     }

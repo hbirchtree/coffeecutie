@@ -35,7 +35,7 @@ STATICINLINE void bind_shading_rate_image(
     u32 texture, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BindShadingRateImageNV)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -65,7 +65,7 @@ STATICINLINE void get_shading_rate_image_palette(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetShadingRateImagePaletteNV)
     }
@@ -97,7 +97,7 @@ STATICINLINE void get_shading_rate_sample_locationiv(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetShadingRateSampleLocationivNV)
     }
@@ -127,7 +127,7 @@ STATICINLINE void shading_rate_image_barrier(
     bool synchronize, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ShadingRateImageBarrierNV)
     }
@@ -159,7 +159,7 @@ STATICINLINE void shading_rate_image_palette(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ShadingRateImagePaletteNV)
     }
@@ -188,7 +188,7 @@ STATICINLINE void shading_rate_sample_order(
     GLenum order, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ShadingRateSampleOrderNV)
     }
@@ -219,7 +219,7 @@ STATICINLINE void shading_rate_sample_order_custom(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ShadingRateSampleOrderCustomNV)
     }

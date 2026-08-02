@@ -14,7 +14,7 @@ STATICINLINE void clear_depthf(
     GLclampf depth, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClearDepthfOES)
     }
@@ -43,7 +43,7 @@ STATICINLINE void clip_planef(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClipPlanefOES)
     }
@@ -72,7 +72,7 @@ STATICINLINE void depth_rangef(
     GLclampf n, GLclampf f, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DepthRangefOES)
     }
@@ -103,7 +103,7 @@ STATICINLINE void frustumf(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FrustumfOES)
     }
@@ -131,7 +131,7 @@ STATICINLINE void get_clip_planef(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetClipPlanefOES)
     }
@@ -169,7 +169,7 @@ STATICINLINE void orthof(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(OrthofOES)
     }

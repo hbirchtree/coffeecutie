@@ -52,7 +52,7 @@ STATICINLINE void lgpu_copy_image_sub_data(
     error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(LGPUCopyImageSubDataNVX)
     }
@@ -104,7 +104,7 @@ STATICINLINE void lgpu_copy_image_sub_data(
 STATICINLINE void lgpu_interlock(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(LGPUInterlockNVX)
     }
@@ -135,7 +135,7 @@ STATICINLINE void lgpu_named_buffer_sub_data(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(LGPUNamedBufferSubDataNVX)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \

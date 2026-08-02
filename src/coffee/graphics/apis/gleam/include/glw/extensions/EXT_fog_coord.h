@@ -33,7 +33,7 @@ STATICINLINE void fog_coord_pointer(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FogCoordPointerEXT)
     }
@@ -63,7 +63,7 @@ STATICINLINE void fog_coordd(
     f64 coord, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FogCoorddEXT)
     }
@@ -89,7 +89,7 @@ STATICINLINE void fog_coorddv(
     span_const_f64 const& coord, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FogCoorddvEXT)
     }
@@ -114,7 +114,7 @@ STATICINLINE void fog_coordf(
     f32 coord, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FogCoordfEXT)
     }
@@ -140,7 +140,7 @@ STATICINLINE void fog_coordfv(
     span_const_f32 const& coord, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FogCoordfvEXT)
     }

@@ -30,7 +30,7 @@ STATICINLINE void delete_semaphores(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeleteSemaphoresEXT)
     }
@@ -63,7 +63,7 @@ STATICINLINE void gen_semaphores(
     span_u32 semaphores, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GenSemaphoresEXT)
     }
@@ -100,7 +100,7 @@ STATICINLINE void get_semaphore_parameterui64v(
     error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetSemaphoreParameterui64vEXT)
     }
@@ -136,7 +136,7 @@ STATICINLINE void get_unsigned_bytev(
     error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetUnsignedBytevEXT)
     }
@@ -172,7 +172,7 @@ STATICINLINE void get_unsigned_bytei_v(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetUnsignedBytei_vEXT)
     }
@@ -200,7 +200,7 @@ STATICINLINE GLboolean
 is_semaphore(u32 semaphore, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsSemaphoreEXT)
     }
@@ -232,7 +232,7 @@ STATICINLINE void semaphore_parameterui64v(
     error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SemaphoreParameterui64vEXT)
     }
@@ -282,7 +282,7 @@ STATICINLINE void signal_semaphore(
     error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SignalSemaphoreEXT)
     }
@@ -345,7 +345,7 @@ STATICINLINE void wait_semaphore(
     error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WaitSemaphoreEXT)
     }

@@ -36,7 +36,7 @@ STATICINLINE void debug_message_callback(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DebugMessageCallbackARB)
     }
@@ -80,7 +80,7 @@ STATICINLINE void debug_message_control(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DebugMessageControlARB)
     }
@@ -123,7 +123,7 @@ STATICINLINE void debug_message_insert(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DebugMessageInsertARB)
     }
@@ -194,7 +194,7 @@ STATICINLINE GLuint get_debug_message_log(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetDebugMessageLogARB)
     }

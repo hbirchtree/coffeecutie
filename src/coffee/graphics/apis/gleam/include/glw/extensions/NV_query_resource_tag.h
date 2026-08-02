@@ -21,7 +21,7 @@ STATICINLINE void delete_query_resource_tag(
     span_const_i32 const& tagIds, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeleteQueryResourceTagNV)
     }
@@ -53,7 +53,7 @@ STATICINLINE void gen_query_resource_tag(
     span_i32 tagIds, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GenQueryResourceTagNV)
     }
@@ -81,7 +81,7 @@ STATICINLINE void query_resource_tag(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(QueryResourceTagNV)
     }

@@ -27,7 +27,7 @@ STATICINLINE void delete_fences(
     span_const_u32 const& fences, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeleteFencesNV)
     }
@@ -53,7 +53,7 @@ STATICINLINE void finish_fence(
     u32 fence, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FinishFenceNV)
     }
@@ -79,7 +79,7 @@ STATICINLINE void gen_fences(
     span_u32 fences, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GenFencesNV)
     }
@@ -114,7 +114,7 @@ STATICINLINE void get_fenceiv(
     error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetFenceivNV)
     }
@@ -142,7 +142,7 @@ STATICINLINE GLboolean
 is_fence(u32 fence, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsFenceNV)
     }
@@ -166,7 +166,7 @@ STATICINLINE void set_fence(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SetFenceNV)
     }
@@ -186,7 +186,7 @@ STATICINLINE GLboolean
 test_fence(u32 fence, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TestFenceNV)
     }

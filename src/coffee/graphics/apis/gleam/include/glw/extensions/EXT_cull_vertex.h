@@ -27,7 +27,7 @@ STATICINLINE void cull_parameter(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CullParameterdvEXT)
     }
@@ -61,7 +61,7 @@ STATICINLINE void cull_parameter(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CullParameterfvEXT)
     }

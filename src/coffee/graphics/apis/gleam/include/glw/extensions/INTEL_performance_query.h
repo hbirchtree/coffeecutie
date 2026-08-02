@@ -35,7 +35,7 @@ STATICINLINE void begin_perf_query(
     u32 queryHandle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BeginPerfQueryINTEL)
     }
@@ -63,7 +63,7 @@ STATICINLINE void create_perf_query(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CreatePerfQueryINTEL)
     }
@@ -91,7 +91,7 @@ STATICINLINE void delete_perf_query(
     u32 queryHandle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeletePerfQueryINTEL)
     }
@@ -111,7 +111,7 @@ STATICINLINE void end_perf_query(
     u32 queryHandle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EndPerfQueryINTEL)
     }
@@ -136,7 +136,7 @@ STATICINLINE void get_first_perf_query_id(
     span_u32 queryId, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetFirstPerfQueryIdINTEL)
     }
@@ -168,7 +168,7 @@ STATICINLINE void get_next_perf_query_id(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetNextPerfQueryIdINTEL)
     }
@@ -229,7 +229,7 @@ STATICINLINE void get_perf_counter_info(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPerfCounterInfoINTEL)
     }
@@ -308,7 +308,7 @@ STATICINLINE void get_perf_query_data(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPerfQueryDataINTEL)
     }
@@ -349,7 +349,7 @@ STATICINLINE void get_perf_query_id_by_name(
     span_u32 queryId, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPerfQueryIdByNameINTEL)
     }
@@ -395,7 +395,7 @@ STATICINLINE void get_perf_query_info(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPerfQueryInfoINTEL)
     }

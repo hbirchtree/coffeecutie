@@ -29,7 +29,7 @@ STATICINLINE void vertex_attrib_p1ui(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribP1ui)
     }
@@ -62,7 +62,7 @@ STATICINLINE void vertex_attrib_p1uiv(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribP1uiv)
     }
@@ -99,7 +99,7 @@ STATICINLINE void vertex_attrib_p2ui(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribP2ui)
     }
@@ -130,7 +130,7 @@ STATICINLINE void vertex_attrib_p2uiv(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribP2uiv)
     }
@@ -167,7 +167,7 @@ STATICINLINE void vertex_attrib_p3ui(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribP3ui)
     }
@@ -198,7 +198,7 @@ STATICINLINE void vertex_attrib_p3uiv(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribP3uiv)
     }
@@ -235,7 +235,7 @@ STATICINLINE void vertex_attrib_p4ui(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribP4ui)
     }
@@ -266,7 +266,7 @@ STATICINLINE void vertex_attrib_p4uiv(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribP4uiv)
     }

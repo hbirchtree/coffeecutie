@@ -28,7 +28,7 @@ STATICINLINE void ext_get_buffer_pointerv(
     GLenum target, span_void params, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ExtGetBufferPointervQCOM)
     }
@@ -64,7 +64,7 @@ STATICINLINE void ext_get_buffers(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ExtGetBuffersQCOM)
     }
@@ -102,7 +102,7 @@ STATICINLINE void ext_get_framebuffers(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ExtGetFramebuffersQCOM)
     }
@@ -142,7 +142,7 @@ STATICINLINE void ext_get_renderbuffers(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ExtGetRenderbuffersQCOM)
     }
@@ -186,7 +186,7 @@ STATICINLINE void ext_get_tex_level_parameter(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ExtGetTexLevelParameterivQCOM)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -244,7 +244,7 @@ STATICINLINE void ext_get_tex_sub_image(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ExtGetTexSubImageQCOM)
     }
@@ -299,7 +299,7 @@ STATICINLINE void ext_get_textures(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ExtGetTexturesQCOM)
     }
@@ -335,7 +335,7 @@ STATICINLINE void ext_tex_object_state_overridei(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ExtTexObjectStateOverrideiQCOM)
     }

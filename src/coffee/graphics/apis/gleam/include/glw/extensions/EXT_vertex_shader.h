@@ -91,7 +91,7 @@ STATICINLINE void begin_vertex_shader(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BeginVertexShaderEXT)
     }
@@ -114,7 +114,7 @@ STATICINLINE GLuint bind_light_parameter(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BindLightParameterEXT)
     }
@@ -139,7 +139,7 @@ STATICINLINE GLuint bind_material_parameter(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BindMaterialParameterEXT)
     }
@@ -162,7 +162,7 @@ STATICINLINE GLuint bind_parameter(
     error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BindParameterEXT)
     }
@@ -188,7 +188,7 @@ STATICINLINE GLuint bind_tex_gen_parameter(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BindTexGenParameterEXT)
     }
@@ -215,7 +215,7 @@ STATICINLINE GLuint bind_texture_unit_parameter(
     error_check                                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BindTextureUnitParameterEXT)
     }
@@ -237,7 +237,7 @@ STATICINLINE void bind_vertex_shader(
     u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BindVertexShaderEXT)
     }
@@ -257,7 +257,7 @@ STATICINLINE void delete_vertex_shader(
     u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeleteVertexShaderEXT)
     }
@@ -277,7 +277,7 @@ STATICINLINE void disable_variant_client_state(
     u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DisableVariantClientStateEXT)
     }
@@ -297,7 +297,7 @@ STATICINLINE void enable_variant_client_state(
     u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EnableVariantClientStateEXT)
     }
@@ -316,7 +316,7 @@ STATICINLINE void enable_variant_client_state(
 STATICINLINE void end_vertex_shader(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EndVertexShaderEXT)
     }
@@ -338,7 +338,7 @@ STATICINLINE void extract_component(
     u32 res, u32 src, u32 num, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ExtractComponentEXT)
     }
@@ -365,7 +365,7 @@ STATICINLINE GLuint gen_symbols(
     error_check                           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GenSymbolsEXT)
     }
@@ -390,7 +390,7 @@ STATICINLINE GLuint
 gen_vertex_shaders(u32 range, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GenVertexShadersEXT)
     }
@@ -422,7 +422,7 @@ STATICINLINE void get_invariant_booleanv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetInvariantBooleanvEXT)
     }
@@ -460,7 +460,7 @@ STATICINLINE void get_invariant_floatv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetInvariantFloatvEXT)
     }
@@ -498,7 +498,7 @@ STATICINLINE void get_invariant_integerv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetInvariantIntegervEXT)
     }
@@ -537,7 +537,7 @@ STATICINLINE void get_local_constant_booleanv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetLocalConstantBooleanvEXT)
     }
@@ -575,7 +575,7 @@ STATICINLINE void get_local_constant_floatv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetLocalConstantFloatvEXT)
     }
@@ -613,7 +613,7 @@ STATICINLINE void get_local_constant_integerv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetLocalConstantIntegervEXT)
     }
@@ -652,7 +652,7 @@ STATICINLINE void get_variant_booleanv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetVariantBooleanvEXT)
     }
@@ -690,7 +690,7 @@ STATICINLINE void get_variant_floatv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetVariantFloatvEXT)
     }
@@ -728,7 +728,7 @@ STATICINLINE void get_variant_integerv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetVariantIntegervEXT)
     }
@@ -763,7 +763,7 @@ STATICINLINE void get_variant_pointerv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetVariantPointervEXT)
     }
@@ -793,7 +793,7 @@ STATICINLINE void insert_component(
     u32 res, u32 src, u32 num, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(InsertComponentEXT)
     }
@@ -816,7 +816,7 @@ STATICINLINE GLboolean is_variant_enabled(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsVariantEnabledEXT)
     }
@@ -844,7 +844,7 @@ STATICINLINE void set_invariant(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SetInvariantEXT)
     }
@@ -879,7 +879,7 @@ STATICINLINE void set_local_constant(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SetLocalConstantEXT)
     }
@@ -912,7 +912,7 @@ STATICINLINE void shader_op1(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ShaderOp1EXT)
     }
@@ -939,7 +939,7 @@ STATICINLINE void shader_op2(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ShaderOp2EXT)
     }
@@ -968,7 +968,7 @@ STATICINLINE void shader_op3(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ShaderOp3EXT)
     }
@@ -999,7 +999,7 @@ STATICINLINE void swizzle(
     error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SwizzleEXT)
     }
@@ -1034,7 +1034,7 @@ STATICINLINE void variant_pointer(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VariantPointerEXT)
     }
@@ -1073,7 +1073,7 @@ STATICINLINE void variantbv(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VariantbvEXT)
     }
@@ -1108,7 +1108,7 @@ STATICINLINE void variantdv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VariantdvEXT)
     }
@@ -1143,7 +1143,7 @@ STATICINLINE void variantfv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VariantfvEXT)
     }
@@ -1178,7 +1178,7 @@ STATICINLINE void variantiv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VariantivEXT)
     }
@@ -1213,7 +1213,7 @@ STATICINLINE void variantsv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VariantsvEXT)
     }
@@ -1248,7 +1248,7 @@ STATICINLINE void variantubv(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VariantubvEXT)
     }
@@ -1283,7 +1283,7 @@ STATICINLINE void variantuiv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VariantuivEXT)
     }
@@ -1318,7 +1318,7 @@ STATICINLINE void variantusv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VariantusvEXT)
     }
@@ -1355,7 +1355,7 @@ STATICINLINE void write_mask(
     error_check                         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WriteMaskEXT)
     }

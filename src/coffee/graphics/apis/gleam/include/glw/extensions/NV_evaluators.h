@@ -44,7 +44,7 @@ STATICINLINE void eval_maps(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EvalMapsNV)
     }
@@ -76,7 +76,7 @@ STATICINLINE void get_map_attrib_parameter(
     error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetMapAttribParameterfvNV)
     }
@@ -118,7 +118,7 @@ STATICINLINE void get_map_attrib_parameter(
     error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetMapAttribParameterivNV)
     }
@@ -163,7 +163,7 @@ STATICINLINE void get_map_control_points(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetMapControlPointsNV)
     }
@@ -209,7 +209,7 @@ STATICINLINE void get_map_parameter(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetMapParameterfvNV)
     }
@@ -247,7 +247,7 @@ STATICINLINE void get_map_parameter(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetMapParameterivNV)
     }
@@ -294,7 +294,7 @@ STATICINLINE void map_control_points(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MapControlPointsNV)
     }
@@ -345,7 +345,7 @@ STATICINLINE void map_parameter(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MapParameterfvNV)
     }
@@ -385,7 +385,7 @@ STATICINLINE void map_parameter(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MapParameterivNV)
     }

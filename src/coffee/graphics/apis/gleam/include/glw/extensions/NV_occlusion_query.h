@@ -20,7 +20,7 @@ STATICINLINE void begin_occlusion_query(
     u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BeginOcclusionQueryNV)
     }
@@ -47,7 +47,7 @@ STATICINLINE void delete_occlusion_queries(
     span_const_u32 const& ids, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeleteOcclusionQueriesNV)
     }
@@ -72,7 +72,7 @@ STATICINLINE void end_occlusion_query(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EndOcclusionQueryNV)
     }
@@ -98,7 +98,7 @@ STATICINLINE void gen_occlusion_queries(
     span_u32 ids, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GenOcclusionQueriesNV)
     }
@@ -132,7 +132,7 @@ STATICINLINE void get_occlusion_queryiv(
     error_check                              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetOcclusionQueryivNV)
     }
@@ -170,7 +170,7 @@ STATICINLINE void get_occlusion_queryuiv(
     error_check                              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetOcclusionQueryuivNV)
     }
@@ -198,7 +198,7 @@ STATICINLINE GLboolean
 is_occlusion_query(u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsOcclusionQueryNV)
     }

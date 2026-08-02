@@ -51,7 +51,7 @@ STATICINLINE void active_texture(
     group::texture_unit texture, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ActiveTextureARB)
     }
@@ -71,7 +71,7 @@ STATICINLINE void client_active_texture(
     group::texture_unit texture, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClientActiveTextureARB)
     }
@@ -94,7 +94,7 @@ STATICINLINE void multi_tex_coord1d(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord1dARB)
     }
@@ -123,7 +123,7 @@ STATICINLINE void multi_tex_coord1dv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord1dvARB)
     }
@@ -152,7 +152,7 @@ STATICINLINE void multi_tex_coord1f(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord1fARB)
     }
@@ -181,7 +181,7 @@ STATICINLINE void multi_tex_coord1fv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord1fvARB)
     }
@@ -210,7 +210,7 @@ STATICINLINE void multi_tex_coord1i(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord1iARB)
     }
@@ -239,7 +239,7 @@ STATICINLINE void multi_tex_coord1iv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord1ivARB)
     }
@@ -267,7 +267,7 @@ STATICINLINE void multi_tex_coord1s(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord1sARB)
     }
@@ -296,7 +296,7 @@ STATICINLINE void multi_tex_coord1sv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord1svARB)
     }
@@ -327,7 +327,7 @@ STATICINLINE void multi_tex_coord2d(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord2dARB)
     }
@@ -354,7 +354,7 @@ STATICINLINE void multi_tex_coord2dv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord2dvARB)
     }
@@ -385,7 +385,7 @@ STATICINLINE void multi_tex_coord2f(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord2fARB)
     }
@@ -412,7 +412,7 @@ STATICINLINE void multi_tex_coord2fv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord2fvARB)
     }
@@ -443,7 +443,7 @@ STATICINLINE void multi_tex_coord2i(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord2iARB)
     }
@@ -470,7 +470,7 @@ STATICINLINE void multi_tex_coord2iv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord2ivARB)
     }
@@ -500,7 +500,7 @@ STATICINLINE void multi_tex_coord2s(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord2sARB)
     }
@@ -527,7 +527,7 @@ STATICINLINE void multi_tex_coord2sv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord2svARB)
     }
@@ -560,7 +560,7 @@ STATICINLINE void multi_tex_coord3d(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord3dARB)
     }
@@ -587,7 +587,7 @@ STATICINLINE void multi_tex_coord3dv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord3dvARB)
     }
@@ -620,7 +620,7 @@ STATICINLINE void multi_tex_coord3f(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord3fARB)
     }
@@ -647,7 +647,7 @@ STATICINLINE void multi_tex_coord3fv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord3fvARB)
     }
@@ -680,7 +680,7 @@ STATICINLINE void multi_tex_coord3i(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord3iARB)
     }
@@ -707,7 +707,7 @@ STATICINLINE void multi_tex_coord3iv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord3ivARB)
     }
@@ -739,7 +739,7 @@ STATICINLINE void multi_tex_coord3s(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord3sARB)
     }
@@ -766,7 +766,7 @@ STATICINLINE void multi_tex_coord3sv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord3svARB)
     }
@@ -801,7 +801,7 @@ STATICINLINE void multi_tex_coord4d(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord4dARB)
     }
@@ -828,7 +828,7 @@ STATICINLINE void multi_tex_coord4dv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord4dvARB)
     }
@@ -863,7 +863,7 @@ STATICINLINE void multi_tex_coord4f(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord4fARB)
     }
@@ -890,7 +890,7 @@ STATICINLINE void multi_tex_coord4fv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord4fvARB)
     }
@@ -925,7 +925,7 @@ STATICINLINE void multi_tex_coord4i(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord4iARB)
     }
@@ -952,7 +952,7 @@ STATICINLINE void multi_tex_coord4iv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord4ivARB)
     }
@@ -986,7 +986,7 @@ STATICINLINE void multi_tex_coord4s(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord4sARB)
     }
@@ -1013,7 +1013,7 @@ STATICINLINE void multi_tex_coord4sv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord4svARB)
     }

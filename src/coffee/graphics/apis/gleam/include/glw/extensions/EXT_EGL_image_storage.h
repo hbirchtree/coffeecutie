@@ -25,7 +25,7 @@ STATICINLINE void egl_image_target_tex_storage(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EGLImageTargetTexStorageEXT)
     }
@@ -66,7 +66,7 @@ STATICINLINE void egl_image_target_texture_storage(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EGLImageTargetTextureStorageEXT)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \

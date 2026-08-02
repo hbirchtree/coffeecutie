@@ -17,7 +17,7 @@ STATICINLINE void window_pos2d(
     vec_2_f64 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WindowPos2dARB)
     }
@@ -41,7 +41,7 @@ STATICINLINE void window_pos2dv(
     span_const_vec_2_f64 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WindowPos2dvARB)
     }
@@ -67,7 +67,7 @@ STATICINLINE void window_pos2f(
     vec_2_f32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WindowPos2fARB)
     }
@@ -91,7 +91,7 @@ STATICINLINE void window_pos2fv(
     span_const_vec_2_f32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WindowPos2fvARB)
     }
@@ -117,7 +117,7 @@ STATICINLINE void window_pos2i(
     vec_2_i32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WindowPos2iARB)
     }
@@ -141,7 +141,7 @@ STATICINLINE void window_pos2iv(
     span_const_vec_2_i32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WindowPos2ivARB)
     }
@@ -167,7 +167,7 @@ STATICINLINE void window_pos2s(
     vec_2_i16 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WindowPos2sARB)
     }
@@ -191,7 +191,7 @@ STATICINLINE void window_pos2sv(
     span_const_vec_2_i16 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WindowPos2svARB)
     }
@@ -218,7 +218,7 @@ STATICINLINE void window_pos3d(
     vec_3_f64 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WindowPos3dARB)
     }
@@ -242,7 +242,7 @@ STATICINLINE void window_pos3dv(
     span_const_vec_3_f64 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WindowPos3dvARB)
     }
@@ -269,7 +269,7 @@ STATICINLINE void window_pos3f(
     vec_3_f32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WindowPos3fARB)
     }
@@ -293,7 +293,7 @@ STATICINLINE void window_pos3fv(
     span_const_vec_3_f32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WindowPos3fvARB)
     }
@@ -320,7 +320,7 @@ STATICINLINE void window_pos3i(
     vec_3_i32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WindowPos3iARB)
     }
@@ -344,7 +344,7 @@ STATICINLINE void window_pos3iv(
     span_const_vec_3_i32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WindowPos3ivARB)
     }
@@ -371,7 +371,7 @@ STATICINLINE void window_pos3s(
     vec_3_i16 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WindowPos3sARB)
     }
@@ -395,7 +395,7 @@ STATICINLINE void window_pos3sv(
     span_const_vec_3_i16 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WindowPos3svARB)
     }

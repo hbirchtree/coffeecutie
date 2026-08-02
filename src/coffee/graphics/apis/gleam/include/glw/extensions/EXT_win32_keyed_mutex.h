@@ -19,7 +19,7 @@ STATICINLINE GLboolean acquire_keyed_mutex_win32(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(AcquireKeyedMutexWin32EXT)
     }
@@ -41,7 +41,7 @@ STATICINLINE GLboolean release_keyed_mutex_win32(
     u32 memory, u64 key, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ReleaseKeyedMutexWin32EXT)
     }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "peripherals/constants.h"
 #include <peripherals/concepts/span.h>
 #include <peripherals/concepts/vector.h>
 #include <peripherals/identify/compiler/variable_attributes.h>
@@ -218,4 +219,11 @@ inline std::string error_to_hex(auto error)
 void error_check(std::string_view cmd_name, enum error_check check_errors);
 
 } // namespace detail
+namespace impl {
+
+constexpr bool debugging_enabled =
+    compile_info::debug_mode &&
+    !compile_info::platform::is_emscripten;
+
+}
 } // namespace gl

@@ -17,7 +17,7 @@ STATICINLINE void egl_image_target_renderbuffer_storage(
     error_check   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EGLImageTargetRenderbufferStorageOES)
     }
@@ -40,7 +40,7 @@ STATICINLINE void egl_image_target_texture_2d(
     error_check   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EGLImageTargetTexture2DOES)
     }

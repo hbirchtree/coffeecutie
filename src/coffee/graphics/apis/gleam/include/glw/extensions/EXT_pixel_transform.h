@@ -35,7 +35,7 @@ STATICINLINE void get_pixel_transform_parameter(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPixelTransformParameterfvEXT)
     }
@@ -73,7 +73,7 @@ STATICINLINE void get_pixel_transform_parameter(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetPixelTransformParameterivEXT)
     }
@@ -106,7 +106,7 @@ STATICINLINE void pixel_transform_parameter(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PixelTransformParameterfEXT)
     }
@@ -138,7 +138,7 @@ STATICINLINE void pixel_transform_parameter(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PixelTransformParameterfvEXT)
     }
@@ -172,7 +172,7 @@ STATICINLINE void pixel_transform_parameter(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PixelTransformParameteriEXT)
     }
@@ -204,7 +204,7 @@ STATICINLINE void pixel_transform_parameter(
     error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PixelTransformParameterivEXT)
     }

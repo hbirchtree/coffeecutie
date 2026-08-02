@@ -18,7 +18,7 @@ STATICINLINE void call_command_list(
     u32 list, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CallCommandListNV)
     }
@@ -39,7 +39,7 @@ STATICINLINE void command_list_segments(
     u32 list, u32 segments, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CommandListSegmentsNV)
     }
@@ -59,7 +59,7 @@ STATICINLINE void compile_command_list(
     u32 list, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CompileCommandListNV)
     }
@@ -85,7 +85,7 @@ STATICINLINE void create_command_lists(
     span_u32 lists, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CreateCommandListsNV)
     }
@@ -116,7 +116,7 @@ STATICINLINE void create_states(
     span_u32 states, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CreateStatesNV)
     }
@@ -148,7 +148,7 @@ STATICINLINE void delete_command_lists(
     span_const_u32 const& lists, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeleteCommandListsNV)
     }
@@ -180,7 +180,7 @@ STATICINLINE void delete_states(
     span_const_u32 const& states, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DeleteStatesNV)
     }
@@ -223,7 +223,7 @@ STATICINLINE void draw_commands_address(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawCommandsAddressNV)
     }
@@ -275,7 +275,7 @@ STATICINLINE void draw_commands(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawCommandsNV)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -338,7 +338,7 @@ STATICINLINE void draw_commands_states_address(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawCommandsStatesAddressNV)
     }
@@ -401,7 +401,7 @@ STATICINLINE void draw_commands_states(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DrawCommandsStatesNV)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -449,7 +449,7 @@ STATICINLINE GLuint get_command_header(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetCommandHeaderNV)
     }
@@ -470,7 +470,7 @@ STATICINLINE GLushort get_stage_index(
     group::shader_type shadertype, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetStageIndexNV)
     }
@@ -491,7 +491,7 @@ STATICINLINE GLboolean
 is_command_list(u32 list, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsCommandListNV)
     }
@@ -512,7 +512,7 @@ STATICINLINE GLboolean
 is_state(u32 state, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IsStateNV)
     }
@@ -556,7 +556,7 @@ STATICINLINE void list_draw_commands_states_client(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ListDrawCommandsStatesClientNV)
     }
@@ -599,7 +599,7 @@ STATICINLINE void state_capture(
     u32 state, GLenum mode, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(StateCaptureNV)
     }

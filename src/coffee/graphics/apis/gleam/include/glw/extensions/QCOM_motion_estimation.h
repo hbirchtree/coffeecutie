@@ -22,7 +22,7 @@ STATICINLINE void tex_estimate_motion(
     u32 ref, u32 target, u32 output, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexEstimateMotionQCOM)
     }
@@ -49,7 +49,7 @@ STATICINLINE void tex_estimate_motion_regions(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexEstimateMotionRegionsQCOM)
     }

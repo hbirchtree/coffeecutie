@@ -37,7 +37,7 @@ STATICINLINE void get_program_named_parameter(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetProgramNamedParameterdvNV)
     }
@@ -85,7 +85,7 @@ STATICINLINE void get_program_named_parameter(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetProgramNamedParameterfvNV)
     }
@@ -131,7 +131,7 @@ STATICINLINE void program_named_parameter4d(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramNamedParameter4dNV)
     }
@@ -177,7 +177,7 @@ STATICINLINE void program_named_parameter4dv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramNamedParameter4dvNV)
     }
@@ -223,7 +223,7 @@ STATICINLINE void program_named_parameter4f(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramNamedParameter4fNV)
     }
@@ -269,7 +269,7 @@ STATICINLINE void program_named_parameter4fv(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ProgramNamedParameter4fvNV)
     }

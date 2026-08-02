@@ -17,7 +17,7 @@ constexpr u32 write_discard      = 0x88BE;
 STATICINLINE void vdpau_fini(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VDPAUFiniNV)
     }
@@ -50,7 +50,7 @@ STATICINLINE void vdpau_get_surfaceiv(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VDPAUGetSurfaceivNV)
     }
@@ -87,7 +87,7 @@ STATICINLINE void vdpau_init(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VDPAUInitNV)
     }
@@ -119,7 +119,7 @@ STATICINLINE GLboolean vdpau_is_surface(
     GLvdpauSurfaceNV surface, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VDPAUIsSurfaceNV)
     }
@@ -148,7 +148,7 @@ STATICINLINE void vdpau_map_surfaces(
     error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VDPAUMapSurfacesNV)
     }
@@ -188,7 +188,7 @@ STATICINLINE GLvdpauSurfaceNV vdpau_register_output_surface(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VDPAURegisterOutputSurfaceNV)
     }
@@ -236,7 +236,7 @@ STATICINLINE GLvdpauSurfaceNV vdpau_register_video_surface(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VDPAURegisterVideoSurfaceNV)
     }
@@ -275,7 +275,7 @@ STATICINLINE void vdpau_surface_access(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VDPAUSurfaceAccessNV)
     }
@@ -303,7 +303,7 @@ STATICINLINE void vdpau_unmap_surfaces(
     error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VDPAUUnmapSurfacesNV)
     }
@@ -331,7 +331,7 @@ STATICINLINE void vdpau_unregister_surface(
     GLvdpauSurfaceNV surface, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VDPAUUnregisterSurfaceNV)
     }

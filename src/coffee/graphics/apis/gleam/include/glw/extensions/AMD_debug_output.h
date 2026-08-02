@@ -34,7 +34,7 @@ STATICINLINE void debug_message_callback(
     error_check    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DebugMessageCallbackAMD)
     }
@@ -74,7 +74,7 @@ STATICINLINE void debug_message_enable(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DebugMessageEnableAMD)
     }
@@ -113,7 +113,7 @@ STATICINLINE void debug_message_insert(
     error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DebugMessageInsertAMD)
     }
@@ -172,7 +172,7 @@ STATICINLINE GLuint get_debug_message_log(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetDebugMessageLogAMD)
     }

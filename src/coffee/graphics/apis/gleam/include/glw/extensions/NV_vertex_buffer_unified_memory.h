@@ -46,7 +46,7 @@ STATICINLINE void buffer_address_range(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(BufferAddressRangeNV)
     }
@@ -71,7 +71,7 @@ STATICINLINE void color_format(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ColorFormatNV)
     }
@@ -91,7 +91,7 @@ STATICINLINE void edge_flag_format(
     i32 stride, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EdgeFlagFormatNV)
     }
@@ -112,7 +112,7 @@ STATICINLINE void fog_coord_format(
     GLenum type, i32 stride, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FogCoordFormatNV)
     }
@@ -143,7 +143,7 @@ STATICINLINE void get_integerui64i_v(
     error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetIntegerui64i_vNV)
     }
@@ -173,7 +173,7 @@ STATICINLINE void index_format(
     GLenum type, i32 stride, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(IndexFormatNV)
     }
@@ -194,7 +194,7 @@ STATICINLINE void normal_format(
     GLenum type, i32 stride, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(NormalFormatNV)
     }
@@ -219,7 +219,7 @@ STATICINLINE void secondary_color_format(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColorFormatNV)
     }
@@ -244,7 +244,7 @@ STATICINLINE void tex_coord_format(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoordFormatNV)
     }
@@ -273,7 +273,7 @@ STATICINLINE void vertex_attrib_format(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribFormatNV)
     }
@@ -302,7 +302,7 @@ STATICINLINE void vertex_attrib_i_format(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribIFormatNV)
     }
@@ -327,7 +327,7 @@ STATICINLINE void vertex_format(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexFormatNV)
     }

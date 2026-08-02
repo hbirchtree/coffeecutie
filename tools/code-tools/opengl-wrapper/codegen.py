@@ -649,7 +649,7 @@ def generate_function(command, usages: dict, version: tuple = None, override_nam
     yield f'''STATICINLINE {return_type} {visible_name}({param_string})
 {{
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {{
         GLW_FPTR_CHECK({func_name})'''
 

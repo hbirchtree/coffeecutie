@@ -35,7 +35,7 @@ STATICINLINE void named_renderbuffer_storage_multisample_advanced(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(NamedRenderbufferStorageMultisampleAdvancedAMD)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -85,7 +85,7 @@ STATICINLINE void renderbuffer_storage_multisample_advanced(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(RenderbufferStorageMultisampleAdvancedAMD)
     }

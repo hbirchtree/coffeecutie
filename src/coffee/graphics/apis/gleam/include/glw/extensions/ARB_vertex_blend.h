@@ -56,7 +56,7 @@ STATICINLINE void vertex_blend(
     i32 count, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexBlendARB)
     }
@@ -85,7 +85,7 @@ STATICINLINE void weight_pointer(
     error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WeightPointerARB)
     }
@@ -124,7 +124,7 @@ STATICINLINE void weightbv(
     span_const_i8 const& weights, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WeightbvARB)
     }
@@ -158,7 +158,7 @@ STATICINLINE void weightdv(
     span_const_f64 const& weights, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WeightdvARB)
     }
@@ -192,7 +192,7 @@ STATICINLINE void weightfv(
     span_const_f32 const& weights, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WeightfvARB)
     }
@@ -226,7 +226,7 @@ STATICINLINE void weightiv(
     span_const_i32 const& weights, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WeightivARB)
     }
@@ -260,7 +260,7 @@ STATICINLINE void weightsv(
     span_const_i16 const& weights, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WeightsvARB)
     }
@@ -294,7 +294,7 @@ STATICINLINE void weightubv(
     span_const_u8 const& weights, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WeightubvARB)
     }
@@ -328,7 +328,7 @@ STATICINLINE void weightuiv(
     span_const_u32 const& weights, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WeightuivARB)
     }
@@ -362,7 +362,7 @@ STATICINLINE void weightusv(
     span_const_u16 const& weights, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(WeightusvARB)
     }

@@ -36,7 +36,7 @@ STATICINLINE void clear_color_ii(
     vec_4_i32 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClearColorIiEXT)
     }
@@ -61,7 +61,7 @@ STATICINLINE void clear_color_iui(
     vec_4_u32 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClearColorIuiEXT)
     }
@@ -91,7 +91,7 @@ STATICINLINE void get_tex_parameter_iiv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetTexParameterIivEXT)
     }
@@ -129,7 +129,7 @@ STATICINLINE void get_tex_parameter_iuiv(
     error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetTexParameterIuivEXT)
     }
@@ -168,7 +168,7 @@ STATICINLINE void tex_parameter_iiv(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexParameterIivEXT)
     }
@@ -208,7 +208,7 @@ STATICINLINE void tex_parameter_iuiv(
     error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexParameterIuivEXT)
     }

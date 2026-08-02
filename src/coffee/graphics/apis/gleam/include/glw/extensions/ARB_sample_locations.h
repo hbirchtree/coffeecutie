@@ -24,7 +24,7 @@ STATICINLINE void evaluate_depth_values(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(EvaluateDepthValuesARB)
     }
@@ -57,7 +57,7 @@ STATICINLINE void framebuffer_sample_locationsfv(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FramebufferSampleLocationsfvARB)
     }
@@ -100,7 +100,7 @@ STATICINLINE void named_framebuffer_sample_locationsfv(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(NamedFramebufferSampleLocationsfvARB)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \

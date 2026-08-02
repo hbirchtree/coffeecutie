@@ -10,7 +10,7 @@ STATICINLINE void active_texture(
     group::texture_unit texture, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ActiveTexture)
     }
@@ -45,7 +45,7 @@ STATICINLINE void compressed_tex_image_1d(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CompressedTexImage1D)
     }
@@ -98,7 +98,7 @@ STATICINLINE void compressed_tex_image_2d(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CompressedTexImage2D)
     }
@@ -153,7 +153,7 @@ STATICINLINE void compressed_tex_image_3d(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CompressedTexImage3D)
     }
@@ -206,7 +206,7 @@ STATICINLINE void compressed_tex_sub_image_1d(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CompressedTexSubImage1D)
     }
@@ -261,7 +261,7 @@ STATICINLINE void compressed_tex_sub_image_2d(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CompressedTexSubImage2D)
     }
@@ -320,7 +320,7 @@ STATICINLINE void compressed_tex_sub_image_3d(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CompressedTexSubImage3D)
     }
@@ -367,7 +367,7 @@ STATICINLINE void get_compressed_tex_image(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetCompressedTexImage)
     }
@@ -397,7 +397,7 @@ STATICINLINE void sample_coverage(
     f32 value, bool invert, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SampleCoverage)
     }

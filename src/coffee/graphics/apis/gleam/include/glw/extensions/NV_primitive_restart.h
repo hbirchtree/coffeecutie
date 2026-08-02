@@ -16,7 +16,7 @@ STATICINLINE void primitive_restart_index(
     u32 index, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PrimitiveRestartIndexNV)
     }
@@ -35,7 +35,7 @@ STATICINLINE void primitive_restart_index(
 STATICINLINE void primitive_restart(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(PrimitiveRestartNV)
     }

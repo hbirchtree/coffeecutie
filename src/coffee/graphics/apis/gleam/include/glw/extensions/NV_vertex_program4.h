@@ -20,7 +20,7 @@ STATICINLINE void get_vertex_attrib_iiv_ext(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetVertexAttribIivEXT)
     }
@@ -45,7 +45,7 @@ STATICINLINE void get_vertex_attrib_iuiv_ext(
     error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetVertexAttribIuivEXT)
     }
@@ -66,7 +66,7 @@ STATICINLINE void vertex_attrib_i1i_ext(
     u32 index, i32 x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI1iEXT)
     }
@@ -95,7 +95,7 @@ STATICINLINE void vertex_attrib_i1iv_ext(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI1ivEXT)
     }
@@ -120,7 +120,7 @@ STATICINLINE void vertex_attrib_i1ui_ext(
     u32 index, u32 x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI1uiEXT)
     }
@@ -149,7 +149,7 @@ STATICINLINE void vertex_attrib_i1uiv_ext(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI1uivEXT)
     }
@@ -177,7 +177,7 @@ STATICINLINE void vertex_attrib_i2i_ext(
     u32 index, vec_2_i32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI2iEXT)
     }
@@ -204,7 +204,7 @@ STATICINLINE void vertex_attrib_i2iv_ext(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI2ivEXT)
     }
@@ -232,7 +232,7 @@ STATICINLINE void vertex_attrib_i2ui_ext(
     u32 index, vec_2_u32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI2uiEXT)
     }
@@ -259,7 +259,7 @@ STATICINLINE void vertex_attrib_i2uiv_ext(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI2uivEXT)
     }
@@ -288,7 +288,7 @@ STATICINLINE void vertex_attrib_i3i_ext(
     u32 index, vec_3_i32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI3iEXT)
     }
@@ -315,7 +315,7 @@ STATICINLINE void vertex_attrib_i3iv_ext(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI3ivEXT)
     }
@@ -344,7 +344,7 @@ STATICINLINE void vertex_attrib_i3ui_ext(
     u32 index, vec_3_u32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI3uiEXT)
     }
@@ -371,7 +371,7 @@ STATICINLINE void vertex_attrib_i3uiv_ext(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI3uivEXT)
     }
@@ -404,7 +404,7 @@ STATICINLINE void vertex_attrib_i4bv_ext(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI4bvEXT)
     }
@@ -435,7 +435,7 @@ STATICINLINE void vertex_attrib_i4i_ext(
     u32 index, vec_4_i32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI4iEXT)
     }
@@ -462,7 +462,7 @@ STATICINLINE void vertex_attrib_i4iv_ext(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI4ivEXT)
     }
@@ -493,7 +493,7 @@ STATICINLINE void vertex_attrib_i4sv_ext(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI4svEXT)
     }
@@ -526,7 +526,7 @@ STATICINLINE void vertex_attrib_i4ubv_ext(
     error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI4ubvEXT)
     }
@@ -557,7 +557,7 @@ STATICINLINE void vertex_attrib_i4ui_ext(
     u32 index, vec_4_u32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI4uiEXT)
     }
@@ -584,7 +584,7 @@ STATICINLINE void vertex_attrib_i4uiv_ext(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI4uivEXT)
     }
@@ -615,7 +615,7 @@ STATICINLINE void vertex_attrib_i4usv_ext(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribI4usvEXT)
     }
@@ -650,7 +650,7 @@ STATICINLINE void vertex_attrib_i_pointer_ext(
     error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribIPointerEXT)
     }

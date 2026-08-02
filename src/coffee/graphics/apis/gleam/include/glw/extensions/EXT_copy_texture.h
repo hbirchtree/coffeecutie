@@ -28,7 +28,7 @@ STATICINLINE void copy_tex_image_1d(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CopyTexImage1DEXT)
     }
@@ -72,7 +72,7 @@ STATICINLINE void copy_tex_image_2d(
     error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CopyTexImage2DEXT)
     }
@@ -113,7 +113,7 @@ STATICINLINE void copy_tex_sub_image_1d(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CopyTexSubImage1DEXT)
     }
@@ -149,7 +149,7 @@ STATICINLINE void copy_tex_sub_image_2d(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CopyTexSubImage2DEXT)
     }
@@ -194,7 +194,7 @@ STATICINLINE void copy_tex_sub_image_3d(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(CopyTexSubImage3DEXT)
     }

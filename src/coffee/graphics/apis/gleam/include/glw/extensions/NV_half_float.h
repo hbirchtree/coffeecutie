@@ -22,7 +22,7 @@ STATICINLINE void color3h(
     vec_3_GLhalfNV const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Color3hNV)
     }
@@ -48,7 +48,7 @@ STATICINLINE void color3hv(
     span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Color3hvNV)
     }
@@ -77,7 +77,7 @@ STATICINLINE void color4h(
     vec_4_GLhalfNV const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Color4hNV)
     }
@@ -103,7 +103,7 @@ STATICINLINE void color4hv(
     span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Color4hvNV)
     }
@@ -130,7 +130,7 @@ STATICINLINE void multi_tex_coord1h(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord1hNV)
     }
@@ -159,7 +159,7 @@ STATICINLINE void multi_tex_coord1hv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord1hvNV)
     }
@@ -190,7 +190,7 @@ STATICINLINE void multi_tex_coord2h(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord2hNV)
     }
@@ -219,7 +219,7 @@ STATICINLINE void multi_tex_coord2hv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord2hvNV)
     }
@@ -252,7 +252,7 @@ STATICINLINE void multi_tex_coord3h(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord3hNV)
     }
@@ -281,7 +281,7 @@ STATICINLINE void multi_tex_coord3hv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord3hvNV)
     }
@@ -316,7 +316,7 @@ STATICINLINE void multi_tex_coord4h(
     error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord4hNV)
     }
@@ -345,7 +345,7 @@ STATICINLINE void multi_tex_coord4hv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(MultiTexCoord4hvNV)
     }
@@ -376,7 +376,7 @@ STATICINLINE void normal3h(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Normal3hNV)
     }
@@ -402,7 +402,7 @@ STATICINLINE void normal3hv(
     span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Normal3hvNV)
     }
@@ -426,7 +426,7 @@ STATICINLINE void tex_coord1h(
     GLhalfNV s, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord1hNV)
     }
@@ -452,7 +452,7 @@ STATICINLINE void tex_coord1hv(
     span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord1hvNV)
     }
@@ -477,7 +477,7 @@ STATICINLINE void tex_coord2h(
     GLhalfNV s, GLhalfNV t, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord2hNV)
     }
@@ -503,7 +503,7 @@ STATICINLINE void tex_coord2hv(
     span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord2hvNV)
     }
@@ -532,7 +532,7 @@ STATICINLINE void tex_coord3h(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord3hNV)
     }
@@ -558,7 +558,7 @@ STATICINLINE void tex_coord3hv(
     span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord3hvNV)
     }
@@ -589,7 +589,7 @@ STATICINLINE void tex_coord4h(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord4hNV)
     }
@@ -615,7 +615,7 @@ STATICINLINE void tex_coord4hv(
     span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(TexCoord4hvNV)
     }
@@ -642,7 +642,7 @@ STATICINLINE void vertex2h(
     vec_2_GLhalfNV const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex2hNV)
     }
@@ -668,7 +668,7 @@ STATICINLINE void vertex2hv(
     span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex2hvNV)
     }
@@ -696,7 +696,7 @@ STATICINLINE void vertex3h(
     vec_3_GLhalfNV const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex3hNV)
     }
@@ -722,7 +722,7 @@ STATICINLINE void vertex3hv(
     span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex3hvNV)
     }
@@ -751,7 +751,7 @@ STATICINLINE void vertex4h(
     vec_4_GLhalfNV const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex4hNV)
     }
@@ -777,7 +777,7 @@ STATICINLINE void vertex4hv(
     span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(Vertex4hvNV)
     }
@@ -802,7 +802,7 @@ STATICINLINE void vertex_attrib1h(
     u32 index, GLhalfNV x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib1hNV)
     }
@@ -831,7 +831,7 @@ STATICINLINE void vertex_attrib1hv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib1hvNV)
     }
@@ -863,7 +863,7 @@ STATICINLINE void vertex_attrib2h(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib2hNV)
     }
@@ -892,7 +892,7 @@ STATICINLINE void vertex_attrib2hv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib2hvNV)
     }
@@ -925,7 +925,7 @@ STATICINLINE void vertex_attrib3h(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib3hNV)
     }
@@ -954,7 +954,7 @@ STATICINLINE void vertex_attrib3hv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib3hvNV)
     }
@@ -988,7 +988,7 @@ STATICINLINE void vertex_attrib4h(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4hNV)
     }
@@ -1017,7 +1017,7 @@ STATICINLINE void vertex_attrib4hv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttrib4hvNV)
     }
@@ -1053,7 +1053,7 @@ STATICINLINE void vertex_attribs1hv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribs1hvNV)
     }
@@ -1090,7 +1090,7 @@ STATICINLINE void vertex_attribs2hv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribs2hvNV)
     }
@@ -1127,7 +1127,7 @@ STATICINLINE void vertex_attribs3hv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribs3hvNV)
     }
@@ -1164,7 +1164,7 @@ STATICINLINE void vertex_attribs4hv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexAttribs4hvNV)
     }
@@ -1191,7 +1191,7 @@ STATICINLINE void fog_coordh(
     GLhalfNV fog, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FogCoordhNV)
     }
@@ -1217,7 +1217,7 @@ STATICINLINE void fog_coordhv(
     span_const_GLhalfNV const& fog, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(FogCoordhvNV)
     }
@@ -1245,7 +1245,7 @@ STATICINLINE void secondary_color3h(
     vec_3_GLhalfNV const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3hNV)
     }
@@ -1271,7 +1271,7 @@ STATICINLINE void secondary_color3hv(
     span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(SecondaryColor3hvNV)
     }
@@ -1295,7 +1295,7 @@ STATICINLINE void vertex_weighth(
     GLhalfNV weight, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexWeighthNV)
     }
@@ -1322,7 +1322,7 @@ STATICINLINE void vertex_weighthv(
     error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(VertexWeighthvNV)
     }

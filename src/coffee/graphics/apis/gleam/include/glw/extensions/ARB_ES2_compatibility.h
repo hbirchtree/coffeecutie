@@ -30,7 +30,7 @@ STATICINLINE void clear_depthf(
     f32 d, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ClearDepthf)
     }
@@ -51,7 +51,7 @@ STATICINLINE void depth_rangef(
     f32 n, f32 f, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(DepthRangef)
     }
@@ -83,7 +83,7 @@ STATICINLINE void get_shader_precision_format(
     error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(GetShaderPrecisionFormat)
     }
@@ -113,7 +113,7 @@ STATICINLINE void release_shader_compiler(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ReleaseShaderCompiler)
     }
@@ -148,7 +148,7 @@ STATICINLINE void shader_binary(
     error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ShaderBinary)
     }

@@ -31,7 +31,7 @@ STATICINLINE void ext_get_program_binary_source(
     error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ExtGetProgramBinarySourceQCOM)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
@@ -77,7 +77,7 @@ STATICINLINE void ext_get_programs(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ExtGetProgramsQCOM)
     }
@@ -115,7 +115,7 @@ STATICINLINE void ext_get_shaders(
     error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ExtGetShadersQCOM)
     }
@@ -143,7 +143,7 @@ STATICINLINE GLboolean
 ext_is_program_binary(u32 program, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(::gl::impl::debugging_enabled)
     {
         GLW_FPTR_CHECK(ExtIsProgramBinaryQCOM)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
