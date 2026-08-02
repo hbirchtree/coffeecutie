@@ -12,6 +12,7 @@ name: vcpkg dependency freshness
     - vcpkg-configuration.json
     - .github/workflows/40-vcpkg-versions.yml
     - .github/scripts/check_vcpkg_versions.py
+    - toolchain/vcpkg/
 
 jobs:
   check:

@@ -348,6 +348,8 @@ def main() -> int:
         )
 
     rows.sort(key=lambda r: (r["status"] != "OUTDATED", r["name"]))
+    main_rows = [r for r in rows if r["source"] != "local overlay (patched)"]
+    overlay_rows = [r for r in rows if r["source"] == "local overlay (patched)"]
 
     lines = []
     lines.append(f"# vcpkg dependency freshness report")
@@ -356,19 +358,38 @@ def main() -> int:
         f"Checked {len(rows)} package(s), skipped {len(skipped)}. "
         f"Generated against `vcpkg-configuration.json` baselines."
     )
-    lines.append(
-        "Local overlay ports are patched forks of upstream; their comparison "
-        "is best-effort (upstream version doesn't account for local patches)."
-    )
     lines.append("")
-    lines.append("| Package | Source | Registry | Pinned | Latest | Commits behind | Status | Note |")
-    lines.append("|---|---|---|---|---|---|---|---|")
-    for r in rows:
+    lines.append("## Registry dependencies")
+    lines.append("")
+    lines.append("| Package | Source | Registry | Pinned | Latest | Commits behind | Status |")
+    lines.append("|---|---|---|---|---|---|---|")
+    for r in main_rows:
         marker = "🔴" if r["status"] == "OUTDATED" else "🟢"
         lines.append(
             f"| {r['name']} | {r['source']} | {r['registry']} | `{r['pinned']}` | `{r['latest']}` | "
-            f"{r['behind']} | {marker} {r['status']} | {r['note']} |"
+            f"{r['behind']} | {marker} {r['status']} |"
         )
+
+    if overlay_rows:
+        lines.append("")
+        lines.append("## Local overlay ports")
+        lines.append("")
+        lines.append(
+            "These ports are patched forks maintained in `toolchain/vcpkg/ports*` and are "
+            "**not necessarily used by every build target** (wired in per-triplet/per-preset "
+            "via `VCPKG_OVERLAY_PORTS`, or globally via `vcpkg-configuration.json`). Comparison "
+            "against upstream is best-effort — it does not account for local patches, only the "
+            "base version being forked from."
+        )
+        lines.append("")
+        lines.append("| Package | Upstream registry | Pinned (local) | Latest (upstream) | Commits behind | Status | Note |")
+        lines.append("|---|---|---|---|---|---|---|")
+        for r in overlay_rows:
+            marker = "🔴" if r["status"] == "OUTDATED" else "🟢"
+            lines.append(
+                f"| {r['name']} | {r['registry']} | `{r['pinned']}` | `{r['latest']}` | "
+                f"{r['behind']} | {marker} {r['status']} | {r['note']} |"
+            )
 
     if skipped:
         lines.append("")
