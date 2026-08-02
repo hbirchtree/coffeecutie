@@ -6,8 +6,8 @@
 
 #include <coffee/core/CDebug>
 
-#define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include <stb_image_resize.h>
+#define STB_IMAGE_RESIZE2_IMPLEMENTATION
+#include <stb_image_resize2.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -114,7 +114,7 @@ bool ResizeImage(
     int               req_comp,
     stb_error&        ec)
 {
-    auto res = stbir_resize_float(
+    auto res = stbir_resize_float_linear(
         img.data,
         img.size.w,
         img.size.h,
@@ -123,7 +123,19 @@ bool ResizeImage(
         target.w,
         target.h,
         0,
-        req_comp);
+        [req_comp] {
+            switch(req_comp)
+            {
+            case 1:
+                return stbir_pixel_layout::STBIR_1CHANNEL;
+            case 2:
+                return stbir_pixel_layout::STBIR_2CHANNEL;
+            case 3:
+                return stbir_pixel_layout::STBIR_RGB;
+            default:
+                return stbir_pixel_layout::STBIR_RGBA;
+            }
+        }());
 
     if(res == 0)
         ec = STBError::ResizeError;
@@ -139,7 +151,7 @@ bool ResizeImage(
     int              req_comp,
     stb_error&       ec)
 {
-    auto res = stbir_resize_uint8_generic(
+    auto res = stbir_resize_uint8_linear(
         img.data,
         img.size.w,
         img.size.h,
@@ -148,13 +160,19 @@ bool ResizeImage(
         target.w,
         target.h,
         0,
-        req_comp,
-        3,
-        0,
-        STBIR_EDGE_CLAMP,
-        STBIR_FILTER_DEFAULT,
-        STBIR_COLORSPACE_LINEAR,
-        nullptr);
+        [req_comp] {
+            switch(req_comp)
+            {
+            case 1:
+                return STBIR_1CHANNEL;
+            case 2:
+                return STBIR_2CHANNEL;
+            case 3:
+                return STBIR_RGB;
+            default:
+                return STBIR_RGBA;
+            }
+        }());
 
     if(res == 0)
         ec = STBError::ResizeError;

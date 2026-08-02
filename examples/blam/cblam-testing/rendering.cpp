@@ -281,7 +281,7 @@ struct DrawListBuilder
                q.has_value())
             {
                 m_worker = q.value();
-                m_pipelined = true;
+                m_pipelined = false;
             }
 
         for(auto& set : m_bsp_sets)

@@ -185,7 +185,8 @@ elseif(EMSCRIPTEN)
     # Enables Wasm SIMD
     # Better than the prior "enable SSE to get SIMD"
     # https://emscripten.org/docs/porting/simd.html
-    -msimd128
+    -mrelaxed-simd
+    -mfma
     # Wraps C++ exceptions to Wasm exceptions
     # Carries some code weight
     -fwasm-exceptions
