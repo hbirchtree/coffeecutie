@@ -28,6 +28,8 @@ GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 MAX_COMMIT_PAGES = 10  # 100 commits/page -> looks back up to 1000 commits per port
 API_ROOT = "https://api.github.com"
 RAW_ROOT = "https://raw.githubusercontent.com"
+OSV_QUERYBATCH_URL = "https://api.osv.dev/v1/querybatch"
+OSV_BATCH_SIZE = 100
 
 
 def http_get(url: str, headers: dict | None = None, retries: int = 3) -> tuple[int, bytes]:
@@ -70,6 +72,38 @@ def raw_file(owner: str, repo: str, ref: str, path: str) -> str | None:
     if status != 200:
         return None
     return body.decode("utf-8", errors="replace")
+
+
+def osv_lookup(name_versions: list[tuple[str, str]]) -> dict[str, list[str]]:
+    """
+    Best-effort, flag-only OSV.dev lookup: queries by package name + version
+    with no ecosystem specified, so results may include unrelated projects
+    that happen to share a name (e.g. "outcome", "status-code"). This is not
+    a verified affected-version match — it's a pointer to go check manually.
+    """
+    hits: dict[str, list[str]] = {}
+    items = [(n, v) for n, v in name_versions if v]
+    for i in range(0, len(items), OSV_BATCH_SIZE):
+        batch = items[i : i + OSV_BATCH_SIZE]
+        body = json.dumps(
+            {"queries": [{"version": v, "package": {"name": n}} for n, v in batch]}
+        ).encode("utf-8")
+        req = urllib.request.Request(
+            OSV_QUERYBATCH_URL,
+            data=body,
+            headers={"Content-Type": "application/json", "User-Agent": "vcpkg-version-check"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                results = json.loads(resp.read())["results"]
+        except (urllib.error.URLError, urllib.error.HTTPError, KeyError, json.JSONDecodeError):
+            continue
+        for (name, _), result in zip(batch, results):
+            vuln_ids = [v["id"] for v in result.get("vulns", [])]
+            if vuln_ids:
+                hits[name] = vuln_ids
+    return hits
 
 
 def owner_repo_from_url(repo_url: str) -> tuple[str, str]:
@@ -390,6 +424,29 @@ def main() -> int:
                 f"| {r['name']} | {r['registry']} | `{r['pinned']}` | `{r['latest']}` | "
                 f"{r['behind']} | {marker} {r['status']} | {r['note']} |"
             )
+
+    osv_hits = osv_lookup([(r["name"], r["pinned"].split("#")[0]) for r in rows])
+    if osv_hits:
+        lines.append("")
+        lines.append("## Possible known vulnerabilities (unverified)")
+        lines.append("")
+        lines.append(
+            "Flag-only OSV.dev lookup by package name + pinned version, **no ecosystem filter "
+            "and no affected-range verification** — matches may be false positives from an "
+            "unrelated project sharing the name, or may not even apply to this exact fork/build. "
+            "Treat as a prompt to go check manually, not as a confirmed CVE."
+        )
+        lines.append("")
+        lines.append("| Package | Pinned version queried | Possible advisories |")
+        lines.append("|---|---|---|")
+        for name in sorted(osv_hits):
+            pinned = next(r["pinned"] for r in rows if r["name"] == name)
+            links = ", ".join(
+                f"[{vid}](https://osv.dev/vulnerability/{vid})" for vid in osv_hits[name][:5]
+            )
+            if len(osv_hits[name]) > 5:
+                links += f", +{len(osv_hits[name]) - 5} more"
+            lines.append(f"| {name} | `{pinned}` | {links} |")
 
     if skipped:
         lines.append("")
