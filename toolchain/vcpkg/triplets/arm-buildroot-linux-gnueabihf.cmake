@@ -6,6 +6,5 @@ set(VCPKG_CMAKE_SYSTEM_NAME Linux)
 
 set(VCPKG_DEP_INFO_OVERRIDE_VARS linux;arm;wayland)
 set(TOOLCHAIN_PREFIX arm-buildroot-linux-gnueabihf)
-set(VCPKG_OVERLAY_PORTS ${CMAKE_CURRENT_LIST_DIR}/../ports)
 set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/../../cmake/Toolchains/arm-buildroot-linux-gnueabihf.toolchain.cmake)
 
