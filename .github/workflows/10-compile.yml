@@ -277,7 +277,7 @@ jobs:
     - name: Installing Inkscape + other stuff
       run: |
         brew install --cask inkscape
-        brew install automake libtool
+        brew install automake libtool autoconf autoconf-archive
     - uses: ./source/.github/actions/build-host-tools
       with:
         cache_path: source/multi_build/host-arm64-osx
