@@ -1,6 +1,7 @@
 {
   "name": "sdl2",
-  "version": "2.24.2",
+  "version": "2.32.10",
+  "port-version": 1,
   "description": "Simple DirectMedia Layer is a cross-platform development library designed to provide low level access to audio, keyboard, mouse, joystick, and graphics hardware via OpenGL and Direct3D.",
   "homepage": "https://www.libsdl.org/download-2.0.php",
   "license": "Zlib",
@@ -14,63 +15,75 @@
       "host": true
     }
   ],
+  "default-features": [
+    {
+      "name": "dbus",
+      "platform": "linux"
+    },
+    {
+      "name": "ibus",
+      "platform": "linux"
+    },
+    {
+      "name": "wayland",
+      "platform": "linux"
+    },
+    {
+      "name": "x11",
+      "platform": "linux"
+    }
+  ],
   "features": {
+    "alsa": {
+      "description": "Support for alsa audio",
+      "dependencies": [
+        "alsa"
+      ]
+    },
+    "audio": {
+      "description": "Build with audio support"
+    },
+    "dbus": {
+      "description": "Build with D-Bus support",
+      "dependencies": [
+        {
+          "name": "dbus",
+          "default-features": false,
+          "platform": "linux"
+        }
+      ]
+    },
+    "filesystem": {
+      "description": "Build with filesystem support"
+    },
+    "ibus": {
+      "description": "Build with ibus IME support",
+      "supports": "linux"
+    },
     "offscreen": {
-      "description": "EGL offscreen functionality"
+      "description": "Build with render support"
+    },
+    "render": {
+      "description": "Build with render support"
+    },
+    "samplerate": {
+      "description": "Use libsamplerate for audio rate conversion",
+      "dependencies": [
+        "libsamplerate"
+      ]
+    },
+    "sensor": {
+      "description": "Build with sensor support"
     },
     "vulkan": {
       "description": "Vulkan functionality for SDL"
     },
     "wayland": {
-      "description": "Dynamically load Wayland support",
+      "description": "Build with Wayland support",
       "supports": "linux"
     },
     "x11": {
-      "description": "Dynamically load X11 support",
-      "supports": "!windows"
-    },
-    "alsa": {
-      "description": "Dynamically load X11 support",
-      "supports": "!windows"
-    },
-    "atomic": {
-      "description": "Dynamically load X11 support",
-      "supports": "!windows"
-    },
-    "audio": {
-      "description": "Dynamically load X11 support",
-      "supports": "!windows"
-    },
-    "file": {
-      "description": "Dynamically load X11 support",
-      "supports": "!windows"
-    },
-    "filesystem": {
-      "description": "Dynamically load X11 support",
-      "supports": "!windows"
-    },
-    "pipewire": {
-      "description": "Dynamically load X11 support",
-      "supports": "!windows"
-    },
-    "pulse": {
-      "description": "Dynamically load X11 support",
-      "supports": "!windows"
-    },
-    "render": {
-      "description": "Dynamically load X11 support",
-      "supports": "!windows"
-    },
-    "sensor": {
-      "description": "Dynamically load X11 support",
-      "supports": "!windows"
-    },
-    "sndio": {
-      "description": "Dynamically load X11 support",
-      "supports": "!windows"
-    },
-    "timers": {
-      "description": "Dynamically load X11 support",
+      "description": "Build with X11 support",
       "supports": "!windows"
     }
   }
