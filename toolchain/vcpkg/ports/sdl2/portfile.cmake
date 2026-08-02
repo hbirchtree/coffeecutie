@@ -54,6 +54,7 @@ vcpkg_cmake_configure(
         -DSDL_LIBSAMPLERATE_SHARED=OFF
 
         -DSDL_ARTS=OFF
+        -DSDL_AUDIO=OFF
         -DSDL_DISKAUDIO=OFF
         -DSDL_AUDIO=OFF
         -DSDL_DUMMYAUDIO=OFF
@@ -66,6 +67,7 @@ vcpkg_cmake_configure(
         -DSDL_NAS=OFF
         -DSDL_OSS=OFF
         -DSDL_RENDER=OFF
+        -DSDL_SENSOR=OFF
         -DSDL_SNDIO=OFF
         -DSDL_TIMERS=OFF
     MAYBE_UNUSED_VARIABLES
