@@ -661,9 +661,26 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 
         this->priority = 1280;
         m_identity.Clear();
-        m_identity.SetLocalHost();
         SteamNetworkingErrMsg ec;
+#if defined(USE_WEBRTC_TRANSPORT) && defined(COFFEE_WASM)
+        /* SetLocalHost() always renders as "ip:::1" -- every peer using it
+         * collides on the same value, and GNS's P2P signal handler treats
+         * IsLocalHost() as an "identity not learned yet" sentinel, not a
+         * real identity. Give each instance a unique one instead. Scoped to
+         * wasm: native builds go through plain UDP (--listen/--server),
+         * which never hits this identity-matching path at all. */
+        char randomIdentity[24];
+        snprintf(
+            randomIdentity,
+            sizeof(randomIdentity),
+            "peer-%08x",
+            m_local_random.rand<u32>(0, 0xFFFFFFFFu));
+        m_identity.SetGenericString(randomIdentity);
+        if(!GameNetworkingSockets_Init(&m_identity, ec))
+#else
+        m_identity.SetLocalHost();
         if(!GameNetworkingSockets_Init(nullptr, ec))
+#endif
         {
             cWarning("Failed to init networking: {}", ec);
             return;
