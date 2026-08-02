@@ -27,7 +27,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     name: Linux host tools
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: true
         path: source
@@ -70,7 +70,7 @@ jobs:
       MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
     name: ${{ matrix.variant }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: true
         path: source
@@ -154,7 +154,7 @@ jobs:
       MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
     name: ${{ matrix.artifact }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: true
         path: source
@@ -196,7 +196,7 @@ jobs:
       MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
     name: ${{ matrix.variant }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: true
         path: source
@@ -240,10 +240,10 @@ jobs:
           artifact: webrtc-gateway-linux-arm64
     name: "webrtc-gateway (linux/${{ matrix.goarch }})"
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         path: source
-    - uses: actions/setup-go@v5
+    - uses: actions/setup-go@v7
       with:
         go-version-file: source/tools/webrtc-gateway/go.mod
         cache-dependency-path: source/tools/webrtc-gateway/go.sum
@@ -267,7 +267,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     name: macOS host tools
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: true
         path: source
@@ -304,7 +304,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     name: ${{ matrix.variant }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: true
         path: source
@@ -369,7 +369,7 @@ jobs:
           journal_check: 'true'
           skip_audio: 'true'
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         path: source
     - name: Installing AppImage/media dependencies
@@ -442,10 +442,10 @@ jobs:
           - variant: wasm32
           - variant: wasm64
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         path: source
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v7
       with:
         node-version: '22'
     - name: Downloading web-${{ matrix.variant }}-emscripten-webgl2 artifacts
@@ -495,10 +495,10 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         path: source
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v7
       with:
         node-version: '22'
     - name: Downloading desktop-x86_64-buildroot-linux-gnu-multi artifacts (server)
@@ -605,10 +605,10 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         path: source
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v7
       with:
         node-version: '22'
     - name: Downloading web-wasm32-emscripten-webgl2 artifacts (both roles)
@@ -686,10 +686,10 @@ jobs:
       MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
       GATEWAY_URL: ${{ secrets.WEBRTC_GATEWAY_SERVER }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         path: source
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v7
       with:
         node-version: '22'
     - name: Downloading desktop-x86_64-buildroot-linux-gnu-multi artifacts (server)
@@ -781,7 +781,7 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         path: source
     - name: Installing Dolphin dependencies
@@ -828,7 +828,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         path: source
     - name: Downloading test artifacts
