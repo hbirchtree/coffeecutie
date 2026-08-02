@@ -1,7 +1,6 @@
 {
     "overlay-ports": [
-        "./toolchain/vcpkg/ports/discord-rpc",
-        "./toolchain/vcpkg/ports/openal-soft"
+        "./toolchain/vcpkg/ports/discord-rpc"
     ],
     "overlay-triplets": [
         "./toolchain/vcpkg/triplets"
