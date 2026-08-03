@@ -395,7 +395,7 @@ struct EntityContainer : stl_types::non_copy
         auto it = components.find(type_id);
 
         if(it == components.end())
-            Throw(undefined_behavior("component not found"));
+            ThrowNotFound<ComponentType>("component not found: ");
 
         return *C_DCAST<container_t>(it->second.get());
     }
