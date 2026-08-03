@@ -153,26 +153,26 @@ i32 blam_main()
 
             e.register_subsystem_inplace<net::CurlNetStats>(
                 net::create_curl_context());
-            e.register_component_inplace<Model>();
-            e.register_component_inplace<SubModel>();
             e.register_component_inplace<BspReference>();
-            e.register_component_inplace<DrawState>();
-            e.register_component_inplace<Visibility>();
-            e.register_component_inplace<ObjectSpawn>();
-            e.register_component_inplace<NetworkInfo>();
-            e.register_component_inplace<PhysicsData>();
-            e.register_component_inplace<PlayerInfo>();
-            e.register_component_inplace<SoundEffects>();
-            e.register_component_inplace<MultiplayerSpawn>();
-            e.register_component_inplace<ShaderData>();
-            e.register_component_inplace<MeshTrackingData>();
-            e.register_component_inplace<DebugDraw>();
-            e.register_component_inplace<TriggerVolume>();
-            e.register_component_inplace<Light>();
-            e.register_component_inplace<DepthInfo>();
-            e.register_component_inplace<PlayerCamera>();
-            e.register_component_inplace<PlayerInput>();
             e.register_component_inplace<CameraLerp>();
+            e.register_component_inplace<DebugDraw>();
+            e.register_component_inplace<DepthInfo>();
+            e.register_component_inplace<DrawState>();
+            e.register_component_inplace<Light>();
+            e.register_component_inplace<MeshTrackingData>();
+            e.register_component_inplace<Model>();
+            e.register_component_inplace<MultiplayerSpawn>();
+            e.register_component_inplace<NetworkInfo>();
+            e.register_component_inplace<ObjectSpawn>();
+            e.register_component_inplace<PlayerCamera>();
+            e.register_component_inplace<PlayerInfo>();
+            e.register_component_inplace<PlayerInput>();
+            e.register_component_inplace<PhysicsData>();
+            e.register_component_inplace<ShaderData>();
+            e.register_component_inplace<SoundEffects>();
+            e.register_component_inplace<SubModel>();
+            e.register_component_inplace<TriggerVolume>();
+            e.register_component_inplace<Visibility>();
 
             e.register_subsystem_inplace<comp_app::FrameTag>();
             auto& game_bus = e.register_subsystem_inplace<GameEventBus>();
