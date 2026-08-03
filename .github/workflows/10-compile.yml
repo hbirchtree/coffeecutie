@@ -653,9 +653,6 @@ jobs:
         # swept while the client was still connecting, leaving nothing to
         # attach the host side of the bridge to.
         GATEWAY_EXTRA_ARGS: "-registration-ttl 180s"
-        # A different gateway port from Test_webrtc_wasm_client's, so the
-        # two jobs stay independent even on a shared runner.
-        GATEWAY_HTTP_PORT: "8099"
       run: |
         source/.github/tests/web/run_webrtc_web_client_test.sh "${{ steps.bundle.outputs.dir }}" /tmp/webrtc_wasm_pair_test
     - name: Uploading test artifacts
