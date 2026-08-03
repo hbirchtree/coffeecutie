@@ -111,6 +111,11 @@ ASSETS_DIR=$(find $BUILDDIR -name assets -type d | head -n 1)
 export TMPDIR=$TESTDIR/tmp
 mkdir -p $TMPDIR
 
+BLAM_TEST_OUTPUT_DIR="$TMPDIR"
+if [ -n "$GITHUB_ENV" ]; then
+    echo "BLAM_TEST_OUTPUT_DIR=$BLAM_TEST_OUTPUT_DIR" >> "$GITHUB_ENV"
+fi
+
 # BOOT_MAP: which downloaded map to launch with (default beavercreek, the
 # original single-process smoke-test map). The networking scenario boots
 # bloodgulch and switches to beavercreek mid-session via its dummy plug

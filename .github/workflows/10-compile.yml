@@ -392,8 +392,8 @@ jobs:
     - name: Verify multiplayer journals
       if: matrix.journal_check == 'true'
       run: |
-        SERVER_JOURNAL="/tmp/Blam Graphics/journal.jsonl"
-        CLIENT_JOURNAL="/tmp/Blam Graphics/client0/journal.jsonl"
+        SERVER_JOURNAL="$BLAM_TEST_OUTPUT_DIR/journal.jsonl"
+        CLIENT_JOURNAL="$BLAM_TEST_OUTPUT_DIR/client0/journal.jsonl"
         if python3 source/.github/tests/net/compare_journals.py "$SERVER_JOURNAL" "$CLIENT_JOURNAL"; then
           exit 0
         fi
@@ -404,16 +404,16 @@ jobs:
     - name: Convert audio samples to .wav
       if: ${{ always() && matrix.skip_audio != 'true' }}
       run: |
-        if [ -f "/tmp/Blam Graphics/rendered_audio" ]; then
-          ffmpeg -f f32le -ar 48k -ac 2 -i "/tmp/Blam Graphics/rendered_audio" -c:a copy "/tmp/Blam Graphics/rendered_audio.wav"
-          rm "/tmp/Blam Graphics/rendered_audio"
+        if [ -f "$BLAM_TEST_OUTPUT_DIR/rendered_audio" ]; then
+          ffmpeg -f f32le -ar 48k -ac 2 -i "$BLAM_TEST_OUTPUT_DIR/rendered_audio" -c:a copy "$BLAM_TEST_OUTPUT_DIR/rendered_audio.wav"
+          rm "$BLAM_TEST_OUTPUT_DIR/rendered_audio"
         fi
     - name: Uploading test artifacts
       if: ${{ always() && matrix.skip_audio != 'true' }}
       uses: actions/upload-artifact@v7
       with:
         name: dummy_plug_test_${{ matrix.variant }}
-        path: "/tmp/Blam Graphics"
+        path: "${{ env.BLAM_TEST_OUTPUT_DIR }}"
         if-no-files-found: error
     - name: Uploading test artifacts (no audio)
       if: ${{ always() && matrix.skip_audio == 'true' }}
@@ -421,9 +421,9 @@ jobs:
       with:
         name: dummy_plug_test_${{ matrix.variant }}
         path: |
-          /tmp/Blam Graphics
-          !/tmp/Blam Graphics/**/rendered_audio
-          !/tmp/Blam Graphics/**/rendered_audio.wav
+          ${{ env.BLAM_TEST_OUTPUT_DIR }}
+          !${{ env.BLAM_TEST_OUTPUT_DIR }}/**/rendered_audio
+          !${{ env.BLAM_TEST_OUTPUT_DIR }}/**/rendered_audio.wav
         if-no-files-found: error
   Test_wasm_swiftshader:
     if: ${{ always() }}
