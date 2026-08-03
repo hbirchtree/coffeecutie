@@ -290,6 +290,7 @@ func currentServerRows(ws *serverWorkingSet, id string, spinnerFrame string) (in
 			peerLocalStr,
 			fmt.Sprintf("%d", client.relayPort),
 			serverAddrStr,
+			fmt.Sprintf("%d/%d", client.clientToHost.Load(), client.hostToClient.Load()),
 		})
 	}
 	ws.clients.RUnlock()
@@ -446,6 +447,7 @@ func initialModel() model {
 			{Title: "ICE local port", Width: 16},
 			{Title: "Relay port", Width: 16},
 			{Title: "Server address", Width: 24},
+			{Title: "RX/TX (msgs)", Width: 16},
 		}),
 		table.WithRows([]table.Row{}),
 		table.WithFocused(false),
