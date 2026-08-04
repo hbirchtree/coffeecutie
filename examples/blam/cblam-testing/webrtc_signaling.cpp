@@ -31,10 +31,9 @@ GatewayConnectBootstrap::~GatewayConnectBootstrap()
 void GatewayConnectBootstrap::Start()
 {
     rtc::Configuration config;
-    /* Same STUN server Networking::connect_symmetric already uses for
-     * GNS's own ICE transport -- kept consistent, not load-bearing here
-     * beyond "a STUN server that works in this environment." */
+#if !defined(COFFEE_WASM)
     config.iceServers.emplace_back("stun:stun.l.google.com:19302");
+#endif
 
     m_pc = std::make_shared<rtc::PeerConnection>(config);
 
@@ -310,7 +309,9 @@ void GatewayAcceptSignaling::Start()
 {
     m_started = true;
     rtc::Configuration config;
+#if !defined(COFFEE_WASM)
     config.iceServers.emplace_back("stun:stun.l.google.com:19302");
+#endif
     m_pc = std::make_shared<rtc::PeerConnection>(config);
 
     /* This object's own /signal dial plays the same "offerer" role
