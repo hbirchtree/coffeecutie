@@ -81,6 +81,11 @@ struct RestrictedSubsystem : SubsystemBase
         static const auto set = access::collect<typename Manifest::services>();
         return set;
     }
+
+    virtual bool declares_access() const override
+    {
+        return true;
+    }
 };
 
 #undef ENTCOMP_RESTRICTED_CONTRACT

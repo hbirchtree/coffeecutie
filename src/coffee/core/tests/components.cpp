@@ -1,6 +1,9 @@
 #include <coffee/components/components.h>
 #include <coffee/components/scheduling.h>
+#include <coffee/components/worker_pool.h>
 #include <coffee/core/CUnitTesting>
+
+#include <atomic>
 
 using namespace compo;
 
@@ -223,6 +226,23 @@ bool test_conflicts()
     assertTrue(sched::conflicts(mutator, write_vel));
     assertTrue(sched::conflicts(mutator, read_pos));
 
+    auto state_only     = set_of(16, {});
+    state_only.has_work = false;
+    assertFalse(sched::conflicts(mutator, state_only));
+    assertFalse(sched::conflicts(state_only, write_pos));
+
+    auto queried        = set_of(17, {});
+    queried.self_access = access::mode::read;
+
+    auto asks   = set_of(18, {}, {reads(17)});
+    auto drives = set_of(19, {}, {writes(17)});
+
+    assertFalse(sched::conflicts(asks, queried));
+    assertTrue(sched::conflicts(drives, queried));
+
+    auto working = set_of(20, {});
+    assertTrue(sched::conflicts(set_of(21, {}, {reads(20)}), working));
+
     return true;
 }
 
@@ -277,9 +297,108 @@ bool test_batching()
     return true;
 }
 
+bool test_windows()
+{
+    /* Opting in is not enough on its own: undeclared access, structural
+     * mutation and a main thread pin all keep a subsystem where it is */
+    auto opted_in     = set_of(10, {reads(pos_h)});
+    opted_in.parallel = true;
+    assertTrue(sched::can_offload(opted_in));
+
+    auto escaped     = opted_in;
+    escaped.opaque   = true;
+    assertFalse(sched::can_offload(escaped));
+
+    auto pinned        = opted_in;
+    pinned.main_thread = true;
+    assertFalse(sched::can_offload(pinned));
+
+    /* A subsystem that conflicts with nobody covers the whole frame, even
+     * though it sits in the last batch */
+    auto writer_a = set_of(11, {writes(pos_h)});
+    auto writer_b = set_of(12, {writes(pos_h)});
+    auto late     = set_of(13, {reads(vel_h)});
+    late.parallel = true;
+
+    auto nodes   = nodes_of({writer_a, writer_b, late});
+    auto batches = sched::build_batches(nodes);
+    auto windows = sched::build_windows(nodes, batches);
+
+    assertEquals(batches.size(), size_t(2));
+    assertTrue(windows.at(2).offloaded());
+    assertEquals(windows.at(2).first, size_t(0));
+    assertEquals(windows.at(2).last, size_t(1));
+    /* ...while the ones that stayed behind are not offloaded at all */
+    assertFalse(windows.at(0).offloaded());
+    assertFalse(windows.at(1).offloaded());
+
+    /* A conflict on either side closes the window down to the batch the
+     * subsystem was scheduled in: this is the data dependency case, and it
+     * has to hold inside the frame, not just at its edges */
+    auto producer   = set_of(20, {writes(pos_h)});
+    auto consumer   = set_of(21, {reads(pos_h)});
+    consumer.parallel = true;
+    auto next       = set_of(22, {writes(pos_h)});
+
+    auto fenced         = nodes_of({producer, consumer, next});
+    auto fenced_batches = sched::build_batches(fenced);
+    auto fenced_windows = sched::build_windows(fenced, fenced_batches);
+
+    assertEquals(fenced_batches.size(), size_t(3));
+    assertTrue(fenced_windows.at(1).offloaded());
+    assertEquals(fenced_windows.at(1).first, size_t(1));
+    assertEquals(fenced_windows.at(1).last, size_t(1));
+
+    return true;
+}
+
+bool test_worker_pool()
+{
+    /* No workers: jobs still run, on the submitting thread */
+    {
+        sched::worker_pool serial(0);
+        int                ran = 0;
+        serial.submit([&ran]() { ran++; });
+        serial.wait_all();
+        assertEquals(ran, 1);
+    }
+
+    sched::worker_pool pool(3);
+    assertEquals(pool.size(), size_t(3));
+
+    std::atomic<int> counter{0};
+
+    for(size_t frame = 0; frame < 32; frame++)
+    {
+        pool.reset();
+
+        std::vector<sched::worker_pool::job_id> tickets;
+        for(size_t job = 0; job < 8; job++)
+            tickets.push_back(pool.submit([&counter]() { counter++; }));
+
+        /* Waiting on one job says nothing about the others... */
+        pool.wait(tickets.front());
+        pool.wait_all();
+        /* ...but by the end of the frame every one of them has run, exactly
+         * once, and nothing is left over for the next frame */
+        assertEquals(counter.load(), static_cast<int>((frame + 1) * 8));
+    }
+
+    /* An exception on a worker is contained: it neither escapes the pool nor
+     * leaves the frame waiting forever */
+    pool.reset();
+    auto thrower = pool.submit(
+        []() { throw std::runtime_error("subsystem blew up"); });
+    pool.wait(thrower);
+    pool.wait_all();
+    assertEquals(pool.failed(), size_t(1));
+
+    return true;
+}
+
 } // namespace
 
-COFFEE_TESTS_BEGIN(3)
+COFFEE_TESTS_BEGIN(5)
 
     {test_component_projection,
      "Manifest access projection",
@@ -290,5 +409,11 @@ COFFEE_TESTS_BEGIN(3)
     {test_batching,
      "Frame batching",
      "priority-ordered greedy batching of non-conflicting subsystems"},
+    {test_windows,
+     "Offload windows",
+     "how far an opted-in subsystem may run outside its own batch"},
+    {test_worker_pool,
+     "Worker pool",
+     "jobs run once per frame, are joined within it, and contain throws"},
 
 COFFEE_TESTS_END()

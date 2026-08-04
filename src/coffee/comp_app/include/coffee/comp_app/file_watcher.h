@@ -17,6 +17,11 @@ class FileWatcher : public compo::SubsystemBase
 
     void start_frame(compo::ContainerProxy&, const compo::time_point&);
 
+    bool declares_access() const override
+    {
+        return true;
+    }
+
     std::future<Url> await(
         Url const&             url,
         compo::duration const& timeout = std::chrono::seconds(0));

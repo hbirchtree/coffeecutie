@@ -19,12 +19,7 @@ using OccluderManifest = compo::SubsystemManifest<
         const Model,
         const PlayerCamera,
         const PlayerInfo>,
-    type_list_t<
-        BSPCache<V>,
-        BlamResources,
-        RenderingParameters,
-        DebugMarkers,
-        GameEventBus>,
+    type_list_t<BSPCache<V>, RenderingParameters, DebugMarkers, GameEventBus>,
     empty_list_t>;
 
 template<typename V>
@@ -56,15 +51,20 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
     std::vector<eye_marker_t> eye_pool;
 
+    bool m_markers_scheduled{true};
+
+    bool parallel_safe() const override
+    {
+        return !m_markers_scheduled;
+    }
+
     void start_restricted(Proxy& p, time_point const&)
     {
         BSPCache<V>*         bsp_cache;
-        BlamResources*       resources;
         RenderingParameters* rendering;
         DebugMarkers*        markers;
         GameEventBus*        game_bus;
         p.subsystem(bsp_cache);
-        p.subsystem(resources);
         p.subsystem(rendering);
         p.subsystem(markers);
         p.subsystem(game_bus);
@@ -74,11 +74,15 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
         Coffee::ProfContext _("Occluder::frame");
 
+        bool const markers_wanted = markers->available();
+        bool const markers_now    = m_markers_scheduled && markers_wanted;
+        m_markers_scheduled       = markers_wanted;
+
         /* available() is gated on RenderingParameters::debug_markers:
          * mapping the marker buffer stalls on GPU sync every frame, which
          * is pure loss when the markers aren't even drawn (release/mobile
          * default). This was ~99% of occluder frame time. */
-        if(markers->available())
+        if(markers_now)
         {
             Coffee::ProfContext __("Occluder::debug_viz");
             update_debug_viz(p);

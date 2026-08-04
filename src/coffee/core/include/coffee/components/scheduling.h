@@ -22,6 +22,9 @@ struct access_set
     bool opaque{false};
     /* Pinned to the main thread (GL contexts, windowing, input) */
     bool main_thread{false};
+    bool parallel{false};
+    access::mode self_access{access::mode::write};
+    bool has_work{true};
 };
 
 using access_entry = access::entry;
@@ -45,6 +48,33 @@ struct batch
     size_t width{0};
 };
 
+struct window
+{
+    size_t first{0};
+    size_t last{0};
+
+    bool offloaded() const
+    {
+        return first <= last;
+    }
+};
+
+/*! Whether the subsystem may leave the main thread at all */
+bool can_offload(access_set const& set);
+
+std::vector<window> build_windows(
+    std::vector<node> const& priority_sorted,
+    std::vector<batch> const& batches);
+
+std::string format_windows(
+    std::vector<node> const& priority_sorted,
+    std::vector<batch> const& batches,
+    std::vector<window> const& windows);
+
+size_t configured_worker_count();
+
+size_t warmup_frames();
+
 /*! Spread main-thread affinity along declared dependencies */
 void propagate_main_thread(std::vector<node>& nodes);
 
@@ -58,6 +88,8 @@ std::string format_batches(
 
 /*! Access set of a subsystem, from the manifest it declared */
 access_set access_of(type_hash self, SubsystemBase const& subsystem);
+
+bool access_changed(access_set const& previous, SubsystemBase const& subsystem);
 
 /*! Frame to emit the schedule report on, from COFFEE_ECS_SCHEDULE */
 size_t report_frame();

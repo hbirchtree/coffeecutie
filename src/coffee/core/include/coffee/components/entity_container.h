@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <unordered_map>
 
+#include <coffee/components/scheduling.h>
 #include <coffee/components/types.h>
+#include <coffee/components/worker_pool.h>
 #include <coffee/core/printing/log_interface.h>
 #include <peripherals/stl/quick_container.h>
 
@@ -549,6 +551,29 @@ struct EntityContainer : stl_types::non_copy
 
     std::string schedule_report();
 
+    void   set_worker_count(size_t count);
+    size_t worker_count() const
+    {
+        return workers ? workers->size() : 0u;
+    }
+
+  private:
+    using frame_hook = void (SubsystemBase::*)(
+        ContainerProxy&, time_point const&);
+
+    std::vector<sched::node> build_schedule_nodes(
+        std::vector<SubsystemBase*> const& sorted);
+
+    void update_schedule(std::vector<SubsystemBase*> const& sorted);
+
+    void exec_batched(
+        ContainerProxy&   proxy,
+        time_point const& time,
+        bool              measure,
+        bool              reverse,
+        frame_hook        hook,
+        std::string_view  hook_name);
+
   private:
     u64                 entity_counter; /*!< For enumerating entities */
     std::vector<Entity> entities;
@@ -565,6 +590,14 @@ struct EntityContainer : stl_types::non_copy
     clock::duration                    time_offset;
     std::vector<std::function<void()>> frame_end_callbacks;
     u64                                frames_elapsed{0};
+
+    std::unique_ptr<sched::worker_pool> workers;
+    std::vector<SubsystemBase*>         scheduled;
+    std::vector<sched::node>            schedule_nodes;
+    std::vector<sched::batch>           schedule_batches;
+    std::vector<sched::window>          schedule_windows;
+    std::vector<sched::worker_pool::job_id> schedule_jobs;
+    bool                                    workers_configured{false};
 
   public:
     u32 debug_flags;

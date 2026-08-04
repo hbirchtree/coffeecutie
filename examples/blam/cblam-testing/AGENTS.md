@@ -48,6 +48,21 @@ Tags are bitmask flags on entities used for filtering and lifecycle:
 - `ObjectScenery`, `ObjectVehicle`, `ObjectBiped`, etc. — object type classification
 - `PositioningStatic/Dynamic/Background` — spatial positioning categories
 
+### Threading
+
+`SoundSystem` (`sounds.cpp`) is the one subsystem that opts in to running on a worker thread (`parallel_safe()`), so it is the reference for what that costs:
+
+- Its manifest names everything it touches, including `SoundCache<Ver>` — which it writes, and which keeps `SoundUISystem` out of the same stage.
+- `inject()` copies the event and hands it to the audio thread at the next frame hook; `process()` remains the same-thread path. Raise sound events with `inject()`.
+- The `ClusterChanged` subscription is a queued one (`addQueuedEventFunction`), polled at the top of `start_restricted`, because the occluder raises it from the main thread.
+
+`Occluder` is the second one, and it is the interesting case: its window reaches back to the batch holding `sdl2::GLFramebuffer`, so culling runs while the main thread is blocked in `SDL_GL_SwapWindow`. Two things make that legal:
+
+- `parallel_safe()` returns `!m_markers_scheduled`. The only GPU work it does is mapping the debug marker buffer, and the flag it answers from is the one the *schedule* was built from — turning markers on takes effect the next frame, once the occluder is back on the main thread.
+- `ClusterChanged` is raised from that worker, so `MeshRenderer` takes it through a queue (`m_cluster_events`) instead of having its `m_pending_changes` written from another thread.
+
+Enable it with `COFFEE_ECS_THREADS=2` (see the root `AGENTS.md` for the rules); without it everything runs serially as before. `COFFEE_ECS_SCHEDULE=300` prints the resulting batches and offload windows.
+
 ## Game events (`data.h`)
 
 Events flow through `GameEventBus` (a `BasicEventBus<GameEvent>`). Key events:

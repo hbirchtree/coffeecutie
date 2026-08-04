@@ -13,9 +13,12 @@
 #include <platforms/profiling/jsonprofile.h>
 
 #include "app_error.h"
+#include "event_queue.h"
 #include "peripherals/constants.h"
 
 #include <fmt/format.h>
+#include <memory>
+#include <mutex>
 
 namespace rq {
 class runtime_queue;
@@ -244,6 +247,12 @@ struct BasicEventBus : EventBus<EventType>
         std::function<void(EventType&, libc_types::c_ptr)> handler;
     };
 
+    using handler_ptr  = std::shared_ptr<EvData>;
+    using handler_list = std::vector<handler_ptr>;
+
+    template<typename SubEventType>
+    using queue_type = event_queue<EventType, SubEventType>;
+
     template<typename HandlerType>
     void addEventHandler(libc_types::u32 prio, HandlerType&& hnd)
     {
@@ -253,8 +262,7 @@ struct BasicEventBus : EventBus<EventType>
                 hnd(ev, C_RCAST<typename HandlerType::event_type*>(data));
         };
 
-        m_handlers.push_back({prio, std::move(handler)});
-        sort_handlers();
+        addEventData({prio, std::move(handler)});
     }
 
     template<typename SubEventType>
@@ -268,33 +276,83 @@ struct BasicEventBus : EventBus<EventType>
                 hnd(ev, C_RCAST<SubEventType*>(data));
         };
 
-        m_handlers.push_back({prio, std::move(handler)});
-        sort_handlers();
+        addEventData({prio, std::move(handler)});
+    }
+
+    /*!
+     * \brief Register a handler that runs on the consumer's thread.
+     *
+     * Matching events are copied into the returned queue instead of being
+     * handled where they were raised. The consumer owns the queue and calls
+     * poll() on it from its own thread; when it drops the queue the
+     * subscription lapses.
+     */
+    template<typename SubEventType>
+    std::shared_ptr<queue_type<SubEventType>> addQueuedEventFunction(
+        libc_types::u32                                  prio,
+        std::function<void(EventType&, SubEventType*)>&& hnd,
+        libc_types::szptr                                capacity =
+            queue_type<SubEventType>::default_capacity)
+    {
+        auto queue = std::make_shared<queue_type<SubEventType>>(
+            std::move(hnd), capacity);
+
+        auto handler = [weak = std::weak_ptr<queue_type<SubEventType>>(queue)](
+                           EventType& ev, libc_types::c_ptr data) {
+            if(ev.type != SubEventType::event_type)
+                return;
+            if(auto target = weak.lock())
+                target->post(ev, C_RCAST<SubEventType const*>(data));
+        };
+
+        addEventData({prio, std::move(handler)});
+
+        return queue;
     }
 
     void addEventData(EvData&& data)
     {
-        m_handlers.push_back(std::move(data));
-        sort_handlers();
+        auto updated = std::make_shared<handler_list>();
+        {
+            std::lock_guard _(m_lock);
+            if(m_handlers)
+                *updated = *m_handlers;
+            updated->push_back(std::make_shared<EvData>(std::move(data)));
+            std::stable_sort(
+                updated->begin(), updated->end(), handler_sorter);
+            m_handlers = std::move(updated);
+        }
     }
 
     virtual void process(EventType& ev, libc_types::c_ptr data) final
     {
-        for(auto& e : m_handlers)
-            e.handler(ev, data);
+        std::shared_ptr<handler_list const> handlers;
+        {
+            std::lock_guard _(m_lock);
+            handlers = m_handlers;
+        }
+
+        if(!handlers)
+            return;
+
+        for(auto const& e : *handlers)
+            e->handler(ev, data);
     }
 
-    std::vector<EvData> m_handlers;
-
-    static bool handler_sorter(EvData const& e1, EvData const& e2)
+    libc_types::szptr handler_count() const
     {
-        return e1.prio < e2.prio;
+        std::lock_guard _(m_lock);
+        return m_handlers ? m_handlers->size() : 0u;
     }
 
-    void sort_handlers()
+    static bool handler_sorter(handler_ptr const& e1, handler_ptr const& e2)
     {
-        std::stable_sort(m_handlers.begin(), m_handlers.end(), handler_sorter);
+        return e1->prio < e2->prio;
     }
+
+  private:
+    mutable std::mutex                  m_lock;
+    std::shared_ptr<handler_list const> m_handlers;
 };
 
 struct HIDPreferences
@@ -805,6 +863,17 @@ struct AppService : detail::SubsystemBase
         static const auto set = compo::access::collect<
             detail::restricted::readable_services_of<ExposedType>>();
         return set;
+    }
+
+    virtual bool declares_access() const override
+    {
+        return true;
+    }
+
+    virtual bool has_frame_work() const override
+    {
+        return detail::restricted::is_start_restricted_subsystem<ExposedType> ||
+               detail::restricted::is_end_restricted_subsystem<ExposedType>;
     }
 
     template<typename InternalType, typename... Args>

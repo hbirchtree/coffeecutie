@@ -175,7 +175,13 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
             m_usage.buffers.uploads++;
         } else
         {
-            // TODO: Implement partial update
+            auto bytes =
+                semantic::mem_chunk<const char>::ofContainer(data).view;
+            auto target = map<char>(offset, bytes.size());
+            std::copy(bytes.begin(), bytes.end(), target.begin());
+            unmap();
+            m_usage.buffers.upload_data += bytes.size();
+            m_usage.buffers.uploads++;
         }
     }
 
@@ -426,6 +432,26 @@ struct buffer_slice_t
     {
         auto parent = m_parent.lock();
         return parent->unmap();
+    }
+
+    template<typename Span>
+    requires semantic::concepts::Span<Span>
+    inline void update(Span const& data)
+    {
+        if(auto parent = m_parent.lock())
+            parent->update(m_offset, data);
+    }
+
+    /*! Invalidate the buffer this slice lives in, not the store's current */
+    inline void discard_parent()
+    {
+        if(auto parent = m_parent.lock())
+            parent->discard();
+    }
+
+    inline gleam::buffer_t* parent() const
+    {
+        return m_parent.lock().get();
     }
 
     inline buffer_slice_t slice(

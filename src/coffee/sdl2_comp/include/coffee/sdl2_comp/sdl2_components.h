@@ -162,6 +162,21 @@ struct GLFramebuffer
     virtual void start_frame(
         comp_app::detail::ContainerProxy&, time_point const&) final;
 
+    virtual bool main_thread_only() const override
+    {
+        return true;
+    }
+
+    virtual compo::access::mode self_access() const override
+    {
+        return compo::access::mode::read;
+    }
+
+    virtual bool has_frame_work() const override
+    {
+        return true;
+    }
+
     entity_container* m_container;
 };
 

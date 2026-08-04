@@ -193,10 +193,12 @@ struct SubsystemBase
 
     virtual void start_frame(ContainerProxy&, time_point const&)
     {
+        no_start_hook = true;
     }
 
     virtual void end_frame(ContainerProxy&, time_point const&)
     {
+        no_end_hook = true;
     }
 
     virtual std::string_view subsystem_name() const
@@ -224,6 +226,26 @@ struct SubsystemBase
         return false;
     }
 
+    virtual bool parallel_safe() const
+    {
+        return false;
+    }
+
+    virtual bool declares_access() const
+    {
+        return false;
+    }
+
+    virtual access::mode self_access() const
+    {
+        return has_frame_work() ? access::mode::write : access::mode::read;
+    }
+
+    virtual bool has_frame_work() const
+    {
+        return !(no_start_hook && no_end_hook);
+    }
+
     /*!
      * \brief Access taken during frame hooks that the manifest cannot
      * express. Accumulated across frames, never reset.
@@ -231,6 +253,8 @@ struct SubsystemBase
     access::runtime_flags runtime_access;
     u64 frame_time_ns{0};
     u32 priority;
+    bool no_start_hook{false};
+    bool no_end_hook{false};
 
   protected:
     static EntityContainer& get_container(ContainerProxy& proxy);

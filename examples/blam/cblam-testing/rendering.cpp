@@ -88,12 +88,34 @@ struct Pass
     gfx::draw_command                     command;
     std::vector<std::vector<draw_data_t>> draws;
 
-    gfx::buffer_slice_t               material_buffer;
-    gfx::buffer_slice_t               transparent_buffer;
-    gfx::buffer_slice_t               matrix_buffer;
+    gfx::buffer_slice_t material_buffer;
+    gfx::buffer_slice_t transparent_buffer;
+    gfx::buffer_slice_t matrix_buffer;
+
+    std::vector<materials::shader_data>      material_staging;
+    std::vector<materials::transparent_data> transparent_staging;
+    std::vector<PerInstanceData>             matrix_staging;
+
     Span<materials::shader_data>      material_mapping;
     Span<materials::transparent_data> transparent_mapping;
     Span<PerInstanceData>             matrix_mapping;
+
+    void stage_materials(size_t material_size, size_t transparent_size)
+    {
+        material_staging.assign(
+            material_size / sizeof(materials::shader_data), {});
+        transparent_staging.assign(
+            transparent_size / sizeof(materials::transparent_data), {});
+        material_mapping    = Span<materials::shader_data>(material_staging);
+        transparent_mapping =
+            Span<materials::transparent_data>(transparent_staging);
+    }
+
+    void stage_matrices(size_t matrix_size)
+    {
+        matrix_staging.assign(matrix_size / sizeof(PerInstanceData), {});
+        matrix_mapping = Span<PerInstanceData>(matrix_staging);
+    }
 
     std::string name;
 
@@ -276,14 +298,6 @@ struct DrawListBuilder
         /* Ahead of MeshRenderer (3072): produces what it submits */
         this->priority = 3071;
 
-        if(std::thread::hardware_concurrency() > 1)
-            if(auto q = rq::runtime_queue::CreateNewThreadQueue("DrawBuilder");
-               q.has_value())
-            {
-                m_worker = q.value();
-                m_pipelined = false;
-            }
-
         for(auto& set : m_bsp_sets)
         {
             u32 i = 0;
@@ -306,21 +320,6 @@ struct DrawListBuilder
         }
     }
 
-    void finish_build()
-    {
-        if(m_build_running)
-        {
-            std::unique_lock lock(m_build_mutex);
-            m_build_cv.wait(lock, [this] { return !m_build_running; });
-        }
-        if(m_mapped)
-        {
-            m_resources.material_store->unmap();
-            m_resources.transparent_store->unmap();
-            m_mapped = false;
-        }
-    }
-
     void start_restricted(Proxy& p, compo::time_point const& time)
     {
         ProfContext _;
@@ -329,17 +328,7 @@ struct DrawListBuilder
         if(use_legacy_rendering())
             return;
 
-        finish_build();
-
-        RenderingParameters* render_params;
-        p.subsystem(render_params);
-        bool const pipelined =
-            m_pipelined && !render_params->structural_change_pending;
-
-        if(pipelined)
-            std::swap(m_build, m_submit);
-        else
-            m_submit = m_build;
+        m_submit = m_build;
 
         m_resources.model_matrix_store->next();
         m_resources.transparent_store->next();
@@ -351,14 +340,6 @@ struct DrawListBuilder
         bool invalidated = true; //! compile_info::platform::is_emscripten;
         if(time - last_update <= std::chrono::seconds(10) && !invalidated)
             return;
-
-        if(m_api->feature_info().program.buffer_binding)
-        {
-            m_resources.material_store->template map_all<std::byte>();
-            m_resources.transparent_store->template map_all<std::byte>();
-            m_resources.model_matrix_store->template map_all<std::byte>();
-            m_mapped = true;
-        }
 
         f32 t = std::fmod(stl_types::Chrono::to_f32(time), 3600.f);
         {
@@ -379,42 +360,14 @@ struct DrawListBuilder
             break;
         }
 
-        m_proxy.emplace(p.clone());
-        auto build_rest = [this, time, sort_cam]() {
-            update_materials(*m_proxy, time);
-            for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
-            {
-                model_build()[static_cast<Passes>(pi)].sort_by_depth(sort_cam);
-                bsp_build()[static_cast<Passes>(pi)].sort_by_depth(sort_cam);
-            }
-        };
-        auto signal_done = [this] {
-            {
-                std::lock_guard lock(m_build_mutex);
-                m_build_running = false;
-            }
-            m_build_cv.notify_all();
-        };
-
         last_update = time;
 
-        if(pipelined)
+        update_materials(p, time);
+        for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
         {
-            m_build_running = true;
-            auto queued     = rq::runtime_queue::QueueImmediate(
-                m_worker,
-                std::chrono::milliseconds(0),
-                [build_rest, signal_done] {
-                    build_rest();
-                    signal_done();
-                });
-            if(queued.has_value())
-                return;
-            m_build_running = false;
+            model_build()[static_cast<Passes>(pi)].sort_by_depth(sort_cam);
+            bsp_build()[static_cast<Passes>(pi)].sort_by_depth(sort_cam);
         }
-
-        build_rest();
-        finish_build();
     }
 
     compo::time_point last_update{};
@@ -474,13 +427,13 @@ struct DrawListBuilder
         return m_model_sets[m_submit];
     }
 
-    rq::runtime_queue* m_worker{nullptr};
-    std::mutex              m_build_mutex;
-    std::condition_variable m_build_cv;
-    bool                    m_build_running{false};
-    bool m_pipelined{false};
-    std::optional<Proxy> m_proxy;
-    bool m_mapped{false};
+    /*! Bone matrices for the frame, uploaded by the renderer */
+    std::vector<Matf4> m_bone_upload;
+
+    std::vector<Matf4> const& bone_upload() const
+    {
+        return m_bone_upload;
+    }
 
 
 
@@ -528,14 +481,9 @@ struct DrawListBuilder
             auto material_size = align_for_gpu_padding(pass.required_storage());
             pass.material_buffer =
                 m_resources.material_store->slice(materials_ptr, material_size);
-            pass.material_mapping =
-                pass.material_buffer
-                    .template buffer_cast<materials::shader_data>();
             pass.transparent_buffer = m_resources.transparent_store->slice(
                 transparent_ptr, transparent_size);
-            pass.transparent_mapping =
-                pass.transparent_buffer
-                    .template buffer_cast<materials::transparent_data>();
+            pass.stage_materials(material_size, transparent_size);
             materials_ptr += material_size;
             transparent_ptr += transparent_size;
         }
@@ -634,16 +582,10 @@ struct DrawListBuilder
                 m_resources.material_store->slice(materials_ptr, material_size);
             pass.matrix_buffer =
                 m_resources.model_matrix_store->slice(matrix_ptr, matrix_size);
-            pass.material_mapping =
-                pass.material_buffer
-                    .template buffer_cast<materials::shader_data>();
-            pass.matrix_mapping =
-                pass.matrix_buffer.template buffer_cast<PerInstanceData>();
             pass.transparent_buffer = m_resources.transparent_store->slice(
                 transparent_ptr, transparent_size);
-            pass.transparent_mapping =
-                pass.transparent_buffer
-                    .template buffer_cast<materials::transparent_data>();
+            pass.stage_materials(material_size, transparent_size);
+            pass.stage_matrices(matrix_size);
             matrix_ptr += matrix_size;
             materials_ptr += material_size;
             transparent_ptr += transparent_size;
@@ -652,8 +594,9 @@ struct DrawListBuilder
         // Reset per-frame bone_base so each model uploads once per frame
         for(auto& [id, item] : model_cache->m_cache)
             item.bone_base = -1;
-        std::vector<Matf4> bone_upload;
-        size_t             bone_write_ptr = 0;
+        auto& bone_upload = m_bone_upload;
+        bone_upload.clear();
+        size_t bone_write_ptr = 0;
 
         for(auto ent : p.select(ObjectMod2))
         {
@@ -699,30 +642,12 @@ struct DrawListBuilder
                 instance_id);
         }
 
-        if(!bone_upload.empty())
-            m_resources.bone_matrix_buf->update(
-                0, Span<const Matf4>(bone_upload));
-
-        m_resources.model_matrix_store->unmap();
     }
 
     void update_materials(Proxy& p, time_point const& time)
     {
         if(!m_api->feature_info().program.buffer_binding)
             return;
-
-        for(Pass& pass : bsp_build())
-        {
-            pass.material_mapping =
-                pass.material_buffer
-                    .template buffer_cast<materials::shader_data>();
-        }
-        for(Pass& pass : model_build())
-        {
-            pass.material_mapping =
-                pass.material_buffer
-                    .template buffer_cast<materials::shader_data>();
-        }
 
         RenderingParameters* rendering_params;
         p.subsystem(rendering_params);
@@ -891,6 +816,9 @@ struct MeshRenderer
     };
 
     std::vector<pending_change_t> m_pending_changes;
+
+    std::shared_ptr<GameEventBus::queue_type<ClusterChangedEvent>>
+        m_cluster_events;
 
     i16 current_skybox{-1};
 
@@ -1378,9 +1306,56 @@ struct MeshRenderer
             get_view_state(0));
     }
 
+    void upload_draw_lists(DrawListBuilder<Version> const& builder)
+    {
+        if(!m_api->feature_info().program.buffer_binding)
+            return;
+
+        ProfContext _("MeshRenderer::upload_draw_lists");
+
+        std::vector<gleam::buffer_t*> discarded;
+        auto upload = [&discarded](
+                          gfx::buffer_slice_t const& target, auto const& src) {
+            using value_type = typename std::decay_t<decltype(src)>::value_type;
+            if(src.empty() || !target.valid())
+                return;
+            auto slice = target;
+            if(auto* parent = slice.parent();
+               std::find(discarded.begin(), discarded.end(), parent) ==
+               discarded.end())
+            {
+                slice.discard_parent();
+                discarded.push_back(parent);
+            }
+            slice.update(Span<const value_type>(src));
+        };
+
+        auto upload_set = [&upload](auto const& passes) {
+            for(auto const& pass : passes)
+            {
+                upload(pass.material_buffer, pass.material_staging);
+                upload(pass.transparent_buffer, pass.transparent_staging);
+                upload(pass.matrix_buffer, pass.matrix_staging);
+            }
+        };
+
+        upload_set(builder.bsp_submit());
+        upload_set(builder.model_submit());
+
+        if(!builder.bone_upload().empty())
+            m_resources.bone_matrix_buf->update(
+                0, Span<const Matf4>(builder.bone_upload()));
+    }
+
     void start_restricted(Proxy& p, time_point const& time)
     {
         ProfContext _;
+
+        if(m_cluster_events)
+            m_cluster_events->poll();
+
+        if(!use_legacy_rendering())
+            upload_draw_lists(p.template subsystem<DrawListBuilder<Version>>());
 
         /* Collect active local players sorted by seat_idx */
         m_players.clear();
@@ -2813,8 +2788,9 @@ void alloc_renderer(EntityContainer& container)
     if(api.api_version() != std::make_tuple<u32, u32>(2, 0))
         container.register_subsystem_inplace<LoadingScreen>();
 
-    auto& game_bus = container.subsystem_cast<GameEventBus>();
-    game_bus.addEventFunction<ClusterChangedEvent>(
+    auto& game_bus       = container.subsystem_cast<GameEventBus>();
+    renderer.m_cluster_events =
+        game_bus.addQueuedEventFunction<ClusterChangedEvent>(
         0,
         std::function<void(GameEvent&, ClusterChangedEvent*)>(
             [renderer = &renderer,

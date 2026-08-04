@@ -29,6 +29,7 @@
 #endif
 
 #include <deque>
+#include <mutex>
 #include <oaf/api_system.h>
 #include <oaf/ogg/ogg_decode.h>
 #include <oaf/wav/wav_decode.h>
@@ -40,13 +41,14 @@
 
 using Coffee::Logging::cDebug;
 
+template<typename Ver>
 using SoundManifest = compo::SubsystemManifest<
     type_list_t<
-        PlayerCamera,
-        PlayerInfo,
-        SoundEffects
+        const PlayerCamera,
+        const PlayerInfo,
+        const SoundEffects
     >,
-    type_list_t<LoadingStatus, SoundPreferences>,
+    type_list_t<const LoadingStatus, const SoundPreferences, SoundCache<Ver>>,
     empty_list_t>;
 
 struct sound_unit_t
@@ -76,34 +78,42 @@ struct sound_unit_t
 
 template<typename Ver>
 struct SoundSystem
-    : compo::RestrictedSubsystem<SoundSystem<Ver>, SoundManifest>
+    : compo::RestrictedSubsystem<SoundSystem<Ver>, SoundManifest<Ver>>
     , comp_app::EventBus<SoundEvent>
 {
     using services = type_list_t<comp_app::EventBus<SoundEvent>>;
     using type     = SoundSystem;
-    using Proxy    = compo::proxy_of<SoundManifest>;
+    using Proxy    = compo::proxy_of<SoundManifest<Ver>>;
 
     SoundSystem(
-        oaf::api&        audio,
-        SoundCache<Ver>& sound_cache,
-        LoadingStatus*   loading,
-        GameEventBus&    game_bus)
+        oaf::api&            audio,
+        SoundCache<Ver>&     sound_cache,
+        LoadingStatus const* loading,
+        GameEventBus&        game_bus)
         : snd(audio)
         , sound_cache(sound_cache)
         , index(sound_cache.index)
         , loading(loading)
     {
         this->priority = 2048;
-        game_bus.addEventFunction<ClusterChangedEvent>(
+        cluster_events = game_bus.addQueuedEventFunction<ClusterChangedEvent>(
             0, [this](GameEvent&, ClusterChangedEvent* e) {
                 on_cluster_changed(e->bsp, e->cluster);
             });
     }
 
+    bool parallel_safe() const override
+    {
+        return true;
+    }
+
     oaf::api&                  snd;
     SoundCache<Ver>&           sound_cache;
     blam::tag_index_view<Ver>& index;
-    LoadingStatus*             loading;
+    LoadingStatus const*       loading;
+
+    std::shared_ptr<GameEventBus::queue_type<ClusterChangedEvent>>
+        cluster_events;
 
     std::map<u64, sound_unit_t> active_sounds;
     std::map<u64, sound_unit_t> fading_sounds;
@@ -135,13 +145,19 @@ struct SoundSystem
     {
         SoundEvent event;
         std::variant<
+            std::monostate,
             LoopSoundEvent,
             PlaySoundEvent,
             BackgroundSoundTransitionEvent>
             data;
     };
 
+    /*! Raised before the sound assets were there, replayed once they are */
     std::vector<queued_event_t> queued_events;
+
+    /*! Raised on another thread, handed over at the next frame hook */
+    std::vector<queued_event_t> inbox;
+    std::mutex                  inbox_lock;
 
     /* Push current sound.volume to every OAF source as gain.
      * Called every frame so fades are smooth regardless of buffer queue state.
@@ -266,9 +282,71 @@ struct SoundSystem
         return any_done;
     }
 
+    /*! Copy an event's payload so it survives the trip to this thread */
+    static queued_event_t capture(
+        SoundEvent const& ev, libc_types::c_ptr data)
+    {
+        queued_event_t out{.event = ev};
+
+        if(!data)
+            return out;
+
+        switch(ev.type)
+        {
+        case SoundEvent::loop_sound:
+            out.data = *reinterpret_cast<LoopSoundEvent const*>(data);
+            break;
+        case SoundEvent::play_sound:
+            out.data = *reinterpret_cast<PlaySoundEvent const*>(data);
+            break;
+        case SoundEvent::background_sound_transition:
+            out.data =
+                *reinterpret_cast<BackgroundSoundTransitionEvent const*>(data);
+            break;
+        default:
+            break;
+        }
+
+        return out;
+    }
+
+    void deliver(queued_event_t& queued)
+    {
+        std::visit(
+            [this, &queued](auto& payload) {
+                using payload_t = std::decay_t<decltype(payload)>;
+                if constexpr(std::is_same_v<payload_t, std::monostate>)
+                    process(queued.event, nullptr);
+                else
+                    process(queued.event, &payload);
+            },
+            queued.data);
+    }
+
+    virtual void inject(SoundEvent& ev, libc_types::c_ptr data) final
+    {
+        std::lock_guard _(inbox_lock);
+        inbox.push_back(capture(ev, data));
+    }
+
+    void drain_inbox()
+    {
+        std::vector<queued_event_t> incoming;
+        {
+            std::lock_guard _(inbox_lock);
+            incoming.swap(inbox);
+        }
+
+        for(auto& queued : incoming)
+            deliver(queued);
+    }
+
     void start_restricted(Proxy& p, compo::time_point const& t)
     {
-        SoundPreferences* sound_pref{};
+        cluster_events->poll();
+        drain_inbox();
+
+        SoundPreferences const* sound_pref{};
         p.subsystem(sound_pref);
         snd.listener().template set_property<oaf::listener_property::gain>(
             sound_pref->master_volume);
@@ -283,26 +361,13 @@ struct SoundSystem
            loading->loaded_sounds == LoadingStatus::loaded)
         {
             stat_replayed += static_cast<u32>(queued_events.size());
-            for(queued_event_t& event : queued_events)
-            {
-                switch(event.event.type)
-                {
-                case SoundEvent::loop_sound:
-                    process(event.event, &std::get<LoopSoundEvent>(event.data));
-                    break;
-                case SoundEvent::play_sound:
-                    process(event.event, &std::get<PlaySoundEvent>(event.data));
-                    break;
-                case SoundEvent::background_sound_transition:
-                    process(
-                        event.event,
-                        &std::get<BackgroundSoundTransitionEvent>(event.data));
-                    break;
-                default:
-                    break;
-                }
-            }
-            queued_events.clear();
+
+            /* Replaying can re-queue, so hand over the list first */
+            std::vector<queued_event_t> replay;
+            replay.swap(queued_events);
+
+            for(queued_event_t& event : replay)
+                deliver(event);
         }
 
         if(has_pending_cluster &&
@@ -340,7 +405,7 @@ struct SoundSystem
         for(auto id : fading_finished)
             fading_sounds.erase(id);
 
-        for(auto const player : p.select<PlayerInfo, PlayerCamera>())
+        for(auto const player : p.template select<PlayerInfo, PlayerCamera>())
         {
             auto const [info, cam] = player.components();
             if(info.seat_idx != 0)
@@ -472,24 +537,12 @@ struct SoundSystem
         /* Queue events until sound assets are ready. */
         if(loading->loaded_sounds != LoadingStatus::loaded)
         {
-            queued_event_t event{.event = ev};
-            switch(ev.type)
-            {
-            case SoundEvent::loop_sound:
-                event.data = *reinterpret_cast<LoopSoundEvent const*>(data);
-                break;
-            case SoundEvent::play_sound:
-                event.data = *reinterpret_cast<PlaySoundEvent const*>(data);
-                break;
-            case SoundEvent::background_sound_transition:
-                event.data =
-                    *reinterpret_cast<BackgroundSoundTransitionEvent const*>(
-                        data);
-                break;
-            default:
+            auto event = capture(ev, data);
+
+            if(std::holds_alternative<std::monostate>(event.data))
                 return;
-            }
-            queued_events.push_back(event);
+
+            queued_events.push_back(std::move(event));
             return;
         }
 

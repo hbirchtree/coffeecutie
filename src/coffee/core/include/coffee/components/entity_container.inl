@@ -160,17 +160,9 @@ FORCEDINLINE bool subsystem_sort(
 
 } // namespace detail
 
-FORCEDINLINE std::string EntityContainer::schedule_report()
+FORCEDINLINE std::vector<sched::node> EntityContainer::build_schedule_nodes(
+    std::vector<SubsystemBase*> const& sorted)
 {
-    std::vector<SubsystemBase*> sorted;
-    sorted.reserve(subsystems.size());
-    std::transform(
-        std::cbegin(subsystems),
-        std::cend(subsystems),
-        std::back_inserter(sorted),
-        detail::pointer_extract);
-    std::sort(sorted.begin(), sorted.end(), detail::subsystem_sort);
-
     /* Batches index into this, so it must be complete before batching */
     std::vector<sched::node> nodes;
     nodes.reserve(sorted.size());
@@ -194,7 +186,141 @@ FORCEDINLINE std::string EntityContainer::schedule_report()
 
     sched::propagate_main_thread(nodes);
 
-    return sched::format_batches(nodes, sched::build_batches(nodes));
+    return nodes;
+}
+
+FORCEDINLINE std::string EntityContainer::schedule_report()
+{
+    std::vector<SubsystemBase*> sorted;
+    sorted.reserve(subsystems.size());
+    std::transform(
+        std::cbegin(subsystems),
+        std::cend(subsystems),
+        std::back_inserter(sorted),
+        detail::pointer_extract);
+    std::sort(sorted.begin(), sorted.end(), detail::subsystem_sort);
+
+    auto nodes   = build_schedule_nodes(sorted);
+    auto batches = sched::build_batches(nodes);
+
+    return sched::format_batches(nodes, batches) +
+           "  " + std::to_string(worker_count()) + " worker threads\n" +
+           sched::format_windows(
+               nodes, batches, sched::build_windows(nodes, batches));
+}
+
+FORCEDINLINE void EntityContainer::set_worker_count(size_t count)
+{
+    if(worker_count() == count)
+        return;
+
+    /* Destruction joins, so no job outlives the pool it was queued on */
+    workers.reset();
+
+    if(count)
+        workers = std::make_unique<sched::worker_pool>(count);
+
+    scheduled.clear();
+}
+
+FORCEDINLINE void EntityContainer::update_schedule(
+    std::vector<SubsystemBase*> const& sorted)
+{
+    bool dirty = sorted != scheduled;
+
+    if(!dirty)
+        for(size_t index = 0; index < schedule_nodes.size(); index++)
+            if(sched::access_changed(
+                   schedule_nodes.at(index).access, *sorted.at(index)))
+            {
+                dirty = true;
+                break;
+            }
+
+    if(!dirty)
+        return;
+
+    scheduled        = sorted;
+    schedule_nodes   = build_schedule_nodes(sorted);
+    schedule_batches = sched::build_batches(schedule_nodes);
+    schedule_windows = sched::build_windows(schedule_nodes, schedule_batches);
+
+    if(debug_flags & Verbose_Schedule)
+        log(libc::io::io_handles::err,
+            "Coffee::Components",
+            "schedule changed:\n" +
+                sched::format_batches(schedule_nodes, schedule_batches) +
+                sched::format_windows(
+                    schedule_nodes, schedule_batches, schedule_windows),
+            semantic::debug::Severity::Information);
+}
+
+FORCEDINLINE void EntityContainer::exec_batched(
+    ContainerProxy&   proxy,
+    time_point const& time_now,
+    bool              measure,
+    bool              reverse,
+    frame_hook        hook,
+    std::string_view  hook_name)
+{
+    workers->reset();
+    schedule_jobs.assign(schedule_nodes.size(), 0);
+
+    auto run = [&](size_t index) {
+        auto& subsys     = *schedule_nodes.at(index).subsystem;
+        auto  frame_name = typeid(subsys).name() + std::string(hook_name);
+        DProfContext _(frame_name);
+
+        if(!measure)
+        {
+            (subsys.*hook)(proxy, time_now);
+            return;
+        }
+
+        auto begin = clock::now();
+        (subsys.*hook)(proxy, time_now);
+        subsys.frame_time_ns += static_cast<u64>(
+            std::chrono::duration_cast<std::chrono::nanoseconds>(
+                clock::now() - begin)
+                .count());
+    };
+
+    /* Opens at first, closes at last - mirrored when unwinding the frame */
+    auto opens = [reverse](sched::window const& span) {
+        return reverse ? span.last : span.first;
+    };
+    auto closes = [reverse](sched::window const& span) {
+        return reverse ? span.first : span.last;
+    };
+
+    size_t const stages = schedule_batches.size();
+
+    for(size_t step = 0; step < stages; step++)
+    {
+        size_t const current = reverse ? stages - 1u - step : step;
+
+        for(size_t index = 0; index < schedule_windows.size(); index++)
+        {
+            auto const& span = schedule_windows.at(index);
+            if(span.offloaded() && opens(span) == current)
+                schedule_jobs.at(index) =
+                    workers->submit([&run, index]() { run(index); });
+        }
+
+        for(auto member : schedule_batches.at(current).members)
+            if(!schedule_windows.at(member).offloaded())
+                run(member);
+
+        for(size_t index = 0; index < schedule_windows.size(); index++)
+        {
+            auto const& span = schedule_windows.at(index);
+            if(span.offloaded() && closes(span) == current)
+                workers->wait(schedule_jobs.at(index));
+        }
+    }
+
+    /* Nothing escapes the pass it was submitted in */
+    workers->wait_all();
 }
 
 FORCEDINLINE
@@ -205,8 +331,16 @@ void EntityContainer::exec()
     auto const measure_frames =
         sched::report_frame() || (debug_flags & Verbose_Schedule);
 
+    frames_elapsed++;
+
+    if(!workers_configured)
+    {
+        workers_configured = true;
+        set_worker_count(sched::configured_worker_count());
+    }
+
     if(auto target = sched::report_frame();
-       measure_frames && ++frames_elapsed == std::max<u64>(target, 1))
+       measure_frames && frames_elapsed == std::max<u64>(target, 1))
     {
         log(libc::io::io_handles::err,
             "Coffee::Components",
@@ -244,33 +378,52 @@ void EntityContainer::exec()
         };
     };
 
-    for(auto& subsys_ptr : subsystems_)
-    {
-        auto& subsys = *subsys_ptr;
+    /* The first frames run serially: a manifest escape is only visible once
+     * the hook that makes it has run at least once, and the load phase is
+     * where most of them happen */
+    bool const batched =
+        worker_count() > 0 && frames_elapsed > sched::warmup_frames();
 
-        if constexpr(wrap_exceptions)
-            ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:start:", subsys)
-        auto frame_name = typeid(subsys).name() + std::string("::start_frame");
-        DProfContext _(frame_name);
+    if(batched)
+        update_schedule(subsystems_);
 
-        if constexpr(wrap_exceptions)
-            wrap_exception<std::exception>(
-                ex_handler(subsys),
-                &SubsystemBase::start_frame,
-                &subsys,
-                std::ref(proxy),
-                time_now);
-        else if(measure_frames)
+    if(batched)
+        exec_batched(
+            proxy,
+            time_now,
+            measure_frames,
+            false,
+            &SubsystemBase::start_frame,
+            "::start_frame");
+    else
+        for(auto& subsys_ptr : subsystems_)
         {
-            auto begin = clock::now();
-            subsys.start_frame(proxy, time_now);
-            subsys.frame_time_ns += static_cast<u64>(
-                std::chrono::duration_cast<std::chrono::nanoseconds>(
-                    clock::now() - begin)
-                    .count());
-        } else
-            subsys.start_frame(proxy, time_now);
-    }
+            auto& subsys = *subsys_ptr;
+
+            if constexpr(wrap_exceptions)
+                ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:start:", subsys)
+            auto frame_name =
+                typeid(subsys).name() + std::string("::start_frame");
+            DProfContext _(frame_name);
+
+            if constexpr(wrap_exceptions)
+                wrap_exception<std::exception>(
+                    ex_handler(subsys),
+                    &SubsystemBase::start_frame,
+                    &subsys,
+                    std::ref(proxy),
+                    time_now);
+            else if(measure_frames)
+            {
+                auto begin = clock::now();
+                subsys.start_frame(proxy, time_now);
+                subsys.frame_time_ns += static_cast<u64>(
+                    std::chrono::duration_cast<std::chrono::nanoseconds>(
+                        clock::now() - begin)
+                        .count());
+            } else
+                subsys.start_frame(proxy, time_now);
+        }
 
     /* TODO: Put visitors in buckets according to what data they access */
     for(auto const& visitor_ptr : visitors)
@@ -293,33 +446,42 @@ void EntityContainer::exec()
             visitor.dispatch(*this, time_now);
     }
 
-    for(auto it = subsystems_.rbegin(); it != subsystems_.rend(); ++it)
-    {
-        auto& subsys = *(*it);
-
-        if constexpr(wrap_exceptions)
-            ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:end:", subsys)
-        auto frame_name = typeid(subsys).name() + std::string("::end_frame");
-        DProfContext _(frame_name);
-
-        if constexpr(wrap_exceptions)
-            wrap_exception<std::exception>(
-                ex_handler(subsys),
-                &SubsystemBase::end_frame,
-                std::ref(subsys),
-                std::ref(proxy),
-                time_now);
-        else if(measure_frames)
+    if(batched)
+        exec_batched(
+            proxy,
+            time_now,
+            measure_frames,
+            true,
+            &SubsystemBase::end_frame,
+            "::end_frame");
+    else
+        for(auto it = subsystems_.rbegin(); it != subsystems_.rend(); ++it)
         {
-            auto begin = clock::now();
-            subsys.end_frame(proxy, time_now);
-            subsys.frame_time_ns += static_cast<u64>(
-                std::chrono::duration_cast<std::chrono::nanoseconds>(
-                    clock::now() - begin)
-                    .count());
-        } else
-            subsys.end_frame(proxy, time_now);
-    }
+            auto& subsys = *(*it);
+
+            if constexpr(wrap_exceptions)
+                ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:end:", subsys)
+            auto frame_name = typeid(subsys).name() + std::string("::end_frame");
+            DProfContext _(frame_name);
+
+            if constexpr(wrap_exceptions)
+                wrap_exception<std::exception>(
+                    ex_handler(subsys),
+                    &SubsystemBase::end_frame,
+                    std::ref(subsys),
+                    std::ref(proxy),
+                    time_now);
+            else if(measure_frames)
+            {
+                auto begin = clock::now();
+                subsys.end_frame(proxy, time_now);
+                subsys.frame_time_ns += static_cast<u64>(
+                    std::chrono::duration_cast<std::chrono::nanoseconds>(
+                        clock::now() - begin)
+                        .count());
+            } else
+                subsys.end_frame(proxy, time_now);
+        }
 
     for(auto const& callback : frame_end_callbacks)
     {

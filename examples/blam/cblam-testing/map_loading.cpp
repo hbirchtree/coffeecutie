@@ -405,7 +405,7 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     if(auto* sound_bus = e.service<comp_app::EventBus<SoundEvent>>())
     {
         SoundEvent ev = {.type = SoundEvent::clear_all};
-        sound_bus->process(ev, nullptr);
+        sound_bus->inject(ev, nullptr);
     }
 
     // TODO: Decouple this from open_map so we can do MapLoadByName
