@@ -87,6 +87,12 @@ Keys:
   presets[name].extras     — Android --es intent extras (merged with device env)
 
 Flags:
+  --build-type dbg|rel — which Android APK flavour to install (default
+                          $BUILD_TYPE, else dbg). Release APKs come out of
+                          gradle unsigned; they are re-signed with the local
+                          Android debug keystore before install, since adb
+                          rejects unsigned APKs with
+                          INSTALL_PARSE_FAILED_NO_CERTIFICATES.
   --log FILE           — tee all received output (setup + program) to FILE
   --collect-profile DIR — after the run, copy profile.json and *-chrome.json
                           into DIR (docker: from bind-mount/scratch dirs;
@@ -425,10 +431,113 @@ def find_linux_binary(build_root, target_dir, binary):
     return path if os.path.isfile(path) else None
 
 
-def find_android_apk(build_root, target_dir, package):
+def find_android_apk(build_root, target_dir, package, build_type=None):
+    """Locate the APK for `package`."""
     apk_dir = os.path.join(build_root, target_dir, 'packaged', 'android-apk')
     matches = glob.glob(os.path.join(apk_dir, f'{package}*.apk'))
-    return matches[0] if matches else None
+    if not matches:
+        return None
+
+    build_type = build_type or os.environ.get('BUILD_TYPE', 'dbg')
+    want = 'release' if build_type.lower().startswith('rel') else 'debug'
+    # Exact name first (excludes e.g. `<package>-legacy_debug.apk`), then any
+    # APK of the requested flavour, then whatever is newest.
+    exact = os.path.join(apk_dir, f'{package}_{want}.apk')
+    if exact in matches:
+        return exact
+    flavour = [m for m in matches if m.endswith(f'_{want}.apk')]
+    return max(flavour or matches, key=os.path.getmtime)
+
+
+def _android_sdk_dir(build_root, target_dir):
+    """Resolve the Android SDK: env first, then the sdk.dir gradle writes into
+    the generated project's local.properties."""
+    for var in ('ANDROID_SDK_ROOT', 'ANDROID_HOME', 'ANDROID_SDK'):
+        path = os.environ.get(var)
+        if path and os.path.isdir(path):
+            return path
+    for props in glob.glob(os.path.join(
+            build_root, target_dir, 'deploy', 'android-apk', '*', 'local.properties')):
+        try:
+            with open(props) as f:
+                for line in f:
+                    key, _, value = line.partition('=')
+                    if key.strip() == 'sdk.dir' and os.path.isdir(value.strip()):
+                        return value.strip()
+        except OSError:
+            continue
+    return None
+
+
+def _find_apksigner(build_root, target_dir):
+    path = shutil.which('apksigner')
+    if path:
+        return path
+    sdk = _android_sdk_dir(build_root, target_dir)
+    if not sdk:
+        return None
+    # Highest build-tools version available.
+    candidates = glob.glob(os.path.join(sdk, 'build-tools', '*', 'apksigner'))
+    return max(candidates) if candidates else None
+
+
+def _debug_keystore():
+    """Return the standard Android debug keystore, creating it if absent.
+    Returns None if it cannot be produced (no keytool)."""
+    keystore = os.path.expanduser('~/.android/debug.keystore')
+    if os.path.isfile(keystore):
+        return keystore
+    keytool = shutil.which('keytool')
+    if not keytool:
+        return None
+    os.makedirs(os.path.dirname(keystore), exist_ok=True)
+    res = subprocess.run(
+        [keytool, '-genkeypair', '-keystore', keystore, '-storepass', 'android',
+         '-keypass', 'android', '-alias', 'androiddebugkey', '-keyalg', 'RSA',
+         '-keysize', '2048', '-validity', '10000',
+         '-dname', 'CN=Android Debug,O=Android,C=US'],
+        capture_output=True, text=True)
+    return keystore if res.returncode == 0 else None
+
+
+def ensure_signed_apk(apk_path, build_root, target_dir):
+    """Return a signed APK path for `apk_path`."""
+    apksigner = _find_apksigner(build_root, target_dir)
+    if not apksigner:
+        return apk_path
+
+    verify = subprocess.run(
+        [apksigner, 'verify', apk_path], capture_output=True, text=True)
+    if verify.returncode == 0:
+        return apk_path
+
+    keystore = _debug_keystore()
+    if not keystore:
+        print("warning: APK is unsigned and no debug keystore could be created "
+              "(keytool missing) — install will likely fail")
+        return apk_path
+
+    # Kept in a side directory so it is never picked up by find_android_apk.
+    signed_dir = os.path.join(os.path.dirname(apk_path), '.signed')
+    os.makedirs(signed_dir, exist_ok=True)
+    signed = os.path.join(signed_dir, os.path.basename(apk_path))
+    # Re-sign whenever the source is newer than a previously signed copy.
+    if not (os.path.isfile(signed)
+            and os.path.getmtime(signed) >= os.path.getmtime(apk_path)):
+        shutil.copy2(apk_path, signed)
+        res = subprocess.run(
+            [apksigner, 'sign', '--ks', keystore, '--ks-pass', 'pass:android',
+             '--key-pass', 'pass:android', '--ks-key-alias', 'androiddebugkey',
+             signed],
+            capture_output=True, text=True)
+        if res.returncode != 0:
+            print(f"warning: apksigner failed on {apk_path}:\n{res.stderr.strip()}")
+            if os.path.isfile(signed):
+                os.remove(signed)
+            return apk_path
+    print(f"note: {os.path.basename(apk_path)} was unsigned — "
+          f"installing debug-signed copy {os.path.basename(signed)}")
+    return signed
 
 
 def find_web_bundle(build_root, target_dir):
@@ -760,7 +869,7 @@ def run_docker(device_name, device, preset_name, preset, extra_args, script_dir,
     sys.exit(returncode)
 
 
-def run_android(device_name, device, preset_name, preset, extra_args, build_root, target_dir, dry_run=False, log_file=None, collect_profile=None):
+def run_android(device_name, device, preset_name, preset, extra_args, build_root, target_dir, dry_run=False, log_file=None, collect_profile=None, build_type=None):
     hostname = device.get('hostname') or (None if dry_run else pick_adb_device())
     if dry_run and not hostname:
         hostname = '<adb-device>'
@@ -768,7 +877,7 @@ def run_android(device_name, device, preset_name, preset, extra_args, build_root
     if not package:
         sys.exit(f"Error: preset '{preset_name}' is missing required 'package' for Android target")
 
-    apk_path = find_android_apk(build_root, target_dir, package)
+    apk_path = find_android_apk(build_root, target_dir, package, build_type)
     if not apk_path and not dry_run:
         apk_dir = f"multi_build/{target_dir}/packaged/android-apk/"
         sys.exit(
@@ -777,6 +886,8 @@ def run_android(device_name, device, preset_name, preset, extra_args, build_root
         )
     if not apk_path:
         apk_path = os.path.join(build_root, target_dir, 'packaged', 'android-apk', f'{package}.apk')
+    else:
+        apk_path = ensure_signed_apk(apk_path, build_root, target_dir)
 
     if dry_run:
         component = f'<launcher-activity-of/{package}>'
@@ -1702,6 +1813,9 @@ def main():
                         help='Write all received output (setup + program) to FILE')
     parser.add_argument('--collect-profile', metavar='DIR', default=None,
                         help='After the run, copy profile.json and *-chrome.json into DIR')
+    parser.add_argument('--build-type', metavar='dbg|rel', default=None,
+                        help='Which Android APK flavour to install '
+                             '(default: $BUILD_TYPE, else dbg)')
     parser.add_argument('device', nargs='?', help='Device name from .targets.json')
     parser.add_argument('preset', nargs='?', help='Preset name from .targets.json')
     parser.add_argument('extra_args', nargs='*', help='Extra arguments passed to the binary')
@@ -1746,7 +1860,7 @@ def main():
     if dev_type == 'docker':
         run_docker(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile)
     elif dev_type == 'android':
-        run_android(args.device, device, args.preset, preset, args.extra_args, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile)
+        run_android(args.device, device, args.preset, preset, args.extra_args, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile, build_type=args.build_type)
     elif dev_type == 'web':
         run_web(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile)
     elif dev_type == 'dolphin':
