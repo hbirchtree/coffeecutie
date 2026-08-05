@@ -90,9 +90,10 @@ struct model_tracker_t
     u16  draw;
     u16  instance;
     bool enabled{false};
+    u32 epoch{0};
 };
 
-static_assert(sizeof(model_tracker_t) == 8);
+static_assert(sizeof(model_tracker_t) == 12);
 
 struct MeshTrackingData
 {

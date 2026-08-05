@@ -348,6 +348,7 @@ struct DrawListBuilder
             model_cache->tick_animations(t);
         }
 
+        m_epoch++;
         generate_draws(p);
 
         Vecf3 sort_cam{0};
@@ -425,6 +426,14 @@ struct DrawListBuilder
     std::array<Pass, Pass_Count> const& model_submit() const
     {
         return m_model_sets[m_submit];
+    }
+
+    u32 m_epoch{0};
+
+    /*! Whether a tracker's indices address the set currently being built */
+    bool followable(model_tracker_t const& id) const
+    {
+        return id.enabled && id.epoch == m_epoch;
     }
 
     /*! Bone matrices for the frame, uploaded by the renderer */
@@ -553,6 +562,7 @@ struct DrawListBuilder
                     wf.insert_sortable(model_draw.draw.data.front(), center);
             } else
                 track.model_id = wf.insert_draw(model_draw.draw.data.front());
+            track.model_id.epoch = m_epoch;
         }
         Coffee::Profiler::PopContext();
 
@@ -611,10 +621,12 @@ struct DrawListBuilder
             MeshTrackingData const& track =
                 ref.template get<MeshTrackingData>();
 
-            if(!track.model_id.enabled)
+            if(!followable(track.model_id))
                 continue;
 
             Pass&              pass = model_build()[sm_draw.current_pass];
+            if(track.model_id.bucket >= pass.draws.size())
+                continue;
             draw_data_t const& draw =
                 pass.draws[track.model_id.bucket].at(track.model_id.draw);
             auto instance_id = draw.instances.offset + track.model_id.instance;
@@ -664,9 +676,13 @@ struct DrawListBuilder
             SubModel const&   smodel = ref.template get<SubModel>();
             DrawState&        sm_draw = ref.template get<DrawState>();
             MeshTrackingData& track  = ref.template get<MeshTrackingData>();
+            if(!followable(track.model_id))
+                continue;
             Pass&             pass   = model_build()[sm_draw.current_pass];
+            if(track.model_id.bucket >= pass.draws.size())
+                continue;
             auto&             bucket = pass.draws[track.model_id.bucket];
-            if(bucket.empty())
+            if(bucket.empty() || track.model_id.draw >= bucket.size())
                 continue;
             draw_data_t const& draw = bucket.at(track.model_id.draw);
             auto instance_id = draw.instances.offset + track.model_id.instance;
