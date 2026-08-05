@@ -244,9 +244,8 @@ void apply_pose(
         {
             /* Exponential moving average via slerp: q = slerp(prev, q_src, alpha).
              */
-            static std::unordered_map<BoneRetargetEntry const*, Quatf>
-                        smoothed_state;
-            constexpr f32 kAlpha = 0.35f;
+            static std::unordered_map<BoneRetargetEntry const*, Quatf> smoothed_state;
+            constexpr f32 kAlpha = 0.1f;
 
             auto [it, inserted] = smoothed_state.try_emplace(entry, q_src);
             if(!inserted)

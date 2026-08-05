@@ -27,6 +27,7 @@ target_include_directories(BlamPoseDemo PRIVATE ${CBLAM_TESTING_DIR})
 target_compile_definitions(BlamPoseDemo
     PUBLIC
     -DBLAM_HALO_VERSION=${BLAM_HALO_VERSION}
+    -DDISABLE_LOADING_SCREEN=1
 )
 
 set_target_properties(

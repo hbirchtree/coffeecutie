@@ -2800,9 +2800,11 @@ void alloc_renderer(EntityContainer& container)
         std::ref(container.subsystem_cast<BSPCache<halo_version>>()));
 
     container.register_subsystem_inplace<ScreenClear>();
+#ifndef DISABLE_LOADING_SCREEN
     // TODO: Find out why this fails on OpenGL ES 2.0 emulation
     if(api.api_version() != std::make_tuple<u32, u32>(2, 0))
         container.register_subsystem_inplace<LoadingScreen>();
+#endif
 
     auto& game_bus       = container.subsystem_cast<GameEventBus>();
     renderer.m_cluster_events =
