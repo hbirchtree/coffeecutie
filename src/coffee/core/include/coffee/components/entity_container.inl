@@ -1,5 +1,6 @@
 #pragma once
 
+#include "types.h"
 #include <coffee/components/entity_container.h>
 #include <coffee/components/entity_reference.h>
 #include <coffee/components/scheduling.h>
@@ -40,112 +41,6 @@ namespace detail {
 
 using node_id = size_t;
 
-extern void expand_neighbor_matrix(
-    std::vector<bool>& matrix, size_t size, node_id current_node);
-
-FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
-    std::vector<std::unique_ptr<EntityVisitorBase>> const& visitors)
-{
-    std::map<type_hash, std::vector<node_id>> buckets;
-
-    /* Add visitors to buckets */
-    node_id idx = 0;
-    for(auto const& visitor : visitors)
-    {
-        for(auto const& component : visitor->components)
-            buckets[component].push_back(idx);
-
-        idx++;
-    }
-
-    auto              neigh_size = visitors.size();
-    std::vector<bool> neighbor_matrix;
-    neighbor_matrix.resize(visitors.size() * visitors.size());
-
-    /* Create a neighbor matrix for the nodes */
-    for(auto const& bucket : buckets)
-    {
-        /* TODO: Handle visitors with exclusive access */
-        if(bucket.second.empty())
-            continue;
-
-        if(bucket.second.size() < 2)
-        {
-            auto node_idx = bucket.second.at(0);
-            neighbor_matrix.at(neigh_size * node_idx + node_idx) = true;
-            continue;
-        }
-
-        auto start = bucket.second.begin();
-        auto it1   = start;
-        auto it2   = start + 1;
-
-        for(; it2 != bucket.second.end(); it1++, it2++)
-        {
-            auto x = C_FCAST<size_t>(it1 - start);
-            auto y = C_FCAST<size_t>(it2 - start);
-
-            bool val = true;
-
-            auto coord1 = neigh_size * y + x;
-            auto coord2 = neigh_size * x + y;
-
-            neighbor_matrix.at(coord1) = neighbor_matrix.at(coord1) | val;
-            neighbor_matrix.at(coord2) = neighbor_matrix.at(coord2) | val;
-        }
-    }
-
-    /* Connect all nodes that run on main thread, grouping them together */
-    {
-        auto const is_mainthread
-            = [](std::unique_ptr<EntityVisitorBase> const& p) {
-                  return (p->flags & VisitorFlags::MainThread)
-                         == VisitorFlags::MainThread;
-              };
-
-        auto start = visitors.begin();
-
-        auto it1 = std::find_if(start, visitors.end(), is_mainthread);
-
-        while(it1 != visitors.end())
-        {
-            auto new_start = it1 + 1;
-            auto it2 = std::find_if(new_start, visitors.end(), is_mainthread);
-
-            if constexpr(compile_info::debug_mode)
-                if(it1 == it2)
-                    Throw(undefined_behavior("incorrect grouping"));
-
-            if(it2 == visitors.end())
-                break;
-
-            auto x = C_FCAST<size_t>(it1 - start);
-            auto y = C_FCAST<size_t>(it2 - start);
-
-            neighbor_matrix.at(neigh_size * y + x) = true;
-            neighbor_matrix.at(neigh_size * x + y) = true;
-
-            it1 = it2;
-        }
-    }
-
-    /* Expand neighbor matrix completely */
-    for(auto i : stl_types::Range<>(neigh_size))
-        expand_neighbor_matrix(neighbor_matrix, neigh_size, i);
-
-    /* De-duplicate neighbor matrix rows to create task queues */
-    std::set<std::vector<bool>> unique_rows;
-    for(auto i : stl_types::Range<>(neigh_size))
-    {
-        unique_rows.insert(std::vector<bool>(
-            neighbor_matrix.begin() + static_cast<ptroff>(neigh_size * i),
-            neighbor_matrix.begin()
-                + static_cast<ptroff>(neigh_size * (i + 1))));
-    }
-
-    return unique_rows;
-}
-
 FORCEDINLINE SubsystemBase* pointer_extract(
     std::pair<const type_hash, std::unique_ptr<SubsystemBase>> const& sub)
 {
@@ -177,11 +72,12 @@ FORCEDINLINE std::vector<sched::node> EntityContainer::build_schedule_nodes(
                 break;
             }
 
-        nodes.push_back(
-            {subsys,
-             sched::access_of(self, *subsys),
-             ENT_TYPE_NAME(*subsys),
-             subsys->frame_time_ns});
+        nodes.push_back({
+            subsys,
+            sched::access_of(self, *subsys),
+            ENT_TYPE_NAME(*subsys),
+            subsys->frame_time_ns,
+        });
     }
 
     sched::propagate_main_thread(nodes);
@@ -366,6 +262,12 @@ void EntityContainer::exec()
         std::back_inserter(subsystems_),
         detail::pointer_extract);
 
+    std::erase_if(
+        subsystems_,
+        [](SubsystemBase* s) {
+            return s->no_start_hook && s->no_end_hook;
+        });
+
     std::sort(subsystems_.begin(), subsystems_.end(), detail::subsystem_sort);
 
     auto ex_handler = [](auto const& source) {
@@ -399,6 +301,8 @@ void EntityContainer::exec()
         for(auto& subsys_ptr : subsystems_)
         {
             auto& subsys = *subsys_ptr;
+            if(subsys.no_start_hook)
+                continue;
 
             if constexpr(wrap_exceptions)
                 ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:start:", subsys)
@@ -458,6 +362,8 @@ void EntityContainer::exec()
         for(auto it = subsystems_.rbegin(); it != subsystems_.rend(); ++it)
         {
             auto& subsys = *(*it);
+            if(subsys.no_end_hook)
+                continue;
 
             if constexpr(wrap_exceptions)
                 ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:end:", subsys)
@@ -489,11 +395,6 @@ void EntityContainer::exec()
             callback();
     }
     advance_frame();
-}
-
-FORCEDINLINE EntityContainer::visitor_graph EntityContainer::create_task_graph()
-{
-    return detail::create_visitor_graph(visitors);
 }
 
 template<typename ComponentType>

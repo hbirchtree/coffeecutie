@@ -544,11 +544,6 @@ struct EntityContainer : stl_types::non_copy
         frame_end_callbacks.at(i) = {};
     }
 
-    /* For optimizations */
-    using visitor_graph = std::set<std::vector<bool>>;
-
-    visitor_graph create_task_graph();
-
     std::string schedule_report();
 
     void   set_worker_count(size_t count);

@@ -2250,7 +2250,9 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
 {
     auto& api         = e.subsystem<gfx::system>();
     auto& resources   = e.subsystem<BlamResources>();
-    auto& postprocess = e.subsystem<PostProcessParameters>();
+
+    if(api.default_rendertarget() == resources.offscreen)
+        return;
 
     auto _ = api.debug().scope("ScreenClear::end_restricted");
     auto render_timer = api.gpu_timer("ScreenClear Full screen render");
@@ -2258,9 +2260,7 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
     if(!quad_program)
         load_resources(api, e.subsystem<BlamResources>());
 
-    if(api.default_rendertarget() == resources.offscreen)
-        return;
-
+    auto& postprocess = e.subsystem<PostProcessParameters>();
     f32 display_scale = postprocess.scale;
 
     Matf4 transform = glm::scale(

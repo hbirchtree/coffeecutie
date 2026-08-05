@@ -51,8 +51,9 @@ using readable_services_of = typename readable_services_of_s<T>::type;
 
 template<class T>
 requires(!is_start_restricted_subsystem<T>)
-void start_frame(T&, EntityContainer&, time_point const&)
+void start_frame(T& subsys, EntityContainer&, time_point const&)
 {
+    subsys.no_start_hook = true;
 }
 
 template<class T>
@@ -66,8 +67,9 @@ void start_frame(T& subsys, EntityContainer& container, time_point const& t)
 
 template<class T>
 requires(!is_end_restricted_subsystem<T>)
-void end_frame(T&, EntityContainer&, time_point const&)
+void end_frame(T& subsys, EntityContainer&, time_point const&)
 {
+    subsys.no_end_hook = true;
 }
 
 template<class T>
