@@ -30,6 +30,10 @@
     #webcam_feed, #webcam_overlay { width: 160px; height: 120px; display: block; }
     #webcam_overlay { position: absolute; top: 0; left: 0; }
     #pose_status { position: fixed; top: 8px; left: 8px; z-index: 10; font-size: 12px; }
+    #camera_select {
+      position: fixed; top: 28px; left: 8px; z-index: 10; font-size: 12px;
+      max-width: 240px; background: #222; color: white; border: 1px solid #555;
+    }
     #animations > button {
 
     }
@@ -46,6 +50,7 @@
 </head>
 <body>
   <div id="pose_status">waiting for webcam…</div>
+  <select id="camera_select" style="display:none;" title="Camera source"></select>
   <div id="animations" style="position: fixed; top: 40%; display: flex; flex-direction: column;">
       <button onclick="window.blamLoopAnimation('stand pistol idle')">🧍‍♂️</button>
       <button onclick="window.blamLoopAnimation('crouch unarmed idle')">🪑</button>
@@ -123,6 +128,8 @@
   <script src="vendor/kalidokit/kalidokit.umd.js"></script>
   <script type="text/javascript">
     const poseStatus = document.getElementById('pose_status');
+    const cameraSelect = document.getElementById('camera_select');
+    const video = document.getElementById('webcam_feed');
 
     /* three.js's Quaternion.setFromEuler for order 'XYZ' — Kalidokit's
      * Pose.solve() returns each bone as an {x,y,z} Euler in that order
@@ -162,6 +169,78 @@
     let calibrationOffsets = {};
     let calibrateRequested = false;
     window.calibratePose = () => { calibrateRequested = true; };
+
+    const kCameraStorageKey = 'pose_demo_camera';
+    let currentStream = null;
+    let cameraSwitching = false;
+
+    function stopStream(stream) {
+      if (!stream) return;
+      for (const track of stream.getTracks()) track.stop();
+    }
+
+    async function openCamera(deviceId) {
+      cameraSwitching = true;
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: deviceId
+            ? { deviceId: { exact: deviceId }, width: 640, height: 360 }
+            : { width: 640, height: 360 },
+          audio: false,
+        });
+        stopStream(currentStream);
+        currentStream = stream;
+        video.srcObject = stream;
+        if (video.readyState < 1) {
+          await new Promise((resolve) => { video.onloadedmetadata = resolve; });
+        }
+        await video.play().catch(
+          (e) => console.error('[pose_demo] video.play() rejected: ' + e.message));
+        console.log(
+          `[pose_demo] camera ${video.videoWidth}x${video.videoHeight} ` +
+          `readyState=${video.readyState} paused=${video.paused}`,
+        );
+      } finally {
+        cameraSwitching = false;
+      }
+    }
+
+    async function populateCameraList() {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const cameras = devices.filter((d) => d.kind === 'videoinput');
+      const active = currentStream &&
+        currentStream.getVideoTracks()[0] &&
+        currentStream.getVideoTracks()[0].getSettings().deviceId;
+
+      cameraSelect.textContent = '';
+      cameras.forEach((device, i) => {
+        const option = document.createElement('option');
+        option.value = device.deviceId;
+        option.textContent = device.label || `Camera ${i + 1}`;
+        cameraSelect.appendChild(option);
+      });
+      if (active) cameraSelect.value = active;
+      cameraSelect.style.display = cameras.length > 0 ? '' : 'none';
+    }
+
+    cameraSelect.addEventListener('change', async () => {
+      const deviceId = cameraSelect.value;
+      setPoseStatus('switching camera…');
+      try {
+        await openCamera(deviceId);
+        localStorage.setItem(kCameraStorageKey, deviceId);
+        setPoseStatus('tracking');
+      } catch (e) {
+        console.error('[pose_demo] camera switch failed: ' + (e.stack || e.message || e));
+        setPoseStatus('camera switch failed: ' + e.message);
+      }
+    });
+
+    /* Fires on plug/unplug; also refreshes labels once permission lands. */
+    if (navigator.mediaDevices.addEventListener) {
+      navigator.mediaDevices.addEventListener(
+        'devicechange', () => populateCameraList().catch(() => {}));
+    }
 
     let poseFrameCount = 0;
     function sendPose(kalidokitPose) {
@@ -246,15 +325,17 @@
       await waitForAppLoaded();
       setPoseStatus('app loaded, requesting webcam…');
 
-      const video = document.getElementById('webcam_feed');
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 360 }, audio: false });
-      setPoseStatus('webcam stream acquired, waiting for metadata…');
-      video.srcObject = stream;
-      await new Promise((resolve) => { video.onloadedmetadata = resolve; });
-      await video.play().catch((e) => console.error('[pose_demo] video.play() rejected: ' + e.message));
-      console.log(
-        `[pose_demo] video ${video.videoWidth}x${video.videoHeight} readyState=${video.readyState} paused=${video.paused}`,
-      );
+      const saved = localStorage.getItem(kCameraStorageKey);
+      try {
+        await openCamera(saved || undefined);
+      } catch (e) {
+        if (!saved) throw e;
+        console.warn('[pose_demo] saved camera unavailable (' + e.name + '), using default');
+        localStorage.removeItem(kCameraStorageKey);
+        await openCamera(undefined);
+      }
+      setPoseStatus('webcam stream acquired, enumerating cameras…');
+      await populateCameraList();
       setPoseStatus('video metadata ready, loading MediaPipe Pose…');
 
       const pose = new Pose({ locateFile: (file) => `vendor/pose/${file}` });
@@ -299,8 +380,10 @@
       let sendFrameCount = 0;
       const frameLoop = async () => {
         try {
-          await pose.send({ image: video });
-          if (sendFrameCount++ === 0) console.log('[pose_demo] first pose.send() resolved');
+          if (!cameraSwitching && video.readyState >= 2 && video.videoWidth > 0) {
+            await pose.send({ image: video });
+            if (sendFrameCount++ === 0) console.log('[pose_demo] first pose.send() resolved');
+          }
         } catch (e) {
           console.error('[pose_demo] pose.send() threw: ' + (e.stack || e.message || e));
         }
