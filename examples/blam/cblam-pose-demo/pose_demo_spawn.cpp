@@ -2,6 +2,7 @@
 
 #include "components.h"
 #include "materials.h"
+#include "pose_config.h"
 
 #include <blam/volta/blam_antr.h>
 #include <blam/volta/blam_scenario.h>
@@ -14,12 +15,9 @@
 
 generation_idx_t g_pose_demo_biped_model{};
 u64              g_pose_demo_biped_entity{};
+Matf4            g_pose_demo_biped_base_transform{1.f};
 
-generation_idx_t g_pose_demo_pistol_model{};
-u64              g_pose_demo_pistol_entity{};
-u16              g_pose_demo_hand_node_idx{};
-Matf4            g_pose_demo_hand_marker_local{1.f};
-bool             g_pose_demo_pistol_attached{false};
+std::vector<SpawnedAttachment> g_pose_demo_attachments;
 
 f32 g_pose_demo_mic_volume{0.f};
 
@@ -155,25 +153,10 @@ void spawn_static_biped(
     auto                 magic = container.magic;
     blam::tag_index_view index(container);
 
-#if defined(COFFEE_EMSCRIPTEN)
-    auto biped = emscripten::args::query_params()["biped"];
-    if(biped.empty())
-        biped = "characters\\cyborg_mp\\cyborg_mp";
-    auto weapon = emscripten::args::query_params()["weapon"];
-    if(weapon.empty())
-        weapon = "weapons\\pistol\\pistol";
-    auto attachment = emscripten::args::query_params()["marker"];
-    if(attachment.empty())
-        attachment = "left hand";
-    auto start_anim = emscripten::args::query_params()["start_anim"];
-    if(start_anim.empty())
-        start_anim = "stand pistol idle";
-#else
-    auto biped      = "characters\\cyborg_mp\\cyborg_mp";
-    auto weapon     = "weapons\\pistol\\pistol";
-    auto attachment = "left hand";
-    auto start_anim = "stand pistol idle";
-#endif
+    /* All of these came from query params before; load_pose_config() now folds
+     * the query params over pose_config.json, so the same URLs still work. */
+    auto const& biped      = g_pose_config.biped_tag;
+    auto const& start_anim = g_pose_config.start_animation;
 
     auto it = index.find(biped);
     if(it == index.end())
@@ -191,10 +174,18 @@ void spawn_static_biped(
     }
     blam::scn::object const* instance_obj = obj_opt.value();
 
-    bool found_hand_marker = false;
+    /* Marker placement per configured attachment, filled by the marker scan
+     * below; index matches g_pose_config.attachments. */
+    struct MarkerHit
+    {
+        bool  found{false};
+        u16   node_idx{0};
+        Matf4 local{1.f};
+    };
+    std::vector<MarkerHit> marker_hits(g_pose_config.attachments.size());
 
-    /* Diagnostic bone dump — verify real bone names before trusting
-     * pose_retarget.h's placeholder table (main.cpp:80-91 pattern). */
+    /* Diagnostic bone dump — verify real bone names before trusting the
+     * retarget table in pose_config.json (main.cpp:80-91 pattern). */
     {
         auto model_hdr_it = index.find(instance_obj[0].model);
         if(model_hdr_it != index.end())
@@ -284,22 +275,30 @@ void spawn_static_biped(
                                     inst.position.y,
                                     inst.position.z);
 
-                                if(marker.name.str() == attachment &&
-                                   !found_hand_marker)
+                                /* First instance of each configured marker
+                                 * wins, matching the previous single-marker
+                                 * behaviour. */
+                                for(size_t a = 0;
+                                    a < g_pose_config.attachments.size();
+                                    ++a)
                                 {
-                                    g_pose_demo_hand_node_idx =
-                                        static_cast<u16>(inst.node_idx);
+                                    if(marker_hits[a].found ||
+                                       marker.name.str() !=
+                                           g_pose_config.attachments[a].marker)
+                                        continue;
                                     Quatf marker_rot(
                                         inst.rotation.w,
                                         inst.rotation.x,
                                         inst.rotation.y,
                                         inst.rotation.z);
-                                    g_pose_demo_hand_marker_local =
+                                    marker_hits[a].node_idx =
+                                        static_cast<u16>(inst.node_idx);
+                                    marker_hits[a].local =
                                         glm::translate(
                                             Matf4(1), inst.position) *
                                         glm::mat4_cast(
                                             glm::conjugate(marker_rot));
-                                    found_hand_marker = true;
+                                    marker_hits[a].found = true;
                                 }
                             }
                         }
@@ -417,6 +416,7 @@ void spawn_static_biped(
     model.model         = mesh_data.models.at(0);
     model.origin_object = &biped_tag;
     model.initialize(&s_synth_spawn);
+    g_pose_demo_biped_base_transform = model.transform;
     depth.position = model.position;
 
     g_pose_demo_biped_entity = parent_.id();
@@ -465,21 +465,29 @@ void spawn_static_biped(
         parts_skipped,
         parent_.get<Visibility>().visible);
 
-    if(found_hand_marker)
+    g_pose_demo_attachments.clear();
+    for(size_t a = 0; a < g_pose_config.attachments.size(); ++a)
     {
+        auto const& want = g_pose_config.attachments[a];
+        if(!marker_hits[a].found)
+        {
+            cWarning(
+                "pose_demo: marker '{}' not found on '{}', skipping '{}' "
+                "attach",
+                want.marker,
+                biped,
+                want.tag);
+            continue;
+        }
+
+        SpawnedAttachment attached;
+        attached.node_idx     = marker_hits[a].node_idx;
+        attached.marker_local = marker_hits[a].local;
         spawn_attached_weapon(
-            e,
-            container,
-            weapon,
-            g_pose_demo_pistol_model,
-            g_pose_demo_pistol_entity);
-        g_pose_demo_pistol_attached = g_pose_demo_pistol_model.valid();
-    } else
-    {
-        cWarning(
-            "pose_demo: '{}' marker not found, skipping '{}' attach",
-            attachment,
-            weapon);
+            e, container, want.tag, attached.model, attached.entity);
+        if(!attached.model.valid())
+            continue;
+        g_pose_demo_attachments.push_back(attached);
     }
 }
 
@@ -492,17 +500,13 @@ void setup_fixed_camera(compo::EntityContainer& e)
     info.player_idx = 0;
     info.seat_idx   = 0;
 
-    f32 height = 0.6f;
-#if defined(COFFEE_EMSCRIPTEN)
-    if(auto h = emscripten::args::query_params()["height"]; !h.empty())
-        height = std::stof(h);
-#endif
+    auto const& cam_config = g_pose_config.camera;
 
-    auto& cam               = ref.get<PlayerCamera>();
-    cam.keyboard.enabled    = true;
-    cam.camera.position    = Vecf3(.4f, -0.03f, height);
-    cam.camera.aspect      = 1.6f;
-    cam.camera.fieldOfView = 70.f;
+    auto& cam              = ref.get<PlayerCamera>();
+    cam.keyboard.enabled   = cam_config.keyboard;
+    cam.camera.position    = cam_config.position;
+    cam.camera.aspect      = cam_config.aspect;
+    cam.camera.fieldOfView = cam_config.field_of_view;
 
     cDebug(
         "pose_demo: fixed camera at {} looking toward origin",

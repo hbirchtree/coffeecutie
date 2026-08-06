@@ -31,6 +31,12 @@ std::optional<u32> find_animation_by_name(
  * step in place of item.anim_idx. Set by pose_demo_main.cpp's
  * "play_animation" (one-shot, plays through once then falls back to the
  * loop) and "loop_animation" (replaces the base loop) dummy-plug events. */
+/* Smoothed root translation from the solved Hips position, in model space.
+ * Written by apply_pose (at pose-event rate, which is where the EMA belongs)
+ * and folded into the biped's transform by the per-frame update in
+ * pose_demo_main.cpp, alongside the microphone offset. */
+extern Vecf3 g_pose_demo_root_offset;
+
 extern std::optional<u32>                    g_pose_demo_oneshot_anim_idx;
 extern std::chrono::steady_clock::time_point g_pose_demo_oneshot_start;
 extern std::optional<u32>                    g_pose_demo_loop_anim_idx;

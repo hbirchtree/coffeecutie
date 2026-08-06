@@ -6,6 +6,7 @@
 #include "networking.h"
 #include "physics.h"
 #include "pose_apply.h"
+#include "pose_config.h"
 #include "pose_demo_spawn.h"
 #include "rendering.h"
 #include "resource_creation.h"
@@ -14,6 +15,7 @@
 #include "ui_caching.h"
 
 #include <cxxopts.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <peripherals/stl/magic_enum.hpp>
 
 #include <coffee/comp_app/app_wrap.h>
@@ -42,6 +44,10 @@ i32 pose_demo_main()
         options.add_options("Graphics")(
             "gfx-level",
             "Override graphics API, eg. core:4:6, es:2:0",
+            cxxopts::value<std::string>());
+        options.add_options("Demo")(
+            "config",
+            "Path to a configs/*.json file",
             cxxopts::value<std::string>());
         if constexpr(!compile_info::supports_command_line)
         {
@@ -291,20 +297,34 @@ i32 pose_demo_main()
 
             using namespace ::platform::url::constructors;
 
+            /* Under emscripten the shell's --pre-js staged the JSON at
+             * /pose_config.json before main(); natively it is read relative to
+             * the working directory, overridable with --config. */
+            g_pose_config = load_pose_config(
+                compile_info::platform::is_emscripten
+                    ? "/pose_config.json"
+                : arguments.count("config")
+                    ? arguments["config"].as<std::string>()
+                    : "configs/cyborg.json");
+
+            /* Command line still wins on desktop, where the map is positional;
+             * on the web the query param already folded into the config. */
+            std::string map_name = g_pose_config.map_file;
+            if(compile_info::supports_command_line &&
+               arguments.unmatched().size() >=
+                   (compile_info::implicit_resource_dir ? 1u : 2u))
+                map_name = arguments.unmatched().at(
+                    compile_info::implicit_resource_dir ? 0 : 1);
+
             Url map_filename = MkUrl(
-                compile_info::supports_command_line
-                    ? (arguments.unmatched().size() >=
-                               (compile_info::implicit_resource_dir ? 1 : 2)
-                           ? arguments.unmatched().at(
-                                 compile_info::implicit_resource_dir ? 0 : 1)
-                           : "bloodgulch.map")
-                : arguments.count("map") ? arguments["map"].as<std::string>()
-                                         : "bloodgulch.map",
+                map_name,
                 compile_info::supports_command_line ? RSCA::SystemFile
                                                     : RSCA::AssetFile);
             Url bitmap_filename =
-                (map_filename.path().dirname() / "bitmaps.map")
-                    .url(map_filename.flags);
+                g_pose_config.bitmaps_file.empty()
+                    ? (map_filename.path().dirname() / "bitmaps.map")
+                          .url(map_filename.flags)
+                    : MkUrl(g_pose_config.bitmaps_file, map_filename.flags);
 
             using result_type = blam::map_container<halo_version>::result_type;
             using AsyncResource = comp_app::FileMapper::Resource;
@@ -421,8 +441,9 @@ i32 pose_demo_main()
            duration const&) {
             for(auto entity : e.select<PlayerCamera>())
             {
-                auto& cam = entity.get<PlayerCamera>();
-                cam.camera.zVals = {100.f, 0.001f};
+                auto& cam        = entity.get<PlayerCamera>();
+                cam.camera.zVals = {
+                    g_pose_config.camera.z_far, g_pose_config.camera.z_near};
 
                 static const Matf4 bsp_basis{
                     {0, 0, 1, 0}, {1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 0, 1}};
@@ -437,29 +458,64 @@ i32 pose_demo_main()
                 cam.rotation     = glm::mat3_cast(cam.camera.rotation);
             }
 
-            if(g_pose_demo_pistol_attached)
+            /* Whole-model offset: microphone level and root motion sum into
+             * one translation, rebuilt from the spawn transform each frame so
+             * it cannot accumulate. Runs before the attachment loop, which
+             * derives from this transform. */
             {
-                auto* biped_model  = e.get<Model>(g_pose_demo_biped_entity);
-                auto* pistol_model = e.get<Model>(g_pose_demo_pistol_entity);
-                if(biped_model && pistol_model)
-                {
-                    auto& model_cache =
-                        e.subsystem_cast<ModelCache<halo_version>>();
-                    auto& biped_item = model_cache.get(g_pose_demo_biped_model);
-                    if(g_pose_demo_hand_node_idx <
-                           biped_item.bone_matrices.size() &&
-                       g_pose_demo_hand_node_idx < biped_item.inv_bind.size())
+                auto const& mic_translation =
+                    g_pose_config.microphone.model_translation;
+                bool const root_enabled = g_pose_config.root_motion.enabled;
+
+                if(mic_translation.enabled || root_enabled)
+                    if(auto* biped_model =
+                           e.get<Model>(g_pose_demo_biped_entity))
                     {
-                        Matf4 bind_world_hand = glm::inverse(
-                            biped_item.inv_bind[g_pose_demo_hand_node_idx]);
-                        Matf4 world_hand =
-                            biped_item
-                                .bone_matrices[g_pose_demo_hand_node_idx] *
-                            bind_world_hand;
-                        pistol_model->transform = biped_model->transform *
-                                                  world_hand *
-                                                  g_pose_demo_hand_marker_local;
+                        Vecf3 offset(0.f);
+
+                        if(mic_translation.enabled)
+                        {
+                            Vecf3 mic_offset = mic_translation.vector *
+                                               g_pose_demo_mic_volume;
+                            if(f32 length = glm::length(mic_offset);
+                               length > mic_translation.clamp && length > 0.f)
+                                mic_offset *= mic_translation.clamp / length;
+                            offset += mic_offset;
+                        }
+
+                        if(root_enabled)
+                            offset += g_pose_demo_root_offset;
+
+                        biped_model->transform =
+                            glm::translate(Matf4(1), offset) *
+                            g_pose_demo_biped_base_transform;
                     }
+            }
+
+            if(!g_pose_demo_attachments.empty())
+            {
+                auto* biped_model = e.get<Model>(g_pose_demo_biped_entity);
+                auto& model_cache =
+                    e.subsystem_cast<ModelCache<halo_version>>();
+                auto& biped_item = model_cache.get(g_pose_demo_biped_model);
+
+                for(auto const& attached : g_pose_demo_attachments)
+                {
+                    auto* attached_model = e.get<Model>(attached.entity);
+                    if(!biped_model || !attached_model)
+                        continue;
+                    if(attached.node_idx >= biped_item.bone_matrices.size() ||
+                       attached.node_idx >= biped_item.inv_bind.size())
+                        continue;
+
+                    Matf4 bind_world_node =
+                        glm::inverse(biped_item.inv_bind[attached.node_idx]);
+                    Matf4 world_node =
+                        biped_item.bone_matrices[attached.node_idx] *
+                        bind_world_node;
+                    attached_model->transform = biped_model->transform *
+                                                world_node *
+                                                attached.marker_local;
                 }
             }
         },

@@ -1,0 +1,76 @@
+{
+  "map": {
+    "file": "c10.map",
+    "bitmaps": ""
+  },
+  "biped": {
+    "tag": "characters\\monitor\\monitor",
+    "start_animation": "talk"
+  },
+  "attachments": [
+    { "tag": "weapons\\pistol\\pistol", "marker": "monitor tendril" }
+  ],
+  "camera": {
+    "position": [0.4, -0.03, 0.0],
+    "field_of_view": 70.0,
+    "aspect": 1.6,
+    "z_near": 0.001,
+    "z_far": 100.0,
+    "keyboard": true
+  },
+  "retarget": [
+    {
+      "source": "Spine",
+      "bone": "frame monitor root",
+      "mode": "twist",
+      "twist_axis": [0, 1, 0],
+      "output_axis": [0, 0, 1],
+      "axis_map": ["x", "y", "z"],
+      "basis_rotation": [0, 0, 0, 1],
+      "rest_delta": [0, 0, 0, 1],
+      "mirror_z180": false,
+      "clamp_degrees": 60,
+      "gain": 2
+    }
+  ],
+  "smoothing": { "alpha": 0.05 },
+  "root_motion": {
+    "enabled": true,
+    "source": "Hips",
+    "axis_map": ["z", "-x", "y"],
+    "scale": [1.0, 1.0, 1.0],
+    "offset": [0.0, 0.0, 0.0],
+    "deadzone": [0.02, 0.02, 0.02],
+    "clamp": [0.5, 0.5, 1],
+    "smoothing": 0.05
+  },
+  "microphone": {
+    "enabled": true,
+    "interval_ms": 33,
+    "fft_size": 2048,
+    "noise_floor": 0.0,
+    "gain": 1,
+    "smoothing": 0.1,
+    "model_translation": {
+      "enabled": true,
+      "vector": [0.0, 0.0, 0.5],
+      "clamp": 0.5
+    }
+  },
+  "animations": [
+    {
+      "biped": "characters\\monitor\\monitor",
+      "fps": 30.0,
+      "buttons": [
+      ]
+    }
+  ],
+  "pose": {
+    "pose_model": "vendor/tasks-vision/pose_landmarker_full.task",
+    "face_model": "vendor/tasks-vision/face_landmarker.task",
+    "delegate": "GPU",
+    "min_detection_confidence": 0.5,
+    "min_tracking_confidence": 0.5,
+    "min_presence_confidence": 0.5
+  }
+}

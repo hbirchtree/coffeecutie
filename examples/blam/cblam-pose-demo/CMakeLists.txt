@@ -13,6 +13,7 @@ coffee_application(
         pose_demo_main.cpp
         pose_demo_spawn.cpp
         pose_apply.cpp
+        pose_config.cpp
         ${CBLAM_TESTING_DIR}/caching.cpp
         ${CBLAM_TESTING_DIR}/resource_creation.cpp
         ${CBLAM_TESTING_DIR}/rendering.cpp
@@ -45,14 +46,26 @@ if(EMSCRIPTEN)
     -sFETCH
     -sMODULARIZE=1
     -sEXPORT_NAME=createBlamPoseDemo
+    # Stages pose_config.json into MEMFS before main() runs; pose_config.cpp
+    # reads it synchronously during app load, before the map fetch.
+    --pre-js=${CMAKE_CURRENT_SOURCE_DIR}/pose_config_preload.js
+  )
+  set_property(
+    TARGET BlamPoseDemo APPEND
+    PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pose_config_preload.js
   )
 
-  # Vendored MediaPipe Pose (Apache-2.0) + Kalidokit (MIT)
+  # Vendored MediaPipe Tasks Vision (Apache-2.0) + Kalidokit (MIT)
   add_custom_command(
     TARGET BlamPoseDemo
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/vendor
         $<TARGET_FILE_DIR:BlamPoseDemo>/vendor
+    # Served alongside the page rather than preloaded, so editing it and
+    # reloading is enough -- no rebuild, and ?config=<url> can point elsewhere.
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/configs/
+        $<TARGET_FILE_DIR:BlamPoseDemo>/configs/
   )
 endif()

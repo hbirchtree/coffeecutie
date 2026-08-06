@@ -1,7 +1,7 @@
 <!--
   Shell for BlamPoseDemo's wasm build — based on
   toolchain/desktop/emscripten/template.html, with webcam capture +
-  MediaPipe Pose + Kalidokit added to drive the pose_apply dummy-plug
+  MediaPipe Tasks Vision + Kalidokit added to drive the pose_apply dummy-plug
   bridge (src/coffee/comp_app/private/dummy_plug.cpp:969) every frame.
 
   Requires the page to be loaded as BlamPoseDemo.html?dummy_plug — that
@@ -9,8 +9,20 @@
   all; without it coffee_dummy_plug_event has nothing to route to.
 
   Vendored libraries (MIT/Apache-2.0, see vendor/*/LICENSE if present):
-    vendor/pose/pose.js         — @mediapipe/pose (Apache-2.0)
-    vendor/kalidokit/kalidokit.umd.js — kalidokit (MIT)
+    vendor/tasks-vision/          — @mediapipe/tasks-vision 1.0.1 (Apache-2.0),
+                                    IIFE bundle exposing the global `Vision`,
+                                    plus its WASM fileset and the
+                                    pose/face .task models
+    vendor/kalidokit/kalidokit.umd.js — kalidokit 1.1.5 (MIT)
+
+  vendor/pose/ holds the superseded @mediapipe/pose Solutions API (frozen
+  upstream since 2023-02). Nothing loads it any more; it is kept only so the
+  migration can be compared against, and is safe to delete.
+
+  Runtime knobs live in configs/*.json, defaulting to configs/cyborg.json and
+  selectable with ?config=<url>. pose_config.cpp reads map/biped/attachments/
+  camera/retarget/animation fps; this shell reads the "pose" section and builds
+  its animation buttons from "animations".
 -->
 <!doctype html>
 <html lang="en-us">
@@ -50,20 +62,17 @@
 </head>
 <body>
   <div id="pose_status">waiting for webcam…</div>
+  <!-- Populated after the first getUserMedia() — enumerateDevices() returns
+       blank labels until the page holds a camera permission. -->
   <select id="camera_select" style="display:none;" title="Camera source"></select>
+  <!-- Animation buttons are built from the config's "animations" sets, since
+       the names are per-biped — cyborg_mp's "stand pistol idle" does not exist
+       on the monitor. Calibrate is not an animation, so it stays put. -->
   <div id="animations" style="position: fixed; top: 40%; display: flex; flex-direction: column;">
-      <button onclick="window.blamLoopAnimation('stand pistol idle')">🧍‍♂️</button>
-      <button onclick="window.blamLoopAnimation('crouch unarmed idle')">🪑</button>
-      <button onclick="window.blamLoopAnimation('alert unarmed move-front')">🚶</button>
-      <button onclick="window.blamPlayAnimation('s-kill front gut')">⚰️</button>
-      <button onclick="window.blamPlayAnimation('h-kill left head')">⚰️</button>
-      <button onclick="window.blamPlayAnimation('stand push')">🧻</button>
-      <button onclick="window.blamPlayAnimation('stand pistol pp melee')">👊</button>
-      <button onclick="window.blamPlayAnimation('stand look')">🔍</button>
       <button onclick="window.calibratePose()" title="Reset facing: zero out current pose as new neutral">🎯</button>
   </div>
 
-  <!-- Hidden source feed; MediaPipe Pose reads frames from this element. -->
+  <!-- Hidden source feed; the landmarkers read frames from this element. -->
   <video id="webcam_feed" autoplay playsinline muted style="display:none;"></video>
   <div id="webcam_panel" style="display:none;">
     <canvas id="webcam_overlay" width="160" height="120"></canvas>
@@ -124,7 +133,7 @@
     }).then((instance) => { window.BlamModule = instance; return instance; });
   </script>
 
-  <script src="vendor/pose/pose.js"></script>
+  <script src="vendor/tasks-vision/vision_bundle.js"></script>
   <script src="vendor/kalidokit/kalidokit.umd.js"></script>
   <script type="text/javascript">
     const poseStatus = document.getElementById('pose_status');
@@ -146,11 +155,9 @@
       ];
     }
 
-    /* Arms not retargeted (pose_retarget.h has no entry). Head is sent
-     * but also has no table entry — data flows through, unapplied. */
-    const RETARGETED_BONES = [
-      'Spine', 'Head',
-    ];
+    /* Every bone Kalidokit solves is sent; apply_pose filters against the
+     * retarget table in pose_config.json, so adding a mapping there needs no
+     * change here. Face.solve()'s head Euler is merged in as 'Head'. */
 
     async function waitForAppLoaded() {
       await window.blamModuleReady;
@@ -167,13 +174,49 @@
     }
 
     let calibrationOffsets = {};
+    /* Standing hips position captured at calibrate; root motion is sent
+     * relative to it. null until the first calibrate. */
+    let hipsPositionOffset = null;
     let calibrateRequested = false;
     window.calibratePose = () => { calibrateRequested = true; };
 
+    /* Same file pose_config.cpp reads; the two sides consume disjoint
+     * sections, so they just load it independently. Missing or malformed
+     * config is not fatal — both sides fall back to built-in defaults. */
+    let poseConfig = {};
+    let poseConfigReady = null;
+    /* main() and setupMicrophone() run independently and both need this, so
+     * the fetch is memoized rather than sequenced between them. */
+    function loadPoseConfig() {
+      if (poseConfigReady) return poseConfigReady;
+      poseConfigReady = (async () => {
+        const url = new URLSearchParams(location.search).get('config') ||
+                    'configs/cyborg.json';
+        try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(response.status + ' ' + response.statusText);
+          poseConfig = await response.json();
+          console.log('[pose_demo] loaded config ' + url);
+        } catch (e) {
+          console.warn(
+            '[pose_demo] config ' + url + ' unavailable (' + e.message + '), using defaults');
+          poseConfig = {};
+        }
+        return poseConfig;
+      })();
+      return poseConfigReady;
+    }
+
+    /* Camera selection. The landmarkers read the same <video> element every
+     * frame, so switching sources only means swapping video.srcObject — no
+     * detector restart. cameraSwitching gates the frame loop across the gap
+     * where the element has no usable frame. */
     const kCameraStorageKey = 'pose_demo_camera';
     let currentStream = null;
     let cameraSwitching = false;
 
+    /* getUserMedia() hands out a fresh stream per call; the previous one keeps
+     * the camera and its buffers allocated until its tracks are stopped. */
     function stopStream(stream) {
       if (!stream) return;
       for (const track of stream.getTracks()) track.stop();
@@ -242,37 +285,104 @@
         'devicechange', () => populateCameraList().catch(() => {}));
     }
 
+    /* Picks the animation set for the biped actually in use — the same
+     * precedence pose_config.cpp applies, since ?biped= overrides the file.
+     * "*" matches anything, so it belongs last. */
+    function selectAnimationSet(config) {
+      const sets = Array.isArray(config.animations) ? config.animations : [];
+      const biped = new URLSearchParams(location.search).get('biped') ||
+                    (config.biped && config.biped.tag) || '';
+      return sets.find((s) => !s.biped || s.biped === '*' || s.biped === biped);
+    }
+
+    function buildAnimationButtons(config) {
+      const set = selectAnimationSet(config);
+      if (!set || !Array.isArray(set.buttons)) {
+        console.log('[pose_demo] no animation set matched; only calibrate shown');
+        return;
+      }
+      const strip = document.getElementById('animations');
+      const calibrate = strip.firstElementChild;
+      for (const entry of set.buttons) {
+        if (!entry || !entry.name) continue;
+        const button = document.createElement('button');
+        button.textContent = entry.label || entry.name;
+        button.title = entry.title || entry.name;
+        button.onclick = entry.loop
+          ? () => window.blamLoopAnimation(entry.name)
+          : () => window.blamPlayAnimation(entry.name);
+        /* Keep calibrate at the bottom of the strip. */
+        strip.insertBefore(button, calibrate);
+      }
+      console.log('[pose_demo] built ' + set.buttons.length + ' animation button(s)');
+    }
+
     let poseFrameCount = 0;
-    function sendPose(kalidokitPose) {
+
+    /* Kalidokit's solved objects mix plain Euler triples (Spine, LeftUpperArm,
+     * …) with composites — Pose.Hips is {position, rotation}, Face.eye is
+     * {l, r}. Only the triples are bones. */
+    function isEuler(v) {
+      return v && typeof v.x === 'number' && typeof v.y === 'number' &&
+             typeof v.z === 'number';
+    }
+
+    function sendPose(solvedBones) {
+      /* Hips is the one composite that is still a bone: {position, rotation}
+       * rather than a bare Euler, and the only solved output carrying a
+       * position at all. It drives root motion in pose_apply.cpp. */
+      const hips = solvedBones.Hips;
+
       if (calibrateRequested) {
         calibrationOffsets = {};
-        for (const name of RETARGETED_BONES) {
-          const euler = kalidokitPose[name];
-          if (euler) calibrationOffsets[name] = { x: euler.x, y: euler.y, z: euler.z };
+        for (const [name, euler] of Object.entries(solvedBones)) {
+          if (isEuler(euler))
+            calibrationOffsets[name] = { x: euler.x, y: euler.y, z: euler.z };
         }
+        if (hips && isEuler(hips.rotation))
+          calibrationOffsets.Hips = { ...hips.rotation };
+        /* Zeroing the standing position too, so root motion is relative to
+         * where you were when you pressed calibrate. */
+        hipsPositionOffset = hips && isEuler(hips.position)
+          ? { ...hips.position } : null;
         calibrateRequested = false;
         setPoseStatus('calibrated facing');
         setTimeout(() => setPoseStatus('tracking'), 1000);
       }
+
       const bones = [];
-      for (const name of RETARGETED_BONES) {
-        const euler = kalidokitPose[name];
-        if (!euler) continue;
+      const calibrated = (name, euler) => {
         const off = calibrationOffsets[name];
-        const x = off ? euler.x - off.x : euler.x;
-        const y = off ? euler.y - off.y : euler.y;
-        const z = off ? euler.z - off.z : euler.z;
-        bones.push({ name, rotation: eulerXYZToQuat(x, y, z) });
+        return off
+          ? [euler.x - off.x, euler.y - off.y, euler.z - off.z]
+          : [euler.x, euler.y, euler.z];
+      };
+
+      for (const [name, euler] of Object.entries(solvedBones)) {
+        if (!isEuler(euler)) continue;
+        bones.push({ name, rotation: eulerXYZToQuat(...calibrated(name, euler)) });
       }
+
+      if (hips && isEuler(hips.rotation)) {
+        const entry = {
+          name: 'Hips',
+          rotation: eulerXYZToQuat(...calibrated('Hips', hips.rotation)),
+        };
+        if (isEuler(hips.position)) {
+          const base = hipsPositionOffset;
+          entry.position = base
+            ? [hips.position.x - base.x, hips.position.y - base.y,
+               hips.position.z - base.z]
+            : [hips.position.x, hips.position.y, hips.position.z];
+        }
+        bones.push(entry);
+      }
+
       if (bones.length === 0) return;
-      const payload = { type: 'pose_apply', bones };
-      // if (poseFrameCount++ % 30 === 0) console.log('[pose_demo] sending', JSON.stringify(payload));
-      if (kalidokitPose.Spine && poseFrameCount % 10 === 0) {
-        const s = kalidokitPose.Spine;
-        const toDeg = (r) => (r * 180 / Math.PI).toFixed(1);
-        // console.log('[pose_demo] Spine raw (deg): x=' + toDeg(s.x) + ' y=' + toDeg(s.y) + ' z=' + toDeg(s.z));
-      }
-      window.BlamModule.ccall('coffee_dummy_plug_event', null, ['string'], [JSON.stringify(payload)]);
+      poseFrameCount++;
+      window.BlamModule.ccall(
+        'coffee_dummy_plug_event', null, ['string'],
+        [JSON.stringify({ type: 'pose_apply', bones })]);
     }
 
     function setPoseStatus(text) {
@@ -287,15 +397,33 @@
      * audioCtx.destination, so this doesn't route mic audio to speakers. */
     async function setupMicrophone() {
       await window.blamModuleReady;
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      await loadPoseConfig();
+
+      const mic = poseConfig.microphone || {};
+      if (mic.enabled === false) {
+        console.log('[pose_demo] microphone disabled by config');
+        return;
+      }
+
+      /* device_id pins a specific input; otherwise the browser default. */
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: mic.device_id ? { deviceId: { exact: mic.device_id } } : true,
+        video: false,
+      });
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const source = audioCtx.createMediaStreamSource(stream);
       const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 2048;
+      analyser.fftSize = mic.fft_size || 2048;
       source.connect(analyser);
+
+      const noiseFloor = mic.noise_floor ?? 0.0;
+      const gain = mic.gain ?? 1.0;
+      const smoothing = mic.smoothing ?? 0.0;
+      const intervalMs = mic.interval_ms ?? 33;
 
       const data = new Uint8Array(analyser.fftSize);
       let micFrameCount = 0;
+      let level = 0;
       setInterval(() => {
         analyser.getByteTimeDomainData(data);
         let sumSq = 0;
@@ -303,15 +431,24 @@
           const v = (data[i] - 128) / 128;
           sumSq += v * v;
         }
-        const volume = Math.sqrt(sumSq / data.length);
-        if (micFrameCount++ % 30 === 0) console.log('[pose_demo] mic volume: ' + volume.toFixed(4));
+        const rms = Math.sqrt(sumSq / data.length);
+        /* Condition here so the level C++ maps onto bones is already in a
+         * usable 0..1 range; per-bone gain is the second stage. */
+        const conditioned = Math.min(Math.max((rms - noiseFloor) * gain, 0), 1);
+        level = smoothing > 0
+          ? level + smoothing * (conditioned - level)
+          : conditioned;
+        if (micFrameCount++ % 30 === 0)
+          console.log('[pose_demo] mic rms ' + rms.toFixed(4) + ' -> level ' + level.toFixed(4));
         window.BlamModule.ccall(
           'coffee_dummy_plug_event', null, ['string'],
-          [JSON.stringify({ type: 'mic_volume', volume })],
+          [JSON.stringify({ type: 'mic_volume', volume: level })],
         );
-      }, 33);
+      }, intervalMs);
 
-      console.log('[pose_demo] microphone capture started');
+      console.log(
+        '[pose_demo] microphone capture started (' + intervalMs + 'ms, fft ' +
+        analyser.fftSize + ')');
     }
 
     async function main() {
@@ -321,10 +458,16 @@
         return;
       }
 
+      await loadPoseConfig();
+      buildAnimationButtons(poseConfig);
+
       setPoseStatus('waiting for app to finish loading…');
       await waitForAppLoaded();
       setPoseStatus('app loaded, requesting webcam…');
 
+      /* A stored deviceId can go stale between sessions (device unplugged, or
+       * the id rotated); deviceId:{exact} then throws OverconstrainedError, so
+       * drop it and fall back to the default camera. */
       const saved = localStorage.getItem(kCameraStorageKey);
       try {
         await openCamera(saved || undefined);
@@ -336,56 +479,95 @@
       }
       setPoseStatus('webcam stream acquired, enumerating cameras…');
       await populateCameraList();
-      setPoseStatus('video metadata ready, loading MediaPipe Pose…');
+      setPoseStatus('video metadata ready, loading MediaPipe Tasks…');
 
-      const pose = new Pose({ locateFile: (file) => `vendor/pose/${file}` });
-      pose.setOptions({
-        modelComplexity: 1,
-        smoothLandmarks: true,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5,
+      /* tasks-vision replaces the frozen @mediapipe/pose Solutions API. Both
+       * landmarkers share one WASM fileset. VIDEO mode is synchronous —
+       * detectForVideo() returns the result rather than invoking a callback,
+       * so there is no packet-lifetime contract to get wrong. */
+      const fileset = await Vision.FilesetResolver.forVisionTasks(
+        'vendor/tasks-vision/wasm');
+
+      const poseCfg = poseConfig.pose || {};
+      const poseLandmarker = await Vision.PoseLandmarker.createFromOptions(fileset, {
+        baseOptions: {
+          modelAssetPath: poseCfg.pose_model || 'vendor/tasks-vision/pose_landmarker_full.task',
+          delegate: poseCfg.delegate || 'GPU',
+        },
+        runningMode: 'VIDEO',
+        numPoses: 1,
+        minPoseDetectionConfidence: poseCfg.min_detection_confidence ?? 0.5,
+        minTrackingConfidence: poseCfg.min_tracking_confidence ?? 0.5,
+        minPosePresenceConfidence: poseCfg.min_presence_confidence ?? 0.5,
       });
-      let resultsSeen = 0;
-      pose.onResults((results) => {
-        if (resultsSeen++ === 0) console.log('[pose_demo] first onResults callback fired');
-        if (!results.poseWorldLandmarks || !results.poseLandmarks) {
-          if (resultsSeen <= 3) console.log('[pose_demo] onResults: no landmarks this frame');
-          return;
-        }
-        const solved = Kalidokit.Pose.solve(results.poseWorldLandmarks, results.poseLandmarks, {
-          runtime: 'mediapipe',
-          video,
+
+      /* Optional: the face solver only runs if a model is configured. */
+      let faceLandmarker = null;
+      if (poseCfg.face_model !== null) {
+        faceLandmarker = await Vision.FaceLandmarker.createFromOptions(fileset, {
+          baseOptions: {
+            modelAssetPath: poseCfg.face_model || 'vendor/tasks-vision/face_landmarker.task',
+            delegate: poseCfg.delegate || 'GPU',
+          },
+          runningMode: 'VIDEO',
+          numFaces: 1,
         });
-        /* Head roll: ear-line (7,8) relative to shoulder-line (11,12) to
-         * cancel shared body twist. rollPitchYaw returns angle/PI, not
-         * radians. */
-        if (solved && results.poseWorldLandmarks[7] && results.poseWorldLandmarks[8] &&
-            results.poseWorldLandmarks[11] && results.poseWorldLandmarks[12]) {
-          const earRoll = Kalidokit.Vector.rollPitchYaw(
-            results.poseWorldLandmarks[7], results.poseWorldLandmarks[8],
-          ).x;
-          const shoulderRoll = Kalidokit.Vector.rollPitchYaw(
-            results.poseWorldLandmarks[11], results.poseWorldLandmarks[12],
-          ).x;
-          const roll = (earRoll - shoulderRoll) * Math.PI;
-          solved.Head = { x: 0, y: roll, z: 0 };
-          if (poseFrameCount % 10 === 0) {
-            // console.log('[pose_demo] Head roll raw (deg): ' + (roll * 180 / Math.PI).toFixed(1));
-          }
-        }
-        if (solved) sendPose(solved);
-      });
+      }
 
       setPoseStatus('tracking');
-      let sendFrameCount = 0;
-      const frameLoop = async () => {
+      let framesSeen = 0, landmarksSeen = 0;
+
+      const frameLoop = () => {
         try {
+          /* Skip across a camera swap: detectForVideo() uploads the element as
+           * a texture, and a detached or 0x0 video makes that throw. */
           if (!cameraSwitching && video.readyState >= 2 && video.videoWidth > 0) {
-            await pose.send({ image: video });
-            if (sendFrameCount++ === 0) console.log('[pose_demo] first pose.send() resolved');
+            /* Timestamps must increase strictly monotonically or the graph
+             * rejects the frame; performance.now() is not tied to the camera
+             * clock but does satisfy that. */
+            const ts = performance.now();
+            const poseResult = poseLandmarker.detectForVideo(video, ts);
+            if (framesSeen++ === 0) console.log('[pose_demo] first detectForVideo returned');
+
+            const world = poseResult.worldLandmarks && poseResult.worldLandmarks[0];
+            const norm = poseResult.landmarks && poseResult.landmarks[0];
+            if (world && norm) {
+              if (landmarksSeen++ === 0) console.log('[pose_demo] first pose detected');
+              const solved = Kalidokit.Pose.solve(world, norm, {
+                runtime: 'mediapipe',
+                video,
+              });
+
+              if (solved && faceLandmarker) {
+                const faceResult = faceLandmarker.detectForVideo(video, ts);
+                const face = faceResult.faceLandmarks && faceResult.faceLandmarks[0];
+                if (face) {
+                  /* Face.solve() mutates its input in place under
+                   * runtime:'mediapipe' (scales normalized -> pixels), so the
+                   * array must not be reused afterwards. */
+                  const solvedFace = Kalidokit.Face.solve(face, {
+                    runtime: 'mediapipe',
+                    video,
+                    smoothBlink: true,
+                  });
+                  if (solvedFace && solvedFace.head) {
+                    solved.Head = {
+                      x: solvedFace.head.x,
+                      y: solvedFace.head.y,
+                      z: solvedFace.head.z,
+                    };
+                  }
+                }
+              }
+
+              if (solved) sendPose(solved);
+            }
+            /* Frees the segmentation masks when they are enabled; a no-op
+             * otherwise, but it is the documented lifetime contract. */
+            if (poseResult.close) poseResult.close();
           }
         } catch (e) {
-          console.error('[pose_demo] pose.send() threw: ' + (e.stack || e.message || e));
+          console.error('[pose_demo] detect failed: ' + (e.stack || e.message || e));
         }
         requestAnimationFrame(frameLoop);
       };
