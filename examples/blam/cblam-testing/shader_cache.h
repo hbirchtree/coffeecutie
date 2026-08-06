@@ -429,12 +429,4 @@ struct ShaderCache
     {
         return args.tag_id;
     }
-
-    void start_restricted(Proxy&, time_point const&)
-    {
-    }
-
-    void end_restricted(Proxy&, time_point const&)
-    {
-    }
 };

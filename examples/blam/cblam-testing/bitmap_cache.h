@@ -461,12 +461,4 @@ struct BitmapCache
         out.layer = type_mask(bitmap) | bitmap.image.layer;
         return &bitmap;
     }
-
-    void start_restricted(Proxy&, time_point const&)
-    {
-    }
-
-    void end_restricted(Proxy&, time_point const&)
-    {
-    }
 };

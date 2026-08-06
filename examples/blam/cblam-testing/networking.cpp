@@ -1933,10 +1933,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
     }
 
-    void end_restricted(Proxy&, time_point const&)
-    {
-    }
-
     std::string client_name(HSteamNetConnection connection)
     {
         SteamNetConnectionInfo_t conn_info;
