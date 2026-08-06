@@ -13,12 +13,22 @@ concept is_subsystem_manifest =
     type_safety::is_type_list<typename T::services>;
 
 template<typename T, typename Manifest>
-concept is_restricted_subsystem =
+concept has_start_restricted =
     is_subsystem_manifest<Manifest> &&
     requires(T& v, typename compo::proxy_of<Manifest>& p) {
         { v.start_restricted(p, SubsystemBase::time_point()) };
+    };
+
+template<typename T, typename Manifest>
+concept has_end_restricted =
+    is_subsystem_manifest<Manifest> &&
+    requires(T& v, typename compo::proxy_of<Manifest>& p) {
         { v.end_restricted(p, SubsystemBase::time_point()) };
     };
+
+template<typename T, typename Manifest>
+concept is_restricted_subsystem =
+    has_start_restricted<T, Manifest> || has_end_restricted<T, Manifest>;
 
 template<typename ComponentList, typename SubsystemList, typename ServiceList>
 struct SubsystemManifest
@@ -27,12 +37,6 @@ struct SubsystemManifest
     using subsystems = SubsystemList;
     using services   = ServiceList;
 };
-
-#define ENTCOMP_RESTRICTED_CONTRACT                                          \
-    static_assert(                                                           \
-        is_restricted_subsystem<OuterType, Manifest>,                        \
-        "subsystem must define start_restricted(Proxy&, time_point const&) " \
-        "and end_restricted(Proxy&, time_point const&)")
 
 template<typename OuterType, is_subsystem_manifest Manifest>
 struct RestrictedSubsystem : SubsystemBase
@@ -44,20 +48,26 @@ struct RestrictedSubsystem : SubsystemBase
 
     virtual void start_frame(ContainerProxy& proxy, time_point const& t) final
     {
-        ENTCOMP_RESTRICTED_CONTRACT;
-        access::scope_guard _(this->runtime_access);
-        Proxy p(this->get_container(proxy));
-        auto* this_specialization = C_CAST<OuterType*>(this);
-        this_specialization->start_restricted(p, t);
+        if constexpr(has_start_restricted<OuterType, Manifest>)
+        {
+            access::scope_guard _(this->runtime_access);
+            Proxy p(this->get_container(proxy));
+            auto* this_specialization = C_CAST<OuterType*>(this);
+            this_specialization->start_restricted(p, t);
+        } else
+            SubsystemBase::start_frame(proxy, t);
     }
 
     virtual void end_frame(ContainerProxy& proxy, time_point const& t) final
     {
-        ENTCOMP_RESTRICTED_CONTRACT;
-        access::scope_guard _(this->runtime_access);
-        Proxy p(this->get_container(proxy));
-        auto* this_specialization = C_CAST<OuterType*>(this);
-        this_specialization->end_restricted(p, t);
+        if constexpr(has_end_restricted<OuterType, Manifest>)
+        {
+            access::scope_guard _(this->runtime_access);
+            Proxy p(this->get_container(proxy));
+            auto* this_specialization = C_CAST<OuterType*>(this);
+            this_specialization->end_restricted(p, t);
+        } else
+            SubsystemBase::end_frame(proxy, t);
     }
 
     virtual std::vector<access::entry> const& declared_components()
@@ -87,7 +97,5 @@ struct RestrictedSubsystem : SubsystemBase
         return true;
     }
 };
-
-#undef ENTCOMP_RESTRICTED_CONTRACT
 
 } // namespace compo

@@ -141,6 +141,19 @@ FORCEDINLINE void EntityContainer::update_schedule(
     schedule_batches = sched::build_batches(schedule_nodes);
     schedule_windows = sched::build_windows(schedule_nodes, schedule_batches);
 
+    schedule_opens.assign(schedule_batches.size(), {});
+    schedule_closes.assign(schedule_batches.size(), {});
+    schedule_offloads = false;
+    for(size_t index = 0; index < schedule_windows.size(); index++)
+    {
+        auto const& span = schedule_windows.at(index);
+        if(!span.offloaded())
+            continue;
+        schedule_opens.at(span.first).push_back(index);
+        schedule_closes.at(span.last).push_back(index);
+        schedule_offloads = true;
+    }
+
     if(debug_flags & Verbose_Schedule)
         log(libc::io::io_handles::err,
             "Coffee::Components",
@@ -159,12 +172,20 @@ FORCEDINLINE void EntityContainer::exec_batched(
     frame_hook        hook,
     std::string_view  hook_name)
 {
-    workers->reset();
-    schedule_jobs.assign(schedule_nodes.size(), 0);
+    if(schedule_offloads)
+    {
+        workers->reset();
+        schedule_jobs.assign(schedule_nodes.size(), 0);
+    }
 
     auto run = [&](size_t index) {
-        auto& subsys     = *schedule_nodes.at(index).subsystem;
-        auto  frame_name = typeid(subsys).name() + std::string(hook_name);
+        auto& subsys = *schedule_nodes.at(index).subsystem;
+
+        /* Nothing to call: skip before paying for the profiling context */
+        if(reverse ? subsys.no_end_hook : subsys.no_start_hook)
+            return;
+
+        auto frame_name = typeid(subsys).name() + std::string(hook_name);
         DProfContext _(frame_name);
 
         if(!measure)
@@ -182,12 +203,8 @@ FORCEDINLINE void EntityContainer::exec_batched(
     };
 
     /* Opens at first, closes at last - mirrored when unwinding the frame */
-    auto opens = [reverse](sched::window const& span) {
-        return reverse ? span.last : span.first;
-    };
-    auto closes = [reverse](sched::window const& span) {
-        return reverse ? span.first : span.last;
-    };
+    auto const& opening = reverse ? schedule_closes : schedule_opens;
+    auto const& closing = reverse ? schedule_opens : schedule_closes;
 
     size_t const stages = schedule_batches.size();
 
@@ -195,28 +212,23 @@ FORCEDINLINE void EntityContainer::exec_batched(
     {
         size_t const current = reverse ? stages - 1u - step : step;
 
-        for(size_t index = 0; index < schedule_windows.size(); index++)
-        {
-            auto const& span = schedule_windows.at(index);
-            if(span.offloaded() && opens(span) == current)
+        if(schedule_offloads)
+            for(auto index : opening.at(current))
                 schedule_jobs.at(index) =
                     workers->submit([&run, index]() { run(index); });
-        }
 
         for(auto member : schedule_batches.at(current).members)
             if(!schedule_windows.at(member).offloaded())
                 run(member);
 
-        for(size_t index = 0; index < schedule_windows.size(); index++)
-        {
-            auto const& span = schedule_windows.at(index);
-            if(span.offloaded() && closes(span) == current)
+        if(schedule_offloads)
+            for(auto index : closing.at(current))
                 workers->wait(schedule_jobs.at(index));
-        }
     }
 
     /* Nothing escapes the pass it was submitted in */
-    workers->wait_all();
+    if(schedule_offloads)
+        workers->wait_all();
 }
 
 FORCEDINLINE

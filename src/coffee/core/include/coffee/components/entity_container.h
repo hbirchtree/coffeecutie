@@ -591,6 +591,9 @@ struct EntityContainer : stl_types::non_copy
     std::vector<sched::node>            schedule_nodes;
     std::vector<sched::batch>           schedule_batches;
     std::vector<sched::window>          schedule_windows;
+    std::vector<std::vector<size_t>>    schedule_opens;
+    std::vector<std::vector<size_t>>    schedule_closes;
+    bool                                schedule_offloads{false};
     std::vector<sched::worker_pool::job_id> schedule_jobs;
     bool                                    workers_configured{false};
 

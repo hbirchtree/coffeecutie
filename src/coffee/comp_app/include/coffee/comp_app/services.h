@@ -825,15 +825,23 @@ struct AppService : detail::SubsystemBase
     virtual void start_frame(
         detail::ContainerProxy& c, detail::time_point const& t) override
     {
-        detail::restricted::start_frame(
-            C_OCAST<exposed_type&>(*this), c.underlying(), t);
+        if constexpr(detail::restricted::is_start_restricted_subsystem<
+                         ExposedType>)
+            detail::restricted::start_frame(
+                C_OCAST<exposed_type&>(*this), c.underlying(), t);
+        else
+            compo::SubsystemBase::start_frame(c, t);
     }
 
     virtual void end_frame(
         detail::ContainerProxy& c, detail::time_point const& t) override
     {
-        detail::restricted::end_frame(
-            C_OCAST<exposed_type&>(*this), c.underlying(), t);
+        if constexpr(detail::restricted::is_end_restricted_subsystem<
+                         ExposedType>)
+            detail::restricted::end_frame(
+                C_OCAST<exposed_type&>(*this), c.underlying(), t);
+        else
+            compo::SubsystemBase::end_frame(c, t);
     }
 
     virtual std::string_view subsystem_name() const final
