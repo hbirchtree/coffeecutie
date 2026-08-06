@@ -42,6 +42,17 @@ optional<error> system::load(
                 gfx_config.value("major", 0u), gfx_config.value("minor", 0u)));
     }
 #endif
+    if(auto* display =
+           container.service<comp_app::BasicEventBus<Coffee::Display::Event>>())
+        display->addEventFunction<Coffee::Display::ResizeEvent>(
+            0,
+            std::function<void(
+                Coffee::Display::Event&, Coffee::Display::ResizeEvent*)>(
+                [this](
+                    Coffee::Display::Event&, Coffee::Display::ResizeEvent*) {
+                    m_resize_dirty = true;
+                }));
+
     auto out = api::load(options);
     if(compile_info::debug_mode && api_type() == api_type_t::es &&
        api_version() == std::make_tuple<u32, u32>(2, 0))
@@ -79,7 +90,12 @@ void system::start_restricted(Proxy& e, time_point const& ts)
     using namespace std::chrono_literals;
     using namespace Coffee::Logging;
 
-    activate_resize(e);
+    if(m_resize_dirty || m_next_resize_poll < ts)
+    {
+        activate_resize(e);
+        m_resize_dirty     = false;
+        m_next_resize_poll = ts + 1s;
+    }
     check_context();
 
     if(m_next_stats < ts)

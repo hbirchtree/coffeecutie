@@ -92,6 +92,8 @@ class system
     void check_context();
 
     comp_app::size_2d_t m_last_size;
+    bool                m_resize_dirty{true};
+    time_point          m_next_resize_poll{};
     time_point          m_next_stats{};
 
     struct timing_t
