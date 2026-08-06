@@ -763,9 +763,13 @@ STATICINLINE void GetExtras()
         static std::vector<std::string> stringStorage;
         static auto                     extras = appIntent.extras();
 
+        const auto forwarded_to_env = [](std::string const& key) {
+            return key.starts_with("COFFEE_") || key.starts_with("DUMMY_PLUG_");
+        };
+
         for(auto const& e : extras)
         {
-            if(e.first.substr(0, 7) == "COFFEE_")
+            if(forwarded_to_env(e.first))
                 platform::env::set_var(e.first, e.second);
             cDebug("{0} = {1}", e.first, e.second);
         }

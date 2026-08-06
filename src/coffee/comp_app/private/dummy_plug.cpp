@@ -25,7 +25,11 @@
 #include <peripherals/posix/process.h>
 #endif
 
-#if defined(__linux__)
+#if defined(__linux__) && !defined(__ANDROID__)
+#define DUMMY_PLUG_CAN_SPAWN 1
+#endif
+
+#if defined(DUMMY_PLUG_CAN_SPAWN)
 #include <climits>
 #include <coffee/core/argument_handling.h>
 #include <cstdlib>
@@ -64,7 +68,7 @@ enum class type_t
     custom,
 };
 
-#if defined(__linux__)
+#if defined(DUMMY_PLUG_CAN_SPAWN)
 /* File-scope (not anonymous-namespace-local) so insert_dummy_plug's
  * emit_events, further down in this file and outside the anonymous
  * namespace below, can see which children this process spawned -- used
@@ -80,6 +84,19 @@ std::vector<spawned_child_t> spawned_children;
 #endif
 
 namespace {
+
+platform::url::Url config_url()
+{
+    using platform::url::constructors::MkUrl;
+    using semantic::RSCA;
+
+    auto const path = platform::env::var("DUMMY_PLUG_CONFIG").value();
+    auto       url  = MkUrl(path, RSCA::SystemFile);
+
+    if(Coffee::FileExists(Coffee::Resource(url)))
+        return url;
+    return MkUrl(path, RSCA::AssetFile);
+}
 
 /* Polled controller state, mirroring what a platform layer (SDL2) would
  * hold. Registered as the comp_app::ControllerInput service before the
@@ -288,7 +305,7 @@ void queue_input_event(
     }
 }
 
-#if defined(__linux__)
+#if defined(DUMMY_PLUG_CAN_SPAWN)
 /* Multi-process test orchestration: a "spawn" array in the dummy plug
  * config forks+execs this same binary N times, each child seeded with its
  * own dummy plug config (and optionally extra argv, e.g. --server) — so a
@@ -373,9 +390,7 @@ void spawn_dummy_plug_children(nlohmann::json const& config)
         return;
     }
 
-    auto base_dir = platform::path::dir(
-        MkUrl(
-            platform::env::var("DUMMY_PLUG_CONFIG").value())).value().path();
+    auto base_dir = platform::path::dir(config_url()).value().path();
 
     spawn_grace_ms = config.value("spawn_grace_ms", 30000u);
 
@@ -496,8 +511,7 @@ void fork_dummy_plugs(
 
     cDebug("Dummy plug activated");
 
-    auto config_file = platform::url::constructors::MkUrl(
-        platform::env::var("DUMMY_PLUG_CONFIG").value());
+    auto config_file    = config_url();
     auto config_content = Coffee::Resource(config_file);
     if(!Coffee::FileMap(config_content))
     {
@@ -533,7 +547,7 @@ void fork_dummy_plugs(
             return config["events"].size();
         }());
 
-#if defined(__linux__)
+#if defined(DUMMY_PLUG_CAN_SPAWN)
     if(config.contains("spawn") && config["spawn"].is_array())
         spawn_dummy_plug_children(config);
 #endif
@@ -849,7 +863,7 @@ void insert_dummy_plug(
                         semantic::RSCA::WriteOnly);
                 ready_marked = true;
             }
-#if defined(__linux__)
+#if defined(DUMMY_PLUG_CAN_SPAWN)
             if(!spawned_children.empty())
             {
                 using namespace std::chrono;
