@@ -59,8 +59,10 @@ Keys:
   devices[name].target     — platform:arch:sysroot (determines build dir under multi_build/)
   devices[name].type       — "linux" (ssh, default), "android" (adb), "dolphin", or "docker"
   devices[name].hostname   — SSH host or ADB serial; omit for android to auto-pick via adb
-  devices[name].scratchdir — working directory data is staged into (Linux ssh
-                             and docker; docker defaults to <build_dir>/.docker_scratch)
+  devices[name].scratchdir — working directory data is staged into (Linux ssh,
+                             docker and android; docker defaults to
+                             <build_dir>/.docker_scratch, android to
+                             /sdcard/Android/data/<package>/files)
   devices[name].env        — environment variables set on the remote
   devices[name].viewer     — optional display viewer: {type: "web"|"scrcpy", address: "..."}
 
@@ -83,8 +85,13 @@ Keys:
   presets[name].package    — Android package name (required for android targets)
   presets[name].workdir    — remote cwd, supports $SCRATCH_DIR, $BUILD_DIR, and $SRC_DIR
   presets[name].files      — list of {local, remote} rsync transfers before launch
+                             (android: `adb push`, same trailing-slash meaning)
   presets[name].args       — command-line args passed to the binary
-  presets[name].extras     — Android --es intent extras (merged with device env)
+  presets[name].extras     — Android --es intent extras (merged with device env).
+                             Values expand $SCRATCH_DIR/$BUILD_DIR/$SRC_DIR.
+                             Lowercase keys reach the app as `--key value` argv;
+                             COFFEE_* and DUMMY_PLUG_* keys become environment
+                             variables. Anything else is dropped by the app.
 
 Flags:
   --build-type dbg|rel — which Android APK flavour to install (default
@@ -869,13 +876,51 @@ def run_docker(device_name, device, preset_name, preset, extra_args, script_dir,
     sys.exit(returncode)
 
 
-def run_android(device_name, device, preset_name, preset, extra_args, build_root, target_dir, dry_run=False, log_file=None, collect_profile=None, build_type=None):
+def android_push_cmds(hostname, local, remote):
+    """`adb push` with rsync's trailing-slash semantics: "dir/" pushes the
+    contents of dir, "dir" pushes the directory itself. adb does not create
+    intermediate directories, so each destination is mkdir'd first."""
+    def push(src, dst):
+        return ['adb', '-s', hostname, 'push', src, dst]
+
+    def mkdir(path):
+        return ['adb', '-s', hostname, 'shell', 'mkdir', '-p', path]
+
+    local_path = local.rstrip('/')
+    if local.endswith('/') and os.path.isdir(local_path):
+        # Contents-of: name every top-level entry, so the destination name
+        # never has to match the source name. `adb push` takes many sources.
+        dest = remote.rstrip('/')
+        entries = [os.path.join(local_path, name)
+                   for name in sorted(os.listdir(local_path))]
+        if not entries:
+            return [mkdir(dest)]
+        return [mkdir(dest), ['adb', '-s', hostname, 'push'] + entries + [dest]]
+    if os.path.isdir(local_path) or local.endswith('/'):
+        dest = remote.rstrip('/')
+        return [mkdir(dest), push(local_path, dest)]
+
+    dest = remote.rstrip('/') if remote.endswith('/') else remote
+    dest_dir = dest if remote.endswith('/') else (os.path.dirname(dest) or '/')
+    return [mkdir(dest_dir), push(local_path, dest)]
+
+
+def run_android(device_name, device, preset_name, preset, extra_args, script_dir, build_root, target_dir, dry_run=False, log_file=None, collect_profile=None, build_type=None):
     hostname = device.get('hostname') or (None if dry_run else pick_adb_device())
     if dry_run and not hostname:
         hostname = '<adb-device>'
     package = preset.get('package')
     if not package:
         sys.exit(f"Error: preset '{preset_name}' is missing required 'package' for Android target")
+
+    # The app's external data dir: the one location adb can write to without
+    # run-as, and what the app resolves RSCA::AssetFile against — so a pushed
+    # map or dummy plug config is reachable by plain name.
+    scratchdir = device.get('scratchdir') or f'/sdcard/Android/data/{package}/files'
+    build_dir = os.path.join(build_root, target_dir)
+
+    def ev(s):
+        return expand_vars(str(s), scratchdir, build_dir, script_dir)
 
     apk_path = find_android_apk(build_root, target_dir, package, build_type)
     if not apk_path and not dry_run:
@@ -902,14 +947,16 @@ def run_android(device_name, device, preset_name, preset, extra_args, build_root
         component = result.stdout.strip().split('\n')[-1]
 
     merged_extras = {
-        **device.get('env', {}),
-        **preset.get('env', {}),
-        **preset.get('extras', {}),
+        key: ev(value) for key, value in {
+            **device.get('env', {}),
+            **preset.get('env', {}),
+            **preset.get('extras', {}),
+        }.items()
     }
 
     launch_cmd = ['adb', '-s', hostname, 'shell', 'am', 'start', '-n', component]
     for key, value in merged_extras.items():
-        launch_cmd += ['--es', key, str(value)]
+        launch_cmd += ['--es', key, value]
 
     def get_logcat_cmd():
         pid = None
@@ -922,16 +969,37 @@ def run_android(device_name, device, preset_name, preset, extra_args, build_root
                 pid = result.stdout.strip()
                 break
             time.sleep(0.5)
-        cmd = ['adb', '-s', hostname, 'logcat']
-        if pid:
-            cmd += ['--pid', pid]
-        return cmd
+        if not pid:
+            return ['adb', '-s', hostname, 'logcat']
+        # `adb logcat --pid` keeps tailing after the app is gone, so a scenario
+        # that closes its own window (dummy plug "end_time") would never hand
+        # control back — and the profile would never be collected. Follow the
+        # pid instead, with a grace period for the last lines to arrive.
+        adb = f'adb -s {shlex.quote(hostname)}'
+        return ['sh', '-c', '; '.join([
+            f'{adb} logcat --pid {shlex.quote(pid)} & log_pid=$!',
+            f'while {adb} shell pidof -s {shlex.quote(package)} >/dev/null 2>&1'
+            '; do sleep 1; done',
+            'sleep 2',
+            'kill $log_pid 2>/dev/null',
+            'wait $log_pid 2>/dev/null',
+            'exit 0',
+        ])]
 
     setup_cmds = []
     if device.get('hostname'):
         setup_cmds.append(['adb', 'connect', hostname])
+    setup_cmds.append(['adb', '-s', hostname, 'install', '-r', apk_path])
+
+    for entry in preset.get('files', []):
+        # Trailing slashes survive expansion and os.path.join, and they are
+        # what tells a directory apart from its contents.
+        local_abs = ev(entry['local'])
+        if not os.path.isabs(local_abs):
+            local_abs = os.path.join(script_dir, local_abs)
+        setup_cmds += android_push_cmds(hostname, local_abs, ev(entry['remote']))
+
     setup_cmds += [
-        ['adb', '-s', hostname, 'install', '-r', apk_path],
         ['adb', '-s', hostname, 'logcat', '-c'],
         launch_cmd,
     ]
@@ -1860,7 +1928,7 @@ def main():
     if dev_type == 'docker':
         run_docker(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile)
     elif dev_type == 'android':
-        run_android(args.device, device, args.preset, preset, args.extra_args, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile, build_type=args.build_type)
+        run_android(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile, build_type=args.build_type)
     elif dev_type == 'web':
         run_web(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile)
     elif dev_type == 'dolphin':
