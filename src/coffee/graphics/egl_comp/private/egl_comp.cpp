@@ -663,6 +663,7 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
 
     auto display  = e.service<DisplayHandle>()->context().display;
     auto ptr_info = e.service<comp_app::PtrNativeWindowInfo>();
+    auto context  = e.service<egl::GraphicsContext>();
 #if defined(EGL_VERSION_1_5)
     std::vector<std::pair<EGLAttrib, EGLAttrib>> attribs;
     auto&          config = comp_app::AppLoader::config<comp_app::GLConfig>(e);
@@ -724,14 +725,14 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
         {
             m_surface = eglCreatePlatformWindowSurface(
                 display,
-                e.service<egl::GraphicsContext>()->m_config,
+                context->m_config,
                 ptr_info->window,
                 C_RCAST<EGLAttrib*>(attribs.data()));
         } else
 #endif // defined(EGL_VERSION_1_5)
             m_surface = eglCreateWindowSurface(
                 display,
-                e.service<egl::GraphicsContext>()->m_config,
+                context->m_config,
                 C_RCAST<EGLNativeWindowType>(ptr_info->window),
                 nullptr);
 
@@ -741,7 +742,7 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
                 "Failed to create surface on first try: {}", egl_to_error());
             m_surface = eglCreateWindowSurface(
                 display,
-                e.service<egl::GraphicsContext>()->m_config,
+                context->m_config,
                 C_RCAST<EGLNativeWindowType>(ptr_info->window),
                 nullptr);
             cWarning("Falling back to default window configuration");
@@ -755,14 +756,33 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
         return;
     }
 
-    auto context = e.service<GraphicsContext>()->m_context;
-
-    if(!eglMakeCurrent(display, m_surface, m_surface, context))
+    if(!eglMakeCurrent(display, m_surface, m_surface, context->m_context))
     {
         ec = "eglMakeCurrent:" + egl_to_error();
         ec = comp_app::AppError::ContextNotAvailable;
         return;
     }
+
+    EGLint swap_min{}, swap_max{};
+    eglGetConfigAttrib(
+        display,
+        context->m_config,
+        EGL_MIN_SWAP_INTERVAL,
+        &swap_min);
+    eglGetConfigAttrib(
+        display,
+        context->m_config,
+        EGL_MAX_SWAP_INTERVAL,
+        &swap_max);
+    if(config.swapInterval >= swap_min && config.swapInterval <= swap_max)
+    {
+        cDebug("egl_comp: Setting swap interval {}", config.swapInterval);
+        eglSwapInterval(display, config.swapInterval);
+    } else
+        cWarning("egl_comp: Cannot set swap interval {}, min={} max={}",
+            config.swapInterval,
+            swap_min,
+            swap_max);
 
 #if defined(EGL_ANDROID_get_frame_timestamps)
 //    auto& feature_flags = e.service<GraphicsContext>()->feature_flags;
