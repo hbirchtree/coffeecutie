@@ -185,7 +185,7 @@ FORCEDINLINE void EntityContainer::exec_batched(
         if(reverse ? subsys.no_end_hook : subsys.no_start_hook)
             return;
 
-        auto frame_name = typeid(subsys).name() + std::string(hook_name);
+        auto frame_name = ENT_TYPE_NAME(subsys) + std::string(hook_name);
         DProfContext _(frame_name);
 
         if(!measure)
@@ -319,7 +319,7 @@ void EntityContainer::exec()
             if constexpr(wrap_exceptions)
                 ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:start:", subsys)
             auto frame_name =
-                typeid(subsys).name() + std::string("::start_frame");
+                ENT_TYPE_NAME(subsys) + std::string("::start_frame");
             DProfContext _(frame_name);
 
             if constexpr(wrap_exceptions)
@@ -348,7 +348,7 @@ void EntityContainer::exec()
 
         if constexpr(wrap_exceptions)
             ENT_DBG_TYPE(Verbose_Visitors, "visitor:dispatch:", visitor)
-        auto frame_name = typeid(visitor).name() + std::string("::dispatch");
+        auto frame_name = ENT_TYPE_NAME(visitor) + std::string("::dispatch");
         DProfContext _(frame_name);
 
         if constexpr(wrap_exceptions)
@@ -379,7 +379,7 @@ void EntityContainer::exec()
 
             if constexpr(wrap_exceptions)
                 ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:end:", subsys)
-            auto frame_name = typeid(subsys).name() + std::string("::end_frame");
+            auto frame_name = ENT_TYPE_NAME(subsys) + std::string("::end_frame");
             DProfContext _(frame_name);
 
             if constexpr(wrap_exceptions)
