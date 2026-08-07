@@ -23,7 +23,7 @@ struct ScreenClear
 
     ScreenClear()
     {
-        priority = 1536;
+        priority = 899;
     }
 
     bool main_thread_only() const override { return true; }

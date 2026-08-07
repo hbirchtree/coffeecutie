@@ -57,6 +57,8 @@ struct PhysicsSystem
 
     PhysicsSystem()
     {
+        // Ordering constraint: before Occluder and DrawListBuilder
+        this->priority = 897;
         m_config     = std::make_unique<btDefaultCollisionConfiguration>();
         m_dispatcher = std::make_unique<btCollisionDispatcher>(m_config.get());
         m_broadphase = std::make_unique<btDbvtBroadphase>();

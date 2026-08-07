@@ -53,6 +53,13 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
     bool m_markers_scheduled{true};
 
+    Occluder()
+    {
+        // Ordering constraint: after PhysicsSystem, before DrawListBuilder
+        // Also kept parallel with anything that doesn't conflict
+        this->priority = 898;
+    }
+
     bool parallel_safe() const override
     {
         return !m_markers_scheduled;
