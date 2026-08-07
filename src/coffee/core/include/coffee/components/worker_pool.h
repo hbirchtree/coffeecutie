@@ -6,6 +6,7 @@
 #include <condition_variable>
 #include <functional>
 #include <mutex>
+#include <pthread.h>
 #include <string>
 #include <thread>
 #include <vector>
@@ -193,6 +194,10 @@ struct worker_pool
 
     void worker_main()
     {
+#if defined(__linux__)
+        sched_param sched{};
+        pthread_setschedparam(pthread_self(), SCHED_IDLE, &sched);
+#endif
         std::unique_lock lock(m_lock);
         while(true)
         {
