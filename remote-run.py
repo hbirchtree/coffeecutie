@@ -279,7 +279,9 @@ class OutputViewerApp(App):
         self._stream()
 
     def _run_setup(self, log, cmd) -> bool:
-        """Run a setup command, writing heading/output/exit code. Returns True on success."""
+        """Run a setup command, writing heading/output/exit code. Returns True on success.
+        A callable is resolved here, so it can depend on earlier setup steps."""
+        cmd = cmd() if callable(cmd) else cmd
         heading = "$ " + " ".join(str(c) for c in cmd)
         self.call_from_thread(log.write, "")
         self.call_from_thread(log.write, RichText(heading, style="bold"))
@@ -378,6 +380,7 @@ def run_plain(cmd, toptext_msg=None, setup_cmds=None, on_quit=None, log_file=Non
             print(toptext_msg)
         ok = True
         for c in (setup_cmds or []):
+            c = c() if callable(c) else c
             heading = '$ ' + ' '.join(str(x) for x in c)
             print(heading)
             if log_fh:
@@ -556,6 +559,8 @@ def find_web_bundle(build_root, target_dir):
 
 def print_dry_run(cmds):
     for cmd in cmds:
+        if callable(cmd):
+            cmd = getattr(cmd, 'dry_run_cmd', None) or ['<deferred>']
         print('$', ' '.join(shlex.quote(str(c)) for c in cmd))
 
 
@@ -934,18 +939,6 @@ def run_android(device_name, device, preset_name, preset, extra_args, script_dir
     else:
         apk_path = ensure_signed_apk(apk_path, build_root, target_dir)
 
-    if dry_run:
-        component = f'<launcher-activity-of/{package}>'
-    else:
-        # Resolve the launcher activity (needed before TUI starts to build launch_cmd)
-        result = subprocess.run(
-            ['adb', '-s', hostname, 'shell', 'cmd', 'package', 'resolve-activity',
-             '--brief', '-a', 'android.intent.action.MAIN',
-             '-c', 'android.intent.category.LAUNCHER', package],
-            capture_output=True, text=True, check=True,
-        )
-        component = result.stdout.strip().split('\n')[-1]
-
     merged_extras = {
         key: ev(value) for key, value in {
             **device.get('env', {}),
@@ -954,9 +947,32 @@ def run_android(device_name, device, preset_name, preset, extra_args, script_dir
         }.items()
     }
 
-    launch_cmd = ['adb', '-s', hostname, 'shell', 'am', 'start', '-n', component]
-    for key, value in merged_extras.items():
-        launch_cmd += ['--es', key, value]
+    def launch_cmd():
+        """Deferred: the launcher activity can only be resolved once the device
+        is connected and the APK installed, both of which are setup steps."""
+        result = subprocess.run(
+            ['adb', '-s', hostname, 'shell', 'cmd', 'package', 'resolve-activity',
+             '--brief', '-a', 'android.intent.action.MAIN',
+             '-c', 'android.intent.category.LAUNCHER', package],
+            capture_output=True, text=True,
+        )
+        component = result.stdout.strip().split('\n')[-1] if result.returncode == 0 else ''
+        # A miss prints something like "No activity found" rather than <pkg>/<activity>.
+        if not component.startswith(f'{package}/'):
+            sys.exit(
+                f"Error: could not resolve the launcher activity for '{package}' on {hostname}\n"
+                f"  adb said: {(result.stderr or result.stdout).strip() or '(nothing)'}"
+            )
+        cmd = ['adb', '-s', hostname, 'shell', 'am', 'start', '-n', component]
+        for key, value in merged_extras.items():
+            cmd += ['--es', key, value]
+        return cmd
+
+    launch_cmd.dry_run_cmd = (
+        ['adb', '-s', hostname, 'shell', 'am', 'start', '-n',
+         f'<launcher-activity-of/{package}>']
+        + [x for key, value in merged_extras.items() for x in ('--es', key, value)]
+    )
 
     def get_logcat_cmd():
         pid = None
@@ -991,12 +1007,17 @@ def run_android(device_name, device, preset_name, preset, extra_args, script_dir
         setup_cmds.append(['adb', 'connect', hostname])
     setup_cmds.append(['adb', '-s', hostname, 'install', '-r', apk_path])
 
+    apk_assets = os.path.abspath(build_dir) + os.sep
     for entry in preset.get('files', []):
         # Trailing slashes survive expansion and os.path.join, and they are
         # what tells a directory apart from its contents.
         local_abs = ev(entry['local'])
         if not os.path.isabs(local_abs):
             local_abs = os.path.join(script_dir, local_abs)
+        # This target's build output is already bundled into the APK's assets,
+        # so only external data (maps, dummy plug configs) needs pushing.
+        if os.path.abspath(local_abs).startswith(apk_assets):
+            continue
         setup_cmds += android_push_cmds(hostname, local_abs, ev(entry['remote']))
 
     setup_cmds += [
