@@ -31,6 +31,17 @@
       "mirror_z180": false,
       "clamp_degrees": 60,
       "gain": 2
+    },
+    {
+      "source": "Head",
+      "bone": "frame monitor root",
+      "mode": "direct",
+      "axis_map": ["-z", "-x", "y"],
+      "basis_rotation": [0, 0, 0, 1],
+      "rest_delta": [0, 0, 0, 1],
+      "mirror_z180": false,
+      "clamp_degrees": 60,
+      "gain": 1
     }
   ],
   "smoothing": { "alpha": 0.05 },
