@@ -300,6 +300,8 @@ void system::finalize_timer(system::timing_t&& timer)
 
 static bool timers_available(gleam::system* system)
 {
+    if(system->api_type() == api_type_t::es || system->api_type() == api_type_t::webgl)
+        return false;
     if(system->feature_info().query.disjoint_timer_query)
         return true;
     auto const type = system->api_type();
@@ -328,6 +330,7 @@ system::gpu_timer_t::~gpu_timer_t()
         return;
     m_timer->stop();
     m_system->track_timer(std::move(m_timer), m_name);
+    m_timer->dealloc();
 }
 
 } // namespace gleam
