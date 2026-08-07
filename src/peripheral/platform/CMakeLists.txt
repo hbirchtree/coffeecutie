@@ -135,7 +135,7 @@ endif()
 #
 # Linux desktop-specific code
 #
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID AND NOT MINGW AND NOT WIN32 AND NOT MINGW)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT (ANDROID OR MINGW OR WIN32))
   coffee_library(
     TARGET EmbedFileStub
     LIBRARIES PeripheralLib
@@ -149,6 +149,17 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID AND NOT MINGW AND NOT W
       PeripheralPlatform PUBLIC -DEMBED_RESOURCES_ENABLED=1
     )
   endif()
+endif()
+
+#
+# Linux/Android shared code
+#
+if((${CMAKE_SYSTEM_NAME} STREQUAL Linux OR ANDROID) AND NOT (MINGW OR WIN32))
+  target_sources(
+    PeripheralPlatform
+    PRIVATE
+      linux/sysinfo.cpp
+  )
 endif()
 
 #

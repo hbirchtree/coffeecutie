@@ -16,7 +16,7 @@
 #endif
 
 #if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID) || \
-    defined(COFFEE_BEAGLEBONE) || defined(COFFEE_GEKKO)
+    defined(COFFEE_GEKKO)
 // Nothing...
 #elif defined(COFFEE_APPLE) || defined(COFFEE_NO_LIB_BACKTRACE)
 #define BOOST_STACKTRACE_USE_LIBC_BACKTRACE_FUNCTION
