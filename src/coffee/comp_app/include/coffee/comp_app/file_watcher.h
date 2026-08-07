@@ -15,7 +15,7 @@ class FileWatcher : public compo::SubsystemBase
   public:
     using type = FileWatcher;
 
-    void start_frame(compo::ContainerProxy&, const compo::time_point&);
+    void start_frame(compo::ContainerProxy&, const compo::time_point&) override;
 
     bool declares_access() const override
     {
