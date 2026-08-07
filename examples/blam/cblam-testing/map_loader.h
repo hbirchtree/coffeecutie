@@ -503,10 +503,6 @@ struct BlamMapBrowser
         ImGui::End();
     }
 
-    void end_restricted(Proxy&, time_point const&)
-    {
-    }
-
     void try_load_map(Url const& map)
     {
         m_map   = {};

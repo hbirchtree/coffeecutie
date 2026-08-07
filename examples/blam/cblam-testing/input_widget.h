@@ -115,8 +115,4 @@ struct InputDebugWidget
         }
         ImGui::End();
     }
-
-    void end_restricted(Proxy&, time_point const&)
-    {
-    }
 };

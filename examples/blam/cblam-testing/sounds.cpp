@@ -419,10 +419,6 @@ struct SoundSystem
         }
     }
 
-    void end_restricted(Proxy&, compo::time_point const&)
-    {
-    }
-
     sound_unit_t make_sound_unit(
         blam::tagref_t const& tagref, LoopSoundEvent::usage_t usage)
     {
@@ -754,8 +750,6 @@ struct SoundUISystem
         ImGui::End();
 #endif
     }
-
-    void end_restricted(Proxy&, time_point const& t) {}
 };
 
 #endif

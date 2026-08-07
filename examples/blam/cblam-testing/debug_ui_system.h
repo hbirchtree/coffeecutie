@@ -49,10 +49,6 @@ struct BlamDebugUi
         //        ImGui::ShowDemoWindow();
     }
 
-    void end_restricted(Proxy&, time_point const&)
-    {
-    }
-
     void framerate_text(time_point const& time)
     {
         using namespace std::chrono_literals;

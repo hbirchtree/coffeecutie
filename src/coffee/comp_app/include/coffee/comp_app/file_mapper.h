@@ -42,7 +42,6 @@ class FileMapper : public compo::SubsystemBase
 #endif
     };
 
-    void start_frame(compo::ContainerProxy&, const compo::time_point&);
     std::future<std::shared_ptr<Resource>> fetch(platform::url::Url const& src);
 
   private:

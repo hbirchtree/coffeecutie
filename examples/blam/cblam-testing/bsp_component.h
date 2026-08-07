@@ -234,10 +234,6 @@ struct BlamBspWidget
         ImGui::End();
     }
 
-    void end_restricted(Proxy&, time_point const&)
-    {
-    }
-
     // blam::map_container<V> const* m_map{nullptr};
 
     std::map<std::string_view, bool> m_bsps;

@@ -373,10 +373,6 @@ struct DrawListBuilder
 
     compo::time_point last_update{};
 
-    void end_restricted(Proxy&, compo::time_point const&)
-    {
-    }
-
     size_t align_for_gpu_padding(size_t size) const
     {
         u32 padding = m_api->limits().buffers.ubo_alignment;
@@ -2435,10 +2431,6 @@ void main()
         offscreen_sampler = resources.color->sampler();
         offscreen_sampler->alloc();
     }
-}
-
-void LoadingScreen::start_restricted(Proxy&, const time_point&)
-{
 }
 
 void LoadingScreen::end_restricted(Proxy& e, const time_point& time)

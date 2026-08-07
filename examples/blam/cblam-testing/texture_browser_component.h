@@ -55,10 +55,6 @@ struct BlamTextureBrowser
         ImGui::End();
     }
 
-    void end_restricted(Proxy&, time_point const&)
-    {
-    }
-
     void show_texture_view(Proxy& e)
     {
         BitmapCache<V>& bitmap_cache = e.template subsystem<BitmapCache<V>>();

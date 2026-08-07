@@ -205,10 +205,6 @@ struct PhysicsSystem
         m_frame++;
     }
 
-    void end_restricted(Proxy&, compo::time_point const&)
-    {
-    }
-
     /* Wire box following the probe sphere, drawn through the existing
      * debug line pass (RenderingParameters::debug_markers gates it).
      * Vertex slot is reserved once (acquire_strip), the 16 line-strip

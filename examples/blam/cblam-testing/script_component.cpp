@@ -488,10 +488,6 @@ struct BlamScript
             script_types::layout_t::typed_(curr.ret_type));
     }
 
-    void end_restricted(Proxy&, time_point const&)
-    {
-    }
-
     /* Read-only map data */
     blam::map_container<Ver> const* m_map{nullptr};
     blam::tag_index_view<Ver>       m_tags{};

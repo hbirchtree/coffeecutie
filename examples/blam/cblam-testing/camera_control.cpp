@@ -91,10 +91,6 @@ struct CameraControl
         last_time = t;
     }
 
-    void end_restricted(Proxy& p, time_point const& t)
-    {
-    }
-
     time_point                         last_time;
     std::vector<PlayerCameraLerpEvent> incoming_lerps;
 };

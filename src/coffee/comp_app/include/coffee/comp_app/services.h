@@ -992,10 +992,6 @@ struct BasicEventBus
 {
     using readable_services = type_safety::empty_list_t;
     using proxy_type        = detail::restricted::proxy_t<BasicEventBus<EType>>;
-
-    void start_restricted(proxy_type&, detail::time_point const&)
-    {
-    }
 };
 
 struct PtrNativeWindowInfoService

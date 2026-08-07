@@ -767,10 +767,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
         markers->unmap();
     }
-
-    void end_restricted(Proxy&, time_point const&)
-    {
-    }
 };
 
 void alloc_occluder(compo::EntityContainer& container)

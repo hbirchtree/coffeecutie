@@ -846,10 +846,6 @@ struct RS2CacheLoader
             cWarning("RS2: Failed to draw: {}", std::get<1>(*res));
     }
 
-    virtual void end_restricted(Proxy&, time_point const& t) final
-    {
-    }
-
     gfx::api&                                api;
     PhysicsBus&                              physics;
     compo::EntityRef<compo::EntityContainer> world_entity;

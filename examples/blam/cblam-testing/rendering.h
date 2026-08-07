@@ -96,7 +96,6 @@ struct LoadingScreen
         priority = 1535;
     }
 
-    void start_restricted(Proxy&, time_point const&);
     void end_restricted(Proxy& e, time_point const& time);
 
     void load_resources(gfx::system& api);

@@ -17,10 +17,6 @@ FileMapper::Resource::operator semantic::BytesConst() const
     return semantic::mem_chunk<const char>::ofContainer(span);
 }
 
-void FileMapper::start_frame(compo::ContainerProxy&, const compo::time_point&)
-{
-}
-
 std::future<std::shared_ptr<FileMapper::Resource>> FileMapper::fetch(
     const platform::url::Url& src)
 {
