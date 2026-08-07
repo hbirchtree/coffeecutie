@@ -1,5 +1,6 @@
 #include "rendering.h"
 
+#include "bitmap_cache.h"
 #include "blam_files.h"
 #include "caching.h"
 #include "caching_item.h"
@@ -324,10 +325,6 @@ struct DrawListBuilder
     {
         ProfContext _;
 
-        /* Legacy builds their batches from different rules in the renderer */
-        if(use_legacy_rendering())
-            return;
-
         m_submit = m_build;
 
         m_resources.model_matrix_store->next();
@@ -382,11 +379,6 @@ struct DrawListBuilder
         u32 unaligned_size = size & mask;
         u32 added_padding  = padding - unaligned_size;
         return size + added_padding;
-    }
-
-    bool use_legacy_rendering() const
-    {
-        return m_api->api_version() == std::make_tuple<u32, u32>(2, 0);
     }
 
     gfx::api*             m_api;
@@ -520,9 +512,6 @@ struct DrawListBuilder
         size_t materials_ptr   = 0;
         size_t transparent_ptr = 0;
         generate_static_draws(p, materials_ptr, transparent_ptr);
-
-        if(use_legacy_rendering())
-            return;
 
         for(Pass& pass : model_build())
             pass.clear();
@@ -852,11 +841,6 @@ struct MeshRenderer
     }
 
     bool main_thread_only() const override { return true; }
-
-    bool use_legacy_rendering() const
-    {
-        return m_api->api_version() == std::make_tuple<u32, u32>(2, 0);
-    }
 
     BSPItem const* get_bsp(generation_idx_t bsp)
     {
@@ -1366,8 +1350,7 @@ struct MeshRenderer
         if(m_cluster_events)
             m_cluster_events->poll();
 
-        if(!use_legacy_rendering())
-            upload_draw_lists(p.template subsystem<DrawListBuilder<Version>>());
+        upload_draw_lists(p.template subsystem<DrawListBuilder<Version>>());
 
         /* Collect active local players sorted by seat_idx */
         m_players.clear();
@@ -1448,12 +1431,6 @@ struct MeshRenderer
             m_pending_changes.clear();
             p.template subsystem<RenderingParameters>()
                 .structural_change_pending = false;
-        }
-
-        if(use_legacy_rendering())
-        {
-            legacy_render(p, t);
-            return;
         }
 
         gfx::system& system = p.template subsystem<gfx::system>();
@@ -1576,514 +1553,6 @@ struct MeshRenderer
 
         render_debug_lines(p);
     }
-
-    struct LegacyBatch
-    {
-        gfx::draw_command::call_spec_t         call;
-        std::vector<gfx::draw_command::data_t> data;
-        std::shared_ptr<gfx::texture_t>        lightmap;
-        std::shared_ptr<gfx::sampler_t>        lightmap_sampler;
-        std::vector<gfx::texture_t*>           base_map;
-        std::shared_ptr<gfx::sampler_t>        base_sampler;
-        std::vector<Vecf2>                     base_map_scale;
-        std::vector<gfx::texture_t*>           micro_map;
-        std::shared_ptr<gfx::sampler_t>        micro_sampler;
-        std::vector<Vecf2>                     micro_map_scale;
-    };
-
-    void legacy_render(Proxy& p, f32 t)
-    {
-        using typing::vector_types::Vecd2;
-
-        RenderingParameters const* rendering_props;
-        p.subsystem(rendering_props);
-
-        ProfContext _;
-        std::map<cache_id_t, LegacyBatch> batches;
-        for(auto const& ent :
-            p.template select<BspReference, DrawState, Visibility>())
-        {
-            auto const& [bsp_ref, bsp_draw, vis] = ent.components();
-            if(!vis.visible)
-                continue;
-            if(!bsp_ref.shader.valid() || !bsp_ref.lightmap.valid())
-                continue;
-            ShaderItem const& shader =
-                shader_cache.find(bsp_ref.shader)->second;
-            if(shader.tag_class != blam::tag_class_t::senv)
-                continue;
-            BitmapItem const& lightm =
-                bitm_cache.find(bsp_ref.lightmap)->second;
-            blam::shader::shader_env const* senv =
-                reinterpret_cast<blam::shader::shader_env const*>(
-                    shader.header);
-            LegacyBatch& batch = batches[bsp_ref.lightmap.i];
-            auto         light_bucket =
-                bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
-                    lightm.image.fmt);
-
-            auto setup_texture = [&](generation_idx_t                 ref,
-                                     std::vector<gfx::texture_t*>&    array,
-                                     std::shared_ptr<gfx::sampler_t>& sampler) {
-                if(!ref.valid())
-                {
-                    array.push_back(nullptr);
-                    return;
-                }
-                BitmapItem const& bitm = bitm_cache.find(ref)->second;
-                auto              bucket =
-                    bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
-                        bitm.image.fmt);
-                array.push_back(
-                    bucket.template texture_as<gfx::compat::texture_2da_t>()
-                        .subtexture(bitm.image.layer)
-                        .get());
-                sampler = bucket.sampler;
-            };
-
-            // Texture setup
-            batch.lightmap =
-                light_bucket.template texture_as<gfx::compat::texture_2da_t>()
-                    .subtexture(lightm.image.layer);
-            batch.lightmap_sampler = light_bucket.sampler;
-
-            setup_texture(
-                shader.senv.base_bitm, batch.base_map, batch.base_sampler);
-            setup_texture(
-                shader.senv.micro_bitm, batch.micro_map, batch.micro_sampler);
-
-            // Draw call setup
-            batch.call = bsp_draw.draw.call;
-            batch.data.push_back(bsp_draw.draw.data.front());
-        }
-
-        Coffee::Profiler::PushContext("legacy_render: Opaque BSP");
-        for(auto const& [_, light_group] : batches)
-        {
-            Vecf2 base_map_scale{1, 1};
-            Vecf2 micro_map_scale{8, 8};
-            auto  vertex_u = gfx::make_uniform_list(
-                typing::graphics::ShaderStage::Vertex,
-                gfx::uniform_pair{
-                     {"camera"sv},
-                    semantic::SpanOne<const Matf4>(m_players[0].matrix)});
-            auto fragment_u = gfx::make_uniform_list(
-                typing::graphics::ShaderStage::Fragment,
-                gfx::uniform_pair{
-                    {"base_map_scale"sv},
-                    semantic::SpanOne<const Vecf2>(base_map_scale)},
-                gfx::uniform_pair{
-                    {"micro_map_scale"sv},
-                    semantic::SpanOne<const Vecf2>(micro_map_scale)});
-            light_group.lightmap_sampler->rebind(light_group.lightmap);
-            std::vector<gfx::sampler_definition_t> samplers;
-            samplers.push_back(
-                gleam::sampler_definition_t{
-                    typing::graphics::ShaderStage::Fragment,
-                    {"lightmap"sv, 0},
-                    light_group.lightmap_sampler});
-            auto texture_lists = gfx::make_instance_textures(
-                gfx::instance_texture_t{
-                    .stage    = typing::graphics::ShaderStage::Fragment,
-                    .uniform  = gfx::uniform_key{"base_map"sv, 1},
-                    .sampler  = light_group.base_sampler,
-                    .textures = light_group.base_map,
-                },
-                gfx::instance_texture_t{
-                    .stage    = typing::graphics::ShaderStage::Fragment,
-                    .uniform  = gfx::uniform_key{"micro_map"sv, 2},
-                    .sampler  = light_group.micro_sampler,
-                    .textures = light_group.micro_map,
-                });
-            ProfContext __("Draw submission");
-            m_api->submit(
-                {
-                    .program       = m_resources.bsp_pipeline,
-                    .vertices      = m_resources.bsp_attr,
-                    .render_target = m_resources.offscreen,
-                    .call =
-                        gfx::draw_command::call_spec_t{
-                            .indexed = true,
-                            .mode    = gfx::drawing::primitive::triangle,
-                        },
-                    .data = light_group.data,
-                },
-                vertex_u,
-                fragment_u,
-                samplers,
-                texture_lists,
-                gfx::cull_state{.front_face = true},
-                gfx::view_state{
-                    .depth =
-                        gfx::depth_state{
-                            .range    = Vecd2{0.0, 1.0},
-                            .reversed = true,
-                        },
-                });
-        }
-        Coffee::Profiler::PopContext();
-
-        Coffee::Profiler::PushContext("legacy_render: Water BSP");
-        for(auto const& ref : p.template select<BspReference, DrawState>())
-        {
-            auto const& [bsp_ref, bsp_draw] = ref.components();
-            if(!bsp_ref.shader.valid())
-                continue;
-            auto sh_it = shader_cache.find(bsp_ref.shader);
-            if(sh_it == shader_cache.end())
-                continue;
-            if(sh_it->second.tag_class != blam::tag_class_t::swat)
-                continue;
-            generation_idx_t base_id = sh_it->second.swat.base;
-            if(!base_id.valid())
-                continue;
-            auto b_it = bitm_cache.find(base_id);
-            if(b_it == bitm_cache.end())
-                continue;
-            BitmapItem const& b = b_it->second;
-            auto              base_tex =
-                bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
-                    b.image.fmt);
-            base_tex.sampler->rebind(
-                base_tex.template texture_as<gfx::compat::texture_2da_t>()
-                    .subtexture(b.image.layer));
-
-            std::vector<gfx::sampler_definition_t> samplers;
-            samplers.push_back(
-                gleam::sampler_definition_t{
-                    typing::graphics::ShaderStage::Fragment,
-                    {"base"sv, 0},
-                    base_tex.sampler});
-
-            /* Ripple layer (swat bump/ripple map) */
-            i32 has_ripple = 0;
-            if(auto rid = sh_it->second.swat.bump; rid.valid())
-            {
-                if(auto r_it = bitm_cache.find(rid); r_it != bitm_cache.end())
-                {
-                    BitmapItem const& rb = r_it->second;
-                    auto              rtex =
-                        bitm_cache
-                            .template get_bucket<gfx::compat::texture_2da_t>(
-                                rb.image.fmt);
-                    rtex.sampler->rebind(
-                        rtex.template texture_as<gfx::compat::texture_2da_t>()
-                            .subtexture(rb.image.layer));
-                    samplers.push_back(
-                        gleam::sampler_definition_t{
-                            typing::graphics::ShaderStage::Fragment,
-                            {"ripple"sv, 1},
-                            rtex.sampler});
-                    has_ripple = 1;
-                }
-            }
-
-            /* Lightmap modulation */
-            i32   has_light = 0;
-            Vecf2 light_scale{1, 1}, light_offset{0, 0};
-            if(bsp_ref.lightmap.valid())
-            {
-                if(auto l_it = bitm_cache.find(bsp_ref.lightmap);
-                   l_it != bitm_cache.end())
-                {
-                    BitmapItem const& lm = l_it->second;
-                    auto              ltex =
-                        bitm_cache
-                            .template get_bucket<gfx::compat::texture_2da_t>(
-                                lm.image.fmt);
-                    ltex.sampler->rebind(
-                        ltex.template texture_as<gfx::compat::texture_2da_t>()
-                            .subtexture(lm.image.layer));
-                    samplers.push_back(
-                        gleam::sampler_definition_t{
-                            typing::graphics::ShaderStage::Fragment,
-                            {"lightmap"sv, 2},
-                            ltex.sampler});
-                    light_scale  = lm.image.scale;
-                    light_offset = lm.image.offset;
-                    has_light    = 1;
-                }
-            }
-
-            auto vtx_u = gfx::make_uniform_list(
-                typing::graphics::ShaderStage::Vertex,
-                gfx::uniform_pair{
-                    {"camera"sv},
-                    semantic::SpanOne<const Matf4>(m_players[0].matrix)});
-            auto frg_u = gfx::make_uniform_list(
-                typing::graphics::ShaderStage::Fragment,
-                gfx::uniform_pair{{"time"sv}, semantic::SpanOne<const f32>(t)},
-                gfx::uniform_pair{
-                    {"has_ripple"sv}, semantic::SpanOne<const i32>(has_ripple)},
-                gfx::uniform_pair{
-                    {"has_light"sv}, semantic::SpanOne<const i32>(has_light)},
-                gfx::uniform_pair{
-                    {"light_scale"sv},
-                    semantic::SpanOne<const Vecf2>(light_scale)},
-                gfx::uniform_pair{
-                    {"light_offset"sv},
-                    semantic::SpanOne<const Vecf2>(light_offset)});
-            m_api->submit(
-                {
-                    .program       = m_resources.water_pipeline,
-                    .vertices      = m_resources.bsp_attr,
-                    .render_target = m_resources.offscreen,
-                    .call =
-                        gfx::draw_command::call_spec_t{
-                            .indexed = true,
-                            .mode    = gfx::drawing::primitive::triangle,
-                        },
-                    .data = bsp_draw.draw.data,
-                },
-                vtx_u,
-                frg_u,
-                samplers,
-                gfx::blend_state{}, /* standard src-alpha transparency */
-                gfx::view_state{
-                    .depth =
-                        gfx::depth_state{
-                            .range    = Vecd2{0.0, 1.0},
-                            .reversed = true,
-                        },
-                });
-        }
-        Coffee::Profiler::PopContext();
-
-        if(!rendering_props->render_scenery)
-            return;
-
-        ModelCache<Version>* model_cache;
-        p.subsystem(model_cache);
-
-        Coffee::Profiler::PushContext("legacy_render: Scenery");
-        Matf4 const& camera = m_players[0].matrix;
-
-        constexpr u32 model_batch_size = 32;
-
-        struct ModelBatch
-        {
-            generation_idx_t          shader;
-            gfx::draw_command::data_t geom;
-            Vecf2                     base_scale{1, 1};
-            std::vector<Matf4>        transforms;
-        };
-
-        std::map<std::pair<cache_id_t, u64>, ModelBatch> soso_batches;
-
-        /* Model lives on the parent entity, SubModel on its children —
-         * they are never on the same entity, so Model cannot be part of
-         * the fused select here */
-        for(auto ent : p.template select<SubModel, DrawState>())
-        {
-            auto const& [sm, sm_draw] = ent.components();
-            auto            parent = p.template ref<Proxy>(sm.parent);
-            Model const&    mod    = parent.template get<Model>();
-            if(!parent.template get<Visibility>().visible || !sm.shader.valid())
-                continue;
-
-            auto shader_it = shader_cache.find(sm.shader);
-            if(shader_it == shader_cache.end())
-                continue;
-            ShaderItem const& shitem   = shader_it->second;
-            auto              model_it = model_cache->find(mod.model);
-            if(model_it == model_cache->end())
-                continue;
-            ModelItem<Version> const& mitem = model_it->second;
-
-            /* schi/scex (incl. the sky dome) — simplified multi-map combiner.
-             * Distinct per-object map sets and few instances; drawn inline as a
-             * single-instance batch (models[0], glw_InstanceID==0). */
-            if(shitem.tag_class == blam::tag_class_t::schi ||
-               shitem.tag_class == blam::tag_class_t::scex)
-            {
-                auto vtx_u = gfx::make_uniform_list(
-                    typing::graphics::ShaderStage::Vertex,
-                    gfx::uniform_pair{
-                        {"camera"sv, 1},
-                        semantic::SpanOne<const Matf4>(camera)},
-                    gfx::uniform_pair{
-                        {"models"sv, 2},
-                        semantic::SpanOne<const Matf4>(mod.transform)});
-                auto const& maps = shitem.tag_class == blam::tag_class_t::schi
-                                       ? shitem.schi.maps
-                                       : shitem.scex.maps;
-                static constexpr std::array<std::string_view, 4> map_names = {
-                    {"map0"sv, "map1"sv, "map2"sv, "map3"sv}};
-                std::vector<gfx::sampler_definition_t> samplers;
-                Vecf2                                  scale0{1, 1};
-                i32                                    count = 0;
-                for(i32 i = 0; i < 4; i++)
-                {
-                    if(!maps[i].valid())
-                        break; /* chicago maps are contiguous from 0 */
-                    auto it = bitm_cache.find(maps[i]);
-                    if(it == bitm_cache.end())
-                        break;
-                    BitmapItem const& b = it->second;
-                    auto              bkt =
-                        bitm_cache
-                            .template get_bucket<gfx::compat::texture_2da_t>(
-                                b.image.fmt);
-                    auto sub =
-                        bkt.template texture_as<gfx::compat::texture_2da_t>()
-                            .subtexture(b.image.layer);
-                    bkt.sampler->rebind(sub);
-                    samplers.push_back(
-                        gleam::sampler_definition_t{
-                            typing::graphics::ShaderStage::Fragment,
-                            {map_names[i], i},
-                            bkt.sampler});
-                    if(i == 0)
-                        scale0 = b.image.scale;
-                    count++;
-                }
-                if(count == 0)
-                    continue;
-                auto frg_u = gfx::make_uniform_list(
-                    typing::graphics::ShaderStage::Fragment,
-                    gfx::uniform_pair{
-                        {"map_count"sv, 4},
-                        semantic::SpanOne<const i32>(count)},
-                    gfx::uniform_pair{
-                        {"base_map_scale"sv, 5},
-                        semantic::SpanOne<const Vecf2>(scale0)});
-                m_api->submit(
-                    {
-                        .program       = m_resources.chicago_pipeline,
-                        .vertices      = m_resources.model_attr,
-                        .render_target = m_resources.offscreen,
-                        .call =
-                            gfx::draw_command::call_spec_t{
-                                .indexed = true,
-                                .mode = gfx::drawing::primitive::triangle_strip,
-                            },
-                        .data = sm_draw.draw.data,
-                    },
-                    vtx_u,
-                    frg_u,
-                    samplers,
-                    gfx::cull_state{.front_face = true},
-                    gfx::view_state{
-                        .depth =
-                            gfx::depth_state{
-                                .range          = Vecd2{0.0, 0.0},
-                                .reversed       = true,
-                                .strict_greater = false,
-                            },
-                    },
-                    gfx::depth_extended_state{.depth_write = false});
-                continue;
-            }
-
-            /* soso — standard single-diffuse scenery; accumulate identical
-             * instances into a batch keyed by shader + part geometry. */
-            generation_idx_t base_bitm = shitem.soso.base_bitm;
-            if(!base_bitm.valid())
-                continue;
-            auto bitm_it = bitm_cache.find(base_bitm);
-            if(bitm_it == bitm_cache.end())
-                continue;
-            if(sm_draw.draw.data.empty())
-                continue;
-
-            auto const& geom = sm_draw.draw.data.front();
-            auto& batch = soso_batches[{sm.shader.i, geom.elements.offset}];
-            if(batch.transforms.empty())
-            {
-                batch.shader                = sm.shader;
-                batch.geom                  = geom;
-                batch.geom.instances.count  = 1;
-                batch.geom.instances.offset = 0;
-                batch.base_scale =
-                    bitm_it->second.image.scale * mitem.header->uvscale;
-            }
-            batch.transforms.push_back(mod.transform);
-        }
-
-        /* Emit one batched draw per identical group (splitting runs longer than
-         * the uniform-array cap). The program, base texture, sampler and frag
-         * uniform are bound once per group; only the transform array changes.
-         */
-        for(auto const& [key, batch] : soso_batches)
-        {
-            auto shader_it = shader_cache.find(batch.shader);
-            if(shader_it == shader_cache.end())
-                continue;
-            generation_idx_t base_bitm = shader_it->second.soso.base_bitm;
-            auto             bitm_it   = bitm_cache.find(base_bitm);
-            if(bitm_it == bitm_cache.end())
-                continue;
-
-            BitmapItem const& base = bitm_it->second;
-            auto              base_tex =
-                bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
-                    base.image.fmt);
-            auto base_sub =
-                base_tex.template texture_as<gfx::compat::texture_2da_t>()
-                    .subtexture(base.image.layer);
-            base_tex.sampler->rebind(base_sub);
-
-            auto frg_u = gfx::make_uniform_list(
-                typing::graphics::ShaderStage::Fragment,
-                gfx::uniform_pair{
-                    {"base_map_scale"sv, 3},
-                    semantic::SpanOne<const Vecf2>(batch.base_scale)});
-
-            std::vector<gfx::sampler_definition_t> samplers;
-            samplers.push_back(
-                gleam::sampler_definition_t{
-                    typing::graphics::ShaderStage::Fragment,
-                    {"diffuse"sv, 0},
-                    base_tex.sampler});
-
-            for(size_t off = 0; off < batch.transforms.size();
-                off += model_batch_size)
-            {
-                size_t n = std::min<size_t>(
-                    model_batch_size, batch.transforms.size() - off);
-                auto vtx_u = gfx::make_uniform_list(
-                    typing::graphics::ShaderStage::Vertex,
-                    gfx::uniform_pair{
-                        {"camera"sv, 1},
-                        semantic::SpanOne<const Matf4>(camera)},
-                    gfx::uniform_pair{
-                        {"models"sv, 2},
-                        semantic::Span<const Matf4>(
-                            batch.transforms.data() + off, n)});
-                std::vector<gfx::draw_command::data_t> data(n, batch.geom);
-                m_api->submit(
-                    {
-                        .program       = m_resources.model_pipeline,
-                        .vertices      = m_resources.model_attr,
-                        .render_target = m_resources.offscreen,
-                        .call =
-                            gfx::draw_command::call_spec_t{
-                                .indexed = true,
-                                .mode = gfx::drawing::primitive::triangle_strip,
-                            },
-                        .data = data,
-                    },
-                    vtx_u,
-                    frg_u,
-                    samplers,
-                    gfx::cull_state{.front_face = true},
-                    gfx::view_state{
-                        .depth =
-                            gfx::depth_state{
-                                .range          = Vecd2{0.0, 1.0},
-                                .reversed       = true,
-                                .strict_greater = true,
-                            },
-                    });
-            }
-        }
-        Coffee::Profiler::PopContext();
-    }
-
-    void end_restricted(Proxy& /*p*/, time_point const& /*time*/)
-    {
-    }
-
 
     void update_skybox(Proxy& p, i16 new_skybox)
     {
@@ -2231,6 +1700,564 @@ struct MeshRenderer
                 }
             }
         }
+    }
+};
+
+template<typename Ver>
+struct LegacyMeshRenderer
+    : compo::RestrictedSubsystem<LegacyMeshRenderer<Ver>, LegacyMeshRendererManifest<Ver>>
+{
+    using type = LegacyMeshRenderer<Ver>;
+    using Proxy = compo::proxy_of<LegacyMeshRendererManifest<Ver>>;
+
+    struct LegacyBatch
+    {
+        gfx::draw_command::call_spec_t         call;
+        std::vector<gfx::draw_command::data_t> data;
+        std::shared_ptr<gfx::texture_t>        lightmap;
+        std::shared_ptr<gfx::sampler_t>        lightmap_sampler;
+        std::vector<gfx::texture_t*>           base_map;
+        std::shared_ptr<gfx::sampler_t>        base_sampler;
+        std::vector<Vecf2>                     base_map_scale;
+        std::vector<gfx::texture_t*>           micro_map;
+        std::shared_ptr<gfx::sampler_t>        micro_sampler;
+        std::vector<Vecf2>                     micro_map_scale;
+    };
+
+    void start_restricted(Proxy& p, time_point const& time)
+    {
+        f32 t = std::fmod(stl_types::Chrono::to_f32(time), 3600.f);
+        legacy_render(p, t);
+    }
+
+    void legacy_render(Proxy& p, f32 t)
+    {
+        using typing::vector_types::Vecd2;
+
+        BlamResources const& resources = p.template subsystem<BlamResources>();
+
+        do
+        {
+            LoadingStatus* loading_state;
+            p.subsystem(loading_state);
+
+            auto bsp_state = resources.bsp_pipeline->check_async_ready();
+            auto mod_state =
+                resources.model_pipeline
+                    ? resources.model_pipeline->check_async_ready()
+                    : stl_types::result<bool, gfx::program_t::compile_error_t>(
+                          true);
+
+            if(!bsp_state.has_value() || !mod_state.has_value())
+                return;
+            loading_state->loaded_shaders =
+                bsp_state.value() && mod_state.value()
+                    ? LoadingStatus::loaded
+                    : LoadingStatus::in_progress;
+            loading_state->check_all_loaded(true);
+            if(loading_state->loading)
+                return;
+        } while(false);
+
+        RenderingParameters const* rendering_props;
+        gfx::system* api;
+        p.subsystem(rendering_props);
+        p.subsystem(api);
+        BitmapCache<Ver>& bitm_cache = p.template subsystem<BitmapCache<Ver>>();
+        ShaderCache<Ver>& shader_cache = p.template subsystem<ShaderCache<Ver>>();
+
+        PlayerCamera const* player_cam{};
+        for(auto player : p.template select<PlayerInfo, PlayerCamera>())
+        {
+            auto [info, camera] = player.components();
+            if(info.seat_idx != 0)
+                continue;
+            player_cam = &camera;
+        }
+
+        if(!player_cam)
+            cWarning("No player camera");
+
+        ProfContext _;
+        std::map<cache_id_t, LegacyBatch> batches;
+        for(auto const& ent :
+            p.template select<BspReference, DrawState, Visibility>())
+        {
+            auto const& [bsp_ref, bsp_draw, vis] = ent.components();
+            if(!vis.visible)
+                continue;
+            if(!bsp_ref.shader.valid() || !bsp_ref.lightmap.valid())
+                continue;
+            ShaderItem const& shader =
+                shader_cache.find(bsp_ref.shader)->second;
+            if(shader.tag_class != blam::tag_class_t::senv)
+                continue;
+            BitmapItem const& lightm =
+                bitm_cache.find(bsp_ref.lightmap)->second;
+            blam::shader::shader_env const* senv =
+                reinterpret_cast<blam::shader::shader_env const*>(
+                    shader.header);
+            LegacyBatch& batch = batches[bsp_ref.lightmap.i];
+            auto         light_bucket =
+                bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
+                    lightm.image.fmt);
+
+            auto setup_texture = [&](generation_idx_t                 ref,
+                                     std::vector<gfx::texture_t*>&    array,
+                                     std::shared_ptr<gfx::sampler_t>& sampler) {
+                if(!ref.valid())
+                {
+                    array.push_back(nullptr);
+                    return;
+                }
+                BitmapItem const& bitm = bitm_cache.find(ref)->second;
+                auto              bucket =
+                    bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
+                        bitm.image.fmt);
+                array.push_back(
+                    bucket.template texture_as<gfx::compat::texture_2da_t>()
+                        .subtexture(bitm.image.layer)
+                        .get());
+                sampler = bucket.sampler;
+            };
+
+            // Texture setup
+            batch.lightmap =
+                light_bucket.template texture_as<gfx::compat::texture_2da_t>()
+                    .subtexture(lightm.image.layer);
+            batch.lightmap_sampler = light_bucket.sampler;
+
+            setup_texture(
+                shader.senv.base_bitm, batch.base_map, batch.base_sampler);
+            setup_texture(
+                shader.senv.micro_bitm, batch.micro_map, batch.micro_sampler);
+
+            // Draw call setup
+            batch.call = bsp_draw.draw.call;
+            batch.data.push_back(bsp_draw.draw.data.front());
+        }
+
+        Coffee::Profiler::PushContext("legacy_render: Opaque BSP");
+        for(auto const& [_, light_group] : batches)
+        {
+            Vecf2 base_map_scale{1, 1};
+            Vecf2 micro_map_scale{8, 8};
+            auto  vertex_u = gfx::make_uniform_list(
+                typing::graphics::ShaderStage::Vertex,
+                gfx::uniform_pair{
+                     {"camera"sv},
+                    semantic::SpanOne<const Matf4>(player_cam->matrix)});
+            auto fragment_u = gfx::make_uniform_list(
+                typing::graphics::ShaderStage::Fragment,
+                gfx::uniform_pair{
+                    {"base_map_scale"sv},
+                    semantic::SpanOne<const Vecf2>(base_map_scale)},
+                gfx::uniform_pair{
+                    {"micro_map_scale"sv},
+                    semantic::SpanOne<const Vecf2>(micro_map_scale)});
+            light_group.lightmap_sampler->rebind(light_group.lightmap);
+            std::vector<gfx::sampler_definition_t> samplers;
+            samplers.push_back(
+                gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"lightmap"sv, 0},
+                    light_group.lightmap_sampler});
+            auto texture_lists = gfx::make_instance_textures(
+                gfx::instance_texture_t{
+                    .stage    = typing::graphics::ShaderStage::Fragment,
+                    .uniform  = gfx::uniform_key{"base_map"sv, 1},
+                    .sampler  = light_group.base_sampler,
+                    .textures = light_group.base_map,
+                },
+                gfx::instance_texture_t{
+                    .stage    = typing::graphics::ShaderStage::Fragment,
+                    .uniform  = gfx::uniform_key{"micro_map"sv, 2},
+                    .sampler  = light_group.micro_sampler,
+                    .textures = light_group.micro_map,
+                });
+            ProfContext __("Draw submission");
+            api->submit(
+                {
+                    .program       = resources.bsp_pipeline,
+                    .vertices      = resources.bsp_attr,
+                    .render_target = resources.offscreen,
+                    .call =
+                        gfx::draw_command::call_spec_t{
+                            .indexed = true,
+                            .mode    = gfx::drawing::primitive::triangle,
+                        },
+                    .data = light_group.data,
+                },
+                vertex_u,
+                fragment_u,
+                samplers,
+                texture_lists,
+                gfx::cull_state{.front_face = true},
+                gfx::view_state{
+                    .depth =
+                        gfx::depth_state{
+                            .range    = Vecd2{0.0, 1.0},
+                            .reversed = true,
+                        },
+                });
+        }
+        Coffee::Profiler::PopContext();
+
+        Coffee::Profiler::PushContext("legacy_render: Water BSP");
+        for(auto const& ref : p.template select<BspReference, DrawState>())
+        {
+            auto const& [bsp_ref, bsp_draw] = ref.components();
+            if(!bsp_ref.shader.valid())
+                continue;
+            auto sh_it = shader_cache.find(bsp_ref.shader);
+            if(sh_it == shader_cache.end())
+                continue;
+            if(sh_it->second.tag_class != blam::tag_class_t::swat)
+                continue;
+            generation_idx_t base_id = sh_it->second.swat.base;
+            if(!base_id.valid())
+                continue;
+            auto b_it = bitm_cache.find(base_id);
+            if(b_it == bitm_cache.end())
+                continue;
+            BitmapItem const& b = b_it->second;
+            auto              base_tex =
+                bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
+                    b.image.fmt);
+            base_tex.sampler->rebind(
+                base_tex.template texture_as<gfx::compat::texture_2da_t>()
+                    .subtexture(b.image.layer));
+
+            std::vector<gfx::sampler_definition_t> samplers;
+            samplers.push_back(
+                gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"base"sv, 0},
+                    base_tex.sampler});
+
+            /* Ripple layer (swat bump/ripple map) */
+            i32 has_ripple = 0;
+            if(auto rid = sh_it->second.swat.bump; rid.valid())
+            {
+                if(auto r_it = bitm_cache.find(rid); r_it != bitm_cache.end())
+                {
+                    BitmapItem const& rb = r_it->second;
+                    auto              rtex =
+                        bitm_cache
+                            .template get_bucket<gfx::compat::texture_2da_t>(
+                                rb.image.fmt);
+                    rtex.sampler->rebind(
+                        rtex.template texture_as<gfx::compat::texture_2da_t>()
+                            .subtexture(rb.image.layer));
+                    samplers.push_back(
+                        gleam::sampler_definition_t{
+                            typing::graphics::ShaderStage::Fragment,
+                            {"ripple"sv, 1},
+                            rtex.sampler});
+                    has_ripple = 1;
+                }
+            }
+
+            /* Lightmap modulation */
+            i32   has_light = 0;
+            Vecf2 light_scale{1, 1}, light_offset{0, 0};
+            if(bsp_ref.lightmap.valid())
+            {
+                if(auto l_it = bitm_cache.find(bsp_ref.lightmap);
+                   l_it != bitm_cache.end())
+                {
+                    BitmapItem const& lm = l_it->second;
+                    auto              ltex =
+                        bitm_cache
+                            .template get_bucket<gfx::compat::texture_2da_t>(
+                                lm.image.fmt);
+                    ltex.sampler->rebind(
+                        ltex.template texture_as<gfx::compat::texture_2da_t>()
+                            .subtexture(lm.image.layer));
+                    samplers.push_back(
+                        gleam::sampler_definition_t{
+                            typing::graphics::ShaderStage::Fragment,
+                            {"lightmap"sv, 2},
+                            ltex.sampler});
+                    light_scale  = lm.image.scale;
+                    light_offset = lm.image.offset;
+                    has_light    = 1;
+                }
+            }
+
+            auto vtx_u = gfx::make_uniform_list(
+                typing::graphics::ShaderStage::Vertex,
+                gfx::uniform_pair{
+                    {"camera"sv},
+                    semantic::SpanOne<const Matf4>(player_cam->matrix)});
+            auto frg_u = gfx::make_uniform_list(
+                typing::graphics::ShaderStage::Fragment,
+                gfx::uniform_pair{{"time"sv}, semantic::SpanOne<const f32>(t)},
+                gfx::uniform_pair{
+                    {"has_ripple"sv}, semantic::SpanOne<const i32>(has_ripple)},
+                gfx::uniform_pair{
+                    {"has_light"sv}, semantic::SpanOne<const i32>(has_light)},
+                gfx::uniform_pair{
+                    {"light_scale"sv},
+                    semantic::SpanOne<const Vecf2>(light_scale)},
+                gfx::uniform_pair{
+                    {"light_offset"sv},
+                    semantic::SpanOne<const Vecf2>(light_offset)});
+            api->submit(
+                {
+                    .program       = resources.water_pipeline,
+                    .vertices      = resources.bsp_attr,
+                    .render_target = resources.offscreen,
+                    .call =
+                        gfx::draw_command::call_spec_t{
+                            .indexed = true,
+                            .mode    = gfx::drawing::primitive::triangle,
+                        },
+                    .data = bsp_draw.draw.data,
+                },
+                vtx_u,
+                frg_u,
+                samplers,
+                gfx::blend_state{}, /* standard src-alpha transparency */
+                gfx::view_state{
+                    .depth =
+                        gfx::depth_state{
+                            .range    = Vecd2{0.0, 1.0},
+                            .reversed = true,
+                        },
+                });
+        }
+        Coffee::Profiler::PopContext();
+
+        if(!rendering_props->render_scenery)
+            return;
+
+        ModelCache<Ver>* model_cache;
+        p.subsystem(model_cache);
+
+        Coffee::Profiler::PushContext("legacy_render: Scenery");
+        Matf4 const& camera = player_cam->matrix;
+
+        constexpr u32 model_batch_size = 32;
+
+        struct ModelBatch
+        {
+            generation_idx_t          shader;
+            gfx::draw_command::data_t geom;
+            Vecf2                     base_scale{1, 1};
+            std::vector<Matf4>        transforms;
+        };
+
+        std::map<std::pair<cache_id_t, u64>, ModelBatch> soso_batches;
+
+        /* Model lives on the parent entity, SubModel on its children —
+         * they are never on the same entity, so Model cannot be part of
+         * the fused select here */
+        for(auto ent : p.template select<SubModel, DrawState>())
+        {
+            auto const& [sm, sm_draw] = ent.components();
+            auto            parent = p.template ref<Proxy>(sm.parent);
+            Model const&    mod    = parent.template get<Model>();
+            if(!parent.template get<Visibility>().visible || !sm.shader.valid())
+                continue;
+
+            auto shader_it = shader_cache.find(sm.shader);
+            if(shader_it == shader_cache.end())
+                continue;
+            ShaderItem const& shitem   = shader_it->second;
+            auto              model_it = model_cache->find(mod.model);
+            if(model_it == model_cache->end())
+                continue;
+            ModelItem<Ver> const& mitem = model_it->second;
+
+            /* schi/scex (incl. the sky dome) — simplified multi-map combiner.
+             * Distinct per-object map sets and few instances; drawn inline as a
+             * single-instance batch (models[0], glw_InstanceID==0). */
+            if(shitem.tag_class == blam::tag_class_t::schi ||
+               shitem.tag_class == blam::tag_class_t::scex)
+            {
+                auto vtx_u = gfx::make_uniform_list(
+                    typing::graphics::ShaderStage::Vertex,
+                    gfx::uniform_pair{
+                        {"camera"sv, 1},
+                        semantic::SpanOne<const Matf4>(camera)},
+                    gfx::uniform_pair{
+                        {"models"sv, 2},
+                        semantic::SpanOne<const Matf4>(mod.transform)});
+                auto const& maps = shitem.tag_class == blam::tag_class_t::schi
+                                       ? shitem.schi.maps
+                                       : shitem.scex.maps;
+                static constexpr std::array<std::string_view, 4> map_names = {
+                    {"map0"sv, "map1"sv, "map2"sv, "map3"sv}};
+                std::vector<gfx::sampler_definition_t> samplers;
+                Vecf2                                  scale0{1, 1};
+                i32                                    count = 0;
+                for(i32 i = 0; i < 4; i++)
+                {
+                    if(!maps[i].valid())
+                        break; /* chicago maps are contiguous from 0 */
+                    auto it = bitm_cache.find(maps[i]);
+                    if(it == bitm_cache.end())
+                        break;
+                    BitmapItem const& b = it->second;
+                    auto              bkt =
+                        bitm_cache
+                            .template get_bucket<gfx::compat::texture_2da_t>(
+                                b.image.fmt);
+                    auto sub =
+                        bkt.template texture_as<gfx::compat::texture_2da_t>()
+                            .subtexture(b.image.layer);
+                    bkt.sampler->rebind(sub);
+                    samplers.push_back(
+                        gleam::sampler_definition_t{
+                            typing::graphics::ShaderStage::Fragment,
+                            {map_names[i], i},
+                            bkt.sampler});
+                    if(i == 0)
+                        scale0 = b.image.scale;
+                    count++;
+                }
+                if(count == 0)
+                    continue;
+                auto frg_u = gfx::make_uniform_list(
+                    typing::graphics::ShaderStage::Fragment,
+                    gfx::uniform_pair{
+                        {"map_count"sv, 4},
+                        semantic::SpanOne<const i32>(count)},
+                    gfx::uniform_pair{
+                        {"base_map_scale"sv, 5},
+                        semantic::SpanOne<const Vecf2>(scale0)});
+                api->submit(
+                    {
+                        .program       = resources.chicago_pipeline,
+                        .vertices      = resources.model_attr,
+                        .render_target = resources.offscreen,
+                        .call =
+                            gfx::draw_command::call_spec_t{
+                                .indexed = true,
+                                .mode = gfx::drawing::primitive::triangle_strip,
+                            },
+                        .data = sm_draw.draw.data,
+                    },
+                    vtx_u,
+                    frg_u,
+                    samplers,
+                    gfx::cull_state{.front_face = true},
+                    gfx::view_state{
+                        .depth =
+                            gfx::depth_state{
+                                .range          = Vecd2{0.0, 0.0},
+                                .reversed       = true,
+                                .strict_greater = false,
+                            },
+                    },
+                    gfx::depth_extended_state{.depth_write = false});
+                continue;
+            }
+
+            /* soso — standard single-diffuse scenery; accumulate identical
+             * instances into a batch keyed by shader + part geometry. */
+            generation_idx_t base_bitm = shitem.soso.base_bitm;
+            if(!base_bitm.valid())
+                continue;
+            auto bitm_it = bitm_cache.find(base_bitm);
+            if(bitm_it == bitm_cache.end())
+                continue;
+            if(sm_draw.draw.data.empty())
+                continue;
+
+            auto const& geom = sm_draw.draw.data.front();
+            auto& batch = soso_batches[{sm.shader.i, geom.elements.offset}];
+            if(batch.transforms.empty())
+            {
+                batch.shader                = sm.shader;
+                batch.geom                  = geom;
+                batch.geom.instances.count  = 1;
+                batch.geom.instances.offset = 0;
+                batch.base_scale =
+                    bitm_it->second.image.scale * mitem.header->uvscale;
+            }
+            batch.transforms.push_back(mod.transform);
+        }
+
+        /* Emit one batched draw per identical group (splitting runs longer than
+         * the uniform-array cap). The program, base texture, sampler and frag
+         * uniform are bound once per group; only the transform array changes.
+         */
+        for(auto const& [key, batch] : soso_batches)
+        {
+            auto shader_it = shader_cache.find(batch.shader);
+            if(shader_it == shader_cache.end())
+                continue;
+            generation_idx_t base_bitm = shader_it->second.soso.base_bitm;
+            auto             bitm_it   = bitm_cache.find(base_bitm);
+            if(bitm_it == bitm_cache.end())
+                continue;
+
+            BitmapItem const& base = bitm_it->second;
+            auto              base_tex =
+                bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
+                    base.image.fmt);
+            auto base_sub =
+                base_tex.template texture_as<gfx::compat::texture_2da_t>()
+                    .subtexture(base.image.layer);
+            base_tex.sampler->rebind(base_sub);
+
+            auto frg_u = gfx::make_uniform_list(
+                typing::graphics::ShaderStage::Fragment,
+                gfx::uniform_pair{
+                    {"base_map_scale"sv, 3},
+                    semantic::SpanOne<const Vecf2>(batch.base_scale)});
+
+            std::vector<gfx::sampler_definition_t> samplers;
+            samplers.push_back(
+                gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"diffuse"sv, 0},
+                    base_tex.sampler});
+
+            for(size_t off = 0; off < batch.transforms.size();
+                off += model_batch_size)
+            {
+                size_t n = std::min<size_t>(
+                    model_batch_size, batch.transforms.size() - off);
+                auto vtx_u = gfx::make_uniform_list(
+                    typing::graphics::ShaderStage::Vertex,
+                    gfx::uniform_pair{
+                        {"camera"sv, 1},
+                        semantic::SpanOne<const Matf4>(camera)},
+                    gfx::uniform_pair{
+                        {"models"sv, 2},
+                        semantic::Span<const Matf4>(
+                            batch.transforms.data() + off, n)});
+                std::vector<gfx::draw_command::data_t> data(n, batch.geom);
+                api->submit(
+                    {
+                        .program       = resources.model_pipeline,
+                        .vertices      = resources.model_attr,
+                        .render_target = resources.offscreen,
+                        .call =
+                            gfx::draw_command::call_spec_t{
+                                .indexed = true,
+                                .mode = gfx::drawing::primitive::triangle_strip,
+                            },
+                        .data = data,
+                    },
+                    vtx_u,
+                    frg_u,
+                    samplers,
+                    gfx::cull_state{.front_face = true},
+                    gfx::view_state{
+                        .depth =
+                            gfx::depth_state{
+                                .range          = Vecd2{0.0, 1.0},
+                                .reversed       = true,
+                                .strict_greater = true,
+                            },
+                    });
+            }
+        }
+        Coffee::Profiler::PopContext();
     }
 };
 
@@ -2775,44 +2802,45 @@ void alloc_renderer(EntityContainer& container)
 {
     ProfContext _;
     auto&       api = container.subsystem_cast<gfx::system>();
+    auto& game_bus  = container.subsystem_cast<GameEventBus>();
 
-    auto& builder =
+    container.register_subsystem_inplace<ScreenClear>();
+    if(api.api_version() == std::make_tuple<u32, u32>(2, 0))
+    {
+        container.register_subsystem_inplace<LegacyMeshRenderer<halo_version>>();
+    } else
+    {
         container.register_subsystem_inplace<DrawListBuilder<halo_version>>(
             &api,
             std::ref(container.subsystem_cast<BlamResources>()),
             std::ref(container.subsystem_cast<RenderingParameters>()),
             std::ref(container.subsystem_cast<ShaderCache<halo_version>>()),
             std::ref(container.subsystem_cast<BitmapCache<halo_version>>()));
-    auto& renderer = container.register_subsystem_inplace<MeshRenderer<halo_version>>(
-        &api,
-        std::ref(container.subsystem_cast<BlamResources>()),
-        std::ref(container.subsystem_cast<RenderingParameters>()),
-        std::ref(container.subsystem_cast<ShaderCache<halo_version>>()),
-        std::ref(container.subsystem_cast<BitmapCache<halo_version>>()),
-        std::ref(container.subsystem_cast<BSPCache<halo_version>>()));
-
-    container.register_subsystem_inplace<ScreenClear>();
+        auto& renderer = container.register_subsystem_inplace<MeshRenderer<halo_version>>(
+            &api,
+            std::ref(container.subsystem_cast<BlamResources>()),
+            std::ref(container.subsystem_cast<RenderingParameters>()),
+            std::ref(container.subsystem_cast<ShaderCache<halo_version>>()),
+            std::ref(container.subsystem_cast<BitmapCache<halo_version>>()),
+            std::ref(container.subsystem_cast<BSPCache<halo_version>>()));
+        renderer.m_cluster_events =
+            game_bus.addQueuedEventFunction<ClusterChangedEvent>(
+            0,
+            std::function<void(GameEvent&, ClusterChangedEvent*)>(
+                [renderer = &renderer,
+                 params   = &container.subsystem_cast<RenderingParameters>()](
+                    GameEvent&, ClusterChangedEvent* cluster) {
+                    if(!cluster->bsp)
+                        return;
+                    params->structural_change_pending = true;
+                    renderer->m_pending_changes.push_back({
+                        .type = MeshRenderer<halo_version>::pending_change_t::skybox,
+                        .skybox_id = cluster->bsp->clusters.at(cluster->cluster)
+                                         .cluster->sky,
+                    });
+                }));
 #ifndef DISABLE_LOADING_SCREEN
-    // TODO: Find out why this fails on OpenGL ES 2.0 emulation
-    if(api.api_version() != std::make_tuple<u32, u32>(2, 0))
         container.register_subsystem_inplace<LoadingScreen>();
 #endif
-
-    auto& game_bus       = container.subsystem_cast<GameEventBus>();
-    renderer.m_cluster_events =
-        game_bus.addQueuedEventFunction<ClusterChangedEvent>(
-        0,
-        std::function<void(GameEvent&, ClusterChangedEvent*)>(
-            [renderer = &renderer,
-             params   = &container.subsystem_cast<RenderingParameters>()](
-                GameEvent&, ClusterChangedEvent* cluster) {
-                if(!cluster->bsp)
-                    return;
-                params->structural_change_pending = true;
-                renderer->m_pending_changes.push_back({
-                    .type = MeshRenderer<halo_version>::pending_change_t::skybox,
-                    .skybox_id = cluster->bsp->clusters.at(cluster->cluster)
-                                     .cluster->sky,
-                });
-            }));
+    }
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "bitmap_cache.h"
 #include "blam_files.h"
 #include "caching.h"
 #include "components.h"
@@ -79,6 +80,28 @@ using MeshRendererManifest = compo::SubsystemManifest<
         DebugMarkers,
         gfx::system>,
     type_list_t<comp_app::GraphicsFramebuffer>>;
+
+template<typename V>
+using LegacyMeshRendererManifest = compo::SubsystemManifest<
+    type_list_t<
+        const BspReference,
+        const SubModel,
+        const Model,
+        const Visibility,
+        const PlayerInfo,
+        const PlayerCamera,
+        const DrawState
+    >,
+    type_list_t<
+        BitmapCache<V>,
+        const BlamResources,
+        gfx::system,
+        LoadingStatus,
+        ModelCache<V>,
+        const RenderingParameters,
+        ShaderCache<V>
+    >,
+    empty_list_t>;
 
 using LoadingScreenManifest = compo::SubsystemManifest<
     empty_list_t,
