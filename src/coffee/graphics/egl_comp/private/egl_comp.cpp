@@ -664,9 +664,9 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
     auto display  = e.service<DisplayHandle>()->context().display;
     auto ptr_info = e.service<comp_app::PtrNativeWindowInfo>();
     auto context  = e.service<egl::GraphicsContext>();
+    auto& config  = comp_app::AppLoader::config<comp_app::GLConfig>(e);
 #if defined(EGL_VERSION_1_5)
     std::vector<std::pair<EGLAttrib, EGLAttrib>> attribs;
-    auto&          config = comp_app::AppLoader::config<comp_app::GLConfig>(e);
     DisplayHandle& handle = *e.service<DisplayHandle>();
 
     const bool srgb_requested = config.framebufferFmt == pix_fmt::SRGB8A8 ||
