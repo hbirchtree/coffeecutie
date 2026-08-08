@@ -326,11 +326,10 @@ system::gpu_timer_t::gpu_timer_t(gleam::system* system, std::string const& name)
 
 system::gpu_timer_t::~gpu_timer_t()
 {
-    if(!m_timer || !m_system)
+    if(!m_timer)
         return;
     m_timer->stop();
     m_system->track_timer(std::move(m_timer), m_name);
-    m_timer->dealloc();
 }
 
 } // namespace gleam
