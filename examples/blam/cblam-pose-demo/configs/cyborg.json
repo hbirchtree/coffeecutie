@@ -30,6 +30,16 @@
       "rest_delta": [0.0, 0.0, 0.0, 1.0],
       "clamp_degrees": 60.0,
       "gain": 2.0
+    },
+    {
+      "source": "Head",
+      "bone": "bip01 neck",
+      "mode": "direct",
+      "axis_map": ["y", "-z", "-x"],
+      "basis_rotation": [0.0, 0.0, 0.0, 1.0],
+      "rest_delta": [0.0, 0.0, 0.0, 1.0],
+      "clamp_degrees": 60.0,
+      "gain": 2.0
     }
   ],
   "smoothing": { "alpha": 0.05 },
