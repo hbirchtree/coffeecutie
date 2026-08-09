@@ -1,6 +1,8 @@
 #pragma once
 
+#include "access.h"
 #include "caching.h"
+#include "types.h"
 
 #include <coffee/core/input/standard_input_handlers.h>
 #include <peripherals/concepts/graphics_api.h> 
@@ -692,6 +694,15 @@ static const auto gc_marker = compo::EntityRecipe{
             compo::type_hash_v<DebugDraw>(),
         },
     .tags = ObjectGC,
+};
+
+static const auto trigger_volume = compo::EntityRecipe{
+    .components =
+        {
+            compo::type_hash_v<DebugDraw>(),
+            compo::type_hash_v<TriggerVolume>(),
+        },
+    .tags = ObjectScriptObject | ObjectTriggerVolume | ObjectGC,
 };
 
 }

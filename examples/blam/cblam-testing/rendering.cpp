@@ -1415,24 +1415,6 @@ struct MeshRenderer
          * and UV animations freeze. Wrap to a shorter cycle. */
         f32 t = std::fmod(stl_types::Chrono::to_f32(time), 3600.f);
 
-        if(!m_pending_changes.empty())
-        {
-            for(auto const& change : m_pending_changes)
-            {
-                switch(change.type)
-                {
-                case pending_change_t::skybox:
-                    update_skybox(p, change.skybox_id);
-                    break;
-                default:
-                    break;
-                }
-            }
-            m_pending_changes.clear();
-            p.template subsystem<RenderingParameters>()
-                .structural_change_pending = false;
-        }
-
         gfx::system& system = p.template subsystem<gfx::system>();
         auto render_timer = system.gpu_timer("MeshRenderer full pass");
 
@@ -1479,13 +1461,16 @@ struct MeshRenderer
             .mask       = 0x1,
             .reference  = 0x1,
         };
+        gfx::cull_state cull_front{
+            .front_face = true,
+        };
         for(i32 pi = Pass_Opaque; pi <= Pass_LastOpaque; ++pi)
         {
             auto pass = static_cast<Passes>(pi);
             for(auto i : stl_types::range<u32>(m_players.size()))
             {
                 render_bsp_pass(p, i, t, builder.bsp_submit()[pass], opaque_stencil);
-                render_pass(p, i, t, builder.model_submit()[pass], opaque_stencil);
+                render_pass(p, i, t, builder.model_submit()[pass], opaque_stencil, cull_front);
             }
         }
 
@@ -1552,154 +1537,6 @@ struct MeshRenderer
         }
 
         render_debug_lines(p);
-    }
-
-    void update_skybox(Proxy& p, i16 new_skybox)
-    {
-        if(new_skybox == current_skybox)
-            return;
-
-        compo::EntityRef<Proxy> skybox_item;
-        for(auto skybox : p.select(ObjectSkybox))
-        {
-            if(!p.template get<Model>(skybox.id()))
-                continue;
-            skybox_item = skybox;
-        }
-
-        if(!skybox_item.exists())
-            return;
-
-        Model& skybox_mod = skybox_item.template get<Model>();
-
-        auto& data = p.template subsystem<BlamFiles<halo_version>>();
-        auto& model_cache = p.template subsystem<ModelCache<halo_version>>();
-
-        auto const* scenario = data.container.scenario().value_or(nullptr);
-
-        if(!scenario)
-            return;
-
-        auto const& magic = data.container.magic;
-        blam::tag_index_view index(data.container);
-
-        current_skybox = new_skybox;
-
-        auto skyboxes = scenario->info.skyboxes.data(magic).value();
-        if(new_skybox != -1 && new_skybox < skyboxes.size())
-        {
-            auto const& skybox = skyboxes[new_skybox];
-            auto                     skybox_tag = *index.tag_of(skybox);
-            blam::scn::skybox const& skybox_ =
-                skybox_tag->template data<blam::scn::skybox>(magic).value()[0];
-
-            Span<const blam::scn::skybox::light> lights =
-                skybox_.lights.data(magic).value();
-
-            Span<materials::world_data> world_data =
-                m_resources.world_store->map<materials::world_data>(0);
-            if(world_data.empty())
-            {
-                m_resources.world_store->unmap();
-                cWarning("Skybox update without a mapped world buffer");
-                return;
-            }
-
-            for([[maybe_unused]] auto const& light : lights)
-            {
-                f32   yaw   = light.radiosity.direction.x;
-                f32   pitch = light.radiosity.direction.y;
-                Vecf3 rotation{
-                    std::cos(pitch) * std::cos(yaw),
-                    std::cos(pitch) * std::sin(yaw),
-                    std::sin(pitch),
-                };
-                world_data[0].lighting[0].light_direction = Vecf4{
-                    rotation,
-                    light.radiosity.test_distance,
-                };
-                world_data[0].lighting[0].light_color = Vecf4{
-                    light.radiosity.color,
-                    light.radiosity.power,
-                };
-                // TODO: Find out how objects are identified as being
-                // interior or exterior in the world
-            }
-
-            world_data[0].fog.indoor_color =
-                Vecf4(skybox_.indoor_fog.color, skybox_.indoor_fog.density);
-            world_data[0].fog.indoor_ambient =
-                Vecf4(skybox_.indoor_ambient.color, skybox_.indoor_ambient.power);
-            world_data[0].fog.outdoor_color =
-                Vecf4(skybox_.outdoor_fog.color, skybox_.outdoor_fog.density);
-            world_data[0].fog.outdoor_ambient =
-                Vecf4(skybox_.outdoor_ambient.color, skybox_.outdoor_ambient.power);
-
-            world_data[0].fog.distances = Vecf4(
-                skybox_.indoor_fog.start_distance,
-                skybox_.indoor_fog.opaque_distance,
-                skybox_.outdoor_fog.start_distance,
-                skybox_.outdoor_fog.opaque_distance);
-
-            if(skybox_.outdoor_fog.opaque_distance < 1)
-                world_data[0].fog.distances.w = 1000.f;
-
-            m_resources.world_store->unmap();
-
-            if(skybox_.model.valid())
-                skybox_mod.tag = *index.tag_of(skybox_.model);
-            skybox_mod.origin_object = skybox_tag;
-            skybox_mod.transform     = glm::identity<Matf4>();
-
-            if(!skybox_mod.parts.empty())
-            {
-                std::set<u64> stale;
-                for(auto const& part : skybox_mod.parts)
-                    stale.insert(part.id());
-                p.remove_entity_if([&stale](compo::Entity const& e) {
-                    return stale.contains(e.id);
-                });
-                skybox_mod.parts.clear();
-            }
-
-            ModelAssembly assem = model_cache.predict_regions(
-                skybox_.model, blam::mod2::mod2_lod::lod_high_ext);
-
-            if(assem.models.empty())
-            {
-                cDebug("Invalid skybox");
-                return;
-            }
-
-            skybox_mod.model = assem.models.at(0);
-
-            for(auto const& part_id : assem.models)
-            {
-                ModelItem<Version>& part = model_cache.get(part_id);
-                skybox_mod.model         = part_id;
-
-                for(typename ModelItem<Version>::SubModel const& region :
-                    part.mesh.sub)
-                {
-                    if(!region.shader.valid())
-                        continue;
-
-                    auto submod = p.create_entity(shared_recipes::skybox_submodel);
-                    skybox_mod.parts.push_back(submod);
-                    SubModel& submodel  = submod.template get<SubModel>();
-                    submodel.parent     = skybox_item.id();
-                    DrawState& sub_draw = submod.template get<DrawState>();
-                    submodel.initialize<Version>(part_id, region, sub_draw);
-
-                    ShaderData&       shader_   = submod.template get<ShaderData>();
-                    ShaderItem const& shader_it = shader_cache.get(region.shader);
-                    shader_.initialize(shader_it, submodel);
-
-                    sub_draw.current_pass =
-                        shader_.get_render_pass(shader_cache, true);
-                }
-            }
-        }
     }
 };
 
@@ -2263,9 +2100,9 @@ struct LegacyMeshRenderer
 
 void ScreenClear::start_restricted(Proxy& e, const time_point&)
 {
-    auto fb = e.subsystem<gfx::system>().default_rendertarget();
-    //        fb->clear(Vecf4{Vecf3{0.1f}, 1.f}, 1.0, 0);
-
+    auto& api = e.subsystem<gfx::system>();
+    auto _    = api.debug().scope("ScreenClear::start_restricted");
+    auto fb   = e.subsystem<gfx::system>().default_rendertarget();
     e.subsystem<BlamResources>().offscreen->clear(0.0);
 }
 
@@ -2489,7 +2326,7 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
     if(!loading_program)
         load_resources(*api);
 
-    auto _ = api->debug().scope();
+    auto _ = api->debug().scope("LoadingScreen::end_restricted");
 
     auto screen_aspect =
         e.service<comp_app::GraphicsFramebuffer>()->size().aspect();
@@ -2816,29 +2653,13 @@ void alloc_renderer(EntityContainer& container)
             std::ref(container.subsystem_cast<RenderingParameters>()),
             std::ref(container.subsystem_cast<ShaderCache<halo_version>>()),
             std::ref(container.subsystem_cast<BitmapCache<halo_version>>()));
-        auto& renderer = container.register_subsystem_inplace<MeshRenderer<halo_version>>(
+        container.register_subsystem_inplace<MeshRenderer<halo_version>>(
             &api,
             std::ref(container.subsystem_cast<BlamResources>()),
             std::ref(container.subsystem_cast<RenderingParameters>()),
             std::ref(container.subsystem_cast<ShaderCache<halo_version>>()),
             std::ref(container.subsystem_cast<BitmapCache<halo_version>>()),
             std::ref(container.subsystem_cast<BSPCache<halo_version>>()));
-        renderer.m_cluster_events =
-            game_bus.addQueuedEventFunction<ClusterChangedEvent>(
-            0,
-            std::function<void(GameEvent&, ClusterChangedEvent*)>(
-                [renderer = &renderer,
-                 params   = &container.subsystem_cast<RenderingParameters>()](
-                    GameEvent&, ClusterChangedEvent* cluster) {
-                    if(!cluster->bsp)
-                        return;
-                    params->structural_change_pending = true;
-                    renderer->m_pending_changes.push_back({
-                        .type = MeshRenderer<halo_version>::pending_change_t::skybox,
-                        .skybox_id = cluster->bsp->clusters.at(cluster->cluster)
-                                         .cluster->sky,
-                    });
-                }));
 #ifndef DISABLE_LOADING_SCREEN
         container.register_subsystem_inplace<LoadingScreen>();
 #endif

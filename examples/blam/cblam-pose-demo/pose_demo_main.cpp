@@ -416,7 +416,7 @@ i32 pose_demo_main()
                         gpu.model_index->unmap();
                     }
 
-                    bitmaps.allocate_storage();
+                    bitmaps.begin_map();
 
                     auto& loading_status    = e.subsystem_cast<LoadingStatus>();
                     loading_status.app_info = e.service<comp_app::AppInfo>();

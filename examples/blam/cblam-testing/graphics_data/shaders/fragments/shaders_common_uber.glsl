@@ -252,6 +252,12 @@ vec4 shader_environment()
     vec4 micro = has_micro == 1 ? get_color(micro_map_id) : vec4(1);
     vec4 primary = get_color(primary_map_id);
     vec4 secondary = get_color(secondary_map_id);
+    if((render_flags & RENDER_FLAG_ONLY_DIFFUSE) != 0)
+        return vec4(base.rgb, 1);
+    if((render_flags & RENDER_FLAG_ONLY_MULTIPURPOSE) != 0)
+        return vec4(primary.rgb, 1);
+    if((render_flags & RENDER_FLAG_ONLY_MULTIPURPOSE2) != 0)
+        return vec4(secondary.rgb, 1);
 #if USE_LIGHTMAPS == 1
     vec4 lightmap = (render_flags & RENDER_FLAG_LIGHTMAP) != 0
         ? get_light(frag.instanceId, frag.light_tex)
@@ -722,6 +728,7 @@ vec4 shader_model()
 
     vec4 primary_change_color = mats.instance[frag.instanceId].material.input2;
 
+    vec4 detail = get_color(detail_map_id);
     vec4 multi = get_color(multi_map_id);
     int multi_source = mats.instance[frag.instanceId].maps[multi_map_id].layer >> 24;
     if(multi_source == 0)
@@ -748,7 +755,7 @@ vec4 shader_model()
     if((render_flags & RENDER_FLAG_ONLY_MULTIPURPOSE) != 0)
         return vec4(multi.rgb, 1);
     if((render_flags & RENDER_FLAG_ONLY_MULTIPURPOSE2) != 0)
-        return vec4(multi.a, color.a, 0, 1);
+        return vec4(multi.a, color.a, detail.a, 1);
     if((render_flags & RENDER_FLAG_ONLY_NORMALS) != 0)
         return vec4(frag.normal, 1);
 
@@ -793,7 +800,6 @@ vec4 shader_model()
     if((render_flags & RENDER_FLAG_ONLY_NORMALS) != 0)
         return vec4(normalize(frag.normal), 1);
 
-    vec4 detail = get_color(detail_map_id);
     if(detail_mask_reflection)
         detail_factor = specular_factor;
     else if(detail_mask_reflection_inv)

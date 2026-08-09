@@ -53,7 +53,7 @@ static void load_bitmaps(compo::EntityContainer& e, blam::map_ptr const& magic)
     auto& files          = e.subsystem_cast<BlamFiles<halo_version>>();
     if constexpr(compile_info::platform::is_32bit)
         return;
-    bitmaps.allocate_storage();
+    // bitmaps.allocate_storage();
     loading_status.loaded_bitmaps = LoadingStatus::in_progress;
     if(auto tex_queue = api.queue<gleam::system::queues::texture_decode>())
     {
@@ -126,6 +126,8 @@ static void init_map(
     if(finished.bitmaps.has_value())
         bitmaps.load_bitmaps_from(*finished.bitmaps);
 
+    bitmaps.begin_map();
+
     event = {GameEvent::MapDataReady};
     MapDataReadyEvent ready{};
     e.subsystem_cast<GameEventBus>().inject(event, &ready);
@@ -147,15 +149,22 @@ static void load_resources(
     auto& ui_elements    = e.subsystem_cast<UIElementCache<halo_version>>();
     auto& files          = e.subsystem_cast<BlamFiles<halo_version>>();
     auto* sound_bus      = e.service<comp_app::EventBus<SoundEvent>>();
+    auto& game_bus       = e.subsystem_cast<GameEventBus>();
 
-    load_scenario_bsp(e, changed);
-    load_scenario_scenery(e, changed);
-    load_collision_debug(e, changed);
-    load_ui_items(e, changed);
+    {
+        GameEvent spawn{.type = GameEvent::SpawnBSP};
+        SpawnBSPEvent bsp{
+            .section_id = 0,
+        };
+        game_bus.inject(spawn, &bsp);
+    }
+    // load_scenario_bsp(e, changed);
+    // load_collision_debug(e, changed);
+    // load_ui_items(e, changed);
 
     if(finished.bitmaps.has_value())
     {
-        bitmaps.allocate_storage();
+        // bitmaps.allocate_storage();
         loading_status.loaded_bitmaps = LoadingStatus::loaded;
         loading_status.check_all_loaded();
     }
@@ -177,8 +186,6 @@ static void load_resources(
         if(info && !info->is_remote())
             ++num_pinfo;
     }
-    // if(player_model.valid())
-    //     recipe.components.push_back(compo::type_hash_v<Model>());
     u64 main_biped_id{0};
     if(num_pinfo == 0)
     {

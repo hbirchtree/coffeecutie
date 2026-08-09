@@ -31,11 +31,25 @@ struct BitmapCache
 
         u32 mip_bias{0};
 
+        Veci2 max_size{};
+        u32   layers{0};
+
         template<typename T>
         auto& texture_as()
         {
             return *std::dynamic_pointer_cast<T>(surface);
         }
+    };
+
+    struct bitmap_slot_t
+    {
+        Veci2 max_size{}; /* bucket dimensions the UVs were normalized by */
+        u32   layer{0};
+        Veci2 pixel_offset{}; /* where the upload writes */
+        Vecf2 offset{};       /* normalized, what the shader samples with */
+        Vecf2 scale{};
+        u32   mip_base{0};
+        u32   mip_last{0};
     };
 
     BitmapCache(gfx::api* allocator, RenderingParameters const* params)
@@ -74,7 +88,17 @@ struct BitmapCache
     blam::map_ptr    bitm_magic;
     blam::atlas_view bitm_header;
 
-    std::map<bitm_format_hash, TextureBucket> tex_buckets;
+    struct storage_reservation_t
+    {
+        PixDesc            fmt;
+        blam::bitm::type_t type;
+        Veci2              max_size{};
+        u32                layers{0};
+    };
+
+    std::map<bitm_format_hash, TextureBucket>          tex_buckets;
+    std::map<bitm_format_hash, storage_reservation_t>  m_reservations;
+    std::map<std::tuple<u32, i16>, bitmap_slot_t>      m_slots;
 
     u32  max_mipmap{3};
     bool supports_tex3d{true};
@@ -339,7 +363,17 @@ struct BitmapCache
             upload_mipmap<BucketType>(bucket, img, bmagic, 0);
     }
 
-    void allocate_storage();
+    u32 bias_of(blam::bitm::image_t const& img) const;
+
+    void calculate_storage();
+
+    void reserve_storage();
+
+    void begin_map()
+    {
+        calculate_storage();
+        reserve_storage();
+    }
 
     virtual BitmapItem predict_impl(
         blam::tagref_t const& bitmap, i16 idx) override;
@@ -353,6 +387,8 @@ struct BitmapCache
         }
 
         tex_buckets.clear();
+        m_reservations.clear();
+        m_slots.clear();
     }
 
     virtual std::tuple<u32, i16> get_id(

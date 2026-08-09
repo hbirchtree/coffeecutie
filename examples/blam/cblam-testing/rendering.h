@@ -116,8 +116,10 @@ struct LoadingScreen
 
     LoadingScreen()
     {
-        priority = 1535;
+        priority = 801;
     }
+
+    bool main_thread_only() const override { return true; }
 
     void end_restricted(Proxy& e, time_point const& time);
 

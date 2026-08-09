@@ -41,6 +41,7 @@ coffee_application(
         camera_control.cpp
         gateway_fleet_registration.cpp
         graphics.cpp
+        loading.cpp
         map_loading.cpp
         networking.cpp
         occluder.cpp

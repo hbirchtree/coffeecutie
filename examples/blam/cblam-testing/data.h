@@ -14,6 +14,9 @@
 #include <peripherals/typing/vectors/glm_vector_types.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
+#include "blam/volta/blam_mod2.h"
+#include "blam/volta/blam_tag_classes.h"
+#include "blam/volta/blam_tag_ref.h"
 #include "blam/volta/blam_versions.h"
 #include "graphics_api.h"
 #include "selected_version.h"
@@ -32,6 +35,7 @@ constexpr libc_types::u32 debug_axes_colors = 3;
 using libc_types::f32;
 using libc_types::i32;
 using libc_types::u32;
+using libc_types::u64;
 using semantic::Span;
 struct BSPItem;
 using typing::vector_types::Matf4;
@@ -196,7 +200,18 @@ struct GameEvent
         MapDataReady,
         MapAllLoaded,
         MapChanged,
+
         ClusterChanged,
+        SkyboxChanged,
+        WeatherChanged,
+
+        // Resource loading
+        SpawnBiped,
+        SpawnBSP,
+        SpawnEquipment,
+        SpawnModel,
+
+        PlayModelAnimation,
 
         PlayerTeleport,
         PlayerCameraLerp,
@@ -288,6 +303,49 @@ struct ClusterChangedEvent
 
     BSPItem const* bsp{nullptr};
     u32            cluster{std::numeric_limits<u32>::max()};
+};
+
+struct SkyboxChangedEvent
+{
+    static constexpr auto event_type = GameEvent::SkyboxChanged;
+};
+
+struct WeatherChangedEvent
+{
+    static constexpr auto event_type = GameEvent::WeatherChanged;
+};
+
+struct SpawnBipedEvent
+{
+    static constexpr auto event_type = GameEvent::SpawnBiped;
+    blam::tagref_typed_t<blam::tag_class_t::bipd> biped;
+    u32 player_idx{0};
+    u32 tags{};
+};
+
+struct SpawnBSPEvent
+{
+    static constexpr auto event_type = GameEvent::SpawnBSP;
+    u32 section_id{};
+};
+
+struct SpawnEquipmentEvent
+{
+    static constexpr auto event_type = GameEvent::SpawnEquipment;
+};
+
+struct SpawnModelEvent
+{
+    static constexpr auto event_type = GameEvent::SpawnModel;
+    blam::tagref_typed_t<blam::tag_class_t::mod2> model;
+
+    // TODO: Add param for which variant, eg. marine variant
+    blam::mod2::mod2_lod max_lod_level{};
+};
+
+struct PlayModelAnimationEvent
+{
+    static constexpr auto event_type = GameEvent::PlayModelAnimation;
 };
 
 struct PlayerTeleportEvent

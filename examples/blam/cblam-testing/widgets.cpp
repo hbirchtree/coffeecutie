@@ -19,7 +19,7 @@ void install_imgui_widgets(
 #if defined(FEATURE_ENABLE_ImGui)
     // auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
 
-    auto& imgui = e.register_subsystem_inplace<imgui::ImGuiSystem>(1024);
+    auto& imgui = e.register_subsystem_inplace<imgui::ImGuiSystem>(800);
     e.register_subsystem_inplace<BlamBspWidget<halo_version>>();
     e.register_subsystem_inplace<BlamDebugUi>();
     auto& textures =

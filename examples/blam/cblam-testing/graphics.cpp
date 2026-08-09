@@ -4,6 +4,7 @@
 #include "cursed.h"
 #include "data.h"
 #include "journal.h"
+#include "loading.h"
 #include "map_loading.h"
 #include "map_marker.h"
 #include "networking.h"
@@ -205,6 +206,7 @@ i32 blam_main()
             e.register_subsystem_inplace<BlamFiles<halo_version>>();
             e.register_subsystem_inplace<LoadingStatus>();
 
+            alloc_resource_loader(e);
             alloc_occluder(e);
             alloc_physics(e);
             alloc_scripting(e);
