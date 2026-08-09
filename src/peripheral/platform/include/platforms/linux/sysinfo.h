@@ -161,6 +161,30 @@ inline std::optional<std::pair<std::string, std::string>> model(
         return false;
     });
 
+    if(model.empty() && vendor.empty() && implementer.empty() &&
+        variant.empty() && part.empty())
+    {
+        // Special-case for older kernels
+        // Where CPU implementer/part is not listed under the given processor
+        // This happens on Linux 3.0.x at least
+        detail::foreach_cpuinfo([&](std::string_view const&,
+                                    std::string_view const&,
+                                    std::string_view const& key,
+                                    std::string_view const& value) {
+            if(key == "model name")
+                model = trim::both(value);
+            else if(key == "vendor_id")
+                vendor = trim::both(value);
+            else if(key == "CPU implementer")
+                implementer = trim::both(value);
+            else if(key == "CPU variant")
+                variant = trim::both(value);
+            else if(key == "CPU part")
+                part = trim::both(value);
+            return false;
+        });
+    }
+
     if(auto human_implementer = detail::map_cpu_implementer(implementer))
     {
         vendor = human_implementer.value();

@@ -1174,6 +1174,30 @@ def android_plan(
         skip_reason=f"{android_sdk} already present",
     ))
 
+    # API < 21 is built with a split toolchain: the newest NDK's clang against
+    # NDK 25's sysroot (r26+ dropped API < 21), plus a libc++ compiled from
+    # source against that sysroot. Nobody ships that libc++, so it has to be
+    # built before anything tries to link. Everything from API 21 up uses the
+    # NDK's own prebuilt runtime and skips this entirely.
+    api_level = target.sysroot.split("-")[0]
+    if api_level.isdigit() and int(api_level) < 21:
+        kitkat_overlay = (
+            base_dir / "multi_build/compilers/android/kitkat-clang21/kitkat-libcxx.cmake"
+        )
+        plan.add(Step(
+            name="android-kitkat-libcxx",
+            cmd=[str(base_dir / "toolchain/android/build-kitkat-libcxx.sh")],
+            env={
+                "SDK_ROOT": str(android_sdk),
+                "NDK_SYSROOT_VER": ndk_version,
+                "API": api_level,
+            },
+            cwd=base_dir,
+            description=f"Build static libc++ for API {api_level}",
+            skip_if=lambda: kitkat_overlay.exists(),
+            skip_reason=f"{kitkat_overlay} already present",
+        ))
+
     env = _base_env(target, host, base_dir)
     env.update({
         "ANDROID_SDK": str(android_sdk),

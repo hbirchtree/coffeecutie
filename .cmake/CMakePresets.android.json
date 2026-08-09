@@ -129,6 +129,7 @@
                 "BUILD_GLES_32": "OFF",
                 "CMAKE_C_FLAGS": "-march=armv7-a",
                 "CMAKE_CXX_FLAGS": "-march=armv7-a",
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/vcpkg/toolchains/android-kitkat.cmake",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;arm;arm32;arm_neon",
                 "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports-android-kitkat"
             },

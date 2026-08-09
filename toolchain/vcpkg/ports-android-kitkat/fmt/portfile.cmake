@@ -6,6 +6,15 @@ vcpkg_from_github(
     HEAD_REF master
 )
 
+# fmt's detail::allocator calls malloc/free unqualified, but format.h never
+# includes <cstdlib> -- it relied on some other standard header dragging the
+# declarations in. libc++ 21 removed those transitive includes, so say it.
+vcpkg_replace_string(
+    "${SOURCE_PATH}/include/fmt/format.h"
+    "#  include <cstring>  // std::memcpy"
+    "#  include <cstdlib>  // malloc, free\n#  include <cstring>  // std::memcpy"
+)
+
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
