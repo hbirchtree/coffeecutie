@@ -407,6 +407,8 @@ i32 pose_demo_main()
                         model_cache.element_buffer = Bytes::ofContainer(index);
                     }
 
+                    bitmaps.begin_map();
+
                     setup_fixed_camera(e);
                     spawn_static_biped(e, files.container);
 
@@ -416,7 +418,6 @@ i32 pose_demo_main()
                         gpu.model_index->unmap();
                     }
 
-                    bitmaps.begin_map();
 
                     auto& loading_status    = e.subsystem_cast<LoadingStatus>();
                     loading_status.app_info = e.service<comp_app::AppInfo>();

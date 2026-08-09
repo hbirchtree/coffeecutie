@@ -226,16 +226,7 @@ PoseConfig PoseConfig::defaults()
     spine.gain          = 2.f;
     out.retarget        = {std::move(spine)};
 
-    /* Reproduces the hardcoded bob: -2 radians per unit level about local Z
-     * on the upper spine. */
-    out.microphone.bones = {
-        MicBoneMapping{
-            .blam_bone_name = "bip01 spine1",
-            .axis           = Vecf3(0.f, 0.f, 1.f),
-            .gain           = -2.f,
-            .clamp_degrees  = 90.f,
-        },
-    };
+    out.microphone.bones = {};
     return out;
 }
 
