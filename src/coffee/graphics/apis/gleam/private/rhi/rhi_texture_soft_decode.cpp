@@ -243,6 +243,10 @@ std::future<std::vector<char>> texture_t::software_decode(
                          * vector guarantees 2-byte alignment so the index is
                          * correct. */
                         std::vector<char> out(data.begin(), data.end());
+                        fprintf(
+                            stderr,
+                            "Alignment: %li",
+                            reinterpret_cast<intptr_t>(out.data()) & 0x1);
                         return out;
                     });
             auto fut = task->output.get_future();
