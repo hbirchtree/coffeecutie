@@ -1153,6 +1153,10 @@ def android_plan(
 
         sdkmanager = sdk / "cmdline-tools/latest/bin/sdkmanager"
         ndk_versions = [ndk_ver] if _is_ci() else ["25.2.9519653", "29.0.14206865"]
+        # Special case: Android API 19 requires both NDKs
+        # We need this to frankenstein the compiler and sysroot
+        if target.sysroot == '19':
+            ndk_versions = ["25.2.9519653", "29.0.14206865"]
         packages = (
             ["build-tools;35.0.0"]
             + [f"ndk;{v}" for v in ndk_versions]
