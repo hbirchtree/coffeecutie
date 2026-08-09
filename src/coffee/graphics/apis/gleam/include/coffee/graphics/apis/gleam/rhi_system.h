@@ -38,10 +38,10 @@ class system
         return true;
     }
 
-    system()
+    system(u32 prio = 900)
         : context_checker{context_robustness()}
     {
-        priority = 900;
+        priority = prio;
     }
 
     optional<error> load(
