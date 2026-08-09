@@ -360,7 +360,8 @@ template<typename T>
 struct is_pod
 {
     static constexpr auto value =
-        std::is_standard_layout_v<T> && std::is_trivial_v<T>;
+        std::is_standard_layout_v<T> && std::is_trivially_copy_assignable_v<T> &&
+        std::is_copy_constructible_v<T>;
     typedef typename std::enable_if<value, T>::type type;
 };
 
