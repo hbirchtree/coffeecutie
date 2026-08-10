@@ -504,13 +504,12 @@ FORCEDINLINE void EntityContainer::remove_entity_if(
         if(predicate(entity))
             removed_ids.push_back(entity.id);
     }
-    auto remove_it = std::remove_if(entities.begin(), entities.end(), predicate);
     for(auto& component : components)
     {
         for(auto id : removed_ids)
             component.second->unregister_entity(id);
     }
-    entities.erase(remove_it, entities.end());
+    std::erase_if(entities, predicate);
 }
 
 inline bool EntityContainer::exists(u64 id) const

@@ -80,13 +80,9 @@ struct CameraControl
                 camera.camera.position = lerp.p1 + (lerp.p2 - lerp.p1) * alpha;
                 camera.camera.rotation = glm::slerp(lerp.r1, lerp.r2, alpha);
             }
-            auto remove_it = std::remove_if(
-                    lerps.lerps.begin(), 
-                    lerps.lerps.end(), 
-                    [](auto const& lerp) {
+            std::erase_if(lerps.lerps, [](auto const& lerp) {
                 return lerp.remaining_time <= 0ms;
             });
-            lerps.lerps.erase(remove_it, lerps.lerps.end());
         }
         last_time = t;
     }

@@ -842,20 +842,12 @@ void runtime_queue::execute_tasks()
     m_dependent_tasks = std::move(dependent_tasks);
 
     // TODO: Do this only occasionally
-    {
-        auto trimmed_tasks = std::remove_if(
-            m_dependent_tasks.begin(),
-            m_dependent_tasks.end(),
-            [](dependent_task_data_t const& task) { return !task.alive; });
-        m_dependent_tasks.erase(trimmed_tasks, m_dependent_tasks.end());
-    }
-    {
-        auto trimmed_tasks = std::remove_if(
-            m_tasks.begin(), m_tasks.end(), [](task_data_t const& task) {
-                return task.to_dispose;
-            });
-        m_tasks.erase(trimmed_tasks, m_tasks.end());
-    }
+    std::erase_if(m_dependent_tasks, [](dependent_task_data_t const& task) {
+        return !task.alive;
+    });
+    std::erase_if(m_tasks, [](task_data_t const& task) {
+        return task.to_dispose;
+    });
 
     /* One signal per pass, not per task: AwaitTask re-checks its own task on
      * wake, so nothing here needs to know who is waiting. */

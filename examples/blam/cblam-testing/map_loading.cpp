@@ -35,14 +35,12 @@ static void load_resources(
 
 static void filter_maps(std::vector<platform::file::file_entry_t>& files)
 {
-    auto remove_it =
-        std::remove_if(files.begin(), files.end(), [](auto const& file) {
-            Path filepath(file.name.data());
-            if(filepath.extension() != "map")
-                return true;
-            return file.name.find("bitmaps") != std::string::npos;
-        });
-    files.erase(remove_it, files.end());
+    std::erase_if(files, [](auto const& file) {
+        Path filepath(file.name.data());
+        if(filepath.extension() != "map")
+            return true;
+        return file.name.find("bitmaps") != std::string::npos;
+    });
 }
 
 static void load_bitmaps(compo::EntityContainer& e, blam::map_ptr const& magic)
