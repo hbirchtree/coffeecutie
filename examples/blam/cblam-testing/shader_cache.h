@@ -158,7 +158,7 @@ struct ShaderCache
             return;
         auto stages = stages_.value();
 
-        double t64 = std::chrono::duration_cast<stl_types::Chrono::seconds_f64>(
+        double t64 = std::chrono::duration_cast<stl_types::chrono::seconds_f64>(
                          time.time_since_epoch())
                          .count();
         f32 t = static_cast<f32>(std::fmod(t64, 3600.0));
@@ -344,7 +344,7 @@ struct ShaderCache
 
         // Wrap to [0, 3600) before converting to f32 to avoid precision loss
         // at Unix epoch scale (~1.7e9s, where f32 ULP ≈ 256s)
-        double t64 = std::chrono::duration_cast<stl_types::Chrono::seconds_f64>(
+        double t64 = std::chrono::duration_cast<stl_types::chrono::seconds_f64>(
                          time.time_since_epoch())
                          .count();
         f32 t = static_cast<f32>(std::fmod(t64, 3600.0));

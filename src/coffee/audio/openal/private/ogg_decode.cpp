@@ -114,7 +114,7 @@ bool decoder::decode(
     auto time_end = time_offset + time_duration;
 
     auto d_duration =
-        std::chrono::duration_cast<stl_types::Chrono::seconds_f64>(time_end);
+        std::chrono::duration_cast<stl_types::chrono::seconds_f64>(time_end);
 
     auto sample_offset =
         (std::chrono::duration_cast<std::chrono::milliseconds>(time_offset)

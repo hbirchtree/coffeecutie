@@ -204,7 +204,7 @@ struct StandardCamera
         if(has_key(reg, CK_LCtrl))
             acceleration = opts.accel.fast;
 
-        accel = acceleration * stl_types::Chrono::to_f32(t);
+        accel = acceleration * stl_types::chrono::to_f32(t);
 
         for(auto const& [key, mod] : reg)
         {
@@ -283,7 +283,7 @@ inline void controller_sample_input(
     CIControllerState const&                   state,
     std::chrono::system_clock::duration const& t)
 {
-    using stl_types::Chrono::to_f32;
+    using stl_types::chrono::to_f32;
 
     const auto filter = [](i16 raw, f32 sens) {
         return convert_i16_f(raw) * sens;
@@ -308,7 +308,7 @@ void controller_camera_update(
     CIControllerState const&                   state,
     std::chrono::system_clock::duration const& t)
 {
-    using stl_types::Chrono::to_f32;
+    using stl_types::chrono::to_f32;
 
     const auto filter = [](i16 raw, f32 sens) {
         return convert_i16_f(raw) * sens;

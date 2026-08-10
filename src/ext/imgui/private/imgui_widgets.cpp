@@ -8,7 +8,7 @@ using compo::time_point;
 using libc_types::f32;
 using libc_types::szptr;
 using std::chrono::duration_cast;
-using stl_types::Chrono::seconds_f32;
+using stl_types::chrono::seconds_f32;
 
 ImGuiWidget StatsMenu()
 {

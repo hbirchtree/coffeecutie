@@ -338,7 +338,7 @@ struct DrawListBuilder
         if(time - last_update <= std::chrono::seconds(10) && !invalidated)
             return;
 
-        f32 t = std::fmod(stl_types::Chrono::to_f32(time), 3600.f);
+        f32 t = std::fmod(stl_types::chrono::to_f32(time), 3600.f);
         {
             ModelCache<Version>* model_cache;
             p.subsystem(model_cache);
@@ -1413,7 +1413,7 @@ struct MeshRenderer
         /* to_f32 gives seconds-since-epoch (~1.7e9). At that magnitude
          * float32 precision is ~128 s, so adjacent frames are identical
          * and UV animations freeze. Wrap to a shorter cycle. */
-        f32 t = std::fmod(stl_types::Chrono::to_f32(time), 3600.f);
+        f32 t = std::fmod(stl_types::chrono::to_f32(time), 3600.f);
 
         gfx::system& system = p.template subsystem<gfx::system>();
         auto render_timer = system.gpu_timer("MeshRenderer full pass");
@@ -1563,7 +1563,7 @@ struct LegacyMeshRenderer
 
     void start_restricted(Proxy& p, time_point const& time)
     {
-        f32 t = std::fmod(stl_types::Chrono::to_f32(time), 3600.f);
+        f32 t = std::fmod(stl_types::chrono::to_f32(time), 3600.f);
         legacy_render(p, t);
     }
 
@@ -2330,7 +2330,7 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
 
     auto screen_aspect =
         e.service<comp_app::GraphicsFramebuffer>()->size().aspect();
-    f32 timef = std::chrono::duration_cast<stl_types::Chrono::seconds_f32>(
+    f32 timef = std::chrono::duration_cast<stl_types::chrono::seconds_f32>(
                     time.time_since_epoch())
                     .count();
 
@@ -2347,7 +2347,7 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
 
     f32 time_left =
         loading_screen_gone_time.has_value()
-            ? std::chrono::duration_cast<stl_types::Chrono::seconds_f32>(
+            ? std::chrono::duration_cast<stl_types::chrono::seconds_f32>(
                   *loading_screen_gone_time - time)
                   .count()
             : 2.f;

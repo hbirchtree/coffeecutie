@@ -80,7 +80,7 @@ FORCEDINLINE bool FutureAvailable(C_UNUSED(Future<T> const& f))
     if(!f.valid())
         return true;
 
-    return f.wait_for(Chrono::seconds(0)) == FutureStatus::ready;
+    return f.wait_for(chrono::seconds(0)) == FutureStatus::ready;
 #endif
 }
 
@@ -90,7 +90,7 @@ FORCEDINLINE bool FutureAvailable(C_UNUSED(Future<T> const& f))
  */
 FORCEDINLINE void sleepMicros(u64 mic)
 {
-    CurrentThread::sleep_for(Chrono::microseconds(mic));
+    CurrentThread::sleep_for(chrono::microseconds(mic));
 }
 
 /*!
@@ -99,7 +99,7 @@ FORCEDINLINE void sleepMicros(u64 mic)
  */
 FORCEDINLINE void sleepMillis(u64 mll)
 {
-    CurrentThread::sleep_for(Chrono::milliseconds(mll));
+    CurrentThread::sleep_for(chrono::milliseconds(mll));
 }
 
 } // namespace threads

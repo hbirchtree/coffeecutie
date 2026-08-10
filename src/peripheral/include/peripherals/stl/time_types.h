@@ -7,7 +7,7 @@
 #include <peripherals/libc/types.h>
 
 namespace stl_types {
-namespace Chrono {
+namespace chrono {
 
 using seconds_f32 = std::chrono::duration<libc_types::f32>;
 using seconds_f64 = std::chrono::duration<libc_types::f64>;
@@ -54,10 +54,7 @@ inline libc_types::f32 to_f32(std::chrono::duration<Rep, Ratio> const& dur)
     return std::chrono::duration_cast<seconds_f32>(dur).count();
 }
 
-} // namespace Chrono
-namespace chrono {
-using namespace stl_types::Chrono;
-}
+} // namespace chrono
 
 using Timestamp = libc_types::u64;
 

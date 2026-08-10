@@ -236,7 +236,7 @@ void RunTest(Test const& test, TestInstance& test_info)
         return;
     }
 
-    auto start_time = Chrono::steady_clock::now();
+    auto start_time = chrono::steady_clock::now();
     bool res        = false;
 
     cDebug("Starting test {0}", test_info.title);
@@ -266,8 +266,8 @@ void RunTest(Test const& test, TestInstance& test_info)
 
     test_info.submit(
         res,
-        C_FCAST<u64>(Chrono::duration_cast<Chrono::microseconds>(
-                         Chrono::steady_clock::now() - start_time)
+        C_FCAST<u64>(chrono::duration_cast<chrono::microseconds>(
+                         chrono::steady_clock::now() - start_time)
                          .count()));
 }
 

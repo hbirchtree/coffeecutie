@@ -1221,7 +1221,7 @@ int coffee_main(i32, cstring_w*)
     runtime_queue_error rqec;
     RuntimeQueue::QueueShot(
         RuntimeQueue::GetCurrentQueue(rqec),
-        Chrono::milliseconds(50),
+        chrono::milliseconds(50),
         examine_task,
         rqec);
 

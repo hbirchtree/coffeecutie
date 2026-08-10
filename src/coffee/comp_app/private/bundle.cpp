@@ -875,7 +875,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
         time.time_since_epoch());
 
-    auto frametime = std::chrono::duration_cast<stl_types::Chrono::seconds_f32>(
+    auto frametime = std::chrono::duration_cast<stl_types::chrono::seconds_f32>(
         time - m_prevFrame);
 
     if constexpr(compile_info::release_mode)

@@ -101,7 +101,7 @@ void TouchOverlay::end_restricted(Proxy& proxy, const time_point& time)
 
     if(delta > 1s)
         delta = 10ms;
-    auto delta_s = stl_types::Chrono::to_f32(delta);
+    auto delta_s = stl_types::chrono::to_f32(delta);
 
     /* Find seat_idx==0 PlayerCamera */
     for(auto entity : proxy.select<PlayerCamera>())
