@@ -62,6 +62,20 @@
 #   HOST_READY_TIMEOUT_MS  how long to wait for the wasm host to register
 #                 before starting the client (default: 120000 -- two cold
 #                 wasm boots on a CI runner, not one)
+#   HOST_WARM_FRAMES / HOST_WARM_GAP_MS / HOST_WARM_TIMEOUT_MS
+#                 registration goes active seconds into boot, but the first
+#                 frames that draw a loaded map compile its shaders and
+#                 block the frame loop -- and the frame loop is what answers
+#                 the gateway. The client waits for that many frame reports
+#                 after the host's map load, the newest no older than the
+#                 gap, before dialing (defaults: 3 / 8000 / 180000).
+#   HOST_VIEWPORT / VIEWPORT  "WxH" render surface for the host page and for
+#                 the client page (defaults: 160x120, and 640x480 -- except
+#                 in SERVER_ROLE=wasm, where the client defaults to the host
+#                 size too). Nothing here looks at what either page draws,
+#                 and on a software rasterizer the surface is most of the
+#                 frame time: 640x480 measured 14.7s per frame against
+#                 160x120's 1.2s, which is signaling latency, not pixels.
 #   GATEWAY_URL   ws(s):// base URL of an already-running gateway. Set it to
 #                 skip starting a local one entirely (external deployment,
 #                 or to keep the gateway's CPU off this machine).

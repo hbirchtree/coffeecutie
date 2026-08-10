@@ -25,6 +25,12 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, normalize, extname } from 'node:path';
 
+// "WxH" -> { width, height }; anything unparseable keeps the default.
+function parseViewport(spec, fallback) {
+  const m = /^(\d+)x(\d+)$/.exec((spec || '').trim());
+  return m ? { width: Number(m[1]), height: Number(m[2]) } : fallback;
+}
+
 const cfg = {
   bundleDir: process.env.BUNDLE_DIR,
   page: process.env.PAGE || 'BlamGraphics.html',
@@ -35,7 +41,7 @@ const cfg = {
   // complete (SDP/ICE + GNS rendezvous handshake all take real
   // wall-clock time -- see WEBRTC_TRANSPORT.md).
   connectTimeoutMs: Number(process.env.CONNECT_TIMEOUT_MS || 60000),
-  viewport: { width: 640, height: 480 },
+  viewport: parseViewport(process.env.VIEWPORT, { width: 640, height: 480 }),
 
   // Setting HOST_URL makes this a wasm<->wasm run: a second browser page
   // is booted first as a WebRTC-hosted server (--listen ws://gw#id, see
@@ -49,7 +55,14 @@ const cfg = {
   // The host has to boot AND get its registration accepted before the
   // client may dial it; a cold wasm boot on a CI runner is the slow part.
   hostReadyTimeoutMs: Number(process.env.HOST_READY_TIMEOUT_MS || 120000),
+
+  hostWarmFrames: Number(process.env.HOST_WARM_FRAMES || 3),
+  hostWarmGapMs: Number(process.env.HOST_WARM_GAP_MS || 8000),
+  hostWarmTimeoutMs: Number(process.env.HOST_WARM_TIMEOUT_MS || 180000),
+  hostViewport: parseViewport(process.env.HOST_VIEWPORT, { width: 160, height: 120 }),
 };
+
+if (!process.env.VIEWPORT && cfg.hostUrl) cfg.viewport = cfg.hostViewport;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -122,6 +135,9 @@ const HOST_MARKERS = [
   { label: 'host accepted a client', re: /Player joined:/ },
 ];
 
+const FRAME_TICK_RE = /\bFPS:\s*\d+/;
+const MAP_LOADED_RE = /Load finish signalled/;
+
 const logLines = [];
 const record = (s, level = 'DEBG') => {
   const d = new Date();
@@ -172,13 +188,35 @@ const closeBrowsers = async () => {
 // background tab, and Chrome pins those to 1fps -- which on CI stalled the
 // host's signaling for minutes and expired its registration. Separate
 // browsers give each page its own foreground tab.
-async function launchRole({ url, role, markers }) {
-  const state = { found: new Set(), sawFatal: false, timedOut: false };
+async function launchRole({ url, role, markers, viewport }) {
+  const state = {
+    found: new Set(), sawFatal: false, timedOut: false,
+    // Frame-loop liveness, from the engine's own once-a-second FPS line:
+    // when it was last seen, how many since the map finished loading, and
+    // the longest silence -- a stalled loop is a stalled network stack.
+    lastFrameAt: 0, framesSinceLoad: 0, mapLoaded: false, worstStallMs: 0,
+  };
   const browser = await chromium.launch({ headless: true, args: CHROMIUM_ARGS });
   browsers.push(browser);
 
   const scan = (text) => {
     if (FATAL_PATTERNS.some((re) => re.test(text))) state.sawFatal = true;
+    if (FRAME_TICK_RE.test(text)) {
+      const now = Date.now();
+      if (state.lastFrameAt) {
+        const gap = now - state.lastFrameAt;
+        if (gap > state.worstStallMs) state.worstStallMs = gap;
+        if (gap >= cfg.hostWarmGapMs) {
+          record(`[${role}] frame-loop stall: ${(gap / 1000).toFixed(1)}s with no frame`, 'WARN');
+        }
+      }
+      state.lastFrameAt = now;
+      if (state.mapLoaded) state.framesSinceLoad++;
+    }
+    if (!state.mapLoaded && MAP_LOADED_RE.test(text)) {
+      state.mapLoaded = true;
+      state.framesSinceLoad = 0;
+    }
     for (const m of markers) {
       if (!state.found.has(m.label) && m.re.test(text)) {
         state.found.add(m.label);
@@ -187,7 +225,7 @@ async function launchRole({ url, role, markers }) {
     }
   };
 
-  const page = await browser.newPage({ viewport: cfg.viewport });
+  const page = await browser.newPage({ viewport: viewport || cfg.viewport });
   page.on('console', (msg) => {
     const text = msg.text();
     record(`[${role}] ${text}`, msg.type() === 'error' ? 'ERR' : msg.type() === 'warning' ? 'WARN' : 'DEBG');
@@ -242,7 +280,10 @@ async function main() {
       const hostPageUrl = `http://127.0.0.1:${port}/${cfg.page}`
         + `?listen=${encodeURIComponent(cfg.hostUrl)}&map=${encodeURIComponent(cfg.hostMap)}`;
       record(`Booting wasm host page at ${hostPageUrl}`);
-      host = await launchRole({ url: hostPageUrl, role: 'host', markers: HOST_MARKERS });
+      host = await launchRole({
+        url: hostPageUrl, role: 'host', markers: HOST_MARKERS,
+        viewport: cfg.hostViewport,
+      });
 
       const hostReady = await waitFor(
         () => HOST_READY_MARKERS.every((m) => host.found.has(m.label)) || host.sawFatal,
@@ -251,7 +292,23 @@ async function main() {
         throw new Error('wasm host never reached an active registration'
           + ` (fatal=${host.sawFatal} timedOut=${host.timedOut})`);
       }
-      record('wasm host is registered and active; starting the client.');
+      record('wasm host is registered and active; waiting for its frame loop to settle.');
+
+      const hostWarm = await waitFor(
+        () => (host.mapLoaded
+               && host.framesSinceLoad >= cfg.hostWarmFrames
+               && Date.now() - host.lastFrameAt < cfg.hostWarmGapMs)
+              || host.sawFatal,
+        cfg.hostWarmTimeoutMs);
+      if (host.sawFatal) {
+        throw new Error('wasm host died while loading its map');
+      }
+      if (!hostWarm) {
+        record(`wasm host frame loop never settled (map loaded=${host.mapLoaded},`
+          + ` frames since=${host.framesSinceLoad}, worst stall=${(host.worstStallMs / 1000).toFixed(1)}s);`
+          + ' dialing regardless.', 'WARN');
+      }
+      record(`Starting the client (host worst stall so far: ${(host.worstStallMs / 1000).toFixed(1)}s).`);
     }
 
     const client = await launchRole({ url, role: 'client', markers: MARKERS });
@@ -282,6 +339,8 @@ async function main() {
     }
     record(`no wasm abort/trap: ${!sawFatal}`);
     record(`did not time out booting: ${!timedOut}`);
+    if (host) record(`host worst frame-loop stall: ${(host.worstStallMs / 1000).toFixed(1)}s`);
+    record(`client worst frame-loop stall: ${(client.worstStallMs / 1000).toFixed(1)}s`);
     record('===============================================================');
 
     const ok = !timedOut && !sawFatal
