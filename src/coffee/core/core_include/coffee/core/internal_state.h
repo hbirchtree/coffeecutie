@@ -78,7 +78,7 @@ extern P<InternalThreadState>& GetInternalThreadState();
  *
  */
 
-extern stl_types::ThreadId& GetCurrentThreadId();
+extern stl_types::thread_id_t GetCurrentThreadId();
 
 extern std::mutex& GetPrinterLock();
 

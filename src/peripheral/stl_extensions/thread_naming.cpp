@@ -1,6 +1,7 @@
 #include <peripherals/stl/thread_types.h>
 
 #include <peripherals/stl/functional_types.h>
+#include <peripherals/stl/standard_exceptions.h>
 #include <platforms/pimpl_state.h>
 
 #if defined(COFFEE_UNIXPLAT)
@@ -15,7 +16,7 @@ struct ThreadNames : platform::GlobalState
 {
     virtual ~ThreadNames();
 
-    std::map<ThreadId::Hash, std::string> names;
+    std::map<stl_types::thread_id_t, std::string> names;
 };
 
 ThreadNames::~ThreadNames()
@@ -50,7 +51,7 @@ STATICINLINE ThreadNames& GetContext(platform::GlobalState* context = nullptr)
     return *threadNames;
 }
 
-STATICINLINE void SaveThreadName(ThreadId::Hash hs, std::string const& name)
+STATICINLINE void SaveThreadName(stl_types::thread_id_t hs, std::string const& name)
 {
     C_UNUSED(auto state) = platform::state->LockState("threadNames");
     auto& context        = GetContext();
@@ -61,7 +62,7 @@ STATICINLINE void SaveThreadName(ThreadId::Hash hs, std::string const& name)
     context.names[hs] = name;
 }
 
-STATICINLINE std::string_view LoadThreadName(ThreadId::Hash hs)
+STATICINLINE std::string_view LoadThreadName(stl_types::thread_id_t hs)
 {
     C_UNUSED(auto state) = platform::state->LockState("threadNames");
     auto& context        = GetContext();
@@ -72,7 +73,7 @@ STATICINLINE std::string_view LoadThreadName(ThreadId::Hash hs)
 namespace Threads {
 bool SetName(std::thread& t, std::string const& name)
 {
-    SaveThreadName(std::hash<std::thread::id>{}(t.get_id()), name);
+    SaveThreadName(stl_types::get_thread_id(t), name);
 
 #if defined(COFFEE_APPLE)
     //    pthread_setname_np(name.c_str());
@@ -100,18 +101,18 @@ std::string_view GetName(std::thread& t)
 #endif
 }
 
-bool SetName(ThreadId::Hash t, std::string const& name)
+bool SetName(stl_types::thread_id_t t, std::string const& name)
 {
     SaveThreadName(t, name);
     return true;
 }
 
-std::string_view GetName(ThreadId::Hash t)
+std::string_view GetName(stl_types::thread_id_t t)
 {
     return LoadThreadName(t);
 }
 
-std::map<ThreadId::Hash, std::string> GetNames(platform::GlobalState* context)
+std::map<stl_types::thread_id_t, std::string> GetNames(platform::GlobalState* context)
 {
     C_UNUSED(auto state) = platform::state->LockState(*context);
     return GetContext(context).names;
@@ -122,7 +123,7 @@ namespace CurrentThread {
 
 bool SetName(std::string const& name)
 {
-    SaveThreadName(ThreadId().hash(), name);
+    SaveThreadName(stl_types::get_this_thread_id(), name);
 
     std::string cpy = name;
     if(name.size() >= 16)
@@ -155,7 +156,7 @@ std::string_view GetName()
     out.resize(out.find('\0', 0));
     return out;
 #else
-    return LoadThreadName(ThreadId().hash());
+    return LoadThreadName(stl_types::get_this_thread_id());
 #endif
 }
 

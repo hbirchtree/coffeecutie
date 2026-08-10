@@ -1,3 +1,4 @@
+#include "peripherals/stl/thread_types.h"
 #include <coffee/core/task_queue/task.h>
 
 #include <algorithm>
@@ -29,7 +30,7 @@ std::function<rq::detail::time_point()> clock_now = []() {
 
 } // namespace
 
-runtime_queue* runtime_queue::find_queue(detail::thread_id id)
+runtime_queue* runtime_queue::find_queue(stl_types::thread_id_t id)
 {
     std::shared_lock _(context->global_lock);
 
@@ -111,9 +112,9 @@ static detail::result<std::pair<runtime_task const*, size_t>, RQE> GetTask(
 
 static void NotifyThread(
     std::shared_ptr<runtime_queue::QueueContext> context,
-    detail::thread_id                            threadId,
-    std::optional<detail::duration>   previousDeadline = std::nullopt,
-    std::optional<detail::time_point> currentBase      = std::nullopt)
+    stl_types::thread_id_t                       threadId,
+    std::optional<detail::duration>              previousDeadline = std::nullopt,
+    std::optional<detail::time_point>            currentBase      = std::nullopt)
 {
     C_PTR_CHECK(context);
 
@@ -163,7 +164,7 @@ detail::result<runtime_queue*, RuntimeQueueError> runtime_queue::CreateNewQueue(
 
     std::unique_lock _(context->global_lock);
 
-    auto t_id = detail::current_thread_id();
+    auto t_id = stl_types::get_this_thread_id();
     if(auto q_it = context->queues.find(t_id); q_it == context->queues.end())
     {
         auto [_, inserted] = context->queues.try_emplace(t_id);
@@ -288,11 +289,11 @@ detail::result<runtime_queue*, RuntimeQueueVerboseError> runtime_queue::
         sem->running.store(true);
 
         /* Spawn the thread */
-        detail::thread worker(
+        std::thread worker(
             [name, sem, started = std::move(thread_started)]() mutable {
                 ImpCreateNewThreadQueue(name, sem, std::move(started));
             });
-        auto tid = std::hash<detail::thread::id>()(worker.get_id());
+        auto tid = stl_types::get_thread_id(worker);
 
         /* Wait for the runtime_queue to be created on the thread */
         if(thread_started_signal.wait_for(500ms) != std::future_status::ready)
@@ -335,7 +336,7 @@ detail::result<runtime_queue*, RuntimeQueueError> runtime_queue::
 
     std::shared_lock _(context->global_lock);
 
-    auto q_id = detail::current_thread_id();
+    auto q_id = stl_types::get_this_thread_id();
     auto q_it = context->queues.find(q_id);
 
     if(q_it != context->queues.end())
@@ -371,11 +372,11 @@ detail::result<u64, RuntimeQueueError> runtime_queue::GetSelfId()
 
 detail::result<u64, RuntimeQueueError> runtime_queue::Queue(runtime_task&& task)
 {
-    return Queue(detail::current_thread_id(), std::move(task));
+    return Queue(stl_types::get_this_thread_id(), std::move(task));
 }
 
 detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
-    detail::thread_id targetThread, runtime_task&& task)
+    stl_types::thread_id_t targetThread, runtime_task&& task)
 {
     if(auto error = VerifyTask(task))
         return *error;
@@ -452,7 +453,7 @@ detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
 }
 
 std::optional<RuntimeQueueError> runtime_queue::Block(
-    detail::thread_id targetThread, u64 taskId)
+    stl_types::thread_id_t targetThread, u64 taskId)
 {
     if(context->shutdown_flag.load())
     {
@@ -491,7 +492,7 @@ std::optional<RuntimeQueueError> runtime_queue::Block(
 }
 
 std::optional<RuntimeQueueError> runtime_queue::Unblock(
-    detail::thread_id targetThread, u64 taskId)
+    stl_types::thread_id_t targetThread, u64 taskId)
 {
     if(context->shutdown_flag.load())
         return RQE::ShuttingDown;
@@ -523,7 +524,7 @@ std::optional<RuntimeQueueError> runtime_queue::Unblock(
 }
 
 std::optional<RuntimeQueueError> runtime_queue::CancelTask(
-    detail::thread_id targetThread, u64 taskId)
+    stl_types::thread_id_t targetThread, u64 taskId)
 {
     if(context->shutdown_flag.load())
         return RQE::ShuttingDown;
@@ -561,7 +562,7 @@ std::optional<RuntimeQueueError> runtime_queue::CancelTask(
 }
 
 std::optional<RuntimeQueueError> runtime_queue::AwaitTask(
-    detail::thread_id targetThread, u64 taskId)
+    stl_types::thread_id_t targetThread, u64 taskId)
 {
     if(taskId == 0)
         return RQE::InvalidTaskId;
@@ -569,7 +570,7 @@ std::optional<RuntimeQueueError> runtime_queue::AwaitTask(
     if(context->shutdown_flag.load())
         return RQE::ShuttingDown;
 
-    if(detail::current_thread_id() == targetThread)
+    if(stl_types::get_this_thread_id() == targetThread)
         return RQE::SameThread;
 
     runtime_queue* queueRef = find_queue(targetThread);
@@ -654,7 +655,7 @@ std::optional<RuntimeQueueError> runtime_queue::TerminateThread(
      * holding the lock, but join() WITHOUT the lock held: the worker may run a
      * task that needs global_lock (via NotifyThread) on its way out, and
      * holding the lock across join() would deadlock. */
-    detail::thread worker;
+    std::thread worker;
     {
         std::unique_lock _(context->global_lock);
 
@@ -689,7 +690,7 @@ std::optional<RuntimeQueueError> runtime_queue::TerminateThreads()
 
     /* Signal all workers under the lock, move out their thread handles, then
      * join WITHOUT the lock held (see TerminateThread for why). */
-    std::map<u64, detail::thread> threads;
+    std::map<u64, std::thread> threads;
     {
         std::unique_lock _(context->global_lock);
 
@@ -890,7 +891,7 @@ std::string_view runtime_queue::name()
     return stl_types::Threads::GetName(m_thread_id);
 }
 
-detail::thread_id runtime_queue::thread_id() const
+stl_types::thread_id_t runtime_queue::thread_id() const
 {
     return m_thread_id;
 }

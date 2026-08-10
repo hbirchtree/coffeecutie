@@ -9,6 +9,7 @@
 #include <peripherals/stl/time_types.h>
 #include <peripherals/stl/tuple_foreach.h>
 
+#include <future>
 #include <shared_mutex>
 
 namespace rq {
@@ -18,19 +19,11 @@ using clock      = std::chrono::steady_clock;
 using time_point = clock::time_point;
 using duration   = clock::duration;
 
-using thread    = std::thread;
-using thread_id = stl_types::ThreadId::Hash;
-
 template<typename T, typename E>
 using result = stl_types::result<T, E>;
 
 using stl_types::failure;
 using stl_types::success;
-
-inline thread_id current_thread_id()
-{
-    return std::hash<thread::id>()(std::this_thread::get_id());
-}
 
 template<typename R, typename... Args>
 requires std::is_same_v<R, void>
@@ -417,8 +410,8 @@ class runtime_queue
         std::shared_mutex global_lock;
         std::atomic_bool  shutdown_flag;
 
-        std::map<u64, runtime_queue>  queues;
-        std::map<u64, detail::thread> queue_threads;
+        std::map<u64, runtime_queue> queues;
+        std::map<u64, std::thread>   queue_threads;
         /*!
          * \brief Contains all data necessary to manage a worker thread.
          * Needs to be a std::shared_ptr<T> in order to avoid early destruction.
@@ -471,7 +464,7 @@ class runtime_queue
      * \return
      */
     static detail::result<u64, RuntimeQueueError> Queue(
-        detail::thread_id targetThread, runtime_task&& task);
+        stl_types::thread_id_t targetThread, runtime_task&& task);
 
     /*!
      * \brief Queue
@@ -524,7 +517,7 @@ class runtime_queue
         }
 
         /* If we are on the desired thread, run it now */
-        if(detail::current_thread_id() == q->thread_id())
+        if(stl_types::get_this_thread_id() == q->thread_id())
         {
             task();
             return detail::success(0);
@@ -638,30 +631,30 @@ class runtime_queue
 
     STATICINLINE std::optional<RuntimeQueueError> Block(u64 taskId)
     {
-        return Block(detail::current_thread_id(), taskId);
+        return Block(stl_types::get_this_thread_id(), taskId);
     }
 
     static std::optional<RuntimeQueueError> Block(
-        detail::thread_id targetThread, u64 taskId);
+        stl_types::thread_id_t targetThread, u64 taskId);
 
     STATICINLINE std::optional<RuntimeQueueError> Unblock(u64 taskId)
     {
-        return Unblock(detail::current_thread_id(), taskId);
+        return Unblock(stl_types::get_this_thread_id(), taskId);
     }
 
     static std::optional<RuntimeQueueError> Unblock(
-        detail::thread_id targetThread, u64 taskId);
+        stl_types::thread_id_t targetThread, u64 taskId);
 
     STATICINLINE std::optional<RuntimeQueueError> CancelTask(u64 taskId)
     {
-        return CancelTask(detail::current_thread_id(), taskId);
+        return CancelTask(stl_types::get_this_thread_id(), taskId);
     }
 
     static std::optional<RuntimeQueueError> CancelTask(
-        detail::thread_id targetThread, u64 taskId);
+        stl_types::thread_id_t targetThread, u64 taskId);
 
     static std::optional<RuntimeQueueError> AwaitTask(
-        detail::thread_id targetThread, u64 taskId);
+        stl_types::thread_id_t targetThread, u64 taskId);
 
     static detail::result<bool, RuntimeQueueError> IsRunning(
         runtime_queue* thread);
@@ -674,7 +667,7 @@ class runtime_queue
     detail::duration  time_till_next() const;
     detail::duration  time_till_next(detail::time_point clock) const;
     std::string_view  name();
-    detail::thread_id thread_id() const;
+    stl_types::thread_id_t thread_id() const;
 
     size_t task_count();
 
@@ -736,11 +729,11 @@ class runtime_queue
 
     std::vector<task_data_t>           m_tasks;
     std::vector<dependent_task_data_t> m_dependent_tasks;
-    detail::thread_id                  m_thread_id{0};
+    stl_types::thread_id_t                  m_thread_id{0};
     u64                                m_task_index{0};
     u64                                m_current_task_id{0};
 
-    static runtime_queue* find_queue(detail::thread_id id);
+    static runtime_queue* find_queue(stl_types::thread_id_t id);
 
     static std::shared_ptr<QueueContext> context;
 };
@@ -754,7 +747,7 @@ struct scoped_task
 
     template<typename... Args>
     scoped_task(
-        detail::thread_id tid, std::function<void()>&& fun, Args... args)
+        stl_types::thread_id_t tid, std::function<void()>&& fun, Args... args)
     {
         if(auto res = runtime_queue::Queue(
                tid, runtime_task::CreateTask(std::move(fun), args...));
@@ -765,7 +758,7 @@ struct scoped_task
         m_thread_id = tid;
     }
 
-    scoped_task(detail::thread_id tid, runtime_task&& task)
+    scoped_task(stl_types::thread_id_t tid, runtime_task&& task)
     {
         if(auto res = runtime_queue::Queue(tid, std::move(task));
            res.has_error())
@@ -807,14 +800,14 @@ struct scoped_task
         return m_id;
     }
 
-    detail::thread_id threadId() const
+    stl_types::thread_id_t threadId() const
     {
         return m_thread_id;
     }
 
   private:
-    u64               m_id;
-    detail::thread_id m_thread_id;
+    u64                    m_id;
+    stl_types::thread_id_t m_thread_id;
 };
 
 } // namespace rq

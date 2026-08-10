@@ -234,7 +234,7 @@ i32 coffee_main(i32, cstring_w*)
             //            cBasicPrint("]");
         }
         script.update_sleepers(15ms, {opcode_executor, pre_op, post_op});
-        CurrentThread::sleep_for(15ms);
+        std::this_thread::sleep_for(15ms);
     }
 
     return 0;

@@ -1,3 +1,4 @@
+#include "peripherals/stl/thread_types.h"
 #include <coffee/core/internal_state.h>
 
 #include <coffee/core/CDebug>
@@ -71,21 +72,21 @@ struct InternalThreadState
 {
 #if PERIPHERAL_PROFILER_ENABLED
     InternalThreadState()
-        : current_thread_id()
+        : current_thread_id(stl_types::get_this_thread_id())
         , profiler_data(std::make_shared<profiling::ThreadState>())
     {
         auto runtimeProps = std::make_unique<profiling::RuntimeProperties>();
 
         runtimeProps->push               = profiling::json::Push;
         runtimeProps->context            = profiler_data;
-        runtimeProps->context->thread_id = current_thread_id.hash();
+        runtimeProps->context->thread_id = stl_types::get_this_thread_id();
 
         std::lock_guard _(State::internal_state->profiler_store->access);
 
         auto& globalState =
             State::internal_state->profiler_store->thread_states;
 
-        globalState[current_thread_id.hash()] = profiler_data;
+        globalState[stl_types::get_this_thread_id()] = profiler_data;
 
         profiler_data->writer         = State::PeekState("jsonProfiler").get();
         profiler_data->internal_state = std::move(runtimeProps);
@@ -103,7 +104,7 @@ struct InternalThreadState
         profiler_data->internal_state = {};
     }
 
-    stl_types::ThreadId                     current_thread_id;
+    stl_types::thread_id_t                  current_thread_id;
     std::shared_ptr<profiling::ThreadState> profiler_data;
 #endif
 };
@@ -148,7 +149,7 @@ STATICINLINE void RegisterProfilerThreadState()
 #if PERIPHERAL_PROFILER_ENABLED
     if(ISTATE)
     {
-        auto tid   = stl_types::ThreadId().hash();
+        auto tid   = stl_types::get_this_thread_id();
         auto store = GetProfilerStore();
 
         C_PTR_CHECK(store);
@@ -231,7 +232,7 @@ std::mutex& GetPrinterLock()
     return ISTATE->printer_lock;
 }
 
-stl_types::ThreadId& GetCurrentThreadId()
+stl_types::thread_id_t GetCurrentThreadId()
 {
     if constexpr(!compile_info::profiler::enabled)
         Throw(releasemode_error("thread ID is not available"));

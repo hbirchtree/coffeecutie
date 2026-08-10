@@ -148,8 +148,6 @@ target_link_libraries(
   Core
   INTERFACE CoreCommon
             CoreProfiling
-            CoreSaving
-#            CoreTerminal
             CoreQueue
             CoreFile
             CoreState

@@ -1,3 +1,4 @@
+#include "peripherals/stl/thread_types.h"
 #include "platforms/sysinfo.h"
 #include <coffee/comp_app/bundle.h>
 
@@ -231,7 +232,7 @@ bool loop_container(detail::EntityContainer& container)
             Coffee::Logging::cWarning(
                 "TEMPDEBUG: loop_container first tick: thread={} "
                 "GetCurrentQueue={}",
-                rq::detail::current_thread_id(),
+                stl_types::get_this_thread_id(),
                 queue.has_value() ? "ok" : "FAILED");
         }
         if(queue.has_value())

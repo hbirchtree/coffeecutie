@@ -17,6 +17,7 @@
 #include "peripherals/constants.h"
 
 #include <fmt/format.h>
+#include <future>
 #include <memory>
 #include <mutex>
 
@@ -525,8 +526,8 @@ struct GraphicsFramebuffer
 
 struct GraphicsThreadInfo
 {
-    virtual stl_types::ThreadId::Hash thread() const             = 0;
-    virtual void                      makeCurrent(app_error& ec) = 0;
+    virtual stl_types::thread_id_t thread() const             = 0;
+    virtual void                   makeCurrent(app_error& ec) = 0;
 };
 
 struct GraphicsSwapControl
