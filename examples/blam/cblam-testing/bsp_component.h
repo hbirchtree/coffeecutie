@@ -199,6 +199,9 @@ struct BlamBspWidget
                     ImGui::SliderFloat("Gamma", &postprocess->gamma, 0.1, 5.0);
                     ImGui::SliderFloat(
                         "Exposure", &postprocess->exposure, -10.f, 10.f);
+                    ImGui::InputFloat("Blur", &postprocess->blur, 0.00001f, 0.0001f);
+                    ImGui::SliderFloat4(
+                        "RGB decomp", reinterpret_cast<f32*>(&postprocess->rgb_comp), -5.f, 5.f);
                     ImGui::SliderFloat(
                         "Texture resolution", &rendering->tex_res, -20.f, 20.f);
                     ImGui::SliderInt(

@@ -23,15 +23,6 @@
 
 using namespace Coffee::StandardInput;
 
-/* The only genuinely fixed reservation in the debug-line buffers: three
- * 2-vertex axis lines, drawn once at load (resource_creation.cpp) and
- * never resized. Everything else — physics body boxes, occluder eye
- * markers, map-load geometry — is allocated dynamically at runtime
- * (DebugMarkers::acquire_strip / create_marker / create_loop), bounded
- * only by the buffers' real capacity instead of hand-picked offsets. */
-constexpr libc_types::u32 debug_axes_verts  = 6;
-constexpr libc_types::u32 debug_axes_colors = 3;
-
 using libc_types::f32;
 using libc_types::i32;
 using libc_types::u32;
@@ -39,6 +30,17 @@ using libc_types::u64;
 using semantic::Span;
 struct BSPItem;
 using typing::vector_types::Matf4;
+using typing::vector_types::Vecf3;
+using typing::vector_types::Vecf4;
+
+/* The only genuinely fixed reservation in the debug-line buffers: three
+ * 2-vertex axis lines, drawn once at load (resource_creation.cpp) and
+ * never resized. Everything else — physics body boxes, occluder eye
+ * markers, map-load geometry — is allocated dynamically at runtime
+ * (DebugMarkers::acquire_strip / create_marker / create_loop), bounded
+ * only by the buffers' real capacity instead of hand-picked offsets. */
+constexpr u32 debug_axes_verts  = 6;
+constexpr u32 debug_axes_colors = 3;
 
 template<typename Version>
 struct BlamData
@@ -95,6 +97,8 @@ struct PostProcessParameters : compo::SubsystemBase
     f32  gamma{1.f};
     f32  scale{1.f};
     bool auto_expose{true};
+    f32   blur{0.f};
+    Vecf4 rgb_comp{};
 
     bool doom_mode{false};
 };
@@ -132,8 +136,8 @@ struct RenderingParameters : compo::SubsystemBase
     bool debug_clusters{false};
     bool debug_triggers{false};
 
-    f32 tex_res{0.f};
-    f32 draw_distance{500.f};
+    f32   tex_res{0.f};
+    f32   draw_distance{500.f};
 
     libc_types::u32 current_bsp_cluster{
         std::numeric_limits<libc_types::u32>::max()};

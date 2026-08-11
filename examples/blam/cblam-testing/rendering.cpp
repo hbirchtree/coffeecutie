@@ -8,6 +8,7 @@
 #include "data.h"
 #include "map_marker.h"
 #include "materials.h"
+#include "peripherals/semantic/chunk.h"
 #include "selected_version.h"
 
 #include <blam/volta/blam_bitm.h>
@@ -2139,7 +2140,8 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
         gfx::uniform_pair{{"scale"sv}, semantic::SpanOne(uvscale)},
         gfx::uniform_pair{{"offset"sv}, semantic::SpanOne(offset)},
         gfx::uniform_pair{
-            {"exposure"sv}, semantic::SpanOne(postprocess.exposure)});
+            {"exposure"sv}, semantic::SpanOne(postprocess.exposure)},
+        gfx::uniform_pair{{"blur_distance"}, semantic::SpanOne(postprocess.blur)});
 
     // clang-format off
     api.submit(gfx::draw_command{
@@ -2165,13 +2167,15 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
 
     Vecf2 item_scale{2.f / framebuffer->size().w, 2.f / framebuffer->size().h};
     f32   one = 1.f;
+    f32   zero = 0.f;
 
     params_f = gfx::make_uniform_list(
         typing::graphics::ShaderStage::Fragment,
         gfx::uniform_pair{{"gamma"sv}, semantic::SpanOne(one)},
         gfx::uniform_pair{{"scale"sv}, semantic::SpanOne(uvscale)},
         gfx::uniform_pair{{"offset"sv}, semantic::SpanOne(offset)},
-        gfx::uniform_pair{{"exposure"sv}, semantic::SpanOne(one)});
+        gfx::uniform_pair{{"exposure"sv}, semantic::SpanOne(one)},
+        gfx::uniform_pair{{"blur_distance"}, semantic::SpanOne(zero)});
 
     for(screen_quad_t const& draw : extra_quads)
     {
@@ -2269,9 +2273,81 @@ uniform float gamma;
 uniform float exposure;
 uniform vec2 offset;
 uniform vec2 scale;
+
+uniform vec4 rgb_comp_defocus;
+uniform float blur_distance;
+
+// Creates RGB channel desync
+vec4 rgb_defocus()
+{
+    vec4 color = texture2D(source, offset + in_tex * scale).rrra;
+    color.g = texture2D(source, offset + (in_tex + rgb_comp_defocus.xy) * scale).g;
+    color.b = texture2D(source, offset + (in_tex + rgb_comp_defocus.zw) * scale).b;
+    return color;
+}
+
+vec4 box_blur_sample()
+{
+    vec4 color = vec4(0);
+    color += texture2D(source, offset + in_tex * scale + vec2(-blur_distance, blur_distance)) / 0.08;
+    color += texture2D(source, offset + in_tex * scale + vec2(-blur_distance, 0            )) / 0.08;
+    color += texture2D(source, offset + in_tex * scale + vec2(-blur_distance,-blur_distance)) / 0.08;
+    color += texture2D(source, offset + in_tex * scale + vec2(             0, blur_distance)) / 0.08;
+    color += texture2D(source, offset + in_tex * scale + vec2(             0, 0            )) / 0.36;
+    color += texture2D(source, offset + in_tex * scale + vec2(             0,-blur_distance)) / 0.08;
+    color += texture2D(source, offset + in_tex * scale + vec2( blur_distance, blur_distance)) / 0.08;
+    color += texture2D(source, offset + in_tex * scale + vec2( blur_distance, 0            )) / 0.08;
+    color += texture2D(source, offset + in_tex * scale + vec2( blur_distance,-blur_distance)) / 0.08;
+    return color;
+}
+
+vec4 gaussian_blur_sample()
+{
+    vec3 weights = vec3(0.02, 0.12, 0.20);
+
+    vec2 uv = vec2(blur_distance);
+    vec4 color = vec4(0.0);
+    color += texture2D(source, offset + in_tex * scale + uv * vec2(0, 0)) * weights.z;
+
+    color += texture2D(source, offset + in_tex * scale + uv * vec2( 1, 1) / 1.2) * weights.y;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2( 1, 0) / 1.2) * weights.y;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2( 1,-1) / 1.2) * weights.y;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2( 0, 1) / 1.2) * weights.y;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2(-1, 1) / 1.2) * weights.y;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2(-1, 0) / 1.2) * weights.y;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2(-1,-1) / 1.2) * weights.y;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2( 0,-1) / 1.2) * weights.y;
+
+    color += texture2D(source, offset + in_tex * scale + uv * vec2( 2, 2) / 1.5) * weights.x;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2( 2, 1) / 1.5) * weights.x;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2( 2, 0) / 1.5) * weights.x;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2( 2,-1) / 1.5) * weights.x;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2( 2,-2) / 1.5) * weights.x;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2( 1,-2) / 1.5) * weights.x;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2( 0,-2) / 1.5) * weights.x;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2(-1,-2) / 1.5) * weights.x;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2(-2,-2) / 1.5) * weights.x;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2(-2,-1) / 1.5) * weights.x;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2(-2, 0) / 1.5) * weights.x;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2(-2, 1) / 1.5) * weights.x;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2(-2, 2) / 1.5) * weights.x;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2(-1, 2) / 1.5) * weights.x;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2( 0, 2) / 1.5) * weights.x;
+    color += texture2D(source, offset + in_tex * scale + uv * vec2( 1, 2) / 1.5) * weights.x;
+
+    return color;
+}
+
+vec4 plain_sample()
+{
+    return texture2D(source, offset + in_tex * scale).rgba;
+}
+
 void main()
 {
-    vec4 color = texture2D(source, offset + in_tex * scale).rgba;
+    vec4 color = plain_sample();
+    if(blur_distance > 0.00001)
+        color = gaussian_blur_sample();
     color.rgb = color.rgb / (color.rgb + vec3(1.0));
     color.rgb = pow(exposure * color.rgb, vec3(1.0 / gamma));
     gl_FragColor = color;
