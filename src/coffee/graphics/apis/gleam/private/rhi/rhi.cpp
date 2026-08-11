@@ -1360,11 +1360,11 @@ std::string api_limits::get_all_limits() const
 
 struct downscaler_t
 {
-    std::shared_ptr<program_t>      downscale; /*!< Simple passthrough */
-    std::shared_ptr<buffer_t>       vertices;
-    std::shared_ptr<vertex_array_t> vao;
-    std::shared_ptr<rendertarget_t> target;
-    std::shared_ptr<sampler_t>      sampler;
+    std::shared_ptr<api::program_type>      downscale; /*!< Simple passthrough */
+    std::shared_ptr<api::buffer_type>       vertices;
+    std::shared_ptr<api::vertex_type>       vao;
+    std::shared_ptr<api::rendertarget_type> target;
+    std::shared_ptr<sampler_t>              sampler; /*!< Bilinear sampler */
 };
 
 void api::alloc_downscaler()
