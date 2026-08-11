@@ -1,21 +1,25 @@
-#include "coffee/graphics/apis/gleam/rhi_translate.h"
-#include "coffee/graphics/apis/gleam/rhi_versioning.h"
-#include "glw/enums/InternalFormat.h"
-#include <peripherals/constants.h>
-#include <peripherals/stl/magic_enum.hpp>
-
+#include "peripherals/typing/enum/graphics/shader_stage.h"
+#include "peripherals/typing/enum/pixels/filtering.h"
 #include <coffee/graphics/apis/gleam/rhi.h>
 
-#include <glw/enums/FrontFaceDirection.h>
-#include <glw/enums/TriangleFace.h>
-
+#include <coffee/graphics/apis/gleam/rhi_draw_command.h>
+#include <coffee/graphics/apis/gleam/rhi_program.h>
+#include <coffee/graphics/apis/gleam/rhi_rendertarget.h>
+#include <coffee/graphics/apis/gleam/rhi_submit.h>
 #include <coffee/graphics/apis/gleam/rhi_texture.h>
+#include <coffee/graphics/apis/gleam/rhi_translate.h>
+#include <coffee/graphics/apis/gleam/rhi_versioning.h>
+#include <coffee/graphics/apis/gleam/rhi_vertex.h>
 
+#include <peripherals/concepts/graphics_api.h>
+#include <peripherals/constants.h>
+#include <peripherals/stl/magic_enum.hpp>
 #include <peripherals/stl/regex.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string_ops.h>
-
-#include <coffee/core/debug/formatting.h>
+#include <peripherals/typing/geometry/rect.h>
+#include <peripherals/typing/geometry/size.h>
+#include <peripherals/typing/vectors/glm_vector_types.h>
 
 #include <glw/extensions/ARB_color_buffer_float.h>
 #include <glw/extensions/ARB_depth_buffer_float.h>
@@ -36,9 +40,14 @@
 #include <glw/extensions/OES_rgb8_rgba8.h>
 #include <glw/extensions/OES_vertex_array_object.h>
 
+#include <glw/enums/FrontFaceDirection.h>
 #include <glw/enums/limits.h>
+#include <glw/enums/InternalFormat.h>
+#include <glw/enums/TriangleFace.h>
 #include <glw/texture_formats.h>
 #include <glw/texture_formats_desc.h>
+
+#include <coffee/core/debug/formatting.h>
 
 #if defined(FEATURE_ENABLE_CEAGL)
 #include <CEAGL/eagl.h>
@@ -1347,6 +1356,143 @@ std::string api_limits::get_all_limits() const
         out.erase(out.end() - 1);
     out += "}";
     return out;
+}
+
+struct downscaler_t
+{
+    std::shared_ptr<program_t>      downscale; /*!< Simple passthrough */
+    std::shared_ptr<buffer_t>       vertices;
+    std::shared_ptr<vertex_array_t> vao;
+    std::shared_ptr<rendertarget_t> target;
+    std::shared_ptr<sampler_t>      sampler;
+};
+
+void api::alloc_downscaler()
+{
+    using typing::vector_types::Vecf2;
+    using typing::vector_types::Vecf4;
+    using namespace std::string_view_literals;
+
+    m_downscaler = std::make_shared<downscaler_t>();
+    m_downscaler->downscale = alloc_program();
+    m_downscaler->target    = alloc_rendertarget();
+    m_downscaler->sampler   = std::make_shared<sampler_t>(
+        m_features.texture, std::ref(*m_debug), textures::type::d2);
+    m_downscaler->vao       = alloc_vertex_array();
+    m_downscaler->vertices  = alloc_buffer(
+        buffers::vertex, semantic::RSCA::ReadOnly);
+
+    auto& vao = m_downscaler->vao;
+    auto& vbo = m_downscaler->vertices;
+    auto& rt  = m_downscaler->target;
+    auto& prg = m_downscaler->downscale;
+    auto& smp = m_downscaler->sampler;
+
+    vbo->alloc();
+    // Triangle fan quad
+    vbo->commit(std::array<Vecf4, 4>{{
+        {-1,  1, 0, 1},
+        {-1, -1, 0, 0},
+        { 1, -1, 1, 0},
+        { 1,  1, 1, 1},
+    }});
+    vao->alloc();
+    vao->add(vertex_attribute{
+        .index = 0,
+        .value = {
+            .stride = sizeof(Vecf4),
+            .count = 2,
+        },
+    });
+    vao->add(vertex_attribute{
+        .index = 1,
+        .value = {
+            .offset = sizeof(Vecf2),
+            .stride = sizeof(Vecf4),
+            .count = 2,
+        },
+    });
+    vao->set_buffer(buffers::vertex, vbo, 0);
+    vao->set_attribute_names({
+        {"pos", 0},
+        {"tex", 1},
+    });
+
+    rt->alloc();
+    smp->alloc();
+    smp->set_filtering(typing::Filtering::Linear, typing::Filtering::Linear);
+
+    prg->add(program_t::stage_t::Vertex, alloc_shader(
+        R"(#version 100
+precision highp float;
+attribute vec2 pos;
+attribute vec2 tex;
+varying vec2 f_tex;
+void main()
+{
+    f_tex = tex;
+    gl_Position = vec4(pos.x, pos.y, 0.0, 1.0);
+}
+)"sv));
+    prg->add(program_t::stage_t::Fragment, alloc_shader(
+        R"(#version 100
+precision highp float;
+precision highp sampler2D;
+varying vec2 f_tex;
+uniform sampler2D source;
+void main()
+{
+    gl_FragColor = vec4(texture2D(source, f_tex).rgb, 1.0);
+}
+)"sv));
+    if(auto status = prg->compile(); status.has_error())
+    {
+        Coffee::Logging::cWarning(
+            "Failed to compile downscale shader: {}", status.error());
+    }
+}
+
+bool api::perform_downscale(
+    std::weak_ptr<texture_t> source_,
+    std::weak_ptr<texture_t> target_,
+    size_2d<u32> size,
+    u32 level)
+{
+    using typing::vector_types::Veci4;
+
+    auto source = source_.lock();
+    auto target = target_.lock();
+    if(!source || !target)
+        return false;
+
+    if(!m_downscaler)
+        alloc_downscaler();
+
+    auto& rt = m_downscaler->target;
+
+    target->alloc(size_3d<u32>{size.w, size.h, 1}, true);
+    rt->attach(render_targets::attachment::color, *target, level);
+    rt->resize(typing::geometry::rect<i32>{
+        0, 0, static_cast<i32>(size.w), static_cast<i32>(size.h)});
+    m_downscaler->sampler->rebind(source);
+
+    submit(draw_command{
+            .program = m_downscaler->downscale,
+            .vertices = m_downscaler->vao,
+            .render_target = m_downscaler->target,
+            .call = draw_command::call_spec_t{
+                .mode = drawing::primitive::triangle_fan,
+            },
+            .data = {draw_command::data_t{.arrays = {.count = 4}}},
+        }, view_state{
+            .view = Veci4(0u, 0u, size.w, size.h),
+        }, make_sampler_list(sampler_definition_t{
+            typing::graphics::ShaderStage::Fragment,
+            uniform_key{"source"},
+            m_downscaler->sampler,
+        }));
+
+    return true;
 }
 
 } // namespace gleam

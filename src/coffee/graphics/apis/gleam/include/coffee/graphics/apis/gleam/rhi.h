@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <memory>
 #include <peripherals/concepts/graphics_api.h>
 #include <peripherals/concepts/span.h>
 #include <peripherals/stl/all_of.h>
@@ -31,6 +32,8 @@ namespace gleam {
 using std::optional;
 using std::string;
 using std::tuple;
+
+struct downscaler_t;
 
 struct api
 {
@@ -383,6 +386,14 @@ struct api
             return m_main_queue;
     }
 
+    // Utility methods
+
+    bool perform_downscale(
+        std::weak_ptr<texture_t> source,
+        std::weak_ptr<texture_t> target,
+        size_2d<u32> size,
+        u32 level = 0);
+
     using debug_api =
         std::conditional_t<debug::api_available, debug::api, debug::null_api>;
 
@@ -392,6 +403,8 @@ struct api
     bool        supports_extension(string const& ext);
     static bool supports_render_format(
         features const& features, PixDesc const& fmt);
+
+    void alloc_downscaler();
 
     std::shared_ptr<rendertarget_type> m_framebuffer;
     std::unique_ptr<debug_api>         m_debug;
@@ -419,6 +432,7 @@ struct api
 #if GLEAM_MAX_VERSION_ES != 0x200
     std::unique_ptr<circular_buffer_t> m_indirect_buffer;
 #endif
+    std::shared_ptr<downscaler_t> m_downscaler{};
 };
 
 inline void test_t2d()

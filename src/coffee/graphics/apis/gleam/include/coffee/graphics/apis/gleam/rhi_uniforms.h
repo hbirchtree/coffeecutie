@@ -473,6 +473,13 @@ inline bool apply_command_modifier_per_call(
     return true;
 }
 
+inline void undo_command_modifier(
+    program_t&,
+    shader_bookkeeping_t&,
+    texture_list&&)
+{
+}
+
 inline bool apply_command_modifier(
     program_t&, shader_bookkeeping_t& bookkeeping, instance_texture_list&)
 {

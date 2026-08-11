@@ -192,8 +192,19 @@ struct sampler_t
 {
     sampler_t(std::shared_ptr<texture_t> const& source)
         : m_source(source)
+        , m_debug(source->m_debug)
         , m_features(source->m_features)
         , m_type(source->m_type)
+    {
+    }
+
+    sampler_t(
+            features::textures const& features,
+            debug::api& debug,
+            textures::type type)
+        : m_debug(debug)
+        , m_features(features)
+        , m_type(type)
     {
     }
 
@@ -202,7 +213,7 @@ struct sampler_t
 #if GLEAM_MAX_VERSION_ES != 0x200
         if(m_features.samplers)
         {
-            [[maybe_unused]] auto _ = m_source.lock()->m_debug.scope();
+            [[maybe_unused]] auto _ = m_debug.scope();
             cmd::gen_samplers(SpanOne<u32>(m_handle));
             cmd::bind_sampler(0, m_handle);
             cmd::bind_sampler(0, 0);
@@ -215,7 +226,7 @@ struct sampler_t
 #if GLEAM_MAX_VERSION_ES != 0x200
         if(m_features.samplers)
         {
-            [[maybe_unused]] auto _ = m_source.lock()->m_debug.scope();
+            [[maybe_unused]] auto _ = m_debug.scope();
             cmd::delete_samplers(SpanOne<u32>(m_handle));
             m_handle.release();
         }
@@ -238,7 +249,7 @@ struct sampler_t
 #if GLEAM_MAX_VERSION_ES != 0x200
         if(m_features.samplers)
         {
-            [[maybe_unused]] auto _ = m_source.lock()->m_debug.scope();
+            [[maybe_unused]] auto _ = m_debug.scope();
             cmd::sampler_parameter(
                 m_handle,
                 group::sampler_parameter_f::texture_min_lod,
@@ -256,7 +267,7 @@ struct sampler_t
 
     inline void set_anisotropic([[maybe_unused]] f32 samples)
     {
-        [[maybe_unused]] auto _         = m_source.lock()->m_debug.scope();
+        [[maybe_unused]] auto _         = m_debug.scope();
         [[maybe_unused]] i32  max_aniso = 0;
 #if GLEAM_MAX_VERSION >= 0x460
         if(m_features.anisotropy)
@@ -299,7 +310,7 @@ struct sampler_t
 #if GLEAM_MAX_VERSION_ES != 0x200
         if(m_features.samplers)
         {
-            [[maybe_unused]] auto _ = m_source.lock()->m_debug.scope();
+            [[maybe_unused]] auto _ = m_debug.scope();
             using typing::Filtering;
             cmd::sampler_parameter(
                 m_handle,
@@ -349,6 +360,7 @@ struct sampler_t
     }
 
     std::weak_ptr<texture_t>    m_source;
+    debug::api&                 m_debug;
     features::textures          m_features;
     hnd                         m_handle;
     textures::type              m_type{textures::type::d2};
