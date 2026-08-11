@@ -40,6 +40,13 @@ struct ScreenClear
     std::shared_ptr<gfx::program_t>      quad_program;
     std::shared_ptr<gfx::sampler_t>      offscreen_sampler;
 
+    static constexpr std::size_t blur_max_levels = 4;
+    std::array<std::shared_ptr<gfx::texture_t>, blur_max_levels> blur_chain;
+    std::array<std::shared_ptr<gfx::sampler_t>, blur_max_levels>
+        blur_chain_samplers;
+    std::shared_ptr<gfx::program_t> blur_down_program;
+    std::shared_ptr<gfx::program_t> blur_up_program;
+
     struct screen_quad_t
     {
         Vecf2                         position; /* Position in display coords */
