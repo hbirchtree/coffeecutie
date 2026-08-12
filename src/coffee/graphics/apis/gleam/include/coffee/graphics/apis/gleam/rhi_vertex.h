@@ -566,6 +566,18 @@ struct vertex_array_legacy_t
         m_attributes.push_back(attribute);
     }
 
+    void set_attribute_names(
+        std::vector<std::pair<std::string_view, u32>>&& attributes)
+    {
+        m_attribute_names = std::move(attributes);
+    }
+
+    /* This path always binds attribute names, the flag is only for parity */
+    void force_attribute_names()
+    {
+        m_forced_attribute_names = true;
+    }
+
     template<class T>
     requires(T::value == buffers::type::vertex)
     //
@@ -587,6 +599,7 @@ struct vertex_array_legacy_t
     std::vector<std::pair<std::string_view, u32>> m_attribute_names;
     std::map<u32, std::weak_ptr<buffer_t>>        m_buffers;
     std::weak_ptr<buffer_t>                       m_element_buffer;
+    bool m_forced_attribute_names{false};
 };
 
 } // namespace gleam
