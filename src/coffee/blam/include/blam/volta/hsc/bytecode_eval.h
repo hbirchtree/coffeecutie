@@ -2,7 +2,6 @@
 
 #include "blam_bytecode.h"
 #include <chrono>
-#include <ratio>
 
 namespace blam::hsc {
 

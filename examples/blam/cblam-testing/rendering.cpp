@@ -1,7 +1,6 @@
 #include "rendering.h"
 
 #include "bitmap_cache.h"
-#include "blam_files.h"
 #include "caching.h"
 #include "caching_item.h"
 #include "components.h"
@@ -2165,6 +2164,13 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
             1.f / static_cast<f32>(level_size.y)};
     }
 
+    int effect_mode =
+        postprocess.rgb_comp.length() > 0
+        ? 2
+        : postprocess.blur > 0
+          ? 1
+          : 0;
+
     auto params_v = gfx::make_uniform_list(
         typing::graphics::ShaderStage::Vertex,
         gfx::uniform_pair{{"transform"sv}, semantic::SpanOne(transform)});
@@ -2175,7 +2181,9 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
         gfx::uniform_pair{{"offset"sv}, semantic::SpanOne(offset)},
         gfx::uniform_pair{
             {"exposure"sv}, semantic::SpanOne(postprocess.exposure)},
-        gfx::uniform_pair{{"blur_distance"}, semantic::SpanOne(blur_spacing)});
+        gfx::uniform_pair{{"blur_distance"}, semantic::SpanOne(blur_spacing)},
+        gfx::uniform_pair{{"rgb_comp_defocus"}, semantic::SpanOne(postprocess.rgb_comp)},
+        gfx::uniform_pair{{"mode"}, semantic::SpanOne(effect_mode)});
 
     // clang-format off
     api.submit(gfx::draw_command{
@@ -2202,6 +2210,7 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
     Vecf2 item_scale{2.f / framebuffer->size().w, 2.f / framebuffer->size().h};
     f32   one = 1.f;
     Vecf2 no_blur{0.f, 0.f};
+    effect_mode = 0;
 
     params_f = gfx::make_uniform_list(
         typing::graphics::ShaderStage::Fragment,
@@ -2209,7 +2218,9 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
         gfx::uniform_pair{{"scale"sv}, semantic::SpanOne(uvscale)},
         gfx::uniform_pair{{"offset"sv}, semantic::SpanOne(offset)},
         gfx::uniform_pair{{"exposure"sv}, semantic::SpanOne(one)},
-        gfx::uniform_pair{{"blur_distance"}, semantic::SpanOne(no_blur)});
+        gfx::uniform_pair{{"blur_distance"}, semantic::SpanOne(no_blur)},
+        gfx::uniform_pair{{"rgb_comp_defocus"}, semantic::SpanOne(postprocess.rgb_comp)},
+        gfx::uniform_pair{{"mode"}, semantic::SpanOne(effect_mode)});
 
     for(screen_quad_t const& draw : extra_quads)
     {
@@ -2323,6 +2334,7 @@ uniform float gamma;
 uniform float exposure;
 uniform vec2 offset;
 uniform vec2 scale;
+uniform int mode;
 
 uniform vec4 rgb_comp_defocus;
 uniform vec2 blur_distance;
@@ -2383,9 +2395,12 @@ vec4 plain_sample()
 
 void main()
 {
-    vec4 color = blur_distance.x > 0.00001
-        ? gaussian_blur_sample()
-        : plain_sample();
+    vec4 color =
+        mode == 2
+        ? rgb_defocus()
+        : mode == 1
+          ? gaussian_blur_sample()
+          : plain_sample();
     color.rgb = color.rgb / (color.rgb + vec3(1.0));
     color.rgb = pow(exposure * color.rgb, vec3(1.0 / gamma));
     gl_FragColor = color;

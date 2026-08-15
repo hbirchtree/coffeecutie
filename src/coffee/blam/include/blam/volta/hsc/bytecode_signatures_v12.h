@@ -152,7 +152,10 @@ inline typename Getter::return_type opcode_signature(
         return Getter::template get<sig_t<t::short_, t::short_, t::short_>>();
 
         /* Flow control */
+    case o::thread_sleep:
+        return Getter::template get<sig_t<t::void_, t::long_>>();
     case o::sleep:
+        // TODO: Find out how to express multiple prototypes for opcode
         return Getter::template get<sig_t<t::void_, t::any>>();
     case o::sleep_until:
         return Getter::template get<sig_t<t::void_>>();
