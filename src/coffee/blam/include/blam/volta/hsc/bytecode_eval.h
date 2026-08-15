@@ -213,6 +213,11 @@ inline typename bytecode_pointer<BC>::result_t bytecode_pointer<BC>::evaluate(
 
             break;
         }
+        case BC::thread_sleep: {
+            out_ = result_t::sleep_timeout(
+                std::chrono::milliseconds(param(type_t::long_).to_u32()));
+            break;
+        }
         case BC::if_: {
             /* TODO: What do the bits in the short fields mean */
 

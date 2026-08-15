@@ -527,10 +527,28 @@ struct bytecode_pointer
                 end_(),
                 terminator,
                 eval::sleeping,
-                {sleep_condition::timer,
-                 terminator,
-                 std::chrono::milliseconds(time * 30),
-                 0}};
+                {
+                    sleep_condition::timer,
+                    terminator,
+                    std::chrono::milliseconds(time * 30),
+                    0,
+                },
+            };
+        }
+
+        static result_t sleep_timeout(std::chrono::milliseconds time)
+        {
+            return {
+                end_(),
+                terminator,
+                eval::sleeping,
+                {
+                    sleep_condition::timer,
+                    terminator,
+                    time,
+                    0,
+                },
+            };
         }
 
         static result_t sleep_condition(u16 expr, u16 tick = 1, u32 timeout = 0)

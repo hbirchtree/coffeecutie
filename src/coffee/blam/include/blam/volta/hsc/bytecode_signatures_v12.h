@@ -1,8 +1,11 @@
 #pragma once
 
 #include "bytecode_common_v12.h"
+#include "peripherals/stl/enumerate.h"
+#include "peripherals/stl/types.h"
 
 #include <array>
+#include <span>
 
 namespace blam {
 namespace hsc {
@@ -14,58 +17,42 @@ constexpr u16 unknown_opcode_signature = 0xFF - 1;
 
 namespace signatures {
 
-struct sig_v
-{
-    const type_t return_type;
-    const size_t num_params;
-};
-
-template<type_t RType = type_t::void_, type_t... Params>
 struct sig_t
 {
-    static constexpr type_t return_type = RType;
-    static constexpr auto   parameters  = std::make_tuple(Params...);
-    static constexpr size_t num_parameters =
-        std::tuple_size<decltype(parameters)>::value;
-
-    static inline sig_v value = {return_type, num_parameters};
-
-    static inline std::vector<type_t> params()
+    template<typename... T>
+    sig_t(type_t return_type, T... param_type)
+        : return_type(return_type)
+        , num_params(sizeof...(T))
     {
-        auto params_static = stl_types::make_array(type_t::void_, Params...);
-
-        return std::vector<type_t>(
-            params_static.begin() + 1, params_static.end());
+        // Avoid dynamic allocation here, but it means we need to do some
+        // trickery
+        static_assert(
+            sizeof...(T) <= 10, "signature has more params than anticipated");
+        auto params =
+            stl_types::make_array<type_t, T...>(std::move(param_type)...);
+        for(size_t i = 0; i < sizeof...(T); i++)
+            param_types[i] = params[i];
     }
-};
 
-struct param_getter
-{
-    using return_type = std::vector<type_t>;
+    const type_t           return_type;
+    const size_t           num_params;
+    std::array<type_t, 10> param_types;
 
-    template<typename T>
-    static inline return_type get()
+    inline auto params() const
     {
-        return T::params();
+        return std::span<const type_t>(param_types.begin(), num_params);
     }
-};
 
-struct num_getter
-{
-    using return_type = signatures::sig_v;
-
-    template<typename T>
-    static inline return_type get()
+    inline auto enumerate_params() const
     {
-        return T::value;
+        return stl_types::enumerate(params());
     }
 };
 
 } // namespace signatures
 
-template<typename Bytecode = bc::v1, typename Getter = signatures::num_getter>
-inline typename Getter::return_type opcode_signature(
-    opcode_layout<Bytecode> const& op)
+template<typename Bytecode = bc::v1>
+inline signatures::sig_t opcode_signature(opcode_layout<Bytecode> const& op)
 {
     using o = Bytecode;
     using t = type_t;
@@ -83,22 +70,21 @@ inline typename Getter::return_type opcode_signature(
     case o::game_save_totally_unsafe:
     case o::game_save_no_timeout:
     case o::garbage_collect_now:
-        return Getter::template get<sig_t<t::void_>>();
+        return sig_t(t::void_);
 
     case o::cinematic_set_title:
-        return Getter::template get<sig_t<t::void_, t::cutscene_title>>();
+        return sig_t(t::void_, t::cutscene_title);
     case o::cinematic_screen_effect_set_filter_desaturation_tint:
-        return Getter::template get<
-            sig_t<t::void_, t::real_, t::real_, t::real_>>();
+        return sig_t(t::void_, t::real_, t::real_, t::real_);
     case o::cinematic_screen_effect_set_filter:
-        return Getter::template get<sig_t<
+        return sig_t(
             t::void_,
             t::real_,
             t::real_,
             t::real_,
             t::real_,
             t::bool_,
-            t::real_>>();
+            t::real_);
 
     case o::game_all_quiet:
     case o::game_is_cooperative:
@@ -106,302 +92,258 @@ inline typename Getter::return_type opcode_signature(
     case o::game_reverted:
     case o::game_won:
     case o::game_safe_to_speak:
-        return Getter::template get<sig_t<t::bool_>>();
+        return sig_t(t::bool_);
 
     case o::game_safe_to_save:
-        return Getter::template get<sig_t<t::bool_, t::short_>>();
+        return sig_t(t::bool_, t::short_);
 
         // case o::game_skip_ticks:
-        //     return Getter::template get<sig_t<t::void_, t::short_>>();
+        //     return sig_t(t::void_, t::short_);
 
     case o::game_difficulty_get:
-        return Getter::template get<sig_t<t::game_difficulty>>();
+        return sig_t(t::game_difficulty);
     case o::game_difficulty_get_real:
-        return Getter::template get<sig_t<t::game_difficulty>>();
+        return sig_t(t::game_difficulty);
 
     case o::players:
-        return Getter::template get<sig_t<t::obj_list>>();
+        return sig_t(t::obj_list);
 
         /* Logic, arithmetic */
     case o::or_:
     case o::and_:
-        return Getter::template get<sig_t<t::bool_, t::bool_, t::bool_>>();
+        return sig_t(t::bool_, t::bool_, t::bool_);
     case o::greater:
     case o::less:
     case o::lequals:
     case o::gequals:
     case o::equal:
     case o::nequal:
-        return Getter::template get<sig_t<t::bool_, t::any, t::any>>();
+        return sig_t(t::bool_, t::any, t::any);
     case o::not_:
-        return Getter::template get<sig_t<t::bool_, t::bool_>>();
+        return sig_t(t::bool_, t::bool_);
 
     case o::min_:
     case o::max_:
-        return Getter::template get<sig_t<t::any, t::any, t::any>>();
+        return sig_t(t::any, t::any, t::any);
 
     case o::add_:
     case o::sub_:
     case o::mul_:
     case o::div_:
-        return Getter::template get<sig_t<t::number, t::number, t::number>>();
+        return sig_t(t::number, t::number, t::number);
 
     case o::real_random_range:
-        return Getter::template get<sig_t<t::real_, t::real_, t::real_>>();
+        return sig_t(t::real_, t::real_, t::real_);
     case o::random_range:
-        return Getter::template get<sig_t<t::short_, t::short_, t::short_>>();
+        return sig_t(t::short_, t::short_, t::short_);
 
         /* Flow control */
     case o::thread_sleep:
-        return Getter::template get<sig_t<t::void_, t::long_>>();
+        return sig_t(t::void_, t::long_);
     case o::sleep:
         // TODO: Find out how to express multiple prototypes for opcode
-        return Getter::template get<sig_t<t::void_, t::any>>();
+        return sig_t(t::void_, t::any);
     case o::sleep_until:
-        return Getter::template get<sig_t<t::void_>>();
+        return sig_t(t::void_);
     case o::wake:
-        return Getter::template get<sig_t<t::void_, t::script>>();
+        return sig_t(t::void_, t::script);
     case o::if_:
-        return Getter::template get<sig_t<t::void_, t::bool_>>();
+        return sig_t(t::void_, t::bool_);
     case o::begin:
     case o::begin_random:
-        return Getter::template get<sig_t<t::any>>();
+        return sig_t(t::any);
 
     case o::print_:
-        return Getter::template get<sig_t<t::void_, t::string_>>();
+        return sig_t(t::void_, t::string_);
 
     case o::fade_in:
     case o::fade_out:
-        return Getter::template get<
-            sig_t<t::void_, t::real_, t::real_, t::real_, t::short_>>();
+        return sig_t(t::void_, t::real_, t::real_, t::real_, t::short_);
 
         /* List operators */
     case o::list_get:
-        return Getter::template get<sig_t<t::object, t::obj_list, t::short_>>();
+        return sig_t(t::object, t::obj_list, t::short_);
     case o::list_count:
-        return Getter::template get<sig_t<t::short_, t::obj_list>>();
+        return sig_t(t::short_, t::obj_list);
 
     case o::unit:
-        return Getter::template get<sig_t<t::unit, t::object>>();
+        return sig_t(t::unit, t::object);
 
         /* Object operators */
     case o::object_create:
     case o::object_destroy:
     case o::object_create_anew:
-        return Getter::template get<sig_t<t::void_, t::object_name>>();
+        return sig_t(t::void_, t::object_name);
     case o::object_create_containing:
     case o::object_destroy_containing:
     case o::object_create_anew_containing:
-        return Getter::template get<sig_t<t::void_, t::string_>>();
+        return sig_t(t::void_, t::string_);
     case o::object_beautify:
-        return Getter::template get<sig_t<t::void_, t::object, t::bool_>>();
+        return sig_t(t::void_, t::object, t::bool_);
     case o::object_can_take_damage:
-        return Getter::template get<sig_t<t::void_, t::obj_list>>();
+        return sig_t(t::void_, t::obj_list);
     case o::object_destroy_all:
-        return Getter::template get<sig_t<t::void_>>();
+        return sig_t(t::void_);
     case o::object_teleport:
     case o::object_set_facing:
-        return Getter::template get<
-            sig_t<t::void_, t::object_name, t::cutscene_flag>>();
+        return sig_t(t::void_, t::object_name, t::cutscene_flag);
     case o::objects_attach:
-        return Getter::template get<sig_t<
-            t::void_,
-            t::object_name,
-            t::string_,
-            t::object_name,
-            t::string_>>();
+        return sig_t(
+            t::void_, t::object_name, t::string_, t::object_name, t::string_);
     case o::objects_detach:
-        return Getter::template get<
-            sig_t<t::void_, t::object_name, t::object_name>>();
+        return sig_t(t::void_, t::object_name, t::object_name);
     case o::object_pvs_activate:
-        return Getter::template get<sig_t<t::void_, t::object>>();
+        return sig_t(t::void_, t::object);
     case o::object_pvs_set_camera:
-        return Getter::template get<sig_t<t::void_, t::cutscene_camera_pnt>>();
+        return sig_t(t::void_, t::cutscene_camera_pnt);
     case o::object_pvs_set_object:
-        return Getter::template get<sig_t<t::void_, t::object>>();
+        return sig_t(t::void_, t::object);
     case o::object_pvs_clear:
-        return Getter::template get<sig_t<t::void_>>();
+        return sig_t(t::void_);
 
     case o::object_set_scale:
-        return Getter::template get<
-            sig_t<t::void_, t::object_name, t::real_, t::short_>>();
+        return sig_t(t::void_, t::object_name, t::real_, t::short_);
     case o::object_set_permutation:
-        return Getter::template get<
-            sig_t<t::void_, t::object_name, t::string_, t::string_>>();
+        return sig_t(t::void_, t::object_name, t::string_, t::string_);
 
     case o::object_cannot_take_damage:
-        return Getter::template get<sig_t<t::void_, t::object_name>>();
+        return sig_t(t::void_, t::object_name);
 
     case o::objects_predict:
-        return Getter::template get<sig_t<t::void_, t::obj_list>>();
+        return sig_t(t::void_, t::obj_list);
     case o::object_type_predict:
-        return Getter::template get<sig_t<t::void_, t::obj_def>>();
+        return sig_t(t::void_, t::obj_def);
 
     case o::objects_can_see_object:
-        return Getter::template get<
-            sig_t<t::bool_, t::obj_list, t::object_name, t::real_>>();
+        return sig_t(t::bool_, t::obj_list, t::object_name, t::real_);
     case o::objects_can_see_flag:
-        return Getter::template get<
-            sig_t<t::bool_, t::obj_list, t::cutscene_flag, t::real_>>();
+        return sig_t(t::bool_, t::obj_list, t::cutscene_flag, t::real_);
 
         /* Camera controls */
     case o::camera_set:
-        return Getter::template get<sig_t<
-            t::void_,
-            t::cutscene_camera_pnt,
-            t::short_>>();
+        return sig_t(t::void_, t::cutscene_camera_pnt, t::short_);
     case o::camera_set_relative:
-        return Getter::template get<sig_t<
-            t::void_,
-            t::cutscene_camera_pnt,
-            t::short_,
-            t::object_name>>();
+        return sig_t(
+            t::void_, t::cutscene_camera_pnt, t::short_, t::object_name);
     case o::camera_time:
-        return Getter::template get<sig_t<t::short_>>();
+        return sig_t(t::short_);
     case o::camera_set_first_person:
-        return Getter::template get<sig_t<t::void_, t::unit_name>>();
+        return sig_t(t::void_, t::unit_name);
     case o::camera_control:
-        return Getter::template get<sig_t<
-            t::void_,
-            t::bool_,
-            t::cutscene_camera_pnt>>();
+        return sig_t(t::void_, t::bool_, t::cutscene_camera_pnt);
 
         /* Cinematic controls */
     case o::cinematic_set_near_clip_distance:
-        return Getter::template get<sig_t<t::void_, t::real_>>();
+        return sig_t(t::void_, t::real_);
     case o::cinematic_screen_effect_start:
-        return Getter::template get<sig_t<t::void_, t::bool_>>();
+        return sig_t(t::void_, t::bool_);
     case o::cinematic_screen_effect_stop:
-        return Getter::template get<sig_t<>>();
+        return sig_t(t::void_);
     case o::cinematic_screen_effect_set_convolution:
-        return Getter::template get<sig_t<
-            t::void_,
-            t::short_,
-            t::short_,
-            t::real_,
-            t::real_,
-            t::real_>>();
+        return sig_t(
+            t::void_, t::short_, t::short_, t::real_, t::real_, t::real_);
     case o::cinematic_show_letterbox:
-        return Getter::template get<sig_t<t::void_, t::cutscene_title>>();
+        return sig_t(t::void_, t::cutscene_title);
     case o::cinematic_screen_effect_set_video:
-        return Getter::template get<sig_t<t::void_, t::short_, t::real_>>();
+        return sig_t(t::void_, t::short_, t::real_);
 
         /* Animation controls */
     case o::custom_animation:
-        return Getter::template get<sig_t<
-            t::void_,
-            t::unit_name,
-            t::anim_graph,
-            t::string_,
-            t::bool_>>();
+        return sig_t(
+            t::void_, t::unit_name, t::anim_graph, t::string_, t::bool_);
     case o::unit_stop_custom_animation:
-        return Getter::template get<sig_t<t::void_, t::unit_name>>();
+        return sig_t(t::void_, t::unit_name);
     case o::unit_get_custom_animation_time:
-        return Getter::template get<sig_t<t::real_, t::unit_name, t::real_>>();
+        return sig_t(t::real_, t::unit_name, t::real_);
     case o::unit_custom_animation_at_frame:
-        return Getter::template get<sig_t<
+        return sig_t(
             t::void_,
             t::unit_name,
             t::anim_graph,
             t::string_,
             t::bool_,
-            t::short_>>();
+            t::short_);
 
         /* Unit recording controls */
     case o::recording_play:
-        return Getter::template get<
-            sig_t<t::void_, t::unit_name, t::cutscene_recording>>();
+        return sig_t(t::void_, t::unit_name, t::cutscene_recording);
     case o::recording_time:
-        return Getter::template get<sig_t<t::short_, t::unit_name, t::real_>>();
+        return sig_t(t::short_, t::unit_name, t::real_);
     case o::recording_play_and_delete:
-        return Getter::template get<
-            sig_t<t::void_, t::unit_name, t::cutscene_recording>>();
+        return sig_t(t::void_, t::unit_name, t::cutscene_recording);
     case o::recording_kill:
-        return Getter::template get<sig_t<t::void_, t::unit_name>>();
+        return sig_t(t::void_, t::unit_name);
     case o::recording_play_and_hover:
-        return Getter::template get<
-            sig_t<t::void_, t::vehicle_name, t::cutscene_recording>>();
+        return sig_t(t::void_, t::vehicle_name, t::cutscene_recording);
 
         /* Effects */
     case o::effect_new_on_object_marker:
-        return Getter::template get<
-            sig_t<t::void_, t::effect, t::object_name, t::string_>>();
+        return sig_t(t::void_, t::effect, t::object_name, t::string_);
     case o::effect_new:
-        return Getter::template get<sig_t<t::effect, t::cutscene_flag>>();
+        return sig_t(t::effect, t::cutscene_flag);
 
     case o::damage_new:
-        return Getter::template get<
-            sig_t<t::void_, t::damage, t::cutscene_flag>>();
+        return sig_t(t::void_, t::damage, t::cutscene_flag);
 
         /* Device controls */
     case o::device_set_position:
-        return Getter::template get<
-            sig_t<t::bool_, t::device_name, t::real_>>();
+        return sig_t(t::bool_, t::device_name, t::real_);
     case o::device_set_position_immediate:
-        return Getter::template get<
-            sig_t<t::void_, t::device_name, t::real_>>();
+        return sig_t(t::void_, t::device_name, t::real_);
     case o::device_set_power:
-        return Getter::template get<
-            sig_t<t::void_, t::device_name, t::real_>>();
+        return sig_t(t::void_, t::device_name, t::real_);
     case o::device_get_power:
     case o::device_get_position:
-        return Getter::template get<sig_t<t::real_, t::device_name>>();
+        return sig_t(t::real_, t::device_name);
     case o::device_one_sided_set:
-        return Getter::template get<
-            sig_t<t::void_, t::device_name, t::bool_>>();
+        return sig_t(t::void_, t::device_name, t::bool_);
     case o::device_group_get:
-        return Getter::template get<sig_t<t::real_, t::device_group>>();
+        return sig_t(t::real_, t::device_group);
     case o::device_group_set:
-        return Getter::template get<
-            sig_t<t::void_, t::device_group, t::real_>>();
+        return sig_t(t::void_, t::device_group, t::real_);
     case o::device_operates_automatically_set:
-        return Getter::template get<
-            sig_t<t::void_, t::device_name, t::bool_>>();
+        return sig_t(t::void_, t::device_name, t::bool_);
 
         /* Sound controls */
     case o::sound_class_set_gain:
-        return Getter::template get<
-            sig_t<t::void_, t::string_, t::real_, t::short_>>();
+        return sig_t(t::void_, t::string_, t::real_, t::short_);
     case o::sound_looping_start:
-        return Getter::template get<
-            sig_t<t::void_, t::loop_sound, t::object_name, t::real_>>();
+        return sig_t(t::void_, t::loop_sound, t::object_name, t::real_);
     case o::sound_looping_stop:
-        return Getter::template get<sig_t<t::void_, t::loop_sound>>();
+        return sig_t(t::void_, t::loop_sound);
     case o::sound_impulse_start:
-        return Getter::template get<
-            sig_t<t::void_, t::sound, t::object_name, t::real_>>();
+        return sig_t(t::void_, t::sound, t::object_name, t::real_);
     case o::sound_impulse_time:
-        return Getter::template get<sig_t<t::short_, t::sound>>();
+        return sig_t(t::short_, t::sound);
     case o::sound_impulse_stop:
-        return Getter::template get<sig_t<t::void_, t::sound>>();
+        return sig_t(t::void_, t::sound);
     case o::sound_looping_set_alternate:
     case o::sound_looping_set_alternate_:
-        return Getter::template get<sig_t<t::void_, t::loop_sound, t::bool_>>();
+        return sig_t(t::void_, t::loop_sound, t::bool_);
 
         /* Global variables */
     case o::set_:
-        return Getter::template get<sig_t<t::void_, t::nothing, t::any>>();
+        return sig_t(t::void_, t::nothing, t::any);
 
         /* AI operators */
     case o::ai_dialogue_triggers:
     case o::ai_grenades:
-        return Getter::template get<sig_t<t::void_, t::bool_>>();
+        return sig_t(t::void_, t::bool_);
     case o::ai_attach_free:
-        return Getter::template get<
-            sig_t<t::void_, t::unit_name, t::actor_variant>>();
+        return sig_t(t::void_, t::unit_name, t::actor_variant);
     case o::ai_attach:
-        return Getter::template get<sig_t<t::void_, t::unit_name, t::ai>>();
+        return sig_t(t::void_, t::unit_name, t::ai);
     case o::ai_detach:
     case o::ai_erase:
-        return Getter::template get<sig_t<t::void_, t::unit_name>>();
+        return sig_t(t::void_, t::unit_name);
     case o::ai_erase_all:
     case o::ai_reconnect:
-        return Getter::template get<sig_t<>>();
+        return sig_t(t::void_);
     case o::ai_prefer_target:
-        return Getter::template get<sig_t<t::void_, t::obj_list, t::bool_>>();
+        return sig_t(t::void_, t::obj_list, t::bool_);
     case o::ai_conversation_advance:
     case o::ai_conversation_stop:
-        return Getter::template get<sig_t<t::void_, t::conversation>>();
+        return sig_t(t::void_, t::conversation);
     case o::ai_place:
     case o::ai_kill:
     case o::ai_free:
@@ -421,19 +363,19 @@ inline typename Getter::return_type opcode_signature(
     case o::ai_teleport_to_starting_location:
     case o::ai_magically_see_encounter:
     case o::ai_command_list_advance:
-        return Getter::template get<sig_t<t::void_, t::ai>>();
+        return sig_t(t::void_, t::ai);
     case o::ai_free_units:
-        return Getter::template get<sig_t<t::void_, t::obj_list>>();
+        return sig_t(t::void_, t::obj_list);
     case o::ai_strength:
-        return Getter::template get<sig_t<t::real_, t::ai>>();
+        return sig_t(t::real_, t::ai);
     case o::ai_status:
     case o::ai_living_count:
     case o::ai_nonswarm_count:
-        return Getter::template get<sig_t<t::short_, t::ai>>();
+        return sig_t(t::short_, t::ai);
     case o::ai_living_fraction:
-        return Getter::template get<sig_t<t::real_, t::ai>>();
+        return sig_t(t::real_, t::ai);
     case o::ai_actors:
-        return Getter::template get<sig_t<t::obj_list, t::ai>>();
+        return sig_t(t::obj_list, t::ai);
     case o::ai_set_blind:
     case o::ai_playfight:
     case o::ai_set_deaf:
@@ -442,116 +384,101 @@ inline typename Getter::return_type opcode_signature(
     case o::ai_braindead:
     case o::ai_force_active:
     case o::ai_migrate_and_speak:
-        return Getter::template get<sig_t<t::void_, t::ai, t::bool_>>();
+        return sig_t(t::void_, t::ai, t::bool_);
     case o::ai_migrate:
     case o::ai_try_to_fight:
     case o::ai_follow_target_ai:
     case o::ai_link_activation:
-        return Getter::template get<sig_t<t::void_, t::ai, t::ai>>();
+        return sig_t(t::void_, t::ai, t::ai);
     case o::ai_vehicle_encounter:
-        return Getter::template get<sig_t<t::void_, t::unit, t::ai>>();
+        return sig_t(t::void_, t::unit, t::ai);
     case o::ai_vehicle_enterable_distance:
-        return Getter::template get<sig_t<t::void_, t::unit_name, t::real_>>();
+        return sig_t(t::void_, t::unit_name, t::real_);
     case o::ai_vehicle_enterable_actor_type:
-        return Getter::template get<
-            sig_t<t::void_, t::unit_name, t::actor_type>>();
+        return sig_t(t::void_, t::unit_name, t::actor_type);
     case o::ai_vehicle_enterable_disable:
-        return Getter::template get<sig_t<t::void_, t::unit_name>>();
+        return sig_t(t::void_, t::unit_name);
     case o::ai_go_to_vehicle:
-        return Getter::template get<
-            sig_t<t::void_, t::ai, t::unit, t::string_>>();
+        return sig_t(t::void_, t::ai, t::unit, t::string_);
     case o::ai_command_list:
-        return Getter::template get<sig_t<t::void_, t::ai, t::ai_cmd_list>>();
+        return sig_t(t::void_, t::ai, t::ai_cmd_list);
     case o::ai_command_list_by_unit:
-        return Getter::template get<
-            sig_t<t::void_, t::unit_name, t::ai_cmd_list>>();
+        return sig_t(t::void_, t::unit_name, t::ai_cmd_list);
     case o::ai_command_list_status:
-        return Getter::template get<sig_t<t::short_, t::obj_list>>();
+        return sig_t(t::short_, t::obj_list);
     case o::ai_allegiance:
     case o::ai_allegiance_remove:
-        return Getter::template get<sig_t<t::void_, t::team, t::team>>();
+        return sig_t(t::void_, t::team, t::team);
     case o::ai_conversation_status:
-        return Getter::template get<sig_t<t::short_, t::conversation>>();
+        return sig_t(t::short_, t::conversation);
     case o::ai_conversation:
-        return Getter::template get<sig_t<t::void_, t::conversation>>();
+        return sig_t(t::void_, t::conversation);
 
     /* Effects */
     case o::player_effect_set_max_rumble:
-        return Getter::template get<sig_t<t::void_, t::real_, t::real_>>();
+        return sig_t(t::void_, t::real_, t::real_);
     case o::player_effect_set_max_translation:
     case o::player_effect_set_max_rotation:
-        return Getter::template get<
-            sig_t<t::void_, t::real_, t::real_, t::real_>>();
+        return sig_t(t::void_, t::real_, t::real_, t::real_);
     case o::player_effect_start:
-        return Getter::template get<sig_t<t::void_, t::real_, t::real_>>();
+        return sig_t(t::void_, t::real_, t::real_);
     case o::player_effect_stop:
-        return Getter::template get<sig_t<t::void_, t::real_>>();
+        return sig_t(t::void_, t::real_);
 
         /* Unit controls */
     case o::unit_enter_vehicle:
-        return Getter::template get<
-            sig_t<t::void_, t::unit_name, t::vehicle_name, t::short_>>();
+        return sig_t(t::void_, t::unit_name, t::vehicle_name, t::short_);
     case o::vehicle_hover:
-        return Getter::template get<
-            sig_t<t::void_, t::vehicle_name, t::bool_>>();
+        return sig_t(t::void_, t::vehicle_name, t::bool_);
     case o::vehicle_test_seat_list:
-        return Getter::template get<
-            sig_t<t::bool_, t::vehicle_name, t::string_, t::obj_list>>();
+        return sig_t(t::bool_, t::vehicle_name, t::string_, t::obj_list);
     case o::vehicle_load_magic:
-        return Getter::template get<
-            sig_t<t::void_, t::unit_name, t::string_, t::obj_list>>();
+        return sig_t(t::void_, t::unit_name, t::string_, t::obj_list);
     case o::vehicle_unload:
-        return Getter::template get<
-            sig_t<t::void_, t::unit_name, t::string_>>();
+        return sig_t(t::void_, t::unit_name, t::string_);
     case o::vehicle_riders:
-        return Getter::template get<sig_t<t::obj_list, t::unit_name>>();
+        return sig_t(t::obj_list, t::unit_name);
 
     case o::unit_set_seat:
-        return Getter::template get<
-            sig_t<t::void_, t::unit_name, t::string_>>();
+        return sig_t(t::void_, t::unit_name, t::string_);
     case o::unit_suspended:
-        return Getter::template get<sig_t<t::void_, t::unit_name, t::bool_>>();
+        return sig_t(t::void_, t::unit_name, t::bool_);
     case o::unit_set_enterable_by_player:
-        return Getter::template get<sig_t<t::void_, t::unit_name, t::bool_>>();
+        return sig_t(t::void_, t::unit_name, t::bool_);
     case o::unit_exit_vehicle:
-        return Getter::template get<sig_t<t::void_, t::unit_name>>();
+        return sig_t(t::void_, t::unit_name);
     case o::unit_impervious:
-        return Getter::template get<sig_t<t::void_, t::obj_list, t::bool_>>();
+        return sig_t(t::void_, t::obj_list, t::bool_);
     case o::unit_set_maximum_vitality:
     case o::unit_set_current_vitality:
-        return Getter::template get<
-            sig_t<t::void_, t::unit_name, t::real_, t::real_>>();
+        return sig_t(t::void_, t::unit_name, t::real_, t::real_);
     case o::units_set_desired_flashlight_state:
-        return Getter::template get<sig_t<t::bool_, t::short_>>();
+        return sig_t(t::bool_, t::short_);
     case o::units_set_current_vitality:
-        return Getter::template get<
-            sig_t<t::void_, t::obj_list, t::real_, t::real_>>();
+        return sig_t(t::void_, t::obj_list, t::real_, t::real_);
     case o::unit_get_health:
-        return Getter::template get<sig_t<t::real_, t::unit_name>>();
+        return sig_t(t::real_, t::unit_name);
     case o::unit_close:
     case o::unit_open:
-        return Getter::template get<sig_t<t::void_, t::unit_name>>();
+        return sig_t(t::void_, t::unit_name);
     case o::unit_set_emotion:
-        return Getter::template get<sig_t<t::void_, t::unit_name, t::short_>>();
+        return sig_t(t::void_, t::unit_name, t::short_);
     case o::unit_solo_player_integrated_night_vision_is_active:
-        return Getter::template get<sig_t<t::void_>>();
+        return sig_t(t::void_);
 
         /* Trigger volume controls */
     case o::volume_test_object:
-        return Getter::template get<
-            sig_t<t::bool_, t::trigger_vol, t::object_name>>();
+        return sig_t(t::bool_, t::trigger_vol, t::object_name);
     case o::volume_test_objects:
     case o::volume_test_objects_all:
-        return Getter::template get<
-            sig_t<t::bool_, t::trigger_vol, t::obj_list>>();
+        return sig_t(t::bool_, t::trigger_vol, t::obj_list);
     case o::volume_teleport_players_not_inside:
-        return Getter::template get<
-            sig_t<t::void_, t::trigger_vol, t::cutscene_flag>>();
+        return sig_t(t::void_, t::trigger_vol, t::cutscene_flag);
 
     case o::switch_bsp:
-        return Getter::template get<sig_t<t::void_, t::short_>>();
+        return sig_t(t::void_, t::short_);
     case o::structure_bsp_index:
-        return Getter::template get<sig_t<t::short_>>();
+        return sig_t(t::short_);
 
         /* Player controls */
     case o::show_hud:
@@ -564,59 +491,54 @@ inline typename Getter::return_type opcode_signature(
     case o::hud_blink_shield:
     case o::hud_blink_motion_sensor:
     case o::enable_hud_help_flash:
-        return Getter::template get<sig_t<t::void_, t::bool_>>();
+        return sig_t(t::void_, t::bool_);
     case o::hud_set_help_text:
-        return Getter::template get<sig_t<t::void_, t::hud_msg>>();
+        return sig_t(t::void_, t::hud_msg);
     case o::hud_set_objective_text:
-        return Getter::template get<sig_t<t::void_, t::hud_msg>>();
+        return sig_t(t::void_, t::hud_msg);
     case o::display_scenario_help:
-        return Getter::template get<sig_t<t::void_, t::short_>>();
+        return sig_t(t::void_, t::short_);
 
     case o::player_enable_input:
-        return Getter::template get<sig_t<t::void_, t::bool_>>();
+        return sig_t(t::void_, t::bool_);
     case o::player_action_test_reset:
-        return Getter::template get<sig_t<t::void_>>();
+        return sig_t(t::void_);
     case o::player_action_test_back:
     case o::player_action_test_look_relative_left:
     // case o::player_action_test_look_relative_right:
     case o::player_action_test_look_relative_down:
     case o::player_action_test_look_relative_up:
-        return Getter::template get<sig_t<t::bool_>>();
+        return sig_t(t::bool_);
     // case o::player_action_test_move_relative_all_directions:
     case o::player_action_test_look_relative_all_directions:
     case o::player_action_test_accept:
     case o::player_action_test_zoom:
     case o::player_action_test_grenade_trigger:
-        return Getter::template get<sig_t<t::bool_, t::short_>>();
+        return sig_t(t::bool_, t::short_);
         // case o::player_camera_control:
-        //     return Getter::template get<sig_t<t::void_, t::bool_>>();
+        //     return sig_t(t::void_, t::bool_);
 
     case o::player0_joystick_set_is_normal:
     case o::player0_look_pitch_is_inverted:
-        return Getter::template get<sig_t<t::bool_>>();
+        return sig_t(t::bool_);
     case o::player0_look_invert_pitch:
-        return Getter::template get<sig_t<t::void_, t::bool_>>();
+        return sig_t(t::void_, t::bool_);
 
     case o::cls:
-        return Getter::template get<sig_t<t::void_>>();
+        return sig_t(t::void_);
 
         /* Debugging */
     case o::inspect:
-        return Getter::template get<sig_t<t::void_, t::any>>();
+        return sig_t(t::void_, t::any);
 
     case o::rasterizer_lights_reset_for_new_map:
-        return Getter::template get<sig_t<t::void_>>();
+        return sig_t(t::void_);
 
     case o::deactivate_team_nav_point_flag:
-        return Getter::template get<
-            sig_t<t::void_, t::team, t::cutscene_flag>>();
+        return sig_t(t::void_, t::team, t::cutscene_flag);
     case o::activate_team_nav_point_flag:
-        return Getter::template get<sig_t<
-            t::void_,
-            t::navpoint,
-            t::team,
-            t::cutscene_flag,
-            t::real_>>();
+        return sig_t(
+            t::void_, t::navpoint, t::team, t::cutscene_flag, t::real_);
 
     default:
         break;
