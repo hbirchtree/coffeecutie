@@ -290,18 +290,21 @@ i32 blam_main()
             cDebug("GL extensions: {0}", gfx.extensions());
 
 #if defined(FEATURE_ENABLE_OAF)
-            auto& snd = e.register_subsystem_inplace<oaf::system>();
-            if(auto error = snd.load(e))
+            if(!arguments.count("no-sound"))
             {
-                cWarning("Failed to load audio: {}", error.value());
-                if(auto error = snd.load(e, oaf::system::dummy()))
+                auto& snd = e.register_subsystem_inplace<oaf::system>();
+                if(auto error = snd.load(e))
                 {
-                    cWarning("Failed to load audio dummy: {}", error.value());
-                    return;
+                    cWarning("Failed to load audio: {}", error.value());
+                    if(auto error = snd.load(e, oaf::system::dummy()))
+                    {
+                        cWarning("Failed to load audio dummy: {}", error.value());
+                        return;
+                    }
                 }
+                snd.set_distance_model(oaf::api::exponential);
+                snd.collect_info(*e.service<comp_app::AppInfo>());
             }
-            snd.set_distance_model(oaf::api::exponential);
-            snd.collect_info(*e.service<comp_app::AppInfo>());
 #endif
 #if defined(FEATURE_ENABLE_DiscordLatte)
             using namespace net::url_literals;
@@ -382,7 +385,11 @@ i32 blam_main()
             auto& sound_cache =
                 e.register_subsystem_inplace<SoundCache<halo_version>>(
 #if defined(FEATURE_ENABLE_OAF)
-                    &snd
+                    [arguments, &e] -> oaf::system* {
+                        if(arguments.count("no-sound"))
+                            return nullptr;
+                        return &e.subsystem_cast<oaf::system>();
+                    }()
 #else
                     nullptr
 #endif
