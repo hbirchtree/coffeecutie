@@ -1,9 +1,15 @@
 #include "blam/volta/hsc/blam_bytecode.h"
+#include "blam/volta/blam_base_types.h"
+#include "blam/volta/blam_scenario.h"
+#include "peripherals/semantic/chunk.h"
+#include "peripherals/stl/string/replace.h"
+#include <deque>
 #include <string>
 #define MAGIC_ENUM_RANGE_MIN -4
 #define MAGIC_ENUM_RANGE_MAX 550
 #include <magic_enum/magic_enum.hpp>
 
+#include <blam/volta/blam_scenario.h>
 #include <blam/volta/hsc/bytecode_common_v12.h>
 #include <blam/volta/hsc/bytecode_v1.h>
 #include <blam/volta/hsc/bytecode_v2.h>
@@ -134,6 +140,89 @@ std::string_view to_string(sleep_condition cond)
 std::string_view to_string(script_status stat)
 {
     return magic_enum::enum_name(stat);
+}
+
+std::string script_to_string(semantic::Span<const opcode_layout<bc::v2>> const& bytecode)
+{
+    std::string script;
+    bool last_op{false};
+    for(auto const& opcode : bytecode)
+    {
+        switch(opcode.exp_type)
+        {
+        case expression_t::group:
+            script += fmt::format(" ({}", bc::to_string(opcode.opcode));
+            break;
+        case expression_t::expression:
+            if(opcode.ret_type == type_t::branch_val)
+                break;
+            switch(opcode.param_type)
+            {
+            case type_t::long_:
+                script += fmt::format(" {}", opcode.to_u32());
+                break;
+            case type_t::short_:
+                script += fmt::format(" {}", opcode.to_u16());
+                break;
+            case type_t::real_:
+                script += fmt::format(" {}", opcode.to_real());
+                break;
+            case type_t::bool_:
+                script += fmt::format(" {}", opcode.to_bool() ? "true" : "false");
+                break;
+            case type_t::script:
+                script += fmt::format(" script({})", opcode.long_);
+                break;
+            default:
+                script += fmt::format(" {}({})", to_string(opcode.param_type), opcode.long_);
+                break;
+            }
+            break;
+        case expression_t::global_ref:
+            script += fmt::format(" global({})", opcode.long_);
+            break;
+        case expression_t::script_ref:
+            script += fmt::format(" script({})", opcode.long_);
+            break;
+        default:
+            script += " <unknown>";
+            break;
+        }
+        if(opcode.exp_type != expression_t::group && opcode.next_op.ip == 0xFFFF)
+        {
+            script += ")";
+            if(last_op)
+            {
+                last_op = false;
+                script += ")";
+            }
+        }
+        if(opcode.exp_type ==expression_t::group && opcode.next_op.ip == 0xFFFF)
+            last_op = true;
+    }
+    return script;
+}
+
+std::string to_halo_script(scn::scenario<pc_version_t> const& scenario, map_ptr const& magic)
+{
+    auto scripts = scenario.function_table(magic);
+    auto bytecode = scenario.bytecode(magic);
+    std::string script;
+    for(auto const& decl : scripts)
+    {
+        auto definition = bytecode.subspan(decl.index + 1, 2);
+        auto start      = definition[1].next_op.ip + 1;
+        auto start_op   = bytecode[start].index;
+        auto length     = definition[0].index - start_op;
+        auto body       = bytecode.subspan(start, length);
+        script += fmt::format(
+            "(script[{}] {} {}\n{}\n)\n\n",
+            to_string(decl.type),
+            decl.name.str(),
+            to_string(decl.schedule),
+            script_to_string(body));
+    }
+    return script;
 }
 
 }

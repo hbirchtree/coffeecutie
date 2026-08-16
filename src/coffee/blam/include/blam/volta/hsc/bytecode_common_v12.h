@@ -4,8 +4,15 @@
 
 #include <blam/volta/blam_strings.h>
 #include <blam/volta/blam_structures.h>
+#include <blam/volta/blam_versions.h>
 
 #include <peripherals/stl/time_types.h>
+
+namespace blam::scn {
+template<typename V>
+requires is_game_version<V>
+struct scenario;
+}
 
 namespace blam::hsc {
 
@@ -434,6 +441,11 @@ struct opcode_layout
             other, [](auto op1, auto op2) { return op1 / op2; });
     }
 };
+
+//std::string to_halo_script(semantic::Span<const opcode_layout<bc::v1>> const& op);
+std::string to_halo_script(
+    scn::scenario<pc_version_t> const& scenario,
+    map_ptr const& magic);
 
 std::string to_string(opcode_layout<bc::v1> const& op);
 std::string to_string(opcode_layout<bc::v2> const& op);

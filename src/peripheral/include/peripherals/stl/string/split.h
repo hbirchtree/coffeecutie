@@ -69,6 +69,15 @@ struct spliterator
         return *(*this);
     }
 
+    auto begin() const
+    {
+        return spliterator(source, sep);
+    }
+    auto end() const
+    {
+        return spliterator();
+    }
+
   private:
     typename string_type::size_type len() const
     {
