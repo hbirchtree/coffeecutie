@@ -13,6 +13,7 @@
 #include <peripherals/libc/types.h>
 #include <url/url.h>
 
+using libc_types::u16;
 using libc_types::i32;
 using Coffee::Logging::cWarning;
 
@@ -141,10 +142,12 @@ void open_map(std::string path, std::string output)
     //         comment.position.x, comment.position.y, comment.position.z,
     //         static_cast<int>(comment_.size()), comment_.data());
     // }
+    u16 ip{0};
     for(auto const& opcode : bytecode)
     {
         auto repr = blam::hsc::to_string(opcode);
-        fprintf(fp, "%.*s | op=%04i\n",
+        fprintf(fp, "0x%04x: %.*s | op=%04i\n",
+            ip++,
             static_cast<int>(repr.size()), repr.data(),
             static_cast<int>(opcode.opcode));
     }

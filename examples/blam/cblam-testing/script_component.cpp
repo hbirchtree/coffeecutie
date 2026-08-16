@@ -3,6 +3,7 @@
 #include "caching_item.h"
 #include "components.h"
 #include "data.h"
+#include "peripherals/stl/string/split.h"
 #include "selected_version.h"
 
 #include <blam/volta/blam_scenario.h>
@@ -288,6 +289,27 @@ struct BlamScript
 
                 ImGui::Text("%s", to_string(opcode).c_str());
             }
+            ImGui::EndTabItem();
+        }
+        if(ImGui::BeginTabItem("HaloScript"))
+        {
+            if(ImGui::Button("Start/Stop"))
+                m_running = !m_running;
+            ImGui::SameLine();
+            if(ImGui::Button("Step"))
+            {
+                m_script.execute_timestep(
+                    15ms,
+                    {
+                        .cmd =
+                            [this, &p](auto& ptr, const auto& curr) {
+                                return script_func_handler(p, ptr, curr);
+                            },
+                    });
+            }
+            auto lines = blam::hsc::to_halo_script(*m_scenario, m_magic);
+            for(auto const& line : stl_types::str::split::spliterator<char>(lines, '\n'))
+                ImGui::Text("%.*s", static_cast<int>(line.size()), line.data());
             ImGui::EndTabItem();
         }
 
