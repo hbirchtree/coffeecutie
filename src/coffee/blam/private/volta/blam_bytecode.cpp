@@ -142,87 +142,117 @@ std::string_view to_string(script_status stat)
     return magic_enum::enum_name(stat);
 }
 
+/* bytecode() starts the span 36 bytes into the script syntax data, but its
+ * header is 56 bytes long: node N sits at span index N + 1. */
 template<typename Dialect>
-std::string script_to_string(semantic::Span<const opcode_layout<Dialect>> const& bytecode)
+opcode_layout<Dialect> const* node_at(
+    semantic::Span<const opcode_layout<Dialect>> const& bytecode, u16 index)
 {
-    std::string script;
-    bool last_op{false};
-    for(auto const& opcode : bytecode)
+    u32 pos = static_cast<u32>(index) + 1;
+    if(index == terminator || pos >= bytecode.size())
+        return nullptr;
+    return &bytecode[pos];
+}
+
+/* An offset only names something when it lands on a string boundary; numeric
+ * literals carry a stale offset into the middle of a neighbouring string. */
+std::string_view name_at(string_segment_ref const& strings, u32 offset)
+{
+    if(offset >= strings.data.size() ||
+       (offset > 0 && strings.data[offset - 1] != '\0'))
+        return {};
+    return strings.data.substr(
+        offset, strings.data.find('\0', offset) - offset);
+}
+
+/* A group points at its function-name node, and every node points at its next
+ * sibling; walking that graph is what puts the parentheses in the right place.
+ * A linear pass over the opcodes cannot know where a group ends. */
+template<typename Dialect>
+std::string script_to_string(
+    semantic::Span<const opcode_layout<Dialect>> const& bytecode,
+    string_segment_ref const&                           strings,
+    u16                                                 index,
+    u32                                                 depth = 0)
+{
+    auto const* op = node_at(bytecode, index);
+    if(!op)
+        return {};
+
+    switch(op->exp_type)
     {
-        switch(opcode.exp_type)
+    case expression_t::expression:
+        switch(op->param_type)
         {
-        case expression_t::group:
-            script += fmt::format(" ({}", bc::to_string(opcode.opcode));
-            break;
-        case expression_t::expression:
-            if(opcode.ret_type == type_t::branch_val)
-                break;
-            switch(opcode.param_type)
-            {
-            case type_t::long_:
-                script += fmt::format(" {}", opcode.to_u32());
-                break;
-            case type_t::short_:
-                script += fmt::format(" {}", opcode.to_u16());
-                break;
-            case type_t::real_:
-                script += fmt::format(" {}", opcode.to_real());
-                break;
-            case type_t::bool_:
-                script += fmt::format(" {}", opcode.to_bool() ? "true" : "false");
-                break;
-            case type_t::script:
-                script += fmt::format(" script({})", opcode.long_);
-                break;
-            default:
-                script += fmt::format(" {}({})", to_string(opcode.param_type), opcode.long_);
-                break;
-            }
-            break;
-        case expression_t::global_ref:
-            script += fmt::format(" global({})", opcode.long_);
-            break;
-        case expression_t::script_ref:
-            script += fmt::format(" script({})", opcode.long_);
-            break;
+        case type_t::bool_:
+            return op->to_bool() ? "true" : "false";
+        case type_t::real_:
+            return fmt::format("{}", op->to_real());
+        case type_t::short_:
+            return std::to_string(op->to_u16());
+        case type_t::long_:
+            return std::to_string(op->to_u32());
+        case type_t::string_:
+            return fmt::format("\"{}\"", name_at(strings, op->to_ptr()));
         default:
-            script += " <unknown>";
-            break;
+            /* Object names, tag references and enum values keep their source
+             * spelling in the string segment */
+            if(auto name = name_at(strings, op->to_ptr()); !name.empty())
+                return std::string(name);
+            return std::to_string(op->template get<i32>());
         }
-        if(opcode.exp_type != expression_t::group && opcode.next_op.ip == 0xFFFF)
-        {
-            script += ")";
-            if(last_op)
-            {
-                last_op = false;
-                script += ")";
-            }
-        }
-        if(opcode.exp_type ==expression_t::group && opcode.next_op.ip == 0xFFFF)
-            last_op = true;
+    case expression_t::global_ref:
+    case expression_t::param_ref:
+        return std::string(name_at(strings, op->to_ptr()));
+    case expression_t::group:
+    case expression_t::script_ref:
+        break;
+    default:
+        return "<unknown>";
     }
-    return script;
+
+    /* The value field of a group holds the datum index of its function-name
+     * node, which carries the name the source used. to_*() rejects anything
+     * but an expression node, so it is read directly. */
+    auto const* name_op = node_at(bytecode, static_cast<u16>(op->long_));
+    if(!name_op)
+        return "<unknown>";
+    auto name = name_at(strings, name_op->to_ptr());
+    auto out  = fmt::format("({}", name);
+    /* Statement sequences read better one per line */
+    std::string separator =
+        name == "begin"sv || name == "begin_random"sv || name == "cond"sv
+            ? '\n' + std::string((depth + 1) * 2, ' ')
+            : " ";
+    for(u16 arg = name_op->next_op.ip, guard = 0; guard < bytecode.size();
+        guard++)
+    {
+        auto const* param = node_at(bytecode, arg);
+        if(!param)
+            break;
+        out += separator +
+               script_to_string(bytecode, strings, arg, depth + 1);
+        arg = param->next_op.ip;
+    }
+    return out += ")";
 }
 
 template<typename Version>
 std::string to_halo_script(scn::scenario<Version> const& scenario, map_ptr const& magic)
 {
-    auto scripts = scenario.function_table(magic);
+    auto strings = scenario.string_segment(magic);
+    if(strings.has_error())
+        return {};
     auto bytecode = scenario.bytecode(magic);
     std::string script;
-    for(auto const& decl : scripts)
+    for(auto const& decl : scenario.function_table(magic))
     {
-        auto definition = bytecode.subspan(decl.index + 1, 2);
-        auto start      = definition[1].next_op.ip + 1;
-        auto start_op   = bytecode[start].index;
-        auto length     = definition[0].index - start_op;
-        auto body       = bytecode.subspan(start, length);
         script += fmt::format(
-            "(script[{}] {} {}\n{}\n)\n\n",
+            "(script[{}] {} {}\n {}\n)\n\n",
             to_string(decl.type),
             decl.name.str(),
             to_string(decl.schedule),
-            script_to_string(body));
+            script_to_string(bytecode, strings.value(), decl.index));
     }
     return script;
 }
