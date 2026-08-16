@@ -126,7 +126,7 @@ inline std::optional<std::pair<std::string, std::string>> model(
     using namespace stl_types::str;
 
     std::string vendor, model;
-    std::string implementer, variant, part;
+    std::string implementer, part;
 
     cpu = [&]() -> u32 {
         u32 cpu_i{0};
@@ -153,15 +153,13 @@ inline std::optional<std::pair<std::string, std::string>> model(
                 vendor = trim::both(value);
             else if(key == "CPU implementer")
                 implementer = trim::both(value);
-            else if(key == "CPU variant")
-                variant = trim::both(value);
             else if(key == "CPU part")
                 part = trim::both(value);
         }
         return false;
     });
 
-    if(model.empty() && implementer.empty() && part.empty())
+    if(implementer.empty() && part.empty())
     {
         // Special-case for older ARM kernels
         // Where CPU implementer/part is not listed under the given processor
@@ -170,14 +168,8 @@ inline std::optional<std::pair<std::string, std::string>> model(
                                     std::string_view const&,
                                     std::string_view const& key,
                                     std::string_view const& value) {
-            if(key == "model name")
-                model = trim::both(value);
-            else if(key == "vendor_id")
-                vendor = trim::both(value);
-            else if(key == "CPU implementer")
+            if(key == "CPU implementer")
                 implementer = trim::both(value);
-            else if(key == "CPU variant")
-                variant = trim::both(value);
             else if(key == "CPU part")
                 part = trim::both(value);
             return false;
