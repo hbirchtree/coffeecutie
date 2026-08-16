@@ -1121,8 +1121,8 @@ void ShaderCache<V>::populate_material(
         mat.maps[0].uv_scale = base_map_scale;
         mat.maps[0].bias     = 0;
 
-        bitm_cache.assign_atlas_data(mat.maps[1], shader.swat.reflection);
-        mat.lightmap.reflection = mat.maps[1].layer;
+        mat.lightmap.reflection =
+            bitm_cache.get_atlas_layer(shader.swat.reflection);
 
         bitm_cache.assign_atlas_data(mat.maps[1], shader.swat.bump);
         mat.maps[1].uv_scale = base_map_scale * info->ripple.scale;
