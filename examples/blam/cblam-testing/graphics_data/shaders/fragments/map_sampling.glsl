@@ -75,20 +75,20 @@ layout(binding = 4, std140) uniform TransparentProperties
     TransparentData instance[128];
 } tr;
 
-vec4 get_map(in uint map_id, in int layer, in sampler2DArray sampler, in vec2 tex_coord, in int instance)
+vec4 get_map(in uint map_id, in int layer, in sampler2DArray sampler, in vec2 tex_coord, in Material mat)
 {
     if(layer == -1)
         return vec4(1.0);
 
-    vec2 scale   = mats.instance[instance].maps[map_id].atlas_scale;
-    vec2 uvscale = mats.instance[instance].maps[map_id].uv_scale;
-    vec2 offset  = mats.instance[instance].maps[map_id].atlas_offset;
+    vec2 scale   = mat.maps[map_id].atlas_scale;
+    vec2 uvscale = mat.maps[map_id].uv_scale;
+    vec2 offset  = mat.maps[map_id].atlas_offset;
 
 //    vec2 tc = (tex_coord - floor(tex_coord)) * uvscale;
     vec2 tc = tex_coord * uvscale;
     tc = tc - floor(tc);
 
-    float bias = mats.instance[instance].maps[map_id].bias;
+    float bias = mat.maps[map_id].bias;
     return texture(sampler, vec3(tc * scale + offset, layer & 0xFFFF), bias);
 }
 
@@ -100,10 +100,10 @@ vec4 get_cube_map(
     in samplerCube sampler,
 #endif
     in vec3 tex_coord,
-    in int instance)
+    in Material mat)
 {
 #if USE_ARRAY_CUBEMAP == 1
-    int tex_id = mats.instance[instance].lightmap.reflection;
+    int tex_id = mat.lightmap.reflection;
     // Explicit mip level to not fuzz with in-face texcoords
     float lod = float((tex_id >> 16) & 0xFF);
     return textureLod(sampler, vec4(tex_coord, tex_id & 0xFFFF), lod);
@@ -113,20 +113,20 @@ vec4 get_cube_map(
 }
 #endif
 
-uint get_material_id(in uint instance)
+uint get_material_id(in Material mat)
 {
-    return mats.instance[instance].material.id;
+    return mat.material.id;
 }
 
 #if USE_LIGHTMAPS == 1
 layout(location = 14, binding = 4) uniform sampler2DArray lightmaps;
 
 #ifndef LIGHTMAP_FORMAT_AWARE
-vec4 get_light(in uint instance, in vec2 light_tex)
+vec4 get_light(in Material mat, in vec2 light_tex)
 {
-    vec2 light_scale = mats.instance[instance].lightmap.atlas_scale;
-    vec2 light_offset = mats.instance[instance].lightmap.atlas_offset;
-    int light_layer = mats.instance[instance].lightmap.layer & 0xFFFF;
+    vec2 light_scale = mat.lightmap.atlas_scale;
+    vec2 light_offset = mat.lightmap.atlas_offset;
+    int light_layer = mat.lightmap.layer & 0xFFFF;
 
     return texture(lightmaps, vec3(
                 light_tex * light_scale + light_offset,

@@ -274,6 +274,8 @@ def compile_shaders(
             opt_level = '--Ofast'
         if level == 'size':
             opt_level = '--Osize'
+    force_temporary = ['--force-temporary'] if values.get('force_temporary', False) else []
+
     for variant in variants:
         profile, version = variant.split(':')
         for file in files:
@@ -291,6 +293,7 @@ def compile_shaders(
                 '--compact',
                 in_file,
                 opt_level,
+                *force_temporary,
                 '-p', profile,
                 '-V', version,
                 '-s', extension,

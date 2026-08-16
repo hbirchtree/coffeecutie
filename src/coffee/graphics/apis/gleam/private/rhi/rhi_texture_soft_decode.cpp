@@ -36,6 +36,19 @@ struct texture_decode_not_implemented : std::runtime_error
 
 using typing::pixels::pix_fmt;
 
+#if defined(GLEAM_ENABLE_SOFTWARE_BCN) || defined(GLEAM_ENABLE_SOFTWARE_PVRTC)
+static semantic::Span<const char> aligned_blocks(
+    semantic::Span<const char> data, std::vector<u64>& storage)
+{
+    if(reinterpret_cast<uintptr_t>(data.data()) % alignof(u64) == 0)
+        return data;
+    storage.resize((data.size_bytes() + sizeof(u64) - 1) / sizeof(u64));
+    std::memcpy(storage.data(), data.data(), data.size_bytes());
+    return semantic::Span<const char>(
+        reinterpret_cast<const char*>(storage.data()), data.size_bytes());
+}
+#endif
+
 bool texture_t::requires_software_decode()
 {
     using Comp = typing::pixels::comp_flags;
@@ -137,6 +150,9 @@ static std::vector<char> software_decode_bcn(
         Throw(texture_decode_not_implemented(
             "this variation of BCn not implemented"));
 
+    std::vector<u64> aligned;
+    data = aligned_blocks(data, aligned);
+
     auto blk_pitch = size.w / 4;
     for(auto y : stl_types::range<int>(size.h / 4))
         for(auto x : stl_types::range<int>(blk_pitch))
@@ -166,6 +182,8 @@ static std::vector<char> software_decode_pvrtc_etc1(
     using typing::pixels::comp_flags;
     std::vector<char> out;
     out.resize(size.w * size.h * 4);
+    std::vector<u64> aligned;
+    data = aligned_blocks(data, aligned);
     if(fmt.pixfmt == pix_fmt::PVRTC)
         pvr::PVRTDecompressPVRTC(
             data.data(),

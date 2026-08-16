@@ -1106,7 +1106,7 @@ void create_shaders(compo::EntityContainer& e)
     const bool use_uber =
         features.texture.cube_array /*&& features.buffer.ssbo*/
         && !lowspec_hardware && !bugs.adreno;
-    const bool use_uber_lite = features.buffer.ubo && !bugs.adreno_3xx;
+    const bool use_uber_lite = features.buffer.ubo /*&& !bugs.adreno_3xx*/;
 
     if(use_spv && false)
     {
@@ -1126,10 +1126,7 @@ void create_shaders(compo::EntityContainer& e)
         return;
     }
 
-    if(gfx.feature_info().buffer.ubo)
-        create_standard_shaders(gfx, resources);
-    else
-        create_legacy_shaders(gfx, resources);
+    create_legacy_shaders(gfx, resources);
 }
 
 void set_resource_labels(EntityContainer& e)

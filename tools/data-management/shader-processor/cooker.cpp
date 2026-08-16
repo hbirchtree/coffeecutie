@@ -153,7 +153,11 @@ libc_types::i32 cooker_main()
         ("M,module",
          "Combine SPIR-V binaries into a large module (only if -B is "
          "specified)")(
-            "compact", "Generate compact GLSL code by compacting spacing");
+            "compact", "Generate compact GLSL code by compacting spacing")(
+            "force-temporary",
+            "Emit every intermediate as its own temporary. Works around "
+            "drivers that miscompile long access chains, at the cost of "
+            "output size");
     opts.allow_unrecognised_options();
 
     auto res = opts.parse(arguments.size(), arguments.data());
@@ -387,6 +391,7 @@ libc_types::i32 cooker_main()
                     .version =
                         cast_string<u32>(res["version"].as<std::string>()),
                     .compact = res.count("compact") > 0,
+                    .force_temporary = res.count("force-temporary") > 0,
                 });
             if(glsl.has_error())
             {

@@ -40,6 +40,7 @@ struct target_options
     bool                                    strip_debug{false};
     bool                                    targets_spv{false};
     bool                                    compact{false};
+    bool                                    force_temporary{false};
 };
 
 } // namespace shader_proc

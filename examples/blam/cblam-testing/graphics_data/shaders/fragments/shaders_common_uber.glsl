@@ -94,14 +94,14 @@ vec4 sample_map(
     in uint map_id,
     in int layer,
     in sampler2DArray sampler,
-    in vec2 offset)
+    in vec2 offset,
+    in Material mat)
 {
-    return get_map(
-        map_id,
+    return get_map(map_id,
         layer,
         sampler,
         frag.tex + offset,
-        frag.instanceId);
+        mat);
 }
 
 const uint TEX_BC1    = 1u;
@@ -118,58 +118,58 @@ const uint TEX_Y8     = 10u; /* LLL1 */
 const uint TEX_AY8    = 11u; /* LLLL */
 const uint TEX_A8Y8   = 12u; /* LLLA (r=L, g=A) */
 
-vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offset)
+vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offset, in Material mat)
 {
     uint source = tex_id >> 24;
     if(source == TEX_BC1)
-        return sample_map(map_id, tex_id, source_bc1, offset);
+        return sample_map(map_id, tex_id, source_bc1, offset, mat);
     else if(source == TEX_BC2)
-        return sample_map(map_id, tex_id, source_bc2, offset);
+        return sample_map(map_id, tex_id, source_bc2, offset, mat);
     else if(source == TEX_BC3)
-        return sample_map(map_id, tex_id, source_bc3, offset);
+        return sample_map(map_id, tex_id, source_bc3, offset, mat);
     else if(source == TEX_R8)
-        return sample_map(map_id, tex_id, source_r8, offset);
+        return sample_map(map_id, tex_id, source_r8, offset, mat);
     else if(source == TEX_RG8)
-        return sample_map(map_id, tex_id, source_rg8, offset);
+        return sample_map(map_id, tex_id, source_rg8, offset, mat);
     else if(source == TEX_A8)
         /* D3D A8 samples RGB as 1 (white), alpha from the texture — the
          * cloud mask multiplies onto the cloud color this way. */
-        return vec4(1, 1, 1, sample_map(map_id, tex_id, source_r8, offset).r);
+        return vec4(1, 1, 1, sample_map(map_id, tex_id, source_r8, offset, mat).r);
     else if(source == TEX_Y8)
-        return vec4(vec3(sample_map(map_id, tex_id, source_r8, offset).r), 1);
+        return vec4(vec3(sample_map(map_id, tex_id, source_r8, offset, mat).r), 1);
     else if(source == TEX_AY8)
     {
-        float l = sample_map(map_id, tex_id, source_r8, offset).r;
+        float l = sample_map(map_id, tex_id, source_r8, offset, mat).r;
         return vec4(vec3(l), l);
     }
     else if(source == TEX_A8Y8)
     {
-        vec2 la = sample_map(map_id, tex_id, source_rg8, offset).rg;
+        vec2 la = sample_map(map_id, tex_id, source_rg8, offset, mat).rg;
         return vec4(vec3(la.r), la.g);
     }
     else if(source == TEX_RGB565)
-        return sample_map(map_id, tex_id, source_rgb565, offset).bgra;
+        return sample_map(map_id, tex_id, source_rgb565, offset, mat).bgra;
     else if(source == TEX_RGBA4)
-        return sample_map(map_id, tex_id, source_rgba4, offset).bgra;
+        return sample_map(map_id, tex_id, source_rgba4, offset, mat).bgra;
     else if(source == TEX_RGBA8)
-        return sample_map(map_id, tex_id, source_rgba8, offset).bgra;
+        return sample_map(map_id, tex_id, source_rgba8, offset, mat).bgra;
     return vec4(vec3(1), 1);
 }
 
-vec4 get_color_with_offset(in uint map_id, in vec2 offset)
+vec4 get_color_with_offset(in uint map_id, in vec2 offset, in Material mat)
 {
-    int tex_id = mats.instance[frag.instanceId].maps[map_id].layer;
-    return get_color_explicit_with_offset(map_id, tex_id, offset);
+    int tex_id = mat.maps[map_id].layer;
+    return get_color_explicit_with_offset(map_id, tex_id, offset, mat);
 }
 
-vec4 get_color(in uint map_id)
+vec4 get_color(in uint map_id, in Material mat)
 {
-    return get_color_with_offset(map_id, vec2(0));
+    return get_color_with_offset(map_id, vec2(0), mat);
 }
 
-vec4 get_color_explicit(in uint map_id, in int layer)
+vec4 get_color_explicit(in uint map_id, in int layer, in Material mat)
 {
-    return get_color_explicit_with_offset(map_id, layer, vec2(0));
+    return get_color_explicit_with_offset(map_id, layer, vec2(0), mat);
 }
 
 #if USE_LIGHTMAPS == 1
@@ -177,11 +177,11 @@ vec4 get_color_explicit(in uint map_id, in int layer)
  * byte of its layer (same scheme as get_color). Stock maps use RGB565
  * lightmaps; HD/Refined maps store them as RGBA8. Sample the matching bucket
  * instead of the old hardcoded RGB565-only `lightmaps` sampler. */
-vec4 get_light(in uint instance, in vec2 light_tex)
+vec4 get_light(in Material mat, in vec2 light_tex)
 {
-    vec2 light_scale  = mats.instance[instance].lightmap.atlas_scale;
-    vec2 light_offset = mats.instance[instance].lightmap.atlas_offset;
-    int  tex_id       = mats.instance[instance].lightmap.layer;
+    vec2 light_scale  = mat.lightmap.atlas_scale;
+    vec2 light_offset = mat.lightmap.atlas_offset;
+    int  tex_id       = mat.lightmap.layer;
     vec2 uv           = light_tex * light_scale + light_offset;
     int  layer        = tex_id & 0xFFFF;
     uint source       = uint(tex_id) >> 24;
@@ -198,31 +198,31 @@ vec3 world_to_cube(in vec3 v)
     return vec3(-v.y, v.z, v.x);
 }
 
-vec4 get_cube_color(in vec3 world_dir)
+vec4 get_cube_color(in vec3 world_dir, in Material mat)
 {
     vec3 tex_coord = world_to_cube(world_dir);
-    int tex_id = mats.instance[frag.instanceId].lightmap.reflection;
+    int tex_id = mat.lightmap.reflection;
     uint source = tex_id >> 24;
     if(source == TEX_BC1)
-        return get_cube_map(source_cube_bc1, tex_coord, frag.instanceId);
+        return get_cube_map(source_cube_bc1, tex_coord, mat);
     else if(source == TEX_RGB565)
-        return get_cube_map(source_cube_rgb565, tex_coord, frag.instanceId);
+        return get_cube_map(source_cube_rgb565, tex_coord, mat);
     else if(source == TEX_RGBA8)
-        return get_cube_map(source_cube_rgba8, tex_coord, frag.instanceId);
+        return get_cube_map(source_cube_rgba8, tex_coord, mat);
     else
         return vec4(1);
 }
 #else
-vec4 get_cube_color(in vec3 tex_coord)
+vec4 get_cube_color(in vec3 tex_coord, in Material mat)
 {
     return vec4(1);
 }
 #endif
 
 #if USE_NORMALMAP == 1
-vec4 get_bump(in uint map_id, in vec2 offset)
+vec4 get_bump(in uint map_id, in vec2 offset, in Material mat)
 {
-    vec3 normal = normalize(get_color_with_offset(map_id, offset).rgb * 2.0 - 1.0);
+    vec3 normal = normalize(get_color_with_offset(map_id, offset, mat).rgb * 2.0 - 1.0);
     normal = /*tbn_matrix() **/ normal;
     return vec4(normal, dot(normal, light_direction()));
 }
@@ -230,12 +230,12 @@ vec4 get_bump(in uint map_id, in vec2 offset)
 
 const uint base_map_id      = 0u;
 
-vec4 shader_dummy()
+vec4 shader_dummy(in Material mat)
 {
-    return get_color(base_map_id);
+    return get_color(base_map_id, mat);
 }
 
-vec4 shader_environment()
+vec4 shader_environment(in Material mat)
 {
     const int TYPE_NORMAL           = 0;
     const int TYPE_BLENDED          = 1;
@@ -246,18 +246,18 @@ vec4 shader_environment()
     const uint secondary_map_id = 3u;
     const uint bump_map_id      = 4u;
 
-    uint flags = uint(mats.instance[frag.instanceId].material.flags & 0x7);
-    uint type = uint((mats.instance[frag.instanceId].material.flags >> 4) & 0x3);
+    uint flags = uint(mat.material.flags & 0x7);
+    uint type = uint((mat.material.flags >> 4) & 0x3);
 
-    int detailed = (mats.instance[frag.instanceId].material.flags >> 9) & 0x1;
-    int has_micro = (mats.instance[frag.instanceId].material.flags >> 10) & 0x1;
+    int detailed = (mat.material.flags >> 9) & 0x1;
+    int has_micro = (mat.material.flags >> 10) & 0x1;
     detailed = 1;
 
-    vec2 scroll_uv = mats.instance[frag.instanceId].material.input4.xy;
-    vec4 base = get_color_with_offset(base_map_id, scroll_uv);
-    vec4 micro = has_micro == 1 ? get_color(micro_map_id) : vec4(1);
-    vec4 primary = get_color(primary_map_id);
-    vec4 secondary = get_color(secondary_map_id);
+    vec2 scroll_uv = mat.material.input4.xy;
+    vec4 base = get_color_with_offset(base_map_id, scroll_uv, mat);
+    vec4 micro = has_micro == 1 ? get_color(micro_map_id, mat) : vec4(1);
+    vec4 primary = get_color(primary_map_id, mat);
+    vec4 secondary = get_color(secondary_map_id, mat);
     if((render_flags & RENDER_FLAG_ONLY_DIFFUSE) != 0)
         return vec4(base.rgb, 1);
     if((render_flags & RENDER_FLAG_ONLY_MULTIPURPOSE) != 0)
@@ -266,7 +266,7 @@ vec4 shader_environment()
         return vec4(secondary.rgb, 1);
 #if USE_LIGHTMAPS == 1
     vec4 lightmap = (render_flags & RENDER_FLAG_LIGHTMAP) != 0
-        ? get_light(frag.instanceId, frag.light_tex)
+        ? get_light(mat, frag.light_tex)
         : vec4(1.0);
     if((render_flags & RENDER_FLAG_ONLY_LIGHTMAP) != 0)
         return lightmap;
@@ -280,18 +280,18 @@ vec4 shader_environment()
         ? base.a * micro.a : blend.a * micro.a;
 
 #if USE_NORMALMAP == 1
-    vec4 normal = get_bump(bump_map_id, vec2(0));
+    vec4 normal = get_bump(bump_map_id, vec2(0), mat);
 #endif
 
 #if USE_REFLECTIONS == 1
-    int reflective = (mats.instance[frag.instanceId].material.flags >> 6) & 0x1;
+    int reflective = (mat.material.flags >> 6) & 0x1;
     vec3 reflection   = vec3(1.0);
     vec3 refl_color   = vec3(1.0);
     float refl_strength = 0.0;
     if(reflective > 0 && (render_flags & RENDER_FLAG_REFLECTION) != 0)
     {
-        uint reflect_type = uint((mats.instance[frag.instanceId].material.flags >> 7) & 0x3);
-        float lightmap_brightness = mats.instance[frag.instanceId].material.input1.x;
+        uint reflect_type = uint((mat.material.flags >> 7) & 0x3);
+        float lightmap_brightness = mat.material.input1.x;
 
         vec3 view_world  = normalize(camera_position - frag.position);
         vec3 surf_normal = normalize(frag.normal);
@@ -305,10 +305,10 @@ vec4 shader_environment()
         vec3 refl_normal = (reflect_type == 1u) ? surf_normal : world_bump;
         float NdotV      = clamp(dot(refl_normal, view_world), 0.0, 1.0);
         vec3 reflect_dir = reflect(-view_world, refl_normal);
-        reflection       = get_cube_color(reflect_dir).rgb;
+        reflection       = get_cube_color(reflect_dir, mat).rgb;
 
-        vec4 perp_color     = mats.instance[frag.instanceId].material.input2;
-        vec4 parallel_color = mats.instance[frag.instanceId].material.input3;
+        vec4 perp_color     = mat.material.input2;
+        vec4 parallel_color = mat.material.input3;
         float t   = 1.0 - NdotV; // perp=grazing(NdotV=0), parallel=straight-on(NdotV=1)
         refl_color    = mix(parallel_color.rgb, perp_color.rgb, t);
         refl_strength = mix(parallel_color.a,   perp_color.a,   t);
@@ -342,13 +342,13 @@ vec4 shader_environment()
         vec3(1);
 
 #if USE_SELF_ILLUMINATION == 1
-    if(mats.instance[frag.instanceId].lightmap.meta1 != 0)
+    if(mat.lightmap.meta1 != 0)
     {
-        vec4 self_illum_tex  = get_color(micro_map_id);
-        vec3 primary_color   = mats.instance[frag.instanceId].material.input5.rgb;
-        vec3 secondary_color = mats.instance[frag.instanceId].material.input6.rgb;
-        vec3 plasma_on_color = mats.instance[frag.instanceId].material.input7.rgb;
-        float plasma_anim    = mats.instance[frag.instanceId].material.input7.a;
+        vec4 self_illum_tex  = get_color(micro_map_id, mat);
+        vec3 primary_color   = mat.material.input5.rgb;
+        vec3 secondary_color = mat.material.input6.rgb;
+        vec3 plasma_on_color = mat.material.input7.rgb;
+        float plasma_anim    = mat.material.input7.a;
         // B = plasma mask, A = animation reference phase
         float plasma_prox    = self_illum_tex.b
             * max(0.0, 1.0 - abs(plasma_anim - self_illum_tex.a));
@@ -425,62 +425,62 @@ void chicago_stage(out vec4 dst, in vec4 i1, in vec4 last, in vec4 i2, in uint f
         dst.a = i1.a + i2.a * (1 - i2.a);
 }
 
-vec4 chicago_blend(vec4 c1, vec4 c2, vec4 c3, vec4 c4, uint flags)
+vec4 chicago_blend(vec4 c1, vec4 c2, vec4 c3, vec4 c4, uint flags, in Material mat)
 {
     vec4 out_color = vec4(1.0);
     chicago_stage(out_color, c1, c1, c2, flags & 0xFFu);
-    if((uint(mats.instance[frag.instanceId].maps[2].layer) >> 24) != 0u)
+    if((uint(mat.maps[2].layer) >> 24) != 0u)
         chicago_stage(out_color, out_color, c2, c3, (flags >> 8) & 0xFFu);
-    if((uint(mats.instance[frag.instanceId].maps[3].layer) >> 24) != 0u)
+    if((uint(mat.maps[3].layer) >> 24) != 0u)
         chicago_stage(out_color, out_color, c3, c4, (flags >> 16) & 0xFFu);
     return out_color;
 }
 
-vec4 shader_chicago()
+vec4 shader_chicago(in Material mat)
 {
     /* schi supports up to 4 maps just like scex — the Xbox sky dome chains
      * star detail + a blue gradient in maps 2+, which chicago_blend gates on
      * their layer being assigned. */
-    vec2 o1 = mats.instance[frag.instanceId].material.input1.xy;
-    vec2 o2 = mats.instance[frag.instanceId].material.input2.xy;
-    vec2 o3 = mats.instance[frag.instanceId].material.input2.zw;
-    vec2 o4 = mats.instance[frag.instanceId].material.input3.xy;
+    vec2 o1 = mat.material.input1.xy;
+    vec2 o2 = mat.material.input2.xy;
+    vec2 o3 = mat.material.input2.zw;
+    vec2 o4 = mat.material.input3.xy;
 
-    vec4 c1 = get_color_with_offset(0u, o1);
-    vec4 c2 = get_color_with_offset(1u, o2);
-    vec4 c3 = get_color_with_offset(2u, o3);
-    vec4 c4 = get_color_with_offset(3u, o4);
+    vec4 c1 = get_color_with_offset(0u, o1, mat);
+    vec4 c2 = get_color_with_offset(1u, o2, mat);
+    vec4 c3 = get_color_with_offset(2u, o3, mat);
+    vec4 c4 = get_color_with_offset(3u, o4, mat);
 
-    uint flags = uint(mats.instance[frag.instanceId].lightmap.meta1);
-    return chicago_blend(c1, c2, c3, c4, flags);
+    uint flags = uint(mat.lightmap.meta1);
+    return chicago_blend(c1, c2, c3, c4, flags, mat);
 }
 
-vec4 shader_chicago_extended()
+vec4 shader_chicago_extended(in Material mat)
 {
-    vec2 o1 = mats.instance[frag.instanceId].material.input1.xy;
-    vec2 o2 = mats.instance[frag.instanceId].material.input2.xy;
-    vec2 o3 = mats.instance[frag.instanceId].material.input2.zw;
-    vec2 o4 = mats.instance[frag.instanceId].material.input3.xy;
+    vec2 o1 = mat.material.input1.xy;
+    vec2 o2 = mat.material.input2.xy;
+    vec2 o3 = mat.material.input2.zw;
+    vec2 o4 = mat.material.input3.xy;
 
-    vec4 c1 = get_color_with_offset(0u, o1);
-    vec4 c2 = get_color_with_offset(1u, o2);
-    vec4 c3 = get_color_with_offset(2u, o3);
-    vec4 c4 = get_color_with_offset(3u, o4);
+    vec4 c1 = get_color_with_offset(0u, o1, mat);
+    vec4 c2 = get_color_with_offset(1u, o2, mat);
+    vec4 c3 = get_color_with_offset(2u, o3, mat);
+    vec4 c4 = get_color_with_offset(3u, o4, mat);
 
-    uint flags = uint(mats.instance[frag.instanceId].lightmap.meta1);
-    return chicago_blend(c1, c2, c3, c4, flags);
+    uint flags = uint(mat.lightmap.meta1);
+    return chicago_blend(c1, c2, c3, c4, flags, mat);
 }
 
 #else
 
-vec4 shader_chicago()
+vec4 shader_chicago(in Material mat)
 {
-    return vec4(shader_dummy().rgb, 1.0);
+    return vec4(shader_dummy(mat).rgb, 1.0);
 }
 
-vec4 shader_chicago_extended()
+vec4 shader_chicago_extended(in Material mat)
 {
-    return vec4(shader_dummy().rgb, 1.0);
+    return vec4(shader_dummy(mat).rgb, 1.0);
 }
 
 #endif
@@ -582,14 +582,16 @@ float sotr_ain(uint i, vec4 reg[9], vec4 c0, vec4 c1)
     return 0.0;
 }
 
-vec4 shader_transparent()
+vec4 shader_transparent(in Material mat)
 {
     /* Register file: 0=discard sink, 1/2=scratch, 3/4=vertex (init 1 =
      * "no fade"), 5..8=map colors. All writable, per NV combiner rules. */
     /* Per-map UV scroll offsets, animated CPU-side (input2 = maps 0/1,
      * input3 = maps 2/3) */
-    vec4 uv01 = mats.instance[frag.instanceId].material.input2;
-    vec4 uv23 = mats.instance[frag.instanceId].material.input3;
+    vec4 uv01 = mat.material.input2;
+    vec4 uv23 = mat.material.input3;
+
+    TransparentData trd = tr.instance[frag.instanceId];
 
     vec4 reg[9];
     reg[0] = vec4(0);
@@ -597,18 +599,18 @@ vec4 shader_transparent()
     reg[2] = vec4(0);
     reg[3] = vec4(1);
     reg[4] = vec4(1);
-    reg[5] = get_color_with_offset(0u, uv01.xy);
-    reg[6] = get_color_with_offset(1u, uv01.zw);
-    reg[7] = get_color_with_offset(2u, uv23.xy);
-    reg[8] = get_color_with_offset(3u, uv23.zw);
+    reg[5] = get_color_with_offset(0u, uv01.xy, mat);
+    reg[6] = get_color_with_offset(1u, uv01.zw, mat);
+    reg[7] = get_color_with_offset(2u, uv23.xy, mat);
+    reg[8] = get_color_with_offset(3u, uv23.zw, mat);
 
-    int num_stages = int(tr.instance[frag.instanceId].num_stages);
+    int num_stages = int(trd.num_stages);
     if(num_stages == 0)
         return reg[5];
 
     for(int si = 0; si < num_stages && si < 7; si++)
     {
-        TransparentStage s = tr.instance[frag.instanceId].stages[si];
+        TransparentStage s = trd.stages[si];
         uint cin  = s.color_in;
         uint ain  = s.alpha_in;
         uint outs = s.outputs;
@@ -698,7 +700,7 @@ vec4 shader_transparent()
      * The engine's additive blend is (SRC_ALPHA, ONE), but Halo's true `add`
      * and component_max are alpha-independent. Force alpha=1 there so the
      * (SRC_ALPHA, ONE) state becomes straight additive (ONE, ONE). */
-    uint bm = tr.instance[frag.instanceId].blend_mode;
+    uint bm = trd.blend_mode;
     if(bm == 3u || bm == 5u || bm == 6u)
         sc0.a = 1.0;
     return sc0;
@@ -716,17 +718,17 @@ const uint SOSO_FLAG_DETAIL_MASK_SELF_ILLUM_INV   = 0x100;
 const uint SOSO_FLAG_DETAIL_MASK_MULTI_ALPHA      = 0x200;
 const uint SOSO_FLAG_DETAIL_MASK_MULTI_ALPHA_INV  = 0x400;
 
-vec4 shader_model()
+vec4 shader_model(in Material mat)
 {
     const uint multi_map_id  = 1u;
     const uint detail_map_id = 2u;
 
     float alpha_ref = 0.5;
-    vec4 color = get_color(base_map_id);
+    vec4 color = get_color(base_map_id, mat);
     if(color.a < alpha_ref)
         discard;
 
-    const int flags = mats.instance[frag.instanceId].material.flags;
+    const int flags = mat.material.flags;
     bool detail_mask_reflection = (flags & SOSO_FLAG_DETAIL_MASK_REFLECTION) != 0;
     bool detail_mask_reflection_inv = (flags & SOSO_FLAG_DETAIL_MASK_REFLECTION_INV) != 0;
     bool detail_mask_change_color = (flags & SOSO_FLAG_DETAIL_MASK_CHANGE_COLOR) != 0;
@@ -736,11 +738,11 @@ vec4 shader_model()
     bool detail_mask_multi_alpha = (flags & SOSO_FLAG_DETAIL_MASK_MULTI_ALPHA) != 0;
     bool detail_mask_multi_alpha_inv = (flags & SOSO_FLAG_DETAIL_MASK_MULTI_ALPHA_INV) != 0;
 
-    vec4 primary_change_color = mats.instance[frag.instanceId].material.input2;
+    vec4 primary_change_color = mat.material.input2;
 
-    vec4 detail = get_color(detail_map_id);
-    vec4 multi = get_color(multi_map_id);
-    int multi_source = mats.instance[frag.instanceId].maps[multi_map_id].layer >> 24;
+    vec4 detail = get_color(detail_map_id, mat);
+    vec4 multi = get_color(multi_map_id, mat);
+    int multi_source = mat.maps[multi_map_id].layer >> 24;
     if(multi_source == 0)
         multi = vec4(0);
     float detail_factor = 1.0;
@@ -782,18 +784,18 @@ vec4 shader_model()
         float NdotV_m      = clamp(dot(frag.normal, view_world), 0.0, 1.0);
         float fresnel_m    = 1.0 - NdotV_m;
         vec3 reflect_dir   = reflect(-view_world, frag.normal);
-        vec4 perp_m        = mats.instance[frag.instanceId].material.input3;
-        vec4 para_m        = mats.instance[frag.instanceId].material.input4;
+        vec4 perp_m        = mat.material.input3;
+        vec4 para_m        = mat.material.input4;
         // Brightness controls blend strength; tint colors the reflection.
         // Keeping them separate prevents zero-brightness from darkening the base.
         float refl_strength = mix(perp_m.a,   para_m.a,   fresnel_m);
         vec3  refl_color    = mix(perp_m.rgb, para_m.rgb, fresnel_m);
         reflection = mix(
             vec3(1),
-            get_cube_color(reflect_dir).rgb + refl_color,
+            get_cube_color(reflect_dir, mat).rgb + refl_color,
             specular_factor * NdotV_m);
         if((render_flags & RENDER_FLAG_ONLY_REFLECTIONS) != 0)
-            return vec4(get_cube_color(reflect_dir).rgb + refl_color, 1);
+            return vec4(get_cube_color(reflect_dir, mat).rgb + refl_color, 1);
     }
     if((render_flags & RENDER_FLAG_ONLY_REFLECTIONS) != 0)
         return vec4(0.0, 0.0, 0.0, 1.0); /* non-reflective surfaces -> black */
@@ -835,15 +837,15 @@ vec4 shader_model()
     return color;
 }
 
-vec4 shader_glass()
+vec4 shader_glass(in Material mat)
 {
-    vec4 diffuse    = get_color(base_map_id);
-    int  flags      = mats.instance[frag.instanceId].material.flags;
+    vec4 diffuse    = get_color(base_map_id, mat);
+    int  flags      = mat.material.flags;
     bool alpha_test = (flags & 0x1) != 0;
 
-    vec3 bg_tint = mats.instance[frag.instanceId].material.input2.rgb;
-    vec4 perp    = mats.instance[frag.instanceId].material.input3; // tint.rgb + brightness.a
-    vec4 para    = mats.instance[frag.instanceId].material.input4;
+    vec3 bg_tint = mat.material.input2.rgb;
+    vec4 perp    = mat.material.input3; // tint.rgb + brightness.a
+    vec4 para    = mat.material.input4;
 
     vec3  view_world = normalize(camera_position - frag.position);
     float NdotV      = clamp(dot(frag.normal, view_world), 0.0, 1.0);
@@ -853,7 +855,7 @@ vec4 shader_glass()
 
 #if USE_REFLECTIONS == 1
     vec3  reflect_dir = reflect(-view_world, frag.normal);
-    vec3  refl        = get_cube_color(reflect_dir).rgb;
+    vec3  refl        = get_cube_color(reflect_dir, mat).rgb;
     vec3  refl_tint   = mix(para.rgb, perp.rgb, fresnel);
     float refl_str    = mix(para.a, perp.a, fresnel);
     color             = mix(color, refl * refl_tint, refl_str);
@@ -862,16 +864,16 @@ vec4 shader_glass()
     return vec4(color, alpha_test ? diffuse.a : 1.0);
 }
 
-vec4 shader_meter()
+vec4 shader_meter(in Material mat)
 {
-    vec4  mask      = get_color(base_map_id);
-    float value     = mats.instance[frag.instanceId].material.input1.x;
-    float transp    = mats.instance[frag.instanceId].material.input1.y;
-    vec3  gmin      = mats.instance[frag.instanceId].material.input2.rgb;
-    float bg_transp = mats.instance[frag.instanceId].material.input2.a;
-    vec3  gmax      = mats.instance[frag.instanceId].material.input3.rgb;
-    vec3  background = mats.instance[frag.instanceId].material.input4.rgb;
-    vec3  tint      = mats.instance[frag.instanceId].material.input5.rgb;
+    vec4  mask      = get_color(base_map_id, mat);
+    float value     = mat.material.input1.x;
+    float transp    = mat.material.input1.y;
+    vec3  gmin      = mat.material.input2.rgb;
+    float bg_transp = mat.material.input2.a;
+    vec3  gmax      = mat.material.input3.rgb;
+    vec3  background = mat.material.input4.rgb;
+    vec3  tint      = mat.material.input5.rgb;
 
     bool  filled   = mask.r <= value;
     float t        = value > 0.0 ? mask.r / value : 0.0;
@@ -881,22 +883,22 @@ vec4 shader_meter()
     return vec4(color, alpha);
 }
 
-vec4 shader_plasma()
+vec4 shader_plasma(in Material mat)
 {
     const uint secondary_map_id = 1u;
 
-    float intensity_exp = mats.instance[frag.instanceId].material.input1.x;
-    vec4  perp          = mats.instance[frag.instanceId].material.input2; // tint.rgb + brightness.a
-    vec4  para          = mats.instance[frag.instanceId].material.input3;
-    vec4  pdir          = mats.instance[frag.instanceId].material.input4; // anim_dir.xyz + inv_period
-    vec4  sdir          = mats.instance[frag.instanceId].material.input5;
+    float intensity_exp = mat.material.input1.x;
+    vec4  perp          = mat.material.input2; // tint.rgb + brightness.a
+    vec4  para          = mat.material.input3;
+    vec4  pdir          = mat.material.input4; // anim_dir.xyz + inv_period
+    vec4  sdir          = mat.material.input5;
 
     // Two noise maps scroll in opposite directions; their interference is
     // the moving plasma pattern. anim_dir.xy * inv_period gives tiles/sec.
     vec2  p_off = pdir.xy * pdir.w * time;
     vec2  s_off = sdir.xy * sdir.w * time;
-    vec4  primary   = get_color_with_offset(base_map_id, p_off);
-    vec4  secondary = get_color_with_offset(secondary_map_id, s_off);
+    vec4  primary   = get_color_with_offset(base_map_id, p_off, mat);
+    vec4  secondary = get_color_with_offset(secondary_map_id, s_off, mat);
 
     vec3  view_world = normalize(camera_position - frag.position);
     float NdotV      = clamp(dot(frag.normal, view_world), 0.0, 1.0);
@@ -912,29 +914,29 @@ vec4 shader_plasma()
     return vec4(color, plasma);
 }
 
-vec4 shader_water()
+vec4 shader_water(in Material mat)
 {
     const int ALPHA_MODULATES_REFLECT    = 0x1;
     const int COLOR_MODULATES_BACKGROUND = 0x2;
     const uint bump_map_id = 1u;
 
-    int  flags         = mats.instance[frag.instanceId].material.flags & 0x3;
-    vec4 parallel      = mats.instance[frag.instanceId].material.input2;
-    vec4 perpendicular = mats.instance[frag.instanceId].material.input3;
-    vec4 base          = get_color(base_map_id);
+    int  flags         = mat.material.flags & 0x3;
+    vec4 parallel      = mat.material.input2;
+    vec4 perpendicular = mat.material.input3;
+    vec4 base          = get_color(base_map_id, mat);
 
-    float angle_rad = mats.instance[frag.instanceId].material.input1.x;
-    float velocity  = mats.instance[frag.instanceId].material.input1.y;
+    float angle_rad = mat.material.input1.x;
+    float velocity  = mat.material.input1.y;
 
     // Four ripple layers at evenly-spaced angles, varying speeds.
     // get_bump returns tangent-space normals decoded to [-1, 1].
 #if USE_NORMALMAP == 0
     vec3 bump_ts = vec3(0.0, 0.0, 1.0); /* flat water, no bump map bound */
 #else
-    vec3 n1 = get_bump(bump_map_id, vec2(cos(angle_rad),         sin(angle_rad))         * velocity        * time).xyz;
-    vec3 n2 = get_bump(bump_map_id, vec2(cos(angle_rad + 1.047), sin(angle_rad + 1.047)) * velocity * 1.3  * time).xyz;
-    vec3 n3 = get_bump(bump_map_id, vec2(cos(angle_rad + 2.094), sin(angle_rad + 2.094)) * velocity * 0.8  * time).xyz;
-    vec3 n4 = get_bump(bump_map_id, vec2(cos(angle_rad + 3.14),  sin(angle_rad + 3.14))  * velocity * 0.6  * time).xyz;
+    vec3 n1 = get_bump(bump_map_id, vec2(cos(angle_rad),         sin(angle_rad))         * velocity        * time, mat).xyz;
+    vec3 n2 = get_bump(bump_map_id, vec2(cos(angle_rad + 1.047), sin(angle_rad + 1.047)) * velocity * 1.3  * time, mat).xyz;
+    vec3 n3 = get_bump(bump_map_id, vec2(cos(angle_rad + 2.094), sin(angle_rad + 2.094)) * velocity * 0.8  * time, mat).xyz;
+    vec3 n4 = get_bump(bump_map_id, vec2(cos(angle_rad + 3.14),  sin(angle_rad + 3.14))  * velocity * 0.6  * time, mat).xyz;
     vec3 bump_ts = normalize(n1 + n2 + n3 + n4);
 #endif
 
@@ -953,7 +955,7 @@ vec4 shader_water()
 
 #if USE_REFLECTIONS == 1
     vec3 reflect_dir  = reflect(-view_world, world_normal);
-    reflect_color    *= get_cube_color(reflect_dir).rgb;
+    reflect_color    *= get_cube_color(reflect_dir, mat).rgb;
 #endif
 
     if((flags & COLOR_MODULATES_BACKGROUND) != 0)
@@ -978,40 +980,42 @@ layout(location = 0) out vec4 final_color;
 
 void main()
 {
-    uint material_id = get_material_id(frag.instanceId);
+    Material material = mats.instance[frag.instanceId];
+
+    uint material_id = get_material_id(material);
     vec4 color;
 
     if(material_id == MATERIAL_SENV)
     {
-        color = shader_environment();
+        color = shader_environment(material);
 #if USE_MODEL_SHADERS == 1
     } else if(material_id == MATERIAL_SOSO)
     {
-        color = shader_model();
+        color = shader_model(material);
 #endif
     } else if(material_id == MATERIAL_SCHI)
     {
-        final_color = shader_chicago();
+        final_color = shader_chicago(material);
         return;
     } else if(material_id == MATERIAL_SCEX)
     {
-        final_color = shader_chicago_extended();
+        final_color = shader_chicago_extended(material);
         return;
     } else if(material_id == MATERIAL_SWAT)
     {
-        color = shader_water();
+        color = shader_water(material);
     } else if(material_id == MATERIAL_SGLA)
     {
-        color = shader_glass();
+        color = shader_glass(material);
     } else if(material_id == MATERIAL_SMET)
     {
-        color = shader_meter();
+        color = shader_meter(material);
     } else if(material_id == MATERIAL_SPLA)
     {
-        color = shader_plasma();
+        color = shader_plasma(material);
     } else if(material_id == MATERIAL_SOTR)
     {
-        final_color = shader_transparent();
+        final_color = shader_transparent(material);
         return;
     } else
         color = vec4(0, 1, 0, 1);

@@ -105,6 +105,7 @@ stl_types::result<std::string, glsl_error> generate(
     opts.version = output.version;
 
     opts.vertex.support_nonzero_base_instance = false;
+    opts.force_temporary                      = output.force_temporary;
 
     const auto is_es        = output.profile == profile_t::es;
     const auto is_core      = output.profile == profile_t::core;
