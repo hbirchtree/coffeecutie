@@ -271,7 +271,7 @@ struct BlamScript
             if(ImGui::Button("Step"))
             {
                 m_script.execute_timestep(
-                    15ms,
+                    33ms,
                     {
                         .cmd =
                             [this, &p](auto& ptr, const auto& curr) {
@@ -279,15 +279,21 @@ struct BlamScript
                             },
                     });
             }
+            std::set<u16> active_ips;
+            for(auto const& [i, state] : m_script.context.scripts)
+                active_ips.insert(state.ip + 1);
+            u16 ip{};
             for(blam::hsc::opcode_layout<typename Ver::bytecode_type> const&
                     opcode : m_scenario->bytecode(m_magic))
             {
                 using namespace Coffee::Strings;
-
+                ip++;
                 if(!opcode.valid())
                     break;
-
-                ImGui::Text("%s", to_string(opcode).c_str());
+                auto color = active_ips.contains(ip)
+                    ? ImVec4(0, 1, 0, 1)
+                    : ImVec4(1, 1, 1, 1);
+                ImGui::TextColored(color, "%s", to_string(opcode).c_str());
             }
             ImGui::EndTabItem();
         }
@@ -299,7 +305,7 @@ struct BlamScript
             if(ImGui::Button("Step"))
             {
                 m_script.execute_timestep(
-                    15ms,
+                    33ms,
                     {
                         .cmd =
                             [this, &p](auto& ptr, const auto& curr) {
