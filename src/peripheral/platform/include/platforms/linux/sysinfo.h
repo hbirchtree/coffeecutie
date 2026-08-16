@@ -161,10 +161,9 @@ inline std::optional<std::pair<std::string, std::string>> model(
         return false;
     });
 
-    if(model.empty() && vendor.empty() && implementer.empty() &&
-        variant.empty() && part.empty())
+    if(model.empty() && implementer.empty() && part.empty())
     {
-        // Special-case for older kernels
+        // Special-case for older ARM kernels
         // Where CPU implementer/part is not listed under the given processor
         // This happens on Linux 3.0.x at least
         detail::foreach_cpuinfo([&](std::string_view const&,
