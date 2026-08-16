@@ -175,7 +175,7 @@ int dumper_main()
 
     options.add_options("Map parsing")
         //
-        ("halo-version", "Version of Halo: pc xbox custom trial", cxxopts::value<std::string>())
+        ("halo-version", "Version of Halo: pc xbox custom trial mcc", cxxopts::value<std::string>())
         //
         ;
 
@@ -209,6 +209,9 @@ int dumper_main()
             arguments.unmatched().at(0), decomped, script_recomp);
     if(selected_version == "trial")
         open_map<blam::trial_version_t>(
+            arguments.unmatched().at(0), decomped, script_recomp);
+    if(selected_version == "mcc")
+        open_map<blam::mcc_version_t>(
             arguments.unmatched().at(0), decomped, script_recomp);
 
     std::quick_exit(0);

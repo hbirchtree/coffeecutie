@@ -10,6 +10,7 @@ namespace hsc::bc {
 
 enum class v1 : libc_types::i16;
 enum class v2 : libc_types::i16;
+enum class v4 : libc_types::i16;
 
 } // namespace hsc::bc
 
@@ -46,7 +47,7 @@ struct custom_version_t
 
 struct mcc_version_t
 {
-    using bytecode_type      = hsc::bc::v2;
+    using bytecode_type      = hsc::bc::v4;
     using bytecode_pointer_t = hsc::bytecode_pointer<bytecode_type>;
 
     static constexpr auto version_v = version_t::mcc;

@@ -448,6 +448,7 @@ std::string to_halo_script(
 
 std::string to_string(opcode_layout<bc::v1> const& op);
 std::string to_string(opcode_layout<bc::v2> const& op);
+std::string to_string(opcode_layout<bc::v4> const& op);
 
 std::string_view to_string(expression_t expr);
 std::string_view to_string(function_group_t group);

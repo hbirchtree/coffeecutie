@@ -2,6 +2,7 @@
 
 #include "bytecode_v1.h"
 #include "bytecode_v2.h"
+#include "bytecode_v4.h"
 
 #include <blam/volta/blam_base_types.h>
 #include <peripherals/stl/any_of.h>
@@ -26,8 +27,10 @@ enum class cheats : i16
 
 using xbox_opcode_t = bc::v1;
 using pc_opcode_t   = bc::v2;
+using mcc_opcode_t  = bc::v4;
 
 template<typename T>
-concept is_bytecode_variant = stl_types::is_any_of<T, bc::v1, bc::v2>;
+concept is_bytecode_variant =
+    stl_types::is_any_of<T, bc::v1, bc::v2, bc::v4>;
 
 } // namespace blam::hsc

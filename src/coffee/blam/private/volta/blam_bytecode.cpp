@@ -45,6 +45,18 @@ v2 v2_from_string(std::string_view opcode)
     return magic_enum::enum_cast<v2>(opcode).value_or(v2::invalid);
 }
 
+std::string_view to_string(v4 opcode)
+{
+    if(opcode == v4::sentinel)
+        return "[sentinel]"sv;
+    return magic_enum::enum_name(opcode);
+}
+
+v4 v4_from_string(std::string_view opcode)
+{
+    return magic_enum::enum_cast<v4>(opcode).value_or(v4::invalid);
+}
+
 }
 
 namespace blam::hsc {
@@ -130,6 +142,11 @@ std::string to_string(opcode_layout<bc::v1> const& op)
 std::string to_string(opcode_layout<bc::v2> const& op)
 {
     return op_to_string<bc::v2>(op);
+}
+
+std::string to_string(opcode_layout<bc::v4> const& op)
+{
+    return op_to_string<bc::v4>(op);
 }
 
 std::string_view to_string(sleep_condition cond)
