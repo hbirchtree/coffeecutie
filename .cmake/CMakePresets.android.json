@@ -194,6 +194,12 @@
             "inherits": "base-linux"
         },
         {
+            "name": "android-arm-neon-19-reldeb",
+            "environment": {"BUILD_TYPE":"RelWithDebInfo"},
+            "configurePreset": "android-arm-neon-19",
+            "inherits": "base-linux"
+        },
+        {
             "name": "android-arm-neon-19-dbg",
             "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "android-arm-neon-19",
