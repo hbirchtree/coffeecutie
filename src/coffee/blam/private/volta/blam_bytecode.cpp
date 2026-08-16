@@ -142,7 +142,8 @@ std::string_view to_string(script_status stat)
     return magic_enum::enum_name(stat);
 }
 
-std::string script_to_string(semantic::Span<const opcode_layout<bc::v2>> const& bytecode)
+template<typename Dialect>
+std::string script_to_string(semantic::Span<const opcode_layout<Dialect>> const& bytecode)
 {
     std::string script;
     bool last_op{false};
@@ -203,7 +204,8 @@ std::string script_to_string(semantic::Span<const opcode_layout<bc::v2>> const& 
     return script;
 }
 
-std::string to_halo_script(scn::scenario<pc_version_t> const& scenario, map_ptr const& magic)
+template<typename Version>
+std::string to_halo_script(scn::scenario<Version> const& scenario, map_ptr const& magic)
 {
     auto scripts = scenario.function_table(magic);
     auto bytecode = scenario.bytecode(magic);
@@ -224,6 +226,26 @@ std::string to_halo_script(scn::scenario<pc_version_t> const& scenario, map_ptr 
     }
     return script;
 }
+
+template
+std::string to_halo_script<xbox_version_t>(
+    scn::scenario<xbox_version_t> const& scenario, map_ptr const& magic);
+
+template
+std::string to_halo_script<pc_version_t>(
+    scn::scenario<pc_version_t> const& scenario, map_ptr const& magic);
+
+template
+std::string to_halo_script<custom_version_t>(
+    scn::scenario<custom_version_t> const& scenario, map_ptr const& magic);
+
+template
+std::string to_halo_script<mcc_version_t>(
+    scn::scenario<mcc_version_t> const& scenario, map_ptr const& magic);
+
+template
+std::string to_halo_script<trial_version_t>(
+    scn::scenario<trial_version_t> const& scenario, map_ptr const& magic);
 
 }
 

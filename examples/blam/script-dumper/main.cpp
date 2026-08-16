@@ -1,6 +1,7 @@
 
 #include "blam/volta/blam_scenario.h"
 #include "blam/volta/hsc/bytecode_common_v12.h"
+#include "peripherals/stl/string/split.h"
 #include <blam/volta/blam_stl.h>
 #include <blam/volta/blam_versions.h>
 #include <coffee/application/application_start.h>
@@ -18,7 +19,7 @@ using libc_types::i32;
 using Coffee::Logging::cWarning;
 
 template<blam::is_game_version Ver>
-void open_map(std::string path, std::string output)
+void open_map(std::string path, std::string output, std::string script)
 {
     Coffee::Resource map_file(platform::url::constructors::MkUrl(path));
     if(!Coffee::FileMap(map_file))
@@ -152,6 +153,15 @@ void open_map(std::string path, std::string output)
             static_cast<int>(opcode.opcode));
     }
     fclose(fp);
+    if(script.empty())
+        return;
+    fp = fopen(script.c_str(), "w+");
+    auto script_text = blam::hsc::to_halo_script(*scenario, map.magic);
+    for(auto const& line : stl_types::str::split::spliterator<char>(script_text, '\n'))
+    {
+        fprintf(fp, "%.*s\n", static_cast<int>(line.size()), line.data());
+    }
+    fclose(fp);
 }
 
 int dumper_main()
@@ -159,8 +169,9 @@ int dumper_main()
     cxxopts::Options options(
         "Blam Script Dumper",
         "An application to dump Halo Script from a .map file");
+    options.add_options("Help")("h,help", "Show this help info");
 
-    options.positional_help("[map file] [output file.hsd]");
+    options.positional_help("[map file] [output file.hsd] [output file.hsc]");
 
     options.add_options("Map parsing")
         //
@@ -173,29 +184,34 @@ int dumper_main()
     if(Coffee::BaseArgParser::PerformDefaults(options, args) >= 0)
         return 0;
 
-    if(arguments.unmatched().size() != 2)
+    if(arguments.unmatched().size() < 2)
     {
-        cWarning("Needs exactly two arguments, check --help");
-        std::exit(1);
+        cWarning("Needs two arguments or three, check --help");
+        std::quick_exit(1);
     }
 
     std::string selected_version =
         arguments.as_optional<std::string>("halo-version").value_or("pc");
 
+    auto decomped = arguments.unmatched().at(1);
+    std::string script_recomp;
+    if(arguments.unmatched().size() >= 3)
+        script_recomp = arguments.unmatched().at(2);
+
     if(selected_version == "pc")
         open_map<blam::pc_version_t>(
-            arguments.unmatched().at(0), arguments.unmatched().at(1));
+            arguments.unmatched().at(0), decomped, script_recomp);
     if(selected_version == "xbox")
         open_map<blam::xbox_version_t>(
-            arguments.unmatched().at(0), arguments.unmatched().at(1));
+            arguments.unmatched().at(0), decomped, script_recomp);
     if(selected_version == "custom")
         open_map<blam::custom_version_t>(
-            arguments.unmatched().at(0), arguments.unmatched().at(1));
+            arguments.unmatched().at(0), decomped, script_recomp);
     if(selected_version == "trial")
         open_map<blam::trial_version_t>(
-            arguments.unmatched().at(0), arguments.unmatched().at(1));
+            arguments.unmatched().at(0), decomped, script_recomp);
 
-    return 0;
+    std::quick_exit(0);
 }
 
 COFFEE_APPLICATION_MAIN_CUSTOM(dumper_main, 0x1 | 0x2)

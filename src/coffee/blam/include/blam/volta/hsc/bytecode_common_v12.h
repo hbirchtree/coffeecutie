@@ -442,10 +442,9 @@ struct opcode_layout
     }
 };
 
-//std::string to_halo_script(semantic::Span<const opcode_layout<bc::v1>> const& op);
+template<typename Ver>
 std::string to_halo_script(
-    scn::scenario<pc_version_t> const& scenario,
-    map_ptr const& magic);
+    scn::scenario<Ver> const& scenario, map_ptr const& magic);
 
 std::string to_string(opcode_layout<bc::v1> const& op);
 std::string to_string(opcode_layout<bc::v2> const& op);
