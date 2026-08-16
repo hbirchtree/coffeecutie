@@ -158,7 +158,7 @@ static void load_resources(
     }
     // load_scenario_bsp(e, changed);
     // load_collision_debug(e, changed);
-    // load_ui_items(e, changed);
+    load_ui_items(e, changed);
 
     if(finished.bitmaps.has_value())
     {

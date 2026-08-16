@@ -72,7 +72,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     {
         using namespace std::string_view_literals;
 
-        priority = 1534;
+        priority = 850;
 
         create_shaders(
             api,
