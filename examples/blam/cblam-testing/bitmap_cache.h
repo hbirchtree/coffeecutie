@@ -45,6 +45,7 @@ struct BitmapCache
     {
         Veci2 max_size{}; /* bucket dimensions the UVs were normalized by */
         u32   layer{0};
+        u32   array_level{0}; /* mip level a sub-sized cube sits at */
         Veci2 pixel_offset{}; /* where the upload writes */
         Vecf2 offset{};       /* normalized, what the shader samples with */
         Vecf2 scale{};
@@ -198,7 +199,8 @@ struct BitmapCache
     {
         u32 mips = bucket.surface->m_mipmaps;
 
-        if(mipmap >= mips || mipmap > img.image.mip->mipmaps)
+        if(mipmap + img.image.array_level >= mips ||
+           mipmap > img.image.mip->mipmaps)
             return;
 
         auto size = img.image.mip->isize;
@@ -275,7 +277,7 @@ struct BitmapCache
                 faces,
                 Veci3{0, 0, img.image.layer},
                 Veci3{size.x, size.y, 1},
-                mipmap - img.mipmaps.base);
+                mipmap - img.mipmaps.base + img.image.array_level);
         } else
 #endif
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
@@ -477,7 +479,8 @@ struct BitmapCache
         if(bitmit == m_cache.end())
             return 0;
         BitmapItem const& bitmap = bitmit->second;
-        return type_mask(bitmap) | bitmap.image.layer;
+        return type_mask(bitmap) | (bitmap.image.array_level << 16) |
+               bitmap.image.layer;
     }
 
     template<typename T>

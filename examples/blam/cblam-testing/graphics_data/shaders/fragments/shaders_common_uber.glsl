@@ -193,8 +193,14 @@ vec4 get_light(in uint instance, in vec2 light_tex)
 #endif
 
 #if USE_REFLECTIONS == 1
-vec4 get_cube_color(in vec3 tex_coord)
+vec3 world_to_cube(in vec3 v)
 {
+    return vec3(-v.y, v.z, v.x);
+}
+
+vec4 get_cube_color(in vec3 world_dir)
+{
+    vec3 tex_coord = world_to_cube(world_dir);
     int tex_id = mats.instance[frag.instanceId].lightmap.reflection;
     uint source = tex_id >> 24;
     if(source == TEX_BC1)
@@ -288,8 +294,12 @@ vec4 shader_environment()
         float lightmap_brightness = mats.instance[frag.instanceId].material.input1.x;
 
         vec3 view_world  = normalize(camera_position - frag.position);
-        vec3 world_bump  = normalize(tbn_matrix() * normal.rgb);
         vec3 surf_normal = normalize(frag.normal);
+#if USE_NORMALMAP == 1
+        vec3 world_bump  = normalize(tbn_matrix() * normal.rgb);
+#else
+        vec3 world_bump  = surf_normal;
+#endif
 
         // bumped_cube=0: perturbed normal; flat_cube=1: geometric normal; bumped_radiosity=2: bumped
         vec3 refl_normal = (reflect_type == 1u) ? surf_normal : world_bump;
@@ -918,11 +928,15 @@ vec4 shader_water()
 
     // Four ripple layers at evenly-spaced angles, varying speeds.
     // get_bump returns tangent-space normals decoded to [-1, 1].
+#if USE_NORMALMAP == 0
+    vec3 bump_ts = vec3(0.0, 0.0, 1.0); /* flat water, no bump map bound */
+#else
     vec3 n1 = get_bump(bump_map_id, vec2(cos(angle_rad),         sin(angle_rad))         * velocity        * time).xyz;
     vec3 n2 = get_bump(bump_map_id, vec2(cos(angle_rad + 1.047), sin(angle_rad + 1.047)) * velocity * 1.3  * time).xyz;
     vec3 n3 = get_bump(bump_map_id, vec2(cos(angle_rad + 2.094), sin(angle_rad + 2.094)) * velocity * 0.8  * time).xyz;
     vec3 n4 = get_bump(bump_map_id, vec2(cos(angle_rad + 3.14),  sin(angle_rad + 3.14))  * velocity * 0.6  * time).xyz;
     vec3 bump_ts = normalize(n1 + n2 + n3 + n4);
+#endif
 
     // World-space quantities for reflection and Fresnel.
     // tbn_matrix() columns are T/B/N so it transforms tangent -> world.

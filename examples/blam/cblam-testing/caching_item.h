@@ -633,6 +633,7 @@ struct BitmapItem
         bitm_format_hash           bucket;
 
         u32   layer{0};
+        u32   array_level{0}; /*!< mip level the image occupies in its bucket */
         Vecf2 offset{};
         Vecf2 scale{};
         f32   bias{0.f};

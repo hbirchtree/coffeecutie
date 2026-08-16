@@ -1368,6 +1368,15 @@ u32 BitmapCache<V>::bias_of(blam::bitm::image_t const& img) const
     return bias;
 }
 
+static u32 cube_mip_levels(PixDesc const& fmt, Veci2 const& max_size)
+{
+    i32 smallest = fmt.pixfmt == pix_fmt::BCn ? 4 : 1;
+    u32 levels   = 1;
+    while((max_size.x >> levels) >= smallest && (max_size.y >> levels) >= smallest)
+        levels++;
+    return levels;
+}
+
 template<typename V>
 void BitmapCache<V>::calculate_storage()
 {
@@ -1482,6 +1491,17 @@ void BitmapCache<V>::calculate_storage()
                 slot.pixel_offset = {0, 0};
                 slot.offset       = {0.f, 0.f};
                 slot.scale        = {1.f, 1.f};
+
+                if(pool.type == blam::bitm::type_t::tex_cube)
+                {
+                    u32 level = 0;
+                    while(level < 15 && (pool.max.x >> level) > e.size.x &&
+                          (pool.max.y >> level) > e.size.y)
+                        level++;
+                    if((pool.max.x >> level) == e.size.x &&
+                       (pool.max.y >> level) == e.size.y)
+                        slot.array_level = level;
+                }
             } else
             {
                 if((offset.x + e.size.x) <= pool.max.x)
@@ -1530,6 +1550,8 @@ void BitmapCache<V>::calculate_storage()
         u32 mips = res.fmt.pixfmt == pix_fmt::RGB565
                        ? 1u
                        : (max_mipmap - params->mipmap_bias);
+        if(res.type == blam::bitm::type_t::tex_cube)
+            mips = cube_mip_levels(res.fmt, res.max_size);
         size_t layer_bytes = 0;
         for(u32 mip = 0; mip < mips; mip++)
         {
@@ -1601,6 +1623,9 @@ void BitmapCache<V>::reserve_storage()
 
         bucket->max_size = res.max_size;
         bucket->layers   = res.layers;
+
+        if(res.type == blam::bitm::type_t::tex_cube)
+            bucket->surface->m_mipmaps = cube_mip_levels(res.fmt, res.max_size);
 
         auto size = size_3d<i32>{
             res.max_size.x, res.max_size.y, static_cast<i32>(res.layers)}
@@ -1680,6 +1705,7 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
         auto const& slot = slot_it->second;
 
         img.layer        = slot.layer;
+        img.array_level  = slot.array_level;
         out.mipmaps.base = slot.mip_base;
         out.mipmaps.last = slot.mip_last;
         /* Upload wants pixels; the shader wants normalized UVs. Commit

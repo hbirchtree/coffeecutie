@@ -103,8 +103,10 @@ vec4 get_cube_map(
     in int instance)
 {
 #if USE_ARRAY_CUBEMAP == 1
-    int layer = mats.instance[instance].lightmap.reflection;
-    return texture(sampler, vec4(tex_coord, layer & 0xFFFF));
+    int tex_id = mats.instance[instance].lightmap.reflection;
+    // Explicit mip level to not fuzz with in-face texcoords
+    float lod = float((tex_id >> 16) & 0xFF);
+    return textureLod(sampler, vec4(tex_coord, tex_id & 0xFFFF), lod);
 #else
     return texture(sampler, vec3(tex_coord));
 #endif
