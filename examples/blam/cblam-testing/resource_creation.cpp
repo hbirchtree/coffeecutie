@@ -358,6 +358,10 @@ void create_resources(compo::EntityContainer& e)
                                  rot[2].get<float>(),
                                  rot[3].get<float>()));
                      }
+                     if(ev.data.contains("fov"))
+                     {
+                        target->camera.fieldOfView = ev.data["fov"].get<f32>();
+                     }
                      /* Headless equivalent of the ImGui "Physics" checkbox */
                      target->mode.physics =
                          ev.data.value("physics", target->mode.physics);

@@ -27,8 +27,16 @@
         {"time":  1000, "type":"key", "key": "CK_e", "duration":  1500},
         {"time": 22000, "type":"screenshot", "name": "sidewinder_ice"},
         {"time": 23000, "type":"key", "key": "CK_w", "duration": 1000},
-        {"time": 24500, "type":"screenshot", "name": "sidewinder_ice_closer"}
+        {"time": 24500, "type":"screenshot", "name": "sidewinder_ice_closer"},
+        {"time": 25000, "type": "camera", "position" :[-22.048727, 11.020909, -2.9874964], "rotation":[-0.91601986, -0.11045277, 0.38285357, 0.046164174]},
+        {"time": 25500, "type":"screenshot", "name": "sidewinder_ice_red"},
+        {"time": 26000, "type": "camera", "position" :[-19.089285, 23.472754, -3.5082607], "rotation":[-0.28175107, -0.024006706, -0.9557243, -0.081432514]},
+        {"time": 26500, "type":"screenshot", "name": "sidewinder_ground"},
+        {"time": 27000, "type": "camera", "position" :[-19.399021, -5.8402615, -3.207514], "rotation":[0.050669782, 0.016510721, -0.9494455, -0.30937567]},
+        {"time": 27500, "type":"screenshot", "name": "sidewinder_hill_edge"},
+        {"time": 28000, "type": "camera", "position" :[-21.189144, 7.8219976, -2.089835], "rotation":[-0.50857604, -0.08468451, -0.8452052, -0.14073794]},
+        {"time": 29500, "type":"screenshot", "name": "sidewinder_center_overview"}
     ],
     "frame_delta": 50.0,
-    "end_time": 27000
+    "end_time": 30000
 }
