@@ -20,7 +20,7 @@
         "channels": 2,
         "format": "f32"
     },
-    "comment": "On sidewinder.map, moves the camera to the cave for cluster testing",
+    "comment": "On a30.map, moves the camera to the cave for cluster testing",
     "events": [
         {"time":  500, "type": "camera", "fov": 70},
         {"time": 1000, "type": "camera", "position" :[41.334938, -60.73878, 59.171364], "rotation":[0.58200365, 0.03204246, 0.8113261, 0.04466792]},
