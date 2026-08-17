@@ -23,10 +23,19 @@
     "comment": "On a30.map, moves the camera to the cave for cluster testing",
     "events": [
         {"time":  500, "type": "camera", "fov": 70},
+        {"time":  500, "type": "render_param", "exposure": 1.0, "comment": "the Xbox has no tonemap, so compare at 1:1"},
         {"time": 1000, "type": "camera", "position" :[41.334938, -60.73878, 59.171364], "rotation":[0.58200365, 0.03204246, 0.8113261, 0.04466792]},
         {"time": 2000, "type":"screenshot", "name": "a30_mountain_stream"},
         {"time": 3000, "type": "camera", "position" :[12.956794, -82.940865, 57.718487], "rotation":[0.7232527, 0.076221675, -0.68258405, -0.07193609]},
-        {"time": 4000, "type":"screenshot", "name": "a30_open_landscape"}
+        {"time": 4000, "type":"screenshot", "name": "a30_open_landscape"},
+        {"time": 5000, "type": "camera", "position" :[-69.33917, -25.35172, 36.077705], "rotation":[-0.7004991, 0.05263614, -0.7097088, 0.053328067]},
+        {"time": 6000, "type":"screenshot", "name": "a30_forerunner_cave"},
+        {"time": 7000, "type": "camera", "position" :[12.964433, 37.912506, 60.838787], "rotation":[0.8950946, -0.053770605, 0.4418258, -0.02654163]},
+        {"time": 8000, "type":"screenshot", "name": "a30_forerunner_station"},
+        {"time": 9000, "type": "camera", "position" :[22.507896, -99.64262, 58.410847], "rotation":[0.8555465, 0.37184665, 0.33038044, 0.14359355]},
+        {"time":10000, "type":"screenshot", "name": "a30_forerunner_bridge"},
+        {"time":11000, "type": "camera", "position" :[37.579853, 9.824635, 72.840675], "rotation":[0.44562852, 0.017834194, 0.8943244, 0.035791513]},
+        {"time":12000, "type":"screenshot", "name": "a30_rocks"}
     ],
     "frame_delta": 200.0,
     "end_time": 10000

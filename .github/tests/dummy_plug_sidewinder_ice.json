@@ -23,6 +23,7 @@
     "comment": "On sidewinder.map, moves the camera to the cave for cluster testing",
     "events": [
         {"time":   500, "type": "camera", "fov": 70},
+        {"time":   500, "type": "render_param", "exposure": 1.0, "comment": "the Xbox has no tonemap, so compare at 1:1"},
         {"time":  1000, "type":"key", "key": "CK_w", "duration": 16500},
         {"time":  1000, "type":"key", "key": "CK_d", "duration":  2000},
         {"time":  1000, "type":"key", "key": "CK_e", "duration":  1500},
