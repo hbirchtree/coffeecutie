@@ -1044,7 +1044,10 @@ struct MeshRenderer
                          (m_render_params.only_reflections ? 0x80 : 0) |
                          (m_render_params.only_multipurpose ? 0x100 : 0) |
                          (m_render_params.only_multipurpose2 ? 0x200 : 0) |
-                         (m_render_params.only_diffuse ? 0x400 : 0);
+                         (m_render_params.only_diffuse ? 0x400 : 0) |
+                         (std::is_same_v<halo_version, blam::xbox_version_t>
+                              ? 0x800
+                              : 0);
         return gfx::uniform_pair{
             {"render_flags"sv, 31},
             semantic::SpanOne<const int>(m_render_flags),

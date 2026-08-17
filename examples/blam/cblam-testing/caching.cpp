@@ -1054,6 +1054,11 @@ void ShaderCache<V>::populate_material(
 
         mat.material.flags |= (primary && secondary ? 1 : 0) << 9;
 
+        mat.material.flags |= static_cast<u32>(info->diffuse.detail_function)
+                              << 20;
+        mat.material.flags |= static_cast<u32>(info->diffuse.micro_function)
+                              << 22;
+
         // Self-illum takes map slot 1 when present; micro otherwise.
         if(shader.senv.self_illum.valid())
         {
@@ -1098,8 +1103,10 @@ void ShaderCache<V>::populate_material(
          * 6:     Reflection toggle
          * 7-8:   Reflection map type
          *          * Blending properties:
-         * 9-10:  Detail map function
-         * 10-11: Micro map function
+         * 9:     Primary + secondary detail maps present
+         * 10:    Micro detail map present
+         * 20-21: Detail map function
+         * 22-23: Micro map function
          *          * Texture scrolling animation:
          * 12-15: U-animation function
          * 16-19: V-animation function

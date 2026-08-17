@@ -48,6 +48,7 @@ const int RENDER_FLAG_ONLY_LIGHTMAP  = 0x40;
 const int RENDER_FLAG_ONLY_MULTIPURPOSE = 0x100;
 const int RENDER_FLAG_ONLY_MULTIPURPOSE2 = 0x200;
 const int RENDER_FLAG_ONLY_DIFFUSE = 0x400;
+const int RENDER_FLAG_CUBE_YAW     = 0x800;
 
 struct LightProperties
 {
@@ -117,6 +118,7 @@ const uint TEX_A8     = 9u;  /* 000A */
 const uint TEX_Y8     = 10u; /* LLL1 */
 const uint TEX_AY8    = 11u; /* LLLL */
 const uint TEX_A8Y8   = 12u; /* LLLA (r=L, g=A) */
+const uint TEX_P8     = 13u; /* Xbox palettized bump, index in R8 */
 
 vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offset, in Material mat)
 {
@@ -146,6 +148,11 @@ vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offse
     {
         vec2 la = sample_map(map_id, tex_id, source_rg8, offset, mat).rg;
         return vec4(vec3(la.r), la.g);
+    }
+    else if(source == TEX_P8)
+    {
+        float i = sample_map(map_id, tex_id, source_r8, offset, mat).r;
+        return vec4(vec3(i), i);
     }
     else if(source == TEX_RGB565)
         return sample_map(map_id, tex_id, source_rgb565, offset, mat).bgra;
@@ -186,6 +193,8 @@ vec4 get_light(in Material mat, in vec2 light_tex)
     int  layer        = tex_id & 0xFFFF;
     uint source       = uint(tex_id) >> 24;
 
+    if(source == 0u)
+        return vec4(1.0);
     if(source == TEX_RGBA8)
         return texture(source_rgba8, vec3(uv, layer), -100.0).bgra;
     return texture(source_rgb565, vec3(uv, layer), -100.0);
@@ -195,6 +204,8 @@ vec4 get_light(in Material mat, in vec2 light_tex)
 #if USE_REFLECTIONS == 1
 vec3 world_to_cube(in vec3 v)
 {
+    if((render_flags & RENDER_FLAG_CUBE_YAW) != 0)
+        v = vec3(v.y, -v.x, v.z);
     return vec3(-v.y, v.z, v.x);
 }
 
@@ -220,15 +231,47 @@ vec4 get_cube_color(in vec3 tex_coord, in Material mat)
 #endif
 
 #if USE_NORMALMAP == 1
+const float P8_BUMP_GAIN = 1.0;
+
 vec4 get_bump(in uint map_id, in vec2 offset, in Material mat)
 {
-    vec3 normal = normalize(get_color_with_offset(map_id, offset, mat).rgb * 2.0 - 1.0);
-    normal = /*tbn_matrix() **/ normal;
+    uint source = uint(mat.maps[map_id].layer) >> 24;
+    vec3 normal;
+    if(source == TEX_P8)
+    {
+        /* P8 bump maps index a palette that lives in the game executable, not
+         * in the map. Without it, read the index as a height and take the
+         * slope across a texel — approximate, but it keeps the surface lit
+         * like a flat one instead of normalizing an index into nonsense. */
+        vec2 texel = 1.0 / vec2(textureSize(source_r8, 0).xy);
+        vec2 step  = texel / max(
+            mat.maps[map_id].uv_scale * mat.maps[map_id].atlas_scale,
+            vec2(1e-6));
+        float here = get_color_with_offset(map_id, offset, mat).r;
+        float du = get_color_with_offset(map_id, offset + vec2(step.x, 0), mat).r;
+        float dv = get_color_with_offset(map_id, offset + vec2(0, step.y), mat).r;
+        normal = normalize(vec3(
+            (here - du) * P8_BUMP_GAIN, (here - dv) * P8_BUMP_GAIN, 1.0));
+    } else
+        normal = normalize(get_color_with_offset(map_id, offset, mat).rgb * 2.0 - 1.0);
     return vec4(normal, dot(normal, light_direction()));
 }
 #endif
 
 const uint base_map_id      = 0u;
+
+const uint DETAIL_BIASED_MULTIPLY = 0u;
+const uint DETAIL_MULTIPLY        = 1u;
+const uint DETAIL_BIASED_ADD      = 2u;
+
+vec3 apply_detail(in vec3 color, in vec3 detail, in uint func)
+{
+    if(func == DETAIL_MULTIPLY)
+        return color * detail;
+    if(func == DETAIL_BIASED_ADD)
+        return clamp(color + detail * 2.0 - 1.0, 0.0, 1.0);
+    return clamp(color * detail * 2.0, 0.0, 1.0);
+}
 
 vec4 shader_dummy(in Material mat)
 {
@@ -249,9 +292,13 @@ vec4 shader_environment(in Material mat)
     uint flags = uint(mat.material.flags & 0x7);
     uint type = uint((mat.material.flags >> 4) & 0x3);
 
-    int detailed = (mat.material.flags >> 9) & 0x1;
     int has_micro = (mat.material.flags >> 10) & 0x1;
-    detailed = 1;
+    uint detail_func = uint((mat.material.flags >> 20) & 0x3);
+    uint micro_func  = uint((mat.material.flags >> 22) & 0x3);
+
+    bool has_primary   = (uint(mat.maps[primary_map_id].layer) >> 24) != 0u;
+    bool has_secondary = (uint(mat.maps[secondary_map_id].layer) >> 24) != 0u;
+    bool has_bump      = (uint(mat.maps[bump_map_id].layer) >> 24) != 0u;
 
     vec2 scroll_uv = mat.material.input4.xy;
     vec4 base = get_color_with_offset(base_map_id, scroll_uv, mat);
@@ -273,14 +320,20 @@ vec4 shader_environment(in Material mat)
 #endif
 
     float factor = type == TYPE_NORMAL ? secondary.a : base.a;
-    vec4 blend = detailed == 1
-        ? ((primary * factor) + (secondary * (1.0 - factor)))
-        : vec4(1);
+    vec4 blend = vec4(1);
+    if(has_primary && has_secondary)
+        blend = (primary * factor) + (secondary * (1.0 - factor));
+    else if(has_primary)
+        blend = primary;
+    else if(has_secondary)
+        blend = secondary;
     float specular = type == TYPE_BLENDED_SPECULAR
         ? base.a * micro.a : blend.a * micro.a;
 
 #if USE_NORMALMAP == 1
-    vec4 normal = get_bump(bump_map_id, vec2(0), mat);
+    vec4 normal = has_bump
+        ? get_bump(bump_map_id, vec2(0), mat)
+        : vec4(0, 0, 1, dot(vec3(0, 0, 1), light_direction()));
 #endif
 
 #if USE_REFLECTIONS == 1
@@ -327,19 +380,23 @@ vec4 shader_environment(in Material mat)
     if((render_flags & RENDER_FLAG_ONLY_NORMALMAP) != 0)
         return vec4(normal.rgb, 1);
 #endif
-    vec3 out_color = base.rgb *
-        micro.rgb *
-        blend.rgb *
+    vec3 out_color = base.rgb;
+    if(has_primary || has_secondary)
+        out_color = apply_detail(out_color, blend.rgb, detail_func);
+    if(has_micro == 1)
+        out_color = apply_detail(out_color, micro.rgb, micro_func);
 #if USE_LIGHTMAPS == 1
-        lightmap.rgb *
+    out_color *= lightmap.rgb;
 #endif
 #if USE_REFLECTIONS == 1
-        mix(vec3(1), reflection * refl_color, refl_strength) *
+    vec3 refl_out = reflection * refl_color * refl_strength * specular;
+    if((render_flags & RENDER_FLAG_ONLY_REFLECTIONS) != 0)
+        return vec4(refl_out, 1);
+    out_color = clamp(out_color + refl_out, 0.0, 1.0);
 #endif
 #if USE_NORMALMAP == 1
-        bump_factor *
+    out_color *= bump_factor;
 #endif
-        vec3(1);
 
 #if USE_SELF_ILLUMINATION == 1
     if(mat.lightmap.meta1 != 0)

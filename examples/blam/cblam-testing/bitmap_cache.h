@@ -453,6 +453,8 @@ struct BitmapCache
                 return 0x0A000000;
             case blam::bitm::format_t::AY8:
                 return 0x0B000000;
+            case blam::bitm::format_t::P8:
+                return 0x0D000000;
             default:
                 return 0x05000000;
             }
