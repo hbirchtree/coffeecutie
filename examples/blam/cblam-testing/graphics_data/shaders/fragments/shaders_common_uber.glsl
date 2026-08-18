@@ -841,10 +841,8 @@ vec4 shader_model(in Material mat)
 
 #if USE_REFLECTIONS == 1
     vec3 view_world = normalize(camera_position - frag.position);
-    vec3 reflection = vec3(1);
-    // TODO: Find out why boulder_moss_large.shader_model becomes so glossy
-    // TODO: Find out why visor is opaque, but flipping the mix()
-    //       makes other shiny objects opaque
+    vec3  reflection  = vec3(0);
+    float refl_amount = 0.0;
     if((render_flags & RENDER_FLAG_REFLECTION) != 0)
     {
         float NdotV_m      = clamp(dot(frag.normal, view_world), 0.0, 1.0);
@@ -852,21 +850,25 @@ vec4 shader_model(in Material mat)
         vec3 reflect_dir   = reflect(-view_world, frag.normal);
         vec4 perp_m        = mat.material.input3;
         vec4 para_m        = mat.material.input4;
-        // Brightness controls blend strength; tint colors the reflection.
-        // Keeping them separate prevents zero-brightness from darkening the base.
-        float refl_strength = mix(perp_m.a,   para_m.a,   fresnel_m);
-        vec3  refl_color    = mix(perp_m.rgb, para_m.rgb, fresnel_m);
-        reflection = mix(
-            vec3(1),
-            get_cube_color(reflect_dir, mat).rgb + refl_color,
-            specular_factor * NdotV_m);
+        /* Perpendicular at grazing, parallel head-on, as shader_environment
+         * reads them. */
+        float refl_strength = mix(para_m.a,   perp_m.a,   fresnel_m);
+        vec3  refl_color    = mix(para_m.rgb, perp_m.rgb, fresnel_m);
+        /* The cube map, tinted per shader. How much of it replaces the
+         * surface is the shader's own reflection brightness times the
+         * multipurpose map's shiny channel, so a dull ammo bag (brightness
+         * 0.5) and a lacquered storage crate (1.0) stay apart, and a model's
+         * unpolished parts keep their diffuse. */
+        reflection  = get_cube_color(reflect_dir, mat).rgb * refl_color;
+        refl_amount = clamp(refl_strength * specular_factor, 0.0, 1.0);
         if((render_flags & RENDER_FLAG_ONLY_REFLECTIONS) != 0)
-            return vec4(get_cube_color(reflect_dir, mat).rgb + refl_color, 1);
+            return vec4(reflection * refl_amount, 1);
     }
     if((render_flags & RENDER_FLAG_ONLY_REFLECTIONS) != 0)
         return vec4(0.0, 0.0, 0.0, 1.0); /* non-reflective surfaces -> black */
 #else
-    vec3 reflection = vec3(1);
+    vec3  reflection  = vec3(0);
+    float refl_amount = 0.0;
 #endif
 
     // Diffuse lighting via geometry normal (soso has no bump map texture).
@@ -899,7 +901,26 @@ vec4 shader_model(in Material mat)
         vec3(1), primary_change_color.rgb,
         color_change * primary_change_color.a);
     color.rgb = clamp(NdotL * color.rgb, 0, 1);
-    color.rgb = color.rgb * mix(vec3(1), detail.rgb, detail_factor) * reflection;
+
+    /* The detail map combines by the shader's own function, the default being
+     * the same 2x modulate the environment shader uses; plain multiplication
+     * halves the model. detail_factor stays the mask that says how much of the
+     * detail applies. */
+    uint soso_detail_func =
+        (uint(flags) & SOSO_FLAG_DETAIL_FUNC_MUL) != 0u
+            ? DETAIL_MULTIPLY
+            : ((uint(flags) & SOSO_FLAG_DETAIL_FUNC_DOUBLE_BIAS_ADD) != 0u
+                   ? DETAIL_BIASED_ADD
+                   : DETAIL_BIASED_MULTIPLY);
+
+    /* The reflection blends toward the cube, so the detail map has to land on
+     * top of it or a shiny surface loses its panelling entirely — the hull of
+     * a dropship is reflective across its whole multipurpose mask. On a matte
+     * surface the reflection is zero and the order makes no difference. */
+    color.rgb = mix(color.rgb, reflection, refl_amount * 0.8);
+    color.rgb = clamp(
+        mix(color.rgb, apply_detail(color.rgb, detail.rgb, soso_detail_func),
+            detail_factor), 0.0, 1.0);
     return color;
 }
 
