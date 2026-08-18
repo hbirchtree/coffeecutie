@@ -327,8 +327,7 @@ vec4 shader_environment(in Material mat)
         blend = primary;
     else if(has_secondary)
         blend = secondary;
-    float specular = type == TYPE_BLENDED_SPECULAR
-        ? base.a * micro.a : blend.a * micro.a;
+    float specular = type == TYPE_BLENDED ? micro.a : base.a;
 
 #if USE_NORMALMAP == 1
     vec4 normal = has_bump
@@ -366,10 +365,9 @@ vec4 shader_environment(in Material mat)
         refl_color    = mix(parallel_color.rgb, perp_color.rgb, t);
         refl_strength = mix(parallel_color.a,   perp_color.a,   t);
 
-        // lightmap_brightness scales how much the lightmap modulates reflection strength
 #if USE_LIGHTMAPS == 1
         float lm_luma   = dot(lightmap.rgb, vec3(0.299, 0.587, 0.114));
-        refl_strength  *= mix(1.0, lm_luma, lightmap_brightness);
+        refl_strength  *= mix(0.5 + 0.5 * lm_luma, 1.0, lightmap_brightness);
 #endif
     }
 #endif
@@ -389,7 +387,8 @@ vec4 shader_environment(in Material mat)
     out_color *= lightmap.rgb;
 #endif
 #if USE_REFLECTIONS == 1
-    vec3 refl_out = reflection * refl_color * refl_strength * specular;
+    vec3 refl_out =
+        reflection * refl_color * refl_strength * specular * 2.0;
     if((render_flags & RENDER_FLAG_ONLY_REFLECTIONS) != 0)
         return vec4(refl_out, 1);
     out_color = clamp(out_color + refl_out, 0.0, 1.0);
