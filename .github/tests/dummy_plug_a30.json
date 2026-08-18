@@ -38,5 +38,5 @@
         {"time":12000, "type":"screenshot", "name": "a30_rocks"}
     ],
     "frame_delta": 200.0,
-    "end_time": 10000
+    "end_time": 15000
 }
