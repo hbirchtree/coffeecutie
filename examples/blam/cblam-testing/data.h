@@ -93,8 +93,8 @@ struct PostProcessParameters : compo::SubsystemBase
 {
     using type = PostProcessParameters;
 
-    f32  exposure{2.6f};
-    f32  gamma{1.f};
+    f32  exposure{2.f};
+    f32  gamma{.7f};
     f32  scale{1.f};
     bool auto_expose{true};
     f32   blur{0.f};
@@ -109,19 +109,27 @@ struct RenderingParameters : compo::SubsystemBase
 
     libc_types::u32 mipmap_bias{compile_info::platform::is_32bit ? 2 : 3};
 
-    bool color_changing{true};
-    bool render_fog{true};
-    bool render_lightmaps{true};
-    bool render_model_bones{true};
-    bool render_reflection{true};
-    bool render_scenery{true};
+    // Common render flags
+    bool only_diffuse{false};
     bool only_normals{false};
-    bool only_normalmaps{false};
-    bool only_lightmaps{false};
     bool only_reflections{false};
+    bool render_fog{true};
+    bool render_reflection{true};
+
+    // MOD-exclusive
+    bool color_changing{true};
+    bool only_detail{false};
     bool only_multipurpose{false};
     bool only_multipurpose2{false};
-    bool only_diffuse{false};
+    bool render_model_bones{true};
+    bool render_scenery{true};
+
+    // BSP-exclusive
+    bool only_aux_channels{false};
+    bool only_micro{false};
+    bool only_lightmaps{false};
+    bool only_normalmaps{false};
+    bool render_lightmaps{true};
 
     bool  render_ui{false};
     bool  debug_clear{false}; // sets a different clear color for visibility

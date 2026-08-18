@@ -38,17 +38,21 @@ layout(location = 22) uniform float time;
 // TODO: Add constant fallback on release mode
 layout(location = 31) uniform int render_flags;
 
-const int RENDER_FLAG_FOG             = 0x1;
-const int RENDER_FLAG_LIGHTMAP        = 0x2;
-const int RENDER_FLAG_REFLECTION      = 0x4;
-const int RENDER_FLAG_ONLY_REFLECTIONS = 0x80;
-const int RENDER_FLAG_ONLY_NORMALS   = 0x10;
-const int RENDER_FLAG_ONLY_NORMALMAP = 0x20;
-const int RENDER_FLAG_ONLY_LIGHTMAP  = 0x40;
-const int RENDER_FLAG_ONLY_MULTIPURPOSE = 0x100;
+const int RENDER_FLAG_FOG                = 0x1;
+const int RENDER_FLAG_LIGHTMAP           = 0x2;
+const int RENDER_FLAG_REFLECTION         = 0x4;
+// 0x8 taken by a vertex shader flag
+const int RENDER_FLAG_ONLY_NORMALS       = 0x10;
+const int RENDER_FLAG_ONLY_NORMALMAP     = 0x20;
+const int RENDER_FLAG_ONLY_LIGHTMAP      = 0x40;
+const int RENDER_FLAG_ONLY_REFLECTIONS   = 0x80;
+const int RENDER_FLAG_ONLY_MULTIPURPOSE  = 0x100;
 const int RENDER_FLAG_ONLY_MULTIPURPOSE2 = 0x200;
-const int RENDER_FLAG_ONLY_DIFFUSE = 0x400;
-const int RENDER_FLAG_CUBE_YAW     = 0x800;
+const int RENDER_FLAG_ONLY_DIFFUSE       = 0x400;
+const int RENDER_FLAG_CUBE_YAW           = 0x800;
+const int RENDER_FLAG_ONLY_DETAIL        = 0x1000;
+const int RENDER_FLAG_ONLY_MICRO         = 0x2000;
+const int RENDER_FLAG_ONLY_AUX           = 0x4000;
 
 struct LightProperties
 {
@@ -311,6 +315,10 @@ vec4 shader_environment(in Material mat)
         return vec4(primary.rgb, 1);
     if((render_flags & RENDER_FLAG_ONLY_MULTIPURPOSE2) != 0)
         return vec4(secondary.rgb, 1);
+    if((render_flags & RENDER_FLAG_ONLY_MICRO) != 0)
+        return vec4(micro.rgb, 1);
+    if((render_flags & RENDER_FLAG_ONLY_AUX) != 0)
+        return vec4(base.a, secondary.a, micro.a, 1);
 #if USE_LIGHTMAPS == 1
     vec4 lightmap = (render_flags & RENDER_FLAG_LIGHTMAP) != 0
         ? get_light(mat, frag.light_tex)
@@ -820,6 +828,8 @@ vec4 shader_model(in Material mat)
 
     if((render_flags & RENDER_FLAG_ONLY_DIFFUSE) != 0)
         return vec4(color.rgb, 1);
+    if((render_flags & RENDER_FLAG_ONLY_DETAIL) != 0)
+        return vec4(detail.rgb, 1);
     if((render_flags & RENDER_FLAG_ONLY_MULTIPURPOSE) != 0)
         return vec4(multi.rgb, 1);
     if((render_flags & RENDER_FLAG_ONLY_MULTIPURPOSE2) != 0)

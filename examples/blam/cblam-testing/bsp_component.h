@@ -80,14 +80,20 @@ struct BlamBspWidget
                         "Only normal maps", &rendering->only_normalmaps);
                     ImGui::Checkbox(
                         "Only reflections", &rendering->only_reflections);
+                    ImGui::Checkbox(
+                        "Only aux channels", &rendering->only_aux_channels);
                     ImGui::Text("BSP-specific");
                     ImGui::Checkbox(
                         "Render lightmaps", &rendering->render_lightmaps);
                     ImGui::Checkbox(
                         "Only lightmaps", &rendering->only_lightmaps);
+                    ImGui::Checkbox(
+                        "Only micro map", &rendering->only_micro);
                     ImGui::Text("Model-specific");
                     ImGui::Checkbox(
                         "Render scenery", &rendering->render_scenery);
+                    ImGui::Checkbox(
+                        "Only detail map", &rendering->only_detail);
                     ImGui::Checkbox(
                         "Only multipurpose", &rendering->only_multipurpose);
                     ImGui::Checkbox(
