@@ -45,8 +45,18 @@
         {"time":18500, "type":"screenshot","name":"b30_covenant_shield_broken_2"},
         {"time":19000, "type":"screenshot","name":"b30_covenant_shield_broken_3"},
         {"time":20000, "type": "camera", "position" :[-1.5171281, -26.95685, 2.5377915], "rotation":[0.22229183, 0.08621828, -0.90543956, -0.3511866]},
-        {"time":21000, "type":"screenshot","name":"b30_transparent_senv"}
+        {"time":21000, "type":"screenshot","name":"b30_transparent_senv"},
+        {"time":22000, "type": "camera", "position" :[4.390085, -64.832924, 9.460856], "rotation":[0.93568844, 0.20433095, 0.28101632, 0.061366912]},
+        {"time":23000, "type":"screenshot","name":"b30_spirit_dropship"},
+        {"time":24000, "type": "camera", "position" :[-3.1800685, -27.31131, 2.6418986], "rotation":[-0.22443324, 0.0032203118, -0.9743839, 0.0139813395]},
+        {"time":25000, "type":"screenshot","name":"b30_chief_interior"},
+        {"time":26000, "type": "camera", "position" :[55.941704, -20.80527, 2.3522272], "rotation":[-0.9342831, -0.30443516, 0.17643468, 0.057491276]},
+        {"time":27000, "type":"screenshot","name":"b30_powerup"},
+        {"time":28000, "type": "camera", "position" :[38.03743, 14.601476, 20.095167], "rotation":[0.79103297, 0.26711193, 0.5214533, 0.17608143]},
+        {"time":29000, "type":"screenshot","name":"b30_ammo_pack"},
+        {"time":30000, "type": "camera", "position" :[31.630638, -27.759111, 9.770132], "rotation":[0.7586623, 0.08763252, 0.6412993, 0.074075975]},
+        {"time":31000, "type":"screenshot","name":"b30_cov_box"}
     ],
     "frame_delta": 200.0,
-    "end_time": 30000
+    "end_time": 33000
 }
