@@ -35,8 +35,25 @@
         {"time": 9000, "type": "camera", "position" :[22.507896, -99.64262, 58.410847], "rotation":[0.8555465, 0.37184665, 0.33038044, 0.14359355]},
         {"time":10000, "type":"screenshot", "name": "a30_forerunner_bridge"},
         {"time":11000, "type": "camera", "position" :[37.579853, 9.824635, 72.840675], "rotation":[0.44562852, 0.017834194, 0.8943244, 0.035791513]},
-        {"time":12000, "type":"screenshot", "name": "a30_rocks"}
+        {"time":12000, "type":"screenshot", "name": "a30_rocks"},
+
+        {"time":13000, "type": "camera", "position" :[-451.22183, 240.52368, 104.18472], "rotation":[-0.6483943, 0.106052205, 0.74061906, -0.14078777]},
+        {"time":14000, "type":"screenshot", "name": "a30_spirit_1"},
+        {"time":15000, "type": "camera", "position" :[-442.69797, 236.26004, 104.1491], "rotation":[-0.9416589, 0.2289512, 0.2362676, -0.070976324]},
+        {"time":16000, "type":"screenshot", "name": "a30_spirit_2"},
+        {"time":17000, "type": "camera", "position" :[-154.20097, 6.357392, 30.676014], "rotation":[-0.9231702, -0.017125888, 0.38395146, -0.006679393]},
+        {"time":18000, "type":"screenshot", "name": "a30_transparent_senv_2"},
+        {"time":19000, "type": "camera", "position" :[-175.89616, -4.2939305, 33.543617], "rotation":[-0.9784407, -0.19243485, 0.074965, 0.001721231]},
+        {"time":20000, "type":"screenshot", "name": "a30_light_bridge"},
+        {"time":21000, "type": "camera", "position" :[-336.43997, 34.091187, 42.60751], "rotation":[-0.8392923, 0.17398511, -0.5071742, 0.08995566]},
+        {"time":22000, "type":"screenshot", "name": "a30_light_interior"},
+        {"time":23000, "type": "camera", "position" :[-289.89233, -2.1637187, 35.694004], "rotation":[-0.84821445, 0.12334478, -0.51165646, 0.059381697]},
+        {"time":24000, "type":"screenshot", "name": "a30_interior_reflections"},
+        {"time":25000, "type": "camera", "position" :[-245.80519, -4.7510743, 32.837017], "rotation":[-0.9821653, -0.18690194, -0.01335762, -0.0155149875]},
+        {"time":26000, "type":"screenshot", "name": "a30_interior_tunnel"},
+        {"time":27000, "type": "camera", "position" :[-178.49146, 20.232271, 34.943882], "rotation":[0.4179111, -0.029301722, 0.9057916, -0.06350923]},
+        {"time":28000, "type":"screenshot", "name": "a30_chief_holo_controls"}
     ],
     "frame_delta": 200.0,
-    "end_time": 15000
+    "end_time": 30000
 }

@@ -7,10 +7,13 @@
         }
     },
     "events": [
-        {"time": 800, "type": "camera", "position": [119.427414, -183.3026, 7.780891], "rotation": [0.9190232, 0.050596938, 0.39035165, 0.021490876]},
         {"time": 1200, "type": "render_param", "render_ui": true},
-        {"time": 2000, "type": "mouse_move", "x": 640, "y": 360},
-        {"time": 2500, "type": "screenshot", "name": "ui_test"}
+        {"time": 3000, "type": "camera", "position" :[-0.30472726, -0.19051418, 0.074154176], "rotation":[0.06060622, -0.003967001, -0.99602336, 0.06518157]},
+        {"time": 3500, "type": "screenshot", "name": "ui_start"},
+        {"time": 4000, "type": "camera", "position" :[0.9146866, 1.5528936, 0.21891445], "rotation":[0.31785202, 0.0068878904, -0.9481146, -0.0011823153]},
+        {"time": 4500, "type": "screenshot", "name": "ui_bottom"},
+        {"time": 5000, "type": "camera", "position" :[0.88378733, 0.6210254, 0.8047082], "rotation":[0.14286536, 0.09457026, -0.9659534, 0.19385561]},
+        {"time": 5500, "type": "screenshot", "name": "ui_planet"}
     ],
     "frame_delta": 33.333,
     "end_time": 10000
