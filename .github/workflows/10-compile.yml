@@ -483,7 +483,7 @@ jobs:
     # confirmation + roster sync), since comp_app::dummy_plug/Journal
     # doesn't exist on the wasm side (see .github/tests/web/README.md).
     if: ${{ always() }}
-    name: "WebRTC test: wasm client through gateway to native server"
+    name: "WebRTC: Wasm <-> GW <-> x86_64"
     needs:
     - Linux
     - WebAssembly
@@ -594,7 +594,7 @@ jobs:
     # markers, SERVER_ROLE=wasm -- so there is no native server, no
     # sysroot and no Mesa/EGL setup to do here.
     if: ${{ always() }}
-    name: "WebRTC test: wasm client to wasm server through gateway"
+    name: "WebRTC: Wasm <-> GW <-> Wasm"
     needs:
     - WebAssembly
     - WebRTCGateway
@@ -671,7 +671,7 @@ jobs:
     # Skipped when the secret isn't available (forks, PRs from forks).
     # Replaces an earlier docker MASQUERADE topology that never passed.
     if: ${{ always() }}
-    name: "WebRTC test: NAT punch-through (remote gateway)"
+    name: "WebRTC: Wasm <-> FW <-> GW <-> x86_64"
     needs:
     - Linux
     - WebAssembly
@@ -873,6 +873,7 @@ jobs:
         cp -r artifacts/web-wasm32-emscripten-webgl2-custom _site/custom/bin
         cp -r artifacts/web-wasm32-emscripten-webgl2-mcc _site/mcc/bin
         cp -r artifacts/web-wasm32-emscripten-webgl2-trial _site/trial/bin
+        cp -r artifacts/web-wasm32-emscripten-webgl2-xbox _site/xbox/bin
         for f in $(find artifacts/ -mindepth 1 -maxdepth 1); do pushd $f; [[ -f apps.tar ]] && (tar xvf apps.tar && rm apps.tar); tar Jcvf ../../_site/downloads/$(basename $f).tar.xz .; popd; done
     - name: Uploading GitHub Pages examples
       uses: actions/upload-pages-artifact@v4

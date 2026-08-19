@@ -69,10 +69,10 @@ details[open]>.jsum::before{transform:rotate(90deg)}
 .ext-link-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:#0e3352;color:#4fc3f7;border:1px solid #0e639c;border-radius:3px;font:12px ui-monospace,monospace;text-decoration:none;margin:10px 12px 4px;cursor:pointer}
 .ext-link-btn:hover{background:#1e4a6a;color:#81d4fa}
 /* GPU extensions bar chart */
-#ext-search-wrap{padding:6px 8px;background:#252526;border-bottom:1px solid #3a3a3a;position:sticky;top:0;z-index:10;display:flex;flex-direction:column;gap:5px}
-#ext-search,#ext-gpu-filter{width:100%;padding:3px 7px;background:#3c3c3c;color:#ccc;border:1px solid #555;border-radius:3px;font:12px ui-monospace,monospace;outline:none}
-#ext-search:focus,#ext-gpu-filter:focus{border-color:#0e639c}
-#ext-gpu-filter{cursor:pointer}
+#ext-search-wrap,#al-ext-search-wrap{padding:6px 8px;background:#252526;border-bottom:1px solid #3a3a3a;position:sticky;top:0;z-index:10;display:flex;flex-direction:column;gap:5px}
+#ext-search,#ext-gpu-filter,#al-ext-search,#al-device-filter{width:100%;padding:3px 7px;background:#3c3c3c;color:#ccc;border:1px solid #555;border-radius:3px;font:12px ui-monospace,monospace;outline:none}
+#ext-search:focus,#ext-gpu-filter:focus,#al-ext-search:focus,#al-device-filter:focus{border-color:#0e639c}
+#ext-gpu-filter,#al-device-filter{cursor:pointer}
 .ext-ctx-head{padding:6px 12px 4px;font:bold 11px ui-monospace,monospace;color:#9cdcfe;background:#252526;border-bottom:1px solid #2d2d2d;border-top:1px solid #3a3a3a;position:sticky;top:63px;z-index:5}
 .ext-bar-row{display:flex;align-items:center;gap:8px;padding:2px 12px;border-bottom:1px solid #222}
 .ext-bar-row:hover{background:#252525}
@@ -110,8 +110,8 @@ body.win98 .list-item:hover { background: #e0e0e0; }
 body.win98 .list-item.selected { background: #000080 !important; color: #fff !important; }
 body.win98 .list-item.selected .list-title { color: #fff; }
 body.win98 .list-item.selected .list-sub { color: #ccc; }
-body.win98 .list-search, body.win98 #ext-search, body.win98 #ext-gpu-filter, body.win98 #egl-ext-search, body.win98 #egl-device-filter { background: #fff !important; color: #000 !important; border: 1px solid !important; border-color: #888 #fff #fff #888 !important; border-radius: 0 !important; }
-body.win98 #ext-search-wrap, body.win98 #egl-ext-search-wrap { background: #c0c0c0 !important; border-bottom: 1px solid #888 !important; }
+body.win98 .list-search, body.win98 #ext-search, body.win98 #ext-gpu-filter, body.win98 #egl-ext-search, body.win98 #egl-device-filter, body.win98 #al-ext-search, body.win98 #al-device-filter { background: #fff !important; color: #000 !important; border: 1px solid !important; border-color: #888 #fff #fff #888 !important; border-radius: 0 !important; }
+body.win98 #ext-search-wrap, body.win98 #egl-ext-search-wrap, body.win98 #al-ext-search-wrap { background: #c0c0c0 !important; border-bottom: 1px solid #888 !important; }
 body.win98 .ext-name { color: #000; }
 body.win98 .ext-name a { color: #000080; }
 body.win98 .ext-count { color: #444; }
@@ -158,6 +158,7 @@ body.win98 #loading { background: rgba(192, 192, 192, 0.8); color: #000; font-we
     <button class="tab" data-tab="gpu-limits">GPU Limits</button>
     <button class="tab" data-tab="gpu-extensions">GL Extensions</button>
     <button class="tab" data-tab="egl-extensions">EGL Extensions</button>
+    <button class="tab" data-tab="al-extensions">AL Extensions</button>
     <button class="tab" data-tab="gpu-viz">Limits Chart</button>
   </div>
 </div>
@@ -227,6 +228,9 @@ body.win98 #loading { background: rgba(192, 192, 192, 0.8); color: #000; font-we
   </div>
   <div id="tab-egl-extensions" class="tab-panel">
     <div class="detail-pane" id="detail-egl-extensions" style="width:100%"><div class="detail-empty">Connect to an API to view EGL extension statistics</div></div>
+  </div>
+  <div id="tab-al-extensions" class="tab-panel">
+    <div class="detail-pane" id="detail-al-extensions" style="width:100%"><div class="detail-empty">Connect to an API to view OpenAL extension statistics</div></div>
   </div>
   <div id="tab-gpu-viz" class="tab-panel">
     <div class="detail-pane" id="detail-gpu-viz" style="width:100%"><div class="detail-empty">Connect to an API to view GPU limit charts</div></div>
@@ -496,6 +500,7 @@ async function loadAll(){
     renderGPUs();
     renderGPULimits();
     renderEGLExtensions();
+    renderALExtensions();
     renderGPUExtensions();
     renderGPULimitsViz();
 
@@ -596,6 +601,7 @@ async function loadReports(){
     DATA.reports=r.data||[];
     DATA.machines=m.data||[];
     renderReports();
+    renderALExtensions();
     setStatus(`${DATA.reports.length} report${DATA.reports.length!==1?'s':''} · refreshed`);
   }catch(e){
     setStatus('Error: '+e.message,true);
@@ -883,6 +889,137 @@ function applyEGLExtensionFilters(){
   if(head) head.style.display=visible?'':'none';
 }
 
+// ── AL Extensions ─────────────────────────────────────────────────────────────
+// Spec texts live in Raulshc/OpenAL-EXT-Repository; only names present there get
+// a link, since the repo lags behind what implementations advertise.
+const AL_SPEC_REPO='https://github.com/Raulshc/OpenAL-EXT-Repository/';
+const AL_SPEC_FILES=new Map((
+  'ALC_AAX_capture_loopback ALC_ENUMERATE_ALL_EXT ALC_ENUMERATION_EXT ALC_EXT_ASA ALC_EXT_ASA_DISTORTION '+
+  'ALC_EXT_ASA_ROGER_BEEP ALC_EXT_CAPTURE ALC_EXT_DEDICATED ALC_EXT_DEFAULT_FILTER_ORDER ALC_EXT_EFX '+
+  'ALC_EXT_MAC_OSX ALC_EXT_OUTPUT_CAPTURER ALC_EXT_STATIC_BUFFER ALC_EXT_disconnect '+
+  'ALC_EXT_thread_local_context ALC_LOKI_audio_channel ALC_MAC_OSX_CONVERT_DATA_UPON_LOADING ALC_SOFT_HRTF '+
+  'ALC_SOFT_device_clock ALC_SOFT_loopback ALC_SOFT_loopback_bformat ALC_SOFT_output_limiter '+
+  'ALC_SOFT_output_mode ALC_SOFT_pause_device ALC_SOFT_reopen_device ALC_SOFT_system_events '+
+  'ALUT_LOKI_buffer_convert_data AL_AAX_distance_delay_model AL_AAX_frequency_filter AL_AAX_reverb AL_EXT_ALAW '+
+  'AL_EXT_BFORMAT AL_EXT_EXPONENT_DISTANCE AL_EXT_FOLDBACK AL_EXT_IMA4 AL_EXT_LINEAR_DISTANCE AL_EXT_MCFORMATS '+
+  'AL_EXT_MULAW AL_EXT_MULAW_BFORMAT AL_EXT_MULAW_MCFORMATS AL_EXT_OFFSET AL_EXT_SOURCE_NOTIFICATIONS '+
+  'AL_EXT_SOURCE_RADIUS AL_EXT_SOURCE_SPATIALIZATION AL_EXT_STATIC_BUFFER AL_EXT_STEREO_ANGLES AL_EXT_debug '+
+  'AL_EXT_direct_context AL_EXT_double AL_EXT_float32 AL_EXT_loop_points AL_EXT_mp3 '+
+  'AL_EXT_source_distance_model AL_EXT_vorbis AL_LOKI_IMA_ADPCM_format AL_LOKI_WAVE_format '+
+  'AL_LOKI_attenuation_scale AL_LOKI_buffer_data_callback AL_LOKI_play_position AL_LOKI_quadriphonic '+
+  'AL_SOFT_MSADPCM AL_SOFT_UHJ AL_SOFT_UHJ_ex AL_SOFT_bformat_ex AL_SOFT_bformat_hoa AL_SOFT_block_alignment '+
+  'AL_SOFT_buffer_length_query AL_SOFT_buffer_samples AL_SOFT_buffer_sub_data AL_SOFT_callback_buffer '+
+  'AL_SOFT_deferred_updates AL_SOFT_direct_channels AL_SOFT_direct_channels_remix AL_SOFT_effect_target '+
+  'AL_SOFT_events AL_SOFT_gain_clamp_ex AL_SOFT_loop_points AL_SOFT_source_latency AL_SOFT_source_length '+
+  'AL_SOFT_source_resampler AL_SOFT_source_spatialize AL_SOFT_source_start_delay EAX EAX-AC3 EAX-RAM EAX2.0 '+
+  'EAX3.0 EAX3.0EMULATED EAX4.0 EAX4.0EMULATED EAX5.0 '+
+'').split(' ').filter(Boolean).map(n=>[n.toLowerCase(),n]));
+
+// Matched case-insensitively: implementations report AL_EXT_FLOAT32 where the spec file is AL_EXT_float32
+function alSpecUrl(name){
+  const key=name.toLowerCase();
+  // a few extensions are advertised under both AL_ and ALC_; the repo files only one form
+  const alt=key.startsWith('alc_')?'al_'+key.slice(4):key.startsWith('al_')?'alc_'+key.slice(3):null;
+  const file=AL_SPEC_FILES.get(key)||(alt?AL_SPEC_FILES.get(alt):null);
+  if(!file) return AL_SPEC_REPO;
+  const dir=file.startsWith('ALC_')?'ALC Extensions':file.startsWith('ALUT_')?'ALUT Extensions':'AL Extensions';
+  const leaf=file==='EAX4.0EMULATED'?file+' ':file; // the only spec file with a trailing space
+  return AL_SPEC_REPO+'blob/master/'+encodeURIComponent(dir)+'/'+encodeURIComponent(leaf+'.txt');
+}
+
+// al:extensions arrives as the raw space-separated alcGetString/alGetString value
+function alExtensions(item){
+  const v=item&&item.machine&&item.machine.extra&&item.machine.extra['al:extensions'];
+  if(Array.isArray(v)) return v.filter(Boolean);
+  return typeof v==='string'?v.split(/\s+/).filter(Boolean):[];
+}
+
+function alDeviceLabel(item){
+  const ex=item.machine&&item.machine.extra||{};
+  return [ex['al:renderer'],ex['al:device']].filter(Boolean).join(' · ')||
+    (item.machine&&item.machine.device&&item.machine.device.name)||'Unknown AL device';
+}
+
+// /all/gpus strips the audio keys, so machines/devices are the source here
+function alSources(){
+  const seen=new Set(), out=[];
+  for(const list of [DATA.machines,DATA.devices,DATA.gpus])
+    for(const item of list||[]){
+      if(seen.has(item.id)||!alExtensions(item).length) continue;
+      seen.add(item.id); out.push(item);
+    }
+  return out;
+}
+
+const AL_EXT_GROUPS=[
+  ['ALC',n=>n.startsWith('ALC_')],
+  ['ALUT',n=>n.startsWith('ALUT_')],
+  ['AL',n=>n.startsWith('AL_')],
+  ['EAX',n=>n.startsWith('EAX')],
+  ['Other',()=>true],
+];
+
+function renderALExtensions(){
+  const detail=document.getElementById('detail-al-extensions');
+  const sources=alSources();
+  const counts={};
+  for(const item of sources)
+    for(const ext of alExtensions(item)) counts[ext]=(counts[ext]||0)+1;
+  const all=Object.entries(counts);
+  if(!all.length){
+    detail.innerHTML='<div class="detail-empty">No OpenAL extension data</div>';
+    return;
+  }
+  const maxCount=Math.max(...all.map(([,c])=>c));
+  const groups=AL_EXT_GROUPS.map(([label])=>[label,[]]);
+  for(const entry of all)
+    groups[AL_EXT_GROUPS.findIndex(([,match])=>match(entry[0]))][1].push(entry);
+  const deviceOptions='<option value="">All devices</option>'+
+    [...sources].sort((a,b)=>alDeviceLabel(a).localeCompare(alDeviceLabel(b))).map(s=>
+      `<option value="${s.id}">${esc(alDeviceLabel(s))} (#${s.id})</option>`
+    ).join('');
+  let html=`<div id="al-ext-search-wrap">
+    <select id="al-device-filter">${deviceOptions}</select>
+    <input id="al-ext-search" type="search" placeholder="Search OpenAL extensions…" spellcheck="false" autocomplete="off">
+  </div>`;
+  for(const [label,entries] of groups){
+    if(!entries.length) continue;
+    entries.sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+    html+=`<div class="ext-ctx-head" data-ctx="${esc(label)}">${esc(label)} <span style="font-weight:normal;color:#888">(${entries.length} extensions)</span></div>`;
+    html+=entries.map(([name,count])=>{
+      const url=alSpecUrl(name);
+      const known=url!==AL_SPEC_REPO;
+      const title=known?name:name+' — no spec text in the repository';
+      return `<div class="ext-bar-row" data-name="${esc(name)}">
+        <span class="ext-name" title="${esc(title)}"><a href="${esc(url)}" target="_blank" rel="noopener"${known?'':' style="opacity:.65"'}>${esc(name)}</a></span>
+        <div class="ext-bar" style="width:${Math.max(2,Math.round(180*count/maxCount))}px"></div>
+        <span class="ext-count">${count}</span>
+      </div>`;
+    }).join('');
+  }
+  detail.innerHTML=html;
+  document.getElementById('al-ext-search').addEventListener('input',applyALExtensionFilters);
+  document.getElementById('al-device-filter').addEventListener('change',applyALExtensionFilters);
+  bindExtHover('detail-al-extensions','al');
+}
+
+function applyALExtensionFilters(){
+  const q=(document.getElementById('al-ext-search')?.value||'').toLowerCase();
+  const deviceId=document.getElementById('al-device-filter')?.value||'';
+  const src=deviceId?alSources().find(x=>x.id===Number(deviceId)):null;
+  const allowed=src?new Set(alExtensions(src)):null;
+  document.querySelectorAll('#detail-al-extensions .ext-ctx-head').forEach(head=>{
+    let visible=0, el=head.nextElementSibling;
+    while(el&&el.classList.contains('ext-bar-row')){
+      const show=(!q||el.dataset.name.toLowerCase().includes(q))&&(!allowed||allowed.has(el.dataset.name));
+      el.style.display=show?'':'none';
+      if(show) visible++;
+      el=el.nextElementSibling;
+    }
+    head.style.display=visible?'':'none';
+  });
+}
+
 // ── GPU Extensions ────────────────────────────────────────────────────────────
 function extRegistryUrl(name){
   if(name.startsWith('WEBGL_'))
@@ -1075,9 +1212,17 @@ function ensureExtTip(){
   return tip;
 }
 
-// kind: 'gl' (uses gl:extensions, partitioned by context) or 'egl' (egl:extensions)
+// kind: 'gl' (uses gl:extensions, partitioned by context), 'egl' (egl:extensions) or 'al' (al:extensions)
 function extSupporters(name, kind, ctx){
   const out=[];
+  if(kind==='al'){
+    for(const s of alSources()){
+      if(!alExtensions(s).includes(name)) continue;
+      out.push({label:alDeviceLabel(s),id:s.id,api:s.machine?.extra?.['al:api']||''});
+    }
+    out.sort((a,b)=>a.label.localeCompare(b.label));
+    return out;
+  }
   for(const g of DATA.gpus){
     const ex=g.machine?.extra||{};
     const exts=kind==='egl'?ex['egl:extensions']:ex['gl:extensions'];
