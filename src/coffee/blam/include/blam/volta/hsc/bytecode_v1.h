@@ -135,14 +135,14 @@ enum class v1 : libc_types::i16
     vehicle_unload,
     magic_seat_name, /* inferred */
     unit_set_seat,
-    vehicle_driver, /* inferred */
+    _dummy_120,
     vehicle_riders,
-    vehicle_gunner, /* inferred */
-    _dummy_123,
+    vehicle_driver,
+    vehicle_gunner,
     unit_get_health,
     unit_get_shield,
     unit_get_total_grenade_count,
-    _dummy_127,
+    unit_has_weapon,
     unit_has_weapon_readied,
     unit_doesnt_drop_items,
     unit_impervious,
@@ -523,13 +523,16 @@ enum class v1 : libc_types::i16
     oid_watch, /* inferred */
     oid_dump, /* inferred */
     oid_status, /* inferred */
-    milliseconds, /* referenced by the signature table, real opcode unknown */
-    player_action_test_move_relative_all_directions, /* referenced by the signature table, real opcode unknown */
-    player_action_test_zoom, /* referenced by the signature table, real opcode unknown */
-    seconds, /* referenced by the signature table, real opcode unknown */
-    sound_looping_set_alternate_, /* referenced by the signature table, real opcode unknown */
 
     max_opcode = 550,
+
+    /* Named by the signature table, but no map emits them and their real
+     * opcode is unknown; past max_opcode so they cannot claim a real slot. */
+    milliseconds,
+    player_action_test_move_relative_all_directions,
+    player_action_test_zoom,
+    seconds,
+    sound_looping_set_alternate_,
 };
 
 std::string_view to_string(v1 opcode);

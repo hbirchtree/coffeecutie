@@ -284,11 +284,11 @@ enum class v2 : libc_types::i16
     game_difficulty_get_real,
     profile_service_clear_timers, /* carried */
     map_reset, /* carried */
+    _dummy_262,
     map_name, /* carried */
     multiplayer_map_name, /* carried */
     game_difficulty_set, /* carried */
     crash, /* carried */
-    _dummy_266,
     switch_bsp,
     structure_bsp_index,
     version, /* carried */
@@ -562,12 +562,15 @@ enum class v2 : libc_types::i16
     oid_watch, /* carried */
     oid_dump, /* carried */
     oid_status, /* carried */
-    milliseconds, /* displaced by a measured entry, real opcode unknown */
-    player_action_test_move_relative_all_directions, /* displaced by a measured entry, real opcode unknown */
-    player_action_test_zoom, /* displaced by a measured entry, real opcode unknown */
-    seconds, /* displaced by a measured entry, real opcode unknown */
 
     max_opcode = 550,
+
+    /* Named by the signature table, but no map emits them and their real
+     * opcode is unknown; past max_opcode so they cannot claim a real slot. */
+    milliseconds,
+    player_action_test_move_relative_all_directions,
+    player_action_test_zoom,
+    seconds,
 };
 
 std::string_view to_string(v2 opcode);

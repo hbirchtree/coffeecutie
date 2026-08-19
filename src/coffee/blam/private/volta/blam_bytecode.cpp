@@ -6,7 +6,7 @@
 #include <deque>
 #include <string>
 #define MAGIC_ENUM_RANGE_MIN -4
-#define MAGIC_ENUM_RANGE_MAX 550
+#define MAGIC_ENUM_RANGE_MAX 560
 #include <magic_enum/magic_enum.hpp>
 
 #include <blam/volta/blam_scenario.h>

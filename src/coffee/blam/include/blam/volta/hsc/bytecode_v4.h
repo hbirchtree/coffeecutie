@@ -498,18 +498,21 @@ enum class v4 : libc_types::i16
     player0_joystick_set_is_normal,
     _dummy_471,
     display_scenario_help,
-    ai_follow_target_unit, /* referenced by the signature table, real opcode unknown */
-    ai_set_respawn, /* referenced by the signature table, real opcode unknown */
-    milliseconds, /* referenced by the signature table, real opcode unknown */
-    min_, /* referenced by the signature table, real opcode unknown */
-    player_action_test_move_relative_all_directions, /* referenced by the signature table, real opcode unknown */
-    player_action_test_zoom, /* referenced by the signature table, real opcode unknown */
-    player_effect_set_max_rumble, /* referenced by the signature table, real opcode unknown */
-    seconds, /* referenced by the signature table, real opcode unknown */
-    sound_looping_set_alternate_, /* referenced by the signature table, real opcode unknown */
-    thread_sleep, /* referenced by the signature table, real opcode unknown */
 
     max_opcode = 550,
+
+    /* Named by the signature table, but no map emits them and their real
+     * opcode is unknown; past max_opcode so they cannot claim a real slot. */
+    ai_follow_target_unit,
+    ai_set_respawn,
+    milliseconds,
+    min_,
+    player_action_test_move_relative_all_directions,
+    player_action_test_zoom,
+    player_effect_set_max_rumble,
+    seconds,
+    sound_looping_set_alternate_,
+    thread_sleep,
 };
 
 std::string_view to_string(v4 opcode);
