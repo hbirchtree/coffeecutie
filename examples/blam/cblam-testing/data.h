@@ -149,6 +149,7 @@ struct RenderingParameters : compo::SubsystemBase
 
     libc_types::u32 current_bsp_cluster{
         std::numeric_limits<libc_types::u32>::max()};
+    bool interior{false};
 };
 
 struct LoadingStatus : compo::SubsystemBase

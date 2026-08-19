@@ -238,8 +238,12 @@ struct ResourceLoader
                 return;
             }
 
-            for([[maybe_unused]] auto const& light : lights)
+            for(auto& slot : world_data[0].lighting)
+                slot = {};
+            for(auto const& [i, light] : stl_types::const_enumerate(lights))
             {
+                if(i >= std::size(world_data[0].lighting))
+                    break;
                 f32   yaw   = light.radiosity.direction.x;
                 f32   pitch = light.radiosity.direction.y;
                 Vecf3 rotation{
@@ -247,16 +251,15 @@ struct ResourceLoader
                     std::cos(pitch) * std::sin(yaw),
                     std::sin(pitch),
                 };
-                world_data[0].lighting[0].light_direction = Vecf4{
+                /* .w carries the light's interior/exterior flags  (1 = exteriors, 2 = interiors). */
+                world_data[0].lighting[i].light_direction = Vecf4{
                     rotation,
-                    light.radiosity.test_distance,
+                    static_cast<f32>(light.radiosity.flags),
                 };
-                world_data[0].lighting[0].light_color = Vecf4{
+                world_data[0].lighting[i].light_color = Vecf4{
                     light.radiosity.color,
                     light.radiosity.power,
                 };
-                // TODO: Find out how objects are identified as being
-                // interior or exterior in the world
             }
 
             world_data[0].fog.indoor_color =

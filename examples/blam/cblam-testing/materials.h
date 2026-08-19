@@ -16,6 +16,8 @@ using libc_types::u32;
 using typing::vector_types::Vecf2;
 using typing::vector_types::Vecf4;
 
+constexpr u32 flag_interior = 0x10000;
+
 template<typename... Values>
 Vecf4 partitioned_vec4(Values... values)
 {
@@ -225,12 +227,14 @@ struct alignas(16) fog_properties
     Vecf4 distances; /* xy = indoor range, zw = outdoor range */
 };
 
+constexpr size_t max_world_lights = 8;
+
 struct alignas(16) world_data
 {
-    light_properties lighting[2];
+    light_properties lighting[max_world_lights];
     fog_properties   fog;
 };
 
-static_assert(sizeof(world_data) == 144);
+static_assert(sizeof(world_data) == 336);
 
 } // namespace materials

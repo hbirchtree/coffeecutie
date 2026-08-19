@@ -51,6 +51,7 @@ struct Visibility
     using value_type = Visibility;
     using type = compo::alloc::BufferedContainer<value_type, 2>;
     bool visible{true};
+    bool interior{false};
 };
 
 /*! Per-frame draw bookkeeping, kept apart from the geometry it draws */

@@ -289,6 +289,9 @@ void create_resources(compo::EntityContainer& e)
                      set_val("only_multipurpose", rp.only_multipurpose);
                      set_val("only_multipurpose2", rp.only_multipurpose2);
                      set_val("only_diffuse", rp.only_diffuse);
+                     set_val("only_detail", rp.only_detail);
+                     set_val("only_micro", rp.only_micro);
+                     set_val("only_aux_channels", rp.only_aux_channels);
                      set_val("render_ui", rp.render_ui);
                      set_val("debug_clear", rp.debug_clear);
                      set_val("occluder_update", rp.occluder_update);

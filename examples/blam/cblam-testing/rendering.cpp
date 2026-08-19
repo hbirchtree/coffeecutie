@@ -636,7 +636,10 @@ struct DrawListBuilder
                 sm_draw.current_pass,
                 cache_item,
                 model_context(model.origin_object),
-                instance_id);
+                instance_id,
+                p.template ref<Proxy>(smodel.parent)
+                    .template get<Visibility>()
+                    .interior);
         }
 
     }
@@ -748,12 +751,15 @@ struct DrawListBuilder
         Passes                                                     which,
         ModelItem<Version> const&                                  model,
         std::optional<ShaderCache<halo_version>::material_context> context,
-        size_t                                                     i = 0)
+        size_t                                                     i = 0,
+        bool                                                       interior = false)
     {
         Pass&                   pass     = model_build()[which];
         materials::shader_data& material = pass.material_of(i);
         shader_cache.populate_material(
             material, sub.shader, model.header->uvscale, context);
+        if(interior)
+            material.material.flags |= materials::flag_interior;
         if(material.material.material == materials::id::sotr &&
            i < pass.transparent_mapping.size())
             shader_cache.populate_transparent_material(
@@ -1050,7 +1056,8 @@ struct MeshRenderer
                               : 0) |
                          (m_render_params.only_detail ? 0x1000 : 0) |
                          (m_render_params.only_micro ? 0x2000 : 0) |
-                         (m_render_params.only_aux_channels ? 0x4000 : 0);
+                         (m_render_params.only_aux_channels ? 0x4000 : 0) |
+                         (m_render_params.interior ? 0x8000 : 0);
         return gfx::uniform_pair{
             {"render_flags"sv, 31},
             semantic::SpanOne<const int>(m_render_flags),

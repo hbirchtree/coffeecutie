@@ -1243,7 +1243,7 @@ void ShaderCache<V>::populate_material(
         for(auto i : range<>(maps.size()))
         {
             bitm_cache.assign_atlas_data(mat.maps[i], shader.sotr.maps[i]);
-            mat.maps[i].uv_scale = maps[i].map.uv_scale;
+            mat.maps[i].uv_scale = maps[i].map.uv_scale * base_map_scale;
             mat.maps[i].bias     = maps[i].map.mip_bias;
         }
 

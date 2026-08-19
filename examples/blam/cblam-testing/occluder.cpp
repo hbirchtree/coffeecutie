@@ -293,6 +293,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 current_bsp
                     ? current_bsp->clusters.at(current_cluster).cluster->sky
                     : -1;
+            rendering->interior = sky_idx < 0;
         }
 
         BSPItem const* cull_bsp = pvs_bsp;
@@ -389,7 +390,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
          * origin. */
         constexpr f32 model_radius   = 5.f;
         const auto    classify_model = [&](BSPItem const* bsp,
-                                        Model const&   model) -> model_vis {
+                                        Model const&   model,
+                                        bool&          interior) -> model_vis {
             auto pos = model.position;
             /* Cheapest test first: outside the view frustum hides the model
              * regardless of cluster, and skips the BSP-tree walks below. */
@@ -417,6 +419,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                     cidx = mc->first;
             if(cidx)
             {
+                interior = bsp->clusters.at(*cidx).cluster->sky < 0;
                 if(!cluster_ok(*cidx))
                     return model_vis::pvs_culled;
                 return in_draw_distance(model) ? model_vis::visible
@@ -447,7 +450,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             model_total++;
             if(cull_bsp)
             {
-                switch(classify_model(cull_bsp, model))
+                switch(classify_model(cull_bsp, model, vis.interior))
                 {
                 case model_vis::visible:
                     vis.visible = true;
@@ -484,8 +487,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             Model const& model = ref.template get<Model>();
             Visibility&  vis   = ref.template get<Visibility>();
             if(cull_bsp)
-                vis.visible =
-                    classify_model(cull_bsp, model) == model_vis::visible;
+                vis.visible = classify_model(cull_bsp, model, vis.interior) ==
+                              model_vis::visible;
             else
                 vis.visible = in_draw_distance(model);
         }

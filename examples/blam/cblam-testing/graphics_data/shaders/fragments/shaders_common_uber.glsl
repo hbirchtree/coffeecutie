@@ -53,6 +53,9 @@ const int RENDER_FLAG_CUBE_YAW           = 0x800;
 const int RENDER_FLAG_ONLY_DETAIL        = 0x1000;
 const int RENDER_FLAG_ONLY_MICRO         = 0x2000;
 const int RENDER_FLAG_ONLY_AUX           = 0x4000;
+const int RENDER_FLAG_INTERIOR           = 0x8000;
+
+const uint MATERIAL_FLAG_INTERIOR        = 0x10000u;
 
 struct LightProperties
 {
@@ -69,9 +72,11 @@ struct FogProperties
     vec4 distances;
 };
 
+const int MAX_WORLD_LIGHTS = 8;
+
 layout(binding = 2, std140) uniform WorldProperties
 {
-    LightProperties lighting[2];
+    LightProperties lighting[MAX_WORLD_LIGHTS];
     FogProperties fog;
 } world;
 
@@ -87,12 +92,23 @@ vec3 view_direction()
 {
     return normalize(transpose(tbn_matrix()) * (camera_position - frag.position));
 }
+vec3 world_key_light()
+{
+    uint want = (render_flags & RENDER_FLAG_INTERIOR) != 0 ? 2u : 1u;
+    for(int li = 0; li < MAX_WORLD_LIGHTS; li++)
+    {
+        vec4 dir = world.lighting[li].light_direction;
+        if(dot(dir.xyz, dir.xyz) < 1e-6)
+            continue;
+        if((uint(dir.w) & want) != 0u)
+            return dir.xyz;
+    }
+    return world.lighting[0].light_direction.xyz;
+}
+
 vec3 light_direction()
 {
-    vec3 direction = world.lighting[INTERIOR_LIGHTING].light_direction.xyz;
-    return normalize(
-        transpose(tbn_matrix()) *
-        direction);
+    return normalize(transpose(tbn_matrix()) * world_key_light());
 }
 
 vec4 sample_map(
@@ -293,6 +309,8 @@ vec4 shader_environment(in Material mat)
     const uint secondary_map_id = 3u;
     const uint bump_map_id      = 4u;
 
+    const uint SENV_FLAG_ALPHA_TESTED = 0x1u;
+
     uint flags = uint(mat.material.flags & 0x7);
     uint type = uint((mat.material.flags >> 4) & 0x3);
 
@@ -309,6 +327,16 @@ vec4 shader_environment(in Material mat)
     vec4 micro = has_micro == 1 ? get_color(micro_map_id, mat) : vec4(1);
     vec4 primary = get_color(primary_map_id, mat);
     vec4 secondary = get_color(secondary_map_id, mat);
+
+    if((flags & SENV_FLAG_ALPHA_TESTED) != 0u && has_bump)
+    {
+        vec4  bump_texel = get_color(bump_map_id, mat);
+        bool  is_p8      = (uint(mat.maps[bump_map_id].layer) >> 24) == TEX_P8;
+        float cutout     = is_p8 ? 1.0 - bump_texel.r : bump_texel.a;
+        if(cutout < 0.05)
+            discard;
+    }
+
     if((render_flags & RENDER_FLAG_ONLY_DIFFUSE) != 0)
         return vec4(base.rgb, 1);
     if((render_flags & RENDER_FLAG_ONLY_MULTIPURPOSE) != 0)
@@ -380,7 +408,9 @@ vec4 shader_environment(in Material mat)
     }
 #endif
 #if USE_NORMALMAP == 1
-    float bump_factor = clamp((normal.a + 1.0) / (light_direction().z + 1.0), 0.1, 2.0);
+    float light_z     = light_direction().z;
+    float bump_factor = clamp(
+        1.0 + (normal.a - light_z) / max(light_z + 1.0, 0.5), 0.1, 2.0);
     if((render_flags & RENDER_FLAG_ONLY_NORMALS) != 0)
         return vec4(normalize(frag.normal), 1);
     if((render_flags & RENDER_FLAG_ONLY_NORMALMAP) != 0)
@@ -873,10 +903,28 @@ vec4 shader_model(in Material mat)
 
     // Diffuse lighting via geometry normal (soso has no bump map texture).
     // frag.normal is world-space and interpolated per-vertex (Gouraud approximation).
-    vec3 world_light = normalize(world.lighting[INTERIOR_LIGHTING].light_direction.xyz);
-    float NdotL = max(0.1, dot(frag.normal, world_light));
-    if(illum_factor > NdotL)
-        NdotL = illum_factor;
+    /* Skybox lighting: every light whose flags cover where the camera stands
+     * (.w holds them: 1 = exteriors, 2 = interiors), over the matching
+     * ambient. Without the flag test a level's sun lights its corridors as
+     * brightly as its hillsides. */
+    bool interior   = (uint(mat.material.flags) & MATERIAL_FLAG_INTERIOR) != 0u;
+    uint light_mask = interior ? 2u : 1u;
+    vec3 lit = interior
+        ? world.fog.indoor_ambient.rgb * world.fog.indoor_ambient.a
+        : world.fog.outdoor_ambient.rgb * world.fog.outdoor_ambient.a;
+    for(int li = 0; li < MAX_WORLD_LIGHTS; li++)
+    {
+        vec4 light_dir = world.lighting[li].light_direction;
+        if(dot(light_dir.xyz, light_dir.xyz) < 1e-6)
+            continue;
+        if((uint(light_dir.w) & light_mask) == 0u)
+            continue;
+        lit += world.lighting[li].light_color.rgb
+             * world.lighting[li].light_color.a
+             * max(0.0, dot(frag.normal, normalize(light_dir.xyz)));
+    }
+    lit = clamp(lit, 0.1, 1.0);
+
     if((render_flags & RENDER_FLAG_ONLY_NORMALS) != 0)
         return vec4(normalize(frag.normal), 1);
 
@@ -900,7 +948,8 @@ vec4 shader_model(in Material mat)
     color.rgb = color.rgb * mix(
         vec3(1), primary_change_color.rgb,
         color_change * primary_change_color.a);
-    color.rgb = clamp(NdotL * color.rgb, 0, 1);
+    vec3 albedo = color.rgb;
+    color.rgb   = clamp(lit * color.rgb + albedo * illum_factor, 0.0, 1.0);
 
     /* The detail map combines by the shader's own function, the default being
      * the same 2x modulate the environment shader uses; plain multiplication
@@ -1113,10 +1162,15 @@ void main()
         return;
     }
 
-    vec4 fog_color = vec4(world.fog.outdoor_color.xyz, 1);
+    bool  fog_interior = (render_flags & RENDER_FLAG_INTERIOR) != 0;
+    vec4  fog_props    = fog_interior
+        ? world.fog.indoor_color : world.fog.outdoor_color;
+    vec2  fog_range    = fog_interior
+        ? world.fog.distances.xy : world.fog.distances.zw;
+    vec4 fog_color = vec4(fog_props.xyz, 1);
     float fog_distance = length(frag.position - camera_position);
-    fog_distance = (fog_distance - world.fog.distances.z) / world.fog.distances.w;
-    fog_distance = clamp(exp(-fog_distance * world.fog.outdoor_color.w), 0, 1);
+    fog_distance = (fog_distance - fog_range.x) / max(fog_range.y, 1.0);
+    fog_distance = clamp(exp(-fog_distance * fog_props.w), 0, 1);
     final_color = mix(
         color,
         fog_color,
