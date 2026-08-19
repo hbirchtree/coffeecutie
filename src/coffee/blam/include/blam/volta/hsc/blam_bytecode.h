@@ -524,10 +524,10 @@ struct bytecode_pointer
         static result_t sleep_timeout(u32 time)
         {
             return {
-                end_(),
-                terminator,
-                eval::sleeping,
-                {
+                .result    = end_(),
+                .next      = terminator,
+                .state     = eval::sleeping,
+                .condition = {
                     sleep_condition::timer,
                     terminator,
                     std::chrono::milliseconds(time * 30),
@@ -539,10 +539,10 @@ struct bytecode_pointer
         static result_t sleep_timeout(std::chrono::milliseconds time)
         {
             return {
-                end_(),
-                terminator,
-                eval::sleeping,
-                {
+                .result = end_(),
+                .next   = terminator,
+                .state  = eval::sleeping,
+                .condition = {
                     sleep_condition::timer,
                     terminator,
                     time,
@@ -554,14 +554,17 @@ struct bytecode_pointer
         static result_t sleep_condition(u16 expr, u16 tick = 1, u32 timeout = 0)
         {
             return {
-                end_(),
-                terminator,
-                eval::sleeping,
-                {timeout > 0 ? sleep_condition::expression_timer
-                             : sleep_condition::expression,
-                 expr,
-                 std::chrono::seconds(timeout),
-                 tick}};
+                .result    = end_(),
+                .next      = terminator,
+                .state     = eval::sleeping,
+                .condition = {
+                    .condition   = timeout > 0 ? sleep_condition::expression_timer
+                                               : sleep_condition::expression,
+                    .expression = expr,
+                    .time       = std::chrono::seconds(timeout),
+                    .tickrate   = tick,
+                },
+            };
         }
 
         static result_t branch_to(u16 addr)

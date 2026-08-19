@@ -105,6 +105,10 @@ std::string op_to_string(opcode_layout<BC> const& op)
             return fmt::format("global:{}", op.data_ptr);
         case expression_t::group:
             return fmt::format("opcode:{}", bc::to_string(op.opcode));
+        case expression_t::param_ref:
+            return fmt::format("param:{}", op.data_ptr);
+        case expression_t::script_ref:
+            return fmt::format("script:{}", static_cast<u16>(op.opcode));
         default:
             switch(op.param_type)
             {
@@ -235,7 +239,9 @@ std::string script_to_string(
     if(!name_op)
         return "<unknown>";
     auto name = name_at(strings, name_op->to_ptr());
-    auto out  = fmt::format("({}", name);
+    auto out  = op->exp_type == expression_t::script_ref
+                   ? fmt::format("(script:{}", name)
+                   : fmt::format("({}", name);
     /* Statement sequences read better one per line */
     std::string separator =
         name == "begin"sv || name == "begin_random"sv || name == "cond"sv
