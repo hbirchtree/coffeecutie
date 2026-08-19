@@ -7,6 +7,7 @@
 #include "map_marker.h"
 #include "peripherals/stl/math.h"
 #include "selected_version.h"
+#include "types.h"
 
 #include <coffee/core/debug/formatting.h>
 #include <magic_enum/magic_enum.hpp>
@@ -74,8 +75,10 @@ struct PhysicsSystem
             btQuaternion(btVector3(1, 0, 0), stl_types::math::pi / 2));
     }
 
-    void start_restricted(Proxy& p, compo::time_point const&)
+    void start_restricted(Proxy& p, compo::time_point const& t)
     {
+        using namespace std::chrono_literals;
+
         BSPCache<V> const*   bsp_cache;
         LoadingStatus const* loading;
         p.subsystem(bsp_cache);
@@ -100,7 +103,11 @@ struct PhysicsSystem
         if(!m_world_body && m_bodies.empty() && !m_probe_body)
             return;
 
+        if(m_next_process_time > t)
+            return;
+
         m_world->stepSimulation(1.f / 60.f, 4);
+        m_next_process_time = t + 16ms;
 
         /* Sensor overlaps (trigger volumes): narrowphase still generates
          * contact manifolds for CF_NO_CONTACT_RESPONSE bodies, the solver
@@ -830,6 +837,7 @@ struct PhysicsSystem
     i16  m_built_section{-2};
     u32  m_frame{0};
     bool m_marker_spawned{false};
+    compo::time_point m_next_process_time{};
 };
 
 void alloc_physics(compo::EntityContainer& container)

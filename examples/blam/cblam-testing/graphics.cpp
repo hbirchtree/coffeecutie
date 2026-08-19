@@ -578,6 +578,7 @@ i32 blam_main()
                         cam.camera_.rotate(
                             cam.camera, input.look_delta.x, input.look_delta.y);
                         input.look_delta = {};
+                        net.changes.viewport = true;
                     }
 
                     /* In physics mode the body owns the position: let
@@ -596,29 +597,26 @@ i32 blam_main()
                             input.accel,
                             t);
 
-                    if(!cam.mode.physics && input.movement != Vecf3{})
+                    if(!cam.mode.physics)
                     {
-                        cam.camera_.move(
-                            cam.camera,
-                            input.movement.x,
-                            input.movement.y,
-                            input.movement.z,
-                            input.accel);
-                        net.changes.transform = net.changes.viewport = true;
-                    }
-
-                    if(cam.mode.physics)
+                        // Check that there's input
+                        // Avoid needless movement
+                        if(input.movement != Vecf3{})
+                        {
+                            cam.camera_.move(
+                                cam.camera,
+                                input.movement.x,
+                                input.movement.y,
+                                input.movement.z,
+                                input.accel);
+                            net.changes.transform = net.changes.viewport = true;
+                        }
+                    } else
                     {
                         cam.camera.position = freecam_pos;
+                        // TODO: Check for changes in position on physics movement
                         net.changes.transform = net.changes.viewport = true;
-                    }
 
-                    /* Physics-mode movement: sample held keys and stick
-                     * state every frame instead of reacting to input
-                     * events, which stutter at the OS key-repeat rate.
-                     * The physics system only ever sees a Velocity event. */
-                    if(cam.mode.physics)
-                    {
                         /* Project onto the ground plane so looking down
                          * doesn't drive the capsule into the floor */
                         auto planar = [](Vecf3 v) {
@@ -646,8 +644,8 @@ i32 blam_main()
                         if(f32 len2 = glm::dot(dir, dir); len2 > 1.f)
                             dir /= std::sqrt(len2);
 
-                        constexpr f32 move_speed = 2.f;
-                        constexpr f32 jump_speed = 3.5f;
+                        const f32 move_speed = 14.f * input.accel;
+                        const f32 jump_speed = 4.f;
 
                         Physics::Event    ev{Physics::Event::Velocity};
                         Physics::Velocity velocity{

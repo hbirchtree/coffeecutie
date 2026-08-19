@@ -204,7 +204,7 @@ struct StandardCamera
         if(has_key(reg, CK_LCtrl))
             acceleration = opts.accel.fast;
 
-        accel = acceleration * stl_types::chrono::to_f32(t);
+        accel = std::max(accel, acceleration * stl_types::chrono::to_f32(t));
 
         for(auto const& [key, mod] : reg)
         {
