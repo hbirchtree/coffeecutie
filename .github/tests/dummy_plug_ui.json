@@ -13,8 +13,10 @@
         {"time": 4000, "type": "camera", "position" :[0.9146866, 1.5528936, 0.21891445], "rotation":[0.31785202, 0.0068878904, -0.9481146, -0.0011823153]},
         {"time": 4500, "type": "screenshot", "name": "ui_bottom"},
         {"time": 5000, "type": "camera", "position" :[0.88378733, 0.6210254, 0.8047082], "rotation":[0.14286536, 0.09457026, -0.9659534, 0.19385561]},
-        {"time": 5500, "type": "screenshot", "name": "ui_planet"}
+        {"time": 5500, "type": "screenshot", "name": "ui_planet"},
+        {"time": 6000, "type": "camera", "position" :[14.397369, -6.4095616, -2.240288], "rotation":[0.078764886, -0.017613031, -0.972714, 0.21751648]},
+        {"time": 6500, "type": "screenshot", "name": "ui_near_inside"}
     ],
-    "frame_delta": 33.333,
+    "frame_delta": 200.0,
     "end_time": 10000
 }
