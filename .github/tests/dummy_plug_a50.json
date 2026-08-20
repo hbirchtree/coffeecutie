@@ -1,0 +1,24 @@
+{
+    "comment": "Enables the Halo shell UI (UIRenderer pause menu) and holds a bloodgulch view so the UI overlay is captured. The 'render_param' custom event drives RenderingParameters::render_ui, which on desktop is toggled via the ImGui checkbox.",
+    "graphics": {
+        "window": {
+            "width": 1280,
+            "height": 720
+        }
+    },
+    "events": [
+        {"time": 1200, "type": "render_param", "render_ui": true},
+        {"time": 0, "type": "camera", "position" :[2.653434, -62.5422, -17.24336], "rotation":[0.6840083, -0.0108493315, -0.72930187, 0.011568295]},
+        {"time": 3500, "type": "screenshot", "name": "a50_control_room"},
+        {"time": 0, "type": "camera", "position" :[-5.031458, -114.983345, -19.238829], "rotation":[-0.8684204, 0.0076206117, -0.49575108, 0.004349668]},
+        {"time": 3500, "type": "screenshot", "name": "a50_prison"},
+        {"time": 0, "type": "camera", "position" :[31.10006, -104.633, -17.584549], "rotation":[-0.9982443, -0.05921596, 0.0013460246, 7.928862e-05]},
+        {"time": 3500, "type": "screenshot", "name": "a50_prison_overlook"},
+        {"time": 0, "type": "camera", "position" :[8.927042, -12.275333, -22.552694], "rotation":[-0.34651825, 0.0023793012, 0.9380182, -0.0064421645]},
+        {"time": 3500, "type": "screenshot", "name": "a50_wraith_hangar"},
+        {"time": 0, "type": "camera", "position" :[29.784494, 32.728386, 102.71725], "rotation":[0.84183884, 0.02527881, -0.5388939, -0.016181858]},
+        {"time": 3500, "type": "screenshot", "name": "a50_transporter"}
+    ],
+    "frame_delta": 200.0,
+    "end_time": 10000
+}

@@ -1,0 +1,43 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1440,
+            "height": 540,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "comment": "For beavercreek.map, screenshots water, powerups and weapons",
+    "events": [
+        {"time":  500, "type": "camera", "fov": 70},
+        {"time":  500, "type": "render_param", "exposure": 1.0, "comment": "the Xbox has no tonemap, so compare at 1:1"},
+        {"time": 1000, "type": "camera", "position" :[12.615044, 7.0586457, 0.048143473], "rotation":[0.41070595, 0.108067185, 0.875539, 0.230377]},
+        {"time": 1500, "type":"screenshot", "name": "beavercreek_water_stream"},
+        {"time": 2000, "type": "camera", "position" :[13.698999, 12.722153, -0.10411126], "rotation":[0.6935703, 0.21510106, 0.65667, 0.20365733]},
+        {"time": 2500, "type":"screenshot", "name": "beavercreek_water_stream_close"},
+        {"time": 3000, "type": "camera", "position" :[14.181329, 6.886427, -0.2893798], "rotation":[-0.38033274, -0.014784954, 0.92403364, 0.035919152]},
+        {"time": 3500, "type":"screenshot", "name": "beavercreek_invis"},
+        {"time": 4000, "type": "camera", "position" :[33.504074, 13.683393, 0.1419506], "rotation":[0.065579, 0.014425025, -0.97446257, -0.21427593]},
+        {"time": 4500, "type":"screenshot", "name": "beavercreek_shield_up"},
+        {"time": 5000, "type": "camera", "position" :[22.403603, 18.01221, -0.22593608], "rotation":[-0.6916217, 0.01641859, -0.7218701, 0.017130246]},
+        {"time": 5500, "type":"screenshot", "name": "beavercreek_plasma_rifle"},
+        {"time": 6000, "type": "camera", "position" :[23.28291, 10.571248, -1.2910469], "rotation":[-0.94090486, -0.24757452, -0.22348686, -0.05880922]},
+        {"time": 6500, "type":"screenshot", "name": "beavercreek_plasma_grenade"},
+        {}
+    ],
+    "frame_delta": 200.0,
+    "end_time": 10000
+}

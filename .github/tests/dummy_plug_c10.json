@@ -43,7 +43,9 @@
         {"time": 21000, "type": "camera", "position" :[-18.393904, -34.95075, 0.4848771], "rotation":[-0.5467461, -0.021881608, 0.83634305, 0.03347181]},
         {"time": 22000, "type":"screenshot","name":"c10_door","comment":"the animation plays wrong"},
         {"time": 23000, "type": "camera", "position" :[-143.84383, -38.594425, 39.0582], "rotation":[-0.6634253, -0.059870187, 0.7428248, 0.06703519]},
-        {"time": 24000, "type":"screenshot","name":"c10_mossy_rock","comment":"this rock would become glossy when soso math is wrong, not blending into surroundings"}
+        {"time": 24000, "type":"screenshot","name":"c10_mossy_rock","comment":"this rock would become glossy when soso math is wrong, not blending into surroundings"},
+        {"time": 25000, "type": "camera", "position" :[-137.01978, -26.300348, 39.138847], "rotation":[0.9252321, 0.2715875, 0.2542009, 0.07461668]},
+        {"time": 26000, "type":"screenshot","name":"c10_swamp_water","comment":"the animation plays wrong"}
     ],
     "frame_delta": 500.0,
     "end_time": 30000
