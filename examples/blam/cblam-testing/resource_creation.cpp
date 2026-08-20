@@ -1188,7 +1188,8 @@ void create_camera(
     {
         auto [cam, info]  = entity.components();
         cam.controller.opts.sens.move = {.1f, .1f};
-        cam.camera_opts.accel.alt    = 50.f;
+        cam.controller.opts.curve     = 200.f;
+        cam.camera_opts.accel.alt     = 50.f;
 
         if(spawns.empty())
             continue;

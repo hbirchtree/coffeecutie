@@ -301,7 +301,7 @@ struct RS2CacheLoader
         std::shared_ptr<RegionData>            data;
         Range                                  vrange{}, erange{};
         std::vector<gfx::draw_command::data_t> draws;
-        std::vector<i32> draw_textures; // per draw: texture id, -1 = flat
+        std::vector<i32> draw_textures{}; // per draw: texture id, -1 = flat
     };
 
     static u64 region_key(i32 rx, i32 ry)
@@ -699,7 +699,7 @@ struct RS2CacheLoader
 
     bool main_thread_only() const override { return true; }
 
-    virtual void start_restricted(Proxy& p, time_point const& t) final
+    virtual void start_restricted(Proxy& p, time_point const&) final
     {
         PlayerCamera* camera{};
         for(auto e : p.select<PlayerCamera, PlayerInfo>())

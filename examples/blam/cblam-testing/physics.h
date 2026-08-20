@@ -98,7 +98,7 @@ struct BodyCreationShape
     struct
     {
         bool rotation{false};
-    } lock;
+    } lock{};
 };
 
 struct BodyRemoval

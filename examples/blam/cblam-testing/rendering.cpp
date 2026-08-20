@@ -1644,9 +1644,9 @@ struct LegacyMeshRenderer
                 continue;
             BitmapItem const& lightm =
                 bitm_cache.find(bsp_ref.lightmap)->second;
-            blam::shader::shader_env const* senv =
-                reinterpret_cast<blam::shader::shader_env const*>(
-                    shader.header);
+            // blam::shader::shader_env const* senv =
+            //     reinterpret_cast<blam::shader::shader_env const*>(
+            //         shader.header);
             LegacyBatch& batch = batches[bsp_ref.lightmap.i];
             auto         light_bucket =
                 bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
@@ -2843,7 +2843,6 @@ void alloc_renderer(EntityContainer& container)
 {
     ProfContext _;
     auto&       api = container.subsystem_cast<gfx::system>();
-    auto& game_bus  = container.subsystem_cast<GameEventBus>();
 
     container.register_subsystem_inplace<ScreenClear>();
     if(api.api_version() == std::make_tuple<u32, u32>(2, 0))

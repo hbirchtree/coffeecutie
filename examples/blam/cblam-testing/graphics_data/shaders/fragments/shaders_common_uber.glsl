@@ -250,7 +250,6 @@ vec4 get_cube_color(in vec3 tex_coord, in Material mat)
 }
 #endif
 
-#if USE_NORMALMAP == 1
 const float P8_BUMP_GAIN = 1.0;
 
 vec4 get_bump(in uint map_id, in vec2 offset, in Material mat)
@@ -276,7 +275,6 @@ vec4 get_bump(in uint map_id, in vec2 offset, in Material mat)
         normal = normalize(get_color_with_offset(map_id, offset, mat).rgb * 2.0 - 1.0);
     return vec4(normal, dot(normal, light_direction()));
 }
-#endif
 
 const uint base_map_id      = 0u;
 
@@ -851,7 +849,7 @@ vec4 shader_model(in Material mat)
     // Some models have correct specular in R/B, others in A
     // Master Chief has A as specular
     // Old-style marines have specular in R or B
-    float specular_factor = multi.b;
+    float specular_factor = multi.a;
     float illum_factor = multi.g;
     float color_change = multi.a;
 #endif
@@ -1050,6 +1048,21 @@ vec4 shader_plasma(in Material mat)
     return vec4(color, plasma);
 }
 
+vec3 ripple_normal(in uint map_id, in vec2 offset, in Material mat)
+{
+    vec2 texel = exp2(mat.maps[map_id].bias)
+               / vec2(textureSize(source_r8, 0).xy);
+    vec2 step  = texel / max(
+        mat.maps[map_id].uv_scale * mat.maps[map_id].atlas_scale, vec2(1e-6));
+    step = max(step, abs(dFdx(frag.tex)) + abs(dFdy(frag.tex)));
+
+    float here = get_color_with_offset(map_id, offset, mat).r;
+    float du   = get_color_with_offset(map_id, offset + vec2(step.x, 0.0), mat).r;
+    float dv   = get_color_with_offset(map_id, offset + vec2(0.0, step.y), mat).r;
+
+    return normalize(vec3(here - du, here - dv, 1.0));
+}
+
 vec4 shader_water(in Material mat)
 {
     const int ALPHA_MODULATES_REFLECT    = 0x1;
@@ -1061,33 +1074,45 @@ vec4 shader_water(in Material mat)
     vec4 perpendicular = mat.material.input3;
     vec4 base          = get_color(base_map_id, mat);
 
-    float angle_rad = mat.material.input1.x;
-    float velocity  = mat.material.input1.y;
-
-    // Four ripple layers at evenly-spaced angles, varying speeds.
+    // Up to four ripple layers, each with the angle, rate, offset and weight
+    // its entry in the shader's ripple block states.
     // get_bump returns tangent-space normals decoded to [-1, 1].
-#if USE_NORMALMAP == 0
-    vec3 bump_ts = vec3(0.0, 0.0, 1.0); /* flat water, no bump map bound */
-#else
-    vec3 n1 = get_bump(bump_map_id, vec2(cos(angle_rad),         sin(angle_rad))         * velocity        * time, mat).xyz;
-    vec3 n2 = get_bump(bump_map_id, vec2(cos(angle_rad + 1.047), sin(angle_rad + 1.047)) * velocity * 1.3  * time, mat).xyz;
-    vec3 n3 = get_bump(bump_map_id, vec2(cos(angle_rad + 2.094), sin(angle_rad + 2.094)) * velocity * 0.8  * time, mat).xyz;
-    vec3 n4 = get_bump(bump_map_id, vec2(cos(angle_rad + 3.14),  sin(angle_rad + 3.14))  * velocity * 0.6  * time, mat).xyz;
-    vec3 bump_ts = normalize(n1 + n2 + n3 + n4);
-#endif
+    vec4 angles        = mat.material.input4;
+    vec4 velocities    = mat.material.input5;
+    vec4 contributions = mat.material.input6;
+    vec2 offsets[4]    = vec2[4](
+        mat.material.input7.xy, mat.material.input7.zw,
+        mat.material.input8.xy, mat.material.input8.zw);
+
+    vec3  bump_sum = vec3(0.0);
+    float weight   = 0.0;
+    for(int i = 0; i < 4; i++)
+    {
+        /* Every layer is sampled whether it contributes or not: skipping one
+         * would make the texture gradient undefined for the whole quad. */
+        vec2 dir = vec2(cos(angles[i]), sin(angles[i]));
+        bump_sum += contributions[i] * ripple_normal(
+            bump_map_id, offsets[i] + dir * velocities[i] * time, mat);
+        weight   += contributions[i];
+    }
+    vec3 bump_ts = weight > 0.0 ? normalize(bump_sum) : vec3(0.0, 0.0, 1.0);
 
     // World-space quantities for reflection and Fresnel.
     // tbn_matrix() columns are T/B/N so it transforms tangent -> world.
     vec3 view_world   = normalize(camera_position - frag.position);
     vec3 world_normal = normalize(tbn_matrix() * bump_ts);
 
+    /* Linear in the view angle, as every other class here blends its
+     * perpendicular and parallel pair; an exponent here pins all but the most
+     * grazing water to the perpendicular brightness and it turns see-through. */
     float NdotV   = clamp(dot(world_normal, view_world), 0.0, 1.0);
-    float fresnel = pow(1.0 - NdotV, 4.0);
+    float fresnel = 1.0 - NdotV;
 
-    // Fresnel blend: perpendicular at normal incidence, parallel at grazing.
-    // brightness (alpha channel) is the view-angle opacity, not a color scale.
-    vec3  reflect_color = mix(perpendicular.rgb, parallel.rgb, fresnel);
-    float out_alpha     = mix(perpendicular.a,   parallel.a,   fresnel);
+    /* Perpendicular at grazing, parallel head-on, as shader_environment and
+     * the other classes here read the pair. brightness (alpha channel) is the
+     * view-angle reflection strength, not a color scale. */
+    vec3  reflect_color = mix(parallel.rgb, perpendicular.rgb, fresnel);
+    float out_alpha     = mix(parallel.a,   perpendicular.a,   fresnel);
 
 #if USE_REFLECTIONS == 1
     vec3 reflect_dir  = reflect(-view_world, world_normal);
@@ -1095,7 +1120,7 @@ vec4 shader_water(in Material mat)
 #endif
 
     if((flags & COLOR_MODULATES_BACKGROUND) != 0)
-        reflect_color *= base.rgb;
+        reflect_color += base.rgb;
     if((flags & ALPHA_MODULATES_REFLECT) != 0)
         out_alpha *= base.a;
 

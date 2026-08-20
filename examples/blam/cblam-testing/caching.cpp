@@ -1137,24 +1137,45 @@ void ShaderCache<V>::populate_material(
 
         mat.material.material = materials::id::swat;
         mat.material.flags    = static_cast<u32>(info->flags);
-        /* anim_velocity is in UV tiles/sec at 1x tiling. The bump map's
-         * uvscale (= base_map_scale * ripple.scale) multiplies offsets,
-         * so divide by ripple.scale to keep visual scroll rate independent
-         * of texture tiling. Apply a floor so slow-velocity maps (e.g. c10)
-         * still show perceptible animation; effective_rate = max(vel, floor).
-         */
-        constexpr f32 min_tiles_per_sec = 0.03f;
-        f32           effective_vel =
-            std::max(info->ripple.anim_velocity, min_tiles_per_sec);
-        f32 norm_velocity = info->ripple.scale > 0.f
-                                ? effective_vel / info->ripple.scale
-                                : effective_vel;
-        mat.material.inputs1 =
-            Vecf2{glm::radians(info->ripple.anim_angle), norm_velocity};
         mat.material.inputs[0] =
             Vecf4(info->parallel.tint_color, info->parallel.brightness);
         mat.material.inputs[1] = Vecf4(
             info->perpendicular.tint_color, info->perpendicular.brightness);
+
+        /* Ripple scrolling rides on the untiled texture coordinate, so the
+         * ripple map's own tiling has to be divided back out of the rates and
+         * offsets the tag states in ripple-map tiles. */
+        f32 const inv_scale =
+            info->ripple.scale > 0.f ? 1.f / info->ripple.scale : 1.f;
+        Vecf4 angles{}, velocities{}, contributions{}, offsets_01{},
+            offsets_23{};
+        auto         ripples = info->ripple.ripples.data(magic);
+        size_t const count   = ripples.has_value()
+                                   ? std::min<size_t>(ripples.value().size(), 4)
+                                   : 0;
+        for(size_t i = 0; i < count; i++)
+        {
+            auto const& ripple = ripples.value()[i];
+            angles[i]          = ripple.anim_angle;
+            velocities[i]      = ripple.anim_velocity * inv_scale;
+            contributions[i]   = ripple.contribution;
+            Vecf4& offset      = i < 2 ? offsets_01 : offsets_23;
+            offset[(i % 2) * 2]     = ripple.map_offset.x * inv_scale;
+            offset[(i % 2) * 2 + 1] = ripple.map_offset.y * inv_scale;
+        }
+        if(count == 0)
+        {
+            /* Shaders with no ripple block animate off the top-level angle
+             * and velocity instead. */
+            angles[0]        = info->ripple.anim_angle;
+            velocities[0]    = info->ripple.anim_velocity * inv_scale;
+            contributions[0] = 1.f;
+        }
+        mat.material.inputs[2] = angles;
+        mat.material.inputs[3] = velocities;
+        mat.material.inputs[4] = contributions;
+        mat.material.inputs[5] = offsets_01;
+        mat.material.inputs[6] = offsets_23;
         break;
     }
     case tag_class_t::sgla: {

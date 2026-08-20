@@ -84,12 +84,12 @@ vec4 get_map(in uint map_id, in int layer, in sampler2DArray sampler, in vec2 te
     vec2 uvscale = mat.maps[map_id].uv_scale;
     vec2 offset  = mat.maps[map_id].atlas_offset;
 
-//    vec2 tc = (tex_coord - floor(tex_coord)) * uvscale;
-    vec2 tc = tex_coord * uvscale;
-    tc = tc - floor(tc);
+    vec2 uv = tex_coord * uvscale;
+    vec2 tc = (uv - floor(uv)) * scale + offset;
 
-    float bias = mat.maps[map_id].bias;
-    return texture(sampler, vec3(tc * scale + offset, layer & 0xFFFF), bias);
+    vec2 grad = scale * exp2(mat.maps[map_id].bias);
+    return textureGrad(sampler, vec3(tc, layer & 0xFFFF),
+                       dFdx(uv) * grad, dFdy(uv) * grad);
 }
 
 #if USE_REFLECTIONS == 1

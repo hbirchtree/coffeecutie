@@ -62,7 +62,7 @@ struct sound_unit_t
             u32               permutation{0};
         } active;
 
-        std::deque<std::shared_ptr<oaf::buffer_t>> queued_bufs;
+        std::deque<std::shared_ptr<oaf::buffer_t>> queued_bufs{};
         std::shared_ptr<oaf::source_t>             source;
     };
 
@@ -149,7 +149,7 @@ struct SoundSystem
             LoopSoundEvent,
             PlaySoundEvent,
             BackgroundSoundTransitionEvent>
-            data;
+            data{};
     };
 
     /*! Raised before the sound assets were there, replayed once they are */
@@ -565,8 +565,8 @@ struct SoundSystem
         }
         if(ev.type == SoundEvent::play_sound)
         {
-            auto const& play  = reinterpret_cast<PlaySoundEvent const*>(data);
-            auto        sound = sound_cache.predict(*play->sound);
+            // auto const& play  = reinterpret_cast<PlaySoundEvent const*>(data);
+            // auto        sound = sound_cache.predict(*play->sound);
         }
     }
 };
@@ -595,7 +595,7 @@ struct SoundUISystem
 
     bool main_thread_only() const override { return true; }
 
-    void start_restricted(Proxy& p, compo::time_point const& t)
+    void start_restricted(Proxy& p, compo::time_point const&)
     {
 #if defined(FEATURE_ENABLE_ImGui)
         auto& sound_cache = p.subsystem<SoundCache<halo_version>>();
