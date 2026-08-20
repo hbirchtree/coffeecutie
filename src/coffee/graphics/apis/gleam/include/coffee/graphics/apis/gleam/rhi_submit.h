@@ -173,10 +173,10 @@ inline optional<tuple<error, std::string_view>> api::submit(
         return result;
     }() && m_workarounds.draw.advance_ubos_by_baseinstance;
     const bool uses_vertex_offset =
-        call.indexed &&
+        (call.indexed &&
             stl_types::any_of(
                 data,
-                [](auto const& d) { return d.elements.vertex_offset > 0; }) ||
+                [](auto const& d) { return d.elements.vertex_offset > 0; })) ||
         draw_cache.vertex_offset_changed;
     draw_cache.vertex_offset_changed =
         uses_vertex_offset && m_workarounds.draw.slow_state_changes;

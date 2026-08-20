@@ -468,15 +468,19 @@ struct alignas(4) shader_water : radiosity_properties /* aka swat */
 
     tagref_typed_t<tag_class_t::bitm> reflection_map;
 
-    struct ripple_t /* TODO: Find the correct layout of this structure */
+    struct ripple_t
     {
+        u32   unknown_;
         f32   contribution;
+        u32   padding_[8];
         f32   anim_angle;
         f32   anim_velocity;
         Vecf2 map_offset;
-        u32   map_repeats;
-        u32   map_index;
+        u16   map_repeats;
+        u16   map_index;
+        u32   padding__[4];
     };
+    static_assert(sizeof(ripple_t) == 76);
 
     u32 padding_4[4];
 

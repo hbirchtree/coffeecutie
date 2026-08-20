@@ -197,6 +197,7 @@ struct StandardCamera
         f32&                                       accel,
         std::chrono::system_clock::duration const& t)
     {
+        using namespace stl_types::chrono;
         f32 acceleration = opts.accel.base;
 
         if(has_key(reg, CK_LShift))
@@ -212,12 +213,12 @@ struct StandardCamera
                 continue;
             switch(key)
             {
-            case CK_w: movement.x += 1.f; break;
-            case CK_s: movement.x -= 1.f; break;
-            case CK_a: movement.y -= 1.f; break;
-            case CK_d: movement.y += 1.f; break;
-            case CK_q: movement.z += 1.f; break;
-            case CK_e: movement.z -= 1.f; break;
+            case CK_w: movement.x += to_f32(t) * 10.f; break;
+            case CK_s: movement.x -= to_f32(t) * 10.f; break;
+            case CK_a: movement.y -= to_f32(t) * 10.f; break;
+            case CK_d: movement.y += to_f32(t) * 10.f; break;
+            case CK_q: movement.z += to_f32(t) * 10.f; break;
+            case CK_e: movement.z -= to_f32(t) * 10.f; break;
             }
         }
     }

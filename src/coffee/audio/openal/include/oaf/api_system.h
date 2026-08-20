@@ -20,6 +20,7 @@ struct system
     static DeviceHandle dummy()
     {
         return DeviceHandle{
+            .name = "Dummy Audio",
             .dummy =
                 DummyInfo{
                     .fmt =

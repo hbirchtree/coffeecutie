@@ -12,11 +12,6 @@ namespace stl_types::str::fmt {
 template<typename CharType = char>
 FORCEDINLINE std::basic_string<CharType> hexify(libc_types::u64 s)
 {
-    if(s == 0)
-        return "0";
-
-    long long unsigned int ss = s;
-
     std::basic_string<CharType> str = ::fmt::format("{:016x}", s);
     stl_types::str::trim::left_zero(str);
     return str;

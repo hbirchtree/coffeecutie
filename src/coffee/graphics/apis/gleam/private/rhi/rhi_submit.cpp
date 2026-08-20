@@ -131,7 +131,7 @@ std::optional<std::tuple<error, std::string_view>> direct_draw(
     draw_command::data_t const&      data,
     shader_bookkeeping_t&            bookkeeping,
     workarounds const&               workarounds,
-    features const&                  features)
+    features const&)
 {
     [[maybe_unused]] const auto base_instance =
         data.instances.offset != 0 && !workarounds.draw.emulated_base_instance;

@@ -484,8 +484,15 @@ struct bytecode_pointer
     using script_state_t  = typename context_t::script_state;
     using bytecode_ptr    = bytecode_pointer<BC>;
 
+    enum class operation_t
+    {
+        kill_all_continuous,
+    };
+
     struct result_t
     {
+        std::optional<operation_t> operation;
+
         opcode_layout_t result;
         u16             next;
         eval            state;
@@ -510,6 +517,16 @@ struct bytecode_pointer
             out.next_op.ip        = terminator;
             out.next_op.salt      = terminator;
             return out;
+        }
+
+        static result_t return_operation(operation_t op)
+        {
+            return {
+                .operation = op,
+                .result    = {},
+                .next      = {},
+                .state     = eval::running,
+            };
         }
 
         static result_t return_(opcode_layout_t const& out = {})
@@ -1111,6 +1128,18 @@ struct bytecode_pointer
             {
                 result    = evaluate(*current, handler);
                 run_state = result.state;
+                if(result.operation.has_value())
+                {
+                    switch(*result.operation)
+                    {
+                    case operation_t::kill_all_continuous: {
+                        for(auto& [id, script] : context.scripts)
+                            if(script.function->schedule == script_type_t::continuous)
+                                script.status = script_status::dormant;
+                        break;
+                    }
+                    }
+                }
                 if(run_state == eval::running)
                     advance();
                 if(is_value(result.result.ret_type))

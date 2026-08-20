@@ -61,7 +61,8 @@ struct tag_atlas_t
 
     inline map_ptr block_magic(map_ptr const& bitm, u32 bitm_idx) const
     {
-        auto const& loc = locators()[bitm_idx];
+        auto locs = locators();
+        auto const& loc = locs[bitm_idx];
         return map_ptr(
             {bitm.base_ptr + loc.offset, bitm.max_size - loc.offset}, 0);
     }
@@ -69,7 +70,8 @@ struct tag_atlas_t
     template<typename T>
     inline reference<T> get_block(u32 bitm_idx = 0) const
     {
-        auto const& loc = locators()[bitm_idx];
+        auto locs = locators();
+        auto const& loc = locs[bitm_idx];
         return loc.to_reference<T>();
     }
 };

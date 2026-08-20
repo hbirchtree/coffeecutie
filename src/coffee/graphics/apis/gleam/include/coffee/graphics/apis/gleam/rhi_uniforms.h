@@ -481,16 +481,16 @@ inline void undo_command_modifier(
 }
 
 inline bool apply_command_modifier(
-    program_t&, shader_bookkeeping_t& bookkeeping, instance_texture_list&)
+    program_t&, shader_bookkeeping_t&, instance_texture_list&)
 {
     return true;
 }
 
 inline bool apply_command_modifier_per_call(
     program_t&             program,
-    shader_bookkeeping_t&  bookkeeping,
+    shader_bookkeeping_t&,
     instance_texture_list& textures,
-    u32                    base_instance,
+    u32,
     u32                    instance)
 {
     // This codepath is meant for OpenGL ES 2.0

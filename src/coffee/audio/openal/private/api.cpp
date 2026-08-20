@@ -83,10 +83,10 @@ const ALCchar* alcGetStringiSOFT(
     return getStringiSOFT(device, paramName, index);
 }
 
-void alcDevicePauseSOFT(ALCdevice* device)
-{
-    devicePauseSOFT(device);
-}
+// void alcDevicePauseSOFT(ALCdevice* device)
+// {
+//     devicePauseSOFT(device);
+// }
 
 void alcDeviceResumeSOFT(ALCdevice* device)
 {
@@ -294,7 +294,6 @@ std::optional<std::string> api::load(DeviceHandle&& device)
                 info.fmt.channels,
                 magic_enum::enum_name(info.fmt.format));
 
-        using format_t = Format::format_t;
         attrs.push_back(ALC_FORMAT_CHANNELS_SOFT);
         attrs.push_back(channelFormat);
         attrs.push_back(ALC_FORMAT_TYPE_SOFT);
@@ -413,12 +412,14 @@ std::optional<std::string> system::load(
             .speed = 1.f,
         };
     }
+#else
+    (void)e;
 #endif
 
     return api::load(std::move(device));
 }
 
-void system::start_frame(compo::ContainerProxy& p, const compo::time_point& t)
+void system::start_frame(compo::ContainerProxy&, const compo::time_point& t)
 {
 #if defined(ALC_SOFT_loopback)
     if(m_loopback.has_value())

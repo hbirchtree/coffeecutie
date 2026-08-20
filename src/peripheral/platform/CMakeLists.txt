@@ -1,4 +1,5 @@
-option(BUILD_WITH_WERROR ON "Build with warnings as errors")
+option(BUILD_WITH_WARNINGS OFF "Build with copious warnings")
+option(BUILD_WITH_WERROR OFF "Build with warnings as errors")
 
 coffee_library(
   TARGET PeripheralPlatform
@@ -31,13 +32,14 @@ else()
   )
 endif()
 
-if((CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
-                                             "GNU") AND BUILD_WITH_WERROR
+if((
+        CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
+        CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND
+    BUILD_WITH_WARNINGS
 )
   target_compile_options(
     PeripheralPlatform
-    PUBLIC -Werror
-           -Wall
+    PUBLIC -Wall
            # -Wpedantic
            -Wextra
            -Winit-self
@@ -48,6 +50,13 @@ if((CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
            -Wno-misleading-indentation
            $<$<COMPILE_LANGUAGE:CXX>:-Wno-invalid-offsetof>
   )
+  if(BUILD_WITH_WERROR)
+    target_compile_definitions(
+      PeripheralPlatform
+      PUBLIC -Werror
+
+    )
+  endif()
 endif()
 
 #
