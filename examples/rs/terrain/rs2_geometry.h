@@ -243,7 +243,7 @@ inline std::vector<Mesh> repack_by_material(
             if(!filter(*src, t))
                 continue;
             i32   mat = t < src->tri_texture.size() ? src->tri_texture[t] : -1;
-            bool  transparent = src->vertices[src->indices[t * 3]].a < 255;
+            // bool  transparent = src->vertices[src->indices[t * 3]].a < 255;
             auto& list        = buckets[sorter(*src, t)];
             if(list.empty() ||
                list.back().mesh.vertices.size() + 3 > MESH_MAX_VERTICES)
@@ -342,7 +342,7 @@ struct MapLink
     // model ids the def resolves to for that shape — the same geometry
     // that build_locs_mesh emitted at (from_x, from_y, from_plane)
     int              shape = 10, rotation = 0;
-    std::vector<int> model_ids;
+    std::vector<int> model_ids{};
     // world-space footprint box of the placement (mesh units: 128/tile,
     // height×8, z up): def size (swapped on odd rotation) in x/y, z from
     // the footprint's ground height up a nominal LINK_AABB_HEIGHT — meant
