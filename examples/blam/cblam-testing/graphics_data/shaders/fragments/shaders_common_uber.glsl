@@ -1124,18 +1124,11 @@ vec4 shader_water(in Material mat)
     reflect_color = tint * get_cube_color(reflect_dir, mat).rgb;
 #endif
 
-    if((flags & COLOR_MODULATES_BACKGROUND) != 0)
-    {
-        vec3 lit = vec3(1.0);
-#if USE_LIGHTMAPS == 1
-        if((render_flags & RENDER_FLAG_LIGHTMAP) != 0)
-            lit = get_light(mat, frag.light_tex).rgb;
-#endif
-        reflect_color += base.rgb * lit;
-    }
-
     if((flags & ALPHA_MODULATES_REFLECT) != 0)
         out_alpha *= base.a;
+
+    if((flags & COLOR_MODULATES_BACKGROUND) != 0)
+        reflect_color += base.rgb * out_alpha;
 
     return vec4(reflect_color, out_alpha);
 }
