@@ -312,7 +312,11 @@ struct ShaderCache
         u32 i = 0;
         for(chicago::map_t const& map : maps)
         {
-            auto        uv = uv_animation(map.anim_2d, t);
+            auto uv = uv_animation(map.anim_2d, t);
+            Vecf2 const scale = mat.maps[i].uv_scale;
+            uv = Vecf2(
+                scale.x != 0.f ? uv.x / scale.x : uv.x,
+                scale.y != 0.f ? uv.y / scale.y : uv.y);
             auto const& i2 = mat.material.inputs[0];
             switch(i)
             {
