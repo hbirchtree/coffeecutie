@@ -1111,16 +1111,25 @@ vec4 shader_water(in Material mat)
     /* Perpendicular at grazing, parallel head-on, as shader_environment and
      * the other classes here read the pair. brightness (alpha channel) is the
      * view-angle reflection strength, not a color scale. */
-    vec3  reflect_color = mix(parallel.rgb, perpendicular.rgb, fresnel);
-    float out_alpha     = mix(parallel.a,   perpendicular.a,   fresnel);
+    vec3  tint      = mix(parallel.rgb, perpendicular.rgb, fresnel);
+    float out_alpha = mix(parallel.a,   perpendicular.a,   fresnel);
 
+    vec3 reflect_color = vec3(0.0);
 #if USE_REFLECTIONS == 1
-    vec3 reflect_dir  = reflect(-view_world, world_normal);
-    reflect_color    *= get_cube_color(reflect_dir, mat).rgb;
+    vec3 reflect_dir = reflect(-view_world, world_normal);
+    reflect_color = tint * get_cube_color(reflect_dir, mat).rgb;
 #endif
 
     if((flags & COLOR_MODULATES_BACKGROUND) != 0)
-        reflect_color += base.rgb;
+    {
+        vec3 lit = vec3(1.0);
+#if USE_LIGHTMAPS == 1
+        if((render_flags & RENDER_FLAG_LIGHTMAP) != 0)
+            lit = get_light(mat, frag.light_tex).rgb;
+#endif
+        reflect_color += base.rgb * lit;
+    }
+
     if((flags & ALPHA_MODULATES_REFLECT) != 0)
         out_alpha *= base.a;
 
