@@ -224,6 +224,12 @@ inline optional<tuple<error, std::string_view>> api::submit(
     if(m_features.vertex.layout_binding && !vao->m_forced_attribute_names)
     {
         usage().draw.vaos_bound++;
+        if(draw_cache.last_vao != vao.get())
+        {
+            draw_cache.last_vao = vao.get();
+            draw_cache.last_vertex_offset =
+                std::numeric_limits<libc_types::u32>::max();
+        }
         cmd::bind_vertex_array(vao->m_handle);
     } else if(m_features.vertex.vertex_arrays)
     {
