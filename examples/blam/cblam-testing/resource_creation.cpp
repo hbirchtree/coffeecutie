@@ -700,6 +700,9 @@ void create_resources(compo::EntityContainer& e)
 
     mod2_array.set_buffer(gfx::buffers::vertex, resources.model_buf, 0);
     mod2_array.set_buffer(gfx::buffers::element, resources.model_index);
+    constexpr std::string_view node_weight_name =
+        std::is_same_v<halo_version, blam::xbox_version_t> ? "i_node_weight0"
+                                                           : "i_node_weights";
     mod2_array.set_attribute_names({
         {"position", 0},
         {"tex", 1},
@@ -707,7 +710,7 @@ void create_resources(compo::EntityContainer& e)
         {"i_binormal", 3},
         {"i_tangent", 4},
         {"i_node_indices", 5},
-        {"i_node_weights", 6},
+        {node_weight_name, 6},
     });
 
     if(api.api_version() != std::make_tuple<u32, u32>(2, 0))
