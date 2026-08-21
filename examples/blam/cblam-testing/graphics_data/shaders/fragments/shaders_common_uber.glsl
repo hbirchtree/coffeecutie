@@ -833,6 +833,7 @@ vec4 shader_model(in Material mat)
     vec4 primary_change_color = mat.material.input2;
 
     vec4 detail = get_color(detail_map_id, mat);
+    bool has_detail = (mat.maps[detail_map_id].layer >> 24) != 0;
     vec4 multi = get_color(multi_map_id, mat);
     int multi_source = mat.maps[multi_map_id].layer >> 24;
     if(multi_source == 0)
@@ -939,9 +940,12 @@ vec4 shader_model(in Material mat)
     else if(detail_mask_self_illum_inv)
         detail_factor = 1 - illum_factor;
     else if(detail_mask_multi_alpha)
-        detail_factor = 4;
+        detail_factor = multi.a;
     else if(detail_mask_multi_alpha_inv)
-        detail_factor = 4;
+        detail_factor = 1 - multi.a;
+
+    if(!has_detail)
+        detail_factor = 0.0;
 
     color.rgb = color.rgb * mix(
         vec3(1), primary_change_color.rgb,
