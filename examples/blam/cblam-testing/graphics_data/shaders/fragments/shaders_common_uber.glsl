@@ -999,7 +999,7 @@ vec4 shader_glass(in Material mat)
     color             = mix(color, refl * refl_tint, refl_str);
 #endif
 
-    return vec4(color, alpha_test ? diffuse.a : 1.0);
+    return vec4(color, diffuse.a);
 }
 
 vec4 shader_meter(in Material mat)
