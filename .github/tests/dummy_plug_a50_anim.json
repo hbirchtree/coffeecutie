@@ -1,0 +1,39 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1440,
+            "height": 1080,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "events": [
+        {"time": 1000, "type": "camera", "fov": 70},
+        {"time": 2500, "type": "camera", "position" :[2.653434, -62.5422, -17.24336], "rotation":[0.6840083, -0.0108493315, -0.72930187, 0.011568295]},
+        {"time": 2300, "type": "screenshot", "name": "a50_control_room"},
+        {"time": 2600, "type": "camera", "position" :[-5.031458, -114.983345, -19.238829], "rotation":[-0.8684204, 0.0076206117, -0.49575108, 0.004349668]},
+        {"time": 2900, "type": "screenshot", "name": "a50_prison"},
+        {"time": 3200, "type": "camera", "position" :[29.784494, 32.728386, 102.71725], "rotation":[0.84183884, 0.02527881, -0.5388939, -0.016181858]},
+        {"time": 3500, "type": "screenshot", "name": "a50_covenant_shield"},
+        {"time": 3800, "type": "camera", "position" :[43.518764, -38.592342, -22.89552], "rotation":[-0.3252868, 0.055837464, 0.93035805, 
+-0.15970159]},
+        {"time": 4100, "type": "screenshot", "name": "a50_covenant_hangar_shield_1"},
+        {"time": 4400, "type": "screenshot", "name": "a50_covenant_hangar_shield_2"},
+        {"time": 4700, "type": "screenshot", "name": "a50_covenant_hangar_shield_3"}
+    ],
+    "frame_delta": 200,
+    "end_time": 6000
+}
