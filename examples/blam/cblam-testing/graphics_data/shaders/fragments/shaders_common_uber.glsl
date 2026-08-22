@@ -850,7 +850,7 @@ vec4 shader_model(in Material mat)
     // Some models have correct specular in R/B, others in A
     // Master Chief has A as specular
     // Old-style marines have specular in R or B
-    float specular_factor = multi.a;
+    float specular_factor = multi.b;
     float illum_factor = multi.g;
     float color_change = multi.a;
 #endif
