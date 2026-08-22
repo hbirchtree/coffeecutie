@@ -798,20 +798,18 @@ signatures::sig_t opcode_signature(opcode_layout<Bytecode> const& op)
         return sig_t(
             t::void_, t::navpoint, t::team, t::cutscene_flag, t::real_);
 
-    case o::object_set_shield:
-        return sig_t(t::void_, t::object, t::real_);
     case o::damage_object:
         return sig_t(t::void_, t::damage, t::object);
-    case o::sound_set_gain:
-        return sig_t(t::void_, t::string_, t::real_);
-    case o::sound_get_gain:
-        return sig_t(t::real_, t::string_);
-
-    case o::objects_delete_by_definition:
-        return sig_t(t::void_, t::obj_def);
-
-    case o::seconds:
-        return sig_t(t::void_);
+    // case o::object_set_shield:
+    //     return sig_t(t::void_, t::object, t::real_);
+    // case o::sound_set_gain:
+    //     return sig_t(t::void_, t::string_, t::real_);
+    // case o::sound_get_gain:
+    //     return sig_t(t::real_, t::string_);
+    // case o::objects_delete_by_definition:
+    //     return sig_t(t::void_, t::obj_def);
+    // case o::seconds:
+    //     return sig_t(t::void_);
     }
 
     auto op_name = to_string(op.opcode);
@@ -822,6 +820,8 @@ template
 signatures::sig_t opcode_signature(opcode_layout<bc::v1> const& op);
 template
 signatures::sig_t opcode_signature(opcode_layout<bc::v2> const& op);
+template
+signatures::sig_t opcode_signature(opcode_layout<bc::v4> const& op);
 
 }
 
