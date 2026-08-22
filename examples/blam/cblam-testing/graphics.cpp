@@ -362,17 +362,20 @@ i32 blam_main()
                         }
                         discord.presence().update(std::move(data));
                     };
-                    e.subsystem_cast<GameEventBus>()
-                        .addEventFunction<ServerStateUpdate>(
+                    auto& gbus = e.subsystem_cast<GameEventBus>();
+                    gbus.addEventFunction<ServerStateUpdate>(
                             0, std::move(handler));
-                    e.subsystem_cast<GameEventBus>()
-                        .addEventFunction<ServerJoinInfo>(
+                    gbus.addEventFunction<ServerJoinInfo>(
                             0, [&discord](GameEvent&, ServerJoinInfo* join) {
                                 // set join info
                                 platform::online::PartyDescUpdate data;
                                 data.partyId     = join->server_id.str();
                                 data.join.secret = join->secret.str();
                                 discord.presence().update(std::move(data));
+                            });
+                    gbus.addEventFunction<MapLoadFinishedEvent<halo_version>>(
+                            0, [&discord](GameEvent&, MapLoadFinishedEvent<halo_version>* load) {
+                                discord.presence().putState(fmt::format("Playing on {}", load->map_title));
                             });
                     return false;
                 },
