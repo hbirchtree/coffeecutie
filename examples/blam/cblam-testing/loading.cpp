@@ -333,6 +333,14 @@ struct ResourceLoader
 
                     sub_draw.current_pass =
                         shader_.get_render_pass(shader_cache, true);
+
+                    // Annotate DrawState with the shader info
+                    auto shader_name = index.name_of(*shader_.shader_tag);
+                    for(auto& draw : sub_draw.draw.data)
+                        draw.debug_identifier = fmt::format(
+                            "{} {}",
+                            shader_name,
+                            shader_.shader_tag->tagclass[0].str());
                 }
             }
         }
@@ -854,6 +862,14 @@ struct ResourceLoader
             shader_.initialize(shader_it, submod_);
 
             sub_draw.current_pass = shader_.get_render_pass(shader_cache);
+
+            // Annotate DrawState with the shader info
+            auto shader_name = index.name_of(*shader_.shader_tag);
+            for(auto& draw : sub_draw.draw.data)
+                draw.debug_identifier = fmt::format(
+                            "{} {}",
+                            shader_name,
+                            shader_.shader_tag->tagclass[0].str());
         }
     }
 

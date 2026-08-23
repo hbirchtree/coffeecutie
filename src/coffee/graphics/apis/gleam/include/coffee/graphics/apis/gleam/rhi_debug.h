@@ -53,7 +53,10 @@ struct scope
 {
     scope(features::debugging debug, std::string_view const& name)
         : ext(debug)
+        , enabled(!name.empty())
     {
+        if(!enabled)
+            return;
 #if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320
         if(ext.debug)
         {
@@ -71,6 +74,8 @@ struct scope
 
     ~scope()
     {
+        if(!enabled)
+            return;
 #if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320
         if(ext.debug)
         {
@@ -88,6 +93,7 @@ struct scope
     }
 
     features::debugging ext;
+    bool enabled{true};
 };
 
 struct api

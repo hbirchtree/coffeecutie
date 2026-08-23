@@ -472,6 +472,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
         m_usage.draw.draws += data.size();
         for(auto d : data)
         {
+            auto dbg_id = debug().scope(d.debug_identifier.value_or(""));
             m_usage.draw.instances += d.instances.count;
             bookkeeping.baseInstance = d.instances.offset;
             apply_ubo_offset(d.instances.offset, d.instances.count);
@@ -483,6 +484,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
         m_usage.draw.draws += data.size();
         for(auto d : data)
         {
+            auto dbg_id = debug().scope(d.debug_identifier.value_or(""));
             m_usage.draw.instances += d.instances.count;
             bookkeeping.baseInstance = d.instances.offset;
             apply_ubo_offset(d.instances.offset, d.instances.count);
@@ -500,8 +502,9 @@ inline optional<tuple<error, std::string_view>> api::submit(
         using stl_types::range;
         for(auto d : data)
         {
-            [[maybe_unused]] auto _ =
-                debug().scope("legacy_draw::base_instance");
+            auto dbg_id = debug().scope(
+                d.debug_identifier.value_or("legacy_draw::base_instance"));
+
             auto       num_instances    = std::max(d.instances.count, 1u);
             auto const base_sampler_idx = bookkeeping.sampler_idx;
             d                           = apply_base_instance(d);
