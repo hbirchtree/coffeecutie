@@ -26,7 +26,7 @@
         {"time": 2300, "type": "screenshot", "name": "a50_control_room"},
         {"time": 2600, "type": "camera", "position" :[-5.031458, -114.983345, -19.238829], "rotation":[-0.8684204, 0.0076206117, -0.49575108, 0.004349668]},
         {"time": 2900, "type": "screenshot", "name": "a50_prison"},
-        {"time": 7000, "type": "camera", "position" :[0.48024336, -27.25982, 87.52262], "rotation":[0.9420348, 0.049975798, -0.33130676, -0.017576108]},
+        {"time": 3200, "type": "camera", "position" :[0.48024336, -27.25982, 87.52262], "rotation":[0.9420348, 0.049975798, -0.33130676, -0.017576108]},
         {"time": 3500, "type": "screenshot", "name": "a50_covenant_shield"},
         {"time": 3800, "type": "camera", "position" :[43.518764, -38.592342, -22.89552], "rotation":[-0.3252868, 0.055837464, 0.93035805, 
 -0.15970159]},
