@@ -16,6 +16,7 @@ endif()
 if(BUILD_BLAM AND NOT (ANDROID OR EMSCRIPTEN OR IOS))
   add_subdirectory(blam/dimeter-info)
   add_subdirectory(blam/script-dumper)
+  add_subdirectory(blam/tag-inspect)
 endif()
 
 # Trimmed BSP+lightmap viewer for the GX backend (no gleam/GLSL).
