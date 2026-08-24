@@ -32,7 +32,7 @@
         {"time": 5500, "type": "screenshot", "name": "a50_wraith_hangar"},
         {"time": 6000, "type": "camera", "position" :[29.784494, 32.728386, 102.71725], "rotation":[0.84183884, 0.02527881, -0.5388939, -0.016181858]},
         {"time": 6500, "type": "screenshot", "name": "a50_transporter"},
-        {"time": 7000, "type": "camera", "position" :[29.784494, 32.728386, 102.71725], "rotation":[0.84183884, 0.02527881, -0.5388939, -0.016181858]},
+        {"time": 7000, "type": "camera", "position" :[0.48024336, -27.25982, 87.52262], "rotation":[0.9420348, 0.049975798, -0.33130676, -0.017576108]},
         {"time": 7500, "type": "screenshot", "name": "a50_covenant_shield"},
         {"time": 8000, "type": "camera", "position" :[43.518764, -38.592342, -22.89552], "rotation":[-0.3252868, 0.055837464, 0.93035805, 
 -0.15970159]},
