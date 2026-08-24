@@ -29,11 +29,11 @@ enum class animation_function : u16
     one,
     zero,
     cosine,
-    cosine_variable,
-    diagonal,
-    diagonal_period,
+    cosine_variable, // cosine (variable period)
+    diagonal,        // diagonal wave
+    diagonal_period, // diagonal wave (variable period)
     slide,
-    slide_variable,
+    slide_variable,  // slide (variable period)
     noise,
     jitter,
     wander,
@@ -149,7 +149,7 @@ struct simple_tex_property_anim
 {
     animation_src      source;
     animation_function function;
-    f32                period;
+    f32                period; // guerilla: 0 defaults to 1
     f32                scale;
 };
 
@@ -171,9 +171,9 @@ struct texture_property_anim
     animation_src      source;
     animation_function function;
 
-    f32 period;
+    f32 period; // guerilla: 0 defaults to 1
     f32 phase;
-    f32 scale;
+    f32 scale; // guerilla: 0 defaults to 1
 };
 
 struct texture_uv_rotation_animation
@@ -193,10 +193,10 @@ struct detail_map
 
 struct bitm_reference_t
 {
-    Vecf2 uv_scale;
+    Vecf2 uv_scale; // guerilla: 0 defaults to 1
     Vecf2 uv_offset;
     f32   rotation;
-    f32   mip_bias;
+    f32   mip_bias; // guerilla: from 0 to 1
 
     tagref_typed_t<tag_class_t::bitm> map;
 };
@@ -835,12 +835,47 @@ enum class color_input : u16
     one_half,
     negative_one,
     negative_one_half,
+    map_color_0,
+    map_color_1,
+    map_color_2,
+    map_color_3,
+    vertex_color_0,
+    diffuse_light = vertex_color_0,
+    vertex_color_1,
+    fade_perpendicular = vertex_color_1, // fade(perpendicular ...) (can't read the full text)
+    scratch_color_0,
+    scratch_color_1,
+    constant_color_0,
+    constant_color_1,
     map_alpha_0,
     map_alpha_1,
     map_alpha_2,
     map_alpha_3,
     vertex_alpha_0,
+    fade_none = vertex_alpha_0, // fade(none)???
     vertex_alpha_1,
+    alpha_fade_perpendicular = vertex_alpha_1, // fade(perpendicular ...) (can't read the full text)
+    scratch_alpha_0,
+    scratch_alpha_1,
+    constant_alpha_0,
+    constant_alpha_1,
+};
+
+enum class alpha_input : u16
+{
+    zero,
+    one,
+    one_half,
+    negative_one,
+    negative_one_half,
+    map_alpha_0,
+    map_alpha_1,
+    map_alpha_2,
+    map_alpha_3,
+    vertex_alpha_0,
+    fade_none = vertex_alpha_0, // fade(none)
+    vertex_alpha_1,
+    fade_perpendicular = vertex_alpha_1, // fade(perpendicular) (can't read full text)
     scratch_alpha_0,
     scratch_alpha_1,
     constant_alpha_0,
@@ -850,7 +885,9 @@ enum class color_input : u16
     map_blue_2,
     map_blue_3,
     vertex_blue_0,
+    blue_light = vertex_blue_0, // blue light
     vertex_blue_1,
+    fade_parallel = vertex_blue_1, // fade(parallel)
     scratch_blue_0,
     scratch_blue_1,
     constant_blue_0,
@@ -860,13 +897,13 @@ enum class color_input : u16
 /* Requires 3 bits */
 enum class color_mapping : u16
 {
-    clamp,
-    clamp_inverse,
-    squared_clamp_minus_one,
-    one_minus_square_clamp,
-    clamp_minus_half,
-    one,
-    minus_one,
+    clamp,                   // clamp(x)
+    clamp_inverse,           // 1 - clamp(x)
+    squared_clamp_minus_one, // 2 * clamp(x) - 1
+    one_minus_square_clamp,  // 1 - 2 * clamp(x)
+    clamp_minus_half,        // clamp(x) - 1/2
+    one,                     //  x
+    minus_one,               // -x
 };
 
 /* Requires 4 bits */
@@ -884,6 +921,21 @@ enum class color_output : u16
     map_color_3,
 };
 
+enum class alpha_output : u16
+{
+    discard,
+    scratch_alpha_0,
+    final_alpha = scratch_alpha_0,
+    scratch_alpha_1,
+    vertex_alpha_0,
+    fog = vertex_alpha_0,
+    vertex_alpha_1,
+    map_alpha_0,
+    map_alpha_1,
+    map_alpha_2,
+    map_alpha_3,
+};
+
 enum class color_output_function : u16
 {
     multiply,
@@ -892,24 +944,29 @@ enum class color_output_function : u16
 
 enum class color_output_mapping : u16
 {
-    identity,
-    scale_half,
-    scale_2,
-    scale_4,
-    subtract_half, /* subtract 1/2 */
-    expand_normal, /* normalize? */
+    identity,      // identity
+    scale_half,    // scale by 1/2
+    scale_2,       // scale by 2
+    scale_4,       // scale by 4
+    subtract_half, // bias by -1/2
+    expand_normal, // expand normal? what does it mean?
 };
 
 struct transparent_stage
 {
     transparent_flags flags;
 
-    /* constants and animation */
+    /* constants and animation
+     * Guerilla notes:
+     * Constant color 0 is animated in exactly the same way as the self-illumination
+     * color of the model shader, except that it has an alpha component in addition
+     * to the RGB components. Constant color 1 is just a constant.
+     */
     struct
     {
         animation_src      color0_src;
         animation_function color0_function;
-        animation_src      color0_period;
+        animation_src      color0_period; // guerilla: 0 defaults to 1
         Vecf3              color0_lower_bound;
         Vecf3              color0_upper_bound;
         Vecf3              color1;
@@ -918,17 +975,15 @@ struct transparent_stage
 
     struct inputs_t
     {
-        color_input a;
-        color_input a_mapping;
-        color_input b;
-        color_input b_mapping;
-        color_input c;
-        color_input c_mapping;
-        color_input d;
-        color_input d_mapping;
-    };
-
-    inputs_t color_inputs;
+        color_input   a;
+        color_mapping a_mapping;
+        color_input   b;
+        color_mapping b_mapping;
+        color_input   c;
+        color_mapping c_mapping;
+        color_input   d;
+        color_mapping d_mapping;
+    } color_inputs;
 
     struct
     {
@@ -941,13 +996,23 @@ struct transparent_stage
         u16                   padding[2];
     } color_outputs;
 
-    inputs_t alpha_inputs;
+    struct alpha_inputs_t
+    {
+        alpha_input   a;
+        color_mapping a_mapping;
+        alpha_input   b;
+        color_mapping b_mapping;
+        alpha_input   c;
+        color_mapping c_mapping;
+        alpha_input   d;
+        color_mapping d_mapping;
+    } alpha_inputs;
 
     struct
     {
-        color_output         ab;
-        color_output         cd;
-        color_output         abcd_mux_sum;
+        alpha_output         ab;
+        alpha_output         cd;
+        alpha_output         abcd_mux_sum;
         color_output_mapping mapping;
         u32                  padding[2];
     } alpha_outputs;
