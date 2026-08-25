@@ -841,6 +841,9 @@ struct RS2CacheLoader
             frag_sampler,
             gfx::view_state{
                 .depth = gfx::depth_state{.reversed = true},
+            },
+            gfx::cull_state{
+                .front_face = false,
             });
         if(res.has_value())
             cWarning("RS2: Failed to draw: {}", std::get<1>(*res));
