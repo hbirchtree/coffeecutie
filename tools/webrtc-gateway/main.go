@@ -53,6 +53,7 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/hex"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -218,11 +219,15 @@ type PortPool struct {
 	usedPorts map[int]struct{}
 }
 
+const maxMetadataBytes = 4096
+
 type serverMetadata struct {
-	playerCountCurrent int
-	playerCountMax     int
-	timeLeft           int
-	// gametype string
+	// raw is the JSON payload exactly as the server sent it. The gateway
+	// does not interpret the contents beyond enforcing the size cap.
+	raw []byte
+	// receivedAt is when the payload arrived, for HTTP cache headers /
+	// admin display.
+	receivedAt time.Time
 }
 
 type registeredServer struct {
@@ -460,10 +465,55 @@ func main() {
 		handleSignal(w, r, *iceUDPPortMin, *iceUDPPortMax)
 	})
 	http.HandleFunc("/server-signal", handleServerSignal)
+	http.HandleFunc("/metadata", handleMetadataQuery)
 
 	log.Printf("webrtc-gateway listening on %s", *listenAddr)
 	if err := http.ListenAndServe(*listenAddr, nil); err != nil {
 		log.Fatal(err)
+	}
+}
+
+// handleMetadataQuery returns the most recent metadata payload a registered
+// server has published over its /server-signal websocket. Only the server
+// may publish metadata; clients read it via this endpoint. The payload is
+// capped at maxMetadataBytes on ingest.
+func handleMetadataQuery(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	serverID := r.URL.Query().Get("server")
+	if serverID == "" {
+		http.Error(w, "missing ?server=<id>", http.StatusBadRequest)
+		return
+	}
+	workingSet.servers.RLock()
+	srv, ok := workingSet.servers.registry[serverID]
+	workingSet.servers.RUnlock()
+	if !ok {
+		http.Error(w, "unknown server", http.StatusNotFound)
+		return
+	}
+
+	srv.mu.Lock()
+	meta := srv.metadata
+	active := srv.active
+	srv.mu.Unlock()
+	if !active {
+		http.Error(w, "server not active", http.StatusServiceUnavailable)
+		return
+	}
+	if meta == nil || len(meta.raw) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Length", strconv.Itoa(len(meta.raw)))
+	w.Header().Set("X-Metadata-Received-At", meta.receivedAt.UTC().Format(time.RFC3339))
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(meta.raw); err != nil {
+		log.Printf("failed to write metadata response for %q: %v", serverID, err)
 	}
 }
 
@@ -1116,7 +1166,19 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 			}
 			completeChallenge(myID, myEntry, m.Nonce)
 		case "metadata":
-			stashServerMetadata(myID, myEntry, m.Metadata)
+			// m.Metadata is kept for backward compatibility with small
+			// key/value maps. If a raw payload is present it takes
+			// precedence and is subject to the size cap.
+			if len(m.Data) > 0 {
+				stashServerMetadata(myID, myEntry, []byte(m.Data))
+			} else if len(m.Metadata) > 0 {
+				encoded, err := json.Marshal(m.Metadata)
+				if err != nil {
+					log.Printf("%s failed to encode metadata map: %v", myEntry.tag(), err)
+					continue
+				}
+				stashServerMetadata(myID, myEntry, encoded)
+			}
 		case "gns-rendezvous":
 			relayRendezvousToClient(m.SessionID, m.Data)
 		case "gns-connected":
@@ -1282,25 +1344,19 @@ func completeChallenge(id string, srv *registeredServer, nonceHex string) {
 	journalServerEvent(srv, id, "register-active", "ok", challengeAddr)
 }
 
-func mapToInt(data map[string]string, key string) int {
-	value, ok := data[key]
-	if !ok {
-		return 0
+func stashServerMetadata(id string, srv *registeredServer, raw []byte) {
+	if len(raw) > maxMetadataBytes {
+		log.Printf("%s server metadata from %s rejected: %d bytes exceeds %d byte cap",
+			srv.tag(), id, len(raw), maxMetadataBytes)
+		return
 	}
-	parsed, err := strconv.Atoi(value)
-	if err != nil {
-		return 0
+	log.Printf("%s server metadata received from %s (%d bytes)", srv.tag(), id, len(raw))
+	srv.mu.Lock()
+	srv.metadata = &serverMetadata{
+		raw:        raw,
+		receivedAt: time.Now(),
 	}
-	return parsed
-}
-
-func stashServerMetadata(id string, srv *registeredServer, metadata map[string]string) {
-	log.Printf("%s server metadata received from %s", srv.tag(), id)
-	var parsedMeta = serverMetadata{}
-	parsedMeta.playerCountCurrent = mapToInt(metadata, "playerCount")
-	parsedMeta.playerCountMax = mapToInt(metadata, "playerCountMax")
-	parsedMeta.timeLeft = mapToInt(metadata, "timeLeft")
-	srv.metadata = &parsedMeta
+	srv.mu.Unlock()
 }
 
 func relayRendezvousToServer(serverID, sessionID, data string) {

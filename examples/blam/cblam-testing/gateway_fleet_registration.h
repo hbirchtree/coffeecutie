@@ -45,6 +45,11 @@ class GatewayFleetRegistration
      * gateway is actively routing browsers to this server. */
     bool Active() const;
 
+    /*! Sends an opaque metadata payload to the gateway over the persistent
+     * /server-signal websocket. The gateway caps this at 4096 bytes and
+     * exposes it via GET /metadata?server=<id>. Only valid once Active(). */
+    void SendMetadata(std::string_view jsonPayload);
+
   private:
     void onWebSocketOpen();
     void onWebSocketMessage(std::string const& text);

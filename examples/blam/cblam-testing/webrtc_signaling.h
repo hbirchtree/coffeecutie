@@ -253,6 +253,11 @@ class GatewayServerRegistration final
     void NotifyGNSConnected(HSteamNetConnection hConn);
     void ForgetConnection(HSteamNetConnection hConn);
 
+    /*! Sends an opaque metadata payload to the gateway over the persistent
+     * /server-signal websocket. The gateway caps this at 4096 bytes and
+     * exposes it via GET /metadata?server=<id>. Only valid once Active(). */
+    void SendMetadata(std::string_view jsonPayload);
+
   private:
     void onWebSocketMessage(std::string const& text);
     void sendRegister();

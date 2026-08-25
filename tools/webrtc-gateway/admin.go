@@ -242,6 +242,14 @@ func currentServerRows(ws *serverWorkingSet, id string, spinnerFrame string) (in
 			{"Expiry", server.expiresAt.String()},
 		}
 	}
+	if server.metadata != nil && len(server.metadata.raw) > 0 {
+		metaStr := string(server.metadata.raw)
+		if len(metaStr) > 96 {
+			metaStr = metaStr[:93] + "..."
+		}
+		info = append(info, table.Row{"Metadata", metaStr})
+		info = append(info, table.Row{"Metadata received", server.metadata.receivedAt.Format(time.TimeOnly)})
+	}
 	server.mu.Unlock()
 
 	clients = make([]table.Row, 0)
@@ -337,11 +345,12 @@ type styles struct {
 var containerStyle = lipgloss.NewStyle().BorderStyle(lipgloss.DoubleBorder()).BorderForeground(lipgloss.White)
 
 // currentInfoRowCount is the fixed number of property rows currentInfo
-// always shows (Active/Challenge address/Expiry/Server address). Its
-// viewport height is sized off this constant, not off Rows() at layout
-// time -- currentInfo is empty until a server is selected, so sizing off
-// the live row count would permanently pin the viewport height to zero.
-const currentInfoRowCount = 4
+// always shows (Active/Challenge address/Expiry/Server address, plus up to
+// two optional metadata rows). Its viewport height is sized off this
+// constant, not off Rows() at layout time -- currentInfo is empty until a
+// server is selected, so sizing off the live row count would permanently
+// pin the viewport height to zero.
+const currentInfoRowCount = 6
 
 // Tabs, in display order.
 const (

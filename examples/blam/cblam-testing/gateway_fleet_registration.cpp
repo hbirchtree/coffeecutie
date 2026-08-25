@@ -500,6 +500,20 @@ bool GatewayFleetRegistration::Active() const
     return m_active;
 }
 
+void GatewayFleetRegistration::SendMetadata(std::string_view jsonPayload)
+{
+    if(!m_ws)
+        return;
+    nlohmann::json msg{
+        {"type", "metadata"},
+        {"data", std::string(jsonPayload)},
+    };
+    if(!m_ws->send(msg.dump()))
+        cWarning(
+            "webrtc_signaling: gateway_fleet_registration: failed to send "
+            "metadata");
+}
+
 } // namespace webrtc_signaling
 
 #endif

@@ -466,6 +466,66 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         });
     }
 
+#if defined(USE_WEBRTC_TRANSPORT)
+    std::string build_server_metadata()
+    {
+        nlohmann::json meta = nlohmann::json::object();
+        meta["map"]         = m_map ? std::string(m_map->internal_name()) : "";
+
+        std::string map_type = "unknown";
+        if(m_map)
+        {
+            if(auto scenario = m_map->scenario(); scenario.has_value())
+            {
+                switch(scenario.value()->info.type)
+                {
+                case blam::scn::scenario<halo_version>::scenario_type::solo:
+                    map_type = "campaign";
+                    break;
+                case blam::scn::scenario<halo_version>::scenario_type::multiplayer:
+                    map_type = "multiplayer";
+                    break;
+                case blam::scn::scenario<halo_version>::scenario_type::main_menu:
+                    map_type = "main_menu";
+                    break;
+                }
+            }
+        }
+        meta["map_type"] = map_type;
+
+        u32 player_count = static_cast<u32>(m_local_player_info.size()) +
+                           static_cast<u32>(m_connections.size());
+        meta["player_count"]     = player_count;
+        meta["player_count_max"] = 16;
+
+        return meta.dump();
+    }
+
+    void publish_server_metadata()
+    {
+        auto payload = build_server_metadata();
+        if(payload.size() > 4096)
+        {
+            cWarning(
+                "Server metadata payload too large ({} bytes), dropping",
+                payload.size());
+            return;
+        }
+        if(payload == m_last_metadata_sent)
+            return;
+
+        if(m_webrtcServer && m_webrtcServer->Active())
+        {
+            m_webrtcServer->SendMetadata(payload);
+            m_last_metadata_sent = std::move(payload);
+        } else if(m_fleetRegistration && m_fleetRegistration->Active())
+        {
+            m_fleetRegistration->SendMetadata(payload);
+            m_last_metadata_sent = std::move(payload);
+        }
+    }
+#endif
+
     void update_player_counts()
     {
         GameEvent         update{.type = GameEvent::ServerStateUpdate};
@@ -479,6 +539,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             .num_field = 16,
         };
         m_game_bus.inject(update, &data);
+#if defined(USE_WEBRTC_TRANSPORT)
+        publish_server_metadata();
+#endif
     }
 
     void send_player_roster(i32 player_idx = -1)
@@ -805,6 +868,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             0,
             [this](GameEvent&, MapLoadFinishedEvent<halo_version>* finished) {
                 m_map = finished->container;
+#if defined(USE_WEBRTC_TRANSPORT)
+                publish_server_metadata();
+#endif
                 if(!is_server())
                     return;
                 for(auto& [connection, state] : m_connections)
@@ -1420,6 +1486,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 #endif
         if(is_server())
         {
+#if defined(USE_WEBRTC_TRANSPORT)
+            publish_server_metadata();
+#endif
             if(m_local_player_info.empty())
             {
                 for(auto player : p.select<PlayerInfo, PlayerCamera>())
@@ -2018,6 +2087,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::optional<u32> m_pending_focus{};
     blam::map_container<halo_version>* m_map{nullptr};
     stl_types::math::rng               m_local_random{};
+#if defined(USE_WEBRTC_TRANSPORT)
+    std::string m_last_metadata_sent;
+#endif
 };
 
 #endif

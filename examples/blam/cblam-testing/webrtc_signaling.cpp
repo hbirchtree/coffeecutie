@@ -911,6 +911,18 @@ void GatewayServerRegistration::ForgetConnection(HSteamNetConnection hConn)
     m_relayRetired.erase(hConn);
 }
 
+void GatewayServerRegistration::SendMetadata(std::string_view jsonPayload)
+{
+    if(!m_ws)
+        return;
+    nlohmann::json msg{
+        {"type", "metadata"},
+        {"data", std::string(jsonPayload)},
+    };
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_outgoing.push_back(msg.dump());
+}
+
 } // namespace webrtc_signaling
 
 #endif
