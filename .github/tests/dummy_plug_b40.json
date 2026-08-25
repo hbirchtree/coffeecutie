@@ -47,7 +47,13 @@
         {"time":12000, "type": "camera", "position" :[252.93436, -547.424, 23.075773], "rotation":[-0.6479589, -0.13977589, 0.7319047, 0.15788479]},
         {"time":12500, "type":"screenshot","name":"b40_ghost"},
         {"time":13000, "type": "camera", "position" :[305.44855, -534.5667, 24.063343], "rotation":[0.8931762, -0.4494036, 0.014754592, -0.0074242763]},
-        {"time":13500, "type":"screenshot","name":"b40_sky"}
+        {"time":13500, "type":"screenshot","name":"b40_sky"},
+        {"time":14000, "type": "camera", "position" :[46.081757, -34.56241, 48.8074], "rotation":[0.8393015, -0.28476396, 0.4385671, -0.14880006]},
+        {"time":14500, "type":"screenshot","name":"b40_bridge_beams"},
+        {"time":15000, "type": "camera", "position" :[43.844826, -73.49047, 0.6451015], "rotation":[-0.9230687, 0.07574771, 0.37583944, -0.030841704]},
+        {"time":15500, "type":"screenshot","name":"b40_plasma_torch"},
+        {"time":16000, "type": "camera", "position" :[36.762585, -68.442955, 0.34970737], "rotation":[-0.94029415, -0.07354936, -0.33130956, -0.025914704]},
+        {"time":16500, "type":"screenshot","name":"b40_plasma_turret"}
     ],
     "frame_delta": 250.0,
     "end_time": 20000
