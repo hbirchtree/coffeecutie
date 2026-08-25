@@ -226,15 +226,6 @@ bool loop_container(detail::EntityContainer& container)
     {
         static bool warned_once = false;
         auto        queue       = rq::runtime_queue::GetCurrentQueue();
-        if(!warned_once)
-        {
-            warned_once = true;
-            Coffee::Logging::cWarning(
-                "TEMPDEBUG: loop_container first tick: thread={} "
-                "GetCurrentQueue={}",
-                stl_types::get_this_thread_id(),
-                queue.has_value() ? "ok" : "FAILED");
-        }
         if(queue.has_value())
         {
             using namespace std::chrono_literals;
