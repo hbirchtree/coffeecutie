@@ -492,8 +492,12 @@ struct GraphicsContext
 
 struct GraphicsFramebuffer
 {
+    std::function<void()> pre_swap;
+
     void defaultSwap()
     {
+        if(pre_swap)
+            pre_swap();
         app_error ec;
         swapBuffers(ec);
         C_ERROR_CHECK(ec);

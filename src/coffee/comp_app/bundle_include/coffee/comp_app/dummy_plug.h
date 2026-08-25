@@ -25,6 +25,18 @@ struct Config : comp_app::Config<Config>
     bool                   enabled{false};
     std::string            swrender{"none"};
     int                    screenshot_quality{30};
+
+    struct pending_action_t
+    {
+        std::string    screenshot;
+        std::string    event;
+        nlohmann::json data;
+        libc_types::u32 settle;
+    };
+    std::vector<pending_action_t> pending_actions{};
+    bool                          screenshot_armed{false};
+    bool                          step_between_captures{false};
+    bool                          defer_to_swap{false};
 };
 
 /* Free-form dummy events we can insert and interpret per-application */

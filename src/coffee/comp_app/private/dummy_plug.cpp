@@ -575,6 +575,12 @@ void fork_dummy_plugs(
             if(app_info &&
                app_info->state() != comp_app::interfaces::AppInfo::loaded)
                 return;
+            if(!dummy_plug.pending_actions.empty())
+            {
+                if(!dummy_plug.step_between_captures)
+                    return;
+                dummy_plug.step_between_captures = false;
+            }
             dummy_plug.frame_index++;
         });
         rq::runtime_queue::OverrideClock(
@@ -804,6 +810,44 @@ struct FrameCounter : compo::SubsystemBase
 
     libc_types::u64 frame_counter{0};
 };
+
+struct DummyPlugDrain : compo::SubsystemBase
+{
+    using type = DummyPlugDrain;
+
+    DummyPlugDrain(dummy_plug::Config* config, DummyEventBus* bus)
+        : m_config(config)
+        , m_bus(bus)
+    {
+        priority = 32;
+    }
+
+    virtual void start_frame(ContainerProxy&, time_point const&) final
+    {
+        if(m_config->screenshot_armed || m_config->step_between_captures)
+            return;
+        while(!m_config->pending_actions.empty())
+        {
+            auto action = m_config->pending_actions.front();
+            if(!action.screenshot.empty())
+            {
+                m_config->screenshot_armed = true;
+                return;
+            }
+            m_config->pending_actions.erase(m_config->pending_actions.begin());
+            DummyEvent out{action.event, action.data};
+            cDebug(
+                "Injecting custom dummy event: {} => {}",
+                out.event,
+                out.data.dump(2));
+            m_bus->process(out, nullptr);
+        }
+    }
+
+    dummy_plug::Config* m_config;
+    DummyEventBus*      m_bus;
+};
+
 } // namespace
 
 void insert_dummy_plug(
@@ -914,7 +958,36 @@ void insert_dummy_plug(
                 container.subsystem_cast<comp_app::PerformanceMonitor>();
             perf_monitor.m_screenshot_quality = dummy_plug.screenshot_quality;
             perf_monitor.m_synchronous_screenshots = true;
+
+            if(auto* framebuffer = container.service<GraphicsFramebuffer>())
+            {
+                dummy_plug.defer_to_swap = true;
+                framebuffer->pre_swap    = [&perf_monitor,
+                                         &container,
+                                         &dummy_plug]() {
+                    if(!dummy_plug.screenshot_armed)
+                        return;
+                    auto& armed = dummy_plug.pending_actions.front();
+                    if(armed.settle > 0)
+                    {
+                        armed.settle--;
+                        return;
+                    }
+                    auto name = armed.screenshot;
+                    dummy_plug.pending_actions.erase(
+                        dummy_plug.pending_actions.begin());
+                    dummy_plug.screenshot_armed = false;
+                    dummy_plug.step_between_captures =
+                        !dummy_plug.pending_actions.empty();
+                    PerformanceMonitor::proxy_type proxy(container);
+                    cDebug("Capturing dummyplug screenshot: {}", name);
+                    perf_monitor.capture_screenshot(
+                        proxy, name, container.relative_timestamp());
+                };
+            }
             auto& dummy_bus = container.subsystem_cast<DummyEventBus>();
+            container.register_subsystem_inplace<DummyPlugDrain>(
+                &dummy_plug, &dummy_bus);
             for(auto const& event : config["events"])
             {
                 if(!event.contains("type"))
@@ -940,13 +1013,22 @@ void insert_dummy_plug(
                     rq::runtime_queue::QueueShot(
                         rq::runtime_queue::GetCurrentQueue().value(),
                         start_time,
-                        [&perf_monitor, &container, event]() {
-                            PerformanceMonitor::proxy_type proxy(container);
-                            cDebug("Capturing dummyplug screenshot");
-                            perf_monitor.capture_screenshot(
-                                proxy,
-                                event.value("name", "dummy_screenshot"),
-                                container.relative_timestamp());
+                        [&dummy_plug, &perf_monitor, &container, event]() {
+                            auto name =
+                                event.value("name", "dummy_screenshot");
+                            if(!dummy_plug.defer_to_swap)
+                            {
+                                PerformanceMonitor::proxy_type proxy(container);
+                                perf_monitor.capture_screenshot(
+                                    proxy,
+                                    name,
+                                    container.relative_timestamp());
+                                return;
+                            }
+                            dummy_plug.pending_actions.push_back(
+                                {.screenshot = name,
+                                 .settle =
+                                     event.value("settle_frames", 2u)});
                         })
                         .assume_value();
                     break;
@@ -962,12 +1044,12 @@ void insert_dummy_plug(
                     rq::runtime_queue::QueueShot(
                         rq::runtime_queue::GetCurrentQueue().value(),
                         start_time,
-                        [&dummy_bus, out]() mutable {
-                            cDebug(
-                                "Injecting custom dummy event: {} => {}",
-                                out.event,
-                                out.data.dump(2));
-                            dummy_bus.process(out, nullptr);
+                        [&dummy_plug, out]() mutable {
+                            /* Queued rather than injected here: several events
+                             * can come due in one pass, and one scheduled after
+                             * a screenshot must not land in its frame. */
+                            dummy_plug.pending_actions.push_back(
+                                {.event = out.event, .data = out.data});
                         })
                         .assume_value();
                     break;
