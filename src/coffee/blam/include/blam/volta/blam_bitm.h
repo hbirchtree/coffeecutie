@@ -200,13 +200,19 @@ struct alignas(64) sequence_t
     bl_string_var<32> name;
     u16               first_bitmap;
     u16               bitmap_count;
+    u32               unknown[4];
 
     reference<sprite_t> sprites;
 };
 
+static_assert(offsetof(sequence_t, sprites) == 52);
+static_assert(sizeof(sequence_t) == 64);
+
 struct alignas(32) sprite_t
 {
     u16   bitmap_index;
+    u16   unknown_0;
+    u32   unknown_1;
     f32   left;
     f32   right;
     f32   top;
@@ -214,6 +220,7 @@ struct alignas(32) sprite_t
     Vecf2 registration_point;
 };
 
+static_assert(offsetof(sprite_t, left) == 8);
 static_assert(sizeof(sprite_t) == 32);
 
 /*!
