@@ -118,10 +118,14 @@ vec4 sample_map(
     in vec2 offset,
     in Material mat)
 {
+    vec2 uvscale = mat.maps[map_id].uv_scale;
+    vec2 adjust  = vec2(
+        uvscale.x != 0.0 ? offset.x / uvscale.x : offset.x,
+        uvscale.y != 0.0 ? offset.y / uvscale.y : offset.y);
     return get_map(map_id,
         layer,
         sampler,
-        frag.tex + offset,
+        frag.tex + adjust,
         mat);
 }
 
@@ -582,14 +586,14 @@ vec4 shader_chicago_extended(in Material mat)
 vec3 sotr_cmap(vec3 v, uint m)
 {
     vec3 u = max(v, 0.0);
-    if(m == 1u) return 1.0 - clamp(v, 0.0, 1.0); // one_minus_clamp (unsigned invert)
-    if(m == 2u) return 2.0 * u - 1.0;            // two (expand normal)
-    if(m == 3u) return 1.0 - 2.0 * u;            // one_minus_two (expand negate)
-    if(m == 4u) return u - 0.5;                  // clamp_minus_half (half bias)
-    if(m == 5u) return 0.5 - u;                  // half_minus_clamp (half bias negate)
-    if(m == 6u) return v;                        // passthrough (signed identity)
-    if(m == 7u) return -v;                       // negative (signed negate)
-    return u;                                    // clamp (unsigned identity)
+    if(m == 1u) return 1.0 - clamp(v, 0.0, 1.0);
+    if(m == 2u) return 2.0 * u - 1.0;
+    if(m == 3u) return 1.0 - 2.0 * u;
+    if(m == 4u) return u - 0.5;
+    if(m == 5u) return 0.5 - u;
+    if(m == 6u) return v;
+    if(m == 7u) return -v;
+    return u;
 }
 float sotr_smap(float v, uint m)
 {
@@ -632,23 +636,25 @@ float sotr_somap(float v, uint m)
  * Vertex registers initialize to 1 — the engine substitutes fade factors
  * there and "no fade" is 1, not 0 (0 nukes any multiply stage to black). */
 
-/* Get color input (shader_transparent::input_t) as vec3 */
+/* Get color input (blam::shader::color_input) as vec3. reg[3]/reg[4] are the
+ * vertex registers: vertex_color_0 is the diffuse light, vertex_color_1 the
+ * perpendicular fade. */
 vec3 sotr_cin(uint i, vec4 reg[9], vec4 c0, vec4 c1)
 {
     if(i ==  1u) return vec3(1);
     if(i ==  2u) return vec3(0.5);
     if(i ==  3u) return vec3(-1);
     if(i ==  4u) return vec3(-0.5);
-    if(i >=  5u && i <= 8u)  return reg[i].rgb;        // map_color0..3
-    if(i ==  9u || i == 10u) return reg[i - 6u].rgb;   // vertex_color0/1
-    if(i == 11u || i == 12u) return reg[i - 10u].rgb;  // scratch_color0/1
-    if(i == 13u) return c0.rgb;   // constant_color0
-    if(i == 14u) return c1.rgb;   // constant_color1
-    if(i >= 15u && i <= 18u) return vec3(reg[i - 10u].a); // map_alpha0..3
-    if(i == 19u || i == 20u) return vec3(reg[i - 16u].a); // vertex_alpha0/1
-    if(i == 21u || i == 22u) return vec3(reg[i - 20u].a); // scratch_alpha0/1
-    if(i == 23u) return vec3(c0.a); // constant_alpha0
-    if(i == 24u) return vec3(c1.a); // constant_alpha1
+    if(i >=  5u && i <=  8u) return reg[i].rgb;           // map_color_0..3
+    if(i ==  9u || i == 10u) return reg[i - 6u].rgb;      // vertex_color_0/1
+    if(i == 11u || i == 12u) return reg[i - 10u].rgb;     // scratch_color_0/1
+    if(i == 13u) return c0.rgb;                           // constant_color_0
+    if(i == 14u) return c1.rgb;                           // constant_color_1
+    if(i >= 15u && i <= 18u) return vec3(reg[i - 10u].a); // map_alpha_0..3
+    if(i == 19u || i == 20u) return vec3(reg[i - 16u].a); // vertex_alpha_0/1
+    if(i == 21u || i == 22u) return vec3(reg[i - 20u].a); // scratch_alpha_0/1
+    if(i == 23u) return vec3(c0.a);                       // constant_alpha_0
+    if(i == 24u) return vec3(c1.a);                       // constant_alpha_1
     return vec3(0); // zero
 }
 
@@ -735,8 +741,28 @@ vec4 shader_transparent(in Material mat)
         for(int r = 0; r < 9; r++)
             inr[r] = reg[r];
 
+        /* constant_color0 ramps between its bounds, alpha included, and the
+         * CPU hands us the time-animated value. With a_out_controls_color0_anim
+         * the ramp is driven by this stage's alpha output instead, so the alpha
+         * chain is resolved first and the colour inputs read the result. These
+         * shaders use the constant to blend their static map against scrolling
+         * noise; pinned at one end the static map never shows and the effect
+         * smears. constant_color1 is a plain constant. */
         vec4 c0 = s.color0;
         vec4 c1 = s.color1;
+
+        bool alpha_mux = (s.flags & 2u) != 0u;
+        if((s.flags & 4u) != 0u)
+            c0 = mix(s.color0, s.color0_up, clamp(inr[1].a, 0.0, 1.0));
+        float aa = sotr_smap(sotr_ain(aa_i, inr, c0, c1), aa_m);
+        float ab = sotr_smap(sotr_ain(ab_i, inr, c0, c1), ab_m);
+        float ac = sotr_smap(sotr_ain(ac_i, inr, c0, c1), ac_m);
+        float ad = sotr_smap(sotr_ain(ad_i, inr, c0, c1), ad_m);
+
+        float a_ab = aa * ab;
+        float a_cd = ac * ad;
+        float a_sum =
+            alpha_mux ? (inr[1].a >= 0.5 ? a_cd : a_ab) : (a_ab + a_cd);
 
         /* Color: get + map inputs */
         vec3 ca = sotr_cmap(sotr_cin(ca_i, inr, c0, c1), ca_m);
@@ -751,7 +777,6 @@ vec4 shader_transparent(in Material mat)
          * stage flag it's the combiner MUX, selecting CD when r0.a ≥ 0.5,
          * else AB. Summing where mux was meant over-brightens badly. */
         bool color_mux = (s.flags & 1u) != 0u;
-        bool alpha_mux = (s.flags & 2u) != 0u;
         vec3 c_sum =
             color_mux ? (inr[1].a >= 0.5 ? c_cd : c_ab) : (c_ab + c_cd);
 
@@ -763,17 +788,6 @@ vec4 shader_transparent(in Material mat)
         if(c_sum_d <= 8u)
             reg[c_sum_d].rgb = clamp(sotr_omap(c_sum, c_om), -1.0, 1.0);
         reg[0] = vec4(0); /* keep the discard sink discarded */
-
-        /* Alpha: get + map inputs (from the stage-entry snapshot) */
-        float aa = sotr_smap(sotr_ain(aa_i, inr, c0, c1), aa_m);
-        float ab = sotr_smap(sotr_ain(ab_i, inr, c0, c1), ab_m);
-        float ac = sotr_smap(sotr_ain(ac_i, inr, c0, c1), ac_m);
-        float ad = sotr_smap(sotr_ain(ad_i, inr, c0, c1), ad_m);
-
-        float a_ab = aa * ab;
-        float a_cd = ac * ad;
-        float a_sum =
-            alpha_mux ? (inr[1].a >= 0.5 ? a_cd : a_ab) : (a_ab + a_cd);
 
         if(a_ab_d <= 8u)
             reg[a_ab_d].a = clamp(sotr_somap(a_ab, a_om), -1.0, 1.0);
@@ -789,9 +803,10 @@ vec4 shader_transparent(in Material mat)
     /* blend_mode (chicago::framebuffer_blending):
      * 0=alpha_blend 1=multiply 2=double_multiply 3=add 4=subtract
      * 5=component_min 6=component_max 7=alpha_multiply_add
-     * The engine's additive blend is (SRC_ALPHA, ONE), but Halo's true `add`
-     * and component_max are alpha-independent. Force alpha=1 there so the
-     * (SRC_ALPHA, ONE) state becomes straight additive (ONE, ONE). */
+     * The engine's additive state is (SRC_ALPHA, ONE), but that is what
+     * `alpha_multiply_add` asks for. Plain `add`, like component_min/max, is
+     * alpha-independent — modulating it by the combiner alpha erases every
+     * shader whose alpha chain resolves low. */
     uint bm = trd.blend_mode;
     if(bm == 3u || bm == 5u || bm == 6u)
         sc0.a = 1.0;

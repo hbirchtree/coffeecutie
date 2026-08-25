@@ -648,6 +648,29 @@ struct ResourceLoader
         load_world_lighting(p, 0);
     }
 
+    /* A device machine's power comes from the scenario device group it points
+     * at. Most machines reference no group (index -1), and objects that are not
+     * devices have none at all; both report -1 so the shader falls back rather
+     * than treating them as unpowered. */
+    template<typename T>
+    libc_types::f32 device_power(BlamFiles<Ver>& files, T const& instance)
+    {
+        if constexpr(std::is_same_v<T, blam::scn::device_machine_spawn>)
+        {
+            auto const* scenario = files.container.scenario().value_or(nullptr);
+            if(!scenario || instance.power_group < 0)
+                return -1.f;
+            auto groups = scenario->objects.device_groups.data(
+                files.container.magic);
+            if(groups.has_error() ||
+               static_cast<size_t>(instance.power_group) >=
+                   groups.value().size())
+                return -1.f;
+            return groups.value()[instance.power_group].initial_value;
+        } else
+            return -1.f;
+    }
+
     /* One scenario object palette (scenery, vehicles, bipeds, ...): resolve
      * each instance's model, apply its idle animation frame, and build the
      * parent + submodel entities. */
@@ -724,6 +747,7 @@ struct ResourceLoader
 
             spawn.tag           = instance_tag;
             spawn.header        = &instance;
+            spawn.power         = device_power(files, instance);
             model.tag           = &(*model_it);
             model.model         = mesh_data.models.at(0);
             model.origin_object = instance_tag;

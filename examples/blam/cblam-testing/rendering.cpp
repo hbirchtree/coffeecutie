@@ -264,6 +264,7 @@ using DrawListBuilderManifest = compo::SubsystemManifest<
         const BspReference,
         const SubModel,
         const Model,
+        const ObjectSpawn,
         const Visibility,
         const PlayerCamera,
         const PlayerInfo>,
@@ -680,8 +681,15 @@ struct DrawListBuilder
                 time);
             if(static_cast<size_t>(instance_id) <
                pass.transparent_mapping.size())
+            {
+                auto const* obj = p.template get<ObjectSpawn>(smodel.parent);
+                f32         power = obj ? obj->power : -1.f;
                 shader_cache.update_transparent_animations(
-                    pass.transparent_of(instance_id), smodel.shader, time);
+                    pass.transparent_of(instance_id),
+                    smodel.shader,
+                    time,
+                    power);
+            }
         }
 
         for(auto ent : p.select(ObjectBsp))

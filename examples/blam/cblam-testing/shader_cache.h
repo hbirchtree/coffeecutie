@@ -139,7 +139,8 @@ struct ShaderCache
     void update_transparent_animations(
         materials::transparent_data& mat,
         generation_idx_t const&      shader_id,
-        time_point const&            time)
+        time_point const&            time,
+        f32                          a_out = -1.f)
     {
         using namespace blam::shader;
 
@@ -177,12 +178,11 @@ struct ShaderCache
             return;
         f32 f;
         if(static_cast<u32>(s0.flags) & 0x4u)
-            /* a_out_controls_color0_anim: driven by the object's exported
-             * function (e.g. generator power), which we don't simulate.
-             * Stand-in: steady low value — the generator shield reads as
-             * violet there (blue constant blended slightly toward its red
-             * counterpart); higher values shift it pink. */
-            f = 0.15f;
+            /* a_out_controls_color0_anim: the object's exported function drives
+             * the constant. For a device that is its power, which the scenario
+             * hands us; scenery has none and rests near the lower bound, where
+             * the generator shield reads violet. */
+            f = a_out >= 0.f ? glm::clamp(a_out, 0.f, 1.f) : 0.15f;
         else
             f = transparent_color0_factor(s0, t);
         Vecf4 c = glm::mix(s0.color0_lower, s0.color0_upper, f);
@@ -190,10 +190,8 @@ struct ShaderCache
          * stage's own animated weight. */
         Vecf3 global_rgb(c.y, c.z, c.w);
         if(static_cast<u32>(s0.flags) & 0x4u)
-            /* Part of the function stand-in: soften the constant toward
-             * white so fully-constant-lit areas (shield spots where both
-             * mask and scratch alpha drop out) read pale instead of
-             * fully saturated. */
+            /* Softens the constant toward white so areas lit purely by it read
+             * pale rather than fully saturated. */
             global_rgb = glm::mix(global_rgb, Vecf3(1.f), 0.35f);
         /* mat lives in the mapped GPU buffer and may not be populated yet
          * on the first frame an instance appears (update runs before
@@ -312,11 +310,7 @@ struct ShaderCache
         u32 i = 0;
         for(chicago::map_t const& map : maps)
         {
-            auto uv = uv_animation(map.anim_2d, t);
-            Vecf2 const scale = mat.maps[i].uv_scale;
-            uv = Vecf2(
-                scale.x != 0.f ? uv.x / scale.x : uv.x,
-                scale.y != 0.f ? uv.y / scale.y : uv.y);
+            auto        uv = uv_animation(map.anim_2d, t);
             auto const& i2 = mat.material.inputs[0];
             switch(i)
             {

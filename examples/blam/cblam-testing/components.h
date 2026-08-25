@@ -193,6 +193,7 @@ struct ObjectSpawn
 
     blam::scn::object_spawn const* header = nullptr;
     blam::tag_t const*             tag    = nullptr;
+    libc_types::f32 power{-1.f};
 };
 
 struct MultiplayerSpawn
