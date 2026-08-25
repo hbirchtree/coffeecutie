@@ -2,6 +2,7 @@
  * answered from the tag instead of from the rendered frame. */
 
 #include <blam/volta/blam_bitm.h>
+#include <blam/volta/blam_swizzle.h>
 #include <blam/volta/blam_shaders.h>
 #include <blam/volta/blam_stl.h>
 #include <blam/volta/blam_versions.h>
@@ -25,6 +26,29 @@ using Coffee::Logging::cWarning;
 namespace {
 
 blam::map_ptr g_magic;
+/* Pixel data is addressed by absolute file offset, unlike tag data */
+blam::map_ptr g_raw_magic;
+bool          g_channel_stats{false};
+std::string   g_dump_prefix{};
+
+/* Writes each byte position of a 32-bit image as its own greyscale PGM, so the
+ * channel order can be settled by looking at which one carries the mask. */
+void dump_planes(
+    std::string const& name, semantic::Span<const libc_types::u8> px, u32 w, u32 h)
+{
+    for(u32 c = 0; c < 4; c++)
+    {
+        auto  path = fmt::format("{}_{}_byte{}.pgm", g_dump_prefix, name, c);
+        auto* fp   = fopen(path.c_str(), "wb");
+        if(!fp)
+            continue;
+        fprintf(fp, "P5\n%u %u\n255\n", w, h);
+        for(size_t i = 0; i < static_cast<size_t>(w) * h; i++)
+            fputc(px[i * 4 + c], fp);
+        fclose(fp);
+        printf("      wrote %s\n", path.c_str());
+    }
+}
 
 std::string_view sv(std::string_view v)
 {
@@ -288,7 +312,7 @@ void dump_senv(blam::shader::shader_env const* info)
 
 /* ---- bitm ---- */
 
-void dump_bitm(blam::bitm::header_t const* header)
+void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
 {
     print_enum("  type", header->type);
     print_enum("format", header->format);
@@ -335,6 +359,68 @@ void dump_bitm(blam::bitm::header_t const* header)
     printf("  images=%u\n", images.has_value() ? images.value().size() : 0u);
     if(!images.has_value())
         return;
+    if(g_channel_stats)
+        for(auto const& img : images.value())
+        {
+            if(img.format != blam::bitm::format_t::ARGB8 &&
+               img.format != blam::bitm::format_t::XRGB8)
+                continue;
+            /* image_t::data() is what the engine itself uses; a hand-rolled
+             * read of img.offset does not land in the same place. */
+            auto data = img.data(g_raw_magic, 0);
+            printf("    data(): %zu bytes (expected %u)\n",
+                   data.size(),
+                   img.isize.x * img.isize.y * 4u);
+            /* Byte order is what is in question, so report per byte position;
+             * Morton swizzling permutes pixels, never channels, so these are
+             * exact whether or not the image is swizzled. */
+            u32 lo[4] = {255, 255, 255, 255}, hi[4] = {0, 0, 0, 0};
+            libc_types::u64 sum[4] = {0, 0, 0, 0};
+            size_t          px     = data.size() / 4;
+            for(size_t i = 0; i < px; i++)
+                for(u32 c = 0; c < 4; c++)
+                {
+                    u32 v  = data[i * 4 + c];
+                    lo[c]  = std::min(lo[c], v);
+                    hi[c]  = std::max(hi[c], v);
+                    sum[c] += v;
+                }
+            if(!g_dump_prefix.empty())
+            {
+                /* Xbox stores these Morton-swizzled; linearise first or the
+                 * plane images are unreadable. */
+                std::vector<libc_types::u8> linear(data.size());
+                auto view = data;
+                if(static_cast<u16>(img.flags) &
+                   static_cast<u16>(blam::bitm::flags_t::swizzled))
+                    if(blam::swizzle::deswizzle_bytes(
+                           data,
+                           semantic::Span<libc_types::u8>(
+                               linear.data(), linear.size()),
+                           static_cast<u32>(img.isize.x),
+                           static_cast<u32>(img.isize.y),
+                           4u))
+                        view = semantic::Span<const libc_types::u8>(
+                            linear.data(), linear.size());
+                auto short_name = std::string(
+                    name.substr(name.find_last_of('\\') + 1));
+                for(auto& ch : short_name)
+                    if(ch == ' ')
+                        ch = '_';
+                dump_planes(
+                    short_name,
+                    view,
+                    static_cast<u32>(img.isize.x),
+                    static_cast<u32>(img.isize.y));
+            }
+            printf("    byte stats over %zu px:\n", px);
+            for(u32 c = 0; c < 4; c++)
+                printf("      byte %u: min=%3u max=%3u mean=%6.1f\n",
+                       c,
+                       lo[c],
+                       hi[c],
+                       px ? static_cast<double>(sum[c]) / px : 0.0);
+        }
     u32 i = 0;
     for(auto const& img : images.value())
     {
@@ -422,7 +508,7 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
             auto [_, header, magic] = *res;
             auto saved              = g_magic;
             g_magic                 = magic;
-            dump_bitm(header);
+            dump_bitm(header, name);
             g_magic = saved;
         }
         break;
@@ -454,7 +540,12 @@ void open_map(
     }
     blam::map_container<Ver> map = std::move(map_.value());
     blam::tag_index_view<Ver> index(map);
-    g_magic = map.magic;
+    g_magic     = map.magic;
+    /* Exactly how BitmapCache builds bitm_magic for Xbox: the map's own magic
+     * with the file offset zeroed. Building one from the file start instead
+     * lands on unrelated bytes. */
+    g_raw_magic             = map.magic;
+    g_raw_magic.file_offset = 0;
 
     u32 matched = 0;
     for(blam::tag_t const& tag : index)
@@ -505,6 +596,10 @@ int inspect_main()
         //
         ("l,list", "List matching tags instead of dumping them")
         //
+        ("channel-stats", "For 32-bit bitmaps, report min/max/mean per byte position")
+        //
+        ("dump-planes", "Write each byte position of 32-bit bitmaps as a PGM with this path prefix", cxxopts::value<std::string>())
+        //
         ;
 
     auto& args      = Coffee::GetInitArgs();
@@ -524,7 +619,12 @@ int inspect_main()
         arguments.as_optional<std::string>("class").value_or("");
     std::string name_filter =
         arguments.as_optional<std::string>("name").value_or("");
-    bool list_only = arguments.count("list") > 0;
+    bool list_only  = arguments.count("list") > 0;
+    g_channel_stats = arguments.count("channel-stats") > 0;
+    g_dump_prefix =
+        arguments.as_optional<std::string>("dump-planes").value_or("");
+    if(!g_dump_prefix.empty())
+        g_channel_stats = true;
 
     auto const& path = arguments.unmatched().at(0);
 
