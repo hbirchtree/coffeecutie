@@ -1,3 +1,4 @@
+#include "glw/enums/TextureTarget.h"
 #include "peripherals/typing/enum/graphics/shader_stage.h"
 #include "peripherals/typing/enum/pixels/filtering.h"
 #include <coffee/graphics/apis/gleam/rhi.h>
@@ -140,12 +141,22 @@ void texture_t::alloc(size_type const& size, bool create_storage)
 
         using textures::type;
 
+        const std::array<group::texture_target, 6> cube_faces = {{
+            group::texture_target::texture_cube_map_positive_x,
+            group::texture_target::texture_cube_map_negative_x,
+            group::texture_target::texture_cube_map_positive_y,
+            group::texture_target::texture_cube_map_negative_y,
+            group::texture_target::texture_cube_map_positive_z,
+            group::texture_target::texture_cube_map_negative_z,
+        }};
+
 #if GLEAM_MAX_VERSION >= 0x450
         if(is_immutable && m_features.dsa && !is_compressed)
         {
             switch(m_type)
             {
             case type::d2:
+            case type::cube:
                 cmd::texture_storage_2d(m_handle, m_mipmaps, sized_fmt, glsize);
                 break;
             case type::d2_array:
@@ -165,6 +176,7 @@ void texture_t::alloc(size_type const& size, bool create_storage)
             switch(m_type)
             {
             case type::d2:
+            case type::cube:
                 cmd::tex_storage_2d(target, m_mipmaps, sized_fmt, glsize);
                 break;
             case type::d2_array:
@@ -210,6 +222,22 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                         null_span<>{alloc_size}
 #endif
                     );
+                    break;
+                case type::cube:
+                    for(auto face : cube_faces)
+                        cmd::compressed_tex_image_2d(
+                            face,
+                            i,
+                            ifmt,
+                            size_2d<i32>{signed_size.w, signed_size.h},
+                            0,
+#if defined(COFFEE_EMSCRIPTEN)
+                            semantic::SpanOver<libc_types::u8>(
+                                black.begin(), black.end())
+#else
+                            null_span<>{alloc_size}
+#endif
+                        );
                     break;
 #if GLEAM_MAX_VERSION >= 0x120 || GLEAM_MAX_VERSION_ES >= 0x300
                 case type::d3:
@@ -295,6 +323,23 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                         pfmt,
                         ptype,
                         null_data);
+                };
+                break;
+            case type::cube:
+                create_level = [&](size_3d<i32> const& s, i32 i) {
+                    auto [old_fmt, ptype, pfmt] =
+                        convert::to<group::internal_format>(
+                            alloc_format, m_features);
+                    for(auto face : cube_faces)
+                        cmd::tex_image_2d(
+                            face,
+                            i,
+                            static_cast<u32>(old_fmt),
+                            s,
+                            0,
+                            pfmt,
+                            ptype,
+                            null_data);
                 };
                 break;
 #if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300 || \

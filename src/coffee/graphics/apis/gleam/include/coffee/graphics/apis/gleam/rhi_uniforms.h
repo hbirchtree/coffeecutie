@@ -28,6 +28,7 @@ struct unknown_shader_stage : std::runtime_error
 
 struct shader_bookkeeping_t
 {
+    u32 draw_index{0};
     u32 buffer_idx{0};
     u32 sampler_idx{0};
     u32 view_idx{0};
@@ -807,6 +808,76 @@ inline void undo_command_modifier(
     stencil_state&& /*view_info*/)
 {
     cmd::disable(group::enable_cap::stencil_test);
+}
+
+
+/* base_instance_sampler_list: the texture behind each sampler is chosen per
+ * draw. */
+inline bool apply_command_modifier(
+    program_t&                  program,
+    shader_bookkeeping_t&       bookkeeping,
+    base_instance_sampler_list& list)
+{
+    if(list.slots.empty())
+        return true;
+
+    list.first_unit = bookkeeping.sampler_idx;
+    u32 index       = list.first_unit;
+
+    for(auto const& slot : list.slots)
+    {
+        /* Whatever binds here is a placeholder for draws that never resolve
+         * to a texture */
+        if(auto* tex = slot.resolve(0); tex)
+        {
+            cmd::active_texture(group::texture_unit::texture0 + index);
+            cmd::bind_texture(convert::to(tex->m_type), tex->m_handle);
+#if GLEAM_MAX_VERSION_ES != 0x200
+            if(tex->m_features.samplers && slot.sampler)
+                cmd::bind_sampler(index, slot.sampler->m_handle);
+#endif
+        }
+        apply_sampler_uniform(program, slot.stage, slot.location, index);
+        index++;
+    }
+    bookkeeping.sampler_idx = index;
+    return true;
+}
+
+inline bool apply_command_modifier_per_call(
+    program_t&,
+    shader_bookkeeping_t&       bookkeeping,
+    base_instance_sampler_list& list,
+    u32 /*base_instance*/,
+    u32 /*instance_id*/)
+{
+    u32 index = list.first_unit;
+    for(auto const& slot : list.slots)
+    {
+        auto* tex = slot.resolve(bookkeeping.draw_index);
+        if(!tex)
+        {
+            index++;
+            continue;
+        }
+        cmd::active_texture(group::texture_unit::texture0 + index);
+        cmd::bind_texture(convert::to(tex->m_type), tex->m_handle);
+#if GLEAM_MAX_VERSION_ES != 0x200
+        if(!tex->m_features.samplers)
+#endif
+            if(slot.sampler)
+                apply_texture_filtering_opts(
+                    tex->m_type, slot.sampler->m_min, slot.sampler->m_mag);
+        index++;
+    }
+    return true;
+}
+
+inline void undo_command_modifier(
+    program_t const& /*program*/,
+    shader_bookkeeping_t& /*bookkeeping*/,
+    base_instance_sampler_list&& /*list*/)
+{
 }
 
 } // namespace gleam::detail

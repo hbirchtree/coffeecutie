@@ -131,6 +131,7 @@ struct api
                 decltype(d2),
                 decltype(d2_array),
                 decltype(d3),
+                decltype(cube),
                 decltype(cube_array)>,
             "invalid texture type");
         [[maybe_unused]] const auto no_3d_textures =
@@ -140,6 +141,17 @@ struct api
         if constexpr(T::value == textures::type::d2)
         {
             return std::make_shared<texture_2d_t>(
+                m_features.texture,
+                m_workarounds,
+                std::ref(m_texture_decode_queue),
+                std::ref(*m_debug),
+                T::value,
+                data_type,
+                mipmaps,
+                properties);
+        } else if constexpr(T::value == textures::type::cube)
+        {
+            return std::make_shared<texture_cube_t>(
                 m_features.texture,
                 m_workarounds,
                 std::ref(m_texture_decode_queue),

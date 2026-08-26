@@ -1,5 +1,7 @@
 #pragma once
 
+#include <span>
+
 #include <peripherals/semantic/enum/data_types.h>
 
 #include "rhi_program.h"
@@ -11,6 +13,7 @@
 namespace gleam {
 
 struct sampler_t;
+struct texture_t;
 
 constexpr libc_types::i32 invalid_uniform = -1;
 
@@ -165,6 +168,33 @@ inline auto make_sampler_list(Samplers&&... defs)
 }
 
 using sampler_list = declreturntype(make_sampler_list<>);
+
+/*!
+ * \brief A sampler whose texture is picked per draw, keyed on the draw's
+ *        base instance.
+ */
+struct base_instance_sampler_t
+{
+    typing::graphics::ShaderStage stage{};
+    uniform_key                   location{};
+    std::shared_ptr<sampler_t>    sampler;
+
+    std::span<std::shared_ptr<texture_t> const> textures;
+    std::shared_ptr<texture_t>                  fallback;
+
+    inline texture_t* resolve(libc_types::u32 draw_index) const
+    {
+        if(draw_index < textures.size() && textures[draw_index])
+            return textures[draw_index].get();
+        return fallback.get();
+    }
+};
+
+struct base_instance_sampler_list
+{
+    std::vector<base_instance_sampler_t> slots;
+    libc_types::u32                      first_unit{0};
+};
 
 template<typename... Textures>
 requires(std::is_same_v<Textures, raw_texture_definition_t> && ...)

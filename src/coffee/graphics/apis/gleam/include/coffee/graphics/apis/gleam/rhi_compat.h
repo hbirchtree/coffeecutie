@@ -1,6 +1,7 @@
 #pragma once
 
 #include "glw/enums/TextureTarget.h"
+#include "peripherals/concepts/graphics_api.h"
 #include "peripherals/enum/helpers.h"
 #include "peripherals/typing/geometry/size.h"
 #include "rhi.h"
@@ -14,6 +15,22 @@ using texture_array_base_t =
     texture_t
 #else
     texture_2da_t
+#endif
+    ;
+
+constexpr bool has_cube_array_target =
+#if GLEAM_MAX_VERSION >= 0x410 || GLEAM_MAX_VERSION_ES >= 0x320
+    true
+#else
+    false
+#endif
+    ;
+
+using texture_cube_base_t =
+#if GLEAM_MAX_VERSION >= 0x410 || GLEAM_MAX_VERSION_ES >= 0x320
+    gleam::texture_cube_array_t
+#else
+    texture_cube_t
 #endif
     ;
 
@@ -105,7 +122,7 @@ struct texture_2da_t : texture_array_base_t
                 m_page_allocated.resize(layer + 1, false);
             if(!m_page_allocated[layer])
             {
-                m_textures.at(offset[2])->alloc(
+                m_textures.at(layer)->alloc(
                     size_3d<u32>{
                         static_cast<u32>(size[0]),
                         static_cast<u32>(size[1]),
@@ -140,6 +157,113 @@ struct texture_2da_t : texture_array_base_t
 
   private:
     api* m_api;
+    bool m_compat_active{false};
+};
+
+struct texture_cube_array_t : texture_cube_base_t
+{
+    texture_cube_array_t(
+        api* api,
+        PixDesc const& fmt,
+        u32 mips,
+        textures::property properties = textures::property::none)
+        : texture_cube_base_t(
+            api->feature_info().texture,
+            api->workarounds(),
+            api->queue<api::queues::texture_decode>(),
+            api->debug(),
+            textures::type::cube_array,
+            fmt,
+            mips,
+            properties)
+        , m_api(api)
+        , m_compat_active(!has_cube_array_target || !m_features.cube_array)
+    {
+        if(m_compat_active)
+            m_type = textures::type::cube;
+    }
+
+    virtual void alloc(size_type const& size, bool create_storage = true)
+    {
+        if constexpr(has_cube_array_target)
+        {
+            if(!m_compat_active)
+            {
+                texture_cube_base_t::alloc(size, create_storage);
+                return;
+            }
+        }
+        bool const sparse =
+            enum_helpers::feval(m_hints, texture_usage_hint_t::sparse_atlas);
+        if(sparse)
+            m_page_allocated.assign(size.d, false);
+        m_textures.reserve(size.d);
+        size_type const face_size{size.w, size.h, 1};
+        for(C_UNUSED(auto _) : stl_types::range<>(size.d))
+        {
+            m_textures.emplace_back(m_api->alloc_texture(
+                textures::cube, m_format, m_mipmaps));
+            if(sparse)
+                continue;
+            m_textures.back()->alloc(face_size, create_storage);
+        }
+    }
+
+    template<class T, class VectorT, class SizeT>
+    void upload(
+        T const& data, VectorT const& offset, SizeT const& size, u32 level = 0)
+    {
+        if constexpr(has_cube_array_target)
+        {
+            if(!m_compat_active)
+            {
+                texture_cube_base_t::upload(data, offset, size, level);
+                return;
+            }
+        }
+        if(enum_helpers::feval(m_hints, texture_usage_hint_t::sparse_atlas))
+        {
+            u32 layer = static_cast<u32>(offset[2]);
+            if(layer >= m_page_allocated.size())
+                m_page_allocated.resize(layer + 1, false);
+            if(!m_page_allocated[layer])
+            {
+                m_textures.at(layer)->alloc(
+                    size_3d<u32>{
+                        static_cast<u32>(size[0]),
+                        static_cast<u32>(size[1]),
+                        1u
+                    },
+                    true);
+                m_page_allocated[layer] = true;
+            }
+        }
+        m_textures.at(offset[2])->upload(
+            data,
+            typing::vector_types::Veci2{offset[0], offset[1]},
+            size_2d<i32>{size[0], size[1]},
+            level);
+    }
+
+    void set_usage_hint(texture_usage_hint_t hint)
+    {
+        m_hints |= hint;
+    }
+
+    std::shared_ptr<texture_cube_t> subtexture(u32 i)
+    {
+        if(i >= m_textures.size())
+            return nullptr;
+        return m_textures.at(i);
+    }
+
+    texture_usage_hint_t m_hints{texture_usage_hint_t::no_hints};
+    std::vector<std::shared_ptr<texture_cube_t>> m_textures;
+    /* sparse_atlas: per-layer lazy-allocation flags */
+    std::vector<bool> m_page_allocated;
+
+  private:
+    api* m_api{nullptr};
     bool m_compat_active{false};
 };
 

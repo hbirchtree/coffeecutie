@@ -1,5 +1,6 @@
 #pragma once
 
+#include "glw/enums/TextureTarget.h"
 #include "rhi_buffer.h"
 #include "rhi_debug.h"
 #include "rhi_features.h"
@@ -30,6 +31,7 @@
 
 #include <coffee/core/task_queue/task.h>
 #include <future>
+#include <peripherals/stl/enumerate.h>
 
 namespace gleam {
 
@@ -454,6 +456,93 @@ struct texture_2d_t : texture_t
                 data);
             cmd::bind_texture(group::texture_target::texture_2d, 0);
         }
+        return std::nullopt;
+    }
+};
+
+constexpr group::texture_target cube_face_target(libc_types::u32 idx)
+{
+    switch(idx)
+    {
+    case 0: return group::texture_target::texture_cube_map_positive_x;
+    case 1: return group::texture_target::texture_cube_map_negative_x;
+    case 2: return group::texture_target::texture_cube_map_positive_y;
+    case 3: return group::texture_target::texture_cube_map_negative_y;
+    case 4: return group::texture_target::texture_cube_map_positive_z;
+    case 5: return group::texture_target::texture_cube_map_negative_z;
+    default: return group::texture_target::texture_cube_map;
+    }
+}
+
+/* Not normally used, but used by compat fallback for texture_cube_array_t */
+struct texture_cube_t : texture_t
+{
+    using texture_t::texture_t;
+
+    template<class T, class VectorT, class SizeT>
+    std::optional<error> upload(
+        std::array<T, 6> const& data,
+        VectorT const&          offset,
+        SizeT const&            size,
+        i32                     level = 0)
+    {
+        auto [ifmt1, type, layout] = convert::to<group::internal_format>(
+            software_decode_format().value_or(m_format), m_features);
+        auto is_compressed =
+            format_description().is_compressed() && !requires_software_decode();
+        cmd::bind_texture(group::texture_target::texture_cube_map, m_handle);
+        for(auto const& [idx, face] : stl_types::enumerate<decltype(data)>(data))
+        {
+            /* Normally we'd have a GL 4.5/ES 3.2 codepath here
+             * But those should use the cubemap array to begin with
+             * So we omitted it here
+             */
+            if(is_compressed)
+            {
+                cmd::compressed_tex_sub_image_2d(
+                    cube_face_target(idx),
+                    level,
+                    offset,
+                    size,
+                    ifmt1,
+                    face);
+            } else if(requires_software_decode())
+            {
+                auto bits = software_decode_cast(std::move(face), size, level);
+                rq::runtime_queue::Queue(
+                    rq::runtime_queue::GetCurrentQueue().value(),
+                    rq::dependent_task<std::vector<char>, void>::CreateSink(
+                        std::move(bits),
+                        [this,
+                         offset,
+                         size,
+                         level,
+                         layout = layout,
+                         type   = type,
+                         idx](std::vector<char> const* bits) {
+                            cmd::tex_sub_image_2d(
+                                cube_face_target(idx),
+                                level,
+                                offset,
+                                size,
+                                layout,
+                                type,
+                                *bits);
+                        }))
+                    .has_value();
+            } else
+            {
+                cmd::tex_sub_image_2d(
+                    cube_face_target(idx),
+                    level,
+                    offset,
+                    size,
+                    layout,
+                    type,
+                    face);
+            }
+        }
+        cmd::bind_texture(group::texture_target::texture_cube_map, 0);
         return std::nullopt;
     }
 };

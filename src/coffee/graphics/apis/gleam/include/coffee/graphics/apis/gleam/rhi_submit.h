@@ -172,6 +172,16 @@ inline optional<tuple<error, std::string_view>> api::submit(
             modifiers...);
         return result;
     }() && m_workarounds.draw.advance_ubos_by_baseinstance;
+    const bool uses_per_draw_textures = [&modifiers...]() {
+        bool result = false;
+        stl_types::for_each_if_type<base_instance_sampler_list>(
+            [&result](base_instance_sampler_list const& list) {
+                if(!list.slots.empty())
+                    result = true;
+            },
+            modifiers...);
+        return result;
+    }();
     const bool uses_vertex_offset =
         (call.indexed &&
             stl_types::any_of(
@@ -424,7 +434,8 @@ inline optional<tuple<error, std::string_view>> api::submit(
             return d.elements.type == data.at(0).elements.type;
         });
     const bool multi_indirect_supported //= false;
-        = !uses_ubo_advancing && m_features.draw.multi_indirect &&
+        = !uses_ubo_advancing && !uses_per_draw_textures &&
+          m_features.draw.multi_indirect &&
           (m_api_type == api_type_t::core ? m_api_version >= 0x430 : false);
     const bool legacy_draw_only =
         m_api_type == api_type_t::es && m_api_version == 0x200;
@@ -470,6 +481,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
     } else if(indirect_supported)
     {
         m_usage.draw.draws += data.size();
+        bookkeeping.draw_index = 0;
         for(auto d : data)
         {
             auto dbg_id = debug().scope(d.debug_identifier.value_or(""));
@@ -477,11 +489,21 @@ inline optional<tuple<error, std::string_view>> api::submit(
             bookkeeping.baseInstance = d.instances.offset;
             apply_ubo_offset(d.instances.offset, d.instances.count);
             d = apply_base_instance(d);
+            if(uses_per_draw_textures)
+                (detail::apply_command_modifier_per_call(
+                     *program,
+                     bookkeeping,
+                     modifiers,
+                     d.instances.offset,
+                     d.instances.offset),
+                 ...);
             detail::indirect_draw(call, d, *m_indirect_buffer);
+            bookkeeping.draw_index++;
         }
     } else if(!legacy_draw_only)
     {
         m_usage.draw.draws += data.size();
+        bookkeeping.draw_index = 0;
         for(auto d : data)
         {
             auto dbg_id = debug().scope(d.debug_identifier.value_or(""));
@@ -489,9 +511,18 @@ inline optional<tuple<error, std::string_view>> api::submit(
             bookkeeping.baseInstance = d.instances.offset;
             apply_ubo_offset(d.instances.offset, d.instances.count);
             d = apply_base_instance(d);
+            if(uses_per_draw_textures)
+                (detail::apply_command_modifier_per_call(
+                     *program,
+                     bookkeeping,
+                     modifiers,
+                     d.instances.offset,
+                     d.instances.offset),
+                 ...);
             apply_vertex_offset(call.indexed ? d.elements.vertex_offset : 0);
             detail::direct_draw(
                 call, d, bookkeeping, m_workarounds, m_features);
+            bookkeeping.draw_index++;
         }
     } else
 #endif

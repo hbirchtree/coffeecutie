@@ -157,11 +157,13 @@ struct texture_type
 using type_d2         = texture_type<type::d2>;
 using type_d2_array   = texture_type<type::d2_array>;
 using type_d3         = texture_type<type::d3>;
+using type_cube       = texture_type<type::cube>;
 using type_cube_array = texture_type<type::cube_array>;
 
 constexpr texture_type<type::d2>         d2;
 constexpr texture_type<type::d2_array>   d2_array;
 constexpr texture_type<type::d3>         d3;
+constexpr texture_type<type::cube>       cube;
 constexpr texture_type<type::cube_array> cube_array;
 
 static_assert(
