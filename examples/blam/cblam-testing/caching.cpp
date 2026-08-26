@@ -1634,14 +1634,11 @@ void BitmapCache<V>::reserve_storage()
                 &get_bucket<gfx::compat::texture_2da_t>(res.fmt, res.type);
             break;
         }
-#if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION_ES >= 0x320
         case blam::bitm::type_t::tex_cube: {
-            if(!allocator->feature_info().texture.cube_array)
-                continue;
-            bucket = &get_bucket<gfx::texture_cube_array_t>(res.fmt, res.type);
+            bucket = &get_bucket<gfx::compat::texture_cube_array_t>(
+                res.fmt, res.type);
             break;
         }
-#endif
         default:
             continue;
         }
@@ -1763,14 +1760,10 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
             commit_bitmap<gfx::compat::texture_2da_t>(out);
             break;
         }
-#if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION_ES >= 0x320
         case blam::bitm::type_t::tex_cube: {
-            if(!allocator->feature_info().texture.cube_array)
-                return {};
-            commit_bitmap<gfx::texture_cube_array_t>(out);
+            commit_bitmap<gfx::compat::texture_cube_array_t>(out);
             break;
         }
-#endif
         default:
             cDebug(
                 "unimplemented texture type: {0}",

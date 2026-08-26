@@ -108,7 +108,8 @@ vec4 get_cube_map(
     float lod = float((tex_id >> 16) & 0xFF);
     return textureLod(sampler, vec4(tex_coord, tex_id & 0xFFFF), lod);
 #else
-    return texture(sampler, vec3(tex_coord));
+    float lod = float((mat.lightmap.reflection >> 16) & 0xFF);
+    return textureLod(sampler, vec3(tex_coord), lod);
 #endif
 }
 #endif

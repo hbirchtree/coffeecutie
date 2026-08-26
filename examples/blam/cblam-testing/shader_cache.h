@@ -63,6 +63,29 @@ struct ShaderCache
         Vecf2 const&                    base_map_scale,
         std::optional<material_context> context = {});
 
+    generation_idx_t reflection_bitmap(generation_idx_t const& shader_id)
+    {
+        auto it = find(shader_id);
+        if(it == m_cache.end())
+            return generation_idx_t();
+        ShaderItem const& shader = it->second;
+        if(!shader.valid())
+            return generation_idx_t();
+        switch(shader.tag_class)
+        {
+        case blam::tag_class_t::senv:
+            return shader.senv.reflection_bitm;
+        case blam::tag_class_t::soso:
+            return shader.soso.reflection_bitm;
+        case blam::tag_class_t::swat:
+            return shader.swat.reflection;
+        case blam::tag_class_t::sgla:
+            return shader.sgla.reflection_cube;
+        default:
+            return generation_idx_t();
+        }
+    }
+
     void populate_transparent_material(
         materials::transparent_data& mat, generation_idx_t const& shader_id)
     {

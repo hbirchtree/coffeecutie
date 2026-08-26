@@ -93,6 +93,9 @@ struct Pass
     gfx::buffer_slice_t transparent_buffer;
     gfx::buffer_slice_t matrix_buffer;
 
+    std::vector<std::vector<std::shared_ptr<gfx::texture_t>>>
+        reflection_textures;
+
     std::vector<materials::shader_data>      material_staging;
     std::vector<materials::transparent_data> transparent_staging;
     std::vector<PerInstanceData>             matrix_staging;
@@ -183,30 +186,44 @@ struct Pass
         if(sort_centers.empty())
             return;
 
-        std::vector<std::pair<Vecf3, draw_data_t>> flat;
+        std::vector<std::tuple<Vecf3, draw_data_t,
+                               std::shared_ptr<gfx::texture_t>>>
+               flat;
         flat.reserve(sort_centers.size());
         size_t ci = 0;
-        for(auto& bucket : draws)
-            for(auto& d : bucket)
-                flat.push_back({sort_centers[ci++], d});
+        for(size_t bi = 0; bi < draws.size(); bi++)
+            for(size_t di = 0; di < draws[bi].size(); di++)
+            {
+                auto const& cubes = reflections_for(bi);
+                flat.push_back(
+                    {sort_centers[ci++],
+                     draws[bi][di],
+                     di < cubes.size() ? cubes[di] : nullptr});
+            }
 
         /* stable: parts at equal distance (e.g. all sky model parts,
          * which share one transform) keep their creation order. */
         std::stable_sort(
             flat.begin(), flat.end(), [&](auto const& a, auto const& b) {
-                return glm::distance2(a.first, cam) >
-                       glm::distance2(b.first, cam);
+                return glm::distance2(std::get<0>(a), cam) >
+                       glm::distance2(std::get<0>(b), cam);
             });
 
         draws.clear();
         draws.emplace_back();
         sort_centers.clear();
-        for(auto& [c, d] : flat)
+        reflection_textures.clear();
+        for(auto& [c, d, cube] : flat)
         {
             if(draws.back().size() >= 128)
                 draws.emplace_back();
             draws.back().push_back(d);
             sort_centers.push_back(c);
+            if(cube)
+                set_reflection(
+                    static_cast<u16>(draws.size() - 1),
+                    static_cast<u16>(draws.back().size() - 1),
+                    cube);
         }
     }
 
@@ -215,6 +232,27 @@ struct Pass
         draws.clear();
         draws.emplace_back();
         sort_centers.clear();
+        reflection_textures.clear();
+    }
+
+    /* Record the cube for one draw, growing to match `draws`. */
+    inline void set_reflection(
+        u16 bucket, u16 draw, std::shared_ptr<gfx::texture_t> cube)
+    {
+        if(reflection_textures.size() <= bucket)
+            reflection_textures.resize(bucket + 1);
+        auto& b = reflection_textures[bucket];
+        if(b.size() <= draw)
+            b.resize(draw + 1);
+        b[draw] = std::move(cube);
+    }
+
+    inline std::vector<std::shared_ptr<gfx::texture_t>> const&
+    reflections_for(size_t bucket) const
+    {
+        static const std::vector<std::shared_ptr<gfx::texture_t>> none;
+        return bucket < reflection_textures.size() ? reflection_textures[bucket]
+                                                   : none;
     }
 
     inline materials::shader_data& material_of(size_t idx)
@@ -617,6 +655,9 @@ struct DrawListBuilder
                 pass.draws[track.model_id.bucket].at(track.model_id.draw);
             auto instance_id = draw.instances.offset + track.model_id.instance;
 
+            record_reflection_cube(
+                pass, smodel, track.model_id.bucket, track.model_id.draw);
+
             ModelItem<Version>& cache_item =
                 model_cache->find(model.model)->second;
             if(!cache_item.bone_matrices.empty() && cache_item.bone_base < 0)
@@ -752,6 +793,18 @@ struct DrawListBuilder
         default:
             return std::nullopt;
         }
+    }
+
+    void record_reflection_cube(
+        Pass& pass, SubModel const& sub, u16 bucket, u16 draw)
+    {
+        auto refl = shader_cache.reflection_bitmap(sub.shader);
+        if(!refl.valid())
+            return;
+        auto cube = bitm_cache.cube_texture(refl);
+        if(!cube)
+            return;
+        pass.set_reflection(bucket, draw, std::move(cube));
     }
 
     void populate_mod2_material(
@@ -960,12 +1013,14 @@ struct MeshRenderer
 #if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION_ES >= 0x320
         if(std::get<0>(m_api->api_version()) == 2)
             return;
+        if(!m_api->feature_info().texture.cube_array)
+            return;
         samplers.push_back(
             gleam::sampler_definition_t{
                 typing::graphics::ShaderStage::Fragment,
                 {"source_cube_bc1"sv, 9},
                 bitm_cache
-                    .template get_bucket<gfx::texture_cube_array_t>(
+                    .template get_bucket<gfx::compat::texture_cube_array_t>(
                         CompFmt(pix_fmt::BCn, comp_flags::BC1),
                         blam::bitm::type_t::tex_cube)
                     .sampler});
@@ -974,7 +1029,7 @@ struct MeshRenderer
                 typing::graphics::ShaderStage::Fragment,
                 {"source_cube_rgb565"sv, 10},
                 bitm_cache
-                    .template get_bucket<gfx::texture_cube_array_t>(
+                    .template get_bucket<gfx::compat::texture_cube_array_t>(
                         PixDesc(pix_fmt::RGB565), blam::bitm::type_t::tex_cube)
                     .sampler});
         samplers.push_back(
@@ -982,7 +1037,7 @@ struct MeshRenderer
                 typing::graphics::ShaderStage::Fragment,
                 {"source_cube_rgba8"sv, 11},
                 bitm_cache
-                    .template get_bucket<gfx::texture_cube_array_t>(
+                    .template get_bucket<gfx::compat::texture_cube_array_t>(
                         PixDesc(pix_fmt::RGBA8), blam::bitm::type_t::tex_cube)
                     .sampler});
 #endif
@@ -1138,8 +1193,35 @@ struct MeshRenderer
         std::vector<gfx::sampler_definition_t> samplers;
         setup_textures(samplers);
 
-        for(auto const& draw : pass.draws)
+        const bool per_draw_cubes = !m_api->feature_info().texture.cube_array;
+        std::shared_ptr<gfx::texture_t> cube_fallback;
+        if(per_draw_cubes)
+            for(auto const& bucket : pass.reflection_textures)
+            {
+                for(auto const& cube : bucket)
+                    if(cube)
+                    {
+                        cube_fallback = cube;
+                        break;
+                    }
+                if(cube_fallback)
+                    break;
+            }
+
+        for(size_t bucket_idx = 0; bucket_idx < pass.draws.size(); bucket_idx++)
         {
+            auto const& draw = pass.draws[bucket_idx];
+
+            gfx::base_instance_sampler_list cube_slots;
+            if(per_draw_cubes && cube_fallback)
+                cube_slots.slots.push_back(gfx::base_instance_sampler_t{
+                    .stage    = typing::graphics::ShaderStage::Fragment,
+                    .location = {"source_cube"sv, 19},
+                    .sampler  = bitm_cache.cube_sampler(),
+                    .textures = pass.reflections_for(bucket_idx),
+                    .fallback = cube_fallback,
+                });
+
             auto res = m_api->submit(
                 {
                     .program       = pass.command.program,
@@ -1153,6 +1235,7 @@ struct MeshRenderer
                 buffers,
                 get_view_state(idx),
                 samplers,
+                cube_slots,
                 std::forward<Args&&>(extra)...);
             if(res)
                 cFatal("submit error: {}", std::get<1>(*res));

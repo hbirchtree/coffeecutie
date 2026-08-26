@@ -28,9 +28,7 @@ layout(location = 19, binding = 9) uniform samplerCubeArray source_cube_bc1;
 layout(location = 20, binding = 10) uniform samplerCubeArray source_cube_rgb565;
 layout(location = 30, binding = 11) uniform samplerCubeArray source_cube_rgba8;
 #elif USE_REFLECTIONS == 1
-layout(location = 19, binding = 9) uniform samplerCube source_cube_bc1;
-layout(location = 20, binding = 10) uniform samplerCube source_cube_rgb565;
-layout(location = 30, binding = 11) uniform samplerCube source_cube_rgba8;
+layout(location = 19) uniform samplerCube source_cube;
 #endif
 
 layout(location = 21) uniform vec3 camera_position;
@@ -236,6 +234,7 @@ vec3 world_to_cube(in vec3 v)
 vec4 get_cube_color(in vec3 world_dir, in Material mat)
 {
     vec3 tex_coord = world_to_cube(world_dir);
+#if USE_ARRAY_CUBEMAP == 1
     int tex_id = mat.lightmap.reflection;
     uint source = tex_id >> 24;
     if(source == TEX_BC1)
@@ -246,6 +245,9 @@ vec4 get_cube_color(in vec3 world_dir, in Material mat)
         return get_cube_map(source_cube_rgba8, tex_coord, mat);
     else
         return vec4(1);
+#else
+    return get_cube_map(source_cube, tex_coord, mat);
+#endif
 }
 #else
 vec4 get_cube_color(in vec3 tex_coord, in Material mat)

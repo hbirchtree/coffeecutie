@@ -118,14 +118,12 @@ struct BitmapCache
         return gfx::textures::d2_array;
     }
 
-#if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION >= 0x320
     template<typename T>
-    requires std::is_same_v<T, gfx::texture_cube_array_t>
+    requires std::is_same_v<T, gfx::compat::texture_cube_array_t>
     auto bucket_to_type()
     {
         return gfx::textures::cube_array;
     }
-#endif
 
     template<typename T>
     TextureBucket& get_bucket(
@@ -150,18 +148,16 @@ struct BitmapCache
 
         bucket.mip_bias = no_mipmap ? 0 : params->mipmap_bias;
 
-#if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION >= 0x320
-        if(std::is_same_v<T, gfx::texture_cube_array_t>)
+        if constexpr(std::is_same_v<T, gfx::compat::texture_cube_array_t>)
         {
-            // TODO: Add fallback to single cube maps for GL ES 2.0
-            // Most likely a rhi::compat::texture_cube_array_t version
-            // Most models only use one cube map I believe
-            bucket.surface = allocator->alloc_texture(
-                gfx::textures::cube_array, fmt, max_mipmap);
+            auto surface = std::make_shared<gfx::compat::texture_cube_array_t>(
+                allocator, fmt, max_mipmap);
+            surface->set_usage_hint(
+                gfx::compat::texture_usage_hint_t::per_base_instance);
+            bucket.surface = std::move(surface);
         } else
-#endif
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
-            if(std::is_same_v<T, gfx::texture_3d_t>)
+            if constexpr(std::is_same_v<T, gfx::texture_3d_t>)
         {
             // TODO: Find fallback on GL ES 2.0
             // Problem here is that shader_plasma uses TWO 3D textures
@@ -224,11 +220,11 @@ struct BitmapCache
 
         mipmap += img.mipmaps.base;
 
-#if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION >= 0x320
         if(bucket.type == blam::bitm::type_t::tex_cube)
         {
-            gfx::texture_cube_array_t& texture =
-                bucket.template texture_as<gfx::texture_cube_array_t>();
+            gfx::compat::texture_cube_array_t& texture =
+                bucket.template texture_as<
+                    gfx::compat::texture_cube_array_t>();
             auto face_size = img.image.mip->layer_mip_bytes(mipmap);
 
             /* Xbox swizzles each cube face like a 2D texture; deswizzle per
@@ -279,7 +275,6 @@ struct BitmapCache
                 Veci3{size.x, size.y, 1},
                 mipmap - img.mipmaps.base + img.image.array_level);
         } else
-#endif
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
             if(bucket.type == blam::bitm::type_t::tex_3d)
         {
@@ -483,6 +478,36 @@ struct BitmapCache
         BitmapItem const& bitmap = bitmit->second;
         return type_mask(bitmap) | (bitmap.image.array_level << 16) |
                bitmap.image.layer;
+    }
+
+    std::shared_ptr<gfx::sampler_t> cube_sampler()
+    {
+        for(auto& [hash, bucket] : tex_buckets)
+            if(bucket.type == blam::bitm::type_t::tex_cube)
+                return bucket.sampler;
+        return nullptr;
+    }
+
+    std::shared_ptr<gfx::texture_t> cube_texture(generation_idx_t bitm)
+    {
+        if(!bitm.valid())
+            return nullptr;
+        auto bitmit = find(bitm);
+        if(bitmit == m_cache.end())
+            return nullptr;
+        BitmapItem const& bitmap = bitmit->second;
+        if(bitmap.image.mip->type != blam::bitm::type_t::tex_cube)
+            return nullptr;
+        auto bucket = tex_buckets.find(
+            create_hash(bitmap.image.fmt, bitmap.image.mip->type));
+        if(bucket == tex_buckets.end())
+            return nullptr;
+        auto cube =
+            std::dynamic_pointer_cast<gfx::compat::texture_cube_array_t>(
+                bucket->second.surface);
+        if(!cube)
+            return nullptr;
+        return cube->subtexture(bitmap.image.layer);
     }
 
     template<typename T>
