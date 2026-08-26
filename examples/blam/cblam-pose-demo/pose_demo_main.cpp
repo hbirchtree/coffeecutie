@@ -209,6 +209,9 @@ i32 pose_demo_main()
             set_resource_labels(e);
             alloc_renderer(e);
 
+            auto& postproc = e.subsystem_cast<PostProcessParameters>();
+            postproc.exposure = 3.f;
+
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
             auto& dummyConfig = e.subsystem_cast<comp_app::AppLoader>()
                                     .config<comp_app::dummy_plug::Config>();
