@@ -389,7 +389,7 @@ i32 blam_main()
                             });
                     gbus.addEventFunction<MapLoadFinishedEvent<halo_version>>(
                             0, [&discord](GameEvent&, MapLoadFinishedEvent<halo_version>* load) {
-                                discord.presence().putState(fmt::format("Playing on {}", load->map_title));
+                                discord.presence().putState(load->map_title);
                             });
                     return false;
                 },
