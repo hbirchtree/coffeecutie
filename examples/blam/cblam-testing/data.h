@@ -400,6 +400,12 @@ struct ServerConnectEvent
      * register. */
     std::string gateway_register_url;
     std::string gateway_server_id;
+
+    /* Only used with type == Listen and gateway_register_url non-empty:
+     * enables signed metadata so clients can verify the server's identity
+     * independently of the gateway. */
+    std::string gateway_auth_secret; /* HMAC-SHA256 key, base64 */
+    std::string gateway_auth_key;    /* Ed25519 private key PEM path */
 };
 
 struct ServerConnectedEvent

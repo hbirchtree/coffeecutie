@@ -5,6 +5,8 @@
 #include <GameNetworkingSockets/steam/isteamnetworkingsockets.h>
 #include <GameNetworkingSockets/steam/steamnetworkingcustomsignaling.h>
 
+#include "webrtc_identity.h"
+
 #include <rtc/rtc.hpp>
 
 #include <atomic>
@@ -44,7 +46,8 @@ class GatewayConnectBootstrap final : public ISteamNetworkingConnectionSignaling
 {
   public:
     explicit GatewayConnectBootstrap(
-        std::string gatewayUrl, std::string serverId = "");
+        std::string gatewayUrl, std::string serverId = "",
+        WebrtcAuth auth = {});
     ~GatewayConnectBootstrap();
 
     void Start();
@@ -53,6 +56,10 @@ class GatewayConnectBootstrap final : public ISteamNetworkingConnectionSignaling
     bool Failed() const;
 
     std::string ServerTransport() const;
+
+    /*! Signed server metadata from the gateway's answer message, if any.
+     * Valid once Ready(). */
+    nlohmann::json Metadata() const;
 
     /*! Valid only once Ready(); each may only be taken once. */
     std::shared_ptr<rtc::PeerConnection> TakePeerConnection();
@@ -83,6 +90,7 @@ class GatewayConnectBootstrap final : public ISteamNetworkingConnectionSignaling
 
     std::string                          m_gatewayUrl;
     std::string                          m_serverId;
+    WebrtcAuth                             m_auth;
     std::shared_ptr<rtc::WebSocket>      m_ws;
     std::shared_ptr<rtc::PeerConnection> m_pc;
     std::shared_ptr<rtc::DataChannel>    m_dc;
@@ -104,6 +112,7 @@ class GatewayConnectBootstrap final : public ISteamNetworkingConnectionSignaling
     bool               m_offerSent{false};
     std::string        m_pendingOfferSdp;
     std::string        m_serverTransport;
+    nlohmann::json     m_metadata;
 };
 
 class GatewayServerRegistration;

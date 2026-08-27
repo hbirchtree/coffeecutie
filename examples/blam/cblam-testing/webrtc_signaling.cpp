@@ -18,9 +18,10 @@ using namespace Coffee::Logging;
 namespace webrtc_signaling {
 
 GatewayConnectBootstrap::GatewayConnectBootstrap(
-    std::string gatewayUrl, std::string serverId)
+    std::string gatewayUrl, std::string serverId, WebrtcAuth auth)
     : m_gatewayUrl(std::move(gatewayUrl))
     , m_serverId(std::move(serverId))
+    , m_auth(std::move(auth))
 {
 }
 
@@ -166,6 +167,7 @@ void GatewayConnectBootstrap::onWebSocketMessage(std::string const& text)
         auto sdp       = msg.value("sdp", std::string());
         auto sessionId = msg.value("sessionId", std::string());
         auto transport = msg.value("transport", std::string("udp"));
+        auto metadata  = msg.value("metadata", std::string());
         if(sdp.empty() || sessionId.empty())
         {
             cWarning("webrtc_signaling: malformed answer message");
@@ -177,7 +179,20 @@ void GatewayConnectBootstrap::onWebSocketMessage(std::string const& text)
         std::lock_guard<std::mutex> lock(m_mutex);
         m_sessionId       = std::move(sessionId);
         m_serverTransport = std::move(transport);
-        m_haveSessionId   = true;
+        if(!metadata.empty())
+        {
+            try
+            {
+                m_metadata = nlohmann::json::parse(metadata);
+            } catch(nlohmann::json::parse_error const& e)
+            {
+                cWarning(
+                    "webrtc_signaling: failed to parse metadata from answer: "
+                    "{}",
+                    e.what());
+            }
+        }
+        m_haveSessionId = true;
     } else if(type == "gns-rendezvous")
     {
         auto data = msg.value("data", std::string());
@@ -211,6 +226,12 @@ std::string GatewayConnectBootstrap::ServerTransport() const
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     return m_serverTransport;
+}
+
+nlohmann::json GatewayConnectBootstrap::Metadata() const
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_metadata;
 }
 
 void GatewayConnectBootstrap::sendJSON(std::string const& json)

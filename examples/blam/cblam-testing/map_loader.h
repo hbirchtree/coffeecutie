@@ -168,6 +168,11 @@ struct BlamMapBrowser
 #endif
                     ImGui::InputText(
                         "Server", remote_address.data(), remote_address.size());
+                    if(ImGui::IsItemHovered())
+                        ImGui::SetTooltip(
+                            "ws://gateway#serverId or\n"
+                            "ws://gateway#serverId;auth=hmac:base64secret or\n"
+                            "ws://gateway#serverId;auth=ed25519:base64publickey");
                     ImGui::NextColumn();
                     if(ImGui::Button("Connect"))
                     {

@@ -53,6 +53,7 @@ coffee_application(
         sounds.cpp
         touch_overlay.cpp
         ui.cpp
+        webrtc_identity.cpp
         webrtc_signaling.cpp
         widgets.cpp
   LIBRARIES Blam Core Image GLeamRHI ComponentBundleSetup
@@ -108,6 +109,10 @@ if(GameNetworkingSockets_FOUND AND (LibDataChannel_FOUND OR EMSCRIPTEN))
             LibDataChannel::LibDataChannel
         )
     endif()
+    target_link_libraries(BlamGraphics PUBLIC
+        OpenSSL::SSL
+        OpenSSL::Crypto
+    )
     target_compile_definitions(BlamGraphics PUBLIC -DUSE_WEBRTC_TRANSPORT=1)
 endif()
 if(TARGET ImGui)

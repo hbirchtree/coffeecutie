@@ -94,11 +94,25 @@ i32 blam_main()
             //
             ("gateway-register",
              "webrtc-gateway /server-signal URL to register this --listen "
-             "server with, so browser clients can be routed to it",
+             "server with, so browser clients can be routed to it. If no "
+             "--gateway-auth-secret or --gateway-auth-key is given, an "
+             "Ed25519 key is auto-generated and persisted in the config "
+             "directory",
              cxxopts::value<std::string>())
             //
             ("gateway-server-id",
              "Server ID to register under with --gateway-register",
+             cxxopts::value<std::string>())
+            //
+            ("gateway-auth-secret",
+             "HMAC-SHA256 key (base64) for signing WebRTC server metadata",
+             cxxopts::value<std::string>())
+            //
+            ("gateway-auth-key",
+             "Path to Ed25519 private key PEM for signing WebRTC server "
+             "metadata. If the file does not exist it will be generated; if "
+             "omitted when --gateway-register is used, the key is stored in "
+             "the config directory",
              cxxopts::value<std::string>());
         if constexpr(!compile_info::supports_command_line)
             options.add_options("Game")(
@@ -448,7 +462,17 @@ i32 blam_main()
             set_resource_labels(e);
             alloc_renderer(e);
             alloc_ui_system(e);
-            alloc_networking(e);
+            alloc_networking(
+                e,
+                arguments.count("gateway-register")
+                    ? arguments["gateway-register"].as<std::string>()
+                    : std::string(),
+                arguments.count("gateway-auth-secret")
+                    ? arguments["gateway-auth-secret"].as<std::string>()
+                    : std::string(),
+                arguments.count("gateway-auth-key")
+                    ? arguments["gateway-auth-key"].as<std::string>()
+                    : std::string());
 #if defined(BLAM_CURSED_ENABLED)
             cursed::setup_cursed_loaders(e);
 #endif
@@ -531,6 +555,14 @@ i32 blam_main()
                                 ? arguments["gateway-server-id"]
                                       .as<std::string>()
                                 : std::string("default");
+                        if(arguments.count("gateway-auth-secret"))
+                            connect.gateway_auth_secret =
+                                arguments["gateway-auth-secret"]
+                                    .as<std::string>();
+                        if(arguments.count("gateway-auth-key"))
+                            connect.gateway_auth_key =
+                                arguments["gateway-auth-key"]
+                                    .as<std::string>();
                     }
                     gbus.inject(event, &connect);
                 }

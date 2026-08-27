@@ -10,6 +10,8 @@
 #include <coffee/core/CProfiling>
 #include <coffee/core/files/cfiles.h>
 #include <gsl/span_ext>
+#include <peripherals/stl/base64.h>
+#include <url/url.h>
 
 using Coffee::ProfContext;
 
@@ -20,6 +22,7 @@ using Coffee::ProfContext;
 #include "gateway_fleet_registration.h"
 #include "journal.h"
 #include "selected_version.h"
+#include "webrtc_identity.h"
 #include "webrtc_signaling.h"
 
 #include <GameNetworkingSockets/steam/isteamnetworkingsockets.h>
@@ -27,6 +30,9 @@ using Coffee::ProfContext;
 #include <GameNetworkingSockets/steam/steamnetworkingsockets.h>
 #include <coffee/components/restricted_subsystem.h>
 #include <peripherals/identify/system.h>
+
+using namespace webrtc_signaling;
+using platform::url::constructors::MkUrl;
 
 #include <fmt_extensions/format.h>
 #include <fmt_extensions/url_types.h>
@@ -498,6 +504,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         meta["player_count"]     = player_count;
         meta["player_count_max"] = 16;
 
+        if(m_server_auth.type == AuthType::HmacSha256 &&
+           !m_server_auth.hmac_key.empty())
+        {
+            meta = sign_metadata_hmac(std::move(meta), m_server_auth.hmac_key);
+        } else if(
+            m_server_auth.type == AuthType::Ed25519 &&
+            !m_server_auth_key_path.empty())
+        {
+            meta = sign_metadata_ed25519(std::move(meta), m_server_auth_key_path);
+        }
+
         return meta.dump();
     }
 
@@ -714,7 +731,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return std::string(out);
     }
 
-    Networking(GameEventBus& game_bus, NetworkState& net_state)
+    Networking(
+        GameEventBus&      game_bus,
+        NetworkState&      net_state,
+        std::string const& gateway_register_url,
+        std::string const& gateway_auth_secret,
+        std::string const& gateway_auth_key)
         : m_game_bus(game_bus)
         , m_net_state(net_state)
     {
@@ -741,8 +763,47 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_identity.SetGenericString(randomIdentity);
         if(!GameNetworkingSockets_Init(&m_identity, ec))
 #else
+#    if defined(USE_WEBRTC_TRANSPORT)
+        m_server_auth_key_path = gateway_auth_key;
+        if(!gateway_register_url.empty() && gateway_auth_secret.empty() &&
+           m_server_auth_key_path.empty())
+        {
+            // Auto-generate an Ed25519 identity key in the application's config directory.
+            m_server_auth_key_path =
+                MkUrl("webrtc_identity.pem", semantic::RSCA::ConfigFile)
+                    .internUrl;
+            cDebug(
+                "Auto-generating WebRTC Ed25519 identity key at {}",
+                m_server_auth_key_path);
+        }
+
+        if(!gateway_auth_secret.empty())
+        {
+            m_server_auth.type     = AuthType::HmacSha256;
+            m_server_auth.hmac_key = b64::decode(gateway_auth_secret);
+            if(m_server_auth.hmac_key.empty())
+                cWarning(
+                    "--gateway-auth-secret decoded to an empty key; is it "
+                    "valid base64?");
+            m_identity.SetGenericString(
+                derive_identity_hmac(m_server_auth.hmac_key).c_str());
+        } else if(!m_server_auth_key_path.empty())
+        {
+            m_server_auth.type = AuthType::Ed25519;
+            m_server_auth.ed25519_public_key =
+                load_or_generate_ed25519_public_key(m_server_auth_key_path);
+            if(!m_server_auth.ed25519_public_key.empty())
+                m_identity.SetGenericString(
+                    derive_identity_ed25519(m_server_auth.ed25519_public_key)
+                        .c_str());
+        }
+        if(m_identity.IsInvalid())
+            m_identity.SetLocalHost();
+#    else
         m_identity.SetLocalHost();
-        if(!GameNetworkingSockets_Init(nullptr, ec))
+#    endif
+        if(!GameNetworkingSockets_Init(
+               m_identity.IsLocalHost() ? nullptr : &m_identity, ec))
 #endif
         {
             cWarning("Failed to init networking: {}", ec);
@@ -1023,22 +1084,32 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             cWarning("WebRTC gateway connection already in progress");
             return;
         }
-        std::string baseUrl = gatewayUrl;
-        std::string serverId;
-        if(auto hash = gatewayUrl.find('#'); hash != std::string::npos)
+        auto parsed = parse_webrtc_url(gatewayUrl);
+        if(parsed.server_id.empty())
         {
-            baseUrl  = gatewayUrl.substr(0, hash);
-            serverId = gatewayUrl.substr(hash + 1);
-        } else
-        {
-            cWarning("Failed to split gateway URL: {}", gatewayUrl);
+            cWarning("Failed to parse gateway URL: {}", gatewayUrl);
+            m_net_state.client_state = NetworkState::ClientState::Error;
+            return;
         }
-        cDebug("Bootstrapping WebRTC DataChannel via gateway {}", gatewayUrl);
+        m_client_auth = parsed.auth;
+        if(m_client_auth.type == AuthType::HmacSha256 &&
+           m_client_auth.hmac_key.empty())
+            cWarning(
+                "WebRTC HMAC secret in URL decoded to an empty key; is it "
+                "valid base64?");
+        cDebug(
+            "Bootstrapping WebRTC DataChannel via gateway {} for serverId={} "
+            "auth={}",
+            parsed.gateway_url, parsed.server_id,
+            m_client_auth.type == AuthType::HmacSha256
+                ? "hmac-sha256"
+                : (m_client_auth.type == AuthType::Ed25519 ? "ed25519"
+                                                           : "none"));
         m_utils->SetGlobalConfigValueInt32(
             k_ESteamNetworkingConfig_LogLevel_P2PRendezvous,
             k_ESteamNetworkingSocketsDebugOutputType_Verbose);
-        m_webrtcBootstrap =
-            new webrtc_signaling::GatewayConnectBootstrap(baseUrl, serverId);
+        m_webrtcBootstrap = new webrtc_signaling::GatewayConnectBootstrap(
+            parsed.gateway_url, parsed.server_id, m_client_auth);
         m_webrtcBootstrap->Start();
         m_net_state.client_state = NetworkState::ClientState::Establishing;
     }
@@ -1064,6 +1135,42 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         if(!m_webrtcBootstrap->Ready())
             return;
 
+        auto metadata = m_webrtcBootstrap->Metadata();
+        if(!metadata.is_null())
+        {
+            bool verified = false;
+            if(m_client_auth.type == AuthType::HmacSha256)
+            {
+                verified = verify_metadata_hmac(
+                    metadata, m_client_auth.hmac_key);
+            } else if(m_client_auth.type == AuthType::Ed25519)
+            {
+                verified = verify_metadata_ed25519(
+                    metadata, m_client_auth.ed25519_public_key);
+            }
+            if(!verified)
+            {
+                cWarning("WebRTC server metadata verification failed");
+                m_webrtcBootstrap->Release();
+                m_webrtcBootstrap        = nullptr;
+                m_net_state.client_state = NetworkState::ClientState::Error;
+                return;
+            }
+            m_expected_server_identity = metadata.value("identity", "");
+            cDebug(
+                "WebRTC server metadata verified, identity={}",
+                m_expected_server_identity);
+        } else if(m_client_auth.type != AuthType::None)
+        {
+            cWarning(
+                "WebRTC server did not provide signed metadata, but auth was "
+                "expected");
+            m_webrtcBootstrap->Release();
+            m_webrtcBootstrap        = nullptr;
+            m_net_state.client_state = NetworkState::ClientState::Error;
+            return;
+        }
+
         auto pc     = m_webrtcBootstrap->TakePeerConnection();
         auto dc     = m_webrtcBootstrap->TakeDataChannel();
         auto config = create_callbacks();
@@ -1073,6 +1180,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             "WebRTC server transport={}, using {} mode",
             m_webrtcBootstrap->ServerTransport(),
             m_webrtcDirectMode ? "direct-UDP" : "P2P rendezvous");
+
+        SteamNetworkingIdentity expected_identity;
+        expected_identity.Clear();
+        if(!m_expected_server_identity.empty())
+            expected_identity.SetGenericString(
+                m_expected_server_identity.c_str());
 
         if(m_webrtcDirectMode)
         {
@@ -1097,7 +1210,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto* bootstrap   = m_webrtcBootstrap;
             m_webrtcBootstrap = nullptr;
             m_connection      = m_impl->ConnectP2PWebRTCDataChannel(
-                bootstrap, nullptr, 0, pc, dc, config.size(), config.data());
+                bootstrap,
+                expected_identity.IsInvalid() ? nullptr : &expected_identity,
+                0, pc, dc, config.size(), config.data());
         }
         if(m_connection == k_HSteamNetConnection_Invalid)
         {
@@ -1359,6 +1474,31 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             cDebug("Connection to server/peer established ({})", remote_name());
             journal("net_connected", {{"server", remote_name()}});
             m_connection_last_seen = std::nullopt;
+#if defined(USE_WEBRTC_TRANSPORT)
+            if(!m_expected_server_identity.empty())
+            {
+                std::string remote_identity;
+                if(!info->m_info.m_identityRemote.IsInvalid())
+                    remote_identity =
+                        info->m_info.m_identityRemote.GetGenericString();
+                if(remote_identity != m_expected_server_identity)
+                {
+                    cWarning(
+                        "WebRTC server identity mismatch: expected {}, got {}",
+                        m_expected_server_identity,
+                        remote_identity.empty() ? "<invalid>"
+                                                : remote_identity);
+                    m_impl->CloseConnection(
+                        info->m_hConn, 0, "identity mismatch", false);
+                    m_net_state.client_state =
+                        NetworkState::ClientState::Error;
+                    return;
+                }
+                cDebug(
+                    "WebRTC server identity verified: {}",
+                    m_expected_server_identity);
+            }
+#endif
             break;
         }
         case k_ESteamNetworkingConnectionState_ProblemDetectedLocally:
@@ -2089,6 +2229,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     stl_types::math::rng               m_local_random{};
 #if defined(USE_WEBRTC_TRANSPORT)
     std::string m_last_metadata_sent;
+
+    /* Server-side WebRTC auth config. */
+    webrtc_signaling::WebrtcAuth m_server_auth;
+    std::string                  m_server_auth_key_path;
+
+    /* Client-side WebRTC auth parsed from the join URL fragment. */
+    webrtc_signaling::WebrtcAuth m_client_auth;
+    std::string                  m_expected_server_identity;
 #endif
 };
 
@@ -2125,7 +2273,11 @@ std::vector<NetworkState::RosterEntry> PlayerRoster::roster(
     return entries;
 }
 
-void alloc_networking(compo::EntityContainer& e)
+void alloc_networking(
+    compo::EntityContainer& e,
+    std::string const&      gateway_register_url,
+    std::string const&      gateway_auth_secret,
+    std::string const&      gateway_auth_key)
 {
     ProfContext _;
     e.register_subsystem_inplace<NetworkState>();
@@ -2133,7 +2285,10 @@ void alloc_networking(compo::EntityContainer& e)
 #if defined(USE_NETWORKING)
     auto& networking = e.register_subsystem_inplace<Networking>(
         std::ref(e.subsystem_cast<GameEventBus>()),
-        std::ref(e.subsystem_cast<NetworkState>()));
+        std::ref(e.subsystem_cast<NetworkState>()),
+        gateway_register_url,
+        gateway_auth_secret,
+        gateway_auth_key);
     networking.m_journal = &e.subsystem_cast<Journal>();
 #endif
 }
