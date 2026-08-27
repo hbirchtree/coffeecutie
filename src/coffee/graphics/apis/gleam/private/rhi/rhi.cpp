@@ -1167,6 +1167,12 @@ optional<error> api::load(load_options_t options)
     } else
         m_features = native_features;
 
+    if constexpr(compile_info::platform::is_emscripten)
+    {
+        m_features.buffer.mapping       = false;
+        m_features.buffer.oes.mapbuffer = false;
+    }
+
     if(options.limits)
         m_limits = options.limits.value();
     else

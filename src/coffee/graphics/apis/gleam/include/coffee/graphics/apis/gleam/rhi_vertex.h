@@ -541,6 +541,7 @@ struct vertex_array_t
     std::weak_ptr<buffer_t>                       m_element_buffer;
     hnd                                           m_handle;
     bool m_forced_attribute_names{false};
+    u32 m_applied_vertex_offset{0};
 };
 #endif
 
@@ -600,6 +601,7 @@ struct vertex_array_legacy_t
     std::map<u32, std::weak_ptr<buffer_t>>        m_buffers;
     std::weak_ptr<buffer_t>                       m_element_buffer;
     bool m_forced_attribute_names{false};
+    u32 m_applied_vertex_offset{0};
 };
 
 } // namespace gleam

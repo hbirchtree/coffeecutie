@@ -2290,7 +2290,7 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
         gfx::uniform_pair{{"mode"}, semantic::SpanOne(effect_mode)});
 
     // clang-format off
-    api.submit(gfx::draw_command{
+    auto composite_result = api.submit(gfx::draw_command{
                     .program = quad_program,
                     .vertices = quad_vao,
                     .call = {
@@ -2307,6 +2307,10 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
                 params_v,
                 std::move(params_f));
     // clang-format on
+    if(composite_result.has_value())
+        cWarning(
+            "ScreenClear composite failed: {}",
+            std::get<1>(*composite_result));
 
     comp_app::interfaces::GraphicsFramebuffer* framebuffer =
         e.service<comp_app::GraphicsFramebuffer>();
@@ -2589,6 +2593,10 @@ void main()
     {
         offscreen_sampler = resources.color->sampler();
         offscreen_sampler->alloc();
+        offscreen_sampler->set_filtering(
+            typing::Filtering::Linear, typing::Filtering::Linear);
+        offscreen_sampler->set_edge_policy(0, typing::WrapPolicy::Clamp);
+        offscreen_sampler->set_edge_policy(1, typing::WrapPolicy::Clamp);
     }
 }
 

@@ -71,10 +71,7 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
     {
         m_cached_size = size;
         if(no_mapping_optimization() || slow_mapping_optimization())
-        {
             m_allocation.resize(size);
-            return;
-        }
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && immutable())
         {
@@ -121,7 +118,6 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
                 semantic::mem_chunk<const char>::ofContainer(data).view;
             m_allocation.resize(bytes.size());
             std::copy(bytes.begin(), bytes.end(), m_allocation.begin());
-            return;
         }
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && immutable())
@@ -286,24 +282,18 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
 #endif
         if(no_mapping_optimization() || slow_mapping_optimization())
         {
-            // cmd::bind_buffer(convert::to(m_type), m_handle);
-            // cmd::buffer_sub_data(
-            //     convert::to(m_type),
-            //     m_mapping.first,
-            //     semantic::Span<char>(
-            //         m_allocation.data() + m_mapping.first,
-            //         m_mapping.second));
-            if(stl_types::any_of(
-                   m_type, buffers::type::vertex, buffers::type::element))
+            if(m_mapping.second)
             {
-                // For these buffer types, we need to dump the data on the GPU
-                // on unmap
                 cmd::bind_buffer(convert::to(m_type), m_handle);
-                cmd::buffer_data(
+                cmd::buffer_sub_data(
                     convert::to(m_type),
-                    m_allocation,
-                    convert::to<group::buffer_usage_arb>(m_features, m_access));
+                    m_mapping.first,
+                    semantic::Span<const char>(
+                        m_allocation.data() + m_mapping.first,
+                        m_mapping.second));
                 cmd::bind_buffer(convert::to(m_type), 0);
+                m_usage.buffers.upload_data += m_mapping.second;
+                m_usage.buffers.uploads++;
             }
             m_mapping = std::make_pair<size_t, size_t>(0, 0);
             return;

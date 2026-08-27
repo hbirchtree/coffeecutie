@@ -187,7 +187,9 @@ inline optional<tuple<error, std::string_view>> api::submit(
             stl_types::any_of(
                 data,
                 [](auto const& d) { return d.elements.vertex_offset > 0; })) ||
-        draw_cache.vertex_offset_changed;
+        draw_cache.vertex_offset_changed ||
+        (m_workarounds.draw.emulated_vertex_offset && vao &&
+         vao->m_applied_vertex_offset != 0);
     draw_cache.vertex_offset_changed =
         uses_vertex_offset && m_workarounds.draw.slow_state_changes;
     if(m_api_type == api_type_t::es && uses_baseinstance &&
@@ -283,6 +285,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
         }
         /* Attribute pointers were just re-established at base offset 0. */
         draw_cache.last_vertex_offset = 0;
+        vao->m_applied_vertex_offset  = 0;
 
         if(!vao->m_element_buffer.expired())
         {
@@ -386,6 +389,8 @@ inline optional<tuple<error, std::string_view>> api::submit(
     if(m_workarounds.draw.emulated_vertex_offset && uses_vertex_offset)
     {
         apply_vertex_offset = [this, &vao](u32 offset) {
+            if(vao->m_applied_vertex_offset == offset)
+                return;
             for(auto const& attrib : vao->m_attributes)
             {
                 if(vao->m_buffers.at(attrib.buffer.id).expired())
@@ -399,6 +404,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 detail::vertex_setup_attribute(
                     m_features.vertex, attrib, offset * attrib.value.stride);
             }
+            vao->m_applied_vertex_offset = offset;
         };
     }
     if(uses_ubo_advancing)
