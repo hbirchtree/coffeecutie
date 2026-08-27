@@ -89,6 +89,10 @@ type signalMessage struct {
 	Nonce      string `json:"nonce,omitempty"`
 	RelayPort  int    `json:"relayPort,omitempty"`
 	RelayNonce string `json:"relayNonce,omitempty"`
+	// MetadataPayload is the server's most recent signed metadata JSON,
+	// forwarded verbatim so clients can verify the server's identity
+	// independently of the gateway.
+	MetadataPayload string `json:"metadata,omitempty"`
 	// PunchPort is sent in the "register-pending" reply: the UDP port the
 	// registering server must punch its return-routability probe at. Told
 	// explicitly rather than guessed from the WS URL, since behind a TLS
@@ -856,6 +860,14 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 	}
 	<-gatherComplete
 
+	srv.mu.Lock()
+	meta := srv.metadata
+	srv.mu.Unlock()
+	metadataPayload := ""
+	if meta != nil && len(meta.raw) > 0 {
+		metadataPayload = string(meta.raw)
+	}
+
 	session.writeMu.Lock()
 	err = conn.WriteJSON(signalMessage{
 		Type:             "answer",
@@ -866,7 +878,8 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		// Which GNS connect mode this client should use: ordinary
 		// direct-UDP-over-DataChannel for a UDP server, P2P rendezvous
 		// for a WebRTC-hosted one.
-		Transport: transport,
+		Transport:       transport,
+		MetadataPayload: metadataPayload,
 	})
 	session.writeMu.Unlock()
 	if err != nil {
