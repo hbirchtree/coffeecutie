@@ -534,7 +534,7 @@ func handleMetadataQuery(w http.ResponseWriter, r *http.Request) {
 	serverID := r.URL.Query().Get("server")
 	if serverID == "" {
 		w.Header().Set("Content-Type", "application/json")
-		http.Error(w, "missing ?server=<id>", http.StatusBadRequest)
+		http.Error(w, "{\"message\":\"missing ?server=<id>\"}", http.StatusBadRequest)
 		return
 	}
 	workingSet.servers.RLock()
