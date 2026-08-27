@@ -469,11 +469,55 @@ func main() {
 		handleSignal(w, r, *iceUDPPortMin, *iceUDPPortMax)
 	})
 	http.HandleFunc("/server-signal", handleServerSignal)
+
+	// Server browsing functions
+	http.HandleFunc("/server-list", handleServerList)
 	http.HandleFunc("/metadata", handleMetadataQuery)
 
 	log.Printf("webrtc-gateway listening on %s", *listenAddr)
 	if err := http.ListenAndServe(*listenAddr, nil); err != nil {
 		log.Fatal(err)
+	}
+}
+
+type ServerListing struct {
+	Name string `json:"name"`
+	Private bool `json:"private"`
+}
+
+type ServerList struct {
+	Servers []ServerListing `json:"servers"`
+}
+
+func handleServerList(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	servers := ServerList {
+		Servers: make([]ServerListing, 0),
+	};
+	workingSet.servers.RLock()
+	for id, srv := range workingSet.servers.registry {
+		if !srv.active {
+			continue
+		}
+		servers.Servers = append(servers.Servers, ServerListing{
+			Name: id,
+			Private: false,
+		})
+	}
+	workingSet.servers.RUnlock()
+	serialized, err := json.Marshal(servers)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Length", strconv.Itoa(len(serialized)))
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(serialized); err != nil {
+		log.Printf("failed to write server list response: %v", err)
 	}
 }
 
@@ -483,11 +527,13 @@ func main() {
 // capped at maxMetadataBytes on ingest.
 func handleMetadataQuery(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, "{\"message\":\"method not allowed\"}", http.StatusMethodNotAllowed)
 		return
 	}
 	serverID := r.URL.Query().Get("server")
 	if serverID == "" {
+		w.Header().Set("Content-Type", "application/json")
 		http.Error(w, "missing ?server=<id>", http.StatusBadRequest)
 		return
 	}
@@ -495,7 +541,8 @@ func handleMetadataQuery(w http.ResponseWriter, r *http.Request) {
 	srv, ok := workingSet.servers.registry[serverID]
 	workingSet.servers.RUnlock()
 	if !ok {
-		http.Error(w, "unknown server", http.StatusNotFound)
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, "{\"message\":\"unknown server\"}", http.StatusNotFound)
 		return
 	}
 
@@ -504,7 +551,7 @@ func handleMetadataQuery(w http.ResponseWriter, r *http.Request) {
 	active := srv.active
 	srv.mu.Unlock()
 	if !active {
-		http.Error(w, "server not active", http.StatusServiceUnavailable)
+		http.Error(w, "{\"message\":\"server not active\"}", http.StatusServiceUnavailable)
 		return
 	}
 	if meta == nil || len(meta.raw) == 0 {
