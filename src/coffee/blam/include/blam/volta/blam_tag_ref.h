@@ -8,10 +8,10 @@ namespace blam {
 template<tag_class_t... Tags>
 struct alignas(4) tagref_typed_t
 {
-    tag_class_t tag_class;
+    tag_class_t tag_class{tag_class_t::none};
     string_ref  name;
     i32         unknown{0};
-    u32         tag_id;
+    u32         tag_id{std::numeric_limits<u32>::max()};
 
     inline bool valid() const
     {
@@ -41,6 +41,12 @@ struct alignas(4) tagref_typed_t
     inline operator tagref_typed_t<> const&() const
     {
         return *C_RCAST<tagref_typed_t<> const*>(this);
+    }
+
+    template<tag_class_t Class>
+    inline operator tagref_typed_t<Class> const&() const
+    {
+        return *C_RCAST<tagref_typed_t<Class> const*>(this);
     }
 
 #pragma GCC diagnostic pop

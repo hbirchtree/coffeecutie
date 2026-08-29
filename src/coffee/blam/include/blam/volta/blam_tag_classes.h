@@ -17,7 +17,8 @@ using namespace libc_types;
 
 enum class tag_class_t : u32
 {
-    none = 0xffffffff,
+    none    = 0xffffffff,
+    invalid = none,
 
     actr = 0x61637472, // rtca 1633907826 Actor
     actv = 0x61637476, // vtca 1633907830 Actor variant
