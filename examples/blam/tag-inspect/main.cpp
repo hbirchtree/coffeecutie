@@ -2,6 +2,8 @@
  * answered from the tag instead of from the rendered frame. */
 
 #include <blam/volta/blam_bitm.h>
+#include <blam/volta/blam_bsp_structures.h>
+#include <blam/volta/blam_scenario.h>
 #include <blam/volta/blam_swizzle.h>
 #include <blam/volta/blam_shaders.h>
 #include <blam/volta/blam_stl.h>
@@ -10,7 +12,9 @@
 #include <coffee/core/coffee_args.h>
 #include <coffee/core/debug/formatting.h>
 #include <coffee/core/files/cfiles.h>
+#include <cmath>
 #include <cstdlib>
+#include <cstring>
 #include <cxxopts.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <peripherals/libc/types.h>
@@ -28,6 +32,7 @@ namespace {
 blam::map_ptr g_magic;
 /* Pixel data is addressed by absolute file offset, unlike tag data */
 blam::map_ptr g_raw_magic;
+bool          g_dump_mirrors = false;
 bool          g_channel_stats{false};
 std::string   g_dump_prefix{};
 
@@ -308,6 +313,15 @@ void dump_senv(blam::shader::shader_env const* info)
     illum("primary", info->self_illum.primary);
     illum("secondary", info->self_illum.secondary);
     illum("plasma", info->self_illum.plasma);
+    print_enum("    reflection flags", info->reflection.flags);
+    printf(
+        "type=%.*s perp=%g parallel=%g lightmap=%g cube=%s\n",
+        static_cast<int>(magic_enum::enum_name(info->reflection.type).size()),
+        magic_enum::enum_name(info->reflection.type).data(),
+        info->reflection.perpendicular_brightness,
+        info->reflection.parallel_brightness,
+        info->reflection.lightmap_brightness,
+        name_of(info->reflection.reflection).c_str());
 }
 
 /* ---- bitm ---- */
@@ -519,6 +533,181 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
     printf("\n");
 }
 
+/* A mirror's shader is one of the shader tag classes; anything else at that
+ * offset means the layout guess is wrong. */
+inline bool is_shader_class(blam::tag_class_t cls)
+{
+    using c = blam::tag_class_t;
+    switch(cls)
+    {
+    case c::senv:
+    case c::soso:
+    case c::schi:
+    case c::scex:
+    case c::sotr:
+    case c::swat:
+    case c::sgla:
+    case c::smet:
+    case c::spla:
+    case c::shdr:
+        return true;
+    default:
+        return false;
+    }
+}
+
+/* The cluster mirror block's internal layout is unverified -- it may carry
+ * padding between the plane and the shader reference. Score candidate
+ * paddings on whether the shader resolves to a real tag, the vertex count is
+ * sane, and the vertices actually lie on the mirror's own plane. */
+template<typename Ver>
+void dump_mirrors(
+    blam::map_container<Ver> const& map, blam::tag_index_view<Ver> const& index)
+{
+    auto scn = map.scenario();
+    if(!scn.has_value())
+    {
+        printf("no scenario tag\n");
+        return;
+    }
+
+    printf(
+        "sizeof(cluster)=%zu sizeof(mirror)=%zu (as declared)\n",
+        sizeof(blam::bsp::cluster),
+        sizeof(blam::bsp::mirror));
+
+    auto bsps = scn.value()->bsp_info.data(map.magic);
+    if(bsps.has_error())
+    {
+        printf("no bsp_info\n");
+        return;
+    }
+
+    static const int kPads[] = {0, 4, 8, 12, 16, 20, 24, 28, 32};
+    const size_t     kNPads  = sizeof(kPads) / sizeof(kPads[0]);
+    int              pass[16] = {};
+    int              total    = 0;
+
+    u32 bsp_idx = 0;
+    for(blam::bsp::info const& bsp : bsps.value())
+    {
+        auto bsp_magic = bsp.bsp_magic(map.magic);
+        auto sec       = bsp.to_bsp(bsp_magic).to_header().data(
+            bsp_magic, blam::single_value);
+        if(sec.has_error())
+        {
+            bsp_idx++;
+            continue;
+        }
+        auto const& section  = *sec.value();
+        auto        clusters = section.clusters.data(bsp_magic);
+        if(clusters.has_error())
+        {
+            bsp_idx++;
+            continue;
+        }
+
+        u32 cluster_idx = 0;
+        for(blam::bsp::cluster const& cluster : clusters.value())
+        {
+            u32 const count = blam::from_le(cluster.mirrors.count);
+            if(count == 0 || count > 64)
+            {
+                if(count > 64)
+                    printf(
+                        "bsp %u cluster %u: implausible mirror count %u\n",
+                        bsp_idx,
+                        cluster_idx,
+                        count);
+                cluster_idx++;
+                continue;
+            }
+            u32 const   off = blam::from_le(cluster.mirrors.offset);
+            auto const* raw = reinterpret_cast<const u8*>(
+                bsp_magic.base_ptr + off - bsp_magic.file_offset);
+
+            printf(
+                "bsp %u cluster %u: %u mirror(s) @ 0x%x\n",
+                bsp_idx,
+                cluster_idx,
+                count,
+                off);
+            total += static_cast<int>(count);
+
+            for(size_t p = 0; p < kNPads; p++)
+            {
+                const int    pad    = kPads[p];
+                const size_t stride = 16 + pad + 16 + 12;
+                for(u32 m = 0; m < count; m++)
+                {
+                    auto const* e = raw + m * stride;
+                    f32         n[4];
+                    memcpy(n, e, sizeof(n));
+                    const f32 len =
+                        std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+                    if(std::fabs(len - 1.f) > 1e-3f)
+                        continue;
+
+                    auto const* sh =
+                        reinterpret_cast<blam::tagref_t const*>(e + 16 + pad);
+                    if(!sh->valid() || !is_shader_class(sh->tag_class))
+                        continue;
+
+                    auto const* vr =
+                        reinterpret_cast<blam::reference<typing::vector_types::Vecf3> const*>(
+                            e + 16 + pad + 16);
+                    const u32 vcount = blam::from_le(vr->count);
+                    if(vcount < 3 || vcount > 256)
+                        continue;
+                    auto verts = vr->data(bsp_magic);
+                    if(verts.has_error())
+                        continue;
+
+                    f32 resid = 0.f;
+                    for(auto const& v : verts.value())
+                        resid = std::max(
+                            resid,
+                            std::fabs(
+                                n[0] * v[0] + n[1] * v[1] + n[2] * v[2] - n[3]));
+                    if(resid >= 0.05f)
+                        continue;
+                    pass[p]++;
+
+                    auto name = sh->to_name().to_string(map.magic);
+                    printf(
+                        "    [pad=%d] plane=(%.4f %.4f %.4f) d=%.4f "
+                        "verts=%u resid=%.5f\n      shader=%.*s (%.*s)\n",
+                        pad,
+                        n[0],
+                        n[1],
+                        n[2],
+                        n[3],
+                        vcount,
+                        resid,
+                        static_cast<int>(name.size()),
+                        name.data(),
+                        4,
+                        reinterpret_cast<const char*>(&sh->tag_class));
+                }
+            }
+            cluster_idx++;
+        }
+        bsp_idx++;
+    }
+
+    printf("\ntotal mirrors found: %d\n", total);
+    if(total == 0)
+        return;
+    printf("layout scan (mirrors passing all checks):\n");
+    for(size_t p = 0; p < kNPads; p++)
+        printf(
+            "  pad=%2d stride=%2zu  passing=%d/%d\n",
+            kPads[p],
+            static_cast<size_t>(44 + kPads[p]),
+            pass[p],
+            total);
+}
+
 template<typename Ver>
 void open_map(
     std::string const& path,
@@ -546,6 +735,12 @@ void open_map(
      * lands on unrelated bytes. */
     g_raw_magic             = map.magic;
     g_raw_magic.file_offset = 0;
+
+    if(g_dump_mirrors)
+    {
+        dump_mirrors<Ver>(map, index);
+        return;
+    }
 
     u32 matched = 0;
     for(blam::tag_t const& tag : index)
@@ -600,6 +795,8 @@ int inspect_main()
         //
         ("dump-planes", "Write each byte position of 32-bit bitmaps as a PGM with this path prefix", cxxopts::value<std::string>())
         //
+        ("dump-mirrors", "Walk BSP clusters and report their mirror blocks")
+        //
         ;
 
     auto& args      = Coffee::GetInitArgs();
@@ -620,6 +817,7 @@ int inspect_main()
     std::string name_filter =
         arguments.as_optional<std::string>("name").value_or("");
     bool list_only  = arguments.count("list") > 0;
+    g_dump_mirrors  = arguments.count("dump-mirrors") > 0;
     g_channel_stats = arguments.count("channel-stats") > 0;
     g_dump_prefix =
         arguments.as_optional<std::string>("dump-planes").value_or("");
