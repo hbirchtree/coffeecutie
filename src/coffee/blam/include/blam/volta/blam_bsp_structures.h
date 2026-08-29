@@ -477,9 +477,12 @@ struct mirror
 {
     Vecf3                             plane;
     f32                               d;
+    u32                               padding[5];
     tagref_typed_t<tag_class_t::shdr> shader;
     reference<Vecf3>                  vertices;
 };
+
+static_assert(sizeof(mirror) == 64);
 
 struct cluster
 {
