@@ -5,6 +5,7 @@
 #include "data_cache.h"
 
 #include <blam/volta/blam_swizzle.h>
+#include <coffee/graphics/apis/gleam/rhi_texture_atlas.h>
 
 using BitmapManifest =
     compo::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
@@ -47,6 +48,7 @@ struct BitmapCache
         u32   layer{0};
         u32   array_level{0}; /* mip level a sub-sized cube sits at */
         Veci2 pixel_offset{}; /* where the upload writes */
+        Veci2 gutter{};       /* wrap padding reserved around the tile */
         Vecf2 offset{};       /* normalized, what the shader samples with */
         Vecf2 scale{};
         u32   mip_base{0};
@@ -206,17 +208,9 @@ struct BitmapCache
         if(size.x % 4 != 0 || size.y % 4 != 0)
             return;
 
-        i32 mip_pad = 0; // bucket.surface->m_format.pixfmt != pix_fmt::RGB565
-                         //? 2 << (mips - mipmap)
-                         //: 0;
-
-        Veci2 pool_offset = Veci2(img.image.offset[0], img.image.offset[1]);
-        Veci2 tex_offset  = {
-            (pool_offset[0] >> mipmap) - mip_pad,
-            (pool_offset[1] >> mipmap) - mip_pad};
-
-        (tex_offset[0] >>= 2) <<= 2;
-        (tex_offset[1] >>= 2) <<= 2;
+        Veci2 const pool_offset =
+            Veci2(img.image.offset[0], img.image.offset[1]);
+        u32 const dst_level = mipmap;
 
         mipmap += img.mipmaps.base;
 
@@ -318,14 +312,27 @@ struct BitmapCache
                         semantic::Span<const u8>(linear.data(), linear.size());
             }
 
+            /* The gutter around the tile is filled with copies of its own
+             * opposite edges, so a filter tap leaving the tile lands on the
+             * texels a repeat wrap would have given it. */
+            std::vector<u8> padded;
+            auto            tile = gfx::pad_tile(
+                padded,
+                gl::tex::format_of(bucket.fmt),
+                pool_offset,
+                img.image.gutter,
+                dst_level,
+                Veci2{size.x, size.y},
+                mip_data);
+
             texture.upload(
-                mip_data,
+                tile.data,
                 Veci3{
-                    tex_offset.x + mip_pad,
-                    tex_offset.y + mip_pad,
+                    tile.offset[0],
+                    tile.offset[1],
                     static_cast<i32>(img.image.layer)},
-                Veci3{size.x, size.y, 1},
-                mipmap - img.mipmaps.base);
+                Veci3{tile.size[0], tile.size[1], 1},
+                static_cast<i32>(dst_level));
         }
     }
 

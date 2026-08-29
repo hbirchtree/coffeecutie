@@ -636,6 +636,7 @@ struct BitmapItem
         u32   array_level{0}; /*!< mip level the image occupies in its bucket */
         Vecf2 offset{};
         Vecf2 scale{};
+        Veci2 gutter{}; /*!< wrap padding reserved around the tile */
         f32   bias{0.f};
     } image;
 

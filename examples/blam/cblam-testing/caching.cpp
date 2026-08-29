@@ -1494,8 +1494,13 @@ void BitmapCache<V>::calculate_storage()
      * unaffected by what happens to be resident. */
     for(auto& [hash, pool] : pools)
     {
-        Veci2 offset{0, 0};
-        u32   layer = 0;
+        /* The atlas needs the bucket's real mip count: the gutter has to
+         * survive down to the coarsest level anything samples. */
+        u32 const mips = pool.fmt.pixfmt == pix_fmt::RGB565 ? 1u
+                         : max_mipmap > params->mipmap_bias
+                             ? max_mipmap - params->mipmap_bias
+                             : 1u;
+        gfx::texture_atlas_t atlas(pool.max, mips);
 
         for(entry_t const& e : pool.images)
         {
@@ -1513,12 +1518,21 @@ void BitmapCache<V>::calculate_storage()
                 slot.mip_last = e.mipmaps;
             }
 
+            auto const placement = e.own_layer ? atlas.reserve_layer(e.size)
+                                              : atlas.reserve(e.size);
+            auto const rect = atlas.reference_of(placement);
+
+            slot.layer        = placement.layer;
+            slot.pixel_offset = placement.offset;
+            slot.gutter       = placement.gutter;
+            slot.offset       = rect.offset;
+            slot.scale        = rect.scale;
+
             if(e.own_layer)
             {
-                slot.layer        = layer++;
-                slot.pixel_offset = {0, 0};
-                slot.offset       = {0.f, 0.f};
-                slot.scale        = {1.f, 1.f};
+                /* A layer to itself is addressed whole, whatever it holds. */
+                slot.offset = {0.f, 0.f};
+                slot.scale  = {1.f, 1.f};
 
                 if(pool.type == blam::bitm::type_t::tex_cube)
                 {
@@ -1530,28 +1544,6 @@ void BitmapCache<V>::calculate_storage()
                        (pool.max.y >> level) == e.size.y)
                         slot.array_level = level;
                 }
-            } else
-            {
-                if((offset.x + e.size.x) <= pool.max.x)
-                {
-                    slot.pixel_offset = {offset.x, offset.y};
-                    offset.x += e.size.x;
-                } else
-                {
-                    layer++;
-                    offset.x          = e.size.x;
-                    slot.pixel_offset = {0, 0};
-                }
-
-                slot.layer  = layer;
-                slot.offset = {
-                    static_cast<f32>(slot.pixel_offset.x) / pool.max.x,
-                    static_cast<f32>(slot.pixel_offset.y) / pool.max.y,
-                };
-                slot.scale = {
-                    static_cast<f32>(e.size.x) / pool.max.x,
-                    static_cast<f32>(e.size.y) / pool.max.y,
-                };
             }
 
             m_slots.insert({std::make_tuple(e.tag_id, e.idx), slot});
@@ -1563,7 +1555,7 @@ void BitmapCache<V>::calculate_storage()
                 .fmt      = pool.fmt,
                 .type     = pool.type,
                 .max_size = pool.max,
-                .layers   = layer + 1,
+                .layers   = atlas.layers(),
             },
         });
     }
@@ -1731,6 +1723,7 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
 
         img.layer        = slot.layer;
         img.array_level  = slot.array_level;
+        img.gutter       = slot.gutter;
         out.mipmaps.base = slot.mip_base;
         out.mipmaps.last = slot.mip_last;
         /* Upload wants pixels; the shader wants normalized UVs. Commit
