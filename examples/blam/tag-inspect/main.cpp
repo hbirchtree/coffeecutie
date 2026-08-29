@@ -3,6 +3,7 @@
 
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_bsp_structures.h>
+#include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_scenario.h>
 #include <blam/volta/blam_swizzle.h>
 #include <blam/volta/blam_shaders.h>
@@ -13,6 +14,7 @@
 #include <coffee/core/debug/formatting.h>
 #include <coffee/core/files/cfiles.h>
 #include <cmath>
+#include <map>
 #include <cstdlib>
 #include <cstring>
 #include <cxxopts.hpp>
@@ -33,6 +35,8 @@ blam::map_ptr g_magic;
 /* Pixel data is addressed by absolute file offset, unlike tag data */
 blam::map_ptr g_raw_magic;
 bool          g_dump_mirrors = false;
+size_t        g_scan_window  = 0;
+bool          g_dump_player  = false;
 bool          g_channel_stats{false};
 std::string   g_dump_prefix{};
 
@@ -324,6 +328,85 @@ void dump_senv(blam::shader::shader_env const* info)
         name_of(info->reflection.reflection).c_str());
 }
 
+/* ---- obje / unit ---- */
+
+void dump_object(blam::scn::object const* obj)
+{
+    print_enum("  type", obj->type);
+    print_enum("flags", obj->flags);
+    printf(
+        "bound_radius=%g render_bound=%g accel_scale=%g\n",
+        obj->bound_radius,
+        obj->render_bound_radius,
+        obj->acceleration_scale);
+    printf(
+        "    bound_offset=(%g,%g,%g) origin_offset=(%g,%g,%g)\n",
+        obj->bound_offset.x,
+        obj->bound_offset.y,
+        obj->bound_offset.z,
+        obj->origin_offset.x,
+        obj->origin_offset.y,
+        obj->origin_offset.z);
+    printf("    model      =%s\n", name_of(obj->model).c_str());
+    printf("    anim_graph =%s\n", name_of(obj->anim_graph).c_str());
+    printf("    collider   =%s\n", name_of(obj->collider).c_str());
+    printf("    physics    =%s\n", name_of(obj->physics).c_str());
+    printf("    shader     =%s\n", name_of(obj->shader).c_str());
+    printf("    effect     =%s\n", name_of(obj->effect).c_str());
+    printf(
+        "    hud_msg=%d shader_perm=%d\n",
+        obj->export_.hud_msg,
+        obj->export_.shader_perm);
+}
+
+void dump_unit(blam::scn::unit const* unit)
+{
+    dump_object(unit);
+
+    auto colors = unit->change_colors.data(g_magic);
+    if(colors.has_error())
+    {
+        printf("    change_colors: <unreadable>\n");
+        return;
+    }
+    printf("    change_colors: %zu\n", colors.value().size());
+
+    u32 idx = 0;
+    for(auto const& c : colors.value())
+    {
+        printf("      [%u] ", idx++);
+        print_enum("darken_by", c.darken_by);
+        print_enum("scale_by", c.scale_by);
+        print_enum("flags", c.scale_flags);
+        printf("\n");
+        printf(
+            "          lower=(%g,%g,%g) upper=(%g,%g,%g)\n",
+            c.lower_bound.x,
+            c.lower_bound.y,
+            c.lower_bound.z,
+            c.upper_bound.x,
+            c.upper_bound.y,
+            c.upper_bound.z);
+
+        auto perms = c.permutations.data(g_magic);
+        if(perms.has_error())
+        {
+            printf("          permutations: <unreadable>\n");
+            continue;
+        }
+        for(auto const& p : perms.value())
+            printf(
+                "          perm weight=%g lower=(%g,%g,%g) upper=(%g,%g,%g)\n",
+                p.weight,
+                p.lower_bound.x,
+                p.lower_bound.y,
+                p.lower_bound.z,
+                p.upper_bound.x,
+                p.upper_bound.y,
+                p.upper_bound.z);
+    }
+}
+
 /* ---- bitm ---- */
 
 void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
@@ -448,6 +531,131 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
 
 /* ---- dispatch ---- */
 
+/* Resolves the player's spawn unit the way the engine would: globals -> the
+ * multiplayer or singleplayer information block -> a bipd tag -> its model. */
+template<typename Ver>
+void dump_player_biped(
+    blam::map_container<Ver> const& map, blam::tag_index_view<Ver> const& index)
+{
+    for(blam::tag_t const& tag : index)
+    {
+        if(!tag.valid() || !tag.matches(blam::tag_class_t::matg))
+            continue;
+
+        auto glob = tag.template data<blam::globals::globals>(g_magic);
+        if(!glob.has_value())
+        {
+            printf("globals tag has no data\n");
+            return;
+        }
+
+        auto report = [&](char const* label, blam::tagref_t const& unit) {
+            auto uname = unit.to_name().to_string(g_magic);
+            printf(
+                "%s unit: %.*s [%.*s]\n",
+                label,
+                static_cast<int>(uname.size()),
+                uname.data(),
+                4,
+                reinterpret_cast<const char*>(&unit.tag_class));
+
+            auto it = index.find(unit);
+            if(it == index.end())
+            {
+                printf("  (biped tag not in index)\n");
+                return;
+            }
+            auto biped = it->template data<blam::scn::biped>(g_magic);
+            if(!biped.has_value())
+            {
+                printf("  (biped tag has no data)\n");
+                return;
+            }
+            dump_unit(biped.value());
+        };
+
+        if(auto mp = glob.value()->multiplayer.data(g_magic);
+           mp.has_value() && !mp.value().empty())
+            report("multiplayer", mp.value()[0].unit);
+        else
+            printf("multiplayer unit: <none>\n");
+
+        if(auto sp = glob.value()->player.data(g_magic);
+           sp.has_value() && !sp.value().empty())
+            report("singleplayer", sp.value()[0].unit);
+        else
+            printf("singleplayer unit: <none>\n");
+        return;
+    }
+    printf("no globals tag\n");
+}
+
+/* Walks a tag's bytes looking for embedded tagrefs, for tags whose layout is
+ * not described anywhere. A hit must carry a tag id present in the index whose
+ * class agrees with the reference -- strong enough that false positives are
+ * rare. Looked up against a prebuilt map because find() throws on a malformed
+ * tagref, which is exactly what scanning produces. */
+template<typename Ver>
+void scan_tagrefs(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
+{
+    static std::map<u32, blam::tag_t const*> by_id;
+    if(by_id.empty())
+        for(blam::tag_t const& t : index)
+            if(t.valid())
+                by_id.emplace(t.tag_id, &t);
+
+    auto data = tag.template data<u8>(g_magic);
+    if(!data.has_value())
+    {
+        printf("  (no data)\n");
+        return;
+    }
+    auto const* base = data.value();
+
+    /* Reflexives first: a tagref found by the scan usually lives inside one of
+     * these blocks, and the block's position in the tag header is what names
+     * the field it came from. */
+    for(size_t off = 0; off + 12 <= g_scan_window; off += 4)
+    {
+        const u32 count = blam::from_le(
+            *reinterpret_cast<const u32*>(base + off));
+        const u32 ptr = blam::from_le(
+            *reinterpret_cast<const u32*>(base + off + 4));
+        if(count == 0 || count > 256 || ptr <= g_magic.file_offset)
+            continue;
+        const size_t rel = ptr - g_magic.file_offset;
+        if(rel >= g_magic.max_size)
+            continue;
+        auto const* target =
+            reinterpret_cast<const u8*>(g_magic.base_ptr) + rel;
+        const ptrdiff_t delta = target - base;
+        if(delta < 0 || delta > 0x20000)
+            continue;
+        printf(
+            "  REFLEX +0x%03zx  count=%-3u -> +0x%04tx\n", off, count, delta);
+    }
+
+    for(size_t off = 0; off + 16 <= g_scan_window; off += 4)
+    {
+        auto const* r = reinterpret_cast<blam::tagref_t const*>(base + off);
+        if(!r->valid())
+            continue;
+        auto it = by_id.find(r->tag_id);
+        if(it == by_id.end() || it->second->tag_class() != r->tag_class)
+            continue;
+        auto n = it->second->to_name().to_string(g_magic);
+        if(n.empty())
+            continue;
+        printf(
+            "  +0x%03zx  %.*s  %.*s\n",
+            off,
+            4,
+            reinterpret_cast<const char*>(&r->tag_class),
+            static_cast<int>(n.size()),
+            n.data());
+    }
+}
+
 template<typename Ver>
 void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
 {
@@ -467,8 +675,36 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         return data.has_value() ? data.value() : nullptr;
     };
 
+    if(g_scan_window > 0)
+    {
+        scan_tagrefs(index, tag);
+        return;
+    }
+
     switch(tag.tag_class())
     {
+    case blam::tag_class_t::bipd:
+        if(auto* info = header_of((blam::scn::biped*)nullptr))
+            dump_unit(info);
+        break;
+    case blam::tag_class_t::vehi:
+        if(auto* info = header_of((blam::scn::vehicle*)nullptr))
+            dump_unit(info);
+        break;
+    /* Everything else derived from obje shares the object header; only bipeds
+     * and vehicles are units, so the rest stop there. */
+    case blam::tag_class_t::scen:
+    case blam::tag_class_t::mach:
+    case blam::tag_class_t::ctrl:
+    case blam::tag_class_t::lifi:
+    case blam::tag_class_t::ssce:
+    case blam::tag_class_t::garb:
+    case blam::tag_class_t::proj:
+    case blam::tag_class_t::weap:
+    case blam::tag_class_t::eqip:
+        if(auto* info = header_of((blam::scn::object*)nullptr))
+            dump_object(info);
+        break;
     case blam::tag_class_t::sotr:
         if(auto* info = header_of((shader_transparent*)nullptr))
             dump_sotr(info);
@@ -742,6 +978,12 @@ void open_map(
         return;
     }
 
+    if(g_dump_player)
+    {
+        dump_player_biped<Ver>(map, index);
+        return;
+    }
+
     u32 matched = 0;
     for(blam::tag_t const& tag : index)
     {
@@ -797,6 +1039,10 @@ int inspect_main()
         //
         ("dump-mirrors", "Walk BSP clusters and report their mirror blocks")
         //
+        ("scan-tagrefs", "Scan this many bytes of each tag for embedded tag references", cxxopts::value<int>())
+        //
+        ("dump-player-biped", "Resolve the player's spawn unit and its model from globals")
+        //
         ;
 
     auto& args      = Coffee::GetInitArgs();
@@ -818,6 +1064,9 @@ int inspect_main()
         arguments.as_optional<std::string>("name").value_or("");
     bool list_only  = arguments.count("list") > 0;
     g_dump_mirrors  = arguments.count("dump-mirrors") > 0;
+    g_dump_player   = arguments.count("dump-player-biped") > 0;
+    g_scan_window   = static_cast<size_t>(
+        arguments.as_optional<int>("scan-tagrefs").value_or(0));
     g_channel_stats = arguments.count("channel-stats") > 0;
     g_dump_prefix =
         arguments.as_optional<std::string>("dump-planes").value_or("");
