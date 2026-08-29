@@ -866,8 +866,6 @@ struct MeshRenderer
 
     std::vector<cached_player_t> m_players;
 
-    const bool supports_splitscreen = !compile_info::platform::is_emscripten;
-
     std::shared_ptr<gfx::texture_2d_t> meow_tex;
     std::shared_ptr<gfx::sampler_t>    meow_sampler;
 
@@ -1132,7 +1130,7 @@ struct MeshRenderer
     {
         using namespace typing::vector_types;
 
-        if(!supports_splitscreen && idx != 0)
+        if(!const_config::supports_splitscreen && idx != 0)
             return;
         if(idx >= m_players.size())
             return;
@@ -1248,7 +1246,7 @@ struct MeshRenderer
     {
         using namespace typing::vector_types;
 
-        if(!supports_splitscreen && idx != 0)
+        if(!const_config::supports_splitscreen && idx != 0)
             return;
         if(idx >= m_players.size())
             return;

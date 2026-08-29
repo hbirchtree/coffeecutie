@@ -48,6 +48,10 @@ struct BlamData
     using type = BlamData<Version>;
 };
 
+namespace const_config {
+const bool supports_splitscreen = !compile_info::platform::is_emscripten;
+}
+
 struct BlamResources : compo::SubsystemBase
 {
     using type = BlamResources;
@@ -93,10 +97,10 @@ struct PostProcessParameters : compo::SubsystemBase
 {
     using type = PostProcessParameters;
 
-    f32  exposure{2.f};
-    f32  gamma{.7f};
-    f32  scale{1.f};
-    bool auto_expose{true};
+    f32   exposure{2.f};
+    f32   gamma{.7f};
+    f32   scale{1.f};
+    bool  auto_expose{true};
     f32   blur{0.f};
     Vecf4 rgb_comp{};
 
