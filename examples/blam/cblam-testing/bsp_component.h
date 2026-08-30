@@ -124,7 +124,7 @@ struct BlamBspWidget
                                 bsp_ref->cluster_idx);
                             ImGui::Checkbox(
                                 name.c_str(),
-                                &e.template get<Visibility>(bsp.id())->visible);
+                                &e.template get<Visibility>(bsp.id())->visibility());
                         }
                         ImGui::EndListBox();
                     }

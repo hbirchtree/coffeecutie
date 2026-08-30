@@ -581,9 +581,9 @@ i32 blam_main()
 
             auto controllers = e.service<comp_app::ControllerInput>();
 
-            for(auto entity : e.select<PlayerCamera, PlayerInput, PlayerInfo, NetworkInfo>())
+            for(auto entity : e.select<PlayerCamera, PlayerInput, PlayerInfo, NetworkInfo, Model>())
             {
-                auto [cam, input, info, net] = entity.components();
+                auto [cam, input, info, net, mod] = entity.components();
                 if(info.permissions.camera)
                 {
                     if(controllers && cam.controller.index.has_value())
@@ -715,6 +715,13 @@ i32 blam_main()
                 cam.matrix[2][2] = 0.f;
                 cam.matrix       = cam.matrix * view_matrix;
                 cam.rotation = glm::mat4_cast(cam.camera.rotation) * bsp_basis;
+
+                mod.position  = cam.camera.position;
+                mod.rotation  = cam.camera.rotation;
+                mod.transform =
+                    glm::translate(Matf4(1), mod.position) *
+                    glm::transpose(cam.rotation) * bsp_basis *
+                    glm::rotate(Matf4(1), glm::pi<f32>(), Vecf3{0, 0, 1});
             }
         },
         [](EntityContainer&, BlamData<halo_version>&, time_point const&) {

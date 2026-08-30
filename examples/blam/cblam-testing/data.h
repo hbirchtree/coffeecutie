@@ -223,6 +223,7 @@ struct GameEvent
         WeatherChanged,
 
         // Resource loading
+        MountModel, // SpawnModel, but to an existing entity
         SpawnBiped,
         SpawnBSP,
         SpawnEquipment,
@@ -330,6 +331,13 @@ struct SkyboxChangedEvent
 struct WeatherChangedEvent
 {
     static constexpr auto event_type = GameEvent::WeatherChanged;
+};
+
+struct MountModelEvent
+{
+    static constexpr auto event_type = GameEvent::MountModel;
+    blam::tagref_typed_t<blam::tag_class_t::mod2> model;
+    u64 entity_id{0};
 };
 
 struct SpawnBipedEvent

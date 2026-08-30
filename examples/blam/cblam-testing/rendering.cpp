@@ -471,8 +471,6 @@ struct DrawListBuilder
         return m_bone_upload;
     }
 
-
-
     void generate_static_draws(
         Proxy& p, size_t& materials_ptr, size_t& transparent_ptr)
     {
@@ -486,7 +484,7 @@ struct DrawListBuilder
         {
             auto&& [bsp, bsp_draw, vis] = ent.components();
 
-            if(!vis.visible)
+            if(!vis.visible_for(0))
                 continue;
 
             Pass& wf              = bsp_build()[bsp_draw.current_pass];
@@ -529,7 +527,7 @@ struct DrawListBuilder
         {
             auto&& [bsp, bsp_draw, vis] = ent.components();
 
-            if(!vis.visible)
+            if(!vis.visible_for(0))
                 continue;
             populate_bsp_material(
                 bsp,
@@ -564,7 +562,7 @@ struct DrawListBuilder
             auto   parent = p.template ref<Proxy>(model.parent);
             Model const& mod    = parent.template get<Model>();
 
-            if(!parent.template get<Visibility>().visible ||
+            if(!parent.template get<Visibility>().visible_for(0) ||
                (!rendering_params->render_scenery &&
                 (ent.tags() & ObjectSkybox) == 0))
             {
@@ -739,7 +737,7 @@ struct DrawListBuilder
             BspReference const& bsp = ref.template get<BspReference>();
             DrawState&    bsp_draw = ref.template get<DrawState>();
 
-            if(!ref.template get<Visibility>().visible)
+            if(!ref.template get<Visibility>().visible_for(0))
                 continue;
 
             i32 instance_offset = bsp_draw.draw.data.front().instances.offset;
@@ -782,6 +780,8 @@ struct DrawListBuilder
         blam::tag_t const* tag)
     {
         if(!m_render_params.color_changing)
+            return std::nullopt;
+        if(!tag)
             return std::nullopt;
         switch(tag->tag_class())
         {
@@ -1723,7 +1723,7 @@ struct LegacyMeshRenderer
             p.template select<BspReference, DrawState, Visibility>())
         {
             auto const& [bsp_ref, bsp_draw, vis] = ent.components();
-            if(!vis.visible)
+            if(!vis.visible_for(0))
                 continue;
             if(!bsp_ref.shader.valid() || !bsp_ref.lightmap.valid())
                 continue;
@@ -1997,7 +1997,7 @@ struct LegacyMeshRenderer
             auto const& [sm, sm_draw] = ent.components();
             auto            parent = p.template ref<Proxy>(sm.parent);
             Model const&    mod    = parent.template get<Model>();
-            if(!parent.template get<Visibility>().visible || !sm.shader.valid())
+            if(!parent.template get<Visibility>().visible_for(0) || !sm.shader.valid())
                 continue;
 
             auto shader_it = shader_cache.find(sm.shader);

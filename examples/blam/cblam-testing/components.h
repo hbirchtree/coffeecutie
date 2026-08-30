@@ -8,6 +8,7 @@
 #include <peripherals/concepts/graphics_api.h> 
 #include <blam/volta/blam_scenario.h>
 #include <chrono>
+#include <utility>
 
 using ERef = compo::EntityRef<compo::EntityContainer>;
 
@@ -50,8 +51,33 @@ struct Visibility
 {
     using value_type = Visibility;
     using type = compo::alloc::BufferedContainer<value_type, 2>;
-    bool visible{true};
+
+    // Viewport ID: player ID/mirror
+    // Only player 1 and 2 have a mirror as per the old campaign limitations
+    using viewport_id = std::pair<u32, bool>;
+
+    std::map<viewport_id, bool> visible{};
+    // Interior is invariant to viewports
     bool interior{false};
+
+    bool visible_for(u32 player_id = 0, bool mirror = false) const
+    {
+        if(auto vis = visible.find(std::make_pair(player_id, mirror));
+           vis != visible.end())
+            return vis->second;
+        return true;
+    }
+    void set_visibility(bool visible, u32 player_id = 0, bool mirror = false)
+    {
+        this->visible[std::make_pair(player_id, mirror)] = visible;
+    }
+
+    bool& visibility(u32 player_id = 0, bool mirror = false)
+    {
+        return visible[std::make_pair(player_id, mirror)];
+    }
+
+    // TODO: We need to decide at some point if visibility extends from server to client data
 };
 
 /*! Per-frame draw bookkeeping, kept apart from the geometry it draws */
@@ -619,6 +645,9 @@ static const auto player_recipe = compo::EntityRecipe{
             compo::type_hash_v<SoundEffects>(),
             compo::type_hash_v<PhysicsData>(),
             compo::type_hash_v<DebugDraw>(),
+
+            compo::type_hash_v<Model>(),
+            compo::type_hash_v<Visibility>(),
         },
     .tags = PlayerBiped,
 };

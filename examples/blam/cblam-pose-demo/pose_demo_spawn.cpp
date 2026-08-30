@@ -457,13 +457,11 @@ void spawn_static_biped(
     }
 
     cDebug(
-        "pose_demo: spawned '{}' biped at {} ({} parts created, {} skipped, "
-        "visible={})",
+        "pose_demo: spawned '{}' biped at {} ({} parts created, {} skipped)",
         biped,
         s_synth_spawn.pos,
         parts_created,
-        parts_skipped,
-        parent_.get<Visibility>().visible);
+        parts_skipped);
 
     g_pose_demo_attachments.clear();
     for(size_t a = 0; a < g_pose_config.attachments.size(); ++a)

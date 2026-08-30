@@ -37,6 +37,7 @@ blam::map_ptr g_raw_magic;
 bool          g_dump_mirrors = false;
 size_t        g_scan_window  = 0;
 bool          g_dump_player  = false;
+bool          g_dump_scenario = false;
 bool          g_channel_stats{false};
 std::string   g_dump_prefix{};
 
@@ -531,6 +532,78 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
 
 /* ---- dispatch ---- */
 
+/* The scenario never names the globals tag; it supplies where a player spawns
+ * and with what, while globals supplies the unit itself. Printed together so
+ * the split is visible. */
+template<typename Ver>
+void dump_scenario(blam::map_container<Ver> const& map)
+{
+    auto scn = map.scenario();
+    if(!scn.has_value())
+    {
+        printf("no scenario tag\n");
+        return;
+    }
+    auto const* s = scn.value();
+
+    print_enum("scenario type", s->info.type);
+    print_enum("flags", s->info.flags);
+    printf("\n");
+
+    if(auto p = s->player_start.profiles.data(g_magic); p.has_value())
+    {
+        printf("player_starting_profiles: %zu\n", p.value().size());
+        for(auto const& prof : p.value())
+            printf(
+                "  %-16.*s health=%g shield=%g  %s (%u) / %s (%u)  nades f=%u p=%u\n",
+                static_cast<int>(prof.name.str().size()),
+                prof.name.str().data(),
+                prof.health_modifier,
+                prof.shield_modifier,
+                name_of(prof.primary_weapon).c_str(),
+                prof.rounds1_total,
+                name_of(prof.secondary_weapon).c_str(),
+                prof.rounds2_total,
+                prof.frag_grenades,
+                prof.plasma_nades);
+    }
+
+    if(auto l = s->player_start.locations.data(g_magic); l.has_value())
+    {
+        printf("player_starting_locations: %zu\n", l.value().size());
+        u32 shown = 0;
+        for(auto const& loc : l.value())
+        {
+            if(shown++ >= 4)
+            {
+                printf("  ...\n");
+                break;
+            }
+            printf(
+                "  pos=(%.2f,%.2f,%.2f) rot=%.2f team=%u bsp=%u modes=",
+                loc.pos.x,
+                loc.pos.y,
+                loc.pos.z,
+                loc.rot,
+                loc.team_index,
+                loc.bsp_index);
+            for(auto const& t : loc.types)
+                printf(
+                    "%.*s ",
+                    static_cast<int>(enum_name(t).size()),
+                    enum_name(t).data());
+            printf("\n");
+        }
+    }
+
+    if(auto f = s->netgame.flags.data(g_magic); f.has_value())
+        printf("netgame flags: %zu\n", f.value().size());
+    if(auto e = s->netgame.equipment.data(g_magic); e.has_value())
+        printf("netgame equipment: %zu\n", e.value().size());
+    if(auto q = s->starting_equipment.data(g_magic); q.has_value())
+        printf("starting_equipment: %zu\n", q.value().size());
+}
+
 /* Resolves the player's spawn unit the way the engine would: globals -> the
  * multiplayer or singleplayer information block -> a bipd tag -> its model. */
 template<typename Ver>
@@ -984,6 +1057,12 @@ void open_map(
         return;
     }
 
+    if(g_dump_scenario)
+    {
+        dump_scenario<Ver>(map);
+        return;
+    }
+
     u32 matched = 0;
     for(blam::tag_t const& tag : index)
     {
@@ -1043,6 +1122,8 @@ int inspect_main()
         //
         ("dump-player-biped", "Resolve the player's spawn unit and its model from globals")
         //
+        ("dump-scenario", "Print scenario type, starting profiles and spawn locations")
+        //
         ;
 
     auto& args      = Coffee::GetInitArgs();
@@ -1065,6 +1146,7 @@ int inspect_main()
     bool list_only  = arguments.count("list") > 0;
     g_dump_mirrors  = arguments.count("dump-mirrors") > 0;
     g_dump_player   = arguments.count("dump-player-biped") > 0;
+    g_dump_scenario = arguments.count("dump-scenario") > 0;
     g_scan_window   = static_cast<size_t>(
         arguments.as_optional<int>("scan-tagrefs").value_or(0));
     g_channel_stats = arguments.count("channel-stats") > 0;

@@ -1,10 +1,12 @@
 #include "loading.h"
 #include "bitmap_cache.h"
+#include "blam/volta/blam_mod2.h"
 #include "blam/volta/blam_scenario.h"
 #include "blam/volta/blam_stl.h"
 #include "blam/volta/blam_tag_ref.h"
 #include "blam_files.h"
 #include "caching.h"
+#include "caching_item.h"
 #include "components.h"
 #include "data.h"
 #include "map_marker.h"
@@ -54,12 +56,14 @@ struct ResourceLoader
     std::vector<SpawnBipedEvent> pending_bipeds;
     std::vector<SpawnEquipmentEvent> pending_equipment;
     std::vector<SpawnModelEvent> pending_models;
+    std::vector<MountModelEvent> pending_mounts;
     std::optional<ClusterChangedEvent> pending_cluster_change;
 
     std::shared_ptr<GameEventBus::queue_type<SpawnBSPEvent>>       spawn_bsp_queue;
     std::shared_ptr<GameEventBus::queue_type<SpawnBipedEvent>>     spawn_biped_queue;
     std::shared_ptr<GameEventBus::queue_type<SpawnEquipmentEvent>> spawn_equip_queue;
     std::shared_ptr<GameEventBus::queue_type<SpawnModelEvent>>     spawn_model_queue;
+    std::shared_ptr<GameEventBus::queue_type<MountModelEvent>>     mount_model_queue;
     std::shared_ptr<GameEventBus::queue_type<ClusterChangedEvent>> cluster_queue;
 
     struct
@@ -127,13 +131,14 @@ struct ResourceLoader
         index = blam::tag_index_view<Ver>(files.container);
 
         cluster_queue->poll();
+        mount_model_queue->poll();
         // spawn_biped_queue->poll();
         spawn_bsp_queue->poll();
         // spawn_equip_queue->poll();
         spawn_model_queue->poll();
 
         if(!pending_cluster_change && pending_bsps.empty() &&
-           pending_models.empty())
+           pending_models.empty() && pending_mounts.empty())
             return;
 
         /* Everything below can reach ModelCache::predict(), so the model
@@ -164,7 +169,10 @@ struct ResourceLoader
 
         for(auto const& model_load : pending_models)
             load_model(p, model_load.model);
+        for(auto const& model_mount : pending_mounts)
+            mount_model(p, model_mount);
         pending_models.clear();
+        pending_mounts.clear();
     }
 
     /* Sun direction/colour and fog for the world UBO, taken from the
@@ -1089,6 +1097,38 @@ struct ResourceLoader
         for(auto const& model_id : mesh_data.models)
             build_submodels(p, ent, model, model_id, submodel);
     }
+
+    void mount_model(Proxy& p, MountModelEvent const& mount)
+    {
+        if(!mount.model.valid())
+            return;
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+
+        auto model_it = index.find(mount.model);
+        if(model_it == index.end())
+            return;
+
+        ModelAssembly mesh = model_cache.predict_regions(
+            model_it->as_ref(), blam::mod2::lod_high_ext);
+        if(mesh.models.empty())
+        {
+            cWarning("Failed to mount model {} to entity {}",
+                index.name_of(mount.model),
+                mount.entity_id);
+            return;
+        }
+
+        auto   target = p.ref(mount.entity_id);
+        Model& model  = target.template get<Model>();
+
+        model.tag       = &(*model_it);
+        model.model     = mesh.models.at(0);
+        model.transform = glm::identity<Matf4>();
+
+        for(auto const& model_id : mesh.models)
+            build_submodels(
+                p, target, model, model_id, shared_recipes::submodel);
+    }
 };
 
 void alloc_resource_loader(compo::EntityContainer& e)
@@ -1103,6 +1143,10 @@ void alloc_resource_loader(compo::EntityContainer& e)
     loader.spawn_model_queue = game_bus.addQueuedEventFunction<SpawnModelEvent>(
         0, [&loader](GameEvent&, SpawnModelEvent* spawn) {
             loader.pending_models.push_back(*spawn);
+        });
+    loader.mount_model_queue = game_bus.addQueuedEventFunction<MountModelEvent>(
+        0, [&loader](GameEvent&, MountModelEvent* spawn) {
+            loader.pending_mounts.push_back(*spawn);
         });
     loader.spawn_biped_queue = game_bus.addQueuedEventFunction<SpawnBipedEvent>(
         0, [&loader](GameEvent&, SpawnBipedEvent* spawn) {
