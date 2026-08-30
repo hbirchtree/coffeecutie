@@ -31,7 +31,10 @@ using Coffee::ProfContext;
 #include <coffee/components/restricted_subsystem.h>
 #include <peripherals/identify/system.h>
 
+#if defined(USE_WEBRTC_TRANSPORT)
 using namespace webrtc_signaling;
+#endif
+
 using platform::url::constructors::MkUrl;
 
 #include <fmt_extensions/format.h>
