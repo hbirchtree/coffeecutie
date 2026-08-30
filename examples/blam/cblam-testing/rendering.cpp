@@ -338,26 +338,32 @@ struct DrawListBuilder
         /* Ahead of MeshRenderer (3072): produces what it submits */
         this->priority = 3071;
 
-        for(auto& set : m_bsp_sets)
-        {
-            u32 i = 0;
-            for(auto& pass : set)
+        for(auto& buffered : m_bsp_sets)
+            for(u32 vp = 0; vp < kMaxViewports; vp++)
             {
-                pass.command.program = resources.bsp_pipeline;
-                pass.name            = fmt::format(
-                    "BSP::{}", magic_enum::enum_name(static_cast<Passes>(i++)));
+                u32 i = 0;
+                for(auto& pass : buffered[vp])
+                {
+                    pass.command.program = resources.bsp_pipeline;
+                    pass.name            = fmt::format(
+                        "BSP::{}::{}",
+                        vp,
+                        magic_enum::enum_name(static_cast<Passes>(i++)));
+                }
             }
-        }
-        for(auto& set : m_model_sets)
-        {
-            u32 i = 0;
-            for(auto& pass : set)
+        for(auto& buffered : m_model_sets)
+            for(u32 vp = 0; vp < kMaxViewports; vp++)
             {
-                pass.command.program = resources.model_pipeline;
-                pass.name            = fmt::format(
-                    "MOD::{}", magic_enum::enum_name(static_cast<Passes>(i++)));
+                u32 i = 0;
+                for(auto& pass : buffered[vp])
+                {
+                    pass.command.program = resources.model_pipeline;
+                    pass.name            = fmt::format(
+                        "MOD::{}::{}",
+                        vp,
+                        magic_enum::enum_name(static_cast<Passes>(i++)));
+                }
             }
-        }
     }
 
     void start_restricted(Proxy& p, compo::time_point const& time)
@@ -385,26 +391,57 @@ struct DrawListBuilder
         }
 
         m_epoch++;
-        generate_draws(p);
 
-        Vecf3 sort_cam{0};
+        /* Same filter and ordering as MeshRenderer::m_players, so viewport i
+         * here is viewport i there. */
+        m_views.clear();
         for(auto ent : p.template select<PlayerCamera, PlayerInfo>())
         {
             auto const& [cam, info] = ent.components();
-            if(info.seat_idx != 0)
+            if(info.is_remote() || !cam.is_active())
                 continue;
-            sort_cam = cam.camera.position;
-            break;
+            if(m_views.size() >= kMaxViewports)
+                break;
+            m_views.push_back({
+                .seat     = info.seat_idx,
+                .position = cam.camera.position,
+            });
         }
+        std::sort(
+            m_views.begin(), m_views.end(), [](auto const& a, auto const& b) {
+                return a.seat < b.seat;
+            });
+        if(m_views.empty())
+            m_views.push_back({});
 
         last_update = time;
 
-        update_materials(p, time);
-        for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
+        /* One viewport at a time: the per-entity instance offsets in DrawState
+         * and MeshTrackingData are scratch, reused by each pass over the
+         * world, so a viewport must be built and have its materials populated
+         * before the next overwrites them. */
+        m_materials_ptr   = 0;
+        m_transparent_ptr = 0;
+        m_matrix_ptr      = 0;
+
+        for(u32 vp = 0; vp < m_views.size(); vp++)
         {
-            model_build()[static_cast<Passes>(pi)].sort_by_depth(sort_cam);
-            bsp_build()[static_cast<Passes>(pi)].sort_by_depth(sort_cam);
+            m_vp   = vp;
+            m_seat = m_views[vp].seat;
+
+            generate_draws(p);
+            update_materials(p, time);
+
+            for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
+            {
+                model_build()[static_cast<Passes>(pi)].sort_by_depth(
+                    m_views[vp].position);
+                bsp_build()[static_cast<Passes>(pi)].sort_by_depth(
+                    m_views[vp].position);
+            }
         }
+        m_vp   = 0;
+        m_seat = 0;
     }
 
     compo::time_point last_update{};
@@ -430,29 +467,55 @@ struct DrawListBuilder
      * submitting from. The GPU storage behind the spans already rotates
      * (revolving_buffer_t, per_frame_bufs=3), so each set naturally lands on
      * a different buffer. */
-    std::array<std::array<Pass, Pass_Count>, 2> m_bsp_sets;
-    std::array<std::array<Pass, Pass_Count>, 2> m_model_sets;
-    u32                                         m_build{0};
-    u32                                         m_submit{1};
+    /* Splitscreen submits a different set per viewport: a player must not
+     * pay for what only the other one can see. */
+    static constexpr u32 kMaxViewports = 4;
+    using pass_set_t = std::array<Pass, Pass_Count>;
+
+    std::array<std::array<pass_set_t, kMaxViewports>, 2> m_bsp_sets;
+    std::array<std::array<pass_set_t, kMaxViewports>, 2> m_model_sets;
+    u32                                                  m_build{0};
+    u32                                                  m_submit{1};
+
+    struct view_t
+    {
+        u32   seat{0};
+        Vecf3 position{};
+    };
+    /* Active local viewports, sorted by seat -- MeshRenderer sorts its own
+     * copy the same way, so index i means the same viewport in both. */
+    std::vector<view_t> m_views;
+    u32                 m_vp{0};   /* viewport currently being built */
+    u32                 m_seat{0}; /* its seat, for visibility queries */
+
+    /* Store cursors for the frame, shared by every viewport. */
+    size_t m_materials_ptr{0};
+    size_t m_transparent_ptr{0};
+    size_t m_matrix_ptr{0};
+
+    u32 view_count() const
+    {
+        return static_cast<u32>(m_views.size());
+    }
 
     /* The set the builder writes; the renderer must never see it. */
-    std::array<Pass, Pass_Count>& bsp_build()
+    pass_set_t& bsp_build()
     {
-        return m_bsp_sets[m_build];
+        return m_bsp_sets[m_build][m_vp];
     }
-    std::array<Pass, Pass_Count>& model_build()
+    pass_set_t& model_build()
     {
-        return m_model_sets[m_build];
+        return m_model_sets[m_build][m_vp];
     }
 
     /* The completed set from the previous frame, for the renderer. */
-    std::array<Pass, Pass_Count> const& bsp_submit() const
+    pass_set_t const& bsp_submit(u32 vp = 0) const
     {
-        return m_bsp_sets[m_submit];
+        return m_bsp_sets[m_submit][std::min(vp, kMaxViewports - 1)];
     }
-    std::array<Pass, Pass_Count> const& model_submit() const
+    pass_set_t const& model_submit(u32 vp = 0) const
     {
-        return m_model_sets[m_submit];
+        return m_model_sets[m_submit][std::min(vp, kMaxViewports - 1)];
     }
 
     u32 m_epoch{0};
@@ -484,7 +547,7 @@ struct DrawListBuilder
         {
             auto&& [bsp, bsp_draw, vis] = ent.components();
 
-            if(!vis.visible_for(0))
+            if(!vis.visible_for(m_seat))
                 continue;
 
             Pass& wf              = bsp_build()[bsp_draw.current_pass];
@@ -527,7 +590,7 @@ struct DrawListBuilder
         {
             auto&& [bsp, bsp_draw, vis] = ent.components();
 
-            if(!vis.visible_for(0))
+            if(!vis.visible_for(m_seat))
                 continue;
             populate_bsp_material(
                 bsp,
@@ -546,8 +609,11 @@ struct DrawListBuilder
         ModelCache<Version>* model_cache;
         p.subsystem(model_cache);
 
-        size_t materials_ptr   = 0;
-        size_t transparent_ptr = 0;
+        /* Frame-scoped, not call-scoped: every viewport carves its own
+         * slices out of the same stores, so restarting at zero would have
+         * each one overwrite the last. */
+        size_t& materials_ptr   = m_materials_ptr;
+        size_t& transparent_ptr = m_transparent_ptr;
         generate_static_draws(p, materials_ptr, transparent_ptr);
 
         for(Pass& pass : model_build())
@@ -562,7 +628,7 @@ struct DrawListBuilder
             auto   parent = p.template ref<Proxy>(model.parent);
             Model const& mod    = parent.template get<Model>();
 
-            if(!parent.template get<Visibility>().visible_for(0) ||
+            if(!parent.template get<Visibility>().visible_for(m_seat) ||
                (!rendering_params->render_scenery &&
                 (ent.tags() & ObjectSkybox) == 0))
             {
@@ -602,7 +668,7 @@ struct DrawListBuilder
         if(!m_api->feature_info().program.buffer_binding)
             return;
 
-        size_t matrix_ptr = 0;
+        size_t& matrix_ptr = m_matrix_ptr;
         for(Pass& pass : model_build())
         {
             auto material_size = align_for_gpu_padding(pass.required_storage());
@@ -623,12 +689,17 @@ struct DrawListBuilder
             transparent_ptr += transparent_size;
         }
 
-        // Reset per-frame bone_base so each model uploads once per frame
-        for(auto& [id, item] : model_cache->m_cache)
-            item.bone_base = -1;
-        auto& bone_upload = m_bone_upload;
-        bone_upload.clear();
-        size_t bone_write_ptr = 0;
+        /* Bone matrices are viewport-independent, so the buffer is filled
+         * once for the frame: the first viewport resets it, later ones only
+         * append models the earlier ones never reached. */
+        if(m_vp == 0)
+        {
+            for(auto& [id, item] : model_cache->m_cache)
+                item.bone_base = -1;
+            m_bone_upload.clear();
+        }
+        auto&  bone_upload    = m_bone_upload;
+        size_t bone_write_ptr = bone_upload.size();
 
         for(auto ent : p.select(ObjectMod2))
         {
@@ -737,7 +808,7 @@ struct DrawListBuilder
             BspReference const& bsp = ref.template get<BspReference>();
             DrawState&    bsp_draw = ref.template get<DrawState>();
 
-            if(!ref.template get<Visibility>().visible_for(0))
+            if(!ref.template get<Visibility>().visible_for(m_seat))
                 continue;
 
             i32 instance_offset = bsp_draw.draw.data.front().instances.offset;
@@ -1437,8 +1508,11 @@ struct MeshRenderer
             }
         };
 
-        upload_set(builder.bsp_submit());
-        upload_set(builder.model_submit());
+        for(u32 vp = 0; vp < builder.view_count(); vp++)
+        {
+            upload_set(builder.bsp_submit(vp));
+            upload_set(builder.model_submit(vp));
+        }
 
         if(!builder.bone_upload().empty())
             m_resources.bone_matrix_buf->update(
@@ -1553,7 +1627,7 @@ struct MeshRenderer
                 auto pass  = static_cast<Passes>(pi);
                 auto blend = blend_for_pass(pass);
                 render_pass(
-                    p, primary_player, t, builder.model_submit()[pass], blend, sky_depth);
+                    p, primary_player, t, builder.model_submit(primary_player)[pass], blend, sky_depth);
             }
         }
 
@@ -1571,8 +1645,15 @@ struct MeshRenderer
             auto pass = static_cast<Passes>(pi);
             for(auto i : stl_types::range<u32>(m_players.size()))
             {
-                render_bsp_pass(p, i, t, builder.bsp_submit()[pass], opaque_stencil);
-                render_pass(p, i, t, builder.model_submit()[pass], opaque_stencil, cull_front);
+                render_bsp_pass(
+                    p, i, t, builder.bsp_submit(i)[pass], opaque_stencil);
+                render_pass(
+                    p,
+                    i,
+                    t,
+                    builder.model_submit(i)[pass],
+                    opaque_stencil,
+                    cull_front);
             }
         }
 
@@ -1631,11 +1712,24 @@ struct MeshRenderer
         for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
         {
             auto pass  = static_cast<Passes>(pi);
-            auto blend = blend_for_pass(pass);
-            render_pass(
-                p, primary_player, t, builder.model_submit()[pass], blend, transparent_depth);
-            render_bsp_pass(
-                p, primary_player, t, builder.bsp_submit()[pass], blend, transparent_depth);
+            for(auto i : stl_types::range<u32>(m_players.size()))
+            {
+                auto blend = blend_for_pass(pass);
+                render_pass(
+                    p,
+                    i,
+                    t,
+                    builder.model_submit(i)[pass],
+                    blend,
+                    transparent_depth);
+                render_bsp_pass(
+                    p,
+                    i,
+                    t,
+                    builder.bsp_submit(i)[pass],
+                    blend,
+                    transparent_depth);
+            }
         }
 
         render_debug_lines(p);

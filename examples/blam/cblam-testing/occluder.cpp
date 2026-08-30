@@ -30,8 +30,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
     using type  = Occluder<V>;
     using Proxy = compo::proxy_of<OccluderManifest<V>>;
 
-    u32            last_cluster{std::numeric_limits<u32>::max()};
-    bool           last_found{false};
     i16            last_sky_idx{-1};
     u32            frame_counter{0};
     Vecf3          last_camera_pos{};
@@ -39,9 +37,18 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
     u32            pvs_cluster{0};
     generation_idx_t
         pvs_bsp_id{}; /* which BSP section the camera is currently in */
-    std::vector<bool> pvs_visible{}; /* portal-traversal visible set,
-                                        recomputed on view change */
-    Matf4 last_pvs_mvp{};            /* view the set was computed for */
+
+    /* Which BSP section is active is global game state; the cluster a camera
+     * stands in -- and so its portal-traversal set -- is per viewport. */
+    struct viewport_pvs_t
+    {
+        u32               cluster{0};
+        std::vector<bool> visible{}; /* per-cluster, recomputed on change */
+        Matf4             last_mvp{};
+        u32  last_cluster{std::numeric_limits<u32>::max()};
+        bool last_found{false};
+    };
+    std::map<Visibility::viewport_id, viewport_pvs_t> viewport_pvs;
     BSPItem::portal_scratch
         portal_scratch{}; /* reused walk buffers, see caching_item.h */
 
@@ -119,7 +126,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             };
         }
 
-        auto& seat0_cam = cull_targets[std::make_pair(0u, false)];
+        const auto primary_view = std::make_pair(0u, false);
+        auto&      seat0_cam    = cull_targets[primary_view];
 
         BSPItem const*   current_bsp{nullptr};
         u32              current_cluster{0};
@@ -203,49 +211,71 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             }
         }
 
-        /* When the camera enters a new cluster, recompute the portal-traversal
-         * visible set. When between clusters, keep the last valid set so
-         * culling doesn't snap to all-visible at cluster boundaries. */
         bool section_changed = active_bsp != pvs_bsp;
-        bool cluster_changed = section_changed ||
-                               (current_bsp != nullptr) != last_found ||
-                               current_cluster != last_cluster;
-        last_found   = current_bsp != nullptr;
-        last_cluster = current_cluster;
 
-        /* The active section is culled even while the camera is outside its
+        /* The active section is culled even while a camera is outside its
          * clusters; other sections stay hidden wholesale. */
         pvs_bsp    = active_bsp;
         pvs_bsp_id = active_bsp_id;
         if(section_changed)
-            pvs_visible.clear(); /* stale per-cluster bits of old section */
+            for(auto& [id, st] : viewport_pvs)
+                st.visible.clear(); /* stale per-cluster bits of old section */
+
+        /* Forget viewports that went away, so a returning seat cannot read a
+         * stale set back. */
+        std::erase_if(viewport_pvs, [&](auto const& kv) {
+            return cull_targets.find(kv.first) == cull_targets.end();
+        });
 
         Coffee::Profiler::PopContext(); /* Occluder::section_resolve */
 
-        /* The visible set depends on the full view (portal screen rects),
-         * so it must follow camera motion — but an identical MVP and
-         * cluster yields an identical set, so idle frames skip the walk. */
+        /* Each viewport resolves its own cluster and visible set: the walk
+         * depends on the full view (portal screen rects), so it follows camera
+         * motion, but an identical MVP and cluster yields an identical set and
+         * idle viewports skip it. */
+        bool primary_cluster_changed = false;
         {
-            auto const& [camera_pos, camera_mvp, _] = seat0_cam;
-            bool view_changed = cluster_changed || camera_mvp != last_pvs_mvp;
-            if(current_bsp && view_changed)
+            Coffee::ProfContext __("Occluder::portal_visible_set");
+            for(auto const& [id, view] : cull_targets)
             {
-                Coffee::ProfContext __("Occluder::portal_visible_set");
-                pvs_cluster = current_cluster;
-                pvs_visible = pvs_bsp->portal_visible_set(
-                    pvs_cluster, camera_pos, camera_mvp, portal_scratch);
-                last_pvs_mvp = camera_mvp;
-            } else if(current_bsp)
-                pvs_cluster = current_cluster;
-        }
-        /* else: camera outside the active section's clusters (noclip through
-         * rock) — keep the last valid set; empty set = all-visible within the
-         * active section. Snapping to all-visible across sections is what
-         * used to flash far-off geometry into view. */
+                auto& st = viewport_pvs[id];
 
+                u32  cluster = st.cluster;
+                bool found   = false;
+                if(active_bsp)
+                    if(auto c = active_bsp->find_cluster(view.pos);
+                       c.has_value())
+                    {
+                        cluster = c.value().first;
+                        found   = true;
+                    }
+
+                bool changed = section_changed || found != st.last_found ||
+                               cluster != st.last_cluster;
+                st.last_found   = found;
+                st.last_cluster = cluster;
+                if(id == primary_view)
+                    primary_cluster_changed = changed;
+
+                /* Outside every cluster (noclip through rock): keep the last
+                 * valid set. Snapping to all-visible is what used to flash
+                 * far-off geometry into view. */
+                if(!found)
+                    continue;
+                st.cluster = cluster;
+                if(changed || view.mvp != st.last_mvp)
+                {
+                    st.visible = pvs_bsp->portal_visible_set(
+                        cluster, view.pos, view.mvp, portal_scratch);
+                    st.last_mvp = view.mvp;
+                }
+            }
+        }
+
+        pvs_cluster                    = viewport_pvs[primary_view].cluster;
         rendering->current_bsp_cluster = pvs_cluster;
 
-        if(cluster_changed)
+        if(primary_cluster_changed)
         {
             /* Publish the cluster change neutrally; the sound system (and any
              * other interested subsystem) resolves its own concerns from this.
@@ -266,12 +296,12 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
         BSPItem const* cull_bsp = pvs_bsp;
 
-        /* Returns true if cluster ci is visible from the camera cluster.
+        /* Whether cluster ci is visible from that viewport's own cluster.
          * Falls back to visible when no set is computed yet. */
-        const auto cluster_ok = [&](u32 ci) -> bool {
-            if(pvs_visible.empty() || ci >= pvs_visible.size())
+        const auto cluster_ok = [](viewport_pvs_t const& st, u32 ci) -> bool {
+            if(st.visible.empty() || ci >= st.visible.size())
                 return true;
-            return pvs_visible[ci];
+            return st.visible[ci];
         };
 
         bool periodic = (frame_counter++ % 300) == 0;
@@ -299,36 +329,42 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 auto [bsp_ref, vis] = ent.components();
 
                 bsp_total++;
-                if(bsp_ref.bsp == pvs_bsp_id)
+                if(bsp_ref.bsp != pvs_bsp_id)
                 {
+                    /* Different BSP section: hide in every viewport. */
+                    vis.hide_all();
+                    continue;
+                }
+                if(bsp_ref.clusters.empty())
+                    bsp_no_cluster++;
+
+                /* The cluster set is per viewport, so the PVS test is too;
+                 * only the chunk's own cluster list is shared. */
+                for(auto const& [idx, view] : cull_targets)
+                {
+                    auto [seat, mirror] = idx;
+                    auto const& st      = viewport_pvs[idx];
+
                     bool pvs_ok = true;
                     if(!bsp_ref.clusters.empty())
                     {
                         pvs_ok = false;
                         for(u16 ci : bsp_ref.clusters)
-                            if(cluster_ok(ci))
+                            if(cluster_ok(st, ci))
                             {
                                 pvs_ok = true;
                                 break;
                             }
-                    } else
-                        bsp_no_cluster++;
-
-                    for(auto& [idx, view] : cull_targets)
-                    {
-                        auto [seat, mirror] = idx;
-                        vis.set_visibility(
-                            pvs_ok &&
-                            (!bsp_ref.has_bounds ||
-                             view.f.aabb_visible(bsp_ref.bmin, bsp_ref.bmax)),
-                            seat);
                     }
-                } else
-                {
-                    /* Different BSP section: hide entirely. */
-                    vis.set_visibility(false);
+
+                    vis.set_visibility(
+                        pvs_ok &&
+                        (!bsp_ref.has_bounds ||
+                         view.f.aabb_visible(bsp_ref.bmin, bsp_ref.bmax)),
+                        seat,
+                        mirror);
                 }
-                if(vis.visible_for(0))
+                if(vis.visible_any())
                     bsp_visible++;
             }
         }
@@ -340,15 +376,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 return glm::distance(mod.position, frustum.pos) < draw_dist;
             };
 
-        /* Cull a model against the camera's BSP section.
-         * - In a cluster → portal-traversal set + draw distance.
-         * - No cluster but inside this section's world bounds → origin is in
-         *   solid space (scenery planted into the ground); keep it, gated by
-         *   draw distance.
-         * - Outside the section's world bounds → belongs to another BSP
-         *   section, which is hidden wholesale, so hide its objects too.
-         *   These used to fall through to the distance check alone, which is
-         *   why far-away models never disappeared. */
         enum class model_vis
         {
             visible,
@@ -360,110 +387,125 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
          * headers carry no decoded bounding sphere, and the largest placed
          * objects (trees, vehicles) stay within ~5 world units of their
          * origin. */
-        constexpr f32 model_radius   = 5.f;
-        const auto    classify_model = [&](BSPItem const* bsp,
-                                        Model const&   model,
-                                        bool&          interior) -> model_vis {
-            auto pos = model.position;
-            /* Cheapest test first: outside the view frustum hides the model
-             * regardless of cluster, and skips the BSP-tree walks below. */
-            if(!seat0_cam.f.sphere_visible(pos, model_radius))
-                return model_vis::frustum_culled;
-            /* Resolve the model's cluster by the EXACT BSP-tree lookup. Scenery
-             * origins commonly sit on/under the ground, i.e. in a solid leaf,
-             * so the lookup at the origin misses; probe upward through the
-             * model body until it lands in open space. The exact tree is
-             * preferred over find_cluster()'s subcluster-AABB fallback, whose
-             * overlapping boxes can resolve to the wrong cluster and keep an
-             * object that is actually in an invisible one. Accurate assignment
-             * is what lets an object be culled with an invisible cluster
-             * instead of always drawn — important on legacy renderers where
-             * models are costly. */
-            std::optional<u32> cidx;
+        constexpr f32 model_radius = 5.f;
+
+        /* Resolving which cluster a model sits in is the expensive half of
+         * model culling, and it depends only on the model -- so it runs once
+         * and every viewport shares the answer. Scenery origins commonly sit
+         * on/under the ground, i.e. in a solid leaf, so the lookup at the
+         * origin misses; probe upward through the model body until it lands in
+         * open space. The exact tree is preferred over find_cluster()'s
+         * subcluster-AABB fallback, whose overlapping boxes can resolve to the
+         * wrong cluster and keep an object that is actually in an invisible
+         * one. Accurate assignment is what lets an object be culled with an
+         * invisible cluster instead of always drawn -- important on legacy
+         * renderers where models are costly. */
+        const auto resolve_cluster =
+            [](BSPItem const* bsp, Vecf3 const& pos) -> std::optional<u32> {
             for(f32 up : {0.f, 2.f, 5.f, 10.f, 20.f})
                 if(auto ci = bsp->find_cluster_tree(pos + Vecf3{0.f, 0.f, up}))
-                {
-                    cidx = ci;
-                    break;
-                }
-            if(!cidx)
-                if(auto mc = bsp->find_cluster(pos))
-                    cidx = mc->first;
-            if(cidx)
-            {
-                interior = bsp->clusters.at(*cidx).cluster->sky < 0;
-                if(!cluster_ok(*cidx))
-                    return model_vis::pvs_culled;
-                return in_draw_distance(seat0_cam, model) ? model_vis::visible
-                                                  : model_vis::dist_culled;
-            }
-            if(bsp->valid())
-            {
-                auto [p1, p2] = bsp->mesh->world_bounds.points();
-                Vecf3 lo = glm::min(p1, p2), hi = glm::max(p1, p2);
-                if(pos.x < lo.x || pos.x > hi.x || pos.y < lo.y ||
-                   pos.y > hi.y || pos.z < lo.z || pos.z > hi.z)
-                    return model_vis::pvs_culled;
-            }
-            return in_draw_distance(seat0_cam, model) ? model_vis::visible
-                                              : model_vis::dist_culled;
+                    return ci;
+            if(auto mc = bsp->find_cluster(pos))
+                return mc->first;
+            return std::nullopt;
+        };
+
+        /* Outside the section's world bounds a model belongs to another BSP
+         * section, which is hidden wholesale, so hide its objects too. Inside
+         * but clusterless is solid space (scenery planted into the ground) --
+         * keep it, gated by draw distance. */
+        const auto within_section = [](BSPItem const* bsp, Vecf3 const& pos) {
+            if(!bsp->valid())
+                return true;
+            auto [p1, p2] = bsp->mesh->world_bounds.points();
+            Vecf3 lo = glm::min(p1, p2), hi = glm::max(p1, p2);
+            return !(pos.x < lo.x || pos.x > hi.x || pos.y < lo.y ||
+                     pos.y > hi.y || pos.z < lo.z || pos.z > hi.z);
+        };
+
+        /* One model against one viewport. Everything here is cheap; the shared
+         * cluster lookup above is what must not repeat. */
+        const auto classify_model = [&](cull_target_t const&  view,
+                                        viewport_pvs_t const& st,
+                                        Model const&          model,
+                                        std::optional<u32>    cidx,
+                                        bool in_section) -> model_vis {
+            if(!view.f.sphere_visible(model.position, model_radius))
+                return model_vis::frustum_culled;
+            if(cidx ? !cluster_ok(st, *cidx) : !in_section)
+                return model_vis::pvs_culled;
+            return in_draw_distance(view, model) ? model_vis::visible
+                                                 : model_vis::dist_culled;
         };
 
         u32 model_visible = 0, model_pvs_culled = 0, model_frustum_culled = 0,
             model_dist_culled = 0, model_total = 0;
 
-        Coffee::Profiler::PushContext("Occluder::model_cull_static");
-        for(auto ent : p.select(PositioningStatic))
-        {
-            auto         ref   = p.template ref<Proxy>(ent.id());
-            Model const& model = ref.template get<Model>();
-            Visibility&  vis   = ref.template get<Visibility>();
+        /* Counters describe the primary viewport, as they did when culling was
+         * single-view. */
+        const auto cull_models = [&](auto&& entities) {
+            for(auto ent : entities)
+            {
+                auto         ref   = p.template ref<Proxy>(ent.id());
+                Model const& model = ref.template get<Model>();
+                Visibility&  vis   = ref.template get<Visibility>();
 
-            model_total++;
-            if(cull_bsp)
-            {
-                switch(classify_model(cull_bsp, model, vis.interior))
+                model_total++;
+
+                if(!cull_bsp)
                 {
-                case model_vis::visible:
-                    vis.set_visibility(true);
-                    model_visible++;
-                    break;
-                case model_vis::pvs_culled:
-                    vis.set_visibility(false);
-                    model_pvs_culled++;
-                    break;
-                case model_vis::frustum_culled:
-                    vis.set_visibility(false);
-                    model_frustum_culled++;
-                    break;
-                case model_vis::dist_culled:
-                    vis.set_visibility(false);
-                    model_dist_culled++;
-                    break;
+                    for(auto const& [idx, view] : cull_targets)
+                    {
+                        bool ok = in_draw_distance(view, model);
+                        vis.set_visibility(ok, idx.first, idx.second);
+                        if(idx == primary_view)
+                            (ok ? model_visible : model_dist_culled)++;
+                    }
+                    continue;
                 }
-            } else
-            {
-                vis.set_visibility(in_draw_distance(seat0_cam, model));
-                if(vis.visible_for(0))
-                    model_visible++;
-                else
-                    model_dist_culled++;
+
+                auto cidx = resolve_cluster(cull_bsp, model.position);
+                if(cidx)
+                    vis.interior =
+                        cull_bsp->clusters.at(*cidx).cluster->sky < 0;
+                const bool in_section =
+                    cidx.has_value() ||
+                    within_section(cull_bsp, model.position);
+
+                for(auto const& [idx, view] : cull_targets)
+                {
+                    auto const state = classify_model(
+                        view, viewport_pvs[idx], model, cidx, in_section);
+                    vis.set_visibility(
+                        state == model_vis::visible, idx.first, idx.second);
+
+                    if(idx != primary_view)
+                        continue;
+                    switch(state)
+                    {
+                    case model_vis::visible:
+                        model_visible++;
+                        break;
+                    case model_vis::pvs_culled:
+                        model_pvs_culled++;
+                        break;
+                    case model_vis::frustum_culled:
+                        model_frustum_culled++;
+                        break;
+                    case model_vis::dist_culled:
+                        model_dist_culled++;
+                        break;
+                    }
+                }
             }
-        }
+        };
+
+        Coffee::Profiler::PushContext("Occluder::model_cull_static");
+        cull_models(p.select(PositioningStatic));
         Coffee::Profiler::PopContext(); /* Occluder::model_cull_static */
 
         Coffee::Profiler::PushContext("Occluder::model_cull_dynamic");
-        for(auto ent : p.select(PositioningDynamic))
-        {
-            auto         ref   = p.template ref<Proxy>(ent.id());
-            Model const& model = ref.template get<Model>();
-            Visibility&  vis   = ref.template get<Visibility>();
-            if(cull_bsp)
-                vis.set_visibility(
-                    classify_model(cull_bsp, model, vis.interior) == model_vis::visible);
-            else
-                vis.set_visibility(in_draw_distance(seat0_cam, model));
-        }
+        cull_models(p.select(PositioningDynamic));
         Coffee::Profiler::PopContext(); /* Occluder::model_cull_dynamic */
 
         debug_clusters();

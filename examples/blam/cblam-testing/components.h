@@ -67,6 +67,22 @@ struct Visibility
             return vis->second;
         return true;
     }
+    bool visible_any() const
+    {
+        if(visible.empty())
+            return true;
+        for(auto const& [id, v] : visible)
+            if(v)
+                return true;
+        return false;
+    }
+
+    void hide_all()
+    {
+        for(auto& [id, v] : visible)
+            v = false;
+    }
+
     void set_visibility(bool visible, u32 player_id = 0, bool mirror = false)
     {
         this->visible[std::make_pair(player_id, mirror)] = visible;
