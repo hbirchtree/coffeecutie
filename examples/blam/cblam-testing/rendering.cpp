@@ -1626,8 +1626,14 @@ struct MeshRenderer
             {
                 auto pass  = static_cast<Passes>(pi);
                 auto blend = blend_for_pass(pass);
-                render_pass(
-                    p, primary_player, t, builder.model_submit(primary_player)[pass], blend, sky_depth);
+                for(auto i : stl_types::range<u32>(m_players.size()))
+                    render_pass(
+                        p,
+                        i,
+                        t,
+                        builder.model_submit(i)[pass],
+                        blend,
+                        sky_depth);
             }
         }
 
