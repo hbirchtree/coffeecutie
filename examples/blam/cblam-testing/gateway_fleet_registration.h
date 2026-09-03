@@ -112,6 +112,7 @@ class GatewayFleetRegistration
     bool                                  m_havePunchTarget{false};
     std::chrono::steady_clock::time_point m_lastHeartbeat{};
     std::chrono::steady_clock::time_point m_lastRegistrationPunch{};
+    std::chrono::steady_clock::time_point m_lastRegisterSent{};
 };
 
 } // namespace webrtc_signaling

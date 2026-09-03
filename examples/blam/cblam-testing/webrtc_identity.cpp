@@ -142,25 +142,22 @@ std::vector<uint8_t> ed25519_sign(EVP_PKEY* pkey, std::string_view data)
         EVP_MD_CTX_free(ctx);
         return {};
     }
-    if(EVP_DigestSignUpdate(
-           ctx, reinterpret_cast<const unsigned char*>(data.data()),
-           data.size()) <= 0)
-    {
-        EVP_MD_CTX_free(ctx);
-        return {};
-    }
-    size_t sig_len = 0;
-    if(EVP_DigestSignFinal(ctx, nullptr, &sig_len) <= 0)
+    /* Ed25519 is one-shot in OpenSSL: the Update/Final pair is unsupported
+     * for it and fails at Update, so EVP_DigestSign() is the only way in. */
+    auto const* msg     = reinterpret_cast<const unsigned char*>(data.data());
+    size_t      sig_len = 0;
+    if(EVP_DigestSign(ctx, nullptr, &sig_len, msg, data.size()) <= 0)
     {
         EVP_MD_CTX_free(ctx);
         return {};
     }
     std::vector<uint8_t> sig(sig_len);
-    if(EVP_DigestSignFinal(ctx, sig.data(), &sig_len) <= 0)
+    if(EVP_DigestSign(ctx, sig.data(), &sig_len, msg, data.size()) <= 0)
     {
         EVP_MD_CTX_free(ctx);
         return {};
     }
+    sig.resize(sig_len);
     EVP_MD_CTX_free(ctx);
     return sig;
 }
@@ -171,12 +168,14 @@ bool ed25519_verify(
     EVP_MD_CTX* ctx = EVP_MD_CTX_new();
     if(!ctx)
         return false;
-    bool ok =
-        EVP_DigestVerifyInit(ctx, nullptr, nullptr, nullptr, pkey) > 0 &&
-        EVP_DigestVerifyUpdate(
-            ctx, reinterpret_cast<const unsigned char*>(data.data()),
-            data.size()) > 0 &&
-        EVP_DigestVerifyFinal(ctx, sig.data(), sig.size()) == 1;
+    /* One-shot, for the same reason as ed25519_sign above. */
+    bool ok = EVP_DigestVerifyInit(ctx, nullptr, nullptr, nullptr, pkey) > 0 &&
+              EVP_DigestVerify(
+                  ctx,
+                  sig.data(),
+                  sig.size(),
+                  reinterpret_cast<const unsigned char*>(data.data()),
+                  data.size()) == 1;
     EVP_MD_CTX_free(ctx);
     return ok;
 }

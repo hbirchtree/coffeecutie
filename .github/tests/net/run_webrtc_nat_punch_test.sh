@@ -104,8 +104,17 @@ webrtc_server_command "$TARGET" \
 webrtc_start_server "$SERVER_LOG" "$SERVER_TMP" "$SERVER_DUMMY_PLUG_CONFIG" "$RUN_TIMEOUT"
 
 if ! webrtc_wait_for_registration "$SERVER_LOG" "$SERVER_ID" "$BOOT_TIMEOUT" "$WEBRTC_SERVER_PID"; then
-    echo "  (the remote gateway never got our punch, or its reply never came back --"
-    echo "   check that its UDP punch port is reachable and that it is actually up)"
+    # Distinguish "never reached the gateway at all" from "reached it but
+    # the UDP punch didn't land": the first is the gateway being down or
+    # its URL being wrong, and no amount of punching fixes it.
+    if grep -q "websocket error" "$SERVER_LOG" 2>/dev/null; then
+        echo "  (the signaling websocket never connected -- the remote gateway in"
+        echo "   WEBRTC_GATEWAY_SERVER is down or unreachable, so this ran before"
+        echo "   any punch was attempted)"
+    else
+        echo "  (the remote gateway never got our punch, or its reply never came back --"
+        echo "   check that its UDP punch port is reachable and that it is actually up)"
+    fi
     exit 1
 fi
 

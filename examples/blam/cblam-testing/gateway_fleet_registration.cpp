@@ -33,6 +33,7 @@ constexpr std::chrono::seconds kHeartbeatInterval{10};
  * (5s) closely enough to get a couple of attempts in per timeout window
  * without being chatty. */
 constexpr std::chrono::seconds kRegistrationPunchInterval{1};
+constexpr std::chrono::seconds kRegistrationRetryInterval{7};
 /* How often each per-client relay re-punches to keep its NAT mapping
  * alive for the life of that client's connection. */
 constexpr std::chrono::seconds kRelayPunchInterval{2};
@@ -212,8 +213,9 @@ void GatewayFleetRegistration::onWebSocketOpen()
     cDebug("Gateway WebSocket opened");
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        m_wsOpen        = true;
-        m_lastHeartbeat = std::chrono::steady_clock::now();
+        m_wsOpen           = true;
+        m_lastHeartbeat    = std::chrono::steady_clock::now();
+        m_lastRegisterSent = m_lastHeartbeat;
     }
     sendRegister();
 }
@@ -471,6 +473,16 @@ void GatewayFleetRegistration::Poll()
     if(!active)
     {
         auto now = std::chrono::steady_clock::now();
+        bool dueForRegister;
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            dueForRegister =
+                now - m_lastRegisterSent >= kRegistrationRetryInterval;
+            if(dueForRegister)
+                m_lastRegisterSent = now;
+        }
+        if(dueForRegister)
+            sendRegister();
         if(now - m_lastRegistrationPunch >= kRegistrationPunchInterval)
         {
             m_lastRegistrationPunch = now;

@@ -268,6 +268,7 @@ async function main() {
         '--ignore-gpu-blocklist',
         '--enable-webgl',
         '--disable-dev-shm-usage',
+        '--disable-gpu-watchdog',
       ],
     });
 
