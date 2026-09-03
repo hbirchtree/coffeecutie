@@ -1,9 +1,13 @@
 /* Prints decoded tag data straight out of a .map, so shader questions can be
  * answered from the tag instead of from the rendered frame. */
 
+#include "blam/volta/blam_antr.h"
+#include "blam/volta/blam_tag_classes.h"
+#include "peripherals/stl/enumerate.h"
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_bsp_structures.h>
 #include <blam/volta/blam_globals.h>
+#include <blam/volta/blam_mod2.h>
 #include <blam/volta/blam_scenario.h>
 #include <blam/volta/blam_swizzle.h>
 #include <blam/volta/blam_shaders.h>
@@ -15,9 +19,11 @@
 #include <coffee/core/files/cfiles.h>
 #include <cmath>
 #include <map>
+#include <vector>
 #include <cstdlib>
 #include <cstring>
 #include <cxxopts.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <peripherals/libc/types.h>
 #include <url/url.h>
@@ -27,6 +33,8 @@ using libc_types::i32;
 using libc_types::u16;
 using libc_types::u32;
 using libc_types::u8;
+using typing::vector_types::Quatf;
+using typing::vector_types::Vecf3;
 using Coffee::Logging::cWarning;
 
 namespace {
@@ -38,6 +46,7 @@ bool          g_dump_mirrors = false;
 size_t        g_scan_window  = 0;
 bool          g_dump_player  = false;
 bool          g_dump_scenario = false;
+bool          g_dump_bones    = false;
 bool          g_channel_stats{false};
 std::string   g_dump_prefix{};
 
@@ -331,6 +340,73 @@ void dump_senv(blam::shader::shader_env const* info)
 
 /* ---- obje / unit ---- */
 
+/* Bind pose of a model's bone tree, in the convention caching.cpp builds
+ * inv_bind with: world = parent_world * translate(t) * mat4_cast(conj(q)).
+ * The stored quaternion is the conjugate of what GLM's forward kinematics
+ * wants, so it is conjugated here too and both are printed.
+ *
+ * "axes" are the bone's local X/Y/Z expressed in model space. That is what a
+ * retargeting mapping has to be written against: a source rotation in model
+ * space becomes bone-local as conj(world) * q * world. */
+template<typename Ver>
+void dump_bones(blam::mod2::header<Ver> const* header)
+{
+    auto bones_opt = header->bones.data(g_magic);
+    if(!bones_opt.has_value())
+    {
+        printf("  (no bone data)\n");
+        return;
+    }
+    auto bones = bones_opt.value();
+    u32  n     = static_cast<u32>(bones.size());
+    printf("  bones=%u\n", n);
+
+    std::vector<Quatf> world_rot(n, Quatf(1.f, 0.f, 0.f, 0.f));
+    std::vector<Vecf3> world_pos(n, Vecf3(0.f));
+
+    for(u32 i = 0; i < n; i++)
+    {
+        auto const& b   = bones[i];
+        Quatf       br  = glm::conjugate(b.rotation);
+        u16         par = b.parent;
+        if(par != blam::mod2::bone::invalid_bone && par < i)
+        {
+            world_rot[i] = world_rot[par] * br;
+            world_pos[i] = world_pos[par] + world_rot[par] * b.translation;
+        } else
+        {
+            world_rot[i] = br;
+            world_pos[i] = b.translation;
+        }
+
+        auto const& w    = world_rot[i];
+        auto        axes = glm::mat3_cast(w);
+        auto        name = b.name.str();
+        auto        idx  = [](u16 v) {
+            return v == blam::mod2::bone::invalid_bone ? -1 : static_cast<i32>(v);
+        };
+
+        printf("  [%3u] %-26.*s parent=%-4d next=%-4d child=%d\n",
+               i,
+               static_cast<int>(name.size()),
+               name.data(),
+               idx(par),
+               idx(b.next_bone),
+               idx(b.next_child));
+        printf("        local t=(%8.4f,%8.4f,%8.4f) q=(%7.4f,%7.4f,%7.4f,%7.4f)\n",
+               b.translation.x, b.translation.y, b.translation.z,
+               b.rotation.x, b.rotation.y, b.rotation.z, b.rotation.w);
+        printf("        world t=(%8.4f,%8.4f,%8.4f) q=(%7.4f,%7.4f,%7.4f,%7.4f)\n",
+               world_pos[i].x, world_pos[i].y, world_pos[i].z,
+               w.x, w.y, w.z, w.w);
+        printf("        axes  X=(%6.3f,%6.3f,%6.3f) "
+               "Y=(%6.3f,%6.3f,%6.3f) Z=(%6.3f,%6.3f,%6.3f)\n",
+               axes[0].x, axes[0].y, axes[0].z,
+               axes[1].x, axes[1].y, axes[1].z,
+               axes[2].x, axes[2].y, axes[2].z);
+    }
+}
+
 void dump_object(blam::scn::object const* obj)
 {
     print_enum("  type", obj->type);
@@ -527,6 +603,59 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
         print_enum("format", img.format);
         print_enum("flags", img.flags);
         printf("mips=%u offset=0x%x\n", img.mipmaps, img.offset);
+    }
+}
+
+void dump_antr(blam::antr::header const* animation)
+{
+    printf("  objects=%u\n", animation->objects.count);
+    printf("  units=%u\n", animation->units.count);
+    printf("  weapons=%u\n", animation->weapons.count);
+    printf("  vehicles=%u\n", animation->vehicles.count);
+    printf("  devices=%u\n", animation->devices.count);
+    printf("  nodes=%u\n", animation->nodes.count);
+    for(auto [i, node] : stl_types::enumerate(animation->nodes.data(g_magic).value()))
+    {
+        auto joint = magic_enum::enum_name(node.joint_flags);
+        printf("    node %zu: name=%.*s parent=%hi joint=%.*s\n",
+            i,
+            static_cast<int>(node.name.size), node.name.data.data(),
+            node.parent,
+            static_cast<int>(joint.size()), joint.data());
+    }
+    printf("  animations=%u\n", animation->animations.count);
+    for(auto [i, anim] : stl_types::enumerate(animation->animations.data(g_magic).value()))
+    {
+        auto anim_type = magic_enum::enum_name(anim.type);
+        printf("    animation %zu: name=%.*s type=%.*s\n",
+            i,
+            static_cast<int>(anim.name.size), anim.name.data.data(),
+            static_cast<int>(anim_type.size()), anim_type.data());
+    }
+}
+
+template<typename Ver>
+void dump_mode(blam::mod2::header<Ver> const* info)
+{
+    if(auto markers = info->markers.data(g_magic); markers.has_value())
+    {
+        printf("  markers=%zu\n", markers.value().size());
+        for(auto [i, marker] : stl_types::enumerate(markers.value()))
+        {
+            printf("    marker %zu: name=%.*s\n",
+                i,
+                static_cast<int>(marker.name.size), marker.name.data.data());
+        }
+    } 
+    if(auto regions = info->regions.data(g_magic); regions.has_value())
+    {
+        printf("  regions=%zu\n", regions.value().size());
+        for(auto [i, region] : stl_types::enumerate(regions.value()))
+        {
+            printf("    region %zu: name=%.*s\n",
+                i,
+                static_cast<int>(region.name.size), region.name.data.data());
+        }
     }
 }
 
@@ -791,7 +920,7 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         {
             dump_chicago_base(info);
             auto maps = info->maps.data(g_magic);
-            printf("  maps=%u\n", maps.has_value() ? maps.value().size() : 0u);
+            printf("  maps=%zu\n", maps.has_value() ? maps.value().size() : 0u);
             if(maps.has_value())
             {
                 u32 i = 0;
@@ -805,7 +934,7 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         {
             dump_chicago_base(info);
             auto maps = info->maps_4stage.data(g_magic);
-            printf("  maps_4stage=%u\n",
+            printf("  maps_4stage=%zu\n",
                    maps.has_value() ? maps.value().size() : 0u);
             if(maps.has_value())
             {
@@ -814,7 +943,7 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
                     dump_chicago_maps(map, i++);
             }
             auto maps2 = info->maps_2stage.data(g_magic);
-            printf("  maps_2stage=%u\n",
+            printf("  maps_2stage=%zu\n",
                    maps2.has_value() ? maps2.value().size() : 0u);
             if(maps2.has_value())
             {
@@ -822,6 +951,17 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
                 for(auto const& map : maps2.value())
                     dump_chicago_maps(map, i++);
             }
+        }
+        break;
+    case blam::tag_class_t::mod2:
+    case blam::tag_class_t::mode:
+        if(auto* info = header_of((blam::mod2::header<Ver>*)nullptr))
+        {
+            dump_mode(info);
+            if(g_dump_bones)
+                dump_bones(info);
+            else
+                printf("  (pass --dump-bones for the bone tree)\n");
         }
         break;
     case blam::tag_class_t::bitm:
@@ -833,6 +973,12 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
             g_magic                 = magic;
             dump_bitm(header, name);
             g_magic = saved;
+        }
+        break;
+    case blam::tag_class_t::antr:
+        if(auto* info = header_of((blam::antr::header*)nullptr))
+        {
+            dump_antr(info);
         }
         break;
     default:
@@ -1124,6 +1270,8 @@ int inspect_main()
         //
         ("dump-scenario", "Print scenario type, starting profiles and spawn locations")
         //
+        ("dump-bones", "For model tags, print the bone tree with bind-pose axes in model space")
+        //
         ;
 
     auto& args      = Coffee::GetInitArgs();
@@ -1147,6 +1295,7 @@ int inspect_main()
     g_dump_mirrors  = arguments.count("dump-mirrors") > 0;
     g_dump_player   = arguments.count("dump-player-biped") > 0;
     g_dump_scenario = arguments.count("dump-scenario") > 0;
+    g_dump_bones    = arguments.count("dump-bones") > 0;
     g_scan_window   = static_cast<size_t>(
         arguments.as_optional<int>("scan-tagrefs").value_or(0));
     g_channel_stats = arguments.count("channel-stats") > 0;
