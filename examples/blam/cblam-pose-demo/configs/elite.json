@@ -3,45 +3,110 @@
 
   "biped": {
     "tag": "characters\\elite\\elite",
-    "start_animation": "stand pistol idle"
+    "start_animation": "stand pistol idle%0"
   },
 
   "attachments": [
-    { "tag": "weapons\\pistol\\pistol", "marker": "right hand elite" }
+    { "tag": "weapons\\plasma pistol\\plasma pistol", "marker": "right hand elite" }
   ],
-
   "camera": {
-    "position": [0.4, -0.03, 0.6],
+    "position": [0.5, -0.05, 0.6],
     "field_of_view": 70.0,
     "aspect": 1.6,
     "z_near": 0.001,
     "z_far": 100.0,
     "keyboard": true
   },
-
   "retarget": [
     {
       "source": "Spine",
       "bone": "bip01 spine1",
-      "basis": "spine",
+      "mode": "twist",
+      "twist_axis": [0.0, 1.0, 0.0],
+      "output_axis": [1.0, 0.0, 0.0],
+      "axis_map": ["x", "y", "z"],
+      "basis_rotation": [0.0, 0.0, 0.0, 1.0],
       "rest_delta": [0.0, 0.0, 0.0, 1.0],
-      "mirror_z180": false,
       "clamp_degrees": 60.0,
       "gain": 2.0
+    },
+    {
+      "source": "Head",
+      "bone": "bip01 neck",
+      "mode": "direct",
+      "axis_map": ["y", "-z", "-x"],
+      "basis_rotation": [0.0, 0.0, 0.0, 1.0],
+      "rest_delta": [0.0, 0.0, 0.0, 1.0],
+      "clamp_degrees": 60.0,
+      "gain": 2.0
+    },
+    {
+      "source": "LeftUpperArm",
+      "bone": "bip01 l upperarm",
+      "mode": "aim",
+      "axis_map": ["-z", "-x", "-y"]
+    },
+    {
+      "source": "LeftLowerArm",
+      "bone": "bip01 l forearm",
+      "mode": "aim",
+      "axis_map": ["-z", "-x", "-y"]
+    },
+    {
+      "source": "RightUpperArm",
+      "bone": "bip01 r upperarm",
+      "mode": "aim",
+      "axis_map": ["-z", "-x", "-y"]
+    },
+    {
+      "source": "RightLowerArm",
+      "bone": "bip01 r forearm",
+      "mode": "aim",
+      "axis_map": ["-z", "-x", "-y"]
     }
   ],
+  "smoothing": { "alpha": 0.05 },
 
-  "smoothing": { "alpha": 0.1 },
-
+  "root_motion": {
+    "enabled": true,
+    "source": "Hips",
+    "axis_map": ["z", "-x", "y"],
+    "scale": [1, 1, 0],
+    "offset": [0.0, 0.0, 0.0],
+    "deadzone": [0.05, 0.02, 0.02],
+    "clamp": [0.5, 0.5, 0.5],
+    "smoothing": 0.05
+  },
+  "microphone": {
+    "enabled": true,
+    "interval_ms": 33,
+    "fft_size": 2048,
+    "noise_floor": 0.0,
+    "gain": 1.0,
+    "smoothing": 0.0,
+    "bones": [
+      { "bone": "bip01 spine1", "axis": [0.0, 0.0, 1.0], "gain": -2.0, "clamp_degrees": 90.0 }
+    ],
+    "model_translation": {
+      "enabled": false,
+      "vector": [0.0, 0.0, 0.2],
+      "clamp": 0.5
+    }
+  },
   "animations": [
     {
+      "biped": "characters\\elite\\elite",
       "fps": 30.0,
       "buttons": [
-        { "label": "🧍", "name": "stand pistol idle", "loop": true, "title": "Stand" }
+        { "label": "🧍‍♂️", "name": "stand pistol idle%0", "loop": true, "title": "Stand" },
+        { "label": "🪑", "name": "crouch sword idle", "loop": true, "title": "Crouch" },
+        { "label": "🚶", "name": "alert pistol move-front", "loop": true, "title": "Walk" },
+        { "label": "⚰️", "name": "s-kill front gut", "title": "Gut" },
+        { "label": "⚰️", "name": "h-kill front gut", "title": "Head" },
+        { "label": "🧻", "name": "stand sword idle", "title": "Sword" }
       ]
     }
   ],
-
   "pose": {
     "pose_model": "vendor/tasks-vision/pose_landmarker_full.task",
     "face_model": "vendor/tasks-vision/face_landmarker.task",

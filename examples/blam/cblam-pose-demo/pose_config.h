@@ -80,7 +80,9 @@ struct RootMotionConfig
  *   2. basis_rotation— change of basis by conjugation, q' = B * q * conj(B).
  *                      Any true rotation of the frame, at whatever angle.
  *   3. mode          — direct passes the result through; twist projects it
- *                      onto one axis and re-emits that angle about another.
+ *                      onto one axis and re-emits that angle about another;
+ *                      aim ignores the source rotation entirely and points the
+ *                      bone along a supplied direction instead.
  *
  * The old none/arm/spine presets are all expressible here and still accepted
  * as "basis" for existing configs:
@@ -100,6 +102,31 @@ struct BoneRetarget
     /* q_target_local = restDelta^-1 * q_source_local * restDelta */
     Quatf rest_delta{1.f, 0.f, 0.f, 0.f};
 
+    /* Which frame the source rotation is expressed in:
+     *   bone  - a rotation to compose onto whatever the animation left on the
+     *           bone, carried in by the fixed rest_delta above.
+     *   model - an orientation in model space. The bone is reset to its bind
+     *           pose and conjugated by the bind world orientation, so it ends
+     *           up sitting at exactly that rotation off the bind pose, and
+     *           rest_delta goes unused. This replaces the animation on that
+     *           bone rather than composing onto it, which is the point: a
+     *           source that says where a limb *is* would otherwise mean a
+     *           different pose in every frame of the animation under it.
+     *           Kalidokit solves limbs against the model, so its arms and legs
+     *           want this. */
+    enum class space_t
+    {
+        bone,
+        model,
+    } space{space_t::bone};
+
+    /* The source's orientation when the subject is at rest, divided out as
+     * q * conj(source_rest) before anything else, so a subject at rest
+     * contributes no rotation at all. Kalidokit's upper arms rest at
+     * z = +/-1.25 rad rather than at zero (RestingDefault,
+     * kalidokit.umd.js). */
+    Quatf source_rest{1.f, 0.f, 0.f, 0.f};
+
     /* Stage 1. Each output component names the input component it takes,
      * with a sign. Identity is x<-x, y<-y, z<-z. */
     AxisPick axis_map[3]{{0, 1.f}, {1, 1.f}, {2, 1.f}};
@@ -112,7 +139,12 @@ struct BoneRetarget
     {
         direct,
         twist,
+        aim,
     } mode{mode_t::direct};
+
+    /* aim only: which way the bone points in its own local space. The bip01
+     * skeleton runs its bones along local X, which is the default. */
+    Vecf3 aim_axis{1.f, 0.f, 0.f};
 
     /* twist only: axis the angle is read off, and the axis it is re-applied
      * about. Normalized on use. */

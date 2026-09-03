@@ -409,9 +409,11 @@ void spawn_static_biped(
     Model&       model   = parent_.get<Model>();
     ObjectSpawn& spawn   = parent_.get<ObjectSpawn>();
     DepthInfo&   depth   = parent_.get<DepthInfo>();
+    Visibility&  vis     = parent_.get<Visibility>();
 
     spawn.tag           = &biped_tag;
     spawn.header        = &s_synth_spawn;
+    vis.interior        = true;
     model.tag           = &(*model_it);
     model.model         = mesh_data.models.at(0);
     model.origin_object = &biped_tag;

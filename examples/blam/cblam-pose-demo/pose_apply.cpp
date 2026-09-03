@@ -6,9 +6,11 @@
 #include <algorithm>
 #include <chrono>
 #include <unordered_map>
+#include <utility>
 
 #include <blam/volta/blam_antr.h>
 #include <blam/volta/blam_mod2.h>
+#include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
@@ -17,6 +19,25 @@ Vecf3 g_pose_demo_root_offset{0.f};
 std::optional<u32>                    g_pose_demo_oneshot_anim_idx;
 std::chrono::steady_clock::time_point g_pose_demo_oneshot_start;
 std::optional<u32>                    g_pose_demo_loop_anim_idx;
+
+/* Shortest-arc rotation taking a onto b, both unit. Used by aim mode, where
+ * the source supplies where a limb points rather than how it is turned. */
+static Quatf rotation_between(Vecf3 const& a, Vecf3 const& b)
+{
+    f32 d = glm::dot(a, b);
+    if(d > 0.99999f)
+        return Quatf(1.f, 0.f, 0.f, 0.f);
+    if(d < -0.99999f)
+    {
+        /* Opposite: any perpendicular axis will do, so take the one furthest
+         * from a to keep the cross product well conditioned. */
+        Vecf3 axis = glm::cross(
+            a, std::abs(a.x) < 0.9f ? Vecf3(1.f, 0.f, 0.f) : Vecf3(0.f, 1.f, 0.f));
+        return glm::angleAxis(glm::pi<f32>(), glm::normalize(axis));
+    }
+    Vecf3 axis = glm::cross(a, b);
+    return glm::normalize(Quatf(1.f + d, axis.x, axis.y, axis.z));
+}
 
 std::optional<u32> find_animation_by_name(
     blam::antr::header const* antr_hdr,
@@ -238,6 +259,29 @@ void apply_pose(
         }
     }
 
+    /* Bind-pose local rotations and the world orientation each accumulates to.
+     * Bones are in DFS order, so a parent is always done before its children.
+     *
+     * A model-space source says where the limb is, not how far it has moved,
+     * so it replaces the animation on its bone instead of composing onto it.
+     * Composing would make the same source rotation mean something different
+     * in every frame of the idle: "arm out to the side" applied on top of a
+     * pistol-aiming pose swings the arm somewhere else entirely. */
+    std::vector<Quatf> bind_local(n), bind_world(n);
+    for(u32 i = 0; i < n; ++i)
+    {
+        bind_local[i] = glm::conjugate(bones[i].rotation);
+        u16 parent    = bones[i].parent;
+        bind_world[i] = parent != blam::mod2::bone::invalid_bone && parent < i
+                            ? bind_world[parent] * bind_local[i]
+                            : bind_local[i];
+    }
+
+    /* Resolved entries keyed by bone, so the walk below can go in bone order:
+     * aim needs its parents already applied, and the shell sends bones in
+     * whatever order the solver produced them. */
+    std::vector<std::pair<BoneRetarget const*, nlohmann::json const*>> per_bone(
+        n, {nullptr, nullptr});
     for(auto const& b : bones_json)
     {
         std::string name  = b.value("name", std::string{});
@@ -252,8 +296,73 @@ void apply_pose(
                 entry->blam_bone_name);
             continue;
         }
-        // cDebug("apply_pose: retargeting '{}' -> '{}' (bone idx {})", name,
-        // entry->blam_bone_name, *idx);
+        per_bone[*idx] = {entry, &b};
+    }
+
+    /* World orientation as the walk sees it, kept current so that a bone's
+     * ancestors have already contributed by the time it is reached. */
+    std::vector<Quatf> cur_world(n);
+
+    for(u32 i = 0; i < n; ++i)
+    {
+        u16 parent = bones[i].parent;
+        auto accum = [&](u32 j) {
+            u16 p = bones[j].parent;
+            cur_world[j] =
+                p != blam::mod2::bone::invalid_bone && p < j
+                    ? cur_world[p] * rotations[j]
+                    : rotations[j];
+        };
+        accum(i);
+
+        auto const* entry = per_bone[i].first;
+        if(!entry)
+            continue;
+        auto const& b   = *per_bone[i].second;
+        auto const  idx = std::optional<u32>(i);
+
+        /* aim takes a direction rather than a rotation, and turns the bone so
+         * its own axis points along it. Everything downstream is shared. */
+        if(entry->mode == BoneRetarget::mode_t::aim)
+        {
+            if(!b.contains("direction") || b["direction"].size() != 3)
+                continue;
+            auto const& d = b["direction"];
+            Vecf3       raw(
+                d[0].get<f32>(), d[1].get<f32>(), d[2].get<f32>());
+            if(glm::length(raw) < 1e-6f)
+                continue;
+
+            /* Same signed permutation as a rotation gets, applied to the
+             * vector directly. */
+            Vecf3 target;
+            for(int k = 0; k < 3; ++k)
+                target[k] = entry->axis_map[k].sign * raw[entry->axis_map[k].source];
+            target = glm::normalize(target);
+
+            Vecf3 from = glm::normalize(
+                cur_world[i] * glm::normalize(entry->aim_axis));
+            Quatf q_aim = rotation_between(from, target);
+
+            {
+                static std::unordered_map<std::string, Quatf> aim_state;
+                auto [it, inserted] =
+                    aim_state.try_emplace(entry->source_name, q_aim);
+                if(!inserted)
+                    it->second = glm::slerp(
+                        it->second, q_aim, g_pose_config.smoothing_alpha);
+                q_aim = it->second;
+            }
+
+            /* Conjugating by the bone's live world orientation turns q_aim,
+             * which is in model space, into the bone's own frame. */
+            Quatf const& delta = cur_world[i];
+            rotations[i] =
+                rotations[i] * glm::conjugate(delta) * q_aim * delta;
+            accum(i);
+            continue;
+        }
+
         if(!b.contains("rotation") || b["rotation"].size() != 4)
             continue;
 
@@ -262,6 +371,11 @@ void apply_pose(
          */
         Quatf q_src(
             r[3].get<f32>(), r[0].get<f32>(), r[1].get<f32>(), r[2].get<f32>());
+
+        /* Stage 0: divide out the source's resting orientation. These are
+         * absolute orientations, so the delta from rest is the world-frame
+         * one, q_now * conj(q_rest), not the body-frame one. */
+        q_src = q_src * glm::conjugate(entry->source_rest);
 
         /* Stage 1: signed axis permutation. Done on the components directly
          * because a reflection is not a rotation and cannot be conjugated in. */
@@ -306,9 +420,22 @@ void apply_pose(
             q_src = it->second;
         }
 
-        Quatf const& delta = entry->rest_delta;
-        rotations[*idx] =
-            rotations[*idx] * glm::conjugate(delta) * q_src * delta;
+        /* Model space: start from the bind pose and conjugate by its world
+         * orientation, which leaves the bone sitting at exactly q_src in model
+         * space. Bone space: compose onto whatever is already there, through
+         * the constant the entry was tuned with. */
+        if(entry->space == BoneRetarget::space_t::model)
+        {
+            Quatf const& delta = bind_world[*idx];
+            rotations[*idx] =
+                bind_local[*idx] * glm::conjugate(delta) * q_src * delta;
+        } else
+        {
+            Quatf const& delta = entry->rest_delta;
+            rotations[*idx] =
+                rotations[*idx] * glm::conjugate(delta) * q_src * delta;
+        }
+        accum(i);
     }
 
     /* Microphone level, applied on top of the pose/animation result. */

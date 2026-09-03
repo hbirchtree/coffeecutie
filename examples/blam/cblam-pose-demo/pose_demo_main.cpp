@@ -251,6 +251,50 @@ i32 pose_demo_main()
                                 ev.data.value("volume", 0.f);
                         },
                 });
+                /* {type:'dump_pose'} prints where every bone actually
+                 * ended up, in model space, out of the matrices the
+                 * renderer is about to use. A retargeting mapping is a
+                 * question about geometry, and a screenshot of a
+                 * half-occluded limb is a poor way to answer it. */
+                dummy.addEventData({
+                    .prio = 0,
+                    .handler =
+                        [&e](
+                            comp_app::dummy_plug::DummyEvent& ev, const void*) {
+                            if(ev.event != "dump_pose")
+                                return;
+                            if(!g_pose_demo_biped_model.valid())
+                                return;
+                            auto& cache =
+                                e.subsystem_cast<ModelCache<halo_version>>();
+                            auto& item = cache.get(g_pose_demo_biped_model);
+                            if(!item.header || item.inv_bind.empty())
+                                return;
+                            auto bones_opt =
+                                item.header->bones.data(cache.magic);
+                            if(!bones_opt.has_value())
+                                return;
+                            auto bones = bones_opt.value();
+                            auto n     = std::min(
+                                {bones.size(),
+                                 item.bone_matrices.size(),
+                                 item.inv_bind.size()});
+                            for(size_t i = 0; i < n; i++)
+                            {
+                                /* bone_matrices is world * inv_bind, so the
+                                 * bind has to go back in to read a position
+                                 * off it. */
+                                Matf4 world = item.bone_matrices[i] *
+                                              glm::inverse(item.inv_bind[i]);
+                                cDebug(
+                                    "pose_demo: bone_pos {} {} {} {}",
+                                    bones[i].name.str(),
+                                    world[3].x,
+                                    world[3].y,
+                                    world[3].z);
+                            }
+                        },
+                });
                 /* {type:'play_animation', name} plays once then falls back
                  * to the loop animation; {type:'loop_animation', name}
                  * replaces the loop outright. Both look up name in the

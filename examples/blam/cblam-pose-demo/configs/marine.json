@@ -1,10 +1,10 @@
 {
   "map": {
-    "file": "bloodgulch.map",
+    "file": "b30.map",
     "bitmaps": ""
   },
   "biped": {
-    "tag": "characters\\cyborg_mp\\cyborg_mp",
+    "tag": "characters\\marine_armored\\marine_armored",
     "start_animation": "stand pistol idle"
   },
   "attachments": [
@@ -96,7 +96,7 @@
   },
   "animations": [
     {
-      "biped": "characters\\cyborg_mp\\cyborg_mp",
+      "biped": "characters\\marine_armored\\marine_armored",
       "fps": 30.0,
       "buttons": [
         { "label": "🧍‍♂️", "name": "stand pistol idle", "loop": true, "title": "Stand" },
@@ -105,7 +105,7 @@
         { "label": "⚰️", "name": "s-kill front gut", "title": "Gut" },
         { "label": "⚰️", "name": "h-kill left head", "title": "Head" },
         { "label": "🧻", "name": "stand push", "title": "Push" },
-        { "label": "👊", "name": "stand pistol pp melee", "title": "Melee" },
+        { "label": "👊", "name": "stand pistol warn", "title": "Warn" },
         { "label": "🔍", "name": "stand look", "title": "Look" }
       ]
     }

@@ -1,17 +1,16 @@
 {
-  "map": {
-    "file": "bloodgulch.map",
-    "bitmaps": ""
-  },
+  "map": { "file": "b30.map" },
+
   "biped": {
-    "tag": "characters\\cyborg_mp\\cyborg_mp",
-    "start_animation": "stand pistol idle"
+    "tag": "characters\\grunt\\grunt",
+    "start_animation": "stand pistol idle%0"
   },
+
   "attachments": [
-    { "tag": "weapons\\pistol\\pistol", "marker": "left hand" }
+    { "tag": "weapons\\plasma pistol\\plasma pistol", "marker": "right hand" }
   ],
   "camera": {
-    "position": [0.4, -0.03, 0.6],
+    "position": [0.5, -0.05, 0.45],
     "field_of_view": 70.0,
     "aspect": 1.6,
     "z_near": 0.001,
@@ -96,17 +95,15 @@
   },
   "animations": [
     {
-      "biped": "characters\\cyborg_mp\\cyborg_mp",
+      "biped": "characters\\grunt\\grunt",
       "fps": 30.0,
       "buttons": [
-        { "label": "🧍‍♂️", "name": "stand pistol idle", "loop": true, "title": "Stand" },
-        { "label": "🪑", "name": "crouch unarmed idle", "loop": true, "title": "Crouch" },
-        { "label": "🚶", "name": "alert unarmed move-front", "loop": true, "title": "Walk" },
-        { "label": "⚰️", "name": "s-kill front gut", "title": "Gut" },
-        { "label": "⚰️", "name": "h-kill left head", "title": "Head" },
-        { "label": "🧻", "name": "stand push", "title": "Push" },
-        { "label": "👊", "name": "stand pistol pp melee", "title": "Melee" },
-        { "label": "🔍", "name": "stand look", "title": "Look" }
+        { "label": "🧍‍♂️", "name": "stand pistol idle%0", "loop": true, "title": "Stand" },
+        { "label": "🪑", "name": "crouch sword idle", "loop": true, "title": "Crouch" },
+        { "label": "🚶", "name": "alert pistol move-front", "loop": true, "title": "Walk" },
+        { "label": "⚰️", "name": "s-kill front gut%0", "title": "Gut" },
+        { "label": "⚰️", "name": "h-kill front gut%0", "title": "Head" },
+        { "label": "🧻", "name": "stand sword idle", "title": "Sword" }
       ]
     }
   ],

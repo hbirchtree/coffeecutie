@@ -147,14 +147,31 @@ void read_basis(nlohmann::json const& entry, BoneRetarget& out)
             out.mode = parsed.value();
         else
             cWarning(
-                "pose_config: unknown mode '{}' (expected direct|twist), "
+                "pose_config: unknown mode '{}' (expected direct|twist|aim), "
                 "keeping {}",
                 mode,
                 magic_enum::enum_name(out.mode));
     }
 
+    if(auto it = entry.find("space"); it != entry.end() && it->is_string())
+    {
+        auto space = it->get<std::string>();
+        if(auto parsed = magic_enum::enum_cast<BoneRetarget::space_t>(space);
+           parsed.has_value())
+            out.space = parsed.value();
+        else
+            cWarning(
+                "pose_config: unknown space '{}' (expected bone|model), "
+                "keeping {}",
+                space,
+                magic_enum::enum_name(out.space));
+    }
+
+    out.source_rest = read_quat(entry, "source_rest", out.source_rest);
+
     out.twist_axis  = read_vec3(entry, "twist_axis", out.twist_axis);
     out.output_axis = read_vec3(entry, "output_axis", out.output_axis);
+    out.aim_axis    = read_vec3(entry, "aim_axis", out.aim_axis);
 }
 
 /* URL query params win over the config file, so the README's test URLs keep

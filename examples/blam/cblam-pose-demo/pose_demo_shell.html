@@ -327,7 +327,35 @@
              typeof v.z === 'number';
     }
 
-    function sendPose(solvedBones) {
+    /* Kalidokit's arm solve goes through an Euler form that is damped (its
+     * flexion scale is 2.14 where the exact figure is PI) and sits on gimbal
+     * lock for a lowered arm, so a bone driven from it lands tens of degrees
+     * out. MediaPipe's world landmarks carry the limb directions outright, so
+     * a retarget entry in "aim" mode uses these instead.
+     *
+     * The pairing follows Kalidokit's own: its Left is solved from landmarks
+     * 12/14/16, the subject's anatomical right. Changing that here would flip
+     * which of your arms drives which of the biped's. */
+    const AIM_LANDMARKS = {
+      LeftUpperArm: [12, 14], LeftLowerArm: [14, 16],
+      RightUpperArm: [11, 13], RightLowerArm: [13, 15],
+    };
+    const AIM_MIN_VISIBILITY = 0.3;
+
+    /* Unit vector from one landmark to another, in MediaPipe world space.
+     * Returns null when either end is not confidently tracked — a direction
+     * built from a guessed landmark would snap the limb somewhere arbitrary. */
+    function limbDirection(world, [from, to]) {
+      const a = world[from], b = world[to];
+      if (!a || !b) return null;
+      if ((a.visibility ?? 1) < AIM_MIN_VISIBILITY ||
+          (b.visibility ?? 1) < AIM_MIN_VISIBILITY) return null;
+      const d = [b.x - a.x, b.y - a.y, b.z - a.z];
+      const n = Math.hypot(d[0], d[1], d[2]);
+      return n > 1e-6 ? [d[0] / n, d[1] / n, d[2] / n] : null;
+    }
+
+    function sendPose(solvedBones, world) {
       /* Hips is the one composite that is still a bone: {position, rotation}
        * rather than a bare Euler, and the only solved output carrying a
        * position at all. It drives root motion in pose_apply.cpp. */
@@ -360,7 +388,14 @@
 
       for (const [name, euler] of Object.entries(solvedBones)) {
         if (!isEuler(euler)) continue;
-        bones.push({ name, rotation: eulerXYZToQuat(...calibrated(name, euler)) });
+        const entry = { name, rotation: eulerXYZToQuat(...calibrated(name, euler)) };
+        /* Sent alongside the rotation, not instead of it: which one is used is
+         * the config's choice, via the entry's mode. */
+        if (world && AIM_LANDMARKS[name]) {
+          const dir = limbDirection(world, AIM_LANDMARKS[name]);
+          if (dir) entry.direction = dir;
+        }
+        bones.push(entry);
       }
 
       if (hips && isEuler(hips.rotation)) {
@@ -560,7 +595,7 @@
                 }
               }
 
-              if (solved) sendPose(solved);
+              if (solved) sendPose(solved, world);
             }
             /* Frees the segmentation masks when they are enabled; a no-op
              * otherwise, but it is the documented lifetime contract. */

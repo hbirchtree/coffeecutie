@@ -79,17 +79,31 @@ the value that was hardcoded before the config existed.
 
 ## Rotation basis
 
-Each `retarget` entry carries the source rotation into bone space in three
+Each `retarget` entry carries the source rotation into bone space in four
 stages, applied in order:
 
 | field | what it does |
 |---|---|
+| `source_rest` | The source's orientation when the subject is at rest, divided out as `q * conj(source_rest)`, as `[x, y, z, w]`. Kalidokit does not solve to zero at rest — the upper arms sit at `z = ±1.25` rad — so without this a still subject holds the model 71° off its animation. |
 | `axis_map` | Signed permutation of the quaternion's imaginary part, e.g. `["-z","x","y"]`. Each slot names the *source* component it takes. This is the stage that expresses axis swaps and handedness flips — a reflection is not a rotation, so conjugation cannot do it. |
 | `basis_rotation` | Change of basis by conjugation, `q' = B * q * conj(B)`, as `[x, y, z, w]`. Any true rotation of the frame, at any angle. |
-| `mode` | `direct` (default) passes the result through. `twist` projects it onto `twist_axis`, clamps the angle to `±clamp_degrees`, scales by `gain`, and re-emits it about `output_axis`. |
+| `mode` | `direct` (default) passes the result through. `twist` projects it onto `twist_axis`, clamps the angle to `±clamp_degrees`, scales by `gain`, and re-emits it about `output_axis`. `aim` ignores the rotation entirely and turns the bone so its `aim_axis` points along a `direction` supplied with the bone — see [Arms](#arms). |
 
-`rest_delta` is applied last, in `apply_pose`, as
-`q_target = restDelta^-1 * q_src * restDelta`.
+The result is conjugated into the bone's frame last, in `apply_pose`, as
+`q_target = delta^-1 * q_src * delta`. What `delta` is depends on `space`:
+
+| `"space"` | what happens |
+|---|---|
+| `bone` (default) | `delta` is `rest_delta`, a constant tuned per bone, and the result composes onto whatever the animation left on that bone. |
+| `model` | `delta` is the bone's bind world orientation, and the bone is reset to its bind pose first, so it ends up sitting at exactly `q_src` off the bind pose. `rest_delta` goes unused. |
+
+`model` is the one to reach for when the source says where a limb *is* rather
+than how far it has moved — Kalidokit's arms and legs do. It deliberately
+replaces the animation on that bone: composed instead, the same "arm out to the
+side" would land somewhere different in every frame of the idle, because it
+would be measured from wherever the animation had just put the arm. Bones with
+no entry keep animating as usual, so a config that maps only the arms leaves the
+legs and torso alone.
 
 Tuning is usually `axis_map` first — it is discrete, 48 combinations, and one
 of them is almost always right — then `basis_rotation` for the leftover angle.
@@ -107,9 +121,59 @@ working:
 `basis_rotation`, which is exactly what it always did. Explicit fields override
 whatever the preset set, so you can start from `"basis": "arm"` and adjust.
 
-The arms have no entry by default; the axis mapping was never worked out. This
-is the knob for that — `LeftUpperArm`, `RightUpperArm`, `LeftLowerArm`,
-`RightLowerArm` are all being sent already.
+### Arms
+
+The arms do not use Kalidokit's rotations at all. They are aimed straight at
+MediaPipe's world landmarks:
+
+```jsonc
+{ "source": "LeftUpperArm", "bone": "bip01 l upperarm",
+  "mode": "aim", "axis_map": ["-z", "-x", "-y"] }
+```
+
+**Why not the rotations.** Kalidokit's arm solve is measurably not good enough
+here, for two independent reasons. Its flexion scale is 2.14 where the exact
+figure is π, so a 100° elbow comes out as 54° — `normalizeRadians` returns
+units of π, not radians. And a lowered arm puts its XYZ Euler on gimbal lock
+(`y ≈ ±π/2`), where the triple flips between frames. Driven from those, the
+upper arms landed 16–21° out and the forearms 106–126° out, pointing at the
+floor. Aimed at the landmarks instead, the same clip gives 2–4° on the upper
+arms and 2–13° on the forearms.
+
+**How aim works.** The shell attaches a unit `direction` to each arm bone,
+taken from the landmark pair spanning it, and `apply_pose` rotates the bone so
+its `aim_axis` — local X, which is down the bone on a bip01 skeleton — points
+along it. Because it sets a direction rather than composing a rotation, it is
+independent of whatever the animation is doing and of the bind pose, which is
+what makes it immune to both problems above. `space`, `rest_delta` and
+`source_rest` are unused in this mode.
+
+`axis_map` here converts *MediaPipe world space* (X image-right, Y down, Z away
+from camera) into blam's model space (X forward, Y left, Z up). Note this is a
+different map from the one a `direct` entry needs, because Kalidokit's rotations
+are in VRM axes rather than MediaPipe's.
+
+The lateral sign is the subtle one. Kalidokit's `Left` is solved from landmarks
+12/14/16 — the subject's anatomical *right*, since it mirrors the camera itself
+— and that drives `bip01 l`, which sits at **+Y**. The subject's right arm
+points image-left, at **-x**. So blam's +Y comes from MediaPipe's -x, and the
+map is `["-z", "-x", "-y"]`. Getting that sign backwards points each arm across
+the body: a T-pose comes out crossed, and crossed arms come out T-posed.
+
+That error is invisible in any clip where the arms stay near the body's
+midline, which is most seated footage — `arms_down`, `arms_up`, `arms_forward`
+and `elbow_bend` all pass with the sign inverted. The `t_pose` and
+`arms_crossed` cases in `pose_demo_arms.mjs` exist to catch it, and both fail
+if it is flipped back.
+
+**What it does not fix.** Aim matches bone *directions*, not wrist positions.
+The cyborg's shoulders are much wider than a person's, so hands clasped
+together on the subject still come out apart on the model. Closing that needs
+IK onto the wrist landmark, not a direction.
+
+`blam_tag_inspect --dump-bones` prints a model's bind pose, including each
+bone's local axes in model space; that is where `aim_axis` comes from. For
+`bip01 l upperarm` the bone's local X runs down the arm.
 
 ## Microphone
 
@@ -223,3 +287,38 @@ MediaPipe dependency). Solved bones go to `coffee_dummy_plug_event` as a
 `vendor/pose/` holds the superseded `@mediapipe/pose` Solutions API, frozen
 upstream since 2023-02 and no longer loaded. It is kept only for comparison and
 can be deleted.
+
+# Tests
+
+Two harnesses in `.github/tests/web/`, answering different questions.
+
+`pose_demo_kalidokit_smoke.mjs` runs the real pipeline: Chrome's fake webcam
+plays a video of a person, and the test passes if MediaPipe and Kalidokit
+produce pose payloads at all. It says the chain is live; it says nothing about
+whether the retargeting is right, because the input is a video and the output
+is a picture.
+
+`run_pose_demo_arms.sh` (driving `pose_demo_arms.mjs`) asks the other question.
+It skips the webcam entirely, injects exact quaternions as `pose_apply` events,
+and reads the resulting bone positions back out of the engine with the
+`dump_pose` event, so each case is a known input checked against a measured
+output in metres. A mirrored axis fails as a sign rather than as an impression
+of a screenshot. It also checks that moving one arm leaves the other exactly
+where the bind pose put it, which is what catches a basis change leaking across
+the body.
+
+```
+.github/tests/web/run_pose_demo_arms.sh [BUNDLE_DIR] [OUT_DIR]
+```
+
+It freezes the idle animation (via a near-zero `fps`) and turns off smoothing,
+root motion and the microphone, so a bone only moves when a pose moves it. Both
+run under Xvfb against a real GL backend — SwiftShader loses the WebGL context
+on this bundle, and everything after that is fallout rather than a result.
+
+`blam_tag_inspect --dump-bones <map>` prints the bind pose a mapping has to be
+written against, which is the offline half of the same question:
+
+```
+blam_tag_inspect -c mod2 -n cyborg --dump-bones /path/to/bloodgulch.map
+```
