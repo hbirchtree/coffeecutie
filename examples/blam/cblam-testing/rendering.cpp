@@ -1617,26 +1617,6 @@ struct MeshRenderer
         auto const& builder =
             p.template subsystem<DrawListBuilder<Version>>();
 
-        // Sky passes — drawn first so opaque geometry overwrites them
-        // naturally. No depth write; depth test passes everywhere (empty
-        // buffer).
-        {
-            gfx::depth_extended_state sky_depth{.depth_write = false};
-            for(i32 pi = Pass_SkyOpaque; pi <= Pass_LastSky; ++pi)
-            {
-                auto pass  = static_cast<Passes>(pi);
-                auto blend = blend_for_pass(pass);
-                for(auto i : stl_types::range<u32>(m_players.size()))
-                    render_pass(
-                        p,
-                        i,
-                        t,
-                        builder.model_submit(i)[pass],
-                        blend,
-                        sky_depth);
-            }
-        }
-
         // Opaque world geometry — all players, depth write + stencil write.
         gfx::stencil_state opaque_stencil{
             .depth_pass = gfx::stencil_state::operation_t::write,
@@ -1712,6 +1692,22 @@ struct MeshRenderer
             });
         }
 
+        {
+            gfx::depth_extended_state sky_depth{.depth_write = false};
+            for(i32 pi = Pass_SkyOpaque; pi <= Pass_LastSky; ++pi)
+            {
+                auto pass  = static_cast<Passes>(pi);
+                auto blend = blend_for_pass(pass);
+                for(auto i : stl_types::range<u32>(m_players.size()))
+                    render_pass(
+                        p,
+                        i,
+                        t,
+                        builder.model_submit(i)[pass],
+                        blend,
+                        sky_depth);
+            }
+        }
 
         // Transparent world geometry — primary player, no depth write.
         gfx::depth_extended_state transparent_depth{.depth_write = false};
