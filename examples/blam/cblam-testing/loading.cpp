@@ -14,6 +14,7 @@
 #include "selected_version.h"
 #include "shader_cache.h"
 #include "types.h"
+#include <optional>
 
 template<typename Ver>
 using ResourceLoaderManifest = compo::SubsystemManifest<
@@ -347,8 +348,8 @@ struct ResourceLoader
                     for(auto& draw : sub_draw.draw.data)
                         draw.debug_identifier = fmt::format(
                             "{} {}",
-                            shader_name,
-                            shader_.shader_tag->tagclass[0].str());
+                            shader_.shader_tag->tagclass[0].str(),
+                            shader_name);
                 }
             }
         }
@@ -645,11 +646,10 @@ struct ResourceLoader
                     shader_.shader_tag          = shader_it.tag;
                     shader_.shader_id           = mesh.shader;
 
-                    //                DepthInfo&    depth    =
-                    //                mesh_ent.get<DepthInfo>(); depth.position =
-                    //                bsp.
-
                     bsp_draw.current_pass = shader_.get_render_pass(shader_cache);
+                    bsp_draw.draw.data.back().debug_identifier = fmt::format("{} {}",
+                        shader_it.tag->tagclass.front().str(),
+                        shader_it.tag->to_name().to_string(shader_cache.magic));
                 }
             // break;
         }
