@@ -82,7 +82,6 @@
             "bc5": ["rg", "ra"],
             "bc3": ["rgba"],
             "pvrtc1": ["rgba"],
-            "etc1": ["rgba"],
             "png": ["rgba", "ra"],
             "raw": ["rgba", "ra"]
         }

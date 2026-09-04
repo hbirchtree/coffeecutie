@@ -638,23 +638,28 @@ float sotr_somap(float v, uint m)
  * Vertex registers initialize to 1 — the engine substitutes fade factors
  * there and "no fade" is 1, not 0 (0 nukes any multiply stage to black). */
 
+/* GLSL passes arrays by value, so handing the register file to the four
+ * colour and four alpha input lookups copies all nine entries eight times per
+ * stage. At global scope it is read in place. */
+vec4 sotr_reg[9];
+
 /* Get color input (blam::shader::color_input) as vec3. reg[3]/reg[4] are the
  * vertex registers: vertex_color_0 is the diffuse light, vertex_color_1 the
  * perpendicular fade. */
-vec3 sotr_cin(uint i, vec4 reg[9], vec4 c0, vec4 c1)
+vec3 sotr_cin(uint i, vec4 c0, vec4 c1)
 {
     if(i ==  1u) return vec3(1);
     if(i ==  2u) return vec3(0.5);
     if(i ==  3u) return vec3(-1);
     if(i ==  4u) return vec3(-0.5);
-    if(i >=  5u && i <=  8u) return reg[i].rgb;           // map_color_0..3
-    if(i ==  9u || i == 10u) return reg[i - 6u].rgb;      // vertex_color_0/1
-    if(i == 11u || i == 12u) return reg[i - 10u].rgb;     // scratch_color_0/1
+    if(i >=  5u && i <=  8u) return sotr_reg[i].rgb;           // map_color_0..3
+    if(i ==  9u || i == 10u) return sotr_reg[i - 6u].rgb;      // vertex_color_0/1
+    if(i == 11u || i == 12u) return sotr_reg[i - 10u].rgb;     // scratch_color_0/1
     if(i == 13u) return c0.rgb;                           // constant_color_0
     if(i == 14u) return c1.rgb;                           // constant_color_1
-    if(i >= 15u && i <= 18u) return vec3(reg[i - 10u].a); // map_alpha_0..3
-    if(i == 19u || i == 20u) return vec3(reg[i - 16u].a); // vertex_alpha_0/1
-    if(i == 21u || i == 22u) return vec3(reg[i - 20u].a); // scratch_alpha_0/1
+    if(i >= 15u && i <= 18u) return vec3(sotr_reg[i - 10u].a); // map_alpha_0..3
+    if(i == 19u || i == 20u) return vec3(sotr_reg[i - 16u].a); // vertex_alpha_0/1
+    if(i == 21u || i == 22u) return vec3(sotr_reg[i - 20u].a); // scratch_alpha_0/1
     if(i == 23u) return vec3(c0.a);                       // constant_alpha_0
     if(i == 24u) return vec3(c1.a);                       // constant_alpha_1
     return vec3(0); // zero
@@ -663,24 +668,31 @@ vec3 sotr_cin(uint i, vec4 reg[9], vec4 c0, vec4 c1)
 /* Get alpha input (blam::shader::color_input).
  * NOTE different enum from color: 5-8 map alpha, 15-18 map BLUE,
  * 19/20 vertex blue, 21/22 scratch BLUE, 23/24 constant BLUE. */
-float sotr_ain(uint i, vec4 reg[9], vec4 c0, vec4 c1)
+float sotr_ain(uint i, vec4 c0, vec4 c1)
 {
     if(i ==  1u) return 1.0;
     if(i ==  2u) return 0.5;
     if(i ==  3u) return -1.0;
     if(i ==  4u) return -0.5;
-    if(i >=  5u && i <= 8u)  return reg[i].a;          // map_alpha_0..3
-    if(i ==  9u || i == 10u) return reg[i - 6u].a;     // vertex_alpha_0/1
-    if(i == 11u || i == 12u) return reg[i - 10u].a;    // scratch_alpha_0/1
+    if(i >=  5u && i <= 8u)  return sotr_reg[i].a;          // map_alpha_0..3
+    if(i ==  9u || i == 10u) return sotr_reg[i - 6u].a;     // vertex_alpha_0/1
+    if(i == 11u || i == 12u) return sotr_reg[i - 10u].a;    // scratch_alpha_0/1
     if(i == 13u) return c0.a;
     if(i == 14u) return c1.a;
-    if(i >= 15u && i <= 18u) return reg[i - 10u].b;    // map_blue_0..3
-    if(i == 19u || i == 20u) return reg[i - 16u].b;    // vertex_blue_0/1
-    if(i == 21u || i == 22u) return reg[i - 20u].b;    // scratch_blue_0/1
+    if(i >= 15u && i <= 18u) return sotr_reg[i - 10u].b;    // map_blue_0..3
+    if(i == 19u || i == 20u) return sotr_reg[i - 16u].b;    // vertex_blue_0/1
+    if(i == 21u || i == 22u) return sotr_reg[i - 20u].b;    // scratch_blue_0/1
     if(i == 23u) return c0.b;    // constant_blue_0
     if(i == 24u) return c1.b;    // constant_blue_1
     return 0.0;
 }
+
+/* Read the stage data straight out of the UBO. Copying it into a local first
+ * puts the dynamically indexed stage array in private memory, which the
+ * compiler can only back with scratch: on Intel that doubled this shader's
+ * instruction count and its spills. */
+#define TR_DATA  tr.instance[frag.instanceId]
+#define TR_STAGE tr.instance[frag.instanceId].stages[si]
 
 vec4 shader_transparent(in Material mat)
 {
@@ -691,29 +703,25 @@ vec4 shader_transparent(in Material mat)
     vec4 uv01 = mat.material.input2;
     vec4 uv23 = mat.material.input3;
 
-    TransparentData trd = tr.instance[frag.instanceId];
+    sotr_reg[0] = vec4(0);
+    sotr_reg[1] = vec4(0);
+    sotr_reg[2] = vec4(0);
+    sotr_reg[3] = vec4(1);
+    sotr_reg[4] = vec4(1);
+    sotr_reg[5] = get_color_with_offset(0u, uv01.xy, mat);
+    sotr_reg[6] = get_color_with_offset(1u, uv01.zw, mat);
+    sotr_reg[7] = get_color_with_offset(2u, uv23.xy, mat);
+    sotr_reg[8] = get_color_with_offset(3u, uv23.zw, mat);
 
-    vec4 reg[9];
-    reg[0] = vec4(0);
-    reg[1] = vec4(0);
-    reg[2] = vec4(0);
-    reg[3] = vec4(1);
-    reg[4] = vec4(1);
-    reg[5] = get_color_with_offset(0u, uv01.xy, mat);
-    reg[6] = get_color_with_offset(1u, uv01.zw, mat);
-    reg[7] = get_color_with_offset(2u, uv23.xy, mat);
-    reg[8] = get_color_with_offset(3u, uv23.zw, mat);
-
-    int num_stages = int(trd.num_stages);
+    int num_stages = int(TR_DATA.num_stages);
     if(num_stages == 0)
-        return reg[5];
+        return sotr_reg[5];
 
     for(int si = 0; si < num_stages && si < 7; si++)
     {
-        TransparentStage s = trd.stages[si];
-        uint cin  = s.color_in;
-        uint ain  = s.alpha_in;
-        uint outs = s.outputs;
+        uint cin  = TR_STAGE.color_in;
+        uint ain  = TR_STAGE.alpha_in;
+        uint outs = TR_STAGE.outputs;
 
         /* Decode color inputs */
         uint ca_i = cin & 0x1Fu,        ca_m = (cin >> 5)  & 7u;
@@ -736,13 +744,9 @@ vec4 shader_transparent(in Material mat)
         uint a_cd_d  = (outs >> 21) & 0xFu;
         uint a_sum_d = (outs >> 25) & 0xFu, a_om   = (outs >> 29) & 7u;
 
-        /* The hardware reads every input from the register state at stage
-         * entry; outputs land after. Snapshot so color writes don't feed
-         * this stage's alpha inputs. */
-        vec4 inr[9];
-        for(int r = 0; r < 9; r++)
-            inr[r] = reg[r];
-
+        /* Inputs are read from the register state at stage entry and every
+         * output lands after the last read below, so the file is read in
+         * place: a stage-entry copy would only duplicate it. */
         /* constant_color0 ramps between its bounds, alpha included, and the
          * CPU hands us the time-animated value. With a_out_controls_color0_anim
          * the ramp is driven by this stage's alpha output instead, so the alpha
@@ -750,27 +754,28 @@ vec4 shader_transparent(in Material mat)
          * shaders use the constant to blend their static map against scrolling
          * noise; pinned at one end the static map never shows and the effect
          * smears. constant_color1 is a plain constant. */
-        vec4 c0 = s.color0;
-        vec4 c1 = s.color1;
+        vec4 c0 = TR_STAGE.color0;
+        vec4 c1 = TR_STAGE.color1;
 
-        bool alpha_mux = (s.flags & 2u) != 0u;
-        if((s.flags & 4u) != 0u)
-            c0 = mix(s.color0, s.color0_up, clamp(inr[1].a, 0.0, 1.0));
-        float aa = sotr_smap(sotr_ain(aa_i, inr, c0, c1), aa_m);
-        float ab = sotr_smap(sotr_ain(ab_i, inr, c0, c1), ab_m);
-        float ac = sotr_smap(sotr_ain(ac_i, inr, c0, c1), ac_m);
-        float ad = sotr_smap(sotr_ain(ad_i, inr, c0, c1), ad_m);
+        bool alpha_mux = (TR_STAGE.flags & 2u) != 0u;
+        if((TR_STAGE.flags & 4u) != 0u)
+            c0 = mix(TR_STAGE.color0, TR_STAGE.color0_up,
+                     clamp(sotr_reg[1].a, 0.0, 1.0));
+        float aa = sotr_smap(sotr_ain(aa_i, c0, c1), aa_m);
+        float ab = sotr_smap(sotr_ain(ab_i, c0, c1), ab_m);
+        float ac = sotr_smap(sotr_ain(ac_i, c0, c1), ac_m);
+        float ad = sotr_smap(sotr_ain(ad_i, c0, c1), ad_m);
 
         float a_ab = aa * ab;
         float a_cd = ac * ad;
         float a_sum =
-            alpha_mux ? (inr[1].a >= 0.5 ? a_cd : a_ab) : (a_ab + a_cd);
+            alpha_mux ? (sotr_reg[1].a >= 0.5 ? a_cd : a_ab) : (a_ab + a_cd);
 
         /* Color: get + map inputs */
-        vec3 ca = sotr_cmap(sotr_cin(ca_i, inr, c0, c1), ca_m);
-        vec3 cb = sotr_cmap(sotr_cin(cb_i, inr, c0, c1), cb_m);
-        vec3 cc = sotr_cmap(sotr_cin(cc_i, inr, c0, c1), cc_m);
-        vec3 cd = sotr_cmap(sotr_cin(cd_i, inr, c0, c1), cd_m);
+        vec3 ca = sotr_cmap(sotr_cin(ca_i, c0, c1), ca_m);
+        vec3 cb = sotr_cmap(sotr_cin(cb_i, c0, c1), cb_m);
+        vec3 cc = sotr_cmap(sotr_cin(cc_i, c0, c1), cc_m);
+        vec3 cd = sotr_cmap(sotr_cin(cd_i, c0, c1), cd_m);
 
         vec3 c_ab = c_ab_fn == 0u ? ca * cb : vec3(dot(ca, cb));
         vec3 c_cd = c_cd_fn == 0u ? cc * cd : vec3(dot(cc, cd));
@@ -778,29 +783,29 @@ vec4 shader_transparent(in Material mat)
         /* mux_sum destination: sum by default; with the color_mux/alpha_mux
          * stage flag it's the combiner MUX, selecting CD when r0.a ≥ 0.5,
          * else AB. Summing where mux was meant over-brightens badly. */
-        bool color_mux = (s.flags & 1u) != 0u;
+        bool color_mux = (TR_STAGE.flags & 1u) != 0u;
         vec3 c_sum =
-            color_mux ? (inr[1].a >= 0.5 ? c_cd : c_ab) : (c_ab + c_cd);
+            color_mux ? (sotr_reg[1].a >= 0.5 ? c_cd : c_ab) : (c_ab + c_cd);
 
         /* Route color outputs; registers clamp to [-1, 1] on write. */
         if(c_ab_d <= 8u)
-            reg[c_ab_d].rgb = clamp(sotr_omap(c_ab, c_om), -1.0, 1.0);
+            sotr_reg[c_ab_d].rgb = clamp(sotr_omap(c_ab, c_om), -1.0, 1.0);
         if(c_cd_d <= 8u)
-            reg[c_cd_d].rgb = clamp(sotr_omap(c_cd, c_om), -1.0, 1.0);
+            sotr_reg[c_cd_d].rgb = clamp(sotr_omap(c_cd, c_om), -1.0, 1.0);
         if(c_sum_d <= 8u)
-            reg[c_sum_d].rgb = clamp(sotr_omap(c_sum, c_om), -1.0, 1.0);
-        reg[0] = vec4(0); /* keep the discard sink discarded */
+            sotr_reg[c_sum_d].rgb = clamp(sotr_omap(c_sum, c_om), -1.0, 1.0);
+        sotr_reg[0] = vec4(0); /* keep the discard sink discarded */
 
         if(a_ab_d <= 8u)
-            reg[a_ab_d].a = clamp(sotr_somap(a_ab, a_om), -1.0, 1.0);
+            sotr_reg[a_ab_d].a = clamp(sotr_somap(a_ab, a_om), -1.0, 1.0);
         if(a_cd_d <= 8u)
-            reg[a_cd_d].a = clamp(sotr_somap(a_cd, a_om), -1.0, 1.0);
+            sotr_reg[a_cd_d].a = clamp(sotr_somap(a_cd, a_om), -1.0, 1.0);
         if(a_sum_d <= 8u)
-            reg[a_sum_d].a = clamp(sotr_somap(a_sum, a_om), -1.0, 1.0);
-        reg[0] = vec4(0);
+            sotr_reg[a_sum_d].a = clamp(sotr_somap(a_sum, a_om), -1.0, 1.0);
+        sotr_reg[0] = vec4(0);
     }
 
-    vec4 sc0 = reg[1];
+    vec4 sc0 = sotr_reg[1];
 
     /* blend_mode (chicago::framebuffer_blending):
      * 0=alpha_blend 1=multiply 2=double_multiply 3=add 4=subtract
@@ -809,11 +814,14 @@ vec4 shader_transparent(in Material mat)
      * `alpha_multiply_add` asks for. Plain `add`, like component_min/max, is
      * alpha-independent — modulating it by the combiner alpha erases every
      * shader whose alpha chain resolves low. */
-    uint bm = trd.blend_mode;
+    uint bm = TR_DATA.blend_mode;
     if(bm == 3u || bm == 5u || bm == 6u)
         sc0.a = 1.0;
     return sc0;
 }
+
+#undef TR_DATA
+#undef TR_STAGE
 
 const uint SOSO_FLAG_DETAIL_AFTER_REFLECTION      =   0x1;
 const uint SOSO_FLAG_DETAIL_FUNC_MUL              =   0x2;

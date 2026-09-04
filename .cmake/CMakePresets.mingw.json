@@ -84,6 +84,12 @@
     ],
     "buildPresets": [
         {
+            "name": "desktop-x86_64-w64-mingw32-posix-reldeb",
+            "environment": {"BUILD_TYPE":"RelWithDebInfo"},
+            "configurePreset": "desktop-x86_64-w64-mingw32-posix",
+            "inherits": "base-linux"
+        },
+        {
             "name": "desktop-x86_64-w64-mingw32-posix-rel",
             "environment": {"BUILD_TYPE":"Release"},
             "configurePreset": "desktop-x86_64-w64-mingw32-posix",
