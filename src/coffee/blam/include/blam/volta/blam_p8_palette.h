@@ -1,9 +1,6 @@
 #pragma once
 
-#include <algorithm>
 #include <array>
-#include <glm/detail/qualifier.hpp>
-
 #include "blam_base_types.h"
 
 namespace blam::bitm {
@@ -104,8 +101,7 @@ inline bool expand_p8(Span<const u8> src, Span<vecb4> dst)
     if(dst.size() < src.size())
         return false;
     for(size_t i = 0; i < src.size(); i++)
-        std::copy_n(
-            p8_bump_palette.begin() + src[i], 1, dst.begin() + i);
+        dst[i] = p8_bump_palette[src[i]];
     return true;
 }
 
