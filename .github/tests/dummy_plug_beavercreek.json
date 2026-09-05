@@ -36,6 +36,8 @@
         {"time": 5500, "type":"screenshot", "name": "beavercreek_plasma_rifle"},
         {"time": 6000, "type": "camera", "position" :[23.28291, 10.571248, -1.2910469], "rotation":[-0.94090486, -0.24757452, -0.22348686, -0.05880922]},
         {"time": 6500, "type":"screenshot", "name": "beavercreek_plasma_grenade"},
+        {"time": 7000, "type": "camera", "position" :[4.936234, 18.510597, -0.14088163], "rotation":[0.8946426, 0.12962869, -0.4231452, -0.061312076]},
+        {"time": 7500, "type":"screenshot", "name": "beavercreek_needler"},
         {}
     ],
     "frame_delta": 200.0,
