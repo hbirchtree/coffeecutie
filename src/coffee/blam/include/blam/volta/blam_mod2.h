@@ -271,7 +271,7 @@ requires is_game_version<Variant>
 struct part_wrap_header
 {
     static constexpr size_t padding_size =
-        std::is_same_v<Variant, grbx_t> ? 28 : 0;
+        std::is_same_v<Variant, xbox_t> ? 0 : 28;
 
     part data;
     u8   unknown_2[padding_size];
