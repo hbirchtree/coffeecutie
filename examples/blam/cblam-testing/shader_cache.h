@@ -63,6 +63,8 @@ struct ShaderCache
         Vecf2 const&                    base_map_scale,
         std::optional<material_context> context = {});
 
+    f32 meter_value_of(blam::shader::animation_src src) const;
+
     generation_idx_t reflection_bitmap(generation_idx_t const& shader_id)
     {
         auto it = find(shader_id);

@@ -282,6 +282,13 @@ void create_resources(compo::EntityContainer& e)
                      set_val("render_model_bones", rp.render_model_bones);
                      set_val("render_reflection", rp.render_reflection);
                      set_val("render_scenery", rp.render_scenery);
+                     set_val("meter_value", rp.meter_value);
+                     for(auto i : stl_types::range<size_t>(4))
+                     {
+                         auto key = fmt::format("object_function{}", i);
+                         rp.object_function[i] =
+                             d.value(key, rp.object_function[i]);
+                     }
                      set_val("only_normals", rp.only_normals);
                      set_val("only_normalmaps", rp.only_normalmaps);
                      set_val("only_lightmaps", rp.only_lightmaps);

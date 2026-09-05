@@ -373,7 +373,7 @@ struct ShaderData
             return sky_pass(p);
         }
         case tc::smet:
-            return sky_pass(Pass_Opaque);
+            return sky_pass(Pass_Glass);
         case tc::spla:
             /* Plasma is glowing energy — rendered additively. */
             return sky_pass(Pass_Additive);

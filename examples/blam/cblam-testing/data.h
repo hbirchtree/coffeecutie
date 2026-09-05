@@ -146,6 +146,9 @@ struct RenderingParameters : compo::SubsystemBase
     bool only_normalmaps{false};
     bool render_lightmaps{true};
 
+    std::array<libc_types::f32, 4> object_function{{0.f, 0.f, 0.f, 0.f}};
+    libc_types::f32                meter_value{0.f};
+
     bool  render_ui{false};
     bool  debug_clear{false}; // sets a different clear color for visibility
     Vecf3 clear_color{0, 0.2f, 0.5f};

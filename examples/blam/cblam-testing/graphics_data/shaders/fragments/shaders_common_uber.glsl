@@ -498,8 +498,9 @@ void chicago_stage(out vec4 dst, in vec4 i1, in vec4 last, in vec4 i2, in uint f
 
 vec4 chicago_blend(vec4 c1, vec4 c2, vec4 c3, vec4 c4, uint flags, in Material mat)
 {
-    vec4 out_color = vec4(1.0);
-    chicago_stage(out_color, c1, c1, c2, flags & 0xFFu);
+    vec4 out_color = c1;
+    if((uint(mat.maps[1].layer) >> 24) != 0u)
+        chicago_stage(out_color, c1, c1, c2, flags & 0xFFu);
     if((uint(mat.maps[2].layer) >> 24) != 0u)
         chicago_stage(out_color, out_color, c2, c3, (flags >> 8) & 0xFFu);
     if((uint(mat.maps[3].layer) >> 24) != 0u)
@@ -1019,13 +1020,13 @@ vec4 shader_meter(in Material mat)
     float bg_transp = mat.material.input2.a;
     vec3  gmax      = mat.material.input3.rgb;
     vec3  background = mat.material.input4.rgb;
-    vec3  tint      = mat.material.input5.rgb;
+    vec3  tint      = mat.material.input6.rgb;
 
     bool  filled   = mask.r <= value;
     float t        = value > 0.0 ? mask.r / value : 0.0;
     vec3  gradient = mix(gmin, gmax, t) * tint;
     vec3  color    = filled ? gradient : background;
-    float alpha    = filled ? 1.0 - transp : 1.0 - bg_transp;
+    float alpha    = mask.a * (filled ? 1.0 - transp : 1.0 - bg_transp);
     return vec4(color, alpha);
 }
 

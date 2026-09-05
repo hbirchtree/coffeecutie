@@ -947,6 +947,28 @@ template ShaderItem ShaderCache<halo_version>::predict_impl(
     const blam::tagref_t& shader);
 
 template<typename V>
+f32 ShaderCache<V>::meter_value_of(blam::shader::animation_src src) const
+{
+    using blam::shader::animation_src;
+    auto const* params = bitm_cache.params;
+    if(!params)
+        return 1.f;
+    switch(src)
+    {
+    case animation_src::A_out:
+        return params->object_function[0];
+    case animation_src::B_out:
+        return params->object_function[1];
+    case animation_src::C_out:
+        return params->object_function[2];
+    case animation_src::D_out:
+        return params->object_function[3];
+    default:
+        return params->meter_value;
+    }
+}
+
+template<typename V>
 void ShaderCache<V>::populate_material(
     materials::shader_data&            mat,
     const generation_idx_t&            shader_id,
@@ -1213,7 +1235,9 @@ void ShaderCache<V>::populate_material(
         mat.maps[0].uv_scale   = Vecf2(1);
         mat.maps[0].bias       = 0;
         mat.material.flags     = static_cast<u32>(info->flags);
-        mat.material.inputs1   = Vecf2{1.f, info->colors.transparency};
+        mat.material.inputs1 =
+            Vecf2{meter_value_of(info->ext_func_src.value),
+                  info->colors.transparency};
         mat.material.inputs[0] = Vecf4(
             info->colors.gradient_min, info->colors.background_transparency);
         mat.material.inputs[1] = Vecf4(info->colors.gradient_max, 1.f);
