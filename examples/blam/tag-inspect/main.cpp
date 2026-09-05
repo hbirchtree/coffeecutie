@@ -6,8 +6,10 @@
 #include "peripherals/stl/enumerate.h"
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_bsp_structures.h>
+#include <blam/volta/blam_font.h>
 #include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_mod2.h>
+#include <blam/volta/blam_p8_palette.h>
 #include <blam/volta/blam_scenario.h>
 #include <blam/volta/blam_swizzle.h>
 #include <blam/volta/blam_shaders.h>
@@ -17,6 +19,7 @@
 #include <coffee/core/coffee_args.h>
 #include <coffee/core/debug/formatting.h>
 #include <coffee/core/files/cfiles.h>
+#include <coffee/image/cimage.h>
 #include <cmath>
 #include <map>
 #include <vector>
@@ -27,6 +30,10 @@
 #include <magic_enum/magic_enum.hpp>
 #include <peripherals/libc/types.h>
 #include <url/url.h>
+
+#define BCDEC_IMPLEMENTATION
+#define BCDEC_STATIC
+#include <bcdec.h>
 
 using libc_types::f32;
 using libc_types::i32;
@@ -49,6 +56,11 @@ bool          g_dump_scenario = false;
 bool          g_dump_bones    = false;
 bool          g_channel_stats{false};
 std::string   g_dump_prefix{};
+std::string   g_dump_png_prefix{};
+/* PC and Custom Edition keep bitmap pixels in bitmaps.map; Xbox keeps them in
+ * the map itself, and then this stays equal to g_raw_magic. */
+blam::map_ptr g_bitm_magic;
+bool          g_have_bitmaps_file = false;
 
 /* Writes each byte position of a 32-bit image as its own greyscale PGM, so the
  * channel order can be settled by looking at which one carries the mask. */
@@ -93,11 +105,380 @@ void print_enum(char const* label, E value)
            static_cast<u32>(value));
 }
 
+/* Everything is a D3D format read little-endian. A8R8G8B8 lands in memory as
+ * B, G, R, A and has to be swapped; the packed 16-bit formats already carry
+ * red in the high bits of the u16, so they are unpacked as-is. (The renderer
+ * samples R5G6B5 with a .bgra swizzle, which does not follow from that -- it
+ * goes unnoticed because the only R5G6B5 content is near-greyscale lightmaps
+ * and dim cube maps. The red-yellow checker in a lightmap's unused space is
+ * what pins the layout down.) Returns empty for anything it cannot decode. */
+std::vector<u8> decode_rgba8(
+    blam::bitm::format_t fmt, semantic::Span<const u8> px, u32 w, u32 h)
+{
+    using blam::bitm::format_t;
+
+    size_t const    texels = static_cast<size_t>(w) * h;
+    std::vector<u8> out(texels * 4, 0);
+
+    auto put = [&out](size_t i, u8 r, u8 g, u8 b, u8 a) {
+        out[i * 4 + 0] = r;
+        out[i * 4 + 1] = g;
+        out[i * 4 + 2] = b;
+        out[i * 4 + 3] = a;
+    };
+    auto packed = [&px](size_t i) {
+        return static_cast<u32>(px[i * 2]) |
+               (static_cast<u32>(px[i * 2 + 1]) << 8);
+    };
+    /* 5 bits of 31 must reach 255, so replicate the value's own high bits
+     * into the slack rather than shifting zeroes in. */
+    auto widen = [](u32 v, u32 bits) {
+        u32 const s = v << (8 - bits);
+        return static_cast<u8>(s | (s >> bits));
+    };
+    auto need = [&](size_t bytes) { return px.size_bytes() >= bytes; };
+
+    switch(fmt)
+    {
+    case format_t::A8: /* 000A */
+        if(!need(texels))
+            return {};
+        for(size_t i = 0; i < texels; i++)
+            put(i, 255, 255, 255, px[i]);
+        break;
+    case format_t::Y8: /* LLL1 */
+        if(!need(texels))
+            return {};
+        for(size_t i = 0; i < texels; i++)
+            put(i, px[i], px[i], px[i], 255);
+        break;
+    case format_t::AY8: /* LLLL */
+        if(!need(texels))
+            return {};
+        for(size_t i = 0; i < texels; i++)
+            put(i, px[i], px[i], px[i], px[i]);
+        break;
+    case format_t::A8Y8: /* r=L, g=A */
+        if(!need(texels * 2))
+            return {};
+        for(size_t i = 0; i < texels; i++)
+            put(i, px[i * 2], px[i * 2], px[i * 2], px[i * 2 + 1]);
+        break;
+    case format_t::P8: {
+        if(!need(texels))
+            return {};
+        std::vector<u8> expanded(texels * 4);
+        if(!blam::bitm::expand_p8(
+                px,
+                semantic::Span<blam::bitm::vecb4>(
+                    reinterpret_cast<blam::bitm::vecb4*>(expanded.data()),
+                    expanded.size())))
+            return {};
+        for(size_t i = 0; i < texels; i++)
+            put(i,
+                expanded[i * 4 + 2],
+                expanded[i * 4 + 1],
+                expanded[i * 4 + 0],
+                expanded[i * 4 + 3]);
+        break;
+    }
+    case format_t::R5G6B5: /* R:11-15 G:5-10 B:0-4 */
+        if(!need(texels * 2))
+            return {};
+        for(size_t i = 0; i < texels; i++)
+        {
+            u32 const v = packed(i);
+            put(i,
+                widen((v >> 11) & 31u, 5),
+                widen((v >> 5) & 63u, 6),
+                widen(v & 31u, 5),
+                255);
+        }
+        break;
+    case format_t::A1RGB5: /* A:15 R:10-14 G:5-9 B:0-4 */
+        if(!need(texels * 2))
+            return {};
+        for(size_t i = 0; i < texels; i++)
+        {
+            u32 const v = packed(i);
+            put(i,
+                widen((v >> 10) & 31u, 5),
+                widen((v >> 5) & 31u, 5),
+                widen(v & 31u, 5),
+                ((v >> 15) & 1u) ? 255 : 0);
+        }
+        break;
+    case format_t::ARGB4: /* A:12-15 R:8-11 G:4-7 B:0-3 */
+        if(!need(texels * 2))
+            return {};
+        for(size_t i = 0; i < texels; i++)
+        {
+            u32 const v = packed(i);
+            put(i,
+                widen((v >> 8) & 15u, 4),
+                widen((v >> 4) & 15u, 4),
+                widen(v & 15u, 4),
+                widen((v >> 12) & 15u, 4));
+        }
+        break;
+    case format_t::XRGB8:
+    case format_t::ARGB8:
+        if(!need(texels * 4))
+            return {};
+        for(size_t i = 0; i < texels; i++)
+            put(i,
+                px[i * 4 + 2],
+                px[i * 4 + 1],
+                px[i * 4 + 0],
+                fmt == format_t::ARGB8 ? px[i * 4 + 3] : 255);
+        break;
+    case format_t::BC1:
+    case format_t::BC2:
+    case format_t::BC3: {
+        /* bcdec writes whole 4x4 blocks, so a mip narrower than one block has
+         * nowhere to land. */
+        if(w % 4 != 0 || h % 4 != 0)
+            return {};
+        u32 block_bytes = BCDEC_BC1_BLOCK_SIZE;
+        auto transform  = &bcdec_bc1;
+        if(fmt == format_t::BC2)
+        {
+            block_bytes = BCDEC_BC2_BLOCK_SIZE;
+            transform   = &bcdec_bc2;
+        } else if(fmt == format_t::BC3)
+        {
+            block_bytes = BCDEC_BC3_BLOCK_SIZE;
+            transform   = &bcdec_bc3;
+        }
+        u32 const blocks_x = w / 4, blocks_y = h / 4;
+        if(!need(static_cast<size_t>(blocks_x) * blocks_y * block_bytes))
+            return {};
+        for(u32 by = 0; by < blocks_y; by++)
+            for(u32 bx = 0; bx < blocks_x; bx++)
+                transform(
+                    &px[(static_cast<size_t>(by) * blocks_x + bx) *
+                        block_bytes],
+                    &out[(static_cast<size_t>(by) * 4 * w + bx * 4) * 4],
+                    static_cast<int>(w) * 4);
+        break;
+    }
+    default:
+        return {};
+    }
+    return out;
+}
+
+bool write_png(
+    std::string const& path, std::vector<u8> const& rgba, u32 w, u32 h)
+{
+    Coffee::stb::image_const im;
+    im.data = rgba.data();
+    im.size = Coffee::Size(w, h);
+    im.bpp  = 4;
+
+    Coffee::stb::stb_error ec;
+    auto                   encoded = Coffee::PNG::Save(im, ec);
+    if(encoded.size == 0)
+        return false;
+
+    auto* fp = fopen(path.c_str(), "wb");
+    if(!fp)
+        return false;
+    bool ok = fwrite(encoded.data, 1, encoded.size, fp) == encoded.size;
+    fclose(fp);
+    return ok;
+}
+
+/* A tag name is a path with backslashes and spaces; flatten it so the dump
+ * lands in one directory. */
+std::string flatten_name(std::string_view name)
+{
+    std::string out(name.substr(name.find_last_of('\\') + 1));
+    for(auto& ch : out)
+        if(ch == ' ' || ch == '/' || ch == '\\')
+            ch = '_';
+    return out;
+}
+
+/* Same rule BitmapCache uses: a shared image's pixels are in bitmaps.map, an
+ * unshared one's are in the map itself. */
+blam::map_ptr const& pixel_magic(blam::bitm::image_t const& img)
+{
+    return (img.shared() && g_have_bitmaps_file) ? g_bitm_magic : g_raw_magic;
+}
+
+/* Deswizzle if the Xbox flag says so, decode, write. `label` already carries
+ * the image index and, for a cube, the face. */
+void dump_image_png(
+    blam::bitm::image_t const& img,
+    semantic::Span<const u8>   px,
+    std::string const&         label,
+    u32                        w,
+    u32                        h)
+{
+    /* An image whose pixels live in a store we did not open reports a span
+     * that is empty or nonsense; deswizzling that allocates wildly. */
+    u32 const expect = img.layer_mip_bytes(0);
+    if(w == 0 || h == 0 || expect == 0 || px.size_bytes() < expect)
+    {
+        printf("      %s: no pixel data (%zu bytes, need %u)\n",
+               label.c_str(),
+               px.size_bytes(),
+               expect);
+        return;
+    }
+    px = semantic::Span<const u8>(px.data(), expect);
+
+    std::vector<u8> linear;
+    if(static_cast<u16>(img.flags) &
+       static_cast<u16>(blam::bitm::flags_t::swizzled))
+    {
+        size_t const pixels = static_cast<size_t>(w) * h;
+        u32 const    bpp    = static_cast<u32>(px.size_bytes() / pixels);
+        linear.resize(px.size_bytes());
+        if(bpp != 0 &&
+           blam::swizzle::deswizzle_bytes(
+               px,
+               semantic::Span<u8>(linear.data(), linear.size()),
+               w,
+               h,
+               bpp))
+            px = semantic::Span<const u8>(linear.data(), linear.size());
+    }
+
+    auto rgba = decode_rgba8(img.format, px, w, h);
+    if(rgba.empty())
+    {
+        printf("      %s: no decoder for %.*s\n",
+               label.c_str(),
+               static_cast<int>(enum_name(img.format).size()),
+               enum_name(img.format).data());
+        return;
+    }
+
+    auto path = fmt::format("{}{}.png", g_dump_png_prefix, label);
+    if(write_png(path, rgba, w, h))
+        printf("      wrote %s (%ux%u)\n", path.c_str(), w, h);
+    else
+        printf("      failed to write %s\n", path.c_str());
+}
+
 std::string name_of(blam::tagref_t const& ref)
 {
     if(!ref.valid())
         return "<none>";
     return std::string(ref.to_name().to_string(g_magic));
+}
+
+/* A font's glyphs are loose 8-bit coverage bitmaps at their own offsets into
+ * one pixel block, so a PNG each is not worth looking at. Pack them into a
+ * grid, one cell per character, with coverage in rgb as well as alpha so the
+ * sheet reads on any background. */
+void dump_font_png(blam::font const* font, std::string_view name)
+{
+    auto chars_opt = font->characters.data(g_magic);
+    if(!chars_opt.has_value() || chars_opt.value().empty())
+    {
+        printf("      no characters to dump\n");
+        return;
+    }
+    auto chars = chars_opt.value();
+
+    i32 cell_w = 0, cell_h = 0;
+    for(auto const& ch : chars)
+    {
+        cell_w = std::max(cell_w, static_cast<i32>(ch.bitmap_width));
+        cell_h = std::max(cell_h, static_cast<i32>(ch.bitmap_height));
+    }
+    if(cell_w <= 0 || cell_h <= 0)
+    {
+        printf("      characters carry no bitmaps\n");
+        return;
+    }
+    /* A texel of gutter keeps neighbours from reading as one glyph. */
+    cell_w += 1;
+    cell_h += 1;
+
+    u32 const cols = static_cast<u32>(
+        std::ceil(std::sqrt(static_cast<double>(chars.size()))));
+    u32 const rows = static_cast<u32>((chars.size() + cols - 1) / cols);
+    u32 const w    = cols * static_cast<u32>(cell_w);
+    u32 const h    = rows * static_cast<u32>(cell_h);
+
+    std::vector<u8> rgba(static_cast<size_t>(w) * h * 4, 0);
+    u32             placed = 0, missing = 0, idx = 0;
+
+    for(auto const& ch : chars)
+    {
+        u32 const cell_x = (idx % cols) * static_cast<u32>(cell_w);
+        u32 const cell_y = (idx / cols) * static_cast<u32>(cell_h);
+        idx++;
+
+        i32 const bw = ch.bitmap_width, bh = ch.bitmap_height;
+        if(bw <= 0 || bh <= 0)
+            continue;
+
+        auto const data_size = static_cast<u32>(bw) * static_cast<u32>(bh);
+        auto       pix =
+            font->pixel_data(ch.pixel_offset, data_size).data(g_magic);
+        if(!pix.has_value() || pix.value().size() < data_size)
+        {
+            missing++;
+            continue;
+        }
+        auto const* src = reinterpret_cast<u8 const*>(pix.value().data());
+        for(i32 row = 0; row < bh; row++)
+            for(i32 col = 0; col < bw; col++)
+            {
+                u8 const     v = src[row * bw + col];
+                size_t const o =
+                    ((static_cast<size_t>(cell_y + row) * w) + cell_x + col) *
+                    4;
+                rgba[o + 0] = v;
+                rgba[o + 1] = v;
+                rgba[o + 2] = v;
+                rgba[o + 3] = v;
+            }
+        placed++;
+    }
+
+    auto path = fmt::format("{}{}.png", g_dump_png_prefix, flatten_name(name));
+    if(write_png(path, rgba, w, h))
+        printf(
+            "      wrote %s (%ux%u, %u glyphs in a %ux%u grid%s)\n",
+            path.c_str(),
+            w,
+            h,
+            placed,
+            cols,
+            rows,
+            missing ? ", some pixel data missing" : "");
+    else
+        printf("      failed to write %s\n", path.c_str());
+}
+
+void dump_font(blam::font const* font, std::string_view name)
+{
+    printf("  ascend=%u descend=%u leadin=%ux%u\n",
+           font->ascend_height,
+           font->descend_height,
+           font->leadin_width,
+           font->leadin_height);
+
+    auto chars = font->characters.data(g_magic);
+    printf("  characters=%zu\n", chars.has_value() ? chars.value().size() : 0u);
+
+    if(font->bold.valid())
+        printf("    bold: %s\n", name_of(font->bold).c_str());
+    if(font->italic.valid())
+        printf("    italic: %s\n", name_of(font->italic).c_str());
+    if(font->condense.valid())
+        printf("    condense: %s\n", name_of(font->condense).c_str());
+    if(font->underline.valid())
+        printf("    underline: %s\n", name_of(font->underline).c_str());
+
+    if(!g_dump_png_prefix.empty())
+        dump_font_png(font, name);
 }
 
 void print_anim(char const* label, blam::shader::texture_property_anim const& a)
@@ -527,6 +908,7 @@ void dump_unit(blam::scn::unit const* unit)
 
 /* ---- bitm ---- */
 
+template<typename V>
 void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
 {
     print_enum("  type", header->type);
@@ -644,6 +1026,42 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
         print_enum("format", img.format);
         print_enum("flags", img.flags);
         printf("mips=%u offset=0x%x\n", img.mipmaps, img.offset);
+    }
+
+    if(g_dump_png_prefix.empty())
+        return;
+
+    auto  base = flatten_name(name);
+    u32   idx  = 0;
+    for(auto const& img : images.value())
+    {
+        u32 const this_idx = idx++;
+        u32 const w = static_cast<u32>(img.isize.x);
+        u32 const h = static_cast<u32>(img.isize.y);
+        auto      label =
+            images.value().size() > 1
+                ? fmt::format("{}_{}", base, this_idx)
+                : base;
+
+        /* Cube faces are laid out differently on Xbox and PC, so go through
+         * cube_face<V> rather than slicing data() by hand. */
+        if(img.type == blam::bitm::type_t::tex_cube)
+        {
+            for(u32 face = 0; face < 6; face++)
+                dump_image_png(
+                    img,
+                    img.template cube_face<V>(pixel_magic(img), face, 0),
+                    fmt::format("{}_face{}", label, face),
+                    w,
+                    h);
+            continue;
+        }
+        if(img.type == blam::bitm::type_t::tex_3d)
+        {
+            printf("      %s: 3D textures are not dumped\n", label.c_str());
+            continue;
+        }
+        dump_image_png(img, img.data(pixel_magic(img), 0), label, w, h);
     }
 }
 
@@ -1034,6 +1452,10 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
                 printf("  (pass --dump-bones for the bone tree)\n");
         }
         break;
+    case blam::tag_class_t::font:
+        if(auto* info = header_of((blam::font*)nullptr))
+            dump_font(info, name);
+        break;
     case blam::tag_class_t::bitm:
         if(auto res = index.template resource<blam::bitm::header_t>(tag.tag_id);
            res.has_value())
@@ -1041,7 +1463,7 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
             auto [_, header, magic] = *res;
             auto saved              = g_magic;
             g_magic                 = magic;
-            dump_bitm(header, name);
+            dump_bitm<Ver>(header, name);
             g_magic = saved;
         }
         break;
@@ -1260,6 +1682,25 @@ void open_map(
      * lands on unrelated bytes. */
     g_raw_magic             = map.magic;
     g_raw_magic.file_offset = 0;
+    g_bitm_magic            = g_raw_magic;
+
+    /* PC and Custom Edition put bitmap pixels in bitmaps.map beside the map;
+     * without it every shared image reads out of bounds. Xbox has no such
+     * file and wants the map's own magic, which g_bitm_magic already is. */
+    Coffee::Resource bitmaps_file(platform::url::constructors::MkUrl(
+        path.substr(0, path.find_last_of('/') + 1) + "bitmaps.map"));
+    if(!g_dump_png_prefix.empty() && Coffee::FileMap(bitmaps_file))
+    {
+        auto bitmaps_bytes = bitmaps_file.data();
+        auto bitmaps_magic = blam::map_ptr(
+            semantic::Span<const blam::byte_t>(
+                reinterpret_cast<blam::byte_t const*>(bitmaps_bytes.data()),
+                bitmaps_bytes.size()));
+        index.add_atlas(blam::atlas_type_t::bitmaps, bitmaps_magic);
+        g_bitm_magic             = bitmaps_magic;
+        g_bitm_magic.file_offset = 0;
+        g_have_bitmaps_file      = true;
+    }
 
     if(g_dump_mirrors)
     {
@@ -1332,6 +1773,8 @@ int inspect_main()
         //
         ("dump-planes", "Write each byte position of 32-bit bitmaps as a PGM with this path prefix", cxxopts::value<std::string>())
         //
+        ("dump-bitmaps", "Write matching bitmaps (top mip) and font glyph sheets as PNGs with this path prefix", cxxopts::value<std::string>())
+        //
         ("dump-mirrors", "Walk BSP clusters and report their mirror blocks")
         //
         ("scan-tagrefs", "Scan this many bytes of each tag for embedded tag references", cxxopts::value<int>())
@@ -1371,6 +1814,8 @@ int inspect_main()
     g_channel_stats = arguments.count("channel-stats") > 0;
     g_dump_prefix =
         arguments.as_optional<std::string>("dump-planes").value_or("");
+    g_dump_png_prefix =
+        arguments.as_optional<std::string>("dump-bitmaps").value_or("");
     if(!g_dump_prefix.empty())
         g_channel_stats = true;
 
