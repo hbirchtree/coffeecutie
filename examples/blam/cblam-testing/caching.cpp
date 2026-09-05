@@ -985,6 +985,8 @@ void ShaderCache<V>::populate_material(
             mat.lightmap.meta1 |= flags << (i * 8);
         }
 
+        mat.lightmap.meta2 = static_cast<u32>(info->transparent.blend_function);
+
         mat.material.material = materials::id::scex;
         break;
     }
@@ -1009,6 +1011,8 @@ void ShaderCache<V>::populate_material(
                         (static_cast<u8>(map.alpha_func) << 4);
             mat.lightmap.meta1 |= flags << (i * 8);
         }
+
+        mat.lightmap.meta2 = static_cast<u32>(info->transparent.blend_function);
 
         mat.material.material = materials::id::schi;
         break;
@@ -1456,7 +1460,7 @@ void BitmapCache<V>::calculate_storage()
         {
             i16 this_idx = idx++;
 
-            PixDesc fmt  = image.to_fmt();
+            PixDesc fmt  = upload_fmt(image);
             auto    hash = create_hash(fmt, image.type);
 
             auto& pool = pools[hash];
@@ -1705,7 +1709,7 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
         img.mip   = &image;
         img.layer = 0;
 
-        PixDesc fmt = image.to_fmt();
+        PixDesc fmt = upload_fmt(image);
         img.bucket  = create_hash(fmt, img.mip->type);
         img.fmt     = fmt;
 

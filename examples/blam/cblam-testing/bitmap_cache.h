@@ -4,6 +4,7 @@
 #include "data.h"
 #include "data_cache.h"
 
+#include <blam/volta/blam_p8_palette.h>
 #include <blam/volta/blam_swizzle.h>
 #include <coffee/graphics/apis/gleam/rhi_texture_atlas.h>
 
@@ -111,6 +112,13 @@ struct BitmapCache
     {
         return std::make_tuple(
             type, fmt.pixfmt, fmt.comp, fmt.bfmt, fmt.cmpflg);
+    }
+
+    static inline PixDesc upload_fmt(blam::bitm::image_t const& image)
+    {
+        if(image.format == blam::bitm::format_t::P8)
+            return PixDesc(pix_fmt::RGBA8, bit_fmt::u8, pix_components::RGBA);
+        return image.to_fmt();
     }
 
     template<typename T>
@@ -312,6 +320,18 @@ struct BitmapCache
                         semantic::Span<const u8>(linear.data(), linear.size());
             }
 
+            std::vector<u8> expanded;
+            if(img.image.mip->format == blam::bitm::format_t::P8)
+            {
+                expanded.resize(mip_data.size_bytes() * 4);
+                if(blam::bitm::expand_p8(
+                       semantic::Span<const u8>(
+                           mip_data.data(), mip_data.size_bytes()),
+                       semantic::Span<u8>(expanded.data(), expanded.size())))
+                    mip_data = semantic::Span<const u8>(
+                        expanded.data(), expanded.size());
+            }
+
             /* The gutter around the tile is filled with copies of its own
              * opposite edges, so a filter tap leaving the tile lands on the
              * texels a repeat wrap would have given it. */
@@ -446,7 +466,7 @@ struct BitmapCache
         case pix_fmt::R8:
             /* Xbox luminance/alpha formats all upload as R8; the shader
              * needs the semantic to reconstruct rgb/alpha (A8=000A,
-             * Y8=LLL1, AY8=LLLL). P8 (palettized bump) stays raw. */
+             * Y8=LLL1, AY8=LLLL). */
             switch(bitm.image.mip->format)
             {
             case blam::bitm::format_t::A8:
@@ -455,8 +475,6 @@ struct BitmapCache
                 return 0x0A000000;
             case blam::bitm::format_t::AY8:
                 return 0x0B000000;
-            case blam::bitm::format_t::P8:
-                return 0x0D000000;
             default:
                 return 0x05000000;
             }

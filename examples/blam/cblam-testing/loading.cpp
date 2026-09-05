@@ -879,7 +879,13 @@ struct ResourceLoader
         for(auto const& sub : modelit.mesh.sub)
         {
             if(!sub.shader.valid())
+            {
+                cWarning(
+                    "Model part dropped, shader unresolved: {}",
+                    modelit.tag ? index.name_of(*modelit.tag)
+                                : std::string_view("<unknown>"));
                 continue;
+            }
 
             auto submod = p.create_entity(submodel);
             model.parts.push_back(submod);

@@ -140,7 +140,6 @@ const uint TEX_A8     = 9u;  /* 000A */
 const uint TEX_Y8     = 10u; /* LLL1 */
 const uint TEX_AY8    = 11u; /* LLLL */
 const uint TEX_A8Y8   = 12u; /* LLLA (r=L, g=A) */
-const uint TEX_P8     = 13u; /* Xbox palettized bump, index in R8 */
 
 vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offset, in Material mat)
 {
@@ -170,11 +169,6 @@ vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offse
     {
         vec2 la = sample_map(map_id, tex_id, source_rg8, offset, mat).rg;
         return vec4(vec3(la.r), la.g);
-    }
-    else if(source == TEX_P8)
-    {
-        float i = sample_map(map_id, tex_id, source_r8, offset, mat).r;
-        return vec4(vec3(i), i);
     }
     else if(source == TEX_RGB565)
         return sample_map(map_id, tex_id, source_rgb565, offset, mat).bgra;
@@ -256,29 +250,10 @@ vec4 get_cube_color(in vec3 tex_coord, in Material mat)
 }
 #endif
 
-const float P8_BUMP_GAIN = 1.0;
-
 vec4 get_bump(in uint map_id, in vec2 offset, in Material mat)
 {
-    uint source = uint(mat.maps[map_id].layer) >> 24;
-    vec3 normal;
-    if(source == TEX_P8)
-    {
-        /* P8 bump maps index a palette that lives in the game executable, not
-         * in the map. Without it, read the index as a height and take the
-         * slope across a texel — approximate, but it keeps the surface lit
-         * like a flat one instead of normalizing an index into nonsense. */
-        vec2 texel = 1.0 / vec2(textureSize(source_r8, 0).xy);
-        vec2 step  = texel / max(
-            mat.maps[map_id].uv_scale * mat.maps[map_id].atlas_scale,
-            vec2(1e-6));
-        float here = get_color_with_offset(map_id, offset, mat).r;
-        float du = get_color_with_offset(map_id, offset + vec2(step.x, 0), mat).r;
-        float dv = get_color_with_offset(map_id, offset + vec2(0, step.y), mat).r;
-        normal = normalize(vec3(
-            (here - du) * P8_BUMP_GAIN, (here - dv) * P8_BUMP_GAIN, 1.0));
-    } else
-        normal = normalize(get_color_with_offset(map_id, offset, mat).rgb * 2.0 - 1.0);
+    vec3 normal =
+        normalize(get_color_with_offset(map_id, offset, mat).rgb * 2.0 - 1.0);
     return vec4(normal, dot(normal, light_direction()));
 }
 
@@ -334,10 +309,8 @@ vec4 shader_environment(in Material mat)
 
     if((flags & SENV_FLAG_ALPHA_TESTED) != 0u && has_bump)
     {
-        vec4  bump_texel = get_color(bump_map_id, mat);
-        bool  is_p8      = (uint(mat.maps[bump_map_id].layer) >> 24) == TEX_P8;
-        float cutout     = is_p8 ? 1.0 - bump_texel.r : bump_texel.a;
-        if(cutout < 0.05)
+        vec4 bump_texel = get_color(bump_map_id, mat);
+        if(bump_texel.a < 0.05)
             discard;
     }
 
@@ -534,6 +507,14 @@ vec4 chicago_blend(vec4 c1, vec4 c2, vec4 c3, vec4 c4, uint flags, in Material m
     return out_color;
 }
 
+vec4 chicago_framebuffer_alpha(vec4 color, in Material mat)
+{
+    uint bm = uint(mat.lightmap.meta2);
+    if(bm == 3u || bm == 5u || bm == 6u)
+        color.a = 1.0;
+    return color;
+}
+
 vec4 shader_chicago(in Material mat)
 {
     /* schi supports up to 4 maps just like scex — the Xbox sky dome chains
@@ -550,7 +531,8 @@ vec4 shader_chicago(in Material mat)
     vec4 c4 = get_color_with_offset(3u, o4, mat);
 
     uint flags = uint(mat.lightmap.meta1);
-    return chicago_blend(c1, c2, c3, c4, flags, mat);
+    return chicago_framebuffer_alpha(
+        chicago_blend(c1, c2, c3, c4, flags, mat), mat);
 }
 
 vec4 shader_chicago_extended(in Material mat)
@@ -566,7 +548,8 @@ vec4 shader_chicago_extended(in Material mat)
     vec4 c4 = get_color_with_offset(3u, o4, mat);
 
     uint flags = uint(mat.lightmap.meta1);
-    return chicago_blend(c1, c2, c3, c4, flags, mat);
+    return chicago_framebuffer_alpha(
+        chicago_blend(c1, c2, c3, c4, flags, mat), mat);
 }
 
 #else
