@@ -338,6 +338,47 @@ void dump_senv(blam::shader::shader_env const* info)
         name_of(info->reflection.reflection).c_str());
 }
 
+/* ---- shader_model (soso) ---- */
+
+/* The multipurpose map's channels carry four separate masks. The field comment
+ * on shader_model::maps_t::multipurpose is the authority on which is which:
+ * R = base color, G = illumination, B = change color, A = reflection. */
+void dump_soso(blam::shader::shader_model const* info)
+{
+    print_enum("  flags", info->flags);
+    printf(" translucency=%g", info->translucency);
+    print_enum(" change_color_src", info->change_color_src);
+    printf("\n");
+    printf("    maps scale=(%g,%g)\n",
+           info->maps.scale.x,
+           info->maps.scale.y);
+    printf("      base         = %s\n", name_of(info->maps.base).c_str());
+    printf("      multipurpose = %s\n",
+           name_of(info->maps.multipurpose).c_str());
+    printf("        (R=base_color G=illumination B=change_color A=reflection)\n");
+    print_enum("      detail function", info->maps.detail.function);
+    print_enum(" mask", info->maps.detail.mask);
+    printf(" scale=%g v_scale=%g map=%s\n",
+           info->maps.detail.scale,
+           info->maps.detail.v_scale,
+           name_of(info->maps.detail.map).c_str());
+    printf("    reflection falloff=%g cutoff=%g\n",
+           info->reflection.falloff_distance,
+           info->reflection.cutoff_distance);
+    printf("      perpendicular brightness=%g tint=(%g,%g,%g)\n",
+           info->reflection.perpendicular_brightness,
+           info->reflection.perpendicular_tint.x,
+           info->reflection.perpendicular_tint.y,
+           info->reflection.perpendicular_tint.z);
+    printf("      parallel      brightness=%g tint=(%g,%g,%g)\n",
+           info->reflection.parallel_brightness,
+           info->reflection.parallel_tint.x,
+           info->reflection.parallel_tint.y,
+           info->reflection.parallel_tint.z);
+    printf("      cube         = %s\n",
+           name_of(info->reflection.reflection).c_str());
+}
+
 /* ---- obje / unit ---- */
 
 /* Bind pose of a model's bone tree, in the convention caching.cpp builds
@@ -657,6 +698,31 @@ void dump_mode(blam::mod2::header<Ver> const* info)
                 static_cast<int>(region.name.size), region.name.data.data());
         }
     }
+    /* Per-part vertex_type: model_at() silently drops any part that is not
+     * mod2_uncompressed(4) or mod2_compressed(5), so a part listed here with
+     * another type is geometry the renderer never sees. */
+    if(auto geoms = info->geometries.data(g_magic); geoms.has_value())
+    {
+        printf("  geometries=%zu\n", geoms.value().size());
+        for(auto [gi, geom] : stl_types::enumerate(geoms.value()))
+        {
+            auto parts = geom.meshes(g_magic);
+            printf("    geometry %zu: parts=%zu\n", gi, parts.size());
+            for(auto [pi, part] : stl_types::enumerate(parts))
+            {
+                auto vt = blam::from_le(part.data.vertex_type);
+                printf(
+                    "      part %zu: vertex_type=%u%s shader_idx=%u\n",
+                    pi,
+                    static_cast<unsigned>(vt),
+                    (vt == blam::vert::vertex_type_t::mod2_compressed_vertex
+                     || vt == blam::vert::vertex_type_t::mod2_uncompressed_vertex)
+                        ? ""
+                        : "  <-- DROPPED by model_at",
+                    static_cast<unsigned>(blam::from_le(part.data.shader_idx)));
+            }
+        }
+    }
 }
 
 /* ---- dispatch ---- */
@@ -914,6 +980,10 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
     case blam::tag_class_t::senv:
         if(auto* info = header_of((shader_env*)nullptr))
             dump_senv(info);
+        break;
+    case blam::tag_class_t::soso:
+        if(auto* info = header_of((shader_model*)nullptr))
+            dump_soso(info);
         break;
     case blam::tag_class_t::schi:
         if(auto* info = header_of((shader_chicago<Ver>*)nullptr))
