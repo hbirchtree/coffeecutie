@@ -63,13 +63,100 @@ struct FontCache
             return data.value();
     }
 
+    /* One transparent texel between glyphs, so a filter tap at the edge of one
+     * cannot reach into the next. FontItem::glyph_uv() handles the other half
+     * of the problem, the tap that leaves the glyph's own rect. */
+    static constexpr i32 kGlyphGutter = 1;
+
+    /* Shelf packer shared by the sizing pass and the upload pass. Calls
+     * place(character, x, y) for every glyph, with x/y negative when it has no
+     * home; returns false if any glyph did not fit. */
+    template<typename Place>
+    static bool pack_glyphs(
+        Span<const blam::font::character_t> chars, i32 size, Place&& place)
+    {
+        i32  cursor_x = 0, cursor_y = 0, row_height = 0;
+        bool fits = true;
+
+        for(auto const& ch : chars)
+        {
+            i32 const bw = ch.bitmap_width, bh = ch.bitmap_height;
+            if(bw <= 0 || bh <= 0)
+            {
+                place(ch, -1, -1);
+                continue;
+            }
+            i32 const step_w = bw + kGlyphGutter;
+            i32 const step_h = bh + kGlyphGutter;
+            if(cursor_x + step_w > size)
+            {
+                cursor_x = 0;
+                cursor_y += row_height;
+                row_height = 0;
+            }
+            if(cursor_y + step_h > size)
+            {
+                /* Out of shelves. Report it rather than placing the glyph at
+                 * 0,0, which is what the previous packer did -- the entry kept
+                 * its default atlas coordinates and drew whichever glyph
+                 * happened to sit at the atlas origin. */
+                fits = false;
+                place(ch, -1, -1);
+                continue;
+            }
+            place(ch, cursor_x, cursor_y);
+            cursor_x += step_w;
+            row_height = std::max(row_height, step_h);
+        }
+        return fits;
+    }
+
+    Span<const blam::font::character_t> characters_of(FontItem const& item)
+    {
+        if(!item.font)
+            return {};
+        auto chars = item.font->characters.data(magic);
+        return chars.has_value() ? chars.value()
+                                 : Span<const blam::font::character_t>{};
+    }
+
     void allocate_font_texture()
     {
-        constexpr u32 kAtlasSize = 256;
+        /* Every layer of the array is the same size, so the atlas has to be
+         * big enough for the largest font; grow until the shelf packer stops
+         * running out of room. */
+        constexpr i32 kMinAtlas = 256;
+        constexpr i32 kMaxAtlas = 2048;
+
+        i32 atlas_size = kMinAtlas;
+        while(atlas_size < kMaxAtlas)
+        {
+            bool all_fit = true;
+            for(auto& [id, font_item] : m_cache)
+            {
+                auto chars = characters_of(font_item);
+                if(chars.empty())
+                    continue;
+                if(!pack_glyphs(chars, atlas_size, [](auto const&, i32, i32) {}))
+                {
+                    all_fit = false;
+                    break;
+                }
+            }
+            if(all_fit)
+                break;
+            atlas_size *= 2;
+        }
+
+        cDebug(
+            "Font atlas: {}x{} x{} layers", atlas_size, atlas_size,
+            m_cache.size());
 
         font_textures->alloc(
             gleam::size_3d<u32>{
-                kAtlasSize, kAtlasSize, static_cast<u32>(m_cache.size())});
+                static_cast<u32>(atlas_size),
+                static_cast<u32>(atlas_size),
+                static_cast<u32>(m_cache.size())});
         font_sampler->alloc();
         api->debug().annotate(*font_textures, "fonts_r8");
 
@@ -77,45 +164,33 @@ struct FontCache
         for(auto& [id, font_item] : m_cache)
         {
             font_item.atlas_layer = layer;
+            font_item.atlas_size  = static_cast<u32>(atlas_size);
             font_item.glyph_map.clear();
 
-            auto chars_opt = font_item.font->characters.data(magic);
-            if(!chars_opt.has_value())
+            auto chars = characters_of(font_item);
+            if(chars.empty())
             {
                 layer++;
                 continue;
             }
 
-            /* Pack into CPU buffer with stride=kAtlasSize (always 4-byte
-             * aligned) to avoid GL_UNPACK_ALIGNMENT issues with odd glyph
-             * widths. */
-            std::vector<u8> atlas_buf(kAtlasSize * kAtlasSize, 0);
+            /* Pack into a CPU buffer with stride=atlas_size (a power of two,
+             * so always 4-byte aligned) to avoid GL_UNPACK_ALIGNMENT issues
+             * with odd glyph widths. */
+            std::vector<u8> atlas_buf(
+                static_cast<size_t>(atlas_size) * atlas_size, 0);
 
-            i32 cursor_x   = 0;
-            i32 cursor_y   = 0;
-            i32 row_height = 0;
+            bool const fits = pack_glyphs(
+                chars,
+                atlas_size,
+                [&](blam::font::character_t const& ch, i32 x, i32 y) {
+                    GlyphEntry entry;
+                    entry.advance  = ch.character_width;
+                    entry.origin_x = ch.origin.x;
+                    entry.origin_y = ch.origin.y;
 
-            for(auto const& ch : chars_opt.value())
-            {
-                i32 bw = ch.bitmap_width;
-                i32 bh = ch.bitmap_height;
-
-                GlyphEntry entry;
-                entry.advance       = ch.character_width;
-                entry.bitmap_width  = static_cast<i16>(bw);
-                entry.bitmap_height = static_cast<i16>(bh);
-                entry.origin_x      = ch.origin.x;
-                entry.origin_y      = ch.origin.y;
-
-                if(bw > 0 && bh > 0)
-                {
-                    if(cursor_x + bw > static_cast<i32>(kAtlasSize))
-                    {
-                        cursor_x = 0;
-                        cursor_y += row_height;
-                        row_height = 0;
-                    }
-                    if(cursor_y + bh <= static_cast<i32>(kAtlasSize))
+                    i32 const bw = ch.bitmap_width, bh = ch.bitmap_height;
+                    if(x >= 0 && y >= 0)
                     {
                         auto data_size =
                             static_cast<u32>(bw) * static_cast<u32>(bh);
@@ -129,28 +204,34 @@ struct FontCache
                             for(i32 row = 0; row < bh; row++)
                             {
                                 u8* dst = atlas_buf.data() +
-                                          (cursor_y + row) * kAtlasSize +
-                                          cursor_x;
+                                          static_cast<size_t>(y + row) *
+                                              atlas_size +
+                                          x;
                                 std::memcpy(
                                     dst, src + row * bw, static_cast<u32>(bw));
                             }
                         }
-                        entry.atlas_x = static_cast<i16>(cursor_x);
-                        entry.atlas_y = static_cast<i16>(cursor_y);
-                        cursor_x += bw;
-                        row_height = std::max(row_height, bh);
+                        entry.atlas_x       = static_cast<i16>(x);
+                        entry.atlas_y       = static_cast<i16>(y);
+                        entry.bitmap_width  = static_cast<i16>(bw);
+                        entry.bitmap_height = static_cast<i16>(bh);
                     }
-                }
-                font_item.glyph_map[ch.character] = entry;
-            }
+                    /* An unplaced glyph keeps its advance and stays
+                     * undrawable, so text still spaces correctly. */
+                    font_item.glyph_map[ch.character] = entry;
+                });
+
+            if(!fits)
+                cWarning(
+                    "Font atlas overflowed at {}x{}; some glyphs will not "
+                    "render",
+                    atlas_size,
+                    atlas_size);
 
             font_textures->upload(
                 semantic::Bytes::ofContainer(atlas_buf).view,
                 Veci3{0, 0, static_cast<i32>(layer)},
-                Veci3{
-                    static_cast<i32>(kAtlasSize),
-                    static_cast<i32>(kAtlasSize),
-                    1});
+                Veci3{atlas_size, atlas_size, 1});
             layer++;
         }
     }

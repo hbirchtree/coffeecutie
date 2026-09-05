@@ -372,20 +372,12 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 if(text.empty())
                     return false;
 
-                constexpr f32 kAtlasSize  = 256.f;
                 constexpr u32 kFontSource = 9u;
                 u32 tex_source = (kFontSource << 24) | font_item.atlas_layer;
 
-                f32 text_width = 0.f;
-                for(char16_t c : text)
-                {
-                    auto git = font_item.glyph_map.find(static_cast<u16>(c));
-                    if(git != font_item.glyph_map.end())
-                        text_width += git->second.advance;
-                }
-
-                f32 box_w   = max.x - min.x;
-                f32 start_x = min.x + tb.horizontal_offset;
+                f32 text_width = font_item.measure(text);
+                f32 box_w      = max.x - min.x;
+                f32 start_x    = min.x + tb.horizontal_offset;
                 f32 baseline_y =
                     min.y + tb.vertical_offset +
                     static_cast<f32>(font_item.font->ascend_height);
@@ -396,49 +388,38 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 else if(tb.justification == just_t::right)
                     start_x = min.x + box_w - text_width - tb.horizontal_offset;
 
-                f32 cursor_x = start_x;
-                for(char16_t c : text)
-                {
-                    auto git = font_item.glyph_map.find(static_cast<u16>(c));
-                    if(git == font_item.glyph_map.end())
-                        continue;
-                    GlyphEntry const& g = git->second;
-                    if(g.bitmap_width <= 0 || g.bitmap_height <= 0)
-                    {
-                        cursor_x += g.advance;
-                        continue;
-                    }
+                Vecf4 const color = (tb.color.a > 0.f) ? Vecf4(tb.color)
+                                                       : Vecf4{1, 1, 1, 1};
 
-                    f32 gx  = cursor_x + g.origin_x;
-                    f32 gy  = baseline_y - g.origin_y;
-                    f32 gx2 = gx + g.bitmap_width;
-                    f32 gy2 = gy + g.bitmap_height;
+                /* One quad per glyph, appended straight into the frame's UI
+                 * buffers -- for_each_glyph only owns where each one goes. */
+                font_item.for_each_glyph(
+                    text,
+                    start_x,
+                    baseline_y,
+                    [&](GlyphEntry const& g, f32 gx, f32 gy) {
+                        f32 gx2 = gx + g.bitmap_width;
+                        f32 gy2 = gy + g.bitmap_height;
 
-                    std::array<vertex_t, 6> glyph_verts = {{
-                        {{gx, gy}, {0, 0}},
-                        {{gx2, gy}, {1, 0}},
-                        {{gx2, gy2}, {1, 1}},
-                        {{gx, gy}, {0, 0}},
-                        {{gx2, gy2}, {1, 1}},
-                        {{gx, gy2}, {0, 1}},
-                    }};
-                    data.vertex_data.insert(
-                        data.vertex_data.end(),
-                        glyph_verts.begin(),
-                        glyph_verts.end());
+                        std::array<vertex_t, 6> glyph_verts = {{
+                            {{gx, gy}, {0, 0}},
+                            {{gx2, gy}, {1, 0}},
+                            {{gx2, gy2}, {1, 1}},
+                            {{gx, gy}, {0, 0}},
+                            {{gx2, gy2}, {1, 1}},
+                            {{gx, gy2}, {0, 1}},
+                        }};
+                        data.vertex_data.insert(
+                            data.vertex_data.end(),
+                            glyph_verts.begin(),
+                            glyph_verts.end());
 
-                    instance_vertex_t inst{};
-                    inst.color            = (tb.color.a > 0.f) ? Vecf4(tb.color)
-                                                               : Vecf4{1, 1, 1, 1};
-                    inst.tex_scale_offset = Vecf4(
-                        g.bitmap_width / kAtlasSize,
-                        g.bitmap_height / kAtlasSize,
-                        g.atlas_x / kAtlasSize,
-                        g.atlas_y / kAtlasSize);
-                    inst.texture_source.x = tex_source;
-                    data.instance_data.push_back(inst);
-                    cursor_x += g.advance;
-                }
+                        instance_vertex_t inst{};
+                        inst.color            = color;
+                        inst.tex_scale_offset = font_item.glyph_uv(g);
+                        inst.texture_source.x = tex_source;
+                        data.instance_data.push_back(inst);
+                    });
                 return false;
             });
     }
