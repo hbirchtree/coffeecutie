@@ -172,7 +172,7 @@ std::vector<u8> decode_rgba8(
                 px,
                 semantic::Span<blam::bitm::vecb4>(
                     reinterpret_cast<blam::bitm::vecb4*>(expanded.data()),
-                    expanded.size())))
+                    expanded.size() / 4)))
             return {};
         for(size_t i = 0; i < texels; i++)
             put(i,
