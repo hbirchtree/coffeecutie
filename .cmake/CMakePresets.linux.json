@@ -37,7 +37,7 @@
                 "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
                 "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/compilers/$env{PLATFORM}-$env{ARCHITECTURE}/$env{TOOLCHAIN_VERSION}",
                 "TOOLCHAIN_SYSROOT": "$env{TOOLCHAIN_ROOT}/$env{TOOLCHAIN_PREFIX}/sysroot",
-                "TOOLCHAIN_VERSION": "v2.2",
+                "TOOLCHAIN_VERSION": "v2.3",
                 "VCPKG_INSTALL_DIR": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{ARCHITECTURE}"
             }
         },

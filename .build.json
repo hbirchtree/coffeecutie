@@ -2,8 +2,7 @@
     "coverage": true,
     "toolchain": {
         "git": {
-            "repo": "hbirchtree/coffeecutie-automation-tools",
-            "tag": "v2.1.1"
+            "repo": "hbirchtree/coffeecutie-automation-tools"
         },
         "emsdk": {
             "version": "6.0.5"
