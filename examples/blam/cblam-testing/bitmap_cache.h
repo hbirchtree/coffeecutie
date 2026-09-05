@@ -325,9 +325,11 @@ struct BitmapCache
             {
                 expanded.resize(mip_data.size_bytes() * 4);
                 if(blam::bitm::expand_p8(
-                       semantic::Span<const u8>(
-                           mip_data.data(), mip_data.size_bytes()),
-                       semantic::Span<u8>(expanded.data(), expanded.size())))
+                        semantic::Span<const u8>(
+                            mip_data.data(), mip_data.size_bytes()),
+                        semantic::Span<blam::bitm::vecb4>(
+                            reinterpret_cast<blam::bitm::vecb4*>(expanded.data()),
+                            expanded.size() / 4)))
                     mip_data = semantic::Span<const u8>(
                         expanded.data(), expanded.size());
             }
