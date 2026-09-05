@@ -319,14 +319,21 @@ struct alignas(4) shader_chicago : radiosity_properties /* aka schi */
     chicago::base          transparent;
     chicago::lens_flares_t lens_flares;
 
-    reference<tagref_typed_t<tag_class_t::shdr>, V> layers;
+    /* Not reference<..., V>: the Xbox instantiation of that shrinks a
+     * reflexive to 8 bytes, but a schi tag lays its reflexives out exactly as
+     * the PC one does -- both keep maps at +0x54 -- so the shortened form read
+     * maps 4 bytes early and always came back with a count of zero, leaving
+     * every chicago shader on Xbox with no textures to sample. */
+    reference<tagref_typed_t<tag_class_t::shdr>> layers;
 
-    reference<chicago::map_t, V> maps;
+    reference<chicago::map_t> maps;
 
     chicago::extra_flags ex_flags;
 };
 
 static_assert(offsetof(shader_chicago<pc_version_t>, lens_flares) == 52);
+static_assert(offsetof(shader_chicago<pc_version_t>, maps) == 84);
+static_assert(offsetof(shader_chicago<xbox_version_t>, maps) == 84);
 
 struct reflection_properties
 {
@@ -342,14 +349,17 @@ struct alignas(4) shader_chicago_extended : radiosity_properties /* aka scex */
 {
     chicago::base                                   transparent;
     chicago::lens_flares_t                          lens_flares;
-    reference<tagref_typed_t<tag_class_t::shdr>, V> layers;
-    reference<chicago::map_t, V>                    maps_4stage;
-    reference<chicago::map_t, V>                    maps_2stage;
-    chicago::extra_flags                            extra_flags;
+    reference<tagref_typed_t<tag_class_t::shdr>> layers;
+    reference<chicago::map_t>                    maps_4stage;
+    reference<chicago::map_t>                    maps_2stage;
+    chicago::extra_flags                         extra_flags;
 };
 
 static_assert(
     offsetof(shader_chicago_extended<pc_version_t>, lens_flares) == 52);
+static_assert(offsetof(shader_chicago_extended<pc_version_t>, maps_4stage) == 84);
+static_assert(
+    offsetof(shader_chicago_extended<xbox_version_t>, maps_4stage) == 84);
 
 struct alignas(32) shader_glass : radiosity_properties /* aka sgla */
 {
