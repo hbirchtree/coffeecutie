@@ -1170,14 +1170,28 @@ const uint MATERIAL_SOSO = 9u;
 
 layout(location = 0) out vec4 final_color;
 
+/* Which material paths this variant compiles. sotr and chicago are far heavier
+ * than the rest — sotr especially, whose combiner register file sets the
+ * register budget for every material sharing its binary — so they can be built
+ * as their own programs. Unreferenced shader_* functions are dead-code
+ * eliminated, so gating the dispatch is enough. */
+#ifndef USE_BASE_MATERIALS
+#define USE_BASE_MATERIALS 1
+#endif
+#ifndef USE_TRANSPARENT
+#define USE_TRANSPARENT 1
+#endif
+
 void main()
 {
     Material material = mats.instance[frag.instanceId];
 
     uint material_id = get_material_id(material);
-    vec4 color;
+    vec4 color = vec4(0, 1, 0, 1);
 
-    if(material_id == MATERIAL_SENV)
+    if(false) {}
+#if USE_BASE_MATERIALS == 1
+    else if(material_id == MATERIAL_SENV)
     {
         color = shader_environment(material);
 #if USE_MODEL_SHADERS == 1
@@ -1185,14 +1199,6 @@ void main()
     {
         color = shader_model(material);
 #endif
-    } else if(material_id == MATERIAL_SCHI)
-    {
-        final_color = shader_chicago(material);
-        return;
-    } else if(material_id == MATERIAL_SCEX)
-    {
-        final_color = shader_chicago_extended(material);
-        return;
     } else if(material_id == MATERIAL_SWAT)
     {
         color = shader_water(material);
@@ -1205,12 +1211,26 @@ void main()
     } else if(material_id == MATERIAL_SPLA)
     {
         color = shader_plasma(material);
-    } else if(material_id == MATERIAL_SOTR)
+    }
+#endif
+#if USE_CHICAGO == 1
+    else if(material_id == MATERIAL_SCHI)
+    {
+        final_color = shader_chicago(material);
+        return;
+    } else if(material_id == MATERIAL_SCEX)
+    {
+        final_color = shader_chicago_extended(material);
+        return;
+    }
+#endif
+#if USE_TRANSPARENT == 1
+    else if(material_id == MATERIAL_SOTR)
     {
         final_color = shader_transparent(material);
         return;
-    } else
-        color = vec4(0, 1, 0, 1);
+    }
+#endif
 
     if((render_flags & RENDER_FLAG_FOG) == 0)
     {

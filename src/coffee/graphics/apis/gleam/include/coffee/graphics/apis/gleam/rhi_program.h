@@ -177,6 +177,7 @@ struct program_t
 
         m_buffer_locations.clear();
         m_uniform_locations.clear();
+        m_explicit_uniform_state.clear();
 
         [[maybe_unused]] auto _ = m_debug.scope(__PRETTY_FUNCTION__);
 #if GLEAM_MAX_VERSION >= 0x460
@@ -443,6 +444,9 @@ struct program_t
     /*! Buffer location + queried size*/
     std::map<std::string, std::pair<u32, i32>> m_buffer_locations;
     std::map<std::string, u32>                 m_uniform_locations;
+    /*! Per explicit uniform location: 0 unknown, 1 live, 2 compiled out.
+     *  Indexed by location so the hot path costs no lookup or allocation. */
+    std::vector<libc_types::u8> m_explicit_uniform_state;
 };
 
 } // namespace gleam

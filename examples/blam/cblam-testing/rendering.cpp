@@ -79,6 +79,111 @@ static_assert(sizeof(PerInstanceData) == 80);
 
 using draw_data_t = gfx::draw_command::data_t;
 
+/* Which material families a pass ended up holding. sotr's combiner register
+ * file sets the register budget for every material sharing its binary, so a
+ * pass that turns out to hold only one family is submitted with a program
+ * built for just that family. A mixed pass falls back to the combined one, so
+ * draw order is never disturbed. */
+enum MaterialClass : u8
+{
+    MatClass_Base    = 0x1,
+    MatClass_Chicago = 0x2,
+    MatClass_Sotr    = 0x4,
+};
+
+/* How far to split the uber shader. Splitting cuts register pressure but costs
+ * a bucket -- and so a submit -- wherever families meet, so the useful setting
+ * is hardware-dependent. `full` is the only mode that leaves no shader
+ * spilling, and measured best on NVIDIA Ampere.
+ * COFFEE_SHADER_SPLIT=off|sotr|full, default full. */
+enum class shader_split_t
+{
+    off,  /* one program, as before */
+    sotr, /* sotr vs everything else */
+    full, /* sotr vs chicago vs the rest */
+};
+
+inline shader_split_t shader_split_mode()
+{
+    static shader_split_t mode = [] {
+        auto v = platform::env::var("COFFEE_SHADER_SPLIT");
+        if(!v || *v == "full")
+            return shader_split_t::full;
+        if(*v == "off")
+            return shader_split_t::off;
+        if(*v == "sotr")
+            return shader_split_t::sotr;
+        return shader_split_t::full;
+    }();
+    return mode;
+}
+
+struct PassPrograms
+{
+    std::shared_ptr<gfx::program_t> combined;
+    std::shared_ptr<gfx::program_t> nosotr;
+    std::shared_ptr<gfx::program_t> base;
+    std::shared_ptr<gfx::program_t> chicago;
+    std::shared_ptr<gfx::program_t> sotr;
+
+    std::shared_ptr<gfx::program_t> const& for_classes(u8 classes) const
+    {
+        switch(shader_split_mode())
+        {
+        case shader_split_t::off:
+            break;
+        case shader_split_t::sotr:
+            if(classes == MatClass_Sotr && sotr)
+                return sotr;
+            if(classes && !(classes & MatClass_Sotr) && nosotr)
+                return nosotr;
+            break;
+        case shader_split_t::full:
+            if(classes == MatClass_Sotr && sotr)
+                return sotr;
+            if(classes == MatClass_Chicago && chicago)
+                return chicago;
+            if(classes == MatClass_Base && base)
+                return base;
+            break;
+        }
+        return combined;
+    }
+};
+
+/* Additive, multiply and component-max blending are commutative, so draws in
+ * those passes may be regrouped freely. Alpha blending is not: Pass_Glass has
+ * to keep its back-to-front order. */
+inline bool pass_is_order_independent(Passes pass)
+{
+    switch(pass)
+    {
+    case Pass_SkyAdditive:
+    case Pass_SkyMultiply:
+    case Pass_Additive:
+    case Pass_Multiply:
+    case Pass_Max:
+        return true;
+    default:
+        return false;
+    }
+}
+
+/* Map a shader tag onto the material family whose program can draw it. */
+inline u8 material_class_of(blam::tag_class_t tag)
+{
+    switch(tag)
+    {
+    case blam::tag_class_t::sotr:
+        return MatClass_Sotr;
+    case blam::tag_class_t::schi:
+    case blam::tag_class_t::scex:
+        return MatClass_Chicago;
+    default:
+        return MatClass_Base;
+    }
+}
+
 struct Pass
 {
     Pass()
@@ -87,7 +192,54 @@ struct Pass
     }
 
     gfx::draw_command                     command;
+    PassPrograms                          programs;
+    u8                                    material_classes{0};
     std::vector<std::vector<draw_data_t>> draws;
+    /* Material families present in each bucket, parallel to `draws`. A bucket
+     * holding one family is submitted with that family's program; buckets are
+     * broken at family changes rather than reordered, so draw order — which
+     * Pass_Glass depends on — is untouched. */
+    std::vector<u8> bucket_classes;
+    /* Family per sortable draw, parallel to `sort_centers`. */
+    std::vector<u8> sort_classes;
+
+    /* Collapse families that the current mode draws with the same program. */
+    static u8 split_family(u8 cls)
+    {
+        switch(shader_split_mode())
+        {
+        case shader_split_t::off:
+            return 0;
+        case shader_split_t::sotr:
+            return (cls & MatClass_Sotr) ? MatClass_Sotr : MatClass_Base;
+        case shader_split_t::full:
+            return cls;
+        }
+        return cls;
+    }
+
+    /* Start a new bucket when the current one is full or holds another
+     * family, and record the family of whichever bucket we land in. */
+    void open_bucket(u8 cls, size_t incoming)
+    {
+        bucket_classes.resize(draws.size(), 0);
+        size_t num_draws = 0;
+        for(auto const& d : draws.back())
+            num_draws += d.instances.count;
+        bool full = num_draws >= 128 || (num_draws + incoming) > 128;
+        /* Only break where the chosen mode actually needs a different program:
+         * in `sotr` mode chicago and base share one, so they share a bucket. */
+        u8   effective = split_family(cls);
+        bool other_family
+            = !draws.back().empty()
+              && split_family(bucket_classes.back()) != effective;
+        if(full || other_family)
+        {
+            draws.emplace_back();
+            bucket_classes.push_back(0);
+        }
+        bucket_classes.back() |= cls;
+    }
 
     gfx::buffer_slice_t material_buffer;
     gfx::buffer_slice_t transparent_buffer;
@@ -127,14 +279,9 @@ struct Pass
     // Only populated for transparent passes; used for depth sorting.
     std::vector<Vecf3> sort_centers;
 
-    model_tracker_t insert_draw(draw_data_t const& draw)
+    model_tracker_t insert_draw(draw_data_t const& draw, u8 cls)
     {
-        size_t num_draws = 0;
-        for(auto const& draw : draws.back())
-            num_draws += draw.instances.count;
-
-        if(num_draws >= 128 || (num_draws + draw.instances.count) > 128)
-            draws.emplace_back();
+        open_bucket(cls, draw.instances.count);
 
         auto& bucket_ = draws.back();
         auto  it      = std::find_if(
@@ -163,14 +310,15 @@ struct Pass
 
     // Transparent passes: one draw per item (no instancing), records
     // center.
-    model_tracker_t insert_sortable(draw_data_t draw, Vecf3 const& center)
+    model_tracker_t insert_sortable(
+        draw_data_t draw, Vecf3 const& center, u8 cls)
     {
         draw.instances.count = 1;
-        if(draws.back().size() >= 128)
-            draws.emplace_back();
+        open_bucket(cls, 1);
         auto& bucket_ = draws.back();
         bucket_.push_back(draw);
         sort_centers.push_back(center);
+        sort_classes.push_back(cls);
         return model_tracker_t{
             .bucket   = static_cast<u16>(draws.size() - 1),
             .draw     = static_cast<u16>(bucket_.size() - 1),
@@ -181,13 +329,13 @@ struct Pass
 
     // Sort transparent draws back-to-front by distance from cam.
     // Call after update_materials (material slots unchanged by reorder).
-    void sort_by_depth(Vecf3 const& cam)
+    void sort_by_depth(Vecf3 const& cam, bool group_by_family)
     {
         if(sort_centers.empty())
             return;
 
         std::vector<std::tuple<Vecf3, draw_data_t,
-                               std::shared_ptr<gfx::texture_t>>>
+                               std::shared_ptr<gfx::texture_t>, u8>>
                flat;
         flat.reserve(sort_centers.size());
         size_t ci = 0;
@@ -195,10 +343,12 @@ struct Pass
             for(size_t di = 0; di < draws[bi].size(); di++)
             {
                 auto const& cubes = reflections_for(bi);
+                u8 cls = ci < sort_classes.size() ? sort_classes[ci] : 0;
                 flat.push_back(
                     {sort_centers[ci++],
                      draws[bi][di],
-                     di < cubes.size() ? cubes[di] : nullptr});
+                     di < cubes.size() ? cubes[di] : nullptr,
+                     cls});
             }
 
         /* stable: parts at equal distance (e.g. all sky model parts,
@@ -209,16 +359,38 @@ struct Pass
                        glm::distance2(std::get<0>(b), cam);
             });
 
+        /* Where blending is commutative, gather the families together so the
+         * pass costs a handful of buckets instead of one per family change --
+         * sotr and chicago interleave in depth, which otherwise degenerates to
+         * roughly a bucket per draw. Stable, so depth order still holds within
+         * each family. */
+        if(group_by_family)
+            std::stable_sort(
+                flat.begin(), flat.end(), [](auto const& a, auto const& b) {
+                    return std::get<3>(a) < std::get<3>(b);
+                });
+
         draws.clear();
         draws.emplace_back();
         sort_centers.clear();
+        sort_classes.clear();
+        bucket_classes.assign(1, 0);
         reflection_textures.clear();
-        for(auto& [c, d, cube] : flat)
+        for(auto& [c, d, cube, cls] : flat)
         {
-            if(draws.back().size() >= 128)
+            /* Break the bucket where the family changes; the sorted order is
+             * kept exactly, so this cannot alter blending. */
+            if(draws.back().size() >= 128
+               || (!draws.back().empty()
+                   && split_family(bucket_classes.back()) != split_family(cls)))
+            {
                 draws.emplace_back();
+                bucket_classes.push_back(0);
+            }
+            bucket_classes.back() |= cls;
             draws.back().push_back(d);
             sort_centers.push_back(c);
+            sort_classes.push_back(cls);
             if(cube)
                 set_reflection(
                     static_cast<u16>(draws.size() - 1),
@@ -232,7 +404,10 @@ struct Pass
         draws.clear();
         draws.emplace_back();
         sort_centers.clear();
+        sort_classes.clear();
+        bucket_classes.assign(1, 0);
         reflection_textures.clear();
+        material_classes = 0;
     }
 
     /* Record the cube for one draw, growing to match `draws`. */
@@ -345,7 +520,14 @@ struct DrawListBuilder
                 for(auto& pass : buffered[vp])
                 {
                     pass.command.program = resources.bsp_pipeline;
-                    pass.name            = fmt::format(
+                    pass.programs        = {
+                               .combined = resources.bsp_pipeline,
+                               .nosotr   = resources.bsp_pipeline_nosotr,
+                               .base     = resources.bsp_pipeline_base,
+                               .chicago  = resources.bsp_pipeline_chicago,
+                               .sotr     = resources.bsp_pipeline_sotr,
+                    };
+                    pass.name = fmt::format(
                         "BSP::{}::{}",
                         vp,
                         magic_enum::enum_name(static_cast<Passes>(i++)));
@@ -358,7 +540,14 @@ struct DrawListBuilder
                 for(auto& pass : buffered[vp])
                 {
                     pass.command.program = resources.model_pipeline;
-                    pass.name            = fmt::format(
+                    pass.programs        = {
+                               .combined = resources.model_pipeline,
+                               .nosotr   = resources.model_pipeline_nosotr,
+                               .base     = resources.model_pipeline_base,
+                               .chicago  = resources.model_pipeline_chicago,
+                               .sotr     = resources.model_pipeline_sotr,
+                    };
+                    pass.name = fmt::format(
                         "MOD::{}::{}",
                         vp,
                         magic_enum::enum_name(static_cast<Passes>(i++)));
@@ -434,10 +623,12 @@ struct DrawListBuilder
 
             for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
             {
+                bool grouped =
+                    pass_is_order_independent(static_cast<Passes>(pi));
                 model_build()[static_cast<Passes>(pi)].sort_by_depth(
-                    m_views[vp].position);
+                    m_views[vp].position, grouped);
                 bsp_build()[static_cast<Passes>(pi)].sort_by_depth(
-                    m_views[vp].position);
+                    m_views[vp].position, grouped);
             }
         }
         m_vp   = 0;
@@ -560,11 +751,22 @@ struct DrawListBuilder
             };
             bsp_draw.draw.data.front().instances.offset = instance_offset;
             instance_offset += bsp_draw.draw.data.front().instances.count;
+            auto sh_it   = shader_cache.find(bsp.shader);
+            u8   mat_cls = sh_it != shader_cache.end()
+                             ? material_class_of(sh_it->second.tag_class)
+                             : MatClass_Base;
+            wf.material_classes |= mat_cls;
             if(bsp_draw.current_pass > Pass_LastOpaque)
                 wf.insert_sortable(
-                    bsp_draw.draw.data.front(), bsp.sort_center);
+                    bsp_draw.draw.data.front(), bsp.sort_center, mat_cls);
             else
+            {
+                /* Opaque BSP keeps its single instanced bucket; only record
+                 * which family it holds. */
+                wf.bucket_classes.resize(wf.draws.size(), 0);
+                wf.bucket_classes[0] |= mat_cls;
                 wf.draws[0].push_back(bsp_draw.draw.data.front());
+            }
         }
 
         if(!m_api->feature_info().program.buffer_binding)
@@ -643,13 +845,20 @@ struct DrawListBuilder
                     .instanced = true,
                     .mode      = gfx::drawing::primitive::triangle_strip,
             };
+            auto sh_it   = shader_cache.find(model.shader);
+            u8   mat_cls = sh_it != shader_cache.end()
+                             ? material_class_of(sh_it->second.tag_class)
+                             : MatClass_Base;
+            wf.material_classes |= mat_cls;
+
             if(model_draw.current_pass > Pass_LastOpaque)
             {
                 Vecf3 center = Vecf3(mod.transform[3]);
-                track.model_id =
-                    wf.insert_sortable(model_draw.draw.data.front(), center);
+                track.model_id = wf.insert_sortable(
+                    model_draw.draw.data.front(), center, mat_cls);
             } else
-                track.model_id = wf.insert_draw(model_draw.draw.data.front());
+                track.model_id =
+                    wf.insert_draw(model_draw.draw.data.front(), mat_cls);
             track.model_id.epoch = m_epoch;
         }
         Coffee::Profiler::PopContext();
@@ -1293,7 +1502,10 @@ struct MeshRenderer
 
             auto res = m_api->submit(
                 {
-                    .program       = pass.command.program,
+                    .program = pass.programs.for_classes(
+                        bucket_idx < pass.bucket_classes.size()
+                            ? pass.bucket_classes[bucket_idx]
+                            : pass.material_classes),
                     .vertices      = pass.command.vertices,
                     .render_target = m_resources.offscreen,
                     .call          = pass.command.call,
@@ -1368,12 +1580,16 @@ struct MeshRenderer
         std::vector<gfx::sampler_definition_t> samplers;
         setup_textures(samplers);
 
-        for(auto const& draw : pass.draws)
+        for(size_t bucket_idx = 0; bucket_idx < pass.draws.size(); bucket_idx++)
         {
+            auto const& draw = pass.draws[bucket_idx];
             /* Step 3: DRAW */
             auto res = m_api->submit(
                 {
-                    .program       = pass.command.program,
+                    .program = pass.programs.for_classes(
+                        bucket_idx < pass.bucket_classes.size()
+                            ? pass.bucket_classes[bucket_idx]
+                            : pass.material_classes),
                     .vertices      = pass.command.vertices,
                     .render_target = m_resources.offscreen,
                     .call          = pass.command.call,

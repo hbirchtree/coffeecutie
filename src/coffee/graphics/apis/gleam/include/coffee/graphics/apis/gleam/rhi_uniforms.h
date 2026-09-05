@@ -47,7 +47,26 @@ inline i32 get_program_uniform_location(
     auto        ulocation = key.location;
     auto const& features  = program.m_features;
     if(ulocation != invalid_uniform && features.uniform_location)
-        return ulocation;
+    {
+        /* An explicit layout(location=) only reserves the slot while the
+         * uniform survives compilation. A shader variant that compiled it out
+         * leaves the slot unclaimed, and writing there lands on whatever the
+         * driver put in its place, so confirm the name is live first. Separable
+         * programs keep the old path: the query would target the pipeline
+         * rather than a stage. */
+        if(features.separable_programs)
+            return ulocation;
+        auto& state = program.m_explicit_uniform_state;
+        if(static_cast<size_t>(ulocation) >= state.size())
+            state.resize(static_cast<size_t>(ulocation) + 1, 0);
+        libc_types::u8& live = state[static_cast<size_t>(ulocation)];
+        if(live == 0)
+            live = cmd::get_uniform_location(program.m_handle, key.name)
+                           == invalid_uniform
+                       ? 2
+                       : 1;
+        return live == 1 ? ulocation : invalid_uniform;
+    }
 
     if(auto it = program.m_uniform_locations.find(std::string(key.name));
        it != program.m_uniform_locations.end())

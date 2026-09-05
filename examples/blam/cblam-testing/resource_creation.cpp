@@ -929,11 +929,19 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
             : (compile_info::platform::is_emscripten ? "scenery_lite"sv
                                                      : "scenery"sv);
     /* Xbox multipurpose maps are ARGB; use the matching fragment variant. */
-    const auto scenery_frag = std::is_same_v<halo_version, blam::xbox_version_t>
-                                  ? "scenery_uber_xbox"sv
-                                  : "scenery_uber"sv;
+    constexpr bool is_xbox = std::is_same_v<halo_version, blam::xbox_version_t>;
+    const auto scenery_frag = is_xbox ? "scenery_uber_xbox"sv : "scenery_uber"sv;
+    /* Per-material-family builds; see BlamResources for why they exist. */
+    const auto scenery_frag_nosotr =
+        is_xbox ? "scenery_uber_xbox_nosotr"sv : "scenery_uber_nosotr"sv;
+    const auto scenery_frag_base =
+        is_xbox ? "scenery_uber_xbox_base"sv : "scenery_uber_base"sv;
+    /* sotr and chicago read neither lightmaps nor the multipurpose map, so one
+     * build serves the BSP and model pipelines on both Halo versions. */
+    const auto frag_sotr    = "uber_sotr"sv;
+    const auto frag_chicago = "uber_chicago"sv;
 
-    std::array<shader_pair_t, 4> shaders = {{
+    std::array<shader_pair_t, 12> shaders = {{
         {
             .vertex_file   = "debug_lines"sv,
             .fragment_file = "debug_lines"sv,
@@ -953,6 +961,46 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
             .vertex_file   = map_vertex,
             .fragment_file = "wireframe"sv,
             .shader        = resources.wireframe_pipeline,
+        },
+        {
+            .vertex_file   = scenery_vertex,
+            .fragment_file = scenery_frag_nosotr,
+            .shader        = resources.model_pipeline_nosotr,
+        },
+        {
+            .vertex_file   = scenery_vertex,
+            .fragment_file = scenery_frag_base,
+            .shader        = resources.model_pipeline_base,
+        },
+        {
+            .vertex_file   = scenery_vertex,
+            .fragment_file = frag_chicago,
+            .shader        = resources.model_pipeline_chicago,
+        },
+        {
+            .vertex_file   = scenery_vertex,
+            .fragment_file = frag_sotr,
+            .shader        = resources.model_pipeline_sotr,
+        },
+        {
+            .vertex_file   = map_vertex,
+            .fragment_file = "map_uber_nosotr"sv,
+            .shader        = resources.bsp_pipeline_nosotr,
+        },
+        {
+            .vertex_file   = map_vertex,
+            .fragment_file = "map_uber_base"sv,
+            .shader        = resources.bsp_pipeline_base,
+        },
+        {
+            .vertex_file   = map_vertex,
+            .fragment_file = frag_chicago,
+            .shader        = resources.bsp_pipeline_chicago,
+        },
+        {
+            .vertex_file   = map_vertex,
+            .fragment_file = frag_sotr,
+            .shader        = resources.bsp_pipeline_sotr,
         },
     }};
 
