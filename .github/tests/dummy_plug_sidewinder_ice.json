@@ -37,8 +37,10 @@
         {"time": 27000, "type": "camera", "position" :[-19.399021, -5.8402615, -3.207514], "rotation":[0.050669782, 0.016510721, -0.9494455, -0.30937567]},
         {"time": 27500, "type":"screenshot", "name": "sidewinder_hill_edge"},
         {"time": 28000, "type": "camera", "position" :[-21.189144, 7.8219976, -2.089835], "rotation":[-0.50857604, -0.08468451, -0.8452052, -0.14073794]},
-        {"time": 29500, "type":"screenshot", "name": "sidewinder_center_overview"}
+        {"time": 29500, "type":"screenshot", "name": "sidewinder_center_overview"},
+        {"time": 30000, "type": "camera", "position" :[-31.900421, -26.637545, -3.2325423], "rotation":[0.7683395, 0.16347703, 0.6052648, 0.12877966]},
+        {"time": 30500, "type":"screenshot", "name": "sidewinder_warthog_interior"}
     ],
     "frame_delta": 50.0,
-    "end_time": 30000
+    "end_time": 32000
 }
