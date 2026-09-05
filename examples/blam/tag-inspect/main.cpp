@@ -457,6 +457,33 @@ void dump_font_png(blam::font const* font, std::string_view name)
         printf("      failed to write %s\n", path.c_str());
 }
 
+void dump_smet(blam::shader::shader_meter const* info)
+{
+    print_enum("  flags", info->flags);
+    printf("\n");
+    printf("  map=%s\n", name_of(info->map).c_str());
+    auto const& c = info->colors;
+    printf("  gradient_min=(%g,%g,%g) gradient_max=(%g,%g,%g)\n",
+           c.gradient_min.x, c.gradient_min.y, c.gradient_min.z,
+           c.gradient_max.x, c.gradient_max.y, c.gradient_max.z);
+    printf("  background=(%g,%g,%g) flash=(%g,%g,%g) tint=(%g,%g,%g)\n",
+           c.background.x, c.background.y, c.background.z,
+           c.flash.x, c.flash.y, c.flash.z,
+           c.tint.x, c.tint.y, c.tint.z);
+    printf("  transparency=%g background_transparency=%g\n",
+           c.transparency, c.background_transparency);
+    auto const& f = info->ext_func_src;
+    printf("  sources: brightness=%.*s flash=%.*s value=%.*s gradient=%.*s\n",
+           static_cast<int>(enum_name(f.brightness).size()),
+           enum_name(f.brightness).data(),
+           static_cast<int>(enum_name(f.flash).size()),
+           enum_name(f.flash).data(),
+           static_cast<int>(enum_name(f.value).size()),
+           enum_name(f.value).data(),
+           static_cast<int>(enum_name(f.gradient).size()),
+           enum_name(f.gradient).data());
+}
+
 void dump_font(blam::font const* font, std::string_view name)
 {
     printf("  ascend=%u descend=%u leadin=%ux%u\n",
@@ -1116,6 +1143,27 @@ void dump_mode(blam::mod2::header<Ver> const* info)
                 static_cast<int>(region.name.size), region.name.data.data());
         }
     }
+    /* shader_idx on a part indexes this list, so it is what names the shader
+     * a piece of the model actually draws with. */
+    if(auto shaders = info->shaders.data(g_magic); shaders.has_value())
+    {
+        printf("  shaders=%zu\n", shaders.value().size());
+        for(auto [i, shader] : stl_types::enumerate(shaders.value()))
+        {
+            /* tag_class_t holds a fourcc, which magic_enum cannot name. */
+            u32 const  cls = static_cast<u32>(shader.ref.tag_class);
+            char const fourcc[5]  = {
+                static_cast<char>((cls >> 24) & 0xFF),
+                static_cast<char>((cls >> 16) & 0xFF),
+                static_cast<char>((cls >> 8) & 0xFF),
+                static_cast<char>(cls & 0xFF),
+                0};
+            printf("    shader %zu: %s [%s]\n",
+                   i,
+                   name_of(shader.ref).c_str(),
+                   fourcc);
+        }
+    }
     /* Per-part vertex_type: model_at() silently drops any part that is not
      * mod2_uncompressed(4) or mod2_compressed(5), so a part listed here with
      * another type is geometry the renderer never sees. */
@@ -1451,6 +1499,10 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
             else
                 printf("  (pass --dump-bones for the bone tree)\n");
         }
+        break;
+    case blam::tag_class_t::smet:
+        if(auto* info = header_of((blam::shader::shader_meter*)nullptr))
+            dump_smet(info);
         break;
     case blam::tag_class_t::font:
         if(auto* info = header_of((blam::font*)nullptr))
