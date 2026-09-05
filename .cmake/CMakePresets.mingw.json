@@ -40,7 +40,7 @@
                 "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/compilers/mingw/$env{ARCHITECTURE}/$env{TOOLCHAIN_VERSION}",
                 "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
                 "NINJA": "$penv{NINJA}",
-                "TOOLCHAIN_VERSION": "v2.2"
+                "TOOLCHAIN_VERSION": "v2.3"
             }
         },
         {
