@@ -13,7 +13,7 @@ if(BUILD_BLAM AND BUILD_GLEAM)
   add_subdirectory(blam/cblam-pose-demo)
 endif()
 
-if(BUILD_BLAM AND NOT (ANDROID OR EMSCRIPTEN OR IOS))
+if(BUILD_BLAM AND NOT (ANDROID OR EMSCRIPTEN OR IOS OR GAMECUBE OR WII))
   add_subdirectory(blam/dimeter-info)
   add_subdirectory(blam/script-dumper)
   add_subdirectory(blam/tag-inspect)

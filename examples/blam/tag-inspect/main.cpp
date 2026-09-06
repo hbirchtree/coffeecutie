@@ -11,6 +11,7 @@
 #include <blam/volta/blam_mod2.h>
 #include <blam/volta/blam_p8_palette.h>
 #include <blam/volta/blam_scenario.h>
+#include <blam/volta/blam_ui.h>
 #include <blam/volta/blam_swizzle.h>
 #include <blam/volta/blam_shaders.h>
 #include <blam/volta/blam_stl.h>
@@ -455,6 +456,86 @@ void dump_font_png(blam::font const* font, std::string_view name)
             missing ? ", some pixel data missing" : "");
     else
         printf("      failed to write %s\n", path.c_str());
+}
+
+void dump_dela(blam::ui_element const* info)
+{
+    print_enum("  type", info->widget_type);
+    print_enum("controller", info->controller_index);
+    printf("\n");
+    auto name = info->name.str();
+    printf("  name=\"%.*s\"\n",
+           static_cast<int>(name.size()),
+           name.data());
+    print_enum("  flags", info->flags);
+    printf("\n");
+    printf("  bounds=(%d,%d,%d,%d) auto_close=%dms fade=%dms\n",
+           info->bounds[0],
+           info->bounds[1],
+           info->bounds[2],
+           info->bounds[3],
+           info->millis_to_auto_close,
+           info->millis_auto_close_fade_time);
+    printf("  background=%s\n", name_of(info->background).c_str());
+
+    /* data_inputs are what let a widget show something the tag cannot know --
+     * a profile name, a map count -- so a widget that changes at runtime and
+     * has no obvious animation usually has one of these. */
+    if(auto inputs = info->data_inputs.data(g_magic); inputs.has_value())
+    {
+        printf("  data_inputs=%zu\n", inputs.value().size());
+        for(auto [i, in] : stl_types::enumerate(inputs.value()))
+            printf("    input %zu: function=%u\n",
+                   i,
+                   static_cast<unsigned>(in.function));
+    }
+
+    if(auto events = info->event_handlers.data(g_magic); events.has_value())
+    {
+        printf("  event_handlers=%zu\n", events.value().size());
+        for(auto const& ev : events.value())
+        {
+            printf("    ");
+            print_enum("event", ev.event_type);
+            print_enum("flags", ev.flags);
+            auto script = ev.script.str();
+            printf("widget=%s sound=%s script=\"%.*s\"\n",
+                   name_of(ev.widget).c_str(),
+                   name_of(ev.sound).c_str(),
+                   static_cast<int>(script.size()),
+                   script.data());
+        }
+    }
+
+    if(info->widget_type == blam::ui_element::widget_type_t::text_box)
+    {
+        auto const& tb = info->text_box;
+        printf("  text_box: strings=%s font=%s\n",
+               name_of(tb.unicode_strings).c_str(),
+               name_of(tb.font).c_str());
+        printf("    ");
+        print_enum("justification", tb.justification);
+        print_enum("flags", tb.flags);
+        printf("string_index=%d offset=(%d,%d)\n",
+               tb.string_list_index,
+               tb.horizontal_offset,
+               tb.vertical_offset);
+    }
+
+    if(auto children = info->child_widgets.data(g_magic); children.has_value())
+    {
+        printf("  child_widgets=%zu\n", children.value().size());
+        for(auto const& ch : children.value())
+        {
+            auto name = ch.name.str();
+            printf("    \"%.*s\" -> %s offset=(%d,%d)\n",
+                   static_cast<int>(name.size()),
+                   name.data(),
+                   name_of(ch.widget).c_str(),
+                   ch.horizontal_offset,
+                   ch.vertical_offset);
+        }
+    }
 }
 
 void dump_smet(blam::shader::shader_meter const* info)
@@ -1499,6 +1580,10 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
             else
                 printf("  (pass --dump-bones for the bone tree)\n");
         }
+        break;
+    case blam::tag_class_t::DeLa:
+        if(auto* info = header_of((blam::ui_element*)nullptr))
+            dump_dela(info);
         break;
     case blam::tag_class_t::smet:
         if(auto* info = header_of((blam::shader::shader_meter*)nullptr))
