@@ -524,7 +524,7 @@ jobs:
       run: |
         # Same sysroot tarball .github/tests/test_blam_graphics.sh uses --
         mkdir -p sysroot/lib full-sysroot
-        (cd full-sysroot && gh release -R hbirchtree/coffeecutie-automation-tools download v2.2 -p desktop_x86_64-buildroot-linux-gnu_*_target.tar.xz && tar xf *.tar.xz && rm *.tar.xz)
+        (cd full-sysroot && gh release -R hbirchtree/coffeecutie-automation-tools download v2.3 -p desktop_x86_64-buildroot-linux-gnu_*_target.tar.xz && tar xf *.tar.xz && rm *.tar.xz)
         find "$PWD/full-sysroot/usr/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
         find "$PWD/full-sysroot/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
     - name: Locating server binary and assets
@@ -708,7 +708,7 @@ jobs:
         # Same sysroot tarball the other server-running test jobs use --
         # the server binary and its whole Mesa/EGL stack come from it.
         mkdir -p sysroot/lib full-sysroot
-        (cd full-sysroot && gh release -R hbirchtree/coffeecutie-automation-tools download v2.2 -p desktop_x86_64-buildroot-linux-gnu_*_target.tar.xz && tar xf *.tar.xz && rm *.tar.xz)
+        (cd full-sysroot && gh release -R hbirchtree/coffeecutie-automation-tools download v2.3 -p desktop_x86_64-buildroot-linux-gnu_*_target.tar.xz && tar xf *.tar.xz && rm *.tar.xz)
         find "$PWD/full-sysroot/usr/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
         find "$PWD/full-sysroot/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
     - name: Locating server binary and assets

@@ -11,7 +11,7 @@ mkdir -p $TESTDIR
 pushd $TESTDIR
 
 # Acquire the sysroot for the desktop x86_64 platform
-gh release -R hbirchtree/coffeecutie-automation-tools download v2.2 -p desktop_x86_64-buildroot-linux-gnu_*_target.tar.xz
+gh release -R hbirchtree/coffeecutie-automation-tools download v2.3 -p desktop_x86_64-buildroot-linux-gnu_*_target.tar.xz
 mkdir -p sysroot/lib full-sysroot
 cd full-sysroot
 tar xf ../*.tar.xz
