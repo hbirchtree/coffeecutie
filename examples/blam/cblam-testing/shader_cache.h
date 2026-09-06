@@ -55,7 +55,15 @@ struct ShaderCache
 
     ShaderItem predict_impl(blam::tagref_t const& shader);
 
-    using material_context = std::variant<blam::scn::unit const*>;
+    /* What a draw knows about the object it belongs to. `unit` is the tag
+     * side (change colours); the rest is per-object state. */
+    struct material_context
+    {
+        blam::scn::unit const*         unit{nullptr};
+        std::array<libc_types::f32, 4> object_function{
+            {-1.f, -1.f, -1.f, -1.f}};
+        libc_types::f32 meter_value{-1.f};
+    };
 
     void populate_material(
         materials::shader_data&         mat,
@@ -63,7 +71,12 @@ struct ShaderCache
         Vecf2 const&                    base_map_scale,
         std::optional<material_context> context = {});
 
-    f32 meter_value_of(blam::shader::animation_src src) const;
+    f32 meter_value_of(
+        blam::shader::animation_src            src,
+        std::optional<material_context> const& context) const;
+
+    std::array<f32, 4> resolved_functions(
+        std::optional<material_context> const& context) const;
 
     generation_idx_t reflection_bitmap(generation_idx_t const& shader_id)
     {
@@ -165,7 +178,7 @@ struct ShaderCache
         materials::transparent_data& mat,
         generation_idx_t const&      shader_id,
         time_point const&            time,
-        f32                          a_out = -1.f)
+        std::array<f32, 4> const&    functions = {{0.f, 0.f, 0.f, 0.f}})
     {
         using namespace blam::shader;
 
@@ -201,15 +214,19 @@ struct ShaderCache
          * white, keep it. */
         if(is_zero(s0.color0_lower) && is_zero(s0.color0_upper))
             return;
-        f32 f;
-        if(static_cast<u32>(s0.flags) & 0x4u)
-            /* a_out_controls_color0_anim: the object's exported function drives
-             * the constant. For a device that is its power, which the scenario
-             * hands us; scenery has none and rests near the lower bound, where
-             * the generator shield reads violet. */
-            f = a_out >= 0.f ? glm::clamp(a_out, 0.f, 1.f) : 0.15f;
-        else
-            f = transparent_color0_factor(s0, t);
+        auto factor_of = [&](shader_transparent::stage_t const& s) {
+            auto src = s.color0_source;
+            if(src == animation_src::none &&
+               (static_cast<u32>(s.flags) & 0x4u))
+                src = animation_src::A_out;
+            if(src == animation_src::none)
+                return transparent_color0_factor(s, t);
+            auto const i = static_cast<size_t>(src) - 1u;
+            return glm::clamp(
+                i < functions.size() ? functions[i] : 0.f, 0.f, 1.f);
+        };
+
+        f32 f = factor_of(s0);
         Vecf4 c = glm::mix(s0.color0_lower, s0.color0_upper, f);
         /* tag colors are ARGB → RGBA; RGB is global (stage 0), alpha is each
          * stage's own animated weight. */
@@ -224,8 +241,10 @@ struct ShaderCache
         u32 n = std::min(mat.num_stages, 7u);
         for(u32 i = 0; i < n && i < stages.size(); i++)
         {
-            Vecf4 own =
-                glm::mix(stages[i].color0_lower, stages[i].color0_upper, f);
+            Vecf4 own = glm::mix(
+                stages[i].color0_lower,
+                stages[i].color0_upper,
+                factor_of(stages[i]));
             mat.stages[i].color0 = Vecf4(global_rgb, own.x);
         }
     }
@@ -278,7 +297,10 @@ struct ShaderCache
         blam::shader::texture_property_anim,
         blam::shader::simple_tex_property_anim>
     //
-    f32 tex_animation(PropertyAnim const& anim, f32 const& time)
+    f32 tex_animation(
+        PropertyAnim const&       anim,
+        f32 const&                time,
+        std::array<f32, 4> const& functions = {{0.f, 0.f, 0.f, 0.f}})
     {
         using namespace blam::shader;
         switch(anim.function)
@@ -292,16 +314,27 @@ struct ShaderCache
         default:
             break;
         }
-        if(anim.period == 0.f)
-            return 0.f;
+
+        f32 phase01;
+        if(anim.source != animation_src::none)
+        {
+            auto const i = static_cast<size_t>(anim.source) - 1u;
+            phase01      = i < functions.size() ? functions[i] : 0.f;
+        } else
+        {
+            if(anim.period == 0.f)
+                return 0.f;
+            phase01 = glm::fract(time / anim.period);
+        }
+
         switch(anim.function)
         {
         case animation_function::slide:
         case animation_function::slide_variable:
-            return glm::fract(time / anim.period) * anim.scale;
+            return phase01 * anim.scale;
         case animation_function::cosine:
         case animation_function::cosine_variable: {
-            f32 phase = glm::fract(time / anim.period) * glm::two_pi<f32>();
+            f32 phase = phase01 * glm::two_pi<f32>();
             if constexpr(requires { anim.phase; })
                 return glm::cos(phase + anim.phase) * anim.scale;
             else
@@ -320,22 +353,28 @@ struct ShaderCache
         blam::shader::texture_uv_rotation_animation,
         blam::shader::simple_texture_uv_animation>
     //
-    Vecf2 uv_animation(Anim const& anim, f32 const& time)
+    Vecf2 uv_animation(
+        Anim const&               anim,
+        f32 const&                time,
+        std::array<f32, 4> const& functions = {{0.f, 0.f, 0.f, 0.f}})
     {
-        return Vecf2{tex_animation(anim.u, time), tex_animation(anim.v, time)};
+        return Vecf2{
+            tex_animation(anim.u, time, functions),
+            tex_animation(anim.v, time, functions)};
     }
 
     void populate_chicago_uv_anims(
         materials::shader_data&                         mat,
         Span<blam::shader::chicago::map_t const> const& maps,
-        f32                                             t)
+        f32                                             t,
+        std::array<f32, 4> const&                       functions)
     {
         using namespace blam::shader;
 
         u32 i = 0;
         for(chicago::map_t const& map : maps)
         {
-            auto        uv = uv_animation(map.anim_2d, t);
+            auto        uv = uv_animation(map.anim_2d, t, functions);
             auto const& i2 = mat.material.inputs[0];
             switch(i)
             {
@@ -357,9 +396,10 @@ struct ShaderCache
     }
 
     void update_uv_animations(
-        materials::shader_data& mat,
-        generation_idx_t const& shader_id,
-        time_point const&       time)
+        materials::shader_data&   mat,
+        generation_idx_t const&   shader_id,
+        time_point const&         time,
+        std::array<f32, 4> const& functions = {{0.f, 0.f, 0.f, 0.f}})
     {
         using namespace blam::shader;
 
@@ -379,7 +419,7 @@ struct ShaderCache
                 shader.header->as<blam::shader::shader_chicago_extended<
                     blam::pc_version_t>>();
             auto maps = info->maps_4stage.data(magic).value();
-            populate_chicago_uv_anims(mat, maps, t);
+            populate_chicago_uv_anims(mat, maps, t, functions);
             break;
         }
         case blam::tag_class_t::sotr: {
@@ -394,7 +434,7 @@ struct ShaderCache
             Vecf4 uv01(0), uv23(0);
             for(u32 i = 0; i < maps.size() && i < 4u; i++)
             {
-                Vecf2  uv  = uv_animation(maps[i].animation, t);
+                Vecf2  uv  = uv_animation(maps[i].animation, t, functions);
                 Vecf4& dst = i < 2 ? uv01 : uv23;
                 if(i % 2 == 0)
                 {
@@ -414,14 +454,17 @@ struct ShaderCache
             shader_chicago<blam::pc_version_t> const* info =
                 shader.header->as<shader_chicago<blam::pc_version_t>>();
             auto maps = info->maps.data(magic).value();
-            populate_chicago_uv_anims(mat, maps, t);
+            populate_chicago_uv_anims(mat, maps, t, functions);
             break;
         }
         case blam::tag_class_t::senv: {
             shader_env const* info = shader.header->as<shader_env>();
             using simple_uv        = blam::shader::simple_texture_uv_animation;
             auto uv =
-                uv_animation(static_cast<simple_uv const&>(info->scrolling), t);
+                uv_animation(
+                    static_cast<simple_uv const&>(info->scrolling),
+                    t,
+                    functions);
             auto& inp2 = mat.material.inputs[2];
             inp2       = Vecf4(uv.x, uv.y, inp2.z, inp2.w);
 

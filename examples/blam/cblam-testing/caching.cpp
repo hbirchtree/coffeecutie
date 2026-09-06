@@ -946,25 +946,48 @@ ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)
 template ShaderItem ShaderCache<halo_version>::predict_impl(
     const blam::tagref_t& shader);
 
+/* A meter's fill comes from one of the object's exported functions. Nothing
+ * here runs object logic, so the debug values stand in; a meter naming no
+ * source (all of the stock ones) gets meter_value. */
 template<typename V>
-f32 ShaderCache<V>::meter_value_of(blam::shader::animation_src src) const
+std::array<f32, 4> ShaderCache<V>::resolved_functions(
+    std::optional<material_context> const& context) const
+{
+    auto const*        params = bitm_cache.params;
+    std::array<f32, 4> out{{0.f, 0.f, 0.f, 0.f}};
+    for(auto i : range<size_t>(4))
+    {
+        if(context.has_value() && context->object_function[i] >= 0.f)
+            out[i] = context->object_function[i];
+        else if(params)
+            out[i] = params->object_function[i];
+    }
+    return out;
+}
+
+template<typename V>
+f32 ShaderCache<V>::meter_value_of(
+    blam::shader::animation_src            src,
+    std::optional<material_context> const& context) const
 {
     using blam::shader::animation_src;
-    auto const* params = bitm_cache.params;
-    if(!params)
-        return 1.f;
+
+    auto const* params    = bitm_cache.params;
+    auto const  functions = resolved_functions(context);
     switch(src)
     {
     case animation_src::A_out:
-        return params->object_function[0];
+        return functions[0];
     case animation_src::B_out:
-        return params->object_function[1];
+        return functions[1];
     case animation_src::C_out:
-        return params->object_function[2];
+        return functions[2];
     case animation_src::D_out:
-        return params->object_function[3];
+        return functions[3];
     default:
-        return params->meter_value;
+        if(context.has_value() && context->meter_value >= 0.f)
+            return context->meter_value;
+        return params ? params->meter_value : 0.f;
     }
 }
 
@@ -1236,7 +1259,7 @@ void ShaderCache<V>::populate_material(
         mat.maps[0].bias       = 0;
         mat.material.flags     = static_cast<u32>(info->flags);
         mat.material.inputs1 =
-            Vecf2{meter_value_of(info->ext_func_src.value),
+            Vecf2{meter_value_of(info->ext_func_src.value, context),
                   info->colors.transparency};
         mat.material.inputs[0] = Vecf4(
             info->colors.gradient_min, info->colors.background_transparency);
@@ -1365,13 +1388,13 @@ void ShaderCache<V>::populate_material(
 
         mat.material.inputs[0] = Vecf4(Vecf3(1.f), 0.f);
         using change_color_t   = blam::shader::shader_model::change_color_t;
-        if(context.has_value())
+        if(context.has_value() && context->unit)
         {
             do
             {
                 if(info->change_color_src == change_color_t::none)
                     break;
-                auto unit   = std::get<blam::scn::unit const*>(*context);
+                auto unit   = context->unit;
                 auto colors = unit->change_colors.data(magic).value();
                 if(colors.empty())
                     break;
@@ -1402,6 +1425,9 @@ void ShaderCache<V>::populate_material(
     }
     }
 }
+
+template std::array<f32, 4> ShaderCache<halo_version>::resolved_functions(
+    std::optional<material_context> const& context) const;
 
 template void ShaderCache<halo_version>::populate_material(
     materials::shader_data&            mat,

@@ -955,7 +955,7 @@ struct DrawListBuilder
                 smodel,
                 sm_draw.current_pass,
                 cache_item,
-                model_context(model.origin_object),
+                model_context(model),
                 instance_id,
                 p.template ref<Proxy>(smodel.parent)
                     .template get<Visibility>()
@@ -997,17 +997,27 @@ struct DrawListBuilder
             update_animations(
                 model_material_of(sm_draw.current_pass, instance_id),
                 smodel.shader,
-                time);
+                time,
+                shader_cache.resolved_functions(
+                    model_context(*p.template get<Model>(smodel.parent))));
             if(static_cast<size_t>(instance_id) <
                pass.transparent_mapping.size())
             {
+                auto const* model = p.template get<Model>(smodel.parent);
+                auto        functions =
+                    shader_cache.resolved_functions(model_context(*model));
+                /* A device's power is its A_out, and the scenario supplies a
+                 * real one -- but an A_out set on the object itself is a
+                 * deliberate override, so it wins. */
                 auto const* obj = p.template get<ObjectSpawn>(smodel.parent);
-                f32         power = obj ? obj->power : -1.f;
+                if(obj && obj->power >= 0.f &&
+                   model->object_function[0] < 0.f)
+                    functions[0] = obj->power;
                 shader_cache.update_transparent_animations(
                     pass.transparent_of(instance_id),
                     smodel.shader,
                     time,
-                    power);
+                    functions);
             }
         }
 
@@ -1029,7 +1039,10 @@ struct DrawListBuilder
             if(instance_offset >= 0 && static_cast<size_t>(instance_offset) <
                                            pass.transparent_mapping.size())
                 shader_cache.update_transparent_animations(
-                    pass.transparent_of(instance_offset), bsp.shader, time);
+                    pass.transparent_of(instance_offset),
+                    bsp.shader,
+                    time,
+                    shader_cache.resolved_functions({}));
         }
     }
 
@@ -1056,23 +1069,30 @@ struct DrawListBuilder
                 pass.transparent_of(i), ref.shader);
     }
 
+    /* Always built: the object's own function values travel with it even
+     * when change colours are off or its tag is not a unit. */
     std::optional<ShaderCache<halo_version>::material_context> model_context(
-        blam::tag_t const* tag)
+        Model const& model)
     {
-        if(!m_render_params.color_changing)
-            return std::nullopt;
-        if(!tag)
-            return std::nullopt;
-        switch(tag->tag_class())
-        {
-        case blam::tag_class_t::bipd:
-        case blam::tag_class_t::vehi:
-        case blam::tag_class_t::scen:
-            return tag->template data<blam::scn::unit>(shader_cache.magic)
-                .value();
-        default:
-            return std::nullopt;
-        }
+        ShaderCache<halo_version>::material_context ctxt;
+        ctxt.object_function = model.object_function;
+        ctxt.meter_value     = model.meter_value;
+
+        blam::tag_t const* tag = model.origin_object;
+        if(m_render_params.color_changing && tag)
+            switch(tag->tag_class())
+            {
+            case blam::tag_class_t::bipd:
+            case blam::tag_class_t::vehi:
+            case blam::tag_class_t::scen:
+                ctxt.unit =
+                    tag->template data<blam::scn::unit>(shader_cache.magic)
+                        .value();
+                break;
+            default:
+                break;
+            }
+        return ctxt;
     }
 
     void record_reflection_cube(
@@ -1108,11 +1128,12 @@ struct DrawListBuilder
     }
 
     void update_animations(
-        materials::shader_data& material,
-        generation_idx_t const& shader,
-        time_point const&       time)
+        materials::shader_data&   material,
+        generation_idx_t const&   shader,
+        time_point const&         time,
+        std::array<f32, 4> const& functions = {{0.f, 0.f, 0.f, 0.f}})
     {
-        shader_cache.update_uv_animations(material, shader, time);
+        shader_cache.update_uv_animations(material, shader, time, functions);
     }
 };
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "coffee/comp_app/services.h"
+#include "bitmap_cache.h"
 #include "components.h"
 #include "data.h"
 #include "networking.h"
@@ -29,6 +30,7 @@ using Coffee::cDebug;
 using BlamMapBrowserManifest = compo::SubsystemManifest<
     type_list_t<PlayerInfo, NetworkInfo, PlayerCamera>,
     type_list_t<
+        BitmapCache<halo_version>,
         GameEventBus,
         NetworkState,
         PlayerRoster
@@ -51,9 +53,12 @@ struct BlamMapBrowser
         priority       = 2048;
         remote_address = "0.0.0.0:16420";
         remote_address.resize(64);
+        entity_filter.resize(64);
     }
 
     bool main_thread_only() const override { return true; }
+
+    std::string entity_filter;
 
     void start_restricted(Proxy& e, time_point const&)
     {
@@ -366,18 +371,43 @@ struct BlamMapBrowser
                 if(ImGui::BeginTabItem("Entities"))
                 {
                     auto& ec = e.unconstrained_container();
+                    auto& bitmaps =
+                        e.template subsystem<BitmapCache<halo_version>>();
+
+                    auto name_of_entity = [&](u64 id) -> std::string {
+                        auto* model = ec.template get<Model>(id);
+                        if(!model || !model->tag)
+                            return {};
+                        return std::string(
+                            model->tag->to_name().to_string(bitmaps.magic));
+                    };
+
+                    ImGui::InputText(
+                        "Search tag",
+                        entity_filter.data(),
+                        entity_filter.size());
+                    std::string_view filter(entity_filter.c_str());
+
                     if(ImGui::BeginListBox("##entities"))
                     {
                         u32 entity_idx = 0;
                         for(auto entity : e.select(0))
                         {
-                            char label[64];
+                            auto name = name_of_entity(entity.id());
+                            if(!filter.empty() &&
+                               name.find(filter) == std::string::npos)
+                            {
+                                entity_idx++;
+                                continue;
+                            }
+                            char label[160];
                             snprintf(
                                 label,
                                 sizeof(label),
-                                "E %llu [0x%llX]##%u",
+                                "E %llu [0x%llX] %s##%u",
                                 static_cast<unsigned long long>(entity.id()),
                                 static_cast<unsigned long long>(entity.tags()),
+                                name.c_str(),
                                 entity_idx);
                             if(ImGui::Selectable(
                                    label, m_selected_entity == entity.id()))
@@ -435,6 +465,34 @@ struct BlamMapBrowser
                             "TriggerVolume",
                             ec.get<TriggerVolume>(m_selected_entity));
                         check("Light", ec.get<Light>(m_selected_entity));
+                        if(auto* model = ec.get<Model>(m_selected_entity))
+                        {
+                            ImGui::Separator();
+                            ImGui::Text("Object functions");
+                            for(auto i : stl_types::range<size_t>(4))
+                            {
+                                char label[16];
+                                snprintf(
+                                    label,
+                                    sizeof(label),
+                                    "%c_out",
+                                    'A' + static_cast<int>(i));
+                                ImGui::SliderFloat(
+                                    label,
+                                    &model->object_function[i],
+                                    -1.f,
+                                    1.f,
+                                    model->object_function[i] < 0.f
+                                        ? "unset"
+                                        : "%.2f");
+                            }
+                            ImGui::SliderFloat(
+                                "Meter value",
+                                &model->meter_value,
+                                -1.f,
+                                1.f,
+                                model->meter_value < 0.f ? "unset" : "%.2f");
+                        }
                         check(
                             "DepthInfo", ec.get<DepthInfo>(m_selected_entity));
 

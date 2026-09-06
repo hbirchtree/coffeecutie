@@ -213,6 +213,9 @@ struct Model
     blam::tag_t const* tag{nullptr};
     blam::tag_t const* origin_object{nullptr};
 
+    std::array<libc_types::f32, 4> object_function{{-1.f, -1.f, -1.f, -1.f}};
+    libc_types::f32                meter_value{-1.f};
+
     template<typename T>
     void initialize(T const* spawn)
     {
