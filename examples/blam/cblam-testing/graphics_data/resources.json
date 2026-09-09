@@ -110,5 +110,40 @@
         "shaders",
         "sounds",
         "textures"
-    ]
+    ],
+    "crunch": {
+        "output": "crunched/loading_screen.h",
+        "namespace": "blam::loading",
+        "textures": [
+            {
+                "source": "textures/threshold_noise.png",
+                "name": "threshold_noise",
+                "format": "r8",
+                "channel": "r"
+            },
+            {
+                "source": "textures/machinery.png",
+                "name": "machinery",
+                "format": "rgb565"
+            }
+        ],
+        "meshes": [
+            {
+                "source": "mesh/loading.obj",
+                "name": "loading"
+            }
+        ],
+        "text": [
+            {"source":"shaders/screen_clear.vert", "name": "screen_clear_vert"},
+            {"source":"shaders/screen_clear.frag", "name": "screen_clear_frag"},
+            {"source":"shaders/blur_down.frag", "name": "blur_down_frag"},
+            {"source":"shaders/blur_up.frag", "name": "blur_up_frag"},
+            {"source":"shaders/loading_screen.vert", "name": "loading_screen_vert"},
+            {"source":"shaders/loading_screen_background.frag", "name": "loading_screen_background"},
+            {"source":"shaders/loading_screen_spinner.frag", "name": "loading_screen_spinner"},
+            {"source":"shaders/loading_scene.vert", "name": "loading_scene_vert"},
+            {"source":"shaders/loading_scene.frag", "name": "loading_scene_frag"},
+            {"source":"shaders/loading_zoom.frag", "name": "loading_zoom_frag"}
+        ]
+    }
 }
