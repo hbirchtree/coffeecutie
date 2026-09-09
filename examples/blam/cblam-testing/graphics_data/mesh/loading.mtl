@@ -1,0 +1,32 @@
+# Blender 5.2.0 LTS MTL File: 'loading.blend'
+# www.blender.org
+
+newmtl Material.001
+Ns 462.077057
+Ka 0.919420 0.919420 0.919420
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 74.999992
+d 1.000000
+illum 3
+map_Kd /home/havard/Code/coffeecutie/examples/blam/cblam-testing/graphics_data/textures/machinery.png
+
+newmtl Material.002
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd /home/havard/Code/coffeecutie/examples/blam/cblam-testing/graphics_data/textures/threshold_noise.png
+map_Ns /home/havard/Code/coffeecutie/examples/blam/cblam-testing/graphics_data/textures/threshold_noise.png
+
+newmtl Material.003
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800007 0.463216 0.038431
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
