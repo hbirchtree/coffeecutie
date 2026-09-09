@@ -421,12 +421,46 @@ inline bool apply_command_modifier_per_call(
 
 inline void undo_command_modifier(
     program_t const& /*program*/,
-    shader_bookkeeping_t& /*bookkeeping*/,
-    sampler_list&& /*samplers*/)
+    shader_bookkeeping_t& bookkeeping,
+    sampler_list&&        samplers)
 {
-    //    for(auto const& sampler : samplers)
-    //    {
-    //    }
+    if(samplers.empty())
+        return;
+    auto first_source = std::get<2>(samplers.at(0))->m_source.lock();
+    if(!first_source)
+        return;
+    auto const& features = first_source->m_features;
+
+    u32 auto_units = 0;
+    for(auto const& sampler : samplers)
+    {
+        auto const& locinfo = std::get<1>(sampler);
+        if(!(features.sampler_binding && locinfo.location != -1))
+            auto_units++;
+    }
+    u32 next_auto = bookkeeping.sampler_idx - auto_units;
+
+    for(auto const& sampler : samplers)
+    {
+        auto const& locinfo     = std::get<1>(sampler);
+        auto const& sampler_hnd = std::get<2>(sampler);
+        u32         index       = (features.sampler_binding &&
+                       locinfo.location != -1)
+                                      ? static_cast<u32>(locinfo.location)
+                                      : next_auto++;
+
+        auto source = sampler_hnd->m_source.lock();
+        if(!source)
+            continue;
+
+        cmd::active_texture(group::texture_unit::texture0 + index);
+        cmd::bind_texture(convert::to(source->m_type), 0);
+#if GLEAM_MAX_VERSION_ES != 0x200
+        if(features.samplers)
+            cmd::bind_sampler(index, 0);
+#endif
+    }
+    cmd::active_texture(group::texture_unit::texture0);
 }
 
 inline bool apply_command_modifier(
@@ -495,9 +529,19 @@ inline bool apply_command_modifier_per_call(
 
 inline void undo_command_modifier(
     program_t&,
-    shader_bookkeeping_t&,
-    texture_list&&)
+    shader_bookkeeping_t& bookkeeping,
+    texture_list&&        textures)
 {
+    u32 index = bookkeeping.sampler_idx - static_cast<u32>(textures.size());
+    for(auto const& texture : textures)
+    {
+        auto const& texture_hnd = std::get<2>(texture);
+        cmd::active_texture(group::texture_unit::texture0 + index);
+        cmd::bind_texture(convert::to(texture_hnd.type), 0);
+        index++;
+    }
+    if(!textures.empty())
+        cmd::active_texture(group::texture_unit::texture0);
 }
 
 inline bool apply_command_modifier(
@@ -537,8 +581,20 @@ inline bool apply_command_modifier_per_call(
 }
 
 inline void undo_command_modifier(
-    program_t const&, shader_bookkeeping_t&, instance_texture_list&&)
+    program_t const&, shader_bookkeeping_t&, instance_texture_list&& textures)
 {
+    /* ES 2.0 path: units come straight from the uniform locations */
+    for(auto const& def : textures)
+    {
+        auto texture = def.textures.empty() ? nullptr : def.textures.front();
+        if(!texture)
+            continue;
+        cmd::active_texture(
+            group::texture_unit::texture0 + def.uniform.location);
+        cmd::bind_texture(convert::to(texture->m_type), 0);
+    }
+    if(!textures.empty())
+        cmd::active_texture(group::texture_unit::texture0);
 }
 
 inline bool apply_command_modifier(
@@ -631,7 +687,7 @@ inline bool apply_command_modifier_per_call(
 }
 
 inline void undo_command_modifier(
-    program_t const& /*program*/,
+    program_t const&      program,
     shader_bookkeeping_t& bookkeeping,
     view_state&&          view_info)
 {
@@ -641,7 +697,15 @@ inline void undo_command_modifier(
     {
         cmd::disable(group::enable_cap::depth_test);
         if(view_info.depth->reversed)
+        {
             cmd::depth_func(group::depth_function::less);
+#if GLEAM_MAX_VERSION >= 0x450
+            if(program.m_features.dsa)
+                cmd::clip_control(
+                    group::clip_control_origin::lower_left,
+                    group::clip_control_depth::negative_one_to_one);
+#endif
+        }
     }
     if(view_info.view.has_value())
         cmd::viewport(
@@ -895,8 +959,25 @@ inline bool apply_command_modifier_per_call(
 inline void undo_command_modifier(
     program_t const& /*program*/,
     shader_bookkeeping_t& /*bookkeeping*/,
-    base_instance_sampler_list&& /*list*/)
+    base_instance_sampler_list&& list)
 {
+    /* first_unit and the slot count give the exact run of units this bound */
+    u32 index = list.first_unit;
+    for(auto const& slot : list.slots)
+    {
+        if(auto* tex = slot.resolve(0); tex)
+        {
+            cmd::active_texture(group::texture_unit::texture0 + index);
+            cmd::bind_texture(convert::to(tex->m_type), 0);
+#if GLEAM_MAX_VERSION_ES != 0x200
+            if(tex->m_features.samplers && slot.sampler)
+                cmd::bind_sampler(index, 0);
+#endif
+        }
+        index++;
+    }
+    if(!list.slots.empty())
+        cmd::active_texture(group::texture_unit::texture0);
 }
 
 } // namespace gleam::detail

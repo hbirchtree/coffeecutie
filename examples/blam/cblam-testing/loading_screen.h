@@ -596,4 +596,5 @@ void LoadingScreen::render_ring_texture(gfx::system& api)
     simplex_noise_tex->dealloc();
     simplex_noise_sampler->dealloc();
     loading_textures.clear();
+    loading_draws.clear();
 }

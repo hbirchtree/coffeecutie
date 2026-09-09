@@ -153,6 +153,9 @@ struct rendertarget_t
         auto& buf = m_renderbufs[attachment];
         buf.fmt = fmt;
         cmd::gen_renderbuffers(semantic::SpanOne(buf.handle.hnd));
+        cmd::bind_renderbuffer(
+            group::renderbuffer_target::renderbuffer, buf.handle);
+        cmd::bind_renderbuffer(group::renderbuffer_target::renderbuffer, 0);
         if(!m_features.dsa)
             internal_bind(target);
         auto fb_attachment = [&] {
