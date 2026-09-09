@@ -22,6 +22,7 @@ function(RESOURCE_DIR_PACKAGE)
     SOURCE_DIR
     OUT_DIR
     CACHE_DIR
+    INCLUDE_DIR
   )
 
   set(MULTI_OPTS
@@ -38,6 +39,9 @@ function(RESOURCE_DIR_PACKAGE)
   endif()
   if("${RPKG_CACHE_DIR}" STREQUAL "")
     set(RPKG_CACHE_DIR "${CMAKE_CURRENT_BINARY_DIR}/asset_cache")
+  endif()
+  if("${RPKG_INCLUDE_DIR}" STREQUAL "")
+    set(RPKG_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
   endif()
   if("${RPKG_SOURCE_DIR}" STREQUAL "")
     message(
@@ -65,6 +69,8 @@ function(RESOURCE_DIR_PACKAGE)
     --output ${RPKG_OUT_DIR}
     #
     --cache ${RPKG_CACHE_DIR}
+    #
+    --include-output ${RPKG_INCLUDE_DIR}
     #
     --program ShaderCooker=${SHADER_COOKER_PROGRAM}
     #
@@ -94,6 +100,25 @@ function(RESOURCE_DIR_PACKAGE)
     COMMAND
       ${CMAKE_SOURCE_DIR}/toolchain/desktop/resource_compile.py ${ARG_LIST}
   )
+
+  # "crunch" entries emit headers that get #included, so they have to exist
+  # before anything compiles. Run just that step at configure time -- the whole
+  # resource compile would drag the shader cook in with it -- and let the target
+  # keep the headers in step on later builds.
+  file(GLOB_RECURSE RPKG_DEFS "${RPKG_SOURCE_DIR}/resources.json")
+  foreach(RPKG_DEF ${RPKG_DEFS})
+    file(READ "${RPKG_DEF}" RPKG_DEF_TEXT)
+    string(FIND "${RPKG_DEF_TEXT}" "\"crunch\"" RPKG_HAS_CRUNCH)
+    if(NOT RPKG_HAS_CRUNCH EQUAL -1)
+      get_filename_component(RPKG_DEF_DIR "${RPKG_DEF}" DIRECTORY)
+      execute_process(COMMAND
+        ${CMAKE_SOURCE_DIR}/toolchain/desktop/asset_crunch.py
+          --root ${RPKG_DEF_DIR}
+          --output ${RPKG_INCLUDE_DIR}
+        COMMAND_ERROR_IS_FATAL ANY
+      )
+    endif()
+  endforeach()
 
   if(WIN32 OR APPLE)
     # When we're using GLOB_RECURSE, we need the files to exist

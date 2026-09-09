@@ -10,6 +10,8 @@ from os.path import dirname, getmtime, exists
 from shutil import copyfile, which
 from hashlib import sha256
 
+from asset_crunch import crunch_assets
+
 
 PROGRAMS = {}
 
@@ -537,7 +539,8 @@ def _process_gx_texture(
     submit(_task)
 
 
-def process_resources(definition: dict, extra_dependencies: list, **kwargs):
+def process_resources(definition: dict, extra_dependencies: list,
+                      include_directory: str = None, **kwargs):
     for key in definition:
         if key == 'shaders':
             compile_shaders(definition[key],
@@ -551,12 +554,21 @@ def process_resources(definition: dict, extra_dependencies: list, **kwargs):
             copy_files(definition[key],
                        extra_dependencies=extra_dependencies,
                        **kwargs)
+        if key == 'crunch':
+            # Generated headers are compile inputs, so this one runs inline
+            # rather than on the pool -- nothing may start compiling until the
+            # header is on disk.
+            crunch_assets(definition[key],
+                          include_directory=include_directory,
+                          **kwargs)
 
 
 if __name__ == '__main__':
     parser = ArgumentParser(__file__)
     parser.add_argument('-p', '--path', dest='paths', action='append')
     parser.add_argument('-o', '--output', dest='output')
+    parser.add_argument('-I', '--include-output', dest='include_dir',
+                        help='Where "crunch" entries write generated headers')
     parser.add_argument('--cache', dest='cache_dir', required=True)
     parser.add_argument('-P', '--program', dest='programs', action='append')
     parser.add_argument('-t', '--target', dest='target', required=True)
@@ -595,6 +607,7 @@ if __name__ == '__main__':
                 arch=args.arch,
                 api=args.api,
                 build_mode=args.build_mode,
+                include_directory=args.include_dir,
                 extra_dependencies=[resource_def])
 
     # Wait for all dispatched compiler processes and report any failures.
