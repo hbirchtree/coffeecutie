@@ -3,6 +3,12 @@
 #include "bitmap_cache.h"
 #include "blam_files.h"
 #include "caching.h"
+#include "coffee/graphics/apis/gleam/rhi_buffer.h"
+#include "coffee/graphics/apis/gleam/rhi_draw_command.h"
+#include "coffee/graphics/apis/gleam/rhi_program.h"
+#include "coffee/graphics/apis/gleam/rhi_rendertarget.h"
+#include "coffee/graphics/apis/gleam/rhi_texture.h"
+#include "coffee/graphics/apis/gleam/rhi_vertex.h"
 #include "components.h"
 #include "data.h"
 
@@ -132,12 +138,36 @@ struct LoadingScreen
 
     void load_resources(gfx::system& api);
 
+    void render_ring_texture(gfx::system& api);
+
     std::shared_ptr<gfx::buffer_t>       quad_vbo;
     std::shared_ptr<gfx::vertex_array_t> quad_vao;
     std::shared_ptr<gfx::program_t>      loading_program;
     std::shared_ptr<gfx::program_t>      loading_bg_program;
     std::shared_ptr<gfx::texture_2d_t>   loading_tex;
     std::shared_ptr<gfx::sampler_t>      loading_sampler;
+
+    std::shared_ptr<gfx::buffer_t>       loading_ebo;
+    std::shared_ptr<gfx::buffer_t>       loading_vbo;
+    std::shared_ptr<gfx::vertex_array_t> loading_vao;
+    std::shared_ptr<gfx::program_t>      ring_program;
+    std::shared_ptr<gfx::texture_2d_t>   machine_tex;
+    std::shared_ptr<gfx::texture_2d_t>   simplex_noise_tex;
+    std::shared_ptr<gfx::sampler_t>      simplex_noise_sampler;
+    enum model_name_t
+    {
+        model_ring_exterior,
+        model_ring_interior,
+        model_threshold,
+    };
+    std::map<model_name_t, gfx::draw_command::data_t> loading_draws;
+    std::vector<std::shared_ptr<gfx::texture_t>>      loading_textures;
+
+    std::shared_ptr<gfx::texture_2d_t>   ring_color;
+    std::shared_ptr<gfx::sampler_t>      ring_color_sampler;
+    std::shared_ptr<gfx::rendertarget_t> ring_rt;
+    std::shared_ptr<gfx::program_t>      zoom_program;
+    bool m_ring_rendered{false};
 
     std::optional<compo::time_point> loading_screen_gone_time;
     bool                             was_loading{false};

@@ -497,6 +497,8 @@ void create_resources(compo::EntityContainer& e)
     gfx::api&      api       = e.subsystem_cast<gfx::system>();
     BlamResources& resources = e.register_subsystem_inplace<BlamResources>();
 
+    auto __ = api.debug().scope();
+
     resources.background_worker =
         rq::runtime_queue::CreateNewThreadQueue("Background Worker").value();
 

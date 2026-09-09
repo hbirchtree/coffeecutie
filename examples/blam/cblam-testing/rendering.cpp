@@ -10,6 +10,7 @@
 #include "materials.h"
 #include "peripherals/semantic/chunk.h"
 #include "selected_version.h"
+#include "crunched/loading_screen.h"
 
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_shaders.h>
@@ -2753,162 +2754,26 @@ void ScreenClear::load_resources(gleam::system& api, BlamResources& resources)
         }
     }
 
-    constexpr std::string_view vertex_shader   = R"(#version 100
-precision highp float;
-attribute vec2 pos;
-attribute vec2 tex;
-varying vec2 in_tex;
-uniform mat4 transform;
-void main()
-{
-    in_tex = tex;
-    gl_Position = transform * vec4(pos.x, pos.y, 0.0, 1.0);
-}
-)";
-    constexpr std::string_view fragment_shader = R"(#version 100
-precision highp float;
-precision highp sampler2D;
-varying vec2 in_tex;
-uniform sampler2D source;
-uniform float gamma;
-uniform float exposure;
-uniform vec2 offset;
-uniform vec2 scale;
-uniform int mode;
-
-uniform vec4 rgb_comp_defocus;
-uniform vec2 blur_distance;
-
-// Creates RGB channel desync
-vec4 rgb_defocus()
-{
-    vec4 color = texture2D(source, offset + in_tex * scale).rrra;
-    color.g = texture2D(source, offset + (in_tex + rgb_comp_defocus.xy) * scale).g;
-    color.b = texture2D(source, offset + (in_tex + rgb_comp_defocus.zw) * scale).b;
-    return color;
-}
-
-vec4 box_blur_sample()
-{
-    vec4 color = vec4(0);
-    color += texture2D(source, offset + in_tex * scale + vec2(-blur_distance.x, blur_distance.y)) * 0.08;
-    color += texture2D(source, offset + in_tex * scale + vec2(-blur_distance.x, 0.0            )) * 0.08;
-    color += texture2D(source, offset + in_tex * scale + vec2(-blur_distance.x,-blur_distance.y)) * 0.08;
-    color += texture2D(source, offset + in_tex * scale + vec2(             0.0, blur_distance.y)) * 0.08;
-    color += texture2D(source, offset + in_tex * scale + vec2(             0.0, 0.0            )) * 0.36;
-    color += texture2D(source, offset + in_tex * scale + vec2(             0.0,-blur_distance.y)) * 0.08;
-    color += texture2D(source, offset + in_tex * scale + vec2( blur_distance.x, blur_distance.y)) * 0.08;
-    color += texture2D(source, offset + in_tex * scale + vec2( blur_distance.x, 0.0            )) * 0.08;
-    color += texture2D(source, offset + in_tex * scale + vec2( blur_distance.x,-blur_distance.y)) * 0.08;
-    return color;
-}
-
-vec4 gaussian_blur_sample()
-{
-    const float sigma       = 1.0; // in taps
-    const float inv_2_sigma = 1.0 / (2.0 * sigma * sigma);
-
-    vec2  base  = offset + in_tex * scale;
-    vec4  color = vec4(0.0);
-    float total = 0.0;
-
-    for(int y = -3; y <= 3; y++)
-    {
-        float fy = float(y);
-        float wy = exp(-fy * fy * inv_2_sigma);
-        for(int x = -3; x <= 3; x++)
-        {
-            float fx = float(x);
-            float w  = wy * exp(-fx * fx * inv_2_sigma);
-            color += texture2D(source, base + blur_distance * vec2(fx, fy)) * w;
-            total += w;
-        }
-    }
-
-    return color / total;
-}
-
-vec4 plain_sample()
-{
-    return texture2D(source, offset + in_tex * scale).rgba;
-}
-
-void main()
-{
-    vec4 color =
-        mode == 2
-        ? rgb_defocus()
-        : mode == 1
-          ? gaussian_blur_sample()
-          : plain_sample();
-    color.rgb = color.rgb / (color.rgb + vec3(1.0));
-    color.rgb = pow(exposure * color.rgb, vec3(1.0 / gamma));
-    gl_FragColor = color;
-}
-)";
-
-    constexpr std::string_view blur_down_shader = R"(#version 100
-precision highp float;
-precision highp sampler2D;
-varying vec2 in_tex;
-uniform sampler2D source;
-uniform vec2 halfpixel;
-uniform float blur_offset;
-
-void main()
-{
-    vec2 o = halfpixel * blur_offset;
-    vec4 sum = texture2D(source, in_tex) * 4.0;
-    sum += texture2D(source, in_tex + vec2(-o.x, -o.y));
-    sum += texture2D(source, in_tex + vec2( o.x, -o.y));
-    sum += texture2D(source, in_tex + vec2(-o.x,  o.y));
-    sum += texture2D(source, in_tex + vec2( o.x,  o.y));
-    gl_FragColor = sum / 8.0;
-}
-)";
-    constexpr std::string_view blur_up_shader   = R"(#version 100
-precision highp float;
-precision highp sampler2D;
-varying vec2 in_tex;
-uniform sampler2D source;
-uniform vec2 halfpixel;
-uniform float blur_offset;
-
-void main()
-{
-    vec2 o = halfpixel * blur_offset;
-    vec4 sum = texture2D(source, in_tex + vec2(-o.x * 2.0, 0.0));
-    sum += texture2D(source, in_tex + vec2(-o.x,  o.y)) * 2.0;
-    sum += texture2D(source, in_tex + vec2( 0.0,  o.y * 2.0));
-    sum += texture2D(source, in_tex + vec2( o.x,  o.y)) * 2.0;
-    sum += texture2D(source, in_tex + vec2( o.x * 2.0, 0.0));
-    sum += texture2D(source, in_tex + vec2( o.x, -o.y)) * 2.0;
-    sum += texture2D(source, in_tex + vec2( 0.0, -o.y * 2.0));
-    sum += texture2D(source, in_tex + vec2(-o.x, -o.y)) * 2.0;
-    gl_FragColor = sum / 12.0;
-}
-)";
-
     quad_program = api.alloc_program();
     quad_program->add(
         gfx::program_t::stage_t::Vertex,
         api.alloc_shader(
-            semantic::mem_chunk<const char>::ofContainer(vertex_shader)));
+            semantic::mem_chunk<const char>::ofContainer(blam::loading::screen_clear_vert)));
     quad_program->add(
         gfx::program_t::stage_t::Fragment,
         api.alloc_shader(
-            semantic::mem_chunk<const char>::ofContainer(fragment_shader)));
+            semantic::mem_chunk<const char>::ofContainer(blam::loading::screen_clear_frag)));
     if(auto res = quad_program->compile(); res.has_error())
         cDebug("Error compiling quad shader: {0}", res.error());
 
-    auto compile_blur_stage = [&api, &vertex_shader](
+    auto compile_blur_stage = [&api](
                                   std::string_view fragment,
                                   std::string_view name) {
         auto program = api.alloc_program();
         program->add(
             gfx::program_t::stage_t::Vertex,
             api.alloc_shader(
-                semantic::mem_chunk<const char>::ofContainer(vertex_shader)));
+                semantic::mem_chunk<const char>::ofContainer(blam::loading::screen_clear_vert)));
         program->add(
             gfx::program_t::stage_t::Fragment,
             api.alloc_shader(
@@ -2918,8 +2783,8 @@ void main()
         return program;
     };
 
-    blur_down_program = compile_blur_stage(blur_down_shader, "blur downsample");
-    blur_up_program   = compile_blur_stage(blur_up_shader, "blur upsample");
+    blur_down_program = compile_blur_stage(blam::loading::blur_down_frag, "blur downsample");
+    blur_up_program   = compile_blur_stage(blam::loading::blur_up_frag, "blur upsample");
 
     if(resources.color)
     {

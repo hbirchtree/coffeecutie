@@ -25,6 +25,13 @@ coffee_application(
 add_dependencies(BlamPoseDemo BlamPoseDemo.assets)
 
 target_include_directories(BlamPoseDemo PRIVATE ${CBLAM_TESTING_DIR})
+# rendering.cpp includes the crunched header, so this target needs the
+# generated include dir and the translation unit holding the data
+target_include_directories(
+  BlamPoseDemo PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
+file(GLOB BLAMPD_CRUNCHED_SOURCES CONFIGURE_DEPENDS
+  ${CMAKE_CURRENT_BINARY_DIR}/generated/crunched/*.cpp)
+target_sources(BlamPoseDemo PRIVATE ${BLAMPD_CRUNCHED_SOURCES})
 target_compile_definitions(BlamPoseDemo
     PUBLIC
     -DBLAM_HALO_VERSION=${BLAM_HALO_VERSION}

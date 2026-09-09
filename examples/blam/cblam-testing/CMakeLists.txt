@@ -63,6 +63,13 @@ coffee_application(
   RESOURCES "${CMAKE_CURRENT_BINARY_DIR}/assets"
 )
 add_dependencies(BlamGraphics BlamGraphics.assets)
+# Crunched assets (textures/meshes as constexpr arrays) land here.
+target_include_directories(BlamGraphics PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
+# Crunched data lives in its own translation unit, so including the header
+# does not drag the initialisers into every consumer
+file(GLOB BLAMG_CRUNCHED_SOURCES CONFIGURE_DEPENDS
+  ${CMAKE_CURRENT_BINARY_DIR}/generated/crunched/*.cpp)
+target_sources(BlamGraphics PRIVATE ${BLAMG_CRUNCHED_SOURCES})
 
 #target_precompile_headers(
 #  BlamGraphics PRIVATE
