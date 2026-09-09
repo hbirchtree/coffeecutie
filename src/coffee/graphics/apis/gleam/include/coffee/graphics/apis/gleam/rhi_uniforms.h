@@ -510,14 +510,14 @@ inline bool apply_command_modifier_per_call(
     program_t&             program,
     shader_bookkeeping_t&,
     instance_texture_list& textures,
-    u32,
+    u32                    base_instance,
     u32                    instance)
 {
     // This codepath is meant for OpenGL ES 2.0
     // Application to systems with functional sampler type is not included
     for(auto const& def : textures)
     {
-        auto texture = def.textures.at(instance);
+        auto texture = def.textures.at(def.base_instance ? base_instance : instance);
         if(!texture)
             continue;
         auto const& sampler = *def.sampler;

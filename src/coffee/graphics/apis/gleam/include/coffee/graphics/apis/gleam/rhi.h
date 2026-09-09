@@ -88,7 +88,7 @@ struct api
     inline auto alloc_rendertarget()
     {
         return std::make_shared<rendertarget_t>(
-            m_features.rendertarget, std::ref(m_rendertargetCurrency));
+            m_features, std::ref(m_rendertargetCurrency));
     }
 
     template<typename T>
@@ -249,7 +249,7 @@ struct api
         if(!m_framebuffer)
         {
             m_framebuffer = std::make_shared<rendertarget_type>(
-                m_features.rendertarget, std::ref(m_rendertargetCurrency));
+                m_features, std::ref(m_rendertargetCurrency));
 
             if constexpr(compile_info::debug_mode)
             {

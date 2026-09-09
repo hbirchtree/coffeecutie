@@ -1,5 +1,13 @@
 #pragma once
 
+#include "glw/enums/FramebufferAttachment.h"
+#include "glw/enums/FramebufferTarget.h"
+#include "glw/enums/GetPName.h"
+#include "glw/enums/InternalFormat.h"
+#include "glw/enums/RenderbufferTarget.h"
+#include "peripherals/concepts/graphics_api.h"
+#include "peripherals/semantic/chunk.h"
+#include "peripherals/typing/enum/pixels/format_transform.h"
 #include "rhi_features.h"
 #include "rhi_texture.h"
 #include "rhi_translate.h"
@@ -67,9 +75,10 @@ struct rendertarget_t
         group::object_identifier::framebuffer;
 
     rendertarget_t(
-        features::rendertargets const& features,
-        rendertarget_currency&         currency)
-        : m_features(features)
+        features const&        features,
+        rendertarget_currency& currency)
+        : m_features(features.rendertarget)
+        , m_texture_features(features.texture)
         , m_currency(&currency)
     {
     }
@@ -88,6 +97,9 @@ struct rendertarget_t
     {
         cmd::delete_framebuffers(SpanOne<u32>(m_handle));
         m_handle.release();
+
+        for(auto& [_, buf] : m_renderbufs)
+            cmd::delete_renderbuffers(SpanOne(buf.handle.hnd));
     }
 
     void attach(
@@ -126,6 +138,49 @@ struct rendertarget_t
                 texture.m_handle,
                 level);
         }
+    }
+
+    void attach_renderbuffer(
+        render_targets::attachment attachment,
+        PixDesc const& fmt)
+    {
+        auto target = internal_collapse_target(
+#if GLEAM_MAX_VERSION > 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+            group::framebuffer_target::draw_framebuffer
+#endif
+        );
+
+        auto& buf = m_renderbufs[attachment];
+        buf.fmt = fmt;
+        cmd::gen_renderbuffers(semantic::SpanOne(buf.handle.hnd));
+        if(!m_features.dsa)
+            internal_bind(target);
+        auto fb_attachment = [&] {
+            switch(attachment)
+            {
+            case render_targets::attachment::depth:
+                return group::framebuffer_attachment::depth_attachment;
+            case render_targets::attachment::depth_stencil:
+                return group::framebuffer_attachment::depth_stencil_attachment;
+            default:
+                // TODO: Fix multi-level color attachment
+                return group::framebuffer_attachment::color_attachment0;
+            }
+        }();
+#if GLEAM_MAX_VERSION >= 0x450
+        if(m_features.dsa)
+            cmd::named_framebuffer_renderbuffer(
+                m_handle,
+                fb_attachment,
+                group::renderbuffer_target::renderbuffer,
+                buf.handle);
+        else
+#endif
+            cmd::framebuffer_renderbuffer(
+                target,
+                fb_attachment,
+                group::renderbuffer_target::renderbuffer,
+                buf.handle);
     }
 
     void copy(
@@ -178,6 +233,17 @@ struct rendertarget_t
                 size.h);
         }
 #endif
+        for(auto& [_, buf] : m_renderbufs)
+        {
+            cmd::bind_renderbuffer(group::renderbuffer_target::renderbuffer, buf.handle);
+            auto [ifmt, __, ___] = gleam::convert::to<group::internal_format>(
+                buf.fmt, m_texture_features);
+            cmd::renderbuffer_storage(
+                group::renderbuffer_target::renderbuffer,
+                ifmt,
+                Veci2{size.w, size.h});
+            cmd::bind_renderbuffer(group::renderbuffer_target::renderbuffer, 0);
+        }
     }
 
     size_2d<i32> size()
@@ -402,8 +468,16 @@ struct rendertarget_t
     }
 
     features::rendertargets m_features;
+    features::textures      m_texture_features;
     rendertarget_currency*  m_currency;
     hnd                     m_handle;
+
+    struct renderbuf_t
+    {
+        hnd     handle;
+        PixDesc fmt;
+    };
+    std::map<render_targets::attachment, renderbuf_t> m_renderbufs;
 
     void internal_bind(group::framebuffer_target target)
     {

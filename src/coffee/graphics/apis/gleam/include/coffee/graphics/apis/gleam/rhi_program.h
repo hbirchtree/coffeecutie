@@ -71,6 +71,12 @@ struct shader_t
     {
     }
 
+    shader_t(std::string_view const& data, constants_t const& constants = {})
+        : m_data(data.data(), data.size())
+        , m_constants(constants)
+    {
+    }
+
     template<class span_data>
     requires semantic::concepts::Span<span_data>
     shader_t(

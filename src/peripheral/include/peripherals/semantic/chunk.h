@@ -462,7 +462,7 @@ template<typename T, typename It>
 FORCEDINLINE auto SpanOver(It begin, It end)
 {
     auto ptrBegin = &(*begin), ptrEnd = &(*end);
-    return Span<T>(ptrBegin, ptrEnd);
+    return gsl::span<T>(ptrBegin, ptrEnd);
 }
 
 template<typename T>
