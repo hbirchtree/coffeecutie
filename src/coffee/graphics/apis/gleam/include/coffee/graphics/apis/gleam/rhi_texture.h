@@ -421,6 +421,22 @@ struct texture_2d_t : texture_t
                 ifmt1,
                 data);
             cmd::bind_texture(group::texture_target::texture_2d, 0);
+        } else if(
+            m_format.pixfmt == typing::pixels::pix_fmt::RGB565 &&
+            m_workarounds.tex.requires_aligned &&
+            (reinterpret_cast<uintptr_t>(data.data()) %
+             sizeof(libc_types::u16)) == 0)
+        {
+            cmd::bind_texture(group::texture_target::texture_2d, m_handle);
+            cmd::tex_sub_image_2d(
+                group::texture_target::texture_2d,
+                level,
+                offset,
+                size,
+                layout,
+                type,
+                data);
+            cmd::bind_texture(group::texture_target::texture_2d, 0);
         } else if(requires_software_decode())
         {
             auto bits = software_decode_cast(std::move(data), size, level);
