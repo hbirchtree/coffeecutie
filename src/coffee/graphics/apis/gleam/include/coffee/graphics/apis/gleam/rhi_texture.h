@@ -422,11 +422,12 @@ struct texture_2d_t : texture_t
                 data);
             cmd::bind_texture(group::texture_target::texture_2d, 0);
         } else if(
-            m_format.pixfmt == typing::pixels::pix_fmt::RGB565 &&
-            m_workarounds.tex.requires_aligned &&
-            (reinterpret_cast<uintptr_t>(data.data()) %
-             sizeof(libc_types::u16)) == 0)
+            requires_software_decode() &&
+            enum_helpers::feval(m_flags, textures::property::sync_upload))
         {
+            auto chunk = semantic::mem_chunk<const char>::ofBytes(
+                data.data(), data.size());
+            std::vector<char> copied(chunk.view.begin(), chunk.view.end());
             cmd::bind_texture(group::texture_target::texture_2d, m_handle);
             cmd::tex_sub_image_2d(
                 group::texture_target::texture_2d,
@@ -435,7 +436,7 @@ struct texture_2d_t : texture_t
                 size,
                 layout,
                 type,
-                data);
+                copied);
             cmd::bind_texture(group::texture_target::texture_2d, 0);
         } else if(requires_software_decode())
         {

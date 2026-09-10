@@ -117,6 +117,7 @@ enum class property
     immutable       = 0x1,
     view            = 0x2,
     generate_mipmap = 0x4,
+    sync_upload = 0x8,
 };
 C_FLAGS(property, u32);
 

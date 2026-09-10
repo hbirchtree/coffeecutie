@@ -384,7 +384,11 @@ void LoadingScreen::load_resources(gleam::system& api)
     loading_vbo = api.alloc_buffer(gfx::buffers::vertex, RSCA::ReadOnly);
     loading_vao = api.alloc_vertex_array();
     ring_program = api.alloc_program();
-    machine_tex = api.alloc_texture(gfx::textures::d2, PixDesc(pix_fmt::RGB565), 1);
+    machine_tex = api.alloc_texture(
+        gfx::textures::d2,
+        PixDesc(pix_fmt::RGB565),
+        1,
+        gfx::textures::property::sync_upload);
     simplex_noise_tex = api.alloc_texture(gfx::textures::d2, PixDesc(pix_fmt::R8), 1);
 
     using semantic::SpanOver;
