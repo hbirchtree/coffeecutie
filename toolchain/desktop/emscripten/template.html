@@ -24,7 +24,22 @@
       div.emscripten { text-align: center; }
       div.emscripten_border { border: 1px solid black; }
       /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
-      canvas.emscripten { border: 0px none; background-color: black; }
+      canvas.emscripten {
+        border: 0px none;
+        background-color: black;
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Takes whatever height the banner leaves, and gives the canvas a box of
+         its own to be measured against. min-height allows it to shrink below
+         the canvas' intrinsic size. */
+      #canvas_container {
+        display: flex;
+        flex: 1 1 auto;
+        min-height: 0;
+      }
 
       #emscripten_logo {
         display: inline-block;
@@ -138,8 +153,10 @@
   <div class="emscripten">
     <progress value="0" max="1" id="progress" hidden=""></progress>
   </div>
-  <canvas class="emscripten" id="canvas" oncontextmenu=
-  "event.preventDefault()" style="cursor: default;"></canvas>
+  <div id="canvas_container">
+    <canvas class="emscripten" id="canvas" oncontextmenu=
+    "event.preventDefault()" style="cursor: default;"></canvas>
+  </div>
   <script type='text/javascript'>
       var statusElement = document.getElementById('status');
       var statusBar = document.querySelector('#status_banner');
@@ -235,10 +252,19 @@
         };
       };
       const canvas = document.querySelector('#canvas');
-      const canvasParent = canvas.closest('body, div, span');
+      /* Measure the canvas' own container, not the body: the body also holds
+         the status banner above the canvas, so sizing the drawing buffer from
+         it made the canvas overflow the viewport by the banner's height.
+         Observing an ancestor of the element being resized also fed back into
+         the observer, which is why the first size came out square. */
+      const canvasParent = document.querySelector('#canvas_container');
       const resizeCanvas = () => {
-        canvas.height = canvasParent.offsetHeight;
-        canvas.width = canvasParent.offsetWidth;
+        const w = Math.max(1, canvasParent.clientWidth);
+        const h = Math.max(1, canvasParent.clientHeight);
+        if (canvas.width !== w || canvas.height !== h) {
+          canvas.width = w;
+          canvas.height = h;
+        }
       };
       new ResizeObserver(resizeCanvas).observe(canvasParent);
       setTimeout(resizeCanvas, 1000);
