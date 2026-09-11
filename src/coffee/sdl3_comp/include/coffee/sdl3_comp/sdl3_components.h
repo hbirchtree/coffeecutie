@@ -5,9 +5,10 @@
 
 struct SDL_Window;
 struct SDL_Surface;
-using SDL_GLContext = void*;
+struct SDL_GLContextState;
+using SDL_GLContext = SDL_GLContextState*;
 
-namespace sdl2 {
+namespace sdl3 {
 
 using comp_app::position_t;
 using comp_app::size_2d_t;
@@ -271,4 +272,4 @@ using Services = comp_app::subsystem_list<
 using GLServices =
     comp_app::subsystem_list<GLSwapControl, GLContext, GLFramebuffer>;
 
-} // namespace sdl2
+} // namespace sdl3

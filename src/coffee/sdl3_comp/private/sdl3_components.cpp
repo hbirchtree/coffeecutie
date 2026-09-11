@@ -1,5 +1,5 @@
-#include <SDL_gamecontroller.h>
-#include <coffee/sdl2_comp/sdl2_components.h>
+#include <SDL3/SDL_gamepad.h>
+#include <coffee/sdl3_comp/sdl3_components.h>
 
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/comp_app/subsystems.h>
@@ -10,9 +10,9 @@
 #include <peripherals/typing/enum/pixels/format_transform.h>
 #include <platforms/sysinfo.h>
 
-#include "sdl2events.h"
+#include "sdl3events.h"
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #if defined(COFFEE_EMSCRIPTEN)
 #include <emscripten.h>
@@ -21,7 +21,8 @@
 
 #include <coffee/core/debug/formatting.h>
 
-#define NOT_ZERO(v) (v < 0)
+/* SDL3 returns true on success where SDL2 returned 0 */
+#define SDL_FAILED(v) (!(v))
 
 #define EMIT_IEVENT(from)                  \
     {                                      \
@@ -36,13 +37,16 @@
 #define SUPPORTS_WINDOW_ACTIONS 1
 #endif
 
-namespace sdl2 {
+namespace sdl3 {
 
 namespace {
 
 #if defined(COFFEE_EMSCRIPTEN)
 int canvas_width = 0, canvas_height = 0;
 #endif
+
+/* SDL3 scopes text input to a window, and KeyboardInput has no container */
+SDL_Window* active_window = nullptr;
 
 } // namespace
 
@@ -62,8 +66,7 @@ static ws_t get_wm_selection(SDL_Window* window);
 
 inline void print_current_config()
 {
-    SDL_version ver;
-    SDL_GetVersion(&ver);
+    auto const ver = SDL_GetVersion();
     current_config_t config;
     SDL_GL_GetAttribute(SDL_GL_RED_SIZE, &config.r);
     SDL_GL_GetAttribute(SDL_GL_GREEN_SIZE, &config.g);
@@ -82,48 +85,59 @@ inline void print_current_config()
         config.a,
         config.depth,
         config.stencil,
-        config.srgb == SDL_TRUE,
+        config.srgb == true,
         !!(config.profile & SDL_GL_CONTEXT_PROFILE_CORE),
-        ver.major,
-        ver.minor);
+        SDL_VERSIONNUM_MAJOR(ver),
+        SDL_VERSIONNUM_MINOR(ver));
 }
 
 using F      = comp_app::window_flags_t;
 using WState = comp_app::window_flags_t;
 
-static constexpr std::array<std::pair<Uint32, F>, 8> window_flag_mapping = {{
-    {SDL_WINDOW_SHOWN, F::visible},
-
-    {SDL_WINDOW_FULLSCREEN_DESKTOP, F::fullscreen_window},
-    {SDL_WINDOW_FULLSCREEN, F::fullscreen},
+/* SDL3 dropped SDL_WINDOW_SHOWN (windows are shown unless SDL_WINDOW_HIDDEN)
+ * and SDL_WINDOW_FULLSCREEN_DESKTOP (SDL_WINDOW_FULLSCREEN without a display
+ * mode set is the borderless-desktop mode). Both are handled outside the
+ * table. */
+static constexpr std::array<std::pair<SDL_WindowFlags, F>, 6>
+    window_flag_mapping = {{
+        {SDL_WINDOW_FULLSCREEN, F::fullscreen},
 
 #if SUPPORTS_WINDOW_ACTIONS == 1
-    {SDL_WINDOW_MINIMIZED, F::minimized},
-    {SDL_WINDOW_MAXIMIZED, F::maximized},
+        {SDL_WINDOW_MINIMIZED, F::minimized},
+        {SDL_WINDOW_MAXIMIZED, F::maximized},
 #endif
-    {SDL_WINDOW_RESIZABLE, F::resizable},
-    {SDL_WINDOW_BORDERLESS, F::undecorated},
-    {SDL_WINDOW_ALLOW_HIGHDPI, F::high_dpi},
-}};
+        {SDL_WINDOW_RESIZABLE, F::resizable},
+        {SDL_WINDOW_BORDERLESS, F::undecorated},
+        {SDL_WINDOW_HIGH_PIXEL_DENSITY, F::high_dpi},
+    }};
 
-static ::Uint32 window_to_sdl2(comp_app::window_flags_t state)
+static SDL_WindowFlags window_to_sdl3(comp_app::window_flags_t state)
 {
-    Uint32 out = 0;
+    SDL_WindowFlags out = 0;
 
     for(auto const& v : window_flag_mapping)
         if(enum_helpers::feval(state, v.second))
             out |= v.first;
 
+    if(enum_helpers::feval(state, F::fullscreen_window))
+        out |= SDL_WINDOW_FULLSCREEN;
+
+    /* F::visible is deliberately not mapped to SDL_WINDOW_HIDDEN: callers that
+     * set flags wholesale leave it out, and SDL2 showed those windows anyway */
+
     return out;
 }
 
-static comp_app::window_flags_t window_from_sdl2(::Uint32 state)
+static comp_app::window_flags_t window_from_sdl3(SDL_WindowFlags state)
 {
     comp_app::window_flags_t out = comp_app::window_flags_t::none;
 
     for(auto const& v : window_flag_mapping)
         if(state & v.first)
             out |= v.second;
+
+    if(!(state & SDL_WINDOW_HIDDEN))
+        out |= F::visible;
 
     return out;
 }
@@ -133,21 +147,26 @@ static void getWindow(
 
 using namespace stl_types;
 
-void Context::load(entity_container& c, comp_app::app_error&)
+void Context::load(entity_container& c, comp_app::app_error& ec)
 {
-    C_EXPECT_ZERO(SDL_Init(0))
+    if(SDL_FAILED(SDL_Init(0)))
+    {
+        ec = comp_app::AppError::SystemError;
+        ec = SDL_GetError();
+        return;
+    }
 
     c.register_subsystem_services<comp_app::AppServiceTraits<Context>>(this);
 
     if(auto info = c.service<comp_app::AppInfo>(); info)
     {
-        SDL_version ver;
-        SDL_GetVersion(&ver);
+        auto const ver = SDL_GetVersion();
 
-        auto verString = cast_pod(ver.major) + "." + cast_pod(ver.minor) + "." +
-                         cast_pod(ver.patch);
+        auto verString = cast_pod(SDL_VERSIONNUM_MAJOR(ver)) + "." +
+                         cast_pod(SDL_VERSIONNUM_MINOR(ver)) + "." +
+                         cast_pod(SDL_VERSIONNUM_MICRO(ver));
 
-        info->add("sdl2:version", verString);
+        info->add("sdl3:version", verString);
     }
 }
 
@@ -168,7 +187,7 @@ void Context::end_restricted(proxy_type& p, time_point const&)
     CIEvent inputEv;
 
     SDL_Event event;
-    while(SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_QUIT, SDL_QUIT))
+    while(SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_EVENT_QUIT, SDL_EVENT_QUIT))
     {
         auto data    = translate::event<CIQuit>(event);
         inputEv.type = data.event_type;
@@ -188,7 +207,7 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
 #endif
 
-    if(NOT_ZERO(SDL_InitSubSystem(SDL_INIT_VIDEO)))
+    if(SDL_FAILED(SDL_InitSubSystem(SDL_INIT_VIDEO)))
     {
         ec = comp_app::AppError::NoDisplay;
         ec = SDL_GetError();
@@ -197,20 +216,19 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
 
     auto& config = comp_app::AppLoader::config<comp_app::WindowConfig>(c);
 
-    Uint32 extraFlags = 0 /*SDL_WINDOW_ALLOW_HIGHDPI*/;
+    SDL_WindowFlags extraFlags = 0 /*SDL_WINDOW_HIGH_PIXEL_DENSITY*/;
 
     extraFlags |= SDL_WINDOW_OPENGL;
     // if([[maybe_unused]] auto glContext = c.service<GLContext>())
     // else
     //     extraFlags |= SDL_WINDOW_VULKAN;
 
+    /* SDL3 takes no position here, the window manager places the window */
     m_window = SDL_CreateWindow(
         config.title.c_str(),
-        SDL_WINDOWPOS_UNDEFINED,
-        SDL_WINDOWPOS_UNDEFINED,
         config.size.w,
         config.size.h,
-        sdl2::window_to_sdl2(config.flags) | extraFlags);
+        sdl3::window_to_sdl3(config.flags) | extraFlags);
 
     if(!m_window)
     {
@@ -218,6 +236,8 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
         ec = SDL_GetError();
         return;
     }
+
+    active_window = m_window;
 
     if(auto glContext = c.service<GLContext>())
         glContext->setupAttributes(c);
@@ -242,7 +262,7 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
             wm_selection = "Default";
             break;
         }
-        info->add("sdl2:windowManager", wm_selection);
+        info->add("sdl3:windowManager", wm_selection);
     }
 
     m_container = &c;
@@ -252,6 +272,7 @@ void Windowing::unload(entity_container&, comp_app::app_error&)
 {
     if(m_window)
         SDL_DestroyWindow(m_window);
+    active_window = nullptr;
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
@@ -275,28 +296,29 @@ void Windowing::start_restricted(proxy_type& p, time_point const&)
     SDL_Event event;
     SDL_PumpEvents();
 
+    /* SDL3 promoted the window events to top-level event types */
     while(SDL_PeepEvents(
         &event,
         1,
-        SDL_eventaction::SDL_GETEVENT,
-        SDL_WINDOWEVENT,
-        SDL_WINDOWEVENT))
+        SDL_GETEVENT,
+        SDL_EVENT_WINDOW_FIRST,
+        SDL_EVENT_WINDOW_LAST))
     {
-        switch(event.window.event)
+        switch(event.type)
         {
-        case SDL_WINDOWEVENT_ENTER:
-        case SDL_WINDOWEVENT_LEAVE:
-        case SDL_WINDOWEVENT_EXPOSED:
-        case SDL_WINDOWEVENT_FOCUS_LOST:
-        case SDL_WINDOWEVENT_FOCUS_GAINED:
+        case SDL_EVENT_WINDOW_MOUSE_ENTER:
+        case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+        case SDL_EVENT_WINDOW_EXPOSED:
+        case SDL_EVENT_WINDOW_FOCUS_LOST:
+        case SDL_EVENT_WINDOW_FOCUS_GAINED:
             EMIT_DEVENT(translate::event<FocusEvent>(event))
             break;
 #if !defined(COFFEE_EMSCRIPTEN)
-        case SDL_WINDOWEVENT_RESIZED:
+        case SDL_EVENT_WINDOW_RESIZED:
             EMIT_DEVENT(translate::event<ResizeEvent>(event))
             break;
 #endif
-        case SDL_WINDOWEVENT_MOVED:
+        case SDL_EVENT_WINDOW_MOVED:
             EMIT_DEVENT(translate::event<MoveEvent>(event))
             break;
         default:
@@ -368,7 +390,7 @@ void Windowing::move(const comp_app::position_t& newPos)
 
 comp_app::window_flags_t Windowing::state() const
 {
-    return static_cast<WState>(window_from_sdl2(SDL_GetWindowFlags(m_window)));
+    return static_cast<WState>(window_from_sdl3(SDL_GetWindowFlags(m_window)));
 }
 
 void Windowing::setState(comp_app::window_flags_t state)
@@ -383,17 +405,18 @@ void Windowing::setState(comp_app::window_flags_t state)
         SDL_MaximizeWindow(m_window);
 #endif
 
-    if(enum_helpers::feval(state & F::fullscreen))
-        SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN);
-    if(enum_helpers::feval(state & F::fullscreen_window))
-        SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    /* Without a display mode set, SDL3 fullscreen is the borderless-desktop
+     * mode, which is what F::fullscreen_window asked for */
+    if(enum_helpers::feval(state & F::fullscreen) ||
+       enum_helpers::feval(state & F::fullscreen_window))
+        SDL_SetWindowFullscreen(m_window, true);
     if(enum_helpers::feval(state & F::normal))
-        SDL_SetWindowFullscreen(m_window, 0);
+        SDL_SetWindowFullscreen(m_window, false);
 
     if(enum_helpers::feval(state & F::undecorated))
-        SDL_SetWindowBordered(m_window, SDL_FALSE);
+        SDL_SetWindowBordered(m_window, false);
     else
-        SDL_SetWindowBordered(m_window, SDL_TRUE);
+        SDL_SetWindowBordered(m_window, true);
 
     if(enum_helpers::feval(state & F::focused))
         SDL_RaiseWindow(m_window);
@@ -404,46 +427,104 @@ bool Windowing::notifiedClose() const
     return m_container->service<Context>()->m_shouldClose;
 }
 
+namespace {
+
+/* SDL3 display IDs are opaque and need not be contiguous, so a comp_app
+ * display index is a position in the current display list */
+SDL_DisplayID display_at(libc_types::u32 index)
+{
+    int  count    = 0;
+    auto displays = SDL_GetDisplays(&count);
+
+    if(!displays)
+        return 0;
+
+    SDL_DisplayID out =
+        index < C_FCAST<libc_types::u32>(count) ? displays[index] : 0;
+    SDL_free(displays);
+    return out;
+}
+
+/* SDL3 replaced display DPI with a content scale where 1.0 is 96 DPI */
+constexpr libc_types::f32 base_dpi = 96.f;
+
+libc_types::f32 display_dpi(SDL_DisplayID display)
+{
+    auto scale = SDL_GetDisplayContentScale(display);
+    return scale > 0.f ? scale * base_dpi : base_dpi;
+}
+
+} // namespace
+
 comp_app::size_2d_t DisplayInfo::virtualSize() const
 {
     size_2d_t out;
     SDL_Rect  displayRect = {};
-    for(auto i : Range<int>(SDL_GetNumVideoDisplays()))
+
+    int  count    = 0;
+    auto displays = SDL_GetDisplays(&count);
+
+    if(!displays)
+        return out;
+
+    for(auto i : Range<int>(count))
     {
-        SDL_GetDisplayBounds(i, &displayRect);
+        SDL_GetDisplayBounds(displays[i], &displayRect);
         out.w = std::max(out.w, displayRect.x + displayRect.w);
         out.h = std::max(out.h, displayRect.y + displayRect.h);
     }
+    SDL_free(displays);
     return out;
 }
 
 libc_types::u32 DisplayInfo::count() const
 {
-    return C_FCAST<libc_types::u32>(SDL_GetNumVideoDisplays());
+    int count = 0;
+    if(auto displays = SDL_GetDisplays(&count); displays)
+        SDL_free(displays);
+    return C_FCAST<libc_types::u32>(count);
 }
 
 libc_types::u32 DisplayInfo::currentDisplay() const
 {
-    return C_FCAST<libc_types::u32>(SDL_GetWindowDisplayIndex(nullptr));
+    auto current = active_window ? SDL_GetDisplayForWindow(active_window)
+                                 : SDL_GetPrimaryDisplay();
+
+    int  count    = 0;
+    auto displays = SDL_GetDisplays(&count);
+
+    if(!displays)
+        return 0;
+
+    libc_types::u32 out = 0;
+    for(auto i : Range<int>(count))
+        if(displays[i] == current)
+        {
+            out = C_FCAST<libc_types::u32>(i);
+            break;
+        }
+    SDL_free(displays);
+    return out;
 }
 
 comp_app::size_2d_t DisplayInfo::size(libc_types::u32 idx) const
 {
-    SDL_Rect rect;
-    SDL_GetDisplayBounds(C_FCAST<libc_types::i32>(idx), &rect);
+    SDL_Rect rect{};
+    SDL_GetDisplayBounds(display_at(idx), &rect);
     return {rect.w, rect.h};
 }
 
 comp_app::size_2d_t DisplayInfo::physicalSize(libc_types::u32 i) const
 {
-    libc_types::f32 hdpi{1.f}, vdpi{1.f};
-    if(SDL_GetDisplayDPI(i, nullptr, &hdpi, &vdpi) != 0)
+    auto display = display_at(i);
+    auto density = display_dpi(display);
+    auto mode    = SDL_GetCurrentDisplayMode(display);
+
+    if(!mode || density <= 0.f)
         return {};
-    SDL_DisplayMode mode{};
-    if(SDL_GetCurrentDisplayMode(i, &mode) != 0)
-        return {};
+
     return typing::geometry::size_2d<libc_types::f32>{
-        mode.w / hdpi, mode.h / vdpi}
+        mode->w / density, mode->h / density}
         .convert<libc_types::i32>();
 }
 
@@ -452,21 +533,32 @@ libc_types::f32 DisplayInfo::dpi([[maybe_unused]] libc_types::u32 i) const
 #if defined(COFFEE_EMSCRIPTEN)
     return platform::info::device::emscripten::dpi();
 #else
-    libc_types::f32 hdpi{1.f};
-    SDL_GetDisplayDPI(i, nullptr, &hdpi, nullptr);
-    return hdpi;
+    /* Callers use this as a scale factor, not as dots-per-inch: ImGui divides
+     * its display size by it. That is the window's pixel-to-logical ratio,
+     * which stays 1 unless the window took SDL_WINDOW_HIGH_PIXEL_DENSITY. */
+    if(!active_window)
+        return 1.f;
+
+    int logical = 0, pixels = 0;
+    SDL_GetWindowSize(active_window, &logical, nullptr);
+    SDL_GetWindowSizeInPixels(active_window, &pixels, nullptr);
+
+    return logical > 0 ? static_cast<libc_types::f32>(pixels) /
+                             static_cast<libc_types::f32>(logical)
+                       : 1.f;
 #endif
 }
 
 libc_types::f32 DisplayInfo::diagonal(libc_types::u32 i) const
 {
-    libc_types::f32 hdpi{1.f}, vdpi{1.f};
-    if(SDL_GetDisplayDPI(i, nullptr, &hdpi, &vdpi) != 0)
+    auto display = display_at(i);
+    auto density = display_dpi(display);
+    auto mode    = SDL_GetCurrentDisplayMode(display);
+
+    if(!mode || density <= 0.f)
         return 0.f;
-    SDL_DisplayMode mode{};
-    if(SDL_GetCurrentDisplayMode(i, &mode) != 0)
-        return 0.f;
-    libc_types::f32 h = mode.w / hdpi, w = mode.h / vdpi;
+
+    libc_types::f32 h = mode->w / density, w = mode->h / density;
 
     return std::sqrt(h * h + w * w);
 }
@@ -481,10 +573,10 @@ void GLContext::setupAttributes(entity_container& c)
     SDL_GL_SetAttribute(
         SDL_GL_FRAMEBUFFER_SRGB_CAPABLE,
         properties::get<properties::supports_srgb>(glConfig.framebufferFmt)
-            ? SDL_TRUE
-            : SDL_FALSE);
-    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, SDL_TRUE);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, SDL_TRUE);
+            ? true
+            : false);
+    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, true);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, true);
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, glConfig.version.major);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, glConfig.version.minor);
@@ -524,7 +616,7 @@ void GLContext::setupAttributes(entity_container& c)
 
     if(glConfig.multisampling.enabled)
     {
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, SDL_TRUE);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, true);
         SDL_GL_SetAttribute(
             SDL_GL_MULTISAMPLESAMPLES, glConfig.multisampling.samples);
     }
@@ -593,7 +685,7 @@ void GLContext::load(entity_container& c, comp_app::app_error& ec)
         return;
     }
 
-    if(SDL_GL_MakeCurrent(window, m_context) != 0)
+    if(SDL_FAILED(SDL_GL_MakeCurrent(window, m_context)))
     {
         ec = SDL_GetError();
         ec = comp_app::AppError::SystemError;
@@ -609,7 +701,10 @@ void GLContext::load(entity_container& c, comp_app::app_error& ec)
     {
         auto& bindConf =
             comp_app::AppLoader::config<comp_app::GraphicsBindingConfig>(c);
-        bindConf.loader = SDL_GL_GetProcAddress;
+        /* SDL3 returns SDL_FunctionPointer instead of void* */
+        bindConf.loader =
+            reinterpret_cast<comp_app::GraphicsBindingConfig::loader_func>(
+                SDL_GL_GetProcAddress);
     }
 
 #if defined(COFFEE_EMSCRIPTEN)
@@ -629,12 +724,14 @@ void GLContext::load(entity_container& c, comp_app::app_error& ec)
 void GLContext::unload(entity_container&, comp_app::app_error&)
 {
     if(m_context)
-        SDL_GL_DeleteContext(m_context);
+        SDL_GL_DestroyContext(m_context);
 }
 
 libc_types::i32 GLSwapControl::swapInterval() const
 {
-    return SDL_GL_GetSwapInterval();
+    int interval = 0;
+    SDL_GL_GetSwapInterval(&interval);
+    return interval;
 }
 
 void GLSwapControl::setSwapInterval(libc_types::i32 interval)
@@ -650,9 +747,9 @@ void GLFramebuffer::load(entity_container& c, comp_app::app_error&)
 void GLFramebuffer::swapBuffers(comp_app::app_error&)
 {
     if constexpr(compile_info::debug_mode)
-        Coffee::Profiler::PushContext("sdl2::GLFramebuffer::swapBuffers");
+        Coffee::Profiler::PushContext("sdl3::GLFramebuffer::swapBuffers");
 
-    SDL_GL_SwapWindow(m_container->service<sdl2::Windowing>()->m_window);
+    SDL_GL_SwapWindow(m_container->service<sdl3::Windowing>()->m_window);
 
     if constexpr(compile_info::debug_mode)
         Coffee::Profiler::PopContext();
@@ -664,7 +761,7 @@ comp_app::size_2d_t GLFramebuffer::size() const
 #if defined(COFFEE_EMSCRIPTEN)
     out = {canvas_width, canvas_height};
 #else
-    SDL_GL_GetDrawableSize(
+    SDL_GetWindowSizeInPixels(
         m_container->service<Windowing>()->m_window, &out.w, &out.h);
 #endif
     return out;
@@ -686,14 +783,14 @@ void ControllerInput::load(entity_container& c, comp_app::app_error& ec)
     {
         auto controllerdb = *"controllerdb.txt"_config;
         cDebug("Looking for controllerdb in: {}", controllerdb);
-        SDL_GameControllerAddMappingsFromFile(controllerdb.c_str());
+        SDL_AddGamepadMappingsFromFile(controllerdb.c_str());
         SDL_SetHint(SDL_HINT_GAMECONTROLLERCONFIG_FILE, controllerdb.c_str());
     } else
         SDL_SetHint(SDL_HINT_GAMECONTROLLERCONFIG_FILE, config.mapping.c_str());
     if(config.options & comp_app::ControllerConfig::BackgroundInput)
         SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 
-    if(SDL_InitSubSystem(SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER) != 0)
+    if(SDL_FAILED(SDL_InitSubSystem(SDL_INIT_EVENTS | SDL_INIT_GAMEPAD)))
     {
         ec = SDL_GetError();
         ec = comp_app::AppError::SystemError;
@@ -711,16 +808,14 @@ void ControllerInput::load(entity_container& c, comp_app::app_error& ec)
 
 void ControllerInput::unload(entity_container&, comp_app::app_error&)
 {
-    //    for(auto const& controller : m_controllers)
-    //        SDL_GameControllerClose(
-    //            C_RCAST<SDL_GameController*>(controller.second));
+    for(auto const& controller : m_controllers)
+        SDL_CloseGamepad(C_RCAST<SDL_Gamepad*>(controller.second));
 
-    for(auto i : stl_types::Range<int>(SDL_NumJoysticks()))
-    {
-        SDL_JoystickClose(SDL_JoystickOpen(i));
-    }
+    m_controllers.clear();
+    m_playerIndex.clear();
+    m_deviceToPlayer.clear();
 
-    SDL_QuitSubSystem(SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER);
+    SDL_QuitSubSystem(SDL_INIT_EVENTS | SDL_INIT_GAMEPAD);
     SDL_GetError();
 }
 
@@ -739,68 +834,66 @@ void ControllerInput::start_restricted(proxy_type& p, time_point const&)
         &event,
         1,
         SDL_GETEVENT,
-        SDL_CONTROLLERDEVICEADDED,
-        SDL_CONTROLLERDEVICEREMAPPED))
+        SDL_EVENT_GAMEPAD_ADDED,
+        SDL_EVENT_GAMEPAD_REMAPPED))
     {
-        if(event.type == SDL_CONTROLLERDEVICEADDED)
+        if(event.type == SDL_EVENT_GAMEPAD_ADDED)
         {
-            auto controller = SDL_GameControllerOpen(event.cdevice.which);
+            /* SDL3 addresses gamepads by instance ID, not device index, so
+             * event.gdevice.which is already the key used below */
+            auto instanceId = event.gdevice.which;
+            auto controller = SDL_OpenGamepad(instanceId);
 
             if(!controller)
             {
-                Throw(undefined_behavior("failed to open controller device"));
+                /* Browsers can announce a gamepad before it is readable, so
+                 * this is not fatal */
+                Coffee::Logging::cDebug(
+                    "Failed to open controller {}: {}",
+                    instanceId,
+                    SDL_GetError());
+                continue;
             }
 
-            auto joystick = SDL_GameControllerGetJoystick(controller);
-
-#if SDL_VERSION_ATLEAST(2, 0, 8)
-            auto playerIdx = SDL_GameControllerGetPlayerIndex(controller);
-#else
-            auto playerIdx = -1;
-#endif
-            auto instanceId = SDL_JoystickInstanceID(joystick);
+            auto playerIdx = SDL_GetGamepadPlayerIndex(controller);
 
             playerIdx = playerIdx >= 0
                             ? playerIdx
                             : C_FCAST<libc_types::i32>(m_playerIndex.size());
 
             m_playerIndex.insert({playerIdx, controller});
-            m_controllers.insert({instanceId, controller});
-            m_deviceToPlayer.insert({event.cdevice.which, playerIdx});
+            m_controllers.insert({C_FCAST<int>(instanceId), controller});
+            m_deviceToPlayer.insert({C_FCAST<int>(instanceId), playerIdx});
 
             CIEvent                  ev{.type = CIEvent::ControllerConnect};
             CIControllerConnectEvent connect = {
-                .index = static_cast<libc_types::u16>(event.cdevice.which),
+                .index = static_cast<libc_types::u16>(event.gdevice.which),
                 .player_index = static_cast<libc_types::i16>(playerIdx),
                 .connected    = true,
             };
             inputBus->process(ev, &connect);
 
-#if SDL_VERSION_ATLEAST(2, 0, 8) && 0
-            SDL_GameControllerRumble(controller, 7000, 9000, 200);
+#if 0
+            SDL_RumbleGamepad(controller, 7000, 9000, 200);
 #endif
             Coffee::Logging::cDebug(
-                "Player {} connected (playerIdx={}, instance={}, which={})",
-                playerIdx,
-                playerIdx,
-                instanceId,
-                event.cdevice.which);
-        } else if(event.type == SDL_CONTROLLERDEVICEREMOVED)
+                "Player {} connected (instance={})", playerIdx, instanceId);
+        } else if(event.type == SDL_EVENT_GAMEPAD_REMOVED)
         {
-            auto    playerIdx = m_deviceToPlayer[event.cdevice.which];
+            auto    playerIdx = m_deviceToPlayer[event.gdevice.which];
             CIEvent ev{.type = CIEvent::ControllerConnect};
             CIControllerConnectEvent connect = {
-                .index = static_cast<libc_types::u16>(event.cdevice.which),
+                .index = static_cast<libc_types::u16>(event.gdevice.which),
                 .player_index = static_cast<libc_types::i16>(playerIdx),
                 .connected    = false,
             };
             inputBus->process(ev, &connect);
 
-            controllerDisconnect(event.cdevice.which);
+            controllerDisconnect(event.gdevice.which);
             Coffee::Logging::cDebug("Player {} disconnected", playerIdx);
-        } else if(event.type == SDL_CONTROLLERDEVICEREMAPPED)
+        } else if(event.type == SDL_EVENT_GAMEPAD_REMAPPED)
         {
-            Coffee::Logging::cDebug("Player {} remapped", event.cdevice.which);
+            Coffee::Logging::cDebug("Player {} remapped", event.gdevice.which);
         }
 
         EMIT_IEVENT(translate::event<CIControllerAtomicUpdateEvent>(event))
@@ -810,12 +903,12 @@ void ControllerInput::start_restricted(proxy_type& p, time_point const&)
         &event,
         1,
         SDL_GETEVENT,
-        SDL_CONTROLLERAXISMOTION,
-        SDL_CONTROLLERBUTTONUP))
+        SDL_EVENT_GAMEPAD_AXIS_MOTION,
+        SDL_EVENT_GAMEPAD_BUTTON_UP))
         ;
 
     while(SDL_PeepEvents(
-        &event, 1, SDL_GETEVENT, SDL_JOYAXISMOTION, SDL_JOYDEVICEREMOVED))
+        &event, 1, SDL_GETEVENT, SDL_EVENT_JOYSTICK_AXIS_MOTION, SDL_EVENT_JOYSTICK_REMOVED))
         ;
 }
 
@@ -832,39 +925,39 @@ ControllerInput::controller_map ControllerInput::state(
     if(it == m_playerIndex.end())
         return {};
 
-    auto controller = C_RCAST<SDL_GameController*>(it->second);
+    auto controller = C_RCAST<SDL_Gamepad*>(it->second);
 
     controller_map out;
 
-    if constexpr(!compile_info::platform::is_emscripten)
+    /* SDL3 has a real gamepad backend on Emscripten, unlike SDL2 */
     {
-#define BTN SDL_GameControllerGetButton
-#define AXIS SDL_GameControllerGetAxis
+#define BTN SDL_GetGamepadButton
+#define AXIS SDL_GetGamepadAxis
 
-        out.buttons.e.a   = BTN(controller, SDL_CONTROLLER_BUTTON_A);
-        out.buttons.e.b   = BTN(controller, SDL_CONTROLLER_BUTTON_B);
-        out.buttons.e.x   = BTN(controller, SDL_CONTROLLER_BUTTON_X);
-        out.buttons.e.y   = BTN(controller, SDL_CONTROLLER_BUTTON_Y);
-        out.buttons.e.b_l = BTN(controller, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+        out.buttons.e.a   = BTN(controller, SDL_GAMEPAD_BUTTON_SOUTH);
+        out.buttons.e.b   = BTN(controller, SDL_GAMEPAD_BUTTON_EAST);
+        out.buttons.e.x   = BTN(controller, SDL_GAMEPAD_BUTTON_WEST);
+        out.buttons.e.y   = BTN(controller, SDL_GAMEPAD_BUTTON_NORTH);
+        out.buttons.e.b_l = BTN(controller, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER);
         out.buttons.e.b_r =
-            BTN(controller, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
-        out.buttons.e.s_l  = BTN(controller, SDL_CONTROLLER_BUTTON_LEFTSTICK);
-        out.buttons.e.s_r  = BTN(controller, SDL_CONTROLLER_BUTTON_RIGHTSTICK);
-        out.buttons.e.p_up = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_UP);
-        out.buttons.e.p_down = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
-        out.buttons.e.p_left = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+            BTN(controller, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
+        out.buttons.e.s_l  = BTN(controller, SDL_GAMEPAD_BUTTON_LEFT_STICK);
+        out.buttons.e.s_r  = BTN(controller, SDL_GAMEPAD_BUTTON_RIGHT_STICK);
+        out.buttons.e.p_up = BTN(controller, SDL_GAMEPAD_BUTTON_DPAD_UP);
+        out.buttons.e.p_down = BTN(controller, SDL_GAMEPAD_BUTTON_DPAD_DOWN);
+        out.buttons.e.p_left = BTN(controller, SDL_GAMEPAD_BUTTON_DPAD_LEFT);
         out.buttons.e.p_right =
-            BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
-        out.buttons.e.back  = BTN(controller, SDL_CONTROLLER_BUTTON_BACK);
-        out.buttons.e.start = BTN(controller, SDL_CONTROLLER_BUTTON_START);
-        out.buttons.e.guide = BTN(controller, SDL_CONTROLLER_BUTTON_GUIDE);
+            BTN(controller, SDL_GAMEPAD_BUTTON_DPAD_RIGHT);
+        out.buttons.e.back  = BTN(controller, SDL_GAMEPAD_BUTTON_BACK);
+        out.buttons.e.start = BTN(controller, SDL_GAMEPAD_BUTTON_START);
+        out.buttons.e.guide = BTN(controller, SDL_GAMEPAD_BUTTON_GUIDE);
 
-        out.axes.e.l_x = rescale(AXIS(controller, SDL_CONTROLLER_AXIS_LEFTX));
-        out.axes.e.l_y = rescale(AXIS(controller, SDL_CONTROLLER_AXIS_LEFTY));
-        out.axes.e.r_x = rescale(AXIS(controller, SDL_CONTROLLER_AXIS_RIGHTX));
-        out.axes.e.r_y = rescale(AXIS(controller, SDL_CONTROLLER_AXIS_RIGHTY));
-        out.axes.e.t_l = AXIS(controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
-        out.axes.e.t_r = AXIS(controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+        out.axes.e.l_x = rescale(AXIS(controller, SDL_GAMEPAD_AXIS_LEFTX));
+        out.axes.e.l_y = rescale(AXIS(controller, SDL_GAMEPAD_AXIS_LEFTY));
+        out.axes.e.r_x = rescale(AXIS(controller, SDL_GAMEPAD_AXIS_RIGHTX));
+        out.axes.e.r_y = rescale(AXIS(controller, SDL_GAMEPAD_AXIS_RIGHTY));
+        out.axes.e.t_l = AXIS(controller, SDL_GAMEPAD_AXIS_LEFT_TRIGGER);
+        out.axes.e.t_r = AXIS(controller, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER);
 
 #undef BTN
 #undef AXIS
@@ -880,14 +973,9 @@ comp_app::text_type_t ControllerInput::name(libc_types::u32 idx) const
     if(it == m_playerIndex.end())
         return {};
 
-    if constexpr(!compile_info::platform::is_emscripten)
-    {
-        auto name =
-            SDL_GameControllerName(C_RCAST<SDL_GameController*>(it->second));
+    auto name = SDL_GetGamepadName(C_RCAST<SDL_Gamepad*>(it->second));
 
-        return name ? name : std::string();
-    } else
-        return std::string();
+    return name ? name : std::string();
 }
 
 libc_types::i16 ControllerInput::rescale(libc_types::i16 value) const
@@ -918,12 +1006,9 @@ int ControllerInput::controllerDisconnect(int device)
         Throw(undefined_behavior("failed to close device"));
     }
 
-    auto controller = C_RCAST<SDL_GameController*>(it->second);
-    auto joystick   = SDL_GameControllerGetJoystick(controller);
+    auto controller = C_RCAST<SDL_Gamepad*>(it->second);
 
-    auto instanceIdx = SDL_JoystickInstanceID(joystick);
-
-    SDL_GameControllerClose(controller);
+    SDL_CloseGamepad(controller);
 
     decltype(m_playerIndex)::key_type delete_key = -1;
 
@@ -932,7 +1017,7 @@ int ControllerInput::controllerDisconnect(int device)
             delete_key = v.first;
 
     m_playerIndex.erase(delete_key);
-    m_controllers.erase(instanceIdx);
+    m_controllers.erase(device);
     m_deviceToPlayer.erase(device);
 
     return delete_key;
@@ -948,7 +1033,7 @@ void KeyboardInput::start_restricted(proxy_type& p, time_point const&)
     auto inputBus =
         p.service<comp_app::BasicEventBus<CIEvent>>();
 
-    while(SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_KEYDOWN, SDL_KEYUP))
+    while(SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_EVENT_KEY_DOWN, SDL_EVENT_KEY_UP))
     {
         auto ev            = translate::event<CIKeyEvent>(event);
         m_register[ev.key] = ev.mod;
@@ -956,11 +1041,11 @@ void KeyboardInput::start_restricted(proxy_type& p, time_point const&)
     }
 
     while(
-        SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_TEXTEDITING, SDL_TEXTINPUT))
+        SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_EVENT_TEXT_EDITING, SDL_EVENT_TEXT_INPUT))
     {
         switch(event.type)
         {
-        case SDL_TEXTEDITING: {
+        case SDL_EVENT_TEXT_EDITING: {
             CIWEditEvent edit;
             edit.cursor = event.edit.start;
             edit.len    = event.edit.length;
@@ -968,7 +1053,7 @@ void KeyboardInput::start_restricted(proxy_type& p, time_point const&)
             EMIT_IEVENT(edit)
             break;
         }
-        case SDL_TEXTINPUT: {
+        case SDL_EVENT_TEXT_INPUT: {
             CIWriteEvent write;
             write.text = event.text.text;
             EMIT_IEVENT(write)
@@ -982,12 +1067,14 @@ void KeyboardInput::start_restricted(proxy_type& p, time_point const&)
 
 void KeyboardInput::startWriting() const
 {
-    SDL_StartTextInput();
+    if(active_window)
+        SDL_StartTextInput(active_window);
 }
 
 void KeyboardInput::stopWriting() const
 {
-    SDL_StopTextInput();
+    if(active_window)
+        SDL_StopTextInput(active_window);
 }
 
 void MouseInput::load(entity_container& e, comp_app::app_error&)
@@ -1005,54 +1092,56 @@ void MouseInput::start_restricted(proxy_type&, time_point const&)
 
     SDL_Event event;
     while(SDL_PeepEvents(
-        &event, 1, SDL_GETEVENT, SDL_MOUSEMOTION, SDL_MOUSEWHEEL))
+        &event, 1, SDL_GETEVENT, SDL_EVENT_MOUSE_MOTION, SDL_EVENT_MOUSE_WHEEL))
     {
         switch(event.type)
         {
-        case SDL_MOUSEMOTION:
+        case SDL_EVENT_MOUSE_MOTION:
             EMIT_IEVENT(translate::event<CIMouseMoveEvent>(event))
             break;
-        case SDL_MOUSEBUTTONUP:
-        case SDL_MOUSEBUTTONDOWN: {
+        case SDL_EVENT_MOUSE_BUTTON_UP:
+        case SDL_EVENT_MOUSE_BUTTON_DOWN: {
             auto ev = translate::event<CIMouseButtonEvent>(event);
             EMIT_IEVENT(ev)
 
-            if(event.button.state == SDL_PRESSED)
+            if(event.button.down)
                 m_buttons |= ev.btn;
             else
                 m_buttons &= (m_buttons ^ ev.btn);
 
             break;
         }
-        case SDL_MOUSEWHEEL:
+        case SDL_EVENT_MOUSE_WHEEL:
             EMIT_IEVENT(translate::event<CIScrollEvent>(event))
             break;
         }
     }
 
     while(
-        SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_DROPFILE, SDL_DROPCOMPLETE))
+        SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_EVENT_DROP_FILE, SDL_EVENT_DROP_COMPLETE))
     {
-        cDebug("Drop event: {}", event.drop.type);
+        cDebug("Drop event: {}", static_cast<int>(event.drop.type));
         switch(event.type)
         {
-        case SDL_DROPFILE: {
-            cDebug("Received file: {}", event.drop.file);
-            if(!std::isprint(event.drop.file[0]))
+        case SDL_EVENT_DROP_FILE: {
+            /* SDL3 owns drop.data, and it is null outside file/text drops */
+            if(!event.drop.data)
+                break;
+            cDebug("Received file: {}", event.drop.data);
+            if(!std::isprint(event.drop.data[0]))
                 break;
             inputEv.type = Coffee::Input::CIEvent::Drop;
             CIDropEvent drop;
-            drop.file = platform::url::constructors::MkUrl(event.drop.file);
+            drop.file = platform::url::constructors::MkUrl(event.drop.data);
             inputBus->process(inputEv, &drop);
-            SDL_free(event.drop.file);
             break;
         }
-        case SDL_DROPTEXT:
+        case SDL_EVENT_DROP_TEXT:
             break;
-        case SDL_DROPBEGIN:
+        case SDL_EVENT_DROP_BEGIN:
             cDebug("Something's coming!");
             break;
-        case SDL_DROPCOMPLETE:
+        case SDL_EVENT_DROP_COMPLETE:
             cDebug("Aaaand it's done");
             break;
         }
@@ -1061,29 +1150,38 @@ void MouseInput::start_restricted(proxy_type&, time_point const&)
 
 bool MouseInput::mouseGrabbed() const
 {
-    return SDL_GetRelativeMouseMode();
+    auto window = m_container->service<Windowing>()->m_window;
+    return window ? SDL_GetWindowRelativeMouseMode(window) : false;
 }
 
 void MouseInput::setMouseGrab(bool enabled)
 {
-    SDL_SetRelativeMouseMode(enabled ? SDL_TRUE : SDL_FALSE);
+    if(auto window = m_container->service<Windowing>()->m_window; window)
+        SDL_SetWindowRelativeMouseMode(window, enabled);
 }
 
 comp_app::position_t MouseInput::position() const
 {
-    position_t out;
-    if(SDL_GetRelativeMouseMode())
-        SDL_GetRelativeMouseState(&out.x, &out.y);
-    else
-        SDL_GetMouseState(&out.x, &out.y);
+    /* SDL3 reports mouse position in floats */
+    libc_types::f32 x{0.f}, y{0.f};
 
+    if(mouseGrabbed())
+        SDL_GetRelativeMouseState(&x, &y);
+    else
+        SDL_GetMouseState(&x, &y);
+
+    position_t out;
+    out.x = static_cast<libc_types::i32>(x);
+    out.y = static_cast<libc_types::i32>(y);
     return out;
 }
 
 void MouseInput::warp(const comp_app::position_t& newPos)
 {
     SDL_WarpMouseInWindow(
-        m_container->service<Windowing>()->m_window, newPos.x, newPos.y);
+        m_container->service<Windowing>()->m_window,
+        static_cast<libc_types::f32>(newPos.x),
+        static_cast<libc_types::f32>(newPos.y));
 }
 
 MouseInput::MouseButton MouseInput::buttons() const
@@ -1111,11 +1209,23 @@ void WindowInfo::setName(comp_app::text_type newName)
         m_container->service<Windowing>()->m_window, newName.c_str());
 }
 
-} // namespace sdl2
+} // namespace sdl3
 
-#include <SDL_syswm.h>
+#include <string_view>
 
-namespace sdl2 {
+namespace sdl3 {
+
+namespace {
+
+/* SDL3 names the active backend at runtime, so the handles below no longer
+ * depend on which SDL_VIDEO_DRIVER_* defines SDL happened to be built with */
+bool driver_is(std::string_view name)
+{
+    auto const driver = SDL_GetCurrentVideoDriver();
+    return driver && driver == name;
+}
+
+} // namespace
 
 void getWindow(
     SDL_Window*                                                 window,
@@ -1123,82 +1233,47 @@ void getWindow(
 {
     using namespace comp_app;
 
-    SDL_SysWMinfo windowInfo;
-    SDL_VERSION(&windowInfo.version)
-    SDL_GetWindowWMInfo(window, &windowInfo);
+    auto const props = SDL_GetWindowProperties(window);
 
-    switch(windowInfo.subsystem)
+    if(driver_is("x11"))
     {
-#if defined(COFFEE_LINUX)
-#if defined(SDL_VIDEO_DRIVER_X11)
-    case SDL_SYSWM_X11:
-        info.display = windowInfo.info.x11.display;
-        info.window  = reinterpret_cast<void*>(windowInfo.info.x11.window);
+        info.display = SDL_GetPointerProperty(
+            props, SDL_PROP_WINDOW_X11_DISPLAY_POINTER, nullptr);
+        info.window        = C_RCAST<void*>(C_FCAST<intptr_t>(
+            SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0)));
         info.window_system = ws_t::x11;
-        break;
-#endif
-#if defined(SDL_VIDEO_DRIVER_WAYLAND)
-    case SDL_SYSWM_WAYLAND:
-        info.display = windowInfo.info.wl.display;
-        info.window  = windowInfo.info.wl.egl_window;
-        info.surface = windowInfo.info.wl.surface;
-
+    } else if(driver_is("wayland"))
+    {
+        info.display = SDL_GetPointerProperty(
+            props, SDL_PROP_WINDOW_WAYLAND_DISPLAY_POINTER, nullptr);
+        info.window = SDL_GetPointerProperty(
+            props, SDL_PROP_WINDOW_WAYLAND_EGL_WINDOW_POINTER, nullptr);
+        info.surface = SDL_GetPointerProperty(
+            props, SDL_PROP_WINDOW_WAYLAND_SURFACE_POINTER, nullptr);
         info.window_system = ws_t::wayland;
-        break;
-#endif
-#if defined(SDL_VIDEO_DRIVER_OFFSCREEN)
-    case SDL_SYSWM_KMSDRM:
-        break;
-#endif
-#elif defined(SDL_VIDEO_DRIVER_WINDOWS)
-    case SDL_SYSWM_WINDOWS:
-        info.display = windowInfo.info.win.hdc;
-        info.window  = windowInfo.info.win.window;
-        break;
-#elif defined(SDL_VIDEO_DRIVER_COCOA)
-    case SDL_SYSWM_COCOA:
-        info.display = nullptr;
-        info.window  = windowInfo.info.cocoa.window;
-        break;
-#elif defined(SDL_VIDEO_DRIVER_EMSCRIPTEN)
-        /* There's nothing here? */
-#else
-        static_assert(false, "missing video driver");
-#endif
-    default:
-#if defined(COFFEE_EMSCRIPTEN) // Emscripten does not need this info
-        break;
-#else
+    } else if(driver_is("windows"))
     {
-        // auto subsystem_name = magic_enum::enum_name(windowInfo.subsystem);
-        // Throw(std::runtime_error(
-        //     "no video driver was chosen: " +
-        //     std::string(subsystem_name.begin(), subsystem_name.end())));
-        break;
+        info.display = SDL_GetPointerProperty(
+            props, SDL_PROP_WINDOW_WIN32_HDC_POINTER, nullptr);
+        info.window = SDL_GetPointerProperty(
+            props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr);
+    } else if(driver_is("cocoa"))
+    {
+        info.window = SDL_GetPointerProperty(
+            props, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, nullptr);
     }
-#endif
-    }
+    /* offscreen, emscripten, KMSDRM and dummy expose no handles to hand out */
 }
 
-static ws_t get_wm_selection(SDL_Window* window)
+static ws_t get_wm_selection(SDL_Window*)
 {
-    SDL_SysWMinfo windowInfo;
-    SDL_VERSION(&windowInfo.version)
-    SDL_GetWindowWMInfo(window, &windowInfo);
-
-    switch(windowInfo.subsystem)
-    {
-#if defined(SDL_VIDEO_DRIVER_WAYLAND)
-    case SDL_SYSWM_WAYLAND:
+    if(driver_is("wayland"))
         return ws_t::wayland;
-#endif
-#if defined(SDL_VIDEO_DRIVER_X11)
-    case SDL_SYSWM_X11:
+    if(driver_is("x11"))
         return ws_t::x11;
-#endif
-    default:
-        return ws_t::nullws;
-    }
+    if(driver_is("offscreen"))
+        return ws_t::surfaceless;
+    return ws_t::nullws;
 }
 
-} // namespace sdl2
+} // namespace sdl3

@@ -1,5 +1,5 @@
 if(ANDROID)
-  if(BUILD_SDL2)
+  if(BUILD_SDL3)
     message(FATAL "Invalid configuration")
   endif()
 

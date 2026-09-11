@@ -59,12 +59,12 @@
         },
         {
             "name": "web-wasm32-emscripten-webgl2",
-            "displayName": "Wasm32 for Web + WebGL2 (SDL2)",
+            "displayName": "Wasm32 for Web + WebGL2 (SDL3)",
             "inherits": ["vcpkg-base-emscripten"]
         },
         {
             "name": "web-wasm64-emscripten-webgl2",
-            "displayName": "Wasm64 for Web + WebGL2 (SDL2)",
+            "displayName": "Wasm64 for Web + WebGL2 (SDL3)",
             "inherits": ["vcpkg-base-emscripten64"]
         }
     ],

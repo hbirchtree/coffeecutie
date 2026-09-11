@@ -28,7 +28,7 @@
                 "BUILD_IMGUI": "OFF",
                 "BUILD_LIBOGC": "ON",
                 "BUILD_OPENGL": "OFF",
-                "BUILD_SDL2": "OFF",
+                "BUILD_SDL3": "OFF",
                 "CMAKE_C_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-gcc",
                 "CMAKE_CXX_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-g++",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",

@@ -57,8 +57,8 @@
 #include <coffee/glad/glad_comp.h>
 #endif
 
-#if defined(FEATURE_ENABLE_SDL2Components)
-#include <coffee/sdl2_comp/sdl2_components.h>
+#if defined(FEATURE_ENABLE_SDL3Components)
+#include <coffee/sdl3_comp/sdl3_components.h>
 #endif
 
 #if defined(FEATURE_ENABLE_GLKitComponent)
@@ -122,7 +122,7 @@
     defined(FEATURE_ENABLE_GLADComponent_ESDynamic) ||  \
     defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic) || \
     defined(FEATURE_ENABLE_EGLComponent) ||             \
-    defined(FEATURE_ENABLE_SDL2Components) || USES_LINKED_GL
+    defined(FEATURE_ENABLE_SDL3Components) || USES_LINKED_GL
 #define USES_GL 1
 #endif
 
@@ -497,7 +497,7 @@ void addDefaults(
     enum SelectedWindowLibrary
     {
         Windower_Default,
-        Windower_SDL2,    // The standard
+        Windower_SDL3,    // The standard
         Windower_UIKit,   // iOS
         Windower_ANative, // Android Native
         Windower_EGL,     // EGL-based platforms, eg. NullWS on BeagleBone
@@ -604,22 +604,20 @@ void addDefaults(
     {
         std::map<SelectedWindowLibrary, std::function<void()>>
             windowingCandidates = {
-#if defined(FEATURE_ENABLE_SDL2Components)
-                {Windower_SDL2,
+#if defined(FEATURE_ENABLE_SDL3Components)
+                {Windower_SDL3,
                  [&] -> void {
-                     loader.registerAll<sdl2::Services>(container, ec);
+                     loader.registerAll<sdl3::Services>(container, ec);
                      C_ERROR_CHECK(ec);
-#if !defined(FEATURE_ENABLE_EmscriptenComponents)
-                     /* Controller API in Emscripten is not part of the SDL2
-                      * port */
+                     /* Unlike SDL2, the SDL3 Emscripten port builds the
+                      * joystick backend, so this is registered everywhere */
                      loader.registerAll<
-                         type_safety::type_list_t<sdl2::ControllerInput>>(
+                         type_safety::type_list_t<sdl3::ControllerInput>>(
                          container, ec);
                      C_ERROR_CHECK(ec);
-#endif
                      appInfo.add(
                          "window:library",
-                         "SDL2 " + appInfo.get("sdl2:version"));
+                         "SDL3 " + appInfo.get("sdl3:version"));
                  }},
 #endif
 #if defined(FEATURE_ENABLE_X11Component)
@@ -696,7 +694,7 @@ void addDefaults(
         }
 #endif
 
-#if !defined(FEATURE_ENABLE_SDL2Components) &&    \
+#if !defined(FEATURE_ENABLE_SDL3Components) &&    \
     !defined(FEATURE_ENABLE_X11Component) &&      \
     !defined(FEATURE_ENABLE_GLKitComponent) &&    \
     !defined(FEATURE_ENABLE_ANativeComponent) &&  \
@@ -707,7 +705,8 @@ void addDefaults(
 #endif
     }
 
-#if defined(FEATURE_ENABLE_EmscriptenComponents)
+#if defined(FEATURE_ENABLE_EmscriptenComponents) && \
+    !defined(FEATURE_ENABLE_SDL3Components)
     loader.registerAll<type_safety::type_list_t<emscripten::ControllerInput>>(
         container, ec);
     C_ERROR_CHECK(ec);
@@ -731,9 +730,9 @@ void addDefaults(
         loader.registerAll<emscripten::GLServices>(container, ec);
         C_ERROR_CHECK(ec);
         appInfo.add("gl:context", "Emscripten WebGL");
-#elif defined(FEATURE_ENABLE_SDL2Components)
-        loader.registerAll<sdl2::GLServices>(container, ec);
-        appInfo.add("gl:context", "SDL2");
+#elif defined(FEATURE_ENABLE_SDL3Components)
+        loader.registerAll<sdl3::GLServices>(container, ec);
+        appInfo.add("gl:context", "SDL3");
 #elif defined(FEATURE_ENABLE_EGLComponent)
         loader.registerAll<egl::Services>(container, ec);
         C_ERROR_CHECK(ec);

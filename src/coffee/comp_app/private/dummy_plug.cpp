@@ -98,7 +98,7 @@ platform::url::Url config_url()
     return MkUrl(path, RSCA::AssetFile);
 }
 
-/* Polled controller state, mirroring what a platform layer (SDL2) would
+/* Polled controller state, mirroring what a platform layer (SDL3) would
  * hold. Registered as the comp_app::ControllerInput service before the
  * windowing services load, so it takes the service slot and consumers
  * polling ControllerInput::state() see synthetic state. Injecting
@@ -257,7 +257,7 @@ void queue_input_event(
     }
     case type_t::controller_connect: {
         const auto controller = event.value("index", 0u);
-        /* Seat assignment listens for ControllerConnect (what the SDL2
+        /* Seat assignment listens for ControllerConnect (what the SDL3
          * layer emits), not the atomic update event */
         ievent.type                      = CIEvent::ControllerConnect;
         CIControllerConnectEvent connect = {

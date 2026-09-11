@@ -78,7 +78,7 @@
                 "BUILD_IMGUI": "OFF",
                 "BUILD_MEDIA": "OFF",
                 "BUILD_OPENAL": "OFF",
-                "BUILD_SDL2": "OFF",
+                "BUILD_SDL3": "OFF",
                 "BUILD_TESTS": "OFF",
                 "BUILD_WITH_WERROR": "OFF",
                 "VCPKG_MANIFEST_FEATURES": "pressure-cooker;network",

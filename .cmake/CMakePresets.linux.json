@@ -64,7 +64,7 @@
             "cacheVariables": {
                 "BUILD_EGL": "ON",
                 "BUILD_EGL_DOUBLE_GETPROC": "ON",
-                "BUILD_SDL2": "OFF"
+                "BUILD_SDL3": "OFF"
             }
         },
         {
@@ -84,7 +84,7 @@
                 "CMAKE_CXX_FLAGS": "-march=native",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
                 "MKSQUASH_PROGRAM": "$env{MKSQUASH_PROGRAM}",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl2"
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl3"
             },
             "environment": {
                 "MKSQUASH_PROGRAM": "/usr/bin/mksquash",
@@ -108,7 +108,7 @@
         },
         {
             "name": "desktop-x86_64-buildroot-linux-gnu-multi",
-            "displayName": "Linux x86_64v3 AVX2 Core OpenGL (SDL2)",
+            "displayName": "Linux x86_64v3 AVX2 Core OpenGL (SDL3)",
             "inherits": ["vcpkg-base-linux"],
             "cacheVariables": {
                 "BUILD_DISCORD_RPC": "ON",
@@ -121,18 +121,18 @@
                 "GENERATE_FLATPAK": "ON",
                 "GENERATE_RWIMAGE": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl2",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl3",
                 "VCPKG_TARGET_TRIPLET": "desktop-x86-64-buildroot-linux-gnu"
             },
             "environment": {
                 "ARCHITECTURE": "x86_64-buildroot-linux-gnu",
                 "PLATFORM": "desktop",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl2"
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl3"
             }
         },
         {
             "name": "desktop-x64-linux-multi",
-            "displayName": "Linux x86_64 AVX2 Core OpenGL (SDL2) (System libs)",
+            "displayName": "Linux x86_64 AVX2 Core OpenGL (SDL3) (System libs)",
             "inherits": ["vcpkg-base"],
             "generator": "Ninja",
             "condition": {
@@ -150,7 +150,7 @@
                 "CMAKE_CXX_FLAGS": "-march=native",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl2"
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl3"
             },
             "environment": {
                 "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
@@ -159,14 +159,14 @@
                 "NINJA": "$penv{NINJA}",
                 "TOOLCHAIN_REQUIRED": "1",
                 "PATH": "$penv{PATH}:$env{TOOLCHAIN_ROOT}/bin",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl2",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl3",
                 "VCPKG_INSTALL_DIR": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{ARCHITECTURE}"
 
             }
         },
         {
             "name": "desktop-x86_64v2-buildroot-linux-gnu-multi",
-            "displayName": "Linux x86_64v2 SSE4.2 Core OpenGL (SDL2)",
+            "displayName": "Linux x86_64v2 SSE4.2 Core OpenGL (SDL3)",
             "inherits": ["vcpkg-base-linux"],
             "cacheVariables": {
                 "BUILD_DISCORD_RPC": "ON",
@@ -177,18 +177,18 @@
                 "GENERATE_FLATPAK": "ON",
                 "GENERATE_RWIMAGE": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl2",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl3",
                 "VCPKG_TARGET_TRIPLET": "desktop-x86-64v2-buildroot-linux-gnu"
             },
             "environment": {
                 "ARCHITECTURE": "x86_64-buildroot-linux-gnu",
                 "PLATFORM": "desktop",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl2"
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl3"
             }
         },
         {
             "name": "desktop-aarch64-buildroot-linux-gnu-multi",
-            "displayName": "Linux ARMv8.1 OpenGL ES 3.x (SDL2)",
+            "displayName": "Linux ARMv8.1 OpenGL ES 3.x (SDL3)",
             "inherits": ["vcpkg-base-linux"],
             "cacheVariables": {
                 "BUILD_GLSCREENSHOT": "ON",
@@ -214,7 +214,7 @@
         },
         {
             "name": "desktop-arm-buildroot-linux-gnueabihf-sdl2",
-            "displayName": "Linux ARMv7 OpenGL ES 2.0 (SDL2)",
+            "displayName": "Linux ARMv7 OpenGL ES 2.0 (SDL3)",
             "inherits": ["vcpkg-base-linux-es20"],
             "cacheVariables": {
                 "BUILD_EGL": "OFF",

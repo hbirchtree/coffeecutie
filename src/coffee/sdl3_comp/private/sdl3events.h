@@ -1,10 +1,10 @@
 #pragma once
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <coffee/core/types/display/event.h>
 #include <coffee/core/types/input/event_types.h>
 
-namespace sdl2::translate {
+namespace sdl3::translate {
 using namespace Coffee::Input;
 using namespace Coffee::Display;
 using typing::vector_types::Vecf2;
@@ -24,15 +24,15 @@ EVENT_TRANSLATE(FocusEvent)
 {
     switch(ev.window.type)
     {
-    case SDL_WINDOWEVENT_ENTER:
+    case SDL_EVENT_WINDOW_MOUSE_ENTER:
         return {FocusEvent::Enter};
-    case SDL_WINDOWEVENT_EXPOSED:
+    case SDL_EVENT_WINDOW_EXPOSED:
         return {FocusEvent::Exposed};
-    case SDL_WINDOWEVENT_LEAVE:
+    case SDL_EVENT_WINDOW_MOUSE_LEAVE:
         return {FocusEvent::Leave};
-    case SDL_WINDOWEVENT_FOCUS_LOST:
+    case SDL_EVENT_WINDOW_FOCUS_LOST:
         return {FocusEvent::Leave};
-    case SDL_WINDOWEVENT_FOCUS_GAINED:
+    case SDL_EVENT_WINDOW_FOCUS_GAINED:
         return {FocusEvent::Enter};
     }
     return {};
@@ -54,7 +54,8 @@ EVENT_TRANSLATE(CIKeyEvent)
     CIKeyEvent key;
 
     {
-        auto  sym = ev.key.keysym.sym;
+        /* SDL3 dropped the keysym indirection and renamed sym to key */
+        auto  sym = ev.key.key;
         auto& out = key.key;
 
 #define MAP_KEY(from, to) \
@@ -94,8 +95,8 @@ EVENT_TRANSLATE(CIKeyEvent)
         }
     }
 
-    key.mod |= ev.key.state == SDL_PRESSED ? CIKeyEvent::PressedModifier
-                                           : CIKeyEvent::NoneModifier;
+    key.mod |= ev.key.down ? CIKeyEvent::PressedModifier
+                           : CIKeyEvent::NoneModifier;
 
     key.mod |=
         ev.key.repeat ? CIKeyEvent::RepeatedModifier : CIKeyEvent::NoneModifier;
@@ -110,7 +111,7 @@ EVENT_TRANSLATE(CIMouseButtonEvent)
     CIMouseButtonEvent btn;
 
     btn.pos = Vecf2(ev.button.x, ev.button.y);
-    btn.mod = ev.button.state == SDL_PRESSED ? BTN::Pressed : BTN::NoneModifier;
+    btn.mod = ev.button.down ? BTN::Pressed : BTN::NoneModifier;
 
     switch(ev.button.button)
     {
@@ -162,19 +163,19 @@ EVENT_TRANSLATE(CIControllerAtomicUpdateEvent)
 {
     CIControllerAtomicUpdateEvent out;
 
-    if(ev.type == SDL_CONTROLLERDEVICEADDED ||
-       ev.type == SDL_CONTROLLERDEVICEREMOVED)
+    if(ev.type == SDL_EVENT_GAMEPAD_ADDED ||
+       ev.type == SDL_EVENT_GAMEPAD_REMOVED)
     {
-        auto& device = ev.cdevice;
+        auto& device = ev.gdevice;
 
         out.controller = device.which;
-        out.connected  = device.type != SDL_CONTROLLERDEVICEREMOVED;
-    } else if(ev.type == SDL_JOYDEVICEREMOVED)
+        out.connected  = device.type != SDL_EVENT_GAMEPAD_REMOVED;
+    } else if(ev.type == SDL_EVENT_JOYSTICK_REMOVED)
     {
         auto& joydev = ev.jdevice;
 
         out.controller = joydev.which;
-        out.connected  = joydev.type != SDL_JOYDEVICEREMOVED;
+        out.connected  = joydev.type != SDL_EVENT_JOYSTICK_REMOVED;
     }
 
     return out;
@@ -187,4 +188,4 @@ EVENT_TRANSLATE(CIQuit)
 
 #undef EVENT_TRANSLATE
 
-} // namespace sdl2::translate
+} // namespace sdl3::translate

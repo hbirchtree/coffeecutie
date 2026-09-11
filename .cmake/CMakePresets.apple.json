@@ -75,7 +75,7 @@
         },
         {
             "name": "desktop-x86_64-darwin-macos",
-            "displayName": "Darwin/macOS x86_64 Core OpenGL (SDL2)",
+            "displayName": "Darwin/macOS x86_64 Core OpenGL (SDL3)",
             "inherits": ["vcpkg-base-mac-ninja"],
             "cacheVariables": {
                 "BUILD_DISCORD_RPC": "ON",
@@ -88,7 +88,7 @@
         },
         {
             "name": "desktop-universal-darwin-macos",
-            "displayName": "macOS Universal Core OpenGL (SDL2)",
+            "displayName": "macOS Universal Core OpenGL (SDL3)",
             "inherits": ["vcpkg-base-mac"],
             "cacheVariables": {
                 "BUILD_DISCORD_RPC": "ON",
@@ -101,7 +101,7 @@
         },
         {
             "name": "desktop-universal-darwin-catalyst",
-            "displayName": "macOS Catalyst Core OpenGL (SDL2) (Experimental)",
+            "displayName": "macOS Catalyst Core OpenGL (SDL3) (Experimental)",
             "inherits": ["vcpkg-base-mac"],
             "cacheVariables": {
                 "BUILD_DISCORD_RPC": "ON",
