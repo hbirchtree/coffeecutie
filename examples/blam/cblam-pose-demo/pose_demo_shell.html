@@ -1,29 +1,3 @@
-<!--
-  Shell for BlamPoseDemo's wasm build — based on
-  toolchain/desktop/emscripten/template.html, with webcam capture +
-  MediaPipe Tasks Vision + Kalidokit added to drive the pose_apply dummy-plug
-  bridge (src/coffee/comp_app/private/dummy_plug.cpp:969) every frame.
-
-  Requires the page to be loaded as BlamPoseDemo.html?dummy_plug — that
-  query param is what bundle.cpp:425 checks to enable the DummyEventBus at
-  all; without it coffee_dummy_plug_event has nothing to route to.
-
-  Vendored libraries (MIT/Apache-2.0, see vendor/*/LICENSE if present):
-    vendor/tasks-vision/          — @mediapipe/tasks-vision 1.0.1 (Apache-2.0),
-                                    IIFE bundle exposing the global `Vision`,
-                                    plus its WASM fileset and the
-                                    pose/face .task models
-    vendor/kalidokit/kalidokit.umd.js — kalidokit 1.1.5 (MIT)
-
-  vendor/pose/ holds the superseded @mediapipe/pose Solutions API (frozen
-  upstream since 2023-02). Nothing loads it any more; it is kept only so the
-  migration can be compared against, and is safe to delete.
-
-  Runtime knobs live in configs/*.json, defaulting to configs/cyborg.json and
-  selectable with ?config=<url>. pose_config.cpp reads map/biped/attachments/
-  camera/retarget/animation fps; this shell reads the "pose" section and builds
-  its animation buttons from "animations".
--->
 <!doctype html>
 <html lang="en-us">
 <head>
