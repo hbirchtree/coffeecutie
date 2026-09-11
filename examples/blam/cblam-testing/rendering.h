@@ -171,6 +171,8 @@ struct LoadingScreen
 
     std::optional<compo::time_point> loading_screen_gone_time;
     bool                             was_loading{false};
+    libc_types::u32 frames_since_loaded{0};
+    static constexpr libc_types::u32 scene_frames_before_fade{2};
 };
 
 void alloc_renderer(compo::EntityContainer& container);

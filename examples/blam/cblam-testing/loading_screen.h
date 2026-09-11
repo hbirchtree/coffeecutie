@@ -38,7 +38,7 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
     e.subsystem(screen_clear);
     e.subsystem(status);
 
-    if(status->progress < 0)
+    if(!status->loading)
     {
         if(!was_loading)
             return;
@@ -47,9 +47,12 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
         {
             was_loading = false;
             loading_screen_gone_time.reset();
+            frames_since_loaded = 0;
             return;
         }
-        if(!loading_screen_gone_time.has_value())
+        if(frames_since_loaded < scene_frames_before_fade)
+            frames_since_loaded++;
+        else if(!loading_screen_gone_time.has_value())
             loading_screen_gone_time = time + 2s;
     }
 
@@ -180,10 +183,11 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
             msg);
     }
 
-    if(status->progress < 0)
+    if(!status->loading)
         return;
 
-    was_loading = true;
+    was_loading         = true;
+    frames_since_loaded = 0;
 
     Matf4 transform = glm::translate(
         // glm::scale(glm::identity<Matf4>(), glm::vec3(0.2f)),
