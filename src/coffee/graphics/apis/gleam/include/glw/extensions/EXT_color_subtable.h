@@ -34,8 +34,7 @@ STATICINLINE void color_sub_table(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glColorSubTableEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         target,
         start,
         count,

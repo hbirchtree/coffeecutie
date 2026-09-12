@@ -48,8 +48,7 @@ STATICINLINE void get_object_label(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetObjectLabelEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(label.data()), label.size_bytes()),
+        ::glw::trace::byte_span(label),
         type,
         object,
         length);

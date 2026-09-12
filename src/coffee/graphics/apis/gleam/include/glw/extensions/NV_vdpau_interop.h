@@ -59,10 +59,8 @@ STATICINLINE void vdpau_get_surfaceiv(
         glVDPAUGetSurfaceivNV,
         surface,
         pname,
-        gsl::span<char>(
-            reinterpret_cast<char*>(length.data()), length.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(values.data()), values.size_bytes()));
+        ::glw::trace::byte_span(length),
+        ::glw::trace::byte_span(values));
 #endif
     glVDPAUGetSurfaceivNV(
         surface,
@@ -94,12 +92,8 @@ STATICINLINE void vdpau_init(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glVDPAUInitNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(vdpDevice.data()),
-            vdpDevice.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(getProcAddress.data()),
-            getProcAddress.size_bytes()));
+        ::glw::trace::byte_span(vdpDevice),
+        ::glw::trace::byte_span(getProcAddress));
 #endif
     glVDPAUInitNV(
         vdpDevice.size() ? reinterpret_cast<const void*>(vdpDevice.data())
@@ -154,10 +148,7 @@ STATICINLINE void vdpau_map_surfaces(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVDPAUMapSurfacesNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(surfaces.data()),
-            surfaces.size_bytes()));
+        glVDPAUMapSurfacesNV, ::glw::trace::byte_span(surfaces));
 #endif
     glVDPAUMapSurfacesNV(
         surfaces.size(),
@@ -195,13 +186,9 @@ STATICINLINE GLvdpauSurfaceNV vdpau_register_output_surface(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glVDPAURegisterOutputSurfaceNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(vdpSurface.data()),
-            vdpSurface.size_bytes()),
+        ::glw::trace::byte_span(vdpSurface),
         target,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(textureNames.data()),
-            textureNames.size_bytes()));
+        ::glw::trace::byte_span(textureNames));
 #endif
     auto out = glVDPAURegisterOutputSurfaceNV(
         vdpSurface.size() ? reinterpret_cast<const void*>(vdpSurface.data())
@@ -243,13 +230,9 @@ STATICINLINE GLvdpauSurfaceNV vdpau_register_video_surface(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glVDPAURegisterVideoSurfaceNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(vdpSurface.data()),
-            vdpSurface.size_bytes()),
+        ::glw::trace::byte_span(vdpSurface),
         target,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(textureNames.data()),
-            textureNames.size_bytes()));
+        ::glw::trace::byte_span(textureNames));
 #endif
     auto out = glVDPAURegisterVideoSurfaceNV(
         vdpSurface.size() ? reinterpret_cast<const void*>(vdpSurface.data())
@@ -309,10 +292,7 @@ STATICINLINE void vdpau_unmap_surfaces(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVDPAUUnmapSurfacesNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(surfaces.data()),
-            surfaces.size_bytes()));
+        glVDPAUUnmapSurfacesNV, ::glw::trace::byte_span(surfaces));
 #endif
     glVDPAUUnmapSurfacesNV(
         surfaces.size(),

@@ -200,9 +200,7 @@ STATICINLINE void get_active_uniform_block_name(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveUniformBlockName,
-        gsl::span<char>(
-            reinterpret_cast<char*>(uniformBlockName.data()),
-            uniformBlockName.size_bytes()),
+        ::glw::trace::byte_span(uniformBlockName),
         program,
         uniformBlockIndex,
         length);
@@ -250,8 +248,7 @@ STATICINLINE void get_active_uniform_blockiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveUniformBlockiv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         program,
         uniformBlockIndex,
         pname);
@@ -299,9 +296,7 @@ STATICINLINE void get_active_uniform_name(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveUniformName,
-        gsl::span<char>(
-            reinterpret_cast<char*>(uniformName.data()),
-            uniformName.size_bytes()),
+        ::glw::trace::byte_span(uniformName),
         program,
         uniformIndex,
         length);
@@ -351,12 +346,9 @@ STATICINLINE void get_active_uniformsiv(
     GLW_FPTR_TRACE(
         glGetActiveUniformsiv,
         program,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(uniformIndices.data()),
-            uniformIndices.size_bytes()),
+        ::glw::trace::byte_span(uniformIndices),
         pname,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()));
+        ::glw::trace::byte_span(params));
 #endif
     glGetActiveUniformsiv(
         program,
@@ -436,9 +428,7 @@ STATICINLINE void get_uniform_indices(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetUniformIndices,
-        gsl::span<char>(
-            reinterpret_cast<char*>(uniformIndices.data()),
-            uniformIndices.size_bytes()),
+        ::glw::trace::byte_span(uniformIndices),
         program,
         uniformCount,
         uniformNames);

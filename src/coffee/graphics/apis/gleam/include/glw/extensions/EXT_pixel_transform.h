@@ -42,8 +42,7 @@ STATICINLINE void get_pixel_transform_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPixelTransformParameterfvEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -80,8 +79,7 @@ STATICINLINE void get_pixel_transform_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPixelTransformParameterivEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -145,8 +143,7 @@ STATICINLINE void pixel_transform_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPixelTransformParameterfvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -211,8 +208,7 @@ STATICINLINE void pixel_transform_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPixelTransformParameterivEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif

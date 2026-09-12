@@ -35,12 +35,8 @@ STATICINLINE void client_wait_semaphoreui64(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glClientWaitSemaphoreui64NVX,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(semaphoreArray.data()),
-            semaphoreArray.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(fenceValueArray.data()),
-            fenceValueArray.size_bytes()));
+        ::glw::trace::byte_span(semaphoreArray),
+        ::glw::trace::byte_span(fenceValueArray));
 #endif
     glClientWaitSemaphoreui64NVX(
         semaphoreArray.size(),
@@ -107,12 +103,8 @@ STATICINLINE void signal_semaphoreui64(
     GLW_FPTR_TRACE(
         glSignalSemaphoreui64NVX,
         signalGpu,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(semaphoreArray.data()),
-            semaphoreArray.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(fenceValueArray.data()),
-            fenceValueArray.size_bytes()));
+        ::glw::trace::byte_span(semaphoreArray),
+        ::glw::trace::byte_span(fenceValueArray));
 #endif
     glSignalSemaphoreui64NVX(
         signalGpu,
@@ -159,12 +151,8 @@ STATICINLINE void wait_semaphoreui64(
     GLW_FPTR_TRACE(
         glWaitSemaphoreui64NVX,
         waitGpu,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(semaphoreArray.data()),
-            semaphoreArray.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(fenceValueArray.data()),
-            fenceValueArray.size_bytes()));
+        ::glw::trace::byte_span(semaphoreArray),
+        ::glw::trace::byte_span(fenceValueArray));
 #endif
     glWaitSemaphoreui64NVX(
         waitGpu,

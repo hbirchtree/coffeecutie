@@ -35,8 +35,7 @@ STATICINLINE void uniform(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix2x3fvNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        ::glw::trace::byte_span(value),
         location,
         transpose);
 #endif
@@ -74,8 +73,7 @@ STATICINLINE void uniform(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix2x4fvNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        ::glw::trace::byte_span(value),
         location,
         transpose);
 #endif
@@ -113,8 +111,7 @@ STATICINLINE void uniform(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix3x2fvNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        ::glw::trace::byte_span(value),
         location,
         transpose);
 #endif
@@ -152,8 +149,7 @@ STATICINLINE void uniform(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix3x4fvNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        ::glw::trace::byte_span(value),
         location,
         transpose);
 #endif
@@ -191,8 +187,7 @@ STATICINLINE void uniform(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix4x2fvNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        ::glw::trace::byte_span(value),
         location,
         transpose);
 #endif
@@ -230,8 +225,7 @@ STATICINLINE void uniform(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix4x3fvNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        ::glw::trace::byte_span(value),
         location,
         transpose);
 #endif

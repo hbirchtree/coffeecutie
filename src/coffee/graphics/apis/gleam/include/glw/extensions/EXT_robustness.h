@@ -71,8 +71,7 @@ STATICINLINE void getn_uniformfv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetnUniformfvEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         program,
         location,
         bufSize);
@@ -118,8 +117,7 @@ STATICINLINE void getn_uniformiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetnUniformivEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         program,
         location,
         bufSize);
@@ -164,8 +162,7 @@ STATICINLINE void readn_pixels(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glReadnPixelsEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         x,
         width,
         format,

@@ -32,12 +32,7 @@ STATICINLINE void color_pointerv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glColorPointervINTEL,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
-        size,
-        type);
+        glColorPointervINTEL, ::glw::trace::byte_span(pointer), size, type);
 #endif
     glColorPointervINTEL(
         size,
@@ -67,11 +62,7 @@ STATICINLINE void normal_pointerv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glNormalPointervINTEL,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
-        type);
+        glNormalPointervINTEL, ::glw::trace::byte_span(pointer), type);
 #endif
     glNormalPointervINTEL(
         static_cast<GLenum>(type),
@@ -102,12 +93,7 @@ STATICINLINE void tex_coord_pointerv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glTexCoordPointervINTEL,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
-        size,
-        type);
+        glTexCoordPointervINTEL, ::glw::trace::byte_span(pointer), size, type);
 #endif
     glTexCoordPointervINTEL(
         size,
@@ -139,12 +125,7 @@ STATICINLINE void vertex_pointerv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexPointervINTEL,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
-        size,
-        type);
+        glVertexPointervINTEL, ::glw::trace::byte_span(pointer), size, type);
 #endif
     glVertexPointervINTEL(
         size,

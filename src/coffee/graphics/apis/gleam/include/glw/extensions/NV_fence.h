@@ -32,10 +32,7 @@ STATICINLINE void delete_fences(
         GLW_FPTR_CHECK(DeleteFencesNV)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glDeleteFencesNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(fences.data()), fences.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glDeleteFencesNV, ::glw::trace::byte_span(fences));
 #endif
     glDeleteFencesNV(
         fences.size(),
@@ -84,10 +81,7 @@ STATICINLINE void gen_fences(
         GLW_FPTR_CHECK(GenFencesNV)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGenFencesNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(fences.data()), fences.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glGenFencesNV, ::glw::trace::byte_span(fences));
 #endif
     glGenFencesNV(
         fences.size(),
@@ -120,11 +114,7 @@ STATICINLINE void get_fenceiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetFenceivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        fence,
-        pname);
+        glGetFenceivNV, ::glw::trace::byte_span(params), fence, pname);
 #endif
     glGetFenceivNV(
         fence,

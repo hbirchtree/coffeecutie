@@ -46,9 +46,7 @@ STATICINLINE void vertex_weight_pointer(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexWeightPointerEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
+        ::glw::trace::byte_span(pointer),
         size,
         type,
         stride);
@@ -102,10 +100,7 @@ STATICINLINE void vertex_weightfv(
         GLW_FPTR_CHECK(VertexWeightfvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glVertexWeightfvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(weight.data()), weight.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glVertexWeightfvEXT, ::glw::trace::byte_span(weight));
 #endif
     glVertexWeightfvEXT(
         weight.size() ? reinterpret_cast<const GLfloat*>(weight.data())

@@ -108,8 +108,7 @@ STATICINLINE void get_query_indexediv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetQueryIndexediv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index,
         pname);

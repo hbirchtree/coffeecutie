@@ -132,8 +132,7 @@ STATICINLINE void multicast_buffer_sub_data(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMulticastBufferSubDataNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         gpuMask,
         buffer,
         offset,
@@ -320,8 +319,7 @@ STATICINLINE void multicast_framebuffer_sample_locationsfv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMulticastFramebufferSampleLocationsfvNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        ::glw::trace::byte_span(v),
         gpu,
         framebuffer,
         start,
@@ -365,8 +363,7 @@ STATICINLINE void multicast_get_query_objecti64v(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMulticastGetQueryObjecti64vNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         gpu,
         id,
         pname);
@@ -407,8 +404,7 @@ STATICINLINE void multicast_get_query_objectiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMulticastGetQueryObjectivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         gpu,
         id,
         pname);
@@ -449,8 +445,7 @@ STATICINLINE void multicast_get_query_objectui64v(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMulticastGetQueryObjectui64vNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         gpu,
         id,
         pname);
@@ -491,8 +486,7 @@ STATICINLINE void multicast_get_query_objectuiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMulticastGetQueryObjectuivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         gpu,
         id,
         pname);

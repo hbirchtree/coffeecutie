@@ -75,10 +75,7 @@ STATICINLINE void patch_parameter(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glPatchParameterfv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(values.data()), values.size_bytes()),
-        pname);
+        glPatchParameterfv, ::glw::trace::byte_span(values), pname);
 #endif
     glPatchParameterfv(
         static_cast<GLenum>(pname),

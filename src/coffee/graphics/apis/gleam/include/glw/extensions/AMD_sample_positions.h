@@ -32,11 +32,7 @@ STATICINLINE void set_multisamplefv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glSetMultisamplefvAMD,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(val.data()), val.size_bytes()),
-        pname,
-        index);
+        glSetMultisamplefvAMD, ::glw::trace::byte_span(val), pname, index);
 #endif
     glSetMultisamplefvAMD(
         pname,

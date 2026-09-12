@@ -50,8 +50,7 @@ STATICINLINE void convolution_filter_1d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glConvolutionFilter1DEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(image.data()), image.size_bytes()),
+        ::glw::trace::byte_span(image),
         target,
         internalformat,
         width,
@@ -98,8 +97,7 @@ STATICINLINE void convolution_filter_2d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glConvolutionFilter2DEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(image.data()), image.size_bytes()),
+        ::glw::trace::byte_span(image),
         target,
         internalformat,
         width,
@@ -170,8 +168,7 @@ STATICINLINE void convolution_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glConvolutionParameterfvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -236,8 +233,7 @@ STATICINLINE void convolution_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glConvolutionParameterivEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -349,8 +345,7 @@ STATICINLINE void get_convolution_filter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetConvolutionFilterEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(image.data()), image.size_bytes()),
+        ::glw::trace::byte_span(image),
         target,
         format,
         type);
@@ -389,8 +384,7 @@ STATICINLINE void get_convolution_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetConvolutionParameterfvEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -427,8 +421,7 @@ STATICINLINE void get_convolution_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetConvolutionParameterivEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -471,11 +464,9 @@ STATICINLINE void get_separable_filter(
         target,
         format,
         type,
-        gsl::span<char>(reinterpret_cast<char*>(row.data()), row.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(column.data()), column.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(span.data()), span.size_bytes()));
+        ::glw::trace::byte_span(row),
+        ::glw::trace::byte_span(column),
+        ::glw::trace::byte_span(span));
 #endif
     glGetSeparableFilterEXT(
         static_cast<GLenum>(target),
@@ -524,10 +515,8 @@ STATICINLINE void separable_filter_2d(
         width,
         format,
         type,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(row.data()), row.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(column.data()), column.size_bytes()));
+        ::glw::trace::byte_span(row),
+        ::glw::trace::byte_span(column));
 #endif
     glSeparableFilter2DEXT(
         static_cast<GLenum>(target),

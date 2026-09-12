@@ -90,8 +90,7 @@ STATICINLINE void get_shader_precision_format(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetShaderPrecisionFormat,
-        gsl::span<char>(
-            reinterpret_cast<char*>(range.data()), range.size_bytes()),
+        ::glw::trace::byte_span(range),
         shadertype,
         precisiontype,
         precision);
@@ -155,12 +154,9 @@ STATICINLINE void shader_binary(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glShaderBinary,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(shaders.data()),
-            shaders.size_bytes()),
+        ::glw::trace::byte_span(shaders),
         binaryFormat,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(binary.data()), binary.size_bytes()),
+        ::glw::trace::byte_span(binary),
         length);
 #endif
     glShaderBinary(

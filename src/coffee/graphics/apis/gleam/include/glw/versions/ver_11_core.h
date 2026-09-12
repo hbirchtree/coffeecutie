@@ -219,11 +219,7 @@ STATICINLINE void delete_textures(
         GLW_FPTR_CHECK(DeleteTextures)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glDeleteTextures,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(textures.data()),
-            textures.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glDeleteTextures, ::glw::trace::byte_span(textures));
 #endif
     glDeleteTextures(
         textures.size(),
@@ -313,10 +309,7 @@ STATICINLINE void gen_textures(
         GLW_FPTR_CHECK(GenTextures)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGenTextures,
-        gsl::span<char>(
-            reinterpret_cast<char*>(textures.data()), textures.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glGenTextures, ::glw::trace::byte_span(textures));
 #endif
     glGenTextures(
         textures.size(),
@@ -407,8 +400,7 @@ STATICINLINE void tex_sub_image_1d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexSubImage1D,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        ::glw::trace::byte_span(pixels),
         target,
         level,
         xoffset,
@@ -463,8 +455,7 @@ STATICINLINE void tex_sub_image_2d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexSubImage2D,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        ::glw::trace::byte_span(pixels),
         target,
         level,
         xoffset,

@@ -120,11 +120,7 @@ STATICINLINE void debug_message_callback(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glDebugMessageCallback,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(userParam.data()),
-            userParam.size_bytes()),
-        callback);
+        glDebugMessageCallback, ::glw::trace::byte_span(userParam), callback);
 #endif
     glDebugMessageCallback(
         callback,
@@ -167,8 +163,7 @@ STATICINLINE void debug_message_control(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDebugMessageControl,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()),
+        ::glw::trace::byte_span(ids),
         source,
         type,
         severity,
@@ -287,19 +282,12 @@ STATICINLINE GLuint get_debug_message_log(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glGetDebugMessageLog,
-        gsl::span<char>(
-            reinterpret_cast<char*>(sources.data()), sources.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(types.data()), types.size_bytes()),
-        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(severities.data()),
-            severities.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(lengths.data()), lengths.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(messageLog.data()),
-            messageLog.size_bytes()));
+        ::glw::trace::byte_span(sources),
+        ::glw::trace::byte_span(types),
+        ::glw::trace::byte_span(ids),
+        ::glw::trace::byte_span(severities),
+        ::glw::trace::byte_span(lengths),
+        ::glw::trace::byte_span(messageLog));
 #endif
     auto out = glGetDebugMessageLog(
         sources.size(),
@@ -347,8 +335,7 @@ STATICINLINE void get_object_label(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetObjectLabel,
-        gsl::span<char>(
-            reinterpret_cast<char*>(label.data()), label.size_bytes()),
+        ::glw::trace::byte_span(label),
         identifier,
         name,
         length);
@@ -392,11 +379,9 @@ STATICINLINE void get_object_ptr_label(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glGetObjectPtrLabel,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(ptr.data()), ptr.size_bytes()),
+        ::glw::trace::byte_span(ptr),
         length,
-        gsl::span<char>(
-            reinterpret_cast<char*>(label.data()), label.size_bytes()));
+        ::glw::trace::byte_span(label));
 #endif
     glGetObjectPtrLabel(
         ptr.size() ? reinterpret_cast<const void*>(ptr.data()) : nullptr,
@@ -427,11 +412,7 @@ STATICINLINE void get_pointerv(
         GLW_FPTR_CHECK(GetPointerv)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGetPointerv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        pname);
+    GLW_FPTR_TRACE_DATA(glGetPointerv, ::glw::trace::byte_span(params), pname);
 #endif
     glGetPointerv(
         static_cast<GLenum>(pname),
@@ -492,11 +473,7 @@ STATICINLINE void object_ptr_label(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glObjectPtrLabel,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(ptr.data()), ptr.size_bytes()),
-        length,
-        label);
+        glObjectPtrLabel, ::glw::trace::byte_span(ptr), length, label);
 #endif
     glObjectPtrLabel(
         ptr.size() ? reinterpret_cast<const void*>(ptr.data()) : nullptr,
@@ -578,9 +555,7 @@ STATICINLINE void debug_message_callback(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDebugMessageCallbackKHR,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(userParam.data()),
-            userParam.size_bytes()),
+        ::glw::trace::byte_span(userParam),
         callback);
 #endif
     glDebugMessageCallbackKHR(
@@ -625,8 +600,7 @@ STATICINLINE void debug_message_control(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDebugMessageControlKHR,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()),
+        ::glw::trace::byte_span(ids),
         source,
         type,
         severity,
@@ -746,19 +720,12 @@ STATICINLINE GLuint get_debug_message_log(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glGetDebugMessageLogKHR,
-        gsl::span<char>(
-            reinterpret_cast<char*>(sources.data()), sources.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(types.data()), types.size_bytes()),
-        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(severities.data()),
-            severities.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(lengths.data()), lengths.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(messageLog.data()),
-            messageLog.size_bytes()));
+        ::glw::trace::byte_span(sources),
+        ::glw::trace::byte_span(types),
+        ::glw::trace::byte_span(ids),
+        ::glw::trace::byte_span(severities),
+        ::glw::trace::byte_span(lengths),
+        ::glw::trace::byte_span(messageLog));
 #endif
     auto out = glGetDebugMessageLogKHR(
         sources.size(),
@@ -806,8 +773,7 @@ STATICINLINE void get_object_label(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetObjectLabelKHR,
-        gsl::span<char>(
-            reinterpret_cast<char*>(label.data()), label.size_bytes()),
+        ::glw::trace::byte_span(label),
         identifier,
         name,
         length);
@@ -846,11 +812,9 @@ STATICINLINE void get_object_ptr_label(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glGetObjectPtrLabelKHR,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(ptr.data()), ptr.size_bytes()),
+        ::glw::trace::byte_span(ptr),
         length,
-        gsl::span<char>(
-            reinterpret_cast<char*>(label.data()), label.size_bytes()));
+        ::glw::trace::byte_span(label));
 #endif
     glGetObjectPtrLabelKHR(
         ptr.size() ? reinterpret_cast<const void*>(ptr.data()) : nullptr,
@@ -880,10 +844,7 @@ STATICINLINE void get_pointerv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetPointervKHR,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        pname);
+        glGetPointervKHR, ::glw::trace::byte_span(params), pname);
 #endif
     glGetPointervKHR(
         pname,
@@ -945,11 +906,7 @@ STATICINLINE void object_ptr_label(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glObjectPtrLabelKHR,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(ptr.data()), ptr.size_bytes()),
-        length,
-        label);
+        glObjectPtrLabelKHR, ::glw::trace::byte_span(ptr), length, label);
 #endif
     glObjectPtrLabelKHR(
         ptr.size() ? reinterpret_cast<const void*>(ptr.data()) : nullptr,

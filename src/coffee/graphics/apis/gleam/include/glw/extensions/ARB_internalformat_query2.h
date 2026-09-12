@@ -111,8 +111,7 @@ STATICINLINE void get_internalformati64v(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetInternalformati64v,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         internalformat,
         pname);

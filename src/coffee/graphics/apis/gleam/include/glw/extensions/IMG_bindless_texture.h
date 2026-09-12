@@ -126,8 +126,7 @@ STATICINLINE void program_uniform_handle(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniformHandleui64vIMG,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(values.data()), values.size_bytes()),
+        ::glw::trace::byte_span(values),
         program,
         location);
 #endif
@@ -186,10 +185,7 @@ STATICINLINE void uniform_handle(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glUniformHandleui64vIMG,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        location);
+        glUniformHandleui64vIMG, ::glw::trace::byte_span(value), location);
 #endif
     glUniformHandleui64vIMG(
         location,

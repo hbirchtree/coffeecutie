@@ -64,8 +64,7 @@ STATICINLINE void framebuffer_sample_locationsfv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glFramebufferSampleLocationsfvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        ::glw::trace::byte_span(v),
         target,
         start,
         count);
@@ -112,8 +111,7 @@ STATICINLINE void named_framebuffer_sample_locationsfv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glNamedFramebufferSampleLocationsfvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        ::glw::trace::byte_span(v),
         framebuffer,
         start,
         count);

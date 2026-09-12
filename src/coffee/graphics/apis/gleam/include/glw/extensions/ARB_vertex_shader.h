@@ -95,8 +95,7 @@ STATICINLINE void bind_attrib_location(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBindAttribLocationARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(name.data()), name.size_bytes()),
+        ::glw::trace::byte_span(name),
         programObj,
         index);
 #endif
@@ -182,8 +181,7 @@ STATICINLINE void get_active_attrib(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveAttribARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(name.data()), name.size_bytes()),
+        ::glw::trace::byte_span(name),
         programObj,
         index,
         length,
@@ -225,10 +223,7 @@ STATICINLINE GLint get_attrib_location(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetAttribLocationARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(name.data()), name.size_bytes()),
-        programObj);
+        glGetAttribLocationARB, ::glw::trace::byte_span(name), programObj);
 #endif
     auto out = glGetAttribLocationARB(
         programObj,
@@ -261,8 +256,7 @@ STATICINLINE void get_vertex_attrib_pointerv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVertexAttribPointervARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(pointer.data()), pointer.size_bytes()),
+        ::glw::trace::byte_span(pointer),
         index,
         pname);
 #endif
@@ -298,11 +292,7 @@ STATICINLINE void get_vertex_attribdv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetVertexAttribdvARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        index,
-        pname);
+        glGetVertexAttribdvARB, ::glw::trace::byte_span(params), index, pname);
 #endif
     glGetVertexAttribdvARB(
         index,
@@ -336,11 +326,7 @@ STATICINLINE void get_vertex_attribfv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetVertexAttribfvARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        index,
-        pname);
+        glGetVertexAttribfvARB, ::glw::trace::byte_span(params), index, pname);
 #endif
     glGetVertexAttribfvARB(
         index,
@@ -374,11 +360,7 @@ STATICINLINE void get_vertex_attribiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetVertexAttribivARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        index,
-        pname);
+        glGetVertexAttribivARB, ::glw::trace::byte_span(params), index, pname);
 #endif
     glGetVertexAttribivARB(
         index,
@@ -432,10 +414,7 @@ STATICINLINE void vertex_attrib1dv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib1dvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib1dvARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib1dvARB(index, reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("VertexAttrib1dvARB"sv, check_errors);
@@ -486,10 +465,7 @@ STATICINLINE void vertex_attrib1fv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib1fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib1fvARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib1fvARB(index, reinterpret_cast<const GLfloat*>(v.data()));
     detail::error_check("VertexAttrib1fvARB"sv, check_errors);
@@ -540,10 +516,7 @@ STATICINLINE void vertex_attrib1sv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib1svARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib1svARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib1svARB(index, reinterpret_cast<const GLshort*>(v.data()));
     detail::error_check("VertexAttrib1svARB"sv, check_errors);
@@ -595,10 +568,7 @@ STATICINLINE void vertex_attrib2dv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib2dvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib2dvARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib2dvARB(index, reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("VertexAttrib2dvARB"sv, check_errors);
@@ -650,10 +620,7 @@ STATICINLINE void vertex_attrib2fv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib2fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib2fvARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib2fvARB(index, reinterpret_cast<const GLfloat*>(v.data()));
     detail::error_check("VertexAttrib2fvARB"sv, check_errors);
@@ -705,10 +672,7 @@ STATICINLINE void vertex_attrib2sv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib2svARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib2svARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib2svARB(index, reinterpret_cast<const GLshort*>(v.data()));
     detail::error_check("VertexAttrib2svARB"sv, check_errors);
@@ -761,10 +725,7 @@ STATICINLINE void vertex_attrib3dv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib3dvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib3dvARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib3dvARB(index, reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("VertexAttrib3dvARB"sv, check_errors);
@@ -817,10 +778,7 @@ STATICINLINE void vertex_attrib3fv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib3fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib3fvARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib3fvARB(index, reinterpret_cast<const GLfloat*>(v.data()));
     detail::error_check("VertexAttrib3fvARB"sv, check_errors);
@@ -873,10 +831,7 @@ STATICINLINE void vertex_attrib3sv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib3svARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib3svARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib3svARB(index, reinterpret_cast<const GLshort*>(v.data()));
     detail::error_check("VertexAttrib3svARB"sv, check_errors);
@@ -906,10 +861,7 @@ STATICINLINE void vertex_attrib4_nbv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib4NbvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib4NbvARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib4NbvARB(
         index, v.size() ? reinterpret_cast<const GLbyte*>(v.data()) : nullptr);
@@ -940,10 +892,7 @@ STATICINLINE void vertex_attrib4_niv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib4NivARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib4NivARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib4NivARB(
         index, v.size() ? reinterpret_cast<const GLint*>(v.data()) : nullptr);
@@ -974,10 +923,7 @@ STATICINLINE void vertex_attrib4_nsv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib4NsvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib4NsvARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib4NsvARB(
         index, v.size() ? reinterpret_cast<const GLshort*>(v.data()) : nullptr);
@@ -1034,10 +980,7 @@ STATICINLINE void vertex_attrib4_nubv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib4NubvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib4NubvARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib4NubvARB(
         index, v.size() ? reinterpret_cast<const GLubyte*>(v.data()) : nullptr);
@@ -1068,10 +1011,7 @@ STATICINLINE void vertex_attrib4_nuiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib4NuivARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib4NuivARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib4NuivARB(
         index, v.size() ? reinterpret_cast<const GLuint*>(v.data()) : nullptr);
@@ -1102,10 +1042,7 @@ STATICINLINE void vertex_attrib4_nusv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib4NusvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib4NusvARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib4NusvARB(
         index,
@@ -1137,10 +1074,7 @@ STATICINLINE void vertex_attrib4bv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib4bvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib4bvARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib4bvARB(
         index, v.size() ? reinterpret_cast<const GLbyte*>(v.data()) : nullptr);
@@ -1195,10 +1129,7 @@ STATICINLINE void vertex_attrib4dv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib4dvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib4dvARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib4dvARB(index, reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("VertexAttrib4dvARB"sv, check_errors);
@@ -1252,10 +1183,7 @@ STATICINLINE void vertex_attrib4fv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib4fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib4fvARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib4fvARB(index, reinterpret_cast<const GLfloat*>(v.data()));
     detail::error_check("VertexAttrib4fvARB"sv, check_errors);
@@ -1283,10 +1211,7 @@ STATICINLINE void vertex_attrib4iv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib4ivARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib4ivARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib4ivARB(index, reinterpret_cast<const GLint*>(v.data()));
     detail::error_check("VertexAttrib4ivARB"sv, check_errors);
@@ -1340,10 +1265,7 @@ STATICINLINE void vertex_attrib4sv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib4svARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib4svARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib4svARB(index, reinterpret_cast<const GLshort*>(v.data()));
     detail::error_check("VertexAttrib4svARB"sv, check_errors);
@@ -1373,10 +1295,7 @@ STATICINLINE void vertex_attrib4ubv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib4ubvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib4ubvARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib4ubvARB(
         index, v.size() ? reinterpret_cast<const GLubyte*>(v.data()) : nullptr);
@@ -1405,10 +1324,7 @@ STATICINLINE void vertex_attrib4uiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib4uivARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib4uivARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib4uivARB(index, reinterpret_cast<const GLuint*>(v.data()));
     detail::error_check("VertexAttrib4uivARB"sv, check_errors);
@@ -1436,10 +1352,7 @@ STATICINLINE void vertex_attrib4usv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttrib4usvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttrib4usvARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttrib4usvARB(index, reinterpret_cast<const GLushort*>(v.data()));
     detail::error_check("VertexAttrib4usvARB"sv, check_errors);
@@ -1474,9 +1387,7 @@ STATICINLINE void vertex_attrib_pointer(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribPointerARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
+        ::glw::trace::byte_span(pointer),
         index,
         size,
         type,

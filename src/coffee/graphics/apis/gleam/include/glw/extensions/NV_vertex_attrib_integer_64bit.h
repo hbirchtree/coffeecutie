@@ -38,8 +38,7 @@ STATICINLINE void get_vertex_attrib_li64v(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVertexAttribLi64vNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         index,
         pname);
 #endif
@@ -77,8 +76,7 @@ STATICINLINE void get_vertex_attrib_lui64v(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVertexAttribLui64vNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         index,
         pname);
 #endif
@@ -135,10 +133,7 @@ STATICINLINE void vertex_attrib_l1i64v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttribL1i64vNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttribL1i64vNV, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttribL1i64vNV(
         index, reinterpret_cast<const GLint64EXT*>(v.data()));
@@ -190,10 +185,7 @@ STATICINLINE void vertex_attrib_l1ui64v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttribL1ui64vNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttribL1ui64vNV, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttribL1ui64vNV(
         index, reinterpret_cast<const GLuint64EXT*>(v.data()));
@@ -249,10 +241,7 @@ STATICINLINE void vertex_attrib_l2i64v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttribL2i64vNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttribL2i64vNV, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttribL2i64vNV(
         index, reinterpret_cast<const GLint64EXT*>(v.data()));
@@ -310,10 +299,7 @@ STATICINLINE void vertex_attrib_l2ui64v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttribL2ui64vNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttribL2ui64vNV, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttribL2ui64vNV(
         index, reinterpret_cast<const GLuint64EXT*>(v.data()));
@@ -370,10 +356,7 @@ STATICINLINE void vertex_attrib_l3i64v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttribL3i64vNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttribL3i64vNV, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttribL3i64vNV(
         index, reinterpret_cast<const GLint64EXT*>(v.data()));
@@ -432,10 +415,7 @@ STATICINLINE void vertex_attrib_l3ui64v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttribL3ui64vNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttribL3ui64vNV, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttribL3ui64vNV(
         index, reinterpret_cast<const GLuint64EXT*>(v.data()));
@@ -493,10 +473,7 @@ STATICINLINE void vertex_attrib_l4i64v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttribL4i64vNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttribL4i64vNV, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttribL4i64vNV(
         index, reinterpret_cast<const GLint64EXT*>(v.data()));
@@ -556,10 +533,7 @@ STATICINLINE void vertex_attrib_l4ui64v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttribL4ui64vNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttribL4ui64vNV, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttribL4ui64vNV(
         index, reinterpret_cast<const GLuint64EXT*>(v.data()));

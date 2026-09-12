@@ -197,8 +197,7 @@ STATICINLINE void get_transform_feedback_varying(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetTransformFeedbackVaryingEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(name.data()), name.size_bytes()),
+        ::glw::trace::byte_span(name),
         program,
         index,
         length,

@@ -23,11 +23,7 @@ STATICINLINE void buffer_storage(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glBufferStorage,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
-        target,
-        flags);
+        glBufferStorage, ::glw::trace::byte_span(data), target, flags);
 #endif
     glBufferStorage(
         static_cast<GLenum>(target),
@@ -71,8 +67,7 @@ STATICINLINE void clear_tex_image(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glClearTexImage,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         texture,
         level,
         format,
@@ -130,8 +125,7 @@ STATICINLINE void clear_tex_sub_image(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glClearTexSubImage,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         texture,
         level,
         xoffset,
@@ -181,12 +175,7 @@ STATICINLINE void bind_buffers_base(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glBindBuffersBase,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(buffers.data()),
-            buffers.size_bytes()),
-        target,
-        first);
+        glBindBuffersBase, ::glw::trace::byte_span(buffers), target, first);
 #endif
     glBindBuffersBase(
         static_cast<GLenum>(target),
@@ -242,14 +231,9 @@ STATICINLINE void bind_buffers_range(
         glBindBuffersRange,
         target,
         first,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(buffers.data()),
-            buffers.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(offsets.data()),
-            offsets.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(sizes.data()), sizes.size_bytes()));
+        ::glw::trace::byte_span(buffers),
+        ::glw::trace::byte_span(offsets),
+        ::glw::trace::byte_span(sizes));
 #endif
     glBindBuffersRange(
         static_cast<GLenum>(target),
@@ -289,11 +273,7 @@ STATICINLINE void bind_image_textures(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glBindImageTextures,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(textures.data()),
-            textures.size_bytes()),
-        first);
+        glBindImageTextures, ::glw::trace::byte_span(textures), first);
 #endif
     glBindImageTextures(
         first,
@@ -328,11 +308,7 @@ STATICINLINE void bind_samplers(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glBindSamplers,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(samplers.data()),
-            samplers.size_bytes()),
-        first);
+        glBindSamplers, ::glw::trace::byte_span(samplers), first);
 #endif
     glBindSamplers(
         first,
@@ -367,11 +343,7 @@ STATICINLINE void bind_textures(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glBindTextures,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(textures.data()),
-            textures.size_bytes()),
-        first);
+        glBindTextures, ::glw::trace::byte_span(textures), first);
 #endif
     glBindTextures(
         first,
@@ -420,15 +392,9 @@ STATICINLINE void bind_vertex_buffers(
     GLW_FPTR_TRACE(
         glBindVertexBuffers,
         first,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(buffers.data()),
-            buffers.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(offsets.data()),
-            offsets.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(strides.data()),
-            strides.size_bytes()));
+        ::glw::trace::byte_span(buffers),
+        ::glw::trace::byte_span(offsets),
+        ::glw::trace::byte_span(strides));
 #endif
     glBindVertexBuffers(
         first,

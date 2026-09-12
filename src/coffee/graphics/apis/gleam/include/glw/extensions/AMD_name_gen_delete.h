@@ -35,10 +35,7 @@ STATICINLINE void delete_names(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glDeleteNamesAMD,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(names.data()), names.size_bytes()),
-        identifier);
+        glDeleteNamesAMD, ::glw::trace::byte_span(names), identifier);
 #endif
     glDeleteNamesAMD(
         identifier,
@@ -71,10 +68,7 @@ STATICINLINE void gen_names(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGenNamesAMD,
-        gsl::span<char>(
-            reinterpret_cast<char*>(names.data()), names.size_bytes()),
-        identifier);
+        glGenNamesAMD, ::glw::trace::byte_span(names), identifier);
 #endif
     glGenNamesAMD(
         identifier,

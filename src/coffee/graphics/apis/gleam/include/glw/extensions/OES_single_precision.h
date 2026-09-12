@@ -49,11 +49,7 @@ STATICINLINE void clip_planef(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glClipPlanefOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(equation.data()),
-            equation.size_bytes()),
-        plane);
+        glClipPlanefOES, ::glw::trace::byte_span(equation), plane);
 #endif
     glClipPlanefOES(
         static_cast<GLenum>(plane),
@@ -137,10 +133,7 @@ STATICINLINE void get_clip_planef(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetClipPlanefOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(equation.data()), equation.size_bytes()),
-        plane);
+        glGetClipPlanefOES, ::glw::trace::byte_span(equation), plane);
 #endif
     glGetClipPlanefOES(
         static_cast<GLenum>(plane),

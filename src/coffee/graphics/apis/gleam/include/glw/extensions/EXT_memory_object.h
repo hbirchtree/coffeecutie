@@ -67,11 +67,7 @@ STATICINLINE void create_memory_objects(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glCreateMemoryObjectsEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(memoryObjects.data()),
-            memoryObjects.size_bytes()),
-        n);
+        glCreateMemoryObjectsEXT, ::glw::trace::byte_span(memoryObjects), n);
 #endif
     glCreateMemoryObjectsEXT(
         n,
@@ -103,10 +99,7 @@ STATICINLINE void delete_memory_objects(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glDeleteMemoryObjectsEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(memoryObjects.data()),
-            memoryObjects.size_bytes()));
+        glDeleteMemoryObjectsEXT, ::glw::trace::byte_span(memoryObjects));
 #endif
     glDeleteMemoryObjectsEXT(
         memoryObjects.size(),
@@ -142,8 +135,7 @@ STATICINLINE void get_memory_object_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMemoryObjectParameterivEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         memoryObject,
         pname);
 #endif
@@ -177,10 +169,7 @@ STATICINLINE void get_unsigned_bytev(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetUnsignedBytevEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        pname);
+        glGetUnsignedBytevEXT, ::glw::trace::byte_span(data), pname);
 #endif
     glGetUnsignedBytevEXT(
         static_cast<GLenum>(pname),
@@ -213,11 +202,7 @@ STATICINLINE void get_unsigned_bytei_v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetUnsignedBytei_vEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        target,
-        index);
+        glGetUnsignedBytei_vEXT, ::glw::trace::byte_span(data), target, index);
 #endif
     glGetUnsignedBytei_vEXT(
         target,
@@ -274,8 +259,7 @@ STATICINLINE void memory_object_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMemoryObjectParameterivEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         memoryObject,
         pname);
 #endif

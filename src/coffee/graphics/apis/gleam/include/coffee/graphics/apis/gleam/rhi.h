@@ -383,6 +383,11 @@ struct api
     optional<error> load(load_options_t options = default_options);
     void            unload();
 
+    /* Attaches each format for real and asks the driver whether the resulting
+     * framebuffer is complete. Feature flags only say what is advertised. */
+    void debug_print_renderable_formats(
+        comp_app::interfaces::AppInfo& appInfo);
+
     enum class queues
     {
         main,

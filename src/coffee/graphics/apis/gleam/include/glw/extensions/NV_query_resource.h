@@ -37,11 +37,7 @@ STATICINLINE GLint query_resource(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glQueryResourceNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(buffer.data()), buffer.size_bytes()),
-        queryType,
-        tagId);
+        glQueryResourceNV, ::glw::trace::byte_span(buffer), queryType, tagId);
 #endif
     auto out = glQueryResourceNV(
         queryType,

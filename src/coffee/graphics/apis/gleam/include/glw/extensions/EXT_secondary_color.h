@@ -56,10 +56,7 @@ STATICINLINE void secondary_color3bv(
         GLW_FPTR_CHECK(SecondaryColor3bvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glSecondaryColor3bvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glSecondaryColor3bvEXT, ::glw::trace::byte_span(v));
 #endif
     glSecondaryColor3bvEXT(
         v.size() ? reinterpret_cast<const GLbyte*>(v.data()) : nullptr);
@@ -108,10 +105,7 @@ STATICINLINE void secondary_color3dv(
         GLW_FPTR_CHECK(SecondaryColor3dvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glSecondaryColor3dvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glSecondaryColor3dvEXT, ::glw::trace::byte_span(v));
 #endif
     glSecondaryColor3dvEXT(reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("SecondaryColor3dvEXT"sv, check_errors);
@@ -159,10 +153,7 @@ STATICINLINE void secondary_color3fv(
         GLW_FPTR_CHECK(SecondaryColor3fvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glSecondaryColor3fvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glSecondaryColor3fvEXT, ::glw::trace::byte_span(v));
 #endif
     glSecondaryColor3fvEXT(reinterpret_cast<const GLfloat*>(v.data()));
     detail::error_check("SecondaryColor3fvEXT"sv, check_errors);
@@ -210,10 +201,7 @@ STATICINLINE void secondary_color3iv(
         GLW_FPTR_CHECK(SecondaryColor3ivEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glSecondaryColor3ivEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glSecondaryColor3ivEXT, ::glw::trace::byte_span(v));
 #endif
     glSecondaryColor3ivEXT(reinterpret_cast<const GLint*>(v.data()));
     detail::error_check("SecondaryColor3ivEXT"sv, check_errors);
@@ -261,10 +249,7 @@ STATICINLINE void secondary_color3sv(
         GLW_FPTR_CHECK(SecondaryColor3svEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glSecondaryColor3svEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glSecondaryColor3svEXT, ::glw::trace::byte_span(v));
 #endif
     glSecondaryColor3svEXT(reinterpret_cast<const GLshort*>(v.data()));
     detail::error_check("SecondaryColor3svEXT"sv, check_errors);
@@ -314,10 +299,7 @@ STATICINLINE void secondary_color3ubv(
         GLW_FPTR_CHECK(SecondaryColor3ubvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glSecondaryColor3ubvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glSecondaryColor3ubvEXT, ::glw::trace::byte_span(v));
 #endif
     glSecondaryColor3ubvEXT(
         v.size() ? reinterpret_cast<const GLubyte*>(v.data()) : nullptr);
@@ -366,10 +348,7 @@ STATICINLINE void secondary_color3uiv(
         GLW_FPTR_CHECK(SecondaryColor3uivEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glSecondaryColor3uivEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glSecondaryColor3uivEXT, ::glw::trace::byte_span(v));
 #endif
     glSecondaryColor3uivEXT(reinterpret_cast<const GLuint*>(v.data()));
     detail::error_check("SecondaryColor3uivEXT"sv, check_errors);
@@ -417,10 +396,7 @@ STATICINLINE void secondary_color3usv(
         GLW_FPTR_CHECK(SecondaryColor3usvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glSecondaryColor3usvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glSecondaryColor3usvEXT, ::glw::trace::byte_span(v));
 #endif
     glSecondaryColor3usvEXT(reinterpret_cast<const GLushort*>(v.data()));
     detail::error_check("SecondaryColor3usvEXT"sv, check_errors);
@@ -451,9 +427,7 @@ STATICINLINE void secondary_color_pointer(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSecondaryColorPointerEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
+        ::glw::trace::byte_span(pointer),
         size,
         type,
         stride);

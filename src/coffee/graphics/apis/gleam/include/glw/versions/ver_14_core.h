@@ -69,10 +69,8 @@ STATICINLINE void multi_draw_arrays(
     GLW_FPTR_TRACE(
         glMultiDrawArrays,
         mode,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(first.data()), first.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(count.data()), count.size_bytes()));
+        ::glw::trace::byte_span(first),
+        ::glw::trace::byte_span(count));
 #endif
     glMultiDrawArrays(static_cast<GLenum>(mode), first.data(), count.data());
     detail::error_check("MultiDrawArrays"sv, check_errors);
@@ -110,8 +108,7 @@ STATICINLINE void multi_draw_elements(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiDrawElements,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(count.data()), count.size_bytes()),
+        ::glw::trace::byte_span(count),
         mode,
         type,
         indices);
@@ -173,10 +170,7 @@ STATICINLINE void point_parameter(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glPointParameterfv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
-        pname);
+        glPointParameterfv, ::glw::trace::byte_span(params), pname);
 #endif
     glPointParameterfv(
         static_cast<GLenum>(pname),
@@ -234,10 +228,7 @@ STATICINLINE void point_parameter(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glPointParameteriv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
-        pname);
+        glPointParameteriv, ::glw::trace::byte_span(params), pname);
 #endif
     glPointParameteriv(
         static_cast<GLenum>(pname),

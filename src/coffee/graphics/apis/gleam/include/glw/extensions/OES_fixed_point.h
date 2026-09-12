@@ -98,11 +98,7 @@ STATICINLINE void clip_planex(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glClipPlanexOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(equation.data()),
-            equation.size_bytes()),
-        plane);
+        glClipPlanexOES, ::glw::trace::byte_span(equation), plane);
 #endif
     glClipPlanexOES(
         static_cast<GLenum>(plane),
@@ -203,11 +199,7 @@ STATICINLINE void fogxv(
         GLW_FPTR_CHECK(FogxvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glFogxvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(param.data()), param.size_bytes()),
-        pname);
+    GLW_FPTR_TRACE_DATA(glFogxvOES, ::glw::trace::byte_span(param), pname);
 #endif
     glFogxvOES(
         static_cast<GLenum>(pname),
@@ -271,10 +263,7 @@ STATICINLINE void get_clip_planex(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetClipPlanexOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(equation.data()), equation.size_bytes()),
-        plane);
+        glGetClipPlanexOES, ::glw::trace::byte_span(equation), plane);
 #endif
     glGetClipPlanexOES(
         static_cast<GLenum>(plane),
@@ -306,11 +295,7 @@ STATICINLINE void get_fixedv(
         GLW_FPTR_CHECK(GetFixedvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGetFixedvOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        pname);
+    GLW_FPTR_TRACE_DATA(glGetFixedvOES, ::glw::trace::byte_span(params), pname);
 #endif
     glGetFixedvOES(
         static_cast<GLenum>(pname),
@@ -344,11 +329,7 @@ STATICINLINE void get_tex_envxv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetTexEnvxvOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        target,
-        pname);
+        glGetTexEnvxvOES, ::glw::trace::byte_span(params), target, pname);
 #endif
     glGetTexEnvxvOES(
         static_cast<GLenum>(target),
@@ -383,11 +364,7 @@ STATICINLINE void get_tex_parameterxv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetTexParameterxvOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        target,
-        pname);
+        glGetTexParameterxvOES, ::glw::trace::byte_span(params), target, pname);
 #endif
     glGetTexParameterxvOES(
         static_cast<GLenum>(target),
@@ -443,10 +420,7 @@ STATICINLINE void light_modelxv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glLightModelxvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(param.data()), param.size_bytes()),
-        pname);
+        glLightModelxvOES, ::glw::trace::byte_span(param), pname);
 #endif
     glLightModelxvOES(
         static_cast<GLenum>(pname),
@@ -506,11 +480,7 @@ STATICINLINE void lightxv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glLightxvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
-        light,
-        pname);
+        glLightxvOES, ::glw::trace::byte_span(params), light, pname);
 #endif
     glLightxvOES(
         static_cast<GLenum>(light),
@@ -560,10 +530,7 @@ STATICINLINE void load_matrixx(
         GLW_FPTR_CHECK(LoadMatrixxOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glLoadMatrixxOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glLoadMatrixxOES, ::glw::trace::byte_span(m));
 #endif
     glLoadMatrixxOES(
         m.size() ? reinterpret_cast<const GLfixed*>(m.data()) : nullptr);
@@ -622,11 +589,7 @@ STATICINLINE void materialxv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMaterialxvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(param.data()), param.size_bytes()),
-        face,
-        pname);
+        glMaterialxvOES, ::glw::trace::byte_span(param), face, pname);
 #endif
     glMaterialxvOES(
         static_cast<GLenum>(face),
@@ -656,10 +619,7 @@ STATICINLINE void mult_matrixx(
         GLW_FPTR_CHECK(MultMatrixxOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glMultMatrixxOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glMultMatrixxOES, ::glw::trace::byte_span(m));
 #endif
     glMultMatrixxOES(
         m.size() ? reinterpret_cast<const GLfixed*>(m.data()) : nullptr);
@@ -775,10 +735,7 @@ STATICINLINE void point_parameterxv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glPointParameterxvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
-        pname);
+        glPointParameterxvOES, ::glw::trace::byte_span(params), pname);
 #endif
     glPointParameterxvOES(
         static_cast<GLenum>(pname),
@@ -931,11 +888,7 @@ STATICINLINE void tex_envxv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glTexEnvxvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
-        target,
-        pname);
+        glTexEnvxvOES, ::glw::trace::byte_span(params), target, pname);
 #endif
     glTexEnvxvOES(
         static_cast<GLenum>(target),
@@ -997,11 +950,7 @@ STATICINLINE void tex_parameterxv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glTexParameterxvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
-        target,
-        pname);
+        glTexParameterxvOES, ::glw::trace::byte_span(params), target, pname);
 #endif
     glTexParameterxvOES(
         static_cast<GLenum>(target),
@@ -1062,11 +1011,7 @@ STATICINLINE void get_lightxv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetLightxvOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        light,
-        pname);
+        glGetLightxvOES, ::glw::trace::byte_span(params), light, pname);
 #endif
     glGetLightxvOES(
         static_cast<GLenum>(light),
@@ -1103,11 +1048,7 @@ STATICINLINE void get_materialxv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetMaterialxvOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        face,
-        pname);
+        glGetMaterialxvOES, ::glw::trace::byte_span(params), face, pname);
 #endif
     glGetMaterialxvOES(
         static_cast<GLenum>(face),
@@ -1223,8 +1164,7 @@ STATICINLINE void bitmapx(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glBitmapxOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(bitmap.data()), bitmap.size_bytes()),
+        ::glw::trace::byte_span(bitmap),
         width,
         xorig,
         yorig,
@@ -1346,11 +1286,7 @@ STATICINLINE void color3xv(
         GLW_FPTR_CHECK(Color3xvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glColor3xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(components.data()),
-            components.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glColor3xvOES, ::glw::trace::byte_span(components));
 #endif
     glColor3xvOES(
         components.size() ? reinterpret_cast<const GLfixed*>(components.data())
@@ -1381,11 +1317,7 @@ STATICINLINE void color4xv(
         GLW_FPTR_CHECK(Color4xvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glColor4xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(components.data()),
-            components.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glColor4xvOES, ::glw::trace::byte_span(components));
 #endif
     glColor4xvOES(
         components.size() ? reinterpret_cast<const GLfixed*>(components.data())
@@ -1450,8 +1382,7 @@ STATICINLINE void convolution_parameterxv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glConvolutionParameterxvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -1508,10 +1439,7 @@ STATICINLINE void eval_coord1xv(
         GLW_FPTR_CHECK(EvalCoord1xvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glEvalCoord1xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glEvalCoord1xvOES, ::glw::trace::byte_span(coords));
 #endif
     glEvalCoord1xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
@@ -1565,10 +1493,7 @@ STATICINLINE void eval_coord2xv(
         GLW_FPTR_CHECK(EvalCoord2xvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glEvalCoord2xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glEvalCoord2xvOES, ::glw::trace::byte_span(coords));
 #endif
     glEvalCoord2xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
@@ -1603,10 +1528,7 @@ STATICINLINE void feedback_bufferx(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glFeedbackBufferxOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(buffer.data()), buffer.size_bytes()),
-        type);
+        glFeedbackBufferxOES, ::glw::trace::byte_span(buffer), type);
 #endif
     glFeedbackBufferxOES(
         buffer.size(),
@@ -1645,8 +1567,7 @@ STATICINLINE void get_convolution_parameterxv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetConvolutionParameterxvOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -1686,8 +1607,7 @@ STATICINLINE void get_histogram_parameterxv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetHistogramParameterxvOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -1726,11 +1646,7 @@ STATICINLINE void get_lightx(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetLightxOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        light,
-        pname);
+        glGetLightxOES, ::glw::trace::byte_span(params), light, pname);
 #endif
     glGetLightxOES(
         static_cast<GLenum>(light),
@@ -1767,10 +1683,7 @@ STATICINLINE void get_mapxv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetMapxvOES,
-        gsl::span<char>(reinterpret_cast<char*>(v.data()), v.size_bytes()),
-        target,
-        query);
+        glGetMapxvOES, ::glw::trace::byte_span(v), target, query);
 #endif
     glGetMapxvOES(
         static_cast<GLenum>(target),
@@ -1833,11 +1746,7 @@ STATICINLINE void get_pixel_mapxv(
         GLW_FPTR_CHECK(GetPixelMapxv)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGetPixelMapxv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(values.data()), values.size_bytes()),
-        map);
+    GLW_FPTR_TRACE_DATA(glGetPixelMapxv, ::glw::trace::byte_span(values), map);
 #endif
     glGetPixelMapxv(
         static_cast<GLenum>(map),
@@ -1874,11 +1783,7 @@ STATICINLINE void get_tex_genxv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetTexGenxvOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        coord,
-        pname);
+        glGetTexGenxvOES, ::glw::trace::byte_span(params), coord, pname);
 #endif
     glGetTexGenxvOES(
         static_cast<GLenum>(coord),
@@ -1918,8 +1823,7 @@ STATICINLINE void get_tex_level_parameterxv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetTexLevelParameterxvOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         level,
         pname);
@@ -1977,11 +1881,7 @@ STATICINLINE void indexxv(
         GLW_FPTR_CHECK(IndexxvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glIndexxvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(component.data()),
-            component.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glIndexxvOES, ::glw::trace::byte_span(component));
 #endif
     glIndexxvOES(
         component.size() ? reinterpret_cast<const GLfixed*>(component.data())
@@ -2011,10 +1911,7 @@ STATICINLINE void load_transpose_matrixx(
         GLW_FPTR_CHECK(LoadTransposeMatrixxOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glLoadTransposeMatrixxOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glLoadTransposeMatrixxOES, ::glw::trace::byte_span(m));
 #endif
     glLoadTransposeMatrixxOES(
         m.size() ? reinterpret_cast<const GLfixed*>(m.data()) : nullptr);
@@ -2193,10 +2090,7 @@ STATICINLINE void mult_transpose_matrixx(
         GLW_FPTR_CHECK(MultTransposeMatrixxOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glMultTransposeMatrixxOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glMultTransposeMatrixxOES, ::glw::trace::byte_span(m));
 #endif
     glMultTransposeMatrixxOES(
         m.size() ? reinterpret_cast<const GLfixed*>(m.data()) : nullptr);
@@ -2254,10 +2148,7 @@ STATICINLINE void multi_tex_coord1xv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord1xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()),
-        texture);
+        glMultiTexCoord1xvOES, ::glw::trace::byte_span(coords), texture);
 #endif
     glMultiTexCoord1xvOES(
         static_cast<GLenum>(texture),
@@ -2319,10 +2210,7 @@ STATICINLINE void multi_tex_coord2xv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord2xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()),
-        texture);
+        glMultiTexCoord2xvOES, ::glw::trace::byte_span(coords), texture);
 #endif
     glMultiTexCoord2xvOES(
         static_cast<GLenum>(texture),
@@ -2386,10 +2274,7 @@ STATICINLINE void multi_tex_coord3xv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord3xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()),
-        texture);
+        glMultiTexCoord3xvOES, ::glw::trace::byte_span(coords), texture);
 #endif
     glMultiTexCoord3xvOES(
         static_cast<GLenum>(texture),
@@ -2424,10 +2309,7 @@ STATICINLINE void multi_tex_coord4xv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord4xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()),
-        texture);
+        glMultiTexCoord4xvOES, ::glw::trace::byte_span(coords), texture);
 #endif
     glMultiTexCoord4xvOES(
         static_cast<GLenum>(texture),
@@ -2459,10 +2341,7 @@ STATICINLINE void normal3xv(
         GLW_FPTR_CHECK(Normal3xvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glNormal3xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glNormal3xvOES, ::glw::trace::byte_span(coords));
 #endif
     glNormal3xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
@@ -2518,11 +2397,7 @@ STATICINLINE void pixel_mapx(
         GLW_FPTR_CHECK(PixelMapx)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glPixelMapx,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(values.data()), values.size_bytes()),
-        map);
+    GLW_FPTR_TRACE_DATA(glPixelMapx, ::glw::trace::byte_span(values), map);
 #endif
     glPixelMapx(
         static_cast<GLenum>(map),
@@ -2639,12 +2514,8 @@ STATICINLINE void prioritize_texturesx(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glPrioritizeTexturesxOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(textures.data()),
-            textures.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(priorities.data()),
-            priorities.size_bytes()));
+        ::glw::trace::byte_span(textures),
+        ::glw::trace::byte_span(priorities));
 #endif
     glPrioritizeTexturesxOES(
         textures.size(),
@@ -2703,10 +2574,7 @@ STATICINLINE void raster_pos2xv(
         GLW_FPTR_CHECK(RasterPos2xvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glRasterPos2xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glRasterPos2xvOES, ::glw::trace::byte_span(coords));
 #endif
     glRasterPos2xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
@@ -2763,10 +2631,7 @@ STATICINLINE void raster_pos3xv(
         GLW_FPTR_CHECK(RasterPos3xvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glRasterPos3xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glRasterPos3xvOES, ::glw::trace::byte_span(coords));
 #endif
     glRasterPos3xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
@@ -2824,10 +2689,7 @@ STATICINLINE void raster_pos4xv(
         GLW_FPTR_CHECK(RasterPos4xvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glRasterPos4xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glRasterPos4xvOES, ::glw::trace::byte_span(coords));
 #endif
     glRasterPos4xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
@@ -2890,11 +2752,7 @@ STATICINLINE void rectxv(
     }
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
-        glRectxvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v1.data()), v1.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v2.data()), v2.size_bytes()));
+        glRectxvOES, ::glw::trace::byte_span(v1), ::glw::trace::byte_span(v2));
 #endif
     glRectxvOES(
         v1.size() ? reinterpret_cast<const GLfixed*>(v1.data()) : nullptr,
@@ -2947,10 +2805,7 @@ STATICINLINE void tex_coord1xv(
         GLW_FPTR_CHECK(TexCoord1xvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glTexCoord1xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glTexCoord1xvOES, ::glw::trace::byte_span(coords));
 #endif
     glTexCoord1xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
@@ -3004,10 +2859,7 @@ STATICINLINE void tex_coord2xv(
         GLW_FPTR_CHECK(TexCoord2xvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glTexCoord2xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glTexCoord2xvOES, ::glw::trace::byte_span(coords));
 #endif
     glTexCoord2xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
@@ -3062,10 +2914,7 @@ STATICINLINE void tex_coord3xv(
         GLW_FPTR_CHECK(TexCoord3xvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glTexCoord3xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glTexCoord3xvOES, ::glw::trace::byte_span(coords));
 #endif
     glTexCoord3xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
@@ -3125,10 +2974,7 @@ STATICINLINE void tex_coord4xv(
         GLW_FPTR_CHECK(TexCoord4xvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glTexCoord4xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glTexCoord4xvOES, ::glw::trace::byte_span(coords));
 #endif
     glTexCoord4xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
@@ -3191,11 +3037,7 @@ STATICINLINE void tex_genxv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glTexGenxvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
-        coord,
-        pname);
+        glTexGenxvOES, ::glw::trace::byte_span(params), coord, pname);
 #endif
     glTexGenxvOES(
         static_cast<GLenum>(coord),
@@ -3250,10 +3092,7 @@ STATICINLINE void vertex2xv(
         GLW_FPTR_CHECK(Vertex2xvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glVertex2xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glVertex2xvOES, ::glw::trace::byte_span(coords));
 #endif
     glVertex2xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
@@ -3309,10 +3148,7 @@ STATICINLINE void vertex3xv(
         GLW_FPTR_CHECK(Vertex3xvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glVertex3xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glVertex3xvOES, ::glw::trace::byte_span(coords));
 #endif
     glVertex3xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
@@ -3369,10 +3205,7 @@ STATICINLINE void vertex4xv(
         GLW_FPTR_CHECK(Vertex4xvOES)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glVertex4xvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glVertex4xvOES, ::glw::trace::byte_span(coords));
 #endif
     glVertex4xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())

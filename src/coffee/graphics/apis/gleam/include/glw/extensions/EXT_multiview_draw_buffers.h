@@ -42,12 +42,8 @@ STATICINLINE void draw_buffers_indexed(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glDrawBuffersIndexedEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(location.data()),
-            location.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(indices.data()),
-            indices.size_bytes()));
+        ::glw::trace::byte_span(location),
+        ::glw::trace::byte_span(indices));
 #endif
     glDrawBuffersIndexedEXT(
         location.size(),
@@ -83,11 +79,7 @@ STATICINLINE void get_integeri_v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetIntegeri_vEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        target,
-        index);
+        glGetIntegeri_vEXT, ::glw::trace::byte_span(data), target, index);
 #endif
     glGetIntegeri_vEXT(
         static_cast<GLenum>(target),

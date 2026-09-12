@@ -50,11 +50,7 @@ STATICINLINE void vertex_array_range(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexArrayRangeNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
-        length);
+        glVertexArrayRangeNV, ::glw::trace::byte_span(pointer), length);
 #endif
     glVertexArrayRangeNV(
         length,

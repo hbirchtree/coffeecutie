@@ -24,6 +24,7 @@
 
 #include <glw/extensions/ARB_color_buffer_float.h>
 #include <glw/extensions/ARB_depth_buffer_float.h>
+#include <glw/extensions/ARB_internalformat_query2.h>
 #include <glw/extensions/ARB_shader_draw_parameters.h>
 #include <glw/extensions/EXT_color_buffer_float.h>
 #include <glw/extensions/EXT_color_buffer_half_float.h>
@@ -1100,7 +1101,217 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
         //     if(fmt.condition)
         //         cDebug("- {}", magic_enum::enum_name(std::get<0>(fmt.out)));
     }
+
+    debug_print_renderable_formats(appInfo);
 }
+
+void api::debug_print_renderable_formats(
+    comp_app::interfaces::AppInfo& appInfo)
+{
+    using pix_fmt = typing::pixels::pix_fmt;
+
+    /* Feature flags only say what the extensions advertise, which is not the
+     * same as what the driver will accept as an attachment. ARB_internalformat_query2
+     * answers directly, but it does not exist on GL ES or WebGL, so there we
+     * have to attach the format and ask whether the framebuffer came out
+     * complete. A format the driver refuses leaves the framebuffer incomplete
+     * and every draw into it fails silently. */
+    struct probe_t
+    {
+        decltype(pix_fmt::RGBA8) fmt;
+        std::string_view         name;
+    };
+
+    static constexpr std::array<probe_t, 13> color_formats = {{
+        {pix_fmt::R8, "R8"},
+        {pix_fmt::RG8, "RG8"},
+        {pix_fmt::RGB8, "RGB8"},
+        {pix_fmt::RGBA8, "RGBA8"},
+        {pix_fmt::RGB565, "RGB565"},
+        {pix_fmt::RGBA4, "RGBA4"},
+        {pix_fmt::RGB5A1, "RGB5A1"},
+        {pix_fmt::RGB10A2, "RGB10A2"},
+        {pix_fmt::RGBA16F, "RGBA16F"},
+        {pix_fmt::RGBA32F, "RGBA32F"},
+        {pix_fmt::R11G11B10F, "R11G11B10F"},
+        {pix_fmt::SRGB8, "SRGB8"},
+        {pix_fmt::SRGB8A8, "SRGB8A8"},
+    }};
+
+    static constexpr std::array<probe_t, 6> depth_formats = {{
+        {pix_fmt::Depth16, "Depth16"},
+        {pix_fmt::Depth24, "Depth24"},
+        {pix_fmt::Depth32, "Depth32"},
+        {pix_fmt::Depth32F, "Depth32F"},
+        {pix_fmt::Depth24Stencil8, "Depth24Stencil8"},
+        {pix_fmt::Depth32FStencil8, "Depth32FStencil8"},
+    }};
+
+#if defined(GL_ARB_internalformat_query2)
+    const bool can_query =
+        supports_extension(gl::arb::internalformat_query2::name);
+#else
+    const bool can_query = false;
+#endif
+
+    constexpr libc_types::i32 probe_size = 4;
+    const auto                probe_rect =
+        typing::geometry::rect<libc_types::i32>{0, 0, probe_size, probe_size};
+    const auto probe_extent = typing::geometry::size_3d<libc_types::u32>{
+        probe_size, probe_size, 1};
+
+    auto is_complete = [](rendertarget_t& rt) {
+        rt.internal_bind(group::framebuffer_target::framebuffer);
+        return static_cast<group::framebuffer_status>(
+                   cmd::check_framebuffer_status(
+                       group::framebuffer_target::framebuffer)) ==
+               group::framebuffer_status::framebuffer_complete;
+    };
+
+    [[maybe_unused]] auto query_renderable =
+        [this]([[maybe_unused]] probe_t const& p,
+               [[maybe_unused]] bool           depth) -> bool {
+#if defined(GL_ARB_internalformat_query2)
+        auto [ifmt, _, __] = convert::to<group::internal_format>(
+            PixDesc(p.fmt), m_features.texture);
+        libc_types::i64 out = 0;
+        gl::arb::internalformat_query2::get_internalformati64v(
+            group::texture_target::texture_2d,
+            ifmt,
+            depth ? group::internal_format_prop::depth_renderable
+                  : group::internal_format_prop::color_renderable,
+            SpanOne(out));
+        return out != 0;
+#else
+        return false;
+#endif
+    };
+
+    std::string color_out, depth_out;
+
+    /* A format with no mapping at all throws out of gl::tex::format_of */
+    auto record = [](std::string& out, probe_t const& p, auto&& fn) {
+        bool ok = false;
+        try
+        {
+            ok = fn();
+        } catch(std::exception const&)
+        {
+            ok = false;
+        }
+        if(!out.empty())
+            out.append(" ");
+        out.append(p.name).append(ok ? "=yes" : "=NO");
+    };
+
+    for(auto const& p : color_formats)
+        record(color_out, p, [&] {
+            if(can_query)
+                return query_renderable(p, false);
+            auto tex = alloc_texture(textures::d2, PixDesc(p.fmt), 1);
+            tex->alloc(probe_extent);
+            auto rt = alloc_rendertarget();
+            rt->alloc();
+            rt->attach(render_targets::attachment::color, *tex, 0);
+            rt->resize(probe_rect);
+            return is_complete(*rt);
+        });
+
+    for(auto const& p : depth_formats)
+        record(depth_out, p, [&] {
+            if(can_query)
+                return query_renderable(p, true);
+            auto tex = alloc_texture(textures::d2, PixDesc(pix_fmt::RGBA8), 1);
+            tex->alloc(probe_extent);
+            auto rt = alloc_rendertarget();
+            rt->alloc();
+            rt->attach(render_targets::attachment::color, *tex, 0);
+            rt->attach_renderbuffer(
+                render_targets::attachment::depth, PixDesc(p.fmt));
+            rt->resize(probe_rect);
+            return is_complete(*rt);
+        });
+
+    /* Asking about formats the driver rejects leaves errors behind */
+    while(cmd::get_error() != group::error_code::no_error)
+        ;
+
+    if(!can_query && m_framebuffer)
+        m_framebuffer->internal_bind(group::framebuffer_target::framebuffer);
+
+    appInfo.add("gl:colorFormats", color_out);
+    appInfo.add("gl:depthFormats", depth_out);
+
+    Coffee::Logging::cDebug(
+        "Renderable formats ({}): color: {} | depth: {}",
+        can_query ? "queried" : "probed",
+        color_out,
+        depth_out);
+}
+
+
+#if defined(GLW_ENABLE_TRACE)
+namespace {
+
+/* Reads back a texture for the trace. GL ES and WebGL have no glGetTexImage,
+ * so the only route is to attach it to a framebuffer and read that, which
+ * works for colour-renderable formats and quietly declines for the rest. */
+bool trace_read_texture(
+    libc_types::u32               target,
+    libc_types::u32               texture,
+    libc_types::u32               width,
+    libc_types::u32               height,
+    std::vector<libc_types::u8>&  out)
+{
+    if(target != static_cast<libc_types::u32>(group::texture_target::texture_2d))
+        return false;
+    if(!width || !height)
+        return false;
+
+    static libc_types::u32 scratch_fbo = 0;
+    if(scratch_fbo == 0)
+        cmd::gen_framebuffers(SpanOne(scratch_fbo));
+
+    cmd::bind_framebuffer(group::framebuffer_target::read_framebuffer, scratch_fbo);
+    cmd::framebuffer_texture_2d(
+        group::framebuffer_target::read_framebuffer,
+        group::framebuffer_attachment::color_attachment0,
+        group::texture_target::texture_2d,
+        texture,
+        0);
+
+    bool ok = static_cast<group::framebuffer_status>(
+                  cmd::check_framebuffer_status(
+                      group::framebuffer_target::read_framebuffer)) ==
+              group::framebuffer_status::framebuffer_complete;
+
+    if(ok)
+    {
+        out.resize(static_cast<std::size_t>(width) * height * 4u);
+        cmd::read_pixels(
+            Veci2{0, 0},
+            size_2d<libc_types::i32>{
+                static_cast<libc_types::i32>(width),
+                static_cast<libc_types::i32>(height)},
+            group::pixel_format::rgba,
+            group::pixel_type::unsigned_byte,
+            semantic::concepts::offset_span::of(out.data()));
+    }
+
+    /* Leave the attachment behind and the next bind of this scratch target
+     * would keep the texture alive, so clear it out */
+    cmd::framebuffer_texture_2d(
+        group::framebuffer_target::read_framebuffer,
+        group::framebuffer_attachment::color_attachment0,
+        group::texture_target::texture_2d,
+        0,
+        0);
+    cmd::bind_framebuffer(group::framebuffer_target::read_framebuffer, 0);
+    return ok;
+}
+
+} // namespace
+#endif
 
 optional<error> api::load(load_options_t options)
 {
@@ -1328,11 +1539,23 @@ optional<error> api::load(load_options_t options)
     }
 #endif
 
+#if defined(GLW_ENABLE_TRACE)
+    glw::trace::set_error_probe(
+        []() -> libc_types::u32 { return static_cast<libc_types::u32>(
+            cmd::get_error()); });
+    glw::trace::set_texture_probe(&trace_read_texture);
+    glw::trace::init();
+#endif
+
     return std::nullopt;
 }
 
 void api::unload()
 {
+#if defined(GLW_ENABLE_TRACE)
+    glw::trace::shutdown();
+#endif
+
     debug().message("gleam::api::unload");
     // TODO: Maybe invalidate some state?
 }

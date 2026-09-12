@@ -44,12 +44,8 @@ STATICINLINE GLboolean are_textures_resident(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glAreTexturesResidentEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(textures.data()),
-            textures.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(residences.data()),
-            residences.size_bytes()));
+        ::glw::trace::byte_span(textures),
+        ::glw::trace::byte_span(residences));
 #endif
     auto out = glAreTexturesResidentEXT(
         textures.size(),
@@ -110,11 +106,7 @@ STATICINLINE void delete_textures(
         GLW_FPTR_CHECK(DeleteTexturesEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glDeleteTexturesEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(textures.data()),
-            textures.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glDeleteTexturesEXT, ::glw::trace::byte_span(textures));
 #endif
     glDeleteTexturesEXT(
         textures.size(),
@@ -143,10 +135,7 @@ STATICINLINE void gen_textures(
         GLW_FPTR_CHECK(GenTexturesEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGenTexturesEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(textures.data()), textures.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glGenTexturesEXT, ::glw::trace::byte_span(textures));
 #endif
     glGenTexturesEXT(
         textures.size(),
@@ -210,12 +199,8 @@ STATICINLINE void prioritize_textures(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glPrioritizeTexturesEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(textures.data()),
-            textures.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(priorities.data()),
-            priorities.size_bytes()));
+        ::glw::trace::byte_span(textures),
+        ::glw::trace::byte_span(priorities));
 #endif
     glPrioritizeTexturesEXT(
         textures.size(),

@@ -59,9 +59,7 @@ STATICINLINE void delete_transform_feedbacks(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glDeleteTransformFeedbacks,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()));
+        glDeleteTransformFeedbacks, ::glw::trace::byte_span(ids));
 #endif
     glDeleteTransformFeedbacks(
         ids.size(),
@@ -112,9 +110,7 @@ STATICINLINE void gen_transform_feedbacks(
         GLW_FPTR_CHECK(GenTransformFeedbacks)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGenTransformFeedbacks,
-        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glGenTransformFeedbacks, ::glw::trace::byte_span(ids));
 #endif
     glGenTransformFeedbacks(
         ids.size(),

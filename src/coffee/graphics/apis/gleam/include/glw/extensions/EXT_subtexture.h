@@ -36,8 +36,7 @@ STATICINLINE void tex_sub_image_1d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexSubImage1DEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        ::glw::trace::byte_span(pixels),
         target,
         level,
         xoffset,
@@ -91,8 +90,7 @@ STATICINLINE void tex_sub_image_2d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexSubImage2DEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        ::glw::trace::byte_span(pixels),
         target,
         level,
         xoffset,

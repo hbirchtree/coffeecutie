@@ -49,8 +49,7 @@ STATICINLINE void compressed_tex_image_3d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCompressedTexImage3DOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         target,
         level,
         internalformat,
@@ -107,8 +106,7 @@ STATICINLINE void compressed_tex_sub_image_3d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCompressedTexSubImage3DOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         target,
         level,
         xoffset,
@@ -261,8 +259,7 @@ STATICINLINE void tex_image_3d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexImage3DOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        ::glw::trace::byte_span(pixels),
         target,
         level,
         internalformat,
@@ -322,8 +319,7 @@ STATICINLINE void tex_sub_image_3d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexSubImage3DOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        ::glw::trace::byte_span(pixels),
         target,
         level,
         xoffset,

@@ -33,11 +33,7 @@ STATICINLINE void scissor_exclusive_arrayv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glScissorExclusiveArrayvNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        first,
-        count);
+        glScissorExclusiveArrayvNV, ::glw::trace::byte_span(v), first, count);
 #endif
     glScissorExclusiveArrayvNV(
         first,

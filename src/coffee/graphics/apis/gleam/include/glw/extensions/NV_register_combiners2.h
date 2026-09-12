@@ -33,8 +33,7 @@ STATICINLINE void combiner_stage_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCombinerStageParameterfvNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         stage,
         pname);
 #endif
@@ -72,8 +71,7 @@ STATICINLINE void get_combiner_stage_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetCombinerStageParameterfvNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         stage,
         pname);
 #endif

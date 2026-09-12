@@ -60,9 +60,7 @@ STATICINLINE void matrix_index_pointer(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMatrixIndexPointerARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
+        ::glw::trace::byte_span(pointer),
         size,
         type,
         stride);
@@ -97,11 +95,7 @@ STATICINLINE void matrix_indexubv(
         GLW_FPTR_CHECK(MatrixIndexubvARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glMatrixIndexubvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(indices.data()),
-            indices.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glMatrixIndexubvARB, ::glw::trace::byte_span(indices));
 #endif
     glMatrixIndexubvARB(
         indices.size(),
@@ -131,11 +125,7 @@ STATICINLINE void matrix_indexuiv(
         GLW_FPTR_CHECK(MatrixIndexuivARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glMatrixIndexuivARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(indices.data()),
-            indices.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glMatrixIndexuivARB, ::glw::trace::byte_span(indices));
 #endif
     glMatrixIndexuivARB(
         indices.size(),
@@ -165,11 +155,7 @@ STATICINLINE void matrix_indexusv(
         GLW_FPTR_CHECK(MatrixIndexusvARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glMatrixIndexusvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(indices.data()),
-            indices.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glMatrixIndexusvARB, ::glw::trace::byte_span(indices));
 #endif
     glMatrixIndexusvARB(
         indices.size(),

@@ -39,8 +39,7 @@ STATICINLINE void get_program_env_parameter_iiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramEnvParameterIivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -77,8 +76,7 @@ STATICINLINE void get_program_env_parameter_iuiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramEnvParameterIuivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -115,8 +113,7 @@ STATICINLINE void get_program_local_parameter_iiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramLocalParameterIivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -153,8 +150,7 @@ STATICINLINE void get_program_local_parameter_iuiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramLocalParameterIuivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -221,8 +217,7 @@ STATICINLINE void program_env_parameter_i4iv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramEnvParameterI4ivNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -289,8 +284,7 @@ STATICINLINE void program_env_parameter_i4uiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramEnvParameterI4uivNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -327,8 +321,7 @@ STATICINLINE void program_env_parameters_i4iv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramEnvParametersI4ivNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -366,8 +359,7 @@ STATICINLINE void program_env_parameters_i4uiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramEnvParametersI4uivNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -435,8 +427,7 @@ STATICINLINE void program_local_parameter_i4iv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramLocalParameterI4ivNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -503,8 +494,7 @@ STATICINLINE void program_local_parameter_i4uiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramLocalParameterI4uivNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -541,8 +531,7 @@ STATICINLINE void program_local_parameters_i4iv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramLocalParametersI4ivNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -580,8 +569,7 @@ STATICINLINE void program_local_parameters_i4uiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramLocalParametersI4uivNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif

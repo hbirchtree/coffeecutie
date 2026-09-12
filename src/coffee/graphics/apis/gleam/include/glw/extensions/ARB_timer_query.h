@@ -38,11 +38,7 @@ STATICINLINE void get_query_objecti64v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetQueryObjecti64v,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        id,
-        pname);
+        glGetQueryObjecti64v, ::glw::trace::byte_span(params), id, pname);
 #endif
     glGetQueryObjecti64v(
         id,
@@ -76,11 +72,7 @@ STATICINLINE void get_query_objectui64v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetQueryObjectui64v,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        id,
-        pname);
+        glGetQueryObjectui64v, ::glw::trace::byte_span(params), id, pname);
 #endif
     glGetQueryObjectui64v(
         id,

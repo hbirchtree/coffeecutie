@@ -616,9 +616,9 @@ def generate_function(command, usages: dict, version: tuple = None, override_nam
     for p_name, p_type, _ in params:
         t = p_type.strip()
         if 'span_' in t:
-            is_const = 'const_' in t or t.endswith('const&')
-            char_t = 'const char' if is_const else 'char'
-            span_expr = f'gsl::span<{char_t}>(reinterpret_cast<{char_t}*>({p_name}.data()), {p_name}.size_bytes())'
+            # Not every span type here has size_bytes(), so the sink
+            # normalises them: see glw::trace::byte_span
+            span_expr = f'::glw::trace::byte_span({p_name})'
             trace_spans.append(span_expr)
             trace_inputs.append(span_expr)
         else:

@@ -80,11 +80,7 @@ STATICINLINE void get_vertex_attrib_ldv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetVertexAttribLdvEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        index,
-        pname);
+        glGetVertexAttribLdvEXT, ::glw::trace::byte_span(params), index, pname);
 #endif
     glGetVertexAttribLdvEXT(
         index,
@@ -138,10 +134,7 @@ STATICINLINE void vertex_attrib_l1dv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttribL1dvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttribL1dvEXT, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttribL1dvEXT(index, reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("VertexAttribL1dvEXT"sv, check_errors);
@@ -193,10 +186,7 @@ STATICINLINE void vertex_attrib_l2dv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttribL2dvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttribL2dvEXT, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttribL2dvEXT(index, reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("VertexAttribL2dvEXT"sv, check_errors);
@@ -249,10 +239,7 @@ STATICINLINE void vertex_attrib_l3dv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttribL3dvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttribL3dvEXT, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttribL3dvEXT(index, reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("VertexAttribL3dvEXT"sv, check_errors);
@@ -306,10 +293,7 @@ STATICINLINE void vertex_attrib_l4dv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttribL4dvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttribL4dvEXT, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttribL4dvEXT(index, reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("VertexAttribL4dvEXT"sv, check_errors);
@@ -342,9 +326,7 @@ STATICINLINE void vertex_attrib_l_pointer(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribLPointerEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
+        ::glw::trace::byte_span(pointer),
         index,
         size,
         type,

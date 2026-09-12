@@ -54,8 +54,7 @@ STATICINLINE void get_program_interfaceiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramInterfaceiv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         program,
         programInterface,
         pname);
@@ -203,8 +202,7 @@ STATICINLINE void get_program_resource_name(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramResourceName,
-        gsl::span<char>(
-            reinterpret_cast<char*>(name.data()), name.size_bytes()),
+        ::glw::trace::byte_span(name),
         program,
         programInterface,
         index,
@@ -267,11 +265,9 @@ STATICINLINE void get_program_resourceiv(
         program,
         programInterface,
         index,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(props.data()), props.size_bytes()),
+        ::glw::trace::byte_span(props),
         length,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()));
+        ::glw::trace::byte_span(params));
 #endif
     glGetProgramResourceiv(
         program,

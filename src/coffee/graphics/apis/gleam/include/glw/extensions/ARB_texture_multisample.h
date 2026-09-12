@@ -49,10 +49,7 @@ STATICINLINE void get_multisamplefv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetMultisamplefv,
-        gsl::span<char>(reinterpret_cast<char*>(val.data()), val.size_bytes()),
-        pname,
-        index);
+        glGetMultisamplefv, ::glw::trace::byte_span(val), pname, index);
 #endif
     glGetMultisamplefv(
         static_cast<GLenum>(pname),

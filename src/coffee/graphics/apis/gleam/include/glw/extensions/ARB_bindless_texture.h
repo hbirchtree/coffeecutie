@@ -132,8 +132,7 @@ STATICINLINE void get_vertex_attrib_lui64v(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVertexAttribLui64vARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         index,
         pname);
 #endif
@@ -331,8 +330,7 @@ STATICINLINE void program_uniform_handle(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniformHandleui64vARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(values.data()), values.size_bytes()),
+        ::glw::trace::byte_span(values),
         program,
         location);
 #endif
@@ -391,10 +389,7 @@ STATICINLINE void uniform_handle(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glUniformHandleui64vARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        location);
+        glUniformHandleui64vARB, ::glw::trace::byte_span(value), location);
 #endif
     glUniformHandleui64vARB(
         location,
@@ -449,10 +444,7 @@ STATICINLINE void vertex_attrib_l1ui64v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVertexAttribL1ui64vARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glVertexAttribL1ui64vARB, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttribL1ui64vARB(
         index, reinterpret_cast<const GLuint64EXT*>(v.data()));

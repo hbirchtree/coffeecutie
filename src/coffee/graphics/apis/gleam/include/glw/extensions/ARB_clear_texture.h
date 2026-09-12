@@ -41,8 +41,7 @@ STATICINLINE void clear_tex_image(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glClearTexImage,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         texture,
         level,
         format,
@@ -99,8 +98,7 @@ STATICINLINE void clear_tex_sub_image(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glClearTexSubImage,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         texture,
         level,
         xoffset,

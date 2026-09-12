@@ -35,8 +35,7 @@ STATICINLINE void get_buffer_parameterui64v(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetBufferParameterui64vNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -72,10 +71,7 @@ STATICINLINE void get_integerui64v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetIntegerui64vNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(result.data()), result.size_bytes()),
-        value);
+        glGetIntegerui64vNV, ::glw::trace::byte_span(result), value);
 #endif
     glGetIntegerui64vNV(
         value,
@@ -116,8 +112,7 @@ STATICINLINE void get_named_buffer_parameterui64v(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetNamedBufferParameterui64vNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         buffer,
         pname);
 #endif
@@ -161,8 +156,7 @@ STATICINLINE void get_uniformui64v(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetUniformui64vNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         program,
         location);
 #endif
@@ -376,8 +370,7 @@ STATICINLINE void program_uniform(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramUniformui64vNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        ::glw::trace::byte_span(value),
         program,
         location);
 #endif
@@ -437,11 +430,7 @@ STATICINLINE void uniform(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glUniformui64vNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        location,
-        count);
+        glUniformui64vNV, ::glw::trace::byte_span(value), location, count);
 #endif
     glUniformui64vNV(
         location,

@@ -46,12 +46,8 @@ STATICINLINE void specialize_shader(
         shader,
         pEntryPoint,
         numSpecializationConstants,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pConstantIndex.data()),
-            pConstantIndex.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pConstantValue.data()),
-            pConstantValue.size_bytes()));
+        ::glw::trace::byte_span(pConstantIndex),
+        ::glw::trace::byte_span(pConstantValue));
 #endif
     glSpecializeShaderARB(
         shader,

@@ -45,10 +45,8 @@ STATICINLINE void ext_get_program_binary_source(
         glExtGetProgramBinarySourceQCOM,
         program,
         shadertype,
-        gsl::span<char>(
-            reinterpret_cast<char*>(source.data()), source.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(length.data()), length.size_bytes()));
+        ::glw::trace::byte_span(source),
+        ::glw::trace::byte_span(length));
 #endif
     glExtGetProgramBinarySourceQCOM(
         program,
@@ -84,8 +82,7 @@ STATICINLINE void ext_get_programs(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glExtGetProgramsQCOM,
-        gsl::span<char>(
-            reinterpret_cast<char*>(programs.data()), programs.size_bytes()),
+        ::glw::trace::byte_span(programs),
         maxPrograms,
         numPrograms);
 #endif
@@ -122,8 +119,7 @@ STATICINLINE void ext_get_shaders(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glExtGetShadersQCOM,
-        gsl::span<char>(
-            reinterpret_cast<char*>(shaders.data()), shaders.size_bytes()),
+        ::glw::trace::byte_span(shaders),
         maxShaders,
         numShaders);
 #endif

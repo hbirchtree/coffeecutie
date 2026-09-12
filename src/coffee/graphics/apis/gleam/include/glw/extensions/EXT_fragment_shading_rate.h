@@ -96,9 +96,7 @@ STATICINLINE void get_fragment_shading_rates(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetFragmentShadingRatesEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(shadingRates.data()),
-            shadingRates.size_bytes()),
+        ::glw::trace::byte_span(shadingRates),
         samples,
         count);
 #endif

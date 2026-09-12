@@ -55,10 +55,7 @@ STATICINLINE void point_parameter(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glPointParameterivNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
-        pname);
+        glPointParameterivNV, ::glw::trace::byte_span(params), pname);
 #endif
     glPointParameterivNV(
         static_cast<GLenum>(pname),

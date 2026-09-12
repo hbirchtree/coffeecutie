@@ -83,8 +83,7 @@ STATICINLINE void get_map_attrib_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMapAttribParameterfvNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index,
         pname);
@@ -125,8 +124,7 @@ STATICINLINE void get_map_attrib_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMapAttribParameterivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index,
         pname);
@@ -170,8 +168,7 @@ STATICINLINE void get_map_control_points(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMapControlPointsNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(points.data()), points.size_bytes()),
+        ::glw::trace::byte_span(points),
         target,
         index,
         type,
@@ -215,11 +212,7 @@ STATICINLINE void get_map_parameter(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetMapParameterfvNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        target,
-        pname);
+        glGetMapParameterfvNV, ::glw::trace::byte_span(params), target, pname);
 #endif
     glGetMapParameterfvNV(
         static_cast<GLenum>(target),
@@ -253,11 +246,7 @@ STATICINLINE void get_map_parameter(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetMapParameterivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        target,
-        pname);
+        glGetMapParameterivNV, ::glw::trace::byte_span(params), target, pname);
 #endif
     glGetMapParameterivNV(
         static_cast<GLenum>(target),
@@ -301,8 +290,7 @@ STATICINLINE void map_control_points(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMapControlPointsNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(points.data()), points.size_bytes()),
+        ::glw::trace::byte_span(points),
         target,
         index,
         type,
@@ -351,11 +339,7 @@ STATICINLINE void map_parameter(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMapParameterfvNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
-        target,
-        pname);
+        glMapParameterfvNV, ::glw::trace::byte_span(params), target, pname);
 #endif
     glMapParameterfvNV(
         static_cast<GLenum>(target),
@@ -391,11 +375,7 @@ STATICINLINE void map_parameter(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMapParameterivNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
-        target,
-        pname);
+        glMapParameterivNV, ::glw::trace::byte_span(params), target, pname);
 #endif
     glMapParameterivNV(
         static_cast<GLenum>(target),

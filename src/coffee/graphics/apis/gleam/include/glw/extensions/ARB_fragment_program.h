@@ -137,11 +137,7 @@ STATICINLINE void delete_programs(
         GLW_FPTR_CHECK(DeleteProgramsARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glDeleteProgramsARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(programs.data()),
-            programs.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glDeleteProgramsARB, ::glw::trace::byte_span(programs));
 #endif
     glDeleteProgramsARB(
         programs.size(),
@@ -170,10 +166,7 @@ STATICINLINE void gen_programs(
         GLW_FPTR_CHECK(GenProgramsARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGenProgramsARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(programs.data()), programs.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glGenProgramsARB, ::glw::trace::byte_span(programs));
 #endif
     glGenProgramsARB(
         programs.size(),
@@ -207,8 +200,7 @@ STATICINLINE void get_program_env_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramEnvParameterdvARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -245,8 +237,7 @@ STATICINLINE void get_program_env_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramEnvParameterfvARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -283,8 +274,7 @@ STATICINLINE void get_program_local_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramLocalParameterdvARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -321,8 +311,7 @@ STATICINLINE void get_program_local_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramLocalParameterfvARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -355,11 +344,7 @@ STATICINLINE void get_program_string(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetProgramStringARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(string.data()), string.size_bytes()),
-        target,
-        pname);
+        glGetProgramStringARB, ::glw::trace::byte_span(string), target, pname);
 #endif
     glGetProgramStringARB(
         static_cast<GLenum>(target),
@@ -476,8 +461,7 @@ STATICINLINE void program_env_parameter4dv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramEnvParameter4dvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -544,8 +528,7 @@ STATICINLINE void program_env_parameter4fv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramEnvParameter4fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -612,8 +595,7 @@ STATICINLINE void program_local_parameter4dv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramLocalParameter4dvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -680,8 +662,7 @@ STATICINLINE void program_local_parameter4fv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramLocalParameter4fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         index);
 #endif
@@ -715,11 +696,7 @@ STATICINLINE void program_string(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glProgramStringARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(string.data()), string.size_bytes()),
-        target,
-        format);
+        glProgramStringARB, ::glw::trace::byte_span(string), target, format);
 #endif
     glProgramStringARB(
         static_cast<GLenum>(target),

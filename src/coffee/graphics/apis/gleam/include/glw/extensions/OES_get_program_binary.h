@@ -39,8 +39,7 @@ STATICINLINE void get_program_binary(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramBinaryOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(binary.data()), binary.size_bytes()),
+        ::glw::trace::byte_span(binary),
         program,
         length,
         binaryFormat);
@@ -84,8 +83,7 @@ STATICINLINE void program_binary(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramBinaryOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(binary.data()), binary.size_bytes()),
+        ::glw::trace::byte_span(binary),
         program,
         binaryFormat,
         length);

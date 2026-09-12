@@ -635,7 +635,7 @@ def collect_profiles_android(hostname, package, dest):
         print(f"collect-profile: no profile.json / *-chrome.json in {package} private storage")
 
 
-def run_linux(device_name, device, preset_name, preset, extra_args, script_dir, build_root, target_dir, dry_run=False, log_file=None, collect_profile=None):
+def run_linux(device_name, device, preset_name, preset, extra_args, script_dir, build_root, target_dir, dry_run=False, log_file=None, collect_profile=None, gleam_debug=None, gleam_debug_port=8099):
     hostname = device['hostname']
     scratchdir = device.get('scratchdir')
     if not scratchdir:
@@ -744,7 +744,7 @@ def _dri_gids(paths):
     return gids
 
 
-def run_docker(device_name, device, preset_name, preset, extra_args, script_dir, build_root, target_dir, dry_run=False, log_file=None, collect_profile=None):
+def run_docker(device_name, device, preset_name, preset, extra_args, script_dir, build_root, target_dir, dry_run=False, log_file=None, collect_profile=None, gleam_debug=None, gleam_debug_port=8099):
     image = device.get('image')
     if not image:
         sys.exit(f"Error: docker device '{device_name}' is missing required 'image'")
@@ -910,7 +910,7 @@ def android_push_cmds(hostname, local, remote):
     return [mkdir(dest_dir), push(local_path, dest)]
 
 
-def run_android(device_name, device, preset_name, preset, extra_args, script_dir, build_root, target_dir, dry_run=False, log_file=None, collect_profile=None, build_type=None):
+def run_android(device_name, device, preset_name, preset, extra_args, script_dir, build_root, target_dir, dry_run=False, log_file=None, collect_profile=None, gleam_debug=None, gleam_debug_port=8099, build_type=None):
     hostname = device.get('hostname') or (None if dry_run else pick_adb_device())
     if dry_run and not hostname:
         hostname = '<adb-device>'
@@ -1038,7 +1038,110 @@ def run_android(device_name, device, preset_name, preset, extra_args, script_dir
         collect_profiles_android(hostname, package, collect_profile)
 
 
-def run_web(device_name, device, preset_name, preset, extra_args, script_dir, build_root, target_dir, dry_run=False, log_file=None, collect_profile=None):
+
+def start_gleam_debug_collector(harness_dir, out_dir, port, dry_run=False):
+    """Start the collector the wasm build streams its GL trace to.
+
+    Returns the process, or None when tracing is off. The build has to have
+    been made with -DBUILD_GL_TRACE=ON for anything to connect to it.
+    """
+    server = os.path.join(harness_dir, "gl_trace_server.mjs")
+    if not os.path.exists(server):
+        print(f"warning: {server} missing, GL trace will not be collected")
+        return None
+    cmd = ["node", server, "--port", str(port), "--out", out_dir]
+    if dry_run:
+        print("  " + " ".join(cmd))
+        return None
+    os.makedirs(out_dir, exist_ok=True)
+    print(f"GL trace collector on port {port}, writing {out_dir}")
+    return subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+
+
+def stop_gleam_debug_collector(proc, out_dir):
+    if proc is None:
+        return
+    proc.terminate()
+    try:
+        output, _ = proc.communicate(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        output = ""
+    for line in (output or "").splitlines():
+        if "calls" in line or "trace written" in line:
+            print(line)
+    print(f"GL trace in {out_dir}")
+
+
+def serve_bundle(bundle_dir, port, page, query, host="127.0.0.1", tls=False,
+                 script_dir=None):
+    """Serve the staged bundle and block, so the page can be opened by hand.
+
+    The headless harness is the wrong tool when the thing being investigated is
+    a specific browser or GPU driver, which is the usual reason to want this.
+
+    Headers match toolchain/desktop/emscripten/wasm-http-server.py: the build
+    uses pthreads, and without COOP/COEP the browser withholds
+    SharedArrayBuffer and the module fails to start. localhost counts as a
+    secure context, so TLS is only needed when serving to another machine.
+    """
+    import functools
+    import http.server
+    import socketserver
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        extensions_map = {
+            **http.server.SimpleHTTPRequestHandler.extensions_map,
+            ".wasm": "application/wasm",
+            ".data": "application/octet-stream",
+            ".mjs": "text/javascript",
+        }
+
+        def end_headers(self):
+            self.send_header("Cross-Origin-Embedder-Policy", "require-corp")
+            self.send_header("Cross-Origin-Opener-Policy", "same-origin")
+            self.send_header("Cross-Origin-Resource-Policy", "same-site")
+            super().end_headers()
+
+    handler = functools.partial(Handler, directory=bundle_dir)
+
+    class Server(socketserver.ThreadingTCPServer):
+        allow_reuse_address = True
+        daemon_threads = True
+
+    scheme = "http"
+    httpd = Server((host, port), handler)
+    if tls:
+        import ssl
+        ref = os.path.join(script_dir or ".", "toolchain", "desktop", "emscripten")
+        key, cert = os.path.join(ref, "key.pem"), os.path.join(ref, "cert.pem")
+        if not (os.path.exists(key) and os.path.exists(cert)):
+            httpd.server_close()
+            sys.exit(
+                f"Error: --serve-tls needs {key} and {cert}\n"
+                f"Generate them with {os.path.join(ref, 'wasm-http-server.sh')}")
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(keyfile=key, certfile=cert)
+        httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
+        scheme = "https"
+
+    shown_host = "127.0.0.1" if host in ("0.0.0.0", "") else host
+    url = f"{scheme}://{shown_host}:{port}/{page}"
+    if query:
+        url += f"?{query}"
+    with httpd:
+        # Flushed explicitly: serve_forever blocks straight after, and the
+        # whole point of this mode is seeing the URL
+        print(f"\n  Serving {bundle_dir}\n  Open:    {url}\n\n  Ctrl-C to stop\n",
+              flush=True)
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            print("\nstopped")
+
+
+def run_web(device_name, device, preset_name, preset, extra_args, script_dir, build_root, target_dir, dry_run=False, log_file=None, collect_profile=None, gleam_debug=None, gleam_debug_port=8099, serve=False, serve_port=8088, serve_host='127.0.0.1', serve_tls=False):
     binary = preset.get("binary")
     bundle_path = None
     if binary:
@@ -1083,6 +1186,10 @@ def run_web(device_name, device, preset_name, preset, extra_args, script_dir, bu
             params[k.lstrip('-')] = v
         else:
             params[arg.lstrip('-')] = "true"
+
+    if gleam_debug:
+        params["gleamDebug"] = gleam_debug
+        params["gleamDebugPort"] = str(gleam_debug_port)
 
     param_str = "&".join(f"{k}={v}" for k, v in params.items())
 
@@ -1132,6 +1239,25 @@ def run_web(device_name, device, preset_name, preset, extra_args, script_dir, bu
         print_dry_run(setup_cmds + [test_cmd])
         return
 
+    trace_dir = os.path.join(out_dir, "gltrace")
+
+    if serve:
+        for cmd in setup_cmds:
+            subprocess.run(cmd, check=True)
+        collector = (
+            start_gleam_debug_collector(harness_dir, trace_dir, gleam_debug_port)
+            if gleam_debug else None)
+        try:
+            serve_bundle(staged_bundle, serve_port, page_name, param_str,
+                         host=serve_host, tls=serve_tls, script_dir=script_dir)
+        finally:
+            stop_gleam_debug_collector(collector, trace_dir)
+        return
+
+    collector = (
+        start_gleam_debug_collector(harness_dir, trace_dir, gleam_debug_port)
+        if gleam_debug else None)
+
     view_output(
         test_cmd,
         f"Running WebAssembly smoke test for **{preset_name}**",
@@ -1151,7 +1277,9 @@ def run_dolphin(
         target_dir,
         dry_run=False,
         log_file=None,
-        collect_profile=None):
+        collect_profile=None,
+        gleam_debug=None,
+        gleam_debug_port=8099):
     binary = preset['binary']
     binary_path = find_linux_binary(build_root, target_dir, binary)
     if not binary_path and not dry_run:
@@ -1902,6 +2030,27 @@ def main():
                         help='Write all received output (setup + program) to FILE')
     parser.add_argument('--collect-profile', metavar='DIR', default=None,
                         help='After the run, copy profile.json and *-chrome.json into DIR')
+    parser.add_argument('--gleam-debug', metavar='LEVEL', default=None,
+                        choices=['calls', 'errors', 'data', 'textures'],
+                        help='Trace GL calls at LEVEL. Needs a build with '
+                             '-DBUILD_GL_TRACE=ON. On web the collector is '
+                             'started for you')
+    parser.add_argument('--gleam-debug-port', metavar='PORT', type=int, default=8099,
+                        help='Port the web trace collector listens on (default 8099)')
+    parser.add_argument('--serve', action='store_true',
+                        help='Web devices: serve the bundle and print a URL to '
+                             'open in your own browser instead of running the '
+                             'headless smoke test')
+    parser.add_argument('--serve-port', metavar='PORT', type=int, default=8088,
+                        help='Port for --serve (default 8088)')
+    parser.add_argument('--serve-host', metavar='ADDR', default='127.0.0.1',
+                        help='Address for --serve (default 127.0.0.1; use '
+                             '0.0.0.0 to reach it from another device)')
+    parser.add_argument('--serve-tls', action='store_true',
+                        help='Serve over HTTPS using the cert next to '
+                             'toolchain/desktop/emscripten/wasm-http-server.py. '
+                             'Only needed off localhost, which is already a '
+                             'secure context')
     parser.add_argument('--build-type', metavar='dbg|rel', default=None,
                         help='Which Android APK flavour to install '
                              '(default: $BUILD_TYPE, else dbg)')
@@ -1947,15 +2096,15 @@ def main():
 
     dev_type = device.get('type') or ('android' if target.startswith('android:') else 'linux')
     if dev_type == 'docker':
-        run_docker(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile)
+        run_docker(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile, gleam_debug=args.gleam_debug, gleam_debug_port=args.gleam_debug_port)
     elif dev_type == 'android':
-        run_android(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile, build_type=args.build_type)
+        run_android(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile, gleam_debug=args.gleam_debug, gleam_debug_port=args.gleam_debug_port, build_type=args.build_type)
     elif dev_type == 'web':
-        run_web(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile)
+        run_web(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile, gleam_debug=args.gleam_debug, gleam_debug_port=args.gleam_debug_port, serve=args.serve, serve_port=args.serve_port, serve_host=args.serve_host, serve_tls=args.serve_tls)
     elif dev_type == 'dolphin':
-        run_dolphin(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile)
+        run_dolphin(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile, gleam_debug=args.gleam_debug, gleam_debug_port=args.gleam_debug_port)
     else:
-        run_linux(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile)
+        run_linux(args.device, device, args.preset, preset, args.extra_args, script_dir, build_root, target_dir, dry_run=args.dry_run, log_file=args.log, collect_profile=args.collect_profile, gleam_debug=args.gleam_debug, gleam_debug_port=args.gleam_debug_port)
 
 
 if __name__ == '__main__':

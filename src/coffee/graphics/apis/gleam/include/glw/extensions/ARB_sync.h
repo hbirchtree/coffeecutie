@@ -115,11 +115,7 @@ STATICINLINE void get_integer64v(
         GLW_FPTR_CHECK(GetInteger64v)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGetInteger64v,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        pname);
+    GLW_FPTR_TRACE_DATA(glGetInteger64v, ::glw::trace::byte_span(data), pname);
 #endif
     glGetInteger64v(
         static_cast<GLenum>(pname),
@@ -155,12 +151,7 @@ STATICINLINE void get_synciv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetSynciv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(values.data()), values.size_bytes()),
-        sync,
-        pname,
-        length);
+        glGetSynciv, ::glw::trace::byte_span(values), sync, pname, length);
 #endif
     glGetSynciv(
         sync,

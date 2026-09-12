@@ -147,8 +147,7 @@ STATICINLINE void lgpu_named_buffer_sub_data(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glLGPUNamedBufferSubDataNVX,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         gpuMask,
         buffer,
         offset,

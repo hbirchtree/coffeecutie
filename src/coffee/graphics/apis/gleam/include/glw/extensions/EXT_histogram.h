@@ -48,8 +48,7 @@ STATICINLINE void get_histogram(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetHistogramEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(values.data()), values.size_bytes()),
+        ::glw::trace::byte_span(values),
         target,
         reset,
         format,
@@ -90,8 +89,7 @@ STATICINLINE void get_histogram_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetHistogramParameterfvEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -128,8 +126,7 @@ STATICINLINE void get_histogram_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetHistogramParameterivEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -167,8 +164,7 @@ STATICINLINE void get_minmax(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMinmaxEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(values.data()), values.size_bytes()),
+        ::glw::trace::byte_span(values),
         target,
         reset,
         format,
@@ -209,8 +205,7 @@ STATICINLINE void get_minmax_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMinmaxParameterfvEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -247,8 +242,7 @@ STATICINLINE void get_minmax_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMinmaxParameterivEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif

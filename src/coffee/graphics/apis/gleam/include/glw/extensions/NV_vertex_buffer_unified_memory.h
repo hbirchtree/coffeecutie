@@ -149,11 +149,7 @@ STATICINLINE void get_integerui64i_v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetIntegerui64i_vNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(result.data()), result.size_bytes()),
-        value,
-        index);
+        glGetIntegerui64i_vNV, ::glw::trace::byte_span(result), value, index);
 #endif
     glGetIntegerui64i_vNV(
         value,

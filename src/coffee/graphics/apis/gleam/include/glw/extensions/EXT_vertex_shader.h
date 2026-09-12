@@ -428,11 +428,7 @@ STATICINLINE void get_invariant_booleanv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetInvariantBooleanvEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        id,
-        value);
+        glGetInvariantBooleanvEXT, ::glw::trace::byte_span(data), id, value);
 #endif
     glGetInvariantBooleanvEXT(
         id,
@@ -466,11 +462,7 @@ STATICINLINE void get_invariant_floatv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetInvariantFloatvEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        id,
-        value);
+        glGetInvariantFloatvEXT, ::glw::trace::byte_span(data), id, value);
 #endif
     glGetInvariantFloatvEXT(
         id,
@@ -504,11 +496,7 @@ STATICINLINE void get_invariant_integerv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetInvariantIntegervEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        id,
-        value);
+        glGetInvariantIntegervEXT, ::glw::trace::byte_span(data), id, value);
 #endif
     glGetInvariantIntegervEXT(
         id,
@@ -544,8 +532,7 @@ STATICINLINE void get_local_constant_booleanv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetLocalConstantBooleanvEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         id,
         value);
 #endif
@@ -581,11 +568,7 @@ STATICINLINE void get_local_constant_floatv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetLocalConstantFloatvEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        id,
-        value);
+        glGetLocalConstantFloatvEXT, ::glw::trace::byte_span(data), id, value);
 #endif
     glGetLocalConstantFloatvEXT(
         id,
@@ -620,8 +603,7 @@ STATICINLINE void get_local_constant_integerv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetLocalConstantIntegervEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         id,
         value);
 #endif
@@ -658,11 +640,7 @@ STATICINLINE void get_variant_booleanv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetVariantBooleanvEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        id,
-        value);
+        glGetVariantBooleanvEXT, ::glw::trace::byte_span(data), id, value);
 #endif
     glGetVariantBooleanvEXT(
         id,
@@ -696,11 +674,7 @@ STATICINLINE void get_variant_floatv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetVariantFloatvEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        id,
-        value);
+        glGetVariantFloatvEXT, ::glw::trace::byte_span(data), id, value);
 #endif
     glGetVariantFloatvEXT(
         id,
@@ -734,11 +708,7 @@ STATICINLINE void get_variant_integerv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetVariantIntegervEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        id,
-        value);
+        glGetVariantIntegervEXT, ::glw::trace::byte_span(data), id, value);
 #endif
     glGetVariantIntegervEXT(
         id,
@@ -769,11 +739,7 @@ STATICINLINE void get_variant_pointerv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetVariantPointervEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        id,
-        value);
+        glGetVariantPointervEXT, ::glw::trace::byte_span(data), id, value);
 #endif
     glGetVariantPointervEXT(
         id,
@@ -850,11 +816,7 @@ STATICINLINE void set_invariant(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glSetInvariantEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
-        id,
-        type);
+        glSetInvariantEXT, ::glw::trace::byte_span(addr), id, type);
 #endif
     glSetInvariantEXT(
         id,
@@ -885,11 +847,7 @@ STATICINLINE void set_local_constant(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glSetLocalConstantEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
-        id,
-        type);
+        glSetLocalConstantEXT, ::glw::trace::byte_span(addr), id, type);
 #endif
     glSetLocalConstantEXT(
         id,
@@ -1040,12 +998,7 @@ STATICINLINE void variant_pointer(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glVariantPointerEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
-        id,
-        type,
-        stride);
+        glVariantPointerEXT, ::glw::trace::byte_span(addr), id, type, stride);
 #endif
     glVariantPointerEXT(
         id,
@@ -1078,11 +1031,7 @@ STATICINLINE void variantbv(
         GLW_FPTR_CHECK(VariantbvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glVariantbvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
-        id);
+    GLW_FPTR_TRACE_DATA(glVariantbvEXT, ::glw::trace::byte_span(addr), id);
 #endif
     glVariantbvEXT(
         id,
@@ -1113,11 +1062,7 @@ STATICINLINE void variantdv(
         GLW_FPTR_CHECK(VariantdvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glVariantdvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
-        id);
+    GLW_FPTR_TRACE_DATA(glVariantdvEXT, ::glw::trace::byte_span(addr), id);
 #endif
     glVariantdvEXT(
         id,
@@ -1148,11 +1093,7 @@ STATICINLINE void variantfv(
         GLW_FPTR_CHECK(VariantfvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glVariantfvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
-        id);
+    GLW_FPTR_TRACE_DATA(glVariantfvEXT, ::glw::trace::byte_span(addr), id);
 #endif
     glVariantfvEXT(
         id,
@@ -1183,11 +1124,7 @@ STATICINLINE void variantiv(
         GLW_FPTR_CHECK(VariantivEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glVariantivEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
-        id);
+    GLW_FPTR_TRACE_DATA(glVariantivEXT, ::glw::trace::byte_span(addr), id);
 #endif
     glVariantivEXT(
         id,
@@ -1218,11 +1155,7 @@ STATICINLINE void variantsv(
         GLW_FPTR_CHECK(VariantsvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glVariantsvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
-        id);
+    GLW_FPTR_TRACE_DATA(glVariantsvEXT, ::glw::trace::byte_span(addr), id);
 #endif
     glVariantsvEXT(
         id,
@@ -1253,11 +1186,7 @@ STATICINLINE void variantubv(
         GLW_FPTR_CHECK(VariantubvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glVariantubvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
-        id);
+    GLW_FPTR_TRACE_DATA(glVariantubvEXT, ::glw::trace::byte_span(addr), id);
 #endif
     glVariantubvEXT(
         id,
@@ -1288,11 +1217,7 @@ STATICINLINE void variantuiv(
         GLW_FPTR_CHECK(VariantuivEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glVariantuivEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
-        id);
+    GLW_FPTR_TRACE_DATA(glVariantuivEXT, ::glw::trace::byte_span(addr), id);
 #endif
     glVariantuivEXT(
         id,
@@ -1323,11 +1248,7 @@ STATICINLINE void variantusv(
         GLW_FPTR_CHECK(VariantusvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glVariantusvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(addr.data()), addr.size_bytes()),
-        id);
+    GLW_FPTR_TRACE_DATA(glVariantusvEXT, ::glw::trace::byte_span(addr), id);
 #endif
     glVariantusvEXT(
         id,

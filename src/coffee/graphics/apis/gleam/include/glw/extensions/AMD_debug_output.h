@@ -41,8 +41,7 @@ STATICINLINE void debug_message_callback(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDebugMessageCallbackAMD,
-        gsl::span<char>(
-            reinterpret_cast<char*>(userParam.data()), userParam.size_bytes()),
+        ::glw::trace::byte_span(userParam),
         callback);
 #endif
     glDebugMessageCallbackAMD(
@@ -81,8 +80,7 @@ STATICINLINE void debug_message_enable(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDebugMessageEnableAMD,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()),
+        ::glw::trace::byte_span(ids),
         category,
         severity,
         enabled);
@@ -179,17 +177,11 @@ STATICINLINE GLuint get_debug_message_log(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glGetDebugMessageLogAMD,
-        gsl::span<char>(
-            reinterpret_cast<char*>(categories.data()),
-            categories.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(severities.data()),
-            severities.size_bytes()),
-        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(lengths.data()), lengths.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(message.data()), message.size_bytes()));
+        ::glw::trace::byte_span(categories),
+        ::glw::trace::byte_span(severities),
+        ::glw::trace::byte_span(ids),
+        ::glw::trace::byte_span(lengths),
+        ::glw::trace::byte_span(message));
 #endif
     auto out = glGetDebugMessageLogAMD(
         categories.size(),

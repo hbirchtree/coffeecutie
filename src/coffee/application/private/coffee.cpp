@@ -370,6 +370,8 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     PrintArchitectureInfo();
     for(auto const& [key, value] : emscripten::args::query_params())
     {
+        if(key.starts_with("gleamDebug"))
+            continue;
         arg_storage.push_back(fmt::format("--{}", key));
         arg_storage.push_back(value);
     }

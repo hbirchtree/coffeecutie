@@ -80,6 +80,18 @@ inline void capture_gl_trace_data(
     glw::trace::detail::capture_gl_trace(#func, ##__VA_ARGS__)
 #endif
 
+#if defined(GLW_ENABLE_TRACE)
+#include <glw/trace.h>
+
+#undef GLW_FPTR_TRACE
+#undef GLW_FPTR_TRACE_DATA
+
+#define GLW_FPTR_TRACE(func, ...) \
+    ::glw::trace::detail::record_call(#func, ##__VA_ARGS__)
+#define GLW_FPTR_TRACE_DATA(func, data, ...) \
+    ::glw::trace::detail::record_call_data(#func, data, ##__VA_ARGS__)
+#endif
+
 // clang-format off
 
 #define GL_BASE_ES_MASK 0x1000
@@ -219,11 +231,11 @@ inline std::string error_to_hex(auto error)
 void error_check(std::string_view cmd_name, enum error_check check_errors);
 
 } // namespace detail
+
 namespace impl {
 
 constexpr bool debugging_enabled =
-    compile_info::debug_mode &&
-    !compile_info::platform::is_emscripten;
+    compile_info::debug_mode && !compile_info::platform::is_emscripten;
 
 }
 } // namespace gl

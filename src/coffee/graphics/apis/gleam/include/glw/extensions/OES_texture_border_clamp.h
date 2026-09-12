@@ -41,8 +41,7 @@ STATICINLINE void get_sampler_parameter_iiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSamplerParameterIivOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         sampler,
         pname);
 #endif
@@ -84,8 +83,7 @@ STATICINLINE void get_sampler_parameter_iuiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSamplerParameterIuivOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         sampler,
         pname);
 #endif
@@ -122,8 +120,7 @@ STATICINLINE void get_tex_parameter_iiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetTexParameterIivOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -160,8 +157,7 @@ STATICINLINE void get_tex_parameter_iuiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetTexParameterIuivOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -204,8 +200,7 @@ STATICINLINE void sampler_parameter_iiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSamplerParameterIivOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(param.data()), param.size_bytes()),
+        ::glw::trace::byte_span(param),
         sampler,
         pname);
 #endif
@@ -248,8 +243,7 @@ STATICINLINE void sampler_parameter_iuiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSamplerParameterIuivOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(param.data()), param.size_bytes()),
+        ::glw::trace::byte_span(param),
         sampler,
         pname);
 #endif
@@ -286,11 +280,7 @@ STATICINLINE void tex_parameter_iiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glTexParameterIivOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
-        target,
-        pname);
+        glTexParameterIivOES, ::glw::trace::byte_span(params), target, pname);
 #endif
     glTexParameterIivOES(
         static_cast<GLenum>(target),
@@ -326,11 +316,7 @@ STATICINLINE void tex_parameter_iuiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glTexParameterIuivOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
-        target,
-        pname);
+        glTexParameterIuivOES, ::glw::trace::byte_span(params), target, pname);
 #endif
     glTexParameterIuivOES(
         static_cast<GLenum>(target),

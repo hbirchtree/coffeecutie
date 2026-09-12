@@ -52,8 +52,7 @@ STATICINLINE void compressed_tex_image_1d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCompressedTexImage1D,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         target,
         level,
         internalformat,
@@ -105,8 +104,7 @@ STATICINLINE void compressed_tex_image_2d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCompressedTexImage2D,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         target,
         level,
         internalformat,
@@ -160,8 +158,7 @@ STATICINLINE void compressed_tex_image_3d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCompressedTexImage3D,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         target,
         level,
         internalformat,
@@ -213,8 +210,7 @@ STATICINLINE void compressed_tex_sub_image_1d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCompressedTexSubImage1D,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         target,
         level,
         xoffset,
@@ -268,8 +264,7 @@ STATICINLINE void compressed_tex_sub_image_2d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCompressedTexSubImage2D,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         target,
         level,
         xoffset,
@@ -327,8 +322,7 @@ STATICINLINE void compressed_tex_sub_image_3d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCompressedTexSubImage3D,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         target,
         level,
         xoffset,
@@ -373,10 +367,7 @@ STATICINLINE void get_compressed_tex_image(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetCompressedTexImage,
-        gsl::span<char>(reinterpret_cast<char*>(img.data()), img.size_bytes()),
-        target,
-        level);
+        glGetCompressedTexImage, ::glw::trace::byte_span(img), target, level);
 #endif
     glGetCompressedTexImage(
         static_cast<GLenum>(target),

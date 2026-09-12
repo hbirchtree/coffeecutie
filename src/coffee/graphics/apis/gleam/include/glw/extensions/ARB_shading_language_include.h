@@ -42,8 +42,7 @@ STATICINLINE void compile_shader_include(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCompileShaderIncludeARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(length.data()), length.size_bytes()),
+        ::glw::trace::byte_span(length),
         shader,
         path);
 #endif
@@ -105,11 +104,7 @@ STATICINLINE void get_named_string(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetNamedStringARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(string.data()), string.size_bytes()),
-        name,
-        stringlen);
+        glGetNamedStringARB, ::glw::trace::byte_span(string), name, stringlen);
 #endif
     glGetNamedStringARB(
         name.size(), name.data(), string.size(), &stringlen, string.data());
@@ -142,11 +137,7 @@ STATICINLINE void get_named_stringiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetNamedStringivARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        name,
-        pname);
+        glGetNamedStringivARB, ::glw::trace::byte_span(params), name, pname);
 #endif
     glGetNamedStringivARB(
         name.size(),

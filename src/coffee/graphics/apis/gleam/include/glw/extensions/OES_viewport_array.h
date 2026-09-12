@@ -41,11 +41,7 @@ STATICINLINE void depth_range_arrayfv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glDepthRangeArrayfvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        first,
-        count);
+        glDepthRangeArrayfvOES, ::glw::trace::byte_span(v), first, count);
 #endif
     glDepthRangeArrayfvOES(
         first,
@@ -147,11 +143,7 @@ STATICINLINE void get_floati_v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetFloati_vOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        target,
-        index);
+        glGetFloati_vOES, ::glw::trace::byte_span(data), target, index);
 #endif
     glGetFloati_vOES(
         static_cast<GLenum>(target),
@@ -210,11 +202,7 @@ STATICINLINE void scissor_arrayv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glScissorArrayvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        first,
-        count);
+        glScissorArrayvOES, ::glw::trace::byte_span(v), first, count);
 #endif
     glScissorArrayvOES(
         first,
@@ -277,10 +265,7 @@ STATICINLINE void scissor_indexedv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glScissorIndexedvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glScissorIndexedvOES, ::glw::trace::byte_span(v), index);
 #endif
     glScissorIndexedvOES(
         index, v.size() ? reinterpret_cast<const GLint*>(v.data()) : nullptr);
@@ -313,11 +298,7 @@ STATICINLINE void viewport_arrayv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glViewportArrayvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        first,
-        count);
+        glViewportArrayvOES, ::glw::trace::byte_span(v), first, count);
 #endif
     glViewportArrayvOES(
         first,
@@ -380,10 +361,7 @@ STATICINLINE void viewport_indexedfv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glViewportIndexedfvOES,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+        glViewportIndexedfvOES, ::glw::trace::byte_span(v), index);
 #endif
     glViewportIndexedfvOES(
         index, v.size() ? reinterpret_cast<const GLfloat*>(v.data()) : nullptr);

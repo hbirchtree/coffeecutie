@@ -40,11 +40,7 @@ STATICINLINE void depth_range_arrayv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glDepthRangeArrayv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        first,
-        count);
+        glDepthRangeArrayv, ::glw::trace::byte_span(v), first, count);
 #endif
     glDepthRangeArrayv(
         first,
@@ -100,11 +96,7 @@ STATICINLINE void get_doublei_v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetDoublei_v,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        target,
-        index);
+        glGetDoublei_v, ::glw::trace::byte_span(data), target, index);
 #endif
     glGetDoublei_v(
         static_cast<GLenum>(target),
@@ -138,11 +130,7 @@ STATICINLINE void get_floati_v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetFloati_v,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        target,
-        index);
+        glGetFloati_v, ::glw::trace::byte_span(data), target, index);
 #endif
     glGetFloati_v(
         static_cast<GLenum>(target),
@@ -177,11 +165,7 @@ STATICINLINE void scissor_arrayv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glScissorArrayv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        first,
-        count);
+        glScissorArrayv, ::glw::trace::byte_span(v), first, count);
 #endif
     glScissorArrayv(
         first,
@@ -243,11 +227,7 @@ STATICINLINE void scissor_indexedv(
         GLW_FPTR_CHECK(ScissorIndexedv)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glScissorIndexedv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+    GLW_FPTR_TRACE_DATA(glScissorIndexedv, ::glw::trace::byte_span(v), index);
 #endif
     glScissorIndexedv(
         index, v.size() ? reinterpret_cast<const GLint*>(v.data()) : nullptr);
@@ -280,11 +260,7 @@ STATICINLINE void viewport_arrayv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glViewportArrayv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        first,
-        count);
+        glViewportArrayv, ::glw::trace::byte_span(v), first, count);
 #endif
     glViewportArrayv(
         first,
@@ -346,11 +322,7 @@ STATICINLINE void viewport_indexedfv(
         GLW_FPTR_CHECK(ViewportIndexedfv)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glViewportIndexedfv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+    GLW_FPTR_TRACE_DATA(glViewportIndexedfv, ::glw::trace::byte_span(v), index);
 #endif
     glViewportIndexedfv(
         index, v.size() ? reinterpret_cast<const GLfloat*>(v.data()) : nullptr);
@@ -383,11 +355,7 @@ STATICINLINE void depth_range_arraydv_nv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glDepthRangeArraydvNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        first,
-        count);
+        glDepthRangeArraydvNV, ::glw::trace::byte_span(v), first, count);
 #endif
     glDepthRangeArraydvNV(
         first,

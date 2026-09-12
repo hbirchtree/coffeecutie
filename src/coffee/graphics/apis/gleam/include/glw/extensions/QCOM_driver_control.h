@@ -78,11 +78,8 @@ STATICINLINE void get_driver_control_string(
     GLW_FPTR_TRACE(
         glGetDriverControlStringQCOM,
         driverControl,
-        gsl::span<char>(
-            reinterpret_cast<char*>(length.data()), length.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(driverControlString.data()),
-            driverControlString.size_bytes()));
+        ::glw::trace::byte_span(length),
+        ::glw::trace::byte_span(driverControlString));
 #endif
     glGetDriverControlStringQCOM(
         driverControl,
@@ -122,10 +119,8 @@ STATICINLINE void get_driver_controls(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glGetDriverControlsQCOM,
-        gsl::span<char>(reinterpret_cast<char*>(num.data()), num.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(driverControls.data()),
-            driverControls.size_bytes()));
+        ::glw::trace::byte_span(num),
+        ::glw::trace::byte_span(driverControls));
 #endif
     glGetDriverControlsQCOM(
         num.size() ? reinterpret_cast<GLint*>(num.data()) : nullptr,

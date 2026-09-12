@@ -37,10 +37,8 @@ STATICINLINE void multi_draw_arrays(
     GLW_FPTR_TRACE(
         glMultiDrawArraysEXT,
         mode,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(first.data()), first.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(count.data()), count.size_bytes()));
+        ::glw::trace::byte_span(first),
+        ::glw::trace::byte_span(count));
 #endif
     glMultiDrawArraysEXT(static_cast<GLenum>(mode), first.data(), count.data());
     detail::error_check("MultiDrawArraysEXT"sv, check_errors);
@@ -78,8 +76,7 @@ STATICINLINE void multi_draw_elements(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMultiDrawElementsEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(count.data()), count.size_bytes()),
+        ::glw::trace::byte_span(count),
         mode,
         type,
         indices);

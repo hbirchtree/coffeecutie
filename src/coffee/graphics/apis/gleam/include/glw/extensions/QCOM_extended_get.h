@@ -34,10 +34,7 @@ STATICINLINE void ext_get_buffer_pointerv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glExtGetBufferPointervQCOM,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        target);
+        glExtGetBufferPointervQCOM, ::glw::trace::byte_span(params), target);
 #endif
     glExtGetBufferPointervQCOM(
         target,
@@ -71,8 +68,7 @@ STATICINLINE void ext_get_buffers(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glExtGetBuffersQCOM,
-        gsl::span<char>(
-            reinterpret_cast<char*>(buffers.data()), buffers.size_bytes()),
+        ::glw::trace::byte_span(buffers),
         maxBuffers,
         numBuffers);
 #endif
@@ -109,9 +105,7 @@ STATICINLINE void ext_get_framebuffers(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glExtGetFramebuffersQCOM,
-        gsl::span<char>(
-            reinterpret_cast<char*>(framebuffers.data()),
-            framebuffers.size_bytes()),
+        ::glw::trace::byte_span(framebuffers),
         maxFramebuffers,
         numFramebuffers);
 #endif
@@ -149,9 +143,7 @@ STATICINLINE void ext_get_renderbuffers(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glExtGetRenderbuffersQCOM,
-        gsl::span<char>(
-            reinterpret_cast<char*>(renderbuffers.data()),
-            renderbuffers.size_bytes()),
+        ::glw::trace::byte_span(renderbuffers),
         maxRenderbuffers,
         numRenderbuffers);
 #endif
@@ -198,8 +190,7 @@ STATICINLINE void ext_get_tex_level_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glExtGetTexLevelParameterivQCOM,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         texture,
         face,
         level,
@@ -251,8 +242,7 @@ STATICINLINE void ext_get_tex_sub_image(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glExtGetTexSubImageQCOM,
-        gsl::span<char>(
-            reinterpret_cast<char*>(texels.data()), texels.size_bytes()),
+        ::glw::trace::byte_span(texels),
         target,
         level,
         xoffset,
@@ -306,12 +296,9 @@ STATICINLINE void ext_get_textures(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glExtGetTexturesQCOM,
-        gsl::span<char>(
-            reinterpret_cast<char*>(textures.data()), textures.size_bytes()),
+        ::glw::trace::byte_span(textures),
         maxTextures,
-        gsl::span<char>(
-            reinterpret_cast<char*>(numTextures.data()),
-            numTextures.size_bytes()));
+        ::glw::trace::byte_span(numTextures));
 #endif
     glExtGetTexturesQCOM(
         textures.size() ? reinterpret_cast<GLuint*>(textures.data()) : nullptr,

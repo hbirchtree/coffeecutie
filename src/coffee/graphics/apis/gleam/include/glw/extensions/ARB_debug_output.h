@@ -43,9 +43,7 @@ STATICINLINE void debug_message_callback(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDebugMessageCallbackARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(userParam.data()),
-            userParam.size_bytes()),
+        ::glw::trace::byte_span(userParam),
         callback);
 #endif
     glDebugMessageCallbackARB(
@@ -87,8 +85,7 @@ STATICINLINE void debug_message_control(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDebugMessageControlARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()),
+        ::glw::trace::byte_span(ids),
         source,
         type,
         severity,
@@ -201,19 +198,12 @@ STATICINLINE GLuint get_debug_message_log(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glGetDebugMessageLogARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(sources.data()), sources.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(types.data()), types.size_bytes()),
-        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(severities.data()),
-            severities.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(lengths.data()), lengths.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(messageLog.data()),
-            messageLog.size_bytes()));
+        ::glw::trace::byte_span(sources),
+        ::glw::trace::byte_span(types),
+        ::glw::trace::byte_span(ids),
+        ::glw::trace::byte_span(severities),
+        ::glw::trace::byte_span(lengths),
+        ::glw::trace::byte_span(messageLog));
 #endif
     auto out = glGetDebugMessageLogARB(
         sources.size(),

@@ -61,9 +61,7 @@ STATICINLINE void coverage_modulation_table(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glCoverageModulationTableNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+        glCoverageModulationTableNV, ::glw::trace::byte_span(v));
 #endif
     glCoverageModulationTableNV(
         v.size(),
@@ -92,9 +90,7 @@ STATICINLINE void get_coverage_modulation_table(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetCoverageModulationTableNV,
-        gsl::span<char>(reinterpret_cast<char*>(v.data()), v.size_bytes()),
-        bufSize);
+        glGetCoverageModulationTableNV, ::glw::trace::byte_span(v), bufSize);
 #endif
     glGetCoverageModulationTableNV(
         bufSize, v.size() ? reinterpret_cast<GLfloat*>(v.data()) : nullptr);

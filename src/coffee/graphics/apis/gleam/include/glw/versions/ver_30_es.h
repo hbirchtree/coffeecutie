@@ -312,11 +312,7 @@ STATICINLINE void clear_bufferfv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glClearBufferfv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        buffer,
-        drawbuffer);
+        glClearBufferfv, ::glw::trace::byte_span(value), buffer, drawbuffer);
 #endif
     glClearBufferfv(
         static_cast<GLenum>(buffer),
@@ -352,11 +348,7 @@ STATICINLINE void clear_bufferiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glClearBufferiv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        buffer,
-        drawbuffer);
+        glClearBufferiv, ::glw::trace::byte_span(value), buffer, drawbuffer);
 #endif
     glClearBufferiv(
         static_cast<GLenum>(buffer),
@@ -391,11 +383,7 @@ STATICINLINE void clear_bufferuiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glClearBufferuiv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        buffer,
-        drawbuffer);
+        glClearBufferuiv, ::glw::trace::byte_span(value), buffer, drawbuffer);
 #endif
     glClearBufferuiv(
         static_cast<GLenum>(buffer),
@@ -466,8 +454,7 @@ STATICINLINE void compressed_tex_image_3d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCompressedTexImage3D,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         target,
         level,
         internalformat,
@@ -525,8 +512,7 @@ STATICINLINE void compressed_tex_sub_image_3d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glCompressedTexSubImage3D,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         target,
         level,
         xoffset,
@@ -659,10 +645,7 @@ STATICINLINE void delete_queries(
         GLW_FPTR_CHECK(DeleteQueries)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glDeleteQueries,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glDeleteQueries, ::glw::trace::byte_span(ids));
 #endif
     glDeleteQueries(
         ids.size(),
@@ -691,11 +674,7 @@ STATICINLINE void delete_samplers(
         GLW_FPTR_CHECK(DeleteSamplers)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glDeleteSamplers,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(samplers.data()),
-            samplers.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glDeleteSamplers, ::glw::trace::byte_span(samplers));
 #endif
     glDeleteSamplers(
         samplers.size(),
@@ -748,9 +727,7 @@ STATICINLINE void delete_transform_feedbacks(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glDeleteTransformFeedbacks,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()));
+        glDeleteTransformFeedbacks, ::glw::trace::byte_span(ids));
 #endif
     glDeleteTransformFeedbacks(
         ids.size(),
@@ -779,10 +756,7 @@ STATICINLINE void delete_vertex_arrays(
         GLW_FPTR_CHECK(DeleteVertexArrays)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glDeleteVertexArrays,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(arrays.data()), arrays.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glDeleteVertexArrays, ::glw::trace::byte_span(arrays));
 #endif
     glDeleteVertexArrays(
         arrays.size(),
@@ -844,10 +818,7 @@ STATICINLINE void draw_buffers(
         GLW_FPTR_CHECK(DrawBuffers)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glDrawBuffers,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(bufs.data()), bufs.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glDrawBuffers, ::glw::trace::byte_span(bufs));
 #endif
     glDrawBuffers(
         bufs.size(),
@@ -922,9 +893,7 @@ STATICINLINE void draw_range_elements(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDrawRangeElements,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(indices.data()),
-            indices.size_bytes()),
+        ::glw::trace::byte_span(indices),
         mode,
         start,
         end,
@@ -1103,9 +1072,7 @@ STATICINLINE void gen_queries(
         GLW_FPTR_CHECK(GenQueries)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGenQueries,
-        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glGenQueries, ::glw::trace::byte_span(ids));
 #endif
     glGenQueries(
         ids.size(),
@@ -1134,10 +1101,7 @@ STATICINLINE void gen_samplers(
         GLW_FPTR_CHECK(GenSamplers)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGenSamplers,
-        gsl::span<char>(
-            reinterpret_cast<char*>(samplers.data()), samplers.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glGenSamplers, ::glw::trace::byte_span(samplers));
 #endif
     glGenSamplers(
         samplers.size(),
@@ -1166,9 +1130,7 @@ STATICINLINE void gen_transform_feedbacks(
         GLW_FPTR_CHECK(GenTransformFeedbacks)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGenTransformFeedbacks,
-        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glGenTransformFeedbacks, ::glw::trace::byte_span(ids));
 #endif
     glGenTransformFeedbacks(
         ids.size(),
@@ -1197,10 +1159,7 @@ STATICINLINE void gen_vertex_arrays(
         GLW_FPTR_CHECK(GenVertexArrays)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGenVertexArrays,
-        gsl::span<char>(
-            reinterpret_cast<char*>(arrays.data()), arrays.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glGenVertexArrays, ::glw::trace::byte_span(arrays));
 #endif
     glGenVertexArrays(
         arrays.size(),
@@ -1243,9 +1202,7 @@ STATICINLINE void get_active_uniform_block_name(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveUniformBlockName,
-        gsl::span<char>(
-            reinterpret_cast<char*>(uniformBlockName.data()),
-            uniformBlockName.size_bytes()),
+        ::glw::trace::byte_span(uniformBlockName),
         program,
         uniformBlockIndex,
         length);
@@ -1293,8 +1250,7 @@ STATICINLINE void get_active_uniform_blockiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveUniformBlockiv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         program,
         uniformBlockIndex,
         pname);
@@ -1347,12 +1303,9 @@ STATICINLINE void get_active_uniformsiv(
     GLW_FPTR_TRACE(
         glGetActiveUniformsiv,
         program,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(uniformIndices.data()),
-            uniformIndices.size_bytes()),
+        ::glw::trace::byte_span(uniformIndices),
         pname,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()));
+        ::glw::trace::byte_span(params));
 #endif
     glGetActiveUniformsiv(
         program,
@@ -1392,8 +1345,7 @@ STATICINLINE void get_buffer_parameteri64v(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetBufferParameteri64v,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -1426,11 +1378,7 @@ STATICINLINE void get_buffer_pointerv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetBufferPointerv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        target,
-        pname);
+        glGetBufferPointerv, ::glw::trace::byte_span(params), target, pname);
 #endif
     glGetBufferPointerv(
         static_cast<GLenum>(target),
@@ -1496,11 +1444,7 @@ STATICINLINE void get_integer64i_v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetInteger64i_v,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        target,
-        index);
+        glGetInteger64i_v, ::glw::trace::byte_span(data), target, index);
 #endif
     glGetInteger64i_v(
         static_cast<GLenum>(target),
@@ -1532,11 +1476,7 @@ STATICINLINE void get_integer64v(
         GLW_FPTR_CHECK(GetInteger64v)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGetInteger64v,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        pname);
+    GLW_FPTR_TRACE_DATA(glGetInteger64v, ::glw::trace::byte_span(data), pname);
 #endif
     glGetInteger64v(
         static_cast<GLenum>(pname),
@@ -1570,11 +1510,7 @@ STATICINLINE void get_integeri_v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetIntegeri_v,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        target,
-        index);
+        glGetIntegeri_v, ::glw::trace::byte_span(data), target, index);
 #endif
     glGetIntegeri_v(
         static_cast<GLenum>(target),
@@ -1613,8 +1549,7 @@ STATICINLINE void get_internalformativ(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetInternalformativ,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         internalformat,
         pname);
@@ -1659,8 +1594,7 @@ STATICINLINE void get_program_binary(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetProgramBinary,
-        gsl::span<char>(
-            reinterpret_cast<char*>(binary.data()), binary.size_bytes()),
+        ::glw::trace::byte_span(binary),
         program,
         length,
         binaryFormat);
@@ -1700,11 +1634,7 @@ STATICINLINE void get_query_objectuiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetQueryObjectuiv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        id,
-        pname);
+        glGetQueryObjectuiv, ::glw::trace::byte_span(params), id, pname);
 #endif
     glGetQueryObjectuiv(
         id,
@@ -1739,11 +1669,7 @@ STATICINLINE void get_queryiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetQueryiv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        target,
-        pname);
+        glGetQueryiv, ::glw::trace::byte_span(params), target, pname);
 #endif
     glGetQueryiv(
         static_cast<GLenum>(target),
@@ -1784,8 +1710,7 @@ STATICINLINE void get_sampler_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSamplerParameterfv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         sampler,
         pname);
 #endif
@@ -1828,8 +1753,7 @@ STATICINLINE void get_sampler_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSamplerParameteriv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         sampler,
         pname);
 #endif
@@ -1895,12 +1819,7 @@ STATICINLINE void get_synciv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetSynciv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(values.data()), values.size_bytes()),
-        sync,
-        pname,
-        length);
+        glGetSynciv, ::glw::trace::byte_span(values), sync, pname, length);
 #endif
     glGetSynciv(
         sync,
@@ -1950,8 +1869,7 @@ STATICINLINE void get_transform_feedback_varying(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetTransformFeedbackVarying,
-        gsl::span<char>(
-            reinterpret_cast<char*>(name.data()), name.size_bytes()),
+        ::glw::trace::byte_span(name),
         program,
         index,
         length,
@@ -2030,9 +1948,7 @@ STATICINLINE void get_uniform_indices(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetUniformIndices,
-        gsl::span<char>(
-            reinterpret_cast<char*>(uniformIndices.data()),
-            uniformIndices.size_bytes()),
+        ::glw::trace::byte_span(uniformIndices),
         program,
         uniformCount,
         uniformNames);
@@ -2077,11 +1993,7 @@ STATICINLINE void get_uniformuiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetUniformuiv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        program,
-        location);
+        glGetUniformuiv, ::glw::trace::byte_span(params), program, location);
 #endif
     glGetUniformuiv(
         program,
@@ -2171,11 +2083,7 @@ STATICINLINE void invalidate_framebuffer(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glInvalidateFramebuffer,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(attachments.data()),
-            attachments.size_bytes()),
-        target);
+        glInvalidateFramebuffer, ::glw::trace::byte_span(attachments), target);
 #endif
     glInvalidateFramebuffer(
         static_cast<GLenum>(target),
@@ -2223,9 +2131,7 @@ STATICINLINE void invalidate_sub_framebuffer(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glInvalidateSubFramebuffer,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(attachments.data()),
-            attachments.size_bytes()),
+        ::glw::trace::byte_span(attachments),
         target,
         x,
         width);
@@ -2454,8 +2360,7 @@ STATICINLINE void program_binary(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramBinary,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(binary.data()), binary.size_bytes()),
+        ::glw::trace::byte_span(binary),
         program,
         binaryFormat,
         length);
@@ -2649,11 +2554,7 @@ STATICINLINE void sampler_parameter(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glSamplerParameterfv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(param.data()), param.size_bytes()),
-        sampler,
-        pname);
+        glSamplerParameterfv, ::glw::trace::byte_span(param), sampler, pname);
 #endif
     glSamplerParameterfv(
         sampler,
@@ -2726,11 +2627,7 @@ STATICINLINE void sampler_parameter(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glSamplerParameteriv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(param.data()), param.size_bytes()),
-        sampler,
-        pname);
+        glSamplerParameteriv, ::glw::trace::byte_span(param), sampler, pname);
 #endif
     glSamplerParameteriv(
         sampler,
@@ -2776,8 +2673,7 @@ STATICINLINE void tex_image_3d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexImage3D,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        ::glw::trace::byte_span(pixels),
         target,
         level,
         internalformat,
@@ -2914,8 +2810,7 @@ STATICINLINE void tex_sub_image_3d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexSubImage3D,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        ::glw::trace::byte_span(pixels),
         target,
         level,
         xoffset,
@@ -3025,10 +2920,7 @@ STATICINLINE void uniform(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glUniform1uiv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        location);
+        glUniform1uiv, ::glw::trace::byte_span(value), location);
 #endif
     glUniform1uiv(
         location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
@@ -3087,10 +2979,7 @@ STATICINLINE void uniform(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glUniform2uiv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        location);
+        glUniform2uiv, ::glw::trace::byte_span(value), location);
 #endif
     glUniform2uiv(
         location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
@@ -3150,10 +3039,7 @@ STATICINLINE void uniform(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glUniform3uiv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        location);
+        glUniform3uiv, ::glw::trace::byte_span(value), location);
 #endif
     glUniform3uiv(
         location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
@@ -3214,10 +3100,7 @@ STATICINLINE void uniform(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glUniform4uiv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        location);
+        glUniform4uiv, ::glw::trace::byte_span(value), location);
 #endif
     glUniform4uiv(
         location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
@@ -3284,8 +3167,7 @@ STATICINLINE void uniform(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix2x3fv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        ::glw::trace::byte_span(value),
         location,
         transpose);
 #endif
@@ -3324,8 +3206,7 @@ STATICINLINE void uniform(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix2x4fv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        ::glw::trace::byte_span(value),
         location,
         transpose);
 #endif
@@ -3364,8 +3245,7 @@ STATICINLINE void uniform(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix3x2fv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        ::glw::trace::byte_span(value),
         location,
         transpose);
 #endif
@@ -3404,8 +3284,7 @@ STATICINLINE void uniform(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix3x4fv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        ::glw::trace::byte_span(value),
         location,
         transpose);
 #endif
@@ -3444,8 +3323,7 @@ STATICINLINE void uniform(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix4x2fv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        ::glw::trace::byte_span(value),
         location,
         transpose);
 #endif
@@ -3484,8 +3362,7 @@ STATICINLINE void uniform(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix4x3fv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        ::glw::trace::byte_span(value),
         location,
         transpose);
 #endif
@@ -3593,11 +3470,7 @@ STATICINLINE void vertex_attrib_i4iv(
         GLW_FPTR_CHECK(VertexAttribI4iv)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glVertexAttribI4iv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+    GLW_FPTR_TRACE_DATA(glVertexAttribI4iv, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttribI4iv(index, reinterpret_cast<const GLint*>(v.data()));
     detail::error_check("VertexAttribI4iv"sv, check_errors);
@@ -3653,11 +3526,7 @@ STATICINLINE void vertex_attrib_i4uiv(
         GLW_FPTR_CHECK(VertexAttribI4uiv)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glVertexAttribI4uiv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        index);
+    GLW_FPTR_TRACE_DATA(glVertexAttribI4uiv, ::glw::trace::byte_span(v), index);
 #endif
     glVertexAttribI4uiv(index, reinterpret_cast<const GLuint*>(v.data()));
     detail::error_check("VertexAttribI4uiv"sv, check_errors);
@@ -3691,9 +3560,7 @@ STATICINLINE void vertex_attrib_i_pointer(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexAttribIPointer,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
+        ::glw::trace::byte_span(pointer),
         index,
         size,
         type,

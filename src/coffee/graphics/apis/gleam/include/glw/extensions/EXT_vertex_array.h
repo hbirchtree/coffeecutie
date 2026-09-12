@@ -78,9 +78,7 @@ STATICINLINE void color_pointer(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glColorPointerEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
+        ::glw::trace::byte_span(pointer),
         size,
         type,
         stride,
@@ -147,12 +145,7 @@ STATICINLINE void edge_flag_pointer(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glEdgeFlagPointerEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
-        stride,
-        count);
+        glEdgeFlagPointerEXT, ::glw::trace::byte_span(pointer), stride, count);
 #endif
     glEdgeFlagPointerEXT(
         stride,
@@ -182,10 +175,7 @@ STATICINLINE void get_pointerv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetPointervEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        pname);
+        glGetPointervEXT, ::glw::trace::byte_span(params), pname);
 #endif
     glGetPointervEXT(
         static_cast<GLenum>(pname),
@@ -218,9 +208,7 @@ STATICINLINE void index_pointer(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glIndexPointerEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
+        ::glw::trace::byte_span(pointer),
         type,
         stride,
         count);
@@ -259,9 +247,7 @@ STATICINLINE void normal_pointer(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glNormalPointerEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
+        ::glw::trace::byte_span(pointer),
         type,
         stride,
         count);
@@ -302,9 +288,7 @@ STATICINLINE void tex_coord_pointer(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexCoordPointerEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
+        ::glw::trace::byte_span(pointer),
         size,
         type,
         stride,
@@ -347,9 +331,7 @@ STATICINLINE void vertex_pointer(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVertexPointerEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
+        ::glw::trace::byte_span(pointer),
         size,
         type,
         stride,

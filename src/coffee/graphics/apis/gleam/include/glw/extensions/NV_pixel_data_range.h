@@ -55,11 +55,7 @@ STATICINLINE void pixel_data_range(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glPixelDataRangeNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
-        target);
+        glPixelDataRangeNV, ::glw::trace::byte_span(pointer), target);
 #endif
     glPixelDataRangeNV(
         static_cast<GLenum>(target),

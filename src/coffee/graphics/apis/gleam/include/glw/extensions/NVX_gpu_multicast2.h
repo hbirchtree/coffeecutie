@@ -55,12 +55,8 @@ STATICINLINE GLuint async_copy_buffer_sub_data(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glAsyncCopyBufferSubDataNVX,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(waitSemaphoreArray.data()),
-            waitSemaphoreArray.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(fenceValueArray.data()),
-            fenceValueArray.size_bytes()),
+        ::glw::trace::byte_span(waitSemaphoreArray),
+        ::glw::trace::byte_span(fenceValueArray),
         readGpu,
         writeGpuMask,
         readBuffer,
@@ -68,12 +64,8 @@ STATICINLINE GLuint async_copy_buffer_sub_data(
         readOffset,
         writeOffset,
         size,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(signalSemaphoreArray.data()),
-            signalSemaphoreArray.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(signalValueArray.data()),
-            signalValueArray.size_bytes()));
+        ::glw::trace::byte_span(signalSemaphoreArray),
+        ::glw::trace::byte_span(signalValueArray));
 #endif
     auto out = glAsyncCopyBufferSubDataNVX(
         waitSemaphoreArray.size(),
@@ -170,12 +162,8 @@ STATICINLINE GLuint async_copy_image_sub_data(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glAsyncCopyImageSubDataNVX,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(waitSemaphoreArray.data()),
-            waitSemaphoreArray.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(waitValueArray.data()),
-            waitValueArray.size_bytes()),
+        ::glw::trace::byte_span(waitSemaphoreArray),
+        ::glw::trace::byte_span(waitValueArray),
         srcGpu,
         dstGpuMask,
         srcName,
@@ -193,12 +181,8 @@ STATICINLINE GLuint async_copy_image_sub_data(
         srcWidth,
         srcHeight,
         srcDepth,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(signalSemaphoreArray.data()),
-            signalSemaphoreArray.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(signalValueArray.data()),
-            signalValueArray.size_bytes()));
+        ::glw::trace::byte_span(signalSemaphoreArray),
+        ::glw::trace::byte_span(signalValueArray));
 #endif
     auto out = glAsyncCopyImageSubDataNVX(
         waitSemaphoreArray.size(),
@@ -265,8 +249,7 @@ STATICINLINE void multicast_scissor_arrayv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMulticastScissorArrayvNVX,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        ::glw::trace::byte_span(v),
         gpu,
         first,
         count);
@@ -308,8 +291,7 @@ STATICINLINE void multicast_viewport_arrayv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glMulticastViewportArrayvNVX,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
+        ::glw::trace::byte_span(v),
         gpu,
         first,
         count);

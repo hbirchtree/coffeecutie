@@ -53,9 +53,7 @@ STATICINLINE void delete_occlusion_queries(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glDeleteOcclusionQueriesNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()));
+        glDeleteOcclusionQueriesNV, ::glw::trace::byte_span(ids));
 #endif
     glDeleteOcclusionQueriesNV(
         ids.size(),
@@ -103,9 +101,7 @@ STATICINLINE void gen_occlusion_queries(
         GLW_FPTR_CHECK(GenOcclusionQueriesNV)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGenOcclusionQueriesNV,
-        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glGenOcclusionQueriesNV, ::glw::trace::byte_span(ids));
 #endif
     glGenOcclusionQueriesNV(
         ids.size(),
@@ -138,11 +134,7 @@ STATICINLINE void get_occlusion_queryiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetOcclusionQueryivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        id,
-        pname);
+        glGetOcclusionQueryivNV, ::glw::trace::byte_span(params), id, pname);
 #endif
     glGetOcclusionQueryivNV(
         id,
@@ -176,11 +168,7 @@ STATICINLINE void get_occlusion_queryuiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetOcclusionQueryuivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        id,
-        pname);
+        glGetOcclusionQueryuivNV, ::glw::trace::byte_span(params), id, pname);
 #endif
     glGetOcclusionQueryuivNV(
         id,

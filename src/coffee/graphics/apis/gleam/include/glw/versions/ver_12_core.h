@@ -76,9 +76,7 @@ STATICINLINE void draw_range_elements(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDrawRangeElements,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(indices.data()),
-            indices.size_bytes()),
+        ::glw::trace::byte_span(indices),
         mode,
         start,
         end,
@@ -133,8 +131,7 @@ STATICINLINE void tex_image_3d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexImage3D,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        ::glw::trace::byte_span(pixels),
         target,
         level,
         internalformat,
@@ -195,8 +192,7 @@ STATICINLINE void tex_sub_image_3d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexSubImage3D,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pixels.data()), pixels.size_bytes()),
+        ::glw::trace::byte_span(pixels),
         target,
         level,
         xoffset,

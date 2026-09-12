@@ -115,9 +115,7 @@ STATICINLINE void draw_range_elements_base_vertex(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDrawRangeElementsBaseVertex,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(indices.data()),
-            indices.size_bytes()),
+        ::glw::trace::byte_span(indices),
         mode,
         start,
         end,
@@ -173,13 +171,10 @@ STATICINLINE void multi_draw_elements_base_vertex(
     GLW_FPTR_TRACE(
         glMultiDrawElementsBaseVertex,
         mode,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(count.data()), count.size_bytes()),
+        ::glw::trace::byte_span(count),
         type,
         indices,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(basevertex.data()),
-            basevertex.size_bytes()));
+        ::glw::trace::byte_span(basevertex));
 #endif
     glMultiDrawElementsBaseVertex(
         static_cast<GLenum>(mode),
@@ -313,11 +308,7 @@ STATICINLINE void get_integer64v(
         GLW_FPTR_CHECK(GetInteger64v)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGetInteger64v,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        pname);
+    GLW_FPTR_TRACE_DATA(glGetInteger64v, ::glw::trace::byte_span(data), pname);
 #endif
     glGetInteger64v(
         static_cast<GLenum>(pname),
@@ -354,12 +345,7 @@ STATICINLINE void get_synciv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetSynciv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(values.data()), values.size_bytes()),
-        sync,
-        pname,
-        length);
+        glGetSynciv, ::glw::trace::byte_span(values), sync, pname, length);
 #endif
     glGetSynciv(
         sync,
@@ -485,8 +471,7 @@ STATICINLINE void get_buffer_parameteri64v(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetBufferParameteri64v,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -523,11 +508,7 @@ STATICINLINE void get_integer64i_v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetInteger64i_v,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        target,
-        index);
+        glGetInteger64i_v, ::glw::trace::byte_span(data), target, index);
 #endif
     glGetInteger64i_v(
         static_cast<GLenum>(target),
@@ -562,10 +543,7 @@ STATICINLINE void get_multisamplefv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetMultisamplefv,
-        gsl::span<char>(reinterpret_cast<char*>(val.data()), val.size_bytes()),
-        pname,
-        index);
+        glGetMultisamplefv, ::glw::trace::byte_span(val), pname, index);
 #endif
     glGetMultisamplefv(
         static_cast<GLenum>(pname),

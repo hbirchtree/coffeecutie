@@ -49,10 +49,7 @@ STATICINLINE void draw_buffers(
         GLW_FPTR_CHECK(DrawBuffersNV)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glDrawBuffersNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(bufs.data()), bufs.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glDrawBuffersNV, ::glw::trace::byte_span(bufs));
 #endif
     glDrawBuffersNV(
         bufs.size(),

@@ -34,10 +34,7 @@ STATICINLINE void clear_pixel_local_storageui(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glClearPixelLocalStorageuiEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(values.data()), values.size_bytes()),
-        offset);
+        glClearPixelLocalStorageuiEXT, ::glw::trace::byte_span(values), offset);
 #endif
     glClearPixelLocalStorageuiEXT(
         offset,

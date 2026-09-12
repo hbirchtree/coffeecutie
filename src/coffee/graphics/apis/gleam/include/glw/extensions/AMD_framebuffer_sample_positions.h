@@ -41,8 +41,7 @@ STATICINLINE void framebuffer_sample_positionsfv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glFramebufferSamplePositionsfvAMD,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(values.data()), values.size_bytes()),
+        ::glw::trace::byte_span(values),
         target,
         numsamples,
         pixelindex);
@@ -88,8 +87,7 @@ STATICINLINE void get_framebuffer_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetFramebufferParameterfvAMD,
-        gsl::span<char>(
-            reinterpret_cast<char*>(values.data()), values.size_bytes()),
+        ::glw::trace::byte_span(values),
         target,
         pname,
         numsamples,
@@ -143,8 +141,7 @@ STATICINLINE void get_named_framebuffer_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetNamedFramebufferParameterfvAMD,
-        gsl::span<char>(
-            reinterpret_cast<char*>(values.data()), values.size_bytes()),
+        ::glw::trace::byte_span(values),
         framebuffer,
         pname,
         numsamples,
@@ -195,8 +192,7 @@ STATICINLINE void named_framebuffer_sample_positionsfv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glNamedFramebufferSamplePositionsfvAMD,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(values.data()), values.size_bytes()),
+        ::glw::trace::byte_span(values),
         framebuffer,
         numsamples,
         pixelindex);

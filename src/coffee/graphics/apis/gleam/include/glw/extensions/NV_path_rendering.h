@@ -156,14 +156,11 @@ STATICINLINE void cover_fill_path_instanced(
         glCoverFillPathInstancedNV,
         numPaths,
         pathNameType,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(paths.data()), paths.size_bytes()),
+        ::glw::trace::byte_span(paths),
         pathBase,
         coverMode,
         transformType,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(transformValues.data()),
-            transformValues.size_bytes()));
+        ::glw::trace::byte_span(transformValues));
 #endif
     glCoverFillPathInstancedNV(
         numPaths,
@@ -238,14 +235,11 @@ STATICINLINE void cover_stroke_path_instanced(
         glCoverStrokePathInstancedNV,
         numPaths,
         pathNameType,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(paths.data()), paths.size_bytes()),
+        ::glw::trace::byte_span(paths),
         pathBase,
         coverMode,
         transformType,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(transformValues.data()),
-            transformValues.size_bytes()));
+        ::glw::trace::byte_span(transformValues));
 #endif
     glCoverStrokePathInstancedNV(
         numPaths,
@@ -346,10 +340,7 @@ STATICINLINE void get_path_commands(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetPathCommandsNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(commands.data()), commands.size_bytes()),
-        path);
+        glGetPathCommandsNV, ::glw::trace::byte_span(commands), path);
 #endif
     glGetPathCommandsNV(
         path,
@@ -379,10 +370,7 @@ STATICINLINE void get_path_coords(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetPathCoordsNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(coords.data()), coords.size_bytes()),
-        path);
+        glGetPathCoordsNV, ::glw::trace::byte_span(coords), path);
 #endif
     glGetPathCoordsNV(
         path,
@@ -411,10 +399,7 @@ STATICINLINE void get_path_dash_array(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetPathDashArrayNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(dashArray.data()), dashArray.size_bytes()),
-        path);
+        glGetPathDashArrayNV, ::glw::trace::byte_span(dashArray), path);
 #endif
     glGetPathDashArrayNV(
         path,
@@ -479,8 +464,7 @@ STATICINLINE void get_path_metric_range(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetPathMetricRangeNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(metrics.data()), metrics.size_bytes()),
+        ::glw::trace::byte_span(metrics),
         metricQueryMask,
         firstPathName,
         numPaths,
@@ -533,12 +517,10 @@ STATICINLINE void get_path_metrics(
         metricQueryMask,
         numPaths,
         pathNameType,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(paths.data()), paths.size_bytes()),
+        ::glw::trace::byte_span(paths),
         pathBase,
         stride,
-        gsl::span<char>(
-            reinterpret_cast<char*>(metrics.data()), metrics.size_bytes()));
+        ::glw::trace::byte_span(metrics));
 #endif
     glGetPathMetricsNV(
         static_cast<GLenum>(metricQueryMask),
@@ -576,11 +558,7 @@ STATICINLINE void get_path_parameter(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetPathParameterfvNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(value.data()), value.size_bytes()),
-        path,
-        pname);
+        glGetPathParameterfvNV, ::glw::trace::byte_span(value), path, pname);
 #endif
     glGetPathParameterfvNV(
         path,
@@ -614,11 +592,7 @@ STATICINLINE void get_path_parameter(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetPathParameterivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(value.data()), value.size_bytes()),
-        path,
-        pname);
+        glGetPathParameterivNV, ::glw::trace::byte_span(value), path, pname);
 #endif
     glGetPathParameterivNV(
         path,
@@ -669,15 +643,12 @@ STATICINLINE void get_path_spacing(
         pathListMode,
         numPaths,
         pathNameType,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(paths.data()), paths.size_bytes()),
+        ::glw::trace::byte_span(paths),
         pathBase,
         advanceScale,
         kerningScale,
         transformType,
-        gsl::span<char>(
-            reinterpret_cast<char*>(returnedSpacing.data()),
-            returnedSpacing.size_bytes()));
+        ::glw::trace::byte_span(returnedSpacing));
 #endif
     glGetPathSpacingNV(
         static_cast<GLenum>(pathListMode),
@@ -830,13 +801,10 @@ STATICINLINE void path_commands(
     GLW_FPTR_TRACE(
         glPathCommandsNV,
         path,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(commands.data()),
-            commands.size_bytes()),
+        ::glw::trace::byte_span(commands),
         numCoords,
         coordType,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+        ::glw::trace::byte_span(coords));
 #endif
     glPathCommandsNV(
         path,
@@ -874,8 +842,7 @@ STATICINLINE void path_coords(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPathCoordsNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()),
+        ::glw::trace::byte_span(coords),
         path,
         numCoords,
         coordType);
@@ -933,11 +900,7 @@ STATICINLINE void path_dash_array(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glPathDashArrayNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(dashArray.data()),
-            dashArray.size_bytes()),
-        path);
+        glPathDashArrayNV, ::glw::trace::byte_span(dashArray), path);
 #endif
     glPathDashArrayNV(
         path,
@@ -982,9 +945,7 @@ STATICINLINE void path_glyph_range(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPathGlyphRangeNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(fontName.data()),
-            fontName.size_bytes()),
+        ::glw::trace::byte_span(fontName),
         firstPathName,
         fontTarget,
         fontStyle,
@@ -1047,15 +1008,11 @@ STATICINLINE void path_glyphs(
         glPathGlyphsNV,
         firstPathName,
         fontTarget,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(fontName.data()),
-            fontName.size_bytes()),
+        ::glw::trace::byte_span(fontName),
         fontStyle,
         numGlyphs,
         type,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(charcodes.data()),
-            charcodes.size_bytes()),
+        ::glw::trace::byte_span(charcodes),
         handleMissingGlyphs,
         pathParameterTemplate,
         emScale);
@@ -1127,11 +1084,7 @@ STATICINLINE void path_parameter(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glPathParameterfvNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        path,
-        pname);
+        glPathParameterfvNV, ::glw::trace::byte_span(value), path, pname);
 #endif
     glPathParameterfvNV(
         path,
@@ -1192,11 +1145,7 @@ STATICINLINE void path_parameter(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glPathParameterivNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        path,
-        pname);
+        glPathParameterivNV, ::glw::trace::byte_span(value), path, pname);
 #endif
     glPathParameterivNV(
         path,
@@ -1274,12 +1223,7 @@ STATICINLINE void path_string(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glPathStringNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pathString.data()),
-            pathString.size_bytes()),
-        path,
-        format);
+        glPathStringNV, ::glw::trace::byte_span(pathString), path, format);
 #endif
     glPathStringNV(
         path,
@@ -1331,13 +1275,10 @@ STATICINLINE void path_sub_commands(
         path,
         commandStart,
         commandsToDelete,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(commands.data()),
-            commands.size_bytes()),
+        ::glw::trace::byte_span(commands),
         numCoords,
         coordType,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()));
+        ::glw::trace::byte_span(coords));
 #endif
     glPathSubCommandsNV(
         path,
@@ -1379,8 +1320,7 @@ STATICINLINE void path_sub_coords(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPathSubCoordsNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coords.data()), coords.size_bytes()),
+        ::glw::trace::byte_span(coords),
         path,
         coordStart,
         numCoords,
@@ -1487,15 +1427,12 @@ STATICINLINE void stencil_fill_path_instanced(
         glStencilFillPathInstancedNV,
         numPaths,
         pathNameType,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(paths.data()), paths.size_bytes()),
+        ::glw::trace::byte_span(paths),
         pathBase,
         fillMode,
         mask,
         transformType,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(transformValues.data()),
-            transformValues.size_bytes()));
+        ::glw::trace::byte_span(transformValues));
 #endif
     glStencilFillPathInstancedNV(
         numPaths,
@@ -1575,15 +1512,12 @@ STATICINLINE void stencil_stroke_path_instanced(
         glStencilStrokePathInstancedNV,
         numPaths,
         pathNameType,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(paths.data()), paths.size_bytes()),
+        ::glw::trace::byte_span(paths),
         pathBase,
         reference,
         mask,
         transformType,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(transformValues.data()),
-            transformValues.size_bytes()));
+        ::glw::trace::byte_span(transformValues));
 #endif
     glStencilStrokePathInstancedNV(
         numPaths,
@@ -1653,9 +1587,7 @@ STATICINLINE void transform_path(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTransformPathNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(transformValues.data()),
-            transformValues.size_bytes()),
+        ::glw::trace::byte_span(transformValues),
         resultPath,
         srcPath,
         transformType);
@@ -1703,11 +1635,8 @@ STATICINLINE void weight_paths(
     GLW_FPTR_TRACE(
         glWeightPathsNV,
         resultPath,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(paths.data()), paths.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(weights.data()),
-            weights.size_bytes()));
+        ::glw::trace::byte_span(paths),
+        ::glw::trace::byte_span(weights));
 #endif
     glWeightPathsNV(
         resultPath,
@@ -1740,10 +1669,7 @@ STATICINLINE void matrix_load3x2f(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMatrixLoad3x2fNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()),
-        matrixMode);
+        glMatrixLoad3x2fNV, ::glw::trace::byte_span(m), matrixMode);
 #endif
     glMatrixLoad3x2fNV(matrixMode, reinterpret_cast<const GLfloat*>(m.data()));
     detail::error_check("MatrixLoad3x2fNV"sv, check_errors);
@@ -1771,10 +1697,7 @@ STATICINLINE void matrix_load3x3f(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMatrixLoad3x3fNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()),
-        matrixMode);
+        glMatrixLoad3x3fNV, ::glw::trace::byte_span(m), matrixMode);
 #endif
     glMatrixLoad3x3fNV(matrixMode, reinterpret_cast<const GLfloat*>(m.data()));
     detail::error_check("MatrixLoad3x3fNV"sv, check_errors);
@@ -1802,10 +1725,7 @@ STATICINLINE void matrix_load_transpose3x3f(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMatrixLoadTranspose3x3fNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()),
-        matrixMode);
+        glMatrixLoadTranspose3x3fNV, ::glw::trace::byte_span(m), matrixMode);
 #endif
     glMatrixLoadTranspose3x3fNV(
         matrixMode, reinterpret_cast<const GLfloat*>(m.data()));
@@ -1834,10 +1754,7 @@ STATICINLINE void matrix_mult3x2f(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMatrixMult3x2fNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()),
-        matrixMode);
+        glMatrixMult3x2fNV, ::glw::trace::byte_span(m), matrixMode);
 #endif
     glMatrixMult3x2fNV(matrixMode, reinterpret_cast<const GLfloat*>(m.data()));
     detail::error_check("MatrixMult3x2fNV"sv, check_errors);
@@ -1865,10 +1782,7 @@ STATICINLINE void matrix_mult3x3f(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMatrixMult3x3fNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()),
-        matrixMode);
+        glMatrixMult3x3fNV, ::glw::trace::byte_span(m), matrixMode);
 #endif
     glMatrixMult3x3fNV(matrixMode, reinterpret_cast<const GLfloat*>(m.data()));
     detail::error_check("MatrixMult3x3fNV"sv, check_errors);
@@ -1896,10 +1810,7 @@ STATICINLINE void matrix_mult_transpose3x3f(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMatrixMultTranspose3x3fNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()),
-        matrixMode);
+        glMatrixMultTranspose3x3fNV, ::glw::trace::byte_span(m), matrixMode);
 #endif
     glMatrixMultTranspose3x3fNV(
         matrixMode, reinterpret_cast<const GLfloat*>(m.data()));
@@ -1940,15 +1851,11 @@ STATICINLINE GLenum path_glyph_index_range(
     GLW_FPTR_TRACE(
         glPathGlyphIndexRangeNV,
         fontTarget,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(fontName.data()),
-            fontName.size_bytes()),
+        ::glw::trace::byte_span(fontName),
         fontStyle,
         pathParameterTemplate,
         emScale,
-        gsl::span<char>(
-            reinterpret_cast<char*>(baseAndCount.data()),
-            baseAndCount.size_bytes()));
+        ::glw::trace::byte_span(baseAndCount));
 #endif
     auto out = glPathGlyphIndexRangeNV(
         fontTarget,
@@ -2004,16 +1911,13 @@ STATICINLINE void stencil_then_cover_fill_path_instanced(
         glStencilThenCoverFillPathInstancedNV,
         numPaths,
         pathNameType,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(paths.data()), paths.size_bytes()),
+        ::glw::trace::byte_span(paths),
         pathBase,
         fillMode,
         mask,
         coverMode,
         transformType,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(transformValues.data()),
-            transformValues.size_bytes()));
+        ::glw::trace::byte_span(transformValues));
 #endif
     glStencilThenCoverFillPathInstancedNV(
         numPaths,
@@ -2103,16 +2007,13 @@ STATICINLINE void stencil_then_cover_stroke_path_instanced(
         glStencilThenCoverStrokePathInstancedNV,
         numPaths,
         pathNameType,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(paths.data()), paths.size_bytes()),
+        ::glw::trace::byte_span(paths),
         pathBase,
         reference,
         mask,
         coverMode,
         transformType,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(transformValues.data()),
-            transformValues.size_bytes()));
+        ::glw::trace::byte_span(transformValues));
 #endif
     glStencilThenCoverStrokePathInstancedNV(
         numPaths,
@@ -2208,11 +2109,9 @@ STATICINLINE void get_program_resourcefv(
         programInterface,
         index,
         propCount,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(props.data()), props.size_bytes()),
+        ::glw::trace::byte_span(props),
         length,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()));
+        ::glw::trace::byte_span(params));
 #endif
     glGetProgramResourcefvNV(
         program,
@@ -2259,9 +2158,7 @@ STATICINLINE GLenum path_glyph_index_array(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPathGlyphIndexArrayNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(fontName.data()),
-            fontName.size_bytes()),
+        ::glw::trace::byte_span(fontName),
         firstPathName,
         fontTarget,
         fontStyle,
@@ -2319,9 +2216,7 @@ STATICINLINE GLenum path_memory_glyph_index_array(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glPathMemoryGlyphIndexArrayNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(fontData.data()),
-            fontData.size_bytes()),
+        ::glw::trace::byte_span(fontData),
         firstPathName,
         fontTarget,
         fontSize,
@@ -2382,8 +2277,7 @@ STATICINLINE void program_path_fragment_input_gen(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glProgramPathFragmentInputGenNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coeffs.data()), coeffs.size_bytes()),
+        ::glw::trace::byte_span(coeffs),
         program,
         location,
         genMode,
@@ -2478,10 +2372,7 @@ STATICINLINE void matrix_load_transposed_ext(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMatrixLoadTransposedEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()),
-        mode);
+        glMatrixLoadTransposedEXT, ::glw::trace::byte_span(m), mode);
 #endif
     glMatrixLoadTransposedEXT(
         static_cast<GLenum>(mode),
@@ -2513,10 +2404,7 @@ STATICINLINE void matrix_load_transposef_ext(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMatrixLoadTransposefEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()),
-        mode);
+        glMatrixLoadTransposefEXT, ::glw::trace::byte_span(m), mode);
 #endif
     glMatrixLoadTransposefEXT(
         static_cast<GLenum>(mode),
@@ -2547,11 +2435,7 @@ STATICINLINE void matrix_loadd_ext(
         GLW_FPTR_CHECK(MatrixLoaddEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glMatrixLoaddEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()),
-        mode);
+    GLW_FPTR_TRACE_DATA(glMatrixLoaddEXT, ::glw::trace::byte_span(m), mode);
 #endif
     glMatrixLoaddEXT(
         static_cast<GLenum>(mode),
@@ -2582,11 +2466,7 @@ STATICINLINE void matrix_loadf_ext(
         GLW_FPTR_CHECK(MatrixLoadfEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glMatrixLoadfEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()),
-        mode);
+    GLW_FPTR_TRACE_DATA(glMatrixLoadfEXT, ::glw::trace::byte_span(m), mode);
 #endif
     glMatrixLoadfEXT(
         static_cast<GLenum>(mode),
@@ -2618,10 +2498,7 @@ STATICINLINE void matrix_mult_transposed_ext(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMatrixMultTransposedEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()),
-        mode);
+        glMatrixMultTransposedEXT, ::glw::trace::byte_span(m), mode);
 #endif
     glMatrixMultTransposedEXT(
         static_cast<GLenum>(mode),
@@ -2653,10 +2530,7 @@ STATICINLINE void matrix_mult_transposef_ext(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMatrixMultTransposefEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()),
-        mode);
+        glMatrixMultTransposefEXT, ::glw::trace::byte_span(m), mode);
 #endif
     glMatrixMultTransposefEXT(
         static_cast<GLenum>(mode),
@@ -2687,11 +2561,7 @@ STATICINLINE void matrix_multd_ext(
         GLW_FPTR_CHECK(MatrixMultdEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glMatrixMultdEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()),
-        mode);
+    GLW_FPTR_TRACE_DATA(glMatrixMultdEXT, ::glw::trace::byte_span(m), mode);
 #endif
     glMatrixMultdEXT(
         static_cast<GLenum>(mode),
@@ -2722,11 +2592,7 @@ STATICINLINE void matrix_multf_ext(
         GLW_FPTR_CHECK(MatrixMultfEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glMatrixMultfEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(m.data()), m.size_bytes()),
-        mode);
+    GLW_FPTR_TRACE_DATA(glMatrixMultfEXT, ::glw::trace::byte_span(m), mode);
 #endif
     glMatrixMultfEXT(
         static_cast<GLenum>(mode),

@@ -88,11 +88,7 @@ STATICINLINE void buffer_data(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glBufferDataARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
-        target,
-        usage);
+        glBufferDataARB, ::glw::trace::byte_span(data), target, usage);
 #endif
     glBufferDataARB(
         static_cast<GLenum>(target),
@@ -126,11 +122,7 @@ STATICINLINE void buffer_sub_data(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glBufferSubDataARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(data.data()), data.size_bytes()),
-        target,
-        offset);
+        glBufferSubDataARB, ::glw::trace::byte_span(data), target, offset);
 #endif
     glBufferSubDataARB(
         static_cast<GLenum>(target),
@@ -162,11 +154,7 @@ STATICINLINE void delete_buffers(
         GLW_FPTR_CHECK(DeleteBuffersARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glDeleteBuffersARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(buffers.data()),
-            buffers.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glDeleteBuffersARB, ::glw::trace::byte_span(buffers));
 #endif
     glDeleteBuffersARB(
         buffers.size(),
@@ -195,10 +183,7 @@ STATICINLINE void gen_buffers(
         GLW_FPTR_CHECK(GenBuffersARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGenBuffersARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(buffers.data()), buffers.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glGenBuffersARB, ::glw::trace::byte_span(buffers));
 #endif
     glGenBuffersARB(
         buffers.size(),
@@ -232,8 +217,7 @@ STATICINLINE void get_buffer_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetBufferParameterivARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif
@@ -266,11 +250,7 @@ STATICINLINE void get_buffer_pointerv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetBufferPointervARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        target,
-        pname);
+        glGetBufferPointervARB, ::glw::trace::byte_span(params), target, pname);
 #endif
     glGetBufferPointervARB(
         static_cast<GLenum>(target),
@@ -302,11 +282,7 @@ STATICINLINE void get_buffer_sub_data(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetBufferSubDataARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        target,
-        offset);
+        glGetBufferSubDataARB, ::glw::trace::byte_span(data), target, offset);
 #endif
     glGetBufferSubDataARB(
         static_cast<GLenum>(target),

@@ -115,9 +115,7 @@ STATICINLINE void draw_range_elements_base_vertex(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glDrawRangeElementsBaseVertex,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(indices.data()),
-            indices.size_bytes()),
+        ::glw::trace::byte_span(indices),
         mode,
         start,
         end,
@@ -173,13 +171,10 @@ STATICINLINE void multi_draw_elements_base_vertex(
     GLW_FPTR_TRACE(
         glMultiDrawElementsBaseVertex,
         mode,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(count.data()), count.size_bytes()),
+        ::glw::trace::byte_span(count),
         type,
         indices,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(basevertex.data()),
-            basevertex.size_bytes()));
+        ::glw::trace::byte_span(basevertex));
 #endif
     glMultiDrawElementsBaseVertex(
         static_cast<GLenum>(mode),

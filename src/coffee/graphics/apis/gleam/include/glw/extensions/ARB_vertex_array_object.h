@@ -55,10 +55,7 @@ STATICINLINE void delete_vertex_arrays(
         GLW_FPTR_CHECK(DeleteVertexArrays)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glDeleteVertexArrays,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(arrays.data()), arrays.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glDeleteVertexArrays, ::glw::trace::byte_span(arrays));
 #endif
     glDeleteVertexArrays(
         arrays.size(),
@@ -87,10 +84,7 @@ STATICINLINE void gen_vertex_arrays(
         GLW_FPTR_CHECK(GenVertexArrays)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGenVertexArrays,
-        gsl::span<char>(
-            reinterpret_cast<char*>(arrays.data()), arrays.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glGenVertexArrays, ::glw::trace::byte_span(arrays));
 #endif
     glGenVertexArrays(
         arrays.size(),

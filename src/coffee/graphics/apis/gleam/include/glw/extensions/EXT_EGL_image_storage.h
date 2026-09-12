@@ -32,9 +32,7 @@ STATICINLINE void egl_image_target_tex_storage(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glEGLImageTargetTexStorageEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(attrib_list.data()),
-            attrib_list.size_bytes()),
+        ::glw::trace::byte_span(attrib_list),
         target,
         image);
 #endif
@@ -78,9 +76,7 @@ STATICINLINE void egl_image_target_texture_storage(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glEGLImageTargetTextureStorageEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(attrib_list.data()),
-            attrib_list.size_bytes()),
+        ::glw::trace::byte_span(attrib_list),
         texture,
         image);
 #endif

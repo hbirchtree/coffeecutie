@@ -62,10 +62,7 @@ STATICINLINE void getn_compressed_tex_image(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetnCompressedTexImageARB,
-        gsl::span<char>(reinterpret_cast<char*>(img.data()), img.size_bytes()),
-        target,
-        lod);
+        glGetnCompressedTexImageARB, ::glw::trace::byte_span(img), target, lod);
 #endif
     glGetnCompressedTexImageARB(
         static_cast<GLenum>(target),
@@ -103,7 +100,7 @@ STATICINLINE void getn_tex_image(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetnTexImageARB,
-        gsl::span<char>(reinterpret_cast<char*>(img.data()), img.size_bytes()),
+        ::glw::trace::byte_span(img),
         target,
         level,
         format,
@@ -152,8 +149,7 @@ STATICINLINE void getn_uniformdv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetnUniformdvARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         program,
         location,
         bufSize);
@@ -199,8 +195,7 @@ STATICINLINE void getn_uniformfv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetnUniformfvARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         program,
         location,
         bufSize);
@@ -246,8 +241,7 @@ STATICINLINE void getn_uniformiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetnUniformivARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         program,
         location,
         bufSize);
@@ -293,8 +287,7 @@ STATICINLINE void getn_uniformuiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetnUniformuivARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         program,
         location,
         bufSize);
@@ -339,8 +332,7 @@ STATICINLINE void readn_pixels(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glReadnPixelsARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
+        ::glw::trace::byte_span(data),
         x,
         width,
         format,

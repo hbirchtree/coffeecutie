@@ -36,10 +36,7 @@ STATICINLINE void delete_semaphores(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glDeleteSemaphoresEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(semaphores.data()),
-            semaphores.size_bytes()));
+        glDeleteSemaphoresEXT, ::glw::trace::byte_span(semaphores));
 #endif
     glDeleteSemaphoresEXT(
         semaphores.size(),
@@ -69,10 +66,7 @@ STATICINLINE void gen_semaphores(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGenSemaphoresEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(semaphores.data()),
-            semaphores.size_bytes()));
+        glGenSemaphoresEXT, ::glw::trace::byte_span(semaphores));
 #endif
     glGenSemaphoresEXT(
         semaphores.size(),
@@ -107,8 +101,7 @@ STATICINLINE void get_semaphore_parameterui64v(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSemaphoreParameterui64vEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         semaphore,
         pname);
 #endif
@@ -142,10 +135,7 @@ STATICINLINE void get_unsigned_bytev(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetUnsignedBytevEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        pname);
+        glGetUnsignedBytevEXT, ::glw::trace::byte_span(data), pname);
 #endif
     glGetUnsignedBytevEXT(
         static_cast<GLenum>(pname),
@@ -178,11 +168,7 @@ STATICINLINE void get_unsigned_bytei_v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetUnsignedBytei_vEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        target,
-        index);
+        glGetUnsignedBytei_vEXT, ::glw::trace::byte_span(data), target, index);
 #endif
     glGetUnsignedBytei_vEXT(
         target,
@@ -239,8 +225,7 @@ STATICINLINE void semaphore_parameterui64v(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSemaphoreParameterui64vEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         semaphore,
         pname);
 #endif
@@ -291,16 +276,10 @@ STATICINLINE void signal_semaphore(
         glSignalSemaphoreEXT,
         semaphore,
         numBufferBarriers,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(buffers.data()),
-            buffers.size_bytes()),
+        ::glw::trace::byte_span(buffers),
         numTextureBarriers,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(textures.data()),
-            textures.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(dstLayouts.data()),
-            dstLayouts.size_bytes()));
+        ::glw::trace::byte_span(textures),
+        ::glw::trace::byte_span(dstLayouts));
 #endif
     glSignalSemaphoreEXT(
         semaphore,
@@ -354,16 +333,10 @@ STATICINLINE void wait_semaphore(
         glWaitSemaphoreEXT,
         semaphore,
         numBufferBarriers,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(buffers.data()),
-            buffers.size_bytes()),
+        ::glw::trace::byte_span(buffers),
         numTextureBarriers,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(textures.data()),
-            textures.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(srcLayouts.data()),
-            srcLayouts.size_bytes()));
+        ::glw::trace::byte_span(textures),
+        ::glw::trace::byte_span(srcLayouts));
 #endif
     glWaitSemaphoreEXT(
         semaphore,

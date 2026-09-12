@@ -45,9 +45,7 @@ STATICINLINE void tex_storage_attribs_2d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexStorageAttribs2DEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(attrib_list.data()),
-            attrib_list.size_bytes()),
+        ::glw::trace::byte_span(attrib_list),
         target,
         levels,
         internalformat,
@@ -97,9 +95,7 @@ STATICINLINE void tex_storage_attribs_3d(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTexStorageAttribs3DEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(attrib_list.data()),
-            attrib_list.size_bytes()),
+        ::glw::trace::byte_span(attrib_list),
         target,
         levels,
         internalformat,

@@ -54,8 +54,7 @@ STATICINLINE void get_active_subroutine_name(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveSubroutineName,
-        gsl::span<char>(
-            reinterpret_cast<char*>(name.data()), name.size_bytes()),
+        ::glw::trace::byte_span(name),
         program,
         shadertype,
         index,
@@ -108,8 +107,7 @@ STATICINLINE void get_active_subroutine_uniform_name(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveSubroutineUniformName,
-        gsl::span<char>(
-            reinterpret_cast<char*>(name.data()), name.size_bytes()),
+        ::glw::trace::byte_span(name),
         program,
         shadertype,
         index,
@@ -160,8 +158,7 @@ STATICINLINE void get_active_subroutine_uniformiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveSubroutineUniformiv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(values.data()), values.size_bytes()),
+        ::glw::trace::byte_span(values),
         program,
         shadertype,
         index,
@@ -327,11 +324,7 @@ STATICINLINE void uniform_subroutines(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glUniformSubroutinesuiv,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(indices.data()),
-            indices.size_bytes()),
-        shadertype);
+        glUniformSubroutinesuiv, ::glw::trace::byte_span(indices), shadertype);
 #endif
     glUniformSubroutinesuiv(
         static_cast<GLenum>(shadertype),

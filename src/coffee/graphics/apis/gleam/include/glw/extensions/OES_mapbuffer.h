@@ -34,11 +34,7 @@ STATICINLINE void get_buffer_pointerv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetBufferPointervOES,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        target,
-        pname);
+        glGetBufferPointervOES, ::glw::trace::byte_span(params), target, pname);
 #endif
     glGetBufferPointervOES(
         static_cast<GLenum>(target),

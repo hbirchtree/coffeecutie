@@ -46,10 +46,7 @@ STATICINLINE void window_pos2dv(
         GLW_FPTR_CHECK(WindowPos2dvARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glWindowPos2dvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glWindowPos2dvARB, ::glw::trace::byte_span(v));
 #endif
     glWindowPos2dvARB(reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("WindowPos2dvARB"sv, check_errors);
@@ -96,10 +93,7 @@ STATICINLINE void window_pos2fv(
         GLW_FPTR_CHECK(WindowPos2fvARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glWindowPos2fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glWindowPos2fvARB, ::glw::trace::byte_span(v));
 #endif
     glWindowPos2fvARB(reinterpret_cast<const GLfloat*>(v.data()));
     detail::error_check("WindowPos2fvARB"sv, check_errors);
@@ -146,10 +140,7 @@ STATICINLINE void window_pos2iv(
         GLW_FPTR_CHECK(WindowPos2ivARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glWindowPos2ivARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glWindowPos2ivARB, ::glw::trace::byte_span(v));
 #endif
     glWindowPos2ivARB(reinterpret_cast<const GLint*>(v.data()));
     detail::error_check("WindowPos2ivARB"sv, check_errors);
@@ -196,10 +187,7 @@ STATICINLINE void window_pos2sv(
         GLW_FPTR_CHECK(WindowPos2svARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glWindowPos2svARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glWindowPos2svARB, ::glw::trace::byte_span(v));
 #endif
     glWindowPos2svARB(reinterpret_cast<const GLshort*>(v.data()));
     detail::error_check("WindowPos2svARB"sv, check_errors);
@@ -247,10 +235,7 @@ STATICINLINE void window_pos3dv(
         GLW_FPTR_CHECK(WindowPos3dvARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glWindowPos3dvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glWindowPos3dvARB, ::glw::trace::byte_span(v));
 #endif
     glWindowPos3dvARB(reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("WindowPos3dvARB"sv, check_errors);
@@ -298,10 +283,7 @@ STATICINLINE void window_pos3fv(
         GLW_FPTR_CHECK(WindowPos3fvARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glWindowPos3fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glWindowPos3fvARB, ::glw::trace::byte_span(v));
 #endif
     glWindowPos3fvARB(reinterpret_cast<const GLfloat*>(v.data()));
     detail::error_check("WindowPos3fvARB"sv, check_errors);
@@ -349,10 +331,7 @@ STATICINLINE void window_pos3iv(
         GLW_FPTR_CHECK(WindowPos3ivARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glWindowPos3ivARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glWindowPos3ivARB, ::glw::trace::byte_span(v));
 #endif
     glWindowPos3ivARB(reinterpret_cast<const GLint*>(v.data()));
     detail::error_check("WindowPos3ivARB"sv, check_errors);
@@ -400,10 +379,7 @@ STATICINLINE void window_pos3sv(
         GLW_FPTR_CHECK(WindowPos3svARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glWindowPos3svARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glWindowPos3svARB, ::glw::trace::byte_span(v));
 #endif
     glWindowPos3svARB(reinterpret_cast<const GLshort*>(v.data()));
     detail::error_check("WindowPos3svARB"sv, check_errors);

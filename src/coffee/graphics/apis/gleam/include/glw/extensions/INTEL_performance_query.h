@@ -69,11 +69,7 @@ STATICINLINE void create_perf_query(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glCreatePerfQueryINTEL,
-        gsl::span<char>(
-            reinterpret_cast<char*>(queryHandle.data()),
-            queryHandle.size_bytes()),
-        queryId);
+        glCreatePerfQueryINTEL, ::glw::trace::byte_span(queryHandle), queryId);
 #endif
     glCreatePerfQueryINTEL(
         queryId,
@@ -142,9 +138,7 @@ STATICINLINE void get_first_perf_query_id(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetFirstPerfQueryIdINTEL,
-        gsl::span<char>(
-            reinterpret_cast<char*>(queryId.data()), queryId.size_bytes()));
+        glGetFirstPerfQueryIdINTEL, ::glw::trace::byte_span(queryId));
 #endif
     glGetFirstPerfQueryIdINTEL(
         queryId.size() ? reinterpret_cast<GLuint*>(queryId.data()) : nullptr);
@@ -175,9 +169,7 @@ STATICINLINE void get_next_perf_query_id(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetNextPerfQueryIdINTEL,
-        gsl::span<char>(
-            reinterpret_cast<char*>(nextQueryId.data()),
-            nextQueryId.size_bytes()),
+        ::glw::trace::byte_span(nextQueryId),
         queryId);
 #endif
     glGetNextPerfQueryIdINTEL(
@@ -238,27 +230,13 @@ STATICINLINE void get_perf_counter_info(
         glGetPerfCounterInfoINTEL,
         queryId,
         counterId,
-        gsl::span<char>(
-            reinterpret_cast<char*>(counterName.data()),
-            counterName.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(counterDesc.data()),
-            counterDesc.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(counterOffset.data()),
-            counterOffset.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(counterDataSize.data()),
-            counterDataSize.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(counterTypeEnum.data()),
-            counterTypeEnum.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(counterDataTypeEnum.data()),
-            counterDataTypeEnum.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(rawCounterMaxValue.data()),
-            rawCounterMaxValue.size_bytes()));
+        ::glw::trace::byte_span(counterName),
+        ::glw::trace::byte_span(counterDesc),
+        ::glw::trace::byte_span(counterOffset),
+        ::glw::trace::byte_span(counterDataSize),
+        ::glw::trace::byte_span(counterTypeEnum),
+        ::glw::trace::byte_span(counterDataTypeEnum),
+        ::glw::trace::byte_span(rawCounterMaxValue));
 #endif
     glGetPerfCounterInfoINTEL(
         queryId,
@@ -318,11 +296,8 @@ STATICINLINE void get_perf_query_data(
         queryHandle,
         flags,
         dataSize,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(bytesWritten.data()),
-            bytesWritten.size_bytes()));
+        ::glw::trace::byte_span(data),
+        ::glw::trace::byte_span(bytesWritten));
 #endif
     glGetPerfQueryDataINTEL(
         queryHandle,
@@ -355,9 +330,7 @@ STATICINLINE void get_perf_query_id_by_name(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetPerfQueryIdByNameINTEL,
-        gsl::span<char>(
-            reinterpret_cast<char*>(queryId.data()), queryId.size_bytes()));
+        glGetPerfQueryIdByNameINTEL, ::glw::trace::byte_span(queryId));
 #endif
     glGetPerfQueryIdByNameINTEL(
         queryId.size() ? reinterpret_cast<GLuint*>(queryId.data()) : nullptr);
@@ -403,18 +376,11 @@ STATICINLINE void get_perf_query_info(
     GLW_FPTR_TRACE(
         glGetPerfQueryInfoINTEL,
         queryId,
-        gsl::span<char>(
-            reinterpret_cast<char*>(queryName.data()), queryName.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(dataSize.data()), dataSize.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(noCounters.data()),
-            noCounters.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(noInstances.data()),
-            noInstances.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(capsMask.data()), capsMask.size_bytes()));
+        ::glw::trace::byte_span(queryName),
+        ::glw::trace::byte_span(dataSize),
+        ::glw::trace::byte_span(noCounters),
+        ::glw::trace::byte_span(noInstances),
+        ::glw::trace::byte_span(capsMask));
 #endif
     glGetPerfQueryInfoINTEL(
         queryId,

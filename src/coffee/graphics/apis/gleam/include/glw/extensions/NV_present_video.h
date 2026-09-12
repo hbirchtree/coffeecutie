@@ -37,11 +37,7 @@ STATICINLINE void get_videoi64v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetVideoi64vNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        video_slot,
-        pname);
+        glGetVideoi64vNV, ::glw::trace::byte_span(params), video_slot, pname);
 #endif
     glGetVideoi64vNV(
         video_slot,
@@ -75,11 +71,7 @@ STATICINLINE void get_videoiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetVideoivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        video_slot,
-        pname);
+        glGetVideoivNV, ::glw::trace::byte_span(params), video_slot, pname);
 #endif
     glGetVideoivNV(
         video_slot,
@@ -114,11 +106,7 @@ STATICINLINE void get_videoui64v(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetVideoui64vNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        video_slot,
-        pname);
+        glGetVideoui64vNV, ::glw::trace::byte_span(params), video_slot, pname);
 #endif
     glGetVideoui64vNV(
         video_slot,
@@ -153,11 +141,7 @@ STATICINLINE void get_videouiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetVideouivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        video_slot,
-        pname);
+        glGetVideouivNV, ::glw::trace::byte_span(params), video_slot, pname);
 #endif
     glGetVideouivNV(
         video_slot,

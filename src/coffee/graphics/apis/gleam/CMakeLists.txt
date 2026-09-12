@@ -15,6 +15,7 @@ option(
 )
 
 option(BUILD_GL_ANGLE "Use ANGLE as the backend for GL (ES)" OFF)
+option(BUILD_GL_TRACE "Trace GL calls, arguments and errors" OFF)
 
 option(BUILD_GL_SOFTWARE_BCN "Build software-decode for BCn using bcdec" OFF)
 option(BUILD_GL_SOFTWARE_PVRTC "Build software-decode for PVRTC" OFF)
@@ -84,11 +85,20 @@ function(GEN_GLEAM_TARGET GLVERSION SUFFIX)
   coffee_library(
     TARGET GLeamCommon_${SUFFIX}
     SOURCES private/glw.cpp
+            private/glw_trace.cpp
             # private/levels/shared/gl_shared_debug.cpp
     LIBRARIES Core Image ComponentApp GraphicsAPI GraphicsInterface ${GLVERSION}
     HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                 $<INSTALL_INTERFACE:include>
   )
+
+  if(BUILD_GL_TRACE)
+    target_compile_definitions(GLeamCommon_${SUFFIX} PUBLIC -DGLW_ENABLE_TRACE)
+    if(EMSCRIPTEN)
+      # The trace is streamed to a collector rather than kept in the page
+      target_link_options(GLeamCommon_${SUFFIX} PUBLIC -lwebsocket.js)
+    endif()
+  endif()
 
   if(BUILD_GLEAM)
     coffee_library(

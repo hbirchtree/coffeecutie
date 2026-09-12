@@ -106,11 +106,7 @@ STATICINLINE void get_boolean_indexedv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetBooleanIndexedvEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        target,
-        index);
+        glGetBooleanIndexedvEXT, ::glw::trace::byte_span(data), target, index);
 #endif
     glGetBooleanIndexedvEXT(
         static_cast<GLenum>(target),
@@ -144,11 +140,7 @@ STATICINLINE void get_integer_indexedv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetIntegerIndexedvEXT,
-        gsl::span<char>(
-            reinterpret_cast<char*>(data.data()), data.size_bytes()),
-        target,
-        index);
+        glGetIntegerIndexedvEXT, ::glw::trace::byte_span(data), target, index);
 #endif
     glGetIntegerIndexedvEXT(
         static_cast<GLenum>(target),

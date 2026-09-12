@@ -61,10 +61,7 @@ STATICINLINE void binormal3bv(
         GLW_FPTR_CHECK(Binormal3bvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glBinormal3bvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glBinormal3bvEXT, ::glw::trace::byte_span(v));
 #endif
     glBinormal3bvEXT(
         v.size() ? reinterpret_cast<const GLbyte*>(v.data()) : nullptr);
@@ -111,10 +108,7 @@ STATICINLINE void binormal3dv(
         GLW_FPTR_CHECK(Binormal3dvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glBinormal3dvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glBinormal3dvEXT, ::glw::trace::byte_span(v));
 #endif
     glBinormal3dvEXT(reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("Binormal3dvEXT"sv, check_errors);
@@ -160,10 +154,7 @@ STATICINLINE void binormal3fv(
         GLW_FPTR_CHECK(Binormal3fvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glBinormal3fvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glBinormal3fvEXT, ::glw::trace::byte_span(v));
 #endif
     glBinormal3fvEXT(reinterpret_cast<const GLfloat*>(v.data()));
     detail::error_check("Binormal3fvEXT"sv, check_errors);
@@ -209,10 +200,7 @@ STATICINLINE void binormal3iv(
         GLW_FPTR_CHECK(Binormal3ivEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glBinormal3ivEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glBinormal3ivEXT, ::glw::trace::byte_span(v));
 #endif
     glBinormal3ivEXT(reinterpret_cast<const GLint*>(v.data()));
     detail::error_check("Binormal3ivEXT"sv, check_errors);
@@ -258,10 +246,7 @@ STATICINLINE void binormal3sv(
         GLW_FPTR_CHECK(Binormal3svEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glBinormal3svEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glBinormal3svEXT, ::glw::trace::byte_span(v));
 #endif
     glBinormal3svEXT(reinterpret_cast<const GLshort*>(v.data()));
     detail::error_check("Binormal3svEXT"sv, check_errors);
@@ -289,12 +274,7 @@ STATICINLINE void binormal_pointer(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glBinormalPointerEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
-        type,
-        stride);
+        glBinormalPointerEXT, ::glw::trace::byte_span(pointer), type, stride);
 #endif
     glBinormalPointerEXT(
         static_cast<GLenum>(type),
@@ -346,10 +326,7 @@ STATICINLINE void tangent3bv(
         GLW_FPTR_CHECK(Tangent3bvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glTangent3bvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glTangent3bvEXT, ::glw::trace::byte_span(v));
 #endif
     glTangent3bvEXT(
         v.size() ? reinterpret_cast<const GLbyte*>(v.data()) : nullptr);
@@ -396,10 +373,7 @@ STATICINLINE void tangent3dv(
         GLW_FPTR_CHECK(Tangent3dvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glTangent3dvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glTangent3dvEXT, ::glw::trace::byte_span(v));
 #endif
     glTangent3dvEXT(reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("Tangent3dvEXT"sv, check_errors);
@@ -445,10 +419,7 @@ STATICINLINE void tangent3fv(
         GLW_FPTR_CHECK(Tangent3fvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glTangent3fvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glTangent3fvEXT, ::glw::trace::byte_span(v));
 #endif
     glTangent3fvEXT(reinterpret_cast<const GLfloat*>(v.data()));
     detail::error_check("Tangent3fvEXT"sv, check_errors);
@@ -494,10 +465,7 @@ STATICINLINE void tangent3iv(
         GLW_FPTR_CHECK(Tangent3ivEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glTangent3ivEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glTangent3ivEXT, ::glw::trace::byte_span(v));
 #endif
     glTangent3ivEXT(reinterpret_cast<const GLint*>(v.data()));
     detail::error_check("Tangent3ivEXT"sv, check_errors);
@@ -543,10 +511,7 @@ STATICINLINE void tangent3sv(
         GLW_FPTR_CHECK(Tangent3svEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glTangent3svEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glTangent3svEXT, ::glw::trace::byte_span(v));
 #endif
     glTangent3svEXT(reinterpret_cast<const GLshort*>(v.data()));
     detail::error_check("Tangent3svEXT"sv, check_errors);
@@ -574,12 +539,7 @@ STATICINLINE void tangent_pointer(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glTangentPointerEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
-        type,
-        stride);
+        glTangentPointerEXT, ::glw::trace::byte_span(pointer), type, stride);
 #endif
     glTangentPointerEXT(
         static_cast<GLenum>(type),

@@ -92,9 +92,7 @@ STATICINLINE void weight_pointer(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glWeightPointerARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
+        ::glw::trace::byte_span(pointer),
         size,
         type,
         stride);
@@ -129,11 +127,7 @@ STATICINLINE void weightbv(
         GLW_FPTR_CHECK(WeightbvARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glWeightbvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(weights.data()),
-            weights.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glWeightbvARB, ::glw::trace::byte_span(weights));
 #endif
     glWeightbvARB(
         weights.size(),
@@ -163,11 +157,7 @@ STATICINLINE void weightdv(
         GLW_FPTR_CHECK(WeightdvARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glWeightdvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(weights.data()),
-            weights.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glWeightdvARB, ::glw::trace::byte_span(weights));
 #endif
     glWeightdvARB(
         weights.size(),
@@ -197,11 +187,7 @@ STATICINLINE void weightfv(
         GLW_FPTR_CHECK(WeightfvARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glWeightfvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(weights.data()),
-            weights.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glWeightfvARB, ::glw::trace::byte_span(weights));
 #endif
     glWeightfvARB(
         weights.size(),
@@ -231,11 +217,7 @@ STATICINLINE void weightiv(
         GLW_FPTR_CHECK(WeightivARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glWeightivARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(weights.data()),
-            weights.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glWeightivARB, ::glw::trace::byte_span(weights));
 #endif
     glWeightivARB(
         weights.size(),
@@ -265,11 +247,7 @@ STATICINLINE void weightsv(
         GLW_FPTR_CHECK(WeightsvARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glWeightsvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(weights.data()),
-            weights.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glWeightsvARB, ::glw::trace::byte_span(weights));
 #endif
     glWeightsvARB(
         weights.size(),
@@ -299,11 +277,7 @@ STATICINLINE void weightubv(
         GLW_FPTR_CHECK(WeightubvARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glWeightubvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(weights.data()),
-            weights.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glWeightubvARB, ::glw::trace::byte_span(weights));
 #endif
     glWeightubvARB(
         weights.size(),
@@ -333,11 +307,7 @@ STATICINLINE void weightuiv(
         GLW_FPTR_CHECK(WeightuivARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glWeightuivARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(weights.data()),
-            weights.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glWeightuivARB, ::glw::trace::byte_span(weights));
 #endif
     glWeightuivARB(
         weights.size(),
@@ -367,11 +337,7 @@ STATICINLINE void weightusv(
         GLW_FPTR_CHECK(WeightusvARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glWeightusvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(weights.data()),
-            weights.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glWeightusvARB, ::glw::trace::byte_span(weights));
 #endif
     glWeightusvARB(
         weights.size(),

@@ -32,10 +32,7 @@ STATICINLINE void create_semaphores(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glCreateSemaphoresNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(semaphores.data()),
-            semaphores.size_bytes()));
+        glCreateSemaphoresNV, ::glw::trace::byte_span(semaphores));
 #endif
     glCreateSemaphoresNV(
         semaphores.size(),
@@ -70,8 +67,7 @@ STATICINLINE void get_semaphore_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetSemaphoreParameterivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         semaphore,
         pname);
 #endif
@@ -109,8 +105,7 @@ STATICINLINE void semaphore_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glSemaphoreParameterivNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         semaphore,
         pname);
 #endif

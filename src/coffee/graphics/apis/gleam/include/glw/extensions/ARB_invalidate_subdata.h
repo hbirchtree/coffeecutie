@@ -86,11 +86,7 @@ STATICINLINE void invalidate_framebuffer(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glInvalidateFramebuffer,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(attachments.data()),
-            attachments.size_bytes()),
-        target);
+        glInvalidateFramebuffer, ::glw::trace::byte_span(attachments), target);
 #endif
     glInvalidateFramebuffer(
         static_cast<GLenum>(target),
@@ -137,9 +133,7 @@ STATICINLINE void invalidate_sub_framebuffer(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glInvalidateSubFramebuffer,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(attachments.data()),
-            attachments.size_bytes()),
+        ::glw::trace::byte_span(attachments),
         target,
         x,
         width);

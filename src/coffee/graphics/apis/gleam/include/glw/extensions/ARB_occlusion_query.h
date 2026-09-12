@@ -54,10 +54,7 @@ STATICINLINE void delete_queries(
         GLW_FPTR_CHECK(DeleteQueriesARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glDeleteQueriesARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(ids.data()), ids.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glDeleteQueriesARB, ::glw::trace::byte_span(ids));
 #endif
     glDeleteQueriesARB(
         ids.size(),
@@ -105,9 +102,7 @@ STATICINLINE void gen_queries(
         GLW_FPTR_CHECK(GenQueriesARB)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glGenQueriesARB,
-        gsl::span<char>(reinterpret_cast<char*>(ids.data()), ids.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glGenQueriesARB, ::glw::trace::byte_span(ids));
 #endif
     glGenQueriesARB(
         ids.size(),
@@ -140,11 +135,7 @@ STATICINLINE void get_query_objectiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetQueryObjectivARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        id,
-        pname);
+        glGetQueryObjectivARB, ::glw::trace::byte_span(params), id, pname);
 #endif
     glGetQueryObjectivARB(
         id,
@@ -178,11 +169,7 @@ STATICINLINE void get_query_objectuiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetQueryObjectuivARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        id,
-        pname);
+        glGetQueryObjectuivARB, ::glw::trace::byte_span(params), id, pname);
 #endif
     glGetQueryObjectuivARB(
         id,
@@ -216,11 +203,7 @@ STATICINLINE void get_queryiv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetQueryivARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        target,
-        pname);
+        glGetQueryivARB, ::glw::trace::byte_span(params), target, pname);
 #endif
     glGetQueryivARB(
         static_cast<GLenum>(target),

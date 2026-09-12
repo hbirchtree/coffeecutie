@@ -176,8 +176,7 @@ STATICINLINE void get_video_capture_streamdv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVideoCaptureStreamdvNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         video_capture_slot,
         stream,
         pname);
@@ -218,8 +217,7 @@ STATICINLINE void get_video_capture_streamfv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVideoCaptureStreamfvNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         video_capture_slot,
         stream,
         pname);
@@ -260,8 +258,7 @@ STATICINLINE void get_video_capture_streamiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVideoCaptureStreamivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         video_capture_slot,
         stream,
         pname);
@@ -300,8 +297,7 @@ STATICINLINE void get_video_captureiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetVideoCaptureivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         video_capture_slot,
         pname);
 #endif
@@ -344,12 +340,8 @@ STATICINLINE GLenum video_capture(
     GLW_FPTR_TRACE(
         glVideoCaptureNV,
         video_capture_slot,
-        gsl::span<char>(
-            reinterpret_cast<char*>(sequence_num.data()),
-            sequence_num.size_bytes()),
-        gsl::span<char>(
-            reinterpret_cast<char*>(capture_time.data()),
-            capture_time.size_bytes()));
+        ::glw::trace::byte_span(sequence_num),
+        ::glw::trace::byte_span(capture_time));
 #endif
     auto out = glVideoCaptureNV(
         video_capture_slot,
@@ -391,8 +383,7 @@ STATICINLINE void video_capture_stream_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVideoCaptureStreamParameterdvNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         video_capture_slot,
         stream,
         pname);
@@ -435,8 +426,7 @@ STATICINLINE void video_capture_stream_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVideoCaptureStreamParameterfvNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         video_capture_slot,
         stream,
         pname);
@@ -479,8 +469,7 @@ STATICINLINE void video_capture_stream_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glVideoCaptureStreamParameterivNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         video_capture_slot,
         stream,
         pname);

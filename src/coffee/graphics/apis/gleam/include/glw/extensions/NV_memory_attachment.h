@@ -70,8 +70,7 @@ STATICINLINE void get_memory_object_detached_resourcesuiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetMemoryObjectDetachedResourcesuivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         memory,
         pname,
         first,

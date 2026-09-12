@@ -87,6 +87,10 @@ optional<error> system::load(
 
 void system::start_restricted(Proxy& e, time_point const& ts)
 {
+#if defined(GLW_ENABLE_TRACE)
+    glw::trace::frame_boundary();
+#endif
+
     using namespace std::chrono_literals;
     using namespace Coffee::Logging;
 

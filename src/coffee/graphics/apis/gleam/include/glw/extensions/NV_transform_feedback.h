@@ -240,8 +240,7 @@ STATICINLINE void get_active_varying(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveVaryingNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(name.data()), name.size_bytes()),
+        ::glw::trace::byte_span(name),
         program,
         index,
         length,
@@ -339,9 +338,7 @@ STATICINLINE void transform_feedback_attribs(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTransformFeedbackAttribsNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(attribs.data()),
-            attribs.size_bytes()),
+        ::glw::trace::byte_span(attribs),
         count,
         bufferMode);
 #endif
@@ -386,9 +383,7 @@ STATICINLINE void transform_feedback_varyings(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glTransformFeedbackVaryingsNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(locations.data()),
-            locations.size_bytes()),
+        ::glw::trace::byte_span(locations),
         program,
         bufferMode);
 #endif
@@ -430,12 +425,8 @@ STATICINLINE void transform_feedback_stream_attribs(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glTransformFeedbackStreamAttribsNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(attribs.data()),
-            attribs.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(bufstreams.data()),
-            bufstreams.size_bytes()),
+        ::glw::trace::byte_span(attribs),
+        ::glw::trace::byte_span(bufstreams),
         bufferMode);
 #endif
     glTransformFeedbackStreamAttribsNV(

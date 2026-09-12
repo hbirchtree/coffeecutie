@@ -39,12 +39,7 @@ STATICINLINE void fog_coord_pointer(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glFogCoordPointerEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(pointer.data()),
-            pointer.size_bytes()),
-        type,
-        stride);
+        glFogCoordPointerEXT, ::glw::trace::byte_span(pointer), type, stride);
 #endif
     glFogCoordPointerEXT(
         static_cast<GLenum>(type),
@@ -94,10 +89,7 @@ STATICINLINE void fog_coorddv(
         GLW_FPTR_CHECK(FogCoorddvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glFogCoorddvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coord.data()), coord.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glFogCoorddvEXT, ::glw::trace::byte_span(coord));
 #endif
     glFogCoorddvEXT(
         coord.size() ? reinterpret_cast<const GLdouble*>(coord.data())
@@ -145,10 +137,7 @@ STATICINLINE void fog_coordfv(
         GLW_FPTR_CHECK(FogCoordfvEXT)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glFogCoordfvEXT,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(coord.data()), coord.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glFogCoordfvEXT, ::glw::trace::byte_span(coord));
 #endif
     glFogCoordfvEXT(
         coord.size() ? reinterpret_cast<const GLfloat*>(coord.data())

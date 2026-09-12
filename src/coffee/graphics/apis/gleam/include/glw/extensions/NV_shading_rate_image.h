@@ -104,8 +104,7 @@ STATICINLINE void get_shading_rate_sample_locationiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetShadingRateSampleLocationivNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(location.data()), location.size_bytes()),
+        ::glw::trace::byte_span(location),
         rate,
         samples,
         index);
@@ -166,8 +165,7 @@ STATICINLINE void shading_rate_image_palette(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glShadingRateImagePaletteNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(rates.data()), rates.size_bytes()),
+        ::glw::trace::byte_span(rates),
         viewport,
         first);
 #endif
@@ -226,9 +224,7 @@ STATICINLINE void shading_rate_sample_order_custom(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glShadingRateSampleOrderCustomNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(locations.data()),
-            locations.size_bytes()),
+        ::glw::trace::byte_span(locations),
         rate,
         samples);
 #endif

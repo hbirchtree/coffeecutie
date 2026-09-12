@@ -90,10 +90,7 @@ STATICINLINE void create_command_lists(
         GLW_FPTR_CHECK(CreateCommandListsNV)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glCreateCommandListsNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(lists.data()), lists.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glCreateCommandListsNV, ::glw::trace::byte_span(lists));
 #endif
     glCreateCommandListsNV(
         lists.size(),
@@ -121,10 +118,7 @@ STATICINLINE void create_states(
         GLW_FPTR_CHECK(CreateStatesNV)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glCreateStatesNV,
-        gsl::span<char>(
-            reinterpret_cast<char*>(states.data()), states.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glCreateStatesNV, ::glw::trace::byte_span(states));
 #endif
     glCreateStatesNV(
         states.size(),
@@ -153,10 +147,7 @@ STATICINLINE void delete_command_lists(
         GLW_FPTR_CHECK(DeleteCommandListsNV)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glDeleteCommandListsNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(lists.data()), lists.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glDeleteCommandListsNV, ::glw::trace::byte_span(lists));
 #endif
     glDeleteCommandListsNV(
         lists.size(),
@@ -185,10 +176,7 @@ STATICINLINE void delete_states(
         GLW_FPTR_CHECK(DeleteStatesNV)
     }
 #ifdef GLW_FPTR_TRACE_DATA
-    GLW_FPTR_TRACE_DATA(
-        glDeleteStatesNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(states.data()), states.size_bytes()));
+    GLW_FPTR_TRACE_DATA(glDeleteStatesNV, ::glw::trace::byte_span(states));
 #endif
     glDeleteStatesNV(
         states.size(),
@@ -231,11 +219,8 @@ STATICINLINE void draw_commands_address(
     GLW_FPTR_TRACE(
         glDrawCommandsAddressNV,
         primitiveMode,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(indirects.data()),
-            indirects.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(sizes.data()), sizes.size_bytes()),
+        ::glw::trace::byte_span(indirects),
+        ::glw::trace::byte_span(sizes),
         count);
 #endif
     glDrawCommandsAddressNV(
@@ -289,11 +274,8 @@ STATICINLINE void draw_commands(
         glDrawCommandsNV,
         primitiveMode,
         buffer,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(indirects.data()),
-            indirects.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(sizes.data()), sizes.size_bytes()),
+        ::glw::trace::byte_span(indirects),
+        ::glw::trace::byte_span(sizes),
         count);
 #endif
     glDrawCommandsNV(
@@ -345,15 +327,10 @@ STATICINLINE void draw_commands_states_address(
 #ifdef GLW_FPTR_TRACE
     GLW_FPTR_TRACE(
         glDrawCommandsStatesAddressNV,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(indirects.data()),
-            indirects.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(sizes.data()), sizes.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(states.data()), states.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(fbos.data()), fbos.size_bytes()),
+        ::glw::trace::byte_span(indirects),
+        ::glw::trace::byte_span(sizes),
+        ::glw::trace::byte_span(states),
+        ::glw::trace::byte_span(fbos),
         count);
 #endif
     glDrawCommandsStatesAddressNV(
@@ -414,15 +391,10 @@ STATICINLINE void draw_commands_states(
     GLW_FPTR_TRACE(
         glDrawCommandsStatesNV,
         buffer,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(indirects.data()),
-            indirects.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(sizes.data()), sizes.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(states.data()), states.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(fbos.data()), fbos.size_bytes()),
+        ::glw::trace::byte_span(indirects),
+        ::glw::trace::byte_span(sizes),
+        ::glw::trace::byte_span(states),
+        ::glw::trace::byte_span(fbos),
         count);
 #endif
     glDrawCommandsStatesNV(
@@ -565,15 +537,10 @@ STATICINLINE void list_draw_commands_states_client(
         glListDrawCommandsStatesClientNV,
         list,
         segment,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(indirects.data()),
-            indirects.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(sizes.data()), sizes.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(states.data()), states.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(fbos.data()), fbos.size_bytes()),
+        ::glw::trace::byte_span(indirects),
+        ::glw::trace::byte_span(sizes),
+        ::glw::trace::byte_span(states),
+        ::glw::trace::byte_span(fbos),
         count);
 #endif
     glListDrawCommandsStatesClientNV(

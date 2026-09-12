@@ -213,10 +213,7 @@ STATICINLINE void delete_framebuffers(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glDeleteFramebuffers,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(framebuffers.data()),
-            framebuffers.size_bytes()));
+        glDeleteFramebuffers, ::glw::trace::byte_span(framebuffers));
 #endif
     glDeleteFramebuffers(
         framebuffers.size(),
@@ -249,10 +246,7 @@ STATICINLINE void delete_renderbuffers(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glDeleteRenderbuffers,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(renderbuffers.data()),
-            renderbuffers.size_bytes()));
+        glDeleteRenderbuffers, ::glw::trace::byte_span(renderbuffers));
 #endif
     glDeleteRenderbuffers(
         renderbuffers.size(),
@@ -493,10 +487,7 @@ STATICINLINE void gen_framebuffers(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGenFramebuffers,
-        gsl::span<char>(
-            reinterpret_cast<char*>(framebuffers.data()),
-            framebuffers.size_bytes()));
+        glGenFramebuffers, ::glw::trace::byte_span(framebuffers));
 #endif
     glGenFramebuffers(
         framebuffers.size(),
@@ -526,10 +517,7 @@ STATICINLINE void gen_renderbuffers(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGenRenderbuffers,
-        gsl::span<char>(
-            reinterpret_cast<char*>(renderbuffers.data()),
-            renderbuffers.size_bytes()));
+        glGenRenderbuffers, ::glw::trace::byte_span(renderbuffers));
 #endif
     glGenRenderbuffers(
         renderbuffers.size(),
@@ -586,8 +574,7 @@ STATICINLINE void get_framebuffer_attachment_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetFramebufferAttachmentParameteriv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         attachment,
         pname);
@@ -626,8 +613,7 @@ STATICINLINE void get_renderbuffer_parameter(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetRenderbufferParameteriv,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         target,
         pname);
 #endif

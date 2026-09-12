@@ -129,10 +129,7 @@ STATICINLINE void multi_tex_coord1dv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord1dvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        target);
+        glMultiTexCoord1dvARB, ::glw::trace::byte_span(v), target);
 #endif
     glMultiTexCoord1dvARB(
         static_cast<GLenum>(target),
@@ -187,10 +184,7 @@ STATICINLINE void multi_tex_coord1fv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord1fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        target);
+        glMultiTexCoord1fvARB, ::glw::trace::byte_span(v), target);
 #endif
     glMultiTexCoord1fvARB(
         static_cast<GLenum>(target),
@@ -245,10 +239,7 @@ STATICINLINE void multi_tex_coord1iv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord1ivARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        target);
+        glMultiTexCoord1ivARB, ::glw::trace::byte_span(v), target);
 #endif
     glMultiTexCoord1ivARB(
         static_cast<GLenum>(target), reinterpret_cast<const GLint*>(v.data()));
@@ -302,10 +293,7 @@ STATICINLINE void multi_tex_coord1sv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord1svARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        target);
+        glMultiTexCoord1svARB, ::glw::trace::byte_span(v), target);
 #endif
     glMultiTexCoord1svARB(
         static_cast<GLenum>(target),
@@ -360,10 +348,7 @@ STATICINLINE void multi_tex_coord2dv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord2dvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        target);
+        glMultiTexCoord2dvARB, ::glw::trace::byte_span(v), target);
 #endif
     glMultiTexCoord2dvARB(
         static_cast<GLenum>(target),
@@ -418,10 +403,7 @@ STATICINLINE void multi_tex_coord2fv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord2fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        target);
+        glMultiTexCoord2fvARB, ::glw::trace::byte_span(v), target);
 #endif
     glMultiTexCoord2fvARB(
         static_cast<GLenum>(target),
@@ -476,10 +458,7 @@ STATICINLINE void multi_tex_coord2iv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord2ivARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        target);
+        glMultiTexCoord2ivARB, ::glw::trace::byte_span(v), target);
 #endif
     glMultiTexCoord2ivARB(
         static_cast<GLenum>(target), reinterpret_cast<const GLint*>(v.data()));
@@ -533,10 +512,7 @@ STATICINLINE void multi_tex_coord2sv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord2svARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        target);
+        glMultiTexCoord2svARB, ::glw::trace::byte_span(v), target);
 #endif
     glMultiTexCoord2svARB(
         static_cast<GLenum>(target),
@@ -593,10 +569,7 @@ STATICINLINE void multi_tex_coord3dv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord3dvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        target);
+        glMultiTexCoord3dvARB, ::glw::trace::byte_span(v), target);
 #endif
     glMultiTexCoord3dvARB(
         static_cast<GLenum>(target),
@@ -653,10 +626,7 @@ STATICINLINE void multi_tex_coord3fv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord3fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        target);
+        glMultiTexCoord3fvARB, ::glw::trace::byte_span(v), target);
 #endif
     glMultiTexCoord3fvARB(
         static_cast<GLenum>(target),
@@ -713,10 +683,7 @@ STATICINLINE void multi_tex_coord3iv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord3ivARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        target);
+        glMultiTexCoord3ivARB, ::glw::trace::byte_span(v), target);
 #endif
     glMultiTexCoord3ivARB(
         static_cast<GLenum>(target), reinterpret_cast<const GLint*>(v.data()));
@@ -772,10 +739,7 @@ STATICINLINE void multi_tex_coord3sv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord3svARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        target);
+        glMultiTexCoord3svARB, ::glw::trace::byte_span(v), target);
 #endif
     glMultiTexCoord3svARB(
         static_cast<GLenum>(target),
@@ -834,10 +798,7 @@ STATICINLINE void multi_tex_coord4dv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord4dvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        target);
+        glMultiTexCoord4dvARB, ::glw::trace::byte_span(v), target);
 #endif
     glMultiTexCoord4dvARB(
         static_cast<GLenum>(target),
@@ -896,10 +857,7 @@ STATICINLINE void multi_tex_coord4fv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord4fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        target);
+        glMultiTexCoord4fvARB, ::glw::trace::byte_span(v), target);
 #endif
     glMultiTexCoord4fvARB(
         static_cast<GLenum>(target),
@@ -958,10 +916,7 @@ STATICINLINE void multi_tex_coord4iv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord4ivARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        target);
+        glMultiTexCoord4ivARB, ::glw::trace::byte_span(v), target);
 #endif
     glMultiTexCoord4ivARB(
         static_cast<GLenum>(target), reinterpret_cast<const GLint*>(v.data()));
@@ -1019,10 +974,7 @@ STATICINLINE void multi_tex_coord4sv(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glMultiTexCoord4svARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(v.data()), v.size_bytes()),
-        target);
+        glMultiTexCoord4svARB, ::glw::trace::byte_span(v), target);
 #endif
     glMultiTexCoord4svARB(
         static_cast<GLenum>(target),

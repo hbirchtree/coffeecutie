@@ -185,8 +185,7 @@ STATICINLINE void get_active_uniform(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetActiveUniformARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(name.data()), name.size_bytes()),
+        ::glw::trace::byte_span(name),
         programObj,
         index,
         length,
@@ -232,7 +231,7 @@ STATICINLINE void get_attached_objects(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetAttachedObjectsARB,
-        gsl::span<char>(reinterpret_cast<char*>(obj.data()), obj.size_bytes()),
+        ::glw::trace::byte_span(obj),
         containerObj,
         count);
 #endif
@@ -292,11 +291,7 @@ STATICINLINE void get_info_log(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetInfoLogARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(infoLog.data()), infoLog.size_bytes()),
-        obj,
-        length);
+        glGetInfoLogARB, ::glw::trace::byte_span(infoLog), obj, length);
 #endif
     glGetInfoLogARB(
         obj,
@@ -332,11 +327,7 @@ STATICINLINE void get_object_parameter(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetObjectParameterfvARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        obj,
-        pname);
+        glGetObjectParameterfvARB, ::glw::trace::byte_span(params), obj, pname);
 #endif
     glGetObjectParameterfvARB(
         obj,
@@ -370,11 +361,7 @@ STATICINLINE void get_object_parameter(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetObjectParameterivARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
-        obj,
-        pname);
+        glGetObjectParameterivARB, ::glw::trace::byte_span(params), obj, pname);
 #endif
     glGetObjectParameterivARB(
         obj,
@@ -410,11 +397,7 @@ STATICINLINE void get_shader_source(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetShaderSourceARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(source.data()), source.size_bytes()),
-        obj,
-        length);
+        glGetShaderSourceARB, ::glw::trace::byte_span(source), obj, length);
 #endif
     glGetShaderSourceARB(
         obj,
@@ -448,10 +431,7 @@ STATICINLINE GLint get_uniform_location(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glGetUniformLocationARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(name.data()), name.size_bytes()),
-        programObj);
+        glGetUniformLocationARB, ::glw::trace::byte_span(name), programObj);
 #endif
     auto out = glGetUniformLocationARB(
         programObj,
@@ -487,8 +467,7 @@ STATICINLINE void get_uniformfv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetUniformfvARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         programObj,
         location);
 #endif
@@ -525,8 +504,7 @@ STATICINLINE void get_uniformiv(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glGetUniformivARB,
-        gsl::span<char>(
-            reinterpret_cast<char*>(params.data()), params.size_bytes()),
+        ::glw::trace::byte_span(params),
         programObj,
         location);
 #endif
@@ -590,10 +568,8 @@ STATICINLINE void shader_source(
     GLW_FPTR_TRACE(
         glShaderSourceARB,
         shaderObj,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(string.data()), string.size_bytes()),
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(length.data()), length.size_bytes()));
+        ::glw::trace::byte_span(string),
+        ::glw::trace::byte_span(length));
 #endif
     glShaderSourceARB(
         shaderObj,
@@ -651,10 +627,7 @@ STATICINLINE void uniform(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glUniform1fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        location);
+        glUniform1fvARB, ::glw::trace::byte_span(value), location);
 #endif
     glUniform1fvARB(
         location, value.size(), reinterpret_cast<const GLfloat*>(value.data()));
@@ -707,10 +680,7 @@ STATICINLINE void uniform(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glUniform1ivARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        location);
+        glUniform1ivARB, ::glw::trace::byte_span(value), location);
 #endif
     glUniform1ivARB(
         location, value.size(), reinterpret_cast<const GLint*>(value.data()));
@@ -766,10 +736,7 @@ STATICINLINE void uniform(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glUniform2fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        location);
+        glUniform2fvARB, ::glw::trace::byte_span(value), location);
 #endif
     glUniform2fvARB(
         location, value.size(), reinterpret_cast<const GLfloat*>(value.data()));
@@ -825,10 +792,7 @@ STATICINLINE void uniform(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glUniform2ivARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        location);
+        glUniform2ivARB, ::glw::trace::byte_span(value), location);
 #endif
     glUniform2ivARB(
         location, value.size(), reinterpret_cast<const GLint*>(value.data()));
@@ -885,10 +849,7 @@ STATICINLINE void uniform(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glUniform3fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        location);
+        glUniform3fvARB, ::glw::trace::byte_span(value), location);
 #endif
     glUniform3fvARB(
         location, value.size(), reinterpret_cast<const GLfloat*>(value.data()));
@@ -945,10 +906,7 @@ STATICINLINE void uniform(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glUniform3ivARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        location);
+        glUniform3ivARB, ::glw::trace::byte_span(value), location);
 #endif
     glUniform3ivARB(
         location, value.size(), reinterpret_cast<const GLint*>(value.data()));
@@ -1006,10 +964,7 @@ STATICINLINE void uniform(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glUniform4fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        location);
+        glUniform4fvARB, ::glw::trace::byte_span(value), location);
 #endif
     glUniform4fvARB(
         location, value.size(), reinterpret_cast<const GLfloat*>(value.data()));
@@ -1067,10 +1022,7 @@ STATICINLINE void uniform(
     }
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
-        glUniform4ivARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
-        location);
+        glUniform4ivARB, ::glw::trace::byte_span(value), location);
 #endif
     glUniform4ivARB(
         location, value.size(), reinterpret_cast<const GLint*>(value.data()));
@@ -1103,8 +1055,7 @@ STATICINLINE void uniform(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix2fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        ::glw::trace::byte_span(value),
         location,
         transpose);
 #endif
@@ -1142,8 +1093,7 @@ STATICINLINE void uniform(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix3fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        ::glw::trace::byte_span(value),
         location,
         transpose);
 #endif
@@ -1181,8 +1131,7 @@ STATICINLINE void uniform(
 #ifdef GLW_FPTR_TRACE_DATA
     GLW_FPTR_TRACE_DATA(
         glUniformMatrix4fvARB,
-        gsl::span<const char>(
-            reinterpret_cast<const char*>(value.data()), value.size_bytes()),
+        ::glw::trace::byte_span(value),
         location,
         transpose);
 #endif
