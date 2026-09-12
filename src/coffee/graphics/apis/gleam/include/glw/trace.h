@@ -69,10 +69,28 @@ using texture_probe_t =
              std::vector<u8>& out);
 void set_texture_probe(texture_probe_t probe);
 
+/* A null base with a non-zero length is normal here: buffer allocations pass
+ * no pointer but a real size, and several "pointers" are buffer offsets. A
+ * gsl::span cannot hold that pair, so this carries it instead. */
+struct data_ref
+{
+    const char* m_data{nullptr};
+    std::size_t m_size{0};
+
+    const char* data() const
+    {
+        return m_data;
+    }
+    std::size_t size() const
+    {
+        return m_size;
+    }
+};
+
 /* The wrappers hand us several span-like types, not all of which carry
  * size_bytes(), so normalise them here rather than at 1800 call sites. */
 template<typename T>
-inline gsl::span<const char> byte_span(T const& v)
+inline data_ref byte_span(T const& v)
 {
     const char* ptr   = nullptr;
     std::size_t bytes = 0;
@@ -91,11 +109,7 @@ inline gsl::span<const char> byte_span(T const& v)
                 bytes = static_cast<std::size_t>(v.size()) * sizeof(elem);
         }
     }
-    /* Several of these "pointers" are buffer offsets, so a null base with a
-     * non-zero length is normal here and would trip the span's contract. */
-    if(ptr == nullptr)
-        bytes = 0;
-    return gsl::span<const char>(ptr, bytes);
+    return data_ref{ptr, bytes};
 }
 
 namespace detail {
@@ -161,10 +175,14 @@ inline arg_t to_arg(T const& v)
 
 /* `func` must be a string literal: its address interns the name, so the name
  * itself crosses the wire only once. */
+/* declared_size is what the call moves, which is recorded even when nothing is
+ * captured; data/data_size is the copy taken, which is absent below the data
+ * level and for calls that only name a size. */
 void emit_call(
     const char*  func,
     arg_t const* args,
     u8           argc,
+    u32          declared_size,
     const void*  data,
     u32          data_size);
 
@@ -174,11 +192,12 @@ inline void record_call(const char* func, Args&&... args)
     if(!enabled(level::calls))
         return;
     if constexpr(sizeof...(Args) == 0)
-        emit_call(func, nullptr, 0, nullptr, 0);
+        emit_call(func, nullptr, 0, 0, nullptr, 0);
     else
     {
         arg_t packed[] = {to_arg(args)...};
-        emit_call(func, packed, static_cast<u8>(sizeof...(Args)), nullptr, 0);
+        emit_call(
+            func, packed, static_cast<u8>(sizeof...(Args)), 0, nullptr, 0);
     }
 }
 
@@ -187,19 +206,28 @@ inline void record_call_data(const char* func, Span const& data, Args&&... args)
 {
     if(!enabled(level::calls))
         return;
+    auto const declared = static_cast<u32>(data.size() * sizeof(*data.data()));
     const void* ptr  = nullptr;
     u32         size = 0;
-    if(enabled(level::data))
+    /* A buffer allocation names a size but hands over no pointer, so the size
+     * is worth recording on its own. */
+    if(enabled(level::data) && data.data())
     {
         ptr  = static_cast<const void*>(data.data());
-        size = static_cast<u32>(data.size() * sizeof(*data.data()));
+        size = declared;
     }
     if constexpr(sizeof...(Args) == 0)
-        emit_call(func, nullptr, 0, ptr, size);
+        emit_call(func, nullptr, 0, declared, ptr, size);
     else
     {
         arg_t packed[] = {to_arg(args)...};
-        emit_call(func, packed, static_cast<u8>(sizeof...(Args)), ptr, size);
+        emit_call(
+            func,
+            packed,
+            static_cast<u8>(sizeof...(Args)),
+            declared,
+            ptr,
+            size);
     }
 }
 

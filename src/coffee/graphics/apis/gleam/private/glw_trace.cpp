@@ -4,7 +4,9 @@
 
 #include <coffee/core/debug/formatting.h>
 
+#include <atomic>
 #include <cstdio>
+#include <cstdlib>
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -38,8 +40,11 @@ enum record_kind : u8
 };
 
 /* Data blobs are the reason a trace gets big; a whole texture per upload is
- * rarely what you want, and the head of it usually answers the question. */
-constexpr u32 max_data_bytes = 4096;
+ * rarely what you want, and the head of it usually answers the question. The
+ * declared size is recorded whatever this is, so a clipped blob still says how
+ * much it stood for. Raise it with gleamDebugBytes to capture whole buffers. */
+constexpr u32   default_max_data_bytes = 4096;
+std::atomic<u32> max_data_bytes{default_max_data_bytes};
 /* A texture is dumped whole rather than capped, but only up to this, so a
  * stray 4K texture cannot stall the run */
 constexpr u32 max_texture_bytes = 4 * 1024 * 1024;
@@ -216,6 +221,31 @@ void init()
     if(lvl == level::off)
         return;
 
+    if(auto cap = platform::env::var("COFFEE_GL_TRACE_BYTES"); cap.has_value())
+        max_data_bytes.store(
+            static_cast<u32>(std::strtoul(cap->c_str(), nullptr, 10)),
+            std::memory_order_relaxed);
+#if defined(__EMSCRIPTEN__)
+    {
+        int bytes = EM_ASM_INT({
+            var b = 0;
+            if(typeof window !== 'undefined')
+            {
+                try {
+                    b = parseInt(new URLSearchParams(window.location.search)
+                                     .get('gleamDebugBytes') || '', 10) | 0;
+                } catch (e) { b = 0; }
+                if(!b)
+                    b = window.gleamDebugBytes | 0;
+            }
+            return b;
+        });
+        if(bytes > 0)
+            max_data_bytes.store(
+                static_cast<u32>(bytes), std::memory_order_relaxed);
+    }
+#endif
+
     auto& s = state();
     {
         std::lock_guard<std::mutex> _(s.mutex);
@@ -261,7 +291,10 @@ void init()
     }
 
     active_level.store(static_cast<u8>(lvl), std::memory_order_relaxed);
-    Coffee::Logging::cDebug("GL trace: enabled at level {}", static_cast<int>(lvl));
+    Coffee::Logging::cDebug(
+        "GL trace: enabled at level {}, capturing up to {} bytes per call",
+        static_cast<int>(lvl),
+        max_data_bytes.load(std::memory_order_relaxed));
 }
 
 void shutdown()
@@ -304,6 +337,7 @@ void emit_call(
     const char*  func,
     arg_t const* args,
     u8           argc,
+    u32          declared_size,
     const void*  data,
     u32          data_size)
 {
@@ -427,8 +461,9 @@ void emit_call(
         put_bytes(s.buffer, name.data(), static_cast<u32>(name.size()));
     }
 
-    if(data_size > max_data_bytes)
-        data_size = max_data_bytes;
+    if(auto cap = max_data_bytes.load(std::memory_order_relaxed);
+       data_size > cap)
+        data_size = cap;
     if(!data)
         data_size = 0;
 
@@ -441,9 +476,15 @@ void emit_call(
         put<u64>(s.buffer, args[i].value);
     }
     put<u32>(s.buffer, error);
-    put<u32>(s.buffer, data_size);
-    if(data_size)
-        put_bytes(s.buffer, data, data_size);
+    /* The captured length is only written when there is a length to describe,
+     * so the majority of calls, which move no data, cost nothing extra. */
+    put<u32>(s.buffer, declared_size);
+    if(declared_size)
+    {
+        put<u32>(s.buffer, data_size);
+        if(data_size)
+            put_bytes(s.buffer, data, data_size);
+    }
 
     if(s.buffer.size() >= flush_threshold ||
        ++s.since_flush >= flush_every_records)
