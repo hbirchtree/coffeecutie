@@ -132,7 +132,9 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
     Vecf2           zoom_center{
         sweep_rest.x +
             sweep_extent *
-                std::sin(timef * (stl_types::math::pi_f * 2.f / sweep_period)),
+                std::sin(
+                    timef * (stl_types::math::pi_f * 2.f / sweep_period) -
+                    stl_types::math::pi_f / 2.f),
         sweep_rest.y};
     f32 zoom_strength{0.25f};
     f32 zoom_exposure{2.5f};
