@@ -1,5 +1,6 @@
 #pragma once
 
+#include "glw/enums/ObjectIdentifier.h"
 #include "glw/enums/TextureTarget.h"
 #include "rhi_buffer.h"
 #include "rhi_debug.h"
@@ -192,6 +193,8 @@ struct texture_t : std::enable_shared_from_this<texture_t>
 
 struct sampler_t
 {
+    static constexpr auto debug_identifier = group::object_identifier::sampler;
+
     sampler_t(std::shared_ptr<texture_t> const& source)
         : m_source(source)
         , m_debug(source->m_debug)

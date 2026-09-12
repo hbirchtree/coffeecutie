@@ -6,6 +6,7 @@
 #include "crunched/crunch_types.h"
 #include "crunched/loading_screen.h"
 #include "peripherals/concepts/graphics_api.h"
+#include "peripherals/constants.h"
 #include "peripherals/stl/accumulate.h"
 #include "peripherals/stl/enumerate.h"
 #include "peripherals/stl/map_values.h"
@@ -522,6 +523,16 @@ void LoadingScreen::load_resources(gleam::system& api)
     {
         cWarning("Failed to compile loading zoom program: {}", res.error());
     }
+
+    api.debug().annotate(*ring_color, "rendered_loading_screen");
+    api.debug().annotate(*ring_rt, "rendered_loading_screen_render_target");
+    api.debug().annotate(*loading_ebo, "loading_screen_ebo");
+    api.debug().annotate(*loading_vao, "loading_screen_vao");
+    api.debug().annotate(*loading_vbo, "loading_screen_vbo");
+    api.debug().annotate(*machine_tex, "loading_machine_tex");
+    api.debug().annotate(*simplex_noise_tex, "loading_simplex_tex");
+    api.debug().annotate(*simplex_noise_sampler, "loading_simplex_sampler");
+    api.debug().annotate(*zoom_program, "radial_zoom_shader");
 }
 
 void LoadingScreen::render_ring_texture(gfx::system& api)
@@ -591,6 +602,9 @@ void LoadingScreen::render_ring_texture(gfx::system& api)
             gleam::detail::draw_error_to_string(err),
             msg);
     }
+
+    if constexpr(compile_info::platform::is_emscripten)
+        return;
 
     // Everything below is released, so this must not run a second time
     m_ring_rendered = true;
