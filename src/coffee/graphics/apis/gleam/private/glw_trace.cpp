@@ -37,6 +37,8 @@ namespace {
  *   label : u8 7, u32 identifier, u32 handle, u16 len, bytes
  *   msg   : u8 8, u32 severity, u16 len, bytes
  *   xlat  : u8 9, u32 program, u32 len, bytes
+ *   shot  : u8 10, u32 frame, u32 draw, u32 w, u32 h, u32 size,
+ *           bytes; draw == 0xFFFFFFFF means the whole frame
  */
 enum record_kind : u8
 {
@@ -49,6 +51,7 @@ enum record_kind : u8
     kind_label = 7,
     kind_msg   = 8,
     kind_xlat  = 9,
+    kind_shot  = 10,
 };
 
 /* Strings are capped by the same knob as data, since a shader source is both.
@@ -61,6 +64,14 @@ u16 string_cap();
  * much it stood for. Raise it with gleamDebugBytes to capture whole buffers. */
 constexpr u32   default_max_data_bytes = 4096;
 std::atomic<u32> max_data_bytes{default_max_data_bytes};
+
+/* Colour-buffer capture. Off by default: even once per frame this is a full
+ * readback and a sync, and per draw it is far worse. */
+std::atomic<u8>  capture_mode{static_cast<u8>(capture::off)};
+constexpr u32    default_shot_edge = 480;
+std::atomic<u32> shot_edge{default_shot_edge};
+/* Marks a shot as covering the whole frame rather than one draw */
+constexpr u32 whole_frame = 0xFFFFFFFFu;
 
 u16 string_cap()
 {
@@ -80,6 +91,11 @@ constexpr u32 flush_every_records = 128;
 
 struct state_t
 {
+    framebuffer_probe_t framebuffer_probe{nullptr};
+    /* A draw is captured on the next call, because the trace macro
+     * runs before the GL call it names. */
+    bool pending_shot{false};
+    u32  draw_index{0};
     /* Programs whose translation has already been sent */
     std::unordered_set<u32> translated;
     std::mutex                                mutex;
@@ -202,6 +218,13 @@ void set_texture_probe(texture_probe_t probe)
     s.texture_probe = probe;
 }
 
+void set_framebuffer_probe(framebuffer_probe_t probe)
+{
+    auto&                       s = state();
+    std::lock_guard<std::mutex> _(s.mutex);
+    s.framebuffer_probe = probe;
+}
+
 void set_error_probe(u32 (*probe)())
 {
     auto&                       s = state();
@@ -245,6 +268,17 @@ void init()
     if(lvl == level::off)
         return;
 
+    if(auto mode = platform::env::var("COFFEE_GL_TRACE_FRAMES"); mode.has_value())
+        capture_mode.store(
+            static_cast<u8>(
+                *mode == "draw"    ? capture::draw
+                : *mode == "frame" ? capture::frame
+                                   : capture::off),
+            std::memory_order_relaxed);
+    if(auto edge = platform::env::var("COFFEE_GL_TRACE_SHOT"); edge.has_value())
+        shot_edge.store(
+            static_cast<u32>(std::strtoul(edge->c_str(), nullptr, 10)),
+            std::memory_order_relaxed);
     if(auto cap = platform::env::var("COFFEE_GL_TRACE_BYTES"); cap.has_value())
         max_data_bytes.store(
             static_cast<u32>(std::strtoul(cap->c_str(), nullptr, 10)),
@@ -267,6 +301,39 @@ void init()
         if(bytes > 0)
             max_data_bytes.store(
                 static_cast<u32>(bytes), std::memory_order_relaxed);
+
+        int mode = EM_ASM_INT({
+            var v = '';
+            if(typeof window !== 'undefined')
+            {
+                try {
+                    v = new URLSearchParams(window.location.search)
+                            .get('gleamDebugFrames') || '';
+                } catch (e) { v = ''; }
+                if(!v)
+                    v = window.gleamDebugFrames || '';
+            }
+            return v === 'frame' ? 1 : v === 'draw' ? 2 : 0;
+        });
+        if(mode > 0)
+            capture_mode.store(
+                static_cast<u8>(mode), std::memory_order_relaxed);
+
+        int edge = EM_ASM_INT({
+            var e = 0;
+            if(typeof window !== 'undefined')
+            {
+                try {
+                    e = parseInt(new URLSearchParams(window.location.search)
+                                     .get('gleamDebugShot') || '', 10) | 0;
+                } catch (e2) { e = 0; }
+                if(!e)
+                    e = window.gleamDebugShot | 0;
+            }
+            return e;
+        });
+        if(edge > 0)
+            shot_edge.store(static_cast<u32>(edge), std::memory_order_relaxed);
     }
 #endif
 
@@ -316,9 +383,12 @@ void init()
 
     active_level.store(static_cast<u8>(lvl), std::memory_order_relaxed);
     Coffee::Logging::cDebug(
-        "GL trace: enabled at level {}, capturing up to {} bytes per call",
+        "GL trace: level {}, up to {} bytes per call, framebuffer capture {}",
         static_cast<int>(lvl),
-        max_data_bytes.load(std::memory_order_relaxed));
+        max_data_bytes.load(std::memory_order_relaxed),
+        capture_mode.load(std::memory_order_relaxed) == 2   ? "per draw"
+        : capture_mode.load(std::memory_order_relaxed) == 1 ? "per frame"
+                                                           : "off");
 }
 
 void shutdown()
@@ -344,6 +414,20 @@ void shutdown()
 #endif
 }
 
+namespace {
+void emit_shot(state_t& s, u32 draw);
+}
+
+void frame_capture()
+{
+    if(!enabled(level::calls))
+        return;
+    if(capture_mode.load(std::memory_order_relaxed) ==
+       static_cast<u8>(capture::off))
+        return;
+    emit_shot(state(), whole_frame);
+}
+
 void frame_boundary()
 {
     if(!enabled(level::calls))
@@ -352,6 +436,8 @@ void frame_boundary()
     std::lock_guard<std::mutex> _(s.mutex);
     put<u8>(s.buffer, kind_frame);
     put<u32>(s.buffer, s.frame++);
+    s.draw_index    = 0;
+    s.pending_shot  = false;
     transmit(s);
 }
 
@@ -408,6 +494,36 @@ void put_string(std::vector<u8>& buffer, std::string_view text)
     auto len = static_cast<u16>(text.size() > cap ? cap : text.size());
     put<u16>(buffer, len);
     put_bytes(buffer, text.data(), len);
+}
+
+/* Reads the colour buffer and writes a shot record. The caller must not hold
+ * the lock: the probe issues GL calls, which are traced in turn. */
+void emit_shot(state_t& s, u32 draw)
+{
+    framebuffer_probe_t probe = nullptr;
+    {
+        std::lock_guard<std::mutex> _(s.mutex);
+        probe = s.framebuffer_probe;
+    }
+    if(!probe || s.in_probe)
+        return;
+
+    u32             w = 0, h = 0;
+    std::vector<u8> pixels;
+    s.in_probe = true;
+    bool ok = probe(shot_edge.load(std::memory_order_relaxed), w, h, pixels);
+    s.in_probe = false;
+    if(!ok || pixels.empty() || !w || !h)
+        return;
+
+    std::lock_guard<std::mutex> _(s.mutex);
+    put<u8>(s.buffer, kind_shot);
+    put<u32>(s.buffer, s.frame);
+    put<u32>(s.buffer, draw);
+    put<u32>(s.buffer, w);
+    put<u32>(s.buffer, h);
+    put<u32>(s.buffer, static_cast<u32>(pixels.size()));
+    put_bytes(s.buffer, pixels.data(), static_cast<u32>(pixels.size()));
 }
 
 } // namespace
@@ -469,6 +585,18 @@ void emit_call(
     /* The error probe calls back into GL, which is traced in turn */
     if(s.in_probe)
         return;
+
+    /* Per-draw capture. The macro runs before the call it names, so the draw
+     * just recorded is read back here, on the call that follows it. */
+    if(s.pending_shot)
+    {
+        s.pending_shot = false;
+        emit_shot(s, s.draw_index++);
+    }
+    if(capture_mode.load(std::memory_order_relaxed) ==
+           static_cast<u8>(capture::draw) &&
+       std::string_view(func).starts_with("glDraw"))
+        s.pending_shot = true;
 
     u32 error = 0;
     if(enabled(level::errors) && s.error_probe)

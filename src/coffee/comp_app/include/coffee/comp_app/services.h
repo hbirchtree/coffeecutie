@@ -492,12 +492,20 @@ struct GraphicsContext
 
 struct GraphicsFramebuffer
 {
-    std::function<void()> pre_swap;
+    /* More than one feature wants the moment before the swap: dummy_plug
+     * screenshots and the GL trace's frame capture. A single slot meant
+     * whichever arrived second silently replaced the first. */
+    std::vector<std::function<void()>> pre_swap;
+
+    void add_pre_swap(std::function<void()>&& callback)
+    {
+        pre_swap.push_back(std::move(callback));
+    }
 
     void defaultSwap()
     {
-        if(pre_swap)
-            pre_swap();
+        for(auto const& callback : pre_swap)
+            callback();
         app_error ec;
         swapBuffers(ec);
         C_ERROR_CHECK(ec);

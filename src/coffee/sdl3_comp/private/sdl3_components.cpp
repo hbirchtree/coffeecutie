@@ -767,7 +767,7 @@ comp_app::size_2d_t GLFramebuffer::size() const
     return out;
 }
 
-void GLFramebuffer::start_frame(
+void GLFramebuffer::end_frame(
     comp_app::detail::ContainerProxy&, time_point const&)
 {
     defaultSwap();

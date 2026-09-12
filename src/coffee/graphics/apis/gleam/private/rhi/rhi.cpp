@@ -1310,6 +1310,79 @@ bool trace_read_texture(
     return ok;
 }
 
+/* Reads back whatever is bound for drawing, for the trace's timeline. The
+ * viewport gives the region worth reading; the result is box-filtered down to
+ * max_edge so a per-draw capture does not produce gigabytes. */
+bool trace_read_framebuffer(
+    libc_types::u32              max_edge,
+    libc_types::u32&             width,
+    libc_types::u32&             height,
+    std::vector<libc_types::u8>& out)
+{
+    std::array<libc_types::i32, 4> viewport{0, 0, 0, 0};
+    cmd::get_integerv(group::get_prop::viewport, semantic::SpanOver(viewport));
+    auto src_w = static_cast<libc_types::u32>(viewport[2]);
+    auto src_h = static_cast<libc_types::u32>(viewport[3]);
+    if(!src_w || !src_h)
+        return false;
+
+    libc_types::i32 draw_fbo = 0;
+    cmd::get_integerv(
+        group::get_prop::draw_framebuffer_binding, SpanOne(draw_fbo));
+    libc_types::i32 read_fbo = 0;
+    cmd::get_integerv(
+        group::get_prop::read_framebuffer_binding, SpanOne(read_fbo));
+
+    cmd::bind_framebuffer(
+        group::framebuffer_target::read_framebuffer,
+        static_cast<libc_types::u32>(draw_fbo));
+
+    std::vector<libc_types::u8> full(
+        static_cast<std::size_t>(src_w) * src_h * 4u);
+    cmd::read_pixels(
+        Veci2{viewport[0], viewport[1]},
+        size_2d<libc_types::i32>{
+            static_cast<libc_types::i32>(src_w),
+            static_cast<libc_types::i32>(src_h)},
+        group::pixel_format::rgba,
+        group::pixel_type::unsigned_byte,
+        semantic::concepts::offset_span::of(full.data()));
+
+    cmd::bind_framebuffer(
+        group::framebuffer_target::read_framebuffer,
+        static_cast<libc_types::u32>(read_fbo));
+
+
+    /* Integer step rather than a resample: this is a thumbnail for a timeline,
+     * and a cheap one matters more than a clean one. */
+    libc_types::u32 step = 1;
+    if(max_edge)
+        while(src_w / step > max_edge || src_h / step > max_edge)
+            step++;
+
+    width  = src_w / step;
+    height = src_h / step;
+    if(!width || !height)
+        return false;
+
+    out.resize(static_cast<std::size_t>(width) * height * 4u);
+    for(libc_types::u32 y = 0; y < height; y++)
+    {
+        /* GL hands back bottom-up; flip here so the viewer can stay simple */
+        auto src_y = (height - 1 - y) * step;
+        for(libc_types::u32 x = 0; x < width; x++)
+        {
+            auto si = (static_cast<std::size_t>(src_y) * src_w + x * step) * 4u;
+            auto di = (static_cast<std::size_t>(y) * width + x) * 4u;
+            out[di + 0] = full[si + 0];
+            out[di + 1] = full[si + 1];
+            out[di + 2] = full[si + 2];
+            out[di + 3] = 255;
+        }
+    }
+    return true;
+}
+
 } // namespace
 #endif
 
@@ -1544,6 +1617,7 @@ optional<error> api::load(load_options_t options)
         []() -> libc_types::u32 { return static_cast<libc_types::u32>(
             cmd::get_error()); });
     glw::trace::set_texture_probe(&trace_read_texture);
+    glw::trace::set_framebuffer_probe(&trace_read_framebuffer);
     glw::trace::init();
 #endif
 

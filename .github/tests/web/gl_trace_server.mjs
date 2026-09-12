@@ -18,7 +18,10 @@
 import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
 import { mkdir, writeFile, appendFile } from 'node:fs/promises';
+import { openSync, writeSync, closeSync } from 'node:fs';
+import { deflateSync } from 'node:zlib';
 import { join } from 'node:path';
+import { VIEWER_HTML } from './gl_trace_viewer.mjs';
 
 const args = process.argv.slice(2);
 const argOf = (name, fallback) => {
@@ -40,6 +43,32 @@ const KIND_POP = 6;
 const KIND_LABEL = 7;
 const KIND_MSG = 8;
 const KIND_XLAT = 9;
+const KIND_SHOT = 10;
+const WHOLE_FRAME = 0xffffffff;
+
+// One self-contained file rather than a directory of thousands: blobs, images
+// and per-frame event lists are appended as they arrive, and an index of their
+// offsets is written to the footer at the end. The viewer reads the footer
+// first and then slices out only the frame being looked at, so scrubbing never
+// parses the whole trace.
+const containerPath = join(outDir, 'trace.gltrace');
+let container = null;
+let containerAt = 0;
+const index = { version: 1, labels: {}, frames: [], shaders: [] };
+let frameEvents = [];
+let frameShot = null;
+let frameDraws = [];
+let pendingDraw = null;
+
+// Written synchronously rather than through a stream: a long capture buffers
+// tens of megabytes, and a stream still holding them when the process is killed
+// loses the footer and with it the whole index.
+function stash(buf) {
+  const at = containerAt;
+  writeSync(container, buf);
+  containerAt += buf.length;
+  return { off: at, len: buf.length };
+}
 
 // WebGL has no KHR_debug, so gleam::debug hands its scope names and object
 // labels straight to the trace instead. Groups indent the log; labels name the
@@ -100,12 +129,6 @@ function chunk(type, data) {
   return out;
 }
 
-function adler32(buf) {
-  let a = 1, b = 0;
-  for (let i = 0; i < buf.length; i++) { a = (a + buf[i]) % 65521; b = (b + a) % 65521; }
-  return ((b << 16) | a) >>> 0;
-}
-
 // RGBA8 rows with a zero filter byte each, deflated in stored mode.
 function encodePng(pixels, w, h) {
   const stride = w * 4;
@@ -114,18 +137,9 @@ function encodePng(pixels, w, h) {
     raw[y * (stride + 1)] = 0;
     pixels.copy(raw, y * (stride + 1) + 1, y * stride, y * stride + stride);
   }
-  const blocks = [];
-  for (let off = 0; off < raw.length; off += 65535) {
-    const len = Math.min(65535, raw.length - off);
-    const head = Buffer.alloc(5);
-    head[0] = off + len >= raw.length ? 1 : 0;
-    head.writeUInt16LE(len, 1);
-    head.writeUInt16LE(~len & 0xffff, 3);
-    blocks.push(head, raw.subarray(off, off + len));
-  }
-  const tail = Buffer.alloc(4);
-  tail.writeUInt32BE(adler32(raw), 0);
-  const zlib = Buffer.concat([Buffer.from([0x78, 0x01]), ...blocks, tail]);
+  // Real deflate, not stored blocks: a timeline holds hundreds of these and
+  // screenshots compress by an order of magnitude.
+  const zlib = deflateSync(raw, { level: 6 });
 
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(w, 0);
@@ -142,7 +156,7 @@ function encodePng(pixels, w, h) {
 
 const names = new Map();
 const stats = { calls: 0, frames: 0, errors: 0, bytes: 0, blobs: 0, textures: 0, dataBytes: 0,
-                labels: 0, messages: 0, shaders: 0 };
+                labels: 0, messages: 0, shaders: 0, shots: 0 };
 let pending = Buffer.alloc(0);
 let lines = [];
 let blobIndex = 0;
@@ -179,12 +193,14 @@ function decodeOne(buf, offset) {
     const name = buf.toString('utf8', p, p + len);
     p += len;
     lines.push(`${'  '.repeat(depth)}> ${name}`);
+    frameEvents.push({ t: 'push', name });
     depth++;
     return p;
   }
 
   if (kind === KIND_POP) {
     if (depth > 0) depth--;
+    frameEvents.push({ t: 'pop' });
     return p;
   }
 
@@ -198,6 +214,8 @@ function decodeOne(buf, offset) {
     const name = buf.toString('utf8', p, p + len);
     p += len;
     labels.set(`${identifier}:${handle}`, name);
+    index.labels[`${identifier}:${handle}`] = name;
+    frameEvents.push({ t: 'label', kind: identifier, handle, name });
     const kindName = OBJECT_KINDS[identifier] ?? `object 0x${identifier.toString(16)}`;
     lines.push(`${'  '.repeat(depth)}[label ${kindName} ${handle} = "${name}"]`);
     stats.labels++;
@@ -213,7 +231,33 @@ function decodeOne(buf, offset) {
     const text = buf.toString('utf8', p, p + len);
     p += len;
     lines.push(`${'  '.repeat(depth)}[message 0x${severity.toString(16)}] ${text}`);
+    frameEvents.push({ t: 'msg', severity, text });
     stats.messages++;
+    return p;
+  }
+
+  if (kind === KIND_SHOT) {
+    if (p + 20 > buf.length) return null;
+    const frame = buf.readUInt32LE(p);
+    const draw = buf.readUInt32LE(p + 4);
+    const w = buf.readUInt32LE(p + 8);
+    const h = buf.readUInt32LE(p + 12);
+    const size = buf.readUInt32LE(p + 16);
+    p += 20;
+    if (p + size > buf.length) return null;
+    const png = encodePng(buf.subarray(p, p + size), w, h);
+    p += size;
+    const shot = { ...stash(png), w, h };
+    if (draw === WHOLE_FRAME) {
+      frameShot = shot;
+    } else {
+      frameDraws.push({ n: draw, fn: pendingDraw, shot });
+      pendingDraw = null;
+    }
+    stats.shots++;
+    lines.push(
+      `${'  '.repeat(depth)}[shot frame ${frame}` +
+      `${draw === WHOLE_FRAME ? '' : ` draw ${draw}`} ${w}x${h}]`);
     return p;
   }
 
@@ -227,6 +271,7 @@ function decodeOne(buf, offset) {
     const file = `program_${program}_translated.glsl`;
     writeFile(join(outDir, file), buf.subarray(p, p + len)).catch(() => {});
     p += len;
+    index.shaders.push({ program, ...stash(buf.subarray(p - len, p)) });
     stats.shaders++;
     lines.push(`${'  '.repeat(depth)}[translated program ${program} -> ${file}, ${len}B]`);
     return p;
@@ -234,11 +279,12 @@ function decodeOne(buf, offset) {
 
   if (kind === KIND_FRAME) {
     if (p + 4 > buf.length) return null;
-    const index = buf.readUInt32LE(p);
+    const frameIndex = buf.readUInt32LE(p);
     p += 4;
     stats.frames++;
     // Depth is not reset: a scope can legitimately straddle the swap.
-    lines.push(`--- frame ${index} ---`);
+    lines.push(`--- frame ${frameIndex} ---`);
+    flushFrame(frameIndex);
     return p;
   }
 
@@ -314,17 +360,16 @@ function decodeOne(buf, offset) {
     }
 
     let blobNote = '';
+    let blobRef = null;
     if (dataSize > 0) {
       const blob = buf.subarray(p, p + dataSize);
-      const file = `blob_${String(blobIndex++).padStart(5, '0')}.bin`;
-      writeFile(join(outDir, file), blob).catch(() => {});
+      blobRef = stash(Buffer.from(blob));
       blobNote = dataSize < declared
-        ? ` data=${declared}B (${dataSize}B captured) -> ${file}`
-        : ` data=${dataSize}B -> ${file}`;
+        ? ` data=${declared}B (${dataSize}B captured)`
+        : ` data=${dataSize}B`;
       stats.blobs++;
       stats.dataBytes += declared;
     } else if (declared > 0) {
-      // No arrow means no blob was kept, only the size.
       blobNote = ` data=${declared}B`;
       stats.dataBytes += declared;
     }
@@ -346,6 +391,14 @@ function decodeOne(buf, offset) {
     }
     lines.push(
       `${'  '.repeat(depth)}${fn}(${parts.join(', ')})${blobNote}${errNote}${labelNote}`);
+    const ev = { t: 'call', fn, args: parts };
+    if (error !== 0) ev.err = error;
+    if (declared > 0) ev.size = declared;
+    if (blobRef) ev.blob = blobRef;
+    if (labelNote) ev.label = labelNote.slice(4);
+    frameEvents.push(ev);
+    // Remembered so the shot that follows can say which draw it belongs to.
+    if (fn.startsWith('glDraw')) pendingDraw = fn;
     return p;
   }
 
@@ -368,6 +421,39 @@ async function consume(chunk) {
     lines = [];
     await appendFile(logPath, out);
   }
+}
+
+// One frame's events become a single slice of the container. The index keeps
+// only where that slice is, so the viewer can jump straight to a frame.
+function flushFrame(frameIndex) {
+  const payload = Buffer.from(JSON.stringify({ events: frameEvents }), 'utf8');
+  const slice = stash(payload);
+  index.frames.push({
+    index: frameIndex,
+    calls: frameEvents.filter((e) => e.t === 'call').length,
+    ...slice,
+    shot: frameShot,
+    draws: frameDraws,
+  });
+  frameEvents = [];
+  frameDraws = [];
+  frameShot = null;
+  pendingDraw = null;
+}
+
+// Footer: the index, its length, and the magic again, so a reader can find it
+// from the end without scanning.
+function closeContainer() {
+  if (container === null) return;
+  if (frameEvents.length) flushFrame(index.frames.length);
+  const body = Buffer.from(JSON.stringify(index), 'utf8');
+  const tail = Buffer.alloc(8);
+  tail.writeUInt32LE(body.length, 0);
+  tail.write('GLTR', 4, 'ascii');
+  writeSync(container, body);
+  writeSync(container, tail);
+  closeSync(container);
+  container = null;
 }
 
 async function flush() {
@@ -429,6 +515,11 @@ function readFrames(socket, onMessage) {
 
 await mkdir(outDir, { recursive: true });
 await writeFile(logPath, '');
+// The viewer is written next to the trace so the pair always match.
+await writeFile(join(outDir, 'viewer.html'), VIEWER_HTML);
+container = openSync(containerPath, 'w');
+writeSync(container, Buffer.from('GLTR\x01\x00\x00\x00', 'binary'));
+containerAt = 8;
 
 const server = createServer((_, res) => {
   res.writeHead(426);
@@ -456,9 +547,13 @@ server.on('upgrade', (req, socket) => {
       `${stats.errors} GL errors, ${stats.blobs} blobs, ${stats.textures} textures, ` +
       `${stats.dataBytes} data bytes, ` +
       `${stats.labels} labels, ${stats.messages} messages, ` +
-      `${stats.shaders} translated shaders, ` +
+      `${stats.shaders} translated shaders, ${stats.shots} shots, ` +
       `${stats.bytes} bytes`);
+    closeContainer();
     console.log(`trace written to ${logPath}`);
+    console.log(
+      `timeline: open ${join(outDir, 'viewer.html')} and drop in ` +
+      `${containerPath}`);
   });
 });
 
@@ -469,6 +564,7 @@ server.listen(port, '127.0.0.1', () => {
 for (const sig of ['SIGINT', 'SIGTERM']) {
   process.on(sig, async () => {
     await flush();
+    closeContainer();
     console.log(`\n${stats.calls} calls, ${stats.errors} GL errors -> ${logPath}`);
     process.exit(0);
   });

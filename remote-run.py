@@ -1188,6 +1188,7 @@ def run_web(device_name, device, preset_name, preset, extra_args, script_dir, bu
             params[arg.lstrip('-')] = "true"
 
     if gleam_debug:
+        params["gleamDebugFrames"] = "frame"
         params["gleamDebug"] = gleam_debug
         params["gleamDebugPort"] = str(gleam_debug_port)
 

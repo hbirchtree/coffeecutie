@@ -38,6 +38,10 @@ class system
         return true;
     }
 
+#if defined(GLW_ENABLE_TRACE)
+    bool m_trace_swap_hooked{false};
+#endif
+
     system(u32 prio = 900)
         : context_checker{context_robustness()}
     {

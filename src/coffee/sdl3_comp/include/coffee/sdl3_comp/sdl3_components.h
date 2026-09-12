@@ -160,7 +160,9 @@ struct GLFramebuffer
     virtual void                swapBuffers(comp_app::app_error& ec) final;
     virtual comp_app::size_2d_t size() const final;
 
-    virtual void start_frame(
+    /* Priority 128 is the lowest of these components, and end_frame runs
+     * highest first, so this lands after every other subsystem has drawn. */
+    virtual void end_frame(
         comp_app::detail::ContainerProxy&, time_point const&) final;
 
     virtual bool main_thread_only() const override

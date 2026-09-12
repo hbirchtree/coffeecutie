@@ -962,9 +962,9 @@ void insert_dummy_plug(
             if(auto* framebuffer = container.service<GraphicsFramebuffer>())
             {
                 dummy_plug.defer_to_swap = true;
-                framebuffer->pre_swap    = [&perf_monitor,
-                                         &container,
-                                         &dummy_plug]() {
+                framebuffer->add_pre_swap([&perf_monitor,
+                                           &container,
+                                           &dummy_plug]() {
                     if(!dummy_plug.screenshot_armed)
                         return;
                     auto& armed = dummy_plug.pending_actions.front();
@@ -983,7 +983,7 @@ void insert_dummy_plug(
                     cDebug("Capturing dummyplug screenshot: {}", name);
                     perf_monitor.capture_screenshot(
                         proxy, name, container.relative_timestamp());
-                };
+                });
             }
             auto& dummy_bus = container.subsystem_cast<DummyEventBus>();
             container.register_subsystem_inplace<DummyPlugDrain>(

@@ -55,6 +55,11 @@ void shutdown();
 /* Marks a frame boundary so the collector can group calls. */
 void frame_boundary();
 
+/* Reads back the finished frame. Must be called just before the swap: on web
+ * the drawing buffer is cleared once the browser composites, so by the next
+ * frame boundary there is nothing left to read. */
+void frame_capture();
+
 /* KHR_debug carries the engine's own names for scopes and objects, and WebGL
  * has no KHR_debug, so gleam::debug drops all of it there. These take the same
  * information into the trace instead, which is the only place it can land. */
@@ -97,6 +102,21 @@ using texture_probe_t =
     bool (*)(u32 target, u32 texture, u32 width, u32 height,
              std::vector<u8>& out);
 void set_texture_probe(texture_probe_t probe);
+
+/* How often the colour buffer is read back. Per draw is expensive on purpose:
+ * every draw costs a full readback and a sync. */
+enum class capture : u8
+{
+    off = 0,
+    frame, /* once per frame, at the swap */
+    draw,  /* after every draw call as well */
+};
+
+/* Reads back the bound draw framebuffer, downscaled to fit max_edge. Supplied
+ * by the RHI for the same reason as the other probes. */
+using framebuffer_probe_t =
+    bool (*)(u32 max_edge, u32& width, u32& height, std::vector<u8>& out);
+void set_framebuffer_probe(framebuffer_probe_t probe);
 
 /* A null base with a non-zero length is normal here: buffer allocations pass
  * no pointer but a real size, and several "pointers" are buffer offsets. A

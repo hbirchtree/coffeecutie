@@ -89,6 +89,17 @@ void system::start_restricted(Proxy& e, time_point const& ts)
 {
 #if defined(GLW_ENABLE_TRACE)
     glw::trace::frame_boundary();
+
+    /* The finished frame has to be read before it is presented, which is what
+     * pre_swap is for. */
+    if(!m_trace_swap_hooked)
+    {
+        if(auto fb = e.service<comp_app::GraphicsFramebuffer>())
+        {
+            m_trace_swap_hooked = true;
+            fb->add_pre_swap([]() { glw::trace::frame_capture(); });
+        }
+    }
 #endif
 
     using namespace std::chrono_literals;
