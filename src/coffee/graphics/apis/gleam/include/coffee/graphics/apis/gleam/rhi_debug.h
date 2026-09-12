@@ -11,6 +11,10 @@
 
 #include <coffee/core/CProfiling>
 
+#if defined(GLW_ENABLE_TRACE)
+#include <glw/trace.h>
+#endif
+
 namespace gleam::debug {
 
 struct null_api
@@ -67,8 +71,17 @@ struct scope
 #endif
 #if defined(GL_KHR_debug)
         if(ext.khr.debug)
+        {
             gl::khr::debug::push_debug_group(
                 group::debug_source::application, 0, name.size(), name);
+            return;
+        }
+#endif
+#if defined(GLW_ENABLE_TRACE)
+        /* The header defines KHR_debug but the driver does not offer it, which
+         * is every WebGL context. The name is still worth keeping. */
+        traced = true;
+        glw::trace::push_group(name);
 #endif
     }
 
@@ -90,10 +103,17 @@ struct scope
             return;
         }
 #endif
+#if defined(GLW_ENABLE_TRACE)
+        if(traced)
+            glw::trace::pop_group();
+#endif
     }
 
     features::debugging ext;
     bool enabled{true};
+#if defined(GLW_ENABLE_TRACE)
+    bool traced{false};
+#endif
 };
 
 struct api
@@ -139,6 +159,9 @@ struct api
                 msg);
             return;
         }
+#endif
+#if defined(GLW_ENABLE_TRACE)
+        glw::trace::insert_message(msg, static_cast<u32>(severity));
 #endif
     }
 
@@ -201,22 +224,34 @@ struct api
         if(ext.debug)
         {
             cmd::object_label(identifier, hnd, label.size(), label);
+            return;
         }
 #endif
 #if defined(GL_KHR_debug)
         if(ext.khr.debug)
         {
             gl::khr::debug::object_label(identifier, hnd, label.size(), label);
+            return;
         }
+#endif
+#if defined(GLW_ENABLE_TRACE)
+        glw::trace::label_object(
+            static_cast<u32>(identifier), hnd, label);
 #endif
     }
 
     template<typename T>
     inline void annotate(T& object, std::string_view const& label)
     {
-#if GL_DEBUG_AVAILABLE == 1
-        annotate(T::debug_identifier, object.m_handle, label);
-#endif
+        /* This was guarded on GL_DEBUG_AVAILABLE, which nothing defines, so
+         * every labelled object was silently skipped. The overload below
+         * already checks what the driver offers. */
+        if constexpr(requires { object.m_handle; })
+            annotate(T::debug_identifier, object.m_handle, label);
+        else
+            /* A revolving buffer only exposes whichever slice is current, so
+             * that is the one that gets the name. */
+            annotate(T::debug_identifier, object.handle(), label);
     }
 
     using debug_function  = stl_types::Function<void(

@@ -27,9 +27,16 @@ namespace {
 /* Wire format, little-endian:
  *   name  : u8 1, u16 id, u16 len, bytes
  *   call  : u8 2, u16 id, u8 argc, argc * (u8 type, u64 value),
- *           u32 error, u32 data_size, data_size bytes
+ *           per string argument (u16 len, bytes),
+ *           u32 error, u32 declared_size,
+ *           if declared_size: u32 captured, captured bytes
  *   frame : u8 3, u32 index
  *   tex   : u8 4, u32 id, u32 w, u32 h, u32 size, bytes
+ *   push  : u8 5, u16 len, bytes
+ *   pop   : u8 6
+ *   label : u8 7, u32 identifier, u32 handle, u16 len, bytes
+ *   msg   : u8 8, u32 severity, u16 len, bytes
+ *   xlat  : u8 9, u32 program, u32 len, bytes
  */
 enum record_kind : u8
 {
@@ -37,7 +44,16 @@ enum record_kind : u8
     kind_call  = 2,
     kind_frame = 3,
     kind_tex   = 4,
+    kind_push  = 5,
+    kind_pop   = 6,
+    kind_label = 7,
+    kind_msg   = 8,
+    kind_xlat  = 9,
 };
+
+/* Strings are capped by the same knob as data, since a shader source is both.
+ * The length field is 16-bit, so that is the ceiling whatever the knob says. */
+u16 string_cap();
 
 /* Data blobs are the reason a trace gets big; a whole texture per upload is
  * rarely what you want, and the head of it usually answers the question. The
@@ -45,6 +61,12 @@ enum record_kind : u8
  * much it stood for. Raise it with gleamDebugBytes to capture whole buffers. */
 constexpr u32   default_max_data_bytes = 4096;
 std::atomic<u32> max_data_bytes{default_max_data_bytes};
+
+u16 string_cap()
+{
+    auto cap = max_data_bytes.load(std::memory_order_relaxed);
+    return static_cast<u16>(cap > 0xFFFFu ? 0xFFFFu : cap);
+}
 /* A texture is dumped whole rather than capped, but only up to this, so a
  * stray 4K texture cannot stall the run */
 constexpr u32 max_texture_bytes = 4 * 1024 * 1024;
@@ -58,6 +80,8 @@ constexpr u32 flush_every_records = 128;
 
 struct state_t
 {
+    /* Programs whose translation has already been sent */
+    std::unordered_set<u32> translated;
     std::mutex                                mutex;
     std::vector<u8>                           buffer;
     std::unordered_map<const char*, u16>      names;
@@ -331,6 +355,105 @@ void frame_boundary()
     transmit(s);
 }
 
+namespace {
+
+#if defined(__EMSCRIPTEN__)
+/* ANGLE rewrites every shader before the driver sees it, and when a backend
+ * misbehaves the rewritten text is the thing worth reading. WEBGL_debug_shaders
+ * is the only route to it, and it lives solely in JS. Returns a malloc'd
+ * string, or null when the extension or the shader is missing. */
+/* ANGLE rewrites every shader before the driver sees it, and when a backend
+ * misbehaves the rewritten text is the thing worth reading. WEBGL_debug_shaders
+ * is the only route to it, and it lives solely in JS.
+ *
+ * Asked at link time rather than after the compile: the browser defers
+ * compilation, so immediately after glCompileShader the translation is still
+ * empty. Returns a malloc'd string, or null when there is nothing to report. */
+EM_JS(char*, translated_program_sources, (int program), {
+    try {
+        var ctx = (typeof GLctx !== 'undefined' && GLctx)
+            ? GLctx
+            : ((typeof GL !== 'undefined' && GL.currentContext)
+                ? GL.currentContext.GLctx : null);
+        if (!ctx || typeof GL === 'undefined') return 0;
+        var ext = ctx.getExtension('WEBGL_debug_shaders');
+        if (!ext) return 0;
+        var prog = GL.programs[program];
+        if (!prog) return 0;
+        var shaders = ctx.getAttachedShaders(prog) || [];
+        var out = '';
+        for (var i = 0; i < shaders.length; i++) {
+            var src = ext.getTranslatedShaderSource(shaders[i]);
+            if (!src) continue;
+            var kind = ctx.getShaderParameter(shaders[i], ctx.SHADER_TYPE);
+            var name = kind === ctx.VERTEX_SHADER ? 'vertex' : 'fragment';
+            out += '// ---- ' + name + ' ----\n' + src + '\n';
+        }
+        if (!out) return 0;
+        var len = lengthBytesUTF8(out) + 1;
+        var buf = _malloc(len);
+        stringToUTF8(out, buf, len);
+        return buf;
+    } catch (e) {
+        return 0;
+    }
+});
+#endif
+
+/* Shared by the four debug records, all of which end in a length-prefixed
+ * string. The caller holds the lock. */
+void put_string(std::vector<u8>& buffer, std::string_view text)
+{
+    auto cap = string_cap();
+    auto len = static_cast<u16>(text.size() > cap ? cap : text.size());
+    put<u16>(buffer, len);
+    put_bytes(buffer, text.data(), len);
+}
+
+} // namespace
+
+void push_group(std::string_view name)
+{
+    if(!enabled(level::calls))
+        return;
+    auto&                       s = state();
+    std::lock_guard<std::mutex> _(s.mutex);
+    put<u8>(s.buffer, kind_push);
+    put_string(s.buffer, name);
+}
+
+void pop_group()
+{
+    if(!enabled(level::calls))
+        return;
+    auto&                       s = state();
+    std::lock_guard<std::mutex> _(s.mutex);
+    put<u8>(s.buffer, kind_pop);
+}
+
+void label_object(u32 identifier, u32 handle, std::string_view name)
+{
+    if(!enabled(level::calls))
+        return;
+    auto&                       s = state();
+    std::lock_guard<std::mutex> _(s.mutex);
+    put<u8>(s.buffer, kind_label);
+    put<u32>(s.buffer, identifier);
+    put<u32>(s.buffer, handle);
+    put_string(s.buffer, name);
+}
+
+void insert_message(std::string_view text, u32 severity)
+{
+    if(!enabled(level::calls))
+        return;
+    auto&                       s = state();
+    std::lock_guard<std::mutex> _(s.mutex);
+    put<u8>(s.buffer, kind_msg);
+    put<u32>(s.buffer, severity);
+    put_string(s.buffer, text);
+}
+
 namespace detail {
 
 void emit_call(
@@ -420,6 +543,35 @@ void emit_call(
         }
     }
 
+#if defined(__EMSCRIPTEN__)
+    /* Programs are linked once, and by then every attached shader has been
+     * compiled, so this is where a translation exists to be read. */
+    if(enabled(level::data) && std::string_view(func) == "glLinkProgram" &&
+       argc >= 1)
+    {
+        auto program = static_cast<u32>(args[0].value);
+        bool first   = false;
+        {
+            std::lock_guard<std::mutex> _(s.mutex);
+            first = s.translated.insert(program).second;
+        }
+        if(first)
+        {
+            if(char* src = translated_program_sources(static_cast<int>(program)))
+            {
+                std::string_view            text(src);
+                auto                        len = static_cast<u32>(text.size());
+                std::lock_guard<std::mutex> _(s.mutex);
+                put<u8>(s.buffer, kind_xlat);
+                put<u32>(s.buffer, program);
+                put<u32>(s.buffer, len);
+                put_bytes(s.buffer, text.data(), len);
+                std::free(src);
+            }
+        }
+    }
+#endif
+
     /* Outside the lock: the probe issues GL calls, which are traced in turn */
     if(texture_id != 0)
     {
@@ -474,6 +626,20 @@ void emit_call(
     {
         put<u8>(s.buffer, static_cast<u8>(args[i].type));
         put<u64>(s.buffer, args[i].value);
+    }
+    /* Names are the point of a trace: an attribute or uniform lookup says
+     * nothing without them. They follow the fixed-width arguments, in order,
+     * each as long as the length already written above. */
+    for(u8 i = 0; i < argc; i++)
+    {
+        if(args[i].type != arg_type::string)
+            continue;
+        auto cap = string_cap();
+        auto len = static_cast<u16>(
+            args[i].value > cap ? cap : args[i].value);
+        put<u16>(s.buffer, len);
+        if(len && args[i].str)
+            put_bytes(s.buffer, args[i].str, len);
     }
     put<u32>(s.buffer, error);
     /* The captured length is only written when there is a length to describe,

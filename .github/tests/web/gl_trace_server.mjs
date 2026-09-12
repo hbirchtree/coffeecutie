@@ -35,8 +35,39 @@ const KIND_NAME = 1;
 const KIND_CALL = 2;
 const KIND_FRAME = 3;
 const KIND_TEX = 4;
+const KIND_PUSH = 5;
+const KIND_POP = 6;
+const KIND_LABEL = 7;
+const KIND_MSG = 8;
+const KIND_XLAT = 9;
 
-const ARG_TYPES = ['i64', 'u64', 'f64', 'ptr', 'enum', 'vec2', 'opaque'];
+// WebGL has no KHR_debug, so gleam::debug hands its scope names and object
+// labels straight to the trace instead. Groups indent the log; labels name the
+// handles that would otherwise print as bare integers.
+let depth = 0;
+const labels = new Map(); // `${identifier}:${handle}` -> name
+
+// GL object identifiers as KHR_debug numbers them, for labelled handles.
+const OBJECT_KINDS = {
+  0x1702: 'texture', 0x82E0: 'buffer', 0x82E1: 'shader', 0x82E2: 'program',
+  0x82E3: 'query', 0x8074: 'vertex_array', 0x8D40: 'framebuffer',
+  0x8D41: 'renderbuffer', 0x82E6: 'sampler', 0x82E8: 'transform_feedback',
+};
+
+// Calls whose handle argument can be resolved against a recorded label.
+const BOUND_OBJECT = {
+  glBindTexture: { kind: 0x1702, arg: 1 },
+  glBindBuffer: { kind: 0x82E0, arg: 1 },
+  glBindBufferRange: { kind: 0x82E0, arg: 2 },
+  glUseProgram: { kind: 0x82E2, arg: 0 },
+  glBindVertexArray: { kind: 0x8074, arg: 0 },
+  glBindFramebuffer: { kind: 0x8D40, arg: 1 },
+  glBindRenderbuffer: { kind: 0x8D41, arg: 1 },
+  glBindSampler: { kind: 0x82E6, arg: 1 },
+};
+
+const ARG_TYPES = ['i64', 'u64', 'f64', 'ptr', 'enum', 'vec2', 'opaque', 'string'];
+const ARG_STRING = 7;
 
 // Errors worth naming; anything else is printed raw.
 const GL_ERRORS = {
@@ -110,7 +141,8 @@ function encodePng(pixels, w, h) {
 }
 
 const names = new Map();
-const stats = { calls: 0, frames: 0, errors: 0, bytes: 0, blobs: 0, textures: 0, dataBytes: 0 };
+const stats = { calls: 0, frames: 0, errors: 0, bytes: 0, blobs: 0, textures: 0, dataBytes: 0,
+                labels: 0, messages: 0, shaders: 0 };
 let pending = Buffer.alloc(0);
 let lines = [];
 let blobIndex = 0;
@@ -139,11 +171,73 @@ function decodeOne(buf, offset) {
   const kind = buf.readUInt8(offset);
   let p = offset + 1;
 
+  if (kind === KIND_PUSH) {
+    if (p + 2 > buf.length) return null;
+    const len = buf.readUInt16LE(p);
+    p += 2;
+    if (p + len > buf.length) return null;
+    const name = buf.toString('utf8', p, p + len);
+    p += len;
+    lines.push(`${'  '.repeat(depth)}> ${name}`);
+    depth++;
+    return p;
+  }
+
+  if (kind === KIND_POP) {
+    if (depth > 0) depth--;
+    return p;
+  }
+
+  if (kind === KIND_LABEL) {
+    if (p + 10 > buf.length) return null;
+    const identifier = buf.readUInt32LE(p);
+    const handle = buf.readUInt32LE(p + 4);
+    const len = buf.readUInt16LE(p + 8);
+    p += 10;
+    if (p + len > buf.length) return null;
+    const name = buf.toString('utf8', p, p + len);
+    p += len;
+    labels.set(`${identifier}:${handle}`, name);
+    const kindName = OBJECT_KINDS[identifier] ?? `object 0x${identifier.toString(16)}`;
+    lines.push(`${'  '.repeat(depth)}[label ${kindName} ${handle} = "${name}"]`);
+    stats.labels++;
+    return p;
+  }
+
+  if (kind === KIND_MSG) {
+    if (p + 6 > buf.length) return null;
+    const severity = buf.readUInt32LE(p);
+    const len = buf.readUInt16LE(p + 4);
+    p += 6;
+    if (p + len > buf.length) return null;
+    const text = buf.toString('utf8', p, p + len);
+    p += len;
+    lines.push(`${'  '.repeat(depth)}[message 0x${severity.toString(16)}] ${text}`);
+    stats.messages++;
+    return p;
+  }
+
+  if (kind === KIND_XLAT) {
+    if (p + 8 > buf.length) return null;
+    const program = buf.readUInt32LE(p);
+    const len = buf.readUInt32LE(p + 4);
+    p += 8;
+    if (p + len > buf.length) return null;
+    // ANGLE's rewritten GLSL, which is what the driver actually compiled.
+    const file = `program_${program}_translated.glsl`;
+    writeFile(join(outDir, file), buf.subarray(p, p + len)).catch(() => {});
+    p += len;
+    stats.shaders++;
+    lines.push(`${'  '.repeat(depth)}[translated program ${program} -> ${file}, ${len}B]`);
+    return p;
+  }
+
   if (kind === KIND_FRAME) {
     if (p + 4 > buf.length) return null;
     const index = buf.readUInt32LE(p);
     p += 4;
     stats.frames++;
+    // Depth is not reset: a scope can legitimately straddle the swap.
     lines.push(`--- frame ${index} ---`);
     return p;
   }
@@ -185,11 +279,24 @@ function decodeOne(buf, offset) {
     p += 3;
     if (p + argc * 9 > buf.length) return null;
     const parts = [];
+    const raw = [];
+    const stringArgs = [];
     for (let i = 0; i < argc; i++) {
       const type = buf.readUInt8(p);
       const value = buf.readBigUInt64LE(p + 1);
       p += 9;
       parts.push(formatArg(type, value));
+      raw.push(value);
+      if (type === ARG_STRING) stringArgs.push(parts.length - 1);
+    }
+    // Name bytes follow the fixed-width arguments, in argument order.
+    for (const idx of stringArgs) {
+      if (p + 2 > buf.length) return null;
+      const len = buf.readUInt16LE(p);
+      p += 2;
+      if (p + len > buf.length) return null;
+      parts[idx] = JSON.stringify(buf.toString('utf8', p, p + len));
+      p += len;
     }
     if (p + 8 > buf.length) return null;
     const error = buf.readUInt32LE(p);
@@ -217,7 +324,8 @@ function decodeOne(buf, offset) {
       stats.blobs++;
       stats.dataBytes += declared;
     } else if (declared > 0) {
-      blobNote = ` data=${declared}B (not captured)`;
+      // No arrow means no blob was kept, only the size.
+      blobNote = ` data=${declared}B`;
       stats.dataBytes += declared;
     }
     p += dataSize;
@@ -228,8 +336,16 @@ function decodeOne(buf, offset) {
       stats.errors++;
       errNote = ` !! ${GL_ERRORS[error] ?? '0x' + error.toString(16)}`;
     }
+    const fn = names.get(id) ?? `fn${id}`;
+    // A labelled handle is far more use than its number, so name it inline.
+    let labelNote = '';
+    const bound = BOUND_OBJECT[fn];
+    if (bound && raw.length > bound.arg) {
+      const name = labels.get(`${bound.kind}:${Number(raw[bound.arg])}`);
+      if (name) labelNote = ` // ${name}`;
+    }
     lines.push(
-      `${names.get(id) ?? `fn${id}`}(${parts.join(', ')})${blobNote}${errNote}`);
+      `${'  '.repeat(depth)}${fn}(${parts.join(', ')})${blobNote}${errNote}${labelNote}`);
     return p;
   }
 
@@ -339,6 +455,8 @@ server.on('upgrade', (req, socket) => {
       `tracer disconnected: ${stats.calls} calls, ${stats.frames} frames, ` +
       `${stats.errors} GL errors, ${stats.blobs} blobs, ${stats.textures} textures, ` +
       `${stats.dataBytes} data bytes, ` +
+      `${stats.labels} labels, ${stats.messages} messages, ` +
+      `${stats.shaders} translated shaders, ` +
       `${stats.bytes} bytes`);
     console.log(`trace written to ${logPath}`);
   });

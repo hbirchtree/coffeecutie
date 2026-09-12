@@ -499,6 +499,8 @@ inline buffer_slice_t buffer_t::slice(size_t offset, std::optional<size_t> size)
  */
 struct revolving_buffer_t
 {
+    static constexpr auto debug_identifier = group::object_identifier::buffer;
+
     revolving_buffer_t(
         u32               num_buffers,
         features::buffers features,

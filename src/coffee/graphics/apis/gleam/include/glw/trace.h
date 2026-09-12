@@ -55,6 +55,35 @@ void shutdown();
 /* Marks a frame boundary so the collector can group calls. */
 void frame_boundary();
 
+/* KHR_debug carries the engine's own names for scopes and objects, and WebGL
+ * has no KHR_debug, so gleam::debug drops all of it there. These take the same
+ * information into the trace instead, which is the only place it can land. */
+void push_group(std::string_view name);
+void pop_group();
+void label_object(u32 identifier, u32 handle, std::string_view name);
+void insert_message(std::string_view text, u32 severity);
+
+/* Pushes on construction and pops on destruction, for gleam::debug::scope. */
+struct group_scope
+{
+    explicit group_scope(std::string_view name)
+        : m_active(enabled(level::calls) && !name.empty())
+    {
+        if(m_active)
+            push_group(name);
+    }
+    ~group_scope()
+    {
+        if(m_active)
+            pop_group();
+    }
+
+    group_scope(group_scope const&)            = delete;
+    group_scope& operator=(group_scope const&) = delete;
+
+    bool m_active;
+};
+
 /* Supplies the error-reading function. Kept as a hook so this layer does not
  * reach back into GL itself, and so the call can be guarded against recursing
  * through its own tracing. */
@@ -124,12 +153,15 @@ enum class arg_type : u8
     enumeration,
     vector2, /* two components packed into the low and high halves */
     opaque,  /* aggregate we do not decompose */
+    string,  /* value is the length; the bytes follow the argument array */
 };
 
 struct arg_t
 {
     u64      value;
     arg_type type;
+    /* Only set for arg_type::string */
+    const char* str{nullptr};
 };
 
 template<typename T>
@@ -156,6 +188,34 @@ inline arg_t to_arg(T const& v)
         return {
             static_cast<u64>(static_cast<std::int64_t>(v)), arg_type::integer};
     else if constexpr(requires {
+                          v.data();
+                          v.size();
+                          requires std::is_same_v<
+                              std::remove_cvref_t<decltype(*v.data())>, char>;
+                      })
+    {
+        /* Attribute, uniform and label names. Without this they match the
+         * vector branch below and arrive as their first two characters. */
+        return {static_cast<u64>(v.size()), arg_type::string, v.data()};
+    } else if constexpr(requires {
+                          v.size();
+                          v[0].data();
+                          v[0].size();
+                          requires std::is_same_v<
+                              std::remove_cvref_t<decltype(*v[0].data())>,
+                              char>;
+                      })
+    {
+        /* Shader sources arrive as a list of views. gleam hands over a single
+         * chunk, which is the case worth reading; anything else keeps only
+         * its count. */
+        if(v.size() == 1)
+            return {
+                static_cast<u64>(v[0].size()),
+                arg_type::string,
+                v[0].data()};
+        return {static_cast<u64>(v.size()), arg_type::opaque};
+    } else if constexpr(requires {
                           v[0];
                           v[1];
                           requires std::is_arithmetic_v<
