@@ -1263,7 +1263,10 @@ bool trace_read_texture(
     libc_types::u32               height,
     std::vector<libc_types::u8>&  out)
 {
-    if(target != static_cast<libc_types::u32>(group::texture_target::texture_2d))
+    const bool is_array = target == static_cast<libc_types::u32>(
+                              group::texture_target::texture_2d_array);
+    if(target != static_cast<libc_types::u32>(group::texture_target::texture_2d)
+       && !is_array)
         return false;
     if(!width || !height)
         return false;
@@ -1273,12 +1276,58 @@ bool trace_read_texture(
         cmd::gen_framebuffers(SpanOne(scratch_fbo));
 
     cmd::bind_framebuffer(group::framebuffer_target::read_framebuffer, scratch_fbo);
-    cmd::framebuffer_texture_2d(
-        group::framebuffer_target::read_framebuffer,
-        group::framebuffer_attachment::color_attachment0,
-        group::texture_target::texture_2d,
-        texture,
-        0);
+    /* An array holds a page per layer. The dimensions reported to the trace
+     * describe one layer, so rather than stacking, hand back the first layer
+     * that has anything in it. */
+    if(is_array)
+    {
+        constexpr libc_types::u32 max_layers = 8;
+        out.resize(static_cast<std::size_t>(width) * height * 4u);
+        bool found = false;
+        for(libc_types::u32 i = 0; i < max_layers && !found; i++)
+        {
+            cmd::framebuffer_texture_layer(
+                group::framebuffer_target::read_framebuffer,
+                group::framebuffer_attachment::color_attachment0,
+                texture,
+                0,
+                static_cast<libc_types::i32>(i));
+            if(static_cast<group::framebuffer_status>(
+                   cmd::check_framebuffer_status(
+                       group::framebuffer_target::read_framebuffer)) !=
+               group::framebuffer_status::framebuffer_complete)
+                break;
+            cmd::read_pixels(
+                Veci2{0, 0},
+                size_2d<libc_types::i32>{
+                    static_cast<libc_types::i32>(width),
+                    static_cast<libc_types::i32>(height)},
+                group::pixel_format::rgba,
+                group::pixel_type::unsigned_byte,
+                semantic::concepts::offset_span::of(out.data()));
+            for(std::size_t px = 0; px + 3 < out.size(); px += 4)
+                if(out[px] | out[px + 1] | out[px + 2])
+                {
+                    found = true;
+                    break;
+                }
+        }
+        cmd::framebuffer_texture_layer(
+            group::framebuffer_target::read_framebuffer,
+            group::framebuffer_attachment::color_attachment0,
+            0,
+            0,
+            0);
+        cmd::bind_framebuffer(group::framebuffer_target::read_framebuffer, 0);
+        return true;
+    }
+    else
+        cmd::framebuffer_texture_2d(
+            group::framebuffer_target::read_framebuffer,
+            group::framebuffer_attachment::color_attachment0,
+            group::texture_target::texture_2d,
+            texture,
+            0);
 
     bool ok = static_cast<group::framebuffer_status>(
                   cmd::check_framebuffer_status(
@@ -1300,12 +1349,20 @@ bool trace_read_texture(
 
     /* Leave the attachment behind and the next bind of this scratch target
      * would keep the texture alive, so clear it out */
-    cmd::framebuffer_texture_2d(
-        group::framebuffer_target::read_framebuffer,
-        group::framebuffer_attachment::color_attachment0,
-        group::texture_target::texture_2d,
-        0,
-        0);
+    if(is_array)
+        cmd::framebuffer_texture_layer(
+            group::framebuffer_target::read_framebuffer,
+            group::framebuffer_attachment::color_attachment0,
+            0,
+            0,
+            0);
+    else
+        cmd::framebuffer_texture_2d(
+            group::framebuffer_target::read_framebuffer,
+            group::framebuffer_attachment::color_attachment0,
+            group::texture_target::texture_2d,
+            0,
+            0);
     cmd::bind_framebuffer(group::framebuffer_target::read_framebuffer, 0);
     return ok;
 }

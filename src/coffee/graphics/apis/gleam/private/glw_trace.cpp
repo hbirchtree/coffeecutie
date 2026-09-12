@@ -639,16 +639,21 @@ void emit_call(
             }
         } else if(
             name == "glTexSubImage2D" || name == "glCompressedTexSubImage2D" ||
-            name == "glGenerateMipmap" || name == "glCopyTexSubImage2D")
+            name == "glGenerateMipmap" || name == "glCopyTexSubImage2D" ||
+            name == "glTexSubImage3D" || name == "glCompressedTexSubImage3D")
         {
             auto target = static_cast<u32>(args[0].value);
             if(auto b = s.bound_texture.find(target); b != s.bound_texture.end())
                 s.dirty.insert(b->second);
         } else if(
-            (name == "glTexStorage2D" || name == "glTexImage2D") && argc >= 5)
+            (name == "glTexStorage2D" || name == "glTexImage2D" ||
+             name == "glTexStorage3D" || name == "glTexImage3D") &&
+            argc >= 5)
         {
             /* glTexStorage2D(target, levels, format, w, h)
-             * glTexImage2D(target, level, format, w, h, ...) */
+             * glTexImage2D(target, level, format, w, h, ...)
+             * The 3D forms carry the layer count in the same packed vector,
+             * and the first two components are what a dump needs. */
             auto target = static_cast<u32>(args[0].value);
             /* The size is one packed vector argument whose position differs
              * between these two, so take the first vector we find */
