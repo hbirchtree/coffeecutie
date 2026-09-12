@@ -251,21 +251,17 @@ std::future<std::vector<char>> texture_t::software_decode(
         // with 2-bytes causes clown vomit
         if(m_format.pixfmt == pix_fmt::RGB565)
         {
-            auto task =
+            /* Taken now, not on the decoder thread: `data` is a view of the
+             * caller's memory, which is free to go away the moment upload()
+             * returns. Reading it later gave whatever had reused the heap,
+             * which is what turned lightmap pages into noise. The copy also
+             * lands on the heap, so its base is malloc-aligned and the
+             * HEAPU16 index emscripten computes is exact. */
+            std::vector<char> aligned(data.begin(), data.end());
+            auto              task =
                 rq::dependent_task<void, std::vector<char>>::CreateSource(
-                    [data]() mutable {
-                        /* Source pointer may be at an odd byte offset in the
-                         * WASM heap. Emscripten's glTexSubImage3D does ptr >>>
-                         * 1 to index HEAPU16, truncating the low bit and
-                         * swapping bytes within every u16. Copying to a heap
-                         * vector guarantees 2-byte alignment so the index is
-                         * correct. */
-                        std::vector<char> out(data.begin(), data.end());
-                        fprintf(
-                            stderr,
-                            "Alignment: %li",
-                            reinterpret_cast<intptr_t>(out.data()) & 0x1);
-                        return out;
+                    [aligned = std::move(aligned)]() mutable {
+                        return std::move(aligned);
                     });
             auto fut = task->output.get_future();
             auto res =

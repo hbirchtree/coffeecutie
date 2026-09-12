@@ -605,6 +605,10 @@ void LoadingScreen::render_ring_texture(gfx::system& api)
             msg);
     }
 
+    // Observed bug on ANGLE-over-GL:
+    // Rendering to texture then using the resulting texture turns up
+    // black. Running with sync such as glGetError causes it to show up
+    // so there's some bizarre sync issue here.
     if constexpr(compile_info::platform::is_emscripten)
         return;
 
