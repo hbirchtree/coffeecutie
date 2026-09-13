@@ -205,7 +205,7 @@ struct alignas(4) object_spawn
     i16         ref;
     i16         name;
     spawn_flags flags;
-    u16         permutation;
+    u16         desired_permutation;
     Vecf3       pos;
     Vecf3       rot;
     bsp_flags_t bsp_flags;
@@ -231,7 +231,39 @@ static_assert(sizeof(biped_spawn) == 120);
 
 struct vehicle_spawn : object_spawn
 {
-    u32 unknown_[21];
+    u32 padding[9];
+
+    // TODO: Locations not confirmed
+    enum biped_flags_t : u16
+    {
+        none = 0x0,
+        dead = 0x1,
+    };
+
+    f32           vitality;
+    biped_flags_t biped_flags;
+    u16           team_index;
+    enum multiplayer_spawn_flags_t : u16
+    {
+        none_spawn      = 0x0,
+        slayer_default  = 0x1,
+        ctf_default     = 0x2,
+        king_default    = 0x4,
+        oddball_default = 0x8,
+        unused_1        = 0x10,
+        unused_2        = 0x20,
+        unused_3        = 0x40,
+        unused_4        = 0x80,
+        slayer_allowed  = 0x100,
+        ctf_allowed     = 0x200,
+        king_allowed    = 0x400,
+        oddball_allowed = 0x800,
+        unused_5        = 0x1000,
+        unused_6        = 0x2000,
+        unused_7        = 0x4000,
+        unused_8        = 0x8000,
+    } spawn_flags;
+    u32           padding2[9];
 };
 
 static_assert(sizeof(vehicle_spawn) == 120);
@@ -1332,8 +1364,8 @@ struct scenario
     enum class scenario_flags : u16
     {
         none         = 0x0,
-        cortana_hack = 0x1,
-        demo_ui      = 0x2,
+        cortana_hack = 0x1, // sort cortana in front of all other transparent geom
+        demo_ui      = 0x2, // use alternate UI collection for demo
     };
 
     using bytecode_t = typename V::bytecode_type;
