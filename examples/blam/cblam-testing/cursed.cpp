@@ -611,7 +611,7 @@ struct RS2CacheLoader
                 continue;
             auto tex_data = *tex_data_;
             region_tex->upload(
-                tex_data.rgba,
+                std::move(tex_data.rgba),
                 Veci3{0, 0, tex},
                 size_3d<i32>{tex_data.width, tex_data.height, 1});
         }

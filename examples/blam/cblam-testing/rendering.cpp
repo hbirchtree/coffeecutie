@@ -490,7 +490,7 @@ using DrawListBuilderManifest = compo::SubsystemManifest<
         LoadingStatus>,
     empty_list_t>;
 
-template<typename Version>
+template<typename Version = blam::xbox_version_t>
 struct DrawListBuilder
     : compo::RestrictedSubsystem<
           DrawListBuilder<Version>,
@@ -912,18 +912,15 @@ struct DrawListBuilder
         auto&  bone_upload    = m_bone_upload;
         size_t bone_write_ptr = bone_upload.size();
 
-        for(auto ent : p.select(ObjectMod2))
+        for(auto ent : p.template select<SubModel, DrawState, MeshTrackingData>())
         {
             if(!rendering_params->render_scenery &&
                (ent.tags() & ObjectSkybox) == 0)
                 continue;
             auto             ref     = p.template ref<Proxy>(ent.id());
-            SubModel const&  smodel  = ref.template get<SubModel>();
-            DrawState const& sm_draw = ref.template get<DrawState>();
+            auto [smodel, sm_draw, track] = ent.components();
             Model const&     model =
                 p.template ref<Proxy>(smodel.parent).template get<Model>();
-            MeshTrackingData const& track =
-                ref.template get<MeshTrackingData>();
 
             if(!followable(track.model_id))
                 continue;
@@ -976,15 +973,12 @@ struct DrawListBuilder
         ModelCache<Version>* model_cache;
         p.subsystem(model_cache);
 
-        for(auto ent : p.select(ObjectMod2))
+        for(auto ent : p.template select<SubModel, DrawState, MeshTrackingData>())
         {
             if(!rendering_params->render_scenery &&
                (ent.tags() & ObjectSkybox) == 0)
                 continue;
-            auto              ref     = p.template ref<Proxy>(ent.id());
-            SubModel const&   smodel  = ref.template get<SubModel>();
-            DrawState&        sm_draw = ref.template get<DrawState>();
-            MeshTrackingData& track   = ref.template get<MeshTrackingData>();
+            auto [smodel, sm_draw, track] = ent.components();
             if(!followable(track.model_id))
                 continue;
             Pass& pass = model_build()[sm_draw.current_pass];
@@ -1021,13 +1015,12 @@ struct DrawListBuilder
             }
         }
 
-        for(auto ent : p.select(ObjectBsp))
+        for(auto ent : p.template select<BspReference, DrawState, Visibility>())
         {
             auto                ref      = p.template ref<Proxy>(ent.id());
-            BspReference const& bsp      = ref.template get<BspReference>();
-            DrawState&          bsp_draw = ref.template get<DrawState>();
+            auto [bsp, bsp_draw, visibility] = ent.components();
 
-            if(!ref.template get<Visibility>().visible_for(m_seat))
+            if(!visibility.visible_for(m_seat))
                 continue;
 
             i32 instance_offset = bsp_draw.draw.data.front().instances.offset;
@@ -1137,7 +1130,7 @@ struct DrawListBuilder
     }
 };
 
-template<typename Version>
+template<typename Version = blam::xbox_version_t>
 struct MeshRenderer
     : compo::RestrictedSubsystem<
           MeshRenderer<Version>,
@@ -1977,7 +1970,7 @@ struct MeshRenderer
     }
 };
 
-template<typename Ver>
+template<typename Ver = blam::xbox_version_t>
 struct LegacyMeshRenderer
     : compo::RestrictedSubsystem<
           LegacyMeshRenderer<Ver>,
