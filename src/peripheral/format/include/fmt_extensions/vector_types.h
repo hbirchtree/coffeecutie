@@ -4,69 +4,62 @@
 #include <peripherals/typing/geometry/size.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
-template<>
-struct fmt::formatter<glm::quat>
+/* A spec on the vector is handed to the component type's own formatter, so
+ * "{:.3f}" prints vec3(1.000, 2.000, 3.000). One definition covers every
+ * length and component type. */
+template<glm::length_t N, typename T, glm::qualifier Q>
+struct fmt::formatter<glm::vec<N, T, Q>>
 {
+    fmt::formatter<T> element;
+
     template<typename ParseCtx>
     constexpr auto parse(ParseCtx& ctx)
     {
-        return ctx.begin();
+        return element.parse(ctx);
     }
 
     template<typename FormatCtx>
-    auto format(glm::quat const& p, FormatCtx& ctx) const
+    auto format(glm::vec<N, T, Q> const& p, FormatCtx& ctx) const
     {
-        return fmt::format_to(
-            ctx.out(), "quat({}, {}, {}, {})", p.x, p.y, p.z, p.w);
+        auto out = fmt::format_to(ctx.out(), "vec{}(", N);
+        for(glm::length_t i = 0; i < N; i++)
+        {
+            if(i > 0)
+                out = fmt::format_to(out, ", ");
+            ctx.advance_to(out);
+            out = element.format(p[i], ctx);
+        }
+        return fmt::format_to(out, ")");
     }
 };
 
-template<>
-struct fmt::formatter<glm::vec2>
+template<typename T, glm::qualifier Q>
+struct fmt::formatter<glm::qua<T, Q>>
 {
+    fmt::formatter<T> element;
+
     template<typename ParseCtx>
     constexpr auto parse(ParseCtx& ctx)
     {
-        return ctx.begin();
+        return element.parse(ctx);
     }
 
     template<typename FormatCtx>
-    auto format(glm::vec2 const& p, FormatCtx& ctx) const
+    auto format(glm::qua<T, Q> const& p, FormatCtx& ctx) const
     {
-        return fmt::format_to(ctx.out(), "vec2({}, {})", p.x, p.y);
-    }
-};
+        /* Named rather than indexed: quat storage order is a GLM build
+         * option, xyzw is not. */
+        T const components[] = {p.x, p.y, p.z, p.w};
 
-template<>
-struct fmt::formatter<glm::vec3>
-{
-    template<typename ParseCtx>
-    constexpr auto parse(ParseCtx& ctx)
-    {
-        return ctx.begin();
-    }
-
-    template<typename FormatCtx>
-    auto format(glm::vec3 const& p, FormatCtx& ctx) const
-    {
-        return fmt::format_to(ctx.out(), "vec3({}, {}, {})", p.x, p.y, p.z);
-    }
-};
-
-template<>
-struct fmt::formatter<glm::vec4>
-{
-    template<typename ParseCtx>
-    constexpr auto parse(ParseCtx& ctx)
-    {
-        return ctx.begin();
-    }
-
-    template<typename FormatCtx>
-    auto format(glm::vec4 const& p, FormatCtx& ctx) const
-    {
-        return fmt::format_to(
-            ctx.out(), "vec4({}, {}, {})", p.x, p.y, p.z, p.w);
+        auto out = fmt::format_to(ctx.out(), "quat(");
+        for(int i = 0; i < 4; i++)
+        {
+            if(i > 0)
+                out = fmt::format_to(out, ", ");
+            ctx.advance_to(out);
+            out = element.format(components[i], ctx);
+        }
+        return fmt::format_to(out, ")");
     }
 };
 

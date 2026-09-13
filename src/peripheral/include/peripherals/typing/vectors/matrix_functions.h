@@ -7,29 +7,15 @@ namespace typing {
 namespace vectors {
 namespace scene {
 
-#if defined(USE_HOMEGROWN_VECTORS)
-using namespace stl_types::math;
-#endif
-
+/* Unimplemented: returns a default matrix, not an orthographic projection.
+ * No caller today; use glm::ortho before relying on it. */
 template<typename T>
 FORCEDINLINE tmatrix<T, 4> GenOrthographic(
     geometry::rect<T> const& view, const geometry::range<T>& zfield)
 {
-#if defined(USE_HOMEGROWN_VECTORS)
-    tmatrix<T, 4> mat;
-
-    mat[0][0] = T(2) / (view.right() - view.left());
-    mat[1][1] = T(2) / (view.top() - view.bottom());
-    mat[2][2] = -T(2) / (zfield.far_ - zfield.near_);
-
-    mat[3][0] = -(view.right() + view.left()) / (view.right() - view.left());
-    mat[3][1] = -(view.top() + view.bottom()) / (view.top() - view.bottom());
-    mat[3][2] = -(zfield.far_ + zfield.near_) / (zfield.far_ - zfield.near_);
-
-    return mat;
-#else
+    (void)view;
+    (void)zfield;
     return tmatrix<T, 4>();
-#endif
 }
 
 template<typename T>
@@ -54,25 +40,8 @@ template<typename T>
 FORCEDINLINE tmatrix<T, 4> GenPerspective(
     const T& fov, const T& aspect, const geometry::range<T>& zfield)
 {
-#if defined(USE_HOMEGROWN_VECTORS)
-    CASSERT(abs(aspect - std::numeric_limits<T>::epsilon()) > T(0));
-
-    tmatrix<T, 4> matrix;
-
-    T thalffov = tan(radians(fov) / T(2));
-
-    matrix[0][0] = T(1) / (aspect * thalffov);
-    matrix[1][1] = T(1) / (thalffov);
-    matrix[2][2] = -(zfield.far_ + zfield.near_) / (zfield.far_ - zfield.near_);
-    matrix[2][3] = T(-1);
-    matrix[3][2] =
-        (T(-2) * zfield.far_ * zfield.near_) / (zfield.far_ - zfield.near_);
-
-    return matrix;
-#else
     return glm::perspective(
         glm::radians(fov), aspect, zfield.near_, zfield.far_);
-#endif
 }
 
 template<typename T>
@@ -125,17 +94,7 @@ FORCEDINLINE tmatrix<T, 4> GenTransform(
     tvector<T, 3> const&  scl,
     tquaternion<T> const& rot)
 {
-#if defined(USE_HOMEGROWN_VECTORS)
-    tmatrix<T, 4> mat;
-
-    mat = matrixify(normalize_quat(rot));
-    mat = scale(mat, scl);
-    mat = translation(mat, pos);
-
-    return mat;
-#else
     return glm::translate(glm::scale(glm::mat4_cast(rot), scl), pos);
-#endif
 }
 
 template<typename T>
