@@ -38,6 +38,7 @@
 
 using Coffee::Logging::cWarning;
 using libc_types::f32;
+using libc_types::i16;
 using libc_types::i32;
 using libc_types::u16;
 using libc_types::u32;
@@ -55,6 +56,7 @@ size_t        g_scan_window   = 0;
 bool          g_dump_player   = false;
 bool          g_dump_scenario = false;
 bool          g_dump_bones    = false;
+bool          g_dump_recanim  = false;
 bool          g_channel_stats{false};
 std::string   g_dump_prefix{};
 std::string   g_dump_png_prefix{};
@@ -1426,6 +1428,130 @@ void dump_scenario(blam::map_container<Ver> const& map)
         printf("starting_equipment: %zu\n", q.value().size());
 }
 
+/* Recorded animations store per-tick control input rather than keyframes, so
+ * what is printed is the input the unit is handed, tick by tick. The tick
+ * total doubles as a check on the decode: it has to come back as
+ * length_of_animation. */
+template<typename Ver>
+void dump_recorded_animations(blam::map_container<Ver> const& map)
+{
+    namespace rec = blam::scn::recorded;
+
+    auto scn = map.scenario();
+    if(!scn.has_value())
+    {
+        printf("no scenario tag\n");
+        return;
+    }
+
+    auto anims = scn.value()->recorded_animations.data(g_magic);
+    if(anims.has_error())
+    {
+        printf(
+            "recorded_animations: %.*s\n",
+            static_cast<int>(anims.error().size()),
+            anims.error().data());
+        return;
+    }
+
+    constexpr f32 to_degrees = 57.2957795f;
+
+    printf("recorded_animations: %zu\n", anims.value().size());
+    for(auto const& anim : anims.value())
+    {
+        auto name = anim.name.str();
+        printf(
+            "\n  %-34.*s codec=%u ucd=%u raw=%d ticks=%d stream=%u bytes\n",
+            static_cast<int>(name.size()),
+            name.data(),
+            anim.version,
+            anim.unit_control_data_version,
+            anim.raw_animation_data,
+            anim.length_of_animation,
+            anim.event_stream.size());
+
+        auto stream = anim.stream(g_magic);
+        if(stream.has_error())
+        {
+            printf(
+                "    %.*s\n",
+                static_cast<int>(stream.error().size()),
+                stream.error().data());
+            continue;
+        }
+
+        /* The decoded angles are checked against the direction vectors the
+         * header stores beside them; they agree to a rounding unit. */
+        auto const& control = stream.value().control();
+        auto const  facing  = stream.value().initial_state().facing();
+        auto const  dir     = facing.direction();
+        printf(
+            "    facing=(%.3f,%.3f,%.3f) from_angles=(%.3f,%.3f,%.3f) "
+            "yaw=%.1fdeg pitch=%.1fdeg\n",
+            control.facing.x,
+            control.facing.y,
+            control.facing.z,
+            dir.x,
+            dir.y,
+            dir.z,
+            facing.yaw_radians() * to_degrees,
+            facing.pitch_radians() * to_degrees);
+
+        /* Summarising the input says more about a recording than a byte dump
+         * would: a dropship steers constantly and never presses anything. */
+        rec::playback play(stream.value());
+        u32           moving   = 0;
+        u16           buttons  = 0;
+        i32           turned   = 0;
+        i16           prev_yaw = play.state().facing().yaw;
+        do
+        {
+            auto const& in = play.state();
+            if(in.movement.x != 0.f || in.movement.y != 0.f)
+                moving++;
+            /* Yaw wraps, so accumulate the short way round rather than
+             * subtracting across the seam. */
+            constexpr i32 turn = 2000;
+            i32 step = (in.facing().yaw - prev_yaw + turn * 3 / 2) % turn - turn / 2;
+            turned += step < 0 ? -step : step;
+            prev_yaw = in.facing().yaw;
+            buttons |= in.buttons;
+        } while(play.advance());
+
+        printf("    ticks decoded=%u", play.tick());
+        if(play.tick() != static_cast<u32>(anim.length_of_animation))
+            printf(" (MISMATCH, header says %d)", anim.length_of_animation);
+        printf(
+            " moving=%u turned=%.0fdeg buttons=%#06x",
+            moving,
+            turned * 360.f / rec::control_vector::units_per_turn,
+            buttons);
+        /* Named by hand: the flag values run past magic_enum's default
+         * reflection range, so it would print nothing for most of them. */
+        static constexpr std::pair<rec::control_flags_t, char const*> flags[] = {
+            {rec::control_crouch, "crouch"},
+            {rec::control_jump, "jump"},
+            {rec::control_user1, "user1"},
+            {rec::control_user2, "user2"},
+            {rec::control_light, "light"},
+            {rec::control_exact_facing, "exact_facing"},
+            {rec::control_action, "action"},
+            {rec::control_melee, "melee"},
+            {rec::control_look_dont_turn, "look_dont_turn"},
+            {rec::control_force_alert, "force_alert"},
+            {rec::control_reload, "reload"},
+            {rec::control_primary_trigger, "primary_trigger"},
+            {rec::control_secondary_trigger, "secondary_trigger"},
+            {rec::control_grenade, "grenade"},
+            {rec::control_swap_weapon, "swap_weapon"},
+        };
+        for(auto const& [flag, name] : flags)
+            if(buttons & flag)
+                printf(" %s", name);
+        printf("\n");
+    }
+}
+
 /* Resolves the player's spawn unit the way the engine would: globals -> the
  * multiplayer or singleplayer information block -> a bipd tag -> its model. */
 template<typename Ver>
@@ -1943,6 +2069,12 @@ void open_map(
         return;
     }
 
+    if(g_dump_recanim)
+    {
+        dump_recorded_animations<Ver>(map);
+        return;
+    }
+
     u32 matched = 0;
     for(blam::tag_t const& tag : index)
     {
@@ -2026,6 +2158,9 @@ int inspect_main()
          "For model tags, print the bone tree with bind-pose axes in model "
          "space")
         //
+        ("dump-recorded-animations",
+         "Decode the scenario's recorded animations and their event streams")
+        //
         ;
 
     auto& args      = Coffee::GetInitArgs();
@@ -2050,6 +2185,8 @@ int inspect_main()
     g_dump_player   = arguments.count("dump-player-biped") > 0;
     g_dump_scenario = arguments.count("dump-scenario") > 0;
     g_dump_bones    = arguments.count("dump-bones") > 0;
+    g_dump_recanim =
+        arguments.count("dump-recorded-animations") > 0;
     g_scan_window   = static_cast<size_t>(
         arguments.as_optional<int>("scan-tagrefs").value_or(0));
     g_channel_stats = arguments.count("channel-stats") > 0;

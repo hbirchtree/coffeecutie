@@ -8,6 +8,7 @@
 #include "blam_file_header.h"
 #include "blam_magic_data.h"
 #include "blam_mod2.h"
+#include "blam_recorded_animation.h"
 #include "blam_reference.h"
 #include "blam_sound.h"
 #include "blam_tag_index.h"
@@ -1390,7 +1391,7 @@ struct scenario
     } player_start;
 
     reference<trigger_volume> trigger_volumes;
-    reference<scn_chunk>      recorded_animations;
+    reference<recorded_animation> recorded_animations;
 
     struct multiplayer_t /* 216-byte block */
     {
