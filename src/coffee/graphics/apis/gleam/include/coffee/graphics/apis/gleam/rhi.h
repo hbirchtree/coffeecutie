@@ -238,7 +238,8 @@ struct api
         if constexpr(T::value == queries::type::time)
             return std::make_shared<query_t>(m_features.query, T::value);
         if constexpr(T::value == queries::type::timestamp)
-            return std::make_shared<timestamp_query>(m_features.query, T::value);
+            return std::make_shared<timestamp_query>(
+                m_features.query, T::value);
         return std::shared_ptr<query_t>();
     }
 
@@ -385,8 +386,7 @@ struct api
 
     /* Attaches each format for real and asks the driver whether the resulting
      * framebuffer is complete. Feature flags only say what is advertised. */
-    void debug_print_renderable_formats(
-        comp_app::interfaces::AppInfo& appInfo);
+    void debug_print_renderable_formats(comp_app::interfaces::AppInfo& appInfo);
 
     enum class queues
     {
@@ -408,8 +408,8 @@ struct api
     bool perform_downscale(
         std::weak_ptr<texture_t> source,
         std::weak_ptr<texture_t> target,
-        size_2d<u32> size,
-        u32 level = 0);
+        size_2d<u32>             size,
+        u32                      level = 0);
 
     using debug_api =
         std::conditional_t<debug::api_available, debug::api, debug::null_api>;

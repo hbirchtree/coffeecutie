@@ -914,7 +914,8 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
 
     if(clock)
     {
-        Coffee::DProfContext _("compo::PerformanceMonitor::start_restricted: CPU clock query");
+        Coffee::DProfContext _(
+            "compo::PerformanceMonitor::start_restricted: CPU clock query");
         u32 metric_i = 0;
         for(auto i : Range<u32>(clock->cpus()))
         {
@@ -943,7 +944,9 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
             MetricVariant::Value,
             clock->processCpuLoad(),
             timestamp);
-        Coffee::DProfContext __("compo::PerformanceMonitor::start_restricted: CPU thread load query");
+        Coffee::DProfContext __(
+            "compo::PerformanceMonitor::start_restricted: CPU thread load "
+            "query");
         for(auto const& tl : clock->threadCpuLoads())
             json::CaptureMetrics(
                 "CPU thread load",
@@ -956,7 +959,8 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
 
     if(cpu_temp)
     {
-        Coffee::DProfContext _("compo::PerformanceMonitor::start_restricted: CPU temp query");
+        Coffee::DProfContext _(
+            "compo::PerformanceMonitor::start_restricted: CPU temp query");
         json::CaptureMetrics(
             "CPU temperature",
             MetricVariant::Value,
@@ -965,7 +969,8 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
     }
     if(gpu_temp)
     {
-        Coffee::DProfContext _("compo::PerformanceMonitor::start_restricted: GPU temp query");
+        Coffee::DProfContext _(
+            "compo::PerformanceMonitor::start_restricted: GPU temp query");
         json::CaptureMetrics(
             "GPU temperature",
             MetricVariant::Value,
@@ -975,7 +980,8 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
 
     if(mem)
     {
-        Coffee::DProfContext _("compo::PerformanceMonitor::start_restricted: mem query");
+        Coffee::DProfContext _(
+            "compo::PerformanceMonitor::start_restricted: mem query");
         json::CaptureMetrics(
             "Memory consumption",
             MetricVariant::Value,
@@ -1060,7 +1066,8 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
 
     if(sensors)
     {
-        Coffee::DProfContext _("compo::PerformanceMonitor::start_restricted: sensors query");
+        Coffee::DProfContext _(
+            "compo::PerformanceMonitor::start_restricted: sensors query");
         for(auto const& [label, reading] : sensors->stats_numeric())
             json::CaptureMetrics(
                 "HWMON",

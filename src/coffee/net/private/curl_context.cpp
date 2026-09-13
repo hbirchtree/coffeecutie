@@ -102,9 +102,10 @@ std::future<void> curl_data::add_request(
 
 void curl_data::remove_request(curl_request request)
 {
-    auto queued_count = std::erase_if(
-        queued_requests,
-        [&request](curl_request const& req) { return req == request; });
+    auto queued_count =
+        std::erase_if(queued_requests, [&request](curl_request const& req) {
+            return req == request;
+        });
     if(queued_count > 0)
         curl_multi_remove_handle(context, request->handle);
     std::erase_if(finished_requests, [&request](curl_request const& req) {

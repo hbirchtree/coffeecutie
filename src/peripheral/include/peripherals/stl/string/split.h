@@ -73,6 +73,7 @@ struct spliterator
     {
         return spliterator(source, sep);
     }
+
     auto end() const
     {
         return spliterator();

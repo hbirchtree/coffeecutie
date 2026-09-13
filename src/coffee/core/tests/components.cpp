@@ -90,23 +90,21 @@ static_assert(std::is_same_v<
               Journal const&>);
 
 /* ...including through select<>() payloads and tag-based queries */
-static_assert(
-    std::is_same_v<
-        decltype(std::declval<MixedProxy&>()
-                     .select<Position, Velocity>()
-                     .front()
-                     .get<Velocity>()),
-        Velocity const&>);
+static_assert(std::is_same_v<
+              decltype(std::declval<MixedProxy&>()
+                           .select<Position, Velocity>()
+                           .front()
+                           .get<Velocity>()),
+              Velocity const&>);
 static_assert(can_get_via_tag_query<MixedProxy, Velocity>);
 
 /* An unrestricted container query keeps payloads mutable */
-static_assert(
-    std::is_same_v<
-        decltype(std::declval<EntityContainer&>()
-                     .select<Position>()
-                     .front()
-                     .get<Position>()),
-        Position&>);
+static_assert(std::is_same_v<
+              decltype(std::declval<EntityContainer&>()
+                           .select<Position>()
+                           .front()
+                           .get<Position>()),
+              Position&>);
 
 /* 2. undeclared access does not compile */
 static_assert(can_get<MixedProxy, Position> && can_get<MixedProxy, Velocity>);
@@ -221,7 +219,7 @@ bool test_conflicts()
     assertTrue(sched::conflicts(write_pos, depends_on_10));
 
     /* Structural mutation invalidates every query, so it excludes all */
-    auto mutator             = set_of(15, {});
+    auto mutator                = set_of(15, {});
     mutator.structural_mutation = true;
     assertTrue(sched::conflicts(mutator, write_vel));
     assertTrue(sched::conflicts(mutator, read_pos));
@@ -274,7 +272,7 @@ bool test_batching()
     auto mutator                = set_of(11, {reads(vel_h)});
     mutator.structural_mutation = true;
 
-    auto mixed    = nodes_of(
+    auto mixed = nodes_of(
         {set_of(10, {reads(pos_h)}), mutator, set_of(12, {reads(pos_h)})});
     auto isolated = sched::build_batches(mixed);
 
@@ -288,8 +286,9 @@ bool test_batching()
     pinned_a.main_thread = true;
     pinned_b.main_thread = true;
 
-    auto pinned_nodes = nodes_of({pinned_a, pinned_b, set_of(12, {reads(pos_h)})});
-    auto pinned       = sched::build_batches(pinned_nodes);
+    auto pinned_nodes =
+        nodes_of({pinned_a, pinned_b, set_of(12, {reads(pos_h)})});
+    auto pinned = sched::build_batches(pinned_nodes);
 
     assertEquals(pinned.size(), size_t(1));
     assertEquals(pinned.at(0).width, size_t(2));
@@ -305,8 +304,8 @@ bool test_windows()
     opted_in.parallel = true;
     assertTrue(sched::can_offload(opted_in));
 
-    auto escaped     = opted_in;
-    escaped.opaque   = true;
+    auto escaped   = opted_in;
+    escaped.opaque = true;
     assertFalse(sched::can_offload(escaped));
 
     auto pinned        = opted_in;
@@ -335,10 +334,10 @@ bool test_windows()
     /* A conflict on either side closes the window down to the batch the
      * subsystem was scheduled in: this is the data dependency case, and it
      * has to hold inside the frame, not just at its edges */
-    auto producer   = set_of(20, {writes(pos_h)});
-    auto consumer   = set_of(21, {reads(pos_h)});
+    auto producer     = set_of(20, {writes(pos_h)});
+    auto consumer     = set_of(21, {reads(pos_h)});
     consumer.parallel = true;
-    auto next       = set_of(22, {writes(pos_h)});
+    auto next         = set_of(22, {writes(pos_h)});
 
     auto fenced         = nodes_of({producer, consumer, next});
     auto fenced_batches = sched::build_batches(fenced);
@@ -387,8 +386,8 @@ bool test_worker_pool()
     /* An exception on a worker is contained: it neither escapes the pool nor
      * leaves the frame waiting forever */
     pool.reset();
-    auto thrower = pool.submit(
-        []() { throw std::runtime_error("subsystem blew up"); });
+    auto thrower =
+        pool.submit([]() { throw std::runtime_error("subsystem blew up"); });
     pool.wait(thrower);
     pool.wait_all();
     assertEquals(pool.failed(), size_t(1));
@@ -416,4 +415,4 @@ COFFEE_TESTS_BEGIN(5)
      "Worker pool",
      "jobs run once per frame, are joined within it, and contain throws"},
 
-COFFEE_TESTS_END()
+    COFFEE_TESTS_END()

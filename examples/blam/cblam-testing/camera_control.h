@@ -7,11 +7,7 @@
 #include "components.h"
 
 using CameraControlManifest = compo::SubsystemManifest<
-    type_list_t<
-        const PlayerInfo,
-        PlayerCamera,
-        CameraLerp
-    >,
+    type_list_t<const PlayerInfo, PlayerCamera, CameraLerp>,
     empty_list_t,
     empty_list_t>;
 

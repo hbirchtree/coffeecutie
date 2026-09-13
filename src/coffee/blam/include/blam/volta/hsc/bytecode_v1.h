@@ -39,7 +39,7 @@ enum class v1 : libc_types::i16
     wake,
     inspect,
     unit,
-    sound, /* inferred */
+    sound,  /* inferred */
     effect, /* inferred */
     _dummy_26,
     not_,
@@ -69,11 +69,11 @@ enum class v1 : libc_types::i16
     objects_can_see_object,
     objects_can_see_flag,
     objects_delete_by_definition, /* inferred */
-    sound_set_gain, /* inferred */
-    sound_get_gain, /* inferred */
-    script_recompile, /* inferred */
-    help, /* inferred */
-    _dummy_1, /* inferred */
+    sound_set_gain,               /* inferred */
+    sound_get_gain,               /* inferred */
+    script_recompile,             /* inferred */
+    help,                         /* inferred */
+    _dummy_1,                     /* inferred */
     random_range,
     real_random_range,
     numeric_countdown_timer_set,
@@ -111,7 +111,7 @@ enum class v1 : libc_types::i16
     unit_can_blink, /* inferred */
     unit_open,
     unit_close,
-    unit_kill, /* inferred */
+    unit_kill,        /* inferred */
     unit_kill_silent, /* inferred */
     unit_get_custom_animation_time,
     unit_stop_custom_animation,
@@ -119,12 +119,12 @@ enum class v1 : libc_types::i16
     custom_animation,
     custom_animation_list,
     unit_is_playing_custom_animation, /* inferred */
-    unit_aim_without_turning, /* inferred */
+    unit_aim_without_turning,         /* inferred */
     unit_set_emotion,
     unit_set_enterable_by_player,
     unit_enter_vehicle,
     vehicle_test_seat_list,
-    vehicle_test_seat, /* inferred */
+    vehicle_test_seat,          /* inferred */
     unit_set_emotion_animation, /* inferred */
     unit_exit_vehicle,
     unit_set_maximum_vitality,
@@ -181,7 +181,7 @@ enum class v1 : libc_types::i16
     ai_kill_silent,
     ai_erase,
     ai_erase_all,
-    ai_select, /* inferred */
+    ai_select,   /* inferred */
     ai_deselect, /* inferred */
     ai_spawn_actor,
     ai_set_respawn, /* inferred */
@@ -230,8 +230,8 @@ enum class v1 : libc_types::i16
     ai_is_attacking, /* inferred */
     ai_force_active,
     ai_force_active_by_unit, /* inferred */
-    ai_set_return_state, /* inferred */
-    ai_set_current_state, /* inferred */
+    ai_set_return_state,     /* inferred */
+    ai_set_current_state,    /* inferred */
     ai_playfight,
     ai_status,
     ai_reconnect,
@@ -242,7 +242,7 @@ enum class v1 : libc_types::i16
     ai_vehicle_enterable_actors, /* inferred */
     ai_vehicle_enterable_disable,
     ai_look_at_object, /* inferred */
-    ai_stop_looking, /* inferred */
+    ai_stop_looking,   /* inferred */
     ai_automatic_migration_target,
     ai_follow_target_disable,
     ai_follow_target_players,
@@ -256,7 +256,7 @@ enum class v1 : libc_types::i16
     ai_conversation_status,
     ai_link_activation,
     ai_berserk,
-    ai_set_team, /* inferred */
+    ai_set_team,     /* inferred */
     ai_allow_charge, /* inferred */
     ai_allow_dormant,
     ai_allegiance_broken,
@@ -275,22 +275,22 @@ enum class v1 : libc_types::i16
     game_difficulty_get,
     game_difficulty_get_real,
     profile_service_clear_timers, /* inferred */
-    map_reset, /* inferred */
-    map_name, /* inferred */
-    multiplayer_map_name, /* inferred */
-    game_difficulty_set, /* inferred */
+    map_reset,                    /* inferred */
+    map_name,                     /* inferred */
+    multiplayer_map_name,         /* inferred */
+    game_difficulty_set,          /* inferred */
     switch_bsp,
     structure_bsp_index,
-    version, /* inferred */
-    playback, /* inferred */
-    quit, /* inferred */
-    texture_cache_flush, /* inferred */
-    sound_cache_flush, /* inferred */
+    version,                  /* inferred */
+    playback,                 /* inferred */
+    quit,                     /* inferred */
+    texture_cache_flush,      /* inferred */
+    sound_cache_flush,        /* inferred */
     sound_cache_dump_to_file, /* inferred */
-    debug_memory, /* inferred */
-    debug_memory_by_file, /* inferred */
-    debug_memory_for_file, /* inferred */
-    debug_tags, /* inferred */
+    debug_memory,             /* inferred */
+    debug_memory_by_file,     /* inferred */
+    debug_memory_for_file,    /* inferred */
+    debug_tags,               /* inferred */
     _dummy_276,
     _dummy_277,
     _dummy_278,
@@ -346,10 +346,10 @@ enum class v1 : libc_types::i16
     sound_looping_stop,
     sound_looping_set_scale, /* inferred */
     sound_looping_set_alternate,
-    debug_sounds_enable, /* inferred */
+    debug_sounds_enable,    /* inferred */
     debug_sounds_distances, /* inferred */
-    debug_sounds_wet, /* inferred */
-    sound_enable, /* inferred */
+    debug_sounds_wet,       /* inferred */
+    sound_enable,           /* inferred */
     sound_class_set_gain,
     vehicle_hover,
     players_unzoom_all,
@@ -374,17 +374,17 @@ enum class v1 : libc_types::i16
     show_hud,
     show_hud_help_text,
     enable_hud_help_flash,
-    hud_help_flash_restart, /* inferred */
-    activate_nav_point_flag, /* inferred */
+    hud_help_flash_restart,    /* inferred */
+    activate_nav_point_flag,   /* inferred */
     activate_nav_point_object, /* inferred */
     activate_team_nav_point_flag,
     activate_team_nav_point_object,
-    deactivate_nav_point_flag, /* inferred */
+    deactivate_nav_point_flag,   /* inferred */
     deactivate_nav_point_object, /* inferred */
     deactivate_team_nav_point_flag,
     deactivate_team_nav_point_object,
     cls,
-    hud_team_icon_set_scale, /* inferred */
+    hud_team_icon_set_scale,     /* inferred */
     hud_team_background_set_pos, /* inferred */
     player_effect_set_max_translation,
     player_effect_set_max_rotation,
@@ -409,9 +409,9 @@ enum class v1 : libc_types::i16
     hud_get_timer_ticks,
     time_code_show,
     time_code_start,
-    time_code_reset, /* inferred */
+    time_code_reset,                   /* inferred */
     reload_shader_transparent_chicago, /* inferred */
-    rasterizer_reload_effects, /* inferred */
+    rasterizer_reload_effects,         /* inferred */
     rasterizer_model_ambient_reflection_tint,
     rasterizer_lights_reset_for_new_map,
     rasterizer_decals_flush, /* inferred */
@@ -422,7 +422,7 @@ enum class v1 : libc_types::i16
     cinematic_screen_effect_set_video,
     cinematic_screen_effect_stop,
     cinematic_set_near_clip_distance,
-    fast_setup_network_server, /* inferred */
+    fast_setup_network_server,  /* inferred */
     profile_unlock_solo_levels, /* inferred */
     _dummy_409,
     _dummy_410,
@@ -431,98 +431,98 @@ enum class v1 : libc_types::i16
     player0_joystick_set_is_normal,
     ui_widget_show_path, /* inferred */
     display_scenario_help,
-    sound_enable_eax, /* inferred */
-    sound_eax_enabled, /* inferred */
-    sound_set_env, /* inferred */
-    sound_enable_hardware, /* inferred */
-    sound_set_supplementary_buffers, /* inferred */
-    sound_get_supplementary_buffers, /* inferred */
-    sound_set_rolloff, /* inferred */
-    sound_set_factor, /* inferred */
-    input_get_joy_count, /* inferred */
-    input_is_joy_active, /* inferred */
-    input_activate_joy, /* inferred */
-    input_deactivate_joy, /* inferred */
-    input_find_joystick, /* inferred */
-    input_show_joystick_info, /* inferred */
-    input_find_default, /* inferred */
-    config_one_control, /* inferred */
-    get_pitch_rate, /* inferred */
-    set_yaw_rate, /* inferred */
-    set_pitch_rate, /* inferred */
-    get_digital_forward_throttle, /* inferred */
-    set_digital_forward_throttle, /* inferred */
-    get_digital_strafe_throttle, /* inferred */
-    set_digital_strafe_throttle, /* inferred */
-    get_digital_yaw_increment, /* inferred */
-    set_digital_yaw_increment, /* inferred */
-    get_digital_pitch_increment, /* inferred */
-    set_digital_pitch_increment, /* inferred */
-    get_mouse_forward_threshold, /* inferred */
-    set_mouse_forward_threshold, /* inferred */
-    get_mouse_strafe_threshold, /* inferred */
-    set_mouse_strafe_threshold, /* inferred */
-    get_mouse_yaw_scale, /* inferred */
-    set_mouse_yaw_scale, /* inferred */
-    get_mouse_pitch_scale, /* inferred */
-    set_mouse_pitch_scale, /* inferred */
-    get_gamepad_forward_threshold, /* inferred */
-    set_gamepad_forward_threshold, /* inferred */
-    get_gamepad_strafe_threshold, /* inferred */
-    set_gamepad_strafe_threshold, /* inferred */
-    get_gamepad_yaw_scale, /* inferred */
-    set_gamepad_yaw_scale, /* inferred */
-    set_gamepad_pitch_scale, /* inferred */
-    bind, /* inferred */
-    unbind, /* inferred */
-    print_binds, /* inferred */
-    sv_end_game, /* inferred */
-    change_team, /* inferred */
-    sv_mapcycle, /* inferred */
-    sv_mapcycle_begin, /* inferred */
-    sv_mapcycle_add, /* inferred */
-    sv_mapcycle_del, /* inferred */
-    sv_map_next, /* inferred */
-    sv_map_reset, /* inferred */
-    sv_map, /* inferred */
-    rcon, /* inferred */
-    sv_rcon_password, /* inferred */
-    sv_say, /* inferred */
-    sv_players, /* inferred */
-    sv_kick, /* inferred */
-    sv_ban, /* inferred */
-    sv_banlist, /* inferred */
-    sv_unban, /* inferred */
-    sv_parameters_reload, /* inferred */
-    sv_parameters_dump, /* inferred */
-    sv_status, /* inferred */
-    sv_name, /* inferred */
-    sv_password, /* inferred */
-    sv_log_note, /* inferred */
-    sv_log_enabled, /* inferred */
-    sv_log_rotation_threshold, /* inferred */
-    sv_log_echo_chat, /* inferred */
-    profile_load, /* inferred */
+    sound_enable_eax,                     /* inferred */
+    sound_eax_enabled,                    /* inferred */
+    sound_set_env,                        /* inferred */
+    sound_enable_hardware,                /* inferred */
+    sound_set_supplementary_buffers,      /* inferred */
+    sound_get_supplementary_buffers,      /* inferred */
+    sound_set_rolloff,                    /* inferred */
+    sound_set_factor,                     /* inferred */
+    input_get_joy_count,                  /* inferred */
+    input_is_joy_active,                  /* inferred */
+    input_activate_joy,                   /* inferred */
+    input_deactivate_joy,                 /* inferred */
+    input_find_joystick,                  /* inferred */
+    input_show_joystick_info,             /* inferred */
+    input_find_default,                   /* inferred */
+    config_one_control,                   /* inferred */
+    get_pitch_rate,                       /* inferred */
+    set_yaw_rate,                         /* inferred */
+    set_pitch_rate,                       /* inferred */
+    get_digital_forward_throttle,         /* inferred */
+    set_digital_forward_throttle,         /* inferred */
+    get_digital_strafe_throttle,          /* inferred */
+    set_digital_strafe_throttle,          /* inferred */
+    get_digital_yaw_increment,            /* inferred */
+    set_digital_yaw_increment,            /* inferred */
+    get_digital_pitch_increment,          /* inferred */
+    set_digital_pitch_increment,          /* inferred */
+    get_mouse_forward_threshold,          /* inferred */
+    set_mouse_forward_threshold,          /* inferred */
+    get_mouse_strafe_threshold,           /* inferred */
+    set_mouse_strafe_threshold,           /* inferred */
+    get_mouse_yaw_scale,                  /* inferred */
+    set_mouse_yaw_scale,                  /* inferred */
+    get_mouse_pitch_scale,                /* inferred */
+    set_mouse_pitch_scale,                /* inferred */
+    get_gamepad_forward_threshold,        /* inferred */
+    set_gamepad_forward_threshold,        /* inferred */
+    get_gamepad_strafe_threshold,         /* inferred */
+    set_gamepad_strafe_threshold,         /* inferred */
+    get_gamepad_yaw_scale,                /* inferred */
+    set_gamepad_yaw_scale,                /* inferred */
+    set_gamepad_pitch_scale,              /* inferred */
+    bind,                                 /* inferred */
+    unbind,                               /* inferred */
+    print_binds,                          /* inferred */
+    sv_end_game,                          /* inferred */
+    change_team,                          /* inferred */
+    sv_mapcycle,                          /* inferred */
+    sv_mapcycle_begin,                    /* inferred */
+    sv_mapcycle_add,                      /* inferred */
+    sv_mapcycle_del,                      /* inferred */
+    sv_map_next,                          /* inferred */
+    sv_map_reset,                         /* inferred */
+    sv_map,                               /* inferred */
+    rcon,                                 /* inferred */
+    sv_rcon_password,                     /* inferred */
+    sv_say,                               /* inferred */
+    sv_players,                           /* inferred */
+    sv_kick,                              /* inferred */
+    sv_ban,                               /* inferred */
+    sv_banlist,                           /* inferred */
+    sv_unban,                             /* inferred */
+    sv_parameters_reload,                 /* inferred */
+    sv_parameters_dump,                   /* inferred */
+    sv_status,                            /* inferred */
+    sv_name,                              /* inferred */
+    sv_password,                          /* inferred */
+    sv_log_note,                          /* inferred */
+    sv_log_enabled,                       /* inferred */
+    sv_log_rotation_threshold,            /* inferred */
+    sv_log_echo_chat,                     /* inferred */
+    profile_load,                         /* inferred */
     track_remote_player_position_updates, /* inferred */
-    remote_player_stats, /* inferred */
-    sv_get_player_action_queue_length, /* inferred */
-    thread_sleep, /* inferred */
-    checkpoint_save, /* inferred */
-    checkpoint_load, /* inferred */
-    sv_maplist, /* inferred */
-    sv_gamelist, /* inferred */
-    sv_friendly_fire, /* inferred */
-    sv_timelimit, /* inferred */
-    sv_ban_penalty, /* inferred */
-    sv_tk_grace, /* inferred */
-    sv_tk_cooldown, /* inferred */
-    sv_banlist_file, /* inferred */
-    sv_maxplayers, /* inferred */
-    sv_single_flag_force_reset, /* inferred */
-    sv_motd, /* inferred */
-    oid_watch, /* inferred */
-    oid_dump, /* inferred */
-    oid_status, /* inferred */
+    remote_player_stats,                  /* inferred */
+    sv_get_player_action_queue_length,    /* inferred */
+    thread_sleep,                         /* inferred */
+    checkpoint_save,                      /* inferred */
+    checkpoint_load,                      /* inferred */
+    sv_maplist,                           /* inferred */
+    sv_gamelist,                          /* inferred */
+    sv_friendly_fire,                     /* inferred */
+    sv_timelimit,                         /* inferred */
+    sv_ban_penalty,                       /* inferred */
+    sv_tk_grace,                          /* inferred */
+    sv_tk_cooldown,                       /* inferred */
+    sv_banlist_file,                      /* inferred */
+    sv_maxplayers,                        /* inferred */
+    sv_single_flag_force_reset,           /* inferred */
+    sv_motd,                              /* inferred */
+    oid_watch,                            /* inferred */
+    oid_dump,                             /* inferred */
+    oid_status,                           /* inferred */
 
     max_opcode = 550,
 

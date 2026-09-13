@@ -18,7 +18,10 @@ struct BlamDebugUi
         compo::SubsystemBase::priority = 2048;
     }
 
-    bool main_thread_only() const override { return true; }
+    bool main_thread_only() const override
+    {
+        return true;
+    }
 
     void start_restricted(Proxy& e, time_point const& current_time)
     {

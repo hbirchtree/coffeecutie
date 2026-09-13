@@ -216,8 +216,7 @@ struct ShaderCache
             return;
         auto factor_of = [&](shader_transparent::stage_t const& s) {
             auto src = s.color0_source;
-            if(src == animation_src::none &&
-               (static_cast<u32>(s.flags) & 0x4u))
+            if(src == animation_src::none && (static_cast<u32>(s.flags) & 0x4u))
                 src = animation_src::A_out;
             if(src == animation_src::none)
                 return transparent_color0_factor(s, t);
@@ -226,7 +225,7 @@ struct ShaderCache
                 i < functions.size() ? functions[i] : 0.f, 0.f, 1.f);
         };
 
-        f32 f = factor_of(s0);
+        f32   f = factor_of(s0);
         Vecf4 c = glm::mix(s0.color0_lower, s0.color0_upper, f);
         /* tag colors are ARGB → RGBA; RGB is global (stage 0), alpha is each
          * stage's own animated weight. */
@@ -460,11 +459,8 @@ struct ShaderCache
         case blam::tag_class_t::senv: {
             shader_env const* info = shader.header->as<shader_env>();
             using simple_uv        = blam::shader::simple_texture_uv_animation;
-            auto uv =
-                uv_animation(
-                    static_cast<simple_uv const&>(info->scrolling),
-                    t,
-                    functions);
+            auto uv                = uv_animation(
+                static_cast<simple_uv const&>(info->scrolling), t, functions);
             auto& inp2 = mat.material.inputs[2];
             inp2       = Vecf4(uv.x, uv.y, inp2.z, inp2.w);
 

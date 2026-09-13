@@ -491,10 +491,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 case blam::scn::scenario<halo_version>::scenario_type::solo:
                     map_type = "campaign";
                     break;
-                case blam::scn::scenario<halo_version>::scenario_type::multiplayer:
+                case blam::scn::scenario<
+                    halo_version>::scenario_type::multiplayer:
                     map_type = "multiplayer";
                     break;
-                case blam::scn::scenario<halo_version>::scenario_type::main_menu:
+                case blam::scn::scenario<
+                    halo_version>::scenario_type::main_menu:
                     map_type = "main_menu";
                     break;
                 }
@@ -515,7 +517,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_server_auth.type == AuthType::Ed25519 &&
             !m_server_auth_key_path.empty())
         {
-            meta = sign_metadata_ed25519(std::move(meta), m_server_auth_key_path);
+            meta =
+                sign_metadata_ed25519(std::move(meta), m_server_auth_key_path);
         }
 
         return meta.dump();
@@ -766,12 +769,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_identity.SetGenericString(randomIdentity);
         if(!GameNetworkingSockets_Init(&m_identity, ec))
 #else
-#    if defined(USE_WEBRTC_TRANSPORT)
+#if defined(USE_WEBRTC_TRANSPORT)
         m_server_auth_key_path = gateway_auth_key;
         if(!gateway_register_url.empty() && gateway_auth_secret.empty() &&
            m_server_auth_key_path.empty())
         {
-            // Auto-generate an Ed25519 identity key in the application's config directory.
+            // Auto-generate an Ed25519 identity key in the application's config
+            // directory.
             m_server_auth_key_path =
                 MkUrl("webrtc_identity.pem", semantic::RSCA::ConfigFile)
                     .internUrl;
@@ -802,9 +806,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
         if(m_identity.IsInvalid())
             m_identity.SetLocalHost();
-#    else
+#else
         m_identity.SetLocalHost();
-#    endif
+#endif
         if(!GameNetworkingSockets_Init(
                m_identity.IsLocalHost() ? nullptr : &m_identity, ec))
 #endif
@@ -1103,7 +1107,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         cDebug(
             "Bootstrapping WebRTC DataChannel via gateway {} for serverId={} "
             "auth={}",
-            parsed.gateway_url, parsed.server_id,
+            parsed.gateway_url,
+            parsed.server_id,
             m_client_auth.type == AuthType::HmacSha256
                 ? "hmac-sha256"
                 : (m_client_auth.type == AuthType::Ed25519 ? "ed25519"
@@ -1144,8 +1149,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             bool verified = false;
             if(m_client_auth.type == AuthType::HmacSha256)
             {
-                verified = verify_metadata_hmac(
-                    metadata, m_client_auth.hmac_key);
+                verified =
+                    verify_metadata_hmac(metadata, m_client_auth.hmac_key);
             } else if(m_client_auth.type == AuthType::Ed25519)
             {
                 verified = verify_metadata_ed25519(
@@ -1215,7 +1220,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_connection      = m_impl->ConnectP2PWebRTCDataChannel(
                 bootstrap,
                 expected_identity.IsInvalid() ? nullptr : &expected_identity,
-                0, pc, dc, config.size(), config.data());
+                0,
+                pc,
+                dc,
+                config.size(),
+                config.data());
         }
         if(m_connection == k_HSteamNetConnection_Invalid)
         {
@@ -1493,8 +1502,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                                                 : remote_identity);
                     m_impl->CloseConnection(
                         info->m_hConn, 0, "identity mismatch", false);
-                    m_net_state.client_state =
-                        NetworkState::ClientState::Error;
+                    m_net_state.client_state = NetworkState::ClientState::Error;
                     return;
                 }
                 cDebug(
@@ -1591,7 +1599,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         /* bDeleteFailedMessages: added in GNS 1.6.0; true keeps the
          * previous behaviour here. */
         m_impl->SendMessages(
-            messages.size(), messages.data(), nullptr, /*bDeleteFailedMessages*/ true);
+            messages.size(),
+            messages.data(),
+            nullptr,
+            /*bDeleteFailedMessages*/ true);
     }
 
     template<typename T>
@@ -1924,7 +1935,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             if(event.progress != 100)
                 break;
             if(player_info.player_info.exists())
-                player_init(p.unconstrained_container(), *player_info.player_info);
+                player_init(
+                    p.unconstrained_container(), *player_info.player_info);
             break;
         }
         case MessageBase::GameEvent: {

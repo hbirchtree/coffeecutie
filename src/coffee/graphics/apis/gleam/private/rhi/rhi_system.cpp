@@ -48,8 +48,7 @@ optional<error> system::load(
             0,
             std::function<void(
                 Coffee::Display::Event&, Coffee::Display::ResizeEvent*)>(
-                [this](
-                    Coffee::Display::Event&, Coffee::Display::ResizeEvent*) {
+                [this](Coffee::Display::Event&, Coffee::Display::ResizeEvent*) {
                     m_resize_dirty = true;
                 }));
 
@@ -264,15 +263,16 @@ void system::load(entity_container& e, comp_app::app_error&)
         });
 }
 
-void system::track_timer(std::shared_ptr<query_t>&& timer, std::string const& name)
+void system::track_timer(
+    std::shared_ptr<query_t>&& timer, std::string const& name)
 {
     if(m_tracked_timings.contains(name))
         return;
     auto& tracker = m_tracked_timings[name];
-    tracker = {
-        .timer = std::move(timer),
-        .name = name,
-        .start_time = compo::clock::now(),
+    tracker       = {
+              .timer      = std::move(timer),
+              .name       = name,
+              .start_time = compo::clock::now(),
     };
 }
 
@@ -290,32 +290,39 @@ void system::finalize_timer(system::timing_t&& timer)
 
     auto props = RuntimeProperties::get_properties();
     auto start = timer.start_time.time_since_epoch();
-    props.push(*props.context, datapoint_t{
-        .tid = 0x8005,
-        .name = timer.name,
-        .component = COFFEE_COMPONENT_NAME,
-        .thread_name = "GPU",
-        .ts = start,
-        .flags = {
-            .type = datapoint_t::push,
-        },
-    });
-    props.push(*props.context, datapoint_t{
-        .tid = 0x8005,
-        .name = timer.name,
-        .component = COFFEE_COMPONENT_NAME,
-        .thread_name = "GPU",
-        .ts = start + std::chrono::nanoseconds(timer.timer->resultSync()),
-        .flags = {
-            .type = datapoint_t::pop,
-        },
-    });
+    props.push(
+        *props.context,
+        datapoint_t{
+            .tid         = 0x8005,
+            .name        = timer.name,
+            .component   = COFFEE_COMPONENT_NAME,
+            .thread_name = "GPU",
+            .ts          = start,
+            .flags =
+                {
+                    .type = datapoint_t::push,
+                },
+        });
+    props.push(
+        *props.context,
+        datapoint_t{
+            .tid         = 0x8005,
+            .name        = timer.name,
+            .component   = COFFEE_COMPONENT_NAME,
+            .thread_name = "GPU",
+            .ts = start + std::chrono::nanoseconds(timer.timer->resultSync()),
+            .flags =
+                {
+                    .type = datapoint_t::pop,
+                },
+        });
     timer.timer->dealloc();
 }
 
 static bool timers_available(gleam::system* system)
 {
-    if(system->api_type() == api_type_t::es || system->api_type() == api_type_t::webgl)
+    if(system->api_type() == api_type_t::es ||
+       system->api_type() == api_type_t::webgl)
         return false;
     if(system->feature_info().query.disjoint_timer_query)
         return true;
@@ -333,8 +340,8 @@ system::gpu_timer_t::gpu_timer_t(gleam::system* system, std::string const& name)
     if(system->is_timer_pending(name))
         return;
     m_system = system;
-    m_timer = system->alloc_query(queries::time);
-    m_name = name;
+    m_timer  = system->alloc_query(queries::time);
+    m_name   = name;
     m_timer->alloc();
     m_timer->start();
 }

@@ -4,13 +4,13 @@
 #include "caching.h"
 #include "caching_item.h"
 #include "components.h"
+#include "crunched/loading_screen.h"
 #include "data.h"
 #include "loading_screen.h"
 #include "map_marker.h"
 #include "materials.h"
 #include "peripherals/semantic/chunk.h"
 #include "selected_version.h"
-#include "crunched/loading_screen.h"
 
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_shaders.h>
@@ -231,10 +231,9 @@ struct Pass
         bool full = num_draws >= 128 || (num_draws + incoming) > 128;
         /* Only break where the chosen mode actually needs a different program:
          * in `sotr` mode chicago and base share one, so they share a bucket. */
-        u8   effective = split_family(cls);
-        bool other_family
-            = !draws.back().empty()
-              && split_family(bucket_classes.back()) != effective;
+        u8   effective    = split_family(cls);
+        bool other_family = !draws.back().empty() &&
+                            split_family(bucket_classes.back()) != effective;
         if(full || other_family)
         {
             draws.emplace_back();
@@ -264,7 +263,7 @@ struct Pass
             material_size / sizeof(materials::shader_data), {});
         transparent_staging.assign(
             transparent_size / sizeof(materials::transparent_data), {});
-        material_mapping    = Span<materials::shader_data>(material_staging);
+        material_mapping = Span<materials::shader_data>(material_staging);
         transparent_mapping =
             Span<materials::transparent_data>(transparent_staging);
     }
@@ -336,9 +335,9 @@ struct Pass
         if(sort_centers.empty())
             return;
 
-        std::vector<std::tuple<Vecf3, draw_data_t,
-                               std::shared_ptr<gfx::texture_t>, u8>>
-               flat;
+        std::vector<
+            std::tuple<Vecf3, draw_data_t, std::shared_ptr<gfx::texture_t>, u8>>
+            flat;
         flat.reserve(sort_centers.size());
         size_t ci = 0;
         for(size_t bi = 0; bi < draws.size(); bi++)
@@ -382,9 +381,9 @@ struct Pass
         {
             /* Break the bucket where the family changes; the sorted order is
              * kept exactly, so this cannot alter blending. */
-            if(draws.back().size() >= 128
-               || (!draws.back().empty()
-                   && split_family(bucket_classes.back()) != split_family(cls)))
+            if(draws.back().size() >= 128 ||
+               (!draws.back().empty() &&
+                split_family(bucket_classes.back()) != split_family(cls)))
             {
                 draws.emplace_back();
                 bucket_classes.push_back(0);
@@ -424,8 +423,8 @@ struct Pass
         b[draw] = std::move(cube);
     }
 
-    inline std::vector<std::shared_ptr<gfx::texture_t>> const&
-    reflections_for(size_t bucket) const
+    inline std::vector<std::shared_ptr<gfx::texture_t>> const& reflections_for(
+        size_t bucket) const
     {
         static const std::vector<std::shared_ptr<gfx::texture_t>> none;
         return bucket < reflection_textures.size() ? reflection_textures[bucket]
@@ -663,7 +662,7 @@ struct DrawListBuilder
     /* Splitscreen submits a different set per viewport: a player must not
      * pay for what only the other one can see. */
     static constexpr u32 kMaxViewports = 4;
-    using pass_set_t = std::array<Pass, Pass_Count>;
+    using pass_set_t                   = std::array<Pass, Pass_Count>;
 
     std::array<std::array<pass_set_t, kMaxViewports>, 2> m_bsp_sets;
     std::array<std::array<pass_set_t, kMaxViewports>, 2> m_model_sets;
@@ -675,6 +674,7 @@ struct DrawListBuilder
         u32   seat{0};
         Vecf3 position{};
     };
+
     /* Active local viewports, sorted by seat -- MeshRenderer sorts its own
      * copy the same way, so index i means the same viewport in both. */
     std::vector<view_t> m_views;
@@ -696,6 +696,7 @@ struct DrawListBuilder
     {
         return m_bsp_sets[m_build][m_vp];
     }
+
     pass_set_t& model_build()
     {
         return m_model_sets[m_build][m_vp];
@@ -706,6 +707,7 @@ struct DrawListBuilder
     {
         return m_bsp_sets[m_submit][std::min(vp, kMaxViewports - 1)];
     }
+
     pass_set_t const& model_submit(u32 vp = 0) const
     {
         return m_model_sets[m_submit][std::min(vp, kMaxViewports - 1)];
@@ -730,13 +732,12 @@ struct DrawListBuilder
     void generate_static_draws(
         Proxy& p, size_t& materials_ptr, size_t& transparent_ptr)
     {
-        ProfContext _;
+        ProfContext           _;
         std::map<Passes, i32> instance_offsets;
         for(Pass& pass : bsp_build())
             pass.clear();
 
-        for(auto ent :
-            p.template select<BspReference, DrawState, Visibility>())
+        for(auto ent : p.template select<BspReference, DrawState, Visibility>())
         {
             auto&& [bsp, bsp_draw, vis] = ent.components();
 
@@ -755,8 +756,8 @@ struct DrawListBuilder
             instance_offset += bsp_draw.draw.data.front().instances.count;
             auto sh_it   = shader_cache.find(bsp.shader);
             u8   mat_cls = sh_it != shader_cache.end()
-                             ? material_class_of(sh_it->second.tag_class)
-                             : MatClass_Base;
+                               ? material_class_of(sh_it->second.tag_class)
+                               : MatClass_Base;
             wf.material_classes |= mat_cls;
             if(bsp_draw.current_pass > Pass_LastOpaque)
                 wf.insert_sortable(
@@ -789,8 +790,7 @@ struct DrawListBuilder
             transparent_ptr += transparent_size;
         }
 
-        for(auto ent :
-            p.template select<BspReference, DrawState, Visibility>())
+        for(auto ent : p.template select<BspReference, DrawState, Visibility>())
         {
             auto&& [bsp, bsp_draw, vis] = ent.components();
 
@@ -829,7 +829,7 @@ struct DrawListBuilder
             p.template select<SubModel, DrawState, MeshTrackingData>())
         {
             auto&& [model, model_draw, track] = ent.components();
-            auto   parent = p.template ref<Proxy>(model.parent);
+            auto         parent = p.template ref<Proxy>(model.parent);
             Model const& mod    = parent.template get<Model>();
 
             if(!parent.template get<Visibility>().visible_for(m_seat) ||
@@ -849,13 +849,13 @@ struct DrawListBuilder
             };
             auto sh_it   = shader_cache.find(model.shader);
             u8   mat_cls = sh_it != shader_cache.end()
-                             ? material_class_of(sh_it->second.tag_class)
-                             : MatClass_Base;
+                               ? material_class_of(sh_it->second.tag_class)
+                               : MatClass_Base;
             wf.material_classes |= mat_cls;
 
             if(model_draw.current_pass > Pass_LastOpaque)
             {
-                Vecf3 center = Vecf3(mod.transform[3]);
+                Vecf3 center   = Vecf3(mod.transform[3]);
                 track.model_id = wf.insert_sortable(
                     model_draw.draw.data.front(), center, mat_cls);
             } else
@@ -917,10 +917,10 @@ struct DrawListBuilder
             if(!rendering_params->render_scenery &&
                (ent.tags() & ObjectSkybox) == 0)
                 continue;
-            auto            ref     = p.template ref<Proxy>(ent.id());
-            SubModel const& smodel  = ref.template get<SubModel>();
+            auto             ref     = p.template ref<Proxy>(ent.id());
+            SubModel const&  smodel  = ref.template get<SubModel>();
             DrawState const& sm_draw = ref.template get<DrawState>();
-            Model const&    model =
+            Model const&     model =
                 p.template ref<Proxy>(smodel.parent).template get<Model>();
             MeshTrackingData const& track =
                 ref.template get<MeshTrackingData>();
@@ -928,7 +928,7 @@ struct DrawListBuilder
             if(!followable(track.model_id))
                 continue;
 
-            Pass&              pass = model_build()[sm_draw.current_pass];
+            Pass& pass = model_build()[sm_draw.current_pass];
             if(track.model_id.bucket >= pass.draws.size())
                 continue;
             draw_data_t const& draw =
@@ -963,7 +963,6 @@ struct DrawListBuilder
                     .template get<Visibility>()
                     .interior);
         }
-
     }
 
     void update_materials(Proxy& p, time_point const& time)
@@ -982,16 +981,16 @@ struct DrawListBuilder
             if(!rendering_params->render_scenery &&
                (ent.tags() & ObjectSkybox) == 0)
                 continue;
-            auto              ref    = p.template ref<Proxy>(ent.id());
-            SubModel const&   smodel = ref.template get<SubModel>();
+            auto              ref     = p.template ref<Proxy>(ent.id());
+            SubModel const&   smodel  = ref.template get<SubModel>();
             DrawState&        sm_draw = ref.template get<DrawState>();
-            MeshTrackingData& track  = ref.template get<MeshTrackingData>();
+            MeshTrackingData& track   = ref.template get<MeshTrackingData>();
             if(!followable(track.model_id))
                 continue;
-            Pass&             pass   = model_build()[sm_draw.current_pass];
+            Pass& pass = model_build()[sm_draw.current_pass];
             if(track.model_id.bucket >= pass.draws.size())
                 continue;
-            auto&             bucket = pass.draws[track.model_id.bucket];
+            auto& bucket = pass.draws[track.model_id.bucket];
             if(bucket.empty() || track.model_id.draw >= bucket.size())
                 continue;
             draw_data_t const& draw = bucket.at(track.model_id.draw);
@@ -1012,8 +1011,7 @@ struct DrawListBuilder
                  * real one -- but an A_out set on the object itself is a
                  * deliberate override, so it wins. */
                 auto const* obj = p.template get<ObjectSpawn>(smodel.parent);
-                if(obj && obj->power >= 0.f &&
-                   model->object_function[0] < 0.f)
+                if(obj && obj->power >= 0.f && model->object_function[0] < 0.f)
                     functions[0] = obj->power;
                 shader_cache.update_transparent_animations(
                     pass.transparent_of(instance_id),
@@ -1025,9 +1023,9 @@ struct DrawListBuilder
 
         for(auto ent : p.select(ObjectBsp))
         {
-            auto          ref = p.template ref<Proxy>(ent.id());
-            BspReference const& bsp = ref.template get<BspReference>();
-            DrawState&    bsp_draw = ref.template get<DrawState>();
+            auto                ref      = p.template ref<Proxy>(ent.id());
+            BspReference const& bsp      = ref.template get<BspReference>();
+            DrawState&          bsp_draw = ref.template get<DrawState>();
 
             if(!ref.template get<Visibility>().visible_for(m_seat))
                 continue;
@@ -1115,7 +1113,7 @@ struct DrawListBuilder
         ModelItem<Version> const&                                  model,
         std::optional<ShaderCache<halo_version>::material_context> context,
         size_t                                                     i = 0,
-        bool                                                       interior = false)
+        bool interior                                                = false)
     {
         Pass&                   pass     = model_build()[which];
         materials::shader_data& material = pass.material_of(i);
@@ -1138,7 +1136,6 @@ struct DrawListBuilder
         shader_cache.update_uv_animations(material, shader, time, functions);
     }
 };
-
 
 template<typename Version>
 struct MeshRenderer
@@ -1178,6 +1175,7 @@ struct MeshRenderer
         {
             skybox,
         } type;
+
         union
         {
             i16 skybox_id;
@@ -1208,7 +1206,10 @@ struct MeshRenderer
         this->priority = 3072;
     }
 
-    bool main_thread_only() const override { return true; }
+    bool main_thread_only() const override
+    {
+        return true;
+    }
 
     BSPItem const* get_bsp(generation_idx_t bsp)
     {
@@ -1404,24 +1405,23 @@ struct MeshRenderer
 
     gfx::uniform_pair<const int> get_renderflag_uniform()
     {
-        m_render_flags = (m_render_params.render_fog ? 0x1 : 0) |
-                         (m_render_params.render_lightmaps ? 0x2 : 0) |
-                         (m_render_params.render_reflection ? 0x4 : 0) |
-                         (m_render_params.render_model_bones ? 0x8 : 0) |
-                         (m_render_params.only_normals ? 0x10 : 0) |
-                         (m_render_params.only_normalmaps ? 0x20 : 0) |
-                         (m_render_params.only_lightmaps ? 0x40 : 0) |
-                         (m_render_params.only_reflections ? 0x80 : 0) |
-                         (m_render_params.only_multipurpose ? 0x100 : 0) |
-                         (m_render_params.only_multipurpose2 ? 0x200 : 0) |
-                         (m_render_params.only_diffuse ? 0x400 : 0) |
-                         (std::is_same_v<halo_version, blam::xbox_version_t>
-                              ? 0x800
-                              : 0) |
-                         (m_render_params.only_detail ? 0x1000 : 0) |
-                         (m_render_params.only_micro ? 0x2000 : 0) |
-                         (m_render_params.only_aux_channels ? 0x4000 : 0) |
-                         (m_render_params.interior ? 0x8000 : 0);
+        m_render_flags =
+            (m_render_params.render_fog ? 0x1 : 0) |
+            (m_render_params.render_lightmaps ? 0x2 : 0) |
+            (m_render_params.render_reflection ? 0x4 : 0) |
+            (m_render_params.render_model_bones ? 0x8 : 0) |
+            (m_render_params.only_normals ? 0x10 : 0) |
+            (m_render_params.only_normalmaps ? 0x20 : 0) |
+            (m_render_params.only_lightmaps ? 0x40 : 0) |
+            (m_render_params.only_reflections ? 0x80 : 0) |
+            (m_render_params.only_multipurpose ? 0x100 : 0) |
+            (m_render_params.only_multipurpose2 ? 0x200 : 0) |
+            (m_render_params.only_diffuse ? 0x400 : 0) |
+            (std::is_same_v<halo_version, blam::xbox_version_t> ? 0x800 : 0) |
+            (m_render_params.only_detail ? 0x1000 : 0) |
+            (m_render_params.only_micro ? 0x2000 : 0) |
+            (m_render_params.only_aux_channels ? 0x4000 : 0) |
+            (m_render_params.interior ? 0x8000 : 0);
         return gfx::uniform_pair{
             {"render_flags"sv, 31},
             semantic::SpanOne<const int>(m_render_flags),
@@ -1515,13 +1515,14 @@ struct MeshRenderer
 
             gfx::base_instance_sampler_list cube_slots;
             if(per_draw_cubes && cube_fallback)
-                cube_slots.slots.push_back(gfx::base_instance_sampler_t{
-                    .stage    = typing::graphics::ShaderStage::Fragment,
-                    .location = {"source_cube"sv, 19},
-                    .sampler  = bitm_cache.cube_sampler(),
-                    .textures = pass.reflections_for(bucket_idx),
-                    .fallback = cube_fallback,
-                });
+                cube_slots.slots.push_back(
+                    gfx::base_instance_sampler_t{
+                        .stage    = typing::graphics::ShaderStage::Fragment,
+                        .location = {"source_cube"sv, 19},
+                        .sampler  = bitm_cache.cube_sampler(),
+                        .textures = pass.reflections_for(bucket_idx),
+                        .fallback = cube_fallback,
+                    });
 
             auto res = m_api->submit(
                 {
@@ -1653,7 +1654,7 @@ struct MeshRenderer
             if(!params->debug_portals && !params->debug_clusters)
                 break;
             BspReference const& bsp_ = ent.template get<BspReference>();
-            BSPItem const* bsp  = get_bsp(bsp_.bsp);
+            BSPItem const*      bsp  = get_bsp(bsp_.bsp);
 
             if(params->debug_portals)
             {
@@ -1722,7 +1723,7 @@ struct MeshRenderer
         ProfContext _("MeshRenderer::upload_draw_lists");
 
         std::vector<gleam::buffer_t*> discarded;
-        auto upload = [&discarded](
+        auto                          upload = [&discarded](
                           gfx::buffer_slice_t const& target, auto const& src) {
             using value_type = typename std::decay_t<decltype(src)>::value_type;
             if(src.empty() || !target.valid())
@@ -1830,8 +1831,8 @@ struct MeshRenderer
          * and UV animations freeze. Wrap to a shorter cycle. */
         f32 t = std::fmod(stl_types::chrono::to_f32(time), 3600.f);
 
-        gfx::system& system = p.template subsystem<gfx::system>();
-        auto render_timer = system.gpu_timer("MeshRenderer full pass");
+        gfx::system& system       = p.template subsystem<gfx::system>();
+        auto         render_timer = system.gpu_timer("MeshRenderer full pass");
 
         auto blend_for_pass = [](Passes pass) -> gfx::blend_state {
             switch(pass)
@@ -1853,8 +1854,7 @@ struct MeshRenderer
         u32 primary_player = 0;
 
         /* Read-only view of what the builder produced this frame */
-        auto const& builder =
-            p.template subsystem<DrawListBuilder<Version>>();
+        auto const& builder = p.template subsystem<DrawListBuilder<Version>>();
 
         // Opaque world geometry — all players, depth write + stencil write.
         gfx::stencil_state opaque_stencil{
@@ -1952,7 +1952,7 @@ struct MeshRenderer
         gfx::depth_extended_state transparent_depth{.depth_write = false};
         for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
         {
-            auto pass  = static_cast<Passes>(pi);
+            auto pass = static_cast<Passes>(pi);
             for(auto i : stl_types::range<u32>(m_players.size()))
             {
                 auto blend = blend_for_pass(pass);
@@ -1979,9 +1979,11 @@ struct MeshRenderer
 
 template<typename Ver>
 struct LegacyMeshRenderer
-    : compo::RestrictedSubsystem<LegacyMeshRenderer<Ver>, LegacyMeshRendererManifest<Ver>>
+    : compo::RestrictedSubsystem<
+          LegacyMeshRenderer<Ver>,
+          LegacyMeshRendererManifest<Ver>>
 {
-    using type = LegacyMeshRenderer<Ver>;
+    using type  = LegacyMeshRenderer<Ver>;
     using Proxy = compo::proxy_of<LegacyMeshRendererManifest<Ver>>;
 
     struct LegacyBatch
@@ -2034,11 +2036,12 @@ struct LegacyMeshRenderer
         } while(false);
 
         RenderingParameters const* rendering_props;
-        gfx::system* api;
+        gfx::system*               api;
         p.subsystem(rendering_props);
         p.subsystem(api);
         BitmapCache<Ver>& bitm_cache = p.template subsystem<BitmapCache<Ver>>();
-        ShaderCache<Ver>& shader_cache = p.template subsystem<ShaderCache<Ver>>();
+        ShaderCache<Ver>& shader_cache =
+            p.template subsystem<ShaderCache<Ver>>();
 
         PlayerCamera const* player_cam{};
         for(auto player : p.template select<PlayerInfo, PlayerCamera>())
@@ -2052,7 +2055,7 @@ struct LegacyMeshRenderer
         if(!player_cam)
             cWarning("No player camera");
 
-        ProfContext _;
+        ProfContext                       _;
         std::map<cache_id_t, LegacyBatch> batches;
         for(auto const& ent :
             p.template select<BspReference, DrawState, Visibility>())
@@ -2330,9 +2333,10 @@ struct LegacyMeshRenderer
         for(auto ent : p.template select<SubModel, DrawState>())
         {
             auto const& [sm, sm_draw] = ent.components();
-            auto            parent = p.template ref<Proxy>(sm.parent);
-            Model const&    mod    = parent.template get<Model>();
-            if(!parent.template get<Visibility>().visible_for(0) || !sm.shader.valid())
+            auto         parent       = p.template ref<Proxy>(sm.parent);
+            Model const& mod          = parent.template get<Model>();
+            if(!parent.template get<Visibility>().visible_for(0) ||
+               !sm.shader.valid())
                 continue;
 
             auto shader_it = shader_cache.find(sm.shader);
@@ -2538,27 +2542,27 @@ struct LegacyMeshRenderer
 void ScreenClear::start_restricted(Proxy& e, const time_point&)
 {
     auto& api = e.subsystem<gfx::system>();
-    auto _    = api.debug().scope("ScreenClear::start_restricted");
-    auto fb   = e.subsystem<gfx::system>().default_rendertarget();
+    auto  _   = api.debug().scope("ScreenClear::start_restricted");
+    auto  fb  = e.subsystem<gfx::system>().default_rendertarget();
     e.subsystem<BlamResources>().offscreen->clear(0.0);
 }
 
 void ScreenClear::end_restricted(Proxy& e, const time_point&)
 {
-    auto& api         = e.subsystem<gfx::system>();
-    auto& resources   = e.subsystem<BlamResources>();
+    auto& api       = e.subsystem<gfx::system>();
+    auto& resources = e.subsystem<BlamResources>();
 
     if(api.default_rendertarget() == resources.offscreen)
         return;
 
-    auto _ = api.debug().scope("ScreenClear::end_restricted");
+    auto _            = api.debug().scope("ScreenClear::end_restricted");
     auto render_timer = api.gpu_timer("ScreenClear Full screen render");
 
     if(!quad_program)
         load_resources(api, e.subsystem<BlamResources>());
 
-    auto& postprocess = e.subsystem<PostProcessParameters>();
-    f32 display_scale = postprocess.scale;
+    auto& postprocess   = e.subsystem<PostProcessParameters>();
+    f32   display_scale = postprocess.scale;
 
     Matf4 transform = glm::scale(
         glm::translate(glm::identity<Matf4>(), Vecf3{-1, -1, 0}),
@@ -2601,12 +2605,9 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
             1.f / static_cast<f32>(level_size.y)};
     }
 
-    int effect_mode =
-        postprocess.rgb_comp.length() > 0
-        ? 2
-        : postprocess.blur > 0
-          ? 1
-          : 0;
+    int effect_mode = postprocess.rgb_comp.length() > 0 ? 2
+                      : postprocess.blur > 0            ? 1
+                                                        : 0;
 
     auto params_v = gfx::make_uniform_list(
         typing::graphics::ShaderStage::Vertex,
@@ -2619,7 +2620,8 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
         gfx::uniform_pair{
             {"exposure"sv}, semantic::SpanOne(postprocess.exposure)},
         gfx::uniform_pair{{"blur_distance"}, semantic::SpanOne(blur_spacing)},
-        gfx::uniform_pair{{"rgb_comp_defocus"}, semantic::SpanOne(postprocess.rgb_comp)},
+        gfx::uniform_pair{
+            {"rgb_comp_defocus"}, semantic::SpanOne(postprocess.rgb_comp)},
         gfx::uniform_pair{{"mode"}, semantic::SpanOne(effect_mode)});
 
     // clang-format off
@@ -2642,8 +2644,7 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
     // clang-format on
     if(composite_result.has_value())
         cWarning(
-            "ScreenClear composite failed: {}",
-            std::get<1>(*composite_result));
+            "ScreenClear composite failed: {}", std::get<1>(*composite_result));
 
     comp_app::interfaces::GraphicsFramebuffer* framebuffer =
         e.service<comp_app::GraphicsFramebuffer>();
@@ -2660,7 +2661,8 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
         gfx::uniform_pair{{"offset"sv}, semantic::SpanOne(offset)},
         gfx::uniform_pair{{"exposure"sv}, semantic::SpanOne(one)},
         gfx::uniform_pair{{"blur_distance"}, semantic::SpanOne(no_blur)},
-        gfx::uniform_pair{{"rgb_comp_defocus"}, semantic::SpanOne(postprocess.rgb_comp)},
+        gfx::uniform_pair{
+            {"rgb_comp_defocus"}, semantic::SpanOne(postprocess.rgb_comp)},
         gfx::uniform_pair{{"mode"}, semantic::SpanOne(effect_mode)});
 
     for(screen_quad_t const& draw : extra_quads)
@@ -2758,33 +2760,37 @@ void ScreenClear::load_resources(gleam::system& api, BlamResources& resources)
     quad_program->add(
         gfx::program_t::stage_t::Vertex,
         api.alloc_shader(
-            semantic::mem_chunk<const char>::ofContainer(blam::loading::screen_clear_vert)));
+            semantic::mem_chunk<const char>::ofContainer(
+                blam::loading::screen_clear_vert)));
     quad_program->add(
         gfx::program_t::stage_t::Fragment,
         api.alloc_shader(
-            semantic::mem_chunk<const char>::ofContainer(blam::loading::screen_clear_frag)));
+            semantic::mem_chunk<const char>::ofContainer(
+                blam::loading::screen_clear_frag)));
     if(auto res = quad_program->compile(); res.has_error())
         cDebug("Error compiling quad shader: {0}", res.error());
 
-    auto compile_blur_stage = [&api](
-                                  std::string_view fragment,
-                                  std::string_view name) {
-        auto program = api.alloc_program();
-        program->add(
-            gfx::program_t::stage_t::Vertex,
-            api.alloc_shader(
-                semantic::mem_chunk<const char>::ofContainer(blam::loading::screen_clear_vert)));
-        program->add(
-            gfx::program_t::stage_t::Fragment,
-            api.alloc_shader(
-                semantic::mem_chunk<const char>::ofContainer(fragment)));
-        if(auto res = program->compile(); res.has_error())
-            cDebug("Error compiling {0} shader: {1}", name, res.error());
-        return program;
-    };
+    auto compile_blur_stage =
+        [&api](std::string_view fragment, std::string_view name) {
+            auto program = api.alloc_program();
+            program->add(
+                gfx::program_t::stage_t::Vertex,
+                api.alloc_shader(
+                    semantic::mem_chunk<const char>::ofContainer(
+                        blam::loading::screen_clear_vert)));
+            program->add(
+                gfx::program_t::stage_t::Fragment,
+                api.alloc_shader(
+                    semantic::mem_chunk<const char>::ofContainer(fragment)));
+            if(auto res = program->compile(); res.has_error())
+                cDebug("Error compiling {0} shader: {1}", name, res.error());
+            return program;
+        };
 
-    blur_down_program = compile_blur_stage(blam::loading::blur_down_frag, "blur downsample");
-    blur_up_program   = compile_blur_stage(blam::loading::blur_up_frag, "blur upsample");
+    blur_down_program =
+        compile_blur_stage(blam::loading::blur_down_frag, "blur downsample");
+    blur_up_program =
+        compile_blur_stage(blam::loading::blur_up_frag, "blur upsample");
 
     if(resources.color)
     {
@@ -2805,7 +2811,8 @@ void alloc_renderer(EntityContainer& container)
     container.register_subsystem_inplace<ScreenClear>();
     if(api.api_version() == std::make_tuple<u32, u32>(2, 0))
     {
-        container.register_subsystem_inplace<LegacyMeshRenderer<halo_version>>();
+        container
+            .register_subsystem_inplace<LegacyMeshRenderer<halo_version>>();
     } else
     {
         container.register_subsystem_inplace<DrawListBuilder<halo_version>>(

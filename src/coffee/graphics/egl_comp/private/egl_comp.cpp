@@ -661,10 +661,10 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
 
     m_container = &e;
 
-    auto display  = e.service<DisplayHandle>()->context().display;
-    auto ptr_info = e.service<comp_app::PtrNativeWindowInfo>();
-    auto context  = e.service<egl::GraphicsContext>();
-    auto& config  = comp_app::AppLoader::config<comp_app::GLConfig>(e);
+    auto  display  = e.service<DisplayHandle>()->context().display;
+    auto  ptr_info = e.service<comp_app::PtrNativeWindowInfo>();
+    auto  context  = e.service<egl::GraphicsContext>();
+    auto& config   = comp_app::AppLoader::config<comp_app::GLConfig>(e);
 #if defined(EGL_VERSION_1_5)
     std::vector<std::pair<EGLAttrib, EGLAttrib>> attribs;
     DisplayHandle& handle = *e.service<DisplayHandle>();
@@ -765,21 +765,16 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
 
     EGLint swap_min{}, swap_max{};
     eglGetConfigAttrib(
-        display,
-        context->m_config,
-        EGL_MIN_SWAP_INTERVAL,
-        &swap_min);
+        display, context->m_config, EGL_MIN_SWAP_INTERVAL, &swap_min);
     eglGetConfigAttrib(
-        display,
-        context->m_config,
-        EGL_MAX_SWAP_INTERVAL,
-        &swap_max);
+        display, context->m_config, EGL_MAX_SWAP_INTERVAL, &swap_max);
     if(config.swapInterval >= swap_min && config.swapInterval <= swap_max)
     {
         cDebug("egl_comp: Setting swap interval {}", config.swapInterval);
         eglSwapInterval(display, config.swapInterval);
     } else
-        cWarning("egl_comp: Cannot set swap interval {}, min={} max={}",
+        cWarning(
+            "egl_comp: Cannot set swap interval {}, min={} max={}",
             config.swapInterval,
             swap_min,
             swap_max);

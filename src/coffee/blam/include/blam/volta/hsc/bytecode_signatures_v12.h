@@ -50,7 +50,7 @@ struct sig_t
 };
 
 } // namespace signatures
- 
+
 template<typename Bytecode = bc::v1>
 signatures::sig_t opcode_signature(opcode_layout<Bytecode> const& op);
 

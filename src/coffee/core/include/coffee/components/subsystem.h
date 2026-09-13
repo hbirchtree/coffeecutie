@@ -51,8 +51,8 @@ struct RestrictedSubsystem : SubsystemBase
         if constexpr(has_start_restricted<OuterType, Manifest>)
         {
             access::scope_guard _(this->runtime_access);
-            Proxy p(this->get_container(proxy));
-            auto* this_specialization = C_CAST<OuterType*>(this);
+            Proxy               p(this->get_container(proxy));
+            auto*               this_specialization = C_CAST<OuterType*>(this);
             this_specialization->start_restricted(p, t);
         } else
             SubsystemBase::start_frame(proxy, t);
@@ -63,8 +63,8 @@ struct RestrictedSubsystem : SubsystemBase
         if constexpr(has_end_restricted<OuterType, Manifest>)
         {
             access::scope_guard _(this->runtime_access);
-            Proxy p(this->get_container(proxy));
-            auto* this_specialization = C_CAST<OuterType*>(this);
+            Proxy               p(this->get_container(proxy));
+            auto*               this_specialization = C_CAST<OuterType*>(this);
             this_specialization->end_restricted(p, t);
         } else
             SubsystemBase::end_frame(proxy, t);

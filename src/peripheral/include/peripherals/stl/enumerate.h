@@ -96,19 +96,19 @@ struct enumerate
     };
 
     enumerate(container_t& c)
-        requires(std::is_lvalue_reference_v<Container>)
+    requires(std::is_lvalue_reference_v<Container>)
         : m_container(c)
     {
     }
 
     enumerate(container_t const& c)
-        requires(!std::is_lvalue_reference_v<Container>)
+    requires(!std::is_lvalue_reference_v<Container>)
         : m_container(c)
     {
     }
 
     enumerate(container_t&& c)
-        requires(!std::is_lvalue_reference_v<Container>)
+    requires(!std::is_lvalue_reference_v<Container>)
         : m_container(std::move(c))
     {
     }

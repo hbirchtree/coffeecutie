@@ -137,7 +137,8 @@ struct FontCache
                 auto chars = characters_of(font_item);
                 if(chars.empty())
                     continue;
-                if(!pack_glyphs(chars, atlas_size, [](auto const&, i32, i32) {}))
+                if(!pack_glyphs(
+                       chars, atlas_size, [](auto const&, i32, i32) {}))
                 {
                     all_fit = false;
                     break;
@@ -149,7 +150,9 @@ struct FontCache
         }
 
         cDebug(
-            "Font atlas: {}x{} x{} layers", atlas_size, atlas_size,
+            "Font atlas: {}x{} x{} layers",
+            atlas_size,
+            atlas_size,
             m_cache.size());
 
         font_textures->alloc(
@@ -203,10 +206,10 @@ struct FontCache
                                 reinterpret_cast<u8 const*>(pix.value().data());
                             for(i32 row = 0; row < bh; row++)
                             {
-                                u8* dst = atlas_buf.data() +
-                                          static_cast<size_t>(y + row) *
-                                              atlas_size +
-                                          x;
+                                u8* dst =
+                                    atlas_buf.data() +
+                                    static_cast<size_t>(y + row) * atlas_size +
+                                    x;
                                 std::memcpy(
                                     dst, src + row * bw, static_cast<u32>(bw));
                             }

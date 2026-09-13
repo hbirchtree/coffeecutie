@@ -60,7 +60,7 @@ struct PhysicsSystem
     {
         // Ordering constraint: before Occluder and DrawListBuilder
         this->priority = 897;
-        m_config     = std::make_unique<btDefaultCollisionConfiguration>();
+        m_config       = std::make_unique<btDefaultCollisionConfiguration>();
         m_dispatcher = std::make_unique<btCollisionDispatcher>(m_config.get());
         m_broadphase = std::make_unique<btDbvtBroadphase>();
         m_solver     = std::make_unique<btSequentialImpulseConstraintSolver>();
@@ -834,9 +834,9 @@ struct PhysicsSystem
 
     static constexpr f32 probe_radius = 0.2f;
 
-    i16  m_built_section{-2};
-    u32  m_frame{0};
-    bool m_marker_spawned{false};
+    i16               m_built_section{-2};
+    u32               m_frame{0};
+    bool              m_marker_spawned{false};
     compo::time_point m_next_process_time{};
 };
 

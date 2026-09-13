@@ -51,7 +51,8 @@ STATICINLINE ThreadNames& GetContext(platform::GlobalState* context = nullptr)
     return *threadNames;
 }
 
-STATICINLINE void SaveThreadName(stl_types::thread_id_t hs, std::string const& name)
+STATICINLINE void SaveThreadName(
+    stl_types::thread_id_t hs, std::string const& name)
 {
     C_UNUSED(auto state) = platform::state->LockState("threadNames");
     auto& context        = GetContext();
@@ -112,7 +113,8 @@ std::string_view GetName(stl_types::thread_id_t t)
     return LoadThreadName(t);
 }
 
-std::map<stl_types::thread_id_t, std::string> GetNames(platform::GlobalState* context)
+std::map<stl_types::thread_id_t, std::string> GetNames(
+    platform::GlobalState* context)
 {
     C_UNUSED(auto state) = platform::state->LockState(*context);
     return GetContext(context).names;

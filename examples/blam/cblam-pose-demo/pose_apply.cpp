@@ -32,7 +32,8 @@ static Quatf rotation_between(Vecf3 const& a, Vecf3 const& b)
         /* Opposite: any perpendicular axis will do, so take the one furthest
          * from a to keep the cross product well conditioned. */
         Vecf3 axis = glm::cross(
-            a, std::abs(a.x) < 0.9f ? Vecf3(1.f, 0.f, 0.f) : Vecf3(0.f, 1.f, 0.f));
+            a,
+            std::abs(a.x) < 0.9f ? Vecf3(1.f, 0.f, 0.f) : Vecf3(0.f, 1.f, 0.f));
         return glm::angleAxis(glm::pi<f32>(), glm::normalize(axis));
     }
     Vecf3 axis = glm::cross(a, b);
@@ -141,7 +142,7 @@ void apply_pose(
                                     ? std::min<u32>(
                                           static_cast<u32>(
                                               one_shot_time_s *
-                                                  g_pose_config.animation_fps),
+                                              g_pose_config.animation_fps),
                                           static_cast<u32>(anim.frame_count) -
                                               1)
                                     : 0;
@@ -149,7 +150,8 @@ void apply_pose(
                             frame_idx =
                                 anim.frame_count > 0
                                     ? static_cast<u32>(
-                                          time_s * g_pose_config.animation_fps) %
+                                          time_s *
+                                          g_pose_config.animation_fps) %
                                           static_cast<u32>(anim.frame_count)
                                     : 0;
 
@@ -232,12 +234,12 @@ void apply_pose(
                 break;
 
             auto const& p = b["position"];
-            f32 const   raw[3]{
-                p[0].get<f32>(), p[1].get<f32>(), p[2].get<f32>()};
+            f32 const raw[3]{p[0].get<f32>(), p[1].get<f32>(), p[2].get<f32>()};
 
             Vecf3 target;
             for(int i = 0; i < 3; ++i)
-                target[i] = root.axis_map[i].sign * raw[root.axis_map[i].source];
+                target[i] =
+                    root.axis_map[i].sign * raw[root.axis_map[i].source];
 
             target = target * root.scale + root.offset;
 
@@ -252,8 +254,7 @@ void apply_pose(
             g_pose_demo_root_offset =
                 root.smoothing > 0.f
                     ? g_pose_demo_root_offset +
-                          root.smoothing *
-                              (target - g_pose_demo_root_offset)
+                          root.smoothing * (target - g_pose_demo_root_offset)
                     : target;
             break;
         }
@@ -305,13 +306,12 @@ void apply_pose(
 
     for(u32 i = 0; i < n; ++i)
     {
-        u16 parent = bones[i].parent;
-        auto accum = [&](u32 j) {
-            u16 p = bones[j].parent;
-            cur_world[j] =
-                p != blam::mod2::bone::invalid_bone && p < j
-                    ? cur_world[p] * rotations[j]
-                    : rotations[j];
+        u16  parent = bones[i].parent;
+        auto accum  = [&](u32 j) {
+            u16 p        = bones[j].parent;
+            cur_world[j] = p != blam::mod2::bone::invalid_bone && p < j
+                                ? cur_world[p] * rotations[j]
+                                : rotations[j];
         };
         accum(i);
 
@@ -328,8 +328,7 @@ void apply_pose(
             if(!b.contains("direction") || b["direction"].size() != 3)
                 continue;
             auto const& d = b["direction"];
-            Vecf3       raw(
-                d[0].get<f32>(), d[1].get<f32>(), d[2].get<f32>());
+            Vecf3       raw(d[0].get<f32>(), d[1].get<f32>(), d[2].get<f32>());
             if(glm::length(raw) < 1e-6f)
                 continue;
 
@@ -337,11 +336,12 @@ void apply_pose(
              * vector directly. */
             Vecf3 target;
             for(int k = 0; k < 3; ++k)
-                target[k] = entry->axis_map[k].sign * raw[entry->axis_map[k].source];
+                target[k] =
+                    entry->axis_map[k].sign * raw[entry->axis_map[k].source];
             target = glm::normalize(target);
 
-            Vecf3 from = glm::normalize(
-                cur_world[i] * glm::normalize(entry->aim_axis));
+            Vecf3 from =
+                glm::normalize(cur_world[i] * glm::normalize(entry->aim_axis));
             Quatf q_aim = rotation_between(from, target);
 
             {
@@ -357,8 +357,7 @@ void apply_pose(
             /* Conjugating by the bone's live world orientation turns q_aim,
              * which is in model space, into the bone's own frame. */
             Quatf const& delta = cur_world[i];
-            rotations[i] =
-                rotations[i] * glm::conjugate(delta) * q_aim * delta;
+            rotations[i] = rotations[i] * glm::conjugate(delta) * q_aim * delta;
             accum(i);
             continue;
         }
@@ -378,9 +377,10 @@ void apply_pose(
         q_src = q_src * glm::conjugate(entry->source_rest);
 
         /* Stage 1: signed axis permutation. Done on the components directly
-         * because a reflection is not a rotation and cannot be conjugated in. */
+         * because a reflection is not a rotation and cannot be conjugated in.
+         */
         {
-            f32 const imag[3]{q_src.x, q_src.y, q_src.z};
+            f32 const   imag[3]{q_src.x, q_src.y, q_src.z};
             auto const& map = entry->axis_map;
             q_src           = Quatf(
                 q_src.w,
@@ -406,9 +406,9 @@ void apply_pose(
         }
 
         {
-            /* Exponential moving average via slerp: q = slerp(prev, q_src, alpha).
-             * Keyed by source name rather than by entry pointer, since the
-             * config's retarget vector owns the entries and reallocating it
+            /* Exponential moving average via slerp: q = slerp(prev, q_src,
+             * alpha). Keyed by source name rather than by entry pointer, since
+             * the config's retarget vector owns the entries and reallocating it
              * would leave dangling keys. */
             static std::unordered_map<std::string, Quatf> smoothed_state;
 
@@ -449,12 +449,11 @@ void apply_pose(
                 mic_bone.blam_bone_name);
             continue;
         }
-        f32 angle     = g_pose_demo_mic_volume * mic_bone.gain;
-        f32 max_angle = glm::radians(mic_bone.clamp_degrees);
-        angle         = std::clamp(angle, -max_angle, max_angle);
-        rotations[*idx] =
-            rotations[*idx] *
-            glm::angleAxis(angle, glm::normalize(mic_bone.axis));
+        f32 angle       = g_pose_demo_mic_volume * mic_bone.gain;
+        f32 max_angle   = glm::radians(mic_bone.clamp_degrees);
+        angle           = std::clamp(angle, -max_angle, max_angle);
+        rotations[*idx] = rotations[*idx] *
+                          glm::angleAxis(angle, glm::normalize(mic_bone.axis));
     }
 
     std::vector<Matf4> world(n);

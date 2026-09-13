@@ -390,7 +390,7 @@ libc_types::i32 cooker_main()
                         from_profile_string(res["profile"].as<std::string>()),
                     .version =
                         cast_string<u32>(res["version"].as<std::string>()),
-                    .compact = res.count("compact") > 0,
+                    .compact         = res.count("compact") > 0,
                     .force_temporary = res.count("force-temporary") > 0,
                 });
             if(glsl.has_error())

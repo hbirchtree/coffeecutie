@@ -116,13 +116,9 @@ void TouchOverlay::end_restricted(Proxy& proxy, const time_point& time)
             movement.control.x * delta_s,
             0);
         cam->camera_.rotate(
-            cam->camera,
-            -look.control.x * delta_s,
-            look.control.y * delta_s);
+            cam->camera, -look.control.x * delta_s, look.control.y * delta_s);
         cam->camera_.rotate(
-            cam->camera,
-            -look.instant_control.x,
-            look.instant_control.y);
+            cam->camera, -look.instant_control.x, look.instant_control.y);
         break;
     }
     look.instant_control = {};

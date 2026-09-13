@@ -4,10 +4,10 @@
 #include "caching.h"
 #include "types.h"
 
-#include <coffee/core/input/standard_input_handlers.h>
-#include <peripherals/concepts/graphics_api.h> 
 #include <blam/volta/blam_scenario.h>
 #include <chrono>
+#include <coffee/core/input/standard_input_handlers.h>
+#include <peripherals/concepts/graphics_api.h>
 #include <utility>
 
 using ERef = compo::EntityRef<compo::EntityContainer>;
@@ -50,7 +50,7 @@ enum Passes
 struct Visibility
 {
     using value_type = Visibility;
-    using type = compo::alloc::BufferedContainer<value_type, 2>;
+    using type       = compo::alloc::BufferedContainer<value_type, 2>;
 
     // Viewport ID: player ID/mirror
     // Only player 1 and 2 have a mirror as per the old campaign limitations
@@ -67,6 +67,7 @@ struct Visibility
             return vis->second;
         return true;
     }
+
     bool visible_any() const
     {
         if(visible.empty())
@@ -93,14 +94,15 @@ struct Visibility
         return visible[std::make_pair(player_id, mirror)];
     }
 
-    // TODO: We need to decide at some point if visibility extends from server to client data
+    // TODO: We need to decide at some point if visibility extends from server
+    // to client data
 };
 
 /*! Per-frame draw bookkeeping, kept apart from the geometry it draws */
 struct DrawState
 {
     using value_type = DrawState;
-    using type = compo::alloc::VectorContainer<value_type>;
+    using type       = compo::alloc::VectorContainer<value_type>;
 
     Passes            current_pass{Pass_Opaque};
     gfx::draw_command draw;
@@ -115,7 +117,7 @@ struct BspReference
     generation_idx_t shader;
     generation_idx_t lightmap;
 
-    Vecf3  sort_center{};
+    Vecf3 sort_center{};
 
     u32 cluster_idx{std::numeric_limits<u32>::max()};
     u32 subcluster_idx{std::numeric_limits<u32>::max()};
@@ -135,7 +137,7 @@ struct model_tracker_t
     u16  draw;
     u16  instance;
     bool enabled{false};
-    u32 epoch{0};
+    u32  epoch{0};
 };
 
 static_assert(sizeof(model_tracker_t) == 12);
@@ -238,7 +240,7 @@ struct ObjectSpawn
 
     blam::scn::object_spawn const* header = nullptr;
     blam::tag_t const*             tag    = nullptr;
-    libc_types::f32 power{-1.f};
+    libc_types::f32                power{-1.f};
 };
 
 struct MultiplayerSpawn
@@ -544,10 +546,10 @@ struct PlayerInput
     using value_type = PlayerInput;
     using type       = compo::alloc::VectorContainer<value_type>;
 
-    StandardCamera::Reg keys;         /*!< held keys, from KeyboardInput */
-    Vecf2               look_delta{}; /*!< accumulated look; zeroed once applied */
+    StandardCamera::Reg keys; /*!< held keys, from KeyboardInput */
+    Vecf2 look_delta{};       /*!< accumulated look; zeroed once applied */
     Vecf3 movement{};
-    f32   accel{1.f};           /*!< speed modifier chosen by the source */
+    f32   accel{1.f}; /*!< speed modifier chosen by the source */
     bool  jump{false};
 
     std::optional<Vecf3> position; /*!< teleport target */
@@ -561,7 +563,7 @@ struct PlayerCamera
     using value_type = PlayerCamera;
     using type       = compo::alloc::VectorContainer<value_type>;
 
-    using camera_t         = typing::vectors::scene::camera<f32>;
+    using camera_t = typing::vectors::scene::camera<f32>;
 
     StandardCameraOpts camera_opts{};
     StandardCamera     camera_{};
@@ -604,15 +606,16 @@ struct PlayerCamera
 struct CameraLerp
 {
     using value_type = CameraLerp;
-    using type = compo::alloc::VectorContainer<CameraLerp>;
+    using type       = compo::alloc::VectorContainer<CameraLerp>;
 
     struct lerp_t
     {
-        Vecf3                     p1, p2; /*!< units/s to move   */
-        Quatf                     r1, r2;  /*!< target rotation, blended with slerp */
+        Vecf3 p1, p2; /*!< units/s to move   */
+        Quatf r1, r2; /*!< target rotation, blended with slerp */
         std::chrono::milliseconds remaining_time;
         std::chrono::milliseconds total_time;
     };
+
     std::vector<lerp_t> lerps;
 };
 
@@ -755,4 +758,4 @@ static const auto trigger_volume = compo::EntityRecipe{
     .tags = ObjectScriptObject | ObjectTriggerVolume | ObjectGC,
 };
 
-}
+} // namespace shared_recipes

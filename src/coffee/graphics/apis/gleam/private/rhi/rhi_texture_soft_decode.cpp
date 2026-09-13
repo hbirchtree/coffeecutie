@@ -91,7 +91,6 @@ bool texture_t::requires_software_decode()
     // WebGL2 reads RGB565 uploads via HEAPU16[ptr >>> 1]. If the pixel data
     // is at an odd byte offset in the WASM heap the shift truncates the low
     // bit, swapping bytes within every u16 and producing wrong colors.
-    // Decode to RGBA8 in C++ first so the upload pointer is always aligned.
     if(m_format.pixfmt == pix_fmt::RGB565 && m_workarounds.tex.requires_aligned)
         return true;
 

@@ -73,9 +73,9 @@ class system
         gpu_timer_t(system* system, std::string const& name);
         ~gpu_timer_t();
 
-        system* m_system{nullptr};
+        system*                  m_system{nullptr};
         std::shared_ptr<query_t> m_timer;
-        std::string m_name;
+        std::string              m_name;
     };
 
     gpu_timer_t gpu_timer(std::string const& name)

@@ -100,9 +100,9 @@ struct BitmapCache
         u32                layers{0};
     };
 
-    std::map<bitm_format_hash, TextureBucket>          tex_buckets;
-    std::map<bitm_format_hash, storage_reservation_t>  m_reservations;
-    std::map<std::tuple<u32, i16>, bitmap_slot_t>      m_slots;
+    std::map<bitm_format_hash, TextureBucket>         tex_buckets;
+    std::map<bitm_format_hash, storage_reservation_t> m_reservations;
+    std::map<std::tuple<u32, i16>, bitmap_slot_t>     m_slots;
 
     u32  max_mipmap{3};
     bool supports_tex3d{true};
@@ -225,8 +225,7 @@ struct BitmapCache
         if(bucket.type == blam::bitm::type_t::tex_cube)
         {
             gfx::compat::texture_cube_array_t& texture =
-                bucket.template texture_as<
-                    gfx::compat::texture_cube_array_t>();
+                bucket.template texture_as<gfx::compat::texture_cube_array_t>();
             auto face_size = img.image.mip->layer_mip_bytes(mipmap);
 
             /* Xbox swizzles each cube face like a 2D texture; deswizzle per
@@ -258,8 +257,7 @@ struct BitmapCache
                            static_cast<u32>(size.y),
                            bpp))
                         return semantic::Span<const u8>(
-                            linear_faces[idx].data(),
-                            linear_faces[idx].size());
+                            linear_faces[idx].data(), linear_faces[idx].size());
                 }
                 return raw;
             };
@@ -319,7 +317,7 @@ struct BitmapCache
                        static_cast<u32>(size.y),
                        bpp))
                 {
-                    owned    = std::move(linear);
+                    owned = std::move(linear);
                     mip_data =
                         semantic::Span<const u8>(owned.data(), owned.size());
                 }
@@ -330,15 +328,16 @@ struct BitmapCache
             {
                 expanded.resize(mip_data.size_bytes() * 4);
                 if(blam::bitm::expand_p8(
-                        semantic::Span<const u8>(
-                            mip_data.data(), mip_data.size_bytes()),
-                        semantic::Span<blam::bitm::vecb4>(
-                            reinterpret_cast<blam::bitm::vecb4*>(expanded.data()),
-                            expanded.size() / 4)))
+                       semantic::Span<const u8>(
+                           mip_data.data(), mip_data.size_bytes()),
+                       semantic::Span<blam::bitm::vecb4>(
+                           reinterpret_cast<blam::bitm::vecb4*>(
+                               expanded.data()),
+                           expanded.size() / 4)))
                 {
-                    owned    = std::move(expanded);
-                    mip_data = semantic::Span<const u8>(
-                        owned.data(), owned.size());
+                    owned = std::move(expanded);
+                    mip_data =
+                        semantic::Span<const u8>(owned.data(), owned.size());
                 }
             }
 
@@ -366,11 +365,15 @@ struct BitmapCache
 
             if(owned.empty())
                 texture.upload(
-                    tile.data, dst_offset, dst_size,
+                    tile.data,
+                    dst_offset,
+                    dst_size,
                     static_cast<i32>(dst_level));
             else
                 texture.upload(
-                    std::move(owned), dst_offset, dst_size,
+                    std::move(owned),
+                    dst_offset,
+                    dst_size,
                     static_cast<i32>(dst_level));
         }
     }

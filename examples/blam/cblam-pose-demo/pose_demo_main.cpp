@@ -209,7 +209,7 @@ i32 pose_demo_main()
             set_resource_labels(e);
             alloc_renderer(e);
 
-            auto& postproc = e.subsystem_cast<PostProcessParameters>();
+            auto& postproc    = e.subsystem_cast<PostProcessParameters>();
             postproc.exposure = 3.f;
 
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
@@ -277,8 +277,8 @@ i32 pose_demo_main()
                             auto bones = bones_opt.value();
                             auto n     = std::min(
                                 {bones.size(),
-                                 item.bone_matrices.size(),
-                                 item.inv_bind.size()});
+                                     item.bone_matrices.size(),
+                                     item.inv_bind.size()});
                             for(size_t i = 0; i < n; i++)
                             {
                                 /* bone_matrices is world * inv_bind, so the
@@ -348,8 +348,7 @@ i32 pose_demo_main()
              * /pose_config.json before main(); natively it is read relative to
              * the working directory, overridable with --config. */
             g_pose_config = load_pose_config(
-                compile_info::platform::is_emscripten
-                    ? "/pose_config.json"
+                compile_info::platform::is_emscripten ? "/pose_config.json"
                 : arguments.count("config")
                     ? arguments["config"].as<std::string>()
                     : "configs/cyborg.json");
@@ -465,7 +464,6 @@ i32 pose_demo_main()
                         gpu.model_index->unmap();
                     }
 
-
                     auto& loading_status    = e.subsystem_cast<LoadingStatus>();
                     loading_status.app_info = e.service<comp_app::AppInfo>();
                     loading_status.loaded_map     = LoadingStatus::loaded;
@@ -523,8 +521,8 @@ i32 pose_demo_main()
 
                         if(mic_translation.enabled)
                         {
-                            Vecf3 mic_offset = mic_translation.vector *
-                                               g_pose_demo_mic_volume;
+                            Vecf3 mic_offset =
+                                mic_translation.vector * g_pose_demo_mic_volume;
                             if(f32 length = glm::length(mic_offset);
                                length > mic_translation.clamp && length > 0.f)
                                 mic_offset *= mic_translation.clamp / length;

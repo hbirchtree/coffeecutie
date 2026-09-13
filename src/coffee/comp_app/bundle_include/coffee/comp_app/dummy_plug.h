@@ -28,11 +28,12 @@ struct Config : comp_app::Config<Config>
 
     struct pending_action_t
     {
-        std::string    screenshot;
-        std::string    event;
-        nlohmann::json data;
+        std::string     screenshot;
+        std::string     event;
+        nlohmann::json  data;
         libc_types::u32 settle;
     };
+
     std::vector<pending_action_t> pending_actions{};
     bool                          screenshot_armed{false};
     bool                          step_between_captures{false};

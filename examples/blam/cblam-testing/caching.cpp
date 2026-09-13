@@ -1204,11 +1204,11 @@ void ShaderCache<V>::populate_material(
                                    : 0;
         for(size_t i = 0; i < count; i++)
         {
-            auto const& ripple = ripples.value()[i];
-            angles[i]          = ripple.anim_angle;
-            velocities[i]      = ripple.anim_velocity * inv_scale;
-            contributions[i]   = ripple.contribution;
-            Vecf4& offset      = i < 2 ? offsets_01 : offsets_23;
+            auto const& ripple      = ripples.value()[i];
+            angles[i]               = ripple.anim_angle;
+            velocities[i]           = ripple.anim_velocity * inv_scale;
+            contributions[i]        = ripple.contribution;
+            Vecf4& offset           = i < 2 ? offsets_01 : offsets_23;
             offset[(i % 2) * 2]     = ripple.map_offset.x * inv_scale;
             offset[(i % 2) * 2 + 1] = ripple.map_offset.y * inv_scale;
         }
@@ -1255,12 +1255,12 @@ void ShaderCache<V>::populate_material(
     case tag_class_t::smet: {
         auto const* info = shader.header->as<blam::shader::shader_meter>();
         bitm_cache.assign_atlas_data(mat.maps[0], shader.smet.map);
-        mat.maps[0].uv_scale   = Vecf2(1);
-        mat.maps[0].bias       = 0;
-        mat.material.flags     = static_cast<u32>(info->flags);
-        mat.material.inputs1 =
-            Vecf2{meter_value_of(info->ext_func_src.value, context),
-                  info->colors.transparency};
+        mat.maps[0].uv_scale = Vecf2(1);
+        mat.maps[0].bias     = 0;
+        mat.material.flags   = static_cast<u32>(info->flags);
+        mat.material.inputs1 = Vecf2{
+            meter_value_of(info->ext_func_src.value, context),
+            info->colors.transparency};
         mat.material.inputs[0] = Vecf4(
             info->colors.gradient_min, info->colors.background_transparency);
         mat.material.inputs[1] = Vecf4(info->colors.gradient_max, 1.f);
@@ -1454,7 +1454,8 @@ static u32 cube_mip_levels(PixDesc const& fmt, Veci2 const& max_size)
 {
     i32 smallest = fmt.pixfmt == pix_fmt::BCn ? 4 : 1;
     u32 levels   = 1;
-    while((max_size.x >> levels) >= smallest && (max_size.y >> levels) >= smallest)
+    while((max_size.x >> levels) >= smallest &&
+          (max_size.y >> levels) >= smallest)
         levels++;
     return levels;
 }
@@ -1524,9 +1525,8 @@ void BitmapCache<V>::calculate_storage()
 
             /* Cubemaps are never atlased, and without 2D array textures each
              * bitmap becomes its own full-size layer. */
-            bool own_layer =
-                header->type == blam::bitm::bitmap_type_t::cube ||
-                !supports_tex3d;
+            bool own_layer = header->type == blam::bitm::bitmap_type_t::cube ||
+                             !supports_tex3d;
 
             pool.images.push_back({
                 .tag_id    = tag.tag_id,
@@ -1550,10 +1550,10 @@ void BitmapCache<V>::calculate_storage()
     {
         /* The atlas needs the bucket's real mip count: the gutter has to
          * survive down to the coarsest level anything samples. */
-        u32 const mips = pool.fmt.pixfmt == pix_fmt::RGB565 ? 1u
-                         : max_mipmap > params->mipmap_bias
-                             ? max_mipmap - params->mipmap_bias
-                             : 1u;
+        u32 const            mips = pool.fmt.pixfmt == pix_fmt::RGB565 ? 1u
+                                    : max_mipmap > params->mipmap_bias
+                                        ? max_mipmap - params->mipmap_bias
+                                        : 1u;
         gfx::texture_atlas_t atlas(pool.max, mips);
 
         for(entry_t const& e : pool.images)
@@ -1564,8 +1564,7 @@ void BitmapCache<V>::calculate_storage()
             if(e.bias > 0)
             {
                 slot.mip_base = e.bias;
-                slot.mip_last =
-                    e.bias + std::min<i32>(8, e.mipmaps - e.bias);
+                slot.mip_last = e.bias + std::min<i32>(8, e.mipmaps - e.bias);
             } else
             {
                 slot.mip_base = 0;
@@ -1573,8 +1572,8 @@ void BitmapCache<V>::calculate_storage()
             }
 
             auto const placement = e.own_layer ? atlas.reserve_layer(e.size)
-                                              : atlas.reserve(e.size);
-            auto const rect = atlas.reference_of(placement);
+                                               : atlas.reserve(e.size);
+            auto const rect      = atlas.reference_of(placement);
 
             slot.layer        = placement.layer;
             slot.pixel_offset = placement.offset;
@@ -1676,8 +1675,7 @@ void BitmapCache<V>::reserve_storage()
         }
 #endif
         case blam::bitm::type_t::tex_2d: {
-            bucket =
-                &get_bucket<gfx::compat::texture_2da_t>(res.fmt, res.type);
+            bucket = &get_bucket<gfx::compat::texture_2da_t>(res.fmt, res.type);
             break;
         }
         case blam::bitm::type_t::tex_cube: {
@@ -1698,9 +1696,10 @@ void BitmapCache<V>::reserve_storage()
         if(res.type == blam::bitm::type_t::tex_cube)
             bucket->surface->m_mipmaps = cube_mip_levels(res.fmt, res.max_size);
 
-        auto size = size_3d<i32>{
-            res.max_size.x, res.max_size.y, static_cast<i32>(res.layers)}
-                        .convert<u32>();
+        auto size =
+            size_3d<i32>{
+                res.max_size.x, res.max_size.y, static_cast<i32>(res.layers)}
+                .convert<u32>();
         bucket->surface->alloc(size);
 
         auto [type, fmt, _, __, comp] = hash;
@@ -1769,8 +1768,7 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
         auto slot_it = m_slots.find(std::make_tuple(bitmap.tag_id, idx));
         if(slot_it == m_slots.end())
         {
-            cWarning(
-                "No storage slot reserved for bitmap {}", shader_name);
+            cWarning("No storage slot reserved for bitmap {}", shader_name);
             return {};
         }
         auto const& slot = slot_it->second;

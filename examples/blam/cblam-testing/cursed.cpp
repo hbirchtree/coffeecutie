@@ -159,11 +159,14 @@ struct RS2CacheLoader
                     sync_link_bodies();
                 }));
         rq::runtime_queue::QueueImmediate(
-            worker, rq::detail::duration(), [this] {
+            worker,
+            rq::detail::duration(),
+            [this] {
                 on_links(
                     std::make_shared<std::vector<rs2::MapLink>>(
                         loader.find_links()));
-            }).assume_value();
+            })
+            .assume_value();
 
         // Touching a link's sensor box: resolve and log it (teleporting is
         // a game decision, e.g. on interact). Fires every frame while
@@ -697,7 +700,10 @@ struct RS2CacheLoader
             i32(std::floor(rs_space.y / 8192.f)));
     }
 
-    bool main_thread_only() const override { return true; }
+    bool main_thread_only() const override
+    {
+        return true;
+    }
 
     virtual void start_restricted(Proxy& p, time_point const&) final
     {

@@ -21,10 +21,10 @@ struct DebugMarkers : compo::SubsystemBase
     std::shared_ptr<gfx::buffer_t> colors;
 
     static constexpr u32 frames_in_flight = 3;
-    Span<Vecf3> portal_buffer;
-    Span<Vecf3> portal_color_buffer;
-    u32         portal_ptr{0};
-    u32         portal_color_ptr{0};
+    Span<Vecf3>          portal_buffer;
+    Span<Vecf3>          portal_color_buffer;
+    u32                  portal_ptr{0};
+    u32                  portal_color_ptr{0};
 
     /*!
      * \brief Reserve a persistent slot for one line strip (vert_count
@@ -185,7 +185,7 @@ struct DebugMarkers : compo::SubsystemBase
 
         /* Rotate first: the region written last frame is the one the GPU is
          * reading now. */
-        m_region = (m_region + 1) % frames_in_flight;
+        m_region  = (m_region + 1) % frames_in_flight;
         auto send = [](std::shared_ptr<gfx::buffer_t> const& buffer,
                        std::vector<Vecf3> const&             store,
                        u32                                   base,

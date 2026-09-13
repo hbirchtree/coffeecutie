@@ -38,14 +38,15 @@ struct datapoint_t
         async           = 0x2,
     };
 
-    u64              tid{std::hash<std::thread::id>()(std::this_thread::get_id())};
-    std::string      name{};
+    u64         tid{std::hash<std::thread::id>()(std::this_thread::get_id())};
+    std::string name{};
     std::string_view component{COFFEE_COMPONENT_NAME};
     std::string      thread_name{};
     duration_t       ts{PClock::now().time_since_epoch()};
     duration_t       dur{};
 
-    struct {
+    struct
+    {
         type_t type{type_t::profile};
         attr_t attrs{attr_t::none_attr};
     } flags;
@@ -222,12 +223,15 @@ struct profile_wrapper
         if(!props.context)
             return;
         props.push_stack(name);
-        props.push(*props.context, datapoint_t{
-            .name = std::string(name.begin(), name.end()),
-            .flags = {
-                .type = datapoint_t::push,
-            },
-        });
+        props.push(
+            *props.context,
+            datapoint_t{
+                .name = std::string(name.begin(), name.end()),
+                .flags =
+                    {
+                        .type = datapoint_t::push,
+                    },
+            });
     }
 
     STATICINLINE void pop()
@@ -239,12 +243,15 @@ struct profile_wrapper
         auto name  = props.pop_stack();
         if(name.empty())
             return;
-        props.push(*props.context, datapoint_t{
-            .name = std::string(name.begin(), name.end()),
-            .flags = {
-                .type = datapoint_t::pop,
-            },
-        });
+        props.push(
+            *props.context,
+            datapoint_t{
+                .name = std::string(name.begin(), name.end()),
+                .flags =
+                    {
+                        .type = datapoint_t::pop,
+                    },
+            });
     }
 
     STATICINLINE void profile(std::string_view name)
@@ -253,12 +260,15 @@ struct profile_wrapper
             return;
 
         auto props = RuntimeProperties::get_properties();
-        props.push(*props.context, datapoint_t{
-            .name = std::string(name.begin(), name.end()),
-            .flags = {
-                .type = datapoint_t::profile,
-            },
-        });
+        props.push(
+            *props.context,
+            datapoint_t{
+                .name = std::string(name.begin(), name.end()),
+                .flags =
+                    {
+                        .type = datapoint_t::profile,
+                    },
+            });
     }
 };
 

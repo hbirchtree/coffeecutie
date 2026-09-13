@@ -663,10 +663,10 @@ class runtime_queue
         runtime_queue* thread);
     static std::optional<RuntimeQueueError> TerminateThreads();
 
-    void              execute_tasks();
-    detail::duration  time_till_next() const;
-    detail::duration  time_till_next(detail::time_point clock) const;
-    std::string_view  name();
+    void                   execute_tasks();
+    detail::duration       time_till_next() const;
+    detail::duration       time_till_next(detail::time_point clock) const;
+    std::string_view       name();
     stl_types::thread_id_t thread_id() const;
 
     size_t task_count();
@@ -729,7 +729,7 @@ class runtime_queue
 
     std::vector<task_data_t>           m_tasks;
     std::vector<dependent_task_data_t> m_dependent_tasks;
-    stl_types::thread_id_t                  m_thread_id{0};
+    stl_types::thread_id_t             m_thread_id{0};
     u64                                m_task_index{0};
     u64                                m_current_task_id{0};
 

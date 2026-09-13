@@ -11,4 +11,4 @@ T accumulate(C const& container, T init, F binary_op)
     return out;
 }
 
-}
+} // namespace stl_types

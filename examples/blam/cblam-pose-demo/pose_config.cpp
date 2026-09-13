@@ -24,8 +24,7 @@ Vecf3 read_vec3(nlohmann::json const& parent, char const* key, Vecf3 fallback)
         cWarning("pose_config: '{}' must be [x, y, z], ignoring", key);
         return fallback;
     }
-    return Vecf3(
-        node[0].get<f32>(), node[1].get<f32>(), node[2].get<f32>());
+    return Vecf3(node[0].get<f32>(), node[1].get<f32>(), node[2].get<f32>());
 }
 
 /* Reads [x, y, z, w] — same order as the bone rotations on the wire — and
@@ -130,14 +129,12 @@ void read_basis(nlohmann::json const& entry, BoneRetarget& out)
 
     read_axis_map(entry, out.axis_map);
 
-    out.basis_rotation =
-        read_quat(entry, "basis_rotation", out.basis_rotation);
+    out.basis_rotation = read_quat(entry, "basis_rotation", out.basis_rotation);
 
     /* Kept as shorthand: bip01 mirrors left/right by a 180-degree Z turn,
      * which is a change of basis like any other. */
     if(entry.value("mirror_z180", false))
-        out.basis_rotation =
-            Quatf(0.f, 0.f, 0.f, 1.f) * out.basis_rotation;
+        out.basis_rotation = Quatf(0.f, 0.f, 0.f, 1.f) * out.basis_rotation;
 
     if(auto it = entry.find("mode"); it != entry.end() && it->is_string())
     {
@@ -273,22 +270,23 @@ PoseConfig PoseConfig::from_json(nlohmann::json const& doc)
                 cWarning("pose_config: attachment without 'tag', skipping");
                 continue;
             }
-            out.attachments.push_back(AttachmentConfig{
-                .tag    = entry.value("tag", std::string{}),
-                .marker = entry.value("marker", std::string{}),
-            });
+            out.attachments.push_back(
+                AttachmentConfig{
+                    .tag    = entry.value("tag", std::string{}),
+                    .marker = entry.value("marker", std::string{}),
+                });
         }
     }
 
     if(auto it = doc.find("camera"); it != doc.end() && it->is_object())
     {
-        auto& cam        = out.camera;
-        cam.position     = read_vec3(*it, "position", cam.position);
+        auto& cam         = out.camera;
+        cam.position      = read_vec3(*it, "position", cam.position);
         cam.field_of_view = it->value("field_of_view", cam.field_of_view);
-        cam.aspect       = it->value("aspect", cam.aspect);
-        cam.z_near       = it->value("z_near", cam.z_near);
-        cam.z_far        = it->value("z_far", cam.z_far);
-        cam.keyboard     = it->value("keyboard", cam.keyboard);
+        cam.aspect        = it->value("aspect", cam.aspect);
+        cam.z_near        = it->value("z_near", cam.z_near);
+        cam.z_far         = it->value("z_far", cam.z_far);
+        cam.keyboard      = it->value("keyboard", cam.keyboard);
     }
 
     if(auto it = doc.find("retarget"); it != doc.end() && it->is_array())
@@ -356,21 +354,22 @@ PoseConfig PoseConfig::from_json(nlohmann::json const& doc)
                         "skipping");
                     continue;
                 }
-                mic.bones.push_back(MicBoneMapping{
-                    .blam_bone_name = bone.value("bone", std::string{}),
-                    .axis = read_vec3(bone, "axis", Vecf3(0.f, 0.f, 1.f)),
-                    .gain = bone.value("gain", -2.f),
-                    .clamp_degrees = bone.value("clamp_degrees", 90.f),
-                });
+                mic.bones.push_back(
+                    MicBoneMapping{
+                        .blam_bone_name = bone.value("bone", std::string{}),
+                        .axis = read_vec3(bone, "axis", Vecf3(0.f, 0.f, 1.f)),
+                        .gain = bone.value("gain", -2.f),
+                        .clamp_degrees = bone.value("clamp_degrees", 90.f),
+                    });
             }
         }
     }
 
     if(auto it = doc.find("root_motion"); it != doc.end() && it->is_object())
     {
-        auto& root    = out.root_motion;
-        root.enabled  = it->value("enabled", true);
-        root.source   = it->value("source", root.source);
+        auto& root   = out.root_motion;
+        root.enabled = it->value("enabled", true);
+        root.source  = it->value("source", root.source);
         read_axis_map(*it, root.axis_map);
         root.scale     = read_vec3(*it, "scale", root.scale);
         root.offset    = read_vec3(*it, "offset", root.offset);
@@ -409,12 +408,13 @@ PoseConfig PoseConfig::from_json(nlohmann::json const& doc)
                             "skipping");
                         continue;
                     }
-                    set.buttons.push_back(AnimationButton{
-                        .label = button.value("label", std::string{}),
-                        .name  = button.value("name", std::string{}),
-                        .title = button.value("title", std::string{}),
-                        .loop  = button.value("loop", false),
-                    });
+                    set.buttons.push_back(
+                        AnimationButton{
+                            .label = button.value("label", std::string{}),
+                            .name  = button.value("name", std::string{}),
+                            .title = button.value("title", std::string{}),
+                            .loop  = button.value("loop", false),
+                        });
                 }
             }
             out.animation_sets.push_back(std::move(set));

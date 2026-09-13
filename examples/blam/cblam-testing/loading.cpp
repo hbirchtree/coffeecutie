@@ -30,8 +30,7 @@ using ResourceLoaderManifest = compo::SubsystemManifest<
         ShaderData,
         SubModel,
         TriggerVolume,
-        Visibility
-    >,
+        Visibility>,
     type_list_t<
         BitmapCache<Ver>,
         BlamFiles<Ver>,
@@ -39,33 +38,37 @@ using ResourceLoaderManifest = compo::SubsystemManifest<
         BSPCache<Ver>,
         DebugMarkers,
         ModelCache<Ver>,
-        ShaderCache<Ver>
-    >,
-    empty_list_t
->;
+        ShaderCache<Ver>>,
+    empty_list_t>;
 
 template<typename Ver>
 struct ResourceLoader
-    : compo::RestrictedSubsystem<ResourceLoader<Ver>, ResourceLoaderManifest<Ver>>
+    : compo::
+          RestrictedSubsystem<ResourceLoader<Ver>, ResourceLoaderManifest<Ver>>
 {
-    using type = ResourceLoader<Ver>;
+    using type  = ResourceLoader<Ver>;
     using Proxy = compo::proxy_of<ResourceLoaderManifest<Ver>>;
 
     blam::tag_index_view<Ver> index;
 
-    std::vector<SpawnBSPEvent> pending_bsps;
-    std::vector<SpawnBipedEvent> pending_bipeds;
-    std::vector<SpawnEquipmentEvent> pending_equipment;
-    std::vector<SpawnModelEvent> pending_models;
-    std::vector<MountModelEvent> pending_mounts;
+    std::vector<SpawnBSPEvent>         pending_bsps;
+    std::vector<SpawnBipedEvent>       pending_bipeds;
+    std::vector<SpawnEquipmentEvent>   pending_equipment;
+    std::vector<SpawnModelEvent>       pending_models;
+    std::vector<MountModelEvent>       pending_mounts;
     std::optional<ClusterChangedEvent> pending_cluster_change;
 
-    std::shared_ptr<GameEventBus::queue_type<SpawnBSPEvent>>       spawn_bsp_queue;
-    std::shared_ptr<GameEventBus::queue_type<SpawnBipedEvent>>     spawn_biped_queue;
-    std::shared_ptr<GameEventBus::queue_type<SpawnEquipmentEvent>> spawn_equip_queue;
-    std::shared_ptr<GameEventBus::queue_type<SpawnModelEvent>>     spawn_model_queue;
-    std::shared_ptr<GameEventBus::queue_type<MountModelEvent>>     mount_model_queue;
-    std::shared_ptr<GameEventBus::queue_type<ClusterChangedEvent>> cluster_queue;
+    std::shared_ptr<GameEventBus::queue_type<SpawnBSPEvent>> spawn_bsp_queue;
+    std::shared_ptr<GameEventBus::queue_type<SpawnBipedEvent>>
+        spawn_biped_queue;
+    std::shared_ptr<GameEventBus::queue_type<SpawnEquipmentEvent>>
+        spawn_equip_queue;
+    std::shared_ptr<GameEventBus::queue_type<SpawnModelEvent>>
+        spawn_model_queue;
+    std::shared_ptr<GameEventBus::queue_type<MountModelEvent>>
+        mount_model_queue;
+    std::shared_ptr<GameEventBus::queue_type<ClusterChangedEvent>>
+        cluster_queue;
 
     struct
     {
@@ -115,19 +118,20 @@ struct ResourceLoader
 
     void start_restricted(Proxy& p, compo::time_point const& t)
     {
-        BlamFiles<Ver>& files          = p.template subsystem<BlamFiles<Ver>>();
+        BlamFiles<Ver>& files = p.template subsystem<BlamFiles<Ver>>();
         if(current.load_generation != files.load_generation)
         {
             // Purge resources
             current.load_generation = files.load_generation;
-            current.skybox_id  = -1;
-            current.weather_id = -1;
+            current.skybox_id       = -1;
+            current.weather_id      = -1;
         }
-        BlamResources& resources       = p.template subsystem<BlamResources>();
-        BitmapCache<Ver>& bitm_cache   = p.template subsystem<BitmapCache<Ver>>();
-        BSPCache<Ver>& bsp_cache       = p.template subsystem<BSPCache<Ver>>();
-        ModelCache<Ver>& model_cache   = p.template subsystem<ModelCache<Ver>>();
-        ShaderCache<Ver>& shader_cache = p.template subsystem<ShaderCache<Ver>>();
+        BlamResources&    resources  = p.template subsystem<BlamResources>();
+        BitmapCache<Ver>& bitm_cache = p.template subsystem<BitmapCache<Ver>>();
+        BSPCache<Ver>&    bsp_cache  = p.template subsystem<BSPCache<Ver>>();
+        ModelCache<Ver>&  model_cache = p.template subsystem<ModelCache<Ver>>();
+        ShaderCache<Ver>& shader_cache =
+            p.template subsystem<ShaderCache<Ver>>();
 
         index = blam::tag_index_view<Ver>(files.container);
 
@@ -153,8 +157,9 @@ struct ResourceLoader
             {
                 load_world_lighting(
                     p,
-                    pending_cluster_change->bsp->clusters.at(
-                        pending_cluster_change->cluster).cluster->sky);
+                    pending_cluster_change->bsp->clusters
+                        .at(pending_cluster_change->cluster)
+                        .cluster->sky);
             }
             pending_cluster_change.reset();
         }
@@ -184,8 +189,9 @@ struct ResourceLoader
         if(skybox_id == current.skybox_id)
             return;
 
-        BlamResources& resources       = p.template subsystem<BlamResources>();
-        ShaderCache<Ver>& shader_cache = p.template subsystem<ShaderCache<Ver>>();
+        BlamResources&    resources = p.template subsystem<BlamResources>();
+        ShaderCache<Ver>& shader_cache =
+            p.template subsystem<ShaderCache<Ver>>();
 
         compo::EntityRef<Proxy> skybox_item;
         for(auto skybox : p.select(ObjectSkybox))
@@ -214,7 +220,7 @@ struct ResourceLoader
 
         Model& skybox_mod = skybox_item.template get<Model>();
 
-        auto& data = p.template subsystem<BlamFiles<Ver>>();
+        auto& data        = p.template subsystem<BlamFiles<Ver>>();
         auto& model_cache = p.template subsystem<ModelCache<Ver>>();
 
         auto const* scenario = data.container.scenario().value_or(nullptr);
@@ -222,7 +228,7 @@ struct ResourceLoader
         if(!scenario)
             return;
 
-        auto const& magic = data.container.magic;
+        auto const&          magic = data.container.magic;
         blam::tag_index_view index(data.container);
 
         current.skybox_id = skybox_id;
@@ -230,7 +236,7 @@ struct ResourceLoader
         auto skyboxes = scenario->info.skyboxes.data(magic).value();
         if(skybox_id != -1 && skybox_id < skyboxes.size())
         {
-            auto const& skybox = skyboxes[skybox_id];
+            auto const&              skybox     = skyboxes[skybox_id];
             auto                     skybox_tag = *index.tag_of(skybox);
             blam::scn::skybox const& skybox_ =
                 skybox_tag->template data<blam::scn::skybox>(magic).value()[0];
@@ -260,7 +266,8 @@ struct ResourceLoader
                     std::cos(pitch) * std::sin(yaw),
                     std::sin(pitch),
                 };
-                /* .w carries the light's interior/exterior flags  (1 = exteriors, 2 = interiors). */
+                /* .w carries the light's interior/exterior flags  (1 =
+                 * exteriors, 2 = interiors). */
                 world_data[0].lighting[i].light_direction = Vecf4{
                     rotation,
                     static_cast<f32>(light.radiosity.flags),
@@ -273,12 +280,12 @@ struct ResourceLoader
 
             world_data[0].fog.indoor_color =
                 Vecf4(skybox_.indoor_fog.color, skybox_.indoor_fog.density);
-            world_data[0].fog.indoor_ambient =
-                Vecf4(skybox_.indoor_ambient.color, skybox_.indoor_ambient.power);
+            world_data[0].fog.indoor_ambient = Vecf4(
+                skybox_.indoor_ambient.color, skybox_.indoor_ambient.power);
             world_data[0].fog.outdoor_color =
                 Vecf4(skybox_.outdoor_fog.color, skybox_.outdoor_fog.density);
-            world_data[0].fog.outdoor_ambient =
-                Vecf4(skybox_.outdoor_ambient.color, skybox_.outdoor_ambient.power);
+            world_data[0].fog.outdoor_ambient = Vecf4(
+                skybox_.outdoor_ambient.color, skybox_.outdoor_ambient.power);
 
             world_data[0].fog.distances = Vecf4(
                 skybox_.indoor_fog.start_distance,
@@ -321,7 +328,7 @@ struct ResourceLoader
             for(auto const& part_id : assem.models)
             {
                 ModelItem<Ver>& part = model_cache.get(part_id);
-                skybox_mod.model         = part_id;
+                skybox_mod.model     = part_id;
 
                 for(typename ModelItem<Ver>::SubModel const& region :
                     part.mesh.sub)
@@ -329,15 +336,17 @@ struct ResourceLoader
                     if(!region.shader.valid())
                         continue;
 
-                    auto submod = p.create_entity(shared_recipes::skybox_submodel);
+                    auto submod =
+                        p.create_entity(shared_recipes::skybox_submodel);
                     skybox_mod.parts.push_back(submod);
                     SubModel& submodel  = submod.template get<SubModel>();
                     submodel.parent     = skybox_item.id();
                     DrawState& sub_draw = submod.template get<DrawState>();
                     submodel.initialize<Ver>(part_id, region, sub_draw);
 
-                    ShaderData&       shader_   = submod.template get<ShaderData>();
-                    ShaderItem const& shader_it = shader_cache.get(region.shader);
+                    ShaderData& shader_ = submod.template get<ShaderData>();
+                    ShaderItem const& shader_it =
+                        shader_cache.get(region.shader);
                     shader_.initialize(shader_it, submodel);
 
                     sub_draw.current_pass =
@@ -357,14 +366,14 @@ struct ResourceLoader
 
     void load_debug_shapes(Proxy& p)
     {
-        BlamFiles<Ver>& files          = p.template subsystem<BlamFiles<Ver>>();
-        DebugMarkers& debug_markers    = p.template subsystem<DebugMarkers>();
+        BlamFiles<Ver>& files         = p.template subsystem<BlamFiles<Ver>>();
+        DebugMarkers&   debug_markers = p.template subsystem<DebugMarkers>();
 
-        auto& container                          = files.container;
-        auto const& magic                        = container.magic;
+        auto&                           container = files.container;
+        auto const&                     magic     = container.magic;
         blam::scn::scenario<Ver> const* scenario = container.scenario().value();
 
-        compo::EntityRecipe map_marker = shared_recipes::gc_marker;
+        compo::EntityRecipe map_marker  = shared_recipes::gc_marker;
         compo::EntityRecipe trigger_obj = shared_recipes::trigger_volume;
 
         debug_markers.map(debug_axes_verts, debug_axes_colors);
@@ -384,7 +393,8 @@ struct ResourceLoader
             volume.trigger_volume = &trigger;
         }
 
-        auto player_profiles = scenario->player_start.profiles.data(magic).value();
+        auto player_profiles =
+            scenario->player_start.profiles.data(magic).value();
         for(blam::scn::player_starting_profile const& profile : player_profiles)
         {
             cDebug(" - Profile: {}", profile.name.str());
@@ -527,20 +537,21 @@ struct ResourceLoader
     {
         ProfContext _(__FUNCTION__);
 
-        BlamFiles<Ver>& files          = p.template subsystem<BlamFiles<Ver>>();
-        BitmapCache<Ver>& bitm_cache   = p.template subsystem<BitmapCache<Ver>>();
-        BSPCache<Ver>& bsp_cache       = p.template subsystem<BSPCache<Ver>>();
-        BlamResources& gpu             = p.template subsystem<BlamResources>();
-        DebugMarkers& debug_markers    = p.template subsystem<DebugMarkers>();
-        ShaderCache<Ver>& shader_cache = p.template subsystem<ShaderCache<Ver>>();
+        BlamFiles<Ver>&   files      = p.template subsystem<BlamFiles<Ver>>();
+        BitmapCache<Ver>& bitm_cache = p.template subsystem<BitmapCache<Ver>>();
+        BSPCache<Ver>&    bsp_cache  = p.template subsystem<BSPCache<Ver>>();
+        BlamResources&    gpu        = p.template subsystem<BlamResources>();
+        DebugMarkers&     debug_markers = p.template subsystem<DebugMarkers>();
+        ShaderCache<Ver>& shader_cache =
+            p.template subsystem<ShaderCache<Ver>>();
 
         /* Continue load_debug_shapes' cursor: the two-arg map() would reset it
          * and overwrite the markers it just wrote. */
         debug_markers.map();
         bsp_cache.debug_markers = &debug_markers;
 
-        auto& container = files.container;
-        auto const& magic = container.magic;
+        auto&       container = files.container;
+        auto const& magic     = container.magic;
 
         using namespace compo;
 
@@ -555,16 +566,17 @@ struct ResourceLoader
 
         auto trigger_vols = scenario->trigger_volumes.data(magic).value();
 
-        /* Structure BSP switching: collect the scenario's switch triggers so the
-         * occluder can track the active section, and start in the section the
-         * first player spawn belongs to. */
+        /* Structure BSP switching: collect the scenario's switch triggers so
+         * the occluder can track the active section, and start in the section
+         * the first player spawn belongs to. */
         if(auto switches = scenario->bsp_switch_triggers.data(magic);
            switches.has_value())
         {
             for(blam::scn::bsp_trigger const& sw : switches.value())
             {
                 if(sw.trigger_volume < 0 ||
-                   static_cast<size_t>(sw.trigger_volume) >= trigger_vols.size())
+                   static_cast<size_t>(sw.trigger_volume) >=
+                       trigger_vols.size())
                     continue;
                 bsp_cache.bsp_switches.push_back({
                     .volume      = &trigger_vols[sw.trigger_volume],
@@ -623,7 +635,8 @@ struct ResourceLoader
                 for(BSPItem::Mesh const& mesh : group.meshes)
                 {
                     auto          mesh_ent = p.create_entity(bsp_);
-                    BspReference& bsp_ref  = mesh_ent.template get<BspReference>();
+                    BspReference& bsp_ref =
+                        mesh_ent.template get<BspReference>();
 
                     bsp_ref.shader         = mesh.shader;
                     bsp_ref.lightmap       = mesh.light_bitm;
@@ -640,14 +653,16 @@ struct ResourceLoader
                     DrawState& bsp_draw = mesh_ent.template get<DrawState>();
                     bsp_draw.draw.data.push_back(mesh.draw);
 
-                    ShaderData&       shader_   = mesh_ent.template get<ShaderData>();
+                    ShaderData& shader_ = mesh_ent.template get<ShaderData>();
                     ShaderItem const& shader_it = shader_cache.get(mesh.shader);
                     shader_.shader              = shader_it.header;
                     shader_.shader_tag          = shader_it.tag;
                     shader_.shader_id           = mesh.shader;
 
-                    bsp_draw.current_pass = shader_.get_render_pass(shader_cache);
-                    bsp_draw.draw.data.back().debug_identifier = fmt::format("{} {}",
+                    bsp_draw.current_pass =
+                        shader_.get_render_pass(shader_cache);
+                    bsp_draw.draw.data.back().debug_identifier = fmt::format(
+                        "{} {}",
                         shader_it.tag->tagclass.front().str(),
                         shader_it.tag->to_name().to_string(shader_cache.magic));
                 }
@@ -668,8 +683,8 @@ struct ResourceLoader
             auto const* scenario = files.container.scenario().value_or(nullptr);
             if(!scenario || instance.power_group < 0)
                 return -1.f;
-            auto groups = scenario->objects.device_groups.data(
-                files.container.magic);
+            auto groups =
+                scenario->objects.device_groups.data(files.container.magic);
             if(groups.has_error() ||
                static_cast<size_t>(instance.power_group) >=
                    groups.value().size())
@@ -690,9 +705,10 @@ struct ResourceLoader
 
         using namespace compo;
 
-        BlamFiles<Ver>&   files        = p.template subsystem<BlamFiles<Ver>>();
-        ModelCache<Ver>&  model_cache  = p.template subsystem<ModelCache<Ver>>();
-        ShaderCache<Ver>& shader_cache = p.template subsystem<ShaderCache<Ver>>();
+        BlamFiles<Ver>&   files       = p.template subsystem<BlamFiles<Ver>>();
+        ModelCache<Ver>&  model_cache = p.template subsystem<ModelCache<Ver>>();
+        ShaderCache<Ver>& shader_cache =
+            p.template subsystem<ShaderCache<Ver>>();
 
         auto const& magic = files.container.magic;
 
@@ -702,7 +718,7 @@ struct ResourceLoader
         EntityRecipe submodel = shared_recipes::submodel;
         submodel.tags         = submodel.tags | (tags & SubObjectMask);
 
-        auto palette_opt = group.palette.data(magic);
+        auto palette_opt   = group.palette.data(magic);
         auto instances_opt = group.instances.data(magic);
         if(palette_opt.has_error() || instances_opt.has_error())
             return;
@@ -818,14 +834,12 @@ struct ResourceLoader
                 {
                     auto ai_opt = wpn.animations.data(magic);
                     if(!ai_opt.has_value() ||
-                       ai_opt.value().size() <=
-                           blam::antr::unit_weapon::idle)
+                       ai_opt.value().size() <= blam::antr::unit_weapon::idle)
                         continue;
                     i16 idx =
                         ai_opt.value()[blam::antr::unit_weapon::idle].animation;
-                    if(idx < 0 ||
-                       static_cast<u32>(idx) >=
-                           static_cast<u32>(all_anims.size()))
+                    if(idx < 0 || static_cast<u32>(idx) >=
+                                      static_cast<u32>(all_anims.size()))
                         continue;
                     if(!found_fallback)
                     {
@@ -866,14 +880,15 @@ struct ResourceLoader
 
     /* One submodel entity per shaded region of a loaded model. */
     void build_submodels(
-        Proxy&                        p,
+        Proxy&                                    p,
         compo::EntityRef<compo::EntityContainer>& parent_,
-        Model&                        model,
-        generation_idx_t const&       model_id,
-        compo::EntityRecipe const&    submodel)
+        Model&                                    model,
+        generation_idx_t const&                   model_id,
+        compo::EntityRecipe const&                submodel)
     {
-        ShaderCache<Ver>& shader_cache = p.template subsystem<ShaderCache<Ver>>();
-        ModelCache<Ver>&  model_cache  = p.template subsystem<ModelCache<Ver>>();
+        ShaderCache<Ver>& shader_cache =
+            p.template subsystem<ShaderCache<Ver>>();
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
 
         ModelItem<Ver>& modelit = model_cache.get(model_id);
         for(auto const& sub : modelit.mesh.sub)
@@ -905,9 +920,9 @@ struct ResourceLoader
             auto shader_name = index.name_of(*shader_.shader_tag);
             for(auto& draw : sub_draw.draw.data)
                 draw.debug_identifier = fmt::format(
-                            "{} {}",
-                            shader_.shader_tag->tagclass[0].str(),
-                            shader_name);
+                    "{} {}",
+                    shader_.shader_tag->tagclass[0].str(),
+                    shader_name);
         }
     }
 
@@ -917,9 +932,10 @@ struct ResourceLoader
     {
         using namespace compo;
 
-        BlamFiles<Ver>&   files        = p.template subsystem<BlamFiles<Ver>>();
-        ModelCache<Ver>&  model_cache  = p.template subsystem<ModelCache<Ver>>();
-        ShaderCache<Ver>& shader_cache = p.template subsystem<ShaderCache<Ver>>();
+        BlamFiles<Ver>&   files       = p.template subsystem<BlamFiles<Ver>>();
+        ModelCache<Ver>&  model_cache = p.template subsystem<ModelCache<Ver>>();
+        ShaderCache<Ver>& shader_cache =
+            p.template subsystem<ShaderCache<Ver>>();
 
         auto const& magic    = files.container.magic;
         auto const* scenario = files.container.scenario().value_or(nullptr);
@@ -1043,8 +1059,7 @@ struct ResourceLoader
             p, scenario->objects.controls, ObjectControl | PositioningDynamic);
 
         if(files.container.map->map_type == blam::maptype_t::multiplayer)
-            load_multiplayer_equipment(
-                p, ObjectEquipment | PositioningDynamic);
+            load_multiplayer_equipment(p, ObjectEquipment | PositioningDynamic);
     }
 
     void queue_spawn(SpawnBSPEvent& bsp)
@@ -1118,7 +1133,8 @@ struct ResourceLoader
             model_it->as_ref(), blam::mod2::lod_high_ext);
         if(mesh.models.empty())
         {
-            cWarning("Failed to mount model {} to entity {}",
+            cWarning(
+                "Failed to mount model {} to entity {}",
                 index.name_of(mount.model),
                 mount.entity_id);
             return;
@@ -1141,7 +1157,7 @@ void alloc_resource_loader(compo::EntityContainer& e)
 {
     auto& loader = e.register_subsystem_inplace<ResourceLoader<halo_version>>();
 
-    auto& game_bus = e.subsystem_cast<GameEventBus>();
+    auto& game_bus         = e.subsystem_cast<GameEventBus>();
     loader.spawn_bsp_queue = game_bus.addQueuedEventFunction<SpawnBSPEvent>(
         0, [&loader](GameEvent&, SpawnBSPEvent* spawn) {
             loader.pending_bsps.push_back(*spawn);

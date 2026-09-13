@@ -1,8 +1,8 @@
 #pragma once
 
 #include "blam_atlas.h"
-#include "blam_sound.h"
 #include "blam_scenario.h"
+#include "blam_sound.h"
 #include "blam_structures.h"
 #include "blam_tag_index.h"
 

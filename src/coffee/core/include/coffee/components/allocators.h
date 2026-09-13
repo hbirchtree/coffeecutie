@@ -129,7 +129,7 @@ struct VectorContainer : VectorBaseContainer<ComponentType, AllocationType>
  */
 template<
     typename ComponentType,
-    size_t   Frames         = 2,
+    size_t Frames           = 2,
     typename AllocationType = typename ComponentType::value_type>
 struct BufferedContainer : VectorBaseContainer<ComponentType, AllocationType>
 {
@@ -151,7 +151,7 @@ struct BufferedContainer : VectorBaseContainer<ComponentType, AllocationType>
     /* base::m_data is buffer 0; the remainder live here */
     std::array<vector_type, Frames - 1> m_extra;
     size_t                              m_read{0};
-    bool m_seeded{false};
+    bool                                m_seeded{false};
 
     vector_type& buffer(size_t index)
     {
@@ -225,7 +225,8 @@ struct BufferedContainer : VectorBaseContainer<ComponentType, AllocationType>
         return &buffer(m_read)[this->m_sparse[id]];
     }
 
-    virtual typename ComponentType::value_type* get_at(u64 id, size_t offset) override
+    virtual typename ComponentType::value_type* get_at(
+        u64 id, size_t offset) override
     {
         if(!this->contains_entity(id))
             return nullptr;

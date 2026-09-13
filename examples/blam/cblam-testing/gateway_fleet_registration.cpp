@@ -260,7 +260,7 @@ void GatewayFleetRegistration::onWebSocketMessage(std::string const& text)
         std::lock_guard<std::mutex> lock(m_mutex);
         m_gatewayAddr.sin_port = htons(static_cast<uint16_t>(punchPort));
         m_havePunchTarget      = true;
-        m_trackingId = msg.value("serverTrackingId", std::string());
+        m_trackingId           = msg.value("serverTrackingId", std::string());
 #endif
     } else if(type == "client-relay")
     {

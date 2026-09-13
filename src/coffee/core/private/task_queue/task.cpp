@@ -113,8 +113,8 @@ static detail::result<std::pair<runtime_task const*, size_t>, RQE> GetTask(
 static void NotifyThread(
     std::shared_ptr<runtime_queue::QueueContext> context,
     stl_types::thread_id_t                       threadId,
-    std::optional<detail::duration>              previousDeadline = std::nullopt,
-    std::optional<detail::time_point>            currentBase      = std::nullopt)
+    std::optional<detail::duration>   previousDeadline = std::nullopt,
+    std::optional<detail::time_point> currentBase      = std::nullopt)
 {
     C_PTR_CHECK(context);
 
@@ -818,9 +818,8 @@ void runtime_queue::execute_tasks()
     std::erase_if(m_dependent_tasks, [](dependent_task_data_t const& task) {
         return !task.alive;
     });
-    std::erase_if(m_tasks, [](task_data_t const& task) {
-        return task.to_dispose;
-    });
+    std::erase_if(
+        m_tasks, [](task_data_t const& task) { return task.to_dispose; });
 
     /* One signal per pass, not per task: AwaitTask re-checks its own task on
      * wake, so nothing here needs to know who is waiting. */

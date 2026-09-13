@@ -24,7 +24,6 @@
 #include <coffee/imgui/imgui_binding.h>
 #endif
 
-
 using libc_types::f32;
 using libc_types::u32;
 using type_safety::empty_list_t;
@@ -36,15 +35,9 @@ using namespace std::chrono_literals;
 
 #if defined(FEATURE_ENABLE_ImGui)
 using BlamScriptManifest = compo::SubsystemManifest<
-    type_list_t<
-        const PlayerCamera,
-        const PlayerInfo
-    >,
-    type_list_t<
-        GameEventBus
-    >,
-    empty_list_t
->;
+    type_list_t<const PlayerCamera, const PlayerInfo>,
+    type_list_t<GameEventBus>,
+    empty_list_t>;
 
 template<typename Ver>
 struct BlamScript
@@ -61,10 +54,13 @@ struct BlamScript
 
     static constexpr u32 max_log_lines = 1024;
 
-    bool main_thread_only() const override { return true; }
+    bool main_thread_only() const override
+    {
+        return true;
+    }
 
     template<typename T>
-    requires (!blam::hsc::is_bytecode_variant<T>)
+    requires(!blam::hsc::is_bytecode_variant<T>)
     static std::string enum_to_string(T v)
     {
         auto val = blam::hsc::to_string(v);
@@ -72,7 +68,7 @@ struct BlamScript
     }
 
     template<typename T>
-    requires (blam::hsc::is_bytecode_variant<T>)
+    requires(blam::hsc::is_bytecode_variant<T>)
     static std::string enum_to_string(T v)
     {
         auto val = blam::hsc::bc::to_string(v);
@@ -290,9 +286,8 @@ struct BlamScript
                 ip++;
                 if(!opcode.valid())
                     break;
-                auto color = active_ips.contains(ip)
-                    ? ImVec4(0, 1, 0, 1)
-                    : ImVec4(1, 1, 1, 1);
+                auto color = active_ips.contains(ip) ? ImVec4(0, 1, 0, 1)
+                                                     : ImVec4(1, 1, 1, 1);
                 ImGui::TextColored(color, "%s", to_string(opcode).c_str());
             }
             ImGui::EndTabItem();
@@ -314,7 +309,8 @@ struct BlamScript
                     });
             }
             auto lines = blam::hsc::to_halo_script(*m_scenario, m_magic);
-            for(auto const& line : stl_types::str::split::spliterator<char>(lines, '\n'))
+            for(auto const& line :
+                stl_types::str::split::spliterator<char>(lines, '\n'))
                 ImGui::Text("%.*s", static_cast<int>(line.size()), line.data());
             ImGui::EndTabItem();
         }
@@ -433,7 +429,7 @@ struct BlamScript
     {
         using op = typename script_types::opcode_t;
         // using op = blam::hsc::bc::v1;
-        using t  = blam::hsc::type_t;
+        using t = blam::hsc::type_t;
 
         GameEventBus& game_bus = p.subsystem<GameEventBus>();
 
@@ -474,16 +470,16 @@ struct BlamScript
             break;
         }
         case op::camera_set: {
-            auto camera_points = m_scenario->cutscene.camera_points.data(m_magic).value();
-            auto interp_ticks  = ptr.param(t::short_);
-            auto camera_idx    = ptr.param(t::cutscene_camera_pnt, 1);
+            auto camera_points =
+                m_scenario->cutscene.camera_points.data(m_magic).value();
+            auto interp_ticks    = ptr.param(t::short_);
+            auto camera_idx      = ptr.param(t::cutscene_camera_pnt, 1);
             auto [pos, rotation] = camera_points[camera_idx.long_].to_camera(
                 typing::vector_types::Matf3(
-                    Vecf3{ 0,-1, 0},
-                    Vecf3{-1, 0, 0},
-                    Vecf3{ 0, 0,-1}
-                ));
-            cDebug("Selecting camera point #{} (total={}) : name={} pos={} rot={} fov={} ticks={}",
+                    Vecf3{0, -1, 0}, Vecf3{-1, 0, 0}, Vecf3{0, 0, -1}));
+            cDebug(
+                "Selecting camera point #{} (total={}) : name={} pos={} rot={} "
+                "fov={} ticks={}",
                 camera_idx.long_,
                 camera_points.size(),
                 camera_points[camera_idx.long_].name.str(),
@@ -491,7 +487,7 @@ struct BlamScript
                 camera_points[camera_idx.long_].rotation,
                 camera_points[camera_idx.long_].fov,
                 interp_ticks.long_);
-            GameEvent event{.type = GameEvent::PlayerCameraLerp};
+            GameEvent             event{.type = GameEvent::PlayerCameraLerp};
             PlayerCameraLerpEvent lerp{
                 .seat_idx = 0x0,
                 .position = pos,

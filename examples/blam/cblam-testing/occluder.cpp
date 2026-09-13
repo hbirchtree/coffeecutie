@@ -45,9 +45,10 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         u32               cluster{0};
         std::vector<bool> visible{}; /* per-cluster, recomputed on change */
         Matf4             last_mvp{};
-        u32  last_cluster{std::numeric_limits<u32>::max()};
-        bool last_found{false};
+        u32               last_cluster{std::numeric_limits<u32>::max()};
+        bool              last_found{false};
     };
+
     std::map<Visibility::viewport_id, viewport_pvs_t> viewport_pvs;
     BSPItem::portal_scratch
         portal_scratch{}; /* reused walk buffers, see caching_item.h */
@@ -60,8 +61,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
     struct cull_target_t
     {
-        Vecf3 pos;
-        Matf4 mvp;
+        Vecf3   pos;
+        Matf4   mvp;
         Frustum f;
     };
 
@@ -359,8 +360,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
                     vis.set_visibility(
                         pvs_ok &&
-                        (!bsp_ref.has_bounds ||
-                         view.f.aabb_visible(bsp_ref.bmin, bsp_ref.bmax)),
+                            (!bsp_ref.has_bounds ||
+                             view.f.aabb_visible(bsp_ref.bmin, bsp_ref.bmax)),
                         seat,
                         mirror);
                 }
@@ -371,8 +372,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
         const auto in_draw_distance =
             [rendering, draw_dist = rendering->draw_distance](
-                cull_target_t const& frustum,
-                Model const& mod) {
+                cull_target_t const& frustum, Model const& mod) {
                 return glm::distance(mod.position, frustum.pos) < draw_dist;
             };
 
@@ -419,8 +419,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 return true;
             auto [p1, p2] = bsp->mesh->world_bounds.points();
             Vecf3 lo = glm::min(p1, p2), hi = glm::max(p1, p2);
-            return !(pos.x < lo.x || pos.x > hi.x || pos.y < lo.y ||
-                     pos.y > hi.y || pos.z < lo.z || pos.z > hi.z);
+            return !(
+                pos.x < lo.x || pos.x > hi.x || pos.y < lo.y || pos.y > hi.y ||
+                pos.z < lo.z || pos.z > hi.z);
         };
 
         /* One model against one viewport. Everything here is cheap; the shared
@@ -548,7 +549,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             }
             auto const& eye = eye_pool[player_i];
 
-
             std::array<Vecf3, 7> points = {{
                 Vecf3{},
                 Vecf3{-.1f, .1f, -.1f},
@@ -560,7 +560,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             }};
 
             Matf4 const to_world = glm::transpose(cam.rotation);
-            auto rotate = [&to_world](Vecf3 const& vert) -> Vecf3 {
+            auto        rotate   = [&to_world](Vecf3 const& vert) -> Vecf3 {
                 return Vecf3(to_world * Vecf4(vert, 1.f));
             };
 
@@ -602,16 +602,17 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         //         return Vecf3(p) / p.w;
         //     };
         //     cDebug(
-        //         "Occluder probe: camera cluster {} at ({:.1f},{:.1f},{:.1f})",
-        //         pvs_cluster,
-        //         camera_pos.x,
+        //         "Occluder probe: camera cluster {} at
+        //         ({:.1f},{:.1f},{:.1f})", pvs_cluster, camera_pos.x,
         //         camera_pos.y,
         //         camera_pos.z);
         //     for(f32 ny = -0.8f; ny <= 0.81f; ny += 0.1f)
         //         for(f32 nx = -0.9f; nx <= 0.91f; nx += 0.1f)
         //         {
-        //             /* Reversed-Z with infinite far plane: z=0 is at infinity,
-        //              * so unproject a mid-depth point and shoot from the eye. */
+        //             /* Reversed-Z with infinite far plane: z=0 is at
+        //             infinity,
+        //              * so unproject a mid-depth point and shoot from the eye.
+        //              */
         //             Vecf3 origin = camera_pos;
         //             Vecf3 dir =
         //                 glm::normalize(unproject(nx, ny, 0.5f) - camera_pos);
@@ -627,7 +628,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         //                     break;
         //             if(!hc)
         //                 continue;
-        //             bool vis = *hc < pvs_visible.size() ? bool(pvs_visible[*hc])
+        //             bool vis = *hc < pvs_visible.size() ?
+        //             bool(pvs_visible[*hc])
         //                                                 : true;
         //             if(!vis)
         //                 cDebug(
@@ -658,9 +660,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         //             "Occluder [frame {}]: cluster {}/{}"
         //             " bsp=({:.1f},{:.1f},{:.1f})"
         //             " | BSP {}/{} visible ({} no-cluster)"
-        //             " | models {}/{} visible ({} PVS-culled, {} frustum-culled,"
-        //             " {} dist-culled)",
-        //             frame_counter,
+        //             " | models {}/{} visible ({} PVS-culled, {}
+        //             frustum-culled," " {} dist-culled)", frame_counter,
         //             current_cluster,
         //             total_clusters,
         //             camera_pos.x,
@@ -677,14 +678,15 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
         //         /* Print current cluster's subcluster bounds */
         //         {
-        //             auto const& cc = current_bsp->clusters.at(current_cluster);
-        //             u32         si = 0;
-        //             for(auto const& sub : cc.sub)
+        //             auto const& cc =
+        //             current_bsp->clusters.at(current_cluster); u32         si
+        //             = 0; for(auto const& sub : cc.sub)
         //             {
         //                 auto [bmin, bmax] = sub.cluster->bounds.points();
         //                 cDebug(
         //                     "  cluster[{}] sub[{}] bounds:"
-        //                     " ({:.1f},{:.1f},{:.1f})..({:.1f},{:.1f},{:.1f})",
+        //                     "
+        //                     ({:.1f},{:.1f},{:.1f})..({:.1f},{:.1f},{:.1f})",
         //                     current_cluster,
         //                     si++,
         //                     bmin.x,
@@ -709,7 +711,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         //         }
 
         //         /* Per-portal frustum debug: show pass/cull for each portal
-        //          * of the camera cluster, with centroid and front-vertex count.
+        //          * of the camera cluster, with centroid and front-vertex
+        //          count.
         //          */
         //         {
         //             Frustum frustum = Frustum::from_mvp(camera_mvp);
@@ -719,17 +722,17 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         //                 frustum.cam_plane.y,
         //                 frustum.cam_plane.z,
         //                 frustum.cam_plane.w);
-        //             auto const& cc = current_bsp->clusters.at(current_cluster);
-        //             u32         pi = 0;
-        //             for(auto const& portal : cc.portals)
+        //             auto const& cc =
+        //             current_bsp->clusters.at(current_cluster); u32         pi
+        //             = 0; for(auto const& portal : cc.portals)
         //             {
         //                 i32  adj = (portal.data->front_cluster ==
         //                            static_cast<i16>(current_cluster))
         //                                ? portal.data->back_cluster
         //                                : portal.data->front_cluster;
         //                 bool near =
-        //                     glm::distance(camera_pos, portal.data->centroid) <=
-        //                     portal.data->bound_radius;
+        //                     glm::distance(camera_pos, portal.data->centroid)
+        //                     <= portal.data->bound_radius;
         //                 bool poly = frustum.polygon_inside(portal.vertices);
 
         //                 u32 front_count = 0;
@@ -771,9 +774,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         //                 auto   mc    = current_bsp->find_cluster(bsp_p);
         //                 cDebug(
         //                     "  model[{}] scenario=({:.1f},{:.1f},{:.1f})"
-        //                     " bsp=({:.1f},{:.1f},{:.1f}) cluster={} visible={}",
-        //                     sample - 1,
-        //                     model.position.x,
+        //                     " bsp=({:.1f},{:.1f},{:.1f}) cluster={}
+        //                     visible={}", sample - 1, model.position.x,
         //                     model.position.y,
         //                     model.position.z,
         //                     bsp_p.x,
@@ -790,8 +792,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         //             {
         //                 if(sample++ >= 5)
         //                     break;
-        //                 auto                ref = p.template ref<Proxy>(ent.id());
-        //                 BspReference const& bsp_ref =
+        //                 auto                ref = p.template
+        //                 ref<Proxy>(ent.id()); BspReference const& bsp_ref =
         //                     ref.template get<BspReference>();
         //                 bool has_cluster = bsp_ref.cluster_idx !=
         //                                    std::numeric_limits<u32>::max();
@@ -820,8 +822,8 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         //             auto ref = p.template ref<Proxy>(ent.id());
         //             BspReference const& bsp_ref =
         //                 ref.template get<BspReference>();
-        //             BSPItem const& bsp = bsp_cache->find(bsp_ref.bsp)->second;
-        //             if(!bsp.valid())
+        //             BSPItem const& bsp =
+        //             bsp_cache->find(bsp_ref.bsp)->second; if(!bsp.valid())
         //                 break;
         //             auto [wmin, wmax] = bsp.mesh->world_bounds.points();
         //             cDebug(

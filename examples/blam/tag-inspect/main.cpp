@@ -11,31 +11,32 @@
 #include <blam/volta/blam_mod2.h>
 #include <blam/volta/blam_p8_palette.h>
 #include <blam/volta/blam_scenario.h>
-#include <blam/volta/blam_ui.h>
-#include <blam/volta/blam_swizzle.h>
 #include <blam/volta/blam_shaders.h>
 #include <blam/volta/blam_stl.h>
+#include <blam/volta/blam_swizzle.h>
+#include <blam/volta/blam_ui.h>
 #include <blam/volta/blam_versions.h>
+#include <cmath>
 #include <coffee/application/application_start.h>
 #include <coffee/core/coffee_args.h>
 #include <coffee/core/debug/formatting.h>
 #include <coffee/core/files/cfiles.h>
 #include <coffee/image/cimage.h>
-#include <cmath>
-#include <map>
-#include <vector>
 #include <cstdlib>
 #include <cstring>
 #include <cxxopts.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <map>
 #include <peripherals/libc/types.h>
 #include <url/url.h>
+#include <vector>
 
 #define BCDEC_IMPLEMENTATION
 #define BCDEC_STATIC
 #include <bcdec.h>
 
+using Coffee::Logging::cWarning;
 using libc_types::f32;
 using libc_types::i32;
 using libc_types::u16;
@@ -43,16 +44,15 @@ using libc_types::u32;
 using libc_types::u8;
 using typing::vector_types::Quatf;
 using typing::vector_types::Vecf3;
-using Coffee::Logging::cWarning;
 
 namespace {
 
 blam::map_ptr g_magic;
 /* Pixel data is addressed by absolute file offset, unlike tag data */
 blam::map_ptr g_raw_magic;
-bool          g_dump_mirrors = false;
-size_t        g_scan_window  = 0;
-bool          g_dump_player  = false;
+bool          g_dump_mirrors  = false;
+size_t        g_scan_window   = 0;
+bool          g_dump_player   = false;
 bool          g_dump_scenario = false;
 bool          g_dump_bones    = false;
 bool          g_channel_stats{false};
@@ -66,7 +66,10 @@ bool          g_have_bitmaps_file = false;
 /* Writes each byte position of a 32-bit image as its own greyscale PGM, so the
  * channel order can be settled by looking at which one carries the mask. */
 void dump_planes(
-    std::string const& name, semantic::Span<const libc_types::u8> px, u32 w, u32 h)
+    std::string const&                   name,
+    semantic::Span<const libc_types::u8> px,
+    u32                                  w,
+    u32                                  h)
 {
     for(u32 c = 0; c < 4; c++)
     {
@@ -99,11 +102,12 @@ std::string_view enum_name(E value)
 template<typename E>
 void print_enum(char const* label, E value)
 {
-    printf("%s=%.*s(%u) ",
-           label,
-           static_cast<int>(enum_name(value).size()),
-           enum_name(value).data(),
-           static_cast<u32>(value));
+    printf(
+        "%s=%.*s(%u) ",
+        label,
+        static_cast<int>(enum_name(value).size()),
+        enum_name(value).data(),
+        static_cast<u32>(value));
 }
 
 /* Everything is a D3D format read little-endian. A8R8G8B8 lands in memory as
@@ -170,10 +174,10 @@ std::vector<u8> decode_rgba8(
             return {};
         std::vector<u8> expanded(texels * 4);
         if(!blam::bitm::expand_p8(
-                px,
-                semantic::Span<blam::bitm::vecb4>(
-                    reinterpret_cast<blam::bitm::vecb4*>(expanded.data()),
-                    expanded.size() / 4)))
+               px,
+               semantic::Span<blam::bitm::vecb4>(
+                   reinterpret_cast<blam::bitm::vecb4*>(expanded.data()),
+                   expanded.size() / 4)))
             return {};
         for(size_t i = 0; i < texels; i++)
             put(i,
@@ -240,8 +244,8 @@ std::vector<u8> decode_rgba8(
          * nowhere to land. */
         if(w % 4 != 0 || h % 4 != 0)
             return {};
-        u32 block_bytes = BCDEC_BC1_BLOCK_SIZE;
-        auto transform  = &bcdec_bc1;
+        u32  block_bytes = BCDEC_BC1_BLOCK_SIZE;
+        auto transform   = &bcdec_bc1;
         if(fmt == format_t::BC2)
         {
             block_bytes = BCDEC_BC2_BLOCK_SIZE;
@@ -322,10 +326,11 @@ void dump_image_png(
     u32 const expect = img.layer_mip_bytes(0);
     if(w == 0 || h == 0 || expect == 0 || px.size_bytes() < expect)
     {
-        printf("      %s: no pixel data (%zu bytes, need %u)\n",
-               label.c_str(),
-               px.size_bytes(),
-               expect);
+        printf(
+            "      %s: no pixel data (%zu bytes, need %u)\n",
+            label.c_str(),
+            px.size_bytes(),
+            expect);
         return;
     }
     px = semantic::Span<const u8>(px.data(), expect);
@@ -339,21 +344,18 @@ void dump_image_png(
         linear.resize(px.size_bytes());
         if(bpp != 0 &&
            blam::swizzle::deswizzle_bytes(
-               px,
-               semantic::Span<u8>(linear.data(), linear.size()),
-               w,
-               h,
-               bpp))
+               px, semantic::Span<u8>(linear.data(), linear.size()), w, h, bpp))
             px = semantic::Span<const u8>(linear.data(), linear.size());
     }
 
     auto rgba = decode_rgba8(img.format, px, w, h);
     if(rgba.empty())
     {
-        printf("      %s: no decoder for %.*s\n",
-               label.c_str(),
-               static_cast<int>(enum_name(img.format).size()),
-               enum_name(img.format).data());
+        printf(
+            "      %s: no decoder for %.*s\n",
+            label.c_str(),
+            static_cast<int>(enum_name(img.format).size()),
+            enum_name(img.format).data());
         return;
     }
 
@@ -420,8 +422,7 @@ void dump_font_png(blam::font const* font, std::string_view name)
             continue;
 
         auto const data_size = static_cast<u32>(bw) * static_cast<u32>(bh);
-        auto       pix =
-            font->pixel_data(ch.pixel_offset, data_size).data(g_magic);
+        auto pix = font->pixel_data(ch.pixel_offset, data_size).data(g_magic);
         if(!pix.has_value() || pix.value().size() < data_size)
         {
             missing++;
@@ -464,18 +465,17 @@ void dump_dela(blam::ui_element const* info)
     print_enum("controller", info->controller_index);
     printf("\n");
     auto name = info->name.str();
-    printf("  name=\"%.*s\"\n",
-           static_cast<int>(name.size()),
-           name.data());
+    printf("  name=\"%.*s\"\n", static_cast<int>(name.size()), name.data());
     print_enum("  flags", info->flags);
     printf("\n");
-    printf("  bounds=(%d,%d,%d,%d) auto_close=%dms fade=%dms\n",
-           info->bounds[0],
-           info->bounds[1],
-           info->bounds[2],
-           info->bounds[3],
-           info->millis_to_auto_close,
-           info->millis_auto_close_fade_time);
+    printf(
+        "  bounds=(%d,%d,%d,%d) auto_close=%dms fade=%dms\n",
+        info->bounds[0],
+        info->bounds[1],
+        info->bounds[2],
+        info->bounds[3],
+        info->millis_to_auto_close,
+        info->millis_auto_close_fade_time);
     printf("  background=%s\n", name_of(info->background).c_str());
 
     /* data_inputs are what let a widget show something the tag cannot know --
@@ -485,9 +485,10 @@ void dump_dela(blam::ui_element const* info)
     {
         printf("  data_inputs=%zu\n", inputs.value().size());
         for(auto [i, in] : stl_types::enumerate(inputs.value()))
-            printf("    input %zu: function=%u\n",
-                   i,
-                   static_cast<unsigned>(in.function));
+            printf(
+                "    input %zu: function=%u\n",
+                i,
+                static_cast<unsigned>(in.function));
     }
 
     if(auto events = info->event_handlers.data(g_magic); events.has_value())
@@ -499,27 +500,30 @@ void dump_dela(blam::ui_element const* info)
             print_enum("event", ev.event_type);
             print_enum("flags", ev.flags);
             auto script = ev.script.str();
-            printf("widget=%s sound=%s script=\"%.*s\"\n",
-                   name_of(ev.widget).c_str(),
-                   name_of(ev.sound).c_str(),
-                   static_cast<int>(script.size()),
-                   script.data());
+            printf(
+                "widget=%s sound=%s script=\"%.*s\"\n",
+                name_of(ev.widget).c_str(),
+                name_of(ev.sound).c_str(),
+                static_cast<int>(script.size()),
+                script.data());
         }
     }
 
     if(info->widget_type == blam::ui_element::widget_type_t::text_box)
     {
         auto const& tb = info->text_box;
-        printf("  text_box: strings=%s font=%s\n",
-               name_of(tb.unicode_strings).c_str(),
-               name_of(tb.font).c_str());
+        printf(
+            "  text_box: strings=%s font=%s\n",
+            name_of(tb.unicode_strings).c_str(),
+            name_of(tb.font).c_str());
         printf("    ");
         print_enum("justification", tb.justification);
         print_enum("flags", tb.flags);
-        printf("string_index=%d offset=(%d,%d)\n",
-               tb.string_list_index,
-               tb.horizontal_offset,
-               tb.vertical_offset);
+        printf(
+            "string_index=%d offset=(%d,%d)\n",
+            tb.string_list_index,
+            tb.horizontal_offset,
+            tb.vertical_offset);
     }
 
     if(auto children = info->child_widgets.data(g_magic); children.has_value())
@@ -528,12 +532,13 @@ void dump_dela(blam::ui_element const* info)
         for(auto const& ch : children.value())
         {
             auto name = ch.name.str();
-            printf("    \"%.*s\" -> %s offset=(%d,%d)\n",
-                   static_cast<int>(name.size()),
-                   name.data(),
-                   name_of(ch.widget).c_str(),
-                   ch.horizontal_offset,
-                   ch.vertical_offset);
+            printf(
+                "    \"%.*s\" -> %s offset=(%d,%d)\n",
+                static_cast<int>(name.size()),
+                name.data(),
+                name_of(ch.widget).c_str(),
+                ch.horizontal_offset,
+                ch.vertical_offset);
         }
     }
 }
@@ -544,34 +549,50 @@ void dump_smet(blam::shader::shader_meter const* info)
     printf("\n");
     printf("  map=%s\n", name_of(info->map).c_str());
     auto const& c = info->colors;
-    printf("  gradient_min=(%g,%g,%g) gradient_max=(%g,%g,%g)\n",
-           c.gradient_min.x, c.gradient_min.y, c.gradient_min.z,
-           c.gradient_max.x, c.gradient_max.y, c.gradient_max.z);
-    printf("  background=(%g,%g,%g) flash=(%g,%g,%g) tint=(%g,%g,%g)\n",
-           c.background.x, c.background.y, c.background.z,
-           c.flash.x, c.flash.y, c.flash.z,
-           c.tint.x, c.tint.y, c.tint.z);
-    printf("  transparency=%g background_transparency=%g\n",
-           c.transparency, c.background_transparency);
+    printf(
+        "  gradient_min=(%g,%g,%g) gradient_max=(%g,%g,%g)\n",
+        c.gradient_min.x,
+        c.gradient_min.y,
+        c.gradient_min.z,
+        c.gradient_max.x,
+        c.gradient_max.y,
+        c.gradient_max.z);
+    printf(
+        "  background=(%g,%g,%g) flash=(%g,%g,%g) tint=(%g,%g,%g)\n",
+        c.background.x,
+        c.background.y,
+        c.background.z,
+        c.flash.x,
+        c.flash.y,
+        c.flash.z,
+        c.tint.x,
+        c.tint.y,
+        c.tint.z);
+    printf(
+        "  transparency=%g background_transparency=%g\n",
+        c.transparency,
+        c.background_transparency);
     auto const& f = info->ext_func_src;
-    printf("  sources: brightness=%.*s flash=%.*s value=%.*s gradient=%.*s\n",
-           static_cast<int>(enum_name(f.brightness).size()),
-           enum_name(f.brightness).data(),
-           static_cast<int>(enum_name(f.flash).size()),
-           enum_name(f.flash).data(),
-           static_cast<int>(enum_name(f.value).size()),
-           enum_name(f.value).data(),
-           static_cast<int>(enum_name(f.gradient).size()),
-           enum_name(f.gradient).data());
+    printf(
+        "  sources: brightness=%.*s flash=%.*s value=%.*s gradient=%.*s\n",
+        static_cast<int>(enum_name(f.brightness).size()),
+        enum_name(f.brightness).data(),
+        static_cast<int>(enum_name(f.flash).size()),
+        enum_name(f.flash).data(),
+        static_cast<int>(enum_name(f.value).size()),
+        enum_name(f.value).data(),
+        static_cast<int>(enum_name(f.gradient).size()),
+        enum_name(f.gradient).data());
 }
 
 void dump_font(blam::font const* font, std::string_view name)
 {
-    printf("  ascend=%u descend=%u leadin=%ux%u\n",
-           font->ascend_height,
-           font->descend_height,
-           font->leadin_width,
-           font->leadin_height);
+    printf(
+        "  ascend=%u descend=%u leadin=%ux%u\n",
+        font->ascend_height,
+        font->descend_height,
+        font->leadin_width,
+        font->leadin_height);
 
     auto chars = font->characters.data(g_magic);
     printf("  characters=%zu\n", chars.has_value() ? chars.value().size() : 0u);
@@ -591,49 +612,53 @@ void dump_font(blam::font const* font, std::string_view name)
 
 void print_anim(char const* label, blam::shader::texture_property_anim const& a)
 {
-    printf("      %-4s src=%-6.*s fn=%-16.*s period=%g phase=%g scale=%g\n",
-           label,
-           static_cast<int>(enum_name(a.source).size()),
-           enum_name(a.source).data(),
-           static_cast<int>(enum_name(a.function).size()),
-           enum_name(a.function).data(),
-           a.period,
-           a.phase,
-           a.scale);
+    printf(
+        "      %-4s src=%-6.*s fn=%-16.*s period=%g phase=%g scale=%g\n",
+        label,
+        static_cast<int>(enum_name(a.source).size()),
+        enum_name(a.source).data(),
+        static_cast<int>(enum_name(a.function).size()),
+        enum_name(a.function).data(),
+        a.period,
+        a.phase,
+        a.scale);
 }
 
 void print_anim(
     char const* label, blam::shader::simple_tex_property_anim const& a)
 {
-    printf("      %-4s src=%-6.*s fn=%-16.*s period=%g scale=%g\n",
-           label,
-           static_cast<int>(enum_name(a.source).size()),
-           enum_name(a.source).data(),
-           static_cast<int>(enum_name(a.function).size()),
-           enum_name(a.function).data(),
-           a.period,
-           a.scale);
+    printf(
+        "      %-4s src=%-6.*s fn=%-16.*s period=%g scale=%g\n",
+        label,
+        static_cast<int>(enum_name(a.source).size()),
+        enum_name(a.source).data(),
+        static_cast<int>(enum_name(a.function).size()),
+        enum_name(a.function).data(),
+        a.period,
+        a.scale);
 }
 
 void print_bitm_ref(blam::shader::bitm_reference_t const& map)
 {
-    printf("      bitmap=%s uv_scale=(%g,%g) uv_offset=(%g,%g) rot=%g "
-           "mip_bias=%g\n",
-           name_of(map.map).c_str(),
-           map.uv_scale.x,
-           map.uv_scale.y,
-           map.uv_offset.x,
-           map.uv_offset.y,
-           map.rotation,
-           map.mip_bias);
+    printf(
+        "      bitmap=%s uv_scale=(%g,%g) uv_offset=(%g,%g) rot=%g "
+        "mip_bias=%g\n",
+        name_of(map.map).c_str(),
+        map.uv_scale.x,
+        map.uv_scale.y,
+        map.uv_offset.x,
+        map.uv_offset.y,
+        map.rotation,
+        map.mip_bias);
 }
 
 void print_detail_map(char const* label, blam::shader::detail_map const& map)
 {
-    printf("    %-10s scale=%g bitmap=%s\n",
-           label,
-           map.scale,
-           name_of(map.map).c_str());
+    printf(
+        "    %-10s scale=%g bitmap=%s\n",
+        label,
+        map.scale,
+        name_of(map.map).c_str());
 }
 
 /* ---- shader_transparent (sotr) ---- */
@@ -649,9 +674,10 @@ void dump_sotr(blam::shader::shader_transparent const* info)
     print_enum("first_map_type", info->transparent.first_map_type);
     print_enum("flags", info->transparent.flags);
     printf("\n");
-    printf("  lens_flare=%s layers=%u\n",
-           name_of(info->lens_flares.lens_flare).c_str(),
-           info->layers.size());
+    printf(
+        "  lens_flare=%s layers=%u\n",
+        name_of(info->lens_flares.lens_flare).c_str(),
+        info->layers.size());
 
     if(auto layers = info->layers.data(g_magic); layers.has_value())
         for(auto const& layer : layers.value())
@@ -671,9 +697,10 @@ void dump_sotr(blam::shader::shader_transparent const* info)
             print_anim("u", map.animation.u);
             print_anim("v", map.animation.v);
             print_anim("rot", map.animation.rot);
-            printf("      rot_center=(%g,%g)\n",
-                   map.animation.rotation_center.x,
-                   map.animation.rotation_center.y);
+            printf(
+                "      rot_center=(%g,%g)\n",
+                map.animation.rotation_center.x,
+                map.animation.rotation_center.y);
         }
     }
 
@@ -682,20 +709,22 @@ void dump_sotr(blam::shader::shader_transparent const* info)
     if(!stages.has_value())
         return;
 
-    auto cmap = [](shader_transparent::input_t in,
+    auto cmap = [](shader_transparent::input_t   in,
                    shader_transparent::mapping_t m) {
-        printf("%.*s/%.*s ",
-               static_cast<int>(enum_name(in).size()),
-               enum_name(in).data(),
-               static_cast<int>(enum_name(m).size()),
-               enum_name(m).data());
+        printf(
+            "%.*s/%.*s ",
+            static_cast<int>(enum_name(in).size()),
+            enum_name(in).data(),
+            static_cast<int>(enum_name(m).size()),
+            enum_name(m).data());
     };
     auto amap = [](color_input in, shader_transparent::mapping_t m) {
-        printf("%.*s/%.*s ",
-               static_cast<int>(enum_name(in).size()),
-               enum_name(in).data(),
-               static_cast<int>(enum_name(m).size()),
-               enum_name(m).data());
+        printf(
+            "%.*s/%.*s ",
+            static_cast<int>(enum_name(in).size()),
+            enum_name(in).data(),
+            static_cast<int>(enum_name(m).size()),
+            enum_name(m).data());
     };
 
     u32 i = 0;
@@ -706,20 +735,22 @@ void dump_sotr(blam::shader::shader_transparent const* info)
         print_enum("color0_src", s.color0_source);
         print_enum("color0_fn", s.color0_func);
         printf("period=%g\n", s.color0_period);
-        printf("      color0_lower=(%g,%g,%g,%g) color0_upper=(%g,%g,%g,%g)\n",
-               s.color0_lower.x,
-               s.color0_lower.y,
-               s.color0_lower.z,
-               s.color0_lower.w,
-               s.color0_upper.x,
-               s.color0_upper.y,
-               s.color0_upper.z,
-               s.color0_upper.w);
-        printf("      color1=(%g,%g,%g,%g)\n",
-               s.color1.x,
-               s.color1.y,
-               s.color1.z,
-               s.color1.w);
+        printf(
+            "      color0_lower=(%g,%g,%g,%g) color0_upper=(%g,%g,%g,%g)\n",
+            s.color0_lower.x,
+            s.color0_lower.y,
+            s.color0_lower.z,
+            s.color0_lower.w,
+            s.color0_upper.x,
+            s.color0_upper.y,
+            s.color0_upper.z,
+            s.color0_upper.w);
+        printf(
+            "      color1=(%g,%g,%g,%g)\n",
+            s.color1.x,
+            s.color1.y,
+            s.color1.z,
+            s.color1.w);
         printf("      color in:  ");
         cmap(s.color.a_input, s.color.a_mapping);
         cmap(s.color.b_input, s.color.b_mapping);
@@ -780,8 +811,7 @@ void dump_senv(blam::shader::shader_env const* info)
     print_enum("  flags", info->flags);
     print_enum("type", info->shader_type);
     printf("\n");
-    printf("    base       bitmap=%s ",
-           name_of(info->diffuse.base).c_str());
+    printf("    base       bitmap=%s ", name_of(info->diffuse.base).c_str());
     print_enum("diffuse_flags", info->diffuse.flags);
     printf("\n");
     print_enum("    detail_function", info->diffuse.detail_function);
@@ -791,26 +821,28 @@ void dump_senv(blam::shader::shader_env const* info)
     print_enum("    micro_function", info->diffuse.micro_function);
     printf("\n");
     print_detail_map("micro", info->diffuse.micro);
-    printf("    material_color=(%g,%g,%g)\n",
-           info->diffuse.material_color.x,
-           info->diffuse.material_color.y,
-           info->diffuse.material_color.z);
+    printf(
+        "    material_color=(%g,%g,%g)\n",
+        info->diffuse.material_color.x,
+        info->diffuse.material_color.y,
+        info->diffuse.material_color.z);
     print_detail_map("bump", info->bump);
     printf("    scrolling:\n");
     print_anim("u", info->scrolling.u);
     print_anim("v", info->scrolling.v);
     print_enum("    self_illum flags", info->self_illum.flags);
     printf("map=%s\n", name_of(info->self_illum.map.map).c_str());
-    auto illum = [](char const* label,
+    auto illum = [](char const*                                         label,
                     blam::shader::shader_env::illumination_props const& p) {
-        printf("      %-10s on=(%g,%g,%g) off=(%g,%g,%g)\n",
-               label,
-               p.color_on.x,
-               p.color_on.y,
-               p.color_on.z,
-               p.color_off.x,
-               p.color_off.y,
-               p.color_off.z);
+        printf(
+            "      %-10s on=(%g,%g,%g) off=(%g,%g,%g)\n",
+            label,
+            p.color_on.x,
+            p.color_on.y,
+            p.color_on.z,
+            p.color_off.x,
+            p.color_off.y,
+            p.color_off.z);
         print_anim("anim", p.anim);
     };
     illum("primary", info->self_illum.primary);
@@ -838,34 +870,38 @@ void dump_soso(blam::shader::shader_model const* info)
     printf(" translucency=%g", info->translucency);
     print_enum(" change_color_src", info->change_color_src);
     printf("\n");
-    printf("    maps scale=(%g,%g)\n",
-           info->maps.scale.x,
-           info->maps.scale.y);
+    printf("    maps scale=(%g,%g)\n", info->maps.scale.x, info->maps.scale.y);
     printf("      base         = %s\n", name_of(info->maps.base).c_str());
-    printf("      multipurpose = %s\n",
-           name_of(info->maps.multipurpose).c_str());
-    printf("        (R=base_color G=illumination B=change_color A=reflection)\n");
+    printf(
+        "      multipurpose = %s\n", name_of(info->maps.multipurpose).c_str());
+    printf(
+        "        (R=base_color G=illumination B=change_color A=reflection)\n");
     print_enum("      detail function", info->maps.detail.function);
     print_enum(" mask", info->maps.detail.mask);
-    printf(" scale=%g v_scale=%g map=%s\n",
-           info->maps.detail.scale,
-           info->maps.detail.v_scale,
-           name_of(info->maps.detail.map).c_str());
-    printf("    reflection falloff=%g cutoff=%g\n",
-           info->reflection.falloff_distance,
-           info->reflection.cutoff_distance);
-    printf("      perpendicular brightness=%g tint=(%g,%g,%g)\n",
-           info->reflection.perpendicular_brightness,
-           info->reflection.perpendicular_tint.x,
-           info->reflection.perpendicular_tint.y,
-           info->reflection.perpendicular_tint.z);
-    printf("      parallel      brightness=%g tint=(%g,%g,%g)\n",
-           info->reflection.parallel_brightness,
-           info->reflection.parallel_tint.x,
-           info->reflection.parallel_tint.y,
-           info->reflection.parallel_tint.z);
-    printf("      cube         = %s\n",
-           name_of(info->reflection.reflection).c_str());
+    printf(
+        " scale=%g v_scale=%g map=%s\n",
+        info->maps.detail.scale,
+        info->maps.detail.v_scale,
+        name_of(info->maps.detail.map).c_str());
+    printf(
+        "    reflection falloff=%g cutoff=%g\n",
+        info->reflection.falloff_distance,
+        info->reflection.cutoff_distance);
+    printf(
+        "      perpendicular brightness=%g tint=(%g,%g,%g)\n",
+        info->reflection.perpendicular_brightness,
+        info->reflection.perpendicular_tint.x,
+        info->reflection.perpendicular_tint.y,
+        info->reflection.perpendicular_tint.z);
+    printf(
+        "      parallel      brightness=%g tint=(%g,%g,%g)\n",
+        info->reflection.parallel_brightness,
+        info->reflection.parallel_tint.x,
+        info->reflection.parallel_tint.y,
+        info->reflection.parallel_tint.z);
+    printf(
+        "      cube         = %s\n",
+        name_of(info->reflection.reflection).c_str());
 }
 
 /* ---- obje / unit ---- */
@@ -913,27 +949,48 @@ void dump_bones(blam::mod2::header<Ver> const* header)
         auto        axes = glm::mat3_cast(w);
         auto        name = b.name.str();
         auto        idx  = [](u16 v) {
-            return v == blam::mod2::bone::invalid_bone ? -1 : static_cast<i32>(v);
+            return v == blam::mod2::bone::invalid_bone ? -1
+                                                               : static_cast<i32>(v);
         };
 
-        printf("  [%3u] %-26.*s parent=%-4d next=%-4d child=%d\n",
-               i,
-               static_cast<int>(name.size()),
-               name.data(),
-               idx(par),
-               idx(b.next_bone),
-               idx(b.next_child));
-        printf("        local t=(%8.4f,%8.4f,%8.4f) q=(%7.4f,%7.4f,%7.4f,%7.4f)\n",
-               b.translation.x, b.translation.y, b.translation.z,
-               b.rotation.x, b.rotation.y, b.rotation.z, b.rotation.w);
-        printf("        world t=(%8.4f,%8.4f,%8.4f) q=(%7.4f,%7.4f,%7.4f,%7.4f)\n",
-               world_pos[i].x, world_pos[i].y, world_pos[i].z,
-               w.x, w.y, w.z, w.w);
-        printf("        axes  X=(%6.3f,%6.3f,%6.3f) "
-               "Y=(%6.3f,%6.3f,%6.3f) Z=(%6.3f,%6.3f,%6.3f)\n",
-               axes[0].x, axes[0].y, axes[0].z,
-               axes[1].x, axes[1].y, axes[1].z,
-               axes[2].x, axes[2].y, axes[2].z);
+        printf(
+            "  [%3u] %-26.*s parent=%-4d next=%-4d child=%d\n",
+            i,
+            static_cast<int>(name.size()),
+            name.data(),
+            idx(par),
+            idx(b.next_bone),
+            idx(b.next_child));
+        printf(
+            "        local t=(%8.4f,%8.4f,%8.4f) q=(%7.4f,%7.4f,%7.4f,%7.4f)\n",
+            b.translation.x,
+            b.translation.y,
+            b.translation.z,
+            b.rotation.x,
+            b.rotation.y,
+            b.rotation.z,
+            b.rotation.w);
+        printf(
+            "        world t=(%8.4f,%8.4f,%8.4f) q=(%7.4f,%7.4f,%7.4f,%7.4f)\n",
+            world_pos[i].x,
+            world_pos[i].y,
+            world_pos[i].z,
+            w.x,
+            w.y,
+            w.z,
+            w.w);
+        printf(
+            "        axes  X=(%6.3f,%6.3f,%6.3f) "
+            "Y=(%6.3f,%6.3f,%6.3f) Z=(%6.3f,%6.3f,%6.3f)\n",
+            axes[0].x,
+            axes[0].y,
+            axes[0].z,
+            axes[1].x,
+            axes[1].y,
+            axes[1].z,
+            axes[2].x,
+            axes[2].y,
+            axes[2].z);
     }
 }
 
@@ -1024,11 +1081,12 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
     print_enum("usage", header->usage);
     print_enum("sprite_usage", header->sprite_usage);
     print_enum("budget", header->budget);
-    printf("sprite_spacing=%u mipmaps=%u import=%ux%u\n",
-           header->sprite_spacing,
-           header->mipmap_count,
-           header->import_width,
-           header->import_height);
+    printf(
+        "sprite_spacing=%u mipmaps=%u import=%ux%u\n",
+        header->sprite_spacing,
+        header->mipmap_count,
+        header->import_width,
+        header->import_height);
 
     auto seqs = header->sequences.data(g_magic);
     printf("  sequences=%u\n", seqs.has_value() ? seqs.value().size() : 0u);
@@ -1039,24 +1097,26 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
         {
             auto sprites = seq.sprites.data(g_magic);
             auto name    = seq.name.str();
-            printf("    seq %u: \"%.*s\" first=%u count=%u sprites=%u\n",
-                   i++,
-                   static_cast<int>(name.size()),
-                   name.data(),
-                   seq.first_bitmap,
-                   seq.bitmap_count,
-                   sprites.has_value() ? sprites.value().size() : 0u);
+            printf(
+                "    seq %u: \"%.*s\" first=%u count=%u sprites=%u\n",
+                i++,
+                static_cast<int>(name.size()),
+                name.data(),
+                seq.first_bitmap,
+                seq.bitmap_count,
+                sprites.has_value() ? sprites.value().size() : 0u);
             if(!sprites.has_value())
                 continue;
             for(auto const& spr : sprites.value())
-                printf("      sprite: bitmap=%u l=%g r=%g t=%g b=%g reg=(%g,%g)\n",
-                       spr.bitmap_index,
-                       spr.left,
-                       spr.right,
-                       spr.top,
-                       spr.bottom,
-                       spr.registration_point.x,
-                       spr.registration_point.y);
+                printf(
+                    "      sprite: bitmap=%u l=%g r=%g t=%g b=%g reg=(%g,%g)\n",
+                    spr.bitmap_index,
+                    spr.left,
+                    spr.right,
+                    spr.top,
+                    spr.bottom,
+                    spr.registration_point.x,
+                    spr.registration_point.y);
         }
     }
 
@@ -1073,21 +1133,22 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
             /* image_t::data() is what the engine itself uses; a hand-rolled
              * read of img.offset does not land in the same place. */
             auto data = img.data(g_raw_magic, 0);
-            printf("    data(): %zu bytes (expected %u)\n",
-                   data.size(),
-                   img.isize.x * img.isize.y * 4u);
+            printf(
+                "    data(): %zu bytes (expected %u)\n",
+                data.size(),
+                img.isize.x * img.isize.y * 4u);
             /* Byte order is what is in question, so report per byte position;
              * Morton swizzling permutes pixels, never channels, so these are
              * exact whether or not the image is swizzled. */
-            u32 lo[4] = {255, 255, 255, 255}, hi[4] = {0, 0, 0, 0};
+            u32             lo[4] = {255, 255, 255, 255}, hi[4] = {0, 0, 0, 0};
             libc_types::u64 sum[4] = {0, 0, 0, 0};
             size_t          px     = data.size() / 4;
             for(size_t i = 0; i < px; i++)
                 for(u32 c = 0; c < 4; c++)
                 {
-                    u32 v  = data[i * 4 + c];
-                    lo[c]  = std::min(lo[c], v);
-                    hi[c]  = std::max(hi[c], v);
+                    u32 v = data[i * 4 + c];
+                    lo[c] = std::min(lo[c], v);
+                    hi[c] = std::max(hi[c], v);
                     sum[c] += v;
                 }
             if(!g_dump_prefix.empty())
@@ -1095,7 +1156,7 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
                 /* Xbox stores these Morton-swizzled; linearise first or the
                  * plane images are unreadable. */
                 std::vector<libc_types::u8> linear(data.size());
-                auto view = data;
+                auto                        view = data;
                 if(static_cast<u16>(img.flags) &
                    static_cast<u16>(blam::bitm::flags_t::swizzled))
                     if(blam::swizzle::deswizzle_bytes(
@@ -1107,8 +1168,8 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
                            4u))
                         view = semantic::Span<const libc_types::u8>(
                             linear.data(), linear.size());
-                auto short_name = std::string(
-                    name.substr(name.find_last_of('\\') + 1));
+                auto short_name =
+                    std::string(name.substr(name.find_last_of('\\') + 1));
                 for(auto& ch : short_name)
                     if(ch == ' ')
                         ch = '_';
@@ -1120,16 +1181,22 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
             }
             printf("    byte stats over %zu px:\n", px);
             for(u32 c = 0; c < 4; c++)
-                printf("      byte %u: min=%3u max=%3u mean=%6.1f\n",
-                       c,
-                       lo[c],
-                       hi[c],
-                       px ? static_cast<double>(sum[c]) / px : 0.0);
+                printf(
+                    "      byte %u: min=%3u max=%3u mean=%6.1f\n",
+                    c,
+                    lo[c],
+                    hi[c],
+                    px ? static_cast<double>(sum[c]) / px : 0.0);
         }
     u32 i = 0;
     for(auto const& img : images.value())
     {
-        printf("    image %u: %ix%ix%i ", i++, img.isize.x, img.isize.y, img.depth);
+        printf(
+            "    image %u: %ix%ix%i ",
+            i++,
+            img.isize.x,
+            img.isize.y,
+            img.depth);
         print_enum("type", img.type);
         print_enum("format", img.format);
         print_enum("flags", img.flags);
@@ -1139,17 +1206,16 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
     if(g_dump_png_prefix.empty())
         return;
 
-    auto  base = flatten_name(name);
-    u32   idx  = 0;
+    auto base = flatten_name(name);
+    u32  idx  = 0;
     for(auto const& img : images.value())
     {
         u32 const this_idx = idx++;
-        u32 const w = static_cast<u32>(img.isize.x);
-        u32 const h = static_cast<u32>(img.isize.y);
-        auto      label =
-            images.value().size() > 1
-                ? fmt::format("{}_{}", base, this_idx)
-                : base;
+        u32 const w        = static_cast<u32>(img.isize.x);
+        u32 const h        = static_cast<u32>(img.isize.y);
+        auto      label    = images.value().size() > 1
+                                 ? fmt::format("{}_{}", base, this_idx)
+                                 : base;
 
         /* Cube faces are laid out differently on Xbox and PC, so go through
          * cube_face<V> rather than slicing data() by hand. */
@@ -1181,23 +1247,31 @@ void dump_antr(blam::antr::header const* animation)
     printf("  vehicles=%u\n", animation->vehicles.count);
     printf("  devices=%u\n", animation->devices.count);
     printf("  nodes=%u\n", animation->nodes.count);
-    for(auto [i, node] : stl_types::enumerate(animation->nodes.data(g_magic).value()))
+    for(auto [i, node] :
+        stl_types::enumerate(animation->nodes.data(g_magic).value()))
     {
         auto joint = magic_enum::enum_name(node.joint_flags);
-        printf("    node %zu: name=%.*s parent=%hi joint=%.*s\n",
+        printf(
+            "    node %zu: name=%.*s parent=%hi joint=%.*s\n",
             i,
-            static_cast<int>(node.name.size), node.name.data.data(),
+            static_cast<int>(node.name.size),
+            node.name.data.data(),
             node.parent,
-            static_cast<int>(joint.size()), joint.data());
+            static_cast<int>(joint.size()),
+            joint.data());
     }
     printf("  animations=%u\n", animation->animations.count);
-    for(auto [i, anim] : stl_types::enumerate(animation->animations.data(g_magic).value()))
+    for(auto [i, anim] :
+        stl_types::enumerate(animation->animations.data(g_magic).value()))
     {
         auto anim_type = magic_enum::enum_name(anim.type);
-        printf("    animation %zu: name=%.*s type=%.*s\n",
+        printf(
+            "    animation %zu: name=%.*s type=%.*s\n",
             i,
-            static_cast<int>(anim.name.size), anim.name.data.data(),
-            static_cast<int>(anim_type.size()), anim_type.data());
+            static_cast<int>(anim.name.size),
+            anim.name.data.data(),
+            static_cast<int>(anim_type.size()),
+            anim_type.data());
     }
 }
 
@@ -1209,19 +1283,23 @@ void dump_mode(blam::mod2::header<Ver> const* info)
         printf("  markers=%zu\n", markers.value().size());
         for(auto [i, marker] : stl_types::enumerate(markers.value()))
         {
-            printf("    marker %zu: name=%.*s\n",
+            printf(
+                "    marker %zu: name=%.*s\n",
                 i,
-                static_cast<int>(marker.name.size), marker.name.data.data());
+                static_cast<int>(marker.name.size),
+                marker.name.data.data());
         }
-    } 
+    }
     if(auto regions = info->regions.data(g_magic); regions.has_value())
     {
         printf("  regions=%zu\n", regions.value().size());
         for(auto [i, region] : stl_types::enumerate(regions.value()))
         {
-            printf("    region %zu: name=%.*s\n",
+            printf(
+                "    region %zu: name=%.*s\n",
                 i,
-                static_cast<int>(region.name.size), region.name.data.data());
+                static_cast<int>(region.name.size),
+                region.name.data.data());
         }
     }
     /* shader_idx on a part indexes this list, so it is what names the shader
@@ -1232,17 +1310,18 @@ void dump_mode(blam::mod2::header<Ver> const* info)
         for(auto [i, shader] : stl_types::enumerate(shaders.value()))
         {
             /* tag_class_t holds a fourcc, which magic_enum cannot name. */
-            u32 const  cls = static_cast<u32>(shader.ref.tag_class);
-            char const fourcc[5]  = {
+            u32 const  cls       = static_cast<u32>(shader.ref.tag_class);
+            char const fourcc[5] = {
                 static_cast<char>((cls >> 24) & 0xFF),
                 static_cast<char>((cls >> 16) & 0xFF),
                 static_cast<char>((cls >> 8) & 0xFF),
                 static_cast<char>(cls & 0xFF),
                 0};
-            printf("    shader %zu: %s [%s]\n",
-                   i,
-                   name_of(shader.ref).c_str(),
-                   fourcc);
+            printf(
+                "    shader %zu: %s [%s]\n",
+                i,
+                name_of(shader.ref).c_str(),
+                fourcc);
         }
     }
     /* Per-part vertex_type: model_at() silently drops any part that is not
@@ -1262,8 +1341,8 @@ void dump_mode(blam::mod2::header<Ver> const* info)
                     "      part %zu: vertex_type=%u%s shader_idx=%u\n",
                     pi,
                     static_cast<unsigned>(vt),
-                    (vt == blam::vert::vertex_type_t::mod2_compressed_vertex
-                     || vt == blam::vert::vertex_type_t::mod2_uncompressed_vertex)
+                    (vt == blam::vert::vertex_type_t::mod2_compressed_vertex ||
+                     vt == blam::vert::vertex_type_t::mod2_uncompressed_vertex)
                         ? ""
                         : "  <-- DROPPED by model_at",
                     static_cast<unsigned>(blam::from_le(part.data.shader_idx)));
@@ -1297,7 +1376,8 @@ void dump_scenario(blam::map_container<Ver> const& map)
         printf("player_starting_profiles: %zu\n", p.value().size());
         for(auto const& prof : p.value())
             printf(
-                "  %-16.*s health=%g shield=%g  %s (%u) / %s (%u)  nades f=%u p=%u\n",
+                "  %-16.*s health=%g shield=%g  %s (%u) / %s (%u)  nades f=%u "
+                "p=%u\n",
                 static_cast<int>(prof.name.str().size()),
                 prof.name.str().data(),
                 prof.health_modifier,
@@ -1411,7 +1491,8 @@ void dump_player_biped(
  * rare. Looked up against a prebuilt map because find() throws on a malformed
  * tagref, which is exactly what scanning produces. */
 template<typename Ver>
-void scan_tagrefs(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
+void scan_tagrefs(
+    blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
 {
     static std::map<u32, blam::tag_t const*> by_id;
     if(by_id.empty())
@@ -1432,10 +1513,10 @@ void scan_tagrefs(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag
      * the field it came from. */
     for(size_t off = 0; off + 12 <= g_scan_window; off += 4)
     {
-        const u32 count = blam::from_le(
-            *reinterpret_cast<const u32*>(base + off));
-        const u32 ptr = blam::from_le(
-            *reinterpret_cast<const u32*>(base + off + 4));
+        const u32 count =
+            blam::from_le(*reinterpret_cast<const u32*>(base + off));
+        const u32 ptr =
+            blam::from_le(*reinterpret_cast<const u32*>(base + off + 4));
         if(count == 0 || count > 256 || ptr <= g_magic.file_offset)
             continue;
         const size_t rel = ptr - g_magic.file_offset;
@@ -1478,11 +1559,12 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
 
     auto name  = tag.to_name().to_string(g_magic);
     auto klass = tag.tagclass[0].str();
-    printf("=== %.*s [%s] id=0x%x\n",
-           static_cast<int>(name.size()),
-           name.data(),
-           klass.c_str(),
-           tag.tag_id);
+    printf(
+        "=== %.*s [%s] id=0x%x\n",
+        static_cast<int>(name.size()),
+        name.data(),
+        klass.c_str(),
+        tag.tag_id);
 
     auto header_of = [&](auto* type) {
         using T   = std::remove_const_t<std::remove_pointer_t<decltype(type)>>;
@@ -1551,8 +1633,9 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         {
             dump_chicago_base(info);
             auto maps = info->maps_4stage.data(g_magic);
-            printf("  maps_4stage=%zu\n",
-                   maps.has_value() ? maps.value().size() : 0u);
+            printf(
+                "  maps_4stage=%zu\n",
+                maps.has_value() ? maps.value().size() : 0u);
             if(maps.has_value())
             {
                 u32 i = 0;
@@ -1560,8 +1643,9 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
                     dump_chicago_maps(map, i++);
             }
             auto maps2 = info->maps_2stage.data(g_magic);
-            printf("  maps_2stage=%zu\n",
-                   maps2.has_value() ? maps2.value().size() : 0u);
+            printf(
+                "  maps_2stage=%zu\n",
+                maps2.has_value() ? maps2.value().size() : 0u);
             if(maps2.has_value())
             {
                 u32 i = 0;
@@ -1667,8 +1751,8 @@ void dump_mirrors(
         return;
     }
 
-    static const int kPads[] = {0, 4, 8, 12, 16, 20, 24, 28, 32};
-    const size_t     kNPads  = sizeof(kPads) / sizeof(kPads[0]);
+    static const int kPads[]  = {0, 4, 8, 12, 16, 20, 24, 28, 32};
+    const size_t     kNPads   = sizeof(kPads) / sizeof(kPads[0]);
     int              pass[16] = {};
     int              total    = 0;
 
@@ -1737,9 +1821,9 @@ void dump_mirrors(
                     if(!sh->valid() || !is_shader_class(sh->tag_class))
                         continue;
 
-                    auto const* vr =
-                        reinterpret_cast<blam::reference<typing::vector_types::Vecf3> const*>(
-                            e + 16 + pad + 16);
+                    auto const* vr = reinterpret_cast<
+                        blam::reference<typing::vector_types::Vecf3> const*>(
+                        e + 16 + pad + 16);
                     const u32 vcount = blam::from_le(vr->count);
                     if(vcount < 3 || vcount > 256)
                         continue;
@@ -1752,7 +1836,8 @@ void dump_mirrors(
                         resid = std::max(
                             resid,
                             std::fabs(
-                                n[0] * v[0] + n[1] * v[1] + n[2] * v[2] - n[3]));
+                                n[0] * v[0] + n[1] * v[1] + n[2] * v[2] -
+                                n[3]));
                     if(resid >= 0.05f)
                         continue;
                     pass[p]++;
@@ -1811,9 +1896,9 @@ void open_map(
         cWarning("Failed to open map: {}", magic_enum::enum_name(map_.error()));
         std::exit(1);
     }
-    blam::map_container<Ver> map = std::move(map_.value());
+    blam::map_container<Ver>  map = std::move(map_.value());
     blam::tag_index_view<Ver> index(map);
-    g_magic     = map.magic;
+    g_magic = map.magic;
     /* Exactly how BitmapCache builds bitm_magic for Xbox: the map's own magic
      * with the file offset zeroed. Building one from the file start instead
      * lands on unrelated bytes. */
@@ -1824,8 +1909,9 @@ void open_map(
     /* PC and Custom Edition put bitmap pixels in bitmaps.map beside the map;
      * without it every shared image reads out of bounds. Xbox has no such
      * file and wants the map's own magic, which g_bitm_magic already is. */
-    Coffee::Resource bitmaps_file(platform::url::constructors::MkUrl(
-        path.substr(0, path.find_last_of('/') + 1) + "bitmaps.map"));
+    Coffee::Resource bitmaps_file(
+        platform::url::constructors::MkUrl(
+            path.substr(0, path.find_last_of('/') + 1) + "bitmaps.map"));
     if(!g_dump_png_prefix.empty() && Coffee::FileMap(bitmaps_file))
     {
         auto bitmaps_bytes = bitmaps_file.data();
@@ -1872,11 +1958,12 @@ void open_map(
         matched++;
         if(list_only)
         {
-            printf("%s  0x%-8x  %.*s\n",
-                   klass.c_str(),
-                   tag.tag_id,
-                   static_cast<int>(name.size()),
-                   name.data());
+            printf(
+                "%s  0x%-8x  %.*s\n",
+                klass.c_str(),
+                tag.tag_id,
+                static_cast<int>(name.size()),
+                name.data());
             continue;
         }
         dump_tag(index, tag);
@@ -1900,27 +1987,44 @@ int inspect_main()
          "Version of Halo: pc xbox custom trial mcc",
          cxxopts::value<std::string>())
         //
-        ("c,class", "Only tags of this class, e.g. sotr", cxxopts::value<std::string>())
+        ("c,class",
+         "Only tags of this class, e.g. sotr",
+         cxxopts::value<std::string>())
         //
-        ("n,name", "Only tags whose name contains this", cxxopts::value<std::string>())
+        ("n,name",
+         "Only tags whose name contains this",
+         cxxopts::value<std::string>())
         //
         ("l,list", "List matching tags instead of dumping them")
         //
-        ("channel-stats", "For 32-bit bitmaps, report min/max/mean per byte position")
+        ("channel-stats",
+         "For 32-bit bitmaps, report min/max/mean per byte position")
         //
-        ("dump-planes", "Write each byte position of 32-bit bitmaps as a PGM with this path prefix", cxxopts::value<std::string>())
+        ("dump-planes",
+         "Write each byte position of 32-bit bitmaps as a PGM with this path "
+         "prefix",
+         cxxopts::value<std::string>())
         //
-        ("dump-bitmaps", "Write matching bitmaps (top mip) and font glyph sheets as PNGs with this path prefix", cxxopts::value<std::string>())
+        ("dump-bitmaps",
+         "Write matching bitmaps (top mip) and font glyph sheets as PNGs with "
+         "this path prefix",
+         cxxopts::value<std::string>())
         //
         ("dump-mirrors", "Walk BSP clusters and report their mirror blocks")
         //
-        ("scan-tagrefs", "Scan this many bytes of each tag for embedded tag references", cxxopts::value<int>())
+        ("scan-tagrefs",
+         "Scan this many bytes of each tag for embedded tag references",
+         cxxopts::value<int>())
         //
-        ("dump-player-biped", "Resolve the player's spawn unit and its model from globals")
+        ("dump-player-biped",
+         "Resolve the player's spawn unit and its model from globals")
         //
-        ("dump-scenario", "Print scenario type, starting profiles and spawn locations")
+        ("dump-scenario",
+         "Print scenario type, starting profiles and spawn locations")
         //
-        ("dump-bones", "For model tags, print the bone tree with bind-pose axes in model space")
+        ("dump-bones",
+         "For model tags, print the bone tree with bind-pose axes in model "
+         "space")
         //
         ;
 
@@ -1959,7 +2063,8 @@ int inspect_main()
     auto const& path = arguments.unmatched().at(0);
 
     if(version == "pc")
-        open_map<blam::pc_version_t>(path, class_filter, name_filter, list_only);
+        open_map<blam::pc_version_t>(
+            path, class_filter, name_filter, list_only);
     else if(version == "xbox")
         open_map<blam::xbox_version_t>(
             path, class_filter, name_filter, list_only);

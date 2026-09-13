@@ -44,7 +44,10 @@ struct BlamBspWidget
         compo::SubsystemBase::priority = 2048;
     }
 
-    bool main_thread_only() const override { return true; }
+    bool main_thread_only() const override
+    {
+        return true;
+    }
 
     void start_restricted(Proxy& e, time_point const&)
     {
@@ -87,13 +90,11 @@ struct BlamBspWidget
                         "Render lightmaps", &rendering->render_lightmaps);
                     ImGui::Checkbox(
                         "Only lightmaps", &rendering->only_lightmaps);
-                    ImGui::Checkbox(
-                        "Only micro map", &rendering->only_micro);
+                    ImGui::Checkbox("Only micro map", &rendering->only_micro);
                     ImGui::Text("Model-specific");
                     ImGui::Checkbox(
                         "Render scenery", &rendering->render_scenery);
-                    ImGui::Checkbox(
-                        "Only detail map", &rendering->only_detail);
+                    ImGui::Checkbox("Only detail map", &rendering->only_detail);
                     ImGui::Checkbox(
                         "Only multipurpose", &rendering->only_multipurpose);
                     ImGui::Checkbox(
@@ -124,7 +125,8 @@ struct BlamBspWidget
                                 bsp_ref->cluster_idx);
                             ImGui::Checkbox(
                                 name.c_str(),
-                                &e.template get<Visibility>(bsp.id())->visibility());
+                                &e.template get<Visibility>(bsp.id())
+                                     ->visibility());
                         }
                         ImGui::EndListBox();
                     }
@@ -157,7 +159,8 @@ struct BlamBspWidget
                     /* Find primary (seat_idx==0) PlayerCamera */
                     PlayerCamera* primary_cam = nullptr;
                     u32           num_cameras = 0;
-                    for(auto ent : e.template select<PlayerCamera, PlayerInfo>())
+                    for(auto ent :
+                        e.template select<PlayerCamera, PlayerInfo>())
                     {
                         auto [cam, info] = ent.components();
                         ++num_cameras;
@@ -205,9 +208,13 @@ struct BlamBspWidget
                     ImGui::SliderFloat("Gamma", &postprocess->gamma, 0.1, 5.0);
                     ImGui::SliderFloat(
                         "Exposure", &postprocess->exposure, -10.f, 10.f);
-                    ImGui::InputFloat("Blur", &postprocess->blur, 0.00001f, 0.0001f);
+                    ImGui::InputFloat(
+                        "Blur", &postprocess->blur, 0.00001f, 0.0001f);
                     ImGui::SliderFloat4(
-                        "RGB decomp", reinterpret_cast<f32*>(&postprocess->rgb_comp), -0.01f, 0.01f);
+                        "RGB decomp",
+                        reinterpret_cast<f32*>(&postprocess->rgb_comp),
+                        -0.01f,
+                        0.01f);
                     ImGui::SliderFloat(
                         "Texture resolution", &rendering->tex_res, -20.f, 20.f);
                     ImGui::SliderInt(

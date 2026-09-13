@@ -426,7 +426,8 @@ void spawn_dummy_plug_children(nlohmann::json const& config)
     libc_types::u32 index = 0;
     for(auto const& entry : config["spawn"])
     {
-        const auto cfg_path = (base_dir / entry.value("config", std::string{})).internUrl;
+        const auto cfg_path =
+            (base_dir / entry.value("config", std::string{})).internUrl;
         if(cfg_path.empty())
         {
             Coffee::Logging::cFatal(
@@ -515,8 +516,8 @@ void fork_dummy_plugs(
     auto config_content = Coffee::Resource(config_file);
     if(!Coffee::FileMap(config_content))
     {
-        Coffee::Logging::cFatal("Dummy plug config file not found: {}",
-            config_file.internUrl);
+        Coffee::Logging::cFatal(
+            "Dummy plug config file not found: {}", config_file.internUrl);
         std::exit(1);
     }
 
@@ -559,8 +560,7 @@ void fork_dummy_plugs(
                 config.value("frame_delta", 0.0) * 1000));
         container.set_epoch_offset(
             std::chrono::duration_cast<compo::clock::duration>(
-                std::chrono::duration<double>(
-                    config.value("epoch", 3600.0))));
+                std::chrono::duration<double>(config.value("epoch", 3600.0))));
 
         /* Replace the original timestamp provider, so we can step the frames
          * consistently. As long as everything is based on ECS-provided
@@ -962,28 +962,27 @@ void insert_dummy_plug(
             if(auto* framebuffer = container.service<GraphicsFramebuffer>())
             {
                 dummy_plug.defer_to_swap = true;
-                framebuffer->add_pre_swap([&perf_monitor,
-                                           &container,
-                                           &dummy_plug]() {
-                    if(!dummy_plug.screenshot_armed)
-                        return;
-                    auto& armed = dummy_plug.pending_actions.front();
-                    if(armed.settle > 0)
-                    {
-                        armed.settle--;
-                        return;
-                    }
-                    auto name = armed.screenshot;
-                    dummy_plug.pending_actions.erase(
-                        dummy_plug.pending_actions.begin());
-                    dummy_plug.screenshot_armed = false;
-                    dummy_plug.step_between_captures =
-                        !dummy_plug.pending_actions.empty();
-                    PerformanceMonitor::proxy_type proxy(container);
-                    cDebug("Capturing dummyplug screenshot: {}", name);
-                    perf_monitor.capture_screenshot(
-                        proxy, name, container.relative_timestamp());
-                });
+                framebuffer->add_pre_swap(
+                    [&perf_monitor, &container, &dummy_plug]() {
+                        if(!dummy_plug.screenshot_armed)
+                            return;
+                        auto& armed = dummy_plug.pending_actions.front();
+                        if(armed.settle > 0)
+                        {
+                            armed.settle--;
+                            return;
+                        }
+                        auto name = armed.screenshot;
+                        dummy_plug.pending_actions.erase(
+                            dummy_plug.pending_actions.begin());
+                        dummy_plug.screenshot_armed = false;
+                        dummy_plug.step_between_captures =
+                            !dummy_plug.pending_actions.empty();
+                        PerformanceMonitor::proxy_type proxy(container);
+                        cDebug("Capturing dummyplug screenshot: {}", name);
+                        perf_monitor.capture_screenshot(
+                            proxy, name, container.relative_timestamp());
+                    });
             }
             auto& dummy_bus = container.subsystem_cast<DummyEventBus>();
             container.register_subsystem_inplace<DummyPlugDrain>(
@@ -1014,8 +1013,7 @@ void insert_dummy_plug(
                         rq::runtime_queue::GetCurrentQueue().value(),
                         start_time,
                         [&dummy_plug, &perf_monitor, &container, event]() {
-                            auto name =
-                                event.value("name", "dummy_screenshot");
+                            auto name = event.value("name", "dummy_screenshot");
                             if(!dummy_plug.defer_to_swap)
                             {
                                 PerformanceMonitor::proxy_type proxy(container);
@@ -1027,8 +1025,7 @@ void insert_dummy_plug(
                             }
                             dummy_plug.pending_actions.push_back(
                                 {.screenshot = name,
-                                 .settle =
-                                     event.value("settle_frames", 2u)});
+                                 .settle = event.value("settle_frames", 2u)});
                         })
                         .assume_value();
                     break;

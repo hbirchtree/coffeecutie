@@ -156,7 +156,7 @@ static void load_resources(
     auto& game_bus       = e.subsystem_cast<GameEventBus>();
 
     {
-        GameEvent spawn{.type = GameEvent::SpawnBSP};
+        GameEvent     spawn{.type = GameEvent::SpawnBSP};
         SpawnBSPEvent bsp{
             .section_id = 0,
         };
@@ -174,11 +174,10 @@ static void load_resources(
     }
 
     generation_idx_t player_model;
-    auto biped = [&] -> blam::tagref_typed_t<blam::tag_class_t::mod2> const
-    {
-        auto const& magic = changed.container.magic;
-        auto index = blam::tag_index_view(changed.container);
-        auto globals_ = bitmaps.index.tag_of("globals\\globals");
+    auto biped = [&] -> blam::tagref_typed_t<blam::tag_class_t::mod2> const {
+        auto const& magic    = changed.container.magic;
+        auto        index    = blam::tag_index_view(changed.container);
+        auto        globals_ = bitmaps.index.tag_of("globals\\globals");
         if(!globals_.has_value())
         {
             cWarning("Failed to find globals object");
@@ -202,7 +201,7 @@ static void load_resources(
             return {};
         }
     }();
-    u32  num_pinfo = 0;
+    u32 num_pinfo = 0;
     for(auto const& pinfo : e.select<PlayerInfo>())
     {
         auto const* info = e.get<PlayerInfo>(pinfo.id());
@@ -227,9 +226,9 @@ static void load_resources(
         auto attach_model = [&](u64 entity_id) {
             if(!biped.valid())
                 return;
-            GameEvent mount_ev{.type = GameEvent::MountModel};
+            GameEvent       mount_ev{.type = GameEvent::MountModel};
             MountModelEvent mount = {
-                .model = biped,
+                .model     = biped,
                 .entity_id = entity_id,
             };
             game_bus.inject(mount_ev, &mount);

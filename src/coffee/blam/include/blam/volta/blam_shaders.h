@@ -33,7 +33,7 @@ enum class animation_function : u16
     diagonal,        // diagonal wave
     diagonal_period, // diagonal wave (variable period)
     slide,
-    slide_variable,  // slide (variable period)
+    slide_variable, // slide (variable period)
     noise,
     jitter,
     wander,
@@ -347,8 +347,8 @@ struct reflection_properties
 template<typename V>
 struct alignas(4) shader_chicago_extended : radiosity_properties /* aka scex */
 {
-    chicago::base                                   transparent;
-    chicago::lens_flares_t                          lens_flares;
+    chicago::base                                transparent;
+    chicago::lens_flares_t                       lens_flares;
     reference<tagref_typed_t<tag_class_t::shdr>> layers;
     reference<chicago::map_t>                    maps_4stage;
     reference<chicago::map_t>                    maps_2stage;
@@ -357,7 +357,8 @@ struct alignas(4) shader_chicago_extended : radiosity_properties /* aka scex */
 
 static_assert(
     offsetof(shader_chicago_extended<pc_version_t>, lens_flares) == 52);
-static_assert(offsetof(shader_chicago_extended<pc_version_t>, maps_4stage) == 84);
+static_assert(
+    offsetof(shader_chicago_extended<pc_version_t>, maps_4stage) == 84);
 static_assert(
     offsetof(shader_chicago_extended<xbox_version_t>, maps_4stage) == 84);
 
@@ -490,6 +491,7 @@ struct alignas(4) shader_water : radiosity_properties /* aka swat */
         u16   map_index;
         u32   padding__[4];
     };
+
     static_assert(sizeof(ripple_t) == 76);
 
     u32 padding_4[4];
@@ -852,7 +854,8 @@ enum class color_input : u16
     vertex_color_0,
     diffuse_light = vertex_color_0,
     vertex_color_1,
-    fade_perpendicular = vertex_color_1, // fade(perpendicular ...) (can't read the full text)
+    fade_perpendicular =
+        vertex_color_1, // fade(perpendicular ...) (can't read the full text)
     scratch_color_0,
     scratch_color_1,
     constant_color_0,
@@ -864,7 +867,8 @@ enum class color_input : u16
     vertex_alpha_0,
     fade_none = vertex_alpha_0, // fade(none)???
     vertex_alpha_1,
-    alpha_fade_perpendicular = vertex_alpha_1, // fade(perpendicular ...) (can't read the full text)
+    alpha_fade_perpendicular =
+        vertex_alpha_1, // fade(perpendicular ...) (can't read the full text)
     scratch_alpha_0,
     scratch_alpha_1,
     constant_alpha_0,
@@ -885,7 +889,8 @@ enum class alpha_input : u16
     vertex_alpha_0,
     fade_none = vertex_alpha_0, // fade(none)
     vertex_alpha_1,
-    fade_perpendicular = vertex_alpha_1, // fade(perpendicular) (can't read full text)
+    fade_perpendicular =
+        vertex_alpha_1, // fade(perpendicular) (can't read full text)
     scratch_alpha_0,
     scratch_alpha_1,
     constant_alpha_0,
@@ -968,9 +973,10 @@ struct transparent_stage
 
     /* constants and animation
      * Guerilla notes:
-     * Constant color 0 is animated in exactly the same way as the self-illumination
-     * color of the model shader, except that it has an alpha component in addition
-     * to the RGB components. Constant color 1 is just a constant.
+     * Constant color 0 is animated in exactly the same way as the
+     * self-illumination color of the model shader, except that it has an alpha
+     * component in addition to the RGB components. Constant color 1 is just a
+     * constant.
      */
     struct
     {

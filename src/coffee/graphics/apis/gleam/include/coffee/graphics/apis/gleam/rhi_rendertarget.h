@@ -74,9 +74,7 @@ struct rendertarget_t
     static constexpr auto debug_identifier =
         group::object_identifier::framebuffer;
 
-    rendertarget_t(
-        features const&        features,
-        rendertarget_currency& currency)
+    rendertarget_t(features const& features, rendertarget_currency& currency)
         : m_features(features.rendertarget)
         , m_texture_features(features.texture)
         , m_currency(&currency)
@@ -141,8 +139,7 @@ struct rendertarget_t
     }
 
     void attach_renderbuffer(
-        render_targets::attachment attachment,
-        PixDesc const& fmt)
+        render_targets::attachment attachment, PixDesc const& fmt)
     {
         auto target = internal_collapse_target(
 #if GLEAM_MAX_VERSION > 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
@@ -151,7 +148,7 @@ struct rendertarget_t
         );
 
         auto& buf = m_renderbufs[attachment];
-        buf.fmt = fmt;
+        buf.fmt   = fmt;
         cmd::gen_renderbuffers(semantic::SpanOne(buf.handle.hnd));
         cmd::bind_renderbuffer(
             group::renderbuffer_target::renderbuffer, buf.handle);
@@ -238,7 +235,8 @@ struct rendertarget_t
 #endif
         for(auto& [_, buf] : m_renderbufs)
         {
-            cmd::bind_renderbuffer(group::renderbuffer_target::renderbuffer, buf.handle);
+            cmd::bind_renderbuffer(
+                group::renderbuffer_target::renderbuffer, buf.handle);
             auto [ifmt, __, ___] = gleam::convert::to<group::internal_format>(
                 buf.fmt, m_texture_features);
             cmd::renderbuffer_storage(
@@ -480,6 +478,7 @@ struct rendertarget_t
         hnd     handle;
         PixDesc fmt;
     };
+
     std::map<render_targets::attachment, renderbuf_t> m_renderbufs;
 
     void internal_bind(group::framebuffer_target target)

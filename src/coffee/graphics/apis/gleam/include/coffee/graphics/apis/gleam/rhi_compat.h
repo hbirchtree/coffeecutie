@@ -150,8 +150,7 @@ struct texture_2da_t : texture_array_base_t
 #if GLEAM_MAX_VERSION_ES != 0x200
         if(!m_compat_active)
         {
-            texture_array_base_t::upload(
-                std::move(data), offset, size, level);
+            texture_array_base_t::upload(std::move(data), offset, size, level);
             return;
         }
 #endif
@@ -212,19 +211,19 @@ struct texture_2da_t : texture_array_base_t
 struct texture_cube_array_t : texture_cube_base_t
 {
     texture_cube_array_t(
-        api* api,
-        PixDesc const& fmt,
-        u32 mips,
+        api*               api,
+        PixDesc const&     fmt,
+        u32                mips,
         textures::property properties = textures::property::none)
         : texture_cube_base_t(
-            api->feature_info().texture,
-            api->workarounds(),
-            api->queue<api::queues::texture_decode>(),
-            api->debug(),
-            textures::type::cube_array,
-            fmt,
-            mips,
-            properties)
+              api->feature_info().texture,
+              api->workarounds(),
+              api->queue<api::queues::texture_decode>(),
+              api->debug(),
+              textures::type::cube_array,
+              fmt,
+              mips,
+              properties)
         , m_api(api)
         , m_compat_active(!has_cube_array_target || !m_features.cube_array)
     {
@@ -250,8 +249,8 @@ struct texture_cube_array_t : texture_cube_base_t
         size_type const face_size{size.w, size.h, 1};
         for(C_UNUSED(auto _) : stl_types::range<>(size.d))
         {
-            m_textures.emplace_back(m_api->alloc_texture(
-                textures::cube, m_format, m_mipmaps));
+            m_textures.emplace_back(
+                m_api->alloc_texture(textures::cube, m_format, m_mipmaps));
             if(sparse)
                 continue;
             m_textures.back()->alloc(face_size, create_storage);
@@ -281,8 +280,7 @@ struct texture_cube_array_t : texture_cube_base_t
                     size_3d<u32>{
                         static_cast<u32>(size[0]),
                         static_cast<u32>(size[1]),
-                        1u
-                    },
+                        1u},
                     true);
                 m_page_allocated[layer] = true;
             }

@@ -91,8 +91,7 @@ EVP_PKEY* load_or_generate_ed25519_key(std::string const& path)
     if(!ctx)
         return nullptr;
     EVP_PKEY* pkey = nullptr;
-    if(EVP_PKEY_keygen_init(ctx) <= 0 ||
-       EVP_PKEY_keygen(ctx, &pkey) <= 0)
+    if(EVP_PKEY_keygen_init(ctx) <= 0 || EVP_PKEY_keygen(ctx, &pkey) <= 0)
     {
         EVP_PKEY_CTX_free(ctx);
         return nullptr;
@@ -103,14 +102,14 @@ EVP_PKEY* load_or_generate_ed25519_key(std::string const& path)
     {
         PEM_write_PrivateKey(f, pkey, nullptr, nullptr, 0, nullptr, nullptr);
         std::fclose(f);
-#    if defined(S_IRUSR) && defined(S_IWUSR)
+#if defined(S_IRUSR) && defined(S_IWUSR)
         if(::chmod(path.c_str(), S_IRUSR | S_IWUSR) != 0)
             cWarning(
                 "Failed to set restrictive permissions on Ed25519 identity "
                 "key {}: {}",
                 path,
                 std::strerror(errno));
-#    endif
+#endif
     } else
     {
         cWarning(
@@ -197,10 +196,10 @@ ParsedWebRtcUrl parse_webrtc_url(std::string const& url)
         result.gateway_url = url;
         return result;
     }
-    result.gateway_url = url.substr(0, hash);
+    result.gateway_url   = url.substr(0, hash);
     std::string fragment = url.substr(hash + 1);
 
-    auto semi = fragment.find(';');
+    auto semi        = fragment.find(';');
     result.server_id = fragment.substr(0, semi);
     if(semi != std::string::npos)
     {
@@ -219,7 +218,7 @@ ParsedWebRtcUrl parse_webrtc_url(std::string const& url)
                     result.auth.hmac_key = b64::decode(auth_data);
                 } else if(auth_type == "ed25519")
                 {
-                    result.auth.type = AuthType::Ed25519;
+                    result.auth.type               = AuthType::Ed25519;
                     result.auth.ed25519_public_key = b64::decode(auth_data);
                 } else
                 {
@@ -249,8 +248,8 @@ nlohmann::json sign_metadata_hmac(
     std::string canonical = canonical_metadata_json(meta);
     auto        hmac      = hmac_sha256(key, canonical);
     meta["auth"]          = nlohmann::json{
-        {"type", "hmac-sha256"},
-        {"hmac", hex_encode(hmac)},
+                 {"type", "hmac-sha256"},
+                 {"hmac", hex_encode(hmac)},
     };
     return meta;
 }
@@ -269,8 +268,8 @@ bool verify_metadata_hmac(
 
     nlohmann::json stripped = meta;
     stripped.erase("auth");
-    std::string canonical   = canonical_metadata_json(stripped);
-    auto        computed    = hmac_sha256(key, canonical);
+    std::string canonical    = canonical_metadata_json(stripped);
+    auto        computed     = hmac_sha256(key, canonical);
     auto        computed_hex = hex_encode(computed);
     return computed_hex == expected_hex;
 }

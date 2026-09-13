@@ -10,11 +10,11 @@
 
 #include <coffee/comp_app/services.h>
 #include <coffee/comp_app/subsystems.h>
-#include <coffee/core/input/standard_input_handlers.h>
-#include <coffee/core/types/input/keymap_latin1.h>
 #include <coffee/core/files/cfiles.h>
 #include <coffee/core/input/eventhandlers.h>
+#include <coffee/core/input/standard_input_handlers.h>
 #include <coffee/core/types/input/event_types.h>
+#include <coffee/core/types/input/keymap_latin1.h>
 #include <coffee/graphics/apis/gleam/rhi.h>
 #include <glm/ext/quaternion_trigonometric.hpp>
 #include <glm/geometric.hpp>
@@ -49,7 +49,7 @@ void update_camera_aspect(compo::EntityContainer& e)
             cam.camera.aspect = window->size().aspect();
         else
         {
-            auto size           = window->size();
+            auto size         = window->size();
             cam.camera.aspect = static_cast<f32>(size.w) / (size.h / 2.f);
             cDebug("Assigning aspect ratio {}", cam.camera.aspect);
         }
@@ -78,10 +78,10 @@ void create_resources(compo::EntityContainer& e)
         eventhandler->addEventHandler(
             1024, StandardCamera::KeyboardInput([&e] -> StandardCamera::Reg* {
                 for(auto entity : e.select<
-                        PlayerCamera,
-                        PlayerInput,
-                        PlayerInfo,
-                        NetworkInfo>())
+                                  PlayerCamera,
+                                  PlayerInput,
+                                  PlayerInfo,
+                                  NetworkInfo>())
                 {
                     auto [cam, input, info, net] = entity.components();
                     if(cam.keyboard.enabled && info.permissions.camera)
@@ -96,10 +96,10 @@ void create_resources(compo::EntityContainer& e)
         eventhandler->addEventHandler(
             1024, StandardCamera::MouseInput([&e] -> Vecf2* {
                 for(auto entity : e.select<
-                        PlayerCamera,
-                        PlayerInput,
-                        PlayerInfo,
-                        NetworkInfo>())
+                                  PlayerCamera,
+                                  PlayerInput,
+                                  PlayerInfo,
+                                  NetworkInfo>())
                 {
                     auto [cam, input, info, net] = entity.components();
                     if(cam.keyboard.enabled && info.permissions.camera)
@@ -130,7 +130,8 @@ void create_resources(compo::EntityContainer& e)
                         return e.ref(teleport->entity_id);
                     for(auto const& player : e.select<PlayerInfo>())
                     {
-                        if(player.get<PlayerInfo>().seat_idx != teleport->seat_idx)
+                        if(player.get<PlayerInfo>().seat_idx !=
+                           teleport->seat_idx)
                             continue;
                         return e.ref(player.id());
                     }
@@ -150,9 +151,9 @@ void create_resources(compo::EntityContainer& e)
                     pbus.process(ev, &translate);
                 } else
                 {
-                    auto& input = player.get<PlayerInput>();
-                    input.position = teleport->position;
-                    input.rotation = teleport->rotation;
+                    auto& input          = player.get<PlayerInput>();
+                    input.position       = teleport->position;
+                    input.rotation       = teleport->rotation;
                     net.changes.viewport = net.changes.transform = true;
                 }
             });
@@ -331,7 +332,7 @@ void create_resources(compo::EntityContainer& e)
                      PlayerCamera* target{};
                      for(auto const& en : e.select<PlayerCamera, PlayerInfo>())
                      {
-                        auto [cam, info] = en.components();
+                         auto [cam, info] = en.components();
                          if(info.seat_idx != 0)
                              continue;
                          target = &cam;
@@ -343,7 +344,7 @@ void create_resources(compo::EntityContainer& e)
                      }
                      if(ev.data.contains("position"))
                      {
-                         auto pos                 = ev.data["position"];
+                         auto pos                = ev.data["position"];
                          target->camera.position = Vecf3{
                              pos[0].get<float>(),
                              pos[1].get<float>(),
@@ -370,7 +371,7 @@ void create_resources(compo::EntityContainer& e)
                      }
                      if(ev.data.contains("fov"))
                      {
-                        target->camera.fieldOfView = ev.data["fov"].get<f32>();
+                         target->camera.fieldOfView = ev.data["fov"].get<f32>();
                      }
                      /* Headless equivalent of the ImGui "Physics" checkbox */
                      target->mode.physics =
@@ -939,7 +940,8 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
                                                      : "scenery"sv);
     /* Xbox multipurpose maps are ARGB; use the matching fragment variant. */
     constexpr bool is_xbox = std::is_same_v<halo_version, blam::xbox_version_t>;
-    const auto scenery_frag = is_xbox ? "scenery_uber_xbox"sv : "scenery_uber"sv;
+    const auto     scenery_frag =
+        is_xbox ? "scenery_uber_xbox"sv : "scenery_uber"sv;
     /* Per-material-family builds; see BlamResources for why they exist. */
     const auto scenery_frag_nosotr =
         is_xbox ? "scenery_uber_xbox_nosotr"sv : "scenery_uber_nosotr"sv;
@@ -1246,7 +1248,7 @@ void create_camera(
     auto& physics_bus = e.subsystem_cast<PhysicsBus>();
     for(auto entity : e.select<PlayerCamera, PlayerInfo>())
     {
-        auto [cam, info]  = entity.components();
+        auto [cam, info]              = entity.components();
         cam.controller.opts.sens.move = {.1f, .1f};
         cam.controller.opts.curve     = 200.f;
         cam.camera_opts.accel.alt     = 50.f;

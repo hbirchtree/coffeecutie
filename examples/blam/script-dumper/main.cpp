@@ -14,9 +14,9 @@
 #include <peripherals/libc/types.h>
 #include <url/url.h>
 
-using libc_types::u16;
-using libc_types::i32;
 using Coffee::Logging::cWarning;
+using libc_types::i32;
+using libc_types::u16;
 
 template<blam::is_game_version Ver>
 void open_map(std::string path, std::string output, std::string script)
@@ -33,90 +33,140 @@ void open_map(std::string path, std::string output, std::string script)
         cWarning("Failed to open map: {}", magic_enum::enum_name(map_.error()));
         std::exit(1);
     }
-    blam::map_container<Ver> map = std::move(map_.value());
+    blam::map_container<Ver>        map      = std::move(map_.value());
     blam::scn::scenario<Ver> const* scenario = map.scenario().value();
-    auto fp = fopen(output.c_str(), "w+");
+    auto                            fp       = fopen(output.c_str(), "w+");
     // Scripting
     auto bytecode = scenario->bytecode(map.magic);
-    for(blam::hsc::global const& global : scenario->script.globals.data(map.magic).value())
+    for(blam::hsc::global const& global :
+        scenario->script.globals.data(map.magic).value())
     {
         auto name = global.name.str();
         auto type = magic_enum::enum_name(global.type);
-        fprintf(fp, ";;   %04i: glob                %-32.*s type=%.*s\n",
+        fprintf(
+            fp,
+            ";;   %04i: glob                %-32.*s type=%.*s\n",
             global.index,
-            static_cast<int>(name.size()), name.data(),
-            static_cast<int>(type.size()), type.data());
+            static_cast<int>(name.size()),
+            name.data(),
+            static_cast<int>(type.size()),
+            type.data());
     }
     for(auto const& fun : scenario->function_table(map.magic))
     {
-        auto name = fun.name.str();
+        auto name  = fun.name.str();
         auto sched = magic_enum::enum_name(fun.schedule);
-        auto type = magic_enum::enum_name(fun.type);
-        fprintf(fp, ";; 0x%04x: func                %-32.*s schedule=%.*s return_type=%.*s\n",
+        auto type  = magic_enum::enum_name(fun.type);
+        fprintf(
+            fp,
+            ";; 0x%04x: func                %-32.*s schedule=%.*s "
+            "return_type=%.*s\n",
             fun.index,
-            static_cast<int>(name.size()), name.data(),
-            static_cast<int>(sched.size()), sched.data(),
-            static_cast<int>(type.size()), type.data());
+            static_cast<int>(name.size()),
+            name.data(),
+            static_cast<int>(sched.size()),
+            sched.data(),
+            static_cast<int>(type.size()),
+            type.data());
     }
     // Cutscene data
     i32 i = 0;
-    for(blam::scn::cutscene_camera_position const& cam : scenario->cutscene.camera_points.data(map.magic).value())
+    for(blam::scn::cutscene_camera_position const& cam :
+        scenario->cutscene.camera_points.data(map.magic).value())
     {
         auto name = cam.name.str();
-        fprintf(fp, ";;   %04i: cutscene_camera_pnt %-32.*s pos=%f,%f,%f rot=%f,%f,%f fov=%f\n",
+        fprintf(
+            fp,
+            ";;   %04i: cutscene_camera_pnt %-32.*s pos=%f,%f,%f rot=%f,%f,%f "
+            "fov=%f\n",
             i++,
-            static_cast<int>(name.size()), name.data(),
-            cam.position.x, cam.position.y, cam.position.z,
-            cam.rotation.x, cam.rotation.y, cam.rotation.z,
+            static_cast<int>(name.size()),
+            name.data(),
+            cam.position.x,
+            cam.position.y,
+            cam.position.z,
+            cam.rotation.x,
+            cam.rotation.y,
+            cam.rotation.z,
             cam.fov);
     }
     i = 0;
-    for(blam::scn::cutscene_title const& title : scenario->cutscene.titles.data(map.magic).value())
+    for(blam::scn::cutscene_title const& title :
+        scenario->cutscene.titles.data(map.magic).value())
     {
         auto name = title.name.str();
-        fprintf(fp, ";;   %04i: cutscene_title      %-32.*s bounds=(top=%i,left=%i,bottom=%i,right=%i)\n",
+        fprintf(
+            fp,
+            ";;   %04i: cutscene_title      %-32.*s "
+            "bounds=(top=%i,left=%i,bottom=%i,right=%i)\n",
             i++,
-            static_cast<int>(name.size()), name.data(),
-            title.text_bounds.x, title.text_bounds.y, title.text_bounds.z, title.text_bounds.w);
+            static_cast<int>(name.size()),
+            name.data(),
+            title.text_bounds.x,
+            title.text_bounds.y,
+            title.text_bounds.z,
+            title.text_bounds.w);
     }
     i = 0;
-    for(blam::scn::cutscene_flag const& flag : scenario->cutscene.flags.data(map.magic).value())
+    for(blam::scn::cutscene_flag const& flag :
+        scenario->cutscene.flags.data(map.magic).value())
     {
         auto name = flag.name.str();
-        fprintf(fp, ";;   %04i: cutscene_flag       %-32.*s pos=%f,%f,%f facing=yaw=%f,pitch=%f\n",
+        fprintf(
+            fp,
+            ";;   %04i: cutscene_flag       %-32.*s pos=%f,%f,%f "
+            "facing=yaw=%f,pitch=%f\n",
             i++,
-            static_cast<int>(name.size()), name.data(),
-            flag.position.x, flag.position.y, flag.position.z,
-            flag.facing.x, flag.facing.y);
+            static_cast<int>(name.size()),
+            name.data(),
+            flag.position.x,
+            flag.position.y,
+            flag.position.z,
+            flag.facing.x,
+            flag.facing.y);
     }
-    // AI 
+    // AI
     i = 0;
-    for(blam::scn::ai::conversation const& conv : scenario->ai.conversations.data(map.magic).value())
+    for(blam::scn::ai::conversation const& conv :
+        scenario->ai.conversations.data(map.magic).value())
     {
         auto name = conv.name.str();
-        fprintf(fp, ";;   %04i: ai conversation     %-32.*s participants=%u lines=%u\n",
+        fprintf(
+            fp,
+            ";;   %04i: ai conversation     %-32.*s participants=%u lines=%u\n",
             i++,
-            static_cast<int>(name.size()), name.data(),
+            static_cast<int>(name.size()),
+            name.data(),
             conv.participants.size(),
             conv.lines.size());
-        for(blam::scn::ai::conversation_participant const& p : conv.participants.data(map.magic).value())
+        for(blam::scn::ai::conversation_participant const& p :
+            conv.participants.data(map.magic).value())
         {
             auto name = p.encounter_name.str();
-            fprintf(fp, ";;       : conversation_participant name=%.*s\n",
-                static_cast<int>(name.size()), name.data());
+            fprintf(
+                fp,
+                ";;       : conversation_participant name=%.*s\n",
+                static_cast<int>(name.size()),
+                name.data());
         }
-        for(blam::scn::ai::conversation_line const& l : conv.lines.data(map.magic).value())
+        for(blam::scn::ai::conversation_line const& l :
+            conv.lines.data(map.magic).value())
         {
             fprintf(fp, ";;       : conversation_line\n");
         }
     }
     i = 0;
-    for(blam::scn::ai::encounter const& enc : scenario->ai.encounters.data(map.magic).value())
+    for(blam::scn::ai::encounter const& enc :
+        scenario->ai.encounters.data(map.magic).value())
     {
         auto name = enc.name.str();
-        fprintf(fp, ";;   %04i: ai_encounter        %-32.*s squads=%u platoons=%u firing_positions=%u starting_locations=%u\n",
+        fprintf(
+            fp,
+            ";;   %04i: ai_encounter        %-32.*s squads=%u platoons=%u "
+            "firing_positions=%u starting_locations=%u\n",
             i++,
-            static_cast<int>(name.size()), name.data(),
+            static_cast<int>(name.size()),
+            name.data(),
             enc.squads.size(),
             enc.platoons.size(),
             enc.firing_positions.size(),
@@ -124,17 +174,21 @@ void open_map(std::string path, std::string output, std::string script)
     }
     // Object references
     i = 0;
-    for(blam::scn::object_name const& obname : scenario->objects.object_names.data(map.magic).value())
+    for(blam::scn::object_name const& obname :
+        scenario->objects.object_names.data(map.magic).value())
     {
         auto name = obname.name.str();
-        fprintf(fp, ";;   %04i: object_name         \"%-32.*s\"\n",
+        fprintf(
+            fp,
+            ";;   %04i: object_name         \"%-32.*s\"\n",
             i++,
-            static_cast<int>(name.size()), name.data());
+            static_cast<int>(name.size()),
+            name.data());
     }
     // Misc data
     // TODO: Fix layout of editor_comment, it has variable-length strings
     // i = 0;
-    // for(blam::scn::editor_comment const& comment 
+    // for(blam::scn::editor_comment const& comment
     //     : scenario->editor.comments.data(map.magic).value())
     // {
     //     auto comment_ = comment.comment.str();
@@ -147,17 +201,21 @@ void open_map(std::string path, std::string output, std::string script)
     for(auto const& opcode : bytecode)
     {
         auto repr = blam::hsc::to_string(opcode);
-        fprintf(fp, "0x%04x: %.*s | op=%04i\n",
+        fprintf(
+            fp,
+            "0x%04x: %.*s | op=%04i\n",
             ip++,
-            static_cast<int>(repr.size()), repr.data(),
+            static_cast<int>(repr.size()),
+            repr.data(),
             static_cast<int>(opcode.opcode));
     }
     fclose(fp);
     if(script.empty())
         return;
-    fp = fopen(script.c_str(), "w+");
+    fp               = fopen(script.c_str(), "w+");
     auto script_text = blam::hsc::to_halo_script(*scenario, map.magic);
-    for(auto const& line : stl_types::str::split::spliterator<char>(script_text, '\n'))
+    for(auto const& line :
+        stl_types::str::split::spliterator<char>(script_text, '\n'))
     {
         fprintf(fp, "%.*s\n", static_cast<int>(line.size()), line.data());
     }
@@ -175,12 +233,14 @@ int dumper_main()
 
     options.add_options("Map parsing")
         //
-        ("halo-version", "Version of Halo: pc xbox custom trial mcc", cxxopts::value<std::string>())
+        ("halo-version",
+         "Version of Halo: pc xbox custom trial mcc",
+         cxxopts::value<std::string>())
         //
         ;
 
-    auto& args = Coffee::GetInitArgs();
-    auto arguments = options.parse(args.size(), args.data());
+    auto& args      = Coffee::GetInitArgs();
+    auto  arguments = options.parse(args.size(), args.data());
     if(Coffee::BaseArgParser::PerformDefaults(options, args) >= 0)
         return 0;
 
@@ -193,7 +253,7 @@ int dumper_main()
     std::string selected_version =
         arguments.as_optional<std::string>("halo-version").value_or("pc");
 
-    auto decomped = arguments.unmatched().at(1);
+    auto        decomped = arguments.unmatched().at(1);
     std::string script_recomp;
     if(arguments.unmatched().size() >= 3)
         script_recomp = arguments.unmatched().at(2);

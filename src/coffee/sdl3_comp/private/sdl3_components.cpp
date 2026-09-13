@@ -66,7 +66,7 @@ static ws_t get_wm_selection(SDL_Window* window);
 
 inline void print_current_config()
 {
-    auto const ver = SDL_GetVersion();
+    auto const       ver = SDL_GetVersion();
     current_config_t config;
     SDL_GL_GetAttribute(SDL_GL_RED_SIZE, &config.r);
     SDL_GL_GetAttribute(SDL_GL_GREEN_SIZE, &config.g);
@@ -187,7 +187,8 @@ void Context::end_restricted(proxy_type& p, time_point const&)
     CIEvent inputEv;
 
     SDL_Event event;
-    while(SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_EVENT_QUIT, SDL_EVENT_QUIT))
+    while(
+        SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_EVENT_QUIT, SDL_EVENT_QUIT))
     {
         auto data    = translate::event<CIQuit>(event);
         inputEv.type = data.event_type;
@@ -280,8 +281,7 @@ void Windowing::start_restricted(proxy_type& p, time_point const&)
 {
     using namespace Coffee::Display;
 
-    auto displayBus =
-        p.service<comp_app::BasicEventBus<Event>>();
+    auto displayBus = p.service<comp_app::BasicEventBus<Event>>();
     if(!displayBus)
         Throw(implementation_error("display bus not available!"));
     Event displayEv;
@@ -298,11 +298,7 @@ void Windowing::start_restricted(proxy_type& p, time_point const&)
 
     /* SDL3 promoted the window events to top-level event types */
     while(SDL_PeepEvents(
-        &event,
-        1,
-        SDL_GETEVENT,
-        SDL_EVENT_WINDOW_FIRST,
-        SDL_EVENT_WINDOW_LAST))
+        &event, 1, SDL_GETEVENT, SDL_EVENT_WINDOW_FIRST, SDL_EVENT_WINDOW_LAST))
     {
         switch(event.type)
         {
@@ -823,8 +819,7 @@ void ControllerInput::start_restricted(proxy_type& p, time_point const&)
 {
     using namespace Coffee::Input;
 
-    auto inputBus =
-        p.service<comp_app::BasicEventBus<CIEvent>>();
+    auto    inputBus = p.service<comp_app::BasicEventBus<CIEvent>>();
     CIEvent inputEv;
 
     SDL_Event event;
@@ -908,7 +903,11 @@ void ControllerInput::start_restricted(proxy_type& p, time_point const&)
         ;
 
     while(SDL_PeepEvents(
-        &event, 1, SDL_GETEVENT, SDL_EVENT_JOYSTICK_AXIS_MOTION, SDL_EVENT_JOYSTICK_REMOVED))
+        &event,
+        1,
+        SDL_GETEVENT,
+        SDL_EVENT_JOYSTICK_AXIS_MOTION,
+        SDL_EVENT_JOYSTICK_REMOVED))
         ;
 }
 
@@ -934,23 +933,21 @@ ControllerInput::controller_map ControllerInput::state(
 #define BTN SDL_GetGamepadButton
 #define AXIS SDL_GetGamepadAxis
 
-        out.buttons.e.a   = BTN(controller, SDL_GAMEPAD_BUTTON_SOUTH);
-        out.buttons.e.b   = BTN(controller, SDL_GAMEPAD_BUTTON_EAST);
-        out.buttons.e.x   = BTN(controller, SDL_GAMEPAD_BUTTON_WEST);
-        out.buttons.e.y   = BTN(controller, SDL_GAMEPAD_BUTTON_NORTH);
-        out.buttons.e.b_l = BTN(controller, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER);
-        out.buttons.e.b_r =
-            BTN(controller, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
+        out.buttons.e.a    = BTN(controller, SDL_GAMEPAD_BUTTON_SOUTH);
+        out.buttons.e.b    = BTN(controller, SDL_GAMEPAD_BUTTON_EAST);
+        out.buttons.e.x    = BTN(controller, SDL_GAMEPAD_BUTTON_WEST);
+        out.buttons.e.y    = BTN(controller, SDL_GAMEPAD_BUTTON_NORTH);
+        out.buttons.e.b_l  = BTN(controller, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER);
+        out.buttons.e.b_r  = BTN(controller, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
         out.buttons.e.s_l  = BTN(controller, SDL_GAMEPAD_BUTTON_LEFT_STICK);
         out.buttons.e.s_r  = BTN(controller, SDL_GAMEPAD_BUTTON_RIGHT_STICK);
         out.buttons.e.p_up = BTN(controller, SDL_GAMEPAD_BUTTON_DPAD_UP);
-        out.buttons.e.p_down = BTN(controller, SDL_GAMEPAD_BUTTON_DPAD_DOWN);
-        out.buttons.e.p_left = BTN(controller, SDL_GAMEPAD_BUTTON_DPAD_LEFT);
-        out.buttons.e.p_right =
-            BTN(controller, SDL_GAMEPAD_BUTTON_DPAD_RIGHT);
-        out.buttons.e.back  = BTN(controller, SDL_GAMEPAD_BUTTON_BACK);
-        out.buttons.e.start = BTN(controller, SDL_GAMEPAD_BUTTON_START);
-        out.buttons.e.guide = BTN(controller, SDL_GAMEPAD_BUTTON_GUIDE);
+        out.buttons.e.p_down  = BTN(controller, SDL_GAMEPAD_BUTTON_DPAD_DOWN);
+        out.buttons.e.p_left  = BTN(controller, SDL_GAMEPAD_BUTTON_DPAD_LEFT);
+        out.buttons.e.p_right = BTN(controller, SDL_GAMEPAD_BUTTON_DPAD_RIGHT);
+        out.buttons.e.back    = BTN(controller, SDL_GAMEPAD_BUTTON_BACK);
+        out.buttons.e.start   = BTN(controller, SDL_GAMEPAD_BUTTON_START);
+        out.buttons.e.guide   = BTN(controller, SDL_GAMEPAD_BUTTON_GUIDE);
 
         out.axes.e.l_x = rescale(AXIS(controller, SDL_GAMEPAD_AXIS_LEFTX));
         out.axes.e.l_y = rescale(AXIS(controller, SDL_GAMEPAD_AXIS_LEFTY));
@@ -1030,18 +1027,18 @@ void KeyboardInput::start_restricted(proxy_type& p, time_point const&)
     CIEvent   inputEv;
     SDL_Event event;
 
-    auto inputBus =
-        p.service<comp_app::BasicEventBus<CIEvent>>();
+    auto inputBus = p.service<comp_app::BasicEventBus<CIEvent>>();
 
-    while(SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_EVENT_KEY_DOWN, SDL_EVENT_KEY_UP))
+    while(SDL_PeepEvents(
+        &event, 1, SDL_GETEVENT, SDL_EVENT_KEY_DOWN, SDL_EVENT_KEY_UP))
     {
         auto ev            = translate::event<CIKeyEvent>(event);
         m_register[ev.key] = ev.mod;
         EMIT_IEVENT(ev)
     }
 
-    while(
-        SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_EVENT_TEXT_EDITING, SDL_EVENT_TEXT_INPUT))
+    while(SDL_PeepEvents(
+        &event, 1, SDL_GETEVENT, SDL_EVENT_TEXT_EDITING, SDL_EVENT_TEXT_INPUT))
     {
         switch(event.type)
         {
@@ -1117,8 +1114,8 @@ void MouseInput::start_restricted(proxy_type&, time_point const&)
         }
     }
 
-    while(
-        SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_EVENT_DROP_FILE, SDL_EVENT_DROP_COMPLETE))
+    while(SDL_PeepEvents(
+        &event, 1, SDL_GETEVENT, SDL_EVENT_DROP_FILE, SDL_EVENT_DROP_COMPLETE))
     {
         cDebug("Drop event: {}", static_cast<int>(event.drop.type));
         switch(event.type)
@@ -1239,8 +1236,8 @@ void getWindow(
     {
         info.display = SDL_GetPointerProperty(
             props, SDL_PROP_WINDOW_X11_DISPLAY_POINTER, nullptr);
-        info.window        = C_RCAST<void*>(C_FCAST<intptr_t>(
-            SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0)));
+        info.window = C_RCAST<void*>(C_FCAST<intptr_t>(SDL_GetNumberProperty(
+            props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0)));
         info.window_system = ws_t::x11;
     } else if(driver_is("wayland"))
     {

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "coffee/comp_app/services.h"
 #include "bitmap_cache.h"
+#include "coffee/comp_app/services.h"
 #include "components.h"
 #include "data.h"
 #include "networking.h"
@@ -56,7 +56,10 @@ struct BlamMapBrowser
         entity_filter.resize(64);
     }
 
-    bool main_thread_only() const override { return true; }
+    bool main_thread_only() const override
+    {
+        return true;
+    }
 
     std::string entity_filter;
 
@@ -118,7 +121,8 @@ struct BlamMapBrowser
                 {
                     auto controllers = e.service<comp_app::ControllerInput>();
                     ImGui::Columns(3);
-                    for(auto const& player : e.select<PlayerCamera, PlayerInfo>())
+                    for(auto const& player :
+                        e.select<PlayerCamera, PlayerInfo>())
                     {
                         if(!controllers)
                             continue;
@@ -177,7 +181,8 @@ struct BlamMapBrowser
                         ImGui::SetTooltip(
                             "ws://gateway#serverId or\n"
                             "ws://gateway#serverId;auth=hmac:base64secret or\n"
-                            "ws://gateway#serverId;auth=ed25519:base64publickey");
+                            "ws://"
+                            "gateway#serverId;auth=ed25519:base64publickey");
                     ImGui::NextColumn();
                     if(ImGui::Button("Connect"))
                     {
@@ -356,9 +361,10 @@ struct BlamMapBrowser
                             {
                                 std::swap(
                                     old_seat0->seat_idx, target->seat_idx);
-                                for(auto pe : e.select<PlayerCamera, PlayerInfo>())
+                                for(auto pe :
+                                    e.select<PlayerCamera, PlayerInfo>())
                                 {
-                                    auto [cam, pi] = pe.components();
+                                    auto [cam, pi]       = pe.components();
                                     cam.keyboard.enabled = pi.seat_idx == 0;
                                 }
                             }
@@ -482,9 +488,8 @@ struct BlamMapBrowser
                                     &model->object_function[i],
                                     -1.f,
                                     1.f,
-                                    model->object_function[i] < 0.f
-                                        ? "unset"
-                                        : "%.2f");
+                                    model->object_function[i] < 0.f ? "unset"
+                                                                    : "%.2f");
                             }
                             ImGui::SliderFloat(
                                 "Meter value",

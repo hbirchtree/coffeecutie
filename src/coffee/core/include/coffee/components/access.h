@@ -41,10 +41,9 @@ constexpr bool readable_v =
     type_safety::type_list::type_in_list_v<const T, List>;
 
 template<typename T, typename List>
-constexpr mode mode_of_v = writable_v<T, List> ? mode::write
-                           : readable_v<T, List>
-                               ? mode::read
-                               : mode::none;
+constexpr mode mode_of_v = writable_v<T, List>   ? mode::write
+                           : readable_v<T, List> ? mode::read
+                                                 : mode::none;
 
 /*!
  * \brief A component tag's payload type, const-qualified unless the list
@@ -135,9 +134,7 @@ struct is_buffered : std::false_type
 };
 
 template<typename T>
-struct is_buffered<
-    T,
-    std::void_t<decltype(T::type::frame_count_v)>>
+struct is_buffered<T, std::void_t<decltype(T::type::frame_count_v)>>
     : std::bool_constant<(T::type::frame_count_v > 1)>
 {
 };

@@ -214,7 +214,7 @@ struct instance_texture_t
     uniform_key                   uniform;
     std::shared_ptr<sampler_t>    sampler;
     std::vector<texture_t*>       textures;
-    bool base_instance{false};
+    bool                          base_instance{false};
 };
 
 template<typename... InstanceTextures>

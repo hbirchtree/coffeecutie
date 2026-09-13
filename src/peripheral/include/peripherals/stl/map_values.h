@@ -14,4 +14,4 @@ std::vector<V> values(std::map<K, V> const& source)
     return out;
 }
 
-}
+} // namespace stl_types

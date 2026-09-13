@@ -633,8 +633,7 @@ void GatewayServerRegistration::onWebSocketMessage(std::string const& text)
         std::lock_guard<std::mutex> lock(m_mutex);
         m_incoming.emplace_back(
             std::move(sessionId),
-            std::string(
-                reinterpret_cast<char const*>(raw.data()), raw.size()));
+            std::string(reinterpret_cast<char const*>(raw.data()), raw.size()));
     } else if(type == "register-active")
     {
         auto trackingId = msg.value("serverTrackingId", std::string());
@@ -760,7 +759,7 @@ void GatewayServerRegistration::RemovePendingAccept(
 void GatewayServerRegistration::PollPendingAccepts()
 {
     constexpr std::chrono::seconds kHeartbeatInterval{10};
-    bool sendBeat = false;
+    bool                           sendBeat = false;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         auto                        now = std::chrono::steady_clock::now();
@@ -888,8 +887,7 @@ void GatewayServerRegistration::pollDirectRouteTakeover()
         if(!m_sockets->GetConnectionInfo(hConn, &info))
             continue;
         std::string_view description(info.m_szConnectionDescription);
-        bool             onRelay =
-            description.find("WebRTC") != std::string_view::npos;
+        bool onRelay = description.find("WebRTC") != std::string_view::npos;
 
         std::lock_guard<std::mutex> lock(m_mutex);
         auto                        tick = m_directRouteTicks.find(hConn);

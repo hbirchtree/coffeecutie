@@ -12,7 +12,7 @@ namespace compo::sched {
 struct access_set
 {
     /* Tag hash the subsystem is registered under */
-    type_hash self{0};
+    type_hash                  self{0};
     std::vector<access::entry> components;
     std::vector<access::entry> subsystems;
     std::vector<access::entry> services;
@@ -21,10 +21,10 @@ struct access_set
     /* Reached the container outside its manifest */
     bool opaque{false};
     /* Pinned to the main thread (GL contexts, windowing, input) */
-    bool main_thread{false};
-    bool parallel{false};
+    bool         main_thread{false};
+    bool         parallel{false};
     access::mode self_access{access::mode::write};
-    bool has_work{true};
+    bool         has_work{true};
 };
 
 using access_entry = access::entry;
@@ -45,7 +45,7 @@ struct batch
 {
     /*! Indices into the node list the batch was built from */
     std::vector<size_t> members;
-    size_t width{0};
+    size_t              width{0};
 };
 
 struct window
@@ -63,12 +63,12 @@ struct window
 bool can_offload(access_set const& set);
 
 std::vector<window> build_windows(
-    std::vector<node> const& priority_sorted,
+    std::vector<node> const&  priority_sorted,
     std::vector<batch> const& batches);
 
 std::string format_windows(
-    std::vector<node> const& priority_sorted,
-    std::vector<batch> const& batches,
+    std::vector<node> const&   priority_sorted,
+    std::vector<batch> const&  batches,
     std::vector<window> const& windows);
 
 size_t configured_worker_count();
@@ -83,7 +83,7 @@ std::vector<batch> build_batches(std::vector<node> const& priority_sorted);
 
 /*! Human-readable schedule, one line per batch plus a summary */
 std::string format_batches(
-    std::vector<node> const& priority_sorted,
+    std::vector<node> const&  priority_sorted,
     std::vector<batch> const& batches);
 
 /*! Access set of a subsystem, from the manifest it declared */

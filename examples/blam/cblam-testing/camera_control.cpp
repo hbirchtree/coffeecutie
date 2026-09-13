@@ -13,10 +13,10 @@
 using namespace std::chrono_literals;
 using stl_types::chrono::to_f32;
 
-struct CameraControl 
+struct CameraControl
     : compo::RestrictedSubsystem<CameraControl, CameraControlManifest>
 {
-    using type = CameraControl;
+    using type  = CameraControl;
     using Proxy = compo::proxy_of<CameraControlManifest>;
 
     CameraControl()
@@ -44,14 +44,15 @@ struct CameraControl
                 auto to_pos   = new_lerp.position;
                 auto from_rot = cam.camera.rotation;
                 auto to_rot   = new_lerp.rotation;
-                lerp.lerps.push_back(CameraLerp::lerp_t{
-                    .p1             = from_pos,
-                    .p2             = to_pos,
-                    .r1             = from_rot,
-                    .r2             = to_rot.value_or(from_rot),
-                    .remaining_time = new_lerp.duration,
-                    .total_time     = new_lerp.duration,
-                });
+                lerp.lerps.push_back(
+                    CameraLerp::lerp_t{
+                        .p1             = from_pos,
+                        .p2             = to_pos,
+                        .r1             = from_rot,
+                        .r2             = to_rot.value_or(from_rot),
+                        .remaining_time = new_lerp.duration,
+                        .total_time     = new_lerp.duration,
+                    });
             }
         incoming_lerps.clear();
 
@@ -71,8 +72,8 @@ struct CameraControl
                 /* Advance first, then clamp: the last tick takes remaining
                  * below zero, and this is where the lerp has to land exactly
                  * on its target before being retired below. */
-                f32 alpha = 1.f - to_f32(lerp.remaining_time) /
-                                      to_f32(lerp.total_time);
+                f32 alpha =
+                    1.f - to_f32(lerp.remaining_time) / to_f32(lerp.total_time);
                 alpha = glm::clamp(alpha, 0.f, 1.f);
                 /* Assigned, not accumulated: p1 is the start point, so the
                  * interpolation is absolute. Adding the offset each tick
@@ -93,11 +94,12 @@ struct CameraControl
 
 void alloc_camera_control(compo::EntityContainer& e)
 {
-    auto& camera = e.register_subsystem_inplace<CameraControl>();
+    auto& camera   = e.register_subsystem_inplace<CameraControl>();
     auto& game_bus = e.subsystem_cast<GameEventBus>();
     game_bus.addEventFunction<PlayerCameraLerpEvent>(
         1024, [&camera](GameEvent&, PlayerCameraLerpEvent* lerp) {
-            cDebug("Lerp'ing camera #{} to {} in {}ms",
+            cDebug(
+                "Lerp'ing camera #{} to {} in {}ms",
                 lerp->seat_idx,
                 lerp->position,
                 lerp->duration.count());

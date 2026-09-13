@@ -8,10 +8,10 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include <blam/volta/blam_scenario.h>
+#include <blam/volta/hsc/blam_bytecode.h>
 #include <blam/volta/hsc/bytecode_common_v12.h>
 #include <blam/volta/hsc/bytecode_v1.h>
 #include <blam/volta/hsc/bytecode_v2.h>
-#include <blam/volta/hsc/blam_bytecode.h>
 
 #include <fmt/format.h>
 
@@ -55,7 +55,7 @@ v4 v4_from_string(std::string_view opcode)
     return magic_enum::enum_cast<v4>(opcode).value_or(v4::invalid);
 }
 
-}
+} // namespace blam::hsc::bc
 
 namespace blam::hsc {
 
@@ -91,9 +91,8 @@ std::string op_to_string(opcode_layout<BC> const& op)
     case expression_t::script_ref:
         break;
     default:
-        return fmt::format("{:#06x}-{:#06x}: [invalid]",
-            op.index,
-            op.next_op.ip);
+        return fmt::format(
+            "{:#06x}-{:#06x}: [invalid]", op.index, op.next_op.ip);
     }
 
     auto value = [&op] -> std::string {
@@ -238,8 +237,8 @@ std::string script_to_string(
         return "<unknown>";
     auto name = name_at(strings, name_op->to_ptr());
     auto out  = op->exp_type == expression_t::script_ref
-                   ? fmt::format("(script:{}", name)
-                   : fmt::format("({}", name);
+                    ? fmt::format("(script:{}", name)
+                    : fmt::format("({}", name);
     /* Statement sequences read better one per line */
     std::string separator =
         name == "begin"sv || name == "begin_random"sv || name == "cond"sv
@@ -251,20 +250,20 @@ std::string script_to_string(
         auto const* param = node_at(bytecode, arg);
         if(!param)
             break;
-        out += separator +
-               script_to_string(bytecode, strings, arg, depth + 1);
+        out += separator + script_to_string(bytecode, strings, arg, depth + 1);
         arg = param->next_op.ip;
     }
     return out += ")";
 }
 
 template<typename Version>
-std::string to_halo_script(scn::scenario<Version> const& scenario, map_ptr const& magic)
+std::string to_halo_script(
+    scn::scenario<Version> const& scenario, map_ptr const& magic)
 {
     auto strings = scenario.string_segment(magic);
     if(strings.has_error())
         return {};
-    auto bytecode = scenario.bytecode(magic);
+    auto        bytecode = scenario.bytecode(magic);
     std::string script;
     for(auto const& decl : scenario.function_table(magic))
     {
@@ -278,24 +277,19 @@ std::string to_halo_script(scn::scenario<Version> const& scenario, map_ptr const
     return script;
 }
 
-template
-std::string to_halo_script<xbox_version_t>(
+template std::string to_halo_script<xbox_version_t>(
     scn::scenario<xbox_version_t> const& scenario, map_ptr const& magic);
 
-template
-std::string to_halo_script<pc_version_t>(
+template std::string to_halo_script<pc_version_t>(
     scn::scenario<pc_version_t> const& scenario, map_ptr const& magic);
 
-template
-std::string to_halo_script<custom_version_t>(
+template std::string to_halo_script<custom_version_t>(
     scn::scenario<custom_version_t> const& scenario, map_ptr const& magic);
 
-template
-std::string to_halo_script<mcc_version_t>(
+template std::string to_halo_script<mcc_version_t>(
     scn::scenario<mcc_version_t> const& scenario, map_ptr const& magic);
 
-template
-std::string to_halo_script<trial_version_t>(
+template std::string to_halo_script<trial_version_t>(
     scn::scenario<trial_version_t> const& scenario, map_ptr const& magic);
 
 template<typename Bytecode>
@@ -800,28 +794,24 @@ signatures::sig_t opcode_signature(opcode_layout<Bytecode> const& op)
 
     case o::damage_object:
         return sig_t(t::void_, t::damage, t::object);
-    // case o::object_set_shield:
-    //     return sig_t(t::void_, t::object, t::real_);
-    // case o::sound_set_gain:
-    //     return sig_t(t::void_, t::string_, t::real_);
-    // case o::sound_get_gain:
-    //     return sig_t(t::real_, t::string_);
-    // case o::objects_delete_by_definition:
-    //     return sig_t(t::void_, t::obj_def);
-    // case o::seconds:
-    //     return sig_t(t::void_);
+        // case o::object_set_shield:
+        //     return sig_t(t::void_, t::object, t::real_);
+        // case o::sound_set_gain:
+        //     return sig_t(t::void_, t::string_, t::real_);
+        // case o::sound_get_gain:
+        //     return sig_t(t::real_, t::string_);
+        // case o::objects_delete_by_definition:
+        //     return sig_t(t::void_, t::obj_def);
+        // case o::seconds:
+        //     return sig_t(t::void_);
     }
 
     auto op_name = to_string(op.opcode);
     Throw(missing_signature(std::string(op_name.begin(), op_name.end())));
 }
 
-template
-signatures::sig_t opcode_signature(opcode_layout<bc::v1> const& op);
-template
-signatures::sig_t opcode_signature(opcode_layout<bc::v2> const& op);
-template
-signatures::sig_t opcode_signature(opcode_layout<bc::v4> const& op);
+template signatures::sig_t opcode_signature(opcode_layout<bc::v1> const& op);
+template signatures::sig_t opcode_signature(opcode_layout<bc::v2> const& op);
+template signatures::sig_t opcode_signature(opcode_layout<bc::v4> const& op);
 
-}
-
+} // namespace blam::hsc

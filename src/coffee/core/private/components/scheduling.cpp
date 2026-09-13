@@ -327,8 +327,8 @@ std::string format_batches(
 
     for(auto const& current : batches)
     {
-        libc_types::u64 pinned   = 0;
-        libc_types::u64 slowest  = 0;
+        libc_types::u64 pinned  = 0;
+        libc_types::u64 slowest = 0;
 
         for(auto index : current.members)
         {
@@ -349,7 +349,8 @@ std::string format_batches(
         out += "  measured: " + std::to_string(serial / 1000000) +
                "ms serial -> " + std::to_string(walled / 1000000) +
                "ms if every batch ran in parallel (" +
-               std::to_string((serial * 100) / std::max<libc_types::u64>(walled, 1)) +
+               std::to_string(
+                   (serial * 100) / std::max<libc_types::u64>(walled, 1)) +
                "% of serial, upper bound, zero sync cost)\n";
 
         /* Ranked, because a 17-wide batch of subsystems that do nothing is
@@ -357,10 +358,9 @@ std::string format_batches(
         std::vector<size_t> ranked(priority_sorted.size());
         for(size_t i = 0; i < ranked.size(); i++)
             ranked[i] = i;
-        std::sort(
-            ranked.begin(), ranked.end(), [&](size_t a, size_t b) {
-                return priority_sorted.at(a).cost > priority_sorted.at(b).cost;
-            });
+        std::sort(ranked.begin(), ranked.end(), [&](size_t a, size_t b) {
+            return priority_sorted.at(a).cost > priority_sorted.at(b).cost;
+        });
 
         out += "  costliest subsystems:\n";
         for(size_t i = 0; i < std::min<size_t>(8, ranked.size()); i++)
@@ -413,9 +413,8 @@ bool access_changed(access_set const& previous, SubsystemBase const& subsystem)
 {
     return previous.has_work != subsystem.has_frame_work() ||
            previous.self_access != subsystem.self_access() ||
-           previous.opaque !=
-               (subsystem.runtime_access.opaque ||
-                !subsystem.declares_access()) ||
+           previous.opaque != (subsystem.runtime_access.opaque ||
+                               !subsystem.declares_access()) ||
            previous.structural_mutation !=
                subsystem.runtime_access.structural_mutation ||
            previous.parallel != subsystem.parallel_safe();

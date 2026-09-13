@@ -30,7 +30,6 @@ using pc_opcode_t   = bc::v2;
 using mcc_opcode_t  = bc::v4;
 
 template<typename T>
-concept is_bytecode_variant =
-    stl_types::is_any_of<T, bc::v1, bc::v2, bc::v4>;
+concept is_bytecode_variant = stl_types::is_any_of<T, bc::v1, bc::v2, bc::v4>;
 
 } // namespace blam::hsc

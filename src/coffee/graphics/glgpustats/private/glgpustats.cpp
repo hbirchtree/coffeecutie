@@ -13,7 +13,6 @@
 #include <glw/extensions/ATI_meminfo.h>
 #include <glw/extensions/NVX_gpu_memory_info.h>
 
-
 using namespace Coffee::Logging;
 using libc_types::i32;
 using libc_types::i64;

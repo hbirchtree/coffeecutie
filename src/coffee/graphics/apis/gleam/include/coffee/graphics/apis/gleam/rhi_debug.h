@@ -110,7 +110,7 @@ struct scope
     }
 
     features::debugging ext;
-    bool enabled{true};
+    bool                enabled{true};
 #if defined(GLW_ENABLE_TRACE)
     bool traced{false};
 #endif
@@ -235,8 +235,7 @@ struct api
         }
 #endif
 #if defined(GLW_ENABLE_TRACE)
-        glw::trace::label_object(
-            static_cast<u32>(identifier), hnd, label);
+        glw::trace::label_object(static_cast<u32>(identifier), hnd, label);
 #endif
     }
 

@@ -292,8 +292,7 @@ struct BasicEventBus : EventBus<EventType>
     std::shared_ptr<queue_type<SubEventType>> addQueuedEventFunction(
         libc_types::u32                                  prio,
         std::function<void(EventType&, SubEventType*)>&& hnd,
-        libc_types::szptr                                capacity =
-            queue_type<SubEventType>::default_capacity)
+        libc_types::szptr capacity = queue_type<SubEventType>::default_capacity)
     {
         auto queue = std::make_shared<queue_type<SubEventType>>(
             std::move(hnd), capacity);
@@ -319,8 +318,7 @@ struct BasicEventBus : EventBus<EventType>
             if(m_handlers)
                 *updated = *m_handlers;
             updated->push_back(std::make_shared<EvData>(std::move(data)));
-            std::stable_sort(
-                updated->begin(), updated->end(), handler_sorter);
+            std::stable_sort(updated->begin(), updated->end(), handler_sorter);
             m_handlers = std::move(updated);
         }
     }

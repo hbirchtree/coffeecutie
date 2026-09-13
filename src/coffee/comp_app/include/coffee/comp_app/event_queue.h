@@ -26,8 +26,7 @@ struct event_queue
     static constexpr libc_types::szptr default_capacity = 1024;
 
     event_queue(
-        handler_type&&      handler,
-        libc_types::szptr   capacity = default_capacity)
+        handler_type&& handler, libc_types::szptr capacity = default_capacity)
         : m_handler(std::move(handler))
         , m_capacity(capacity)
     {

@@ -46,7 +46,7 @@ enum class v2 : libc_types::i16
     wake,
     inspect,
     unit,
-    sound, /* carried */
+    sound,  /* carried */
     effect, /* carried */
     _dummy_26,
     not_,
@@ -76,11 +76,11 @@ enum class v2 : libc_types::i16
     objects_can_see_object,
     objects_can_see_flag,
     objects_delete_by_definition, /* carried */
-    sound_set_gain, /* carried */
-    sound_get_gain, /* carried */
-    script_recompile, /* carried */
-    help, /* carried */
-    _dummy_1, /* carried */
+    sound_set_gain,               /* carried */
+    sound_get_gain,               /* carried */
+    script_recompile,             /* carried */
+    help,                         /* carried */
+    _dummy_1,                     /* carried */
     random_range,
     real_random_range,
     numeric_countdown_timer_set,
@@ -126,12 +126,12 @@ enum class v2 : libc_types::i16
     custom_animation,
     custom_animation_list,
     unit_is_playing_custom_animation, /* carried */
-    unit_aim_without_turning, /* carried */
+    unit_aim_without_turning,         /* carried */
     unit_set_emotion,
     unit_set_enterable_by_player,
     unit_enter_vehicle,
     vehicle_test_seat_list,
-    vehicle_test_seat, /* carried */
+    vehicle_test_seat,          /* carried */
     unit_set_emotion_animation, /* carried */
     unit_exit_vehicle,
     unit_set_maximum_vitality,
@@ -189,7 +189,7 @@ enum class v2 : libc_types::i16
     ai_kill_silent,
     ai_erase,
     ai_erase_all,
-    ai_select, /* carried */
+    ai_select,   /* carried */
     ai_deselect, /* carried */
     ai_spawn_actor,
     ai_set_respawn, /* carried */
@@ -238,8 +238,8 @@ enum class v2 : libc_types::i16
     ai_is_attacking, /* carried */
     ai_force_active,
     ai_force_active_by_unit, /* carried */
-    ai_set_return_state, /* carried */
-    ai_set_current_state, /* carried */
+    ai_set_return_state,     /* carried */
+    ai_set_current_state,    /* carried */
     ai_playfight,
     ai_status,
     ai_reconnect,
@@ -250,7 +250,7 @@ enum class v2 : libc_types::i16
     ai_vehicle_enterable_actors, /* carried */
     ai_vehicle_enterable_disable,
     ai_look_at_object, /* carried */
-    ai_stop_looking, /* carried */
+    ai_stop_looking,   /* carried */
     ai_automatic_migration_target,
     ai_follow_target_disable,
     ai_follow_target_players,
@@ -264,7 +264,7 @@ enum class v2 : libc_types::i16
     ai_conversation_status,
     ai_link_activation,
     ai_berserk,
-    ai_set_team, /* carried */
+    ai_set_team,     /* carried */
     ai_allow_charge, /* carried */
     ai_allow_dormant,
     ai_allegiance_broken,
@@ -283,24 +283,24 @@ enum class v2 : libc_types::i16
     game_difficulty_get,
     game_difficulty_get_real,
     profile_service_clear_timers, /* carried */
-    map_reset, /* carried */
+    map_reset,                    /* carried */
     _dummy_262,
-    map_name, /* carried */
+    map_name,             /* carried */
     multiplayer_map_name, /* carried */
-    game_difficulty_set, /* carried */
-    crash, /* carried */
+    game_difficulty_set,  /* carried */
+    crash,                /* carried */
     switch_bsp,
     structure_bsp_index,
-    version, /* carried */
+    version,  /* carried */
     playback, /* carried */
     quit,
-    texture_cache_flush, /* carried */
-    sound_cache_flush, /* carried */
+    texture_cache_flush,      /* carried */
+    sound_cache_flush,        /* carried */
     sound_cache_dump_to_file, /* carried */
-    debug_memory, /* carried */
-    debug_memory_by_file, /* carried */
-    debug_memory_for_file, /* carried */
-    debug_tags, /* carried */
+    debug_memory,             /* carried */
+    debug_memory_by_file,     /* carried */
+    debug_memory_for_file,    /* carried */
+    debug_tags,               /* carried */
     _dummy_279,
     _dummy_280,
     _dummy_281,
@@ -360,14 +360,14 @@ enum class v2 : libc_types::i16
     sound_looping_stop,
     sound_looping_set_scale, /* carried */
     sound_looping_set_alternate,
-    debug_sounds_enable, /* carried */
+    debug_sounds_enable,    /* carried */
     debug_sounds_distances, /* carried */
-    debug_sounds_wet, /* carried */
-    sound_enable, /* carried */
-    sound_set_master_gain, /* carried */
-    sound_get_master_gain, /* carried */
-    sound_set_music_gain, /* carried */
-    sound_get_music_gain, /* carried */
+    debug_sounds_wet,       /* carried */
+    sound_enable,           /* carried */
+    sound_set_master_gain,  /* carried */
+    sound_get_master_gain,  /* carried */
+    sound_set_music_gain,   /* carried */
+    sound_get_music_gain,   /* carried */
     sound_set_effects_gain, /* carried */
     sound_get_effects_gain, /* carried */
     sound_class_set_gain,
@@ -394,32 +394,32 @@ enum class v2 : libc_types::i16
     show_hud,
     show_hud_help_text,
     enable_hud_help_flash,
-    hud_help_flash_restart, /* carried */
-    activate_nav_point_flag, /* carried */
+    hud_help_flash_restart,    /* carried */
+    activate_nav_point_flag,   /* carried */
     activate_nav_point_object, /* carried */
     activate_team_nav_point_flag,
     activate_team_nav_point_object,
-    deactivate_nav_point_flag, /* carried */
+    deactivate_nav_point_flag,   /* carried */
     deactivate_nav_point_object, /* carried */
     deactivate_team_nav_point_flag,
     deactivate_team_nav_point_object,
-    hud_team_icon_set_pos, /* carried */
-    hud_team_icon_set_scale, /* carried */
-    hud_team_background_set_pos, /* carried */
+    hud_team_icon_set_pos,         /* carried */
+    hud_team_icon_set_scale,       /* carried */
+    hud_team_background_set_pos,   /* carried */
     hud_team_background_set_scale, /* carried */
     cls,
-    connect, /* carried */
-    hammer_begin, /* carried */
-    hammer_stop, /* carried */
-    network_server_dump, /* carried */
-    network_client_dump, /* carried */
-    net_graph_clear, /* carried */
-    net_graph_show, /* carried */
-    play_update_history, /* carried */
-    show_player_update_stats, /* carried */
-    message_metrics_clear, /* carried */
-    message_metrics_dump, /* carried */
-    error_overflow_suppression, /* carried */
+    connect,                     /* carried */
+    hammer_begin,                /* carried */
+    hammer_stop,                 /* carried */
+    network_server_dump,         /* carried */
+    network_client_dump,         /* carried */
+    net_graph_clear,             /* carried */
+    net_graph_show,              /* carried */
+    play_update_history,         /* carried */
+    show_player_update_stats,    /* carried */
+    message_metrics_clear,       /* carried */
+    message_metrics_dump,        /* carried */
+    error_overflow_suppression,  /* carried */
     structure_lens_flares_place, /* carried */
     _dummy_399,
     player_effect_set_max_translation,
@@ -445,13 +445,13 @@ enum class v2 : libc_types::i16
     hud_get_timer_ticks,
     time_code_show,
     time_code_start,
-    time_code_reset, /* carried */
+    time_code_reset,                   /* carried */
     reload_shader_transparent_chicago, /* carried */
-    rasterizer_reload_effects, /* carried */
-    set_gamma, /* carried */
+    rasterizer_reload_effects,         /* carried */
+    set_gamma,                         /* carried */
     rasterizer_fixed_function_ambient, /* carried */
-    rasterizer_decals_flush, /* carried */
-    rasterizer_fps_accumulate, /* carried */
+    rasterizer_decals_flush,           /* carried */
+    rasterizer_fps_accumulate,         /* carried */
     rasterizer_model_ambient_reflection_tint,
     rasterizer_lights_reset_for_new_map,
     script_screen_effect_set_value, /* carried */
@@ -462,7 +462,7 @@ enum class v2 : libc_types::i16
     cinematic_screen_effect_set_video,
     cinematic_screen_effect_stop,
     cinematic_set_near_clip_distance,
-    fast_setup_network_server, /* carried */
+    fast_setup_network_server,  /* carried */
     profile_unlock_solo_levels, /* carried */
     _dummy_442,
     player0_look_invert_pitch,
@@ -470,98 +470,98 @@ enum class v2 : libc_types::i16
     player0_joystick_set_is_normal,
     ui_widget_show_path, /* carried */
     display_scenario_help,
-    sound_enable_eax, /* carried */
-    sound_eax_enabled, /* carried */
-    sound_set_env, /* carried */
-    sound_enable_hardware, /* carried */
+    sound_enable_eax,                /* carried */
+    sound_eax_enabled,               /* carried */
+    sound_set_env,                   /* carried */
+    sound_enable_hardware,           /* carried */
     sound_set_supplementary_buffers, /* carried */
     sound_get_supplementary_buffers, /* carried */
-    sound_set_rolloff, /* carried */
-    sound_set_factor, /* carried */
-    input_get_joy_count, /* carried */
-    input_is_joy_active, /* carried */
-    input_activate_joy, /* carried */
-    input_deactivate_joy, /* carried */
-    input_find_joystick, /* carried */
-    input_show_joystick_info, /* carried */
-    input_find_default, /* carried */
-    config_one_control, /* carried */
-    get_pitch_rate, /* carried */
-    set_yaw_rate, /* carried */
-    set_pitch_rate, /* carried */
-    get_digital_forward_throttle, /* carried */
-    set_digital_forward_throttle, /* carried */
-    get_digital_strafe_throttle, /* carried */
-    set_digital_strafe_throttle, /* carried */
-    get_digital_yaw_increment, /* carried */
-    set_digital_yaw_increment, /* carried */
-    get_digital_pitch_increment, /* carried */
-    set_digital_pitch_increment, /* carried */
-    get_mouse_forward_threshold, /* carried */
-    set_mouse_forward_threshold, /* carried */
-    get_mouse_strafe_threshold, /* carried */
-    set_mouse_strafe_threshold, /* carried */
-    get_mouse_yaw_scale, /* carried */
-    set_mouse_yaw_scale, /* carried */
-    get_mouse_pitch_scale, /* carried */
-    set_mouse_pitch_scale, /* carried */
-    get_gamepad_forward_threshold, /* carried */
-    set_gamepad_forward_threshold, /* carried */
-    get_gamepad_strafe_threshold, /* carried */
-    set_gamepad_strafe_threshold, /* carried */
-    get_gamepad_yaw_scale, /* carried */
-    set_gamepad_yaw_scale, /* carried */
-    set_gamepad_pitch_scale, /* carried */
-    bind, /* carried */
-    unbind, /* carried */
-    print_binds, /* carried */
-    sv_end_game, /* carried */
-    change_team, /* carried */
-    sv_mapcycle, /* carried */
-    sv_mapcycle_begin, /* carried */
-    sv_mapcycle_add, /* carried */
-    sv_mapcycle_del, /* carried */
-    sv_map_next, /* carried */
-    sv_map_reset, /* carried */
-    sv_map, /* carried */
-    rcon, /* carried */
+    sound_set_rolloff,               /* carried */
+    sound_set_factor,                /* carried */
+    input_get_joy_count,             /* carried */
+    input_is_joy_active,             /* carried */
+    input_activate_joy,              /* carried */
+    input_deactivate_joy,            /* carried */
+    input_find_joystick,             /* carried */
+    input_show_joystick_info,        /* carried */
+    input_find_default,              /* carried */
+    config_one_control,              /* carried */
+    get_pitch_rate,                  /* carried */
+    set_yaw_rate,                    /* carried */
+    set_pitch_rate,                  /* carried */
+    get_digital_forward_throttle,    /* carried */
+    set_digital_forward_throttle,    /* carried */
+    get_digital_strafe_throttle,     /* carried */
+    set_digital_strafe_throttle,     /* carried */
+    get_digital_yaw_increment,       /* carried */
+    set_digital_yaw_increment,       /* carried */
+    get_digital_pitch_increment,     /* carried */
+    set_digital_pitch_increment,     /* carried */
+    get_mouse_forward_threshold,     /* carried */
+    set_mouse_forward_threshold,     /* carried */
+    get_mouse_strafe_threshold,      /* carried */
+    set_mouse_strafe_threshold,      /* carried */
+    get_mouse_yaw_scale,             /* carried */
+    set_mouse_yaw_scale,             /* carried */
+    get_mouse_pitch_scale,           /* carried */
+    set_mouse_pitch_scale,           /* carried */
+    get_gamepad_forward_threshold,   /* carried */
+    set_gamepad_forward_threshold,   /* carried */
+    get_gamepad_strafe_threshold,    /* carried */
+    set_gamepad_strafe_threshold,    /* carried */
+    get_gamepad_yaw_scale,           /* carried */
+    set_gamepad_yaw_scale,           /* carried */
+    set_gamepad_pitch_scale,         /* carried */
+    bind,                            /* carried */
+    unbind,                          /* carried */
+    print_binds,                     /* carried */
+    sv_end_game,                     /* carried */
+    change_team,                     /* carried */
+    sv_mapcycle,                     /* carried */
+    sv_mapcycle_begin,               /* carried */
+    sv_mapcycle_add,                 /* carried */
+    sv_mapcycle_del,                 /* carried */
+    sv_map_next,                     /* carried */
+    sv_map_reset,                    /* carried */
+    sv_map,                          /* carried */
+    rcon,                            /* carried */
     _dummy_503,
     _dummy_504,
     sv_rcon_password,
     sv_say,
-    sv_ban, /* carried */
-    sv_banlist, /* carried */
-    sv_unban, /* carried */
+    sv_ban,               /* carried */
+    sv_banlist,           /* carried */
+    sv_unban,             /* carried */
     sv_parameters_reload, /* carried */
-    sv_parameters_dump, /* carried */
-    sv_status, /* carried */
+    sv_parameters_dump,   /* carried */
+    sv_status,            /* carried */
     _dummy_513,
     _dummy_514,
     sv_name,
     sv_password,
-    sv_log_rotation_threshold, /* carried */
-    sv_log_echo_chat, /* carried */
-    profile_load, /* carried */
+    sv_log_rotation_threshold,            /* carried */
+    sv_log_echo_chat,                     /* carried */
+    profile_load,                         /* carried */
     track_remote_player_position_updates, /* carried */
-    remote_player_stats, /* carried */
-    sv_get_player_action_queue_length, /* carried */
-    thread_sleep, /* carried */
-    checkpoint_save, /* carried */
-    checkpoint_load, /* carried */
-    sv_maplist, /* carried */
-    sv_gamelist, /* carried */
-    sv_friendly_fire, /* carried */
-    sv_timelimit, /* carried */
-    sv_ban_penalty, /* carried */
-    sv_tk_grace, /* carried */
-    sv_tk_cooldown, /* carried */
-    sv_banlist_file, /* carried */
-    sv_maxplayers, /* carried */
-    sv_single_flag_force_reset, /* carried */
-    sv_motd, /* carried */
-    oid_watch, /* carried */
-    oid_dump, /* carried */
-    oid_status, /* carried */
+    remote_player_stats,                  /* carried */
+    sv_get_player_action_queue_length,    /* carried */
+    thread_sleep,                         /* carried */
+    checkpoint_save,                      /* carried */
+    checkpoint_load,                      /* carried */
+    sv_maplist,                           /* carried */
+    sv_gamelist,                          /* carried */
+    sv_friendly_fire,                     /* carried */
+    sv_timelimit,                         /* carried */
+    sv_ban_penalty,                       /* carried */
+    sv_tk_grace,                          /* carried */
+    sv_tk_cooldown,                       /* carried */
+    sv_banlist_file,                      /* carried */
+    sv_maxplayers,                        /* carried */
+    sv_single_flag_force_reset,           /* carried */
+    sv_motd,                              /* carried */
+    oid_watch,                            /* carried */
+    oid_dump,                             /* carried */
+    oid_status,                           /* carried */
 
     max_opcode = 550,
 

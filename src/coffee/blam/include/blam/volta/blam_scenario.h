@@ -471,7 +471,7 @@ struct object_name
 
 struct editor_comment
 {
-    Vecf3 position;
+    Vecf3     position;
     bl_string comment;
 };
 
@@ -686,8 +686,8 @@ struct actor
     {
         Vecf2 guard_position_time;
         Vecf2 combat_position_time;
-        f32 old_position_avoid_dist;
-        f32 friend_avoid_dist;
+        f32   old_position_avoid_dist;
+        f32   friend_avoid_dist;
     } firing_positions;
 
     struct communication_t
@@ -803,9 +803,9 @@ enum class state_t : i16
 
 struct animation_ref
 {
-    bl_string name;
+    bl_string                         name;
     tagref_typed_t<tag_class_t::antr> animation_graph;
-    u32       unk[3];
+    u32                               unk[3];
 };
 
 static_assert(sizeof(animation_ref) == 60);
@@ -905,7 +905,8 @@ static_assert(sizeof(squad_spawn) == 28);
 
 struct encounter
 {
-    bl_string_var<16>          name;
+    bl_string_var<16> name;
+
     enum flags_t : u16
     {
         none                       = 0x0,
@@ -917,6 +918,7 @@ struct encounter
         _3d_firing_positions       = 0x20,
         manual_bsp_index_specified = 0x40,
     } flags;
+
     enum team_index_t : u16
     {
         default_by_unit,
@@ -930,14 +932,16 @@ struct encounter
         unused_8,
         unused_9,
     } team_index;
+
     enum search_behavior_t : u16
     {
         search_normal,
         search_never,
         search_tenacious,
     } search_behavior;
-    i16 manual_bsp_index;
-    Vecf2 respawn_delay;
+
+    i16                        manual_bsp_index;
+    Vecf2                      respawn_delay;
     u32                        unk[24];
     reference<squad>           squads;
     reference<platoon>         platoons;
@@ -980,6 +984,7 @@ struct command_list_command
         set_radius,
         teleport,
     } atom_type;
+
     u16 atom_modifier;
     u16 param1;
     u16 param2;
@@ -1000,6 +1005,7 @@ struct command_list_point
 struct command_list
 {
     bl_string name;
+
     enum flags_t : u16
     {
         none                = 0x0,
@@ -1008,8 +1014,9 @@ struct command_list
         disable_looking     = 0x4,
         disable_comms       = 0x8,
         disable_fall_damage = 0x10,
-        manual_bsp_index_    = 0x20,
+        manual_bsp_index_   = 0x20,
     } flags;
+
     i16                             manual_bsp_index;
     reference<command_list_command> commands;
     reference<command_list_point>   points;
@@ -1024,6 +1031,7 @@ struct conversation_participant
         has_alternate  = 0x2,
         is_alternative = 0x4,
     } flags;
+
     enum selection_type_t : u16
     {
         friendly_actor,
@@ -1035,10 +1043,11 @@ struct conversation_participant
         radio_unit,
         radio_sergeant,
     } selection_type;
+
     actor_type_t actor_type;
     i16          use_this_object; // references object_names list
     i16          set_new_name;    // references object_names list
-    u32 padding[10];
+    u32          padding[10];
     bl_string    encounter_name;
 };
 
@@ -1055,6 +1064,7 @@ struct conversation_line
         wait_until_speaker_nearby        = 0x10,
         wait_until_everyone_nearby       = 0x20,
     } flags;
+
     i16                              participant;
     i16                              addressee;
     i16                              addressee_participant;
@@ -1069,6 +1079,7 @@ static_assert(sizeof(conversation_line) == 124);
 struct conversation
 {
     bl_string name;
+
     enum conversation_flags_t : u16
     {
         none                     = 0x0,
@@ -1081,9 +1092,10 @@ struct conversation
         keep_trying_to_play      = 0x40,
         player_must_be_looking   = 0x80,
     } flags;
+
     f32                                 trigger_distance;
     f32                                 run_to_player_dist;
-    u32 padding_[9];
+    u32                                 padding_[9];
     reference<conversation_participant> participants;
     reference<conversation_line>        lines;
 
@@ -1259,7 +1271,7 @@ struct cutscene_camera_position
     bl_string_var<36> name;
     Vecf3             position;
     Vecf3             rotation; // components in radians, editor shows degrees!
-    f32               fov; // same as above
+    f32               fov;      // same as above
 
     u32 padding_[9];
 
@@ -1270,8 +1282,7 @@ struct cutscene_camera_position
             position,
             glm::normalize(
                 glm::angleAxis(rotation.y, basis[1]) *
-                glm::angleAxis(
-                    rotation.x + glm::pi<f32>(), basis[0]) *
+                glm::angleAxis(rotation.x + glm::pi<f32>(), basis[0]) *
                 glm::angleAxis(rotation.z, basis[2])),
         };
     }
@@ -1285,12 +1296,14 @@ struct cutscene_title
     bl_string_var<36> name;
     bl_rect           text_bounds;
     i16               string_index;
+
     enum justification_t
     {
         left,
         right,
         center,
     } justification;
+
     bl_rgba_t text_color;
     bl_rgba_t shadow_color;
     u32       fade_time;

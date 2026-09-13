@@ -225,13 +225,13 @@ struct MicrophoneConfig
     bool enabled{true};
 
     /* Shell-side capture. */
-    f32                 interval_ms{33.f};
-    libc_types::u32     fft_size{2048};
+    f32             interval_ms{33.f};
+    libc_types::u32 fft_size{2048};
     /* level = clamp((rms - noise_floor) * gain, 0, 1), then an optional EMA:
      * level = prev + smoothing * (level - prev). smoothing 0 disables it. */
-    f32                 noise_floor{0.f};
-    f32                 gain{1.f};
-    f32                 smoothing{0.f};
+    f32 noise_floor{0.f};
+    f32 gain{1.f};
+    f32 smoothing{0.f};
 
     /* C++ side. Defaults to the bone the hardcoded bob used. */
     std::vector<MicBoneMapping> bones;
@@ -242,12 +242,12 @@ struct MicrophoneConfig
 
 struct CameraConfig
 {
-    Vecf3           position{0.4f, -0.03f, 0.6f};
-    f32 field_of_view{70.f};
-    f32 aspect{1.6f};
-    f32 z_near{0.001f};
-    f32 z_far{100.f};
-    bool            keyboard{true};
+    Vecf3 position{0.4f, -0.03f, 0.6f};
+    f32   field_of_view{70.f};
+    f32   aspect{1.6f};
+    f32   z_near{0.001f};
+    f32   z_far{100.f};
+    bool  keyboard{true};
 };
 
 struct PoseConfig
@@ -287,8 +287,9 @@ struct PoseConfig
     static PoseConfig from_json(nlohmann::json const& doc);
 };
 
-/* Parsed once during app load. Reads /pose_config.json under emscripten (staged by --pre-js), or
- * config_path otherwise; returns defaults() when unreadable. */
+/* Parsed once during app load. Reads /pose_config.json under emscripten (staged
+ * by --pre-js), or config_path otherwise; returns defaults() when unreadable.
+ */
 PoseConfig load_pose_config(std::string_view config_path);
 
 extern PoseConfig g_pose_config;

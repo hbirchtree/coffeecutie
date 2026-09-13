@@ -312,7 +312,8 @@ i32 blam_main()
                     cWarning("Failed to load audio: {}", error.value());
                     if(auto error = snd.load(e, oaf::system::dummy()))
                     {
-                        cWarning("Failed to load audio dummy: {}", error.value());
+                        cWarning(
+                            "Failed to load audio dummy: {}", error.value());
                         return;
                     }
                 }
@@ -378,19 +379,22 @@ i32 blam_main()
                     };
                     auto& gbus = e.subsystem_cast<GameEventBus>();
                     gbus.addEventFunction<ServerStateUpdate>(
-                            0, std::move(handler));
+                        0, std::move(handler));
                     gbus.addEventFunction<ServerJoinInfo>(
-                            0, [&discord](GameEvent&, ServerJoinInfo* join) {
-                                // set join info
-                                platform::online::PartyDescUpdate data;
-                                data.partyId     = join->server_id.str();
-                                data.join.secret = join->secret.str();
-                                discord.presence().update(std::move(data));
-                            });
+                        0, [&discord](GameEvent&, ServerJoinInfo* join) {
+                            // set join info
+                            platform::online::PartyDescUpdate data;
+                            data.partyId     = join->server_id.str();
+                            data.join.secret = join->secret.str();
+                            discord.presence().update(std::move(data));
+                        });
                     gbus.addEventFunction<MapLoadFinishedEvent<halo_version>>(
-                            0, [&discord](GameEvent&, MapLoadFinishedEvent<halo_version>* load) {
-                                discord.presence().putState(load->map_title);
-                            });
+                        0,
+                        [&discord](
+                            GameEvent&,
+                            MapLoadFinishedEvent<halo_version>* load) {
+                            discord.presence().putState(load->map_title);
+                        });
                     return false;
                 },
                 []() {
@@ -415,7 +419,8 @@ i32 blam_main()
 
             {
                 auto& sound_pref = e.subsystem_cast<SoundPreferences>();
-                sound_pref.master_volume = arguments.count("no-sound") > 0 ? 0.f : 1.f;
+                sound_pref.master_volume =
+                    arguments.count("no-sound") > 0 ? 0.f : 1.f;
             }
 
             {
@@ -561,8 +566,7 @@ i32 blam_main()
                                     .as<std::string>();
                         if(arguments.count("gateway-auth-key"))
                             connect.gateway_auth_key =
-                                arguments["gateway-auth-key"]
-                                    .as<std::string>();
+                                arguments["gateway-auth-key"].as<std::string>();
                     }
                     gbus.inject(event, &connect);
                 }
@@ -581,7 +585,12 @@ i32 blam_main()
 
             auto controllers = e.service<comp_app::ControllerInput>();
 
-            for(auto entity : e.select<PlayerCamera, PlayerInput, PlayerInfo, NetworkInfo, Model>())
+            for(auto entity : e.select<
+                              PlayerCamera,
+                              PlayerInput,
+                              PlayerInfo,
+                              NetworkInfo,
+                              Model>())
             {
                 auto [cam, input, info, net, mod] = entity.components();
                 if(info.permissions.camera)
@@ -597,14 +606,14 @@ i32 blam_main()
 
                     if(input.rotation)
                     {
-                        cam.camera.rotation = *std::exchange(
-                            input.rotation, std::nullopt);
+                        cam.camera.rotation =
+                            *std::exchange(input.rotation, std::nullopt);
                         net.changes.viewport = true;
                     }
                     if(input.position)
                     {
-                        cam.camera.position = *std::exchange(
-                            input.position, std::nullopt);
+                        cam.camera.position =
+                            *std::exchange(input.position, std::nullopt);
                         net.changes.transform = net.changes.viewport = true;
                     }
 
@@ -612,7 +621,7 @@ i32 blam_main()
                     {
                         cam.camera_.rotate(
                             cam.camera, input.look_delta.x, input.look_delta.y);
-                        input.look_delta = {};
+                        input.look_delta     = {};
                         net.changes.viewport = true;
                     }
 
@@ -649,7 +658,8 @@ i32 blam_main()
                     } else
                     {
                         cam.camera.position = freecam_pos;
-                        // TODO: Check for changes in position on physics movement
+                        // TODO: Check for changes in position on physics
+                        // movement
                         net.changes.transform = net.changes.viewport = true;
 
                         /* Project onto the ground plane so looking down
@@ -661,11 +671,10 @@ i32 blam_main()
                         };
                         auto const& wrap = cam.camera_;
 
-                        Vecf3 dir = planar(wrap.cached.forward) *
-                                        input.movement.x +
-                                    planar(wrap.cached.right) *
-                                        input.movement.y;
-                        bool  jump = input.jump;
+                        Vecf3 dir =
+                            planar(wrap.cached.forward) * input.movement.x +
+                            planar(wrap.cached.right) * input.movement.y;
+                        bool jump = input.jump;
 
                         if(cam.keyboard.enabled)
                             jump = jump || StandardCamera::has_key(
@@ -720,8 +729,8 @@ i32 blam_main()
                 cam.matrix       = cam.matrix * view_matrix;
                 cam.rotation = glm::mat4_cast(cam.camera.rotation) * bsp_basis;
 
-                mod.position  = cam.camera.position;
-                mod.rotation  = cam.camera.rotation;
+                mod.position = cam.camera.position;
+                mod.rotation = cam.camera.rotation;
                 mod.transform =
                     glm::translate(Matf4(1), mod.position) *
                     glm::transpose(cam.rotation) * bsp_basis *

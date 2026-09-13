@@ -61,8 +61,8 @@ inline i32 get_program_uniform_location(
             state.resize(static_cast<size_t>(ulocation) + 1, 0);
         libc_types::u8& live = state[static_cast<size_t>(ulocation)];
         if(live == 0)
-            live = cmd::get_uniform_location(program.m_handle, key.name)
-                           == invalid_uniform
+            live = cmd::get_uniform_location(program.m_handle, key.name) ==
+                           invalid_uniform
                        ? 2
                        : 1;
         return live == 1 ? ulocation : invalid_uniform;
@@ -444,10 +444,9 @@ inline void undo_command_modifier(
     {
         auto const& locinfo     = std::get<1>(sampler);
         auto const& sampler_hnd = std::get<2>(sampler);
-        u32         index       = (features.sampler_binding &&
-                       locinfo.location != -1)
-                                      ? static_cast<u32>(locinfo.location)
-                                      : next_auto++;
+        u32         index = (features.sampler_binding && locinfo.location != -1)
+                                ? static_cast<u32>(locinfo.location)
+                                : next_auto++;
 
         auto source = sampler_hnd->m_source.lock();
         if(!source)
@@ -528,9 +527,7 @@ inline bool apply_command_modifier_per_call(
 }
 
 inline void undo_command_modifier(
-    program_t&,
-    shader_bookkeeping_t& bookkeeping,
-    texture_list&&        textures)
+    program_t&, shader_bookkeeping_t& bookkeeping, texture_list&& textures)
 {
     u32 index = bookkeeping.sampler_idx - static_cast<u32>(textures.size());
     for(auto const& texture : textures)
@@ -551,7 +548,7 @@ inline bool apply_command_modifier(
 }
 
 inline bool apply_command_modifier_per_call(
-    program_t&             program,
+    program_t& program,
     shader_bookkeeping_t&,
     instance_texture_list& textures,
     u32                    base_instance,
@@ -561,7 +558,8 @@ inline bool apply_command_modifier_per_call(
     // Application to systems with functional sampler type is not included
     for(auto const& def : textures)
     {
-        auto texture = def.textures.at(def.base_instance ? base_instance : instance);
+        auto texture =
+            def.textures.at(def.base_instance ? base_instance : instance);
         if(!texture)
             continue;
         auto const& sampler = *def.sampler;
@@ -892,7 +890,6 @@ inline void undo_command_modifier(
 {
     cmd::disable(group::enable_cap::stencil_test);
 }
-
 
 /* base_instance_sampler_list: the texture behind each sampler is chosen per
  * draw. */

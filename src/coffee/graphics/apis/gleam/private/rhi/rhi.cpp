@@ -43,9 +43,9 @@
 #include <glw/extensions/OES_vertex_array_object.h>
 
 #include <glw/enums/FrontFaceDirection.h>
-#include <glw/enums/limits.h>
 #include <glw/enums/InternalFormat.h>
 #include <glw/enums/TriangleFace.h>
+#include <glw/enums/limits.h>
 #include <glw/texture_formats.h>
 #include <glw/texture_formats_desc.h>
 
@@ -1105,17 +1105,16 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
     debug_print_renderable_formats(appInfo);
 }
 
-void api::debug_print_renderable_formats(
-    comp_app::interfaces::AppInfo& appInfo)
+void api::debug_print_renderable_formats(comp_app::interfaces::AppInfo& appInfo)
 {
     using pix_fmt = typing::pixels::pix_fmt;
 
     /* Feature flags only say what the extensions advertise, which is not the
-     * same as what the driver will accept as an attachment. ARB_internalformat_query2
-     * answers directly, but it does not exist on GL ES or WebGL, so there we
-     * have to attach the format and ask whether the framebuffer came out
-     * complete. A format the driver refuses leaves the framebuffer incomplete
-     * and every draw into it fails silently. */
+     * same as what the driver will accept as an attachment.
+     * ARB_internalformat_query2 answers directly, but it does not exist on GL
+     * ES or WebGL, so there we have to attach the format and ask whether the
+     * framebuffer came out complete. A format the driver refuses leaves the
+     * framebuffer incomplete and every draw into it fails silently. */
     struct probe_t
     {
         decltype(pix_fmt::RGBA8) fmt;
@@ -1157,8 +1156,8 @@ void api::debug_print_renderable_formats(
     constexpr libc_types::i32 probe_size = 4;
     const auto                probe_rect =
         typing::geometry::rect<libc_types::i32>{0, 0, probe_size, probe_size};
-    const auto probe_extent = typing::geometry::size_3d<libc_types::u32>{
-        probe_size, probe_size, 1};
+    const auto probe_extent =
+        typing::geometry::size_3d<libc_types::u32>{probe_size, probe_size, 1};
 
     auto is_complete = [](rendertarget_t& rt) {
         rt.internal_bind(group::framebuffer_target::framebuffer);
@@ -1169,8 +1168,9 @@ void api::debug_print_renderable_formats(
     };
 
     [[maybe_unused]] auto query_renderable =
-        [this]([[maybe_unused]] probe_t const& p,
-               [[maybe_unused]] bool           depth) -> bool {
+        [this](
+            [[maybe_unused]] probe_t const& p,
+            [[maybe_unused]] bool           depth) -> bool {
 #if defined(GL_ARB_internalformat_query2)
         auto [ifmt, _, __] = convert::to<group::internal_format>(
             PixDesc(p.fmt), m_features.texture);
@@ -1249,7 +1249,6 @@ void api::debug_print_renderable_formats(
         depth_out);
 }
 
-
 #if defined(GLW_ENABLE_TRACE)
 namespace {
 
@@ -1257,16 +1256,18 @@ namespace {
  * so the only route is to attach it to a framebuffer and read that, which
  * works for colour-renderable formats and quietly declines for the rest. */
 bool trace_read_texture(
-    libc_types::u32               target,
-    libc_types::u32               texture,
-    libc_types::u32               width,
-    libc_types::u32               height,
-    std::vector<libc_types::u8>&  out)
+    libc_types::u32              target,
+    libc_types::u32              texture,
+    libc_types::u32              width,
+    libc_types::u32              height,
+    std::vector<libc_types::u8>& out)
 {
-    const bool is_array = target == static_cast<libc_types::u32>(
-                              group::texture_target::texture_2d_array);
-    if(target != static_cast<libc_types::u32>(group::texture_target::texture_2d)
-       && !is_array)
+    const bool is_array =
+        target ==
+        static_cast<libc_types::u32>(group::texture_target::texture_2d_array);
+    if(target !=
+           static_cast<libc_types::u32>(group::texture_target::texture_2d) &&
+       !is_array)
         return false;
     if(!width || !height)
         return false;
@@ -1275,7 +1276,8 @@ bool trace_read_texture(
     if(scratch_fbo == 0)
         cmd::gen_framebuffers(SpanOne(scratch_fbo));
 
-    cmd::bind_framebuffer(group::framebuffer_target::read_framebuffer, scratch_fbo);
+    cmd::bind_framebuffer(
+        group::framebuffer_target::read_framebuffer, scratch_fbo);
     /* An array holds a page per layer. The dimensions reported to the trace
      * describe one layer, so rather than stacking, hand back the first layer
      * that has anything in it. */
@@ -1320,8 +1322,7 @@ bool trace_read_texture(
             0);
         cmd::bind_framebuffer(group::framebuffer_target::read_framebuffer, 0);
         return true;
-    }
-    else
+    } else
         cmd::framebuffer_texture_2d(
             group::framebuffer_target::read_framebuffer,
             group::framebuffer_attachment::color_attachment0,
@@ -1329,10 +1330,10 @@ bool trace_read_texture(
             texture,
             0);
 
-    bool ok = static_cast<group::framebuffer_status>(
-                  cmd::check_framebuffer_status(
-                      group::framebuffer_target::read_framebuffer)) ==
-              group::framebuffer_status::framebuffer_complete;
+    bool ok =
+        static_cast<group::framebuffer_status>(cmd::check_framebuffer_status(
+            group::framebuffer_target::read_framebuffer)) ==
+        group::framebuffer_status::framebuffer_complete;
 
     if(ok)
     {
@@ -1408,7 +1409,6 @@ bool trace_read_framebuffer(
     cmd::bind_framebuffer(
         group::framebuffer_target::read_framebuffer,
         static_cast<libc_types::u32>(read_fbo));
-
 
     /* Integer step rather than a resample: this is a thumbnail for a timeline,
      * and a cheap one matters more than a clean one. */
@@ -1670,9 +1670,9 @@ optional<error> api::load(load_options_t options)
 #endif
 
 #if defined(GLW_ENABLE_TRACE)
-    glw::trace::set_error_probe(
-        []() -> libc_types::u32 { return static_cast<libc_types::u32>(
-            cmd::get_error()); });
+    glw::trace::set_error_probe([]() -> libc_types::u32 {
+        return static_cast<libc_types::u32>(cmd::get_error());
+    });
     glw::trace::set_texture_probe(&trace_read_texture);
     glw::trace::set_framebuffer_probe(&trace_read_framebuffer);
     glw::trace::init();
@@ -1765,9 +1765,9 @@ std::string api_limits::get_all_limits() const
 
 struct downscaler_t
 {
-    std::shared_ptr<api::program_type>      downscale; /*!< Simple passthrough */
-    std::shared_ptr<api::buffer_type>       vertices;
-    std::shared_ptr<api::vertex_type>       vao;
+    std::shared_ptr<api::program_type> downscale; /*!< Simple passthrough */
+    std::shared_ptr<api::buffer_type>  vertices;
+    std::shared_ptr<api::vertex_type>  vao;
     std::shared_ptr<api::rendertarget_type> target;
     std::shared_ptr<sampler_t>              sampler; /*!< Bilinear sampler */
 };
@@ -1778,14 +1778,14 @@ void api::alloc_downscaler()
     using typing::vector_types::Vecf4;
     using namespace std::string_view_literals;
 
-    m_downscaler = std::make_shared<downscaler_t>();
+    m_downscaler            = std::make_shared<downscaler_t>();
     m_downscaler->downscale = alloc_program();
     m_downscaler->target    = alloc_rendertarget();
     m_downscaler->sampler   = std::make_shared<sampler_t>(
         m_features.texture, std::ref(*m_debug), textures::type::d2);
-    m_downscaler->vao       = alloc_vertex_array();
-    m_downscaler->vertices  = alloc_buffer(
-        buffers::vertex, semantic::RSCA::ReadOnly);
+    m_downscaler->vao = alloc_vertex_array();
+    m_downscaler->vertices =
+        alloc_buffer(buffers::vertex, semantic::RSCA::ReadOnly);
 
     auto& vao = m_downscaler->vao;
     auto& vbo = m_downscaler->vertices;
@@ -1795,28 +1795,33 @@ void api::alloc_downscaler()
 
     vbo->alloc();
     // Triangle fan quad
-    vbo->commit(std::array<Vecf4, 4>{{
-        {-1,  1, 0, 1},
-        {-1, -1, 0, 0},
-        { 1, -1, 1, 0},
-        { 1,  1, 1, 1},
-    }});
+    vbo->commit(
+        std::array<Vecf4, 4>{{
+            {-1, 1, 0, 1},
+            {-1, -1, 0, 0},
+            {1, -1, 1, 0},
+            {1, 1, 1, 1},
+        }});
     vao->alloc();
-    vao->add(vertex_attribute{
-        .index = 0,
-        .value = {
-            .stride = sizeof(Vecf4),
-            .count = 2,
-        },
-    });
-    vao->add(vertex_attribute{
-        .index = 1,
-        .value = {
-            .offset = sizeof(Vecf2),
-            .stride = sizeof(Vecf4),
-            .count = 2,
-        },
-    });
+    vao->add(
+        vertex_attribute{
+            .index = 0,
+            .value =
+                {
+                    .stride = sizeof(Vecf4),
+                    .count  = 2,
+                },
+        });
+    vao->add(
+        vertex_attribute{
+            .index = 1,
+            .value =
+                {
+                    .offset = sizeof(Vecf2),
+                    .stride = sizeof(Vecf4),
+                    .count  = 2,
+                },
+        });
     vao->set_buffer(buffers::vertex, vbo, 0);
     vao->set_attribute_names({
         {"pos", 0},
@@ -1827,8 +1832,10 @@ void api::alloc_downscaler()
     smp->alloc();
     smp->set_filtering(typing::Filtering::Linear, typing::Filtering::Linear);
 
-    prg->add(program_t::stage_t::Vertex, alloc_shader(
-        R"(#version 100
+    prg->add(
+        program_t::stage_t::Vertex,
+        alloc_shader(
+            R"(#version 100
 precision highp float;
 attribute vec2 pos;
 attribute vec2 tex;
@@ -1839,8 +1846,10 @@ void main()
     gl_Position = vec4(pos.x, pos.y, 0.0, 1.0);
 }
 )"sv));
-    prg->add(program_t::stage_t::Fragment, alloc_shader(
-        R"(#version 100
+    prg->add(
+        program_t::stage_t::Fragment,
+        alloc_shader(
+            R"(#version 100
 precision highp float;
 precision highp sampler2D;
 varying vec2 f_tex;
@@ -1860,8 +1869,8 @@ void main()
 bool api::perform_downscale(
     std::weak_ptr<texture_t> source_,
     std::weak_ptr<texture_t> target_,
-    size_2d<u32> size,
-    u32 level)
+    size_2d<u32>             size,
+    u32                      level)
 {
     using typing::vector_types::Veci4;
 
@@ -1877,25 +1886,31 @@ bool api::perform_downscale(
 
     target->alloc(size_3d<u32>{size.w, size.h, 1}, true);
     rt->attach(render_targets::attachment::color, *target, level);
-    rt->resize(typing::geometry::rect<i32>{
-        0, 0, static_cast<i32>(size.w), static_cast<i32>(size.h)});
+    rt->resize(
+        typing::geometry::rect<i32>{
+            0, 0, static_cast<i32>(size.w), static_cast<i32>(size.h)});
     m_downscaler->sampler->rebind(source);
 
-    submit(draw_command{
-            .program = m_downscaler->downscale,
-            .vertices = m_downscaler->vao,
+    submit(
+        draw_command{
+            .program       = m_downscaler->downscale,
+            .vertices      = m_downscaler->vao,
             .render_target = m_downscaler->target,
-            .call = draw_command::call_spec_t{
-                .mode = drawing::primitive::triangle_fan,
-            },
+            .call =
+                draw_command::call_spec_t{
+                    .mode = drawing::primitive::triangle_fan,
+                },
             .data = {draw_command::data_t{.arrays = {.count = 4}}},
-        }, view_state{
+        },
+        view_state{
             .view = Veci4(0u, 0u, size.w, size.h),
-        }, make_sampler_list(sampler_definition_t{
-            typing::graphics::ShaderStage::Fragment,
-            uniform_key{"source"},
-            m_downscaler->sampler,
-        }));
+        },
+        make_sampler_list(
+            sampler_definition_t{
+                typing::graphics::ShaderStage::Fragment,
+                uniform_key{"source"},
+                m_downscaler->sampler,
+            }));
 
     return true;
 }

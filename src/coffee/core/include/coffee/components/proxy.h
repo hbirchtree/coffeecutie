@@ -110,7 +110,8 @@ struct ConstrainedProxy : private ContainerProxy
     using subsystem_list = SubsystemList;
     using service_list   = ServiceList;
 
-    using self_type = ConstrainedProxy<ComponentList, SubsystemList, ServiceList>;
+    using self_type =
+        ConstrainedProxy<ComponentList, SubsystemList, ServiceList>;
 
     ConstrainedProxy(EntityContainer& container)
         : ContainerProxy(container)
@@ -130,7 +131,7 @@ struct ConstrainedProxy : private ContainerProxy
     template<is_component_tag... Components>
     requires(access::readable_v<Components, ComponentList> && ...)
     FORCEDINLINE quick_container<component_query<ComponentList, Components...>>
-    select()
+                 select()
     {
         return m_container
             .template select_restricted<ComponentList, Components...>();
@@ -223,7 +224,8 @@ struct ConstrainedProxy : private ContainerProxy
     FORCEDINLINE std::conditional_t<
         Offset == 0,
         access::value_t<ComponentType, ComponentList>,
-        typename ComponentType::value_type>* get_at(u64 id)
+        typename ComponentType::value_type>*
+    get_at(u64 id)
     {
         return m_container.get_at<ComponentType>(id, Offset);
     }

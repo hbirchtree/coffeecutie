@@ -218,7 +218,7 @@ void foreach_cpuinfo(
     }
 }
 
-}
+} // namespace platform::info::proc::linux_::detail
 
 namespace platform::info::proc::linux_ {
 
@@ -308,7 +308,7 @@ std::map<u32, libc_types::u64> thread_cpu_ticks()
     return result;
 }
 
-}
+} // namespace platform::info::proc::linux_
 
 namespace platform::info::device::linux_ {
 
@@ -357,4 +357,4 @@ std::optional<std::pair<std::string, std::string>> device()
     return std::pair{vendor, product};
 }
 
-}
+} // namespace platform::info::device::linux_

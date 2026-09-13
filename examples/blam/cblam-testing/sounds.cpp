@@ -43,11 +43,7 @@ using Coffee::Logging::cDebug;
 
 template<typename Ver>
 using SoundManifest = compo::SubsystemManifest<
-    type_list_t<
-        const PlayerCamera,
-        const PlayerInfo,
-        const SoundEffects
-    >,
+    type_list_t<const PlayerCamera, const PlayerInfo, const SoundEffects>,
     type_list_t<const LoadingStatus, const SoundPreferences, SoundCache<Ver>>,
     empty_list_t>;
 
@@ -283,8 +279,7 @@ struct SoundSystem
     }
 
     /*! Copy an event's payload so it survives the trip to this thread */
-    static queued_event_t capture(
-        SoundEvent const& ev, libc_types::c_ptr data)
+    static queued_event_t capture(SoundEvent const& ev, libc_types::c_ptr data)
     {
         queued_event_t out{.event = ev};
 
@@ -410,12 +405,13 @@ struct SoundSystem
             auto const [info, cam] = player.components();
             if(info.seat_idx != 0)
                 continue;
-            auto const& cached = cam.camera_.cached;
-            auto& listener = snd.listener();
+            auto const& cached   = cam.camera_.cached;
+            auto&       listener = snd.listener();
             listener.template set_property<oaf::listener_property::position>(
                 cam.camera.position);
             listener.template set_property<oaf::listener_property::orientation>(
-                glm::transpose(glm::mat3(cached.right, cached.up, -cached.forward)));
+                glm::transpose(
+                    glm::mat3(cached.right, cached.up, -cached.forward)));
         }
     }
 
@@ -565,8 +561,9 @@ struct SoundSystem
         }
         if(ev.type == SoundEvent::play_sound)
         {
-            // auto const& play  = reinterpret_cast<PlaySoundEvent const*>(data);
-            // auto        sound = sound_cache.predict(*play->sound);
+            // auto const& play  = reinterpret_cast<PlaySoundEvent
+            // const*>(data); auto        sound =
+            // sound_cache.predict(*play->sound);
         }
     }
 };
@@ -578,29 +575,31 @@ using SoundUIManifest = compo::SubsystemManifest<
     type_list_t<
         LoadingStatus,
         SoundSystem<halo_version>,
-        SoundCache<halo_version>
-    >,
+        SoundCache<halo_version>>,
     empty_list_t>;
 
 struct SoundUISystem
     : compo::RestrictedSubsystem<SoundUISystem, SoundUIManifest>
 {
-    using type = SoundUISystem;
+    using type  = SoundUISystem;
     using Proxy = compo::proxy_of<SoundUIManifest>;
 
     SoundUISystem()
-    { 
+    {
         this->priority = 2048;
     }
 
-    bool main_thread_only() const override { return true; }
+    bool main_thread_only() const override
+    {
+        return true;
+    }
 
     void start_restricted(Proxy& p, compo::time_point const&)
     {
 #if defined(FEATURE_ENABLE_ImGui)
         auto& sound_cache = p.subsystem<SoundCache<halo_version>>();
-        auto& snd = p.subsystem<SoundSystem<halo_version>>();
-        auto& loading = p.subsystem<LoadingStatus>();
+        auto& snd         = p.subsystem<SoundSystem<halo_version>>();
+        auto& loading     = p.subsystem<LoadingStatus>();
         if(ImGui::Begin("Sound"))
         {
             if(ImGui::BeginTabBar("AudioTabs"))
@@ -699,7 +698,7 @@ struct SoundUISystem
                 }
                 if(ImGui::BeginTabItem("Testing"))
                 {
-                    auto& voice = snd.voice;
+                    auto& voice   = snd.voice;
                     auto& buffers = snd.buffers;
                     auto& sources = snd.sources;
 

@@ -101,7 +101,8 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
     //     gfx::make_uniform_list(
     //         typing::graphics::ShaderStage::Vertex,
     //         gfx::uniform_pair{{"transform"sv}, semantic::SpanOne(transform)},
-    //         gfx::uniform_pair{{"tex_offset"sv}, semantic::SpanOne(bg_offset)}),
+    //         gfx::uniform_pair{{"tex_offset"sv},
+    //         semantic::SpanOne(bg_offset)}),
     //     gfx::make_uniform_list(
     //         typing::graphics::ShaderStage::Fragment,
     //         gfx::uniform_pair{
@@ -126,15 +127,14 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
     // The original swept the convergence point slowly side to side; timef is
     // still seconds here, before the spinner reuses it. Its resting place was
     // measured off loading.dds at (0.95, 0.20).
-    constexpr f32   sweep_period = 12.f;   // seconds for a full cycle
-    constexpr f32   sweep_extent = 0.5f;  // how far either side of rest
+    constexpr f32   sweep_period = 12.f; // seconds for a full cycle
+    constexpr f32   sweep_extent = 0.5f; // how far either side of rest
     constexpr Vecf2 sweep_rest{0.5f, 0.5f};
     Vecf2           zoom_center{
-        sweep_rest.x +
-            sweep_extent *
-                std::sin(
-                    timef * (stl_types::math::pi_f * 2.f / sweep_period) -
-                    stl_types::math::pi_f / 2.f),
+        sweep_rest.x + sweep_extent * std::sin(
+                                          timef * (stl_types::math::pi_f * 2.f /
+                                                   sweep_period) -
+                                          stl_types::math::pi_f / 2.f),
         sweep_rest.y};
     f32 zoom_strength{0.25f};
     f32 zoom_exposure{2.5f};
@@ -159,10 +159,12 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair{
                 {"transform"sv}, semantic::SpanOne(zoom_transform)},
-            gfx::uniform_pair{{"tex_offset"sv}, semantic::SpanOne(zoom_offset)}),
+            gfx::uniform_pair{
+                {"tex_offset"sv}, semantic::SpanOne(zoom_offset)}),
         gfx::make_uniform_list(
             typing::graphics::ShaderStage::Fragment,
-            gfx::uniform_pair{{"zoom_center"sv}, semantic::SpanOne(zoom_center)},
+            gfx::uniform_pair{
+                {"zoom_center"sv}, semantic::SpanOne(zoom_center)},
             gfx::uniform_pair{
                 {"zoom_strength"sv}, semantic::SpanOne(zoom_strength)},
             gfx::uniform_pair{{"exposure"sv}, semantic::SpanOne(zoom_exposure)},
@@ -387,50 +389,52 @@ void LoadingScreen::load_resources(gleam::system& api)
     loading_sampler->set_edge_policy(0, typing::WrapPolicy::MirrorRepeat);
     loading_sampler->set_edge_policy(1, typing::WrapPolicy::MirrorRepeat);
 
-    loading_ebo = api.alloc_buffer(gfx::buffers::element, RSCA::ReadOnly);
-    loading_vbo = api.alloc_buffer(gfx::buffers::vertex, RSCA::ReadOnly);
-    loading_vao = api.alloc_vertex_array();
+    loading_ebo  = api.alloc_buffer(gfx::buffers::element, RSCA::ReadOnly);
+    loading_vbo  = api.alloc_buffer(gfx::buffers::vertex, RSCA::ReadOnly);
+    loading_vao  = api.alloc_vertex_array();
     ring_program = api.alloc_program();
-    machine_tex = api.alloc_texture(
+    machine_tex  = api.alloc_texture(
         gfx::textures::d2,
         PixDesc(pix_fmt::RGB565),
         1,
         gfx::textures::property::sync_upload);
-    simplex_noise_tex = api.alloc_texture(gfx::textures::d2, PixDesc(pix_fmt::R8), 1);
+    simplex_noise_tex =
+        api.alloc_texture(gfx::textures::d2, PixDesc(pix_fmt::R8), 1);
 
     using semantic::SpanOver;
     loading_ebo->alloc();
     loading_vbo->alloc();
+
     struct mesh_source_t
     {
         model_name_t                    name;
         gsl::span<const u16>            indices;
         gsl::span<const crunch::vertex> vertices;
     };
+
     // Named explicitly; object order in the OBJ is not model_name_t order
-    std::array<mesh_source_t, 3> meshes = {{
-        {
-            model_ring_exterior,
-            gsl::span(blam::loading::loading_torus_indices),
-            gsl::span(blam::loading::loading_torus_vertices),
-        },
-        {
-            model_ring_interior,
-            gsl::span(blam::loading::loading_cylinder_indices),
-            gsl::span(blam::loading::loading_cylinder_vertices),
-        },
-        {
-            model_threshold,
-            gsl::span(blam::loading::loading_sphere_indices),
-            gsl::span(blam::loading::loading_sphere_vertices),
-        }
-    }};
-    loading_ebo->commit(stl_types::accumulate(
-        meshes, 0u, [](auto const& m, u32 size) {
+    std::array<mesh_source_t, 3> meshes = {
+        {{
+             model_ring_exterior,
+             gsl::span(blam::loading::loading_torus_indices),
+             gsl::span(blam::loading::loading_torus_vertices),
+         },
+         {
+             model_ring_interior,
+             gsl::span(blam::loading::loading_cylinder_indices),
+             gsl::span(blam::loading::loading_cylinder_vertices),
+         },
+         {
+             model_threshold,
+             gsl::span(blam::loading::loading_sphere_indices),
+             gsl::span(blam::loading::loading_sphere_vertices),
+         }}};
+    loading_ebo->commit(
+        stl_types::accumulate(meshes, 0u, [](auto const& m, u32 size) {
             return m.indices.size_bytes() + size;
         }));
-    loading_vbo->commit(stl_types::accumulate(
-        meshes, 0u, [](auto const& m, u32 size) {
+    loading_vbo->commit(
+        stl_types::accumulate(meshes, 0u, [](auto const& m, u32 size) {
             return m.vertices.size_bytes() + size;
         }));
     size_t ebo_ptr{0}, vbo_ptr{0};
@@ -439,13 +443,14 @@ void LoadingScreen::load_resources(gleam::system& api)
         loading_ebo->update(ebo_ptr, mesh.indices);
         loading_vbo->update(vbo_ptr, mesh.vertices);
         loading_draws[mesh.name] = {
-            .elements = {
-                .count = static_cast<u32>(mesh.indices.size()),
-                // offset is in bytes, vertex_offset is in vertices
-                .offset = ebo_ptr,
-                .vertex_offset = vbo_ptr / sizeof(crunch::vertex),
-                .type = semantic::type_t::u16,
-            },
+            .elements =
+                {
+                    .count = static_cast<u32>(mesh.indices.size()),
+                    // offset is in bytes, vertex_offset is in vertices
+                    .offset        = ebo_ptr,
+                    .vertex_offset = vbo_ptr / sizeof(crunch::vertex),
+                    .type          = semantic::type_t::u16,
+                },
             .debug_identifier = std::string(magic_enum::enum_name(mesh.name)),
         };
         ebo_ptr += mesh.indices.size_bytes();
@@ -455,8 +460,10 @@ void LoadingScreen::load_resources(gleam::system& api)
     loading_draws[model_ring_interior].instances.offset = 1;
     loading_draws[model_threshold].instances.offset     = 2;
     loading_vao->alloc();
-    loading_vao->add(gfx::vertex_attribute::from_member(&crunch::vertex::position).at(0));
-    loading_vao->add(gfx::vertex_attribute::from_member(&crunch::vertex::texcoord).at(1));
+    loading_vao->add(
+        gfx::vertex_attribute::from_member(&crunch::vertex::position).at(0));
+    loading_vao->add(
+        gfx::vertex_attribute::from_member(&crunch::vertex::texcoord).at(1));
     loading_vao->set_attribute_names({
         {"pos", 0},
         {"tex", 1},
@@ -467,9 +474,13 @@ void LoadingScreen::load_resources(gleam::system& api)
     loading_vao->set_buffer(gfx::buffers::vertex, loading_vbo, 0);
 
     machine_tex->alloc(size_3d<u32>(64, 128, 1));
-    machine_tex->upload(blam::loading::machinery_data, Veci2{0, 0}, size_2d<i32>{64, 128});
+    machine_tex->upload(
+        blam::loading::machinery_data, Veci2{0, 0}, size_2d<i32>{64, 128});
     simplex_noise_tex->alloc(size_3d<u32>(128, 128, 1));
-    simplex_noise_tex->upload(blam::loading::threshold_noise_data, Veci2{0, 0}, size_2d<i32>{128, 128});
+    simplex_noise_tex->upload(
+        blam::loading::threshold_noise_data,
+        Veci2{0, 0},
+        size_2d<i32>{128, 128});
     simplex_noise_sampler = simplex_noise_tex->sampler();
     simplex_noise_sampler->alloc();
 
@@ -494,7 +505,8 @@ void LoadingScreen::load_resources(gleam::system& api)
         cWarning("Failed to compile loading scene program: {}", res.error());
     }
 
-    ring_color = api.alloc_texture(gfx::textures::d2, PixDesc(pix_fmt::RGB565), 1);
+    ring_color =
+        api.alloc_texture(gfx::textures::d2, PixDesc(pix_fmt::RGB565), 1);
     ring_color->alloc(size_3d<u32>{640, 360, 1});
     ring_color_sampler = ring_color->sampler();
     ring_color_sampler->alloc();
@@ -567,14 +579,16 @@ void LoadingScreen::render_ring_texture(gfx::system& api)
 
     ring_rt->clear(1.f);
     ring_rt->clear(Vecf4{0, 0, 0, 1});
-    auto res = api.submit(gfx::draw_command{
-            .program = ring_program,
-            .vertices = loading_vao,
+    auto res = api.submit(
+        gfx::draw_command{
+            .program       = ring_program,
+            .vertices      = loading_vao,
             .render_target = ring_rt,
-            .call = {
-                .indexed = true,
-                .mode = gfx::drawing::primitive::triangle,
-            },
+            .call =
+                {
+                    .indexed = true,
+                    .mode    = gfx::drawing::primitive::triangle,
+                },
             .data = stl_types::values(loading_draws),
         },
         gfx::make_uniform_list(
@@ -582,18 +596,20 @@ void LoadingScreen::render_ring_texture(gfx::system& api)
             gfx::uniform_pair{
                 {"transform"sv}, semantic::SpanOne(scene_transform)}),
         gfx::base_instance_sampler_list{
-            .slots = {
-                gfx::base_instance_sampler_t{
-                    .stage = gfx::program_t::stage_t::Fragment,
-                    .location = gfx::uniform_key{"surface"},
-                    .sampler = simplex_noise_sampler,
-                    .textures = std::span(loading_textures.begin(), loading_textures.end()),
+            .slots =
+                {
+                    gfx::base_instance_sampler_t{
+                        .stage    = gfx::program_t::stage_t::Fragment,
+                        .location = gfx::uniform_key{"surface"},
+                        .sampler  = simplex_noise_sampler,
+                        .textures = std::span(
+                            loading_textures.begin(), loading_textures.end()),
+                    },
                 },
-            },
             .first_unit = 0,
         },
         gfx::view_state{
-            .view = typing::vector_types::Veci4{0, 0, 640, 360},
+            .view  = typing::vector_types::Veci4{0, 0, 640, 360},
             .depth = gfx::depth_state{},
         });
     if(res)

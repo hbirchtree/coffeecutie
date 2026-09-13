@@ -92,7 +92,8 @@ FORCEDINLINE std::basic_string<CharType> printclean(
     std::basic_string<CharType> const& src_)
 {
     std::basic_string<CharType> src = src_;
-    std::erase_if(src, [](char c) { return !(std::isprint(c) || std::isspace(c)); });
+    std::erase_if(
+        src, [](char c) { return !(std::isprint(c) || std::isspace(c)); });
     return src;
 }
 

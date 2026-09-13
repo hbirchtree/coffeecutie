@@ -126,7 +126,7 @@ static void spawn_attached_weapon(
             model.parts.push_back(submod);
             SubModel& submod_ = submod.get<SubModel>();
 
-            submod_.parent = parent_.id();
+            submod_.parent          = parent_.id();
             DrawState& submod__draw = submod.get<DrawState>();
             submod_.initialize<halo_version>(model_, sub, submod__draw);
 
@@ -182,6 +182,7 @@ void spawn_static_biped(
         u16   node_idx{0};
         Matf4 local{1.f};
     };
+
     std::vector<MarkerHit> marker_hits(g_pose_config.attachments.size());
 
     /* Diagnostic bone dump — verify real bone names before trusting the
@@ -419,7 +420,7 @@ void spawn_static_biped(
     model.origin_object = &biped_tag;
     model.initialize(&s_synth_spawn);
     g_pose_demo_biped_base_transform = model.transform;
-    depth.position = model.position;
+    depth.position                   = model.position;
 
     g_pose_demo_biped_entity = parent_.id();
 
@@ -446,7 +447,7 @@ void spawn_static_biped(
             model.parts.push_back(submod);
             SubModel& submod_ = submod.get<SubModel>();
 
-            submod_.parent = parent_.id();
+            submod_.parent          = parent_.id();
             DrawState& submod__draw = submod.get<DrawState>();
             submod_.initialize<halo_version>(model_, sub, submod__draw);
 

@@ -135,8 +135,8 @@ struct StandardCamera
             look->y += -0.01f * ev->delta.y;
         }
 
-        u32                      m_button;
-        std::function<Vecf2*()>  m_look;
+        u32                     m_button;
+        std::function<Vecf2*()> m_look;
     };
 
     static inline bool has_key(Reg const& reg, u16 key)
@@ -147,7 +147,8 @@ struct StandardCamera
     }
 
     template<typename Camera>
-    inline void move(Camera& camera, f32 forward, f32 right, f32 up, f32 accel = 5.f)
+    inline void move(
+        Camera& camera, f32 forward, f32 right, f32 up, f32 accel = 5.f)
     {
         camera.position += forward * cached.forward * movement_speed * accel;
         camera.position += right * cached.right * movement_speed * accel;
@@ -213,12 +214,24 @@ struct StandardCamera
                 continue;
             switch(key)
             {
-            case CK_w: movement.x += to_f32(t) * 10.f; break;
-            case CK_s: movement.x -= to_f32(t) * 10.f; break;
-            case CK_a: movement.y -= to_f32(t) * 10.f; break;
-            case CK_d: movement.y += to_f32(t) * 10.f; break;
-            case CK_q: movement.z += to_f32(t) * 10.f; break;
-            case CK_e: movement.z -= to_f32(t) * 10.f; break;
+            case CK_w:
+                movement.x += to_f32(t) * 10.f;
+                break;
+            case CK_s:
+                movement.x -= to_f32(t) * 10.f;
+                break;
+            case CK_a:
+                movement.y -= to_f32(t) * 10.f;
+                break;
+            case CK_d:
+                movement.y += to_f32(t) * 10.f;
+                break;
+            case CK_q:
+                movement.z += to_f32(t) * 10.f;
+                break;
+            case CK_e:
+                movement.z -= to_f32(t) * 10.f;
+                break;
             }
         }
     }

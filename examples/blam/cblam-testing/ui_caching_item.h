@@ -72,7 +72,10 @@ struct FontItem
      * here so the UI renderer and anything else that wants text agree on it. */
     template<typename Emit>
     void for_each_glyph(
-        std::u16string_view text, f32 start_x, f32 baseline_y, Emit&& emit) const
+        std::u16string_view text,
+        f32                 start_x,
+        f32                 baseline_y,
+        Emit&&              emit) const
     {
         f32 pen = start_x;
         for(char16_t c : text)

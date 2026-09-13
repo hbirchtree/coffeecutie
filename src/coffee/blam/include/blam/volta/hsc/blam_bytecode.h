@@ -379,7 +379,6 @@ struct script_context
         std::vector<u16>                     value_ptr;
         std::deque<u32>                      param_counts;
         wait_condition                       condition;
-        
 
         inline bool is_ready() const
         {
@@ -541,15 +540,16 @@ struct bytecode_pointer
         static result_t sleep_timeout(u32 time)
         {
             return {
-                .result    = end_(),
-                .next      = terminator,
-                .state     = eval::sleeping,
-                .condition = {
-                    sleep_condition::timer,
-                    terminator,
-                    std::chrono::milliseconds(time * 30),
-                    0,
-                },
+                .result = end_(),
+                .next   = terminator,
+                .state  = eval::sleeping,
+                .condition =
+                    {
+                        sleep_condition::timer,
+                        terminator,
+                        std::chrono::milliseconds(time * 30),
+                        0,
+                    },
             };
         }
 
@@ -559,28 +559,31 @@ struct bytecode_pointer
                 .result = end_(),
                 .next   = terminator,
                 .state  = eval::sleeping,
-                .condition = {
-                    sleep_condition::timer,
-                    terminator,
-                    time,
-                    0,
-                },
+                .condition =
+                    {
+                        sleep_condition::timer,
+                        terminator,
+                        time,
+                        0,
+                    },
             };
         }
 
         static result_t sleep_condition(u16 expr, u16 tick = 1, u32 timeout = 0)
         {
             return {
-                .result    = end_(),
-                .next      = terminator,
-                .state     = eval::sleeping,
-                .condition = {
-                    .condition   = timeout > 0 ? sleep_condition::expression_timer
-                                               : sleep_condition::expression,
-                    .expression = expr,
-                    .time       = std::chrono::seconds(timeout),
-                    .tickrate   = tick,
-                },
+                .result = end_(),
+                .next   = terminator,
+                .state  = eval::sleeping,
+                .condition =
+                    {
+                        .condition  = timeout > 0
+                                          ? sleep_condition::expression_timer
+                                          : sleep_condition::expression,
+                        .expression = expr,
+                        .time       = std::chrono::seconds(timeout),
+                        .tickrate   = tick,
+                    },
             };
         }
 
@@ -1112,8 +1115,7 @@ struct bytecode_pointer
     }
 
     inline void execute_state(
-        script_state_t& state,
-        opcode_handlers const& handler)
+        script_state_t& state, opcode_handlers const& handler)
     {
         if(state.is_inactive())
             return;
@@ -1134,7 +1136,8 @@ struct bytecode_pointer
                     {
                     case operation_t::kill_all_continuous: {
                         for(auto& [id, script] : context.scripts)
-                            if(script.function->schedule == script_type_t::continuous)
+                            if(script.function->schedule ==
+                               script_type_t::continuous)
                                 script.status = script_status::dormant;
                         break;
                     }
@@ -1238,7 +1241,7 @@ struct disassembler_t
 
 // namespace Coffee {
 // namespace Strings {
-// 
+//
 // template<
 //     typename BC,
 //     typename std::enable_if<
@@ -1248,38 +1251,38 @@ struct disassembler_t
 // {
 //     return blam::hsc::bc::to_string(opc);
 // }
-// 
+//
 // inline std::string to_string(blam::hsc::type_t type)
 // {
 //     return blam::hsc::to_string(type);
 // }
-// 
+//
 // inline std::string to_string(blam::hsc::script_eval_result type)
 // {
 //     return blam::hsc::to_string(type);
 // }
-// 
+//
 // inline std::string to_string(blam::hsc::expression_t exp)
 // {
 //     return blam::hsc::to_string(exp);
 // }
-// 
+//
 // inline std::string to_string(blam::hsc::script_type_t script_type)
 // {
 //     return blam::hsc::to_string(script_type);
 // }
-// 
+//
 // inline std::string to_string(blam::hsc::script_status stat)
 // {
 //     return blam::hsc::to_string(stat);
 // }
-// 
+//
 // template<typename BC>
 // inline std::string to_string(blam::hsc::opcode_layout<BC> const& op)
 // {
 //     using namespace blam::hsc;
 //     std::string out = {};
-// 
+//
 //     if(!stl_types::any_of(
 //            op.exp_type,
 //            expression_t::expression,
@@ -1288,7 +1291,7 @@ struct disassembler_t
 //            expression_t::param_ref,
 //            expression_t::script_ref))
 //         return "(invalid)";
-// 
+//
 //     if(op.exp_type == expression_t::global_ref)
 //         out = "global@" + std::to_string(op.data_ptr);
 //     else if(op.exp_type == expression_t::group)
@@ -1313,9 +1316,9 @@ struct disassembler_t
 //                   std::to_string(op.to_ptr());
 //             break;
 //         }
-// 
+//
 //     return "[" + blam::hsc::to_string(op.ret_type) + ":" + out + "]";
 // }
-// 
+//
 // } // namespace Strings
 // } // namespace Coffee

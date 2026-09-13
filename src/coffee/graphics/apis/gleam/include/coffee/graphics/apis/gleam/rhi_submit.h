@@ -184,9 +184,9 @@ inline optional<tuple<error, std::string_view>> api::submit(
     }();
     const bool uses_vertex_offset =
         (call.indexed &&
-            stl_types::any_of(
-                data,
-                [](auto const& d) { return d.elements.vertex_offset > 0; })) ||
+         stl_types::any_of(
+             data,
+             [](auto const& d) { return d.elements.vertex_offset > 0; })) ||
         draw_cache.vertex_offset_changed ||
         (m_workarounds.draw.emulated_vertex_offset && vao &&
          vao->m_applied_vertex_offset != 0);

@@ -251,10 +251,10 @@ struct SubsystemBase
      * express. Accumulated across frames, never reset.
      */
     access::runtime_flags runtime_access;
-    u64 frame_time_ns{0};
-    u32 priority;
-    bool no_start_hook{false};
-    bool no_end_hook{false};
+    u64                   frame_time_ns{0};
+    u32                   priority;
+    bool                  no_start_hook{false};
+    bool                  no_end_hook{false};
 
   protected:
     static EntityContainer& get_container(ContainerProxy& proxy);

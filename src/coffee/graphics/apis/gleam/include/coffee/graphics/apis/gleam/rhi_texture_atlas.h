@@ -56,9 +56,10 @@ struct texture_atlas_t
     slot_t reserve(Veci2 size)
     {
         slot_t slot{
-            .size   = size,
-            .gutter = {fits(size[0], m_layer_size[0]),
-                       fits(size[1], m_layer_size[1])},
+            .size = size,
+            .gutter =
+                {fits(size[0], m_layer_size[0]),
+                 fits(size[1], m_layer_size[1])},
         };
 
         const i32 stride = align_up(size[0] + slot.gutter[0] * 2);
@@ -139,10 +140,10 @@ struct texture_atlas_t
 /*! A tile expanded with its wrap gutter, ready to upload. */
 struct padded_tile_t
 {
-    Veci2                  offset{0, 0};
-    Veci2                  size{0, 0};
+    Veci2                    offset{0, 0};
+    Veci2                    size{0, 0};
     semantic::Span<const u8> data;
-    bool                   in_scratch{false};
+    bool                     in_scratch{false};
 };
 
 /*! Wraps `data` -- a tile of `size` at mip `level`, placed at level-0 texel
@@ -169,8 +170,9 @@ inline padded_tile_t pad_tile(
         unit = fmt.raw_format->pixel_size;
 
     padded_tile_t plain{
-        Veci2{(offset[0] >> level) / block_w * block_w,
-              (offset[1] >> level) / block_h * block_h},
+        Veci2{
+            (offset[0] >> level) / block_w * block_w,
+            (offset[1] >> level) / block_h * block_h},
         size,
         data};
 
@@ -195,8 +197,9 @@ inline padded_tile_t pad_tile(
     for(i32 y = 0; y < dst_h; y++)
     {
         const i32 src_y = ((y - pad_h) % tile_h + tile_h) % tile_h;
-        const u8* src = data.data() + static_cast<size_t>(src_y) * tile_w * unit;
-        u8*       dst = scratch.data() + static_cast<size_t>(y) * dst_w * unit;
+        const u8* src =
+            data.data() + static_cast<size_t>(src_y) * tile_w * unit;
+        u8* dst = scratch.data() + static_cast<size_t>(y) * dst_w * unit;
 
         std::memcpy(dst, src + (tile_w - pad_w) * unit, pad_w * unit);
         std::memcpy(dst + pad_w * unit, src, tile_w * unit);

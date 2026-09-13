@@ -340,7 +340,7 @@ struct image_t
             /* Swapping 1 and 2 is its own inverse, so this reads the same
              * either direction. */
             constexpr u32 stored[6] = {0, 2, 1, 3, 4, 5};
-            u32 preceding           = 0;
+            u32           preceding = 0;
             for(u16 i = 0; i < mipmap; i++)
                 preceding += layer_mip_bytes(i) * 6u;
             start = preceding + stored[face] * level;
@@ -371,10 +371,10 @@ struct image_t
 
             /* Every layer of a level is stored before the next level starts,
              * so skipping a level means skipping all of its layers. */
-            u32 const layers = type == type_t::tex_cube  ? 6u
-                               : type == type_t::tex_3d  ? depth
-                                                         : 1u;
-            u32 mip_offset = 0;
+            u32 const layers     = type == type_t::tex_cube ? 6u
+                                   : type == type_t::tex_3d ? depth
+                                                            : 1u;
+            u32       mip_offset = 0;
 
             for(auto i : stl_types::range<>(mipmap))
             {
@@ -395,10 +395,10 @@ struct image_t
 
             u32 size = gl::tex::format_of(fmt.c).data_size(mipsize);
 
-            u32 const layers = type == type_t::tex_cube  ? 6u
-                               : type == type_t::tex_3d  ? depth
-                                                         : 1u;
-            u32 mip_offset = 0;
+            u32 const layers     = type == type_t::tex_cube ? 6u
+                                   : type == type_t::tex_3d ? depth
+                                                            : 1u;
+            u32       mip_offset = 0;
             for(auto i : stl_types::Range<>(mipmap))
             {
                 auto off_size = isize;
@@ -449,11 +449,11 @@ struct image_t
         if(mipmap != 0 && mipmap >= mipmaps)
             Throw(undefined_behavior("mipmap out of range"));
 
-        u32 const layers = type == type_t::tex_cube ? 6u
-                           : type == type_t::tex_3d
-                               ? (u32)(depth > 0 ? depth : 1)
-                               : 1u;
-        u32 mip_offset = 0;
+        u32 const layers     = type == type_t::tex_cube ? 6u
+                               : type == type_t::tex_3d
+                                   ? (u32)(depth > 0 ? depth : 1)
+                                   : 1u;
+        u32       mip_offset = 0;
         for(u16 i = 0; i < mipmap; i++)
             mip_offset += bytes_per_mip(i) * layers;
 

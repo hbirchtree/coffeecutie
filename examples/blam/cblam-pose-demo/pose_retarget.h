@@ -8,7 +8,8 @@
 /* The landmark -> bone mapping that used to live here as a constexpr
  * kRetargetTable is now data: see BoneRetarget and find_retarget_entry() in
  * pose_config.h, populated from pose_config.json's "retarget" array. Only the
- * mod2 bone lookup remains here, since it is generic over the bone span type. */
+ * mod2 bone lookup remains here, since it is generic over the bone span type.
+ */
 
 template<typename BoneSpan>
 inline std::optional<libc_types::u32> find_bone_index(

@@ -162,8 +162,8 @@ struct RenderingParameters : compo::SubsystemBase
     bool debug_clusters{false};
     bool debug_triggers{false};
 
-    f32   tex_res{0.f};
-    f32   draw_distance{500.f};
+    f32 tex_res{0.f};
+    f32 draw_distance{500.f};
 
     libc_types::u32 current_bsp_cluster{
         std::numeric_limits<libc_types::u32>::max()};
@@ -351,21 +351,21 @@ struct MountModelEvent
 {
     static constexpr auto event_type = GameEvent::MountModel;
     blam::tagref_typed_t<blam::tag_class_t::mod2> model;
-    u64 entity_id{0};
+    u64                                           entity_id{0};
 };
 
 struct SpawnBipedEvent
 {
     static constexpr auto event_type = GameEvent::SpawnBiped;
     blam::tagref_typed_t<blam::tag_class_t::bipd> biped;
-    u32 player_idx{0};
-    u32 tags{};
+    u32                                           player_idx{0};
+    u32                                           tags{};
 };
 
 struct SpawnBSPEvent
 {
     static constexpr auto event_type = GameEvent::SpawnBSP;
-    u32 section_id{};
+    u32                   section_id{};
 };
 
 struct SpawnEquipmentEvent

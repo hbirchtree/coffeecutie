@@ -46,8 +46,9 @@ class GatewayConnectBootstrap final : public ISteamNetworkingConnectionSignaling
 {
   public:
     explicit GatewayConnectBootstrap(
-        std::string gatewayUrl, std::string serverId = "",
-        WebrtcAuth auth = {});
+        std::string gatewayUrl,
+        std::string serverId = "",
+        WebrtcAuth  auth     = {});
     ~GatewayConnectBootstrap();
 
     void Start();
@@ -90,7 +91,7 @@ class GatewayConnectBootstrap final : public ISteamNetworkingConnectionSignaling
 
     std::string                          m_gatewayUrl;
     std::string                          m_serverId;
-    WebrtcAuth                             m_auth;
+    WebrtcAuth                           m_auth;
     std::shared_ptr<rtc::WebSocket>      m_ws;
     std::shared_ptr<rtc::PeerConnection> m_pc;
     std::shared_ptr<rtc::DataChannel>    m_dc;
@@ -280,9 +281,9 @@ class GatewayServerRegistration final
     ISteamNetworkingSockets*        m_sockets;
     std::shared_ptr<rtc::WebSocket> m_ws;
 
-    std::mutex m_mutex;
-    bool       m_active{false};
-    std::string m_trackingId;
+    std::mutex                            m_mutex;
+    bool                                  m_active{false};
+    std::string                           m_trackingId;
     std::chrono::steady_clock::time_point m_lastHeartbeat{};
     /* Set just before each ReceivedP2PCustomSignal call, consumed by
      * OnConnectRequest if that call triggers one synchronously (it always
@@ -294,11 +295,11 @@ class GatewayServerRegistration final
     std::string                          m_pendingSessionId;
     std::vector<GatewayAcceptSignaling*> m_pendingAccepts;
     std::unordered_map<HSteamNetConnection, std::string>
-        m_sessionIdByConnection;
-    std::unordered_map<HSteamNetConnection, int> m_directRouteTicks;
-    std::unordered_set<HSteamNetConnection>      m_relayRetired;
+                                                     m_sessionIdByConnection;
+    std::unordered_map<HSteamNetConnection, int>     m_directRouteTicks;
+    std::unordered_set<HSteamNetConnection>          m_relayRetired;
     std::vector<std::pair<std::string, std::string>> m_incoming;
-    std::vector<std::string> m_outgoing;
+    std::vector<std::string>                         m_outgoing;
 };
 
 } // namespace webrtc_signaling

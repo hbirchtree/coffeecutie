@@ -33,7 +33,10 @@ struct ScreenClear
         priority = 899;
     }
 
-    bool main_thread_only() const override { return true; }
+    bool main_thread_only() const override
+    {
+        return true;
+    }
 
     void start_restricted(Proxy& e, time_point const&);
 
@@ -49,7 +52,7 @@ struct ScreenClear
     static constexpr std::size_t blur_max_levels = 4;
     std::array<std::shared_ptr<gfx::texture_t>, blur_max_levels> blur_chain;
     std::array<std::shared_ptr<gfx::sampler_t>, blur_max_levels>
-        blur_chain_samplers;
+                                    blur_chain_samplers;
     std::shared_ptr<gfx::program_t> blur_down_program;
     std::shared_ptr<gfx::program_t> blur_up_program;
 
@@ -103,8 +106,7 @@ using LegacyMeshRendererManifest = compo::SubsystemManifest<
         const Visibility,
         const PlayerInfo,
         const PlayerCamera,
-        const DrawState
-    >,
+        const DrawState>,
     type_list_t<
         BitmapCache<V>,
         const BlamResources,
@@ -112,8 +114,7 @@ using LegacyMeshRendererManifest = compo::SubsystemManifest<
         LoadingStatus,
         ModelCache<V>,
         const RenderingParameters,
-        ShaderCache<V>
-    >,
+        ShaderCache<V>>,
     empty_list_t>;
 
 using LoadingScreenManifest = compo::SubsystemManifest<
@@ -132,7 +133,10 @@ struct LoadingScreen
         priority = 801;
     }
 
-    bool main_thread_only() const override { return true; }
+    bool main_thread_only() const override
+    {
+        return true;
+    }
 
     void end_restricted(Proxy& e, time_point const& time);
 
@@ -154,12 +158,14 @@ struct LoadingScreen
     std::shared_ptr<gfx::texture_2d_t>   machine_tex;
     std::shared_ptr<gfx::texture_2d_t>   simplex_noise_tex;
     std::shared_ptr<gfx::sampler_t>      simplex_noise_sampler;
+
     enum model_name_t
     {
         model_ring_exterior,
         model_ring_interior,
         model_threshold,
     };
+
     std::map<model_name_t, gfx::draw_command::data_t> loading_draws;
     std::vector<std::shared_ptr<gfx::texture_t>>      loading_textures;
 
@@ -167,11 +173,11 @@ struct LoadingScreen
     std::shared_ptr<gfx::sampler_t>      ring_color_sampler;
     std::shared_ptr<gfx::rendertarget_t> ring_rt;
     std::shared_ptr<gfx::program_t>      zoom_program;
-    bool m_ring_rendered{false};
+    bool                                 m_ring_rendered{false};
 
     std::optional<compo::time_point> loading_screen_gone_time;
     bool                             was_loading{false};
-    libc_types::u32 frames_since_loaded{0};
+    libc_types::u32                  frames_since_loaded{0};
     static constexpr libc_types::u32 scene_frames_before_fade{2};
 };
 

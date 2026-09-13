@@ -17,10 +17,10 @@
 #include <gsl/span>
 
 #include <atomic>
-#include <vector>
 #include <cstring>
 #include <string_view>
 #include <type_traits>
+#include <vector>
 
 namespace glw::trace {
 
@@ -32,8 +32,8 @@ using libc_types::u8;
 enum class level : u8
 {
     off = 0,
-    calls,  /* function and arguments */
-    errors, /* + glGetError() after each call, which costs a sync */
+    calls,    /* function and arguments */
+    errors,   /* + glGetError() after each call, which costs a sync */
     data,     /* + the data spans passed to uploads, capped per record */
     textures, /* + the contents of each texture, once, on its first bind */
 };
@@ -77,6 +77,7 @@ struct group_scope
         if(m_active)
             push_group(name);
     }
+
     ~group_scope()
     {
         if(m_active)
@@ -98,9 +99,8 @@ void set_error_probe(u32 (*probe)());
  * this attaches the texture to a framebuffer and reads it, which only works for
  * colour-renderable formats; the probe returns false otherwise. Supplied by the
  * RHI for the same reason as the error probe. */
-using texture_probe_t =
-    bool (*)(u32 target, u32 texture, u32 width, u32 height,
-             std::vector<u8>& out);
+using texture_probe_t = bool (*)(
+    u32 target, u32 texture, u32 width, u32 height, std::vector<u8>& out);
 void set_texture_probe(texture_probe_t probe);
 
 /* How often the colour buffer is read back. Per draw is expensive on purpose:
@@ -130,6 +130,7 @@ struct data_ref
     {
         return m_data;
     }
+
     std::size_t size() const
     {
         return m_size;
@@ -211,44 +212,46 @@ inline arg_t to_arg(T const& v)
                           v.data();
                           v.size();
                           requires std::is_same_v<
-                              std::remove_cvref_t<decltype(*v.data())>, char>;
+                              std::remove_cvref_t<decltype(*v.data())>,
+                              char>;
                       })
     {
         /* Attribute, uniform and label names. Without this they match the
          * vector branch below and arrive as their first two characters. */
         return {static_cast<u64>(v.size()), arg_type::string, v.data()};
     } else if constexpr(requires {
-                          v.size();
-                          v[0].data();
-                          v[0].size();
-                          requires std::is_same_v<
-                              std::remove_cvref_t<decltype(*v[0].data())>,
-                              char>;
-                      })
+                            v.size();
+                            v[0].data();
+                            v[0].size();
+                            requires std::is_same_v<
+                                std::remove_cvref_t<decltype(*v[0].data())>,
+                                char>;
+                        })
     {
         /* Shader sources arrive as a list of views. gleam hands over a single
          * chunk, which is the case worth reading; anything else keeps only
          * its count. */
         if(v.size() == 1)
             return {
-                static_cast<u64>(v[0].size()),
-                arg_type::string,
-                v[0].data()};
+                static_cast<u64>(v[0].size()), arg_type::string, v[0].data()};
         return {static_cast<u64>(v.size()), arg_type::opaque};
     } else if constexpr(requires {
-                          v[0];
-                          v[1];
-                          requires std::is_arithmetic_v<
-                              std::remove_cvref_t<decltype(v[0])>>;
-                      })
+                            v[0];
+                            v[1];
+                            requires std::is_arithmetic_v<
+                                std::remove_cvref_t<decltype(v[0])>>;
+                        })
     {
         /* Sizes and offsets arrive as one vector argument, and losing them
          * costs the trace the dimensions of every texture and viewport. Only
          * the first two components are kept, which is all these carry. */
-        auto first  = static_cast<libc_types::u32>(static_cast<std::int64_t>(v[0]));
-        auto second = static_cast<libc_types::u32>(static_cast<std::int64_t>(v[1]));
-        return {static_cast<u64>(first) | (static_cast<u64>(second) << 32),
-                arg_type::vector2};
+        auto first =
+            static_cast<libc_types::u32>(static_cast<std::int64_t>(v[0]));
+        auto second =
+            static_cast<libc_types::u32>(static_cast<std::int64_t>(v[1]));
+        return {
+            static_cast<u64>(first) | (static_cast<u64>(second) << 32),
+            arg_type::vector2};
     } else
         return {0, arg_type::opaque};
 }
@@ -286,9 +289,9 @@ inline void record_call_data(const char* func, Span const& data, Args&&... args)
 {
     if(!enabled(level::calls))
         return;
-    auto const declared = static_cast<u32>(data.size() * sizeof(*data.data()));
-    const void* ptr  = nullptr;
-    u32         size = 0;
+    auto const  declared = static_cast<u32>(data.size() * sizeof(*data.data()));
+    const void* ptr      = nullptr;
+    u32         size     = 0;
     /* A buffer allocation names a size but hands over no pointer, so the size
      * is worth recording on its own. */
     if(enabled(level::data) && data.data())

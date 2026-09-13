@@ -22,7 +22,10 @@ struct InputDebugWidget
         priority = 2048;
     }
 
-    bool main_thread_only() const override { return true; }
+    bool main_thread_only() const override
+    {
+        return true;
+    }
 
     static ImVec4 grey(libc_types::f32 color)
     {

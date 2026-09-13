@@ -388,8 +388,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 else if(tb.justification == just_t::right)
                     start_x = min.x + box_w - text_width - tb.horizontal_offset;
 
-                Vecf4 const color = (tb.color.a > 0.f) ? Vecf4(tb.color)
-                                                       : Vecf4{1, 1, 1, 1};
+                Vecf4 const color =
+                    (tb.color.a > 0.f) ? Vecf4(tb.color) : Vecf4{1, 1, 1, 1};
 
                 /* One quad per glyph, appended straight into the frame's UI
                  * buffers -- for_each_glyph only owns where each one goes. */

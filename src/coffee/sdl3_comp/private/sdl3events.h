@@ -95,8 +95,8 @@ EVENT_TRANSLATE(CIKeyEvent)
         }
     }
 
-    key.mod |= ev.key.down ? CIKeyEvent::PressedModifier
-                           : CIKeyEvent::NoneModifier;
+    key.mod |=
+        ev.key.down ? CIKeyEvent::PressedModifier : CIKeyEvent::NoneModifier;
 
     key.mod |=
         ev.key.repeat ? CIKeyEvent::RepeatedModifier : CIKeyEvent::NoneModifier;

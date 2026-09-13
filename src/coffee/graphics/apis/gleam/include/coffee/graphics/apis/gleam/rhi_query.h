@@ -135,6 +135,7 @@ struct query_t
     inline i64 resultSync() const { return 0; }
     inline std::optional<i64> result() const { return std::nullopt; }
     inline queries::state state() const { return queries::state::clear; }
+
     // clang-format on
 };
 #endif
@@ -210,6 +211,7 @@ struct timestamp_query
     inline void alloc() {}
     inline void dealloc() {}
     inline u64 sample() { return 0; }
+
     // clang-format on
 };
 #endif
@@ -217,6 +219,7 @@ struct timestamp_query
 struct null_query_t
 {
     null_query_t() = default;
+
     null_query_t(features::queries&, queries::type)
     {
     }
