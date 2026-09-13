@@ -863,7 +863,6 @@ struct DrawListBuilder
                     wf.insert_draw(model_draw.draw.data.front(), mat_cls);
             track.model_id.epoch = m_epoch;
         }
-        Coffee::Profiler::PopContext();
 
         for(Pass& pass : model_build())
         {
