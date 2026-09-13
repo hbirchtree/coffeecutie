@@ -6,8 +6,8 @@ coffee_library(
 )
 
 if(EMSCRIPTEN)
-  target_compile_options(SDL3Components PUBLIC -sUSE_SDL=3)
-  target_link_options(SDL3Components PUBLIC -sUSE_SDL=3)
+  target_compile_options(SDL3Components PUBLIC -sUSE_SDL=3 -Wno-experimental)
+  target_link_options(SDL3Components PUBLIC -sUSE_SDL=3 -Wno-experimental)
 else()
   find_package(SDL3 CONFIG REQUIRED)
   target_link_libraries(SDL3Components PUBLIC SDL3::SDL3)
