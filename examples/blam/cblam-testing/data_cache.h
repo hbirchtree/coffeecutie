@@ -6,6 +6,7 @@
 #include <peripherals/stl/type_list.h>
 #include <peripherals/stl/type_safety.h>
 
+#include <deque>
 #include <map>
 #include <stdexcept>
 
@@ -50,7 +51,7 @@ struct DataCache
 
         if(cache_it != m_cache_key.end())
         {
-            auto cached_it = m_cache.find(cache_it->second);
+            auto cached_it = find_id(cache_it->second);
 
             if(cached_it != m_cache.end())
                 return {cached_it->first, generation};
@@ -58,8 +59,7 @@ struct DataCache
                 Throw(data_cache_error("corrupt key cache"));
         }
 
-        cache_id_t out  = ++counter;
-        T          item = predict_impl(param...);
+        T item = predict_impl(param...);
 
         if(!item.valid())
         {
@@ -67,10 +67,20 @@ struct DataCache
             return {invalid_id, 0};
         }
 
-        m_cache.insert({out, std::move(item)});
+        /* Ids are handed out only for entries that are actually stored, so
+         * they stay dense and index m_cache directly. */
+        cache_id_t out = ++counter;
+        m_cache.push_back({out, std::move(item)});
         m_cache_key.emplace(item_id, out);
 
         return {out, generation};
+    }
+
+    auto find_id(cache_id_t id)
+    {
+        if(id == invalid_id || id > m_cache.size())
+            return m_cache.end();
+        return m_cache.begin() + static_cast<ptrdiff_t>(id - 1);
     }
 
     auto find(generation_idx_t id)
@@ -78,7 +88,7 @@ struct DataCache
         if(id.gen < generation)
             Throw(data_cache_error("stale reference"));
 
-        return m_cache.find(id.i);
+        return find_id(id.i);
     }
 
     auto& get(generation_idx_t id)
@@ -101,9 +111,11 @@ struct DataCache
         generation++;
     }
 
-    cache_id_t                   counter{0};
-    std::map<cache_id_t, T>      m_cache;
-    std::map<IdType, cache_id_t> m_cache_key;
+    cache_id_t counter{0};
+    /* Dense: id N lives at index N-1. A deque so references and pointers
+     * into entries survive later insertions. */
+    std::deque<std::pair<cache_id_t, T>> m_cache;
+    std::map<IdType, cache_id_t>         m_cache_key;
     libc_types::u32              generation{1};
 
     virtual T      predict_impl(IType... param) = 0;

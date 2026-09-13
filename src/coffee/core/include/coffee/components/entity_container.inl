@@ -512,19 +512,28 @@ FORCEDINLINE void EntityContainer::remove_entity_if(
     std::erase_if(entities, predicate);
 }
 
+/* create_entity appends with a strictly increasing id and removal erases in
+ * place, so `entities` is always sorted by id. Binary search matters: these
+ * are called per entity inside loops that already run over every entity, and
+ * a scan makes that quadratic. */
+inline std::vector<Entity>::const_iterator EntityContainer::find_entity(
+    u64 id) const
+{
+    auto it = std::lower_bound(
+        entities.begin(), entities.end(), id, [](Entity const& e, u64 v) {
+            return e.id < v;
+        });
+    return (it != entities.end() && it->id == id) ? it : entities.end();
+}
+
 inline bool EntityContainer::exists(u64 id) const
 {
-    return std::find_if(entities.begin(), entities.end(), [id](Entity const& entity) {
-            return entity.id == id;
-        }) != entities.end();
+    return find_entity(id) != entities.end();
 }
 
 inline u64 EntityContainer::tags_of(u64 id) const
 {
-    auto it = std::find_if(
-        entities.begin(), entities.end(), [id](Entity const& entity) {
-            return entity.id == id;
-        });
+    auto it = find_entity(id);
     if(it == entities.end())
         return 0;
     return it->tags;

@@ -916,13 +916,13 @@ struct DrawListBuilder
             if(!rendering_params->render_scenery &&
                (ent.tags() & ObjectSkybox) == 0)
                 continue;
-            auto             ref     = p.template ref<Proxy>(ent.id());
             auto [smodel, sm_draw, track] = ent.components();
-            Model const&     model =
-                p.template ref<Proxy>(smodel.parent).template get<Model>();
 
             if(!followable(track.model_id))
                 continue;
+
+            auto         parent = p.template ref<Proxy>(smodel.parent);
+            Model const& model  = parent.template get<Model>();
 
             Pass& pass = model_build()[sm_draw.current_pass];
             if(track.model_id.bucket >= pass.draws.size())
@@ -955,9 +955,7 @@ struct DrawListBuilder
                 cache_item,
                 model_context(model),
                 instance_id,
-                p.template ref<Proxy>(smodel.parent)
-                    .template get<Visibility>()
-                    .interior);
+                parent.template get<Visibility>().interior);
         }
     }
 
@@ -988,18 +986,17 @@ struct DrawListBuilder
                 continue;
             draw_data_t const& draw = bucket.at(track.model_id.draw);
             auto instance_id = draw.instances.offset + track.model_id.instance;
+            auto const* model = p.template get<Model>(smodel.parent);
+            auto functions = shader_cache.resolved_functions(
+                model_context(*model));
             update_animations(
                 model_material_of(sm_draw.current_pass, instance_id),
                 smodel.shader,
                 time,
-                shader_cache.resolved_functions(
-                    model_context(*p.template get<Model>(smodel.parent))));
+                functions);
             if(static_cast<size_t>(instance_id) <
                pass.transparent_mapping.size())
             {
-                auto const* model = p.template get<Model>(smodel.parent);
-                auto        functions =
-                    shader_cache.resolved_functions(model_context(*model));
                 /* A device's power is its A_out, and the scenario supplies a
                  * real one -- but an A_out set on the object itself is a
                  * deliberate override, so it wins. */
@@ -1016,7 +1013,6 @@ struct DrawListBuilder
 
         for(auto ent : p.template select<BspReference, DrawState, Visibility>())
         {
-            auto                ref      = p.template ref<Proxy>(ent.id());
             auto [bsp, bsp_draw, visibility] = ent.components();
 
             if(!visibility.visible_for(m_seat))
