@@ -906,8 +906,8 @@ struct ResourceLoader
             for(auto& draw : sub_draw.draw.data)
                 draw.debug_identifier = fmt::format(
                             "{} {}",
-                            shader_name,
-                            shader_.shader_tag->tagclass[0].str());
+                            shader_.shader_tag->tagclass[0].str(),
+                            shader_name);
         }
     }
 

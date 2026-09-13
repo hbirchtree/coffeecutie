@@ -298,6 +298,8 @@ struct BitmapCache
 
             auto mip_data = img.image.mip->data(magic, mipmap);
 
+            std::vector<u8> owned;
+
             /* Xbox stores uncompressed textures Morton-swizzled; deswizzle into
              * a linear buffer before upload (compressed are never swizzled). */
             std::vector<u8> linear;
@@ -316,8 +318,11 @@ struct BitmapCache
                        static_cast<u32>(size.x),
                        static_cast<u32>(size.y),
                        bpp))
+                {
+                    owned    = std::move(linear);
                     mip_data =
-                        semantic::Span<const u8>(linear.data(), linear.size());
+                        semantic::Span<const u8>(owned.data(), owned.size());
+                }
             }
 
             std::vector<u8> expanded;
@@ -330,8 +335,11 @@ struct BitmapCache
                         semantic::Span<blam::bitm::vecb4>(
                             reinterpret_cast<blam::bitm::vecb4*>(expanded.data()),
                             expanded.size() / 4)))
+                {
+                    owned    = std::move(expanded);
                     mip_data = semantic::Span<const u8>(
-                        expanded.data(), expanded.size());
+                        owned.data(), owned.size());
+                }
             }
 
             /* The gutter around the tile is filled with copies of its own
@@ -347,14 +355,23 @@ struct BitmapCache
                 Veci2{size.x, size.y},
                 mip_data);
 
-            texture.upload(
-                tile.data,
-                Veci3{
-                    tile.offset[0],
-                    tile.offset[1],
-                    static_cast<i32>(img.image.layer)},
-                Veci3{tile.size[0], tile.size[1], 1},
-                static_cast<i32>(dst_level));
+            if(tile.in_scratch)
+                owned = std::move(padded);
+
+            Veci3 const dst_offset{
+                tile.offset[0],
+                tile.offset[1],
+                static_cast<i32>(img.image.layer)};
+            Veci3 const dst_size{tile.size[0], tile.size[1], 1};
+
+            if(owned.empty())
+                texture.upload(
+                    tile.data, dst_offset, dst_size,
+                    static_cast<i32>(dst_level));
+            else
+                texture.upload(
+                    std::move(owned), dst_offset, dst_size,
+                    static_cast<i32>(dst_level));
         }
     }
 
