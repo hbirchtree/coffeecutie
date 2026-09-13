@@ -3,6 +3,7 @@
 
 #include "blam/volta/blam_antr.h"
 #include "blam/volta/blam_tag_classes.h"
+#include "blam/volta/blam_tag_ref.h"
 #include "peripherals/stl/enumerate.h"
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_bsp_structures.h>
@@ -25,6 +26,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <cxxopts.hpp>
+#include <fmt_extensions/format.h>
+#include <fmt_extensions/vector_types.h>
 #include <glm/gtc/quaternion.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <map>
@@ -79,11 +82,11 @@ void dump_planes(
         auto* fp   = fopen(path.c_str(), "wb");
         if(!fp)
             continue;
-        fprintf(fp, "P5\n%u %u\n255\n", w, h);
+        fmt::print(fp, "P5\n{} {}\n255\n", w, h);
         for(size_t i = 0; i < static_cast<size_t>(w) * h; i++)
             fputc(px[i * 4 + c], fp);
         fclose(fp);
-        printf("      wrote %s\n", path.c_str());
+        fmt::print("      wrote {}\n", path);
     }
 }
 
@@ -104,12 +107,7 @@ std::string_view enum_name(E value)
 template<typename E>
 void print_enum(char const* label, E value)
 {
-    printf(
-        "%s=%.*s(%u) ",
-        label,
-        static_cast<int>(enum_name(value).size()),
-        enum_name(value).data(),
-        static_cast<u32>(value));
+    fmt::print("{}={}({}) ", label, enum_name(value), static_cast<u32>(value));
 }
 
 /* Everything is a D3D format read little-endian. A8R8G8B8 lands in memory as
@@ -328,9 +326,9 @@ void dump_image_png(
     u32 const expect = img.layer_mip_bytes(0);
     if(w == 0 || h == 0 || expect == 0 || px.size_bytes() < expect)
     {
-        printf(
-            "      %s: no pixel data (%zu bytes, need %u)\n",
-            label.c_str(),
+        fmt::print(
+            "      {}: no pixel data ({} bytes, need {})\n",
+            label,
             px.size_bytes(),
             expect);
         return;
@@ -353,19 +351,16 @@ void dump_image_png(
     auto rgba = decode_rgba8(img.format, px, w, h);
     if(rgba.empty())
     {
-        printf(
-            "      %s: no decoder for %.*s\n",
-            label.c_str(),
-            static_cast<int>(enum_name(img.format).size()),
-            enum_name(img.format).data());
+        fmt::print(
+            "      {}: no decoder for {}\n", label, enum_name(img.format));
         return;
     }
 
     auto path = fmt::format("{}{}.png", g_dump_png_prefix, label);
     if(write_png(path, rgba, w, h))
-        printf("      wrote %s (%ux%u)\n", path.c_str(), w, h);
+        fmt::print("      wrote {} ({}x{})\n", path, w, h);
     else
-        printf("      failed to write %s\n", path.c_str());
+        fmt::print("      failed to write {}\n", path);
 }
 
 std::string name_of(blam::tagref_t const& ref)
@@ -384,7 +379,7 @@ void dump_font_png(blam::font const* font, std::string_view name)
     auto chars_opt = font->characters.data(g_magic);
     if(!chars_opt.has_value() || chars_opt.value().empty())
     {
-        printf("      no characters to dump\n");
+        fmt::print("      no characters to dump\n");
         return;
     }
     auto chars = chars_opt.value();
@@ -397,7 +392,7 @@ void dump_font_png(blam::font const* font, std::string_view name)
     }
     if(cell_w <= 0 || cell_h <= 0)
     {
-        printf("      characters carry no bitmaps\n");
+        fmt::print("      characters carry no bitmaps\n");
         return;
     }
     /* A texel of gutter keeps neighbours from reading as one glyph. */
@@ -448,9 +443,9 @@ void dump_font_png(blam::font const* font, std::string_view name)
 
     auto path = fmt::format("{}{}.png", g_dump_png_prefix, flatten_name(name));
     if(write_png(path, rgba, w, h))
-        printf(
-            "      wrote %s (%ux%u, %u glyphs in a %ux%u grid%s)\n",
-            path.c_str(),
+        fmt::print(
+            "      wrote {} ({}x{}, {} glyphs in a {}x{} grid{})\n",
+            path,
             w,
             h,
             placed,
@@ -458,71 +453,70 @@ void dump_font_png(blam::font const* font, std::string_view name)
             rows,
             missing ? ", some pixel data missing" : "");
     else
-        printf("      failed to write %s\n", path.c_str());
+        fmt::print("      failed to write {}\n", path);
 }
 
 void dump_dela(blam::ui_element const* info)
 {
     print_enum("  type", info->widget_type);
     print_enum("controller", info->controller_index);
-    printf("\n");
+    fmt::print("\n");
     auto name = info->name.str();
-    printf("  name=\"%.*s\"\n", static_cast<int>(name.size()), name.data());
+    fmt::print("  name=\"{}\"\n", name);
     print_enum("  flags", info->flags);
-    printf("\n");
-    printf(
-        "  bounds=(%d,%d,%d,%d) auto_close=%dms fade=%dms\n",
+    fmt::print("\n");
+    fmt::print(
+        "  bounds=({},{},{},{}) auto_close={}ms fade={}ms\n",
         info->bounds[0],
         info->bounds[1],
         info->bounds[2],
         info->bounds[3],
         info->millis_to_auto_close,
         info->millis_auto_close_fade_time);
-    printf("  background=%s\n", name_of(info->background).c_str());
+    fmt::print("  background={}\n", name_of(info->background));
 
     /* data_inputs are what let a widget show something the tag cannot know --
      * a profile name, a map count -- so a widget that changes at runtime and
      * has no obvious animation usually has one of these. */
     if(auto inputs = info->data_inputs.data(g_magic); inputs.has_value())
     {
-        printf("  data_inputs=%zu\n", inputs.value().size());
+        fmt::print("  data_inputs={}\n", inputs.value().size());
         for(auto [i, in] : stl_types::enumerate(inputs.value()))
-            printf(
-                "    input %zu: function=%u\n",
+            fmt::print(
+                "    input {}: function={}\n",
                 i,
                 static_cast<unsigned>(in.function));
     }
 
     if(auto events = info->event_handlers.data(g_magic); events.has_value())
     {
-        printf("  event_handlers=%zu\n", events.value().size());
+        fmt::print("  event_handlers={}\n", events.value().size());
         for(auto const& ev : events.value())
         {
-            printf("    ");
+            fmt::print("    ");
             print_enum("event", ev.event_type);
             print_enum("flags", ev.flags);
             auto script = ev.script.str();
-            printf(
-                "widget=%s sound=%s script=\"%.*s\"\n",
-                name_of(ev.widget).c_str(),
-                name_of(ev.sound).c_str(),
-                static_cast<int>(script.size()),
-                script.data());
+            fmt::print(
+                "widget={} sound={} script=\"{}\"\n",
+                name_of(ev.widget),
+                name_of(ev.sound),
+                script);
         }
     }
 
     if(info->widget_type == blam::ui_element::widget_type_t::text_box)
     {
         auto const& tb = info->text_box;
-        printf(
-            "  text_box: strings=%s font=%s\n",
-            name_of(tb.unicode_strings).c_str(),
-            name_of(tb.font).c_str());
-        printf("    ");
+        fmt::print(
+            "  text_box: strings={} font={}\n",
+            name_of(tb.unicode_strings),
+            name_of(tb.font));
+        fmt::print("    ");
         print_enum("justification", tb.justification);
         print_enum("flags", tb.flags);
-        printf(
-            "string_index=%d offset=(%d,%d)\n",
+        fmt::print(
+            "string_index={} offset=({},{})\n",
             tb.string_list_index,
             tb.horizontal_offset,
             tb.vertical_offset);
@@ -530,15 +524,14 @@ void dump_dela(blam::ui_element const* info)
 
     if(auto children = info->child_widgets.data(g_magic); children.has_value())
     {
-        printf("  child_widgets=%zu\n", children.value().size());
+        fmt::print("  child_widgets={}\n", children.value().size());
         for(auto const& ch : children.value())
         {
             auto name = ch.name.str();
-            printf(
-                "    \"%.*s\" -> %s offset=(%d,%d)\n",
-                static_cast<int>(name.size()),
-                name.data(),
-                name_of(ch.widget).c_str(),
+            fmt::print(
+                "    \"{}\" -> {} offset=({},{})\n",
+                name,
+                name_of(ch.widget),
                 ch.horizontal_offset,
                 ch.vertical_offset);
         }
@@ -548,65 +541,52 @@ void dump_dela(blam::ui_element const* info)
 void dump_smet(blam::shader::shader_meter const* info)
 {
     print_enum("  flags", info->flags);
-    printf("\n");
-    printf("  map=%s\n", name_of(info->map).c_str());
+    fmt::print("\n");
+    fmt::print("  map={}\n", name_of(info->map));
     auto const& c = info->colors;
-    printf(
-        "  gradient_min=(%g,%g,%g) gradient_max=(%g,%g,%g)\n",
-        c.gradient_min.x,
-        c.gradient_min.y,
-        c.gradient_min.z,
-        c.gradient_max.x,
-        c.gradient_max.y,
-        c.gradient_max.z);
-    printf(
-        "  background=(%g,%g,%g) flash=(%g,%g,%g) tint=(%g,%g,%g)\n",
-        c.background.x,
-        c.background.y,
-        c.background.z,
-        c.flash.x,
-        c.flash.y,
-        c.flash.z,
-        c.tint.x,
-        c.tint.y,
-        c.tint.z);
-    printf(
-        "  transparency=%g background_transparency=%g\n",
+    fmt::print(
+        "  gradient_min={:g} gradient_max={:g}\n",
+        c.gradient_min,
+        c.gradient_max);
+    fmt::print(
+        "  background={:g} flash={:g} tint={:g}\n",
+        c.background,
+        c.flash,
+        c.tint);
+    fmt::print(
+        "  transparency={:g} background_transparency={:g}\n",
         c.transparency,
         c.background_transparency);
     auto const& f = info->ext_func_src;
-    printf(
-        "  sources: brightness=%.*s flash=%.*s value=%.*s gradient=%.*s\n",
-        static_cast<int>(enum_name(f.brightness).size()),
-        enum_name(f.brightness).data(),
-        static_cast<int>(enum_name(f.flash).size()),
-        enum_name(f.flash).data(),
-        static_cast<int>(enum_name(f.value).size()),
-        enum_name(f.value).data(),
-        static_cast<int>(enum_name(f.gradient).size()),
-        enum_name(f.gradient).data());
+    fmt::print(
+        "  sources: brightness={} flash={} value={} gradient={}\n",
+        enum_name(f.brightness),
+        enum_name(f.flash),
+        enum_name(f.value),
+        enum_name(f.gradient));
 }
 
 void dump_font(blam::font const* font, std::string_view name)
 {
-    printf(
-        "  ascend=%u descend=%u leadin=%ux%u\n",
+    fmt::print(
+        "  ascend={} descend={} leadin={}x{}\n",
         font->ascend_height,
         font->descend_height,
         font->leadin_width,
         font->leadin_height);
 
     auto chars = font->characters.data(g_magic);
-    printf("  characters=%zu\n", chars.has_value() ? chars.value().size() : 0u);
+    fmt::print(
+        "  characters={}\n", chars.has_value() ? chars.value().size() : 0u);
 
     if(font->bold.valid())
-        printf("    bold: %s\n", name_of(font->bold).c_str());
+        fmt::print("    bold: {}\n", name_of(font->bold));
     if(font->italic.valid())
-        printf("    italic: %s\n", name_of(font->italic).c_str());
+        fmt::print("    italic: {}\n", name_of(font->italic));
     if(font->condense.valid())
-        printf("    condense: %s\n", name_of(font->condense).c_str());
+        fmt::print("    condense: {}\n", name_of(font->condense));
     if(font->underline.valid())
-        printf("    underline: %s\n", name_of(font->underline).c_str());
+        fmt::print("    underline: {}\n", name_of(font->underline));
 
     if(!g_dump_png_prefix.empty())
         dump_font_png(font, name);
@@ -614,13 +594,11 @@ void dump_font(blam::font const* font, std::string_view name)
 
 void print_anim(char const* label, blam::shader::texture_property_anim const& a)
 {
-    printf(
-        "      %-4s src=%-6.*s fn=%-16.*s period=%g phase=%g scale=%g\n",
+    fmt::print(
+        "      {:<4} src={:<6} fn={:<16} period={:g} phase={:g} scale={:g}\n",
         label,
-        static_cast<int>(enum_name(a.source).size()),
-        enum_name(a.source).data(),
-        static_cast<int>(enum_name(a.function).size()),
-        enum_name(a.function).data(),
+        enum_name(a.source),
+        enum_name(a.function),
         a.period,
         a.phase,
         a.scale);
@@ -629,38 +607,34 @@ void print_anim(char const* label, blam::shader::texture_property_anim const& a)
 void print_anim(
     char const* label, blam::shader::simple_tex_property_anim const& a)
 {
-    printf(
-        "      %-4s src=%-6.*s fn=%-16.*s period=%g scale=%g\n",
+    fmt::print(
+        "      {:<4} src={:<6} fn={:<16} period={:g} scale={:g}\n",
         label,
-        static_cast<int>(enum_name(a.source).size()),
-        enum_name(a.source).data(),
-        static_cast<int>(enum_name(a.function).size()),
-        enum_name(a.function).data(),
+        enum_name(a.source),
+        enum_name(a.function),
         a.period,
         a.scale);
 }
 
 void print_bitm_ref(blam::shader::bitm_reference_t const& map)
 {
-    printf(
-        "      bitmap=%s uv_scale=(%g,%g) uv_offset=(%g,%g) rot=%g "
-        "mip_bias=%g\n",
-        name_of(map.map).c_str(),
-        map.uv_scale.x,
-        map.uv_scale.y,
-        map.uv_offset.x,
-        map.uv_offset.y,
+    fmt::print(
+        "      bitmap={} uv_scale={:g} uv_offset={:g} rot={:g} "
+        "mip_bias={:g}\n",
+        name_of(map.map),
+        map.uv_scale,
+        map.uv_offset,
         map.rotation,
         map.mip_bias);
 }
 
 void print_detail_map(char const* label, blam::shader::detail_map const& map)
 {
-    printf(
-        "    %-10s scale=%g bitmap=%s\n",
+    fmt::print(
+        "    {:<10} scale={:g} bitmap={}\n",
         label,
         map.scale,
-        name_of(map.map).c_str());
+        name_of(map.map));
 }
 
 /* ---- shader_transparent (sotr) ---- */
@@ -669,113 +643,91 @@ void dump_sotr(blam::shader::shader_transparent const* info)
 {
     using namespace blam::shader;
 
-    printf("  transparent: ");
+    fmt::print("  transparent: ");
     print_enum("blend", info->transparent.blend_function);
     print_enum("fade_mode", info->transparent.fade_mode);
     print_enum("fade_src", info->transparent.fade_src);
     print_enum("first_map_type", info->transparent.first_map_type);
     print_enum("flags", info->transparent.flags);
-    printf("\n");
-    printf(
-        "  lens_flare=%s layers=%u\n",
-        name_of(info->lens_flares.lens_flare).c_str(),
+    fmt::print("\n");
+    fmt::print(
+        "  lens_flare={} layers={}\n",
+        name_of(info->lens_flares.lens_flare),
         info->layers.size());
 
     if(auto layers = info->layers.data(g_magic); layers.has_value())
         for(auto const& layer : layers.value())
-            printf("    layer: %s\n", name_of(layer).c_str());
+            fmt::print("    layer: {}\n", name_of(layer));
 
     auto maps = info->maps.data(g_magic);
-    printf("  maps=%u\n", maps.has_value() ? maps.value().size() : 0u);
+    fmt::print("  maps={}\n", maps.has_value() ? maps.value().size() : 0u);
     if(maps.has_value())
     {
         u32 i = 0;
         for(auto const& map : maps.value())
         {
-            printf("    map %u: ", i++);
+            fmt::print("    map {}: ", i++);
             print_enum("flags", map.flags);
-            printf("\n");
+            fmt::print("\n");
             print_bitm_ref(map.map);
             print_anim("u", map.animation.u);
             print_anim("v", map.animation.v);
             print_anim("rot", map.animation.rot);
-            printf(
-                "      rot_center=(%g,%g)\n",
-                map.animation.rotation_center.x,
-                map.animation.rotation_center.y);
+            fmt::print(
+                "      rot_center={:g}\n", map.animation.rotation_center);
         }
     }
 
     auto stages = info->stages.data(g_magic);
-    printf("  stages=%u\n", stages.has_value() ? stages.value().size() : 0u);
+    fmt::print(
+        "  stages={}\n", stages.has_value() ? stages.value().size() : 0u);
     if(!stages.has_value())
         return;
 
     auto cmap = [](shader_transparent::input_t   in,
                    shader_transparent::mapping_t m) {
-        printf(
-            "%.*s/%.*s ",
-            static_cast<int>(enum_name(in).size()),
-            enum_name(in).data(),
-            static_cast<int>(enum_name(m).size()),
-            enum_name(m).data());
+        fmt::print("{}/{} ", enum_name(in), enum_name(m));
     };
     auto amap = [](color_input in, shader_transparent::mapping_t m) {
-        printf(
-            "%.*s/%.*s ",
-            static_cast<int>(enum_name(in).size()),
-            enum_name(in).data(),
-            static_cast<int>(enum_name(m).size()),
-            enum_name(m).data());
+        fmt::print("{}/{} ", enum_name(in), enum_name(m));
     };
 
     u32 i = 0;
     for(auto const& s : stages.value())
     {
-        printf("    stage %u: ", i++);
+        fmt::print("    stage {}: ", i++);
         print_enum("flags", s.flags);
         print_enum("color0_src", s.color0_source);
         print_enum("color0_fn", s.color0_func);
-        printf("period=%g\n", s.color0_period);
-        printf(
-            "      color0_lower=(%g,%g,%g,%g) color0_upper=(%g,%g,%g,%g)\n",
-            s.color0_lower.x,
-            s.color0_lower.y,
-            s.color0_lower.z,
-            s.color0_lower.w,
-            s.color0_upper.x,
-            s.color0_upper.y,
-            s.color0_upper.z,
-            s.color0_upper.w);
-        printf(
-            "      color1=(%g,%g,%g,%g)\n",
-            s.color1.x,
-            s.color1.y,
-            s.color1.z,
-            s.color1.w);
-        printf("      color in:  ");
+        fmt::print("period={:g}\n", s.color0_period);
+        fmt::print(
+            "      color0_lower={:g} color0_upper={:g}\n",
+            s.color0_lower,
+            s.color0_upper);
+        fmt::print("      color1={:g}\n", s.color1);
+        fmt::print("      color in:  ");
         cmap(s.color.a_input, s.color.a_mapping);
         cmap(s.color.b_input, s.color.b_mapping);
         cmap(s.color.c_input, s.color.c_mapping);
         cmap(s.color.d_input, s.color.d_mapping);
-        printf("\n      color out: ");
+        fmt::print("\n      color out: ");
         print_enum("ab", s.color.ab_output);
         print_enum("ab_fn", s.color.ab_out_func);
         print_enum("cd", s.color.cd_output);
         print_enum("cd_fn", s.color.cd_out_func);
         print_enum("sum", s.color.ab_cd_mux_sum);
         print_enum("map", s.color.output_map);
-        printf("\n      alpha in:  ");
+        fmt::print("\n      alpha in:  ");
         amap(s.alpha.a_input, s.alpha.a_mapping);
         amap(s.alpha.b_input, s.alpha.b_mapping);
         amap(s.alpha.c_input, s.alpha.c_mapping);
         amap(s.alpha.d_input, s.alpha.d_mapping);
-        printf("\n      alpha out: ");
+        fmt::print("\n      alpha out: ");
         print_enum("ab", s.alpha.ab_output);
         print_enum("cd", s.alpha.cd_output);
         print_enum("sum", s.alpha.ab_cd_mux_sum);
         print_enum("map", s.alpha.output_map);
-        printf("\n");
+        fmt::print("\n");
     }
 }
 
@@ -783,11 +735,11 @@ void dump_sotr(blam::shader::shader_transparent const* info)
 
 void dump_chicago_maps(blam::shader::chicago::map_t const& map, u32 idx)
 {
-    printf("    map %u: ", idx);
+    fmt::print("    map {}: ", idx);
     print_enum("flags", map.flags);
     print_enum("color_func", map.color_func);
     print_enum("alpha_func", map.alpha_func);
-    printf("\n");
+    fmt::print("\n");
     print_bitm_ref(map.map);
     print_anim("u", map.anim_2d.u);
     print_anim("v", map.anim_2d.v);
@@ -797,13 +749,13 @@ void dump_chicago_maps(blam::shader::chicago::map_t const& map, u32 idx)
 template<typename T>
 void dump_chicago_base(T const* info)
 {
-    printf("  transparent: ");
+    fmt::print("  transparent: ");
     print_enum("blend", info->transparent.blend_function);
     print_enum("fade_mode", info->transparent.fade_mode);
     print_enum("fade_src", info->transparent.fade_src);
     print_enum("first_map_type", info->transparent.first_map_type);
     print_enum("flags", info->transparent.flags);
-    printf("\n");
+    fmt::print("\n");
 }
 
 /* ---- shader_env (senv) ---- */
@@ -812,53 +764,41 @@ void dump_senv(blam::shader::shader_env const* info)
 {
     print_enum("  flags", info->flags);
     print_enum("type", info->shader_type);
-    printf("\n");
-    printf("    base       bitmap=%s ", name_of(info->diffuse.base).c_str());
+    fmt::print("\n");
+    fmt::print("    base       bitmap={} ", name_of(info->diffuse.base));
     print_enum("diffuse_flags", info->diffuse.flags);
-    printf("\n");
+    fmt::print("\n");
     print_enum("    detail_function", info->diffuse.detail_function);
-    printf("\n");
+    fmt::print("\n");
     print_detail_map("primary", info->diffuse.primary);
     print_detail_map("secondary", info->diffuse.secondary);
     print_enum("    micro_function", info->diffuse.micro_function);
-    printf("\n");
+    fmt::print("\n");
     print_detail_map("micro", info->diffuse.micro);
-    printf(
-        "    material_color=(%g,%g,%g)\n",
-        info->diffuse.material_color.x,
-        info->diffuse.material_color.y,
-        info->diffuse.material_color.z);
+    fmt::print("    material_color={:g}\n", info->diffuse.material_color);
     print_detail_map("bump", info->bump);
-    printf("    scrolling:\n");
+    fmt::print("    scrolling:\n");
     print_anim("u", info->scrolling.u);
     print_anim("v", info->scrolling.v);
     print_enum("    self_illum flags", info->self_illum.flags);
-    printf("map=%s\n", name_of(info->self_illum.map.map).c_str());
+    fmt::print("map={}\n", name_of(info->self_illum.map.map));
     auto illum = [](char const*                                         label,
                     blam::shader::shader_env::illumination_props const& p) {
-        printf(
-            "      %-10s on=(%g,%g,%g) off=(%g,%g,%g)\n",
-            label,
-            p.color_on.x,
-            p.color_on.y,
-            p.color_on.z,
-            p.color_off.x,
-            p.color_off.y,
-            p.color_off.z);
+        fmt::print(
+            "      {:<10} on={:g} off={:g}\n", label, p.color_on, p.color_off);
         print_anim("anim", p.anim);
     };
     illum("primary", info->self_illum.primary);
     illum("secondary", info->self_illum.secondary);
     illum("plasma", info->self_illum.plasma);
     print_enum("    reflection flags", info->reflection.flags);
-    printf(
-        "type=%.*s perp=%g parallel=%g lightmap=%g cube=%s\n",
-        static_cast<int>(magic_enum::enum_name(info->reflection.type).size()),
-        magic_enum::enum_name(info->reflection.type).data(),
+    fmt::print(
+        "type={} perp={:g} parallel={:g} lightmap={:g} cube={}\n",
+        magic_enum::enum_name(info->reflection.type),
         info->reflection.perpendicular_brightness,
         info->reflection.parallel_brightness,
         info->reflection.lightmap_brightness,
-        name_of(info->reflection.reflection).c_str());
+        name_of(info->reflection.reflection));
 }
 
 /* ---- shader_model (soso) ---- */
@@ -869,41 +809,35 @@ void dump_senv(blam::shader::shader_env const* info)
 void dump_soso(blam::shader::shader_model const* info)
 {
     print_enum("  flags", info->flags);
-    printf(" translucency=%g", info->translucency);
+    fmt::print(" translucency={:g}", info->translucency);
     print_enum(" change_color_src", info->change_color_src);
-    printf("\n");
-    printf("    maps scale=(%g,%g)\n", info->maps.scale.x, info->maps.scale.y);
-    printf("      base         = %s\n", name_of(info->maps.base).c_str());
-    printf(
-        "      multipurpose = %s\n", name_of(info->maps.multipurpose).c_str());
-    printf(
+    fmt::print("\n");
+    fmt::print("    maps scale={:g}\n", info->maps.scale);
+    fmt::print("      base         = {}\n", name_of(info->maps.base));
+    fmt::print("      multipurpose = {}\n", name_of(info->maps.multipurpose));
+    fmt::print(
         "        (R=base_color G=illumination B=change_color A=reflection)\n");
     print_enum("      detail function", info->maps.detail.function);
     print_enum(" mask", info->maps.detail.mask);
-    printf(
-        " scale=%g v_scale=%g map=%s\n",
+    fmt::print(
+        " scale={:g} v_scale={:g} map={}\n",
         info->maps.detail.scale,
         info->maps.detail.v_scale,
-        name_of(info->maps.detail.map).c_str());
-    printf(
-        "    reflection falloff=%g cutoff=%g\n",
+        name_of(info->maps.detail.map));
+    fmt::print(
+        "    reflection falloff={:g} cutoff={:g}\n",
         info->reflection.falloff_distance,
         info->reflection.cutoff_distance);
-    printf(
-        "      perpendicular brightness=%g tint=(%g,%g,%g)\n",
+    fmt::print(
+        "      perpendicular brightness={:g} tint={:g}\n",
         info->reflection.perpendicular_brightness,
-        info->reflection.perpendicular_tint.x,
-        info->reflection.perpendicular_tint.y,
-        info->reflection.perpendicular_tint.z);
-    printf(
-        "      parallel      brightness=%g tint=(%g,%g,%g)\n",
+        info->reflection.perpendicular_tint);
+    fmt::print(
+        "      parallel      brightness={:g} tint={:g}\n",
         info->reflection.parallel_brightness,
-        info->reflection.parallel_tint.x,
-        info->reflection.parallel_tint.y,
-        info->reflection.parallel_tint.z);
-    printf(
-        "      cube         = %s\n",
-        name_of(info->reflection.reflection).c_str());
+        info->reflection.parallel_tint);
+    fmt::print(
+        "      cube         = {}\n", name_of(info->reflection.reflection));
 }
 
 /* ---- obje / unit ---- */
@@ -922,12 +856,12 @@ void dump_bones(blam::mod2::header<Ver> const* header)
     auto bones_opt = header->bones.data(g_magic);
     if(!bones_opt.has_value())
     {
-        printf("  (no bone data)\n");
+        fmt::print("  (no bone data)\n");
         return;
     }
     auto bones = bones_opt.value();
     u32  n     = static_cast<u32>(bones.size());
-    printf("  bones=%u\n", n);
+    fmt::print("  bones={}\n", n);
 
     std::vector<Quatf> world_rot(n, Quatf(1.f, 0.f, 0.f, 0.f));
     std::vector<Vecf3> world_pos(n, Vecf3(0.f));
@@ -955,44 +889,21 @@ void dump_bones(blam::mod2::header<Ver> const* header)
                                                                : static_cast<i32>(v);
         };
 
-        printf(
-            "  [%3u] %-26.*s parent=%-4d next=%-4d child=%d\n",
+        fmt::print(
+            "  [{:3}] {:<26} parent={:<4} next={:<4} child={}\n",
             i,
-            static_cast<int>(name.size()),
-            name.data(),
+            name,
             idx(par),
             idx(b.next_bone),
             idx(b.next_child));
-        printf(
-            "        local t=(%8.4f,%8.4f,%8.4f) q=(%7.4f,%7.4f,%7.4f,%7.4f)\n",
-            b.translation.x,
-            b.translation.y,
-            b.translation.z,
-            b.rotation.x,
-            b.rotation.y,
-            b.rotation.z,
-            b.rotation.w);
-        printf(
-            "        world t=(%8.4f,%8.4f,%8.4f) q=(%7.4f,%7.4f,%7.4f,%7.4f)\n",
-            world_pos[i].x,
-            world_pos[i].y,
-            world_pos[i].z,
-            w.x,
-            w.y,
-            w.z,
-            w.w);
-        printf(
-            "        axes  X=(%6.3f,%6.3f,%6.3f) "
-            "Y=(%6.3f,%6.3f,%6.3f) Z=(%6.3f,%6.3f,%6.3f)\n",
-            axes[0].x,
-            axes[0].y,
-            axes[0].z,
-            axes[1].x,
-            axes[1].y,
-            axes[1].z,
-            axes[2].x,
-            axes[2].y,
-            axes[2].z);
+        fmt::print(
+            "        local t={:8.4f} q={:7.4f}\n", b.translation, b.rotation);
+        fmt::print("        world t={:8.4f} q={:7.4f}\n", world_pos[i], w);
+        fmt::print(
+            "        axes  X={:6.3f} Y={:6.3f} Z={:6.3f}\n",
+            axes[0],
+            axes[1],
+            axes[2]);
     }
 }
 
@@ -1000,27 +911,23 @@ void dump_object(blam::scn::object const* obj)
 {
     print_enum("  type", obj->type);
     print_enum("flags", obj->flags);
-    printf(
-        "bound_radius=%g render_bound=%g accel_scale=%g\n",
+    fmt::print(
+        "bound_radius={:g} render_bound={:g} accel_scale={:g}\n",
         obj->bound_radius,
         obj->render_bound_radius,
         obj->acceleration_scale);
-    printf(
-        "    bound_offset=(%g,%g,%g) origin_offset=(%g,%g,%g)\n",
-        obj->bound_offset.x,
-        obj->bound_offset.y,
-        obj->bound_offset.z,
-        obj->origin_offset.x,
-        obj->origin_offset.y,
-        obj->origin_offset.z);
-    printf("    model      =%s\n", name_of(obj->model).c_str());
-    printf("    anim_graph =%s\n", name_of(obj->anim_graph).c_str());
-    printf("    collider   =%s\n", name_of(obj->collider).c_str());
-    printf("    physics    =%s\n", name_of(obj->physics).c_str());
-    printf("    shader     =%s\n", name_of(obj->shader).c_str());
-    printf("    effect     =%s\n", name_of(obj->effect).c_str());
-    printf(
-        "    hud_msg=%d shader_perm=%d\n",
+    fmt::print(
+        "    bound_offset={:g} origin_offset={:g}\n",
+        obj->bound_offset,
+        obj->origin_offset);
+    fmt::print("    model      ={}\n", name_of(obj->model));
+    fmt::print("    anim_graph ={}\n", name_of(obj->anim_graph));
+    fmt::print("    collider   ={}\n", name_of(obj->collider));
+    fmt::print("    physics    ={}\n", name_of(obj->physics));
+    fmt::print("    shader     ={}\n", name_of(obj->shader));
+    fmt::print("    effect     ={}\n", name_of(obj->effect));
+    fmt::print(
+        "    hud_msg={} shader_perm={}\n",
         obj->export_.hud_msg,
         obj->export_.shader_perm);
 }
@@ -1032,44 +939,34 @@ void dump_unit(blam::scn::unit const* unit)
     auto colors = unit->change_colors.data(g_magic);
     if(colors.has_error())
     {
-        printf("    change_colors: <unreadable>\n");
+        fmt::print("    change_colors: <unreadable>\n");
         return;
     }
-    printf("    change_colors: %zu\n", colors.value().size());
+    fmt::print("    change_colors: {}\n", colors.value().size());
 
     u32 idx = 0;
     for(auto const& c : colors.value())
     {
-        printf("      [%u] ", idx++);
+        fmt::print("      [{}] ", idx++);
         print_enum("darken_by", c.darken_by);
         print_enum("scale_by", c.scale_by);
         print_enum("flags", c.scale_flags);
-        printf("\n");
-        printf(
-            "          lower=(%g,%g,%g) upper=(%g,%g,%g)\n",
-            c.lower_bound.x,
-            c.lower_bound.y,
-            c.lower_bound.z,
-            c.upper_bound.x,
-            c.upper_bound.y,
-            c.upper_bound.z);
+        fmt::print("\n");
+        fmt::print(
+            "          lower={:g} upper={:g}\n", c.lower_bound, c.upper_bound);
 
         auto perms = c.permutations.data(g_magic);
         if(perms.has_error())
         {
-            printf("          permutations: <unreadable>\n");
+            fmt::print("          permutations: <unreadable>\n");
             continue;
         }
         for(auto const& p : perms.value())
-            printf(
-                "          perm weight=%g lower=(%g,%g,%g) upper=(%g,%g,%g)\n",
+            fmt::print(
+                "          perm weight={:g} lower={:g} upper={:g}\n",
                 p.weight,
-                p.lower_bound.x,
-                p.lower_bound.y,
-                p.lower_bound.z,
-                p.upper_bound.x,
-                p.upper_bound.y,
-                p.upper_bound.z);
+                p.lower_bound,
+                p.upper_bound);
     }
 }
 
@@ -1083,15 +980,15 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
     print_enum("usage", header->usage);
     print_enum("sprite_usage", header->sprite_usage);
     print_enum("budget", header->budget);
-    printf(
-        "sprite_spacing=%u mipmaps=%u import=%ux%u\n",
+    fmt::print(
+        "sprite_spacing={} mipmaps={} import={}x{}\n",
         header->sprite_spacing,
         header->mipmap_count,
         header->import_width,
         header->import_height);
 
     auto seqs = header->sequences.data(g_magic);
-    printf("  sequences=%u\n", seqs.has_value() ? seqs.value().size() : 0u);
+    fmt::print("  sequences={}\n", seqs.has_value() ? seqs.value().size() : 0u);
     if(seqs.has_value())
     {
         u32 i = 0;
@@ -1099,31 +996,31 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
         {
             auto sprites = seq.sprites.data(g_magic);
             auto name    = seq.name.str();
-            printf(
-                "    seq %u: \"%.*s\" first=%u count=%u sprites=%u\n",
+            fmt::print(
+                "    seq {}: \"{}\" first={} count={} sprites={}\n",
                 i++,
-                static_cast<int>(name.size()),
-                name.data(),
+                name,
                 seq.first_bitmap,
                 seq.bitmap_count,
                 sprites.has_value() ? sprites.value().size() : 0u);
             if(!sprites.has_value())
                 continue;
             for(auto const& spr : sprites.value())
-                printf(
-                    "      sprite: bitmap=%u l=%g r=%g t=%g b=%g reg=(%g,%g)\n",
+                fmt::print(
+                    "      sprite: bitmap={} l={:g} r={:g} t={:g} b={:g} "
+                    "reg={:g}\n",
                     spr.bitmap_index,
                     spr.left,
                     spr.right,
                     spr.top,
                     spr.bottom,
-                    spr.registration_point.x,
-                    spr.registration_point.y);
+                    spr.registration_point);
         }
     }
 
     auto images = header->images.data(g_magic);
-    printf("  images=%u\n", images.has_value() ? images.value().size() : 0u);
+    fmt::print(
+        "  images={}\n", images.has_value() ? images.value().size() : 0u);
     if(!images.has_value())
         return;
     if(g_channel_stats)
@@ -1135,8 +1032,8 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
             /* image_t::data() is what the engine itself uses; a hand-rolled
              * read of img.offset does not land in the same place. */
             auto data = img.data(g_raw_magic, 0);
-            printf(
-                "    data(): %zu bytes (expected %u)\n",
+            fmt::print(
+                "    data(): {} bytes (expected {})\n",
                 data.size(),
                 img.isize.x * img.isize.y * 4u);
             /* Byte order is what is in question, so report per byte position;
@@ -1181,10 +1078,10 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
                     static_cast<u32>(img.isize.x),
                     static_cast<u32>(img.isize.y));
             }
-            printf("    byte stats over %zu px:\n", px);
+            fmt::print("    byte stats over {} px:\n", px);
             for(u32 c = 0; c < 4; c++)
-                printf(
-                    "      byte %u: min=%3u max=%3u mean=%6.1f\n",
+                fmt::print(
+                    "      byte {}: min={:3} max={:3} mean={:6.1f}\n",
                     c,
                     lo[c],
                     hi[c],
@@ -1193,8 +1090,8 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
     u32 i = 0;
     for(auto const& img : images.value())
     {
-        printf(
-            "    image %u: %ix%ix%i ",
+        fmt::print(
+            "    image {}: {}x{}x{} ",
             i++,
             img.isize.x,
             img.isize.y,
@@ -1202,7 +1099,7 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
         print_enum("type", img.type);
         print_enum("format", img.format);
         print_enum("flags", img.flags);
-        printf("mips=%u offset=0x%x\n", img.mipmaps, img.offset);
+        fmt::print("mips={} offset=0x{:x}\n", img.mipmaps, img.offset);
     }
 
     if(g_dump_png_prefix.empty())
@@ -1234,7 +1131,7 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
         }
         if(img.type == blam::bitm::type_t::tex_3d)
         {
-            printf("      %s: 3D textures are not dumped\n", label.c_str());
+            fmt::print("      {}: 3D textures are not dumped\n", label);
             continue;
         }
         dump_image_png(img, img.data(pixel_magic(img), 0), label, w, h);
@@ -1243,37 +1140,33 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
 
 void dump_antr(blam::antr::header const* animation)
 {
-    printf("  objects=%u\n", animation->objects.count);
-    printf("  units=%u\n", animation->units.count);
-    printf("  weapons=%u\n", animation->weapons.count);
-    printf("  vehicles=%u\n", animation->vehicles.count);
-    printf("  devices=%u\n", animation->devices.count);
-    printf("  nodes=%u\n", animation->nodes.count);
+    fmt::print("  objects={}\n", animation->objects.count);
+    fmt::print("  units={}\n", animation->units.count);
+    fmt::print("  weapons={}\n", animation->weapons.count);
+    fmt::print("  vehicles={}\n", animation->vehicles.count);
+    fmt::print("  devices={}\n", animation->devices.count);
+    fmt::print("  nodes={}\n", animation->nodes.count);
     for(auto [i, node] :
         stl_types::enumerate(animation->nodes.data(g_magic).value()))
     {
         auto joint = magic_enum::enum_name(node.joint_flags);
-        printf(
-            "    node %zu: name=%.*s parent=%hi joint=%.*s\n",
+        fmt::print(
+            "    node {}: name={} parent={} joint={}\n",
             i,
-            static_cast<int>(node.name.size),
-            node.name.data.data(),
+            node.name.str(),
             node.parent,
-            static_cast<int>(joint.size()),
-            joint.data());
+            joint);
     }
-    printf("  animations=%u\n", animation->animations.count);
+    fmt::print("  animations={}\n", animation->animations.count);
     for(auto [i, anim] :
         stl_types::enumerate(animation->animations.data(g_magic).value()))
     {
         auto anim_type = magic_enum::enum_name(anim.type);
-        printf(
-            "    animation %zu: name=%.*s type=%.*s\n",
+        fmt::print(
+            "    animation {}: name={} type={}\n",
             i,
-            static_cast<int>(anim.name.size),
-            anim.name.data.data(),
-            static_cast<int>(anim_type.size()),
-            anim_type.data());
+            anim.name.str(),
+            anim_type);
     }
 }
 
@@ -1282,33 +1175,25 @@ void dump_mode(blam::mod2::header<Ver> const* info)
 {
     if(auto markers = info->markers.data(g_magic); markers.has_value())
     {
-        printf("  markers=%zu\n", markers.value().size());
+        fmt::print("  markers={}\n", markers.value().size());
         for(auto [i, marker] : stl_types::enumerate(markers.value()))
         {
-            printf(
-                "    marker %zu: name=%.*s\n",
-                i,
-                static_cast<int>(marker.name.size),
-                marker.name.data.data());
+            fmt::print("    marker {}: name={}\n", i, marker.name.str());
         }
     }
     if(auto regions = info->regions.data(g_magic); regions.has_value())
     {
-        printf("  regions=%zu\n", regions.value().size());
+        fmt::print("  regions={}\n", regions.value().size());
         for(auto [i, region] : stl_types::enumerate(regions.value()))
         {
-            printf(
-                "    region %zu: name=%.*s\n",
-                i,
-                static_cast<int>(region.name.size),
-                region.name.data.data());
+            fmt::print("    region {}: name={}\n", i, region.name.str());
         }
     }
     /* shader_idx on a part indexes this list, so it is what names the shader
      * a piece of the model actually draws with. */
     if(auto shaders = info->shaders.data(g_magic); shaders.has_value())
     {
-        printf("  shaders=%zu\n", shaders.value().size());
+        fmt::print("  shaders={}\n", shaders.value().size());
         for(auto [i, shader] : stl_types::enumerate(shaders.value()))
         {
             /* tag_class_t holds a fourcc, which magic_enum cannot name. */
@@ -1319,11 +1204,8 @@ void dump_mode(blam::mod2::header<Ver> const* info)
                 static_cast<char>((cls >> 8) & 0xFF),
                 static_cast<char>(cls & 0xFF),
                 0};
-            printf(
-                "    shader %zu: %s [%s]\n",
-                i,
-                name_of(shader.ref).c_str(),
-                fourcc);
+            fmt::print(
+                "    shader {}: {} [{}]\n", i, name_of(shader.ref), fourcc);
         }
     }
     /* Per-part vertex_type: model_at() silently drops any part that is not
@@ -1331,16 +1213,16 @@ void dump_mode(blam::mod2::header<Ver> const* info)
      * another type is geometry the renderer never sees. */
     if(auto geoms = info->geometries.data(g_magic); geoms.has_value())
     {
-        printf("  geometries=%zu\n", geoms.value().size());
+        fmt::print("  geometries={}\n", geoms.value().size());
         for(auto [gi, geom] : stl_types::enumerate(geoms.value()))
         {
             auto parts = geom.meshes(g_magic);
-            printf("    geometry %zu: parts=%zu\n", gi, parts.size());
+            fmt::print("    geometry {}: parts={}\n", gi, parts.size());
             for(auto [pi, part] : stl_types::enumerate(parts))
             {
                 auto vt = blam::from_le(part.data.vertex_type);
-                printf(
-                    "      part %zu: vertex_type=%u%s shader_idx=%u\n",
+                fmt::print(
+                    "      part {}: vertex_type={}{} shader_idx={}\n",
                     pi,
                     static_cast<unsigned>(vt),
                     (vt == blam::vert::vertex_type_t::mod2_compressed_vertex ||
@@ -1364,29 +1246,60 @@ void dump_scenario(blam::map_container<Ver> const& map)
     auto scn = map.scenario();
     if(!scn.has_value())
     {
-        printf("no scenario tag\n");
+        fmt::print("no scenario tag\n");
         return;
     }
     auto const* s = scn.value();
 
     print_enum("scenario type", s->info.type);
     print_enum("flags", s->info.flags);
-    printf("\n");
+    fmt::print("\n");
+
+    fmt::print("skyboxes: {}\n", s->info.skyboxes.count);
+    if(auto skyboxes = s->info.skyboxes.data(map.magic); skyboxes.has_value())
+    {
+        for(blam::scn::skybox_ref const& skybox : skyboxes.value())
+        {
+            fmt::print("  [{}] {}\n",
+                skybox.tag_class_name(),
+                skybox.name.to_string(map.magic));
+        }
+    }
+
+    // Guerilla calls this child scenarios too
+    // They're marked with scnr but the tags point to globals\\globals on a lot of maps??
+    // Obviously a misnomer of some sort
+    fmt::print("child scenarios: {}\n", s->info.child_scenarios.count);
+    if(auto child_scen = s->info.child_scenarios.data(map.magic); child_scen.has_value())
+    {
+        for(blam::tagref_t const& scenario : child_scen.value())
+        {
+            fmt::print("  [{}] {}\n",
+                scenario.tag_class_name(),
+                scenario.name.to_string(map.magic));
+        }
+    }
+
+    fmt::print("local north: {}\n", s->info.local_north);
+
+    fmt::print("predicted resource: {}\n", s->info.predicted_resource.count);
+
+    fmt::print("functions: {}\n", s->info.functions.count);
 
     if(auto p = s->player_start.profiles.data(g_magic); p.has_value())
     {
-        printf("player_starting_profiles: %zu\n", p.value().size());
+        fmt::print("player_starting_profiles: {}\n", p.value().size());
         for(auto const& prof : p.value())
-            printf(
-                "  %-16.*s health=%g shield=%g  %s (%u) / %s (%u)  nades f=%u "
-                "p=%u\n",
-                static_cast<int>(prof.name.str().size()),
-                prof.name.str().data(),
+            fmt::print(
+                "  {:<16} health={:g} shield={:g}  {} ({}) / {} ({})  nades "
+                "f={} "
+                "p={}\n",
+                prof.name.str(),
                 prof.health_modifier,
                 prof.shield_modifier,
-                name_of(prof.primary_weapon).c_str(),
+                name_of(prof.primary_weapon),
                 prof.rounds1_total,
-                name_of(prof.secondary_weapon).c_str(),
+                name_of(prof.secondary_weapon),
                 prof.rounds2_total,
                 prof.frag_grenades,
                 prof.plasma_nades);
@@ -1394,38 +1307,33 @@ void dump_scenario(blam::map_container<Ver> const& map)
 
     if(auto l = s->player_start.locations.data(g_magic); l.has_value())
     {
-        printf("player_starting_locations: %zu\n", l.value().size());
+        fmt::print("player_starting_locations: {}\n", l.value().size());
         u32 shown = 0;
         for(auto const& loc : l.value())
         {
             if(shown++ >= 4)
             {
-                printf("  ...\n");
+                fmt::print("  ...\n");
                 break;
             }
-            printf(
-                "  pos=(%.2f,%.2f,%.2f) rot=%.2f team=%u bsp=%u modes=",
-                loc.pos.x,
-                loc.pos.y,
-                loc.pos.z,
+            fmt::print(
+                "  pos={:.2f} rot={:.2f} team={} bsp={} modes=",
+                loc.pos,
                 loc.rot,
                 loc.team_index,
                 loc.bsp_index);
             for(auto const& t : loc.types)
-                printf(
-                    "%.*s ",
-                    static_cast<int>(enum_name(t).size()),
-                    enum_name(t).data());
-            printf("\n");
+                fmt::print("{} ", enum_name(t));
+            fmt::print("\n");
         }
     }
 
     if(auto f = s->netgame.flags.data(g_magic); f.has_value())
-        printf("netgame flags: %zu\n", f.value().size());
+        fmt::print("netgame flags: {}\n", f.value().size());
     if(auto e = s->netgame.equipment.data(g_magic); e.has_value())
-        printf("netgame equipment: %zu\n", e.value().size());
+        fmt::print("netgame equipment: {}\n", e.value().size());
     if(auto q = s->starting_equipment.data(g_magic); q.has_value())
-        printf("starting_equipment: %zu\n", q.value().size());
+        fmt::print("starting_equipment: {}\n", q.value().size());
 }
 
 /* Recorded animations store per-tick control input rather than keyframes, so
@@ -1440,30 +1348,26 @@ void dump_recorded_animations(blam::map_container<Ver> const& map)
     auto scn = map.scenario();
     if(!scn.has_value())
     {
-        printf("no scenario tag\n");
+        fmt::print("no scenario tag\n");
         return;
     }
 
     auto anims = scn.value()->recorded_animations.data(g_magic);
     if(anims.has_error())
     {
-        printf(
-            "recorded_animations: %.*s\n",
-            static_cast<int>(anims.error().size()),
-            anims.error().data());
+        fmt::print("recorded_animations: {}\n", anims.error());
         return;
     }
 
     constexpr f32 to_degrees = 57.2957795f;
 
-    printf("recorded_animations: %zu\n", anims.value().size());
+    fmt::print("recorded_animations: {}\n", anims.value().size());
     for(auto const& anim : anims.value())
     {
         auto name = anim.name.str();
-        printf(
-            "\n  %-34.*s codec=%u ucd=%u raw=%d ticks=%d stream=%u bytes\n",
-            static_cast<int>(name.size()),
-            name.data(),
+        fmt::print(
+            "\n  {:<34} codec={} ucd={} raw={} ticks={} stream={} bytes\n",
+            name,
             anim.version,
             anim.unit_control_data_version,
             anim.raw_animation_data,
@@ -1473,10 +1377,7 @@ void dump_recorded_animations(blam::map_container<Ver> const& map)
         auto stream = anim.stream(g_magic);
         if(stream.has_error())
         {
-            printf(
-                "    %.*s\n",
-                static_cast<int>(stream.error().size()),
-                stream.error().data());
+            fmt::print("    {}\n", stream.error());
             continue;
         }
 
@@ -1485,15 +1386,11 @@ void dump_recorded_animations(blam::map_container<Ver> const& map)
         auto const& control = stream.value().control();
         auto const  facing  = stream.value().initial_state().facing();
         auto const  dir     = facing.direction();
-        printf(
-            "    facing=(%.3f,%.3f,%.3f) from_angles=(%.3f,%.3f,%.3f) "
-            "yaw=%.1fdeg pitch=%.1fdeg\n",
-            control.facing.x,
-            control.facing.y,
-            control.facing.z,
-            dir.x,
-            dir.y,
-            dir.z,
+        fmt::print(
+            "    facing={:.3f} from_angles={:.3f} "
+            "yaw={:.1f}deg pitch={:.1f}deg\n",
+            control.facing,
+            dir,
             facing.yaw_radians() * to_degrees,
             facing.pitch_radians() * to_degrees);
 
@@ -1512,43 +1409,45 @@ void dump_recorded_animations(blam::map_container<Ver> const& map)
             /* Yaw wraps, so accumulate the short way round rather than
              * subtracting across the seam. */
             constexpr i32 turn = 2000;
-            i32 step = (in.facing().yaw - prev_yaw + turn * 3 / 2) % turn - turn / 2;
+            i32           step =
+                (in.facing().yaw - prev_yaw + turn * 3 / 2) % turn - turn / 2;
             turned += step < 0 ? -step : step;
             prev_yaw = in.facing().yaw;
             buttons |= in.buttons;
         } while(play.advance());
 
-        printf("    ticks decoded=%u", play.tick());
+        fmt::print("    ticks decoded={}", play.tick());
         if(play.tick() != static_cast<u32>(anim.length_of_animation))
-            printf(" (MISMATCH, header says %d)", anim.length_of_animation);
-        printf(
-            " moving=%u turned=%.0fdeg buttons=%#06x",
+            fmt::print(" (MISMATCH, header says {})", anim.length_of_animation);
+        fmt::print(
+            " moving={} turned={:.0f}deg buttons={:#06x}",
             moving,
             turned * 360.f / rec::control_vector::units_per_turn,
             buttons);
         /* Named by hand: the flag values run past magic_enum's default
          * reflection range, so it would print nothing for most of them. */
-        static constexpr std::pair<rec::control_flags_t, char const*> flags[] = {
-            {rec::control_crouch, "crouch"},
-            {rec::control_jump, "jump"},
-            {rec::control_user1, "user1"},
-            {rec::control_user2, "user2"},
-            {rec::control_light, "light"},
-            {rec::control_exact_facing, "exact_facing"},
-            {rec::control_action, "action"},
-            {rec::control_melee, "melee"},
-            {rec::control_look_dont_turn, "look_dont_turn"},
-            {rec::control_force_alert, "force_alert"},
-            {rec::control_reload, "reload"},
-            {rec::control_primary_trigger, "primary_trigger"},
-            {rec::control_secondary_trigger, "secondary_trigger"},
-            {rec::control_grenade, "grenade"},
-            {rec::control_swap_weapon, "swap_weapon"},
-        };
+        static constexpr std::pair<rec::control_flags_t, char const*> flags[] =
+            {
+                {rec::control_crouch, "crouch"},
+                {rec::control_jump, "jump"},
+                {rec::control_user1, "user1"},
+                {rec::control_user2, "user2"},
+                {rec::control_light, "light"},
+                {rec::control_exact_facing, "exact_facing"},
+                {rec::control_action, "action"},
+                {rec::control_melee, "melee"},
+                {rec::control_look_dont_turn, "look_dont_turn"},
+                {rec::control_force_alert, "force_alert"},
+                {rec::control_reload, "reload"},
+                {rec::control_primary_trigger, "primary_trigger"},
+                {rec::control_secondary_trigger, "secondary_trigger"},
+                {rec::control_grenade, "grenade"},
+                {rec::control_swap_weapon, "swap_weapon"},
+            };
         for(auto const& [flag, name] : flags)
             if(buttons & flag)
-                printf(" %s", name);
-        printf("\n");
+                fmt::print(" {}", name);
+        fmt::print("\n");
     }
 }
 
@@ -1566,30 +1465,29 @@ void dump_player_biped(
         auto glob = tag.template data<blam::globals::globals>(g_magic);
         if(!glob.has_value())
         {
-            printf("globals tag has no data\n");
+            fmt::print("globals tag has no data\n");
             return;
         }
 
         auto report = [&](char const* label, blam::tagref_t const& unit) {
             auto uname = unit.to_name().to_string(g_magic);
-            printf(
-                "%s unit: %.*s [%.*s]\n",
+            fmt::print(
+                "{} unit: {} [{}]\n",
                 label,
-                static_cast<int>(uname.size()),
-                uname.data(),
-                4,
-                reinterpret_cast<const char*>(&unit.tag_class));
+                uname,
+                std::string_view(
+                    reinterpret_cast<const char*>(&unit.tag_class), 4));
 
             auto it = index.find(unit);
             if(it == index.end())
             {
-                printf("  (biped tag not in index)\n");
+                fmt::print("  (biped tag not in index)\n");
                 return;
             }
             auto biped = it->template data<blam::scn::biped>(g_magic);
             if(!biped.has_value())
             {
-                printf("  (biped tag has no data)\n");
+                fmt::print("  (biped tag has no data)\n");
                 return;
             }
             dump_unit(biped.value());
@@ -1599,16 +1497,16 @@ void dump_player_biped(
            mp.has_value() && !mp.value().empty())
             report("multiplayer", mp.value()[0].unit);
         else
-            printf("multiplayer unit: <none>\n");
+            fmt::print("multiplayer unit: <none>\n");
 
         if(auto sp = glob.value()->player.data(g_magic);
            sp.has_value() && !sp.value().empty())
             report("singleplayer", sp.value()[0].unit);
         else
-            printf("singleplayer unit: <none>\n");
+            fmt::print("singleplayer unit: <none>\n");
         return;
     }
-    printf("no globals tag\n");
+    fmt::print("no globals tag\n");
 }
 
 /* Walks a tag's bytes looking for embedded tagrefs, for tags whose layout is
@@ -1629,7 +1527,7 @@ void scan_tagrefs(
     auto data = tag.template data<u8>(g_magic);
     if(!data.has_value())
     {
-        printf("  (no data)\n");
+        fmt::print("  (no data)\n");
         return;
     }
     auto const* base = data.value();
@@ -1653,8 +1551,11 @@ void scan_tagrefs(
         const ptrdiff_t delta = target - base;
         if(delta < 0 || delta > 0x20000)
             continue;
-        printf(
-            "  REFLEX +0x%03zx  count=%-3u -> +0x%04tx\n", off, count, delta);
+        fmt::print(
+            "  REFLEX +0x{:03x}  count={:<3} -> +0x{:04x}\n",
+            off,
+            count,
+            delta);
     }
 
     for(size_t off = 0; off + 16 <= g_scan_window; off += 4)
@@ -1668,13 +1569,11 @@ void scan_tagrefs(
         auto n = it->second->to_name().to_string(g_magic);
         if(n.empty())
             continue;
-        printf(
-            "  +0x%03zx  %.*s  %.*s\n",
+        fmt::print(
+            "  +0x{:03x}  {}  {}\n",
             off,
-            4,
-            reinterpret_cast<const char*>(&r->tag_class),
-            static_cast<int>(n.size()),
-            n.data());
+            std::string_view(reinterpret_cast<const char*>(&r->tag_class), 4),
+            n);
     }
 }
 
@@ -1685,12 +1584,7 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
 
     auto name  = tag.to_name().to_string(g_magic);
     auto klass = tag.tagclass[0].str();
-    printf(
-        "=== %.*s [%s] id=0x%x\n",
-        static_cast<int>(name.size()),
-        name.data(),
-        klass.c_str(),
-        tag.tag_id);
+    fmt::print("=== [{}] {} id=0x{:x}\n", klass, name, tag.tag_id);
 
     auto header_of = [&](auto* type) {
         using T   = std::remove_const_t<std::remove_pointer_t<decltype(type)>>;
@@ -1745,7 +1639,8 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         {
             dump_chicago_base(info);
             auto maps = info->maps.data(g_magic);
-            printf("  maps=%zu\n", maps.has_value() ? maps.value().size() : 0u);
+            fmt::print(
+                "  maps={}\n", maps.has_value() ? maps.value().size() : 0u);
             if(maps.has_value())
             {
                 u32 i = 0;
@@ -1759,8 +1654,8 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         {
             dump_chicago_base(info);
             auto maps = info->maps_4stage.data(g_magic);
-            printf(
-                "  maps_4stage=%zu\n",
+            fmt::print(
+                "  maps_4stage={}\n",
                 maps.has_value() ? maps.value().size() : 0u);
             if(maps.has_value())
             {
@@ -1769,8 +1664,8 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
                     dump_chicago_maps(map, i++);
             }
             auto maps2 = info->maps_2stage.data(g_magic);
-            printf(
-                "  maps_2stage=%zu\n",
+            fmt::print(
+                "  maps_2stage={}\n",
                 maps2.has_value() ? maps2.value().size() : 0u);
             if(maps2.has_value())
             {
@@ -1788,7 +1683,7 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
             if(g_dump_bones)
                 dump_bones(info);
             else
-                printf("  (pass --dump-bones for the bone tree)\n");
+                fmt::print("  (pass --dump-bones for the bone tree)\n");
         }
         break;
     case blam::tag_class_t::DeLa:
@@ -1821,10 +1716,10 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         }
         break;
     default:
-        printf("  (no decoder for this class)\n");
+        fmt::print("  (no decoder for this class)\n");
         break;
     }
-    printf("\n");
+    fmt::print("\n");
 }
 
 /* A mirror's shader is one of the shader tag classes; anything else at that
@@ -1861,19 +1756,19 @@ void dump_mirrors(
     auto scn = map.scenario();
     if(!scn.has_value())
     {
-        printf("no scenario tag\n");
+        fmt::print("no scenario tag\n");
         return;
     }
 
-    printf(
-        "sizeof(cluster)=%zu sizeof(mirror)=%zu (as declared)\n",
+    fmt::print(
+        "sizeof(cluster)={} sizeof(mirror)={} (as declared)\n",
         sizeof(blam::bsp::cluster),
         sizeof(blam::bsp::mirror));
 
     auto bsps = scn.value()->bsp_info.data(map.magic);
     if(bsps.has_error())
     {
-        printf("no bsp_info\n");
+        fmt::print("no bsp_info\n");
         return;
     }
 
@@ -1908,8 +1803,8 @@ void dump_mirrors(
             if(count == 0 || count > 64)
             {
                 if(count > 64)
-                    printf(
-                        "bsp %u cluster %u: implausible mirror count %u\n",
+                    fmt::print(
+                        "bsp {} cluster {}: implausible mirror count {}\n",
                         bsp_idx,
                         cluster_idx,
                         count);
@@ -1920,8 +1815,8 @@ void dump_mirrors(
             auto const* raw = reinterpret_cast<const u8*>(
                 bsp_magic.base_ptr + off - bsp_magic.file_offset);
 
-            printf(
-                "bsp %u cluster %u: %u mirror(s) @ 0x%x\n",
+            fmt::print(
+                "bsp {} cluster {}: {} mirror(s) @ 0x{:x}\n",
                 bsp_idx,
                 cluster_idx,
                 count,
@@ -1969,9 +1864,9 @@ void dump_mirrors(
                     pass[p]++;
 
                     auto name = sh->to_name().to_string(map.magic);
-                    printf(
-                        "    [pad=%d] plane=(%.4f %.4f %.4f) d=%.4f "
-                        "verts=%u resid=%.5f\n      shader=%.*s (%.*s)\n",
+                    fmt::print(
+                        "    [pad={}] plane=({:.4f} {:.4f} {:.4f}) d={:.4f} "
+                        "verts={} resid={:.5f}\n      shader={} ({})\n",
                         pad,
                         n[0],
                         n[1],
@@ -1979,10 +1874,9 @@ void dump_mirrors(
                         n[3],
                         vcount,
                         resid,
-                        static_cast<int>(name.size()),
-                        name.data(),
-                        4,
-                        reinterpret_cast<const char*>(&sh->tag_class));
+                        name,
+                        std::string_view(
+                            reinterpret_cast<const char*>(&sh->tag_class), 4));
                 }
             }
             cluster_idx++;
@@ -1990,13 +1884,13 @@ void dump_mirrors(
         bsp_idx++;
     }
 
-    printf("\ntotal mirrors found: %d\n", total);
+    fmt::print("\ntotal mirrors found: {}\n", total);
     if(total == 0)
         return;
-    printf("layout scan (mirrors passing all checks):\n");
+    fmt::print("layout scan (mirrors passing all checks):\n");
     for(size_t p = 0; p < kNPads; p++)
-        printf(
-            "  pad=%2d stride=%2zu  passing=%d/%d\n",
+        fmt::print(
+            "  pad={:2} stride={:2}  passing={}/{}\n",
             kPads[p],
             static_cast<size_t>(44 + kPads[p]),
             pass[p],
@@ -2090,18 +1984,13 @@ void open_map(
         matched++;
         if(list_only)
         {
-            printf(
-                "%s  0x%-8x  %.*s\n",
-                klass.c_str(),
-                tag.tag_id,
-                static_cast<int>(name.size()),
-                name.data());
+            fmt::print("{}  0x{:<8x}  {}\n", klass, tag.tag_id, name);
             continue;
         }
         dump_tag(index, tag);
     }
     if(matched == 0)
-        printf("no tags matched\n");
+        fmt::print("no tags matched\n");
 }
 
 } // namespace
@@ -2185,8 +2074,7 @@ int inspect_main()
     g_dump_player   = arguments.count("dump-player-biped") > 0;
     g_dump_scenario = arguments.count("dump-scenario") > 0;
     g_dump_bones    = arguments.count("dump-bones") > 0;
-    g_dump_recanim =
-        arguments.count("dump-recorded-animations") > 0;
+    g_dump_recanim  = arguments.count("dump-recorded-animations") > 0;
     g_scan_window   = static_cast<size_t>(
         arguments.as_optional<int>("scan-tagrefs").value_or(0));
     g_channel_stats = arguments.count("channel-stats") > 0;
