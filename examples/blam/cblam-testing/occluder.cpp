@@ -333,7 +333,11 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 if(bsp_ref.bsp != pvs_bsp_id)
                 {
                     /* Different BSP section: hide in every viewport. */
-                    vis.hide_all();
+                    for(auto const& [idx, view] : cull_targets)
+                    {
+                        auto [seat, mirror] = idx;
+                        vis.set_visibility(false, seat, mirror);
+                    }
                     continue;
                 }
                 if(bsp_ref.clusters.empty())
