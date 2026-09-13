@@ -142,6 +142,7 @@ struct padded_tile_t
     Veci2                  offset{0, 0};
     Veci2                  size{0, 0};
     semantic::Span<const u8> data;
+    bool                   in_scratch{false};
 };
 
 /*! Wraps `data` -- a tile of `size` at mip `level`, placed at level-0 texel
@@ -206,6 +207,7 @@ inline padded_tile_t pad_tile(
         Veci2{plain.offset[0] - pad[0], plain.offset[1] - pad[1]},
         Veci2{dst_w * block_w, dst_h * block_h},
         semantic::Span<const u8>(scratch.data(), scratch.size()),
+        true,
     };
 }
 

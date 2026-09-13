@@ -32,9 +32,30 @@
 
 #include <coffee/core/task_queue/task.h>
 #include <future>
+#include <type_traits>
+#include <vector>
 #include <peripherals/stl/enumerate.h>
 
 namespace gleam {
+
+namespace detail {
+
+template<class T>
+struct is_owning_container : std::false_type
+{
+};
+
+template<class T, class A>
+struct is_owning_container<std::vector<T, A>> : std::true_type
+{
+};
+
+template<class T>
+constexpr bool is_owning_container_v =
+    is_owning_container<std::remove_cvref_t<T>>::value;
+
+} // namespace detail
+
 
 struct sampler_t;
 
@@ -84,6 +105,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
 
 #if defined(GLEAM_ENABLE_SOFTWARE_BCN) || defined(GLEAM_ENABLE_SOFTWARE_PVRTC)
     bool                   requires_software_decode();
+    bool                   software_decode_is_passthrough();
     std::optional<PixDesc> software_decode_format();
 
     std::future<std::vector<char>> software_decode(
@@ -114,6 +136,11 @@ struct texture_t : std::enable_shared_from_this<texture_t>
     }
 #else
     constexpr bool requires_software_decode()
+    {
+        return false;
+    }
+
+    constexpr bool software_decode_is_passthrough()
     {
         return false;
     }
@@ -380,7 +407,62 @@ struct texture_2d_t : texture_t
 {
     using texture_t::texture_t;
 
+    template<class VectorT, class SizeT>
+    std::optional<error> upload(
+        std::vector<libc_types::u8>&& data,
+        VectorT const&                offset,
+        SizeT const&                  size,
+        i32                           level = 0)
+    {
+        auto view = semantic::Span<const libc_types::u8>(data.data(), data.size());
+
+        if(!requires_software_decode())
+            return upload(view, offset, size, level);
+
+        auto [ifmt1, type, layout] = convert::to<group::internal_format>(
+            software_decode_format().value_or(m_format), m_features);
+        (void)ifmt1;
+
+        if(software_decode_is_passthrough())
+        {
+            cmd::bind_texture(group::texture_target::texture_2d, m_handle);
+            cmd::tex_sub_image_2d(
+                group::texture_target::texture_2d, level, offset, size, layout, type, data);
+            cmd::bind_texture(group::texture_target::texture_2d, 0);
+            return std::nullopt;
+        }
+
+        auto bits = software_decode_cast(view, size, level);
+        rq::runtime_queue::Queue(
+            rq::runtime_queue::GetCurrentQueue().value(),
+            rq::dependent_task<std::vector<char>, void>::CreateSink(
+                std::move(bits),
+                [this,
+                 offset,
+                 size,
+                 level,
+                 layout = layout,
+                 type   = type,
+                 owned  = std::move(data)](std::vector<char> const* bits) {
+                    cmd::bind_texture(
+                        group::texture_target::texture_2d, m_handle);
+                    cmd::tex_sub_image_2d(
+                        group::texture_target::texture_2d,
+                        level,
+                        offset,
+                        size,
+                        layout,
+                        type,
+                        *bits);
+                    cmd::bind_texture(group::texture_target::texture_2d, 0);
+                }))
+            .has_value();
+        return std::nullopt;
+    }
+
     template<class T, class VectorT, class SizeT>
+    requires(!detail::is_owning_container_v<T>)
+    //
     std::optional<error> upload(
         T const& data, VectorT const& offset, SizeT const& size, i32 level = 0)
     {
@@ -572,7 +654,63 @@ struct texture_2da_t : texture_t
 {
     using texture_t::texture_t;
 
+    template<class VectorT, class SizeT>
+    std::optional<error> upload(
+        std::vector<libc_types::u8>&& data,
+        VectorT const&                offset,
+        SizeT const&                  size,
+        i32                           level = 0)
+    {
+        auto view = semantic::Span<const libc_types::u8>(data.data(), data.size());
+
+        if(!requires_software_decode())
+            return upload(view, offset, size, level);
+
+        auto [ifmt1, type, layout] = convert::to<group::internal_format>(
+            software_decode_format().value_or(m_format), m_features);
+        (void)ifmt1;
+
+        if(software_decode_is_passthrough())
+        {
+            cmd::bind_texture(group::texture_target::texture_2d_array, m_handle);
+            cmd::tex_sub_image_3d(
+                group::texture_target::texture_2d_array, level, offset, size, layout, type, data);
+            cmd::bind_texture(group::texture_target::texture_2d_array, 0);
+            return std::nullopt;
+        }
+
+        auto bits = software_decode_cast(view, size, level);
+        rq::runtime_queue::Queue(
+            rq::runtime_queue::GetCurrentQueue().value(),
+            rq::dependent_task<std::vector<char>, void>::CreateSink(
+                std::move(bits),
+                [this,
+                 offset,
+                 size,
+                 level,
+                 layout = layout,
+                 type   = type,
+                 owned  = std::move(data)](std::vector<char> const* bits) {
+                    cmd::bind_texture(
+                        group::texture_target::texture_2d_array, m_handle);
+                    cmd::tex_sub_image_3d(
+                        group::texture_target::texture_2d_array,
+                        level,
+                        offset,
+                        size,
+                        layout,
+                        type,
+                        *bits);
+                    cmd::bind_texture(
+                        group::texture_target::texture_2d_array, 0);
+                }))
+            .has_value();
+        return std::nullopt;
+    }
+
     template<class T, class VectorT, class SizeT>
+    requires(!detail::is_owning_container_v<T>)
+    //
     std::optional<error> upload(
         T const& data, VectorT const& offset, SizeT const& size, i32 level = 0)
     {
@@ -663,6 +801,8 @@ struct texture_3d_t : texture_t
     using texture_t::texture_t;
 
     template<class T, class VectorT, class SizeT>
+    requires(!detail::is_owning_container_v<T>)
+    //
     std::optional<error> upload(
         T const& data, VectorT const& offset, SizeT const& size, i32 level = 0)
     {

@@ -92,6 +92,8 @@ struct texture_2da_t : texture_array_base_t
     }
 
     template<class T, class VectorT, class SizeT>
+    requires(!detail::is_owning_container_v<T>)
+    //
     void upload(
         T const& data, VectorT const& offset, SizeT const& size, u32 level = 0)
     {
@@ -133,6 +135,53 @@ struct texture_2da_t : texture_array_base_t
         }
         m_textures.at(offset[2])->upload(
             data,
+            typing::vector_types::Veci2{offset[0], offset[1]},
+            size_2d<i32>{size[0], size[1]},
+            level);
+    }
+
+    template<class VectorT, class SizeT>
+    void upload(
+        std::vector<libc_types::u8>&& data,
+        VectorT const&                offset,
+        SizeT const&                  size,
+        u32                           level = 0)
+    {
+#if GLEAM_MAX_VERSION_ES != 0x200
+        if(!m_compat_active)
+        {
+            texture_array_base_t::upload(
+                std::move(data), offset, size, level);
+            return;
+        }
+#endif
+        if(size[2] > 1)
+            Throw(
+                std::out_of_range(
+                    "compat::texture_2da_t: does not support multi-layer "
+                    "uploads"));
+        if(offset[2] >= static_cast<i32>(m_textures.size()))
+            Throw(
+                std::out_of_range(
+                    "compat::texture_2da_t: offset out of range"));
+        if(enum_helpers::feval(m_hints, texture_usage_hint_t::sparse_atlas))
+        {
+            u32 layer = static_cast<u32>(offset[2]);
+            if(layer >= m_page_allocated.size())
+                m_page_allocated.resize(layer + 1, false);
+            if(!m_page_allocated[layer])
+            {
+                m_textures.at(layer)->alloc(
+                    size_3d<u32>{
+                        static_cast<u32>(size[0]),
+                        static_cast<u32>(size[1]),
+                        1u},
+                    true);
+                m_page_allocated[layer] = true;
+            }
+        }
+        m_textures.at(offset[2])->upload(
+            std::move(data),
             typing::vector_types::Veci2{offset[0], offset[1]},
             size_2d<i32>{size[0], size[1]},
             level);
