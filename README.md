@@ -10,7 +10,7 @@ Game engine with platform support for Linux, OS X, Windows, Android and web
  - Ports:
    - Linux
      - ARMv7a, ARM64, x86\_64
-     - Compiles using GCC 15+ across platforms, not distro compiler
+     - Compiles using GCC 16 across platforms, not distro compiler
      - X11 and Wayland support with SDL3
      - Plain EGL for SBCs
      - Tested on NVIDIA and Intel GPUs
