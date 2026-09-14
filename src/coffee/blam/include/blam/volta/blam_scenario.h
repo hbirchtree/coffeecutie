@@ -15,6 +15,7 @@
 #include "blam_vertex.h"
 #include "hsc/blam_bytecode.h"
 #include "peripherals/enum/helpers.h"
+#include "peripherals/typing/vectors/glm_vector_types.h"
 
 #include <cstddef>
 #include <peripherals/stl/range.h>
@@ -121,15 +122,45 @@ struct object
     } export_;
 };
 
+template<typename T>
+struct palette_ptr
+{
+    // Within a reflex_group<T>, points from instance to palette
+    i16 index;
+
+    operator i16() const
+    {
+        return index;
+    }
+};
+
+template<typename T>
+struct scenario_ptr
+{
+    // Within any scenario data, points to a scenario list
+    i16 index;
+
+    operator i16() const
+    {
+        return index;
+    }
+};
+
+struct object_name
+{
+    bl_string name;
+    u32       unknown;
+};
+
 struct item : object
 {
     struct attachment_t
     {
-        tagref_t type;
-        i16      marker;
-        u32      primary_scale;
-        u32      second_scale;
-        u32      change_color;
+        tagref_t                      type;
+        mod2::model_ptr<mod2::marker> marker; // pointing into model markers
+        u32                           primary_scale;
+        u32                           second_scale;
+        u32                           change_color;
     };
 
     reference<attachment_t> attachments;
@@ -203,14 +234,14 @@ struct alignas(4) object_spawn
         none = 0x0,
     };
 
-    i16         ref;
-    i16         name;
-    spawn_flags flags;
-    u16         desired_permutation;
-    Vecf3       pos;
-    Vecf3       rot;
-    bsp_flags_t bsp_flags;
-    u16         padding;
+    palette_ptr<tagref_t>     ref;
+    scenario_ptr<object_name> name;
+    spawn_flags               flags;
+    u16                       desired_permutation; // model permutation
+    Vecf3                     pos;
+    Vecf3                     rot;
+    bsp_flags_t               bsp_flags;
+    u16                       padding;
 };
 
 C_FLAGS(object_spawn::spawn_flags, u16)
@@ -244,10 +275,6 @@ struct vehicle_spawn : object_spawn
         none = 0x0,
         dead = 0x1,
     };
-
-    f32           vitality;
-    biped_flags_t biped_flags;
-    u16           team_index;
     enum multiplayer_spawn_flags_t : u16
     {
         none_spawn      = 0x0,
@@ -267,8 +294,13 @@ struct vehicle_spawn : object_spawn
         unused_6        = 0x2000,
         unused_7        = 0x4000,
         unused_8        = 0x8000,
-    } spawn_flags;
-    u32           padding2[9];
+    };
+
+    f32                       vitality;
+    biped_flags_t             biped_flags;
+    u16                       team_index;
+    multiplayer_spawn_flags_t spawn_flags;
+    u32                       padding2[9];
 };
 
 C_FLAGS(vehicle_spawn::biped_flags_t, u16)
@@ -308,6 +340,22 @@ struct weapon_spawn : object_spawn
 
 static_assert(sizeof(weapon_spawn) == 92);
 
+struct device_group
+{
+    enum class device_group_flags : u32
+    {
+        none         = 0x0,
+        changes_once = 0x1,
+    };
+
+    bl_string          name;
+    f32                initial_value;
+    device_group_flags flags;
+    u32                unk[3];
+};
+
+C_FLAGS(device_group::device_group_flags, u16);
+
 enum class machine_spawn_flags : u16
 {
     none              = 0x0,
@@ -318,35 +366,55 @@ enum class machine_spawn_flags : u16
     not_usable        = 0x10,
 };
 
-struct device_machine_spawn : object_spawn
+struct machine_spawn : object_spawn
 {
     enum class machine_spawn_flags2 : u16
     {
-        none                 = 0x0,
-        one_sided            = 0x1,
-        never_appears_locked = 0x2,
-        opened_by_melee      = 0x4,
+        none                           = 0x0,
+        does_not_operate_automatically = 0x1,
+        one_sided                      = 0x2,
+        never_appears_locked           = 0x4,
+        opened_by_melee                = 0x8,
     };
 
-    i16                  power_group;
-    i16                  position_group;
-    machine_spawn_flags  internal_flags;
-    machine_spawn_flags2 device_flags;
+    scenario_ptr<device_group> power_group;
+    scenario_ptr<device_group> position_group;
+    machine_spawn_flags        machine_flags;
+    machine_spawn_flags2       device_flags;
 
     u32 padding[5];
 };
 
-static_assert(sizeof(device_machine_spawn) == 64);
+C_FLAGS(machine_spawn_flags, u16);
+C_FLAGS(machine_spawn::machine_spawn_flags2, u16);
+static_assert(sizeof(machine_spawn) == 64);
+
+struct control : object_spawn
+{
+    enum class control_flags_t : u16
+    {
+        none                   = 0x0,
+        usable_from_both_sides = 0x1,
+    };
+    scenario_ptr<device_group> power_group;
+    scenario_ptr<device_group> position_group;
+    machine_spawn_flags        machine_flags;
+    control_flags_t            control_flags;
+    u32 padding[5];
+};
+
+C_FLAGS(control::control_flags_t, u16);
+static_assert(sizeof(control) == 64);
 
 struct light_fixture_spawn : object_spawn
 {
-    i16                 power_group;
-    i16                 position_group;
-    machine_spawn_flags flags;
-    Vecf3               color;
-    f32                 intensity;
-    f32                 falloff_angle;
-    f32                 cutoff_angle;
+    scenario_ptr<device_group> power_group;
+    scenario_ptr<device_group> position_group;
+    machine_spawn_flags        machine_flags;
+    Vecf3                      color;
+    f32                        intensity;
+    f32                        falloff_angle;
+    f32                        cutoff_angle;
 
     u32 padding[5];
 };
@@ -381,14 +449,12 @@ struct device_machine : object
 {
 };
 
-struct sound_scenery
+struct sound_scenery : object_spawn
 {
-    i16   SoundType;
-    i16   unk2;
-    u32   unk3;
-    Vecf3 pos;
-    u32   unk4[5];
+    u32 padding[1];
 };
+
+static_assert(sizeof(sound_scenery) == 40);
 
 struct player_starting_location
 {
@@ -485,22 +551,6 @@ struct player_starting_profile
 
 static_assert(sizeof(player_starting_profile) == 104);
 
-struct device_group
-{
-    enum class device_group_flags : u32
-    {
-        none         = 0x0,
-        changes_once = 0x1,
-    };
-
-    bl_string          name;
-    f32                initial_value;
-    device_group_flags flags;
-    u32                unk[3];
-};
-
-C_FLAGS(device_group::device_group_flags, u16);
-
 /* "Structure BSP switch trigger volume": while `source` is the active
  * structure BSP and the player enters `trigger_volume`, the engine makes
  * `destination` the active BSP. Decoded from b40.map, where the referenced
@@ -523,12 +573,6 @@ struct move_positions
     byte_t    unk2[4];
     u32       offset;
     u32       unk[5];
-};
-
-struct object_name
-{
-    bl_string name;
-    u32       unknown;
 };
 
 struct editor_comment
@@ -1297,25 +1341,6 @@ struct starting_equip
     byte_t                  padding3[45];
 };
 
-struct control : object_spawn
-{
-    u32 padding[7];
-};
-
-static_assert(sizeof(control) == 64);
-
-struct light_fixture
-{
-    bl_rgba_t ambient;
-    byte_t    unk1[4];
-    Vecf3     pos;
-    byte_t    unk2[12];
-    bl_rgba_t specular;
-    i32       zero1;
-    bl_rgba_t color;
-    byte_t    unk3[40];
-};
-
 struct cutscene_flag
 {
     u32       garbage;
@@ -1430,17 +1455,17 @@ struct scenario
 
     struct objects_t /* 324-byte block, object spawns */
     {
-        reference<object_name>             object_names;
-        reflex_group<scenery_spawn>        scenery;
-        reflex_group<biped_spawn>          bipeds;
-        reflex_group<vehicle_spawn>        vehicles;
-        reflex_group<equip_spawn>          equips;
-        reflex_group<weapon_spawn>         weapon_spawns;
-        reference<device_group>            device_groups;
-        reflex_group<device_machine_spawn> machines;
-        reflex_group<control>              controls;
-        reflex_group<light_fixture_spawn>  light_fixtures;
-        reflex_group<sound_scenery>        snd_scenery;
+        reference<object_name>            object_names;
+        reflex_group<scenery_spawn>       scenery;
+        reflex_group<biped_spawn>         bipeds;
+        reflex_group<vehicle_spawn>       vehicles;
+        reflex_group<equip_spawn>         equips;
+        reflex_group<weapon_spawn>        weapon_spawns;
+        reference<device_group>           device_groups;
+        reflex_group<machine_spawn>       machines;
+        reflex_group<control>             controls;
+        reflex_group<light_fixture_spawn> light_fixtures;
+        reflex_group<sound_scenery>       snd_scenery;
 
         u32 padding3[21];
     } objects;

@@ -32,6 +32,14 @@ template<typename Version>
 struct geometry_header;
 struct part;
 
+template<typename T>
+struct model_ptr
+{
+    i16 index;
+};
+
+static_assert(sizeof(model_ptr<void>) == 2);
+
 /*!
  * \brief Not part of blam per se, but a wrapper to simplify the mod2 structures
  */

@@ -1332,27 +1332,190 @@ void dump_scenario(blam::map_container<Ver> const& map)
             obj_names[i] = name.name.str();
         }
     fmt::print("scenery: {}\n", s->objects.scenery.instances.count);
+    if(auto objects = s->objects.scenery.instances.data(map.magic); objects.has_value())
+    {
+        auto palette = s->objects.scenery.palette.data(map.magic).value();
+        for(blam::scn::scenery_spawn const& obj : objects.value())
+        {
+            fmt::print("  scenery_spawn: obj_name={}\n",
+                obj_names[obj.name]);
+            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
+                palette[obj.ref][0].tag_class_name(),
+                palette[obj.ref][0].name.to_string(map.magic),
+                obj.desired_permutation);
+            fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
+            fmt::print("    bsp_flags={:#x} spawn_flags={}\n",
+                static_cast<u16>(obj.bsp_flags),
+                flags_to_string(obj.flags));
+        }
+    }
     fmt::print("bipeds: {}\n", s->objects.bipeds.instances.count);
     if(auto bipeds = s->objects.bipeds.instances.data(map.magic); bipeds.has_value())
+    {
+        auto palette = s->objects.bipeds.palette.data(map.magic).value();
         for(blam::scn::biped_spawn const& biped : bipeds.value())
         {
-            fmt::print("  biped_spawn: obj_name={} palette={} permutation={}\n",
-                obj_names[biped.name],
-                biped.ref,
+            fmt::print("  biped_spawn: obj_name={}\n",
+                obj_names[biped.name]);
+            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
+                palette[biped.ref][0].tag_class_name(),
+                palette[biped.ref][0].name.to_string(map.magic),
                 biped.desired_permutation);
             fmt::print("    pos={} rot={}\n", biped.pos, biped.rot);
-            fmt::print("    bsp_flags={:#x} spawn_flags={}\n",
+            fmt::print("    bsp_flags={:#x} spawn_flags={} biped flags={}\n",
                 static_cast<u16>(biped.bsp_flags),
-                flags_to_string(biped.flags));
+                flags_to_string(biped.flags),
+                flags_to_string(biped.biped_flags));
         }
+    }
     fmt::print("vehicles: {}\n", s->objects.vehicles.instances.count);
+    if(auto objects = s->objects.vehicles.instances.data(map.magic); objects.has_value())
+    {
+        auto palette = s->objects.vehicles.palette.data(map.magic).value();
+        for(blam::scn::vehicle_spawn const& obj : objects.value())
+        {
+            fmt::print("  vehicle_spawn: obj_name={}\n",
+                obj_names[obj.name]);
+            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
+                palette[obj.ref][0].tag_class_name(),
+                palette[obj.ref][0].name.to_string(map.magic),
+                obj.desired_permutation);
+            fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
+            fmt::print("    bsp_flags={:#x} spawn_flags={}\n",
+                static_cast<u16>(obj.bsp_flags),
+                flags_to_string(obj.flags));
+        }
+    }
     fmt::print("equips: {}\n", s->objects.equips.instances.count);
+    if(auto objects = s->objects.equips.instances.data(map.magic); objects.has_value())
+    {
+        auto palette = s->objects.equips.palette.data(map.magic).value();
+        for(blam::scn::equip_spawn const& obj : objects.value())
+        {
+            fmt::print("  equip_spawn: obj_name={}\n",
+                obj_names[obj.name]);
+            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
+                palette[obj.ref][0].tag_class_name(),
+                palette[obj.ref][0].name.to_string(map.magic),
+                obj.desired_permutation);
+            fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
+            fmt::print("    bsp_flags={:#x} spawn_flags={}\n",
+                static_cast<u16>(obj.bsp_flags),
+                flags_to_string(obj.flags));
+        }
+    }
     fmt::print("weapon spawns: {}\n", s->objects.weapon_spawns.instances.count);
+    if(auto objects = s->objects.weapon_spawns.instances.data(map.magic); objects.has_value())
+    {
+        auto palette = s->objects.weapon_spawns.palette.data(map.magic).value();
+        for(blam::scn::weapon_spawn const& obj : objects.value())
+        {
+            fmt::print("  weapon_spawn: obj_name={}\n",
+                obj_names[obj.name]);
+            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
+                palette[obj.ref][0].tag_class_name(),
+                palette[obj.ref][0].name.to_string(map.magic),
+                obj.desired_permutation);
+            fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
+            fmt::print("    bsp_flags={:#x} spawn_flags={}\n",
+                static_cast<u16>(obj.bsp_flags),
+                flags_to_string(obj.flags));
+        }
+    }
     fmt::print("device groups: {}\n", s->objects.device_groups.count);
+    if(auto groups = s->objects.device_groups.data(map.magic); groups.has_value())
+        for(blam::scn::device_group const& group : groups.value())
+        {
+            fmt::print("  device_group: \n");
+        }
     fmt::print("machines: {}\n", s->objects.machines.instances.count);
+    if(auto objects = s->objects.machines.instances.data(map.magic); objects.has_value())
+    {
+        auto palette = s->objects.machines.palette.data(map.magic).value();
+        for(blam::scn::machine_spawn const& obj : objects.value())
+        {
+            fmt::print("  machine_spawn: obj_name={}\n",
+                obj_names[obj.name]);
+            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
+                palette[obj.ref][0].tag_class_name(),
+                palette[obj.ref][0].name.to_string(map.magic),
+                obj.desired_permutation);
+            fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
+            fmt::print("    bsp_flags={:#x} spawn_flags={} machine_flags={} flags2={}\n",
+                static_cast<u16>(obj.bsp_flags),
+                flags_to_string(obj.flags),
+                flags_to_string(obj.machine_flags),
+                flags_to_string(obj.device_flags));
+        }
+    }
     fmt::print("controls: {}\n", s->objects.controls.instances.count);
+    if(auto objects = s->objects.controls.instances.data(map.magic); objects.has_value())
+    {
+        auto palette = s->objects.controls.palette.data(map.magic).value();
+        for(blam::scn::control const& obj : objects.value())
+        {
+            fmt::print("  control_spawn: obj_name={}\n",
+                obj_names[obj.name]);
+            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
+                palette[obj.ref][0].tag_class_name(),
+                palette[obj.ref][0].name.to_string(map.magic),
+                obj.desired_permutation);
+            fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
+            fmt::print("    power_group={} position_group={}\n",
+                obj.power_group.index,
+                obj.position_group.index);
+            fmt::print("    bsp_flags={:#x} spawn_flags={} machine_flags={} flags2={}\n",
+                static_cast<u16>(obj.bsp_flags),
+                flags_to_string(obj.flags),
+                flags_to_string(obj.machine_flags),
+                flags_to_string(obj.control_flags));
+        }
+    }
     fmt::print("light fixtures: {}\n", s->objects.light_fixtures.instances.count);
+    if(auto objects = s->objects.light_fixtures.instances.data(map.magic); objects.has_value())
+    {
+        auto palette = s->objects.light_fixtures.palette.data(map.magic).value();
+        for(blam::scn::light_fixture_spawn const& obj : objects.value())
+        {
+            fmt::print("  light_fixture_spawn: obj_name={}\n",
+                obj_names[obj.name]);
+            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
+                palette[obj.ref][0].tag_class_name(),
+                palette[obj.ref][0].name.to_string(map.magic),
+                obj.desired_permutation);
+            fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
+            fmt::print("    power_group={} position_group={}\n",
+                obj.power_group.index,
+                obj.position_group.index);
+            fmt::print("    bsp_flags={:#x} spawn_flags={} machine_flags={}\n",
+                static_cast<u16>(obj.bsp_flags),
+                flags_to_string(obj.flags),
+                flags_to_string(obj.machine_flags));
+            fmt::print("    color={} intensity={} falloff_angle={} cutoff_angle={}\n",
+                obj.color,
+                obj.intensity,
+                obj.falloff_angle,
+                obj.cutoff_angle);
+        }
+    }
     fmt::print("sound scenery: {}\n", s->objects.snd_scenery.instances.count);
+    if(auto objects = s->objects.snd_scenery.instances.data(map.magic); objects.has_value())
+    {
+        auto palette = s->objects.snd_scenery.palette.data(map.magic).value();
+        for(blam::scn::sound_scenery const& obj : objects.value())
+        {
+            fmt::print("  sound_scenery: obj_name={}\n",
+                obj_names[obj.name]);
+            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
+                palette[obj.ref][0].tag_class_name(),
+                palette[obj.ref][0].name.to_string(map.magic),
+                obj.desired_permutation);
+            fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
+            fmt::print("    bsp_flags={:#x} spawn_flags={}\n",
+                static_cast<u16>(obj.bsp_flags),
+                flags_to_string(obj.flags));
+        }
+    }
 
     if(auto p = s->player_start.profiles.data(g_magic); p.has_value())
     {
@@ -1399,7 +1562,7 @@ void dump_scenario(blam::map_container<Ver> const& map)
     fmt::print("trigger volumes: {}\n", s->trigger_volumes.count);
     if(auto vols = s->trigger_volumes.data(map.magic); vols.has_value())
         for(blam::scn::trigger_volume const& vol : vols.value())
-            fmt::print("  trigger volume \"{}\"\n    pos={} extents={}\n",
+            fmt::print("  trigger volume \"{:<32}\"\n    pos={} extents={}\n",
                 vol.name.str(),
                 vol.position,
                 vol.extents);
@@ -1407,7 +1570,7 @@ void dump_scenario(blam::map_container<Ver> const& map)
     fmt::print("recorded animations: {}\n", s->recorded_animations.count);
     if(auto anims = s->recorded_animations.data(map.magic); anims.has_value())
         for(blam::scn::recorded_animation const& rec : anims.value())
-            fmt::print("  recorded \"{}\" version={}\n", rec.name.str(), rec.unit_control_data_version);
+            fmt::print("  recorded \"{:<32}\" version={}\n", rec.name.str(), rec.unit_control_data_version);
 
     if(auto f = s->netgame.flags.data(g_magic); f.has_value())
     {
