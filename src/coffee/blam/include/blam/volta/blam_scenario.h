@@ -14,6 +14,7 @@
 #include "blam_tag_index.h"
 #include "blam_vertex.h"
 #include "hsc/blam_bytecode.h"
+#include "peripherals/enum/helpers.h"
 
 #include <cstddef>
 #include <peripherals/stl/range.h>
@@ -212,6 +213,9 @@ struct alignas(4) object_spawn
     u16         padding;
 };
 
+C_FLAGS(object_spawn::spawn_flags, u16)
+C_FLAGS(object_spawn::bsp_flags_t, u16)
+
 struct biped_spawn : object_spawn
 {
     u32 padding[9];
@@ -226,6 +230,7 @@ struct biped_spawn : object_spawn
     biped_flags_t biped_flags;
     u32           padding2[10];
 };
+C_FLAGS(biped_spawn::biped_flags_t, u16)
 
 static_assert(sizeof(biped_spawn) == 120);
 
@@ -266,6 +271,9 @@ struct vehicle_spawn : object_spawn
     u32           padding2[9];
 };
 
+C_FLAGS(vehicle_spawn::biped_flags_t, u16)
+C_FLAGS(vehicle_spawn::multiplayer_spawn_flags_t, u16)
+
 static_assert(sizeof(vehicle_spawn) == 120);
 
 struct equip_spawn : object_spawn
@@ -281,6 +289,8 @@ struct equip_spawn : object_spawn
     equip_flags_t equip_flags;
     u16           padding;
 };
+
+C_FLAGS(equip_spawn::equip_flags_t, u16)
 
 static_assert(sizeof(equip_spawn) == 40);
 
@@ -394,13 +404,28 @@ static_assert(sizeof(player_starting_location) == 52);
 
 struct multiplayer_flag
 {
-    Vecf3  pos;
-    f32    yaw;
-    u16    index1;
-    u16    index2;
-    bl_tag tag;
-    u32    unk2[31];
+    enum flag_type_t : u16
+    {
+       ctf_flag, 
+       ctf_vehicle,
+       oddball_spawn,
+       race_track,
+       race_vehicle,
+       vegas_bank,
+       teleport_from,
+       teleport_to,
+       hill_flag,
+    };
+
+    Vecf3       pos;
+    f32         yaw;
+    flag_type_t type;
+    u16         team_index;
+    tagref_t    weapon_group; // this might be yet another misnomer?
+    u32         unk2[28];
 };
+
+static_assert(sizeof(multiplayer_flag) == 148);
 
 struct item_permutation
 {
@@ -428,7 +453,7 @@ struct multiplayer_equipment
     gamemode_t types[4];
 
     u32 team_idx;
-    u32 spawn_time;
+    u32 spawn_time; // in seconds, 0 = default
 
     u32 padding[11];
 
@@ -437,6 +462,8 @@ struct multiplayer_equipment
     tagref_t item;
     u32      unk3[12];
 };
+
+C_FLAGS(multiplayer_equipment::equipment_flag, u16);
 
 struct player_starting_profile
 {
@@ -471,6 +498,8 @@ struct device_group
     device_group_flags flags;
     u32                unk[3];
 };
+
+C_FLAGS(device_group::device_group_flags, u16);
 
 /* "Structure BSP switch trigger volume": while `source` is the active
  * structure BSP and the player enters `trigger_volume`, the engine makes

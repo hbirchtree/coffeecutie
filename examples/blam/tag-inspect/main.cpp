@@ -2,6 +2,7 @@
  * answered from the tag instead of from the rendered frame. */
 
 #include "blam/volta/blam_antr.h"
+#include "blam/volta/blam_recorded_animation.h"
 #include "blam/volta/blam_tag_classes.h"
 #include "blam/volta/blam_tag_ref.h"
 #include "peripherals/stl/enumerate.h"
@@ -34,6 +35,10 @@
 #include <peripherals/libc/types.h>
 #include <url/url.h>
 #include <vector>
+
+#if defined(__cpp_lib_reflection) && defined(__cpp_impl_reflection) && !defined(__clang_analyzer__)
+#include <meta>
+#endif
 
 #define BCDEC_IMPLEMENTATION
 #define BCDEC_STATIC
@@ -101,6 +106,33 @@ std::string_view enum_name(E value)
     auto name = magic_enum::enum_name(value);
     return name.empty() ? sv("?") : name;
 }
+
+#if defined(__cpp_lib_reflection) && defined(__cpp_impl_reflection) && !defined(__clang_analyzer__)
+template<typename E>
+std::string flags_to_string(E flags)
+{
+    std::string out;
+    template for(constexpr auto val : std::define_static_array(std::meta::enumerators_of(^^E)))
+    {
+        if((flags & [:val:]) != static_cast<E>(0))
+        {
+            out.append(std::meta::identifier_of(val));
+            out.append(" |");
+        }
+    }
+    if(out.empty())
+        out = "none";
+    else
+        out.resize(out.size() - 2);
+    return fmt::format("[{}]", out);
+}
+#else
+template<typename E>
+std::string flags_to_string(E flags)
+{
+    return {};
+}
+#endif
 
 /* Enums are stored as flag words as often as they are stored as values;
  * print the number either way so an unnamed bit is still visible. */
@@ -1240,7 +1272,7 @@ void dump_mode(blam::mod2::header<Ver> const* info)
 /* The scenario never names the globals tag; it supplies where a player spawns
  * and with what, while globals supplies the unit itself. Printed together so
  * the split is visible. */
-template<typename Ver>
+template<typename Ver = blam::xbox_version_t>
 void dump_scenario(blam::map_container<Ver> const& map)
 {
     auto scn = map.scenario();
@@ -1257,34 +1289,70 @@ void dump_scenario(blam::map_container<Ver> const& map)
 
     fmt::print("skyboxes: {}\n", s->info.skyboxes.count);
     if(auto skyboxes = s->info.skyboxes.data(map.magic); skyboxes.has_value())
-    {
         for(blam::scn::skybox_ref const& skybox : skyboxes.value())
         {
             fmt::print("  [{}] {}\n",
                 skybox.tag_class_name(),
                 skybox.name.to_string(map.magic));
         }
-    }
 
     // Guerilla calls this child scenarios too
     // They're marked with scnr but the tags point to globals\\globals on a lot of maps??
     // Obviously a misnomer of some sort
     fmt::print("child scenarios: {}\n", s->info.child_scenarios.count);
     if(auto child_scen = s->info.child_scenarios.data(map.magic); child_scen.has_value())
-    {
         for(blam::tagref_t const& scenario : child_scen.value())
         {
             fmt::print("  [{}] {}\n",
                 scenario.tag_class_name(),
                 scenario.name.to_string(map.magic));
         }
-    }
 
     fmt::print("local north: {}\n", s->info.local_north);
 
     fmt::print("predicted resource: {}\n", s->info.predicted_resource.count);
 
     fmt::print("functions: {}\n", s->info.functions.count);
+
+    fmt::print("editor comments: {}\n", s->editor.comments.count);
+    // TODO: Incorrect data here
+    // if(auto comments = s->editor.comments.data(map.magic); comments.has_value())
+    //     for(blam::scn::editor_comment const& comment : comments.value())
+    //     {
+    //         fmt::print("  comment: pos={} \"{}\"\n", comment.position, comment.comment.str());
+    //     }
+
+    fmt::print("object names: {}\n", s->objects.object_names.count);
+    std::map<u16, std::string_view> obj_names;
+    obj_names[-1] = "[undefined]";
+    if(auto names = s->objects.object_names.data(map.magic); names.has_value())
+        for(auto const& [i, name] : stl_types::enumerate(names.value()))
+        {
+            fmt::print("  object_name: \"{}\"\n", name.name.str());
+            obj_names[i] = name.name.str();
+        }
+    fmt::print("scenery: {}\n", s->objects.scenery.instances.count);
+    fmt::print("bipeds: {}\n", s->objects.bipeds.instances.count);
+    if(auto bipeds = s->objects.bipeds.instances.data(map.magic); bipeds.has_value())
+        for(blam::scn::biped_spawn const& biped : bipeds.value())
+        {
+            fmt::print("  biped_spawn: obj_name={} palette={} permutation={}\n",
+                obj_names[biped.name],
+                biped.ref,
+                biped.desired_permutation);
+            fmt::print("    pos={} rot={}\n", biped.pos, biped.rot);
+            fmt::print("    bsp_flags={:#x} spawn_flags={}\n",
+                static_cast<u16>(biped.bsp_flags),
+                flags_to_string(biped.flags));
+        }
+    fmt::print("vehicles: {}\n", s->objects.vehicles.instances.count);
+    fmt::print("equips: {}\n", s->objects.equips.instances.count);
+    fmt::print("weapon spawns: {}\n", s->objects.weapon_spawns.instances.count);
+    fmt::print("device groups: {}\n", s->objects.device_groups.count);
+    fmt::print("machines: {}\n", s->objects.machines.instances.count);
+    fmt::print("controls: {}\n", s->objects.controls.instances.count);
+    fmt::print("light fixtures: {}\n", s->objects.light_fixtures.instances.count);
+    fmt::print("sound scenery: {}\n", s->objects.snd_scenery.instances.count);
 
     if(auto p = s->player_start.profiles.data(g_magic); p.has_value())
     {
@@ -1328,10 +1396,45 @@ void dump_scenario(blam::map_container<Ver> const& map)
         }
     }
 
+    fmt::print("trigger volumes: {}\n", s->trigger_volumes.count);
+    if(auto vols = s->trigger_volumes.data(map.magic); vols.has_value())
+        for(blam::scn::trigger_volume const& vol : vols.value())
+            fmt::print("  trigger volume \"{}\"\n    pos={} extents={}\n",
+                vol.name.str(),
+                vol.position,
+                vol.extents);
+    
+    fmt::print("recorded animations: {}\n", s->recorded_animations.count);
+    if(auto anims = s->recorded_animations.data(map.magic); anims.has_value())
+        for(blam::scn::recorded_animation const& rec : anims.value())
+            fmt::print("  recorded \"{}\" version={}\n", rec.name.str(), rec.unit_control_data_version);
+
     if(auto f = s->netgame.flags.data(g_magic); f.has_value())
+    {
         fmt::print("netgame flags: {}\n", f.value().size());
+        for(blam::scn::multiplayer_flag const& flag : f.value())
+        {
+            fmt::print("  flag type={} team={} pos={}\n",
+                magic_enum::enum_name(flag.type),
+                flag.team_index,
+                flag.pos);
+        }
+    }
     if(auto e = s->netgame.equipment.data(g_magic); e.has_value())
+    {
         fmt::print("netgame equipment: {}\n", e.value().size());
+        for(blam::scn::multiplayer_equipment const& eq : e.value())
+        {
+            fmt::print("  equipment [{}] \"{}\" team={} pos={} spawn_time={} flags={}\n",
+                eq.item.tag_class_name(),
+                eq.item.name.to_string(map.magic),
+                eq.team_idx,
+                eq.pos,
+                eq.spawn_time,
+                flags_to_string(eq.flags));
+        }
+    }
+
     if(auto q = s->starting_equipment.data(g_magic); q.has_value())
         fmt::print("starting_equipment: {}\n", q.value().size());
 }
