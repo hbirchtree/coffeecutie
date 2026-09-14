@@ -147,9 +147,6 @@ struct LoadingScreen
     std::shared_ptr<gfx::buffer_t>       quad_vbo;
     std::shared_ptr<gfx::vertex_array_t> quad_vao;
     std::shared_ptr<gfx::program_t>      loading_program;
-    std::shared_ptr<gfx::program_t>      loading_bg_program;
-    std::shared_ptr<gfx::texture_2d_t>   loading_tex;
-    std::shared_ptr<gfx::sampler_t>      loading_sampler;
 
     std::shared_ptr<gfx::buffer_t>       loading_ebo;
     std::shared_ptr<gfx::buffer_t>       loading_vbo;
