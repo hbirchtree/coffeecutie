@@ -86,6 +86,11 @@ using draw_data_t = gfx::draw_command::data_t;
  * pass that turns out to hold only one family is submitted with a program
  * built for just that family. A mixed pass falls back to the combined one, so
  * draw order is never disturbed. */
+/* Matches `mat4 bones[256]` in fragments/scenery_common.glsl. Budget per
+ * bucket, not per frame: each bucket binds its own window. 256 mat4 is 16KB,
+ * the smallest GL_MAX_UNIFORM_BLOCK_SIZE ES3 or WebGL2 may report. */
+static constexpr u32 kBonesPerBucket = 256;
+
 enum MaterialClass : u8
 {
     MatClass_Base    = 0x1,
@@ -205,6 +210,24 @@ struct Pass
     /* Family per sortable draw, parallel to `sort_centers`. */
     std::vector<u8> sort_classes;
 
+    /* Whether each bucket carries skinned draws, parallel to `draws`, and the
+     * same per sortable draw. The two never share a bucket: only skinned
+     * draws spend window, so mixing them would split batches for nothing. */
+    std::vector<u8>  bucket_skinned;
+    std::vector<u8>  sort_skinned;
+    std::vector<u64> sort_parents;
+    std::vector<u32> sort_bones;
+
+    /* Slots spent in the newest bucket and which parents already paid there.
+     * Only that bucket is appended to, so one list suffices; bounded by the
+     * budget over the smallest skeleton. */
+    u32                              open_bones{0};
+    std::vector<std::pair<u64, u32>> open_owners;
+
+    /* Start of each bucket's bone window, in matrices, parallel to `draws`.
+     * A bone_base only means anything within its own bucket. */
+    std::vector<u32> bucket_bone_base;
+
     /* Collapse families that the current mode draws with the same program. */
     static u8 split_family(u8 cls)
     {
@@ -222,9 +245,23 @@ struct Pass
 
     /* Start a new bucket when the current one is full or holds another
      * family, and record the family of whichever bucket we land in. */
-    void open_bucket(u8 cls, size_t incoming)
+    /* What this draw adds to the open bucket: nothing if its parent already
+     * paid there. */
+    u32 bone_cost(bool skinned, u64 parent, u32 bones) const
+    {
+        if(!skinned || bones == 0)
+            return 0;
+        for(auto const& owner : open_owners)
+            if(owner.first == parent)
+                return 0;
+        return bones;
+    }
+
+    void open_bucket(
+        u8 cls, size_t incoming, bool skinned, u64 parent = 0, u32 bones = 0)
     {
         bucket_classes.resize(draws.size(), 0);
+        bucket_skinned.resize(draws.size(), 0);
         size_t num_draws = 0;
         for(auto const& d : draws.back())
             num_draws += d.instances.count;
@@ -234,12 +271,29 @@ struct Pass
         u8   effective    = split_family(cls);
         bool other_family = !draws.back().empty() &&
                             split_family(bucket_classes.back()) != effective;
-        if(full || other_family)
+        bool other_skin = !draws.back().empty() &&
+                          static_cast<bool>(bucket_skinned.back()) != skinned;
+        /* Only skinned buckets run out of window -- that is why the two are
+         * kept apart. */
+        u32  cost       = bone_cost(skinned, parent, bones);
+        bool bones_full = skinned && !draws.back().empty() &&
+                          open_bones + cost > kBonesPerBucket;
+        if(full || other_family || other_skin || bones_full)
         {
             draws.emplace_back();
             bucket_classes.push_back(0);
+            bucket_skinned.push_back(skinned ? 1 : 0);
+            open_bones = 0;
+            open_owners.clear();
+            cost = skinned ? bones : 0;
         }
         bucket_classes.back() |= cls;
+        bucket_skinned.back() = skinned ? 1 : 0;
+        if(cost)
+        {
+            open_owners.push_back({parent, open_bones});
+            open_bones += cost;
+        }
     }
 
     gfx::buffer_slice_t material_buffer;
@@ -280,9 +334,14 @@ struct Pass
     // Only populated for transparent passes; used for depth sorting.
     std::vector<Vecf3> sort_centers;
 
-    model_tracker_t insert_draw(draw_data_t const& draw, u8 cls)
+    model_tracker_t insert_draw(
+        draw_data_t const& draw,
+        u8                 cls,
+        bool               skinned = false,
+        u64                parent  = 0,
+        u32                bones   = 0)
     {
-        open_bucket(cls, draw.instances.count);
+        open_bucket(cls, draw.instances.count, skinned, parent, bones);
 
         auto& bucket_ = draws.back();
         auto  it      = std::find_if(
@@ -312,14 +371,22 @@ struct Pass
     // Transparent passes: one draw per item (no instancing), records
     // center.
     model_tracker_t insert_sortable(
-        draw_data_t draw, Vecf3 const& center, u8 cls)
+        draw_data_t  draw,
+        Vecf3 const& center,
+        u8           cls,
+        bool         skinned = false,
+        u64          parent  = 0,
+        u32          bones   = 0)
     {
         draw.instances.count = 1;
-        open_bucket(cls, 1);
+        open_bucket(cls, 1, skinned, parent, bones);
         auto& bucket_ = draws.back();
         bucket_.push_back(draw);
         sort_centers.push_back(center);
         sort_classes.push_back(cls);
+        sort_skinned.push_back(skinned ? 1 : 0);
+        sort_parents.push_back(parent);
+        sort_bones.push_back(bones);
         return model_tracker_t{
             .bucket   = static_cast<u16>(draws.size() - 1),
             .draw     = static_cast<u16>(bucket_.size() - 1),
@@ -335,8 +402,14 @@ struct Pass
         if(sort_centers.empty())
             return;
 
-        std::vector<
-            std::tuple<Vecf3, draw_data_t, std::shared_ptr<gfx::texture_t>, u8>>
+        std::vector<std::tuple<
+            Vecf3,
+            draw_data_t,
+            std::shared_ptr<gfx::texture_t>,
+            u8,
+            u8,
+            u64,
+            u32>>
             flat;
         flat.reserve(sort_centers.size());
         size_t ci = 0;
@@ -344,12 +417,18 @@ struct Pass
             for(size_t di = 0; di < draws[bi].size(); di++)
             {
                 auto const& cubes = reflections_for(bi);
-                u8 cls = ci < sort_classes.size() ? sort_classes[ci] : 0;
+                u8  cls  = ci < sort_classes.size() ? sort_classes[ci] : 0;
+                u8  skin = ci < sort_skinned.size() ? sort_skinned[ci] : 0;
+                u64 par  = ci < sort_parents.size() ? sort_parents[ci] : 0;
+                u32 bn   = ci < sort_bones.size() ? sort_bones[ci] : 0;
                 flat.push_back(
                     {sort_centers[ci++],
                      draws[bi][di],
                      di < cubes.size() ? cubes[di] : nullptr,
-                     cls});
+                     cls,
+                     skin,
+                     par,
+                     bn});
             }
 
         /* stable: parts at equal distance (e.g. all sky model parts,
@@ -368,30 +447,57 @@ struct Pass
         if(group_by_family)
             std::stable_sort(
                 flat.begin(), flat.end(), [](auto const& a, auto const& b) {
-                    return std::get<3>(a) < std::get<3>(b);
+                    /* Skinning splits buckets like a family does, and the
+                     * two alternate freely without this. */
+                    return std::tie(std::get<4>(a), std::get<3>(a)) <
+                           std::tie(std::get<4>(b), std::get<3>(b));
                 });
 
         draws.clear();
         draws.emplace_back();
         sort_centers.clear();
         sort_classes.clear();
+        sort_skinned.clear();
+        sort_parents.clear();
+        sort_bones.clear();
         bucket_classes.assign(1, 0);
+        bucket_skinned.assign(1, 0);
+        bucket_bone_base.clear();
+        open_bones = 0;
+        open_owners.clear();
         reflection_textures.clear();
-        for(auto& [c, d, cube, cls] : flat)
+        for(auto& [c, d, cube, cls, skin, par, bn] : flat)
         {
-            /* Break the bucket where the family changes; the sorted order is
+            /* Break on family, skinning or a spent window. Sorted order is
              * kept exactly, so this cannot alter blending. */
-            if(draws.back().size() >= 128 ||
+            u32  cost       = bone_cost(skin != 0, par, bn);
+            bool bones_full = skin && !draws.back().empty() &&
+                              open_bones + cost > kBonesPerBucket;
+            if(draws.back().size() >= 128 || bones_full ||
                (!draws.back().empty() &&
-                split_family(bucket_classes.back()) != split_family(cls)))
+                (split_family(bucket_classes.back()) != split_family(cls) ||
+                 bucket_skinned.back() != skin)))
             {
                 draws.emplace_back();
                 bucket_classes.push_back(0);
+                bucket_skinned.push_back(skin);
+                open_bones = 0;
+                open_owners.clear();
+                cost = skin ? bn : 0;
             }
             bucket_classes.back() |= cls;
+            bucket_skinned.back() = skin;
+            if(cost)
+            {
+                open_owners.push_back({par, open_bones});
+                open_bones += cost;
+            }
             draws.back().push_back(d);
             sort_centers.push_back(c);
             sort_classes.push_back(cls);
+            sort_skinned.push_back(skin);
+            sort_parents.push_back(par);
+            sort_bones.push_back(bn);
             if(cube)
                 set_reflection(
                     static_cast<u16>(draws.size() - 1),
@@ -407,6 +513,13 @@ struct Pass
         sort_centers.clear();
         sort_classes.clear();
         bucket_classes.assign(1, 0);
+        bucket_skinned.assign(1, 0);
+        sort_skinned.clear();
+        sort_parents.clear();
+        sort_bones.clear();
+        open_bones = 0;
+        open_owners.clear();
+        bucket_bone_base.clear();
         reflection_textures.clear();
         material_classes = 0;
     }
@@ -475,6 +588,7 @@ using DrawListBuilderManifest = compo::SubsystemManifest<
     type_list_t<
         DrawState,
         MeshTrackingData,
+        AnimationPlayback,
         const BspReference,
         const SubModel,
         const Model,
@@ -573,11 +687,39 @@ struct DrawListBuilder
         if(time - last_update <= std::chrono::seconds(10) && !invalidated)
             return;
 
-        f32 t = std::fmod(stl_types::chrono::to_f32(time), 3600.f);
+        /* Clocks move on once per frame; posing happens per viewport, and
+         * chaining to next_animation would double-step if it lived there.
+         * A hitch must not fling every animation forward, hence the clamp. */
         {
+            f32 delta = last_update.time_since_epoch().count() > 0
+                            ? stl_types::chrono::to_f32(time - last_update)
+                            : 0.f;
+            delta     = std::clamp(delta, 0.f, 0.25f);
+
             ModelCache<Version>* model_cache;
             p.subsystem(model_cache);
-            model_cache->tick_animations(t);
+            u32 playbacks = 0;
+            for(auto ent : p.template select<AnimationPlayback>())
+            {
+                auto& anim     = ent.template get<AnimationPlayback>();
+                anim.bone_base = kBoneUnposed;
+                playbacks++;
+                if(delta > 0.f)
+                    model_cache->advance_playback(anim, delta);
+            }
+            /* Last frame's figures. `denied` above zero means instances fell
+             * back to their bind pose for want of window. */
+            if(getenv("BLAM_ANIM_STATS"))
+                cDebug(
+                    "anim_stats: playbacks={} skinned={} blocks={} denied={} "
+                    "buckets={} bones={} cap={}/bucket",
+                    playbacks,
+                    m_bone_work.size(),
+                    m_posed_instances,
+                    m_denied_instances,
+                    m_bone_buckets,
+                    m_bone_upload.size(),
+                    kMaxBoneMatrices);
         }
 
         m_epoch++;
@@ -631,6 +773,10 @@ struct DrawListBuilder
                 bsp_build()[static_cast<Passes>(pi)].sort_by_depth(
                     m_views[vp].position, grouped);
             }
+
+            /* Buckets are final only now; the sort rebuilt the transparent
+             * ones. */
+            allocate_bones(p);
         }
         m_vp   = 0;
         m_seat = 0;
@@ -662,7 +808,17 @@ struct DrawListBuilder
     /* Splitscreen submits a different set per viewport: a player must not
      * pay for what only the other one can see. */
     static constexpr u32 kMaxViewports = 4;
-    using pass_set_t                   = std::array<Pass, Pass_Count>;
+
+    /* Instances past the budget fall back to their bind pose rather than read
+     * a bone slot that belongs to someone else. */
+    static constexpr u32 kMaxBoneMatrices = kBonesPerBucket;
+
+    /* Negative means "no skinning" to the shader. The two values separate
+     * "not looked at yet" from "asked and got nothing", so a parent's
+     * submodels settle it once between them. */
+    static constexpr i32 kBoneUnposed = -1;
+    static constexpr i32 kBoneDenied  = -2;
+    using pass_set_t                  = std::array<Pass, Pass_Count>;
 
     std::array<std::array<pass_set_t, kMaxViewports>, 2> m_bsp_sets;
     std::array<std::array<pass_set_t, kMaxViewports>, 2> m_model_sets;
@@ -723,6 +879,25 @@ struct DrawListBuilder
 
     /*! Bone matrices for the frame, uploaded by the renderer */
     std::vector<Matf4> m_bone_upload;
+    u32                m_posed_instances{0};
+
+    /* One entry per animated instance in a draw list, grouped by bucket
+     * before the windows are laid out. Members, so a frame allocates
+     * nothing once they have grown. */
+    struct bone_work_t
+    {
+        u16              pass;
+        u16              bucket;
+        u64              parent;
+        generation_idx_t model;
+        u32              instance;
+        u32              bones;
+    };
+
+    std::vector<bone_work_t>         m_bone_work;
+    std::vector<std::pair<u64, u32>> m_bone_owners;
+    u32                              m_denied_instances{0};
+    u32                              m_bone_buckets{0};
 
     std::vector<Matf4> const& bone_upload() const
     {
@@ -823,46 +998,87 @@ struct DrawListBuilder
         for(Pass& pass : model_build())
             pass.clear();
 
-        /* Model lives on the parent entity — resolve it through
+        /* Skinned and unskinned go in on separate sweeps: they interleave in
+         * entity order, and since the two never share a bucket, inserting
+         * them as they come would break one at every alternation.
+         *
+         * Model lives on the parent entity — resolve it through
          * SubModel::parent, it is never on the submodel entity itself */
-        for(auto ent :
-            p.template select<SubModel, DrawState, MeshTrackingData>())
-        {
-            auto&& [model, model_draw, track] = ent.components();
-            auto         parent = p.template ref<Proxy>(model.parent);
-            Model const& mod    = parent.template get<Model>();
-
-            if(!parent.template get<Visibility>().visible_for(m_seat) ||
-               (!rendering_params->render_scenery &&
-                (ent.tags() & ObjectSkybox) == 0))
+        for(int sweep = 0; sweep < 2; sweep++)
+            for(auto ent :
+                p.template select<SubModel, DrawState, MeshTrackingData>())
             {
-                track.model_id = {};
-                continue;
+                auto&& [model, model_draw, track] = ent.components();
+                auto         parent = p.template ref<Proxy>(model.parent);
+                Model const& mod    = parent.template get<Model>();
+
+                if(!parent.template get<Visibility>().visible_for(m_seat) ||
+                   (!rendering_params->render_scenery &&
+                    (ent.tags() & ObjectSkybox) == 0))
+                {
+                    if(sweep == 0)
+                        track.model_id = {};
+                    continue;
+                }
+
+                {
+                    /* Transparent goes in once, in entity order: its depth
+                     * sort is stable, so insertion order settles draws at
+                     * equal distance and resweeping would reorder them. */
+                    auto const* a =
+                        p.template get<AnimationPlayback>(model.parent);
+                    bool const is_skinned =
+                        a && a->animating() &&
+                        model_cache->bone_count(mod.model) > 0;
+                    if(model_draw.current_pass > Pass_LastOpaque)
+                    {
+                        if(sweep != 0)
+                            continue;
+                    } else if(is_skinned != (sweep == 1))
+                        continue;
+                }
+
+                Pass& wf            = model_build()[model_draw.current_pass];
+                wf.command.vertices = m_resources.model_attr;
+                wf.command.call     = {
+                        .indexed   = true,
+                        .instanced = true,
+                        .mode      = gfx::drawing::primitive::triangle_strip,
+                };
+                auto sh_it   = shader_cache.find(model.shader);
+                u8   mat_cls = sh_it != shader_cache.end()
+                                   ? material_class_of(sh_it->second.tag_class)
+                                   : MatClass_Base;
+                wf.material_classes |= mat_cls;
+
+                /* Own buckets for skinned draws, so the window only ever
+                 * splits batches that carry bones. */
+                auto const* anim =
+                    p.template get<AnimationPlayback>(model.parent);
+                u32 const  bones   = anim && anim->animating()
+                                         ? model_cache->bone_count(mod.model)
+                                         : 0;
+                bool const skinned = bones > 0;
+
+                if(model_draw.current_pass > Pass_LastOpaque)
+                {
+                    Vecf3 center   = Vecf3(mod.transform[3]);
+                    track.model_id = wf.insert_sortable(
+                        model_draw.draw.data.front(),
+                        center,
+                        mat_cls,
+                        skinned,
+                        model.parent,
+                        bones);
+                } else
+                    track.model_id = wf.insert_draw(
+                        model_draw.draw.data.front(),
+                        mat_cls,
+                        skinned,
+                        model.parent,
+                        bones);
+                track.model_id.epoch = m_epoch;
             }
-
-            Pass& wf            = model_build()[model_draw.current_pass];
-            wf.command.vertices = m_resources.model_attr;
-            wf.command.call     = {
-                    .indexed   = true,
-                    .instanced = true,
-                    .mode      = gfx::drawing::primitive::triangle_strip,
-            };
-            auto sh_it   = shader_cache.find(model.shader);
-            u8   mat_cls = sh_it != shader_cache.end()
-                               ? material_class_of(sh_it->second.tag_class)
-                               : MatClass_Base;
-            wf.material_classes |= mat_cls;
-
-            if(model_draw.current_pass > Pass_LastOpaque)
-            {
-                Vecf3 center   = Vecf3(mod.transform[3]);
-                track.model_id = wf.insert_sortable(
-                    model_draw.draw.data.front(), center, mat_cls);
-            } else
-                track.model_id =
-                    wf.insert_draw(model_draw.draw.data.front(), mat_cls);
-            track.model_id.epoch = m_epoch;
-        }
 
         for(Pass& pass : model_build())
         {
@@ -899,19 +1115,8 @@ struct DrawListBuilder
             transparent_ptr += transparent_size;
         }
 
-        /* Bone matrices are viewport-independent, so the buffer is filled
-         * once for the frame: the first viewport resets it, later ones only
-         * append models the earlier ones never reached. */
-        if(m_vp == 0)
-        {
-            for(auto& [id, item] : model_cache->m_cache)
-                item.bone_base = -1;
-            m_bone_upload.clear();
-        }
-        auto&  bone_upload    = m_bone_upload;
-        size_t bone_write_ptr = bone_upload.size();
-
-        for(auto ent : p.template select<SubModel, DrawState, MeshTrackingData>())
+        for(auto ent :
+            p.template select<SubModel, DrawState, MeshTrackingData>())
         {
             if(!rendering_params->render_scenery &&
                (ent.tags() & ObjectSkybox) == 0)
@@ -936,19 +1141,12 @@ struct DrawListBuilder
 
             ModelItem<Version>& cache_item =
                 model_cache->find(model.model)->second;
-            if(!cache_item.bone_matrices.empty() && cache_item.bone_base < 0)
-            {
-                cache_item.bone_base = static_cast<i32>(bone_write_ptr);
-                bone_write_ptr += cache_item.bone_matrices.size();
-                bone_upload.insert(
-                    bone_upload.end(),
-                    cache_item.bone_matrices.begin(),
-                    cache_item.bone_matrices.end());
-            }
 
+            /* allocate_bones fills these once buckets are final. An instance
+             * that never animates keeps this and skips skinning. */
             auto& pid     = pass.matrix_mapping[instance_id];
             pid.transform = model.transform;
-            pid.bone_base = cache_item.bone_base;
+            pid.bone_base = kBoneUnposed;
             populate_mod2_material(
                 smodel,
                 sm_draw.current_pass,
@@ -956,6 +1154,195 @@ struct DrawListBuilder
                 model_context(model),
                 instance_id,
                 parent.template get<Visibility>().interior);
+        }
+    }
+
+    /* Reserves and fills one bone window per bucket, once the layout is
+     * final -- sort_by_depth rebuilds it for the transparent passes.
+     *
+     * bone_base is bucket-relative, so a bucket only has to fit
+     * kMaxBoneMatrices rather than the frame. Parents sharing a bucket share
+     * a block; one whose submodels straddle a family split pays per bucket. */
+    void allocate_bones(Proxy& p)
+    {
+        ModelCache<Version>* model_cache;
+        p.subsystem(model_cache);
+
+        RenderingParameters* rendering_params;
+        p.subsystem(rendering_params);
+
+        if(m_vp == 0)
+        {
+            m_bone_upload.clear();
+            m_posed_instances  = 0;
+            m_denied_instances = 0;
+            m_bone_buckets     = 0;
+        }
+
+        /* Collected first, grouped by bucket after: entity order has nothing
+         * to do with bucket order, and a window must be contiguous. */
+        m_bone_work.clear();
+        for(auto ent :
+            p.template select<SubModel, DrawState, MeshTrackingData>())
+        {
+            if(!rendering_params->render_scenery &&
+               (ent.tags() & ObjectSkybox) == 0)
+                continue;
+            auto [smodel, sm_draw, track] = ent.components();
+
+            if(!followable(track.model_id))
+                continue;
+
+            auto* anim = p.template get<AnimationPlayback>(smodel.parent);
+            if(!anim || !anim->animating())
+                continue;
+
+            /* Trackers still address the layout only for opaque passes;
+             * sort_by_depth rebuilt the transparent ones after these indices
+             * were handed out. Those come from the sorted arrays below. */
+            if(sm_draw.current_pass > Pass_LastOpaque)
+                continue;
+
+            Pass& pass = model_build()[sm_draw.current_pass];
+            if(track.model_id.bucket >= pass.draws.size())
+                continue;
+            auto const& bucket = pass.draws[track.model_id.bucket];
+            if(track.model_id.draw >= bucket.size())
+                continue;
+
+            auto parent = p.template ref<Proxy>(smodel.parent);
+            u32  bones =
+                model_cache->bone_count(parent.template get<Model>().model);
+            if(bones == 0)
+                continue;
+
+            m_bone_work.push_back({
+                .pass     = static_cast<u16>(sm_draw.current_pass),
+                .bucket   = track.model_id.bucket,
+                .parent   = smodel.parent,
+                .model    = parent.template get<Model>().model,
+                .instance = static_cast<u32>(
+                    bucket.at(track.model_id.draw).instances.offset +
+                    track.model_id.instance),
+                .bones = bones,
+            });
+        }
+
+        /* Transparent passes, read off the layout the sort left behind:
+         * sort_parents and sort_bones were rebuilt alongside `draws`, and a
+         * sortable draw always holds exactly one instance. */
+        for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
+        {
+            Pass&  pass = model_build()[static_cast<Passes>(pi)];
+            size_t ci   = 0;
+            for(size_t bi = 0; bi < pass.draws.size(); bi++)
+                for(size_t di = 0; di < pass.draws[bi].size(); di++, ci++)
+                {
+                    if(ci >= pass.sort_bones.size() || pass.sort_bones[ci] == 0)
+                        continue;
+                    u64 const parent = pass.sort_parents[ci];
+                    auto*     anim = p.template get<AnimationPlayback>(parent);
+                    auto*     mod  = p.template get<Model>(parent);
+                    if(!anim || !anim->animating() || !mod)
+                        continue;
+                    m_bone_work.push_back({
+                        .pass     = static_cast<u16>(pi),
+                        .bucket   = static_cast<u16>(bi),
+                        .parent   = parent,
+                        .model    = mod->model,
+                        .instance = static_cast<u32>(
+                            pass.draws[bi][di].instances.offset),
+                        .bones = pass.sort_bones[ci],
+                    });
+                }
+        }
+
+        std::stable_sort(
+            m_bone_work.begin(),
+            m_bone_work.end(),
+            [](bone_work_t const& a, bone_work_t const& b) {
+                return std::tie(a.pass, a.bucket) < std::tie(b.pass, b.bucket);
+            });
+
+        size_t i = 0;
+        while(i < m_bone_work.size())
+        {
+            u16 const pass_idx   = m_bone_work[i].pass;
+            u16 const bucket_idx = m_bone_work[i].bucket;
+            Pass&     pass       = model_build()[pass_idx];
+
+            /* Bound at this offset, so it must satisfy
+             * UNIFORM_BUFFER_OFFSET_ALIGNMENT: a misaligned bind is rejected
+             * and leaves the previous bucket's bones in place. */
+            {
+                size_t bytes   = m_bone_upload.size() * sizeof(Matf4);
+                size_t aligned = align_for_gpu_padding(bytes);
+                m_bone_upload.resize(
+                    (aligned + sizeof(Matf4) - 1) / sizeof(Matf4));
+            }
+
+            size_t const window = m_bone_upload.size();
+
+            /* Windows bind at full width, so the buffer must hold a whole
+             * one past this offset. */
+            if((window + kMaxBoneMatrices) * sizeof(Matf4) >
+               m_resources.bone_matrix_buf->size())
+            {
+                for(;
+                    i < m_bone_work.size() && m_bone_work[i].pass == pass_idx &&
+                    m_bone_work[i].bucket == bucket_idx;
+                    i++)
+                {
+                    m_denied_instances++;
+                    pass.matrix_mapping[m_bone_work[i].instance].bone_base =
+                        kBoneDenied;
+                }
+                continue;
+            }
+
+            m_bone_buckets++;
+            pass.bucket_bone_base.resize(pass.draws.size(), 0);
+            pass.bucket_bone_base[bucket_idx] = static_cast<u32>(window);
+
+            /* Who already holds a block here. Bounded by the cap over the
+             * smallest skeleton, so a linear scan beats a map. */
+            m_bone_owners.clear();
+            u32 used = 0;
+
+            for(; i < m_bone_work.size() && m_bone_work[i].pass == pass_idx &&
+                  m_bone_work[i].bucket == bucket_idx;
+                i++)
+            {
+                auto const& work = m_bone_work[i];
+
+                auto owner = std::find_if(
+                    m_bone_owners.begin(),
+                    m_bone_owners.end(),
+                    [&work](auto const& o) { return o.first == work.parent; });
+
+                i32 local;
+                if(owner != m_bone_owners.end())
+                    local = static_cast<i32>(owner->second);
+                else if(used + work.bones <= kMaxBoneMatrices)
+                {
+                    local = static_cast<i32>(used);
+                    m_bone_upload.resize(window + used + work.bones);
+                    model_cache->evaluate_pose(
+                        work.model,
+                        *p.template get<AnimationPlayback>(work.parent),
+                        Span<Matf4>(
+                            m_bone_upload.data() + window + used, work.bones));
+                    m_bone_owners.push_back({work.parent, used});
+                    used += work.bones;
+                    m_posed_instances++;
+                } else
+                {
+                    m_denied_instances++;
+                    local = kBoneDenied;
+                }
+
+                pass.matrix_mapping[work.instance].bone_base = local;
+            }
         }
     }
 
@@ -970,7 +1357,8 @@ struct DrawListBuilder
         ModelCache<Version>* model_cache;
         p.subsystem(model_cache);
 
-        for(auto ent : p.template select<SubModel, DrawState, MeshTrackingData>())
+        for(auto ent :
+            p.template select<SubModel, DrawState, MeshTrackingData>())
         {
             if(!rendering_params->render_scenery &&
                (ent.tags() & ObjectSkybox) == 0)
@@ -985,10 +1373,10 @@ struct DrawListBuilder
             if(bucket.empty() || track.model_id.draw >= bucket.size())
                 continue;
             draw_data_t const& draw = bucket.at(track.model_id.draw);
-            auto instance_id = draw.instances.offset + track.model_id.instance;
+            auto instance_id  = draw.instances.offset + track.model_id.instance;
             auto const* model = p.template get<Model>(smodel.parent);
-            auto functions = shader_cache.resolved_functions(
-                model_context(*model));
+            auto        functions =
+                shader_cache.resolved_functions(model_context(*model));
             update_animations(
                 model_material_of(sm_draw.current_pass, instance_id),
                 smodel.shader,
@@ -1469,6 +1857,7 @@ struct MeshRenderer
             gfx::buffer_definition_t{
                 typing::graphics::ShaderStage::Vertex,
                 {"BoneMatrices"sv, 3},
+                /* Replaced per bucket below; each one binds its own window. */
                 m_resources.bone_matrix_buf->slice(0),
                 0,
             },
@@ -1500,6 +1889,26 @@ struct MeshRenderer
         for(size_t bucket_idx = 0; bucket_idx < pass.draws.size(); bucket_idx++)
         {
             auto const& draw = pass.draws[bucket_idx];
+
+            /* Point the bone block at this bucket's own window; bone_base was
+             * handed out relative to it. */
+            for(auto& buffer : buffers)
+                if(buffer.key.name == "BoneMatrices"sv)
+                {
+                    size_t base =
+                        bucket_idx < pass.bucket_bone_base.size()
+                            ? pass.bucket_bone_base[bucket_idx] * sizeof(Matf4)
+                            : 0;
+                    size_t span = DrawListBuilder<Version>::kMaxBoneMatrices *
+                                  sizeof(Matf4);
+                    /* allocate_bones keeps every window inside the buffer and
+                     * on an aligned offset; this only catches a bucket that
+                     * was never given one. */
+                    if(base + span > m_resources.bone_matrix_buf->size())
+                        base = 0;
+                    buffer.buffer =
+                        m_resources.bone_matrix_buf->slice(base, span);
+                }
 
             gfx::base_instance_sampler_list cube_slots;
             if(per_draw_cubes && cube_fallback)

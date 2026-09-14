@@ -79,6 +79,7 @@ static void spawn_attached_weapon(
         type_hash_v<NetworkInfo>(),
         type_hash_v<ObjectSpawn>(),
         type_hash_v<DepthInfo>(),
+        type_hash_v<AnimationPlayback>(),
     };
     parent_recipe.tags = ObjectGC;
 
@@ -328,10 +329,11 @@ void spawn_static_biped(
     }
     g_pose_demo_biped_model = mesh_data.models.at(0);
 
-    /* Idle animation frame 0 — mirrors load_objects (loading.h:380-467). Not
+    /* The start animation — mirrors find_idle_animation (loading.cpp). Not
      * factored into a shared helper: that template is tied to real
      * scenario palette/instance spans we don't have here; duplicating this
      * self-contained scan is simpler than faking a reflex_group. */
+    std::optional<AnimationLayer> start_layer;
     {
         blam::tagref_t const& anim_graph = instance_obj[0].anim_graph;
         if(anim_graph.valid())
@@ -358,23 +360,11 @@ void spawn_static_biped(
                             anim_idx = idx - 1;
                         }
                     }
-                    u32 anim_frame_count = 0;
-                    if(auto ai_opt = antr_hdr->animations.data(magic);
-                       ai_opt.has_value() &&
-                       anim_idx < static_cast<u32>(ai_opt.value().size()))
-                    {
-                        anim_frame_count = static_cast<u32>(
-                            ai_opt.value()[anim_idx.value_or(0)].frame_count);
-                    }
-                    for(auto const& mid : mesh_data.models)
-                    {
-                        model_cache.apply_animation(
-                            mid, antr_hdr, anim_idx.value_or(0), 0);
-                        auto& mitem            = model_cache.get(mid);
-                        mitem.antr_hdr         = antr_hdr;
-                        mitem.anim_idx         = anim_idx.value_or(0);
-                        mitem.anim_frame_count = anim_frame_count;
-                    }
+                    start_layer = AnimationLayer{
+                        .graph     = antr_hdr,
+                        .animation = anim_idx.value_or(0),
+                        .loop      = true,
+                    };
                 }
             }
         }
@@ -394,6 +384,7 @@ void spawn_static_biped(
         type_hash_v<NetworkInfo>(),
         type_hash_v<ObjectSpawn>(),
         type_hash_v<DepthInfo>(),
+        type_hash_v<AnimationPlayback>(),
     };
     parent_recipe.tags = ObjectGC;
 
@@ -423,6 +414,9 @@ void spawn_static_biped(
     depth.position                   = model.position;
 
     g_pose_demo_biped_entity = parent_.id();
+
+    if(start_layer)
+        parent_.get<AnimationPlayback>().layers[0] = *start_layer;
 
     NetworkInfo& netinfo = parent_.get<NetworkInfo>();
     netinfo.instance_id  = 1;

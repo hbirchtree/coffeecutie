@@ -19,6 +19,7 @@
 template<typename Ver>
 using ResourceLoaderManifest = compo::SubsystemManifest<
     type_list_t<
+        AnimationPlayback,
         BspReference,
         DebugDraw,
         DepthInfo,
@@ -764,12 +765,22 @@ struct ResourceLoader
             ModelAssembly mesh_data =
                 model_cache.predict_regions(instance_obj[0].model, model_lod);
 
-            apply_idle_animation(p, instance_obj[0].anim_graph, mesh_data);
+            auto idle = find_idle_animation(p, instance_obj[0].anim_graph);
 
-            auto         parent_ = p.create_entity(parent);
-            Model&       model   = parent_.template get<Model>();
-            ObjectSpawn& spawn   = parent_.template get<ObjectSpawn>();
-            DepthInfo&   depth   = parent_.template get<DepthInfo>();
+            /* Only objects that actually animate carry the component, so
+             * static scenery pays neither the state nor a bone slot. */
+            EntityRecipe recipe = parent;
+            if(idle)
+                recipe.components.push_back(
+                    compo::type_hash_v<AnimationPlayback>());
+
+            auto parent_ = p.create_entity(recipe);
+            if(idle)
+                parent_.template get<AnimationPlayback>().layers[0] = *idle;
+
+            Model&       model = parent_.template get<Model>();
+            ObjectSpawn& spawn = parent_.template get<ObjectSpawn>();
+            DepthInfo&   depth = parent_.template get<DepthInfo>();
 
             spawn.tag           = instance_tag;
             spawn.header        = &instance;
@@ -789,29 +800,26 @@ struct ResourceLoader
         }
     }
 
-    /* Idle animation frame 0 from an object's animation graph. Scans unit
-     * weapons for "stand * idle*" with frame data, falling back to weapons[0]
-     * idle — weapons[0] may be a vehicle-driver slot for some bipeds. */
-    void apply_idle_animation(
-        Proxy&                p,
-        blam::tagref_t const& anim_graph,
-        ModelAssembly const&  mesh_data)
+    /* The idle animation in an object's animation graph. Scans unit weapons
+     * for "stand * idle*" with frame data, falling back to weapons[0] idle —
+     * weapons[0] may be a vehicle-driver slot for some bipeds. */
+    std::optional<AnimationLayer> find_idle_animation(
+        Proxy& p, blam::tagref_t const& anim_graph)
     {
         if(!anim_graph.valid())
-            return;
+            return std::nullopt;
 
-        BlamFiles<Ver>&  files       = p.template subsystem<BlamFiles<Ver>>();
-        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+        BlamFiles<Ver>& files = p.template subsystem<BlamFiles<Ver>>();
 
         auto const& magic = files.container.magic;
 
         auto antr_it = index.find(anim_graph);
         if(antr_it == index.end())
-            return;
+            return std::nullopt;
 
         auto antr_data = (*antr_it).template data<blam::antr::header>(magic);
         if(!antr_data.has_value())
-            return;
+            return std::nullopt;
 
         auto const* antr_hdr = &antr_data.value()[0];
         u32         anim_idx = 0;
@@ -863,21 +871,11 @@ struct ResourceLoader
                 anim_idx = fallback;
         }
 
-        u32 anim_frame_count = 0;
-        if(auto ai_opt = antr_hdr->animations.data(magic);
-           ai_opt.has_value() &&
-           anim_idx < static_cast<u32>(ai_opt.value().size()))
-            anim_frame_count =
-                static_cast<u32>(ai_opt.value()[anim_idx].frame_count);
-
-        for(auto const& mid : mesh_data.models)
-        {
-            model_cache.apply_animation(mid, antr_hdr, anim_idx, 0);
-            auto& mitem            = model_cache.get(mid);
-            mitem.antr_hdr         = antr_hdr;
-            mitem.anim_idx         = anim_idx;
-            mitem.anim_frame_count = anim_frame_count;
-        }
+        return AnimationLayer{
+            .graph     = antr_hdr,
+            .animation = anim_idx,
+            .loop      = true,
+        };
     }
 
     /* One submodel entity per shaded region of a loaded model. */

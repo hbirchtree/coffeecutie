@@ -8,6 +8,8 @@
 #include <coffee/graphics/apis/gleam/rhi_texture_atlas.h>
 
 #include <algorithm>
+#include <cmath>
+#include <glm/ext/quaternion_common.hpp>
 
 #include <magic_enum/magic_enum.hpp>
 #include <peripherals/stl/magic_enum.hpp>
@@ -629,7 +631,6 @@ ModelItem<V> ModelCache<V>::predict_impl(
     {
         auto bones = bones_opt.value();
         u32  n     = static_cast<u32>(bones.size());
-        out.bone_matrices.resize(n, Matf4(1));
         out.inv_bind.resize(n);
 
         /* Compute world bind transforms by walking the parent chain.
@@ -649,10 +650,9 @@ ModelItem<V> ModelCache<V>::predict_impl(
                 world_bind[i] = local;
 
             /* inv_bind = inverse of world bind transform.
-             * world_bind * inv(world_bind) = I, so bind-pose bone_matrices are
-             * identity. */
-            out.inv_bind[i]      = glm::inverse(world_bind[i]);
-            out.bone_matrices[i] = Matf4(1);
+             * world_bind * inv(world_bind) = I, so the bind pose comes out as
+             * identity and an unposed model needs no bone matrices at all. */
+            out.inv_bind[i] = glm::inverse(world_bind[i]);
         }
     }
 
@@ -662,61 +662,79 @@ ModelItem<V> ModelCache<V>::predict_impl(
 template ModelItem<halo_version> ModelCache<halo_version>::predict_impl(
     const blam::tagref_t& mod2, blam::mod2::mod2_lod lod);
 
-template<typename V>
-void ModelCache<V>::apply_animation(
-    generation_idx_t          model_id,
-    blam::antr::header const* antr,
-    u32                       anim_idx,
-    u32                       frame_idx)
+/* Halo animations are authored at 30Hz; PAL tags flag themselves as 25Hz. */
+static f32 frame_rate_of(blam::antr::animation const& anim)
 {
-    ModelItem<V>& item = this->get(model_id);
-    if(item.inv_bind.empty())
-        return;
+    return (static_cast<u16>(anim.flags) &
+            static_cast<u16>(blam::antr::anim_flags::pal_25hz))
+               ? 25.f
+               : 30.f;
+}
 
-    u32 n = static_cast<u32>(item.inv_bind.size());
+static u32 loop_start_frame(blam::antr::animation const& anim)
+{
+    i32 frame = std::clamp<i32>(anim.loop_frame, 0, anim.frame_count - 1);
+    return static_cast<u32>(frame);
+}
 
-    auto anims_opt = antr->animations.data(magic);
+template<typename V>
+u32 ModelCache<V>::bone_count(generation_idx_t model_id)
+{
+    return this->get(model_id).bone_count();
+}
+
+template u32 ModelCache<halo_version>::bone_count(generation_idx_t);
+
+/* The animation a layer plays, rejecting what we cannot pose: a bad index,
+ * or compressed frame data. */
+template<typename V>
+blam::antr::animation const* ModelCache<V>::find_animation(
+    AnimationLayer const& layer)
+{
+    if(!layer.graph)
+        return nullptr;
+
+    auto anims_opt = layer.graph->animations.data(magic);
     if(!anims_opt.has_value())
-        return;
+        return nullptr;
+
     auto anims = anims_opt.value();
+    if(layer.animation >= static_cast<u32>(anims.size()))
+        return nullptr;
 
-    if(anim_idx >= static_cast<u32>(anims.size()))
-        return;
+    auto const& anim = anims[layer.animation];
+    if(anim.is_compressed() || anim.frame_count <= 0 || anim.frame_size <= 0)
+        return nullptr;
 
-    /* In PC cache files, antr::nodes is stripped — use mod2 bone parent chain
-     */
-    if(!item.header)
-        return;
-    auto bones_opt = item.header->bones.data(magic);
-    if(!bones_opt.has_value() || bones_opt.value().size() < n)
-        return;
-    auto bones = bones_opt.value();
+    return &anim;
+}
 
-    auto const& anim = anims[anim_idx];
-    if(anim.is_compressed())
-        return;
-    if(frame_idx >= static_cast<u32>(anim.frame_count))
-        frame_idx = 0;
-
+/* Decodes one animation's node channels at `frame` into node-local TRS.
+ * Interleaved BY NODE: each emits [rotation 8B][translation 12B][scale 4B],
+ * animated channels from frame_data and the rest from default_data.
+ * frame_info (root motion) is a separate block. Scale is unused but its
+ * bytes must still be stepped over. */
+template<typename V>
+bool ModelCache<V>::sample_animation(
+    blam::antr::animation const& anim,
+    u32                          frame,
+    u32                          node_count,
+    std::vector<Quatf>&          rot,
+    std::vector<Vecf3>&          trans)
+{
     auto default_bytes_opt = anim.default_data.data(magic);
     auto frame_bytes_opt   = anim.frame_data.data(magic);
     if(!default_bytes_opt.has_value() || !frame_bytes_opt.has_value())
-        return;
+        return false;
 
     auto default_bytes = default_bytes_opt.value();
     auto frame_bytes   = frame_bytes_opt.value();
 
-    std::vector<Quatf> rotations(n, Quatf(1, 0, 0, 0));
-    std::vector<Vecf3> translations(n, Vecf3(0));
+    rot.assign(node_count, Quatf(1, 0, 0, 0));
+    trans.assign(node_count, Vecf3(0));
 
-    /* Data is interleaved BY NODE: iterate nodes in order; each node emits its
-     * [rotation][translation][scale] channels. Animated channels come from
-     * frame_data (at the current frame), non-animated from default_data.
-     * frame_info (root motion) is a SEPARATE block, not in frame_data.
-     * Scale is a single float we don't use, but its bytes must be skipped. */
-    size_t d = 0; /* default cursor */
-    size_t f =
-        static_cast<size_t>(frame_idx) * anim.frame_size; /* frame cursor */
+    size_t d = 0;
+    size_t f = static_cast<size_t>(frame) * anim.frame_size;
 
     auto read_quat = [](semantic::Span<const byte_t> buf, size_t off) {
         return reinterpret_cast<blam::antr::compressed_quat_t const*>(
@@ -727,34 +745,30 @@ void ModelCache<V>::apply_animation(
         return *reinterpret_cast<Vecf3 const*>(buf.data() + off);
     };
 
-    for(u32 i = 0; i < n; i++)
+    for(u32 i = 0; i < node_count; i++)
     {
-        /* Intra-node channel order: [rotation 8B][translation 12B][scale 4B] */
-        /* rotation */
         if(anim.has_rotation(i))
         {
             if(f + 8 <= frame_bytes.size())
-                rotations[i] = read_quat(frame_bytes, f);
+                rot[i] = read_quat(frame_bytes, f);
             f += 8;
         } else
         {
             if(d + 8 <= default_bytes.size())
-                rotations[i] = read_quat(default_bytes, d);
+                rot[i] = read_quat(default_bytes, d);
             d += 8;
         }
-        /* translation */
         if(anim.has_translation(i))
         {
             if(f + 12 <= frame_bytes.size())
-                translations[i] = read_vec3(frame_bytes, f);
+                trans[i] = read_vec3(frame_bytes, f);
             f += 12;
         } else
         {
             if(d + 12 <= default_bytes.size())
-                translations[i] = read_vec3(default_bytes, d);
+                trans[i] = read_vec3(default_bytes, d);
             d += 12;
         }
-        /* scale (single float, skipped) */
         if(anim.has_scale(i))
             f += 4;
         else
@@ -762,45 +776,190 @@ void ModelCache<V>::apply_animation(
     }
 
     /* antr quats use the same conjugate convention as the mod2 bind quats. */
-    for(u32 i = 0; i < n; i++)
-        rotations[i] = glm::conjugate(rotations[i]);
+    for(u32 i = 0; i < node_count; i++)
+        rot[i] = glm::conjugate(rot[i]);
 
-    /* Build world transforms using mod2 bone parent chain (DFS order: parent<i)
-     */
-    std::vector<Matf4> world(n);
-    for(u32 i = 0; i < n; i++)
-    {
-        Matf4 local = glm::translate(Matf4(1), translations[i]) *
-                      glm::mat4_cast(rotations[i]);
-        u16 parent = bones[i].parent;
-        if(parent != blam::mod2::bone::invalid_bone && parent < i)
-            world[i] = world[parent] * local;
-        else
-            world[i] = local;
-    }
-
-    for(u32 i = 0; i < n; i++)
-        item.bone_matrices[i] = world[i] * item.inv_bind[i];
+    return true;
 }
-
-template void ModelCache<halo_version>::apply_animation(
-    generation_idx_t, blam::antr::header const*, u32, u32);
 
 template<typename V>
-void ModelCache<V>::tick_animations(f32 time_s)
+void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
 {
-    for(auto& [raw_id, item] : this->m_cache)
+    for(auto& layer : anim.layers)
     {
-        if(!item.antr_hdr || item.anim_frame_count == 0 ||
-           item.inv_bind.empty())
+        if(!layer.active() || layer.paused || layer.finished)
             continue;
-        u32 frame = static_cast<u32>(time_s * 30.f) % item.anim_frame_count;
-        generation_idx_t gen_id = {raw_id, this->generation};
-        apply_animation(gen_id, item.antr_hdr, item.anim_idx, frame);
+
+        auto const* clip = find_animation(layer);
+        if(!clip)
+            continue;
+
+        layer.time = std::max(0.f, layer.time + delta * layer.rate);
+
+        f32 const rate   = frame_rate_of(*clip);
+        f32 const length = static_cast<f32>(clip->frame_count) / rate;
+        if(layer.time < length)
+            continue;
+
+        if(layer.loop)
+        {
+            /* A looping animation restarts at loop_frame, not at zero. */
+            f32 const start = static_cast<f32>(loop_start_frame(*clip)) / rate;
+            f32 const span  = length - start;
+            layer.time      = span > 0.f
+                                  ? start + std::fmod(layer.time - start, span)
+                                  : start;
+            continue;
+        }
+
+        /* Chain where the tag says to, else hold the last frame. One step
+         * per call, so a cyclic next_animation cannot spin. */
+        if(clip->next_animation >= 0)
+        {
+            layer.animation = static_cast<u32>(clip->next_animation);
+            layer.time      = 0.f;
+        } else
+        {
+            layer.time     = length - 1.f / rate;
+            layer.finished = true;
+        }
     }
 }
 
-template void ModelCache<halo_version>::tick_animations(f32);
+template void ModelCache<halo_version>::advance_playback(
+    AnimationPlayback&, f32);
+
+template<typename V>
+void ModelCache<V>::evaluate_pose(
+    generation_idx_t model_id, AnimationPlayback const& anim, Span<Matf4> dest)
+{
+    ModelItem<V>& item = this->get(model_id);
+
+    u32 const n = item.bone_count();
+    if(n == 0 || dest.size() < static_cast<ptrdiff_t>(n) || !item.header)
+        return;
+
+    /* A pose driven from outside is already in skinning space. */
+    if(anim.external_pose.size() >= n)
+    {
+        std::copy_n(anim.external_pose.begin(), n, dest.begin());
+        return;
+    }
+
+    /* In PC cache files antr::nodes is stripped, so the mod2 bone list is the
+     * skeleton for both the parent chain and the bind pose. */
+    auto bones_opt = item.header->bones.data(magic);
+    if(!bones_opt.has_value() || bones_opt.value().size() < n)
+        return;
+    auto bones = bones_opt.value();
+
+    /* Start from the bind pose: a layer that animates nothing then leaves
+     * the model as its vertices already stand. */
+    m_rot.assign(n, Quatf(1, 0, 0, 0));
+    m_trans.assign(n, Vecf3(0));
+    for(u32 i = 0; i < n; i++)
+    {
+        m_rot[i]   = glm::conjugate(bones[i].rotation);
+        m_trans[i] = bones[i].translation;
+    }
+
+    for(auto const& layer : anim.layers)
+    {
+        if(!layer.active())
+            continue;
+
+        auto const* clip = find_animation(layer);
+        if(!clip)
+            continue;
+
+        f32 const rate  = frame_rate_of(*clip);
+        u32 const count = static_cast<u32>(clip->frame_count);
+
+        f32 const position = layer.time * rate;
+        u32       f0       = static_cast<u32>(position);
+        if(f0 >= count)
+            f0 = count - 1;
+        u32 const f1    = f0 + 1 < count ? f0 + 1
+                          : layer.loop   ? loop_start_frame(*clip)
+                                         : f0;
+        f32 const blend = position - std::floor(position);
+
+        if(!sample_animation(*clip, f0, n, m_layer_rot, m_layer_trans))
+            continue;
+
+        /* Source runs at 30Hz, we do not, so ride between the two frames. */
+        if(f1 != f0 && blend > 0.f &&
+           sample_animation(*clip, f1, n, m_ref_rot, m_ref_trans))
+            for(u32 i = 0; i < n; i++)
+            {
+                m_layer_rot[i] =
+                    glm::slerp(m_layer_rot[i], m_ref_rot[i], blend);
+                m_layer_trans[i] =
+                    glm::mix(m_layer_trans[i], m_ref_trans[i], blend);
+            }
+
+        f32 const w = std::clamp(layer.weight, 0.f, 1.f);
+
+        switch(clip->type)
+        {
+        case blam::antr::anim_type::base:
+            /* Sets the whole skeleton. */
+            for(u32 i = 0; i < n; i++)
+            {
+                m_rot[i]   = glm::slerp(m_rot[i], m_layer_rot[i], w);
+                m_trans[i] = glm::mix(m_trans[i], m_layer_trans[i], w);
+            }
+            break;
+        case blam::antr::anim_type::replacement:
+            /* Only the nodes it animates; a lower layer keeps the rest. */
+            for(u32 i = 0; i < n; i++)
+            {
+                if(clip->has_rotation(i))
+                    m_rot[i] = glm::slerp(m_rot[i], m_layer_rot[i], w);
+                if(clip->has_translation(i))
+                    m_trans[i] = glm::mix(m_trans[i], m_layer_trans[i], w);
+            }
+            break;
+        case blam::antr::anim_type::overlay:
+            /* Offset from the overlay's own frame 0, added to what is
+             * already posed. */
+            if(!sample_animation(*clip, 0, n, m_ref_rot, m_ref_trans))
+                break;
+            for(u32 i = 0; i < n; i++)
+            {
+                if(clip->has_rotation(i))
+                {
+                    Quatf offset =
+                        glm::conjugate(m_ref_rot[i]) * m_layer_rot[i];
+                    m_rot[i] =
+                        m_rot[i] * glm::slerp(Quatf(1, 0, 0, 0), offset, w);
+                }
+                if(clip->has_translation(i))
+                    m_trans[i] += (m_layer_trans[i] - m_ref_trans[i]) * w;
+            }
+            break;
+        }
+    }
+
+    /* Bones are in DFS order, so a parent is always resolved before its
+     * child. */
+    m_world.assign(n, Matf4(1));
+    for(u32 i = 0; i < n; i++)
+    {
+        Matf4 local =
+            glm::translate(Matf4(1), m_trans[i]) * glm::mat4_cast(m_rot[i]);
+        u16 parent = bones[i].parent;
+        m_world[i] = (parent != blam::mod2::bone::invalid_bone && parent < i)
+                         ? m_world[parent] * local
+                         : local;
+    }
+
+    for(u32 i = 0; i < n; i++)
+        dest[i] = m_world[i] * item.inv_bind[i];
+}
+
+template void ModelCache<halo_version>::evaluate_pose(
+    generation_idx_t, AnimationPlayback const&, Span<Matf4>);
 
 template<typename V>
 ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)

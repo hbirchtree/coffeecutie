@@ -40,7 +40,7 @@ layout(location = 1) uniform mat4 camera;
 
 layout(binding = 3, std140) uniform BoneMatrices
 {
-    mat4 bones[128];
+    mat4 bones[256];
 } bone_store;
 
 layout(location = 31) uniform int render_flags;

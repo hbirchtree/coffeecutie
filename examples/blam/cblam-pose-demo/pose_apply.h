@@ -9,15 +9,16 @@
 #include <optional>
 #include <peripherals/stl/json.h>
 
-/* Applies a canned pose (JSON array of {"name", "rotation":[x,y,z,w]}) onto
- * model_id's bone_matrices, mirroring ModelCache<V>::apply_animation's DFS
- * parent-chain walk (caching.cpp:663-775) but sourcing rotations from JSON
- * instead of antr frame data. Bones not named in bones_json keep their bind
- * pose. Clears anim_frame_count so tick_animations (caching.cpp:780) doesn't
- * clobber the injected pose on the next frame. */
+/* Applies a canned pose (JSON array of {"name", "rotation":[x,y,z,w]}) into
+ * playback.external_pose, walking the DFS parent chain the same way
+ * ModelCache<V>::evaluate_pose does but sourcing rotations from JSON instead
+ * of antr frame data. Bones not named in bones_json keep their bind pose.
+ * external_pose outranks the layers, so the injected pose survives the
+ * renderer's own evaluation. */
 void apply_pose(
     ModelCache<halo_version>& cache,
     generation_idx_t          model_id,
+    AnimationPlayback&        playback,
     nlohmann::json const&     bones_json);
 
 /* Exact-name animation lookup, shared by spawn_static_biped's initial pick
@@ -28,7 +29,7 @@ std::optional<u32> find_animation_by_name(
     std::string_view          name);
 
 /* Animation playback override state, read by apply_pose's animation-seed
- * step in place of item.anim_idx. Set by pose_demo_main.cpp's
+ * step in place of the layer's own animation. Set by pose_demo_main.cpp's
  * "play_animation" (one-shot, plays through once then falls back to the
  * loop) and "loop_animation" (replaces the base loop) dummy-plug events. */
 /* Smoothed root translation from the solved Hips position, in model space.

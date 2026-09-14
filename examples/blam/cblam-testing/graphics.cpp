@@ -168,6 +168,7 @@ i32 blam_main()
 
             e.register_subsystem_inplace<net::CurlNetStats>(
                 net::create_curl_context());
+            e.register_component_inplace<AnimationPlayback>();
             e.register_component_inplace<BspReference>();
             e.register_component_inplace<CameraLerp>();
             e.register_component_inplace<DebugDraw>();

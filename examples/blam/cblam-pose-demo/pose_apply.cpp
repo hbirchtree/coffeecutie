@@ -60,6 +60,7 @@ std::optional<u32> find_animation_by_name(
 void apply_pose(
     ModelCache<halo_version>& cache,
     generation_idx_t          model_id,
+    AnimationPlayback&        playback,
     nlohmann::json const&     bones_json)
 {
     auto& item = cache.get(model_id);
@@ -78,10 +79,12 @@ void apply_pose(
     std::vector<Quatf> rotations(n);
     std::vector<Vecf3> translations(n);
 
+    AnimationLayer const& base_layer = playback.layers[0];
+
     bool seeded_from_anim = false;
-    if(item.antr_hdr)
+    if(base_layer.graph)
     {
-        auto anims_opt = item.antr_hdr->animations.data(cache.magic);
+        auto anims_opt = base_layer.graph->animations.data(cache.magic);
         if(anims_opt.has_value())
         {
             auto anims = anims_opt.value();
@@ -89,7 +92,7 @@ void apply_pose(
             /* One-shot plays through once (clamped, not looped) from
              * g_pose_demo_oneshot_start; once its duration elapses, clear
              * it and fall back to the loop animation. */
-            u32  effective_idx   = item.anim_idx;
+            u32  effective_idx   = base_layer.animation;
             bool one_shot_active = false;
             f32  one_shot_time_s = 0.f;
             if(g_pose_demo_oneshot_anim_idx &&
@@ -467,8 +470,7 @@ void apply_pose(
         else
             world[i] = local;
     }
+    playback.external_pose.assign(n, Matf4(1));
     for(u32 i = 0; i < n; ++i)
-        item.bone_matrices[i] = world[i] * item.inv_bind[i];
-
-    item.anim_frame_count = 0;
+        playback.external_pose[i] = world[i] * item.inv_bind[i];
 }

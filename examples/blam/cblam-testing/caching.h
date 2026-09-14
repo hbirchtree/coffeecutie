@@ -24,6 +24,7 @@
 
 #include <coffee/core/CDebug>
 
+#include "animation.h"
 #include "bitmap_cache.h"
 #include "caching_item.h"
 #include "data.h"
@@ -119,14 +120,36 @@ struct ModelCache
     virtual ModelItem<V> predict_impl(
         blam::tagref_t const& mod2, blam::mod2::mod2_lod lod) override;
 
-    void apply_animation(
-        generation_idx_t          model_id,
-        blam::antr::header const* antr,
-        u32                       anim_idx,
-        u32                       frame_idx);
+    /* Bones the model needs, 0 if it has no skeleton. */
+    u32 bone_count(generation_idx_t model_id);
 
-    void tick_animations(f32 time_s);
+    /* Moves every layer's clock on, looping or chaining as the tag asks.
+     * Once per frame, never per viewport: chaining is not idempotent. */
+    void advance_playback(AnimationPlayback& anim, f32 delta);
 
+    /* Composes `anim`'s layers into `dest`, bone_count() matrices. Only for
+     * models that survived culling. */
+    void evaluate_pose(
+        generation_idx_t         model_id,
+        AnimationPlayback const& anim,
+        Span<Matf4>              dest);
+
+  private:
+    /* Pose scratch, reused across models so a pose allocates nothing.
+     * Main-thread only, like the subsystem that drives it. */
+    std::vector<Quatf> m_rot, m_layer_rot, m_ref_rot;
+    std::vector<Vecf3> m_trans, m_layer_trans, m_ref_trans;
+    std::vector<Matf4> m_world;
+
+    blam::antr::animation const* find_animation(AnimationLayer const& layer);
+    bool                         sample_animation(
+                                blam::antr::animation const& anim,
+                                u32                          frame,
+                                u32                          node_count,
+                                std::vector<Quatf>&          rot,
+                                std::vector<Vecf3>&          trans);
+
+  public:
     virtual void evict_impl() override
     {
         vert_ptr    = 0;

@@ -598,15 +598,14 @@ struct ModelItem
     blam::tag_t const*           tag{nullptr};
     LOD                          mesh;
 
-    std::vector<Matf4>
-        bone_matrices; /* per-bone skinning matrices (world_anim * inv_bind) */
-    std::vector<Matf4>
-        inv_bind; /* inverse bind-world matrices, built from mod2 bone axes */
-    i32 bone_base{-1};
-    blam::antr::header const* antr_hdr{
-        nullptr};            /* non-null → animate this model each frame */
-    u32 anim_idx{0};         /* animation index within antr_hdr */
-    u32 anim_frame_count{0}; /* frame_count for anim_idx */
+    /* Inverse bind-world matrices from the mod2 bone axes. The only bone
+     * data a model keeps; posed matrices are per-instance. */
+    std::vector<Matf4> inv_bind;
+
+    inline u32 bone_count() const
+    {
+        return static_cast<u32>(inv_bind.size());
+    }
 
     inline bool valid() const
     {

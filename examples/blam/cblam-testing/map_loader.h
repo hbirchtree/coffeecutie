@@ -63,6 +63,115 @@ struct BlamMapBrowser
 
     std::string entity_filter;
 
+    /* Per-layer animation picker. Layers play out of the object's own graph;
+     * how one composes with those under it is the animation's own anim_type,
+     * so the type is shown rather than chosen. */
+    static void animation_controls(
+        AnimationPlayback& anim, blam::map_ptr const& magic)
+    {
+        ImGui::Separator();
+        ImGui::Text("Animation");
+
+        blam::antr::header const* graph = nullptr;
+        for(auto const& layer : anim.layers)
+            if(layer.graph)
+            {
+                graph = layer.graph;
+                break;
+            }
+        if(!graph)
+        {
+            ImGui::TextUnformatted("no animation graph");
+            return;
+        }
+
+        auto anims_opt = graph->animations.data(magic);
+        if(!anims_opt.has_value())
+        {
+            ImGui::TextUnformatted("animation graph is empty");
+            return;
+        }
+        auto      anims = anims_opt.value();
+        u32 const count = static_cast<u32>(anims.size());
+
+        for(u32 slot = 0; slot < AnimationPlayback::max_layers; slot++)
+        {
+            AnimationLayer& layer = anim.layers[slot];
+            ImGui::PushID(static_cast<int>(slot));
+
+            char preview[96];
+            if(layer.graph && layer.animation < count)
+            {
+                auto nm = anims[layer.animation].name.str();
+                snprintf(
+                    preview,
+                    sizeof(preview),
+                    "%u: %.*s",
+                    layer.animation,
+                    static_cast<int>(nm.size()),
+                    nm.data());
+            } else
+                snprintf(preview, sizeof(preview), "(none)");
+
+            char slot_label[24];
+            snprintf(slot_label, sizeof(slot_label), "Layer %u", slot);
+            if(ImGui::BeginCombo(slot_label, preview))
+            {
+                if(ImGui::Selectable("(none)", layer.graph == nullptr))
+                    anim.stop(slot);
+                for(u32 i = 0; i < count; i++)
+                {
+                    auto nm = anims[i].name.str();
+                    char item[112];
+                    snprintf(
+                        item,
+                        sizeof(item),
+                        "%u: %.*s##a%u",
+                        i,
+                        static_cast<int>(nm.size()),
+                        nm.data(),
+                        i);
+                    bool current = layer.graph && layer.animation == i;
+                    if(ImGui::Selectable(item, current))
+                        anim.play(slot, graph, i, layer.loop, layer.weight);
+                }
+                ImGui::EndCombo();
+            }
+
+            if(layer.graph && layer.animation < count)
+            {
+                ImGui::SliderFloat("weight", &layer.weight, 0.f, 1.f);
+                ImGui::SliderFloat("rate", &layer.rate, 0.f, 4.f);
+                ImGui::Checkbox("loop", &layer.loop);
+                ImGui::SameLine();
+                ImGui::Checkbox("paused", &layer.paused);
+                ImGui::SameLine();
+                if(ImGui::SmallButton("restart"))
+                {
+                    layer.time     = 0.f;
+                    layer.finished = false;
+                }
+                auto const& clip = anims[layer.animation];
+                auto        type = magic_enum::enum_name(clip.type);
+                ImGui::Text(
+                    "t=%.2fs  %d frames  %.*s%s",
+                    static_cast<double>(layer.time),
+                    static_cast<int>(clip.frame_count),
+                    static_cast<int>(type.size()),
+                    type.data(),
+                    layer.finished ? "  (finished)" : "");
+            }
+            ImGui::PopID();
+        }
+
+        if(anim.bone_base >= 0)
+            ImGui::Text("bone_base %d", anim.bone_base);
+        else
+            ImGui::TextUnformatted(
+                anim.bone_base == -2 ? "not posed: out of bone budget"
+                                     : "not posed this frame");
+    }
+
     void start_restricted(Proxy& e, time_point const&)
     {
         if(ImGui::Begin("Game"))
@@ -498,6 +607,9 @@ struct BlamMapBrowser
                                 1.f,
                                 model->meter_value < 0.f ? "unset" : "%.2f");
                         }
+                        if(auto* anim =
+                               ec.get<AnimationPlayback>(m_selected_entity))
+                            animation_controls(*anim, bitmaps.magic);
                         check(
                             "DepthInfo", ec.get<DepthInfo>(m_selected_entity));
 

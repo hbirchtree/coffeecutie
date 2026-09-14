@@ -101,6 +101,7 @@ i32 pose_demo_main()
             /* Same component set graphics.cpp registers (graphics.cpp:143-158)
              * — the reused caching.cpp/resource_creation.cpp/rendering.cpp
              * select<>/get<> across all of these. */
+            e.register_component_inplace<AnimationPlayback>();
             e.register_component_inplace<BspReference>();
             e.register_component_inplace<CameraLerp>();
             e.register_component_inplace<DebugDraw>();
@@ -235,9 +236,14 @@ i32 pose_demo_main()
                                     "biped spawned");
                                 return;
                             }
+                            auto* playback = e.get<AnimationPlayback>(
+                                g_pose_demo_biped_entity);
+                            if(!playback)
+                                return;
                             apply_pose(
                                 e.subsystem_cast<ModelCache<halo_version>>(),
                                 g_pose_demo_biped_model,
+                                *playback,
                                 ev.data["bones"]);
                         },
                 });
@@ -274,17 +280,21 @@ i32 pose_demo_main()
                                 item.header->bones.data(cache.magic);
                             if(!bones_opt.has_value())
                                 return;
-                            auto bones = bones_opt.value();
-                            auto n     = std::min(
+                            auto  bones    = bones_opt.value();
+                            auto* playback = e.get<AnimationPlayback>(
+                                g_pose_demo_biped_entity);
+                            if(!playback)
+                                return;
+                            auto n = std::min(
                                 {bones.size(),
-                                     item.bone_matrices.size(),
-                                     item.inv_bind.size()});
+                                 playback->external_pose.size(),
+                                 item.inv_bind.size()});
                             for(size_t i = 0; i < n; i++)
                             {
-                                /* bone_matrices is world * inv_bind, so the
-                                 * bind has to go back in to read a position
-                                 * off it. */
-                                Matf4 world = item.bone_matrices[i] *
+                                /* The stored matrix is world * inv_bind, so
+                                 * the bind has to go back in to read a
+                                 * position off it. */
+                                Matf4 world = playback->external_pose[i] *
                                               glm::inverse(item.inv_bind[i]);
                                 cDebug(
                                     "pose_demo: bone_pos {} {} {} {}",
@@ -312,11 +322,12 @@ i32 pose_demo_main()
                                 return;
                             std::string name =
                                 ev.data.value("name", std::string{});
-                            auto& item =
-                                e.subsystem_cast<ModelCache<halo_version>>()
-                                    .get(g_pose_demo_biped_model);
+                            auto* playback = e.get<AnimationPlayback>(
+                                g_pose_demo_biped_entity);
+                            if(!playback)
+                                return;
                             auto idx = find_animation_by_name(
-                                item.antr_hdr,
+                                playback->layers[0].graph,
                                 e.subsystem_cast<ModelCache<halo_version>>()
                                     .magic,
                                 name);
@@ -544,20 +555,22 @@ i32 pose_demo_main()
                 auto& model_cache =
                     e.subsystem_cast<ModelCache<halo_version>>();
                 auto& biped_item = model_cache.get(g_pose_demo_biped_model);
+                auto* playback =
+                    e.get<AnimationPlayback>(g_pose_demo_biped_entity);
 
                 for(auto const& attached : g_pose_demo_attachments)
                 {
                     auto* attached_model = e.get<Model>(attached.entity);
-                    if(!biped_model || !attached_model)
+                    if(!biped_model || !attached_model || !playback)
                         continue;
-                    if(attached.node_idx >= biped_item.bone_matrices.size() ||
+                    if(attached.node_idx >= playback->external_pose.size() ||
                        attached.node_idx >= biped_item.inv_bind.size())
                         continue;
 
                     Matf4 bind_world_node =
                         glm::inverse(biped_item.inv_bind[attached.node_idx]);
                     Matf4 world_node =
-                        biped_item.bone_matrices[attached.node_idx] *
+                        playback->external_pose[attached.node_idx] *
                         bind_world_node;
                     attached_model->transform = biped_model->transform *
                                                 world_node *
