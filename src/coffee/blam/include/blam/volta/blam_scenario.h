@@ -10,15 +10,19 @@
 #include "blam_mod2.h"
 #include "blam_recorded_animation.h"
 #include "blam_reference.h"
-#include "blam_sound.h"
 #include "blam_tag_index.h"
-#include "blam_vertex.h"
 #include "hsc/blam_bytecode.h"
 #include "peripherals/enum/helpers.h"
 #include "peripherals/typing/vectors/glm_vector_types.h"
 
 #include <cstddef>
 #include <peripherals/stl/range.h>
+
+namespace blam::ui {
+
+struct unicode_string;
+
+}
 
 namespace blam::scn {
 
@@ -33,6 +37,7 @@ struct reflex_group
 };
 
 using angle_t = f32;
+using scn_chunk = byte_t[100];
 
 /* Data which is not part of the structures proper */
 
@@ -51,6 +56,7 @@ union local_actor_type
     }
 };
 
+// Commonly shared enums
 enum class gamemode_t : u16
 {
     none,
@@ -70,7 +76,6 @@ enum class gamemode_t : u16
     all_except_race_ctf,
 };
 
-using scn_chunk = byte_t[100];
 
 enum class object_type : u16
 {
@@ -96,32 +101,10 @@ enum class object_flags : u16
     not_pathfinding_obstacle = 0x8,
 };
 
-struct object
-{
-    object_type                       type;
-    object_flags                      flags;
-    f32                               bound_radius;
-    Vecf3                             bound_offset;
-    Vecf3                             origin_offset;
-    f32                               acceleration_scale;
-    u32                               padding_;
-    tagref_typed_t<tag_class_t::mod2> model;
-    tagref_typed_t<tag_class_t::antr> anim_graph;
-    u32                               padding2[10];
-    tagref_typed_t<tag_class_t::coll> collider;
-    tagref_typed_t<tag_class_t::pphy> physics;
-    tagref_typed_t<tag_class_t::shdr> shader;
-    tagref_typed_t<tag_class_t::effe> effect;
-    f32                               render_bound_radius;
+// Forward decls
+struct hud_msg;
 
-    struct
-    {
-        u32 inputs[4];
-        i16 hud_msg;
-        i16 shader_perm;
-    } export_;
-};
-
+// Ptr types around i16
 template<typename T>
 struct palette_ptr
 {
@@ -144,6 +127,43 @@ struct scenario_ptr
     {
         return index;
     }
+};
+
+struct bsp_ptr
+{
+    // Points to a scenario BSP section
+    i16 index;
+
+    operator i16() const
+    {
+        return index;
+    }
+};
+
+struct object
+{
+    object_type                       type;
+    object_flags                      flags;
+    f32                               bound_radius;
+    Vecf3                             bound_offset;
+    Vecf3                             origin_offset;
+    f32                               acceleration_scale;
+    u32                               padding_;
+    tagref_typed_t<tag_class_t::mod2> model;
+    tagref_typed_t<tag_class_t::antr> anim_graph;
+    u32                               padding2[10];
+    tagref_typed_t<tag_class_t::coll> collider;
+    tagref_typed_t<tag_class_t::pphy> physics;
+    tagref_typed_t<tag_class_t::shdr> shader;
+    tagref_typed_t<tag_class_t::effe> effect;
+    f32                               render_bound_radius;
+
+    struct
+    {
+        u32                       inputs[4];
+        scenario_ptr<hud_msg>     hud_msg;
+        mod2::model_ptr<tagref_t> shader_perm;
+    } export_;
 };
 
 struct object_name
@@ -335,7 +355,20 @@ static_assert(sizeof(scenery_spawn) == 72);
 
 struct weapon_spawn : object_spawn
 {
-    u32 unknown_[14];
+    enum weapon_flags_t : u16
+    {
+        none              = 0x0,
+        initially_at_rest = 0x1, // no gravity
+        obsolete          = 0x2,
+        does_accelerate   = 0x4, // moves due to external force
+    };
+
+    u16            rounds_left;
+    u16            rounds_loaded;
+    weapon_flags_t weapon_flags;
+
+    u16 padding__;
+    u32 unknown_[12];
 };
 
 static_assert(sizeof(weapon_spawn) == 92);
@@ -551,22 +584,6 @@ struct player_starting_profile
 
 static_assert(sizeof(player_starting_profile) == 104);
 
-/* "Structure BSP switch trigger volume": while `source` is the active
- * structure BSP and the player enters `trigger_volume`, the engine makes
- * `destination` the active BSP. Decoded from b40.map, where the referenced
- * trigger volumes are named 'bsp <source>,<destination>' and entries come
- * in bidirectional pairs. */
-struct bsp_trigger
-{
-    i16 trigger_volume; /* index into scenario trigger_volumes */
-    i16 source;         /* index into scenario structure BSPs (bsp_info) */
-    i16 destination;    /* index into scenario structure BSPs (bsp_info) */
-    i16 unknown;        /* structured (paired like the volumes, -1 for
-                           script-only transitions) but undeciphered */
-};
-
-static_assert(sizeof(bsp_trigger) == 8);
-
 struct move_positions
 {
     bl_string unk1[32];
@@ -606,6 +623,26 @@ struct trigger_volume
                in(point.z, position.z, hi.z);
     }
 };
+
+static_assert(sizeof(trigger_volume) == 96);
+
+/* "Structure BSP switch trigger volume": while `source` is the active
+ * structure BSP and the player enters `trigger_volume`, the engine makes
+ * `destination` the active BSP. Decoded from b40.map, where the referenced
+ * trigger volumes are named 'bsp <source>,<destination>' and entries come
+ * in bidirectional pairs. */
+struct bsp_trigger
+{
+    scenario_ptr<scn::trigger_volume> trigger_volume; /* index into scenario trigger_volumes */
+
+    bsp_ptr source;      /* index into scenario structure BSPs (bsp_info) */
+    bsp_ptr destination; /* index into scenario structure BSPs (bsp_info) */
+
+    i16 unknown; /* structured (paired like the volumes, -1 for
+                  * script-only transitions) but undeciphered */
+};
+
+static_assert(sizeof(bsp_trigger) == 8);
 
 enum class actor_flags_t : u32
 {
@@ -882,13 +919,13 @@ struct antenna
 
     struct vertex
     {
-        f32   spring_strength_coeff;
-        f32   angle_yaw, angle_pitch;
-        f32   length;
-        i16   sequence_index;
+        f32   spring_strength_coeff; // strength of the spring, larger value = stronger spring
+        Vecf2 angle; // yaw, pitch, direction toward next vertex
+        f32   length; // distance between this vertex and the next
+        i16   sequence_index; // bitmap group sequence index for this vertex's texture
         i16   padding;
-        Vecf4 color;
-        Vecf4 lod_color;
+        Vecf4 color; // color at this vertex
+        Vecf4 lod_color; // color at this vertex for low-LOD line prim
     };
 
     reference<vertex> vertices;
@@ -1257,12 +1294,12 @@ struct skybox
 {
     struct shader_function
     {
-        bl_tag global_func;
+        bl_string global_func; // the global function that controls this shader value
     };
 
     struct animation
     {
-        i16 anim_idx;
+        i16 anim_idx; // index of the animation in the animation graph
         u32 period;
     };
 
@@ -1379,10 +1416,10 @@ static_assert(sizeof(cutscene_camera_position) == 104);
 
 struct cutscene_title
 {
-    u32               garbage;
-    bl_string_var<36> name;
-    bl_rect           text_bounds;
-    i16               string_index;
+    u32                              garbage;
+    bl_string_var<36>                name;
+    bl_rect                          text_bounds;
+    scenario_ptr<ui::unicode_string> string_index; // Points to U16 text string, pending proper ref
 
     enum justification_t
     {
