@@ -161,7 +161,7 @@ struct object
     struct
     {
         u32                       inputs[4];
-        scenario_ptr<hud_msg>     hud_msg;
+        scenario_ptr<scn::hud_msg>     hud_msg;
         mod2::model_ptr<tagref_t> shader_perm;
     } export_;
 };
@@ -1361,8 +1361,9 @@ struct skybox
     reference<shader_function> shader_functions;
     reference<animation>       animations;
     reference<light>           lights;
-}; // namespace scn
+};
 
+C_FLAGS(skybox::light::light_flags, u16);
 static_assert(sizeof(skybox) == 208);
 static_assert(sizeof(skybox::light) == 116);
 static_assert(offsetof(skybox, indoor_ambient) == 56);

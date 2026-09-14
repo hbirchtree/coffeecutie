@@ -960,8 +960,8 @@ void dump_object(blam::scn::object const* obj)
     fmt::print("    effect     ={}\n", name_of(obj->effect));
     fmt::print(
         "    hud_msg={} shader_perm={}\n",
-        obj->export_.hud_msg,
-        obj->export_.shader_perm);
+        obj->export_.hud_msg.index,
+        obj->export_.shader_perm.index);
 }
 
 void dump_unit(blam::scn::unit const* unit)
@@ -1199,6 +1199,41 @@ void dump_antr(blam::antr::header const* animation)
             i,
             anim.name.str(),
             anim_type);
+    }
+}
+
+void dump_sky(blam::scn::skybox const* skybox)
+{
+    fmt::print("  model=[{}] {}\n",
+        skybox->model.tag_class_name(),
+        skybox->model.name.to_string(g_magic));
+    fmt::print("  animation_graph=[{}] {}\n",
+        skybox->anim_graph.tag_class_name(),
+        skybox->anim_graph.name.to_string(g_magic));
+    fmt::print("  indoor_fog_screen=[{}] {}\n",
+        skybox->indoor_fog_screen.tag_class_name(),
+        skybox->indoor_fog_screen.name.to_string(g_magic));
+    fmt::print("  shader_functions: {}\n", skybox->shader_functions.count);
+    fmt::print("  animations: {}\n", skybox->animations.count);
+    fmt::print("  lights: {}\n", skybox->lights.count);
+    if(auto lights = skybox->lights.data(g_magic); lights.has_value())
+    {
+        for(blam::scn::skybox::light const& light : lights.value())
+        {
+            fmt::print("    light:\n");
+            fmt::print("      lens_flare=[{}] {} marker={}\n",
+                light.lens_flare.tag_class_name(),
+                light.lens_flare.name.to_string(g_magic),
+                light.marker_name.str());
+            fmt::print("      flags={} color={}\n",
+                flags_to_string(light.radiosity.flags),
+                light.radiosity.color);
+            fmt::print("      power={} test_distance={} direction={} diameter={}\n",
+                light.radiosity.power,
+                light.radiosity.test_distance,
+                light.radiosity.direction,
+                light.radiosity.diameter);
+        }
     }
 }
 
@@ -1980,6 +2015,10 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         {
             dump_antr(info);
         }
+        break;
+    case blam::tag_class_t::sky:
+        if(auto* info = header_of((blam::scn::skybox*)nullptr))
+            dump_sky(info);
         break;
     default:
         fmt::print("  (no decoder for this class)\n");
