@@ -65,6 +65,8 @@ bool          g_dump_player   = false;
 bool          g_dump_scenario = false;
 bool          g_dump_bones    = false;
 bool          g_dump_recanim  = false;
+bool          g_spawn_hex     = false;
+u32           g_spawn_hex_limit = 3;
 bool          g_channel_stats{false};
 std::string   g_dump_prefix{};
 std::string   g_dump_png_prefix{};
@@ -1202,41 +1204,6 @@ void dump_antr(blam::antr::header const* animation)
     }
 }
 
-void dump_sky(blam::scn::skybox const* skybox)
-{
-    fmt::print("  model=[{}] {}\n",
-        skybox->model.tag_class_name(),
-        skybox->model.name.to_string(g_magic));
-    fmt::print("  animation_graph=[{}] {}\n",
-        skybox->anim_graph.tag_class_name(),
-        skybox->anim_graph.name.to_string(g_magic));
-    fmt::print("  indoor_fog_screen=[{}] {}\n",
-        skybox->indoor_fog_screen.tag_class_name(),
-        skybox->indoor_fog_screen.name.to_string(g_magic));
-    fmt::print("  shader_functions: {}\n", skybox->shader_functions.count);
-    fmt::print("  animations: {}\n", skybox->animations.count);
-    fmt::print("  lights: {}\n", skybox->lights.count);
-    if(auto lights = skybox->lights.data(g_magic); lights.has_value())
-    {
-        for(blam::scn::skybox::light const& light : lights.value())
-        {
-            fmt::print("    light:\n");
-            fmt::print("      lens_flare=[{}] {} marker={}\n",
-                light.lens_flare.tag_class_name(),
-                light.lens_flare.name.to_string(g_magic),
-                light.marker_name.str());
-            fmt::print("      flags={} color={}\n",
-                flags_to_string(light.radiosity.flags),
-                light.radiosity.color);
-            fmt::print("      power={} test_distance={} direction={} diameter={}\n",
-                light.radiosity.power,
-                light.radiosity.test_distance,
-                light.radiosity.direction,
-                light.radiosity.diameter);
-        }
-    }
-}
-
 template<typename Ver>
 void dump_mode(blam::mod2::header<Ver> const* info)
 {
@@ -1303,6 +1270,101 @@ void dump_mode(blam::mod2::header<Ver> const* info)
 }
 
 /* ---- dispatch ---- */
+
+/* A placement may point at no palette entry at all (index -1, one such scenery
+ * in b40), so every palette lookup goes through here rather than indexing. */
+template<typename P>
+std::string palette_entry(
+    P const& palette, i16 idx, blam::map_ptr const& magic)
+{
+    if(idx < 0 || static_cast<size_t>(idx) >= palette.size())
+        return fmt::format("[{}]", idx);
+    auto const& ref = palette[idx][0];
+    return fmt::format(
+        "[{}] \"{}\"", ref.tag_class_name(), ref.name.to_string(magic));
+}
+
+/* Raw view of a spawn block: the same bytes decoded three ways so a field can
+ * be located by what it looks like rather than by where a struct says it is. */
+void hex_words(blam::byte_t const* p, size_t size, size_t stride_note = 0)
+{
+    (void)stride_note;
+    for(size_t off = 0; off + 4 <= size; off += 4)
+    {
+        u8 b[4];
+        std::memcpy(b, p + off, 4);
+        i16 s0, s1;
+        f32 f;
+        u32 u;
+        std::memcpy(&s0, p + off, 2);
+        std::memcpy(&s1, p + off + 2, 2);
+        std::memcpy(&f, p + off, 4);
+        std::memcpy(&u, p + off, 4);
+        fmt::print(
+            "    0x{:02x}: {:02x} {:02x} {:02x} {:02x} | u32={:<11} i16={:>6},"
+            "{:>6} | f32={: .6g}\n",
+            off, b[0], b[1], b[2], b[3], u, s0, s1, f);
+    }
+}
+
+template<typename T>
+void hex_instances(
+    std::string_view label, blam::reference<T> const& ref, u32 limit)
+{
+    auto items = ref.data(g_magic);
+    if(!items.has_value())
+    {
+        fmt::print("{}: <no data>\n", label);
+        return;
+    }
+    fmt::print(
+        "\n== {} == count={} sizeof={}\n",
+        label,
+        items.value().size(),
+        sizeof(T));
+    u32 i = 0;
+    for(T const& item : items.value())
+    {
+        if(i >= limit)
+            break;
+        fmt::print("  [{}]\n", i);
+        hex_words(reinterpret_cast<blam::byte_t const*>(&item), sizeof(T));
+        i++;
+    }
+}
+
+template<typename Ver>
+void dump_spawn_hex(blam::map_container<Ver> const& map)
+{
+    auto scn = map.scenario();
+    if(!scn.has_value())
+    {
+        fmt::print("no scenario tag\n");
+        return;
+    }
+    auto const* s = scn.value();
+    auto const& o = s->objects;
+
+    u32 const n = g_spawn_hex_limit;
+    hex_instances("scenery", o.scenery.instances, n);
+    hex_instances("bipeds", o.bipeds.instances, n);
+    hex_instances("vehicles", o.vehicles.instances, n);
+    hex_instances("equips", o.equips.instances, n);
+    hex_instances("weapon_spawns", o.weapon_spawns.instances, n);
+    hex_instances("device_groups", o.device_groups, n);
+    hex_instances("machines", o.machines.instances, n);
+    hex_instances("controls", o.controls.instances, n);
+    hex_instances("light_fixtures", o.light_fixtures.instances, n);
+    hex_instances("sound_scenery", o.snd_scenery.instances, n);
+    hex_instances("player_start.locations", s->player_start.locations, n);
+    hex_instances("netgame.flags", s->netgame.flags, n);
+    hex_instances("netgame.equipment", s->netgame.equipment, n);
+    hex_instances("trigger_volumes", s->trigger_volumes, n);
+    hex_instances("editor_comments", s->editor.comments, n);
+    hex_instances("cutscene_flags", s->cutscene.flags, n);
+    hex_instances("cutscene_titles", s->cutscene.titles, n);
+    hex_instances("cutscene_cameras", s->cutscene.camera_points, n);
+}
 
 /* The scenario never names the globals tag; it supplies where a player spawns
  * and with what, while globals supplies the unit itself. Printed together so
@@ -1374,9 +1436,8 @@ void dump_scenario(blam::map_container<Ver> const& map)
         {
             fmt::print("  scenery_spawn: obj_name={}\n",
                 obj_names[obj.name]);
-            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
-                palette[obj.ref][0].tag_class_name(),
-                palette[obj.ref][0].name.to_string(map.magic),
+            fmt::print("    palette={} permutation={}\n",
+                palette_entry(palette, obj.ref, map.magic),
                 obj.desired_permutation);
             fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
             fmt::print("    bsp_flags={:#x} spawn_flags={}\n",
@@ -1392,9 +1453,8 @@ void dump_scenario(blam::map_container<Ver> const& map)
         {
             fmt::print("  biped_spawn: obj_name={}\n",
                 obj_names[biped.name]);
-            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
-                palette[biped.ref][0].tag_class_name(),
-                palette[biped.ref][0].name.to_string(map.magic),
+            fmt::print("    palette={} permutation={}\n",
+                palette_entry(palette, biped.ref, map.magic),
                 biped.desired_permutation);
             fmt::print("    pos={} rot={}\n", biped.pos, biped.rot);
             fmt::print("    bsp_flags={:#x} spawn_flags={} biped flags={}\n",
@@ -1411,14 +1471,18 @@ void dump_scenario(blam::map_container<Ver> const& map)
         {
             fmt::print("  vehicle_spawn: obj_name={}\n",
                 obj_names[obj.name]);
-            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
-                palette[obj.ref][0].tag_class_name(),
-                palette[obj.ref][0].name.to_string(map.magic),
+            fmt::print("    palette={} permutation={}\n",
+                palette_entry(palette, obj.ref, map.magic),
                 obj.desired_permutation);
             fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
-            fmt::print("    bsp_flags={:#x} spawn_flags={}\n",
+            fmt::print("    vitality={} team={} multiplayer={}\n",
+                obj.vitality,
+                obj.team_index,
+                flags_to_string(obj.spawn_flags));
+            fmt::print("    bsp_flags={:#x} spawn_flags={} unit_flags={}\n",
                 static_cast<u16>(obj.bsp_flags),
-                flags_to_string(obj.flags));
+                flags_to_string(obj.flags),
+                flags_to_string(obj.biped_flags));
         }
     }
     fmt::print("equips: {}\n", s->objects.equips.instances.count);
@@ -1429,14 +1493,14 @@ void dump_scenario(blam::map_container<Ver> const& map)
         {
             fmt::print("  equip_spawn: obj_name={}\n",
                 obj_names[obj.name]);
-            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
-                palette[obj.ref][0].tag_class_name(),
-                palette[obj.ref][0].name.to_string(map.magic),
+            fmt::print("    palette={} permutation={}\n",
+                palette_entry(palette, obj.ref, map.magic),
                 obj.desired_permutation);
             fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
-            fmt::print("    bsp_flags={:#x} spawn_flags={}\n",
+            fmt::print("    bsp_flags={:#x} spawn_flags={} equip_flags={}\n",
                 static_cast<u16>(obj.bsp_flags),
-                flags_to_string(obj.flags));
+                flags_to_string(obj.flags),
+                flags_to_string(obj.equip_flags));
         }
     }
     fmt::print("weapon spawns: {}\n", s->objects.weapon_spawns.instances.count);
@@ -1447,14 +1511,17 @@ void dump_scenario(blam::map_container<Ver> const& map)
         {
             fmt::print("  weapon_spawn: obj_name={}\n",
                 obj_names[obj.name]);
-            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
-                palette[obj.ref][0].tag_class_name(),
-                palette[obj.ref][0].name.to_string(map.magic),
+            fmt::print("    palette={} permutation={}\n",
+                palette_entry(palette, obj.ref, map.magic),
                 obj.desired_permutation);
             fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
-            fmt::print("    bsp_flags={:#x} spawn_flags={}\n",
+            fmt::print("    rounds_left={} rounds_loaded={}\n",
+                obj.rounds_left,
+                obj.rounds_loaded);
+            fmt::print("    bsp_flags={:#x} spawn_flags={} weapon_flags={}\n",
                 static_cast<u16>(obj.bsp_flags),
-                flags_to_string(obj.flags));
+                flags_to_string(obj.flags),
+                flags_to_string(obj.weapon_flags));
         }
     }
     fmt::print("device groups: {}\n", s->objects.device_groups.count);
@@ -1471,16 +1538,18 @@ void dump_scenario(blam::map_container<Ver> const& map)
         {
             fmt::print("  machine_spawn: obj_name={}\n",
                 obj_names[obj.name]);
-            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
-                palette[obj.ref][0].tag_class_name(),
-                palette[obj.ref][0].name.to_string(map.magic),
+            fmt::print("    palette={} permutation={}\n",
+                palette_entry(palette, obj.ref, map.magic),
                 obj.desired_permutation);
             fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
-            fmt::print("    bsp_flags={:#x} spawn_flags={} machine_flags={} flags2={}\n",
+            fmt::print("    power_group={} position_group={}\n",
+                obj.power_group.index,
+                obj.position_group.index);
+            fmt::print("    bsp_flags={:#x} spawn_flags={} device_flags={} machine_flags={}\n",
                 static_cast<u16>(obj.bsp_flags),
                 flags_to_string(obj.flags),
-                flags_to_string(obj.machine_flags),
-                flags_to_string(obj.device_flags));
+                flags_to_string(obj.device_flags),
+                flags_to_string(obj.machine_flags));
         }
     }
     fmt::print("controls: {}\n", s->objects.controls.instances.count);
@@ -1491,18 +1560,17 @@ void dump_scenario(blam::map_container<Ver> const& map)
         {
             fmt::print("  control_spawn: obj_name={}\n",
                 obj_names[obj.name]);
-            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
-                palette[obj.ref][0].tag_class_name(),
-                palette[obj.ref][0].name.to_string(map.magic),
+            fmt::print("    palette={} permutation={}\n",
+                palette_entry(palette, obj.ref, map.magic),
                 obj.desired_permutation);
             fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
             fmt::print("    power_group={} position_group={}\n",
                 obj.power_group.index,
                 obj.position_group.index);
-            fmt::print("    bsp_flags={:#x} spawn_flags={} machine_flags={} flags2={}\n",
+            fmt::print("    bsp_flags={:#x} spawn_flags={} device_flags={} control_flags={}\n",
                 static_cast<u16>(obj.bsp_flags),
                 flags_to_string(obj.flags),
-                flags_to_string(obj.machine_flags),
+                flags_to_string(obj.device_flags),
                 flags_to_string(obj.control_flags));
         }
     }
@@ -1514,18 +1582,17 @@ void dump_scenario(blam::map_container<Ver> const& map)
         {
             fmt::print("  light_fixture_spawn: obj_name={}\n",
                 obj_names[obj.name]);
-            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
-                palette[obj.ref][0].tag_class_name(),
-                palette[obj.ref][0].name.to_string(map.magic),
+            fmt::print("    palette={} permutation={}\n",
+                palette_entry(palette, obj.ref, map.magic),
                 obj.desired_permutation);
             fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
             fmt::print("    power_group={} position_group={}\n",
                 obj.power_group.index,
                 obj.position_group.index);
-            fmt::print("    bsp_flags={:#x} spawn_flags={} machine_flags={}\n",
+            fmt::print("    bsp_flags={:#x} spawn_flags={} device_flags={}\n",
                 static_cast<u16>(obj.bsp_flags),
                 flags_to_string(obj.flags),
-                flags_to_string(obj.machine_flags));
+                flags_to_string(obj.device_flags));
             fmt::print("    color={} intensity={} falloff_angle={} cutoff_angle={}\n",
                 obj.color,
                 obj.intensity,
@@ -1541,9 +1608,8 @@ void dump_scenario(blam::map_container<Ver> const& map)
         {
             fmt::print("  sound_scenery: obj_name={}\n",
                 obj_names[obj.name]);
-            fmt::print("    palette=[{}] \"{}\" permutation={}\n",
-                palette[obj.ref][0].tag_class_name(),
-                palette[obj.ref][0].name.to_string(map.magic),
+            fmt::print("    palette={} permutation={}\n",
+                palette_entry(palette, obj.ref, map.magic),
                 obj.desired_permutation);
             fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
             fmt::print("    bsp_flags={:#x} spawn_flags={}\n",
@@ -2016,10 +2082,6 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
             dump_antr(info);
         }
         break;
-    case blam::tag_class_t::sky:
-        if(auto* info = header_of((blam::scn::skybox*)nullptr))
-            dump_sky(info);
-        break;
     default:
         fmt::print("  (no decoder for this class)\n");
         break;
@@ -2262,6 +2324,8 @@ void open_map(
         return;
     }
 
+    if(g_spawn_hex)
+        dump_spawn_hex<Ver>(map);
     if(g_dump_scenario)
     {
         dump_scenario<Ver>(map);
@@ -2348,6 +2412,13 @@ int inspect_main()
         ("dump-scenario",
          "Print scenario type, starting profiles and spawn locations")
         //
+        ("dump-spawn-hex",
+         "Hexdump the first few instances of each scenario spawn block")
+        //
+        ("spawn-hex-count",
+         "How many instances of each block to hexdump",
+         cxxopts::value<int>())
+        //
         ("dump-bones",
          "For model tags, print the bone tree with bind-pose axes in model "
          "space")
@@ -2378,6 +2449,9 @@ int inspect_main()
     g_dump_mirrors  = arguments.count("dump-mirrors") > 0;
     g_dump_player   = arguments.count("dump-player-biped") > 0;
     g_dump_scenario = arguments.count("dump-scenario") > 0;
+    g_spawn_hex     = arguments.count("dump-spawn-hex") > 0;
+    g_spawn_hex_limit = static_cast<u32>(
+        arguments.as_optional<int>("spawn-hex-count").value_or(3));
     g_dump_bones    = arguments.count("dump-bones") > 0;
     g_dump_recanim  = arguments.count("dump-recorded-animations") > 0;
     g_scan_window   = static_cast<size_t>(
