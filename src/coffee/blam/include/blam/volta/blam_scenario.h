@@ -160,9 +160,9 @@ struct object
 
     struct
     {
-        u32                       inputs[4];
-        scenario_ptr<scn::hud_msg>     hud_msg;
-        mod2::model_ptr<tagref_t> shader_perm;
+        u32                        inputs[4];
+        scenario_ptr<scn::hud_msg> hud_msg;
+        mod2::model_ptr<tagref_t>  shader_perm;
     } export_;
 };
 
@@ -283,13 +283,14 @@ struct biped_spawn : object_spawn
 };
 C_FLAGS(biped_spawn::biped_flags_t, u16)
 
+static_assert(offsetof(biped_spawn, vitality) == 0x48);
+static_assert(offsetof(biped_spawn, biped_flags) == 0x4c);
 static_assert(sizeof(biped_spawn) == 120);
 
 struct vehicle_spawn : object_spawn
 {
     u32 padding[9];
 
-    // TODO: Locations not confirmed
     enum biped_flags_t : u16
     {
         none = 0x0,
@@ -318,14 +319,20 @@ struct vehicle_spawn : object_spawn
 
     f32                       vitality;
     biped_flags_t             biped_flags;
-    u16                       team_index;
+    u16                       padding2;
+    u32                       padding3[2];
+
+    i16                       team_index;
     multiplayer_spawn_flags_t spawn_flags;
-    u32                       padding2[9];
+    u32                       padding4[7];
 };
 
 C_FLAGS(vehicle_spawn::biped_flags_t, u16)
 C_FLAGS(vehicle_spawn::multiplayer_spawn_flags_t, u16)
 
+static_assert(offsetof(vehicle_spawn, vitality) == 0x48);
+static_assert(offsetof(vehicle_spawn, team_index) == 0x58);
+static_assert(offsetof(vehicle_spawn, spawn_flags) == 0x5a);
 static_assert(sizeof(vehicle_spawn) == 120);
 
 struct equip_spawn : object_spawn
@@ -344,6 +351,7 @@ struct equip_spawn : object_spawn
 
 C_FLAGS(equip_spawn::equip_flags_t, u16)
 
+static_assert(offsetof(equip_spawn, equip_flags) == 0x24);
 static_assert(sizeof(equip_spawn) == 40);
 
 struct scenery_spawn : object_spawn
@@ -363,14 +371,19 @@ struct weapon_spawn : object_spawn
         does_accelerate   = 0x4, // moves due to external force
     };
 
-    u16            rounds_left;
-    u16            rounds_loaded;
+    u32            padding_[9];
+    u16            rounds_left;   // rounds held in reserve
+    u16            rounds_loaded; // rounds in the magazine
     weapon_flags_t weapon_flags;
 
     u16 padding__;
-    u32 unknown_[12];
+    u32 unknown_[3];
 };
 
+C_FLAGS(weapon_spawn::weapon_flags_t, u16)
+
+static_assert(offsetof(weapon_spawn, rounds_left) == 0x48);
+static_assert(offsetof(weapon_spawn, weapon_flags) == 0x4c);
 static_assert(sizeof(weapon_spawn) == 92);
 
 struct device_group
@@ -387,9 +400,9 @@ struct device_group
     u32                unk[3];
 };
 
-C_FLAGS(device_group::device_group_flags, u16);
+C_FLAGS(device_group::device_group_flags, u32);
 
-enum class machine_spawn_flags : u16
+enum class device_flags_t : u32
 {
     none              = 0x0,
     initially_on      = 0x1,
@@ -399,9 +412,11 @@ enum class machine_spawn_flags : u16
     not_usable        = 0x10,
 };
 
+C_FLAGS(device_flags_t, u32);
+
 struct machine_spawn : object_spawn
 {
-    enum class machine_spawn_flags2 : u16
+    enum class machine_flags_t : u32
     {
         none                           = 0x0,
         does_not_operate_automatically = 0x1,
@@ -410,49 +425,62 @@ struct machine_spawn : object_spawn
         opened_by_melee                = 0x8,
     };
 
+    /* Devices skip four more bytes than the other blocks before their own
+     * data, which starts at 0x28. */
+    u32                        padding_;
     scenario_ptr<device_group> power_group;
     scenario_ptr<device_group> position_group;
-    machine_spawn_flags        machine_flags;
-    machine_spawn_flags2       device_flags;
+    device_flags_t             device_flags;
+    machine_flags_t            machine_flags;
 
-    u32 padding[5];
+    u32 padding[3];
 };
 
-C_FLAGS(machine_spawn_flags, u16);
-C_FLAGS(machine_spawn::machine_spawn_flags2, u16);
+C_FLAGS(machine_spawn::machine_flags_t, u32);
+static_assert(offsetof(machine_spawn, power_group) == 0x28);
+static_assert(offsetof(machine_spawn, machine_flags) == 0x30);
 static_assert(sizeof(machine_spawn) == 64);
 
 struct control : object_spawn
 {
-    enum class control_flags_t : u16
+    enum class control_flags_t : u32
     {
         none                   = 0x0,
         usable_from_both_sides = 0x1,
     };
+
+    u32                        padding_;
     scenario_ptr<device_group> power_group;
     scenario_ptr<device_group> position_group;
-    machine_spawn_flags        machine_flags;
+    device_flags_t             device_flags;
     control_flags_t            control_flags;
-    u32 padding[5];
+    i16 dont_touch_this;
+    u16 padding2;
+    u32 padding[2];
 };
 
-C_FLAGS(control::control_flags_t, u16);
+C_FLAGS(control::control_flags_t, u32);
+static_assert(offsetof(control, power_group) == 0x28);
+static_assert(offsetof(control, control_flags) == 0x30);
 static_assert(sizeof(control) == 64);
 
 struct light_fixture_spawn : object_spawn
 {
+    u32                        padding_;
     scenario_ptr<device_group> power_group;
     scenario_ptr<device_group> position_group;
-    machine_spawn_flags        machine_flags;
+    device_flags_t             device_flags;
     Vecf3                      color;
     f32                        intensity;
     f32                        falloff_angle;
     f32                        cutoff_angle;
 
-    u32 padding[5];
+    u32 padding[4];
 };
 
-static_assert(offsetof(light_fixture_spawn, power_group) == 36);
+static_assert(offsetof(light_fixture_spawn, power_group) == 0x28);
+static_assert(offsetof(light_fixture_spawn, color) == 0x30);
+static_assert(offsetof(light_fixture_spawn, intensity) == 0x3c);
 static_assert(sizeof(light_fixture_spawn) == 88);
 
 struct palette
@@ -505,7 +533,7 @@ struct multiplayer_flag
 {
     enum flag_type_t : u16
     {
-       ctf_flag, 
+       ctf_flag,
        ctf_vehicle,
        oddball_spawn,
        race_track,
