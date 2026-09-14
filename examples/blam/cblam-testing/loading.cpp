@@ -585,8 +585,8 @@ struct ResourceLoader
                 });
                 cDebug(
                     "BSP switch: {} → {} via volume '{}'",
-                    sw.source,
-                    sw.destination,
+                    sw.source.index,
+                    sw.destination.index,
                     trigger_vols[sw.trigger_volume].name.str());
             }
         }
@@ -678,7 +678,9 @@ struct ResourceLoader
     template<typename T>
     libc_types::f32 device_power(BlamFiles<Ver>& files, T const& instance)
     {
-        if constexpr(std::is_same_v<T, blam::scn::device_machine_spawn>)
+        if constexpr(std::is_same_v<T, blam::scn::machine_spawn> ||
+            std::is_same_v<T, blam::scn::light_fixture_spawn> ||
+            std::is_same_v<T, blam::scn::control>)
         {
             auto const* scenario = files.container.scenario().value_or(nullptr);
             if(!scenario || instance.power_group < 0)
@@ -1044,6 +1046,8 @@ struct ResourceLoader
             ObjectLightFixture | PositioningStatic);
         load_objects(
             p, scenario->objects.machines, ObjectDevice | PositioningStatic);
+        load_objects(
+            p, scenario->objects.controls, ObjectDevice | PositioningStatic);
 
         load_objects(
             p, scenario->objects.vehicles, ObjectVehicle | PositioningDynamic);
