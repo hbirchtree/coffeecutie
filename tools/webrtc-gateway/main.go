@@ -101,10 +101,6 @@ type signalMessage struct {
 	PunchPort        int    `json:"punchPort,omitempty"`
 	TrackingID       string `json:"trackingId,omitempty"`
 	ServerTrackingID string `json:"serverTrackingId,omitempty"`
-	// Metadata payload from server
-	// Contains player count, game type, player count etc.
-	// We can use this later to create a server browser
-	Metadata map[string]string `json:"metadata,omitempty"`
 }
 
 const registerPunchPrefix = "COFFEE-REG-PUNCH:"
@@ -1226,18 +1222,10 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 			}
 			completeChallenge(myID, myEntry, m.Nonce)
 		case "metadata":
-			// m.Metadata is kept for backward compatibility with small
-			// key/value maps. If a raw payload is present it takes
-			// precedence and is subject to the size cap.
+			// The payload rides in "data" as an opaque string, so the
+			// bytes the server signed reach the client unchanged.
 			if len(m.Data) > 0 {
 				stashServerMetadata(myID, myEntry, []byte(m.Data))
-			} else if len(m.Metadata) > 0 {
-				encoded, err := json.Marshal(m.Metadata)
-				if err != nil {
-					log.Printf("%s failed to encode metadata map: %v", myEntry.tag(), err)
-					continue
-				}
-				stashServerMetadata(myID, myEntry, encoded)
 			}
 		case "gns-rendezvous":
 			relayRendezvousToClient(m.SessionID, m.Data)

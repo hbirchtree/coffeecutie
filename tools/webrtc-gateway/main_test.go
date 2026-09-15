@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -88,24 +89,22 @@ func TestStashServerMetadataEnforcesSizeCap(t *testing.T) {
 	}
 }
 
-func TestMetadataMessageBackwardCompatibility(t *testing.T) {
+// Decode a server's "metadata" message the way handleServerSignal does --
+// off the wire, not from a hand-built struct -- so a field that cannot
+// survive JSON is caught here instead of going quietly missing in CI.
+func TestMetadataMessageFromWire(t *testing.T) {
 	srv := &registeredServer{active: true, trackingID: "S-TEST03"}
-	m := signalMessage{
-		Type:     "metadata",
-		Metadata: map[string]string{"playerCount": "3", "map": "wizard"},
-	}
+	payload := `{"playerCount":"3","map":"wizard"}`
 
-	var encoded []byte
-	if len(m.Data) > 0 {
-		encoded = []byte(m.Data)
-	} else if len(m.Metadata) > 0 {
-		var err error
-		encoded, err = json.Marshal(m.Metadata)
-		if err != nil {
-			t.Fatalf("marshal: %v", err)
-		}
+	var m signalMessage
+	wire := `{"type":"metadata","data":` + strconv.Quote(payload) + `}`
+	if err := json.Unmarshal([]byte(wire), &m); err != nil {
+		t.Fatalf("unmarshal: %v", err)
 	}
-	stashServerMetadata("test-server", srv, encoded)
+	if len(m.Data) == 0 {
+		t.Fatalf("metadata message carried no data: %s", wire)
+	}
+	stashServerMetadata("test-server", srv, []byte(m.Data))
 
 	if srv.metadata == nil {
 		t.Fatal("expected metadata to be stored")
@@ -116,5 +115,30 @@ func TestMetadataMessageBackwardCompatibility(t *testing.T) {
 	}
 	if parsed["playerCount"] != "3" || parsed["map"] != "wizard" {
 		t.Fatalf("unexpected parsed metadata: %v", parsed)
+	}
+}
+
+// A second field tagged "metadata" makes encoding/json drop every one of
+// them, in both directions and without an error -- which silently severed
+// the whole end-to-end metadata path: servers were never read, clients
+// never told. Guard the wire format rather than the struct layout.
+func TestSignalMessageMetadataSurvivesJSON(t *testing.T) {
+	payload := `{"map":"bloodgulch","identity":"ed25519:abc"}`
+
+	encoded, err := json.Marshal(signalMessage{Type: "answer", MetadataPayload: payload})
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+	if !strings.Contains(string(encoded), `"metadata":`) {
+		t.Fatalf("answer carried no metadata field: %s", encoded)
+	}
+
+	var decoded signalMessage
+	if err := json.Unmarshal(encoded, &decoded); err != nil {
+		t.Fatalf("unmarshal failed: %v", err)
+	}
+	if decoded.MetadataPayload != payload {
+		t.Fatalf("metadata did not round-trip: got %q, want %q",
+			decoded.MetadataPayload, payload)
 	}
 }

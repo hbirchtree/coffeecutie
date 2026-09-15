@@ -1144,7 +1144,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             return;
 
         auto metadata = m_webrtcBootstrap->Metadata();
-        if(!metadata.is_null())
+        if(m_client_auth.type != AuthType::None && !metadata.is_null())
         {
             bool verified = false;
             if(m_client_auth.type == AuthType::HmacSha256)
@@ -1215,6 +1215,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 k_ESteamNetworkingConfig_P2P_Transport_ICE_Enable,
                 k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_All);
 #endif
+            config.emplace_back();
+            config.back().SetInt32(
+                k_ESteamNetworkingConfig_TimeoutInitial, 180000);
             auto* bootstrap   = m_webrtcBootstrap;
             m_webrtcBootstrap = nullptr;
             m_connection      = m_impl->ConnectP2PWebRTCDataChannel(
