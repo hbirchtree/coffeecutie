@@ -56,7 +56,11 @@ class GatewayConnectBootstrap final : public ISteamNetworkingConnectionSignaling
     bool Ready() const;
     bool Failed() const;
 
-    std::string ServerTransport() const;
+    /*! What the server said it can speak, most-preferred first. Valid
+     * once Ready(). */
+    std::vector<std::string> ServerTransports() const;
+    /*! True if the server advertised this transport. */
+    bool ServerSupports(std::string_view transport) const;
 
     /*! Signed server metadata from the gateway's answer message, if any.
      * Valid once Ready(). */
@@ -101,19 +105,19 @@ class GatewayConnectBootstrap final : public ISteamNetworkingConnectionSignaling
      * libdatachannel callbacks (their own internal thread) both touch
      * these concurrently with Ready()/Failed() polling from the main
      * thread. */
-    mutable std::mutex m_mutex;
-    std::string        m_sessionId;
-    bool               m_haveSessionId{false};
-    bool               m_dataChannelOpen{false};
-    bool               m_failed{false};
-    bool               m_peerConnectionTaken{false};
-    bool               m_dataChannelTaken{false};
-    bool               m_gatheringComplete{false};
-    bool               m_wsOpen{false};
-    bool               m_offerSent{false};
-    std::string        m_pendingOfferSdp;
-    std::string        m_serverTransport;
-    nlohmann::json     m_metadata;
+    mutable std::mutex       m_mutex;
+    std::string              m_sessionId;
+    bool                     m_haveSessionId{false};
+    bool                     m_dataChannelOpen{false};
+    bool                     m_failed{false};
+    bool                     m_peerConnectionTaken{false};
+    bool                     m_dataChannelTaken{false};
+    bool                     m_gatheringComplete{false};
+    bool                     m_wsOpen{false};
+    bool                     m_offerSent{false};
+    std::string              m_pendingOfferSdp;
+    std::vector<std::string> m_serverTransports;
+    nlohmann::json           m_metadata;
 };
 
 class GatewayServerRegistration;

@@ -139,7 +139,7 @@ func serverListItems(ws *serverWorkingSet) []list.Item {
 		// A webrtc-hosted server has no address of its own -- it is
 		// reachable only down its own /server-signal connection.
 		addr := "<datachannel>"
-		if server.transport != transportWebRTC {
+		if !server.supports(transportWebRTC) {
 			// Only known once a client's relay punch has arrived.
 			addr = "<no client yet>"
 			if server.gameAddr != nil {
@@ -150,7 +150,7 @@ func serverListItems(ws *serverWorkingSet) []list.Item {
 		items = append(items, serverItem{
 			id:         id,
 			addr:       addr,
-			transport:  server.transport,
+			transport:  strings.Join(server.transports, ","),
 			trackingID: server.trackingID,
 		})
 	}
@@ -213,7 +213,7 @@ func currentServerRows(ws *serverWorkingSet, id string, spinnerFrame string) (in
 	}
 
 	server.mu.Lock()
-	webrtcHosted := server.transport == transportWebRTC
+	webrtcHosted := server.supports(transportWebRTC)
 	if webrtcHosted {
 		// No UDP leg exists for these: the gateway bridges the client's
 		// DataChannel to one this server opens per session, so there is

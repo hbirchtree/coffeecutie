@@ -311,7 +311,7 @@ func journalServerEvent(srv *registeredServer, serverID, event, outcome, detail 
 	}
 	if srv != nil {
 		ev.serverTrackingID = srv.trackingID
-		ev.transport = srv.transport
+		ev.transport = strings.Join(srv.transports, ",")
 	}
 	journal.Record(ev)
 }

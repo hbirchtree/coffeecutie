@@ -166,8 +166,15 @@ void GatewayConnectBootstrap::onWebSocketMessage(std::string const& text)
     {
         auto sdp       = msg.value("sdp", std::string());
         auto sessionId = msg.value("sessionId", std::string());
-        auto transport = msg.value("transport", std::string("udp"));
-        auto metadata  = msg.value("metadata", std::string());
+        /* "transports" is the list; "transport" is the single-valued
+         * spelling that predates it, still sent by an older gateway. Read
+         * both so a client works against either. */
+        std::vector<std::string> transports;
+        if(auto it = msg.find("transports"); it != msg.end() && it->is_array())
+            transports = it->get<std::vector<std::string>>();
+        if(transports.empty())
+            transports.push_back(msg.value("transport", std::string("udp")));
+        auto metadata = msg.value("metadata", std::string());
         if(sdp.empty() || sessionId.empty())
         {
             cWarning("webrtc_signaling: malformed answer message");
@@ -177,8 +184,8 @@ void GatewayConnectBootstrap::onWebSocketMessage(std::string const& text)
         }
         m_pc->setRemoteDescription(rtc::Description(sdp, "answer"));
         std::lock_guard<std::mutex> lock(m_mutex);
-        m_sessionId       = std::move(sessionId);
-        m_serverTransport = std::move(transport);
+        m_sessionId        = std::move(sessionId);
+        m_serverTransports = std::move(transports);
         if(!metadata.empty())
         {
             try
@@ -222,10 +229,19 @@ void GatewayConnectBootstrap::onWebSocketMessage(std::string const& text)
     }
 }
 
-std::string GatewayConnectBootstrap::ServerTransport() const
+std::vector<std::string> GatewayConnectBootstrap::ServerTransports() const
 {
     std::lock_guard<std::mutex> lock(m_mutex);
-    return m_serverTransport;
+    return m_serverTransports;
+}
+
+bool GatewayConnectBootstrap::ServerSupports(std::string_view transport) const
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return std::find(
+               m_serverTransports.begin(),
+               m_serverTransports.end(),
+               transport) != m_serverTransports.end();
 }
 
 nlohmann::json GatewayConnectBootstrap::Metadata() const
@@ -584,6 +600,10 @@ void GatewayServerRegistration::sendRegister()
     nlohmann::json register_msg{
         {"type", "register"},
         {"serverId", m_serverId},
+        /* A browser-hosted server can only ever be reached as a DataChannel
+         * peer, so the list has exactly one entry. "transport" repeats it
+         * for a gateway from before the list existed. */
+        {"transports", nlohmann::json::array({"webrtc"})},
         {"transport", "webrtc"},
     };
     if(!m_ws->send(register_msg.dump()))

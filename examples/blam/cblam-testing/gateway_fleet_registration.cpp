@@ -293,6 +293,10 @@ void GatewayFleetRegistration::sendRegister()
     nlohmann::json reg{
         {"type", "register"},
         {"serverId", m_serverId},
+        /* A real UDP listen socket sits behind this registration, so the
+         * gateway relays to it. Stated rather than left to the gateway's
+         * default so the advertised list is always the server's own claim. */
+        {"transports", nlohmann::json::array({"udp"})},
     };
     if(!m_ws->send(reg.dump()))
         cWarning(

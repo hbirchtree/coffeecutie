@@ -1297,10 +1297,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
          * either way. */
         add_pinned_root_config(config);
 
-        m_webrtcDirectMode = m_webrtcBootstrap->ServerTransport() != "webrtc";
+        /* Only the DataChannel bridge can reach a server that has no UDP
+         * socket of its own, so that choice is forced; everything else uses
+         * the ordinary direct-UDP-over-DataChannel shape. */
+        m_webrtcDirectMode = !m_webrtcBootstrap->ServerSupports("webrtc");
+        auto transports    = m_webrtcBootstrap->ServerTransports();
         cDebug(
-            "WebRTC server transport={}, using {} mode",
-            m_webrtcBootstrap->ServerTransport(),
+            "WebRTC server transports=[{}], using {} mode",
+            fmt::join(transports, ", "),
             m_webrtcDirectMode ? "direct-UDP" : "P2P rendezvous");
 
         SteamNetworkingIdentity expected_identity;

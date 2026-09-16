@@ -142,3 +142,190 @@ func TestSignalMessageMetadataSurvivesJSON(t *testing.T) {
 			decoded.MetadataPayload, payload)
 	}
 }
+
+// A session ID arrives inside the sending server's own message, so the only
+// thing standing between one server and another server's clients is this
+// ownership check -- not the secrecy of the ID, which any future debug
+// endpoint or echoed error could give away.
+func TestLookupOwnedSessionRejectsOtherServers(t *testing.T) {
+	const (
+		ownerID = "owner-server"
+		otherID = "other-server"
+		sessID  = "0123456789abcdef0123456789abcdef"
+	)
+	workingSet.clients.Lock()
+	workingSet.clients.sessions[sessID] = &clientSession{
+		serverID:         ownerID,
+		trackingID:       "C-OWN001",
+		serverTrackingID: "S-OWN001",
+	}
+	workingSet.clients.Unlock()
+	t.Cleanup(func() {
+		workingSet.clients.Lock()
+		delete(workingSet.clients.sessions, sessID)
+		workingSet.clients.Unlock()
+	})
+
+	for _, tc := range []struct {
+		name     string
+		serverID string
+		session  string
+		wantOK   bool
+	}{
+		{"owner is allowed", ownerID, sessID, true},
+		{"another registered server is refused", otherID, sessID, false},
+		{"unknown session is refused", ownerID, "deadbeef", false},
+		{"unregistered sender is refused", "", sessID, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, ok := lookupOwnedSession(tc.serverID, tc.session, "gns-rendezvous")
+			if ok != tc.wantOK {
+				t.Fatalf("ok = %v, want %v", ok, tc.wantOK)
+			}
+			if ok && got == nil {
+				t.Fatal("returned a nil session alongside ok")
+			}
+			if !ok && got != nil {
+				t.Fatal("returned a session despite refusing it")
+			}
+		})
+	}
+}
+
+// relayGNSConnected tears a session's relay down, so reaching it with someone
+// else's session ID would be a disconnect primitive needing no cryptography
+// at all. Check the teardown does not happen, rather than only that the
+// lookup refuses.
+func TestRelayGNSConnectedIgnoresForeignSession(t *testing.T) {
+	const (
+		ownerID = "teardown-owner"
+		otherID = "teardown-other"
+		sessID  = "fedcba9876543210fedcba9876543210"
+	)
+	session := &clientSession{
+		serverID:         ownerID,
+		trackingID:       "C-TDN001",
+		serverTrackingID: "S-TDN001",
+		protocol:         "WebRTC",
+	}
+	workingSet.clients.Lock()
+	workingSet.clients.sessions[sessID] = session
+	workingSet.clients.Unlock()
+	t.Cleanup(func() {
+		workingSet.clients.Lock()
+		delete(workingSet.clients.sessions, sessID)
+		workingSet.clients.Unlock()
+	})
+
+	// No DataChannel is attached, so a teardown would show up as the
+	// protocol being switched off "WebRTC" by closeSessionRelay.
+	relayGNSConnected(otherID, sessID)
+
+	session.mu.Lock()
+	protocol := session.protocol
+	session.mu.Unlock()
+	if protocol != "WebRTC" {
+		t.Fatalf("a foreign server retired the relay: protocol is now %q", protocol)
+	}
+}
+
+// A gateway and its peers are deployed and upgraded separately, so both
+// spellings have to survive the wire in both directions: "transports" is the
+// list, "transport" the single value that predates it.
+func TestParseTransports(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		msg  signalMessage
+		want []string
+		bad  bool
+	}{
+		{"list is taken in order",
+			signalMessage{Transports: []string{"udp", "webrtc"}},
+			[]string{"udp", "webrtc"}, false},
+		{"legacy single value still works",
+			signalMessage{Transport: "webrtc"}, []string{"webrtc"}, false},
+		{"list wins over the legacy field",
+			signalMessage{Transports: []string{"webrtc"}, Transport: "udp"},
+			[]string{"webrtc"}, false},
+		{"neither field means udp",
+			signalMessage{}, []string{"udp"}, false},
+		{"duplicates collapse",
+			signalMessage{Transports: []string{"udp", "udp"}},
+			[]string{"udp"}, false},
+		{"unknown entries are ignored, not fatal",
+			signalMessage{Transports: []string{"carrier-pigeon", "udp"}},
+			[]string{"udp"}, false},
+		{"nothing usable is an error",
+			signalMessage{Transports: []string{"carrier-pigeon"}}, nil, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := parseTransports(tc.msg)
+			if tc.bad {
+				if err == nil {
+					t.Fatalf("expected an error, got %v", got)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if len(got) != len(tc.want) {
+				t.Fatalf("got %v, want %v", got, tc.want)
+			}
+			for i := range got {
+				if got[i] != tc.want[i] {
+					t.Fatalf("got %v, want %v", got, tc.want)
+				}
+			}
+		})
+	}
+}
+
+// The answer has to carry both spellings for the same reason, and a client
+// that only knows the single-valued one must still be pointed at a mode it
+// can actually use.
+func TestAnswerCarriesBothTransportSpellings(t *testing.T) {
+	encoded, err := json.Marshal(signalMessage{
+		Type:       "answer",
+		Transports: []string{"webrtc", "udp"},
+		Transport:  firstTransport([]string{"webrtc", "udp"}),
+	})
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+	body := string(encoded)
+	if !strings.Contains(body, `"transports":["webrtc","udp"]`) {
+		t.Fatalf("answer lost the transport list: %s", body)
+	}
+	if !strings.Contains(body, `"transport":"webrtc"`) {
+		t.Fatalf("answer lost the legacy transport field: %s", body)
+	}
+
+	var decoded signalMessage
+	if err := json.Unmarshal(encoded, &decoded); err != nil {
+		t.Fatalf("unmarshal failed: %v", err)
+	}
+	if len(decoded.Transports) != 2 || decoded.Transports[0] != "webrtc" {
+		t.Fatalf("transports did not round-trip: %v", decoded.Transports)
+	}
+	if decoded.Transport != "webrtc" {
+		t.Fatalf("legacy transport did not round-trip: %q", decoded.Transport)
+	}
+}
+
+func TestRegisteredServerSupports(t *testing.T) {
+	srv := &registeredServer{transports: []string{"udp", "webrtc"}}
+	if !srv.supports("udp") || !srv.supports("webrtc") {
+		t.Fatal("advertised transports reported as unsupported")
+	}
+	if srv.supports("carrier-pigeon") {
+		t.Fatal("unadvertised transport reported as supported")
+	}
+	if srv.primaryTransport() != "udp" {
+		t.Fatalf("primary should be the first entry, got %q", srv.primaryTransport())
+	}
+	var nilSrv *registeredServer
+	if nilSrv.supports("udp") || nilSrv.primaryTransport() != "udp" {
+		t.Fatal("nil server should be inert, not panic or claim support")
+	}
+}

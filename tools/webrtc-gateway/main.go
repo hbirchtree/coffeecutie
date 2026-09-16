@@ -81,10 +81,18 @@ type signalMessage struct {
 	Data string `json:"data,omitempty"`
 
 	ServerID string `json:"serverId,omitempty"`
-	// Transport is "udp" (a real GNS listen socket behind a NAT punch) or
-	// "webrtc" (the server is itself a DataChannel peer). Sent by the
-	// server on "register", and reported back to each client on "answer"
-	// so it knows which GNS connect mode to use.
+	// Transports is what a server can speak, most-preferred first, and what
+	// a client is told it may choose from. A list rather than one value
+	// because these are not exclusive: a server with a real UDP socket can
+	// also accept P2P rendezvous, and only the client knows which of those
+	// it can actually use (a browser cannot do either half of ICE).
+	//
+	// Sent by the server on "register" and reported back on "answer".
+	Transports []string `json:"transports,omitempty"`
+	// Transport is the pre-list spelling of the above, carrying a single
+	// value. Still read on the way in and still sent on the way out, so a
+	// gateway and a peer from either side of this change interoperate --
+	// which matters because they are deployed and upgraded separately.
 	Transport  string `json:"transport,omitempty"`
 	Nonce      string `json:"nonce,omitempty"`
 	RelayPort  int    `json:"relayPort,omitempty"`
@@ -115,6 +123,74 @@ const (
 	// that session -- no UDP, no punch, no relay port.
 	transportWebRTC = "webrtc"
 )
+
+// knownTransports is the set a server may advertise. Unknown entries are
+// dropped rather than rejected: a newer peer naming a transport this build
+// has never heard of should fall back to the ones it shares with us, not
+// fail to register.
+var knownTransports = map[string]bool{
+	transportUDP:    true,
+	transportWebRTC: true,
+}
+
+// parseTransports normalizes what a server sent into a non-empty, de-duplicated
+// list of transports this gateway understands, preserving the sender's order
+// because it expresses preference.
+func parseTransports(m signalMessage) ([]string, error) {
+	raw := m.Transports
+	if len(raw) == 0 && m.Transport != "" {
+		raw = []string{m.Transport}
+	}
+	if len(raw) == 0 {
+		return []string{transportUDP}, nil
+	}
+	var out []string
+	seen := map[string]bool{}
+	for _, t := range raw {
+		if !knownTransports[t] || seen[t] {
+			continue
+		}
+		seen[t] = true
+		out = append(out, t)
+	}
+	if len(out) == 0 {
+		return nil, fmt.Errorf("register: no usable transport in %v", raw)
+	}
+	return out, nil
+}
+
+func hasTransport(transports []string, want string) bool {
+	for _, t := range transports {
+		if t == want {
+			return true
+		}
+	}
+	return false
+}
+
+// firstTransport is the preferred entry, for the single-valued legacy field.
+func firstTransport(transports []string) string {
+	if len(transports) == 0 {
+		return transportUDP
+	}
+	return transports[0]
+}
+
+func (s *registeredServer) supports(transport string) bool {
+	if s == nil {
+		return false
+	}
+	return hasTransport(s.transports, transport)
+}
+
+// primaryTransport is what an older client, which only understands a single
+// value, is told to use.
+func (s *registeredServer) primaryTransport() string {
+	if s == nil {
+		return transportUDP
+	}
+	return firstTransport(s.transports)
+}
 
 var relayPunchMarker = []byte("COFFEE-NAT-PUNCH")
 
@@ -234,8 +310,10 @@ type registeredServer struct {
 	conn    *websocket.Conn
 	writeMu sync.Mutex
 
-	// transportUDP or transportWebRTC; fixed at registration.
-	transport string
+	// What this server can speak, most-preferred first; fixed at
+	// registration and never empty. Use supports() rather than indexing:
+	// which entry a given client ends up on is the client's choice.
+	transports []string
 
 	trackingID string
 
@@ -612,7 +690,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 	srv.mu.Lock()
 	active := srv.active
 	srv.mu.Unlock()
-	transport := srv.transport
+	transports := append([]string(nil), srv.transports...)
 	if !active {
 		log.Printf("%s rejecting /signal: server %q not active (challenge pending/failed)", srv.tag(), serverID)
 		return
@@ -639,7 +717,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		scope: "client", event: "session-open", outcome: "ok",
 		serverID: serverID, serverTrackingID: session.serverTrackingID,
 		clientTrackingID: session.trackingID,
-		origin:           signalOrigin(r), transport: transport,
+		origin:           signalOrigin(r), transport: strings.Join(transports, ","),
 	})
 	workingSet.clients.Lock()
 	workingSet.clients.sessions[sessionID] = session
@@ -731,7 +809,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		// isn't registered yet, so the first message(s) were silently
 		// dropped.
 
-		if transport == transportWebRTC {
+		if hasTransport(transports, transportWebRTC) {
 			// No UDP anywhere in this path: the server dials
 			// /signal?role=host&session=<id> with its own DataChannel for
 			// this session, and the two get spliced together.
@@ -918,10 +996,11 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		SessionID:        sessionID,
 		TrackingID:       session.trackingID,
 		ServerTrackingID: session.serverTrackingID,
-		// Which GNS connect mode this client should use: ordinary
-		// direct-UDP-over-DataChannel for a UDP server, P2P rendezvous
-		// for a WebRTC-hosted one.
-		Transport:       transport,
+		// What this client may choose between. Transports is the list;
+		// Transport repeats the preferred one so a client from before the
+		// list existed still picks a mode it understands.
+		Transports:      transports,
+		Transport:       firstTransport(transports),
 		MetadataPayload: metadataPayload,
 	})
 	session.writeMu.Unlock()
@@ -993,7 +1072,7 @@ func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, 
 	workingSet.servers.RLock()
 	srv, srvOK := workingSet.servers.registry[session.serverID]
 	workingSet.servers.RUnlock()
-	if !srvOK || srv.transport != transportWebRTC {
+	if !srvOK || !srv.supports(transportWebRTC) {
 		log.Printf("%s rejecting host /signal: server %q is not webrtc-hosted",
 			session.tag(), session.serverID)
 		return
@@ -1186,7 +1265,7 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 				PunchPort:        settings.punchPortToAdvertise,
 				ServerTrackingID: entry.trackingID,
 			}
-			if entry.transport == transportWebRTC {
+			if entry.supports(transportWebRTC) {
 				// Nothing to punch -- it is routable the moment it
 				// registers (see beginRegistration).
 				reply = signalMessage{
@@ -1228,10 +1307,12 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 				stashServerMetadata(myID, myEntry, []byte(m.Data))
 			}
 		case "gns-rendezvous":
-			relayRendezvousToClient(m.SessionID, m.Data)
+			// myID, not anything in the message: the session has to belong
+			// to the server that sent this, like every other case here.
+			relayRendezvousToClient(myID, m.SessionID, m.Data)
 		case "gns-connected":
-			log.Printf("server signal: GNS reports direct connection for session %s, retiring relay", m.SessionID)
-			relayGNSConnected(m.SessionID)
+			log.Printf("%s server signal: GNS reports a direct connection, retiring relay", myEntry.tag())
+			relayGNSConnected(myID, m.SessionID)
 		default:
 			log.Printf("server signal: unexpected message type %q", m.Type)
 		}
@@ -1242,12 +1323,9 @@ func beginRegistration(conn *websocket.Conn, m signalMessage, origin string) (st
 	if m.ServerID == "" {
 		return "", nil, fmt.Errorf("register: missing serverId")
 	}
-	transport := m.Transport
-	if transport == "" {
-		transport = transportUDP
-	}
-	if transport != transportUDP && transport != transportWebRTC {
-		return "", nil, fmt.Errorf("register: unknown transport %q", transport)
+	transports, err := parseTransports(m)
+	if err != nil {
+		return "", nil, err
 	}
 
 	nonce := make([]byte, 16)
@@ -1257,7 +1335,7 @@ func beginRegistration(conn *websocket.Conn, m signalMessage, origin string) (st
 
 	entry := &registeredServer{
 		conn:         conn,
-		transport:    transport,
+		transports:   transports,
 		trackingID:   newTrackingID("S"),
 		active:       false,
 		pendingNonce: nonce,
@@ -1269,7 +1347,7 @@ func beginRegistration(conn *websocket.Conn, m signalMessage, origin string) (st
 	// return-routability challenge would be checking an address that is
 	// never used, so it is skipped -- first-registered-wins below is the
 	// whole squatting story for these.
-	if transport == transportWebRTC {
+	if entry.supports(transportWebRTC) {
 		entry.active = true
 		entry.pendingNonce = nil
 		entry.expiresAt = time.Now().Add(settings.registrationTTL)
@@ -1283,13 +1361,13 @@ func beginRegistration(conn *websocket.Conn, m signalMessage, origin string) (st
 	workingSet.servers.registry[m.ServerID] = entry
 	workingSet.servers.Unlock()
 
-	if transport == transportWebRTC {
+	if entry.supports(transportWebRTC) {
 		log.Printf("[%s] server %q registration active from %s (webrtc-hosted, no UDP challenge)",
 			entry.trackingID, m.ServerID, origin)
 		journal.Record(journalEvent{
 			scope: "server", event: "register", outcome: "ok",
 			serverID: m.ServerID, serverTrackingID: entry.trackingID,
-			origin: origin, transport: entry.transport,
+			origin: origin, transport: entry.primaryTransport(),
 			detail: "webrtc-hosted, no UDP challenge",
 		})
 		return m.ServerID, entry, nil
@@ -1300,7 +1378,7 @@ func beginRegistration(conn *websocket.Conn, m signalMessage, origin string) (st
 	journal.Record(journalEvent{
 		scope: "server", event: "register", outcome: "pending",
 		serverID: m.ServerID, serverTrackingID: entry.trackingID,
-		origin: origin, transport: entry.transport,
+		origin: origin, transport: entry.primaryTransport(),
 		detail: "awaiting return-routability punch",
 	})
 
@@ -1431,18 +1509,52 @@ func relayRendezvousToServer(serverID, sessionID, data string) {
 	}
 }
 
-func relayRendezvousToClient(sessionID, data string) {
+// lookupOwnedSession resolves a session ID supplied by a server, and returns
+// it only if that server is the one the session was opened against.
+//
+// The session ID arrives in the server's own message, so without this check a
+// registered server could name any session in the global map and act on
+// another server's clients -- injecting into their GNS key exchange, or just
+// tearing their relay down. What has kept that shut is that session IDs are
+// 16 bytes of crypto/rand kept off the logs, journal and admin panel, which is
+// secrecy of an identifier rather than an ownership check: anything that ever
+// surfaced an ID would turn it into a live hole silently. The opposite
+// direction never had the problem, because handleSignal takes both IDs from
+// its own closure and lets the client supply only the opaque payload.
+//
+// Mismatches are logged with tracking IDs rather than the session ID, so
+// diagnosing one does not widen the very surface this is guarding.
+func lookupOwnedSession(serverID, sessionID, msgType string) (*clientSession, bool) {
+	if serverID == "" {
+		log.Printf("dropping %s: sending server is not registered", msgType)
+		return nil, false
+	}
 	workingSet.clients.RLock()
 	session, ok := workingSet.clients.sessions[sessionID]
 	workingSet.clients.RUnlock()
 	if !ok {
-		log.Printf("dropping gns-rendezvous for unknown session %s", sessionID)
+		log.Printf("dropping %s for unknown session (from server %q)", msgType, serverID)
+		return nil, false
+	}
+	if session.serverID != serverID {
+		log.Printf("%s dropping %s: session belongs to server %q, not %q",
+			session.tag(), msgType, session.serverID, serverID)
+		journalClientEvent(session, msgType, "rejected",
+			"sending server "+serverID+" does not own this session")
+		return nil, false
+	}
+	return session, true
+}
+
+func relayRendezvousToClient(serverID, sessionID, data string) {
+	session, ok := lookupOwnedSession(serverID, sessionID, "gns-rendezvous")
+	if !ok {
 		return
 	}
 	session.writeMu.Lock()
 	defer session.writeMu.Unlock()
 	if err := session.conn.WriteJSON(signalMessage{Type: "gns-rendezvous", SessionID: sessionID, Data: data}); err != nil {
-		log.Printf("failed to relay rendezvous to client %s: %v", sessionID, err)
+		log.Printf("%s failed to relay rendezvous to client: %v", session.tag(), err)
 	}
 }
 
@@ -1471,12 +1583,9 @@ func closeSessionRelay(session *clientSession) {
 // relayGNSConnected looks up a session by ID for closeSessionRelay, for
 // callers (the server's /server-signal connection) that don't already
 // have the session in scope the way handleSignal's own read loop does.
-func relayGNSConnected(sessionID string) {
-	workingSet.clients.RLock()
-	session, ok := workingSet.clients.sessions[sessionID]
-	workingSet.clients.RUnlock()
+func relayGNSConnected(serverID, sessionID string) {
+	session, ok := lookupOwnedSession(serverID, sessionID, "gns-connected")
 	if !ok {
-		log.Printf("dropping gns-connected for unknown session %s", sessionID)
 		return
 	}
 	// Senders only signal this once GNS has switched to a transport that
