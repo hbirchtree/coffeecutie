@@ -777,7 +777,7 @@ jobs:
     # the wrong key must be refused, and a client given no key at all must
     # still connect (unauthenticated) rather than be locked out.
     if: ${{ always() }}
-    name: "Pinned server certificate (x86_64 <-> x86_64)"
+    name: x86_64 <-🔒-> x86_64
     needs: Linux
     runs-on: ubuntu-latest
     permissions:
