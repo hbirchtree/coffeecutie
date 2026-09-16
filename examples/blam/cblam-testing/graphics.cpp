@@ -113,6 +113,14 @@ i32 blam_main()
              "metadata. If the file does not exist it will be generated; if "
              "omitted when --gateway-register is used, the key is stored in "
              "the config directory",
+             cxxopts::value<std::string>())
+            //
+            ("server-key",
+             "Ed25519 public key (base64) of the server named by --server. "
+             "The connection then requires a certificate signed by that key, "
+             "so nothing on the path can present its own. For a gateway join "
+             "URL the key rides in the fragment instead and this is not "
+             "needed",
              cxxopts::value<std::string>());
         if constexpr(!compile_info::supports_command_line)
             options.add_options("Game")(
@@ -532,6 +540,9 @@ i32 blam_main()
                     .type   = ServerConnectEvent::Server,
                     .remote = arguments["server"].as<std::string>(),
                 };
+                if(arguments.count("server-key"))
+                    connect.server_public_key =
+                        arguments["server-key"].as<std::string>();
                 gbus.inject(event, &connect);
             } else
             {

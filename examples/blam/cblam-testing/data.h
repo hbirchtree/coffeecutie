@@ -432,6 +432,12 @@ struct ServerConnectEvent
      * independently of the gateway. */
     std::string gateway_auth_secret; /* HMAC-SHA256 key, base64 */
     std::string gateway_auth_key;    /* Ed25519 private key PEM path */
+
+    /* Only used with type == Server, and only for a remote that is a plain
+     * address rather than a gateway join URL (which carries the key in its
+     * fragment): the server's Ed25519 public key, base64. When set, the
+     * connection requires a certificate signed by it. */
+    std::string server_public_key;
 };
 
 struct ServerConnectedEvent

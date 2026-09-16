@@ -99,12 +99,14 @@ if(GameNetworkingSockets_FOUND)
         GameNetworkingSockets::GameNetworkingSockets_s
     )
     target_compile_definitions(BlamGraphics PUBLIC -DUSE_NETWORKING=1)
-    if(EMSCRIPTEN)
-        target_link_libraries(BlamGraphics PUBLIC
-            OpenSSL::SSL
-            OpenSSL::Crypto
-        )
-    endif()
+    # Peer identity keys and certificate signing (webrtc_identity.cpp) are a
+    # GNS-level concern, not a WebRTC one -- a plain UDP or P2P connection
+    # authenticates the same way -- so OpenSSL is needed wherever networking
+    # is, independently of the DataChannel transport below.
+    target_link_libraries(BlamGraphics PUBLIC
+        OpenSSL::SSL
+        OpenSSL::Crypto
+    )
 endif()
 if(GameNetworkingSockets_FOUND AND (LibDataChannel_FOUND OR EMSCRIPTEN))
     if(EMSCRIPTEN)

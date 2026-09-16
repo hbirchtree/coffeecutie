@@ -1,9 +1,10 @@
 #pragma once
 
-#if defined(USE_NETWORKING) && defined(USE_WEBRTC_TRANSPORT)
+#if defined(USE_NETWORKING)
 
 #include <nlohmann/json.hpp>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace webrtc_signaling {
@@ -62,6 +63,13 @@ std::string derive_identity_ed25519(std::vector<uint8_t> const& public_key);
  * the file does not exist. Returns the corresponding public key. */
 std::vector<uint8_t> load_or_generate_ed25519_public_key(
     std::string const& private_key_pem_path);
+
+/*! Sign an opaque blob with the Ed25519 key at the given PEM path, generating
+ * and persisting one if the file does not exist. Used to sign the GNS
+ * certificate body, whose bytes come from GNS rather than from JSON, so the
+ * private key never has to leave this file. Empty on failure. */
+std::vector<uint8_t> sign_blob_ed25519(
+    std::string const& private_key_pem_path, std::string_view data);
 
 /*! Sign metadata with Ed25519. The private key is supplied as a PEM file
  * path; the function will generate and persist a key if the file does not

@@ -1,6 +1,6 @@
 #include "webrtc_identity.h"
 
-#if defined(USE_NETWORKING) && defined(USE_WEBRTC_TRANSPORT)
+#if defined(USE_NETWORKING)
 
 #include <coffee/core/debug/formatting.h>
 #include <fmt/format.h>
@@ -13,6 +13,7 @@
 #include <openssl/pem.h>
 #include <openssl/sha.h>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <fstream>
@@ -235,10 +236,28 @@ std::string canonical_metadata_json(nlohmann::json const& meta)
     return sort_json(meta).dump();
 }
 
+/* A GNS generic-string identity holds 31 characters (k_cchMaxGenericString is
+ * 32 with the terminator), and SetGenericString simply fails for anything
+ * longer. A full 32-byte digest is 44 base64 characters, so an untruncated
+ * identity never fit: it was rejected, the identity stayed invalid and fell
+ * back to localhost, which in turn made GNS treat every connection as
+ * anonymous and send an unsigned certificate. 96 bits leaves both prefixes
+ * comfortably inside the limit, and the signature -- not the identity string
+ * -- is what authenticates a peer. */
+constexpr size_t k_identity_digest_bytes = 12;
+
+static std::string truncated_identity(
+    std::string_view prefix, std::vector<uint8_t> const& digest)
+{
+    auto bytes = digest;
+    bytes.resize(std::min(bytes.size(), k_identity_digest_bytes));
+    return std::string(prefix) + base64_encode(bytes);
+}
+
 std::string derive_identity_hmac(std::vector<uint8_t> const& key)
 {
     auto hash = hmac_sha256(key, "coffee-webrtc-identity-v1");
-    return "hmac-sha256:" + base64_encode(hash);
+    return truncated_identity("hmac-sha256:", hash);
 }
 
 nlohmann::json sign_metadata_hmac(
@@ -276,7 +295,11 @@ bool verify_metadata_hmac(
 
 std::string derive_identity_ed25519(std::vector<uint8_t> const& public_key)
 {
-    return "ed25519:" + base64_encode(public_key);
+    /* Hashed rather than truncating the key itself, so the identity stays a
+     * fingerprint of the whole key instead of a prefix of it. */
+    std::vector<uint8_t> digest(SHA256_DIGEST_LENGTH);
+    SHA256(public_key.data(), public_key.size(), digest.data());
+    return truncated_identity("ed25519:", digest);
 }
 
 std::vector<uint8_t> load_or_generate_ed25519_public_key(
@@ -288,6 +311,20 @@ std::vector<uint8_t> load_or_generate_ed25519_public_key(
     auto pk = ed25519_public_key(pkey);
     EVP_PKEY_free(pkey);
     return pk;
+}
+
+std::vector<uint8_t> sign_blob_ed25519(
+    std::string const& private_key_pem_path, std::string_view data)
+{
+    EVP_PKEY* pkey = load_or_generate_ed25519_key(private_key_pem_path);
+    if(!pkey)
+    {
+        cWarning("Failed to load or generate Ed25519 key");
+        return {};
+    }
+    auto sig = ed25519_sign(pkey, data);
+    EVP_PKEY_free(pkey);
+    return sig;
 }
 
 nlohmann::json sign_metadata_ed25519(

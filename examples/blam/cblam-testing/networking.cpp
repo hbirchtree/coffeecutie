@@ -31,9 +31,9 @@ using Coffee::ProfContext;
 #include <coffee/components/restricted_subsystem.h>
 #include <peripherals/identify/system.h>
 
-#if defined(USE_WEBRTC_TRANSPORT)
+/* Peer identity and certificate signing live here, and are used with or
+ * without the DataChannel transport. */
 using namespace webrtc_signaling;
-#endif
 
 using platform::url::constructors::MkUrl;
 
@@ -737,6 +737,72 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return std::string(out);
     }
 
+    /* Long enough that a server does not silently stop being joinable during a
+     * session, short enough that a leaked key has a horizon. */
+    static constexpr int k_self_signed_cert_seconds = 60 * 60 * 24;
+
+    /* Issue ourselves a GNS certificate over our own connection key, signed by
+     * the same Ed25519 key we sign metadata with. A client that was handed the
+     * matching public key out of band pins it for its connection (see
+     * connect_server_webrtc), and GNS then refuses any cert that key did not
+     * sign -- which is what stops a relay on the rendezvous path from
+     * substituting its own cert and reading the session. Without a cert the
+     * peer presents an unsigned one, which the pinning client rejects.
+     *
+     * Only meaningful for ed25519: an hmac join URL carries a symmetric secret,
+     * so every client holding the link could forge the server's cert too. */
+    void install_self_signed_cert()
+    {
+        if(m_server_auth.type != AuthType::Ed25519 ||
+           m_server_auth.ed25519_public_key.empty() ||
+           m_server_auth_key_path.empty())
+            return;
+
+        SteamNetworkingErrMsg ec{};
+        int                   blob_size = 0;
+        if(!SteamNetworkingSockets_GetSelfSignedCertBlobToSign(
+               m_impl, k_self_signed_cert_seconds, &blob_size, nullptr, ec))
+        {
+            cWarning("Failed to size self-signed certificate: {}", ec);
+            return;
+        }
+        std::vector<u8> blob(static_cast<size_t>(blob_size));
+        if(!SteamNetworkingSockets_GetSelfSignedCertBlobToSign(
+               m_impl, k_self_signed_cert_seconds, &blob_size, blob.data(), ec))
+        {
+            cWarning("Failed to build self-signed certificate: {}", ec);
+            return;
+        }
+
+        auto signature = sign_blob_ed25519(
+            m_server_auth_key_path,
+            std::string_view(
+                reinterpret_cast<const char*>(blob.data()),
+                static_cast<size_t>(blob_size)));
+        if(signature.empty())
+        {
+            cWarning("Failed to sign self-signed certificate");
+            return;
+        }
+
+        if(!SteamNetworkingSockets_InstallSelfSignedCert(
+               m_impl,
+               blob.data(),
+               blob_size,
+               signature.data(),
+               static_cast<int>(signature.size()),
+               m_server_auth.ed25519_public_key.data(),
+               static_cast<int>(m_server_auth.ed25519_public_key.size()),
+               ec))
+        {
+            cWarning("Failed to install self-signed certificate: {}", ec);
+            return;
+        }
+        cDebug(
+            "Installed self-signed GNS certificate for identity {}",
+            derive_identity_ed25519(m_server_auth.ed25519_public_key));
+    }
+
     Networking(
         GameEventBus&      game_bus,
         NetworkState&      net_state,
@@ -769,7 +835,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_identity.SetGenericString(randomIdentity);
         if(!GameNetworkingSockets_Init(&m_identity, ec))
 #else
-#if defined(USE_WEBRTC_TRANSPORT)
         m_server_auth_key_path = gateway_auth_key;
         if(!gateway_register_url.empty() && gateway_auth_secret.empty() &&
            m_server_auth_key_path.empty())
@@ -806,9 +871,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
         if(m_identity.IsInvalid())
             m_identity.SetLocalHost();
-#else
-        m_identity.SetLocalHost();
-#endif
         if(!GameNetworkingSockets_Init(
                m_identity.IsLocalHost() ? nullptr : &m_identity, ec))
 #endif
@@ -818,6 +880,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
         m_impl  = SteamNetworkingSockets();
         m_utils = SteamNetworkingUtils();
+
+        /* No-op unless an Ed25519 key was configured, which is the only mode
+         * that can authenticate a server to a client it shares no secret
+         * with. Not tied to a transport: the cert protects a direct or P2P
+         * UDP session exactly as it protects a relayed one. */
+        install_self_signed_cert();
 
 #if defined(USE_WEBRTC_TRANSPORT) && defined(COFFEE_WASM)
         // On Wasm, we need to ensure we run network code on the main thread
@@ -831,8 +899,21 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 if(connect->type == ServerConnectEvent::Peer)
                     connect_symmetric(connect->remote);
                 else if(connect->type == ServerConnectEvent::Server)
+                {
+                    /* A gateway join URL carries the key in its fragment and
+                     * parses it later; this is the plain-address route in. */
+                    if(!connect->server_public_key.empty())
+                    {
+                        m_client_auth.type = AuthType::Ed25519;
+                        m_client_auth.ed25519_public_key =
+                            b64::decode(connect->server_public_key);
+                        if(m_client_auth.ed25519_public_key.empty())
+                            cWarning(
+                                "--server-key decoded to an empty key; is it "
+                                "valid base64?");
+                    }
                     connect_server(connect->remote);
-                else
+                } else
 #if defined(USE_WEBRTC_TRANSPORT)
                     if(connect->remote.starts_with("ws://") ||
                        connect->remote.starts_with("wss://"))
@@ -1000,6 +1081,34 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return config;
     }
 
+    /* Pin the server's public key for one outgoing connection, so GNS accepts
+     * only a certificate that key signed. Deliberately not folded into
+     * create_callbacks(): that is shared with the listen socket, and a server
+     * pinning a root would demand certs from clients, which are anonymous.
+     *
+     * Only ed25519 carries a public key. An hmac join URL holds a symmetric
+     * secret, so a client could mint the server's certificate itself and the
+     * check would prove nothing. */
+    void add_pinned_root_config(
+        std::vector<SteamNetworkingConfigValue_t>& config)
+    {
+        if(m_client_auth.type != AuthType::Ed25519 ||
+           m_client_auth.ed25519_public_key.empty())
+            return;
+        m_pinned_root_key_b64 = b64::encode(
+            semantic::Span<const u8>(
+                m_client_auth.ed25519_public_key.data(),
+                m_client_auth.ed25519_public_key.size()));
+        config.emplace_back();
+        config.back().SetString(
+            k_ESteamNetworkingConfig_PinnedRootCertPublicKey,
+            m_pinned_root_key_b64.c_str());
+        cDebug(
+            "Requiring the server's certificate to be signed by the pinned "
+            "key ({})",
+            derive_identity_ed25519(m_client_auth.ed25519_public_key));
+    }
+
     void connect_symmetric(std::string const& /*remote*/)
     {
         if(m_connection)
@@ -1059,6 +1168,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             return;
         }
         auto config = create_callbacks();
+        add_pinned_root_config(config);
         m_connection =
             m_impl->ConnectByIPAddress(server, config.size(), config.data());
         if(m_connection == k_HSteamNetConnection_Invalid)
@@ -1182,6 +1292,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         auto pc     = m_webrtcBootstrap->TakePeerConnection();
         auto dc     = m_webrtcBootstrap->TakeDataChannel();
         auto config = create_callbacks();
+        /* Before the branch, so both the relayed-UDP and the P2P rendezvous
+         * shapes are authenticated -- the gateway is on the key-exchange path
+         * either way. */
+        add_pinned_root_config(config);
 
         m_webrtcDirectMode = m_webrtcBootstrap->ServerTransport() != "webrtc";
         cDebug(
@@ -2247,15 +2361,23 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     stl_types::math::rng               m_local_random{};
 #if defined(USE_WEBRTC_TRANSPORT)
     std::string m_last_metadata_sent;
+#endif
 
-    /* Server-side WebRTC auth config. */
+    /* Peer authentication, independent of how packets get there: the server's
+     * keypair issues its GNS certificate, and a client that was given the
+     * public key pins it for the connection. A gateway-relayed session is the
+     * case that most obviously needs it, but a direct or P2P UDP session is
+     * where it carries the whole guarantee, having no second encrypted hop to
+     * fall back on. */
     webrtc_signaling::WebrtcAuth m_server_auth;
     std::string                  m_server_auth_key_path;
 
-    /* Client-side WebRTC auth parsed from the join URL fragment. */
+    /* Client-side auth, from the join URL fragment or --server-key. */
     webrtc_signaling::WebrtcAuth m_client_auth;
     std::string                  m_expected_server_identity;
-#endif
+    /* Base64 of the key pinned for the next connection. SetString keeps the
+     * pointer rather than copying, so this has to outlive the connect call. */
+    std::string m_pinned_root_key_b64;
 };
 
 #endif
