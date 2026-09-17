@@ -2,6 +2,7 @@
 
 #include "caching.h"
 #include "caching_item.h"
+#include "components.h"
 #include "crunched/loading_screen.h"
 #include "data.h"
 #include "loading_screen.h"
@@ -2192,7 +2193,19 @@ struct MeshRenderer
             m_resources.offscreen->clear(
                 Vecf4(rendering_props->clear_color, 1.f));
         else
-            m_resources.offscreen->clear(Vecf4(0, 0, 0, 1));
+        {
+            bool skybox_found{false};
+            for(auto const& skybox : p.template select<WorldInfo>())
+            {
+                skybox_found = true;
+                WorldInfo const& world = skybox.template get<WorldInfo>();
+                if(!world.skybox)
+                    continue;
+                m_resources.offscreen->clear(Vecf4(world.skybox->outdoor_fog.color, 1));
+            }
+            if(!skybox_found)
+                m_resources.offscreen->clear(Vecf4{0, 0, 0, 1});
+        }
 
         // Check if shaders are compiled
         do

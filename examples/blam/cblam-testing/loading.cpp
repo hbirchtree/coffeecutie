@@ -31,7 +31,8 @@ using ResourceLoaderManifest = compo::SubsystemManifest<
         ShaderData,
         SubModel,
         TriggerVolume,
-        Visibility>,
+        Visibility,
+        WorldInfo>,
     type_list_t<
         BitmapCache<Ver>,
         BlamFiles<Ver>,
@@ -220,6 +221,7 @@ struct ResourceLoader
         }
 
         Model& skybox_mod = skybox_item.template get<Model>();
+        WorldInfo& world_info = skybox_item.template get<WorldInfo>();
 
         auto& data        = p.template subsystem<BlamFiles<Ver>>();
         auto& model_cache = p.template subsystem<ModelCache<Ver>>();
@@ -241,6 +243,8 @@ struct ResourceLoader
             auto                     skybox_tag = *index.tag_of(skybox);
             blam::scn::skybox const& skybox_ =
                 skybox_tag->template data<blam::scn::skybox>(magic).value()[0];
+
+            world_info.skybox = &skybox_;
 
             Span<const blam::scn::skybox::light> lights =
                 skybox_.lights.data(magic).value();

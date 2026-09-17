@@ -82,7 +82,8 @@ using MeshRendererManifest = compo::SubsystemManifest<
         const DebugDraw,
         const PlayerCamera,
         const PlayerInfo,
-        const Visibility>,
+        const Visibility,
+        const WorldInfo>,
     type_list_t<
         const DrawListBuilder<V>,
         BlamFiles<V>,

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "access.h"
+#include "allocators.h"
 #include "caching.h"
 #include "types.h"
 
@@ -465,6 +466,14 @@ struct Cluster
     }
 };
 
+struct WorldInfo
+{
+    using value_type = WorldInfo;
+    using type       = compo::alloc::VectorContainer<value_type>;
+
+    blam::scn::skybox const* skybox{nullptr};
+};
+
 /**
  * Depth info for sorting objects in space relative to the camera
  * Contains
@@ -677,6 +686,7 @@ static const auto player_recipe = compo::EntityRecipe{
 static const auto skybox_model = compo::EntityRecipe{
     .components =
         {
+            compo::type_hash_v<WorldInfo>(),
             compo::type_hash_v<Model>(),
             compo::type_hash_v<Visibility>(),
         },
