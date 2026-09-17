@@ -53,7 +53,9 @@
         {"time":15000, "type": "camera", "position" :[43.844826, -73.49047, 0.6451015], "rotation":[-0.9230687, 0.07574771, 0.37583944, -0.030841704]},
         {"time":15500, "type":"screenshot","name":"b40_plasma_torch"},
         {"time":16000, "type": "camera", "position" :[36.762585, -68.442955, 0.34970737], "rotation":[-0.94029415, -0.07354936, -0.33130956, -0.025914704]},
-        {"time":16500, "type":"screenshot","name":"b40_plasma_turret"}
+        {"time":16500, "type":"screenshot","name":"b40_plasma_turret"},
+        {"time":17000, "type": "camera", "position" :[145.42418, -127.17257, 4.096], "rotation":[-0.10556366, 0.09478561, 0.7365416, -0.6613459]},
+        {"time":17500, "type":"screenshot","name":"b40_sky_bloom"}
     ],
     "frame_delta": 250.0,
     "end_time": 20000
