@@ -1,21 +1,20 @@
 #include "blam_files.h"
 #include "camera_control.h"
 #include "components.h"
-#include "cursed.h"
 #include "data.h"
+#include "input/touch_overlay.h"
 #include "journal.h"
 #include "loading.h"
 #include "map_loading.h"
 #include "map_marker.h"
-#include "networking.h"
-#include "occluder.h"
+#include "network/networking.h"
 #include "physics.h"
-#include "rendering.h"
+#include "render/occluder.h"
+#include "render/rendering.h"
 #include "resource_creation.h"
 #include "script_component.h"
 #include "selected_version.h"
 #include "sounds.h"
-#include "touch_overlay.h"
 #include "ui.h"
 #include "ui_caching.h"
 
@@ -25,6 +24,10 @@
 #include <coffee/core/coffee_args.h>
 #include <coffee/graphics/apis/gleam/rhi_emulation.h>
 #include <platforms/sysinfo.h>
+
+#if defined(BLAM_CURSED_ENABLED)
+#include "cursed.h"
+#endif
 
 #if defined(FEATURE_ENABLE_OAF)
 #include <oaf/api_system.h>

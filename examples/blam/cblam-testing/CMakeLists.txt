@@ -39,23 +39,22 @@ coffee_application(
   SOURCES
         caching.cpp
         camera_control.cpp
-        gateway_fleet_registration.cpp
+        debug_ui/widgets.cpp
         graphics.cpp
         loading.cpp
         map_loading.cpp
-        networking.cpp
-        occluder.cpp
+        network/gateway_fleet_registration.cpp
+        network/networking.cpp
+        network/webrtc_identity.cpp
+        network/webrtc_signaling.cpp
         physics.cpp
-        rendering.cpp
+        render/occluder.cpp
+        render/rendering.cpp
         resource_creation.cpp
         script_component.cpp
-        server_browser.cpp
         sounds.cpp
-        touch_overlay.cpp
+        input/touch_overlay.cpp
         ui.cpp
-        webrtc_identity.cpp
-        webrtc_signaling.cpp
-        widgets.cpp
   LIBRARIES Blam Core Image GLeamRHI ComponentBundleSetup
   BUNDLE_LIBRARIES ${BUNDLED_LIBS}
   SCHEMES blam halo
@@ -64,7 +63,10 @@ coffee_application(
 )
 add_dependencies(BlamGraphics BlamGraphics.assets)
 # Crunched assets (textures/meshes as constexpr arrays) land here.
-target_include_directories(BlamGraphics PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
+target_include_directories(BlamGraphics PRIVATE
+  ${CMAKE_CURRENT_BINARY_DIR}/generated
+  ${CMAKE_CURRENT_SOURCE_DIR}
+)
 # Crunched data lives in its own translation unit, so including the header
 # does not drag the initialisers into every consumer
 file(GLOB BLAMG_CRUNCHED_SOURCES CONFIGURE_DEPENDS

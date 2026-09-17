@@ -16,7 +16,7 @@ coffee_application(
         pose_config.cpp
         ${CBLAM_TESTING_DIR}/caching.cpp
         ${CBLAM_TESTING_DIR}/resource_creation.cpp
-        ${CBLAM_TESTING_DIR}/rendering.cpp
+        ${CBLAM_TESTING_DIR}/render/rendering.cpp
   LIBRARIES Blam Core Image GLeamRHI ComponentBundleSetup
   ICON_ASSET ${CBLAM_TESTING_DIR}/icon_asset_plain.svg
   RESOURCES "${CMAKE_CURRENT_BINARY_DIR}/assets"

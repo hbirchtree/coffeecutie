@@ -1,29 +1,27 @@
 #pragma once
 
-#include "coffee/graphics/apis/gleam/rhi_draw_command.h"
-#include "coffee/graphics/apis/gleam/rhi_program.h"
-#include "coffee/graphics/apis/gleam/rhi_vertex.h"
 #include "crunched/crunch_types.h"
 #include "crunched/loading_screen.h"
-#include "peripherals/concepts/graphics_api.h"
-#include "peripherals/constants.h"
-#include "peripherals/stl/accumulate.h"
-#include "peripherals/stl/enumerate.h"
-#include "peripherals/stl/map_values.h"
-#include "peripherals/typing/enum/graphics/shader_stage.h"
-#include "peripherals/typing/geometry/rect.h"
-#include "peripherals/typing/vectors/glm_vector_types.h"
-#include "rendering.h"
+#include "render/rendering.h"
 
+#include <coffee/graphics/apis/gleam/rhi_draw_command.h>
+#include <coffee/graphics/apis/gleam/rhi_program.h>
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
+#include <coffee/graphics/apis/gleam/rhi_vertex.h>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/scalar_constants.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <magic_enum/magic_enum.hpp>
-
-#include <algorithm>
+#include <peripherals/concepts/graphics_api.h>
+#include <peripherals/constants.h>
+#include <peripherals/stl/accumulate.h>
+#include <peripherals/stl/enumerate.h>
+#include <peripherals/stl/map_values.h>
+#include <peripherals/typing/enum/graphics/shader_stage.h>
+#include <peripherals/typing/geometry/rect.h>
+#include <peripherals/typing/vectors/glm_vector_types.h>
 
 using semantic::RSCA;
 using namespace std::string_view_literals;

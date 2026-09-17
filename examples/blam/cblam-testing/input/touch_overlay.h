@@ -4,7 +4,7 @@
 #include <coffee/graphics/apis/gleam/rhi_system.h>
 #include <coffee/image/ktx_load.h>
 
-#include "rendering.h"
+#include "render/rendering.h"
 
 using TouchOverlayManifest = compo::SubsystemManifest<
     compo::type_list_t<PlayerCamera, PlayerInfo>,

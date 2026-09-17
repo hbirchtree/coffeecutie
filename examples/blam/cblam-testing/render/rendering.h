@@ -3,12 +3,12 @@
 #include "bitmap_cache.h"
 #include "blam_files.h"
 #include "caching.h"
-#include "coffee/graphics/apis/gleam/rhi_buffer.h"
-#include "coffee/graphics/apis/gleam/rhi_draw_command.h"
-#include "coffee/graphics/apis/gleam/rhi_program.h"
-#include "coffee/graphics/apis/gleam/rhi_rendertarget.h"
-#include "coffee/graphics/apis/gleam/rhi_texture.h"
-#include "coffee/graphics/apis/gleam/rhi_vertex.h"
+#include <coffee/graphics/apis/gleam/rhi_buffer.h>
+#include <coffee/graphics/apis/gleam/rhi_draw_command.h>
+#include <coffee/graphics/apis/gleam/rhi_program.h>
+#include <coffee/graphics/apis/gleam/rhi_rendertarget.h>
+#include <coffee/graphics/apis/gleam/rhi_texture.h>
+#include <coffee/graphics/apis/gleam/rhi_vertex.h>
 #include "components.h"
 #include "data.h"
 

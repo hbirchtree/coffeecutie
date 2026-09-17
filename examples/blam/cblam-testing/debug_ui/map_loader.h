@@ -4,7 +4,7 @@
 #include "coffee/comp_app/services.h"
 #include "components.h"
 #include "data.h"
-#include "networking.h"
+#include "network/networking.h"
 #include "selected_version.h"
 
 #include <coffee/core/debug/formatting.h>

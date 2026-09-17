@@ -1,15 +1,12 @@
-#include "rendering.h"
+#include "render/rendering.h"
 
-#include "bitmap_cache.h"
 #include "caching.h"
 #include "caching_item.h"
-#include "components.h"
 #include "crunched/loading_screen.h"
 #include "data.h"
 #include "loading_screen.h"
 #include "map_marker.h"
 #include "materials.h"
-#include "peripherals/semantic/chunk.h"
 #include "selected_version.h"
 
 #include <blam/volta/blam_bitm.h>
@@ -27,11 +24,9 @@
 #include <coffee/graphics/apis/gleam/rhi_texture.h>
 #include <coffee/graphics/apis/gleam/rhi_urls.h>
 #include <coffee/image/ktx_load.h>
-#include <condition_variable>
 #include <glw/texture_formats.h>
 #include <glw/texture_formats_desc.h>
 #include <magic_enum/magic_enum.hpp>
-#include <mutex>
 #include <peripherals/concepts/graphics_api.h>
 #include <peripherals/constants.h>
 #include <peripherals/stl/iterator_slice.h>

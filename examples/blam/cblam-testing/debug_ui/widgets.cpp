@@ -1,9 +1,9 @@
 #if defined(FEATURE_ENABLE_ImGui)
-#include "bsp_component.h"
-#include "debug_ui_system.h"
-#include "input_widget.h"
-#include "map_loader.h"
-#include "texture_browser_component.h"
+#include "debug_ui/bsp_component.h"
+#include "debug_ui/debug_ui_system.h"
+#include "debug_ui/input_widget.h"
+#include "debug_ui/map_loader.h"
+#include "debug_ui/texture_browser_component.h"
 #include <coffee/imgui/imgui_binding.h>
 #endif
 

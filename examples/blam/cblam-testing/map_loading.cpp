@@ -1,17 +1,10 @@
 #include "bitmap_cache.h"
-#include "blam/volta/blam_base_types.h"
-#include "blam/volta/blam_globals.h"
-#include "blam/volta/blam_scenario.h"
-#include "blam/volta/blam_stl.h"
-#include "blam/volta/blam_tag_classes.h"
-#include "blam/volta/blam_tag_ref.h"
 #include "blam_files.h"
 #include "caching.h"
 #include "coffee/comp_app/services.h"
 #include "components.h"
 #include "data.h"
-#include "loading.h"
-#include "networking.h"
+#include "network/networking.h"
 #include "physics.h"
 #include "resource_creation.h"
 #include "selected_version.h"
@@ -22,6 +15,12 @@
 #include "ui_caching.h"
 
 #include <algorithm>
+#include <blam/volta/blam_base_types.h>
+#include <blam/volta/blam_globals.h>
+#include <blam/volta/blam_scenario.h>
+#include <blam/volta/blam_stl.h>
+#include <blam/volta/blam_tag_classes.h>
+#include <blam/volta/blam_tag_ref.h>
 #include <coffee/comp_app/file_mapper.h>
 #include <coffee/components/entity_container.h>
 #include <coffee/core/debug/formatting.h>
@@ -29,10 +28,7 @@
 #include <fmt_extensions/url_types.h>
 
 using Coffee::cDebug;
-using Coffee::Resource;
 using platform::url::Path;
-using platform::url::Url;
-using semantic::RSCA;
 
 static void load_resources(
     compo::EntityContainer&             e,
