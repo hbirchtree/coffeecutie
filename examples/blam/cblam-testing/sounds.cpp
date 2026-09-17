@@ -755,9 +755,11 @@ struct SoundUISystem
 
 #endif
 
-void alloc_sound_system(compo::EntityContainer& e)
+void alloc_sound_system(compo::EntityContainer& e, bool enabled)
 {
     e.register_subsystem_inplace<SoundPreferences>();
+    if(!enabled)
+        return;
 #if defined(FEATURE_ENABLE_OAF)
     ProfContext _;
     auto& sound_sys = e.register_subsystem_inplace<SoundSystem<halo_version>>(

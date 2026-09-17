@@ -53,4 +53,4 @@ struct SoundPreferences : compo::SubsystemBase
     f32 master_volume{1.f};
 };
 
-void alloc_sound_system(compo::EntityContainer& e);
+void alloc_sound_system(compo::EntityContainer& e, bool enabled);

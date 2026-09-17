@@ -432,7 +432,7 @@ i32 blam_main()
                     nullptr
 #endif
                 );
-            alloc_sound_system(e);
+            alloc_sound_system(e, arguments.count("no-sound") ? false : true);
 
             {
                 auto& sound_pref = e.subsystem_cast<SoundPreferences>();
