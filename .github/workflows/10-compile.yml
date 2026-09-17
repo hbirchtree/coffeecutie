@@ -852,6 +852,124 @@ jobs:
         name: pinned_cert_test
         path: /tmp/pinned_cert_test
         if-no-files-found: error
+  Test_native_routes:
+    if: ${{ always() }}
+    name: "${{ matrix.title }}"
+    needs: Linux
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - route: no-gateway
+          title: 'x86_64 <-> x86_64'
+          script: run_client_server_test.sh
+        - route: direct
+          title: 'x86_64 <-> x86_64 <--> GW'
+          script: run_webrtc_client_server_test.sh
+        - route: relay
+          title: 'x86_64 <-relay-> GW <-relay-> x86_64'
+          script: run_webrtc_client_server_test.sh
+          relay_only: "1"
+        - route: webrtc-hosted
+          title: 'x86_64 <-> GW <-> Wasm'
+          script: run_webrtc_client_server_test.sh
+          server_transport: webrtc
+        - route: relay-only-server
+          title: 'x86_64 <-> GW <-relay-only-> x86_64'
+          script: run_webrtc_client_server_test.sh
+          server_relay_only: "1"
+        - route: relay-only-webrtc-server
+          title: 'x86_64 <-> GW <-webrtc-> x86_64'
+          script: run_webrtc_client_server_test.sh
+          server_transport: webrtc
+          server_relay_only: "1"
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        path: source
+    - name: Downloading desktop-x86_64-buildroot-linux-gnu-multi artifacts
+      uses: actions/download-artifact@v8
+      with:
+        name: desktop-x86_64-buildroot-linux-gnu-multi
+        path: server_artifacts/
+    - name: Downloading webrtc-gateway-linux-amd64 artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: webrtc-gateway-linux-amd64
+        path: gateway_artifacts/
+    - name: Installing Mesa/EGL dependencies
+      run: |
+        sudo apt update
+        sudo apt install mesa-utils
+    - name: Acquire the sysroot for the desktop x86_64 platform
+      run: |
+        # Same sysroot tarball the other server-running test jobs use --
+        # both processes here are that binary, run through its own loader.
+        mkdir -p sysroot/lib full-sysroot
+        (cd full-sysroot && gh release -R hbirchtree/coffeecutie-automation-tools download v2.3 -p desktop_x86_64-buildroot-linux-gnu_*_target.tar.xz && tar xf *.tar.xz && rm *.tar.xz)
+        find "$PWD/full-sysroot/usr/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
+        find "$PWD/full-sysroot/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
+    - name: Locating binary and assets
+      id: server
+      run: |
+        BINARY=$(find server_artifacts -name BlamGraphics -type f | head -n 1)
+        ASSETS_DIR=$(find server_artifacts -name assets -type d | head -n 1)
+        DRI_PATH=$(find "$PWD/full-sysroot" -name dri -type d | head -n 1)
+        SYS_LD=$(find "$PWD/full-sysroot" -name "ld-linux-x86-64.so.2" | head -n 1)
+        chmod +x "$BINARY"
+        echo "binary=$PWD/$BINARY" >> "$GITHUB_OUTPUT"
+        echo "assets=$PWD/$ASSETS_DIR" >> "$GITHUB_OUTPUT"
+        echo "dri_path=$DRI_PATH" >> "$GITHUB_OUTPUT"
+        echo "ld=$SYS_LD" >> "$GITHUB_OUTPUT"
+    - name: Installing gateway binary
+      run: |
+        mkdir -p source/tools/webrtc-gateway
+        cp gateway_artifacts/gateway source/tools/webrtc-gateway/gateway
+        chmod +x source/tools/webrtc-gateway/gateway
+    - name: Downloading test assets
+      run: |
+        mkdir -p maps/pc/
+        wget -q -O maps/pc/bloodgulch.map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bloodgulch.map
+        wget -q -O maps/pc/bitmaps.map    --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bitmaps.map
+        wget -q -O maps/pc/sounds.map     --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/sounds.map
+    - name: Run ${{ matrix.route }} route test
+      env:
+        LIBGL_ALWAYS_SOFTWARE: "1"
+        GALLIUM_DRIVER: llvmpipe
+        LIBGL_DRIVERS_PATH: ${{ steps.server.outputs.dri_path }}
+        MESA_LOADER_DRIVER_PATH: ${{ steps.server.outputs.dri_path }}
+        LIBGL_DRI3_DISABLE: "1"
+        EGL_PLATFORM: surfaceless
+        SERVER_BINARY: ${{ steps.server.outputs.binary }}
+        SERVER_LD: ${{ steps.server.outputs.ld }}
+        SERVER_LIB_PATH: ${{ github.workspace }}/sysroot/lib
+        RESOURCE_DIR: ${{ steps.server.outputs.assets }}/
+        MAP: ${{ github.workspace }}/maps/pc/bloodgulch.map
+        CI: "true"
+        # Defaulted rather than left unset: the scripts treat an empty
+        # RELAY_ONLY as "set", which would force the relay everywhere.
+        RELAY_ONLY: ${{ matrix.relay_only || '0' }}
+        SERVER_RELAY_ONLY: ${{ matrix.server_relay_only || '0' }}
+        SERVER_TRANSPORT: ${{ matrix.server_transport || 'udp' }}
+        # Two map boots on a software rasterizer, plus ICE or a relay punch
+        # before either side gets going.
+        BOOT_TIMEOUT: "120"
+        RUN_TIMEOUT: "150"
+      run: |
+        source/.github/tests/net/${{ matrix.script }} /tmp/native_route_test
+    - name: Uploading test artifacts
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: native_route_test_${{ matrix.route }}
+        path: /tmp/native_route_test
+        if-no-files-found: error
   Test_gekko:
     if: ${{ always() }}
     name: "Software render test (Dolphin, SW render)"

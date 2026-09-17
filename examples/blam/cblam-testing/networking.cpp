@@ -896,6 +896,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_game_bus.addEventFunction<ServerConnectEvent>(
             0, [this](GameEvent&, ServerConnectEvent* connect) {
                 cDebug("Connection requested to server: {}", connect->remote);
+                m_relay_only = connect->relay_only;
                 if(connect->type == ServerConnectEvent::Peer)
                     connect_symmetric(connect->remote);
                 else if(connect->type == ServerConnectEvent::Server)
@@ -934,7 +935,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                             connect->gateway_register_url,
                             connect->gateway_server_id,
                             m_impl,
-                            m_socket);
+                            m_socket,
+                            connect->relay_only);
                         m_fleetRegistration->Start();
                     }
 #endif
@@ -1297,15 +1299,24 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
          * either way. */
         add_pinned_root_config(config);
 
-        /* Only the DataChannel bridge can reach a server that has no UDP
-         * socket of its own, so that choice is forced; everything else uses
-         * the ordinary direct-UDP-over-DataChannel shape. */
-        m_webrtcDirectMode = !m_webrtcBootstrap->ServerSupports("webrtc");
-        auto transports    = m_webrtcBootstrap->ServerTransports();
+        /* Which of the routes the server offers we can actually take */
+        auto transports     = m_webrtcBootstrap->ServerTransports();
+        bool serverIsWebrtc = m_webrtcBootstrap->ServerSupports("webrtc");
+        bool canTryDirect   = false;
+#if !defined(COFFEE_WASM)
+        canTryDirect =
+            !m_relay_only && m_webrtcBootstrap->ServerSupports("direct");
+#endif
+        /* Rendezvous covers both: reaching a DataChannel-only peer, and
+         * reaching a socket directly. */
+        bool useRendezvous = serverIsWebrtc || canTryDirect;
         cDebug(
-            "WebRTC server transports=[{}], using {} mode",
+            "Server offers [{}]; taking {}",
             fmt::join(transports, ", "),
-            m_webrtcDirectMode ? "direct-UDP" : "P2P rendezvous");
+            !useRendezvous ? "the gateway relay"
+            : serverIsWebrtc
+                ? "rendezvous to its DataChannel, through the gateway"
+                : "the direct route, with the gateway relay as fallback");
 
         SteamNetworkingIdentity expected_identity;
         expected_identity.Clear();
@@ -1313,7 +1324,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             expected_identity.SetGenericString(
                 m_expected_server_identity.c_str());
 
-        if(m_webrtcDirectMode)
+        if(!useRendezvous)
         {
             m_webrtcDirectKeepAlive = m_webrtcBootstrap;
             m_webrtcBootstrap       = nullptr;
@@ -1325,13 +1336,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         } else
         {
 #if !defined(COFFEE_WASM)
-            m_utils->SetGlobalConfigValueString(
-                k_ESteamNetworkingConfig_P2P_STUN_ServerList,
-                "stun.l.google.com:19302");
+            /* Enable STUN only when not requested to use relays */
+            if(!m_relay_only)
+                m_utils->SetGlobalConfigValueString(
+                    k_ESteamNetworkingConfig_P2P_STUN_ServerList,
+                    "stun.l.google.com:19302");
             config.emplace_back();
             config.back().SetInt32(
                 k_ESteamNetworkingConfig_P2P_Transport_ICE_Enable,
-                k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_All);
+                m_relay_only
+                    ? k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_Disable
+                    : k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_All);
 #endif
             config.emplace_back();
             config.back().SetInt32(
@@ -1443,12 +1458,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
          * point the relay is retired (pollDirectRouteTakeover). A browser
          * peer has no ICE of its own, so it just stays on the bridge. */
 #if !defined(COFFEE_WASM)
-        m_utils->SetGlobalConfigValueString(
-            k_ESteamNetworkingConfig_P2P_STUN_ServerList,
-            "stun.l.google.com:19302");
+        if(!m_relay_only)
+            m_utils->SetGlobalConfigValueString(
+                k_ESteamNetworkingConfig_P2P_STUN_ServerList,
+                "stun.l.google.com:19302");
         m_utils->SetGlobalConfigValueInt32(
             k_ESteamNetworkingConfig_P2P_Transport_ICE_Enable,
-            k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_All);
+            m_relay_only
+                ? k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_Disable
+                : k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_All);
 #endif
         m_webrtcServer =
             std::make_unique<webrtc_signaling::GatewayServerRegistration>(
@@ -2332,7 +2350,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 #if defined(USE_WEBRTC_TRANSPORT)
     webrtc_signaling::GatewayConnectBootstrap* m_webrtcBootstrap{nullptr};
     webrtc_signaling::GatewayConnectBootstrap* m_webrtcDirectKeepAlive{nullptr};
-    bool                                       m_webrtcDirectMode{false};
     std::unique_ptr<webrtc_signaling::GatewayServerRegistration> m_webrtcServer;
     std::unique_ptr<webrtc_signaling::GatewayFleetRegistration>
         m_fleetRegistration;
@@ -2382,6 +2399,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     /* Base64 of the key pinned for the next connection. SetString keeps the
      * pointer rather than copying, so this has to outlive the connect call. */
     std::string m_pinned_root_key_b64;
+    bool m_relay_only{false};
 };
 
 #endif

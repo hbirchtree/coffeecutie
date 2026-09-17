@@ -229,9 +229,8 @@ func TestRelayGNSConnectedIgnoresForeignSession(t *testing.T) {
 	}
 }
 
-// A gateway and its peers are deployed and upgraded separately, so both
-// spellings have to survive the wire in both directions: "transports" is the
-// list, "transport" the single value that predates it.
+// The list is how a server states what it is, so normalizing it is where a
+// bad or unknown advertisement has to be caught.
 func TestParseTransports(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -240,23 +239,18 @@ func TestParseTransports(t *testing.T) {
 		bad  bool
 	}{
 		{"list is taken in order",
-			signalMessage{Transports: []string{"udp", "webrtc"}},
-			[]string{"udp", "webrtc"}, false},
-		{"legacy single value still works",
-			signalMessage{Transport: "webrtc"}, []string{"webrtc"}, false},
-		{"list wins over the legacy field",
-			signalMessage{Transports: []string{"webrtc"}, Transport: "udp"},
-			[]string{"webrtc"}, false},
-		{"neither field means udp",
-			signalMessage{}, []string{"udp"}, false},
+			signalMessage{ServerTransports: []string{"relay", "webrtc"}},
+			[]string{"relay", "webrtc"}, false},
+		{"an unset list means udp",
+			signalMessage{}, []string{"relay"}, false},
 		{"duplicates collapse",
-			signalMessage{Transports: []string{"udp", "udp"}},
-			[]string{"udp"}, false},
+			signalMessage{ServerTransports: []string{"relay", "relay"}},
+			[]string{"relay"}, false},
 		{"unknown entries are ignored, not fatal",
-			signalMessage{Transports: []string{"carrier-pigeon", "udp"}},
-			[]string{"udp"}, false},
+			signalMessage{ServerTransports: []string{"carrier-pigeon", "relay"}},
+			[]string{"relay"}, false},
 		{"nothing usable is an error",
-			signalMessage{Transports: []string{"carrier-pigeon"}}, nil, true},
+			signalMessage{ServerTransports: []string{"carrier-pigeon"}}, nil, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := parseTransports(tc.msg)
@@ -281,51 +275,44 @@ func TestParseTransports(t *testing.T) {
 	}
 }
 
-// The answer has to carry both spellings for the same reason, and a client
-// that only knows the single-valued one must still be pointed at a mode it
-// can actually use.
-func TestAnswerCarriesBothTransportSpellings(t *testing.T) {
+// The answer is what tells a client which kinds of server it may choose
+// between, so the list has to survive the wire intact and in order.
+func TestAnswerCarriesTransportList(t *testing.T) {
 	encoded, err := json.Marshal(signalMessage{
-		Type:       "answer",
-		Transports: []string{"webrtc", "udp"},
-		Transport:  firstTransport([]string{"webrtc", "udp"}),
+		Type:             "answer",
+		ServerTransports: []string{"webrtc", "relay"},
 	})
 	if err != nil {
 		t.Fatalf("marshal failed: %v", err)
 	}
 	body := string(encoded)
-	if !strings.Contains(body, `"transports":["webrtc","udp"]`) {
+	if !strings.Contains(body, `"serverTransports":["webrtc","relay"]`) {
 		t.Fatalf("answer lost the transport list: %s", body)
-	}
-	if !strings.Contains(body, `"transport":"webrtc"`) {
-		t.Fatalf("answer lost the legacy transport field: %s", body)
 	}
 
 	var decoded signalMessage
 	if err := json.Unmarshal(encoded, &decoded); err != nil {
 		t.Fatalf("unmarshal failed: %v", err)
 	}
-	if len(decoded.Transports) != 2 || decoded.Transports[0] != "webrtc" {
-		t.Fatalf("transports did not round-trip: %v", decoded.Transports)
-	}
-	if decoded.Transport != "webrtc" {
-		t.Fatalf("legacy transport did not round-trip: %q", decoded.Transport)
+	if len(decoded.ServerTransports) != 2 || decoded.ServerTransports[0] != "webrtc" {
+		t.Fatalf("transports did not round-trip: %v", decoded.ServerTransports)
 	}
 }
 
 func TestRegisteredServerSupports(t *testing.T) {
-	srv := &registeredServer{transports: []string{"udp", "webrtc"}}
-	if !srv.supports("udp") || !srv.supports("webrtc") {
+	srv := &registeredServer{transports: []string{"relay", "webrtc"}}
+	if !srv.supports("relay") || !srv.supports("webrtc") {
 		t.Fatal("advertised transports reported as unsupported")
 	}
 	if srv.supports("carrier-pigeon") {
 		t.Fatal("unadvertised transport reported as supported")
 	}
-	if srv.primaryTransport() != "udp" {
-		t.Fatalf("primary should be the first entry, got %q", srv.primaryTransport())
+	if firstTransport(srv.transports) != "relay" {
+		t.Fatalf("preferred should be the first entry, got %q",
+			firstTransport(srv.transports))
 	}
 	var nilSrv *registeredServer
-	if nilSrv.supports("udp") || nilSrv.primaryTransport() != "udp" {
+	if nilSrv.supports("relay") {
 		t.Fatal("nil server should be inert, not panic or claim support")
 	}
 }

@@ -3,6 +3,7 @@
 #if defined(USE_NETWORKING) && defined(USE_WEBRTC_TRANSPORT)
 
 #include <GameNetworkingSockets/steam/isteamnetworkingsockets.h>
+#include <GameNetworkingSockets/steam/steamnetworkingcustomsignaling.h>
 
 #include <rtc/rtc.hpp>
 
@@ -11,6 +12,8 @@
 #include <mutex>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #if !defined(COFFEE_WASM) && !defined(_WIN32)
 #include <netinet/in.h>
@@ -28,14 +31,54 @@ namespace webrtc_signaling {
  * Per-client relay punches go out directly from the real GNS listen
  * socket (ISteamNetworkingSockets::SendRawPacketOnListenSocket
  */
-class GatewayFleetRegistration
+class GatewayFleetRegistration;
+
+/*!
+ * Outgoing half of one P2P connection accepted by a UDP-based server:
+ * GNS hands rendezvous to this, and it goes back out over the fleet
+ * registration's existing /server-signal socket, tagged with the session the
+ * request arrived under.
+ *
+ * Deliberately far smaller than GatewayAcceptSignaling (webrtc_signaling.h),
+ * which has to stand up a whole DataChannel because that IS its data plane.
+ * Here the data plane is the server's own UDP socket, so the gateway only ever
+ * carries signaling and nothing else needs building.
+ *
+ * Returned from GatewayFleetRegistration::OnConnectRequest, so GNS owns it from
+ * construction onward (Release() -> delete this) -- never delete it yourself.
+ */
+class FleetAcceptSignaling final : public ISteamNetworkingConnectionSignaling
+{
+  public:
+    FleetAcceptSignaling(
+        GatewayFleetRegistration* owner, std::string sessionId);
+
+    /* ISteamNetworkingConnectionSignaling */
+    bool SendSignal(
+        HSteamNetConnection             hConn,
+        const SteamNetConnectionInfo_t& info,
+        const void*                     pMsg,
+        int                             cbMsg) override;
+    void Release() override;
+
+  private:
+    GatewayFleetRegistration* m_owner;
+    std::string               m_sessionId;
+};
+
+class GatewayFleetRegistration final
+    : public ISteamNetworkingSignalingRecvContext
 {
   public:
     GatewayFleetRegistration(
         std::string              registerUrl,
         std::string              serverId,
         ISteamNetworkingSockets* sockets,
-        HSteamListenSocket       listenSocket);
+        HSteamListenSocket       listenSocket,
+        /*! Advertise the relay only, and refuse rendezvous, so no client can
+         * reach this server directly and clients never learn each other's
+         * addresses. */
+        bool relayOnly = false);
     ~GatewayFleetRegistration();
 
     void Start();
@@ -50,6 +93,20 @@ class GatewayFleetRegistration
      * exposes it via GET /metadata?server=<id>. Only valid once Active(). */
     void SendMetadata(std::string_view jsonPayload);
 
+    /*! Sends one GNS rendezvous blob back to the client on the far side of
+     * sessionId. Called by FleetAcceptSignaling on GNS's own thread. */
+    bool SendRendezvous(
+        std::string const& sessionId, const void* msg, int msgLen);
+
+    ISteamNetworkingConnectionSignaling* OnConnectRequest(
+        HSteamNetConnection            hConn,
+        const SteamNetworkingIdentity& identityPeer,
+        int                            nLocalVirtualPort) override;
+    void SendRejectionSignal(
+        const SteamNetworkingIdentity& identityPeer,
+        const void*                    pMsg,
+        int                            cbMsg) override;
+
   private:
     void onWebSocketOpen();
     void onWebSocketMessage(std::string const& text);
@@ -57,12 +114,18 @@ class GatewayFleetRegistration
     void sendHeartbeat();
     void pollChallengeSocket();
     void sendRegistrationPunch();
+    void drainIncomingSignals();
+    /*! Once ICE has taken a connection off the relay, tell the gateway so it
+     * can tear the relay down -- otherwise it stays bound and keeps being
+     * punched for a path nothing is using. */
+    void pollDirectRouteTakeover();
 
     std::string m_registerUrl;
     std::string m_serverId;
 
     ISteamNetworkingSockets* m_sockets;
     HSteamListenSocket       m_listenSocket;
+    bool                     m_relayOnly{false};
 
     std::shared_ptr<rtc::WebSocket> m_ws;
 
@@ -113,6 +176,16 @@ class GatewayFleetRegistration
     std::chrono::steady_clock::time_point m_lastHeartbeat{};
     std::chrono::steady_clock::time_point m_lastRegistrationPunch{};
     std::chrono::steady_clock::time_point m_lastRegisterSent{};
+
+    /* Rendezvous received from the gateway, waiting to be fed to GNS */
+    std::vector<std::pair<std::string, std::string>> m_incomingSignals;
+    /* Set immediately before each ReceivedP2PCustomSignal */
+    std::string m_pendingSessionId;
+
+    /* Connections accepted over rendezvous */
+    std::unordered_map<HSteamNetConnection, std::string> m_sessionByConnection;
+    std::unordered_map<HSteamNetConnection, int>         m_directRouteTicks;
+    std::unordered_set<HSteamNetConnection>              m_relayRetired;
 };
 
 } // namespace webrtc_signaling

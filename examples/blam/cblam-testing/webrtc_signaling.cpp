@@ -166,14 +166,12 @@ void GatewayConnectBootstrap::onWebSocketMessage(std::string const& text)
     {
         auto sdp       = msg.value("sdp", std::string());
         auto sessionId = msg.value("sessionId", std::string());
-        /* "transports" is the list; "transport" is the single-valued
-         * spelling that predates it, still sent by an older gateway. Read
-         * both so a client works against either. */
+        /* What kind of server the gateway routed us to -- not what we
+         * speak, which is this DataChannel either way. */
         std::vector<std::string> transports;
-        if(auto it = msg.find("transports"); it != msg.end() && it->is_array())
+        if(auto it = msg.find("serverTransports");
+           it != msg.end() && it->is_array())
             transports = it->get<std::vector<std::string>>();
-        if(transports.empty())
-            transports.push_back(msg.value("transport", std::string("udp")));
         auto metadata = msg.value("metadata", std::string());
         if(sdp.empty() || sessionId.empty())
         {
@@ -600,11 +598,7 @@ void GatewayServerRegistration::sendRegister()
     nlohmann::json register_msg{
         {"type", "register"},
         {"serverId", m_serverId},
-        /* A browser-hosted server can only ever be reached as a DataChannel
-         * peer, so the list has exactly one entry. "transport" repeats it
-         * for a gateway from before the list existed. */
-        {"transports", nlohmann::json::array({"webrtc"})},
-        {"transport", "webrtc"},
+        {"serverTransports", nlohmann::json::array({"webrtc"})},
     };
     if(!m_ws->send(register_msg.dump()))
         cWarning("webrtc_signaling: failed to send register");

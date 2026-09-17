@@ -4,6 +4,8 @@
 
 #include <coffee/core/debug/formatting.h>
 #include <nlohmann/json.hpp>
+#include <peripherals/semantic/chunk.h>
+#include <peripherals/stl/base64.h>
 #include <peripherals/stl/string/hex.h>
 
 #include <variant>
@@ -116,11 +118,13 @@ GatewayFleetRegistration::GatewayFleetRegistration(
     std::string              registerUrl,
     std::string              serverId,
     ISteamNetworkingSockets* sockets,
-    HSteamListenSocket       listenSocket)
+    HSteamListenSocket       listenSocket,
+    bool                     relayOnly)
     : m_registerUrl(std::move(registerUrl))
     , m_serverId(std::move(serverId))
     , m_sockets(sockets)
     , m_listenSocket(listenSocket)
+    , m_relayOnly(relayOnly)
 {
 }
 
@@ -262,6 +266,30 @@ void GatewayFleetRegistration::onWebSocketMessage(std::string const& text)
         m_havePunchTarget      = true;
         m_trackingId           = msg.value("serverTrackingId", std::string());
 #endif
+    } else if(type == "gns-rendezvous")
+    {
+        if(m_relayOnly)
+        {
+            cWarning(
+                "webrtc_signaling: gateway_fleet_registration: refusing "
+                "rendezvous, this server is relay-only");
+            return;
+        }
+        /* A client wants to reach us over P2P. Queue it rather than feeding
+         * GNS here. */
+        auto sessionId = msg.value("sessionId", std::string());
+        auto raw       = b64::decode(msg.value("data", std::string()));
+        if(sessionId.empty() || raw.empty())
+        {
+            cWarning(
+                "webrtc_signaling: gateway_fleet_registration: malformed "
+                "gns-rendezvous");
+            return;
+        }
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_incomingSignals.emplace_back(
+            std::move(sessionId),
+            std::string(reinterpret_cast<char const*>(raw.data()), raw.size()));
     } else if(type == "client-relay")
     {
 #if !defined(COFFEE_WASM) && !defined(_WIN32)
@@ -293,10 +321,9 @@ void GatewayFleetRegistration::sendRegister()
     nlohmann::json reg{
         {"type", "register"},
         {"serverId", m_serverId},
-        /* A real UDP listen socket sits behind this registration, so the
-         * gateway relays to it. Stated rather than left to the gateway's
-         * default so the advertised list is always the server's own claim. */
-        {"transports", nlohmann::json::array({"udp"})},
+        {"serverTransports",
+         m_relayOnly ? nlohmann::json::array({"relay"})
+                     : nlohmann::json::array({"direct", "relay"})},
     };
     if(!m_ws->send(reg.dump()))
         cWarning(
@@ -463,6 +490,8 @@ void GatewayFleetRegistration::pollRelayKeepalives()
 
 void GatewayFleetRegistration::Poll()
 {
+    drainIncomingSignals();
+    pollDirectRouteTakeover();
     pollChallengeSocket();
 
     bool wsOpen, active;
@@ -514,6 +543,162 @@ bool GatewayFleetRegistration::Active() const
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     return m_active;
+}
+
+void GatewayFleetRegistration::drainIncomingSignals()
+{
+    std::vector<std::pair<std::string, std::string>> pending;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        pending.swap(m_incomingSignals);
+    }
+    for(auto& [sessionId, blob] : pending)
+    {
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_pendingSessionId = sessionId;
+        }
+        m_sockets->ReceivedP2PCustomSignal(
+            blob.data(), static_cast<int>(blob.size()), this);
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_pendingSessionId.clear();
+        }
+    }
+}
+
+void GatewayFleetRegistration::pollDirectRouteTakeover()
+{
+    std::vector<std::pair<HSteamNetConnection, std::string>> watched;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        for(auto const& [hConn, sessionId] : m_sessionByConnection)
+        {
+            if(m_relayRetired.count(hConn))
+                continue;
+            watched.emplace_back(hConn, sessionId);
+        }
+    }
+    if(watched.empty())
+        return;
+
+    std::vector<std::string> retired;
+    for(auto const& [hConn, sessionId] : watched)
+    {
+        SteamNetConnectionInfo_t info{};
+        if(!m_sockets->GetConnectionInfo(hConn, &info))
+            continue;
+        /* GNS names the transport in the description; "WebRTC" there means
+         * packets are still going through the relayed DataChannel. */
+        std::string_view description(info.m_szConnectionDescription);
+        bool onRelay = description.find("WebRTC") != std::string_view::npos;
+
+        std::lock_guard<std::mutex> lock(m_mutex);
+        auto                        tick = m_directRouteTicks.find(hConn);
+        if(tick == m_directRouteTicks.end() || m_relayRetired.count(hConn))
+            continue;
+        if(info.m_eState != k_ESteamNetworkingConnectionState_Connected ||
+           onRelay)
+        {
+            tick->second = 0;
+            continue;
+        }
+        /* Briefly transport-less mid-switch, so require two readings before
+         * calling it settled. */
+        if(++tick->second < 2)
+            continue;
+        m_relayRetired.insert(hConn);
+        retired.push_back(sessionId);
+    }
+
+    for(auto const& sessionId : retired)
+    {
+        if(!m_ws)
+            break;
+        nlohmann::json msg{
+            {"type", "gns-connected"},
+            {"sessionId", sessionId},
+        };
+        if(m_ws->send(msg.dump()))
+            cDebug(
+                "webrtc_signaling: gateway_fleet_registration: connection is "
+                "direct, retiring the gateway relay");
+    }
+}
+
+ISteamNetworkingConnectionSignaling* GatewayFleetRegistration::OnConnectRequest(
+    HSteamNetConnection hConn, const SteamNetworkingIdentity&, int)
+{
+    std::string sessionId;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        sessionId = m_pendingSessionId;
+    }
+    if(sessionId.empty())
+    {
+        /* Per the interface's own doc comment, nullptr is the safe default:
+         * it silently ignores a request we cannot route a reply to, rather
+         * than actively rejecting it. */
+        cWarning(
+            "webrtc_signaling: gateway_fleet_registration: OnConnectRequest "
+            "with no pending session ID");
+        return nullptr;
+    }
+    {
+        /* Remember which session this arrived under, so the relay standing in
+         * until ICE connects can be retired afterwards. */
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_sessionByConnection[hConn] = sessionId;
+        m_directRouteTicks[hConn]    = 0;
+    }
+    /* Ownership passes to GNS; the connection itself is accepted by the
+     * ordinary incoming-connection path, which needs no listen socket. */
+    return new FleetAcceptSignaling(this, std::move(sessionId));
+}
+
+void GatewayFleetRegistration::SendRejectionSignal(
+    const SteamNetworkingIdentity&, const void*, int)
+{
+    /* OnConnectRequest only returns nullptr when it has no session to reply
+     * on, which GNS treats as a silent ignore rather than a rejection. */
+}
+
+bool GatewayFleetRegistration::SendRendezvous(
+    std::string const& sessionId, const void* msg, int msgLen)
+{
+    if(!m_ws || msgLen <= 0)
+        return false;
+    nlohmann::json out{
+        {"type", "gns-rendezvous"},
+        {"sessionId", sessionId},
+        {"data",
+         b64::encode(
+             semantic::Span<const uint8_t>(
+                 reinterpret_cast<const uint8_t*>(msg),
+                 static_cast<size_t>(msgLen)))},
+    };
+    return m_ws->send(out.dump());
+}
+
+FleetAcceptSignaling::FleetAcceptSignaling(
+    GatewayFleetRegistration* owner, std::string sessionId)
+    : m_owner(owner)
+    , m_sessionId(std::move(sessionId))
+{
+}
+
+bool FleetAcceptSignaling::SendSignal(
+    HSteamNetConnection,
+    const SteamNetConnectionInfo_t&,
+    const void* pMsg,
+    int         cbMsg)
+{
+    return m_owner && m_owner->SendRendezvous(m_sessionId, pMsg, cbMsg);
+}
+
+void FleetAcceptSignaling::Release()
+{
+    delete this;
 }
 
 void GatewayFleetRegistration::SendMetadata(std::string_view jsonPayload)

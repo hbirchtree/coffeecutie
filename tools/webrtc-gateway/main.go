@@ -81,22 +81,21 @@ type signalMessage struct {
 	Data string `json:"data,omitempty"`
 
 	ServerID string `json:"serverId,omitempty"`
-	// Transports is what a server can speak, most-preferred first, and what
-	// a client is told it may choose from. A list rather than one value
-	// because these are not exclusive: a server with a real UDP socket can
-	// also accept P2P rendezvous, and only the client knows which of those
-	// it can actually use (a browser cannot do either half of ICE).
+	// ServerTransports says how this server can be reached, most-preferred
+	// first. Routes, not protocols: "relay" and "direct" are the same server on
+	// the same UDP socket, and differ only in whether this gateway sits in
+	// the middle.
+	//
+	// A list rather than one value because they are not exclusive: a server
+	// with a real UDP socket offers both, and only
+	// the client knows which of those it can use (a browser can do neither
+	// half of ICE). Most-preferred first.
 	//
 	// Sent by the server on "register" and reported back on "answer".
-	Transports []string `json:"transports,omitempty"`
-	// Transport is the pre-list spelling of the above, carrying a single
-	// value. Still read on the way in and still sent on the way out, so a
-	// gateway and a peer from either side of this change interoperate --
-	// which matters because they are deployed and upgraded separately.
-	Transport  string `json:"transport,omitempty"`
-	Nonce      string `json:"nonce,omitempty"`
-	RelayPort  int    `json:"relayPort,omitempty"`
-	RelayNonce string `json:"relayNonce,omitempty"`
+	ServerTransports []string `json:"serverTransports,omitempty"`
+	Nonce            string   `json:"nonce,omitempty"`
+	RelayPort        int      `json:"relayPort,omitempty"`
+	RelayNonce       string   `json:"relayNonce,omitempty"`
 	// MetadataPayload is the server's most recent signed metadata JSON,
 	// forwarded verbatim so clients can verify the server's identity
 	// independently of the gateway.
@@ -113,15 +112,31 @@ type signalMessage struct {
 
 const registerPunchPrefix = "COFFEE-REG-PUNCH:"
 
+// These name the ways a client can reach a server. They are about the route,
+// not the protocol: "relay" and "direct" describe the same server with the
+// same UDP socket, differing only in whether the gateway sits in the middle.
+//
+//	relay:  client --DataChannel--> gateway --UDP--> server's socket
+//	direct: client --------------ICE--------------> server's socket
+//	webrtc: client --DataChannel--> gateway --DataChannel--> server
 const (
-	// transportUDP: the server owns a real UDP socket; the gateway relays
-	// DataChannel <-> UDP and reaches it through a punched mapping.
-	transportUDP = "udp"
-	// transportWebRTC: the server is a WebRTC peer itself (browser host,
-	// or anywhere UDP is unusable). The gateway bridges the client's
-	// DataChannel straight to a second DataChannel the server opens for
-	// that session -- no UDP, no punch, no relay port.
+	// transportRelay: the gateway relays between the client's DataChannel and
+	// the server's real GNS UDP socket, through a punched mapping. Named for
+	// the route rather than for UDP, because "direct" reaches that same
+	// socket.
+	transportRelay = "relay"
+	// transportWebRTC: the server is a DataChannel peer itself (browser host,
+	// or anywhere UDP is unusable), so the gateway splices the client's
+	// DataChannel to a second one the server opens for that session -- no UDP,
+	// no punch, no relay port. Still a relay, but a differently shaped one,
+	// and the client has to do something different to use it.
 	transportWebRTC = "webrtc"
+	// transportDirect: the server's socket reached with no relay in the
+	// middle -- GNS's P2P rendezvous still runs through this gateway, but ICE
+	// finds the path and the data plane never touches it. Advertised
+	// alongside "relay", never instead of it, since a browser client can do
+	// neither half of ICE and must still go through the gateway.
+	transportDirect = "direct"
 )
 
 // knownTransports is the set a server may advertise. Unknown entries are
@@ -129,20 +144,18 @@ const (
 // has never heard of should fall back to the ones it shares with us, not
 // fail to register.
 var knownTransports = map[string]bool{
-	transportUDP:    true,
+	transportRelay:  true,
 	transportWebRTC: true,
+	transportDirect: true,
 }
 
 // parseTransports normalizes what a server sent into a non-empty, de-duplicated
 // list of transports this gateway understands, preserving the sender's order
 // because it expresses preference.
 func parseTransports(m signalMessage) ([]string, error) {
-	raw := m.Transports
-	if len(raw) == 0 && m.Transport != "" {
-		raw = []string{m.Transport}
-	}
+	raw := m.ServerTransports
 	if len(raw) == 0 {
-		return []string{transportUDP}, nil
+		return []string{transportRelay}, nil
 	}
 	var out []string
 	seen := map[string]bool{}
@@ -169,9 +182,11 @@ func hasTransport(transports []string, want string) bool {
 }
 
 // firstTransport is the preferred entry, for the single-valued legacy field.
+// firstTransport is the preferred entry, for callers that want one value and
+// understand the whole vocabulary.
 func firstTransport(transports []string) string {
 	if len(transports) == 0 {
-		return transportUDP
+		return transportRelay
 	}
 	return transports[0]
 }
@@ -181,15 +196,6 @@ func (s *registeredServer) supports(transport string) bool {
 		return false
 	}
 	return hasTransport(s.transports, transport)
-}
-
-// primaryTransport is what an older client, which only understands a single
-// value, is told to use.
-func (s *registeredServer) primaryTransport() string {
-	if s == nil {
-		return transportUDP
-	}
-	return firstTransport(s.transports)
 }
 
 var relayPunchMarker = []byte("COFFEE-NAT-PUNCH")
@@ -238,7 +244,7 @@ type clientSession struct {
 
 	// hostDC is the other half of a DataChannel<->DataChannel bridge: the
 	// channel a transportWebRTC server opened for THIS session (see
-	// handleHostSignal). Nil for transportUDP servers, and until the host
+	// handleHostSignal). Nil for transportRelay servers, and until the host
 	// dials in. hostClose tears that side down.
 	hostDC    *webrtc.DataChannel
 	hostClose func()
@@ -996,12 +1002,9 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		SessionID:        sessionID,
 		TrackingID:       session.trackingID,
 		ServerTrackingID: session.serverTrackingID,
-		// What this client may choose between. Transports is the list;
-		// Transport repeats the preferred one so a client from before the
-		// list existed still picks a mode it understands.
-		Transports:      transports,
-		Transport:       firstTransport(transports),
-		MetadataPayload: metadataPayload,
+		// What this client may choose between.
+		ServerTransports: transports,
+		MetadataPayload:  metadataPayload,
 	})
 	session.writeMu.Unlock()
 	if err != nil {
@@ -1270,7 +1273,7 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 				// registers (see beginRegistration).
 				reply = signalMessage{
 					Type:             "register-active",
-					Transport:        transportWebRTC,
+					ServerTransports: entry.transports,
 					ServerTrackingID: entry.trackingID,
 				}
 			}
@@ -1367,7 +1370,7 @@ func beginRegistration(conn *websocket.Conn, m signalMessage, origin string) (st
 		journal.Record(journalEvent{
 			scope: "server", event: "register", outcome: "ok",
 			serverID: m.ServerID, serverTrackingID: entry.trackingID,
-			origin: origin, transport: entry.primaryTransport(),
+			origin: origin, transport: strings.Join(entry.transports, ","),
 			detail: "webrtc-hosted, no UDP challenge",
 		})
 		return m.ServerID, entry, nil
@@ -1378,7 +1381,7 @@ func beginRegistration(conn *websocket.Conn, m signalMessage, origin string) (st
 	journal.Record(journalEvent{
 		scope: "server", event: "register", outcome: "pending",
 		serverID: m.ServerID, serverTrackingID: entry.trackingID,
-		origin: origin, transport: entry.primaryTransport(),
+		origin: origin, transport: strings.Join(entry.transports, ","),
 		detail: "awaiting return-routability punch",
 	})
 

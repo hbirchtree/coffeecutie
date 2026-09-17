@@ -121,7 +121,11 @@ i32 blam_main()
              "so nothing on the path can present its own. For a gateway join "
              "URL the key rides in the fragment instead and this is not "
              "needed",
-             cxxopts::value<std::string>());
+             cxxopts::value<std::string>())
+            //
+            ("relay-only",
+             "Always relay traffic, no peer-to-peer",
+             cxxopts::value<bool>()->default_value("false"));
         if constexpr(!compile_info::supports_command_line)
             options.add_options("Game")(
                 "map", "Which map file to load", cxxopts::value<std::string>());
@@ -540,6 +544,7 @@ i32 blam_main()
                     .type   = ServerConnectEvent::Server,
                     .remote = arguments["server"].as<std::string>(),
                 };
+                connect.relay_only = arguments["relay-only"].as<bool>();
                 if(arguments.count("server-key"))
                     connect.server_public_key =
                         arguments["server-key"].as<std::string>();
@@ -563,6 +568,7 @@ i32 blam_main()
                         .type   = ServerConnectEvent::Listen,
                         .remote = arguments["listen"].as<std::string>(),
                     };
+                    connect.relay_only = arguments["relay-only"].as<bool>();
                     if(arguments.count("gateway-register"))
                     {
                         connect.gateway_register_url =

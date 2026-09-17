@@ -104,16 +104,25 @@ if [ "$SERVER_TRANSPORT" = "webrtc" ]; then
     # /server-signal and serves each client a DataChannel of its own,
     # which the gateway bridges. No listen socket, so nothing to punch.
     echo "Starting server (--listen $GATEWAY_URL#$SERVER_ID, webrtc-hosted)..."
+    SERVER_ROUTE_ARGS=()
+    if [ "${SERVER_RELAY_ONLY:-0}" != "0" ]; then
+        SERVER_ROUTE_ARGS=(--relay-only)
+    fi
     webrtc_server_command "$TARGET" \
         "$RESOURCE_DIR" "$MAP" \
-        --listen "${GATEWAY_URL}#${SERVER_ID}"
+        --listen "${GATEWAY_URL}#${SERVER_ID}" "${SERVER_ROUTE_ARGS[@]}"
 else
     echo "Starting server (--listen 127.0.0.1:$SERVER_UDP_PORT --gateway-register $GATEWAY_URL --gateway-server-id $SERVER_ID)..."
+    # SERVER_RELAY_ONLY=1 makes the server advertise relay only
+    SERVER_ROUTE_ARGS=()
+    if [ "${SERVER_RELAY_ONLY:-0}" != "0" ]; then
+        SERVER_ROUTE_ARGS=(--relay-only)
+    fi
     webrtc_server_command "$TARGET" \
         "$RESOURCE_DIR" "$MAP" \
         --listen "127.0.0.1:$SERVER_UDP_PORT" \
         --gateway-register "$GATEWAY_URL" \
-        --gateway-server-id "$SERVER_ID"
+        --gateway-server-id "$SERVER_ID" "${SERVER_ROUTE_ARGS[@]}"
 fi
 webrtc_start_server "$WEBRTC_SERVER_LOG" "$WEBRTC_SERVER_TMP" "$SERVER_DUMMY_PLUG_CONFIG" "$RUN_TIMEOUT"
 
@@ -123,9 +132,14 @@ webrtc_wait_for_registration "$WEBRTC_SERVER_LOG" "$SERVER_ID" "$BOOT_TIMEOUT" "
 }
 
 echo "Starting client (--server $GATEWAY_URL#$SERVER_ID)..."
+# RELAY_ONLY=1 forces the client onto the gateway relay
+CLIENT_ROUTE_ARGS=()
+if [ "${RELAY_ONLY:-0}" != "0" ]; then
+    CLIENT_ROUTE_ARGS=(--relay-only)
+fi
 webrtc_start_native_client "$TARGET" "$RESOURCE_DIR" "$MAP" \
     "$WEBRTC_CLIENT_LOG" "$WEBRTC_CLIENT_TMP" "$CLIENT_DUMMY_PLUG_CONFIG" "$RUN_TIMEOUT" \
-    --server "${GATEWAY_URL}#${SERVER_ID}"
+    --server "${GATEWAY_URL}#${SERVER_ID}" "${CLIENT_ROUTE_ARGS[@]}"
 
 echo "Waiting for both processes to finish (dummy_plug end_time closes them)..."
 wait "$WEBRTC_CLIENT_PID"

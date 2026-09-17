@@ -438,6 +438,9 @@ struct ServerConnectEvent
      * fragment): the server's Ed25519 public key, base64. When set, the
      * connection requires a certificate signed by it. */
     std::string server_public_key;
+
+    /* Never use a direct route, in either role, both as server and client */
+    bool relay_only{false};
 };
 
 struct ServerConnectedEvent
