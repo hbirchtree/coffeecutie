@@ -580,6 +580,10 @@ struct BlamMapBrowser
                             "TriggerVolume",
                             ec.get<TriggerVolume>(m_selected_entity));
                         check("Light", ec.get<Light>(m_selected_entity));
+                        if(auto* vis = ec.get<Visibility>(m_selected_entity))
+                        {
+                            ImGui::Checkbox("Visible", &vis->visibility());
+                        }
                         if(auto* model = ec.get<Model>(m_selected_entity))
                         {
                             ImGui::Separator();

@@ -60,9 +60,15 @@ struct Visibility
     std::map<viewport_id, bool> visible{};
     // Interior is invariant to viewports
     bool interior{false};
+    // Set for player biped to prevent rendering for self
+    std::optional<u32> skip_render_for;
+    bool _dummy{};
 
     bool visible_for(u32 player_id = 0, bool mirror = false) const
     {
+        if(skip_render_for.has_value() && !mirror)
+            if(*skip_render_for == player_id)
+                return false;
         if(auto vis = visible.find(std::make_pair(player_id, mirror));
            vis != visible.end())
             return vis->second;
@@ -87,11 +93,17 @@ struct Visibility
 
     void set_visibility(bool visible, u32 player_id = 0, bool mirror = false)
     {
+        if(skip_render_for.has_value())
+            if(*skip_render_for == player_id)
+                return;
         this->visible[std::make_pair(player_id, mirror)] = visible;
     }
 
     bool& visibility(u32 player_id = 0, bool mirror = false)
     {
+        if(skip_render_for.has_value())
+            if(*skip_render_for == player_id)
+                return _dummy;
         return visible[std::make_pair(player_id, mirror)];
     }
 
