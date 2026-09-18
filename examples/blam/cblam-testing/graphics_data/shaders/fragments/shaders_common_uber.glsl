@@ -340,7 +340,8 @@ vec4 shader_environment(in Material mat)
         blend = primary;
     else if(has_secondary)
         blend = secondary;
-    float specular = type == TYPE_BLENDED ? micro.a : base.a;
+    float specular = (type == TYPE_BLENDED && has_micro == 1)
+        ? micro.a : base.a;
 
 #if USE_NORMALMAP == 1
     vec4 normal = has_bump
