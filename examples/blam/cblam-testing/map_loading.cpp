@@ -240,13 +240,13 @@ static void load_resources(
             // more local seats than supported
             if(i != 0 && !const_config::supports_splitscreen)
                 break;
-            auto  ref           = e.create_entity(shared_recipes::player_recipe);
-            auto& vis           = ref.get<Visibility>();
-            vis.skip_render_for = i;
-            auto& info          = ref.get<PlayerInfo>();
-            info.player_idx     = i;
-            info.seat_idx       = i;
-            auto& camera        = ref.get<PlayerCamera>();
+            auto ref = e.create_entity(shared_recipes::player_recipe);
+            for(auto frame : range<size_t>(Visibility::type::frame_count_v))
+                e.get_at<Visibility>(ref.id(), frame)->skip_render_for = i;
+            auto& info      = ref.get<PlayerInfo>();
+            info.player_idx = i;
+            info.seat_idx   = i;
+            auto& camera    = ref.get<PlayerCamera>();
             if(i == 0)
             {
                 cDebug("Keyboard seat assigned");
