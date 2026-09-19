@@ -7,6 +7,7 @@
 
 #include <blam/volta/blam_stl.h>
 #include <coffee/comp_app/services.h>
+#include <coffee/core/debug/formatting.h>
 #include <coffee/core/input/standard_input_handlers.h>
 #include <peripherals/identify/compiler/unreachable.h>
 #include <peripherals/semantic/chunk.h>
@@ -63,22 +64,20 @@ struct BlamResources : compo::SubsystemBase
     std::shared_ptr<gfx::buffer_t>       bsp_light_buf;
     std::shared_ptr<gfx::vertex_array_t> bsp_attr;
 
-    std::shared_ptr<gfx::program_t> bsp_pipeline;
-    std::shared_ptr<gfx::program_t> model_pipeline;
-    /* Per-material-family builds of the uber shaders. A pass holding only one
-     * family binds these instead, keeping sotr's register budget off every
-     * other material. Null when the platform builds no uber shaders. */
-    std::shared_ptr<gfx::program_t> bsp_pipeline_nosotr;
+    /* Modern uber shaders, so powerful it needs to be split */
     std::shared_ptr<gfx::program_t> bsp_pipeline_base;
     std::shared_ptr<gfx::program_t> bsp_pipeline_chicago;
     std::shared_ptr<gfx::program_t> bsp_pipeline_sotr;
-    std::shared_ptr<gfx::program_t> model_pipeline_nosotr;
     std::shared_ptr<gfx::program_t> model_pipeline_base;
     std::shared_ptr<gfx::program_t> model_pipeline_chicago;
     std::shared_ptr<gfx::program_t> model_pipeline_sotr;
-    std::shared_ptr<gfx::program_t>
-        chicago_pipeline;                           /* ES2 schi/scex combiner */
+
+    /* ES2 shaders */
+    std::shared_ptr<gfx::program_t> bsp_pipeline;
+    std::shared_ptr<gfx::program_t> model_pipeline;
+    std::shared_ptr<gfx::program_t> chicago_pipeline; /* ES2 schi/scex combiner */
     std::shared_ptr<gfx::program_t> water_pipeline; /* ES2 swat water */
+
     std::shared_ptr<gfx::program_t> wireframe_pipeline;
 
     std::shared_ptr<gfx::buffer_t>       model_buf;
@@ -102,6 +101,52 @@ struct BlamResources : compo::SubsystemBase
     std::shared_ptr<gfx::rendertarget_t> offscreen;
     std::shared_ptr<gfx::texture_2d_t>   color;
     std::shared_ptr<gfx::texture_2d_t>   depth;
+
+    struct shader_status_t
+    {
+        u32 ready{0};
+        u32 total{0};
+    };
+
+    stl_types::result<shader_status_t, gfx::program_t::compile_error_t>
+    check_shaders_ready() const
+    {
+        shader_status_t status;
+        for(gfx::program_t* program : {
+                bsp_pipeline.get(),
+                model_pipeline.get(),
+                bsp_pipeline_base.get(),
+                bsp_pipeline_chicago.get(),
+                bsp_pipeline_sotr.get(),
+                model_pipeline_base.get(),
+                model_pipeline_chicago.get(),
+                model_pipeline_sotr.get(),
+                chicago_pipeline.get(),
+                water_pipeline.get(),
+                wireframe_pipeline.get(),
+                debug_lines_pipeline.get(),
+            })
+        {
+            if(!program)
+                continue;
+            status.total++;
+            /* Never entered async compile (no extension, or already linked),
+             * so check_async_ready() would hit its unreachable(). */
+            if(!program->m_async_waiting)
+            {
+                status.ready++;
+                continue;
+            }
+            /* No early exit: check_async_ready() is what advances each
+             * program's state machine, so all of them need a call. */
+            auto ready = program->check_async_ready();
+            if(ready.has_error())
+                return stl_types::failure(ready.error());
+            if(ready.value())
+                status.ready++;
+        }
+        return stl_types::success(status);
+    }
 };
 
 struct PostProcessParameters : compo::SubsystemBase
@@ -191,6 +236,21 @@ struct LoadingStatus : compo::SubsystemBase
     loading_t                      loaded_shaders{none};
     bool                           init_started{false};
     std::promise<void>             finished{};
+
+    void set_shader_progress(libc_types::u32 ready, libc_types::u32 total)
+    {
+        using namespace Coffee::Logging;
+        loading_t const previous = loaded_shaders;
+        loaded_shaders           = ready == total ? loaded : in_progress;
+        if(previous != loaded_shaders)
+            cDebug("Shader programs linked: {}/{}", ready, total);
+        if(loaded_shaders == loaded || loaded_map != loaded)
+            return;
+        /* Only once the map loader is done with the status line. */
+        status = fmt::format("Compiling shaders ({}/{})", ready, total);
+        progress =
+            static_cast<libc_types::i16>(total ? ready * 100 / total : 0);
+    }
 
     void check_all_loaded(bool quiet = false)
     {

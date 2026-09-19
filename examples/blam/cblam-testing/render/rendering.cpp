@@ -102,29 +102,17 @@ enum MaterialClass : u8
 enum class shader_split_t
 {
     off,  /* one program, as before */
-    sotr, /* sotr vs everything else */
     full, /* sotr vs chicago vs the rest */
 };
 
 inline shader_split_t shader_split_mode()
 {
-    static shader_split_t mode = [] {
-        auto v = platform::env::var("COFFEE_SHADER_SPLIT");
-        if(!v || *v == "full")
-            return shader_split_t::full;
-        if(*v == "off")
-            return shader_split_t::off;
-        if(*v == "sotr")
-            return shader_split_t::sotr;
-        return shader_split_t::full;
-    }();
-    return mode;
+    return shader_split_t::full;
 }
 
 struct PassPrograms
 {
     std::shared_ptr<gfx::program_t> combined;
-    std::shared_ptr<gfx::program_t> nosotr;
     std::shared_ptr<gfx::program_t> base;
     std::shared_ptr<gfx::program_t> chicago;
     std::shared_ptr<gfx::program_t> sotr;
@@ -134,12 +122,6 @@ struct PassPrograms
         switch(shader_split_mode())
         {
         case shader_split_t::off:
-            break;
-        case shader_split_t::sotr:
-            if(classes == MatClass_Sotr && sotr)
-                return sotr;
-            if(classes && !(classes & MatClass_Sotr) && nosotr)
-                return nosotr;
             break;
         case shader_split_t::full:
             if(classes == MatClass_Sotr && sotr)
@@ -231,8 +213,6 @@ struct Pass
         {
         case shader_split_t::off:
             return 0;
-        case shader_split_t::sotr:
-            return (cls & MatClass_Sotr) ? MatClass_Sotr : MatClass_Base;
         case shader_split_t::full:
             return cls;
         }
@@ -633,7 +613,6 @@ struct DrawListBuilder
                     pass.command.program = resources.bsp_pipeline;
                     pass.programs        = {
                                .combined = resources.bsp_pipeline,
-                               .nosotr   = resources.bsp_pipeline_nosotr,
                                .base     = resources.bsp_pipeline_base,
                                .chicago  = resources.bsp_pipeline_chicago,
                                .sotr     = resources.bsp_pipeline_sotr,
@@ -653,7 +632,6 @@ struct DrawListBuilder
                     pass.command.program = resources.model_pipeline;
                     pass.programs        = {
                                .combined = resources.model_pipeline,
-                               .nosotr   = resources.model_pipeline_nosotr,
                                .base     = resources.model_pipeline_base,
                                .chicago  = resources.model_pipeline_chicago,
                                .sotr     = resources.model_pipeline_sotr,
@@ -2197,11 +2175,12 @@ struct MeshRenderer
             bool skybox_found{false};
             for(auto const& skybox : p.template select<WorldInfo>())
             {
-                skybox_found = true;
+                skybox_found           = true;
                 WorldInfo const& world = skybox.template get<WorldInfo>();
                 if(!world.skybox)
                     continue;
-                m_resources.offscreen->clear(Vecf4(world.skybox->outdoor_fog.color, 1));
+                m_resources.offscreen->clear(
+                    Vecf4(world.skybox->outdoor_fog.color, 1));
             }
             if(!skybox_found)
                 m_resources.offscreen->clear(Vecf4{0, 0, 0, 1});
@@ -2213,19 +2192,11 @@ struct MeshRenderer
             LoadingStatus* loading_state;
             p.subsystem(loading_state);
 
-            auto bsp_state = m_resources.bsp_pipeline->check_async_ready();
-            auto mod_state =
-                m_resources.model_pipeline
-                    ? m_resources.model_pipeline->check_async_ready()
-                    : stl_types::result<bool, gfx::program_t::compile_error_t>(
-                          true);
-
-            if(!bsp_state.has_value() || !mod_state.has_value())
+            auto shader_state = m_resources.check_shaders_ready();
+            if(shader_state.has_error())
                 return;
-            loading_state->loaded_shaders =
-                bsp_state.value() && mod_state.value()
-                    ? LoadingStatus::loaded
-                    : LoadingStatus::in_progress;
+            loading_state->set_shader_progress(
+                shader_state.value().ready, shader_state.value().total);
             loading_state->check_all_loaded(true);
             if(loading_state->loading)
                 return;
@@ -2422,19 +2393,11 @@ struct LegacyMeshRenderer
             LoadingStatus* loading_state;
             p.subsystem(loading_state);
 
-            auto bsp_state = resources.bsp_pipeline->check_async_ready();
-            auto mod_state =
-                resources.model_pipeline
-                    ? resources.model_pipeline->check_async_ready()
-                    : stl_types::result<bool, gfx::program_t::compile_error_t>(
-                          true);
-
-            if(!bsp_state.has_value() || !mod_state.has_value())
+            auto shader_state = resources.check_shaders_ready();
+            if(shader_state.has_error())
                 return;
-            loading_state->loaded_shaders =
-                bsp_state.value() && mod_state.value()
-                    ? LoadingStatus::loaded
-                    : LoadingStatus::in_progress;
+            loading_state->set_shader_progress(
+                shader_state.value().ready, shader_state.value().total);
             loading_state->check_all_loaded(true);
             if(loading_state->loading)
                 return;

@@ -929,54 +929,26 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
     using namespace std::string_view_literals;
     using platform::url::constructors::MkUrl;
 
-    const auto map_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
-                                ? "map_xbox"sv
-                                : "map"sv;
-    const auto scenery_vertex =
-        std::is_same_v<halo_version, blam::xbox_version_t>
-            ? (compile_info::platform::is_emscripten ? "scenery_xbox_lite"sv
-                                                     : "scenery_xbox"sv)
-            : (compile_info::platform::is_emscripten ? "scenery_lite"sv
-                                                     : "scenery"sv);
-    /* Xbox multipurpose maps are ARGB; use the matching fragment variant. */
-    constexpr bool is_xbox = std::is_same_v<halo_version, blam::xbox_version_t>;
+    constexpr bool is_xbox    = std::is_same_v<halo_version, blam::xbox_version_t>;
+    const auto scenery_vertex = is_xbox ? "scenery_xbox"sv : "scenery"sv;
+    const auto map_vertex     = is_xbox ? "map_xbox"sv : "map"sv;
     const auto     scenery_frag =
         is_xbox ? "scenery_uber_xbox"sv : "scenery_uber"sv;
-    /* Per-material-family builds; see BlamResources for why they exist. */
-    const auto scenery_frag_nosotr =
-        is_xbox ? "scenery_uber_xbox_nosotr"sv : "scenery_uber_nosotr"sv;
     const auto scenery_frag_base =
         is_xbox ? "scenery_uber_xbox_base"sv : "scenery_uber_base"sv;
-    /* sotr and chicago read neither lightmaps nor the multipurpose map, so one
-     * build serves the BSP and model pipelines on both Halo versions. */
     const auto frag_sotr    = "uber_sotr"sv;
     const auto frag_chicago = "uber_chicago"sv;
 
-    std::array<shader_pair_t, 12> shaders = {{
+    std::array<shader_pair_t, 8> shaders = {{
         {
             .vertex_file   = "debug_lines"sv,
             .fragment_file = "debug_lines"sv,
             .shader        = resources.debug_lines_pipeline,
         },
         {
-            .vertex_file   = scenery_vertex,
-            .fragment_file = scenery_frag,
-            .shader        = resources.model_pipeline,
-        },
-        {
-            .vertex_file   = map_vertex,
-            .fragment_file = "map_uber"sv,
-            .shader        = resources.bsp_pipeline,
-        },
-        {
             .vertex_file   = map_vertex,
             .fragment_file = "wireframe"sv,
             .shader        = resources.wireframe_pipeline,
-        },
-        {
-            .vertex_file   = scenery_vertex,
-            .fragment_file = scenery_frag_nosotr,
-            .shader        = resources.model_pipeline_nosotr,
         },
         {
             .vertex_file   = scenery_vertex,
@@ -992,11 +964,6 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
             .vertex_file   = scenery_vertex,
             .fragment_file = frag_sotr,
             .shader        = resources.model_pipeline_sotr,
-        },
-        {
-            .vertex_file   = map_vertex,
-            .fragment_file = "map_uber_nosotr"sv,
-            .shader        = resources.bsp_pipeline_nosotr,
         },
         {
             .vertex_file   = map_vertex,
@@ -1023,17 +990,11 @@ static void create_uber_lite_shaders(gfx::api& api, BlamResources& resources)
     using namespace std::string_view_literals;
     using platform::url::constructors::MkUrl;
 
-    const auto map_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
-                                ? "map_xbox"sv
-                                : "map"sv;
-    const auto scenery_vertex =
-        std::is_same_v<halo_version, blam::xbox_version_t>
-            ? (compile_info::platform::is_emscripten ? "scenery_xbox_lite"sv
-                                                     : "scenery_xbox"sv)
-            : (compile_info::platform::is_emscripten ? "scenery_lite"sv
-                                                     : "scenery"sv);
+    constexpr bool is_xbox    = std::is_same_v<halo_version, blam::xbox_version_t>;
+    const auto scenery_vertex = is_xbox ? "scenery_xbox"sv : "scenery"sv;
+    const auto map_vertex     = is_xbox ? "map_xbox"sv : "map"sv;
 
-    std::array<shader_pair_t, 4> shaders = {{
+    std::array<shader_pair_t, 8> shaders = {{
         {
             .vertex_file   = "debug_lines"sv,
             .fragment_file = "debug_lines"sv,
@@ -1041,59 +1002,38 @@ static void create_uber_lite_shaders(gfx::api& api, BlamResources& resources)
         },
         {
             .vertex_file   = scenery_vertex,
-            .fragment_file = "scenery_uber_lite"sv,
-            .shader        = resources.model_pipeline,
-        },
-        {
-            .vertex_file   = map_vertex,
-            .fragment_file = "map_uber_lite"sv,
-            .shader        = resources.bsp_pipeline,
-        },
-        {
-            .vertex_file   = map_vertex,
-            .fragment_file = "wireframe"sv,
-            .shader        = resources.wireframe_pipeline,
-        },
-    }};
-
-    create_shaders(api, std::move(shaders));
-}
-
-static void create_standard_shaders(gfx::api& api, BlamResources& resources)
-{
-    using namespace std::string_view_literals;
-    using platform::url::constructors::MkUrl;
-
-    const auto map_vertex = std::is_same_v<halo_version, blam::xbox_version_t>
-                                ? "map_xbox"sv
-                                : "map"sv;
-    const auto scenery_vertex =
-        std::is_same_v<halo_version, blam::xbox_version_t>
-            ? (compile_info::platform::is_emscripten ? "scenery_xbox_lite"sv
-                                                     : "scenery_xbox"sv)
-            : (compile_info::platform::is_emscripten ? "scenery_lite"sv
-                                                     : "scenery"sv);
-
-    std::array<shader_pair_t, 4> shaders = {{
-        {
-            .vertex_file   = "debug_lines"sv,
-            .fragment_file = "debug_lines"sv,
-            .shader        = resources.debug_lines_pipeline,
+            .fragment_file = is_xbox ? "scenery_uber_lite_xbox_base"sv : "scenery_uber_lite_base"sv,
+            .shader        = resources.model_pipeline_base,
         },
         {
             .vertex_file   = scenery_vertex,
-            .fragment_file = "scenery"sv,
-            .shader        = resources.model_pipeline,
+            .fragment_file = "uber_lite_chicago"sv,
+            .shader        = resources.model_pipeline_chicago,
+        },
+        {
+            .vertex_file   = scenery_vertex,
+            .fragment_file = "uber_lite_sotr"sv,
+            .shader        = resources.model_pipeline_sotr,
         },
         {
             .vertex_file   = map_vertex,
-            .fragment_file = "map"sv,
-            .shader        = resources.bsp_pipeline,
-        },
-        {
-            .vertex_file   = "map"sv,
             .fragment_file = "wireframe"sv,
             .shader        = resources.wireframe_pipeline,
+        },
+        {
+            .vertex_file   = map_vertex,
+            .fragment_file = "map_uber_lite_base"sv,
+            .shader        = resources.bsp_pipeline_base,
+        },
+        {
+            .vertex_file   = map_vertex,
+            .fragment_file = "uber_lite_chicago"sv,
+            .shader        = resources.bsp_pipeline_chicago,
+        },
+        {
+            .vertex_file   = map_vertex,
+            .fragment_file = "uber_lite_sotr"sv,
+            .shader        = resources.bsp_pipeline_sotr,
         },
     }};
 
@@ -1206,9 +1146,6 @@ void set_resource_labels(EntityContainer& e)
     gfx::debug::api& debug     = api.debug();
     BlamResources&   resources = e.subsystem_cast<BlamResources>();
 
-    debug.annotate(*resources.bsp_pipeline, "map_basic");
-    if(resources.model_pipeline)
-        debug.annotate(*resources.model_pipeline, "scenery");
     if(resources.debug_lines_pipeline)
         debug.annotate(*resources.debug_lines_pipeline, "debug_lines");
     if(resources.wireframe_pipeline)
