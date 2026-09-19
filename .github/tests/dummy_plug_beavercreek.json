@@ -40,6 +40,12 @@
         {"time": 7500, "type":"screenshot", "name": "beavercreek_needler"},
         {"time": 8000, "type": "camera", "position" :[22.431599, 18.240997, -0.19409788], "rotation":[0.73925203, -0.0146357445, -0.6731379, 0.013326981]},
         {"time": 8500, "type":"screenshot", "name": "beavercreek_plasma_rifle_meter"},
+        {"time": 9000, "type": "camera", "position" :[8.88644, 15.45912, 0.41148642], "rotation":[0.96674544, -0.01939141, -0.25495338, 0.0051138164]},
+        {"time": 9500, "type":"screenshot", "name": "beavercreek_base"},
+        {"time":10000, "type": "camera", "position" :[32.366936, 14.575459, 0.65034604], "rotation":[-0.9975762, -0.040054604, 0.056853194, 0.0022827093]},
+        {"time":10500, "type":"screenshot", "name": "beavercreek_portal"},
+        {"time":11000, "type": "camera", "position" :[6.977598, 12.980686, 0.33363298], "rotation":[-0.92410517, 0.23626278, -0.2909893, 0.07439603]},
+        {"time":11500, "type":"screenshot", "name": "beavercreek_base_closeup"},
         {}
     ],
     "frame_delta": 200.0,
