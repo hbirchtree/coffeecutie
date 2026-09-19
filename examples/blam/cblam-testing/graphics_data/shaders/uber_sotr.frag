@@ -11,12 +11,12 @@
 #define USE_LIGHTMAPS 0
 #define USE_SELF_ILLUMINATION 1
 #define USE_NORMALMAP 1
-#define USE_CHICAGO 0
 
 #define USE_REFLECTIONS 1
 #define USE_ARRAY_CUBEMAP 1
 
 #define USE_BASE_MATERIALS 0
+#define USE_CHICAGO 0
 #define USE_TRANSPARENT 1
 
 #include "fragments/shaders_common_uber.glsl"

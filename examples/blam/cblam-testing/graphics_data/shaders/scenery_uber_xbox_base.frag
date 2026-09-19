@@ -11,7 +11,6 @@
 #define USE_REFLECTIONS 1
 #define USE_ARRAY_CUBEMAP 1
 
-/* Xbox multipurpose packs the reflection mask differently than PC. */
 #define MULTIPURPOSE_XBOX 1
 
 #define USE_BASE_MATERIALS 1
