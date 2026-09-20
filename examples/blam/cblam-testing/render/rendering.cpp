@@ -92,6 +92,7 @@ enum MaterialClass : u8
     MatClass_Base    = 0x1,
     MatClass_Chicago = 0x2,
     MatClass_Sotr    = 0x4,
+    MatClass_Camo    = 0x8,
 };
 
 /* How far to split the uber shader. Splitting cuts register pressure but costs
@@ -116,6 +117,7 @@ struct PassPrograms
     std::shared_ptr<gfx::program_t> base;
     std::shared_ptr<gfx::program_t> chicago;
     std::shared_ptr<gfx::program_t> sotr;
+    std::shared_ptr<gfx::program_t> camo;
 
     std::shared_ptr<gfx::program_t> const& for_classes(u8 classes) const
     {
@@ -130,6 +132,8 @@ struct PassPrograms
                 return chicago;
             if(classes == MatClass_Base && base)
                 return base;
+            if(classes == MatClass_Camo && camo)
+                return camo;
             break;
         }
         return combined;
@@ -635,6 +639,7 @@ struct DrawListBuilder
                                .base     = resources.model_pipeline_base,
                                .chicago  = resources.model_pipeline_chicago,
                                .sotr     = resources.model_pipeline_sotr,
+                               .camo     = resources.camo,
                     };
                     pass.name = fmt::format(
                         "MOD::{}::{}",
@@ -1020,7 +1025,9 @@ struct DrawListBuilder
                         .mode      = gfx::drawing::primitive::triangle_strip,
                 };
                 auto sh_it   = shader_cache.find(model.shader);
-                u8   mat_cls = sh_it != shader_cache.end()
+                u8   mat_cls = model_draw.current_pass == Pass_Postprocess
+                                   ? MatClass_Camo
+                               : sh_it != shader_cache.end()
                                    ? material_class_of(sh_it->second.tag_class)
                                    : MatClass_Base;
                 wf.material_classes |= mat_cls;
@@ -1503,6 +1510,7 @@ struct MeshRenderer
         u32   seat_idx;
         Matf4 matrix;
         Vecf3 position;
+        Matf3 rotation;
     };
 
     gfx::api*            m_api;
@@ -1518,6 +1526,9 @@ struct MeshRenderer
 
     std::shared_ptr<gfx::texture_2d_t> meow_tex;
     std::shared_ptr<gfx::sampler_t>    meow_sampler;
+
+    std::shared_ptr<gfx::texture_2d_t> postprocess_tex;
+    std::shared_ptr<gfx::sampler_t>    postprocess_sampler;
 
     struct pending_change_t
     {
@@ -1800,6 +1811,10 @@ struct MeshRenderer
             get_renderflag_uniform());
         auto fragment_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Fragment,
+            gfx::uniform_pair{
+                {"cameraRotation", 2},
+                semantic::SpanOne(player.rotation),
+            },
             gfx::uniform_pair{
                 {"camera_position", 21},
                 semantic::SpanOne(player.position),
@@ -2150,6 +2165,7 @@ struct MeshRenderer
                 .seat_idx = info.seat_idx,
                 .matrix   = cam.matrix,
                 .position = cam.camera.position,
+                .rotation = glm::mat3_cast(cam.camera.rotation),
             });
         }
         std::sort(
@@ -2326,7 +2342,7 @@ struct MeshRenderer
 
         // Transparent world geometry — primary player, no depth write.
         gfx::depth_extended_state transparent_depth{.depth_write = false};
-        for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
+        for(i32 pi = Pass_LastOpaque + 1; pi <= Pass_Max; ++pi)
         {
             auto pass = static_cast<Passes>(pi);
             for(auto i : stl_types::range<u32>(m_players.size()))
@@ -2346,6 +2362,58 @@ struct MeshRenderer
                     builder.bsp_submit(i)[pass],
                     blend,
                     transparent_depth);
+            }
+        }
+
+        if(!postprocess_tex)
+        {
+            postprocess_tex = m_api->alloc_texture(
+                gfx::textures::d2,
+                m_resources.color->m_format,
+                1);
+            postprocess_tex->alloc(m_resources.color->size());
+            postprocess_sampler = postprocess_tex->sampler();
+            postprocess_sampler->alloc();
+        }
+        auto post_size = m_resources.color->size();
+        if(postprocess_tex->size() != m_resources.color->size())
+        {
+            postprocess_tex->alloc({
+                post_size.w,
+                post_size.h,
+                1,
+            });
+        }
+        m_api->perform_copy(m_resources.color, postprocess_tex);
+
+        PostProcessParameters const* postproc;
+        p.subsystem(postproc);
+
+        // Draws on top of framebuffer
+        for(i32 pi = Pass_Postprocess; pi < Pass_Count; ++pi)
+        {
+            auto pass = static_cast<Passes>(pi);
+            for(auto i : stl_types::range<u32>(m_players.size()))
+            {
+                /* UV units of displacement at the silhouette. */
+                render_pass(
+                    p,
+                    i,
+                    t,
+                    builder.model_submit(i)[pass],
+                    transparent_depth,
+                    gfx::make_uniform_list(
+                        typing::graphics::ShaderStage::Fragment,
+                        gfx::uniform_pair{
+                            gfx::uniform_key{"camo_scale"sv, 24},
+                            semantic::SpanOne(postproc->camo_scale)
+                        }),
+                    gfx::make_sampler_list(
+                        gfx::sampler_definition_t{
+                            typing::graphics::ShaderStage::Fragment,
+                            gfx::uniform_key{"source_scene"sv, 12},
+                            postprocess_sampler,
+                        }));
             }
         }
 

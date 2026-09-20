@@ -210,6 +210,8 @@ struct BlamBspWidget
                         "Exposure", &postprocess->exposure, -10.f, 10.f);
                     ImGui::InputFloat(
                         "Blur", &postprocess->blur, 0.00001f, 0.0001f);
+                    ImGui::InputFloat(
+                        "Camo scale", &postprocess->camo_scale, 0.01f, 0.1f);
                     ImGui::SliderFloat4(
                         "RGB decomp",
                         reinterpret_cast<f32*>(&postprocess->rgb_comp),

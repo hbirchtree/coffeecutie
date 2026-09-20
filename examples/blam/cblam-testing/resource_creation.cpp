@@ -939,7 +939,7 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
     const auto frag_sotr    = "uber_sotr"sv;
     const auto frag_chicago = "uber_chicago"sv;
 
-    std::array<shader_pair_t, 8> shaders = {{
+    std::array<shader_pair_t, 9> shaders = {{
         {
             .vertex_file   = "debug_lines"sv,
             .fragment_file = "debug_lines"sv,
@@ -964,6 +964,11 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
             .vertex_file   = scenery_vertex,
             .fragment_file = frag_sotr,
             .shader        = resources.model_pipeline_sotr,
+        },
+        {
+            .vertex_file   = scenery_vertex,
+            .fragment_file = "camo"sv,
+            .shader        = resources.camo,
         },
         {
             .vertex_file   = map_vertex,
@@ -994,7 +999,7 @@ static void create_uber_lite_shaders(gfx::api& api, BlamResources& resources)
     const auto scenery_vertex = is_xbox ? "scenery_xbox"sv : "scenery"sv;
     const auto map_vertex     = is_xbox ? "map_xbox"sv : "map"sv;
 
-    std::array<shader_pair_t, 8> shaders = {{
+    std::array<shader_pair_t, 9> shaders = {{
         {
             .vertex_file   = "debug_lines"sv,
             .fragment_file = "debug_lines"sv,
@@ -1014,6 +1019,11 @@ static void create_uber_lite_shaders(gfx::api& api, BlamResources& resources)
             .vertex_file   = scenery_vertex,
             .fragment_file = "uber_lite_sotr"sv,
             .shader        = resources.model_pipeline_sotr,
+        },
+        {
+            .vertex_file   = scenery_vertex,
+            .fragment_file = "camo"sv,
+            .shader        = resources.camo,
         },
         {
             .vertex_file   = map_vertex,

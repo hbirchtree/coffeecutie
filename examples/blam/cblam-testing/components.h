@@ -45,6 +45,8 @@ enum Passes
     Pass_Glass,
     Pass_Max, // component_max blend (GL_MAX), e.g. stacked holograms
 
+    Pass_Postprocess, // effects that rely on framebuffer data
+
     Pass_Count,
 };
 

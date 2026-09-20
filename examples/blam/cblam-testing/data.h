@@ -72,6 +72,8 @@ struct BlamResources : compo::SubsystemBase
     std::shared_ptr<gfx::program_t> model_pipeline_chicago;
     std::shared_ptr<gfx::program_t> model_pipeline_sotr;
 
+    std::shared_ptr<gfx::program_t> camo;
+
     /* ES2 shaders */
     std::shared_ptr<gfx::program_t> bsp_pipeline;
     std::shared_ptr<gfx::program_t> model_pipeline;
@@ -159,6 +161,7 @@ struct PostProcessParameters : compo::SubsystemBase
     bool  auto_expose{true};
     f32   blur{0.f};
     Vecf4 rgb_comp{};
+    f32   camo_scale{0.05f};
 
     bool doom_mode{false};
 };

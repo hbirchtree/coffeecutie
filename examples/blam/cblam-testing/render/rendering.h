@@ -86,6 +86,7 @@ using MeshRendererManifest = compo::SubsystemManifest<
         const WorldInfo>,
     type_list_t<
         const DrawListBuilder<V>,
+        const PostProcessParameters,
         BlamFiles<V>,
         BitmapCache<V>,
         ModelCache<V>,
