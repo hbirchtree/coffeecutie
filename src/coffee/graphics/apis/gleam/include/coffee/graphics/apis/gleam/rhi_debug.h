@@ -55,12 +55,14 @@ struct null_api
     !defined(COFFEE_MINGW32)
 struct scope
 {
-    scope(features::debugging debug, std::string_view const& name)
+    scope(features::debugging debug, std::string_view name)
         : ext(debug)
         , enabled(!name.empty())
     {
         if(!enabled)
             return;
+        if(name.size() > 256)
+            name = name.substr(0, 255);
 #if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320
         if(ext.debug)
         {
