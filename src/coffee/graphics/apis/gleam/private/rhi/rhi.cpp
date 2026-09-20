@@ -1,3 +1,4 @@
+#include "glw/enums/CopyImageSubDataTarget.h"
 #include "glw/enums/TextureTarget.h"
 #include "peripherals/typing/enum/graphics/shader_stage.h"
 #include "peripherals/typing/enum/pixels/filtering.h"
@@ -12,6 +13,7 @@
 #include <coffee/graphics/apis/gleam/rhi_versioning.h>
 #include <coffee/graphics/apis/gleam/rhi_vertex.h>
 
+#include <memory>
 #include <peripherals/concepts/graphics_api.h>
 #include <peripherals/constants.h>
 #include <peripherals/stl/magic_enum.hpp>
@@ -1864,6 +1866,11 @@ void main()
         Coffee::Logging::cWarning(
             "Failed to compile downscale shader: {}", status.error());
     }
+
+    debug().annotate(*rt, "gleam::downscaler_target");
+    debug().annotate(*prg, "gleam::downscaler_program");
+    debug().annotate(*vao, "gleam::downscaler_quad_vao");
+    debug().annotate(*smp, "gleam::downscaler_sampler");
 }
 
 bool api::perform_downscale(
@@ -1913,6 +1920,76 @@ bool api::perform_downscale(
             }));
 
     return true;
+}
+
+struct blitter_t
+{
+    std::shared_ptr<api::rendertarget_type> target;
+};
+
+void api::alloc_blitter()
+{
+    // Blitter doesn't need to be allocated if we CopyImage*
+    if(m_features.texture.image_copy)
+        return;
+    if(!m_features.rendertarget.blit)
+    {
+        Coffee::Logging::cWarning("Texture blit not supported, need CopyTexSubImage2D impl");
+        return;
+    }
+
+    m_blitter = std::make_shared<blitter_t>();
+    m_blitter->target = alloc_rendertarget();
+    m_blitter->target->alloc();
+
+    debug().annotate(*m_blitter->target, "blitter target");
+}
+
+bool api::perform_copy(
+    std::weak_ptr<texture_t> source_,
+    std::weak_ptr<texture_t> target_,
+    u32                      level)
+{
+    if(m_features.texture.image_copy)
+    {
+        auto source = source_.lock();
+        auto target = target_.lock();
+
+        if(!source || !target)
+            return false;
+
+        auto src_size = source->size();
+        auto trg_size = target->size();
+
+        if(src_size.w > trg_size.w || src_size.h > trg_size.h)
+            return false;
+
+        cmd::copy_image_sub_data(
+            source->m_handle,
+            group::copy_image_sub_data_target::texture_2d,
+            level,
+            0,
+            0,
+            0,
+            target->m_handle,
+            group::copy_image_sub_data_target::texture_2d,
+            0,
+            0,
+            0,
+            0,
+            src_size.w,
+            src_size.h,
+            1);
+        return true;
+    } else if(m_features.rendertarget.blit)
+    {
+        return false;
+    } else
+    {
+        // TODO: This would be where we have an impl for GL ES 2
+        // Using CopyTexSubImage2D with a framebuffer
+        return false;
+    }
 }
 
 } // namespace gleam

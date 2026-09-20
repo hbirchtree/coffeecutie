@@ -135,6 +135,7 @@ struct features
 
     struct rendertargets
     {
+        bool blit{false};
         bool clearbuffer{true};
         bool dsa{false};
         bool framebuffer_parameter{false};

@@ -103,6 +103,11 @@ struct size_2d
 
         return w;
     }
+
+    inline bool operator!=(size_2d const& other)
+    {
+        return w != other.w || h != other.h;
+    }
 };
 
 template<typename T>
@@ -164,6 +169,11 @@ struct size_3d
         default:
             return 0;
         }
+    }
+
+    inline bool operator!=(size_3d const& other)
+    {
+        return w != other.w || h != other.h || d != other.d;
     }
 };
 

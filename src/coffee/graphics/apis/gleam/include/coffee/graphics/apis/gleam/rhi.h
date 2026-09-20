@@ -34,6 +34,7 @@ using std::string;
 using std::tuple;
 
 struct downscaler_t;
+struct blitter_t;
 
 struct api
 {
@@ -410,6 +411,10 @@ struct api
         std::weak_ptr<texture_t> target,
         size_2d<u32>             size,
         u32                      level = 0);
+    bool perform_copy(
+        std::weak_ptr<texture_t> source,
+        std::weak_ptr<texture_t> target,
+        u32                      level = 0);
 
     using debug_api =
         std::conditional_t<debug::api_available, debug::api, debug::null_api>;
@@ -422,6 +427,7 @@ struct api
         features const& features, PixDesc const& fmt);
 
     void alloc_downscaler();
+    void alloc_blitter();
 
     std::shared_ptr<rendertarget_type> m_framebuffer;
     std::unique_ptr<debug_api>         m_debug;
@@ -450,6 +456,7 @@ struct api
     std::unique_ptr<circular_buffer_t> m_indirect_buffer;
 #endif
     std::shared_ptr<downscaler_t> m_downscaler{};
+    std::shared_ptr<blitter_t>    m_blitter{};
 };
 
 inline void test_t2d()
