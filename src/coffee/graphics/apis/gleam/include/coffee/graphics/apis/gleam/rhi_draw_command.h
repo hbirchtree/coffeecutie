@@ -7,7 +7,6 @@
 #include "rhi_program.h"
 #include "rhi_query.h"
 #include "rhi_rendertarget.h"
-#include "rhi_versioning.h"
 #include "rhi_vertex.h"
 
 namespace gleam {

@@ -4,10 +4,6 @@
 #include <coffee/components/subsystem.h>
 #include <coffee/core/debug/formatting.h>
 
-#include "coffee/graphics/apis/gleam/rhi_query.h"
-#include "coffee/graphics/apis/gleam/rhi_rendertarget.h"
-#include "coffee/graphics/apis/gleam/rhi_texture.h"
-#include "coffee/graphics/apis/gleam/rhi_versioning.h"
 #include "rhi.h"
 #include "rhi_context.h"
 #include "types.h"
@@ -15,6 +11,10 @@
 #include <coffee/core/types/display/event.h>
 
 namespace gleam {
+
+struct query_t;
+struct rendertarget_t;
+struct texture_t;
 
 using system_manifest = compo::SubsystemManifest<
     type_safety::empty_list_t,

@@ -17,6 +17,10 @@
 #include <platforms/profiling.h>
 
 #include <coffee/graphics/apis/gleam/rhi_query.h>
+#include <coffee/graphics/apis/gleam/rhi_rendertarget.h>
+#include <coffee/graphics/apis/gleam/rhi_texture.h>
+#include <coffee/graphics/apis/gleam/rhi_versioning.h>
+#include <coffee/graphics/apis/gleam/rhi.h>
 
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
 #include <coffee/comp_app/dummy_plug.h>

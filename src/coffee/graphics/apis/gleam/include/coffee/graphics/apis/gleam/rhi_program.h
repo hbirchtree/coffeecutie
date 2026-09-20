@@ -1,16 +1,15 @@
 #pragma once
 
-#include "glw/enums/ProgramPropertyARB.h"
-#include "glw/enums/ShaderParameterName.h"
-#include "peripherals/identify/compiler/unreachable.h"
 #include "rhi_debug.h"
 #include "rhi_features.h"
 #include "rhi_translate.h"
 #include "rhi_versioning.h"
 
-#include <future>
 #include <peripherals/error/result.h>
+#include <peripherals/identify/compiler/unreachable.h>
 
+#include <glw/enums/ProgramPropertyARB.h>
+#include <glw/enums/ShaderParameterName.h>
 #include <glw/extensions/KHR_parallel_shader_compile.h>
 
 namespace gleam {
