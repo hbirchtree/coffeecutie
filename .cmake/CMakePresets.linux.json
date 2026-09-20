@@ -116,7 +116,6 @@
                 "BUILD_GLSCREENSHOT": "ON",
                 "BUILD_GL_SOFTWARE_BCN": "ON",
                 "BUILD_GL_SOFTWARE_PVRTC": "ON",
-                "BUILD_OSMESA": "OFF",
                 "GENERATE_APPDIR": "ON",
                 "GENERATE_FLATPAK": "ON",
                 "GENERATE_RWIMAGE": "ON",
@@ -161,7 +160,6 @@
                 "PATH": "$penv{PATH}:$env{TOOLCHAIN_ROOT}/bin",
                 "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl3",
                 "VCPKG_INSTALL_DIR": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{ARCHITECTURE}"
-
             }
         },
         {
