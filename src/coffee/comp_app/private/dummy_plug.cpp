@@ -18,7 +18,7 @@
 #include <optional>
 
 #define MAGIC_ENUM_RANGE_MIN 0
-#define MAGIC_ENUM_RANGE_MAX 0xFFF
+#define MAGIC_ENUM_RANGE_MAX 0x250
 #include <peripherals/stl/magic_enum.hpp>
 
 #if defined(FEATURE_ENABLE_OSMesaComponent)
