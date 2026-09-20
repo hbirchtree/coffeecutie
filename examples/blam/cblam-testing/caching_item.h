@@ -8,7 +8,7 @@
 #include <blam/volta/blam_ui.h>
 
 #include "data_cache.h"
-#include "graphics_api.h"
+#include "graphics_api_fwd.h"
 
 #include <coffee/core/debug/formatting.h>
 
@@ -22,6 +22,7 @@ using libc_types::i16;
 using libc_types::i32;
 using libc_types::u16;
 using libc_types::u32;
+using libc_types::u64;
 using semantic::Span;
 using stl_types::range;
 using typing::pix_components;
@@ -188,10 +189,10 @@ struct BSPItem
 {
     struct Mesh
     {
-        blam::bsp::material const*  mesh{nullptr};
-        gleam::draw_command::data_t draw;
-        generation_idx_t            light_bitm;
-        generation_idx_t            shader;
+        blam::bsp::material const* mesh{nullptr};
+        gfx::draw_command::data_t  draw;
+        generation_idx_t           light_bitm;
+        generation_idx_t           shader;
         u32 cluster_idx{std::numeric_limits<u32>::max()};
         u32 subcluster_idx{std::numeric_limits<u32>::max()};
         /* All clusters whose leaves reference this chunk's faces. Chunks made
@@ -255,7 +256,7 @@ struct BSPItem
     std::vector<Group>                                      groups;
     std::vector<Cluster>                                    clusters;
     std::vector<FlatSubcluster>                             sorted_subclusters;
-    std::vector<gleam::draw_command::data_t>                portals;
+    std::vector<gfx::draw_command::data_t>                  portals;
     std::vector<u32>                                        portal_color_ptrs;
     std::vector<blam::bsp::background_sound_palette const*> bg_sound_palette;
 
@@ -583,9 +584,9 @@ struct ModelItem
 {
     struct SubModel
     {
-        blam::mod2::part const*     header{nullptr};
-        gleam::draw_command::data_t draw;
-        generation_idx_t            shader;
+        blam::mod2::part const*   header{nullptr};
+        gfx::draw_command::data_t draw;
+        generation_idx_t          shader;
     };
 
     struct LOD

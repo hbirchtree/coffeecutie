@@ -12,7 +12,6 @@
 #include "resource_creation.h"
 #include "selected_version.h"
 #include "sounds.h"
-#include "ui_caching.h"
 
 #include <cxxopts.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -198,8 +197,6 @@ i32 pose_demo_main()
                     e.service<comp_app::EventBus<SoundEvent>>());
                 auto& font_cache =
                     e.register_subsystem_inplace<FontCache<halo_version>>(&gfx);
-                e.register_subsystem_inplace<UIElementCache<halo_version>>(
-                    std::ref(bitm_cache), std::ref(font_cache));
             }
 
             if(auto window = e.service<comp_app::WindowInfo>())

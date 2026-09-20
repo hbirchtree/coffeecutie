@@ -2,7 +2,6 @@
 
 #include "bitmap_cache.h"
 #include "caching_item.h"
-#include "shader_cache.h"
 #include "ui_caching_item.h"
 
 #include <blam/volta/blam_scenario.h>

@@ -5,7 +5,10 @@
 #include <future>
 #include <limits>
 
+#include <blam/volta/blam_mod2.h>
 #include <blam/volta/blam_stl.h>
+#include <blam/volta/blam_tag_classes.h>
+#include <blam/volta/blam_tag_ref.h>
 #include <coffee/comp_app/services.h>
 #include <coffee/core/debug/formatting.h>
 #include <coffee/core/input/standard_input_handlers.h>
@@ -15,12 +18,7 @@
 #include <peripherals/typing/vectors/glm_vector_types.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
-#include "blam/volta/blam_mod2.h"
-#include "blam/volta/blam_tag_classes.h"
-#include "blam/volta/blam_tag_ref.h"
-#include "blam/volta/blam_versions.h"
 #include "graphics_api.h"
-#include "selected_version.h"
 
 using namespace Coffee::StandardInput;
 

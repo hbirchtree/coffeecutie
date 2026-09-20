@@ -3,6 +3,7 @@
 #include "caching_item.h"
 #include "data.h"
 #include "data_cache.h"
+#include "graphics_api.h"
 
 #include <blam/volta/blam_p8_palette.h>
 #include <blam/volta/blam_swizzle.h>

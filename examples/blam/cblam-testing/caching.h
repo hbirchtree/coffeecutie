@@ -35,12 +35,9 @@
 
 struct DebugMarkers;
 
-using gfx_api = gleam::api;
 using libc_types::byte_t;
-using libc_types::u64;
 using semantic::Bytes;
 using semantic::BytesConst;
-using semantic::Span;
 
 using compo::time_point;
 
@@ -62,7 +59,7 @@ struct ModelCache
     ModelCache(
         BitmapCache<V>& bitm_cache,
         ShaderCache<V>& shader_cache,
-        gfx_api*        allocator)
+        gfx::api*       allocator)
         : bitm_cache(bitm_cache)
         , shader_cache(shader_cache)
         , allocator(allocator)
@@ -89,7 +86,7 @@ struct ModelCache
     blam::map_ptr               vertex_magic;
     BitmapCache<V>&             bitm_cache;
     ShaderCache<V>&             shader_cache;
-    gfx_api*                    allocator;
+    gfx::api*                   allocator;
 
     Bytes vert_buffer, element_buffer;
     u32   vert_ptr, element_ptr;

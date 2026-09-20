@@ -93,7 +93,6 @@ static void init_map(
     auto& models      = e.subsystem_cast<ModelCache<halo_version>>();
     auto& shaders     = e.subsystem_cast<ShaderCache<halo_version>>();
     auto& sounds      = e.subsystem_cast<SoundCache<halo_version>>();
-    auto& ui_elements = e.subsystem_cast<UIElementCache<halo_version>>();
 
     loading_status.app_info = e.service<comp_app::AppInfo>();
 
