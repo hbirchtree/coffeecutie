@@ -27,6 +27,8 @@
             "shaders/scenery_uber_xbox.frag",
             "shaders/scenery_uber_xbox_base.frag",
 
+            "shaders/camo.frag",
+
             "shaders/rs2.vert",
             "shaders/rs2.frag",
 
