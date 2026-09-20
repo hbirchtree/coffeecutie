@@ -3,6 +3,8 @@
 #include "blam_base_types.h"
 #include "blam_reference.h"
 #include "blam_shaders.h"
+#include "blam_tag_index.h"
+#include "blam_vertex.h"
 
 namespace blam::mod2 {
 
