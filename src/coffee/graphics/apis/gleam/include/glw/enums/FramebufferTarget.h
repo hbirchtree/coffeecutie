@@ -7,18 +7,10 @@ namespace gl::group {
 // FramebufferTarget
 enum class framebuffer_target : u32
 {
-#ifdef GL_DRAW_FRAMEBUFFER
-    draw_framebuffer = GL_DRAW_FRAMEBUFFER,
-#endif
-#ifdef GL_FRAMEBUFFER
-    framebuffer = GL_FRAMEBUFFER,
-#endif
-#ifdef GL_FRAMEBUFFER_OES
-    framebuffer_oes = GL_FRAMEBUFFER_OES,
-#endif
-#ifdef GL_READ_FRAMEBUFFER
-    read_framebuffer = GL_READ_FRAMEBUFFER,
-#endif
+    draw_framebuffer = 0x8CA9, // GL_DRAW_FRAMEBUFFER
+    framebuffer      = 0x8D40, // GL_FRAMEBUFFER
+    read_framebuffer = 0x8CA8, // GL_READ_FRAMEBUFFER
+    framebuffer_oes  = 0x8D40, // GL_FRAMEBUFFER_OES
 }; // enum class framebuffer_target
 
 } // namespace gl::group

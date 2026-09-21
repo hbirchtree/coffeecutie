@@ -7,12 +7,8 @@ namespace gl::group {
 // BlitFramebufferFilter
 enum class blit_framebuffer_filter : u32
 {
-#ifdef GL_LINEAR
-    linear = GL_LINEAR,
-#endif
-#ifdef GL_NEAREST
-    nearest = GL_NEAREST,
-#endif
+    linear  = 0x2601, // GL_LINEAR
+    nearest = 0x2600, // GL_NEAREST
 }; // enum class blit_framebuffer_filter
 
 } // namespace gl::group

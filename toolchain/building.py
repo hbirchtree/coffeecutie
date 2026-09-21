@@ -878,7 +878,10 @@ def configure_and_build_plan(
             description="Disk space summary after configure",
         ))
 
-    build_cmd = ["cmake", "--build", "--preset", target.build_preset]
+    extra_flags = []
+    if "JOBS" in os.environ:
+        extra_flags.append(f"-j{os.environ['JOBS']}")
+    build_cmd = ["cmake", "--build", "--preset", target.build_preset, *extra_flags]
     if target.cmake_target:
         build_cmd += ["--target", target.cmake_target]
 

@@ -7,15 +7,9 @@ namespace gl::group {
 // ClientAttribMask
 enum class client_attrib_mask : u32
 {
-#ifdef GL_CLIENT_ALL_ATTRIB_BITS
-    client_all_attrib_bits = GL_CLIENT_ALL_ATTRIB_BITS,
-#endif
-#ifdef GL_CLIENT_PIXEL_STORE_BIT
-    client_pixel_store_bit = GL_CLIENT_PIXEL_STORE_BIT,
-#endif
-#ifdef GL_CLIENT_VERTEX_ARRAY_BIT
-    client_vertex_array_bit = GL_CLIENT_VERTEX_ARRAY_BIT,
-#endif
+    client_all_attrib_bits  = 0xFFFFFFFF, // GL_CLIENT_ALL_ATTRIB_BITS
+    client_pixel_store_bit  = 0x00000001, // GL_CLIENT_PIXEL_STORE_BIT
+    client_vertex_array_bit = 0x00000002, // GL_CLIENT_VERTEX_ARRAY_BIT
 }; // enum class client_attrib_mask
 C_FLAGS(client_attrib_mask, u32);
 

@@ -7,21 +7,11 @@ namespace gl::group {
 // StringName
 enum class string_name : u32
 {
-#ifdef GL_EXTENSIONS
-    extensions = GL_EXTENSIONS,
-#endif
-#ifdef GL_RENDERER
-    renderer = GL_RENDERER,
-#endif
-#ifdef GL_SHADING_LANGUAGE_VERSION
-    shading_language_version = GL_SHADING_LANGUAGE_VERSION,
-#endif
-#ifdef GL_VENDOR
-    vendor = GL_VENDOR,
-#endif
-#ifdef GL_VERSION
-    version = GL_VERSION,
-#endif
+    extensions               = 0x1F03, // GL_EXTENSIONS
+    renderer                 = 0x1F01, // GL_RENDERER
+    shading_language_version = 0x8B8C, // GL_SHADING_LANGUAGE_VERSION
+    vendor                   = 0x1F00, // GL_VENDOR
+    version                  = 0x1F02, // GL_VERSION
 }; // enum class string_name
 
 } // namespace gl::group

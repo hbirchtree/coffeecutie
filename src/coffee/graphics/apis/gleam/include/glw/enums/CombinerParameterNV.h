@@ -7,15 +7,9 @@ namespace gl::group {
 // CombinerParameterNV
 enum class combiner_parameter_nv : u32
 {
-#ifdef GL_COMBINER_COMPONENT_USAGE_NV
-    combiner_component_usage_nv = GL_COMBINER_COMPONENT_USAGE_NV,
-#endif
-#ifdef GL_COMBINER_INPUT_NV
-    combiner_input_nv = GL_COMBINER_INPUT_NV,
-#endif
-#ifdef GL_COMBINER_MAPPING_NV
-    combiner_mapping_nv = GL_COMBINER_MAPPING_NV,
-#endif
+    combiner_component_usage_nv = 0x8544, // GL_COMBINER_COMPONENT_USAGE_NV
+    combiner_input_nv           = 0x8542, // GL_COMBINER_INPUT_NV
+    combiner_mapping_nv         = 0x8543, // GL_COMBINER_MAPPING_NV
 }; // enum class combiner_parameter_nv
 
 } // namespace gl::group

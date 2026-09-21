@@ -7,22 +7,12 @@ namespace gl::group {
 // FramebufferParameterName
 enum class framebuffer_parameter_name : u32
 {
-#ifdef GL_FRAMEBUFFER_DEFAULT_FIXED_SAMPLE_LOCATIONS
     framebuffer_default_fixed_sample_locations =
-        GL_FRAMEBUFFER_DEFAULT_FIXED_SAMPLE_LOCATIONS,
-#endif
-#ifdef GL_FRAMEBUFFER_DEFAULT_HEIGHT
-    framebuffer_default_height = GL_FRAMEBUFFER_DEFAULT_HEIGHT,
-#endif
-#ifdef GL_FRAMEBUFFER_DEFAULT_LAYERS
-    framebuffer_default_layers = GL_FRAMEBUFFER_DEFAULT_LAYERS,
-#endif
-#ifdef GL_FRAMEBUFFER_DEFAULT_SAMPLES
-    framebuffer_default_samples = GL_FRAMEBUFFER_DEFAULT_SAMPLES,
-#endif
-#ifdef GL_FRAMEBUFFER_DEFAULT_WIDTH
-    framebuffer_default_width = GL_FRAMEBUFFER_DEFAULT_WIDTH,
-#endif
+        0x9314, // GL_FRAMEBUFFER_DEFAULT_FIXED_SAMPLE_LOCATIONS
+    framebuffer_default_height  = 0x9311, // GL_FRAMEBUFFER_DEFAULT_HEIGHT
+    framebuffer_default_layers  = 0x9312, // GL_FRAMEBUFFER_DEFAULT_LAYERS
+    framebuffer_default_samples = 0x9313, // GL_FRAMEBUFFER_DEFAULT_SAMPLES
+    framebuffer_default_width   = 0x9310, // GL_FRAMEBUFFER_DEFAULT_WIDTH
 }; // enum class framebuffer_parameter_name
 
 } // namespace gl::group

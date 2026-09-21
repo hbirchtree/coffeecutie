@@ -7,9 +7,7 @@ namespace gl::group {
 // VertexWeightPointerTypeEXT
 enum class vertex_weight_pointer_type_ext : u32
 {
-#ifdef GL_FLOAT
-    float_ = GL_FLOAT,
-#endif
+    float_ = 0x1406, // GL_FLOAT
 }; // enum class vertex_weight_pointer_type_ext
 
 } // namespace gl::group

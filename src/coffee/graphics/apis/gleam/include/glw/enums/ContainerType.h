@@ -7,12 +7,8 @@ namespace gl::group {
 // ContainerType
 enum class container_type : u32
 {
-#ifdef GL_PROGRAM_OBJECT_ARB
-    program_object_arb = GL_PROGRAM_OBJECT_ARB,
-#endif
-#ifdef GL_PROGRAM_OBJECT_EXT
-    program_object_ext = GL_PROGRAM_OBJECT_EXT,
-#endif
+    program_object_arb = 0x8B40, // GL_PROGRAM_OBJECT_ARB
+    program_object_ext = 0x8B40, // GL_PROGRAM_OBJECT_EXT
 }; // enum class container_type
 
 } // namespace gl::group

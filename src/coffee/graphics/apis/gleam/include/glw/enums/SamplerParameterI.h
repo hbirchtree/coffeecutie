@@ -7,31 +7,15 @@ namespace gl::group {
 // SamplerParameterI
 enum class sampler_parameter_i : u32
 {
-#ifdef GL_TEXTURE_COMPARE_FUNC
-    texture_compare_func = GL_TEXTURE_COMPARE_FUNC,
-#endif
-#ifdef GL_TEXTURE_COMPARE_MODE
-    texture_compare_mode = GL_TEXTURE_COMPARE_MODE,
-#endif
-#ifdef GL_TEXTURE_MAG_FILTER
-    texture_mag_filter = GL_TEXTURE_MAG_FILTER,
-#endif
-#ifdef GL_TEXTURE_MIN_FILTER
-    texture_min_filter = GL_TEXTURE_MIN_FILTER,
-#endif
-#ifdef GL_TEXTURE_UNNORMALIZED_COORDINATES_ARM
+    texture_compare_func = 0x884D, // GL_TEXTURE_COMPARE_FUNC
+    texture_compare_mode = 0x884C, // GL_TEXTURE_COMPARE_MODE
+    texture_mag_filter   = 0x2800, // GL_TEXTURE_MAG_FILTER
+    texture_min_filter   = 0x2801, // GL_TEXTURE_MIN_FILTER
+    texture_wrap_r       = 0x8072, // GL_TEXTURE_WRAP_R
+    texture_wrap_s       = 0x2802, // GL_TEXTURE_WRAP_S
+    texture_wrap_t       = 0x2803, // GL_TEXTURE_WRAP_T
     texture_unnormalized_coordinates_arm =
-        GL_TEXTURE_UNNORMALIZED_COORDINATES_ARM,
-#endif
-#ifdef GL_TEXTURE_WRAP_R
-    texture_wrap_r = GL_TEXTURE_WRAP_R,
-#endif
-#ifdef GL_TEXTURE_WRAP_S
-    texture_wrap_s = GL_TEXTURE_WRAP_S,
-#endif
-#ifdef GL_TEXTURE_WRAP_T
-    texture_wrap_t = GL_TEXTURE_WRAP_T,
-#endif
+        0x8F6A, // GL_TEXTURE_UNNORMALIZED_COORDINATES_ARM
 }; // enum class sampler_parameter_i
 
 } // namespace gl::group

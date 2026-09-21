@@ -7,18 +7,10 @@ namespace gl::group {
 // MatrixMode
 enum class matrix_mode : u32
 {
-#ifdef GL_MODELVIEW
-    modelview = GL_MODELVIEW,
-#endif
-#ifdef GL_MODELVIEW0_EXT
-    modelview0_ext = GL_MODELVIEW0_EXT,
-#endif
-#ifdef GL_PROJECTION
-    projection = GL_PROJECTION,
-#endif
-#ifdef GL_TEXTURE
-    texture = GL_TEXTURE,
-#endif
+    modelview      = 0x1700, // GL_MODELVIEW
+    projection     = 0x1701, // GL_PROJECTION
+    texture        = 0x1702, // GL_TEXTURE
+    modelview0_ext = 0x1700, // GL_MODELVIEW0_EXT
 }; // enum class matrix_mode
 
 } // namespace gl::group

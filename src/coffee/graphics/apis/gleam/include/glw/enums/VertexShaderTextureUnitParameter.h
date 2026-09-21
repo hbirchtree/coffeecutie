@@ -7,12 +7,8 @@ namespace gl::group {
 // VertexShaderTextureUnitParameter
 enum class vertex_shader_texture_unit_parameter : u32
 {
-#ifdef GL_CURRENT_TEXTURE_COORDS
-    current_texture_coords = GL_CURRENT_TEXTURE_COORDS,
-#endif
-#ifdef GL_TEXTURE_MATRIX
-    texture_matrix = GL_TEXTURE_MATRIX,
-#endif
+    current_texture_coords = 0x0B03, // GL_CURRENT_TEXTURE_COORDS
+    texture_matrix         = 0x0BA8, // GL_TEXTURE_MATRIX
 }; // enum class vertex_shader_texture_unit_parameter
 
 } // namespace gl::group

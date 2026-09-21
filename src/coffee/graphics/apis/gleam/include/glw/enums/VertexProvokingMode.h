@@ -7,12 +7,8 @@ namespace gl::group {
 // VertexProvokingMode
 enum class vertex_provoking_mode : u32
 {
-#ifdef GL_FIRST_VERTEX_CONVENTION
-    first_vertex_convention = GL_FIRST_VERTEX_CONVENTION,
-#endif
-#ifdef GL_LAST_VERTEX_CONVENTION
-    last_vertex_convention = GL_LAST_VERTEX_CONVENTION,
-#endif
+    first_vertex_convention = 0x8E4D, // GL_FIRST_VERTEX_CONVENTION
+    last_vertex_convention  = 0x8E4E, // GL_LAST_VERTEX_CONVENTION
 }; // enum class vertex_provoking_mode
 
 } // namespace gl::group

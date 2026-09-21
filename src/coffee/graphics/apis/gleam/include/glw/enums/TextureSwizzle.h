@@ -7,24 +7,12 @@ namespace gl::group {
 // TextureSwizzle
 enum class texture_swizzle : u32
 {
-#ifdef GL_ALPHA
-    alpha = GL_ALPHA,
-#endif
-#ifdef GL_BLUE
-    blue = GL_BLUE,
-#endif
-#ifdef GL_GREEN
-    green = GL_GREEN,
-#endif
-#ifdef GL_ONE
-    one = GL_ONE,
-#endif
-#ifdef GL_RED
-    red = GL_RED,
-#endif
-#ifdef GL_ZERO
-    zero = GL_ZERO,
-#endif
+    alpha = 0x1906, // GL_ALPHA
+    blue  = 0x1905, // GL_BLUE
+    green = 0x1904, // GL_GREEN
+    one   = 1,      // GL_ONE
+    red   = 0x1903, // GL_RED
+    zero  = 0,      // GL_ZERO
 }; // enum class texture_swizzle
 
 } // namespace gl::group

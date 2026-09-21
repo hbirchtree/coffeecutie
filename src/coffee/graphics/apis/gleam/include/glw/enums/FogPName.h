@@ -7,24 +7,12 @@ namespace gl::group {
 // FogPName
 enum class fog_prop : u32
 {
-#ifdef GL_FOG_COORD_SRC
-    fog_coord_src = GL_FOG_COORD_SRC,
-#endif
-#ifdef GL_FOG_DENSITY
-    fog_density = GL_FOG_DENSITY,
-#endif
-#ifdef GL_FOG_END
-    fog_end = GL_FOG_END,
-#endif
-#ifdef GL_FOG_INDEX
-    fog_index = GL_FOG_INDEX,
-#endif
-#ifdef GL_FOG_MODE
-    fog_mode = GL_FOG_MODE,
-#endif
-#ifdef GL_FOG_START
-    fog_start = GL_FOG_START,
-#endif
+    fog_coord_src = 0x8450, // GL_FOG_COORD_SRC
+    fog_density   = 0x0B62, // GL_FOG_DENSITY
+    fog_end       = 0x0B64, // GL_FOG_END
+    fog_index     = 0x0B61, // GL_FOG_INDEX
+    fog_mode      = 0x0B65, // GL_FOG_MODE
+    fog_start     = 0x0B63, // GL_FOG_START
 }; // enum class fog_prop
 
 } // namespace gl::group

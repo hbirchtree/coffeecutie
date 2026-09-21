@@ -81,13 +81,22 @@ if(IOS
   add_export(GLVersion_ES2 "")
 endif()
 
+coffee_library(
+  TARGET GLTextureFormats
+  SOURCES private/texture_formats.cpp
+  LIBRARIES Core
+  HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+              $<INSTALL_INTERFACE:include>
+)
+
 function(GEN_GLEAM_TARGET GLVERSION SUFFIX)
   coffee_library(
     TARGET GLeamCommon_${SUFFIX}
     SOURCES private/glw.cpp
             private/glw_trace.cpp
             # private/levels/shared/gl_shared_debug.cpp
-    LIBRARIES Core Image ComponentApp GraphicsAPI GraphicsInterface ${GLVERSION}
+    LIBRARIES Core Image ComponentApp GraphicsAPI GraphicsInterface
+              GLTextureFormats ${GLVERSION}
     HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                 $<INSTALL_INTERFACE:include>
   )

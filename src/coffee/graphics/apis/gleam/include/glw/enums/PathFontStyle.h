@@ -7,15 +7,9 @@ namespace gl::group {
 // PathFontStyle
 enum class path_font_style : u32
 {
-#ifdef GL_BOLD_BIT_NV
-    bold_bit_nv = GL_BOLD_BIT_NV,
-#endif
-#ifdef GL_ITALIC_BIT_NV
-    italic_bit_nv = GL_ITALIC_BIT_NV,
-#endif
-#ifdef GL_NONE
-    none = GL_NONE,
-#endif
+    none          = 0,    // GL_NONE
+    bold_bit_nv   = 0x01, // GL_BOLD_BIT_NV
+    italic_bit_nv = 0x02, // GL_ITALIC_BIT_NV
 }; // enum class path_font_style
 C_FLAGS(path_font_style, u32);
 

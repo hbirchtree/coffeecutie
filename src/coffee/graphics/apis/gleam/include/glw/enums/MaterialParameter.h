@@ -7,27 +7,13 @@ namespace gl::group {
 // MaterialParameter
 enum class material_parameter : u32
 {
-#ifdef GL_AMBIENT
-    ambient = GL_AMBIENT,
-#endif
-#ifdef GL_AMBIENT_AND_DIFFUSE
-    ambient_and_diffuse = GL_AMBIENT_AND_DIFFUSE,
-#endif
-#ifdef GL_COLOR_INDEXES
-    color_indexes = GL_COLOR_INDEXES,
-#endif
-#ifdef GL_DIFFUSE
-    diffuse = GL_DIFFUSE,
-#endif
-#ifdef GL_EMISSION
-    emission = GL_EMISSION,
-#endif
-#ifdef GL_SHININESS
-    shininess = GL_SHININESS,
-#endif
-#ifdef GL_SPECULAR
-    specular = GL_SPECULAR,
-#endif
+    ambient             = 0x1200, // GL_AMBIENT
+    ambient_and_diffuse = 0x1602, // GL_AMBIENT_AND_DIFFUSE
+    color_indexes       = 0x1603, // GL_COLOR_INDEXES
+    diffuse             = 0x1201, // GL_DIFFUSE
+    emission            = 0x1600, // GL_EMISSION
+    shininess           = 0x1601, // GL_SHININESS
+    specular            = 0x1202, // GL_SPECULAR
 }; // enum class material_parameter
 
 } // namespace gl::group

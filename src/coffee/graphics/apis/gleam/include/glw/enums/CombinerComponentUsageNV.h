@@ -7,15 +7,9 @@ namespace gl::group {
 // CombinerComponentUsageNV
 enum class combiner_component_usage_nv : u32
 {
-#ifdef GL_ALPHA
-    alpha = GL_ALPHA,
-#endif
-#ifdef GL_BLUE
-    blue = GL_BLUE,
-#endif
-#ifdef GL_RGB
-    rgb = GL_RGB,
-#endif
+    alpha = 0x1906, // GL_ALPHA
+    blue  = 0x1905, // GL_BLUE
+    rgb   = 0x1907, // GL_RGB
 }; // enum class combiner_component_usage_nv
 
 } // namespace gl::group

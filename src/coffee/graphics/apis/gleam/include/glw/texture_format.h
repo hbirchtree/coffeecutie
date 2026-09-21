@@ -5,9 +5,9 @@
 #include "enums/PixelFormat.h"
 #include "enums/PixelType.h"
 
-#include "vk_formats.h"
-
 namespace gl::tex {
+
+enum class vk_format_t : libc_types::u32;
 
 using format_t         = gl::group::internal_format;
 using texture_layout_t = gl::group::pixel_format;

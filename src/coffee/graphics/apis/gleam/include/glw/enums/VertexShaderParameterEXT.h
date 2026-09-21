@@ -7,12 +7,8 @@ namespace gl::group {
 // VertexShaderParameterEXT
 enum class vertex_shader_parameter_ext : u32
 {
-#ifdef GL_CURRENT_VERTEX_EXT
-    current_vertex_ext = GL_CURRENT_VERTEX_EXT,
-#endif
-#ifdef GL_MVP_MATRIX_EXT
-    mvp_matrix_ext = GL_MVP_MATRIX_EXT,
-#endif
+    current_vertex_ext = 0x87E2, // GL_CURRENT_VERTEX_EXT
+    mvp_matrix_ext     = 0x87E3, // GL_MVP_MATRIX_EXT
 }; // enum class vertex_shader_parameter_ext
 
 } // namespace gl::group

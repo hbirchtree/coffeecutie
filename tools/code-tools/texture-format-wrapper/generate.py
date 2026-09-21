@@ -265,12 +265,10 @@ def generate_struct(texture_type: dict):
     else:
         vk_format = f'vk_format_t::{format_as_enum(texture_type["vkFormat"])}'
 
-    extra_ifdef = ''
-    if 'glFormat' in texture_type and texture_type['glFormat'] is not None:
-        extra_ifdef = extra_ifdef + f' && defined({texture_type["glFormat"]})'+\
-                                    f' && defined({texture_type["glType"]})'
-
-    return f'''#if defined({format}){extra_ifdef}
+    # No #if guards: the gl::group enums now carry every value from the
+    # registry regardless of which GL headers a TU happens to include, so the
+    # table is the same everywhere instead of silently changing size.
+    return f'''// {format}
 {{
     .type = format_t::{format_as_enum(format)},
     .vk_type = {vk_format},
@@ -286,8 +284,7 @@ def generate_struct(texture_type: dict):
         .es = {extensions_to_list(es_extensions) or '{}'},
         .web = {extensions_to_list(web_extensions) or '{}'},
     }},
-}},
-#endif'''
+}},'''
 
 
 def generate_structs(all_types: list):

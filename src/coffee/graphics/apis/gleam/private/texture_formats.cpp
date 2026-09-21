@@ -1,19 +1,72 @@
-#pragma once
+/* The GL texture format table.
+ *
+ * Kept out of line deliberately: the table is ~190 nested aggregate
+ * initialisers, and every TU that included the header used to materialise the
+ * whole thing just to look one format up. It also used to change size with
+ * whichever GL headers were visible, which made gsl::span<T, N> a different
+ * type per TU. Both problems go away by giving it one home. */
+
+#include <glw/texture_formats.h>
+#include <glw/vk_formats.h> // the table names VK_FORMAT_* enumerators
 
 #include <peripherals/enum/helpers.h>
+
+#include <iterator>
 #include <stdexcept>
-
-#include "texture_formats.h"
-
-// #define MAGIC_ENUM_RANGE_MIN 0x8000
-// #define MAGIC_ENUM_RANGE_MAX 0x9FFF
-// #include <magic_enum.hpp>
+#include <string>
 
 namespace gl::tex {
 
-using typing::pixels::PixDesc;
+namespace detail {
 
-inline texture_format_t const& format_of(PixDesc const& desc)
+using namespace std::string_view_literals;
+
+#define COMPRESSED_FORMAT_TYPE texture_format_t::compression_t
+#define RAW_FORMAT_TYPE texture_format_t::raw_format_t
+
+constexpr texture_format_t texture_formats[] = {
+#include <glw/texture_formats.inl>
+};
+
+#undef COMPRESSED_FORMAT_TYPE
+#undef RAW_FORMAT_TYPE
+
+} // namespace detail
+
+gsl::span<texture_format_t const> texture_formats_view()
+{
+    return {detail::texture_formats, std::size(detail::texture_formats)};
+}
+
+bool is_compiled(format_t fmt)
+{
+    for(auto const& def : texture_formats_view())
+        if(def.type == fmt)
+            return true;
+    return false;
+}
+
+texture_format_t const& format_of(format_t fmt)
+{
+    for(auto const& def : texture_formats_view())
+        if(def.type == fmt)
+            return def;
+    Throw(
+        std::out_of_range(
+            "format not found: " + std::to_string(static_cast<u32>(fmt))));
+}
+
+texture_format_t const& format_of(vk_format_t fmt)
+{
+    for(auto const& def : texture_formats_view())
+        if(def.vk_type == fmt)
+            return def;
+    Throw(
+        std::out_of_range(
+            "format not found" + std::to_string(static_cast<u32>(fmt))));
+}
+
+texture_format_t const& format_of(PixDesc const& desc)
 {
     using enum_helpers::feval;
     using C = typing::pixels::comp_flags;
@@ -24,48 +77,33 @@ inline texture_format_t const& format_of(PixDesc const& desc)
     case P::BCn:
         switch(desc.cmpflg)
         {
-#if defined(GL_COMPRESSED_RGB_S3TC_DXT1_EXT)
         case C::BC1:
             return format_of(format_t::compressed_rgb_s3tc_dxt1_ext);
-#endif
-#if defined(GL_COMPRESSED_RGBA_S3TC_DXT3_EXT)
         case C::BC2:
             return format_of(format_t::compressed_rgba_s3tc_dxt3_ext);
-#endif
-#if defined(GL_COMPRESSED_RGBA_S3TC_DXT5_EXT)
         case C::BC3:
             return format_of(format_t::compressed_rgba_s3tc_dxt5_ext);
-#endif
-#if defined(GL_COMPRESSED_RED_RGTC1)
         case C::BC4:
             if(desc.pixflg == F::Signed)
                 return format_of(format_t::compressed_signed_red_rgtc1);
             return format_of(format_t::compressed_red_rgtc1);
             break;
-#endif
-#if defined(GL_COMPRESSED_RG_RGTC2)
         case C::BC5:
             if(desc.pixflg == F::Signed)
                 return format_of(format_t::compressed_signed_rg_rgtc2);
             return format_of(format_t::compressed_rg_rgtc2);
             break;
-#endif
-#if defined(GL_COMPRESSED_RGBA_BPTC_UNORM)
         case C::BC6H:
             return format_of(format_t::compressed_rgb_bptc_signed_float);
         case C::BC7:
             return format_of(format_t::compressed_rgba_bptc_unorm);
-#endif
         default:
             break;
         }
         break;
 
-#if defined(GL_ETC1_RGB8_OES)
     case P::ETC1:
         return format_of(format_t::etc1_rgb8_oes);
-#endif
-#if defined(GL_COMPRESSED_RGB8_ETC2)
     case P::ETC2:
         if(desc.pixflg == (F::R | F::Signed))
             return format_of(format_t::compressed_signed_r11_eac);
@@ -92,8 +130,6 @@ inline texture_format_t const& format_of(PixDesc const& desc)
             break;
         }
         break;
-#endif
-#if defined(GL_IMG_texture_compression_pvrtc)
     case P::PVRTC:
         return format_of(
             feval(desc.cmpflg, C::PVRTC_BPP2)
@@ -103,8 +139,6 @@ inline texture_format_t const& format_of(PixDesc const& desc)
             : feval(desc.cmpflg, C::PVRTC_RGB)
                 ? format_t::compressed_rgb_pvrtc_4bppv1_img
                 : format_t::compressed_rgba_pvrtc_4bppv1_img);
-#endif
-#if defined(GL_R16)
     /* For some reason, ES does not have these 16-bit formats */
     case P::R16:
         return format_of(format_t::r16);
@@ -114,22 +148,16 @@ inline texture_format_t const& format_of(PixDesc const& desc)
         return format_of(format_t::rgb16);
     case P::RGBA16:
         return format_of(format_t::rgba16);
-#endif
-#if defined(GL_RGBA4)
     case P::RGBA4:
         return format_of(format_t::rgba4);
-#endif
 
     case P::RGB565:
         return format_of(format_t::rgb565);
     case P::RGB5A1:
         return format_of(format_t::rgb5_a1);
-#if defined(GL_RGB9_E5)
     case P::RGB9E5:
         return format_of(format_t::rgb9_e5);
-#endif
 
-#if defined(GL_R8)
     case P::R8:
         return format_of(format_t::r8);
     case P::R8UI:
@@ -210,18 +238,14 @@ inline texture_format_t const& format_of(PixDesc const& desc)
         return format_of(format_t::rgb10_a2);
     case P::RGB10A2UI:
         return format_of(format_t::rgb10_a2ui);
-#endif
 
-#if defined(GL_SRGB8)
     case P::SRGB8:
         return format_of(format_t::srgb8);
     case P::SRGB8A8:
         return format_of(format_t::srgb8_alpha8);
-#endif
 
     case P::Depth16:
         return format_of(format_t::depth_component16);
-#if defined(GL_DEPTH_COMPONENT24)
     case P::Depth24: {
         static texture_format_t d24 = {
             .type = gl::group::internal_format::depth_component24,
@@ -248,23 +272,14 @@ inline texture_format_t const& format_of(PixDesc const& desc)
         };
         return d24;
     }
-#endif
-#if defined(GL_DEPTH24_STENCIL8)
     case P::Depth24Stencil8:
         return format_of(format_t::depth24_stencil8);
-#endif
-#if defined(GL_DEPTH_COMPONENT32)
     case P::Depth32:
         return format_of(format_t::depth_component32);
-#endif
-#if defined(GL_DEPTH_COMPONENT32F)
     case P::Depth32F:
         return format_of(format_t::depth_component32f);
-#endif
-#if defined(GL_DEPTH32F_STENCIL8)
     case P::Depth32FStencil8:
         return format_of(format_t::depth32f_stencil8);
-#endif
     default:
         break;
     }
@@ -273,7 +288,7 @@ inline texture_format_t const& format_of(PixDesc const& desc)
         std::to_string(static_cast<uint32_t>(desc.pixfmt)));
 }
 
-inline PixDesc desc_of(texture_format_t const& fmt)
+PixDesc desc_of(texture_format_t const& fmt)
 {
     using typing::pix_components;
     using typing::pixels::comp_flags;
@@ -284,13 +299,10 @@ inline PixDesc desc_of(texture_format_t const& fmt)
     switch(fmt.type)
     {
         /* ETC1 */
-#if defined(GL_ETC1_RGB8_OES)
     case format_t::etc1_rgb8_oes:
         return CompFmt(pix_fmt::ETC1);
-#endif
 
         /* ETC2 */
-#if defined(GL_COMPRESSED_R11_EAC)
     case format_t::compressed_r11_eac:
         return CompFmt(pix_fmt::ETC2, pix_flags::R);
     case format_t::compressed_rg11_eac:
@@ -301,29 +313,20 @@ inline PixDesc desc_of(texture_format_t const& fmt)
         return CompFmt(pix_fmt::ETC2, pix_flags::RGBA);
     case format_t::compressed_rgb8_punchthrough_alpha1_etc2:
         return CompFmt(pix_fmt::ETC2, pix_flags::RGBA_Punchthrough);
-#endif
 
         /* BCn */
-#if defined(GL_COMPRESSED_RGB_S3TC_DXT1_EXT)
     case format_t::compressed_rgb_s3tc_dxt1_ext:
         return CompFmt(pix_fmt::BCn, comp_flags::BC1);
     case format_t::compressed_rgba_s3tc_dxt3_ext:
         return CompFmt(pix_fmt::BCn, comp_flags::BC2);
     case format_t::compressed_rgba_s3tc_dxt5_ext:
         return CompFmt(pix_fmt::BCn, comp_flags::BC3);
-#endif
 
-#if defined(GL_COMPRESSED_RED_RGTC1)
     case format_t::compressed_red_rgtc1:
         return CompFmt(pix_fmt::BCn, comp_flags::BC4);
-#endif
-#if defined(GL_COMPRESSED_RG_RGTC2)
     case format_t::compressed_rg_rgtc2:
         return CompFmt(pix_fmt::BCn, comp_flags::BC5);
-#endif
 
-#if defined(GL_COMPRESSED_RGBA_BPTC_UNORM) || \
-    defined(GL_COMPRESSED_RGBA_BPTC_UNORM_ARB)
     case format_t::compressed_rgb_bptc_signed_float:
         return CompFmt(
             pix_fmt::BCn,
@@ -336,9 +339,7 @@ inline PixDesc desc_of(texture_format_t const& fmt)
             comp_flags::BC6H);
     case format_t::compressed_rgba_bptc_unorm:
         return CompFmt(pix_fmt::BCn, comp_flags::BC7);
-#endif
 
-#if defined(GL_R16)
     case format_t::r16:
         return PixDesc(pix_fmt::R16);
     case format_t::rg16:
@@ -347,18 +348,14 @@ inline PixDesc desc_of(texture_format_t const& fmt)
         return PixDesc(pix_fmt::RGB16);
     case format_t::rgba16:
         return PixDesc(pix_fmt::RGBA16);
-#endif
 
     case format_t::rgb565:
         return PixDesc(pix_fmt::RGB565);
     case format_t::rgb5_a1:
         return PixDesc(pix_fmt::RGB5A1);
-#if defined(GL_RGB9_E5)
     case format_t::rgb9_e5:
         return PixDesc(pix_fmt::RGB9E5);
-#endif
 
-#if defined(GL_R8)
     case format_t::r8:
         return PixDesc(pix_fmt::R8);
     case format_t::r8i:
@@ -434,7 +431,6 @@ inline PixDesc desc_of(texture_format_t const& fmt)
         return PixDesc(pix_fmt::RGBA32I);
     case format_t::rgba32ui:
         return PixDesc(pix_fmt::RGBA32UI);
-#endif
     default:
         break;
     }

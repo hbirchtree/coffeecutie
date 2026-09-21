@@ -7,12 +7,8 @@ namespace gl::group {
 // VertexShaderWriteMaskEXT
 enum class vertex_shader_write_mask_ext : u32
 {
-#ifdef GL_FALSE
-    false_ = GL_FALSE,
-#endif
-#ifdef GL_TRUE
-    true_ = GL_TRUE,
-#endif
+    false_ = 0, // GL_FALSE
+    true_  = 1, // GL_TRUE
 }; // enum class vertex_shader_write_mask_ext
 
 } // namespace gl::group

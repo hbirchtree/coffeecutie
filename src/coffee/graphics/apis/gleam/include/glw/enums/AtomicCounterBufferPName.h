@@ -7,44 +7,25 @@ namespace gl::group {
 // AtomicCounterBufferPName
 enum class atomic_counter_buffer_prop : u32
 {
-#ifdef GL_ATOMIC_COUNTER_BUFFER_ACTIVE_ATOMIC_COUNTERS
     atomic_counter_buffer_active_atomic_counters =
-        GL_ATOMIC_COUNTER_BUFFER_ACTIVE_ATOMIC_COUNTERS,
-#endif
-#ifdef GL_ATOMIC_COUNTER_BUFFER_ACTIVE_ATOMIC_COUNTER_INDICES
+        0x92C5, // GL_ATOMIC_COUNTER_BUFFER_ACTIVE_ATOMIC_COUNTERS
     atomic_counter_buffer_active_atomic_counter_indices =
-        GL_ATOMIC_COUNTER_BUFFER_ACTIVE_ATOMIC_COUNTER_INDICES,
-#endif
-#ifdef GL_ATOMIC_COUNTER_BUFFER_BINDING
-    atomic_counter_buffer_binding = GL_ATOMIC_COUNTER_BUFFER_BINDING,
-#endif
-#ifdef GL_ATOMIC_COUNTER_BUFFER_DATA_SIZE
-    atomic_counter_buffer_data_size = GL_ATOMIC_COUNTER_BUFFER_DATA_SIZE,
-#endif
-#ifdef GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_COMPUTE_SHADER
+        0x92C6, // GL_ATOMIC_COUNTER_BUFFER_ACTIVE_ATOMIC_COUNTER_INDICES
+    atomic_counter_buffer_binding = 0x92C1, // GL_ATOMIC_COUNTER_BUFFER_BINDING
+    atomic_counter_buffer_data_size =
+        0x92C4, // GL_ATOMIC_COUNTER_BUFFER_DATA_SIZE
     atomic_counter_buffer_referenced_by_compute_shader =
-        GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_COMPUTE_SHADER,
-#endif
-#ifdef GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_FRAGMENT_SHADER
+        0x90ED, // GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_COMPUTE_SHADER
     atomic_counter_buffer_referenced_by_fragment_shader =
-        GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_FRAGMENT_SHADER,
-#endif
-#ifdef GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_GEOMETRY_SHADER
+        0x92CB, // GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_FRAGMENT_SHADER
     atomic_counter_buffer_referenced_by_geometry_shader =
-        GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_GEOMETRY_SHADER,
-#endif
-#ifdef GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_CONTROL_SHADER
+        0x92CA, // GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_GEOMETRY_SHADER
     atomic_counter_buffer_referenced_by_tess_control_shader =
-        GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_CONTROL_SHADER,
-#endif
-#ifdef GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_EVALUATION_SHADER
+        0x92C8, // GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_CONTROL_SHADER
     atomic_counter_buffer_referenced_by_tess_evaluation_shader =
-        GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_EVALUATION_SHADER,
-#endif
-#ifdef GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_VERTEX_SHADER
+        0x92C9, // GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_TESS_EVALUATION_SHADER
     atomic_counter_buffer_referenced_by_vertex_shader =
-        GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_VERTEX_SHADER,
-#endif
+        0x92C7, // GL_ATOMIC_COUNTER_BUFFER_REFERENCED_BY_VERTEX_SHADER
 }; // enum class atomic_counter_buffer_prop
 
 } // namespace gl::group

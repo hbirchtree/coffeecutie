@@ -7,15 +7,9 @@ namespace gl::group {
 // PatchParameterName
 enum class patch_parameter_name : u32
 {
-#ifdef GL_PATCH_DEFAULT_INNER_LEVEL
-    patch_default_inner_level = GL_PATCH_DEFAULT_INNER_LEVEL,
-#endif
-#ifdef GL_PATCH_DEFAULT_OUTER_LEVEL
-    patch_default_outer_level = GL_PATCH_DEFAULT_OUTER_LEVEL,
-#endif
-#ifdef GL_PATCH_VERTICES
-    patch_vertices = GL_PATCH_VERTICES,
-#endif
+    patch_default_inner_level = 0x8E73, // GL_PATCH_DEFAULT_INNER_LEVEL
+    patch_default_outer_level = 0x8E74, // GL_PATCH_DEFAULT_OUTER_LEVEL
+    patch_vertices            = 0x8E72, // GL_PATCH_VERTICES
 }; // enum class patch_parameter_name
 
 } // namespace gl::group

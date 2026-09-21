@@ -5,7 +5,6 @@
 #include <peripherals/typing/vectors/vector_types.h>
 
 #include <glw/texture_formats.h>
-#include <glw/texture_formats_desc.h>
 
 #include <coffee/core/CDebug>
 

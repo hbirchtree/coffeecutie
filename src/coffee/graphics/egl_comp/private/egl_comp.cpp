@@ -6,7 +6,6 @@
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/core/CProfiling>
 #include <glw/texture_formats.h>
-#include <glw/texture_formats_desc.h>
 #include <peripherals/error/result.h>
 #include <peripherals/stl/string_casting.h>
 

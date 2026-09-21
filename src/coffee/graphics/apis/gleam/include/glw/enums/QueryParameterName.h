@@ -7,12 +7,8 @@ namespace gl::group {
 // QueryParameterName
 enum class query_parameter_name : u32
 {
-#ifdef GL_CURRENT_QUERY
-    current_query = GL_CURRENT_QUERY,
-#endif
-#ifdef GL_QUERY_COUNTER_BITS
-    query_counter_bits = GL_QUERY_COUNTER_BITS,
-#endif
+    current_query      = 0x8865, // GL_CURRENT_QUERY
+    query_counter_bits = 0x8864, // GL_QUERY_COUNTER_BITS
 }; // enum class query_parameter_name
 
 } // namespace gl::group

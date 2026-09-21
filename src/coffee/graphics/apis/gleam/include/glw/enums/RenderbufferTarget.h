@@ -7,12 +7,8 @@ namespace gl::group {
 // RenderbufferTarget
 enum class renderbuffer_target : u32
 {
-#ifdef GL_RENDERBUFFER
-    renderbuffer = GL_RENDERBUFFER,
-#endif
-#ifdef GL_RENDERBUFFER_OES
-    renderbuffer_oes = GL_RENDERBUFFER_OES,
-#endif
+    renderbuffer     = 0x8D41, // GL_RENDERBUFFER
+    renderbuffer_oes = 0x8D41, // GL_RENDERBUFFER_OES
 }; // enum class renderbuffer_target
 
 } // namespace gl::group

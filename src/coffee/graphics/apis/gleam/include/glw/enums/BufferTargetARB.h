@@ -7,51 +7,21 @@ namespace gl::group {
 // BufferTargetARB
 enum class buffer_target_arb : u32
 {
-#ifdef GL_ARRAY_BUFFER
-    array_buffer = GL_ARRAY_BUFFER,
-#endif
-#ifdef GL_ATOMIC_COUNTER_BUFFER
-    atomic_counter_buffer = GL_ATOMIC_COUNTER_BUFFER,
-#endif
-#ifdef GL_COPY_READ_BUFFER
-    copy_read_buffer = GL_COPY_READ_BUFFER,
-#endif
-#ifdef GL_COPY_WRITE_BUFFER
-    copy_write_buffer = GL_COPY_WRITE_BUFFER,
-#endif
-#ifdef GL_DISPATCH_INDIRECT_BUFFER
-    dispatch_indirect_buffer = GL_DISPATCH_INDIRECT_BUFFER,
-#endif
-#ifdef GL_DRAW_INDIRECT_BUFFER
-    draw_indirect_buffer = GL_DRAW_INDIRECT_BUFFER,
-#endif
-#ifdef GL_ELEMENT_ARRAY_BUFFER
-    element_array_buffer = GL_ELEMENT_ARRAY_BUFFER,
-#endif
-#ifdef GL_PARAMETER_BUFFER
-    parameter_buffer = GL_PARAMETER_BUFFER,
-#endif
-#ifdef GL_PIXEL_PACK_BUFFER
-    pixel_pack_buffer = GL_PIXEL_PACK_BUFFER,
-#endif
-#ifdef GL_PIXEL_UNPACK_BUFFER
-    pixel_unpack_buffer = GL_PIXEL_UNPACK_BUFFER,
-#endif
-#ifdef GL_QUERY_BUFFER
-    query_buffer = GL_QUERY_BUFFER,
-#endif
-#ifdef GL_SHADER_STORAGE_BUFFER
-    shader_storage_buffer = GL_SHADER_STORAGE_BUFFER,
-#endif
-#ifdef GL_TEXTURE_BUFFER
-    texture_buffer = GL_TEXTURE_BUFFER,
-#endif
-#ifdef GL_TRANSFORM_FEEDBACK_BUFFER
-    transform_feedback_buffer = GL_TRANSFORM_FEEDBACK_BUFFER,
-#endif
-#ifdef GL_UNIFORM_BUFFER
-    uniform_buffer = GL_UNIFORM_BUFFER,
-#endif
+    array_buffer              = 0x8892, // GL_ARRAY_BUFFER
+    atomic_counter_buffer     = 0x92C0, // GL_ATOMIC_COUNTER_BUFFER
+    copy_read_buffer          = 0x8F36, // GL_COPY_READ_BUFFER
+    copy_write_buffer         = 0x8F37, // GL_COPY_WRITE_BUFFER
+    dispatch_indirect_buffer  = 0x90EE, // GL_DISPATCH_INDIRECT_BUFFER
+    draw_indirect_buffer      = 0x8F3F, // GL_DRAW_INDIRECT_BUFFER
+    element_array_buffer      = 0x8893, // GL_ELEMENT_ARRAY_BUFFER
+    parameter_buffer          = 0x80EE, // GL_PARAMETER_BUFFER
+    pixel_pack_buffer         = 0x88EB, // GL_PIXEL_PACK_BUFFER
+    pixel_unpack_buffer       = 0x88EC, // GL_PIXEL_UNPACK_BUFFER
+    query_buffer              = 0x9192, // GL_QUERY_BUFFER
+    shader_storage_buffer     = 0x90D2, // GL_SHADER_STORAGE_BUFFER
+    texture_buffer            = 0x8C2A, // GL_TEXTURE_BUFFER
+    transform_feedback_buffer = 0x8C8E, // GL_TRANSFORM_FEEDBACK_BUFFER
+    uniform_buffer            = 0x8A11, // GL_UNIFORM_BUFFER
 }; // enum class buffer_target_arb
 
 } // namespace gl::group

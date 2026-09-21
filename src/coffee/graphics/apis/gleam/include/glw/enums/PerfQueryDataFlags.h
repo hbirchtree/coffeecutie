@@ -7,15 +7,9 @@ namespace gl::group {
 // PerfQueryDataFlags
 enum class perf_query_data_flags : u32
 {
-#ifdef GL_PERFQUERY_DONOT_FLUSH_INTEL
-    perfquery_donot_flush_intel = GL_PERFQUERY_DONOT_FLUSH_INTEL,
-#endif
-#ifdef GL_PERFQUERY_FLUSH_INTEL
-    perfquery_flush_intel = GL_PERFQUERY_FLUSH_INTEL,
-#endif
-#ifdef GL_PERFQUERY_WAIT_INTEL
-    perfquery_wait_intel = GL_PERFQUERY_WAIT_INTEL,
-#endif
+    perfquery_donot_flush_intel = 0x83F9, // GL_PERFQUERY_DONOT_FLUSH_INTEL
+    perfquery_flush_intel       = 0x83FA, // GL_PERFQUERY_FLUSH_INTEL
+    perfquery_wait_intel        = 0x83FB, // GL_PERFQUERY_WAIT_INTEL
 }; // enum class perf_query_data_flags
 
 } // namespace gl::group

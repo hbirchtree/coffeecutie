@@ -49,7 +49,6 @@
 #include <glw/enums/TriangleFace.h>
 #include <glw/enums/limits.h>
 #include <glw/texture_formats.h>
-#include <glw/texture_formats_desc.h>
 
 #include <coffee/core/debug/formatting.h>
 

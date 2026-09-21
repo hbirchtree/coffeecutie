@@ -7,12 +7,8 @@ namespace gl::group {
 // MapTypeNV
 enum class map_type_nv : u32
 {
-#ifdef GL_DOUBLE
-    double_ = GL_DOUBLE,
-#endif
-#ifdef GL_FLOAT
-    float_ = GL_FLOAT,
-#endif
+    double_ = 0x140A, // GL_DOUBLE
+    float_  = 0x1406, // GL_FLOAT
 }; // enum class map_type_nv
 
 } // namespace gl::group

@@ -1,6 +1,36 @@
 #!/usr/bin/env python3
 
 import re
+from collections import defaultdict
+
+# Vendor/extension suffixes on GL enum names. Used only to decide which
+# spelling of an aliased value gets declared first.
+I32_MIN = -0x80000000
+I32_MAX = 0x7FFFFFFF
+U32_MAX = 0xFFFFFFFF
+
+
+def enum_literal_value(literal: str):
+    """Numeric value of a gl.xml enum literal, or None if it will not parse.
+
+    Values are a mix of 0x-prefixed hex and plain decimal, so base 0 is the
+    right reading; the hex fallback is only there for anything the registry
+    writes without a prefix.
+    """
+    try:
+        return int(literal, 0)
+    except ValueError:
+        pass
+    try:
+        return int(literal, 16)
+    except ValueError:
+        return None
+
+
+VENDOR_SUFFIX = re.compile(
+    r'_(ARB|EXT|KHR|OES|NV|NVX|AMD|ATI|APPLE|IMG|INTEL|MESA|QCOM|ARM|VIV|FJ|'
+    r'DMP|ANGLE|OVR|SGI|SGIS|SGIX|SUN|SUNX|IBM|HP|3DFX|PGI|REND|S3|INGR|'
+    r'GREMEDY|WIN|SGIV|ANDROID)$')
 
 
 VERSION_TEMPLATE = None
@@ -732,9 +762,6 @@ def generate_enum(enum: tuple, usages: dict, deprecated_symbols: set):
         return
 
     snake_name = enum_create_name(name)
-    yield f'''
-// {name}
-enum class {snake_name} : u32 {{'''
 
     # Remove duplicates, they happen?
     unique_values = set()
@@ -744,18 +771,51 @@ enum class {snake_name} : u32 {{'''
 
     unique_values = [ x for x in unique_values if x not in deprecated_symbols]
 
-    overflow_values = []
+    # Emit the registry's numeric value rather than the GL_* macro, so the
+    # enum is the same in every TU instead of varying with whichever GL
+    # headers happen to be included first. A name carrying two different
+    # values in gl.xml cannot be resolved this way, so it is dropped.
+    literals = defaultdict(set)
+    for n, _, v in enum[1]:
+        literals[n].add(v)
+    ambiguous = { n for n, vs in literals.items() if len(vs) != 1 }
+    unique_values = [ x for x in unique_values if x not in ambiguous ]
+
+    # Without the #ifdefs every vendor spelling of a value is now present at
+    # once (GL_HALF_FLOAT, _ARB, _NV, _APPLE all being 0x140B). magic_enum
+    # reports whichever comes first, so order the unsuffixed name first and
+    # keep enum_name() printing GL_HALF_FLOAT rather than GL_HALF_FLOAT_APPLE.
+    unique_values.sort(key=lambda n: (1 if VENDOR_SUFFIX.search(n) else 0, n))
+
+    # A handful of groups (TransformFeedbackTokenNV) are negative throughout,
+    # which u32 cannot hold. Pick the underlying type from the values rather
+    # than assuming unsigned. This only became visible once the #ifdefs went:
+    # before, these enumerators were simply never compiled in.
+    numeric = {}
     for e in unique_values:
-        real_value = [ int(value, base=16) for name, _, value in enum[1] if name == e ]
-        if len(real_value) != 1:
-            continue
-        real_value = real_value[0]
-        if real_value > 0xFFFFFFFF:
-            overflow_values.append(e)
-    [ unique_values.remove(x) for x in overflow_values ]
+        v = enum_literal_value(next(iter(literals[e])))
+        if v is not None and I32_MIN <= v <= U32_MAX:
+            numeric[e] = v
+
+    overflow_values = [ x for x in unique_values if x not in numeric ]
+    unique_values = [ x for x in unique_values if x in numeric ]
+
+    signed = any(v < 0 for v in numeric.values())
+    underlying = 'i32' if signed else 'u32'
+
+    if signed:
+        # Nothing in the registry needs both a negative and a value above
+        # INT32_MAX, but if that ever changes the wide ones have to go.
+        too_wide = [ x for x in unique_values if numeric[x] > I32_MAX ]
+        overflow_values += too_wide
+        unique_values = [ x for x in unique_values if x not in too_wide ]
 
     if len(unique_values) == 0:
         return
+
+    yield f'''
+// {name}
+enum class {snake_name} : {underlying} {{'''
 
     for value in unique_values:
         snake_value = snakeify_underscores(value)
@@ -765,19 +825,20 @@ enum class {snake_name} : u32 {{'''
             snake_value = f'n{snake_value}'
         if snake_value in DENIED_NAMES:
             snake_value = f'{snake_value}_'
-        yield f'''#ifdef {value}
-    {snake_value} = {value},
-#endif'''
-    
+        yield f'''    {snake_value} = {next(iter(literals[value]))}, // {value}'''
+
     yield f'''}}; // enum class {snake_name}'''
 
     if meta[0] == 'bitmask':
-        yield f'C_FLAGS({snake_name}, u32);'
+        yield f'C_FLAGS({snake_name}, {underlying});'
 
     for value in overflow_values:
         snake_value = snakeify_underscores(value)
-        yield f'''#ifdef {value}
-constexpr auto {snake_name}_{snake_value} = {value};
-#endif'''
+        literal = next(iter(literals[value]))
+        parsed = enum_literal_value(literal)
+        # ull only makes sense for the huge positives (GL_TIMEOUT_IGNORED);
+        # a negative that landed here would be a signed constant.
+        suffix = 'ull' if parsed is not None and parsed > U32_MAX else ''
+        yield f'''constexpr auto {snake_name}_{snake_value} = {literal}{suffix}; // {value}'''
 
 

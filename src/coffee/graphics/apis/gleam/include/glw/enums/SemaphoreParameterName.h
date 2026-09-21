@@ -7,21 +7,11 @@ namespace gl::group {
 // SemaphoreParameterName
 enum class semaphore_parameter_name : u32
 {
-#ifdef GL_D3D12_FENCE_VALUE_EXT
-    d3d12_fence_value_ext = GL_D3D12_FENCE_VALUE_EXT,
-#endif
-#ifdef GL_SEMAPHORE_TYPE_BINARY_NV
-    semaphore_type_binary_nv = GL_SEMAPHORE_TYPE_BINARY_NV,
-#endif
-#ifdef GL_SEMAPHORE_TYPE_NV
-    semaphore_type_nv = GL_SEMAPHORE_TYPE_NV,
-#endif
-#ifdef GL_SEMAPHORE_TYPE_TIMELINE_NV
-    semaphore_type_timeline_nv = GL_SEMAPHORE_TYPE_TIMELINE_NV,
-#endif
-#ifdef GL_TIMELINE_SEMAPHORE_VALUE_NV
-    timeline_semaphore_value_nv = GL_TIMELINE_SEMAPHORE_VALUE_NV,
-#endif
+    d3d12_fence_value_ext       = 0x9595, // GL_D3D12_FENCE_VALUE_EXT
+    semaphore_type_binary_nv    = 0x95B4, // GL_SEMAPHORE_TYPE_BINARY_NV
+    semaphore_type_nv           = 0x95B3, // GL_SEMAPHORE_TYPE_NV
+    semaphore_type_timeline_nv  = 0x95B5, // GL_SEMAPHORE_TYPE_TIMELINE_NV
+    timeline_semaphore_value_nv = 0x9595, // GL_TIMELINE_SEMAPHORE_VALUE_NV
 }; // enum class semaphore_parameter_name
 
 } // namespace gl::group

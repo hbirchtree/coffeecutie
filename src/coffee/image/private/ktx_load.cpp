@@ -1,11 +1,11 @@
-#include <glw/texture_formats.h>
-
 #include <coffee/image/ktx_load.h>
+
+#include <glw/texture_formats.h>
+#include <glw/vk_formats.h>
+#include <peripherals/stl/range.h>
 
 #include <ktx.h>
 #include <ktxvulkan.h>
-
-#include <peripherals/stl/range.h>
 
 void ktxDeleter::operator()(ktxTexture* ptr)
 {
@@ -33,7 +33,7 @@ stl_types::result<texture_t, std::string> load_from(
         static_cast<gl::tex::vk_format_t>(ktxTexture_GetVkFormat(texture)));
 
     auto base_ptr = ktxTexture_GetData(texture);
-    for(auto i : stl_types::Range<>(texture->numLevels))
+    for(auto i : stl_types::range<>(texture->numLevels))
     {
         out.mips.emplace_back();
         texture_t::mipmap_t& mip = out.mips.back();

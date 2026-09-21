@@ -7,18 +7,10 @@ namespace gl::group {
 // SubroutineParameterName
 enum class subroutine_parameter_name : u32
 {
-#ifdef GL_COMPATIBLE_SUBROUTINES
-    compatible_subroutines = GL_COMPATIBLE_SUBROUTINES,
-#endif
-#ifdef GL_NUM_COMPATIBLE_SUBROUTINES
-    num_compatible_subroutines = GL_NUM_COMPATIBLE_SUBROUTINES,
-#endif
-#ifdef GL_UNIFORM_NAME_LENGTH
-    uniform_name_length = GL_UNIFORM_NAME_LENGTH,
-#endif
-#ifdef GL_UNIFORM_SIZE
-    uniform_size = GL_UNIFORM_SIZE,
-#endif
+    compatible_subroutines     = 0x8E4B, // GL_COMPATIBLE_SUBROUTINES
+    num_compatible_subroutines = 0x8E4A, // GL_NUM_COMPATIBLE_SUBROUTINES
+    uniform_name_length        = 0x8A39, // GL_UNIFORM_NAME_LENGTH
+    uniform_size               = 0x8A38, // GL_UNIFORM_SIZE
 }; // enum class subroutine_parameter_name
 
 } // namespace gl::group

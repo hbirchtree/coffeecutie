@@ -11,7 +11,6 @@
 
 #if defined(GLEAM_USE_CORE) || defined(GLEAM_USE_ES) || defined(GLEAM_DUMMY)
 #include <glw/texture_formats.h>
-#include <glw/texture_formats_desc.h>
 #include <peripherals/stl/range.h>
 #endif
 

@@ -7,18 +7,10 @@ namespace gl::group {
 // QueryObjectParameterName
 enum class query_object_parameter_name : u32
 {
-#ifdef GL_QUERY_RESULT
-    query_result = GL_QUERY_RESULT,
-#endif
-#ifdef GL_QUERY_RESULT_AVAILABLE
-    query_result_available = GL_QUERY_RESULT_AVAILABLE,
-#endif
-#ifdef GL_QUERY_RESULT_NO_WAIT
-    query_result_no_wait = GL_QUERY_RESULT_NO_WAIT,
-#endif
-#ifdef GL_QUERY_TARGET
-    query_target = GL_QUERY_TARGET,
-#endif
+    query_result           = 0x8866, // GL_QUERY_RESULT
+    query_result_available = 0x8867, // GL_QUERY_RESULT_AVAILABLE
+    query_result_no_wait   = 0x9194, // GL_QUERY_RESULT_NO_WAIT
+    query_target           = 0x82EA, // GL_QUERY_TARGET
 }; // enum class query_object_parameter_name
 
 } // namespace gl::group

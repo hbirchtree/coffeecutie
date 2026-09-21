@@ -7,18 +7,10 @@ namespace gl::group {
 // ClampColorModeARB
 enum class clamp_color_mode_arb : u32
 {
-#ifdef GL_FALSE
-    false_ = GL_FALSE,
-#endif
-#ifdef GL_FIXED_ONLY
-    fixed_only = GL_FIXED_ONLY,
-#endif
-#ifdef GL_FIXED_ONLY_ARB
-    fixed_only_arb = GL_FIXED_ONLY_ARB,
-#endif
-#ifdef GL_TRUE
-    true_ = GL_TRUE,
-#endif
+    false_         = 0,      // GL_FALSE
+    fixed_only     = 0x891D, // GL_FIXED_ONLY
+    true_          = 1,      // GL_TRUE
+    fixed_only_arb = 0x891D, // GL_FIXED_ONLY_ARB
 }; // enum class clamp_color_mode_arb
 
 } // namespace gl::group

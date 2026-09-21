@@ -7,12 +7,8 @@ namespace gl::group {
 // HistogramTarget
 enum class histogram_target : u32
 {
-#ifdef GL_HISTOGRAM
-    histogram = GL_HISTOGRAM,
-#endif
-#ifdef GL_PROXY_HISTOGRAM
-    proxy_histogram = GL_PROXY_HISTOGRAM,
-#endif
+    histogram       = 0x8024, // GL_HISTOGRAM
+    proxy_histogram = 0x8025, // GL_PROXY_HISTOGRAM
 }; // enum class histogram_target
 
 } // namespace gl::group

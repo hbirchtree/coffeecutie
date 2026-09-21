@@ -7,9 +7,7 @@ namespace gl::group {
 // VertexAttribLType
 enum class vertex_attrib_long : u32
 {
-#ifdef GL_DOUBLE
-    double_ = GL_DOUBLE,
-#endif
+    double_ = 0x140A, // GL_DOUBLE
 }; // enum class vertex_attrib_long
 
 } // namespace gl::group

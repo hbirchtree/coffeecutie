@@ -7,9 +7,7 @@ namespace gl::group {
 // EvalMapsModeNV
 enum class eval_maps_mode_nv : u32
 {
-#ifdef GL_FILL_NV
-    fill_nv = GL_FILL_NV,
-#endif
+    fill_nv = 0x1B02, // GL_FILL_NV
 }; // enum class eval_maps_mode_nv
 
 } // namespace gl::group

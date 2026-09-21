@@ -18,7 +18,6 @@
 #include <glw/extensions/OES_compressed_ETC1_RGB8_texture.h>
 
 #include <glw/texture_formats.h>
-#include <glw/texture_formats_desc.h>
 
 namespace gleam {
 

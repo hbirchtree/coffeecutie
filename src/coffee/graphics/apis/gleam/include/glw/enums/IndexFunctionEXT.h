@@ -7,30 +7,14 @@ namespace gl::group {
 // IndexFunctionEXT
 enum class index_function_ext : u32
 {
-#ifdef GL_ALWAYS
-    always = GL_ALWAYS,
-#endif
-#ifdef GL_EQUAL
-    equal = GL_EQUAL,
-#endif
-#ifdef GL_GEQUAL
-    gequal = GL_GEQUAL,
-#endif
-#ifdef GL_GREATER
-    greater = GL_GREATER,
-#endif
-#ifdef GL_LEQUAL
-    lequal = GL_LEQUAL,
-#endif
-#ifdef GL_LESS
-    less = GL_LESS,
-#endif
-#ifdef GL_NEVER
-    never = GL_NEVER,
-#endif
-#ifdef GL_NOTEQUAL
-    notequal = GL_NOTEQUAL,
-#endif
+    always   = 0x0207, // GL_ALWAYS
+    equal    = 0x0202, // GL_EQUAL
+    gequal   = 0x0206, // GL_GEQUAL
+    greater  = 0x0204, // GL_GREATER
+    lequal   = 0x0203, // GL_LEQUAL
+    less     = 0x0201, // GL_LESS
+    never    = 0x0200, // GL_NEVER
+    notequal = 0x0205, // GL_NOTEQUAL
 }; // enum class index_function_ext
 
 } // namespace gl::group

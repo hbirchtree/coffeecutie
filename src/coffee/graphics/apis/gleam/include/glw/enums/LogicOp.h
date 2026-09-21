@@ -7,54 +7,22 @@ namespace gl::group {
 // LogicOp
 enum class logic_op : u32
 {
-#ifdef GL_AND
-    and_ = GL_AND,
-#endif
-#ifdef GL_AND_INVERTED
-    and_inverted = GL_AND_INVERTED,
-#endif
-#ifdef GL_AND_REVERSE
-    and_reverse = GL_AND_REVERSE,
-#endif
-#ifdef GL_CLEAR
-    clear = GL_CLEAR,
-#endif
-#ifdef GL_COPY
-    copy = GL_COPY,
-#endif
-#ifdef GL_COPY_INVERTED
-    copy_inverted = GL_COPY_INVERTED,
-#endif
-#ifdef GL_EQUIV
-    equiv = GL_EQUIV,
-#endif
-#ifdef GL_INVERT
-    invert = GL_INVERT,
-#endif
-#ifdef GL_NAND
-    nand = GL_NAND,
-#endif
-#ifdef GL_NOOP
-    noop = GL_NOOP,
-#endif
-#ifdef GL_NOR
-    nor = GL_NOR,
-#endif
-#ifdef GL_OR
-    or_ = GL_OR,
-#endif
-#ifdef GL_OR_INVERTED
-    or_inverted = GL_OR_INVERTED,
-#endif
-#ifdef GL_OR_REVERSE
-    or_reverse = GL_OR_REVERSE,
-#endif
-#ifdef GL_SET
-    set = GL_SET,
-#endif
-#ifdef GL_XOR
-    xor_ = GL_XOR,
-#endif
+    and_          = 0x1501, // GL_AND
+    and_inverted  = 0x1504, // GL_AND_INVERTED
+    and_reverse   = 0x1502, // GL_AND_REVERSE
+    clear         = 0x1500, // GL_CLEAR
+    copy          = 0x1503, // GL_COPY
+    copy_inverted = 0x150C, // GL_COPY_INVERTED
+    equiv         = 0x1509, // GL_EQUIV
+    invert        = 0x150A, // GL_INVERT
+    nand          = 0x150E, // GL_NAND
+    noop          = 0x1505, // GL_NOOP
+    nor           = 0x1508, // GL_NOR
+    or_           = 0x1507, // GL_OR
+    or_inverted   = 0x150D, // GL_OR_INVERTED
+    or_reverse    = 0x150B, // GL_OR_REVERSE
+    set           = 0x150F, // GL_SET
+    xor_          = 0x1506, // GL_XOR
 }; // enum class logic_op
 
 } // namespace gl::group

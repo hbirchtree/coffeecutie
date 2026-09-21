@@ -7,18 +7,10 @@ namespace gl::group {
 // SyncParameterName
 enum class sync_parameter_name : u32
 {
-#ifdef GL_OBJECT_TYPE
-    object_type = GL_OBJECT_TYPE,
-#endif
-#ifdef GL_SYNC_CONDITION
-    sync_condition = GL_SYNC_CONDITION,
-#endif
-#ifdef GL_SYNC_FLAGS
-    sync_flags = GL_SYNC_FLAGS,
-#endif
-#ifdef GL_SYNC_STATUS
-    sync_status = GL_SYNC_STATUS,
-#endif
+    object_type    = 0x9112, // GL_OBJECT_TYPE
+    sync_condition = 0x9113, // GL_SYNC_CONDITION
+    sync_flags     = 0x9115, // GL_SYNC_FLAGS
+    sync_status    = 0x9114, // GL_SYNC_STATUS
 }; // enum class sync_parameter_name
 
 } // namespace gl::group

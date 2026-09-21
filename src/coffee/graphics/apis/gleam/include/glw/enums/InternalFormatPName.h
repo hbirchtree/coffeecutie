@@ -7,227 +7,87 @@ namespace gl::group {
 // InternalFormatPName
 enum class internal_format_prop : u32
 {
-#ifdef GL_AUTO_GENERATE_MIPMAP
-    auto_generate_mipmap = GL_AUTO_GENERATE_MIPMAP,
-#endif
-#ifdef GL_CLEAR_BUFFER
-    clear_buffer = GL_CLEAR_BUFFER,
-#endif
-#ifdef GL_CLEAR_TEXTURE
-    clear_texture = GL_CLEAR_TEXTURE,
-#endif
-#ifdef GL_COLOR_COMPONENTS
-    color_components = GL_COLOR_COMPONENTS,
-#endif
-#ifdef GL_COLOR_ENCODING
-    color_encoding = GL_COLOR_ENCODING,
-#endif
-#ifdef GL_COLOR_RENDERABLE
-    color_renderable = GL_COLOR_RENDERABLE,
-#endif
-#ifdef GL_COMPUTE_TEXTURE
-    compute_texture = GL_COMPUTE_TEXTURE,
-#endif
-#ifdef GL_DEPTH_RENDERABLE
-    depth_renderable = GL_DEPTH_RENDERABLE,
-#endif
-#ifdef GL_FILTER
-    filter = GL_FILTER,
-#endif
-#ifdef GL_FRAGMENT_TEXTURE
-    fragment_texture = GL_FRAGMENT_TEXTURE,
-#endif
-#ifdef GL_FRAMEBUFFER_BLEND
-    framebuffer_blend = GL_FRAMEBUFFER_BLEND,
-#endif
-#ifdef GL_FRAMEBUFFER_RENDERABLE
-    framebuffer_renderable = GL_FRAMEBUFFER_RENDERABLE,
-#endif
-#ifdef GL_FRAMEBUFFER_RENDERABLE_LAYERED
-    framebuffer_renderable_layered = GL_FRAMEBUFFER_RENDERABLE_LAYERED,
-#endif
-#ifdef GL_GENERATE_MIPMAP
-    generate_mipmap = GL_GENERATE_MIPMAP,
-#endif
-#ifdef GL_GEOMETRY_TEXTURE
-    geometry_texture = GL_GEOMETRY_TEXTURE,
-#endif
-#ifdef GL_GET_TEXTURE_IMAGE_FORMAT
-    get_texture_image_format = GL_GET_TEXTURE_IMAGE_FORMAT,
-#endif
-#ifdef GL_GET_TEXTURE_IMAGE_TYPE
-    get_texture_image_type = GL_GET_TEXTURE_IMAGE_TYPE,
-#endif
-#ifdef GL_IMAGE_COMPATIBILITY_CLASS
-    image_compatibility_class = GL_IMAGE_COMPATIBILITY_CLASS,
-#endif
-#ifdef GL_IMAGE_FORMAT_COMPATIBILITY_TYPE
-    image_format_compatibility_type = GL_IMAGE_FORMAT_COMPATIBILITY_TYPE,
-#endif
-#ifdef GL_IMAGE_PIXEL_FORMAT
-    image_pixel_format = GL_IMAGE_PIXEL_FORMAT,
-#endif
-#ifdef GL_IMAGE_PIXEL_TYPE
-    image_pixel_type = GL_IMAGE_PIXEL_TYPE,
-#endif
-#ifdef GL_IMAGE_TEXEL_SIZE
-    image_texel_size = GL_IMAGE_TEXEL_SIZE,
-#endif
-#ifdef GL_INTERNALFORMAT_ALPHA_SIZE
-    internalformat_alpha_size = GL_INTERNALFORMAT_ALPHA_SIZE,
-#endif
-#ifdef GL_INTERNALFORMAT_ALPHA_TYPE
-    internalformat_alpha_type = GL_INTERNALFORMAT_ALPHA_TYPE,
-#endif
-#ifdef GL_INTERNALFORMAT_BLUE_SIZE
-    internalformat_blue_size = GL_INTERNALFORMAT_BLUE_SIZE,
-#endif
-#ifdef GL_INTERNALFORMAT_BLUE_TYPE
-    internalformat_blue_type = GL_INTERNALFORMAT_BLUE_TYPE,
-#endif
-#ifdef GL_INTERNALFORMAT_DEPTH_SIZE
-    internalformat_depth_size = GL_INTERNALFORMAT_DEPTH_SIZE,
-#endif
-#ifdef GL_INTERNALFORMAT_DEPTH_TYPE
-    internalformat_depth_type = GL_INTERNALFORMAT_DEPTH_TYPE,
-#endif
-#ifdef GL_INTERNALFORMAT_GREEN_SIZE
-    internalformat_green_size = GL_INTERNALFORMAT_GREEN_SIZE,
-#endif
-#ifdef GL_INTERNALFORMAT_GREEN_TYPE
-    internalformat_green_type = GL_INTERNALFORMAT_GREEN_TYPE,
-#endif
-#ifdef GL_INTERNALFORMAT_PREFERRED
-    internalformat_preferred = GL_INTERNALFORMAT_PREFERRED,
-#endif
-#ifdef GL_INTERNALFORMAT_RED_SIZE
-    internalformat_red_size = GL_INTERNALFORMAT_RED_SIZE,
-#endif
-#ifdef GL_INTERNALFORMAT_RED_TYPE
-    internalformat_red_type = GL_INTERNALFORMAT_RED_TYPE,
-#endif
-#ifdef GL_INTERNALFORMAT_SHARED_SIZE
-    internalformat_shared_size = GL_INTERNALFORMAT_SHARED_SIZE,
-#endif
-#ifdef GL_INTERNALFORMAT_STENCIL_SIZE
-    internalformat_stencil_size = GL_INTERNALFORMAT_STENCIL_SIZE,
-#endif
-#ifdef GL_INTERNALFORMAT_STENCIL_TYPE
-    internalformat_stencil_type = GL_INTERNALFORMAT_STENCIL_TYPE,
-#endif
-#ifdef GL_INTERNALFORMAT_SUPPORTED
-    internalformat_supported = GL_INTERNALFORMAT_SUPPORTED,
-#endif
-#ifdef GL_MAX_DEPTH
-    max_depth = GL_MAX_DEPTH,
-#endif
-#ifdef GL_MAX_HEIGHT
-    max_height = GL_MAX_HEIGHT,
-#endif
-#ifdef GL_MAX_LAYERS
-    max_layers = GL_MAX_LAYERS,
-#endif
-#ifdef GL_MAX_WIDTH
-    max_width = GL_MAX_WIDTH,
-#endif
-#ifdef GL_MIPMAP
-    mipmap = GL_MIPMAP,
-#endif
-#ifdef GL_NUM_SAMPLE_COUNTS
-    num_sample_counts = GL_NUM_SAMPLE_COUNTS,
-#endif
-#ifdef GL_NUM_SURFACE_COMPRESSION_FIXED_RATES_EXT
-    num_surface_compression_fixed_rates_ext =
-        GL_NUM_SURFACE_COMPRESSION_FIXED_RATES_EXT,
-#endif
-#ifdef GL_READ_PIXELS
-    read_pixels = GL_READ_PIXELS,
-#endif
-#ifdef GL_READ_PIXELS_FORMAT
-    read_pixels_format = GL_READ_PIXELS_FORMAT,
-#endif
-#ifdef GL_READ_PIXELS_TYPE
-    read_pixels_type = GL_READ_PIXELS_TYPE,
-#endif
-#ifdef GL_SAMPLES
-    samples = GL_SAMPLES,
-#endif
-#ifdef GL_SHADER_IMAGE_ATOMIC
-    shader_image_atomic = GL_SHADER_IMAGE_ATOMIC,
-#endif
-#ifdef GL_SHADER_IMAGE_LOAD
-    shader_image_load = GL_SHADER_IMAGE_LOAD,
-#endif
-#ifdef GL_SHADER_IMAGE_STORE
-    shader_image_store = GL_SHADER_IMAGE_STORE,
-#endif
-#ifdef GL_SIMULTANEOUS_TEXTURE_AND_DEPTH_TEST
+    auto_generate_mipmap   = 0x8295, // GL_AUTO_GENERATE_MIPMAP
+    clear_buffer           = 0x82B4, // GL_CLEAR_BUFFER
+    clear_texture          = 0x9365, // GL_CLEAR_TEXTURE
+    color_components       = 0x8283, // GL_COLOR_COMPONENTS
+    color_encoding         = 0x8296, // GL_COLOR_ENCODING
+    color_renderable       = 0x8286, // GL_COLOR_RENDERABLE
+    compute_texture        = 0x82A0, // GL_COMPUTE_TEXTURE
+    depth_renderable       = 0x8287, // GL_DEPTH_RENDERABLE
+    filter                 = 0x829A, // GL_FILTER
+    fragment_texture       = 0x829F, // GL_FRAGMENT_TEXTURE
+    framebuffer_blend      = 0x828B, // GL_FRAMEBUFFER_BLEND
+    framebuffer_renderable = 0x8289, // GL_FRAMEBUFFER_RENDERABLE
+    framebuffer_renderable_layered =
+        0x828A,                         // GL_FRAMEBUFFER_RENDERABLE_LAYERED
+    generate_mipmap           = 0x8191, // GL_GENERATE_MIPMAP
+    geometry_texture          = 0x829E, // GL_GEOMETRY_TEXTURE
+    get_texture_image_format  = 0x8291, // GL_GET_TEXTURE_IMAGE_FORMAT
+    get_texture_image_type    = 0x8292, // GL_GET_TEXTURE_IMAGE_TYPE
+    image_compatibility_class = 0x82A8, // GL_IMAGE_COMPATIBILITY_CLASS
+    image_format_compatibility_type =
+        0x90C7,                           // GL_IMAGE_FORMAT_COMPATIBILITY_TYPE
+    image_pixel_format          = 0x82A9, // GL_IMAGE_PIXEL_FORMAT
+    image_pixel_type            = 0x82AA, // GL_IMAGE_PIXEL_TYPE
+    image_texel_size            = 0x82A7, // GL_IMAGE_TEXEL_SIZE
+    internalformat_alpha_size   = 0x8274, // GL_INTERNALFORMAT_ALPHA_SIZE
+    internalformat_alpha_type   = 0x827B, // GL_INTERNALFORMAT_ALPHA_TYPE
+    internalformat_blue_size    = 0x8273, // GL_INTERNALFORMAT_BLUE_SIZE
+    internalformat_blue_type    = 0x827A, // GL_INTERNALFORMAT_BLUE_TYPE
+    internalformat_depth_size   = 0x8275, // GL_INTERNALFORMAT_DEPTH_SIZE
+    internalformat_depth_type   = 0x827C, // GL_INTERNALFORMAT_DEPTH_TYPE
+    internalformat_green_size   = 0x8272, // GL_INTERNALFORMAT_GREEN_SIZE
+    internalformat_green_type   = 0x8279, // GL_INTERNALFORMAT_GREEN_TYPE
+    internalformat_preferred    = 0x8270, // GL_INTERNALFORMAT_PREFERRED
+    internalformat_red_size     = 0x8271, // GL_INTERNALFORMAT_RED_SIZE
+    internalformat_red_type     = 0x8278, // GL_INTERNALFORMAT_RED_TYPE
+    internalformat_shared_size  = 0x8277, // GL_INTERNALFORMAT_SHARED_SIZE
+    internalformat_stencil_size = 0x8276, // GL_INTERNALFORMAT_STENCIL_SIZE
+    internalformat_stencil_type = 0x827D, // GL_INTERNALFORMAT_STENCIL_TYPE
+    internalformat_supported    = 0x826F, // GL_INTERNALFORMAT_SUPPORTED
+    max_depth                   = 0x8280, // GL_MAX_DEPTH
+    max_height                  = 0x827F, // GL_MAX_HEIGHT
+    max_layers                  = 0x8281, // GL_MAX_LAYERS
+    max_width                   = 0x827E, // GL_MAX_WIDTH
+    mipmap                      = 0x8293, // GL_MIPMAP
+    num_sample_counts           = 0x9380, // GL_NUM_SAMPLE_COUNTS
+    read_pixels                 = 0x828C, // GL_READ_PIXELS
+    read_pixels_format          = 0x828D, // GL_READ_PIXELS_FORMAT
+    read_pixels_type            = 0x828E, // GL_READ_PIXELS_TYPE
+    samples                     = 0x80A9, // GL_SAMPLES
+    shader_image_atomic         = 0x82A6, // GL_SHADER_IMAGE_ATOMIC
+    shader_image_load           = 0x82A4, // GL_SHADER_IMAGE_LOAD
+    shader_image_store          = 0x82A5, // GL_SHADER_IMAGE_STORE
     simultaneous_texture_and_depth_test =
-        GL_SIMULTANEOUS_TEXTURE_AND_DEPTH_TEST,
-#endif
-#ifdef GL_SIMULTANEOUS_TEXTURE_AND_DEPTH_WRITE
+        0x82AC, // GL_SIMULTANEOUS_TEXTURE_AND_DEPTH_TEST
     simultaneous_texture_and_depth_write =
-        GL_SIMULTANEOUS_TEXTURE_AND_DEPTH_WRITE,
-#endif
-#ifdef GL_SIMULTANEOUS_TEXTURE_AND_STENCIL_TEST
+        0x82AE, // GL_SIMULTANEOUS_TEXTURE_AND_DEPTH_WRITE
     simultaneous_texture_and_stencil_test =
-        GL_SIMULTANEOUS_TEXTURE_AND_STENCIL_TEST,
-#endif
-#ifdef GL_SIMULTANEOUS_TEXTURE_AND_STENCIL_WRITE
+        0x82AD, // GL_SIMULTANEOUS_TEXTURE_AND_STENCIL_TEST
     simultaneous_texture_and_stencil_write =
-        GL_SIMULTANEOUS_TEXTURE_AND_STENCIL_WRITE,
-#endif
-#ifdef GL_SRGB_READ
-    srgb_read = GL_SRGB_READ,
-#endif
-#ifdef GL_SRGB_WRITE
-    srgb_write = GL_SRGB_WRITE,
-#endif
-#ifdef GL_STENCIL_RENDERABLE
-    stencil_renderable = GL_STENCIL_RENDERABLE,
-#endif
-#ifdef GL_TESS_CONTROL_TEXTURE
-    tess_control_texture = GL_TESS_CONTROL_TEXTURE,
-#endif
-#ifdef GL_TESS_EVALUATION_TEXTURE
-    tess_evaluation_texture = GL_TESS_EVALUATION_TEXTURE,
-#endif
-#ifdef GL_TEXTURE_COMPRESSED
-    texture_compressed = GL_TEXTURE_COMPRESSED,
-#endif
-#ifdef GL_TEXTURE_COMPRESSED_BLOCK_HEIGHT
-    texture_compressed_block_height = GL_TEXTURE_COMPRESSED_BLOCK_HEIGHT,
-#endif
-#ifdef GL_TEXTURE_COMPRESSED_BLOCK_SIZE
-    texture_compressed_block_size = GL_TEXTURE_COMPRESSED_BLOCK_SIZE,
-#endif
-#ifdef GL_TEXTURE_COMPRESSED_BLOCK_WIDTH
-    texture_compressed_block_width = GL_TEXTURE_COMPRESSED_BLOCK_WIDTH,
-#endif
-#ifdef GL_TEXTURE_GATHER
-    texture_gather = GL_TEXTURE_GATHER,
-#endif
-#ifdef GL_TEXTURE_GATHER_SHADOW
-    texture_gather_shadow = GL_TEXTURE_GATHER_SHADOW,
-#endif
-#ifdef GL_TEXTURE_IMAGE_FORMAT
-    texture_image_format = GL_TEXTURE_IMAGE_FORMAT,
-#endif
-#ifdef GL_TEXTURE_IMAGE_TYPE
-    texture_image_type = GL_TEXTURE_IMAGE_TYPE,
-#endif
-#ifdef GL_TEXTURE_SHADOW
-    texture_shadow = GL_TEXTURE_SHADOW,
-#endif
-#ifdef GL_TEXTURE_VIEW
-    texture_view = GL_TEXTURE_VIEW,
-#endif
-#ifdef GL_VERTEX_TEXTURE
-    vertex_texture = GL_VERTEX_TEXTURE,
-#endif
-#ifdef GL_VIEW_COMPATIBILITY_CLASS
-    view_compatibility_class = GL_VIEW_COMPATIBILITY_CLASS,
-#endif
+        0x82AF, // GL_SIMULTANEOUS_TEXTURE_AND_STENCIL_WRITE
+    srgb_read               = 0x8297, // GL_SRGB_READ
+    srgb_write              = 0x8298, // GL_SRGB_WRITE
+    stencil_renderable      = 0x8288, // GL_STENCIL_RENDERABLE
+    tess_control_texture    = 0x829C, // GL_TESS_CONTROL_TEXTURE
+    tess_evaluation_texture = 0x829D, // GL_TESS_EVALUATION_TEXTURE
+    texture_compressed      = 0x86A1, // GL_TEXTURE_COMPRESSED
+    texture_compressed_block_height =
+        0x82B2, // GL_TEXTURE_COMPRESSED_BLOCK_HEIGHT
+    texture_compressed_block_size = 0x82B3, // GL_TEXTURE_COMPRESSED_BLOCK_SIZE
+    texture_compressed_block_width =
+        0x82B1,                        // GL_TEXTURE_COMPRESSED_BLOCK_WIDTH
+    texture_gather           = 0x82A2, // GL_TEXTURE_GATHER
+    texture_gather_shadow    = 0x82A3, // GL_TEXTURE_GATHER_SHADOW
+    texture_image_format     = 0x828F, // GL_TEXTURE_IMAGE_FORMAT
+    texture_image_type       = 0x8290, // GL_TEXTURE_IMAGE_TYPE
+    texture_shadow           = 0x82A1, // GL_TEXTURE_SHADOW
+    texture_view             = 0x82B5, // GL_TEXTURE_VIEW
+    vertex_texture           = 0x829B, // GL_VERTEX_TEXTURE
+    view_compatibility_class = 0x82B6, // GL_VIEW_COMPATIBILITY_CLASS
+    num_surface_compression_fixed_rates_ext =
+        0x8F6E, // GL_NUM_SURFACE_COMPRESSION_FIXED_RATES_EXT
 }; // enum class internal_format_prop
 
 } // namespace gl::group

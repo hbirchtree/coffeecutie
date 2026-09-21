@@ -7,12 +7,8 @@ namespace gl::group {
 // QueryCounterTarget
 enum class query_counter_target : u32
 {
-#ifdef GL_TIMESTAMP
-    timestamp = GL_TIMESTAMP,
-#endif
-#ifdef GL_TIMESTAMP_EXT
-    timestamp_ext = GL_TIMESTAMP_EXT,
-#endif
+    timestamp     = 0x8E28, // GL_TIMESTAMP
+    timestamp_ext = 0x8E28, // GL_TIMESTAMP_EXT
 }; // enum class query_counter_target
 
 } // namespace gl::group

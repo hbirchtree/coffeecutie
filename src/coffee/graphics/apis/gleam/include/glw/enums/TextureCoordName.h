@@ -7,21 +7,11 @@ namespace gl::group {
 // TextureCoordName
 enum class texture_coord_name : u32
 {
-#ifdef GL_Q
-    q = GL_Q,
-#endif
-#ifdef GL_R
-    r = GL_R,
-#endif
-#ifdef GL_S
-    s = GL_S,
-#endif
-#ifdef GL_T
-    t = GL_T,
-#endif
-#ifdef GL_TEXTURE_GEN_STR_OES
-    texture_gen_str_oes = GL_TEXTURE_GEN_STR_OES,
-#endif
+    q                   = 0x2003, // GL_Q
+    r                   = 0x2002, // GL_R
+    s                   = 0x2000, // GL_S
+    t                   = 0x2001, // GL_T
+    texture_gen_str_oes = 0x8D60, // GL_TEXTURE_GEN_STR_OES
 }; // enum class texture_coord_name
 
 } // namespace gl::group

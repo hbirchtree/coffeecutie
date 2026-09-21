@@ -7,81 +7,31 @@ namespace gl::group {
 // DebugType
 enum class debug_type : u32
 {
-#ifdef GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR
-    deprecated_behavior = GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR,
-#endif
-#ifdef GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB
-    deprecated_behavior_arb = GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB,
-#endif
-#ifdef GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_KHR
-    deprecated_behavior_khr = GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_KHR,
-#endif
-#ifdef GL_DEBUG_TYPE_ERROR
-    error = GL_DEBUG_TYPE_ERROR,
-#endif
-#ifdef GL_DEBUG_TYPE_ERROR_ARB
-    error_arb = GL_DEBUG_TYPE_ERROR_ARB,
-#endif
-#ifdef GL_DEBUG_TYPE_ERROR_KHR
-    error_khr = GL_DEBUG_TYPE_ERROR_KHR,
-#endif
-#ifdef GL_DEBUG_TYPE_MARKER
-    marker = GL_DEBUG_TYPE_MARKER,
-#endif
-#ifdef GL_DEBUG_TYPE_MARKER_KHR
-    marker_khr = GL_DEBUG_TYPE_MARKER_KHR,
-#endif
-#ifdef GL_DEBUG_TYPE_OTHER
-    other = GL_DEBUG_TYPE_OTHER,
-#endif
-#ifdef GL_DEBUG_TYPE_OTHER_ARB
-    other_arb = GL_DEBUG_TYPE_OTHER_ARB,
-#endif
-#ifdef GL_DEBUG_TYPE_OTHER_KHR
-    other_khr = GL_DEBUG_TYPE_OTHER_KHR,
-#endif
-#ifdef GL_DEBUG_TYPE_PERFORMANCE
-    performance = GL_DEBUG_TYPE_PERFORMANCE,
-#endif
-#ifdef GL_DEBUG_TYPE_PERFORMANCE_ARB
-    performance_arb = GL_DEBUG_TYPE_PERFORMANCE_ARB,
-#endif
-#ifdef GL_DEBUG_TYPE_PERFORMANCE_KHR
-    performance_khr = GL_DEBUG_TYPE_PERFORMANCE_KHR,
-#endif
-#ifdef GL_DEBUG_TYPE_POP_GROUP
-    pop_group = GL_DEBUG_TYPE_POP_GROUP,
-#endif
-#ifdef GL_DEBUG_TYPE_POP_GROUP_KHR
-    pop_group_khr = GL_DEBUG_TYPE_POP_GROUP_KHR,
-#endif
-#ifdef GL_DEBUG_TYPE_PORTABILITY
-    portability = GL_DEBUG_TYPE_PORTABILITY,
-#endif
-#ifdef GL_DEBUG_TYPE_PORTABILITY_ARB
-    portability_arb = GL_DEBUG_TYPE_PORTABILITY_ARB,
-#endif
-#ifdef GL_DEBUG_TYPE_PORTABILITY_KHR
-    portability_khr = GL_DEBUG_TYPE_PORTABILITY_KHR,
-#endif
-#ifdef GL_DEBUG_TYPE_PUSH_GROUP
-    push_group = GL_DEBUG_TYPE_PUSH_GROUP,
-#endif
-#ifdef GL_DEBUG_TYPE_PUSH_GROUP_KHR
-    push_group_khr = GL_DEBUG_TYPE_PUSH_GROUP_KHR,
-#endif
-#ifdef GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR
-    undefined_behavior = GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR,
-#endif
-#ifdef GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB
-    undefined_behavior_arb = GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB,
-#endif
-#ifdef GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_KHR
-    undefined_behavior_khr = GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_KHR,
-#endif
-#ifdef GL_DONT_CARE
-    dont_care = GL_DONT_CARE,
-#endif
+    deprecated_behavior     = 0x824D, // GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR
+    error                   = 0x824C, // GL_DEBUG_TYPE_ERROR
+    marker                  = 0x8268, // GL_DEBUG_TYPE_MARKER
+    other                   = 0x8251, // GL_DEBUG_TYPE_OTHER
+    performance             = 0x8250, // GL_DEBUG_TYPE_PERFORMANCE
+    pop_group               = 0x826A, // GL_DEBUG_TYPE_POP_GROUP
+    portability             = 0x824F, // GL_DEBUG_TYPE_PORTABILITY
+    push_group              = 0x8269, // GL_DEBUG_TYPE_PUSH_GROUP
+    undefined_behavior      = 0x824E, // GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR
+    dont_care               = 0x1100, // GL_DONT_CARE
+    deprecated_behavior_arb = 0x824D, // GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB
+    deprecated_behavior_khr = 0x824D, // GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_KHR
+    error_arb               = 0x824C, // GL_DEBUG_TYPE_ERROR_ARB
+    error_khr               = 0x824C, // GL_DEBUG_TYPE_ERROR_KHR
+    marker_khr              = 0x8268, // GL_DEBUG_TYPE_MARKER_KHR
+    other_arb               = 0x8251, // GL_DEBUG_TYPE_OTHER_ARB
+    other_khr               = 0x8251, // GL_DEBUG_TYPE_OTHER_KHR
+    performance_arb         = 0x8250, // GL_DEBUG_TYPE_PERFORMANCE_ARB
+    performance_khr         = 0x8250, // GL_DEBUG_TYPE_PERFORMANCE_KHR
+    pop_group_khr           = 0x826A, // GL_DEBUG_TYPE_POP_GROUP_KHR
+    portability_arb         = 0x824F, // GL_DEBUG_TYPE_PORTABILITY_ARB
+    portability_khr         = 0x824F, // GL_DEBUG_TYPE_PORTABILITY_KHR
+    push_group_khr          = 0x8269, // GL_DEBUG_TYPE_PUSH_GROUP_KHR
+    undefined_behavior_arb  = 0x824E, // GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB
+    undefined_behavior_khr  = 0x824E, // GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_KHR
 }; // enum class debug_type
 
 } // namespace gl::group

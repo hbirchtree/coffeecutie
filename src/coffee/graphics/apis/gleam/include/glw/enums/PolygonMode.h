@@ -7,15 +7,9 @@ namespace gl::group {
 // PolygonMode
 enum class polygon_mode : u32
 {
-#ifdef GL_FILL
-    fill = GL_FILL,
-#endif
-#ifdef GL_LINE
-    line = GL_LINE,
-#endif
-#ifdef GL_POINT
-    point = GL_POINT,
-#endif
+    fill  = 0x1B02, // GL_FILL
+    line  = 0x1B01, // GL_LINE
+    point = 0x1B00, // GL_POINT
 }; // enum class polygon_mode
 
 } // namespace gl::group

@@ -7,18 +7,10 @@ namespace gl::group {
 // SyncStatus
 enum class sync_status : u32
 {
-#ifdef GL_ALREADY_SIGNALED
-    already_signaled = GL_ALREADY_SIGNALED,
-#endif
-#ifdef GL_CONDITION_SATISFIED
-    condition_satisfied = GL_CONDITION_SATISFIED,
-#endif
-#ifdef GL_TIMEOUT_EXPIRED
-    timeout_expired = GL_TIMEOUT_EXPIRED,
-#endif
-#ifdef GL_WAIT_FAILED
-    wait_failed = GL_WAIT_FAILED,
-#endif
+    already_signaled    = 0x911A, // GL_ALREADY_SIGNALED
+    condition_satisfied = 0x911C, // GL_CONDITION_SATISFIED
+    timeout_expired     = 0x911B, // GL_TIMEOUT_EXPIRED
+    wait_failed         = 0x911D, // GL_WAIT_FAILED
 }; // enum class sync_status
 
 } // namespace gl::group

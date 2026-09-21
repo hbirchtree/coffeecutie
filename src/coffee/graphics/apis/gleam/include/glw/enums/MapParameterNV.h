@@ -7,9 +7,7 @@ namespace gl::group {
 // MapParameterNV
 enum class map_parameter_nv : u32
 {
-#ifdef GL_MAP_TESSELLATION_NV
-    map_tessellation_nv = GL_MAP_TESSELLATION_NV,
-#endif
+    map_tessellation_nv = 0x86C2, // GL_MAP_TESSELLATION_NV
 }; // enum class map_parameter_nv
 
 } // namespace gl::group

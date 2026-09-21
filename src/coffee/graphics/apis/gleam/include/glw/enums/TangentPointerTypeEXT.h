@@ -7,24 +7,12 @@ namespace gl::group {
 // TangentPointerTypeEXT
 enum class tangent_pointer_type_ext : u32
 {
-#ifdef GL_BYTE
-    byte_ = GL_BYTE,
-#endif
-#ifdef GL_DOUBLE
-    double_ = GL_DOUBLE,
-#endif
-#ifdef GL_DOUBLE_EXT
-    double_ext = GL_DOUBLE_EXT,
-#endif
-#ifdef GL_FLOAT
-    float_ = GL_FLOAT,
-#endif
-#ifdef GL_INT
-    int_ = GL_INT,
-#endif
-#ifdef GL_SHORT
-    short_ = GL_SHORT,
-#endif
+    byte_      = 0x1400, // GL_BYTE
+    double_    = 0x140A, // GL_DOUBLE
+    float_     = 0x1406, // GL_FLOAT
+    int_       = 0x1404, // GL_INT
+    short_     = 0x1402, // GL_SHORT
+    double_ext = 0x140A, // GL_DOUBLE_EXT
 }; // enum class tangent_pointer_type_ext
 
 } // namespace gl::group

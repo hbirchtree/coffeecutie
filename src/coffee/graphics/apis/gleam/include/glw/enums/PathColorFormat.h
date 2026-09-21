@@ -7,27 +7,13 @@ namespace gl::group {
 // PathColorFormat
 enum class path_color_format : u32
 {
-#ifdef GL_ALPHA
-    alpha = GL_ALPHA,
-#endif
-#ifdef GL_INTENSITY
-    intensity = GL_INTENSITY,
-#endif
-#ifdef GL_LUMINANCE
-    luminance = GL_LUMINANCE,
-#endif
-#ifdef GL_LUMINANCE_ALPHA
-    luminance_alpha = GL_LUMINANCE_ALPHA,
-#endif
-#ifdef GL_NONE
-    none = GL_NONE,
-#endif
-#ifdef GL_RGB
-    rgb = GL_RGB,
-#endif
-#ifdef GL_RGBA
-    rgba = GL_RGBA,
-#endif
+    alpha           = 0x1906, // GL_ALPHA
+    intensity       = 0x8049, // GL_INTENSITY
+    luminance       = 0x1909, // GL_LUMINANCE
+    luminance_alpha = 0x190A, // GL_LUMINANCE_ALPHA
+    none            = 0,      // GL_NONE
+    rgb             = 0x1907, // GL_RGB
+    rgba            = 0x1908, // GL_RGBA
 }; // enum class path_color_format
 
 } // namespace gl::group

@@ -20,5 +20,6 @@ if(TARGET GraphicsDefines)
   target_sources(Image PRIVATE private/ktx_load.cpp)
   target_link_libraries(Image PRIVATE
     GraphicsDefines KTX::ktx Threads::Threads zstd::libzstd_static
+    GLTextureFormats
   )
 endif()

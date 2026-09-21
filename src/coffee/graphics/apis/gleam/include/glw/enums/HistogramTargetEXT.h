@@ -7,18 +7,10 @@ namespace gl::group {
 // HistogramTargetEXT
 enum class histogram_target_ext : u32
 {
-#ifdef GL_HISTOGRAM
-    histogram = GL_HISTOGRAM,
-#endif
-#ifdef GL_HISTOGRAM_EXT
-    histogram_ext = GL_HISTOGRAM_EXT,
-#endif
-#ifdef GL_PROXY_HISTOGRAM
-    proxy_histogram = GL_PROXY_HISTOGRAM,
-#endif
-#ifdef GL_PROXY_HISTOGRAM_EXT
-    proxy_histogram_ext = GL_PROXY_HISTOGRAM_EXT,
-#endif
+    histogram           = 0x8024, // GL_HISTOGRAM
+    proxy_histogram     = 0x8025, // GL_PROXY_HISTOGRAM
+    histogram_ext       = 0x8024, // GL_HISTOGRAM_EXT
+    proxy_histogram_ext = 0x8025, // GL_PROXY_HISTOGRAM_EXT
 }; // enum class histogram_target_ext
 
 } // namespace gl::group

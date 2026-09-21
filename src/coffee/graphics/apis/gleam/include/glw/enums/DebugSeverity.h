@@ -7,51 +7,21 @@ namespace gl::group {
 // DebugSeverity
 enum class debug_severity : u32
 {
-#ifdef GL_DEBUG_SEVERITY_HIGH
-    high = GL_DEBUG_SEVERITY_HIGH,
-#endif
-#ifdef GL_DEBUG_SEVERITY_HIGH_AMD
-    high_amd = GL_DEBUG_SEVERITY_HIGH_AMD,
-#endif
-#ifdef GL_DEBUG_SEVERITY_HIGH_ARB
-    high_arb = GL_DEBUG_SEVERITY_HIGH_ARB,
-#endif
-#ifdef GL_DEBUG_SEVERITY_HIGH_KHR
-    high_khr = GL_DEBUG_SEVERITY_HIGH_KHR,
-#endif
-#ifdef GL_DEBUG_SEVERITY_LOW
-    low = GL_DEBUG_SEVERITY_LOW,
-#endif
-#ifdef GL_DEBUG_SEVERITY_LOW_AMD
-    low_amd = GL_DEBUG_SEVERITY_LOW_AMD,
-#endif
-#ifdef GL_DEBUG_SEVERITY_LOW_ARB
-    low_arb = GL_DEBUG_SEVERITY_LOW_ARB,
-#endif
-#ifdef GL_DEBUG_SEVERITY_LOW_KHR
-    low_khr = GL_DEBUG_SEVERITY_LOW_KHR,
-#endif
-#ifdef GL_DEBUG_SEVERITY_MEDIUM
-    medium = GL_DEBUG_SEVERITY_MEDIUM,
-#endif
-#ifdef GL_DEBUG_SEVERITY_MEDIUM_AMD
-    medium_amd = GL_DEBUG_SEVERITY_MEDIUM_AMD,
-#endif
-#ifdef GL_DEBUG_SEVERITY_MEDIUM_ARB
-    medium_arb = GL_DEBUG_SEVERITY_MEDIUM_ARB,
-#endif
-#ifdef GL_DEBUG_SEVERITY_MEDIUM_KHR
-    medium_khr = GL_DEBUG_SEVERITY_MEDIUM_KHR,
-#endif
-#ifdef GL_DEBUG_SEVERITY_NOTIFICATION
-    notification = GL_DEBUG_SEVERITY_NOTIFICATION,
-#endif
-#ifdef GL_DEBUG_SEVERITY_NOTIFICATION_KHR
-    notification_khr = GL_DEBUG_SEVERITY_NOTIFICATION_KHR,
-#endif
-#ifdef GL_DONT_CARE
-    dont_care = GL_DONT_CARE,
-#endif
+    high             = 0x9146, // GL_DEBUG_SEVERITY_HIGH
+    low              = 0x9148, // GL_DEBUG_SEVERITY_LOW
+    medium           = 0x9147, // GL_DEBUG_SEVERITY_MEDIUM
+    notification     = 0x826B, // GL_DEBUG_SEVERITY_NOTIFICATION
+    dont_care        = 0x1100, // GL_DONT_CARE
+    high_amd         = 0x9146, // GL_DEBUG_SEVERITY_HIGH_AMD
+    high_arb         = 0x9146, // GL_DEBUG_SEVERITY_HIGH_ARB
+    high_khr         = 0x9146, // GL_DEBUG_SEVERITY_HIGH_KHR
+    low_amd          = 0x9148, // GL_DEBUG_SEVERITY_LOW_AMD
+    low_arb          = 0x9148, // GL_DEBUG_SEVERITY_LOW_ARB
+    low_khr          = 0x9148, // GL_DEBUG_SEVERITY_LOW_KHR
+    medium_amd       = 0x9147, // GL_DEBUG_SEVERITY_MEDIUM_AMD
+    medium_arb       = 0x9147, // GL_DEBUG_SEVERITY_MEDIUM_ARB
+    medium_khr       = 0x9147, // GL_DEBUG_SEVERITY_MEDIUM_KHR
+    notification_khr = 0x826B, // GL_DEBUG_SEVERITY_NOTIFICATION_KHR
 }; // enum class debug_severity
 
 } // namespace gl::group

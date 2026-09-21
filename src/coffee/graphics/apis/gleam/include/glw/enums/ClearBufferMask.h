@@ -7,21 +7,11 @@ namespace gl::group {
 // ClearBufferMask
 enum class clear_buffer_mask : u32
 {
-#ifdef GL_ACCUM_BUFFER_BIT
-    accum_buffer_bit = GL_ACCUM_BUFFER_BIT,
-#endif
-#ifdef GL_COLOR_BUFFER_BIT
-    color_buffer_bit = GL_COLOR_BUFFER_BIT,
-#endif
-#ifdef GL_COVERAGE_BUFFER_BIT_NV
-    coverage_buffer_bit_nv = GL_COVERAGE_BUFFER_BIT_NV,
-#endif
-#ifdef GL_DEPTH_BUFFER_BIT
-    depth_buffer_bit = GL_DEPTH_BUFFER_BIT,
-#endif
-#ifdef GL_STENCIL_BUFFER_BIT
-    stencil_buffer_bit = GL_STENCIL_BUFFER_BIT,
-#endif
+    accum_buffer_bit       = 0x00000200, // GL_ACCUM_BUFFER_BIT
+    color_buffer_bit       = 0x00004000, // GL_COLOR_BUFFER_BIT
+    depth_buffer_bit       = 0x00000100, // GL_DEPTH_BUFFER_BIT
+    stencil_buffer_bit     = 0x00000400, // GL_STENCIL_BUFFER_BIT
+    coverage_buffer_bit_nv = 0x00008000, // GL_COVERAGE_BUFFER_BIT_NV
 }; // enum class clear_buffer_mask
 C_FLAGS(clear_buffer_mask, u32);
 

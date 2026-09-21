@@ -7,54 +7,22 @@ namespace gl::group {
 // LightName
 enum class light_name : u32
 {
-#ifdef GL_FRAGMENT_LIGHT0_SGIX
-    fragment_light0_sgix = GL_FRAGMENT_LIGHT0_SGIX,
-#endif
-#ifdef GL_FRAGMENT_LIGHT1_SGIX
-    fragment_light1_sgix = GL_FRAGMENT_LIGHT1_SGIX,
-#endif
-#ifdef GL_FRAGMENT_LIGHT2_SGIX
-    fragment_light2_sgix = GL_FRAGMENT_LIGHT2_SGIX,
-#endif
-#ifdef GL_FRAGMENT_LIGHT3_SGIX
-    fragment_light3_sgix = GL_FRAGMENT_LIGHT3_SGIX,
-#endif
-#ifdef GL_FRAGMENT_LIGHT4_SGIX
-    fragment_light4_sgix = GL_FRAGMENT_LIGHT4_SGIX,
-#endif
-#ifdef GL_FRAGMENT_LIGHT5_SGIX
-    fragment_light5_sgix = GL_FRAGMENT_LIGHT5_SGIX,
-#endif
-#ifdef GL_FRAGMENT_LIGHT6_SGIX
-    fragment_light6_sgix = GL_FRAGMENT_LIGHT6_SGIX,
-#endif
-#ifdef GL_FRAGMENT_LIGHT7_SGIX
-    fragment_light7_sgix = GL_FRAGMENT_LIGHT7_SGIX,
-#endif
-#ifdef GL_LIGHT0
-    light0 = GL_LIGHT0,
-#endif
-#ifdef GL_LIGHT1
-    light1 = GL_LIGHT1,
-#endif
-#ifdef GL_LIGHT2
-    light2 = GL_LIGHT2,
-#endif
-#ifdef GL_LIGHT3
-    light3 = GL_LIGHT3,
-#endif
-#ifdef GL_LIGHT4
-    light4 = GL_LIGHT4,
-#endif
-#ifdef GL_LIGHT5
-    light5 = GL_LIGHT5,
-#endif
-#ifdef GL_LIGHT6
-    light6 = GL_LIGHT6,
-#endif
-#ifdef GL_LIGHT7
-    light7 = GL_LIGHT7,
-#endif
+    light0               = 0x4000, // GL_LIGHT0
+    light1               = 0x4001, // GL_LIGHT1
+    light2               = 0x4002, // GL_LIGHT2
+    light3               = 0x4003, // GL_LIGHT3
+    light4               = 0x4004, // GL_LIGHT4
+    light5               = 0x4005, // GL_LIGHT5
+    light6               = 0x4006, // GL_LIGHT6
+    light7               = 0x4007, // GL_LIGHT7
+    fragment_light0_sgix = 0x840C, // GL_FRAGMENT_LIGHT0_SGIX
+    fragment_light1_sgix = 0x840D, // GL_FRAGMENT_LIGHT1_SGIX
+    fragment_light2_sgix = 0x840E, // GL_FRAGMENT_LIGHT2_SGIX
+    fragment_light3_sgix = 0x840F, // GL_FRAGMENT_LIGHT3_SGIX
+    fragment_light4_sgix = 0x8410, // GL_FRAGMENT_LIGHT4_SGIX
+    fragment_light5_sgix = 0x8411, // GL_FRAGMENT_LIGHT5_SGIX
+    fragment_light6_sgix = 0x8412, // GL_FRAGMENT_LIGHT6_SGIX
+    fragment_light7_sgix = 0x8413, // GL_FRAGMENT_LIGHT7_SGIX
 }; // enum class light_name
 
 } // namespace gl::group

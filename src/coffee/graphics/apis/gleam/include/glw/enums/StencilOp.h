@@ -7,30 +7,14 @@ namespace gl::group {
 // StencilOp
 enum class stencil_op : u32
 {
-#ifdef GL_DECR
-    decr = GL_DECR,
-#endif
-#ifdef GL_DECR_WRAP
-    decr_wrap = GL_DECR_WRAP,
-#endif
-#ifdef GL_INCR
-    incr = GL_INCR,
-#endif
-#ifdef GL_INCR_WRAP
-    incr_wrap = GL_INCR_WRAP,
-#endif
-#ifdef GL_INVERT
-    invert = GL_INVERT,
-#endif
-#ifdef GL_KEEP
-    keep = GL_KEEP,
-#endif
-#ifdef GL_REPLACE
-    replace = GL_REPLACE,
-#endif
-#ifdef GL_ZERO
-    zero = GL_ZERO,
-#endif
+    decr      = 0x1E03, // GL_DECR
+    decr_wrap = 0x8508, // GL_DECR_WRAP
+    incr      = 0x1E02, // GL_INCR
+    incr_wrap = 0x8507, // GL_INCR_WRAP
+    invert    = 0x150A, // GL_INVERT
+    keep      = 0x1E00, // GL_KEEP
+    replace   = 0x1E01, // GL_REPLACE
+    zero      = 0,      // GL_ZERO
 }; // enum class stencil_op
 
 } // namespace gl::group

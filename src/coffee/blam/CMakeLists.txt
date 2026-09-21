@@ -8,7 +8,7 @@ set(BLAM_SOURCES
 set(BLAM_LIBS Core) # result/semantic/task_queue (got via Image transitively before)
 if(NOT (GAMECUBE OR WII))
   list(APPEND BLAM_SOURCES private/volta/blam_bitm.cpp)
-  list(APPEND BLAM_LIBS Image CoreZ)
+  list(APPEND BLAM_LIBS Image CoreZ GLTextureFormats)
 endif()
 
 coffee_library(

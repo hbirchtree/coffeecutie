@@ -7,15 +7,9 @@ namespace gl::group {
 // Buffer
 enum class buffer : u32
 {
-#ifdef GL_COLOR
-    color = GL_COLOR,
-#endif
-#ifdef GL_DEPTH
-    depth = GL_DEPTH,
-#endif
-#ifdef GL_STENCIL
-    stencil = GL_STENCIL,
-#endif
+    color   = 0x1800, // GL_COLOR
+    depth   = 0x1801, // GL_DEPTH
+    stencil = 0x1802, // GL_STENCIL
 }; // enum class buffer
 
 } // namespace gl::group

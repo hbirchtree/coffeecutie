@@ -10,7 +10,7 @@ option(BUILD_EGL_ANGLE "Use EGL_angle library" OFF)
 coffee_library(
   TARGET EGLComponent
   SOURCES private/egl_comp.cpp
-  LIBRARIES ComponentApp
+  LIBRARIES ComponentApp GLTextureFormats
   HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 

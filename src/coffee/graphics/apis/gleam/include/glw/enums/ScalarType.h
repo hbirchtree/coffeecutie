@@ -7,15 +7,9 @@ namespace gl::group {
 // ScalarType
 enum class scalar_type : u32
 {
-#ifdef GL_UNSIGNED_BYTE
-    unsigned_byte = GL_UNSIGNED_BYTE,
-#endif
-#ifdef GL_UNSIGNED_INT
-    unsigned_int = GL_UNSIGNED_INT,
-#endif
-#ifdef GL_UNSIGNED_SHORT
-    unsigned_short = GL_UNSIGNED_SHORT,
-#endif
+    unsigned_byte  = 0x1401, // GL_UNSIGNED_BYTE
+    unsigned_int   = 0x1405, // GL_UNSIGNED_INT
+    unsigned_short = 0x1403, // GL_UNSIGNED_SHORT
 }; // enum class scalar_type
 
 } // namespace gl::group

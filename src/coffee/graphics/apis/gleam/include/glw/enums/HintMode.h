@@ -7,15 +7,9 @@ namespace gl::group {
 // HintMode
 enum class hint_mode : u32
 {
-#ifdef GL_DONT_CARE
-    dont_care = GL_DONT_CARE,
-#endif
-#ifdef GL_FASTEST
-    fastest = GL_FASTEST,
-#endif
-#ifdef GL_NICEST
-    nicest = GL_NICEST,
-#endif
+    dont_care = 0x1100, // GL_DONT_CARE
+    fastest   = 0x1101, // GL_FASTEST
+    nicest    = 0x1102, // GL_NICEST
 }; // enum class hint_mode
 
 } // namespace gl::group

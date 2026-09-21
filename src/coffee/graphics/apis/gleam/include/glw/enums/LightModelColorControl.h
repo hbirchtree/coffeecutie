@@ -7,18 +7,10 @@ namespace gl::group {
 // LightModelColorControl
 enum class light_model_color_control : u32
 {
-#ifdef GL_SEPARATE_SPECULAR_COLOR
-    separate_specular_color = GL_SEPARATE_SPECULAR_COLOR,
-#endif
-#ifdef GL_SEPARATE_SPECULAR_COLOR_EXT
-    separate_specular_color_ext = GL_SEPARATE_SPECULAR_COLOR_EXT,
-#endif
-#ifdef GL_SINGLE_COLOR
-    single_color = GL_SINGLE_COLOR,
-#endif
-#ifdef GL_SINGLE_COLOR_EXT
-    single_color_ext = GL_SINGLE_COLOR_EXT,
-#endif
+    separate_specular_color     = 0x81FA, // GL_SEPARATE_SPECULAR_COLOR
+    single_color                = 0x81F9, // GL_SINGLE_COLOR
+    separate_specular_color_ext = 0x81FA, // GL_SEPARATE_SPECULAR_COLOR_EXT
+    single_color_ext            = 0x81F9, // GL_SINGLE_COLOR_EXT
 }; // enum class light_model_color_control
 
 } // namespace gl::group
