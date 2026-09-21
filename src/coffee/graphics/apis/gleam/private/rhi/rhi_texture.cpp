@@ -85,9 +85,10 @@ Coffee::Resource literals::detail::TextureUrl::with(
         Throw(undefined_behavior("compatible texture format not found"));
 }
 
-gl::tex::texture_format_t const& texture_t::format_description() const
+bool texture_t::requires_compressed_upload() const
 {
-    return gl::tex::format_of(m_format);
+    return gl::tex::format_of(m_format).is_compressed() &&
+        !requires_software_decode();
 }
 
 #if GLEAM_MAX_VERSION >= 0x420

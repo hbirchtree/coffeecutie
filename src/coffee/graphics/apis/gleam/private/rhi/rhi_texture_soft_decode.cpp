@@ -49,7 +49,7 @@ static semantic::Span<const char> aligned_blocks(
 }
 #endif
 
-bool texture_t::requires_software_decode()
+bool texture_t::requires_software_decode() const
 {
     using Comp = typing::pixels::comp_flags;
 
@@ -103,13 +103,13 @@ bool texture_t::requires_software_decode()
     return false;
 }
 
-bool texture_t::software_decode_is_passthrough()
+bool texture_t::software_decode_is_passthrough() const
 {
     return m_format.pixfmt == pix_fmt::RGB565 &&
            m_workarounds.tex.requires_aligned;
 }
 
-std::optional<PixDesc> texture_t::software_decode_format()
+std::optional<PixDesc> texture_t::software_decode_format() const
 {
     if(m_format.pixfmt == pix_fmt::BCn && requires_software_decode())
         return PixDesc(pix_fmt::RGBA8);

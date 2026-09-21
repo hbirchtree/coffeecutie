@@ -133,8 +133,7 @@ void texture_t::alloc(size_type const& size, bool create_storage)
     if(create_storage)
     {
         [[maybe_unused]] auto glsize = size.convert<i32>();
-        auto                  is_compressed =
-            format_description().is_compressed() && !requires_software_decode();
+        auto                  is_compressed = requires_compressed_upload();
         [[maybe_unused]] auto is_immutable =
             feval(m_flags, textures::property::immutable);
 

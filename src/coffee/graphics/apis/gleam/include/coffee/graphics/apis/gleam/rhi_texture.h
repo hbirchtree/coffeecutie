@@ -28,8 +28,6 @@
 #include <glw/extensions/KHR_texture_compression_astc_ldr.h>
 #include <glw/extensions/OES_compressed_ETC1_RGB8_texture.h>
 
-#include <glw/texture_format.h>
-
 #include <coffee/core/task_queue/task.h>
 #include <future>
 #include <peripherals/stl/enumerate.h>
@@ -103,9 +101,9 @@ struct texture_t : std::enable_shared_from_this<texture_t>
     inline auto sampler();
 
 #if defined(GLEAM_ENABLE_SOFTWARE_BCN) || defined(GLEAM_ENABLE_SOFTWARE_PVRTC)
-    bool                   requires_software_decode();
-    bool                   software_decode_is_passthrough();
-    std::optional<PixDesc> software_decode_format();
+    bool                   requires_software_decode() const;
+    bool                   software_decode_is_passthrough() const;
+    std::optional<PixDesc> software_decode_format() const;
 
     std::future<std::vector<char>> software_decode(
         semantic::Span<const char>&& data, size_3d<i32> size, i32 mipmap);
@@ -134,7 +132,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
             mipmap);
     }
 #else
-    constexpr bool requires_software_decode()
+    constexpr bool requires_software_decode() const
     {
         return false;
     }
@@ -156,7 +154,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
     }
 #endif
 
-    gl::tex::texture_format_t const& format_description() const;
+    bool requires_compressed_upload() const;
 
     inline void set_channel_swizzle(
         group::texture_parameter_name      channel,
@@ -474,8 +472,7 @@ struct texture_2d_t : texture_t
     {
         auto [ifmt1, type, layout] = convert::to<group::internal_format>(
             software_decode_format().value_or(m_format), m_features);
-        auto is_compressed =
-            format_description().is_compressed() && !requires_software_decode();
+        auto is_compressed = requires_compressed_upload();
 
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && is_compressed)
@@ -603,8 +600,7 @@ struct texture_cube_t : texture_t
     {
         auto [ifmt1, type, layout] = convert::to<group::internal_format>(
             software_decode_format().value_or(m_format), m_features);
-        auto is_compressed =
-            format_description().is_compressed() && !requires_software_decode();
+        auto is_compressed = requires_compressed_upload();
         cmd::bind_texture(group::texture_target::texture_cube_map, m_handle);
         for(auto const& [idx, face] :
             stl_types::enumerate<decltype(data)>(data))
@@ -733,8 +729,7 @@ struct texture_2da_t : texture_t
     {
         auto [ifmt1, type, layout] = convert::to<group::internal_format>(
             software_decode_format().value_or(m_format), m_features);
-        auto is_compressed =
-            format_description().is_compressed() && !requires_software_decode();
+        auto is_compressed = requires_compressed_upload();
 
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && is_compressed)
@@ -825,7 +820,7 @@ struct texture_3d_t : texture_t
     {
         auto [ifmt1, type, layout] = convert::to<group::internal_format>(
             software_decode_format().value_or(m_format), m_features);
-        auto is_compressed = format_description().is_compressed();
+        auto is_compressed = requires_compressed_upload();
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && is_compressed)
         {
@@ -877,8 +872,7 @@ struct texture_cube_array_t : texture_t
     {
         auto [ifmt1, type, layout] = convert::to<group::internal_format>(
             software_decode_format().value_or(m_format), m_features);
-        auto is_compressed =
-            format_description().is_compressed() && !requires_software_decode();
+        auto is_compressed = requires_compressed_upload();
         VectorT offset_mul = offset;
         offset_mul[2]      = offset_mul[2] * 6;
         for(auto const& face : data)
