@@ -188,15 +188,6 @@ i32 pose_demo_main()
                         std::ref(bitm_cache));
                 e.register_subsystem_inplace<ModelCache<halo_version>>(
                     std::ref(bitm_cache), std::ref(shader_cache), &gfx);
-                e.register_subsystem_inplace<DebugMarkers>().enabled =
-                    &e.subsystem_cast<RenderingParameters>().debug_markers;
-                e.register_subsystem_inplace<BSPCache<halo_version>>(
-                    std::ref(bitm_cache),
-                    std::ref(shader_cache),
-                    std::ref(sound_cache),
-                    e.service<comp_app::EventBus<SoundEvent>>());
-                auto& font_cache =
-                    e.register_subsystem_inplace<FontCache<halo_version>>(&gfx);
             }
 
             if(auto window = e.service<comp_app::WindowInfo>())
