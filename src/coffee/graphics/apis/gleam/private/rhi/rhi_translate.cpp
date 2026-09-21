@@ -8,7 +8,7 @@
 #include <tuple>
 
 #define MAGIC_ENUM_RANGE_MIN 0
-#define MAGIC_ENUM_RANGE_MAX 1024
+#define MAGIC_ENUM_RANGE_MAX 100
 #include <peripherals/stl/magic_enum.hpp>
 
 namespace gleam::convert {
