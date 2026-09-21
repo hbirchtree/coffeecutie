@@ -12,3 +12,11 @@ target_compile_definitions(
     GraphicsDefines PUBLIC -DGLEAM_USE_ES -DGLEAM_MAX_VERSION=0x0
                          -DGLEAM_MAX_VERSION_ES=0x320
 )
+
+coffee_library(
+  TARGET GLTextureFormats
+  SOURCES ../private/texture_formats.cpp
+  LIBRARIES Core
+  HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+              $<INSTALL_INTERFACE:include>
+)

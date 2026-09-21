@@ -4,6 +4,7 @@
 #include <malloc.h>
 #include <ogc/lwp_watchdog.h> // gettime / millisecs_to_ticks (GP-stall watchdog)
 
+#include <array>
 #include <cstdio>
 #include <cstring>
 
