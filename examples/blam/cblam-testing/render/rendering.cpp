@@ -25,8 +25,6 @@
 #include <coffee/graphics/apis/gleam/rhi_texture.h>
 #include <coffee/graphics/apis/gleam/rhi_urls.h>
 #include <coffee/image/ktx_load.h>
-#include <glw/texture_formats.h>
-#include <glw/texture_formats_desc.h>
 #include <magic_enum/magic_enum.hpp>
 #include <peripherals/concepts/graphics_api.h>
 #include <peripherals/constants.h>

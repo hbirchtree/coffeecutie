@@ -6,6 +6,17 @@
 #include <coffee/graphics/apis/gleam/rhi_urls.h>
 #include <platforms/file.h>
 
+#include <glw/extensions/ARB_texture_compression_bptc.h>
+#include <glw/extensions/ARB_texture_compression_rgtc.h>
+#include <glw/extensions/EXT_texture_compression_bptc.h>
+#include <glw/extensions/EXT_texture_compression_rgtc.h>
+#include <glw/extensions/EXT_texture_compression_s3tc.h>
+#include <glw/extensions/IMG_texture_compression_pvrtc.h>
+#include <glw/extensions/IMG_texture_compression_pvrtc2.h>
+#include <glw/extensions/KHR_texture_compression_astc_hdr.h>
+#include <glw/extensions/KHR_texture_compression_astc_ldr.h>
+#include <glw/extensions/OES_compressed_ETC1_RGB8_texture.h>
+
 #include <glw/texture_formats.h>
 #include <glw/texture_formats_desc.h>
 
