@@ -121,6 +121,7 @@ struct BlamResources : compo::SubsystemBase
                 model_pipeline_base.get(),
                 model_pipeline_chicago.get(),
                 model_pipeline_sotr.get(),
+                camo.get(),
                 chicago_pipeline.get(),
                 water_pipeline.get(),
                 wireframe_pipeline.get(),
