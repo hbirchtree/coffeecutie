@@ -5,7 +5,7 @@
 #include <coffee/core/libc_types.h>
 #include <peripherals/libc/signals.h>
 #include <peripherals/posix/process.h>
-#include <peripherals/stl/string/hex.h>
+#include <peripherals/stl/string/hexdump.h>
 #include <platforms/environment.h>
 #include <platforms/file.h>
 

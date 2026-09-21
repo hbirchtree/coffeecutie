@@ -3,7 +3,6 @@
 #include <peripherals/identify/compiler/function_inlining.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/semantic/chunk.h>
-#include <peripherals/stl/types.h>
 
 namespace semantic {
 

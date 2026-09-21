@@ -2,7 +2,6 @@
 
 #include <peripherals/identify/compiler/function_inlining.h>
 #include <peripherals/libc/types.h>
-#include <peripherals/stl/types.h>
 
 #include <algorithm>
 #include <list>

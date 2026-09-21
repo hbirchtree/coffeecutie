@@ -11,6 +11,7 @@
 
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
 #include <glm/gtx/matrix_transform_2d.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/enumerate.h>
 

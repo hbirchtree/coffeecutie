@@ -12,6 +12,7 @@
 #include <fmt_extensions/url_types.h>
 #include <nlohmann/json_fwd.hpp>
 #include <peripherals/stl/range.h>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/string/hex.h>
 #include <peripherals/stl/string/replace.h>
 #include <peripherals/stl/string_casting.h>

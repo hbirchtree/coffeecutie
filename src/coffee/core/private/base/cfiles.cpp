@@ -1,6 +1,7 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
 #include <peripherals/stl/math.h>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/string/hex.h>
 #include <peripherals/stl/string_casting.h>
 #include <platforms/environment.h>

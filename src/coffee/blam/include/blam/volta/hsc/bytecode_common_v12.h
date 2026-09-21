@@ -6,6 +6,7 @@
 #include <blam/volta/blam_structures.h>
 #include <blam/volta/blam_versions.h>
 
+#include <peripherals/stl/non_copy.h>
 #include <peripherals/stl/time_types.h>
 
 namespace blam::scn {

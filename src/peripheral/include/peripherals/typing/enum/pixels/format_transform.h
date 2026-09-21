@@ -3,7 +3,6 @@
 #include <peripherals/base.h>
 #include <peripherals/stl/standard_exceptions.h>
 
-#include <peripherals/stl/types.h>
 #include <peripherals/typing/enum/pixels/components.h>
 #include <peripherals/typing/enum/pixels/format.h>
 

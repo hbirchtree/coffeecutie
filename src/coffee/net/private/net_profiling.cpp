@@ -7,7 +7,7 @@
 #include <coffee/net/net_resource.h>
 #include <coffee/ssl/hmac.h>
 #include <peripherals/libc/signals.h>
-#include <peripherals/stl/string/hex.h>
+#include <peripherals/stl/string/hexdump.h>
 #include <peripherals/stl/string_ops.h>
 #include <platforms/environment.h>
 

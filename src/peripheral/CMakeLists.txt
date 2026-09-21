@@ -5,6 +5,7 @@ coffee_library(
   TARGET PeripheralLib
   SOURCES private/error_types.cpp private/build_info.cpp
           private/libc_functions.cpp private/pimpl_state.cpp
+          private/string_encoding.cpp
   LIBRARIES
     Microsoft.GSL::GSL
     magic_enum::magic_enum

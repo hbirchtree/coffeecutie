@@ -1,7 +1,9 @@
 #pragma once
 
 #include <peripherals/libc/types.h>
-#include <peripherals/stl/types.h>
+#include <peripherals/stl/type_safety.h>
+
+#include <type_traits>
 
 namespace typing {
 namespace geometry {

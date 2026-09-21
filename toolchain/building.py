@@ -1749,6 +1749,32 @@ def main() -> None:
         help="Limit scan to this directory (default: all source dirs)",
     )
 
+    # iwyu
+    p = sub.add_parser(
+        "iwyu", help="Run include-what-you-use over a target's compile database"
+    )
+    p.add_argument(
+        "target",
+        help="Target whose compile_commands.json to use (e.g. desktop:x64-linux:multi)",
+    )
+    p.add_argument(
+        "--dir", dest="iwyu_dir", default=None, metavar="DIR",
+        help="Limit scan to source paths containing DIR (default: everything)",
+    )
+    p.add_argument(
+        "--fix", action="store_true",
+        help="Apply the suggested edits with fix_includes.py",
+    )
+    p.add_argument(
+        "--headers", action="store_true",
+        help="With --fix, allow removing includes from headers (aggressive)",
+    )
+    p.add_argument("-j", "--jobs", type=int, default=None, help="Parallel jobs")
+    p.add_argument(
+        "--report", default="iwyu-report.txt", metavar="FILE",
+        help="Where to write the ranked report",
+    )
+
     # lint-cmake
     sub.add_parser("lint-cmake", help="Lint CMake files with cmake-format")
 
@@ -1904,6 +1930,43 @@ def main() -> None:
                 for f in failures:
                     print(f"     {f.relative_to(base_dir)}")
                 sys.exit(1)
+
+    elif cmd == "iwyu":
+        # IWYU is clang-based while the desktop presets build with g++, so the
+        # database goes through _tidy_compile_db first (drops the modules flags,
+        # adds GCC's implicit include dirs). run_iwyu.py then drops the GCC-only
+        # -f/-W flags that clang rejects outright.
+        iwyu = os.environ.get("IWYU") or shutil.which("include-what-you-use")
+        if not iwyu:
+            sys.exit(
+                ":: iwyu: include-what-you-use not found on PATH.\n"
+                "   Install it (apt install iwyu) or set IWYU=/path/to/binary."
+            )
+        build_dir = base_dir / "multi_build" / args.target.replace(":", "-")
+        raw_db = build_dir / "compile_commands.json"
+        if not raw_db.exists():
+            sys.exit(
+                f":: iwyu: no compile database at {raw_db}\n"
+                f"   Build the target first: ./cb build {args.target}"
+            )
+        driver = base_dir / "toolchain/iwyu/run_iwyu.py"
+        iwyu_cmd = [sys.executable, str(driver), "--iwyu", iwyu]
+        if args.iwyu_dir:
+            iwyu_cmd += ["--filter", args.iwyu_dir]
+        if args.jobs:
+            iwyu_cmd += ["-j", str(args.jobs)]
+        if args.fix:
+            iwyu_cmd += ["--fix"]
+        if args.headers:
+            iwyu_cmd += ["--headers"]
+        iwyu_cmd += ["--report", args.report]
+        if dry_run:
+            print(f"Would run: {' '.join(iwyu_cmd)} -p <filtered copy of {raw_db}>")
+        else:
+            db_dir = _tidy_compile_db(raw_db)
+            _banner(f"iwyu: {args.target}")
+            r = subprocess.run(iwyu_cmd + ["-p", str(db_dir)], cwd=str(base_dir))
+            sys.exit(r.returncode)
 
     elif cmd == "lint-cmake":
         check_programs("cmake-format")

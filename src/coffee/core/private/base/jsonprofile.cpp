@@ -7,6 +7,7 @@
 #if !defined(COFFEE_GEKKO)
 #include <peripherals/stl/base64.h>
 #endif
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/string/hex.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string_ops.h>

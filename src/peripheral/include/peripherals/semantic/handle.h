@@ -2,9 +2,11 @@
 
 #include <peripherals/constants.h>
 #include <peripherals/libc/types.h>
+#include <peripherals/stl/non_copy.h>
 #include <peripherals/stl/standard_exceptions.h>
-#include <peripherals/stl/types.h>
+#include <peripherals/stl/type_safety.h>
 
+#include <type_traits>
 #include <utility>
 
 namespace semantic {
@@ -43,7 +45,7 @@ requires(
     )
 )
 // clang-format on
-struct generic_handle_t : non_copy
+struct generic_handle_t : stl_types::non_copy
 {
     static constexpr bool exceptions_mode =
         std::is_same<handle_modes::exception_on_destruct, HandleMode>::value;

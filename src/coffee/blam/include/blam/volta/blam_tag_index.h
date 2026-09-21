@@ -7,6 +7,8 @@
 #include "blam_versions.h"
 #include "blam_vertex.h"
 
+#include <peripherals/stl/non_copy.h>
+
 namespace blam {
 namespace bitm {
 

@@ -6,7 +6,7 @@
 #include <nlohmann/json.hpp>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/base64.h>
-#include <peripherals/stl/string/hex.h>
+#include <peripherals/stl/string/hexdump.h>
 
 #include <variant>
 #include <vector>

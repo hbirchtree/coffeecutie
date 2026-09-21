@@ -1,5 +1,8 @@
 #include <coffee/graphics/apis/gleam/rhi.h>
 
+#include <memory>
+#include <set>
+
 #include <coffee/graphics/apis/gleam/rhi_draw_command.h>
 #include <coffee/graphics/apis/gleam/rhi_program.h>
 #include <coffee/graphics/apis/gleam/rhi_rendertarget.h>
@@ -9,7 +12,6 @@
 #include <coffee/graphics/apis/gleam/rhi_versioning.h>
 #include <coffee/graphics/apis/gleam/rhi_vertex.h>
 
-#include <memory>
 #include <peripherals/concepts/graphics_api.h>
 #include <peripherals/constants.h>
 #include <peripherals/stl/magic_enum.hpp>

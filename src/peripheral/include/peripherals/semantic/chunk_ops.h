@@ -1,7 +1,6 @@
 #pragma once
 
 #include "chunk.h"
-#include <peripherals/stl/types.h>
 
 namespace semantic {
 namespace chunk_ops {

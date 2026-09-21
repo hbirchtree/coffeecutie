@@ -1,15 +1,16 @@
 #pragma once
 
 #include <peripherals/base.h>
+#include <peripherals/identify/compiler/function_inlining.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/type_safety.h>
-#include <peripherals/stl/types.h>
 
 #if defined(COFFEE_LINUX)
 #include <sys/ioctl.h>
 #include <unistd.h>
 #endif
 
+#include <errno.h>
 #include <stdio.h>
 
 #define DefaultDebugOutputPipe libc::io::io_handles::err

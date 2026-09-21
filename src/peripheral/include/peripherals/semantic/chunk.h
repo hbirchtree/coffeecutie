@@ -5,6 +5,7 @@
 #include <peripherals/libc/types.h>
 #include <peripherals/semantic/enum/rsca.h>
 #include <peripherals/stl/functional_types.h>
+#include <peripherals/stl/non_copy.h>
 #include <peripherals/stl/types.h>
 
 #include <gsl/span>

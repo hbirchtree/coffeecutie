@@ -6,6 +6,7 @@
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
 #include <peripherals/stl/base64.h>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/string/hex.h>
 
 #include <openssl/evp.h>

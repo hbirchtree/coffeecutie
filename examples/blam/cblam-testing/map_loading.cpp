@@ -24,6 +24,7 @@
 #include <coffee/comp_app/file_mapper.h>
 #include <coffee/components/entity_container.h>
 #include <coffee/core/debug/formatting.h>
+#include <magic_enum/magic_enum.hpp>
 
 #include <fmt_extensions/url_types.h>
 

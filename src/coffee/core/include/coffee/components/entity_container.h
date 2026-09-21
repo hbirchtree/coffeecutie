@@ -7,6 +7,7 @@
 #include <coffee/components/types.h>
 #include <coffee/components/worker_pool.h>
 #include <coffee/core/printing/log_interface.h>
+#include <peripherals/stl/non_copy.h>
 #include <peripherals/stl/quick_container.h>
 
 #include <platforms/stacktrace.h>

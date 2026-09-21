@@ -1,10 +1,10 @@
 #pragma once
 
 #include <peripherals/stl/type_list.h>
+#include <peripherals/stl/non_copy.h>
 
 #include "access.h"
 #include "entity_reference.h"
-#include "platforms/stacktrace.h"
 #include "types.h"
 
 namespace compo {

@@ -3,6 +3,7 @@
 #include <peripherals/enum/helpers.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/decl_member_function.h>
+#include <peripherals/stl/non_copy.h>
 #include <peripherals/stl/time_types.h>
 #include <peripherals/stl/type_list.h>
 #include <peripherals/stl/types.h>

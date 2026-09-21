@@ -10,6 +10,7 @@
 #include <coffee/core/debug/formatting.h>
 #include <fmt/format.h>
 #include <peripherals/stl/magic_enum.hpp>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/string/hex.h>
 
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
