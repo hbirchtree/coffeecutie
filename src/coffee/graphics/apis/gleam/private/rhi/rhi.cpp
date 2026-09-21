@@ -1949,6 +1949,7 @@ bool api::perform_copy(
     std::weak_ptr<texture_t> target_,
     u32                      level)
 {
+#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320
     if(m_features.texture.image_copy)
     {
         auto source = source_.lock();
@@ -1980,10 +1981,14 @@ bool api::perform_copy(
             src_size.h,
             1);
         return true;
-    } else if(m_features.rendertarget.blit)
+    } else
+#endif
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+        if(m_features.rendertarget.blit)
     {
         return false;
     } else
+#endif
     {
         // TODO: This would be where we have an impl for GL ES 2
         // Using CopyTexSubImage2D with a framebuffer
