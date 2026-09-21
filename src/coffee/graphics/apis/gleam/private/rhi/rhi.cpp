@@ -1,7 +1,3 @@
-#include "glw/enums/CopyImageSubDataTarget.h"
-#include "glw/enums/TextureTarget.h"
-#include "peripherals/typing/enum/graphics/shader_stage.h"
-#include "peripherals/typing/enum/pixels/filtering.h"
 #include <coffee/graphics/apis/gleam/rhi.h>
 
 #include <coffee/graphics/apis/gleam/rhi_draw_command.h>
@@ -44,8 +40,10 @@
 #include <glw/extensions/OES_rgb8_rgba8.h>
 #include <glw/extensions/OES_vertex_array_object.h>
 
+#include <glw/enums/CopyImageSubDataTarget.h>
 #include <glw/enums/FrontFaceDirection.h>
 #include <glw/enums/InternalFormat.h>
+#include <glw/enums/TextureTarget.h>
 #include <glw/enums/TriangleFace.h>
 #include <glw/enums/limits.h>
 #include <glw/texture_formats.h>

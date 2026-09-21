@@ -5,7 +5,6 @@
 #include "ui_caching_item.h"
 
 #include <blam/volta/blam_scenario.h>
-#include <peripherals/stl/magic_enum.hpp>
 
 #include <cstring>
 
@@ -264,9 +263,6 @@ struct UIElementCache
         using widget_type = blam::ui_element::widget_type_t;
 
         auto ui_el = get_id(ui_tag);
-        // cDebug(
-        //     "UI element of type: {}",
-        //     magic_enum::enum_name(ui_el->widget_type));
         UIElementItem out{
             .ui_element = ui_el,
             .children   = {},
