@@ -6,6 +6,7 @@
 #include <coffee/graphics/apis/gleam/rhi_draw_command.h>
 #include <coffee/graphics/apis/gleam/rhi_program.h>
 #include <coffee/graphics/apis/gleam/rhi_rendertarget.h>
+#include <coffee/graphics/apis/gleam/rhi_state_scope.h>
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
 #include <coffee/graphics/apis/gleam/rhi_texture.h>
 #include <coffee/graphics/apis/gleam/rhi_translate.h>
@@ -591,7 +592,8 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         // out.rendertarget.color_buffer_float
         //     = supports_extension(extensions, ext::color_buffer_float::name);
         out.program.khr.parallel_shader_compile =
-            supports_extension(extensions, khr::parallel_shader_compile::name);
+            supports_extension(extensions, khr::parallel_shader_compile::name) ||
+            supports_extension(extensions, "KHR_parallel_shader_compile");
         out.debug.webgl.unmasked_vendors =
             supports_extension(extensions, "WEBGL_debug_renderer_info");
         out.debug.webgl.debug_shaders =
@@ -1453,10 +1455,13 @@ optional<error> api::load(load_options_t options)
         auto requested = *options.api_extensions;
         for(auto const& ext : requested)
             m_extensions.insert(ext);
+        m_features.debug.khr.debug = supports_extension(supported, gl::khr::debug::name);
     } else
+    {
         m_extensions = query_native_extensions();
+        m_features.debug.khr.debug = supports_extension(gl::khr::debug::name);
+    }
 
-    m_features.debug.khr.debug = supports_extension(gl::khr::debug::name);
     [[maybe_unused]] auto _    = debug().scope(__PRETTY_FUNCTION__);
 
     auto [native_features, native_api, native_version] =
@@ -1922,6 +1927,7 @@ bool api::perform_downscale(
 
 struct blitter_t
 {
+    std::shared_ptr<api::rendertarget_type> source;
     std::shared_ptr<api::rendertarget_type> target;
 };
 
@@ -1937,7 +1943,9 @@ void api::alloc_blitter()
     }
 
     m_blitter = std::make_shared<blitter_t>();
+    m_blitter->source = alloc_rendertarget();
     m_blitter->target = alloc_rendertarget();
+    m_blitter->source->alloc();
     m_blitter->target->alloc();
 
     debug().annotate(*m_blitter->target, "blitter target");
@@ -1985,6 +1993,35 @@ bool api::perform_copy(
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
         if(m_features.rendertarget.blit)
     {
+        auto source = source_.lock();
+        auto target = target_.lock();
+
+        if(!source || !target)
+            return false;
+
+        auto src_size = source->size();
+        auto trg_size = target->size();
+
+        if(src_size.w > trg_size.w || src_size.h > trg_size.h)
+            return false;
+
+        m_blitter->source->attach(render_targets::attachment::color, *source, level);
+        m_blitter->target->attach(render_targets::attachment::color, *target, level);
+
+        auto read_binding = state::framebuffer_scope_t(
+            group::framebuffer_target::read_framebuffer, m_blitter->source->m_handle);
+        auto draw_binding = state::framebuffer_scope_t(
+            group::framebuffer_target::draw_framebuffer, m_blitter->target->m_handle);
+
+        auto viewport = state::viewport_scope_t(
+            typing::vector_types::Veci4{0, 0, src_size.w, src_size.h});
+
+        cmd::blit_framebuffer(
+            0, 0, src_size.w, src_size.h,
+            0, 0, src_size.w, src_size.h,
+            group::clear_buffer_mask::color_buffer_bit,
+            group::blit_framebuffer_filter::nearest);
+
         return false;
     } else
 #endif
