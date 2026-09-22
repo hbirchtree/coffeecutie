@@ -47,6 +47,8 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
             was_loading = false;
             loading_screen_gone_time.reset();
             frames_since_loaded = 0;
+            current_progress    = 0.f;
+            last_frame.reset();
             return;
         }
         if(frames_since_loaded < scene_frames_before_fade)
@@ -75,20 +77,32 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
         glm::translate(glm::identity<Matf4>(), Vecf3{-1, -1, 0}),
         Vecf3{2, 2, 1});
     Vecf2 zoom_offset{0.f, 0.f};
-    // The original swept the convergence point slowly side to side; timef is
-    // still seconds here, before the spinner reuses it. Its resting place was
-    // measured off loading.dds at (0.95, 0.20).
-    constexpr f32   sweep_period = 12.f; // seconds for a full cycle
-    constexpr f32   sweep_extent = 0.5f; // how far either side of rest
-    constexpr Vecf2 sweep_rest{0.5f, 0.5f};
-    Vecf2           zoom_center{
-        sweep_rest.x + sweep_extent * std::sin(
-                                          timef * (stl_types::math::pi_f * 2.f /
-                                                   sweep_period) -
-                                          stl_types::math::pi_f / 2.f),
-        sweep_rest.y};
-    f32 zoom_strength{0.5f};
-    f32 zoom_exposure{2.5f};
+    // The streaks converge on a fixed point near the middle of the screen,
+    // while the lit band follows loading progress across it, the right edge
+    // being 100%. Once loading is done it scrolls off.
+    constexpr f32 sweep_lerp_rate  = 1.5f; // per second, toward the target
+    constexpr f32 sweep_exit_speed = 1.f;  // screens per second once done
+    Vecf2         zoom_center{0.5f, 0.6f};
+    f32           dt{0.f};
+    if(last_frame)
+        // Capped so a stall on this thread can't jump the band
+        dt = std::min(
+            std::chrono::duration_cast<stl_types::chrono::seconds_f32>(
+                time - *last_frame)
+                .count(),
+            0.1f);
+    last_frame = time;
+    if(status->progress < 0)
+        current_progress += sweep_exit_speed * dt;
+    else
+    {
+        // Never backwards: shader compilation restarts progress from 0
+        f32 target = std::max(current_progress, status->progress / 100.f);
+        current_progress += (target - current_progress) *
+                            (1.f - std::exp(-sweep_lerp_rate * dt));
+    }
+    f32 zoom_strength{0.3f};
+    f32 zoom_exposure{3.5f};
     // An ellipse rather than a disc: narrow across x so the sweep reads as a
     // travelling band, tall enough in y to reach past both screen edges. The
     // 0.6 exponent is the decay measured off the original.
@@ -116,6 +130,8 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
             typing::graphics::ShaderStage::Fragment,
             gfx::uniform_pair{
                 {"zoom_center"sv}, semantic::SpanOne(zoom_center)},
+            gfx::uniform_pair{
+                {"sweep_x"sv}, semantic::SpanOne(current_progress)},
             gfx::uniform_pair{
                 {"zoom_strength"sv}, semantic::SpanOne(zoom_strength)},
             gfx::uniform_pair{{"exposure"sv}, semantic::SpanOne(zoom_exposure)},

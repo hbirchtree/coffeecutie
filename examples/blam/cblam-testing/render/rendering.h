@@ -173,6 +173,8 @@ struct LoadingScreen
     std::shared_ptr<gfx::rendertarget_t> ring_rt;
     std::shared_ptr<gfx::program_t>      zoom_program;
     bool                                 m_ring_rendered{false};
+    f32                                  current_progress{0.f};
+    std::optional<compo::time_point>     last_frame;
 
     std::optional<compo::time_point> loading_screen_gone_time;
     bool                             was_loading{false};
