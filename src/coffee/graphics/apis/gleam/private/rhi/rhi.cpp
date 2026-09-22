@@ -667,8 +667,10 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
             supports_extension(extensions, oes::vertex_array_object::name);
         out.rendertarget.ext.discard_framebuffer =
             supports_extension(extensions, ext::discard_framebuffer::name);
+        // Adding the WebGL version for emulation purposes
         out.program.khr.parallel_shader_compile =
-            supports_extension(extensions, khr::parallel_shader_compile::name);
+            supports_extension(extensions, khr::parallel_shader_compile::name) ||
+            supports_extension(extensions, "KHR_parallel_shader_compile");
     }
 
     using typing::pixels::pix_fmt;
