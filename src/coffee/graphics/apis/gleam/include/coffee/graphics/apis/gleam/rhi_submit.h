@@ -361,14 +361,17 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 *program, bookkeeping, instanceUniform);
         };
     }
+    const bool legacy_draw_only =
+        m_api_type == api_type_t::es && m_api_version == 0x200;
+
     if((m_workarounds.draw.emulated_base_instance || uses_ubo_advancing) &&
-       uses_baseinstance)
+       (uses_baseinstance || !legacy_draw_only))
     {
         if constexpr(compile_info::debug_mode)
         {
             auto loc = detail::get_program_uniform_location(
                 *program, program_t::stage_t::Vertex, {"glw_BaseInstance"sv});
-            if(loc == invalid_uniform)
+            if(loc == invalid_uniform && uses_baseinstance)
                 debug().message(
                     "uniform 'glw_BaseInstance' not located with emulated BaseInstance enabled"sv);
         }
@@ -443,8 +446,6 @@ inline optional<tuple<error, std::string_view>> api::submit(
         = !uses_ubo_advancing && !uses_per_draw_textures &&
           m_features.draw.multi_indirect &&
           (m_api_type == api_type_t::core ? m_api_version >= 0x430 : false);
-    const bool legacy_draw_only =
-        m_api_type == api_type_t::es && m_api_version == 0x200;
 
     if constexpr(compile_info::debug_mode)
     {

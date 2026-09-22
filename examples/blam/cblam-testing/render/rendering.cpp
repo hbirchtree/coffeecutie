@@ -889,6 +889,8 @@ struct DrawListBuilder
         for(Pass& pass : bsp_build())
             pass.clear();
 
+        const bool per_draw_cubes = !m_api->feature_info().texture.cube_array;
+
         for(auto ent : p.template select<BspReference, DrawState, Visibility>())
         {
             auto&& [bsp, bsp_draw, vis] = ent.components();
@@ -911,8 +913,9 @@ struct DrawListBuilder
                                ? material_class_of(sh_it->second.tag_class)
                                : MatClass_Base;
             wf.material_classes |= mat_cls;
+            model_tracker_t slot{};
             if(bsp_draw.current_pass > Pass_LastOpaque)
-                wf.insert_sortable(
+                slot = wf.insert_sortable(
                     bsp_draw.draw.data.front(), bsp.sort_center, mat_cls);
             else
             {
@@ -921,7 +924,10 @@ struct DrawListBuilder
                 wf.bucket_classes.resize(wf.draws.size(), 0);
                 wf.bucket_classes[0] |= mat_cls;
                 wf.draws[0].push_back(bsp_draw.draw.data.front());
+                slot.draw = static_cast<u16>(wf.draws[0].size() - 1);
             }
+            if(per_draw_cubes)
+                record_reflection_cube(wf, bsp.shader, slot.bucket, slot.draw);
         }
 
         if(!m_api->feature_info().program.buffer_binding)
@@ -1116,7 +1122,10 @@ struct DrawListBuilder
             auto instance_id = draw.instances.offset + track.model_id.instance;
 
             record_reflection_cube(
-                pass, smodel, track.model_id.bucket, track.model_id.draw);
+                pass,
+                smodel.shader,
+                track.model_id.bucket,
+                track.model_id.draw);
 
             ModelItem<Version>& cache_item =
                 model_cache->find(model.model)->second;
@@ -1451,9 +1460,9 @@ struct DrawListBuilder
     }
 
     void record_reflection_cube(
-        Pass& pass, SubModel const& sub, u16 bucket, u16 draw)
+        Pass& pass, generation_idx_t const& shader, u16 bucket, u16 draw)
     {
-        auto refl = shader_cache.reflection_bitmap(sub.shader);
+        auto refl = shader_cache.reflection_bitmap(shader);
         if(!refl.valid())
             return;
         auto cube = bitm_cache.cube_texture(refl);
@@ -1787,6 +1796,35 @@ struct MeshRenderer
         };
     }
 
+    std::shared_ptr<gfx::texture_t> reflection_fallback(Pass const& pass)
+    {
+        if(m_api->feature_info().texture.cube_array)
+            return nullptr;
+        for(auto const& bucket : pass.reflection_textures)
+            for(auto const& cube : bucket)
+                if(cube)
+                    return cube;
+        return nullptr;
+    }
+
+    gfx::base_instance_sampler_list reflection_slots(
+        Pass const&                            pass,
+        size_t                                 bucket,
+        std::shared_ptr<gfx::texture_t> const& fallback)
+    {
+        gfx::base_instance_sampler_list slots;
+        if(fallback)
+            slots.slots.push_back(
+                gfx::base_instance_sampler_t{
+                    .stage    = typing::graphics::ShaderStage::Fragment,
+                    .location = {"source_cube"sv, 19},
+                    .sampler  = bitm_cache.cube_sampler(),
+                    .textures = pass.reflections_for(bucket),
+                    .fallback = fallback,
+                });
+        return slots;
+    }
+
     template<typename... Args>
     void render_pass(Proxy&, u32 idx, f32 t, Pass const& pass, Args&&... extra)
     {
@@ -1858,20 +1896,7 @@ struct MeshRenderer
         std::vector<gfx::sampler_definition_t> samplers;
         setup_textures(samplers);
 
-        const bool per_draw_cubes = !m_api->feature_info().texture.cube_array;
-        std::shared_ptr<gfx::texture_t> cube_fallback;
-        if(per_draw_cubes)
-            for(auto const& bucket : pass.reflection_textures)
-            {
-                for(auto const& cube : bucket)
-                    if(cube)
-                    {
-                        cube_fallback = cube;
-                        break;
-                    }
-                if(cube_fallback)
-                    break;
-            }
+        auto cube_fallback = reflection_fallback(pass);
 
         for(size_t bucket_idx = 0; bucket_idx < pass.draws.size(); bucket_idx++)
         {
@@ -1897,16 +1922,7 @@ struct MeshRenderer
                         m_resources.bone_matrix_buf->slice(base, span);
                 }
 
-            gfx::base_instance_sampler_list cube_slots;
-            if(per_draw_cubes && cube_fallback)
-                cube_slots.slots.push_back(
-                    gfx::base_instance_sampler_t{
-                        .stage    = typing::graphics::ShaderStage::Fragment,
-                        .location = {"source_cube"sv, 19},
-                        .sampler  = bitm_cache.cube_sampler(),
-                        .textures = pass.reflections_for(bucket_idx),
-                        .fallback = cube_fallback,
-                    });
+            auto cube_slots = reflection_slots(pass, bucket_idx, cube_fallback);
 
             auto res = m_api->submit(
                 {
@@ -1987,10 +2003,12 @@ struct MeshRenderer
         /* Step 2: Set up all the textures */
         std::vector<gfx::sampler_definition_t> samplers;
         setup_textures(samplers);
+        auto cube_fallback = reflection_fallback(pass);
 
         for(size_t bucket_idx = 0; bucket_idx < pass.draws.size(); bucket_idx++)
         {
             auto const& draw = pass.draws[bucket_idx];
+            auto cube_slots = reflection_slots(pass, bucket_idx, cube_fallback);
             /* Step 3: DRAW */
             auto res = m_api->submit(
                 {
@@ -2011,6 +2029,7 @@ struct MeshRenderer
                     .front_face = true,
                 },
                 samplers,
+                cube_slots,
                 std::forward<Args&&>(extra)...);
             if(res)
                 cFatal("submit error: {}", std::get<1>(*res));
