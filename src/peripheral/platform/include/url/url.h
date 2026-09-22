@@ -4,12 +4,14 @@
 #include <peripherals/libc/types.h>
 #include <peripherals/semantic/enum/http_access.h>
 #include <peripherals/semantic/enum/rsca.h>
-#include <peripherals/stl/types.h>
+
+#include <string>
+#include <string_view>
+#include <vector>
 
 namespace platform::url {
 
 using namespace ::libc_types;
-using namespace ::stl_types;
 using namespace ::semantic;
 
 struct Url;
