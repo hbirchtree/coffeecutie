@@ -445,7 +445,7 @@ size_3d<u32> texture_t::size()
     using target = group::texture_target;
 #endif
 
-    size_3d<u32> out;
+    size_3d<u32> out{};
     Span<i32>    p = mem_chunk<i32>::ofBytes(out).view;
 #if GLEAM_MAX_VERSION >= 0x450
     if(m_features.dsa)
@@ -466,14 +466,13 @@ size_3d<u32> texture_t::size()
             target::texture_2d, 0, get::texture_height, p.subspan(1, 1));
         cmd::get_tex_level_parameter(
             target::texture_2d, 0, get::texture_depth, p.subspan(2, 1));
-    }
-#else
+    } else
+#endif
     {
         p[0] = m_tex_size[0];
         p[1] = m_tex_size[1];
         p[2] = m_layers;
     }
-#endif
 
     return out;
 }
@@ -508,6 +507,7 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.buffer.ubo                            = api_version >= 0x310;
         out.draw.instancing                       = api_version >= 0x310;
         out.draw.vertex_offset                    = api_version >= 0x320;
+        out.rendertarget.blit                     = api_version >= 0x300;
         out.rendertarget.framebuffer_texture      = api_version >= 0x300;
         out.texture.max_level                     = api_version >= 0x120;
         out.texture.tex.gl.rgtc                   = api_version >= 0x300;
@@ -573,6 +573,7 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.buffer.pbo      = api_version >= 0x300;
         out.buffer.ubo      = api_version >= 0x300;
         out.draw.instancing = api_version >= 0x300;
+        out.rendertarget.blit               = api_version >= 0x300;
         out.rendertarget.clearbuffer        = api_version >= 0x300;
         out.rendertarget.color_buffer_10bit = api_version >= 0x300;
         out.rendertarget.readdraw_buffers   = api_version >= 0x300;
@@ -613,6 +614,7 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.buffer.ubo                     = api_version >= 0x300;
         out.draw.instancing                = api_version >= 0x300;
         out.program.buffer_binding         = api_version >= 0x300;
+        out.rendertarget.blit              = api_version >= 0x300;
         out.rendertarget.clearbuffer       = api_version >= 0x300;
         out.rendertarget.depth24_stencil8  = api_version >= 0x300;
         out.rendertarget.readdraw_buffers  = api_version >= 0x300;
@@ -1667,6 +1669,8 @@ optional<error> api::load(load_options_t options)
     }
 #endif
 
+    alloc_blitter();
+
 #if defined(GL_KHR_parallel_shader_compile)
     if(!compile_info::platform::is_emscripten &&
        m_features.program.khr.parallel_shader_compile)
@@ -1993,7 +1997,7 @@ bool api::perform_copy(
     } else
 #endif
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
-        if(m_features.rendertarget.blit)
+        if(m_features.rendertarget.blit && m_blitter)
     {
         auto source = source_.lock();
         auto target = target_.lock();
@@ -2007,12 +2011,17 @@ bool api::perform_copy(
         if(src_size.w > trg_size.w || src_size.h > trg_size.h)
             return false;
 
-        m_blitter->source->attach(render_targets::attachment::color, *source, level);
-        m_blitter->target->attach(render_targets::attachment::color, *target, level);
-
         auto read_binding = state::framebuffer_scope_t(
             group::framebuffer_target::read_framebuffer, m_blitter->source->m_handle);
         auto draw_binding = state::framebuffer_scope_t(
+            group::framebuffer_target::draw_framebuffer, m_blitter->target->m_handle);
+
+        m_blitter->source->attach(render_targets::attachment::color, *source, level);
+        m_blitter->target->attach(render_targets::attachment::color, *target, 0);
+
+        cmd::bind_framebuffer(
+            group::framebuffer_target::read_framebuffer, m_blitter->source->m_handle);
+        cmd::bind_framebuffer(
             group::framebuffer_target::draw_framebuffer, m_blitter->target->m_handle);
 
         auto viewport = state::viewport_scope_t(
@@ -2024,7 +2033,7 @@ bool api::perform_copy(
             group::clear_buffer_mask::color_buffer_bit,
             group::blit_framebuffer_filter::nearest);
 
-        return false;
+        return true;
     } else
 #endif
     {
