@@ -473,7 +473,8 @@ i32 blam_main()
                 const bool use_touch =
                     app_info().device_type() == app_info::device_type_t::phone;
 #else
-                constexpr bool use_touch = false;
+                const bool use_touch =
+                    platform::info::device::variant() == platform::info::DevicePhone;
 #endif
                 if(use_touch)
                     create_touch_overlay(e);
