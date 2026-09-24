@@ -1,30 +1,34 @@
 #pragma once
 
-#include "peripherals/constants.h"
+#include <peripherals/base.h>
+
 #include <exception>
 #include <optional>
-#include <peripherals/base.h>
+#include <peripherals/constants.h>
 #include <peripherals/libc/output_ops.h>
 #include <peripherals/stl/string_ops.h>
 #include <peripherals/typing/logging.h>
 #include <typeinfo>
 #include <utility>
 
-// Platforms without boost::stacktrace fall back to empty frames
-#if defined(COFFEE_WINDOWS) || defined(COFFEE_GEKKO)
-#define COFFEE_STACKTRACE_NO_BOOST
+#if __has_include(<cxxabi.h>)
+#include <cstdlib>
+#include <cxxabi.h>
+#include <memory>
 #endif
 
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID) || \
-    defined(COFFEE_GEKKO)
-// Nothing...
-#elif defined(COFFEE_APPLE) || defined(COFFEE_NO_LIB_BACKTRACE)
+/* libstdc++ provides std::stacktrace (COFFEE_STD_STACKTRACE is set by CMake
+ * when it links), libc++ does not, so Android and Apple keep boost.
+ * Release builds and everything else fall back to empty frames. */
+#if MODE_RELEASE == 1
+#elif defined(COFFEE_STD_STACKTRACE)
+#define COFFEE_STACKTRACE_STD
+#include <stacktrace>
+#elif defined(COFFEE_ANDROID) || defined(COFFEE_APPLE)
+#define COFFEE_STACKTRACE_BOOST
+#if defined(COFFEE_APPLE)
 #define BOOST_STACKTRACE_USE_LIBC_BACKTRACE_FUNCTION
-#elif defined(COFFEE_UNIXPLAT)
-#define BOOST_STACKTRACE_USE_BACKTRACE
 #endif
-
-#if !defined(COFFEE_STACKTRACE_NO_BOOST)
 #include <boost/stacktrace.hpp>
 #endif
 
@@ -50,14 +54,17 @@ FORCEDINLINE void print(
 
 namespace demangle {
 
-FORCEDINLINE auto name(std::string const& symbol)
+FORCEDINLINE std::string name(std::string const& symbol)
 {
-#if defined(COFFEE_STACKTRACE_NO_BOOST)
-    return std::string();
-#else
-    boost::core::scoped_demangled_name demangler(symbol.c_str());
-    return std::string(demangler.get());
+#if __has_include(<cxxabi.h>)
+    int status = 0;
+    std::unique_ptr<char, decltype(&std::free)> demangled(
+        abi::__cxa_demangle(symbol.c_str(), nullptr, nullptr, &status),
+        &std::free);
+    if(status == 0 && demangled)
+        return demangled.get();
 #endif
+    return symbol;
 }
 
 template<typename T>
@@ -74,7 +81,9 @@ FORCEDINLINE auto type_name(T& e)
 
 } // namespace demangle
 
-#if !defined(COFFEE_STACKTRACE_NO_BOOST)
+#if defined(COFFEE_STACKTRACE_STD)
+using stacktrace = std::stacktrace;
+#elif defined(COFFEE_STACKTRACE_BOOST)
 using stacktrace = boost::stacktrace::stacktrace;
 #else
 struct frame_t
@@ -100,7 +109,20 @@ using stacktrace = std::vector<frame_t>;
 
 FORCEDINLINE auto frames()
 {
+#if defined(COFFEE_STACKTRACE_STD)
+    return std::stacktrace::current(); /* default-constructed is empty */
+#else
     return stacktrace();
+#endif
+}
+
+template<typename Frame>
+FORCEDINLINE std::string frame_name(Frame const& frame)
+{
+    if constexpr(requires { frame.description(); })
+        return frame.description();
+    else
+        return frame.name();
 }
 
 FORCEDINLINE

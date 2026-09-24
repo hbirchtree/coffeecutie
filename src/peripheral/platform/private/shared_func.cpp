@@ -22,7 +22,7 @@ void print_frames(
         detail::print(
             print,
             " >> "s +
-            "exec("s + frame.name() + ") [0x????] "s +
+            "exec("s + frame_name(frame) + ") [0x????] "s +
             (frame.source_file().empty() ?
                 std::string() :
                 frame.source_file() + ":"s + std::to_string(frame.source_line()))

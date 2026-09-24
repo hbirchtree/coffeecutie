@@ -194,9 +194,6 @@ elseif(EMSCRIPTEN)
     # We really need this
     -pthread
     # -flto
-    # Includes Boost headers through Emscripten
-    # Native Boost from vcpkg thinks we're x86
-    -sUSE_BOOST_HEADERS=1
   )
   target_link_options(
     PeripheralLib
@@ -223,7 +220,6 @@ elseif(EMSCRIPTEN)
     -Wno-pthreads-mem-growth
     #--no-heap-copy # DEPRECATED
     -sLLD_REPORT_UNDEFINED
-    -sUSE_BOOST_HEADERS=1
     # -sSAFE_HEAP=1 -sALLOW_MEMORY_GROWTH
   )
   target_link_libraries(

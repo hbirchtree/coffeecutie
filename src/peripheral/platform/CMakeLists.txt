@@ -14,22 +14,31 @@ coffee_library(
               $<INSTALL_INTERFACE:include>
 )
 
-if((${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE))
-  find_library(BACKTRACE_LIBRARY backtrace)
-  if(BACKTRACE_LIBRARY
-     AND NOT EMSCRIPTEN
-     AND NOT ANDROID
-  )
-    target_link_libraries(PeripheralPlatform PUBLIC ${BACKTRACE_LIBRARY})
-  else()
-    target_compile_definitions(
-      PeripheralPlatform PUBLIC -DCOFFEE_NO_LIB_BACKTRACE
+# libstdc++ keeps std::stacktrace in a separate library:
+# stdc++exp since GCC 14, stdc++_libbacktrace before that
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+   AND NOT WIN32
+   AND NOT GAMECUBE
+   AND NOT WII
+)
+  include(CheckCXXSourceCompiles)
+  foreach(STACKTRACE_LIB stdc++exp stdc++_libbacktrace)
+    string(MAKE_C_IDENTIFIER "HAVE_STD_STACKTRACE_${STACKTRACE_LIB}" STACKTRACE_VAR)
+    set(CMAKE_REQUIRED_LIBRARIES ${STACKTRACE_LIB})
+    check_cxx_source_compiles(
+      "#include <stacktrace>
+      int main() { return std::stacktrace::current().empty(); }"
+      ${STACKTRACE_VAR}
     )
-  endif()
-else()
-  target_compile_definitions(
-    PeripheralPlatform PUBLIC -DCOFFEE_NO_LIB_BACKTRACE
-  )
+    unset(CMAKE_REQUIRED_LIBRARIES)
+    if(${STACKTRACE_VAR})
+      target_link_libraries(PeripheralPlatform PUBLIC ${STACKTRACE_LIB})
+      target_compile_definitions(
+        PeripheralPlatform PUBLIC -DCOFFEE_STD_STACKTRACE=1
+      )
+      break()
+    endif()
+  endforeach()
 endif()
 
 if((
