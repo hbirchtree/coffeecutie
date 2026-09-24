@@ -17,7 +17,6 @@
         "nlohmann-json",
         { "name": "outcome", "platform": "(android & !arm64) & !emscripten & !(arm & linux) & !(x64 & linux) & !osx & !windows" },
         { "name": "outcome", "platform": "bare" },
-        "rapidjson",
         "stb",
         "utfcpp",
         { "name": "zlib-ng", "platform": "(linux & x64) | osx | windows" },
