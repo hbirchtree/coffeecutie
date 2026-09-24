@@ -51,7 +51,7 @@ result<detail::win32_fd_t, posix::posix_error> open_file(
             .fd = std::move(res.value()),
         };
     else
-        return res.error();
+        return stl_types::failure(res.error());
 }
 
 } // namespace platform::file::win32

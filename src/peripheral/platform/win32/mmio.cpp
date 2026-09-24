@@ -76,7 +76,7 @@ result<mem_mapping_t, posix::posix_error> map(
         if(!fd_.has_value())
         {
             fprintf(stderr, " - Failed opening\n");
-            return posix::posix_error{EPERM};
+            return stl_types::failure(posix::posix_error{EPERM});
         }
         auto fd       = std::move(fd_.value());
         auto map_size = params.size;
@@ -86,7 +86,7 @@ result<mem_mapping_t, posix::posix_error> map(
         if(!data.has_value())
         {
             fprintf(stderr, " - Failed mapping\n");
-            return posix::posix_error{ENOENT};
+            return stl_types::failure(posix::posix_error{ENOENT});
         }
         fprintf(stderr, " - Success\n");
         return mem_mapping_t{
@@ -107,7 +107,7 @@ result<mem_mapping_t, posix::posix_error> map(
     {
         fprintf(
             stderr, "CreateFile: %s\n", platform::win32::last_error().c_str());
-        return posix::posix_error{ENOENT};
+        return stl_types::failure(posix::posix_error{ENOENT});
     }
 
     auto [mapping_flags, view] = mapping_to_win32(params.access);
@@ -120,7 +120,7 @@ result<mem_mapping_t, posix::posix_error> map(
             stderr,
             "CreateFileMapping: %s\n",
             platform::win32::last_error().c_str());
-        return posix::posix_error{EPERM};
+        return stl_types::failure(posix::posix_error{EPERM});
     }
 
     auto [off_lo, off_hi] = size_to_parts(params.offset);
@@ -133,7 +133,7 @@ result<mem_mapping_t, posix::posix_error> map(
             stderr,
             "MapViewOfFile: %s\n",
             platform::win32::last_error().c_str());
-        return posix::posix_error{EPERM};
+        return stl_types::failure(posix::posix_error{EPERM});
     }
     return mem_mapping_t{
         .file    = fd,

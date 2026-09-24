@@ -51,7 +51,7 @@ FORCEDINLINE result<detail::android_mapping_t, posix::posix_error> map(
             .mapping = std::move(res.value()),
         };
     } else
-        return res.error();
+        return stl_types::failure(res.error());
 }
 
 FORCEDINLINE std::optional<posix::posix_error> unmap(

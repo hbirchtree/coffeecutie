@@ -27,7 +27,7 @@ FORCEDINLINE result<file_info_t, posix::posix_error> file_info(Url const& file)
 {
     auto fd = open_file(file, RSCA::ReadOnly);
     if(fd.has_error())
-        return fd.error();
+        return failure(fd.error());
     auto info = file_info(fd.value());
     if(detail::is_asset(fd.value()))
         AAsset_close(fd.value().asset);
@@ -39,7 +39,7 @@ requires(std::is_same_v<T, Url> || std::is_same_v<T, detail::android_fd_t>)
 FORCEDINLINE result<mode_t, posix::posix_error> exists(T const& file)
 {
     if(auto info = file_info(file); info.has_error())
-        return posix::posix_error{info.error()};
+        return failure(posix::posix_error{info.error()});
     else
         return info.value().mode;
 }
@@ -74,9 +74,9 @@ FORCEDINLINE result<std::vector<file_entry_t>, posix::posix_error> list(
     if(!adir)
     {
         if(files.empty())
-            return posix::posix_error{ENOENT};
+            return failure(posix::posix_error{ENOENT});
         else if(earlier_error != 0)
-            return earlier_error;
+            return failure(earlier_error);
         else
             return files;
     }

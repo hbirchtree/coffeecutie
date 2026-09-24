@@ -26,7 +26,7 @@ FORCEDINLINE result<file_info_t, posix::posix_error> file_info(Url const& file)
 {
     auto fd = open_file(file, RSCA::ReadOnly);
     if(fd.has_error())
-        return fd.error();
+        return failure(fd.error());
     return file_info(fd.value());
 }
 
@@ -35,7 +35,7 @@ requires(std::is_same_v<T, Url> || std::is_same_v<T, detail::win32_fd_t>)
 FORCEDINLINE result<mode_t, posix::posix_error> exists(T const& file)
 {
     if(auto info = file_info(file); info.has_error())
-        return posix::posix_error{info.error()};
+        return failure(posix::posix_error{info.error()});
     else
         return info.value().mode;
 }

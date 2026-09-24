@@ -53,7 +53,7 @@ FORCEDINLINE result<detail::emscripten_fd_t, posix::posix_error> open_file(
             .fd = std::move(fd.value()),
         };
     else
-        return fd.error();
+        return stl_types::failure(fd.error());
 }
 
 FORCEDINLINE std::optional<posix::posix_error> close_file(

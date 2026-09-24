@@ -235,7 +235,7 @@ FORCEDINLINE result<Url, posix_error> canon(Url const& path)
     std::error_code ec;
     auto            abs = std::filesystem::absolute(rel, ec);
     if(ec)
-        return posix::posix_error{ENOENT};
+        return failure(posix::posix_error{ENOENT});
     return url::constructors::MkUrl(abs.string());
 #else
     if(auto result = realpath(C_OCAST<const char*>(path), nullptr); !result)
