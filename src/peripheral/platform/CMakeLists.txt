@@ -142,25 +142,6 @@ if((${CMAKE_SYSTEM_NAME} STREQUAL "Linux"
 endif()
 
 #
-# Linux desktop-specific code
-#
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT (ANDROID OR MINGW OR WIN32))
-  coffee_library(
-    TARGET EmbedFileStub
-    LIBRARIES PeripheralLib
-    SOURCES private/embed_files_stub.cpp
-    HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-                $<INSTALL_INTERFACE:include>
-  )
-
-  if(EMBED_RESOURCES)
-    target_compile_definitions(
-      PeripheralPlatform PUBLIC -DEMBED_RESOURCES_ENABLED=1
-    )
-  endif()
-endif()
-
-#
 # Linux/Android shared code
 #
 if((${CMAKE_SYSTEM_NAME} STREQUAL Linux OR ANDROID) AND NOT (MINGW OR WIN32))

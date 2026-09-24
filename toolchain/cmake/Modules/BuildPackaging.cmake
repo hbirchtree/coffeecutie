@@ -142,15 +142,6 @@ function(COFFEE_APPLICATION)
       )
     endif()
 
-    set(EMBED_SRC ${CMAKE_CURRENT_BINARY_DIR}/${APP_TARGET}_files.cpp)
-    set(EMBEDDED_RESOURCES ${APP_RESOURCES})
-
-    # add_custom_command ( OUTPUT ${EMBED_SRC} COMMAND ${PYTHON_COMMAND}
-    # ${CMAKE_SOURCE_DIR}/toolchain/resources-to-source.py --output=${EMBED_SRC}
-    # ${EMBEDDED_RESOURCES} DEPENDS ${EMBEDDED_RESOURCES} ) target_sources (
-    # ${APP_TARGET} PUBLIC ${EMBED_SRC} ) add_custom_command ( TARGET
-    # ${APP_TARGET} PRE_BUILD COMMAND ${CMAKE_COMMAND} -E remove ${EMBED_SRC} )
-
     # We still install a basic binary executable
     install(FILES "$<TARGET_FILE:${APP_TARGET}>"
             DESTINATION "bin/${CMAKE_LIBRARY_ARCHITECTURE}"
