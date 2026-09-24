@@ -127,7 +127,7 @@ struct RS2CacheLoader
         // owns all rs2::RegionLoader access (it is not thread-safe).
         // Results are marshalled back to this (the GPU) thread's queue.
         worker = rq::runtime_queue::CreateNewThreadQueue("RS2::Loader")
-                     .assume_value();
+                     .value();
         on_built = rq::runtime_queue::BindToQueue(
             std::function<void(std::shared_ptr<RegionData>)>(
                 [this](std::shared_ptr<RegionData> data) {

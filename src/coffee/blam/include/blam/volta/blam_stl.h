@@ -66,18 +66,18 @@ struct map_container
         else
         {
             if(map.size < sizeof(file_header_t))
-                return map_load_error::map_file_too_small;
+                return stl_types::failure(map_load_error::map_file_too_small);
 
             progress("Reading map header", 0);
 
             auto header_res = file_header_t::from_data(map, ver);
             if(header_res.has_error())
-                return header_res.error();
+                return stl_types::failure(header_res.error());
             file_header_t const* header = header_res.value();
             if(!header)
-                return map_load_error::not_a_map;
+                return stl_types::failure(map_load_error::not_a_map);
 
-            if(from_le(header->version) != version_t::xbox)
+            if(from_le(header->decomp_len) == map.size)
             {
                 progress("Reading tag index", 100);
                 auto const* tags_index = &tag_index_t<Ver>::from_header(header);
@@ -114,15 +114,15 @@ struct map_container
                 map_data,
                 zlib::options_t{.chunk_size = 10_MB});
             if(err)
-                return map_load_error::decompression_error;
+                return stl_types::failure(map_load_error::decompression_error);
             decompressed = semantic::mem_chunk<char>::ofContainer(map_data);
             auto rehdr   = file_header_t::from_data(decompressed, ver);
             if(rehdr.has_error())
-                return rehdr.error();
+                return stl_types::failure(rehdr.error());
             header = rehdr.value();
 
             if(!header)
-                return map_load_error::not_a_map;
+                return stl_types::failure(map_load_error::not_a_map);
 
             progress("Reading tag index", 50);
             auto const* tags_index = &tag_index_t<Ver>::from_header(header);
@@ -135,7 +135,7 @@ struct map_container
                 .decompressed = std::move(map_data),
             };
 #else
-            return map_load_error::decompression_error;
+            return stl_types::failure(map_load_error::decompression_error);
 #endif
         } // else (non-trial)
     }
@@ -145,13 +145,13 @@ struct map_container
         std::function<void(std::string_view, i16)>&& progress)
     {
         if(map.size < sizeof(file_header_trial_t))
-            return map_load_error::map_file_too_small;
+            return stl_types::failure(map_load_error::map_file_too_small);
 
         progress("Reading map header", 0);
         auto const* trial =
             reinterpret_cast<file_header_trial_t const*>(map.data);
         if(!trial->valid())
-            return map_load_error::incompatible_map_version_expected_trial;
+            return stl_types::failure(map_load_error::incompatible_map_version_expected_trial);
 
         file_header_t normalized = trial->to_retail();
 

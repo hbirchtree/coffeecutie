@@ -1615,7 +1615,7 @@ struct scenario
     {
         if(auto string_base_chunk = script.script_string_segment.data(magic);
            string_base_chunk.has_error())
-            return string_base_chunk.error();
+            return stl_types::failure(string_base_chunk.error());
         else if(auto chunk = string_base_chunk.value(); true)
         {
             return string_segment_ref{
@@ -1674,7 +1674,7 @@ struct unicode_ref
         map_ptr const& magic, u16 off = 0) const
     {
         if(auto str_data = data.data(magic); str_data.has_error())
-            return str_data.error();
+            return stl_types::failure(str_data.error());
         else
             return str_data.value()[0].str(off);
     }

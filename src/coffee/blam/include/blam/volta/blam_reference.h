@@ -89,9 +89,9 @@ struct alignas(4) reference
         using namespace std::string_view_literals;
 
         if(auto v = data(magic); v.has_error())
-            return v.error();
+            return stl_types::failure(v.error());
         else if(v.value().size() > 1)
-            return "got multiple values"sv;
+            return stl_types::failure("got multiple values"sv);
         else
             return &v.value()[0];
     }

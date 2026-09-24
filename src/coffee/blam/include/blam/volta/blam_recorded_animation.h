@@ -506,10 +506,10 @@ struct recorded_animation
 
         auto data = event_stream.data(magic);
         if(data.has_error())
-            return data.error();
+            return stl_types::failure(data.error());
         if(data.value().size() <
            recorded::stream_header_size(unit_control_data_version))
-            return "truncated recorded animation stream"sv;
+            return stl_types::failure("truncated recorded animation stream"sv);
         return recorded::stream_view{
             .data                 = data.value(),
             .unit_control_version = unit_control_data_version,

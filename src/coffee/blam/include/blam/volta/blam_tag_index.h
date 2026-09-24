@@ -85,11 +85,11 @@ struct alignas(4) tag_t
              *
              * Also remember to use the Custom Edition bitmaps.map.
              */
-            return "bitmap uses external storage, use blam::bitm::bitm_header_t"sv;
+            return stl_types::failure("bitmap uses external storage, use blam::bitm::bitm_header_t"sv);
         }
 
         if(!valid())
-            return "invalid tag"sv;
+            return stl_types::failure("invalid tag"sv);
 
         // offset is a little-endian map field; the literal count is host order
         // and must be encoded to little-endian so reference::data() (which

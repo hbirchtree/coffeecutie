@@ -4,7 +4,6 @@
 #include "blam/volta/blam_tag_ref.h"
 #include "blam_base_types.h"
 #include "blam_reference.h"
-#include "blam_strings.h"
 #include "blam_structures.h"
 
 namespace blam::antr {

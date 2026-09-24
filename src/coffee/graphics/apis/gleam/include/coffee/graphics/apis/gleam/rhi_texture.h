@@ -459,8 +459,7 @@ struct texture_2d_t : texture_t
                         type,
                         *bits);
                     cmd::bind_texture(group::texture_target::texture_2d, 0);
-                }))
-            .has_value();
+                })).assume_value();
         return std::nullopt;
     }
 
@@ -491,7 +490,7 @@ struct texture_2d_t : texture_t
                         cmd::texture_sub_image_2d(
                             m_handle, level, offset, size, layout, type, *bits);
                     }))
-                .has_value();
+                .assume_value();
         } else if(m_features.dsa)
         {
             cmd::texture_sub_image_2d(
@@ -547,7 +546,7 @@ struct texture_2d_t : texture_t
                             *bits);
                         cmd::bind_texture(group::texture_target::texture_2d, 0);
                     }))
-                .has_value();
+                .assume_value();
         } else
         {
             cmd::bind_texture(group::texture_target::texture_2d, m_handle);
@@ -636,7 +635,7 @@ struct texture_cube_t : texture_t
                                 type,
                                 *bits);
                         }))
-                    .has_value();
+                    .assume_value();
             } else
             {
                 cmd::tex_sub_image_2d(
@@ -717,7 +716,7 @@ struct texture_2da_t : texture_t
                     cmd::bind_texture(
                         group::texture_target::texture_2d_array, 0);
                 }))
-            .has_value();
+            .assume_value();
         return std::nullopt;
     }
 
@@ -748,7 +747,7 @@ struct texture_2da_t : texture_t
                         cmd::texture_sub_image_3d(
                             m_handle, level, offset, size, layout, type, *bits);
                     }))
-                .has_value();
+                .assume_value();
         } else if(m_features.dsa)
         {
             cmd::texture_sub_image_3d(
@@ -789,7 +788,7 @@ struct texture_2da_t : texture_t
                         cmd::bind_texture(
                             group::texture_target::texture_2d_array, 0);
                     }))
-                .has_value();
+                .assume_value();
         } else
         {
             cmd::bind_texture(
@@ -929,7 +928,7 @@ struct texture_cube_array_t : texture_t
                                 group::texture_target::texture_cube_map_array,
                                 0);
                         }))
-                    .has_value();
+                    .assume_value();
             } else
             {
                 cmd::bind_texture(

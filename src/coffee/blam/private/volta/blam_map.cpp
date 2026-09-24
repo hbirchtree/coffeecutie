@@ -17,11 +17,11 @@ stl_types::result<file_header_t const*, map_load_error> file_header_t::
     file_header_t const* fh = C_RCAST<file_header_t const*>(data.data);
 
     if(from_le(fh->version) != version_t::pc)
-        return map_load_error::incompatible_map_version_expected_pc;
+        return stl_types::failure(map_load_error::incompatible_map_version_expected_pc);
 
     if(!stl_types::equal(header_head, fh->id) ||
        !stl_types::equal(header_foot, fh->footer))
-        return map_load_error::incompatible_endianness;
+        return stl_types::failure(map_load_error::incompatible_endianness);
 
     return fh;
 }
@@ -32,11 +32,11 @@ stl_types::result<file_header_t const*, map_load_error> file_header_t::
     file_header_t const* fh = C_RCAST<file_header_t const*>(data.data);
 
     if(from_le(fh->version) != version_t::custom_edition)
-        return map_load_error::incompatible_map_version_expected_custom_edition;
+        return stl_types::failure(map_load_error::incompatible_map_version_expected_custom_edition);
 
     if(!stl_types::equal(header_head, fh->id) ||
        !stl_types::equal(header_foot, fh->footer))
-        return map_load_error::incompatible_endianness;
+        return stl_types::failure(map_load_error::incompatible_endianness);
 
     return fh;
 }
@@ -47,11 +47,11 @@ stl_types::result<file_header_t const*, map_load_error> file_header_t::
     file_header_t const* fh = C_RCAST<file_header_t const*>(data.data);
 
     if(from_le(fh->version) != version_t::xbox)
-        return map_load_error::incompatible_map_version_expected_xbox;
+        return stl_types::failure(map_load_error::incompatible_map_version_expected_xbox);
 
     if(!stl_types::equal(header_head, fh->id) ||
        !stl_types::equal(header_foot, fh->footer))
-        return map_load_error::incompatible_endianness;
+        return stl_types::failure(map_load_error::incompatible_endianness);
 
     return fh;
 }
@@ -62,11 +62,11 @@ stl_types::result<file_header_t const*, map_load_error> file_header_t::
     file_header_t const* fh = C_RCAST<file_header_t const*>(data.data);
 
     if(from_le(fh->version) != version_t::mcc)
-        return map_load_error::incompatible_map_version_expected_mcc;
+        return stl_types::failure(map_load_error::incompatible_map_version_expected_mcc);
 
     if(!stl_types::equal(header_head, fh->id) ||
        !stl_types::equal(header_foot, fh->footer))
-        return map_load_error::incompatible_endianness;
+        return stl_types::failure(map_load_error::incompatible_endianness);
 
     return fh;
 }
@@ -74,7 +74,7 @@ stl_types::result<file_header_t const*, map_load_error> file_header_t::
 stl_types::result<file_header_t const*, map_load_error> file_header_t::
     from_data(semantic::BytesConst const& /*data*/, trial_version_t)
 {
-    return map_load_error::incompatible_map_version_expected_trial;
+    return stl_types::failure(map_load_error::incompatible_map_version_expected_trial);
 }
 
 } // namespace blam

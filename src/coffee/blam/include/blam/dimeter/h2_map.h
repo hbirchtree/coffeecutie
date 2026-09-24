@@ -57,21 +57,21 @@ struct map_container
     static result_type from_bytes(semantic::BytesConst const& map, V)
     {
         if(map.size < sizeof(header_type))
-            return map_load_error::map_file_too_small;
+            return stl_types::failure(map_load_error::map_file_too_small);
 
         auto const* header = reinterpret_cast<header_type const*>(map.data);
         if(!header->valid())
-            return map_load_error::not_a_map;
+            return stl_types::failure(map_load_error::not_a_map);
 
         u32 meta_offset = from_le(header->meta_offset);
         if(meta_offset > map.size - sizeof(tag_index_t))
-            return map_load_error::not_a_map;
+            return stl_types::failure(map_load_error::not_a_map);
         auto const* index =
             reinterpret_cast<tag_index_t const*>(map.data + meta_offset);
         /* Vista maps ship compressed; the header survives but the index magic
          * won't be found in that case */
         if(!index->valid())
-            return map_load_error::not_a_map;
+            return stl_types::failure(map_load_error::not_a_map);
 
         /* Same version value either way, so tell the layouts apart by the
          * group table pointer: a virtual address on Xbox, a small
@@ -79,7 +79,7 @@ struct map_container
         u32  group_ptr = from_le(index->group_table_pointer);
         bool is_vista  = group_ptr < from_le(header->meta_size);
         if(is_vista != std::is_same_v<V, vista_version_t>)
-            return map_load_error::incompatible_map_version_expected_halo2;
+            return stl_types::failure(map_load_error::incompatible_map_version_expected_halo2);
 
         map_container out{
             .header = header,
@@ -92,7 +92,7 @@ struct map_container
             out.index_mask = group_ptr - sizeof(tag_index_t);
             auto tags      = out.tags();
             if(tags.empty())
-                return map_load_error::not_a_map;
+                return stl_types::failure(map_load_error::not_a_map);
             out.meta_mask = tags[0].pointer() - from_le(header->tag_table_size);
         } else
         {

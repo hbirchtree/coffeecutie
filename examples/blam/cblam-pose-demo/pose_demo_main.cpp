@@ -2,7 +2,6 @@
 #include "components.h"
 #include "data.h"
 #include "journal.h"
-#include "map_marker.h"
 #include "network/networking.h"
 #include "physics.h"
 #include "pose_apply.h"
@@ -11,9 +10,10 @@
 #include "render/rendering.h"
 #include "resource_creation.h"
 #include "selected_version.h"
-#include "sounds.h"
 
-#include <cxxopts.hpp>
+#include <coffee/core/CApplication>
+#include <coffee/core/coffee_args.h>
+#include <coffee/core/Scene>
 #include <glm/gtc/matrix_transform.hpp>
 #include <peripherals/stl/magic_enum.hpp>
 
@@ -391,7 +391,7 @@ i32 pose_demo_main()
                             -> MapReadResult {
                             if(!data || !(*data))
                                 return MapReadResult{
-                                    blam::map_load_error::map_file_too_small,
+                                    stl_types::failure(blam::map_load_error::map_file_too_small),
                                     nullptr};
                             auto map =
                                 blam::map_container<halo_version>::from_bytes(

@@ -1217,7 +1217,7 @@ void PerformanceMonitor::load(
     if constexpr(enable_screenshots)
         m_worker_queue =
             rq::runtime_queue::CreateNewThreadQueue("Profiling worker")
-                .assume_value();
+                .value();
 }
 
 void PerformanceMonitor::unload(

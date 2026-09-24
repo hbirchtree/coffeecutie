@@ -299,8 +299,9 @@ detail::result<runtime_queue*, RuntimeQueueVerboseError> runtime_queue::
         if(thread_started_signal.wait_for(500ms) != std::future_status::ready)
         {
             Coffee::cWarning("Creation of thread {} timed out", name);
-            return RuntimeQueueVerboseError{
-                RQE::ThreadSpawn, "thread creation timed out"};
+            return stl_types::failure(RuntimeQueueVerboseError{
+                RQE::ThreadSpawn, "thread creation timed out",
+            });
         }
 
         {
@@ -349,7 +350,7 @@ detail::result<runtime_task*, RuntimeQueueError> runtime_queue::GetSelf()
 {
     if(auto res = GetCurrentQueue(); res.has_error())
     {
-        return res.error();
+        return stl_types::failure(res.error());
     } else
     {
         auto* queue = res.value();
@@ -359,13 +360,13 @@ detail::result<runtime_task*, RuntimeQueueError> runtime_queue::GetSelf()
                 return &queue->m_tasks[i].task;
             }
     }
-    return RQE::InvalidTaskId;
+    return stl_types::failure(RQE::InvalidTaskId);
 }
 
 detail::result<u64, RuntimeQueueError> runtime_queue::GetSelfId()
 {
     if(auto res = GetCurrentQueue(); res.has_error())
-        return res.error();
+        return stl_types::failure(res.error());
     else
         return res.value()->m_current_task_id;
 }
@@ -379,7 +380,7 @@ detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
     stl_types::thread_id_t targetThread, runtime_task&& task)
 {
     if(auto error = VerifyTask(task))
-        return *error;
+        return stl_types::failure(*error);
 
     if(enum_helpers::feval(task.flags, task_flags::periodic))
         task.time = clock_now() + task.interval;
@@ -393,7 +394,7 @@ detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
         std::shared_lock _(context->global_lock);
         auto             q_it = context->queues.find(targetThread);
         if(q_it == context->queues.end())
-            return RQE::InvalidQueue;
+            return stl_types::failure(RQE::InvalidQueue);
         queue = &q_it->second;
     }
     return Queue(queue, std::move(task));
@@ -404,7 +405,7 @@ detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
 {
     if(context->shutdown_flag.load())
     {
-        return RQE::ShuttingDown;
+        return stl_types::failure(RQE::ShuttingDown);
     }
 
     DProfContext _(RQ_API "Adding task to Queue");
@@ -426,7 +427,7 @@ detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
     runtime_queue* queue, std::unique_ptr<dependent_task_invoker>&& task)
 {
     if(context->shutdown_flag.load())
-        return RQE::ShuttingDown;
+        return stl_types::failure(RQE::ShuttingDown);
 
     DProfContext _(RQ_API "Adding dependent task to queue");
     auto&        ref = *queue;
@@ -634,12 +635,12 @@ detail::result<bool, RuntimeQueueError> runtime_queue::IsRunning(
     runtime_queue* thread)
 {
     if(!thread)
-        return RQE::InvalidQueue;
+        return stl_types::failure(RQE::InvalidQueue);
     auto             tid = thread->thread_id();
     std::shared_lock _(context->global_lock);
     auto             it = context->queue_flags.find(tid);
     if(it == context->queue_flags.end() || !it->second)
-        return RQE::InvalidQueue;
+        return stl_types::failure(RQE::InvalidQueue);
     return detail::success(it->second->running.load());
 }
 

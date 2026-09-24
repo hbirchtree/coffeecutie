@@ -156,10 +156,10 @@ struct tag_block
         if(num == 0)
             return Span<T const>();
         if(num < 0)
-            return "negative tag_block count"sv;
+            return stl_types::failure("negative tag_block count"sv);
         auto const* items = magic.as<T>(pointer(), static_cast<u32>(num));
         if(!items)
-            return "tag_block pointer out of bounds"sv;
+            return stl_types::failure("tag_block pointer out of bounds"sv);
         return Span<T const>(items, static_cast<size_t>(num));
     }
 };
@@ -203,10 +203,10 @@ struct data_reference
         if(num == 0)
             return Span<const byte_t>();
         if(num < 0)
-            return "negative data_reference size"sv;
+            return stl_types::failure("negative data_reference size"sv);
         auto const* bytes = magic.as<byte_t>(pointer(), static_cast<u32>(num));
         if(!bytes)
-            return "data_reference pointer out of bounds"sv;
+            return stl_types::failure("data_reference pointer out of bounds"sv);
         return Span<const byte_t>(bytes, static_cast<size_t>(num));
     }
 };

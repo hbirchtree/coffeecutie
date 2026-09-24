@@ -149,7 +149,7 @@ struct unicode_reflexive
     inline result<ucs_string, error_msg> str(map_ptr const& magic) const
     {
         if(auto seg = data.data(magic); seg.has_error())
-            return seg.error();
+            return stl_types::failure(seg.error());
         else
         {
             return ucs_string(seg.value().data());

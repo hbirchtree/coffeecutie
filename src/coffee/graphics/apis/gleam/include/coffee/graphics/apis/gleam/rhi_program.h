@@ -320,7 +320,7 @@ struct program_t
                 {
                     if(auto res = validate_shader(stage_info.get());
                        res.has_error())
-                        return res.error();
+                        return stl_types::failure(res.error());
                 } else
                 {
                     // KHR_parallel_shader_compile stops at two points:
@@ -382,7 +382,7 @@ struct program_t
                         Coffee::Profiler::DeepProfile(
                             "Async shader compile failed");
                         m_error_state = true;
-                        return res.error();
+                        return stl_types::failure(res.error());
                     }
                     Coffee::Profiler::DeepProfile(
                         "Async shader compile finished");

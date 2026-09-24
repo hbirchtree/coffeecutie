@@ -31,7 +31,7 @@ using glw = std::conditional<
     >::type;
 
 ScreenshotProvider::ScreenshotProvider()
-    : m_main_queue(rq::runtime_queue::GetCurrentQueue().assume_value())
+    : m_main_queue(rq::runtime_queue::GetCurrentQueue().value())
 {
 }
 

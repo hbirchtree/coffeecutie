@@ -23,7 +23,7 @@ stl_types::result<texture_t, std::string> load_from(
         KTX_TEXTURE_CREATE_ALLOC_STORAGE,
         &texture);
     if(ec != KTX_SUCCESS)
-        return ktxErrorString(ec);
+        return stl_types::failure(ktxErrorString(ec));
 
     texture_t out;
     out.texture = std::unique_ptr<ktxTexture, ktxDeleter>(texture);

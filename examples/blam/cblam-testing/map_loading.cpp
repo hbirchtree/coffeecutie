@@ -540,8 +540,8 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
                     if(!data || !(*data))
                     {
                         rq::runtime_queue::CancelTask(
-                            rq::runtime_queue::GetSelfId().assume_value());
-                        return blam::map_load_error::map_file_too_small;
+                            rq::runtime_queue::GetSelfId().value());
+                        return stl_types::failure(blam::map_load_error::map_file_too_small);
                     }
                     auto map = blam::map_container<halo_version>::from_bytes(
                         **data, halo_version_v, std::move(progress_cb));
@@ -602,7 +602,7 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
                         if(!data || load_is_stale())
                         {
                             rq::runtime_queue::CancelTask(
-                                rq::runtime_queue::GetSelfId().assume_value());
+                                rq::runtime_queue::GetSelfId().value());
                             return;
                         }
                         auto& files =

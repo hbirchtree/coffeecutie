@@ -346,8 +346,7 @@ i32 blam_main()
 #if defined(FEATURE_ENABLE_DiscordLatte)
             using namespace net::url_literals;
             auto& discord = e.register_subsystem_inplace<discord::Subsystem>(
-                rq::runtime_queue::CreateNewThreadQueue("Online")
-                    .assume_value(),
+                rq::runtime_queue::CreateNewThreadQueue("Online").value(),
                 discord::DiscordOptions("1194446879027646576"));
             discord.start();
 

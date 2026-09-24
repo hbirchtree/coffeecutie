@@ -12,7 +12,7 @@ using namespace libc_types;
 using namespace type_safety;
 
 template<typename T>
-requires std::is_trivial<T>::value
+requires std::is_arithmetic_v<T>
 struct size_2d
 {
     using value_type                 = T;
