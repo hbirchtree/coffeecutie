@@ -719,11 +719,7 @@ void addDefaults(
     } else
 #endif
     {
-#if defined(COFFEE_EMSCRIPTEN) && 0
-        loader.registerAll<emscripten::GLServices>(container, ec);
-        C_ERROR_CHECK(ec);
-        appInfo.add("gl:context", "Emscripten WebGL");
-#elif defined(FEATURE_ENABLE_SDL3Components)
+#if defined(FEATURE_ENABLE_SDL3Components)
         loader.registerAll<sdl3::GLServices>(container, ec);
         appInfo.add("gl:context", "SDL3");
 #elif defined(FEATURE_ENABLE_EGLComponent)
