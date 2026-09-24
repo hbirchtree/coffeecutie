@@ -6,7 +6,6 @@
 
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
-#include <coffee/core/coffee_saving.h>
 #include <coffee/core/platform_data.h>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/core/url.h>
@@ -275,7 +274,6 @@ struct RendererState
     }
 
     // State that can be loaded from disk
-    std::shared_ptr<Store::SaveApi> saving;
     rq::runtime_queue*              online_queue;
 
     rhi::api gfx;
@@ -654,12 +652,6 @@ void SetupRendering(
     {
         e.register_subsystem_inplace<TimeSystem>(
             TimeSystem::system_clock::now());
-#if !defined(COFFEE_GEKKO)
-        RuntimeState state = {};
-        d.saving           = Store::CreateDefaultSave();
-        d.saving->restore(semantic::Bytes::ofBytes(state));
-        e.subsystem_cast<RuntimeStateSystem>().state = state;
-#endif
     }
 
     {
@@ -825,9 +817,6 @@ void RendererCleanup(
 {
     Profiler::PushContext("Stopping workers");
 
-// #if defined(FEATURE_ENABLE_Net)
-//     entities.subsystem_cast<ASIO::Subsystem>().stop();
-// #endif
 #if defined(FEATURE_ENABLE_DiscordLatte)
     entities.subsystem_cast<discord::Subsystem>().stop();
 #endif
@@ -846,9 +835,6 @@ void RendererCleanup(
                           .count();
 
     state.camera = entities.subsystem_cast<CameraContainer>().camera_source;
-#if !defined(COFFEE_GEKKO)
-    d.saving->save(semantic::Bytes::ofBytes(state));
-#endif
 
     Profiler::PopContext();
 

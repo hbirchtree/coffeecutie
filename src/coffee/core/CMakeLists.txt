@@ -66,15 +66,6 @@ coffee_library(
 )
 
 #
-# Generic application data storage, for application state
-#
-coffee_library(
-  TARGET CoreSaving
-  SOURCES private/coffee_saving.cpp
-  LIBRARIES CoreCommon
-)
-
-#
 # Profiling export to Chrome trace format
 #
 coffee_library(
