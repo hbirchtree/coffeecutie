@@ -5,7 +5,6 @@
 #include <peripherals/stl/range.h>
 
 #include <ktx.h>
-#include <ktxvulkan.h>
 
 void ktxDeleter::operator()(ktxTexture* ptr)
 {
@@ -29,8 +28,12 @@ stl_types::result<texture_t, std::string> load_from(
     texture_t out;
     out.texture = std::unique_ptr<ktxTexture, ktxDeleter>(texture);
     out.levels  = texture->numLevels;
-    out.format  = gl::tex::format_of(
-        static_cast<gl::tex::vk_format_t>(ktxTexture_GetVkFormat(texture)));
+    if(texture->classId == ktxTexture2_c)
+        out.format = gl::tex::format_of(static_cast<gl::tex::vk_format_t>(
+            reinterpret_cast<ktxTexture2*>(texture)->vkFormat));
+    else
+        out.format = gl::tex::format_of(static_cast<gl::tex::format_t>(
+            reinterpret_cast<ktxTexture1*>(texture)->glInternalformat));
 
     auto base_ptr = ktxTexture_GetData(texture);
     for(auto i : stl_types::range<>(texture->numLevels))
