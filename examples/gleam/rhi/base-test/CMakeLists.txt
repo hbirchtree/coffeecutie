@@ -2,7 +2,7 @@ coffee_application(
   TARGET GLeamBaseTest_RHI
   TITLE "GLeam Basic RHI"
   SOURCES main.cpp renderer.h
-  LIBRARIES Core CoreSaving EntComp ComponentBundleSetup
+  LIBRARIES Core EntComp ComponentBundleSetup
   RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/basic_test
 )
 
