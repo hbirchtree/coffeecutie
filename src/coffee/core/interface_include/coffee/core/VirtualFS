@@ -1,2 +1,0 @@
-#pragma once
-#include <coffee/virtfs/virtualfs.h>
