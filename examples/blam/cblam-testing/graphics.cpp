@@ -20,7 +20,12 @@
 
 #include <peripherals/stl/magic_enum.hpp>
 
+#include <coffee/core/CApplication>
+#include <coffee/core/Scene>
+
+#include <coffee/comp_app/app_wrap.h>
 #include <coffee/comp_app/fps_counter.h>
+#include <coffee/comp_app/gl_config.h>
 #include <coffee/core/coffee_args.h>
 #include <coffee/graphics/apis/gleam/rhi_emulation.h>
 #include <platforms/sysinfo.h>

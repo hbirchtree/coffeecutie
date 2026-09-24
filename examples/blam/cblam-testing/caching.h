@@ -6,14 +6,6 @@
 #include <blam/volta/blam_scenario.h>
 #include <blam/volta/blam_sound.h>
 
-#include <coffee/comp_app/AppWrap>
-#include <coffee/comp_app/gl_config.h>
-#include <coffee/core/CApplication>
-#include <coffee/core/CFiles>
-#include <coffee/core/CProfiling>
-#include <coffee/core/EventHandlers>
-#include <coffee/core/Scene>
-
 #include <peripherals/semantic/chunk_ops.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
 
