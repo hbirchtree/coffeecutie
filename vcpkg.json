@@ -3,7 +3,6 @@
     "license": "MIT",
     "version-string": "4.0",
     "dependencies": [
-        { "name": "boost-outcome", "platform": "(android & arm64) | (arm & linux) | (x64 & linux) | osx | windows" },
         { "name": "boost-stacktrace", "platform": "!bare & !emscripten & !android & !windows" },
         { "name": "boost-stacktrace", "platform": "android", "default-features": false },
         { "name": "bzip2", "platform": "!bare" },
@@ -15,8 +14,6 @@
         "magic-enum",
         "ms-gsl",
         "nlohmann-json",
-        { "name": "outcome", "platform": "(android & !arm64) & !emscripten & !(arm & linux) & !(x64 & linux) & !osx & !windows" },
-        { "name": "outcome", "platform": "bare" },
         "stb",
         "utfcpp",
         { "name": "zlib-ng", "platform": "(linux & x64) | osx | windows" },
