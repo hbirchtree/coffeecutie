@@ -296,10 +296,6 @@ jobs:
         - variant: desktop:x86_64-darwin:macos:rel
           artifact: desktop-x86_64-darwin-macos
           mode: rel
-        - variant: desktop:universal-darwin:macos:rel
-          artifact: desktop-universal-darwin-macos
-        - variant: ios:x86_64-darwin:simulator:dbg
-          artifact: ios-x86_64-darwin-simulator
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     name: ${{ matrix.variant }}
