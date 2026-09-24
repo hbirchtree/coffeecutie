@@ -66,18 +66,6 @@ coffee_library(
 )
 
 #
-# Virtual filesystem
-#
-#coffee_library(
-#  TARGET CoreVirtFS
-#  SOURCES private/datastorage/binary/virtualfs.cpp
-#  LIBRARIES CoreCommon CoreZ CoreZstd
-#  HEADER_DIRS
-#    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/virtfs>
-#    HEADER_BASE coffee
-#)
-
-#
 # Generic application data storage, for application state
 #
 coffee_library(

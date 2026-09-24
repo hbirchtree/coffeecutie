@@ -705,13 +705,6 @@ void addDefaults(
 #endif
     }
 
-#if defined(FEATURE_ENABLE_EmscriptenComponents) && \
-    !defined(FEATURE_ENABLE_SDL3Components)
-    loader.registerAll<type_safety::type_list_t<emscripten::ControllerInput>>(
-        container, ec);
-    C_ERROR_CHECK(ec);
-#endif
-
     cVerbose(10, "Loading graphics context");
 #if defined(SELECT_API_OPENGL)
     appInfo.add("graphics:library", "OpenGL");

@@ -41,7 +41,6 @@ struct error_code
 #endif
 
 #include <coffee/core/url.h>
-#include <coffee/interfaces/byte_provider.h>
 #include <coffee/net/curl_context.h>
 #include <coffee/net/http.h>
 #include <fmt/format.h>
