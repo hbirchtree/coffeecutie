@@ -1,6 +1,6 @@
 #pragma once
 
-#include <peripherals/stl/types.h>
+#include <peripherals/stl/error_code.h>
 #include <regex>
 
 namespace stl_types {
@@ -8,7 +8,7 @@ namespace regex {
 
 using namespace ::stl_types;
 
-struct regex_error_category : error_category
+struct regex_error_category : std::error_category
 {
     virtual const char* name() const noexcept;
     virtual std::string message(int) const;

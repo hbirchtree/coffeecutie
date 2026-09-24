@@ -1,7 +1,6 @@
 #include <url/url.h>
 
 #include <coffee/core/resource_prefix.h>
-#include <peripherals/error/file_base.h>
 #include <peripherals/libc/string_ops.h>
 #include <peripherals/stl/regex.h>
 #include <peripherals/stl/stlstring_ops.h>
