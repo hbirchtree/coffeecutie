@@ -1,0 +1,24 @@
+# IWYU mappings for coffeecutie.
+#
+# Only umbrella/detail relationships that IWYU cannot infer belong here.
+# glw/ is deliberately NOT mapped: the point of running IWYU is to find the
+# unused glw/extensions/* includes in the gleam rhi_* headers, and mapping
+# them to an umbrella would hide exactly that.
+[
+  # gleam RHI: rhi_*.h are the public face; nothing should name the
+  # translate/versioning detail headers directly.
+  { include: ["@\"rhi_translate\\.h\"",  private, "<coffee/graphics/apis/gleam/rhi_system.h>", public] },
+  { include: ["@\"rhi_versioning\\.h\"", private, "<coffee/graphics/apis/gleam/rhi_system.h>", public] },
+  { include: ["@\"rhi_features\\.h\"",   private, "<coffee/graphics/apis/gleam/rhi_system.h>", public] },
+
+  # glw format tables are .inl bodies pulled by their own headers.
+  { include: ["@<glw/texture_formats\\.inl>", private, "<glw/texture_formats.h>", public] },
+  { include: ["@<glw/vk_formats\\.inl>",      private, "<glw/vk_formats.h>",      public] },
+
+  # peripherals pulls glm through a shim; nothing names glm directly.
+  { include: ["@<glm/.*>", private, "<peripherals/typing/vectors/glm_vector_types.h>", public] },
+
+  # fmt internals are never included directly.
+  { include: ["@<fmt/base\\.h>", private, "<fmt/format.h>", public] },
+  { include: ["@<fmt/core\\.h>", private, "<fmt/format.h>", public] },
+]
