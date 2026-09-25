@@ -908,7 +908,7 @@ struct texture_cube_array_t : texture_t
                     rq::dependent_task<std::vector<char>, void>::CreateSink(
                         std::move(bits),
                         [this,
-                         offset,
+                         offset = offset_mul,
                          size,
                          level,
                          layout = layout,
