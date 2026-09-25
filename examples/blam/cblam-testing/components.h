@@ -286,6 +286,8 @@ struct ShaderData
     blam::tag_t const*                        shader_tag;
     blam::shader::radiosity_properties const* shader;
 
+    bool camouflaged{false};
+
     generation_idx_t shader_id;
 
     template<typename T>
@@ -326,6 +328,9 @@ struct ShaderData
         {
         case tc::soso: {
             auto info = shader_data<shader_model>();
+            // TODO: Distinguish other postprocess shaders
+            if(camouflaged)
+                return Pass_Postprocess;
             bool alpha_test =
                 !feval(info->flags & shader_model::model_flags::no_alpha_test);
             return sky_pass(alpha_test ? Pass_Alphatest : Pass_Opaque);

@@ -551,11 +551,16 @@ struct BlamMapBrowser
                             "BspReference",
                             ec.get<BspReference>(m_selected_entity));
                         check(
-                            "ObjectSpawn",
-                            ec.get<ObjectSpawn>(m_selected_entity));
+                            "DebugDraw", ec.get<DebugDraw>(m_selected_entity));
+                        check(
+                            "MeshTrackingData",
+                            ec.get<MeshTrackingData>(m_selected_entity));
                         check(
                             "NetworkInfo",
                             ec.get<NetworkInfo>(m_selected_entity));
+                        check(
+                            "ObjectSpawn",
+                            ec.get<ObjectSpawn>(m_selected_entity));
                         check(
                             "PlayerInfo",
                             ec.get<PlayerInfo>(m_selected_entity));
@@ -571,11 +576,6 @@ struct BlamMapBrowser
                         check(
                             "ShaderData",
                             ec.get<ShaderData>(m_selected_entity));
-                        check(
-                            "MeshTrackingData",
-                            ec.get<MeshTrackingData>(m_selected_entity));
-                        check(
-                            "DebugDraw", ec.get<DebugDraw>(m_selected_entity));
                         check(
                             "TriggerVolume",
                             ec.get<TriggerVolume>(m_selected_entity));
@@ -667,6 +667,15 @@ struct BlamMapBrowser
                                 neti->object.tag_class_name().data(),
                                 neti->object.tag_id,
                                 neti->instance_id);
+                        }
+                        if(auto* shader = ec.get<ShaderData>(m_selected_entity))
+                        {
+                            ImGui::Separator();
+                            ImGui::Text("ShaderData");
+                            ImGui::Text("  shader class: %.*s",
+                                4,
+                                shader->shader_tag->tagclass[0].str().data());
+                            ImGui::Checkbox("  camouflaged", &shader->camouflaged);
                         }
                     }
                     ImGui::EndTabItem();
