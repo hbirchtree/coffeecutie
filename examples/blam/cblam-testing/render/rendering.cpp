@@ -149,6 +149,7 @@ inline bool pass_is_order_independent(Passes pass)
     case Pass_SkyMultiply:
     case Pass_Additive:
     case Pass_Multiply:
+    case Pass_Water:
     case Pass_Max:
         return true;
     default:
@@ -1524,6 +1525,7 @@ struct MeshRenderer
     BlamResources&       m_resources;
     RenderingParameters& m_render_params;
     int                  m_render_flags{0x0};
+    bool                 m_water_modulate{false};
 
     ShaderCache<Version>& shader_cache;
     BitmapCache<Version>& bitm_cache;
@@ -1789,7 +1791,8 @@ struct MeshRenderer
             (m_render_params.only_detail ? 0x1000 : 0) |
             (m_render_params.only_micro ? 0x2000 : 0) |
             (m_render_params.only_aux_channels ? 0x4000 : 0) |
-            (m_render_params.interior ? 0x8000 : 0);
+            (m_render_params.interior ? 0x8000 : 0) |
+            (m_water_modulate ? 0x10000 : 0);
         return gfx::uniform_pair{
             {"render_flags"sv, 31},
             semantic::SpanOne<const int>(m_render_flags),
@@ -2254,6 +2257,8 @@ struct MeshRenderer
                 return {.multiply = true};
             case Pass_Max:
                 return {.maximum = true};
+            case Pass_Water:
+                return {.additive = true};
             default:
                 return {};
             }
@@ -2364,6 +2369,25 @@ struct MeshRenderer
             auto pass = static_cast<Passes>(pi);
             for(auto i : stl_types::range<u32>(m_players.size()))
             {
+                if(pass == Pass_Water)
+                {
+                    m_water_modulate = true;
+                    render_pass(
+                        p,
+                        i,
+                        t,
+                        builder.model_submit(i)[pass],
+                        gfx::blend_state{.multiply = true},
+                        transparent_depth);
+                    render_bsp_pass(
+                        p,
+                        i,
+                        t,
+                        builder.bsp_submit(i)[pass],
+                        gfx::blend_state{.multiply = true},
+                        transparent_depth);
+                    m_water_modulate = false;
+                }
                 auto blend = blend_for_pass(pass);
                 render_pass(
                     p,

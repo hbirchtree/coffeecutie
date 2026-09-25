@@ -42,6 +42,7 @@ enum Passes
     // Transparent world geometry — depth write off
     Pass_Additive,
     Pass_Multiply,
+    Pass_Water,
     Pass_Glass,
     Pass_Max, // component_max blend (GL_MAX), e.g. stacked holograms
 
@@ -383,6 +384,7 @@ struct ShaderData
             }
         }
         case tc::swat:
+            return sky_pass(Pass_Water);
         case tc::sgla:
             return sky_pass(Pass_Glass);
         case tc::senv: {

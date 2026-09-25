@@ -52,6 +52,7 @@ const int RENDER_FLAG_ONLY_DETAIL        = 0x1000;
 const int RENDER_FLAG_ONLY_MICRO         = 0x2000;
 const int RENDER_FLAG_ONLY_AUX           = 0x4000;
 const int RENDER_FLAG_INTERIOR           = 0x8000;
+const int RENDER_FLAG_WATER_MODULATE     = 0x10000;
 
 const uint MATERIAL_FLAG_INTERIOR        = 0x10000u;
 
@@ -1062,19 +1063,12 @@ vec4 shader_plasma(in Material mat)
     return vec4(color, plasma);
 }
 
-vec3 ripple_normal(in uint map_id, in vec2 offset, in Material mat)
+vec3 ripple_normal(
+    in uint map_id, in vec2 offset, in float repeats, in Material mat)
 {
-    vec2 texel = exp2(mat.maps[map_id].bias)
-               / vec2(textureSize(source_r8, 0).xy);
-    vec2 step  = texel / max(
-        mat.maps[map_id].uv_scale * mat.maps[map_id].atlas_scale, vec2(1e-6));
-    step = max(step, abs(dFdx(frag.tex)) + abs(dFdy(frag.tex)));
-
-    float here = get_color_with_offset(map_id, offset, mat).r;
-    float du   = get_color_with_offset(map_id, offset + vec2(step.x, 0.0), mat).r;
-    float dv   = get_color_with_offset(map_id, offset + vec2(0.0, step.y), mat).r;
-
-    return normalize(vec3(here - du, here - dv, 1.0));
+    vec2 uv = frag.tex * mat.maps[map_id].uv_scale;
+    return get_color_with_offset(map_id, uv * (repeats - 1.0) + offset, mat)
+               .rgb * 2.0 - 1.0;
 }
 
 vec4 shader_water(in Material mat)
@@ -1086,47 +1080,64 @@ vec4 shader_water(in Material mat)
     int  flags         = mat.material.flags & 0x3;
     vec4 parallel      = mat.material.input2;
     vec4 perpendicular = mat.material.input3;
-    vec4 base          = get_color(base_map_id, mat);
 
-    // Up to four ripple layers, each with the angle, rate, offset and weight
-    // its entry in the shader's ripple block states.
-    // get_bump returns tangent-space normals decoded to [-1, 1].
+    /* Water base maps clamp rather than tile. */
+    vec2 base_uv = frag.tex * mat.maps[base_map_id].uv_scale;
+    vec4 base    = get_color_with_offset(
+        base_map_id, clamp(base_uv, 0.0, 1.0) - base_uv, mat);
+
+    /* Water is drawn twice. This half is multiplied into the background. */
+    if((render_flags & RENDER_FLAG_WATER_MODULATE) != 0)
+        return vec4(
+            (flags & COLOR_MODULATES_BACKGROUND) != 0 ? base.rgb : vec3(1.0),
+            1.0);
+
+    // Up to four ripple layers, each with the angle, rate, offset, weight and
+    // repeat count its entry in the shader's ripple block states.
     vec4 angles        = mat.material.input4;
     vec4 velocities    = mat.material.input5;
     vec4 contributions = mat.material.input6;
+    vec4 repeats       = max(mat.material.input9, vec4(1.0));
     vec2 offsets[4]    = vec2[4](
         mat.material.input7.xy, mat.material.input7.zw,
         mat.material.input8.xy, mat.material.input8.zw);
 
     vec3  bump_sum = vec3(0.0);
     float weight   = 0.0;
+    g_min_lod      = mat.material.input10.x;
     for(int i = 0; i < 4; i++)
     {
         /* Every layer is sampled whether it contributes or not: skipping one
          * would make the texture gradient undefined for the whole quad. */
         vec2 dir = vec2(cos(angles[i]), sin(angles[i]));
         bump_sum += contributions[i] * ripple_normal(
-            bump_map_id, offsets[i] + dir * velocities[i] * time, mat);
+            bump_map_id,
+            offsets[i] + dir * velocities[i] * time,
+            repeats[i],
+            mat);
         weight   += contributions[i];
     }
-    vec3 bump_ts = weight > 0.0 ? normalize(bump_sum) : vec3(0.0, 0.0, 1.0);
+    g_min_lod = -1.0;
+    vec3 bump_ts = weight > 0.0 && dot(bump_sum, bump_sum) > 1e-8
+        ? normalize(bump_sum) : vec3(0.0, 0.0, 1.0);
 
-    // World-space quantities for reflection and Fresnel.
     // tbn_matrix() columns are T/B/N so it transforms tangent -> world.
     vec3 view_world   = normalize(camera_position - frag.position);
     vec3 world_normal = normalize(tbn_matrix() * bump_ts);
 
     /* Linear in the view angle, as every other class here blends its
-     * perpendicular and parallel pair; an exponent here pins all but the most
-     * grazing water to the perpendicular brightness and it turns see-through. */
+     * perpendicular and parallel pair. */
     float NdotV   = clamp(dot(world_normal, view_world), 0.0, 1.0);
     float fresnel = 1.0 - NdotV;
 
     /* Perpendicular at grazing, parallel head-on, as shader_environment and
      * the other classes here read the pair. brightness (alpha channel) is the
      * view-angle reflection strength, not a color scale. */
-    vec3  tint      = mix(parallel.rgb, perpendicular.rgb, fresnel);
-    float out_alpha = mix(parallel.a,   perpendicular.a,   fresnel);
+    vec3  tint     = mix(parallel.rgb, perpendicular.rgb, fresnel);
+    float strength = mix(parallel.a,   perpendicular.a,   fresnel);
+
+    if((flags & ALPHA_MODULATES_REFLECT) != 0)
+        strength *= base.a;
 
     vec3 reflect_color = vec3(0.0);
 #if USE_REFLECTIONS == 1
@@ -1134,13 +1145,8 @@ vec4 shader_water(in Material mat)
     reflect_color = tint * get_cube_color(reflect_dir, mat).rgb;
 #endif
 
-    if((flags & ALPHA_MODULATES_REFLECT) != 0)
-        out_alpha *= base.a;
-
-    if((flags & COLOR_MODULATES_BACKGROUND) != 0)
-        reflect_color += base.rgb * out_alpha;
-
-    return vec4(reflect_color, out_alpha);
+    /* Added over the background, weighted by alpha. */
+    return vec4(reflect_color, strength);
 }
 
 const uint MATERIAL_SENV = 1u;
@@ -1232,6 +1238,14 @@ void main()
     float fog_distance = length(frag.position - camera_position);
     fog_distance = (fog_distance - fog_range.x) / max(fog_range.y, 1.0);
     fog_distance = clamp(exp(-fog_distance * fog_props.w), 0, 1);
+    if(material_id == MATERIAL_SWAT)
+    {
+        /* Both water halves fade to no-ops; the background is fogged already */
+        final_color = (render_flags & RENDER_FLAG_WATER_MODULATE) != 0
+            ? vec4(mix(vec3(1.0), color.rgb, fog_distance), 1.0)
+            : vec4(color.rgb, color.a * fog_distance);
+        return;
+    }
     final_color = mix(
         color,
         fog_color,

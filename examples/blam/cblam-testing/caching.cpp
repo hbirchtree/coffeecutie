@@ -1341,7 +1341,7 @@ void ShaderCache<V>::populate_material(
 
         bitm_cache.assign_atlas_data(mat.maps[1], shader.swat.bump);
         mat.maps[1].uv_scale = base_map_scale * info->ripple.scale;
-        mat.maps[1].bias     = 4.f; // Higher bias makes the water look better
+        mat.maps[1].bias     = info->ripple.mipmap_bias;
 
         mat.material.material = materials::id::swat;
         mat.material.flags    = static_cast<u32>(info->flags);
@@ -1350,13 +1350,8 @@ void ShaderCache<V>::populate_material(
         mat.material.inputs[1] = Vecf4(
             info->perpendicular.tint_color, info->perpendicular.brightness);
 
-        /* Ripple scrolling rides on the untiled texture coordinate, so the
-         * ripple map's own tiling has to be divided back out of the rates and
-         * offsets the tag states in ripple-map tiles. */
-        f32 const inv_scale =
-            info->ripple.scale > 0.f ? 1.f / info->ripple.scale : 1.f;
         Vecf4 angles{}, velocities{}, contributions{}, offsets_01{},
-            offsets_23{};
+            offsets_23{}, repeats{1.f};
         auto         ripples = info->ripple.ripples.data(magic);
         size_t const count   = ripples.has_value()
                                    ? std::min<size_t>(ripples.value().size(), 4)
@@ -1365,18 +1360,19 @@ void ShaderCache<V>::populate_material(
         {
             auto const& ripple      = ripples.value()[i];
             angles[i]               = ripple.anim_angle;
-            velocities[i]           = ripple.anim_velocity * inv_scale;
+            velocities[i]           = ripple.anim_velocity;
             contributions[i]        = ripple.contribution;
+            repeats[i]              = std::max<f32>(ripple.map_repeats, 1.f);
             Vecf4& offset           = i < 2 ? offsets_01 : offsets_23;
-            offset[(i % 2) * 2]     = ripple.map_offset.x * inv_scale;
-            offset[(i % 2) * 2 + 1] = ripple.map_offset.y * inv_scale;
+            offset[(i % 2) * 2]     = ripple.map_offset.x;
+            offset[(i % 2) * 2 + 1] = ripple.map_offset.y;
         }
         if(count == 0)
         {
             /* Shaders with no ripple block animate off the top-level angle
              * and velocity instead. */
             angles[0]        = info->ripple.anim_angle;
-            velocities[0]    = info->ripple.anim_velocity * inv_scale;
+            velocities[0]    = info->ripple.anim_velocity;
             contributions[0] = 1.f;
         }
         mat.material.inputs[2] = angles;
@@ -1384,6 +1380,9 @@ void ShaderCache<V>::populate_material(
         mat.material.inputs[4] = contributions;
         mat.material.inputs[5] = offsets_01;
         mat.material.inputs[6] = offsets_23;
+        mat.material.inputs[7] = repeats;
+        /* Aesthetic mip bias */
+        mat.material.inputs[8] = Vecf4(2.f, 0.f, 0.f, 0.f);
         break;
     }
     case tag_class_t::sgla: {

@@ -75,6 +75,8 @@ layout(binding = 4, std140) uniform TransparentProperties
     TransparentData instance[128];
 } tr;
 
+float g_min_lod = -1.0;
+
 vec4 get_map(in uint map_id, in int layer, in sampler2DArray sampler, in vec2 tex_coord, in Material mat)
 {
     if(layer == -1)
@@ -88,8 +90,17 @@ vec4 get_map(in uint map_id, in int layer, in sampler2DArray sampler, in vec2 te
     vec2 tc = (uv - floor(uv)) * scale + offset;
 
     vec2 grad = scale * exp2(mat.maps[map_id].bias);
-    return textureGrad(sampler, vec3(tc, layer & 0xFFFF),
-                       dFdx(uv) * grad, dFdy(uv) * grad);
+    vec2 dx   = dFdx(uv) * grad;
+    vec2 dy   = dFdy(uv) * grad;
+    if(g_min_lod >= 0.0)
+    {
+        vec2  size      = vec2(textureSize(sampler, 0).xy);
+        float footprint = max(length(dx * size), length(dy * size));
+        float k         = max(1.0, exp2(g_min_lod) / max(footprint, 1e-6));
+        dx *= k;
+        dy *= k;
+    }
+    return textureGrad(sampler, vec3(tc, layer & 0xFFFF), dx, dy);
 }
 
 #if USE_REFLECTIONS == 1
