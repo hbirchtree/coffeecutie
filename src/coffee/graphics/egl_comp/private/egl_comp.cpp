@@ -1,6 +1,7 @@
 #include <coffee/egl/egl_comp.h>
 
 #include <algorithm>
+#include <dlfcn.h>
 
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/comp_app/subsystems.h>
