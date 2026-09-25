@@ -2,9 +2,11 @@
  * stl_types::quick_container.
  *
  * Two dimensions:
- *  - perf:   wall time per full iteration pass over a populated container
+ *  - perf:   nanobench timing per full iteration pass over a populated
+ *            container, reported per entity slot
  *  - memory: heap allocation count + bytes, split into range construction
- *            (quick_container + entity_query) and the iteration itself
+ *            (quick_container + entity_query) and the iteration itself;
+ *            nanobench does not count allocations, so the meter below does
  *
  * The allocation numbers are what motivated the quick_container rewrite:
  * the previous implementation stored two std::function generators per
@@ -17,10 +19,12 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CDebug>
 
-#include <chrono>
+#include <nanobench.h>
+
 #include <cstdio>
 #include <cstdlib>
 #include <new>
+#include <vector>
 
 using namespace Coffee;
 using libc_types::i32;
@@ -138,9 +142,8 @@ constexpr u64 tag_visible = 0x1;
 constexpr u64 tag_static  = 0x2;
 
 /* 1M entities: large enough that iteration is memory-bound and RSS numbers
- * are meaningful; fewer passes to keep the total runtime sane */
+ * are meaningful */
 constexpr u32 num_entities = 1'000'000;
-constexpr u32 num_passes   = 50;
 
 /* Current and peak resident set, from /proc/self/status (Linux) */
 struct rss_snapshot
@@ -205,44 +208,43 @@ static compo::EntityContainer& make_container()
     return container;
 }
 
-template<typename Fn>
-static void bench(const char* name, Fn&& pass)
+/* Printed after nanobench's table so the two don't interleave */
+struct memory_row
 {
-    using clock = std::chrono::steady_clock;
+    const char* name;
+    u64         allocs;
+    u64         bytes;
+    u64         visited;
+    i64         rss_delta_kb;
+};
 
-    /* Memory: one range construction + one pass, measured separately from
-     * timing so the counters don't distort the numbers */
+static std::vector<memory_row> memory_rows;
+
+/* One pass = one range construction + full iteration. nanobench reports it
+ * per entity slot (batch), so the numbers compare across population sizes. */
+template<typename Fn>
+static void bench(ankerl::nanobench::Bench& b, const char* name, Fn&& pass)
+{
+    /* Memory: one pass, measured outside the timed runs so the counters
+     * don't distort the numbers */
     alloc_meter::window mem;
     u64                 visited = pass();
     mem.close();
 
-    /* Perf: warm cache with the pass above, then time. RSS around the
-     * timed loop shows whether iterating grows the working set at all. */
+    /* RSS around the timed runs shows whether iterating grows the working
+     * set at all */
     auto rss_before = rss_snapshot::take();
-    auto t0         = clock::now();
-    for(u32 i = 0; i < num_passes; ++i)
-        visited += pass();
-    auto t1        = clock::now();
+    b.run(name, [&pass]() { ankerl::nanobench::doNotOptimizeAway(pass()); });
     auto rss_after = rss_snapshot::take();
 
-    auto total_ns =
-        std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
-    auto per_pass_us = f64(total_ns) / num_passes / 1000.0;
-    auto per_ent_ns  = f64(total_ns) / num_passes / num_entities;
-
-    if(auto rss_delta = rss_after.current_kb - rss_before.current_kb;
-       rss_delta != 0)
-        cBasicPrint("{0}: RSS grew {1} kB during iteration!", name, rss_delta);
-
-    cBasicPrint(
-        "{0}: {1} us/pass, {2} ns/entity-slot, {3} allocs / {4} B per pass "
-        "(visited={5})",
+    memory_rows.push_back({
         name,
-        per_pass_us,
-        per_ent_ns,
         mem.allocs,
         mem.bytes,
-        visited / (num_passes + 1));
+        visited,
+        static_cast<i64>(rss_after.current_kb) -
+            static_cast<i64>(rss_before.current_kb),
+    });
 }
 
 i32 bench_main(i32, cstring_w*)
@@ -269,10 +271,7 @@ i32 bench_main(i32, cstring_w*)
         }
     }
 
-    cBasicPrint(
-        "compo-bench: {0} entities, {1} passes per benchmark",
-        num_entities,
-        num_passes);
+    cBasicPrint("compo-bench: {0} entities", num_entities);
     cBasicPrint(
         "sizeof: entity_query={0}, quick_container={1} (new), "
         "legacy_quick_container={2} (old, + possible heap per function)",
@@ -281,35 +280,38 @@ i32 bench_main(i32, cstring_w*)
             stl_types::quick_container<compo::EntityContainer::entity_query>),
         sizeof(legacy_quick_container<compo::EntityContainer::entity_query>));
 
-    bench("select<Position>            (all)", [&container]() -> u64 {
+    ankerl::nanobench::Bench b;
+    b.title("compo select").unit("entity").batch(num_entities).warmup(1);
+
+    bench(b, "select<Position>            (all)", [&container]() -> u64 {
         u64 n = 0;
         for(auto ent : container.select<Position>())
             n += ent.id() != 0;
         return n;
     });
 
-    bench("select<Velocity>           (half)", [&container]() -> u64 {
+    bench(b, "select<Velocity>           (half)", [&container]() -> u64 {
         u64 n = 0;
         for(auto ent : container.select<Velocity>())
             n += ent.id() != 0;
         return n;
     });
 
-    bench("select(tags)            (visible)", [&container]() -> u64 {
+    bench(b, "select(tags)            (visible)", [&container]() -> u64 {
         u64 n = 0;
         for(auto ent : container.select(tag_visible))
             n += ent.id() != 0;
         return n;
     });
 
-    bench("select(tags)             (static)", [&container]() -> u64 {
+    bench(b, "select(tags)             (static)", [&container]() -> u64 {
         u64 n = 0;
         for(auto ent : container.select(tag_static))
             n += ent.id() != 0;
         return n;
     });
 
-    bench("select<Velocity> + get<Position>", [&container]() -> u64 {
+    bench(b, "select<Velocity> + get<Position>", [&container]() -> u64 {
         u64 n = 0;
         for(auto ent : container.select<Velocity>())
             n += container.get<Position>(ent.id()) != nullptr;
@@ -318,7 +320,7 @@ i32 bench_main(i32, cstring_w*)
 
     /* Variadic select: both payloads prefetched by the iterator, get<T>()
      * is a cached pointer dereference */
-    bench("select<Velocity, Position> (fused)", [&container]() -> u64 {
+    bench(b, "select<Velocity, Position> (fused)", [&container]() -> u64 {
         u64 n = 0;
         for(auto ent : container.select<Velocity, Position>())
         {
@@ -329,7 +331,7 @@ i32 bench_main(i32, cstring_w*)
     });
 
     /* Same, consumed through the components() tuple + structured binding */
-    bench("select<V, P> components() binding", [&container]() -> u64 {
+    bench(b, "select<V, P> components() binding", [&container]() -> u64 {
         u64 n = 0;
         for(auto ent : container.select<Velocity, Position>())
         {
@@ -345,14 +347,14 @@ i32 bench_main(i32, cstring_w*)
      * std::function generators, calling them on begin()/end(). */
     using query_t = compo::EntityContainer::entity_query;
 
-    bench("quick_container      (new, select)", [&container]() -> u64 {
+    bench(b, "quick_container      (new, select)", [&container]() -> u64 {
         u64 n = 0;
         for(auto ent : container.select(tag_visible))
             n += ent.id() != 0;
         return n;
     });
 
-    bench("legacy_quick_container (old shape)", [&container]() -> u64 {
+    bench(b, "legacy_quick_container (old shape)", [&container]() -> u64 {
         u64  n     = 0;
         auto range = legacy_quick_container<query_t>(
             [&container]() { return query_t(container, tag_visible); },
@@ -361,6 +363,19 @@ i32 bench_main(i32, cstring_w*)
             n += ent.id() != 0;
         return n;
     });
+
+    cBasicPrint("");
+    cBasicPrint("| allocs/pass | bytes/pass | visited | RSS delta kB | benchmark");
+    cBasicPrint("|------------:|-----------:|--------:|-------------:|:----------");
+    for(auto const& row : memory_rows)
+        cBasicPrint(
+            "| {0:>11} | {1:>10} | {2:>7} | {3:>12} | `{4}`",
+            row.allocs,
+            row.bytes,
+            row.visited,
+            row.rss_delta_kb,
+            row.name);
+    cBasicPrint("");
 
     /* Range construction alone: how much does calling select() cost when
      * the range is never iterated? This is the path the quick_container

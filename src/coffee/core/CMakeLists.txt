@@ -96,21 +96,10 @@ coffee_library(
 #)
 
 if(BUILD_TESTS)
-  #
-  # Unit test library that dies properly when a test fails
-  #
-  coffee_library(
-    TARGET Testing
-    SOURCES private/unit_tests/framework.cpp
-    LIBRARIES #[[CoreTerminal]] CoreCommon
-    HEADER_DIRS
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/unit_tests>
-      HEADER_BASE
-      coffee/core
-  )
-
   coffee_add_test(
-    Core "entity-components" "tests/components.cpp" "EntComp"
+    TARGET CompoSchedTests
+    SOURCES tests/components.cpp
+    LIBRARIES Core EntComp
   )
 endif()
 

@@ -61,16 +61,8 @@ macro(INIT_SUBPROJECT)
 
   option(BUILD_LIBRARIES "Build libraries" ON)
   option(BUILD_BINARIES "Build binaries" ON)
-  option(BUILD_UTILITIES "Build tools" ON)
   option(BUILD_TESTS "Build unit tests" ON)
   option(BUILD_EXAMPLES "Build examples" ON)
-  option(BUILD_DOCS "Build documentation" OFF)
-
-  # ############################################################################
-  # Build modifiers These impact the build in multiple ways
-  # ############################################################################
-
-  option(LOWFAT_BUILD "Build with minimal overhead" OFF)
 
   # ############################################################################
   # Coverage and testing
@@ -137,7 +129,6 @@ macro(INIT_SUBPROJECT)
     option(GENERATE_SNAPPY "Generate Snap packages" OFF)
     option(GENERATE_FLATPAK "Generate Flatpaks" OFF)
     option(GENERATE_RWIMAGE "Generate read/write images" OFF)
-    option(EMBED_RESOURCES "Embed resources in ELF" OFF)
   endif()
 
   # When building for Emscripten, we output HTML targets

@@ -1,8 +1,4 @@
-option(BUILD_NET "Build with networking" ON)
 option(BUILD_BLAM "Build Blam! data readers" ON)
-option(BUILD_MEDIA "Build with media decode/encode support" OFF)
-option(BUILD_OPENAL "Build with OpenAL-soft audio" ON)
-option(BUILD_SDL3 "Build with SDL3 graphics backend" ON)
 option(BUILD_TERMINAL "Build with terminal input backend" ON)
 option(BUILD_COMPONENT_APP "Build component-based application" ON)
 
@@ -14,8 +10,6 @@ option(BUILD_GLX "Build X11/GLX components (Linux only)" OFF)
 option(BUILD_GLKIT "Build GLKit components (macOS/iOS only)" OFF)
 option(BUILD_LIBOGC "Build libogc components (GameCube/Wii only)" OFF)
 option(BUILD_X11 "Build X11 components (Linux/macOS only)" OFF)
-
-option(BUILD_HEADFUL "Build with graphics/windowing support" ON)
 
 add_subdirectory(application)
 

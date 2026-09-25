@@ -1,127 +1,27 @@
-# CTest functions
-
-include(BuildPackaging)
-
 # ##############################################################################
-# For automating tests using CTest
+# Unit tests: doctest executables, one CTest entry each
+#
+# Tests are not discovered per TEST_CASE: that runs the binary at build time,
+# which cross builds cannot do. doctest reports each case in the output.
 # ##############################################################################
 
-function(COFFEE_TEST)
-  # If a platform does not support simple testing, drop out here
-  if(WIN_UWP OR ANDROID)
-    return()
+function(COFFEE_ADD_TEST)
+  cmake_parse_arguments(TEST "" "TARGET" "SOURCES;LIBRARIES" ${ARGN})
+
+  if(NOT DEFINED TEST_TARGET)
+    message(FATAL_ERROR "coffee_add_test: TARGET is required")
   endif()
 
-  cmake_parse_arguments(TEST "" "TARGET;TITLE" "SOURCES;LIBRARIES" ${ARGN})
+  find_package(doctest CONFIG REQUIRED)
 
-  if(NOT DEFINED TEST_TARGET OR NOT DEFINED TEST_TITLE)
-    message(FATAL "Test target is not valid")
-  endif()
-
-  coffee_gen_licenseinfo("${TEST_TITLE}" "")
-  coffee_gen_applicationinfo("${TEST_TITLE}" "${TEST_TITLE}" "Coffee" "1")
-
-  if(ANDROID)
-    set(SOURCES_MOD ${TEST_SOURCES} ${APPLICATION_INFO_FILE} ${LICENSE_FILE}
-        # ${SDL2_ANDROID_MAIN_FILE}
-    )
-  else()
-    set(SOURCES_MOD ${TEST_SOURCES} ${APPLICATION_INFO_FILE} ${LICENSE_FILE})
-  endif()
-
-  if(EMSCRIPTEN)
-    add_executable(${TEST_TITLE} ${SOURCES_MOD})
-
-    set_target_properties(
-      ${TEST_TITLE}
-      PROPERTIES RUNTIME_OUTPUT_DIRECTORY
-                 ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TEST_TITLE}.bundle
-    )
-
-    install(DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TEST_TITLE}.bundle
-            DESTINATION bin
-    )
-  elseif(ANDROID OR IOS)
-    coffee_application(
-      TARGET "${TEST_TITLE}"
-      TITLE "${TEST_TITLE}"
-      COMPANY "tests"
-      VERSION_CODE 1 INFO_STRING "Unit test - ${TEST_TITLE}"
-      COPYRIGHT "Testing"
-      SOURCES ${SOURCES_MOD}
-      LIBRARIES ${TEST_LIBRARIES} Testing
-    )
-  else()
-    add_executable("${TEST_TITLE}" ${SOURCES_MOD})
-
-    install(FILES "$<TARGET_FILE:${TEST_TITLE}>"
-            DESTINATION "bin/tests/${CMAKE_LIBRARY_ARCHITECTURE}"
-    )
-  endif()
-
-  set(CORE_TESTING_LIB Coffee::Testing Coffee::CoreApplication)
-  if("${PROJECT_NAME}" STREQUAL "Coffee")
-    set(CORE_TESTING_LIB Testing CoreApplication)
-  endif()
-
-  if((NOT ANDROID) AND (NOT IOS))
-    target_link_libraries(
-      ${TEST_TITLE} PUBLIC ${TEST_LIBRARIES} Testing CoreApplication
-    )
-  endif()
-
+  add_executable(${TEST_TARGET} ${TEST_SOURCES})
+  target_link_libraries(
+    ${TEST_TARGET} PRIVATE ${TEST_LIBRARIES} doctest::doctest
+  )
   target_compile_definitions(
-    ${TEST_TITLE} PUBLIC -DCOFFEE_COMPONENT_NAME="${TEST_TITLE}"
+    ${TEST_TARGET} PRIVATE -DCOFFEE_COMPONENT_NAME="${TEST_TARGET}"
   )
 
-  target_enable_cxx11(${TEST_TITLE})
-
-  if(IOS)
-    # There is not solution for iOS as of yet
-    return()
-  elseif(EMSCRIPTEN)
-    add_test(
-      NAME "${TEST_TITLE}"
-      WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TEST_TITLE}.bundle
-      COMMAND
-        nodejs
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TEST_TITLE}.bundle/${TEST_TITLE}.js
-    )
-  elseif(ANDROID)
-    # We use a unit testing utility for Android, which installs and runs the
-    # test
-
-    set(ADB_AUTO_PATH "${CMAKE_SOURCE_DIR}/tools/automation/scripts/adb_auto")
-    set(ADB_AUTO "${ADB_AUTO_PATH}/unit_test.sh")
-
-    set(PKG_NAME)
-    android_gen_pkg_name("tests" "${TEST_TITLE}" PKG_NAME)
-
-    add_test(
-      NAME "${TEST_TITLE}"
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND ${ADB_AUTO} ${ANDROID_APK_OUTPUT_DIR}/${PKG_NAME}_dbg.apk
-              ${PKG_NAME}
-    )
-  else()
-    # In this case, CTest runs its normal course, locally
-    add_test(
-      NAME "${TEST_TITLE}"
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND $<TARGET_FILE:${TEST_TITLE}> -vvvvvvvvvvvvvv
-    )
-  endif()
-endfunction()
-
-function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES)
-  coffee_test(
-    TARGET
-    "${TARGET}"
-    TITLE
-    "${TITLE}"
-    SOURCES
-    ${SOURCES}
-    LIBRARIES
-    ${LIBRARIES}
-  )
+  # CMAKE_CROSSCOMPILING_EMULATOR is applied by add_test where one is set
+  add_test(NAME ${TEST_TARGET} COMMAND ${TEST_TARGET})
 endfunction()
