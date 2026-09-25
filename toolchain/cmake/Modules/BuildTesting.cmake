@@ -24,4 +24,9 @@ function(COFFEE_ADD_TEST)
 
   # CMAKE_CROSSCOMPILING_EMULATOR is applied by add_test where one is set
   add_test(NAME ${TEST_TARGET} COMMAND ${TEST_TARGET})
+
+  if(NOT TARGET Tests)
+    add_custom_target(Tests)
+  endif()
+  add_dependencies(Tests ${TEST_TARGET})
 endfunction()
