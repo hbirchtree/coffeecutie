@@ -69,6 +69,14 @@
                 { "name": "nativefiledialog-extended", "platform": "!linux & (x11 | wayland)" }
             ]
         },
+        "gns": {
+            "description": "GameNetworkingSockets",
+            "dependencies": [
+                { "name": "gamenetworkingsockets", "platform": "!emscripten & !(android & arm32)" },
+                { "name": "gamenetworkingsockets", "features": ["webrtc-datachannel"], "platform": "!emscripten & !android" },
+                { "name": "gamenetworkingsockets", "features": ["webrtc-datachannel"], "platform": "emscripten" }
+            ]
+        },
         "gleam": {
             "description": "Desktop OpenGL + Mobile OpenGL ES rendering library",
             "dependencies": [
@@ -89,10 +97,7 @@
         "network": {
             "description": "Networking support",
             "dependencies": [
-                { "name": "curl", "features": ["openssl","ssl"], "default-features": false, "platform": "!emscripten" },
-                { "name": "gamenetworkingsockets", "platform": "!emscripten & !(android & arm32)" },
-                { "name": "gamenetworkingsockets", "features": ["webrtc-datachannel"], "platform": "!emscripten & !android" },
-                { "name": "gamenetworkingsockets", "features": ["webrtc-datachannel"], "platform": "emscripten" }
+                { "name": "curl", "features": ["openssl","ssl"], "default-features": false, "platform": "!emscripten" }
             ]
         },
         "openssl": {
