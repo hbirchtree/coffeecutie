@@ -3,11 +3,9 @@
 #include <coffee/core/types/input/event_types.h>
 #include <glm/geometric.hpp>
 #include <peripherals/stl/time_types.h>
-#include <peripherals/typing/enum/graphics/direction.h>
 
 #include <functional>
 #include <map>
-#include <memory>
 
 namespace Coffee::StandardInput {
 

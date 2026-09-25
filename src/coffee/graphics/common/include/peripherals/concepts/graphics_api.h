@@ -6,7 +6,6 @@
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/semantic/enum/rsca.h>
 #include <peripherals/stl/functional_types.h>
-#include <peripherals/typing/enum/graphics/buffer_types.h>
 #include <peripherals/typing/enum/graphics/shader_stage.h>
 #include <peripherals/typing/enum/pixels/filtering.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>

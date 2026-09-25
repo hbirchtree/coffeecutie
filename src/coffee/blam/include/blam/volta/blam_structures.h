@@ -1,20 +1,14 @@
 #pragma once
 
 #include <coffee/core/libc_types.h>
-#include <peripherals/error/result.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/any_of.h>
 #include <peripherals/stl/functional_types.h>
-#include <peripherals/typing/enum/graphics/texture_types.h>
 #include <peripherals/typing/enum/pixels/format.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
-#include <codecvt>
-#include <locale>
-
 #include "blam_base_types.h"
-#include "blam_tag_classes.h"
 
 namespace blam {
 
