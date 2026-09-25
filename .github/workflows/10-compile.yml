@@ -118,6 +118,47 @@ jobs:
           !source/multi_build/${{matrix.artifact}}/install/lib/*.a
           source/multi_build/${{matrix.artifact}}/install/packaged
         if-no-files-found: error
+  Linux_GLES:
+    runs-on: ubuntu-latest
+    needs: Linux_HostTools
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
+      BUILD_DIR: desktop-x86_64-buildroot-linux-gnu-multi
+      ARTIFACT: desktop-x86_64-buildroot-linux-gnu-multi-gles
+    name: "desktop:x86_64-buildroot-linux-gnu:multi:rel (GLES 3.2)"
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: true
+        path: source
+    - uses: ./source/.github/actions/cmake-setup
+    - name: Installing build-essential
+      run: |
+        sudo rm /etc/apt/sources.list.d/microsoft-prod.list
+        sudo apt-get update
+        sudo apt install build-essential inkscape flatpak nasm squashfs-tools autoconf automake autoconf-archive libtool
+    - name: Host tools cache
+      uses: actions/cache@v5
+      with:
+        path: source/multi_build/host-x64-linux-native
+        key: host-tools-${{ runner.os }}-${{ hashFiles('source/toolchain/building.py','source/.cmake/CMakePresets.linux.json','source/.cmake/CMakePresets.apple.json') }}
+        fail-on-cache-miss: true
+    - uses: ./source/.github/actions/build-project
+      with:
+        variant: desktop:x86_64-buildroot-linux-gnu:multi:rel
+        artifact: ${{ env.ARTIFACT }}
+        args: -DBUILD_GLES=ON -DBUILD_GLES_31=ON -DBUILD_GLES_32=ON
+    - name: Uploading artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ env.ARTIFACT }}
+        path: |
+          source/multi_build/${{ env.BUILD_DIR }}/install/bin
+          source/multi_build/${{ env.BUILD_DIR }}/install/lib
+          !source/multi_build/${{ env.BUILD_DIR }}/install/lib/*.a
+          source/multi_build/${{ env.BUILD_DIR }}/install/packaged
+        if-no-files-found: error
   WebAssembly:
     runs-on: ubuntu-latest
     needs: Linux_HostTools
@@ -382,12 +423,6 @@ jobs:
           dummy_plug: dummy_plug_core_43.json
         - variant: core_45
           dummy_plug: dummy_plug_core_45.json
-        - variant: es_20
-          dummy_plug: dummy_plug_es_20.json
-        - variant: es_30
-          dummy_plug: dummy_plug_es_30.json
-        - variant: es_32
-          dummy_plug: dummy_plug_es_32.json
         # Multiplayer: this one config makes the process a server
         # (net_listen) and fork+execs a client child seeded with the
         # client scenario config (dummy plug "spawn" support) — server and
@@ -454,6 +489,60 @@ jobs:
           ${{ env.BLAM_TEST_OUTPUT_DIR }}
           !${{ env.BLAM_TEST_OUTPUT_DIR }}/**/rendered_audio
           !${{ env.BLAM_TEST_OUTPUT_DIR }}/**/rendered_audio.wav
+        if-no-files-found: error
+  Test_x86_64_mesa_gles:
+    name: "llvmpipe ${{ matrix.variant }}"
+    needs: Linux_GLES
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - variant: es_20
+          dummy_plug: dummy_plug_es_20.json
+        - variant: es_30
+          dummy_plug: dummy_plug_es_30.json
+        - variant: es_32
+          dummy_plug: dummy_plug_es_32.json
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        path: source
+    - name: Installing AppImage/media dependencies
+      run: |
+        sudo apt update
+        sudo apt install libfuse2 ffmpeg xvfb mesa-utils
+    - name: Downloading desktop-x86_64-buildroot-linux-gnu-multi-gles artifacts
+      uses: actions/download-artifact@v8
+      with:
+        name: desktop-x86_64-buildroot-linux-gnu-multi-gles
+        path: artifacts/
+    - name: Relocating artifacts
+      run: |
+        mkdir -p source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi
+        mv artifacts/* source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi/
+        chmod +x source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi/packaged/*/*
+    - name: Run dummy plug tests
+      run: |
+        DUMMY_PLUG=${{ matrix.dummy_plug }} xvfb-run --auto-servernum source/.github/tests/test_blam_graphics.sh
+    - name: Convert audio samples to .wav
+      if: always()
+      run: |
+        if [ -f "$BLAM_TEST_OUTPUT_DIR/rendered_audio" ]; then
+          ffmpeg -f f32le -ar 48k -ac 2 -i "$BLAM_TEST_OUTPUT_DIR/rendered_audio" -c:a copy "$BLAM_TEST_OUTPUT_DIR/rendered_audio.wav"
+          rm "$BLAM_TEST_OUTPUT_DIR/rendered_audio"
+        fi
+    - name: Uploading test artifacts
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: dummy_plug_test_${{ matrix.variant }}
+        path: "${{ env.BLAM_TEST_OUTPUT_DIR }}"
         if-no-files-found: error
   Test_wasm_swiftshader:
     if: ${{ always() }}
@@ -1051,6 +1140,7 @@ jobs:
     name: "Gather test results"
     needs:
     - Test_x86_64_mesa
+    - Test_x86_64_mesa_gles
     - Test_wasm_swiftshader
     - Test_webrtc_wasm_client
     - Test_webrtc_wasm_pair
