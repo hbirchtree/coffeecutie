@@ -127,6 +127,7 @@
                 "BUILD_COMP_DUMMY_PLUG": "OFF",
                 "BUILD_GLES_31": "OFF",
                 "BUILD_GLES_32": "OFF",
+                "BUILD_GNS": "OFF",
                 "CMAKE_C_FLAGS": "-march=armv7-a",
                 "CMAKE_CXX_FLAGS": "-march=armv7-a",
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/vcpkg/toolchains/android-kitkat.cmake",

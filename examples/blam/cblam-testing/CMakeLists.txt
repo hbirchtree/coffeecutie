@@ -96,7 +96,7 @@ endif()
 if(TARGET DiscordLatte)
     target_link_libraries(BlamGraphics PUBLIC DiscordLatte)
 endif()
-if(GameNetworkingSockets_FOUND)
+if(BUILD_GNS AND GameNetworkingSockets_FOUND)
     target_link_libraries(BlamGraphics PUBLIC
         GameNetworkingSockets::GameNetworkingSockets_s
     )
@@ -110,7 +110,10 @@ if(GameNetworkingSockets_FOUND)
         OpenSSL::Crypto
     )
 endif()
-if(GameNetworkingSockets_FOUND AND (LibDataChannel_FOUND OR EMSCRIPTEN))
+if(BUILD_GNS AND
+        GameNetworkingSockets_FOUND AND
+        (LibDataChannel_FOUND OR EMSCRIPTEN)
+)
     if(EMSCRIPTEN)
         target_link_libraries(BlamGraphics PUBLIC
             datachannel-wasm::datachannel-wasm

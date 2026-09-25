@@ -22,6 +22,7 @@
                 "BUILD_COMPRESS_ZLIB": "OFF",
                 "BUILD_COMPRESS_ZSTD": "OFF",
                 "BUILD_GLEAM": "OFF",
+                "BUILD_GNS": "OFF",
                 "BUILD_GRAPHICS_COMMON": "ON",
                 "BUILD_GX": "ON",
                 "BUILD_HEADFUL": "ON",
