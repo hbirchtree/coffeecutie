@@ -404,14 +404,16 @@ vec4 shader_environment(in Material mat)
     out_color *= lightmap.rgb;
 #endif
 #if USE_REFLECTIONS == 1
-    vec3 refl_out =
-        reflection * refl_color * refl_strength * specular * 2.0;
+    vec3 refl_out = reflection * refl_color * refl_strength * specular;
     if((render_flags & RENDER_FLAG_ONLY_REFLECTIONS) != 0)
         return vec4(refl_out, 1);
-    out_color = clamp(out_color + refl_out, 0.0, 1.0);
 #endif
 #if USE_NORMALMAP == 1
+    /* Bump shading is diffuse lighting; it does not scale the reflection */
     out_color *= bump_factor;
+#endif
+#if USE_REFLECTIONS == 1
+    out_color = clamp(out_color + refl_out, 0.0, 1.0);
 #endif
 
 #if USE_SELF_ILLUMINATION == 1
