@@ -23,6 +23,7 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/Scene>
 
+#include <coffee/comp_app/app_events.h>
 #include <coffee/comp_app/app_wrap.h>
 #include <coffee/comp_app/fps_counter.h>
 #include <coffee/comp_app/gl_config.h>
@@ -539,6 +540,25 @@ i32 blam_main()
             }
 
             auto& gbus = e.subsystem_cast<GameEventBus>();
+            auto& app_bus = e.subsystem_cast<comp_app::BasicEventBus<comp_app::AppEvent>>();
+
+            if constexpr(compile_info::platform::is_android)
+            {
+                // Map Android back action to game/menu switch
+                // In the future maybe better support for back nav
+                app_bus.addEventFunction<comp_app::NavigationEvent>(
+                    0, [&](auto&, comp_app::NavigationEvent* nav) {
+                        if(nav->navigation_type != comp_app::NavigationEvent::Back)
+                            return;
+                        UIEvent ev{.type = UIEvent::navigation};
+                        for(auto player : e.select<PlayerCamera, PlayerInput>())
+                        {
+                            auto [cam, input] = player.components();
+                            if(cam.keyboard.enabled)
+                                input.start = true;
+                        }
+                    });
+            }
 
             e.subsystem_cast<BlamFiles<halo_version>>().map_directory = map_dir;
 
@@ -611,6 +631,9 @@ i32 blam_main()
             using namespace typing::vectors::scene;
 
             auto controllers = e.service<comp_app::ControllerInput>();
+            auto& uibus = e.subsystem_cast<UIEventBus>();
+
+            UIEvent uiev{.type = UIEvent::navigation};
 
             for(auto entity : e.select<
                               PlayerCamera,
@@ -622,7 +645,9 @@ i32 blam_main()
                 auto [cam, input, info, net, mod] = entity.components();
                 if(info.permissions.camera)
                 {
-                    if(controllers && cam.controller.index.has_value())
+                    bool controller_connected = controllers &&
+                        cam.controller.index.has_value();
+                    if(controller_connected)
                         controller_sample_input(
                             input.look_delta,
                             input.movement,
@@ -668,7 +693,34 @@ i32 blam_main()
                             input.accel,
                             t);
 
-                    if(!cam.mode.physics)
+                    auto controller_buttons = [&controllers, &cam] {
+                        return controllers->state(*cam.controller.index).buttons.e;
+                    };
+                    auto key_pressed = [&input](u16 key) {
+                        return StandardCamera::has_key(input.keys, key);
+                    };
+
+                    if(input.input_mode == PlayerInput::input_mode_t::menu)
+                    {
+                        if(controller_connected)
+                        {
+                            input.accept |= controller_buttons().a;
+                            input.back   |= controller_buttons().b;
+                            input.left   |= controller_buttons().p_left;
+                            input.right  |= controller_buttons().p_right;
+                            input.up     |= controller_buttons().p_up;
+                            input.down   |= controller_buttons().p_down;
+                        }
+                        if(cam.keyboard.enabled)
+                        {
+                            input.accept |= key_pressed(Input::CK_EnterNL);
+                            input.back   |= key_pressed(Input::CK_BackSpace);
+                            input.left   |= key_pressed(Input::CK_Left);
+                            input.right  |= key_pressed(Input::CK_Right);
+                            input.up     |= key_pressed(Input::CK_Up);
+                            input.down   |= key_pressed(Input::CK_Down);
+                        }
+                    } else if(!cam.mode.physics)
                     {
                         // Check that there's input
                         // Avoid needless movement
@@ -704,18 +756,15 @@ i32 blam_main()
                         bool jump = input.jump;
 
                         if(cam.keyboard.enabled)
-                            jump = jump || StandardCamera::has_key(
-                                               input.keys, Input::CK_Space);
-                        if(controllers && cam.controller.index.has_value())
-                            jump = jump ||
-                                   controllers->state(*cam.controller.index)
-                                       .buttons.e.a;
+                            jump |= key_pressed(Input::CK_Space);
+                        if(controller_connected)
+                            jump |= controller_buttons().a;
                         /* Clamp instead of normalize: keyboard diagonals
                          * cap at 1, partial stick deflection stays analog */
                         if(f32 len2 = glm::dot(dir, dir); len2 > 1.f)
                             dir /= std::sqrt(len2);
 
-                        const f32 move_speed = 14.f * input.accel;
+                        const f32 move_speed = 10.f * input.accel;
                         const f32 jump_speed = 4.f;
 
                         Physics::Event    ev{Physics::Event::Velocity};
@@ -728,11 +777,53 @@ i32 blam_main()
                         e.subsystem_cast<PhysicsBus>().process(ev, &velocity);
                     }
 
+                    /* Sampled in every mode, freecam included */
+                    if(controller_connected)
+                        input.start |= controller_buttons().start;
+                    if(cam.keyboard.enabled)
+                        input.start |= key_pressed(Input::CK_F2);
+
+                    if(input.start)
+                    {
+                        cDebug("Toggling game/menu mode");
+                        input.input_mode =
+                            input.input_mode == PlayerInput::input_mode_t::menu
+                                ? PlayerInput::input_mode_t::game
+                                : PlayerInput::input_mode_t::menu;
+                        e.subsystem_cast<RenderingParameters>().render_ui =
+                            input.input_mode == PlayerInput::input_mode_t::menu;
+                    }
+
+                    auto emit_nav_event = [uiev = uiev, &uibus, &info](
+                        UINavigation::action_t action) mutable
+                    {
+                        UINavigation nav{
+                            .action = action,
+                            .seat_idx = info.seat_idx,
+                        };
+                        uibus.inject(uiev, &nav);
+                    };
+
+                    if(input.accept)
+                        emit_nav_event(UINavigation::accept);
+                    if(input.back)
+                        emit_nav_event(UINavigation::back);
+                    if(input.left)
+                        emit_nav_event(UINavigation::left);
+                    if(input.right)
+                        emit_nav_event(UINavigation::right);
+                    if(input.up)
+                        emit_nav_event(UINavigation::up);
+                    if(input.down)
+                        emit_nav_event(UINavigation::down);
+
                     /* Consumed: sampled fresh every frame from held keys and
                      * stick state, never carried over */
                     input.movement = {};
                     input.accel    = 1.f;
                     input.jump     = false;
+
+                    input.frame_end();
                 }
 
                 cam.camera.zVals = {100.f, 0.001f};

@@ -571,21 +571,76 @@ struct PlayerInfo
     }
 };
 
+struct debounced_button_t
+{
+    bool current{false};
+    bool previous{false};
+
+    debounced_button_t& operator|=(bool input)
+    {
+        current |= input;
+        return *this;
+    }
+    debounced_button_t& operator=(bool input)
+    {
+        current = input;
+        return *this;
+    }
+
+    operator bool() const
+    {
+        return current && !previous;
+    }
+
+    void frame_end()
+    {
+        previous = current;
+        current  = false;
+    }
+};
+
 struct PlayerInput
 {
     using value_type = PlayerInput;
     using type       = compo::alloc::VectorContainer<value_type>;
 
+    enum class input_mode_t
+    {
+        game,
+        menu,
+    } input_mode{input_mode_t::game};
+
     StandardCamera::Reg keys; /*!< held keys, from KeyboardInput */
     Vecf2 look_delta{};       /*!< accumulated look; zeroed once applied */
     Vecf3 movement{};
     f32   accel{1.f}; /*!< speed modifier chosen by the source */
-    bool  jump{false};
+
+    // Menu
+    debounced_button_t start{};
+    debounced_button_t accept{};
+    debounced_button_t back{};
+    debounced_button_t up{};
+    debounced_button_t down{};
+    debounced_button_t left{};
+    debounced_button_t right{};
+    // In-game actions, these need indirection for network
+    bool jump{false};
 
     std::optional<Vecf3> position; /*!< teleport target */
     std::optional<Quatf> rotation; /*!< absolute orientation */
 
     // TODO: Add more inputs later
+
+    void frame_end()
+    {
+        start.frame_end();
+        back.frame_end();
+        accept.frame_end();
+        left.frame_end();
+        right.frame_end();
+        up.frame_end();
+        down.frame_end();
+    }
 };
 
 struct PlayerCamera

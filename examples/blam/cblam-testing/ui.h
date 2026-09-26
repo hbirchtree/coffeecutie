@@ -7,8 +7,27 @@
 
 struct UIEvent
 {
-    std::string element{};
-    bool        clicked{true};
+    enum type_t
+    {
+        navigation,
+    } type;
+};
+
+struct UINavigation
+{
+    static constexpr auto event_type = UIEvent::navigation;
+
+    enum action_t
+    {
+        back,
+        accept,
+
+        up,
+        down,
+        left,
+        right,
+    } action{accept};
+    libc_types::u32 seat_idx{};
 };
 
 using UIEventBus = comp_app::BasicEventBus<UIEvent>;

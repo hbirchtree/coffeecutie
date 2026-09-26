@@ -641,6 +641,7 @@ void alloc_ui_system(compo::EntityContainer& e)
             std::ref(e.subsystem_cast<BitmapCache<halo_version>>()),
             std::ref(e.subsystem_cast<FontCache<halo_version>>()));
     e.register_component_inplace<UIElement>();
+    e.register_subsystem_inplace<UIEventBus>();
 }
 
 void load_ui_items(
