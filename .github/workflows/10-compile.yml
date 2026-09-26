@@ -386,7 +386,7 @@ jobs:
       run: |
         sudo rm /etc/apt/sources.list.d/microsoft-prod.list
         sudo apt-get update
-        sudo apt install build-essential nasm autoconf automake autoconf-archive libtool
+        sudo apt install build-essential nasm autoconf automake autoconf-archive libtool flatpak
     - name: Host tools cache
       uses: actions/cache@v5
       with:
