@@ -611,7 +611,7 @@ struct alignas(4) shader_env : radiosity_properties /* aka senv */
         //     and modulates the plasma on color
         detail_map map;
 
-        u32 padding2[15];
+        u32 padding2[10];
     } self_illum;
 
     enum class specular_flags : u16
@@ -626,6 +626,7 @@ struct alignas(4) shader_env : radiosity_properties /* aka senv */
     {
         specular_flags flags;
         f32            brightness;
+        u32            padding_[5];
         Vecf3          perpendicular_color;
         Vecf3          parallel_color;
     } specular;
@@ -673,6 +674,10 @@ static_assert(
     offsetof(shader_env, specular) +
         offsetof(shader_env::specular_t, perpendicular_color) ==
     680);
+static_assert(
+    offsetof(shader_env, specular) +
+        offsetof(shader_env::specular_t, brightness) ==
+    656);
 static_assert(offsetof(shader_env, reflection) == 720);
 static_assert(
     offsetof(shader_env, reflection) +
