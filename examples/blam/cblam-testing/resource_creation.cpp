@@ -1156,6 +1156,26 @@ void set_resource_labels(EntityContainer& e)
     gfx::debug::api& debug     = api.debug();
     BlamResources&   resources = e.subsystem_cast<BlamResources>();
 
+    if(resources.model_pipeline)
+        debug.annotate(*resources.model_pipeline, "mod2_combo");
+    if(resources.model_pipeline_base)
+        debug.annotate(*resources.model_pipeline_base, "mod2_base");
+    if(resources.model_pipeline_chicago)
+        debug.annotate(*resources.model_pipeline_chicago, "mod2_chicago");
+    if(resources.model_pipeline_sotr)
+        debug.annotate(*resources.model_pipeline_sotr, "mod2_sotr");
+    if(resources.camo)
+        debug.annotate(*resources.camo, "mod2_camo");
+
+    if(resources.bsp_pipeline)
+        debug.annotate(*resources.bsp_pipeline, "bsp_combo");
+    if(resources.bsp_pipeline_base)
+        debug.annotate(*resources.bsp_pipeline_base, "bsp_base");
+    if(resources.bsp_pipeline_chicago)
+        debug.annotate(*resources.bsp_pipeline_chicago, "bsp_chicago");
+    if(resources.bsp_pipeline_sotr)
+        debug.annotate(*resources.bsp_pipeline_sotr, "bsp_sotr");
+
     if(resources.debug_lines_pipeline)
         debug.annotate(*resources.debug_lines_pipeline, "debug_lines");
     if(resources.wireframe_pipeline)
