@@ -256,7 +256,7 @@ size_t configured_worker_count()
     static const size_t count = []() -> size_t {
         auto const* value = std::getenv("COFFEE_ECS_THREADS");
         if(!value)
-            return 0;
+            return 1;
         if(std::string_view(value) == "auto")
         {
             auto available = std::thread::hardware_concurrency();
