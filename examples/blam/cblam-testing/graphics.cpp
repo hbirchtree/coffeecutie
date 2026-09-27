@@ -560,6 +560,18 @@ i32 blam_main()
                     });
             }
 
+            /* B or a resume button closed the menu without start */
+            e.subsystem_cast<UIEventBus>().addEventFunction<UIMenuLeave>(
+                0, [&e](UIEvent&, UIMenuLeave* leave) {
+                    for(auto player : e.select<PlayerInfo, PlayerInput>())
+                    {
+                        auto [info, input] = player.components();
+                        if(info.seat_idx == leave->seat_idx)
+                            input.input_mode = PlayerInput::input_mode_t::game;
+                    }
+                    e.subsystem_cast<RenderingParameters>().render_ui = false;
+                });
+
             e.subsystem_cast<BlamFiles<halo_version>>().map_directory = map_dir;
 
             if(arguments.count("server"))
@@ -705,7 +717,7 @@ i32 blam_main()
                         if(controller_connected)
                         {
                             input.accept |= controller_buttons().a;
-                            input.back   |= controller_buttons().b;
+                            input.back   |= controller_buttons().b || controller_buttons().back;
                             input.left   |= controller_buttons().p_left;
                             input.right  |= controller_buttons().p_right;
                             input.up     |= controller_buttons().p_up;
@@ -783,17 +795,6 @@ i32 blam_main()
                     if(cam.keyboard.enabled)
                         input.start |= key_pressed(Input::CK_F2);
 
-                    if(input.start)
-                    {
-                        cDebug("Toggling game/menu mode");
-                        input.input_mode =
-                            input.input_mode == PlayerInput::input_mode_t::menu
-                                ? PlayerInput::input_mode_t::game
-                                : PlayerInput::input_mode_t::menu;
-                        e.subsystem_cast<RenderingParameters>().render_ui =
-                            input.input_mode == PlayerInput::input_mode_t::menu;
-                    }
-
                     auto emit_nav_event = [uiev = uiev, &uibus, &info](
                         UINavigation::action_t action) mutable
                     {
@@ -804,6 +805,18 @@ i32 blam_main()
                         uibus.inject(uiev, &nav);
                     };
 
+                    if(input.start)
+                    {
+                        bool const to_menu =
+                            input.input_mode == PlayerInput::input_mode_t::game;
+                        input.input_mode =
+                            to_menu ? PlayerInput::input_mode_t::menu
+                                    : PlayerInput::input_mode_t::game;
+                        e.subsystem_cast<RenderingParameters>().render_ui =
+                            to_menu;
+                        emit_nav_event(
+                            to_menu ? UINavigation::open : UINavigation::close);
+                    }
                     if(input.accept)
                         emit_nav_event(UINavigation::accept);
                     if(input.back)

@@ -10,6 +10,7 @@ struct UIEvent
     enum type_t
     {
         navigation,
+        menu_leave,
     } type;
 };
 
@@ -21,12 +22,23 @@ struct UINavigation
     {
         back,
         accept,
+        open,  /*!< show the seat's pause menu */
+        close, /*!< hide it, e.g. when the player toggles back to game */
 
         up,
         down,
         left,
         right,
     } action{accept};
+    libc_types::u32 seat_idx{};
+};
+
+/* The UI closed a menu on its own (B, a resume button); whoever sent
+ * UINavigation::close is not told */
+struct UIMenuLeave
+{
+    static constexpr auto event_type = UIEvent::menu_leave;
+
     libc_types::u32 seat_idx{};
 };
 
