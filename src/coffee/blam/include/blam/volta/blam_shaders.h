@@ -452,6 +452,8 @@ struct alignas(64) shader_meter : radiosity_properties
     } ext_func_src;
 };
 
+C_FLAGS(shader_meter::meter_flags, u32);
+
 struct alignas(4) shader_water : radiosity_properties /* aka swat */
 {
     enum class water_flags : u16

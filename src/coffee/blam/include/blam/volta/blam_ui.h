@@ -28,8 +28,8 @@ struct ui_element
         player_4,
         any_player,
     } controller_index;
-    bl_string                        name;
-    typing::vectors::tvector<i16, 4> bounds;
+    bl_string name;
+    vec4i16   bounds;
     enum class flags_t : u32
     {
         pass_unhandled_events_to_focused_child = 0x1,
@@ -55,6 +55,10 @@ struct ui_element
 
     using function_t = u16;
 
+    /* Guerilla notes:
+     * These functions use current game data to modify the appearance of
+     * the widget. These functions are called every time the widget is rendered.
+     */
     struct data_input_t
     {
         function_t function;
@@ -63,6 +67,11 @@ struct ui_element
 
     reference<data_input_t> data_inputs;
 
+    /* Guerilla notes:
+     * These allow actions to be tied to certain UI events
+     * The event handler runs every time the widget receives the specified event
+     * By default, the "back" and "B" buttons will take you to the previous screen
+     */
     struct event_handler_t
     {
         enum class flags_t : u32
@@ -125,6 +134,12 @@ struct ui_element
 
     reference<event_handler_t> event_handlers;
 
+    /* Guerilla notes:
+     * These are used to run a search-and-replace on the specified word in the text-box text
+     * replacing all occurences of the word with the output of the replace function
+     * These are invoked each time the text box is rendered (after any game data input
+     * functions have been run). The searching is case-sensitive
+     */
     struct search_and_replace_t
     {
         bl_string query;
@@ -139,6 +154,13 @@ struct ui_element
 
     u32 unknown_data[10];
 
+    u32 padding_0[25];
+
+    /* Guerilla notes:
+     * Parameters specific to text box widgets
+     * NOTE: The string list tag can also be used for lists whose items come
+     * from a string list tag
+     */
     struct text_box_t
     {
         tagref_typed_t<tag_class_t::ustr> unicode_strings;
@@ -158,16 +180,86 @@ struct ui_element
             dont_focus = 0x8,
         } flags;
         u32 unknown1[3];
+
+        // More text box parameters
+
         i16 string_list_index;
         i16 horizontal_offset;
         i16 vertical_offset;
-        u32 unknown2[6];
-        i16 unknown3;
+        u16 padding;
     } text_box;
+    
+    u32 padding_1[6];
 
     /* Missing list items, conditional widgets, column list, spinner list */
-    u32 padding[188];
 
+    /* Guerilla notes:
+     * These options affect list items for both spinner and column lists
+     * * child widgets are used to define the visible list items
+     * * for lists with code-generated list items, the child widgets are used
+     *   as templated for visible item placement
+     * IMPORTANT: for list widgets, the ONLY thing you can have as child widgets
+     * are the list item widgets!
+     */
+    struct list_items_t
+    {
+        enum flags_t : u32
+        {
+            none                          = 0x0,
+            list_items_generated_in_code  = 0x1,
+            list_items_from_list_tag      = 0x2,
+            list_items_only_one_tooltip   = 0x4,
+            list_single_preview_no_scroll = 0x8,
+        } flags;
+    } list_items; // Currently not located
+
+    /* Guerilla notes:
+     * Parameters specific to spinner list widgets
+     * Child widgets are the list items
+     */
+    struct spinner_list_t
+    {
+        tagref_typed_t<tag_class_t::bitm> list_header_bitmap;
+        tagref_typed_t<tag_class_t::bitm> list_footer_bitmap;
+        vec4i16                           header_bounds;
+        vec4i16                           footer_bounds;
+    } spinner_list;
+
+    u32 padding_2[8];
+
+    /* Guerilla notes:
+     * Parameters specific to column list widgets
+     * Child widgets are the list items
+     */
+    struct column_list_t
+    {
+        tagref_typed_t<tag_class_t::ui_element> extended_description_widget;
+    } column_list;
+
+    u32 padding_3[72];
+
+    /* Guerilla notes:
+     * Use this to attach widgets that are loaded only if some internal
+     * criteria is met while processing a widget event
+     */
+    struct conditional_widget_t
+    {
+        tagref_typed_t<tag_class_t::ui_element> widget_tag;
+        bl_string name; /* unused */
+        enum flags_t : u32
+        {
+            load_if_event_handler_function_fails = 0x1,
+        } flags;
+        u32 custom_controller_index; /* unused */
+    };
+    reference<conditional_widget_t> conditional_widgets;
+
+    u32 padding_4[64];
+
+    /* Guerilla notes:
+     * Use this to attach widgets thata are loaded as "children" of
+     * this widget (children are always loaded as part of the parent widget)
+     */
     struct child_widget_t
     {
         tagref_typed_t<tag_class_t::DeLa> widget;
@@ -185,9 +277,16 @@ struct ui_element
     reference<child_widget_t> child_widgets;
 };
 
+C_FLAGS(ui_element::flags_t, u32);
+C_FLAGS(ui_element::event_handler_t::flags_t, u32);
+C_FLAGS(ui_element::text_box_t::flags_t, u32);
+C_FLAGS(ui_element::child_widget_t::flags_t, u32);
+static_assert(offsetof(ui_element, text_box) == 236);
+static_assert(offsetof(ui_element, spinner_list) == 340);
+static_assert(offsetof(ui_element, column_list) == 420);
+static_assert(offsetof(ui_element, conditional_widgets) == 724);
 static_assert(offsetof(ui_element, child_widgets) == 992);
-
-// static_assert(sizeof(ui_element) == 1004);
+static_assert(sizeof(ui_element) == 1004);
 
 struct ui_item_collection
 {
