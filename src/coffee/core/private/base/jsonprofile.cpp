@@ -78,10 +78,11 @@ struct ProfileWriter : GlobalState
                    R"({"displayTimeUnit": "ms","traceEvents":[)"));
            error.has_value())
             return;
-        if(auto disable = platform::env::var("COFFEE_DISABLE_PROFILER");
-           disable.has_value() && disable.value() == "1")
+        if(auto enable = platform::env::var("COFFEE_PROFILER");
+           enable.has_value() && enable.value() == "1")
+            disable_frequent = false;
+        else
             disable_frequent = true;
-        //        disable_frequent = true;
         init_pid    = getpid();
         init_thread = std::this_thread::get_id();
     }
