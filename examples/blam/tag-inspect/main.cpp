@@ -33,6 +33,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <map>
 #include <peripherals/libc/types.h>
+#include <peripherals/stl/flag_print.h>
 #include <url/url.h>
 #include <vector>
 
@@ -59,6 +60,7 @@ namespace {
 blam::map_ptr g_magic;
 /* Pixel data is addressed by absolute file offset, unlike tag data */
 blam::map_ptr g_raw_magic;
+bool          g_dump_hex = false;
 bool          g_dump_mirrors  = false;
 size_t        g_scan_window   = 0;
 bool          g_dump_player   = false;
@@ -109,32 +111,13 @@ std::string_view enum_name(E value)
     return name.empty() ? sv("?") : name;
 }
 
-#if defined(__cpp_lib_reflection) && defined(__cpp_impl_reflection) && !defined(__clang_analyzer__)
 template<typename E>
 std::string flags_to_string(E flags)
 {
-    std::string out;
-    template for(constexpr auto val : std::define_static_array(std::meta::enumerators_of(^^E)))
-    {
-        if((flags & [:val:]) != static_cast<E>(0))
-        {
-            out.append(std::meta::identifier_of(val));
-            out.append(" |");
-        }
-    }
-    if(out.empty())
-        out = "none";
-    else
-        out.resize(out.size() - 2);
-    return fmt::format("[{}]", out);
+    if(!stl_types::flag_print_supported)
+        return "[unsupported]";
+    return stl_types::flags_to_string(flags);
 }
-#else
-template<typename E>
-std::string flags_to_string(E flags)
-{
-    return {};
-}
-#endif
 
 /* Enums are stored as flag words as often as they are stored as values;
  * print the number either way so an unnamed bit is still visible. */
@@ -142,6 +125,48 @@ template<typename E>
 void print_enum(char const* label, E value)
 {
     fmt::print("{}={}({}) ", label, enum_name(value), static_cast<u32>(value));
+}
+
+/* Dumping a range as hex */
+
+void hex_dump(gsl::span<libc_types::byte_t const> data, libc_types::u32 stride = 16)
+{
+    using libc_types::f32;
+    using libc_types::u32;
+    using libc_types::u16;
+
+    for(size_t offset = 0; offset < data.size_bytes(); offset += stride)
+    {
+        auto current_span = std::min<size_t>(stride, data.size_bytes() - offset);
+        auto span = data.subspan(offset, current_span);
+
+        std::string printable;
+        for(auto c : span)
+        {
+            if(std::isprint(c))
+                printable.push_back(c);
+            else
+                printable.push_back('.');
+        }
+
+        auto f32_view = gsl::span<f32 const>(
+            reinterpret_cast<f32 const*>(span.data()), span.size_bytes() / 4);
+        auto u32_view = gsl::span<u32 const>(
+            reinterpret_cast<u32 const*>(span.data()), span.size_bytes() / 4);
+        auto u16_view = gsl::span<u16 const>(
+            reinterpret_cast<u16 const*>(span.data()), span.size_bytes() / 2);
+
+        fmt::print("  0x{:04x}:", offset);
+        for(size_t i = 0; i < span.size_bytes(); i += 4)
+        {
+            fmt::print(" {:02x} {:02x} {:02x} {:02x}",
+                span[i + 0], span[i + 1], span[i + 2], span[i + 3]);
+        }
+        fmt::print("  | {} |", printable);
+        for(size_t i = 0; i < f32_view.size(); i++)
+            fmt::print(" {: .6g}", f32_view[i]);
+        fmt::print("\n");
+    }
 }
 
 /* Everything is a D3D format read little-endian. A8R8G8B8 lands in memory as
@@ -497,7 +522,7 @@ void dump_dela(blam::ui_element const* info)
     fmt::print("\n");
     auto name = info->name.str();
     fmt::print("  name=\"{}\"\n", name);
-    print_enum("  flags", info->flags);
+    fmt::print("  flags={}", flags_to_string(info->flags));
     fmt::print("\n");
     fmt::print(
         "  bounds=({},{},{},{}) auto_close={}ms fade={}ms\n",
@@ -529,7 +554,7 @@ void dump_dela(blam::ui_element const* info)
         {
             fmt::print("    ");
             print_enum("event", ev.event_type);
-            print_enum("flags", ev.flags);
+            fmt::print("flags={} ({})", flags_to_string(ev.flags), static_cast<u32>(ev.flags));
             auto script = ev.script.str();
             fmt::print(
                 "widget={} sound={} script=\"{}\"\n",
@@ -548,12 +573,48 @@ void dump_dela(blam::ui_element const* info)
             name_of(tb.font));
         fmt::print("    ");
         print_enum("justification", tb.justification);
-        print_enum("flags", tb.flags);
+        fmt::print("flags={} ({})", flags_to_string(tb.flags), static_cast<u32>(tb.flags));
         fmt::print(
             "string_index={} offset=({},{})\n",
             tb.string_list_index,
             tb.horizontal_offset,
             tb.vertical_offset);
+    }
+
+    if(info->widget_type == blam::ui_element::widget_type_t::spinner_list)
+    {
+        fmt::print("  spinner_box:\n");
+        fmt::print("    header_bitm={}\n", name_of(info->spinner_list.list_header_bitmap));
+        fmt::print("    footer_bitm={}\n", name_of(info->spinner_list.list_footer_bitmap));
+        fmt::print("    header_bounds=({},{},{},{})\n",
+            info->spinner_list.header_bounds.x,
+            info->spinner_list.header_bounds.y,
+            info->spinner_list.header_bounds.z,
+            info->spinner_list.header_bounds.w);
+        fmt::print("    footer_bounds=({},{},{},{})\n",
+            info->spinner_list.footer_bounds.x,
+            info->spinner_list.footer_bounds.y,
+            info->spinner_list.footer_bounds.z,
+            info->spinner_list.footer_bounds.w);
+    }
+
+    if(info->widget_type == blam::ui_element::widget_type_t::column_list)
+    {
+        fmt::print("  column_list:\n");
+        fmt::print("    extended_description=[{}] {}\n",
+            info->column_list.extended_description_widget.tag_class_name(),
+            name_of(info->column_list.extended_description_widget));
+    }
+
+    if(auto conditionals = info->conditional_widgets.data(g_magic); conditionals.has_value())
+    {
+        fmt::print("  conditional_widgets={}\n", conditionals->size());
+        for(auto const& cw : conditionals.value())
+        {
+            fmt::print("    tag=[{}] {}\n",
+                cw.widget_tag.tag_class_name(),
+                name_of(cw.widget_tag));
+        }
     }
 
     if(auto children = info->child_widgets.data(g_magic); children.has_value())
@@ -562,19 +623,18 @@ void dump_dela(blam::ui_element const* info)
         for(auto const& ch : children.value())
         {
             auto name = ch.name.str();
-            fmt::print(
-                "    \"{}\" -> {} offset=({},{})\n",
-                name,
-                name_of(ch.widget),
-                ch.horizontal_offset,
-                ch.vertical_offset);
+            fmt::print("    name=\"{}\"\n", name);
+            fmt::print("      widget={}\n", name_of(ch.widget));
+            fmt::print("      offset=({},{})\n", ch.horizontal_offset, ch.vertical_offset);
+            fmt::print("      flags={}\n", flags_to_string(ch.flags));
+            fmt::print("      custom_controller_index={}\n", ch.custom_controller_index);
         }
     }
 }
 
 void dump_smet(blam::shader::shader_meter const* info)
 {
-    print_enum("  flags", info->flags);
+    fmt::print("  flags", flags_to_string(info->flags));
     fmt::print("\n");
     fmt::print("  map={}\n", name_of(info->map));
     auto const& c = info->colors;
@@ -1945,6 +2005,35 @@ void scan_tagrefs(
 }
 
 template<typename Ver>
+void dump_tag_data(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
+{
+    auto name  = tag.to_name().to_string(g_magic);
+    auto klass = tag.tagclass[0].str();
+    fmt::print("=== [{}] {} id=0x{:x}\n", klass, name, tag.tag_id);
+
+    auto data = tag.data<libc_types::byte_t const>(g_magic);
+
+    if(!data.has_value())
+    {
+        fmt::print("<no data>\n");
+        return;
+    }
+
+    switch(tag.tag_class())
+    {
+    case blam::tag_class_t::DeLa:
+    {
+        fmt::print("= bytes={}\n", sizeof(blam::ui_element));
+        hex_dump(gsl::span<libc_types::byte_t const>(
+            data.value(), sizeof(blam::ui_element)));
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+template<typename Ver>
 void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
 {
     using namespace blam::shader;
@@ -2356,7 +2445,10 @@ void open_map(
             fmt::print("{}  0x{:<8x}  {}\n", klass, tag.tag_id, name);
             continue;
         }
-        dump_tag(index, tag);
+        if(g_dump_hex)
+            dump_tag_data(index, tag);
+        else
+            dump_tag(index, tag);
     }
     if(matched == 0)
         fmt::print("no tags matched\n");
@@ -2389,6 +2481,9 @@ int inspect_main()
         //
         ("channel-stats",
          "For 32-bit bitmaps, report min/max/mean per byte position")
+        //
+        ("dump-hex",
+         "Dump tag data as hex")
         //
         ("dump-planes",
          "Write each byte position of 32-bit bitmaps as a PGM with this path "
@@ -2446,6 +2541,7 @@ int inspect_main()
     std::string name_filter =
         arguments.as_optional<std::string>("name").value_or("");
     bool list_only  = arguments.count("list") > 0;
+    g_dump_hex      = arguments.count("dump-hex") > 0;
     g_dump_mirrors  = arguments.count("dump-mirrors") > 0;
     g_dump_player   = arguments.count("dump-player-biped") > 0;
     g_dump_scenario = arguments.count("dump-scenario") > 0;
