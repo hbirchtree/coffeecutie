@@ -31,7 +31,9 @@
 #include <BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h>
 #endif
 
+#if defined(FEATURE_ENABLE_ImGui)
 #include <imgui.h>
+#endif
 
 #include <map>
 #include <set>
@@ -742,6 +744,7 @@ struct RS2CacheLoader
             });
 
         auto current_region = Veci2{last_region.x, last_region.y};
+#if defined(FEATURE_ENABLE_ImGui)
         if(ImGui::Begin("Cursed Control"))
         {
             // ImGui::InputFloat("World scale", &world_scale);
@@ -825,6 +828,7 @@ struct RS2CacheLoader
             }
         }
         ImGui::End();
+#endif
 
         current_region = to_rs2_region(camera->camera.position);
         if(current_region != last_region)
