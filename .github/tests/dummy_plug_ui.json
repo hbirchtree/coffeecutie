@@ -3,7 +3,7 @@
     "graphics": {
         "window": {
             "width": 1280,
-            "height": 720
+            "height": 960
         }
     },
     "events": [
@@ -15,8 +15,32 @@
         {"time": 5000, "type": "camera", "position" :[0.88378733, 0.6210254, 0.8047082], "rotation":[0.14286536, 0.09457026, -0.9659534, 0.19385561]},
         {"time": 5500, "type": "screenshot", "name": "ui_planet"},
         {"time": 6000, "type": "camera", "position" :[14.397369, -6.4095616, -2.240288], "rotation":[0.078764886, -0.017613031, -0.972714, 0.21751648]},
-        {"time": 6500, "type": "screenshot", "name": "ui_near_inside"}
+        {"time": 6500, "type": "screenshot", "name": "ui_near_inside"},
+        {"time": 7000, "type": "controller_connect", "index": 0},
+        {"time": 7000, "type": "controller_button", "button": "POV_DOWN", "duration": 100},
+        {"time": 7200, "type": "controller_button", "button": "POV_DOWN", "duration": 100},
+        {"time": 7400, "type": "controller_button", "button": "A", "duration": 100},
+        {"time": 7500, "type": "screenshot", "name": "player_profile_select_screen"},
+        {"time": 7600, "type": "controller_button", "button": "A", "duration": 100},
+        {"time": 7700, "type": "screenshot", "name": "player_profile_edit_screen"},
+        {"time": 7800, "type": "controller_button", "button": "POV_DOWN", "duration": 100},
+        {"time": 8000, "type": "controller_button", "button": "POV_DOWN", "duration": 100},
+        {"time": 8200, "type": "controller_button", "button": "A", "duration": 100},
+        {"time": 8400, "type": "screenshot", "name": "advanced_controls_menu"},
+        {"time": 8600, "type": "controller_button", "button": "POV_DOWN", "duration": 100},
+        {"time": 8800, "type": "controller_button", "button": "POV_RIGHT", "duration": 100},
+        {"time": 9000, "type": "controller_button", "button": "POV_RIGHT", "duration": 100},
+        {"time": 9200, "type": "controller_button", "button": "POV_DOWN", "duration": 100},
+        {"time": 9400, "type": "controller_button", "button": "POV_DOWN", "duration": 100},
+        {"time": 9600, "type": "controller_button", "button": "POV_RIGHT", "duration": 100},
+        {"time": 9800, "type": "controller_button", "button": "POV_DOWN", "duration": 100},
+        {"time": 10000, "type": "controller_button", "button": "POV_RIGHT", "duration": 100},
+        {"time": 10200, "type": "controller_button", "button": "POV_UP", "duration": 100},
+        {"time": 10400, "type": "controller_button", "button": "POV_UP", "duration": 100},
+        {"time": 10600, "type": "controller_button", "button": "POV_UP", "duration": 100},
+        {"time": 10800, "type": "controller_button", "button": "POV_UP", "duration": 100},
+        {"time": 11000, "type": "screenshot", "name": "advanced_controls_set"}
     ],
-    "frame_delta": 200.0,
-    "end_time": 10000
+    "frame_delta": 100.0,
+    "end_time": 12300
 }
