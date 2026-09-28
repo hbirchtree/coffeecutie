@@ -372,6 +372,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             return t::a_btn;
         case UINavigation::option:
             return t::y_btn;
+        case UINavigation::option_2:
+            return t::x_btn;
         case UINavigation::back:
             return t::b_btn;
         case UINavigation::open:

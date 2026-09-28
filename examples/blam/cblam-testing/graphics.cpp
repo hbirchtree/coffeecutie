@@ -823,6 +823,8 @@ i32 blam_main()
                         emit_nav_event(UINavigation::accept);
                     if(input.option)
                         emit_nav_event(UINavigation::option);
+                    if(input.option_2)
+                        emit_nav_event(UINavigation::option_2);
                     if(input.back)
                         emit_nav_event(UINavigation::back);
                     if(input.left)
