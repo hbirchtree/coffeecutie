@@ -5,8 +5,7 @@
 #include "ui_caching_item.h"
 
 #include <blam/volta/blam_scenario.h>
-
-#include <cstring>
+#include <magic_enum/magic_enum.hpp>
 
 using libc_types::u8;
 
@@ -271,13 +270,16 @@ struct UIElementCache
         if(ui_el->background.valid())
         {
             auto all_bitms = bitm_cache.resolve_all(ui_el->background);
-            out.background = all_bitms.front();
-            if(all_bitms.size() > 1)
-                out.background_alt = all_bitms.at(1);
+            out.background = all_bitms;
         }
         switch(ui_el->widget_type)
         {
         case widget_type::column_list:
+        {
+            out.extended_description =
+                predict(ui_el->column_list.extended_description_widget);
+            [[fallthrough]];
+        }
         case widget_type::container: {
             using child_widget_t = blam::ui_element::child_widget_t;
             auto children        = ui_el->child_widgets.data(magic).value();
@@ -294,13 +296,12 @@ struct UIElementCache
                 out.font_id = font_cache.predict(tb.font);
             if(tb.unicode_strings.valid())
             {
-                if(auto us_data = index.template data<blam::ui::unicode_string>(
+                if(auto us_data = index.template data<blam::ui::unicode_string_list>(
                        tb.unicode_strings);
                    us_data.has_value())
                 {
                     auto const* us = us_data.value();
-                    if(auto subs = us->sub_strings.data(magic);
-                       subs.has_value())
+                    if(auto subs = us->data.data(magic); subs.has_value())
                     {
                         for(auto const& ref : subs.value())
                         {
@@ -315,6 +316,8 @@ struct UIElementCache
             break;
         }
         default:
+            cDebug("Unhandled widget type: {}",
+                magic_enum::enum_name(ui_el->widget_type));
             break;
         }
         return out;

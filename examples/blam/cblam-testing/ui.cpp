@@ -151,9 +151,15 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         blam::vec4i16                   box;
     };
 
+    /* All in 640x480 UI space */
     struct layout_data_t
     {
-        Vecf2 offset;
+        Vecf2 origin; /*!< the screen's root */
+        Vecf2 frame;  /*!< child offsets summed down to this widget */
+        /* Focus path below this widget; empty when it isn't on the path */
+        gsl::span<u16 const> focus;
+        /* Item the owning list has focused, for extended descriptions */
+        std::optional<u32> index;
     };
 
     Vecf2 window_to_ui(Vecf2 const& point)
@@ -192,14 +198,12 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         return mouse_buttons & button;
     }
 
-    /* Walk the widget tree depth-first.
-     * visit(el, min, max) -> bool: return false to skip children. */
+    /* Walk the widget tree depth-first. Child offsets add up, a widget's
+     * bounds only place itself.
+     * visit(el, min, max, layout) -> bool: return false to skip children. */
     template<typename Fn>
     void traverse_widget(
-        generation_idx_t const& item,
-        blam::vec4i16           box,
-        layout_data_t           layout,
-        Fn&&                    visit)
+        generation_idx_t const& item, layout_data_t const& layout, Fn&& visit)
     {
         UIElementItem& el = ui_cache.find(item)->second;
         if(!el.visible)
@@ -207,31 +211,48 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
         auto& bounds = el.ui_element->bounds;
         // bounds stored [y1, x1, y2, x2] as [.x, .y, .z, .w]
-        Vecf2 global_origin =
-            Vecf2(box.x, box.y) + layout.offset + Vecf2(bounds.y, bounds.x);
-        Vecf2 min = global_origin;
-        Vecf2 max =
-            global_origin + Vecf2(bounds.w - bounds.y, bounds.z - bounds.x);
+        Vecf2 const min = layout.frame + Vecf2(bounds.y, bounds.x);
+        Vecf2 const max = layout.frame + Vecf2(bounds.w, bounds.z);
 
-        if(!visit(el, min, max) || el.children.empty())
+        if(!visit(el, min, max, layout))
             return;
 
+        std::optional<u16> focused;
+        if(!layout.focus.empty())
+            focused = layout.focus.front();
+
+        /* Its bounds are screen-absolute, and its images follow the list's
+         * focused item */
+        if(el.extended_description.valid())
+            traverse_widget(
+                el.extended_description,
+                layout_data_t{
+                    .origin = layout.origin,
+                    .frame  = layout.origin,
+                    .index  = focused.value_or(0),
+                },
+                visit);
+
+        if(el.children.empty())
+            return;
         auto children_opt = el.ui_element->child_widgets.data(bitm_cache.magic);
         if(!children_opt.has_value())
             return;
-        auto const    children  = children_opt.value();
-        blam::vec4i16 child_box = {
-            (i16)min.x, (i16)min.y, (i16)max.x, (i16)max.y};
+        auto const children = children_opt.value();
         for(auto const& [i, child] : stl_types::const_enumerate(el.children))
         {
             auto const& meta = children[i];
             traverse_widget(
                 child,
-                child_box,
                 layout_data_t{
-                    .offset =
-                        Vecf2(meta.horizontal_offset, meta.vertical_offset)},
-                std::forward<Fn>(visit));
+                    .origin = layout.origin,
+                    .frame  = layout.frame + Vecf2(meta.horizontal_offset,
+                                                   meta.vertical_offset),
+                    .focus  = focused == i ? layout.focus.subspan(1)
+                                           : gsl::span<u16 const>{},
+                    .index  = layout.index,
+                },
+                visit);
         }
     }
 
@@ -312,6 +333,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         {
         case UINavigation::accept:
             return t::a_btn;
+        case UINavigation::option:
+            return t::y_btn;
         case UINavigation::back:
             return t::b_btn;
         case UINavigation::open:
@@ -346,9 +369,12 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                             eh.event_type == eh_t::type_t::left_mouse);
             if(!matches)
                 continue;
-            handled = true;
 
             auto flags = static_cast<u32>(eh.flags);
+            if(flags == 0)
+                continue;
+            handled = true;
+
             auto has   = [flags](eh_t::flags_t f) {
                 return (flags & static_cast<u32>(f)) != 0;
             };
@@ -456,9 +482,11 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
             bool const tabs =
                 (vertical &&
-                 has_flag(el, flags_t::dpad_ud_tabs_through_children)) ||
+                 (has_flag(el, flags_t::dpad_ud_tabs_through_children) ||
+                  has_flag(el, flags_t::dpad_ud_tabs_through_items))) ||
                 (horizontal &&
-                 has_flag(el, flags_t::dpad_lr_tabs_through_children));
+                 (has_flag(el, flags_t::dpad_lr_tabs_through_children) ||
+                  has_flag(el, flags_t::dpad_lr_tabs_through_items)));
             if(tabs && depth + 1 < path.size())
             {
                 auto& idx  = frame.focus[depth];
@@ -500,18 +528,21 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     void process_render(
         generation_idx_t const& item,
         widget_data_t           data,
-        layout_data_t           layout = {})
+        gsl::span<u16 const>    focus = {})
     {
         using widget_type = blam::ui_element::widget_type_t;
 
+        Vecf2 const root(data.box.x, data.box.y);
         traverse_widget(
             item,
-            data.box,
-            layout,
-            [&](UIElementItem& el, Vecf2 min, Vecf2 max) -> bool {
+            layout_data_t{.origin = root, .frame = root, .focus = focus},
+            [&](UIElementItem& el,
+                Vecf2                min,
+                Vecf2                max,
+                layout_data_t const& layout) -> bool {
                 auto dimensions = max - min;
 
-                if(el.background.valid())
+                if(!el.background.empty())
                 {
                     std::array<vertex_t, 6> verts = {{
                         {.position = {min.x, min.y}, .tex_coord = {0, 0}},
@@ -527,9 +558,14 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
                     auto&                inst = data.instance_data.back();
                     atlas_intermediate_t tmp{};
-                    auto const& im   = el.focused && el.background_alt.valid()
-                                           ? el.background_alt
-                                           : el.background;
+                    auto const& im =
+                        layout.index
+                            ? (*layout.index < el.background.size()
+                                   ? el.background[*layout.index]
+                                   : el.background[0])
+                        : el.focused && el.background.size() >= 2
+                            ? el.background[1]
+                            : el.background[0];
                     auto const* bitm = bitm_cache.assign_atlas_data(tmp, im);
                     auto const* img  = bitm->image.mip;
                     auto        imscale = Vecf2(
@@ -581,8 +617,10 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 else if(tb.justification == just_t::right)
                     start_x = min.x + box_w - text_width - tb.horizontal_offset;
 
-                Vecf4 const color =
-                    (tb.color.a > 0.f) ? Vecf4(tb.color) : Vecf4{1, 1, 1, 1};
+                // Color is in ARGB format
+                Vecf4 const color = (tb.color.r > 0.f)
+                        ? tb.remapped_color()
+                        : Vecf4{1, 1, 1, 1};
 
                 /* One quad per glyph, appended straight into the frame's UI
                  * buffers -- for_each_glyph only owns where each one goes. */
@@ -723,7 +761,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                         .vertex_data   = vertex_data,
                         .instance_data = instance_vertex_data,
                         .box           = screen.box,
-                    });
+                    },
+                    screen.stack.back().focus);
                 if(leaf)
                     leaf->focused = false;
             }
@@ -906,10 +945,10 @@ void load_ui_items(
             continue;
 
         auto us_opt =
-            tag.template data<blam::ui::unicode_string>(data.container.magic);
+            tag.template data<blam::ui::unicode_string_list>(data.container.magic);
         if(!us_opt.has_value())
             continue;
-        auto subs_opt = us_opt.value()->sub_strings.data(data.container.magic);
+        auto subs_opt = us_opt.value()->data.data(data.container.magic);
         if(!subs_opt.has_value() || subs_opt.value().empty())
             continue;
 

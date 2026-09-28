@@ -21,6 +21,7 @@ struct UINavigation
     enum action_t
     {
         back,
+        option,
         accept,
         open,  /*!< show the seat's pause menu */
         close, /*!< hide it, e.g. when the player toggles back to game */

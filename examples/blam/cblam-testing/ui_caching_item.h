@@ -113,8 +113,9 @@ struct UIElementItem
 {
     blam::ui_element const*       ui_element{nullptr};
     std::vector<generation_idx_t> children;
-    generation_idx_t              background;
-    generation_idx_t              background_alt;
+    std::vector<generation_idx_t> background;
+
+    generation_idx_t extended_description;
 
     /* For text_box widgets */
     generation_idx_t            font_id;

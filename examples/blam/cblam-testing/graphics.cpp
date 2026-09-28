@@ -718,6 +718,7 @@ i32 blam_main()
                         {
                             input.accept |= controller_buttons().a;
                             input.back   |= controller_buttons().b || controller_buttons().back;
+                            input.option |= controller_buttons().y;
                             input.left   |= controller_buttons().p_left;
                             input.right  |= controller_buttons().p_right;
                             input.up     |= controller_buttons().p_up;
@@ -819,6 +820,8 @@ i32 blam_main()
                     }
                     if(input.accept)
                         emit_nav_event(UINavigation::accept);
+                    if(input.option)
+                        emit_nav_event(UINavigation::option);
                     if(input.back)
                         emit_nav_event(UINavigation::back);
                     if(input.left)
