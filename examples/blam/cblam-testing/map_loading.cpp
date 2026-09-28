@@ -246,6 +246,9 @@ static void load_resources(
             auto& info      = ref.get<PlayerInfo>();
             info.player_idx = i;
             info.seat_idx   = i;
+            if(changed.container.map->map_type == blam::maptype_t::ui)
+                ref.get<PlayerInput>().input_mode =
+                    PlayerInput::input_mode_t::menu;
             auto& camera    = ref.get<PlayerCamera>();
             if(i == 0)
             {

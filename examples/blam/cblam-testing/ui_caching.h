@@ -262,6 +262,10 @@ struct UIElementCache
         using widget_type = blam::ui_element::widget_type_t;
 
         auto ui_el = get_id(ui_tag);
+
+        if(!ui_el)
+            return {};
+
         UIElementItem out{
             .ui_element = ui_el,
             .children   = {},
@@ -289,6 +293,17 @@ struct UIElementCache
                     out.children.push_back(c);
             }
             break;
+        }
+        case widget_type::spinner_list: {
+            auto const& sl = ui_el->spinner_list;
+            if(sl.list_header_bitmap.valid())
+                out.spinner_header =
+                    bitm_cache.resolve_all(sl.list_header_bitmap);
+            if(sl.list_footer_bitmap.valid())
+                out.spinner_footer =
+                    bitm_cache.resolve_all(sl.list_footer_bitmap);
+            /* The values come from the text box's string list */
+            [[fallthrough]];
         }
         case widget_type::text_box: {
             auto const& tb = ui_el->text_box;

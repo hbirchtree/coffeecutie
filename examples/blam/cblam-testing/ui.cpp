@@ -39,9 +39,28 @@ struct UIScreen
     generation_idx_t     home; /*!< shown by UINavigation::open */
     std::vector<frame_t> stack; /*!< back() is on screen; empty = closed */
 
+    /* Selected value of each spinner_list, until settings back them */
+    std::vector<std::pair<blam::ui_element const*, u16>> spinner_values;
+
     bool accepts(u32 seat_idx) const
     {
         return seat == any_seat || seat == seat_idx;
+    }
+
+    u16& spinner_value(blam::ui_element const* spinner)
+    {
+        for(auto& [widget, value] : spinner_values)
+            if(widget == spinner)
+                return value;
+        return spinner_values.emplace_back(spinner, 0).second;
+    }
+
+    u16 spinner_value(blam::ui_element const* spinner) const
+    {
+        for(auto const& [widget, value] : spinner_values)
+            if(widget == spinner)
+                return value;
+        return 0;
     }
 };
 
@@ -264,6 +283,15 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         return it != ui_cache.end() ? &it->second : nullptr;
     }
 
+    static bool tabs_through_children(UIElementItem const& el)
+    {
+        using flags_t = blam::ui_element::flags_t;
+        return has_flag(el, flags_t::dpad_ud_tabs_through_children) ||
+               has_flag(el, flags_t::dpad_lr_tabs_through_children) ||
+               has_flag(el, flags_t::dpad_ud_tabs_through_items) ||
+               has_flag(el, flags_t::dpad_lr_tabs_through_items);
+    }
+
     static bool has_flag(UIElementItem const& el, blam::ui_element::flags_t f)
     {
         return static_cast<u32>(el.ui_element->flags) & static_cast<u32>(f);
@@ -272,8 +300,13 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     /* Can the widget, or anything below it, take input? */
     bool focusable(UIElementItem const& el)
     {
+        using widget_type = blam::ui_element::widget_type_t;
+
         if(!el.visible)
             return false;
+        /* Takes left/right itself, with no handlers or children */
+        if(el.ui_element->widget_type == widget_type::spinner_list)
+            return true;
         auto handlers = el.ui_element->event_handlers.data(bitm_cache.magic);
         if(handlers.has_value() && handlers.value().size() > 0)
             return true;
@@ -480,6 +513,20 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             if(run_handlers(screen, el, handler_type(nav.action)))
                 return;
 
+            if(horizontal &&
+               el.ui_element->widget_type ==
+                   blam::ui_element::widget_type_t::spinner_list &&
+               has_flag(el, flags_t::dpad_lr_tabs_through_items))
+            {
+                /* Clamped: the arrows mark the ends of the range */
+                auto& value = screen.spinner_value(el.ui_element);
+                i32 const last =
+                    static_cast<i32>(std::max<size_t>(el.text_strings.size(), 1)) - 1;
+                value = static_cast<u16>(
+                    std::clamp(static_cast<i32>(value) + step, 0, last));
+                return;
+            }
+
             bool const tabs =
                 (vertical &&
                  (has_flag(el, flags_t::dpad_ud_tabs_through_children) ||
@@ -525,10 +572,43 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             nav.seat_idx);
     }
 
+    /* One textured quad; the bitmap is stretched to the rect */
+    void push_image(
+        widget_data_t& data, Vecf2 min, Vecf2 max, generation_idx_t const& im)
+    {
+        auto const dimensions = max - min;
+
+        std::array<vertex_t, 6> verts = {{
+            {.position = {min.x, min.y}, .tex_coord = {0, 0}},
+            {.position = {max.x, min.y}, .tex_coord = {1, 0}},
+            {.position = {max.x, max.y}, .tex_coord = {1, 1}},
+            {.position = {min.x, min.y}, .tex_coord = {0, 0}},
+            {.position = {max.x, max.y}, .tex_coord = {1, 1}},
+            {.position = {min.x, max.y}, .tex_coord = {0, 1}},
+        }};
+        data.vertex_data.insert(
+            data.vertex_data.end(), verts.begin(), verts.end());
+        data.instance_data.push_back({.color = Vecf4{1, 1, 1, 0}});
+
+        auto&                inst = data.instance_data.back();
+        atlas_intermediate_t tmp{};
+        auto const*          bitm    = bitm_cache.assign_atlas_data(tmp, im);
+        auto const*          img     = bitm->image.mip;
+        auto                 imscale = Vecf2(
+            dimensions.x / img->isize.x, dimensions.y / img->isize.y);
+        inst.tex_scale_offset = Vecf4(
+            tmp.atlas_scale.x * std::min(imscale.x, 1.f),
+            tmp.atlas_scale.y * std::min(imscale.y, 1.f),
+            tmp.atlas_offset.x,
+            tmp.atlas_offset.y);
+        inst.texture_source.x = tmp.layer;
+    }
+
     void process_render(
         generation_idx_t const& item,
         widget_data_t           data,
-        gsl::span<u16 const>    focus = {})
+        gsl::span<u16 const>    focus  = {},
+        UIScreen const*         screen = nullptr)
     {
         using widget_type = blam::ui_element::widget_type_t;
 
@@ -540,24 +620,10 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 Vecf2                min,
                 Vecf2                max,
                 layout_data_t const& layout) -> bool {
-                auto dimensions = max - min;
-
                 if(!el.background.empty())
                 {
-                    std::array<vertex_t, 6> verts = {{
-                        {.position = {min.x, min.y}, .tex_coord = {0, 0}},
-                        {.position = {max.x, min.y}, .tex_coord = {1, 0}},
-                        {.position = {max.x, max.y}, .tex_coord = {1, 1}},
-                        {.position = {min.x, min.y}, .tex_coord = {0, 0}},
-                        {.position = {max.x, max.y}, .tex_coord = {1, 1}},
-                        {.position = {min.x, max.y}, .tex_coord = {0, 1}},
-                    }};
-                    data.vertex_data.insert(
-                        data.vertex_data.end(), verts.begin(), verts.end());
-                    data.instance_data.push_back({.color = Vecf4{1, 1, 1, 0}});
-
-                    auto&                inst = data.instance_data.back();
-                    atlas_intermediate_t tmp{};
+                    /* Description images hold one image per list item;
+                     * elsewhere image 1 is the focused look */
                     auto const& im =
                         layout.index
                             ? (*layout.index < el.background.size()
@@ -566,20 +632,29 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                         : el.focused && el.background.size() >= 2
                             ? el.background[1]
                             : el.background[0];
-                    auto const* bitm = bitm_cache.assign_atlas_data(tmp, im);
-                    auto const* img  = bitm->image.mip;
-                    auto        imscale = Vecf2(
-                        dimensions.x / img->isize.x,
-                        dimensions.y / img->isize.y);
-                    inst.tex_scale_offset = Vecf4(
-                        tmp.atlas_scale.x * std::min(imscale.x, 1.f),
-                        tmp.atlas_scale.y * std::min(imscale.y, 1.f),
-                        tmp.atlas_offset.x,
-                        tmp.atlas_offset.y);
-                    inst.texture_source.x = tmp.layer;
+                    push_image(data, min, max, im);
                 }
 
-                if(el.ui_element->widget_type != widget_type::text_box)
+                bool const is_spinner = el.ui_element->widget_type ==
+                                        widget_type::spinner_list;
+                if(is_spinner)
+                {
+                    /* Arrow bounds share the frame of the spinner's own */
+                    auto const& sl    = el.ui_element->spinner_list;
+                    auto        arrow = [&](auto const& images, auto const& b) {
+                        if(!images.empty())
+                            push_image(
+                                data,
+                                layout.frame + Vecf2(b.y, b.x),
+                                layout.frame + Vecf2(b.w, b.z),
+                                images[0]);
+                    };
+                    arrow(el.spinner_header, sl.header_bounds);
+                    arrow(el.spinner_footer, sl.footer_bounds);
+                }
+
+                if(el.ui_element->widget_type != widget_type::text_box &&
+                   !is_spinner)
                     return true;
 
                 auto const& tb = el.ui_element->text_box;
@@ -592,7 +667,11 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 if(font_item.glyph_map.empty())
                     return false;
 
-                i32 str_idx = tb.string_list_index;
+                /* A spinner shows its selected value from the same list */
+                i32 str_idx =
+                    is_spinner
+                        ? (screen ? screen->spinner_value(el.ui_element) : 0)
+                        : tb.string_list_index;
                 if(str_idx < 0 ||
                    static_cast<size_t>(str_idx) >= el.text_strings.size())
                     return false;
@@ -604,55 +683,110 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 constexpr u32 kFontSource = 9u;
                 u32 tex_source = (kFontSource << 24) | font_item.atlas_layer;
 
-                f32 text_width = font_item.measure(text);
-                f32 box_w      = max.x - min.x;
-                f32 start_x    = min.x + tb.horizontal_offset;
-                f32 baseline_y =
-                    min.y + tb.vertical_offset +
-                    static_cast<f32>(font_item.font->ascend_height);
+                f32 const box_w = max.x - min.x;
+                f32 const line_h =
+                    static_cast<f32>(font_item.font->ascend_height) +
+                    font_item.font->descend_height +
+                    font_item.font->leadin_height;
 
                 using just_t = blam::ui_element::text_box_t::justification_t;
-                if(tb.justification == just_t::center)
-                    start_x = min.x + (box_w - text_width) * 0.5f;
-                else if(tb.justification == just_t::right)
-                    start_x = min.x + box_w - text_width - tb.horizontal_offset;
+                auto const lines =
+                    layout_lines(font_item, text, box_w - tb.horizontal_offset);
 
-                // Color is in ARGB format
-                Vecf4 const color = (tb.color.r > 0.f)
-                        ? tb.remapped_color()
-                        : Vecf4{1, 1, 1, 1};
+                /* The tag's alpha applies as-is, so alpha 0 hides the text;
+                 * only a colour that was never set falls back to white */
+                Vecf4 color = tb.remapped_color();
+                if(color == Vecf4{})
+                    color = Vecf4{1, 1, 1, 1};
 
                 /* One quad per glyph, appended straight into the frame's UI
                  * buffers -- for_each_glyph only owns where each one goes. */
-                font_item.for_each_glyph(
-                    text,
-                    start_x,
-                    baseline_y,
-                    [&](GlyphEntry const& g, f32 gx, f32 gy) {
-                        f32 gx2 = gx + g.bitmap_width;
-                        f32 gy2 = gy + g.bitmap_height;
+                for(auto const& [line_idx, line] :
+                    stl_types::const_enumerate(lines))
+                {
+                    f32 const text_width = font_item.measure(line);
+                    f32       start_x    = min.x + tb.horizontal_offset;
+                    if(tb.justification == just_t::center)
+                        start_x = min.x + (box_w - text_width) * 0.5f;
+                    else if(tb.justification == just_t::right)
+                        start_x = min.x + box_w - text_width - tb.horizontal_offset;
+                    /* Centred text ignores the offsets, as the Xbox
+                     * spinner values show */
+                    f32 const baseline_y =
+                        min.y +
+                        (tb.justification == just_t::center
+                             ? 0.f
+                             : static_cast<f32>(tb.vertical_offset)) +
+                        static_cast<f32>(font_item.font->ascend_height) +
+                        line_h * static_cast<f32>(line_idx);
+                    font_item.for_each_glyph(
+                        line,
+                        start_x,
+                        baseline_y,
+                        [&](GlyphEntry const& g, f32 gx, f32 gy) {
+                            f32 gx2 = gx + g.bitmap_width;
+                            f32 gy2 = gy + g.bitmap_height;
 
-                        std::array<vertex_t, 6> glyph_verts = {{
-                            {{gx, gy}, {0, 0}},
-                            {{gx2, gy}, {1, 0}},
-                            {{gx2, gy2}, {1, 1}},
-                            {{gx, gy}, {0, 0}},
-                            {{gx2, gy2}, {1, 1}},
-                            {{gx, gy2}, {0, 1}},
-                        }};
-                        data.vertex_data.insert(
-                            data.vertex_data.end(),
-                            glyph_verts.begin(),
-                            glyph_verts.end());
+                            std::array<vertex_t, 6> glyph_verts = {{
+                                {{gx, gy}, {0, 0}},
+                                {{gx2, gy}, {1, 0}},
+                                {{gx2, gy2}, {1, 1}},
+                                {{gx, gy}, {0, 0}},
+                                {{gx2, gy2}, {1, 1}},
+                                {{gx, gy2}, {0, 1}},
+                            }};
+                            data.vertex_data.insert(
+                                data.vertex_data.end(),
+                                glyph_verts.begin(),
+                                glyph_verts.end());
 
-                        instance_vertex_t inst{};
-                        inst.color            = color;
-                        inst.tex_scale_offset = font_item.glyph_uv(g);
-                        inst.texture_source.x = tex_source;
-                        data.instance_data.push_back(inst);
-                    });
+                            instance_vertex_t inst{};
+                            inst.color            = color;
+                            inst.tex_scale_offset = font_item.glyph_uv(g);
+                            inst.texture_source.x = tex_source;
+                            data.instance_data.push_back(inst);
+                        });
+                }
                 return false;
             });
+    }
+
+    /* Split on line breaks, then wrap words to `width` */
+    static std::vector<std::u16string_view> layout_lines(
+        FontItem const& font, std::u16string_view text, f32 width)
+    {
+        constexpr auto npos = std::u16string_view::npos;
+
+        std::vector<std::u16string_view> lines;
+        while(true)
+        {
+            auto const          nl   = text.find(u'\n');
+            std::u16string_view para = text.substr(0, nl);
+            if(!para.empty() && para.back() == u'\r')
+                para.remove_suffix(1);
+
+            while(font.measure(para) > width)
+            {
+                size_t cut = npos;
+                for(auto i = para.find(u' '); i != npos;
+                    i      = para.find(u' ', i + 1))
+                {
+                    if(font.measure(para.substr(0, i)) > width)
+                        break;
+                    cut = i;
+                }
+                if(cut == npos || cut == 0)
+                    break;
+                lines.push_back(para.substr(0, cut));
+                para.remove_prefix(cut + 1);
+            }
+            lines.push_back(para);
+
+            if(nl == npos)
+                break;
+            text.remove_prefix(nl + 1);
+        }
+        return lines;
     }
 
     void start_restricted(Proxy&, time_point const&)
@@ -749,10 +883,17 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 if(screen.stack.empty())
                     continue;
 
-                /* Only the leaf shows as focused, the containers above it
-                 * would light up their alt backgrounds too */
+                /* The focused item is the child of the deepest widget that
+                 * tabs through its children; a row's label below it and the
+                 * containers above it keep their normal background */
                 auto           path = resolve_focus(screen.stack.back());
                 UIElementItem* leaf = path.size() > 1 ? path.back() : nullptr;
+                for(size_t depth = path.size() - 1; depth-- > 0;)
+                    if(tabs_through_children(*path[depth]))
+                    {
+                        leaf = path[depth + 1];
+                        break;
+                    }
                 if(leaf)
                     leaf->focused = true;
                 process_render(
@@ -762,7 +903,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                         .instance_data = instance_vertex_data,
                         .box           = screen.box,
                     },
-                    screen.stack.back().focus);
+                    screen.stack.back().focus,
+                    &screen);
                 if(leaf)
                     leaf->focused = false;
             }
@@ -1114,8 +1256,15 @@ void load_ui_items(
     rec.components = {compo::type_hash_v<UIScreen>()};
     if(selected_id.valid())
     {
-        auto ref                   = e.create_entity(rec);
-        ref.get<UIScreen>().home = selected_id;
+        auto  ref    = e.create_entity(rec);
+        auto& screen = ref.get<UIScreen>();
+        screen.home  = selected_id;
+        /* The UI map is the main menu, so it starts open */
+        if(data.container.map->map_type == blam::maptype_t::ui)
+        {
+            screen.stack.push_back({.widget = selected_id});
+            e.subsystem_cast<RenderingParameters>().render_ui = true;
+        }
     }
 
     fonts.allocate_font_texture();

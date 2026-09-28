@@ -117,9 +117,13 @@ struct UIElementItem
 
     generation_idx_t extended_description;
 
-    /* For text_box widgets */
+    /* For text_box widgets, and spinner_list values */
     generation_idx_t            font_id;
     std::vector<std::u16string> text_strings;
+
+    /* spinner_list arrows, left and right */
+    std::vector<generation_idx_t> spinner_header;
+    std::vector<generation_idx_t> spinner_footer;
 
     bool visible{true};
     bool focused{false};
