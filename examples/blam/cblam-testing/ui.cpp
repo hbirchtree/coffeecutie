@@ -8,6 +8,7 @@
 #include "graphics_api.h"
 #include "shader_compiler.h"
 #include "ui_caching.h"
+#include "ui_keyboard.h"
 
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
 #include <glm/gtx/matrix_transform_2d.hpp>
@@ -32,6 +33,8 @@ struct UIScreen
         /* Child index per level, root first. Kept per frame so going back
          * restores the previous selection. */
         std::vector<u16> focus{};
+        /* Text entry the engine overlays on name screens */
+        std::optional<VirtualKeyboard> keyboard{};
     };
 
     u32                  seat{any_seat};
@@ -159,6 +162,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     bool                            m_click_pending{false};
     CIMouseButtonEvent::MouseButton mouse_buttons{CIMouseButtonEvent::NoneBtn};
     generation_idx_t                m_cursor_bitmap;
+    VirtualKeyboardData             m_keyboard;
 
     std::shared_ptr<UIEventBus::queue_type<UINavigation>> m_nav_queue;
     std::vector<UINavigation> m_nav_events; /*!< filled by m_nav_queue */
@@ -433,6 +437,20 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     screen,
                     widget,
                     has(eh_t::flags_t::replace_self_with_widget));
+
+                /* The name screens are placeholders; the function that
+                 * opens them brings up the keyboard, prompt 9 for game
+                 * settings and 8 for player profiles */
+                constexpr u16 mp_profile_change_name     = 41;
+                constexpr u16 player_profile_change_name = 66;
+                if(has(eh_t::flags_t::run_function) && m_keyboard.valid() &&
+                   (eh.function == mp_profile_change_name ||
+                    eh.function == player_profile_change_name))
+                {
+                    auto& keyboard  = screen.stack.back().keyboard.emplace();
+                    keyboard.prompt = static_cast<u16>(
+                        eh.function == mp_profile_change_name ? 9 : 8);
+                }
             }
             if(screen.stack.empty())
                 break;
@@ -495,6 +513,37 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         }
         if(screen.stack.empty())
             return;
+        if(auto& keyboard = screen.stack.back().keyboard)
+        {
+            switch(nav.action)
+            {
+            case UINavigation::up:
+                keyboard->move(0, -1);
+                break;
+            case UINavigation::down:
+                keyboard->move(0, 1);
+                break;
+            case UINavigation::left:
+                keyboard->move(-1, 0);
+                break;
+            case UINavigation::right:
+                keyboard->move(1, 0);
+                break;
+            case UINavigation::accept:
+                if(!keyboard->press(m_keyboard))
+                    break;
+                cDebug(
+                    "UI: entered name \"{}\"",
+                    std::string(keyboard->text.begin(), keyboard->text.end()));
+                [[fallthrough]];
+            case UINavigation::back:
+                go_back(screen);
+                break;
+            default:
+                break;
+            }
+            return;
+        }
         auto& frame = screen.stack.back();
         auto  path  = resolve_focus(frame);
 
@@ -572,9 +621,58 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             nav.seat_idx);
     }
 
-    /* One textured quad; the bitmap is stretched to the rect */
+    /* One quad per glyph, appended straight into the frame's UI buffers --
+     * for_each_glyph only owns where each one goes */
+    void push_text(
+        widget_data_t&      data,
+        FontItem const&     font,
+        std::u16string_view text,
+        f32                 start_x,
+        f32                 baseline_y,
+        Vecf4 const&        color)
+    {
+        constexpr u32 kFontSource = 9u;
+        u32 const     tex_source  = (kFontSource << 24) | font.atlas_layer;
+
+        font.for_each_glyph(
+            text, start_x, baseline_y, [&](GlyphEntry const& g, f32 gx, f32 gy) {
+                f32 gx2 = gx + g.bitmap_width;
+                f32 gy2 = gy + g.bitmap_height;
+
+                std::array<vertex_t, 6> glyph_verts = {{
+                    {{gx, gy}, {0, 0}},
+                    {{gx2, gy}, {1, 0}},
+                    {{gx2, gy2}, {1, 1}},
+                    {{gx, gy}, {0, 0}},
+                    {{gx2, gy2}, {1, 1}},
+                    {{gx, gy2}, {0, 1}},
+                }};
+                data.vertex_data.insert(
+                    data.vertex_data.end(), glyph_verts.begin(), glyph_verts.end());
+
+                instance_vertex_t inst{};
+                inst.color            = color;
+                inst.tex_scale_offset = font.glyph_uv(g);
+                inst.texture_source.x = tex_source;
+                data.instance_data.push_back(inst);
+            });
+    }
+
+    Vecf2 image_size(generation_idx_t const& im)
+    {
+        atlas_intermediate_t tmp{};
+        auto const*          img = bitm_cache.assign_atlas_data(tmp, im)->image.mip;
+        return Vecf2(img->isize.x, img->isize.y);
+    }
+
+    /* One textured quad; the bitmap is stretched to the rect. `content` is
+     * the used part of a padded image, in texels from its top-left. */
     void push_image(
-        widget_data_t& data, Vecf2 min, Vecf2 max, generation_idx_t const& im)
+        widget_data_t&          data,
+        Vecf2                   min,
+        Vecf2                   max,
+        generation_idx_t const& im,
+        std::optional<Vecf2>    content = std::nullopt)
     {
         auto const dimensions = max - min;
 
@@ -594,14 +692,94 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         atlas_intermediate_t tmp{};
         auto const*          bitm    = bitm_cache.assign_atlas_data(tmp, im);
         auto const*          img     = bitm->image.mip;
-        auto                 imscale = Vecf2(
-            dimensions.x / img->isize.x, dimensions.y / img->isize.y);
+        auto                 imscale =
+            content ? *content / Vecf2(img->isize.x, img->isize.y)
+                    : glm::min(
+                          Vecf2(
+                              dimensions.x / img->isize.x,
+                              dimensions.y / img->isize.y),
+                          Vecf2(1.f));
         inst.tex_scale_offset = Vecf4(
-            tmp.atlas_scale.x * std::min(imscale.x, 1.f),
-            tmp.atlas_scale.y * std::min(imscale.y, 1.f),
+            tmp.atlas_scale.x * imscale.x,
+            tmp.atlas_scale.y * imscale.y,
             tmp.atlas_offset.x,
             tmp.atlas_offset.y);
         inst.texture_source.x = tmp.layer;
+    }
+
+    void draw_keyboard(widget_data_t data, VirtualKeyboard const& keyboard)
+    {
+        using layout = VirtualKeyboardLayout;
+
+        auto font_it = font_cache.find(m_keyboard.font_id);
+        if(font_it == font_cache.end() || font_it->second.glyph_map.empty())
+            return;
+        FontItem const& font   = font_it->second;
+        Vecf2 const     origin = Vecf2(data.box.x, data.box.y);
+        f32 const       middle = (static_cast<f32>(font.font->ascend_height) -
+                            font.font->descend_height) *
+                           0.5f;
+        Vecf4 const     white{1, 1, 1, 1};
+        Vecf4 const     blue{0.25f, 0.6f, 1.f, 1.f};
+
+        if(m_keyboard.background.valid())
+            push_image(
+                data,
+                origin,
+                origin + Vecf2(layout::background_w, layout::background_h),
+                m_keyboard.background,
+                Vecf2(layout::background_w, layout::background_h));
+
+        if(keyboard.prompt < m_keyboard.labels.size())
+            push_text(
+                data,
+                font,
+                m_keyboard.labels[keyboard.prompt],
+                origin.x + layout::panel_x,
+                origin.y + layout::field_y - 12.f,
+                white);
+
+        /* Text field, with the cursor as an underscore */
+        f32 const field_baseline =
+            origin.y + layout::field_y + layout::field_h * 0.5f + middle;
+        f32 const text_x = origin.x + layout::field_x;
+        push_text(data, font, keyboard.text, text_x, field_baseline, white);
+        push_text(
+            data,
+            font,
+            u"_",
+            text_x + font.measure(std::u16string_view(keyboard.text)
+                                      .substr(0, keyboard.cursor)),
+            field_baseline,
+            white);
+
+        for(auto const& [i, slot] : stl_types::const_enumerate(layout::slots()))
+        {
+            Vecf2 const centre   = origin + Vecf2(slot.x, slot.y);
+            bool const  selected = i == keyboard.selected;
+
+            if(slot.key < m_keyboard.keys.size())
+            {
+                auto const& key = m_keyboard.keys[slot.key];
+                auto const& im  = selected ? key.selected
+                                  : keyboard.engaged(slot.key) ? key.sticky
+                                                               : generation_idx_t{};
+                if(im.valid())
+                {
+                    Vecf2 const half = image_size(im) * 0.5f;
+                    push_image(data, centre - half, centre + half, im);
+                }
+            }
+
+            auto const label = keyboard.label(m_keyboard, slot.key);
+            push_text(
+                data,
+                font,
+                label,
+                centre.x - font.measure(label) * 0.5f,
+                centre.y + middle,
+                selected ? white : blue);
+        }
     }
 
     void process_render(
@@ -680,9 +858,6 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 if(text.empty())
                     return false;
 
-                constexpr u32 kFontSource = 9u;
-                u32 tex_source = (kFontSource << 24) | font_item.atlas_layer;
-
                 f32 const box_w = max.x - min.x;
                 f32 const line_h =
                     static_cast<f32>(font_item.font->ascend_height) +
@@ -719,33 +894,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                              : static_cast<f32>(tb.vertical_offset)) +
                         static_cast<f32>(font_item.font->ascend_height) +
                         line_h * static_cast<f32>(line_idx);
-                    font_item.for_each_glyph(
-                        line,
-                        start_x,
-                        baseline_y,
-                        [&](GlyphEntry const& g, f32 gx, f32 gy) {
-                            f32 gx2 = gx + g.bitmap_width;
-                            f32 gy2 = gy + g.bitmap_height;
-
-                            std::array<vertex_t, 6> glyph_verts = {{
-                                {{gx, gy}, {0, 0}},
-                                {{gx2, gy}, {1, 0}},
-                                {{gx2, gy2}, {1, 1}},
-                                {{gx, gy}, {0, 0}},
-                                {{gx2, gy2}, {1, 1}},
-                                {{gx, gy2}, {0, 1}},
-                            }};
-                            data.vertex_data.insert(
-                                data.vertex_data.end(),
-                                glyph_verts.begin(),
-                                glyph_verts.end());
-
-                            instance_vertex_t inst{};
-                            inst.color            = color;
-                            inst.tex_scale_offset = font_item.glyph_uv(g);
-                            inst.texture_source.x = tex_source;
-                            data.instance_data.push_back(inst);
-                        });
+                    push_text(data, font_item, line, start_x, baseline_y, color);
                 }
                 return false;
             });
@@ -882,6 +1031,20 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
                 if(screen.stack.empty())
                     continue;
+
+                /* The name screens close themselves at once; the keyboard
+                 * brings its own full-screen background and header */
+                if(auto const& keyboard = screen.stack.back().keyboard)
+                {
+                    draw_keyboard(
+                        widget_data_t{
+                            .vertex_data   = vertex_data,
+                            .instance_data = instance_vertex_data,
+                            .box           = screen.box,
+                        },
+                        *keyboard);
+                    continue;
+                }
 
                 /* The focused item is the child of the deepest widget that
                  * tabs through its children; a row's label below it and the
@@ -1267,9 +1430,60 @@ void load_ui_items(
         }
     }
 
-    fonts.allocate_font_texture();
-
     auto& bitmaps = e.subsystem_cast<BitmapCache<halo_version>>();
+
+    /* A map ships one vcky, which the engine uses for all text entry */
+    VirtualKeyboardData keyboard;
+    for(blam::tag_t const& tag : tag_view)
+    {
+        if(!tag.matches(blam::tag_class_t::vcky))
+            continue;
+        auto vk_opt =
+            tag.template data<blam::virtual_keyboard>(data.container.magic);
+        if(!vk_opt.has_value())
+            break;
+        auto const* vk    = vk_opt.value();
+        auto        first = [&bitmaps](auto const& ref) {
+            generation_idx_t out;
+            if(ref.valid())
+                if(auto all = bitmaps.resolve_all(ref); !all.empty())
+                    out = all.front();
+            return out;
+        };
+
+        if(vk->display_font.valid())
+            keyboard.font_id = fonts.predict(vk->display_font);
+        keyboard.background = first(vk->background);
+        if(auto labels = tag_view.template data<blam::ui::unicode_string_list>(
+               vk->special_key_labels_string_list);
+           labels.has_value())
+            if(auto subs = labels.value()->data.data(data.container.magic);
+               subs.has_value())
+                for(auto const& ref : subs.value())
+                {
+                    auto s = ref.str(data.container.magic);
+                    if(s.has_error())
+                        keyboard.labels.emplace_back();
+                    else
+                        keyboard.labels.emplace_back(s.value());
+                }
+        if(auto keys = vk->virtual_keys.data(data.container.magic);
+           keys.has_value())
+            for(auto const& key : keys.value())
+            {
+                if(key.key >= keyboard.keys.size())
+                    keyboard.keys.resize(key.key + 1u);
+                keyboard.keys[key.key] = {
+                    .key      = &key,
+                    .selected = first(key.selected_bg),
+                    .active   = first(key.active_bg),
+                    .sticky   = first(key.sticky_bg),
+                };
+            }
+        break;
+    }
+
+    fonts.allocate_font_texture();
     for(blam::tag_t const& tag : tag_view)
     {
         if(!tag.matches(blam::tag_class_t::bitm))
@@ -1285,5 +1499,11 @@ void load_ui_items(
         {
         }
         break;
+    }
+    try
+    {
+        e.subsystem_cast<UIRenderer>().m_keyboard = std::move(keyboard);
+    } catch(...)
+    {
     }
 }

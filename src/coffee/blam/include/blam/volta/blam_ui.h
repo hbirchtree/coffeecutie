@@ -1002,7 +1002,7 @@ struct virtual_keyboard
 
         using token_t = std::tuple<char16_t, action_t, input_mode_t>;
 
-        inline std::optional<token_t> tokenize(input_mode_t mode)
+        inline std::optional<token_t> tokenize(input_mode_t mode) const
         {
             // Range 0-9 is numbers 1-9 + 0
             // Range 10-35 is A-Z
