@@ -620,6 +620,7 @@ struct PlayerInput
     debounced_button_t accept{};
     debounced_button_t back{};
     debounced_button_t option{};
+    debounced_button_t option_2{};
     debounced_button_t up{};
     debounced_button_t down{};
     debounced_button_t left{};
@@ -636,6 +637,7 @@ struct PlayerInput
     {
         start.frame_end();
         option.frame_end();
+        option_2.frame_end();
         back.frame_end();
         accept.frame_end();
         left.frame_end();

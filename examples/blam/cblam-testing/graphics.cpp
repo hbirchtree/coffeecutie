@@ -716,13 +716,14 @@ i32 blam_main()
                     {
                         if(controller_connected)
                         {
-                            input.accept |= controller_buttons().a;
-                            input.back   |= controller_buttons().b || controller_buttons().back;
-                            input.option |= controller_buttons().y;
-                            input.left   |= controller_buttons().p_left;
-                            input.right  |= controller_buttons().p_right;
-                            input.up     |= controller_buttons().p_up;
-                            input.down   |= controller_buttons().p_down;
+                            input.accept   |= controller_buttons().a;
+                            input.back     |= controller_buttons().b || controller_buttons().back;
+                            input.option   |= controller_buttons().y;
+                            input.option_2 |= controller_buttons().x;
+                            input.left     |= controller_buttons().p_left;
+                            input.right    |= controller_buttons().p_right;
+                            input.up       |= controller_buttons().p_up;
+                            input.down     |= controller_buttons().p_down;
                         }
                         if(cam.keyboard.enabled)
                         {
