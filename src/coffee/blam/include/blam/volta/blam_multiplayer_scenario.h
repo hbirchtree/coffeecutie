@@ -15,7 +15,7 @@ struct multiplayer_scenario
         reference<byte_t, V> unknown_1;
         u32                  unknown_2;
         u32                  unknown_3;
-        unicode_reflexive<V> unknown_4;
+        unicode_string_list  unknown_4;
 
         u16 data[32];
     };

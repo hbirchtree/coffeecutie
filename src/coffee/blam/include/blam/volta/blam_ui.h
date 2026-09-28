@@ -165,6 +165,7 @@ struct ui_element
     {
         tagref_typed_t<tag_class_t::ustr> unicode_strings;
         tagref_typed_t<tag_class_t::font> font;
+        // Based on inspection, color is in ARGB format
         Vecf4                             color;
         enum class justification_t : u16
         {
@@ -178,8 +179,8 @@ struct ui_element
             password   = 0x2,
             flashing   = 0x4,
             dont_focus = 0x8,
-        } flags;
-        u32 unknown1[3];
+        } flags [[gnu::packed]]; /* on disk directly after justification */
+        u16 unknown1[6];
 
         // More text box parameters
 
@@ -187,6 +188,11 @@ struct ui_element
         i16 horizontal_offset;
         i16 vertical_offset;
         u16 padding;
+
+        Vecf4 remapped_color() const
+        {
+            return Vecf4{color.g, color.b, color.a, color.r};
+        }
     } text_box;
     
     u32 padding_1[6];
@@ -281,6 +287,8 @@ C_FLAGS(ui_element::flags_t, u32);
 C_FLAGS(ui_element::event_handler_t::flags_t, u32);
 C_FLAGS(ui_element::text_box_t::flags_t, u32);
 C_FLAGS(ui_element::child_widget_t::flags_t, u32);
+static_assert(offsetof(ui_element::text_box_t, flags) == 50);
+static_assert(offsetof(ui_element::text_box_t, string_list_index) == 66);
 static_assert(offsetof(ui_element, text_box) == 236);
 static_assert(offsetof(ui_element, spinner_list) == 340);
 static_assert(offsetof(ui_element, column_list) == 420);

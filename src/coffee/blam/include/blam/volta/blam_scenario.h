@@ -1664,27 +1664,6 @@ inline scenario<V> const& get_scenario(
 
 namespace blam::ui {
 
-struct unicode_ref
-{
-    u32                       length;
-    u32                       padding;
-    reference<unicode_var<1>> data;
-
-    inline result<ucs_string, error_msg> str(
-        map_ptr const& magic, u16 off = 0) const
-    {
-        if(auto str_data = data.data(magic); str_data.has_error())
-            return stl_types::failure(str_data.error());
-        else
-            return str_data.value()[0].str(off);
-    }
-};
-
-struct unicode_string
-{
-    reference<unicode_ref> sub_strings;
-};
-
 struct hud_symbol
 {
     bl_string symbol;
@@ -1702,7 +1681,7 @@ struct hud_message
         u8 size;
     };
 
-    unicode_ref            text;
+    unicode_string         text;
     reference<offset_pair> offsets;
     reference<hud_symbol>  symbols;
 

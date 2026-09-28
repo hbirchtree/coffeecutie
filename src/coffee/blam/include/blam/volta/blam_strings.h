@@ -142,19 +142,40 @@ struct alignas(4) string_ref
     }
 };
 
-struct unicode_reflexive
-{
-    reference<char16_t> data;
+} // namespace blam
 
-    inline result<ucs_string, error_msg> str(map_ptr const& magic) const
+namespace blam::ui {
+
+struct unicode_string
+{
+    u32                       length;
+    u32                       padding;
+    reference<unicode_var<1>> data;
+
+    inline result<ucs_string, error_msg> str(
+        map_ptr const& magic, u16 off = 0) const
     {
-        if(auto seg = data.data(magic); seg.has_error())
-            return stl_types::failure(seg.error());
+        if(auto str_data = data.data(magic); str_data.has_error())
+            return stl_types::failure(str_data.error());
         else
+            return str_data.value()[0].str(off);
+    }
+
+    inline result<std::string, error_msg> u8_str(
+        map_ptr const& magic) const
+    {
+        if(auto data = str(magic))
         {
-            return ucs_string(seg.value().data());
+            auto data_ = *data;
+            return std::string(data_.begin(), data_.end());
         }
+        return stl_types::failure(error_msg{"[nothing]"});
     }
 };
 
-} // namespace blam
+struct unicode_string_list
+{
+    reference<unicode_string> data;
+};
+
+}
