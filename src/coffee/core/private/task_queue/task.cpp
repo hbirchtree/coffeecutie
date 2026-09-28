@@ -821,6 +821,7 @@ void runtime_queue::execute_tasks()
     });
     std::erase_if(
         m_tasks, [](task_data_t const& task) { return task.to_dispose; });
+    sortTasks();
 
     /* One signal per pass, not per task: AwaitTask re-checks its own task on
      * wake, so nothing here needs to know who is waiting. */
@@ -911,7 +912,8 @@ u64 runtime_queue::enqueue(std::unique_ptr<dependent_task_invoker>&& task)
 
 void runtime_queue::sortTasks()
 {
-    std::sort(m_tasks.begin(), m_tasks.end());
+    /* Stable: tasks due at the same time run in the order they were queued */
+    std::stable_sort(m_tasks.begin(), m_tasks.end());
 }
 
 dependent_task_invoker::~dependent_task_invoker()

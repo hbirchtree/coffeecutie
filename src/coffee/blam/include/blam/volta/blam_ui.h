@@ -169,9 +169,9 @@ struct ui_element
         Vecf4                             color;
         enum class justification_t : u16
         {
-            center,
-            right,
             left,
+            right,
+            center,
         } justification;
         enum class flags_t : u32
         {
