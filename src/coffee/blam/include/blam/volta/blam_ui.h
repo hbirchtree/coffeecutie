@@ -4,6 +4,8 @@
 #include "blam_reference.h"
 #include "blam_tag_ref.h"
 
+#include <optional>
+
 namespace blam {
 
 using vec2i16 = typing::vectors::tvector<i16, 2>;
@@ -832,6 +834,139 @@ struct weapon_hud_interface
     reference<overlay_element_t>                   overlay_elements;
     reference<screen_effect_t>                     screen_effects;
     grenade_hud_interface::messaging_information_t messaging_information;
+};
+
+struct virtual_keyboard
+{
+    struct virtual_key_t
+    {
+        u16 key;
+
+        // Key codes
+        // Enter unicode character values as integer numbers
+        u16 lowercase_character;
+        u16 shift_character;
+        u16 caps_character;
+        u16 symbols_character;
+
+        u16 shift_caps_character;
+        u16 shift_symbols_character;
+        u16 caps_symbol_character;
+
+        tagref_typed_t<tag_class_t::bitm> unselected_bg;
+        tagref_typed_t<tag_class_t::bitm> selected_bg;
+        tagref_typed_t<tag_class_t::bitm> active_bg;
+        tagref_typed_t<tag_class_t::bitm> sticky_bg;
+
+        enum class action_t
+        {
+            none,
+            done,
+            backspace,
+            left,
+            right,
+        };
+        struct input_mode_t
+        {
+            bool shift{false};
+            bool caps{false};
+            bool symbols{false};
+        };
+
+        using token_t = std::tuple<char8_t, action_t, input_mode_t>;
+
+        inline std::optional<token_t> tokenize(input_mode_t mode)
+        {
+            // Range 0-9 is numbers 1-9 + 0
+            // Range 10-36 is A-Z
+            // After that is special tokens
+            enum action_idx_t
+            {
+                done = 37,
+                shift,
+                caps_lock,
+                symbols,
+                backspace,
+                left,
+                right,
+                space,
+            };
+
+            auto map_character = [this, &mode] {
+                if(mode.shift && mode.caps)
+                    return shift_caps_character;
+                else if(mode.shift && mode.symbols)
+                    return shift_symbols_character;
+                else if(mode.caps && mode.symbols)
+                    return caps_symbol_character;
+                else if(mode.symbols)
+                    return symbols_character;
+                else if(mode.caps)
+                    return caps_character;
+                else if(mode.shift)
+                    return shift_character;
+                else
+                    return lowercase_character;
+            };
+
+            if(key >= 0 && key < 10)
+                return token_t{
+                    map_character(),
+                    action_t::none,
+                    mode,
+                };
+            else if(key >= 10 && key < 37)
+                return token_t{
+                    map_character(),
+                    action_t::none,
+                    mode,
+                };
+            else
+            {
+                switch(key)
+                {
+                case done:
+                    return token_t{0, action_t::done, mode};
+                case shift:
+                    return token_t{0, action_t::none, input_mode_t{
+                            .shift   = !mode.shift,
+                            .caps    = mode.caps,
+                            .symbols = mode.symbols,
+                        },
+                    };
+                case caps_lock:
+                    return token_t{0, action_t::none, input_mode_t{
+                            .shift   = mode.shift,
+                            .caps    = !mode.caps,
+                            .symbols = mode.symbols,
+                        },
+                    };
+                case symbols:
+                    return token_t{0, action_t::none, input_mode_t{
+                            .shift   = mode.shift,
+                            .caps    = mode.caps,
+                            .symbols = !mode.symbols,
+                        },
+                    };
+                case backspace:
+                    return token_t{0, action_t::backspace, mode};
+                case left:
+                    return token_t{0, action_t::left, mode};
+                case right:
+                    return token_t{0, action_t::right, mode};
+                case space:
+                    return token_t{' ', action_t::none, mode};
+                default:
+                    return token_t{0, action_t::none, mode};
+                }
+            }
+        }
+    };
+
+    tagref_typed_t<tag_class_t::font> display_font;
+    tagref_typed_t<tag_class_t::bitm> background;
+    tagref_typed_t<tag_class_t::ustr> special_key_labels_string_list;
+    reference<virtual_key_t> virtual_keys;
 };
 
 } // namespace blam
