@@ -1459,6 +1459,7 @@ def cmd_run(
     prog_args: list[str],
     dry_run: bool,
     use_gdb: bool = False,
+    use_valgrind_tool: str | None = None
 ) -> None:
     """Run a natively-supported built target, forwarding *prog_args* to it."""
     runnable, why = _native_runnable(target, host)
@@ -1482,6 +1483,11 @@ def cmd_run(
             "--eval-command=set debuginfod enabled off",
             "--args"
         ] + cmd
+    elif use_valgrind_tool is not None:
+        cmd = [
+            "valgrind",
+            f"--tool={use_valgrind_tool}"
+        ] + cmd
 
     if dry_run:
         print(f"Would run (cwd={base_dir}):")
@@ -1495,6 +1501,8 @@ def cmd_run(
     os.chdir(str(base_dir))
     if use_gdb:
         os.execvpe("gdb", cmd, env)
+    elif use_valgrind_tool is not None:
+        os.execvpe("valgrind", cmd, env)
     else:
         os.execvpe(str(binary), cmd, env)
 
@@ -1729,6 +1737,10 @@ def main() -> None:
         "--gdb", action="store_true",
         help="Enable system GDB for the run"
     )
+    p.add_argument(
+        "--valgrind-tool", dest='valgrind_tool', default=None, metavar='VALGRIND_TOOL',
+        help="Wrap program in a Valgrind tool (Linux only)"
+    )
 
     # print-env
     p = sub.add_parser("print-env", help="Print environment variables for a preset")
@@ -1862,7 +1874,14 @@ def main() -> None:
 
     elif cmd == "run":
         target = TargetSpec.parse(args.target)
-        cmd_run(target, host, base_dir, cmake_extra_args, dry_run, args.gdb)
+        cmd_run(
+            target,
+            host,
+            base_dir,
+            cmake_extra_args,
+            dry_run,
+            use_gdb=args.gdb,
+            use_valgrind_tool=args.valgrind_tool)
 
     elif cmd == "print-env":
         check_programs("cmake")
