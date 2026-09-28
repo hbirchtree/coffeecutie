@@ -6,6 +6,7 @@
 
 namespace blam {
 
+using vec2i16 = typing::vectors::tvector<i16, 2>;
 using vec4i16 = typing::vectors::tvector<i16, 4>;
 
 struct ui_element
@@ -317,6 +318,278 @@ struct multiplayer_scenarios
     };
 
     reference<map_t> maps;
+};
+
+struct unit_hud_interface
+{
+    struct multitex_effectors_t
+    {
+        /* Source/destination
+         * These describe the relationship that causes the effect
+         * * destination type is the type of variable you want to be affected
+         * * destination tells which texture map (or geom offset) to apply it to
+         * * source says which value to look at when computing the effect
+         */
+        enum class destination_type_t : u16
+        {
+            tint_01, // tint (0, 1)
+            horizontal_offset,
+            vertical_offset,
+            fade_01, // fade (0, 1)
+        } destination_type;
+        enum class destination_t : u16
+        {
+            geometry_offset,
+            primary_map,
+            secondary_map,
+            tertiary_map,
+        } destination;
+        enum class source_t : u16
+        {
+            player_pitch,
+            player_pitch_tangent,
+            player_yaw,
+            weapon_ammo_total,
+            weapon_ammo_loaded,
+            weapon_heat,
+            explicit_use_low_bound, // explicit (uses low bound)
+            weapon_zoom_level,
+        } source;
+
+        /* In/out bounds
+         * When the source is the lower inbound, the destination ends up
+         * the lower outbound and vice-versa applies for the upper values
+         */
+        Vecf2 in_bounds; // source units
+        Vecf2 out_bounds; // pixels
+
+        /* Tint color bounds
+         * If destination is tint, these values are used instead of the out bounds
+         */
+        Vecf3 tint_color_lower_bound;
+        Vecf3 tint_color_upper_bound;
+
+        /* Periodic functions
+         * If you use periodic function as the source, this lets you tweak it
+         */
+        enum class periodic_function_t : u16
+        {
+            one,
+            zero,
+            cosine,
+            cosine_variable_period, // cosine (variable period)
+            diagonal_wave,
+            diagonal_wave_variable_period,
+            slide,
+            slide_variable_period,
+            noise,
+            jitter,
+            wander,
+            spark,
+        } periodic_function;
+        f32 function_period; // seconds
+        f32 function_phase; // seconds
+    };
+
+    struct multitex_overlay_t
+    {
+        i16 type; // ???
+        enum class blend_func_t : u16
+        {
+            alpha_blend,
+            multiply,
+            double_multiply,
+            add,
+            subtract,
+            component_min,
+            component_max,
+            alpha_multiply_add,
+        } framebuffer_blend_func;
+
+        /* Where you want the origin of the texture
+         * "texture" uses the texture coordinates supplied (?)
+         * "screen" uses the origin of the screen as the origin of the texture
+         */
+        enum class anchor_t : u16
+        {
+            texture,
+            screen,
+        };
+        anchor_t primary_anchor;
+        anchor_t secondary_anchor;
+        anchor_t tertiary_anchor;
+
+        /* How to blend the fextures together */
+        enum class texture_blend_func_t : u16
+        {
+            add,
+            subtract,
+            multiply,
+            multiply2x,
+            dot,
+        };
+        texture_blend_func_t zero_to_one_blend;
+        texture_blend_func_t one_to_two_blend;
+
+        /* How much to scale the textures */
+        Vecf2 primary_scale;
+        Vecf2 secondary_scale;
+        Vecf2 tertiary_scale;
+
+        /* How much to offset the origin of the texture */
+        Vecf2 primary_offset;
+        Vecf2 secondary_offset;
+        Vecf2 tertiary_offset;
+
+        /* Which maps to use */
+        enum class wrap_mode_t : u16
+        {
+            clamp,
+            wrap,
+        };
+        tagref_typed_t<tag_class_t::bitm> primary;
+        tagref_typed_t<tag_class_t::bitm> secondary;
+        tagref_typed_t<tag_class_t::bitm> tertiary;
+        wrap_mode_t                       primary_wrap_mode;
+        wrap_mode_t                       secondary_wrap_mode;
+        wrap_mode_t                       tertiary_wrap_mode;
+
+        reference<multitex_effectors_t> effectors;
+    };
+
+    struct background_t
+    {
+        vec2i16 anchor_offset;
+        i16 width_scale;
+        i16 height_scale;
+        enum class scaling_flags_t
+        {
+            none               = 0x0,
+            dont_scale_offset  = 0x1,
+            dont_scale_size    = 0x2,
+            use_high_res_scale = 0x4,
+        } scaling_flags;
+        tagref_typed_t<tag_class_t::bitm> interface_bitmap;
+        Vecf4 default_color; // In ARGB
+        Vecf4 flashing_color; // In ARGB
+        f32 flash_period;
+        f32 flash_delay;
+        f32 num_flashes;
+        enum class flash_flags_t
+        {
+            none                            = 0x0,
+            reverse_default_flashing_colors = 0x1,
+        } flash_flags;
+        f32 flash_length;
+        Vecf4 disabled_color; // In ARGB
+        i16 sequence_index;
+
+        reference<multitex_overlay_t> overlays;
+    };
+
+    struct overlay_t : background_t
+    {
+        enum class type_t : u16
+        {
+            team_icon,
+        } type;
+        enum class overlay_type_t : u16
+        {
+            none           = 0x0,
+            use_team_color = 0x1,
+        } flags;
+    };
+
+    struct meter_t
+    {
+        vec2i16 anchor_offset;
+        i16 width_scale;
+        i16 height_scale;
+        background_t::scaling_flags_t scaling_flags;
+        tagref_typed_t<tag_class_t::bitm> meter_bitmap;
+        Vecf3 color_at_minimum;
+        Vecf3 color_at_maximum;
+        Vecf3 flash_color;
+        Vecf4 empty_color; // In ARGB
+        enum class meter_flags_t : u16
+        {
+            none = 0x0,
+            use_min_max_for_state_changes     = 0x1,
+            interpolate_min_max_flash         = 0x2, // text cut off in Guerilla
+            interpolate_color_along_hsv_space = 0x4,
+            more_colors_for_hsv_interpolation = 0x8,
+            invert_interpolation              = 0x10,
+        } flags;
+        f32 mininum_meter_value;
+        i16 sequence_index;
+        f32 alpha_multiplier;
+        f32 alpha_bias;
+        f32 value_scale;
+        f32 opacity;
+        f32 translucency;
+        Vecf4 disabled_color; // In ARGB
+        f32 minimum_fraction_cutoff;
+        enum class meter_flags2_t : u16
+        {
+            none = 0x0,
+            show_only_when_active                  = 0x1,
+            flash_once_if_activated_while_disabled = 0x2,
+        } flags2;
+    };
+
+    struct aux_hud_meter_t
+    {
+        enum class type_t : u16
+        {
+            integrated_light,
+        } type;
+        background_t background;
+        meter_t      meter;
+    };
+
+    struct sound_t
+    {
+        tagref_t sound; // snd or lsnd
+        enum class latched_to_t : u16
+        {
+            none                = 0x0,
+            shield_recharging   = 0x1,
+            shield_damaged      = 0x2,
+            shield_low          = 0x4,
+            shield_empty        = 0x8,
+            health_low          = 0x10,
+            health_empty        = 0x20,
+            health_minor_damage = 0x40,
+            health_major_damage = 0x40,
+        } latched_to;
+        f32 scale;
+    };
+
+    enum class anchor_t
+    {
+        top_left,
+        top_right,
+        bottom_left,
+        bottom_right,
+        center,
+    } anchor;
+
+    background_t unit_hud_background;
+    background_t shield_panel_background;
+    meter_t      shield_panel_meter;
+    background_t health_panel_background;
+    meter_t      health_panel_meter;
+    background_t motion_sensor_background;
+    // motion sensor foreground
+    // motion sensor center
+    struct aux_overlays_t
+    {
+        anchor_t             anchor;
+        reference<overlay_t> overlays;
+    } aux_overlays;
+    // auxiliary overlays
+    reference<sound_t>         hud_warning_sounds;
+    reference<aux_hud_meter_t> auxiliary_hud_meters;
 };
 
 } // namespace blam
