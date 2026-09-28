@@ -457,7 +457,7 @@ struct unit_hud_interface
         reference<multitex_effectors_t> effectors;
     };
 
-    struct background_t
+    struct background_base_t
     {
         vec2i16 anchor_offset;
         i16 width_scale;
@@ -482,8 +482,11 @@ struct unit_hud_interface
         } flash_flags;
         f32 flash_length;
         Vecf4 disabled_color; // In ARGB
-        i16 sequence_index;
+    };
 
+    struct background_t : background_base_t
+    {
+        i16 sequence_index;
         reference<multitex_overlay_t> overlays;
     };
 
@@ -500,7 +503,7 @@ struct unit_hud_interface
         } flags;
     };
 
-    struct meter_t
+    struct meter_base_t
     {
         vec2i16 anchor_offset;
         i16 width_scale;
@@ -528,6 +531,10 @@ struct unit_hud_interface
         f32 opacity;
         f32 translucency;
         Vecf4 disabled_color; // In ARGB
+    };
+
+    struct meter_t : meter_base_t
+    {
         f32 minimum_fraction_cutoff;
         enum class meter_flags2_t : u16
         {
@@ -590,6 +597,241 @@ struct unit_hud_interface
     // auxiliary overlays
     reference<sound_t>         hud_warning_sounds;
     reference<aux_hud_meter_t> auxiliary_hud_meters;
+};
+
+struct grenade_hud_interface
+{
+    struct overlay_t : unit_hud_interface::background_base_t
+    {
+        f32 frame_rate;
+        i16 sequence_index;
+        enum class type_t : u16
+        {
+            none = 0x0,
+            show_on_flashing = 0x1,
+            show_on_empty = 0x2,
+            show_on_default = 0x4,
+            show_always = 0x8,
+        } type; // Possibly mislabeled in Guerilla
+        enum class flags_t : u16
+        {
+            none = 0x0,
+            flashes_when_active = 0x1,
+        } flags;
+    };
+
+    unit_hud_interface::anchor_t anchor;
+    unit_hud_interface::background_t grenade_hud_background;
+    unit_hud_interface::background_t total_grenades_background;
+    struct numbers_t : unit_hud_interface::background_base_t
+    {
+        i16 maximum_number_digits;
+        enum class flags_t : u16
+        {
+            none = 0x0,
+            show_leading_zeros    = 0x1,
+            only_show_when_zoomed = 0x2,
+            draw_a_trailing_m     = 0x4, // ???
+        } flags;
+        i16 number_of_fractional_digits;
+        f32 flash_cutoff;
+    } total_grenades_numbers;
+    struct total_grenades_overlays_t
+    {
+        tagref_typed_t<tag_class_t::bitm> overlay_bitmap;
+        reference<overlay_t>              overlays;
+    } total_grenades_overlays;
+    reference<unit_hud_interface::sound_t> warning_sounds;
+    struct messaging_information_t
+    {
+        i16 sequence_index;
+        i16 width_offset;
+        vec2i16 offset_from_reference_corner;
+        Vecf4 override_icon_color; // In ARGB
+        f32 frame_rate; // 0-30
+        enum class flags_t : u16
+        {
+            none = 0x0,
+            use_text_from_string_list_instead   = 0x1,
+            override_default_color              = 0x2,
+            width_offset_is_absolute_icon_width = 0x4,
+        } flags;
+        i16 text_index;
+    } messaging_information;
+};
+
+struct weapon_hud_interface
+{
+    struct static_element_t
+    {
+        enum class attached_to_t : u16
+        {
+            total_ammo,
+            loaded_ammo,
+            heat,
+            age,
+            secondary_weapon_total_ammo,
+            secondary_weapon_loaded_ammo,
+            distance_to_target,
+            elevation_to_target,
+        } state_attached_to;
+        enum class use_on_map_type_t : u16
+        {
+            any,
+            solo,
+            multiplayer,
+        } can_use_on_map_type;
+        unit_hud_interface::background_t background;
+    };
+    struct meter_element_t
+    {
+        static_element_t::attached_to_t     state_attached_to;
+        static_element_t::use_on_map_type_t can_use_on_map_type;
+        unit_hud_interface::meter_base_t    meter;
+    };
+    struct number_element_t : unit_hud_interface::background_base_t
+    {
+        i16                                       maximum_number_digits;
+        grenade_hud_interface::numbers_t::flags_t flags;
+        i16                                       number_of_fractional_digits;
+        enum class weapon_flags_t : u16
+        {
+            none = 0x0,
+            divide_number_by_clip_size = 0x1,
+        } weapon_flags;
+    };
+    struct crosshair_overlay_t : unit_hud_interface::background_base_t
+    {
+        f32 frame_rate;
+        i16 sequence_index;
+        enum class flags_t : u16
+        {
+            none = 0x0,
+            flashes_when_active       = 0x1,
+            not_a_sprite              = 0x2,
+            show_only_when_zoomed     = 0x4,
+            show_sniper_data          = 0x8,
+            hide_area_outside_reticle = 0x10,
+            one_zoom_level            = 0x20,
+            dont_show_when_zoomed     = 0x40,
+        } flags;
+    };
+    struct crosshair_t
+    {
+        enum class crosshair_type_t : u16
+        {
+            aim,
+            zoom,
+            charge,
+            should_reload,
+            flash_heat,
+            flash_total_ammo,
+            flash_battery,
+            reload_overheat,
+            flash_when_firing_and_no_ammo,
+            flash_when_throwing_and_no_grenades,
+            low_ammo_and_none_left_to_reload,
+            should_reload_secondary_trigger,
+            flash_secondary_total_ammo,
+            flash_secondary_reload,
+            flash_when_firing_secondary_trigger,
+            low_secondary_ammo_and_non, // text cut off in Guerilla
+            primary_trigger_ready,
+            secondary_trigger_ready,
+            flash_when_firing_with_depleted,
+        } crosshair_type;
+        static_element_t::use_on_map_type_t can_use_on_map_type;
+        reference<crosshair_overlay_t>      crosshair_overlays;
+    };
+    struct overlay_t : unit_hud_interface::background_base_t
+    {
+        f32 frame_rate;
+        i16 sequence_index;
+        enum class type_t : u16
+        {
+            none = 0x0,
+            show_on_flashing = 0x1,
+            show_on_empty = 0x2,
+            show_on_reload_overheating = 0x4,
+            show_on_default = 0x8,
+            show_always = 0x10,
+        } type; // Possibly mislabeled in Guerilla
+        enum class flags_t : u16
+        {
+            none = 0x0,
+            flashes_when_active = 0x1,
+        } flags;
+    };
+    struct overlay_element_t
+    {
+        static_element_t::attached_to_t     state_attached_to;
+        static_element_t::use_on_map_type_t can_use_on_map_type;
+        tagref_typed_t<tag_class_t::bitm>   overlay_bitmap;
+        reference<overlay_t>                overlays;
+    };
+    struct screen_effect_t
+    {
+        enum class flags_t
+        {
+            none = 0x0,
+            only_when_zoomed = 0x1,
+            connect_to_flashlight = 0x2,
+            // night vision: masked = 0x4
+            // desaturation: additive = 0x4
+            // desaturation: masked = 0x8
+        };
+
+        struct
+        {
+            flags_t flags;
+            tagref_typed_t<tag_class_t::bitm> mask_fullscreen;
+            tagref_typed_t<tag_class_t::bitm> mask_splitscreen;
+        } mask;
+        struct
+        {
+            flags_t flags;
+            Vecf2 fov_in_bounds;
+            Vecf2 radius_out_bounds;
+        } convolution;
+        struct
+        {
+            flags_t flags;
+            f32 script_source; // [0, 3]
+            f32 intensity;     // [0, 1]
+        } night_vision;
+        struct
+        {
+            flags_t flags;
+            f32 script_source; // [0, 3]
+            f32 intensity;     // [0, 1]
+            Vecf3 tint;
+        } desaturation;
+    };
+
+    tagref_typed_t<tag_class_t::hud> child_hud;
+    struct flash_cutoff_t
+    {
+        enum flags_t : u16
+        {
+            none = 0x0,
+            use_parent_hud_flashing_parameters = 0x1,
+        } flags;
+        i16 total_ammo_cutoff;
+        i16 loaded_ammo_cutoff;
+        i16 heat_cutoff;
+        i16 age_cutoff;
+    } flash_cutoffs;
+    struct screen_alignment_t
+    {
+        unit_hud_interface::anchor_t anchor;
+        reference<static_element_t> static_elements;
+    } screen_alignment;
+    reference<meter_element_t>                     meter_elements;
+    reference<number_element_t>                    number_elements;
+    reference<crosshair_t>                         crosshairs;
+    reference<overlay_element_t>                   overlay_elements;
+    reference<screen_effect_t>                     screen_effects;
+    grenade_hud_interface::messaging_information_t messaging_information;
 };
 
 } // namespace blam
