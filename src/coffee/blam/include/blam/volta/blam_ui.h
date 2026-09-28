@@ -322,10 +322,18 @@ struct multiplayer_scenarios
     reference<map_t> maps;
 };
 
+/* D3DCOLOR, a little-endian 0xAARRGGBB: B, G, R, A in memory */
+struct argb8_t
+{
+    u8 b, g, r, a;
+};
+
 struct unit_hud_interface
 {
     struct multitex_effectors_t
     {
+        u32 padding_0[16];
+
         /* Source/destination
          * These describe the relationship that causes the effect
          * * destination type is the type of variable you want to be affected
@@ -357,13 +365,16 @@ struct unit_hud_interface
             explicit_use_low_bound, // explicit (uses low bound)
             weapon_zoom_level,
         } source;
+        u16 padding_1;
 
         /* In/out bounds
          * When the source is the lower inbound, the destination ends up
          * the lower outbound and vice-versa applies for the upper values
          */
-        Vecf2 in_bounds; // source units
+        Vecf2 in_bounds;  // source units
         Vecf2 out_bounds; // pixels
+
+        u32 padding_2[16];
 
         /* Tint color bounds
          * If destination is tint, these values are used instead of the out bounds
@@ -389,12 +400,16 @@ struct unit_hud_interface
             wander,
             spark,
         } periodic_function;
+        u16 padding_3;
         f32 function_period; // seconds
-        f32 function_phase; // seconds
+        f32 function_phase;  // seconds
+
+        u32 padding_4[8];
     };
 
     struct multitex_overlay_t
     {
+        u16 padding_0;
         i16 type; // ???
         enum class blend_func_t : u16
         {
@@ -407,6 +422,7 @@ struct unit_hud_interface
             component_max,
             alpha_multiply_add,
         } framebuffer_blend_func;
+        u16 padding_1[17];
 
         /* Where you want the origin of the texture
          * "texture" uses the texture coordinates supplied (?)
@@ -432,6 +448,7 @@ struct unit_hud_interface
         };
         texture_blend_func_t zero_to_one_blend;
         texture_blend_func_t one_to_two_blend;
+        u16                  padding_2;
 
         /* How much to scale the textures */
         Vecf2 primary_scale;
@@ -455,41 +472,57 @@ struct unit_hud_interface
         wrap_mode_t                       primary_wrap_mode;
         wrap_mode_t                       secondary_wrap_mode;
         wrap_mode_t                       tertiary_wrap_mode;
+        u16                               padding_3;
+
+        u32 padding_4[46];
 
         reference<multitex_effectors_t> effectors;
+
+        u32 padding_5[32];
     };
 
+    /* Placement shared by every HUD element */
     struct background_base_t
     {
         vec2i16 anchor_offset;
-        i16 width_scale;
-        i16 height_scale;
-        enum class scaling_flags_t
+        f32     width_scale;
+        f32     height_scale;
+        enum class scaling_flags_t : u16
         {
             none               = 0x0,
             dont_scale_offset  = 0x1,
             dont_scale_size    = 0x2,
             use_high_res_scale = 0x4,
         } scaling_flags;
-        tagref_typed_t<tag_class_t::bitm> interface_bitmap;
-        Vecf4 default_color; // In ARGB
-        Vecf4 flashing_color; // In ARGB
-        f32 flash_period;
-        f32 flash_delay;
-        f32 num_flashes;
-        enum class flash_flags_t
+        u16 padding_0;
+        u32 padding_1[5];
+    };
+
+    struct colors_t
+    {
+        argb8_t default_color;
+        argb8_t flashing_color;
+        f32     flash_period;
+        f32     flash_delay;
+        i16     num_flashes;
+        enum class flash_flags_t : u16
         {
             none                            = 0x0,
             reverse_default_flashing_colors = 0x1,
         } flash_flags;
-        f32 flash_length;
-        Vecf4 disabled_color; // In ARGB
+        f32     flash_length;
+        argb8_t disabled_color;
+        u32     padding_0;
     };
 
     struct background_t : background_base_t
     {
-        i16 sequence_index;
-        reference<multitex_overlay_t> overlays;
+        tagref_typed_t<tag_class_t::bitm> interface_bitmap;
+        colors_t                          colors;
+        i16                               sequence_index;
+        u16                               padding_2;
+        reference<multitex_overlay_t>     overlays;
+        u32                               padding_3;
     };
 
     struct overlay_t : background_t
@@ -498,52 +531,39 @@ struct unit_hud_interface
         {
             team_icon,
         } type;
-        enum class overlay_type_t : u16
+        enum class flags_t : u16
         {
             none           = 0x0,
             use_team_color = 0x1,
         } flags;
+        u32 padding_4[6];
     };
 
-    struct meter_base_t
+    struct meter_base_t : background_base_t
     {
-        vec2i16 anchor_offset;
-        i16 width_scale;
-        i16 height_scale;
-        background_t::scaling_flags_t scaling_flags;
         tagref_typed_t<tag_class_t::bitm> meter_bitmap;
-        Vecf3 color_at_minimum;
-        Vecf3 color_at_maximum;
-        Vecf3 flash_color;
-        Vecf4 empty_color; // In ARGB
-        enum class meter_flags_t : u16
+        argb8_t                           color_at_minimum;
+        argb8_t                           color_at_maximum;
+        argb8_t                           flash_color;
+        argb8_t                           empty_color;
+        enum class meter_flags_t : u8
         {
-            none = 0x0,
+            none                              = 0x0,
             use_min_max_for_state_changes     = 0x1,
             interpolate_min_max_flash         = 0x2, // text cut off in Guerilla
             interpolate_color_along_hsv_space = 0x4,
             more_colors_for_hsv_interpolation = 0x8,
             invert_interpolation              = 0x10,
         } flags;
-        f32 mininum_meter_value;
-        i16 sequence_index;
-        f32 alpha_multiplier;
-        f32 alpha_bias;
-        f32 value_scale;
-        f32 opacity;
-        f32 translucency;
-        Vecf4 disabled_color; // In ARGB
-    };
-
-    struct meter_t : meter_base_t
-    {
-        f32 minimum_fraction_cutoff;
-        enum class meter_flags2_t : u16
-        {
-            none = 0x0,
-            show_only_when_active                  = 0x1,
-            flash_once_if_activated_while_disabled = 0x2,
-        } flags2;
+        u8      minimum_meter_value;
+        i16     sequence_index;
+        u8      alpha_multiplier;
+        u8      alpha_bias;
+        i16     value_scale;
+        f32     opacity;
+        f32     translucency;
+        argb8_t disabled_color;
+        u32     padding_2[4];
     };
 
     struct aux_hud_meter_t
@@ -552,14 +572,24 @@ struct unit_hud_interface
         {
             integrated_light,
         } type;
+        u16          padding_0;
+        u32          padding_1[4];
         background_t background;
-        meter_t      meter;
+        meter_base_t meter;
+        f32          minimum_fraction_cutoff;
+        enum class flags_t : u32
+        {
+            none                                   = 0x0,
+            show_only_when_active                  = 0x1,
+            flash_once_if_activated_while_disabled = 0x2,
+        } flags;
+        u32 padding_2[22];
     };
 
     struct sound_t
     {
-        tagref_t sound; // snd or lsnd
-        enum class latched_to_t : u16
+        tagref_t sound; // snd! or lsnd
+        enum class latched_to_t : u32
         {
             none                = 0x0,
             shield_recharging   = 0x1,
@@ -569,12 +599,13 @@ struct unit_hud_interface
             health_low          = 0x10,
             health_empty        = 0x20,
             health_minor_damage = 0x40,
-            health_major_damage = 0x40,
+            health_major_damage = 0x80,
         } latched_to;
         f32 scale;
+        u32 padding_0[8];
     };
 
-    enum class anchor_t
+    enum class anchor_t : u16
     {
         top_left,
         top_right,
@@ -582,61 +613,119 @@ struct unit_hud_interface
         bottom_right,
         center,
     } anchor;
+    u16 padding_0;
+    u32 padding_1[8];
 
     background_t unit_hud_background;
     background_t shield_panel_background;
-    meter_t      shield_panel_meter;
+    meter_base_t shield_panel_meter;
+    argb8_t      overcharge_minimum_color;
+    argb8_t      overcharge_maximum_color;
+    argb8_t      overcharge_flash_color;
+    argb8_t      overcharge_empty_color;
+    u32          padding_2[4];
     background_t health_panel_background;
-    meter_t      health_panel_meter;
+    meter_base_t health_panel_meter;
+    argb8_t      medium_health_left_color;
+    f32          max_color_health_fraction_cutoff;
+    f32          min_color_health_fraction_cutoff;
+    u32          padding_3[5];
     background_t motion_sensor_background;
-    // motion sensor foreground
-    // motion sensor center
+    background_t motion_sensor_foreground;
+    u32          padding_4[8];
+    background_base_t motion_sensor_center;
     struct aux_overlays_t
     {
         anchor_t             anchor;
+        u16                  padding_0;
+        u32                  padding_1[8];
         reference<overlay_t> overlays;
+        u32                  padding_2[4];
     } aux_overlays;
-    // auxiliary overlays
     reference<sound_t>         hud_warning_sounds;
     reference<aux_hud_meter_t> auxiliary_hud_meters;
+    u32                        padding_5[101];
 };
+
+static_assert(sizeof(unit_hud_interface::multitex_effectors_t) == 220);
+static_assert(sizeof(unit_hud_interface::multitex_overlay_t) == 480);
+static_assert(sizeof(unit_hud_interface::background_base_t) == 36);
+static_assert(sizeof(unit_hud_interface::colors_t) == 32);
+static_assert(sizeof(unit_hud_interface::background_t) == 104);
+static_assert(sizeof(unit_hud_interface::overlay_t) == 132);
+static_assert(sizeof(unit_hud_interface::meter_base_t) == 104);
+static_assert(sizeof(unit_hud_interface::aux_hud_meter_t) == 324);
+static_assert(sizeof(unit_hud_interface::sound_t) == 56);
+static_assert(sizeof(unit_hud_interface) == 1388);
 
 struct grenade_hud_interface
 {
     struct overlay_t : unit_hud_interface::background_base_t
     {
-        f32 frame_rate;
-        i16 sequence_index;
+        unit_hud_interface::colors_t colors;
+        i16                          frame_rate;
+        u16                          padding_2;
+        i16                          sequence_index;
         enum class type_t : u16
         {
-            none = 0x0,
+            none             = 0x0,
             show_on_flashing = 0x1,
-            show_on_empty = 0x2,
-            show_on_default = 0x4,
-            show_always = 0x8,
+            show_on_empty    = 0x2,
+            show_on_default  = 0x4,
+            show_always      = 0x8,
         } type; // Possibly mislabeled in Guerilla
-        enum class flags_t : u16
+        enum class flags_t : u32
         {
-            none = 0x0,
+            none                = 0x0,
             flashes_when_active = 0x1,
         } flags;
+        u32 padding_3[14];
     };
 
-    unit_hud_interface::anchor_t anchor;
-    unit_hud_interface::background_t grenade_hud_background;
-    unit_hud_interface::background_t total_grenades_background;
     struct numbers_t : unit_hud_interface::background_base_t
     {
-        i16 maximum_number_digits;
-        enum class flags_t : u16
+        unit_hud_interface::colors_t colors;
+        u8                           maximum_number_digits;
+        enum class flags_t : u8
         {
-            none = 0x0,
+            none                  = 0x0,
             show_leading_zeros    = 0x1,
             only_show_when_zoomed = 0x2,
             draw_a_trailing_m     = 0x4, // ???
         } flags;
-        i16 number_of_fractional_digits;
-        f32 flash_cutoff;
+        u8  number_of_fractional_digits;
+        u8  padding_2;
+        u32 padding_3[3];
+    };
+
+    /* Some shipped tags carry junk in here (sequence_index 0x6269) */
+    struct messaging_information_t
+    {
+        i16     sequence_index;
+        i16     width_offset;
+        vec2i16 offset_from_reference_corner;
+        argb8_t override_icon_color;
+        u8      frame_rate; // 0-30
+        enum class flags_t : u8
+        {
+            none                                = 0x0,
+            use_text_from_string_list_instead   = 0x1,
+            override_default_color              = 0x2,
+            width_offset_is_absolute_icon_width = 0x4,
+        } flags;
+        i16 text_index;
+        u32 padding_0[12];
+    };
+
+    unit_hud_interface::anchor_t     anchor;
+    u16                              padding_0;
+    u32                              padding_1[8];
+    unit_hud_interface::background_t grenade_hud_background;
+    unit_hud_interface::background_t total_grenades_background;
+    struct total_grenades_numbers_t : numbers_t
+    {
+        i16 flash_cutoff;
+        u16 padding_4;
     } total_grenades_numbers;
     struct total_grenades_overlays_t
     {
@@ -644,71 +733,76 @@ struct grenade_hud_interface
         reference<overlay_t>              overlays;
     } total_grenades_overlays;
     reference<unit_hud_interface::sound_t> warning_sounds;
-    struct messaging_information_t
-    {
-        i16 sequence_index;
-        i16 width_offset;
-        vec2i16 offset_from_reference_corner;
-        Vecf4 override_icon_color; // In ARGB
-        f32 frame_rate; // 0-30
-        enum class flags_t : u16
-        {
-            none = 0x0,
-            use_text_from_string_list_instead   = 0x1,
-            override_default_color              = 0x2,
-            width_offset_is_absolute_icon_width = 0x4,
-        } flags;
-        i16 text_index;
-    } messaging_information;
+    u32                                    padding_2[17];
+    messaging_information_t                messaging_information;
 };
+
+static_assert(sizeof(grenade_hud_interface::overlay_t) == 136);
+static_assert(sizeof(grenade_hud_interface::numbers_t) == 84);
+static_assert(sizeof(grenade_hud_interface::messaging_information_t) == 64);
+static_assert(sizeof(grenade_hud_interface) == 504);
 
 struct weapon_hud_interface
 {
-    struct static_element_t
+    enum class attached_to_t : u16
     {
-        enum class attached_to_t : u16
-        {
-            total_ammo,
-            loaded_ammo,
-            heat,
-            age,
-            secondary_weapon_total_ammo,
-            secondary_weapon_loaded_ammo,
-            distance_to_target,
-            elevation_to_target,
-        } state_attached_to;
-        enum class use_on_map_type_t : u16
-        {
-            any,
-            solo,
-            multiplayer,
-        } can_use_on_map_type;
+        total_ammo,
+        loaded_ammo,
+        heat,
+        age,
+        secondary_weapon_total_ammo,
+        secondary_weapon_loaded_ammo,
+        distance_to_target,
+        elevation_to_target,
+    };
+    enum class use_on_map_type_t : u16
+    {
+        any,
+        solo,
+        multiplayer,
+    };
+
+    /* Common to static, meter, number and overlay elements */
+    struct element_header_t
+    {
+        attached_to_t     state_attached_to;
+        u16               padding_0;
+        use_on_map_type_t can_use_on_map_type;
+        u16               padding_1;
+        u32               padding_2[7];
+    };
+
+    struct static_element_t : element_header_t
+    {
         unit_hud_interface::background_t background;
+        u32                              padding_3[10];
     };
-    struct meter_element_t
+    struct meter_element_t : element_header_t
     {
-        static_element_t::attached_to_t     state_attached_to;
-        static_element_t::use_on_map_type_t can_use_on_map_type;
-        unit_hud_interface::meter_base_t    meter;
+        unit_hud_interface::meter_base_t meter;
+        u32                              padding_3[10];
     };
-    struct number_element_t : unit_hud_interface::background_base_t
+    struct number_element_t : element_header_t
     {
-        i16                                       maximum_number_digits;
-        grenade_hud_interface::numbers_t::flags_t flags;
-        i16                                       number_of_fractional_digits;
-        enum class weapon_flags_t : u16
+        struct number_t : grenade_hud_interface::numbers_t
         {
-            none = 0x0,
-            divide_number_by_clip_size = 0x1,
-        } weapon_flags;
+            enum class weapon_flags_t : u16
+            {
+                none                       = 0x0,
+                divide_number_by_clip_size = 0x1,
+            } weapon_flags;
+            u16 padding_4;
+            u32 padding_5[9];
+        } number;
     };
     struct crosshair_overlay_t : unit_hud_interface::background_base_t
     {
-        f32 frame_rate;
-        i16 sequence_index;
-        enum class flags_t : u16
+        unit_hud_interface::colors_t colors;
+        i16                          frame_rate;
+        i16                          sequence_index;
+        enum class flags_t : u32
         {
-            none = 0x0,
+            none                      = 0x0,
             flashes_when_active       = 0x1,
             not_a_sprite              = 0x2,
             show_only_when_zoomed     = 0x4,
@@ -717,6 +811,7 @@ struct weapon_hud_interface
             one_zoom_level            = 0x20,
             dont_show_when_zoomed     = 0x40,
         } flags;
+        u32 padding_2[8];
     };
     struct crosshair_t
     {
@@ -742,99 +837,131 @@ struct weapon_hud_interface
             secondary_trigger_ready,
             flash_when_firing_with_depleted,
         } crosshair_type;
-        static_element_t::use_on_map_type_t can_use_on_map_type;
-        reference<crosshair_overlay_t>      crosshair_overlays;
+        u16                               padding_0;
+        use_on_map_type_t                 can_use_on_map_type;
+        u16                               padding_1;
+        u32                               padding_2[7];
+        tagref_typed_t<tag_class_t::bitm> crosshair_bitmap;
+        reference<crosshair_overlay_t>    crosshair_overlays;
+        u32                               padding_3[10];
     };
     struct overlay_t : unit_hud_interface::background_base_t
     {
-        f32 frame_rate;
-        i16 sequence_index;
+        unit_hud_interface::colors_t colors;
+        i16                          frame_rate;
+        u16                          padding_2;
+        i16                          sequence_index;
         enum class type_t : u16
         {
-            none = 0x0,
-            show_on_flashing = 0x1,
-            show_on_empty = 0x2,
+            none                       = 0x0,
+            show_on_flashing           = 0x1,
+            show_on_empty              = 0x2,
             show_on_reload_overheating = 0x4,
-            show_on_default = 0x8,
-            show_always = 0x10,
+            show_on_default            = 0x8,
+            show_always                = 0x10,
         } type; // Possibly mislabeled in Guerilla
-        enum class flags_t : u16
+        enum class flags_t : u32
         {
-            none = 0x0,
+            none                = 0x0,
             flashes_when_active = 0x1,
         } flags;
+        u32 padding_3[14];
     };
-    struct overlay_element_t
+    struct overlay_element_t : element_header_t
     {
-        static_element_t::attached_to_t     state_attached_to;
-        static_element_t::use_on_map_type_t can_use_on_map_type;
-        tagref_typed_t<tag_class_t::bitm>   overlay_bitmap;
-        reference<overlay_t>                overlays;
+        tagref_typed_t<tag_class_t::bitm> overlay_bitmap;
+        reference<overlay_t>              overlays;
+        u32                               padding_3[10];
     };
     struct screen_effect_t
     {
-        enum class flags_t
+        enum class flags_t : u16
         {
-            none = 0x0,
-            only_when_zoomed = 0x1,
+            none                  = 0x0,
+            only_when_zoomed      = 0x1,
             connect_to_flashlight = 0x2,
             // night vision: masked = 0x4
             // desaturation: additive = 0x4
             // desaturation: masked = 0x8
         };
 
+        u32 padding_0;
         struct
         {
-            flags_t flags;
+            flags_t                           flags;
+            u16                               padding_0;
+            u32                               padding_1[4];
             tagref_typed_t<tag_class_t::bitm> mask_fullscreen;
             tagref_typed_t<tag_class_t::bitm> mask_splitscreen;
+            u32                               padding_2[2];
         } mask;
         struct
         {
             flags_t flags;
-            Vecf2 fov_in_bounds;
-            Vecf2 radius_out_bounds;
+            u16     padding_0;
+            Vecf2   fov_in_bounds; // radians
+            Vecf2   radius_out_bounds;
+            u32     padding_1[6];
         } convolution;
         struct
         {
             flags_t flags;
-            f32 script_source; // [0, 3]
-            f32 intensity;     // [0, 1]
+            i16     script_source; // [0, 3]
+            f32     intensity;     // [0, 1]
+            u32     padding_0[6];
         } night_vision;
         struct
         {
             flags_t flags;
-            f32 script_source; // [0, 3]
-            f32 intensity;     // [0, 1]
-            Vecf3 tint;
+            i16     script_source; // [0, 3]
+            f32     intensity;     // [0, 1]
+            Vecf3   tint;
+            u32     padding_0[6];
         } desaturation;
     };
 
-    tagref_typed_t<tag_class_t::hud> child_hud;
+    tagref_typed_t<tag_class_t::wphi> child_hud;
     struct flash_cutoff_t
     {
         enum flags_t : u16
         {
-            none = 0x0,
+            none                               = 0x0,
             use_parent_hud_flashing_parameters = 0x1,
         } flags;
+        u16 padding_0;
         i16 total_ammo_cutoff;
         i16 loaded_ammo_cutoff;
         i16 heat_cutoff;
         i16 age_cutoff;
+        u32 padding_1[8];
     } flash_cutoffs;
     struct screen_alignment_t
     {
         unit_hud_interface::anchor_t anchor;
-        reference<static_element_t> static_elements;
+        u16                          padding_0;
+        u32                          padding_1[8];
+        reference<static_element_t>  static_elements;
     } screen_alignment;
-    reference<meter_element_t>                     meter_elements;
-    reference<number_element_t>                    number_elements;
-    reference<crosshair_t>                         crosshairs;
-    reference<overlay_element_t>                   overlay_elements;
+    reference<meter_element_t>   meter_elements;
+    reference<number_element_t>  number_elements;
+    reference<crosshair_t>       crosshairs;
+    reference<overlay_element_t> overlay_elements;
+    u32 crosshair_types; // 1 << crosshair_type for each of crosshairs
+    u32 padding_0[3];
     reference<screen_effect_t>                     screen_effects;
+    u32                                            padding_1[33];
     grenade_hud_interface::messaging_information_t messaging_information;
 };
+
+static_assert(sizeof(weapon_hud_interface::static_element_t) == 180);
+static_assert(sizeof(weapon_hud_interface::meter_element_t) == 180);
+static_assert(sizeof(weapon_hud_interface::number_element_t) == 160);
+static_assert(sizeof(weapon_hud_interface::crosshair_overlay_t) == 108);
+static_assert(sizeof(weapon_hud_interface::crosshair_t) == 104);
+static_assert(sizeof(weapon_hud_interface::overlay_t) == 136);
+static_assert(sizeof(weapon_hud_interface::overlay_element_t) == 104);
+static_assert(sizeof(weapon_hud_interface::screen_effect_t) == 184);
+static_assert(sizeof(weapon_hud_interface) == 380);
 
 struct virtual_keyboard
 {
