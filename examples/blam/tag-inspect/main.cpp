@@ -569,11 +569,14 @@ void dump_dela(blam::ui_element const* info)
         auto const& tb = info->text_box;
         fmt::print(
             "  text_box: strings={} font={}\n",
+            tb.string_list_index,
             name_of(tb.unicode_strings),
             name_of(tb.font));
+        fmt::print("    color={}\n",
+            tb.color);
         fmt::print("    ");
         print_enum("justification", tb.justification);
-        fmt::print("flags={} ({})", flags_to_string(tb.flags), static_cast<u32>(tb.flags));
+        fmt::print("flags={} ({}) ", flags_to_string(tb.flags), static_cast<u32>(tb.flags));
         fmt::print(
             "string_index={} offset=({},{})\n",
             tb.string_list_index,
@@ -630,6 +633,26 @@ void dump_dela(blam::ui_element const* info)
             fmt::print("      custom_controller_index={}\n", ch.custom_controller_index);
         }
     }
+}
+
+void dump_ustr(blam::ui::unicode_string_list const* info)
+{
+    if(auto strings = info->data.data(g_magic); strings.has_value())
+    {
+        fmt::print("  strings={}\n", strings.value().size());
+        for(auto const& ustr : strings.value())
+        {
+            fmt::print("    \"{}\"\n", ustr.u8_str(g_magic));
+        }
+    }
+}
+
+void dump_soul(blam::ui_item_collection const* info)
+{
+    for(auto dela : info->widget_definitions.data(g_magic).value())
+        fmt::print("  widget=[{}] {}\n",
+            dela.definition.tag_class_name(),
+            name_of(dela.definition));
 }
 
 void dump_smet(blam::shader::shader_meter const* info)
@@ -2028,6 +2051,20 @@ void dump_tag_data(blam::tag_index_view<Ver> const& index, blam::tag_t const& ta
             data.value(), sizeof(blam::ui_element)));
         break;
     }
+    case blam::tag_class_t::Soul:
+    {
+        fmt::print("= bytes={}\n", sizeof(blam::ui_item_collection));
+        hex_dump(gsl::span<libc_types::byte_t const>(
+            data.value(), sizeof(blam::ui_item_collection)));
+        break;
+    }
+    case blam::tag_class_t::ustr:
+    {
+        fmt::print("= bytes={}\n", 32);
+        hex_dump(gsl::span<libc_types::byte_t const>(
+            data.value(), 32));
+        break;
+    }
     default:
         break;
     }
@@ -2145,6 +2182,14 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
     case blam::tag_class_t::DeLa:
         if(auto* info = header_of((blam::ui_element*)nullptr))
             dump_dela(info);
+        break;
+    case blam::tag_class_t::Soul:
+        if(auto* info = header_of((blam::ui_item_collection*)nullptr))
+            dump_soul(info);
+        break;
+    case blam::tag_class_t::ustr:
+        if(auto* info = header_of((blam::ui::unicode_string_list*)nullptr))
+            dump_ustr(info);
         break;
     case blam::tag_class_t::smet:
         if(auto* info = header_of((blam::shader::shader_meter*)nullptr))
