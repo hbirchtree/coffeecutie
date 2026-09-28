@@ -348,6 +348,18 @@
             "inherits": "base-linux"
         },
         {
+            "name": "desktop-x64-linux-multi-reldeb",
+            "environment": {"BUILD_TYPE":"RelWithDebInfo"},
+            "configurePreset": "desktop-x64-linux-multi",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "desktop-x64-linux-multi-rel",
+            "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "desktop-x64-linux-multi",
+            "inherits": "base-linux"
+        },
+        {
             "name": "desktop-x86_64v2-buildroot-linux-gnu-multi-dbg",
             "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "desktop-x86_64v2-buildroot-linux-gnu-multi",
