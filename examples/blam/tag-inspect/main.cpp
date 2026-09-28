@@ -2027,6 +2027,56 @@ void scan_tagrefs(
     }
 }
 
+/* Hex dumps of a whole struct, sized by the struct itself */
+template<typename T>
+void hex_dump_struct(T const* data, std::string_view label)
+{
+    fmt::print("= {} bytes={}\n", label, sizeof(T));
+    hex_dump(gsl::span<libc_types::byte_t const>(
+        reinterpret_cast<libc_types::byte_t const*>(data), sizeof(T)));
+}
+
+/* Dumps every element of a reflexive, then lets `children` descend into it */
+template<typename T, typename Children>
+void hex_dump_block(
+    blam::reference<T> const& block, std::string_view label, Children&& children)
+{
+    auto elements = block.data(g_magic);
+    if(!elements.has_value())
+    {
+        fmt::print("= {} <invalid reflexive>\n", label);
+        return;
+    }
+    u32 i = 0;
+    for(T const& element : elements.value())
+    {
+        auto element_label = fmt::format("{}[{}]", label, i++);
+        hex_dump_struct(&element, element_label);
+        children(element, element_label);
+    }
+}
+
+template<typename T>
+void hex_dump_block(blam::reference<T> const& block, std::string_view label)
+{
+    hex_dump_block(block, label, [](T const&, std::string_view) {});
+}
+
+void hex_dump_hud_background(
+    blam::unit_hud_interface::background_t const& background,
+    std::string_view                              label)
+{
+    using blam::unit_hud_interface;
+    hex_dump_block(
+        background.overlays,
+        fmt::format("{}.overlays", label),
+        [](unit_hud_interface::multitex_overlay_t const& overlay,
+           std::string_view                              overlay_label) {
+            hex_dump_block(
+                overlay.effectors, fmt::format("{}.effectors", overlay_label));
+        });
+}
+
 template<typename Ver>
 void dump_tag_data(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
 {
@@ -2063,6 +2113,97 @@ void dump_tag_data(blam::tag_index_view<Ver> const& index, blam::tag_t const& ta
         fmt::print("= bytes={}\n", 32);
         hex_dump(gsl::span<libc_types::byte_t const>(
             data.value(), 32));
+        break;
+    }
+    case blam::tag_class_t::vcky:
+    {
+        auto const* info =
+            reinterpret_cast<blam::virtual_keyboard const*>(data.value());
+        hex_dump_struct(info, "virtual_keyboard");
+        hex_dump_block(info->virtual_keys, "virtual_keys");
+        break;
+    }
+    case blam::tag_class_t::unhi:
+    {
+        using blam::unit_hud_interface;
+        auto const* info =
+            reinterpret_cast<unit_hud_interface const*>(data.value());
+        hex_dump_struct(info, "unit_hud_interface");
+        hex_dump_hud_background(info->unit_hud_background, "unit_hud_background");
+        hex_dump_hud_background(
+            info->shield_panel_background, "shield_panel_background");
+        hex_dump_hud_background(
+            info->health_panel_background, "health_panel_background");
+        hex_dump_hud_background(
+            info->motion_sensor_background, "motion_sensor_background");
+        hex_dump_hud_background(
+            info->motion_sensor_foreground, "motion_sensor_foreground");
+        hex_dump_block(
+            info->aux_overlays.overlays,
+            "aux_overlays",
+            [](unit_hud_interface::overlay_t const& overlay,
+               std::string_view                     label) {
+                hex_dump_hud_background(overlay, label);
+            });
+        hex_dump_block(info->hud_warning_sounds, "hud_warning_sounds");
+        hex_dump_block(
+            info->auxiliary_hud_meters,
+            "auxiliary_hud_meters",
+            [](unit_hud_interface::aux_hud_meter_t const& meter,
+               std::string_view                           label) {
+                hex_dump_hud_background(
+                    meter.background, fmt::format("{}.background", label));
+            });
+        break;
+    }
+    case blam::tag_class_t::grhi:
+    {
+        auto const* info =
+            reinterpret_cast<blam::grenade_hud_interface const*>(data.value());
+        hex_dump_struct(info, "grenade_hud_interface");
+        hex_dump_hud_background(
+            info->grenade_hud_background, "grenade_hud_background");
+        hex_dump_hud_background(
+            info->total_grenades_background, "total_grenades_background");
+        hex_dump_block(
+            info->total_grenades_overlays.overlays, "total_grenades_overlays");
+        hex_dump_block(info->warning_sounds, "warning_sounds");
+        break;
+    }
+    case blam::tag_class_t::wphi:
+    {
+        using blam::weapon_hud_interface;
+        auto const* info =
+            reinterpret_cast<weapon_hud_interface const*>(data.value());
+        hex_dump_struct(info, "weapon_hud_interface");
+        hex_dump_block(
+            info->screen_alignment.static_elements,
+            "static_elements",
+            [](weapon_hud_interface::static_element_t const& element,
+               std::string_view                              label) {
+                hex_dump_hud_background(
+                    element.background, fmt::format("{}.background", label));
+            });
+        hex_dump_block(info->meter_elements, "meter_elements");
+        hex_dump_block(info->number_elements, "number_elements");
+        hex_dump_block(
+            info->crosshairs,
+            "crosshairs",
+            [](weapon_hud_interface::crosshair_t const& crosshair,
+               std::string_view                         label) {
+                hex_dump_block(
+                    crosshair.crosshair_overlays,
+                    fmt::format("{}.crosshair_overlays", label));
+            });
+        hex_dump_block(
+            info->overlay_elements,
+            "overlay_elements",
+            [](weapon_hud_interface::overlay_element_t const& element,
+               std::string_view                               label) {
+                hex_dump_block(
+                    element.overlays, fmt::format("{}.overlays", label));
+            });
+        hex_dump_block(info->screen_effects, "screen_effects");
         break;
     }
     default:
