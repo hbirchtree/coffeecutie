@@ -1000,16 +1000,18 @@ struct virtual_keyboard
             bool symbols{false};
         };
 
-        using token_t = std::tuple<char8_t, action_t, input_mode_t>;
+        using token_t = std::tuple<char16_t, action_t, input_mode_t>;
 
         inline std::optional<token_t> tokenize(input_mode_t mode)
         {
             // Range 0-9 is numbers 1-9 + 0
-            // Range 10-36 is A-Z
+            // Range 10-35 is A-Z
             // After that is special tokens
             enum action_idx_t
             {
-                done = 37,
+                last_number = 9,
+                last_letter = 35,
+                done,
                 shift,
                 caps_lock,
                 symbols,
@@ -1036,13 +1038,13 @@ struct virtual_keyboard
                     return lowercase_character;
             };
 
-            if(key >= 0 && key < 10)
+            if(key >= 0 && key <= last_number)
                 return token_t{
                     map_character(),
                     action_t::none,
                     mode,
                 };
-            else if(key >= 10 && key < 37)
+            else if(key > last_number && key <= last_letter)
                 return token_t{
                     map_character(),
                     action_t::none,
@@ -1084,7 +1086,7 @@ struct virtual_keyboard
                 case space:
                     return token_t{' ', action_t::none, mode};
                 default:
-                    return token_t{0, action_t::none, mode};
+                    return std::nullopt;
                 }
             }
         }
@@ -1095,5 +1097,8 @@ struct virtual_keyboard
     tagref_typed_t<tag_class_t::ustr> special_key_labels_string_list;
     reference<virtual_key_t> virtual_keys;
 };
+
+static_assert(sizeof(virtual_keyboard::virtual_key_t) == 80);
+static_assert(sizeof(virtual_keyboard) == 60);
 
 } // namespace blam
