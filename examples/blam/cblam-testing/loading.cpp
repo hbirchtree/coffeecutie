@@ -52,12 +52,15 @@ struct ResourceLoader
     using Proxy = compo::proxy_of<ResourceLoaderManifest<Ver>>;
 
     blam::tag_index_view<Ver> index;
+    GameEventBus*             game_bus{nullptr};
 
     std::vector<SpawnBSPEvent>         pending_bsps;
     std::vector<SpawnBipedEvent>       pending_bipeds;
     std::vector<SpawnEquipmentEvent>   pending_equipment;
     std::vector<SpawnModelEvent>       pending_models;
     std::vector<MountModelEvent>       pending_mounts;
+    std::vector<SpawnObjectEvent>      pending_objects;
+    std::vector<u32>                   pending_despawns;
     std::optional<ClusterChangedEvent> pending_cluster_change;
 
     std::shared_ptr<GameEventBus::queue_type<SpawnBSPEvent>> spawn_bsp_queue;
@@ -69,6 +72,10 @@ struct ResourceLoader
         spawn_model_queue;
     std::shared_ptr<GameEventBus::queue_type<MountModelEvent>>
         mount_model_queue;
+    std::shared_ptr<GameEventBus::queue_type<SpawnObjectEvent>>
+        spawn_object_queue;
+    std::shared_ptr<GameEventBus::queue_type<DespawnObjectEvent>>
+        despawn_object_queue;
     std::shared_ptr<GameEventBus::queue_type<ClusterChangedEvent>>
         cluster_queue;
 
@@ -143,9 +150,12 @@ struct ResourceLoader
         spawn_bsp_queue->poll();
         // spawn_equip_queue->poll();
         spawn_model_queue->poll();
+        spawn_object_queue->poll();
+        despawn_object_queue->poll();
 
         if(!pending_cluster_change && pending_bsps.empty() &&
-           pending_models.empty() && pending_mounts.empty())
+           pending_models.empty() && pending_mounts.empty() &&
+           pending_objects.empty() && pending_despawns.empty())
             return;
 
         /* Everything below can reach ModelCache::predict(), so the model
@@ -181,6 +191,15 @@ struct ResourceLoader
             mount_model(p, model_mount);
         pending_models.clear();
         pending_mounts.clear();
+
+        /* Spawns first, so a replacement exists before its impostor goes */
+        for(auto const& object : pending_objects)
+            spawn_object(p, object);
+        pending_objects.clear();
+
+        for(auto net_id : pending_despawns)
+            despawn_object(p, net_id);
+        pending_despawns.clear();
     }
 
     /* Sun direction/colour and fog for the world UBO, taken from the
@@ -701,29 +720,21 @@ struct ResourceLoader
             return -1.f;
     }
 
-    /* One scenario object palette (scenery, vehicles, bipeds, ...): resolve
-     * each instance's model, apply its idle animation frame, and build the
-     * parent + submodel entities. */
+    /* One scenario object palette (scenery, vehicles, bipeds, ...). Static
+     * groups are built here on every peer; dynamic ones are raised as
+     * server-owned SpawnObjectEvents. */
     template<typename T>
     void load_objects(
-        Proxy& p, blam::scn::reflex_group<T> const& group, u32 tags)
+        Proxy&                            p,
+        blam::scn::reflex_group<T> const& group,
+        ScenarioGroup                     group_id,
+        u32                               tags)
     {
         ProfContext _(__FUNCTION__);
 
-        using namespace compo;
-
-        BlamFiles<Ver>&   files       = p.template subsystem<BlamFiles<Ver>>();
-        ModelCache<Ver>&  model_cache = p.template subsystem<ModelCache<Ver>>();
-        ShaderCache<Ver>& shader_cache =
-            p.template subsystem<ShaderCache<Ver>>();
+        BlamFiles<Ver>& files = p.template subsystem<BlamFiles<Ver>>();
 
         auto const& magic = files.container.magic;
-
-        EntityRecipe parent = shared_recipes::model;
-        parent.tags         = parent.tags | tags;
-
-        EntityRecipe submodel = shared_recipes::submodel;
-        submodel.tags         = submodel.tags | (tags & SubObjectMask);
 
         auto palette_opt   = group.palette.data(magic);
         auto instances_opt = group.instances.data(magic);
@@ -733,74 +744,162 @@ struct ResourceLoader
         auto palette   = palette_opt.value();
         auto instances = instances_opt.value();
 
-        u32 instance_id = 0;
         cDebug(
             "load_objects: {} instances, {} palette entries",
             instances.size(),
             palette.size());
 
-        for(T const& instance : instances)
+        bool const dynamic = group_id >= ScenarioGroup::Vehicle;
+
+        for(u32 i = 0; i < instances.size(); ++i)
         {
-            if(instance.ref == -1 ||
-               static_cast<size_t>(instance.ref) >= palette.size() ||
-               !palette[instance.ref][0].valid())
+            auto const net_id = SpawnObjectEvent::scenario_net_id(group_id, i);
+            if(!dynamic)
+            {
+                build_scenario_object(p, palette, instances[i], tags, net_id);
                 continue;
-
-            blam::tagref_t const& tagref = palette[instance.ref][0];
-
-            auto instance_it = index.tag_of(tagref);
-
-            if(!instance_it.has_value())
+            }
+            auto const& instance = instances[i];
+            if(instance.ref < 0 ||
+               static_cast<size_t>(instance.ref) >= palette.size())
                 continue;
+            raise_spawn(palette[instance.ref][0], instance.pos, net_id);
+        }
+    }
 
-            auto const* instance_tag = *instance_it;
+    void raise_spawn(
+        blam::tagref_t const& object, Vecf3 const& position, u32 net_id)
+    {
+        GameEvent        ev{.type = GameEvent::SpawnObject};
+        SpawnObjectEvent spawn{
+            .object       = object,
+            .position     = position,
+            .net_id       = net_id,
+            .server_owned = true,
+        };
+        game_bus->inject(ev, &spawn);
+    }
 
-            if(!instance_tag->valid())
-                continue;
+    /* Resolve the instance's model, apply its idle animation frame, and build
+     * the parent + submodel entities */
+    template<typename Palette, typename T>
+    void build_scenario_object(
+        Proxy&         p,
+        Palette const& palette,
+        T const&       instance,
+        u32            tags,
+        u32            net_id)
+    {
+        using namespace compo;
 
-            blam::scn::object const* instance_obj =
-                instance_tag->template data<blam::scn::object>(magic).value();
+        BlamFiles<Ver>&  files       = p.template subsystem<BlamFiles<Ver>>();
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
 
-            auto model_it = index.find(instance_obj[0].model);
+        auto const& magic = files.container.magic;
 
-            if(model_it == index.end())
-                continue;
+        EntityRecipe parent = shared_recipes::model;
+        parent.tags         = parent.tags | tags;
 
-            ModelAssembly mesh_data =
-                model_cache.predict_regions(instance_obj[0].model, model_lod);
+        EntityRecipe submodel = shared_recipes::submodel;
+        submodel.tags         = submodel.tags | (tags & SubObjectMask);
 
-            auto idle = find_idle_animation(p, instance_obj[0].anim_graph);
+        if(instance.ref == -1 ||
+           static_cast<size_t>(instance.ref) >= palette.size() ||
+           !palette[instance.ref][0].valid())
+            return;
 
-            /* Only objects that actually animate carry the component, so
-             * static scenery pays neither the state nor a bone slot. */
-            EntityRecipe recipe = parent;
-            if(idle)
-                recipe.components.push_back(
-                    compo::type_hash_v<AnimationPlayback>());
+        blam::tagref_t const& tagref = palette[instance.ref][0];
 
-            auto parent_ = p.create_entity(recipe);
-            if(idle)
-                parent_.template get<AnimationPlayback>().layers[0] = *idle;
+        auto instance_it = index.tag_of(tagref);
 
-            Model&       model = parent_.template get<Model>();
-            ObjectSpawn& spawn = parent_.template get<ObjectSpawn>();
-            DepthInfo&   depth = parent_.template get<DepthInfo>();
+        if(!instance_it.has_value())
+            return;
 
-            spawn.tag           = instance_tag;
-            spawn.header        = &instance;
-            spawn.power         = device_power(files, instance);
-            model.tag           = &(*model_it);
-            model.model         = mesh_data.models.at(0);
-            model.origin_object = instance_tag;
-            model.initialize(&instance);
-            depth.position = model.position;
+        auto const* instance_tag = *instance_it;
 
-            NetworkInfo& netinfo = parent_.template get<NetworkInfo>();
-            netinfo.object       = tagref;
-            netinfo.instance_id  = ++instance_id;
+        if(!instance_tag->valid())
+            return;
 
-            for(auto const& model_ : mesh_data.models)
-                build_submodels(p, parent_, model, model_, submodel);
+        blam::scn::object const* instance_obj =
+            instance_tag->template data<blam::scn::object>(magic).value();
+
+        auto model_it = index.find(instance_obj[0].model);
+
+        if(model_it == index.end())
+            return;
+
+        ModelAssembly mesh_data =
+            model_cache.predict_regions(instance_obj[0].model, model_lod);
+
+        auto idle = find_idle_animation(p, instance_obj[0].anim_graph);
+
+        /* Only objects that actually animate carry the component, so
+         * static scenery pays neither the state nor a bone slot. */
+        EntityRecipe recipe = parent;
+        if(idle)
+            recipe.components.push_back(
+                compo::type_hash_v<AnimationPlayback>());
+
+        auto parent_ = p.create_entity(recipe);
+        if(idle)
+            parent_.template get<AnimationPlayback>().layers[0] = *idle;
+
+        Model&       model = parent_.template get<Model>();
+        ObjectSpawn& spawn = parent_.template get<ObjectSpawn>();
+        DepthInfo&   depth = parent_.template get<DepthInfo>();
+
+        spawn.tag           = instance_tag;
+        spawn.header        = &instance;
+        spawn.power         = device_power(files, instance);
+        model.tag           = &(*model_it);
+        model.model         = mesh_data.models.at(0);
+        model.origin_object = instance_tag;
+        model.initialize(&instance);
+        depth.position = model.position;
+
+        NetworkInfo& netinfo = parent_.template get<NetworkInfo>();
+        netinfo.object       = tagref;
+        netinfo.instance_id  = net_id;
+
+        for(auto const& model_ : mesh_data.models)
+            build_submodels(p, parent_, model, model_, submodel);
+    }
+
+    /* Calls fn(group, tags) with the scenario palette group_id names */
+    template<typename Fn>
+    static void with_scenario_group(
+        blam::scn::scenario<Ver> const& scenario, ScenarioGroup group_id, Fn&& fn)
+    {
+        auto const& objects = scenario.objects;
+        switch(group_id)
+        {
+        case ScenarioGroup::Scenery:
+            fn(objects.scenery, ObjectScenery | PositioningStatic);
+            break;
+        case ScenarioGroup::LightFixture:
+            fn(objects.light_fixtures, ObjectLightFixture | PositioningStatic);
+            break;
+        case ScenarioGroup::Machine:
+            fn(objects.machines, ObjectDevice | PositioningStatic);
+            break;
+        case ScenarioGroup::Control:
+            fn(objects.controls,
+               ObjectDevice | ObjectControl | PositioningStatic);
+            break;
+        case ScenarioGroup::Vehicle:
+            fn(objects.vehicles, ObjectVehicle | PositioningDynamic);
+            break;
+        case ScenarioGroup::Biped:
+            fn(objects.bipeds, ObjectBiped | PositioningDynamic);
+            break;
+        case ScenarioGroup::Equipment:
+            fn(objects.equips, ObjectEquipment | PositioningDynamic);
+            break;
+        case ScenarioGroup::Weapon:
+            fn(objects.weapon_spawns, ObjectEquipment | PositioningDynamic);
+            break;
+        default:
+            break;
         }
     }
 
@@ -930,16 +1029,34 @@ struct ResourceLoader
         }
     }
 
-    /* Netgame weapon/equipment spawns, which live outside the object palettes
-     * and are keyed by item collections. */
-    void load_multiplayer_equipment(Proxy& p, u32 tags)
-    {
-        using namespace compo;
+    /* Item permutations of a netgame equipment entry's item collection */
+    using item_span =
+        typename decltype(blam::scn::item_collection::items)::span_type;
 
-        BlamFiles<Ver>&   files       = p.template subsystem<BlamFiles<Ver>>();
-        ModelCache<Ver>&  model_cache = p.template subsystem<ModelCache<Ver>>();
-        ShaderCache<Ver>& shader_cache =
-            p.template subsystem<ShaderCache<Ver>>();
+    std::optional<std::pair<blam::scn::item_collection const*, item_span>>
+    netgame_items(
+        blam::scn::multiplayer_equipment const& entry,
+        blam::map_ptr const&                    magic)
+    {
+        auto item_coll_tag = index.find(entry.item);
+        if(item_coll_tag == index.end())
+            return std::nullopt;
+        auto item_coll_data =
+            (*item_coll_tag).template data<blam::scn::item_collection>(magic);
+        if(item_coll_data.has_error())
+            return std::nullopt;
+        auto const* item_coll = &item_coll_data.value()[0];
+        auto        perms     = item_coll->items.data(magic);
+        if(perms.has_error())
+            return std::nullopt;
+        return std::make_pair(item_coll, perms.value());
+    }
+
+    /* Netgame weapon/equipment spawns, which live outside the object palettes
+     * and are keyed by item collections. Raised as server-owned events. */
+    void load_multiplayer_equipment(Proxy& p)
+    {
+        BlamFiles<Ver>& files = p.template subsystem<BlamFiles<Ver>>();
 
         auto const& magic    = files.container.magic;
         auto const* scenario = files.container.scenario().value_or(nullptr);
@@ -950,83 +1067,127 @@ struct ResourceLoader
         if(equipment.has_error())
             return;
 
+        for(u32 e = 0; e < equipment.value().size(); ++e)
+        {
+            auto const& entry = equipment.value()[e];
+            auto        items = netgame_items(entry, magic);
+            if(!items)
+                continue;
+            for(u32 k = 0; k < items->second.size(); ++k)
+            {
+                auto const& item = items->second[k].item;
+                if(item.tag_class != blam::tag_class_t::weap &&
+                   item.tag_class != blam::tag_class_t::eqip)
+                    continue;
+                raise_spawn(
+                    item,
+                    entry.pos,
+                    SpawnObjectEvent::scenario_net_id(
+                        ScenarioGroup::NetgameEquipment, e, k));
+            }
+        }
+    }
+
+    void build_netgame_item(Proxy& p, u32 entry_idx, u32 perm_idx, u32 net_id)
+    {
+        using namespace compo;
+
+        BlamFiles<Ver>&  files       = p.template subsystem<BlamFiles<Ver>>();
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+
+        auto const& magic    = files.container.magic;
+        auto const* scenario = files.container.scenario().value_or(nullptr);
+        if(!scenario)
+            return;
+
+        auto equipment = scenario->netgame.equipment.data(magic);
+        if(equipment.has_error() || entry_idx >= equipment.value().size())
+            return;
+        blam::scn::multiplayer_equipment const& equipment_ref =
+            equipment.value()[entry_idx];
+
+        auto items = netgame_items(equipment_ref, magic);
+        if(!items || perm_idx >= items->second.size())
+            return;
+        blam::scn::item_permutation const& item_perm = items->second[perm_idx];
+
+        if(item_perm.item.tag_class != blam::tag_class_t::weap &&
+           item_perm.item.tag_class != blam::tag_class_t::eqip)
+            return;
+
+        auto item_data    = index.template data<blam::scn::item>(item_perm.item);
+        auto item_tag_opt = index.tag_of(item_perm.item);
+        if(!item_data.has_value() || !item_tag_opt.has_value())
+            return;
+
+        blam::scn::item const& item     = *item_data.value();
+        blam::tag_t const*     item_tag = *item_tag_opt;
+
+        if(!item.model.valid())
+            return;
+
+        u32 const tags = ObjectEquipment | PositioningDynamic;
+
         EntityRecipe equip = shared_recipes::multiplayer_spawn;
         equip.tags         = equip.tags | tags;
 
         EntityRecipe submodel = shared_recipes::submodel;
         submodel.tags         = submodel.tags | (tags & SubObjectMask);
 
-        u32 instance_id = 0;
-        for(blam::scn::multiplayer_equipment const& equipment_ref :
-            equipment.value())
+        auto              set    = p.create_entity(equip);
+        Model&            model_ = set.template get<Model>();
+        MultiplayerSpawn& spawn  = set.template get<MultiplayerSpawn>();
+
+        spawn.item       = &item;
+        spawn.spawn      = &equipment_ref;
+        spawn.collection = items->first;
+        model_.initialize(&equipment_ref);
+        model_.tag           = *index.tag_of(item.model);
+        model_.origin_object = item_tag;
+
+        NetworkInfo& netinfo = set.template get<NetworkInfo>();
+        netinfo.object       = item_perm.item;
+        netinfo.instance_id  = net_id;
+
+        ModelAssembly models = model_cache.predict_regions(item.model, model_lod);
+
+        for(auto const& model : models.models)
         {
-            auto item_coll_tag = index.find(equipment_ref.item);
-
-            if(item_coll_tag == index.end())
-                continue;
-
-            auto item_coll_data =
-                (*item_coll_tag)
-                    .template data<blam::scn::item_collection>(magic);
-            if(item_coll_data.has_error())
-                continue;
-            blam::scn::item_collection const& item_coll =
-                item_coll_data.value()[0];
-
-            auto perms_opt = item_coll.items.data(magic);
-            if(perms_opt.has_error())
-                continue;
-
-            for(blam::scn::item_permutation const& item_perm :
-                perms_opt.value())
-            {
-                switch(item_perm.item.tag_class)
-                {
-                case blam::tag_class_t::weap:
-                case blam::tag_class_t::eqip: {
-                    auto item_data =
-                        index.template data<blam::scn::item>(item_perm.item);
-                    auto item_tag_opt = index.tag_of(item_perm.item);
-                    if(!item_data.has_value() || !item_tag_opt.has_value())
-                        continue;
-
-                    blam::scn::item const& item     = *item_data.value();
-                    blam::tag_t const*     item_tag = *item_tag_opt;
-
-                    if(!item.model.valid())
-                        continue;
-
-                    auto              set    = p.create_entity(equip);
-                    Model&            model_ = set.template get<Model>();
-                    MultiplayerSpawn& spawn =
-                        set.template get<MultiplayerSpawn>();
-
-                    spawn.item       = &item;
-                    spawn.spawn      = &equipment_ref;
-                    spawn.collection = &item_coll;
-                    model_.initialize(&equipment_ref);
-                    model_.tag           = *index.tag_of(item.model);
-                    model_.origin_object = item_tag;
-
-                    NetworkInfo& netinfo = set.template get<NetworkInfo>();
-                    netinfo.object       = item_perm.item;
-                    netinfo.instance_id  = ++instance_id;
-
-                    ModelAssembly models =
-                        model_cache.predict_regions(item.model, model_lod);
-
-                    for(auto const& model : models.models)
-                    {
-                        model_.model = model;
-                        build_submodels(p, set, model_, model, submodel);
-                    }
-                    break;
-                }
-                default:
-                    break;
-                }
-            }
+            model_.model = model;
+            build_submodels(p, set, model_, model, submodel);
         }
+    }
+
+    /* A scenario-placed object addressed by its scenario net id */
+    void spawn_scenario_object(Proxy& p, u32 net_id)
+    {
+        auto const group = SpawnObjectEvent::scenario_group(net_id);
+        u32 const  idx   = (net_id >> 8) & 0xFFFF;
+        u32 const  sub   = net_id & 0xFF;
+
+        if(group == ScenarioGroup::NetgameEquipment)
+            return build_netgame_item(p, idx, sub, net_id);
+
+        BlamFiles<Ver>& files    = p.template subsystem<BlamFiles<Ver>>();
+        auto const*     scenario = files.container.scenario().value_or(nullptr);
+        if(!scenario)
+            return;
+        auto const& magic = files.container.magic;
+
+        with_scenario_group(
+            *scenario, group, [&](auto const& group_data, u32 tags) {
+                auto palette   = group_data.palette.data(magic);
+                auto instances = group_data.instances.data(magic);
+                if(palette.has_error() || instances.has_error() ||
+                   idx >= instances.value().size())
+                    return;
+                build_scenario_object(
+                    p,
+                    palette.value(),
+                    instances.value()[idx],
+                    tags,
+                    net_id);
+            });
     }
 
     /* Every static and dynamic object the scenario places in the world. */
@@ -1040,32 +1201,17 @@ struct ResourceLoader
         if(!scenario)
             return;
 
-        load_objects(
-            p, scenario->objects.scenery, ObjectScenery | PositioningStatic);
-        load_objects(
-            p,
-            scenario->objects.light_fixtures,
-            ObjectLightFixture | PositioningStatic);
-        load_objects(
-            p, scenario->objects.machines, ObjectDevice | PositioningStatic);
-        load_objects(
-            p, scenario->objects.controls, ObjectDevice | PositioningStatic);
-
-        load_objects(
-            p, scenario->objects.vehicles, ObjectVehicle | PositioningDynamic);
-        load_objects(
-            p, scenario->objects.bipeds, ObjectBiped | PositioningDynamic);
-        load_objects(
-            p, scenario->objects.equips, ObjectEquipment | PositioningDynamic);
-        load_objects(
-            p,
-            scenario->objects.weapon_spawns,
-            ObjectEquipment | PositioningDynamic);
-        load_objects(
-            p, scenario->objects.controls, ObjectControl | PositioningDynamic);
+        for(auto group_id = ScenarioGroup::Scenery;
+            group_id != ScenarioGroup::NetgameEquipment;
+            group_id = static_cast<ScenarioGroup>(
+                static_cast<u32>(group_id) + 1))
+            with_scenario_group(
+                *scenario, group_id, [&](auto const& group_data, u32 tags) {
+                    load_objects(p, group_data, group_id, tags);
+                });
 
         if(files.container.map->map_type == blam::maptype_t::multiplayer)
-            load_multiplayer_equipment(p, ObjectEquipment | PositioningDynamic);
+            load_multiplayer_equipment(p);
     }
 
     void queue_spawn(SpawnBSPEvent& bsp)
@@ -1125,6 +1271,137 @@ struct ResourceLoader
             build_submodels(p, ent, model, model_id, submodel);
     }
 
+    static u32 object_class_tags(blam::tag_t const& tag)
+    {
+        using blam::tag_class_t;
+        if(tag.matches(tag_class_t::bipd))
+            return ObjectBiped | ObjectUnit;
+        if(tag.matches(tag_class_t::vehi))
+            return ObjectVehicle | ObjectUnit;
+        if(tag.matches(tag_class_t::ctrl))
+            return ObjectControl;
+        if(tag.matches(tag_class_t::lifi))
+            return ObjectLightFixture;
+        if(tag.matches(tag_class_t::mach))
+            return ObjectDevice;
+        if(tag.matches(tag_class_t::scen))
+            return ObjectScenery;
+        if(tag.matches(tag_class_t::weap) || tag.matches(tag_class_t::eqip) ||
+           tag.matches(tag_class_t::garb))
+            return ObjectEquipment;
+        return ObjectObject;
+    }
+
+    /* Any object tag, outside the scenario's palettes. Bipeds go through
+     * here like everything else; tying one to a player is a separate step. */
+    void spawn_object(Proxy& p, SpawnObjectEvent const& spawn)
+    {
+        using namespace compo;
+
+        if(spawn.net_id != 0)
+            for(auto ent : p.template select<NetworkInfo>())
+                if(ent.template get<NetworkInfo>().instance_id == spawn.net_id)
+                    return;
+
+        if(SpawnObjectEvent::scenario_group(spawn.net_id) !=
+           ScenarioGroup::None)
+            return spawn_scenario_object(p, spawn.net_id);
+
+        BlamFiles<Ver>&  files       = p.template subsystem<BlamFiles<Ver>>();
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+
+        auto tag_it = index.find(spawn.object.tag_id);
+        if(tag_it == index.end() || !(*tag_it).valid() ||
+           !(*tag_it).matches(blam::tag_class_t::obje))
+        {
+            cWarning(
+                "Cannot spawn tag_id={}: not an object", spawn.object.tag_id);
+            return;
+        }
+        blam::tag_t const& object_tag = *tag_it;
+        if(spawn.object.tag_class != blam::tag_class_t::none &&
+           !object_tag.matches(spawn.object.tag_class))
+        {
+            cWarning(
+                "Cannot spawn {}: tag class {} expected, found {}",
+                index.name_of(object_tag),
+                blam::to_string(spawn.object.tag_class),
+                blam::to_string(object_tag.tag_class()));
+            return;
+        }
+
+        auto object_data =
+            object_tag.template data<blam::scn::object>(files.container.magic);
+        if(object_data.has_error())
+            return;
+        blam::scn::object const& object = object_data.value()[0];
+
+        auto model_it = index.find(object.model);
+        if(model_it == index.end())
+            return;
+
+        ModelAssembly mesh_data =
+            model_cache.predict_regions(object.model, model_lod);
+        if(mesh_data.models.empty())
+        {
+            cWarning("Failed to load model for {}", index.name_of(object_tag));
+            return;
+        }
+
+        u32 const tags = object_class_tags(object_tag);
+
+        EntityRecipe recipe = shared_recipes::model;
+        recipe.tags         = recipe.tags | tags | PositioningDynamic;
+
+        EntityRecipe submodel = shared_recipes::submodel;
+        submodel.tags         = submodel.tags | (tags & SubObjectMask);
+
+        auto idle = find_idle_animation(p, object.anim_graph);
+        if(idle)
+            recipe.components.push_back(
+                compo::type_hash_v<AnimationPlayback>());
+
+        auto ent = p.create_entity(recipe);
+        if(idle)
+            ent.template get<AnimationPlayback>().layers[0] = *idle;
+
+        Model& model        = ent.template get<Model>();
+        model.tag           = &(*model_it);
+        model.model         = mesh_data.models.at(0);
+        model.origin_object = &object_tag;
+        model.position      = spawn.position;
+        model.rotation      = spawn.rotation;
+        model.update_matrix();
+
+        ent.template get<ObjectSpawn>().tag    = &object_tag;
+        ent.template get<DepthInfo>().position = model.position;
+
+        NetworkInfo& netinfo = ent.template get<NetworkInfo>();
+        netinfo.object       = object_tag.as_ref();
+        netinfo.instance_id  = spawn.net_id;
+
+        for(auto const& model_id : mesh_data.models)
+            build_submodels(p, ent, model, model_id, submodel);
+    }
+
+    void despawn_object(Proxy& p, u32 net_id)
+    {
+        std::set<u64> doomed;
+        for(auto ent : p.template select<Model, NetworkInfo>())
+        {
+            auto [model, net] = ent.components();
+            if(net.instance_id != net_id)
+                continue;
+            doomed.insert(ent.id());
+            for(auto const& part : model.parts)
+                doomed.insert(part.id());
+        }
+        if(!doomed.empty())
+            p.remove_entity_if([&doomed](compo::Entity const& e) {
+                return doomed.contains(e.id);
+            });
+    }
+
     void mount_model(Proxy& p, MountModelEvent const& mount)
     {
         if(!mount.model.valid())
@@ -1164,6 +1441,7 @@ void alloc_resource_loader(compo::EntityContainer& e)
     auto& loader = e.register_subsystem_inplace<ResourceLoader<halo_version>>();
 
     auto& game_bus         = e.subsystem_cast<GameEventBus>();
+    loader.game_bus        = &game_bus;
     loader.spawn_bsp_queue = game_bus.addQueuedEventFunction<SpawnBSPEvent>(
         0, [&loader](GameEvent&, SpawnBSPEvent* spawn) {
             loader.pending_bsps.push_back(*spawn);
@@ -1176,6 +1454,19 @@ void alloc_resource_loader(compo::EntityContainer& e)
         0, [&loader](GameEvent&, MountModelEvent* spawn) {
             loader.pending_mounts.push_back(*spawn);
         });
+    /* Above 0 so Networking's stamping handler runs first and the queued copy
+     * carries the replicated net_id */
+    loader.spawn_object_queue =
+        game_bus.addQueuedEventFunction<SpawnObjectEvent>(
+            100, [&loader](GameEvent&, SpawnObjectEvent* spawn) {
+                if(!spawn->deferred)
+                    loader.pending_objects.push_back(*spawn);
+            });
+    loader.despawn_object_queue =
+        game_bus.addQueuedEventFunction<DespawnObjectEvent>(
+            100, [&loader](GameEvent&, DespawnObjectEvent* despawn) {
+                loader.pending_despawns.push_back(despawn->net_id);
+            });
     loader.spawn_biped_queue = game_bus.addQueuedEventFunction<SpawnBipedEvent>(
         0, [&loader](GameEvent&, SpawnBipedEvent* spawn) {
             loader.pending_bipeds.push_back(*spawn);

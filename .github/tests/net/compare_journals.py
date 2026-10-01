@@ -4,8 +4,9 @@ processes (see journal.h — one file per process, in that process's TMPDIR).
 
 Each journal line is {"t_ms": ..., "type": ..., "data": {...}}. Entry types
 of interest here:
-  - state_dump:  full player-roster snapshot (same shape as state.json's
-                 {"players": [...]}), written on every dump_state event
+  - state_dump:  full snapshot (same shape as state.json's
+                 {"players": [...], "objects": [...]}), written on every
+                 dump_state event
   - net_*:       connection lifecycle, joins, received rosters
   - game_event:  GameEventBus event names (payload-less trace)
   - dummy_event: what the test script injected, for timeline correlation
@@ -13,7 +14,9 @@ of interest here:
 Usage:
   compare_journals.py <journal.jsonl> <journal.jsonl> [more...]
       Compares the LAST state_dump of every journal pairwise against the
-      first journal (treated as the server/authority).
+      first journal (treated as the server/authority). With EXPECT_OBJECTS=N
+      in the environment, the authority must also have spawned at least N
+      replicated objects.
 
   compare_journals.py --timeline <journal.jsonl> [more...]
       Prints all journals merged into one timeline (prefixed by journal
@@ -45,7 +48,7 @@ def load_journal(path):
 def last_state_dump(entries):
     for entry in reversed(entries):
         if entry.get("type") == "state_dump":
-            return entry.get("data", {}).get("players", [])
+            return entry.get("data", {})
     return None
 
 
@@ -104,6 +107,51 @@ def compare_rosters(a_label, a_roster, b_label, b_roster):
     return problems
 
 
+def compare_objects(a_label, a_objects, b_label, b_objects):
+    problems = 0
+    a_by = {o["net_id"]: o for o in a_objects}
+    b_by = {o["net_id"]: o for o in b_objects}
+    print(f"{a_label} objects: {len(a_by)}  {b_label} objects: {len(b_by)}")
+
+    for only, present, missing in ((set(a_by) - set(b_by), a_label, b_label),
+                                   (set(b_by) - set(a_by), b_label, a_label)):
+        if only:
+            problems += 1
+            print(f"FAIL: net_id on {present} but missing from {missing}: "
+                  f"{sorted(only)}")
+
+    for net_id in sorted(set(a_by) & set(b_by)):
+        a_o, b_o = a_by[net_id], b_by[net_id]
+        if (a_o["tag_id"], a_o["tag_class"]) != (b_o["tag_id"], b_o["tag_class"]):
+            problems += 1
+            print(f"FAIL: net_id={net_id} tag mismatch: "
+                  f"{a_label}={a_o['tag_class']}:{a_o['tag_id']} "
+                  f"{b_label}={b_o['tag_class']}:{b_o['tag_id']}")
+        if any(abs(x - y) > 1e-3
+               for x, y in zip(a_o["position"], b_o["position"])):
+            problems += 1
+            print(f"FAIL: net_id={net_id} position mismatch: "
+                  f"{a_label}={a_o['position']} {b_label}={b_o['position']}")
+    return problems
+
+
+def unanswered_requests(label, entries):
+    requested = {e["data"]["request_id"] for e in entries
+                 if e.get("type") == "net_spawn_request"}
+    answered = {e["data"]["request_id"] for e in entries
+                if e.get("type") in ("net_spawn_accepted",
+                                     "net_spawn_rejected")}
+    if requested:
+        print(f"{label} spawn requests: {len(requested)}, "
+              f"answered: {len(requested & answered)}")
+    missing = requested - answered
+    if missing:
+        print(f"FAIL: {label}: spawn requests never answered: "
+              f"{sorted(missing)}")
+        return 1
+    return 0
+
+
 def label_for(path):
     # <out>/client0/journal.jsonl -> client0; <out>/journal.jsonl -> <out>
     return os.path.basename(os.path.dirname(os.path.abspath(path))) or path
@@ -138,21 +186,33 @@ def main():
               f"--timeline <journal.jsonl>...", file=sys.stderr)
         return 2
 
-    rosters = []
+    dumps = []
     for path in args:
         entries = load_journal(path)
-        roster = last_state_dump(entries)
-        if roster is None:
+        dump = last_state_dump(entries)
+        if dump is None:
             print(f"FAIL: {path}: no state_dump entry in journal "
                   f"(dump_state never fired?)")
             return 1
-        rosters.append((label_for(path), roster))
+        dumps.append((label_for(path), dump))
 
     problems = 0
-    authority_label, authority = rosters[0]
-    for peer_label, peer in rosters[1:]:
-        problems += compare_rosters(authority_label, authority,
-                                    peer_label, peer)
+    authority_label, authority = dumps[0]
+    expect_objects = int(os.environ.get("EXPECT_OBJECTS", "0"))
+    if len(authority.get("objects", [])) < expect_objects:
+        problems += 1
+        print(f"FAIL: {authority_label} has "
+              f"{len(authority.get('objects', []))} replicated objects, "
+              f"expected at least {expect_objects}")
+    for path in args[1:]:
+        problems += unanswered_requests(label_for(path), load_journal(path))
+    for peer_label, peer in dumps[1:]:
+        problems += compare_rosters(authority_label,
+                                    authority.get("players", []),
+                                    peer_label, peer.get("players", []))
+        problems += compare_objects(authority_label,
+                                    authority.get("objects", []),
+                                    peer_label, peer.get("objects", []))
 
     if problems == 0:
         print("\nPASS: journals agree, no duplicates found")

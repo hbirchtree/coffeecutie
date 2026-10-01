@@ -1,5 +1,6 @@
 #include "resource_creation.h"
 
+#include "blam_files.h"
 #include "components.h"
 #include "data.h"
 #include "journal.h"
@@ -414,6 +415,30 @@ void create_resources(compo::EntityContainer& e)
                          });
                      }
 
+                     /* Networked objects (scenario + server-spawned) */
+                     std::map<u32, nlohmann::json> objects;
+                     for(auto const& entity : e.select<Model, NetworkInfo>())
+                     {
+                         auto [model, net] = entity.components();
+                         if(net.instance_id == 0)
+                             continue;
+                         objects[net.instance_id] = {
+                             {"net_id", net.instance_id},
+                             {"tag_id", net.object.tag_id},
+                             {"tag_class",
+                              blam::to_string(net.object.tag_class)},
+                             {"position",
+                              nlohmann::json{
+                                  model.position.x,
+                                  model.position.y,
+                                  model.position.z,
+                              }},
+                         };
+                     }
+                     state["objects"] = nlohmann::json::array();
+                     for(auto& [_, object] : objects)
+                         state["objects"].push_back(std::move(object));
+
                      /* state_json is a named local, not a temporary passed
                       * straight into ofString(): BytesConst::ofString's
                       * by-value std::string overload copies its argument into
@@ -434,6 +459,60 @@ void create_resources(compo::EntityContainer& e)
                          "State dumped to state.json ({} player(s))",
                          players.size());
                      e.subsystem_cast<Journal>().record("state_dump", state);
+                 }
+                 if(ev.event == "spawn_object")
+                 {
+                     /* {"tag": "<name>", "class": "bipd", "position": [x,y,z],
+                      *  "yaw": deg, "server": bool} -- class is optional, but
+                      * names repeat across classes. On a server the spawn is
+                      * replicated; on a client, "server" requests it from the
+                      * server behind a local impostor. */
+                     auto name  = ev.data.value("tag", std::string{});
+                     auto cls_s = ev.data.value("class", std::string{});
+                     auto cls   = blam::tag_class_t::none;
+                     if(cls_s.size() == 4)
+                     {
+                         u32 fourcc = 0;
+                         for(char c : cls_s)
+                             fourcc = (fourcc << 8) |
+                                      static_cast<unsigned char>(c);
+                         cls = static_cast<blam::tag_class_t>(fourcc);
+                     }
+
+                     auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
+                     blam::tag_index_view<halo_version> index(files.container);
+                     blam::tag_t const*                 found = nullptr;
+                     for(auto const& tag : index)
+                     {
+                         if(!tag.matches(blam::tag_class_t::obje) ||
+                            (cls != blam::tag_class_t::none &&
+                             !tag.matches(cls)) ||
+                            index.name_of(tag) != name)
+                             continue;
+                         found = &tag;
+                         break;
+                     }
+                     if(!found)
+                     {
+                         cWarning("spawn_object: no object tag named {}", name);
+                         return;
+                     }
+
+                     SpawnObjectEvent spawn{
+                         .object       = found->as_ref(),
+                         .server_owned = ev.data.value("server", false),
+                     };
+                     if(auto pos = ev.data.find("position");
+                        pos != ev.data.end() && pos->size() == 3)
+                         spawn.position = Vecf3{
+                             (*pos)[0].get<f32>(),
+                             (*pos)[1].get<f32>(),
+                             (*pos)[2].get<f32>()};
+                     spawn.rotation = glm::angleAxis(
+                         ev.data.value("yaw", 0.f) * glm::pi<f32>() / 180.f,
+                         Vecf3{0.f, 0.f, 1.f});
+                     GameEvent spawn_ev{.type = GameEvent::SpawnObject};
+                     e.subsystem_cast<GameEventBus>().inject(spawn_ev, &spawn);
                  }
                  if(ev.event == "switch_map")
                  {

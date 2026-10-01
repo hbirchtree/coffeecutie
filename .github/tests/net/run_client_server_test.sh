@@ -71,8 +71,9 @@ SERVER_DUMMY_PLUG_CONFIG="${SERVER_DUMMY_PLUG_CONFIG:-$HERE/dummy_plug_net_serve
 CLIENT_DUMMY_PLUG_CONFIG="${CLIENT_DUMMY_PLUG_CONFIG:-$HERE/dummy_plug_net_client.json}"
 if [ "$CLIENT_DELAY" -gt 0 ]; then
     mkdir -p "$OUT_DIR"
+    UNDELAYED_SERVER_CONFIG="$SERVER_DUMMY_PLUG_CONFIG"
     SERVER_DUMMY_PLUG_CONFIG="$OUT_DIR/dummy_plug_net_server_delayed.json"
-    python3 - "$HERE/dummy_plug_net_server.json" "$SERVER_DUMMY_PLUG_CONFIG" "$CLIENT_DELAY" <<'PYEOF'
+    python3 - "$UNDELAYED_SERVER_CONFIG" "$SERVER_DUMMY_PLUG_CONFIG" "$CLIENT_DELAY" <<'PYEOF'
 import json, sys
 src, dst, delay = sys.argv[1], sys.argv[2], int(sys.argv[3])
 cfg = json.load(open(src))

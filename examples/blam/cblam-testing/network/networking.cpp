@@ -176,8 +176,8 @@ struct MessageBase
         PlayerSpawn,
         ObjectSync,
 
-        /* Player replication */
-        PlayerSpawnProjectile,
+        /* Client-requested spawns */
+        SpawnRequest,
 
         /* Debug */
         Screenshot,
@@ -187,6 +187,9 @@ struct MessageBase
 
         /* Extension data */
         NegotiateExtension,
+
+        /* Join-time data check */
+        MapVerify,
     } type{None};
 
     u32 request{};
@@ -237,12 +240,68 @@ gsl::span<const T> MessageBase::values() const
     return gsl::make_span(&impl->data, num_values);
 }
 
+/*! Identifies the tag data a peer has loaded. Tag ids and object classes
+ *  are only meaningful across peers when these agree. */
+struct MapFingerprint
+{
+    u32 tag_hash[2]{}; /*!< FNV-1a 64 over (classes, id, name) of every tag */
+    u32 tag_count{0};
+    u32 base_tag{0};
+
+    bool operator==(MapFingerprint const&) const = default;
+};
+
+MapFingerprint fingerprint_of(blam::map_container<halo_version> const& map)
+{
+    u64  hash   = 0xcbf29ce484222325;
+    auto update = [&hash](void const* data, size_t size) {
+        auto const* bytes = static_cast<u8 const*>(data);
+        for(size_t i = 0; i < size; ++i)
+            hash = (hash ^ bytes[i]) * 0x100000001b3;
+    };
+
+    blam::tag_index_view<halo_version> index(map);
+    MapFingerprint                     out;
+    for(blam::tag_t const& tag : index)
+    {
+        auto name = index.name_of(tag);
+        update(tag.tagclass_e.data(), sizeof(tag.tagclass_e));
+        update(&tag.tag_id, sizeof(tag.tag_id));
+        update(name.data(), name.size());
+        ++out.tag_count;
+    }
+    out.tag_hash[0] = static_cast<u32>(hash);
+    out.tag_hash[1] = static_cast<u32>(hash >> 32);
+    out.base_tag = map.tags->base_tag;
+    return out;
+}
+
+std::string to_string(MapFingerprint const& fp)
+{
+    return fmt::format(
+        "{:08x}{:08x}/{}/{:08x}",
+        fp.tag_hash[1],
+        fp.tag_hash[0],
+        fp.tag_count,
+        fp.base_tag);
+}
+
 struct GameJoin
 {
     static constexpr auto message_type = MessageBase::GameJoin;
 
     blam::bl_string map_name;
     u32             seed{0};
+    MapFingerprint  fingerprint{};
+};
+
+/*! Client -> server once loaded; the server answers a mismatch with
+ *  GameLeave, and a match with the dynamic objects spawned so far */
+struct MapVerify
+{
+    static constexpr auto message_type = MessageBase::MapVerify;
+
+    MapFingerprint fingerprint{};
 };
 
 struct GameLoadState
@@ -316,10 +375,13 @@ struct alignas(8) Screenshot
     pix_fmt format{pix_fmt::None};
 };
 
-struct alignas(8) EntityTag
+/* Tag class + id only; a tagref_t's name is a pointer into the sender's
+ * map. The receiver resolves the id against its own (verified) tag index. */
+struct EntityTag
 {
-    blam::tagref_t object;
-    u32            instance_id;
+    blam::tag_class_t tag_class{blam::tag_class_t::none};
+    u32               tag_id{std::numeric_limits<u32>::max()};
+    u32               instance_id{0}; /*!< Network id, same on all peers */
 };
 
 /* Server-side entity spawn, possibly as a response */
@@ -329,7 +391,9 @@ struct alignas(8) EntitySpawn
 
     static constexpr auto no_request = std::numeric_limits<u32>::max();
 
-    EntityTag tag;
+    Vecf4     position{};
+    Quatf     rotation{1.f, 0.f, 0.f, 0.f};
+    EntityTag tag{};
     i32       permutation{-1};
     u32       response_id{no_request};
 };
@@ -343,10 +407,12 @@ struct alignas(8) PlayerSpawn
     f32   facing;
 };
 
-/*! Client-side request, server responds with EntitySpawn */
-struct alignas(8) PlayerSpawnProjectile
+/*! Client asks the server to spawn an object it has put up an impostor for.
+ *  The server answers the requester with an EntitySpawn carrying
+ *  response_id: instance_id 0 means rejected. */
+struct alignas(8) SpawnRequest
 {
-    static constexpr auto message_type = MessageBase::PlayerSpawnProjectile;
+    static constexpr auto message_type = MessageBase::SpawnRequest;
 
     Vecf4     position{};
     Quatf     direction{};
@@ -396,7 +462,11 @@ struct alignas(8) NegotiateExtension
  *  - We expect IEEE-754 floats/doubles
  *  - Padding should be the same on all platforms
  */
-static_assert(sizeof(Message<GameJoin>) == 52);
+static_assert(sizeof(Message<GameJoin>) == 68);
+static_assert(sizeof(Message<MapVerify>) == 32);
+static_assert(sizeof(EntityTag) == 12);
+static_assert(sizeof(EntitySpawn) == 56);
+static_assert(sizeof(SpawnRequest) == 48);
 static_assert(sizeof(Message<PlayerJoin>) == 48);
 static_assert(sizeof(Message<CameraSync>) == 56);
 static_assert(sizeof(Message<u32>) == 20);
@@ -471,7 +541,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return Message<GameJoin>({
             .map_name = m_map ? *blam::bl_string::from(m_map->internal_name())
                               : blam::bl_string{},
-            .seed     = m_seed,
+            .seed        = m_seed,
+            .fingerprint = m_fingerprint,
         });
     }
 
@@ -567,6 +638,108 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 #endif
     }
 
+    std::set<HSteamNetConnection> verified_connections() const
+    {
+        std::set<HSteamNetConnection> out;
+        for(auto const& [connection, state] : m_connections)
+            if(state.verified)
+                out.insert(connection);
+        return out;
+    }
+
+    void request_spawn(SpawnObjectEvent const& spawn)
+    {
+        u32 const request_id =
+            spawn.net_id & ~SpawnObjectEvent::impostor_net_id_base;
+        journal(
+            "net_spawn_request",
+            {{"request_id", request_id},
+             {"tag_class", blam::to_string(spawn.object.tag_class)},
+             {"tag_id", spawn.object.tag_id}});
+        send_single(
+            m_connection,
+            Message<SpawnRequest>({
+                .position  = Vecf4(spawn.position, 1.f),
+                .direction = spawn.rotation,
+                .tag =
+                    {
+                        .tag_class = spawn.object.tag_class,
+                        .tag_id    = spawn.object.tag_id,
+                    },
+                .request_id = request_id,
+            }));
+    }
+
+    /* Empty if a client may have this spawned */
+    std::string_view check_spawn_request(
+        bool                verified,
+        SpawnRequest const& request,
+        blam::tag_t const*& tag)
+    {
+        if(!verified || !m_map)
+            return "not verified";
+        blam::tag_index_view<halo_version> index(*m_map);
+        auto it = index.find(request.tag.tag_id);
+        if(it == index.end() || !(*it).valid() ||
+           !(*it).matches(blam::tag_class_t::obje) ||
+           !(*it).matches(request.tag.tag_class))
+            return "not an object";
+        tag = &(*it);
+        using blam::tag_class_t;
+        for(auto cls : {
+                tag_class_t::proj,
+                tag_class_t::weap,
+                tag_class_t::eqip,
+                tag_class_t::garb,
+            })
+            if(tag->matches(cls))
+                return {};
+        return "class not requestable";
+    }
+
+    void replicate_spawn(
+        SpawnObjectEvent const& spawn,
+        HSteamNetConnection     requester  = k_HSteamNetConnection_Invalid,
+        u32                     request_id = EntitySpawn::no_request)
+    {
+        /* Scenario loads repeat on BSP switches */
+        for(auto const& existing : m_dynamic_spawns)
+            if(existing.tag.instance_id == spawn.net_id)
+                return;
+        EntitySpawn wire{
+            .position = Vecf4(spawn.position, 1.f),
+            .rotation = spawn.rotation,
+            .tag =
+                {
+                    .tag_class   = spawn.object.tag_class,
+                    .tag_id      = spawn.object.tag_id,
+                    .instance_id = spawn.net_id,
+                },
+        };
+        m_dynamic_spawns.push_back(wire);
+        journal(
+            "net_object_spawn",
+            {{"net_id", spawn.net_id},
+             {"tag_class", blam::to_string(spawn.object.tag_class)},
+             {"tag_id", spawn.object.tag_id}});
+
+        /* Unverified peers get the whole backlog once they verify */
+        auto targets = verified_connections();
+        if(requester != k_HSteamNetConnection_Invalid)
+        {
+            targets.erase(requester);
+            EntitySpawn response = wire;
+            response.response_id = request_id;
+            send_single(requester, Message<EntitySpawn>(std::move(response)));
+        }
+        if(targets.empty())
+            return;
+        send_all(
+            Message<EntitySpawn>(std::move(wire)),
+            k_nSteamNetworkingSend_Reliable,
+            std::move(targets));
+    }
+
     void send_player_roster(i32 player_idx = -1)
     {
         std::vector<PlayerSyncEntry> entries;
@@ -609,7 +782,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             return is_server() && m_map;
         for(auto const& [_, state] : m_connections)
         {
-            if(state.loading_progress < 100)
+            if(state.loading_progress < 100 || !state.verified)
                 return false;
         }
         return true;
@@ -643,10 +816,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return spawns;
     }
 
+    /* Locks the camera to the birds-eye view; release_held_players() lets
+     * everyone go together once all players are ready */
     void player_init(compo::EntityContainer& e, PlayerInfo& player)
     {
-        using namespace std::chrono_literals;
-
         player.permissions.camera = false;
 
         /* Write birds-eye position to PlayerCamera + mark dirty */
@@ -674,32 +847,43 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             return spawns[spawn_idx];
         }();
 
-        if(!spawn_loc)
-            return;
-
         auto pidx = player.player_idx;
-        rq::runtime_queue::QueueImmediate(
-            rq::runtime_queue::GetCurrentQueue().value(),
-            5s,
-            [this, &e, pidx, spawn = *spawn_loc]() {
-                for(auto player : e.select<PlayerInfo, PlayerCamera>())
+        std::erase_if(m_held_players, [pidx](held_player_t const& held) {
+            return held.player_idx == pidx;
+        });
+        m_held_players.push_back({.player_idx = pidx, .spawn = spawn_loc});
+    }
+
+    void release_held_players(Proxy& p)
+    {
+        nlohmann::json released = nlohmann::json::array();
+        for(auto const& held : m_held_players)
+        {
+            for(auto player : p.select<PlayerInfo, PlayerCamera>())
+            {
+                auto [info, cam] = player.components();
+                if(info.player_idx != held.player_idx)
+                    continue;
+                if(held.spawn)
                 {
-                    auto [info, cam] = player.components();
-                    if(info.player_idx != pidx)
-                        continue;
-                    cam.camera.position = spawn.pos;
+                    cam.camera.position = held.spawn->pos;
                     cam.camera.rotation = glm::angleAxis(
-                        glm::pi<f32>() - spawn.rot, Vecf3{0.f, 1.f, 0.f});
-                    info.permissions.camera = true;
-                    if(auto* net = e.get<NetworkInfo>(player.id()))
-                    {
-                        net->changes.viewport    = true;
-                        net->changes.permissions = true;
-                    }
-                    break;
+                        glm::pi<f32>() - held.spawn->rot,
+                        Vecf3{0.f, 1.f, 0.f});
                 }
-            })
-            .assume_value();
+                info.permissions.camera = true;
+                if(auto* net = p.get<NetworkInfo>(player.id()))
+                {
+                    net->changes.viewport    = true;
+                    net->changes.permissions = true;
+                }
+                released.push_back(held.player_idx);
+                break;
+            }
+        }
+        journal("net_spawn_release", {{"players", std::move(released)}});
+        m_held_players.clear();
+        m_release_at.reset();
     }
 
     auto get_random_name()
@@ -970,6 +1154,36 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         (*state.player_info).loading_progress = 0;
                 }
             });
+        /* Ahead of ResourceLoader's queue (prio 100), so the copy it spawns
+         * from already carries the net id */
+        m_game_bus.addEventFunction<SpawnObjectEvent>(
+            0, [this](GameEvent&, SpawnObjectEvent* spawn) {
+                if(spawn->origin != MapLoadEvent::Local)
+                    return;
+                bool const replica = !is_server() &&
+                                     m_connection != k_HSteamNetConnection_Invalid;
+                if(spawn->server_owned && replica)
+                {
+                    /* Scenario objects come from the server regardless */
+                    if(spawn->net_id != 0)
+                        spawn->deferred = true;
+                    else
+                        spawn->net_id = SpawnObjectEvent::impostor_net_id_base |
+                                        (++m_next_request_id & 0x0FFFFFFF);
+                } else if(spawn->net_id == 0 && is_server())
+                    spawn->net_id =
+                        SpawnObjectEvent::dynamic_net_id_base + m_next_net_id++;
+            });
+        m_spawn_queue = m_game_bus.addQueuedEventFunction<SpawnObjectEvent>(
+            0, [this](GameEvent&, SpawnObjectEvent* spawn) {
+                if(spawn->origin != MapLoadEvent::Local || spawn->net_id == 0 ||
+                   spawn->deferred)
+                    return;
+                if(SpawnObjectEvent::is_impostor(spawn->net_id))
+                    request_spawn(*spawn);
+                else
+                    replicate_spawn(*spawn);
+            });
         m_game_bus.addEventFunction<ServerCameraControl>(
             0, [this](GameEvent&, ServerCameraControl* cam) {
                 if(!is_server())
@@ -1018,12 +1232,18 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_game_bus.addEventFunction<MapLoadFinishedEvent<halo_version>>(
             0,
             [this](GameEvent&, MapLoadFinishedEvent<halo_version>* finished) {
-                m_map = finished->container;
+                m_map         = finished->container;
+                m_fingerprint = fingerprint_of(*m_map);
 #if defined(USE_WEBRTC_TRANSPORT)
                 publish_server_metadata();
 #endif
                 if(!is_server())
                     return;
+                m_dynamic_spawns.clear();
+                m_held_players.clear();
+                m_release_at.reset();
+                for(auto& [_, state] : m_connections)
+                    state.verified = false;
                 for(auto& [connection, state] : m_connections)
                 {
                     if(state.invited)
@@ -1048,6 +1268,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         Message<GameLoadState>({
                             .progress = 100,
                         }));
+                    send_single(
+                        m_connection,
+                        Message<MapVerify>({
+                            .fingerprint = m_fingerprint,
+                        }));
+                    if(m_expected_fingerprint &&
+                       *m_expected_fingerprint != m_fingerprint)
+                        cWarning(
+                            "Loaded map differs from the server's: {} != {}",
+                            to_string(m_fingerprint),
+                            to_string(*m_expected_fingerprint));
                 }
             },
         });
@@ -1777,6 +2008,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         if(m_fleetRegistration)
             m_fleetRegistration->Poll();
 #endif
+        if(m_spawn_queue)
+            m_spawn_queue->poll();
         if(is_server())
         {
 #if defined(USE_WEBRTC_TRANSPORT)
@@ -1821,6 +2054,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     if(pi.exists())
                         player_init(p.unconstrained_container(), *pi);
                 }
+            }
+
+            /* A player who isn't ready yet restarts the countdown */
+            if(!m_held_players.empty())
+            {
+                if(!players_ready())
+                    m_release_at.reset();
+                else if(!m_release_at)
+                    m_release_at = t + spawn_hold;
+                else if(t >= *m_release_at)
+                    release_held_players(p);
             }
 
             using namespace std::chrono_literals;
@@ -2048,6 +2292,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 auto& info      = (*player_info.player_info);
                 info.remote     = client_name(connection);
                 info.player_idx = player_info.idx;
+                info.seat_idx   = 0xFFFF; /* Not one of our local seats */
             }
 
             (*player_info.player_info).name = player_join.player_name.str();
@@ -2078,6 +2323,84 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     p.unconstrained_container(), *player_info.player_info);
             break;
         }
+        case MessageBase::SpawnRequest: {
+            auto const&        request = payload.value<SpawnRequest>();
+            blam::tag_t const* tag     = nullptr;
+            auto reason = check_spawn_request(player_info.verified, request, tag);
+            journal(
+                reason.empty() ? "net_spawn_accept" : "net_spawn_reject",
+                {{"player_idx", player_info.idx},
+                 {"request_id", request.request_id},
+                 {"tag_id", request.tag.tag_id},
+                 {"reason", reason}});
+            if(!reason.empty())
+            {
+                cDebug(
+                    "Rejected spawn request {} from player {}: {}",
+                    request.request_id,
+                    player_info.idx,
+                    reason);
+                send_single(
+                    connection,
+                    Message<EntitySpawn>({
+                        .tag =
+                            {
+                                .tag_class = request.tag.tag_class,
+                                .tag_id    = request.tag.tag_id,
+                            },
+                        .response_id = request.request_id,
+                    }));
+                break;
+            }
+            /* Remote, so the spawn queue doesn't replicate it a second time */
+            GameEvent        ev{.type = GameEvent::SpawnObject};
+            SpawnObjectEvent spawn{
+                .origin   = MapLoadEvent::Remote,
+                .object   = tag->as_ref(),
+                .position = Vecf3(request.position),
+                .rotation = request.direction,
+                .net_id = SpawnObjectEvent::dynamic_net_id_base + m_next_net_id++,
+            };
+            m_game_bus.inject(ev, &spawn);
+            replicate_spawn(spawn, connection, request.request_id);
+            break;
+        }
+        case MessageBase::MapVerify: {
+            auto const& theirs = payload.value<MapVerify>().fingerprint;
+            bool const  match  = theirs == m_fingerprint;
+            journal(
+                match ? "net_map_verified" : "net_map_mismatch",
+                {{"player_idx", player_info.idx},
+                 {"fingerprint", to_string(theirs)},
+                 {"expected", to_string(m_fingerprint)}});
+            if(!match)
+            {
+                cWarning(
+                    "Player {} has different map data: {} != {}, kicking",
+                    player_info.idx,
+                    to_string(theirs),
+                    to_string(m_fingerprint));
+                send_single(
+                    connection,
+                    Message<GameLeave>({
+                        .reason = *blam::bl_string_var<128>::from(
+                            "map data differs from server"),
+                    }));
+                server_close_peer_connection(connection, 0, true);
+                break;
+            }
+            player_info.verified = true;
+            if(!m_dynamic_spawns.empty())
+            {
+                MessageBase header{.type = MessageBase::EntitySpawn};
+                send_all(
+                    std::move(header),
+                    gsl::make_span(m_dynamic_spawns),
+                    k_nSteamNetworkingSend_Reliable,
+                    {connection});
+            }
+            break;
+        }
         case MessageBase::GameEvent: {
             auto const& event  = payload.value<GameEventWrapper<char>>();
             GameEvent   event_ = event.event;
@@ -2101,6 +2424,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         {
         case MessageBase::GameJoin: {
             auto const&        join = payload.value<GameJoin>();
+            m_expected_fingerprint  = join.fingerprint;
             GameEvent          ev{.type = GameEvent::MapLoadByName};
             MapLoadByNameEvent data{
                 .origin   = MapLoadEvent::Remote,
@@ -2174,14 +2498,58 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             break;
         }
         case MessageBase::EntitySpawn: {
-            auto spawns = payload.values<EntitySpawn>();
-            cDebug("Server is requesting that we spawn:");
-            for(auto const& spawn : spawns)
+            /* Tag ids are only valid against the server's tag table */
+            if(m_expected_fingerprint != m_fingerprint)
+            {
+                cWarning("Ignoring spawns, map data differs from server");
+                break;
+            }
+            for(auto const& spawn : payload.values<EntitySpawn>())
+            {
+                if(spawn.response_id != EntitySpawn::no_request)
+                {
+                    journal(
+                        spawn.tag.instance_id ? "net_spawn_accepted"
+                                              : "net_spawn_rejected",
+                        {{"request_id", spawn.response_id},
+                         {"net_id", spawn.tag.instance_id}});
+                    /* Queued behind the replacement, if there is one */
+                    GameEvent          ev{.type = GameEvent::DespawnObject};
+                    DespawnObjectEvent impostor{
+                        .net_id = SpawnObjectEvent::impostor_net_id_base |
+                                  spawn.response_id,
+                    };
+                    m_game_bus.inject(ev, &impostor);
+                    if(spawn.tag.instance_id == 0)
+                        continue;
+                }
                 cDebug(
-                    " - {}:{} / {}",
-                    blam::to_string(spawn.tag.object.tag_class),
-                    spawn.tag.object.tag_id,
+                    "Server spawned {}:{} as {}",
+                    blam::to_string(spawn.tag.tag_class),
+                    spawn.tag.tag_id,
                     spawn.tag.instance_id);
+                journal(
+                    "net_object_spawn",
+                    {{"net_id", spawn.tag.instance_id},
+                     {"tag_class", blam::to_string(spawn.tag.tag_class)},
+                     {"tag_id", spawn.tag.tag_id}});
+                GameEvent        ev{.type = GameEvent::SpawnObject};
+                SpawnObjectEvent local{
+                    .origin   = MapLoadEvent::Remote,
+                    .position = Vecf3(spawn.position),
+                    .rotation = spawn.rotation,
+                    .net_id   = spawn.tag.instance_id,
+                };
+                local.object.tag_class = spawn.tag.tag_class;
+                local.object.tag_id    = spawn.tag.tag_id;
+                m_game_bus.inject(ev, &local);
+            }
+            break;
+        }
+        case MessageBase::GameLeave: {
+            auto reason = std::string(payload.value<GameLeave>().reason.str());
+            cWarning("Server asked us to leave: {}", reason);
+            journal("net_game_leave", {{"reason", reason}});
             break;
         }
         case MessageBase::PlayerSync: {
@@ -2365,6 +2733,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         u32                               loading_progress{};
         std::optional<time_point>         last_seen{};
         bool                              invited{false};
+        bool verified{false}; /*!< Map fingerprint matched ours */
     };
 
     std::map<HSteamNetConnection, connection_state_t>      m_connections{};
@@ -2378,8 +2747,25 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     u32                m_seed{164829}; /*!< Randomly typed number */
     bool               m_needs_local_init{false};
     std::optional<u32> m_pending_focus{};
+
+    static constexpr auto spawn_hold = std::chrono::seconds(5);
+    struct held_player_t
+    {
+        u32                                                 player_idx{};
+        std::optional<blam::scn::player_starting_location> spawn{};
+    };
+    std::vector<held_player_t> m_held_players;
+    std::optional<time_point>  m_release_at{};
     blam::map_container<halo_version>* m_map{nullptr};
+    MapFingerprint                     m_fingerprint{};
+    std::optional<MapFingerprint>      m_expected_fingerprint{};
     stl_types::math::rng               m_local_random{};
+
+    /* Dynamic objects; the server replays these to each peer as it verifies */
+    std::shared_ptr<GameEventBus::queue_type<SpawnObjectEvent>> m_spawn_queue;
+    std::vector<EntitySpawn>                                    m_dynamic_spawns;
+    std::atomic<u32> m_next_net_id{0}; /*!< Stamped on whichever thread spawns */
+    std::atomic<u32> m_next_request_id{0};
 #if defined(USE_WEBRTC_TRANSPORT)
     std::string m_last_metadata_sent;
 #endif

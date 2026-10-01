@@ -317,6 +317,11 @@ struct GameEvent
         ServerJoinInfo,
         ServerStateUpdate,
         ServerPlayerStateUpdate,
+
+        /* Appended rather than grouped with the Spawn* events: event types
+         * are sent over the wire in GameEventWrapper */
+        SpawnObject,
+        DespawnObject,
     };
 
     EventType type{None};
@@ -442,6 +447,83 @@ struct SpawnModelEvent
 
     // TODO: Add param for which variant, eg. marine variant
     blam::mod2::mod2_lod max_lod_level{};
+};
+
+/*! Where a scenario-placed object sits in the scenario */
+enum class ScenarioGroup : libc_types::u8
+{
+    None,
+    /* Static, loaded by every peer */
+    Scenery,
+    LightFixture,
+    Machine,
+    Control,
+    /* Dynamic, spawned by the server */
+    Vehicle,
+    Biped,
+    Equipment,
+    Weapon,
+    NetgameEquipment,
+};
+
+/*!
+ * \brief Spawn any object tag (obje subclass: bipd, vehi, weap, eqip, scen,
+ * mach, ctrl, lifi, garb, ...) into the world.
+ *
+ * Same event for local and replicated spawns. On a server, Networking stamps
+ * net_id on Local spawns and replicates them; Remote spawns came from the
+ * server and are never sent back. net_id == 0 means local-only.
+ */
+struct SpawnObjectEvent
+{
+    static constexpr auto event_type = GameEvent::SpawnObject;
+
+    /* Server-assigned ids live above this. Below it, the id addresses a
+     * scenario instance, which every (verified) peer resolves from its own
+     * map: group << 24 | index << 8 | sub */
+    static constexpr libc_types::u32 dynamic_net_id_base = 0x80000000;
+
+    static constexpr libc_types::u32 scenario_net_id(
+        ScenarioGroup group, libc_types::u32 index, libc_types::u32 sub = 0)
+    {
+        return (static_cast<libc_types::u32>(group) << 24) |
+               ((index & 0xFFFF) << 8) | (sub & 0xFF);
+    }
+
+    /* A client's stand-in for an object it asked the server to spawn,
+     * removed once the server answers: impostor base | request id */
+    static constexpr libc_types::u32 impostor_net_id_base = 0xF0000000;
+
+    static constexpr bool is_impostor(libc_types::u32 net_id)
+    {
+        return net_id >= impostor_net_id_base;
+    }
+
+    static constexpr ScenarioGroup scenario_group(libc_types::u32 net_id)
+    {
+        if(net_id >= dynamic_net_id_base)
+            return ScenarioGroup::None;
+        return static_cast<ScenarioGroup>(net_id >> 24);
+    }
+
+    MapLoadEvent::Origin origin{MapLoadEvent::Local};
+    blam::tagref_t       object{};
+    Vecf3                position{};
+    Quatf                rotation{1.f, 0.f, 0.f, 0.f};
+    libc_types::u32      net_id{0};
+
+    /* Only the server creates these. A replica defers scenario objects, and
+     * for anything else spawns an impostor and asks the server for it */
+    bool server_owned{false};
+    /* Set on a replica for server_owned requests, which are then dropped */
+    bool deferred{false};
+};
+
+struct DespawnObjectEvent
+{
+    static constexpr auto event_type = GameEvent::DespawnObject;
+
+    libc_types::u32 net_id{0};
 };
 
 struct PlayModelAnimationEvent
