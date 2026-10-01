@@ -268,6 +268,12 @@ struct UIElementCache
 
         UIElementItem out{
             .ui_element = ui_el,
+            .tag_name   = [&] {
+                auto path = ui_tag.name.to_string(magic);
+                auto base = path.rfind('\\');
+                return std::string(
+                    base == std::string::npos ? path : path.substr(base + 1));
+            }(),
             .children   = {},
             .background = {},
         };

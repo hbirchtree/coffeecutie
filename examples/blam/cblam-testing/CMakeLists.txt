@@ -55,6 +55,7 @@ coffee_application(
         sounds.cpp
         input/touch_overlay.cpp
         ui.cpp
+        ui_profile.cpp
   LIBRARIES Blam Core Image GLeamRHI ComponentBundleSetup
   BUNDLE_LIBRARIES ${BUNDLED_LIBS}
   SCHEMES blam halo

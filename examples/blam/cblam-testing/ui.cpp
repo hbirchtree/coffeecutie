@@ -1,6 +1,7 @@
 #include "ui.h"
 
 #include <cctype>
+#include <set>
 
 #include "coffee/core/types/input/event_types.h"
 #include "components.h"
@@ -8,6 +9,7 @@
 #include "graphics_api.h"
 #include "shader_compiler.h"
 #include "ui_caching.h"
+#include "ui_data.h"
 #include "ui_keyboard.h"
 
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
@@ -35,6 +37,30 @@ struct UIScreen
         std::vector<u16> focus{};
         /* Text entry the engine overlays on name screens */
         std::optional<VirtualKeyboard> keyboard{};
+        /* replace_self_with_widget on a child swaps only that slot; slots
+         * are child indices from the root. Quadrants share one tag, so this
+         * can't live in the cache. */
+        std::vector<std::pair<std::vector<u16>, generation_idx_t>> replaced{};
+
+        generation_idx_t at(
+            std::vector<u16> const& slot, generation_idx_t original) const
+        {
+            for(auto const& [where, widget] : replaced)
+                if(where == slot)
+                    return widget;
+            return original;
+        }
+
+        void replace(std::vector<u16> const& slot, generation_idx_t widget)
+        {
+            for(auto& [where, current] : replaced)
+                if(where == slot)
+                {
+                    current = widget;
+                    return;
+                }
+            replaced.emplace_back(slot, widget);
+        }
     };
 
     u32                  seat{any_seat};
@@ -72,7 +98,8 @@ using UIRendererManifest = compo::SubsystemManifest<
     type_list_t<
         gfx::system,
         RenderingParameters,
-        UIEventBus>,
+        UIEventBus,
+        UIDataSource>,
     type_list_t<
         comp_app::DisplayInfo,
         comp_app::GraphicsFramebuffer,
@@ -164,6 +191,41 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     generation_idx_t                m_cursor_bitmap;
     VirtualKeyboardData             m_keyboard;
 
+    /* hudg's button icons, drawn for "%a-button" style tokens in text */
+    struct button_icon_t
+    {
+        generation_idx_t image;
+        Vecf4            uv{};     /*!< sprite: left, top, right, bottom */
+        Vecf2            size{};   /*!< in texels */
+        f32              advance{};
+        Vecf4            color{1, 1, 1, 1};
+        std::u16string   text; /*!< drawn instead, for text-only entries */
+    };
+    std::vector<button_icon_t> m_button_icons;
+    /* Tokens become private-use characters until they are drawn */
+    static constexpr char16_t first_icon_char = 0xE000;
+
+    /* Provider hooks; valid during end_restricted */
+    UIDataSource*               m_data{nullptr};
+    u32                         m_seat{};         /*!< seat of the event */
+    u64                         m_screen_id{};    /*!< entity of its screen */
+    std::optional<u16>          m_selected;       /*!< nearest list's focus */
+    std::set<u16>               m_unprovided;     /*!< functions logged once */
+
+    /* A handler waiting on a provider's UIFunctionDone */
+    struct pending_t
+    {
+        u64                                token;
+        u64                                screen_id;
+        UIElementItem const*               widget;
+        blam::ui_element::event_handler_t const* handler;
+        std::vector<u16>                   slot{};
+    };
+    std::vector<pending_t> m_pending;
+
+    std::shared_ptr<UIEventBus::queue_type<UIFunctionDone>> m_done_queue;
+    std::vector<UIFunctionDone>                              m_done;
+
     std::shared_ptr<UIEventBus::queue_type<UINavigation>> m_nav_queue;
     std::vector<UINavigation> m_nav_events; /*!< filled by m_nav_queue */
 
@@ -183,6 +245,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         gsl::span<u16 const> focus;
         /* Item the owning list has focused, for extended descriptions */
         std::optional<u32> index;
+        /* Stack entry whose slot replacements apply, and this widget's slot */
+        UIScreen::frame_t const* stack_frame{nullptr};
+        std::vector<u16>         slot{};
     };
 
     Vecf2 window_to_ui(Vecf2 const& point)
@@ -265,15 +330,21 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         for(auto const& [i, child] : stl_types::const_enumerate(el.children))
         {
             auto const& meta = children[i];
+            auto        slot = layout.slot;
+            slot.push_back(static_cast<u16>(i));
+            auto const widget =
+                layout.stack_frame ? layout.stack_frame->at(slot, child) : child;
             traverse_widget(
-                child,
+                widget,
                 layout_data_t{
                     .origin = layout.origin,
                     .frame  = layout.frame + Vecf2(meta.horizontal_offset,
                                                    meta.vertical_offset),
                     .focus  = focused == i ? layout.focus.subspan(1)
                                            : gsl::span<u16 const>{},
-                    .index  = layout.index,
+                    .index       = layout.index,
+                    .stack_frame = layout.stack_frame,
+                    .slot        = std::move(slot),
                 },
                 visit);
         }
@@ -357,7 +428,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     break;
                 idx = *first;
             }
-            el = find_item(el->children[idx]);
+            std::vector<u16> const slot(
+                frame.focus.begin(), frame.focus.begin() + depth + 1);
+            el = find_item(frame.at(slot, el->children[idx]));
         }
         frame.focus.resize(path.empty() ? 0 : path.size() - 1);
         return path;
@@ -393,7 +466,10 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
     /* Returns true if the widget has a handler for the event */
     bool run_handlers(
-        UIScreen& screen, UIElementItem const& el, eh_t::type_t type)
+        UIScreen&               screen,
+        UIElementItem const&    el,
+        eh_t::type_t            type,
+        std::vector<u16> const& slot = {})
     {
         auto handlers = el.ui_element->event_handlers.data(bitm_cache.magic);
         if(!handlers.has_value())
@@ -414,50 +490,198 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 continue;
             handled = true;
 
-            auto has   = [flags](eh_t::flags_t f) {
-                return (flags & static_cast<u32>(f)) != 0;
-            };
-
-            if(has(eh_t::flags_t::close_all_widgets))
-                screen.stack.clear();
-            else if(has(eh_t::flags_t::close_current_widget) &&
-                    !screen.stack.empty())
-                screen.stack.pop_back();
-            else if(has(eh_t::flags_t::go_back_to_previous_widget))
-                go_back(screen);
-
-            if(has(eh_t::flags_t::open_widget) ||
-               has(eh_t::flags_t::replace_self_with_widget))
-            {
-                auto widget = ui_cache.predict(eh.widget);
-                if(!widget.valid())
-                    continue;
-                cDebug(
-                    "open_widget: {}",
-                    eh.widget.name.to_string(bitm_cache.magic));
-                open_widget(
-                    screen,
-                    widget,
-                    has(eh_t::flags_t::replace_self_with_widget));
-
-                /* The name screens are placeholders; the function that
-                 * opens them brings up the keyboard, prompt 9 for game
-                 * settings and 8 for player profiles */
-                constexpr u16 mp_profile_change_name     = 41;
-                constexpr u16 player_profile_change_name = 66;
-                if(has(eh_t::flags_t::run_function) && m_keyboard.valid() &&
-                   (eh.function == mp_profile_change_name ||
-                    eh.function == player_profile_change_name))
-                {
-                    auto& keyboard  = screen.stack.back().keyboard.emplace();
-                    keyboard.prompt = static_cast<u16>(
-                        eh.function == mp_profile_change_name ? 9 : 8);
-                }
-            }
+            auto const result = run_function(el, eh, type);
+            if(result == ui_result_t::pending)
+                m_pending.back().slot = slot;
+            else
+                finish_handler(screen, el, eh, result == ui_result_t::ok, slot);
             if(screen.stack.empty())
                 break;
         }
         return handled;
+    }
+
+    /* A provider's binding wins over the screen's own copy */
+    u16 spinner_get(UIScreen const* screen, UIElementItem const& el) const
+    {
+        if(m_data)
+            if(auto const* value = m_data->value(el.tag_name))
+                return value->get();
+        return screen ? screen->spinner_value(el.ui_element) : 0;
+    }
+
+    void spinner_set(UIScreen& screen, UIElementItem const& el, u16 value)
+    {
+        if(m_data)
+            if(auto const* bound = m_data->value(el.tag_name))
+            {
+                bound->set(value);
+                return;
+            }
+        screen.spinner_value(el.ui_element) = value;
+    }
+
+    /* Sends the event to the child whose custom controller index is the
+     * seat, or to every child that names none */
+    bool dispatch_to_controller(
+        UIScreen&                screen,
+        UIScreen::frame_t const& frame,
+        UIElementItem const&     el,
+        std::vector<u16> const&  slot,
+        UINavigation const&      nav)
+    {
+        using child_flags_t = blam::ui_element::child_widget_t::flags_t;
+
+        auto children = el.ui_element->child_widgets.data(bitm_cache.magic);
+        if(!children.has_value())
+            return false;
+        bool handled = false;
+        for(auto const& [i, meta] : stl_types::const_enumerate(children.value()))
+        {
+            if(i >= el.children.size())
+                break;
+            bool const own = static_cast<u32>(meta.flags) &
+                             static_cast<u32>(
+                                 child_flags_t::use_custom_controller_index);
+            if(own && static_cast<u32>(meta.custom_controller_index) !=
+                          nav.seat_idx)
+                continue;
+            auto child_slot = slot;
+            child_slot.push_back(static_cast<u16>(i));
+            auto* child = find_item(frame.at(child_slot, el.children[i]));
+            if(!child)
+                continue;
+            /* The child's own focus path is not tracked; its handlers are
+             * on the quadrant widgets themselves */
+            handled |= run_handlers(
+                screen, *child, handler_type(nav.action), child_slot);
+            if(screen.stack.empty())
+                break;
+        }
+        return handled;
+    }
+
+    static bool opens_keyboard(u16 function)
+    {
+        constexpr u16 mp_profile_change_name     = 41;
+        constexpr u16 player_profile_change_name = 66;
+        return function == mp_profile_change_name ||
+               function == player_profile_change_name;
+    }
+
+    /* The provider runs before the handler opens or closes anything, since
+     * it often sets up what the next widget shows */
+    ui_result_t run_function(
+        UIElementItem const& el, eh_t const& eh, eh_t::type_t type)
+    {
+        if(!(static_cast<u32>(eh.flags) &
+             static_cast<u32>(eh_t::flags_t::run_function)))
+            return ui_result_t::ok;
+        /* These get the text once the keyboard is done */
+        if(opens_keyboard(eh.function) && m_keyboard.valid())
+            return ui_result_t::ok;
+        if(!m_data)
+            return ui_result_t::ok;
+
+        UIFunctionCall const call{
+            .function = eh.function,
+            .event    = type,
+            .seat     = m_seat,
+            .widget   = el.ui_element,
+            .selected = m_selected,
+            .token    = m_data->next_token(),
+        };
+        auto result = m_data->call(call);
+        if(!result)
+        {
+            if(m_unprovided.insert(eh.function).second)
+                cDebug(
+                    "UI: no provider for function {} ({})",
+                    eh.function,
+                    el.tag_name);
+            return ui_result_t::ok;
+        }
+        if(*result == ui_result_t::pending)
+            m_pending.push_back({call.token, m_screen_id, &el, &eh});
+        return *result;
+    }
+
+    /* Everything a handler does after its function */
+    void finish_handler(
+        UIScreen&               screen,
+        UIElementItem const&    el,
+        eh_t const&             eh,
+        bool                    ok,
+        std::vector<u16> const& slot = {})
+    {
+        auto flags = static_cast<u32>(eh.flags);
+        auto has   = [flags](eh_t::flags_t f) {
+            return (flags & static_cast<u32>(f)) != 0;
+        };
+
+        if(!ok)
+        {
+            /* The widget's conditional widgets are the failure branch */
+            using cond_t = blam::ui_element::conditional_widget_t;
+            if(!has(eh_t::flags_t::try_to_branch_on_failure))
+                return;
+            auto conditionals =
+                el.ui_element->conditional_widgets.data(bitm_cache.magic);
+            if(!conditionals.has_value())
+                return;
+            for(cond_t const& cond : conditionals.value())
+                if(cond.flags & cond_t::load_if_event_handler_function_fails)
+                    if(auto widget = ui_cache.predict(cond.widget_tag);
+                       widget.valid())
+                    {
+                        open_widget(screen, widget, false);
+                        return;
+                    }
+            return;
+        }
+
+        if(has(eh_t::flags_t::close_all_widgets))
+            screen.stack.clear();
+        else if(has(eh_t::flags_t::close_current_widget) &&
+                !screen.stack.empty())
+            screen.stack.pop_back();
+        else if(has(eh_t::flags_t::go_back_to_previous_widget))
+            go_back(screen);
+
+        if(has(eh_t::flags_t::open_widget) ||
+           has(eh_t::flags_t::replace_self_with_widget))
+        {
+            auto widget = ui_cache.predict(eh.widget);
+            if(!widget.valid())
+                return;
+            cDebug(
+                "open_widget: {}",
+                eh.widget.name.to_string(bitm_cache.magic));
+            /* A child replaces only its own slot, e.g. one player's
+             * quadrant; a top-level widget replaces the whole entry */
+            if(has(eh_t::flags_t::replace_self_with_widget) && !slot.empty() &&
+               !screen.stack.empty())
+            {
+                screen.stack.back().replace(slot, widget);
+                fire_created(screen, widget, slot);
+                return;
+            }
+            open_widget(
+                screen,
+                widget,
+                has(eh_t::flags_t::replace_self_with_widget));
+
+            /* The name screens are placeholders; the function that
+             * opens them brings up the keyboard, prompt 9 for game
+             * settings (41) and 8 for player profiles (66) */
+            if(has(eh_t::flags_t::run_function) && m_keyboard.valid() &&
+               opens_keyboard(eh.function))
+            {
+                auto& keyboard    = screen.stack.back().keyboard.emplace();
+                keyboard.function = eh.function;
+                keyboard.prompt   = static_cast<u16>(eh.function == 41 ? 9 : 8);
+            }
+        }
     }
 
     void open_widget(UIScreen& screen, generation_idx_t widget, bool replace)
@@ -474,6 +698,24 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             screen.stack.back() = {.widget = widget};
         else
             screen.stack.push_back({.widget = widget});
+        fire_created(screen, widget);
+    }
+
+    /* A widget and everything below it runs its created handlers when it
+     * appears, e.g. a lobby clearing its joins */
+    void fire_created(
+        UIScreen& screen, generation_idx_t widget, std::vector<u16> slot = {})
+    {
+        auto* el = find_item(widget);
+        if(!el)
+            return;
+        run_handlers(screen, *el, eh_t::type_t::created, slot);
+        for(auto const& [i, child] : stl_types::const_enumerate(el->children))
+        {
+            auto child_slot = slot;
+            child_slot.push_back(static_cast<u16>(i));
+            fire_created(screen, child, std::move(child_slot));
+        }
     }
 
     void go_back(UIScreen& screen)
@@ -502,10 +744,13 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     {
         using flags_t = blam::ui_element::flags_t;
 
+        m_seat     = nav.seat_idx;
+        m_selected = std::nullopt;
+
         if(nav.action == UINavigation::open)
         {
             if(screen.stack.empty() && screen.home.valid())
-                screen.stack.push_back({.widget = screen.home});
+                open_widget(screen, screen.home, false);
             return;
         }
         if(nav.action == UINavigation::close)
@@ -531,13 +776,26 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             case UINavigation::right:
                 keyboard->move(1, 0);
                 break;
-            case UINavigation::accept:
+            case UINavigation::accept: {
                 if(!keyboard->press(m_keyboard))
                     break;
                 cDebug(
                     "UI: entered name \"{}\"",
                     std::string(keyboard->text.begin(), keyboard->text.end()));
-                [[fallthrough]];
+                /* A provider can reject the name and keep the keyboard up */
+                std::optional<ui_result_t> result;
+                if(m_data)
+                    result = m_data->call(UIFunctionCall{
+                        .function = keyboard->function,
+                        .event    = eh_t::type_t::a_btn,
+                        .seat     = m_seat,
+                        .text     = keyboard->text,
+                    });
+                if(result == ui_result_t::failed)
+                    break;
+                go_back(screen);
+                break;
+            }
             case UINavigation::back:
                 go_back(screen);
                 break;
@@ -548,6 +806,14 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         }
         auto& frame = screen.stack.back();
         auto  path  = resolve_focus(frame);
+
+        /* The selection a provider sees: the nearest list's focused item */
+        for(size_t depth = path.size() - 1; depth-- > 0;)
+            if(tabs_through_children(*path[depth]))
+            {
+                m_selected = frame.focus[depth];
+                break;
+            }
 
         bool const vertical =
             nav.action == UINavigation::up || nav.action == UINavigation::down;
@@ -560,9 +826,19 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
         for(size_t depth = 0; depth < path.size(); ++depth)
         {
-            auto& el = *path[depth];
-            if(run_handlers(screen, el, handler_type(nav.action)))
+            auto&                  el = *path[depth];
+            std::vector<u16> const slot(
+                frame.focus.begin(), frame.focus.begin() + depth);
+            if(run_handlers(screen, el, handler_type(nav.action), slot))
                 return;
+
+            /* Children here belong to controllers, not to focus: each
+             * player's quadrant takes that player's input */
+            if(has_flag(el, flags_t::pass_unhandled_events_to_all_children))
+            {
+                dispatch_to_controller(screen, frame, el, slot, nav);
+                return;
+            }
 
             if(horizontal &&
                el.ui_element->widget_type ==
@@ -570,11 +846,15 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                has_flag(el, flags_t::dpad_lr_tabs_through_items))
             {
                 /* Clamped: the arrows mark the ends of the range */
-                auto& value = screen.spinner_value(el.ui_element);
                 i32 const last =
                     static_cast<i32>(std::max<size_t>(el.text_strings.size(), 1)) - 1;
-                value = static_cast<u16>(
-                    std::clamp(static_cast<i32>(value) + step, 0, last));
+                spinner_set(
+                    screen,
+                    el,
+                    static_cast<u16>(std::clamp(
+                        static_cast<i32>(spinner_get(&screen, el)) + step,
+                        0,
+                        last)));
                 return;
             }
 
@@ -636,6 +916,108 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         constexpr u32 kFontSource = 9u;
         u32 const     tex_source  = (kFontSource << 24) | font.atlas_layer;
 
+        /* Runs of glyphs between inline button icons */
+        f32 pen = start_x;
+        while(!text.empty())
+        {
+            auto const icon_at = std::find_if(
+                text.begin(), text.end(), [this](char16_t c) {
+                    return icon_of(c) != nullptr;
+                });
+            auto const run =
+                text.substr(0, static_cast<size_t>(icon_at - text.begin()));
+            push_glyphs(data, font, run, pen, baseline_y, color, tex_source);
+            pen += font.measure(run);
+            text.remove_prefix(run.size());
+            if(text.empty())
+                break;
+
+            auto const& icon = *icon_of(text.front());
+            if(icon.image.valid())
+            {
+                /* Centred on the line, as the Xbox menus draw it */
+                f32 const middle =
+                    baseline_y - (static_cast<f32>(font.font->ascend_height) -
+                                  font.font->descend_height) *
+                                     0.5f;
+                Vecf2 const top_left = Vecf2(pen, middle - icon.size.y * 0.5f);
+                push_quad(
+                    data,
+                    top_left,
+                    top_left + icon.size,
+                    icon.image,
+                    icon.uv,
+                    Vecf3(icon.color));
+            }
+            pen += icon.advance;
+            text.remove_prefix(1);
+        }
+    }
+
+    button_icon_t const* icon_of(char16_t c) const
+    {
+        auto const idx = static_cast<size_t>(c - first_icon_char);
+        return c >= first_icon_char && idx < m_button_icons.size()
+                   ? &m_button_icons[idx]
+                   : nullptr;
+    }
+
+    /* Width including inline icons */
+    f32 text_width(FontItem const& font, std::u16string_view text) const
+    {
+        f32 width = 0.f;
+        for(char16_t c : text)
+            width += icon_of(c) ? icon_of(c)->advance
+                                : font.measure(std::u16string_view(&c, 1));
+        return width;
+    }
+
+    /* "%a-button" and friends become an icon character, or the icon's text */
+    std::u16string expand_tokens(std::u16string_view text) const
+    {
+        static constexpr std::u16string_view names[] = {
+            u"a-button",     u"b-button",      u"x-button",
+            u"y-button",     u"black-button",  u"white-button",
+            u"left-trigger", u"right-trigger", u"dpad-up",
+            u"dpad-down",    u"dpad-left",     u"dpad-right",
+            u"start-button", u"back-button",   u"left-thumb",
+            u"right-thumb",  u"left-stick",    u"right-stick",
+        };
+        std::u16string out;
+        out.reserve(text.size());
+        for(size_t i = 0; i < text.size(); ++i)
+        {
+            bool matched = false;
+            if(text[i] == u'%')
+                for(size_t n = 0; n < std::size(names) && n < m_button_icons.size();
+                    ++n)
+                    if(text.substr(i + 1).starts_with(names[n]))
+                    {
+                        auto const& icon = m_button_icons[n];
+                        if(icon.text.empty())
+                            out.push_back(
+                                static_cast<char16_t>(first_icon_char + n));
+                        else
+                            out += icon.text;
+                        i += names[n].size();
+                        matched = true;
+                        break;
+                    }
+            if(!matched)
+                out.push_back(text[i]);
+        }
+        return out;
+    }
+
+    void push_glyphs(
+        widget_data_t&      data,
+        FontItem const&     font,
+        std::u16string_view text,
+        f32                 start_x,
+        f32                 baseline_y,
+        Vecf4 const&        color,
+        u32                 tex_source)
+    {
         font.for_each_glyph(
             text, start_x, baseline_y, [&](GlyphEntry const& g, f32 gx, f32 gy) {
                 f32 gx2 = gx + g.bitmap_width;
@@ -676,8 +1058,21 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         generation_idx_t const& im,
         std::optional<Vecf2>    content = std::nullopt)
     {
-        auto const dimensions = max - min;
+        Vecf2 const isize   = image_size(im);
+        Vecf2 const imscale = content ? *content / isize
+                                      : glm::min((max - min) / isize, Vecf2(1.f));
+        push_quad(data, min, max, im, Vecf4(0, 0, imscale.x, imscale.y));
+    }
 
+    /* A quad sampling `uv` (left, top, right, bottom) of an image, tinted */
+    void push_quad(
+        widget_data_t&          data,
+        Vecf2                   min,
+        Vecf2                   max,
+        generation_idx_t const& im,
+        Vecf4                   uv,
+        Vecf3                   tint = Vecf3(1.f))
+    {
         std::array<vertex_t, 6> verts = {{
             {.position = {min.x, min.y}, .tex_coord = {0, 0}},
             {.position = {max.x, min.y}, .tex_coord = {1, 0}},
@@ -688,25 +1083,15 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         }};
         data.vertex_data.insert(
             data.vertex_data.end(), verts.begin(), verts.end());
-        data.instance_data.push_back({.color = Vecf4{1, 1, 1, 0}});
 
-        auto&                inst = data.instance_data.back();
         atlas_intermediate_t tmp{};
-        auto const*          bitm    = bitm_cache.assign_atlas_data(tmp, im);
-        auto const*          img     = bitm->image.mip;
-        auto                 imscale =
-            content ? *content / Vecf2(img->isize.x, img->isize.y)
-                    : glm::min(
-                          Vecf2(
-                              dimensions.x / img->isize.x,
-                              dimensions.y / img->isize.y),
-                          Vecf2(1.f));
+        bitm_cache.assign_atlas_data(tmp, im);
+        instance_vertex_t inst{.color = Vecf4(tint, 0.f)};
         inst.tex_scale_offset = Vecf4(
-            tmp.atlas_scale.x * imscale.x,
-            tmp.atlas_scale.y * imscale.y,
-            tmp.atlas_offset.x,
-            tmp.atlas_offset.y);
+            tmp.atlas_scale * Vecf2(uv.z - uv.x, uv.w - uv.y),
+            tmp.atlas_offset + tmp.atlas_scale * Vecf2(uv.x, uv.y));
         inst.texture_source.x = tmp.layer;
+        data.instance_data.push_back(inst);
     }
 
     void draw_keyboard(widget_data_t data, VirtualKeyboard const& keyboard)
@@ -795,7 +1180,14 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         Vecf2 const root(data.box.x, data.box.y);
         traverse_widget(
             item,
-            layout_data_t{.origin = root, .frame = root, .focus = focus},
+            layout_data_t{
+                .origin      = root,
+                .frame       = root,
+                .focus       = focus,
+                .stack_frame = screen && !screen->stack.empty()
+                                   ? &screen->stack.back()
+                                   : nullptr,
+            },
             [&](UIElementItem& el,
                 Vecf2                min,
                 Vecf2                max,
@@ -848,17 +1240,25 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     return false;
 
                 /* A spinner shows its selected value from the same list */
-                i32 str_idx =
-                    is_spinner
-                        ? (screen ? screen->spinner_value(el.ui_element) : 0)
-                        : tb.string_list_index;
-                if(str_idx < 0 ||
-                   static_cast<size_t>(str_idx) >= el.text_strings.size())
-                    return false;
-                std::u16string const& text =
-                    el.text_strings[static_cast<size_t>(str_idx)];
+                i32 str_idx = is_spinner ? spinner_get(screen, el)
+                                         : tb.string_list_index;
+                std::u16string_view text;
+                if(str_idx >= 0 &&
+                   static_cast<size_t>(str_idx) < el.text_strings.size())
+                    text = el.text_strings[static_cast<size_t>(str_idx)];
+                /* Engine-filled text: the provider rewrites the tag's */
+                std::u16string provided;
+                if(m_data)
+                    if(auto const* bound =
+                           m_data->text(el.tag_name))
+                    {
+                        provided = (*bound)(text);
+                        text     = provided;
+                    }
                 if(text.empty())
                     return false;
+                std::u16string const expanded = expand_tokens(text);
+                text                          = expanded;
 
                 f32 const box_w = max.x - min.x;
                 f32 const line_h =
@@ -881,7 +1281,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 for(auto const& [line_idx, line] :
                     stl_types::const_enumerate(lines))
                 {
-                    f32 const text_width = font_item.measure(line);
+                    f32 const text_width = this->text_width(font_item, line);
                     f32       start_x    = min.x + tb.horizontal_offset;
                     if(tb.justification == just_t::center)
                         start_x = min.x + (box_w - text_width) * 0.5f;
@@ -903,8 +1303,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     }
 
     /* Split on line breaks, then wrap words to `width` */
-    static std::vector<std::u16string_view> layout_lines(
-        FontItem const& font, std::u16string_view text, f32 width)
+    std::vector<std::u16string_view> layout_lines(
+        FontItem const& font, std::u16string_view text, f32 width) const
     {
         constexpr auto npos = std::u16string_view::npos;
 
@@ -916,13 +1316,13 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             if(!para.empty() && para.back() == u'\r')
                 para.remove_suffix(1);
 
-            while(font.measure(para) > width)
+            while(text_width(font, para) > width)
             {
                 size_t cut = npos;
                 for(auto i = para.find(u' '); i != npos;
                     i      = para.find(u' ', i + 1))
                 {
-                    if(font.measure(para.substr(0, i)) > width)
+                    if(text_width(font, para.substr(0, i)) > width)
                         break;
                     cut = i;
                 }
@@ -992,9 +1392,16 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     0, [this](UIEvent&, UINavigation* nav) {
                         m_nav_events.push_back(*nav);
                     });
+            m_done_queue =
+                e.subsystem<UIEventBus>().addQueuedEventFunction<UIFunctionDone>(
+                    0, [this](UIEvent&, UIFunctionDone* done) {
+                        m_done.push_back(*done);
+                    });
         }
         mouse_pos = window_to_ui(m_mouse_raw);
+        m_data = &e.subsystem<UIDataSource>();
         m_nav_queue->poll();
+        m_done_queue->poll();
 
         std::vector<vertex_t>          vertex_data;
         std::vector<instance_vertex_t> instance_vertex_data;
@@ -1002,10 +1409,38 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         /* Runs with the UI hidden too, open has to reach a closed menu */
         bool const render_ui = e.subsystem<RenderingParameters>().render_ui;
         auto&      ui_bus    = e.subsystem<UIEventBus>();
+
+        /* Handlers whose provider has now finished pick up where they
+         * stopped; a screen that closed meanwhile is simply skipped */
+        for(auto const& done : m_done)
+        {
+            auto it = std::find_if(
+                m_pending.begin(), m_pending.end(), [&done](pending_t const& p) {
+                    return p.token == done.token;
+                });
+            if(it == m_pending.end())
+                continue;
+            auto const pending = *it;
+            m_pending.erase(it);
+            for(auto const& entity : e.select<UIScreen>())
+                if(entity.id() == pending.screen_id)
+                {
+                    auto& screen = e.ref<Proxy>(entity.id()).get<UIScreen>();
+                    if(!screen.stack.empty())
+                        finish_handler(
+                            screen,
+                            *pending.widget,
+                            *pending.handler,
+                            done.ok,
+                            pending.slot);
+                }
+        }
+        m_done.clear();
         for(auto const& entity : e.select<UIScreen>())
         {
             auto  ref    = e.ref<Proxy>(entity.id());
             auto& screen = ref.get<UIScreen>();
+            m_screen_id  = entity.id();
 
             for(auto const& nav : m_nav_events)
             {
@@ -1183,7 +1618,14 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     gleam::sampler_definition_t{
                         typing::graphics::ShaderStage::Fragment,
                         {"source_font"sv, 5},
-                        font_cache.font_sampler}),
+                        font_cache.font_sampler},
+                    gleam::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"source_rg8"sv, 6},
+                        bitm_cache
+                            .template get_bucket<gfx::compat::texture_2da_t>(
+                                PixDesc(pix_fmt::RG8))
+                            .sampler}),
                 gfx::make_buffer_list(
                     gfx::buffer_definition_t{
                         .stage  = typing::graphics::ShaderStage::Fragment,
@@ -1214,6 +1656,7 @@ void alloc_ui_system(compo::EntityContainer& e)
             std::ref(e.subsystem_cast<FontCache<halo_version>>()));
     e.register_component_inplace<UIScreen>();
     e.register_subsystem_inplace<UIEventBus>();
+    e.register_subsystem_inplace<UIDataSource>();
 }
 
 void load_ui_items(
@@ -1485,6 +1928,102 @@ void load_ui_items(
         break;
     }
 
+    /* Button icons from the HUD globals, for "%a-button" in menu text */
+    std::vector<UIRenderer::button_icon_t> button_icons;
+    for(blam::tag_t const& tag : tag_view)
+    {
+        if(!tag.matches(blam::tag_class_t::hudg))
+            continue;
+        auto hg_opt = tag.template data<blam::hud_globals>(data.container.magic);
+        if(!hg_opt.has_value())
+            break;
+        auto const* hg    = hg_opt.value();
+        auto const  magic = data.container.magic;
+        using flags_t     = blam::hud_globals::button_icon_t::flags_t;
+
+        std::vector<std::u16string> texts;
+        if(auto list = tag_view.template data<blam::ui::unicode_string_list>(
+               hg->alternate_icon_text);
+           list.has_value())
+            if(auto subs = list.value()->data.data(magic); subs.has_value())
+                for(auto const& ref : subs.value())
+                {
+                    auto s = ref.str(magic);
+                    texts.emplace_back(
+                        s.has_error() ? std::u16string{}
+                                      : std::u16string(s.value()));
+                }
+
+        /* Menus use the small sheet, which shares the HUD sheet's sequence
+         * order; the sprite sheet's header holds the sequences */
+        blam::tagref_t icon_sheet = hg->icon_bitmap;
+        for(blam::tag_t const& bitm_tag : tag_view)
+            if(bitm_tag.matches(blam::tag_class_t::bitm) &&
+               bitm_tag.to_name().to_string(data.container.magic) ==
+                   "ui\\hud\\bitmaps\\hud_msg_icons_sm")
+            {
+                icon_sheet = bitm_tag.as_ref();
+                break;
+            }
+        blam::bitm::header_t const* sheet = nullptr;
+        if(icon_sheet.valid())
+            if(auto first = bitmaps.resolve(icon_sheet, 0); first.valid())
+                sheet = bitmaps.find(first)->second.header;
+
+        auto const entries = hg->button_icons.data(magic);
+        if(!entries.has_value())
+            break;
+        for(auto const& entry : entries.value())
+        {
+            auto const flags = static_cast<u8>(entry.flags);
+            auto has = [flags](flags_t f) { return (flags & static_cast<u8>(f)) != 0; };
+            UIRenderer::button_icon_t icon;
+            if(has(flags_t::use_text_from_string_list))
+            {
+                if(entry.text_index >= 0 &&
+                   static_cast<size_t>(entry.text_index) < texts.size())
+                    icon.text = texts[static_cast<size_t>(entry.text_index)];
+                button_icons.push_back(std::move(icon));
+                continue;
+            }
+            if(sheet)
+                if(auto const sequences = sheet->sequences.data(magic);
+                   sequences.has_value() && entry.sequence_index >= 0 &&
+                   static_cast<size_t>(entry.sequence_index) <
+                       sequences.value().size())
+                {
+                    auto const& sequence = sequences.value()[static_cast<size_t>(
+                        entry.sequence_index)];
+                    auto const sprites = sequence.sprites.data(magic);
+                    auto const images  = sheet->images.data(magic);
+                    if(sprites.has_value() && !sprites.value().empty() &&
+                       images.has_value())
+                    {
+                        auto const& sprite = sprites.value()[0];
+                        auto const& image  = images.value()[sprite.bitmap_index];
+                        icon.image =
+                            bitmaps.resolve(icon_sheet, sprite.bitmap_index);
+                        icon.uv = Vecf4(
+                            sprite.left, sprite.top, sprite.right, sprite.bottom);
+                        icon.size = Vecf2(
+                            (sprite.right - sprite.left) * image.isize.x,
+                            (sprite.bottom - sprite.top) * image.isize.y);
+                    }
+                }
+            /* hudg's width and placement offsets are tuned for the HUD's
+             * larger sheet; menu text spaces the small icon like a glyph */
+            icon.advance = icon.size.x;
+            if(has(flags_t::override_default_color))
+                icon.color = Vecf4(
+                    entry.color.r / 255.f,
+                    entry.color.g / 255.f,
+                    entry.color.b / 255.f,
+                    1.f);
+            button_icons.push_back(std::move(icon));
+        }
+        break;
+    }
+
     fonts.allocate_font_texture();
     for(blam::tag_t const& tag : tag_view)
     {
@@ -1504,7 +2043,8 @@ void load_ui_items(
     }
     try
     {
-        e.subsystem_cast<UIRenderer>().m_keyboard = std::move(keyboard);
+        e.subsystem_cast<UIRenderer>().m_keyboard     = std::move(keyboard);
+        e.subsystem_cast<UIRenderer>().m_button_icons = std::move(button_icons);
     } catch(...)
     {
     }

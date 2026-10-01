@@ -13,6 +13,7 @@
 #include "task.h"
 #include "ui.h"
 #include "ui_caching.h"
+#include "ui_profile.h"
 
 #include <algorithm>
 #include <blam/volta/blam_base_types.h>
@@ -216,6 +217,13 @@ static void load_resources(
         }
         return 1;
     }();
+    /* Controllers bound in the split screen lobby get a seat each */
+    std::vector<u32> lobby_controllers;
+    if(changed.container.map->map_type != blam::maptype_t::ui)
+        lobby_controllers =
+            e.subsystem_cast<LocalLobby>().seated_controllers();
+    if(!lobby_controllers.empty())
+        num_seats = static_cast<u16>(lobby_controllers.size());
     u64 main_biped_id{0};
     if(num_pinfo == 0)
     {
@@ -262,7 +270,9 @@ static void load_resources(
                        e.subsystem_cast<NetworkState>().local_player_name)
                     info.name = *name;
             }
-            if(num_controllers > allocated_controllers)
+            if(!lobby_controllers.empty())
+                camera.controller.index = lobby_controllers[i];
+            else if(num_controllers > allocated_controllers)
             {
                 camera.controller.index = allocated_controllers;
                 ++allocated_controllers;

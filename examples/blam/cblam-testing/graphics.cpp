@@ -16,6 +16,7 @@
 #include "selected_version.h"
 #include "sounds.h"
 #include "ui.h"
+#include "ui_profile.h"
 #include "ui_caching.h"
 
 #include <peripherals/stl/magic_enum.hpp>
@@ -490,6 +491,7 @@ i32 blam_main()
             set_resource_labels(e);
             alloc_renderer(e);
             alloc_ui_system(e);
+            alloc_profile_provider(e);
             alloc_networking(
                 e,
                 arguments.count("gateway-register")
@@ -872,6 +874,68 @@ i32 blam_main()
                     glm::translate(Matf4(1), mod.position) *
                     glm::transpose(cam.rotation) * bsp_basis *
                     glm::rotate(Matf4(1), glm::pi<f32>(), Vecf3{0, 0, 1});
+            }
+
+            /* Controllers no player owns still drive the menus, seated by
+             * controller index, so another player can join a split screen
+             * lobby without the game creating a seat (and viewport) for them */
+            if(controllers && e.subsystem_cast<RenderingParameters>().render_ui)
+            {
+                struct menu_pad_t
+                {
+                    debounced_button_t accept, back, option, option_2;
+                    debounced_button_t up, down, left, right;
+                };
+                static std::array<menu_pad_t, 4> pads;
+
+                std::array<bool, 4> owned{};
+                for(auto player : e.select<PlayerCamera>())
+                    if(auto const* cam = e.get<PlayerCamera>(player.id());
+                       cam && cam->controller.index &&
+                       *cam->controller.index < owned.size())
+                        owned[*cam->controller.index] = true;
+
+                u32 const count =
+                    std::min<u32>(controllers->count(), pads.size());
+                for(u32 idx = 0; idx < count; ++idx)
+                {
+                    auto& pad = pads[idx];
+                    if(owned[idx])
+                    {
+                        pad = {};
+                        continue;
+                    }
+                    auto const buttons = controllers->state(idx).buttons.e;
+                    pad.accept |= buttons.a;
+                    pad.back |= buttons.b || buttons.back;
+                    pad.option |= buttons.y;
+                    pad.option_2 |= buttons.x;
+                    pad.up |= buttons.p_up;
+                    pad.down |= buttons.p_down;
+                    pad.left |= buttons.p_left;
+                    pad.right |= buttons.p_right;
+
+                    std::pair<debounced_button_t*, UINavigation::action_t> const
+                        actions[] = {
+                            {&pad.accept, UINavigation::accept},
+                            {&pad.back, UINavigation::back},
+                            {&pad.option, UINavigation::option},
+                            {&pad.option_2, UINavigation::option_2},
+                            {&pad.up, UINavigation::up},
+                            {&pad.down, UINavigation::down},
+                            {&pad.left, UINavigation::left},
+                            {&pad.right, UINavigation::right},
+                        };
+                    for(auto const& [button, action] : actions)
+                    {
+                        if(*button)
+                        {
+                            UINavigation nav{.action = action, .seat_idx = idx};
+                            uibus.inject(uiev, &nav);
+                        }
+                        button->frame_end();
+                    }
+                }
             }
         },
         [](EntityContainer&, BlamData<halo_version>&, time_point const&) {

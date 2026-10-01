@@ -11,6 +11,7 @@ struct UIEvent
     {
         navigation,
         menu_leave,
+        function_done,
     } type;
 };
 
@@ -42,6 +43,15 @@ struct UIMenuLeave
     static constexpr auto event_type = UIEvent::menu_leave;
 
     libc_types::u32 seat_idx{};
+};
+
+/* Finishes a provider function that returned ui_result_t::pending */
+struct UIFunctionDone
+{
+    static constexpr auto event_type = UIEvent::function_done;
+
+    libc_types::u64 token{};
+    bool            ok{true};
 };
 
 using UIEventBus = comp_app::BasicEventBus<UIEvent>;

@@ -963,6 +963,41 @@ static_assert(sizeof(weapon_hud_interface::overlay_element_t) == 104);
 static_assert(sizeof(weapon_hud_interface::screen_effect_t) == 184);
 static_assert(sizeof(weapon_hud_interface) == 380);
 
+/* hudg; only what the shell UI uses so far. Offsets checked against the
+ * Xbox ui.map. */
+struct hud_globals
+{
+    /* What a "%a-button" style token in HUD and menu text draws */
+    struct button_icon_t
+    {
+        i16     sequence_index; /*!< in icon_bitmap */
+        i16     width_offset;
+        vec2i16 offset;
+        argb8_t color;
+        i8      frame_rate;
+        enum class flags_t : u8
+        {
+            use_text_from_string_list           = 0x1,
+            override_default_color              = 0x2,
+            width_offset_is_absolute_icon_width = 0x4,
+        } flags;
+        i16 text_index; /*!< in alternate_icon_text */
+    };
+
+    u8                                unknown_0[0x48];
+    tagref_typed_t<tag_class_t::font> single_player_font;
+    tagref_typed_t<tag_class_t::font> multi_player_font;
+    u8                                unknown_1[0x94 - 0x68];
+    tagref_typed_t<tag_class_t::ustr> item_message_text;
+    tagref_typed_t<tag_class_t::bitm> icon_bitmap;
+    tagref_typed_t<tag_class_t::ustr> alternate_icon_text;
+    reference<button_icon_t>          button_icons; /*!< A, B, X, Y, ... */
+};
+
+static_assert(sizeof(hud_globals::button_icon_t) == 16);
+static_assert(offsetof(hud_globals, icon_bitmap) == 0xa4);
+static_assert(offsetof(hud_globals, button_icons) == 0xc4);
+
 struct virtual_keyboard
 {
     struct virtual_key_t

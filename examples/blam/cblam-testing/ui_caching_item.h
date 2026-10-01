@@ -112,6 +112,8 @@ struct FontItem
 struct UIElementItem
 {
     blam::ui_element const*       ui_element{nullptr};
+    /* Last part of the tag path; unlike ui_element->name it is unique */
+    std::string tag_name;
     std::vector<generation_idx_t> children;
     std::vector<generation_idx_t> background;
 

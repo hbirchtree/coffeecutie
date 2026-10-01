@@ -95,7 +95,8 @@ struct VirtualKeyboard
     static constexpr libc_types::u16 first_special = 36;
     static constexpr size_t          max_length    = 11;
 
-    libc_types::u16 prompt{8}; /*!< index into the special key labels */
+    libc_types::u16 function{}; /*!< run_function that opened it, gets the text */
+    libc_types::u16 prompt{8};   /*!< index into the special key labels */
     std::u16string  text;
     size_t          cursor{0};
     mode_t          mode{};
