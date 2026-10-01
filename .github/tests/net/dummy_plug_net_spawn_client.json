@@ -1,0 +1,86 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "comment": "Client side of the object spawn replication test. The plain spawn_object is local-only (clients cannot assign net ids). The \"server\": true ones are requests: the client shows an impostor, the server accepts the grenade and rejects the warthog (vehicles are not client-requestable), and either way the impostor must be gone by dump_state.",
+    "events": [
+        {
+            "time": 1000,
+            "type": "render_param",
+            "debug_markers": true
+        },
+        {
+            "time": 5000,
+            "type": "spawn_object",
+            "tag": "characters\\cyborg_mp\\cyborg_mp",
+            "class": "bipd",
+            "position": [
+                101.0,
+                -146.0,
+                1.5
+            ]
+        },
+        {
+            "time": 5500,
+            "type": "spawn_object",
+            "server": true,
+            "tag": "weapons\\frag grenade\\frag grenade",
+            "class": "proj",
+            "position": [
+                96.0,
+                -143.0,
+                2.0
+            ]
+        },
+        {
+            "time": 6000,
+            "type": "spawn_object",
+            "server": true,
+            "tag": "vehicles\\warthog\\mp_warthog",
+            "class": "vehi",
+            "position": [
+                93.0,
+                -140.0,
+                1.5
+            ]
+        },
+        {
+            "time": 9000,
+            "type": "dump_state"
+        },
+        {
+            "type": "camera",
+            "position": [
+                104.4,
+                -145.9,
+                6.7
+            ],
+            "rotation": [
+                0.96461415,
+                0.16558254,
+                0.20222986,
+                0.034714244
+            ],
+            "time": 9200
+        },
+        {
+            "time": 9500,
+            "type": "screenshot",
+            "name": "client_view"
+        }
+    ],
+    "end_time": 11000
+}

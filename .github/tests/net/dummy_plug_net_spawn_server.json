@@ -1,0 +1,82 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "comment": "Server side of the object spawn replication test (run_client_server_test.sh with SERVER_DUMMY_PLUG_CONFIG/CLIENT_DUMMY_PLUG_CONFIG pointed at the spawn configs, EXPECT_OBJECTS=4). Spawns made before a client verifies its map reach it through the join backlog (CLIENT_DELAY exercises that), later ones are broadcast live. Biped, vehicle, weapon and scenery (a bush, easy to spot in screenshots) all take the same spawn path.",
+    "events": [
+        {
+            "time": 1000,
+            "type": "render_param",
+            "debug_markers": true
+        },
+        {
+            "time": 1500,
+            "type": "spawn_object",
+            "tag": "characters\\cyborg_mp\\cyborg_mp",
+            "class": "bipd",
+            "position": [
+                102.0,
+                -144.0,
+                1.5
+            ],
+            "yaw": 90
+        },
+        {
+            "time": 6000,
+            "type": "spawn_object",
+            "tag": "vehicles\\warthog\\mp_warthog",
+            "class": "vehi",
+            "position": [
+                99.0,
+                -141.0,
+                1.5
+            ],
+            "yaw": 45
+        },
+        {
+            "time": 6500,
+            "type": "spawn_object",
+            "tag": "weapons\\assault rifle\\assault rifle",
+            "class": "weap",
+            "position": [
+                104.0,
+                -141.5,
+                1.5
+            ]
+        },
+        {
+            "time": 7000,
+            "type": "spawn_object",
+            "tag": "scenery\\plants\\plant_broadleaf_short\\plant_broadleaf_short",
+            "class": "scen",
+            "position": [
+                95.5,
+                -141.5,
+                1.0
+            ]
+        },
+        {
+            "time": 9000,
+            "type": "dump_state"
+        },
+        {
+            "time": 9500,
+            "type": "screenshot",
+            "name": "server_view"
+        }
+    ],
+    "end_time": 11000
+}
