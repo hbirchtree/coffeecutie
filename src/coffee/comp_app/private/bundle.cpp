@@ -954,7 +954,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
                 tl.name);
             if(top3++ < 3)
                 m_last_results[fmt::format("Thread \"{}\"", tl.name)] =
-                    fmt::format("{}%", tl.cpu_load);
+                    fmt::format("{:.1f}%", tl.cpu_load);
         }
     }
 
@@ -990,7 +990,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
             MetricVariant::Value,
             mem->resident(),
             timestamp);
-        m_last_results["Memory"] = fmt::format("{}MB", mem->resident() / 1024);
+        m_last_results["Memory"] = fmt::format("{}MB", mem->resident() / (1024 * 1024));
     }
     if(battery)
     {
