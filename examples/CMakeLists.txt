@@ -23,6 +23,7 @@ if(BUILD_BLAM AND NOT (
 )
   # Apple's Clang yells at tag-inspect
   add_subdirectory(blam/dimeter-info)
+  add_subdirectory(blam/map-decompress)
   add_subdirectory(blam/script-dumper)
   add_subdirectory(blam/tag-inspect)
 endif()
