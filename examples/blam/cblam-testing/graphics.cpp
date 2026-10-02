@@ -729,7 +729,7 @@ i32 blam_main()
                         }
                         if(cam.keyboard.enabled)
                         {
-                            input.accept |= key_pressed(Input::CK_EnterNL);
+                            input.accept |= key_pressed(Input::CK_EnterCR);
                             input.back   |= key_pressed(Input::CK_BackSpace);
                             input.left   |= key_pressed(Input::CK_Left);
                             input.right  |= key_pressed(Input::CK_Right);
