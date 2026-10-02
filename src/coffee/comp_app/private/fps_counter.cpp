@@ -13,19 +13,19 @@ FrameCounter::FrameCounter()
         auto num_seconds = std::stoi(*interval);
         close_time = compo::clock::now() + std::chrono::seconds(num_seconds);
     }
-    get() = 0;
+    current = 0;
 }
 
 void FrameCounter::start_frame(ContainerProxy& p, const time_point& current)
 {
-    get()++;
+    this->current++;
 
     if(next_print < current)
     {
         next_print = current + std::chrono::seconds(1);
 
-        Coffee::cDebug("FPS: {0}", get());
-        get() = 0;
+        Coffee::cDebug("FPS: {0}", this->current);
+        this->current = 0;
     }
     if(close_time.has_value() && *close_time < current)
     {

@@ -40,6 +40,8 @@ struct PerformanceMonitor
     void capture_screenshot(
         proxy_type& p, std::string const& name, time_point const& time);
 
+    std::map<std::string, std::string> last_results() const { return m_last_results; }
+
     rq::runtime_queue* m_worker_queue{nullptr};
     int                m_screenshot_quality{30};
     /* When set (e.g. by the dummy plug), screenshot encode + file write run
@@ -47,6 +49,7 @@ struct PerformanceMonitor
      * exits via quick_exit/window close right after its last screenshot, which
      * would otherwise abandon the async worker before it flushes to disk. */
     bool m_synchronous_screenshots{false};
+    std::map<std::string, std::string> m_last_results{};
 };
 
 } // namespace comp_app

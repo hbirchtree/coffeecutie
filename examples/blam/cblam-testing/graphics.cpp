@@ -213,7 +213,7 @@ i32 blam_main()
             e.register_component_inplace<Visibility>();
             e.register_component_inplace<WorldInfo>();
 
-            e.register_subsystem_inplace<comp_app::FrameTag>();
+            e.register_subsystem_inplace<comp_app::FrameCounter>();
             auto& game_bus = e.register_subsystem_inplace<GameEventBus>();
             auto& journal  = e.register_subsystem_inplace<Journal>();
             if(journal.enabled())

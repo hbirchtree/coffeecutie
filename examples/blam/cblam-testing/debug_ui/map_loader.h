@@ -9,6 +9,8 @@
 
 #include <coffee/core/debug/formatting.h>
 #include <coffee/core/files/cfiles.h>
+#include <coffee/comp_app/fps_counter.h>
+#include <coffee/comp_app/performance_monitor.h>
 #include <coffee/imgui/imgui_binding.h>
 #include <imgui.h>
 #include <magic_enum/magic_enum.hpp>
@@ -33,11 +35,12 @@ using BlamMapBrowserManifest = compo::SubsystemManifest<
         BitmapCache<halo_version>,
         GameEventBus,
         NetworkState,
-        PlayerRoster
+        PlayerRoster,
 #if defined(FEATURE_ENABLE_DiscordLatte)
-        ,
-        discord::Subsystem
+        discord::Subsystem,
 #endif
+        comp_app::PerformanceMonitor,
+        comp_app::FrameCounter
         >,
     type_list_t<comp_app::ControllerInput>>;
 
@@ -172,8 +175,108 @@ struct BlamMapBrowser
                                      : "not posed this frame");
     }
 
+    /* Top-right, for comparing devices side by side. On the foreground draw
+     * list, so no debug window can cover it. */
+    static void net_overlay(
+        std::vector<std::string>& stat_list,
+        NetworkState const& net,
+        PlayerRoster& roster)
+    {
+        auto now = net.server_now();
+        if(!now)
+            return;
+
+        using namespace std::chrono;
+        auto const ms = duration_cast<milliseconds>(now->time_since_epoch()).count();
+
+        if(net.clock_authority)
+            stat_list.push_back("Server");
+        else
+            stat_list.push_back(fmt::format(
+                "Client {}, Player {}",
+                magic_enum::enum_name(net.client_state),
+                net.remote_player_idx.value_or(0xFFFF)));
+        if(net.remote_address)
+            stat_list.push_back(fmt::format("remote {}", *net.remote_address));
+        stat_list.push_back(fmt::format(
+            "{} players",
+            roster.player_count()));
+        stat_list.push_back(
+            fmt::format("server time {}.{:03} s", ms / 1000, ms % 1000));
+        if(auto const& sim = net.simulation; sim.active())
+            stat_list.push_back(fmt::format(
+                "sim +{} ms, {:.1f} jitter, {:.1f}% loss",
+                sim.lag_ms,
+                sim.jitter_ms,
+                sim.loss_pct));
+        if(!net.clock_authority)
+        {
+            stat_list.push_back(fmt::format(
+                "RTT {:.2f} ms (best {:.2f})",
+                net.server_clock_rtt_last.count() / 1000.0,
+                net.server_clock_rtt.count() / 1000.0));
+            stat_list.push_back(fmt::format(
+                "Offset {:+.3f} ms",
+                duration_cast<microseconds>(*net.server_clock_offset).count() /
+                    1000.0));
+        }
+    }
+
+    static void simulation_controls(NetworkState& net)
+    {
+        if(!ImGui::CollapsingHeader("Network simulation"))
+            return;
+        auto& sim = net.simulation;
+        int   lag = static_cast<int>(sim.lag_ms);
+        if(ImGui::SliderInt("Added RTT (ms)", &lag, 0, 500))
+            sim.lag_ms = static_cast<u32>(lag);
+        ImGui::SliderFloat("Jitter (ms)", &sim.jitter_ms, 0.f, 50.f, "%.1f");
+        ImGui::SliderFloat("Loss (%)", &sim.loss_pct, 0.f, 20.f, "%.1f");
+        if(ImGui::Button("Reset"))
+            sim = {};
+    }
+
     void start_restricted(Proxy& e, time_point const&)
     {
+        comp_app::FrameCounter* fps;
+        comp_app::PerformanceMonitor* perf;
+        e.subsystem(fps);
+        e.subsystem(perf);
+        std::vector<std::string> stats_overlay;
+        stats_overlay.push_back(fmt::format("FPS: {}", fps->current));
+        for(auto const& [key, value] : perf->last_results())
+            stats_overlay.push_back(fmt::format("{} : {}", key, value));
+
+        net_overlay(
+            stats_overlay,
+            e.template subsystem<NetworkState>(),
+            e.template subsystem<PlayerRoster>());
+
+        {
+            f32 const line_height = ImGui::GetTextLineHeightWithSpacing();
+            f32       width       = 0.f;
+            for(auto const& line : stats_overlay)
+                width = std::max(width, ImGui::CalcTextSize(line.c_str()).x);
+
+            constexpr f32 margin  = 8.f;
+            constexpr f32 padding = 6.f;
+            auto const*   viewport = ImGui::GetMainViewport();
+            ImVec2 const  max(
+                viewport->WorkPos.x + viewport->WorkSize.x - margin,
+                viewport->WorkPos.y + margin + 2 * padding +
+                    line_height * static_cast<f32>(stats_overlay.size()));
+            ImVec2 const min(max.x - width - 2 * padding, viewport->WorkPos.y + margin);
+
+            auto* draw = ImGui::GetForegroundDrawList();
+            draw->AddRectFilled(min, max, IM_COL32(0, 0, 0, 160), 4.f);
+            ImVec2 cursor(min.x + padding, min.y + padding);
+            for(auto const& line : stats_overlay)
+            {
+                draw->AddText(cursor, IM_COL32(255, 255, 255, 255), line.c_str());
+                cursor.y += line_height;
+            }
+        }
+
         if(ImGui::Begin("Game"))
         {
             if(ImGui::BeginTabBar("Game Options"))
@@ -351,6 +454,7 @@ struct BlamMapBrowser
                         cDebug("Grabbing the server camera's attention");
                         gbus.inject(ev, &control);
                     }
+                    simulation_controls(e.template subsystem<NetworkState>());
                     ImGui::EndTabItem();
                 }
                 if(ImGui::BeginTabItem("Server"))
@@ -380,6 +484,12 @@ struct BlamMapBrowser
                             "State: %.*s",
                             static_cast<int>(state.size()),
                             state.data());
+                    if(auto const& join = net_state->join_string)
+                    {
+                        ImGui::TextWrapped("Join: %s", join->c_str());
+                        if(ImGui::Button("Copy join string"))
+                            ImGui::SetClipboardText(join->c_str());
+                    }
                     ImGui::Columns(2);
                     if(auto local_name = net_state->local_address)
                     {
@@ -481,6 +591,7 @@ struct BlamMapBrowser
                         ImGui::NextColumn();
                     }
                     ImGui::Columns();
+                    simulation_controls(e.template subsystem<NetworkState>());
                     ImGui::EndTabItem();
                 }
                 if(ImGui::BeginTabItem("Entities"))

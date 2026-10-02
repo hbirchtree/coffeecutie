@@ -645,7 +645,7 @@ void SetupRendering(
         e.register_system(std::make_unique<BaseItemVisitor>());
 
         e.register_subsystem_inplace<RuntimeStateSystem>();
-        e.register_subsystem_inplace<comp_app::FrameTag>();
+        e.register_subsystem_inplace<comp_app::FrameCounter>();
         e.register_subsystem_inplace<CameraContainer>();
     }
 

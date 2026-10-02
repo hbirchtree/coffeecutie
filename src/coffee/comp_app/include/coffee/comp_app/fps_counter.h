@@ -6,17 +6,20 @@ namespace comp_app {
 
 struct FrameCounter;
 
-using FrameTag = compo::ValueTag<FrameCounter, libc_types::u32>;
-
-struct FrameCounter : public compo::globals::ValueSubsystem<FrameTag>
+struct FrameCounter : public compo::SubsystemBase
 {
+    using type = FrameCounter;
+
+    using time_point = compo::time_point;
+
     time_point                next_print;
     std::optional<time_point> close_time;
+    libc_types::u64           current{0};
     libc_types::u64           total_frames{0};
 
   public:
     FrameCounter();
-    virtual void start_frame(ContainerProxy& p, time_point const& current);
+    virtual void start_frame(compo::ContainerProxy& p, time_point const& current);
 };
 
 } // namespace comp_app

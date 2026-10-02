@@ -122,7 +122,7 @@ i32 pose_demo_main()
             e.register_component_inplace<TriggerVolume>();
             e.register_component_inplace<Visibility>();
 
-            e.register_subsystem_inplace<comp_app::FrameTag>();
+            e.register_subsystem_inplace<comp_app::FrameCounter>();
             e.register_subsystem_inplace<GameEventBus>();
             e.register_subsystem_inplace<Journal>();
             e.register_subsystem_inplace<BlamFiles<halo_version>>();

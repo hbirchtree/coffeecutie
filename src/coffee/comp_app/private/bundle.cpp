@@ -8,25 +8,23 @@
 #include <coffee/comp_app/performance_monitor.h>
 #include <coffee/comp_app/stat_providers.h>
 
+#include <algorithm>
 #include <coffee/core/CProfiling>
 #include <coffee/core/base_state.h>
 #include <coffee/core/coffee.h>
+#include <coffee/core/debug/formatting.h>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/core/types/display/event.h>
 #include <coffee/core/types/input/event_types.h>
+#include <coffee/strings/format.h>
 #include <coffee/image/cimage.h>
-
 #include <peripherals/libc/output_ops.h>
 #include <peripherals/libc/signals.h>
 #include <peripherals/stl/base64.h>
 #include <peripherals/stl/magic_enum.hpp>
 #include <peripherals/stl/string_ops.h>
-
 #include <platforms/environment.h>
 #include <platforms/stacktrace.h>
-
-#include <coffee/core/debug/formatting.h>
-#include <coffee/strings/format.h>
 #include <utility>
 
 #if !defined(COFFEE_GEKKO)
@@ -901,6 +899,8 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
     auto gpustats = p.services_with<interfaces::GPUStatProvider>();
     auto sensors  = p.service<SensorStatProvider>();
 
+    m_last_results.clear();
+
     if(clock)
     {
         Coffee::DProfContext _(
@@ -928,15 +928,23 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
                     .value_or(std::make_pair(std::string(), std::string()))
                     .second);
         }
+        f32 load = clock->processCpuLoad();
         json::CaptureMetrics(
             "CPU process load",
             MetricVariant::Value,
-            clock->processCpuLoad(),
+            load,
             timestamp);
+        m_last_results["CPU load"] = fmt::format("{:.1f}%", load);
         Coffee::DProfContext __(
             "compo::PerformanceMonitor::start_restricted: CPU thread load "
             "query");
-        for(auto const& tl : clock->threadCpuLoads())
+        u32 top3{};
+        auto thread_loads = clock->threadCpuLoads();
+        std::ranges::sort(thread_loads, [](auto const& l1, auto const& l2) {
+            return l1.cpu_load > l2.cpu_load;
+        });
+        for(auto const& tl : thread_loads)
+        {
             json::CaptureMetrics(
                 "CPU thread load",
                 MetricVariant::Value,
@@ -944,6 +952,10 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
                 timestamp,
                 tl.tid,
                 tl.name);
+            if(top3++ < 3)
+                m_last_results[fmt::format("Thread \"{}\"", tl.name)] =
+                    fmt::format("{}%", tl.cpu_load);
+        }
     }
 
     if(cpu_temp)
@@ -955,6 +967,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
             MetricVariant::Value,
             cpu_temp->value(),
             timestamp);
+        m_last_results["CPU temp"] = fmt::format("{:.1f}C", cpu_temp->value());
     }
     if(gpu_temp)
     {
@@ -965,6 +978,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
             MetricVariant::Value,
             gpu_temp->value(),
             timestamp);
+        m_last_results["GPU temp"] = fmt::format("{:.1f}C", gpu_temp->value());
     }
 
     if(mem)
@@ -976,6 +990,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
             MetricVariant::Value,
             mem->resident(),
             timestamp);
+        m_last_results["Memory"] = fmt::format("{}MB", mem->resident() / 1024);
     }
     if(battery)
     {
@@ -991,6 +1006,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
             MetricVariant::Symbolic,
             battery->source() == PowerSource::Battery ? 1 : 0,
             timestamp);
+        m_last_results["Battery"] = fmt::format("{}%", battery->percentage());
     }
 
     if(network)
