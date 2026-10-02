@@ -1071,7 +1071,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto spawns = player_spawn_locs();
             if(spawns.empty())
                 return std::nullopt;
-            auto spawn_idx = m_local_random.rand<u32>(0, spawns.size());
+            auto spawn_idx = m_local_random.rand<u32>(0, spawns.size() - 1);
             return spawns[spawn_idx];
         }();
 
