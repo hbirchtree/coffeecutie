@@ -1361,13 +1361,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                      * parses it later; this is the plain-address route in. */
                     if(!connect->server_public_key.empty())
                     {
-                        m_client_auth.type = AuthType::Ed25519;
-                        m_client_auth.ed25519_public_key =
-                            b64::decode(connect->server_public_key);
-                        if(m_client_auth.ed25519_public_key.empty())
-                            cWarning(
-                                "--server-key decoded to an empty key; is it "
-                                "valid base64?");
+                        m_client_auth = parse_auth_param(
+                            "auth=ed25519:" + connect->server_public_key);
+                        if(m_client_auth.type != AuthType::Ed25519)
+                        {
+                            m_net_state.client_state =
+                                NetworkState::ClientState::Error;
+                            return;
+                        }
                     }
                     connect_server(connect->remote);
                 } else
@@ -1682,10 +1683,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         {
             address   = remote.substr(0, hash);
             auto auth = parse_auth_param(remote.substr(hash + 1));
-            if(auth.type != AuthType::Ed25519 ||
-               auth.ed25519_public_key.empty())
+            if(auth.type != AuthType::Ed25519)
             {
-                cWarning("Unrecognized server key in {}", remote);
+                cWarning("Refusing to connect, bad server key in {}", remote);
                 m_net_state.client_state = NetworkState::ClientState::Error;
                 return;
             }
@@ -1740,6 +1740,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             return;
         }
         m_client_auth = parsed.auth;
+        if(m_client_auth.type == AuthType::Invalid)
+        {
+            cWarning("Refusing to connect, bad server key in {}", gatewayUrl);
+            m_net_state.client_state = NetworkState::ClientState::Error;
+            return;
+        }
         if(m_client_auth.type == AuthType::HmacSha256 &&
            m_client_auth.hmac_key.empty())
             cWarning(
@@ -2186,6 +2192,21 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             break;
         }
         case k_ESteamNetworkingConnectionState_ProblemDetectedLocally:
+            if(info->m_eOldState != k_ESteamNetworkingConnectionState_Connected)
+            {
+                /* Never got in, e.g. a certificate the pinned key did not
+                 * sign. GNS holds the connection until it is closed. */
+                cWarning(
+                    "Failed to connect to server {}: {}",
+                    client_name(info->m_hConn),
+                    info->m_info.m_szEndDebug);
+                m_net_state.error        = info->m_info.m_szEndDebug;
+                m_net_state.client_state = NetworkState::ClientState::Error;
+                m_impl->CloseConnection(info->m_hConn, 0, nullptr, false);
+                m_connections.erase(info->m_hConn);
+                m_connection = {};
+                break;
+            }
             cDebug(
                 "Problem with connection to server {}",
                 client_name(info->m_hConn));

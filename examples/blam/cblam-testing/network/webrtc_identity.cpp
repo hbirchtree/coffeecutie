@@ -224,16 +224,28 @@ WebrtcAuth parse_auth_param(std::string_view param)
         return auth;
     auto type = value.substr(0, colon);
     auto data = std::string(value.substr(colon + 1));
+    auto key  = b64::decode(data);
+    /* Re-encoding rejects what the decoder forgives, like the unused bits of
+     * the last character, so an edited key never passes as the original */
+    if(key.empty() || base64_encode(key) != data)
+    {
+        cWarning("Malformed key in auth parameter: {}", data);
+        auth.type = AuthType::Invalid;
+        return auth;
+    }
     if(type == "hmac")
     {
         auth.type     = AuthType::HmacSha256;
-        auth.hmac_key = b64::decode(data);
-    } else if(type == "ed25519")
+        auth.hmac_key = std::move(key);
+    } else if(type == "ed25519" && key.size() == 32)
     {
         auth.type               = AuthType::Ed25519;
-        auth.ed25519_public_key = b64::decode(data);
+        auth.ed25519_public_key = std::move(key);
     } else
-        cWarning("Unknown WebRTC auth type: {}", type);
+    {
+        cWarning("Unusable auth parameter: {}", param);
+        auth.type = AuthType::Invalid;
+    }
     return auth;
 }
 

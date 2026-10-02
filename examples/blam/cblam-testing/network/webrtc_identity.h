@@ -17,6 +17,7 @@ enum class AuthType
     None,
     HmacSha256,
     Ed25519,
+    Invalid, /*!< Auth was asked for but did not parse: refuse to connect */
 };
 
 struct WebrtcAuth
@@ -43,7 +44,8 @@ struct ParsedWebRtcUrl
 ParsedWebRtcUrl parse_webrtc_url(std::string const& url);
 
 /*! Parse one "auth=hmac:<base64>" / "auth=ed25519:<base64>" join parameter.
- * AuthType::None if it is not one. */
+ * AuthType::None if it is not one, AuthType::Invalid if it is one but the
+ * type or key is malformed. */
 WebrtcAuth parse_auth_param(std::string_view param);
 
 /*! Inverse of parse_auth_param. Empty for AuthType::None. */
