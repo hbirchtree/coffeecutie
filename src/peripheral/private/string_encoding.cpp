@@ -75,7 +75,13 @@ std::string encode_bytes(void const* data, std::size_t size)
 std::vector<std::uint8_t> decode(std::string const& data_)
 {
 #if defined(COFFEE_HAS_CPPCODEC)
-    return base64::decode(data_);
+    try
+    {
+        return base64::decode(data_);
+    } catch(cppcodec::parse_error const&)
+    {
+        return {};
+    }
 #else
     (void)data_;
     return {};
