@@ -152,6 +152,31 @@ def unanswered_requests(label, entries):
     return 0
 
 
+def clock_error(a_label, a_entries, b_label, b_entries):
+    """Same-machine only: both processes share compo::clock, so the true GNS
+    offset is the difference of their journalled GNS-minus-local bases."""
+    def base(entries):
+        for e in entries:
+            if e.get("type") == "net_clock_base":
+                return e["data"]["gns_minus_local"]
+        return None
+    samples = [e["data"] for e in b_entries if e.get("type") == "net_clock"]
+    a_base, b_base = base(a_entries), base(b_entries)
+    if not samples or a_base is None or b_base is None:
+        return 0
+    truth = a_base - b_base
+    error = samples[-1]["applied"] - truth
+    best_rtt = min(s["rtt"] for s in samples)
+    tolerance = int(os.environ.get("CLOCK_TOLERANCE_US", "2000"))
+    print(f"{b_label} clock: {len(samples)} samples, best rtt {best_rtt}us, "
+          f"error vs {a_label} {error}us (tolerance {tolerance}us), "
+          f"steady offset {samples[-1]['steady_offset']}us")
+    if abs(error) > tolerance:
+        print(f"FAIL: {b_label} clock offset off by {error}us")
+        return 1
+    return 0
+
+
 def label_for(path):
     # <out>/client0/journal.jsonl -> client0; <out>/journal.jsonl -> <out>
     return os.path.basename(os.path.dirname(os.path.abspath(path))) or path
@@ -204,8 +229,12 @@ def main():
         print(f"FAIL: {authority_label} has "
               f"{len(authority.get('objects', []))} replicated objects, "
               f"expected at least {expect_objects}")
+    authority_entries = load_journal(args[0])
     for path in args[1:]:
-        problems += unanswered_requests(label_for(path), load_journal(path))
+        entries = load_journal(path)
+        problems += unanswered_requests(label_for(path), entries)
+        problems += clock_error(authority_label, authority_entries,
+                                label_for(path), entries)
     for peer_label, peer in dumps[1:]:
         problems += compare_rosters(authority_label,
                                     authority.get("players", []),

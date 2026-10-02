@@ -1,6 +1,7 @@
 #include "resource_creation.h"
 
 #include "blam_files.h"
+#include "network/networking.h"
 #include "components.h"
 #include "data.h"
 #include "journal.h"
@@ -459,6 +460,14 @@ void create_resources(compo::EntityContainer& e)
                          "State dumped to state.json ({} player(s))",
                          players.size());
                      e.subsystem_cast<Journal>().record("state_dump", state);
+                 }
+                 if(ev.event == "net_sim")
+                 {
+                     /* Absent keys keep their current value */
+                     auto& sim = e.subsystem_cast<NetworkState>().simulation;
+                     sim.lag_ms    = ev.data.value("lag_ms", sim.lag_ms);
+                     sim.jitter_ms = ev.data.value("jitter_ms", sim.jitter_ms);
+                     sim.loss_pct  = ev.data.value("loss_pct", sim.loss_pct);
                  }
                  if(ev.event == "spawn_object")
                  {

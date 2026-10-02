@@ -78,6 +78,18 @@ nlohmann::json sort_json(nlohmann::json const& j)
     return j;
 }
 
+EVP_PKEY* generate_ed25519_key()
+{
+    EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, nullptr);
+    if(!ctx)
+        return nullptr;
+    EVP_PKEY* pkey = nullptr;
+    if(EVP_PKEY_keygen_init(ctx) <= 0 || EVP_PKEY_keygen(ctx, &pkey) <= 0)
+        pkey = nullptr;
+    EVP_PKEY_CTX_free(ctx);
+    return pkey;
+}
+
 EVP_PKEY* load_or_generate_ed25519_key(std::string const& path)
 {
     if(FILE* f = std::fopen(path.c_str(), "r"); f)
@@ -89,16 +101,9 @@ EVP_PKEY* load_or_generate_ed25519_key(std::string const& path)
     }
 
     cDebug("Generating new Ed25519 identity key: {}", path);
-    EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, nullptr);
-    if(!ctx)
+    EVP_PKEY* pkey = generate_ed25519_key();
+    if(!pkey)
         return nullptr;
-    EVP_PKEY* pkey = nullptr;
-    if(EVP_PKEY_keygen_init(ctx) <= 0 || EVP_PKEY_keygen(ctx, &pkey) <= 0)
-    {
-        EVP_PKEY_CTX_free(ctx);
-        return nullptr;
-    }
-    EVP_PKEY_CTX_free(ctx);
 
     if(FILE* f = std::fopen(path.c_str(), "w"); f)
     {
@@ -204,32 +209,45 @@ ParsedWebRtcUrl parse_webrtc_url(std::string const& url)
     auto semi        = fragment.find(';');
     result.server_id = fragment.substr(0, semi);
     if(semi != std::string::npos)
-    {
-        std::string auth_part = fragment.substr(semi + 1);
-        if(auth_part.starts_with("auth="))
-        {
-            std::string auth_value = auth_part.substr(5);
-            auto        colon      = auth_value.find(':');
-            if(colon != std::string::npos)
-            {
-                std::string auth_type = auth_value.substr(0, colon);
-                std::string auth_data = auth_value.substr(colon + 1);
-                if(auth_type == "hmac")
-                {
-                    result.auth.type     = AuthType::HmacSha256;
-                    result.auth.hmac_key = b64::decode(auth_data);
-                } else if(auth_type == "ed25519")
-                {
-                    result.auth.type               = AuthType::Ed25519;
-                    result.auth.ed25519_public_key = b64::decode(auth_data);
-                } else
-                {
-                    cWarning("Unknown WebRTC auth type: {}", auth_type);
-                }
-            }
-        }
-    }
+        result.auth = parse_auth_param(fragment.substr(semi + 1));
     return result;
+}
+
+WebrtcAuth parse_auth_param(std::string_view param)
+{
+    WebrtcAuth auth;
+    if(!param.starts_with("auth="))
+        return auth;
+    auto value = param.substr(5);
+    auto colon = value.find(':');
+    if(colon == std::string_view::npos)
+        return auth;
+    auto type = value.substr(0, colon);
+    auto data = std::string(value.substr(colon + 1));
+    if(type == "hmac")
+    {
+        auth.type     = AuthType::HmacSha256;
+        auth.hmac_key = b64::decode(data);
+    } else if(type == "ed25519")
+    {
+        auth.type               = AuthType::Ed25519;
+        auth.ed25519_public_key = b64::decode(data);
+    } else
+        cWarning("Unknown WebRTC auth type: {}", type);
+    return auth;
+}
+
+std::string format_auth_param(WebrtcAuth const& auth)
+{
+    switch(auth.type)
+    {
+    case AuthType::HmacSha256:
+        return "auth=hmac:" + base64_encode(auth.hmac_key);
+    case AuthType::Ed25519:
+        return "auth=ed25519:" + base64_encode(auth.ed25519_public_key);
+    default:
+        return {};
+    }
 }
 
 std::string canonical_metadata_json(nlohmann::json const& meta)
@@ -303,52 +321,43 @@ std::string derive_identity_ed25519(std::vector<uint8_t> const& public_key)
     return truncated_identity("ed25519:", digest);
 }
 
-std::vector<uint8_t> load_or_generate_ed25519_public_key(
-    std::string const& private_key_pem_path)
+Ed25519Key Ed25519Key::generate()
 {
-    EVP_PKEY* pkey = load_or_generate_ed25519_key(private_key_pem_path);
-    if(!pkey)
-        return {};
-    auto pk = ed25519_public_key(pkey);
-    EVP_PKEY_free(pkey);
-    return pk;
+    Ed25519Key key;
+    key.m_key.reset(generate_ed25519_key(), EVP_PKEY_free);
+    return key;
 }
 
-std::vector<uint8_t> sign_blob_ed25519(
-    std::string const& private_key_pem_path, std::string_view data)
+Ed25519Key Ed25519Key::load_or_generate(std::string const& pem_path)
 {
-    EVP_PKEY* pkey = load_or_generate_ed25519_key(private_key_pem_path);
-    if(!pkey)
-    {
-        cWarning("Failed to load or generate Ed25519 key");
-        return {};
-    }
-    auto sig = ed25519_sign(pkey, data);
-    EVP_PKEY_free(pkey);
-    return sig;
+    Ed25519Key key;
+    key.m_key.reset(load_or_generate_ed25519_key(pem_path), EVP_PKEY_free);
+    return key;
+}
+
+std::vector<uint8_t> Ed25519Key::public_key() const
+{
+    return m_key ? ed25519_public_key(m_key.get()) : std::vector<uint8_t>{};
+}
+
+std::vector<uint8_t> Ed25519Key::sign(std::string_view data) const
+{
+    return m_key ? ed25519_sign(m_key.get(), data) : std::vector<uint8_t>{};
 }
 
 nlohmann::json sign_metadata_ed25519(
-    nlohmann::json meta, std::string const& private_key_pem_path)
+    nlohmann::json meta, Ed25519Key const& key)
 {
-    EVP_PKEY* pkey = load_or_generate_ed25519_key(private_key_pem_path);
-    if(!pkey)
-    {
-        cWarning("Failed to load or generate Ed25519 key");
-        return meta;
-    }
-    auto pk = ed25519_public_key(pkey);
+    auto pk = key.public_key();
     if(pk.empty())
     {
-        EVP_PKEY_free(pkey);
         cWarning("Failed to extract Ed25519 public key");
         return meta;
     }
 
     meta["identity"]      = derive_identity_ed25519(pk);
     std::string canonical = canonical_metadata_json(meta);
-    auto        sig       = ed25519_sign(pkey, canonical);
-    EVP_PKEY_free(pkey);
+    auto        sig       = key.sign(canonical);
 
     if(sig.empty())
     {

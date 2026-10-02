@@ -95,7 +95,10 @@ i32 blam_main()
         options.add_options("Networking")
             //
             ("server",
-             "Server to connect to on startup",
+             "Server to connect to on startup. Pass the join string the "
+             "server prints, which carries its key so the connection is "
+             "authenticated: ip:port#auth=ed25519:<key>, or "
+             "ws://gateway#<id>;auth=ed25519:<key>",
              cxxopts::value<std::string>())
             //
             ("listen",
@@ -104,10 +107,7 @@ i32 blam_main()
             //
             ("gateway-register",
              "webrtc-gateway /server-signal URL to register this --listen "
-             "server with, so browser clients can be routed to it. If no "
-             "--gateway-auth-secret or --gateway-auth-key is given, an "
-             "Ed25519 key is auto-generated and persisted in the config "
-             "directory",
+             "server with, so browser clients can be routed to it",
              cxxopts::value<std::string>())
             //
             ("gateway-server-id",
@@ -119,23 +119,33 @@ i32 blam_main()
              cxxopts::value<std::string>())
             //
             ("gateway-auth-key",
-             "Path to Ed25519 private key PEM for signing WebRTC server "
-             "metadata. If the file does not exist it will be generated; if "
-             "omitted when --gateway-register is used, the key is stored in "
-             "the config directory",
+             "Path to the server's Ed25519 private key PEM, which signs its "
+             "certificate and WebRTC metadata. Generated if the file does not "
+             "exist. Without it, a server generates a key in memory each run",
              cxxopts::value<std::string>())
             //
             ("server-key",
              "Ed25519 public key (base64) of the server named by --server. "
              "The connection then requires a certificate signed by that key, "
-             "so nothing on the path can present its own. For a gateway join "
-             "URL the key rides in the fragment instead and this is not "
-             "needed",
+             "so nothing on the path can present its own. Not needed with a "
+             "join string, which carries the key",
              cxxopts::value<std::string>())
             //
             ("relay-only",
              "Always relay traffic, no peer-to-peer",
-             cxxopts::value<bool>()->default_value("false"));
+             cxxopts::value<bool>()->default_value("false"))
+            //
+            ("net-lag",
+             "Simulated round-trip latency added to this process's packets, ms",
+             cxxopts::value<libc_types::u32>())
+            //
+            ("net-jitter",
+             "Simulated mean extra delay per packet, ms",
+             cxxopts::value<libc_types::f32>())
+            //
+            ("net-loss",
+             "Simulated packet loss in each direction, percent",
+             cxxopts::value<libc_types::f32>());
         if constexpr(!compile_info::supports_command_line)
             options.add_options("Game")(
                 "map", "Which map file to load", cxxopts::value<std::string>());
@@ -494,9 +504,6 @@ i32 blam_main()
             alloc_profile_provider(e);
             alloc_networking(
                 e,
-                arguments.count("gateway-register")
-                    ? arguments["gateway-register"].as<std::string>()
-                    : std::string(),
                 arguments.count("gateway-auth-secret")
                     ? arguments["gateway-auth-secret"].as<std::string>()
                     : std::string(),
@@ -575,6 +582,16 @@ i32 blam_main()
                 });
 
             e.subsystem_cast<BlamFiles<halo_version>>().map_directory = map_dir;
+
+            {
+                auto& sim = e.subsystem_cast<NetworkState>().simulation;
+                if(arguments.count("net-lag"))
+                    sim.lag_ms = arguments["net-lag"].as<libc_types::u32>();
+                if(arguments.count("net-jitter"))
+                    sim.jitter_ms = arguments["net-jitter"].as<libc_types::f32>();
+                if(arguments.count("net-loss"))
+                    sim.loss_pct = arguments["net-loss"].as<libc_types::f32>();
+            }
 
             if(arguments.count("server"))
             {

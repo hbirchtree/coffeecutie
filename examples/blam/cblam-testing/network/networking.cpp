@@ -8,12 +8,14 @@
 #include "types.h"
 
 #include <coffee/core/CProfiling>
+#include <coffee/core/debug/formatting.h>
 #include <coffee/core/files/cfiles.h>
 #include <gsl/span_ext>
 #include <peripherals/stl/base64.h>
 #include <url/url.h>
 
 using Coffee::ProfContext;
+using Coffee::Logging::cBasicPrint;
 
 #if defined(USE_NETWORKING)
 
@@ -57,6 +59,7 @@ constexpr u32 EVENT_LANE        = 1;
 
 struct Networking;
 
+using libc_types::i64;
 using typing::vector_types::Quatf;
 using typing::vector_types::Vecf3;
 using typing::vector_types::Vecf4;
@@ -190,6 +193,8 @@ struct MessageBase
 
         /* Join-time data check */
         MapVerify,
+
+        ClockSync,
     } type{None};
 
     u32 request{};
@@ -375,6 +380,19 @@ struct alignas(8) Screenshot
     pix_fmt format{pix_fmt::None};
 };
 
+/*! NTP-style exchange, in each side's GNS local timestamps. The server's
+ *  hold time (send - recv) drops out of the round trip. server_base maps the
+ *  server's GNS time onto its steady_clock. */
+struct alignas(8) ClockSync
+{
+    static constexpr auto message_type = MessageBase::ClockSync;
+
+    i64 client_send{0};
+    i64 server_recv{0};
+    i64 server_send{0};
+    i64 server_base{0};
+};
+
 /* Tag class + id only; a tagref_t's name is a pointer into the sender's
  * map. The receiver resolves the id against its own (verified) tag index. */
 struct EntityTag
@@ -467,6 +485,7 @@ static_assert(sizeof(Message<MapVerify>) == 32);
 static_assert(sizeof(EntityTag) == 12);
 static_assert(sizeof(EntitySpawn) == 56);
 static_assert(sizeof(SpawnRequest) == 48);
+static_assert(sizeof(Message<ClockSync>) == 48);
 static_assert(sizeof(Message<PlayerJoin>) == 48);
 static_assert(sizeof(Message<CameraSync>) == 56);
 static_assert(sizeof(Message<u32>) == 20);
@@ -585,11 +604,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         {
             meta = sign_metadata_hmac(std::move(meta), m_server_auth.hmac_key);
         } else if(
-            m_server_auth.type == AuthType::Ed25519 &&
-            !m_server_auth_key_path.empty())
+            m_server_auth.type == AuthType::Ed25519 && m_server_key)
         {
-            meta =
-                sign_metadata_ed25519(std::move(meta), m_server_auth_key_path);
+            meta = sign_metadata_ed25519(std::move(meta), m_server_key);
         }
 
         return meta.dump();
@@ -636,6 +653,217 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 #if defined(USE_WEBRTC_TRANSPORT)
         publish_server_metadata();
 #endif
+    }
+
+    void apply_simulation()
+    {
+        auto const& sim = m_net_state.simulation;
+        if(!m_utils || sim == m_applied_simulation)
+            return;
+        m_applied_simulation = sim;
+
+        i32 const lag_send = static_cast<i32>(sim.lag_ms / 2);
+        m_utils->SetGlobalConfigValueInt32(
+            k_ESteamNetworkingConfig_FakePacketLag_Send, lag_send);
+        m_utils->SetGlobalConfigValueInt32(
+            k_ESteamNetworkingConfig_FakePacketLag_Recv,
+            static_cast<i32>(sim.lag_ms) - lag_send);
+
+        f32 const jitter_pct = sim.jitter_ms > 0.f ? 100.f : 0.f;
+        for(auto [avg, max, pct] : {
+                std::tuple{
+                    k_ESteamNetworkingConfig_FakePacketJitter_Send_Avg,
+                    k_ESteamNetworkingConfig_FakePacketJitter_Send_Max,
+                    k_ESteamNetworkingConfig_FakePacketJitter_Send_Pct},
+                std::tuple{
+                    k_ESteamNetworkingConfig_FakePacketJitter_Recv_Avg,
+                    k_ESteamNetworkingConfig_FakePacketJitter_Recv_Max,
+                    k_ESteamNetworkingConfig_FakePacketJitter_Recv_Pct},
+            })
+        {
+            m_utils->SetGlobalConfigValueFloat(avg, sim.jitter_ms);
+            m_utils->SetGlobalConfigValueFloat(max, sim.jitter_ms * 4.f);
+            m_utils->SetGlobalConfigValueFloat(pct, jitter_pct);
+        }
+
+        m_utils->SetGlobalConfigValueFloat(
+            k_ESteamNetworkingConfig_FakePacketLoss_Send, sim.loss_pct);
+        m_utils->SetGlobalConfigValueFloat(
+            k_ESteamNetworkingConfig_FakePacketLoss_Recv, sim.loss_pct);
+
+        cDebug(
+            "Network simulation: +{} ms rtt, {} ms jitter, {}% loss",
+            sim.lag_ms,
+            sim.jitter_ms,
+            sim.loss_pct);
+        journal(
+            "net_simulation",
+            {{"lag_ms", sim.lag_ms},
+             {"jitter_ms", sim.jitter_ms},
+             {"loss_pct", sim.loss_pct}});
+    }
+
+    /* Clock sync: a burst at connect, then a steady trickle. Sampling
+     * speeds up again for a while when the estimate jumps. */
+    static constexpr u32 clock_burst_samples  = 8;
+    static constexpr i64 clock_burst_interval = 150'000;
+    static constexpr i64 clock_interval       = 1'000'000;
+    static constexpr i64 clock_unsettled      = 250'000;
+    static constexpr i64 clock_unsettled_for  = 3'000'000;
+    static constexpr u32 clock_window         = 16;
+    static constexpr i64 clock_window_age     = 16'000'000;
+    static constexpr i64 clock_jump           = 5'000;
+    static constexpr i64 clock_snap           = 250'000;
+    static constexpr i64 clock_slew_per_mille = 5; /*!< 0.5% */
+
+    struct clock_sample_t
+    {
+        i64 offset{0};
+        i64 rtt{0};
+        i64 taken{0};
+    };
+
+    struct clock_state_t
+    {
+        bool                       active{false};
+        u32                        burst{0};
+        i64                        next_ping{0};
+        i64                        unsettled_until{0};
+        i64                        last_slew{0};
+        i64                        server_base{0};
+        std::optional<i64>         estimate{};
+        std::optional<i64>         applied{};
+        std::deque<clock_sample_t> samples{};
+    };
+
+    /*! GNS local timestamp minus steady_clock, in us */
+    i64 gns_minus_local() const
+    {
+        return m_utils->GetLocalTimestamp() -
+               std::chrono::duration_cast<std::chrono::microseconds>(
+                   std::chrono::steady_clock::now().time_since_epoch())
+                   .count();
+    }
+
+    void clock_tick()
+    {
+        if(!m_utils)
+            return;
+        i64 const now  = m_utils->GetLocalTimestamp();
+        i64 const base = gns_minus_local();
+
+        if(!m_clock_base_journaled && (is_server() || m_clock.active))
+        {
+            /* Same-machine tests diff these to get the true GNS offset */
+            journal("net_clock_base", {{"gns_minus_local", base}});
+            m_clock_base_journaled = true;
+        }
+
+        m_net_state.clock_authority = is_server();
+        if(is_server())
+        {
+            m_net_state.server_clock_offset =
+                std::chrono::steady_clock::duration::zero();
+            return;
+        }
+        if(!m_clock.active)
+            return;
+
+        if(now >= m_clock.next_ping)
+        {
+            send_single(
+                m_connection,
+                Message<ClockSync>({.client_send = now}),
+                k_nSteamNetworkingSend_UnreliableNoNagle);
+            i64 interval = clock_interval;
+            if(m_clock.burst > 0)
+            {
+                --m_clock.burst;
+                interval = clock_burst_interval;
+            } else if(now < m_clock.unsettled_until)
+                interval = clock_unsettled;
+            m_clock.next_ping = now + interval;
+        }
+
+        if(m_clock.estimate && m_clock.applied)
+        {
+            i64 const step =
+                (now - m_clock.last_slew) * clock_slew_per_mille / 1000;
+            m_clock.applied = *m_clock.applied +
+                              std::clamp(
+                                  *m_clock.estimate - *m_clock.applied, -step, step);
+        }
+        m_clock.last_slew = now;
+
+        /* local steady -> local GNS -> server GNS -> server steady */
+        if(m_clock.applied)
+            m_net_state.server_clock_offset =
+                std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+                    std::chrono::microseconds(
+                        base + *m_clock.applied - m_clock.server_base));
+    }
+
+    void clock_reply(
+        HSteamNetConnection connection, ClockSync const& request, i64 received)
+    {
+        auto reply        = request;
+        reply.server_recv = received;
+        reply.server_base = gns_minus_local();
+        reply.server_send = m_utils->GetLocalTimestamp();
+        send_single(
+            connection,
+            Message<ClockSync>(std::move(reply)),
+            k_nSteamNetworkingSend_UnreliableNoNagle);
+    }
+
+    void clock_sample(ClockSync const& sync, i64 received)
+    {
+        if(!m_clock.active)
+            return;
+        i64 const rtt = std::max<i64>(
+            0,
+            (received - sync.client_send) - (sync.server_send - sync.server_recv));
+        i64 const offset = ((sync.server_recv - sync.client_send) +
+                            (sync.server_send - received)) /
+                           2;
+
+        m_clock.server_base = sync.server_base;
+
+        auto& samples = m_clock.samples;
+        samples.push_back({.offset = offset, .rtt = rtt, .taken = received});
+        while(samples.size() > clock_window ||
+              received - samples.front().taken > clock_window_age)
+            samples.pop_front();
+
+        /* Queueing only ever adds delay, so the fastest sample lies least */
+        auto const& best = *std::min_element(
+            samples.begin(), samples.end(), [](auto const& a, auto const& b) {
+                return a.rtt < b.rtt;
+            });
+
+        auto const previous = m_clock.estimate;
+        m_clock.estimate    = best.offset;
+        m_net_state.server_clock_rtt      = std::chrono::microseconds(best.rtt);
+        m_net_state.server_clock_rtt_last = std::chrono::microseconds(rtt);
+
+        if(!m_clock.applied ||
+           std::abs(best.offset - *m_clock.applied) > clock_snap)
+        {
+            m_clock.applied = best.offset;
+            journal("net_clock_snap", {{"offset", best.offset}, {"rtt", best.rtt}});
+        } else if(previous && std::abs(best.offset - *previous) > clock_jump)
+        {
+            m_clock.unsettled_until = received + clock_unsettled_for;
+            m_clock.next_ping = std::min(m_clock.next_ping, received + clock_unsettled);
+        }
+        journal(
+            "net_clock",
+            {{"offset", offset},
+             {"rtt", rtt},
+             {"estimate", *m_clock.estimate},
+             {"applied", *m_clock.applied},
+             {"steady_offset",
+              gns_minus_local() + *m_clock.applied - m_clock.server_base}});
     }
 
     std::set<HSteamNetConnection> verified_connections() const
@@ -938,8 +1166,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     void install_self_signed_cert()
     {
         if(m_server_auth.type != AuthType::Ed25519 ||
-           m_server_auth.ed25519_public_key.empty() ||
-           m_server_auth_key_path.empty())
+           m_server_auth.ed25519_public_key.empty() || !m_server_key)
             return;
 
         SteamNetworkingErrMsg ec{};
@@ -958,8 +1185,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             return;
         }
 
-        auto signature = sign_blob_ed25519(
-            m_server_auth_key_path,
+        auto signature = m_server_key.sign(
             std::string_view(
                 reinterpret_cast<const char*>(blob.data()),
                 static_cast<size_t>(blob_size)));
@@ -987,10 +1213,65 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             derive_identity_ed25519(m_server_auth.ed25519_public_key));
     }
 
+    /* A server always has a keypair, so the join string it hands out
+     * authenticates it by default. The key is held only in memory, so the
+     * join string changes every run. Done at listen time: a client needs no
+     * identity, and the Listen button reaches here without any CLI flags. */
+    void ensure_server_identity()
+    {
+#if !(defined(USE_WEBRTC_TRANSPORT) && defined(COFFEE_WASM))
+        if(m_server_auth.type != AuthType::None)
+            return;
+        m_server_key    = Ed25519Key::generate();
+        auto public_key = m_server_key.public_key();
+        if(public_key.empty())
+        {
+            cWarning(
+                "Failed to generate a server key, clients cannot "
+                "authenticate this server");
+            return;
+        }
+        m_server_auth.type               = AuthType::Ed25519;
+        m_server_auth.ed25519_public_key = std::move(public_key);
+        m_identity.SetGenericString(
+            derive_identity_ed25519(m_server_auth.ed25519_public_key).c_str());
+        m_impl->ResetIdentity(&m_identity);
+        install_self_signed_cert();
+#endif
+    }
+
+    /* address is ip:port, or a gateway URL when server_id is set */
+    void publish_join_string(
+        std::string const& address, std::string const& server_id = {})
+    {
+        auto        auth = format_auth_param(m_server_auth);
+        std::string join = address;
+        if(!server_id.empty())
+        {
+            join += "#" + server_id;
+            if(!auth.empty())
+                join += ";" + auth;
+        } else if(m_server_auth.type == AuthType::Ed25519)
+            /* An hmac secret only verifies gateway metadata */
+            join += "#" + auth;
+        m_net_state.join_string = join;
+
+        SteamNetworkingIPAddr bound;
+        bool const            wildcard =
+            server_id.empty() &&
+            m_impl->GetListenSocketAddress(m_socket, &bound) &&
+            (bound.IsIPv6AllZeros() || (bound.IsIPv4() && !bound.GetIPv4()));
+        cBasicPrint("Join this server with: --server {}", join);
+        if(wildcard)
+            cBasicPrint(
+                "  (listening on all interfaces: replace {} with an address "
+                "clients can reach)",
+                address.substr(0, address.rfind(':')));
+    }
+
     Networking(
         GameEventBus&      game_bus,
         NetworkState&      net_state,
-        std::string const& gateway_register_url,
         std::string const& gateway_auth_secret,
         std::string const& gateway_auth_key)
         : m_game_bus(game_bus)
@@ -1019,20 +1300,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_identity.SetGenericString(randomIdentity);
         if(!GameNetworkingSockets_Init(&m_identity, ec))
 #else
-        m_server_auth_key_path = gateway_auth_key;
-        if(!gateway_register_url.empty() && gateway_auth_secret.empty() &&
-           m_server_auth_key_path.empty())
-        {
-            // Auto-generate an Ed25519 identity key in the application's config
-            // directory.
-            m_server_auth_key_path =
-                MkUrl("webrtc_identity.pem", semantic::RSCA::ConfigFile)
-                    .internUrl;
-            cDebug(
-                "Auto-generating WebRTC Ed25519 identity key at {}",
-                m_server_auth_key_path);
-        }
-
         if(!gateway_auth_secret.empty())
         {
             m_server_auth.type     = AuthType::HmacSha256;
@@ -1043,15 +1310,20 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     "valid base64?");
             m_identity.SetGenericString(
                 derive_identity_hmac(m_server_auth.hmac_key).c_str());
-        } else if(!m_server_auth_key_path.empty())
+        } else if(!gateway_auth_key.empty())
         {
-            m_server_auth.type = AuthType::Ed25519;
-            m_server_auth.ed25519_public_key =
-                load_or_generate_ed25519_public_key(m_server_auth_key_path);
-            if(!m_server_auth.ed25519_public_key.empty())
+            /* A persistent identity; without one, a server gets an in-memory
+             * key when it starts listening */
+            m_server_key = Ed25519Key::load_or_generate(gateway_auth_key);
+            if(auto public_key = m_server_key.public_key(); !public_key.empty())
+            {
+                m_server_auth.type               = AuthType::Ed25519;
+                m_server_auth.ed25519_public_key = std::move(public_key);
                 m_identity.SetGenericString(
                     derive_identity_ed25519(m_server_auth.ed25519_public_key)
                         .c_str());
+            } else
+                cWarning("Failed to load server key {}", gateway_auth_key);
         }
         if(m_identity.IsInvalid())
             m_identity.SetLocalHost();
@@ -1109,10 +1381,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 #endif
                 {
                     create_server(connect->remote);
+                    bool registered = false;
 #if defined(USE_WEBRTC_TRANSPORT)
                     if(!connect->gateway_register_url.empty() &&
                        m_socket != k_HSteamListenSocket_Invalid)
                     {
+                        registered = true;
                         cDebug("Starting gateway fleet registration");
                         m_fleetRegistration = std::make_unique<
                             webrtc_signaling::GatewayFleetRegistration>(
@@ -1124,6 +1398,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         m_fleetRegistration->Start();
                     }
 #endif
+                    if(m_net_state.server_state !=
+                       NetworkState::ServerState::Listening)
+                        return;
+                    if(registered)
+                        publish_join_string(
+                            connect->gateway_register_url,
+                            connect->gateway_server_id);
+                    else
+                        publish_join_string(local_name());
                 }
             });
         m_game_bus.addEventFunction<MapListingEvent>(
@@ -1393,10 +1676,25 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_utils->SetGlobalConfigValueInt32(
             k_ESteamNetworkingConfig_P2P_Transport_ICE_Enable,
             k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_All);
-        SteamNetworkingIPAddr server;
-        if(!server.ParseString(remote.c_str()))
+        /* ip:port#auth=ed25519:<key>, as printed by the server */
+        std::string address = remote;
+        if(auto hash = remote.find('#'); hash != std::string::npos)
         {
-            cWarning("Failed to parse server IP: {}", remote);
+            address   = remote.substr(0, hash);
+            auto auth = parse_auth_param(remote.substr(hash + 1));
+            if(auth.type != AuthType::Ed25519 ||
+               auth.ed25519_public_key.empty())
+            {
+                cWarning("Unrecognized server key in {}", remote);
+                m_net_state.client_state = NetworkState::ClientState::Error;
+                return;
+            }
+            m_client_auth = std::move(auth);
+        }
+        SteamNetworkingIPAddr server;
+        if(!server.ParseString(address.c_str()))
+        {
+            cWarning("Failed to parse server IP: {}", address);
             m_net_state.client_state = NetworkState::ClientState::Error;
             return;
         }
@@ -1623,6 +1921,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_net_state.server_state = NetworkState::ServerState::Error;
             return;
         }
+        ensure_server_identity();
         m_socket =
             m_impl->CreateListenSocketIP(server, config.size(), config.data());
         if(m_socket == k_HSteamListenSocket_Invalid)
@@ -1644,6 +1943,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_impl->CloseListenSocket(m_socket);
         m_impl->DestroyPollGroup(m_poll_group);
         m_net_state.server_state = NetworkState::ServerState::Error;
+        m_net_state.join_string.reset();
     }
 
 #if defined(USE_WEBRTC_TRANSPORT)
@@ -1699,6 +1999,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 ? k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_Disable
                 : k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_All);
 #endif
+        ensure_server_identity();
         m_webrtcServer =
             std::make_unique<webrtc_signaling::GatewayServerRegistration>(
                 gatewayUrl, serverId, m_impl);
@@ -1715,6 +2016,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         // reads GetListenSocketAddress, which m_socket doesn't have here)
         // -- leave unset until there's a sensible thing to show.
         m_net_state.server_state = NetworkState::ServerState::Listening;
+        publish_join_string(gatewayUrl, serverId);
     }
 #endif
 
@@ -1856,6 +2158,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             cDebug("Connection to server/peer established ({})", remote_name());
             journal("net_connected", {{"server", remote_name()}});
             m_connection_last_seen = std::nullopt;
+            m_clock = {.active = true, .burst = clock_burst_samples};
 #if defined(USE_WEBRTC_TRANSPORT)
             if(!m_expected_server_identity.empty())
             {
@@ -1893,6 +2196,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_net_state.client_state = NetworkState::ClientState::Disconnecting;
             cDebug("Disonnected from server/peer ({})", remote_name());
             journal("net_disconnected", {{"server", remote_name()}});
+            m_clock                        = {};
+            m_net_state.server_clock_offset = std::nullopt;
             m_impl->CloseConnection(
                 info->m_hConn,
                 0,
@@ -2010,6 +2315,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 #endif
         if(m_spawn_queue)
             m_spawn_queue->poll();
+        apply_simulation();
+        clock_tick();
         if(is_server())
         {
 #if defined(USE_WEBRTC_TRANSPORT)
@@ -2039,6 +2346,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     break;
                 auto const& payload =
                     *reinterpret_cast<MessageBase const*>(message->GetData());
+                if(payload.type == MessageBase::ClockSync)
+                {
+                    clock_reply(
+                        message->m_conn,
+                        payload.value<ClockSync>(),
+                        message->m_usecTimeReceived);
+                    message->Release();
+                    continue;
+                }
                 auto& pinfo = m_connections[message->m_conn].player_info;
                 if(pinfo.exists())
                     shared_receive_payload(p, *pinfo, payload);
@@ -2194,6 +2510,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     break;
                 auto const& payload =
                     *reinterpret_cast<MessageBase const*>(message->GetData());
+                if(payload.type == MessageBase::ClockSync)
+                {
+                    clock_sample(
+                        payload.value<ClockSync>(), message->m_usecTimeReceived);
+                    message->Release();
+                    continue;
+                }
                 if(m_client_player.exists())
                     shared_receive_payload(
                         p, m_client_player.get<PlayerInfo>(), payload);
@@ -2766,6 +3089,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::vector<EntitySpawn>                                    m_dynamic_spawns;
     std::atomic<u32> m_next_net_id{0}; /*!< Stamped on whichever thread spawns */
     std::atomic<u32> m_next_request_id{0};
+
+    clock_state_t            m_clock{};
+    NetworkState::Simulation   m_applied_simulation{};
+    bool          m_clock_base_journaled{false};
 #if defined(USE_WEBRTC_TRANSPORT)
     std::string m_last_metadata_sent;
 #endif
@@ -2777,7 +3104,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
      * where it carries the whole guarantee, having no second encrypted hop to
      * fall back on. */
     webrtc_signaling::WebrtcAuth m_server_auth;
-    std::string                  m_server_auth_key_path;
+    Ed25519Key                   m_server_key;
 
     /* Client-side auth, from the join URL fragment or --server-key. */
     webrtc_signaling::WebrtcAuth m_client_auth;
@@ -2823,7 +3150,6 @@ std::vector<NetworkState::RosterEntry> PlayerRoster::roster(
 
 void alloc_networking(
     compo::EntityContainer& e,
-    std::string const&      gateway_register_url,
     std::string const&      gateway_auth_secret,
     std::string const&      gateway_auth_key)
 {
@@ -2834,7 +3160,6 @@ void alloc_networking(
     auto& networking = e.register_subsystem_inplace<Networking>(
         std::ref(e.subsystem_cast<GameEventBus>()),
         std::ref(e.subsystem_cast<NetworkState>()),
-        gateway_register_url,
         gateway_auth_secret,
         gateway_auth_key);
     networking.m_journal = &e.subsystem_cast<Journal>();

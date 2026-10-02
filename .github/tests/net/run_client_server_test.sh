@@ -26,6 +26,8 @@
 #   PORT          loopback port               (default: 27105)
 #   BOOT_TIMEOUT  seconds to wait for the server's listen socket (default: 30)
 #   RUN_TIMEOUT   hard cap per process, via `timeout`, before it's killed (default: 40)
+#   CLIENT_EXTRA_ARGS  extra BlamGraphics arguments for the client, e.g.
+#                 "--net-lag 100 --net-jitter 5" for simulated latency
 #   CLIENT_DELAY  seconds to wait after the server is listening before
 #                 starting the client (default: 0). Fabricates a client
 #                 connecting well after the server has already finished
@@ -133,7 +135,7 @@ fi
 echo "Starting client..."
 webrtc_start_native_client "$TARGET" "$RESOURCE_DIR" "$MAP" \
     "$WEBRTC_CLIENT_LOG" "$WEBRTC_CLIENT_TMP" "$CLIENT_DUMMY_PLUG_CONFIG" "$RUN_TIMEOUT" \
-    --server "127.0.0.1:$PORT"
+    --server "127.0.0.1:$PORT" ${CLIENT_EXTRA_ARGS:-}
 
 echo "Waiting for both processes to finish (dummy_plug end_time closes them)..."
 wait "$WEBRTC_CLIENT_PID"
