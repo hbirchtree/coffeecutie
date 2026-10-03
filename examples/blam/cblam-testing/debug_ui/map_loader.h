@@ -243,7 +243,7 @@ struct BlamMapBrowser
         e.subsystem(fps);
         e.subsystem(perf);
         std::vector<std::string> stats_overlay;
-        stats_overlay.push_back(fmt::format("FPS: {}", fps->current));
+        stats_overlay.push_back(fmt::format("FPS: {} {:.1f}ms/f", fps->reading, 1000.f/fps->reading));
         for(auto const& [key, value] : perf->last_results())
             stats_overlay.push_back(fmt::format("{} : {}", key, value));
 

@@ -15,6 +15,7 @@ struct FrameCounter : public compo::SubsystemBase
     time_point                next_print;
     std::optional<time_point> close_time;
     libc_types::u64           current{0};
+    libc_types::u64           reading{0};
     libc_types::u64           total_frames{0};
 
   public:

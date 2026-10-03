@@ -25,6 +25,7 @@ void FrameCounter::start_frame(ContainerProxy& p, const time_point& current)
         next_print = current + std::chrono::seconds(1);
 
         Coffee::cDebug("FPS: {0}", this->current);
+        reading = this->current;
         this->current = 0;
     }
     if(close_time.has_value() && *close_time < current)
