@@ -56,7 +56,15 @@ struct ui_element
     i32                               millis_auto_close_fade_time;
     tagref_typed_t<tag_class_t::bitm> background;
 
-    using function_t = u16;
+    enum class function_t : u16
+    {
+        clear_multiplayer_player_joins = 14,
+        join_controller_to_mp_game     = 15,
+        mp_profile_set_for_controller  = 37,
+        mp_profile_change_name         = 41,
+        player_profile_change_name     = 66,
+        save_changes_profile_item      = 67,
+    };
 
     /* Guerilla notes:
      * These functions use current game data to modify the appearance of
