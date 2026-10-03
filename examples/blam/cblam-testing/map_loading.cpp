@@ -142,7 +142,6 @@ static void load_resources(
     MapChangedEvent<halo_version>&      changed)
 {
     auto& loading_status = e.subsystem_cast<LoadingStatus>();
-    auto& bitmaps        = e.subsystem_cast<BitmapCache<halo_version>>();
     auto& bsps           = e.subsystem_cast<BSPCache<halo_version>>();
     auto& models         = e.subsystem_cast<ModelCache<halo_version>>();
     auto& shaders        = e.subsystem_cast<ShaderCache<halo_version>>();
@@ -170,34 +169,6 @@ static void load_resources(
         loading_status.check_all_loaded();
     }
 
-    generation_idx_t player_model;
-    auto biped = [&] -> blam::tagref_typed_t<blam::tag_class_t::mod2> const {
-        auto const& magic    = changed.container.magic;
-        auto        index    = blam::tag_index_view(changed.container);
-        auto        globals_ = bitmaps.index.tag_of("globals\\globals");
-        if(!globals_.has_value())
-        {
-            cWarning("Failed to find globals object");
-            return {};
-        }
-        auto globals = (*globals_)->data<blam::globals::globals>(magic).value();
-        blam::tagref_typed_t<blam::tag_class_t::biped> unit{};
-        if(changed.container.map->map_type == blam::maptype_t::multiplayer)
-            if(auto mp = globals->multiplayer.data(magic);
-               mp.has_value() && !mp.value().empty())
-                unit = mp.value()[0].unit;
-        if(!unit.valid())
-            if(auto sp = globals->player.data(magic);
-               sp.has_value() && !sp.value().empty())
-                unit = sp.value()[0].unit;
-        if(auto unit_ = index.find(unit); unit_ != index.end())
-            return unit_->data<blam::scn::unit>(magic).value()->model;
-        else
-        {
-            cWarning("Got not biped model :(");
-            return {};
-        }
-    }();
     u32 num_pinfo = 0;
     for(auto const& pinfo : e.select<PlayerInfo>())
     {
@@ -227,16 +198,6 @@ static void load_resources(
     u64 main_biped_id{0};
     if(num_pinfo == 0)
     {
-        auto attach_model = [&](u64 entity_id) {
-            if(!biped.valid())
-                return;
-            GameEvent       mount_ev{.type = GameEvent::MountModel};
-            MountModelEvent mount = {
-                .model     = biped,
-                .entity_id = entity_id,
-            };
-            game_bus.inject(mount_ev, &mount);
-        };
         cDebug("Creating player data");
         auto* controllers         = e.service<comp_app::ControllerInput>();
         auto* window              = e.service<comp_app::Windowing>();
@@ -254,6 +215,9 @@ static void load_resources(
             auto& info      = ref.get<PlayerInfo>();
             info.player_idx = i;
             info.seat_idx   = i;
+            /* On a client, only seat 0 is known to the server */
+            if(i != 0 && e.subsystem_cast<NetworkState>().remote_player_idx)
+                info.player_idx = PlayerInfo::local_only_idx_base + i;
             if(changed.container.map->map_type == blam::maptype_t::ui)
                 ref.get<PlayerInput>().input_mode =
                     PlayerInput::input_mode_t::menu;
@@ -277,7 +241,6 @@ static void load_resources(
                 camera.controller.index = allocated_controllers;
                 ++allocated_controllers;
             }
-            attach_model(ref.id());
         }
     }
     rq::runtime_queue::Queue(

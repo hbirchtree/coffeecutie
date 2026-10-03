@@ -523,8 +523,10 @@ struct PhysicsData
     u64   physics_id{0};
     Vecf3 velocity;
     Vecf3 acceleration;
+    Vecf3 position; /*!< Body origin */
 
     bool enabled{false};
+    bool kinematic{false};
 };
 
 struct NetworkInfo
@@ -553,6 +555,30 @@ struct PlayerInfo
     using value_type = PlayerInfo;
     using type       = compo::alloc::VectorContainer<value_type>;
 
+    /*! For local seats the server does not know about */
+    static constexpr u32 local_only_idx_base = 0x10000;
+
+    /*! From the biped tag; the defaults stand in until one is loaded */
+    struct biped_shape_t
+    {
+        f32 radius{0.1f};
+        f32 height{0.7f};      /*!< Capsule, end to end */
+        f32 eye_height{0.55f}; /*!< Camera above the feet */
+
+        f32 eye_offset() const
+        {
+            return eye_height - height / 2;
+        }
+
+        /*! Body origin above a spawn point, dropping it in from just above */
+        f32 spawn_lift() const
+        {
+            return height / 2 + 0.25f;
+        }
+
+        bool operator==(biped_shape_t const&) const = default;
+    };
+
     std::string name;
     std::string remote;
     u32         player_idx{0};
@@ -564,6 +590,11 @@ struct PlayerInfo
         bool move{true};
         bool camera{true};
     } permissions;
+
+    biped_shape_t biped{};
+
+    /*! False while held before spawning */
+    bool spawned{true};
 
     bool is_remote() const
     {
@@ -691,6 +722,17 @@ struct PlayerCamera
         return keyboard.enabled || controller.index.has_value();
     }
 };
+
+/*! Whether a player should have a biped (model + collision body) */
+inline bool biped_in_play(
+    PlayerInfo const& info, PlayerCamera const& cam, NetworkInfo const& net)
+{
+    if(!info.spawned)
+        return false;
+    if(info.is_remote())
+        return net.connected && info.loading_progress >= 100;
+    return cam.is_active();
+}
 
 struct CameraLerp
 {

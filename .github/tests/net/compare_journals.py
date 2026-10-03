@@ -18,6 +18,13 @@ Usage:
       in the environment, the authority must also have spawned at least N
       replicated objects.
 
+      Bipeds are checked too: within each dump, every player in play wears a
+      model and has a collision body where its camera is (and nobody else
+      does), and a networked player in play on both sides is at the same
+      place, within POSITION_TOLERANCE (default 1.0, world units).
+      MIN_IN_PLAY=N requires every dump to show at least N players in play,
+      e.g. both sides' split screen seats.
+
   compare_journals.py --timeline <journal.jsonl> [more...]
       Prints all journals merged into one timeline (prefixed by journal
       name) instead of comparing. For eyeballing event ordering across
@@ -135,6 +142,112 @@ def compare_objects(a_label, a_objects, b_label, b_objects):
     return problems
 
 
+LOCAL_ONLY_IDX_BASE = 0x10000  # PlayerInfo::local_only_idx_base
+
+
+def close(a, b, tolerance):
+    return all(abs(x - y) <= tolerance for x, y in zip(a, b))
+
+
+def check_bipeds(label, players):
+    """A player's biped (model + collision body) exists exactly while it is
+    in play, and sits where its camera is: the model at the camera, and the
+    body under it, whether the body drives the camera (local physics mode)
+    or follows it (everyone else)."""
+    problems = 0
+    in_play = 0
+    for p in players:
+        biped = p.get("biped")
+        if biped is None:  # journal from before bipeds were dumped
+            continue
+        idx = p["player_idx"]
+        model, body = biped["model"], biped["body"]
+        if not biped["in_play"]:
+            for what, value in (("model", model), ("body", body)):
+                if value is not None:
+                    problems += 1
+                    print(f"FAIL: {label}: player_idx={idx} is not in play "
+                          f"but still has a {what}")
+            continue
+        in_play += 1
+        if model is None:
+            problems += 1
+            print(f"FAIL: {label}: player_idx={idx} is in play without a "
+                  f"biped model")
+        elif not close(model["position"], p["position"], 0.05):
+            problems += 1
+            print(f"FAIL: {label}: player_idx={idx} model at "
+                  f"{model['position']}, camera at {p['position']}")
+        if body is None:
+            problems += 1
+            print(f"FAIL: {label}: player_idx={idx} is in play without a "
+                  f"collision body")
+            continue
+        kinematic = p["remote"] or not p.get("physics", False)
+        if body["kinematic"] != kinematic:
+            problems += 1
+            print(f"FAIL: {label}: player_idx={idx} body kinematic="
+                  f"{body['kinematic']}, expected {kinematic}")
+        eye = [body["position"][0], body["position"][1],
+               body["position"][2] + biped["eye_offset"]]
+        if not close(eye, p["position"], 0.1):
+            problems += 1
+            print(f"FAIL: {label}: player_idx={idx} body at "
+                  f"{body['position']} is not under camera {p['position']}")
+    return problems, in_play
+
+
+def check_local_seats(label, players):
+    """Once a client has joined, its split screen seats leave the server's
+    index space, so the server's players can never land on them."""
+    if not any(p["remote"] for p in players):
+        return 0
+    problems = 0
+    for p in players:
+        if p["remote"] or p["seat_idx"] == 0:
+            continue
+        if p["player_idx"] < LOCAL_ONLY_IDX_BASE:
+            problems += 1
+            print(f"FAIL: {label}: local seat {p['seat_idx']} has "
+                  f"player_idx={p['player_idx']}, inside the server's "
+                  f"index space")
+    return problems
+
+
+def compare_bipeds(a_label, a_roster, b_label, b_roster):
+    """A networked player in play on both sides is at the same place on
+    both. Each process dumps at its own scripted time, so positions are
+    compared with a tolerance, and a player caught spawning between the two
+    dumps (in play on one side only) is only noted; MIN_IN_PLAY is what
+    catches bipeds that never show up."""
+    tolerance = float(os.environ.get("POSITION_TOLERANCE", "1.0"))
+    problems = 0
+    a_by = {e["player_idx"]: e for e in a_roster}
+    b_by = {e["player_idx"]: e for e in b_roster}
+    for idx in sorted(set(a_by) & set(b_by)):
+        a_e, b_e = a_by[idx], b_by[idx]
+        if a_e["remote"] == b_e["remote"]:
+            continue  # not the same player, compare_rosters reports it
+        if "biped" not in a_e or "biped" not in b_e:
+            continue
+        a_play, b_play = a_e["biped"]["in_play"], b_e["biped"]["in_play"]
+        if a_play != b_play:
+            print(f"NOTE: player_idx={idx} in play on "
+                  f"{a_label if a_play else b_label} only")
+            continue
+        if not a_play:
+            continue
+        delta = max(abs(x - y) for x, y in
+                    zip(a_e["position"], b_e["position"]))
+        print(f"player_idx={idx}: {a_label} sees {a_e['position']}, "
+              f"{b_label} sees {b_e['position']} (off by {delta:.3f})")
+        if delta > tolerance:
+            problems += 1
+            print(f"FAIL: player_idx={idx} is {delta:.3f} apart between "
+                  f"{a_label} and {b_label} (tolerance {tolerance})")
+    return problems
+
+
 def unanswered_requests(label, entries):
     requested = {e["data"]["request_id"] for e in entries
                  if e.get("type") == "net_spawn_request"}
@@ -229,6 +342,18 @@ def main():
         print(f"FAIL: {authority_label} has "
               f"{len(authority.get('objects', []))} replicated objects, "
               f"expected at least {expect_objects}")
+    min_in_play = int(os.environ.get("MIN_IN_PLAY", "0"))
+    for i, (label, dump) in enumerate(dumps):
+        players = dump.get("players", [])
+        biped_problems, in_play = check_bipeds(label, players)
+        problems += biped_problems
+        if i > 0:  # the authority's seats are the server's index space
+            problems += check_local_seats(label, players)
+        print(f"{label}: {in_play} player(s) in play")
+        if in_play < min_in_play:
+            problems += 1
+            print(f"FAIL: {label} has {in_play} player(s) in play, expected "
+                  f"at least {min_in_play}")
     authority_entries = load_journal(args[0])
     for path in args[1:]:
         entries = load_journal(path)
@@ -239,6 +364,9 @@ def main():
         problems += compare_rosters(authority_label,
                                     authority.get("players", []),
                                     peer_label, peer.get("players", []))
+        problems += compare_bipeds(authority_label,
+                                   authority.get("players", []),
+                                   peer_label, peer.get("players", []))
         problems += compare_objects(authority_label,
                                     authority.get("objects", []),
                                     peer_label, peer.get("objects", []))

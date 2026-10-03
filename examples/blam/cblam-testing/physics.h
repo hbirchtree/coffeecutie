@@ -95,6 +95,8 @@ struct BodyCreationShape
      * Physics::Overlap events. For trigger volumes (map links). */
     bool sensor{false};
 
+    bool kinematic{false}; /*!< Moved by its owner, not simulated */
+
     struct
     {
         bool rotation{false};

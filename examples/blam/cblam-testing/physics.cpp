@@ -26,9 +26,11 @@
 #include <LinearMath/btVector3.h>
 #include <btBulletDynamicsCommon.h>
 
+#include <algorithm>
 #include <chrono>
 #include <limits>
 #include <memory>
+#include <set>
 #include <vector>
 
 using namespace std::chrono;
@@ -45,7 +47,12 @@ using namespace std::chrono;
  */
 template<typename V>
 using PhysicsManifest = compo::SubsystemManifest<
-    type_list_t<DebugDraw, PhysicsData, PlayerCamera>,
+    type_list_t<
+        DebugDraw,
+        PhysicsData,
+        PlayerCamera,
+        const PlayerInfo,
+        const NetworkInfo>,
     type_list_t<const BSPCache<V>, DebugMarkers, const LoadingStatus>,
     empty_list_t>;
 
@@ -95,6 +102,10 @@ struct PhysicsSystem
             needs_rebuild = find_section_item(*bsp_cache) != nullptr;
         if(needs_rebuild)
             rebuild_world(*bsp_cache);
+
+        /* Without ground, new bodies would fall through the map */
+        if(m_world_body)
+            reconcile_player_bodies(p);
 
         // Simulate when there is anything in the world: the Halo BSP body,
         // streamed RS2 region bodies, or the debug probe. Gating solely on
@@ -199,7 +210,8 @@ struct PhysicsSystem
             if(!camera.mode.physics)
                 continue;
             auto phys_it = m_bodies.find(player.id());
-            if(phys_it == m_bodies.end())
+            auto info    = p.template get<PlayerInfo>(player.id());
+            if(phys_it == m_bodies.end() || !info)
                 continue;
             entity_body& phys = (*phys_it).second;
             btVector3&   origin =
@@ -207,11 +219,100 @@ struct PhysicsSystem
             camera.camera.position = {
                 origin.x(),
                 origin.y(),
-                origin.z() + 0.2f,
+                origin.z() + info->biped.eye_offset(),
             };
         }
 
+        for(auto const& [entity, _] : m_player_bodies)
+        {
+            PhysicsData* data = p.template get<PhysicsData>(entity);
+            auto         it   = m_bodies.find(entity);
+            if(!data || it == m_bodies.end())
+                continue;
+            auto const& origin =
+                it->second.world_body->getWorldTransform().getOrigin();
+            data->position = {origin.x(), origin.y(), origin.z()};
+        }
+
         m_frame++;
+    }
+
+    /* Bodies follow biped_in_play(). A local seat in physics mode drives
+     * its camera with a dynamic body; anyone else gets a kinematic one that
+     * follows their camera, so collisions happen where bipeds are drawn. */
+    void reconcile_player_bodies(Proxy& p)
+    {
+        std::set<u64> live;
+        for(auto player : p.template select<
+                          PlayerCamera,
+                          PlayerInfo,
+                          NetworkInfo,
+                          PhysicsData>())
+        {
+            auto [camera, info, net, data] = player.components();
+            if(!biped_in_play(info, camera, net))
+                continue;
+            u64 const  id        = player.id();
+            bool const kinematic = info.is_remote() || !camera.mode.physics;
+            auto const shape     = info.biped;
+            live.insert(id);
+
+            auto existing = m_player_bodies.find(id);
+            if(existing == m_player_bodies.end() ||
+               existing->second.kinematic != kinematic ||
+               existing->second.shape != shape || !m_bodies.contains(id))
+            {
+                Vecf3 const origin = kinematic
+                                         ? camera.camera.position -
+                                               Vecf3{0, 0, shape.eye_offset()}
+                                         : camera.camera.position +
+                                               Vecf3{0, 0, shape.spawn_lift()};
+                create_body(Physics::BodyCreationShape{
+                    .entity_id = id,
+                    /* The capsule's height is its cylinder, between the caps */
+                    .scale =
+                        {shape.radius,
+                         0,
+                         std::max(shape.height - 2 * shape.radius, 0.f)},
+                    .position  = origin,
+                    .mass      = kinematic ? 0.f : 1.f,
+                    .shape     = Physics::BodyCreationShape::Capsule,
+                    .kinematic = kinematic,
+                    .lock      = {.rotation = true},
+                });
+                m_player_bodies[id] = {.kinematic = kinematic, .shape = shape};
+                data.physics_id     = id;
+                data.enabled        = true;
+                data.kinematic      = kinematic;
+                data.position       = origin;
+            } else if(kinematic)
+                move_kinematic(
+                    id,
+                    camera.camera.position - Vecf3{0, 0, shape.eye_offset()});
+        }
+
+        for(auto it = m_player_bodies.begin(); it != m_player_bodies.end();)
+        {
+            if(live.contains(it->first))
+            {
+                ++it;
+                continue;
+            }
+            remove_body(it->first);
+            if(PhysicsData* data = p.template get<PhysicsData>(it->first))
+                data->enabled = data->kinematic = false;
+            it = m_player_bodies.erase(it);
+        }
+    }
+
+    void move_kinematic(u64 entity_id, Vecf3 const& position)
+    {
+        auto it = m_bodies.find(entity_id);
+        if(it == m_bodies.end())
+            return;
+        btTransform transform = m_world_basis;
+        transform.setOrigin(btVector3(position.x, position.y, position.z));
+        it->second.world_body->setWorldTransform(transform);
     }
 
     /* Wire box following the probe sphere, drawn through the existing
@@ -487,6 +588,13 @@ struct PhysicsSystem
             entity_body.world_body->setCollisionFlags(
                 entity_body.world_body->getCollisionFlags() |
                 btCollisionObject::CF_NO_CONTACT_RESPONSE);
+        if(body_create.kinematic)
+        {
+            entity_body.world_body->setCollisionFlags(
+                entity_body.world_body->getCollisionFlags() |
+                btCollisionObject::CF_KINEMATIC_OBJECT);
+            entity_body.world_body->setActivationState(DISABLE_DEACTIVATION);
+        }
         m_world->addRigidBody(entity_body.world_body.get());
     }
 
@@ -565,6 +673,7 @@ struct PhysicsSystem
                 m_markers->release_strip(body.debug_slot);
         }
         m_bodies.clear();
+        m_player_bodies.clear();
         m_built_section = -2;
     }
 
@@ -820,6 +929,14 @@ struct PhysicsSystem
     };
 
     std::map<u64, entity_body> m_bodies;
+
+    struct player_body_t
+    {
+        bool                      kinematic{};
+        PlayerInfo::biped_shape_t shape{};
+    };
+
+    std::map<u64, player_body_t> m_player_bodies;
 
     DebugMarkers*              m_markers{nullptr};
     DebugMarkers::strip_slot_t m_probe_slot{};
