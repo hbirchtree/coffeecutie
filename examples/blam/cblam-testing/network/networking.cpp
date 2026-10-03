@@ -2,16 +2,17 @@
 
 #include <magic_enum/magic_enum.hpp>
 
-#include "blam/volta/blam_base_types.h"
-#include "blam/volta/blam_scenario.h"
-#include "peripherals/typing/vectors/glm_vector_types.h"
 #include "types.h"
 
+#include <blam/volta/blam_base_types.h>
+#include <blam/volta/blam_scenario.h>
 #include <coffee/core/CProfiling>
 #include <coffee/core/debug/formatting.h>
 #include <coffee/core/files/cfiles.h>
 #include <gsl/span_ext>
 #include <peripherals/stl/base64.h>
+#include <peripherals/stl/string/replace.h>
+#include <peripherals/typing/vectors/glm_vector_types.h>
 #include <url/url.h>
 
 using Coffee::ProfContext;
@@ -1261,9 +1262,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             server_id.empty() &&
             m_impl->GetListenSocketAddress(m_socket, &bound) &&
             (bound.IsIPv6AllZeros() || (bound.IsIPv4() && !bound.GetIPv4()));
-        cBasicPrint("Join this server with: --server {}", join);
+        cDebug("Join this server with: --server {}", join);
+        cDebug("Join this server from a browser: https://<server>/<path>/?map=<map>&server={}",
+            stl_types::str::replace::str<char>(join, "#", "%23"));
         if(wildcard)
-            cBasicPrint(
+            cDebug(
                 "  (listening on all interfaces: replace {} with an address "
                 "clients can reach)",
                 address.substr(0, address.rfind(':')));
