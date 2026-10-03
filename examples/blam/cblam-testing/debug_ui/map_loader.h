@@ -202,10 +202,10 @@ struct BlamMapBrowser
             "{} players",
             roster.player_count()));
         stat_list.push_back(
-            fmt::format("server time {}.{:03} s", ms / 1000, ms % 1000));
+            fmt::format("Server time {}.{:03} s", ms / 1000, ms % 1000));
         if(auto const& sim = net.simulation; sim.active())
             stat_list.push_back(fmt::format(
-                "sim +{} ms, {:.1f} jitter, {:.1f}% loss",
+                "Sim +{} ms, {:.1f} jitter, {:.1f}% loss",
                 sim.lag_ms,
                 sim.jitter_ms,
                 sim.loss_pct));
@@ -243,7 +243,7 @@ struct BlamMapBrowser
         e.subsystem(fps);
         e.subsystem(perf);
         std::vector<std::string> stats_overlay;
-        stats_overlay.push_back(fmt::format("FPS: {} {:.1f}ms/f", fps->reading, 1000.f/fps->reading));
+        stats_overlay.push_back(fmt::format("FPS {} {:.1f}ms", fps->reading, 1000.f/fps->reading));
         for(auto const& [key, value] : perf->last_results())
             stats_overlay.push_back(fmt::format("{} : {}", key, value));
 
