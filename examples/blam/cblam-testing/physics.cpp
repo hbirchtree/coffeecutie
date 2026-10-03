@@ -29,6 +29,7 @@
 #include <chrono>
 #include <limits>
 #include <memory>
+#include <set>
 #include <vector>
 
 using namespace std::chrono;
@@ -45,7 +46,12 @@ using namespace std::chrono;
  */
 template<typename V>
 using PhysicsManifest = compo::SubsystemManifest<
-    type_list_t<DebugDraw, PhysicsData, PlayerCamera>,
+    type_list_t<
+        DebugDraw,
+        PhysicsData,
+        PlayerCamera,
+        const PlayerInfo,
+        const NetworkInfo>,
     type_list_t<const BSPCache<V>, DebugMarkers, const LoadingStatus>,
     empty_list_t>;
 
@@ -95,6 +101,11 @@ struct PhysicsSystem
             needs_rebuild = find_section_item(*bsp_cache) != nullptr;
         if(needs_rebuild)
             rebuild_world(*bsp_cache);
+
+        /* Not before there is ground to stand on, or new bodies would drop
+         * straight through the map */
+        if(m_world_body)
+            reconcile_player_bodies(p);
 
         // Simulate when there is anything in the world: the Halo BSP body,
         // streamed RS2 region bodies, or the debug probe. Gating solely on
@@ -207,11 +218,104 @@ struct PhysicsSystem
             camera.camera.position = {
                 origin.x(),
                 origin.y(),
-                origin.z() + 0.2f,
+                origin.z() + biped_body::eye_offset,
             };
         }
 
+        for(auto const& [entity, kinematic] : m_player_bodies)
+        {
+            PhysicsData* data = p.template get<PhysicsData>(entity);
+            auto         it   = m_bodies.find(entity);
+            if(!data || it == m_bodies.end())
+                continue;
+            auto const& origin =
+                it->second.world_body->getWorldTransform().getOrigin();
+            data->position = {origin.x(), origin.y(), origin.z()};
+        }
+
         m_frame++;
+    }
+
+    /* Every player whose biped is in play has a capsule, and nobody else
+     * does. A local seat in physics mode gets a dynamic one that drives its
+     * camera; anyone else a kinematic one that follows their camera, which
+     * for a remote player is what the network writes. Either way the body
+     * is where the biped is drawn, on every peer. Done every frame, so
+     * bodies track joins, leaves, spawns and map loads however those are
+     * ordered, instead of being made once at map load. */
+    void reconcile_player_bodies(Proxy& p)
+    {
+        std::set<u64> live;
+        for(auto player : p.template select<
+                          PlayerCamera,
+                          PlayerInfo,
+                          NetworkInfo,
+                          PhysicsData>())
+        {
+            auto [camera, info, net, data] = player.components();
+            if(!biped_in_play(info, camera, net))
+                continue;
+            u64 const  id        = player.id();
+            bool const kinematic = info.is_remote() || !camera.mode.physics;
+            live.insert(id);
+
+            auto existing = m_player_bodies.find(id);
+            if(existing == m_player_bodies.end() ||
+               existing->second != kinematic || !m_bodies.contains(id))
+            {
+                /* A dynamic body falls into place from just above where
+                 * the camera was put; a kinematic one sits under the
+                 * camera, as a body driving it would */
+                Vecf3 const origin =
+                    kinematic ? camera.camera.position -
+                                    Vecf3{0, 0, biped_body::eye_offset}
+                              : camera.camera.position +
+                                    Vecf3{0, 0, biped_body::spawn_lift};
+                create_body(Physics::BodyCreationShape{
+                    .entity_id = id,
+                    .scale     = {biped_body::radius, 0, biped_body::height},
+                    .position  = origin,
+                    .mass      = kinematic ? 0.f : 1.f,
+                    .shape     = Physics::BodyCreationShape::Capsule,
+                    .kinematic = kinematic,
+                    .lock      = {.rotation = true},
+                });
+                m_player_bodies[id] = kinematic;
+                data.physics_id     = id;
+                data.enabled        = true;
+                data.kinematic      = kinematic;
+                data.position       = origin;
+            } else if(kinematic)
+                move_kinematic(
+                    id,
+                    camera.camera.position -
+                        Vecf3{0, 0, biped_body::eye_offset});
+        }
+
+        for(auto it = m_player_bodies.begin(); it != m_player_bodies.end();)
+        {
+            if(live.contains(it->first))
+            {
+                ++it;
+                continue;
+            }
+            remove_body(it->first);
+            if(PhysicsData* data = p.template get<PhysicsData>(it->first))
+                data->enabled = data->kinematic = false;
+            it = m_player_bodies.erase(it);
+        }
+    }
+
+    void move_kinematic(u64 entity_id, Vecf3 const& position)
+    {
+        auto it = m_bodies.find(entity_id);
+        if(it == m_bodies.end())
+            return;
+        btTransform transform = m_world_basis;
+        transform.setOrigin(btVector3(position.x, position.y, position.z));
+        /* Bullet derives the body's velocity from the move, which is what
+         * pushes a dynamic body out of the way */
+        it->second.world_body->setWorldTransform(transform);
     }
 
     /* Wire box following the probe sphere, drawn through the existing
@@ -487,6 +591,14 @@ struct PhysicsSystem
             entity_body.world_body->setCollisionFlags(
                 entity_body.world_body->getCollisionFlags() |
                 btCollisionObject::CF_NO_CONTACT_RESPONSE);
+        if(body_create.kinematic)
+        {
+            entity_body.world_body->setCollisionFlags(
+                entity_body.world_body->getCollisionFlags() |
+                btCollisionObject::CF_KINEMATIC_OBJECT);
+            /* It is moved every frame, a sleeping one would stop being */
+            entity_body.world_body->setActivationState(DISABLE_DEACTIVATION);
+        }
         m_world->addRigidBody(entity_body.world_body.get());
     }
 
@@ -565,6 +677,7 @@ struct PhysicsSystem
                 m_markers->release_strip(body.debug_slot);
         }
         m_bodies.clear();
+        m_player_bodies.clear();
         m_built_section = -2;
     }
 
@@ -820,6 +933,8 @@ struct PhysicsSystem
     };
 
     std::map<u64, entity_body> m_bodies;
+    /*! Bodies reconcile_player_bodies() owns, and whether each is kinematic */
+    std::map<u64, bool> m_player_bodies;
 
     DebugMarkers*              m_markers{nullptr};
     DebugMarkers::strip_slot_t m_probe_slot{};
