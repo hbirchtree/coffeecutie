@@ -403,11 +403,10 @@ void create_resources(compo::EntityContainer& e)
                          auto vec              = [](Vecf3 const& v) {
                              return nlohmann::json{v.x, v.y, v.z};
                          };
-                         /* The biped: whether it should exist, and where
-                          * its model and collision body ended up */
                          nlohmann::json biped = {
                              {"in_play", biped_in_play(info, cam, net)},
                              {"spawned", info.spawned},
+                             {"eye_offset", info.biped.eye_offset()},
                              {"model", nullptr},
                              {"body", nullptr},
                          };
@@ -1316,8 +1315,6 @@ void create_camera(
     compo::EntityContainer&                                          e,
     semantic::Span<const blam::scn::player_starting_location> const& spawns)
 {
-    /* Bodies follow from where the cameras are put here, see
-     * PhysicsSystem::reconcile_player_bodies() */
     for(auto entity : e.select<PlayerCamera, PlayerInfo>())
     {
         auto [cam, info]              = entity.components();
@@ -1334,7 +1331,6 @@ void create_camera(
          */
         static const glm::mat3 bsp_basis_inv{{0, 1, 0}, {0, 0, 1}, {1, 0, 0}};
         cam.camera_opts.world_basis = bsp_basis_inv;
-        /* Remote players are wherever the network says */
         if(info.is_remote())
             continue;
         auto& location =

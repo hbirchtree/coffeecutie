@@ -143,7 +143,6 @@ def compare_objects(a_label, a_objects, b_label, b_objects):
 
 
 LOCAL_ONLY_IDX_BASE = 0x10000  # PlayerInfo::local_only_idx_base
-EYE_OFFSET = 0.2               # biped_body::eye_offset
 
 
 def close(a, b, tolerance):
@@ -190,7 +189,7 @@ def check_bipeds(label, players):
             print(f"FAIL: {label}: player_idx={idx} body kinematic="
                   f"{body['kinematic']}, expected {kinematic}")
         eye = [body["position"][0], body["position"][1],
-               body["position"][2] + EYE_OFFSET]
+               body["position"][2] + biped["eye_offset"]]
         if not close(eye, p["position"], 0.1):
             problems += 1
             print(f"FAIL: {label}: player_idx={idx} body at "
