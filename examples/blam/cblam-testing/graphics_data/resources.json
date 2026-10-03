@@ -129,6 +129,10 @@
             {
                 "source": "mesh/loading.obj",
                 "name": "loading"
+            },
+            {
+                "source": "mesh/monitor.obj",
+                "name": "monitor"
             }
         ],
         "text": [
