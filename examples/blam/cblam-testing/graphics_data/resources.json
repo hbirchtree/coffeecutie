@@ -145,7 +145,9 @@
             {"source":"shaders/loading_screen_spinner.frag", "name": "loading_screen_spinner"},
             {"source":"shaders/loading_scene.vert", "name": "loading_scene_vert"},
             {"source":"shaders/loading_scene.frag", "name": "loading_scene_frag"},
-            {"source":"shaders/loading_zoom.frag", "name": "loading_zoom_frag"}
+            {"source":"shaders/loading_zoom.frag", "name": "loading_zoom_frag"},
+            {"source":"shaders/monitor.vert", "name": "monitor_vert"},
+            {"source":"shaders/monitor.frag", "name": "monitor_frag"}
         ]
     }
 }

@@ -1539,6 +1539,30 @@ struct MeshRenderer
     std::shared_ptr<gfx::texture_2d_t> postprocess_tex;
     std::shared_ptr<gfx::sampler_t>    postprocess_sampler;
 
+    /* Monitor model drawn at each player camera, from the crunched mesh */
+    struct monitor_t
+    {
+        std::optional<u32> seat_idx; /*!< Local seat, to skip its own view */
+        Matf4              transform;
+    };
+
+    struct monitor_part_t
+    {
+        gfx::draw_command::data_t draw;
+        Vecf3                     color;
+    };
+
+    /* OBJ units are ~0.6 in radius; this makes it ~0.2 world units across */
+    static constexpr f32 monitor_scale = 0.15f;
+
+    std::vector<monitor_t>               m_monitors;
+    std::vector<monitor_part_t>          monitor_parts;
+    std::shared_ptr<gfx::buffer_t>       monitor_ebo;
+    std::shared_ptr<gfx::buffer_t>       monitor_vbo;
+    std::shared_ptr<gfx::vertex_array_t> monitor_vao;
+    std::shared_ptr<gfx::program_t>      monitor_program;
+    bool                                 monitor_failed{false};
+
     struct pending_change_t
     {
         enum change_t
@@ -2121,6 +2145,178 @@ struct MeshRenderer
             get_view_state(0));
     }
 
+    bool load_monitor()
+    {
+        if(monitor_program)
+            return true;
+        if(monitor_failed)
+            return false;
+
+        auto _ = m_api->debug().scope("MeshRenderer::load_monitor");
+
+        struct mesh_source_t
+        {
+            gsl::span<const u16>            indices;
+            gsl::span<const crunch::vertex> vertices;
+            Vecf3                           color;
+        };
+
+        std::array<mesh_source_t, 5> meshes = {{
+            /* Shell, core, fins, eye */
+            {gsl::span(blam::loading::monitor_sphere_001_indices),
+             gsl::span(blam::loading::monitor_sphere_001_vertices),
+             Vecf3{0.55f, 0.57f, 0.6f}},
+            {gsl::span(blam::loading::monitor_icosphere_indices),
+             gsl::span(blam::loading::monitor_icosphere_vertices),
+             Vecf3{0.15f, 0.16f, 0.18f}},
+            {gsl::span(blam::loading::monitor_cube_indices),
+             gsl::span(blam::loading::monitor_cube_vertices),
+             Vecf3{0.4f, 0.42f, 0.45f}},
+            {gsl::span(blam::loading::monitor_cube_001_indices),
+             gsl::span(blam::loading::monitor_cube_001_vertices),
+             Vecf3{0.4f, 0.42f, 0.45f}},
+            {gsl::span(blam::loading::monitor_cube_002_indices),
+             gsl::span(blam::loading::monitor_cube_002_vertices),
+             Vecf3{0.2f, 0.6f, 1.f}},
+        }};
+
+        monitor_ebo =
+            m_api->alloc_buffer(gfx::buffers::element, RSCA::ReadOnly);
+        monitor_vbo = m_api->alloc_buffer(gfx::buffers::vertex, RSCA::ReadOnly);
+        monitor_ebo->alloc();
+        monitor_vbo->alloc();
+        monitor_ebo->commit(
+            stl_types::accumulate(meshes, 0u, [](auto const& m, u32 size) {
+                return m.indices.size_bytes() + size;
+            }));
+        monitor_vbo->commit(
+            stl_types::accumulate(meshes, 0u, [](auto const& m, u32 size) {
+                return m.vertices.size_bytes() + size;
+            }));
+        size_t ebo_ptr{0}, vbo_ptr{0};
+        for(auto const& mesh : meshes)
+        {
+            monitor_ebo->update(ebo_ptr, mesh.indices);
+            monitor_vbo->update(vbo_ptr, mesh.vertices);
+            monitor_parts.push_back({
+                .draw =
+                    {
+                        .elements =
+                            {
+                                .count  = static_cast<u32>(mesh.indices.size()),
+                                .offset = ebo_ptr,
+                                .vertex_offset =
+                                    vbo_ptr / sizeof(crunch::vertex),
+                                .type = semantic::type_t::u16,
+                            },
+                    },
+                .color = mesh.color,
+            });
+            ebo_ptr += mesh.indices.size_bytes();
+            vbo_ptr += mesh.vertices.size_bytes();
+        }
+
+        monitor_vao = m_api->alloc_vertex_array();
+        monitor_vao->alloc();
+        monitor_vao->add(
+            gfx::vertex_attribute::from_member(&crunch::vertex::position)
+                .at(0));
+        monitor_vao->add(gfx::vertex_attribute::from_member(
+                             &crunch::vertex::normal, gfx::vertex_float_type)
+                             .at(1));
+        monitor_vao->set_attribute_names({
+            {"pos", 0},
+            {"normal", 1},
+        });
+        monitor_vao->force_attribute_names();
+        monitor_vao->set_buffer(gfx::buffers::element, monitor_ebo);
+        monitor_vao->set_buffer(gfx::buffers::vertex, monitor_vbo, 0);
+
+        auto program = m_api->alloc_program();
+        program->add(
+            gfx::program_t::stage_t::Vertex,
+            m_api->alloc_shader(semantic::mem_chunk<const char>::ofContainer(
+                blam::loading::monitor_vert)));
+        program->add(
+            gfx::program_t::stage_t::Fragment,
+            m_api->alloc_shader(semantic::mem_chunk<const char>::ofContainer(
+                blam::loading::monitor_frag)));
+        if(auto res = program->compile(); res.has_error())
+        {
+            cWarning("Failed to compile monitor program: {}", res.error());
+            monitor_failed = true;
+            return false;
+        }
+        monitor_program = program;
+
+        m_api->debug().annotate(*monitor_ebo, "monitor_ebo");
+        m_api->debug().annotate(*monitor_vbo, "monitor_vbo");
+        m_api->debug().annotate(*monitor_vao, "monitor_vao");
+        return true;
+    }
+
+    template<typename... Args>
+    void render_monitors(u32 idx, Args&&... extra)
+    {
+        if(!const_config::supports_splitscreen && idx != 0)
+            return;
+        if(idx >= m_players.size() || m_monitors.empty())
+            return;
+        if(!load_monitor())
+            return;
+
+        auto        _ = m_api->debug().scope("Monitors");
+        ProfContext __;
+
+        auto const& player = m_players[idx];
+        for(auto const& monitor : m_monitors)
+        {
+            /* Don't draw a monitor around the camera looking out of it */
+            if(monitor.seat_idx == player.seat_idx)
+                continue;
+            for(auto const& part : monitor_parts)
+            {
+                auto res = m_api->submit(
+                    {
+                        .program       = monitor_program,
+                        .vertices      = monitor_vao,
+                        .render_target = m_resources.offscreen,
+                        .call =
+                            {
+                                .indexed = true,
+                                .mode    = gfx::drawing::primitive::triangle,
+                            },
+                        .data = {part.draw},
+                    },
+                    gfx::make_uniform_list(
+                        typing::graphics::ShaderStage::Vertex,
+                        gfx::uniform_pair{
+                            {"camera"sv}, semantic::SpanOne(player.matrix)},
+                        gfx::uniform_pair{
+                            {"model"sv}, semantic::SpanOne(monitor.transform)},
+                        gfx::uniform_pair{
+                            {"camera_position"sv},
+                            semantic::SpanOne<const Vecf3>(player.position)}),
+                    gfx::make_uniform_list(
+                        typing::graphics::ShaderStage::Fragment,
+                        gfx::uniform_pair{
+                            {"color"sv},
+                            semantic::SpanOne<const Vecf3>(part.color)}),
+                    get_view_state(idx),
+                    std::forward<Args&&>(extra)...);
+                if(res)
+                {
+                    auto [err, msg] = *res;
+                    cWarning(
+                        "Failed to draw monitor: {}: {}",
+                        gleam::detail::draw_error_to_string(err),
+                        msg);
+                    return;
+                }
+            }
+        }
+    }
+
     void upload_draw_lists(DrawListBuilder<Version> const& builder)
     {
         if(!m_api->feature_info().program.buffer_binding)
@@ -2194,6 +2390,35 @@ struct MeshRenderer
             [](auto const& a, auto const& b) {
                 return a.seat_idx < b.seat_idx;
             });
+
+        /* Monitors go on every camera, remote ones included */
+        m_monitors.clear();
+        for(auto const entity : p.template select<PlayerCamera, PlayerInfo>())
+        {
+            auto const& [cam, info] = entity.components();
+            if(!info.is_remote() && !cam.is_active())
+                continue;
+            /* Same basis graphics.cpp folds into the view matrix */
+            static const Matf4 bsp_basis{
+                {0, 0, 1, 0},
+                {1, 0, 0, 0},
+                {0, 1, 0, 0},
+                {0, 0, 0, 1},
+            };
+            /* Camera-to-world is the inverse of the view rotation; the
+             * monitor's eye faces +X in the OBJ, turned onto camera -Z */
+            Matf4 rotation = glm::mat4_cast(cam.camera.rotation) * bsp_basis;
+            m_monitors.push_back({
+                .seat_idx = info.is_remote()
+                                ? std::nullopt
+                                : std::optional<u32>(info.seat_idx),
+                .transform =
+                    glm::translate(Matf4(1), cam.camera.position) *
+                    glm::transpose(rotation) *
+                    glm::rotate(Matf4(1), glm::half_pi<f32>(), Vecf3{0, 1, 0}) *
+                    glm::scale(Matf4(1), Vecf3(monitor_scale)),
+            });
+        }
 
         // Performance is terrible on Emscripten when updating every frame
         // We need a more efficient way to update the buffer in that case
@@ -2295,6 +2520,10 @@ struct MeshRenderer
                     cull_front);
             }
         }
+
+        // Player camera monitors, opaque, after the world so they depth test
+        for(auto i : stl_types::range<u32>(m_players.size()))
+            render_monitors(i, opaque_stencil);
 
         // Special case for 3 players; black out the 4th quadrant
         if(m_players.size() == 3 && !compile_info::platform::is_emscripten)
