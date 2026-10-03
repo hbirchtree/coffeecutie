@@ -1,0 +1,87 @@
+name: PR Web Smoke Test
+'on':
+  pull_request:
+# No caches, minimal permissions. MAP_ACCESS_TOKEN is only populated for PRs
+# from branches in this repo; fork PRs get an empty secret and the smoke test
+# runs without a map.
+permissions:
+  contents: read
+concurrency:
+  group: pr-web-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  WebAssembly:
+    name: "Build + smoke test (${{ matrix.variant }}-emscripten, WebGL2)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - variant: wasm32
+          target: web:wasm32-emscripten:webgl2:rel
+          build: web-wasm32-emscripten-webgl2
+        - variant: wasm64
+          target: web:wasm64-emscripten:webgl2:rel
+          build: web-wasm64-emscripten-webgl2
+    env:
+      VCPKG_BINARY_SOURCES: "clear"
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: true
+        path: source
+        persist-credentials: false
+    - uses: lukka/get-cmake@latest
+      with:
+        useCloudCache: false
+        useLocalCache: false
+    - uses: actions/setup-node@v7
+      with:
+        node-version: '22'
+        package-manager-cache: false
+    - name: Installing build-essential
+      run: |
+        sudo rm /etc/apt/sources.list.d/microsoft-prod.list
+        sudo apt-get update
+        sudo apt install build-essential inkscape nasm autoconf automake autoconf-archive libtool
+    - name: Building host tools
+      run: source/cb host-build
+    # Xbox maps are self-contained, so the smoke test only needs one download
+    - name: Building project
+      run: source/cb build ${{ matrix.target }}/install -- -DBLAM_HALO_VERSION=xbox_version_t
+      env:
+        BUILD_HOST_TOOLS: no
+    - name: Upload vcpkg logs
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: pr-${{ matrix.build }}-vcpkg-logs
+        path: /usr/local/share/vcpkg/buildtrees/*/*.log
+    - name: Locating WebGL bundle
+      id: bundle
+      run: |
+        BUNDLE=$(find source/multi_build/${{ matrix.build }}/install/bin -type d -name BlamGraphics.bundle | head -n 1)
+        echo "Found bundle: $BUNDLE"
+        echo "dir=$BUNDLE" >> "$GITHUB_OUTPUT"
+    # Without a token there is no map: the app falls back to ui.map, which 404s,
+    # and keeps rendering. Still catches boot crashes, wasm traps, missing WebGL2
+    # and a dead render loop.
+    - name: Run WebGL software-render smoke test
+      env:
+        CI: "true"
+        RUN_SECONDS: "30"
+        MAPS: "xbox_ex/beavercreek.map"
+        MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
+      run: |
+        if [ -n "$MAP_ACCESS_TOKEN" ]; then
+          export ARGS="map=xbox_ex/beavercreek.map"
+        fi
+        source/.github/tests/web/run_webgl_test.sh "${{ steps.bundle.outputs.dir }}" /tmp/blam_webgl
+    - name: Uploading test artifacts
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: pr_smoke_test_${{ matrix.variant }}_webgl2
+        path: /tmp/blam_webgl
+        if-no-files-found: ignore

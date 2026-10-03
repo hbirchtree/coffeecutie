@@ -12,6 +12,9 @@
 #
 # Env passthrough to the smoke driver: RUN_SECONDS, MIN_FRAMES, BOOT_TIMEOUT_MS,
 #   SCREENSHOT_NAME, SCREENSHOT_QUALITY, DUMMY_PLUG.
+#
+# MAPS: space-separated map paths fetched from the map server into BUNDLE_DIR
+#   (default: the PC beavercreek set). Skipped when MAP_ACCESS_TOKEN is unset.
 
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -58,12 +61,17 @@ else
 fi
 echo "::endgroup::"
 
-echo "::group::Downloading test assets"
-mkdir -p $BUNDLE_DIR/pc/
-wget -q -O $BUNDLE_DIR/pc/beavercreek.map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/beavercreek.map
-wget -q -O $BUNDLE_DIR/pc/bitmaps.map     --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bitmaps.map
-wget -q -O $BUNDLE_DIR/pc/sounds.map      --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/sounds.map
-echo "::endgroup::"
+MAPS="${MAPS:-pc/beavercreek.map pc/bitmaps.map pc/sounds.map}"
+if [ -n "${MAP_ACCESS_TOKEN:-}" ]; then
+    echo "::group::Downloading test assets"
+    for map in $MAPS; do
+        mkdir -p "$BUNDLE_DIR/$(dirname "$map")"
+        wget -q -O "$BUNDLE_DIR/$map" --header="Authorization: $MAP_ACCESS_TOKEN" "https://maps.speen.dev/$map"
+    done
+    echo "::endgroup::"
+else
+    echo "MAP_ACCESS_TOKEN not set, running without maps"
+fi
 
 export BUNDLE_DIR OUT_DIR
 exec node webgl_smoke.mjs
