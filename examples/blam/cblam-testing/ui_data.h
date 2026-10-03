@@ -21,10 +21,10 @@ struct UIFunctionCall
 {
     using event_t = blam::ui_element::event_handler_t::type_t;
 
-    libc_types::u16         function{};
-    event_t                 event{};
-    libc_types::u32         seat{};
-    blam::ui_element const* widget{nullptr}; /*!< whose handler ran */
+    blam::ui_element::function_t function{};
+    event_t                      event{};
+    libc_types::u32              seat{};
+    blam::ui_element const*      widget{nullptr}; /*!< whose handler ran */
     /* Focused item of the nearest list, e.g. the selected map or difficulty */
     std::optional<libc_types::u16> selected;
     /* Keyboard input, for the name-change functions */
@@ -51,7 +51,7 @@ struct UIDataSource : compo::SubsystemBase
         setter_t set;
     };
 
-    void on_function(libc_types::u16 function, function_t&& handler)
+    void on_function(blam::ui_element::function_t function, function_t&& handler)
     {
         m_functions[function] = std::move(handler);
     }
@@ -93,7 +93,7 @@ struct UIDataSource : compo::SubsystemBase
     }
 
   private:
-    std::unordered_map<libc_types::u16, function_t> m_functions;
+    std::unordered_map<blam::ui_element::function_t, function_t> m_functions;
     std::unordered_map<std::string, value_t>        m_values;
     std::unordered_map<std::string, text_t>         m_texts;
     libc_types::u64                                 m_token{0};

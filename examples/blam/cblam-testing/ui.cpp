@@ -210,7 +210,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     u32                         m_seat{};         /*!< seat of the event */
     u64                         m_screen_id{};    /*!< entity of its screen */
     std::optional<u16>          m_selected;       /*!< nearest list's focus */
-    std::set<u16>               m_unprovided;     /*!< functions logged once */
+    std::set<blam::ui_element::function_t> m_unprovided; /*!< functions logged once */
 
     /* A handler waiting on a provider's UIFunctionDone */
     struct pending_t
@@ -561,12 +561,11 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         return handled;
     }
 
-    static bool opens_keyboard(u16 function)
+    static bool opens_keyboard(blam::ui_element::function_t function)
     {
-        constexpr u16 mp_profile_change_name     = 41;
-        constexpr u16 player_profile_change_name = 66;
-        return function == mp_profile_change_name ||
-               function == player_profile_change_name;
+        using func_t = blam::ui_element::function_t;
+        return function == func_t::mp_profile_change_name ||
+               function == func_t::player_profile_change_name;
     }
 
     /* The provider runs before the handler opens or closes anything, since
@@ -597,7 +596,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             if(m_unprovided.insert(eh.function).second)
                 cDebug(
                     "UI: no provider for function {} ({})",
-                    eh.function,
+                    magic_enum::enum_name(eh.function),
                     el.tag_name);
             return ui_result_t::ok;
         }
@@ -679,7 +678,11 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             {
                 auto& keyboard    = screen.stack.back().keyboard.emplace();
                 keyboard.function = eh.function;
-                keyboard.prompt   = static_cast<u16>(eh.function == 41 ? 9 : 8);
+                keyboard.prompt   =
+                    static_cast<u16>(
+                        eh.function == blam::ui_element::function_t::mp_profile_change_name 
+                            ? 9 
+                            : 8);
             }
         }
     }
