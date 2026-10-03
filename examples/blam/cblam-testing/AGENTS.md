@@ -95,7 +95,7 @@ Uses Valve's GameNetworkingSockets library. Communication is message-based with 
 - `CameraSync` — per-frame camera position/rotation sync
 - `EntitySpawn` — server requests client to spawn entities
 - `Screenshot` — debug screenshot request
-- `PlayerSync` — full player roster broadcast
+- `PlayerSync` — full player roster broadcast (with each player's spawned state)
 
 **Message structs** are POD types with `static constexpr auto message_type`. `Message<T>` wraps `MessageBase` + `T data`. Multi-value messages use `MessageBase::Multiple` flag and `num_values` count.
 
@@ -110,25 +110,37 @@ Uses Valve's GameNetworkingSockets library. Communication is message-based with 
 
 ### Player index space
 
-Local viewports (split-screen) use indices 0-3. Remote (network) players use indices 4+ via a monotonic counter `m_next_remote_idx`. This prevents overlap with split-screen rendering. `BlamCamera` has 8 viewports; `num_players()` only counts active ones so split-screen layout is unaffected.
+`player_idx` is a player's network identity; `seat_idx` is the local split-screen seat. On the server, local seats use indices 0-3 and remote players 4+ via a monotonic counter `m_next_remote_idx`. On a client, seat 0 takes the index the server assigns (`PlayerJoinConfirm`), and every other local seat moves to `PlayerInfo::local_only_idx_base + seat` (0x10000+), which the server never hands out — otherwise the server's own split-screen players (idx 1-3) would land on the client's seats. `BlamCamera` has 8 viewports; `num_players()` only counts active ones so split-screen layout is unaffected.
+
+A client only ever moves its own player: the server applies a client's `CameraSync` to that connection's player regardless of the index it names, ignores it while the player is held, and relays it to the other verified clients.
+
+### Bipeds
+
+A player has a biped — a mounted model plus a collision capsule — exactly while `biped_in_play()` (`components.h`) says so: a local seat that someone sits in (keyboard or controller), or a remote player that is connected and loaded; neither while held before spawning (`PlayerInfo::spawned`, false between `player_init()` and `release_held_players()`). Two reconcilers keep that true every frame, whatever order joins, leaves, spawns and map loads arrive in:
+
+- `ResourceLoader::reconcile_player_bipeds()` (`loading.cpp`) mounts the map's player model (from globals → unit) and unmounts it, removing the part entities; it remounts after each map load.
+- `PhysicsSystem::reconcile_player_bodies()` (`physics.cpp`) creates and removes capsules. A local seat in physics mode gets a dynamic body that drives its camera; everyone else a kinematic one that follows their camera, so collisions happen against where the biped is drawn. Bodies are only made once the world mesh exists.
+
+Server-authoritative moves of our own player (spawn, birds-eye) go through `place_local_player()`, which also translates the body in physics mode — otherwise the next physics step would pull the camera back.
 
 ### Server flow
 
 1. `create_server()` — binds listen socket, generates host name via `get_random_name()`
-2. `start_restricted()` — first frame: finds existing local `PlayerInfo` entities (created by map loading, idx 0-3), assigns random names, stores refs in `m_local_player_info`
+2. `start_restricted()` — every frame: picks up local `PlayerInfo` entities that became active (created by map loading, idx 0-3), assigns random names, stores refs in `m_local_player_info`
 3. On client connect: accepts connection, assigns idx from `m_next_remote_idx++`
-4. On `PlayerJoin`: creates `PlayerInfo` entity for remote player, sends `PlayerJoinConfirm` with assigned idx, calls `send_player_roster()`
+4. On `PlayerJoin`: creates `PlayerInfo` entity for remote player, sends `PlayerJoinConfirm` with assigned idx, the full roster (`send_player_roster()` — always complete, clients drop players it leaves out) and every other player's position (`send_positions()`)
 5. On disconnect: removes player entity, erases connection, calls `send_player_roster()`
-6. Per-frame: receives messages on poll group, sends camera sync to all clients
+6. Per-frame: adds newly active local seats to the roster, receives messages on poll group, relays client camera syncs, and sends server-side camera/permission changes of networked players (local seats outside the roster stay local)
 
 ### Client flow
 
 1. `connect_server()` — connects to server IP
 2. On `GameJoin`: loads requested map, sends `PlayerJoin` with random name
-3. On `PlayerJoinConfirm`: stores assigned remote index in `NetworkState`
-4. On `PlayerSync`: populates `NetworkState::player_roster` for UI display
-5. On `CameraSync`: updates viewport 4 with server's camera data
-6. Per-frame: receives messages, sends own camera sync to server
+3. On `PlayerJoinConfirm`: stores assigned remote index in `NetworkState`, gives it to seat 0 and moves the other seats to local-only indices
+4. On `PlayerSync`: creates/updates/removes remote player entities (never a local seat), including whether they are spawned
+5. On `CameraSync`: our own index (or `self_id`) is the server placing us; anything else moves that remote player
+6. Per-frame: receives messages, sends own camera sync to server once the join is confirmed
+7. On disconnect: removes remote players and restores local seats (`leave_server()`)
 
 ### NetworkState (`networking.h`)
 
@@ -137,13 +149,17 @@ Public state exposed to UI systems:
 - `remote_player_idx` — this client's server-assigned index
 - `player_roster` — vector of `RosterEntry{name, remote_idx, loading_progress, is_self}`
 
+### Testing
+
+The dummy plug drives multiplayer scenarios: `.github/tests/net/dummy_plug_net_host_scenario.json` (and `dummy_plug_net_host_splitscreen.json`, with a second local seat on each side) makes the process a server and spawns a client child. Each side's `dump_state` event writes the roster and each player's biped (in play, model, body) to its journal, and `.github/tests/net/compare_journals.py <server journal> <client journal>` checks that every in-play player has a model and body under its camera, that client seats stay out of the server's index space, and that both sides agree where each player is (`MIN_IN_PLAY`, `POSITION_TOLERANCE`). CI runs both scenarios in `Test_x86_64_mesa`.
+
 ## Map loading (`map_loading.cpp`)
 
 1. `open_map()` — clears `ObjectGC` entities, parses map file asynchronously via `FileMapper`
-2. `init_map()` — loads caches (bitmaps, BSPs, models, shaders, sounds), creates scenario entities, creates 4 local player biped entities (idx 0-3, tagged `ObjectGC | PlayerBiped`)
+2. `init_map()` — loads caches (bitmaps, BSPs, models, shaders, sounds), creates scenario entities, creates the local player entities on first load (idx 0-3, tagged `PlayerBiped`; they persist across map loads), and puts local cameras on the spawn points (`create_camera()`); models and bodies follow via the biped reconcilers
 3. `setup_load_eventhandlers()` — registers `MapLoadEvent` and `MapLoadFinished` handlers on `GameEventBus`
 
-Local player bipeds are always created as 4 entities with `PlayerInfo` + `NetworkInfo` + `SoundEffects` components.
+Local players are created from `shared_recipes::player_recipe`, one per seat for the map type (4 for multiplayer); only seats in play get a biped.
 
 ## UI (`map_loader.h`)
 

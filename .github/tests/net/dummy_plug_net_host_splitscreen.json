@@ -1,0 +1,46 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "frame_delta": 66.667,
+    "comment": "Split screen on both ends of a multiplayer session: like dummy_plug_net_host_scenario.json, this process becomes the server and spawns one client child (dummy_plug_net_child_splitscreen.json), but each side also seats a second local player on controller 1. The server's second seat joins the roster, so the client must show it as a remote player rather than mistake it for its own second seat; the client's second seat stays local, outside the server's index space. Seat 0 on each side walks in physics mode, seat 1 flies in freecam, and the server switches to beavercreek mid-session, so every biped has to be re-mounted, re-bodied and re-synced after the reload. The journal check (MIN_IN_PLAY=3) then requires a model and collision body under every in-play player on both sides, and the two sides agreeing where each player is. Each process steps its own clock, so the same scripted time is not the same moment on both: the server dumps 1.5 s after the client and the client outlives the server, so both dumps fall after all movement has stopped and while both are still connected, which the journal check's position comparison relies on.",
+    "spawn": [
+        {
+            "config": "dummy_plug_net_child_splitscreen.json",
+            "id": "client0"
+        }
+    ],
+    "spawn_grace_ms": 1800000,
+    "events": [
+        {"time": 500, "type": "net_listen", "address": "127.0.0.1:27106"},
+        {"time": 1000, "type": "render_param", "debug_markers": true},
+        {"time": 1200, "type": "controller_connect", "index": 0},
+        {"time": 1300, "type": "controller_connect", "index": 1},
+        {"time": 1500, "type": "camera", "physics": true},
+        {"time": 2000, "type": "controller_axis", "axis": "LEFT_Y", "value": -1.0, "duration": 3000},
+        {"time": 2000, "type": "controller_axis", "index": 1, "axis": "LEFT_X", "value": 1.0, "duration": 1500},
+        {"time": 5500, "type": "screenshot", "name": "server_split_pre_switch"},
+        {"time": 6000, "type": "switch_map", "map": "beavercreek"},
+        {"time": 14000, "type": "screenshot", "name": "server_split_post_switch"},
+        {"time": 14500, "type": "controller_axis", "axis": "RIGHT_X", "value": 0.5, "duration": 1000},
+        {"time": 15000, "type": "controller_axis", "axis": "LEFT_Y", "value": -1.0, "duration": 2000},
+        {"time": 15000, "type": "controller_axis", "index": 1, "axis": "LEFT_Y", "value": -1.0, "duration": 1500},
+        {"time": 17500, "type": "screenshot", "name": "server_split_post_switch_moved"},
+        {"time": 19500, "type": "dump_state"},
+        {"time": 20000, "type": "screenshot", "name": "server_split_final"}
+    ],
+    "end_time": 22000
+}

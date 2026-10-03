@@ -523,8 +523,10 @@ struct PhysicsData
     u64   physics_id{0};
     Vecf3 velocity;
     Vecf3 acceleration;
+    Vecf3 position; /*!< Body origin, written by the physics step */
 
     bool enabled{false};
+    bool kinematic{false}; /*!< Follows the camera instead of driving it */
 };
 
 struct NetworkInfo
@@ -553,6 +555,11 @@ struct PlayerInfo
     using value_type = PlayerInfo;
     using type       = compo::alloc::VectorContainer<value_type>;
 
+    /*! Indices from here up belong to local seats the server does not know
+     *  about, so they can never match a server-assigned index (those count
+     *  up from 0 and stay below CameraSync's 0xFFFF "self" marker) */
+    static constexpr u32 local_only_idx_base = 0x10000;
+
     std::string name;
     std::string remote;
     u32         player_idx{0};
@@ -564,6 +571,10 @@ struct PlayerInfo
         bool move{true};
         bool camera{true};
     } permissions;
+
+    /*! Biped is in the world; false while the server holds the player at
+     *  the pre-spawn view */
+    bool spawned{true};
 
     bool is_remote() const
     {
@@ -691,6 +702,29 @@ struct PlayerCamera
         return keyboard.enabled || controller.index.has_value();
     }
 };
+
+/*! The player capsule, shared by the physics body and everything placing it */
+namespace biped_body {
+constexpr f32 radius = 0.1f;
+constexpr f32 height = 0.5f;
+/*! The camera sits this far above the body origin */
+constexpr f32 eye_offset = 0.2f;
+/*! A body spawned on a spawn point starts this far above it */
+constexpr f32 spawn_lift = 0.6f;
+} // namespace biped_body
+
+/*! Whether a player has a biped (model + collision body) in the world: a
+ *  local seat someone sits in, or a remote player who is connected and
+ *  loaded. Either is out of the world while held before spawning. */
+inline bool biped_in_play(
+    PlayerInfo const& info, PlayerCamera const& cam, NetworkInfo const& net)
+{
+    if(!info.spawned)
+        return false;
+    if(info.is_remote())
+        return net.connected && info.loading_progress >= 100;
+    return cam.is_active();
+}
 
 struct CameraLerp
 {

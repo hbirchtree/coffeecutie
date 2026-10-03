@@ -1,5 +1,6 @@
 #include "loading.h"
 #include "bitmap_cache.h"
+#include "blam/volta/blam_globals.h"
 #include "blam/volta/blam_mod2.h"
 #include "blam/volta/blam_scenario.h"
 #include "blam/volta/blam_stl.h"
@@ -15,6 +16,7 @@
 #include "shader_cache.h"
 #include "types.h"
 #include <optional>
+#include <set>
 
 template<typename Ver>
 using ResourceLoaderManifest = compo::SubsystemManifest<
@@ -32,7 +34,9 @@ using ResourceLoaderManifest = compo::SubsystemManifest<
         SubModel,
         TriggerVolume,
         Visibility,
-        WorldInfo>,
+        WorldInfo,
+        const PlayerCamera,
+        const PlayerInfo>,
     type_list_t<
         BitmapCache<Ver>,
         BlamFiles<Ver>,
@@ -40,7 +44,8 @@ using ResourceLoaderManifest = compo::SubsystemManifest<
         BSPCache<Ver>,
         DebugMarkers,
         ModelCache<Ver>,
-        ShaderCache<Ver>>,
+        ShaderCache<Ver>,
+        const LoadingStatus>,
     empty_list_t>;
 
 template<typename Ver>
@@ -62,6 +67,22 @@ struct ResourceLoader
     std::vector<SpawnObjectEvent>      pending_objects;
     std::vector<u32>                   pending_despawns;
     std::optional<ClusterChangedEvent> pending_cluster_change;
+
+    /*! Players wearing a biped, by entity: the load the model is from, and
+     *  its parts, which have to go when the player entity does */
+    struct player_biped_t
+    {
+        u32              load_generation{};
+        std::vector<u64> parts;
+    };
+
+    std::map<u64, player_biped_t> player_bipeds;
+
+    struct
+    {
+        u32                                           load_generation{};
+        blam::tagref_typed_t<blam::tag_class_t::mod2> model{};
+    } biped_model;
 
     std::shared_ptr<GameEventBus::queue_type<SpawnBSPEvent>> spawn_bsp_queue;
     std::shared_ptr<GameEventBus::queue_type<SpawnBipedEvent>>
@@ -152,6 +173,8 @@ struct ResourceLoader
         spawn_model_queue->poll();
         spawn_object_queue->poll();
         despawn_object_queue->poll();
+
+        reconcile_player_bipeds(p, files);
 
         if(!pending_cluster_change && pending_bsps.empty() &&
            pending_models.empty() && pending_mounts.empty() &&
@@ -1402,9 +1425,100 @@ struct ResourceLoader
             });
     }
 
+    /*! The model a player spawns as on this map, through its unit */
+    blam::tagref_typed_t<blam::tag_class_t::mod2> player_biped_model(
+        BlamFiles<Ver> const& files)
+    {
+        auto const& magic    = files.container.magic;
+        auto        globals_ = index.tag_of("globals\\globals");
+        if(!globals_.has_value())
+        {
+            cWarning("Failed to find globals object");
+            return {};
+        }
+        auto globals =
+            (*globals_)->template data<blam::globals::globals>(magic);
+        if(!globals.has_value())
+            return {};
+        blam::tagref_typed_t<blam::tag_class_t::biped> unit{};
+        if(files.container.map->map_type == blam::maptype_t::multiplayer)
+            if(auto mp = globals.value()->multiplayer.data(magic);
+               mp.has_value() && !mp.value().empty())
+                unit = mp.value()[0].unit;
+        if(!unit.valid())
+            if(auto sp = globals.value()->player.data(magic);
+               sp.has_value() && !sp.value().empty())
+                unit = sp.value()[0].unit;
+        if(auto unit_ = index.find(unit); unit_ != index.end())
+            return unit_->template data<blam::scn::unit>(magic).value()->model;
+        cWarning("Got not biped model :(");
+        return {};
+    }
+
+    /* Every player whose biped is in play wears the map's player model, and
+     * nobody else does. Follows joins, leaves, spawns and map switches (which
+     * take the parts with them), rather than happening once when the map
+     * creates the local seats; remote players used to never get one. */
+    void reconcile_player_bipeds(Proxy& p, BlamFiles<Ver> const& files)
+    {
+        LoadingStatus const* loading;
+        p.subsystem(loading);
+        if(loading->loaded_map != LoadingStatus::loaded)
+            return;
+        if(biped_model.load_generation != files.load_generation)
+            biped_model = {
+                .load_generation = files.load_generation,
+                .model           = player_biped_model(files),
+            };
+
+        std::set<u64> live;
+        for(auto player :
+            p.template select<PlayerCamera, PlayerInfo, NetworkInfo, Model>())
+        {
+            auto [cam, info, net, model] = player.components();
+            if(!biped_model.model.valid() || !biped_in_play(info, cam, net))
+                continue;
+            live.insert(player.id());
+            /* Once per load, a model that does not mount stays unmounted */
+            auto& biped = player_bipeds[player.id()];
+            if(biped.load_generation == files.load_generation)
+                continue;
+            biped.load_generation = files.load_generation;
+            pending_mounts.push_back({
+                .model     = biped_model.model,
+                .entity_id = player.id(),
+            });
+        }
+
+        std::set<u64> doomed;
+        for(auto it = player_bipeds.begin(); it != player_bipeds.end();)
+        {
+            if(live.contains(it->first))
+            {
+                ++it;
+                continue;
+            }
+            doomed.insert(it->second.parts.begin(), it->second.parts.end());
+            if(Model* model = p.template get<Model>(it->first))
+            {
+                model->parts.clear();
+                model->tag   = nullptr;
+                model->model = {};
+            }
+            it = player_bipeds.erase(it);
+        }
+        if(!doomed.empty())
+            p.remove_entity_if([&doomed](compo::Entity const& e) {
+                return doomed.contains(e.id);
+            });
+    }
+
     void mount_model(Proxy& p, MountModelEvent const& mount)
     {
         if(!mount.model.valid())
+            return;
+        /* The player may have left since this was queued */
+        if(!p.template get<Model>(mount.entity_id))
             return;
         ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
 
@@ -1426,6 +1540,19 @@ struct ResourceLoader
         auto   target = p.ref(mount.entity_id);
         Model& model  = target.template get<Model>();
 
+        /* Remounting replaces the parts. After a map load they are already
+         * gone, collected with the rest of the old map. */
+        if(!model.parts.empty())
+        {
+            std::set<u64> old_parts;
+            for(auto const& part : model.parts)
+                old_parts.insert(part.id());
+            model.parts.clear();
+            p.remove_entity_if([&old_parts](compo::Entity const& e) {
+                return old_parts.contains(e.id);
+            });
+        }
+
         model.tag       = &(*model_it);
         model.model     = mesh.models.at(0);
         model.transform = glm::identity<Matf4>();
@@ -1433,6 +1560,14 @@ struct ResourceLoader
         for(auto const& model_id : mesh.models)
             build_submodels(
                 p, target, model, model_id, shared_recipes::submodel);
+
+        if(auto biped = player_bipeds.find(mount.entity_id);
+           biped != player_bipeds.end())
+        {
+            biped->second.parts.clear();
+            for(auto const& part : model.parts)
+                biped->second.parts.push_back(part.id());
+        }
     }
 };
 

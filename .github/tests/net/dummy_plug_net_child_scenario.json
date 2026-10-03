@@ -31,5 +31,5 @@
         {"time": 18000, "type": "dump_state"},
         {"time": 18500, "type": "screenshot", "name": "client_final"}
     ],
-    "end_time": 20000
+    "end_time": 23000
 }

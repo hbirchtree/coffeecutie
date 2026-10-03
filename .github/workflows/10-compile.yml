@@ -432,6 +432,16 @@ jobs:
           dummy_plug: net/dummy_plug_net_host_scenario.json
           boot_map: bloodgulch.map
           journal_check: 'true'
+          min_in_play: '2'
+          skip_audio: 'true'
+        # Same, with a second split screen seat on each side: the server's
+        # must reach the client as a remote player, the client's must stay
+        # out of the server's index space, and every seat needs its biped.
+        - variant: net_splitscreen
+          dummy_plug: net/dummy_plug_net_host_splitscreen.json
+          boot_map: bloodgulch.map
+          journal_check: 'true'
+          min_in_play: '3'
           skip_audio: 'true'
     steps:
     - uses: actions/checkout@v7
@@ -456,6 +466,8 @@ jobs:
         DUMMY_PLUG=${{ matrix.dummy_plug }} BOOT_MAP=${{ matrix.boot_map }} xvfb-run --auto-servernum source/.github/tests/test_blam_graphics.sh
     - name: Verify multiplayer journals
       if: matrix.journal_check == 'true'
+      env:
+        MIN_IN_PLAY: ${{ matrix.min_in_play || '0' }}
       run: |
         SERVER_JOURNAL="$BLAM_TEST_OUTPUT_DIR/journal.jsonl"
         CLIENT_JOURNAL="$BLAM_TEST_OUTPUT_DIR/client0/journal.jsonl"

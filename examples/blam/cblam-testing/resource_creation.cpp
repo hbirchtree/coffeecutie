@@ -400,6 +400,29 @@ void create_resources(compo::EntityContainer& e)
                          e.select<PlayerInfo, NetworkInfo, PlayerCamera>())
                      {
                          auto [info, net, cam] = entity.components();
+                         auto vec              = [](Vecf3 const& v) {
+                             return nlohmann::json{v.x, v.y, v.z};
+                         };
+                         /* The biped: whether it should exist, and where
+                          * its model and collision body ended up */
+                         nlohmann::json biped = {
+                             {"in_play", biped_in_play(info, cam, net)},
+                             {"spawned", info.spawned},
+                             {"model", nullptr},
+                             {"body", nullptr},
+                         };
+                         if(auto* model = e.get<Model>(entity.id());
+                            model && model->tag)
+                             biped["model"] = {
+                                 {"position", vec(model->position)},
+                                 {"parts", model->parts.size()},
+                             };
+                         if(auto* phys = e.get<PhysicsData>(entity.id());
+                            phys && phys->enabled)
+                             biped["body"] = {
+                                 {"kinematic", phys->kinematic},
+                                 {"position", vec(phys->position)},
+                             };
                          players.push_back({
                              {"player_idx", info.player_idx},
                              {"seat_idx", info.seat_idx},
@@ -407,12 +430,9 @@ void create_resources(compo::EntityContainer& e)
                              {"remote", info.is_remote()},
                              {"loading_progress", info.loading_progress},
                              {"connected", net.connected},
-                             {"position",
-                              nlohmann::json{
-                                  cam.camera.position.x,
-                                  cam.camera.position.y,
-                                  cam.camera.position.z,
-                              }},
+                             {"physics", cam.mode.physics},
+                             {"position", vec(cam.camera.position)},
+                             {"biped", std::move(biped)},
                          });
                      }
 
@@ -1296,11 +1316,8 @@ void create_camera(
     compo::EntityContainer&                                          e,
     semantic::Span<const blam::scn::player_starting_location> const& spawns)
 {
-    u32 count{0};
-    for(auto _ : e.select<PlayerCamera>())
-        if(auto* info = e.get<PlayerInfo>(_.id()); info && !info->is_remote())
-            ++count;
-    auto& physics_bus = e.subsystem_cast<PhysicsBus>();
+    /* Bodies follow from where the cameras are put here, see
+     * PhysicsSystem::reconcile_player_bodies() */
     for(auto entity : e.select<PlayerCamera, PlayerInfo>())
     {
         auto [cam, info]              = entity.components();
@@ -1310,9 +1327,6 @@ void create_camera(
 
         if(spawns.empty())
             continue;
-        auto& location =
-            info.seat_idx < spawns.size() ? spawns[info.seat_idx] : spawns[0];
-        cam.camera.position = location.pos;
         /* R_vertex = R_bsp * bsp_basis^T.
          * Ensures R_vertex * bsp_basis == R_bsp in the view matrix, so
          * rendering is correct while controller direction vectors are in
@@ -1320,21 +1334,14 @@ void create_camera(
          */
         static const glm::mat3 bsp_basis_inv{{0, 1, 0}, {0, 0, 1}, {1, 0, 0}};
         cam.camera_opts.world_basis = bsp_basis_inv;
+        /* Remote players are wherever the network says */
+        if(info.is_remote())
+            continue;
+        auto& location =
+            info.seat_idx < spawns.size() ? spawns[info.seat_idx] : spawns[0];
+        cam.camera.position = location.pos;
         cam.camera.rotation =
             glm::angleAxis(glm::pi<f32>() - location.rot, Vecf3{0.f, 1.f, 0.f});
-        Physics::Event             event{Physics::Event::BodyCreationShape};
-        Physics::BodyCreationShape create{
-            .entity_id = entity.id(),
-            .scale     = {0.1, 0, 0.5},
-            .position  = location.pos + Vecf3{0, 0, 0.6},
-            .mass      = 1,
-            .shape     = Physics::BodyCreationShape::Capsule,
-            .lock =
-                {
-                    .rotation = true,
-                },
-        };
-        physics_bus.process(event, &create);
     }
     update_camera_aspect(e);
 }
