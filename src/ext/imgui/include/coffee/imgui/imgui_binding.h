@@ -113,6 +113,17 @@ struct ImGuiSystem
     std::string m_logFilename;
     std::string m_configFilename;
     bool        m_iniLoaded{false};
+
+    struct ClipboardUserData
+    {
+        comp_app::interfaces::Clipboard* clipboard_impl{};
+        std::optional<std::string>* value;
+    };
+    // Only fetch clipboard once per frame
+    // Because ImGui provides a (const char*) return value from its getter
+    // This should be somewhat sound for intra-frame use
+    std::optional<std::string> m_clipboard{};
+    std::unique_ptr<ClipboardUserData> m_clipboardUserData{};
 };
 
 } // namespace detail

@@ -262,6 +262,14 @@ struct MouseInput
     entity_container* m_container;
 };
 
+struct Clipboard
+    : comp_app::interfaces::Clipboard
+    , comp_app::AppService<Clipboard, comp_app::Clipboard>
+{
+    virtual std::string peek() final;
+    virtual void push(std::string_view const& text) final;
+};
+
 using Services = comp_app::subsystem_list<
     Context,
     Windowing,
@@ -269,6 +277,7 @@ using Services = comp_app::subsystem_list<
     DisplayInfo,
     comp_app::PtrNativeWindowInfoService,
     KeyboardInput,
+    Clipboard,
     MouseInput>;
 
 using GLServices =

@@ -159,6 +159,12 @@ struct Dialogs
     virtual void prompt(text_type title, prompt_callback&& callback)     = 0;
 };
 
+struct Clipboard
+{
+    virtual std::string peek() = 0;
+    virtual void push(std::string_view const&) = 0;
+};
+
 struct DisplayInfo
 {
     virtual size_2d_t       virtualSize() const                         = 0;
@@ -966,9 +972,11 @@ struct AppLoadableService
 using AppInfo             = detail::tag_t<interfaces::AppInfo>;
 using HIDPreferences      = detail::tag_t<interfaces::HIDPreferences>;
 using BatteryProvider     = detail::tag_t<interfaces::BatteryProvider>;
+using Clipboard           = detail::tag_t<interfaces::Clipboard>;
 using ControllerInput     = detail::tag_t<interfaces::ControllerInput>;
 using CPUClockProvider    = detail::tag_t<interfaces::CPUClockProvider>;
 using CPUTempProvider     = detail::tag_t<interfaces::CPUTempProvider>;
+using Dialogs             = detail::tag_t<interfaces::Dialogs>;
 using DisplayInfo         = detail::tag_t<interfaces::DisplayInfo>;
 using SensorStatProvider  = detail::tag_t<interfaces::SensorStatProvider>;
 using GPUTempProvider     = detail::tag_t<interfaces::GPUTempProvider>;

@@ -214,6 +214,30 @@ void ImGuiSystem::load(entity_container& e, comp_app::app_error&)
     io.LogFilename = m_logFilename.c_str();
     io.IniFilename = nullptr;
 
+    if(auto clipboard = e.service<comp_app::Clipboard>())
+    {
+        m_clipboardUserData = std::make_unique<ClipboardUserData>();
+        m_clipboardUserData->clipboard_impl = clipboard;
+        m_clipboardUserData->value = &m_clipboard;
+        io.ClipboardUserData = m_clipboardUserData.get();
+        io.GetClipboardTextFn = [](void* ptr) {
+            auto* data = static_cast<ClipboardUserData*>(ptr);
+            auto& current = *data->value;
+            auto* clipboard = data->clipboard_impl;
+            if(!current)
+                current = clipboard->peek();
+            return current->c_str();
+        };
+        io.SetClipboardTextFn = [](void* ptr, const char* value) {
+            auto* data = static_cast<ClipboardUserData*>(ptr);
+            auto* clipboard = data->clipboard_impl;
+            if(value)
+                clipboard->push(std::string_view(value));
+            else
+                clipboard->push({});
+        };
+    }
+
     rq::runtime_queue::Queue(
         rq::dependent_task<platform::url::Url, void>::CreateSink(
             e.subsystem_cast<comp_app::FileWatcher>().await(

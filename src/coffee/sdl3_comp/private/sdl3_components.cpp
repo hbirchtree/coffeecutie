@@ -1273,4 +1273,18 @@ static ws_t get_wm_selection(SDL_Window*)
     return ws_t::nullws;
 }
 
+std::string Clipboard::peek()
+{
+    if(auto current = SDL_GetClipboardText(); !current)
+        return {};
+    else
+        return std::string(current);
+}
+
+void Clipboard::push(std::string_view const& text)
+{
+    std::string copy(text.begin(), text.end());
+    SDL_SetClipboardText(copy.c_str());
+}
+
 } // namespace sdl3
