@@ -26,6 +26,7 @@
 #include <LinearMath/btVector3.h>
 #include <btBulletDynamicsCommon.h>
 
+#include <algorithm>
 #include <chrono>
 #include <limits>
 #include <memory>
@@ -102,8 +103,7 @@ struct PhysicsSystem
         if(needs_rebuild)
             rebuild_world(*bsp_cache);
 
-        /* Not before there is ground to stand on, or new bodies would drop
-         * straight through the map */
+        /* Without ground, new bodies would fall through the map */
         if(m_world_body)
             reconcile_player_bodies(p);
 
@@ -210,7 +210,8 @@ struct PhysicsSystem
             if(!camera.mode.physics)
                 continue;
             auto phys_it = m_bodies.find(player.id());
-            if(phys_it == m_bodies.end())
+            auto info    = p.template get<PlayerInfo>(player.id());
+            if(phys_it == m_bodies.end() || !info)
                 continue;
             entity_body& phys = (*phys_it).second;
             btVector3&   origin =
@@ -218,11 +219,11 @@ struct PhysicsSystem
             camera.camera.position = {
                 origin.x(),
                 origin.y(),
-                origin.z() + biped_body::eye_offset,
+                origin.z() + info->biped.eye_offset(),
             };
         }
 
-        for(auto const& [entity, kinematic] : m_player_bodies)
+        for(auto const& [entity, _] : m_player_bodies)
         {
             PhysicsData* data = p.template get<PhysicsData>(entity);
             auto         it   = m_bodies.find(entity);
@@ -236,13 +237,9 @@ struct PhysicsSystem
         m_frame++;
     }
 
-    /* Every player whose biped is in play has a capsule, and nobody else
-     * does. A local seat in physics mode gets a dynamic one that drives its
-     * camera; anyone else a kinematic one that follows their camera, which
-     * for a remote player is what the network writes. Either way the body
-     * is where the biped is drawn, on every peer. Done every frame, so
-     * bodies track joins, leaves, spawns and map loads however those are
-     * ordered, instead of being made once at map load. */
+    /* Bodies follow biped_in_play(). A local seat in physics mode drives
+     * its camera with a dynamic body; anyone else gets a kinematic one that
+     * follows their camera, so collisions happen where bipeds are drawn. */
     void reconcile_player_bodies(Proxy& p)
     {
         std::set<u64> live;
@@ -257,30 +254,33 @@ struct PhysicsSystem
                 continue;
             u64 const  id        = player.id();
             bool const kinematic = info.is_remote() || !camera.mode.physics;
+            auto const shape     = info.biped;
             live.insert(id);
 
             auto existing = m_player_bodies.find(id);
             if(existing == m_player_bodies.end() ||
-               existing->second != kinematic || !m_bodies.contains(id))
+               existing->second.kinematic != kinematic ||
+               existing->second.shape != shape || !m_bodies.contains(id))
             {
-                /* A dynamic body falls into place from just above where
-                 * the camera was put; a kinematic one sits under the
-                 * camera, as a body driving it would */
-                Vecf3 const origin =
-                    kinematic ? camera.camera.position -
-                                    Vecf3{0, 0, biped_body::eye_offset}
-                              : camera.camera.position +
-                                    Vecf3{0, 0, biped_body::spawn_lift};
+                Vecf3 const origin = kinematic
+                                         ? camera.camera.position -
+                                               Vecf3{0, 0, shape.eye_offset()}
+                                         : camera.camera.position +
+                                               Vecf3{0, 0, shape.spawn_lift()};
                 create_body(Physics::BodyCreationShape{
                     .entity_id = id,
-                    .scale     = {biped_body::radius, 0, biped_body::height},
+                    /* The capsule's height is its cylinder, between the caps */
+                    .scale =
+                        {shape.radius,
+                         0,
+                         std::max(shape.height - 2 * shape.radius, 0.f)},
                     .position  = origin,
                     .mass      = kinematic ? 0.f : 1.f,
                     .shape     = Physics::BodyCreationShape::Capsule,
                     .kinematic = kinematic,
                     .lock      = {.rotation = true},
                 });
-                m_player_bodies[id] = kinematic;
+                m_player_bodies[id] = {.kinematic = kinematic, .shape = shape};
                 data.physics_id     = id;
                 data.enabled        = true;
                 data.kinematic      = kinematic;
@@ -288,8 +288,7 @@ struct PhysicsSystem
             } else if(kinematic)
                 move_kinematic(
                     id,
-                    camera.camera.position -
-                        Vecf3{0, 0, biped_body::eye_offset});
+                    camera.camera.position - Vecf3{0, 0, shape.eye_offset()});
         }
 
         for(auto it = m_player_bodies.begin(); it != m_player_bodies.end();)
@@ -313,8 +312,6 @@ struct PhysicsSystem
             return;
         btTransform transform = m_world_basis;
         transform.setOrigin(btVector3(position.x, position.y, position.z));
-        /* Bullet derives the body's velocity from the move, which is what
-         * pushes a dynamic body out of the way */
         it->second.world_body->setWorldTransform(transform);
     }
 
@@ -596,7 +593,6 @@ struct PhysicsSystem
             entity_body.world_body->setCollisionFlags(
                 entity_body.world_body->getCollisionFlags() |
                 btCollisionObject::CF_KINEMATIC_OBJECT);
-            /* It is moved every frame, a sleeping one would stop being */
             entity_body.world_body->setActivationState(DISABLE_DEACTIVATION);
         }
         m_world->addRigidBody(entity_body.world_body.get());
@@ -933,8 +929,14 @@ struct PhysicsSystem
     };
 
     std::map<u64, entity_body> m_bodies;
-    /*! Bodies reconcile_player_bodies() owns, and whether each is kinematic */
-    std::map<u64, bool> m_player_bodies;
+
+    struct player_body_t
+    {
+        bool                      kinematic{};
+        PlayerInfo::biped_shape_t shape{};
+    };
+
+    std::map<u64, player_body_t> m_player_bodies;
 
     DebugMarkers*              m_markers{nullptr};
     DebugMarkers::strip_slot_t m_probe_slot{};

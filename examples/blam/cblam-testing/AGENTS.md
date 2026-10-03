@@ -116,12 +116,12 @@ A client only ever moves its own player: the server applies a client's `CameraSy
 
 ### Bipeds
 
-A player has a biped — a mounted model plus a collision capsule — exactly while `biped_in_play()` (`components.h`) says so: a local seat that someone sits in (keyboard or controller), or a remote player that is connected and loaded; neither while held before spawning (`PlayerInfo::spawned`, false between `player_init()` and `release_held_players()`). Two reconcilers keep that true every frame, whatever order joins, leaves, spawns and map loads arrive in:
+A player has a biped (mounted model + collision capsule) while `biped_in_play()` (`components.h`) holds: a local seat someone sits in, or a remote player that is connected and loaded, and not held before spawning (`PlayerInfo::spawned`). Two per-frame reconcilers enforce it:
 
-- `ResourceLoader::reconcile_player_bipeds()` (`loading.cpp`) mounts the map's player model (from globals → unit) and unmounts it, removing the part entities; it remounts after each map load.
-- `PhysicsSystem::reconcile_player_bodies()` (`physics.cpp`) creates and removes capsules. A local seat in physics mode gets a dynamic body that drives its camera; everyone else a kinematic one that follows their camera, so collisions happen against where the biped is drawn. Bodies are only made once the world mesh exists.
+- `ResourceLoader::reconcile_player_bipeds()` (`loading.cpp`) mounts the map's player biped model, remounting after map loads, and copies the biped tag's collision radius/height and camera height into `PlayerInfo::biped`.
+- `PhysicsSystem::reconcile_player_bodies()` (`physics.cpp`) sizes capsules from `PlayerInfo::biped`: dynamic for a local seat in physics mode, kinematic (following the camera) for everyone else.
 
-Server-authoritative moves of our own player (spawn, birds-eye) go through `place_local_player()`, which also translates the body in physics mode — otherwise the next physics step would pull the camera back.
+Server-authoritative moves of our own player go through `place_local_player()`, which also translates the body in physics mode.
 
 ### Server flow
 

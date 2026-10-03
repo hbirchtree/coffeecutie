@@ -448,7 +448,7 @@ struct alignas(8) PlayerSyncEntry
     u32             player_idx{0};
     u32             loading_progress{100};
     u32             connected{0x0};
-    u32             spawned{0x0}; /*!< Biped in the world, not held */
+    u32             spawned{0x0};
 };
 
 static_assert(sizeof(PlayerSyncEntry) == 48);
@@ -971,7 +971,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             std::move(targets));
     }
 
-    /*! Always the whole roster, clients drop whoever it leaves out */
+    /*! Clients drop whoever the roster leaves out */
     void send_player_roster()
     {
         std::vector<PlayerSyncEntry> entries;
@@ -1006,8 +1006,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         send_all(std::move(header), gsl::make_span(entries));
     }
 
-    /*! Where every other player is, for a peer that has just joined or
-     *  loaded; after that it hears about their movement as it happens */
+    /*! For a peer that has just joined or loaded */
     void send_positions(Proxy& p, HSteamNetConnection connection)
     {
         u32 const own_idx = m_connections[connection].idx;
@@ -1026,8 +1025,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
     }
 
-    /*! Players the server tells peers about: connected clients and the
-     *  local seats in the roster. Other local seats stay local. */
+    /*! Remote players and the local seats in the roster */
     bool is_networked(u64 entity, PlayerInfo const& info) const
     {
         if(info.is_remote())
@@ -1038,14 +1036,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             [entity](auto const& local) { return local.m_id == entity; });
     }
 
-    /*! Puts one of our own players somewhere on the server's say-so. A body
-     *  drives the camera in physics mode, so the body has to move too, or
-     *  the next physics step puts the camera back where it was. */
+    /*! In physics mode the body drives the camera, so it has to move too */
     void place_local_player(
         Proxy& p, u64 entity, Vecf3 const& position, Quatf const& rotation)
     {
-        auto* cam = p.get<PlayerCamera>(entity);
-        if(!cam)
+        auto* cam  = p.get<PlayerCamera>(entity);
+        auto* info = p.get<PlayerInfo>(entity);
+        if(!cam || !info)
             return;
         cam->camera.position = position;
         cam->camera.rotation = rotation;
@@ -1054,7 +1051,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         Physics::Event     ev{Physics::Event::Translate};
         Physics::Translate translate{
             .entity_id = entity,
-            .position  = position + Vecf3{0, 0, biped_body::spawn_lift},
+            .position  = position + Vecf3{0, 0, info->biped.spawn_lift()},
         };
         p.subsystem<PhysicsBus>().process(ev, &translate);
     }
@@ -1105,8 +1102,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
      * everyone go together once all players are ready */
     void player_init(compo::EntityContainer& e, PlayerInfo& player)
     {
-        /* Out of the world until released, so no biped or body sits at
-         * the birds-eye view */
         player.permissions.camera = false;
         player.spawned            = false;
 
@@ -2409,8 +2404,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 #if defined(USE_WEBRTC_TRANSPORT)
             publish_server_metadata();
 #endif
-            /* Local seats join the roster as someone sits down in them, e.g.
-             * a controller connecting mid-game for split screen */
+            /* Local seats join the roster as they become active */
             bool local_joined = false;
             for(auto player : p.select<PlayerInfo, PlayerCamera>())
             {
@@ -2522,7 +2516,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             /* Sync dirty player components to network */
             for(auto entity : p.select<PlayerInfo, PlayerCamera, NetworkInfo>())
             {
-                /* Not a structured binding, the lambdas below capture these */
                 auto& info = entity.get<PlayerInfo>();
                 auto& cam  = entity.get<PlayerCamera>();
                 auto& net  = entity.get<NetworkInfo>();
@@ -2563,9 +2556,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     net.changes.viewport = net.changes.transform = false;
                 };
 
-                /* A held player loses its biped before it is moved to the
-                 * birds-eye view, and is moved to its spawn before it gets
-                 * one back, so a body never drags the camera along */
+                /* Lock before moving to birds-eye, move to spawn before
+                 * unlocking, so a body never drags the camera along */
                 if(info.permissions.camera)
                 {
                     send_viewport();
@@ -2593,8 +2585,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 }
             }
 
-            /* Need to guard here during loading. Not before the server has
-             * said who we are, it would not know whose camera this is. */
+            // Need to guard here during loading
             if(m_client_player.exists() && m_join_confirmed)
             {
                 // Push our camera updates to server on change
@@ -2669,8 +2660,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_impl->CloseConnection(connection, code, nullptr, linger);
     }
 
-    /* Back to playing alone: the server's players go, and ours get back
-     * the indices and biped they had before joining */
     void leave_server(Proxy& p)
     {
         m_left_server    = false;
@@ -2696,21 +2685,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         switch(payload.type)
         {
         case MessageBase::CameraSync: {
-            /* A client only ever moves its own player, whatever index it
-             * names: before its join is confirmed it does not know that
-             * index, and would otherwise move whoever has its local one */
+            /* Only ever the sender's own player, whatever index it names */
             if(!player_info.biped.exists())
                 break;
             auto const& sync = payload.value<CameraSync>();
             auto&       info = player_info.biped.get<PlayerInfo>();
-            /* Held: the server owns the camera until release */
             if(!info.permissions.camera)
                 break;
             auto& cam           = player_info.biped.get<PlayerCamera>();
             cam.camera.position = Vecf3(sync.position);
             cam.camera.rotation = sync.rotation;
 
-            /* Everyone else sees it move; the sender already knows */
             auto targets = verified_connections();
             targets.erase(connection);
             if(targets.empty())
@@ -2886,14 +2871,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 auto [info, cam] = entity.components();
                 if(to_self)
                 {
-                    /* The server placing us, e.g. at a spawn */
                     if(info.is_remote() || info.seat_idx != 0)
                         continue;
                     place_local_player(
                         p, entity.id(), Vecf3(sync.position), sync.rotation);
                     break;
                 }
-                /* Another player moving; our own seats are never theirs */
                 if(!info.is_remote() || info.player_idx != sync.target_player)
                     continue;
                 cam.camera.position = Vecf3(sync.position);
@@ -2957,9 +2940,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             net_state.remote_player_idx = confirm.player_idx;
             m_join_confirmed            = true;
 
-            /* Seat 0 is the player the server knows; the other seats move
-             * out of its index space, where the server's own split screen
-             * players would otherwise land on them */
+            /* Other seats leave the server's index space */
             for(auto player : p.select<PlayerInfo>())
             {
                 auto* info = p.get<PlayerInfo>(player.id());
@@ -3111,7 +3092,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     {
                         info->name             = std::string(player.name.str());
                         info->loading_progress = player.loading_progress;
-                        /* Our own comes with UpdatePermission */
                         if(info->is_remote())
                             info->spawned = player.spawned == 0xFFFF;
                     }
@@ -3147,7 +3127,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 switch(perm.permission)
                 {
                 case UpdatePermission::Camera:
-                    /* The camera is only taken away while held */
                     info.permissions.camera = perm.mode != 0;
                     info.spawned            = perm.mode != 0;
                     break;
@@ -3215,10 +3194,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     HSteamNetConnection               m_connection{};
     std::optional<time_point>         m_connection_last_seen{};
     compo::EntityRef<EntityContainer> m_client_player{};
-    /*! The server has told us our player index */
-    bool m_join_confirmed{false};
-    /*! Disconnected; the server's players are cleaned up next frame */
-    bool m_left_server{false};
+    bool                              m_join_confirmed{false};
+    bool                              m_left_server{false};
 #if defined(USE_WEBRTC_TRANSPORT)
     webrtc_signaling::GatewayConnectBootstrap* m_webrtcBootstrap{nullptr};
     webrtc_signaling::GatewayConnectBootstrap* m_webrtcDirectKeepAlive{nullptr};

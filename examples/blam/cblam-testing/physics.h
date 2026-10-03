@@ -95,9 +95,7 @@ struct BodyCreationShape
      * Physics::Overlap events. For trigger volumes (map links). */
     bool sensor{false};
 
-    /*!< Moved by its owner rather than simulated; dynamic bodies collide
-     * with it. For bipeds whose position comes over the network. */
-    bool kinematic{false};
+    bool kinematic{false}; /*!< Moved by its owner, not simulated */
 
     struct
     {

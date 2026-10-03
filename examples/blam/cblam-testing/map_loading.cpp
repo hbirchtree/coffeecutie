@@ -198,9 +198,6 @@ static void load_resources(
     u64 main_biped_id{0};
     if(num_pinfo == 0)
     {
-        /* Bipeds (model, collision) are put on these by
-         * ResourceLoader::reconcile_player_bipeds() and
-         * PhysicsSystem::reconcile_player_bodies() once a seat is in play */
         cDebug("Creating player data");
         auto* controllers         = e.service<comp_app::ControllerInput>();
         auto* window              = e.service<comp_app::Windowing>();
@@ -218,8 +215,7 @@ static void load_resources(
             auto& info      = ref.get<PlayerInfo>();
             info.player_idx = i;
             info.seat_idx   = i;
-            /* On a client, only seat 0 has a server-assigned index; the
-             * others must not collide with the server's players */
+            /* On a client, only seat 0 is known to the server */
             if(i != 0 && e.subsystem_cast<NetworkState>().remote_player_idx)
                 info.player_idx = PlayerInfo::local_only_idx_base + i;
             if(changed.container.map->map_type == blam::maptype_t::ui)

@@ -217,8 +217,31 @@ struct unit : object
     reference<change_color_t> change_colors;
 };
 
+/*! Camera and collision sizes, which sit past the object and unit blocks
+ *  (only partly decoded above), so they are read from the tag directly */
+struct biped_dimensions
+{
+    static constexpr u32 tag_offset = 0x400;
+
+    f32 standing_camera_height;
+    f32 crouching_camera_height;
+    f32 crouch_transition_time;
+    u32 padding[6];
+    f32 standing_collision_height;
+    f32 crouching_collision_height;
+    f32 collision_radius;
+};
+
+static_assert(offsetof(biped_dimensions, standing_collision_height) == 0x24);
+static_assert(offsetof(biped_dimensions, collision_radius) == 0x2c);
+
 struct biped : unit
 {
+    biped_dimensions const& dimensions() const
+    {
+        return *reinterpret_cast<biped_dimensions const*>(
+            reinterpret_cast<char const*>(this) + biped_dimensions::tag_offset);
+    }
 };
 
 struct vehicle : unit

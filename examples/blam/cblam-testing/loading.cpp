@@ -36,7 +36,7 @@ using ResourceLoaderManifest = compo::SubsystemManifest<
         Visibility,
         WorldInfo,
         const PlayerCamera,
-        const PlayerInfo>,
+        PlayerInfo>,
     type_list_t<
         BitmapCache<Ver>,
         BlamFiles<Ver>,
@@ -68,8 +68,7 @@ struct ResourceLoader
     std::vector<u32>                   pending_despawns;
     std::optional<ClusterChangedEvent> pending_cluster_change;
 
-    /*! Players wearing a biped, by entity: the load the model is from, and
-     *  its parts, which have to go when the player entity does */
+    /*! Parts are kept here so they can go when the player entity does */
     struct player_biped_t
     {
         u32              load_generation{};
@@ -82,6 +81,7 @@ struct ResourceLoader
     {
         u32                                           load_generation{};
         blam::tagref_typed_t<blam::tag_class_t::mod2> model{};
+        PlayerInfo::biped_shape_t                     shape{};
     } biped_model;
 
     std::shared_ptr<GameEventBus::queue_type<SpawnBSPEvent>> spawn_bsp_queue;
@@ -1425,21 +1425,20 @@ struct ResourceLoader
             });
     }
 
-    /*! The model a player spawns as on this map, through its unit */
-    blam::tagref_typed_t<blam::tag_class_t::mod2> player_biped_model(
-        BlamFiles<Ver> const& files)
+    /*! The biped a player spawns as on this map */
+    blam::scn::biped const* player_biped(BlamFiles<Ver> const& files)
     {
         auto const& magic    = files.container.magic;
         auto        globals_ = index.tag_of("globals\\globals");
         if(!globals_.has_value())
         {
             cWarning("Failed to find globals object");
-            return {};
+            return nullptr;
         }
         auto globals =
             (*globals_)->template data<blam::globals::globals>(magic);
         if(!globals.has_value())
-            return {};
+            return nullptr;
         blam::tagref_typed_t<blam::tag_class_t::biped> unit{};
         if(files.container.map->map_type == blam::maptype_t::multiplayer)
             if(auto mp = globals.value()->multiplayer.data(magic);
@@ -1450,15 +1449,14 @@ struct ResourceLoader
                sp.has_value() && !sp.value().empty())
                 unit = sp.value()[0].unit;
         if(auto unit_ = index.find(unit); unit_ != index.end())
-            return unit_->template data<blam::scn::unit>(magic).value()->model;
+            if(auto biped = unit_->template data<blam::scn::biped>(magic);
+               biped.has_value())
+                return biped.value();
         cWarning("Got not biped model :(");
-        return {};
+        return nullptr;
     }
 
-    /* Every player whose biped is in play wears the map's player model, and
-     * nobody else does. Follows joins, leaves, spawns and map switches (which
-     * take the parts with them), rather than happening once when the map
-     * creates the local seats; remote players used to never get one. */
+    /* Models follow biped_in_play(), and are remounted after a map load */
     void reconcile_player_bipeds(Proxy& p, BlamFiles<Ver> const& files)
     {
         LoadingStatus const* loading;
@@ -1466,10 +1464,24 @@ struct ResourceLoader
         if(loading->loaded_map != LoadingStatus::loaded)
             return;
         if(biped_model.load_generation != files.load_generation)
-            biped_model = {
-                .load_generation = files.load_generation,
-                .model           = player_biped_model(files),
-            };
+        {
+            biped_model = {.load_generation = files.load_generation};
+            if(auto const* biped = player_biped(files))
+            {
+                auto const& dims  = biped->dimensions();
+                biped_model.model = biped->model;
+                if(dims.collision_radius > 0.f &&
+                   dims.standing_collision_height > 0.f &&
+                   dims.standing_camera_height > 0.f)
+                    biped_model.shape = {
+                        .radius     = dims.collision_radius,
+                        .height     = dims.standing_collision_height,
+                        .eye_height = dims.standing_camera_height,
+                    };
+                else
+                    cWarning("Biped has no collision size, using defaults");
+            }
+        }
 
         std::set<u64> live;
         for(auto player :
@@ -1478,8 +1490,9 @@ struct ResourceLoader
             auto [cam, info, net, model] = player.components();
             if(!biped_model.model.valid() || !biped_in_play(info, cam, net))
                 continue;
+            info.biped = biped_model.shape;
             live.insert(player.id());
-            /* Once per load, a model that does not mount stays unmounted */
+            /* Once per load, so a model that fails to mount isn't retried */
             auto& biped = player_bipeds[player.id()];
             if(biped.load_generation == files.load_generation)
                 continue;
@@ -1517,7 +1530,7 @@ struct ResourceLoader
     {
         if(!mount.model.valid())
             return;
-        /* The player may have left since this was queued */
+        /* The player may have left since */
         if(!p.template get<Model>(mount.entity_id))
             return;
         ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
@@ -1540,8 +1553,7 @@ struct ResourceLoader
         auto   target = p.ref(mount.entity_id);
         Model& model  = target.template get<Model>();
 
-        /* Remounting replaces the parts. After a map load they are already
-         * gone, collected with the rest of the old map. */
+        /* After a map load the old parts are already gone */
         if(!model.parts.empty())
         {
             std::set<u64> old_parts;
