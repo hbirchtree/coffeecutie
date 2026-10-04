@@ -916,15 +916,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
            !(*it).matches(request.tag.tag_class))
             return "not an object";
         tag = &(*it);
-        using blam::tag_class_t;
-        for(auto cls : {
-                tag_class_t::proj,
-                tag_class_t::weap,
-                tag_class_t::eqip,
-                tag_class_t::garb,
-            })
-            if(tag->matches(cls))
-                return {};
+        if(SpawnObjectEvent::is_client_requestable(*tag))
+            return {};
         return "class not requestable";
     }
 
@@ -3025,6 +3018,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                                               : "net_spawn_rejected",
                         {{"request_id", spawn.response_id},
                          {"net_id", spawn.tag.instance_id}});
+                    auto& responses = m_net_state.spawn_responses;
+                    if(responses.size() >= NetworkState::max_spawn_responses)
+                        responses.erase(responses.begin());
+                    responses.push_back({
+                        .request_id = spawn.response_id,
+                        .net_id     = spawn.tag.instance_id,
+                    });
                     /* Queued behind the replacement, if there is one */
                     GameEvent          ev{.type = GameEvent::DespawnObject};
                     DespawnObjectEvent impostor{

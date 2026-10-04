@@ -82,6 +82,15 @@ struct NetworkState : compo::SubsystemBase
 
     std::optional<std::string> local_player_name;
 
+    /*! Server answers to this client's spawn requests, oldest first */
+    struct SpawnResponse
+    {
+        libc_types::u32 request_id{0};
+        libc_types::u32 net_id{0}; /*!< 0 = rejected */
+    };
+    static constexpr libc_types::szptr max_spawn_responses = 64;
+    std::vector<SpawnResponse>         spawn_responses;
+
     struct RosterEntry
     {
         std::string     name;

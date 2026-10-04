@@ -1,6 +1,7 @@
 #pragma once
 
 #include "bitmap_cache.h"
+#include "blam_files.h"
 #include "coffee/comp_app/services.h"
 #include "components.h"
 #include "data.h"
@@ -17,6 +18,9 @@
 #include <peripherals/stl/type_list.h>
 #include <url/url.h>
 
+#include <glm/gtc/quaternion.hpp>
+
+#include <algorithm>
 #include <memory>
 
 #if defined(FEATURE_ENABLE_DiscordLatte)
@@ -33,6 +37,7 @@ using BlamMapBrowserManifest = compo::SubsystemManifest<
     type_list_t<PlayerInfo, NetworkInfo, PlayerCamera>,
     type_list_t<
         BitmapCache<halo_version>,
+        const BlamFiles<halo_version>,
         GameEventBus,
         NetworkState,
         PlayerRoster,
@@ -57,6 +62,7 @@ struct BlamMapBrowser
         remote_address = "0.0.0.0:16420";
         remote_address.resize(64);
         entity_filter.resize(64);
+        m_spawn_filter.resize(64);
     }
 
     bool main_thread_only() const override
@@ -234,6 +240,238 @@ struct BlamMapBrowser
         ImGui::SliderFloat("Loss (%)", &sim.loss_pct, 0.f, 20.f, "%.1f");
         if(ImGui::Button("Reset"))
             sim = {};
+    }
+
+    /* blam::to_string is in memory order, which reads backwards on LE */
+    static std::string class_name(blam::tag_class_t cls)
+    {
+        auto const  v = static_cast<u32>(cls);
+        std::string out;
+        for(auto shift : {24, 16, 8, 0})
+            if(char c = static_cast<char>((v >> shift) & 0xFF))
+                out.push_back(c);
+        return out;
+    }
+
+    /* obje tags of the loaded map; the pointer alone could repeat across
+     * loads, so the load generation goes into the key too */
+    void refresh_spawnables(BlamFiles<halo_version> const& files)
+    {
+        if(files.container.tags == m_spawnables_of &&
+           files.load_generation == m_spawnables_generation)
+            return;
+        m_spawnables_of         = files.container.tags;
+        m_spawnables_generation = files.load_generation;
+        m_spawnables.clear();
+        m_spawn_classes.clear();
+        m_spawn_choice = nullptr;
+
+        blam::tag_index_view<halo_version> index(files.container);
+        for(auto const& tag : index)
+        {
+            if(!tag.valid() || !tag.matches(blam::tag_class_t::obje))
+                continue;
+            m_spawnables.push_back({&tag, std::string(index.name_of(tag))});
+            if(std::find(
+                   m_spawn_classes.begin(),
+                   m_spawn_classes.end(),
+                   tag.tag_class()) == m_spawn_classes.end())
+                m_spawn_classes.push_back(tag.tag_class());
+        }
+        std::sort(
+            m_spawnables.begin(),
+            m_spawnables.end(),
+            [](Spawnable const& a, Spawnable const& b) {
+                return a.name < b.name;
+            });
+        std::sort(
+            m_spawn_classes.begin(),
+            m_spawn_classes.end(),
+            [](blam::tag_class_t a, blam::tag_class_t b) {
+                return class_name(a) < class_name(b);
+            });
+    }
+
+    /* Server and offline spawn directly (a server replicates). A client asks
+     * the server: Networking puts up an impostor, and the server's answer
+     * replaces or removes it. */
+    void spawn_tab(Proxy& e)
+    {
+        using blam::tag_class_t;
+
+        BlamFiles<halo_version> const* files;
+        NetworkState*                  net;
+        e.subsystem(files);
+        e.subsystem(net);
+
+        refresh_spawnables(*files);
+        if(m_spawnables.empty())
+        {
+            ImGui::TextUnformatted("No map loaded");
+            return;
+        }
+
+        bool const client = !net->clock_authority &&
+                            net->client_state != NetworkState::ClientState::None;
+
+        auto const kind = m_spawn_class == tag_class_t::none
+                              ? std::string("All")
+                              : class_name(m_spawn_class);
+        if(ImGui::BeginCombo("Kind", kind.c_str()))
+        {
+            if(ImGui::Selectable("All", m_spawn_class == tag_class_t::none))
+                m_spawn_class = tag_class_t::none;
+            for(auto cls : m_spawn_classes)
+                if(ImGui::Selectable(
+                       class_name(cls).c_str(), m_spawn_class == cls))
+                    m_spawn_class = cls;
+            ImGui::EndCombo();
+        }
+        if(m_spawn_choice && m_spawn_class != tag_class_t::none &&
+           !m_spawn_choice->tag->matches(m_spawn_class))
+            m_spawn_choice = nullptr;
+
+        ImGui::InputText(
+            "Filter", m_spawn_filter.data(), m_spawn_filter.size());
+        std::string_view filter(m_spawn_filter.c_str());
+
+        auto label_of = [](Spawnable const& item) {
+            return fmt::format(
+                "{} [{}]", item.name, class_name(item.tag->tag_class()));
+        };
+        auto const preview =
+            m_spawn_choice ? label_of(*m_spawn_choice) : std::string("(select)");
+        if(ImGui::BeginCombo("Object", preview.c_str()))
+        {
+            for(auto const& item : m_spawnables)
+            {
+                if(m_spawn_class != tag_class_t::none &&
+                   !item.tag->matches(m_spawn_class))
+                    continue;
+                if(!filter.empty() &&
+                   item.name.find(filter) == std::string::npos)
+                    continue;
+                ImGui::PushID(item.tag);
+                if(ImGui::Selectable(
+                       label_of(item).c_str(), m_spawn_choice == &item))
+                    m_spawn_choice = &item;
+                ImGui::PopID();
+            }
+            ImGui::EndCombo();
+        }
+
+        ImGui::Separator();
+        PlayerCamera const* eye = nullptr;
+        for(auto player : e.select<PlayerCamera, PlayerInfo>())
+        {
+            auto [cam, info] = player.components();
+            if(info.seat_idx == 0)
+            {
+                eye = &cam;
+                break;
+            }
+        }
+        f32 heading = 0.f;
+        ImGui::Checkbox("In front of camera", &m_spawn_at_camera);
+        if(m_spawn_at_camera && eye)
+        {
+            ImGui::SliderFloat(
+                "Distance", &m_spawn_distance, 0.5f, 20.f, "%.1f");
+            Vecf3 const forward = glm::transpose(Matf3(eye->rotation)) *
+                                  Vecf3{0.f, 0.f, -1.f};
+            m_spawn_position = eye->camera.position + forward * m_spawn_distance;
+            heading          = std::atan2(forward.y, forward.x);
+            ImGui::Text(
+                "At %.2f, %.2f, %.2f",
+                m_spawn_position.x,
+                m_spawn_position.y,
+                m_spawn_position.z);
+        } else
+            ImGui::DragFloat3("Position", &m_spawn_position.x, 0.1f);
+        ImGui::SliderFloat("Yaw", &m_spawn_yaw, -180.f, 180.f, "%.0f deg");
+        if(ImGui::IsItemHovered())
+            ImGui::SetTooltip("Relative to the camera's heading when spawning "
+                              "in front of it");
+
+        bool request = false;
+        if(client)
+        {
+            ImGui::Checkbox("Local only", &m_spawn_local_only);
+            if(ImGui::IsItemHovered())
+                ImGui::SetTooltip("Not sent to the server, nobody else sees it");
+            request = !m_spawn_local_only;
+            if(request && m_spawn_choice &&
+               !SpawnObjectEvent::is_client_requestable(*m_spawn_choice->tag))
+                ImGui::TextColored(
+                    ImVec4(1.f, 0.8f, 0.2f, 1.f),
+                    "The server only grants proj/weap/eqip/garb, expect a "
+                    "rejection");
+        } else
+            ImGui::TextUnformatted(
+                net->clock_authority ? "Replicated to all clients"
+                                     : "Offline, local only");
+
+        ImGui::BeginDisabled(!m_spawn_choice);
+        if(ImGui::Button(request ? "Request spawn" : "Spawn"))
+        {
+            SpawnObjectEvent spawn{
+                .object   = m_spawn_choice->tag->as_ref(),
+                .position = m_spawn_position,
+                .rotation = glm::angleAxis(
+                    heading + glm::radians(m_spawn_yaw), Vecf3{0.f, 0.f, 1.f}),
+                .server_owned = request,
+            };
+            GameEvent ev{.type = GameEvent::SpawnObject};
+            e.subsystem<GameEventBus>().inject(ev, &spawn);
+            /* Networking's handler runs inline and hands out the impostor id */
+            if(SpawnObjectEvent::is_impostor(spawn.net_id))
+            {
+                if(m_spawn_requests.size() >= max_spawn_requests)
+                    m_spawn_requests.erase(m_spawn_requests.begin());
+                m_spawn_requests.push_back({
+                    .request_id =
+                        spawn.net_id & ~SpawnObjectEvent::impostor_net_id_base,
+                    .name = label_of(*m_spawn_choice),
+                });
+            }
+        }
+        ImGui::EndDisabled();
+
+        if(m_spawn_requests.empty())
+            return;
+        ImGui::Separator();
+        ImGui::TextUnformatted("Requests");
+        ImGui::SameLine();
+        if(ImGui::SmallButton("Clear"))
+            m_spawn_requests.clear();
+        for(auto it = m_spawn_requests.rbegin(); it != m_spawn_requests.rend();
+            ++it)
+        {
+            auto& req = *it;
+            if(!req.net_id)
+                for(auto const& response : net->spawn_responses)
+                    if(response.request_id == req.request_id)
+                        req.net_id = response.net_id;
+            if(!req.net_id)
+                ImGui::Text(
+                    "#%u %s: pending (impostor 0x%08X)",
+                    req.request_id,
+                    req.name.c_str(),
+                    SpawnObjectEvent::impostor_net_id_base | req.request_id);
+            else if(*req.net_id == 0)
+                ImGui::TextColored(
+                    ImVec4(1.f, 0.4f, 0.4f, 1.f),
+                    "#%u %s: rejected",
+                    req.request_id,
+                    req.name.c_str());
+            else
+                ImGui::TextColored(
+                    ImVec4(0.4f, 1.f, 0.4f, 1.f),
+                    "#%u %s: granted as 0x%08X",
+                    req.request_id,
+                    req.name.c_str(),
+                    *req.net_id);
+        }
     }
 
     void start_restricted(Proxy& e, time_point const&)
@@ -791,6 +1029,11 @@ struct BlamMapBrowser
                     }
                     ImGui::EndTabItem();
                 }
+                if(ImGui::BeginTabItem("Spawn"))
+                {
+                    spawn_tab(e);
+                    ImGui::EndTabItem();
+                }
                 if(m_error)
                 {
                     auto error = magic_enum::enum_name(*m_error);
@@ -870,4 +1113,31 @@ struct BlamMapBrowser
     std::vector<Url>                    m_maps;
     std::string                         remote_address;
     u64                                 m_selected_entity{0};
+
+    struct Spawnable
+    {
+        blam::tag_t const* tag;
+        std::string        name;
+    };
+    struct SpawnRequestStatus
+    {
+        u32                request_id;
+        std::string        name;
+        std::optional<u32> net_id{}; /*!< Once answered, 0 = rejected */
+    };
+    static constexpr size_t max_spawn_requests = 16;
+
+    std::vector<Spawnable>          m_spawnables;
+    std::vector<blam::tag_class_t>  m_spawn_classes;
+    blam::tag_index_t<halo_version> const* m_spawnables_of{nullptr};
+    u32                             m_spawnables_generation{0};
+    Spawnable const*                m_spawn_choice{nullptr};
+    blam::tag_class_t               m_spawn_class{blam::tag_class_t::none};
+    std::string                     m_spawn_filter;
+    Vecf3                           m_spawn_position{};
+    f32                             m_spawn_distance{3.f};
+    f32                             m_spawn_yaw{0.f};
+    bool                            m_spawn_at_camera{true};
+    bool                            m_spawn_local_only{false};
+    std::vector<SpawnRequestStatus> m_spawn_requests;
 };

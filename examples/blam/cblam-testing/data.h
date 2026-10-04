@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <future>
@@ -497,6 +498,22 @@ struct SpawnObjectEvent
     static constexpr bool is_impostor(libc_types::u32 net_id)
     {
         return net_id >= impostor_net_id_base;
+    }
+
+    /* What a client may ask the server for; anything else is rejected */
+    static constexpr std::array<blam::tag_class_t, 4> client_requestable = {{
+        blam::tag_class_t::proj,
+        blam::tag_class_t::weap,
+        blam::tag_class_t::eqip,
+        blam::tag_class_t::garb,
+    }};
+
+    static bool is_client_requestable(blam::tag_t const& tag)
+    {
+        for(auto cls : client_requestable)
+            if(tag.matches(cls))
+                return true;
+        return false;
     }
 
     static constexpr ScenarioGroup scenario_group(libc_types::u32 net_id)
