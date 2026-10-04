@@ -1,8 +1,9 @@
 # Blam Map Upload
 
 A browser page (`BlamMapUpload.html`, web builds only) that stores Halo CE
-maps in the browser so the web builds of BlamGraphics can load them without
-downloading anything. Drop `.map` files or a whole `maps` folder onto the page.
+and Halo 2 maps in the browser, so the web builds of BlamGraphics can load
+them without downloading anything. Drop `.map` files or a whole `maps` folder
+onto the page.
 
 ## Where files go
 
@@ -17,6 +18,8 @@ its cache: database `emscripten_filesystem`, object store `FILES`, value an
 | Xbox map            | `/xbox/<name>.map` (decompressed when needed) |
 | MCC map             | `/mcc/<name>.map`                             |
 | Resource maps       | `/<prefix>/bitmaps.map`, `sounds.map`, `loc.map` |
+| Halo 2 Xbox map     | `/h2xbox/<name>.map`                          |
+| Halo 2 Vista map    | `/h2vista/<name>.map`                         |
 
 File names are lowercased. Resource maps get their canonical name from their
 contents, whatever the file was called. Halo PC Trial maps and anything else
@@ -38,6 +41,16 @@ Only the first 2 KiB of a file is read for this (`blam_upload_identify()` in
   whole file passed to wasm, where `blam::map_container::from_bytes()`
   inflates it. The output keeps the original header, whose decompressed
   length now matches the file size.
+- **Halo 2 maps** have the same `head`/`foot` header with version 8, but
+  Xbox and Vista lay the rest of it out differently, and nothing in the
+  header itself tells them apart. The page also reads the 32-byte tag index
+  at the header's `meta_offset`. As in `blam::dimeter::map_container`, its
+  group table pointer is a virtual address on Xbox and a small offset on
+  Vista. Halo 2 maps are stored as they are; when no tag index is found
+  there (a compressed map, say), the file is skipped. `shared.map`,
+  `single_player_shared.map` and `mainmenu.map` are regular Halo 2 cache
+  files and are stored like any other map. BlamGraphics does not load
+  Halo 2 maps, so this only puts them in storage for now.
 - **Trial maps** have the scrambled `Ehed`/`Gfot` header
   (`blam::file_header_trial_t`).
 - **`bitmaps.map`, `sounds.map` and `loc.map`** have no map header. They
@@ -51,6 +64,14 @@ Resource maps are the same format on PC, Custom Edition and MCC, so nothing
 in them says which game they came from. They go under the prefix of the
 regular maps dropped with them. If there are none, or several versions were
 dropped together, choose a target in the drop-down and drop them again.
+
+## Styling
+
+The page follows the blue scheme of the forerunner theme used by the speeny
+dev blog (`hbirchtree/kafei-py`, `blog/themes/forerunner`). `assets/` holds
+the Fira Code font (SIL Open Font License, see `assets/fonts/OFL.txt`) and
+the theme's `noise.png`, which drives the animated "plasma" hover effect.
+CMake copies them into the bundle.
 
 ## BlamGraphics side
 

@@ -1,3 +1,5 @@
+#include <blam/dimeter/h2_file_header.h>
+#include <blam/dimeter/h2_tag_index.h>
 #include <blam/volta/blam_atlas.h>
 #include <blam/volta/blam_file_header.h>
 #include <blam/volta/blam_stl.h>
@@ -7,6 +9,7 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -18,13 +21,16 @@
 /* The JS half of this tool lives in shell.html. It reads the first
  * header_size bytes of each dropped file, asks blam_upload_identify() what it
  * is, and only hands the whole file over to blam_upload_decompress() when it
- * is a compressed map. Everything else goes into IndexedDB untouched. */
+ * is a compressed map. Everything else goes into IndexedDB untouched. For
+ * Halo 2 maps it also reads the 32-byte tag index the header points to and
+ * passes it to blam_upload_identify_halo2(). */
 
 namespace {
 
 using blam::file_header_t;
 using libc_types::i32;
 using libc_types::u32;
+using libc_types::u64;
 
 /* Keep in sync with KINDS in shell.html */
 enum class kind_t : i32
@@ -38,6 +44,10 @@ enum class kind_t : i32
     bitmaps = 6,
     sounds  = 7,
     loc     = 8,
+    /* Halo 2 header found, layout not known until its tag index is read */
+    halo2       = 9,
+    halo2_xbox  = 10,
+    halo2_vista = 11,
 };
 
 /* Read field by field from JS, layout is fixed */
@@ -47,13 +57,16 @@ struct upload_info_t
     i32  compressed;
     u32  decomp_len;
     char name[36];
+    u32  index_offset; /*!< Halo 2: where blam_upload_identify_halo2() reads */
 };
 
-static_assert(sizeof(upload_info_t) == 48);
+static_assert(sizeof(upload_info_t) == 52);
 
-upload_info_t     info{};
-std::vector<char> result;
-std::string       last_error;
+upload_info_t info{};
+/* Halo 2 header kept between the two identify calls */
+std::array<char, sizeof(blam::dimeter::file_header_xbox_t)> halo2_header;
+std::vector<char>                                           result;
+std::string                                                 last_error;
 
 kind_t kind_of(blam::version_t version)
 {
@@ -91,17 +104,18 @@ file_header_t const* map_header(semantic::BytesConst const& data)
  * 3 localization), the offset of the path strings, then the offset and count
  * of 12-byte locators. A map header's first u32 is "head", so it can never
  * read as 1-3. The offsets have to land inside the file. */
-kind_t atlas_kind(semantic::BytesConst const& data, double file_size)
+kind_t atlas_kind(semantic::BytesConst const& data, u32 file_size)
 {
     if(data.size < sizeof(blam::tag_atlas_t))
         return kind_t::unknown;
     blam::tag_atlas_t atlas;
     std::memcpy(&atlas, data.data, sizeof(atlas));
 
-    auto const header_end = static_cast<double>(sizeof(blam::tag_atlas_t));
-    auto const locators_end =
-        static_cast<double>(atlas.locators_offset) +
-        static_cast<double>(atlas.locators_count) * sizeof(blam::locator_block);
+    /* u64, so a bogus offset or count cannot wrap past the file size */
+    u64 const header_end = sizeof(blam::tag_atlas_t);
+    u64 const locators_end =
+        u64{atlas.locators_offset} +
+        u64{atlas.locators_count} * sizeof(blam::locator_block);
     if(atlas.name_block_off < header_end || atlas.name_block_off >= file_size ||
        atlas.locators_offset < header_end || locators_end > file_size)
         return kind_t::unknown;
@@ -117,6 +131,38 @@ kind_t atlas_kind(semantic::BytesConst const& data, double file_size)
     default:
         return kind_t::unknown;
     }
+}
+
+template<typename Header>
+void copy_name(Header const& header)
+{
+    auto const& name = header.name.data;
+    std::memcpy(
+        info.name,
+        name.data(),
+        std::min(sizeof(info.name) - 1, ::strnlen(name.data(), name.size())));
+}
+
+/* Halo 2 maps have the same "head"/"foot" header, with version 8. Xbox and
+ * Vista lay the rest of it out differently, which only shows in the tag
+ * index at meta_offset, so that is read separately. */
+bool halo2_header_of(semantic::BytesConst const& data, u32 file_size)
+{
+    using blam::dimeter::file_header_xbox_t;
+    using blam::dimeter::tag_index_t;
+    if(data.size < sizeof(file_header_xbox_t))
+        return false;
+    auto const* header = reinterpret_cast<file_header_xbox_t const*>(data.data);
+    if(!header->valid())
+        return false;
+
+    std::memcpy(halo2_header.data(), data.data, halo2_header.size());
+    info.kind = static_cast<i32>(kind_t::halo2);
+    /* meta_offset sits at the same place in both layouts */
+    auto meta_offset = blam::from_le(header->meta_offset);
+    if(u64{meta_offset} + sizeof(tag_index_t) <= file_size)
+        info.index_offset = meta_offset;
+    return true;
 }
 
 template<typename Ver>
@@ -145,11 +191,13 @@ extern "C" {
 
 /*!
  * \brief Identify a file from its first bytes (at least 2048 for maps)
- * \param file_size Size of the whole file, which may be more than size
+ * \param file_size Size of the whole file, which may be more than size.
+ * Maps address everything with u32 offsets, so the page rejects files of
+ * 4 GiB or more before calling this.
  * \return Pointer to an upload_info_t, valid until the next call
  */
 EMSCRIPTEN_KEEPALIVE upload_info_t const* blam_upload_identify(
-    char const* data, u32 size, double file_size)
+    char const* data, u32 size, u32 file_size)
 {
     info      = {};
     auto head = semantic::BytesConst::of(
@@ -159,19 +207,53 @@ EMSCRIPTEN_KEEPALIVE upload_info_t const* blam_upload_identify(
     {
         info.kind = static_cast<i32>(kind_of(blam::from_le(header->version)));
         info.decomp_len = blam::from_le(header->decomp_len);
-        info.compressed = static_cast<double>(info.decomp_len) != file_size;
-        auto name       = header->name.data;
-        std::memcpy(
-            info.name,
-            name.data(),
-            std::min(
-                sizeof(info.name) - 1, ::strnlen(name.data(), name.size())));
-    } else if(
-        size >= sizeof(blam::file_header_trial_t) &&
-        reinterpret_cast<blam::file_header_trial_t const*>(data)->valid())
+        info.compressed = info.decomp_len != file_size;
+        copy_name(*header);
+        return &info;
+    }
+    if(halo2_header_of(head, file_size))
+        return &info;
+
+    if(size >= sizeof(blam::file_header_trial_t) &&
+       reinterpret_cast<blam::file_header_trial_t const*>(data)->valid())
         info.kind = static_cast<i32>(kind_t::trial);
     else
         info.kind = static_cast<i32>(atlas_kind(head, file_size));
+    return &info;
+}
+
+/*!
+ * \brief Finish identifying a Halo 2 map from the 32-byte tag index read at
+ * info.index_offset. Same rule as blam::dimeter::map_container: the group
+ * table pointer is a virtual address on Xbox, and a small offset relative to
+ * the index on Vista. The kind stays halo2 when no tag index is found there.
+ */
+EMSCRIPTEN_KEEPALIVE upload_info_t const* blam_upload_identify_halo2(
+    char const* data, u32 size)
+{
+    using namespace blam::dimeter;
+    if(info.kind != static_cast<i32>(kind_t::halo2) ||
+       size < sizeof(tag_index_t))
+        return &info;
+
+    tag_index_t index;
+    std::memcpy(&index, data, sizeof(index));
+    if(!index.valid())
+        return &info;
+
+    auto const* xbox =
+        reinterpret_cast<file_header_xbox_t const*>(halo2_header.data());
+    if(blam::from_le(index.group_table_pointer) <
+       blam::from_le(xbox->meta_size))
+    {
+        info.kind = static_cast<i32>(kind_t::halo2_vista);
+        copy_name(
+            *reinterpret_cast<file_header_vista_t const*>(halo2_header.data()));
+    } else
+    {
+        info.kind = static_cast<i32>(kind_t::halo2_xbox);
+        copy_name(*xbox);
+    }
     return &info;
 }
 

@@ -23,3 +23,13 @@ set_property(
   TARGET BlamMapUpload APPEND
   PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shell.html
 )
+
+# Fira Code and the noise texture behind the "plasma" hover, from the blog's
+# forerunner theme the page is styled after
+add_custom_command(
+  TARGET BlamMapUpload
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+      ${CMAKE_CURRENT_SOURCE_DIR}/assets
+      $<TARGET_FILE_DIR:BlamMapUpload>
+)
