@@ -77,7 +77,7 @@ struct map_container
             if(!header)
                 return stl_types::failure(map_load_error::not_a_map);
 
-            if(from_le(header->decomp_len) == map.size)
+            if(from_le(header->decomp_len) == map.size || !std::is_same_v<Ver, xbox_version_t>)
             {
                 progress("Reading tag index", 100);
                 auto const* tags_index = &tag_index_t<Ver>::from_header(header);
