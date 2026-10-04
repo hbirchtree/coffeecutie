@@ -299,6 +299,11 @@ type PortPool struct {
 	minPort   int
 	maxPort   int
 	usedPorts map[int]struct{}
+	// next is where the search for a free port starts. Handing ports out
+	// round-robin keeps a just-freed one idle for as long as possible: a
+	// server can still hold a connection to the old session behind it,
+	// which would swallow the next client's handshake.
+	next int
 }
 
 const maxMetadataBytes = 4096
@@ -432,10 +437,16 @@ func newPortFromPool(portPool *PortPool) *int {
 		p := 0
 		return &p
 	}
-	for p := portPool.minPort; p <= portPool.maxPort; p++ {
-		_, exists := portPool.usedPorts[p]
-		if !exists {
+	span := portPool.maxPort - portPool.minPort + 1
+	start := portPool.next - portPool.minPort
+	if start < 0 || start >= span {
+		start = 0
+	}
+	for i := 0; i < span; i++ {
+		p := portPool.minPort + (start+i)%span
+		if _, exists := portPool.usedPorts[p]; !exists {
 			portPool.usedPorts[p] = struct{}{}
+			portPool.next = p + 1
 			return &p
 		}
 	}

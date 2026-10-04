@@ -316,3 +316,26 @@ func TestRegisteredServerSupports(t *testing.T) {
 		t.Fatal("nil server should be inert, not panic or claim support")
 	}
 }
+
+func TestPortPoolDelaysReuse(t *testing.T) {
+	pool := PortPool{minPort: 100, maxPort: 102, usedPorts: map[int]struct{}{}}
+	first := *newPortFromPool(&pool)
+	freePortFromPool(first, &pool)
+	if second := *newPortFromPool(&pool); second == first {
+		t.Fatalf("freed port %d handed out again straight away", first)
+	}
+	got := map[int]bool{}
+	for p := range pool.usedPorts {
+		got[p] = true
+	}
+	for len(got) < 3 {
+		p := newPortFromPool(&pool)
+		if p == nil {
+			t.Fatalf("pool exhausted with free ports left: %v", got)
+		}
+		got[*p] = true
+	}
+	if newPortFromPool(&pool) != nil {
+		t.Fatal("full pool handed out a port")
+	}
+}
