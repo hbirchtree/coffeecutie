@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blam Map Upload</title>
+  <link rel="icon" href="favicon.ico">
+  <style>
+    :root {
+      --bg: #101010;
+      --panel: #1b1b1b;
+      --border: #333;
+      --text: #d0d0d0;
+      --muted: #8a8a8a;
+      --accent: #4f8fd6;
+      --ok: #5cb85c;
+      --warn: #d9a440;
+      --bad: #d9534f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 16px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      line-height: 1.4;
+    }
+    main { max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 1.4em; margin: 0 0 4px; }
+    h2 { font-size: 1.1em; margin: 24px 0 8px; }
+    p.lede { color: var(--muted); margin: 0 0 16px; }
+    code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.92em; }
+
+    #drop {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 160px;
+      padding: 24px;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 150ms, background-color 150ms;
+    }
+    #drop.over { border-color: var(--accent); background: #1d2633; }
+    #drop.disabled { opacity: 0.5; cursor: progress; }
+    #drop strong { font-size: 1.1em; }
+    #drop span { color: var(--muted); }
+
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      align-items: center;
+      margin: 12px 0;
+      color: var(--muted);
+    }
+    select, button {
+      background: #262626;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font: inherit;
+    }
+    button { cursor: pointer; }
+    button:hover { border-color: var(--accent); }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95em; }
+    th, td {
+      text-align: left;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th { color: var(--muted); font-weight: normal; }
+    td.status-ok { color: var(--ok); }
+    td.status-warn { color: var(--warn); }
+    td.status-bad { color: var(--bad); }
+    td.status-busy { color: var(--accent); }
+    .empty { color: var(--muted); font-style: italic; }
+
+    .prefix { margin-bottom: 12px; }
+    .prefix h3 { font-size: 1em; margin: 8px 0 4px; }
+    .prefix ul { list-style: none; margin: 0; padding: 0; }
+    .prefix li {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 12px;
+      align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .prefix li code { flex: 1 1 auto; }
+    a { color: var(--accent); }
+    #storage-usage { color: var(--muted); }
+    #runtime-status { color: var(--muted); margin-top: 8px; }
+  </style>
+  <!-- The build uses pthreads, so SharedArrayBuffer needs cross-origin
+       isolation. This service worker provides it on hosts like GitHub Pages
+       (the page reloads once on the first visit). -->
+  <script src="coi-serviceworker.min.js"></script>
+</head>
+<body>
+<main>
+  <h1>Blam Map Upload</h1>
+  <p class="lede">
+    Drop Halo CE <code>.map</code> files, or a whole <code>maps</code> folder.
+    Each file is identified by its contents, Xbox maps are decompressed, and
+    the result is stored in this browser for BlamGraphics to load without
+    downloading anything. Nothing leaves your machine.
+  </p>
+
+  <div id="drop" class="disabled" tabindex="0" role="button"
+       aria-label="Drop map files here or click to choose">
+    <strong>Drop maps here</strong>
+    <span>or click to choose files</span>
+  </div>
+  <input id="picker" type="file" multiple hidden>
+  <div id="runtime-status">Loading the map decoder…</div>
+
+  <div class="options">
+    <label for="resource-target">
+      Store <code>bitmaps.map</code>, <code>sounds.map</code> and
+      <code>loc.map</code> under:
+    </label>
+    <select id="resource-target">
+      <option value="auto">the version of the maps dropped with them</option>
+      <option value="pc">/pc/ (Halo PC)</option>
+      <option value="custom">/custom/ (Custom Edition)</option>
+      <option value="mcc">/mcc/ (MCC)</option>
+    </select>
+  </div>
+
+  <h2>This upload</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>File</th><th>Detected</th><th>Stored as</th><th>Status</th></tr>
+      </thead>
+      <tbody id="results">
+        <tr><td colspan="4" class="empty">Nothing uploaded yet.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Stored maps</h2>
+  <div id="storage-usage"></div>
+  <div id="stored"></div>
+</main>
+
+<script>
+  'use strict';
+
+  /* Emscripten's Fetch API caches files in this IndexedDB store, keyed by
+   * the URL passed to emscripten_fetch(). BlamGraphics requests maps by path
+   * (?map=/pc/bloodgulch.map, then /pc/bitmaps.map next to it), so storing
+   * them under those keys makes it load them from here instead of the
+   * network. Version 1 must match Fetch.init(): Emscripten clears the store
+   * on any upgrade, and a higher version would make its own open fail. */
+  const DB_NAME = 'emscripten_filesystem';
+  const DB_VERSION = 1;
+  const STORE = 'FILES';
+
+  /* Enough for the whole 2 KiB map header; resource maps need 16 bytes */
+  const HEADER_SIZE = 2048;
+  const PREFIXES = ['pc', 'custom', 'xbox', 'mcc'];
+
+  /* Keep in sync with kind_t in main.cpp */
+  const KINDS = {
+    0: { label: 'Not a Halo map' },
+    1: { label: 'Halo PC map', prefix: 'pc' },
+    2: { label: 'Custom Edition map', prefix: 'custom' },
+    3: { label: 'Xbox map', prefix: 'xbox' },
+    4: { label: 'MCC map', prefix: 'mcc' },
+    5: { label: 'Halo PC Trial map' },
+    6: { label: 'Bitmaps resource map', resource: 'bitmaps.map' },
+    7: { label: 'Sounds resource map', resource: 'sounds.map' },
+    8: { label: 'Localization resource map', resource: 'loc.map' },
+  };
+
+  const drop = document.getElementById('drop');
+  const picker = document.getElementById('picker');
+  const results = document.getElementById('results');
+  const resourceTarget = document.getElementById('resource-target');
+  const runtimeStatus = document.getElementById('runtime-status');
+
+  let ready = false;
+  let busy = false;
+
+  /* ---------- IndexedDB ---------- */
+
+  function openDb() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(STORE))
+          db.createObjectStore(STORE);
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async function withStore(mode, fn) {
+    const db = await openDb();
+    try {
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction([STORE], mode);
+        const request = fn(tx.objectStore(STORE));
+        tx.oncomplete = () => resolve(request ? request.result : undefined);
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error || new Error('transaction aborted'));
+      });
+    } finally {
+      db.close();
+    }
+  }
+
+  const putFile = (key, buffer) => withStore('readwrite', s => s.put(buffer, key));
+  const deleteFile = (key) => withStore('readwrite', s => s.delete(key));
+  const listKeys = () => withStore('readonly', s => s.getAllKeys());
+
+  /* ---------- Wasm helpers ---------- */
+
+  /* Copies bytes into the wasm heap. The caller frees the pointer. */
+  function toHeap(bytes) {
+    const ptr = Module._malloc(Math.max(bytes.length, 1));
+    if (!ptr)
+      throw new Error('out of memory');
+    Module.HEAPU8.set(bytes, ptr);
+    return ptr;
+  }
+
+  /* slice() copies out of the (shared) heap into a plain ArrayBuffer, which
+   * is what IndexedDB and TextDecoder accept */
+  function cString(ptr, max) {
+    const heap = Module.HEAPU8;
+    let end = ptr;
+    while (end < ptr + max && heap[end] !== 0)
+      end++;
+    return new TextDecoder('latin1').decode(heap.slice(ptr, end));
+  }
+
+  async function identify(file) {
+    const head = new Uint8Array(await file.slice(0, HEADER_SIZE).arrayBuffer());
+    const ptr = toHeap(head);
+    try {
+      const info = Module._blam_upload_identify(ptr, head.length, file.size);
+      const view = new DataView(Module.HEAPU8.buffer, info, 12);
+      return {
+        kind: view.getInt32(0, true),
+        compressed: view.getInt32(4, true) !== 0,
+        decompLen: view.getUint32(8, true),
+        name: cString(info + 12, 36),
+      };
+    } finally {
+      Module._free(ptr);
+    }
+  }
+
+  async function decompress(file) {
+    const ptr = toHeap(new Uint8Array(await file.arrayBuffer()));
+    try {
+      if (!Module._blam_upload_decompress(ptr, file.size))
+        throw new Error(cString(Module._blam_upload_error(), 256) ||
+                        'decompression failed');
+      const data = Module._blam_upload_result_data();
+      const size = Module._blam_upload_result_size();
+      return Module.HEAPU8.slice(data, data + size).buffer;
+    } finally {
+      Module._blam_upload_result_free();
+      Module._free(ptr);
+    }
+  }
+
+  /* ---------- Gathering dropped files ---------- */
+
+  function readEntries(reader) {
+    return new Promise((resolve, reject) => reader.readEntries(resolve, reject));
+  }
+
+  /* Folders only contribute .map files, so dropping a whole game folder
+   * does not read every file in it. Files dropped directly are always
+   * checked, whatever their name. */
+  async function collectEntry(entry, out) {
+    if (entry.isFile) {
+      if (entry.name.toLowerCase().endsWith('.map'))
+        out.push(await new Promise((resolve, reject) => entry.file(resolve, reject)));
+    } else if (entry.isDirectory) {
+      const reader = entry.createReader();
+      for (let batch; (batch = await readEntries(reader)).length;)
+        for (const child of batch)
+          await collectEntry(child, out);
+    }
+  }
+
+  async function collectDrop(dataTransfer) {
+    /* Items and files have to be taken before any await, they expire after */
+    const plain = [...dataTransfer.files];
+    const entries = [...(dataTransfer.items || [])]
+      .map(item => item.webkitGetAsEntry ? item.webkitGetAsEntry() : null)
+      .filter(Boolean);
+    if (!entries.length)
+      return plain;
+
+    const files = [];
+    for (const entry of entries) {
+      if (entry.isFile)
+        files.push(await new Promise((resolve, reject) => entry.file(resolve, reject)));
+      else
+        await collectEntry(entry, files);
+    }
+    return files;
+  }
+
+  /* ---------- Upload pipeline ---------- */
+
+  function addRow(file) {
+    if (results.querySelector('.empty'))
+      results.innerHTML = '';
+    const row = results.insertRow();
+    const cells = [0, 1, 2, 3].map(() => row.insertCell());
+    cells[0].textContent = file.name;
+    const set = (detected, key, status, tone) => {
+      if (detected !== undefined) cells[1].textContent = detected;
+      if (key !== undefined) {
+        cells[2].innerHTML = '';
+        if (key) {
+          const code = document.createElement('code');
+          code.textContent = key;
+          cells[2].append(code);
+        }
+      }
+      cells[3].textContent = status;
+      cells[3].className = 'status-' + tone;
+    };
+    set('…', '', 'Waiting', 'busy');
+    return set;
+  }
+
+  const nextFrame = () => new Promise(resolve => requestAnimationFrame(() => resolve()));
+
+  function mapKey(prefix, name) {
+    let file = name.toLowerCase();
+    if (!file.endsWith('.map'))
+      file += '.map';
+    return `/${prefix}/${file}`;
+  }
+
+  /* Resource maps carry nothing that says whether they came from Halo PC,
+   * Custom Edition or MCC, and Xbox has none. They go with the regular maps
+   * dropped alongside them, or wherever the user picked. */
+  function resourcePrefix(batch) {
+    if (resourceTarget.value !== 'auto')
+      return { prefix: resourceTarget.value };
+    const prefixes = new Set(batch
+      .map(item => KINDS[item.info.kind])
+      .filter(kind => kind && kind.prefix && kind.prefix !== 'xbox')
+      .map(kind => kind.prefix));
+    if (prefixes.size === 1)
+      return { prefix: [...prefixes][0] };
+    return {
+      error: prefixes.size
+        ? 'Maps from several versions dropped together, pick a target above and drop this again'
+        : 'No PC, Custom Edition or MCC map dropped with it, pick a target above and drop this again',
+    };
+  }
+
+  async function upload(files) {
+    if (busy || !ready || !files.length)
+      return;
+    busy = true;
+    drop.classList.add('disabled');
+
+    try {
+      const batch = [];
+      for (const file of files) {
+        const set = addRow(file);
+        try {
+          const info = await identify(file);
+          const kind = KINDS[info.kind] || KINDS[0];
+          let detected = kind.label;
+          if (info.name)
+            detected += ` (${info.name})`;
+          if (kind.prefix && info.compressed)
+            detected += ', compressed';
+          set(detected, undefined, 'Waiting', 'busy');
+          batch.push({ file, info, kind, set });
+        } catch (e) {
+          set('Unreadable', '', String(e.message || e), 'bad');
+        }
+      }
+
+      const resources = resourcePrefix(batch);
+      let stored = 0;
+
+      for (const { file, info, kind, set } of batch) {
+        let key;
+        if (kind.prefix) {
+          key = mapKey(kind.prefix, file.name);
+        } else if (kind.resource) {
+          if (resources.error) {
+            set(undefined, '', resources.error, 'warn');
+            continue;
+          }
+          key = `/${resources.prefix}/${kind.resource}`;
+        } else {
+          set(undefined, '', info.kind === 5
+              ? 'Skipped: Trial maps are not supported'
+              : 'Skipped', 'warn');
+          continue;
+        }
+
+        try {
+          let data;
+          if (kind.prefix && info.compressed) {
+            set(undefined, key, 'Decompressing…', 'busy');
+            await nextFrame();
+            data = await decompress(file);
+          } else {
+            /* Uncompressed and resource maps are stored byte for byte */
+            set(undefined, key, 'Reading…', 'busy');
+            data = await file.arrayBuffer();
+          }
+          set(undefined, key, 'Storing…', 'busy');
+          await putFile(key, data);
+          const mib = (data.byteLength / (1024 * 1024)).toFixed(1);
+          set(undefined, key, info.compressed && kind.prefix
+              ? `Stored, decompressed to ${mib} MiB`
+              : `Stored, ${mib} MiB`, 'ok');
+          stored++;
+        } catch (e) {
+          set(undefined, key, 'Failed: ' + (e.message || e), 'bad');
+        }
+      }
+
+      if (stored && navigator.storage && navigator.storage.persist)
+        navigator.storage.persist().catch(() => {});
+    } finally {
+      busy = false;
+      drop.classList.remove('disabled');
+      refreshStored();
+    }
+  }
+
+  /* ---------- Stored files ---------- */
+
+  /* Deployed as <root>/bin/... for the PC build and <root>/<prefix>/bin/...
+   * for the others, so BlamGraphics for a prefix is found from here */
+  function blamGraphicsUrl(prefix, key) {
+    const match = location.pathname.match(
+      /^(.*\/)(?:(?:custom|mcc|xbox|trial)\/)?bin\/[^/]+\.bundle\/[^/]*$/);
+    if (!match)
+      return null;
+    const dir = prefix === 'pc' ? 'bin/' : `${prefix}/bin/`;
+    return `${match[1]}${dir}BlamGraphics.bundle/BlamGraphics.html?map=${encodeURIComponent(key)}`;
+  }
+
+  async function refreshStored() {
+    const container = document.getElementById('stored');
+    let keys;
+    try {
+      keys = (await listKeys()).filter(key => typeof key === 'string');
+    } catch (e) {
+      container.textContent = 'Could not read browser storage: ' + (e.message || e);
+      return;
+    }
+
+    container.innerHTML = '';
+    let any = false;
+    for (const prefix of PREFIXES) {
+      const own = keys.filter(key => key.startsWith(`/${prefix}/`)).sort();
+      if (!own.length)
+        continue;
+      any = true;
+      const section = document.createElement('div');
+      section.className = 'prefix';
+      const title = document.createElement('h3');
+      title.textContent = `/${prefix}/`;
+      const list = document.createElement('ul');
+      for (const key of own) {
+        const item = document.createElement('li');
+        const code = document.createElement('code');
+        code.textContent = key;
+        item.append(code);
+
+        const file = key.slice(prefix.length + 2);
+        const isResource = ['bitmaps.map', 'sounds.map', 'loc.map'].includes(file);
+        const url = isResource ? null : blamGraphicsUrl(prefix, key);
+        if (url) {
+          const link = document.createElement('a');
+          link.href = url;
+          link.textContent = 'Open in BlamGraphics';
+          item.append(link);
+        } else if (!isResource) {
+          const hint = document.createElement('code');
+          hint.textContent = `?map=${key}`;
+          item.append(hint);
+        }
+
+        const remove = document.createElement('button');
+        remove.textContent = 'Delete';
+        remove.addEventListener('click', async () => {
+          remove.disabled = true;
+          try {
+            await deleteFile(key);
+          } finally {
+            refreshStored();
+          }
+        });
+        item.append(remove);
+        list.append(item);
+      }
+      section.append(title, list);
+      container.append(section);
+    }
+    if (!any)
+      container.innerHTML = '<p class="empty">No maps stored in this browser yet.</p>';
+
+    const usage = document.getElementById('storage-usage');
+    if (navigator.storage && navigator.storage.estimate) {
+      try {
+        const { usage: used, quota } = await navigator.storage.estimate();
+        const gib = n => (n / (1024 ** 3)).toFixed(2);
+        usage.textContent = `Browser storage in use: ${gib(used)} GiB of ${gib(quota)} GiB available to this site.`;
+      } catch (e) { /* estimate is best effort */ }
+    }
+  }
+
+  /* ---------- Wiring ---------- */
+
+  drop.addEventListener('click', () => { if (ready && !busy) picker.click(); });
+  drop.addEventListener('keydown', event => {
+    if ((event.key === 'Enter' || event.key === ' ') && ready && !busy) {
+      event.preventDefault();
+      picker.click();
+    }
+  });
+  picker.addEventListener('change', () => {
+    upload([...picker.files]);
+    picker.value = '';
+  });
+  drop.addEventListener('dragover', event => {
+    event.preventDefault();
+    drop.classList.add('over');
+  });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', async event => {
+    event.preventDefault();
+    drop.classList.remove('over');
+    if (!ready || busy)
+      return;
+    upload(await collectDrop(event.dataTransfer));
+  });
+  /* Dropping next to the target should not navigate away to the file */
+  window.addEventListener('dragover', event => event.preventDefault());
+  window.addEventListener('drop', event => event.preventDefault());
+
+  var Module = {
+    print: text => console.log(text),
+    printErr: text => console.error(text),
+    onRuntimeInitialized: () => {
+      ready = true;
+      drop.classList.remove('disabled');
+      runtimeStatus.textContent = '';
+    },
+    onAbort: what => {
+      runtimeStatus.textContent = 'The map decoder failed to load: ' + what;
+    },
+  };
+
+  if (typeof indexedDB === 'undefined')
+    runtimeStatus.textContent = 'This browser has no IndexedDB, maps cannot be stored.';
+  refreshStored();
+</script>
+{{{ SCRIPT }}}
+</body>
+</html>

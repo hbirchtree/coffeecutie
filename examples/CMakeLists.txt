@@ -28,6 +28,11 @@ if(BUILD_BLAM AND NOT (
   add_subdirectory(blam/tag-inspect)
 endif()
 
+# Stores maps in the browser for the web builds of BlamGraphics
+if(BUILD_BLAM AND EMSCRIPTEN AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+  add_subdirectory(blam/map-upload)
+endif()
+
 # Trimmed BSP+lightmap viewer for the GX backend (no gleam/GLSL).
 if(BUILD_BLAM AND BUILD_GX)
   add_subdirectory(blam/gx-bsp)
