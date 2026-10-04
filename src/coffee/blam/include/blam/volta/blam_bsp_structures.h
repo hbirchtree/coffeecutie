@@ -602,8 +602,8 @@ struct background_sound_palette
 {
     bl_string                         name;
     tagref_typed_t<tag_class_t::lsnd> bg_sound;
+    // Guerilla says there's a scale function here?
     u32                               padding[17];
-    // Probably some data here? Or maybe not
 };
 
 struct sound_environment_palette

@@ -481,6 +481,16 @@ class tag_index_view
         }
         return std::nullopt;
     }
+
+    inline std::optional<scn::scenario<Ver> const*> scenario() const
+    {
+        return m_idx->scenario(m_file, m_ptr);
+    }
+
+    inline map_ptr magic() const
+    {
+        return m_ptr;
+    }
 };
 
 } // namespace blam
