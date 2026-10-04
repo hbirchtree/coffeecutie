@@ -1024,10 +1024,56 @@ void dump_bones(blam::mod2::header<Ver> const* header)
     }
 }
 
+/* Flag words print as their set names (where reflection is available) and
+ * as hex, so an unnamed bit is still visible. */
+template<typename E>
+void print_flags(char const* label, E flags)
+{
+    /* flags_to_string() needs these with reflection; check without it too */
+    static_assert(
+        requires(E a) { a & a; }, "flag enums need C_FLAGS(...) declared");
+    fmt::print(
+        "{}={} (0x{:x}) ",
+        label,
+        flags_to_string(flags),
+        static_cast<u32>(flags));
+}
+
+/* Prints a block's element count, then each element through fn */
+template<typename T, typename F>
+void dump_block(char const* label, blam::reference<T> const& block, F&& fn)
+{
+    auto elements = block.data(g_magic);
+    if(elements.has_error())
+    {
+        fmt::print("    {}: <unreadable>\n", label);
+        return;
+    }
+    fmt::print("    {}: {}\n", label, elements.value().size());
+    u32 idx = 0;
+    for(auto const& element : elements.value())
+    {
+        fmt::print("      [{}] ", idx++);
+        fn(element);
+    }
+}
+
+template<typename E, size_t N>
+void print_inputs(char const* label, E const (&inputs)[N])
+{
+    fmt::print("    {}:", label);
+    for(auto const& input : inputs)
+        fmt::print(" {}", enum_name(input));
+    fmt::print("\n");
+}
+
+/* Each tag type prints its own fields under its own heading, after those of
+ * the type it extends: [obje], then [item] or [unit], then [bipd] or [vehi]. */
 void dump_object(blam::scn::object const* obj)
 {
-    print_enum("  type", obj->type);
-    print_enum("flags", obj->flags);
+    fmt::print("  [obje]\n    ");
+    print_enum("type", obj->type);
+    print_flags("flags", obj->flags);
     fmt::print(
         "bound_radius={:g} render_bound={:g} accel_scale={:g}\n",
         obj->bound_radius,
@@ -1043,17 +1089,35 @@ void dump_object(blam::scn::object const* obj)
     fmt::print("    physics    ={}\n", name_of(obj->physics));
     fmt::print("    shader     ={}\n", name_of(obj->shader));
     fmt::print("    effect     ={}\n", name_of(obj->creation_effect));
+    print_inputs("inputs", obj->export_.inputs);
     fmt::print(
         "    hud_msg={} shader_perm={}\n",
         obj->export_.hud_msg.index,
         obj->export_.shader_perm.index);
-}
 
-void dump_unit(blam::scn::unit const* unit)
-{
-    dump_object(unit);
+    using object = blam::scn::object;
+    dump_block(
+        "attachments", obj->attachments, [](object::attachment_t const& a) {
+            fmt::print("{} marker={} ", name_of(a.type), a.marker.str());
+            print_enum("primary", a.primary_scale);
+            print_enum("secondary", a.secondary_scale);
+            print_enum("change_color", a.change_color);
+            fmt::print("\n");
+        });
+    dump_block("widgets", obj->widgets, [](object::widget_t const& w) {
+        fmt::print("{}\n", name_of(w.widget));
+    });
+    dump_block("functions", obj->functions, [](object::function_t const& f) {
+        fmt::print("usage={} ", f.usage.str());
+        print_flags("flags", f.flags);
+        fmt::print("period={:g} ", f.period);
+        print_enum("function", f.function);
+        print_enum("map_to", f.map_to);
+        print_enum("bounds_mode", f.bounds_mode);
+        fmt::print("bounds={:g} scale_by={:g}\n", f.bounds, f.scale_by);
+    });
 
-    auto colors = unit->change_colors.data(g_magic);
+    auto colors = obj->change_colors.data(g_magic);
     if(colors.has_error())
     {
         fmt::print("    change_colors: <unreadable>\n");
@@ -1085,6 +1149,298 @@ void dump_unit(blam::scn::unit const* unit)
                 p.lower_bound,
                 p.upper_bound);
     }
+
+    auto resources = obj->predicted_resources.data(g_magic);
+    fmt::print(
+        "    predicted_resources: {}\n",
+        resources.has_value() ? resources.value().size() : 0u);
+}
+
+void dump_item(blam::scn::item const* item)
+{
+    dump_object(item);
+
+    fmt::print("  [item]\n    ");
+    print_flags("flags", item->item_flags);
+    fmt::print(
+        "message_index={} sort_order={} scale={:g} "
+        "hud_message_value_scale={}\n",
+        item->message_index.index,
+        item->sort_order,
+        item->scale,
+        item->hud_message_value_scale);
+    print_inputs("inputs", item->item_inputs);
+    fmt::print("    material_effect  ={}\n", name_of(item->material_effect));
+    fmt::print("    collision_sound  ={}\n", name_of(item->collision_sound));
+    fmt::print("    detonation_delay ={:g}\n", item->detonation_delay);
+    fmt::print("    detonating_effect={}\n", name_of(item->detonating_effect));
+    fmt::print("    detonated_effect ={}\n", name_of(item->detonated_effect));
+}
+
+void dump_unit(blam::scn::unit const* unit)
+{
+    dump_object(unit);
+
+    using unit_t = blam::scn::unit;
+    fmt::print("  [unit]\n    ");
+    print_flags("flags", unit->unit_flags);
+    print_enum("team", unit->default_team);
+    print_enum("sound_volume", unit->constant_sound_volume);
+    fmt::print("rider_damage={:g}\n", unit->rider_damage_fraction);
+    fmt::print(
+        "    integrated_light_toggle={}\n",
+        name_of(unit->integrated_light_toggle_effect));
+    print_inputs("inputs", unit->unit_inputs);
+    fmt::print(
+        "    camera fov={:g} stiffness={:g} marker={} submerged={}\n",
+        unit->camera_field_of_view,
+        unit->camera_stiffness,
+        unit->camera_marker_name.str(),
+        unit->camera_submerged_marker_name.str());
+    fmt::print(
+        "    pitch auto_level={:g} range={:g} seat_accel_scale={:g}\n",
+        unit->pitch_auto_level,
+        unit->pitch_range,
+        unit->seat_acceleration_scale);
+    fmt::print(
+        "    ping soft={:g}/{:g} hard={:g}/{:g} hard_death={:g}\n",
+        unit->soft_ping_threshold,
+        unit->soft_ping_interrupt_time,
+        unit->hard_ping_threshold,
+        unit->hard_ping_interrupt_time,
+        unit->hard_death_threshold);
+    fmt::print(
+        "    feign_death threshold={:g} time={:g} chance={:g} repeat={:g}\n",
+        unit->feign_death_threshold,
+        unit->feign_death_time,
+        unit->feign_death_chance,
+        unit->feign_repeat_chance);
+    fmt::print(
+        "    evade_anim={:g} dive_anim={:g} stunned_movement={:g}\n",
+        unit->distance_of_evade_anim,
+        unit->distance_of_dive_anim,
+        unit->stunned_movement_threshold);
+    fmt::print(
+        "    spawned_actor={} count={}..{} velocity={:g}\n",
+        name_of(unit->spawned_actor),
+        unit->spawned_actor_count[0],
+        unit->spawned_actor_count[1],
+        unit->spawned_velocity);
+    fmt::print(
+        "    aiming velocity={:g} accel={:g} casual={:g} "
+        "looking velocity={:g} accel={:g}\n",
+        unit->aiming_velocity_maximum,
+        unit->aiming_acceleration_maximum,
+        unit->casual_aiming_modifier,
+        unit->looking_velocity_maximum,
+        unit->looking_acceleration_maximum);
+    fmt::print(
+        "    ai vehicle_radius={:g} danger_radius={:g} melee_damage={}\n",
+        unit->ai_vehicle_radius,
+        unit->ai_danger_radius,
+        name_of(unit->melee_damage));
+    fmt::print("    ");
+    print_enum("blip_size", unit->motion_sensor_blip_size);
+    print_enum("metagame_type", unit->metagame_type);
+    print_enum("metagame_class", unit->metagame_class);
+    fmt::print("\n    grenades velocity={:g} ", unit->grenade_velocity);
+    print_enum("type", unit->grenade_type);
+    fmt::print("count={}\n", unit->grenade_count);
+
+    dump_block(
+        "camera_tracks",
+        unit->camera_tracks,
+        [](unit_t::camera_track_t const& t) {
+            fmt::print("{}\n", name_of(t.track));
+        });
+    dump_block(
+        "hud_interfaces",
+        unit->hud_interfaces,
+        [](unit_t::hud_interface_t const& h) {
+            fmt::print("{}\n", name_of(h.hud));
+        });
+    dump_block(
+        "dialogue_variants",
+        unit->dialogue_variants,
+        [](unit_t::dialogue_variant_t const& d) {
+            fmt::print(
+                "variant={} dialogue={}\n",
+                d.variant_number,
+                name_of(d.dialogue));
+        });
+    dump_block(
+        "powered_seats",
+        unit->powered_seats,
+        [](unit_t::powered_seat_t const& s) {
+            fmt::print(
+                "powerup={:g} powerdown={:g}\n",
+                s.driver_powerup_time,
+                s.driver_powerdown_time);
+        });
+    dump_block("weapons", unit->weapons, [](unit_t::weapon_t const& w) {
+        fmt::print("{}\n", name_of(w.weapon));
+    });
+    dump_block("seats", unit->seats, [](unit_t::seat_t const& s) {
+        fmt::print("label={} marker={} ", s.label.str(), s.marker_name.str());
+        print_flags("flags", s.flags);
+        fmt::print(
+            "\n          camera marker={} submerged={} pitch_range={:g} "
+            "yaw={:g}..{:g}\n",
+            s.camera_marker_name.str(),
+            s.camera_submerged_marker_name.str(),
+            s.pitch_range,
+            s.yaw_minimum,
+            s.yaw_maximum);
+        fmt::print(
+            "          accel_scale={:g} yaw_rate={:g} pitch_rate={:g} "
+            "built_in_gunner={}\n",
+            s.acceleration_scale,
+            s.yaw_rate,
+            s.pitch_rate,
+            name_of(s.built_in_gunner));
+        auto tracks = s.camera_tracks.data(g_magic);
+        auto huds   = s.hud_interfaces.data(g_magic);
+        fmt::print(
+            "          camera_tracks={} hud_interfaces={} "
+            "hud_text_message_index={}\n",
+            tracks.has_value() ? tracks.value().size() : 0u,
+            huds.has_value() ? huds.value().size() : 0u,
+            s.hud_text_message_index);
+    });
+}
+
+void dump_biped(blam::scn::biped const* biped)
+{
+    dump_unit(biped);
+
+    fmt::print("  [bipd]\n    ");
+    print_flags("flags", biped->biped_flags);
+    fmt::print(
+        "turning moving={:g} stationary={:g}\n",
+        biped->moving_turning_speed,
+        biped->stationary_turning_threshold);
+    print_inputs("inputs", biped->biped_inputs);
+    fmt::print(
+        "    bank angle={:g} apply={:g} decay={:g} pitch_ratio={:g}\n",
+        biped->bank_angle,
+        biped->bank_apply_time,
+        biped->bank_decay_time,
+        biped->pitch_ratio);
+    fmt::print(
+        "    velocity max={:g} sidestep={:g} accel={:g} decel={:g} "
+        "crouch_modifier={:g}\n",
+        biped->max_velocity,
+        biped->max_sidestep_velocity,
+        biped->acceleration,
+        biped->deceleration,
+        biped->crouch_velocity_modifier);
+    fmt::print(
+        "    angular velocity={:g} accel={:g}\n",
+        biped->angular_velocity_maximum,
+        biped->angular_acceleration_maximum);
+    fmt::print(
+        "    slope max={:g} downhill falloff={:g} cutoff={:g} scale={:g} "
+        "uphill falloff={:g} cutoff={:g} scale={:g}\n",
+        biped->maximum_slope_angle,
+        biped->downhill_falloff_angle,
+        biped->downhill_cutoff_angle,
+        biped->downhill_velocity_scale,
+        biped->uphill_falloff_angle,
+        biped->uphill_cutoff_angle,
+        biped->uphill_velocity_scale);
+    fmt::print(
+        "    footsteps={} jump_velocity={:g}\n",
+        name_of(biped->footsteps),
+        biped->jump_velocity);
+    fmt::print(
+        "    landing soft_time={:g} hard_time={:g} soft_velocity={:g} "
+        "hard_velocity={:g}..{:g} death={:g}\n",
+        biped->maximum_soft_landing_time,
+        biped->maximum_hard_landing_time,
+        biped->minimum_soft_landing_velocity,
+        biped->minimum_hard_landing_velocity,
+        biped->maximum_hard_landing_velocity,
+        biped->death_hard_landing_velocity);
+    fmt::print(
+        "    camera_height standing={:g} crouching={:g} transition={:g}\n",
+        biped->standing_camera_height,
+        biped->crouching_camera_height,
+        biped->crouch_transition_time);
+    fmt::print(
+        "    collision standing={:g} crouching={:g} radius={:g} "
+        "autoaim_width={:g}\n",
+        biped->standing_collision_height,
+        biped->crouching_collision_height,
+        biped->collision_radius,
+        biped->autoaim_width);
+    fmt::print(
+        "    pelvis_node={} head_node={}\n",
+        biped->pelvis_node_index,
+        biped->head_node_index);
+    dump_block(
+        "contact_points",
+        biped->contact_points,
+        [](blam::scn::biped::contact_point_t const& c) {
+            fmt::print("{}\n", c.marker_name.str());
+        });
+}
+
+void dump_vehicle(blam::scn::vehicle const* vehicle)
+{
+    dump_unit(vehicle);
+
+    fmt::print("  [vehi]\n    ");
+    print_flags("flags", vehicle->vehicle_flags);
+    print_enum("type", vehicle->vehicle_type);
+    fmt::print("\n");
+    print_inputs("inputs", vehicle->vehicle_inputs);
+    fmt::print(
+        "    speed forward={:g} reverse={:g} accel={:g} decel={:g}\n",
+        vehicle->maximum_forward_speed,
+        vehicle->maximum_reverse_speed,
+        vehicle->speed_acceleration,
+        vehicle->speed_deceleration);
+    fmt::print(
+        "    turn left={:g} right={:g} rate={:g} wheel_circumference={:g} "
+        "blur_speed={:g}\n",
+        vehicle->maximum_left_turn,
+        vehicle->maximum_right_turn,
+        vehicle->turn_rate,
+        vehicle->wheel_circumference,
+        vehicle->blur_speed);
+    fmt::print(
+        "    slide left={:g} right={:g} accel={:g} decel={:g}\n",
+        vehicle->maximum_left_slide,
+        vehicle->maximum_right_slide,
+        vehicle->slide_acceleration,
+        vehicle->slide_deceleration);
+    fmt::print(
+        "    flipping angular_velocity={:g}..{:g} fixed_gun yaw={:g} "
+        "pitch={:g}\n",
+        vehicle->minimum_flipping_angular_velocity,
+        vehicle->maximum_flipping_angular_velocity,
+        vehicle->fixed_gun_yaw,
+        vehicle->fixed_gun_pitch);
+    fmt::print(
+        "    ai sideslip={:g} destination_radius={:g} avoidance={:g} "
+        "pathfinding_radius={:g}\n",
+        vehicle->ai_sideslip_distance,
+        vehicle->ai_destination_radius,
+        vehicle->ai_avoidance_distance,
+        vehicle->ai_pathfinding_radius);
+    fmt::print(
+        "    ai charge_repeat={:g} strafing_abort={:g} oversteering={:g} "
+        "steering_max={:g} throttle_max={:g} move_position_time={:g}\n",
+        vehicle->ai_charge_repeat_timeout,
+        vehicle->ai_strafing_abort_range,
+        vehicle->ai_oversteering_bounds,
+        vehicle->ai_steering_maximum,
+        vehicle->ai_throttle_maximum,
+        vehicle->ai_move_position_time);
+    fmt::print("    suspension_sound={}\n", name_of(vehicle->suspension_sound));
+    fmt::print("    crash_sound     ={}\n", name_of(vehicle->crash_sound));
+    fmt::print("    material_effects={}\n", name_of(vehicle->material_effects));
+    fmt::print("    effect          ={}\n", name_of(vehicle->effect));
 }
 
 /* ---- bitm ---- */
@@ -1940,7 +2296,7 @@ void dump_player_biped(
                 fmt::print("  (biped tag has no data)\n");
                 return;
             }
-            dump_unit(biped.value());
+            dump_biped(biped.value());
         };
 
         if(auto mp = glob.value()->multiplayer.data(g_magic);
@@ -2264,23 +2620,25 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
     {
     case blam::tag_class_t::bipd:
         if(auto* info = header_of((blam::scn::biped*)nullptr))
-            dump_unit(info);
+            dump_biped(info);
         break;
     case blam::tag_class_t::vehi:
         if(auto* info = header_of((blam::scn::vehicle*)nullptr))
-            dump_unit(info);
+            dump_vehicle(info);
         break;
-    /* Everything else derived from obje shares the object header; only bipeds
-     * and vehicles are units, so the rest stop there. */
+    case blam::tag_class_t::garb:
+    case blam::tag_class_t::weap:
+    case blam::tag_class_t::eqip:
+        if(auto* info = header_of((blam::scn::item*)nullptr))
+            dump_item(info);
+        break;
+    /* The rest of what derives from obje stops at the object header */
     case blam::tag_class_t::scen:
     case blam::tag_class_t::mach:
     case blam::tag_class_t::ctrl:
     case blam::tag_class_t::lifi:
     case blam::tag_class_t::ssce:
-    case blam::tag_class_t::garb:
     case blam::tag_class_t::proj:
-    case blam::tag_class_t::weap:
-    case blam::tag_class_t::eqip:
         if(auto* info = header_of((blam::scn::object*)nullptr))
             dump_object(info);
         break;
