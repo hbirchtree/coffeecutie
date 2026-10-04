@@ -3,6 +3,7 @@
 #include "blam_base_types.h"
 #include "blam_bsp_structures.h"
 #include "blam_domain_ptrs.h"
+#include "blam_effects.h"
 #include "blam_mod2.h"
 #include "blam_shaders.h"
 #include "blam_strings.h"
@@ -62,6 +63,24 @@ enum class object_flags : u16
 };
 
 C_FLAGS(object_flags, u16)
+
+/*! How loud an object is to AI */
+enum class object_noise_t : u16
+{
+    silent,
+    medium,
+    loud,
+    shout,
+    quiet,
+};
+
+enum class grenade_type_t : u16
+{
+    human_fragmentation,
+    covenant_plasma,
+    grenade_type_2,
+    grenade_type_3,
+};
 
 /*! Which of the A-D functions something follows */
 enum class function_name_t : u16
@@ -155,16 +174,6 @@ struct object
             always_active = 0x4,
         };
 
-        enum class map_to_t : u16
-        {
-            linear,
-            early,
-            very_early,
-            late,
-            very_late,
-            cosine,
-        };
-
         enum class bounds_mode_t : u16
         {
             clip,
@@ -182,7 +191,7 @@ struct object
         f32                        wobble_magnitude;
         f32                        square_wave_threshold;
         i16                        step_count;
-        map_to_t                   map_to;
+        function_type_t            map_to;
         i16                        sawtooth_count;
         shader::param_src          add;
         shader::param_src          scale_result_by;
@@ -338,15 +347,6 @@ struct unit : object
         unused9,
     };
 
-    enum class noise_t : u16
-    {
-        silent,
-        medium,
-        loud,
-        shout,
-        quiet,
-    };
-
     enum class unit_function_in_t : u16
     {
         none,
@@ -364,14 +364,6 @@ struct unit : object
         medium,
         small,
         large,
-    };
-
-    enum class grenade_type_t : u16
-    {
-        human_fragmentation,
-        covenant_plasma,
-        grenade_type_2,
-        grenade_type_3,
     };
 
     struct camera_track_t
@@ -451,7 +443,7 @@ struct unit : object
 
     unit_flags_t                      unit_flags;
     team_t                            default_team;
-    noise_t                           constant_sound_volume;
+    object_noise_t                    constant_sound_volume;
     f32                               rider_damage_fraction;
     tagref_typed_t<tag_class_t::effe> integrated_light_toggle_effect;
     unit_function_in_t                unit_inputs[4];
@@ -781,10 +773,351 @@ struct scenery : unit
 
 struct weapon : item
 {
+    enum class weapon_flags_t : u32
+    {
+        none                                 = 0x0,
+        vertical_heat_display                = 0x1,
+        mutually_exclusive_triggers          = 0x2,
+        attacks_automatically_on_bump        = 0x4,
+        must_be_readied                      = 0x8,
+        doesnt_count_toward_maximum          = 0x10,
+        aim_assists_only_when_zoomed         = 0x20,
+        prevents_grenade_throwing            = 0x40,
+        must_be_picked_up                    = 0x80,
+        holds_triggers_when_dropped          = 0x100,
+        prevents_melee_attack                = 0x200,
+        detonates_when_dropped               = 0x400,
+        cannot_fire_at_maximum_age           = 0x800,
+        secondary_trigger_overrides_grenades = 0x1000,
+        does_not_depower_active_camo_in_mp   = 0x2000,
+        enables_integrated_night_vision      = 0x4000,
+        ais_use_weapon_melee_damage          = 0x8000,
+        prevents_crouching                   = 0x10000,
+        uses_3rd_person_camera               = 0x20000,
+    };
+
+    enum class secondary_trigger_mode_t : u16
+    {
+        normal,
+        slaved_to_primary,
+        inhibits_primary,
+        loads_alternate_ammunition,
+        loads_multiple_primary_ammunition,
+    };
+
+    enum class weapon_function_in_t : u16
+    {
+        none,
+        heat,
+        primary_ammunition,
+        secondary_ammunition,
+        primary_rate_of_fire,
+        secondary_rate_of_fire,
+        ready,
+        primary_ejection_port,
+        secondary_ejection_port,
+        overheated,
+        primary_charged,
+        secondary_charged,
+        illumination,
+        age,
+        integrated_light,
+        primary_firing,
+        secondary_firing,
+        primary_firing_on,
+        secondary_firing_on,
+    };
+
+    enum class movement_penalized_t : u16
+    {
+        always,
+        when_zoomed,
+        when_zoomed_or_reloading,
+    };
+
+    enum class weapon_type_t : u16
+    {
+        undefined,
+        shotgun,
+        needler,
+        plasma_pistol,
+        plasma_rifle,
+        rocket_launcher,
+    };
+
+    struct magazine_object_t
+    {
+        i16                               rounds;
+        u16                               padding[5];
+        tagref_typed_t<tag_class_t::eqip> equipment;
+    };
+
+    struct magazine_t
+    {
+        enum class flags_t : u32
+        {
+            none                          = 0x0,
+            wastes_rounds_when_reloaded   = 0x1,
+            every_round_must_be_chambered = 0x2,
+        };
+
+        flags_t flags;
+        i16     rounds_recharged;
+        i16     rounds_total_initial;
+        i16     rounds_reserved_maximum;
+        i16     rounds_loaded_maximum;
+        u32     padding[2];
+        f32     reload_time;
+        i16     rounds_reloaded;
+        u16     padding2;
+        f32     chamber_time;
+        u32     padding3[6];
+
+        /* Sounds or effects */
+        tagref_t reloading_effect;
+        tagref_t chambering_effect;
+
+        u32                          padding4[3];
+        reference<magazine_object_t> magazine_objects;
+    };
+
+    struct firing_effect_t
+    {
+        i16 shot_count[2]; // lower, upper
+        u32 padding[8];
+
+        /* Sounds or effects */
+        tagref_t firing_effect;
+        tagref_t misfire_effect;
+        tagref_t empty_effect;
+
+        tagref_typed_t<tag_class_t::jpt> firing_damage;
+        tagref_typed_t<tag_class_t::jpt> misfire_damage;
+        tagref_typed_t<tag_class_t::jpt> empty_damage;
+    };
+
+    struct trigger_t
+    {
+        enum class flags_t : u32
+        {
+            none                                    = 0x0,
+            tracks_fired_projectile                 = 0x1,
+            random_firing_effects                   = 0x2,
+            can_fire_with_partial_ammo              = 0x4,
+            does_not_repeat_automatically           = 0x8,
+            locks_in_on_off_state                   = 0x10,
+            projectiles_use_weapon_origin           = 0x20,
+            sticks_when_dropped                     = 0x40,
+            ejects_during_chamber                   = 0x80,
+            discharging_spews                       = 0x100,
+            analog_rate_of_fire                     = 0x200,
+            use_error_when_unzoomed                 = 0x400,
+            projectile_vector_cannot_be_adjusted    = 0x800,
+            projectiles_have_identical_error        = 0x1000,
+            projectile_is_client_side_only          = 0x2000,
+            use_original_unit_adjust_projectile_ray = 0x4000,
+        };
+
+        enum class prediction_type_t : u16
+        {
+            none,
+            continuous,
+            instant,
+        };
+
+        enum class overcharged_action_t : u16
+        {
+            none,
+            explode,
+            discharge,
+        };
+
+        enum class distribution_function_t : u16
+        {
+            point,
+            horizontal_fan,
+        };
+
+        flags_t              flags;
+        Vecf2                maximum_rate_of_fire;
+        f32                  acceleration_time;
+        f32                  deceleration_time;
+        f32                  blurred_rate_of_fire;
+        u32                  padding[2];
+        i16                  magazine; // index into weapon::magazines
+        i16                  rounds_per_shot;
+        i16                  minimum_rounds_loaded;
+        i16                  projectiles_between_contrails;
+        u32                  padding2;
+        prediction_type_t    prediction_type;
+        object_noise_t       firing_noise;
+        Vecf2                error;
+        f32                  error_acceleration_time;
+        f32                  error_deceleration_time;
+        u32                  padding3[2];
+        f32                  charging_time;
+        f32                  charged_time;
+        overcharged_action_t overcharged_action;
+        u16                  padding4;
+        f32                  charged_illumination;
+        f32                  spew_time;
+        tagref_t             charging_effect; // sound or effect
+
+        distribution_function_t           distribution_function;
+        i16                               projectiles_per_shot;
+        f32                               distribution_angle;
+        u32                               padding5;
+        f32                               minimum_error;
+        Vecf2                             error_angle;
+        Vecf3                             first_person_offset;
+        u32                               padding6;
+        tagref_typed_t<tag_class_t::proj> projectile;
+        f32                               ejection_port_recovery_time;
+        f32                               illumination_recovery_time;
+        u32                               padding7[3];
+        f32                               heat_generated_per_round;
+        f32                               age_generated_per_round;
+        u32                               padding8;
+        f32                               overload_time;
+        u32                               padding9[10];
+
+        /* Cache only */
+        f32 illumination_recovery_rate;
+        f32 ejection_port_recovery_rate;
+        f32 firing_acceleration_rate;
+        f32 firing_deceleration_rate;
+        f32 error_acceleration_rate;
+        f32 error_deceleration_rate;
+
+        reference<firing_effect_t> firing_effects;
+    };
+
+    weapon_flags_t           weapon_flags;
+    bl_string                label;
+    secondary_trigger_mode_t secondary_trigger_mode;
+    i16                      maximum_alternate_shots_loaded;
+    weapon_function_in_t     weapon_inputs[4];
+    f32                      ready_time;
+    tagref_t                 ready_effect; // sound or effect
+
+    f32 heat_recovery_threshold;
+    f32 overheated_threshold;
+    f32 heat_detonation_threshold;
+    f32 heat_detonation_fraction;
+    f32 heat_loss_rate;
+    f32 heat_illumination;
+    u32 padding[4];
+
+    /* Sounds or effects */
+    tagref_t overheated;
+    tagref_t overheat_detonation;
+
+    tagref_typed_t<tag_class_t::jpt>  player_melee_damage;
+    tagref_typed_t<tag_class_t::jpt>  player_melee_response;
+    u32                               padding2[2];
+    tagref_typed_t<tag_class_t::actv> actor_firing_parameters;
+
+    f32   near_reticle_range;
+    f32   far_reticle_range;
+    f32   intersection_reticle_range;
+    u16   padding3;
+    i16   zoom_levels;
+    Vecf2 zoom_magnification_range;
+    f32   autoaim_angle;
+    f32   autoaim_range;
+    f32   magnetism_angle;
+    f32   magnetism_range;
+    f32   deviation_angle;
+    u32   padding4;
+
+    movement_penalized_t movement_penalized;
+    u16                  padding5;
+    f32                  forward_movement_penalty;
+    f32                  sideways_movement_penalty;
+    u32                  padding6;
+    f32                  minimum_target_range;
+    f32                  looking_time_modifier;
+    u32                  padding7;
+
+    f32 light_power_on_time;
+    f32 light_power_off_time;
+
+    /* Sounds or effects */
+    tagref_t light_power_on_effect;
+    tagref_t light_power_off_effect;
+
+    f32 age_heat_recovery_penalty;
+    f32 age_rate_of_fire_penalty;
+    f32 age_misfire_start;
+    f32 age_misfire_chance;
+    u32 padding8[3];
+
+    tagref_typed_t<tag_class_t::mod2> first_person_model;
+    tagref_typed_t<tag_class_t::antr> first_person_animations;
+    u32                               padding9;
+    tagref_typed_t<tag_class_t::wphi> hud_interface;
+    tagref_typed_t<tag_class_t::snd>  pickup_sound;
+    tagref_typed_t<tag_class_t::snd>  zoom_in_sound;
+    tagref_typed_t<tag_class_t::snd>  zoom_out_sound;
+    u32                               padding10[3];
+    f32                               active_camo_ding;
+    f32                               active_camo_regrowth_rate;
+    u32                               padding11[3];
+    u16                               padding12;
+    weapon_type_t                     weapon_type;
+
+    reference<bsp::predicted_resource> more_predicted_resources; // cache only
+    reference<magazine_t>              magazines;
+    reference<trigger_t>               triggers;
 };
+
+C_FLAGS(weapon::weapon_flags_t, u32)
+C_FLAGS(weapon::magazine_t::flags_t, u32)
+C_FLAGS(weapon::trigger_t::flags_t, u32)
+
+static_assert(sizeof(weapon::magazine_object_t) == 28);
+static_assert(offsetof(weapon::magazine_t, reloading_effect) == 0x38);
+static_assert(sizeof(weapon::magazine_t) == 112);
+static_assert(offsetof(weapon::firing_effect_t, firing_damage) == 0x54);
+static_assert(sizeof(weapon::firing_effect_t) == 132);
+static_assert(offsetof(weapon::trigger_t, prediction_type) == 0x2c);
+static_assert(offsetof(weapon::trigger_t, charging_effect) == 0x5c);
+static_assert(offsetof(weapon::trigger_t, projectile) == 0x94);
+static_assert(offsetof(weapon::trigger_t, firing_effects) == 0x108);
+static_assert(sizeof(weapon::trigger_t) == 276);
+static_assert(offsetof(weapon, label) == 0x30c);
+static_assert(offsetof(weapon, ready_effect) == 0x33c);
+static_assert(offsetof(weapon, actor_firing_parameters) == 0x3bc);
+static_assert(offsetof(weapon, zoom_magnification_range) == 0x3dc);
+static_assert(offsetof(weapon, movement_penalized) == 0x3fc);
+static_assert(offsetof(weapon, light_power_on_effect) == 0x420);
+static_assert(offsetof(weapon, first_person_model) == 0x45c);
+static_assert(offsetof(weapon, hud_interface) == 0x480);
+static_assert(offsetof(weapon, weapon_type) == 0x4e2);
+static_assert(offsetof(weapon, triggers) == 0x4fc);
+static_assert(sizeof(weapon) == 1288);
 
 struct equipment : item
 {
+    enum class powerup_type_t : u16
+    {
+        none,
+        double_speed,
+        over_shield,
+        active_camouflage,
+        full_spectrum_vision,
+        health,
+        grenade,
+    };
+
+    powerup_type_t                   powerup_type;
+    grenade_type_t                   grenade_type;
+    f32                              powerup_time;
+    tagref_typed_t<tag_class_t::snd> pickup_sound;
+    u32                              padding[36];
 };
+
+static_assert(offsetof(equipment, pickup_sound) == 0x310);
+static_assert(sizeof(equipment) == 944);
 
 } // namespace blam::scn
