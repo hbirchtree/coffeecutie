@@ -88,6 +88,11 @@ class GatewayFleetRegistration final
      * gateway is actively routing browsers to this server. */
     bool Active() const;
 
+    /*! Gateway relay addresses whose browser session has ended since the
+     * last call. The gateway reuses relay ports, so a connection still
+     * open on one would swallow the next client's handshake. */
+    std::vector<SteamNetworkingIPAddr> TakeClosedRelays();
+
     /*! Sends an opaque metadata payload to the gateway over the persistent
      * /server-signal websocket. The gateway caps this at 4096 bytes and
      * exposes it via GET /metadata?server=<id>. Only valid once Active(). */
@@ -154,6 +159,7 @@ class GatewayFleetRegistration final
 
     std::mutex                                   m_relaysMutex;
     std::unordered_map<std::string, ClientRelay> m_relays;
+    std::vector<SteamNetworkingIPAddr>           m_closedRelays;
 
     std::string m_trackingId;
 

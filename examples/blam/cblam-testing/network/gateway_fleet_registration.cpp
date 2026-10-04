@@ -9,6 +9,7 @@
 #include <peripherals/stl/string/hexdump.h>
 
 #include <variant>
+#include <utility>
 #include <vector>
 
 #if !defined(COFFEE_WASM) && !defined(_WIN32)
@@ -460,8 +461,18 @@ void GatewayFleetRegistration::onClientRelay(
 
 void GatewayFleetRegistration::onClientRelayClosed(std::string const& sessionId)
 {
+    sockaddr_in target{};
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        target = m_gatewayAddr;
+    }
     std::lock_guard<std::mutex> lock(m_relaysMutex);
-    m_relays.erase(sessionId);
+    auto it = m_relays.find(sessionId);
+    if(it == m_relays.end())
+        return;
+    target.sin_port = htons(static_cast<uint16_t>(it->second.relayPort));
+    m_closedRelays.push_back(toSteamAddr(target));
+    m_relays.erase(it);
 }
 
 void GatewayFleetRegistration::pollRelayKeepalives()
@@ -487,6 +498,16 @@ void GatewayFleetRegistration::pollRelayKeepalives()
         sendRelayPunch(relayPort, kRelayPunchPayload);
 }
 #endif
+
+std::vector<SteamNetworkingIPAddr> GatewayFleetRegistration::TakeClosedRelays()
+{
+#if !defined(COFFEE_WASM) && !defined(_WIN32)
+    std::lock_guard<std::mutex> lock(m_relaysMutex);
+    return std::exchange(m_closedRelays, {});
+#else
+    return {};
+#endif
+}
 
 void GatewayFleetRegistration::Poll()
 {

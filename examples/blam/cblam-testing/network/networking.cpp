@@ -1591,7 +1591,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 for(auto& [connection, state] : m_connections)
                 {
                     if(state.invited)
+                    {
+                        send_single(
+                            connection,
+                            Message<MapVerify>({
+                                .fingerprint = m_fingerprint,
+                            }));
                         continue;
+                    }
                     send_single(connection, generate_game_join());
                     state.invited          = true;
                     state.loading_progress = 0;
@@ -2004,6 +2011,32 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_net_state.server_state  = NetworkState::ServerState::Listening;
     }
 
+#if defined(USE_WEBRTC_TRANSPORT)
+    void close_relayed_connections(
+        std::vector<SteamNetworkingIPAddr> const& relays)
+    {
+        for(auto const& relay : relays)
+        {
+            std::vector<HSteamNetConnection> stale;
+            for(auto const& [connection, _] : m_connections)
+            {
+                SteamNetConnectionInfo_t info;
+                if(m_impl->GetConnectionInfo(connection, &info) &&
+                   info.m_hListenSocket == m_socket &&
+                   info.m_addrRemote == relay)
+                    stale.push_back(connection);
+            }
+            for(auto connection : stale)
+            {
+                cDebug(
+                    "Gateway relay to {} closed, dropping its connection",
+                    client_name(connection));
+                server_close_peer_connection(connection, 0, false);
+            }
+        }
+    }
+#endif
+
     void stop_server()
     {
         m_impl->CloseListenSocket(m_socket);
@@ -2393,7 +2426,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         if(m_webrtcServer)
             m_webrtcServer->PollPendingAccepts();
         if(m_fleetRegistration)
+        {
             m_fleetRegistration->Poll();
+            close_relayed_connections(m_fleetRegistration->TakeClosedRelays());
+        }
 #endif
         if(m_spawn_queue)
             m_spawn_queue->poll();
@@ -2885,6 +2921,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 // entities Distance, visibility in frustum and projectile type
                 break;
             }
+            break;
+        }
+        case MessageBase::MapVerify: {
+            /* The server switched maps */
+            m_expected_fingerprint = payload.value<MapVerify>().fingerprint;
+            journal(
+                "net_map_expected",
+                {{"fingerprint", to_string(*m_expected_fingerprint)}});
             break;
         }
         case MessageBase::GameJoin: {
