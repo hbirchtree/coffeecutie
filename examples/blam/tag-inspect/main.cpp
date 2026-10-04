@@ -2129,6 +2129,13 @@ void dump_tag_data(blam::tag_index_view<Ver> const& index, blam::tag_t const& ta
             data.value(), sizeof(blam::scn::scenery)));
         break;
     }
+    case blam::tag_class_t::weap:
+    {
+        fmt::print("= bytes={}\n", sizeof(blam::scn::weapon));
+        hex_dump(gsl::span<libc_types::byte_t const>(
+            data.value(), sizeof(blam::scn::weapon)));
+        break;
+    }
     case blam::tag_class_t::ustr:
     {
         fmt::print("= bytes={}\n", 32);

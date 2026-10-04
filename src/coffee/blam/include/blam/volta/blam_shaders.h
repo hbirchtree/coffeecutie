@@ -528,12 +528,14 @@ struct alignas(4) shader_env : radiosity_properties /* aka senv */
         alpha_tested = 0x1, // If alpha-tested, use bump map alpha as alpha
         bump_map_is_specular_mask = 0x2,
         true_atmospheric_fog      = 0x4,
+        // TODO: See if there are unknown flags here
     };
     enum class env_shader_type : u16
     {
         normal,
         blended,
         blended_base_specular,
+        // TODO: Are there alternate types here?
     };
     enum class diffuse_flags : u32
     {

@@ -155,6 +155,29 @@ static_assert(sizeof(object) == 380);
 
 struct item : object
 {
+    enum class item_flags_t : u32
+    {
+        none = 0x0,
+        always_maintains_z_up   = 0x1,
+        destroyed_by_explosions = 0x2,
+        unaffected_by_gravity   = 0x4,
+    } flags;
+
+    /* Guerilla note:
+     * Sets which string from tags\ui\hud\hud_item_messages to display
+     */
+    scenario_ptr<ui::unicode_string_list> message_index;
+    i16 sort_order; // ???
+    f32 scale;
+    f32 hud_message_value_scale;
+    u32 inputs[4]; // yet to deduce the valuespace
+    tagref_typed_t<tag_class_t::foot> material_effect; // foot is guessed
+    tagref_typed_t<tag_class_t::snd> collision_sound;
+    Vecf2 detonation_delay;
+    tagref_typed_t<tag_class_t::effe> detonating_effect;
+    tagref_typed_t<tag_class_t::effe> detonated_effect;
+
+    u32 padding[20];
 };
 
 struct unit : object
