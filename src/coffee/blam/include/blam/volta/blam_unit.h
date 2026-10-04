@@ -82,6 +82,9 @@ enum class grenade_type_t : u16
     grenade_type_3,
 };
 
+/*! Played on weapon events; either kind will do */
+using sound_or_effect_t = tagref_typed_t<tag_class_t::snd, tag_class_t::effe>;
+
 /*! Which of the A-D functions something follows */
 enum class function_name_t : u16
 {
@@ -146,9 +149,14 @@ struct object
 
     struct attachment_t
     {
-        /* A light, light volume, contrail, particle system, effect or
-         * looping sound */
-        tagref_t              type;
+        tagref_typed_t<
+            tag_class_t::ligh,
+            tag_class_t::mgs2,
+            tag_class_t::cont,
+            tag_class_t::pctl,
+            tag_class_t::effe,
+            tag_class_t::lsnd>
+                              type;
         bl_string             marker; // model marker to attach to
         shader::animation_src primary_scale;
         shader::animation_src secondary_scale;
@@ -159,9 +167,14 @@ struct object
 
     struct widget_t
     {
-        /* An antenna, glow, light volume, lightning or flag */
-        tagref_t widget;
-        u32      padding[4];
+        tagref_typed_t<
+            tag_class_t::ant,
+            tag_class_t::glw,
+            tag_class_t::mgs2,
+            tag_class_t::elec,
+            tag_class_t::flag>
+            widget;
+        u32 padding[4];
     };
 
     struct function_t
@@ -428,15 +441,15 @@ struct unit : object
         f32                               pitch_rate;
         bl_string                         camera_marker_name;
         bl_string                         camera_submerged_marker_name;
-        f32                               pitch_auto_level;
+        angle_t                           pitch_auto_level;
         Vecf2                             pitch_range;
         reference<camera_track_t>         camera_tracks;
         reference<hud_interface_t>        hud_interfaces;
         u32                               padding3;
         i16                               hud_text_message_index;
         u16                               padding4;
-        f32                               yaw_minimum;
-        f32                               yaw_maximum;
+        angle_t                           yaw_minimum;
+        angle_t                           yaw_maximum;
         tagref_typed_t<tag_class_t::actv> built_in_gunner;
         u32                               padding5[5];
     };
@@ -448,11 +461,11 @@ struct unit : object
     tagref_typed_t<tag_class_t::effe> integrated_light_toggle_effect;
     unit_function_in_t                unit_inputs[4];
 
-    f32                       camera_field_of_view;
+    angle_t                   camera_field_of_view;
     f32                       camera_stiffness;
     bl_string                 camera_marker_name;
     bl_string                 camera_submerged_marker_name;
-    f32                       pitch_auto_level;
+    angle_t                   pitch_auto_level;
     Vecf2                     pitch_range;
     reference<camera_track_t> camera_tracks;
     Vecf3                     seat_acceleration_scale;
@@ -475,11 +488,11 @@ struct unit : object
     tagref_typed_t<tag_class_t::actv> spawned_actor;
     i16                               spawned_actor_count[2]; // min, max
     f32                               spawned_velocity;
-    f32                               aiming_velocity_maximum;
-    f32                               aiming_acceleration_maximum;
+    angle_t                           aiming_velocity_maximum;
+    angle_t                           aiming_acceleration_maximum;
     f32                               casual_aiming_modifier;
-    f32                               looking_velocity_maximum;
-    f32                               looking_acceleration_maximum;
+    angle_t                           looking_velocity_maximum;
+    angle_t                           looking_acceleration_maximum;
     u32                               padding3[2];
     f32                               ai_vehicle_radius;
     f32                               ai_danger_radius;
@@ -552,34 +565,34 @@ struct biped : unit
         bl_string marker_name;
     };
 
-    f32                              moving_turning_speed;
+    angle_t                          moving_turning_speed;
     biped_flags_t                    biped_flags;
-    f32                              stationary_turning_threshold;
+    angle_t                          stationary_turning_threshold;
     u32                              padding[4];
     biped_function_in_t              biped_inputs[4];
     tagref_typed_t<tag_class_t::jpt> dont_use;
 
-    f32 bank_angle;
-    f32 bank_apply_time;
-    f32 bank_decay_time;
-    f32 pitch_ratio;
-    f32 max_velocity;
-    f32 max_sidestep_velocity;
-    f32 acceleration;
-    f32 deceleration;
-    f32 angular_velocity_maximum;
-    f32 angular_acceleration_maximum;
-    f32 crouch_velocity_modifier;
-    u32 padding2[2];
+    angle_t bank_angle;
+    f32     bank_apply_time;
+    f32     bank_decay_time;
+    f32     pitch_ratio;
+    f32     max_velocity;
+    f32     max_sidestep_velocity;
+    f32     acceleration;
+    f32     deceleration;
+    angle_t angular_velocity_maximum;
+    angle_t angular_acceleration_maximum;
+    f32     crouch_velocity_modifier;
+    u32     padding2[2];
 
-    f32 maximum_slope_angle;
-    f32 downhill_falloff_angle;
-    f32 downhill_cutoff_angle;
-    f32 downhill_velocity_scale;
-    f32 uphill_falloff_angle;
-    f32 uphill_cutoff_angle;
-    f32 uphill_velocity_scale;
-    u32 padding3[6];
+    angle_t maximum_slope_angle;
+    angle_t downhill_falloff_angle;
+    angle_t downhill_cutoff_angle;
+    f32     downhill_velocity_scale;
+    angle_t uphill_falloff_angle;
+    angle_t uphill_cutoff_angle;
+    f32     uphill_velocity_scale;
+    u32     padding3[6];
 
     tagref_typed_t<tag_class_t::foot> footsteps;
     u32                               padding4[6];
@@ -738,17 +751,17 @@ struct vehicle : unit
     f32 fixed_gun_pitch;
     u32 padding4[6];
 
-    f32   ai_sideslip_distance;
-    f32   ai_destination_radius;
-    f32   ai_avoidance_distance;
-    f32   ai_pathfinding_radius;
-    f32   ai_charge_repeat_timeout;
-    f32   ai_strafing_abort_range;
-    Vecf2 ai_oversteering_bounds;
-    f32   ai_steering_maximum;
-    f32   ai_throttle_maximum;
-    f32   ai_move_position_time;
-    u32   padding5;
+    f32     ai_sideslip_distance;
+    f32     ai_destination_radius;
+    f32     ai_avoidance_distance;
+    f32     ai_pathfinding_radius;
+    f32     ai_charge_repeat_timeout;
+    f32     ai_strafing_abort_range;
+    Vecf2   ai_oversteering_bounds;
+    angle_t ai_steering_maximum;
+    f32     ai_throttle_maximum;
+    f32     ai_move_position_time;
+    u32     padding5;
 
     tagref_typed_t<tag_class_t::snd>  suspension_sound;
     tagref_typed_t<tag_class_t::snd>  crash_sound;
@@ -873,9 +886,8 @@ struct weapon : item
         f32     chamber_time;
         u32     padding3[6];
 
-        /* Sounds or effects */
-        tagref_t reloading_effect;
-        tagref_t chambering_effect;
+        sound_or_effect_t reloading_effect;
+        sound_or_effect_t chambering_effect;
 
         u32                          padding4[3];
         reference<magazine_object_t> magazine_objects;
@@ -886,10 +898,9 @@ struct weapon : item
         i16 shot_count[2]; // lower, upper
         u32 padding[8];
 
-        /* Sounds or effects */
-        tagref_t firing_effect;
-        tagref_t misfire_effect;
-        tagref_t empty_effect;
+        sound_or_effect_t firing_effect;
+        sound_or_effect_t misfire_effect;
+        sound_or_effect_t empty_effect;
 
         tagref_typed_t<tag_class_t::jpt> firing_damage;
         tagref_typed_t<tag_class_t::jpt> misfire_damage;
@@ -961,13 +972,13 @@ struct weapon : item
         u16                  padding4;
         f32                  charged_illumination;
         f32                  spew_time;
-        tagref_t             charging_effect; // sound or effect
+        sound_or_effect_t    charging_effect;
 
         distribution_function_t           distribution_function;
         i16                               projectiles_per_shot;
-        f32                               distribution_angle;
+        angle_t                           distribution_angle;
         u32                               padding5;
-        f32                               minimum_error;
+        angle_t                           minimum_error;
         Vecf2                             error_angle;
         Vecf3                             first_person_offset;
         u32                               padding6;
@@ -998,7 +1009,7 @@ struct weapon : item
     i16                      maximum_alternate_shots_loaded;
     weapon_function_in_t     weapon_inputs[4];
     f32                      ready_time;
-    tagref_t                 ready_effect; // sound or effect
+    sound_or_effect_t        ready_effect;
 
     f32 heat_recovery_threshold;
     f32 overheated_threshold;
@@ -1008,27 +1019,26 @@ struct weapon : item
     f32 heat_illumination;
     u32 padding[4];
 
-    /* Sounds or effects */
-    tagref_t overheated;
-    tagref_t overheat_detonation;
+    sound_or_effect_t overheated;
+    sound_or_effect_t overheat_detonation;
 
     tagref_typed_t<tag_class_t::jpt>  player_melee_damage;
     tagref_typed_t<tag_class_t::jpt>  player_melee_response;
     u32                               padding2[2];
     tagref_typed_t<tag_class_t::actv> actor_firing_parameters;
 
-    f32   near_reticle_range;
-    f32   far_reticle_range;
-    f32   intersection_reticle_range;
-    u16   padding3;
-    i16   zoom_levels;
-    Vecf2 zoom_magnification_range;
-    f32   autoaim_angle;
-    f32   autoaim_range;
-    f32   magnetism_angle;
-    f32   magnetism_range;
-    f32   deviation_angle;
-    u32   padding4;
+    f32     near_reticle_range;
+    f32     far_reticle_range;
+    f32     intersection_reticle_range;
+    u16     padding3;
+    i16     zoom_levels;
+    Vecf2   zoom_magnification_range;
+    angle_t autoaim_angle;
+    f32     autoaim_range;
+    angle_t magnetism_angle;
+    f32     magnetism_range;
+    angle_t deviation_angle;
+    u32     padding4;
 
     movement_penalized_t movement_penalized;
     u16                  padding5;
@@ -1042,9 +1052,8 @@ struct weapon : item
     f32 light_power_on_time;
     f32 light_power_off_time;
 
-    /* Sounds or effects */
-    tagref_t light_power_on_effect;
-    tagref_t light_power_off_effect;
+    sound_or_effect_t light_power_on_effect;
+    sound_or_effect_t light_power_off_effect;
 
     f32 age_heat_recovery_penalty;
     f32 age_rate_of_fire_penalty;

@@ -169,6 +169,9 @@ struct bl_string_var
 
 using bl_tag    = bl_string_var<4>;
 using bl_string = bl_string_var<32>;
+
+/*! Radians in the tag data (Guerilla shows degrees) */
+using angle_t   = f32;
 using bl_header = std::array<char, 4>;
 using bl_footer = std::array<char, 4>;
 
