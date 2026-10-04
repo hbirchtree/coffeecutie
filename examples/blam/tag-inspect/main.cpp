@@ -1177,6 +1177,281 @@ void dump_item(blam::scn::item const* item)
     fmt::print("    detonated_effect ={}\n", name_of(item->detonated_effect));
 }
 
+void dump_weapon(blam::scn::weapon const* weapon)
+{
+    dump_item(weapon);
+
+    using weapon_t = blam::scn::weapon;
+    fmt::print("  [weap]\n    label={} ", weapon->label.str());
+    print_flags("flags", weapon->weapon_flags);
+    print_enum("type", weapon->weapon_type);
+    print_enum("secondary_trigger", weapon->secondary_trigger_mode);
+    fmt::print("alternate_shots={}\n", weapon->maximum_alternate_shots_loaded);
+    print_inputs("inputs", weapon->weapon_inputs);
+    fmt::print(
+        "    ready time={:g} effect={}\n",
+        weapon->ready_time,
+        name_of(weapon->ready_effect));
+    fmt::print(
+        "    heat recovery={:g} overheated={:g} detonation={:g}/{:g} "
+        "loss_rate={:g} illumination={:g}\n",
+        weapon->heat_recovery_threshold,
+        weapon->overheated_threshold,
+        weapon->heat_detonation_threshold,
+        weapon->heat_detonation_fraction,
+        weapon->heat_loss_rate,
+        weapon->heat_illumination);
+    fmt::print(
+        "    overheated={} overheat_detonation={}\n",
+        name_of(weapon->overheated),
+        name_of(weapon->overheat_detonation));
+    fmt::print(
+        "    melee damage={} response={}\n",
+        name_of(weapon->player_melee_damage),
+        name_of(weapon->player_melee_response));
+    fmt::print(
+        "    actor_firing_parameters={}\n",
+        name_of(weapon->actor_firing_parameters));
+    fmt::print(
+        "    reticle near={:g} far={:g} intersection={:g} zoom levels={} "
+        "magnification={:g}\n",
+        weapon->near_reticle_range,
+        weapon->far_reticle_range,
+        weapon->intersection_reticle_range,
+        weapon->zoom_levels,
+        weapon->zoom_magnification_range);
+    fmt::print(
+        "    autoaim angle={:g} range={:g} magnetism angle={:g} range={:g} "
+        "deviation={:g}\n",
+        weapon->autoaim_angle,
+        weapon->autoaim_range,
+        weapon->magnetism_angle,
+        weapon->magnetism_range,
+        weapon->deviation_angle);
+    fmt::print("    ");
+    print_enum("movement_penalized", weapon->movement_penalized);
+    fmt::print(
+        "forward={:g} sideways={:g} min_target_range={:g} "
+        "looking_time={:g}\n",
+        weapon->forward_movement_penalty,
+        weapon->sideways_movement_penalty,
+        weapon->minimum_target_range,
+        weapon->looking_time_modifier);
+    fmt::print(
+        "    light on={:g} {} off={:g} {}\n",
+        weapon->light_power_on_time,
+        name_of(weapon->light_power_on_effect),
+        weapon->light_power_off_time,
+        name_of(weapon->light_power_off_effect));
+    fmt::print(
+        "    age heat_recovery={:g} rate_of_fire={:g} misfire start={:g} "
+        "chance={:g}\n",
+        weapon->age_heat_recovery_penalty,
+        weapon->age_rate_of_fire_penalty,
+        weapon->age_misfire_start,
+        weapon->age_misfire_chance);
+    fmt::print(
+        "    first_person model={} animations={}\n",
+        name_of(weapon->first_person_model),
+        name_of(weapon->first_person_animations));
+    fmt::print("    hud_interface={}\n", name_of(weapon->hud_interface));
+    fmt::print(
+        "    sounds pickup={} zoom_in={} zoom_out={}\n",
+        name_of(weapon->pickup_sound),
+        name_of(weapon->zoom_in_sound),
+        name_of(weapon->zoom_out_sound));
+    fmt::print(
+        "    active_camo ding={:g} regrowth={:g}\n",
+        weapon->active_camo_ding,
+        weapon->active_camo_regrowth_rate);
+
+    dump_block(
+        "magazines", weapon->magazines, [](weapon_t::magazine_t const& m) {
+            print_flags("flags", m.flags);
+            fmt::print(
+                "rounds recharged={} initial={} reserved={} loaded={} "
+                "reloaded={}\n",
+                m.rounds_recharged,
+                m.rounds_total_initial,
+                m.rounds_reserved_maximum,
+                m.rounds_loaded_maximum,
+                m.rounds_reloaded);
+            fmt::print(
+                "          reload={:g} {} chamber={:g} {}\n",
+                m.reload_time,
+                name_of(m.reloading_effect),
+                m.chamber_time,
+                name_of(m.chambering_effect));
+            auto objects = m.magazine_objects.data(g_magic);
+            if(objects.has_value())
+                for(auto const& o : objects.value())
+                    fmt::print(
+                        "          object rounds={} equipment={}\n",
+                        o.rounds,
+                        name_of(o.equipment));
+        });
+    dump_block("triggers", weapon->triggers, [](weapon_t::trigger_t const& t) {
+        print_flags("flags", t.flags);
+        fmt::print(
+            "rate_of_fire={:g} magazine={} rounds_per_shot={}\n",
+            t.maximum_rate_of_fire,
+            t.magazine,
+            t.rounds_per_shot);
+        fmt::print("          ");
+        print_enum("prediction", t.prediction_type);
+        print_enum("noise", t.firing_noise);
+        print_enum("overcharged", t.overcharged_action);
+        print_enum("distribution", t.distribution_function);
+        fmt::print(
+            "\n          projectile={} per_shot={} error={:g} "
+            "error_angle={:g}\n",
+            name_of(t.projectile),
+            t.projectiles_per_shot,
+            t.error,
+            t.error_angle);
+        fmt::print(
+            "          charging={:g} {} first_person_offset={:g}\n",
+            t.charging_time,
+            name_of(t.charging_effect),
+            t.first_person_offset);
+        auto effects = t.firing_effects.data(g_magic);
+        if(effects.has_value())
+            for(auto const& e : effects.value())
+                fmt::print(
+                    "          firing_effect shots={}..{} effect={} "
+                    "damage={}\n",
+                    e.shot_count[0],
+                    e.shot_count[1],
+                    name_of(e.firing_effect),
+                    name_of(e.firing_damage));
+    });
+}
+
+void dump_equipment(blam::scn::equipment const* equipment)
+{
+    dump_item(equipment);
+
+    fmt::print("  [eqip]\n    ");
+    print_enum("powerup", equipment->powerup_type);
+    print_enum("grenade", equipment->grenade_type);
+    fmt::print(
+        "powerup_time={:g} pickup_sound={}\n",
+        equipment->powerup_time,
+        name_of(equipment->pickup_sound));
+}
+
+void dump_material_effects(blam::scn::material_effects const* effects)
+{
+    using blam::scn::material_effects;
+    fmt::print("  [foot]\n");
+    dump_block(
+        "effects", effects->effects, [](material_effects::effect_t const& e) {
+            auto materials = e.materials.data(g_magic);
+            if(materials.has_error())
+            {
+                fmt::print("materials: <unreadable>\n");
+                return;
+            }
+            fmt::print("materials: {}\n", materials.value().size());
+            u32 i = 0;
+            for(auto const& m : materials.value())
+            {
+                auto material = static_cast<blam::scn::material_type_t>(i++);
+                if(!m.effect.valid() && !m.sound.valid())
+                    continue;
+                fmt::print(
+                    "          {:<22} effect={} sound={}\n",
+                    enum_name(material),
+                    name_of(m.effect),
+                    name_of(m.sound));
+            }
+        });
+}
+
+void dump_camera_track(blam::scn::camera_track const* track)
+{
+    fmt::print("  [trak]\n");
+    dump_block(
+        "control_points",
+        track->control_points,
+        [](blam::scn::camera_track::control_point_t const& c) {
+            fmt::print(
+                "position={:g} orientation={:g}\n", c.position, c.orientation);
+        });
+}
+
+void dump_damage_effect(blam::scn::damage_effect const* damage)
+{
+    fmt::print(
+        "  [jpt!]\n    radius={:g} cutoff_scale={:g} ",
+        damage->radius,
+        damage->cutoff_scale);
+    print_flags("flags", damage->flags);
+    fmt::print("\n    ");
+    print_enum("side_effect", damage->side_effect);
+    print_enum("category", damage->category);
+    print_flags("damage_flags", damage->damage_flags);
+    fmt::print(
+        "\n    damage aoe_core={:g} lower={:g} upper={:g} "
+        "vehicle_passthrough={:g} camo={:g}\n",
+        damage->aoe_core_radius,
+        damage->lower_bound,
+        damage->upper_bound,
+        damage->vehicle_passthrough_penalty,
+        damage->active_camouflage_damage);
+    fmt::print(
+        "    stun={:g} max={:g} time={:g} acceleration={:g}\n",
+        damage->stun,
+        damage->maximum_stun,
+        damage->stun_time,
+        damage->instantaneous_acceleration);
+    fmt::print("    screen_flash ");
+    print_enum("type", damage->screen_flash.type);
+    print_enum("priority", damage->screen_flash.priority);
+    fmt::print(
+        "duration={:g} intensity={:g} color={:g}\n",
+        damage->screen_flash.duration,
+        damage->screen_flash.maximum_intensity,
+        damage->screen_flash.color);
+    fmt::print(
+        "    vibrate low={:g}/{:g} high={:g}/{:g}\n",
+        damage->low_frequency_vibrate.frequency,
+        damage->low_frequency_vibrate.duration,
+        damage->high_frequency_vibrate.frequency,
+        damage->high_frequency_vibrate.duration);
+    fmt::print(
+        "    camera impulse duration={:g} rotation={:g} pushback={:g} "
+        "jitter={:g} permanent={:g}\n",
+        damage->temporary_camera_impulse.duration,
+        damage->temporary_camera_impulse.rotation,
+        damage->temporary_camera_impulse.pushback,
+        damage->temporary_camera_impulse.jitter,
+        damage->permanent_camera_impulse_angle);
+    fmt::print(
+        "    camera shaking duration={:g} translation={:g} rotation={:g} ",
+        damage->camera_shaking.duration,
+        damage->camera_shaking.random_translation,
+        damage->camera_shaking.random_rotation);
+    print_enum("wobble", damage->camera_shaking.wobble_function);
+    fmt::print("\n    sound={}\n", name_of(damage->sound));
+    fmt::print(
+        "    breaking forward={:g}/{:g}/{:g} outward={:g}/{:g}/{:g}\n",
+        damage->breaking_effect_forward.velocity,
+        damage->breaking_effect_forward.radius,
+        damage->breaking_effect_forward.exponent,
+        damage->breaking_effect_outward.velocity,
+        damage->breaking_effect_outward.radius,
+        damage->breaking_effect_outward.exponent);
+    fmt::print("    material modifiers:");
+    for(u32 i = 0; i < blam::scn::material_type_count; ++i)
+        fmt::print(
+            "{}{}={:g}",
+            i % 6 == 0 ? "\n      " : " ",
+            enum_name(static_cast<blam::scn::material_type_t>(i)),
+            damage->material_modifiers[i]);
+    fmt::print("\n");
+}
+
 void dump_unit(blam::scn::unit const* unit)
 {
     dump_object(unit);
@@ -2624,11 +2899,29 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         if(auto* info = header_of((blam::scn::vehicle*)nullptr))
             dump_vehicle(info);
         break;
-    case blam::tag_class_t::garb:
     case blam::tag_class_t::weap:
+        if(auto* info = header_of((blam::scn::weapon*)nullptr))
+            dump_weapon(info);
+        break;
     case blam::tag_class_t::eqip:
+        if(auto* info = header_of((blam::scn::equipment*)nullptr))
+            dump_equipment(info);
+        break;
+    case blam::tag_class_t::garb:
         if(auto* info = header_of((blam::scn::item*)nullptr))
             dump_item(info);
+        break;
+    case blam::tag_class_t::foot:
+        if(auto* info = header_of((blam::scn::material_effects*)nullptr))
+            dump_material_effects(info);
+        break;
+    case blam::tag_class_t::trak:
+        if(auto* info = header_of((blam::scn::camera_track*)nullptr))
+            dump_camera_track(info);
+        break;
+    case blam::tag_class_t::jpt:
+        if(auto* info = header_of((blam::scn::damage_effect*)nullptr))
+            dump_damage_effect(info);
         break;
     /* The rest of what derives from obje stops at the object header */
     case blam::tag_class_t::scen:
