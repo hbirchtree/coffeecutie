@@ -1042,7 +1042,7 @@ void dump_object(blam::scn::object const* obj)
     fmt::print("    collider   ={}\n", name_of(obj->collider));
     fmt::print("    physics    ={}\n", name_of(obj->physics));
     fmt::print("    shader     ={}\n", name_of(obj->shader));
-    fmt::print("    effect     ={}\n", name_of(obj->effect));
+    fmt::print("    effect     ={}\n", name_of(obj->creation_effect));
     fmt::print(
         "    hud_msg={} shader_perm={}\n",
         obj->export_.hud_msg.index,
@@ -2106,6 +2106,27 @@ void dump_tag_data(blam::tag_index_view<Ver> const& index, blam::tag_t const& ta
         fmt::print("= bytes={}\n", sizeof(blam::ui_item_collection));
         hex_dump(gsl::span<libc_types::byte_t const>(
             data.value(), sizeof(blam::ui_item_collection)));
+        break;
+    }
+    case blam::tag_class_t::bipd:
+    {
+        fmt::print("= bytes={}\n", sizeof(blam::scn::biped));
+        hex_dump(gsl::span<libc_types::byte_t const>(
+            data.value(), sizeof(blam::scn::biped)));
+        break;
+    }
+    case blam::tag_class_t::vehi:
+    {
+        fmt::print("= bytes={}\n", sizeof(blam::scn::vehicle));
+        hex_dump(gsl::span<libc_types::byte_t const>(
+            data.value(), sizeof(blam::scn::vehicle)));
+        break;
+    }
+    case blam::tag_class_t::scen:
+    {
+        fmt::print("= bytes={}\n", sizeof(blam::scn::scenery));
+        hex_dump(gsl::span<libc_types::byte_t const>(
+            data.value(), sizeof(blam::scn::scenery)));
         break;
     }
     case blam::tag_class_t::ustr:

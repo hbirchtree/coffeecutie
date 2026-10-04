@@ -1,13 +1,14 @@
 #pragma once
 
-#include "blam/volta/blam_tag_classes.h"
-#include "blam/volta/blam_tag_ref.h"
-#include "blam/volta/hsc/bytecode_common_v12.h"
+#include "blam_tag_classes.h"
+#include "blam_tag_ref.h"
+#include "hsc/bytecode_common_v12.h"
 #include "blam_base_types.h"
 #include "blam_bsp_structures.h"
+#include "blam_domain_ptrs.h"
+#include "blam_unit.h"
 #include "blam_file_header.h"
 #include "blam_magic_data.h"
-#include "blam_mod2.h"
 #include "blam_recorded_animation.h"
 #include "blam_reference.h"
 #include "blam_tag_index.h"
@@ -56,211 +57,10 @@ union local_actor_type
     }
 };
 
-// Commonly shared enums
-enum class gamemode_t : u16
-{
-    none,
-    ctf,
-    slayer,
-    oddball,
-    king_of_the_hill,
-    race,
-    terminator,
-    stub,
-    ignored1,
-    ignored2,
-    ignored3,
-    ignored4,
-    all_games,
-    all_except_ctf,
-    all_except_race_ctf,
-};
-
-
-enum class object_type : u16
-{
-    biped,
-    vehicle,
-    weapon,
-    equipment,
-    garbage,
-    projectile,
-    scenery,
-    machine,
-    control,
-    light_fixture,
-    placeholder,
-    sound_scenery,
-};
-
-enum class object_flags : u16
-{
-    no_shadow                  = 0x1,
-    transparent_self_occlusion = 0x2,
-    bright = 0x4, /* "Brighter than it should be", as in unshaded? */
-    not_pathfinding_obstacle = 0x8,
-};
-
-// Forward decls
-struct hud_msg;
-
-// Ptr types around i16
-template<typename T>
-struct palette_ptr
-{
-    // Within a reflex_group<T>, points from instance to palette
-    i16 index;
-
-    operator i16() const
-    {
-        return index;
-    }
-};
-
-template<typename T>
-struct scenario_ptr
-{
-    // Within any scenario data, points to a scenario list
-    i16 index;
-
-    operator i16() const
-    {
-        return index;
-    }
-};
-
-struct bsp_ptr
-{
-    // Points to a scenario BSP section
-    i16 index;
-
-    operator i16() const
-    {
-        return index;
-    }
-};
-
-struct object
-{
-    object_type                       type;
-    object_flags                      flags;
-    f32                               bound_radius;
-    Vecf3                             bound_offset;
-    Vecf3                             origin_offset;
-    f32                               acceleration_scale;
-    u32                               padding_;
-    tagref_typed_t<tag_class_t::mod2> model;
-    tagref_typed_t<tag_class_t::antr> anim_graph;
-    u32                               padding2[10];
-    tagref_typed_t<tag_class_t::coll> collider;
-    tagref_typed_t<tag_class_t::pphy> physics;
-    tagref_typed_t<tag_class_t::shdr> shader;
-    tagref_typed_t<tag_class_t::effe> effect;
-    f32                               render_bound_radius;
-
-    struct
-    {
-        u32                        inputs[4];
-        scenario_ptr<scn::hud_msg> hud_msg;
-        mod2::model_ptr<tagref_t>  shader_perm;
-    } export_;
-};
-
 struct object_name
 {
     bl_string name;
     u32       unknown;
-};
-
-struct item : object
-{
-    struct attachment_t
-    {
-        tagref_t                      type;
-        mod2::model_ptr<mod2::marker> marker; // pointing into model markers
-        u32                           primary_scale;
-        u32                           second_scale;
-        u32                           change_color;
-    };
-
-    reference<attachment_t> attachments;
-};
-
-struct unit : object
-{
-    struct color_perm_t
-    {
-        f32   weight;
-        Vecf3 lower_bound;
-        Vecf3 upper_bound;
-    };
-
-    struct change_color_t
-    {
-        shader::param_src darken_by;
-        shader::param_src scale_by;
-
-        enum scale_flags_t : u32
-        {
-            none         = 0x0,
-            blend_in_hsv = 0x1,
-            more_hues    = 0x2,
-        } scale_flags;
-
-        Vecf3                   lower_bound;
-        Vecf3                   upper_bound;
-        reference<color_perm_t> permutations;
-    };
-
-    u32 padding[39];
-
-    reference<change_color_t> change_colors;
-};
-
-/*! Camera and collision sizes, which sit past the object and unit blocks
- *  (only partly decoded above), so they are read from the tag directly */
-// TODO: Decode object, unit and biped in full (380, 752 and 1268 bytes in
-// the tag) so biped's fields can be read as members, then drop this
-struct biped_dimensions
-{
-    static constexpr u32 tag_offset = 0x400;
-
-    f32 standing_camera_height;
-    f32 crouching_camera_height;
-    f32 crouch_transition_time;
-    u32 padding[6];
-    f32 standing_collision_height;
-    f32 crouching_collision_height;
-    f32 collision_radius;
-};
-
-static_assert(offsetof(biped_dimensions, standing_collision_height) == 0x24);
-static_assert(offsetof(biped_dimensions, collision_radius) == 0x2c);
-
-struct biped : unit
-{
-    biped_dimensions const& dimensions() const
-    {
-        return *reinterpret_cast<biped_dimensions const*>(
-            reinterpret_cast<char const*>(this) + biped_dimensions::tag_offset);
-    }
-};
-
-struct vehicle : unit
-{
-};
-
-/* ... Need to figure out a common name for these... */
-struct scenery : unit
-{
-};
-
-struct weapon : item
-{
-};
-
-struct equipment : item
-{
 };
 
 struct alignas(4) object_spawn
