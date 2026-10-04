@@ -366,66 +366,6 @@ struct unit : object
         large,
     };
 
-    enum class metagame_type_t : u16
-    {
-        brute,
-        grunt,
-        jackal,
-        skirmisher,
-        marine,
-        spartan,
-        bugger,
-        hunter,
-        flood_infection,
-        flood_carrier,
-        flood_combat,
-        flood_pure,
-        sentinel,
-        elite,
-        engineer,
-        mule,
-        turret,
-        mongoose,
-        warthog,
-        scorpion,
-        hornet,
-        pelican,
-        revenant,
-        seraph,
-        shade,
-        watchtower,
-        ghost,
-        chopper,
-        mauler,
-        wraith,
-        banshee,
-        phantom,
-        scarab,
-        guntower,
-        tuning_fork,
-        broadsword,
-        mammoth,
-        lich,
-        mantis,
-        wasp,
-        phaeton,
-        bishop,
-        knight,
-        pawn,
-    };
-
-    enum class metagame_class_t : u16
-    {
-        infantry,
-        leader,
-        hero,
-        specialist,
-        light_vehicle,
-        heavy_vehicle,
-        giant_vehicle,
-        standard_vehicle,
-    };
-
     enum class grenade_type_t : u16
     {
         human_fragmentation,
@@ -554,9 +494,8 @@ struct unit : object
     tagref_typed_t<tag_class_t::jpt>  melee_damage;
     blip_size_t                       motion_sensor_blip_size;
     u16                               padding4;
-    metagame_type_t                   metagame_type;
-    metagame_class_t                  metagame_class;
-    u32                               padding5[2];
+    u16 padding5[2]; // MCC: metagame type and class, for CEA scoring
+    u32 padding6[2];
 
     reference<hud_interface_t>    hud_interfaces;
     reference<dialogue_variant_t> dialogue_variants;
