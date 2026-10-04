@@ -219,6 +219,8 @@ struct unit : object
 
 /*! Camera and collision sizes, which sit past the object and unit blocks
  *  (only partly decoded above), so they are read from the tag directly */
+// TODO: Decode object, unit and biped in full (380, 752 and 1268 bytes in
+// the tag) so biped's fields can be read as members, then drop this
 struct biped_dimensions
 {
     static constexpr u32 tag_offset = 0x400;
