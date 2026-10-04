@@ -1241,8 +1241,6 @@ void dump_unit(blam::scn::unit const* unit)
         name_of(unit->melee_damage));
     fmt::print("    ");
     print_enum("blip_size", unit->motion_sensor_blip_size);
-    print_enum("metagame_type", unit->metagame_type);
-    print_enum("metagame_class", unit->metagame_class);
     fmt::print("\n    grenades velocity={:g} ", unit->grenade_velocity);
     print_enum("type", unit->grenade_type);
     fmt::print("count={}\n", unit->grenade_count);
