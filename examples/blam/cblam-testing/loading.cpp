@@ -1468,15 +1468,14 @@ struct ResourceLoader
             biped_model = {.load_generation = files.load_generation};
             if(auto const* biped = player_biped(files))
             {
-                auto const& dims  = biped->dimensions();
                 biped_model.model = biped->model;
-                if(dims.collision_radius > 0.f &&
-                   dims.standing_collision_height > 0.f &&
-                   dims.standing_camera_height > 0.f)
+                if(biped->collision_radius > 0.f &&
+                   biped->standing_collision_height > 0.f &&
+                   biped->standing_camera_height > 0.f)
                     biped_model.shape = {
-                        .radius     = dims.collision_radius,
-                        .height     = dims.standing_collision_height,
-                        .eye_height = dims.standing_camera_height,
+                        .radius     = biped->collision_radius,
+                        .height     = biped->standing_collision_height,
+                        .eye_height = biped->standing_camera_height,
                     };
                 else
                     cWarning("Biped has no collision size, using defaults");
