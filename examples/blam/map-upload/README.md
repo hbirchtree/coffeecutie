@@ -47,10 +47,18 @@ Only the first 2 KiB of a file is read for this (`blam_upload_identify()` in
   at the header's `meta_offset`. As in `blam::dimeter::map_container`, its
   group table pointer is a virtual address on Xbox and a small offset on
   Vista. Halo 2 maps are stored as they are; when no tag index is found
-  there (a compressed map, say), the file is skipped. `shared.map`,
-  `single_player_shared.map` and `mainmenu.map` are regular Halo 2 cache
-  files and are stored like any other map. BlamGraphics does not load
-  Halo 2 maps, so this only puts them in storage for now.
+  there (a compressed map, say), the file is skipped. BlamGraphics does not
+  load Halo 2 maps, so this only puts them in storage for now.
+- **Halo 2 `mainmenu.map`, `shared.map` and `single_player_shared.map`**
+  exist for both Xbox and Vista, and every Halo 2 map reads raw data from
+  them by those names in its own directory (see `dimeter-info`). They are
+  recognised by the header's `map_type` (`blam::dimeter::cache_type_t` 2, 3
+  and 4) and stored under those names, whatever the files were called.
+  `shared.map` may carry too little tag data for the Xbox/Vista check. In
+  that case `map_type` is read at both layouts' offsets (0x140 Xbox, 0x14C
+  Vista) and trusted only when exactly one of them reads as one of these
+  files, and the file goes under the prefix of the Halo 2 maps dropped with
+  it, or the one picked on the page.
 - **Trial maps** have the scrambled `Ehed`/`Gfot` header
   (`blam::file_header_trial_t`).
 - **`bitmaps.map`, `sounds.map` and `loc.map`** have no map header. They

@@ -58,9 +58,10 @@ struct upload_info_t
     u32  decomp_len;
     char name[36];
     u32  index_offset; /*!< Halo 2: where blam_upload_identify_halo2() reads */
+    i32  cache_type;   /*!< Halo 2: blam::dimeter::cache_type_t, or -1 */
 };
 
-static_assert(sizeof(upload_info_t) == 52);
+static_assert(sizeof(upload_info_t) == 56);
 
 upload_info_t info{};
 /* Halo 2 header kept between the two identify calls */
@@ -143,6 +144,36 @@ void copy_name(Header const& header)
         std::min(sizeof(info.name) - 1, ::strnlen(name.data(), name.size())));
 }
 
+bool is_global_cache_file(blam::dimeter::cache_type_t type)
+{
+    using blam::dimeter::cache_type_t;
+    return type == cache_type_t::mainmenu || type == cache_type_t::shared ||
+           type == cache_type_t::single_player_shared;
+}
+
+/* Halo 2 maps load raw data from mainmenu.map, shared.map and
+ * single_player_shared.map next to them, by name. Xbox and Vista each have
+ * their own, and shared.map in particular may carry little tag data to tell
+ * the layouts apart by. When the layout is unknown, map_type is still worth
+ * reporting, so the page can file them with the other Halo 2 maps it was
+ * given. It sits at 0x140 on Xbox and 0x14C on Vista; only a value that
+ * reads as one of these files at exactly one of the two is trusted. */
+i32 unresolved_cache_type()
+{
+    using namespace blam::dimeter;
+    auto const* xbox =
+        reinterpret_cast<file_header_xbox_t const*>(halo2_header.data());
+    auto const* vista =
+        reinterpret_cast<file_header_vista_t const*>(halo2_header.data());
+    auto const as_xbox  = blam::from_le(xbox->map_type);
+    auto const as_vista = blam::from_le(vista->map_type);
+    bool const xbox_ok  = is_global_cache_file(as_xbox);
+    bool const vista_ok = is_global_cache_file(as_vista);
+    if(xbox_ok == vista_ok)
+        return -1;
+    return static_cast<i32>(xbox_ok ? as_xbox : as_vista);
+}
+
 /* Halo 2 maps have the same "head"/"foot" header, with version 8. Xbox and
  * Vista lay the rest of it out differently, which only shows in the tag
  * index at meta_offset, so that is read separately. */
@@ -157,7 +188,8 @@ bool halo2_header_of(semantic::BytesConst const& data, u32 file_size)
         return false;
 
     std::memcpy(halo2_header.data(), data.data, halo2_header.size());
-    info.kind = static_cast<i32>(kind_t::halo2);
+    info.kind       = static_cast<i32>(kind_t::halo2);
+    info.cache_type = unresolved_cache_type();
     /* meta_offset sits at the same place in both layouts */
     auto meta_offset = blam::from_le(header->meta_offset);
     if(u64{meta_offset} + sizeof(tag_index_t) <= file_size)
@@ -199,8 +231,9 @@ extern "C" {
 EMSCRIPTEN_KEEPALIVE upload_info_t const* blam_upload_identify(
     char const* data, u32 size, u32 file_size)
 {
-    info      = {};
-    auto head = semantic::BytesConst::of(
+    info            = {};
+    info.cache_type = -1;
+    auto head       = semantic::BytesConst::of(
         reinterpret_cast<libc_types::u8 const*>(data), size);
 
     if(auto header = map_header(head))
@@ -226,7 +259,8 @@ EMSCRIPTEN_KEEPALIVE upload_info_t const* blam_upload_identify(
  * \brief Finish identifying a Halo 2 map from the 32-byte tag index read at
  * info.index_offset. Same rule as blam::dimeter::map_container: the group
  * table pointer is a virtual address on Xbox, and a small offset relative to
- * the index on Vista. The kind stays halo2 when no tag index is found there.
+ * the index on Vista. The kind stays halo2 when no tag index is found there,
+ * and cache_type then keeps what unresolved_cache_type() made of it.
  */
 EMSCRIPTEN_KEEPALIVE upload_info_t const* blam_upload_identify_halo2(
     char const* data, u32 size)
@@ -246,12 +280,15 @@ EMSCRIPTEN_KEEPALIVE upload_info_t const* blam_upload_identify_halo2(
     if(blam::from_le(index.group_table_pointer) <
        blam::from_le(xbox->meta_size))
     {
-        info.kind = static_cast<i32>(kind_t::halo2_vista);
-        copy_name(
-            *reinterpret_cast<file_header_vista_t const*>(halo2_header.data()));
+        auto const* vista =
+            reinterpret_cast<file_header_vista_t const*>(halo2_header.data());
+        info.kind       = static_cast<i32>(kind_t::halo2_vista);
+        info.cache_type = static_cast<i32>(blam::from_le(vista->map_type));
+        copy_name(*vista);
     } else
     {
-        info.kind = static_cast<i32>(kind_t::halo2_xbox);
+        info.kind       = static_cast<i32>(kind_t::halo2_xbox);
+        info.cache_type = static_cast<i32>(blam::from_le(xbox->map_type));
         copy_name(*xbox);
     }
     return &info;

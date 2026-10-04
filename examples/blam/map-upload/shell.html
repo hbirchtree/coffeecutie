@@ -340,6 +340,18 @@
         <option value="mcc">/mcc/ (MCC)</option>
       </select>
     </div>
+    <div class="options">
+      <label for="halo2-target">
+        When Xbox and Vista cannot be told apart, store Halo 2
+        <code>shared.map</code>, <code>single_player_shared.map</code> and
+        <code>mainmenu.map</code> under
+      </label>
+      <select id="halo2-target">
+        <option value="auto">the Halo 2 maps dropped with them</option>
+        <option value="h2xbox">/h2xbox/ (Halo 2 Xbox)</option>
+        <option value="h2vista">/h2vista/ (Halo 2 Vista)</option>
+      </select>
+    </div>
   </section>
 
   <section class="content">
@@ -405,6 +417,14 @@
   const BLAMG_PREFIXES = ['pc', 'custom', 'xbox', 'mcc'];
   /* Halo CE prefixes that have resource maps */
   const RESOURCE_PREFIXES = ['pc', 'custom', 'mcc'];
+  const HALO2_PREFIXES = ['h2xbox', 'h2vista'];
+  /* Halo 2 maps read raw data from these next to them, by name
+   * (blam::dimeter::cache_type_t in the header's map_type) */
+  const HALO2_CACHE_FILES = {
+    2: 'mainmenu.map',
+    3: 'shared.map',
+    4: 'single_player_shared.map',
+  };
 
   /* Keep in sync with kind_t in main.cpp */
   const KIND_HALO2_UNRESOLVED = 9;
@@ -432,6 +452,7 @@
   const picker = document.getElementById('picker');
   const results = document.getElementById('results');
   const resourceTarget = document.getElementById('resource-target');
+  const halo2Target = document.getElementById('halo2-target');
   const runtimeStatus = document.getElementById('runtime-status');
 
   let ready = false;
@@ -494,13 +515,14 @@
 
   /* upload_info_t in main.cpp */
   function readInfo(info) {
-    const view = new DataView(Module.HEAPU8.buffer, info, 52);
+    const view = new DataView(Module.HEAPU8.buffer, info, 56);
     return {
       kind: view.getInt32(0, true),
       compressed: view.getInt32(4, true) !== 0,
       decompLen: view.getUint32(8, true),
       name: cString(info + 12, 36),
       indexOffset: view.getUint32(48, true),
+      cacheType: view.getInt32(52, true),
     };
   }
 
@@ -648,6 +670,24 @@
     };
   }
 
+  /* Halo 2's global cache files whose layout the tag index did not settle
+   * go with the Halo 2 maps dropped alongside them, or wherever the user
+   * picked */
+  function halo2Prefix(batch) {
+    if (halo2Target.value !== 'auto')
+      return { prefix: halo2Target.value };
+    const prefixes = new Set(batch
+      .map(item => item.kind.prefix)
+      .filter(prefix => HALO2_PREFIXES.includes(prefix)));
+    if (prefixes.size === 1)
+      return { prefix: [...prefixes][0] };
+    return {
+      error: prefixes.size
+        ? 'Both Xbox and Vista Halo 2 maps dropped together, pick a target above and drop this again'
+        : 'No Halo 2 map dropped with it to tell Xbox from Vista, pick a target above and drop this again',
+    };
+  }
+
   async function upload(files) {
     if (busy || !ready || !files.length)
       return;
@@ -665,8 +705,15 @@
         }
         try {
           const info = await identify(file);
-          const kind = KINDS[info.kind] || KINDS[0];
+          let kind = KINDS[info.kind] || KINDS[0];
+          const cacheFile = HALO2_CACHE_FILES[info.cacheType];
+          if (info.kind === KIND_HALO2_UNRESOLVED && cacheFile)
+            kind = { label: 'Halo 2 map, Xbox or Vista unknown', halo2CacheFile: cacheFile };
+          else if (kind.prefix && HALO2_PREFIXES.includes(kind.prefix) && cacheFile)
+            kind = { ...kind, halo2CacheFile: cacheFile };
           let detected = kind.label;
+          if (kind.halo2CacheFile)
+            detected += `, ${kind.halo2CacheFile}`;
           if (info.name)
             detected += ` (${info.name})`;
           if (kind.prefix && info.compressed)
@@ -679,12 +726,21 @@
       }
 
       const resources = resourcePrefix(batch);
+      const halo2Files = halo2Prefix(batch);
       let stored = 0;
 
       for (const { file, info, kind, set } of batch) {
         let key;
-        if (kind.prefix) {
+        if (kind.prefix && kind.halo2CacheFile) {
+          key = `/${kind.prefix}/${kind.halo2CacheFile}`;
+        } else if (kind.prefix) {
           key = mapKey(kind.prefix, file.name);
+        } else if (kind.halo2CacheFile) {
+          if (halo2Files.error) {
+            set(undefined, '', halo2Files.error, 'warn');
+            continue;
+          }
+          key = `/${halo2Files.prefix}/${kind.halo2CacheFile}`;
         } else if (kind.resource) {
           if (resources.error) {
             set(undefined, '', resources.error, 'warn');
