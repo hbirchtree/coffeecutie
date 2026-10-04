@@ -8,6 +8,8 @@
 #include "blam_strings.h"
 #include "blam_tag_ref.h"
 
+#include <peripherals/enum/helpers.h>
+
 namespace blam::scn {
 
 // Forward decls
@@ -58,6 +60,8 @@ enum class object_flags : u16
     cast_shadow_by_default   = 0x20,
     no_anniversary_geometry  = 0x40,
 };
+
+C_FLAGS(object_flags, u16)
 
 /*! Which of the A-D functions something follows */
 enum class function_name_t : u16
