@@ -993,8 +993,11 @@ struct DrawListBuilder
                 p.template select<SubModel, DrawState, MeshTrackingData>())
             {
                 auto&& [model, model_draw, track] = ent.components();
+                auto const* mod_ptr = p.template get<Model>(model.parent);
+                if(!mod_ptr)
+                    continue;
                 auto         parent = p.template ref<Proxy>(model.parent);
-                Model const& mod    = parent.template get<Model>();
+                Model const& mod    = *mod_ptr;
 
                 if(!parent.template get<Visibility>().visible_for(m_seat) ||
                    (!rendering_params->render_scenery &&
@@ -1112,8 +1115,11 @@ struct DrawListBuilder
             if(!followable(track.model_id))
                 continue;
 
+            auto const* model_ptr = p.template get<Model>(smodel.parent);
+            if(!model_ptr)
+                continue;
             auto         parent = p.template ref<Proxy>(smodel.parent);
-            Model const& model  = parent.template get<Model>();
+            Model const& model  = *model_ptr;
 
             Pass& pass = model_build()[sm_draw.current_pass];
             if(track.model_id.bucket >= pass.draws.size())
@@ -1199,9 +1205,10 @@ struct DrawListBuilder
             if(track.model_id.draw >= bucket.size())
                 continue;
 
-            auto parent = p.template ref<Proxy>(smodel.parent);
-            u32  bones =
-                model_cache->bone_count(parent.template get<Model>().model);
+            auto const* parent_model = p.template get<Model>(smodel.parent);
+            if(!parent_model)
+                continue;
+            u32 bones = model_cache->bone_count(parent_model->model);
             if(bones == 0)
                 continue;
 
@@ -1209,7 +1216,7 @@ struct DrawListBuilder
                 .pass     = static_cast<u16>(sm_draw.current_pass),
                 .bucket   = track.model_id.bucket,
                 .parent   = smodel.parent,
-                .model    = parent.template get<Model>().model,
+                .model    = parent_model->model,
                 .instance = static_cast<u32>(
                     bucket.at(track.model_id.draw).instances.offset +
                     track.model_id.instance),
@@ -3039,8 +3046,11 @@ struct LegacyMeshRenderer
         for(auto ent : p.template select<SubModel, DrawState>())
         {
             auto const& [sm, sm_draw] = ent.components();
-            auto         parent       = p.template ref<Proxy>(sm.parent);
-            Model const& mod          = parent.template get<Model>();
+            auto const* mod_ptr = p.template get<Model>(sm.parent);
+            if(!mod_ptr)
+                continue;
+            auto         parent = p.template ref<Proxy>(sm.parent);
+            Model const& mod    = *mod_ptr;
             if(!parent.template get<Visibility>().visible_for(0) ||
                !sm.shader.valid())
                 continue;
