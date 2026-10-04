@@ -47,6 +47,7 @@ coffee_application(
         network/networking.cpp
         network/webrtc_identity.cpp
         network/webrtc_signaling.cpp
+        offline_maps.cpp
         physics.cpp
         render/occluder.cpp
         render/rendering.cpp
@@ -93,6 +94,17 @@ target_compile_definitions(BlamGraphics
 
 if(TARGET Net)
   target_link_libraries(BlamGraphics PUBLIC Net)
+endif()
+if(EMSCRIPTEN)
+  # Lists maps uploaded to IndexedDB by BlamMapUpload before main() runs
+  target_link_options(BlamGraphics PUBLIC
+    -sFETCH
+    --pre-js=${CMAKE_CURRENT_SOURCE_DIR}/offline_maps_preload.js
+  )
+  set_property(
+    TARGET BlamGraphics APPEND
+    PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/offline_maps_preload.js
+  )
 endif()
 if(TARGET DiscordLatte)
     target_link_libraries(BlamGraphics PUBLIC DiscordLatte)

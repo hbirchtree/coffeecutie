@@ -5,6 +5,7 @@
 #include "components.h"
 #include "data.h"
 #include "network/networking.h"
+#include "offline_maps.h"
 #include "physics.h"
 #include "resource_creation.h"
 #include "selected_version.h"
@@ -43,7 +44,9 @@ static void filter_maps(std::vector<platform::file::file_entry_t>& files)
         Path filepath(file.name.data());
         if(filepath.extension() != "map")
             return true;
-        return file.name.find("bitmaps") != std::string::npos;
+        /* Resource maps, not playable ones */
+        return file.name.find("bitmaps") != std::string::npos ||
+               file.name == "sounds.map" || file.name == "loc.map";
     });
 }
 
@@ -394,7 +397,20 @@ static MapListingEvent list_maps(
     listing.sound_file =
         (listing.directory.path() / "sounds.map").url(listing.directory.flags);
 
-    if(auto maps_ = platform::file::list(listing.directory); maps_.has_error())
+    auto maps_ = platform::file::list(listing.directory);
+    if(maps_.has_error())
+    {
+        /* Uploaded maps are in IndexedDB, not in the virtual filesystem */
+        auto offline = offline_maps::list(listing.directory.internUrl);
+        if(!offline.empty())
+        {
+            std::vector<platform::file::file_entry_t> entries;
+            for(auto& name : offline)
+                entries.push_back({.name = std::move(name)});
+            maps_ = stl_types::success(std::move(entries));
+        }
+    }
+    if(maps_.has_error())
     {
         cDebug("Failed to list maps: {0}", maps_.error());
     } else

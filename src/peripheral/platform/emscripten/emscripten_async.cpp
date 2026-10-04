@@ -6,6 +6,9 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/fetch.h>
 
+#include <mutex>
+#include <vector>
+
 namespace platform::file::emscripten {
 
 static void sync_storage(semantic::RSCA storage)
@@ -37,6 +40,24 @@ void notify_file_close(int fd)
         sync_storage(it->second);
         fd_tracking.erase(it);
     }
+}
+
+static std::mutex               offline_prefixes_lock;
+static std::vector<std::string> offline_prefixes;
+
+void add_offline_prefix(std::string prefix)
+{
+    std::lock_guard _(offline_prefixes_lock);
+    offline_prefixes.push_back(std::move(prefix));
+}
+
+bool is_offline_url(std::string_view url)
+{
+    std::lock_guard _(offline_prefixes_lock);
+    for(auto const& prefix : offline_prefixes)
+        if(url.starts_with(prefix))
+            return true;
+    return false;
 }
 
 struct promise_data_t
@@ -90,8 +111,12 @@ std::future<posix::mem_mapping_t> mmap_async(Url const& file)
     emscripten_fetch_attr_t attrs;
     emscripten_fetch_attr_init(&attrs);
     strncpy(attrs.requestMethod, "GET", 3);
+    /* Without EMSCRIPTEN_FETCH_REPLACE, Fetch looks in IndexedDB first.
+     * NO_DOWNLOAD turns a cache miss into an error rather than an XHR. */
     attrs.attributes =
-        EMSCRIPTEN_FETCH_LOAD_TO_MEMORY | EMSCRIPTEN_FETCH_PERSIST_FILE;
+        EMSCRIPTEN_FETCH_LOAD_TO_MEMORY |
+        (is_offline_url(file.internUrl) ? EMSCRIPTEN_FETCH_NO_DOWNLOAD
+                                        : EMSCRIPTEN_FETCH_PERSIST_FILE);
     attrs.userData  = data.hash.data();
     attrs.onsuccess = [](emscripten_fetch_t* fetch) {
         auto& data =

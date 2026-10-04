@@ -8,6 +8,7 @@
 #include "map_loading.h"
 #include "map_marker.h"
 #include "network/networking.h"
+#include "offline_maps.h"
 #include "physics.h"
 #include "render/occluder.h"
 #include "render/rendering.h"
@@ -531,6 +532,14 @@ i32 blam_main()
                                          : ".",
                 compile_info::supports_command_line ? RSCA::SystemFile
                                                     : RSCA::AssetFile);
+            /* Maps uploaded with BlamMapUpload only exist in IndexedDB, so
+             * loads under their prefixes never go to the network. Without
+             * ?map=, boot this game version's uploaded ui.map if there is
+             * one, instead of fetching the bundled one. */
+            offline_maps::register_storage();
+            if(!compile_info::supports_command_line && !arguments.count("map"))
+                if(auto offline = offline_maps::default_map())
+                    map_filename = MkUrl(*offline, RSCA::AssetFile);
             if(auto info = platform::file::file_info(map_filename);
                info.has_value())
             {

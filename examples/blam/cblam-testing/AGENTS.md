@@ -183,6 +183,7 @@ Local players are created from `shared_recipes::player_recipe`, one per seat for
 | `map_loader.h`          | ImGui game browser UI                           |
 | `map_loading.cpp`       | Map loading pipeline and entity creation         |
 | `map_loading.h`         | `setup_load_eventhandlers()` declaration         |
+| `offline_maps.cpp/h`    | Web: maps uploaded to IndexedDB by `examples/blam/map-upload`, loaded without network access |
 | `rendering.cpp/h`       | Render pipeline and draw calls                   |
 | `caching.cpp/h`         | Base cache infrastructure                        |
 | `*_cache.h`             | Typed caches (bitmap, shader, model, BSP, etc.)  |
