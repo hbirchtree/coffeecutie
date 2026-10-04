@@ -180,14 +180,14 @@ struct damage_effect
         f32             duration;
         function_type_t fade_function;
         u16             padding;
-        f32             rotation;
+        angle_t         rotation;
         f32             pushback;
         Vecf2           jitter;
         u32             padding2[2];
     } temporary_camera_impulse;
 
-    f32 permanent_camera_impulse_angle;
-    u32 padding4[4];
+    angle_t permanent_camera_impulse_angle;
+    u32     padding4[4];
 
     struct
     {
@@ -195,7 +195,7 @@ struct damage_effect
         function_type_t            falloff_function;
         u16                        padding;
         f32                        random_translation;
-        f32                        random_rotation;
+        angle_t                    random_rotation;
         u32                        padding2[3];
         shader::animation_function wobble_function;
         u16                        padding3;

@@ -596,7 +596,7 @@ struct unit_hud_interface
 
     struct sound_t
     {
-        tagref_t sound; // snd! or lsnd
+        tagref_typed_t<tag_class_t::snd, tag_class_t::lsnd> sound;
         enum class latched_to_t : u32
         {
             none                = 0x0,
@@ -665,6 +665,46 @@ static_assert(sizeof(unit_hud_interface::meter_base_t) == 104);
 static_assert(sizeof(unit_hud_interface::aux_hud_meter_t) == 324);
 static_assert(sizeof(unit_hud_interface::sound_t) == 56);
 static_assert(sizeof(unit_hud_interface) == 1388);
+
+C_FLAGS(unit_hud_interface::background_base_t::scaling_flags_t, u16)
+C_FLAGS(unit_hud_interface::colors_t::flash_flags_t, u16)
+C_FLAGS(unit_hud_interface::overlay_t::flags_t, u16)
+C_FLAGS(unit_hud_interface::meter_base_t::meter_flags_t, u8)
+C_FLAGS(unit_hud_interface::aux_hud_meter_t::flags_t, u32)
+C_FLAGS(unit_hud_interface::sound_t::latched_to_t, u32)
+
+static_assert(
+    offsetof(unit_hud_interface::multitex_effectors_t, in_bounds) == 0x48);
+static_assert(
+    offsetof(unit_hud_interface::multitex_effectors_t, periodic_function) ==
+    0xb0);
+static_assert(
+    offsetof(unit_hud_interface::multitex_overlay_t, primary_anchor) == 0x28);
+static_assert(
+    offsetof(unit_hud_interface::multitex_overlay_t, primary) == 0x64);
+static_assert(
+    offsetof(unit_hud_interface::multitex_overlay_t, effectors) == 0x154);
+static_assert(
+    offsetof(unit_hud_interface::background_t, interface_bitmap) == 0x24);
+static_assert(offsetof(unit_hud_interface::background_t, overlays) == 0x58);
+static_assert(offsetof(unit_hud_interface::overlay_t, type) == 0x68);
+static_assert(offsetof(unit_hud_interface::meter_base_t, meter_bitmap) == 0x24);
+static_assert(offsetof(unit_hud_interface::meter_base_t, flags) == 0x44);
+static_assert(
+    offsetof(unit_hud_interface::meter_base_t, disabled_color) == 0x54);
+static_assert(
+    offsetof(unit_hud_interface::aux_hud_meter_t, background) == 0x14);
+static_assert(offsetof(unit_hud_interface::aux_hud_meter_t, meter) == 0x7c);
+static_assert(offsetof(unit_hud_interface::aux_hud_meter_t, flags) == 0xe8);
+static_assert(offsetof(unit_hud_interface, unit_hud_background) == 0x24);
+static_assert(offsetof(unit_hud_interface, shield_panel_meter) == 0xf4);
+static_assert(offsetof(unit_hud_interface, health_panel_background) == 0x17c);
+static_assert(offsetof(unit_hud_interface, health_panel_meter) == 0x1e4);
+static_assert(offsetof(unit_hud_interface, motion_sensor_background) == 0x26c);
+static_assert(offsetof(unit_hud_interface, motion_sensor_center) == 0x35c);
+static_assert(offsetof(unit_hud_interface, aux_overlays) == 0x380);
+static_assert(offsetof(unit_hud_interface, hud_warning_sounds) == 0x3c0);
+static_assert(offsetof(unit_hud_interface, auxiliary_hud_meters) == 0x3cc);
 
 struct grenade_hud_interface
 {

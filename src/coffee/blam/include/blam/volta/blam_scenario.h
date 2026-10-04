@@ -1,18 +1,19 @@
 #pragma once
 
-#include "blam_tag_classes.h"
-#include "blam_tag_ref.h"
-#include "hsc/bytecode_common_v12.h"
+#include "blam_actor.h"
 #include "blam_base_types.h"
 #include "blam_bsp_structures.h"
 #include "blam_domain_ptrs.h"
-#include "blam_unit.h"
 #include "blam_file_header.h"
 #include "blam_magic_data.h"
 #include "blam_recorded_animation.h"
 #include "blam_reference.h"
+#include "blam_tag_classes.h"
 #include "blam_tag_index.h"
+#include "blam_tag_ref.h"
+#include "blam_unit.h"
 #include "hsc/blam_bytecode.h"
+#include "hsc/bytecode_common_v12.h"
 #include "peripherals/enum/helpers.h"
 #include "peripherals/typing/vectors/glm_vector_types.h"
 
@@ -37,7 +38,6 @@ struct reflex_group
     reference<std::array<tagref_t, 3>> palette;
 };
 
-using angle_t = f32;
 using scn_chunk = byte_t[100];
 
 /* Data which is not part of the structures proper */
@@ -691,72 +691,6 @@ struct actor
         Vecf2 noncombat_idle_speech_time;
         Vecf2 combat_idle_speech_time;
     } communication;
-};
-
-enum class actor_variant_flags_t : u32
-{
-    none                      = 0x0,
-    shoot_while_flying        = 0x1,
-    interpolate_color_hsv     = 0x2,
-    unlimited_grenades        = 0x4,
-    moveswitch_stay_w_friends = 0x8,
-    active_camo               = 0x10,
-    super_active_camo         = 0x20,
-    no_ranged_weapons         = 0x40,
-    prefer_passenger_seat     = 0x80,
-};
-
-enum class actor_movement_t : u32
-{
-    always_run,
-    always_crouch,
-    switchable,
-};
-
-struct actor_variant
-{
-    using cls = tag_class_t;
-
-    actor_variant_flags_t                           flags;
-    tagref_typed_t<cls::actr>                       actor;
-    tagref_typed_t<cls::bipd, cls::unit, cls::vehi> unit;
-    tagref_typed_t<cls::actv>                       major;
-
-    u32 padding[6];
-
-    struct movement_t
-    {
-        actor_movement_t movement;
-        f32              crouch_chance;
-        Vecf2            crouch_time;
-        Vecf2            run_time;
-    } movement;
-
-    struct combat_t
-    {
-        tagref_typed_t<cls::weap> weapon;
-
-        f32     max_fire_dist;
-        f32     rate_of_fire;
-        angle_t projectile_error;
-        Vecf2   burst_delay;
-        f32     retarget_fire_time;
-
-        f32 surprise_delay;
-        f32 surprise_wild_fire_time;
-
-        f32 death_wild_fire_chance;
-        f32 death_wild_fire_time;
-
-        Vecf2 desired_combat_range;
-        Vecf3 custom_stand_gun_offset;
-        Vecf3 custom_crouch_gun_offset;
-
-        Vecf2 target_track;
-        Vecf2 target_lead;
-        f32   dmg_modifier;
-        f32   dmg_per_second;
-    } combat;
 };
 
 using actor_variant_ref = tagref_t;

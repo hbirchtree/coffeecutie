@@ -6,6 +6,7 @@
 #include "blam/volta/blam_tag_classes.h"
 #include "blam/volta/blam_tag_ref.h"
 #include "peripherals/stl/enumerate.h"
+#include <blam/volta/blam_actor.h>
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_bsp_structures.h>
 #include <blam/volta/blam_font.h>
@@ -1450,6 +1451,206 @@ void dump_damage_effect(blam::scn::damage_effect const* damage)
             enum_name(static_cast<blam::scn::material_type_t>(i)),
             damage->material_modifiers[i]);
     fmt::print("\n");
+}
+
+std::string argb(blam::argb8_t const& c)
+{
+    return fmt::format("#{:02x}{:02x}{:02x}{:02x}", c.a, c.r, c.g, c.b);
+}
+
+void print_hud_placement(
+    blam::unit_hud_interface::background_base_t const& placement)
+{
+    fmt::print(
+        "offset=({},{}) scale={:g}x{:g} ",
+        placement.anchor_offset.x,
+        placement.anchor_offset.y,
+        placement.width_scale,
+        placement.height_scale);
+    print_flags("scaling", placement.scaling_flags);
+}
+
+void dump_hud_background(
+    char const* label, blam::unit_hud_interface::background_t const& background)
+{
+    fmt::print("    {}: {} ", label, name_of(background.interface_bitmap));
+    print_hud_placement(background);
+    auto overlays = background.overlays.data(g_magic);
+    fmt::print(
+        "\n      colors default={} flashing={} disabled={} sequence={} "
+        "overlays={}\n",
+        argb(background.colors.default_color),
+        argb(background.colors.flashing_color),
+        argb(background.colors.disabled_color),
+        background.sequence_index,
+        overlays.has_value() ? overlays.value().size() : 0u);
+}
+
+void dump_hud_meter(
+    char const* label, blam::unit_hud_interface::meter_base_t const& meter)
+{
+    fmt::print("    {}: {} ", label, name_of(meter.meter_bitmap));
+    print_hud_placement(meter);
+    print_flags("flags", meter.flags);
+    fmt::print(
+        "\n      colors min={} max={} flash={} empty={} disabled={} "
+        "opacity={:g} translucency={:g}\n",
+        argb(meter.color_at_minimum),
+        argb(meter.color_at_maximum),
+        argb(meter.flash_color),
+        argb(meter.empty_color),
+        argb(meter.disabled_color),
+        meter.opacity,
+        meter.translucency);
+}
+
+void dump_unit_hud(blam::unit_hud_interface const* hud)
+{
+    using hud_t = blam::unit_hud_interface;
+    fmt::print("  [unhi]\n    ");
+    print_enum("anchor", hud->anchor);
+    fmt::print("\n");
+    dump_hud_background("background", hud->unit_hud_background);
+    dump_hud_background("shield_background", hud->shield_panel_background);
+    dump_hud_meter("shield_meter", hud->shield_panel_meter);
+    fmt::print(
+        "    overcharge min={} max={} flash={} empty={}\n",
+        argb(hud->overcharge_minimum_color),
+        argb(hud->overcharge_maximum_color),
+        argb(hud->overcharge_flash_color),
+        argb(hud->overcharge_empty_color));
+    dump_hud_background("health_background", hud->health_panel_background);
+    dump_hud_meter("health_meter", hud->health_panel_meter);
+    fmt::print(
+        "    medium_health_left={} health_cutoff max={:g} min={:g}\n",
+        argb(hud->medium_health_left_color),
+        hud->max_color_health_fraction_cutoff,
+        hud->min_color_health_fraction_cutoff);
+    dump_hud_background(
+        "motion_sensor_background", hud->motion_sensor_background);
+    dump_hud_background(
+        "motion_sensor_foreground", hud->motion_sensor_foreground);
+    fmt::print("    motion_sensor_center: ");
+    print_hud_placement(hud->motion_sensor_center);
+    fmt::print("\n    aux_overlays ");
+    print_enum("anchor", hud->aux_overlays.anchor);
+    fmt::print("\n");
+    dump_block(
+        "overlays", hud->aux_overlays.overlays, [](hud_t::overlay_t const& o) {
+            print_enum("type", o.type);
+            print_flags("flags", o.flags);
+            fmt::print("\n");
+            dump_hud_background("  overlay", o);
+        });
+    dump_block(
+        "warning_sounds", hud->hud_warning_sounds, [](hud_t::sound_t const& w) {
+            fmt::print("{} ", name_of(w.sound));
+            print_flags("latched_to", w.latched_to);
+            fmt::print("scale={:g}\n", w.scale);
+        });
+    dump_block(
+        "auxiliary_meters",
+        hud->auxiliary_hud_meters,
+        [](hud_t::aux_hud_meter_t const& m) {
+            print_enum("type", m.type);
+            print_flags("flags", m.flags);
+            fmt::print("cutoff={:g}\n", m.minimum_fraction_cutoff);
+            dump_hud_background("  background", m.background);
+            dump_hud_meter("  meter", m.meter);
+        });
+}
+
+void dump_actor_variant(blam::scn::actor_variant const* actor)
+{
+    using actor_t = blam::scn::actor_variant;
+    fmt::print("  [actv]\n    ");
+    print_flags("flags", actor->flags);
+    print_enum("movement", actor->movement_type);
+    fmt::print("\n    actor={}\n", name_of(actor->actor_definition));
+    fmt::print("    unit={}\n", name_of(actor->unit));
+    fmt::print("    major_variant={}\n", name_of(actor->major_variant));
+    fmt::print("    weapon={}\n", name_of(actor->weapon));
+    fmt::print("    equipment={}\n", name_of(actor->equipment));
+    fmt::print(
+        "    crouch chance={:g} time={:g} run_time={:g}\n",
+        actor->initial_crouch_chance,
+        actor->crouch_time,
+        actor->run_time);
+    fmt::print(
+        "    firing distance={:g} rate={:g} error={:g} first_burst_delay={:g} "
+        "combat_range={:g}\n",
+        actor->maximum_firing_distance,
+        actor->rate_of_fire,
+        actor->projectile_error,
+        actor->first_burst_delay_time,
+        actor->desired_combat_range);
+    fmt::print(
+        "    gun_offset stand={:g} crouch={:g}\n",
+        actor->custom_stand_gun_offset,
+        actor->custom_crouch_gun_offset);
+    fmt::print(
+        "    target tracking={:g} leading={:g} damage_modifier={:g} "
+        "dps={:g}\n",
+        actor->target_tracking,
+        actor->target_leading,
+        actor->weapon_damage_modifier,
+        actor->damage_per_second);
+    fmt::print(
+        "    burst duration={:g} separation={:g} origin_radius={:g} "
+        "return_length={:g}\n",
+        actor->burst_duration,
+        actor->burst_separation,
+        actor->burst_origin_radius,
+        actor->burst_return_length);
+    auto pattern = [](char const* label, actor_t::fire_pattern_t const& f) {
+        fmt::print(
+            "    {} burst={:g}/{:g} rate={:g} error={:g}\n",
+            label,
+            f.burst_duration,
+            f.burst_separation,
+            f.rate_of_fire,
+            f.projectile_error);
+    };
+    pattern("new_target", actor->new_target);
+    pattern("moving", actor->moving);
+    pattern("berserk", actor->berserk);
+    fmt::print("    special ");
+    print_enum("mode", actor->special_fire_mode);
+    print_enum("situation", actor->special_fire_situation);
+    fmt::print(
+        "chance={:g} delay={:g}\n",
+        actor->special_fire_chance,
+        actor->special_fire_delay);
+    fmt::print(
+        "    melee range={:g} abort={:g} berserk firing={:g} melee={:g}\n",
+        actor->melee_range,
+        actor->melee_abort_range,
+        actor->berserk_firing_ranges,
+        actor->berserk_melee_range);
+    fmt::print("    grenades ");
+    print_enum("type", actor->grenade_type);
+    print_enum("trajectory", actor->trajectory_type);
+    print_enum("stimulus", actor->grenade_stimulus);
+    fmt::print(
+        "velocity={:g} ranges={:g} chance={:g} count={}..{}\n",
+        actor->grenade_velocity,
+        actor->grenade_ranges,
+        actor->grenade_chance,
+        actor->grenade_count[0],
+        actor->grenade_count[1]);
+    fmt::print(
+        "    vitality body={:g} shield={:g} sapping_radius={:g} "
+        "shader_permutation={}\n",
+        actor->body_vitality,
+        actor->shield_vitality,
+        actor->shield_sapping_radius,
+        actor->forced_shader_permutation);
+    dump_block(
+        "change_colors",
+        actor->change_colors,
+        [](actor_t::change_color_t const& c) {
+            fmt::print("lower={:g} upper={:g}\n", c.lower_bound, c.upper_bound);
+        });
 }
 
 void dump_unit(blam::scn::unit const* unit)
@@ -2922,6 +3123,14 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
     case blam::tag_class_t::jpt:
         if(auto* info = header_of((blam::scn::damage_effect*)nullptr))
             dump_damage_effect(info);
+        break;
+    case blam::tag_class_t::unhi:
+        if(auto* info = header_of((blam::unit_hud_interface*)nullptr))
+            dump_unit_hud(info);
+        break;
+    case blam::tag_class_t::actv:
+        if(auto* info = header_of((blam::scn::actor_variant*)nullptr))
+            dump_actor_variant(info);
         break;
     /* The rest of what derives from obje stops at the object header */
     case blam::tag_class_t::scen:
