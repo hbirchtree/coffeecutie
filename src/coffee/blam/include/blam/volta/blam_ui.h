@@ -58,12 +58,35 @@ struct ui_element
 
     enum class function_t : u16
     {
+        initialize_sp_level_list_solo  = 5,
+        initialize_sp_level_list_coop  = 6,
+        dispose_sp_level_list          = 7,
+        solo_level_set_map             = 8,
+        set_difficulty                 = 9,
+        start_new_game                 = 10,
         clear_multiplayer_player_joins = 14,
         join_controller_to_mp_game     = 15,
+        mp_level_list_initialize       = 26,
+        mp_level_list_dispose          = 27,
+        mp_level_select                = 28,
+        mp_profiles_list_initialize    = 29,
+        mp_profiles_list_dispose       = 30,
+        mp_profile_set_for_game        = 31,
         mp_profile_set_for_controller  = 37,
         mp_profile_change_name         = 41,
         player_profile_change_name     = 66,
         save_changes_profile_item      = 67,
+        main_menu_switch_to_solo_game  = 73,
+        net_game_speed_start           = 81,
+        difficulty_menu_init           = 99,
+    };
+
+    /* Game data input functions, a separate list from the handlers' */
+    enum class data_function_t : u16
+    {
+        solo_level_select_update = 6,
+        mp_profile_list_update   = 13,
+        mp_level_select_update   = 22,
     };
 
     /* Guerilla notes:
@@ -72,7 +95,7 @@ struct ui_element
      */
     struct data_input_t
     {
-        function_t function;
+        data_function_t function;
         u32        unknown[8];
     };
 
@@ -228,7 +251,7 @@ struct ui_element
             list_items_only_one_tooltip   = 0x4,
             list_single_preview_no_scroll = 0x8,
         } flags;
-    } list_items; // Currently not located
+    } list_items;
 
     /* Guerilla notes:
      * Parameters specific to spinner list widgets
@@ -301,6 +324,7 @@ C_FLAGS(ui_element::child_widget_t::flags_t, u32);
 static_assert(offsetof(ui_element::text_box_t, flags) == 50);
 static_assert(offsetof(ui_element::text_box_t, string_list_index) == 66);
 static_assert(offsetof(ui_element, text_box) == 236);
+static_assert(offsetof(ui_element, list_items) == 336);
 static_assert(offsetof(ui_element, spinner_list) == 340);
 static_assert(offsetof(ui_element, column_list) == 420);
 static_assert(offsetof(ui_element, conditional_widgets) == 724);
